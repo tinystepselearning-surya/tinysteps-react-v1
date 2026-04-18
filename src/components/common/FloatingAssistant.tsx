@@ -7,7 +7,6 @@ import { trackEvent } from '../../lib/analytics';
 import { inferProgramFromPath, trackCtaClick, trackWhatsappClick } from '../../lib/conversionTracking';
 import { normalizePathname, shouldShowPublicSupportWidgets } from '../../utils/publicRouteGuards';
 import { AskTinyStepsModal } from './AskTinyStepsModal';
-import useAuthStore from '../../store/useAuthStore';
 
 const WHATSAPP_URL =
   'https://wa.me/919618398383?text=Hi%20Tiny%20Steps!%20I%20have%20a%20question%20about%20your%20programs.';
@@ -15,7 +14,6 @@ const EXPAND_COLLAPSE_INTERVAL_MS = 10000;
 
 export default function FloatingAssistant() {
   const location = useLocation();
-  const user = useAuthStore((state) => state.user);
   const [askOpen, setAskOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -28,7 +26,6 @@ export default function FloatingAssistant() {
   }, [askOpen]);
 
   const pathname = normalizePathname(location.pathname || '');
-  if (user) return null;
   if (!shouldShowPublicSupportWidgets(pathname)) return null;
 
   const trackSafely = (fn: () => void) => {

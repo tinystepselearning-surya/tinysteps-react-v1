@@ -85,10 +85,10 @@ describe('FloatingAssistant', () => {
     trackEventSpy.mockRestore()
   })
 
-  it('does not render when a user is authenticated, even on public routes', async () => {
+  it('renders on public routes even when a user is authenticated', async () => {
     await renderWidget('/', { uid: 'u1', email: 'test@example.com', displayName: 'Test', role: 'parent' })
-    expect(screen.queryByRole('button', { name: 'Ask TinySteps AI' })).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Chat on WhatsApp' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Ask TinySteps AI' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Chat on WhatsApp' })).toBeInTheDocument()
   })
 
   it('does not render on protected app routes even if auth store user is null', async () => {
