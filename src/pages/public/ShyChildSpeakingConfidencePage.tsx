@@ -175,7 +175,7 @@ export default function ShyChildSpeakingConfidencePage() {
           <li>
             • For conversational fluency support:{' '}
             <Link to="/spoken-english-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              Spoken English Classes for Kids
+              Communication Classes for Kids
             </Link>
           </li>
         </ul>

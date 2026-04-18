@@ -23,7 +23,7 @@ const ROLES = [
       'Coordinate with parents on goals and next steps.',
     ],
     should: [
-      'Strong spoken English with clear, friendly communication.',
+      'Strong English communication with clear, friendly delivery.',
       'Experience teaching kids or ESL learners.',
       'Reliable internet, laptop, and quiet teaching setup.',
       'Consistent weekly availability (6–12 hrs/week).',

@@ -49,11 +49,11 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
     }
 
     return {
-      title: 'Public speaking, spoken English, and communication confidence in one pathway',
+      title: 'Public speaking, communication, and speaking confidence in one pathway',
       body:
-        'Tiny Steps supports parents searching for public speaking classes, spoken English classes, communication skills, storytelling, and presentation confidence for kids. The pathway moves from clear speaking habits to structured talks and confident delivery.',
+        'Tiny Steps supports parents searching for public speaking classes, communication classes, communication skills, storytelling, and presentation confidence for kids. The pathway moves from clear speaking habits to structured talks and confident delivery.',
       intent:
-        'Parent intent: public speaking classes for kids • spoken English classes • communication confidence • storytelling • presentation skills.',
+        'Parent intent: public speaking classes for kids • communication classes • communication confidence • storytelling • presentation skills.',
     };
   }, [subject]);
 

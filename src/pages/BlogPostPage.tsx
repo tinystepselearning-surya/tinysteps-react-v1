@@ -64,7 +64,7 @@ const CATEGORY_ARTICLE_CONFIG = {
       {
         label: 'Use this when',
         value: 'Writing feels messy or inconsistent',
-        detail: 'Helpful when spoken English is stronger than written accuracy or structure.',
+        detail: 'Helpful when speaking confidence is stronger than written accuracy or structure.',
       },
       {
         label: 'Next best route',

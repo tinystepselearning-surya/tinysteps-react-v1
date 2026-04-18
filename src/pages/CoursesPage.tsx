@@ -81,6 +81,43 @@ const speakingCards = [
   },
 ];
 
+const quickAnswerFaqItems = [
+  {
+    question: 'Which courses are available at Tiny Steps?',
+    answer:
+      'Tiny Steps offers online phonics classes, grammar and sentence-building classes, and communication/public speaking classes for children.',
+  },
+  {
+    question: 'How do parents choose the right course?',
+    answer:
+      'Parents can choose based on the child’s current need, such as reading support, grammar foundations, sentence formation, clear expression, or speaking confidence.',
+  },
+  {
+    question: 'Are the courses suitable for beginners?',
+    answer:
+      'Yes. Children can begin at the right level and move step by step through guided practice, activities, correction, and review.',
+  },
+  {
+    question: 'How are Tiny Steps courses delivered?',
+    answer:
+      'Courses are delivered through live online classes in one-on-one or small-group formats, supported by teacher feedback and parent progress updates.',
+  },
+];
+
+const quickAnswerFaqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  '@id': 'https://tinystepslearning.com/courses#quick-answer-faq',
+  mainEntity: quickAnswerFaqItems.map((item) => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: item.answer,
+    },
+  })),
+};
+
 function CoursesPage() {
   const phonicsUsedHrefs = useMemo(() => new Set<string>(), []);
   const grammarUsedHrefs = useMemo(() => new Set<string>(), []);
@@ -121,7 +158,7 @@ function CoursesPage() {
         'Explore Tiny Steps phonics, grammar, and speaking programs for kids with structured progression, clear outcomes, and live mentor support, including synthetic phonics foundations in the phonics track.',
       canonicalPath: coursesCanonicalPath,
       ogType: 'website',
-      jsonLd: [breadcrumb, courseListSchema],
+      jsonLd: [breadcrumb, courseListSchema, quickAnswerFaqSchema],
     });
   }, []);
 
@@ -204,6 +241,28 @@ function CoursesPage() {
       </section>
 
       <section id="phonics-program-section" className="px-6 py-10">
+        <div className="mx-auto max-w-6xl mb-8 rounded-[28px] border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-sky-50 p-6 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-8">
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Quick Answer for Parents</h2>
+          <p className="mt-3 max-w-4xl text-sm text-slate-700 sm:text-base">
+            Tiny Steps Learning offers online English learning courses for children, including phonics, grammar,
+            sentence formation, communication, and public speaking. The courses are designed for children who need
+            support with reading confidence, grammar foundations, clear expression, vocabulary use, and structured
+            speaking. Classes are available in one-on-one and small-group online formats, with teacher-led practice
+            and parent progress updates to show what the child is learning and what needs more practice.
+          </p>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {quickAnswerFaqItems.map((item) => (
+              <article key={item.question} className="rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-sm">
+                <h3 className="text-sm font-semibold text-slate-900">{item.question}</h3>
+                <p className="mt-2 text-sm text-slate-700">
+                  {item.answer}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+
         <div className="mx-auto max-w-6xl">
           <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Phonics Program — From Sounds to Reading Confidence</h2>
           <p className="mt-3 max-w-3xl text-sm text-slate-700 sm:text-base">

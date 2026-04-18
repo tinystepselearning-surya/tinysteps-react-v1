@@ -59,6 +59,29 @@ const stages = [
 
 import AutoLinkedText from '../components/seo/AutoLinkedText';
 
+const quickAnswerFaqItems = [
+  {
+    question: 'What does a child learn in Tiny Steps phonics classes?',
+    answer:
+      'Children learn letter sounds, blending, short vowel words, digraphs, long vowels, spelling patterns, and reading fluency step by step.',
+  },
+  {
+    question: 'Are the classes suitable for beginners?',
+    answer:
+      'Yes. Children can begin with letter sounds and phonemic awareness, then move gradually into blending, word reading, and sentence reading.',
+  },
+  {
+    question: 'How are online phonics classes conducted?',
+    answer:
+      'Classes are teacher-led through live online sessions using activities, visuals, reading practice, worksheets, and child-friendly interaction.',
+  },
+  {
+    question: 'How do parents know the child is improving?',
+    answer:
+      'Parents receive updates on the child’s learning progress, reading confidence, topic understanding, and areas that need more practice.',
+  },
+];
+
 const faqItems = [
   {
     question: 'What is synthetic phonics?',
@@ -129,7 +152,6 @@ type PhonicsPageProps = {
   seoOverrides?: PhonicsSeoOverrides;
   heroTitleOverride?: string;
   heroSubtitleOverride?: string;
-  introCopy?: string;
   afterHeroContent?: React.ReactNode;
   afterContent?: React.ReactNode;
   extraJsonLd?: object[];
@@ -139,7 +161,6 @@ export default function PhonicsPage({
   seoOverrides,
   heroTitleOverride,
   heroSubtitleOverride,
-  introCopy,
   afterHeroContent,
   afterContent,
   extraJsonLd,
@@ -159,11 +180,6 @@ export default function PhonicsPage({
   const canonicalUrl = `https://tinystepslearning.com${canonicalPath}`;
   const heroTitle = heroTitleOverride ?? "Phonics Classes for Kids";
   const heroSubtitle = heroSubtitleOverride ?? "Structured phonics taught live through a synthetic phonics approach inspired by methods such as Jolly Phonics. Most children blend their first words within 4-6 lessons.";
-  const syntheticPhonicsDefinition =
-    'Synthetic phonics is a method of teaching children to read by connecting sounds (phonemes) with letters and blending them into words.';
-  const methodologyCopy =
-    introCopy ??
-    'Tiny Steps uses a structured synthetic phonics approach inspired by methods such as Jolly Phonics to help children read accurately and confidently.';
   const allFaqOpen = openFaqIndexes.length === faqItems.length;
 
   const toggleFaq = (index: number) => {
@@ -226,7 +242,7 @@ export default function PhonicsPage({
       {
         "@context": "https://schema.org",
         "@type": "FAQPage",
-        "mainEntity": faqItems.map((item) => ({
+        "mainEntity": [...quickAnswerFaqItems, ...faqItems].map((item) => ({
           "@type": "Question",
           "name": item.question,
           "acceptedAnswer": {
@@ -264,17 +280,24 @@ export default function PhonicsPage({
         )}
       />
 
-      {/* Answer Block for AEO */}
-      <div className="mx-4 my-8 max-w-4xl rounded-2xl border border-sky-100 bg-gradient-to-r from-slate-50 to-sky-50 p-5 shadow-sm sm:mx-auto sm:p-6">
-        <h2 className="text-lg font-semibold text-gray-900">What is synthetic phonics?</h2>
-        <p className="mt-2 text-base text-gray-800">{syntheticPhonicsDefinition}</p>
+      <section className="mx-4 my-8 max-w-4xl rounded-2xl border border-sky-100 bg-gradient-to-r from-slate-50 to-sky-50 p-5 shadow-sm sm:mx-auto sm:p-6">
+        <h2 className="text-lg font-semibold text-gray-900">Quick Answer for Parents</h2>
         <p className="mt-2 text-base text-gray-800">
-          {methodologyCopy} Children learn how sounds connect to letters, how to blend them into words, and how to decode new words confidently.
+          Tiny Steps Learning offers online phonics classes for children who need support with letter sounds,
+          blending, word reading, spelling foundations, and reading confidence. The program follows structured
+          phonics and synthetic phonics principles, with age-appropriate activities, guided reading practice,
+          and teacher-led correction. Classes are available in one-on-one and small-group formats, with parent
+          updates to show what the child is learning and where the child needs more practice.
         </p>
-        <p className="mt-3 text-sm text-gray-700">
-          Looking for <Link to="/phonics" className="text-slate-900 underline hover:text-sky-700">phonics classes for kids</Link>? See our <Link to="/curriculum" className="text-slate-900 underline hover:text-sky-700">full curriculum</Link>, compare all tracks on <Link to="/courses" className="text-slate-900 underline hover:text-sky-700">courses</Link>, or read our <Link to={PHONICS_RESEARCH_GUIDE_PATH} className="text-slate-900 underline hover:text-sky-700">phonics parent guide</Link>.
-        </p>
-      </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {quickAnswerFaqItems.map((item) => (
+            <article key={item.question} className="rounded-xl border border-sky-100 bg-white/90 p-4">
+              <h3 className="text-sm font-semibold text-slate-900">{item.question}</h3>
+              <p className="mt-2 text-sm text-slate-700">{item.answer}</p>
+            </article>
+          ))}
+        </div>
+      </section>
 
       <section className="mx-4 my-6 max-w-4xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:mx-auto">
         <h2 className="text-xl font-bold text-slate-900">How children learn to read</h2>

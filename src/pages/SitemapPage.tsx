@@ -23,7 +23,7 @@ const sections = [
       },
       {
         to: '/speaking',
-        label: 'Online Spoken English and Public Speaking Classes',
+        label: 'Online Communication and Public Speaking Classes',
         description: 'Confidence, speaking structure, and presentation-ready communication.',
       },
       {

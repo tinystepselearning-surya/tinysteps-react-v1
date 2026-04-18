@@ -49,6 +49,29 @@ const stages = [
   { title: 'Stage 3 • Presentation readiness', duration: 'Lessons 25–36', description: 'Audience practice, strong openings, showcase speech.' }
 ];
 
+const quickAnswerFaqItems = [
+  {
+    question: 'What does a child learn in Tiny Steps communication classes?',
+    answer:
+      'Children learn self-introduction, picture talk, storytelling, sequencing, vocabulary use, sentence expansion, pronunciation practice, and confident presentation step by step.'
+  },
+  {
+    question: 'Are the classes suitable for shy children?',
+    answer:
+      'Yes. Children begin with guided speaking prompts and simple responses, then move gradually into longer answers, storytelling, and independent speaking.'
+  },
+  {
+    question: 'How are online public speaking classes conducted?',
+    answer:
+      'Classes are teacher-led through live online sessions using picture prompts, speaking games, role play, storytelling tasks, pronunciation practice, and guided feedback.'
+  },
+  {
+    question: 'How do parents know the child is improving?',
+    answer:
+      'Parents receive updates on the child’s participation, clarity, vocabulary use, sentence confidence, presentation skills, and areas that need more practice.'
+  }
+];
+
 const faqItems = [
   {
     question: 'What age should a child start speaking confidence classes?',
@@ -139,7 +162,7 @@ export default function SpeakingPage() {
     {
       "@context": "https://schema.org",
       "@type": "FAQPage",
-      "mainEntity": faqItems.map(item => ({
+      "mainEntity": [...quickAnswerFaqItems, ...faqItems].map(item => ({
         "@type": "Question",
         "name": item.question,
         "acceptedAnswer": {
@@ -161,7 +184,7 @@ export default function SpeakingPage() {
       <ProgramHero
         program="Public Speaking"
         title="Online Public Speaking Classes for Kids"
-        subtitle="From shy to spotlight-ready with spoken English practice, communication coaching, and stage-based showcases."
+        subtitle="From shy to spotlight-ready with guided speaking practice, communication coaching, and stage-based showcases."
         badges={['Ages 4–15', 'S.P.E.A.K habit', 'Parent video notes']}
         highlights={[
           'Show & tell, storytelling, debates, persuasive speeches',
@@ -172,12 +195,21 @@ export default function SpeakingPage() {
 
       <section className="mx-auto max-w-4xl px-6 pt-8">
         <div className="rounded-2xl border border-amber-100 bg-gradient-to-r from-slate-50 to-amber-50 p-6 shadow-sm">
-          <p className="text-lg font-semibold text-slate-900">
-            Online speaking classes for kids at Tiny Steps help ages 4-15 build spoken English confidence, clearer communication, and structured presentation skills through live guided practice.
+          <h2 className="text-lg font-semibold text-slate-900">Quick Answer for Parents</h2>
+          <p className="mt-2 text-base text-slate-800">
+            Tiny Steps Learning offers online communication classes for children and public speaking classes for children who need support with clear expression,
+            sentence confidence, storytelling, pronunciation practice, and structured speaking. The program helps children speak in complete sentences, describe
+            pictures, share ideas, answer questions, organize thoughts, and present with confidence. Classes are available in one-on-one and small-group formats,
+            with parent updates to show what the child is learning and where the child needs more practice.
           </p>
-          <p className="mt-3 text-sm text-slate-700">
-            They are especially useful for children who hesitate to speak, use short answers, or need stronger classroom and stage communication confidence.
-          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {quickAnswerFaqItems.map((item) => (
+              <article key={item.question} className="rounded-xl border border-amber-100 bg-white/90 p-4">
+                <h3 className="text-sm font-semibold text-slate-900">{item.question}</h3>
+                <p className="mt-2 text-sm text-slate-700">{item.answer}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -214,7 +246,7 @@ export default function SpeakingPage() {
         title="Learn More About Public Speaking for Kids"
         links={[
           { label: 'Public Speaking & Communication', href: '/public-speaking-communication-kids' },
-          { label: 'Spoken English Classes', href: '/spoken-english-classes-for-kids' },
+          { label: 'Communication Classes for Kids', href: '/spoken-english-classes-for-kids' },
           { label: 'Helping a Shy Child Speak', href: '/shy-child-speaking-confidence' },
           { label: 'Confidence Building Programs', href: '/confidence-building-program-kids' },
           { label: 'Confidence Seeds (Parents Guide)', href: '/blog/week-12-speaking-confidence-seeds' },
@@ -270,7 +302,7 @@ export default function SpeakingPage() {
             icon: '📊'
           },
           {
-            label: 'Spoken English Classes for Kids',
+            label: 'Communication Classes for Kids',
             href: '/spoken-english-classes-for-kids',
             description: 'Communication confidence with sentence support',
             icon: '🗣️'

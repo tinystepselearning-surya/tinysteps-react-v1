@@ -33,6 +33,43 @@ const trustStrip = [
   { label: "Practice Support", icon: <IconHand /> },
 ];
 
+const quickAnswerFaqItems = [
+  {
+    question: "What makes Tiny Steps different from generic online classes?",
+    answer:
+      "Tiny Steps focuses on structured learning, child-friendly teaching, guided correction, active participation, and parent-visible progress instead of only completing topics quickly.",
+  },
+  {
+    question: "Which programs does Tiny Steps offer?",
+    answer:
+      "Tiny Steps offers online phonics classes, grammar and sentence-building classes, and communication/public speaking classes for children.",
+  },
+  {
+    question: "How does Tiny Steps support children who are shy or struggling?",
+    answer:
+      "Teachers use guided prompts, visuals, examples, activities, correction, and gradual practice so children can build confidence step by step.",
+  },
+  {
+    question: "How do parents track progress at Tiny Steps?",
+    answer:
+      "Parents receive updates about the child’s topic understanding, participation, confidence, strengths, and areas that need more practice.",
+  },
+];
+
+const quickAnswerFaqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "@id": "https://tinystepslearning.com/why-tiny-steps#quick-answer-faq",
+  mainEntity: quickAnswerFaqItems.map((item) => ({
+    "@type": "Question",
+    name: item.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: item.answer,
+    },
+  })),
+};
+
 type Outcome = {
   title: string;
   desc: string;
@@ -202,7 +239,7 @@ const WhyTinyStepsPage: FC = () => {
         title="Why Tiny Steps | Premium Online English Learning School for Children"
         description="Tiny Steps is a premium online English learning school building strong phonics, reading, grammar, and communication through structured teaching and parent-visible progress."
         canonical="https://tinystepslearning.com/why-tiny-steps"
-        jsonLd={[breadcrumbSchema]}
+        jsonLd={[breadcrumbSchema, quickAnswerFaqSchema]}
       />
 
       {/* HERO */}
@@ -270,6 +307,32 @@ const WhyTinyStepsPage: FC = () => {
                 <span className="text-slate-500">{item.icon}</span>
                 <span className="text-sm font-semibold">{item.label}</span>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-8">
+        <div className="rounded-3xl border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-sky-50 p-6 md:p-8 shadow-sm">
+          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">Quick Answer for Parents</h2>
+          <p className="mt-3 text-slate-700 leading-relaxed">
+            Tiny Steps Learning is a premium online English learning school for children, focused on phonics, grammar,
+            sentence formation, reading confidence, and communication confidence. Parents choose Tiny Steps because
+            classes are teacher-led, structured, child-friendly, and designed around steady progress rather than rushed
+            learning. Children can learn through one-on-one or small-group online classes, while parents receive updates
+            on what the child is learning, where the child is improving, and what needs more practice.
+          </p>
+          <p className="mt-3 text-slate-700 leading-relaxed">
+            Families typically come to Tiny Steps when they want one school that connects online phonics classes,
+            grammar and sentence-building classes, and communication/public speaking classes into one clear pathway
+            with parent-visible progress.
+          </p>
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            {quickAnswerFaqItems.map((item) => (
+              <article key={item.question} className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
+                <h3 className="text-sm font-bold text-slate-900">{item.question}</h3>
+                <p className="mt-2 text-sm text-slate-700 leading-relaxed">{item.answer}</p>
+              </article>
             ))}
           </div>
         </div>

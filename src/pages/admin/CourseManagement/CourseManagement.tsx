@@ -305,7 +305,7 @@ export default function CourseManagement() {
                   <SelectItem value="phonics">Phonics</SelectItem>
                   <SelectItem value="grammar">Grammar</SelectItem>
                   <SelectItem value="public_speaking">Public Speaking</SelectItem>
-                  <SelectItem value="spoken_english">Spoken English</SelectItem>
+                  <SelectItem value="spoken_english">Communication</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -369,7 +369,7 @@ export default function CourseManagement() {
                   <SelectItem value="phonics">Phonics</SelectItem>
                   <SelectItem value="grammar">Grammar</SelectItem>
                   <SelectItem value="public_speaking">Public Speaking</SelectItem>
-                  <SelectItem value="spoken_english">Spoken English</SelectItem>
+                  <SelectItem value="spoken_english">Communication</SelectItem>
                 </SelectContent>
               </Select>
             </div>

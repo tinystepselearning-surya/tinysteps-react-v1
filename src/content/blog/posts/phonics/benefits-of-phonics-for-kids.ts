@@ -21,7 +21,7 @@ const post: PhonicsSeoPost = {
     question: 'Does phonics help only weak readers?',
     answer: 'No. Phonics supports most early readers by making decoding and spelling more efficient, which later supports fluency and comprehension.'
   }, {
-    question: 'Can phonics support spoken English too?',
+    question: 'Can phonics support speaking confidence too?',
     answer: 'Indirectly yes. Better sound awareness can support clearer pronunciation and stronger awareness of word patterns in speech.'
   }, {
     question: 'Which benefit should I expect first?',

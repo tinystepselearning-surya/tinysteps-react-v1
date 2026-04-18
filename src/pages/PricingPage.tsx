@@ -83,6 +83,43 @@ const plans = ONE_TO_ONE_MONTHLY_PACKAGES.map((pkg) => {
   };
 });
 
+const quickAnswerFaqItems = [
+  {
+    question: 'What is included in Tiny Steps pricing?',
+    answer:
+      'Pricing covers live online classes, teacher-led practice, guided correction, learning activities, and parent progress updates based on the selected program.',
+  },
+  {
+    question: 'Are phonics, grammar, and communication classes priced separately?',
+    answer:
+      'Pricing may vary based on the selected program, class format, and number of sessions. Parents can review the available plans and choose what suits the child’s learning need.',
+  },
+  {
+    question: 'Can parents choose one-on-one classes?',
+    answer:
+      'Yes. Tiny Steps offers one-on-one online classes for children who need focused attention, guided correction, and a personalized learning pace.',
+  },
+  {
+    question: 'How should parents select the right plan?',
+    answer:
+      'Parents should choose based on the child’s current need, preferred class format, learning goals, and the number of sessions they want to begin with.',
+  },
+];
+
+const quickAnswerFaqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  '@id': 'https://tinystepslearning.com/pricing#quick-answer-faq',
+  mainEntity: quickAnswerFaqItems.map((item) => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: item.answer,
+    },
+  })),
+};
+
 type PricingProgram = 'premium' | 'ultra';
 
 const PricingPage: FC = () => {
@@ -251,7 +288,7 @@ const PricingPage: FC = () => {
         title="Pricing | Tiny Steps Online School"
         description="Premium 1:1 online English school for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice and stage-based parent progress insights. Free assessment class; flexible monthly plans."
         canonical="https://tinystepslearning.com/pricing"
-        jsonLd={offerCatalog}
+        jsonLd={[offerCatalog, quickAnswerFaqSchema]}
       />
 
       <section className="relative px-6 pt-24 pb-10">
@@ -306,6 +343,26 @@ const PricingPage: FC = () => {
               ? `Premium monthly estimate (12 sessions): ${formatINR(premiumMonthlyEstimate)}/month.`
               : `Ultra Premium monthly estimate (12 sessions): ${formatINR(ultraMonthlyEstimate)}/month.`}
           </p>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 pb-10">
+        <div className="rounded-3xl border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-blue-50 p-6 shadow-card-hover sm:p-8">
+          <h2 className="text-2xl font-semibold text-gray-900">Quick Answer for Parents</h2>
+          <p className="mt-3 max-w-4xl text-sm text-gray-700 sm:text-base">
+            Tiny Steps Learning offers online English learning classes for children across phonics, grammar, sentence
+            formation, communication, and public speaking. Pricing depends on the class format, number of sessions, and
+            selected program. Parents can choose one-on-one online classes for focused personal attention or
+            small-group classes where available, with teacher-led practice and parent progress updates.
+          </p>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {quickAnswerFaqItems.map((item) => (
+              <article key={item.question} className="rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-sm">
+                <h3 className="text-sm font-semibold text-slate-900">{item.question}</h3>
+                <p className="mt-2 text-sm text-slate-700">{item.answer}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 

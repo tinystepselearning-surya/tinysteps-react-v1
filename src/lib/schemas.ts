@@ -20,6 +20,12 @@ export const organizationSchema = {
     '@type': 'ImageObject',
     url: `${SITE_ORIGIN}/logo-square.webp`
   },
+  founder: {
+    '@type': 'Person',
+    '@id': `${SITE_ORIGIN}/#priya-founder`,
+    name: 'Priya',
+    jobTitle: 'Founder'
+  },
   description: 'Online phonics, grammar, and public speaking classes for children ages 3–12',
   foundingDate: '2020',
   foundingLocation: {
@@ -46,7 +52,7 @@ export const organizationSchema = {
   knowsAbout: [
     'online phonics classes for kids',
     'online grammar classes for kids',
-    'online spoken English classes for kids',
+    'online communication classes for kids',
     'online public speaking classes for kids',
     'reading classes for children',
   ],
@@ -117,6 +123,9 @@ export function createWebPageSchema(params: {
     ...(params.description ? { description: params.description } : {}),
     isPartOf: {
       '@id': WEBSITE_ID,
+    },
+    publisher: {
+      '@id': ORGANIZATION_ID,
     },
     about: {
       '@id': ORGANIZATION_ID,

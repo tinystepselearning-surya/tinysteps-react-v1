@@ -48,6 +48,26 @@ Disallow: /debug-lessons
 Disallow: /private/
 Disallow: /email/
 
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /admin/
+Disallow: /surya/
+Disallow: /teacher/
+Disallow: /parent/
+Disallow: /kids/
+Disallow: /learning-partner/dashboard
+Disallow: /learning-partner/dashboard/
+Disallow: /learning-partner/login
+Disallow: /learning-partner/login/
+Disallow: /learningpartner/dashboard
+Disallow: /learningpartner/dashboard/
+Disallow: /learningpartner/login
+Disallow: /learningpartner/login/
+Disallow: /dev/
+Disallow: /debug-lessons
+Disallow: /private/
+Disallow: /email/
+
 User-agent: Claude-User
 Allow: /
 Disallow: /admin/

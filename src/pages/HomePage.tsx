@@ -31,6 +31,41 @@ const PARENT_HELP_POINTS = [
   "Friendly support for common phonics questions",
 ];
 const WORLDWIDE_COUNTRIES = ['India','UAE','Vietnam','Singapore','Malaysia','UK','Canada','USA','Sweden','Germany','Australia','Sri Lanka','Pakistan'];
+const quickAnswerFaqItems = [
+  {
+    question: "What does Tiny Steps Learning teach?",
+    answer:
+      "Tiny Steps teaches phonics, reading, grammar, sentence formation, vocabulary use, communication skills, and public speaking for children.",
+  },
+  {
+    question: "Who are Tiny Steps classes for?",
+    answer:
+      "Classes are for children who need support with reading, grammar, writing clarity, sentence confidence, pronunciation practice, storytelling, or communication confidence.",
+  },
+  {
+    question: "How are Tiny Steps classes conducted?",
+    answer:
+      "Classes are conducted through live online sessions in one-on-one and small-group formats using activities, visuals, practice tasks, teacher feedback, and guided correction.",
+  },
+  {
+    question: "How do parents know if the child is improving?",
+    answer:
+      "Parents receive updates on what the child is learning, where the child is improving, and which areas need more practice.",
+  },
+];
+const quickAnswerFaqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "@id": "https://tinystepslearning.com/#quick-answer-faq",
+  mainEntity: quickAnswerFaqItems.map((item) => ({
+    "@type": "Question",
+    name: item.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: item.answer,
+    },
+  })),
+};
 
 export default function HomePage() {
   const [showDeferredSections, setShowDeferredSections] = useState(false);
@@ -49,6 +84,7 @@ export default function HomePage() {
       jsonLd: [
         localBusinessSchema,
         websiteSchema,
+        quickAnswerFaqSchema,
       ],
     });
   }, []);
@@ -137,6 +173,27 @@ export default function HomePage() {
 
       {/* HERO */}
       <ConversionHero />
+
+      <section className="px-6 py-8">
+        <div className="mx-auto max-w-6xl rounded-[30px] border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-sky-50 p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Quick Answer for Parents</h2>
+          <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-700 sm:text-base">
+            Tiny Steps Learning is a premium online English learning school for children, offering phonics, grammar,
+            sentence formation, communication, and public speaking programs. Tiny Steps supports children who need
+            help with reading confidence, grammar foundations, clear expression, structured speaking, and confident
+            communication. Classes are conducted live online in one-on-one and small-group formats, with teacher-led
+            practice, child-friendly activities, guided correction, and parent progress updates.
+          </p>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {quickAnswerFaqItems.map((item) => (
+              <article key={item.question} className="rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-sm">
+                <h3 className="text-sm font-semibold text-slate-900">{item.question}</h3>
+                <p className="mt-2 text-sm text-slate-700">{item.answer}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Program Navigation Cards */}
       <section className="px-6 py-8">

@@ -10,7 +10,6 @@ import TopicClusterLinks from '../components/programs/TopicClusterLinks';
 import Meta from '../components/common/Meta';
 import { createCourseSchema } from '../lib/schemas';
 import { getRouteConfig } from '../lib/seo';
-import { Link } from 'react-router-dom';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
 import {
   createCourseReviewSchemaFragment,
@@ -47,6 +46,29 @@ const stages = [
   { title: 'Stage 1 • Sentence foundations', duration: 'Lessons 1–12', description: 'Parts of speech, simple sentences, quick edits.' },
   { title: 'Stage 2 • Meaning + structure', duration: 'Lessons 13–24', description: 'Prepositions, conjunctions, plurals, run-on fixes.' },
   { title: 'Stage 3 • Tenses + writing', duration: 'Lessons 25–36', description: 'Questions, punctuation, tense accuracy, capstone writing.' }
+];
+
+const quickAnswerFaqItems = [
+  {
+    question: 'What does a child learn in Tiny Steps grammar classes?',
+    answer:
+      'Children learn nouns, verbs, adjectives, pronouns, articles, prepositions, punctuation, tenses, sentence formation, and paragraph writing step by step.'
+  },
+  {
+    question: 'Are the classes suitable for beginners?',
+    answer:
+      'Yes. Children can begin with basic word types and simple sentences, then move gradually into grammar rules, expanded sentences, and short writing tasks.'
+  },
+  {
+    question: 'How are online grammar classes conducted?',
+    answer:
+      'Classes are teacher-led through live online sessions using examples, visuals, picture talk, sentence-building tasks, worksheets, and guided correction.'
+  },
+  {
+    question: 'How do parents know the child is improving?',
+    answer:
+      'Parents receive updates on the child’s grammar understanding, sentence formation, writing clarity, participation, and areas that need more practice.'
+  }
 ];
 
 const faqItems = [
@@ -139,7 +161,7 @@ export default function GrammarPage() {
     {
       "@context": "https://schema.org",
       "@type": "FAQPage",
-      "mainEntity": faqItems.map(item => ({
+      "mainEntity": [...quickAnswerFaqItems, ...faqItems].map(item => ({
         "@type": "Question",
         "name": item.question,
         "acceptedAnswer": {
@@ -172,19 +194,21 @@ export default function GrammarPage() {
 
       <section className="mx-auto max-w-4xl px-6 pt-8">
         <div className="rounded-2xl border border-emerald-100 bg-gradient-to-r from-slate-50 to-emerald-50 p-6 shadow-sm">
-          <p className="text-lg font-semibold text-slate-900">
-            Online grammar and writing classes for kids at Tiny Steps help ages 5-15 build sentence structure, punctuation accuracy, and clear paragraph writing through live guided teaching.
+          <h2 className="text-lg font-semibold text-slate-900">Quick Answer for Parents</h2>
+          <p className="mt-2 text-base text-slate-800">
+            Tiny Steps Learning offers online grammar classes for children and sentence-building classes for children who need support with grammar foundations,
+            sentence formation, writing clarity, and confident expression. The program teaches grammar step by step through examples, guided practice,
+            picture-based activities, reading tasks, and writing exercises. Classes are available in one-on-one and small-group formats, with parent
+            updates to show what the child is learning and where the child needs more practice.
           </p>
-          <p className="mt-3 text-sm text-slate-700">
-            These classes are most useful for children who understand topics in school but still make frequent writing errors or struggle to express ideas clearly in complete sentences.
-          </p>
-          <p className="mt-3 text-sm text-slate-700">
-            If your child is still struggling to read smoothly, start with our{' '}
-            <Link to="/child-not-reading-properly" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              child reading support guide
-            </Link>
-            .
-          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {quickAnswerFaqItems.map((item) => (
+              <article key={item.question} className="rounded-xl border border-emerald-100 bg-white/90 p-4">
+                <h3 className="text-sm font-semibold text-slate-900">{item.question}</h3>
+                <p className="mt-2 text-sm text-slate-700">{item.answer}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 

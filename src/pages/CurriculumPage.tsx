@@ -73,6 +73,29 @@ const curriculumFaqItems = [
   },
 ];
 
+const quickAnswerFaqItems = [
+  {
+    question: 'What does the Tiny Steps curriculum include?',
+    answer:
+      'The curriculum includes phonics, blending, reading practice, spelling patterns, grammar foundations, sentence formation, vocabulary use, communication skills, and public speaking.',
+  },
+  {
+    question: 'Is the curriculum suitable for different age groups?',
+    answer:
+      'Yes. Children can begin at an appropriate level and progress step by step based on their current reading, grammar, and communication needs.',
+  },
+  {
+    question: 'How is progress tracked in the curriculum?',
+    answer:
+      'Progress is tracked through topic coverage, child participation, teacher feedback, learning observations, and parent updates.',
+  },
+  {
+    question: 'How does the curriculum support long-term English learning?',
+    answer:
+      'The curriculum builds foundations gradually, helping children move from sounds and words to sentences, reading fluency, writing clarity, and confident expression.',
+  },
+];
+
 const VALID_TABS = ['phonics', 'grammar', 'speaking'] as const;
 type ValidTab = (typeof VALID_TABS)[number];
 
@@ -136,7 +159,7 @@ function safeCourse(value: string | null): string | null {
     };
 
     const faqSchema = createFAQPageSchema(
-      curriculumFaqItems.map((item) => ({
+      [...quickAnswerFaqItems, ...curriculumFaqItems].map((item) => ({
         question: item.question,
         answer: item.answer,
       }))
@@ -255,10 +278,24 @@ function safeCourse(value: string | null): string | null {
 
       <section className="mx-auto max-w-6xl px-4 pb-6 sm:px-6">
         <div className="glass-panel p-6 md:p-7">
-          <h2 className="text-2xl font-semibold text-gray-900">What Tiny Steps Curriculum is</h2>
+          <h2 className="text-2xl font-semibold text-gray-900">Quick Answer for Parents</h2>
           <p className="mt-3 text-sm text-gray-700 md:text-base">
-            Tiny Steps Curriculum is a structured English learning pathway for children aged 3–12 that builds phonics, reading, grammar, writing, and speaking step by step through live teacher-led classes.
+            The Tiny Steps curriculum is a structured online English learning path for children, covering phonics,
+            reading, grammar, sentence formation, vocabulary use, communication, and public speaking. Children move
+            step by step from foundational skills such as sounds, blending, and simple sentences to stronger reading
+            confidence, clearer writing, and confident expression. The curriculum is taught through live online
+            classes, guided practice, child-friendly activities, and parent progress updates.
           </p>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            {quickAnswerFaqItems.map((item) => (
+              <article key={item.question} className="rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm">
+                <h3 className="text-sm font-semibold text-gray-900">{item.question}</h3>
+                <p className="mt-2 text-sm text-gray-700">{item.answer}</p>
+              </article>
+            ))}
+          </div>
+
           <div className="mt-4">
             <p className="text-sm font-semibold text-gray-900">Curriculum includes:</p>
             <ul className="mt-2 grid gap-2 text-sm text-gray-700 md:grid-cols-3">

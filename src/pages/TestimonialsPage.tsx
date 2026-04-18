@@ -50,6 +50,41 @@ const SORT_OPTIONS: Array<{ id: SortMode; label: string }> = [
   { id: 'newest', label: 'Newest' },
   { id: 'highest', label: 'Highest Rated' },
 ];
+const quickAnswerFaqItems = [
+  {
+    question: 'What do Tiny Steps testimonials show?',
+    answer:
+      'They show parent experiences with Tiny Steps classes, including how children participate, respond to teachers, and build confidence over time.',
+  },
+  {
+    question: 'Can testimonials help parents choose the right program?',
+    answer:
+      'Yes. Testimonials can help parents understand whether the child needs support in phonics, grammar, sentence formation, communication, or public speaking.',
+  },
+  {
+    question: 'Do all children progress at the same speed?',
+    answer:
+      "No. Each child's progress depends on age, current level, consistency, class participation, and practice outside class.",
+  },
+  {
+    question: 'What should parents look for in testimonials?',
+    answer:
+      'Parents should look for comments about teacher guidance, child engagement, reading confidence, sentence confidence, clarity, participation, and parent communication.',
+  },
+];
+const quickAnswerFaqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  '@id': 'https://tinystepslearning.com/testimonials#quick-answer-faq',
+  mainEntity: quickAnswerFaqItems.map((item) => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: item.answer,
+    },
+  })),
+};
 
 const timestampToMillis = (value: unknown): number => {
   if (!value) return 0;
@@ -265,6 +300,7 @@ export default function TestimonialsPage() {
     }),
     [representativeSchemaReviews, visibleRatingValue, visibleReviewCount],
   );
+  const pageJsonLd = useMemo(() => [testimonialsJsonLd, quickAnswerFaqSchema], [testimonialsJsonLd]);
 
   const pageTitle =
     selectedCourse === 'all'
@@ -281,7 +317,7 @@ export default function TestimonialsPage() {
         title={pageTitle}
         description={pageDescription}
         canonical="https://tinystepslearning.com/testimonials"
-        jsonLd={testimonialsJsonLd}
+        jsonLd={pageJsonLd}
       />
 
       <section className="mx-auto max-w-6xl px-6 py-10">
@@ -341,6 +377,27 @@ export default function TestimonialsPage() {
               })}
             </div>
           </div>
+        </div>
+
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <section className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:p-6">
+            <h2 className="text-2xl font-bold text-slate-900">Quick Answer for Parents</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-700">
+              Tiny Steps testimonials help parents understand how children experience our online English learning classes
+              across phonics, grammar, sentence formation, communication, and public speaking. Parent feedback can show
+              improvements in reading confidence, participation, sentence confidence, clarity, and willingness to speak.
+              Testimonials should be viewed as real parent experiences, while each child&apos;s progress may vary based on
+              age, current level, consistency, and practice.
+            </p>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {quickAnswerFaqItems.map((item) => (
+                <article key={item.question} className="rounded-xl border border-slate-200 bg-white p-4">
+                  <h3 className="text-sm font-semibold text-slate-900">{item.question}</h3>
+                  <p className="mt-2 text-sm text-slate-700">{item.answer}</p>
+                </article>
+              ))}
+            </div>
+          </section>
         </div>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

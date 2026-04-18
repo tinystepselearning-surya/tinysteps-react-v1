@@ -2,7 +2,7 @@ import type { BlogPost } from '../../types';
 
 const post: BlogPost = {
   slug: 'spoken-english-classes-for-kids-confidence',
-  title: 'Spoken English classes for kids: a simple confidence plan for shy children (ages 4–12)',
+  title: 'Communication classes for kids: a simple confidence plan for shy children (ages 4–12)',
   category: 'Public Speaking',
   author: 'Tiny Steps Learning',
   date: '2026-01-10',
@@ -14,7 +14,7 @@ const post: BlogPost = {
     content: 'Many children in India understand English but don’t speak confidently. This is usually not a “knowledge problem”—it’s a confidence + practice design problem.'
   }, {
     type: 'p',
-    content: 'If you’re searching for spoken English classes for kids, use this simple plan to check whether a program will actually help your child speak.'
+    content: 'If you’re searching for communication classes for kids, use this simple plan to check whether a program will actually help your child speak.'
   }, {
     type: 'h2',
     content: 'Why kids stay silent (even when they know the answer)'

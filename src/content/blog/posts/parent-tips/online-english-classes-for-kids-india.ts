@@ -39,7 +39,7 @@ const post: BlogPost = // New SEO-targeted posts (Jan 2026)
     content: '4) Speaking confidence needs a method (not just “talk more”)'
   }, {
     type: 'p',
-    content: 'Good spoken English classes for kids scaffold speaking: 10–15s → 30s → 60s using prompts and roleplay.'
+    content: 'Good communication classes for kids scaffold speaking: 10–15s → 30s → 60s using prompts and roleplay.'
   }, {
     type: 'h2',
     content: '5) Grammar should show up inside real sentences'

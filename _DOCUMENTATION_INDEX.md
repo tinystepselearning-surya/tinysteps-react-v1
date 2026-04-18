@@ -3,6 +3,14 @@
 ## Overview
 This is your central index for all Tiny Steps SEO/GEO documentation created for the Summer English Camp 2026 + Year-Round Expansion project.
 
+### AI Visibility Monitoring
+
+- [Tiny Steps AI Visibility Query Tracker](docs/ai-visibility-query-tracker.md) — manual query list for checking Tiny Steps visibility across ChatGPT, Perplexity, Gemini, Claude, Google AI Overviews, and Bing Copilot.
+- [Tiny Steps Earned Media & Digital PR Plan](docs/earned-media-digital-pr-plan.md) — outreach plan for building credible third-party mentions, parent trust signals, and AI-search visibility through ethical digital PR.
+- [Tiny Steps Founder Quote Bank for PR Outreach](docs/founder-quote-bank-pr.md) — approved-style founder quote bank for parent blogs, education articles, podcast pitches, interviews, local media, and ethical digital PR.
+- [Tiny Steps Parent Story Consent & Snippet Bank](docs/parent-story-consent-snippet-bank.md) — consent-safe template for collecting parent-approved learning stories, anonymized snippets, testimonial ideas, and PR-ready story themes.
+- [Tiny Steps AI Search / AEO / GEO Implementation Status](docs/ai-geo-implementation-status.md) — summary of completed AI-search foundations, page-level quick-answer work, FAQ schema additions, documentation files, validation steps, and future work.
+
 ---
 
 ## Core Audit Documents (Read in This Order)
@@ -308,4 +316,3 @@ These are superseded by:
 ---
 
 **Ready for Phase 2?** Start with IMPLEMENTATION_QUICK_START.md 🚀
-

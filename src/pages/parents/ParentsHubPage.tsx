@@ -129,6 +129,28 @@ const helpLanes = [
     detail: 'Start with the closest parent problem, then move into the linked playbook instead of trying to read everything.',
   },
 ];
+const quickAnswerFaqItems = [
+  {
+    question: 'What can parents find on the Tiny Steps Parents page?',
+    answer:
+      'Parents can find guidance about online classes, learning programs, progress updates, parent support, and how Tiny Steps helps children build English foundations.',
+  },
+  {
+    question: 'How does Tiny Steps keep parents informed?',
+    answer:
+      'Tiny Steps shares updates about what the child is learning, how the child is participating, where the child is improving, and which areas need more practice.',
+  },
+  {
+    question: 'Which learning areas can parents understand through Tiny Steps?',
+    answer:
+      'Parents can understand support for phonics, reading, grammar, sentence formation, vocabulary use, communication skills, and public speaking.',
+  },
+  {
+    question: 'How should parents use this page?',
+    answer:
+      'Parents can use this page to explore programs, understand the learning approach, review support resources, and decide the next step for their child.',
+  },
+];
 
 const parentFaqs = [
   {
@@ -162,6 +184,7 @@ const parentFaqs = [
       'Use the full FAQ page if you want answers on classes, pricing, phonics, grammar, speaking confidence, scheduling, and parent support questions in one place.',
   },
 ];
+const combinedFaqItems = [...quickAnswerFaqItems, ...parentFaqs];
 
 const breadcrumbSchema = {
   '@context': 'https://schema.org',
@@ -175,7 +198,7 @@ const breadcrumbSchema = {
 const faqSchema = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
-  mainEntity: parentFaqs.map((item) => ({
+  mainEntity: combinedFaqItems.map((item) => ({
     '@type': 'Question',
     name: item.question,
     acceptedAnswer: {
@@ -305,7 +328,25 @@ const ParentsHubPage: React.FC = () => {
       </section>
 
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <section className="grid gap-5 xl:grid-cols-[minmax(0,1.18fr)_340px]">
+        <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
+          <h2 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">Quick Answer for Parents</h2>
+          <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600 sm:text-base">
+            The Tiny Steps Parents page helps families understand how online English learning works for children across
+            phonics, grammar, sentence formation, communication, and public speaking. Parents can use this page to
+            explore learning support, understand program options, review class expectations, and learn how progress
+            updates help them see what the child is learning and what needs more practice.
+          </p>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {quickAnswerFaqItems.map((item) => (
+              <article key={item.question} className="rounded-[1.4rem] border border-slate-200 bg-slate-50/70 p-4">
+                <h3 className="text-base font-semibold leading-7 text-slate-900">{item.question}</h3>
+                <p className="mt-2 text-sm leading-7 text-slate-600">{item.answer}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-8 grid gap-5 xl:grid-cols-[minmax(0,1.18fr)_340px]">
           <Link
             to={featuredGuides[0].to}
             className="relative overflow-hidden rounded-[2rem] border border-slate-900 bg-slate-950 p-6 text-white shadow-[0_28px_70px_rgba(15,23,42,0.16)] transition hover:-translate-y-0.5 hover:shadow-[0_32px_80px_rgba(15,23,42,0.2)] sm:p-8"

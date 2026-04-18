@@ -16,7 +16,7 @@ const ARTICLE_READ_TIME = '12 min read';
 const ARTICLE_HERO = '/blog/hero-research.jpg';
 const ARTICLE_KEYWORDS = [
   'speaking confidence for kids',
-  'spoken English confidence for children',
+  'communication confidence for children',
   'shy child will not speak',
   'speaking activities for kids at home',
   'oral language development',
@@ -908,7 +908,7 @@ export default function Week12SpeakingConfidenceSeedsPage() {
                 to="/spoken-english-classes-for-kids"
                 className="inline-flex items-center rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
               >
-                Spoken English classes for kids
+                Communication classes for kids
               </Link>
               <Link
                 to="/shy-child-speaking-confidence"

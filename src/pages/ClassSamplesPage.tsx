@@ -28,6 +28,41 @@ const FILTERS: Array<{ value: FilterCategory; label: string }> = [
     label: CLASS_SAMPLE_CATEGORY_LABELS[category],
   })),
 ];
+const quickAnswerFaqItems = [
+  {
+    question: 'What can parents learn from Tiny Steps class samples?',
+    answer:
+      'Parents can see how teachers explain concepts, guide children, correct mistakes, use visuals, and encourage active participation during live online classes.',
+  },
+  {
+    question: 'Do class samples show phonics, grammar, and communication teaching?',
+    answer:
+      'Yes. Class samples may include phonics, reading, grammar, sentence formation, communication activities, and public speaking practice depending on the selected examples.',
+  },
+  {
+    question: 'Can class samples help parents choose a program?',
+    answer:
+      "Yes. Parents can use class samples to understand the teaching style, child interaction, class pace, and whether the program matches the child's learning need.",
+  },
+  {
+    question: 'Do all children respond the same way in online classes?',
+    answer:
+      'No. Every child responds differently based on age, comfort level, current skills, consistency, and practice outside class.',
+  },
+];
+const quickAnswerFaqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  '@id': 'https://tinystepslearning.com/class-samples#quick-answer-faq',
+  mainEntity: quickAnswerFaqItems.map((item) => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: item.answer,
+    },
+  })),
+};
 
 const parentNoticeItems = [
   {
@@ -306,7 +341,7 @@ export default function ClassSamplesPage() {
         description="Watch real Tiny Steps online phonics classes, reading lessons, grammar teaching, and communication moments. See what our online English classes for kids actually look like before you book a demo."
         keywords="online phonics classes, English classes for kids, real class samples, what Tiny Steps classes look like, online reading classes for kids, grammar classes for children"
         canonical={CANONICAL_URL}
-        jsonLd={[breadcrumbSchema, collectionPageSchema, itemListSchema, ...videoSchemas]}
+        jsonLd={[breadcrumbSchema, collectionPageSchema, itemListSchema, ...videoSchemas, quickAnswerFaqSchema]}
       />
 
       <section className="relative overflow-hidden">
@@ -429,6 +464,28 @@ export default function ClassSamplesPage() {
               {item}
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 pb-2 pt-4 lg:px-6">
+        <div className="rounded-[28px] border border-white/80 bg-white/82 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-8">
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Quick Answer for Parents</h2>
+          <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-700 sm:text-base">
+            Tiny Steps class samples help parents see how our live online English learning classes are conducted for
+            children across phonics, grammar, sentence formation, communication, and public speaking. Parents can
+            observe teacher guidance, child participation, use of visuals, guided correction, reading practice,
+            speaking practice, and the overall class flow before choosing a program. These samples are meant to show
+            the teaching experience, while each child&apos;s progress may vary based on age, current level, consistency,
+            and practice.
+          </p>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {quickAnswerFaqItems.map((item) => (
+              <article key={item.question} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <h3 className="text-sm font-semibold text-slate-900">{item.question}</h3>
+                <p className="mt-2 text-sm text-slate-700">{item.answer}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 

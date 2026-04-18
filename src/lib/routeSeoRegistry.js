@@ -38,7 +38,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/speaking': {
     title: 'Online Public Speaking Classes for Kids | Tiny Steps Learning',
     description:
-      'Live online public speaking, spoken English, and communication classes for kids ages 4-15 with storytelling, structure, confidence routines, and presentation coaching.',
+      'Live online public speaking, communication, and clear-expression classes for kids ages 4-15 with storytelling, structure, confidence routines, and presentation coaching.',
     canonicalPath: '/speaking',
     ogType: 'website',
   },
@@ -66,7 +66,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/sitemap': {
     title: 'Sitemap | Tiny Steps Learning',
     description:
-      'Browse the public Tiny Steps sitemap, including phonics, grammar, spoken English, parent resources, blog content, and crawl feeds.',
+      'Browse the public Tiny Steps sitemap, including phonics, grammar, communication, parent resources, blog content, and crawl feeds.',
     canonicalPath: '/sitemap',
     ogType: 'website',
   },
@@ -315,9 +315,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/spoken-english-classes-for-kids': {
-    title: 'Spoken English Classes for Kids India | Tiny Steps Learning',
+    title: 'Communication Classes for Kids India | Tiny Steps Learning',
     description:
-      'Spoken English classes for kids in India focused on communication confidence, vocabulary growth, sentence formation, and stage speaking readiness.',
+      'Communication classes for kids in India focused on communication confidence, vocabulary growth, sentence formation, and stage speaking readiness.',
     canonicalPath: '/spoken-english-classes-for-kids',
     ogType: 'website',
   },
@@ -421,7 +421,7 @@ export const ROUTE_SEO_REGISTRY = {
   },
   // TODO: Add high-intent pages:
   // /reading-classes-for-kids
-  // /spoken-english-classes-for-kids
+  // /communication-classes-for-kids
   // /writing-classes-for-kids
   // /phonics-fees-india
   '/english-grammar-writing-classes': {
@@ -434,7 +434,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/public-speaking-communication-kids': {
     title: 'Public Speaking & Communication Classes for Kids | Tiny Steps Learning',
     description:
-      'Explore Tiny Steps public speaking, spoken English, and communication classes for kids with live online coaching for confidence, storytelling, structure, and presentation skills.',
+      'Explore Tiny Steps public speaking, communication, and clear expression classes for kids with live online coaching for confidence, storytelling, structure, and presentation skills.',
     canonicalPath: '/public-speaking-communication-kids',
     ogType: 'website',
   },
