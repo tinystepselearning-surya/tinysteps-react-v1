@@ -7,11 +7,11 @@ import { Link } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
 import AutoLinkedText from "../components/seo/AutoLinkedText";
+import { computeTestimonialAggregate, fetchApprovedTestimonialsCatalog } from "../lib/testimonials";
 const ParentReassurance = lazy(() => import("../components/programs/ParentReassurance"));
 const GlobalImpactSection = lazy(() => import("../components/Home/GlobalImpactSection"));
 const DemoShowcase = lazy(() => import("../components/Home/StatsProofSection"));
 const StepTimeline = lazy(() => import("../components/Home/StepTimeline"));
-const SocialProofCrispSection = lazy(() => import("../components/Home/SocialProofCrispSection"));
 const PricingCrispSection = lazy(() => import("../components/Home/PricingCrispSection"));
 const FinalCTASection = lazy(() => import("../components/Home/FinalCTASection"));
 const LearningJourneyRoadmapPPT = lazy(async () => {
@@ -35,6 +35,10 @@ const WORLDWIDE_COUNTRIES = ['India','UAE','Vietnam','Singapore','Malaysia','UK'
 
 export default function HomePage() {
   const [showDeferredSections, setShowDeferredSections] = useState(false);
+  const [ratingsSnapshot, setRatingsSnapshot] = useState<{ average: number; count: number }>({
+    average: 4.9,
+    count: 0,
+  });
 
   useEffect(() => {
     applySeo({
@@ -93,6 +97,34 @@ export default function HomePage() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!showDeferredSections) return;
+
+    let cancelled = false;
+    const loadRatings = async () => {
+      try {
+        const approved = await fetchApprovedTestimonialsCatalog(800);
+        if (cancelled) return;
+        const aggregate = computeTestimonialAggregate(approved);
+        if (aggregate.ratingCount > 0) {
+          setRatingsSnapshot({
+            average: aggregate.averageRating,
+            count: aggregate.ratingCount,
+          });
+        }
+      } catch {
+        // Keep fallback rating if live fetch fails
+      }
+    };
+
+    void loadRatings();
+    return () => {
+      cancelled = true;
+    };
+  }, [showDeferredSections]);
+
+  const ratingValue = `${ratingsSnapshot.average.toFixed(1)}/5`;
 
   return (
     <>
@@ -259,7 +291,7 @@ export default function HomePage() {
           </Suspense>
 
           <Suspense fallback={null}>
-            <DemoShowcase />
+            <DemoShowcase ratingValue={ratingValue} ratingCount={ratingsSnapshot.count} />
           </Suspense>
 
           {/* WhyChooseCollapsibleSection intentionally removed */}
@@ -275,10 +307,6 @@ export default function HomePage() {
 
           <Suspense fallback={null}>
             <StepTimeline />
-          </Suspense>
-
-          <Suspense fallback={null}>
-            <SocialProofCrispSection />
           </Suspense>
 
           <Suspense fallback={null}>
@@ -355,7 +383,7 @@ export default function HomePage() {
           </Suspense>
 
           <Suspense fallback={null}>
-            <FinalCTASection />
+            <FinalCTASection ratingValue={ratingValue} ratingCount={ratingsSnapshot.count} />
           </Suspense>
 
           {/* Locations served — helps 'near me' intent while clarifying we're online */}

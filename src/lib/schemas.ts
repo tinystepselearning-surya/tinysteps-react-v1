@@ -125,6 +125,51 @@ export function createWebPageSchema(params: {
   };
 }
 
+export function createTestimonialsStructuredData(params: {
+  name?: string;
+  url: string;
+  organizationType?: 'EducationalOrganization' | 'Organization';
+  ratingValue: number;
+  ratingCount: number;
+  reviewCount: number;
+  reviews: Array<{
+    authorName: string;
+    datePublished: string;
+    reviewBody: string;
+    ratingValue: number;
+  }>;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': params.organizationType || 'EducationalOrganization',
+    name: params.name || 'Tiny Steps Learning',
+    url: params.url,
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: params.ratingValue,
+      bestRating: 5,
+      worstRating: 1,
+      ratingCount: params.ratingCount,
+      reviewCount: params.reviewCount,
+    },
+    review: params.reviews.map((entry) => ({
+      '@type': 'Review',
+      author: {
+        '@type': 'Person',
+        name: entry.authorName,
+      },
+      datePublished: entry.datePublished,
+      reviewBody: entry.reviewBody,
+      reviewRating: {
+        '@type': 'Rating',
+        ratingValue: entry.ratingValue,
+        bestRating: 5,
+        worstRating: 1,
+      },
+    })),
+  };
+}
+
 /**
  * Create HowTo schema for parent guide pages
  * @param title - Guide title (e.g., "Getting started with phonics")

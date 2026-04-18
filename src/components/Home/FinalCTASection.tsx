@@ -2,7 +2,12 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../Button/Button';
 
-const FinalCTASection: React.FC = () => {
+type FinalCTASectionProps = {
+  ratingValue?: string;
+  ratingCount?: number;
+};
+
+const FinalCTASection: React.FC<FinalCTASectionProps> = ({ ratingValue = '4.9/5', ratingCount = 0 }) => {
   return (
     <section className="bg-gradient-to-b from-white to-primary-50 py-20">
       <div className="mx-auto max-w-3xl px-6 text-center">
@@ -31,7 +36,7 @@ const FinalCTASection: React.FC = () => {
           <p className="text-sm text-gray-600">Takes less than 1 minute to book.</p>
           <div className="mt-4 text-sm text-gray-700">
             <p>Join 5000+ families across 15+ countries, including India, UAE, Vietnam, Singapore, Malaysia, UK, Canada, USA, Sweden, Germany, Australia, Sri Lanka, and Pakistan.</p>
-            <p>⭐⭐⭐⭐⭐ 4.9/5 - Parent Reviews • 95% see improvement • 89% more confidence • 92% enjoy English</p>
+            <p>⭐⭐⭐⭐⭐ {ratingValue} - Parent Reviews{ratingCount > 0 ? ` (${ratingCount} verified)` : ''} • 95% see improvement • 89% more confidence • 92% enjoy English</p>
           </div>
         </div>
       </div>
