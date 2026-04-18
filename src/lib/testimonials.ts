@@ -47,6 +47,32 @@ export type TestimonialAggregate = {
   breakdown: Record<1 | 2 | 3 | 4 | 5, number>;
 };
 
+type CourseReviewSchemaFragment = {
+  aggregateRating?: {
+    '@type': 'AggregateRating';
+    ratingValue: number;
+    ratingCount: number;
+    reviewCount: number;
+    bestRating: number;
+    worstRating: number;
+  };
+  review?: Array<{
+    '@type': 'Review';
+    author: {
+      '@type': 'Person';
+      name: string;
+    };
+    reviewRating: {
+      '@type': 'Rating';
+      ratingValue: number;
+      bestRating: number;
+      worstRating: number;
+    };
+    reviewBody?: string;
+    datePublished?: string;
+  }>;
+};
+
 export type PublicTestimonialSubmissionInput = {
   parentName: string;
   childName?: string;
@@ -498,6 +524,107 @@ export function computeTestimonialAggregate(items: Testimonial[]): TestimonialAg
     ratingCount: count,
     averageRating: count ? Number((sum / count).toFixed(1)) : 0,
     breakdown,
+  };
+}
+
+function toIsoDate(value: unknown): string | undefined {
+  if (!value) return undefined;
+
+  if (typeof value === 'string' || typeof value === 'number') {
+    const date = new Date(value);
+    return Number.isFinite(date.getTime()) ? date.toISOString().slice(0, 10) : undefined;
+  }
+
+  if (value && typeof value === 'object') {
+    const withToDate = value as { toDate?: () => Date };
+    if (typeof withToDate.toDate === 'function') {
+      try {
+        const date = withToDate.toDate();
+        if (date instanceof Date && Number.isFinite(date.getTime())) {
+          return date.toISOString().slice(0, 10);
+        }
+      } catch {
+        // no-op
+      }
+    }
+
+    const withToMillis = value as { toMillis?: () => number };
+    if (typeof withToMillis.toMillis === 'function') {
+      try {
+        const millis = withToMillis.toMillis();
+        const date = new Date(millis);
+        if (Number.isFinite(date.getTime())) {
+          return date.toISOString().slice(0, 10);
+        }
+      } catch {
+        // no-op
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function getReviewerName(item: Testimonial): string {
+  const preferred = item.consentToPublishName ? asString(item.parentName) : '';
+  const fallback = preferred || 'Parent Reviewer';
+  return fallback.slice(0, 80);
+}
+
+function getReviewBody(item: Testimonial): string | undefined {
+  const body = asString(item.publishedText) || asString(item.reviewText);
+  return body ? body.slice(0, 4000) : undefined;
+}
+
+export function createCourseReviewSchemaFragment(params: {
+  items: Testimonial[];
+  maxReviews?: number;
+}): CourseReviewSchemaFragment {
+  const ratings = params.items.filter((item) => {
+    const rating = Number(item.rating);
+    return Number.isFinite(rating) && rating >= 1 && rating <= 5;
+  });
+
+  const aggregate = computeTestimonialAggregate(ratings);
+  if (aggregate.ratingCount <= 0) return {};
+
+  const maxReviews = Math.max(0, Math.floor(params.maxReviews ?? 5));
+  const review = ratings.slice(0, maxReviews).map((item) => {
+    const rating = Math.round(Number(item.rating));
+    const reviewNode: NonNullable<CourseReviewSchemaFragment['review']>[number] = {
+      '@type': 'Review',
+      author: {
+        '@type': 'Person',
+        name: getReviewerName(item),
+      },
+      reviewRating: {
+        '@type': 'Rating',
+        ratingValue: rating,
+        bestRating: 5,
+        worstRating: 1,
+      },
+    };
+
+    const reviewBody = getReviewBody(item);
+    if (reviewBody) reviewNode.reviewBody = reviewBody;
+
+    const datePublished =
+      toIsoDate(item.approvedAt) || toIsoDate(item.updatedAt) || toIsoDate(item.createdAt);
+    if (datePublished) reviewNode.datePublished = datePublished;
+
+    return reviewNode;
+  });
+
+  return {
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: aggregate.averageRating,
+      ratingCount: aggregate.ratingCount,
+      reviewCount: aggregate.ratingCount,
+      bestRating: 5,
+      worstRating: 1,
+    },
+    ...(review.length ? { review } : {}),
   };
 }
 

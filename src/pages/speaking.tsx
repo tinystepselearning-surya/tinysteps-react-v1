@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 // React import removed (unused)
 import ProgramHero from '../components/programs/ProgramHero';
 import LevelTabs from '../components/programs/LevelTabs';
@@ -12,6 +12,13 @@ import Meta from '../components/common/Meta';
 import { createCourseSchema } from '../lib/schemas';
 import { getRouteConfig } from '../lib/seo';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
+import {
+  createCourseReviewSchemaFragment,
+  fetchApprovedTestimonialsCatalog,
+  filterApprovedTestimonialsByCourse,
+  getFallbackTestimonials,
+  type Testimonial,
+} from '../lib/testimonials';
 
 const levels = [
   {
@@ -65,6 +72,9 @@ const speakingSeo = getRouteConfig('/speaking');
 
 export default function SpeakingPage() {
   const [openFaqIndexes, setOpenFaqIndexes] = useState<number[]>([0]);
+  const [courseReviewItems, setCourseReviewItems] = useState<Testimonial[]>(() =>
+    filterApprovedTestimonialsByCourse(getFallbackTestimonials({ limit: 800 }), 'speaking'),
+  );
   const allFaqOpen = openFaqIndexes.length === faqItems.length;
 
   const toggleFaq = (index: number) => {
@@ -75,15 +85,49 @@ export default function SpeakingPage() {
 
   const expandAllFaq = () => setOpenFaqIndexes(faqItems.map((_, index) => index));
   const collapseAllFaq = () => setOpenFaqIndexes([]);
-  const jsonLd = [
-    createCourseSchema({
-      name: "Public Speaking Classes for Kids",
-      description: "Live online public speaking classes for kids focused on confidence, clarity, storytelling, and presentation structure with coach feedback.",
-      url: "https://tinystepslearning.com/speaking",
-      courseMode: 'online',
-      ageRange: 'Ages 4-15',
-      educationalLevel: 'Elementary to Middle School'
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const approved = await fetchApprovedTestimonialsCatalog(800);
+        const catalog = approved.length ? approved : getFallbackTestimonials({ limit: 800 });
+        const filtered = filterApprovedTestimonialsByCourse(catalog, 'speaking');
+        if (!cancelled) setCourseReviewItems(filtered);
+      } catch {
+        if (cancelled) return;
+        setCourseReviewItems(
+          filterApprovedTestimonialsByCourse(getFallbackTestimonials({ limit: 800 }), 'speaking'),
+        );
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const courseSchema = useMemo(
+    () => ({
+      ...createCourseSchema({
+        name: "Public Speaking Classes for Kids",
+        description: "Live online public speaking classes for kids focused on confidence, clarity, storytelling, and presentation structure with coach feedback.",
+        url: "https://tinystepslearning.com/speaking",
+        courseMode: 'online',
+        ageRange: 'Ages 4-15',
+        educationalLevel: 'Elementary to Middle School'
+      }),
+      ...createCourseReviewSchemaFragment({
+        items: courseReviewItems,
+        maxReviews: 5,
+      }),
     }),
+    [courseReviewItems],
+  );
+
+  const jsonLd = [
+    courseSchema,
     {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",

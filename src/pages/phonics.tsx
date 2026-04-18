@@ -2,6 +2,13 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo, getRouteConfig } from '../lib/seo';
 import { createCourseSchema } from '../lib/schemas';
+import {
+  createCourseReviewSchemaFragment,
+  fetchApprovedTestimonialsCatalog,
+  filterApprovedTestimonialsByCourse,
+  getFallbackTestimonials,
+  type Testimonial,
+} from '../lib/testimonials';
 import PageHero from '../components/common/PageHero';
 import LevelTabs from '../components/programs/LevelTabs';
 import LearningJourney from '../components/programs/LearningJourney';
@@ -138,6 +145,9 @@ export default function PhonicsPage({
   extraJsonLd,
 }: PhonicsPageProps) {
   const [openFaqIndexes, setOpenFaqIndexes] = useState<number[]>([0]);
+  const [courseReviewItems, setCourseReviewItems] = useState<Testimonial[]>(() =>
+    filterApprovedTestimonialsByCourse(getFallbackTestimonials({ limit: 800 }), 'phonics'),
+  );
   const canonicalPath = seoOverrides?.canonicalPath ?? "/phonics";
   const registry = getRouteConfig(canonicalPath);
   const title = seoOverrides?.title ?? registry?.title ?? "Online Phonics Classes for Kids | Tiny Steps Learning";
@@ -166,8 +176,30 @@ export default function PhonicsPage({
   const collapseAllFaq = () => setOpenFaqIndexes([]);
 
   useEffect(() => {
-    const baseJsonLd = [
-      createCourseSchema({
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const approved = await fetchApprovedTestimonialsCatalog(800);
+        const catalog = approved.length ? approved : getFallbackTestimonials({ limit: 800 });
+        const filtered = filterApprovedTestimonialsByCourse(catalog, 'phonics');
+        if (!cancelled) setCourseReviewItems(filtered);
+      } catch {
+        if (cancelled) return;
+        setCourseReviewItems(
+          filterApprovedTestimonialsByCourse(getFallbackTestimonials({ limit: 800 }), 'phonics'),
+        );
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const courseSchema = {
+      ...createCourseSchema({
         name: "Online Phonics Classes for Kids",
         description: "Structured synthetic phonics taught live, inspired by methods such as Jolly Phonics, with stage-based parent insights from SATPIN to advanced decoding.",
         url: canonicalUrl,
@@ -175,6 +207,14 @@ export default function PhonicsPage({
         ageRange: 'Ages 3-12',
         educationalLevel: 'Beginner to Advanced'
       }),
+      ...createCourseReviewSchemaFragment({
+        items: courseReviewItems,
+        maxReviews: 5,
+      }),
+    };
+
+    const baseJsonLd = [
+      courseSchema,
       {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
@@ -205,7 +245,7 @@ export default function PhonicsPage({
       ogType: "website",
       jsonLd: extraJsonLd?.length ? [...baseJsonLd, ...extraJsonLd] : baseJsonLd,
     });
-  }, [title, description, canonicalPath, breadcrumbName, canonicalUrl, extraJsonLd]);
+  }, [title, description, canonicalPath, breadcrumbName, canonicalUrl, extraJsonLd, courseReviewItems]);
 
   return (
     <div>

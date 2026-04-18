@@ -10,10 +10,13 @@ import { applySeo } from '../lib/seo';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
 import TestimonialsSection from '../components/seo/TestimonialsSection';
 import {
+  createCourseReviewSchemaFragment,
   computeTestimonialAggregate,
   fetchApprovedTestimonialsCatalog,
   filterApprovedTestimonialsByCourse,
+  getFallbackTestimonials,
   getCourseTagFromSlug,
+  type Testimonial,
 } from '../lib/testimonials';
 
 const CourseDetailPage: FC = () => {
@@ -37,12 +40,17 @@ const CourseDetailPage: FC = () => {
     return 'phonics';
   }, [slug]);
   const course = useMemo(() => catalogs.find((c) => c.slug === slug), [slug]);
-  const [courseRatingCount, setCourseRatingCount] = useState(0);
-  const [courseAverageRating, setCourseAverageRating] = useState(0);
+  const [courseReviewItems, setCourseReviewItems] = useState<Testimonial[]>(() =>
+    filterApprovedTestimonialsByCourse(getFallbackTestimonials({ limit: 800 }), courseTrack),
+  );
   const usedHrefs = useMemo(() => new Set<string>(), [slug]);
   const base = curriculumBySlug[slug || ''] || curriculumBySlug[rawSlug || ''] || {};
   const weeks = useMemo(() => base?.weeks ?? [], [base?.weeks]);
   const [weeksState, setWeeks] = useState(weeks);
+  const courseAggregate = useMemo(
+    () => computeTestimonialAggregate(courseReviewItems),
+    [courseReviewItems],
+  );
 
   useEffect(() => {
     (async () => {
@@ -72,17 +80,21 @@ const CourseDetailPage: FC = () => {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      const fallback = filterApprovedTestimonialsByCourse(
+        getFallbackTestimonials({ limit: 800 }),
+        courseTrack,
+      );
+      if (!cancelled) setCourseReviewItems(fallback);
+
       try {
         const approved = await fetchApprovedTestimonialsCatalog(800);
+        const catalog = approved.length ? approved : getFallbackTestimonials({ limit: 800 });
         if (cancelled) return;
-        const filtered = filterApprovedTestimonialsByCourse(approved, courseTrack);
-        const aggregate = computeTestimonialAggregate(filtered);
-        setCourseRatingCount(aggregate.ratingCount);
-        setCourseAverageRating(aggregate.averageRating);
+        const filtered = filterApprovedTestimonialsByCourse(catalog, courseTrack);
+        setCourseReviewItems(filtered);
       } catch {
         if (cancelled) return;
-        setCourseRatingCount(0);
-        setCourseAverageRating(0);
+        setCourseReviewItems(fallback);
       }
     })();
     return () => {
@@ -112,33 +124,42 @@ const CourseDetailPage: FC = () => {
 
   const priceNumber =
     (course.price || '').match(/₹\s*([\d,]+)/)?.[1]?.replace(/,/g, '') || '0';
-  const jsonLd: any = {
-    '@context': 'https://schema.org',
-    '@type': 'Course',
-    name: course.name,
-    description: `${course.name} — ${course.overview.join(', ')}`,
-    provider: { '@type': 'Organization', name: 'Tiny Steps Online School', sameAs: 'https://tinystepslearning.com' },
-    courseCode: course.slug.toUpperCase().replace(/-/g, '_'),
-    educationLevel: course.level,
-    audience: { '@type': 'EducationalAudience', educationalRole: 'student', age: course.age.replace('Ages ', '') },
-    hasCourseInstance: {
-      '@type': 'CourseInstance',
-      courseMode: 'OnlineCoursePlatform',
-      offers: {
-        '@type': 'Offer',
-        price: priceNumber,
-        priceCurrency: 'INR',
-        availability: 'https://schema.org/InStock'
-      }
-    }
-  };
+  const canonicalUrl = `https://tinystepslearning.com/courses/${course.slug}`;
+  const jsonLd: any = useMemo(() => {
+    const reviewFragment = createCourseReviewSchemaFragment({
+      items: courseReviewItems,
+      maxReviews: 5,
+    });
+
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Course',
+      name: course.name,
+      description: `${course.name} — ${course.overview.join(', ')}`,
+      provider: { '@type': 'Organization', name: 'Tiny Steps Online School', sameAs: 'https://tinystepslearning.com' },
+      courseCode: course.slug.toUpperCase().replace(/-/g, '_'),
+      educationLevel: course.level,
+      audience: { '@type': 'EducationalAudience', educationalRole: 'student', age: course.age.replace('Ages ', '') },
+      hasCourseInstance: {
+        '@type': 'CourseInstance',
+        courseMode: 'OnlineCoursePlatform',
+        offers: {
+          '@type': 'Offer',
+          price: priceNumber,
+          priceCurrency: 'INR',
+          availability: 'https://schema.org/InStock'
+        }
+      },
+      ...reviewFragment,
+    };
+  }, [course, courseReviewItems, priceNumber]);
 
   return (
     <div className="bg-white">
       <Meta
         title={`${course.name} | Tiny Steps`}
         description={`${course.name}: ${course.overview.slice(0,3).join(' • ')} • ${course.frequency} • ${course.price}`}
-        canonical={`https://tinystepslearning.com/courses/${course.slug}`}
+        canonical={canonicalUrl}
         jsonLd={jsonLd}
       />
       <div className="mx-auto max-w-6xl px-6 py-10">
@@ -165,11 +186,11 @@ const CourseDetailPage: FC = () => {
         <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Track Parent Rating</p>
           <p className="mt-2 text-3xl font-bold text-slate-900">
-            {courseRatingCount ? courseAverageRating.toFixed(1) : '0.0'}
+            {courseAggregate.ratingCount ? courseAggregate.averageRating.toFixed(1) : '0.0'}
             <span className="ml-1 text-lg font-semibold text-slate-500">/ 5</span>
           </p>
           <p className="mt-1 text-sm text-slate-600">
-            {courseRatingCount} {courseRatingCount === 1 ? 'approved rating' : 'approved ratings'} for this learning track
+            {courseAggregate.ratingCount} {courseAggregate.ratingCount === 1 ? 'approved rating' : 'approved ratings'} for this learning track
           </p>
         </div>
 
