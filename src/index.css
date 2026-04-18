@@ -126,6 +126,17 @@ body.custom-cursor-enabled .hover-highlight:hover {
   transform: translate(0, 0) scale(1);
 }
 
+@media (max-width: 767px) {
+  [data-animate],
+  [data-animate].is-visible,
+  [data-animate="fade-left"],
+  [data-animate="fade-right"] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
 [data-parallax] {
   will-change: transform;
   transition: transform 0.2s ease-out;

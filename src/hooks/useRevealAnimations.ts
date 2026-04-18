@@ -8,6 +8,7 @@ const useRevealAnimations = () => {
     const pathname = normalizePathname(window.location.pathname);
     if (!shouldShowPublicSupportWidgets(pathname)) return;
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.matchMedia?.('(max-width: 767px)').matches) return;
 
     const win = window as Window & {
       requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;

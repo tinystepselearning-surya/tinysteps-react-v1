@@ -247,12 +247,8 @@ const Layout: FC = () => {
     }
 
     const activate = () => setShowDeferredChrome(true);
-    const win = window as Window & {
-      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-      cancelIdleCallback?: (id: number) => void;
-    };
-
-    let idleId: number | undefined;
+    const isMobileViewport = window.matchMedia('(max-width: 767px)').matches;
+    const fallbackDelayMs = isMobileViewport ? 4800 : 2200;
     let timeoutId: number | undefined;
 
     const onFirstInteraction = () => {
@@ -261,28 +257,23 @@ const Layout: FC = () => {
       window.removeEventListener('keydown', onFirstInteraction);
       window.removeEventListener('touchstart', onFirstInteraction);
       window.removeEventListener('scroll', onFirstInteraction);
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+        timeoutId = undefined;
+      }
     };
 
-    window.addEventListener('pointerdown', onFirstInteraction, { passive: true });
-    window.addEventListener('keydown', onFirstInteraction);
-    window.addEventListener('touchstart', onFirstInteraction, { passive: true });
-    window.addEventListener('scroll', onFirstInteraction, { passive: true });
-
-    if (typeof win.requestIdleCallback === 'function') {
-      idleId = win.requestIdleCallback(activate, { timeout: 1800 });
-    } else {
-      timeoutId = window.setTimeout(activate, 1400);
-    }
+    window.addEventListener('pointerdown', onFirstInteraction, { passive: true, once: true });
+    window.addEventListener('keydown', onFirstInteraction, { once: true });
+    window.addEventListener('touchstart', onFirstInteraction, { passive: true, once: true });
+    window.addEventListener('scroll', onFirstInteraction, { passive: true, once: true });
+    timeoutId = window.setTimeout(onFirstInteraction, fallbackDelayMs);
 
     return () => {
       window.removeEventListener('pointerdown', onFirstInteraction);
       window.removeEventListener('keydown', onFirstInteraction);
       window.removeEventListener('touchstart', onFirstInteraction);
       window.removeEventListener('scroll', onFirstInteraction);
-
-      if (idleId !== undefined && typeof win.cancelIdleCallback === 'function') {
-        win.cancelIdleCallback(idleId);
-      }
 
       if (timeoutId !== undefined) {
         window.clearTimeout(timeoutId);
