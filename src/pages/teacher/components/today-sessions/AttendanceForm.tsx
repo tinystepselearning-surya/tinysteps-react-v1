@@ -188,7 +188,6 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
     () => (session as any)?.enrollmentId as string | undefined,
     [session]
   );
-  const kidIdsKey = useMemo(() => kidIds.join('|'), [kidIds]);
 
   useEffect(() => {
     if (attendanceOnly) {
@@ -590,14 +589,14 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
     () => normalizeCourseId(session?.courseId),
     [session?.courseId]
   );
+  const sessionCourseLabel = session?.courseName || (session as any)?.courseLabel || null;
   const nameCourseId = useMemo(
-    () => mapCourseNameToId(session?.courseName || (session as any)?.courseLabel || null),
-    [session?.courseName, (session as any)?.courseLabel]
+    () => mapCourseNameToId(sessionCourseLabel),
+    [sessionCourseLabel]
   );
   const effectiveCourseId = directCourseId || enrollmentCourseId || nameCourseId || '';
   const effectiveCourseLabel =
-    session?.courseName ||
-    (session as any)?.courseLabel ||
+    sessionCourseLabel ||
     (effectiveCourseId ? COURSE_LABEL_BY_ID[effectiveCourseId] : '') ||
     effectiveCourseId ||
     '';
@@ -694,7 +693,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [open, effectiveCourseId, kidIdsKey, attendanceOnly]);
+  }, [open, effectiveCourseId, kidIds, attendanceOnly]);
 
   useEffect(() => {
     if (!session) return;
@@ -724,7 +723,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
       });
       return next;
     });
-  }, [session?.id, kidIdsKey, savedTopicProgressByKidId]);
+  }, [session, kidIds, savedTopicProgressByKidId]);
 
   useEffect(() => {
     if (import.meta.env.DEV) {
@@ -740,7 +739,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
 
   const hasMissingStatus = useMemo(
     () => kidIds.some((kidId) => !formState[kidId]?.status),
-    [kidIdsKey, formState]
+    [kidIds, formState]
   );
 
   const formatTopicLabel = (topic: CurriculumTopic) => {

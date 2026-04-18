@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   collection,
   getDocs,
@@ -265,10 +265,10 @@ export function UserList() {
   const normalizeRoleFilter = (role: string) => String(role || '').trim().toLowerCase();
   const normalizeStatusFilter = (status: string) => String(status || '').trim().toLowerCase();
 
-  const isStudentRole = (role?: string) => {
-    const normalizedRole = normalizeRole(role);
+  const isStudentRole = useCallback((role?: string) => {
+    const normalizedRole = String(role || '').trim().toLowerCase();
     return normalizedRole === 'student' || normalizedRole === 'students' || normalizedRole === 'kid';
-  };
+  }, []);
 
   // ---------------- Fetch Users ----------------
   const fetchUsers = async () => {
@@ -364,7 +364,7 @@ export function UserList() {
       parent,
       students,
     });
-  }, [baseFilteredForCounts]);
+  }, [baseFilteredForCounts, isStudentRole]);
 
   const filteredUsers = useMemo(() => {
     const normalizedRoleFilter = normalizeRoleFilter(appliedRoleFilter);
@@ -375,7 +375,7 @@ export function UserList() {
       if (normalizedRoleFilter === 'students') return isStudentRole(userRole);
       return userRole === normalizedRoleFilter;
     });
-  }, [baseFilteredForCounts, appliedRoleFilter]);
+  }, [baseFilteredForCounts, appliedRoleFilter, isStudentRole]);
 
   const sortedUsers = useMemo(() => {
     if (!sortField) return filteredUsers;
@@ -454,7 +454,6 @@ export function UserList() {
   useEffect(() => {
     setUsers([]);
     fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // If redirected here with a createdUserId query param (e.g. /surya?createdUserId=...),
@@ -488,7 +487,6 @@ export function UserList() {
       console.debug('createdUserId handling failed', err);
     }
     // Only run once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleFiltersChange = () => {

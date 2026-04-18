@@ -42,12 +42,15 @@ export default function SlideJoinGame({ kidId, groupId, group, onBackToGroups }:
   const hasItems = ITEMS.length > 0;
   const isLast = idx >= ITEMS.length - 1;
 
-  const item =
-    ITEMS[clamp(idx, 0, Math.max(0, ITEMS.length - 1))] ?? {
-      left: "a",
-      right: "t",
-      word: "at",
-    };
+  const item = useMemo(
+    () =>
+      ITEMS[clamp(idx, 0, Math.max(0, ITEMS.length - 1))] ?? {
+        left: "a",
+        right: "t",
+        word: "at",
+      },
+    [ITEMS, idx],
+  );
 
   // Start / phases
   const [started, setStarted] = useState(false);

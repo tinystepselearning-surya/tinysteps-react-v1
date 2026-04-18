@@ -350,7 +350,7 @@ function buildMetaDescription(src: any) {
     }
 
     return obj;
-  }, [post, metaSource]);
+  }, [post, metaSource, slug]);
 
   const faqSchema = useMemo(() => {
     if (!post?.faq?.length) return null;

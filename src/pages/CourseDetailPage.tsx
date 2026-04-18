@@ -43,7 +43,7 @@ const CourseDetailPage: FC = () => {
   const [courseReviewItems, setCourseReviewItems] = useState<Testimonial[]>(() =>
     filterApprovedTestimonialsByCourse(getFallbackTestimonials({ limit: 800 }), courseTrack),
   );
-  const usedHrefs = useMemo(() => new Set<string>(), [slug]);
+  const usedHrefs = useMemo(() => new Set<string>(), []);
   const base = curriculumBySlug[slug || ''] || curriculumBySlug[rawSlug || ''] || {};
   const weeks = useMemo(() => base?.weeks ?? [], [base?.weeks]);
   const [weeksState, setWeeks] = useState(weeks);
@@ -125,34 +125,32 @@ const CourseDetailPage: FC = () => {
   const priceNumber =
     (course.price || '').match(/₹\s*([\d,]+)/)?.[1]?.replace(/,/g, '') || '0';
   const canonicalUrl = `https://tinystepslearning.com/courses/${course.slug}`;
-  const jsonLd: any = useMemo(() => {
-    const reviewFragment = createCourseReviewSchemaFragment({
-      items: courseReviewItems,
-      maxReviews: 5,
-    });
+  const reviewFragment = createCourseReviewSchemaFragment({
+    items: courseReviewItems,
+    maxReviews: 5,
+  });
 
-    return {
-      '@context': 'https://schema.org',
-      '@type': 'Course',
-      name: course.name,
-      description: `${course.name} — ${course.overview.join(', ')}`,
-      provider: { '@type': 'Organization', name: 'Tiny Steps Online School', sameAs: 'https://tinystepslearning.com' },
-      courseCode: course.slug.toUpperCase().replace(/-/g, '_'),
-      educationLevel: course.level,
-      audience: { '@type': 'EducationalAudience', educationalRole: 'student', age: course.age.replace('Ages ', '') },
-      hasCourseInstance: {
-        '@type': 'CourseInstance',
-        courseMode: 'OnlineCoursePlatform',
-        offers: {
-          '@type': 'Offer',
-          price: priceNumber,
-          priceCurrency: 'INR',
-          availability: 'https://schema.org/InStock'
-        }
-      },
-      ...reviewFragment,
-    };
-  }, [course, courseReviewItems, priceNumber]);
+  const jsonLd: any = {
+    '@context': 'https://schema.org',
+    '@type': 'Course',
+    name: course.name,
+    description: `${course.name} — ${course.overview.join(', ')}`,
+    provider: { '@type': 'Organization', name: 'Tiny Steps Online School', sameAs: 'https://tinystepslearning.com' },
+    courseCode: course.slug.toUpperCase().replace(/-/g, '_'),
+    educationLevel: course.level,
+    audience: { '@type': 'EducationalAudience', educationalRole: 'student', age: course.age.replace('Ages ', '') },
+    hasCourseInstance: {
+      '@type': 'CourseInstance',
+      courseMode: 'OnlineCoursePlatform',
+      offers: {
+        '@type': 'Offer',
+        price: priceNumber,
+        priceCurrency: 'INR',
+        availability: 'https://schema.org/InStock'
+      }
+    },
+    ...reviewFragment,
+  };
 
   return (
     <div className="bg-white">

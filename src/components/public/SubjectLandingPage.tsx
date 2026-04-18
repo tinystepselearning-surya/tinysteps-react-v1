@@ -115,7 +115,7 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
         },
       ],
     }),
-    [data.breadcrumbName, effectiveCanonicalPath],
+    [data.breadcrumbName, data.route, effectiveCanonicalPath],
   );
 
   const courseListSchema = useMemo(

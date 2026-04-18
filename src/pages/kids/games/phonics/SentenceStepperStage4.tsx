@@ -656,7 +656,7 @@ export default function SentenceStepperStage4() {
     if (!hasStarted) return;
     if (!queue.length) return;
     if (queueIdx >= queue.length) {
-      setQueue(shuffle(queue));
+      setQueue((prev) => shuffle(prev));
       setQueueIdx(0);
     }
   }, [queueIdx, queue.length, hasStarted]);

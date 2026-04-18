@@ -517,7 +517,7 @@ export default function MakeAWordRimeGame() {
     setFlash("none");
     setShowBuiltWord(false);
     setImgOk(true);
-  }, [familyId]);
+  }, [family, familyId]);
 
   const goBackToLibrary = () => {
     safeExitFullscreen();

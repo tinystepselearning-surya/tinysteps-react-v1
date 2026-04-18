@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
 import parentsMeta from '../../content/parentsMeta';
@@ -203,12 +203,15 @@ const ParentsHubPage: React.FC = () => {
   const metaTitle = 'Parents Help Hub | Phonics, Reading, Grammar & Speaking Support for Families';
   const metaDescription =
     'Premium parent help hub for phonics, reading routines, grammar, speaking confidence, progress tracking, homework support, and class decisions for ages 3-12.';
-  const pageSchema = {
-    ...(parentsMeta['/parents'].jsonLd as Record<string, unknown>),
-    about: {
-      '@id': 'https://tinystepslearning.com/#priya-founder',
-    },
-  };
+  const pageSchema = useMemo(
+    () => ({
+      ...(parentsMeta['/parents'].jsonLd as Record<string, unknown>),
+      about: {
+        '@id': 'https://tinystepslearning.com/#priya-founder',
+      },
+    }),
+    [],
+  );
 
   useEffect(() => {
     applySeo({

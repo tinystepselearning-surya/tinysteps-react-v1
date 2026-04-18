@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { buildMissionReturnHref } from "../missionNavigation";
 import { recordLevelResult } from "../../../../../games/engine/recordLevelResult";
@@ -548,7 +548,7 @@ export default function MakeAWordRimeGame() {
   const animKey = `${familyId}-${currentEntry?.id ?? "none"}`;
 
   // ---------- Telemetry ----------
-  const logEvent = (name: string, data: Record<string, any>) => {
+  const logEvent = useCallback((name: string, data: Record<string, any>) => {
     const payload = { name, ts: Date.now(), kidId, familyId, ...data };
     // Hook for your app: window.__TS_LOG__(name, payload)
     const anyWin = window as any;
@@ -556,10 +556,10 @@ export default function MakeAWordRimeGame() {
     else if (import.meta.env.DEV && anyWin.__TS_DEBUG_GAME_EVENTS__ === true) {
       console.debug("[MAW]", payload);
     }
-  };
+  }, [kidId, familyId]);
 
   // ---------- Audio helpers ----------
-  const onsetSoundText = (ch: string) => LETTER_PHONEME[ch.toLowerCase()] ?? ch;
+  const onsetSoundText = useCallback((ch: string) => LETTER_PHONEME[ch.toLowerCase()] ?? ch, []);
 
   const cancelSpeech = () => {
     try {
@@ -629,7 +629,7 @@ export default function MakeAWordRimeGame() {
       }, 80);
     });
 
-  const speak = (text: string) => {
+  const speak = useCallback((text: string) => {
     try {
       if (!("speechSynthesis" in window)) return;
       window.speechSynthesis.cancel();
@@ -640,7 +640,7 @@ export default function MakeAWordRimeGame() {
     } catch {
       // ignore
     }
-  };
+  }, []);
 
   const playCueSequenceSafe = async () => {
     const onset = current.onset.toLowerCase();
@@ -649,10 +649,10 @@ export default function MakeAWordRimeGame() {
     return speakAsyncSafe(cue, 1400);
   };
 
-  const speakFirstSound = () => {
+  const speakFirstSound = useCallback(() => {
     const ch = current.onset.toLowerCase();
     speak(`First sound: ${onsetSoundText(ch)}`);
-  };
+  }, [current.onset, onsetSoundText, speak]);
 
   const speakWord = () => speak(current.word);
 
@@ -861,7 +861,7 @@ export default function MakeAWordRimeGame() {
     }, 3500);
 
     return () => window.clearTimeout(t);
-  }, [screen, phase, isCelebrating, hasActedThisRound, animKey, hintLevel, current.word]);
+  }, [screen, phase, isCelebrating, hasActedThisRound, animKey, hintLevel, current.word, logEvent, speakFirstSound]);
 
   // ---------- Navigation ----------
   const goBackToMission = () => {

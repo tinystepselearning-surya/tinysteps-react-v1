@@ -43,6 +43,8 @@ type GameSnapshot = {
   areaPractised: string;
 };
 
+const EMPTY_RECORD: Record<string, any> = {};
+
 const STAGE1_GAME_META: Record<string, ParentGameMeta> = {
   "letter-tracing": {
     id: "letter-tracing",
@@ -529,12 +531,12 @@ export function ParentGamesProgress({
   refreshMessage = null,
   refreshTone = "neutral",
 }: ParentGamesProgressProps) {
-  const summary = kidSummaryData?.summary || {};
-  const progress = kidSummaryData?.progress || {};
-  const byGame = progress?.byGame || {};
-  const summaryGames = summary?.games || {};
-  const summaries = gameSummaries || {};
-  const liveProgressByGame = gameProgressDocs || {};
+  const summary = kidSummaryData?.summary ?? EMPTY_RECORD;
+  const progress = kidSummaryData?.progress ?? EMPTY_RECORD;
+  const byGame = progress?.byGame ?? EMPTY_RECORD;
+  const summaryGames = summary?.games ?? EMPTY_RECORD;
+  const summaries = gameSummaries ?? EMPTY_RECORD;
+  const liveProgressByGame = gameProgressDocs ?? EMPTY_RECORD;
 
   const lastUpdated = formatDateMaybe(summary?.lastUpdatedAt) || formatDateMaybe(summary?.updatedAt) || null;
   const refreshMessageClass =

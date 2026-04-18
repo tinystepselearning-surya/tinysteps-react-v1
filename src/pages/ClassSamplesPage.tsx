@@ -259,7 +259,7 @@ export default function ClassSamplesPage() {
     return activeVideos.filter((video) => video.category === activeFilter);
   }, [activeFilter, activeVideos]);
 
-  const galleryUsedHrefs = useMemo(() => new Set<string>(), [activeFilter]);
+  const galleryUsedHrefs = useMemo(() => new Set<string>(), []);
   const parentNoticeUsedHrefs = useMemo(() => new Set<string>(), []);
   const classExpectationsUsedHrefs = useMemo(() => new Set<string>(), []);
 

@@ -1191,7 +1191,7 @@ export default function LetterTracingGame() {
 
     setLastIndex(0);
     lastIndexRef.current = 0;
-  }, [currentStroke?.pathD, currentStroke?.kind, strokeStartT, strokeEndT]);
+  }, [currentStroke, currentStroke?.pathD, currentStroke?.kind, strokeStartT, strokeEndT]);
 
   const isTap = currentStroke?.kind === "tap";
 
@@ -1247,7 +1247,7 @@ const futureTapTargets = useMemo(() => {
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [letterDone, currentStroke?.id, currentStroke?.kind, currentStroke?.pathD, samples.length, started, lastIndex]);
+  }, [letterDone, currentStroke, currentStroke?.id, currentStroke?.kind, currentStroke?.pathD, samples.length, started, lastIndex]);
 
   const guideIndex = useMemo(() => {
     if (!samples.length) return 0;

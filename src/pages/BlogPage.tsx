@@ -64,6 +64,17 @@ const HERO_PROOF_POINTS = [
   'Built for ages 3-12 and multilingual homes',
 ];
 
+const BLOG_META_KEYWORDS = [
+  'phonics for parents',
+  'phonics blog for kids',
+  'grammar help for children',
+  'public speaking for kids blog',
+  'english classes for kids parent guide',
+  'SATPIN phonics guide',
+  'reading help at home for kids',
+  'online english learning blog for parents',
+];
+
 const BLOG_FAQS = [
   {
     question: 'Which Tiny Steps blog should I start with if my child is struggling with reading?',
@@ -362,22 +373,12 @@ const BlogPage: FC = () => {
   const metaTitle = 'Tiny Steps Blog | Phonics, Grammar, Speaking & English Help for Parents';
   const metaDescription =
     'Browse parent-friendly phonics, grammar, speaking, and English-learning blogs for kids ages 3-12. Find SATPIN guides, reading routines, grammar roadmaps, and confidence-building support.';
-  const metaKeywords = [
-    'phonics for parents',
-    'phonics blog for kids',
-    'grammar help for children',
-    'public speaking for kids blog',
-    'english classes for kids parent guide',
-    'SATPIN phonics guide',
-    'reading help at home for kids',
-    'online english learning blog for parents',
-  ];
 
   useEffect(() => {
     applySeo({
       title: metaTitle,
       description: metaDescription,
-      keywords: metaKeywords,
+      keywords: BLOG_META_KEYWORDS,
       canonicalPath: '/blog',
       ogType: 'website',
       jsonLd: [breadcrumbSchema, blogSchema, collectionSchema, faqSchema],
@@ -389,7 +390,7 @@ const BlogPage: FC = () => {
       <Meta
         title={metaTitle}
         description={metaDescription}
-        keywords={metaKeywords.join(', ')}
+        keywords={BLOG_META_KEYWORDS.join(', ')}
         canonical="https://tinystepslearning.com/blog"
         jsonLd={[breadcrumbSchema, blogSchema, collectionSchema, faqSchema]}
       />
