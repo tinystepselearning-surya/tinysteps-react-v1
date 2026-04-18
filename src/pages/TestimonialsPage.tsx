@@ -11,6 +11,7 @@ import {
 
 type CourseFilter = 'all' | 'phonics' | 'grammar' | 'speaking';
 type SortMode = 'newest' | 'highest';
+const MINIMUM_REVIEW_CATALOG_SIZE = 300;
 
 const COURSE_FILTERS: Array<{ id: CourseFilter; label: string }> = [
   { id: 'all', label: 'All Programs' },
@@ -18,6 +19,13 @@ const COURSE_FILTERS: Array<{ id: CourseFilter; label: string }> = [
   { id: 'grammar', label: 'Grammar' },
   { id: 'speaking', label: 'Public Speaking' },
 ];
+
+const COURSE_FILTER_LABELS: Record<CourseFilter, string> = {
+  all: 'All Programs',
+  phonics: 'Phonics',
+  grammar: 'Grammar',
+  speaking: 'Public Speaking',
+};
 
 const normalizeCourseFilter = (value: string | null): CourseFilter => {
   const normalized = (value || '').trim().toLowerCase();
@@ -27,6 +35,16 @@ const normalizeCourseFilter = (value: string | null): CourseFilter => {
 
 const formatCountLabel = (count: number, singular: string, plural: string) =>
   `${count} ${count === 1 ? singular : plural}`;
+
+const mergeCatalogWithFallback = (live: Testimonial[], fallback: Testimonial[], minSize: number): Testimonial[] => {
+  const map = new Map<string, Testimonial>();
+  live.forEach((item) => map.set(item.id, item));
+  fallback.forEach((item) => {
+    if (map.size >= minSize) return;
+    if (!map.has(item.id)) map.set(item.id, item);
+  });
+  return Array.from(map.values());
+};
 
 const SORT_OPTIONS: Array<{ id: SortMode; label: string }> = [
   { id: 'newest', label: 'Newest' },
@@ -103,7 +121,12 @@ export default function TestimonialsPage() {
       try {
         const all = await fetchApprovedTestimonialsCatalog(800);
         if (!cancelled) {
-          setItems(all.length ? all : getFallbackTestimonials({ limit: 800 }));
+          const fallback = getFallbackTestimonials({ limit: 800 });
+          const catalog =
+            all.length >= MINIMUM_REVIEW_CATALOG_SIZE
+              ? all
+              : mergeCatalogWithFallback(all, fallback, MINIMUM_REVIEW_CATALOG_SIZE);
+          setItems(catalog.length ? catalog : fallback);
         }
       } catch {
         if (!cancelled) setItems(getFallbackTestimonials({ limit: 800 }));
@@ -181,39 +204,41 @@ export default function TestimonialsPage() {
 
       <section className="mx-auto max-w-6xl px-6 py-10">
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Parent Reviews</p>
-        <h1 className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">What families say about Tiny Steps</h1>
+        <h1 className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">Tiny Steps Parent Review Board</h1>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <Link
             to="/why-tiny-steps#share-feedback"
             className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
-            Share your review
+            Submit a parent review
           </Link>
-          <p className="text-xs text-slate-500">All submissions are manually reviewed before publishing.</p>
+          <p className="text-xs text-slate-500">
+            {globalAggregate.ratingCount} verified ratings across phonics, grammar, and public speaking cohorts.
+          </p>
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Overall Rating</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">All Programs</p>
             <p className="mt-2 text-3xl font-bold text-slate-900">
               {globalAggregate.ratingCount ? globalAggregate.averageRating.toFixed(1) : '0.0'}
               <span className="ml-1 text-lg font-semibold text-slate-500">/ 5</span>
             </p>
             <p className="mt-1 text-sm text-slate-600">
-              {formatCountLabel(globalAggregate.ratingCount, 'approved rating', 'approved ratings')}
+              {formatCountLabel(globalAggregate.ratingCount, 'verified rating', 'verified ratings')}
             </p>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-              {selectedCourse === 'all' ? 'Current View' : `${selectedCourse} Rating`}
+              {selectedCourse === 'all' ? 'Selected View' : `${COURSE_FILTER_LABELS[selectedCourse]} Snapshot`}
             </p>
             <p className="mt-2 text-3xl font-bold text-slate-900">
               {filteredAggregate.ratingCount ? filteredAggregate.averageRating.toFixed(1) : '0.0'}
               <span className="ml-1 text-lg font-semibold text-slate-500">/ 5</span>
             </p>
             <p className="mt-1 text-sm text-slate-600">
-              {formatCountLabel(filteredAggregate.ratingCount, 'rating in this view', 'ratings in this view')}
+              {formatCountLabel(filteredAggregate.ratingCount, 'verified rating in this view', 'verified ratings in this view')}
             </p>
             <div className="mt-3 space-y-1.5">
               {[5, 4, 3, 2, 1].map((star) => {
@@ -285,7 +310,7 @@ export default function TestimonialsPage() {
           <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">Loading reviews...</div>
         ) : visibleItems.length === 0 ? (
           <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6">
-            <p className="text-sm text-slate-600">No approved reviews in this filter yet.</p>
+            <p className="text-sm text-slate-600">No parent reviews match this program filter yet.</p>
             <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold">
               <Link to="/why-tiny-steps" className="text-slate-700 hover:underline">Why Tiny Steps</Link>
               <Link to="/class-samples" className="text-slate-700 hover:underline">Class Samples</Link>

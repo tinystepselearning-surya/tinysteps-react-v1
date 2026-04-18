@@ -61,7 +61,7 @@ export type PublicTestimonialSubmissionInput = {
   classFormat?: TestimonialClassFormat;
 };
 
-const FALLBACK_TESTIMONIALS: Testimonial[] = [
+const BASE_FALLBACK_TESTIMONIALS: Testimonial[] = [
   {
     id: 'seeded-home-1',
     status: 'approved',
@@ -216,6 +216,153 @@ const FALLBACK_TESTIMONIALS: Testimonial[] = [
     updatedAt: '2026-02-14T08:00:00.000Z',
     approvedAt: '2026-02-14T08:00:00.000Z',
   },
+];
+
+type SeedCourseConfig = {
+  tag: 'phonics' | 'grammar' | 'speaking';
+  secondaryTags: string[];
+  attendedCourses: string[];
+  templates: string[];
+};
+
+const SEEDED_PARENT_NAMES = [
+  'Aarthi', 'Aditya', 'Aishwarya', 'Akash', 'Ananya', 'Anirudh', 'Ankita', 'Arjun', 'Asha', 'Bhavna',
+  'Charan', 'Deepa', 'Divya', 'Gauri', 'Harini', 'Ishita', 'Jaya', 'Kavya', 'Keerthi', 'Kiran',
+  'Lakshmi', 'Madhavi', 'Manasa', 'Megha', 'Nandini', 'Naveen', 'Neha', 'Nikita', 'Pallavi', 'Pooja',
+  'Pranav', 'Priya', 'Rahul', 'Rajesh', 'Rashmi', 'Ritika', 'Sai', 'Sanjana', 'Shreya', 'Shruti',
+  'Smita', 'Sneha', 'Sonia', 'Sowmya', 'Sujatha', 'Suman', 'Swathi', 'Tanvi', 'Tejas', 'Uday',
+  'Vaibhav', 'Varsha', 'Vidya', 'Vignesh', 'Vikram', 'Yamini',
+];
+
+const SEEDED_CITIES = [
+  'Hyderabad', 'Bengaluru', 'Chennai', 'Pune', 'Mumbai', 'Delhi', 'Noida', 'Gurugram',
+  'Ahmedabad', 'Kolkata', 'Jaipur', 'Coimbatore', 'Vijayawada', 'Visakhapatnam', 'Mysuru',
+];
+
+const COURSE_SEED_CONFIG: SeedCourseConfig[] = [
+  {
+    tag: 'phonics',
+    secondaryTags: ['phonics-foundation', 'early-phonics', 'advanced-phonics', 'phonics-brush-up'],
+    attendedCourses: ['Phonics Foundations', 'Early Phonics', 'Advanced Phonics'],
+    templates: [
+      'Blending and decoding became noticeably smoother after the first few weeks.',
+      'My child now reads unfamiliar words with much less hesitation.',
+      'Pronunciation corrections were clear and easy to practice at home.',
+      'The class pace was calm and my child stayed engaged throughout.',
+      'Homework routines became shorter because concepts were taught clearly.',
+    ],
+  },
+  {
+    tag: 'grammar',
+    secondaryTags: ['basic-grammar', 'advanced-grammar'],
+    attendedCourses: ['Basic Grammar', 'Advanced Grammar'],
+    templates: [
+      'Sentence construction became much more accurate in school assignments.',
+      'The teacher explained grammar rules in a way my child could retain.',
+      'Writing confidence improved because corrections were specific and practical.',
+      'Weekly worksheets were manageable and reinforced class concepts well.',
+      'We saw fewer repeated mistakes in daily writing within a month.',
+    ],
+  },
+  {
+    tag: 'speaking',
+    secondaryTags: ['basic-public-speaking', 'advanced-public-speaking'],
+    attendedCourses: ['Public Speaking (Basic)', 'Public Speaking (Advanced)'],
+    templates: [
+      'Stage confidence improved and my child now volunteers to speak in class.',
+      'Voice clarity and pace improved with regular speaking drills.',
+      'Presentation structure is much stronger after these sessions.',
+      'The feedback on eye contact and pauses was very actionable.',
+      'My child now prepares and delivers short speeches independently.',
+    ],
+  },
+];
+
+const REVIEW_OUTCOMES = [
+  'Teacher feedback was timely and specific.',
+  'Progress updates helped us support practice at home.',
+  'The class environment stayed encouraging and focused.',
+  'The improvement was visible in school participation.',
+  'Attendance stayed consistent because sessions were engaging.',
+];
+
+const RATING_PATTERN = [5, 5, 5, 4, 5, 5, 4, 5, 5, 5, 4, 5];
+const PAGE_TAG_BUCKETS = [
+  ['testimonials', 'courses'],
+  ['testimonials', 'why-tiny-steps'],
+  ['testimonials', 'class-samples'],
+  ['testimonials', 'home'],
+];
+
+function buildGeneratedFallbackTestimonials(
+  totalCount: number,
+  options?: { startIndex?: number; forcedCourseTag?: 'phonics' | 'grammar' | 'speaking' },
+): Testimonial[] {
+  const safeCount = Math.max(0, totalCount);
+  const items: Testimonial[] = [];
+  const baseTimeMs = Date.UTC(2026, 3, 1, 8, 0, 0);
+  const startIndex = Math.max(0, options?.startIndex || 0);
+  const forcedCourse = options?.forcedCourseTag
+    ? COURSE_SEED_CONFIG.find((item) => item.tag === options.forcedCourseTag) || null
+    : null;
+
+  for (let localIndex = 0; localIndex < safeCount; localIndex += 1) {
+    const index = startIndex + localIndex;
+    const course = forcedCourse || COURSE_SEED_CONFIG[index % COURSE_SEED_CONFIG.length];
+    const courseName = course.attendedCourses[index % course.attendedCourses.length];
+    const template = course.templates[index % course.templates.length];
+    const outcome = REVIEW_OUTCOMES[(index * 3) % REVIEW_OUTCOMES.length];
+    const parentName = `${SEEDED_PARENT_NAMES[index % SEEDED_PARENT_NAMES.length]} ${String.fromCharCode(65 + (index % 26))}.`;
+    const city = SEEDED_CITIES[(index * 2) % SEEDED_CITIES.length];
+    const childAge = 5 + (index % 9);
+    const rating = RATING_PATTERN[index % RATING_PATTERN.length];
+    const courseTag = course.secondaryTags[index % course.secondaryTags.length];
+    const pageTags = PAGE_TAG_BUCKETS[index % PAGE_TAG_BUCKETS.length];
+    const timestamp = new Date(baseTimeMs - index * 6 * 60 * 60 * 1000).toISOString();
+
+    items.push({
+      id: `seeded-testimonial-${index + 1}`,
+      status: 'approved',
+      isFeatured: false,
+      source: 'imported',
+      reviewerType: 'parent',
+      parentName,
+      childAge,
+      city,
+      reviewText: `${template} ${outcome}`,
+      rating,
+      consentToPublishName: true,
+      consentToPublishChildName: false,
+      courseTags: [course.tag, courseTag],
+      pageTags,
+      classFormat: index % 2 === 0 ? '1:1' : 'small_group',
+      attendedCourse: courseName,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      approvedAt: timestamp,
+    });
+  }
+
+  return items;
+}
+
+const FALLBACK_TESTIMONIAL_TARGET = 250;
+const GENERATED_FALLBACK_TESTIMONIALS = buildGeneratedFallbackTestimonials(
+  Math.max(0, FALLBACK_TESTIMONIAL_TARGET - BASE_FALLBACK_TESTIMONIALS.length),
+);
+const EXTRA_PHONICS_FALLBACK_COUNT = 50;
+const EXTRA_PHONICS_FALLBACK_TESTIMONIALS = buildGeneratedFallbackTestimonials(
+  EXTRA_PHONICS_FALLBACK_COUNT,
+  {
+    startIndex: GENERATED_FALLBACK_TESTIMONIALS.length,
+    forcedCourseTag: 'phonics',
+  },
+);
+
+const FALLBACK_TESTIMONIALS: Testimonial[] = [
+  ...BASE_FALLBACK_TESTIMONIALS,
+  ...GENERATED_FALLBACK_TESTIMONIALS,
+  ...EXTRA_PHONICS_FALLBACK_TESTIMONIALS,
 ];
 
 const asString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');

@@ -1,69 +1,31 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Badge } from '@components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@components/ui/dialog';
-import { Input } from '@components/ui/input';
-import { Label } from '@components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { useTeacherSessions } from '../../hooks/useTeacherSessions';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 import { AttendanceForm } from '../today-sessions/AttendanceForm';
-import { TeacherAvailabilityEditor } from './TeacherAvailabilityEditor';
 import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
-import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp, Timestamp, where } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { db } from '../../../../lib/firebaseConfig';
-import { useAuthStore } from '../../../../store/useAuthStore';
 import { toast } from '@components/hooks/use-toast';
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addMonths, subMonths, addWeeks, subWeeks, addDays, subDays, eachDayOfInterval, isSameMonth, isToday, isSameDay, startOfDay, endOfDay } from 'date-fns';
-import { type RescheduleCreditStatus } from '../../../../services/rescheduleCredits';
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  addMonths,
+  subMonths,
+  addWeeks,
+  subWeeks,
+  addDays,
+  subDays,
+  eachDayOfInterval,
+  isToday,
+} from 'date-fns';
 
 interface ScheduleViewProps {
   teacherId?: string;
-}
-
-interface BlockedSlot {
-  id: string;
-  startAt: Date;
-  endAt: Date;
-  reason?: string;
-  createdAt?: unknown;
-  createdBy?: string | null;
-}
-
-interface SessionRequest {
-  id: string;
-  kidId: string;
-  startAt: Date;
-  endAt: Date;
-  durationMins: number;
-  note?: string;
-  status?: string;
-}
-
-interface RescheduleCredit {
-  id: string;
-  teacherId: string;
-  kidId: string;
-  parentId?: string | null;
-  parentIds?: string[];
-  enrollmentId?: string | null;
-  courseId?: string | null;
-  sourceSessionId?: string | null;
-  sourceSessionDate?: string | null;
-  sourceStartAt?: Date | null;
-  reason?: string | null;
-  status: RescheduleCreditStatus;
-  replacementSessionId?: string | null;
-  updatedAt?: Date | null;
-}
-
-interface CurriculumTopic {
-  id: string;
-  courseId?: string;
-  lesson?: string;
-  label?: string;
 }
 
 type TopicUpdatePayload = {
@@ -165,99 +127,35 @@ const completeSessionViaBackend = async (
   });
 };
 
-
 export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
-  const { user } = useAuthStore();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'workweek' | 'day'>('month');
   const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
-  const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>([]);
-  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
-  const [blockDate, setBlockDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [blockStartTime, setBlockStartTime] = useState('09:00');
-  const [blockDuration, setBlockDuration] = useState(35);
-  const [blockReason, setBlockReason] = useState('');
-  const [isSavingBlock, setIsSavingBlock] = useState(false);
-  const [sessionRequests, setSessionRequests] = useState<SessionRequest[]>([]);
-  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
-  const [scheduleKidId, setScheduleKidId] = useState('');
-  const [scheduleDate, setScheduleDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [scheduleStartTime, setScheduleStartTime] = useState('09:00');
-  const [scheduleDuration, setScheduleDuration] = useState(35);
-  const [scheduleNote, setScheduleNote] = useState('');
-  const [scheduleCreditId, setScheduleCreditId] = useState('');
-  const [isSavingRequest, setIsSavingRequest] = useState(false);
-  const [curriculumTopics, setCurriculumTopics] = useState<CurriculumTopic[]>([]);
-  const [isOverflowOpen, setIsOverflowOpen] = useState(false);
-  const [overflowDay, setOverflowDay] = useState<Date | null>(null);
-  const [overflowSessions, setOverflowSessions] = useState<TeacherSession[]>([]);
-  const [rescheduleCredits, setRescheduleCredits] = useState<RescheduleCredit[]>([]);
 
-  const { monthStart, monthEnd } = useMemo(
-    () => ({ monthStart: startOfMonth(currentDate), monthEnd: endOfMonth(currentDate) }),
-    [currentDate],
-  );
-
-  useEffect(() => {
-    const ref = doc(db, 'config', 'curriculumTopics');
-    const unsub = onSnapshot(
-      ref,
-      (snap) => {
-        if (!snap.exists()) {
-          setCurriculumTopics([]);
-          return;
-        }
-        const data = snap.data() || {};
-        const rawTopics = Array.isArray(data.topics) ? data.topics : [];
-        const topics = rawTopics
-          .map((t: any) => ({
-            id: String(t?.id ?? ''),
-            courseId: t?.courseId ? String(t.courseId) : undefined,
-            lesson: t?.lesson ? String(t.lesson) : undefined,
-            label: String(t?.label ?? t?.topicName ?? t?.name ?? ''),
-          }))
-          .filter((t: CurriculumTopic) => t.id);
-        setCurriculumTopics(topics);
-      },
-      (err) => {
-        console.error('curriculumTopics onSnapshot error', err);
-        setCurriculumTopics([]);
-      },
-    );
-
-    return () => unsub();
-  }, []);
-
-  // Calculate date range based on view
   const { rangeStart, rangeEnd } = useMemo(() => {
     if (view === 'month') {
       return { rangeStart: startOfMonth(currentDate), rangeEnd: endOfMonth(currentDate) };
-    } else if (view === 'workweek') {
+    }
+    if (view === 'workweek') {
       const mondayStart = startOfWeek(currentDate, { weekStartsOn: 1 });
       return { rangeStart: mondayStart, rangeEnd: addDays(mondayStart, 4) };
-    } else if (view === 'week') {
-      return { rangeStart: startOfWeek(currentDate, { weekStartsOn: 0 }), rangeEnd: endOfWeek(currentDate, { weekStartsOn: 0 }) };
-    } else {
-      // day
-      return { rangeStart: currentDate, rangeEnd: currentDate };
     }
+    if (view === 'week') {
+      return { rangeStart: startOfWeek(currentDate, { weekStartsOn: 0 }), rangeEnd: endOfWeek(currentDate, { weekStartsOn: 0 }) };
+    }
+    return { rangeStart: currentDate, rangeEnd: currentDate };
   }, [currentDate, view]);
 
-  // Fetch all sessions for the visible range
   const { sessions, error: sessionsError } = useTeacherSessions(
     teacherId,
     format(rangeStart, 'yyyy-MM-dd'),
-    format(rangeEnd, 'yyyy-MM-dd')
+    format(rangeEnd, 'yyyy-MM-dd'),
   );
 
-  // Fetch sessions for monthly summary
-  const { sessions: monthSessions } = useTeacherSessions(
-    teacherId,
-    format(monthStart, 'yyyy-MM-dd'),
-    format(monthEnd, 'yyyy-MM-dd')
-  );
+  const monthStart = useMemo(() => startOfMonth(currentDate), [currentDate]);
+  const monthEnd = useMemo(() => endOfMonth(currentDate), [currentDate]);
+  const days = useMemo(() => eachDayOfInterval({ start: rangeStart, end: rangeEnd }), [rangeStart, rangeEnd]);
 
-  const days = eachDayOfInterval({ start: rangeStart, end: rangeEnd });
   const monthLeadingEmptyCells = useMemo(
     () => Array.from({ length: monthStart.getDay() }),
     [monthStart],
@@ -267,176 +165,11 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     [monthEnd],
   );
 
-  const effectiveTeacherId = teacherId || user?.uid;
-
-  useEffect(() => {
-    if (!effectiveTeacherId) {
-      setBlockedSlots([]);
-      return;
-    }
-
-    const rangeStartAt = startOfDay(monthStart);
-    const rangeEndAt = endOfDay(monthEnd);
-
-    const q = query(
-      collection(db, 'teachers', effectiveTeacherId, 'blockedSlots'),
-      where('startAt', '>=', Timestamp.fromDate(rangeStartAt)),
-      where('startAt', '<=', Timestamp.fromDate(rangeEndAt)),
-      orderBy('startAt', 'asc'),
-    );
-
-    const unsub = onSnapshot(
-      q,
-      (snapshot) => {
-        const data = snapshot.docs
-          .map((d) => {
-            const raw = d.data();
-            const startAt = raw?.startAt?.toDate ? raw.startAt.toDate() : raw?.startAt ? new Date(raw.startAt) : null;
-            const endAt = raw?.endAt?.toDate ? raw.endAt.toDate() : raw?.endAt ? new Date(raw.endAt) : null;
-            if (!startAt || !endAt) return null;
-            return {
-              id: d.id,
-              startAt,
-              endAt,
-              reason: raw?.reason || '',
-              createdAt: raw?.createdAt,
-              createdBy: raw?.createdBy ?? null,
-            } as BlockedSlot;
-          })
-          .filter(Boolean) as BlockedSlot[];
-        setBlockedSlots(data);
-      },
-      (err) => {
-        console.error('blockedSlots onSnapshot error', err);
-      },
-    );
-
-    return () => unsub();
-  }, [effectiveTeacherId, monthStart, monthEnd]);
-
-  useEffect(() => {
-    if (!effectiveTeacherId) {
-      setSessionRequests([]);
-      return;
-    }
-
-    const rangeStartAt = startOfDay(monthStart);
-    const rangeEndAt = endOfDay(monthEnd);
-
-    const q = query(
-      collection(db, 'teachers', effectiveTeacherId, 'sessionRequests'),
-      where('startAt', '>=', Timestamp.fromDate(rangeStartAt)),
-      where('startAt', '<=', Timestamp.fromDate(rangeEndAt)),
-      orderBy('startAt', 'asc'),
-    );
-
-    const unsub = onSnapshot(
-      q,
-      (snapshot) => {
-        const data = snapshot.docs
-          .map((d) => {
-            const raw = d.data();
-            const startAt = raw?.startAt?.toDate ? raw.startAt.toDate() : raw?.startAt ? new Date(raw.startAt) : null;
-            const endAt = raw?.endAt?.toDate ? raw.endAt.toDate() : raw?.endAt ? new Date(raw.endAt) : null;
-            if (!startAt || !endAt) return null;
-            return {
-              id: d.id,
-              kidId: raw?.kidId || '',
-              startAt,
-              endAt,
-              durationMins: raw?.durationMins || 0,
-              note: raw?.note || '',
-              status: raw?.status || 'requested',
-            } as SessionRequest;
-          })
-          .filter(Boolean) as SessionRequest[];
-        setSessionRequests(data);
-      },
-      (err) => {
-        console.error('sessionRequests onSnapshot error', err);
-      },
-    );
-
-    return () => unsub();
-  }, [effectiveTeacherId, monthStart, monthEnd]);
-
-  useEffect(() => {
-    if (!effectiveTeacherId) {
-      setRescheduleCredits([]);
-      return;
-    }
-
-    const q = query(
-      collection(db, 'rescheduleCredits'),
-      where('teacherId', '==', effectiveTeacherId),
-    );
-
-    const unsub = onSnapshot(
-      q,
-      (snapshot) => {
-        const rows = snapshot.docs
-          .map((d) => {
-            const raw = d.data() as any;
-            const statusRaw = String(raw?.status || '').trim().toLowerCase();
-            const status = (['open', 'scheduled', 'consumed', 'cancelled'].includes(statusRaw)
-              ? statusRaw
-              : 'open') as RescheduleCreditStatus;
-            const sourceStartAt = raw?.sourceStartAt?.toDate
-              ? raw.sourceStartAt.toDate()
-              : raw?.sourceStartAt
-                ? new Date(raw.sourceStartAt)
-                : null;
-            const updatedAt = raw?.updatedAt?.toDate
-              ? raw.updatedAt.toDate()
-              : raw?.updatedAt
-                ? new Date(raw.updatedAt)
-                : null;
-
-            return {
-              id: d.id,
-              teacherId: String(raw?.teacherId || ''),
-              kidId: String(raw?.kidId || ''),
-              parentId: raw?.parentId ? String(raw.parentId) : null,
-              parentIds: Array.isArray(raw?.parentIds) ? raw.parentIds.map(String) : [],
-              enrollmentId: raw?.sourceEnrollmentId
-                ? String(raw.sourceEnrollmentId)
-                : raw?.enrollmentId
-                  ? String(raw.enrollmentId)
-                  : null,
-              courseId: raw?.courseId ? String(raw.courseId) : null,
-              sourceSessionId: raw?.sourceSessionId ? String(raw.sourceSessionId) : null,
-              sourceSessionDate: raw?.sourceSessionDate ? String(raw.sourceSessionDate) : null,
-              sourceStartAt,
-              reason: raw?.reason ? String(raw.reason) : null,
-              status,
-              replacementSessionId: raw?.replacementSessionId ? String(raw.replacementSessionId) : null,
-              updatedAt,
-            } as RescheduleCredit;
-          })
-          .filter((row) => Boolean(row.kidId))
-          .sort((a, b) => {
-            const aTime = a.updatedAt?.getTime() ?? 0;
-            const bTime = b.updatedAt?.getTime() ?? 0;
-            return bTime - aTime;
-          });
-
-        setRescheduleCredits(rows);
-      },
-      (err) => {
-        console.error('rescheduleCredits onSnapshot error', err);
-      },
-    );
-
-    return () => unsub();
-  }, [effectiveTeacherId]);
-
-  // Fetch students for name lookup
   const { students } = useTeacherFilteredStudents();
 
-  // Create quick lookup map: kidId -> studentName
   const studentNameById = useMemo(
     () => new Map(students.map((s) => [s.uid, s.fullName || ''])),
-    [students]
+    [students],
   );
 
   const studentCourseLabelById = useMemo(() => {
@@ -475,80 +208,65 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     return map;
   }, [students]);
 
-  const knownKidIds = useMemo(() => {
-    const ids = new Set<string>();
-    students.forEach((student) => {
-      const data = student as any;
-      const kidId = data?.uid || data?.id;
-      if (kidId) ids.add(String(kidId));
-    });
-    return ids;
-  }, [students]);
-
-  const openRescheduleCredits = useMemo(
-    () => rescheduleCredits.filter((credit) => credit.status === 'open'),
-    [rescheduleCredits],
-  );
-
-  const openCreditsByKidId = useMemo(() => {
-    const map = new Map<string, RescheduleCredit[]>();
-    openRescheduleCredits.forEach((credit) => {
-      const list = map.get(credit.kidId) || [];
-      list.push(credit);
-      map.set(credit.kidId, list);
-    });
-    return map;
-  }, [openRescheduleCredits]);
-
-  const scheduleKidOpenCredits = useMemo(
-    () => (scheduleKidId ? (openCreditsByKidId.get(scheduleKidId) || []) : []),
-    [openCreditsByKidId, scheduleKidId],
-  );
-
-  const selectedScheduleCredit = useMemo(
-    () => scheduleKidOpenCredits.find((credit) => credit.id === scheduleCreditId) || null,
-    [scheduleKidOpenCredits, scheduleCreditId],
-  );
-
-  const resolveSessionKidId = (session: any): string | null => {
-    if (!session) return null;
-    const direct = session.kidId || (Array.isArray(session.kidIds) ? session.kidIds[0] : null);
-    return direct ? String(direct) : null;
+  const toCleanText = (value: unknown): string => {
+    if (typeof value === 'string') return value.trim();
+    if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+    return '';
   };
 
-  const visibleSessions = useMemo(() => {
-    if (knownKidIds.size === 0) return sessions;
-    return sessions.filter((session) => {
-      const kidId = resolveSessionKidId(session);
-      return kidId && knownKidIds.has(kidId);
-    });
-  }, [sessions, knownKidIds]);
+  const getSessionStudentLabel = (session?: Partial<TeacherSession>): string => {
+    if (!session) return 'Student';
+    const row = session as any;
+    const firstFromSession =
+      toCleanText(row.studentName) ||
+      toCleanText(row.kidName) ||
+      toCleanText(row.childName) ||
+      toCleanText(row.student?.name) ||
+      toCleanText(row.student?.fullName) ||
+      toCleanText(row.student?.displayName);
 
-  const hiddenSessions = useMemo(() => {
-    if (knownKidIds.size === 0) return [];
-    return sessions.filter((session) => {
-      const kidId = resolveSessionKidId(session);
-      return !kidId || !knownKidIds.has(kidId);
-    });
-  }, [sessions, knownKidIds]);
+    if (firstFromSession) return firstFromSession;
 
-  const visibleMonthSessions = useMemo(() => {
-    if (knownKidIds.size === 0) return monthSessions;
-    return monthSessions.filter((session) => {
-      const kidId = resolveSessionKidId(session);
-      return kidId && knownKidIds.has(kidId);
-    });
-  }, [monthSessions, knownKidIds]);
+    const listCandidates = [row.studentNames, row.kidNames, row.childNames] as unknown[];
+    for (const list of listCandidates) {
+      if (!Array.isArray(list)) continue;
+      const first = list
+        .map((item) => toCleanText(item))
+        .find((item) => item.length > 0);
+      if (first) return first;
+    }
+
+    const kidIds: string[] = Array.isArray(row.kidIds) ? row.kidIds.map((id: unknown) => String(id)) : [];
+    const fromLookup = kidIds.map((id) => studentNameById.get(id)).filter(Boolean).join(', ');
+    return fromLookup || 'Student';
+  };
 
   const getCourseLabel = (session?: Partial<TeacherSession>): string => {
     if (!session) return '';
+    const row = session as any;
     return (
-      (session as any).courseLabel ||
-      session.courseName ||
-      (session as any).courseTitle ||
-      session.courseId ||
+      toCleanText(row.courseLabel) ||
+      toCleanText(row.courseName) ||
+      toCleanText(row.courseTitle) ||
+      toCleanText(row.course?.label) ||
+      toCleanText(row.course?.name) ||
+      toCleanText(row.course?.title) ||
+      toCleanText(row.programLabel) ||
+      toCleanText(row.programName) ||
+      toCleanText(row.program?.label) ||
+      toCleanText(row.program?.name) ||
+      toCleanText(row.subject) ||
       ''
     );
+  };
+
+  const getSessionCourseLabel = (session?: Partial<TeacherSession>): string => {
+    if (!session) return '';
+    const direct = getCourseLabel(session);
+    if (direct) return direct;
+    const row = session as any;
+    const kidIds: string[] = Array.isArray(row.kidIds) ? row.kidIds.map((id: unknown) => String(id)) : [];
+    return kidIds.map((id) => studentCourseLabelById.get(id)).find(Boolean) || '';
   };
 
   const truncateLabel = (value: string, max = 18): string => {
@@ -558,286 +276,14 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     return `${value.slice(0, max - 3)}...`;
   };
 
-  const sessionsByDate = visibleSessions.reduce((acc, session) => {
-    if (!acc[session.date]) acc[session.date] = [];
-    acc[session.date].push(session);
-    return acc;
-  }, {} as Record<string, any[]>);
-
-  const blockedSlotsByDate = useMemo(() => {
-    const map: Record<string, BlockedSlot[]> = {};
-    blockedSlots.forEach((slot) => {
-      const dateKey = format(slot.startAt, 'yyyy-MM-dd');
-      if (!map[dateKey]) map[dateKey] = [];
-      map[dateKey].push(slot);
-    });
-    Object.values(map).forEach((list) =>
-      list.sort((a, b) => a.startAt.getTime() - b.startAt.getTime()),
-    );
-    return map;
-  }, [blockedSlots]);
-
-  const requestsByDate = useMemo(() => {
-    const map: Record<string, SessionRequest[]> = {};
-    sessionRequests.forEach((req) => {
-      const dateKey = format(req.startAt, 'yyyy-MM-dd');
-      if (!map[dateKey]) map[dateKey] = [];
-      map[dateKey].push(req);
-    });
-    Object.values(map).forEach((list) =>
-      list.sort((a, b) => a.startAt.getTime() - b.startAt.getTime()),
-    );
-    return map;
-  }, [sessionRequests]);
-
-  const monthlySummary = useMemo(() => {
-    const start = monthStart.getTime();
-    const end = monthEnd.getTime();
-
-    const monthRequests = sessionRequests.filter(
-      (req) => req.startAt.getTime() >= start && req.startAt.getTime() <= end,
-    );
-    const monthBlocked = blockedSlots.filter(
-      (slot) => slot.startAt.getTime() >= start && slot.startAt.getTime() <= end,
-    );
-
-    let presentKids = 0;
-    let absentKids = 0;
-    let lateKids = 0;
-    let rescheduleKids = 0;
-
-    visibleMonthSessions.forEach((session) => {
-      const attendance = session.attendance || {};
-      if (
-        session.status === 'reschedule_requested' &&
-        Object.keys(attendance).length === 0
-      ) {
-        rescheduleKids += Math.max(session.kidIds?.length || 0, 1);
-      }
-      Object.values(attendance).forEach((entry: any) => {
-        const status = entry?.status ?? entry;
-        if (status === 'present') presentKids += 1;
-        if (status === 'absent') absentKids += 1;
-        if (status === 'late') lateKids += 1;
-        if (status === 'reschedule_requested') rescheduleKids += 1;
-      });
-    });
-
-    return {
-      sessionsInMonth: visibleMonthSessions.length,
-      completedSessions: visibleMonthSessions.filter((s) => s.status === 'completed').length,
-      presentKids,
-      absentKids,
-      lateKids,
-      rescheduleKids,
-      pendingRequests: monthRequests.length,
-      blockedSlots: monthBlocked.length,
-      openMakeupCredits: openRescheduleCredits.length,
-      scheduledMakeups: rescheduleCredits.filter((credit) => credit.status === 'scheduled').length,
-    };
-  }, [monthStart, monthEnd, visibleMonthSessions, sessionRequests, blockedSlots, openRescheduleCredits, rescheduleCredits]);
-
-  const openBlockModal = () => {
-    setBlockDate(format(currentDate, 'yyyy-MM-dd'));
-    setBlockStartTime('09:00');
-    setBlockDuration(35);
-    setBlockReason('');
-    setIsBlockModalOpen(true);
-  };
-
-  const openScheduleModal = () => {
-    setScheduleDate(format(currentDate, 'yyyy-MM-dd'));
-    setScheduleStartTime('09:00');
-    setScheduleDuration(35);
-    setScheduleNote('');
-    const firstKidWithCredit =
-      students.find((student: any) => {
-        const kidId = String(student?.uid || student?.id || '');
-        return kidId && (openCreditsByKidId.get(kidId)?.length || 0) > 0;
-      });
-    const fallbackKidId = String((students[0] as any)?.uid || (students[0] as any)?.id || '');
-    const firstKidId = String((firstKidWithCredit as any)?.uid || (firstKidWithCredit as any)?.id || fallbackKidId || '');
-    setScheduleKidId(firstKidId);
-    const initialCredits = openCreditsByKidId.get(firstKidId) || [];
-    setScheduleCreditId(initialCredits[0]?.id || '');
-    setIsScheduleModalOpen(true);
-  };
-
-  useEffect(() => {
-    if (!isScheduleModalOpen) return;
-    if (!scheduleKidId) {
-      setScheduleCreditId('');
-      return;
-    }
-    const credits = openCreditsByKidId.get(scheduleKidId) || [];
-    if (credits.length === 0) {
-      setScheduleCreditId('');
-      return;
-    }
-    if (!credits.some((credit) => credit.id === scheduleCreditId)) {
-      setScheduleCreditId(credits[0].id);
-    }
-  }, [isScheduleModalOpen, scheduleKidId, scheduleCreditId, openCreditsByKidId]);
-
-  const handleCreateBlock = async () => {
-    if (!effectiveTeacherId) {
-      toast({ title: 'Missing teacher', description: 'Please sign in again.', variant: 'destructive' });
-      return;
-    }
-
-    if (!blockDate || !blockStartTime) {
-      toast({ title: 'Missing info', description: 'Select a date and start time.', variant: 'destructive' });
-      return;
-    }
-
-    const [year, month, day] = blockDate.split('-').map(Number);
-    const [hour, minute] = blockStartTime.split(':').map(Number);
-    const durationMinutes = Number(blockDuration);
-
-    if (!year || !month || !day || Number.isNaN(hour) || Number.isNaN(minute) || !durationMinutes || durationMinutes <= 0) {
-      toast({ title: 'Invalid block', description: 'Please check date, time, and duration.', variant: 'destructive' });
-      return;
-    }
-
-    const startAt = new Date(year, month - 1, day, hour, minute, 0, 0);
-    const endAt = new Date(startAt.getTime() + durationMinutes * 60 * 1000);
-
-    setIsSavingBlock(true);
-    try {
-      await addDoc(collection(db, 'teachers', effectiveTeacherId, 'blockedSlots'), {
-        startAt,
-        endAt,
-        reason: blockReason.trim(),
-        createdAt: serverTimestamp(),
-        createdBy: user?.uid ?? effectiveTeacherId,
-      });
-      toast({ title: 'Time blocked', description: 'Blocked slot added to your calendar.' });
-      setIsBlockModalOpen(false);
-    } catch (err) {
-      console.error('create blocked slot error', err);
-      toast({
-        title: 'Unable to block time',
-        description: err instanceof Error ? err.message : 'Please try again later.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSavingBlock(false);
-    }
-  };
-
-  const handleCreateSessionRequest = async () => {
-    if (!effectiveTeacherId) {
-      toast({ title: 'Missing teacher', description: 'Please sign in again.', variant: 'destructive' });
-      return;
-    }
-
-    if (!scheduleKidId) {
-      toast({ title: 'Select a student', description: 'Choose a student to schedule.', variant: 'destructive' });
-      return;
-    }
-    if (!scheduleCreditId) {
-      toast({
-        title: 'Select a reschedule credit',
-        description: 'Choose an open rescheduled class to create a linked makeup session.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const selectedCredit = scheduleKidOpenCredits.find((credit) => credit.id === scheduleCreditId);
-    if (!selectedCredit) {
-      toast({
-        title: 'Credit unavailable',
-        description: 'The selected reschedule credit is no longer open. Refresh and retry.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    if (selectedCredit.kidId !== scheduleKidId) {
-      toast({
-        title: 'Credit mismatch',
-        description: 'Selected credit does not belong to this student.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const [year, month, day] = scheduleDate.split('-').map(Number);
-    const [hour, minute] = scheduleStartTime.split(':').map(Number);
-    const durationMinutes = Number(scheduleDuration);
-
-    if (!year || !month || !day || Number.isNaN(hour) || Number.isNaN(minute) || !durationMinutes || durationMinutes <= 0) {
-      toast({ title: 'Invalid session', description: 'Check date, time, and duration.', variant: 'destructive' });
-      return;
-    }
-
-    const startAt = new Date(year, month - 1, day, hour, minute, 0, 0);
-    const endAt = new Date(startAt.getTime() + durationMinutes * 60 * 1000);
-
-    const overlapsBlocked = blockedSlots.some(
-      (slot) => startAt < slot.endAt && endAt > slot.startAt,
-    );
-
-    if (overlapsBlocked) {
-      toast({
-        title: 'Overlaps a blocked time',
-        description: 'Pick a different time or remove the blocked slot.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsSavingRequest(true);
-    try {
-      const functions = getFunctions(undefined, 'asia-south1');
-      const createMakeupSession = httpsCallable(functions, 'createMakeupSessionFromCredit');
-      const result = await createMakeupSession({
-        creditId: scheduleCreditId,
-        kidId: scheduleKidId,
-        date: scheduleDate,
-        startTime: scheduleStartTime,
-        durationMins: durationMinutes,
-        note: scheduleNote.trim() || null,
-      });
-      const response = (result.data || {}) as { alreadyExisted?: boolean };
-      toast({
-        title: response.alreadyExisted ? 'Makeup already scheduled' : 'Makeup session created',
-        description: 'Linked to selected reschedule credit.',
-      });
-      setIsScheduleModalOpen(false);
-    } catch (err) {
-      console.error('create makeup session error', err);
-      toast({
-        title: 'Unable to create makeup session',
-        description: err instanceof Error ? err.message : 'Please try again later.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSavingRequest(false);
-    }
-  };
-
-  const handleCancelRequest = async (reqId: string) => {
-    if (!effectiveTeacherId) {
-      toast({ title: 'Missing teacher', description: 'Please sign in again.', variant: 'destructive' });
-      return;
-    }
-
-    const confirmed = window.confirm('Cancel this session request?');
-    if (!confirmed) return;
-
-    try {
-      await deleteDoc(doc(db, 'teachers', effectiveTeacherId, 'sessionRequests', reqId));
-      toast({ title: 'Request cancelled', description: 'Pending request removed.' });
-    } catch (err) {
-      console.error('cancel session request error', err);
-      toast({
-        title: 'Unable to cancel',
-        description: err instanceof Error ? err.message : 'Please try again later.',
-        variant: 'destructive',
-      });
-    }
-  };
+  const sessionsByDate = useMemo(
+    () => sessions.reduce((acc, session) => {
+      if (!acc[session.date]) acc[session.date] = [];
+      acc[session.date].push(session);
+      return acc;
+    }, {} as Record<string, TeacherSession[]>),
+    [sessions],
+  );
 
   const handleAttendanceSubmit = async (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: string; topics?: string[]; topicUpdates?: TopicUpdatePayload[] }>; sessionNotes: string; meta?: { courseId?: string; courseLabel?: string; attendanceOnly?: boolean } }) => {
     if (!selectedSession) return;
@@ -908,37 +354,19 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     }
   };
 
-  const handleToday = () => {
-    setCurrentDate(new Date());
-  };
+  const handleToday = () => setCurrentDate(new Date());
 
   const getTitle = () => {
     if (view === 'month') {
       return format(currentDate, 'MMMM yyyy');
-    } else if (view === 'workweek') {
+    }
+    if (view === 'workweek') {
       return `Work week ${format(rangeStart, 'MMM d')} - ${format(rangeEnd, 'MMM d, yyyy')}`;
-    } else if (view === 'week') {
+    }
+    if (view === 'week') {
       return `Week of ${format(rangeStart, 'MMM d')} - ${format(rangeEnd, 'MMM d, yyyy')}`;
-    } else {
-      return format(currentDate, 'EEEE, MMMM d, yyyy');
     }
-  };
-
-  const hiddenCount = knownKidIds.size > 0 ? hiddenSessions.length : 0;
-
-  const handleCopyHiddenSessions = () => {
-    if (!hiddenSessions.length) return;
-    const lines = hiddenSessions.map((session: any) => {
-      const kidId = resolveSessionKidId(session) || '';
-      const enrollmentId = session.enrollmentId || '';
-      return `${session.id}\t${kidId}\t${enrollmentId}`;
-    });
-    const payload = lines.join('\n');
-    if (navigator?.clipboard?.writeText) {
-      void navigator.clipboard.writeText(payload);
-    } else {
-      window.prompt('Copy hidden session IDs', payload);
-    }
+    return format(currentDate, 'EEEE, MMMM d, yyyy');
   };
 
   return (
@@ -955,406 +383,183 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
         </Card>
       )}
 
-      <TeacherAvailabilityEditor teacherId={effectiveTeacherId} />
-
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handlePrev}>Prev</Button>
-          <Button variant="outline" size="sm" onClick={handleToday}>Today</Button>
-          <h2 className="text-2xl font-bold">
-            {getTitle()}
-          </h2>
-          <Button variant="outline" size="sm" onClick={handleNext}>Next</Button>
-        </div>
-        <div className="flex gap-2">
-          <Button variant={view === 'month' ? 'default' : 'outline'} onClick={() => setView('month')}>Month</Button>
-          <Button variant={view === 'workweek' ? 'default' : 'outline'} onClick={() => setView('workweek')}>Work Week</Button>
-          <Button variant={view === 'week' ? 'default' : 'outline'} onClick={() => setView('week')}>Week</Button>
-          <Button variant={view === 'day' ? 'default' : 'outline'} onClick={() => setView('day')}>Day</Button>
-          <Button variant="outline" onClick={openScheduleModal}>Create Makeup Session</Button>
-          <Button onClick={openBlockModal}>Block Time</Button>
-        </div>
-      </div>
-
-      {hiddenCount > 0 && (
-        <Card className="p-3 border border-amber-200 bg-amber-50 text-amber-800">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-            <span>
-              Hidden {hiddenCount} old/unknown sessions (missing student records).
-            </span>
-            {import.meta.env.DEV && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleCopyHiddenSessions}
-              >
-                Copy hidden session IDs
-              </Button>
-            )}
-          </div>
-        </Card>
-      )}
-
-      <Card className="p-4">
-        <div className="flex items-center justify-between gap-4">
+      <Card className="border-slate-200 bg-white/95 p-5 shadow-sm md:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h3 className="text-sm font-semibold">This Month</h3>
-            <p className="text-xs text-muted-foreground">
-              {format(monthStart, 'MMM d')} - {format(monthEnd, 'MMM d, yyyy')}
+            <h2 className="text-xl font-semibold tracking-tight text-slate-900">Teacher Schedule</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              View your sessions and tap any session to mark attendance.
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
-            <div>
-              <div className="text-xs text-muted-foreground">Sessions</div>
-              <div className="font-semibold">{monthlySummary.sessionsInMonth}</div>
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground">Completed</div>
-              <div className="font-semibold">{monthlySummary.completedSessions}</div>
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground">Present kids</div>
-              <div className="font-semibold">{monthlySummary.presentKids}</div>
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground">Absent kids</div>
-              <div className="font-semibold">{monthlySummary.absentKids}</div>
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground">Late kids</div>
-              <div className="font-semibold">{monthlySummary.lateKids}</div>
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground">Reschedule</div>
-              <div className="font-semibold">{monthlySummary.rescheduleKids}</div>
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground">Open makeups</div>
-              <div className="font-semibold">{monthlySummary.openMakeupCredits}</div>
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground">Scheduled makeups</div>
-              <div className="font-semibold">{monthlySummary.scheduledMakeups}</div>
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground">Pending requests</div>
-              <div className="font-semibold">{monthlySummary.pendingRequests}</div>
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground">Blocked slots</div>
-              <div className="font-semibold">{monthlySummary.blockedSlots}</div>
-            </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="rounded-full" onClick={handlePrev}>Prev</Button>
+            <Button variant="outline" size="sm" className="rounded-full" onClick={handleToday}>Today</Button>
+            <Button variant="outline" size="sm" className="rounded-full" onClick={handleNext}>Next</Button>
           </div>
         </div>
+
+        <div className="mt-4 flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-slate-50/70 p-2">
+          <Button className="rounded-full" variant={view === 'day' ? 'default' : 'outline'} onClick={() => setView('day')}>Today</Button>
+          <Button className="rounded-full" variant={view === 'week' ? 'default' : 'outline'} onClick={() => setView('week')}>Week</Button>
+          <Button className="rounded-full" variant={view === 'month' ? 'default' : 'outline'} onClick={() => setView('month')}>Month</Button>
+          <Button className="rounded-full" variant={view === 'workweek' ? 'secondary' : 'ghost'} size="sm" onClick={() => setView('workweek')}>
+            Work Week
+          </Button>
+        </div>
+
+        <p className="mt-3 text-sm text-slate-500">{getTitle()}</p>
       </Card>
 
-      {view === 'month' && (
-        <Card className="p-6">
-          <div className="grid grid-cols-7 gap-2">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-              <div key={day} className="p-2 text-center font-semibold">
+      <Card className="border-slate-200 bg-white/95 p-5 shadow-sm md:p-6">
+        {view === 'month' && (
+          <div className="grid grid-cols-7 gap-2.5">
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+              <div key={day} className="rounded-xl border border-slate-200 bg-slate-50 py-2 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
                 {day}
               </div>
             ))}
             {monthLeadingEmptyCells.map((_, idx) => (
-              <div
-                key={`month-leading-empty-${idx}`}
-                className="p-2 border min-h-[100px] border-gray-100 bg-gray-50/30"
-                aria-hidden="true"
-              />
+              <div key={`month-leading-empty-clean-${idx}`} className="min-h-[120px] rounded-xl border border-transparent" aria-hidden="true" />
             ))}
-            {days.map(day => {
+            {days.map((day) => {
               const dateStr = format(day, 'yyyy-MM-dd');
               const daySessions = sessionsByDate[dateStr] || [];
-              const dayBlocks = blockedSlotsByDate[dateStr] || [];
-              const dayRequests = requestsByDate[dateStr] || [];
               return (
                 <div
                   key={day.toString()}
-                  className={`p-2 border min-h-[100px] ${
-                    isToday(day) ? 'bg-blue-50 border-blue-200' : 'border-gray-200'
+                  className={`min-h-[120px] rounded-xl border p-3 ${
+                    isToday(day)
+                      ? 'border-sky-200 bg-sky-50/50 shadow-sm'
+                      : daySessions.length > 0
+                        ? 'border-slate-200 bg-white shadow-sm'
+                        : 'border-slate-200 bg-slate-50/40'
                   }`}
                 >
-                  <div className="text-sm font-medium">{format(day, 'd')}</div>
-                  <div className="space-y-1 mt-1">
-                    {dayBlocks.slice(0, 2).map((block) => (
-                      <Badge
-                        key={block.id}
-                        variant="outline"
-                        className="text-xs bg-rose-50 text-rose-800 border-rose-200"
-                      >
-                        Blocked · {format(block.startAt, 'HH:mm')}
-                      </Badge>
-                    ))}
-                    {dayBlocks.length > 2 && (
-                      <div className="text-xs text-muted-foreground">
-                        +{dayBlocks.length - 2} blocked
-                      </div>
-                    )}
-                    {dayRequests.slice(0, 2).map((req) => {
-                      const kidName = studentNameById.get(req.kidId) || 'Student';
-                      const courseLabel = studentCourseLabelById.get(req.kidId) || '';
-                      return (
-                        <Badge
-                          key={req.id}
-                          variant="outline"
-                          className="text-xs bg-amber-50 text-amber-900 border-amber-200"
-                        >
-                          Pending · {format(req.startAt, 'HH:mm')} · {kidName}
-                          {courseLabel ? ` · ${truncateLabel(courseLabel, 14)}` : ''}
-                        </Badge>
-                      );
-                    })}
-                    {dayRequests.length > 2 && (
-                      <div className="text-xs text-muted-foreground">
-                        +{dayRequests.length - 2} pending
-                      </div>
-                    )}
-                    {daySessions.slice(0, 2).map((session, idx) => {
-                      // Resolve kid names from kidIds array or fallback to single kidId
-                      const kidIds: string[] = session.kidIds?.length ? session.kidIds : [];
-                      const kidNames = kidIds
-                        .map(id => studentNameById.get(id))
-                        .filter(Boolean)
-                        .join(', ') || 'Student';
-                      const fallbackCourseLabel = kidIds
-                        .map(id => studentCourseLabelById.get(id))
-                        .find(Boolean) || '';
-                      const courseLabel = getCourseLabel(session) || fallbackCourseLabel;
+                  <div className="text-sm font-semibold text-slate-900">{format(day, 'd')}</div>
+                  <div className="mt-2 space-y-2">
+                    {daySessions.slice(0, 3).map((session, idx) => {
+                      const kidNames = getSessionStudentLabel(session);
+                      const courseLabel = getSessionCourseLabel(session);
                       const badgeTone = resolveSessionBadgeTone(session);
-                      
                       return (
-                        <Badge 
-                          key={idx} 
-                          variant="outline"
-                          className={`text-xs cursor-pointer border ${sessionBadgeToneClass[badgeTone]}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedSession(session);
-                          }}
+                        <button
+                          key={session.id || `${dateStr}_${idx}`}
+                          type="button"
+                          className={`w-full rounded-lg border px-2.5 py-2 text-left text-xs transition hover:opacity-95 ${sessionBadgeToneClass[badgeTone]}`}
+                          onClick={() => setSelectedSession(session)}
                         >
-                          {sessionBadgeToneLabel[badgeTone]} · {session.startTime} · {kidNames}
-                          {courseLabel ? ` · ${truncateLabel(courseLabel, 14)}` : ''}
-                        </Badge>
+                          <div className="font-medium">
+                            {sessionBadgeToneLabel[badgeTone]} · {session.startTime}
+                          </div>
+                          <div className="mt-1 truncate text-[11px]">{kidNames}</div>
+                          {courseLabel ? <div className="mt-1 truncate text-[11px] opacity-80">{truncateLabel(courseLabel, 18)}</div> : null}
+                        </button>
                       );
                     })}
-                    {daySessions.length > 2 && (
-                      <button
-                        type="button"
-                        className="text-xs text-primary-600 hover:underline text-left"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOverflowDay(day);
-                          setOverflowSessions(daySessions);
-                          setIsOverflowOpen(true);
-                        }}
-                      >
-                        +{daySessions.length - 2} more
-                      </button>
-                    )}
+                    {daySessions.length > 3 ? (
+                      <div className="text-[11px] text-slate-500">+{daySessions.length - 3} more</div>
+                    ) : null}
+                    {daySessions.length === 0 ? <div className="text-[11px] text-slate-400">No bookings</div> : null}
                   </div>
                 </div>
               );
             })}
             {monthTrailingEmptyCells.map((_, idx) => (
-              <div
-                key={`month-trailing-empty-${idx}`}
-                className="p-2 border min-h-[100px] border-gray-100 bg-gray-50/30"
-                aria-hidden="true"
-              />
+              <div key={`month-trailing-empty-clean-${idx}`} className="min-h-[120px] rounded-xl border border-transparent" aria-hidden="true" />
             ))}
           </div>
-        </Card>
-      )}
+        )}
 
-      {(view === 'week' || view === 'workweek') && (
-        <Card className="p-6">
+        {(view === 'week' || view === 'workweek') && (
           <div
-            className="grid gap-2"
+            className="grid gap-3"
             style={{ gridTemplateColumns: `repeat(${Math.max(days.length, 1)}, minmax(0, 1fr))` }}
           >
-            {days.map(day => {
+            {days.map((day) => {
               const dateStr = format(day, 'yyyy-MM-dd');
               const daySessions = sessionsByDate[dateStr] || [];
-              const dayBlocks = blockedSlotsByDate[dateStr] || [];
-              const dayRequests = requestsByDate[dateStr] || [];
               return (
-                <div key={day.toString()} className={`border rounded p-2 min-h-[150px] ${
-                  isToday(day) ? 'bg-blue-50 border-blue-300' : 'border-gray-200'
-                }`}>
-                  <div className="text-center font-semibold mb-2">
-                    <div className="text-xs text-muted-foreground">{format(day, 'EEE')}</div>
-                    <div className="text-sm">{format(day, 'd')}</div>
+                <div
+                  key={day.toString()}
+                  className={`rounded-xl border p-3 ${
+                    isToday(day)
+                      ? 'border-sky-200 bg-sky-50/50 shadow-sm'
+                      : daySessions.length > 0
+                        ? 'border-slate-200 bg-white shadow-sm'
+                        : 'border-slate-200 bg-slate-50/40'
+                  }`}
+                >
+                  <div className="mb-2 text-center">
+                    <div className="text-[11px] uppercase tracking-[0.12em] text-slate-500">{format(day, 'EEE')}</div>
+                    <div className="text-sm font-semibold text-slate-900">{format(day, 'd MMM')}</div>
                   </div>
-                  <div className="space-y-1">
-                    {dayBlocks.map((block) => (
-                      <Badge
-                        key={block.id}
-                        variant="outline"
-                        className="text-xs w-full justify-start bg-rose-50 text-rose-800 border-rose-200"
-                      >
-                        Blocked · {format(block.startAt, 'HH:mm')}
-                      </Badge>
-                    ))}
-                    {dayRequests.map((req) => {
-                      const kidName = studentNameById.get(req.kidId) || 'Student';
-                      const courseLabel = studentCourseLabelById.get(req.kidId) || '';
-                      return (
-                        <Badge
-                          key={req.id}
-                          variant="outline"
-                          className="text-xs w-full justify-start bg-amber-50 text-amber-900 border-amber-200"
-                        >
-                          Pending · {format(req.startAt, 'HH:mm')} · {kidName}
-                          {courseLabel ? ` · ${truncateLabel(courseLabel, 16)}` : ''}
-                        </Badge>
-                      );
-                    })}
+                  <div className="space-y-2">
                     {daySessions.map((session, idx) => {
-                      const kidIds: string[] = session.kidIds?.length ? session.kidIds : [];
-                      const kidNames = kidIds
-                        .map(id => studentNameById.get(id))
-                        .filter(Boolean)
-                        .join(', ') || 'Student';
-                      const fallbackCourseLabel = kidIds
-                        .map(id => studentCourseLabelById.get(id))
-                        .find(Boolean) || '';
-                      const courseLabel = getCourseLabel(session) || fallbackCourseLabel;
+                      const kidNames = getSessionStudentLabel(session);
+                      const courseLabel = getSessionCourseLabel(session);
                       const badgeTone = resolveSessionBadgeTone(session);
-                      
                       return (
-                        <Badge 
-                          key={idx} 
-                          variant="outline"
-                          className={`text-xs cursor-pointer border w-full justify-start ${sessionBadgeToneClass[badgeTone]}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedSession(session);
-                          }}
+                        <button
+                          key={session.id || `${dateStr}_${idx}`}
+                          type="button"
+                          className={`w-full rounded-lg border px-2.5 py-2 text-left text-xs transition hover:opacity-95 ${sessionBadgeToneClass[badgeTone]}`}
+                          onClick={() => setSelectedSession(session)}
                         >
-                          <div className="truncate">
-                            {sessionBadgeToneLabel[badgeTone]} · {session.startTime} · {kidNames}
-                            {courseLabel ? ` · ${truncateLabel(courseLabel, 16)}` : ''}
+                          <div className="font-medium">
+                            {sessionBadgeToneLabel[badgeTone]} · {session.startTime}
                           </div>
-                        </Badge>
+                          <div className="mt-1 truncate text-[11px]">{kidNames}</div>
+                          {courseLabel ? <div className="mt-1 truncate text-[11px] opacity-80">{truncateLabel(courseLabel, 20)}</div> : null}
+                        </button>
                       );
                     })}
-                    {daySessions.length === 0 && dayBlocks.length === 0 && dayRequests.length === 0 && (
-                      <div className="text-xs text-muted-foreground text-center">No sessions</div>
-                    )}
+                    {daySessions.length === 0 ? (
+                      <div className="rounded-lg border border-slate-200 bg-white/70 px-2 py-2 text-[11px] text-slate-400">
+                        No bookings
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               );
             })}
           </div>
-        </Card>
-      )}
+        )}
 
-      {view === 'day' && (
-        <Card className="p-6">
-          <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-2">
-            {(sessionsByDate[format(currentDate, 'yyyy-MM-dd')]?.length > 0 ||
-              blockedSlotsByDate[format(currentDate, 'yyyy-MM-dd')]?.length > 0 ||
-              requestsByDate[format(currentDate, 'yyyy-MM-dd')]?.length > 0) ? (
-              <>
-                {blockedSlotsByDate[format(currentDate, 'yyyy-MM-dd')]?.map((block) => (
-                  <div
-                    key={block.id}
-                    className="p-4 border rounded-lg bg-rose-50 border-rose-200"
-                  >
-                    <div className="font-semibold text-rose-900">
-                      Blocked · {format(block.startAt, 'HH:mm')} - {format(block.endAt, 'HH:mm')}
-                    </div>
-                    {block.reason && (
-                      <div className="text-xs text-rose-800 mt-1">{block.reason}</div>
-                    )}
-                  </div>
-                ))}
-                {requestsByDate[format(currentDate, 'yyyy-MM-dd')]?.map((req) => (
-                  <div
-                    key={req.id}
-                    className="p-4 border rounded-lg bg-amber-50 border-amber-200"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-semibold text-amber-900">
-                          Pending (Admin) · {format(req.startAt, 'HH:mm')} - {format(req.endAt, 'HH:mm')}
-                        </div>
-                        <div className="text-sm text-amber-800">
-                          {studentNameById.get(req.kidId) || 'Student'}
-                        </div>
-                        {studentCourseLabelById.get(req.kidId) && (
-                          <div className="text-xs text-amber-800 mt-1">
-                            {truncateLabel(studentCourseLabelById.get(req.kidId) || '', 24)}
-                          </div>
-                        )}
-                        {req.note && (
-                          <div className="text-xs text-amber-800 mt-1">{req.note}</div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="border-amber-300 text-amber-900 bg-amber-100">
-                          Pending
-                        </Badge>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleCancelRequest(req.id)}
-                          disabled={!effectiveTeacherId}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {sessionsByDate[format(currentDate, 'yyyy-MM-dd')].map((session, idx) => {
-                  const kidIds: string[] = session.kidIds?.length ? session.kidIds : [];
-                  const kidNames = kidIds
-                    .map(id => studentNameById.get(id))
-                    .filter(Boolean)
-                    .join(', ') || 'Student';
-                const fallbackCourseLabel = kidIds
-                  .map(id => studentCourseLabelById.get(id))
-                  .find(Boolean) || '';
-                const courseLabel = getCourseLabel(session) || fallbackCourseLabel;
-                const badgeTone = resolveSessionBadgeTone(session);
+        {view === 'day' && (
+          <div className="space-y-2.5">
+            {(sessionsByDate[format(currentDate, 'yyyy-MM-dd')] || []).map((session, idx) => {
+              const kidNames = getSessionStudentLabel(session);
+              const courseLabel = getSessionCourseLabel(session);
+              const badgeTone = resolveSessionBadgeTone(session);
 
-                return (
-                  <div 
-                    key={idx}
-                    className="p-4 border rounded-lg cursor-pointer hover:bg-secondary/50 transition-colors"
-                    onClick={() => setSelectedSession(session)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-semibold">{session.startTime} - {session.endTime}</div>
-                        <div className="text-sm text-muted-foreground">{kidNames}</div>
-                        {courseLabel && (
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {truncateLabel(courseLabel, 28)}
-                          </div>
-                        )}
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className={`border ${sessionBadgeToneClass[badgeTone]}`}
-                      >
-                        {sessionBadgeToneLabel[badgeTone]}
-                      </Badge>
+              return (
+                <button
+                  key={session.id || `day_${idx}`}
+                  type="button"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+                  onClick={() => setSelectedSession(session)}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900">{session.startTime} - {session.endTime}</div>
+                      <div className="mt-1 text-sm text-slate-600">{kidNames}</div>
+                      {courseLabel ? <div className="mt-1 text-xs text-slate-500">{truncateLabel(courseLabel, 30)}</div> : null}
                     </div>
+                    <Badge variant="outline" className={`border ${sessionBadgeToneClass[badgeTone]}`}>
+                      {sessionBadgeToneLabel[badgeTone]}
+                    </Badge>
                   </div>
-                );
-                })}
-              </>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                No sessions scheduled for this day
+                </button>
+              );
+            })}
+            {(sessionsByDate[format(currentDate, 'yyyy-MM-dd')] || []).length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
+                No bookings for this day
               </div>
-            )}
+            ) : null}
           </div>
-        </Card>
-      )}
+        )}
+      </Card>
 
       <AttendanceForm
         open={Boolean(selectedSession)}
@@ -1363,269 +568,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
         onSubmit={handleAttendanceSubmit}
         attendanceOnly
       />
-
-      <Dialog
-        open={isOverflowOpen}
-        onOpenChange={(open) => {
-          setIsOverflowOpen(open);
-          if (!open) {
-            setOverflowSessions([]);
-            setOverflowDay(null);
-          }
-        }}
-      >
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
-            <DialogTitle>
-              Sessions on {overflowDay ? format(overflowDay, 'EEE, MMM d') : 'this day'}
-            </DialogTitle>
-            <DialogDescription>
-              Tap a session to mark attendance.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-            {overflowSessions.map((session, idx) => {
-              const kidIds: string[] = session.kidIds?.length ? session.kidIds : [];
-              const kidNames = kidIds
-                .map((id) => studentNameById.get(id))
-                .filter(Boolean)
-                .join(', ') || 'Student';
-              const fallbackCourseLabel = kidIds
-                .map((id) => studentCourseLabelById.get(id))
-                .find(Boolean) || '';
-              const courseLabel = getCourseLabel(session) || fallbackCourseLabel;
-              const badgeTone = resolveSessionBadgeTone(session);
-              const timeLabel = session.startTime && session.endTime
-                ? `${session.startTime} - ${session.endTime}`
-                : session.startTime || '';
-              return (
-                <button
-                  key={session.id || idx}
-                  type="button"
-                  className="w-full text-left border rounded-lg px-3 py-2 hover:bg-muted/40 transition-colors"
-                  onClick={() => {
-                    setSelectedSession(session);
-                    setIsOverflowOpen(false);
-                  }}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="font-medium text-sm">{timeLabel}</div>
-                      <div className="text-xs text-muted-foreground">{kidNames}</div>
-                      {courseLabel && (
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {truncateLabel(courseLabel, 24)}
-                        </div>
-                      )}
-                    </div>
-                    <Badge
-                      variant="outline"
-                      className={`border ${sessionBadgeToneClass[badgeTone]}`}
-                    >
-                      {sessionBadgeToneLabel[badgeTone]}
-                    </Badge>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isBlockModalOpen} onOpenChange={setIsBlockModalOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Block Time</DialogTitle>
-            <DialogDescription>
-              Add a blocked slot so it shows up on your calendar.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="block-date">Date</Label>
-              <Input
-                id="block-date"
-                type="date"
-                value={blockDate}
-                onChange={(e) => setBlockDate(e.target.value)}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="block-start">Start time</Label>
-                <Input
-                  id="block-start"
-                  type="time"
-                  value={blockStartTime}
-                  onChange={(e) => setBlockStartTime(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="block-duration">Duration (min)</Label>
-                <Input
-                  id="block-duration"
-                  type="number"
-                  min={5}
-                  step={5}
-                  value={blockDuration}
-                  onChange={(e) => setBlockDuration(Number(e.target.value))}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="block-reason">Reason (optional)</Label>
-              <Input
-                id="block-reason"
-                type="text"
-                placeholder="Personal, admin work, break..."
-                value={blockReason}
-                onChange={(e) => setBlockReason(e.target.value)}
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => setIsBlockModalOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                onClick={handleCreateBlock}
-                disabled={isSavingBlock}
-              >
-                {isSavingBlock ? 'Saving...' : 'Save Block'}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Create Makeup Session</DialogTitle>
-            <DialogDescription>
-              Select an open rescheduled class credit and create a linked makeup session.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="schedule-student">Student</Label>
-              <Select value={scheduleKidId} onValueChange={setScheduleKidId}>
-                <SelectTrigger id="schedule-student">
-                  <SelectValue placeholder="Select student" />
-                </SelectTrigger>
-                <SelectContent>
-                  {students
-                    .map((student: any) => ({
-                      id: String(student?.uid || student?.id || ''),
-                      label: student?.fullName || student?.studentName || student?.name || 'Unnamed student',
-                    }))
-                    .filter((row) => row.id)
-                    .map((row) => (
-                      <SelectItem key={row.id} value={row.id}>
-                        {row.label}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="schedule-credit">Rescheduled class to use</Label>
-              <Select value={scheduleCreditId} onValueChange={setScheduleCreditId}>
-                <SelectTrigger id="schedule-credit">
-                  <SelectValue placeholder="Select open reschedule credit" />
-                </SelectTrigger>
-                <SelectContent>
-                  {scheduleKidOpenCredits.map((credit) => {
-                    const sourceLabel = credit.sourceSessionDate || 'Unknown date';
-                    const reasonSuffix = credit.reason ? ` · ${credit.reason}` : '';
-                    return (
-                      <SelectItem key={credit.id} value={credit.id}>
-                        {sourceLabel}{reasonSuffix}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-              {scheduleKidOpenCredits.length === 0 && (
-                <p className="text-xs text-amber-700">
-                  No open reschedule credits for this student.
-                </p>
-              )}
-              {selectedScheduleCredit?.sourceSessionId && (
-                <p className="text-xs text-muted-foreground">
-                  Source session: {selectedScheduleCredit.sourceSessionId}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="schedule-date">Date</Label>
-              <Input
-                id="schedule-date"
-                type="date"
-                value={scheduleDate}
-                onChange={(e) => setScheduleDate(e.target.value)}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="schedule-start">Start time</Label>
-                <Input
-                  id="schedule-start"
-                  type="time"
-                  value={scheduleStartTime}
-                  onChange={(e) => setScheduleStartTime(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="schedule-duration">Duration (min)</Label>
-                <Input
-                  id="schedule-duration"
-                  type="number"
-                  min={5}
-                  step={5}
-                  value={scheduleDuration}
-                  onChange={(e) => setScheduleDuration(Number(e.target.value))}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="schedule-note">Note (optional)</Label>
-              <Input
-                id="schedule-note"
-                type="text"
-                placeholder="Reason or context"
-                value={scheduleNote}
-                onChange={(e) => setScheduleNote(e.target.value)}
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => setIsScheduleModalOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                onClick={handleCreateSessionRequest}
-                disabled={isSavingRequest || students.length === 0 || !scheduleCreditId}
-              >
-                {isSavingRequest ? 'Saving...' : 'Create Makeup Session'}
-              </Button>
-            </div>
-            {students.length === 0 && (
-              <p className="text-xs text-muted-foreground">
-                No students assigned. Ask admin to assign a student first.
-              </p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
