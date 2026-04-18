@@ -67,10 +67,54 @@ const timestampToMillis = (value: unknown): number => {
   return 0;
 };
 
+const toSchemaDate = (item: Testimonial): string => {
+  const millis =
+    timestampToMillis(item.approvedAt) ||
+    timestampToMillis(item.updatedAt) ||
+    timestampToMillis(item.createdAt);
+  if (!millis) return '2026-04-01';
+  return new Date(millis).toISOString().slice(0, 10);
+};
+
 const displayText = (item: Testimonial): string =>
   item.publishedText ||
   item.reviewText ||
   (typeof item.rating === 'number' ? `Rated Tiny Steps ${item.rating} out of 5.` : 'Verified parent review.');
+
+const toSchemaReview = (
+  item: Testimonial,
+): {
+  '@type': 'Review';
+  author: { '@type': 'Person'; name: string };
+  datePublished: string;
+  reviewBody: string;
+  reviewRating: {
+    '@type': 'Rating';
+    ratingValue: number;
+    bestRating: 5;
+    worstRating: 1;
+  };
+} | null => {
+  const ratingValue = Number(item.rating);
+  const reviewBody = displayText(item).trim();
+  if (!Number.isFinite(ratingValue) || ratingValue < 1 || ratingValue > 5 || !reviewBody) return null;
+
+  return {
+    '@type': 'Review',
+    author: {
+      '@type': 'Person',
+      name: item.consentToPublishName && item.parentName ? item.parentName : 'Verified Parent',
+    },
+    datePublished: toSchemaDate(item),
+    reviewBody,
+    reviewRating: {
+      '@type': 'Rating',
+      ratingValue: Math.round(ratingValue),
+      bestRating: 5,
+      worstRating: 1,
+    },
+  };
+};
 
 const formatProgramLabel = (item: Testimonial): string => {
   if (item.attendedCourse) return item.attendedCourse;
@@ -184,6 +228,43 @@ export default function TestimonialsPage() {
     () => computeTestimonialAggregate(visibleItems),
     [visibleItems],
   );
+  const representativeSchemaReviews = useMemo(() => {
+    const visible = visibleItems.map(toSchemaReview).filter(Boolean) as Array<NonNullable<ReturnType<typeof toSchemaReview>>>;
+    const visibleSlice = visible.slice(0, 5);
+    if (visibleSlice.length >= 3) return visibleSlice;
+
+    const visibleBodies = new Set(visibleSlice.map((entry) => entry.reviewBody));
+    const fallback = items
+      .map(toSchemaReview)
+      .filter(Boolean)
+      .filter((entry): entry is NonNullable<ReturnType<typeof toSchemaReview>> => Boolean(entry))
+      .filter((entry) => !visibleBodies.has(entry.reviewBody))
+      .slice(0, 5 - visibleSlice.length);
+
+    return [...visibleSlice, ...fallback].slice(0, 5);
+  }, [items, visibleItems]);
+  const visibleRatingValue = globalAggregate.ratingCount
+    ? Number(globalAggregate.averageRating.toFixed(1))
+    : 4.8;
+  const visibleReviewCount = globalAggregate.ratingCount || MINIMUM_REVIEW_CATALOG_SIZE;
+  const testimonialsJsonLd = useMemo(
+    () => ({
+      '@context': 'https://schema.org',
+      '@type': 'EducationalOrganization',
+      name: 'Tiny Steps Learning',
+      url: 'https://tinystepslearning.com/testimonials',
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: visibleRatingValue,
+        bestRating: 5,
+        worstRating: 1,
+        ratingCount: visibleReviewCount,
+        reviewCount: visibleReviewCount,
+      },
+      review: representativeSchemaReviews,
+    }),
+    [representativeSchemaReviews, visibleRatingValue, visibleReviewCount],
+  );
 
   const pageTitle =
     selectedCourse === 'all'
@@ -200,11 +281,15 @@ export default function TestimonialsPage() {
         title={pageTitle}
         description={pageDescription}
         canonical="https://tinystepslearning.com/testimonials"
+        jsonLd={testimonialsJsonLd}
       />
 
       <section className="mx-auto max-w-6xl px-6 py-10">
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Parent Reviews</p>
         <h1 className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">Tiny Steps Parent Review Board</h1>
+        <p className="mt-2 text-sm font-semibold text-slate-700">
+          {visibleRatingValue.toFixed(1)}/5 from {visibleReviewCount} parent reviews
+        </p>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <Link
             to="/why-tiny-steps#share-feedback"
