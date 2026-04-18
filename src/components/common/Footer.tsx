@@ -59,7 +59,7 @@ function Footer() {
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <img
-                src="/logo-footer.webp"
+                src="/logo-footer-compact.png"
                 alt="Tiny Steps logo"
                 width={44}
                 height={44}

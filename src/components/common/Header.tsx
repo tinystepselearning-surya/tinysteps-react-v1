@@ -282,7 +282,7 @@ export default function Header() {
           aria-label="Go to Tiny Steps home page"
         >
           <img
-            src="/logo-header.webp"
+            src="/logo-header-compact.png"
             alt="Tiny Steps Logo"
             width={44}
             height={44}

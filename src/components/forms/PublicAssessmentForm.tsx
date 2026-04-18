@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import Button from '../Button/Button';
 import { trackDemoBookingComplete, trackLeadFormStart, trackLeadFormSubmit, trackWhatsappClick } from '../../lib/conversionTracking';
 
 const WHATSAPP_NUMBER = '919618398383';
@@ -323,15 +322,16 @@ export default function PublicAssessmentForm({
           />
         </div>
 
-        <Button
+        <button
           type="submit"
-          className="mt-6 w-full rounded-2xl py-4 text-base font-bold shadow-lg shadow-orange-200/70 transition-all hover:shadow-orange-300/80 sm:py-6"
+          aria-label="Get Free Assessment on WhatsApp"
+          className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-2xl border border-white/30 px-6 py-4 text-base font-bold text-white shadow-lg shadow-orange-200/70 transition-all hover:shadow-orange-300/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 sm:py-6 md:text-lg"
           style={{
             background: `linear-gradient(90deg, ${SUN_ORANGE} 0%, #ff7a1a 55%, #ff6a00 100%)`,
           }}
         >
           Get Free Assessment on WhatsApp
-        </Button>
+        </button>
 
         <p className="text-center text-xs text-slate-700">Takes 20–30 seconds • No commitment • Get slots instantly on WhatsApp</p>
 

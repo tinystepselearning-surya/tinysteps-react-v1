@@ -227,6 +227,7 @@ const Layout: FC = () => {
   const isContactPage = normalizedPath === '/contact';
   const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
   const [showDeferredChrome, setShowDeferredChrome] = useState(false);
+  const [showSupportWidgets, setShowSupportWidgets] = useState(false);
 
   useEffect(() => {
     if (hideMarketingChrome || normalizedPath === '/book-demo') {
@@ -289,6 +290,57 @@ const Layout: FC = () => {
       }
     };
   }, [hideMarketingChrome]);
+
+  useEffect(() => {
+    if (hideMarketingChrome || hideSupportWidgets || !showDeferredChrome) {
+      setShowSupportWidgets(false);
+      return;
+    }
+    if (showSupportWidgets) return;
+
+    const activate = () => setShowSupportWidgets(true);
+    const win = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+
+    let idleId: number | undefined;
+    let timeoutId: number | undefined;
+
+    const onFirstInteraction = () => {
+      activate();
+      window.removeEventListener('pointerdown', onFirstInteraction);
+      window.removeEventListener('keydown', onFirstInteraction);
+      window.removeEventListener('touchstart', onFirstInteraction);
+      window.removeEventListener('scroll', onFirstInteraction);
+    };
+
+    window.addEventListener('pointerdown', onFirstInteraction, { passive: true, once: true });
+    window.addEventListener('keydown', onFirstInteraction, { once: true });
+    window.addEventListener('touchstart', onFirstInteraction, { passive: true, once: true });
+    window.addEventListener('scroll', onFirstInteraction, { passive: true, once: true });
+
+    if (typeof win.requestIdleCallback === 'function') {
+      idleId = win.requestIdleCallback(activate, { timeout: 5200 });
+    } else {
+      timeoutId = window.setTimeout(activate, 4200);
+    }
+
+    return () => {
+      window.removeEventListener('pointerdown', onFirstInteraction);
+      window.removeEventListener('keydown', onFirstInteraction);
+      window.removeEventListener('touchstart', onFirstInteraction);
+      window.removeEventListener('scroll', onFirstInteraction);
+
+      if (idleId !== undefined && typeof win.cancelIdleCallback === 'function') {
+        win.cancelIdleCallback(idleId);
+      }
+
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [hideMarketingChrome, hideSupportWidgets, showDeferredChrome, showSupportWidgets]);
 
   const closeAssessmentModal = useCallback(() => {
     setIsAssessmentModalOpen(false);
@@ -372,7 +424,7 @@ const Layout: FC = () => {
       {!hideMarketingChrome ? (
         <Suspense fallback={null}>
           <AnalyticsTracker />
-          {showDeferredChrome ? <ConversionTracker /> : null}
+          {showSupportWidgets ? <ConversionTracker /> : null}
         </Suspense>
       ) : null}
       <ScrollToTop />
@@ -393,7 +445,7 @@ const Layout: FC = () => {
           <Footer />
         </Suspense>
       ) : null}
-      {!hideSupportWidgets && showDeferredChrome ? (
+      {!hideSupportWidgets && showSupportWidgets ? (
         <Suspense fallback={null}>
           <FloatingAssistant />
           <BackToTopButton />
