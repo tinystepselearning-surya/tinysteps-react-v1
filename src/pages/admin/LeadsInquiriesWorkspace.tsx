@@ -2,15 +2,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   addDoc,
   collection,
-  type DocumentData,
   doc,
   limit,
   onSnapshot,
   orderBy,
-  type QueryDocumentSnapshot,
+  type QueryConstraint,
   query,
   serverTimestamp,
-  startAfter,
   Timestamp,
   updateDoc,
   where,
@@ -108,7 +106,6 @@ type CommunicationChannel = 'whatsapp' | 'phone' | 'instagram' | 'website' | 'ma
 type CommunicationStatus = 'logged' | 'pending_follow_up' | 'completed';
 type DeliveryStatus = 'queued' | 'sent' | 'delivered' | 'read' | 'failed';
 type CommunicationHistoryFilter = 'all' | 'whatsapp' | 'failed';
-type UnmatchedInboundStatus = 'unmatched' | 'resolved' | 'ignored';
 type CommunicationPresetKey =
   | 'whatsapp_follow_up'
   | 'call_done'
@@ -263,20 +260,6 @@ interface LeadCommunication {
   updatedBy?: string | null;
 }
 
-interface UnmatchedInboundRecord {
-  id: string;
-  phoneNormalized?: string | null;
-  rawFrom?: string | null;
-  messageSummary?: string | null;
-  externalMessageId?: string | null;
-  provider?: string | null;
-  status: UnmatchedInboundStatus;
-  receivedAt?: Timestamp | null;
-  resolvedLeadId?: string | null;
-  createdAt?: Timestamp | null;
-  updatedAt?: Timestamp | null;
-}
-
 interface CommunicationFormState {
   type: CommunicationType;
   direction: CommunicationDirection;
@@ -295,7 +278,6 @@ interface LeadsInquiriesWorkspaceProps {
 
 const LEADS_COLLECTION = 'leads';
 const LEAD_COMMUNICATIONS_COLLECTION = 'communications';
-const WHATSAPP_UNMATCHED_COLLECTION = 'whatsappInboundUnmatched';
 const EMPTY_DEMO_EDIT_FORM: DemoEditFormState = {
   parentName: '',
   parentPhone: '',
@@ -520,7 +502,7 @@ const FOLLOW_UP_TERMINAL_STATUSES = new Set<LeadStatus>([
   'wrong_fit',
   'lost',
 ]);
-const LEADS_PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
+const LEADS_PAGE_SIZE_OPTIONS = [5, 10, 25, 50, 100] as const;
 
 const toMs = (value: unknown): number => {
   if (!value) return 0;
@@ -968,20 +950,21 @@ export default function LeadsInquiriesWorkspace({
   const { toast } = useToast();
   const { user } = useAuthStore();
   const [leads, setLeads] = useState<LeadRecord[]>([]);
-  const [leadsPageSize, setLeadsPageSize] = useState<number>(10);
-  const [leadsPageIndex, setLeadsPageIndex] = useState<number>(0);
-  const [leadsPageStarts, setLeadsPageStarts] = useState<Array<QueryDocumentSnapshot<DocumentData> | null>>([null]);
-  const [hasNextLeadsPage, setHasNextLeadsPage] = useState(false);
+  const [leadsPageSize, setLeadsPageSize] = useState<number>(5);
   const [isLeadsPageLoading, setIsLeadsPageLoading] = useState(false);
   const [demos, setDemos] = useState<DemoSession[]>([]);
   const [demoPhoneMap, setDemoPhoneMap] = useState<Record<string, string>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [stageFilter, setStageFilter] = useState<string>('all');
+  const [leadStatusFilter, setLeadStatusFilter] = useState<'all' | LeadStatus>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [courseFilter, setCourseFilter] = useState<string>('all');
   const [teacherFilter, setTeacherFilter] = useState<string>('all');
   const [updatedFromDate, setUpdatedFromDate] = useState<string>('');
   const [updatedToDate, setUpdatedToDate] = useState<string>('');
+  const [appliedLeadStatusFilter, setAppliedLeadStatusFilter] = useState<'all' | LeadStatus>('all');
+  const [appliedUpdatedFromDate, setAppliedUpdatedFromDate] = useState<string>('');
+  const [appliedUpdatedToDate, setAppliedUpdatedToDate] = useState<string>('');
   const [summaryCardFilter, setSummaryCardFilter] = useState<SummaryCardFilter>('all');
   const [focusFilter, setFocusFilter] = useState<FocusFilter>(view === 'demos' ? 'all_demos' : 'all');
   const [savingConversionRowId, setSavingConversionRowId] = useState<string | null>(null);
@@ -1007,15 +990,6 @@ export default function LeadsInquiriesWorkspace({
   const [whatsAppMessage, setWhatsAppMessage] = useState('');
   const [loggingWhatsApp, setLoggingWhatsApp] = useState(false);
   const [sendingWhatsAppApi, setSendingWhatsAppApi] = useState(false);
-  const [unmatchedItems, setUnmatchedItems] = useState<UnmatchedInboundRecord[]>([]);
-  const [unmatchedStatusFilter, setUnmatchedStatusFilter] = useState<'all' | UnmatchedInboundStatus>(
-    'unmatched',
-  );
-  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
-  const [linkTarget, setLinkTarget] = useState<UnmatchedInboundRecord | null>(null);
-  const [linkLeadSearch, setLinkLeadSearch] = useState('');
-  const [linkLeadId, setLinkLeadId] = useState('');
-  const [processingUnmatchedId, setProcessingUnmatchedId] = useState<string | null>(null);
   const [demoRequestDialogOpen, setDemoRequestDialogOpen] = useState(false);
   const [demoRequestLeadId, setDemoRequestLeadId] = useState<string | null>(null);
   const [demoRequestForm, setDemoRequestForm] = useState<DemoRequestFormState>(buildInitialDemoRequestForm());
@@ -1037,46 +1011,32 @@ export default function LeadsInquiriesWorkspace({
   const [timelineViewTarget, setTimelineViewTarget] = useState<DemoSession | null>(null);
   const [dialogSavingAction, setDialogSavingAction] = useState<string | null>(null);
 
-  const currentLeadsPageStart = leadsPageStarts[leadsPageIndex] || null;
-
-  useEffect(() => {
-    setLeadsPageIndex(0);
-    setLeadsPageStarts([null]);
-    setHasNextLeadsPage(false);
-  }, [leadsPageSize]);
-
   useEffect(() => {
     setFocusFilter(view === 'demos' ? 'all_demos' : 'all');
   }, [view]);
 
   useEffect(() => {
     setIsLeadsPageLoading(true);
-    const constraints = [
-      orderBy('createdAt', 'desc'),
-      limit(leadsPageSize + 1),
-      ...(currentLeadsPageStart ? [startAfter(currentLeadsPageStart)] : []),
-    ];
+    const constraints: QueryConstraint[] = [];
+    const updatedFromMs = parseDateOnlyMs(appliedUpdatedFromDate);
+    const updatedToMs = parseDateOnlyMs(appliedUpdatedToDate);
+    if (updatedFromMs) {
+      constraints.push(where('createdAt', '>=', Timestamp.fromMillis(updatedFromMs)));
+    }
+    if (updatedToMs) {
+      constraints.push(where('createdAt', '<', Timestamp.fromMillis(updatedToMs + DAY_MS)));
+    }
+    constraints.push(orderBy('createdAt', 'desc'));
+    constraints.push(limit(leadsPageSize));
     const q = query(collection(db, LEADS_COLLECTION), ...constraints);
     const unsub = onSnapshot(
       q,
       (snap) => {
-        const docs = snap.docs;
-        const hasNext = docs.length > leadsPageSize;
-        const visibleDocs = hasNext ? docs.slice(0, leadsPageSize) : docs;
-        const next = visibleDocs.map((docSnap) => ({
+        const next = snap.docs.map((docSnap) => ({
           id: docSnap.id,
           ...(docSnap.data() as Record<string, unknown>),
         })) as LeadRecord[];
         setLeads(next);
-        setHasNextLeadsPage(hasNext);
-        setLeadsPageStarts((prev) => {
-          const nextStarts = prev.slice(0, leadsPageIndex + 1);
-          nextStarts[leadsPageIndex] = currentLeadsPageStart;
-          if (hasNext && visibleDocs.length > 0) {
-            nextStarts[leadsPageIndex + 1] = visibleDocs[visibleDocs.length - 1];
-          }
-          return nextStarts;
-        });
         setIsLeadsPageLoading(false);
       },
       (error) => {
@@ -1087,43 +1047,17 @@ export default function LeadsInquiriesWorkspace({
           variant: 'destructive',
         });
         setLeads([]);
-        setHasNextLeadsPage(false);
         setIsLeadsPageLoading(false);
       },
     );
     return () => unsub();
-  }, [currentLeadsPageStart, leadsPageIndex, leadsPageSize, toast]);
-
-  useEffect(() => {
-    const unmatchedQuery = query(
-      collection(db, WHATSAPP_UNMATCHED_COLLECTION),
-      orderBy('receivedAt', 'desc'),
-    );
-    const unsubscribe = onSnapshot(
-      unmatchedQuery,
-      (snap) => {
-        const next = snap.docs.map((docSnap) => {
-          const data = docSnap.data() as Omit<UnmatchedInboundRecord, 'id' | 'status'> & {
-            status?: UnmatchedInboundStatus;
-          };
-          return {
-            id: docSnap.id,
-            ...data,
-            status: data.status || 'unmatched',
-          };
-        });
-        setUnmatchedItems(next);
-      },
-      (error) => {
-        toast({
-          title: 'Failed to load unmatched WhatsApp inbox',
-          description: error?.message || 'Please refresh.',
-          variant: 'destructive',
-        });
-      },
-    );
-    return () => unsubscribe();
-  }, [toast]);
+  }, [
+    appliedLeadStatusFilter,
+    appliedUpdatedFromDate,
+    appliedUpdatedToDate,
+    leadsPageSize,
+    toast,
+  ]);
 
   useEffect(() => {
     if (!communicationsOpen || !communicationsTarget?.id) {
@@ -1277,32 +1211,30 @@ export default function LeadsInquiriesWorkspace({
       });
     });
 
-    if (view === 'demos') {
-      demos.forEach((demo) => {
-        const leadId = normalizeText((demo as any).leadId);
-        if (leadId && leadById.has(leadId)) return;
-        const stage = deriveLifecycleStage(null, demo);
-        rows.push({
-          id: `demo_${demo.id}`,
-          lead: null,
-          demo,
-          lifecycleStage: stage,
-          source: normalizeText(demo.source) || 'manual',
-          courseLabel: normalizeText(demo.courseInterested) || '—',
-          teacherName:
-            normalizeText(demo.assignedTeacherName) ||
-            (normalizeText(demo.assignedTeacherId) ? 'Assigned' : '—'),
-          nextFollowUpLabel: nextFollowUpLabel(null, demo),
-          updatedAtMs: toMs(demo.lastUpdatedAt || demo.createdAt),
-          parentName: normalizeText(demo.parentName) || '—',
-          childName: normalizeText(demo.childName) || '—',
-          parentPhone: normalizeText(demoPhoneMap[demo.id]) || '—',
-        });
+    demos.forEach((demo) => {
+      const leadId = normalizeText((demo as any).leadId);
+      if (leadId && leadById.has(leadId)) return;
+      const stage = deriveLifecycleStage(null, demo);
+      rows.push({
+        id: `demo_${demo.id}`,
+        lead: null,
+        demo,
+        lifecycleStage: stage,
+        source: normalizeText(demo.source) || 'manual',
+        courseLabel: normalizeText(demo.courseInterested) || '—',
+        teacherName:
+          normalizeText(demo.assignedTeacherName) ||
+          (normalizeText(demo.assignedTeacherId) ? 'Assigned' : '—'),
+        nextFollowUpLabel: nextFollowUpLabel(null, demo),
+        updatedAtMs: toMs(demo.lastUpdatedAt || demo.createdAt),
+        parentName: normalizeText(demo.parentName) || '—',
+        childName: normalizeText(demo.childName) || '—',
+        parentPhone: normalizeText(demoPhoneMap[demo.id]) || '—',
       });
-    }
+    });
 
     return rows.sort((a, b) => b.updatedAtMs - a.updatedAtMs);
-  }, [demoPhoneMap, demos, leads, view]);
+  }, [demoPhoneMap, demos, leads]);
 
   const sourceOptions = useMemo(
     () =>
@@ -1330,16 +1262,6 @@ export default function LeadsInquiriesWorkspace({
     [mergedRows],
   );
 
-  const filteredUnmatchedItems = useMemo(() => {
-    if (unmatchedStatusFilter === 'all') return unmatchedItems;
-    return unmatchedItems.filter((item) => item.status === unmatchedStatusFilter);
-  }, [unmatchedItems, unmatchedStatusFilter]);
-
-  const unmatchedOpenCount = useMemo(
-    () => unmatchedItems.filter((item) => item.status === 'unmatched').length,
-    [unmatchedItems],
-  );
-
   const filteredCommunicationsHistory = useMemo(() => {
     if (communicationsHistoryFilter === 'all') return communications;
     if (communicationsHistoryFilter === 'whatsapp') {
@@ -1348,30 +1270,18 @@ export default function LeadsInquiriesWorkspace({
     return communications.filter((item) => item.deliveryStatus === 'failed');
   }, [communications, communicationsHistoryFilter]);
 
-  const linkLeadOptions = useMemo(() => {
-    const queryText = linkLeadSearch.trim().toLowerCase();
-    if (!queryText) return leads.slice(0, 50);
-
-    return leads
-      .filter((lead) => {
-        const haystack = [lead.parentName, lead.primaryPhone, lead.phoneNormalized, lead.childName]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-        return haystack.includes(queryText);
-      })
-      .slice(0, 50);
-  }, [leads, linkLeadSearch]);
-
   const filteredRows = useMemo(() => {
     const search = normalizeText(searchQuery).toLowerCase();
     const { startMs, endMs } = dayRangeBounds();
-    const updatedFromMs = parseDateOnlyMs(updatedFromDate);
-    const updatedToMs = parseDateOnlyMs(updatedToDate);
+    const updatedFromMs = parseDateOnlyMs(appliedUpdatedFromDate);
+    const updatedToMs = parseDateOnlyMs(appliedUpdatedToDate);
     return mergedRows.filter((row) => {
       const demoWorkflowState = resolveDemoWorkflowState(row.demo);
       if (summaryCardFilter !== 'all' && row.lifecycleStage !== summaryCardFilter) return false;
       if (stageFilter !== 'all' && row.lifecycleStage !== stageFilter) return false;
+      if (appliedLeadStatusFilter !== 'all' && normalizeText(row.lead?.status) !== appliedLeadStatusFilter) {
+        return false;
+      }
       if (sourceFilter !== 'all' && normalizeText(row.source) !== sourceFilter) return false;
       if (courseFilter !== 'all' && normalizeText(row.courseLabel) !== courseFilter) return false;
       if (teacherFilter !== 'all' && normalizeText(row.teacherName) !== teacherFilter) return false;
@@ -1410,6 +1320,9 @@ export default function LeadsInquiriesWorkspace({
       return haystack.includes(search);
     });
   }, [
+    appliedLeadStatusFilter,
+    appliedUpdatedFromDate,
+    appliedUpdatedToDate,
     courseFilter,
     focusFilter,
     mergedRows,
@@ -1418,9 +1331,9 @@ export default function LeadsInquiriesWorkspace({
     stageFilter,
     summaryCardFilter,
     teacherFilter,
-    updatedFromDate,
-    updatedToDate,
   ]);
+
+  const visibleRows = useMemo(() => filteredRows.slice(0, leadsPageSize), [filteredRows, leadsPageSize]);
 
   const summary = useMemo(() => {
     return mergedRows.reduce(
@@ -1513,15 +1426,6 @@ export default function LeadsInquiriesWorkspace({
     const parsed = Number(value);
     if (!Number.isFinite(parsed)) return;
     setLeadsPageSize(parsed);
-  };
-
-  const goToPrevLeadsPage = () => {
-    setLeadsPageIndex((current) => Math.max(0, current - 1));
-  };
-
-  const goToNextLeadsPage = () => {
-    if (!hasNextLeadsPage) return;
-    setLeadsPageIndex((current) => current + 1);
   };
 
   const handleCreateDemoRequest = () => {
@@ -1904,191 +1808,6 @@ export default function LeadsInquiriesWorkspace({
     }
   };
 
-  const buildInboundCommunicationPayload = (item: UnmatchedInboundRecord) => ({
-    type: 'message',
-    direction: 'inbound',
-    channel: 'whatsapp',
-    summary: normalizeText(item.messageSummary) || 'Inbound WhatsApp message',
-    followUpNeeded: false,
-    followUpDate: null,
-    templateTag: null,
-    status: 'logged',
-    provider: item.provider || 'meta_whatsapp_cloud',
-    externalMessageId: item.externalMessageId || null,
-    deliveryStatus: 'sent',
-    errorCode: null,
-    errorMessage: null,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-    createdBy: user?.uid || null,
-    updatedBy: user?.uid || null,
-  });
-
-  const openLinkLeadDialog = (item: UnmatchedInboundRecord) => {
-    setLinkTarget(item);
-    setLinkLeadSearch('');
-    setLinkLeadId('');
-    setLinkDialogOpen(true);
-  };
-
-  const markUnmatchedRecord = async (item: UnmatchedInboundRecord, status: UnmatchedInboundStatus) => {
-    if (!user?.uid) {
-      toast({ title: 'Admin session required', variant: 'destructive' });
-      return;
-    }
-
-    setProcessingUnmatchedId(item.id);
-    try {
-      await updateDoc(doc(db, WHATSAPP_UNMATCHED_COLLECTION, item.id), {
-        status,
-        updatedAt: serverTimestamp(),
-        updatedBy: user.uid,
-        resolvedAt: status === 'resolved' ? serverTimestamp() : null,
-        resolvedBy: status === 'resolved' ? user.uid : null,
-      });
-      toast({ title: status === 'ignored' ? 'Marked ignored' : 'Status updated' });
-    } catch (error: any) {
-      toast({
-        title: 'Failed to update inbox record',
-        description: error?.message || 'Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setProcessingUnmatchedId(null);
-    }
-  };
-
-  const handleResolveByLinkingLead = async () => {
-    if (!user?.uid || !linkTarget?.id || !linkLeadId) {
-      toast({
-        title: 'Lead selection required',
-        description: 'Choose a lead before resolving this message.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setProcessingUnmatchedId(linkTarget.id);
-    try {
-      await addDoc(collection(db, LEADS_COLLECTION, linkLeadId, LEAD_COMMUNICATIONS_COLLECTION), {
-        ...buildInboundCommunicationPayload(linkTarget),
-      });
-      await updateDoc(doc(db, LEADS_COLLECTION, linkLeadId), {
-        lastInboundAt: serverTimestamp(),
-        lastContactAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        updatedBy: user.uid,
-      });
-      await updateDoc(doc(db, WHATSAPP_UNMATCHED_COLLECTION, linkTarget.id), {
-        status: 'resolved',
-        resolvedLeadId: linkLeadId,
-        resolvedAt: serverTimestamp(),
-        resolvedBy: user.uid,
-        updatedAt: serverTimestamp(),
-        updatedBy: user.uid,
-      });
-      setLinkDialogOpen(false);
-      setLinkTarget(null);
-      setLinkLeadId('');
-      toast({ title: 'Unmatched message linked to lead' });
-    } catch (error: any) {
-      toast({
-        title: 'Failed to link message to lead',
-        description: error?.message || 'Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setProcessingUnmatchedId(null);
-    }
-  };
-
-  const handleCreateLeadFromUnmatched = async (item: UnmatchedInboundRecord) => {
-    if (!user?.uid) {
-      toast({ title: 'Admin session required', variant: 'destructive' });
-      return;
-    }
-
-    const normalizedPhone = normalizePhone(item.phoneNormalized || item.rawFrom || '');
-    if (!normalizedPhone) {
-      toast({
-        title: 'Phone unavailable',
-        description: 'This unmatched message has no usable phone number.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setProcessingUnmatchedId(item.id);
-    try {
-      const leadRef = await addDoc(collection(db, LEADS_COLLECTION), {
-        parentName: '',
-        primaryPhone: normalizeText(item.rawFrom) || normalizedPhone,
-        phoneNormalized: normalizedPhone,
-        parentEmail: null,
-        childName: '',
-        childAge: null,
-        childGrade: null,
-        interestTrack: 'phonics',
-        source: 'whatsapp',
-        sourceDetail: null,
-        country: null,
-        timezone: null,
-        preferredTimingText: null,
-        initialMessageSnippet: normalizeText(item.messageSummary) || null,
-        status: 'new',
-        ownerUserId: user.uid,
-        ownerRole: 'admin',
-        priority: 'normal',
-        nextFollowUpAt: null,
-        lastContactAt: serverTimestamp(),
-        lastInboundAt: serverTimestamp(),
-        lastOutboundAt: null,
-        tags: null,
-        notes: null,
-        demoSessionId: null,
-        enrollmentId: null,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        createdBy: user.uid,
-        updatedBy: user.uid,
-      });
-
-      await addDoc(collection(db, LEADS_COLLECTION, leadRef.id, LEAD_COMMUNICATIONS_COLLECTION), {
-        ...buildInboundCommunicationPayload(item),
-      });
-      await updateDoc(doc(db, WHATSAPP_UNMATCHED_COLLECTION, item.id), {
-        status: 'resolved',
-        resolvedLeadId: leadRef.id,
-        resolvedAt: serverTimestamp(),
-        resolvedBy: user.uid,
-        updatedAt: serverTimestamp(),
-        updatedBy: user.uid,
-      });
-      toast({ title: 'New lead created from unmatched message' });
-    } catch (error: any) {
-      toast({
-        title: 'Failed to create lead',
-        description: error?.message || 'Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setProcessingUnmatchedId(null);
-    }
-  };
-
-  const openResolvedLead = (leadId: string) => {
-    const lead = leads.find((item) => item.id === leadId);
-    if (!lead) {
-      toast({
-        title: 'Lead not found in current list',
-        description: `Lead ID: ${leadId}`,
-        variant: 'destructive',
-      });
-      return;
-    }
-    openLeadDialog(lead);
-  };
-
   const setDemoRequestField = <K extends keyof DemoRequestFormState>(
     field: K,
     value: DemoRequestFormState[K],
@@ -2233,13 +1952,33 @@ export default function LeadsInquiriesWorkspace({
   const resetFilters = () => {
     setSearchQuery('');
     setStageFilter('all');
+    setLeadStatusFilter('all');
     setSourceFilter('all');
     setCourseFilter('all');
     setTeacherFilter('all');
     setUpdatedFromDate('');
     setUpdatedToDate('');
+    setAppliedLeadStatusFilter('all');
+    setAppliedUpdatedFromDate('');
+    setAppliedUpdatedToDate('');
     setSummaryCardFilter('all');
     setFocusFilter(view === 'demos' ? 'all_demos' : 'all');
+  };
+
+  const applyServerFilters = () => {
+    const fromMs = parseDateOnlyMs(updatedFromDate);
+    const toMs = parseDateOnlyMs(updatedToDate);
+    if (fromMs && toMs && fromMs > toMs) {
+      toast({
+        title: 'Invalid date range',
+        description: 'Updated From cannot be after Updated To.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setAppliedLeadStatusFilter(leadStatusFilter);
+    setAppliedUpdatedFromDate(updatedFromDate);
+    setAppliedUpdatedToDate(updatedToDate);
   };
 
   const openEditDialog = (row: UnifiedRow) => {
@@ -2788,25 +2527,27 @@ export default function LeadsInquiriesWorkspace({
       </Card>
 
       <Card className="p-4">
-        <div className="mb-4 rounded-md border bg-slate-50/60 p-3">
-          <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Demo Ops Snapshot</div>
-          <div className="text-xs text-muted-foreground">
-            Teacher-wise demos (assigned + completed):
+        {view === 'demos' ? (
+          <div className="mb-4 rounded-md border bg-slate-50/60 p-3">
+            <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Demo Ops Snapshot</div>
+            <div className="text-xs text-muted-foreground">
+              Teacher-wise demos (assigned + completed):
+            </div>
+            <div className="mt-1 flex flex-wrap gap-2">
+              {demoSnapshot.teacherWise.length === 0 ? (
+                <span className="text-xs text-muted-foreground">No assigned/completed demos yet.</span>
+              ) : (
+                demoSnapshot.teacherWise.map(([teacherName, count]) => (
+                  <Badge key={teacherName} variant="outline">
+                    {teacherName}: {count}
+                  </Badge>
+                ))
+              )}
+            </div>
           </div>
-          <div className="mt-1 flex flex-wrap gap-2">
-            {demoSnapshot.teacherWise.length === 0 ? (
-              <span className="text-xs text-muted-foreground">No assigned/completed demos yet.</span>
-            ) : (
-              demoSnapshot.teacherWise.map(([teacherName, count]) => (
-                <Badge key={teacherName} variant="outline">
-                  {teacherName}: {count}
-                </Badge>
-              ))
-            )}
-          </div>
-        </div>
+        ) : null}
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-8">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-9">
           <div className="xl:col-span-2">
             <Label htmlFor="workflow-search">Search</Label>
             <Input
@@ -2830,6 +2571,22 @@ export default function LeadsInquiriesWorkspace({
                 <SelectItem value="admission_follow_up">Admission Follow-up</SelectItem>
                 <SelectItem value="admitted">Admitted</SelectItem>
                 <SelectItem value="lost">Lost</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Lead Status</Label>
+            <Select value={leadStatusFilter} onValueChange={(value) => setLeadStatusFilter(value as 'all' | LeadStatus)}>
+              <SelectTrigger>
+                <SelectValue placeholder="All statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                {LEAD_STATUSES.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {formatLabel(status)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -2902,127 +2659,14 @@ export default function LeadsInquiriesWorkspace({
             />
           </div>
         </div>
-        <div className="mt-3">
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            onClick={resetFilters}
-          >
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Button type="button" size="sm" onClick={applyServerFilters}>
+            Apply filters
+          </Button>
+          <Button type="button" size="sm" variant="ghost" onClick={resetFilters}>
             Clear filters
           </Button>
         </div>
-      </Card>
-
-      <Card className="p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <h4 className="text-base font-semibold">Unmatched WhatsApp Messages</h4>
-              <Badge variant="outline">Open: {unmatchedOpenCount}</Badge>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Inbound WhatsApp messages that could not be auto-matched to an existing lead.
-            </p>
-          </div>
-          <div className="w-[220px]">
-            <Select
-              value={unmatchedStatusFilter}
-              onValueChange={(value) => setUnmatchedStatusFilter(value as 'all' | UnmatchedInboundStatus)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Filter status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                <SelectItem value="unmatched">Unmatched</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
-                <SelectItem value="ignored">Ignored</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {filteredUnmatchedItems.length === 0 ? (
-          <div className="mt-4 rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-            No inbox records for the selected filter.
-          </div>
-        ) : (
-          <div className="mt-4 space-y-2">
-            {filteredUnmatchedItems.map((item) => (
-              <div key={item.id} className="rounded-md border p-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline">{formatLabel(item.status || 'unmatched')}</Badge>
-                  <Badge variant="outline">{item.provider || 'meta_whatsapp_cloud'}</Badge>
-                  <span className="text-xs text-muted-foreground">Received: {formatTs(item.receivedAt)}</span>
-                </div>
-                <div className="mt-2 grid gap-2 text-sm md:grid-cols-2">
-                  <div>
-                    <div className="text-xs text-muted-foreground">Phone</div>
-                    <div className="font-medium">{item.phoneNormalized || item.rawFrom || '—'}</div>
-                    {item.rawFrom && item.rawFrom !== item.phoneNormalized ? (
-                      <div className="text-xs text-muted-foreground">Raw: {item.rawFrom}</div>
-                    ) : null}
-                  </div>
-                  <div>
-                    <div className="text-xs text-muted-foreground">Message</div>
-                    <div>{item.messageSummary || '—'}</div>
-                  </div>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => openLinkLeadDialog(item)}
-                    disabled={item.status !== 'unmatched' || processingUnmatchedId === item.id}
-                  >
-                    Link to Lead
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => void handleCreateLeadFromUnmatched(item)}
-                    disabled={item.status !== 'unmatched' || processingUnmatchedId === item.id}
-                  >
-                    {processingUnmatchedId === item.id ? 'Processing...' : 'Create Lead'}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => void markUnmatchedRecord(item, item.status === 'ignored' ? 'unmatched' : 'ignored')}
-                    disabled={processingUnmatchedId === item.id}
-                  >
-                    {item.status === 'ignored' ? 'Mark Unmatched' : 'Mark Ignored'}
-                  </Button>
-                  {item.status !== 'resolved' ? (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => void markUnmatchedRecord(item, 'resolved')}
-                      disabled={processingUnmatchedId === item.id}
-                    >
-                      Mark Resolved
-                    </Button>
-                  ) : null}
-                  {item.resolvedLeadId ? (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => openResolvedLead(item.resolvedLeadId as string)}
-                    >
-                      Open Resolved Lead
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </Card>
 
       <Card className="overflow-hidden">
@@ -3031,18 +2675,22 @@ export default function LeadsInquiriesWorkspace({
             <div>
               <div className="text-sm font-semibold text-slate-900">Live workflow records</div>
               <div className="text-xs text-muted-foreground">
-                {filteredRows.length} of {mergedRows.length} records visible with current filters.
-                {` Page ${leadsPageIndex + 1} · ${leadsPageSize} per page`}
+                {visibleRows.length} of {filteredRows.length} records visible with current filters.
+                {` Top ${leadsPageSize} shown`}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <Badge variant="outline">Open demos {demoSnapshot.open}</Badge>
-              <Badge variant="outline">Assigned {demoSnapshot.assigned}</Badge>
-              <Badge variant="outline">Completed {demoSnapshot.completed}</Badge>
+              {view === 'demos' ? (
+                <>
+                  <Badge variant="outline">Open demos {demoSnapshot.open}</Badge>
+                  <Badge variant="outline">Assigned {demoSnapshot.assigned}</Badge>
+                  <Badge variant="outline">Completed {demoSnapshot.completed}</Badge>
+                </>
+              ) : null}
               <div className="ml-2 flex items-center gap-2">
                 <Select value={String(leadsPageSize)} onValueChange={handleLeadsPageSizeChange}>
                   <SelectTrigger className="h-8 w-[92px]">
-                    <SelectValue placeholder="10 / page" />
+                    <SelectValue placeholder={`${leadsPageSize} / page`} />
                   </SelectTrigger>
                   <SelectContent>
                     {LEADS_PAGE_SIZE_OPTIONS.map((size) => (
@@ -3052,24 +2700,6 @@ export default function LeadsInquiriesWorkspace({
                     ))}
                   </SelectContent>
                 </Select>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={goToPrevLeadsPage}
-                  disabled={leadsPageIndex === 0 || isLeadsPageLoading}
-                >
-                  Prev
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={goToNextLeadsPage}
-                  disabled={!hasNextLeadsPage || isLeadsPageLoading}
-                >
-                  Next
-                </Button>
               </div>
             </div>
           </div>
@@ -3078,7 +2708,7 @@ export default function LeadsInquiriesWorkspace({
           <div className="p-8 text-center text-sm text-muted-foreground">
             Loading latest leads...
           </div>
-        ) : filteredRows.length === 0 ? (
+        ) : visibleRows.length === 0 ? (
           <div className="p-8 text-center text-sm text-muted-foreground">
             No workflow records found for current filters.
           </div>
@@ -3101,7 +2731,7 @@ export default function LeadsInquiriesWorkspace({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredRows.map((row) => {
+                {visibleRows.map((row) => {
                   const demoStatus = row.demo ? normalizeDemoStatus(row.demo.status) : '';
                   const demoWorkflowState = resolveDemoWorkflowState(row.demo);
                   const isCompletedDemo = demoStatus === 'completed';
@@ -3467,51 +3097,6 @@ export default function LeadsInquiriesWorkspace({
               </Button>
             </div>
           </form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Link Unmatched Message to Existing Lead</DialogTitle>
-            <DialogDescription className="sr-only">
-              Search and select a lead to resolve an unmatched inbound WhatsApp message.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="rounded-md border p-3 text-sm">
-              <div className="text-xs text-muted-foreground">Inbound message</div>
-              <div className="mt-1">{linkTarget?.messageSummary || '—'}</div>
-              <div className="mt-1 text-xs text-muted-foreground">
-                Phone: {linkTarget?.phoneNormalized || linkTarget?.rawFrom || '—'}
-              </div>
-            </div>
-            <div>
-              <Label>Search Lead</Label>
-              <Input placeholder="Parent, child, phone" value={linkLeadSearch} onChange={(event) => setLinkLeadSearch(event.target.value)} />
-            </div>
-            <div>
-              <Label>Select Lead</Label>
-              <Select value={linkLeadId} onValueChange={setLinkLeadId}>
-                <SelectTrigger><SelectValue placeholder="Choose lead" /></SelectTrigger>
-                <SelectContent>
-                  {linkLeadOptions.map((lead) => (
-                    <SelectItem key={lead.id} value={lead.id}>
-                      {(lead.parentName || 'Unnamed Lead').trim() || 'Unnamed Lead'} • {lead.primaryPhone || '—'}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setLinkDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="button" onClick={() => void handleResolveByLinkingLead()} disabled={!linkLeadId || !!processingUnmatchedId}>
-                {processingUnmatchedId ? 'Linking...' : 'Link and Resolve'}
-              </Button>
-            </div>
-          </div>
         </DialogContent>
       </Dialog>
 

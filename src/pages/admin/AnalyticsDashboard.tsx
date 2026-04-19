@@ -70,6 +70,17 @@ const isSessionCharge = (entry: any) => {
 };
 
 const CANCELLED_SESSION_STATUSES = new Set(['cancelled', 'canceled']);
+const NON_PLANNED_SESSION_STATUSES = new Set([
+  'reschedule_requested',
+  'rescheduled',
+  'no_show',
+  'noshow',
+  'consumed',
+  'settled',
+  'paid',
+  'locked',
+]);
+const SCHEDULE_SESSION_SOURCES = new Set(['enrollmentschedule', 'enrollmentschedulereplace']);
 
 const normalizeEnrollmentStatus = (enrollment: any): string => {
   const raw = normalizeStatus(enrollment?.status);
@@ -136,15 +147,14 @@ const isEnrollmentProjectable = (enrollment: any): boolean => {
   return ACTIVE_LIKE_ENROLLMENT_STATUSES.has(normalizeEnrollmentStatus(enrollment));
 };
 
-type ProjectionRow = {
-  enrollmentId: string;
-  kidLabel: string;
-  courseLabel: string;
-  enrollmentStatus: string;
-  plannedSessions: number;
-  projectedRevenue: number;
-  missingFeeSessions: number;
-  avgFeePerSession: number;
+const isPlannedScheduleSession = (session: any): boolean => {
+  const sessionStatus = normalizeStatus(session?.status);
+  if (sessionStatus && CANCELLED_SESSION_STATUSES.has(sessionStatus)) return false;
+  if (sessionStatus && NON_PLANNED_SESSION_STATUSES.has(sessionStatus)) return false;
+
+  const source = normalizeStatus(session?.source);
+  if (!source) return true; // Legacy rows where source was not populated.
+  return SCHEDULE_SESSION_SOURCES.has(source);
 };
 
 const MetricCard = ({
@@ -329,13 +339,12 @@ export default function AnalyticsDashboard(): JSX.Element {
   const outstandingRevenue = revenueTotals.dueTotal;
   const completedSessionsMonth = revenueTotals.sessionChargesCount;
 
-  const projectionDetails = useMemo(() => {
+  const plannedProjection = useMemo(() => {
     let plannedSessions = 0;
     let projectedRevenue = 0;
     let missingFeeSessions = 0;
     const enrollmentIds = new Set<string>();
     const enrollmentById = new Map<string, any>();
-    const rowsByEnrollment = new Map<string, ProjectionRow>();
     enrollments.forEach((enrollment) => {
       const enrollmentId = String(enrollment?.id || '').trim();
       if (!enrollmentId) return;
@@ -354,21 +363,8 @@ export default function AnalyticsDashboard(): JSX.Element {
       });
     });
 
-    const studentNameById = new Map<string, string>();
-    students.forEach((student) => {
-      const key = String(student?.id || '').trim();
-      if (!key) return;
-      const label =
-        String(student?.name || '').trim() ||
-        String(student?.fullName || '').trim() ||
-        String(student?.displayName || '').trim() ||
-        key;
-      studentNameById.set(key, label);
-    });
-
     classSessions.forEach((session) => {
-      const sessionStatus = normalizeStatus(session?.status);
-      if (sessionStatus && CANCELLED_SESSION_STATUSES.has(sessionStatus)) return;
+      if (!isPlannedScheduleSession(session)) return;
 
       const enrollmentId = String(session?.enrollmentId || '').trim();
       if (!enrollmentId) return;
@@ -394,70 +390,16 @@ export default function AnalyticsDashboard(): JSX.Element {
       } else {
         missingFeeSessions += 1;
       }
-
-      const kidId = String(
-        session?.kidId ||
-          enrollment?.kidId ||
-          enrollment?.studentId ||
-          (Array.isArray(enrollment?.kidIds) ? enrollment.kidIds[0] : '') ||
-          ''
-      ).trim();
-      const kidLabel = studentNameById.get(kidId) || kidId || '—';
-
-      const courseId = String(session?.courseId || enrollment?.courseId || '').trim();
-      const courseLabel =
-        String(course?.name || '').trim() ||
-        String(course?.title || '').trim() ||
-        courseId ||
-        '—';
-
-      const existingRow = rowsByEnrollment.get(enrollmentId);
-      if (!existingRow) {
-        rowsByEnrollment.set(enrollmentId, {
-          enrollmentId,
-          kidLabel,
-          courseLabel,
-          enrollmentStatus: normalizeEnrollmentStatus(enrollment),
-          plannedSessions: 1,
-          projectedRevenue: feePerSession,
-          missingFeeSessions: feePerSession > 0 ? 0 : 1,
-          avgFeePerSession: feePerSession > 0 ? feePerSession : 0,
-        });
-      } else {
-        existingRow.plannedSessions += 1;
-        existingRow.projectedRevenue += feePerSession;
-        existingRow.missingFeeSessions += feePerSession > 0 ? 0 : 1;
-      }
     });
 
-    const rows = Array.from(rowsByEnrollment.values())
-      .map((row) => ({
-        ...row,
-        avgFeePerSession:
-          row.plannedSessions > row.missingFeeSessions
-            ? row.projectedRevenue / Math.max(row.plannedSessions - row.missingFeeSessions, 1)
-            : 0,
-      }))
-      .sort(
-        (a, b) =>
-          b.projectedRevenue - a.projectedRevenue ||
-          b.plannedSessions - a.plannedSessions ||
-          a.kidLabel.localeCompare(b.kidLabel)
-      );
-
     return {
-      summary: {
-        plannedSessions,
-        scheduleDrivenEnrollments: enrollmentIds.size,
-        projectedRevenue,
-        avgProjectedRevenuePerSession: plannedSessions > 0 ? projectedRevenue / plannedSessions : 0,
-        missingFeeSessions,
-      },
-      rows,
+      plannedSessions,
+      scheduleDrivenEnrollments: enrollmentIds.size,
+      projectedRevenue,
+      avgProjectedRevenuePerSession: plannedSessions > 0 ? projectedRevenue / plannedSessions : 0,
+      missingFeeSessions,
     };
-  }, [classSessions, courses, enrollments, students]);
-
-  const plannedProjection = projectionDetails.summary;
+  }, [classSessions, courses, enrollments]);
 
   const enrollmentBuckets = useMemo(() => {
     const counts = { activeLike: 0, past: 0, other: 0 };
@@ -675,58 +617,6 @@ export default function AnalyticsDashboard(): JSX.Element {
           sub={`Avg payout/session ${formatMoney(avgSessionPayout)}`}
         />
       </div>
-
-      <Card className="p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h3 className="text-sm font-semibold">Projection audit (by enrollment)</h3>
-            <p className="text-xs text-muted-foreground">
-              Built from real month classSessions; excludes cancelled sessions and non-projectable enrollments.
-            </p>
-          </div>
-          <span className="text-xs text-muted-foreground">
-            {projectionDetails.rows.length} enrollments
-          </span>
-        </div>
-        <div className="mt-3 overflow-x-auto">
-          <table className="w-full text-sm table-auto">
-            <thead>
-              <tr className="text-left border-b">
-                <th className="p-2">Kid</th>
-                <th className="p-2">Course</th>
-                <th className="p-2">Enrollment</th>
-                <th className="p-2">Status</th>
-                <th className="p-2 text-right">Planned</th>
-                <th className="p-2 text-right">Projected ₹</th>
-                <th className="p-2 text-right">Missing fee #</th>
-                <th className="p-2 text-right">Avg fee/session</th>
-              </tr>
-            </thead>
-            <tbody>
-              {projectionDetails.rows.length === 0 ? (
-                <tr>
-                  <td className="p-3 text-muted-foreground" colSpan={8}>
-                    No planned sessions found for this month.
-                  </td>
-                </tr>
-              ) : (
-                projectionDetails.rows.slice(0, 40).map((row) => (
-                  <tr key={row.enrollmentId} className="border-b last:border-b-0">
-                    <td className="p-2">{row.kidLabel}</td>
-                    <td className="p-2">{row.courseLabel}</td>
-                    <td className="p-2 font-mono text-xs">{row.enrollmentId}</td>
-                    <td className="p-2 capitalize">{row.enrollmentStatus || '—'}</td>
-                    <td className="p-2 text-right">{row.plannedSessions}</td>
-                    <td className="p-2 text-right font-medium">{formatMoney(row.projectedRevenue)}</td>
-                    <td className="p-2 text-right">{row.missingFeeSessions}</td>
-                    <td className="p-2 text-right">{formatMoney(row.avgFeePerSession)}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MetricCard label="Active-like enrollments" value={enrollmentBuckets.activeLike} />
