@@ -841,6 +841,22 @@ const formatFollowUpCallStatus = (status?: DemoFollowUpCallStatus | null): strin
   return status.charAt(0).toUpperCase() + status.slice(1);
 };
 
+const getTeacherResponseItems = (demo: DemoSession | null): Array<{ label: string; value: string }> => {
+  if (!demo) return [];
+  const items: Array<{ label: string; value: string }> = [];
+  if (demo.outcome) items.push({ label: 'Outcome', value: formatLabel(demo.outcome) });
+  if (normalizeText(demo.teacherRemarks)) {
+    items.push({ label: 'Teacher Remarks', value: normalizeText(demo.teacherRemarks) });
+  }
+  if (normalizeText(demo.teacherRecommendation)) {
+    items.push({ label: 'Teacher Recommendation', value: normalizeText(demo.teacherRecommendation) });
+  }
+  if (demo.recommendedNextStep) {
+    items.push({ label: 'Recommended Next Step', value: formatLabel(demo.recommendedNextStep) });
+  }
+  return items;
+};
+
 const sanitizePhoneForWhatsApp = (value: string): string => value.replace(/[^\d]/g, '');
 
 const copyText = async (value: string): Promise<void> => {
@@ -1334,6 +1350,10 @@ export default function LeadsInquiriesWorkspace({
   ]);
 
   const visibleRows = useMemo(() => filteredRows.slice(0, leadsPageSize), [filteredRows, leadsPageSize]);
+  const conversionTeacherResponses = useMemo(
+    () => getTeacherResponseItems(conversionTarget?.demo || null),
+    [conversionTarget?.demo],
+  );
 
   const summary = useMemo(() => {
     return mergedRows.reduce(
@@ -1998,7 +2018,7 @@ export default function LeadsInquiriesWorkspace({
     setFollowUpDate(row.demo.followUpDate || '');
     setFollowUpCallStatus(row.demo.followUpCallStatus || 'none');
     setFollowUpCallCompletedAt(row.demo.followUpCallCompletedAt || '');
-    setAdmissionNotConfirmedReason(row.demo.admissionNotConfirmedReason || '');
+    setAdmissionNotConfirmedReason(row.demo.admissionNotConfirmedReason || row.demo.teacherRemarks || '');
   };
 
   const openReassignDialog = (row: UnifiedRow) => {
@@ -2767,6 +2787,16 @@ export default function LeadsInquiriesWorkspace({
                         {row.demo?.teacherConfirmedDate || row.demo?.teacherConfirmedTime ? (
                           <div className="text-xs text-muted-foreground">
                             {`${row.demo.teacherConfirmedDate || '—'} ${row.demo.teacherConfirmedTime || ''}`.trim()}
+                          </div>
+                        ) : null}
+                        {row.demo?.teacherRemarks ? (
+                          <div className="mt-1 max-w-[240px] text-xs text-muted-foreground">
+                            Teacher: {row.demo.teacherRemarks}
+                          </div>
+                        ) : null}
+                        {!row.demo?.teacherRemarks && row.demo?.teacherRecommendation ? (
+                          <div className="mt-1 max-w-[240px] text-xs text-muted-foreground">
+                            Recommendation: {row.demo.teacherRecommendation}
                           </div>
                         ) : null}
                       </TableCell>
@@ -3731,6 +3761,24 @@ export default function LeadsInquiriesWorkspace({
           </DialogHeader>
 
           <form className="space-y-4" onSubmit={handleSaveConversion}>
+            <div className="rounded-md border bg-slate-50/60 p-3">
+              <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Teacher Response
+              </div>
+              {conversionTeacherResponses.length === 0 ? (
+                <div className="text-sm text-muted-foreground">No teacher response submitted yet.</div>
+              ) : (
+                <div className="space-y-1">
+                  {conversionTeacherResponses.map((item) => (
+                    <div key={item.label} className="text-sm">
+                      <span className="font-medium">{item.label}:</span>{' '}
+                      <span className="text-muted-foreground">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="space-y-2">
               <Label>Conversion Status</Label>
               <Select value={conversionStatus} onValueChange={setConversionStatus}>
