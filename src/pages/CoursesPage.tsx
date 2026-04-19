@@ -3,13 +3,18 @@ import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo, getRouteConfig } from '../lib/seo';
 import { catalogs } from '../content/courses';
-import { createCourseListSchema } from '../lib/schemas';
+import { createCourseListSchema, PUBLIC_FACTS } from '../lib/schemas';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
 
 const coursesSeo = getRouteConfig('/courses');
+const coursesSeoTitle = coursesSeo?.title ?? 'Choose the Right English Course for Kids | Tiny Steps Learning';
+const coursesSeoDescription =
+  coursesSeo?.description ??
+  'Choose your child’s starting program by main need: reading gaps, sentence accuracy, or expression confidence across Phonics, Grammar, and Public Speaking.';
 const coursesCanonicalPath = coursesSeo?.canonicalPath ?? '/courses';
 const coursesCanonicalUrl = `https://tinystepslearning.com${coursesCanonicalPath}`;
 const BOOK_ASSESSMENT_HREF = '/courses?book=1';
+const CORE_PROGRAMS_TEXT = `${PUBLIC_FACTS.corePrograms[0]}, ${PUBLIC_FACTS.corePrograms[1]}, and ${PUBLIC_FACTS.corePrograms[2]}`;
 
 const trustPoints = [
   '1:1 personalized attention',
@@ -83,24 +88,24 @@ const speakingCards = [
 
 const quickAnswerFaqItems = [
   {
-    question: 'Which courses are available at Tiny Steps?',
+    question: 'Which course should my child start with?',
     answer:
-      'Tiny Steps offers online phonics classes, grammar and sentence-building classes, and communication/public speaking classes for children.',
+      'Start with Phonics when reading and blending are weak, Grammar when sentence accuracy is the main gap, and Speaking when confidence and expression need the most support.',
   },
   {
-    question: 'How do parents choose the right course?',
+    question: 'How do parents decide between Grammar and Speaking first?',
     answer:
-      'Parents can choose based on the child’s current need, such as reading support, grammar foundations, sentence formation, clear expression, or speaking confidence.',
+      'If school writing has frequent errors, start with Grammar. If your child knows ideas but hesitates to express them, start with Speaking.',
   },
   {
-    question: 'Are the courses suitable for beginners?',
+    question: 'What if my child needs support in more than one area?',
     answer:
-      'Yes. Children can begin at the right level and move step by step through guided practice, activities, correction, and review.',
+      'We recommend one starting priority after assessment, then sequence the next pathway so progress stays focused and manageable.',
   },
   {
-    question: 'How are Tiny Steps courses delivered?',
+    question: 'Can course placement change later?',
     answer:
-      'Courses are delivered through live online classes in one-on-one or small-group formats, supported by teacher feedback and parent progress updates.',
+      'Yes. Placement is reviewed as your child progresses, so level or pathway can be adjusted when the child is ready.',
   },
 ];
 
@@ -136,7 +141,7 @@ function CoursesPage() {
     const courseListSchema = createCourseListSchema({
       name: 'Tiny Steps English courses for kids',
       description:
-        'Browse Tiny Steps online phonics, grammar, and speaking programs for kids with clear learning paths and parent-visible outcomes.',
+        `Which course should your child start with? Compare Tiny Steps ${CORE_PROGRAMS_TEXT} programs by learning need and starting priority.`,
       url: coursesCanonicalUrl,
       courses: catalogs.map((c) => ({
         id: `https://tinystepslearning.com/courses/${c.slug}`,
@@ -150,12 +155,8 @@ function CoursesPage() {
     });
 
     applySeo({
-      title:
-        coursesSeo?.title ??
-        'Online English Courses for Kids | Phonics, Grammar & Speaking | Tiny Steps Learning',
-      description:
-        coursesSeo?.description ??
-        'Explore Tiny Steps phonics, grammar, and speaking programs for kids with structured progression, clear outcomes, and live mentor support, including synthetic phonics foundations in the phonics track.',
+      title: coursesSeoTitle,
+      description: coursesSeoDescription,
       canonicalPath: coursesCanonicalPath,
       ogType: 'website',
       jsonLd: [breadcrumb, courseListSchema, quickAnswerFaqSchema],
@@ -209,9 +210,24 @@ function CoursesPage() {
 
           <div className="mt-7 grid gap-3 md:grid-cols-3">
             {[
-              { title: 'Phonics', subtitle: 'Build reading', icon: '🔤' },
-              { title: 'Grammar', subtitle: 'Build sentences', icon: '✍️' },
-              { title: 'Speaking', subtitle: 'Build confidence', icon: '🎤' },
+              {
+                title: 'Phonics',
+                subtitle: 'Reading foundation',
+                helper: 'Best first step when your child knows letters but struggles to blend or read words.',
+                icon: '🔤',
+              },
+              {
+                title: 'Grammar',
+                subtitle: 'Sentence accuracy',
+                helper: 'Best first step when your child reads but makes frequent sentence or writing errors.',
+                icon: '✍️',
+              },
+              {
+                title: 'Speaking',
+                subtitle: 'Confidence and expression',
+                helper: 'Best first step when your child hesitates to speak or struggles to organize responses.',
+                icon: '🎤',
+              },
             ].map((item, index) => (
               <div
                 key={item.title}
@@ -233,6 +249,7 @@ function CoursesPage() {
                 <p className="mx-auto mb-2 inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-base">{item.icon}</p>
                 <p className="text-lg font-bold text-slate-900">{item.title}</p>
                 <p className="mt-1 text-sm font-medium text-slate-600">{item.subtitle}</p>
+                <p className="mt-2 text-xs leading-relaxed text-slate-500">{item.helper}</p>
                 <p className="mt-3 text-base font-semibold text-slate-400 transition-transform duration-200 group-hover:translate-x-1">→</p>
               </div>
             ))}
@@ -242,13 +259,12 @@ function CoursesPage() {
 
       <section id="phonics-program-section" className="px-6 py-10">
         <div className="mx-auto max-w-6xl mb-8 rounded-[28px] border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-sky-50 p-6 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-8">
-          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Quick Answer for Parents</h2>
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Which course should I choose first?</h2>
           <p className="mt-3 max-w-4xl text-sm text-slate-700 sm:text-base">
-            Tiny Steps Learning offers online English learning courses for children, including phonics, grammar,
-            sentence formation, communication, and public speaking. The courses are designed for children who need
-            support with reading confidence, grammar foundations, clear expression, vocabulary use, and structured
-            speaking. Classes are available in one-on-one and small-group online formats, with teacher-led practice
-            and parent progress updates to show what the child is learning and what needs more practice.
+            Choose the first course based on your child&apos;s main bottleneck. Reading and blending gaps usually need
+            Phonics first, sentence accuracy and writing gaps usually need Grammar first, and hesitation or expression
+            gaps usually need Speaking first. This focused start makes progress easier to see and avoids overload.
+            Next step: book one assessment to confirm the starting track and level.
           </p>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">

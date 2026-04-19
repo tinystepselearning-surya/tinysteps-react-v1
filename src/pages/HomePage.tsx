@@ -1,8 +1,8 @@
 // src/pages/HomePage.tsx
 // @ts-nocheck
 import React, { lazy, Suspense, useEffect, useState } from "react";
-import { applySeo } from "../lib/seo";
-import { localBusinessSchema, websiteSchema } from "../lib/schemas";
+import { applySeo, getRouteConfig } from "../lib/seo";
+import { localBusinessSchema, websiteSchema, PUBLIC_FACTS } from "../lib/schemas";
 import { Link } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
@@ -31,11 +31,20 @@ const PARENT_HELP_POINTS = [
   "Friendly support for common phonics questions",
 ];
 const WORLDWIDE_COUNTRIES = ['India','UAE','Vietnam','Singapore','Malaysia','UK','Canada','USA','Sweden','Germany','Australia','Sri Lanka','Pakistan'];
+const CORE_PROGRAMS_TEXT = `${PUBLIC_FACTS.corePrograms[0]}, ${PUBLIC_FACTS.corePrograms[1]}, and ${PUBLIC_FACTS.corePrograms[2]}`;
+const homeSeo = getRouteConfig("/");
+const homeSeoTitle = homeSeo?.title ?? "Tiny Steps Learning | Premium Online English Learning for Children";
+const homeSeoDescription =
+  homeSeo?.description ??
+  "Start your child’s English journey with premium live online Phonics, Grammar, and Public Speaking classes, structured progression, and clear parent updates.";
+const homeCanonicalPath = homeSeo?.canonicalPath ?? "/";
+const homeCanonicalUrl =
+  homeCanonicalPath === "/" ? `${PUBLIC_FACTS.primaryWebsite}/` : `${PUBLIC_FACTS.primaryWebsite}${homeCanonicalPath}`;
 const quickAnswerFaqItems = [
   {
     question: "What does Tiny Steps Learning teach?",
     answer:
-      "Tiny Steps teaches phonics, reading, grammar, sentence formation, vocabulary use, communication skills, and public speaking for children.",
+      `${PUBLIC_FACTS.brandName} offers ${PUBLIC_FACTS.positioning} through ${CORE_PROGRAMS_TEXT} programs.`,
   },
   {
     question: "Who are Tiny Steps classes for?",
@@ -45,7 +54,7 @@ const quickAnswerFaqItems = [
   {
     question: "How are Tiny Steps classes conducted?",
     answer:
-      "Classes are conducted through live online sessions in one-on-one and small-group formats using activities, visuals, practice tasks, teacher feedback, and guided correction.",
+      `Classes are conducted through ${PUBLIC_FACTS.deliveryModel} in one-on-one and small-group formats. Each session is ${PUBLIC_FACTS.sessionDuration}.`,
   },
   {
     question: "How do parents know if the child is improving?",
@@ -69,17 +78,12 @@ const quickAnswerFaqSchema = {
 
 export default function HomePage() {
   const [showDeferredSections, setShowDeferredSections] = useState(false);
-  const [ratingsSnapshot, setRatingsSnapshot] = useState<{ average: number; count: number }>({
-    average: 4.9,
-    count: 0,
-  });
 
   useEffect(() => {
     applySeo({
-      title: "Online Phonics, Grammar & Public Speaking Classes for Kids | Tiny Steps Learning",
-      description:
-        "Live 1:1 and small-group online phonics, grammar, and speaking classes for kids ages 3–12. Free assessment, structured curriculum, trained teachers, weekly parent updates.",
-      canonicalPath: "/",
+      title: homeSeoTitle,
+      description: homeSeoDescription,
+      canonicalPath: homeCanonicalPath,
       ogType: "website",
       jsonLd: [
         localBusinessSchema,
@@ -133,42 +137,13 @@ export default function HomePage() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!showDeferredSections) return;
-
-    let cancelled = false;
-    const loadRatings = async () => {
-      try {
-        const { fetchApprovedTestimonialsCatalog, computeTestimonialAggregate } = await import("../lib/testimonials");
-        const approved = await fetchApprovedTestimonialsCatalog(800);
-        if (cancelled) return;
-        const aggregate = computeTestimonialAggregate(approved);
-        if (aggregate.ratingCount > 0) {
-          setRatingsSnapshot({
-            average: aggregate.averageRating,
-            count: aggregate.ratingCount,
-          });
-        }
-      } catch {
-        // Keep fallback rating if live fetch fails
-      }
-    };
-
-    void loadRatings();
-    return () => {
-      cancelled = true;
-    };
-  }, [showDeferredSections]);
-
-  const ratingValue = `${ratingsSnapshot.average.toFixed(1)}/5`;
-
   return (
     <>
       <Meta
-        title="Online Phonics, Grammar & Public Speaking Classes for Kids | Tiny Steps Learning"
-        description="1:1 online phonics, grammar, and public speaking classes for kids ages 3–12. Structured curriculum, trained teachers, weekly parent updates, and free assessment."
-        keywords="phonics classes online India, grammar classes for kids, public speaking courses children, English learning kids ages 3-12, online English tuition India"
-        canonical="https://tinystepslearning.com/"
+        title={homeSeoTitle}
+        description={homeSeoDescription}
+        keywords="phonics classes online India, grammar classes for kids, public speaking courses children, English learning kids ages 3-15, online English tuition India"
+        canonical={homeCanonicalUrl}
       />
 
       {/* HERO */}
@@ -178,10 +153,10 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl rounded-[30px] border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-sky-50 p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
           <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Quick Answer for Parents</h2>
           <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-700 sm:text-base">
-            Tiny Steps Learning is a premium online English learning school for children, offering phonics, grammar,
-            sentence formation, communication, and public speaking programs. Tiny Steps supports children who need
+            {PUBLIC_FACTS.brandName} offers {PUBLIC_FACTS.positioning}, with core programs in {CORE_PROGRAMS_TEXT}. Tiny Steps supports children who need
             help with reading confidence, grammar foundations, clear expression, structured speaking, and confident
-            communication. Classes are conducted live online in one-on-one and small-group formats, with teacher-led
+            communication. Founded by Priya, Tiny Steps is led by an academic team focused on structured, child-friendly teaching.
+            Classes are conducted through {PUBLIC_FACTS.deliveryModel} in one-on-one and small-group formats, with teacher-led
             practice, child-friendly activities, guided correction, and parent progress updates.
           </p>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -348,7 +323,7 @@ export default function HomePage() {
           </Suspense>
 
           <Suspense fallback={null}>
-            <DemoShowcase ratingValue={ratingValue} ratingCount={ratingsSnapshot.count} />
+            <DemoShowcase />
           </Suspense>
 
           {/* WhyChooseCollapsibleSection intentionally removed */}
@@ -440,7 +415,7 @@ export default function HomePage() {
           </Suspense>
 
           <Suspense fallback={null}>
-            <FinalCTASection ratingValue={ratingValue} ratingCount={ratingsSnapshot.count} />
+            <FinalCTASection />
           </Suspense>
 
           {/* Locations served — helps 'near me' intent while clarifying we're online */}
@@ -448,7 +423,7 @@ export default function HomePage() {
             <div className="mx-auto max-w-6xl">
               <div className="rounded-[32px] border border-slate-200/80 bg-gradient-to-br from-white via-white to-sky-50 p-6 shadow-[0_24px_60px_rgba(15,23,42,0.06)] sm:p-8">
                 <h2 className="text-2xl font-semibold text-slate-900 sm:text-3xl">English classes for kids worldwide</h2>
-                <p className="mt-3 max-w-3xl text-gray-700"><AutoLinkedText text="Tiny Steps now supports admissions from 15+ countries. Families join us from India, the UAE, Vietnam, Singapore, Malaysia, the UK, Canada, the USA, Sweden, Germany, Australia, Sri Lanka, Pakistan, and more." /></p>
+                <p className="mt-3 max-w-3xl text-gray-700"><AutoLinkedText text={`Tiny Steps supports ${PUBLIC_FACTS.geography}. Families join us from India, the UAE, Vietnam, Singapore, Malaysia, the UK, Canada, the USA, Sweden, Germany, Australia, Sri Lanka, Pakistan, and more.`} /></p>
 
                 <div className="mt-5 flex flex-wrap gap-2">
                   {WORLDWIDE_COUNTRIES.map((c) => (

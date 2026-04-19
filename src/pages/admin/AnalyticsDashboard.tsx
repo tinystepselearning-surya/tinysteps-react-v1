@@ -69,6 +69,8 @@ const isSessionCharge = (entry: any) => {
   return Boolean(String(entry?.sessionId || '').trim());
 };
 
+const CANCELLED_SESSION_STATUSES = new Set(['cancelled', 'canceled']);
+
 const normalizeEnrollmentStatus = (enrollment: any): string => {
   const raw = normalizeStatus(enrollment?.status);
   if (!raw) {
@@ -99,6 +101,18 @@ const ACTIVE_LIKE_ENROLLMENT_STATUSES = new Set([
   'ongoing',
 ]);
 
+const NON_PROJECTABLE_ENROLLMENT_STATUSES = new Set([
+  'paused',
+  'pending_teacher',
+  'completed',
+  'discontinued',
+  'expired',
+  'cancelled',
+  'canceled',
+  'archived',
+  'inactive',
+]);
+
 const LEGACY_PAST_ENROLLMENT_STATUSES = new Set([
   'completed',
   'discontinued',
@@ -108,89 +122,29 @@ const LEGACY_PAST_ENROLLMENT_STATUSES = new Set([
   'archived',
 ]);
 
-const parseYmd = (value: any): Date | null => {
-  const raw = String(value || '').trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
-  const [y, m, d] = raw.split('-').map(Number);
-  const dt = new Date(y, m - 1, d);
-  if (
-    Number.isNaN(dt.getTime()) ||
-    dt.getFullYear() !== y ||
-    dt.getMonth() !== m - 1 ||
-    dt.getDate() !== d
-  ) {
-    return null;
+const resolvePositiveNumber = (...values: any[]): number => {
+  for (const value of values) {
+    const num = Number(value);
+    if (Number.isFinite(num) && num > 0) return num;
   }
-  return dt;
+  return 0;
 };
 
-const toDateMaybe = (value: any): Date | null => {
-  if (!value) return null;
-  if (typeof value?.toDate === 'function') {
-    const d = value.toDate();
-    return Number.isFinite(d?.getTime?.()) ? d : null;
-  }
-  if (value instanceof Date) {
-    return Number.isFinite(value.getTime()) ? value : null;
-  }
-  if (typeof value === 'string') {
-    const ymd = parseYmd(value);
-    if (ymd) return ymd;
-  }
-  const parsed = new Date(value);
-  return Number.isFinite(parsed.getTime()) ? parsed : null;
+const isEnrollmentProjectable = (enrollment: any): boolean => {
+  const rawStatus = normalizeStatus(enrollment?.status);
+  if (rawStatus && NON_PROJECTABLE_ENROLLMENT_STATUSES.has(rawStatus)) return false;
+  return ACTIVE_LIKE_ENROLLMENT_STATUSES.has(normalizeEnrollmentStatus(enrollment));
 };
 
-const normalizeTimeHHmm = (value: any): string | null => {
-  const raw = String(value || '').trim();
-  const match = raw.match(/^(\d{1,2}):(\d{2})$/);
-  if (!match) return null;
-  const hh = Number(match[1]);
-  const mm = Number(match[2]);
-  if (!Number.isInteger(hh) || !Number.isInteger(mm) || hh < 0 || hh > 23 || mm < 0 || mm > 59) return null;
-  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
-};
-
-const normalizeWeekday = (value: any): number | null => {
-  const n = Number(value);
-  if (!Number.isInteger(n) || n < 0 || n > 6) return null;
-  return n;
-};
-
-const extractWeeklyScheduleSlots = (schedule: any): Array<{ weekday: number; timeHHmm: string }> => {
-  const slots: Array<{ weekday: number; timeHHmm: string }> = [];
-  const seen = new Set<string>();
-
-  const weeklySlots = Array.isArray(schedule?.weeklySlots) ? schedule.weeklySlots : [];
-  weeklySlots.forEach((slot: any) => {
-    const weekday = normalizeWeekday(slot?.weekday);
-    const timeHHmm = normalizeTimeHHmm(slot?.time || slot?.timeHHmm);
-    if (weekday === null || !timeHHmm) return;
-    const key = `${weekday}_${timeHHmm}`;
-    if (seen.has(key)) return;
-    seen.add(key);
-    slots.push({ weekday, timeHHmm });
-  });
-  if (slots.length > 0) return slots;
-
-  const legacyWeekdays = Array.isArray(schedule?.weekdays) ? schedule.weekdays : [];
-  const legacyTime = normalizeTimeHHmm(schedule?.timeHHmm || schedule?.time) || '18:00';
-  legacyWeekdays.forEach((day: any) => {
-    const weekday = normalizeWeekday(day);
-    if (weekday === null) return;
-    const key = `${weekday}_${legacyTime}`;
-    if (seen.has(key)) return;
-    seen.add(key);
-    slots.push({ weekday, timeHHmm: legacyTime });
-  });
-  return slots;
-};
-
-const dayCountInclusive = (start: Date, end: Date): number => {
-  const s = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
-  const e = new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime();
-  if (s > e) return 0;
-  return Math.floor((e - s) / (24 * 60 * 60 * 1000)) + 1;
+type ProjectionRow = {
+  enrollmentId: string;
+  kidLabel: string;
+  courseLabel: string;
+  enrollmentStatus: string;
+  plannedSessions: number;
+  projectedRevenue: number;
+  missingFeeSessions: number;
+  avgFeePerSession: number;
 };
 
 const MetricCard = ({
@@ -216,6 +170,7 @@ export default function AnalyticsDashboard(): JSX.Element {
   const [courses, setCourses] = useState<any[]>([]);
   const [charges, setCharges] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
+  const [classSessions, setClassSessions] = useState<any[]>([]);
   const [teacherEarningsEntries, setTeacherEarningsEntries] = useState<any[]>([]);
   const [fsError, setFsError] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => monthKeyFromDate(new Date()));
@@ -252,8 +207,13 @@ export default function AnalyticsDashboard(): JSX.Element {
     if (!selectedMonth) {
       setCharges([]);
       setPayments([]);
+      setClassSessions([]);
       setTeacherEarningsEntries([]);
       return;
+    }
+    const monthRange = monthRangeFromKey(selectedMonth);
+    if (!monthRange) {
+      setClassSessions([]);
     }
     const chargesQuery = query(
       collection(db, 'billingCharges'),
@@ -267,6 +227,13 @@ export default function AnalyticsDashboard(): JSX.Element {
       collection(db, 'teacherEarnings'),
       where('monthKey', '==', selectedMonth)
     );
+    const classSessionsQuery =
+      monthRange &&
+      query(
+        collection(db, 'classSessions'),
+        where('date', '>=', monthRange.startYmd),
+        where('date', '<=', monthRange.endYmd)
+      );
     const unsubCharges = onSnapshot(
       chargesQuery,
       (snap) => setCharges(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
@@ -283,9 +250,17 @@ export default function AnalyticsDashboard(): JSX.Element {
         setTeacherEarningsEntries(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
       (err) => setFsError(err?.message || 'Some analytics data could not be loaded.')
     );
+    const unsubClassSessions = classSessionsQuery
+      ? onSnapshot(
+        classSessionsQuery,
+        (snap) => setClassSessions(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+        (err) => setFsError(err?.message || 'Some analytics data could not be loaded.')
+      )
+      : () => {};
     return () => {
       unsubCharges();
       unsubPayments();
+      unsubClassSessions();
       unsubTeacherEarnings();
     };
   }, [selectedMonth]);
@@ -352,95 +327,137 @@ export default function AnalyticsDashboard(): JSX.Element {
   const expectedRevenue = revenueTotals.chargesTotal;
   const earnedRevenue = revenueTotals.appliedTotal;
   const outstandingRevenue = revenueTotals.dueTotal;
-  const completedSessionsMonth = revenueTotals.chargesCount;
+  const completedSessionsMonth = revenueTotals.sessionChargesCount;
 
-  const plannedProjection = useMemo(() => {
-    const monthRange = monthRangeFromKey(selectedMonth);
-    if (!monthRange) {
-      return {
-        plannedSessions: 0,
-        scheduleDrivenEnrollments: 0,
-        projectedRevenue: 0,
-        avgProjectedRevenuePerSession: 0,
-        missingFeeSessions: 0,
-      };
-    }
-
-    const monthStart = parseYmd(monthRange.startYmd);
-    const monthEnd = parseYmd(monthRange.endYmd);
-    if (!monthStart || !monthEnd) {
-      return {
-        plannedSessions: 0,
-        scheduleDrivenEnrollments: 0,
-        projectedRevenue: 0,
-        avgProjectedRevenuePerSession: 0,
-        missingFeeSessions: 0,
-      };
-    }
-
-    const observedAvgCompletedRevenue =
-      completedSessionsMonth > 0 ? expectedRevenue / completedSessionsMonth : 0;
-
+  const projectionDetails = useMemo(() => {
     let plannedSessions = 0;
-    let scheduleDrivenEnrollments = 0;
     let projectedRevenue = 0;
     let missingFeeSessions = 0;
-
+    const enrollmentIds = new Set<string>();
+    const enrollmentById = new Map<string, any>();
+    const rowsByEnrollment = new Map<string, ProjectionRow>();
     enrollments.forEach((enrollment) => {
-      const status = normalizeEnrollmentStatus(enrollment);
-      if (!ACTIVE_LIKE_ENROLLMENT_STATUSES.has(status)) return;
+      const enrollmentId = String(enrollment?.id || '').trim();
+      if (!enrollmentId) return;
+      enrollmentById.set(enrollmentId, enrollment);
+    });
 
-      const slots = extractWeeklyScheduleSlots(enrollment?.schedule);
-      if (slots.length === 0) return;
+    const courseById = new Map<string, any>();
+    courses.forEach((course) => {
+      const keys = [course?.id, course?.courseId, course?.slug, course?.code]
+        .map((value) => String(value || '').trim())
+        .filter(Boolean);
+      keys.forEach((key) => {
+        if (!courseById.has(key)) {
+          courseById.set(key, course);
+        }
+      });
+    });
 
-      const scheduleStart =
-        parseYmd(enrollment?.classesStartDateYmd) ||
-        toDateMaybe(enrollment?.classesStartDate) ||
-        parseYmd(enrollment?.startDateYmd) ||
-        toDateMaybe(enrollment?.startDate);
-      const scheduleEnd =
-        parseYmd(enrollment?.schedule?.endDateYmd) ||
-        parseYmd(enrollment?.endDateYmd) ||
-        toDateMaybe(enrollment?.endDate);
+    const studentNameById = new Map<string, string>();
+    students.forEach((student) => {
+      const key = String(student?.id || '').trim();
+      if (!key) return;
+      const label =
+        String(student?.name || '').trim() ||
+        String(student?.fullName || '').trim() ||
+        String(student?.displayName || '').trim() ||
+        key;
+      studentNameById.set(key, label);
+    });
 
-      const effectiveStart = scheduleStart && scheduleStart > monthStart ? scheduleStart : monthStart;
-      const effectiveEnd = scheduleEnd && scheduleEnd < monthEnd ? scheduleEnd : monthEnd;
-      if (effectiveStart > effectiveEnd) return;
+    classSessions.forEach((session) => {
+      const sessionStatus = normalizeStatus(session?.status);
+      if (sessionStatus && CANCELLED_SESSION_STATUSES.has(sessionStatus)) return;
 
-      let enrollmentPlannedSessions = 0;
-      const days = dayCountInclusive(effectiveStart, effectiveEnd);
-      for (let i = 0; i < days; i += 1) {
-        const day = new Date(effectiveStart);
-        day.setDate(effectiveStart.getDate() + i);
-        const weekday = day.getDay();
-        enrollmentPlannedSessions += slots.filter((slot) => slot.weekday === weekday).length;
-      }
-      if (enrollmentPlannedSessions <= 0) return;
+      const enrollmentId = String(session?.enrollmentId || '').trim();
+      if (!enrollmentId) return;
 
-      scheduleDrivenEnrollments += 1;
-      plannedSessions += enrollmentPlannedSessions;
+      const enrollment = enrollmentById.get(enrollmentId);
+      if (!enrollment || !isEnrollmentProjectable(enrollment)) return;
 
-      const feeRaw = Number(enrollment?.feePerClass ?? NaN);
-      const feePerClass = Number.isFinite(feeRaw) && feeRaw > 0 ? feeRaw : 0;
-      if (feePerClass > 0) {
-        projectedRevenue += enrollmentPlannedSessions * feePerClass;
+      plannedSessions += 1;
+      enrollmentIds.add(enrollmentId);
+
+      const course = courseById.get(String(session?.courseId || enrollment?.courseId || '').trim());
+      const feePerSession = resolvePositiveNumber(
+        session?.feeAmount,
+        session?.feePerClass,
+        enrollment?.feePerClass,
+        enrollment?.ratePerSession,
+        course?.feePerClass,
+        course?.ratePerSession
+      );
+
+      if (feePerSession > 0) {
+        projectedRevenue += feePerSession;
       } else {
-        missingFeeSessions += enrollmentPlannedSessions;
+        missingFeeSessions += 1;
+      }
+
+      const kidId = String(
+        session?.kidId ||
+          enrollment?.kidId ||
+          enrollment?.studentId ||
+          (Array.isArray(enrollment?.kidIds) ? enrollment.kidIds[0] : '') ||
+          ''
+      ).trim();
+      const kidLabel = studentNameById.get(kidId) || kidId || '—';
+
+      const courseId = String(session?.courseId || enrollment?.courseId || '').trim();
+      const courseLabel =
+        String(course?.name || '').trim() ||
+        String(course?.title || '').trim() ||
+        courseId ||
+        '—';
+
+      const existingRow = rowsByEnrollment.get(enrollmentId);
+      if (!existingRow) {
+        rowsByEnrollment.set(enrollmentId, {
+          enrollmentId,
+          kidLabel,
+          courseLabel,
+          enrollmentStatus: normalizeEnrollmentStatus(enrollment),
+          plannedSessions: 1,
+          projectedRevenue: feePerSession,
+          missingFeeSessions: feePerSession > 0 ? 0 : 1,
+          avgFeePerSession: feePerSession > 0 ? feePerSession : 0,
+        });
+      } else {
+        existingRow.plannedSessions += 1;
+        existingRow.projectedRevenue += feePerSession;
+        existingRow.missingFeeSessions += feePerSession > 0 ? 0 : 1;
       }
     });
 
-    if (missingFeeSessions > 0 && observedAvgCompletedRevenue > 0) {
-      projectedRevenue += missingFeeSessions * observedAvgCompletedRevenue;
-    }
+    const rows = Array.from(rowsByEnrollment.values())
+      .map((row) => ({
+        ...row,
+        avgFeePerSession:
+          row.plannedSessions > row.missingFeeSessions
+            ? row.projectedRevenue / Math.max(row.plannedSessions - row.missingFeeSessions, 1)
+            : 0,
+      }))
+      .sort(
+        (a, b) =>
+          b.projectedRevenue - a.projectedRevenue ||
+          b.plannedSessions - a.plannedSessions ||
+          a.kidLabel.localeCompare(b.kidLabel)
+      );
 
     return {
-      plannedSessions,
-      scheduleDrivenEnrollments,
-      projectedRevenue,
-      avgProjectedRevenuePerSession: plannedSessions > 0 ? projectedRevenue / plannedSessions : 0,
-      missingFeeSessions,
+      summary: {
+        plannedSessions,
+        scheduleDrivenEnrollments: enrollmentIds.size,
+        projectedRevenue,
+        avgProjectedRevenuePerSession: plannedSessions > 0 ? projectedRevenue / plannedSessions : 0,
+        missingFeeSessions,
+      },
+      rows,
     };
-  }, [completedSessionsMonth, enrollments, expectedRevenue, selectedMonth]);
+  }, [classSessions, courses, enrollments, students]);
+
+  const plannedProjection = projectionDetails.summary;
 
   const enrollmentBuckets = useMemo(() => {
     const counts = { activeLike: 0, past: 0, other: 0 };
@@ -481,10 +498,6 @@ export default function AnalyticsDashboard(): JSX.Element {
     });
     return map;
   }, [users]);
-
-  const kidNameById = useMemo(() => ({} as Record<string, string>), []);
-  const courseNameById = useMemo(() => ({} as Record<string, string>), []);
-  const recentEnrollments: any[] = [];
 
   const teacherEarnings = useMemo(() => {
     const byTeacher = new Map<
@@ -619,7 +632,7 @@ export default function AnalyticsDashboard(): JSX.Element {
             className="w-[160px]"
           />
           <span className="text-xs text-muted-foreground px-2 py-1 rounded-full border">
-            Live from billing
+            Live from billing + class sessions
           </span>
         </div>
       </div>
@@ -645,14 +658,14 @@ export default function AnalyticsDashboard(): JSX.Element {
         <MetricCard
           label="Planned sessions (month)"
           value={plannedProjection.plannedSessions}
-          sub={`${plannedProjection.scheduleDrivenEnrollments} active enrollments with schedule`}
+          sub={`${plannedProjection.scheduleDrivenEnrollments} active enrollments with planned sessions`}
         />
         <MetricCard
           label="Projected revenue (if all planned complete)"
           value={formatMoney(plannedProjection.projectedRevenue)}
           sub={
             plannedProjection.missingFeeSessions > 0
-              ? `Avg/session ${formatMoney(plannedProjection.avgProjectedRevenuePerSession)} • ${plannedProjection.missingFeeSessions} sessions estimated by avg`
+              ? `Avg/session ${formatMoney(plannedProjection.avgProjectedRevenuePerSession)} • ${plannedProjection.missingFeeSessions} sessions missing fee config`
               : `Avg/session ${formatMoney(plannedProjection.avgProjectedRevenuePerSession)}`
           }
         />
@@ -662,6 +675,58 @@ export default function AnalyticsDashboard(): JSX.Element {
           sub={`Avg payout/session ${formatMoney(avgSessionPayout)}`}
         />
       </div>
+
+      <Card className="p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold">Projection audit (by enrollment)</h3>
+            <p className="text-xs text-muted-foreground">
+              Built from real month classSessions; excludes cancelled sessions and non-projectable enrollments.
+            </p>
+          </div>
+          <span className="text-xs text-muted-foreground">
+            {projectionDetails.rows.length} enrollments
+          </span>
+        </div>
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full text-sm table-auto">
+            <thead>
+              <tr className="text-left border-b">
+                <th className="p-2">Kid</th>
+                <th className="p-2">Course</th>
+                <th className="p-2">Enrollment</th>
+                <th className="p-2">Status</th>
+                <th className="p-2 text-right">Planned</th>
+                <th className="p-2 text-right">Projected ₹</th>
+                <th className="p-2 text-right">Missing fee #</th>
+                <th className="p-2 text-right">Avg fee/session</th>
+              </tr>
+            </thead>
+            <tbody>
+              {projectionDetails.rows.length === 0 ? (
+                <tr>
+                  <td className="p-3 text-muted-foreground" colSpan={8}>
+                    No planned sessions found for this month.
+                  </td>
+                </tr>
+              ) : (
+                projectionDetails.rows.slice(0, 40).map((row) => (
+                  <tr key={row.enrollmentId} className="border-b last:border-b-0">
+                    <td className="p-2">{row.kidLabel}</td>
+                    <td className="p-2">{row.courseLabel}</td>
+                    <td className="p-2 font-mono text-xs">{row.enrollmentId}</td>
+                    <td className="p-2 capitalize">{row.enrollmentStatus || '—'}</td>
+                    <td className="p-2 text-right">{row.plannedSessions}</td>
+                    <td className="p-2 text-right font-medium">{formatMoney(row.projectedRevenue)}</td>
+                    <td className="p-2 text-right">{row.missingFeeSessions}</td>
+                    <td className="p-2 text-right">{formatMoney(row.avgFeePerSession)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MetricCard label="Active-like enrollments" value={enrollmentBuckets.activeLike} />

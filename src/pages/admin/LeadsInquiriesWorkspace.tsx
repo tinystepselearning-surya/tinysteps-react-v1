@@ -2,11 +2,15 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   addDoc,
   collection,
+  type DocumentData,
   doc,
+  limit,
   onSnapshot,
   orderBy,
+  type QueryDocumentSnapshot,
   query,
   serverTimestamp,
+  startAfter,
   Timestamp,
   updateDoc,
   where,
@@ -501,6 +505,7 @@ const TODAY_DATE_INPUT = (() => {
   const dd = String(now.getDate()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
 })();
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 const LOST_LEAD_STATUSES = new Set<LeadStatus>(['not_interested', 'wrong_fit', 'no_response', 'lost']);
 const TERMINAL_DEMO_BLOCK_LEAD_STATUSES = new Set<LeadStatus>([
@@ -515,6 +520,7 @@ const FOLLOW_UP_TERMINAL_STATUSES = new Set<LeadStatus>([
   'wrong_fit',
   'lost',
 ]);
+const LEADS_PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
 
 const toMs = (value: unknown): number => {
   if (!value) return 0;
@@ -782,6 +788,16 @@ const parseDateOnlyMs = (value: string): number => {
   return Number.isFinite(parsed.getTime()) ? parsed.getTime() : 0;
 };
 
+const formatDateInputLabel = (value?: string | null): string => {
+  const ms = parseDateOnlyMs(normalizeText(value));
+  if (!ms) return '—';
+  return new Intl.DateTimeFormat('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(ms));
+};
+
 const getRowFollowUpMs = (row: UnifiedRow): number => {
   const demoFollowUp = parseDateOnlyMs(normalizeText(row.demo?.followUpDate));
   if (demoFollowUp) return demoFollowUp;
@@ -952,6 +968,11 @@ export default function LeadsInquiriesWorkspace({
   const { toast } = useToast();
   const { user } = useAuthStore();
   const [leads, setLeads] = useState<LeadRecord[]>([]);
+  const [leadsPageSize, setLeadsPageSize] = useState<number>(10);
+  const [leadsPageIndex, setLeadsPageIndex] = useState<number>(0);
+  const [leadsPageStarts, setLeadsPageStarts] = useState<Array<QueryDocumentSnapshot<DocumentData> | null>>([null]);
+  const [hasNextLeadsPage, setHasNextLeadsPage] = useState(false);
+  const [isLeadsPageLoading, setIsLeadsPageLoading] = useState(false);
   const [demos, setDemos] = useState<DemoSession[]>([]);
   const [demoPhoneMap, setDemoPhoneMap] = useState<Record<string, string>>({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -959,6 +980,8 @@ export default function LeadsInquiriesWorkspace({
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [courseFilter, setCourseFilter] = useState<string>('all');
   const [teacherFilter, setTeacherFilter] = useState<string>('all');
+  const [updatedFromDate, setUpdatedFromDate] = useState<string>('');
+  const [updatedToDate, setUpdatedToDate] = useState<string>('');
   const [summaryCardFilter, setSummaryCardFilter] = useState<SummaryCardFilter>('all');
   const [focusFilter, setFocusFilter] = useState<FocusFilter>(view === 'demos' ? 'all_demos' : 'all');
   const [savingConversionRowId, setSavingConversionRowId] = useState<string | null>(null);
@@ -1014,20 +1037,47 @@ export default function LeadsInquiriesWorkspace({
   const [timelineViewTarget, setTimelineViewTarget] = useState<DemoSession | null>(null);
   const [dialogSavingAction, setDialogSavingAction] = useState<string | null>(null);
 
+  const currentLeadsPageStart = leadsPageStarts[leadsPageIndex] || null;
+
+  useEffect(() => {
+    setLeadsPageIndex(0);
+    setLeadsPageStarts([null]);
+    setHasNextLeadsPage(false);
+  }, [leadsPageSize]);
+
   useEffect(() => {
     setFocusFilter(view === 'demos' ? 'all_demos' : 'all');
   }, [view]);
 
   useEffect(() => {
-    const q = query(collection(db, LEADS_COLLECTION), orderBy('updatedAt', 'desc'));
+    setIsLeadsPageLoading(true);
+    const constraints = [
+      orderBy('createdAt', 'desc'),
+      limit(leadsPageSize + 1),
+      ...(currentLeadsPageStart ? [startAfter(currentLeadsPageStart)] : []),
+    ];
+    const q = query(collection(db, LEADS_COLLECTION), ...constraints);
     const unsub = onSnapshot(
       q,
       (snap) => {
-        const next = snap.docs.map((docSnap) => ({
+        const docs = snap.docs;
+        const hasNext = docs.length > leadsPageSize;
+        const visibleDocs = hasNext ? docs.slice(0, leadsPageSize) : docs;
+        const next = visibleDocs.map((docSnap) => ({
           id: docSnap.id,
           ...(docSnap.data() as Record<string, unknown>),
         })) as LeadRecord[];
         setLeads(next);
+        setHasNextLeadsPage(hasNext);
+        setLeadsPageStarts((prev) => {
+          const nextStarts = prev.slice(0, leadsPageIndex + 1);
+          nextStarts[leadsPageIndex] = currentLeadsPageStart;
+          if (hasNext && visibleDocs.length > 0) {
+            nextStarts[leadsPageIndex + 1] = visibleDocs[visibleDocs.length - 1];
+          }
+          return nextStarts;
+        });
+        setIsLeadsPageLoading(false);
       },
       (error) => {
         console.error('[LeadsInquiriesWorkspace] leads load failed', error);
@@ -1036,10 +1086,13 @@ export default function LeadsInquiriesWorkspace({
           description: error?.message || 'Please refresh.',
           variant: 'destructive',
         });
+        setLeads([]);
+        setHasNextLeadsPage(false);
+        setIsLeadsPageLoading(false);
       },
     );
     return () => unsub();
-  }, [toast]);
+  }, [currentLeadsPageStart, leadsPageIndex, leadsPageSize, toast]);
 
   useEffect(() => {
     const unmatchedQuery = query(
@@ -1224,30 +1277,32 @@ export default function LeadsInquiriesWorkspace({
       });
     });
 
-    demos.forEach((demo) => {
-      const leadId = normalizeText((demo as any).leadId);
-      if (leadId && leadById.has(leadId)) return;
-      const stage = deriveLifecycleStage(null, demo);
-      rows.push({
-        id: `demo_${demo.id}`,
-        lead: null,
-        demo,
-        lifecycleStage: stage,
-        source: normalizeText(demo.source) || 'manual',
-        courseLabel: normalizeText(demo.courseInterested) || '—',
-        teacherName:
-          normalizeText(demo.assignedTeacherName) ||
-          (normalizeText(demo.assignedTeacherId) ? 'Assigned' : '—'),
-        nextFollowUpLabel: nextFollowUpLabel(null, demo),
-        updatedAtMs: toMs(demo.lastUpdatedAt || demo.createdAt),
-        parentName: normalizeText(demo.parentName) || '—',
-        childName: normalizeText(demo.childName) || '—',
-        parentPhone: normalizeText(demoPhoneMap[demo.id]) || '—',
+    if (view === 'demos') {
+      demos.forEach((demo) => {
+        const leadId = normalizeText((demo as any).leadId);
+        if (leadId && leadById.has(leadId)) return;
+        const stage = deriveLifecycleStage(null, demo);
+        rows.push({
+          id: `demo_${demo.id}`,
+          lead: null,
+          demo,
+          lifecycleStage: stage,
+          source: normalizeText(demo.source) || 'manual',
+          courseLabel: normalizeText(demo.courseInterested) || '—',
+          teacherName:
+            normalizeText(demo.assignedTeacherName) ||
+            (normalizeText(demo.assignedTeacherId) ? 'Assigned' : '—'),
+          nextFollowUpLabel: nextFollowUpLabel(null, demo),
+          updatedAtMs: toMs(demo.lastUpdatedAt || demo.createdAt),
+          parentName: normalizeText(demo.parentName) || '—',
+          childName: normalizeText(demo.childName) || '—',
+          parentPhone: normalizeText(demoPhoneMap[demo.id]) || '—',
+        });
       });
-    });
+    }
 
     return rows.sort((a, b) => b.updatedAtMs - a.updatedAtMs);
-  }, [demoPhoneMap, demos, leads]);
+  }, [demoPhoneMap, demos, leads, view]);
 
   const sourceOptions = useMemo(
     () =>
@@ -1311,6 +1366,8 @@ export default function LeadsInquiriesWorkspace({
   const filteredRows = useMemo(() => {
     const search = normalizeText(searchQuery).toLowerCase();
     const { startMs, endMs } = dayRangeBounds();
+    const updatedFromMs = parseDateOnlyMs(updatedFromDate);
+    const updatedToMs = parseDateOnlyMs(updatedToDate);
     return mergedRows.filter((row) => {
       const demoWorkflowState = resolveDemoWorkflowState(row.demo);
       if (summaryCardFilter !== 'all' && row.lifecycleStage !== summaryCardFilter) return false;
@@ -1318,6 +1375,8 @@ export default function LeadsInquiriesWorkspace({
       if (sourceFilter !== 'all' && normalizeText(row.source) !== sourceFilter) return false;
       if (courseFilter !== 'all' && normalizeText(row.courseLabel) !== courseFilter) return false;
       if (teacherFilter !== 'all' && normalizeText(row.teacherName) !== teacherFilter) return false;
+      if (updatedFromMs && row.updatedAtMs < updatedFromMs) return false;
+      if (updatedToMs && row.updatedAtMs >= updatedToMs + DAY_MS) return false;
 
       const followUpMs = getRowFollowUpMs(row);
       const hasFollowUp = followUpMs > 0;
@@ -1359,6 +1418,8 @@ export default function LeadsInquiriesWorkspace({
     stageFilter,
     summaryCardFilter,
     teacherFilter,
+    updatedFromDate,
+    updatedToDate,
   ]);
 
   const summary = useMemo(() => {
@@ -1446,6 +1507,21 @@ export default function LeadsInquiriesWorkspace({
 
   const toggleSummaryCard = (next: SummaryCardFilter) => {
     setSummaryCardFilter((current) => (current === next || next === 'all' ? 'all' : next));
+  };
+
+  const handleLeadsPageSizeChange = (value: string) => {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return;
+    setLeadsPageSize(parsed);
+  };
+
+  const goToPrevLeadsPage = () => {
+    setLeadsPageIndex((current) => Math.max(0, current - 1));
+  };
+
+  const goToNextLeadsPage = () => {
+    if (!hasNextLeadsPage) return;
+    setLeadsPageIndex((current) => current + 1);
   };
 
   const handleCreateDemoRequest = () => {
@@ -2160,6 +2236,8 @@ export default function LeadsInquiriesWorkspace({
     setSourceFilter('all');
     setCourseFilter('all');
     setTeacherFilter('all');
+    setUpdatedFromDate('');
+    setUpdatedToDate('');
     setSummaryCardFilter('all');
     setFocusFilter(view === 'demos' ? 'all_demos' : 'all');
   };
@@ -2728,7 +2806,7 @@ export default function LeadsInquiriesWorkspace({
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-8">
           <div className="xl:col-span-2">
             <Label htmlFor="workflow-search">Search</Label>
             <Input
@@ -2802,6 +2880,26 @@ export default function LeadsInquiriesWorkspace({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div>
+            <Label htmlFor="workflow-updated-from">Updated From</Label>
+            <Input
+              id="workflow-updated-from"
+              type="date"
+              value={updatedFromDate}
+              max={updatedToDate || undefined}
+              onChange={(event) => setUpdatedFromDate(event.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="workflow-updated-to">Updated To</Label>
+            <Input
+              id="workflow-updated-to"
+              type="date"
+              value={updatedToDate}
+              min={updatedFromDate || undefined}
+              onChange={(event) => setUpdatedToDate(event.target.value)}
+            />
           </div>
         </div>
         <div className="mt-3">
@@ -2934,16 +3032,53 @@ export default function LeadsInquiriesWorkspace({
               <div className="text-sm font-semibold text-slate-900">Live workflow records</div>
               <div className="text-xs text-muted-foreground">
                 {filteredRows.length} of {mergedRows.length} records visible with current filters.
+                {` Page ${leadsPageIndex + 1} · ${leadsPageSize} per page`}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <Badge variant="outline">Open demos {demoSnapshot.open}</Badge>
               <Badge variant="outline">Assigned {demoSnapshot.assigned}</Badge>
               <Badge variant="outline">Completed {demoSnapshot.completed}</Badge>
+              <div className="ml-2 flex items-center gap-2">
+                <Select value={String(leadsPageSize)} onValueChange={handleLeadsPageSizeChange}>
+                  <SelectTrigger className="h-8 w-[92px]">
+                    <SelectValue placeholder="10 / page" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LEADS_PAGE_SIZE_OPTIONS.map((size) => (
+                      <SelectItem key={size} value={String(size)}>
+                        {size} / page
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={goToPrevLeadsPage}
+                  disabled={leadsPageIndex === 0 || isLeadsPageLoading}
+                >
+                  Prev
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={goToNextLeadsPage}
+                  disabled={!hasNextLeadsPage || isLeadsPageLoading}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-        {filteredRows.length === 0 ? (
+        {isLeadsPageLoading ? (
+          <div className="p-8 text-center text-sm text-muted-foreground">
+            Loading latest leads...
+          </div>
+        ) : filteredRows.length === 0 ? (
           <div className="p-8 text-center text-sm text-muted-foreground">
             No workflow records found for current filters.
           </div>
@@ -2960,6 +3095,7 @@ export default function LeadsInquiriesWorkspace({
                   <TableHead>Demo</TableHead>
                   <TableHead>Teacher</TableHead>
                   <TableHead>Next Follow-up</TableHead>
+                  <TableHead>Received Date</TableHead>
                   <TableHead>Updated</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -3017,6 +3153,7 @@ export default function LeadsInquiriesWorkspace({
                           </div>
                         ) : null}
                       </TableCell>
+                      <TableCell>{formatDateInputLabel(row.demo?.requestReceivedDate)}</TableCell>
                       <TableCell>{formatTs(row.updatedAtMs)}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap justify-end gap-2">

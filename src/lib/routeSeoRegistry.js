@@ -1,44 +1,44 @@
 export const ROUTE_SEO_REGISTRY = {
   '/': {
-    title: 'Online Phonics, Grammar & Public Speaking Classes for Kids | Tiny Steps Learning',
+    title: 'Tiny Steps Learning | Premium Online English Learning for Children',
     description:
-      '1:1 online phonics, grammar, and public speaking classes for kids ages 3-12. Structured curriculum, trained teachers, weekly parent updates, and free assessment.',
+      'Start your child’s English journey with premium live online Phonics, Grammar, and Public Speaking classes, structured progression, and clear parent updates.',
     canonicalPath: '/',
     ogType: 'website',
     ogImage: '/og-default.jpg',
   },
   '/courses': {
-    title: 'Online English Courses for Kids | Phonics, Grammar & Speaking | Tiny Steps Learning',
+    title: 'Choose the Right English Course for Kids | Tiny Steps Learning',
     description:
-      'Browse Tiny Steps 1:1 online English courses for kids ages 3-12 across phonics, grammar, writing, and public speaking with clear learning paths and parent updates.',
+      'Choose your child’s starting program by main need: reading gaps, sentence accuracy, or expression confidence across Phonics, Grammar, and Public Speaking.',
     canonicalPath: '/courses',
     ogType: 'website',
   },
   '/curriculum': {
     title: 'IB-Aligned English Curriculum | Tiny Steps Learning',
     description:
-      'Explore our comprehensive, IB-aligned English curriculum for young learners. Phonics mastery, grammar fundamentals, and communication skills-all designed by education experts.',
+      'See the full learning roadmap across Phonics, Grammar, and Public Speaking, with stage-based progression and clear starting points.',
     canonicalPath: '/curriculum',
     ogType: 'website',
   },
   '/phonics': {
     title: 'Online Phonics Classes for Kids | Tiny Steps Learning',
     description:
-      'Personalized 1:1 online phonics classes for kids ages 3-6. Master letter sounds, blending, and early reading with expert live mentors and AI practice games.',
+      'Phonics reading starts with sound-letter links, blending, and decoding. See how children move from sounds to words and sentence reading.',
     canonicalPath: '/phonics',
     ogType: 'website',
   },
   '/grammar': {
     title: 'Online Grammar and Writing Classes for Kids | Tiny Steps Learning',
     description:
-      'Live online grammar and writing classes for kids ages 5-15 with sentence structure, punctuation, guided writing, and coach feedback that builds confident writing habits.',
+      'Grammar lessons build sentence control, punctuation accuracy, and writing clarity. See how children progress from word types to clearer expression.',
     canonicalPath: '/grammar',
     ogType: 'website',
   },
   '/speaking': {
     title: 'Online Public Speaking Classes for Kids | Tiny Steps Learning',
     description:
-      'Live online public speaking, communication, and clear-expression classes for kids ages 4-15 with storytelling, structure, confidence routines, and presentation coaching.',
+      'Speaking confidence grows through guided stages, from short responses to structured expression. Explore clarity, vocabulary, and presentation practice.',
     canonicalPath: '/speaking',
     ogType: 'website',
   },
@@ -78,9 +78,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/why-tiny-steps': {
-    title: 'Why Choose Tiny Steps Learning | Online English Classes for Kids',
+    title: 'Why Parents Choose Tiny Steps | Founder-Led Online English for Children',
     description:
-      'Discover why thousands of families trust Tiny Steps Learning. Expert mentors, personalized learning, proven results.',
+      'Understand why parents choose Tiny Steps: founder-led academic direction, structured live teaching, and clear learning progress visibility.',
     canonicalPath: '/why-tiny-steps',
     ogType: 'website',
   },
@@ -92,9 +92,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/team': {
-    title: 'Meet the Team | Tiny Steps Learning',
+    title: 'Meet the Founder-Led Academic Team | Tiny Steps Learning',
     description:
-      'Meet the experienced educators behind Tiny Steps Learning. Based in Hyderabad, serving families worldwide with expert 1:1 online English classes for kids ages 3-12.',
+      'Get to know the founder-led academic team behind Tiny Steps Learning and how teaching quality is shaped across core programs.',
     canonicalPath: '/team',
     ogType: 'website',
   },
@@ -110,7 +110,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/testimonials': {
     title: 'Parent Reviews | Tiny Steps Learning',
     description:
-      'Read moderation-approved parent reviews and star ratings for Tiny Steps phonics, grammar, and public speaking programs.',
+      'Read a curated sample of parent feedback across Tiny Steps phonics, grammar, and public speaking programs, with ongoing reviews shared on trusted third-party platforms.',
     canonicalPath: '/testimonials',
     ogType: 'website',
   },

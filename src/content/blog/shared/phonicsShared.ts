@@ -36,7 +36,21 @@ const DEFAULT_PHONICS_EXAMPLES = ['Use a 10-minute loop: 2 minutes sound review,
 
 const PHONICS_PARENT_GUIDE_SCRIPTS = ['Before practice: "We will do only 10 minutes, then stop."', 'During practice: "Show me the sounds first, then blend."', 'After effort: "I liked how you tried again when it felt tricky."', 'For correction: "Let us check it together slowly, then you try once more."'];
 
-const PHONICS_CLUSTER_INTENT_SLUGS = new Set(['synthetic-phonics-vs-traditional-reading', 'child-knows-abc-but-cannot-read', 'what-age-to-start-phonics', 'science-of-phonics-learning', 'how-phonics-classes-help-kids-read', 'phonics-activities-for-kids-at-home', 'online-phonics-classes-vs-school']);
+const PHONICS_CLUSTER_INTENT_SLUGS = new Set(['synthetic-phonics-vs-traditional-reading', 'child-knows-abc-but-cannot-read', 'what-age-to-start-phonics', 'science-of-phonics-learning', 'how-phonics-classes-help-kids-read', 'phonics-activities-for-kids-at-home', 'online-phonics-classes-vs-school', 'how-to-choose-phonics-classes']);
+
+const PHONICS_PRIMARY_DESTINATION_BY_SLUG: Record<string, {
+  label: string;
+  to: string;
+}> = {
+  'child-knows-abc-but-cannot-read': {
+    label: 'Explore structured phonics support',
+    to: '/phonics'
+  },
+  'how-to-choose-phonics-classes': {
+    label: 'Explore structured phonics support',
+    to: '/phonics'
+  }
+};
 
 const PHONICS_CLUSTER_SIBLING_LINKS: Record<string, {
   label: string;
@@ -118,6 +132,16 @@ function buildRelatedReadsBody(relatedReads?: {
 function normalizeClusterRelatedReads(post: PhonicsSeoPost) {
   if (!PHONICS_CLUSTER_INTENT_SLUGS.has(post.slug)) return post.relatedReads ?? [];
   const related = [...(post.relatedReads ?? [])];
+  const primaryDestination = PHONICS_PRIMARY_DESTINATION_BY_SLUG[post.slug];
+  if (primaryDestination) {
+    const filtered = related.filter(item => item.to !== '/phonics' && item.to !== '/curriculum' && item.to !== '/courses');
+    filtered.unshift(primaryDestination);
+    const hasSiblingBlog = filtered.some(item => item.to.startsWith('/blog/') && item.to !== `/blog/${post.slug}`);
+    if (!hasSiblingBlog && PHONICS_CLUSTER_SIBLING_LINKS[post.slug]) {
+      filtered.push(PHONICS_CLUSTER_SIBLING_LINKS[post.slug]);
+    }
+    return filtered.filter((item, index, arr) => arr.findIndex(i => i.to === item.to) === index);
+  }
   if (!related.some(item => item.to === '/phonics')) {
     related.unshift({
       label: 'Explore phonics classes',
@@ -141,6 +165,19 @@ function normalizeClusterRelatedReads(post: PhonicsSeoPost) {
 
 function buildClusterSoftCtaBody(slug: string) {
   if (!PHONICS_CLUSTER_INTENT_SLUGS.has(slug)) return [];
+  const primaryDestination = PHONICS_PRIMARY_DESTINATION_BY_SLUG[slug];
+  if (primaryDestination) {
+    return [{
+      type: 'h2' as const,
+      content: 'Next calm step for parents'
+    }, {
+      type: 'p' as const,
+      content: 'Focus on one structured next step and keep practice consistent before adding extra programs or methods.'
+    }, {
+      type: 'li' as const,
+      content: `${primaryDestination.label}: ${primaryDestination.to}`
+    }];
+  }
   return [{
     type: 'h2' as const,
     content: 'Next calm step for parents'

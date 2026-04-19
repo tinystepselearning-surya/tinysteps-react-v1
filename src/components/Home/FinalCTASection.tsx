@@ -2,12 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../Button/Button';
 
-type FinalCTASectionProps = {
-  ratingValue?: string;
-  ratingCount?: number;
-};
-
-const FinalCTASection: React.FC<FinalCTASectionProps> = ({ ratingValue = '4.9/5', ratingCount = 0 }) => {
+const FinalCTASection: React.FC = () => {
   return (
     <section className="bg-gradient-to-b from-white to-primary-50 py-20">
       <div className="mx-auto max-w-3xl px-6 text-center">
@@ -17,7 +12,7 @@ const FinalCTASection: React.FC<FinalCTASectionProps> = ({ ratingValue = '4.9/5'
           <ul className="mx-auto mt-4 max-w-md space-y-2 text-left text-gray-700">
             <li className="flex items-start">
               <span className="mr-3 mt-1 text-primary-600">•</span>
-              <span>35-minute 1:1 session with a Tiny Steps mentor</span>
+              <span>35–40 minute 1:1 session with a Tiny Steps mentor</span>
             </li>
             <li className="flex items-start">
               <span className="mr-3 mt-1 text-primary-600">•</span>
@@ -36,7 +31,7 @@ const FinalCTASection: React.FC<FinalCTASectionProps> = ({ ratingValue = '4.9/5'
           <p className="text-sm text-gray-600">Takes less than 1 minute to book.</p>
           <div className="mt-4 text-sm text-gray-700">
             <p>Join 5000+ families across 15+ countries, including India, UAE, Vietnam, Singapore, Malaysia, UK, Canada, USA, Sweden, Germany, Australia, Sri Lanka, and Pakistan.</p>
-            <p>⭐⭐⭐⭐⭐ {ratingValue} - Parent Reviews{ratingCount > 0 ? ` (${ratingCount} verified)` : ''} • 95% see improvement • 89% more confidence • 92% enjoy English</p>
+            <p>For fresh public reviews, parents may also check trusted third-party profiles such as Trustpilot, JustDial, and Reddit.</p>
           </div>
         </div>
       </div>

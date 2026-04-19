@@ -5,6 +5,8 @@ import Meta from "../components/common/Meta";
 import AutoLinkedText from "../components/seo/AutoLinkedText";
 import TestimonialsSection from "../components/seo/TestimonialsSection";
 import TestimonialSubmissionForm from "../components/seo/TestimonialSubmissionForm";
+import { PUBLIC_FACTS } from "../lib/schemas";
+import { getRouteConfig } from "../lib/seo";
 
 type Item = {
   title: string;
@@ -18,9 +20,20 @@ type ComparisonRow = {
 };
 
 const WHATSAPP_URL = "https://wa.me/919618398383";
+const CORE_PROGRAMS_TEXT = `${PUBLIC_FACTS.corePrograms[0]}, ${PUBLIC_FACTS.corePrograms[1]}, and ${PUBLIC_FACTS.corePrograms[2]}`;
+const whyTinyStepsSeo = getRouteConfig("/why-tiny-steps");
+const whyTinyStepsSeoTitle = whyTinyStepsSeo?.title ?? "Why Parents Choose Tiny Steps | Founder-Led Online English for Children";
+const whyTinyStepsSeoDescription =
+  whyTinyStepsSeo?.description ??
+  "Understand why parents choose Tiny Steps: founder-led academic direction, structured live teaching, and clear learning progress visibility.";
+const whyTinyStepsCanonicalPath = whyTinyStepsSeo?.canonicalPath ?? "/why-tiny-steps";
+const whyTinyStepsCanonicalUrl =
+  whyTinyStepsCanonicalPath === "/"
+    ? `${PUBLIC_FACTS.primaryWebsite}/`
+    : `${PUBLIC_FACTS.primaryWebsite}${whyTinyStepsCanonicalPath}`;
 
 const valuePills = [
-  "Ages 4–12",
+  "Ages 3–15 across programs",
   "Live classes, real teachers",
   "Structured curriculum",
   "Parent-visible progress",
@@ -42,7 +55,7 @@ const quickAnswerFaqItems = [
   {
     question: "Which programs does Tiny Steps offer?",
     answer:
-      "Tiny Steps offers online phonics classes, grammar and sentence-building classes, and communication/public speaking classes for children.",
+      `Tiny Steps offers ${PUBLIC_FACTS.deliveryModel} through ${CORE_PROGRAMS_TEXT} programs for children.`,
   },
   {
     question: "How does Tiny Steps support children who are shy or struggling?",
@@ -236,9 +249,9 @@ const WhyTinyStepsPage: FC = () => {
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <Meta
-        title="Why Tiny Steps | Premium Online English Learning School for Children"
-        description="Tiny Steps is a premium online English learning school building strong phonics, reading, grammar, and communication through structured teaching and parent-visible progress."
-        canonical="https://tinystepslearning.com/why-tiny-steps"
+        title={whyTinyStepsSeoTitle}
+        description={whyTinyStepsSeoDescription}
+        canonical={whyTinyStepsCanonicalUrl}
         jsonLd={[breadcrumbSchema, quickAnswerFaqSchema]}
       />
 
@@ -324,8 +337,12 @@ const WhyTinyStepsPage: FC = () => {
           </p>
           <p className="mt-3 text-slate-700 leading-relaxed">
             Families typically come to Tiny Steps when they want one school that connects online phonics classes,
-            grammar and sentence-building classes, and communication/public speaking classes into one clear pathway
+            grammar and sentence-building classes, and communication and public speaking classes into one clear pathway
             with parent-visible progress.
+          </p>
+          <p className="mt-3 text-slate-700 leading-relaxed">
+            Tiny Steps is founder-led by Priya. As Founder, she works with the academic team to keep {CORE_PROGRAMS_TEXT} programs
+            practical for live online classes and supportive for children at different confidence levels.
           </p>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             {quickAnswerFaqItems.map((item) => (
@@ -614,23 +631,23 @@ const WhyTinyStepsPage: FC = () => {
                 </div>
                 <p className="mt-3 text-sm leading-relaxed text-slate-700">
                   With 10+ years in early childhood English education, Priya built Tiny Steps to help children ages
-                  3-12 strengthen phonics, grammar, writing, and speaking with calm, structured teaching.
+                  3-15 strengthen phonics, grammar, writing, and speaking with calm, structured teaching.
                 </p>
               </div>
             </div>
 
             <div className="md:col-span-2 space-y-4 text-slate-700 leading-relaxed">
               <p>
-                Tiny Steps Learning was founded by educators who saw firsthand how structured, kind instruction transforms struggling readers into confident communicators—often in just 12–16 weeks.
+                Tiny Steps Learning was founded by educators who saw firsthand how structured, kind instruction helps struggling readers become more confident communicators.
               </p>
               <p>
-                Working with international schools implementing phonics-first curriculum, the founding team realized that many children weren't getting the systematic, age-appropriate support they needed. Generic tuition rushed through content. Apps lacked live guidance. Parents felt lost.
+                The founding team realized that many children were not getting systematic, age-appropriate English support. Generic tuition often rushed through content. App-only practice lacked live guidance. Parents felt unsure about what to do next.
               </p>
               <p>
                 Tiny Steps was built to solve this: <strong>live 1:1 or small-group classes</strong> with trained mentors, <strong>structured curriculum</strong> parents can understand, and <strong>transparent progress tracking</strong> so families see real improvement—not vague promises.
               </p>
               <p className="text-sm text-slate-600">
-                Since 2020, Tiny Steps has supported 5000+ families across 15+ countries including India, UAE, Vietnam, Singapore, Malaysia, UK, Canada, USA, Sweden, Germany, and Australia.
+                Today, Tiny Steps supports learners in India and globally through live online classes across Phonics, Grammar, and Public Speaking.
               </p>
             </div>
           </div>
@@ -673,7 +690,7 @@ const WhyTinyStepsPage: FC = () => {
               <div className="text-lg font-extrabold">Live Guided Teaching</div>
             </div>
             <p className="mt-3 text-sm text-slate-600 leading-relaxed">
-              35-minute live classes (1:1 or small group) with trained mentors using multisensory practice, gentle correction, and age-appropriate pacing.
+              35–40 minute live classes (1:1 or small group) with trained mentors using multisensory practice, gentle correction, and age-appropriate pacing.
             </p>
           </div>
 

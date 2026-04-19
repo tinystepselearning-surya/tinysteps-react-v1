@@ -9,15 +9,6 @@ import { WeekAccordion } from '../components/curriculum/WeekAccordion';
 import { applySeo } from '../lib/seo';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
 import TestimonialsSection from '../components/seo/TestimonialsSection';
-import {
-  createCourseReviewSchemaFragment,
-  computeTestimonialAggregate,
-  fetchApprovedTestimonialsCatalog,
-  filterApprovedTestimonialsByCourse,
-  getFallbackTestimonials,
-  getCourseTagFromSlug,
-  type Testimonial,
-} from '../lib/testimonials';
 
 const CourseDetailPage: FC = () => {
   const params = useParams();
@@ -33,24 +24,17 @@ const CourseDetailPage: FC = () => {
     return lower;
   };
   const slug = normalizeSlug(rawSlug);
-  const courseTag = getCourseTagFromSlug(slug);
   const courseTrack = useMemo(() => {
     if (slug.includes('grammar')) return 'grammar';
     if (slug.includes('speaking') || slug.includes('communication')) return 'speaking';
     return 'phonics';
   }, [slug]);
+  const courseTag = courseTrack;
   const course = useMemo(() => catalogs.find((c) => c.slug === slug), [slug]);
-  const [courseReviewItems, setCourseReviewItems] = useState<Testimonial[]>(() =>
-    filterApprovedTestimonialsByCourse(getFallbackTestimonials({ limit: 800 }), courseTrack),
-  );
   const usedHrefs = useMemo(() => new Set<string>(), []);
   const base = curriculumBySlug[slug || ''] || curriculumBySlug[rawSlug || ''] || {};
   const weeks = useMemo(() => base?.weeks ?? [], [base?.weeks]);
   const [weeksState, setWeeks] = useState(weeks);
-  const courseAggregate = useMemo(
-    () => computeTestimonialAggregate(courseReviewItems),
-    [courseReviewItems],
-  );
 
   useEffect(() => {
     (async () => {
@@ -78,31 +62,6 @@ const CourseDetailPage: FC = () => {
   }, [course, slug]);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const fallback = filterApprovedTestimonialsByCourse(
-        getFallbackTestimonials({ limit: 800 }),
-        courseTrack,
-      );
-      if (!cancelled) setCourseReviewItems(fallback);
-
-      try {
-        const approved = await fetchApprovedTestimonialsCatalog(800);
-        const catalog = approved.length ? approved : getFallbackTestimonials({ limit: 800 });
-        if (cancelled) return;
-        const filtered = filterApprovedTestimonialsByCourse(catalog, courseTrack);
-        setCourseReviewItems(filtered);
-      } catch {
-        if (cancelled) return;
-        setCourseReviewItems(fallback);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [courseTrack]);
-
-  useEffect(() => {
     if (course) return;
     applySeo({
       title: 'Course not found | Tiny Steps Learning',
@@ -125,10 +84,6 @@ const CourseDetailPage: FC = () => {
   const priceNumber =
     (course.price || '').match(/₹\s*([\d,]+)/)?.[1]?.replace(/,/g, '') || '0';
   const canonicalUrl = `https://tinystepslearning.com/courses/${course.slug}`;
-  const reviewFragment = createCourseReviewSchemaFragment({
-    items: courseReviewItems,
-    maxReviews: 5,
-  });
 
   const jsonLd: any = {
     '@context': 'https://schema.org',
@@ -149,7 +104,6 @@ const CourseDetailPage: FC = () => {
         availability: 'https://schema.org/InStock'
       }
     },
-    ...reviewFragment,
   };
 
   return (
@@ -182,13 +136,10 @@ const CourseDetailPage: FC = () => {
         </div>
 
         <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Track Parent Rating</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">
-            {courseAggregate.ratingCount ? courseAggregate.averageRating.toFixed(1) : '0.0'}
-            <span className="ml-1 text-lg font-semibold text-slate-500">/ 5</span>
-          </p>
-          <p className="mt-1 text-sm text-slate-600">
-            {courseAggregate.ratingCount} {courseAggregate.ratingCount === 1 ? 'approved rating' : 'approved ratings'} for this learning track
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Parent Trust</p>
+          <p className="mt-2 text-sm text-slate-700">
+            This page includes a curated sample of parent feedback for this learning track.
+            For fresh public reviews, parents may also check trusted third-party profiles such as Trustpilot, JustDial, and Reddit.
           </p>
         </div>
 
@@ -199,7 +150,7 @@ const CourseDetailPage: FC = () => {
           limit={3}
           compact
           className="px-0"
-          viewAllHref={`/testimonials?course=${courseTrack}`}
+          viewAllHref="/testimonials"
           viewAllLabel="View all program reviews"
         />
 

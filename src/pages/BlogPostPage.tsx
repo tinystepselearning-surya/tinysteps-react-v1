@@ -5,15 +5,51 @@ import { formatBlogDate, isoDateFromYMD } from '../lib/date';
 import type { FC } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { blogPosts } from '../content/blog';
+import { ORGANIZATION_ID, PUBLIC_FACTS, SITE_ORIGIN } from '../lib/schemas';
 import AboutAuthor from '../components/AboutAuthor';
 import ParentsAlsoAsk from '../components/ParentsAlsoAsk';
 import ResearchArticleHero from '../components/blog/ResearchArticleHero';
 // Meta removed — use applySeo as single source of truth
 
+const FOUNDER_AUTHOR_NAME = 'Priya';
+const TEAM_AUTHOR_LABEL = 'Tiny Steps Academic Team';
+
+const isFounderAuthor = (author: unknown): boolean =>
+  String(author || '').trim().toLowerCase() === FOUNDER_AUTHOR_NAME.toLowerCase();
+
+const getArticleAuthorLabel = (author: unknown): string =>
+  isFounderAuthor(author)
+    ? `${FOUNDER_AUTHOR_NAME} • Founder, ${PUBLIC_FACTS.brandName}`
+    : TEAM_AUTHOR_LABEL;
+
+const getArticleAuthorSchema = (author: unknown) =>
+  isFounderAuthor(author)
+    ? {
+        '@type': 'Person',
+        '@id': `${SITE_ORIGIN}/#priya-founder`,
+        name: FOUNDER_AUTHOR_NAME,
+        jobTitle: 'Founder',
+        worksFor: {
+          '@id': ORGANIZATION_ID,
+        },
+      }
+    : {
+        '@type': 'Organization',
+        '@id': ORGANIZATION_ID,
+        name: PUBLIC_FACTS.brandName,
+      };
+
 const CATEGORY_ARTICLE_CONFIG = {
   Phonics: {
     primaryAction: { label: 'Explore Tiny Steps phonics classes', to: '/phonics' },
     secondaryAction: { label: 'Book a free phonics assessment', to: '/?book=1' },
+    learningPathIntro:
+      'Continue with a structured phonics pathway, or review the full learning roadmap before choosing the next program.',
+    learningPathLinks: [
+      { label: 'Structured phonics program', to: '/phonics' },
+      { label: 'Full learning roadmap', to: '/curriculum' },
+      { label: 'Choose the right course', to: '/courses' },
+    ],
     searchPainPoints: [
       'My child knows letters but still cannot blend words.',
       'I need a simple phonics routine that fits real home life.',
@@ -49,6 +85,13 @@ const CATEGORY_ARTICLE_CONFIG = {
   Grammar: {
     primaryAction: { label: 'Explore Tiny Steps grammar classes', to: '/grammar' },
     secondaryAction: { label: 'Book a free grammar assessment', to: '/?book=1' },
+    learningPathIntro:
+      'Move from grammar confusion to clearer sentence-building with the right grammar path and a stage-wise curriculum view.',
+    learningPathLinks: [
+      { label: 'Grammar learning path', to: '/grammar' },
+      { label: 'Full learning roadmap', to: '/curriculum' },
+      { label: 'Choose the right course', to: '/courses' },
+    ],
     searchPainPoints: [
       'My child speaks well but struggles to write clearly.',
       'Grammar practice feels repetitive and does not transfer into writing.',
@@ -84,6 +127,13 @@ const CATEGORY_ARTICLE_CONFIG = {
   'Public Speaking': {
     primaryAction: { label: 'Explore Tiny Steps speaking classes', to: '/speaking' },
     secondaryAction: { label: 'Book a free speaking assessment', to: '/?book=1' },
+    learningPathIntro:
+      'Support communication confidence with a speaking-focused route, then map the next stage in the wider curriculum.',
+    learningPathLinks: [
+      { label: 'Speaking confidence program', to: '/speaking' },
+      { label: 'Full learning roadmap', to: '/curriculum' },
+      { label: 'Choose the right course', to: '/courses' },
+    ],
     searchPainPoints: [
       'My child talks at home but freezes in class or with relatives.',
       'Speaking practice turns into pressure too quickly.',
@@ -119,6 +169,12 @@ const CATEGORY_ARTICLE_CONFIG = {
   'Parent Tips': {
     primaryAction: { label: 'Explore the Parents Hub', to: '/parents' },
     secondaryAction: { label: 'Book a free assessment', to: '/?book=1' },
+    learningPathIntro:
+      'When you are deciding the next step, use the course chooser and curriculum roadmap to match support to your child’s current need.',
+    learningPathLinks: [
+      { label: 'Choose the right course', to: '/courses' },
+      { label: 'Full learning roadmap', to: '/curriculum' },
+    ],
     searchPainPoints: [
       'I want a routine that actually works in a busy family schedule.',
       'I need practical next steps instead of more generic parenting advice.',
@@ -154,6 +210,12 @@ const CATEGORY_ARTICLE_CONFIG = {
   Research: {
     primaryAction: { label: 'Explore the Parents Hub', to: '/parents' },
     secondaryAction: { label: 'Book a free assessment', to: '/?book=1' },
+    learningPathIntro:
+      'Turn research takeaways into action with a clear course-selection route and a connected curriculum pathway.',
+    learningPathLinks: [
+      { label: 'Choose the right course', to: '/courses' },
+      { label: 'Full learning roadmap', to: '/curriculum' },
+    ],
     searchPainPoints: [
       'I want the research summary, not just general advice.',
       'I need guidance that still works in real homes and classrooms.',
@@ -185,6 +247,97 @@ const CATEGORY_ARTICLE_CONFIG = {
       { label: 'Read the phonics guide', to: '/blog/phonics-for-parents-guide' },
       { label: 'Book a free assessment', to: '/?book=1' },
     ],
+  },
+};
+
+const POST_CTA_OVERRIDES: Record<string, {
+  primaryAction?: {
+    label: string;
+    to: string;
+  };
+  learningPathIntro?: string;
+  learningPathLinks?: Array<{
+    label: string;
+    to: string;
+  }>;
+  suppressCoursesFallback?: boolean;
+}> = {
+  'child-knows-abc-but-cannot-read': {
+    primaryAction: { label: 'Explore Tiny Steps phonics classes', to: '/phonics' },
+    learningPathIntro:
+      'For this decoding gap, start with the structured phonics pathway and keep one steady routine for the next few weeks.',
+    learningPathLinks: [{ label: 'Structured phonics program', to: '/phonics' }],
+    suppressCoursesFallback: true,
+  },
+  'what-is-phonics-for-kids': {
+    primaryAction: { label: 'Explore Tiny Steps phonics classes', to: '/phonics' },
+    learningPathIntro:
+      'If you are starting phonics now, use one structured phonics route first before adding broader program decisions.',
+    learningPathLinks: [{ label: 'Structured phonics program', to: '/phonics' }],
+    suppressCoursesFallback: true,
+  },
+  'week-23-grammar-speaking-bridge': {
+    primaryAction: { label: 'Explore Tiny Steps grammar classes', to: '/grammar' },
+    learningPathIntro:
+      'When spoken ideas are stronger than writing, the next best move is a grammar path focused on sentence-building and written expression.',
+    learningPathLinks: [{ label: 'Grammar learning path', to: '/grammar' }],
+    suppressCoursesFallback: true,
+  },
+  'spoken-english-classes-for-kids-confidence': {
+    primaryAction: { label: 'Explore Tiny Steps speaking classes', to: '/speaking' },
+    learningPathIntro:
+      'If confidence is the bottleneck, move into the speaking pathway and track progress in guided stages.',
+    learningPathLinks: [{ label: 'Speaking confidence program', to: '/speaking' }],
+    suppressCoursesFallback: true,
+  },
+  'online-english-classes-for-kids-india': {
+    primaryAction: { label: 'Choose the right course', to: '/courses' },
+    learningPathIntro:
+      'Use the course chooser to match your child’s current bottleneck to the right starting program.',
+    learningPathLinks: [{ label: 'Course chooser', to: '/courses' }],
+    suppressCoursesFallback: true,
+  },
+  'how-to-choose-phonics-classes': {
+    primaryAction: { label: 'Explore Tiny Steps phonics classes', to: '/phonics' },
+    learningPathIntro:
+      'For this decision, focus on one phonics pathway with clear stage-fit and measurable decoding progress.',
+    learningPathLinks: [{ label: 'Structured phonics program', to: '/phonics' }],
+    suppressCoursesFallback: true,
+  },
+  'week-17-grammar-assessment': {
+    primaryAction: { label: 'Explore Tiny Steps grammar classes', to: '/grammar' },
+    learningPathIntro:
+      'After assessment, move into one grammar pathway that targets sentence accuracy and writing clarity in sequence.',
+    learningPathLinks: [{ label: 'Grammar learning path', to: '/grammar' }],
+    suppressCoursesFallback: true,
+  },
+  'week-12-speaking-confidence-seeds': {
+    primaryAction: { label: 'Explore Tiny Steps speaking classes', to: '/speaking' },
+    learningPathIntro:
+      'When confidence is the core gap, continue with one speaking pathway built around guided stages and low-pressure practice.',
+    learningPathLinks: [{ label: 'Speaking confidence program', to: '/speaking' }],
+    suppressCoursesFallback: true,
+  },
+  'week-18-speaking-video-feedback': {
+    primaryAction: { label: 'Explore Tiny Steps speaking classes', to: '/speaking' },
+    learningPathIntro:
+      'Use one speaking pathway to turn gentle feedback into steady confidence and clearer speaking habits.',
+    learningPathLinks: [{ label: 'Speaking confidence program', to: '/speaking' }],
+    suppressCoursesFallback: true,
+  },
+  'week-21-speaking-competition-prep': {
+    primaryAction: { label: 'Explore Tiny Steps speaking classes', to: '/speaking' },
+    learningPathIntro:
+      'Competition preparation works best with one speaking pathway that builds stage comfort, expression, and confidence step by step.',
+    learningPathLinks: [{ label: 'Speaking confidence program', to: '/speaking' }],
+    suppressCoursesFallback: true,
+  },
+  'week-20-grammar-editing-camp': {
+    primaryAction: { label: 'Explore Tiny Steps grammar classes', to: '/grammar' },
+    learningPathIntro:
+      'When editing is the bottleneck, continue with one grammar pathway focused on sentence quality and writing clarity.',
+    learningPathLinks: [{ label: 'Grammar learning path', to: '/grammar' }],
+    suppressCoursesFallback: true,
   },
 };
 
@@ -291,9 +444,9 @@ function buildMetaDescription(src: any) {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
-      { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://tinystepslearning.com/blog' },
-      { '@type': 'ListItem', position: 3, name: metaSource.title || 'Article', item: `https://tinystepslearning.com/blog/${slug}` },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: `${SITE_ORIGIN}/blog` },
+      { '@type': 'ListItem', position: 3, name: metaSource.title || 'Article', item: `${SITE_ORIGIN}/blog/${slug}` },
     ],
   }), [metaSource, slug]);
 
@@ -303,17 +456,14 @@ function buildMetaDescription(src: any) {
       '@context': 'https://schema.org',
       '@type': 'BlogPosting',
       headline: metaSource.title,
-      // Use Person when author provided, else use Organization as site author
-      author: metaSource.author
-        ? { '@type': 'Person', name: metaSource.author }
-        : { '@type': 'Organization', name: 'Tiny Steps Learning' },
+      author: getArticleAuthorSchema(metaSource.author),
       // Add dates only when present in metadata (do not invent dates)
-      image: metaSource.hero ? (metaSource.hero.startsWith('http') ? metaSource.hero : `https://tinystepslearning.com${metaSource.hero}`) : undefined,
+      image: metaSource.hero ? (metaSource.hero.startsWith('http') ? metaSource.hero : `${SITE_ORIGIN}${metaSource.hero}`) : undefined,
       description: buildMetaDescription(metaSource) || undefined,
       articleSection: metaSource.category || undefined,
       mainEntityOfPage: {
         '@type': 'WebPage',
-        '@id': `https://tinystepslearning.com/blog/${slug}`,
+        '@id': `${SITE_ORIGIN}/blog/${slug}`,
       },
       wordCount: post && Array.isArray(post.body) ? post.body.map((b) => (b.content || '')).join('\n').split(/\s+/).length : 2500,
       articleBody: post ? post.body.map((b) => b.content).join('\n') : '',
@@ -330,14 +480,8 @@ function buildMetaDescription(src: any) {
       }
     }
 
-    // Publisher information (use existing site identity/logo if present)
     obj.publisher = {
-      '@type': 'Organization',
-      name: 'Tiny Steps Learning',
-      logo: {
-        '@type': 'ImageObject',
-        url: 'https://tinystepslearning.com/logo-square.webp',
-      },
+      '@id': ORGANIZATION_ID,
     };
 
     // Speakable schema for voice search + assistant integrations
@@ -396,7 +540,7 @@ function buildMetaDescription(src: any) {
     }
 
     const title = `${source.title} | Tiny Steps Blog`;
-    const description = buildMetaDescription(source) || 'Tiny Steps Learning blog post.';
+    const description = buildMetaDescription(source) || `${PUBLIC_FACTS.brandName} blog post.`;
 
     applySeo({
       title,
@@ -408,6 +552,9 @@ function buildMetaDescription(src: any) {
   }, [slug, metaSource, jsonLd, breadcrumbSchema, post]);
 
   const categoryConfig = CATEGORY_ARTICLE_CONFIG[metaSource.category] || CATEGORY_ARTICLE_CONFIG['Parent Tips'];
+  const postCtaOverride = slug ? POST_CTA_OVERRIDES[slug] : undefined;
+  const primaryAction = postCtaOverride?.primaryAction || categoryConfig.primaryAction;
+  const learningPathIntro = postCtaOverride?.learningPathIntro || categoryConfig.learningPathIntro;
   const weekMatch = String(metaSource.title || '').match(/^Week\s+(\d+)/i);
   const eyebrowPrimary = weekMatch ? `Week ${weekMatch[1]} Roadmap` : metaSource.category || 'Parent Guide';
   const rawEyebrowSecondary = deriveEyebrowSecondaryLabel(
@@ -423,6 +570,14 @@ function buildMetaDescription(src: any) {
     Array.isArray(post?.faq) && post.faq.length > 0
       ? post.faq.slice(0, 4).map((item) => item.question)
       : categoryConfig.searchPainPoints;
+  const articleAuthorLabel = getArticleAuthorLabel(metaSource.author);
+  const learningPathLinks = Array.isArray(postCtaOverride?.learningPathLinks)
+    ? postCtaOverride.learningPathLinks
+    : Array.isArray(categoryConfig.learningPathLinks)
+      ? categoryConfig.learningPathLinks
+      : [];
+  const suppressCoursesFallback = Boolean(postCtaOverride?.suppressCoursesFallback);
+  const hasCoursesLink = learningPathLinks.some((link) => link?.to === '/courses');
   const heroDescription = metaSource.metaDescription || metaSource.excerpt || buildMetaDescription(metaSource);
   const headingItems = useMemo(() => buildHeadingMeta(post?.body || []), [post]);
   const articleNodes = useMemo(() => {
@@ -509,10 +664,10 @@ function buildMetaDescription(src: any) {
         eyebrowSecondary={eyebrowSecondary}
         title={metaSource.title}
         description={heroDescription}
-        authorLabel={metaSource.author === 'Priya' ? 'Priya • Tiny Steps Founder' : metaSource.author || 'Tiny Steps Learning'}
+        authorLabel={articleAuthorLabel}
         dateLabel={formatBlogDate(metaSource.date)}
         readTimeLabel={metaSource.readTime || '5 min read'}
-        actions={[categoryConfig.primaryAction, categoryConfig.secondaryAction]}
+        actions={[primaryAction, categoryConfig.secondaryAction]}
         searchPainPoints={heroSearchPainPoints}
         heroPoints={categoryConfig.heroPoints}
       />
@@ -553,6 +708,12 @@ function buildMetaDescription(src: any) {
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Best next move</p>
                 <p className="mt-2 text-sm leading-7 text-slate-600">{categoryConfig.sidebarDescription}</p>
               </div>
+              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Content ownership</p>
+                <p className="mt-2 text-sm leading-7 text-slate-600">
+                  Published by {PUBLIC_FACTS.brandName}. This article is prepared by the Tiny Steps academic team to help parents make practical English-learning decisions.
+                </p>
+              </div>
             </div>
           </div>
         </section>
@@ -580,16 +741,26 @@ function buildMetaDescription(src: any) {
             <section className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#101828,#1b2a46)] px-6 py-8 text-white shadow-[0_28px_80px_rgba(15,23,42,0.18)] sm:px-8">
               <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-center">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">Explore Tiny Steps classes</p>
-                  <h2 className="mt-3 text-3xl font-black tracking-tight">Turn this article into a clearer plan for your child</h2>
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">Continue with Tiny Steps learning paths</p>
+                  <h2 className="mt-3 text-3xl font-black tracking-tight">Turn this article into a clearer next step</h2>
                   <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-200">
-                    Choose a program aligned to your child&apos;s current stage in phonics, grammar, or speaking confidence.
+                    {learningPathIntro || 'Choose a program aligned to your child&apos;s current stage and next learning goal.'}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-3 lg:justify-end">
-                  <Link to="/phonics" className="inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">phonics classes for kids</Link>
-                  <Link to="/grammar" className="inline-flex items-center rounded-full border border-white/18 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15">grammar classes for kids</Link>
-                  <Link to="/speaking" className="inline-flex items-center rounded-full border border-white/18 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15">public speaking classes for kids</Link>
+                  {learningPathLinks.map((link, index) => (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      className={
+                        index === 0
+                          ? 'inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100'
+                          : 'inline-flex items-center rounded-full border border-white/18 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15'
+                      }
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
                 </div>
               </div>
             </section>
@@ -603,9 +774,9 @@ function buildMetaDescription(src: any) {
                 Explore our main programs, related guides, or compare courses directly.
               </p>
               <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold">
-                {categoryConfig.primaryAction && (
-                  <Link to={categoryConfig.primaryAction.to} className="inline-flex items-center rounded-full bg-slate-950 px-5 py-3 text-white transition hover:bg-slate-800">
-                    {categoryConfig.primaryAction.label}
+                {primaryAction && (
+                  <Link to={primaryAction.to} className="inline-flex items-center rounded-full bg-slate-950 px-5 py-3 text-white transition hover:bg-slate-800">
+                    {primaryAction.label}
                   </Link>
                 )}
                 {blogPosts
@@ -616,7 +787,9 @@ function buildMetaDescription(src: any) {
                       {related.title}
                     </Link>
                   ))}
-                <Link to="/courses" className="inline-flex items-center rounded-full border border-slate-200 bg-[#f4f8fc] px-5 py-3 text-slate-900 transition hover:bg-[#e8f1f8]">Explore all courses</Link>
+                {!hasCoursesLink && !suppressCoursesFallback ? (
+                  <Link to="/courses" className="inline-flex items-center rounded-full border border-slate-200 bg-[#f4f8fc] px-5 py-3 text-slate-900 transition hover:bg-[#e8f1f8]">Explore all courses</Link>
+                ) : null}
               </div>
             </section>
           </div>

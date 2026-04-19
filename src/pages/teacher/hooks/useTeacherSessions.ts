@@ -347,13 +347,24 @@ export const useTeacherSessions = (
     const end = endDate || today;
 
     const baseCollection = collection(db, 'classSessions');
-    const classSessionsQuery = query(
-      baseCollection,
-      where('date', '>=', start),
-      where('date', '<=', end),
-      orderBy('date', 'asc'),
-      orderBy('startTime', 'asc'),
-    );
+    const teacherKey = toCleanText(teacherId);
+    const classSessionsQuery =
+      !includeAllTeachers && teacherKey
+        ? query(
+            baseCollection,
+            where('teacherId', '==', teacherKey),
+            where('date', '>=', start),
+            where('date', '<=', end),
+            orderBy('date', 'asc'),
+            orderBy('startTime', 'asc'),
+          )
+        : query(
+            baseCollection,
+            where('date', '>=', start),
+            where('date', '<=', end),
+            orderBy('date', 'asc'),
+            orderBy('startTime', 'asc'),
+          );
 
     let cancelled = false;
     let batchCounter = 0;
@@ -362,7 +373,7 @@ export const useTeacherSessions = (
       const currentBatch = ++batchCounter;
       const filtered = includeAllTeachers
         ? rows
-        : rows.filter((session) => toCleanText((session as any)?.teacherId) === toCleanText(teacherId));
+        : rows.filter((session) => toCleanText((session as any)?.teacherId) === teacherKey);
 
       const enriched = await enrichSessionsWithKidNames(filtered);
       if (cancelled || currentBatch !== batchCounter) return;
@@ -372,18 +383,74 @@ export const useTeacherSessions = (
     };
 
     const runFallback = async () => {
+      const isIndexError = (value: unknown) => {
+        const message = value instanceof Error ? value.message : String(value);
+        const code = (value as any)?.code;
+        return code === 'failed-precondition' || /requires an index|index is currently building/i.test(message);
+      };
+
+      // Keep fallback queries scoped (teacher/date) to avoid broad classSessions reads.
+      const fallbackQueries = includeAllTeachers
+        ? [
+            query(
+              baseCollection,
+              where('date', '>=', start),
+              where('date', '<=', end),
+              orderBy('date', 'asc'),
+            ),
+          ]
+        : teacherKey
+          ? [
+              query(
+                baseCollection,
+                where('teacherId', '==', teacherKey),
+                where('date', '>=', start),
+                where('date', '<=', end),
+                orderBy('date', 'asc'),
+              ),
+              query(baseCollection, where('teacherId', '==', teacherKey)),
+              query(
+                baseCollection,
+                where('date', '>=', start),
+                where('date', '<=', end),
+                orderBy('date', 'asc'),
+              ),
+            ]
+          : [
+              query(
+                baseCollection,
+                where('date', '>=', start),
+                where('date', '<=', end),
+                orderBy('date', 'asc'),
+              ),
+            ];
+
+      let lastError: unknown = null;
+
       try {
-        const fallbackSnap = await getDocs(baseCollection);
-        const allSessions = fallbackSnap.docs.map((d) =>
-          toTeacherSession({ id: d.id, ...d.data() }),
-        );
-        const filteredByDate = allSessions.filter((session) => {
-          const date = toCleanText(session.date);
-          return Boolean(date && date >= start && date <= end);
-        });
-        await applyRows(filteredByDate);
-        if (import.meta.env.DEV && !cancelled) {
-          console.warn('useTeacherSessions: loaded fallback data because classSessions index is not ready');
+        for (const fallbackQuery of fallbackQueries) {
+          try {
+            const fallbackSnap = await getDocs(fallbackQuery);
+            const scopedSessions = fallbackSnap.docs.map((d) =>
+              toTeacherSession({ id: d.id, ...d.data() }),
+            );
+            const filteredByDate = scopedSessions.filter((session) => {
+              const date = toCleanText(session.date);
+              return Boolean(date && date >= start && date <= end);
+            });
+            await applyRows(filteredByDate);
+            if (import.meta.env.DEV && !cancelled) {
+              console.warn('useTeacherSessions: loaded fallback data because classSessions index is not ready');
+            }
+            return;
+          } catch (fallbackErr) {
+            lastError = fallbackErr;
+            if (!isIndexError(fallbackErr)) throw fallbackErr;
+          }
+        }
+        if (!cancelled) {
+          setError((lastError as Error) || new Error('useTeacherSessions fallback failed'));
+          setIsLoading(false);
         }
       } catch (fallbackErr) {
         if (!cancelled) {

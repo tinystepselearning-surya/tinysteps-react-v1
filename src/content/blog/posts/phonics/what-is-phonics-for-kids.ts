@@ -4,7 +4,7 @@ const post: PhonicsSeoPost = {
   slug: 'what-is-phonics-for-kids',
   title: 'What Is Phonics for Kids? A Parent Start-Here Guide',
   focus: 'what is phonics for kids',
-  quickAnswer: 'Phonics teaches children how spoken sounds connect to written letters and letter groups. Instead of memorizing whole words, children learn to decode unfamiliar words step by step and encode them for spelling.',
+  quickAnswer: 'Parent question: "What exactly is phonics, and how does it help my child read?" Direct answer: phonics teaches children to connect sounds to letters, blend those sounds into words, and spell by hearing sound patterns. This usually means your child moves from guessing words to decoding unfamiliar words step by step.',
   homePlan: [
     'Start with the core sequence: hear sound, map to letter, blend sounds into a word, then read in a short sentence.',
     'Teach only a small sound set at first and review daily before adding new patterns.',
@@ -37,11 +37,8 @@ const post: PhonicsSeoPost = {
     answer: 'A strong early sign is reduced guessing: your child starts attempting words sound by sound, including unfamiliar ones.'
   }],
   relatedReads: [{
-    label: 'Right age to start phonics',
-    to: '/blog/what-age-to-start-phonics'
-  }, {
-    label: 'Phonics vs sight words and traditional reading',
-    to: '/blog/science-of-phonics-learning'
+    label: 'Explore structured phonics support',
+    to: '/phonics'
   }, {
     label: 'My child knows ABC but cannot read',
     to: '/blog/child-knows-abc-but-cannot-read'

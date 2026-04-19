@@ -1,9 +1,12 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
+import { ORGANIZATION_ID, PUBLIC_FACTS, SITE_ORIGIN } from '../../lib/schemas';
 
 const ARTICLE_SLUG = 'what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading';
 const ARTICLE_PATH = `/blog/${ARTICLE_SLUG}`;
+const BLOG_URL = `${SITE_ORIGIN}/blog`;
+const ARTICLE_URL = `${SITE_ORIGIN}${ARTICLE_PATH}`;
 
 const faqItems = [
   {
@@ -34,19 +37,32 @@ export default function WhatIsJollyPhonicsBestWayPage() {
       jsonLd: [
         {
           '@context': 'https://schema.org',
-          '@type': 'Article',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
+            { '@type': 'ListItem', position: 2, name: 'Blog', item: BLOG_URL },
+            { '@type': 'ListItem', position: 3, name: 'What is Jolly Phonics and is it the best way to teach reading?', item: ARTICLE_URL },
+          ],
+        },
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BlogPosting',
           headline: 'What is Jolly Phonics and is it the best way to teach reading?',
           description:
             'A parent-friendly guide to Jolly Phonics, synthetic phonics, and how Tiny Steps uses a structured phonics approach for reading confidence.',
+          articleSection: 'Phonics',
           author: {
             '@type': 'Organization',
-            name: 'Tiny Steps Learning',
+            '@id': ORGANIZATION_ID,
+            name: PUBLIC_FACTS.brandName,
           },
           publisher: {
-            '@type': 'Organization',
-            name: 'Tiny Steps Learning',
+            '@id': ORGANIZATION_ID,
           },
-          mainEntityOfPage: `https://tinystepslearning.com${ARTICLE_PATH}`,
+          mainEntityOfPage: {
+            '@type': 'WebPage',
+            '@id': ARTICLE_URL,
+          },
           datePublished: '2026-04-05',
           dateModified: '2026-04-05',
         },

@@ -10,10 +10,16 @@ const post: BlogPost = {
   excerpt: "Story cards that bridge speaking and writing: a week of talk→shape→write tasks with simple frames that turn oral ideas into short, confident sentences.",
   body: [{
     type: 'h2',
-    content: 'Why some kids can speak but can’t write (motor load + planning)'
+    content: 'Parent question: "My child can speak ideas but cannot write clear sentences. Why?"'
   }, {
     type: 'p',
-    content: 'Speaking and writing use different mental muscles. Many children can tell a story easily but freeze when asked to write because handwriting, spelling and planning combine to overload working memory. Speaking first reduces the planning burden — the words are already shaped in the child’s head.'
+    content: 'Direct answer: this is usually a sentence-formation and planning gap, not a thinking gap. Many children can explain ideas aloud but freeze when handwriting, grammar, spelling, and organization need to happen together.'
+  }, {
+    type: 'h2',
+    content: 'What this usually means for parents'
+  }, {
+    type: 'p',
+    content: 'Speaking and writing use different mental loads. If spoken ideas are stronger than written output, your child often needs a short bridge routine: speak first, shape one sentence, then write one sentence. This reduces overload and improves sentence control step by step.'
   }, {
     type: 'h2',
     content: 'The bridge method: Say it → Shape it → Write it'
@@ -116,6 +122,15 @@ const post: BlogPost = {
   }, {
     type: 'p',
     content: 'Finish with praise: “I liked how you told that part — great idea.” Week 24 will guide hosting a family showcase to celebrate progress.'
+  }, {
+    type: 'h2',
+    content: 'Practical next step for parents'
+  }, {
+    type: 'p',
+    content: 'If this pattern continues after 2-3 weeks of short bridge practice, use a grammar pathway focused on sentence-building and writing clarity.'
+  }, {
+    type: 'li',
+    content: 'Explore the grammar learning path: /grammar'
   }, {
     type: 'h3',
     content: '12 sample story card ideas (characters/places/problems)'

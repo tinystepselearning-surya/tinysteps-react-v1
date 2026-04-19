@@ -6,12 +6,36 @@ import { applySeo } from '../lib/seo';
 import { blogPosts } from '../content/blog';
 import { fetchMdxPosts } from '../content/blogMdx';
 import { formatBlogDate, isoDateFromYMD } from '../lib/date';
+import { ORGANIZATION_ID, PUBLIC_FACTS, SITE_ORIGIN } from '../lib/schemas';
 import Meta from '../components/common/Meta';
 import NewsletterForm from '../components/common/NewsletterForm';
 import AboutAuthor from '../components/AboutAuthor';
 
 const TOPIC_OPTIONS = ['All', 'Phonics', 'Grammar', 'Public Speaking', 'Parent Tips', 'Research'] as const;
 const SORT_OPTIONS = ['Newest', 'Most Popular', 'Most Read'] as const;
+const FOUNDER_AUTHOR_NAME = 'Priya';
+const TEAM_AUTHOR_LABEL = 'Tiny Steps Academic Team';
+
+const isFounderAuthor = (author: unknown): boolean =>
+  String(author || '').trim().toLowerCase() === FOUNDER_AUTHOR_NAME.toLowerCase();
+
+const toDisplayAuthorLabel = (author: unknown): string =>
+  isFounderAuthor(author) ? FOUNDER_AUTHOR_NAME : TEAM_AUTHOR_LABEL;
+
+const toArticleAuthorSchema = (author: unknown) =>
+  isFounderAuthor(author)
+    ? {
+        '@type': 'Person',
+        '@id': `${SITE_ORIGIN}/#priya-founder`,
+        name: FOUNDER_AUTHOR_NAME,
+        jobTitle: 'Founder',
+        worksFor: { '@id': ORGANIZATION_ID },
+      }
+    : {
+        '@type': 'Organization',
+        '@id': ORGANIZATION_ID,
+        name: PUBLIC_FACTS.brandName,
+      };
 
 const SEARCH_INTENT_LANES = [
   {
@@ -184,7 +208,7 @@ const BlogPage: FC = () => {
         slug: post.slug,
         title: post.title || post.slug,
         category: post.category || 'Parent Tips',
-        author: post.author || 'Tiny Steps',
+        author: post.author || TEAM_AUTHOR_LABEL,
         date: post.date || new Date().toISOString().slice(0, 10),
         readTime: post.readTime || '5 min read',
         hero: post.hero,
@@ -287,6 +311,9 @@ const BlogPage: FC = () => {
       name: 'Tiny Steps Parent Desk',
       description:
         'Parent-friendly blog for phonics, grammar, public speaking, and home English routines for children ages 3-12.',
+      publisher: {
+        '@id': ORGANIZATION_ID,
+      },
       blogPost: publishedPosts.map((post) => ({
         '@type': 'BlogPosting',
         headline: post.title,
@@ -296,14 +323,13 @@ const BlogPage: FC = () => {
         image: post.hero
           ? String(post.hero).startsWith('http')
             ? post.hero
-            : `https://tinystepslearning.com${post.hero}`
-          : 'https://tinystepslearning.com/logo-square.webp',
-        author: {
-          '@type': 'Organization',
-          name: 'Tiny Steps Learning',
-          url: 'https://tinystepslearning.com',
+            : `${SITE_ORIGIN}${post.hero}`
+          : `${SITE_ORIGIN}/logo-square.webp`,
+        author: toArticleAuthorSchema(post.author),
+        publisher: {
+          '@id': ORGANIZATION_ID,
         },
-        url: `https://tinystepslearning.com/blog/${post.slug}`,
+        url: `${SITE_ORIGIN}/blog/${post.slug}`,
       })),
     }),
     [publishedPosts],
@@ -316,7 +342,7 @@ const BlogPage: FC = () => {
       name: 'Tiny Steps Blog',
       description:
         'Search and browse phonics, grammar, speaking, and parent routine articles for children ages 3-12.',
-      url: 'https://tinystepslearning.com/blog',
+      url: `${SITE_ORIGIN}/blog`,
       audience: {
         '@type': 'Audience',
         audienceType: 'Parents of children ages 3-12',
@@ -333,7 +359,7 @@ const BlogPage: FC = () => {
         itemListElement: publishedPosts.slice(0, 24).map((post, index) => ({
           '@type': 'ListItem',
           position: index + 1,
-          url: `https://tinystepslearning.com/blog/${post.slug}`,
+          url: `${SITE_ORIGIN}/blog/${post.slug}`,
           name: post.title,
         })),
       },
@@ -363,8 +389,8 @@ const BlogPage: FC = () => {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
-        { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://tinystepslearning.com/blog' },
+        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
+        { '@type': 'ListItem', position: 2, name: 'Blog', item: `${SITE_ORIGIN}/blog` },
       ],
     }),
     [],
@@ -592,7 +618,7 @@ const BlogPage: FC = () => {
                     {leadPost.title}
                   </h2>
                   <p className="mt-1 text-xs leading-5 text-slate-600">
-                    by {leadPost.author} • {leadPost.readTime} • {formatBlogDate(leadPost.date)}
+                    by {toDisplayAuthorLabel(leadPost.author)} • {leadPost.readTime} • {formatBlogDate(leadPost.date)}
                   </p>
                   <p className="mt-1 text-sm leading-5 text-slate-700 line-clamp-2">
                     {leadPost.metaDescription || leadPost.excerpt}

@@ -2,6 +2,7 @@ import { useEffect, useMemo, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
 import { formatBlogDate } from '../../lib/date';
+import { ORGANIZATION_ID, PUBLIC_FACTS, SITE_ORIGIN } from '../../lib/schemas';
 import useRevealAnimations from '../../hooks/useRevealAnimations';
 import AboutAuthor from '../../components/AboutAuthor';
 import ResearchArticleHero from '../../components/blog/ResearchArticleHero';
@@ -14,6 +15,8 @@ const ARTICLE_DESCRIPTION =
 const ARTICLE_DATE = '2026-04-03';
 const ARTICLE_READ_TIME = '12 min read';
 const ARTICLE_HERO = '/blog/hero-research.jpg';
+const BLOG_URL = `${SITE_ORIGIN}/blog`;
+const ARTICLE_URL = `${SITE_ORIGIN}${ARTICLE_PATH}`;
 const ARTICLE_KEYWORDS = [
   'grammar basics for kids',
   'grammar for kids',
@@ -430,9 +433,9 @@ export default function Week7GrammarNounsToParagraphsPage() {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
-          { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://tinystepslearning.com/blog' },
-          { '@type': 'ListItem', position: 3, name: ARTICLE_TITLE, item: `https://tinystepslearning.com${ARTICLE_PATH}` },
+          { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
+          { '@type': 'ListItem', position: 2, name: 'Blog', item: BLOG_URL },
+          { '@type': 'ListItem', position: 3, name: ARTICLE_TITLE, item: ARTICLE_URL },
         ],
       },
       {
@@ -444,22 +447,18 @@ export default function Week7GrammarNounsToParagraphsPage() {
         dateModified: ARTICLE_DATE,
         articleSection: 'Grammar',
         keywords: ARTICLE_KEYWORDS,
-        image: `https://tinystepslearning.com${ARTICLE_HERO}`,
+        image: `${SITE_ORIGIN}${ARTICLE_HERO}`,
         author: {
           '@type': 'Organization',
-          name: 'Tiny Steps Learning',
+          '@id': ORGANIZATION_ID,
+          name: PUBLIC_FACTS.brandName,
         },
         publisher: {
-          '@type': 'Organization',
-          name: 'Tiny Steps Learning',
-          logo: {
-            '@type': 'ImageObject',
-            url: 'https://tinystepslearning.com/logo-square.webp',
-          },
+          '@id': ORGANIZATION_ID,
         },
         mainEntityOfPage: {
           '@type': 'WebPage',
-          '@id': `https://tinystepslearning.com${ARTICLE_PATH}`,
+          '@id': ARTICLE_URL,
         },
         citation: SOURCES.map((source) => source.url),
       },

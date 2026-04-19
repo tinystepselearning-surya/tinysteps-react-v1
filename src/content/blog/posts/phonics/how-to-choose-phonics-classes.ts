@@ -4,8 +4,9 @@ const post: PhonicsSeoPost = {
   slug: 'how-to-choose-phonics-classes',
   title: 'How to Choose a Phonics Class: A Parent Decision Framework',
   focus: 'how to choose phonics classes',
-  quickAnswer: 'Choose a phonics class by fit, not brand. Match the class to your child’s current decoding stage, verify teaching quality in a trial, and require measurable 4-6 week outcomes before committing long term.',
+  quickAnswer: 'Parent question: "How do I choose the right phonics class for my child?" Direct answer: choose by stage fit and teaching quality, not by brand. Start with your child’s current decoding level, test one trial class for correction quality, and continue only when you can see clear reading evidence.',
   homePlan: [
+    'What this usually means: if class fit is wrong, progress feels random even with regular attendance. Start by placing your child at the right reading stage before comparing options.',
     'Start with a child profile first: beginner sounds, early blending, or sentence-level decoder. A class can only be judged against the right starting level.',
     'Compare 2-3 options with one scorecard: sequencing clarity, correction quality, decodable reading, parent reporting, and class pace fit.',
     'In each trial, watch for active teaching moves: model, guided attempt, correction, retry, transfer to a new word or sentence.',
@@ -37,6 +38,9 @@ const post: PhonicsSeoPost = {
     answer: 'Yes, if teaching quality and progress evidence are strong. Cost should be compared against measurable learning outcomes, not features alone.'
   }],
   relatedReads: [{
+    label: 'Explore structured phonics support',
+    to: '/phonics'
+  }, {
     label: 'Best online phonics classes for kids',
     to: '/blog/best-online-phonics-classes-for-kids'
   }, {

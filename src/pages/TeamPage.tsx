@@ -1,14 +1,21 @@
 import { useEffect } from 'react';
-import { applySeo } from '../lib/seo';
-import { organizationSchema } from '../lib/schemas';
+import { applySeo, getRouteConfig } from '../lib/seo';
+import { CORE_PROGRAMS_TEXT, ORGANIZATION_ID, PUBLIC_FACTS, SITE_ORIGIN, organizationSchema } from '../lib/schemas';
 import { Link } from 'react-router-dom';
+
+const teamSeo = getRouteConfig('/team');
+const teamSeoTitle = teamSeo?.title ?? 'Meet the Founder-Led Academic Team | Tiny Steps Learning';
+const teamSeoDescription =
+  teamSeo?.description ??
+  'Get to know the founder-led academic team behind Tiny Steps Learning and how teaching quality is shaped across core programs.';
+const teamCanonicalPath = teamSeo?.canonicalPath ?? '/team';
 
 export default function TeamPage() {
   useEffect(() => {
     applySeo({
-      title: 'Meet the Team | Tiny Steps Learning',
-      description: 'Meet the experienced educators behind Tiny Steps Learning. Based in Hyderabad, serving families worldwide with expert 1:1 online English classes for kids ages 3–12.',
-      canonicalPath: '/team',
+      title: teamSeoTitle,
+      description: teamSeoDescription,
+      canonicalPath: teamCanonicalPath,
       ogType: 'website',
       jsonLd: [
         organizationSchema,
@@ -16,30 +23,27 @@ export default function TeamPage() {
           '@context': 'https://schema.org',
           '@type': 'AboutPage',
           name: 'Meet the Team',
-          description: 'Learn about the educators and teaching philosophy behind Tiny Steps Learning',
-          url: 'https://tinystepslearning.com/team',
+          description: `${PUBLIC_FACTS.brandName} is a ${PUBLIC_FACTS.positioning} focused on ${CORE_PROGRAMS_TEXT} through ${PUBLIC_FACTS.deliveryModel}.`,
+          url: `${SITE_ORIGIN}/team`,
           mainEntity: {
             '@type': 'Organization',
-            '@id': 'https://tinystepslearning.com/#organization',
-            name: 'Tiny Steps Learning'
+            '@id': ORGANIZATION_ID,
+            name: PUBLIC_FACTS.brandName,
           }
         },
         {
           '@context': 'https://schema.org',
           '@type': 'Person',
-          name: 'Lead Educator',
-          jobTitle: 'Founder & Lead Teacher',
+          '@id': `${SITE_ORIGIN}/#priya-founder`,
+          name: 'Priya',
+          jobTitle: 'Founder',
           worksFor: {
             '@type': 'Organization',
-            name: 'Tiny Steps Learning',
-            '@id': 'https://tinystepslearning.com/#organization'
+            '@id': ORGANIZATION_ID,
+            name: PUBLIC_FACTS.brandName,
           },
-          description: 'IB-trained educator with 8+ years experience teaching English to young learners',
-          knowsAbout: ['Phonics', 'English Grammar', 'Public Speaking', 'Child Development', 'IB Curriculum'],
-          alumniOf: {
-            '@type': 'Organization',
-            name: 'International Baccalaureate'
-          }
+          description: `Founder of ${PUBLIC_FACTS.brandName}, working with the academic team on ${CORE_PROGRAMS_TEXT} programs for children.`,
+          knowsAbout: [...PUBLIC_FACTS.corePrograms, 'Child-friendly English teaching']
         },
         {
           '@context': 'https://schema.org',
@@ -49,13 +53,13 @@ export default function TeamPage() {
               '@type': 'ListItem',
               position: 1,
               name: 'Home',
-              item: 'https://tinystepslearning.com/'
+              item: `${SITE_ORIGIN}/`
             },
             {
               '@type': 'ListItem',
               position: 2,
               name: 'Team',
-              item: 'https://tinystepslearning.com/team'
+              item: `${SITE_ORIGIN}/team`
             }
           ]
         }
@@ -71,8 +75,8 @@ export default function TeamPage() {
           Meet the Team
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-700">
-          Based in Hyderabad, India, we're a team of passionate educators serving families across 15+ countries. 
-          Every mentor is IB-trained, kind, and committed to making English learning fun and effective.
+          Tiny Steps is a founder-led academic team serving learners in India and globally through live online classes.
+          We build clear, child-friendly pathways in {CORE_PROGRAMS_TEXT} so families can see steady progress.
         </p>
       </section>
 
@@ -89,7 +93,7 @@ export default function TeamPage() {
               </div>
               <h3 className="mb-2 text-lg font-semibold">Systematic Curriculum</h3>
               <p className="text-gray-600">
-                IB-aligned phonics, grammar, and speaking programs with clear milestones and mastery checks at every level.
+                Structured Phonics, Grammar, and Public Speaking programs with clear milestones and mastery checks at every level.
               </p>
             </div>
 
@@ -120,9 +124,9 @@ export default function TeamPage() {
         </div>
       </section>
 
-      {/* Lead Teacher Section */}
+      {/* Founder Section */}
       <section className="mx-auto max-w-4xl px-6 py-16">
-        <h2 className="mb-8 text-center text-3xl font-bold">Lead Educator</h2>
+        <h2 className="mb-8 text-center text-3xl font-bold">Founder</h2>
         <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
           <div className="flex flex-col gap-6 md:flex-row md:items-start">
             <div className="flex-shrink-0">
@@ -131,35 +135,25 @@ export default function TeamPage() {
               </div>
             </div>
             <div className="flex-1">
-              <h3 className="mb-2 text-2xl font-bold">Founder & Lead Teacher</h3>
-              <p className="mb-4 text-sm text-gray-600">IB-Trained Educator | 8+ Years Experience</p>
+              <h3 className="mb-2 text-2xl font-bold">Priya, Founder</h3>
+              <p className="mb-4 text-sm text-gray-600">Founder-led academic direction | Tiny Steps Learning</p>
               <div className="space-y-3 text-gray-700">
                 <p>
-                  Our founder is an IB-trained educator with over 8 years of experience teaching English to young learners 
-                  across diverse learning needs. Specializing in phonics, grammar, and public speaking, they've helped 
-                  3,500+ children build confidence and fluency in English.
+                  Priya founded Tiny Steps Learning to make premium online English learning for children clearer, kinder, and more structured for families.
                 </p>
                 <p>
-                  Their teaching philosophy centers on three principles: systematic progression through clear milestones, 
-                  personalized 1:1 attention, and creating a safe space where children feel encouraged to take risks and 
-                  make mistakes.
+                  She works closely with the academic team on curriculum quality, teacher guidance, and parent communication across Phonics, Grammar, and Public Speaking programs.
                 </p>
                 <p>
-                  Before founding Tiny Steps Learning, they worked with international schools implementing IB curriculum 
-                  and saw firsthand how structured, kind instruction transforms struggling readers into confident communicators 
-                  in just 12–16 weeks.
+                  The focus is consistent: child-friendly teaching, live feedback, and practical progress updates that parents can trust.
                 </p>
               </div>
               <div className="mt-6 flex flex-wrap gap-2">
-                <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700">
-                  IB Curriculum Expert
-                </span>
-                <span className="rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-700">
-                  Phonics Specialist
-                </span>
-                <span className="rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700">
-                  Child Development
-                </span>
+                {PUBLIC_FACTS.corePrograms.map((program) => (
+                  <span key={program} className="rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700">
+                    {program}
+                  </span>
+                ))}
               </div>
             </div>
           </div>

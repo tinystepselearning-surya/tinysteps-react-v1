@@ -9,16 +9,10 @@ import ParentReassurance from '../components/programs/ParentReassurance';
 import NextStepsLinks from '../components/programs/NextStepsLinks';
 import TopicClusterLinks from '../components/programs/TopicClusterLinks';
 import Meta from '../components/common/Meta';
-import { createCourseSchema } from '../lib/schemas';
+import { createCourseSchema, PUBLIC_FACTS } from '../lib/schemas';
 import { getRouteConfig } from '../lib/seo';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
-import {
-  createCourseReviewSchemaFragment,
-  fetchApprovedTestimonialsCatalog,
-  filterApprovedTestimonialsByCourse,
-  getFallbackTestimonials,
-  type Testimonial,
-} from '../lib/testimonials';
+import ContentTrustNote from '../components/seo/ContentTrustNote';
 
 const levels = [
   {
@@ -51,24 +45,24 @@ const stages = [
 
 const quickAnswerFaqItems = [
   {
-    question: 'What does a child learn in Tiny Steps communication classes?',
+    question: 'How does speaking confidence grow for children?',
     answer:
-      'Children learn self-introduction, picture talk, storytelling, sequencing, vocabulary use, sentence expansion, pronunciation practice, and confident presentation step by step.'
+      'Speaking confidence usually grows in stages: comfort, sentence flow, and then structured presentation. Children improve fastest with regular guided speaking turns.',
   },
   {
-    question: 'Are the classes suitable for shy children?',
+    question: 'Is this useful for shy children who speak very little?',
     answer:
-      'Yes. Children begin with guided speaking prompts and simple responses, then move gradually into longer answers, storytelling, and independent speaking.'
+      'Yes. Lessons start with low-pressure prompts and short responses, then build toward longer answers, storytelling, and independent speaking.',
   },
   {
-    question: 'How are online public speaking classes conducted?',
+    question: 'What happens in a live speaking lesson?',
     answer:
-      'Classes are teacher-led through live online sessions using picture prompts, speaking games, role play, storytelling tasks, pronunciation practice, and guided feedback.'
+      'Children practice picture talk, story structure, vocabulary expansion, pronunciation, and feedback-based speaking tasks in live online sessions.',
   },
   {
-    question: 'How do parents know the child is improving?',
+    question: 'What do parents usually notice first?',
     answer:
-      'Parents receive updates on the child’s participation, clarity, vocabulary use, sentence confidence, presentation skills, and areas that need more practice.'
+      'Parents usually notice better participation first. Then children begin speaking in longer, clearer sentences with more confidence.',
   }
 ];
 
@@ -90,14 +84,12 @@ const faqItems = [
     answer: 'Parents receive stage-based progress updates with strengths, targets, and recorded speaking evidence. This makes confidence and communication growth measurable over time.'
   }
 ];
+const schemaFaqItems = [...quickAnswerFaqItems, faqItems[1]];
 
 const speakingSeo = getRouteConfig('/speaking');
 
 export default function SpeakingPage() {
   const [openFaqIndexes, setOpenFaqIndexes] = useState<number[]>([0]);
-  const [courseReviewItems, setCourseReviewItems] = useState<Testimonial[]>(() =>
-    filterApprovedTestimonialsByCourse(getFallbackTestimonials({ limit: 800 }), 'speaking'),
-  );
   const allFaqOpen = openFaqIndexes.length === faqItems.length;
 
   const toggleFaq = (index: number) => {
@@ -109,44 +101,17 @@ export default function SpeakingPage() {
   const expandAllFaq = () => setOpenFaqIndexes(faqItems.map((_, index) => index));
   const collapseAllFaq = () => setOpenFaqIndexes([]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const approved = await fetchApprovedTestimonialsCatalog(800);
-        const catalog = approved.length ? approved : getFallbackTestimonials({ limit: 800 });
-        const filtered = filterApprovedTestimonialsByCourse(catalog, 'speaking');
-        if (!cancelled) setCourseReviewItems(filtered);
-      } catch {
-        if (cancelled) return;
-        setCourseReviewItems(
-          filterApprovedTestimonialsByCourse(getFallbackTestimonials({ limit: 800 }), 'speaking'),
-        );
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   const courseSchema = useMemo(
-    () => ({
-      ...createCourseSchema({
+    () =>
+      createCourseSchema({
         name: "Public Speaking Classes for Kids",
-        description: "Live online public speaking classes for kids focused on confidence, clarity, storytelling, and presentation structure with coach feedback.",
-        url: "https://tinystepslearning.com/speaking",
+        description: "How speaking classes build confidence: children move from guided short responses to story-based and structured speaking with live feedback.",
+        url: `${PUBLIC_FACTS.primaryWebsite}/speaking`,
         courseMode: 'online',
         ageRange: 'Ages 4-15',
         educationalLevel: 'Elementary to Middle School'
       }),
-      ...createCourseReviewSchemaFragment({
-        items: courseReviewItems,
-        maxReviews: 5,
-      }),
-    }),
-    [courseReviewItems],
+    [],
   );
 
   const jsonLd = [
@@ -162,7 +127,7 @@ export default function SpeakingPage() {
     {
       "@context": "https://schema.org",
       "@type": "FAQPage",
-      "mainEntity": [...quickAnswerFaqItems, ...faqItems].map(item => ({
+      "mainEntity": schemaFaqItems.map(item => ({
         "@type": "Question",
         "name": item.question,
         "acceptedAnswer": {
@@ -177,14 +142,14 @@ export default function SpeakingPage() {
     <div>
       <Meta
         title={speakingSeo?.title ?? 'Online Public Speaking Classes for Kids | Tiny Steps Learning'}
-        description={speakingSeo?.description ?? 'Live online public speaking and communication classes for kids with storytelling, structure, and coach feedback.'}
+        description={speakingSeo?.description ?? 'Speaking confidence grows through guided stages, from short responses to structured expression. Explore clarity, vocabulary, and presentation practice.'}
         canonical={`https://tinystepslearning.com${speakingSeo?.canonicalPath ?? '/speaking'}`}
         jsonLd={jsonLd}
       />
       <ProgramHero
         program="Public Speaking"
         title="Online Public Speaking Classes for Kids"
-        subtitle="From shy to spotlight-ready with guided speaking practice, communication coaching, and stage-based showcases."
+        subtitle="How speaking classes build confidence: children practise guided speaking in stages, from short responses to structured presentations."
         badges={['Ages 4–15', 'S.P.E.A.K habit', 'Parent video notes']}
         highlights={[
           'Show & tell, storytelling, debates, persuasive speeches',
@@ -195,12 +160,12 @@ export default function SpeakingPage() {
 
       <section className="mx-auto max-w-4xl px-6 pt-8">
         <div className="rounded-2xl border border-amber-100 bg-gradient-to-r from-slate-50 to-amber-50 p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Quick Answer for Parents</h2>
+          <h2 className="text-lg font-semibold text-slate-900">How do speaking classes build confidence?</h2>
           <p className="mt-2 text-base text-slate-800">
-            Tiny Steps Learning offers online communication classes for children and public speaking classes for children who need support with clear expression,
-            sentence confidence, storytelling, pronunciation practice, and structured speaking. The program helps children speak in complete sentences, describe
-            pictures, share ideas, answer questions, organize thoughts, and present with confidence. Classes are available in one-on-one and small-group formats,
-            with parent updates to show what the child is learning and where the child needs more practice.
+            Speaking classes build confidence through repeated, guided speaking turns in a safe live setting. Children
+            move from short responses to picture talk, storytelling, and structured speaking. Parents usually notice
+            more participation first, then clearer and longer responses. Next step: begin with a comfortable speaking
+            baseline so teaching starts at the right pace.
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {quickAnswerFaqItems.map((item) => (
@@ -213,11 +178,47 @@ export default function SpeakingPage() {
         </div>
       </section>
 
+      <ContentTrustNote text="This page is created by the Tiny Steps academic team and reviewed by the founder to help parents support communication confidence and public speaking development." />
+
+      <section className="mx-auto mt-8 max-w-4xl px-6">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-xl font-bold text-slate-900">Proof: how speaking confidence grows in stages</h2>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {[
+              {
+                stage: 'Stage 1',
+                title: 'Comfort to speak',
+                detail: 'Children begin with guided prompts, short responses, and low-pressure speaking routines.',
+              },
+              {
+                stage: 'Stage 2',
+                title: 'Clear expression',
+                detail: 'Sentence length, vocabulary choice, and speaking clarity improve with regular feedback.',
+              },
+              {
+                stage: 'Stage 3',
+                title: 'Structured presentation',
+                detail: 'Children learn how to organize ideas, present confidently, and handle simple questions.',
+              },
+            ].map((item) => (
+              <article key={item.title} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{item.stage}</p>
+                <h3 className="mt-2 text-sm font-semibold text-slate-900">{item.title}</h3>
+                <p className="mt-2 text-sm text-slate-700">{item.detail}</p>
+              </article>
+            ))}
+          </div>
+          <p className="mt-4 text-sm text-slate-700">
+            Next step: use your child&apos;s current comfort level to start at the right stage and build steadily.
+          </p>
+        </div>
+      </section>
+
       {/* Program at a Glance */}
       <ProgramFacts
         ageRange="Ages 4-15"
         format="Live 1:1 or small group online"
-        duration="35-minute classes, 2-3x per week"
+        duration={`${PUBLIC_FACTS.sessionDuration}, 2-3x per week`}
         structure="2 levels (Basic & Advanced), 36+ lessons with stage-based progression"
         outcomes={[
           'Build confidence to speak clearly in front of others',

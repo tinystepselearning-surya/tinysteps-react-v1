@@ -10,11 +10,17 @@ const post: BlogPost = {
   excerpt: 'If your child understands English but hesitates to speak, this step-by-step confidence plan helps: short prompts, sentence frames, gentle corrections, and weekly practice.',
   hero: '/blog/hero-speaking.jpg',
   body: [{
-    type: 'p',
-    content: 'Many children in India understand English but don’t speak confidently. This is usually not a “knowledge problem”—it’s a confidence + practice design problem.'
+    type: 'h2',
+    content: 'Parent question: "My child understands English but avoids speaking. What should I do first?"'
   }, {
     type: 'p',
-    content: 'If you’re searching for communication classes for kids, use this simple plan to check whether a program will actually help your child speak.'
+    content: 'Direct answer: start with guided, low-pressure speaking practice in small stages. This is usually a confidence-and-structure gap, not a lack of intelligence or effort.'
+  }, {
+    type: 'h2',
+    content: 'What this usually means'
+  }, {
+    type: 'p',
+    content: 'Many children know what they want to say but freeze when they are corrected too quickly or asked to speak for too long. The fix is a short speaking ladder: safe prompts, short responses, and repeated wins.'
   }, {
     type: 'h2',
     content: 'Why kids stay silent (even when they know the answer)'
@@ -33,6 +39,15 @@ const post: BlogPost = {
   }, {
     type: 'p',
     content: 'Ask if the teacher uses sentence frames like: “I can see…”, “My favourite… because…”.'
+  }, {
+    type: 'h2',
+    content: 'Practical next step for parents'
+  }, {
+    type: 'p',
+    content: 'If this pattern is consistent across home and school, move to a structured speaking pathway that builds comfort first and performance later.'
+  }, {
+    type: 'li',
+    content: 'Explore the speaking confidence program: /speaking'
   }]
 };
 

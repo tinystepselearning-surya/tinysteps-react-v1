@@ -1,21 +1,16 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-type StatsProofSectionProps = {
-  ratingValue?: string;
-  ratingCount?: number;
-};
-
-const StatsProofSection: React.FC<StatsProofSectionProps> = ({ ratingValue = '4.9/5', ratingCount = 0 }) => {
+const StatsProofSection: React.FC = () => {
   const stats = [
     { value: '95%', label: 'Visible improvement within 3 months' },
     { value: '89%', label: 'Parents report increased confidence' },
     { value: '92%', label: 'Children now ENJOY English learning' },
     { value: '5000+', label: 'Families supported worldwide (since 2020)' },
     {
-      value: ratingValue,
-      label: 'Parent satisfaction rating',
-      note: ratingCount > 0 ? `${ratingCount} verified parent reviews` : 'Live parent review rating',
+      value: 'Parent-trusted',
+      label: 'Fresh reviews available on trusted public platforms',
+      note: 'Trustpilot, JustDial, Reddit, and similar channels',
     }
   ];
 
@@ -42,10 +37,10 @@ const StatsProofSection: React.FC<StatsProofSectionProps> = ({ ratingValue = '4.
         </div>
         <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
           <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600">
-            Verified parent reviews
+            Curated website sample
           </span>
           <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600">
-            Moderated before publishing
+            Fresh feedback on third-party platforms
           </span>
           <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600">
             Curriculum progress tracked weekly

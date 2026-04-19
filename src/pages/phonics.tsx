@@ -1,14 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo, getRouteConfig } from '../lib/seo';
-import { createCourseSchema } from '../lib/schemas';
-import {
-  createCourseReviewSchemaFragment,
-  fetchApprovedTestimonialsCatalog,
-  filterApprovedTestimonialsByCourse,
-  getFallbackTestimonials,
-  type Testimonial,
-} from '../lib/testimonials';
+import { createCourseSchema, PUBLIC_FACTS } from '../lib/schemas';
 import PageHero from '../components/common/PageHero';
 import LevelTabs from '../components/programs/LevelTabs';
 import LearningJourney from '../components/programs/LearningJourney';
@@ -17,6 +10,7 @@ import ProgramProof from '../components/programs/ProgramProof';
 import ParentReassurance from '../components/programs/ParentReassurance';
 import NextStepsLinks from '../components/programs/NextStepsLinks';
 import TopicClusterLinks from '../components/programs/TopicClusterLinks';
+import ContentTrustNote from '../components/seo/ContentTrustNote';
 
 const levels = [
   {
@@ -61,24 +55,24 @@ import AutoLinkedText from '../components/seo/AutoLinkedText';
 
 const quickAnswerFaqItems = [
   {
-    question: 'What does a child learn in Tiny Steps phonics classes?',
+    question: 'What is phonics, and why does it matter in early reading?',
     answer:
-      'Children learn letter sounds, blending, short vowel words, digraphs, long vowels, spelling patterns, and reading fluency step by step.',
+      'Phonics teaches children to connect sounds with letters and blend those sounds into words. This is the foundation that turns letter recognition into real reading.',
   },
   {
-    question: 'Are the classes suitable for beginners?',
+    question: 'What happens in a structured phonics class?',
     answer:
-      'Yes. Children can begin with letter sounds and phonemic awareness, then move gradually into blending, word reading, and sentence reading.',
+      'Children practice a clear sequence: sound awareness, blending, word reading, spelling patterns, and short reading tasks, with live correction at each step.',
   },
   {
-    question: 'How are online phonics classes conducted?',
+    question: 'Phonics vs general reading practice: what is the difference?',
     answer:
-      'Classes are teacher-led through live online sessions using activities, visuals, reading practice, worksheets, and child-friendly interaction.',
+      'General reading practice builds exposure. Phonics builds decoding skill. When decoding becomes stable, children can read new words with less guessing.',
   },
   {
-    question: 'How do parents know the child is improving?',
+    question: 'What do parents usually notice first?',
     answer:
-      'Parents receive updates on the child’s learning progress, reading confidence, topic understanding, and areas that need more practice.',
+      'Most parents first notice cleaner blending and fewer reading pauses. After that, word accuracy and reading confidence improve steadily.',
   },
 ];
 
@@ -124,6 +118,7 @@ const faqItems = [
       'Most children can begin around ages 3–4 with playful sound work. Older children can also catch up effectively when gaps are addressed with structured synthetic phonics.',
   },
 ];
+const schemaFaqItems = [...quickAnswerFaqItems, faqItems[3]];
 const PHONICS_RESEARCH_GUIDE_PATH = '/blog/phonics-for-parents-guide';
 const PHONICS_SEO_KEYWORDS = [
   'phonics for kids',
@@ -166,20 +161,17 @@ export default function PhonicsPage({
   extraJsonLd,
 }: PhonicsPageProps) {
   const [openFaqIndexes, setOpenFaqIndexes] = useState<number[]>([0]);
-  const [courseReviewItems, setCourseReviewItems] = useState<Testimonial[]>(() =>
-    filterApprovedTestimonialsByCourse(getFallbackTestimonials({ limit: 800 }), 'phonics'),
-  );
   const canonicalPath = seoOverrides?.canonicalPath ?? "/phonics";
   const registry = getRouteConfig(canonicalPath);
   const title = seoOverrides?.title ?? registry?.title ?? "Online Phonics Classes for Kids | Tiny Steps Learning";
   const description =
     seoOverrides?.description ??
     registry?.description ??
-    "Live online phonics classes for kids using a structured synthetic phonics approach inspired by methods such as Jolly Phonics, with SATPIN blending sounds into words, phonics reading development, and stage-based parent updates.";
+    "Phonics reading starts with sound-letter links, blending, and decoding. See how children move from sounds to words and sentence reading.";
   const breadcrumbName = seoOverrides?.breadcrumbName ?? "Phonics";
-  const canonicalUrl = `https://tinystepslearning.com${canonicalPath}`;
+  const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
   const heroTitle = heroTitleOverride ?? "Phonics Classes for Kids";
-  const heroSubtitle = heroSubtitleOverride ?? "Structured phonics taught live through a synthetic phonics approach inspired by methods such as Jolly Phonics. Most children blend their first words within 4-6 lessons.";
+  const heroSubtitle = heroSubtitleOverride ?? "How phonics helps reading: children learn sound-letter links, blending, and decoding in a clear sequence, then apply these skills to words and sentences. Start with a level check to choose the right entry stage.";
   const allFaqOpen = openFaqIndexes.length === faqItems.length;
 
   const toggleFaq = (index: number) => {
@@ -192,42 +184,14 @@ export default function PhonicsPage({
   const collapseAllFaq = () => setOpenFaqIndexes([]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const approved = await fetchApprovedTestimonialsCatalog(800);
-        const catalog = approved.length ? approved : getFallbackTestimonials({ limit: 800 });
-        const filtered = filterApprovedTestimonialsByCourse(catalog, 'phonics');
-        if (!cancelled) setCourseReviewItems(filtered);
-      } catch {
-        if (cancelled) return;
-        setCourseReviewItems(
-          filterApprovedTestimonialsByCourse(getFallbackTestimonials({ limit: 800 }), 'phonics'),
-        );
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    const courseSchema = {
-      ...createCourseSchema({
-        name: "Online Phonics Classes for Kids",
-        description: "Structured synthetic phonics taught live, inspired by methods such as Jolly Phonics, with stage-based parent insights from SATPIN to advanced decoding.",
-        url: canonicalUrl,
-        courseMode: 'online',
-        ageRange: 'Ages 3-12',
-        educationalLevel: 'Beginner to Advanced'
-      }),
-      ...createCourseReviewSchemaFragment({
-        items: courseReviewItems,
-        maxReviews: 5,
-      }),
-    };
+    const courseSchema = createCourseSchema({
+      name: "Online Phonics Classes for Kids",
+      description: "How phonics helps children read: a structured live online pathway from sound-letter links and blending to decoding words and sentences.",
+      url: canonicalUrl,
+      courseMode: 'online',
+      ageRange: 'Ages 3-12',
+      educationalLevel: 'Beginner to Advanced'
+    });
 
     const baseJsonLd = [
       courseSchema,
@@ -242,7 +206,7 @@ export default function PhonicsPage({
       {
         "@context": "https://schema.org",
         "@type": "FAQPage",
-        "mainEntity": [...quickAnswerFaqItems, ...faqItems].map((item) => ({
+        "mainEntity": schemaFaqItems.map((item) => ({
           "@type": "Question",
           "name": item.question,
           "acceptedAnswer": {
@@ -261,7 +225,7 @@ export default function PhonicsPage({
       ogType: "website",
       jsonLd: extraJsonLd?.length ? [...baseJsonLd, ...extraJsonLd] : baseJsonLd,
     });
-  }, [title, description, canonicalPath, breadcrumbName, canonicalUrl, extraJsonLd, courseReviewItems]);
+  }, [title, description, canonicalPath, breadcrumbName, canonicalUrl, extraJsonLd]);
 
   return (
     <div>
@@ -269,7 +233,7 @@ export default function PhonicsPage({
         eyebrow="Tiny Steps Phonics"
         title={heroTitle}
         description={heroSubtitle}
-        badges={['Ages 3–12', 'Live 1:1 or pods', '35-minute classes']}
+        badges={['Ages 3–12', 'Live 1:1 or pods', '35–40 minute sessions']}
         actions={(
           <Link
             to="/?book=1"
@@ -281,13 +245,12 @@ export default function PhonicsPage({
       />
 
       <section className="mx-4 my-8 max-w-4xl rounded-2xl border border-sky-100 bg-gradient-to-r from-slate-50 to-sky-50 p-5 shadow-sm sm:mx-auto sm:p-6">
-        <h2 className="text-lg font-semibold text-gray-900">Quick Answer for Parents</h2>
+        <h2 className="text-lg font-semibold text-gray-900">How do phonics classes help my child read?</h2>
         <p className="mt-2 text-base text-gray-800">
-          Tiny Steps Learning offers online phonics classes for children who need support with letter sounds,
-          blending, word reading, spelling foundations, and reading confidence. The program follows structured
-          phonics and synthetic phonics principles, with age-appropriate activities, guided reading practice,
-          and teacher-led correction. Classes are available in one-on-one and small-group formats, with parent
-          updates to show what the child is learning and where the child needs more practice.
+          Phonics classes help children read by teaching how sounds connect to letters and how to blend those sounds
+          into words. This builds decoding, so children can read unfamiliar words instead of guessing. Parents usually
+          notice cleaner blending first, then smoother word and sentence reading. Next step: start with an assessment
+          so your child begins at the right phonics stage.
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {quickAnswerFaqItems.map((item) => (
@@ -299,8 +262,10 @@ export default function PhonicsPage({
         </div>
       </section>
 
+      <ContentTrustNote text="This page is created by the Tiny Steps academic team and reviewed by the founder to help parents understand structured phonics and reading development." />
+
       <section className="mx-4 my-6 max-w-4xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:mx-auto">
-        <h2 className="text-xl font-bold text-slate-900">How children learn to read</h2>
+        <h2 className="text-xl font-bold text-slate-900">Proof: how children learn to read</h2>
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {[
             '🔤 Sounds',
@@ -329,20 +294,35 @@ export default function PhonicsPage({
       </section>
 
       <section className="mx-4 my-8 max-w-4xl rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm sm:mx-auto sm:p-6">
-        <h2 className="text-xl font-bold text-slate-900">Why structured phonics works</h2>
-        <ul className="mt-4 space-y-2 text-sm text-slate-700">
-          <li>• Builds strong reading foundation</li>
-          <li>• Helps children decode new words independently</li>
-          <li>• Improves spelling naturally</li>
-          <li>• Increases reading confidence</li>
-        </ul>
+        <h2 className="text-xl font-bold text-slate-900">Phonics vs general reading practice</h2>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <article className="rounded-xl border border-slate-200 bg-white p-4">
+            <h3 className="text-sm font-semibold text-slate-900">Phonics instruction</h3>
+            <ul className="mt-2 space-y-1.5 text-sm text-slate-700">
+              <li>• Teaches sound-letter links directly</li>
+              <li>• Builds blending and decoding routines</li>
+              <li>• Helps children read unfamiliar words</li>
+            </ul>
+          </article>
+          <article className="rounded-xl border border-slate-200 bg-white p-4">
+            <h3 className="text-sm font-semibold text-slate-900">General reading practice</h3>
+            <ul className="mt-2 space-y-1.5 text-sm text-slate-700">
+              <li>• Builds exposure to books and vocabulary</li>
+              <li>• Improves comprehension with repetition</li>
+              <li>• Works best when decoding is already stable</li>
+            </ul>
+          </article>
+        </div>
+        <p className="mt-3 text-sm text-slate-700">
+          Children progress fastest when phonics decoding and reading practice are built together.
+        </p>
       </section>
 
       {/* Program Facts */}
       <ProgramFacts
         ageRange="Ages 3-12"
         format="Live 1:1 or small group online"
-        duration="35-minute classes, 2-3x per week"
+        duration={`${PUBLIC_FACTS.sessionDuration}, 2-3x per week`}
         structure="3 levels, 36+ lessons with stage-based progression"
         outcomes={[
           'Master letter sounds and blending—typically within 4-6 lessons',
@@ -622,7 +602,7 @@ export default function PhonicsPage({
           </p>
           <h2 className="mb-4 text-2xl font-bold text-white sm:text-3xl">Ready to Start Your Phonics Journey?</h2>
           <p className="mx-auto mb-6 max-w-2xl text-lg text-slate-100">
-            Book a free 35-minute assessment session with our mentors to understand your child's current level and get a personalized phonics learning plan.
+            Book a free 35–40 minute assessment session with our mentors to understand your child's current level and get a personalized phonics learning plan.
           </p>
           <Link
             to="/?book=1"

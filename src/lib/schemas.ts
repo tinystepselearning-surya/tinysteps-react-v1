@@ -6,6 +6,79 @@
 import { PUBLIC_CONTACT_EMAIL } from '../constants/publicContact';
 
 export const SITE_ORIGIN = 'https://tinystepslearning.com';
+export const PUBLIC_FACTS = {
+  brandName: 'Tiny Steps Learning',
+  shortBrandName: 'Tiny Steps',
+  positioning: 'premium online English learning for children',
+  corePrograms: ['Phonics', 'Grammar', 'Public Speaking'] as const,
+  sessionDuration: '35–40 minutes per session',
+  primaryWebsite: SITE_ORIGIN,
+  deliveryModel: 'live online classes',
+  geography: 'learners in India and globally online',
+} as const;
+export const CORE_PROGRAMS_TEXT = `${PUBLIC_FACTS.corePrograms[0]}, ${PUBLIC_FACTS.corePrograms[1]}, and ${PUBLIC_FACTS.corePrograms[2]}`;
+
+/**
+ * Canonical off-site corroboration pack.
+ * Use this for third-party business profiles, directory citations, founder bios,
+ * and external platform summaries to keep entity facts consistent.
+ */
+export const OFFSITE_CORROBORATION_PACK = {
+  canonicalBrandOneLiner:
+    `${PUBLIC_FACTS.brandName} is a ${PUBLIC_FACTS.positioning} platform with live online ${CORE_PROGRAMS_TEXT} programs.`,
+
+  companyDescriptions: {
+    short:
+      `${PUBLIC_FACTS.brandName} offers ${PUBLIC_FACTS.positioning} through ${PUBLIC_FACTS.deliveryModel} in ${PUBLIC_FACTS.sessionDuration}, serving ${PUBLIC_FACTS.geography}.`,
+    medium:
+      `${PUBLIC_FACTS.brandName} is a premium live-online English learning platform for children. The learning model is structured around ${CORE_PROGRAMS_TEXT}, so families can choose the right starting point and progress step by step. Classes are delivered online in ${PUBLIC_FACTS.sessionDuration}, with child-friendly teaching and clear parent visibility of learning goals and next steps.`,
+    long:
+      `${PUBLIC_FACTS.brandName} is built for families who want a clear, high-quality online English learning journey for children. We provide ${PUBLIC_FACTS.deliveryModel} with focused pathways in ${CORE_PROGRAMS_TEXT}. Instead of random topic coverage, teaching follows structured progression so children can build strong foundations, apply learning with confidence, and move forward with clarity. Session design is age-aware and practical, with ${PUBLIC_FACTS.sessionDuration} that balance instruction, guided practice, and feedback. We support ${PUBLIC_FACTS.geography}, while maintaining one consistent academic approach: premium, child-friendly, and outcome-focused without overclaiming.`,
+  },
+
+  founderBio: {
+    short:
+      `Priya is the Founder of ${PUBLIC_FACTS.brandName}, where she leads the academic direction for premium live-online English learning in ${CORE_PROGRAMS_TEXT}.`,
+    medium:
+      `Priya is the Founder of ${PUBLIC_FACTS.brandName}. She leads curriculum direction and classroom quality across the platform's live online programs in ${CORE_PROGRAMS_TEXT}. Her focus is to keep learning structured, child-friendly, and practical for families who want clear English progression with confidence, communication, and reading growth.`,
+  },
+
+  coreCategories: [
+    'Online Education',
+    'English Classes for Children',
+    'Phonics Classes',
+    'Grammar Classes',
+    'Public Speaking for Children',
+    'Live Online Learning',
+  ],
+
+  canonicalFacts: {
+    brandName: PUBLIC_FACTS.brandName,
+    website: PUBLIC_FACTS.primaryWebsite,
+    positioning: PUBLIC_FACTS.positioning,
+    deliveryModel: PUBLIC_FACTS.deliveryModel,
+    audience: 'children and families',
+    corePrograms: [...PUBLIC_FACTS.corePrograms],
+    sessionDuration: PUBLIC_FACTS.sessionDuration,
+    serviceGeography: PUBLIC_FACTS.geography,
+  },
+
+  profileVariants: {
+    trustpilotProfileSummary:
+      `${PUBLIC_FACTS.brandName} provides ${PUBLIC_FACTS.positioning} through ${PUBLIC_FACTS.deliveryModel} in ${CORE_PROGRAMS_TEXT}. Families are encouraged to share honest feedback based on their real learning experience.`,
+    justdialSulekhaBusinessSummary:
+      `${PUBLIC_FACTS.brandName} offers premium live online English classes for children, including ${CORE_PROGRAMS_TEXT}. Classes run for ${PUBLIC_FACTS.sessionDuration} and serve learners in India and globally online.`,
+    linkedInCompanyAboutSummary:
+      `${PUBLIC_FACTS.brandName} is a ${PUBLIC_FACTS.positioning} platform focused on ${CORE_PROGRAMS_TEXT}. We deliver ${PUBLIC_FACTS.deliveryModel} with structured progression, child-friendly teaching, and clear parent visibility of learning milestones.`,
+    youTubeChannelAboutSummary:
+      `${PUBLIC_FACTS.brandName} shares learning guidance and class-focused insights for families exploring premium live-online English learning for children across ${CORE_PROGRAMS_TEXT}.`,
+  },
+
+  // Internal guidance for review requests: keep trust-safe and platform-compliant.
+  reviewRequestPositioningNote:
+    'Request honest reviews only, and never filter for positive sentiment or offer incentives.',
+} as const;
+
 export const ORGANIZATION_ID = `${SITE_ORIGIN}/#organization`;
 export const WEBSITE_ID = `${SITE_ORIGIN}/#website`;
 
@@ -13,8 +86,8 @@ export const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': ['EducationalOrganization', 'Organization'],
   '@id': ORGANIZATION_ID,
-  name: 'Tiny Steps Learning',
-  alternateName: 'Tiny Steps',
+  name: PUBLIC_FACTS.brandName,
+  alternateName: PUBLIC_FACTS.shortBrandName,
   url: SITE_ORIGIN,
   logo: {
     '@type': 'ImageObject',
@@ -26,7 +99,7 @@ export const organizationSchema = {
     name: 'Priya',
     jobTitle: 'Founder'
   },
-  description: 'Online phonics, grammar, and public speaking classes for children ages 3–12',
+  description: `${PUBLIC_FACTS.positioning} through ${CORE_PROGRAMS_TEXT}.`,
   foundingDate: '2020',
   foundingLocation: {
     '@type': 'Place',
@@ -38,15 +111,15 @@ export const organizationSchema = {
     addressRegion: 'Telangana',
     addressCountry: 'IN'
   },
-  areaServed: 'IN',
-  serviceType: 'Online English classes for kids',
+  areaServed: ['IN', 'Worldwide'],
+  serviceType: 'Premium live online English classes for children',
   contactPoint: {
     '@type': 'ContactPoint',
     contactType: 'Customer Service',
     telephone: '+91-9618398383',
     email: PUBLIC_CONTACT_EMAIL,
     url: `${SITE_ORIGIN}/contact`,
-    areaServed: 'IN',
+    areaServed: ['IN', 'Worldwide'],
     availableLanguage: ['en']
   },
   knowsAbout: [
@@ -69,7 +142,7 @@ export const websiteSchema = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   '@id': WEBSITE_ID,
-  name: 'Tiny Steps Learning',
+  name: PUBLIC_FACTS.brandName,
   url: SITE_ORIGIN,
   inLanguage: 'en-IN',
   publisher: {
@@ -89,7 +162,7 @@ export const localBusinessSchema = {
   '@context': 'https://schema.org',
   '@type': 'LocalBusiness',
   '@id': `${SITE_ORIGIN}/#localbusiness`,
-  name: 'Tiny Steps Learning',
+  name: PUBLIC_FACTS.brandName,
   image: `${SITE_ORIGIN}/logo-square.webp`,
   description: 'Online English learning platform',
   telephone: '+91-9618398383',
@@ -151,7 +224,7 @@ export function createTestimonialsStructuredData(params: {
   return {
     '@context': 'https://schema.org',
     '@type': params.organizationType || 'EducationalOrganization',
-    name: params.name || 'Tiny Steps Learning',
+    name: params.name || PUBLIC_FACTS.brandName,
     url: params.url,
     aggregateRating: {
       '@type': 'AggregateRating',
@@ -260,7 +333,7 @@ export function createBlogPostingSchema(params: {
     publisher: {
       '@type': 'Organization',
       '@id': ORGANIZATION_ID,
-      name: 'Tiny Steps Learning',
+      name: PUBLIC_FACTS.brandName,
       logo: {
         '@type': 'ImageObject',
         url: `${SITE_ORIGIN}/logo-square.webp`
@@ -322,7 +395,7 @@ export function createCourseSchema(params: {
     provider: {
       '@type': 'Organization',
       '@id': ORGANIZATION_ID,
-      name: params.provider || 'Tiny Steps Learning',
+      name: params.provider || PUBLIC_FACTS.brandName,
       url: SITE_ORIGIN
     },
     url: params.url,
@@ -396,7 +469,7 @@ export function createCourseListSchema(params: {
         provider: {
           '@type': 'Organization',
           '@id': ORGANIZATION_ID,
-          name: course.provider || 'Tiny Steps Learning',
+          name: course.provider || PUBLIC_FACTS.brandName,
           url: SITE_ORIGIN,
         },
         ...(course.educationalLevel ? { educationalLevel: course.educationalLevel } : {}),
@@ -457,7 +530,7 @@ export function createEventSchema(params: {
         },
     organizer: {
       '@type': 'Organization',
-      name: params.organizer || 'Tiny Steps Learning',
+      name: params.organizer || PUBLIC_FACTS.brandName,
       url: 'https://tinystepslearning.com'
     },
     ...(params.price && {

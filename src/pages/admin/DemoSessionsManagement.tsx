@@ -301,15 +301,7 @@ const toDateKeyFromTimestamp = (value: unknown): string | null => {
 };
 
 const getTrendReceivedDateKey = (session: DemoSession): string | null => {
-  const requestReceivedKey = normalizeDateInputKey(session.requestReceivedDate);
-  const entryDateKey = toDateKeyFromTimestamp(session.createdAt);
-
-  if (requestReceivedKey && entryDateKey) {
-    // Guard against backfilled defaults later than actual entry date.
-    return requestReceivedKey <= entryDateKey ? requestReceivedKey : entryDateKey;
-  }
-
-  return requestReceivedKey || entryDateKey;
+  return normalizeDateInputKey(session.requestReceivedDate);
 };
 
 const statusBadgeVariant = (status: DemoSessionStatus): 'default' | 'secondary' | 'outline' => {
@@ -736,8 +728,7 @@ export default function DemoSessionsManagement({
     };
 
     sessions.forEach((session) => {
-      setEarliest(normalizeDateInputKey(session.requestReceivedDate));
-      setEarliest(toDateKeyFromTimestamp(session.createdAt));
+      setEarliest(getTrendReceivedDateKey(session));
       setEarliest(toDateKeyFromTimestamp(session.assignedAt));
       setEarliest(toDateKeyFromTimestamp(session.completedAt));
       if (session.conversionStatus === 'enrolled') {

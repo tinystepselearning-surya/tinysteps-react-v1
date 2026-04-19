@@ -10,6 +10,18 @@ const post: BlogPost = {
   excerpt: "A practical competition‑prep checklist for parents: brief daily rehearsals, timing drills, expression tools and stage habits to calmly polish a short performance at home.",
   body: [{
     type: 'h2',
+    content: 'Parent question: "How can I prepare my child for a speaking competition without adding pressure?"'
+  }, {
+    type: 'p',
+    content: 'Direct answer: use short, predictable rehearsal blocks and coach one skill at a time. Competition prep works best when children feel calm, clear, and ready to repeat simple routines.'
+  }, {
+    type: 'h2',
+    content: 'What this usually means for parents'
+  }, {
+    type: 'p',
+    content: 'If your child gets nervous before speaking, it usually means performance load is high, not that they are unprepared. Keep practice structured and brief so confidence rises through repetition, not pressure.'
+  }, {
+    type: 'h2',
     content: 'Why kids feel nervous (and why it’s a good sign)'
   }, {
     type: 'p',
@@ -80,6 +92,15 @@ const post: BlogPost = {
   }, {
     type: 'p',
     content: 'If lines are forgotten, teach two quick fixes: 1) a tiny note card with three keywords, or 2) an anchor gesture to bring back the line. For fast speaking, practise pauses and count quietly in practice. If the child cries, step back, offer a breathing reset, and remind them practice is the priority. For comparisons, redirect to personal progress: “Look how much you improved.”'
+  }, {
+    type: 'h2',
+    content: 'Practical next step for parents'
+  }, {
+    type: 'p',
+    content: 'If competition nerves still stay high after 2-3 weeks of short rehearsal cycles, move to a structured speaking pathway that builds confidence and stage clarity in guided steps.'
+  }, {
+    type: 'li',
+    content: 'Explore the speaking confidence program: /speaking'
   }, {
     type: 'h2',
     content: 'Done checklist + Week 22 phonics diagnostics teaser'

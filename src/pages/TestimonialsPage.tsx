@@ -1,60 +1,34 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import Meta from '../components/common/Meta';
 import {
-  fetchApprovedTestimonialsCatalog,
-  filterApprovedTestimonialsByCourse,
-  getFallbackTestimonials,
-  type Testimonial,
-} from '../lib/testimonials';
+  STATIC_TESTIMONIALS_BY_PROGRAM,
+  TESTIMONIAL_PROGRAM_ORDER,
+  type StaticTestimonial,
+} from '../lib/staticTestimonials';
 
-type CourseFilter = 'all' | 'phonics' | 'grammar' | 'speaking';
-const MINIMUM_REVIEW_CATALOG_SIZE = 300;
-
-const COURSE_FILTERS: Array<{ id: CourseFilter; label: string }> = [
-  { id: 'all', label: 'All Programs' },
-  { id: 'phonics', label: 'Phonics' },
-  { id: 'grammar', label: 'Grammar' },
-  { id: 'speaking', label: 'Public Speaking' },
-];
-
-const normalizeCourseFilter = (value: string | null): CourseFilter => {
-  const normalized = (value || '').trim().toLowerCase();
-  if (normalized === 'phonics' || normalized === 'grammar' || normalized === 'speaking') return normalized;
-  return 'all';
-};
-
-const mergeCatalogWithFallback = (live: Testimonial[], fallback: Testimonial[], minSize: number): Testimonial[] => {
-  const map = new Map<string, Testimonial>();
-  live.forEach((item) => map.set(item.id, item));
-  fallback.forEach((item) => {
-    if (map.size >= minSize) return;
-    if (!map.has(item.id)) map.set(item.id, item);
-  });
-  return Array.from(map.values());
-};
 const quickAnswerFaqItems = [
   {
-    question: 'What do Tiny Steps testimonials show?',
+    question: 'Why do we keep only a small sample on this page?',
     answer:
-      'They show parent experiences with Tiny Steps classes, including how children participate, respond to teachers, and build confidence over time.',
+      'This page shows a curated sample so parents can quickly understand class experience. Ongoing public feedback is encouraged on trusted third-party review platforms.',
   },
   {
-    question: 'Can testimonials help parents choose the right program?',
+    question: 'What do these parent reviews usually cover?',
     answer:
-      'Yes. Testimonials can help parents understand whether the child needs support in phonics, grammar, sentence formation, communication, or public speaking.',
+      'Most reviews mention reading confidence, phonics blending, grammar clarity, sentence formation, speaking confidence, and teacher attention during live classes.',
   },
   {
-    question: 'Do all children progress at the same speed?',
+    question: 'Do all children progress at the same pace?',
     answer:
-      "No. Each child's progress depends on age, current level, consistency, class participation, and practice outside class.",
+      'No. Progress depends on starting level, consistency, participation, and home practice support. The learning pathway is structured, but pace is child-specific.',
   },
   {
-    question: 'What should parents look for in testimonials?',
+    question: 'How should parents use this page?',
     answer:
-      'Parents should look for comments about teacher guidance, child engagement, reading confidence, sentence confidence, clarity, participation, and parent communication.',
+      'Use these reviews as examples of parent experience, then match them with your child’s current learning need before choosing a program track.',
   },
 ];
+
 const quickAnswerFaqSchema = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
@@ -69,216 +43,90 @@ const quickAnswerFaqSchema = {
   })),
 };
 
-const timestampToMillis = (value: unknown): number => {
-  if (!value) return 0;
-  if (typeof value === 'string' || typeof value === 'number') {
-    const t = new Date(value).getTime();
-    return Number.isFinite(t) ? t : 0;
-  }
-  if (value && typeof (value as { toMillis?: unknown }).toMillis === 'function') {
-    try {
-      return Number((value as { toMillis: () => number }).toMillis()) || 0;
-    } catch {
-      return 0;
-    }
-  }
-  return 0;
-};
-
-const displayText = (item: Testimonial): string =>
-  item.publishedText ||
-  item.reviewText ||
-  'Parent shared feedback for Tiny Steps.';
-
-const formatProgramLabel = (item: Testimonial): string => {
-  if (item.attendedCourse) return item.attendedCourse;
-  if (item.courseTags.includes('phonics')) return 'Phonics Program';
-  if (item.courseTags.includes('grammar')) return 'Grammar Program';
-  if (item.courseTags.includes('speaking')) return 'Public Speaking Program';
-  return 'Tiny Steps Program';
-};
-
-function ReviewCard({ item }: { item: Testimonial }) {
+function ReviewCard({ item }: { item: StaticTestimonial }) {
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <p className="text-sm leading-6 text-slate-700">"{displayText(item)}"</p>
+      <p className="mb-2 text-sm font-semibold text-amber-600" aria-label="5 out of 5 stars">
+        {'★'.repeat(item.rating)}
+      </p>
+      <h3 className="text-sm font-semibold text-slate-900">{item.title}</h3>
+      <p className="mt-2 text-sm leading-6 text-slate-700">"{item.quote}"</p>
       <div className="mt-4 border-t border-slate-100 pt-3">
-        <p className="text-sm font-semibold text-slate-900">
-          — {item.consentToPublishName && item.parentName ? item.parentName : 'Parent'}
-        </p>
-        <p className="text-xs text-slate-500">
-          {formatProgramLabel(item)}
-          {item.city ? ` • ${item.city}` : ''}
-        </p>
+        <p className="text-sm font-semibold text-slate-900">— {item.parentName}</p>
+        {typeof item.childAge === 'number' ? (
+          <p className="text-xs text-slate-500">Parent of a {item.childAge}-year-old learner</p>
+        ) : null}
+        {item.location ? <p className="text-xs text-slate-500">{item.location}</p> : null}
+        <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{item.source}</p>
       </div>
     </article>
   );
 }
 
 export default function TestimonialsPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [items, setItems] = useState<Testimonial[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const selectedCourse = normalizeCourseFilter(searchParams.get('course'));
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      setIsLoading(true);
-      try {
-        const all = await fetchApprovedTestimonialsCatalog(800);
-        if (!cancelled) {
-          const fallback = getFallbackTestimonials({ limit: 800 });
-          const catalog =
-            all.length >= MINIMUM_REVIEW_CATALOG_SIZE
-              ? all
-              : mergeCatalogWithFallback(all, fallback, MINIMUM_REVIEW_CATALOG_SIZE);
-          setItems(catalog.length ? catalog : fallback);
-        }
-      } catch {
-        if (!cancelled) setItems(getFallbackTestimonials({ limit: 800 }));
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const filteredItems = useMemo(() => {
-    if (selectedCourse === 'all') return items;
-    return filterApprovedTestimonialsByCourse(items, selectedCourse);
-  }, [items, selectedCourse]);
-
-  const courseCounts = useMemo(() => {
-    const phonicsCount = filterApprovedTestimonialsByCourse(items, 'phonics').length;
-    const grammarCount = filterApprovedTestimonialsByCourse(items, 'grammar').length;
-    const speakingCount = filterApprovedTestimonialsByCourse(items, 'speaking').length;
-    return {
-      all: items.length,
-      phonics: phonicsCount,
-      grammar: grammarCount,
-      speaking: speakingCount,
-    };
-  }, [items]);
-
-  const visibleItems = useMemo(() => {
-    const list = [...filteredItems];
-    list.sort((a, b) => {
-      const aTs = timestampToMillis(a.approvedAt) || timestampToMillis(a.updatedAt) || timestampToMillis(a.createdAt);
-      const bTs = timestampToMillis(b.approvedAt) || timestampToMillis(b.updatedAt) || timestampToMillis(b.createdAt);
-      return bTs - aTs;
-    });
-    return list;
-  }, [filteredItems]);
-
-  const pageJsonLd = useMemo(() => [quickAnswerFaqSchema], []);
-
-  const pageTitle =
-    selectedCourse === 'all'
-      ? 'Parent Reviews | Tiny Steps Learning'
-      : `${selectedCourse[0].toUpperCase()}${selectedCourse.slice(1)} Parent Reviews | Tiny Steps Learning`;
-  const pageDescription =
-    selectedCourse === 'all'
-      ? 'Read parent feedback and experiences for Tiny Steps phonics, grammar, and public speaking programs.'
-      : `Read parent feedback and experiences for Tiny Steps ${selectedCourse} classes.`;
-
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <Meta
-        title={pageTitle}
-        description={pageDescription}
+        title="Parent Reviews | Tiny Steps Learning"
+        description="Browse a curated sample of parent feedback across Tiny Steps phonics, grammar, and public speaking programs."
         canonical="https://tinystepslearning.com/testimonials"
-        jsonLd={pageJsonLd}
+        jsonLd={[quickAnswerFaqSchema]}
       />
 
       <section className="mx-auto max-w-6xl px-6 py-10">
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Parent Feedback</p>
-        <h1 className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">Stories from Tiny Steps Families</h1>
-        <p className="mt-2 text-sm text-slate-700">
-          Real parent experiences on what felt helpful, how children responded, and what improved over time.
+        <h1 className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">Parent Feedback Across Programs</h1>
+        <p className="mt-3 text-sm leading-6 text-slate-700 sm:text-base">
+          Tiny Steps continues to collect ongoing parent feedback through trusted third-party platforms.
+          We keep a small, curated sample here so families can review class experiences quickly.
         </p>
-        <div className="mt-4 flex flex-wrap items-center gap-3">
+        <p className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          For fresh public reviews, parents may also check our third-party review profiles such as Trustpilot, JustDial, and Reddit.
+        </p>
+
+        <div className="mt-5 flex flex-wrap gap-3">
           <Link
             to="/why-tiny-steps#share-feedback"
             className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
-            Submit a parent review
+            Share parent feedback
+          </Link>
+          <Link
+            to="/courses"
+            className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+          >
+            Explore courses
           </Link>
         </div>
 
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <section className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:p-6">
-            <h2 className="text-2xl font-bold text-slate-900">Quick Answer for Parents</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-700">
-              Tiny Steps testimonials help parents understand how children experience our online English learning classes
-              across phonics, grammar, sentence formation, communication, and public speaking. Parent feedback can show
-              improvements in reading confidence, participation, sentence confidence, clarity, and willingness to speak.
-              Testimonials should be viewed as real parent experiences, while each child&apos;s progress may vary based on
-              age, current level, consistency, and practice.
-            </p>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {quickAnswerFaqItems.map((item) => (
-                <article key={item.question} className="rounded-xl border border-slate-200 bg-white p-4">
-                  <h3 className="text-sm font-semibold text-slate-900">{item.question}</h3>
-                  <p className="mt-2 text-sm text-slate-700">{item.answer}</p>
-                </article>
-              ))}
-            </div>
-          </section>
-        </div>
-
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap gap-2">
-          {COURSE_FILTERS.map((filter) => {
-            const active = selectedCourse === filter.id;
-            return (
-              <button
-                key={filter.id}
-                type="button"
-                onClick={() => {
-                  if (filter.id === 'all') {
-                    setSearchParams({});
-                  } else {
-                    setSearchParams({ course: filter.id });
-                  }
-                }}
-                className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                  active
-                    ? 'border-slate-900 bg-slate-900 text-white'
-                    : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:text-slate-900'
-                }`}
-              >
-                {filter.label} ({courseCounts[filter.id]})
-              </button>
-            );
-          })}
-          </div>
-        </div>
-
-        {isLoading ? (
-          <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">Loading parent stories...</div>
-        ) : visibleItems.length === 0 ? (
-          <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-6">
-            <p className="text-sm text-slate-600">No parent reviews match this program filter yet.</p>
-            <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold">
-              <Link to="/why-tiny-steps" className="text-slate-700 hover:underline">Why Tiny Steps</Link>
-              <Link to="/class-samples" className="text-slate-700 hover:underline">Class Samples</Link>
-              <Link to="/courses" className="text-slate-700 hover:underline">All Courses</Link>
-            </div>
-          </div>
-        ) : (
-          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {visibleItems.map((item) => (
-              <ReviewCard key={item.id} item={item} />
+        <section className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:p-6">
+          <h2 className="text-2xl font-bold text-slate-900">Quick Answer for Parents</h2>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {quickAnswerFaqItems.map((item) => (
+              <article key={item.question} className="rounded-xl border border-slate-200 bg-white p-4">
+                <h3 className="text-sm font-semibold text-slate-900">{item.question}</h3>
+                <p className="mt-2 text-sm text-slate-700">{item.answer}</p>
+              </article>
             ))}
           </div>
-        )}
+        </section>
+
+        <div className="mt-10 space-y-10">
+          {TESTIMONIAL_PROGRAM_ORDER.map((program) => {
+            const items = STATIC_TESTIMONIALS_BY_PROGRAM[program].slice(0, 5);
+            return (
+              <section key={program}>
+                <h2 className="text-2xl font-bold text-slate-900">{program}</h2>
+                <p className="mt-1 text-sm text-slate-600">5 curated parent reviews</p>
+                <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {items.map((item) => (
+                    <ReviewCard key={item.id} item={item} />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
       </section>
     </main>
   );

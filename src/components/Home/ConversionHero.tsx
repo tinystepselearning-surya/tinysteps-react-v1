@@ -166,7 +166,7 @@ const ConversionHero: React.FC = () => {
             <p
               className="mt-5 max-w-2xl text-base leading-relaxed text-slate-600 md:text-lg"
             >
-              Live 1:1 and small-group online classes blending phonics, grammar, and speaking into one structured journey for ages 3–12. Free assessment, trained teachers, weekly parent updates.
+              Live 1:1 and small-group online classes blending phonics, grammar, and public speaking into one structured journey for ages 3–15 across programs. Free assessment, trained teachers, and weekly parent updates.
             </p>
 
             <div

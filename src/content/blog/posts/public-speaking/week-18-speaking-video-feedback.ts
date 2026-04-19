@@ -10,6 +10,18 @@ const post: BlogPost = {
   excerpt: "Short, kind video feedback to spot one small improvement: record brief takes, praise strengths and pick one clear target to practise with a simple Loved/Try‑Next review.",
   body: [{
     type: 'h2',
+    content: 'Parent question: "How can I use video to improve my child’s speaking without pressure?"'
+  }, {
+    type: 'p',
+    content: 'Direct answer: use very short recordings, praise first, and improve just one speaking habit at a time. Video works best as a calm mirror for progress, not as a performance test.'
+  }, {
+    type: 'h2',
+    content: 'What this usually means for parents'
+  }, {
+    type: 'p',
+    content: 'If your child resists speaking tasks, the feedback load is often too high. Keep practice brief and predictable so your child can notice one small win and repeat it.'
+  }, {
+    type: 'h2',
     content: 'Why video helps (kids can see progress)'
   }, {
     type: 'p',
@@ -104,6 +116,15 @@ const post: BlogPost = {
   }, {
     type: 'p',
     content: 'If a child dislikes video, start with audio-only notes or record from behind a puppet. If they get silly, keep takes short and set a silly vs serious timer (fun vs practice). If they refuse, offer choice: watch or not watch; if they decline, praise the attempt and try again later. Respecting boundaries keeps practice safe.'
+  }, {
+    type: 'h2',
+    content: 'Practical next step for parents'
+  }, {
+    type: 'p',
+    content: 'If your child still avoids speaking after 2-3 weeks of low-pressure video routines, move to a structured speaking pathway with guided confidence-building.'
+  }, {
+    type: 'li',
+    content: 'Explore the speaking confidence program: /speaking'
   }, {
     type: 'h2',
     content: 'Done checklist + Week 19 multisyllabic word play teaser'

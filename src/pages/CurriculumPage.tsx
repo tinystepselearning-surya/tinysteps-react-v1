@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useEffect, useState } from 'react';
-import { applySeo } from '../lib/seo';
+import { applySeo, getRouteConfig } from '../lib/seo';
 import type { FC } from 'react';
 import { WeekAccordion } from '../components/curriculum/WeekAccordion';
 import Meta from '../components/common/Meta';
@@ -11,9 +11,21 @@ import { CollapsibleCard } from '../components/common/CollapsibleCard';
 import SmartCard from '../components/ui/SmartCard';
 import IBAlignmentSection from '../components/curriculum/IBAlignmentSection';
 import { useSearchParams, Link } from 'react-router-dom';
-import { createFAQPageSchema, createWebPageSchema } from '../lib/schemas';
+import { createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../lib/schemas';
+import ContentTrustNote from '../components/seo/ContentTrustNote';
 
 type Tab = 'phonics' | 'grammar' | 'speaking';
+const CORE_PROGRAMS_TEXT = `${PUBLIC_FACTS.corePrograms[0]}, ${PUBLIC_FACTS.corePrograms[1]}, and ${PUBLIC_FACTS.corePrograms[2]}`;
+const curriculumSeo = getRouteConfig('/curriculum');
+const curriculumSeoTitle = curriculumSeo?.title ?? 'IB-Aligned English Curriculum | Tiny Steps Learning';
+const curriculumSeoDescription =
+  curriculumSeo?.description ??
+  'See the full learning roadmap across Phonics, Grammar, and Public Speaking, with stage-based progression and clear starting points.';
+const curriculumCanonicalPath = curriculumSeo?.canonicalPath ?? '/curriculum';
+const curriculumCanonicalUrl =
+  curriculumCanonicalPath === '/'
+    ? `${PUBLIC_FACTS.primaryWebsite}/`
+    : `${PUBLIC_FACTS.primaryWebsite}${curriculumCanonicalPath}`;
 
 const curriculumFaqItems = [
   {
@@ -27,19 +39,19 @@ const curriculumFaqItems = [
       'We use a free assessment to identify your child’s current stage in reading, grammar, and speaking, then recommend the most suitable starting point.',
   },
   {
-    question: 'What is Jolly Phonics and do you use it?',
+    question: 'How are Phonics, Grammar, and Speaking connected in one curriculum?',
     answer:
-      'Jolly Phonics is a popular synthetic phonics method. We use a structured synthetic phonics approach inspired by Jolly Phonics, including similar sound-to-letter and blending techniques.',
+      'The curriculum is designed as one connected journey. Children build decoding in phonics, apply language control in grammar, and use both skills for clearer speaking and expression.',
   },
   {
-    question: 'What is synthetic phonics?',
+    question: 'How long is each class session in this curriculum?',
     answer:
-      'Synthetic phonics teaches children to read by joining individual sounds into words. This builds stronger decoding and phonics-based reading habits step by step.',
+      `Each live online class runs for ${PUBLIC_FACTS.sessionDuration}, with guided teaching, practice, and teacher feedback in every session.`,
   },
   {
-    question: 'My child knows letters but cannot read. Can this help?',
+    question: 'Can a child move between pathways as needs change?',
     answer:
-      'Yes. This is a common starting point, and our phonics pathway is designed for it. We move from sound recognition to blending and early reading confidence in a guided way.',
+      'Yes. Placement is reviewed by skill progression, so children can move to the right next pathway when reading, grammar, or speaking needs shift.',
   },
   {
     question: 'How is this different from school English teaching?',
@@ -75,26 +87,27 @@ const curriculumFaqItems = [
 
 const quickAnswerFaqItems = [
   {
-    question: 'What does the Tiny Steps curriculum include?',
+    question: 'What does the full Tiny Steps learning roadmap include?',
     answer:
-      'The curriculum includes phonics, blending, reading practice, spelling patterns, grammar foundations, sentence formation, vocabulary use, communication skills, and public speaking.',
+      `The roadmap connects ${CORE_PROGRAMS_TEXT} so children build reading, sentence control, writing clarity, and confident expression in a structured sequence.`,
   },
   {
-    question: 'Is the curriculum suitable for different age groups?',
+    question: 'How are children placed in the roadmap?',
     answer:
-      'Yes. Children can begin at an appropriate level and progress step by step based on their current reading, grammar, and communication needs.',
+      'Children are placed by current skill level through assessment, then mapped to the most suitable starting stage instead of a fixed age-only track.',
   },
   {
-    question: 'How is progress tracked in the curriculum?',
+    question: 'How is progression structured across programs?',
     answer:
-      'Progress is tracked through topic coverage, child participation, teacher feedback, learning observations, and parent updates.',
+      'Each pathway follows stage-based milestones, and children move forward when they show readiness in class practice, participation, and application.',
   },
   {
-    question: 'How does the curriculum support long-term English learning?',
+    question: 'What do parents usually notice first after placement?',
     answer:
-      'The curriculum builds foundations gradually, helping children move from sounds and words to sentences, reading fluency, writing clarity, and confident expression.',
+      'Parents usually notice clearer focus in classes and steadier weekly progress because goals and next steps are mapped in advance.',
   },
 ];
+const schemaFaqItems = [...quickAnswerFaqItems, curriculumFaqItems[3]];
 
 const VALID_TABS = ['phonics', 'grammar', 'speaking'] as const;
 type ValidTab = (typeof VALID_TABS)[number];
@@ -148,7 +161,7 @@ function safeCourse(value: string | null): string | null {
   }, []);
 
   useEffect(() => {
-    const pageUrl = 'https://tinystepslearning.com/curriculum';
+    const pageUrl = curriculumCanonicalUrl;
     const breadcrumb = {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
@@ -159,7 +172,7 @@ function safeCourse(value: string | null): string | null {
     };
 
     const faqSchema = createFAQPageSchema(
-      [...quickAnswerFaqItems, ...curriculumFaqItems].map((item) => ({
+      schemaFaqItems.map((item) => ({
         question: item.question,
         answer: item.answer,
       }))
@@ -168,15 +181,14 @@ function safeCourse(value: string | null): string | null {
     const webpageSchema = createWebPageSchema({
       name: 'Tiny Steps Curriculum (Ages 3–12)',
       description:
-        'Tiny Steps Curriculum is a structured English learning pathway for children ages 3–12 that builds phonics, reading, grammar, writing, and speaking step by step through live teacher-led classes.',
+        'What the full learning journey looks like: a structured online roadmap connecting phonics, grammar, and speaking through stage-based progression.',
       url: pageUrl,
     });
 
     applySeo({
-      title: "English Curriculum & Syllabus | Phonics, Grammar & Public Speaking Roadmap (Ages 3–12) | Tiny Steps",
-      description:
-        "A clear, lesson-by-lesson English curriculum for ages 3–12 covering phonics, blending, reading, spelling patterns and grammar with parent-friendly milestones.",
-      canonicalPath: "/curriculum",
+      title: curriculumSeoTitle,
+      description: curriculumSeoDescription,
+      canonicalPath: curriculumCanonicalPath,
       ogType: "website",
       jsonLd: [breadcrumb, webpageSchema, faqSchema],
     });
@@ -255,16 +267,16 @@ function safeCourse(value: string | null): string | null {
   return (
     <div className="page-gradient relative overflow-hidden">
         <Meta
-        title="English Curriculum & Syllabus | Phonics, Grammar & Public Speaking Roadmap (Ages 3–12) | Tiny Steps"
-        description="A clear, lesson-by-lesson English curriculum for ages 3–12 covering phonics, blending, reading, spelling patterns and grammar with parent-friendly milestones."
-        canonical="https://tinystepslearning.com/curriculum"
+        title={curriculumSeoTitle}
+        description={curriculumSeoDescription}
+        canonical={curriculumCanonicalUrl}
       />
 
       <div className="mx-auto max-w-6xl px-4 pt-8 pb-10 sm:px-6">
         <div className="glass-panel soft-grid overflow-hidden px-5 py-8 text-center sm:px-6 sm:py-10">
           <div className="gradient-chip mx-auto mb-4 w-max">Cambridge-aligned • Ages 3–12</div>
           <h1 className="font-heading text-3xl md:text-4xl">Tiny Steps Curriculum (Ages 3–12)</h1>
-          <p className="mt-3 text-base text-gray-700">Scannable tabs, IB Approaches to Learning call-outs, and immersive lesson-by-lesson details so parents know exactly what’s next.</p>
+          <p className="mt-3 text-base text-gray-700">What does the full learning journey look like? This curriculum maps a clear pathway across phonics, grammar, and speaking so parents know exactly what comes next.</p>
           <p className="mt-2 text-sm text-gray-600">
             For daily home reinforcement, explore our <Link to="/phonics-learning-games" className="font-semibold text-primary-600">phonics games</Link> with tracing, sound practice, and a 3-day free trial.
           </p>
@@ -278,13 +290,12 @@ function safeCourse(value: string | null): string | null {
 
       <section className="mx-auto max-w-6xl px-4 pb-6 sm:px-6">
         <div className="glass-panel p-6 md:p-7">
-          <h2 className="text-2xl font-semibold text-gray-900">Quick Answer for Parents</h2>
+          <h2 className="text-2xl font-semibold text-gray-900">What does the full learning journey look like?</h2>
           <p className="mt-3 text-sm text-gray-700 md:text-base">
-            The Tiny Steps curriculum is a structured online English learning path for children, covering phonics,
-            reading, grammar, sentence formation, vocabulary use, communication, and public speaking. Children move
-            step by step from foundational skills such as sounds, blending, and simple sentences to stronger reading
-            confidence, clearer writing, and confident expression. The curriculum is taught through live online
-            classes, guided practice, child-friendly activities, and parent progress updates.
+            The journey is structured in pathways and levels, not random topics. Each stage builds on the previous
+            one: phonics foundations support grammar control, and both support confident speaking. Parents can track
+            what is mastered, what comes next, and when a child is ready to progress. Next step: use assessment
+            placement to start at the right entry point.
           </p>
 
           <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -307,25 +318,30 @@ function safeCourse(value: string | null): string | null {
         </div>
       </section>
 
+      <ContentTrustNote text="This curriculum page is created by the Tiny Steps academic team and reviewed by the founder to keep program pathways clear, practical, and child-friendly for families." />
+
       <section className="mx-auto max-w-6xl px-4 pb-10 sm:px-6">
-        <h2 className="text-2xl font-semibold text-gray-900">What this curriculum helps your child achieve</h2>
+        <h2 className="text-2xl font-semibold text-gray-900">Proof: how the curriculum roadmap builds stage by stage</h2>
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           {[
-            'Starts reading with confidence, not guessing',
-            'Builds from sounds to words, sentences, and expression',
-            'Learns grammar in a way children can actually use',
-            'Grows into clear, confident communication',
+            'Phase 1: Sound and reading foundations through phonics progression',
+            'Phase 2: Sentence and grammar control for clear writing accuracy',
+            'Phase 3: Expression and speaking structure for confident communication',
+            'Phase 4: Ongoing progression based on readiness, not random topic order',
           ].map((item) => (
             <div key={item} className="rounded-2xl border border-gray-200 bg-white/80 px-5 py-4 shadow-sm">
               <p className="text-sm font-medium text-gray-800 md:text-base">{item}</p>
             </div>
           ))}
         </div>
+        <p className="mt-4 text-sm text-gray-700">
+          Next step: once your child is placed, follow the roadmap stage by stage rather than switching topics randomly.
+        </p>
       </section>
 
       <section aria-labelledby="programs-heading" className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
         <h2 id="programs-heading" className="text-2xl font-semibold text-center sm:text-3xl">Our Programs</h2>
-        <p className="mt-2 text-center text-gray-700">Live 1-on-1 classes in the <Link to="/phonics" className="font-semibold text-primary-600">phonics program</Link>, <Link to="/grammar" className="font-semibold text-primary-600">grammar program</Link>, and <Link to="/speaking" className="font-semibold text-primary-600">speaking program</Link>—tailored to your child’s level.</p>
+        <p className="mt-2 text-center text-gray-700">Live online 1-on-1 classes in the <Link to="/phonics" className="font-semibold text-primary-600">phonics program</Link>, <Link to="/grammar" className="font-semibold text-primary-600">grammar program</Link>, and <Link to="/speaking" className="font-semibold text-primary-600">speaking program</Link>—tailored to your child’s level.</p>
 
         <div className="mt-8 grid gap-6 grid-cols-1 md:grid-cols-3">
           <article className="rounded-lg border p-6 shadow-sm">

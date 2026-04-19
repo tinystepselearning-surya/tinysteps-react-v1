@@ -12,10 +12,10 @@ const post: BlogPost = // New SEO-targeted posts (Jan 2026)
   hero: '/blog/hero-parent-tips.jpg',
   body: [{
     type: 'p',
-    content: "If you’re typing “online English classes for kids India” into Google, you’re not alone. Most parents want the same outcome: better communication, stronger reading, fewer writing struggles—and confidence in school."
+    content: 'Parent question: "Which program should my child start with first?" This guide helps you choose the right starting route based on the child’s main bottleneck.'
   }, {
     type: 'p',
-    content: "The problem is that many programs look similar on the outside. So here’s a clear, parent-friendly way to choose the right one (especially for ages 3–12)."
+    content: 'Most programs look similar from the outside. The key is to identify one immediate need first, instead of trying to fix reading, grammar, and speaking at the same time.'
   }, {
     type: 'h2',
     content: '1) First check: does the program build reading, not just speaking?'
@@ -54,10 +54,19 @@ const post: BlogPost = // New SEO-targeted posts (Jan 2026)
     content: 'Ask for stage-based updates: what was taught, what the child can do now, what to practice, and the next goal.'
   }, {
     type: 'h2',
+    content: 'What this usually means for parents'
+  }, {
+    type: 'p',
+    content: 'If reading is the bottleneck, start with phonics-led support. If sentence accuracy is the bottleneck, start with grammar. If hesitation and expression are the bottleneck, start with speaking confidence. One correct starting point reduces confusion and helps progress feel visible.'
+  }, {
+    type: 'h2',
     content: 'If you want, start with a free level check'
   }, {
     type: 'p',
-    content: 'A good online English tutor for kids will first identify your child’s level then recommend a plan. Explore our courses and FAQs.'
+    content: 'Use a short level check to identify the first program clearly, then commit to that pathway before adding another track.'
+  }, {
+    type: 'li',
+    content: 'Choose the right starting program: /courses'
   }]
 };
 

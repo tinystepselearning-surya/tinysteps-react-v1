@@ -12,6 +12,18 @@ const post: BlogPost = {
   excerpt: 'A premium week 12 speaking guide for parents who want calm, structured speaking practice for shy or hesitant children without forcing performance.',
   body: [{
     type: 'h2',
+    content: 'Parent question: "How do I help my child speak with more confidence?"'
+  }, {
+    type: 'p',
+    content: 'Direct answer: confidence grows through short, guided speaking practice that feels safe and repeatable. Children usually improve when tasks are small, predictable, and not correction-heavy.'
+  }, {
+    type: 'h2',
+    content: 'What this usually means for parents'
+  }, {
+    type: 'p',
+    content: 'If your child freezes, it often means the speaking task feels too risky or too long for their current comfort level. Start with very short wins, then increase speaking load gradually.'
+  }, {
+    type: 'h2',
     content: 'Why some kids freeze while speaking (temperament + fear of mistakes)'
   }, {
     type: 'p',
@@ -160,6 +172,15 @@ const post: BlogPost = {
   }, {
     type: 'p',
     content: 'Finish on a positive note. Tell the child one thing you liked about their attempt and stop while it’s happy — that keeps motivation high.'
+  }, {
+    type: 'h2',
+    content: 'Practical next step for parents'
+  }, {
+    type: 'p',
+    content: 'If confidence still stays low after 2-3 weeks of calm daily practice, move to a structured speaking pathway with guided progression and regular feedback.'
+  }, {
+    type: 'li',
+    content: 'Explore the speaking confidence program: /speaking'
   }, {
     type: 'p',
     content: 'Week 13 teaser: next week we practise short talk structure (Hook — Body — Close) so children can share ideas with a tidy plan.'

@@ -8,16 +8,10 @@ import ParentReassurance from '../components/programs/ParentReassurance';
 import NextStepsLinks from '../components/programs/NextStepsLinks';
 import TopicClusterLinks from '../components/programs/TopicClusterLinks';
 import Meta from '../components/common/Meta';
-import { createCourseSchema } from '../lib/schemas';
+import { createCourseSchema, PUBLIC_FACTS } from '../lib/schemas';
 import { getRouteConfig } from '../lib/seo';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
-import {
-  createCourseReviewSchemaFragment,
-  fetchApprovedTestimonialsCatalog,
-  filterApprovedTestimonialsByCourse,
-  getFallbackTestimonials,
-  type Testimonial,
-} from '../lib/testimonials';
+import ContentTrustNote from '../components/seo/ContentTrustNote';
 
 const levels = [
   {
@@ -50,24 +44,24 @@ const stages = [
 
 const quickAnswerFaqItems = [
   {
-    question: 'What does a child learn in Tiny Steps grammar classes?',
+    question: 'What does grammar progress look like for children?',
     answer:
-      'Children learn nouns, verbs, adjectives, pronouns, articles, prepositions, punctuation, tenses, sentence formation, and paragraph writing step by step.'
+      'Grammar growth usually moves in stages: words, sentence patterns, accuracy, and then clear short writing.',
   },
   {
-    question: 'Are the classes suitable for beginners?',
+    question: 'How do you place a child in the right grammar level?',
     answer:
-      'Yes. Children can begin with basic word types and simple sentences, then move gradually into grammar rules, expanded sentences, and short writing tasks.'
+      'Placement checks sentence formation, punctuation control, tense usage, and writing clarity instead of relying only on age or school grade.',
   },
   {
-    question: 'How are online grammar classes conducted?',
+    question: 'What do parents usually notice first?',
     answer:
-      'Classes are teacher-led through live online sessions using examples, visuals, picture talk, sentence-building tasks, worksheets, and guided correction.'
+      'Parents typically notice fewer sentence errors and better punctuation in homework and daily writing.',
   },
   {
-    question: 'How do parents know the child is improving?',
+    question: 'How is grammar taught beyond worksheets?',
     answer:
-      'Parents receive updates on the child’s grammar understanding, sentence formation, writing clarity, participation, and areas that need more practice.'
+      'Children apply rules through speaking prompts, editing drills, and guided writing tasks so grammar becomes usable, not memorized.',
   }
 ];
 
@@ -89,14 +83,12 @@ const faqItems = [
     answer: 'Parents get stage-based updates with writing samples, strengths, and next-step goals. This makes improvement in sentence quality and paragraph structure easy to track.'
   }
 ];
+const schemaFaqItems = [...quickAnswerFaqItems, faqItems[2]];
 
 const grammarSeo = getRouteConfig('/grammar');
 
 export default function GrammarPage() {
   const [openFaqIndexes, setOpenFaqIndexes] = useState<number[]>([0]);
-  const [courseReviewItems, setCourseReviewItems] = useState<Testimonial[]>(() =>
-    filterApprovedTestimonialsByCourse(getFallbackTestimonials({ limit: 800 }), 'grammar'),
-  );
   const allFaqOpen = openFaqIndexes.length === faqItems.length;
 
   const toggleFaq = (index: number) => {
@@ -108,44 +100,17 @@ export default function GrammarPage() {
   const expandAllFaq = () => setOpenFaqIndexes(faqItems.map((_, index) => index));
   const collapseAllFaq = () => setOpenFaqIndexes([]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const approved = await fetchApprovedTestimonialsCatalog(800);
-        const catalog = approved.length ? approved : getFallbackTestimonials({ limit: 800 });
-        const filtered = filterApprovedTestimonialsByCourse(catalog, 'grammar');
-        if (!cancelled) setCourseReviewItems(filtered);
-      } catch {
-        if (cancelled) return;
-        setCourseReviewItems(
-          filterApprovedTestimonialsByCourse(getFallbackTestimonials({ limit: 800 }), 'grammar'),
-        );
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   const courseSchema = useMemo(
-    () => ({
-      ...createCourseSchema({
+    () =>
+      createCourseSchema({
         name: "Grammar & Writing Classes for Kids",
-        description: "Live online grammar and writing classes with sentence building, punctuation, guided writing, and stage-based parent updates.",
-        url: "https://tinystepslearning.com/grammar",
+        description: "How grammar classes improve real language use: children move from word types to sentence control, punctuation, and clearer writing.",
+        url: `${PUBLIC_FACTS.primaryWebsite}/grammar`,
         courseMode: 'online',
         ageRange: 'Ages 5-15',
         educationalLevel: 'Elementary to Middle School'
       }),
-      ...createCourseReviewSchemaFragment({
-        items: courseReviewItems,
-        maxReviews: 5,
-      }),
-    }),
-    [courseReviewItems],
+    [],
   );
 
   const jsonLd = [
@@ -161,7 +126,7 @@ export default function GrammarPage() {
     {
       "@context": "https://schema.org",
       "@type": "FAQPage",
-      "mainEntity": [...quickAnswerFaqItems, ...faqItems].map(item => ({
+      "mainEntity": schemaFaqItems.map(item => ({
         "@type": "Question",
         "name": item.question,
         "acceptedAnswer": {
@@ -176,14 +141,14 @@ export default function GrammarPage() {
     <div>
       <Meta
         title={grammarSeo?.title ?? 'Online Grammar and Writing Classes for Kids | Tiny Steps Learning'}
-        description={grammarSeo?.description ?? 'Live online grammar and writing classes for kids with sentence structure, punctuation, and guided writing.'}
+        description={grammarSeo?.description ?? 'Grammar lessons build sentence control, punctuation accuracy, and writing clarity. See how children progress from word types to clearer expression.'}
         canonical={`https://tinystepslearning.com${grammarSeo?.canonicalPath ?? '/grammar'}`}
         jsonLd={jsonLd}
       />
       <ProgramHero
         program="Grammar"
         title="Online Grammar and Writing Classes for Kids"
-        subtitle="Playful grammar drills, sentence-structure practice, and AI writing coach help kids write clearly and confidently."
+        subtitle="How grammar improves real language use: children move from word types to sentence control and clear writing through guided live practice."
         badges={['Ages 5–15', 'Live feedback', 'Lesson-based writing samples']}
         highlights={[
           'Sentence dice, grammar bingo, editing relays',
@@ -194,12 +159,12 @@ export default function GrammarPage() {
 
       <section className="mx-auto max-w-4xl px-6 pt-8">
         <div className="rounded-2xl border border-emerald-100 bg-gradient-to-r from-slate-50 to-emerald-50 p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">Quick Answer for Parents</h2>
+          <h2 className="text-lg font-semibold text-slate-900">How do grammar classes improve real language use?</h2>
           <p className="mt-2 text-base text-slate-800">
-            Tiny Steps Learning offers online grammar classes for children and sentence-building classes for children who need support with grammar foundations,
-            sentence formation, writing clarity, and confident expression. The program teaches grammar step by step through examples, guided practice,
-            picture-based activities, reading tasks, and writing exercises. Classes are available in one-on-one and small-group formats, with parent
-            updates to show what the child is learning and where the child needs more practice.
+            Grammar classes improve real language use by helping children build correct sentences they can use in both
+            speech and writing. Lessons move from word types to sentence structure, punctuation, and guided writing.
+            Parents usually notice fewer sentence errors first, then clearer and more confident writing. Next step:
+            place your child by current sentence ability and begin at the right level.
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {quickAnswerFaqItems.map((item) => (
@@ -212,11 +177,47 @@ export default function GrammarPage() {
         </div>
       </section>
 
+      <ContentTrustNote text="This page is created by the Tiny Steps academic team and reviewed by the founder to help parents understand grammar progression and writing clarity for children." />
+
+      <section className="mx-auto mt-8 max-w-4xl px-6">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="text-xl font-bold text-slate-900">Proof: what grammar progress looks like</h2>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {[
+              {
+                stage: 'Stage 1',
+                title: 'Words to sentences',
+                detail: 'Children move from parts of speech to complete sentence patterns.',
+              },
+              {
+                stage: 'Stage 2',
+                title: 'Accuracy and control',
+                detail: 'Punctuation, tense usage, and sentence corrections become more consistent.',
+              },
+              {
+                stage: 'Stage 3',
+                title: 'Writing with clarity',
+                detail: 'Children organize ideas into clearer short paragraphs with fewer errors.',
+              },
+            ].map((item) => (
+              <article key={item.title} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{item.stage}</p>
+                <h3 className="mt-2 text-sm font-semibold text-slate-900">{item.title}</h3>
+                <p className="mt-2 text-sm text-slate-700">{item.detail}</p>
+              </article>
+            ))}
+          </div>
+          <p className="mt-4 text-sm text-slate-700">
+            Next step: choose the starting level based on your child&apos;s current sentence control, then progress stage by stage.
+          </p>
+        </div>
+      </section>
+
       {/* Program at a Glance */}
       <ProgramFacts
         ageRange="Ages 5-15"
         format="Live 1:1 or small group online"
-        duration="35-minute classes, 2-3x per week"
+        duration={`${PUBLIC_FACTS.sessionDuration}, 2-3x per week`}
         structure="2 levels (Basic & Advanced), 36+ lessons with stage-based progression"
         outcomes={[
           'Learn parts of speech, sentence structure, and punctuation rules',

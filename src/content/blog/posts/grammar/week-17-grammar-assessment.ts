@@ -10,6 +10,18 @@ const post: BlogPost = {
   excerpt: "A calm 15‑minute grammar checklist for parents: quick, game‑like checks for nouns, verbs, tenses and paragraph structure that reveal two focused practice targets.",
   body: [{
     type: 'h2',
+    content: 'Parent question: "How can I check my child’s grammar level without pressure?"'
+  }, {
+    type: 'p',
+    content: 'Direct answer: use a short, low-pressure grammar check to find one or two specific gaps, then practise only those gaps. This gives clearer progress than correcting everything at once.'
+  }, {
+    type: 'h2',
+    content: 'What this usually means for parents'
+  }, {
+    type: 'p',
+    content: 'When grammar feels inconsistent, the issue is often not effort. Children usually need targeted practice in one weak layer such as sentence boundaries, tense control, or paragraph structure. A quick assessment helps you pick the right layer first.'
+  }, {
+    type: 'h2',
     content: 'Why quick assessments help (plan smarter, reduce nagging)'
   }, {
     type: 'p',
@@ -95,6 +107,15 @@ const post: BlogPost = {
   }, {
     type: 'p',
     content: 'Finish by praising effort: “Thank you — you tried that really well.” Week 18 will show how video feedback can help notice small improvements.'
+  }, {
+    type: 'h2',
+    content: 'Practical next step for parents'
+  }, {
+    type: 'p',
+    content: 'If the same grammar gaps remain after two focused practice cycles, move to a structured grammar pathway with level-based sentence and writing support.'
+  }, {
+    type: 'li',
+    content: 'Explore the grammar learning path: /grammar'
   }, {
     type: 'h3',
     content: 'Ready-to-use parent script (read aloud)'

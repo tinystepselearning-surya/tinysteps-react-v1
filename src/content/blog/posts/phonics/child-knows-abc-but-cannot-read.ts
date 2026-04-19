@@ -4,7 +4,7 @@ const post: PhonicsSeoPost = {
   slug: 'child-knows-abc-but-cannot-read',
   title: 'My Child Knows ABC but Cannot Read: What Parents Should Do Next',
   focus: 'child knows ABC but cannot read',
-  quickAnswer: 'If your child knows A-B-C but still cannot read words, the gap is usually not intelligence or effort. It is a reading-stage mismatch: many children know letter names, but they have not yet secured letter sounds, blending, and decodable reading habits. Start by identifying the exact break point, then practise that one step daily with short, calm phonics routines.',
+  quickAnswer: 'Parent question: "My child knows letters, so why is reading still hard?" The usual reason is a stage mismatch, not low ability: letter names are in place, but sound mapping, blending, and decodable reading are not yet automatic. Identify the exact break point and run one calm, daily phonics routine that targets that step first.',
   homePlan: [
     'Run a 3-minute parent self-check before practice: (1) sound recall on 8 lowercase letters, (2) oral blending of 3 words like /m/ /a/ /t/, (3) reading 5 no-picture CVC words.',
     'Interpret results quickly: names-not-sounds usually means sound-mapping gap; sounds-but-no-blending means sequencing gap; first-letter or picture guessing means decoding stamina is weak; refusal/avoidance often means confidence load is high.',
@@ -38,17 +38,14 @@ const post: PhonicsSeoPost = {
     answer: 'Use a small sight-word set only as support. Keep decoding and blending as the core, because that is what enables independent reading of new words.'
   }],
   relatedReads: [{
-    label: 'Phonics for parents: full decision guide',
-    to: '/blog/phonics-for-parents-guide'
+    label: 'Explore structured phonics support',
+    to: '/phonics'
   }, {
-    label: 'How phonics builds reading confidence',
-    to: '/blog/how-phonics-builds-reading-confidence'
+    label: 'What is phonics for kids?',
+    to: '/blog/what-is-phonics-for-kids'
   }, {
-    label: 'Broader reading difficulty triage',
-    to: '/child-not-reading-properly'
-  }, {
-    label: 'If pace and fluency are the main issue',
-    to: '/slow-reader-child-help'
+    label: 'How phonics classes help kids read',
+    to: '/blog/how-phonics-classes-help-kids-read'
   }]
 };
 

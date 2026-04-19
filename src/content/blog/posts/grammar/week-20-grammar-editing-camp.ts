@@ -10,6 +10,18 @@ const post: BlogPost = {
   excerpt: "Make editing playful: two quick passes (basics then style), stations, scavenger hunts and immediate rewards so children polish writing without losing confidence.",
   body: [{
     type: 'h2',
+    content: 'Parent question: "How do I help my child edit writing without hurting confidence?"'
+  }, {
+    type: 'p',
+    content: 'Direct answer: use a short two-pass editing routine and fix only a small set of items each time. Children respond better when editing feels like improvement, not criticism.'
+  }, {
+    type: 'h2',
+    content: 'What this usually means for parents'
+  }, {
+    type: 'p',
+    content: 'When children avoid editing, the task is usually too broad. Narrowing the goal to one pass at a time helps them stay calm and complete the work with visible progress.'
+  }, {
+    type: 'h2',
     content: 'Why kids hate editing (and how to change the feeling)'
   }, {
     type: 'p',
@@ -92,6 +104,15 @@ const post: BlogPost = {
   }, {
     type: 'p',
     content: 'Use simple non-monetary rewards: a sticker, a point towards a small privilege (extra story, choose dessert), or five points = 10 minutes of choice time. Keep rewards immediate and tied to effort not perfection.'
+  }, {
+    type: 'h2',
+    content: 'Practical next step for parents'
+  }, {
+    type: 'p',
+    content: 'If your child still struggles to edit sentences after two short weekly cycles, move to a structured grammar pathway focused on sentence control and writing accuracy.'
+  }, {
+    type: 'li',
+    content: 'Explore the grammar learning path: /grammar'
   }, {
     type: 'h2',
     content: 'Done checklist + Week 21 competition prep teaser'

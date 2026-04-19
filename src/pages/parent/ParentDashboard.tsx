@@ -1336,6 +1336,22 @@ export default function ParentDashboard() {
   const requestedKidId = searchParams.get("kidId")?.trim() || "";
 
   const activeTab = safeTab(searchParams.get("tab"));
+  const shouldLoadCurriculumData =
+    activeTab === "dashboard" || activeTab === "insights" || activeTab === "skills";
+  const shouldLoadEnrollmentData =
+    activeTab === "dashboard" ||
+    activeTab === "insights" ||
+    activeTab === "skills" ||
+    activeTab === "classes" ||
+    activeTab === "payments" ||
+    activeTab === "profile";
+  const shouldLoadGamesData = activeTab === "games-progress" || activeTab === "dashboard";
+  const shouldLoadBillingData =
+    activeTab === "dashboard" || activeTab === "payments" || activeTab === "profile";
+  const shouldLoadPaymentHistory = activeTab === "payments" || activeTab === "profile";
+  const shouldLoadClassSessions =
+    activeTab === "classes" || activeTab === "payments" || activeTab === "dashboard";
+  const shouldLoadFullClassHistory = activeTab === "classes";
 
   const setTab = (tab: TabKey) => {
     setSearchParams((prev) => {
@@ -1363,10 +1379,9 @@ export default function ParentDashboard() {
   const kidsQuery = useQuery({
     queryKey: ["parentKids", user?.uid],
     enabled: !!user?.uid,
-    // Manual refresh model: no polling; fetch when page mounts
-    staleTime: 0,
+    staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
     queryFn: async () => {
       if (!user?.uid) return [];
       const q1 = query(
@@ -1446,10 +1461,10 @@ export default function ParentDashboard() {
   // ---- Kid summary doc (kids/{kidId}) ----
   const kidSummaryQuery = useQuery({
     queryKey: ["kidSummary", selectedKidId],
-    enabled: !!selectedKidId,
-    staleTime: 0,
+    enabled: !!selectedKidId && shouldLoadGamesData,
+    staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
     queryFn: async () => {
       if (!selectedKidId) return null;
       const snap = await getDoc(doc(db, "kids", selectedKidId));
@@ -1467,10 +1482,10 @@ export default function ParentDashboard() {
       selectedKidId,
       legacyStudentIdCandidates.join("|"),
     ],
-    enabled: !!user?.uid && !!selectedKidId,
-    staleTime: 0,
+    enabled: !!user?.uid && !!selectedKidId && shouldLoadEnrollmentData,
+    staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
     queryFn: async (): Promise<Enrollment[]> => {
       if (!user?.uid || !selectedKidId) return [];
       const enrollmentsCol = collection(db, "enrollments");
@@ -1535,10 +1550,10 @@ export default function ParentDashboard() {
   // ---- Phonics progress (per-course) ----
   const phonicsProgressQuery = useQuery({
     queryKey: ["phonicsProgress", studentIdForProgress],
-    enabled: !!studentIdForProgress,
-    staleTime: 0,
+    enabled: !!studentIdForProgress && shouldLoadCurriculumData,
+    staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
     queryFn: async () => {
       if (!studentIdForProgress) return [];
       try {
@@ -1555,10 +1570,10 @@ export default function ParentDashboard() {
 
   const curriculumTopicsQuery = useQuery({
     queryKey: ["curriculumTopics"],
-    enabled: activeTab === "dashboard" || activeTab === "insights" || activeTab === "skills",
+    enabled: shouldLoadCurriculumData,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
     queryFn: async () => {
       const snap = await getDoc(doc(db, "config", "curriculumTopics"));
       return snap.exists() ? (snap.data() as any) : null;
@@ -1703,9 +1718,9 @@ export default function ParentDashboard() {
   const coursesLookupQuery = useQuery({
     queryKey: ["coursesLookup"],
     enabled: activeTab === "insights" || profileOpen,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
     queryFn: async () => {
       const snap = await getDocs(collection(db, "courses"));
       const map: Record<string, string> = {};
@@ -1744,9 +1759,9 @@ export default function ParentDashboard() {
   const teacherLookupQuery = useQuery({
     queryKey: ["teacherLookup", teacherIdsForProfile],
     enabled: profileOpen && teacherIdsForProfile.length > 0,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
     queryFn: async () => {
       const map: Record<string, { name: string; email?: string }> = {};
       if (!teacherIdsForProfile.length) return map;
@@ -1823,10 +1838,10 @@ export default function ParentDashboard() {
   // Used to render reliable per-game progress (e.g. Letter Sounds completion/stars)
   const gameSummariesQuery = useQuery({
     queryKey: ["gameSummaries", selectedKidId],
-    enabled: !!selectedKidId && (activeTab === "games-progress" || activeTab === "dashboard"),
-    staleTime: 0,
+    enabled: !!selectedKidId && shouldLoadGamesData,
+    staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
     queryFn: async () => {
       if (!selectedKidId) return null;
       const snap = await getDocs(collection(db, "kids", selectedKidId, "gameSummaries"));
@@ -1841,10 +1856,10 @@ export default function ParentDashboard() {
   // ---- Lightweight game activity freshness head (kids/{kidId}/activity/head) ----
   const gameActivityHeadQuery = useQuery({
     queryKey: ["gameActivityHead", selectedKidId],
-    enabled: !!selectedKidId && (activeTab === "games-progress" || activeTab === "dashboard"),
-    staleTime: 0,
+    enabled: !!selectedKidId && shouldLoadGamesData,
+    staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
     queryFn: async () => {
       if (!selectedKidId) return null;
       const snap = await getDoc(doc(db, "kids", selectedKidId, "activity", "head"));
@@ -1855,9 +1870,10 @@ export default function ParentDashboard() {
   // ---- Games catalog ----
   const gamesCatalogQuery = useQuery({
     queryKey: ["gamesCatalog"],
-    staleTime: 0,
+    enabled: shouldLoadGamesData,
+    staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
     queryFn: async () => {
       const snap = await getDoc(doc(db, "config", "gamesCatalog"));
       const data = snap.exists() ? (snap.data() as any) : null;
@@ -1905,9 +1921,9 @@ export default function ParentDashboard() {
   const gameProgressQuery = useQuery({
     queryKey: ["gameProgress", selectedKidId],
     enabled: shouldFetchLiveGameProgress,
-    staleTime: 0,
+    staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
     queryFn: async () => {
       if (!selectedKidId) return null;
       const snap = await getDocs(collection(db, "kids", selectedKidId, "gameProgress"));
@@ -2113,9 +2129,10 @@ export default function ParentDashboard() {
   // ---- Payments config ----
   const paymentsConfigQuery = useQuery({
     queryKey: ["paymentsConfig"],
-    staleTime: 0,
+    enabled: activeTab === "payments",
+    staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
     queryFn: async () => {
       const snap = await getDoc(doc(db, "config", "payments"));
       return snap.exists() ? (snap.data() as any) : null;
@@ -2124,29 +2141,49 @@ export default function ParentDashboard() {
 
   // ---- Billing charges (Fees & Dues) ----
   const billingChargesQuery = useQuery({
-    queryKey: ["billingCharges", user?.uid],
-    enabled: !!user?.uid,
-    staleTime: 0,
+    queryKey: ["billingCharges", user?.uid, "currentMonth"],
+    enabled: !!user?.uid && shouldLoadBillingData,
+    staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
     queryFn: async (): Promise<BillingCharge[]> => {
       if (!user?.uid) return [];
-      const q = query(
-        collection(db, "billingCharges"),
-        where("parentId", "==", user.uid)
+      const monthKey = toMonthKey(new Date());
+      const billingChargesCol = collection(db, "billingCharges");
+      const canonicalSnap = await getDocs(
+        query(
+          billingChargesCol,
+          where("parentId", "==", user.uid),
+          where("monthKey", "==", monthKey),
+        ),
       );
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+      if (canonicalSnap.size > 0) {
+        return canonicalSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+      }
+
+      const legacySnap = await getDocs(
+        query(
+          billingChargesCol,
+          where("parentId", "==", user.uid),
+        ),
+      );
+      return legacySnap.docs
+        .map((d) => ({ id: d.id, ...(d.data() as any) }))
+        .filter((row) => {
+          const date = toDateOrNull((row as any)?.createdAt);
+          if (!date) return false;
+          return toMonthKey(date) === monthKey;
+        });
     },
   });
 
   // ---- Parent payments (recorded by admin) ----
   const parentPaymentsQuery = useQuery({
     queryKey: ["parentPayments", user?.uid],
-    enabled: !!user?.uid,
-    staleTime: 0,
+    enabled: !!user?.uid && shouldLoadPaymentHistory,
+    staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
     queryFn: async (): Promise<ParentPaymentRecord[]> => {
       if (!user?.uid) return [];
       const q = query(collection(db, "payments"), where("parentId", "==", user.uid));
@@ -2195,15 +2232,11 @@ export default function ParentDashboard() {
 
   // Fetch sessions for this kid (manual refresh model: loads when tab opens)
   const kidSessionsQuery = useQuery({
-    queryKey: ["kidSessions", selectedKidId],
-    enabled:
-      !!selectedKidId &&
-      (activeTab === "classes" ||
-        activeTab === "payments" ||
-        activeTab === "dashboard"),
-    staleTime: 0,
+    queryKey: ["kidSessions", selectedKidId, shouldLoadFullClassHistory ? "full" : "recent"],
+    enabled: !!selectedKidId && shouldLoadClassSessions,
+    staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
     queryFn: async (): Promise<KidSession[]> => {
       if (!selectedKidId || !user?.uid) return [];
       debugParentDashboard("🔍 [ParentDashboard] Fetching sessions for:", {
@@ -2213,42 +2246,63 @@ export default function ParentDashboard() {
       });
 
       const classSessionsCol = collection(db, "classSessions");
+      const recentRangeStart = new Date();
+      recentRangeStart.setMonth(recentRangeStart.getMonth() - 6);
+      const recentRangeEnd = new Date();
+      recentRangeEnd.setMonth(recentRangeEnd.getMonth() + 3);
+      const recentStartKey = toYMD(recentRangeStart);
+      const recentEndKey = toYMD(recentRangeEnd);
 
       try {
-        // Primary: sessions.kidIds array contains kid AND parentId matches current user
-        const qA = query(
-          classSessionsCol,
-          where("kidIds", "array-contains", selectedKidId),
-          where("parentId", "==", user.uid)
-        );
+        const qA = shouldLoadFullClassHistory
+          ? query(
+              classSessionsCol,
+              where("kidIds", "array-contains", selectedKidId),
+              where("parentId", "==", user.uid),
+            )
+          : query(
+              classSessionsCol,
+              where("kidIds", "array-contains", selectedKidId),
+              where("parentId", "==", user.uid),
+              where("date", ">=", recentStartKey),
+              where("date", "<=", recentEndKey),
+            );
         const snapA = await getDocs(qA);
         debugParentDashboard("✅ [Query A] classSessions kidIds array-contains + parentId:", {
           count: snapA.size,
           docs: snapA.docs.map(d => ({ id: d.id, parentId: d.data().parentId, kidIds: d.data().kidIds }))
         });
 
-        // Fallback: sessions.kidId == kid (older schema) AND parentId matches
-        const qB = query(
-          classSessionsCol,
-          where("kidId", "==", selectedKidId),
-          where("parentId", "==", user.uid)
-        );
-        const snapB = await getDocs(qB);
+        const shouldRunLegacyKidIdQuery = shouldLoadFullClassHistory || snapA.size === 0;
+        const qB = shouldLoadFullClassHistory
+          ? query(
+              classSessionsCol,
+              where("kidId", "==", selectedKidId),
+              where("parentId", "==", user.uid),
+            )
+          : query(
+              classSessionsCol,
+              where("kidId", "==", selectedKidId),
+              where("parentId", "==", user.uid),
+              where("date", ">=", recentStartKey),
+              where("date", "<=", recentEndKey),
+            );
+        const snapB = shouldRunLegacyKidIdQuery ? await getDocs(qB) : null;
         debugParentDashboard("✅ [Query B] classSessions kidId equality + parentId:", {
-          count: snapB.size,
-          docs: snapB.docs.map(d => ({ id: d.id, parentId: d.data().parentId, kidId: d.data().kidId }))
+          count: snapB?.size ?? 0,
+          docs: (snapB?.docs ?? []).map(d => ({ id: d.id, parentId: d.data().parentId, kidId: d.data().kidId }))
         });
-        if (snapB.size > 0) {
+        if ((snapB?.size ?? 0) > 0) {
           emitParentLegacyFallbackTelemetry("classSessions_kidId", {
             kidId: selectedKidId,
-            count: snapB.size,
+            count: snapB?.size ?? 0,
             canonicalHit: snapA.size > 0,
           });
         }
 
         const map = new Map<string, KidSession>();
         snapA.docs.forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
-        snapB.docs.forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
+        (snapB?.docs ?? []).forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
 
         const all = Array.from(map.values());
         debugParentDashboard("📊 [Final Result] Total unique sessions:", all.length);
@@ -2275,9 +2329,9 @@ export default function ParentDashboard() {
   const classRecordingsQuery = useQuery({
     queryKey: ["parentClassRecordings", user?.uid],
     enabled: !!user?.uid && activeTab === "classes",
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
     queryFn: async (): Promise<ParentClassRecording[]> => {
       if (!user?.uid) return [];
       const recordingsRef = query(
@@ -2328,9 +2382,9 @@ export default function ParentDashboard() {
   const parentWorksheetsQuery = useQuery({
     queryKey: ["parentWorksheets", user?.uid, worksheetEnrollmentContext.activeCourseIds.join("|")],
     enabled: !!user?.uid && activeTab === "classes",
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
     queryFn: async (): Promise<ParentWorksheetItem[]> => {
       if (!user?.uid) return [];
       const worksheetCollection = collection(db, "parentWorksheetLibrary");
@@ -2384,10 +2438,10 @@ export default function ParentDashboard() {
 
   const parentMonthlyBillingReadModelQuery = useQuery({
     queryKey: ["parentMonthlyBillingReadModel", user?.uid, classesMonthKey],
-    enabled: !!user?.uid,
-    staleTime: 0,
+    enabled: !!user?.uid && shouldLoadBillingData,
+    staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
-    refetchOnMount: "always",
+    refetchOnMount: false,
     queryFn: async (): Promise<ParentMonthlyBillingReadModel | null> => {
       if (!user?.uid) return null;
       const snap = await getDoc(

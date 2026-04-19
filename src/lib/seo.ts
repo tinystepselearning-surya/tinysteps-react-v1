@@ -3,7 +3,7 @@ import {
   ROUTE_SEO_REGISTRY as SHARED_ROUTE_SEO_REGISTRY,
   getRouteConfig as getSharedRouteConfig,
 } from './routeSeoRegistry.js';
-import { createWebPageSchema, organizationSchema, websiteSchema } from './schemas';
+import { createWebPageSchema, organizationSchema, websiteSchema, PUBLIC_FACTS, SITE_ORIGIN } from './schemas';
 
 type SeoConfig = {
   title: string;
@@ -17,7 +17,7 @@ type SeoConfig = {
   jsonLd?: object | object[];
 };
 
-const CANONICAL_ORIGIN = "https://tinystepslearning.com";
+const CANONICAL_ORIGIN = SITE_ORIGIN;
 const JSONLD_SCRIPT_ID = "ts-jsonld";
 const DEFAULT_INDEXABLE_ROBOTS =
   'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
@@ -253,7 +253,7 @@ export function applySeo(cfg: SeoConfig) {
   upsertMeta('meta[name="robots"]', { name: 'robots', content: robotsContent });
   upsertMeta('meta[name="googlebot"]', { name: 'googlebot', content: robotsContent });
   upsertMeta('meta[name="bingbot"]', { name: 'bingbot', content: robotsContent });
-  upsertMeta('meta[name="author"]', { name: 'author', content: 'Tiny Steps Learning' });
+  upsertMeta('meta[name="author"]', { name: 'author', content: PUBLIC_FACTS.brandName });
 
   // Open Graph basics (keep in sync / remove when absent)
   upsertMeta('meta[property="og:title"]', { property: 'og:title', content: cfg.title });
@@ -263,7 +263,7 @@ export function applySeo(cfg: SeoConfig) {
   });
   upsertMeta('meta[property="og:url"]', { property: 'og:url', content: canonicalUrl });
   upsertMeta('meta[property="og:type"]', { property: 'og:type', content: cfg.ogType ?? 'website' });
-  upsertMeta('meta[property="og:site_name"]', { property: 'og:site_name', content: 'Tiny Steps Learning' });
+  upsertMeta('meta[property="og:site_name"]', { property: 'og:site_name', content: PUBLIC_FACTS.brandName });
   upsertMeta('meta[property="og:locale"]', { property: 'og:locale', content: 'en_IN' });
 
   // Twitter metadata: keep in sync with OG but allow pages to override via cfg
@@ -296,12 +296,12 @@ export function applySeo(cfg: SeoConfig) {
   upsertMeta('meta[property="og:image:type"]', { property: 'og:image:type', content: resolvedOgImageType });
   upsertMeta('meta[property="og:image:alt"]', {
     property: 'og:image:alt',
-    content: 'Tiny Steps Learning - Online English classes for kids',
+    content: `${PUBLIC_FACTS.brandName} - ${PUBLIC_FACTS.positioning}`,
   });
   upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: resolvedOgImage });
   upsertMeta('meta[name="twitter:image:alt"]', {
     name: 'twitter:image:alt',
-    content: 'Tiny Steps Learning - Online English classes for kids',
+    content: `${PUBLIC_FACTS.brandName} - ${PUBLIC_FACTS.positioning}`,
   });
   upsertMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: 'summary_large_image' });
 
