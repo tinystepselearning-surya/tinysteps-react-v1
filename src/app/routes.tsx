@@ -227,6 +227,7 @@ const Layout: FC = () => {
   const isContactPage = normalizedPath === '/contact';
   const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
   const [showDeferredChrome, setShowDeferredChrome] = useState(false);
+  const [showDeferredSupportWidgets, setShowDeferredSupportWidgets] = useState(false);
 
   useEffect(() => {
     if (hideMarketingChrome || normalizedPath === '/book-demo') {
@@ -280,6 +281,46 @@ const Layout: FC = () => {
       }
     };
   }, [hideMarketingChrome]);
+
+  useEffect(() => {
+    if (hideMarketingChrome || hideSupportWidgets) {
+      setShowDeferredSupportWidgets(false);
+      return;
+    }
+
+    const activate = () => setShowDeferredSupportWidgets(true);
+    const isDesktopViewport = window.matchMedia('(min-width: 768px)').matches;
+    const fallbackDelayMs = isDesktopViewport ? 6200 : 4800;
+    let timeoutId: number | undefined;
+
+    const onFirstInteraction = () => {
+      activate();
+      window.removeEventListener('pointerdown', onFirstInteraction);
+      window.removeEventListener('keydown', onFirstInteraction);
+      window.removeEventListener('touchstart', onFirstInteraction);
+      window.removeEventListener('scroll', onFirstInteraction);
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+        timeoutId = undefined;
+      }
+    };
+
+    window.addEventListener('pointerdown', onFirstInteraction, { passive: true, once: true });
+    window.addEventListener('keydown', onFirstInteraction, { once: true });
+    window.addEventListener('touchstart', onFirstInteraction, { passive: true, once: true });
+    window.addEventListener('scroll', onFirstInteraction, { passive: true, once: true });
+    timeoutId = window.setTimeout(onFirstInteraction, fallbackDelayMs);
+
+    return () => {
+      window.removeEventListener('pointerdown', onFirstInteraction);
+      window.removeEventListener('keydown', onFirstInteraction);
+      window.removeEventListener('touchstart', onFirstInteraction);
+      window.removeEventListener('scroll', onFirstInteraction);
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [hideMarketingChrome, hideSupportWidgets]);
 
   const closeAssessmentModal = useCallback(() => {
     setIsAssessmentModalOpen(false);
@@ -384,7 +425,7 @@ const Layout: FC = () => {
           <Footer />
         </Suspense>
       ) : null}
-      {!hideSupportWidgets && showDeferredChrome ? (
+      {!hideSupportWidgets && showDeferredSupportWidgets ? (
         <Suspense fallback={null}>
           <FloatingAssistant />
           <BackToTopButton />
