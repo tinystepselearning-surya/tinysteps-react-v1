@@ -2,7 +2,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/': {
     title: 'Tiny Steps Learning | Premium Online English Learning for Children',
     description:
-      'Start your child’s English journey with premium live online Phonics, Grammar, and Public Speaking classes, structured progression, and clear parent updates.',
+      'Tiny Steps Learning is a premium online English learning school for children aged 3–12, offering structured phonics, grammar, reading, sentence formation, communication, and public speaking programs.',
     canonicalPath: '/',
     ogType: 'website',
     ogImage: '/og-default.jpg',
@@ -10,14 +10,14 @@ export const ROUTE_SEO_REGISTRY = {
   '/courses': {
     title: 'Choose the Right English Course for Kids | Tiny Steps Learning',
     description:
-      'Choose your child’s starting program by main need: reading gaps, sentence accuracy, or expression confidence across Phonics, Grammar, and Public Speaking.',
+      'Compare structured phonics, grammar, reading, sentence formation, communication, and public speaking pathways for children aged 3–12, then choose the right starting program.',
     canonicalPath: '/courses',
     ogType: 'website',
   },
   '/curriculum': {
     title: 'IB-Aligned English Curriculum | Tiny Steps Learning',
     description:
-      'See the full learning roadmap across Phonics, Grammar, and Public Speaking, with stage-based progression and clear starting points.',
+      'See the full learning roadmap for children aged 3–12 across phonics, grammar, reading, sentence formation, communication, and public speaking.',
     canonicalPath: '/curriculum',
     ogType: 'website',
   },
@@ -59,7 +59,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/pricing': {
     title: 'Pricing & Plans | Tiny Steps Learning',
     description:
-      'Affordable, transparent pricing for 1:1 online English classes. Choose the plan that fits your family. No hidden fees.',
+      'Premium, transparent pricing for Tiny Steps Learning: a structured online English learning school for children aged 3–12 across phonics, grammar, reading, sentence formation, communication, and public speaking.',
     canonicalPath: '/pricing',
     ogType: 'website',
   },
@@ -73,14 +73,14 @@ export const ROUTE_SEO_REGISTRY = {
   '/contact': {
     title: 'Contact Us | Tiny Steps Learning',
     description:
-      "Have questions? Get in touch with our team. We're here to help you find the perfect English class for your child.",
+      'Contact Tiny Steps Learning, a premium online English learning school for children aged 3–12 offering structured phonics, grammar, reading, sentence formation, communication, and public speaking programs.',
     canonicalPath: '/contact',
     ogType: 'website',
   },
   '/why-tiny-steps': {
     title: 'Why Parents Choose Tiny Steps | Founder-Led Online English for Children',
     description:
-      'Understand why parents choose Tiny Steps: founder-led academic direction, structured live teaching, and clear learning progress visibility.',
+      'Understand why parents choose Tiny Steps Learning: a premium online English learning school for children aged 3–12 with structured live teaching and clear progress visibility.',
     canonicalPath: '/why-tiny-steps',
     ogType: 'website',
   },
@@ -276,7 +276,7 @@ export const ROUTE_SEO_REGISTRY = {
     title: 'Early Reading & Phonics Support Classes (Ages 3-8) | Tiny Steps Learning',
     description:
       'Early-reader support for ages 3-8 with letter sounds, blending, and CVC reading practice. For broad reading classes, use Tiny Steps reading classes page.',
-    canonicalPath: '/online-phonics-reading-classes',
+    canonicalPath: '/phonics',
     ogType: 'website',
   },
   '/best-online-phonics-classes-india': {
@@ -315,10 +315,10 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/spoken-english-classes-for-kids': {
-    title: 'Communication Classes for Kids India | Tiny Steps Learning',
+    title: 'Communication & Public Speaking for Kids India | Tiny Steps Learning',
     description:
-      'Communication classes for kids in India focused on communication confidence, vocabulary growth, sentence formation, and stage speaking readiness.',
-    canonicalPath: '/spoken-english-classes-for-kids',
+      'Communication and public speaking classes for kids in India focused on communication confidence, vocabulary growth, sentence formation, and stage speaking readiness.',
+    canonicalPath: '/speaking',
     ogType: 'website',
   },
   '/writing-classes-for-kids': {
@@ -428,14 +428,14 @@ export const ROUTE_SEO_REGISTRY = {
     title: 'English Grammar & Writing Classes for Kids | Tiny Steps Learning',
     description:
       'Explore Tiny Steps English grammar and writing classes for kids with live online support for sentence structure, punctuation, grammar control, and writing clarity.',
-    canonicalPath: '/english-grammar-writing-classes',
+    canonicalPath: '/grammar',
     ogType: 'website',
   },
   '/public-speaking-communication-kids': {
-    title: 'Public Speaking & Communication Classes for Kids | Tiny Steps Learning',
+    title: 'Public Speaking & Communication for Kids | Tiny Steps Learning',
     description:
-      'Explore Tiny Steps public speaking, communication, and clear expression classes for kids with live online coaching for confidence, storytelling, structure, and presentation skills.',
-    canonicalPath: '/public-speaking-communication-kids',
+      'Explore Tiny Steps public speaking and communication programs for kids with live online coaching for confidence, storytelling, structure, and presentation skills.',
+    canonicalPath: '/speaking',
     ogType: 'website',
   },
   '/login': {

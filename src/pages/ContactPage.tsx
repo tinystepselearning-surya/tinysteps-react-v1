@@ -2,14 +2,24 @@
 import type { FC } from 'react';
 import { Link } from 'react-router-dom';
 import Meta from '../components/common/Meta';
+import { getRouteConfig } from '../lib/seo';
 import ElectricBorder from '../components/ui/ElectricBorder';
 import SoftAurora from '../components/ui/SoftAurora';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
+import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../constants/publicContact';
+
+const contactSeo = getRouteConfig('/contact');
+const contactSeoTitle = contactSeo?.title ?? 'Contact Us | Tiny Steps Learning';
+const contactSeoDescription =
+  contactSeo?.description ??
+  'Contact Tiny Steps Learning, a premium online English learning school for children aged 3–12 offering structured phonics, grammar, reading, sentence formation, communication, and public speaking programs.';
+const contactCanonicalPath = contactSeo?.canonicalPath ?? '/contact';
+const contactCanonicalUrl = `https://tinystepslearning.com${contactCanonicalPath}`;
 
 const ContactPage: FC = () => {
   return (
     <div className="relative overflow-hidden bg-[#060a16]">
-      <Meta title="Contact Tiny Steps Online School" description="Premium 1:1 online English school for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice and stage-based parent progress insights. Free assessment class; flexible monthly plans." canonical="https://tinystepslearning.com/contact" />
+      <Meta title={contactSeoTitle} description={contactSeoDescription} canonical={contactCanonicalUrl} />
       <div className="pointer-events-none absolute inset-0">
         <SoftAurora
           speed={0.6}
@@ -47,17 +57,17 @@ const ContactPage: FC = () => {
             </div>
           </ElectricBorder>
 
-          <h1 className="text-center text-4xl font-bold text-white sm:text-5xl">Get in Touch</h1>
+          <h1 className="text-center text-4xl font-bold text-white sm:text-5xl">Contact Tiny Steps Learning</h1>
           <p className="mt-4 max-w-xl text-center text-lg text-slate-300">
-            <AutoLinkedText text="Have questions about our programs or your child's placement? Email us or book a free assessment." />
+            <AutoLinkedText text="Questions about programs, placement, or admissions? Email us or book a free assessment." />
           </p>
 
           <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <a href="mailto:hello@tinystepslearning.com" className="inline-flex rounded-full bg-cyan-600 px-6 py-3 font-semibold text-white transition hover:bg-cyan-500">
-              hello@tinystepslearning.com
+            <a href={PUBLIC_CONTACT_MAILTO} className="inline-flex rounded-full bg-cyan-600 px-6 py-3 font-semibold text-white transition hover:bg-cyan-500">
+              {PUBLIC_CONTACT_EMAIL}
             </a>
             <Link to="/contact?book=1" className="inline-flex rounded-full border border-cyan-500/30 bg-[#0a1230]/50 px-6 py-3 font-semibold text-white backdrop-blur-md transition hover:bg-[#0a1230]/80">
-              Book Assessment
+              Book Free Assessment
             </Link>
           </div>
 

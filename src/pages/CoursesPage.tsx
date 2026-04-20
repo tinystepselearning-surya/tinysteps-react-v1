@@ -65,7 +65,7 @@ const grammarCards = [
   },
   {
     title: 'Advanced Grammar',
-    age: 'Age: 8–15',
+    age: 'Age: 8–12',
     focus: ['Tenses mastery', 'Complex sentences', 'Paragraph writing'],
     outcome: 'Your child writes and speaks clearly',
   },
@@ -80,7 +80,7 @@ const speakingCards = [
   },
   {
     title: 'Advanced Public Speaking',
-    age: 'Age: 7–15',
+    age: 'Age: 7–12',
     focus: ['Structured speaking', 'Storytelling', 'Presentations and debates'],
     outcome: 'Your child speaks fluently and confidently',
   },
@@ -171,7 +171,7 @@ function CoursesPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/75">Trusted by families across 15+ countries</p>
             <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight sm:text-4xl md:text-5xl">A Complete English Learning Journey for Your Child</h1>
             <p className="mt-4 max-w-3xl text-sm text-white/85 sm:text-base">
-              <AutoLinkedText text="Phonics, grammar, and confident speaking — taught step by step with clarity, care, and proven results." />
+              <AutoLinkedText text="Phonics, grammar, reading, sentence formation, communication, and public speaking — taught step by step with clarity, care, and proven results." />
             </p>
 
             <div className="mt-7 flex flex-wrap gap-3 sm:gap-3.5">

@@ -13,9 +13,9 @@ type MetaProps = {
   jsonLd?: Record<string, any> | Record<string, any>[];
 };
 
-const DEFAULT_TITLE = 'Tiny Steps Learning | 1:1 Online English Classes for Kids';
+const DEFAULT_TITLE = 'Tiny Steps Learning | Premium Online English Learning School for Children';
 const DEFAULT_DESCRIPTION =
-  'Premium 1:1 online English classes for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice, and simple stage-based progress updates for parents. Book a free assessment class.';
+  'Tiny Steps Learning is a premium online English learning school for children aged 3–12, offering structured phonics, grammar, reading, sentence formation, communication, and public speaking programs.';
 
 function hasOrganizationType(schema: Record<string, any> | undefined) {
   const type = schema?.['@type'];

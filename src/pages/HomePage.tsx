@@ -1,8 +1,8 @@
 // src/pages/HomePage.tsx
 // @ts-nocheck
 import React, { lazy, Suspense, useEffect, useState } from "react";
-import { applySeo, getRouteConfig } from "../lib/seo";
-import { localBusinessSchema, websiteSchema, PUBLIC_FACTS } from "../lib/schemas";
+import { getRouteConfig } from "../lib/seo";
+import { localBusinessSchema, PUBLIC_FACTS } from "../lib/schemas";
 import { Link } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
@@ -36,7 +36,7 @@ const homeSeo = getRouteConfig("/");
 const homeSeoTitle = homeSeo?.title ?? "Tiny Steps Learning | Premium Online English Learning for Children";
 const homeSeoDescription =
   homeSeo?.description ??
-  "Start your child’s English journey with premium live online Phonics, Grammar, and Public Speaking classes, structured progression, and clear parent updates.";
+  "Tiny Steps Learning is a premium online English learning school for children aged 3–12, offering structured phonics, grammar, reading, sentence formation, communication, and public speaking programs.";
 const homeCanonicalPath = homeSeo?.canonicalPath ?? "/";
 const homeCanonicalUrl =
   homeCanonicalPath === "/" ? `${PUBLIC_FACTS.primaryWebsite}/` : `${PUBLIC_FACTS.primaryWebsite}${homeCanonicalPath}`;
@@ -78,20 +78,6 @@ const quickAnswerFaqSchema = {
 
 export default function HomePage() {
   const [showDeferredSections, setShowDeferredSections] = useState(false);
-
-  useEffect(() => {
-    applySeo({
-      title: homeSeoTitle,
-      description: homeSeoDescription,
-      canonicalPath: homeCanonicalPath,
-      ogType: "website",
-      jsonLd: [
-        localBusinessSchema,
-        websiteSchema,
-        quickAnswerFaqSchema,
-      ],
-    });
-  }, []);
 
   useEffect(() => {
     if (typeof navigator !== "undefined" && navigator.webdriver) return;
@@ -142,8 +128,9 @@ export default function HomePage() {
       <Meta
         title={homeSeoTitle}
         description={homeSeoDescription}
-        keywords="phonics classes online India, grammar classes for kids, public speaking courses children, English learning kids ages 3-15, online English tuition India"
+        keywords="phonics classes online India, grammar classes for kids, public speaking courses children, premium online English learning school for children ages 3-12, communication and public speaking programs for kids India"
         canonical={homeCanonicalUrl}
+        jsonLd={[localBusinessSchema, quickAnswerFaqSchema]}
       />
 
       {/* HERO */}
@@ -216,7 +203,7 @@ export default function HomePage() {
                 ✏️
               </div>
               <h3 className="text-xl font-bold text-slate-900">Grammar Classes</h3>
-              <p className="mt-1 text-sm text-slate-600">Ages 5–15</p>
+              <p className="mt-1 text-sm text-slate-600">Ages 3–12</p>
               <p className="mt-3 text-sm leading-relaxed text-slate-700">
                 Sentence structure, tenses, writing clarity. Build correct, confident writing skills.
               </p>
@@ -234,7 +221,7 @@ export default function HomePage() {
                 🎤
               </div>
               <h3 className="text-xl font-bold text-slate-900">Speaking Classes</h3>
-              <p className="mt-1 text-sm text-slate-600">Ages 4–15</p>
+              <p className="mt-1 text-sm text-slate-600">Ages 3–12</p>
               <p className="mt-3 text-sm leading-relaxed text-slate-700">
                 Presentation skills, confidence, clarity. Structured talks, Q&A handling, public speaking.
               </p>

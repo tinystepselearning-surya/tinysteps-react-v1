@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { applySeo } from '../../lib/seo';
+import { getRouteConfig } from '../../lib/seo';
 import parentsMeta from '../../content/parentsMeta';
 import AboutAuthor from '../../components/AboutAuthor';
 import Meta from '../../components/common/Meta';
@@ -221,11 +221,17 @@ const founderSchema = {
     url: 'https://tinystepslearning.com/',
   },
 };
+const parentsSeo = getRouteConfig('/parents');
+const metaTitle = parentsSeo?.title ?? 'Parents Hub | Tiny Steps Learning';
+const metaDescription =
+  parentsSeo?.description ??
+  "Resources and guides for parents. Learn how to support your child's English learning journey at home.";
+const parentsCanonicalPath = parentsSeo?.canonicalPath ?? '/parents';
+const parentsCanonicalUrl = `https://tinystepslearning.com${parentsCanonicalPath}`;
+const parentsKeywords =
+  'parents phonics help, how to teach phonics at home, reading help for kids at home, english classes for kids parents guide, grammar and speaking support for children';
 
 const ParentsHubPage: React.FC = () => {
-  const metaTitle = 'Parents Help Hub | Phonics, Reading, Grammar & Speaking Support for Families';
-  const metaDescription =
-    'Premium parent help hub for phonics, reading routines, grammar, speaking confidence, progress tracking, homework support, and class decisions for ages 3-12.';
   const pageSchema = useMemo(
     () => ({
       ...(parentsMeta['/parents'].jsonLd as Record<string, unknown>),
@@ -236,28 +242,13 @@ const ParentsHubPage: React.FC = () => {
     [],
   );
 
-  useEffect(() => {
-    applySeo({
-      ...parentsMeta['/parents'],
-      title: metaTitle,
-      description: metaDescription,
-      keywords: [
-        'parents phonics help',
-        'how to teach phonics at home',
-        'reading help for kids at home',
-        'english classes for kids parents guide',
-        'grammar and speaking support for children',
-      ],
-      jsonLd: [pageSchema, breadcrumbSchema, faqSchema, founderSchema],
-    });
-  }, [pageSchema]);
-
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f7efe4_0%,#fcfaf7_18%,#ffffff_48%,#f3f7fc_100%)] text-slate-900">
       <Meta
         title={metaTitle}
         description={metaDescription}
-        canonical="https://tinystepslearning.com/parents"
+        keywords={parentsKeywords}
+        canonical={parentsCanonicalUrl}
         jsonLd={[pageSchema, breadcrumbSchema, faqSchema, founderSchema]}
       />
 

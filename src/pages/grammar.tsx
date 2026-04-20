@@ -68,7 +68,7 @@ const quickAnswerFaqItems = [
 const faqItems = [
   {
     question: 'What age should a child start grammar and writing classes?',
-    answer: 'Most children benefit from guided grammar and writing support from ages 5 and above. Tiny Steps places each child by current sentence and writing level, not only age.'
+    answer: 'Most children benefit from guided grammar and writing support once they are ready for sentence-level work. Tiny Steps places each child by current sentence and writing level, not only age.'
   },
   {
     question: 'Are online grammar classes effective for school writing?',
@@ -107,7 +107,7 @@ export default function GrammarPage() {
         description: "How grammar classes improve real language use: children move from word types to sentence control, punctuation, and clearer writing.",
         url: `${PUBLIC_FACTS.primaryWebsite}/grammar`,
         courseMode: 'online',
-        ageRange: 'Ages 5-15',
+        ageRange: 'Ages 3-12',
         educationalLevel: 'Elementary to Middle School'
       }),
     [],
@@ -149,7 +149,7 @@ export default function GrammarPage() {
         program="Grammar"
         title="Online Grammar and Writing Classes for Kids"
         subtitle="How grammar improves real language use: children move from word types to sentence control and clear writing through guided live practice."
-        badges={['Ages 5–15', 'Live feedback', 'Lesson-based writing samples']}
+        badges={['Ages 3–12', 'Live feedback', 'Lesson-based writing samples']}
         highlights={[
           'Sentence dice, grammar bingo, editing relays',
           'AI writing assistant + downloadable worksheets',
@@ -215,7 +215,7 @@ export default function GrammarPage() {
 
       {/* Program at a Glance */}
       <ProgramFacts
-        ageRange="Ages 5-15"
+        ageRange="Ages 3-12"
         format="Live 1:1 or small group online"
         duration={`${PUBLIC_FACTS.sessionDuration}, 2-3x per week`}
         structure="2 levels (Basic & Advanced), 36+ lessons with stage-based progression"

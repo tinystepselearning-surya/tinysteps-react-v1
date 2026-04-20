@@ -33,7 +33,7 @@ const whyTinyStepsCanonicalUrl =
     : `${PUBLIC_FACTS.primaryWebsite}${whyTinyStepsCanonicalPath}`;
 
 const valuePills = [
-  "Ages 3–15 across programs",
+  "Ages 3–12 across programs",
   "Live classes, real teachers",
   "Structured curriculum",
   "Parent-visible progress",
@@ -631,7 +631,7 @@ const WhyTinyStepsPage: FC = () => {
                 </div>
                 <p className="mt-3 text-sm leading-relaxed text-slate-700">
                   With 10+ years in early childhood English education, Priya built Tiny Steps to help children ages
-                  3-15 strengthen phonics, grammar, writing, and speaking with calm, structured teaching.
+                  3-12 strengthen phonics, grammar, reading, sentence formation, communication, and public speaking with calm, structured teaching.
                 </p>
               </div>
             </div>
@@ -641,13 +641,13 @@ const WhyTinyStepsPage: FC = () => {
                 Tiny Steps Learning was founded by educators who saw firsthand how structured, kind instruction helps struggling readers become more confident communicators.
               </p>
               <p>
-                The founding team realized that many children were not getting systematic, age-appropriate English support. Generic tuition often rushed through content. App-only practice lacked live guidance. Parents felt unsure about what to do next.
+                The founding team realized that many children were not getting systematic, age-appropriate English support. Generic after-school English support often rushed through content. App-only practice lacked live guidance. Parents felt unsure about what to do next.
               </p>
               <p>
                 Tiny Steps was built to solve this: <strong>live 1:1 or small-group classes</strong> with trained mentors, <strong>structured curriculum</strong> parents can understand, and <strong>transparent progress tracking</strong> so families see real improvement—not vague promises.
               </p>
               <p className="text-sm text-slate-600">
-                Today, Tiny Steps supports learners in India and globally through live online classes across Phonics, Grammar, and Public Speaking.
+                Today, Tiny Steps supports learners in India and globally through live online classes across phonics, grammar, reading, sentence formation, communication, and public speaking.
               </p>
             </div>
           </div>

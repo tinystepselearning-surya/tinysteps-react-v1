@@ -4,9 +4,10 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../../constants/publicContact';
 
 const socialLinks = [
-  { label: 'Instagram', href: 'https://www.instagram.com/tiny_steps_oel?igsh=d2p6Ym9odGlidnZ1', icon: '📸' },
+  { label: 'Facebook', href: 'https://www.facebook.com/tinystepslearning', icon: '📘' },
+  { label: 'Instagram', href: 'https://www.instagram.com/tinystepslearning', icon: '📸' },
   { label: 'YouTube', href: 'https://www.youtube.com/@TinyStepsLearning-1157', icon: '▶️' },
-  { label: 'LinkedIn', href: 'https://linkedin.com', icon: '💼' },
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/company/tinystepslearning', icon: '💼' },
 ];
 
 const courseLinks = [

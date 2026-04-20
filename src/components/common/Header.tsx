@@ -16,10 +16,7 @@ const dashboardPaths: Record<string, string> = {
 
 const TICKER_VERSION = '2026-04-09';
 const DISMISS_KEY = `ts_ticker_dismissed_${TICKER_VERSION}`;
-const TICKER_ITEMS = [
-  'Summer Camp 2026 • Season 27 Apr to 13 Jun • 24 live classes in 4 weeks • Batch starts 27 Apr, 4 May, 11 May, 18 May • Sunday holiday',
-];
-const TICKER_MARQUEE_ITEMS = [...TICKER_ITEMS, ...TICKER_ITEMS];
+const TICKER_LABEL = 'Summer Camp 2026 admissions open';
 
 const PRIMARY_LINKS: LinkItem[] = [
   { label: 'Courses', href: '/courses' },
@@ -68,37 +65,34 @@ const PublicAnnouncementTicker = memo(function PublicAnnouncementTicker({ isLogg
   if (isLoggedIn || isDismissed || !isDesktopTickerEligible) return null;
 
   return (
-    <div className="hidden border-b border-slate-200/80 bg-white/65 text-slate-600 backdrop-blur sm:block">
-      <style>{`
-        @keyframes tsMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-        .ts-marquee { animation: tsMarquee 52s linear infinite; will-change: transform; }
-        .group:hover .ts-marquee { animation-play-state: paused; }
-        @media (prefers-reduced-motion: reduce) { .ts-marquee { animation: none; transform: none; } }
-      `}</style>
-      <div className="group relative overflow-hidden px-4 py-1">
-        <div className="ts-marquee flex w-max items-center gap-12 whitespace-nowrap pr-12 text-[11px] font-medium">
-          {TICKER_MARQUEE_ITEMS.map((item, index) => (
-            <span key={`${item}-${index}`} className="inline-flex items-center gap-2.5">
-              <span className="h-1 w-1 rounded-full bg-slate-300" />
-              {item}
-            </span>
-          ))}
-        </div>
-        <button
-          type="button"
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:text-slate-600"
-          aria-label="Dismiss announcement"
-          onClick={() => {
-            if (typeof window !== 'undefined') {
-              window.localStorage.setItem(DISMISS_KEY, '1');
-            }
-            setIsDismissed(true);
-          }}
-        >
-          ✕
-        </button>
+    <aside
+      aria-label="Seasonal announcement"
+      data-nosnippet
+      className="relative hidden border-t border-slate-200/80 bg-white/65 text-slate-600 backdrop-blur sm:block"
+    >
+      <div className="mx-auto flex max-w-6xl items-center justify-center gap-2 px-10 py-1.5 text-[11px] font-medium sm:px-12">
+        <span className="h-1 w-1 rounded-full bg-slate-300" />
+        <Link to="/summer-camps" className="inline-flex items-center gap-1 underline-offset-2 hover:text-slate-800 hover:underline">
+          <span>{TICKER_LABEL}</span>
+          <span aria-hidden="true">↗</span>
+        </Link>
+        <span className="text-slate-400">•</span>
+        <span>View details</span>
       </div>
-    </div>
+      <button
+        type="button"
+        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:text-slate-600"
+        aria-label="Dismiss announcement"
+        onClick={() => {
+          if (typeof window !== 'undefined') {
+            window.localStorage.setItem(DISMISS_KEY, '1');
+          }
+          setIsDismissed(true);
+        }}
+      >
+        ✕
+      </button>
+    </aside>
   );
 });
 
@@ -272,8 +266,6 @@ export default function Header() {
           : 'border-b border-white/45 bg-white/72 shadow-[0_8px_22px_rgba(8,15,40,0.1)] backdrop-blur-lg'
       }`}
     >
-      <PublicAnnouncementTicker isLoggedIn={!!user} />
-
       <div className="mx-auto flex max-w-6xl items-center justify-between px-3 py-3.5 sm:px-4 sm:py-4">
         <button
           type="button"
@@ -373,6 +365,7 @@ export default function Header() {
           </div>
         </div>
       </div>
+      <PublicAnnouncementTicker isLoggedIn={!!user} />
     </nav>
   );
 }

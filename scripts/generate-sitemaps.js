@@ -124,6 +124,10 @@ const SUPPORTING_LONG_TAIL = new Set([
   const EXCLUDE_FROM_SITEMAP = new Set([
     '/summer-english-camp-2026', // legacy route; canonicalized to /summer-camps
     '/phonics-classes-for-kids', // support guide canonicalized to /phonics
+    '/online-phonics-reading-classes', // redirects/canonicalized to /phonics
+    '/english-grammar-writing-classes', // canonicalized to /grammar
+    '/public-speaking-communication-kids', // canonicalized to /speaking
+    '/spoken-english-classes-for-kids', // legacy keyword variant; canonicalized to /speaking
   ]);
   const staticRoutesForSitemap = staticRoutes.filter((route) => !EXCLUDE_FROM_SITEMAP.has(route));
   const parentRoutes = uniqueRoutes(PARENT_HELP_ROUTES);

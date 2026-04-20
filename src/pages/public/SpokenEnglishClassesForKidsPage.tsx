@@ -5,28 +5,28 @@ import ClusterSeoNav from '../../components/programs/ClusterSeoNav';
 
 const faqItems = [
 	{
-		question: 'What age should a child start communication classes?',
+		question: 'What age should a child start communication and public speaking classes?',
 		answer:
 			'Many children can begin from age 4 with short guided speaking routines. Older children usually need structured sentence-building, communication practice, and confidence coaching.',
 	},
 	{
-		question: 'Will communication classes help a shy child?',
+		question: 'Will communication and public speaking classes help a shy child?',
 		answer:
 			'Yes. A low-pressure, step-by-step format helps shy children build comfort first, then vocabulary, sentence flow, and speaking confidence.',
 	},
 	{
-		question: 'Are online communication classes effective for kids?',
+		question: 'Are online communication and public speaking classes effective for kids?',
 		answer:
-			'Yes. Live online communication classes are effective when children get frequent speaking turns and direct feedback. Consistent practice improves clarity, confidence, and classroom participation.',
+			'Yes. Live online communication and public speaking classes are effective when children get frequent speaking turns and direct feedback. Consistent practice improves clarity, confidence, and classroom participation.',
 	},
 ];
 
 export default function SpokenEnglishClassesForKidsPage() {
 	useEffect(() => {
 		applySeo({
-			title: 'Communication Classes for Kids India | Tiny Steps Learning',
+			title: 'Communication & Public Speaking for Kids India | Tiny Steps Learning',
 			description:
-				'Communication classes for kids in India focused on communication confidence, vocabulary growth, sentence formation, and stage speaking readiness.',
+				'Communication and public speaking classes for kids in India focused on communication confidence, vocabulary growth, sentence formation, and stage speaking readiness.',
 			canonicalPath: '/spoken-english-classes-for-kids',
 			ogType: 'website',
 			jsonLd: [
@@ -53,9 +53,10 @@ export default function SpokenEnglishClassesForKidsPage() {
 					Help Your Child Speak English Clearly and Confidently
 				</h1>
 				<p className="mt-4 text-lg text-slate-700">
-					Tiny Steps live communication classes help children move from
+					Tiny Steps live communication and public speaking classes help children move from
 					hesitation to confident speaking in class, conversations, and
-					presentations.
+					presentations. Often searched as spoken English classes for kids, this
+					pathway is built for structured communication and confident expression.
 				</p>
 				<Link
 					to="/book-demo"
@@ -70,14 +71,14 @@ export default function SpokenEnglishClassesForKidsPage() {
 
 			<section className="mb-10 rounded-xl border border-amber-100 bg-amber-50 p-6">
 				<h2 className="mb-2 text-lg font-bold text-slate-900">
-					What are communication classes for kids?
+					What are communication and public speaking classes for kids?
 				</h2>
 				<p className="text-slate-700">
-					Communication classes for kids help children speak in clearer
-					sentences, use stronger vocabulary, and communicate with confidence
-					in school and daily life. They work best for children who understand
-					English but hesitate to speak, answer briefly, or avoid speaking
-					tasks.
+					Communication and public speaking classes for kids help children
+					speak in clearer sentences, use stronger vocabulary, and communicate
+					with confidence in school and daily life. They work best for children
+					who understand English but hesitate to speak, answer briefly, or avoid
+					speaking tasks.
 				</p>
 			</section>
 
@@ -173,8 +174,8 @@ export default function SpokenEnglishClassesForKidsPage() {
 					Ready to build speaking confidence?
 				</h2>
 				<p className="mt-2 text-slate-200">
-					Book a free assessment to choose the right communication starting
-					point.
+					Book a free assessment to choose the right communication and public
+					speaking starting point.
 				</p>
 				<Link
 					to="/book-demo"

@@ -89,7 +89,7 @@ export default function ConfidenceBuildingProgramKidsPage() {
           </Link>
           {' • '}
           <Link to="/spoken-english-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-            communication classes for kids
+            communication & public speaking for kids
           </Link>
         </p>
       </section>

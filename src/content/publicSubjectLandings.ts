@@ -120,12 +120,12 @@ const SUBJECT_CONFIGS: Record<SubjectLandingId, SubjectLandingConfig> = {
   },
   speaking: {
     route: '/public-speaking-communication-kids',
-    breadcrumbName: 'Public Speaking & Communication Classes',
-    seoTitle: 'Public Speaking & Communication Classes for Kids | Tiny Steps Learning',
+    breadcrumbName: 'Public Speaking & Communication Programs',
+    seoTitle: 'Public Speaking & Communication Programs for Kids | Tiny Steps Learning',
     seoDescription:
-      'Explore Tiny Steps public speaking, communication, and clear expression classes for kids with live online coaching for confidence, storytelling, structure, and presentation skills.',
+      'Explore Tiny Steps public speaking and communication programs for kids with live online coaching for confidence, storytelling, structure, and presentation skills.',
     eyebrow: 'Tiny Steps Speaking',
-    heroTitle: 'Public Speaking & Communication Classes',
+    heroTitle: 'Public Speaking & Communication Programs',
     heroDescription:
       'A speaking pathway built around Public Speaking (Basic) and Public Speaking (Advanced). Children begin with communication confidence and clear expression, then progress to structure, storytelling, Q&A, persuasion, and presentations.',
     whoIntro:

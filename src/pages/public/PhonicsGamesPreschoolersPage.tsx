@@ -69,19 +69,6 @@ const HOW_TO_STEPS = [
   }
 ];
 
-const organizationSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'Organization',
-  '@id': 'https://tinystepslearning.com/#organization',
-  name: 'Tiny Steps Learning',
-  url: 'https://tinystepslearning.com',
-  logo: 'https://tinystepslearning.com/logo-square.webp',
-  sameAs: [
-    'https://www.facebook.com/tinystepslearning',
-    'https://www.instagram.com/tinystepslearning'
-  ]
-};
-
 const breadcrumbSchema = {
   '@context': 'https://schema.org',
   '@type': 'BreadcrumbList',
@@ -127,7 +114,7 @@ export default function PhonicsGamesPreschoolersPage() {
       description: 'Simple no-print phonics games for preschoolers ages 3–6, plus a 10-minute daily routine and common mistakes to avoid. Fun, practical, and parent-friendly.',
       canonicalPath: '/phonics-games-for-preschoolers',
       ogType: 'website',
-      jsonLd: [organizationSchema, breadcrumbSchema, howToSchema, faqSchema]
+      jsonLd: [breadcrumbSchema, howToSchema, faqSchema]
     });
   }, []);
 

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import type { FC } from 'react';
 import Meta from '../components/common/Meta';
+import { getRouteConfig } from '../lib/seo';
 import { useAuthStore } from '../store/useAuthStore';
 import { catalogs } from '../content/courses';
 import {
@@ -90,7 +91,7 @@ const quickAnswerFaqItems = [
       'Pricing covers live online classes, teacher-led practice, guided correction, learning activities, and parent progress updates based on the selected program.',
   },
   {
-    question: 'Are phonics, grammar, and communication classes priced separately?',
+    question: 'Are phonics, grammar, and public speaking programs priced separately?',
     answer:
       'Pricing may vary based on the selected program, class format, and number of sessions. Parents can review the available plans and choose what suits the child’s learning need.',
   },
@@ -121,16 +122,19 @@ const quickAnswerFaqSchema = {
 };
 
 type PricingProgram = 'premium' | 'ultra';
+const pricingSeo = getRouteConfig('/pricing');
+const pricingSeoTitle = pricingSeo?.title ?? 'Pricing & Plans | Tiny Steps Learning';
+const pricingSeoDescription =
+  pricingSeo?.description ??
+  'Premium, transparent pricing for Tiny Steps Learning: a structured online English learning school for children aged 3–12 across phonics, grammar, reading, sentence formation, communication, and public speaking.';
+const pricingCanonicalPath = pricingSeo?.canonicalPath ?? '/pricing';
+const pricingCanonicalUrl = `https://tinystepslearning.com${pricingCanonicalPath}`;
 
 const PricingPage: FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const programParam = searchParams.get('program');
   const initialProgram: PricingProgram = programParam === 'ultra' ? 'ultra' : 'premium';
   const [activeProgram, setActiveProgram] = useState<PricingProgram>(initialProgram);
-
-  useEffect(() => {
-    document.title = 'Pricing | Tiny Steps';
-  }, []);
 
   useEffect(() => {
     setActiveProgram(programParam === 'ultra' ? 'ultra' : 'premium');
@@ -263,31 +267,34 @@ const PricingPage: FC = () => {
     };
   });
 
-  const offerCatalog = {
-    '@context': 'https://schema.org',
-    '@type': 'OfferCatalog',
-    name: 'Tiny Steps Course Pricing',
-    itemListElement: coursePricing.map((entry, index) => ({
-      '@type': 'Offer',
-      position: index + 1,
-      itemOffered: {
-        '@type': 'Course',
-        name: entry.course.name,
-        description: entry.course.overview.join(', '),
-      },
-      price: `${entry.minFee}`,
-      priceCurrency: 'INR',
-    })),
-  };
+  const offerCatalog = useMemo(
+    () => ({
+      '@context': 'https://schema.org',
+      '@type': 'OfferCatalog',
+      name: 'Tiny Steps Course Pricing',
+      itemListElement: coursePricing.map((entry, index) => ({
+        '@type': 'Offer',
+        position: index + 1,
+        itemOffered: {
+          '@type': 'Course',
+          name: entry.course.name,
+          description: entry.course.overview.join(', '),
+        },
+        price: `${entry.minFee}`,
+        priceCurrency: 'INR',
+      })),
+    }),
+    [coursePricing]
+  );
 
   const user = useAuthStore().user;
 
   return (
     <div className="page-gradient min-h-screen">
       <Meta
-        title="Pricing | Tiny Steps Online School"
-        description="Premium 1:1 online English school for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice and stage-based parent progress insights. Free assessment class; flexible monthly plans."
-        canonical="https://tinystepslearning.com/pricing"
+        title={pricingSeoTitle}
+        description={pricingSeoDescription}
+        canonical={pricingCanonicalUrl}
         jsonLd={[offerCatalog, quickAnswerFaqSchema]}
       />
 
@@ -298,15 +305,11 @@ const PricingPage: FC = () => {
               ? `Tiny Steps Premium Classes • Starting from ${formatINR(premiumMinPerClass)} to ${formatINR(premiumMaxPerClass)} per class`
               : `Tiny Steps Ultra Premium • Native English-speaking teachers • Starting from ${formatINR(ultraMinPerClass)} to ${formatINR(ultraMaxPerClass)} per class`}
           </div>
-          <h1 className="mt-3 text-3xl font-bold text-gray-900 md:text-4xl">
-            {activeProgram === 'premium'
-              ? 'Pricing that mirrors your child’s curriculum'
-              : 'Ultra Premium English Program'}
-          </h1>
+          <h1 className="mt-3 text-3xl font-bold text-gray-900 md:text-4xl">Tiny Steps Program Pricing</h1>
           <p className="mt-3 text-gray-700">
-            {activeProgram === 'premium'
-              ? 'Choose the regular Premium Classes format with expert Indian teachers, or switch to Ultra Premium with native English-speaking teachers.'
-              : 'For families seeking an international-classroom feel, premium speaking confidence, and high-touch mentorship with native English-speaking teachers.'}
+            Compare plans for Tiny Steps phonics, grammar, reading, sentence formation, communication, and public
+            speaking programs. Choose Premium Classes with expert Indian teachers, or Ultra Premium with native
+            English-speaking teachers.
           </p>
           <div className="mt-6 mx-auto grid max-w-3xl gap-3 sm:grid-cols-2">
             <button

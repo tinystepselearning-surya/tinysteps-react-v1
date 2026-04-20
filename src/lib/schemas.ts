@@ -9,7 +9,7 @@ export const SITE_ORIGIN = 'https://tinystepslearning.com';
 export const PUBLIC_FACTS = {
   brandName: 'Tiny Steps Learning',
   shortBrandName: 'Tiny Steps',
-  positioning: 'premium online English learning for children',
+  positioning: 'premium online English learning school for children aged 3–12',
   corePrograms: ['Phonics', 'Grammar', 'Public Speaking'] as const,
   sessionDuration: '35–40 minutes per session',
   primaryWebsite: SITE_ORIGIN,
@@ -17,6 +17,15 @@ export const PUBLIC_FACTS = {
   geography: 'learners in India and globally online',
 } as const;
 export const CORE_PROGRAMS_TEXT = `${PUBLIC_FACTS.corePrograms[0]}, ${PUBLIC_FACTS.corePrograms[1]}, and ${PUBLIC_FACTS.corePrograms[2]}`;
+export const ENTITY_FOCUS_AREAS = [
+  'phonics',
+  'grammar',
+  'reading',
+  'sentence formation',
+  'communication',
+  'public speaking',
+] as const;
+export const ENTITY_FOCUS_AREAS_TEXT = ENTITY_FOCUS_AREAS.join(', ');
 
 /**
  * Canonical off-site corroboration pack.
@@ -99,7 +108,8 @@ export const organizationSchema = {
     name: 'Priya',
     jobTitle: 'Founder'
   },
-  description: `${PUBLIC_FACTS.positioning} through ${CORE_PROGRAMS_TEXT}.`,
+  description:
+    'Tiny Steps Learning is a premium online English learning school for children aged 3–12, offering structured phonics, grammar, reading, sentence formation, communication, and public speaking programs.',
   foundingDate: '2020',
   foundingLocation: {
     '@type': 'Place',
@@ -112,7 +122,8 @@ export const organizationSchema = {
     addressCountry: 'IN'
   },
   areaServed: ['IN', 'Worldwide'],
-  serviceType: 'Premium live online English classes for children',
+  serviceType:
+    'Premium online English learning school for children aged 3–12 with structured phonics, grammar, reading, sentence formation, communication, and public speaking programs',
   contactPoint: {
     '@type': 'ContactPoint',
     contactType: 'Customer Service',
@@ -123,11 +134,11 @@ export const organizationSchema = {
     availableLanguage: ['en']
   },
   knowsAbout: [
-    'online phonics classes for kids',
-    'online grammar classes for kids',
-    'online communication classes for kids',
-    'online public speaking classes for kids',
-    'reading classes for children',
+    'online phonics classes for children',
+    'online grammar and sentence formation classes for children',
+    'online reading classes for children',
+    'online communication and public speaking programs for children',
+    'online public speaking classes for children',
   ],
   sameAs: [
     'https://www.facebook.com/tinystepslearning',
@@ -148,14 +159,6 @@ export const websiteSchema = {
   publisher: {
     '@id': ORGANIZATION_ID,
   },
-  potentialAction: {
-    '@type': 'SearchAction',
-    target: {
-      '@type': 'EntryPoint',
-      urlTemplate: `${SITE_ORIGIN}/courses?q={search_term_string}`,
-    },
-    'query-input': 'required name=search_term_string',
-  },
 };
 
 export const localBusinessSchema = {
@@ -164,7 +167,7 @@ export const localBusinessSchema = {
   '@id': `${SITE_ORIGIN}/#localbusiness`,
   name: PUBLIC_FACTS.brandName,
   image: `${SITE_ORIGIN}/logo-square.webp`,
-  description: 'Online English learning platform',
+  description: 'Premium online English learning school for children aged 3–12',
   telephone: '+91-9618398383',
   email: PUBLIC_CONTACT_EMAIL,
   url: SITE_ORIGIN,

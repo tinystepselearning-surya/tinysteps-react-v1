@@ -214,24 +214,20 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
       jsonLd: [
         {
           "@context": "https://schema.org",
-          "@type": "BreadcrumbList",
-          "itemListElement": [
-            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://tinystepslearning.com/" },
-            { "@type": "ListItem", "position": 2, "name": "Best Online Phonics Classes India", "item": "https://tinystepslearning.com/best-online-phonics-classes-india" }
-          ]
-        },
-        {
-          "@context": "https://schema.org",
           "@type": "Article",
           "headline": "Best Online Phonics Classes in India (2026) — Parent Checklist",
           "description": "A comprehensive guide for Indian parents to evaluate and choose the best online phonics classes for their children ages 3–12.",
           "author": {
             "@type": "Organization",
-            "name": "Tiny Steps Learning"
+            "@id": "https://tinystepslearning.com/#organization",
+            "name": "Tiny Steps Learning",
+            "url": "https://tinystepslearning.com"
           },
           "publisher": {
             "@type": "Organization",
+            "@id": "https://tinystepslearning.com/#organization",
             "name": "Tiny Steps Learning",
+            "url": "https://tinystepslearning.com",
             "logo": {
               "@type": "ImageObject",
               "url": "https://tinystepslearning.com/logo-square.webp"
@@ -253,6 +249,12 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
             {
               "@type": "ListItem",
               "position": 2,
+              "name": "Phonics",
+              "item": "https://tinystepslearning.com/phonics"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
               "name": "Best Online Phonics Classes in India",
               "item": "https://tinystepslearning.com/best-online-phonics-classes-india"
             }
@@ -532,7 +534,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
                 <td className="border border-gray-300 px-4 py-3 text-sm text-gray-700">Structured progression, speech recognition, parent dashboard</td>
               </tr>
               <tr className="bg-slate-50">
-                <td className="border border-gray-300 px-4 py-3 font-semibold text-gray-900">Local tuition / coaching</td>
+                <td className="border border-gray-300 px-4 py-3 font-semibold text-gray-900">Local coaching / worksheet center</td>
                 <td className="border border-gray-300 px-4 py-3 text-sm text-gray-700">Hands-on materials, familiar local context</td>
                 <td className="border border-gray-300 px-4 py-3 text-sm text-gray-700">Travel time, inconsistent methodology, harder to track progress</td>
                 <td className="border border-gray-300 px-4 py-3 text-sm text-gray-700">Phonics certification, small batch size, parent updates</td>
@@ -664,7 +666,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
           </Link>
           <Link to="/speaking" className="rounded-lg border border-gray-200 p-4 transition hover:border-sky-300 hover:shadow-md">
             <h3 className="mb-2 font-bold text-slate-900">Speaking Program</h3>
-            <p className="text-sm text-gray-700">Public speaking and communication classes for ages 4–15</p>
+            <p className="text-sm text-gray-700">Public speaking and communication programs for children</p>
           </Link>
           <Link to="/?book=1" className="rounded-lg border border-gray-200 p-4 transition hover:border-sky-300 hover:shadow-md">
             <h3 className="mb-2 font-bold text-slate-900">Book Free Assessment</h3>

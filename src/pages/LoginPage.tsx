@@ -6,6 +6,7 @@ import { handleLogin } from '../lib/auth';
 import type { AuthRole } from '../store/useAuthStore';
 import TinyStepsBrand from '../components/common/TinyStepsBrand';
 import { Mail, Lock } from 'lucide-react';
+import { PUBLIC_CONTACT_EMAIL } from '../constants/publicContact';
 
 const VALID_ROLES: AuthRole[] = [
   'admin',
@@ -91,12 +92,7 @@ export default function LoginPage() {
     });
   }, [title, location.pathname]);
 
-  const emailPlaceholder =
-    expectedRole === 'parent'
-      ? 'parent@tinysteps.com'
-      : expectedRole === 'teacher'
-        ? 'teacher@tinysteps.com'
-        : 'your@email.com';
+  const emailPlaceholder = PUBLIC_CONTACT_EMAIL;
 
   const supportRole = expectedRole && ROLE_LABELS[expectedRole] ? ROLE_LABELS[expectedRole] : 'account';
   const passwordResetWhatsAppUrl = `https://wa.me/919618398383?text=${encodeURIComponent(

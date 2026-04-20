@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useEffect, useState } from 'react';
-import { applySeo, getRouteConfig } from '../lib/seo';
+import { getRouteConfig } from '../lib/seo';
 import type { FC } from 'react';
 import { WeekAccordion } from '../components/curriculum/WeekAccordion';
 import Meta from '../components/common/Meta';
@@ -15,12 +15,11 @@ import { createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../lib/s
 import ContentTrustNote from '../components/seo/ContentTrustNote';
 
 type Tab = 'phonics' | 'grammar' | 'speaking';
-const CORE_PROGRAMS_TEXT = `${PUBLIC_FACTS.corePrograms[0]}, ${PUBLIC_FACTS.corePrograms[1]}, and ${PUBLIC_FACTS.corePrograms[2]}`;
 const curriculumSeo = getRouteConfig('/curriculum');
 const curriculumSeoTitle = curriculumSeo?.title ?? 'IB-Aligned English Curriculum | Tiny Steps Learning';
 const curriculumSeoDescription =
   curriculumSeo?.description ??
-  'See the full learning roadmap across Phonics, Grammar, and Public Speaking, with stage-based progression and clear starting points.';
+  'See the full learning roadmap for children ages 3–12 across phonics, grammar, reading, sentence formation, communication, and public speaking.';
 const curriculumCanonicalPath = curriculumSeo?.canonicalPath ?? '/curriculum';
 const curriculumCanonicalUrl =
   curriculumCanonicalPath === '/'
@@ -89,7 +88,7 @@ const quickAnswerFaqItems = [
   {
     question: 'What does the full Tiny Steps learning roadmap include?',
     answer:
-      `The roadmap connects ${CORE_PROGRAMS_TEXT} so children build reading, sentence control, writing clarity, and confident expression in a structured sequence.`,
+      'The roadmap connects phonics, grammar, reading, sentence formation, communication, and public speaking so children build clear progression in a structured sequence.',
   },
   {
     question: 'How are children placed in the roadmap?',
@@ -160,39 +159,28 @@ function safeCourse(value: string | null): string | null {
       .catch(() => null);
   }, []);
 
-  useEffect(() => {
-    const pageUrl = curriculumCanonicalUrl;
-    const breadcrumb = {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
-        { '@type': 'ListItem', position: 2, name: 'Curriculum', item: pageUrl },
-      ],
-    };
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
+      { '@type': 'ListItem', position: 2, name: 'Curriculum', item: curriculumCanonicalUrl },
+    ],
+  };
 
-    const faqSchema = createFAQPageSchema(
-      schemaFaqItems.map((item) => ({
-        question: item.question,
-        answer: item.answer,
-      }))
-    );
+  const faqSchema = createFAQPageSchema(
+    schemaFaqItems.map((item) => ({
+      question: item.question,
+      answer: item.answer,
+    }))
+  );
 
-    const webpageSchema = createWebPageSchema({
-      name: 'Tiny Steps Curriculum (Ages 3–12)',
-      description:
-        'What the full learning journey looks like: a structured online roadmap connecting phonics, grammar, and speaking through stage-based progression.',
-      url: pageUrl,
-    });
-
-    applySeo({
-      title: curriculumSeoTitle,
-      description: curriculumSeoDescription,
-      canonicalPath: curriculumCanonicalPath,
-      ogType: "website",
-      jsonLd: [breadcrumb, webpageSchema, faqSchema],
-    });
-  }, []);
+  const webpageSchema = createWebPageSchema({
+    name: 'Tiny Steps Curriculum (Ages 3–12)',
+    description:
+      'What the full learning journey looks like: a structured online roadmap connecting phonics, grammar, reading, sentence formation, communication, and public speaking through stage-based progression.',
+    url: curriculumCanonicalUrl,
+  });
 
 
   const getWeeks = (courseSlug: string): WeekItem[] => {
@@ -270,13 +258,14 @@ function safeCourse(value: string | null): string | null {
         title={curriculumSeoTitle}
         description={curriculumSeoDescription}
         canonical={curriculumCanonicalUrl}
+        jsonLd={[breadcrumbSchema, webpageSchema, faqSchema]}
       />
 
       <div className="mx-auto max-w-6xl px-4 pt-8 pb-10 sm:px-6">
         <div className="glass-panel soft-grid overflow-hidden px-5 py-8 text-center sm:px-6 sm:py-10">
           <div className="gradient-chip mx-auto mb-4 w-max">Cambridge-aligned • Ages 3–12</div>
           <h1 className="font-heading text-3xl md:text-4xl">Tiny Steps Curriculum (Ages 3–12)</h1>
-          <p className="mt-3 text-base text-gray-700">What does the full learning journey look like? This curriculum maps a clear pathway across phonics, grammar, and speaking so parents know exactly what comes next.</p>
+          <p className="mt-3 text-base text-gray-700">What does the full learning journey look like? This curriculum maps a clear pathway across phonics, grammar, reading, sentence formation, communication, and public speaking so parents know exactly what comes next.</p>
           <p className="mt-2 text-sm text-gray-600">
             For daily home reinforcement, explore our <Link to="/phonics-learning-games" className="font-semibold text-primary-600">phonics games</Link> with tracing, sound practice, and a 3-day free trial.
           </p>

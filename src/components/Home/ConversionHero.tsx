@@ -166,7 +166,7 @@ const ConversionHero: React.FC = () => {
             <p
               className="mt-5 max-w-2xl text-base leading-relaxed text-slate-600 md:text-lg"
             >
-              Live 1:1 and small-group online classes blending phonics, grammar, and public speaking into one structured journey for ages 3–15 across programs. Free assessment, trained teachers, and weekly parent updates.
+              Tiny Steps Learning is a premium online English learning school for children aged 3–12, offering phonics, grammar, reading, sentence formation, communication, and public speaking programs through live 1:1 and small-group classes.
             </p>
 
             <div

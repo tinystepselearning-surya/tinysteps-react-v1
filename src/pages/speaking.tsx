@@ -69,7 +69,7 @@ const quickAnswerFaqItems = [
 const faqItems = [
   {
     question: 'What age should a child start speaking confidence classes?',
-    answer: 'Most children can begin from age 4 with short, guided speaking tasks. Older children benefit from more structured communication, storytelling, and presentation practice.'
+    answer: 'Children can begin with short, guided speaking tasks and progress to more structured communication, storytelling, and presentation practice as confidence grows.'
   },
   {
     question: 'Will this help a shy child speak in class?',
@@ -108,7 +108,7 @@ export default function SpeakingPage() {
         description: "How speaking classes build confidence: children move from guided short responses to story-based and structured speaking with live feedback.",
         url: `${PUBLIC_FACTS.primaryWebsite}/speaking`,
         courseMode: 'online',
-        ageRange: 'Ages 4-15',
+        ageRange: 'Ages 3-12',
         educationalLevel: 'Elementary to Middle School'
       }),
     [],
@@ -150,7 +150,7 @@ export default function SpeakingPage() {
         program="Public Speaking"
         title="Online Public Speaking Classes for Kids"
         subtitle="How speaking classes build confidence: children practise guided speaking in stages, from short responses to structured presentations."
-        badges={['Ages 4–15', 'S.P.E.A.K habit', 'Parent video notes']}
+        badges={['Ages 3–12', 'S.P.E.A.K habit', 'Parent video notes']}
         highlights={[
           'Show & tell, storytelling, debates, persuasive speeches',
           'AI voice analytics + coach feedback',
@@ -216,7 +216,7 @@ export default function SpeakingPage() {
 
       {/* Program at a Glance */}
       <ProgramFacts
-        ageRange="Ages 4-15"
+        ageRange="Ages 3-12"
         format="Live 1:1 or small group online"
         duration={`${PUBLIC_FACTS.sessionDuration}, 2-3x per week`}
         structure="2 levels (Basic & Advanced), 36+ lessons with stage-based progression"
@@ -247,7 +247,7 @@ export default function SpeakingPage() {
         title="Learn More About Public Speaking for Kids"
         links={[
           { label: 'Public Speaking & Communication', href: '/public-speaking-communication-kids' },
-          { label: 'Communication Classes for Kids', href: '/spoken-english-classes-for-kids' },
+          { label: 'Communication & Public Speaking for Kids', href: '/spoken-english-classes-for-kids' },
           { label: 'Helping a Shy Child Speak', href: '/shy-child-speaking-confidence' },
           { label: 'Confidence Building Programs', href: '/confidence-building-program-kids' },
           { label: 'Confidence Seeds (Parents Guide)', href: '/blog/week-12-speaking-confidence-seeds' },
@@ -303,7 +303,7 @@ export default function SpeakingPage() {
             icon: '📊'
           },
           {
-            label: 'Communication Classes for Kids',
+            label: 'Communication & Public Speaking for Kids',
             href: '/spoken-english-classes-for-kids',
             description: 'Communication confidence with sentence support',
             icon: '🗣️'

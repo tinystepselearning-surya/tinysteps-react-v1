@@ -50,19 +50,6 @@ const FAQS = [
   }
 ];
 
-const organizationSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'Organization',
-  '@id': 'https://tinystepslearning.com/#organization',
-  name: 'Tiny Steps Learning',
-  url: 'https://tinystepslearning.com',
-  logo: 'https://tinystepslearning.com/logo-square.webp',
-  sameAs: [
-    'https://www.facebook.com/tinystepslearning',
-    'https://www.instagram.com/tinystepslearning'
-  ]
-};
-
 const breadcrumbSchema = {
   '@context': 'https://schema.org',
   '@type': 'BreadcrumbList',
@@ -113,7 +100,7 @@ export default function PhonicsAppsPreschoolersIndiaPage() {
       description: 'Parent-friendly guide to phonics apps for preschoolers in India. Learn what to look for, how to use apps at home in 10 minutes a day, and common mistakes to avoid.',
       canonicalPath: '/phonics-apps-for-preschoolers-india',
       ogType: 'website',
-      jsonLd: [organizationSchema, breadcrumbSchema, webPageSchema, faqSchema]
+      jsonLd: [breadcrumbSchema, webPageSchema, faqSchema]
     });
   }, []);
 
