@@ -146,12 +146,38 @@ const COUNTRY_OPTIONS = [
 ] as const;
 const CUSTOM_COUNTRY_ID = 'CUSTOM';
 const DEFAULT_PARENT_TEMPLATE =
-  "Hello [Parent Name], this is a gentle reminder that [Child Name]'s Tiny Steps class is scheduled today at [Time]. Please be ready a few minutes before class. Thank you.";
+  "Hello [Parent Name], this is a gentle reminder that [Child Name]'s Tiny Steps class is scheduled at [Time]. Please be ready a few minutes before class. Thank you.";
 const DEFAULT_TEACHER_TEMPLATE =
-  "Hello [Teacher Name], this is a reminder for today's Tiny Steps class with [Child Name] at [Time]. Please be ready and join on time.";
+  "Hello [Teacher Name], this is a reminder for Tiny Steps class with [Child Name] at [Time]. Please be ready and join on time.";
 const UPCOMING_RANGE_OPTIONS = [3, 7, 14, 30] as const;
 const ALL_TEACHERS_FILTER = 'ALL_TEACHERS';
 const ALL_STATUSES_FILTER = 'ALL_STATUSES';
+const IST_OFFSET_MINUTES = 5.5 * 60;
+const COUNTRY_CODE_TIMEZONE_DEFAULTS: Record<string, string> = {
+  '+1': 'America/Los_Angeles',
+  '+27': 'Africa/Johannesburg',
+  '+31': 'Europe/Amsterdam',
+  '+33': 'Europe/Paris',
+  '+34': 'Europe/Madrid',
+  '+39': 'Europe/Rome',
+  '+41': 'Europe/Zurich',
+  '+44': 'Europe/London',
+  '+47': 'Europe/Oslo',
+  '+49': 'Europe/Berlin',
+  '+60': 'Asia/Kuala_Lumpur',
+  '+61': 'Australia/Sydney',
+  '+64': 'Pacific/Auckland',
+  '+65': 'Asia/Singapore',
+  '+81': 'Asia/Tokyo',
+  '+91': TIMEZONE,
+  '+353': 'Europe/Dublin',
+  '+966': 'Asia/Riyadh',
+  '+968': 'Asia/Muscat',
+  '+971': 'Asia/Dubai',
+  '+973': 'Asia/Bahrain',
+  '+974': 'Asia/Qatar',
+  '+965': 'Asia/Kuwait',
+};
 const getMessageDraftKey = (sessionId: string, recipient: MessageRecipient): string =>
   `${sessionId}:${recipient}:message`;
 
@@ -588,6 +614,123 @@ const formatKolkataTime = (date: Date | null): string => {
   }).format(date);
 };
 
+const resolveUserTimeZone = (userLike: UserDoc | undefined): string => {
+  const candidates = [
+    userLike?.timezone,
+    userLike?.timeZone,
+    userLike?.timezoneId,
+  ];
+  for (const candidate of candidates) {
+    const value = String(candidate || '').trim();
+    if (!value) continue;
+    try {
+      new Intl.DateTimeFormat('en-US', { timeZone: value }).format(new Date());
+      return value;
+    } catch {
+      // Ignore invalid timezone values saved on user records.
+    }
+  }
+  return '';
+};
+
+const resolveCountryCodeFromUser = (userLike: UserDoc | undefined): string => {
+  const structuredCountryCode = normalizeCountryCode(String(userLike?.phoneCountryCode || ''));
+  if (structuredCountryCode) return structuredCountryCode;
+
+  const whatsappE164Digits = digitsOnly(String(userLike?.whatsappE164 || ''));
+  if (whatsappE164Digits.length >= 8) {
+    const inferred = inferCountryCodeFromInternationalDigits(whatsappE164Digits);
+    if (inferred) return inferred;
+  }
+
+  for (const field of USER_PHONE_FIELDS) {
+    const raw = normalizePhoneForSave(String(userLike?.[field] || ''));
+    if (!looksLikeInternationalWithPlus(raw)) continue;
+    const inferred = inferCountryCodeFromInternationalDigits(raw);
+    if (inferred) return inferred;
+  }
+
+  return '';
+};
+
+const resolveParentTimeZone = (userLike: UserDoc | undefined): string => {
+  const explicitTimeZone = resolveUserTimeZone(userLike);
+  if (explicitTimeZone) return explicitTimeZone;
+  const countryCode = resolveCountryCodeFromUser(userLike);
+  if (!countryCode) return '';
+  return COUNTRY_CODE_TIMEZONE_DEFAULTS[countryCode] || '';
+};
+
+const parseIstDateTimeToUtcDate = (dateKey: string, timeValue: string): Date | null => {
+  const minutesSinceMidnight = parseTimeToMinutes(timeValue);
+  if (!isYmdDateKey(dateKey) || minutesSinceMidnight === null) return null;
+  const [year, month, day] = dateKey.split('-').map((part) => Number(part));
+  if (!year || !month || !day) return null;
+  const utcMs =
+    Date.UTC(year, month - 1, day, 0, 0, 0, 0) -
+    IST_OFFSET_MINUTES * 60 * 1000 +
+    minutesSinceMidnight * 60 * 1000;
+  return new Date(utcMs);
+};
+
+const resolveSessionTimeBounds = (session: ClassSessionDoc): { startAt: Date | null; endAt: Date | null } => {
+  const startAtFromTimestamp = toDateMaybe(session.startAt);
+  const endAtFromTimestamp = toDateMaybe(session.endAt);
+  if (startAtFromTimestamp) {
+    return { startAt: startAtFromTimestamp, endAt: endAtFromTimestamp };
+  }
+
+  const dateKey = String(session.date || '').trim();
+  const startAtFromFields = parseIstDateTimeToUtcDate(dateKey, String(session.startTime || '').trim());
+  if (!startAtFromFields) {
+    return { startAt: null, endAt: endAtFromTimestamp };
+  }
+
+  const endMinutes = parseTimeToMinutes(String(session.endTime || '').trim());
+  if (endMinutes === null) {
+    return { startAt: startAtFromFields, endAt: endAtFromTimestamp };
+  }
+  const startMinutes = parseTimeToMinutes(String(session.startTime || '').trim());
+  if (startMinutes === null) {
+    return { startAt: startAtFromFields, endAt: endAtFromTimestamp };
+  }
+
+  let duration = endMinutes - startMinutes;
+  if (duration <= 0) duration += 24 * 60;
+  const endAtFromFields = new Date(startAtFromFields.getTime() + duration * 60 * 1000);
+  return { startAt: startAtFromFields, endAt: endAtFromFields };
+};
+
+const getTimeZoneShortLabel = (date: Date, timeZone: string): string => {
+  if (timeZone === TIMEZONE) return 'IST';
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    timeZoneName: 'short',
+  }).formatToParts(date);
+  return parts.find((part) => part.type === 'timeZoneName')?.value || '';
+};
+
+const formatSessionTimeInTimeZone = (
+  startAt: Date | null,
+  endAt: Date | null,
+  timeZone: string,
+): string => {
+  if (!startAt) return '';
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+  const startLabel = formatter.format(startAt);
+  const endLabel = endAt ? formatter.format(endAt) : '';
+  const zoneLabel = getTimeZoneShortLabel(startAt, timeZone);
+  if (startLabel && endLabel) {
+    return `${startLabel} - ${endLabel}${zoneLabel ? ` ${zoneLabel}` : ''}`;
+  }
+  return `${startLabel}${zoneLabel ? ` ${zoneLabel}` : ''}`;
+};
+
 async function fetchDocsByIds(
   collectionName: string,
   ids: string[],
@@ -856,6 +999,7 @@ export default function TodaysNotifications() {
   const [upcomingSpecificDate, setUpcomingSpecificDate] = useState<string>('');
   const [teacherFilter, setTeacherFilter] = useState<string>(ALL_TEACHERS_FILTER);
   const [statusFilter, setStatusFilter] = useState<string>(ALL_STATUSES_FILTER);
+  const isNotificationActionsEnabled = mode !== 'overall-admissions';
 
   const todayDateKey = useMemo(() => getKolkataDateKey(), []);
   const upcomingStartDateKey = useMemo(() => shiftDateKeyByDays(todayDateKey, 1), [todayDateKey]);
@@ -880,10 +1024,10 @@ export default function TodaysNotifications() {
   }, [mode, upcomingFilterMode, upcomingSpecificDate, upcomingStartDateKey]);
 
   useEffect(() => {
-    if (mode === 'today') return;
+    if (isNotificationActionsEnabled) return;
     setEditingPhone(null);
     setMessageEditor(null);
-  }, [mode]);
+  }, [isNotificationActionsEnabled]);
 
   useEffect(() => {
     let active = true;
@@ -1136,6 +1280,8 @@ export default function TodaysNotifications() {
           getDisplayName(parentUser, '') || String(session.parentName || '').trim();
         const resolvedTeacherName =
           getDisplayName(teacherUser, '') || String(session.teacherName || '').trim();
+        const parentTimeZone = resolveParentTimeZone(parentUser);
+        const sessionTimeBounds = resolveSessionTimeBounds(session);
         const hasValidDate = isYmdDateKey(sessionDateKey);
         const hasValidTime = classTime !== 'Time TBD';
         const hasStatus = Boolean(statusLabel);
@@ -1214,11 +1360,29 @@ export default function TodaysNotifications() {
 
         const studentLabel = activeKidNames.join(', ');
         const childName = activeKidNames[0] || '';
+        const classTimeIst =
+          formatSessionTimeInTimeZone(sessionTimeBounds.startAt, sessionTimeBounds.endAt, TIMEZONE) ||
+          (classTime === 'Time TBD' ? classTime : `${classTime} IST`);
+        const classTimeParent =
+          parentTimeZone && parentTimeZone !== TIMEZONE
+            ? formatSessionTimeInTimeZone(
+                sessionTimeBounds.startAt,
+                sessionTimeBounds.endAt,
+                parentTimeZone,
+              )
+            : '';
+        const parentMessageTime = classTimeParent
+          ? `${classTimeParent} (${parentTimeZone}) / ${classTimeIst}`
+          : classTimeIst;
 
         return {
           ...session,
           sessionDateKey,
           classTime,
+          classTimeIst,
+          classTimeParent,
+          parentTimeZone,
+          parentMessageTime,
           studentLabel,
           childName,
           parentName: resolvedParentName,
@@ -1597,11 +1761,15 @@ export default function TodaysNotifications() {
 
   const buildResolvedRowMessage = (row: any, type: MessageRecipient): string => {
     const template = getRowMessageTemplate(row.id, type);
+    const resolvedTime =
+      type === 'parent'
+        ? row.parentMessageTime || row.classTimeIst || row.classTime || 'Time TBD'
+        : row.classTimeIst || row.classTime || 'Time TBD';
     const context = {
       parentName: row.parentName || 'Parent',
       teacherName: row.teacherName || 'Teacher',
       childName: row.childName || 'your child',
-      time: row.classTime || 'Time TBD',
+      time: resolvedTime,
       course:
         row.courseLabel && row.courseLabel !== '-'
           ? row.courseLabel
@@ -1727,11 +1895,9 @@ export default function TodaysNotifications() {
                 ? `Date: ${upcomingSpecificDate || 'Select date'} (${TIMEZONE})`
                 : `Upcoming: ${upcomingStartDateKey} to ${upcomingEndDateKey} (${TIMEZONE})`
               : 'Active admissions with teacher/schedule readiness'}{' '}
-          {mode === 'today'
+          {isNotificationActionsEnabled
             ? '| Open WhatsApp, then manually tick notified.'
-            : mode === 'upcoming'
-              ? '| Planning view.'
-              : '| Admissions operations view.'}
+            : '| Admissions operations view.'}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <div className="inline-flex items-center rounded-md border bg-white p-0.5">
@@ -1955,7 +2121,9 @@ export default function TodaysNotifications() {
               className={
                 mode === 'today'
                   ? 'min-w-[1160px] table-fixed text-[13px] [&_th]:h-9 [&_th]:px-1.5 [&_th]:py-1.5 [&_th]:text-xs [&_td]:px-1.5 [&_td]:py-1.5 [&_th:not(:last-child)]:border-r [&_th:not(:last-child)]:border-slate-200/80 [&_td:not(:last-child)]:border-r [&_td:not(:last-child)]:border-slate-100'
-                  : 'min-w-[980px] table-fixed text-[13px] [&_th]:h-9 [&_th]:px-1.5 [&_th]:py-1.5 [&_th]:text-xs [&_td]:px-1.5 [&_td]:py-1.5 [&_th:not(:last-child)]:border-r [&_th:not(:last-child)]:border-slate-200/80 [&_td:not(:last-child)]:border-r [&_td:not(:last-child)]:border-slate-100'
+                  : isNotificationActionsEnabled
+                    ? 'min-w-[1160px] table-fixed text-[13px] [&_th]:h-9 [&_th]:px-1.5 [&_th]:py-1.5 [&_th]:text-xs [&_td]:px-1.5 [&_td]:py-1.5 [&_th:not(:last-child)]:border-r [&_th:not(:last-child)]:border-slate-200/80 [&_td:not(:last-child)]:border-r [&_td:not(:last-child)]:border-slate-100'
+                    : 'min-w-[980px] table-fixed text-[13px] [&_th]:h-9 [&_th]:px-1.5 [&_th]:py-1.5 [&_th]:text-xs [&_td]:px-1.5 [&_td]:py-1.5 [&_th:not(:last-child)]:border-r [&_th:not(:last-child)]:border-slate-200/80 [&_td:not(:last-child)]:border-r [&_td:not(:last-child)]:border-slate-100'
               }
             >
               <TableHeader>
@@ -1966,13 +2134,13 @@ export default function TodaysNotifications() {
                       <TableHead className="w-[102px] whitespace-nowrap">Date</TableHead>
                     </>
                   ) : null}
-                  <TableHead className="w-[124px] whitespace-nowrap">Class Time</TableHead>
+                  <TableHead className="w-[188px] whitespace-nowrap">Class Time</TableHead>
                   <TableHead className="w-[150px] whitespace-nowrap">Student</TableHead>
                   <TableHead className="w-[178px] whitespace-nowrap">Parent</TableHead>
                   <TableHead className="w-[178px] whitespace-nowrap">Teacher</TableHead>
                   <TableHead className="w-[146px] whitespace-nowrap">Course / Subject</TableHead>
                   <TableHead className="w-[102px] whitespace-nowrap">Session Status</TableHead>
-                  {mode === 'today' ? (
+                  {isNotificationActionsEnabled ? (
                     <>
                       <TableHead className="w-[280px] whitespace-nowrap">Actions</TableHead>
                       <TableHead className="w-[88px] whitespace-nowrap">Notified</TableHead>
@@ -1992,18 +2160,6 @@ export default function TodaysNotifications() {
                   const isEditingTeacherPhone = editingPhone?.key === teacherPhoneEditKey;
                   const parentMessage = buildResolvedRowMessage(row, 'parent');
                   const teacherMessage = buildResolvedRowMessage(row, 'teacher');
-                  const parentCompactPhone =
-                    row.parentPhoneDisplay ||
-                    (row.parentPhoneStatus === 'needs_country_code' ? 'Add country code' : 'No phone number');
-                  const teacherCompactPhone =
-                    row.teacherPhoneDisplay ||
-                    (row.teacherPhoneStatus === 'needs_country_code' ? 'Add country code' : 'No phone number');
-                  const parentCompactLabel = `${row.parentName || 'Parent'} • ${parentCompactPhone}${
-                    row.parentUserMissing ? ' • User record not found' : ''
-                  }`;
-                  const teacherCompactLabel = `${row.teacherName || 'Teacher'} • ${teacherCompactPhone}${
-                    row.teacherUserMissing ? ' • User record not found' : ''
-                  }`;
                   const hasDirectJoinUrl =
                     (typeof row.joinUrl === 'string' && row.joinUrl.trim().length > 0) ||
                     (typeof row.meetingLink === 'string' && row.meetingLink.trim().length > 0);
@@ -2029,14 +2185,26 @@ export default function TodaysNotifications() {
                           </TableCell>
                         </>
                       ) : null}
-                      <TableCell className="align-top whitespace-nowrap">{row.classTime}</TableCell>
+                      <TableCell className="align-top whitespace-nowrap">
+                        <div className="space-y-0.5">
+                          <div>{row.classTimeIst || row.classTime}</div>
+                          {row.classTimeParent ? (
+                            <div
+                              className="max-w-[178px] truncate text-[11px] leading-tight text-muted-foreground"
+                              title={`${row.classTimeParent} (${row.parentTimeZone || 'Parent timezone'})`}
+                            >
+                              Parent: {row.classTimeParent}
+                            </div>
+                          ) : null}
+                        </div>
+                      </TableCell>
                       <TableCell className="align-top whitespace-nowrap font-medium">
                         <div className="max-w-[145px] truncate" title={row.studentLabel}>
                           {row.studentLabel}
                         </div>
                       </TableCell>
                       <TableCell className="align-top whitespace-nowrap">
-                        {mode === 'today' ? (
+                        {isNotificationActionsEnabled ? (
                           <div className="space-y-1">
                             {isEditingParentPhone ? (
                               <div className="space-y-1 pt-1">
@@ -2123,10 +2291,10 @@ export default function TodaysNotifications() {
                               </div>
                             ) : (
                               <div
-                                className="max-w-[170px] truncate text-sm leading-5 text-muted-foreground"
-                                title={parentCompactLabel}
+                                className="max-w-[170px] truncate text-sm leading-5"
+                                title={row.parentName || 'Parent'}
                               >
-                                {parentCompactLabel}
+                                {row.parentName || 'Parent'}
                               </div>
                             )}
                           </div>
@@ -2137,7 +2305,7 @@ export default function TodaysNotifications() {
                         )}
                       </TableCell>
                       <TableCell className="align-top whitespace-nowrap">
-                        {mode === 'today' ? (
+                        {isNotificationActionsEnabled ? (
                           <div className="space-y-1">
                             {isEditingTeacherPhone ? (
                               <div className="space-y-1 pt-1">
@@ -2224,10 +2392,10 @@ export default function TodaysNotifications() {
                               </div>
                             ) : (
                               <div
-                                className="max-w-[170px] truncate text-sm leading-5 text-muted-foreground"
-                                title={teacherCompactLabel}
+                                className="max-w-[170px] truncate text-sm leading-5"
+                                title={row.teacherName || 'Teacher'}
                               >
-                                {teacherCompactLabel}
+                                {row.teacherName || 'Teacher'}
                               </div>
                             )}
                           </div>
@@ -2243,7 +2411,7 @@ export default function TodaysNotifications() {
                         </div>
                       </TableCell>
                       <TableCell className="align-top whitespace-nowrap capitalize">{row.statusLabel}</TableCell>
-                      {mode === 'today' ? (
+                      {isNotificationActionsEnabled ? (
                         <>
                           <TableCell className="align-top whitespace-nowrap">
                             <div className="flex items-start gap-2">
