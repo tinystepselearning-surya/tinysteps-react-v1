@@ -1,5 +1,9 @@
 import { memo, type FC } from 'react';
 import { cn } from '@components/lib/utils';
+import TinyStepsBrand from '../../../../components/common/TinyStepsBrand';
+import { signOut } from 'firebase/auth';
+import { auth } from '../../../../lib/firebaseConfig';
+import { Button } from '@components/ui/button';
 import {
   BookOpen,
   CalendarCheck,
@@ -7,17 +11,21 @@ import {
   CalendarDays,
   CalendarRange,
   ClipboardList,
+  LogOut,
   MessageSquare,
   Users,
   Wallet,
   UserCircle,
 } from 'lucide-react';
+import { useAuthStore } from '../../../../store/useAuthStore';
+import { useNavigate } from 'react-router-dom';
 
 interface SidebarProps {
   active?: string;
   onSelect?: (value: string) => void;
   todayCount?: number;
   teacherId?: string;
+  teacherName?: string;
   className?: string;
 }
 
@@ -34,17 +42,56 @@ const items = [
   { id: 'profile', label: 'Profile', icon: UserCircle },
 ];
 
-const TeacherSidebarComponent: FC<SidebarProps> = ({ active, onSelect, todayCount, className }) => {
+const TeacherSidebarComponent: FC<SidebarProps> = ({ active, onSelect, todayCount, teacherName, className }) => {
+  const { clearUser } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      clearUser();
+      navigate('/teacher/login');
+    } catch (err) {
+      console.error('Logout failed', err);
+    }
+  };
+
   return (
-    <aside className={cn('w-full lg:w-72', className)}>
+    <aside className={cn('w-full shrink-0 lg:w-72', className)}>
       <div className="space-y-4">
-        <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-          <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Teacher Portal</div>
-          <div className="mt-2 text-sm font-semibold text-slate-900">
-            Plan sessions, update progress, and track earnings.
+        <div className="min-h-[92px] rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm">
+          <div className="flex items-start justify-between gap-2">
+            <TinyStepsBrand
+              subtitle={null}
+              className="min-w-0 flex-1 rounded-lg px-0 py-0 hover:bg-transparent"
+              logoClassName="h-8 w-8"
+              titleClassName="max-w-[130px] truncate whitespace-nowrap text-base"
+            />
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onSelect?.('profile')}
+                title="View profile"
+                aria-label="View profile"
+                className="h-8 w-8 rounded-full bg-slate-100/80 text-slate-900 ring-1 ring-slate-200 hover:bg-slate-200"
+              >
+                <UserCircle className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleLogout}
+                title="Logout"
+                aria-label="Logout"
+                className="h-8 w-8 rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-          <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-            Sessions today: <span className="font-semibold text-slate-900">{todayCount ?? 0}</span>
+          <div className="mt-1 truncate bg-gradient-to-r from-violet-500 via-fuchsia-500 to-cyan-500 bg-clip-text text-base font-semibold text-transparent">
+            Hi, {teacherName || 'Teacher'}
           </div>
         </div>
 
@@ -87,10 +134,6 @@ const TeacherSidebarComponent: FC<SidebarProps> = ({ active, onSelect, todayCoun
           })}
         </nav>
 
-        <div className="rounded-xl border border-slate-200 bg-white/90 p-3 text-xs text-slate-500">
-          <div className="mb-1 font-semibold text-slate-700">Teaching pulse</div>
-          Stay on top of sessions, student progress, and follow-ups.
-        </div>
       </div>
     </aside>
   );

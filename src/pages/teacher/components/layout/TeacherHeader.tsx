@@ -3,6 +3,7 @@ import type { FC } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../../../lib/firebaseConfig';
 import { Button } from '@components/ui/button';
+import { cn } from '@components/lib/utils';
 import {
   CircleUser,
   LogOut,
@@ -16,12 +17,16 @@ interface TeacherHeaderProps {
   name?: string;
   onProfileClick?: () => void;
   onOpenMenu?: () => void;
+  actionsOnly?: boolean;
+  className?: string;
 }
 
 const TeacherHeaderComponent: FC<TeacherHeaderProps> = ({
   name,
   onProfileClick,
   onOpenMenu,
+  actionsOnly = false,
+  className,
 }) => {
   const { clearUser } = useAuthStore();
   const navigate = useNavigate();
@@ -37,16 +42,29 @@ const TeacherHeaderComponent: FC<TeacherHeaderProps> = ({
   };
 
   return (
-    <header className="rounded-[24px] border border-slate-200 bg-white/92 px-4 py-3 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur sm:px-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-4">
-          <TinyStepsBrand subtitle="Teacher Workspace" />
-          <h1 className="truncate bg-gradient-to-r from-violet-500 via-fuchsia-500 to-cyan-500 bg-clip-text text-xl font-semibold tracking-tight text-transparent sm:text-2xl">
-            Hi, {name || 'Teacher'}
-          </h1>
-        </div>
+    <header
+      className={cn(
+        'inline-flex max-w-full rounded-2xl border border-slate-200 bg-white/92 px-3 py-2 shadow-sm backdrop-blur sm:px-4',
+        className,
+      )}
+    >
+      <div className="flex items-center gap-3 sm:gap-4">
+        {!actionsOnly ? (
+          <div className="flex min-w-0 items-center gap-3">
+            <TinyStepsBrand
+              subtitle="Teacher Workspace"
+              className="rounded-lg px-0 py-0 hover:bg-transparent"
+              logoClassName="h-9 w-9"
+              titleClassName="text-lg sm:text-xl"
+              subtitleClassName="text-[10px] tracking-[0.22em]"
+            />
+            <h1 className="truncate bg-gradient-to-r from-violet-500 via-fuchsia-500 to-cyan-500 bg-clip-text text-lg font-semibold tracking-tight text-transparent sm:text-xl">
+              Hi, {name || 'Teacher'}
+            </h1>
+          </div>
+        ) : null}
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           {onOpenMenu ? (
             <Button
               type="button"

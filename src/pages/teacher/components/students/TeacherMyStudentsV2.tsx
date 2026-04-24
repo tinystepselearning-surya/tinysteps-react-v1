@@ -343,45 +343,53 @@ export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
   }, [enrollmentRows, kidsMap]);
 
   return (
-    <Card className="p-6 space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">My Students</h2>
-          <p className="text-sm text-gray-600">Based on enrollments and course history.</p>
-        </div>
-        <div className="w-full max-w-sm">
-          <Input
-            placeholder="Search students or courses"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      </div>
+    <div className="space-y-4">
+      <Card className="border-slate-200 bg-white/95 p-3 shadow-sm">
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">My Students</h2>
+              <p className="text-sm text-gray-600">Compact enrollment and class history view.</p>
+            </div>
+            <div className="w-full md:w-auto md:min-w-[360px]">
+              <Input
+                placeholder="Search student or course"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-10"
+              />
+            </div>
+          </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setTab('active')}
-          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-            tab === 'active'
-              ? 'bg-blue-600 text-white'
-              : 'border border-gray-200 bg-white text-gray-700'
-          }`}
-        >
-          Active Students
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('past')}
-          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-            tab === 'past'
-              ? 'bg-blue-600 text-white'
-              : 'border border-gray-200 bg-white text-gray-700'
-          }`}
-        >
-          Past Students
-        </button>
-      </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setTab('active')}
+              className={`h-8 rounded-full px-3 text-xs font-semibold ${
+                tab === 'active'
+                  ? 'bg-blue-600 text-white'
+                  : 'border border-gray-200 bg-white text-gray-700'
+              }`}
+            >
+              Active Students
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('past')}
+              className={`h-8 rounded-full px-3 text-xs font-semibold ${
+                tab === 'past'
+                  ? 'bg-blue-600 text-white'
+                  : 'border border-gray-200 bg-white text-gray-700'
+              }`}
+            >
+              Past Students
+            </button>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+              {tab === 'active' ? 'Active' : 'Past'} {filteredEnrollments.length}
+            </span>
+          </div>
+        </div>
+      </Card>
 
       {import.meta.env.DEV && devWarnings ? (
         <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
@@ -392,90 +400,124 @@ export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
       ) : null}
 
       {enrollmentsQuery.isLoading || kidsQuery.isLoading ? (
-        <div className="text-sm text-gray-600">Loading students...</div>
+        <Card className="p-6">
+          <div className="text-sm text-gray-600">Loading students...</div>
+        </Card>
       ) : filteredEnrollments.length === 0 ? (
-        <div className="text-sm text-gray-600">
-          {tab === 'active' ? 'No active students.' : 'No past students.'}
-        </div>
+        <Card className="p-6">
+          <div className="text-sm text-gray-600">
+            {tab === 'active' ? 'No active students.' : 'No past students.'}
+          </div>
+        </Card>
       ) : (
-        <div className="grid gap-4">
-          {filteredEnrollments.map((enr) => {
-            const kid = enr.resolvedKidId ? kidsMap.get(enr.resolvedKidId) : undefined;
-            const name = kid?.fullName || kid?.displayName || kid?.name || 'Unnamed student';
-            const status = normalizeStatus(enr.status);
-            const isPast = PAST_STATUSES.has(status);
-            const statusLabel = isPast ? 'Past' : 'Active';
-            const rawStatus = status || 'active';
-            const isUnknownStatus = !ACTIVE_STATUSES.has(status) && !PAST_STATUSES.has(status) && status !== '';
-            const kidStatus = normalizeStatus(kid?.status);
-            const isArchived = Boolean(kidStatus && ARCHIVED_KID_STATUSES.has(kidStatus));
-            const courseLabel =
-              enr.courseLabel ||
-              enr.courseName ||
-              coursesMap.get(enr.courseId || '')?.label ||
-              coursesMap.get(enr.courseId || '')?.name ||
-              coursesMap.get(enr.courseId || '')?.title ||
-              titleCaseFromId(enr.courseId);
-            const summary =
-              (enr.id && summaries.byEnrollment.get(enr.id)) ||
-              (enr.resolvedKidId && summaries.byKidCourse.get(`${enr.resolvedKidId}__${enr.courseId || ''}`)) ||
-              null;
-            const nextLabel = summary?.nextSession
-              ? formatDateTime(summary.nextSession.startAt)
-              : 'No upcoming class';
-            const lastLabel = summary?.lastSession
-              ? formatDateTime(summary.lastSession.startAt)
-              : 'Getting started';
-
-            return (
-              <div key={enr.id} className="rounded-lg border border-gray-200 bg-white p-4">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <div className="text-base font-semibold text-gray-900">{name}</div>
-                    <div className="mt-1 text-sm text-gray-600">Course: {courseLabel}</div>
-                    <div className="mt-1 text-xs text-gray-500">
-                      <span className="inline-flex items-center rounded-full border border-gray-200 px-2 py-0.5 text-[11px] font-semibold text-gray-700">
-                        {isArchived ? 'Past' : statusLabel}
-                      </span>
-                      <span className="ml-2 text-[11px] uppercase tracking-wide text-gray-400">{rawStatus}</span>
-                      {isUnknownStatus ? (
-                        <span className="ml-2 text-[11px] font-semibold text-amber-600">Unknown status</span>
-                      ) : null}
-                    </div>
-                    <div className="mt-1 text-sm text-gray-600">Next class: {nextLabel}</div>
-                    <div className="mt-1 text-sm text-gray-600">Last class: {lastLabel}</div>
-                    {summary ? (
-                      <div className="mt-2 text-xs text-gray-500">
-                        Sessions: {summary.totalSessions} • Completed: {summary.completedCount} • Cancelled: {summary.cancelledCount}
-                      </div>
-                    ) : (
-                      <div className="mt-2 text-xs text-gray-500">
-                        No classes scheduled yet in this window.
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() =>
-                        navigate(
-                          `/teacher/students/${enr.resolvedKidId}/topic-progress?from=students&tab=topic${
-                            enr.courseId ? `&courseId=${encodeURIComponent(enr.courseId)}` : ''
-                          }&enrollmentId=${encodeURIComponent(enr.id)}`
-                        )
-                      }
-                      disabled={!enr.resolvedKidId}
-                    >
-                      Open Topics
-                    </Button>
-                    <Button onClick={() => navigate('/teacher?tab=schedule')}>Schedule</Button>
-                  </div>
+        <Card className="overflow-hidden border-slate-200 bg-white/95 shadow-sm">
+          <div className="overflow-auto">
+            <div className="min-w-[1180px]">
+              <div className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50/95 px-4 py-2 backdrop-blur">
+                <div className="grid grid-cols-[1.2fr_1fr_0.9fr_1fr_1fr_1fr_240px] items-center gap-3">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Student</div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Course</div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Next Class</div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Last Class</div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Session Stats</div>
+                  <div className="text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Actions</div>
                 </div>
               </div>
-            );
-          })}
-        </div>
+
+              {filteredEnrollments.map((enr) => {
+                const kid = enr.resolvedKidId ? kidsMap.get(enr.resolvedKidId) : undefined;
+                const name = kid?.fullName || kid?.displayName || kid?.name || 'Unnamed student';
+                const status = normalizeStatus(enr.status);
+                const isPast = PAST_STATUSES.has(status);
+                const statusLabel = isPast ? 'Past' : 'Active';
+                const rawStatus = status || 'active';
+                const isUnknownStatus = !ACTIVE_STATUSES.has(status) && !PAST_STATUSES.has(status) && status !== '';
+                const kidStatus = normalizeStatus(kid?.status);
+                const isArchived = Boolean(kidStatus && ARCHIVED_KID_STATUSES.has(kidStatus));
+                const courseLabel =
+                  enr.courseLabel ||
+                  enr.courseName ||
+                  coursesMap.get(enr.courseId || '')?.label ||
+                  coursesMap.get(enr.courseId || '')?.name ||
+                  coursesMap.get(enr.courseId || '')?.title ||
+                  titleCaseFromId(enr.courseId);
+                const summary =
+                  (enr.id && summaries.byEnrollment.get(enr.id)) ||
+                  (enr.resolvedKidId && summaries.byKidCourse.get(`${enr.resolvedKidId}__${enr.courseId || ''}`)) ||
+                  null;
+                const nextLabel = summary?.nextSession
+                  ? formatDateTime(summary.nextSession.startAt)
+                  : 'No upcoming class';
+                const lastLabel = summary?.lastSession
+                  ? formatDateTime(summary.lastSession.startAt)
+                  : 'Getting started';
+
+                return (
+                  <div key={enr.id} className="border-b border-slate-100 px-4 py-3 last:border-b-0 hover:bg-slate-50/40">
+                    <div className="grid grid-cols-[1.2fr_1fr_0.9fr_1fr_1fr_1fr_240px] items-center gap-3">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold text-slate-900">{name}</div>
+                        <div className="text-xs uppercase tracking-wide text-slate-400">{rawStatus}</div>
+                      </div>
+
+                      <div className="min-w-0 truncate text-sm text-slate-800">{courseLabel}</div>
+
+                      <div className="min-w-0">
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
+                          isArchived || isPast
+                            ? 'bg-slate-100 text-slate-700'
+                            : 'bg-emerald-100 text-emerald-700'
+                        }`}>
+                          {isArchived ? 'Past' : statusLabel}
+                        </span>
+                        {isUnknownStatus ? (
+                          <div className="mt-1 text-[11px] font-semibold text-amber-600">Unknown</div>
+                        ) : null}
+                      </div>
+
+                      <div className="min-w-0 truncate text-sm text-slate-700">{nextLabel}</div>
+                      <div className="min-w-0 truncate text-sm text-slate-700">{lastLabel}</div>
+
+                      <div className="min-w-0 text-xs text-slate-600">
+                        {summary ? (
+                          <>
+                            <span className="font-medium text-slate-700">{summary.totalSessions}</span> total ·{' '}
+                            <span className="font-medium text-slate-700">{summary.completedCount}</span> completed ·{' '}
+                            <span className="font-medium text-slate-700">{summary.cancelledCount}</span> cancelled
+                          </>
+                        ) : (
+                          'No classes in current window'
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            navigate(
+                              `/teacher/students/${enr.resolvedKidId}/topic-progress?from=students&tab=topic${
+                                enr.courseId ? `&courseId=${encodeURIComponent(enr.courseId)}` : ''
+                              }&enrollmentId=${encodeURIComponent(enr.id)}`
+                            )
+                          }
+                          disabled={!enr.resolvedKidId}
+                        >
+                          Open Topics
+                        </Button>
+                        <Button size="sm" onClick={() => navigate('/teacher?tab=schedule')}>
+                          Schedule
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </Card>
       )}
-    </Card>
+    </div>
   );
 }

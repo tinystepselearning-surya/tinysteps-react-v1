@@ -173,6 +173,31 @@ const toStringArray = (value: unknown): string[] => {
   return [];
 };
 
+const normalizeSearchValue = (value: unknown): string => {
+  if (typeof value !== 'string') return '';
+  return value.trim().toLowerCase();
+};
+
+const demoMatchesQuery = (demo: DemoSession, query: string): boolean => {
+  if (!query) return true;
+  const haystack = [
+    demo.parentName,
+    demo.childName,
+    demo.courseInterested,
+    demo.preferredDateTimeText,
+    demo.teacherConfirmedDate,
+    demo.teacherConfirmedTime,
+    demo.teacherPreDemoNote,
+    demo.teacherRemarks,
+    demo.teacherRecommendation,
+  ]
+    .map((value) => normalizeSearchValue(value))
+    .filter(Boolean)
+    .join(' ');
+
+  return haystack.includes(query);
+};
+
 export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teacherId }) => {
   const { toast } = useToast();
 
@@ -181,6 +206,8 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
   const [myDemos, setMyDemos] = useState<DemoSession[]>([]);
   const [eligibleTracks, setEligibleTracks] = useState<DemoTrack[]>([]);
   const [hasEligibilityConfig, setHasEligibilityConfig] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [expandedRowIds, setExpandedRowIds] = useState<Record<string, boolean>>({});
 
   const [claimTarget, setClaimTarget] = useState<DemoSession | null>(null);
   const [claimDate, setClaimDate] = useState('');
@@ -306,11 +333,6 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
     });
   }, [availableDemos, eligibleTracks, hasEligibilityConfig]);
 
-  const localTimezone = useMemo(
-    () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'Local',
-    [],
-  );
-
   const todayYmd = useMemo(() => {
     const now = new Date();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -327,11 +349,61 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
     [todayYmd, upcomingDemos],
   );
 
-  const loadLabel = useMemo(() => {
-    if (upcomingDemos.length >= 6) return 'High';
-    if (upcomingDemos.length >= 3) return 'Moderate';
-    return 'Light';
-  }, [upcomingDemos.length]);
+  const normalizedSearchQuery = useMemo(() => normalizeSearchValue(searchQuery), [searchQuery]);
+
+  const filteredAvailableBySearch = useMemo(
+    () => filteredAvailableDemos.filter((demo) => demoMatchesQuery(demo, normalizedSearchQuery)),
+    [filteredAvailableDemos, normalizedSearchQuery],
+  );
+
+  const filteredUpcomingBySearch = useMemo(
+    () => upcomingDemos.filter((demo) => demoMatchesQuery(demo, normalizedSearchQuery)),
+    [normalizedSearchQuery, upcomingDemos],
+  );
+
+  const filteredCompletedBySearch = useMemo(
+    () => completedDemos.filter((demo) => demoMatchesQuery(demo, normalizedSearchQuery)),
+    [completedDemos, normalizedSearchQuery],
+  );
+
+  const filteredTodayBySearch = useMemo(
+    () => todaysDemos.filter((demo) => demoMatchesQuery(demo, normalizedSearchQuery)),
+    [normalizedSearchQuery, todaysDemos],
+  );
+
+  const currentTabRows = useMemo(() => {
+    if (activeTab === 'available') return filteredAvailableBySearch;
+    if (activeTab === 'upcoming') return filteredUpcomingBySearch;
+    if (activeTab === 'completed') return filteredCompletedBySearch;
+    return filteredTodayBySearch;
+  }, [
+    activeTab,
+    filteredAvailableBySearch,
+    filteredCompletedBySearch,
+    filteredTodayBySearch,
+    filteredUpcomingBySearch,
+  ]);
+
+  const isExpanded = (demoId: string) => Boolean(expandedRowIds[demoId]);
+
+  const toggleExpand = (demoId: string) => {
+    setExpandedRowIds((prev) => ({
+      ...prev,
+      [demoId]: !prev[demoId],
+    }));
+  };
+
+  const expandAllVisible = () => {
+    setExpandedRowIds((prev) => {
+      const next = {...prev};
+      currentTabRows.forEach((demo) => {
+        next[demo.id] = true;
+      });
+      return next;
+    });
+  };
+
+  const collapseAllRows = () => setExpandedRowIds({});
 
   const openClaimDialog = (demo: DemoSession) => {
     setClaimTarget(demo);
@@ -481,6 +553,198 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
     }
   };
 
+  const countLabel = (visibleCount: number, totalCount: number) =>
+    normalizedSearchQuery ? `${visibleCount}/${totalCount}` : `${totalCount}`;
+
+  const tableColumnsClass =
+    'grid grid-cols-[1.1fr_1.1fr_1.2fr_1fr_0.7fr_260px] items-center gap-3';
+
+  const renderDemoRow = (
+    demo: DemoSession,
+    section: 'available' | 'upcoming' | 'today' | 'completed',
+  ) => {
+    const expanded = isExpanded(demo.id);
+    const confirmedSlot = `${demo.teacherConfirmedDate || ''} ${demo.teacherConfirmedTime || ''}`.trim();
+
+    return (
+      <div key={demo.id} className="border-b border-slate-100 px-4 py-3 last:border-b-0">
+        <div className={tableColumnsClass}>
+          <div className="text-sm font-medium text-slate-900">{demo.parentName || '—'}</div>
+          <div className="text-sm font-semibold text-slate-900">
+            {demo.childName || '—'}
+            <span className="ml-1 font-normal text-slate-500">({demo.childGrade || '—'})</span>
+          </div>
+          <div className="text-sm text-slate-900">{demo.preferredDateTimeText || '—'}</div>
+          <div className="text-sm text-slate-900">{demo.courseInterested || '—'}</div>
+          <div className="text-sm text-slate-900">
+            {typeof demo.childAge === 'number' ? demo.childAge : '—'}
+          </div>
+
+          <div className="flex items-center justify-end gap-2">
+            {statusBadge(demo.status)}
+            <Button size="sm" variant="outline" onClick={() => toggleExpand(demo.id)}>
+              {expanded ? 'Collapse' : 'Expand'}
+            </Button>
+            {section === 'available' && (
+              <Button size="sm" onClick={() => openClaimDialog(demo)}>
+                Assign to me
+              </Button>
+            )}
+            {(section === 'upcoming' || section === 'today') && (
+              <>
+                <Button size="sm" variant="outline" onClick={() => openUpdateDialog(demo)}>
+                  Update timing
+                </Button>
+                <Button size="sm" onClick={() => openCompleteDialog(demo)}>
+                  Mark completed
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {expanded && (
+          <div className="mt-3 space-y-2 border-t border-slate-100 pt-3 text-sm text-slate-600">
+            {confirmedSlot ? (
+              <div>
+                <span className="font-medium text-slate-800">Confirmed slot:</span> {confirmedSlot}
+              </div>
+            ) : null}
+            {demo.timezone ? (
+              <div>
+                <span className="font-medium text-slate-800">Timezone:</span> {demo.timezone}
+              </div>
+            ) : null}
+            <div>
+              <span className="font-medium text-slate-800">Request received:</span>{' '}
+              {demo.requestReceivedDate || '—'}
+            </div>
+            <div>
+              <span className="font-medium text-slate-800">Entered at:</span> {formatTs(demo.createdAt)}
+            </div>
+            {demo.assignedAt ? (
+              <div>
+                <span className="font-medium text-slate-800">Assigned at:</span> {formatTs(demo.assignedAt)}
+              </div>
+            ) : null}
+            {demo.adminNotes ? (
+              <div>
+                <span className="font-medium text-slate-800">Assignment notes:</span> {demo.adminNotes}
+              </div>
+            ) : null}
+            {demo.teacherPreDemoNote ? (
+              <div>
+                <span className="font-medium text-slate-800">Pre-demo note:</span> {demo.teacherPreDemoNote}
+              </div>
+            ) : null}
+            {section === 'completed' && (
+              <>
+                <div>
+                  <span className="font-medium text-slate-800">Outcome:</span> {formatOutcome(demo.outcome)}
+                </div>
+                <div>
+                  <span className="font-medium text-slate-800">Remarks:</span> {demo.teacherRemarks || '—'}
+                </div>
+                {demo.teacherRecommendation ? (
+                  <div>
+                    <span className="font-medium text-slate-800">Recommendation:</span>{' '}
+                    {demo.teacherRecommendation}
+                  </div>
+                ) : null}
+                {demo.childLevelObserved ? (
+                  <div>
+                    <span className="font-medium text-slate-800">Overall level:</span>{' '}
+                    {formatEnum(demo.childLevelObserved)}
+                  </div>
+                ) : null}
+                {demo.readingLevel ? (
+                  <div>
+                    <span className="font-medium text-slate-800">Reading skill:</span>{' '}
+                    {formatEnum(demo.readingLevel)}
+                  </div>
+                ) : null}
+                {demo.phonicsAwareness ? (
+                  <div>
+                    <span className="font-medium text-slate-800">Phonics skill:</span>{' '}
+                    {formatEnum(demo.phonicsAwareness)}
+                  </div>
+                ) : null}
+                {demo.grammarEvaluation ? (
+                  <div>
+                    <span className="font-medium text-slate-800">Grammar skill:</span>{' '}
+                    {formatEnum(demo.grammarEvaluation)}
+                  </div>
+                ) : null}
+                {demo.speakingConfidence ? (
+                  <div>
+                    <span className="font-medium text-slate-800">Speaking confidence:</span>{' '}
+                    {formatEnum(demo.speakingConfidence)}
+                  </div>
+                ) : null}
+                {demo.attentionSpan ? (
+                  <div>
+                    <span className="font-medium text-slate-800">Attention:</span>{' '}
+                    {formatEnum(demo.attentionSpan)}
+                  </div>
+                ) : null}
+                {demo.parentExpectation ? (
+                  <div>
+                    <span className="font-medium text-slate-800">Parent goal:</span>{' '}
+                    {formatEnum(demo.parentExpectation)}
+                  </div>
+                ) : null}
+                {demo.recommendedNextStep ? (
+                  <div>
+                    <span className="font-medium text-slate-800">Next step:</span>{' '}
+                    {formatEnum(demo.recommendedNextStep)}
+                  </div>
+                ) : null}
+                <div>
+                  <span className="font-medium text-slate-800">Completed:</span> {formatTs(demo.completedAt)}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderDemoTable = (
+    rows: DemoSession[],
+    section: 'available' | 'upcoming' | 'today' | 'completed',
+    emptyMessage: string,
+  ) => {
+    if (rows.length === 0) {
+      return <Card className="p-6 text-sm text-muted-foreground">{emptyMessage}</Card>;
+    }
+
+    return (
+      <Card className="overflow-hidden border-slate-200 bg-white/95 shadow-sm">
+        <div className="max-h-[58vh] overflow-auto">
+          <div className="min-w-[980px]">
+            <div className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50/95 px-4 py-2 backdrop-blur">
+              <div className={tableColumnsClass}>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Parent</div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Student</div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Preferred Slot</div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Course</div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Child Age</div>
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-right text-slate-500">Actions</div>
+              </div>
+            </div>
+            <div>{rows.map((demo) => renderDemoRow(demo, section))}</div>
+          </div>
+        </div>
+      </Card>
+    );
+  };
+
+  const hasExpandedRows = useMemo(
+    () => Object.values(expandedRowIds).some((isOpen) => isOpen),
+    [expandedRowIds],
+  );
+
   if (!teacherId) {
     return (
       <Card className="p-6">
@@ -491,229 +755,127 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
 
   return (
     <div className="space-y-3 sm:space-y-4">
-      <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+      <Card className="border-slate-200 bg-white/95 p-2 shadow-sm">
+        <div className="flex flex-wrap gap-2">
         <button
           type="button"
           onClick={() => setActiveTab('available')}
-          className={`rounded-xl border p-3 text-left shadow-sm transition ${
+          className={`inline-flex h-9 items-center rounded-full border px-4 text-sm font-medium shadow-sm transition ${
             activeTab === 'available'
-              ? 'border-sky-300 bg-gradient-to-br from-sky-100 to-white ring-1 ring-sky-200'
-              : 'border-sky-100 bg-gradient-to-br from-sky-50/80 to-white hover:border-sky-200'
+              ? 'border-sky-300 bg-sky-100 text-sky-800'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
           }`}
         >
-          <div className="text-[11px] uppercase tracking-wide text-sky-700/80">Open Demos</div>
-          <div className="mt-1 text-xl font-semibold">{filteredAvailableDemos.length}</div>
+          <span>Open demos</span>
+          <span className="ml-1 tabular-nums">
+            {countLabel(filteredAvailableBySearch.length, filteredAvailableDemos.length)}
+          </span>
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('upcoming')}
-          className={`rounded-xl border p-3 text-left shadow-sm transition ${
+          className={`inline-flex h-9 items-center rounded-full border px-4 text-sm font-medium shadow-sm transition ${
             activeTab === 'upcoming'
-              ? 'border-emerald-300 bg-gradient-to-br from-emerald-100 to-white ring-1 ring-emerald-200'
-              : 'border-emerald-100 bg-gradient-to-br from-emerald-50/80 to-white hover:border-emerald-200'
+              ? 'border-emerald-300 bg-emerald-100 text-emerald-800'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
           }`}
         >
-          <div className="text-[11px] uppercase tracking-wide text-emerald-700/80">My Demos</div>
-          <div className="mt-1 text-xl font-semibold">{upcomingDemos.length}</div>
+          <span>My demos</span>
+          <span className="ml-1 tabular-nums">
+            {countLabel(filteredUpcomingBySearch.length, upcomingDemos.length)}
+          </span>
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('completed')}
-          className={`rounded-xl border p-3 text-left shadow-sm transition ${
+          className={`inline-flex h-9 items-center rounded-full border px-4 text-sm font-medium shadow-sm transition ${
             activeTab === 'completed'
-              ? 'border-violet-300 bg-gradient-to-br from-violet-100 to-white ring-1 ring-violet-200'
-              : 'border-violet-100 bg-gradient-to-br from-violet-50/80 to-white hover:border-violet-200'
+              ? 'border-violet-300 bg-violet-100 text-violet-800'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
           }`}
         >
-          <div className="text-[11px] uppercase tracking-wide text-violet-700/80">Completed</div>
-          <div className="mt-1 text-xl font-semibold">{completedDemos.length}</div>
+          <span>Completed</span>
+          <span className="ml-1 tabular-nums">
+            {countLabel(filteredCompletedBySearch.length, completedDemos.length)}
+          </span>
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('today')}
-          className={`rounded-xl border p-3 text-left shadow-sm transition ${
+          className={`inline-flex h-9 items-center rounded-full border px-4 text-sm font-medium shadow-sm transition ${
             activeTab === 'today'
-              ? 'border-amber-300 bg-gradient-to-br from-amber-100 to-white ring-1 ring-amber-200'
-              : 'border-amber-100 bg-gradient-to-br from-amber-50/80 to-white hover:border-amber-200'
+              ? 'border-amber-300 bg-amber-100 text-amber-800'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
           }`}
         >
-          <div className="text-[11px] uppercase tracking-wide text-amber-700/80">Today's Load</div>
-          <div className="mt-1 text-xl font-semibold">{todaysUpcomingCount}</div>
-          <div className="mt-1 text-[11px] text-amber-700/80">
-            {todaysUpcomingCount} today · {upcomingDemos.length} upcoming ({loadLabel})
-          </div>
+          <span>Today's load</span>
+          <span className="ml-1 tabular-nums">
+            {countLabel(filteredTodayBySearch.length, todaysUpcomingCount)}
+          </span>
         </button>
-      </div>
+        </div>
+      </Card>
+
+      <Card className="border-slate-200 bg-white/95 p-3 shadow-sm">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+          <Input
+            id="demo-global-search"
+            className="h-10 lg:max-w-3xl lg:flex-1"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Global search by parent name or student name"
+          />
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={expandAllVisible}
+              disabled={currentTabRows.length === 0}
+            >
+              Expand all
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={collapseAllRows}
+              disabled={!hasExpandedRows}
+            >
+              Collapse all
+            </Button>
+          </div>
+        </div>
+      </Card>
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TeacherDemoTab)}>
         <TabsContent value="available" className="mt-4 space-y-3">
-          <Card className="border-slate-200 bg-slate-50/80 p-3 text-xs text-muted-foreground">
-            You have {todaysUpcomingCount} demo classes today and {upcomingDemos.length} upcoming.
-          </Card>
-          <Card className="border-slate-200 bg-slate-50/80 p-3 text-xs text-muted-foreground">
-            {hasEligibilityConfig
-              ? `Showing demos matching your teaching tracks: ${eligibleTracks
-                  .map((track) => track[0].toUpperCase() + track.slice(1))
-                  .join(', ')}`
-              : 'You can currently view all open demos.'}
-          </Card>
-          {filteredAvailableDemos.length === 0 ? (
-            <Card className="p-6 text-sm text-muted-foreground">No open demos right now.</Card>
-          ) : (
-            filteredAvailableDemos.map((demo) => (
-              <Card
-                key={demo.id}
-                className="border-slate-200 bg-white/90 p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
-              >
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                  <div className="space-y-1">
-                    <div className="text-sm font-semibold">
-                      {demo.childName} <span className="font-normal text-muted-foreground">(Grade {demo.childGrade})</span>
-                    </div>
-                    <div className="text-sm text-muted-foreground">Parent: {demo.parentName}</div>
-                    <div className="text-sm">Course: {demo.courseInterested}</div>
-                    {typeof demo.childAge === 'number' && <div className="text-sm">Age: {demo.childAge}</div>}
-                    <div className="text-sm">Preferred Slot: {demo.preferredDateTimeText}</div>
-                    {demo.timezone && <div className="text-sm text-muted-foreground">Timezone: {demo.timezone}</div>}
-                    {demo.adminNotes && <div className="text-sm text-muted-foreground">Assignment notes: {demo.adminNotes}</div>}
-                    <div className="text-xs text-muted-foreground">
-                      Request received date: {demo.requestReceivedDate || '—'}
-                    </div>
-                    <div className="text-xs text-muted-foreground">Entered at: {formatTs(demo.createdAt)}</div>
-                  </div>
-
-                  <div className="flex flex-col items-stretch gap-2 md:items-end">
-                    {statusBadge(demo.status)}
-                    <Button size="sm" className="w-full md:w-auto" onClick={() => openClaimDialog(demo)}>
-                      Assign to me
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))
+          {renderDemoTable(
+            filteredAvailableBySearch,
+            'available',
+            normalizedSearchQuery ? 'No open demos match this search.' : 'No open demos right now.',
           )}
         </TabsContent>
 
         <TabsContent value="upcoming" className="mt-4 space-y-3">
-          {upcomingDemos.length === 0 ? (
-            <Card className="p-6 text-sm text-muted-foreground">You have no assigned demos right now.</Card>
-          ) : (
-            upcomingDemos.map((demo) => (
-              <Card key={demo.id} className="p-4">
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                  <div className="space-y-1">
-                    <div className="text-sm font-semibold">
-                      {demo.childName} <span className="font-normal text-muted-foreground">(Grade {demo.childGrade})</span>
-                    </div>
-                    <div className="text-sm text-muted-foreground">Parent: {demo.parentName}</div>
-                    <div className="text-sm">Course: {demo.courseInterested}</div>
-                    <div className="text-sm">
-                      Confirmed: {demo.teacherConfirmedDate || '—'} {demo.teacherConfirmedTime || ''}
-                    </div>
-                    <div className="text-sm">Preferred Slot: {demo.preferredDateTimeText}</div>
-                    <div className="text-xs text-muted-foreground">Assigned at: {formatTs(demo.assignedAt)}</div>
-                    {demo.teacherPreDemoNote && (
-                      <div className="text-sm text-muted-foreground">Pre-demo note: {demo.teacherPreDemoNote}</div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col items-stretch gap-2 md:items-end">
-                    {statusBadge(demo.status)}
-                    <Button size="sm" variant="outline" className="w-full md:w-auto" onClick={() => openUpdateDialog(demo)}>
-                      Update timing
-                    </Button>
-                    <Button size="sm" className="w-full md:w-auto" onClick={() => openCompleteDialog(demo)}>
-                      Mark completed
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))
+          {renderDemoTable(
+            filteredUpcomingBySearch,
+            'upcoming',
+            normalizedSearchQuery ? 'No assigned demos match this search.' : 'You have no assigned demos right now.',
           )}
         </TabsContent>
 
         <TabsContent value="today" className="mt-4 space-y-3">
-          <Card className="border-slate-200 bg-slate-50/80 p-3 text-xs text-muted-foreground">
-            Today's demo load: {todaysUpcomingCount} today, {upcomingDemos.length} upcoming ({loadLabel}) · {localTimezone}
-          </Card>
-          {todaysDemos.length === 0 ? (
-            <Card className="p-6 text-sm text-muted-foreground">No demos scheduled for today.</Card>
-          ) : (
-            todaysDemos.map((demo) => (
-              <Card key={demo.id} className="p-4">
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                  <div className="space-y-1">
-                    <div className="text-sm font-semibold">
-                      {demo.childName} <span className="font-normal text-muted-foreground">(Grade {demo.childGrade})</span>
-                    </div>
-                    <div className="text-sm text-muted-foreground">Parent: {demo.parentName}</div>
-                    <div className="text-sm">Course: {demo.courseInterested}</div>
-                    <div className="text-sm">
-                      Confirmed: {demo.teacherConfirmedDate || '—'} {demo.teacherConfirmedTime || ''}
-                    </div>
-                    <div className="text-sm">Preferred Slot: {demo.preferredDateTimeText}</div>
-                    <div className="text-xs text-muted-foreground">Assigned at: {formatTs(demo.assignedAt)}</div>
-                    {demo.teacherPreDemoNote && (
-                      <div className="text-sm text-muted-foreground">Pre-demo note: {demo.teacherPreDemoNote}</div>
-                    )}
-                  </div>
-                  <div className="flex flex-col items-stretch gap-2 md:items-end">
-                    {statusBadge(demo.status)}
-                    <Button size="sm" variant="outline" className="w-full md:w-auto" onClick={() => openUpdateDialog(demo)}>
-                      Update timing
-                    </Button>
-                    <Button size="sm" className="w-full md:w-auto" onClick={() => openCompleteDialog(demo)}>
-                      Mark completed
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))
+          {renderDemoTable(
+            filteredTodayBySearch,
+            'today',
+            normalizedSearchQuery ? "No demos in today's load match this search." : 'No demos scheduled for today.',
           )}
         </TabsContent>
 
         <TabsContent value="completed" className="mt-4 space-y-3">
-          {completedDemos.length === 0 ? (
-            <Card className="p-6 text-sm text-muted-foreground">No completed demos yet.</Card>
-          ) : (
-            completedDemos.map((demo) => (
-              <Card key={demo.id} className="p-4">
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-sm font-semibold">
-                      {demo.childName} <span className="font-normal text-muted-foreground">(Parent: {demo.parentName})</span>
-                    </div>
-                    {statusBadge(demo.status)}
-                  </div>
-                  <div className="text-sm">Outcome: {formatOutcome(demo.outcome)}</div>
-                  {(demo.childLevelObserved ||
-                    demo.readingLevel ||
-                    demo.phonicsAwareness ||
-                    demo.grammarEvaluation ||
-                    demo.speakingConfidence ||
-                    demo.attentionSpan ||
-                    demo.parentExpectation ||
-                    demo.recommendedNextStep) && (
-                    <div className="text-sm text-muted-foreground space-y-1">
-                      {demo.childLevelObserved && <div>Overall level: {formatEnum(demo.childLevelObserved)}</div>}
-                      {demo.readingLevel && <div>Reading skill: {formatEnum(demo.readingLevel)}</div>}
-                      {demo.phonicsAwareness && <div>Phonics skill: {formatEnum(demo.phonicsAwareness)}</div>}
-                      {demo.grammarEvaluation && <div>Grammar skill: {formatEnum(demo.grammarEvaluation)}</div>}
-                      {demo.speakingConfidence && <div>Speaking confidence: {formatEnum(demo.speakingConfidence)}</div>}
-                      {demo.attentionSpan && <div>Attention: {formatEnum(demo.attentionSpan)}</div>}
-                      {demo.parentExpectation && <div>Parent goal: {formatEnum(demo.parentExpectation)}</div>}
-                      {demo.recommendedNextStep && <div>Next step: {formatEnum(demo.recommendedNextStep)}</div>}
-                    </div>
-                  )}
-                  <div className="text-sm text-muted-foreground">Remarks: {demo.teacherRemarks || '—'}</div>
-                  {demo.teacherRecommendation && (
-                    <div className="text-sm text-muted-foreground">Recommendation: {demo.teacherRecommendation}</div>
-                  )}
-                  <div className="text-xs text-muted-foreground">Assigned at: {formatTs(demo.assignedAt)}</div>
-                  <div className="text-xs text-muted-foreground">Completed: {formatTs(demo.completedAt)}</div>
-                </div>
-              </Card>
-            ))
+          {renderDemoTable(
+            filteredCompletedBySearch,
+            'completed',
+            normalizedSearchQuery ? 'No completed demos match this search.' : 'No completed demos yet.',
           )}
         </TabsContent>
       </Tabs>

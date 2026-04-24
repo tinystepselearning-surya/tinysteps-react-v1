@@ -4,9 +4,8 @@ import { Tabs, TabsContent } from '@components/ui/tabs';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@components/ui/dialog';
-import { CalendarCheck, CalendarClock, ClipboardList, MessageSquare, Users, Wallet } from 'lucide-react';
+import { CalendarCheck, CalendarClock, ClipboardList, MessageSquare, Users, Wallet, Menu } from 'lucide-react';
 
-import { TeacherHeader } from './components/layout/TeacherHeader';
 import { TeacherSidebar } from './components/layout/TeacherSidebar';
 import MobileTabBar, { type MobileTabBarItem } from '../../components/common/MobileTabBar';
 import HolidayCalendar2026 from '../../components/common/HolidayCalendar2026';
@@ -204,6 +203,7 @@ export default function TeacherDashboard() {
             }}
             todayCount={sessions.length}
             teacherId={teacherId}
+            teacherName={user.displayName || user.email || 'Teacher'}
           />
         </DialogContent>
       </Dialog>
@@ -214,33 +214,31 @@ export default function TeacherDashboard() {
           onSelect={setTabAndUrl}
           todayCount={sessions.length}
           teacherId={teacherId}
+          teacherName={user.displayName || user.email || 'Teacher'}
           className="hidden lg:block"
         />
 
-        <main className="flex min-h-0 flex-1 flex-col">
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col">
           <div className="sticky top-0 z-30 bg-slate-50/90 backdrop-blur">
-            <TeacherHeader
-              name={user.displayName || user.email || 'Teacher'}
-              onProfileClick={() => setProfileOpen(true)}
-              onOpenMenu={() => setMobileMenuOpen(true)}
-            />
-            <div className="mt-3 flex justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                onClick={() => setTabAndUrl('messages')}
-              >
-                <MessageSquare className="h-4 w-4" />
-                Messages
-              </Button>
-            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-2 lg:hidden"
+              onClick={() => setMobileMenuOpen(true)}
+            >
+              <Menu className="h-4 w-4" />
+              Menu
+            </Button>
             {tab === 'lessons' ? (
               <div id="teacher-lessons-controls-slot" className="mt-3 w-full" />
             ) : null}
           </div>
-          <Tabs value={tab} onValueChange={setTabAndUrl} className="mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto pb-24 lg:pb-6 pr-1">
+          <Tabs
+            value={tab}
+            onValueChange={setTabAndUrl}
+            className="mt-4 min-h-0 min-w-0 flex-1 space-y-4 overflow-y-auto [scrollbar-gutter:stable] pb-24 pr-1 lg:pb-6"
+          >
             {/* Today */}
             <TabsContent value="today">
               {tab === 'today' && (

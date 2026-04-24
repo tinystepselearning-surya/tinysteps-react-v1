@@ -28,25 +28,13 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
     setIsLessonPlanModalOpen(true);
   };
 
-  const groupedSessions = useMemo(() => {
-    const groups: Record<string, TeacherSession[]> = {};
-    sessions.forEach((session) => {
-      if (!groups[session.date]) {
-        groups[session.date] = [];
-      }
-      groups[session.date].push(session);
-    });
-    return groups;
-  }, [sessions]);
-
-  const filteredSessions = useMemo(() => {
-    return sessions.filter((session) => {
-      const matchesSearch = session.courseName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           session.date.includes(searchTerm);
-      const matchesCourse = !courseFilter || session.courseName === courseFilter;
-      return matchesSearch && matchesCourse;
-    });
-  }, [sessions, searchTerm, courseFilter]);
+  const formatSessionDate = (rawDate: string, pattern: string) => {
+    try {
+      return format(parseISO(rawDate), pattern);
+    } catch {
+      return rawDate || '-';
+    }
+  };
 
   const courseOptions = useMemo(() => {
     const courses = new Set(sessions.map(s => s.courseName).filter(Boolean));
@@ -63,6 +51,43 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
     return map;
   }, [students]);
 
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+
+  const filteredSessions = useMemo(() => {
+    const resolveStudentNames = (session: TeacherSession) =>
+      (session.kidIds || [])
+        .map((id) => studentNameById.get(String(id)))
+        .filter((name): name is string => Boolean(name && name.trim()));
+
+    return [...sessions]
+      .filter((session) => {
+        const studentNames = resolveStudentNames(session);
+        const displayDate = (() => {
+          return formatSessionDate(session.date, 'EEE, dd MMM');
+        })();
+
+        const haystack = [
+          session.courseName || '',
+          session.date || '',
+          displayDate,
+          session.startTime || '',
+          session.endTime || '',
+          ...studentNames,
+        ]
+          .join(' ')
+          .toLowerCase();
+
+        const matchesSearch = !normalizedSearch || haystack.includes(normalizedSearch);
+        const matchesCourse = !courseFilter || session.courseName === courseFilter;
+        return matchesSearch && matchesCourse;
+      })
+      .sort((a, b) => {
+        const aKey = `${a.date || ''}T${a.startTime || '00:00'}`;
+        const bKey = `${b.date || ''}T${b.startTime || '00:00'}`;
+        return aKey.localeCompare(bKey);
+      });
+  }, [sessions, studentNameById, normalizedSearch, courseFilter]);
+
   if (isLoading) {
     return <Card className="p-6"><p>Loading upcoming sessions...</p></Card>;
   }
@@ -72,88 +97,105 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex gap-4">
-        <Input
-          placeholder="Search by course or date..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
-        <Select
-          value={courseFilter || 'all'}
-          onValueChange={(value) => setCourseFilter(value === 'all' ? '' : value)}
-        >
-          <SelectTrigger className="max-w-sm">
-            <SelectValue placeholder="Filter by course" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Courses</SelectItem>
-            {courseOptions.map((course) => (
-              <SelectItem key={course} value={course}>
-                {course}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+    <div className="space-y-4">
+      <Card className="border-slate-200 bg-white/95 p-3 shadow-sm">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center">
+          <Input
+            placeholder="Search by child, course, date, or time"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="h-10 md:max-w-md"
+          />
+          <Select
+            value={courseFilter || 'all'}
+            onValueChange={(value) => setCourseFilter(value === 'all' ? '' : value)}
+          >
+            <SelectTrigger className="h-10 md:w-[240px]">
+              <SelectValue placeholder="Filter by course" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Courses</SelectItem>
+              {courseOptions.map((course) => (
+                <SelectItem key={course} value={course}>
+                  {course}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Badge variant="outline" className="h-8 w-fit px-3 text-xs font-medium">
+            Upcoming {filteredSessions.length}
+          </Badge>
+        </div>
+      </Card>
 
-      {Object.keys(groupedSessions).length === 0 ? (
+      {filteredSessions.length === 0 ? (
         <Card className="p-6 text-center">
           <p>No upcoming sessions in the next 7 days.</p>
         </Card>
       ) : (
-        Object.entries(groupedSessions)
-          .filter(([date]) => filteredSessions.some(s => s.date === date))
-          .map(([date, daySessions]) => (
-            <div key={date} className="space-y-4">
-              <h3 className="text-lg font-semibold">
-                {format(parseISO(date), 'EEEE, MMMM d')} ({daySessions.length} sessions)
-              </h3>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {daySessions
-                  .filter(session => filteredSessions.includes(session))
-                  .map((session) => (
-                    <Card key={session.id} className="p-4">
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-medium">{session.startTime}</p>
-                            <p className="text-sm text-muted-foreground">{session.courseName}</p>
-                            <p className="text-sm">
-                              {session.kidIds
-                                .map((id) => studentNameById.get(id))
-                                .filter(Boolean)
-                                .join(', ') || `${session.kidIds.length} students`}
-                            </p>
-                          </div>
-                          <Badge variant="secondary">Scheduled</Badge>
-                        </div>
-                        <div className="flex gap-2 flex-wrap">
-                          {session.lessonPlanUrl && (
-                            <Button 
-                              size="sm" 
-                              variant="default"
-                              onClick={() => handleViewLessonPlan(session)}
-                              className="gap-1"
-                            >
-                              <FileText className="h-3 w-3" />
-                              View Lesson Plan
-                            </Button>
-                          )}
-                          <Button size="sm" variant="outline">
-                            Set Reminder
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            View Details
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
+        <Card className="overflow-hidden border-slate-200 bg-white/95 shadow-sm">
+          <div className="overflow-auto">
+            <div className="min-w-[1050px]">
+              <div className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50/95 px-4 py-2 backdrop-blur">
+                <div className="grid grid-cols-[1fr_0.9fr_1.2fr_1fr_0.8fr_260px] items-center gap-3">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Date</div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Time</div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Child Name</div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Course</div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">Actions</div>
+                </div>
               </div>
+
+              {filteredSessions.map((session) => {
+                const childNames = (session.kidIds || [])
+                  .map((id) => studentNameById.get(String(id)))
+                  .filter((name): name is string => Boolean(name && name.trim()));
+
+                const childLabel =
+                  childNames.length > 0 ? childNames.join(', ') : `${session.kidIds?.length || 0} students`;
+
+                return (
+                  <div key={session.id} className="border-b border-slate-100 px-4 py-3 last:border-b-0 hover:bg-slate-50/40">
+                    <div className="grid grid-cols-[1fr_0.9fr_1.2fr_1fr_0.8fr_260px] items-center gap-3">
+                      <div className="text-sm font-medium text-slate-700">
+                        {formatSessionDate(session.date, 'EEE, dd MMM')}
+                      </div>
+                      <div className="text-sm font-medium text-slate-900">
+                        {session.startTime}
+                        {session.endTime ? ` - ${session.endTime}` : ''}
+                      </div>
+                      <div className="truncate text-sm font-semibold text-slate-900">{childLabel}</div>
+                      <div className="truncate text-sm text-slate-800">{session.courseName}</div>
+                      <div>
+                        <Badge variant="secondary">Scheduled</Badge>
+                      </div>
+                      <div className="flex items-center justify-end gap-2">
+                        {session.lessonPlanUrl ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1"
+                            onClick={() => handleViewLessonPlan(session)}
+                          >
+                            <FileText className="h-3.5 w-3.5" />
+                            Plan
+                          </Button>
+                        ) : null}
+                        <Button size="sm" variant="outline">
+                          Set Reminder
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          View Details
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          ))
+          </div>
+        </Card>
       )}
 
       {/* Canva Lesson Plan Modal */}

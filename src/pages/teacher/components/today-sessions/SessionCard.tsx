@@ -1,9 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { Card } from '@components/ui/card';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { TeacherSession } from '../../../../types/Teacher';
-import { format, differenceInMinutes } from 'date-fns';
+import { format } from 'date-fns';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../../lib/firebaseConfig';
 import { toast } from '@components/hooks/use-toast';
@@ -58,20 +57,10 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
       ? fromFieldsEnd
       : endAtFallback || new Date(sessionStart.getTime() + 30 * 60 * 1000);
 
-  const durationMinutes = (() => {
-    const explicitCandidates = [
-      Number((session as any).durationMins),
-      Number((session as any).durationMinutes),
-      Number((session as any).duration),
-    ];
-    const explicit = explicitCandidates.find((value) => Number.isFinite(value) && value > 0);
-    if (typeof explicit === 'number') return Math.round(explicit);
-    const calculated = differenceInMinutes(sessionEnd, sessionStart);
-    return calculated > 0 ? calculated : 30;
-  })();
-
   const now = new Date();
-  const timeUntilStart = differenceInMinutes(sessionStart, now);
+  const hasStarted = sessionStart.getTime() <= now.getTime();
+  const hasEnded = sessionEnd.getTime() < now.getTime();
+  const isLiveNow = hasStarted && !hasEnded;
 
   const getAttendanceStatus = (value: any): string | undefined => {
     if (!value) return undefined;
@@ -102,19 +91,6 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
     );
   }, [session.attendance, session.status]);
 
-  const attendanceState = useMemo(() => {
-    const attendance = session.attendance || {};
-    const hasAttendance = Object.keys(attendance).length > 0;
-    if (!hasAttendance) return { marked: false, allAbsent: false };
-    
-    const statuses = Object.values(attendance)
-      .map(getAttendanceStatus)
-      .filter(Boolean);
-    
-    const allAbsent = statuses.length > 0 && statuses.every(s => s === 'absent');
-    return { marked: hasAttendance, allAbsent };
-  }, [session.attendance]);
-
   const directJoinUrl =
     (typeof session.joinUrl === 'string' && session.joinUrl.trim()) ||
     (typeof session.meetingLink === 'string' && session.meetingLink.trim()) ||
@@ -127,6 +103,11 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
       ? session.id.split('_')[0].trim()
       : '';
   const enrollmentId = enrollmentIdFromSession || enrollmentIdFromSessionId;
+
+  const readJoinUrl = (source: any): string =>
+    (typeof source?.joinUrl === 'string' && source.joinUrl.trim()) ||
+    (typeof source?.meetingLink === 'string' && source.meetingLink.trim()) ||
+    '';
 
   const openMeetingLink = (url: string) => {
     const trimmed = url.trim();
@@ -147,41 +128,32 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
   const handleStartClass = async () => {
     if (isStartingClass) return;
 
-    if (directJoinUrl) {
-      openMeetingLink(directJoinUrl);
-      return;
-    }
-
-    if (!enrollmentId) {
-      toast({
-        title: 'Meeting link unavailable',
-        description: 'No Teams meeting link is configured for this class yet.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     setIsStartingClass(true);
     try {
-      const enrollmentSnap = await getDoc(doc(db, 'enrollments', enrollmentId));
-      const data = enrollmentSnap.data() as any;
-      const fallbackJoinUrl =
-        (typeof data?.joinUrl === 'string' && data.joinUrl.trim()) ||
-        (typeof data?.meetingLink === 'string' && data.meetingLink.trim()) ||
-        '';
+      let latestEnrollmentJoinUrl = '';
+      if (enrollmentId) {
+        const enrollmentSnap = await getDoc(doc(db, 'enrollments', enrollmentId));
+        latestEnrollmentJoinUrl = readJoinUrl(enrollmentSnap.data());
+      }
 
-      if (!fallbackJoinUrl) {
+      // Always prefer live enrollment link so teacher gets freshly updated Teams URLs.
+      const resolvedJoinUrl = latestEnrollmentJoinUrl || directJoinUrl;
+      if (!resolvedJoinUrl) {
         toast({
           title: 'Meeting link unavailable',
-          description: 'No Teams meeting link is configured for this enrollment.',
+          description: 'No Teams meeting link is configured for this class yet.',
           variant: 'destructive',
         });
         return;
       }
 
-      openMeetingLink(fallbackJoinUrl);
+      openMeetingLink(resolvedJoinUrl);
     } catch (err) {
       console.error('Failed to open meeting link', err);
+      if (directJoinUrl) {
+        openMeetingLink(directJoinUrl);
+        return;
+      }
       toast({
         title: 'Could not start class',
         description: 'Please try again.',
@@ -203,74 +175,65 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
     session.courseId ||
     '';
 
+  const childName =
+    resolvedStudentNames.length > 0
+      ? resolvedStudentNames.join(', ')
+      : `${attendanceSummary.total} assigned`;
+
+  const timeText =
+    `${session.startTime || format(sessionStart, 'HH:mm')}${
+      (session.endTime || format(sessionEnd, 'HH:mm'))
+        ? ` - ${session.endTime || format(sessionEnd, 'HH:mm')}`
+        : ''
+    }`;
+
   return (
-    <Card className="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <Badge variant={statusMap[session.status]?.variant || 'secondary'}>
-            {statusMap[session.status]?.label || 'Scheduled'}
-          </Badge>
-          {attendanceState.allAbsent && session.status === 'scheduled' && (
-            <Badge variant="outline" className="border-slate-300 bg-slate-50 text-slate-700">
-              Attendance Marked
-            </Badge>
-          )}
-          {hasRescheduleRequested && (
-            <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-900">
-              Reschedule requested
-            </Badge>
-          )}
-          {timeUntilStart > 0 && timeUntilStart <= 60 && (
-            <Badge variant="outline">
-              Starts in {timeUntilStart} min
-            </Badge>
-          )}
+    <div className="border-b border-slate-100 px-4 py-3 last:border-b-0 hover:bg-slate-50/40">
+      <div className="grid grid-cols-[1.15fr_1fr_0.9fr_1.1fr_240px] items-center gap-3">
+        <div className="min-w-0">
+          <div className="truncate text-sm font-semibold text-slate-900">{childName}</div>
         </div>
-        <p className="text-sm text-muted-foreground">
-          {format(sessionStart, 'PPPP')} · {(session.startTime || format(sessionStart, 'HH:mm'))}
-          {(session.endTime || format(sessionEnd, 'HH:mm'))
-            ? ` - ${session.endTime || format(sessionEnd, 'HH:mm')}`
-            : ''}
-          {' '}({durationMinutes} min)
-        </p>
-        {courseLabel ? (
-          <h3 className="text-lg font-semibold">{courseLabel}</h3>
-        ) : (
-          <h3 className="text-lg font-semibold">Course</h3>
-        )}
-        <p className="text-sm">
-          <span className="text-muted-foreground">Student: </span>
-          <span className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 font-semibold text-slate-900">
-            {resolvedStudentNames.length > 0
-              ? resolvedStudentNames.join(', ')
-              : `${attendanceSummary.total} assigned`}
-          </span>
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Attendance: {attendanceSummary.present + attendanceSummary.absent + attendanceSummary.late + attendanceSummary.rescheduled} of {attendanceSummary.total} marked
-        </p>
-        <div className="flex gap-2 mt-1">
-          <span className="text-green-600">✅ {attendanceSummary.present}</span>
-          <span className="text-red-600">❌ {attendanceSummary.absent}</span>
-          <span className="text-yellow-600">⏰ {attendanceSummary.late}</span>
-          <span className="text-amber-700">Resched {attendanceSummary.rescheduled}</span>
+
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <Badge variant={statusMap[session.status]?.variant || 'secondary'}>
+              {statusMap[session.status]?.label || 'Scheduled'}
+            </Badge>
+            {isLiveNow && (
+              <Badge className="border border-emerald-300 bg-emerald-100 text-emerald-900">
+                Live
+              </Badge>
+            )}
+            {hasRescheduleRequested && (
+              <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-900">
+                Resched
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        <div className="min-w-0">
+          <div className="text-sm font-medium text-slate-900">{timeText}</div>
+        </div>
+
+        <div className="min-w-0">
+          <div className="truncate text-sm font-semibold text-slate-900">{courseLabel || 'Course'}</div>
+        </div>
+
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            size="sm"
+            variant={isLiveNow ? 'default' : 'outline'}
+            onClick={handleStartClass}
+            disabled={isStartingClass}
+          >
+            {isStartingClass ? 'Opening…' : 'Start Class'}
+          </Button>
+          <Button size="sm" onClick={() => onMarkAttendance(session)} variant="secondary">
+            Mark Attendance
+          </Button>
         </div>
       </div>
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant="outline"
-          onClick={handleStartClass}
-          disabled={isStartingClass}
-        >
-          {isStartingClass ? 'Opening…' : 'Start Class'}
-        </Button>
-        <Button onClick={() => onMarkAttendance(session)} variant="secondary">
-          Mark Attendance
-        </Button>
-        <Button variant="outline">
-          Add Notes
-        </Button>
-      </div>
-    </Card>
+    </div>
   );
 };
