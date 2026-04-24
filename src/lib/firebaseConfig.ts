@@ -1,7 +1,7 @@
 // src/lib/firebaseConfig.ts
 import { initializeApp, getApps, getApp, type FirebaseOptions } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { getAuth, initializeAuth, inMemoryPersistence, type Auth } from 'firebase/auth';
 import { getAnalytics, type Analytics, logEvent as fbLogEvent } from 'firebase/analytics';
 import { getFunctions } from 'firebase/functions';
 
@@ -32,9 +32,56 @@ const firebaseConfig: FirebaseOptions = {
 // Avoid duplicate initialization
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
+const isNativeCapacitorRuntime = () => {
+  if (typeof window === 'undefined') return false;
+
+  const cap = (window as any).Capacitor;
+  if (cap && typeof cap.isNativePlatform === 'function') {
+    try {
+      return Boolean(cap.isNativePlatform());
+    } catch {
+      // Ignore bridge/runtime errors and fall back to protocol checks.
+    }
+  }
+
+  const protocol = window.location?.protocol;
+  return protocol === 'capacitor:' || protocol === 'ionic:';
+};
+
+const shouldLogAuthInit = () => import.meta.env.DEV || isNativeCapacitorRuntime();
+
+const logAuthInit = (event: string, data?: Record<string, unknown>) => {
+  if (!shouldLogAuthInit()) return;
+  if (data) {
+    console.info(`[firebase] ${event}`, data);
+    return;
+  }
+  console.info(`[firebase] ${event}`);
+};
+
+const createAuth = (): Auth => {
+  if (!isNativeCapacitorRuntime()) {
+    logAuthInit('firebase-auth:init:web');
+    return getAuth(app);
+  }
+
+  try {
+    const nativeAuth = initializeAuth(app, {
+      persistence: inMemoryPersistence,
+    });
+    logAuthInit('firebase-auth:init:native');
+    return nativeAuth;
+  } catch (err) {
+    logAuthInit('firebase-auth:init:fallback-existing', {
+      code: typeof (err as any)?.code === 'string' ? (err as any).code : undefined,
+    });
+    return getAuth(app);
+  }
+};
+
 // Core services
 const db = getFirestore(app);
-const auth = getAuth(app);
+const auth = createAuth();
 
 // Use env region (fallback to asia-south1) — guard against boolean
 const functionsRegion = asString(env.VITE_FUNCTIONS_REGION) ?? 'asia-south1';

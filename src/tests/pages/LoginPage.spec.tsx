@@ -25,8 +25,8 @@ describe('LoginPage', () => {
       </MemoryRouter>
     );
 
-    const email = screen.getByLabelText('email') as HTMLInputElement;
-    const password = screen.getByLabelText('password') as HTMLInputElement;
+    const email = screen.getByLabelText('Email, username, or phone number') as HTMLInputElement;
+    const password = screen.getByLabelText('Password') as HTMLInputElement;
     const button = screen.getByRole('button', { name: /sign in/i });
 
     fireEvent.change(email, { target: { value: 'test@example.com' } });
@@ -49,8 +49,8 @@ describe('LoginPage', () => {
       </MemoryRouter>
     );
 
-    const email = screen.getByLabelText('email') as HTMLInputElement;
-    const password = screen.getByLabelText('password') as HTMLInputElement;
+    const email = screen.getByLabelText('Email, username, or phone number') as HTMLInputElement;
+    const password = screen.getByLabelText('Password') as HTMLInputElement;
     const button = screen.getByRole('button', { name: /sign in/i });
 
     fireEvent.change(email, { target: { value: 'wrong@example.com' } });

@@ -2,13 +2,15 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent } from '@components/ui/tabs';
 import { Card } from '@components/ui/card';
+import { Button } from '@components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@components/ui/dialog';
-import { CalendarCheck, CalendarClock, ClipboardList, Users, Wallet } from 'lucide-react';
+import { CalendarCheck, CalendarClock, ClipboardList, MessageSquare, Users, Wallet } from 'lucide-react';
 
 import { TeacherHeader } from './components/layout/TeacherHeader';
 import { TeacherSidebar } from './components/layout/TeacherSidebar';
 import MobileTabBar, { type MobileTabBarItem } from '../../components/common/MobileTabBar';
 import HolidayCalendar2026 from '../../components/common/HolidayCalendar2026';
+import MessagesPanel from '../messages/MessagesPanel';
 
 import { useAuthStore } from '../../store/useAuthStore';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -78,6 +80,7 @@ const TAB_ITEMS = [
   { id: 'lessons', label: 'Lesson Library' },
   { id: 'upcoming', label: 'Upcoming Sessions' },
   { id: 'students', label: 'Students' },
+  { id: 'messages', label: 'Messages' },
   { id: 'earnings', label: 'Earnings' },
   { id: 'schedule', label: 'Schedule' },
   { id: 'holidays', label: 'Holiday Calendar' },
@@ -89,6 +92,7 @@ const TEACHER_MOBILE_TABS: MobileTabBarItem[] = [
   { id: 'today', label: 'Today', icon: CalendarCheck },
   { id: 'demo-assignments', label: 'Demos', icon: ClipboardList },
   { id: 'upcoming', label: 'Upcoming', icon: CalendarClock },
+  { id: 'messages', label: 'Messages', icon: MessageSquare },
   { id: 'students', label: 'Students', icon: Users },
   { id: 'earnings', label: 'Earnings', icon: Wallet },
 ];
@@ -220,6 +224,18 @@ export default function TeacherDashboard() {
               onProfileClick={() => setProfileOpen(true)}
               onOpenMenu={() => setMobileMenuOpen(true)}
             />
+            <div className="mt-3 flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => setTabAndUrl('messages')}
+              >
+                <MessageSquare className="h-4 w-4" />
+                Messages
+              </Button>
+            </div>
             {tab === 'lessons' ? (
               <div id="teacher-lessons-controls-slot" className="mt-3 w-full" />
             ) : null}
@@ -253,6 +269,19 @@ export default function TeacherDashboard() {
               <React.Suspense fallback={<div className="text-sm text-gray-600">Loading students…</div>}>
                 <TeacherMyStudentsV2 teacherId={teacherId} />
               </React.Suspense>
+            </TabsContent>
+
+            {/* Messages */}
+            <TabsContent value="messages">
+              <div className="space-y-3">
+                <Card className="p-4">
+                  <h3 className="text-base font-semibold text-slate-900">Messages</h3>
+                  <p className="text-xs text-slate-500">
+                    Student-wise Tiny Steps conversations
+                  </p>
+                </Card>
+                <MessagesPanel embedded />
+              </div>
             </TabsContent>
 
             {/* Earnings */}

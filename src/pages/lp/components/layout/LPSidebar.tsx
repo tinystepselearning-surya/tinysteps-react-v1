@@ -11,6 +11,7 @@ const MENU_ITEMS = [
   { id: 'overview', label: 'Overview', icon: '📊' },
   { id: 'parents', label: 'Parents', icon: '👨‍👩‍👧‍👦' },
   { id: 'teachers', label: 'Teachers', icon: '👩‍🏫' },
+  { id: 'messages', label: 'Messages', icon: '💬' },
   { id: 'tickets', label: 'Support Tickets', icon: '🎫' },
   { id: 'performance', label: 'Performance', icon: '📈' },
   { id: 'region', label: 'Regional Data', icon: '🌍' },

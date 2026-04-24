@@ -26,8 +26,8 @@ describe('LoginPage', () => {
         var _a, _b;
         (_b = (_a = handleLogin).mockResolvedValue) === null || _b === void 0 ? void 0 : _b.call(_a, undefined);
         render(_jsx(MemoryRouter, { initialEntries: ["/teacher/login"], children: _jsx(LoginPage, {}) }));
-        const email = screen.getByLabelText('email');
-        const password = screen.getByLabelText('password');
+        const email = screen.getByLabelText('Email, username, or phone number');
+        const password = screen.getByLabelText('Password');
         const button = screen.getByRole('button', { name: /sign in/i });
         fireEvent.change(email, { target: { value: 'test@example.com' } });
         fireEvent.change(password, { target: { value: 'secret' } });
@@ -41,8 +41,8 @@ describe('LoginPage', () => {
         var _a, _b;
         (_b = (_a = handleLogin).mockRejectedValue) === null || _b === void 0 ? void 0 : _b.call(_a, new Error('Bad credentials'));
         render(_jsx(MemoryRouter, { initialEntries: ["/teacher/login"], children: _jsx(LoginPage, {}) }));
-        const email = screen.getByLabelText('email');
-        const password = screen.getByLabelText('password');
+        const email = screen.getByLabelText('Email, username, or phone number');
+        const password = screen.getByLabelText('Password');
         const button = screen.getByRole('button', { name: /sign in/i });
         fireEvent.change(email, { target: { value: 'wrong@example.com' } });
         fireEvent.change(password, { target: { value: 'wrong' } });

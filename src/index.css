@@ -82,6 +82,34 @@ html {
   scroll-behavior: smooth;
 }
 
+html.ts-capacitor-native {
+  --ts-safe-area-top: env(safe-area-inset-top);
+  --ts-safe-area-bottom: env(safe-area-inset-bottom);
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+html.ts-capacitor-native body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  padding-top: var(--ts-safe-area-top, 0px);
+  padding-bottom: var(--ts-safe-area-bottom, 0px);
+}
+
+html.ts-capacitor-native #root {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+html.ts-capacitor-native .fixed.top-0,
+html.ts-capacitor-native .sticky.top-0 {
+  top: var(--ts-safe-area-top, 0px);
+}
+
 body.custom-cursor-enabled {
   cursor: none;
 }

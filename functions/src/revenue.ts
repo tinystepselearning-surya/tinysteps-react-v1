@@ -85,14 +85,18 @@ function normalizeStatus(value: any): string {
   return normalizeLowerStatus(value);
 }
 
+function resolveAttendanceEntryStatus(entry: any): string | null {
+  if (typeof entry === 'string') return entry.trim().toLowerCase();
+  if (typeof entry?.status === 'string') return entry.status.trim().toLowerCase();
+  return null;
+}
+
 function resolveAttendanceStatus(session: any, kidId: string | null): string | null {
   if (!kidId) return null;
   const attendance = session?.attendance || {};
   const entry = attendance?.[kidId];
   if (!entry) return null;
-  if (typeof entry === 'string') return entry.trim().toLowerCase();
-  if (typeof entry?.status === 'string') return entry.status.trim().toLowerCase();
-  return null;
+  return resolveAttendanceEntryStatus(entry);
 }
 
 function isBillableAttendance(status: string | null): boolean {
@@ -101,22 +105,25 @@ function isBillableAttendance(status: string | null): boolean {
 
 function hasAnyBillableAttendance(session: any): boolean {
   const attendance = session?.attendance;
-  if (!attendance || typeof attendance !== 'object') return false;
-  return Object.values(attendance).some((entry: any) => {
-    if (typeof entry === 'string') {
-      return isBillableAttendance(entry.trim().toLowerCase());
-    }
-    if (typeof entry?.status === 'string') {
-      return isBillableAttendance(entry.status.trim().toLowerCase());
-    }
-    return false;
-  });
+  if (!attendance || typeof attendance !== 'object' || Array.isArray(attendance)) return false;
+  return Object.values(attendance).some((entry: any) =>
+    isBillableAttendance(resolveAttendanceEntryStatus(entry))
+  );
 }
 
 function isSessionBillableByAttendance(session: any, kidId: string | null): boolean {
+  const attendance = session?.attendance;
+  if (attendance && typeof attendance === 'object' && !Array.isArray(attendance)) {
+    const hasTrackedStatuses = Object.values(attendance).some(
+      (entry: any) => Boolean(resolveAttendanceEntryStatus(entry))
+    );
+    if (hasTrackedStatuses) {
+      return hasAnyBillableAttendance(session);
+    }
+  }
+
   const directStatus = resolveAttendanceStatus(session, kidId);
-  if (directStatus) return isBillableAttendance(directStatus);
-  return hasAnyBillableAttendance(session);
+  return isBillableAttendance(directStatus);
 }
 
 function revenueMonthlyRef(db: admin.firestore.Firestore, monthKey: string) {
@@ -144,6 +151,34 @@ function resolveKidId(data: any): string | null {
     (Array.isArray(data?.kidIds) ? data.kidIds[0] : null) ||
     null
   );
+}
+
+function resolveBillableKidId(data: any): string | null {
+  const attendance = data?.attendance;
+  if (!attendance || typeof attendance !== 'object' || Array.isArray(attendance)) return null;
+
+  const sessionKidIds = new Set<string>(
+    [
+      String(data?.kidId || '').trim(),
+      String(data?.studentId || '').trim(),
+      ...(Array.isArray(data?.kidIds)
+        ? data.kidIds.map((kidId: unknown) => String(kidId || '').trim())
+        : []),
+    ].filter(Boolean)
+  );
+
+  let fallback: string | null = null;
+  for (const [rawKidId, entry] of Object.entries(attendance)) {
+    const kidId = String(rawKidId || '').trim();
+    if (!kidId) continue;
+    if (!isBillableAttendance(resolveAttendanceEntryStatus(entry))) continue;
+    if (!fallback) fallback = kidId;
+    if (sessionKidIds.size === 0 || sessionKidIds.has(kidId)) {
+      return kidId;
+    }
+  }
+
+  return fallback;
 }
 
 function normalizeTeacherId(value: any): string | null {
@@ -195,11 +230,12 @@ function normalizeCorrectionReason(value: any, fallback: string): string {
 
 async function resolveEnrollmentId(
   db: admin.firestore.Firestore,
-  session: any
+  session: any,
+  preferredKidId?: string | null
 ): Promise<string | null> {
   if (session?.enrollmentId) return String(session.enrollmentId);
 
-  const kidId = resolveKidId(session);
+  const kidId = String(preferredKidId || '').trim() || resolveKidId(session);
   const courseId = session?.courseId || null;
   if (!kidId || !courseId) return null;
 
@@ -293,9 +329,10 @@ export const onSessionRevenueWrite = onDocumentWritten(
     const afterStatus = normalizeStatus(afterData?.status);
     const beforeCompleted = beforeStatus === 'completed';
     const afterCompleted = afterStatus === 'completed';
-    const kidIdForCheck = resolveKidId(afterData || beforeData);
-    const beforeBillable = beforeCompleted && isSessionBillableByAttendance(beforeData, kidIdForCheck);
-    const afterBillable = afterCompleted && isSessionBillableByAttendance(afterData, kidIdForCheck);
+    const beforeKidIdForCheck = resolveBillableKidId(beforeData) || resolveKidId(beforeData);
+    const afterKidIdForCheck = resolveBillableKidId(afterData) || resolveKidId(afterData);
+    const beforeBillable = beforeCompleted && isSessionBillableByAttendance(beforeData, beforeKidIdForCheck);
+    const afterBillable = afterCompleted && isSessionBillableByAttendance(afterData, afterKidIdForCheck);
     const beforeAccrued = beforeData?.revenueAccrued === true;
     const afterAccrued = afterData?.revenueAccrued === true;
 
@@ -305,7 +342,7 @@ export const onSessionRevenueWrite = onDocumentWritten(
     const sessionRef = change.after.ref;
 
     if (afterBillable) {
-      const enrollmentId = await resolveEnrollmentId(db, afterData);
+      const enrollmentId = await resolveEnrollmentId(db, afterData, afterKidIdForCheck);
       if (!enrollmentId) {
         logger.warn('Revenue accrual skipped: missing enrollmentId', {
           sessionId: change.after.id,
@@ -321,9 +358,8 @@ export const onSessionRevenueWrite = onDocumentWritten(
         const currentStatus = normalizeStatus(session.status);
         if (currentStatus !== 'completed') return;
 
-        const currentKidId = resolveKidId(session);
-        const attendanceStatus = resolveAttendanceStatus(session, currentKidId);
-        if (!isBillableAttendance(attendanceStatus)) return;
+        const currentKidId = resolveBillableKidId(session) || resolveKidId(session);
+        if (!isSessionBillableByAttendance(session, currentKidId)) return;
         if (isSessionRevenueSuppressed(session)) return;
 
         const enrollmentRef = db.collection('enrollments').doc(enrollmentId);
@@ -488,7 +524,7 @@ export const onSessionRevenueWrite = onDocumentWritten(
 
         const session = sessionSnap.data() || {};
         const currentStatus = normalizeStatus(session.status);
-        const currentKidId = resolveKidId(session);
+        const currentKidId = resolveBillableKidId(session) || resolveKidId(session);
         const stillBillable =
           currentStatus === 'completed' &&
           isSessionBillableByAttendance(session, currentKidId);
@@ -686,28 +722,89 @@ async function recomputeTeacherMonthlyRollup(
   let demoCompletedCount = 0;
   let demoEnrollmentBonusCount = 0;
 
+  type TeacherEarningCandidate = {
+    id: string;
+    data: any;
+    status: string;
+    source: string;
+    sessionId: string;
+    sortMs: number;
+  };
+
+  const standaloneCandidates: TeacherEarningCandidate[] = [];
+  const sessionCandidates = new Map<string, TeacherEarningCandidate>();
+
+  const pickPreferredSessionCandidate = (
+    current: TeacherEarningCandidate,
+    incoming: TeacherEarningCandidate
+  ): TeacherEarningCandidate => {
+    const currentCanonical = current.id === current.sessionId;
+    const incomingCanonical = incoming.id === incoming.sessionId;
+    if (currentCanonical !== incomingCanonical) {
+      return incomingCanonical ? incoming : current;
+    }
+
+    if ((current.status === 'void') !== (incoming.status === 'void')) {
+      return incoming.status === 'void' ? current : incoming;
+    }
+
+    return incoming.sortMs > current.sortMs ? incoming : current;
+  };
+
   for (const docSnap of earningsSnap.docs) {
     const earning = docSnap.data() || {};
     const status = normalizeChargeStatus(earning.status);
-    if (status === 'void') continue;
-
-    const amount = Math.max(normalizeNumber(earning.amount, 0), 0);
-    const paidAmount = resolveTeacherEarningPaidAmount(earning, amount);
-    const pendingAmount = Math.max(amount - paidAmount, 0);
     const source = normalizeStatus(earning.source);
+    const sessionId = String(earning.sessionId || '').trim();
+    const sortMs =
+      toMillis(earning.updatedAt) ||
+      toMillis(earning.earnedAt) ||
+      toMillis(earning.createdAt) ||
+      0;
+    const candidate: TeacherEarningCandidate = {
+      id: docSnap.id,
+      data: earning,
+      status,
+      source,
+      sessionId,
+      sortMs,
+    };
+
+    if (sessionId && isSessionLinkedTeacherEarning(earning)) {
+      const existing = sessionCandidates.get(sessionId);
+      if (!existing) {
+        sessionCandidates.set(sessionId, candidate);
+      } else {
+        sessionCandidates.set(sessionId, pickPreferredSessionCandidate(existing, candidate));
+      }
+      continue;
+    }
+
+    standaloneCandidates.push(candidate);
+  }
+
+  const selectedCandidates = [
+    ...standaloneCandidates,
+    ...Array.from(sessionCandidates.values()),
+  ].filter((candidate) => candidate.status !== 'void');
+
+  for (const candidate of selectedCandidates) {
+    const amount = Math.max(normalizeNumber(candidate.data.amount, 0), 0);
+    const paidAmount = resolveTeacherEarningPaidAmount(candidate.data, amount);
+    const pendingAmount = Math.max(amount - paidAmount, 0);
 
     totalEarnings += amount;
     pendingEarnings += pendingAmount;
 
-    if (isSessionLinkedTeacherEarning(earning)) {
+    if (isSessionLinkedTeacherEarning(candidate.data)) {
       totalSessions += 1;
       sessionsCompleted += 1;
     }
 
-    if (isDemoTeacherEarningSource(source)) {
+    if (isDemoTeacherEarningSource(candidate.source)) {
       demoEarnings += amount;
-      if (source === 'demo_completed') demoCompletedCount += 1;
-      if (source === 'demo_enrolled_bonus') demoEnrollmentBonusCount += 1;
+      if (candidate.source === 'demo_completed') demoCompletedCount += 1;
+      if (candidate.source === 'demo_enrolled_bonus') demoEnrollmentBonusCount += 1;
     }
   }
 
@@ -1382,11 +1479,10 @@ export const voidTeacherOrphanEarnings = onCall(
           String(
             earning.data.kidId || resolveKidId(sessionData) || ''
           ).trim() || null;
-        const attendanceStatus = resolveAttendanceStatus(sessionData, earningKidId);
         const isBillable =
           Boolean(sessionSnap?.exists) &&
           sessionStatus === 'completed' &&
-          isBillableAttendance(attendanceStatus);
+          isSessionBillableByAttendance(sessionData, earningKidId);
 
         if (isBillable) {
           continue;

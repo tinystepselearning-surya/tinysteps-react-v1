@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent } from '@components/ui/tabs';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
+import { Input } from '@components/ui/input';
+import { Textarea } from '@components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@components/ui/dialog';
 import {
   BellDot,
@@ -31,6 +33,7 @@ import { httpsCallable } from 'firebase/functions';
 import { useToast } from '@components/hooks/use-toast';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
+import callFunction from '../../lib/callFunctions';
 
 // 🔁 CHANGE START
 import UserManagement from './UserManagement/UserManagement';
@@ -294,6 +297,208 @@ function InsightsKillSwitch() {
   );
 }
 
+function MessagingBackendTestCard() {
+  const [kidId, setKidId] = useState('');
+  const [threadId, setThreadId] = useState('');
+  const [messageText, setMessageText] = useState('');
+  const [result, setResult] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isBulkSyncing, setIsBulkSyncing] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+
+  const normalizeError = (err: unknown): string => {
+    if (typeof err === 'object' && err !== null) {
+      const maybeMessage = (err as { message?: unknown }).message;
+      if (typeof maybeMessage === 'string' && maybeMessage.trim()) {
+        return maybeMessage;
+      }
+    }
+    return 'Request failed. Please check logs and try again.';
+  };
+
+  const handleCreateOrSync = async () => {
+    const trimmedKidId = kidId.trim();
+    if (!trimmedKidId) {
+      setError('kidId is required.');
+      setResult(null);
+      return;
+    }
+
+    setIsSyncing(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      const response = await callFunction<{ threadId: string }, { kidId: string }>(
+        'createOrSyncMessageThread',
+        { kidId: trimmedKidId }
+      );
+      setThreadId(response.threadId || '');
+      setResult(`Thread ready: ${response.threadId}`);
+    } catch (err) {
+      setError(normalizeError(err));
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleSendMessage = async (textOverride?: string) => {
+    const resolvedThreadId = threadId.trim();
+    const resolvedText = (textOverride ?? messageText).trim();
+
+    if (!resolvedThreadId) {
+      setError('threadId is required. Create/Sync thread first.');
+      setResult(null);
+      return;
+    }
+
+    if (!resolvedText) {
+      setError('Message text is required.');
+      setResult(null);
+      return;
+    }
+
+    setIsSending(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      const response = await callFunction<{ messageId: string }, { threadId: string; text: string }>(
+        'sendMessage',
+        {
+          threadId: resolvedThreadId,
+          text: resolvedText,
+        }
+      );
+      setResult(`Message sent: ${response.messageId}`);
+    } catch (err) {
+      setError(normalizeError(err));
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleSyncAllActiveStudentThreads = async () => {
+    setIsBulkSyncing(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      const response = await callFunction<
+        { scanned: number; synced: number; skipped: number; errors?: string[] },
+        Record<string, never>
+      >('syncMessageThreadsForActiveStudents', {});
+      const scanned = Number(response?.scanned || 0);
+      const synced = Number(response?.synced || 0);
+      const skipped = Number(response?.skipped || 0);
+      const hasErrors = Array.isArray(response?.errors) && response.errors.length > 0;
+      setResult(
+        `Synced ${synced} threads, skipped ${skipped}. Scanned ${scanned} active students.${hasErrors ? ' Check function logs for details.' : ''}`
+      );
+    } catch (err) {
+      setError(normalizeError(err));
+    } finally {
+      setIsBulkSyncing(false);
+    }
+  };
+
+  return (
+    <Card className="p-6 space-y-4">
+      <div>
+        <h3 className="text-lg font-semibold">Messaging Backend Test (Admin)</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          Internal callable test only. Uses Cloud Functions, no direct Firestore writes.
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Kid ID</label>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Input
+            value={kidId}
+            onChange={(event) => setKidId(event.target.value)}
+            placeholder="Enter kidId"
+          />
+          <Button
+            type="button"
+            onClick={handleCreateOrSync}
+            disabled={isSyncing}
+            className="sm:w-auto"
+          >
+            {isSyncing ? 'Syncing...' : 'Create/Sync Thread'}
+          </Button>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+        <p className="text-sm font-medium text-slate-800">Bulk sync</p>
+        <p className="mt-1 text-xs text-slate-600">
+          Create or refresh conversation threads for all active students.
+        </p>
+        <Button
+          type="button"
+          className="mt-2"
+          variant="outline"
+          onClick={handleSyncAllActiveStudentThreads}
+          disabled={isBulkSyncing}
+        >
+          {isBulkSyncing ? 'Syncing all...' : 'Sync All Active Student Threads'}
+        </Button>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Thread ID</label>
+        <Input
+          value={threadId}
+          onChange={(event) => setThreadId(event.target.value)}
+          placeholder="student_<kidId>"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Test Message</label>
+        <Textarea
+          value={messageText}
+          onChange={(event) => setMessageText(event.target.value)}
+          placeholder="Type test message"
+          rows={3}
+        />
+      </div>
+
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button
+          type="button"
+          onClick={() => handleSendMessage()}
+          disabled={isSending}
+        >
+          {isSending ? 'Sending...' : 'Send Test Message'}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => handleSendMessage('Please call me at +91 98765 43210')}
+          disabled={isSending}
+        >
+          Send Phone Number Test Message
+        </Button>
+      </div>
+
+      {result && (
+        <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+          {result}
+        </div>
+      )}
+
+      {error && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 // ---------- Main Admin Dashboard ----------
 export default function AdminDashboard() {
   const { user, isLoading: authLoading } = useAuthStore();
@@ -393,6 +598,24 @@ export default function AdminDashboard() {
 
         <main className="flex min-h-0 flex-1 min-w-0 overflow-x-hidden overflow-y-auto p-3 sm:p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1280px] min-w-0">
+          <Card className="mb-4 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm text-slate-600">
+                Internal messenger conversations
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="gap-2"
+                onClick={() => navigate('/messages')}
+              >
+                <MessageSquareQuote className="h-4 w-4" />
+                Messages
+              </Button>
+            </div>
+          </Card>
+
           {isSuperUser && (
             <Card className="mb-4 p-3">
               <div className="flex gap-2 flex-wrap">
@@ -483,6 +706,7 @@ export default function AdminDashboard() {
 
             <TabsContent value="settings" className="mt-0">
               <div className="space-y-4">
+                <MessagingBackendTestCard />
                 <InsightsKillSwitch />
                 <FinanceReconciliationRunsCard />
                 <EnrollmentCanonicalMigrationCard />

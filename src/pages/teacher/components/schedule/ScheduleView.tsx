@@ -1,12 +1,15 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Badge } from '@components/ui/badge';
+import { Input } from '@components/ui/input';
 import { useTeacherSessions } from '../../hooks/useTeacherSessions';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 import { AttendanceForm } from '../today-sessions/AttendanceForm';
 import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { auth, db } from '../../../../lib/firebaseConfig';
 import { toast } from '@components/hooks/use-toast';
 import {
   format,
@@ -82,12 +85,13 @@ const resolveSessionBadgeTone = (session: TeacherSession): SessionBadgeTone => {
   const attendanceValues = Object.values(session.attendance || {})
     .map(getAttendanceStatus)
     .filter(Boolean) as AttendanceStatus[];
+  const hasPresentOrLate = attendanceValues.some((value) => value === 'present' || value === 'late');
   const hasRescheduleRequested =
     session.status === 'reschedule_requested' ||
     attendanceValues.includes('reschedule_requested');
+  if (hasPresentOrLate) return 'completed';
   if (hasRescheduleRequested) return 'reschedule_requested';
 
-  const hasPresentOrLate = attendanceValues.some((value) => value === 'present' || value === 'late');
   const hasAbsent = attendanceValues.includes('absent');
   if (session.status === 'completed') {
     if (hasAbsent && !hasPresentOrLate) return 'absent';
@@ -111,6 +115,58 @@ const sessionBadgeToneLabel: Record<SessionBadgeTone, string> = {
   reschedule_requested: 'Reschedule',
 };
 
+const MONTH_WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
+
+const MONTH_WEEKDAY_HEADER_TONE_CLASS = [
+  'border-rose-200 bg-gradient-to-b from-rose-100 to-rose-50 text-rose-700',
+  'border-orange-200 bg-gradient-to-b from-orange-100 to-orange-50 text-orange-700',
+  'border-amber-200 bg-gradient-to-b from-amber-100 to-amber-50 text-amber-700',
+  'border-emerald-200 bg-gradient-to-b from-emerald-100 to-emerald-50 text-emerald-700',
+  'border-cyan-200 bg-gradient-to-b from-cyan-100 to-cyan-50 text-cyan-700',
+  'border-sky-200 bg-gradient-to-b from-sky-100 to-sky-50 text-sky-700',
+  'border-indigo-200 bg-gradient-to-b from-indigo-100 to-indigo-50 text-indigo-700',
+] as const;
+
+type RescheduleCreditRecord = {
+  creditId: string;
+  kidId: string;
+  status: 'open' | 'scheduled' | 'consumed' | 'cancelled' | string;
+  sourceSessionId: string;
+  sourceSessionDate: string;
+  sourceStartTime: string;
+  durationMins: number;
+  updatedAt?: unknown;
+};
+
+type MakeupDraft = {
+  date: string;
+  startTime: string;
+  note: string;
+};
+
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const HHMM_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+const buildDefaultMakeupDate = (): string => {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  return format(date, 'yyyy-MM-dd');
+};
+
+const toNumberOr = (value: unknown, fallback: number): number => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+};
+
+const timestampToMillis = (value: unknown): number => {
+  if (value && typeof value === 'object' && typeof (value as { toMillis?: unknown }).toMillis === 'function') {
+    return Number((value as { toMillis: () => number }).toMillis()) || 0;
+  }
+  if (value instanceof Date) return value.getTime();
+  const asNumber = Number(value);
+  return Number.isFinite(asNumber) ? asNumber : 0;
+};
+
 const completeSessionViaBackend = async (
   sessionId: string,
   payload?: {
@@ -131,6 +187,11 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'workweek' | 'day'>('month');
   const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
+  const [rescheduleCredits, setRescheduleCredits] = useState<RescheduleCreditRecord[]>([]);
+  const [rescheduleCreditsLoading, setRescheduleCreditsLoading] = useState<boolean>(false);
+  const [makeupDraftByCredit, setMakeupDraftByCredit] = useState<Record<string, MakeupDraft>>({});
+  const [schedulingCreditId, setSchedulingCreditId] = useState<string | null>(null);
+  const [isReschedulePanelExpanded, setIsReschedulePanelExpanded] = useState<boolean>(false);
 
   const { rangeStart, rangeEnd } = useMemo(() => {
     if (view === 'month') {
@@ -166,6 +227,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   );
 
   const { students } = useTeacherFilteredStudents();
+  const resolvedTeacherId = teacherId || auth.currentUser?.uid || '';
 
   const studentNameById = useMemo(
     () => new Map(students.map((s) => [s.uid, s.fullName || ''])),
@@ -284,6 +346,136 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     }, {} as Record<string, TeacherSession[]>),
     [sessions],
   );
+
+  useEffect(() => {
+    if (!resolvedTeacherId) {
+      setRescheduleCredits([]);
+      setRescheduleCreditsLoading(false);
+      return;
+    }
+
+    setRescheduleCreditsLoading(true);
+    const creditsQuery = query(
+      collection(db, 'rescheduleCredits'),
+      where('teacherId', '==', resolvedTeacherId),
+      where('status', '==', 'open'),
+    );
+
+    const unsub = onSnapshot(
+      creditsQuery,
+      (snapshot) => {
+        const rows: RescheduleCreditRecord[] = snapshot.docs.map((snap) => {
+          const data = (snap.data() || {}) as Record<string, unknown>;
+          const durationMins = Math.max(10, Math.min(180, Math.round(toNumberOr(data.durationMins, 35))));
+          return {
+            creditId: String(data.creditId || snap.id),
+            kidId: String(data.kidId || ''),
+            status: String(data.status || 'open'),
+            sourceSessionId: String(data.sourceSessionId || ''),
+            sourceSessionDate: String(data.sourceSessionDate || ''),
+            sourceStartTime: String(data.sourceStartTime || ''),
+            durationMins,
+            updatedAt: data.updatedAt,
+          };
+        }).filter((row) => row.creditId && row.kidId);
+
+        rows.sort((a, b) => {
+          const byUpdated = timestampToMillis(b.updatedAt) - timestampToMillis(a.updatedAt);
+          if (byUpdated !== 0) return byUpdated;
+          return b.sourceSessionDate.localeCompare(a.sourceSessionDate);
+        });
+
+        setRescheduleCredits(rows);
+        setRescheduleCreditsLoading(false);
+        setMakeupDraftByCredit((prev) => {
+          const next: Record<string, MakeupDraft> = {};
+          rows.forEach((row) => {
+            next[row.creditId] = prev[row.creditId] || {
+              date: buildDefaultMakeupDate(),
+              startTime: '16:00',
+              note: '',
+            };
+          });
+          return next;
+        });
+      },
+      (err) => {
+        console.error('rescheduleCredits onSnapshot error', err);
+        setRescheduleCredits([]);
+        setRescheduleCreditsLoading(false);
+      },
+    );
+
+    return () => unsub();
+  }, [resolvedTeacherId]);
+
+  const updateMakeupDraft = (creditId: string, patch: Partial<MakeupDraft>) => {
+    setMakeupDraftByCredit((prev) => ({
+      ...prev,
+      [creditId]: {
+        ...(prev[creditId] || { date: buildDefaultMakeupDate(), startTime: '16:00', note: '' }),
+        ...patch,
+      },
+    }));
+  };
+
+  const handleCreateMakeupSession = async (credit: RescheduleCreditRecord) => {
+    const draft = makeupDraftByCredit[credit.creditId] || {
+      date: buildDefaultMakeupDate(),
+      startTime: '16:00',
+      note: '',
+    };
+
+    if (!ISO_DATE_RE.test(draft.date)) {
+      toast({
+        title: 'Invalid date',
+        description: 'Choose a valid date (YYYY-MM-DD).',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (!HHMM_RE.test(draft.startTime)) {
+      toast({
+        title: 'Invalid time',
+        description: 'Choose a valid start time (HH:mm).',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setSchedulingCreditId(credit.creditId);
+      const functions = getFunctions(undefined, 'asia-south1');
+      const createMakeupSessionFromCredit = httpsCallable(functions, 'createMakeupSessionFromCredit');
+      const response = await createMakeupSessionFromCredit({
+        creditId: credit.creditId,
+        kidId: credit.kidId,
+        date: draft.date,
+        startTime: draft.startTime,
+        durationMins: credit.durationMins,
+        note: draft.note.trim() || undefined,
+      });
+
+      const result = (response.data || {}) as { sessionId?: string; alreadyExisted?: boolean };
+      setCurrentDate(new Date(`${draft.date}T00:00:00`));
+      setView('day');
+      toast({
+        title: result.alreadyExisted ? 'Makeup session already exists' : 'Makeup session scheduled',
+        description: result.sessionId
+          ? `Session ${result.sessionId} is ready in your calendar.`
+          : 'The reschedule credit was scheduled successfully.',
+      });
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: 'Unable to schedule makeup session',
+        description: err instanceof Error ? err.message : 'Please try another date/time.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSchedulingCreditId(null);
+    }
+  };
 
   const handleAttendanceSubmit = async (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: string; topics?: string[]; topicUpdates?: TopicUpdatePayload[] }>; sessionNotes: string; meta?: { courseId?: string; courseLabel?: string; attendanceOnly?: boolean } }) => {
     if (!selectedSession) return;
@@ -410,63 +602,154 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
         <p className="mt-3 text-sm text-slate-500">{getTitle()}</p>
       </Card>
 
+      <Card className="border-slate-200 bg-white/95 p-4 shadow-sm md:p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-slate-900">Open Reschedule Credits</h3>
+            <p className="text-xs text-slate-500">
+              Schedule one makeup class per student credit.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
+              {rescheduleCredits.length} open
+            </Badge>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="rounded-full"
+              onClick={() => setIsReschedulePanelExpanded((prev) => !prev)}
+            >
+              {isReschedulePanelExpanded ? 'Close' : 'Expand'}
+            </Button>
+          </div>
+        </div>
+
+        {isReschedulePanelExpanded && (
+          <>
+            {rescheduleCreditsLoading ? (
+              <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                Loading credits...
+              </div>
+            ) : rescheduleCredits.length === 0 ? (
+              <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                No open reschedule credits right now.
+              </div>
+            ) : (
+              <div className="mt-3 space-y-3">
+                {rescheduleCredits.map((credit) => {
+                  const draft = makeupDraftByCredit[credit.creditId] || {
+                    date: buildDefaultMakeupDate(),
+                    startTime: '16:00',
+                    note: '',
+                  };
+                  const studentLabel =
+                    studentNameById.get(credit.kidId) ||
+                    `Student (${credit.kidId.slice(0, 6)}...)`;
+
+                  return (
+                    <div key={credit.creditId} className="rounded-xl border border-slate-200 bg-white p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="text-sm font-medium text-slate-900">{studentLabel}</div>
+                        <div className="text-xs text-slate-500">
+                          Missed: {credit.sourceSessionDate || '—'}{credit.sourceStartTime ? ` at ${credit.sourceStartTime}` : ''}
+                        </div>
+                      </div>
+                      <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4">
+                        <div>
+                          <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-500">Date</label>
+                          <Input
+                            type="date"
+                            value={draft.date}
+                            onChange={(event) => updateMakeupDraft(credit.creditId, { date: event.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-500">Time</label>
+                          <Input
+                            type="time"
+                            value={draft.startTime}
+                            onChange={(event) => updateMakeupDraft(credit.creditId, { startTime: event.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-slate-500">Note (optional)</label>
+                          <Input
+                            type="text"
+                            placeholder="Optional note"
+                            value={draft.note}
+                            onChange={(event) => updateMakeupDraft(credit.creditId, { note: event.target.value })}
+                          />
+                        </div>
+                        <div className="flex items-end">
+                          <Button
+                            className="w-full rounded-lg"
+                            onClick={() => handleCreateMakeupSession(credit)}
+                            disabled={schedulingCreditId === credit.creditId}
+                          >
+                            {schedulingCreditId === credit.creditId ? 'Scheduling...' : 'Schedule Makeup'}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
+      </Card>
+
       <Card className="border-slate-200 bg-white/95 p-5 shadow-sm md:p-6">
         {view === 'month' && (
-          <div className="grid grid-cols-7 gap-2.5">
-            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-              <div key={day} className="rounded-xl border border-slate-200 bg-slate-50 py-2 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                {day}
-              </div>
-            ))}
-            {monthLeadingEmptyCells.map((_, idx) => (
-              <div key={`month-leading-empty-clean-${idx}`} className="min-h-[120px] rounded-xl border border-transparent" aria-hidden="true" />
-            ))}
-            {days.map((day) => {
-              const dateStr = format(day, 'yyyy-MM-dd');
-              const daySessions = sessionsByDate[dateStr] || [];
-              return (
+          <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-br from-sky-50/70 via-white to-orange-50/70 p-2.5 shadow-inner">
+            <div className="grid grid-cols-7 gap-1.5">
+              {MONTH_WEEKDAY_LABELS.map((day, index) => (
                 <div
-                  key={day.toString()}
-                  className={`min-h-[120px] rounded-xl border p-3 ${
-                    isToday(day)
-                      ? 'border-sky-200 bg-sky-50/50 shadow-sm'
-                      : daySessions.length > 0
-                        ? 'border-slate-200 bg-white shadow-sm'
-                        : 'border-slate-200 bg-slate-50/40'
-                  }`}
+                  key={day}
+                  className={`rounded-lg border py-1.5 text-center text-[11px] font-semibold uppercase tracking-[0.12em] ${MONTH_WEEKDAY_HEADER_TONE_CLASS[index]}`}
                 >
-                  <div className="text-sm font-semibold text-slate-900">{format(day, 'd')}</div>
-                  <div className="mt-2 space-y-2">
-                    {daySessions.slice(0, 3).map((session, idx) => {
-                      const kidNames = getSessionStudentLabel(session);
-                      const courseLabel = getSessionCourseLabel(session);
-                      const badgeTone = resolveSessionBadgeTone(session);
-                      return (
-                        <button
-                          key={session.id || `${dateStr}_${idx}`}
-                          type="button"
-                          className={`w-full rounded-lg border px-2.5 py-2 text-left text-xs transition hover:opacity-95 ${sessionBadgeToneClass[badgeTone]}`}
-                          onClick={() => setSelectedSession(session)}
-                        >
-                          <div className="font-medium">
-                            {sessionBadgeToneLabel[badgeTone]} · {session.startTime}
-                          </div>
-                          <div className="mt-1 truncate text-[11px]">{kidNames}</div>
-                          {courseLabel ? <div className="mt-1 truncate text-[11px] opacity-80">{truncateLabel(courseLabel, 18)}</div> : null}
-                        </button>
-                      );
-                    })}
-                    {daySessions.length > 3 ? (
-                      <div className="text-[11px] text-slate-500">+{daySessions.length - 3} more</div>
-                    ) : null}
-                    {daySessions.length === 0 ? <div className="text-[11px] text-slate-400">No bookings</div> : null}
-                  </div>
+                  {day}
                 </div>
-              );
-            })}
-            {monthTrailingEmptyCells.map((_, idx) => (
-              <div key={`month-trailing-empty-clean-${idx}`} className="min-h-[120px] rounded-xl border border-transparent" aria-hidden="true" />
-            ))}
+              ))}
+              {monthLeadingEmptyCells.map((_, idx) => (
+                <div key={`month-leading-empty-clean-${idx}`} className="h-14 rounded-lg border border-transparent bg-white/20" aria-hidden="true" />
+              ))}
+              {days.map((day) => {
+                const dateStr = format(day, 'yyyy-MM-dd');
+                const daySessions = sessionsByDate[dateStr] || [];
+                const dayOfWeek = day.getDay();
+                const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                const dayCellToneClass = isToday(day)
+                  ? 'border-sky-300 bg-gradient-to-br from-sky-100 to-cyan-50 shadow-sm'
+                  : daySessions.length > 0
+                    ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50/80'
+                    : isWeekend
+                      ? 'border-rose-100 bg-gradient-to-br from-rose-50/75 to-orange-50/70'
+                      : 'border-slate-200 bg-white/95';
+
+                return (
+                  <button
+                    key={day.toString()}
+                    type="button"
+                    className={`h-14 rounded-lg border px-2 py-1.5 text-left transition-all duration-200 hover:-translate-y-[1px] hover:shadow-sm ${dayCellToneClass}`}
+                    onClick={() => {
+                      setCurrentDate(day);
+                      setView('day');
+                    }}
+                    aria-label={`Open schedule for ${format(day, 'MMMM d, yyyy')}`}
+                  >
+                    <div className="flex h-full text-left">
+                      <div className="text-sm font-semibold leading-none text-slate-900">{format(day, 'd')}</div>
+                    </div>
+                  </button>
+                );
+              })}
+              {monthTrailingEmptyCells.map((_, idx) => (
+                <div key={`month-trailing-empty-clean-${idx}`} className="h-14 rounded-lg border border-transparent bg-white/20" aria-hidden="true" />
+              ))}
+            </div>
           </div>
         )}
 

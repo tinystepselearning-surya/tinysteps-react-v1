@@ -142,6 +142,63 @@ const endOfDay = (date: Date): Date => {
   return out;
 };
 
+const isSessionLinkedRow = (row: TeacherEarningLedgerRow): boolean => {
+  const source = String(row.source || '').trim().toLowerCase();
+  if (source === 'demo_completed' || source === 'demo_enrolled_bonus') return false;
+  return String(row.sessionId || '').trim().length > 0;
+};
+
+const pickPreferredSessionRow = (
+  current: TeacherEarningLedgerRow,
+  incoming: TeacherEarningLedgerRow
+): TeacherEarningLedgerRow => {
+  const currentSessionId = String(current.sessionId || '').trim();
+  const incomingSessionId = String(incoming.sessionId || '').trim();
+  const currentCanonical = current.id === currentSessionId;
+  const incomingCanonical = incoming.id === incomingSessionId;
+  if (currentCanonical !== incomingCanonical) {
+    return incomingCanonical ? incoming : current;
+  }
+
+  if ((current.status === 'void') !== (incoming.status === 'void')) {
+    return incoming.status === 'void' ? current : incoming;
+  }
+
+  const currentMs = current.earnedAt?.getTime() || 0;
+  const incomingMs = incoming.earnedAt?.getTime() || 0;
+  return incomingMs > currentMs ? incoming : current;
+};
+
+const dedupeSessionLedgerRows = (
+  rows: TeacherEarningLedgerRow[]
+): TeacherEarningLedgerRow[] => {
+  const sessionRowsBySessionId = new Map<string, TeacherEarningLedgerRow>();
+  const nonSessionRows: TeacherEarningLedgerRow[] = [];
+
+  rows.forEach((row) => {
+    if (!isSessionLinkedRow(row)) {
+      nonSessionRows.push(row);
+      return;
+    }
+
+    const sessionId = String(row.sessionId || '').trim();
+    if (!sessionId) {
+      nonSessionRows.push(row);
+      return;
+    }
+
+    const existing = sessionRowsBySessionId.get(sessionId);
+    if (!existing) {
+      sessionRowsBySessionId.set(sessionId, row);
+      return;
+    }
+
+    sessionRowsBySessionId.set(sessionId, pickPreferredSessionRow(existing, row));
+  });
+
+  return [...nonSessionRows, ...Array.from(sessionRowsBySessionId.values())];
+};
+
 export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
   const { user } = useAuthStore();
   const { students } = useTeacherFilteredStudents();
@@ -269,7 +326,6 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
   const filteredRows = useMemo(
     () =>
       ledgerRows.filter((row) => {
-        if (row.status === 'void') return false;
         if (filterPreset === 'month') {
           if (row.monthKey) return row.monthKey === selectedMonth;
           if (!row.earnedAt) return false;
@@ -281,16 +337,21 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
     [filterPreset, ledgerRows, range.end, range.start, selectedMonth],
   );
 
+  const effectiveRows = useMemo(
+    () => dedupeSessionLedgerRows(filteredRows).filter((row) => row.status !== 'void'),
+    [filteredRows],
+  );
+
   const categorizedRows = useMemo(() => {
-    const demoCompletedRows = filteredRows.filter((row) => row.source === 'demo_completed');
-    const demoConvertedRows = filteredRows.filter((row) => row.source === 'demo_enrolled_bonus');
-    const sessionRows = filteredRows.filter((row) => {
+    const demoCompletedRows = effectiveRows.filter((row) => row.source === 'demo_completed');
+    const demoConvertedRows = effectiveRows.filter((row) => row.source === 'demo_enrolled_bonus');
+    const sessionRows = effectiveRows.filter((row) => {
       const hasDemoMarker = row.demoId.length > 0;
       const isDemoSource = row.source === 'demo_completed' || row.source === 'demo_enrolled_bonus';
       return !hasDemoMarker && !isDemoSource;
     });
     return { demoCompletedRows, demoConvertedRows, sessionRows };
-  }, [filteredRows]);
+  }, [effectiveRows]);
 
   const metrics = useMemo(() => {
     const { demoCompletedRows, demoConvertedRows, sessionRows } = categorizedRows;
@@ -305,12 +366,12 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
     const sumAmount = (rows: TeacherEarningLedgerRow[]) =>
       rows.reduce((acc, row) => acc + toNumber(row.amount, 0), 0);
 
-    const totalEarnings = sumAmount(filteredRows);
+    const totalEarnings = sumAmount(effectiveRows);
     const sessionEarnings = sumAmount(sessionRows);
     const demoCompletedEarnings = sumAmount(demoCompletedRows);
     const demoConvertedEarnings = sumAmount(demoConvertedRows);
 
-    const paymentsReceived = filteredRows.reduce((acc, row) => {
+    const paymentsReceived = effectiveRows.reduce((acc, row) => {
       const paidAmount = toNumber(row.paidAmount, 0);
       if (paidAmount > 0) return acc + paidAmount;
       if (row.status === 'paid') return acc + toNumber(row.amount, 0);
@@ -330,7 +391,7 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
       paymentsReceived,
       pendingEarnings,
     };
-  }, [categorizedRows, filteredRows]);
+  }, [categorizedRows, effectiveRows]);
 
   const sessionDetails = useMemo(() => {
     const bucket = new Map<string, { name: string; count: number; amount: number }>();

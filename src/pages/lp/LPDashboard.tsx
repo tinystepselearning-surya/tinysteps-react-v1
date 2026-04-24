@@ -6,7 +6,8 @@ import { LPHeader } from './components/layout/LPHeader';
 import { LPSidebar } from './components/layout/LPSidebar';
 import HolidayCalendar2026 from '../../components/common/HolidayCalendar2026';
 import MobileTabBar, { type MobileTabBarItem } from '../../components/common/MobileTabBar';
-import { BarChart2, Users, GraduationCap, HeadphonesIcon, TrendingUp } from 'lucide-react';
+import { BarChart2, Users, GraduationCap, HeadphonesIcon, MessageSquare, TrendingUp } from 'lucide-react';
+import MessagesPanel from '../messages/MessagesPanel';
 const LPStats = React.lazy(() => import('./components/overview/LPStats'));
 const ParentsList = React.lazy(() => import('./components/parents/ParentsList'));
 const TeachersList = React.lazy(() => import('./components/teachers/TeachersList'));
@@ -19,6 +20,7 @@ const LP_MOBILE_TABS: MobileTabBarItem[] = [
   { id: 'overview', label: 'Overview', icon: BarChart2 },
   { id: 'parents', label: 'Parents', icon: Users },
   { id: 'teachers', label: 'Teachers', icon: GraduationCap },
+  { id: 'messages', label: 'Messages', icon: MessageSquare },
   { id: 'tickets', label: 'Tickets', icon: HeadphonesIcon },
   { id: 'performance', label: 'Stats', icon: TrendingUp },
 ];
@@ -33,6 +35,7 @@ const TAB_ITEMS = [
   { id: 'overview', label: 'Overview' },
   { id: 'parents', label: 'Parents' },
   { id: 'teachers', label: 'Teachers' },
+  { id: 'messages', label: 'Messages' },
   { id: 'tickets', label: 'Support Tickets' },
   { id: 'performance', label: 'Performance' },
   { id: 'region', label: 'Regional Data' },
@@ -87,6 +90,17 @@ export default function LPDashboard() {
               <Suspense fallback={<div className="text-sm text-gray-600">Loading teachers…</div>}>
                 <TeachersList lpId={lpId} />
               </Suspense>
+            </TabsContent>
+            <TabsContent value="messages">
+              <div className="space-y-3">
+                <Card className="p-4">
+                  <h3 className="text-base font-semibold text-slate-900">Messages</h3>
+                  <p className="text-xs text-slate-500">
+                    Student-wise Tiny Steps conversations
+                  </p>
+                </Card>
+                <MessagesPanel embedded />
+              </div>
             </TabsContent>
             <TabsContent value="tickets">
               <Suspense fallback={<div className="text-sm text-gray-600">Loading tickets…</div>}>

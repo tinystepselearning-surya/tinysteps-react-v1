@@ -5,6 +5,7 @@ const PROTECTED_APP_ROUTE_PREFIXES = [
   '/parent',
   '/kids',
   '/kid',
+  '/messages',
   '/learning-partner/dashboard',
   '/learningpartner/dashboard',
 ];

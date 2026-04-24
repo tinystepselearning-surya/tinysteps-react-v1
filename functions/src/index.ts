@@ -46,6 +46,7 @@ export { adminArchiveUser } from "./adminArchiveUser";
 export { adminUpdateUser } from "./adminUpdateUser";
 export { adminGenerateResetLink } from "./adminGenerateResetLink";
 export { adminResetPassword } from "./adminResetPassword";
+export { resolveLoginIdentifier } from "./resolveLoginIdentifier";
 
 // Learning Partner assignment
 export { 
@@ -123,3 +124,8 @@ export { refreshPublicKb } from "./ai/refreshPublicKb";
 // WhatsApp backend foundation (admin send + webhook callbacks)
 export { sendWhatsAppTemplateMessage, whatsAppWebhook } from './whatsapp';
 export { whatsappWebhookV2 } from './whatsappWebhook';
+
+// Internal messaging
+export { createOrSyncMessageThread } from './messaging/createOrSyncMessageThread';
+export { sendMessage } from './messaging/sendMessage';
+export { syncMessageThreadsForActiveStudents } from './messaging/syncMessageThreadsForActiveStudents';

@@ -74,6 +74,21 @@ service cloud.firestore {
       return ('role' in request.resource.data) && (request.resource.data.role != resource.data.role);
     }
 
+    function messageThreadDocPath(threadId) {
+      return /databases/$(database)/documents/messageThreads/$(threadId);
+    }
+
+    function messageThreadExists(threadId) {
+      return exists(messageThreadDocPath(threadId));
+    }
+
+    function isMessageThreadParticipant(threadId) {
+      return isSignedIn()
+        && messageThreadExists(threadId)
+        && ('participantIds' in get(messageThreadDocPath(threadId)).data)
+        && (request.auth.uid in get(messageThreadDocPath(threadId)).data.participantIds);
+    }
+
     // ----------------------------
     // Kids helper functions (NO "let" usage)
     // ----------------------------
@@ -745,6 +760,28 @@ service cloud.firestore {
     }
 
     // ----------------------------
+    // MESSAGE THREADS (SERVER-WRITE ONLY)
+    // ----------------------------
+    match /messageThreads/{threadId} {
+      allow read: if isAdmin()
+        || (
+          isSignedIn()
+          && ('participantIds' in resource.data)
+          && (request.auth.uid in resource.data.participantIds)
+        );
+
+      // Direct client writes are blocked; Cloud Functions/Admin SDK only.
+      allow create, update, delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if isAdmin() || isMessageThreadParticipant(threadId);
+
+        // Direct client writes are blocked; callable function only.
+        allow create, update, delete: if false;
+      }
+    }
+
+    // ----------------------------
     // ADMIN STATS (ROLLUPS)
     // ----------------------------
     match /adminStats/{docId} {
@@ -923,6 +960,28 @@ service cloud.firestore {
       allow read, write: if isAdmin();
       allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
       allow write: if false;
+    }
+
+    // ----------------------------
+    // NOTIFICATION TOKENS
+    // ----------------------------
+    match /notificationTokens/{tokenId} {
+      allow read: if isAdmin()
+        || (isSignedIn() && resource.data.userId == request.auth.uid);
+
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid;
+
+      allow update: if isAdmin()
+        || (
+          isSignedIn()
+          && resource.data.userId == request.auth.uid
+          && request.resource.data.userId == resource.data.userId
+          && request.resource.data.userId == request.auth.uid
+        );
+
+      allow delete: if isAdmin()
+        || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
 
     match /bulkUploadJobs/{jobId} {

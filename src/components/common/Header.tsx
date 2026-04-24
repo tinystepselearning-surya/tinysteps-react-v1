@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 
@@ -14,10 +14,6 @@ const dashboardPaths: Record<string, string> = {
   learningpartner: '/learning-partner/dashboard',
 };
 
-const TICKER_VERSION = '2026-04-09';
-const DISMISS_KEY = `ts_ticker_dismissed_${TICKER_VERSION}`;
-const TICKER_LABEL = 'Summer Camp 2026 admissions open';
-
 const PRIMARY_LINKS: LinkItem[] = [
   { label: 'Courses', href: '/courses' },
   { label: 'Curriculum', href: '/curriculum' },
@@ -27,105 +23,20 @@ const PRIMARY_LINKS: LinkItem[] = [
   { label: 'Contact', href: '/contact' },
 ];
 
-const LOGIN_LINKS: LinkItem[] = [
-  { label: 'Parent Login', href: '/parent/login' },
-  { label: 'Teacher Login', href: '/teacher/login' },
-  { label: 'Learning Partner Login', href: '/learning-partner/login' },
-];
-
-const PublicAnnouncementTicker = memo(function PublicAnnouncementTicker({ isLoggedIn }: { isLoggedIn: boolean }) {
-  const [isDismissed, setIsDismissed] = useState(false);
-  const [isDesktopTickerEligible, setIsDesktopTickerEligible] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    setIsDismissed(window.localStorage.getItem(DISMISS_KEY) === '1');
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const evaluateViewport = () => {
-      setIsDesktopTickerEligible(window.matchMedia('(min-width: 640px)').matches);
-    };
-
-    const win = window as Window & {
-      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-    };
-
-    window.requestAnimationFrame(() => {
-      if (typeof win.requestIdleCallback === 'function') {
-        win.requestIdleCallback(evaluateViewport, { timeout: 1200 });
-      } else {
-        window.setTimeout(evaluateViewport, 200);
-      }
-    });
-  }, []);
-
-  if (isLoggedIn || isDismissed || !isDesktopTickerEligible) return null;
-
-  return (
-    <aside
-      aria-label="Seasonal announcement"
-      data-nosnippet
-      className="relative hidden border-t border-slate-200/80 bg-white/65 text-slate-600 backdrop-blur sm:block"
-    >
-      <div className="mx-auto flex max-w-6xl items-center justify-center gap-2 px-10 py-1.5 text-[11px] font-medium sm:px-12">
-        <span className="h-1 w-1 rounded-full bg-slate-300" />
-        <Link to="/summer-camps" className="inline-flex items-center gap-1 underline-offset-2 hover:text-slate-800 hover:underline">
-          <span>{TICKER_LABEL}</span>
-          <span aria-hidden="true">↗</span>
-        </Link>
-        <span className="text-slate-400">•</span>
-        <span>View details</span>
-      </div>
-      <button
-        type="button"
-        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:text-slate-600"
-        aria-label="Dismiss announcement"
-        onClick={() => {
-          if (typeof window !== 'undefined') {
-            window.localStorage.setItem(DISMISS_KEY, '1');
-          }
-          setIsDismissed(true);
-        }}
-      >
-        ✕
-      </button>
-    </aside>
-  );
-});
+const LOGIN_LINK: LinkItem = { label: 'Login', href: '/login' };
 
 export default function Header() {
   const { user, clearUser } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
-  const loginMenuRef = useRef<HTMLDivElement | null>(null);
-
   const [isOpen, setIsOpen] = useState(false);
-  const [showLoginMenu, setShowLoginMenu] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
 
   const isHomePage = location.pathname === '/';
 
   useEffect(() => {
-    setShowLoginMenu(false);
     setIsOpen(false);
   }, [location.pathname]);
-
-  useEffect(() => {
-    if (!showLoginMenu) return;
-
-    const onPointerDownCapture = (event: PointerEvent) => {
-      const target = event.target as Node | null;
-      if (!target) return;
-      if (loginMenuRef.current?.contains(target)) return;
-      setShowLoginMenu(false);
-    };
-
-    document.addEventListener('pointerdown', onPointerDownCapture, true);
-    return () => document.removeEventListener('pointerdown', onPointerDownCapture, true);
-  }, [showLoginMenu]);
 
   useEffect(() => {
     let rafId = 0;
@@ -193,55 +104,27 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
-
-          <div className="relative" ref={loginMenuRef}>
-            <button
-              type="button"
-              className="flex items-center gap-1 transition-colors hover:text-tiny-blue-600"
-              aria-haspopup="menu"
-              aria-expanded={showLoginMenu}
-              onClick={() => setShowLoginMenu((current) => !current)}
-            >
-              Login ▾
-            </button>
-
-            {showLoginMenu ? (
-              <div className="absolute right-0 mt-3 w-64 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-2xl backdrop-blur" role="menu">
-                <div className="flex flex-col gap-1 text-sm text-slate-700">
-                  {LOGIN_LINKS.map((link) => (
-                    <Link
-                      key={link.href}
-                      to={link.href}
-                      className="rounded-xl px-3 py-2 transition hover:bg-slate-50 hover:text-slate-900"
-                      role="menuitem"
-                      onClick={() => setShowLoginMenu(false)}
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                  {user ? (
-                    <>
-                      <Link
-                        to={dashboardPaths[user.role] || `/${user.role}`}
-                        className="rounded-xl px-3 py-2 transition hover:bg-slate-50 hover:text-slate-900"
-                        role="menuitem"
-                        onClick={() => setShowLoginMenu(false)}
-                      >
-                        Dashboard
-                      </Link>
-                      <button
-                        type="button"
-                        className="rounded-xl px-3 py-2 text-left text-rose-600 transition hover:bg-rose-50"
-                        onClick={handleLogout}
-                      >
-                        Logout
-                      </button>
-                    </>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
-          </div>
+          {user ? (
+            <>
+              <Link
+                to={dashboardPaths[user.role] || `/${user.role}`}
+                className="transition-colors hover:text-tiny-blue-600"
+              >
+                Dashboard
+              </Link>
+              <button
+                type="button"
+                className="transition-colors text-rose-600 hover:text-rose-700"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <Link to={LOGIN_LINK.href} className="transition-colors hover:text-tiny-blue-600">
+              {LOGIN_LINK.label}
+            </Link>
+          )}
         </div>
 
         <div className="hidden items-center gap-4 md:flex">
@@ -255,7 +138,7 @@ export default function Header() {
         </div>
       </>
     ),
-    [handleBookAssessment, handleLogout, showLoginMenu, user]
+    [handleBookAssessment, handleLogout, user]
   );
 
   return (
@@ -342,11 +225,6 @@ export default function Header() {
           <div className="border-t border-slate-200 pt-4">
             <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Login</p>
             <div className="mt-3 space-y-3">
-              {LOGIN_LINKS.map((link) => (
-                <Link key={link.href} to={link.href} onClick={() => setIsOpen(false)} className="block">
-                  {link.label}
-                </Link>
-              ))}
               {user ? (
                 <>
                   <Link
@@ -360,12 +238,15 @@ export default function Header() {
                     Logout
                   </button>
                 </>
-              ) : null}
+              ) : (
+                <Link to={LOGIN_LINK.href} onClick={() => setIsOpen(false)} className="block">
+                  {LOGIN_LINK.label}
+                </Link>
+              )}
             </div>
           </div>
         </div>
       </div>
-      <PublicAnnouncementTicker isLoggedIn={!!user} />
     </nav>
   );
 }

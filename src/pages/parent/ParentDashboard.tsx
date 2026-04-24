@@ -47,6 +47,7 @@ import {
   Home,
   LogOut,
   Menu,
+  MessageSquare,
   RefreshCw,
   Sparkles,
   Target,
@@ -64,6 +65,7 @@ import {
 import TinyStepsBrand from "../../components/common/TinyStepsBrand";
 import MobileTabBar, { type MobileTabBarItem } from "../../components/common/MobileTabBar";
 import HolidayCalendar2026 from "../../components/common/HolidayCalendar2026";
+import MessagesPanel from "../messages/MessagesPanel";
  
 import { masteryKeyFromValue, masteryLabel, masteryPctFromKey, type MasteryKey } from "../../lib/mastery";
 import {
@@ -96,6 +98,7 @@ type TabKey =
   | "games-progress"
   | "skills"
   | "classes"
+  | "messages"
   | "holidays"
   | "profile"
   | "payments";
@@ -112,6 +115,7 @@ const parentNavItems: ParentNavItem[] = [
   { id: "games-progress", label: "Games Progress", icon: Gamepad2 },
   { id: "skills", label: "Skills", icon: Sparkles },
   { id: "classes", label: "Classes", icon: CalendarDays },
+  { id: "messages", label: "Messages", icon: MessageSquare },
   { id: "holidays", label: "Holiday Calendar", icon: CalendarDays },
   { id: "payments", label: "Payments", icon: CreditCard },
 ];
@@ -119,6 +123,7 @@ const parentNavItems: ParentNavItem[] = [
 const PARENT_MOBILE_TABS: MobileTabBarItem[] = [
   { id: "dashboard", label: "Home", icon: Home },
   { id: "classes", label: "Classes", icon: CalendarDays },
+  { id: "messages", label: "Messages", icon: MessageSquare },
   { id: "payments", label: "Payments", icon: CreditCard },
   { id: "insights", label: "Insights", icon: TrendingUp },
   { id: "games-progress", label: "Games", icon: Gamepad2 },
@@ -172,6 +177,7 @@ function safeTab(value: string | null): TabKey {
     "games-progress",
     "skills",
     "classes",
+    "messages",
     "holidays",
     "profile",
     "payments",
@@ -4508,6 +4514,19 @@ export default function ParentDashboard() {
                   );
                 })}
               </nav>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-3 w-full justify-start gap-2"
+                onClick={() => {
+                  setTab("messages");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <MessageSquare className="h-4 w-4" />
+                Messages
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -4598,6 +4617,16 @@ export default function ParentDashboard() {
                   })}
                 </nav>
 
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-start gap-2"
+                  onClick={() => setTab("messages")}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Messages
+                </Button>
+
                 <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 text-xs text-slate-500 dark:text-slate-400">
                   <div className="font-semibold text-slate-700 dark:text-slate-200 mb-1">
                     Confidence at a glance
@@ -4667,6 +4696,18 @@ export default function ParentDashboard() {
             <div className="mt-4 min-h-0 space-y-6 overflow-y-auto pb-6 pr-1">
               {/* Content */}
               {activeTab === "dashboard" && renderDashboardHome()}
+
+        {activeTab === "messages" && (
+          <div className="space-y-4">
+            <Card className="p-4">
+              <h3 className="text-base font-semibold text-slate-900">Messages</h3>
+              <p className="text-xs text-slate-500">
+                Student-wise Tiny Steps conversations
+              </p>
+            </Card>
+            <MessagesPanel embedded />
+          </div>
+        )}
 
         {activeTab === "insights" && (
           <div className="space-y-6">

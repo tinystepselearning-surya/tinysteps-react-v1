@@ -100,6 +100,7 @@ const ParentProfile = lazy(() => import('../pages/parent/Profile'));
 const ParentPayments = lazy(() => import('../pages/parent/Payments'));
 const KidsPortal = lazy(() => import('../pages/KidsPortal'));
 const LPDashboard = lazy(() => import('../pages/lp/LPDashboard'));
+const MessagesPage = lazy(() => import('../pages/messages/MessagesPage'));
 const KidsGamesHub = lazy(() => import('../pages/KidsGamesHub'));
 const KidsEnglishExcellence = lazy(() => import('../pages/KidsEnglishExcellence'));
 const KidsPhonicsLibrary = lazy(() => import('../pages/KidsPhonicsLibrary'));
@@ -154,9 +155,29 @@ import {
   trackBookDemoClick,
   trackConversionEvent,
 } from '../lib/conversionTracking';
-import { isProtectedAppRoute, normalizePathname, shouldShowPublicSupportWidgets } from '../utils/publicRouteGuards';
+import { isAuthEntryRoute, isProtectedAppRoute, normalizePathname, shouldShowPublicSupportWidgets } from '../utils/publicRouteGuards';
 const FloatingAssistant = lazy(() => import('../components/common/FloatingAssistant'));
 const routeLoaderFallback = <div className="px-6 py-10 text-sm text-gray-600">Loading…</div>;
+
+const isNativeCapacitorRuntime = () => {
+  if (typeof window === 'undefined') return false;
+
+  const cap = (window as any).Capacitor;
+  if (cap && typeof cap.isNativePlatform === 'function') {
+    try {
+      return Boolean(cap.isNativePlatform());
+    } catch {
+      // Ignore runtime bridge errors and fall back to protocol checks.
+    }
+  }
+
+  const protocol = window.location.protocol;
+  return protocol === 'capacitor:' || protocol === 'ionic:';
+};
+
+const rootLandingElement = isNativeCapacitorRuntime()
+  ? <Navigate to="/login" replace />
+  : <HomePage />;
 
 const ENGLISH_EXCELLENCE_SHELL_PATH = '/kids/games/english-excellence';
 
@@ -222,8 +243,10 @@ const Layout: FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const normalizedPath = normalizePathname(location.pathname);
-  const hideMarketingChrome = isProtectedAppRoute(normalizedPath);
-  const hideSupportWidgets = !shouldShowPublicSupportWidgets(normalizedPath);
+  const isNativeRuntime = isNativeCapacitorRuntime();
+  const hideNativeAuthChrome = isNativeRuntime && isAuthEntryRoute(normalizedPath);
+  const hideMarketingChrome = isProtectedAppRoute(normalizedPath) || hideNativeAuthChrome;
+  const hideSupportWidgets = !shouldShowPublicSupportWidgets(normalizedPath) || hideNativeAuthChrome;
   const isContactPage = normalizedPath === '/contact';
   const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
   const [showDeferredChrome, setShowDeferredChrome] = useState(false);
@@ -450,7 +473,7 @@ const router = createBrowserRouter(
       errorElement: <NotFoundPage />,
       children: [
         // ---------- Public marketing site ----------
-        { index: true, element: <HomePage /> },
+        { index: true, element: rootLandingElement },
         { path: 'blog', element: <BlogPage /> },
         { path: 'blog/phonics-for-parents-guide', element: <PhonicsForParentsResearchPage /> },
         { path: 'blog/week-1-phonics-satpin-launch', element: <Week1SatpinLaunchPage /> },
@@ -584,6 +607,16 @@ const router = createBrowserRouter(
         },
         { path: 'admin', element: <Navigate to="/surya/login" replace /> },
         { path: 'Surya', element: <Navigate to="/surya" replace /> },
+
+        // ---------- Internal messaging ----------
+        {
+          path: 'messages',
+          element: withRoleGate(['admin', 'teacher', 'parent', 'learningPartner'], '/login'),
+          children: [
+            { index: true, element: <MessagesPage /> },
+            { path: ':threadId', element: <MessagesPage /> },
+          ],
+        },
 
         // ---------- Teacher dashboard ----------
         {
