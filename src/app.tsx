@@ -1,7 +1,10 @@
 import React, { useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
+import { onAuthStateChanged } from 'firebase/auth';
 import router from './app/routes';
 import useRevealAnimations from './hooks/useRevealAnimations';
+import { auth } from './lib/firebaseConfig';
+import { registerNativePushNotifications } from './lib/pushNotifications';
 
 const isNativeCapacitorRuntime = () => {
   if (typeof window === 'undefined') return false;
@@ -21,6 +24,7 @@ const isNativeCapacitorRuntime = () => {
 
 function App() {
   useRevealAnimations();
+
   useEffect(() => {
     if (typeof document === 'undefined') return;
 
@@ -42,6 +46,18 @@ function App() {
     return () => {
       root.classList.remove('ts-capacitor-native');
     };
+  }, []);
+
+  useEffect(() => {
+    if (!isNativeCapacitorRuntime()) return;
+
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      const uid = firebaseUser?.uid?.trim();
+      if (!uid) return;
+      void registerNativePushNotifications(uid);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   return <RouterProvider router={router} />;

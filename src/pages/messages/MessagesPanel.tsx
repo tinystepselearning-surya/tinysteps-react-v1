@@ -437,6 +437,9 @@ export default function MessagesPanel({
 
   const showConversationList = !selectedThread;
   const showConversationDetail = Boolean(selectedThread);
+  const threadPaneHeightClass = embedded ? 'max-h-[52vh]' : 'max-h-[72vh]';
+  const detailPaneHeightClass = embedded ? 'h-[52vh] min-h-[360px]' : 'h-[72vh] min-h-[420px]';
+  const detailEmptyStateClass = embedded ? 'min-h-[360px]' : 'min-h-[420px]';
 
   return (
     <div className={embedded ? 'min-h-0 min-w-0 overflow-x-hidden pb-safe' : 'min-h-screen overflow-x-hidden bg-slate-50 pb-safe'}>
@@ -473,7 +476,7 @@ export default function MessagesPanel({
                 className="mt-2"
               />
             </div>
-            <div className="max-h-[72vh] overflow-y-auto p-2">
+            <div className={`${threadPaneHeightClass} overflow-y-auto p-2`}>
               {isThreadsLoading ? (
                 <div className="px-3 py-6 text-sm text-slate-500">Loading conversations…</div>
               ) : threadsError ? (
@@ -548,11 +551,11 @@ export default function MessagesPanel({
 
           <Card className={`min-w-0 overflow-hidden ${showConversationList ? 'lg:block hidden' : ''}`}>
             {!showConversationDetail ? (
-              <div className="flex min-h-[420px] items-center justify-center px-6 text-center text-sm text-slate-500">
+              <div className={`flex items-center justify-center px-6 text-center text-sm text-slate-500 ${detailEmptyStateClass}`}>
                 Select a conversation to view messages.
               </div>
             ) : (
-              <div className="flex h-[72vh] min-h-[420px] min-w-0 flex-col">
+              <div className={`flex min-w-0 flex-col ${detailPaneHeightClass}`}>
                 <div className="border-b border-slate-200 px-4 py-3">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
@@ -596,7 +599,12 @@ export default function MessagesPanel({
                   ) : messagesError ? (
                     <p className="text-sm text-red-600">{messagesError}</p>
                   ) : messages.length === 0 ? (
-                    <p className="text-sm text-slate-500">No messages yet.</p>
+                    <div className="rounded-xl border border-slate-200 bg-white px-4 py-4">
+                      <p className="text-sm font-medium text-slate-700">No messages yet.</p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Type your message below to start this conversation.
+                      </p>
+                    </div>
                   ) : (
                     messages.map((message) => {
                       const isOwn = Boolean(user?.uid && message.senderId === user.uid);
@@ -640,6 +648,15 @@ export default function MessagesPanel({
                     </p>
                   ) : (
                     <>
+                      <p className="pb-2 text-xs text-slate-500">
+                        {viewerRole === 'parent'
+                          ? 'Message your Teacher and Learning Partner here.'
+                          : viewerRole === 'teacher'
+                            ? 'Message the Parent and Learning Partner here.'
+                            : viewerRole === 'learningPartner'
+                              ? 'Message the Parent and Teacher here.'
+                              : 'Message participants here.'}
+                      </p>
                       <div className="flex items-center gap-2">
                         <Input
                           value={draft}

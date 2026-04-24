@@ -27,6 +27,8 @@ const FUNCTION_REGION_OVERRIDES: Record<string, string> = {
   adminUpdateDemoSessionDetails: 'asia-south1',
   createOrSyncMessageThread: 'asia-south1',
   syncMessageThreadsForActiveStudents: 'asia-south1',
+  registerNotificationToken: 'asia-south1',
+  sendTestPushNotification: 'asia-south1',
   createLessonAccessSession: 'asia-south1',
   resolveLessonAccessViewer: 'asia-south1',
   claimDemoSession: 'asia-south1',

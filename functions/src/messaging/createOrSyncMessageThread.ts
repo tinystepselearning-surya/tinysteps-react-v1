@@ -7,6 +7,16 @@ if (!admin.apps.length) {
 
 const REGION = 'asia-south1';
 const MAX_ID_LENGTH = 200;
+const ACTIVE_ENROLLMENT_STATUSES = new Set([
+  'active',
+  'trial',
+  'paused',
+  'pending_teacher',
+  'pending_payment',
+  'enrolled',
+  'current',
+  'ongoing',
+]);
 
 type AuthLike = {
   uid: string;
@@ -24,6 +34,20 @@ interface KidLikeDoc {
   studentName?: unknown;
   childName?: unknown;
   firstName?: unknown;
+  parentIds?: unknown;
+  parentId?: unknown;
+  primaryParentId?: unknown;
+  teacherId?: unknown;
+  teacherIds?: unknown;
+  assignedLPs?: unknown;
+  lpId?: unknown;
+}
+
+interface EnrollmentLikeDoc {
+  status?: unknown;
+  kidId?: unknown;
+  studentId?: unknown;
+  kidIds?: unknown;
   parentIds?: unknown;
   parentId?: unknown;
   primaryParentId?: unknown;
@@ -205,6 +229,129 @@ function resolveParticipantFields(kidData: KidLikeDoc) {
   };
 }
 
+function normalizeEnrollmentStatus(value: unknown): string {
+  return String(value || '').trim().toLowerCase();
+}
+
+function isActiveEnrollment(enrollment: EnrollmentLikeDoc): boolean {
+  const status = normalizeEnrollmentStatus(enrollment.status);
+  if (!status) return true;
+  return ACTIVE_ENROLLMENT_STATUSES.has(status);
+}
+
+function resolveKidIdsFromEnrollment(enrollment: EnrollmentLikeDoc): string[] {
+  return mergeUnique(
+    [asOptionalString(enrollment.kidId)].filter(Boolean) as string[],
+    [asOptionalString(enrollment.studentId)].filter(Boolean) as string[],
+    asStringList(enrollment.kidIds),
+  );
+}
+
+async function loadEnrollmentParticipantFields(
+  db: admin.firestore.Firestore,
+  kidId: string,
+) {
+  const [byKidIdSnap, byStudentIdSnap, byKidIdsSnap] = await Promise.all([
+    db
+      .collection('enrollments')
+      .where('kidId', '==', kidId)
+      .select(
+        'status',
+        'kidId',
+        'studentId',
+        'kidIds',
+        'parentId',
+        'parentIds',
+        'primaryParentId',
+        'teacherId',
+        'teacherIds',
+        'assignedLPs',
+        'lpId',
+      )
+      .get(),
+    db
+      .collection('enrollments')
+      .where('studentId', '==', kidId)
+      .select(
+        'status',
+        'kidId',
+        'studentId',
+        'kidIds',
+        'parentId',
+        'parentIds',
+        'primaryParentId',
+        'teacherId',
+        'teacherIds',
+        'assignedLPs',
+        'lpId',
+      )
+      .get(),
+    db
+      .collection('enrollments')
+      .where('kidIds', 'array-contains', kidId)
+      .select(
+        'status',
+        'kidId',
+        'studentId',
+        'kidIds',
+        'parentId',
+        'parentIds',
+        'primaryParentId',
+        'teacherId',
+        'teacherIds',
+        'assignedLPs',
+        'lpId',
+      )
+      .get(),
+  ]);
+
+  const parentIds: string[] = [];
+  const teacherIds: string[] = [];
+  const learningPartnerIds: string[] = [];
+  const seenEnrollmentIds = new Set<string>();
+
+  [byKidIdSnap, byStudentIdSnap, byKidIdsSnap].forEach((snapshot) => {
+    snapshot.docs.forEach((docSnap) => {
+      if (seenEnrollmentIds.has(docSnap.id)) return;
+      seenEnrollmentIds.add(docSnap.id);
+
+      const enrollment = (docSnap.data() || {}) as EnrollmentLikeDoc;
+      if (!isActiveEnrollment(enrollment)) return;
+
+      const enrollmentKidIds = resolveKidIdsFromEnrollment(enrollment);
+      if (enrollmentKidIds.length > 0 && !enrollmentKidIds.includes(kidId)) {
+        return;
+      }
+
+      parentIds.push(
+        ...mergeUnique(
+          asStringList(enrollment.parentIds),
+          [asOptionalString(enrollment.primaryParentId)].filter(Boolean) as string[],
+          [asOptionalString(enrollment.parentId)].filter(Boolean) as string[],
+        ),
+      );
+      teacherIds.push(
+        ...mergeUnique(
+          asStringList(enrollment.teacherIds),
+          [asOptionalString(enrollment.teacherId)].filter(Boolean) as string[],
+        ),
+      );
+      learningPartnerIds.push(
+        ...mergeUnique(
+          asStringList(enrollment.assignedLPs),
+          [asOptionalString(enrollment.lpId)].filter(Boolean) as string[],
+        ),
+      );
+    });
+  });
+
+  return {
+    parentIds: mergeUnique(parentIds),
+    teacherIds: mergeUnique(teacherIds),
+    learningPartnerIds: mergeUnique(learningPartnerIds),
+  };
+}
+
 async function loadMergedKidData(
   db: admin.firestore.Firestore,
   kidId: string,
@@ -296,15 +443,52 @@ export async function buildMessageThreadSyncPayload(
   db: admin.firestore.Firestore,
   kidId: string,
 ): Promise<MessageThreadSyncPayload> {
-  const mergedKidData = await loadMergedKidData(db, kidId);
-  const kidName = resolveKidName(mergedKidData);
+  const [mergedKidData, enrollmentParticipants] = await Promise.all([
+    loadMergedKidData(db, kidId),
+    loadEnrollmentParticipantFields(db, kidId),
+  ]);
+
+  const mergedWithEnrollment: KidLikeDoc = {
+    ...mergedKidData,
+    parentIds: mergeUnique(
+      asStringList(mergedKidData.parentIds),
+      [asOptionalString(mergedKidData.primaryParentId)].filter(Boolean) as string[],
+      [asOptionalString(mergedKidData.parentId)].filter(Boolean) as string[],
+      enrollmentParticipants.parentIds,
+    ),
+    parentId:
+      asOptionalString(mergedKidData.parentId) ||
+      asOptionalString(mergedKidData.primaryParentId) ||
+      enrollmentParticipants.parentIds[0] ||
+      null,
+    teacherIds: mergeUnique(
+      asStringList(mergedKidData.teacherIds),
+      [asOptionalString(mergedKidData.teacherId)].filter(Boolean) as string[],
+      enrollmentParticipants.teacherIds,
+    ),
+    teacherId:
+      asOptionalString(mergedKidData.teacherId) ||
+      enrollmentParticipants.teacherIds[0] ||
+      null,
+    assignedLPs: mergeUnique(
+      asStringList(mergedKidData.assignedLPs),
+      [asOptionalString(mergedKidData.lpId)].filter(Boolean) as string[],
+      enrollmentParticipants.learningPartnerIds,
+    ),
+    lpId:
+      asOptionalString(mergedKidData.lpId) ||
+      enrollmentParticipants.learningPartnerIds[0] ||
+      null,
+  };
+
+  const kidName = resolveKidName(mergedWithEnrollment);
   const {
     parentIds,
     teacherIds,
     teacherId,
     learningPartnerIds,
     participantIds,
-  } = resolveParticipantFields(mergedKidData);
+  } = resolveParticipantFields(mergedWithEnrollment);
   const participantMetadata = await resolveParticipantMetadata(
     db,
     parentIds,
