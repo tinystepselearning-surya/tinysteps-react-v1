@@ -18,7 +18,7 @@ export const LPHeader: FC<LPHeaderProps> = ({ name }) => {
     try {
       await signOut(auth);
       clearUser();
-      navigate('/learning-partner/login');
+      navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
     }

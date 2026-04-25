@@ -585,7 +585,7 @@ const router = createBrowserRouter(
         { path: 'learning-partner/login', element: <LoginPage /> },
         { path: 'learningpartner/login', element: <LoginPage /> }, // alias
 
-        { path: 'kid/login', element: <Navigate to="/parent/login" replace /> },
+        { path: 'kid/login', element: <Navigate to="/login" replace /> },
         { path: 'unauthorized', element: <UnauthorizedPage /> },
 
         ...devOnlyRoutes,
@@ -621,13 +621,13 @@ const router = createBrowserRouter(
         // ---------- Teacher dashboard ----------
         {
           path: 'teacher',
-          element: withRoleGate(['teacher'], '/teacher/login'),
+          element: withRoleGate(['teacher'], '/login'),
           children: teacherRouteChildren,
         },
         // Teacher routes with :teacherId param (supports sidebar links)
         {
           path: 'teacher/:teacherId',
-          element: withRoleGate(['teacher'], '/teacher/login'),
+          element: withRoleGate(['teacher'], '/login'),
           children: teacherRouteChildren,
         },
         // Legacy public /teachers URL should resolve to the canonical team page
@@ -636,7 +636,7 @@ const router = createBrowserRouter(
         // ---------- Parent dashboard + payments ----------
         {
           path: 'parent',
-          element: withRoleGate(['parent'], '/parent/login'),
+          element: withRoleGate(['parent'], '/login'),
           children: [
             { index: true, element: <ParentDashboard /> },
             { path: 'profile', element: <ParentProfile /> },
@@ -651,7 +651,7 @@ const router = createBrowserRouter(
         // ---------- Kids Portal (standalone, kid-friendly) ----------
         {
           path: 'kids',
-          element: withRoleGate(['kid', 'parent'], '/parent/login'),
+          element: withRoleGate(['kid', 'parent'], '/login'),
           children: [
             { index: true, loader: missionShellRedirectLoader },
             // Legacy kids shell paths retained as aliases only.
@@ -693,7 +693,7 @@ const router = createBrowserRouter(
         // ---------- Learning Partner dashboard ----------
         {
           path: 'learning-partner/dashboard',
-          element: withRoleGate(['learningPartner'], '/learning-partner/login'),
+          element: withRoleGate(['learningPartner'], '/login'),
           children: [{ index: true, element: <LPDashboard /> }],
         },
         { path: 'learningpartner', element: <Navigate to="/learning-partner" replace /> },

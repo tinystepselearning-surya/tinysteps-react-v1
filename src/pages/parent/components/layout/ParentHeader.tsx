@@ -20,7 +20,7 @@ export const ParentHeader: FC<ParentHeaderProps> = ({ name, totalChildren, onOpe
     try {
       await signOut(auth);
       clearUser();
-      navigate('/parent/login');
+      navigate('/login');
     } catch (error) {
       console.error('Logout error: ', error);
     }

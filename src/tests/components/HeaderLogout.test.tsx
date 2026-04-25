@@ -30,7 +30,7 @@ describe('Header logout', () => {
     mockNavigate.mockReset()
   })
 
-  it('redirects parent to parent login after logout', async () => {
+  it('redirects parent to generic login after logout', async () => {
   act(() => useAuthStore.setState({ user: { uid: 'u1', email: 'p@test.com', displayName: 'Parent', role: 'parent' }, clearUser: vi.fn() }))
     await act(async () => {
       render(
@@ -47,7 +47,7 @@ describe('Header logout', () => {
   await act(async () => {
     fireEvent.click(logoutButton!)
     // wait for async work (signOut -> clearUser -> navigate) to finish inside act
-    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/parent/login'))
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/login'))
   })
   })
 })

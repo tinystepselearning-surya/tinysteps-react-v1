@@ -2494,42 +2494,6 @@ export default function ParentDashboard() {
       .sort((a, b) => b.start.getTime() - a.start.getTime());
   }, [sortedClassSessions]);
 
-  const groupedUpcomingSessions = useMemo(() => {
-    const grouped: Record<string, { date: Date; rows: Array<{ session: KidSession; start: Date; status: string }> }> = {};
-    upcomingClassSessions.forEach((row) => {
-      const key = toYMD(row.start);
-      if (!grouped[key]) grouped[key] = { date: row.start, rows: [] };
-      grouped[key].rows.push(row);
-    });
-    return Object.entries(grouped)
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([, value]) => value);
-  }, [upcomingClassSessions]);
-
-  const groupedCompletedSessions = useMemo(() => {
-    const grouped: Record<string, { date: Date; rows: Array<{ session: KidSession; start: Date; status: string }> }> = {};
-    completedClassSessions.forEach((row) => {
-      const key = toYMD(row.start);
-      if (!grouped[key]) grouped[key] = { date: row.start, rows: [] };
-      grouped[key].rows.push(row);
-    });
-    return Object.entries(grouped)
-      .sort((a, b) => b[0].localeCompare(a[0]))
-      .map(([, value]) => value);
-  }, [completedClassSessions]);
-
-  const groupedRescheduledSessions = useMemo(() => {
-    const grouped: Record<string, { date: Date; rows: Array<{ session: KidSession; start: Date; status: string }> }> = {};
-    rescheduledClassSessions.forEach((row) => {
-      const key = toYMD(row.start);
-      if (!grouped[key]) grouped[key] = { date: row.start, rows: [] };
-      grouped[key].rows.push(row);
-    });
-    return Object.entries(grouped)
-      .sort((a, b) => b[0].localeCompare(a[0]))
-      .map(([, value]) => value);
-  }, [rescheduledClassSessions]);
-
   const classesCalendarMonthLabel = useMemo(() => {
     return classesCalendarMonth.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
   }, [classesCalendarMonth]);
@@ -3796,60 +3760,102 @@ export default function ParentDashboard() {
     !parentMonthlyBillingReadModelQuery.data &&
     (billingChargesQuery.isLoading || kidSessionsQuery.isLoading);
 
-  const renderParentSessionCard = (
-    row: { session: KidSession; start: Date; status: string },
-    includeDateLabel = false
-  ) => {
-    const { session, start, status } = row;
-    const canJoin =
+  const canJoinSession = (session: KidSession, status: string) => {
+    return (
       status !== "completed" &&
       status !== "cancelled" &&
       status !== "no_show" &&
       status !== "reschedule_requested" &&
       ((typeof session.joinUrl === "string" && session.joinUrl.trim().length > 0) ||
-        (typeof (session as any).meetingLink === "string" && String((session as any).meetingLink).trim().length > 0) ||
-        (typeof (session as any).enrollmentId === "string" && String((session as any).enrollmentId).trim().length > 0) ||
-        (typeof session.id === "string" && session.id.includes("_")));
+        (typeof (session as any).meetingLink === "string" &&
+          String((session as any).meetingLink).trim().length > 0) ||
+        (typeof (session as any).enrollmentId === "string" &&
+          String((session as any).enrollmentId).trim().length > 0) ||
+        (typeof session.id === "string" && session.id.includes("_")))
+    );
+  };
 
-    const dateLabel = start.toLocaleDateString("en-IN", {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-
+  const renderClassSessionsTable = (
+    rows: Array<{ session: KidSession; start: Date; status: string }>,
+    title: string,
+    emptyText: string
+  ) => {
+    const rowCount = rows.length;
     return (
-      <Card key={session.id} className="p-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                {formatSessionTimeRange(session)}
-              </span>
-              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${statusBadgeClass(status)}`}>
-                {statusLabel(status)}
-              </span>
-            </div>
-            <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-              {resolveSessionChildName(session)}
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {includeDateLabel ? `${dateLabel} · ` : ""}
-              {session.courseName ? `Course: ${session.courseName}` : "Course: —"}
-              {session.teacherName ? ` • Teacher: ${session.teacherName}` : ""}
-            </p>
-          </div>
-
-          <Button
-            type="button"
-            onClick={() => openJoinClass(session)}
-            disabled={!canJoin || joiningSessionId === session.id}
-            className="w-full md:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
-          >
-            {joiningSessionId === session.id ? "Opening…" : "Join Class"}
-            <ExternalLink className="ml-2 h-4 w-4" />
-          </Button>
+      <Card className="overflow-hidden">
+        <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</h3>
+          <span className="text-xs text-slate-500">
+            {rowCount} session{rowCount === 1 ? "" : "s"}
+          </span>
         </div>
+        {rows.length === 0 ? (
+          <div className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-300">
+            {emptyText}
+          </div>
+        ) : (
+          <div className="max-h-[62vh] overflow-auto [scrollbar-gutter:stable]">
+            <table className="min-w-[920px] w-full text-sm">
+              <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur dark:bg-slate-950/95">
+                <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800">
+                  <th className="px-4 py-2 text-left font-semibold">Date</th>
+                  <th className="px-4 py-2 text-left font-semibold">Time</th>
+                  <th className="px-4 py-2 text-left font-semibold">Child</th>
+                  <th className="px-4 py-2 text-left font-semibold">Course</th>
+                  <th className="px-4 py-2 text-left font-semibold">Status</th>
+                  <th className="px-4 py-2 text-right font-semibold">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => {
+                  const { session, start, status } = row;
+                  const canJoin = canJoinSession(session, status);
+                  const joining = joiningSessionId === session.id;
+                  return (
+                    <tr
+                      key={session.id}
+                      className="border-b border-slate-200 align-middle last:border-b-0 dark:border-slate-800"
+                    >
+                      <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
+                        {start.toLocaleDateString("en-IN", {
+                          weekday: "short",
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                        {formatSessionTimeRange(session)}
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                        {resolveSessionChildName(session)}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
+                        {session.courseName || "—"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${statusBadgeClass(status)}`}>
+                          {statusLabel(status)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => openJoinClass(session)}
+                          disabled={!canJoin || joining}
+                          className="h-8 bg-gradient-to-r from-indigo-600 to-purple-600 px-3 text-white hover:from-indigo-700 hover:to-purple-700"
+                        >
+                          {joining ? "Opening…" : "Join Class"}
+                          <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
     );
   };
@@ -4437,6 +4443,45 @@ export default function ParentDashboard() {
               <DialogTitle>Parent Menu</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
+              <div className="min-h-[92px] rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <TinyStepsBrand
+                    subtitle={null}
+                    className="min-w-0 flex-1 rounded-lg px-0 py-0 hover:bg-transparent"
+                    logoClassName="h-8 w-8"
+                    titleClassName="max-w-[130px] truncate whitespace-nowrap text-base"
+                  />
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setProfileOpen(true);
+                        setMobileMenuOpen(false);
+                      }}
+                      title="View profile"
+                      aria-label="View profile"
+                      className="h-8 w-8 rounded-full bg-slate-100/80 text-slate-900 ring-1 ring-slate-200 hover:bg-slate-200"
+                    >
+                      <CircleUser className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleLogout}
+                      title="Logout"
+                      aria-label="Logout"
+                      className="h-8 w-8 rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                    >
+                      <LogOut className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="mt-1 truncate bg-gradient-to-r from-violet-500 via-fuchsia-500 to-cyan-500 bg-clip-text text-base font-semibold text-transparent">
+                  Hi, {user?.displayName || "Parent"}
+                </div>
+              </div>
+
               <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   Active Child
@@ -4514,27 +4559,50 @@ export default function ParentDashboard() {
                   );
                 })}
               </nav>
-
-              <Button
-                type="button"
-                variant="outline"
-                className="mt-3 w-full justify-start gap-2"
-                onClick={() => {
-                  setTab("messages");
-                  setMobileMenuOpen(false);
-                }}
-              >
-                <MessageSquare className="h-4 w-4" />
-                Messages
-              </Button>
             </div>
           </DialogContent>
         </Dialog>
 
         <div className="flex h-full min-h-0 flex-col gap-6 pb-24 lg:flex-row lg:pb-0">
-          <aside className="hidden w-full lg:block lg:w-72 lg:sticky lg:top-6 lg:self-start">
+          <aside className="hidden w-full shrink-0 lg:sticky lg:top-6 lg:block lg:w-72 lg:self-start">
             <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900 shadow-sm overflow-hidden">
               <div className="px-4 pb-4 pt-3 space-y-4">
+                <div className="min-h-[92px] rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                  <div className="flex items-start justify-between gap-2">
+                    <TinyStepsBrand
+                      subtitle={null}
+                      className="min-w-0 flex-1 rounded-lg px-0 py-0 hover:bg-transparent"
+                      logoClassName="h-8 w-8"
+                      titleClassName="max-w-[130px] truncate whitespace-nowrap text-base"
+                    />
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setProfileOpen(true)}
+                        title="View profile"
+                        aria-label="View profile"
+                        className="h-8 w-8 rounded-full bg-slate-100/80 text-slate-900 ring-1 ring-slate-200 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700 dark:hover:bg-slate-700"
+                      >
+                        <CircleUser className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleLogout}
+                        title="Logout"
+                        aria-label="Logout"
+                        className="h-8 w-8 rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                      >
+                        <LogOut className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="mt-1 truncate bg-gradient-to-r from-violet-500 via-fuchsia-500 to-cyan-500 bg-clip-text text-base font-semibold text-transparent">
+                    Hi, {user?.displayName || "Parent"}
+                  </div>
+                </div>
+
                 <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/40 p-3">
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -4616,72 +4684,22 @@ export default function ParentDashboard() {
                     );
                   })}
                 </nav>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full justify-start gap-2"
-                  onClick={() => setTab("messages")}
-                >
-                  <MessageSquare className="h-4 w-4" />
-                  Messages
-                </Button>
-
-                <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 text-xs text-slate-500 dark:text-slate-400">
-                  <div className="font-semibold text-slate-700 dark:text-slate-200 mb-1">
-                    Confidence at a glance
-                  </div>
-                  Clear milestones, upcoming classes, and payments together.
-                </div>
               </div>
             </div>
           </aside>
 
-          <main className="flex min-h-0 flex-1 flex-col">
+          <main className="flex min-h-0 min-w-0 flex-1 flex-col">
             <div className="sticky top-0 z-30 bg-slate-50/90 backdrop-blur dark:bg-slate-950/80 pt-safe">
-              <header className="rounded-[24px] border border-slate-200 bg-white/92 px-3 py-2.5 sm:px-4 sm:py-3 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur sm:px-6 dark:border-slate-800 dark:bg-slate-900">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-4">
-                    <TinyStepsBrand subtitle="Parent Workspace" />
-                    <h1 className="truncate bg-gradient-to-r from-violet-500 via-fuchsia-500 to-cyan-500 bg-clip-text text-xl font-semibold tracking-tight text-transparent sm:text-2xl">
-                      Hi, {user?.displayName || "Parent"}
-                    </h1>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setMobileMenuOpen(true)}
-                      className="lg:hidden"
-                      aria-label="Open menu"
-                    >
-                      <Menu className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setProfileOpen(true)}
-                      title="View profile"
-                      aria-label="View profile"
-                      className="h-10 w-10 rounded-full bg-slate-100/80 text-slate-900 ring-1 ring-slate-200 hover:bg-slate-200 dark:bg-slate-800/70 dark:text-slate-100 dark:ring-slate-700 dark:hover:bg-slate-700"
-                    >
-                      <CircleUser className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleLogout}
-                      title="Logout"
-                      aria-label="Logout"
-                      className="h-10 w-10 rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-                    >
-                      <LogOut className="h-5 w-5" />
-                    </Button>
-                  </div>
-                </div>
-              </header>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-2 lg:hidden"
+                onClick={() => setMobileMenuOpen(true)}
+              >
+                <Menu className="h-4 w-4" />
+                Menu
+              </Button>
             </div>
 
             <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
@@ -4693,7 +4711,7 @@ export default function ParentDashboard() {
               </DialogContent>
             </Dialog>
 
-            <div className="mt-4 min-h-0 space-y-6 overflow-y-auto pb-6 pr-1">
+            <div className="mt-4 min-h-0 space-y-6 overflow-y-auto [scrollbar-gutter:stable] pb-6 pr-1">
               {/* Content */}
               {activeTab === "dashboard" && renderDashboardHome()}
 
@@ -5427,109 +5445,13 @@ export default function ParentDashboard() {
                 Loading sessions…
               </Card>
             ) : classesView === "today" ? (
-              <Card className="p-6">
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                    Today&apos;s Sessions
-                  </h3>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
-                    {todayClassSessions.length} session{todayClassSessions.length === 1 ? "" : "s"}
-                  </span>
-                </div>
-                {todayClassSessions.length === 0 ? (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
-                    No sessions scheduled for today.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {todayClassSessions.map((row) => renderParentSessionCard(row, true))}
-                  </div>
-                )}
-              </Card>
+              renderClassSessionsTable(todayClassSessions, "Today's Sessions", "No sessions scheduled for today.")
             ) : classesView === "upcoming" ? (
-              <div className="space-y-4">
-                {groupedUpcomingSessions.length === 0 ? (
-                  <Card className="p-6 text-center text-sm text-slate-500 dark:text-slate-300">
-                    No upcoming sessions scheduled.
-                  </Card>
-                ) : (
-                  groupedUpcomingSessions.map((group) => (
-                    <Card key={toYMD(group.date)} className="p-6">
-                      <div className="mb-3 flex items-center justify-between">
-                        <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                          {group.date.toLocaleDateString("en-IN", {
-                            weekday: "long",
-                            day: "numeric",
-                            month: "long",
-                          })}
-                        </h3>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
-                          {group.rows.length} session{group.rows.length === 1 ? "" : "s"}
-                        </span>
-                      </div>
-                      <div className="space-y-3">
-                        {group.rows.map((row) => renderParentSessionCard(row, true))}
-                      </div>
-                    </Card>
-                  ))
-                )}
-              </div>
+              renderClassSessionsTable(upcomingClassSessions, "Upcoming Sessions", "No upcoming sessions scheduled.")
             ) : classesView === "completed" ? (
-              <div className="space-y-4">
-                {groupedCompletedSessions.length === 0 ? (
-                  <Card className="p-6 text-center text-sm text-slate-500 dark:text-slate-300">
-                    No completed sessions yet.
-                  </Card>
-                ) : (
-                  groupedCompletedSessions.map((group) => (
-                    <Card key={toYMD(group.date)} className="p-6">
-                      <div className="mb-3 flex items-center justify-between">
-                        <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                          {group.date.toLocaleDateString("en-IN", {
-                            weekday: "long",
-                            day: "numeric",
-                            month: "long",
-                          })}
-                        </h3>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
-                          {group.rows.length} session{group.rows.length === 1 ? "" : "s"}
-                        </span>
-                      </div>
-                      <div className="space-y-3">
-                        {group.rows.map((row) => renderParentSessionCard(row, true))}
-                      </div>
-                    </Card>
-                  ))
-                )}
-              </div>
+              renderClassSessionsTable(completedClassSessions, "Completed Sessions", "No completed sessions yet.")
             ) : classesView === "rescheduled" ? (
-              <div className="space-y-4">
-                {groupedRescheduledSessions.length === 0 ? (
-                  <Card className="p-6 text-center text-sm text-slate-500 dark:text-slate-300">
-                    No rescheduled sessions.
-                  </Card>
-                ) : (
-                  groupedRescheduledSessions.map((group) => (
-                    <Card key={toYMD(group.date)} className="p-6">
-                      <div className="mb-3 flex items-center justify-between">
-                        <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                          {group.date.toLocaleDateString("en-IN", {
-                            weekday: "long",
-                            day: "numeric",
-                            month: "long",
-                          })}
-                        </h3>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
-                          {group.rows.length} session{group.rows.length === 1 ? "" : "s"}
-                        </span>
-                      </div>
-                      <div className="space-y-3">
-                        {group.rows.map((row) => renderParentSessionCard(row, true))}
-                      </div>
-                    </Card>
-                  ))
-                )}
-              </div>
+              renderClassSessionsTable(rescheduledClassSessions, "Rescheduled Sessions", "No rescheduled sessions.")
             ) : classesView === "worksheets" ? (
               <Card className="p-6">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-2">

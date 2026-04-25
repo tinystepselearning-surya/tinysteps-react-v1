@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "vite",
     "build": "npm run gen:sitemaps && vite build && node scripts/prerender.mjs && node scripts/write-indexnow-key.mjs",
-    "prebuild": "npm run check:shadowing",
+    "prebuild": "npm run check:shadowing && node scripts/generate-rss.mjs",
+    "generate:rss": "node scripts/generate-rss.mjs",
     "check:shadowing": "node scripts/check-shadowing.mjs",
     "preview": "vite preview",
     "gen:sitemaps": "node scripts/generate-sitemaps.js",

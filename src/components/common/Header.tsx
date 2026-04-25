@@ -69,19 +69,9 @@ export default function Header() {
       console.error('Error signing out of Firebase', error);
     }
 
-    const currentRole = user?.role;
     clearUser();
-
-    const loginMap: Record<string, string> = {
-      admin: '/surya/login',
-      teacher: '/teacher/login',
-      parent: '/parent/login',
-      learningPartner: '/learning-partner/login',
-      kid: '/parent/login',
-    };
-
-    navigate(currentRole ? loginMap[currentRole] || '/login' : '/login');
-  }, [clearUser, navigate, user?.role]);
+    navigate('/login');
+  }, [clearUser, navigate]);
 
   const handleBookAssessment = useCallback(() => {
     const params = new URLSearchParams(location.search);

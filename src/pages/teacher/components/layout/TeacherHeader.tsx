@@ -35,7 +35,7 @@ const TeacherHeaderComponent: FC<TeacherHeaderProps> = ({
     try {
       await signOut(auth);
       clearUser();
-      navigate('/teacher/login');
+      navigate('/login');
     } catch (err) {
       console.error('Logout failed', err);
     }
