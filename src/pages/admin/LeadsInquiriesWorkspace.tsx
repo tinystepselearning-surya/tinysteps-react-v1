@@ -841,6 +841,126 @@ const formatFollowUpCallStatus = (status?: DemoFollowUpCallStatus | null): strin
   return status.charAt(0).toUpperCase() + status.slice(1);
 };
 
+const toIsoTimestamp = (value: unknown): string => {
+  const ms = toMs(value);
+  if (!ms) return '';
+  return new Date(ms).toISOString();
+};
+
+const toCsvCell = (value: unknown): string => {
+  const text = (value == null ? '' : String(value))
+    .replace(/\r\n/g, ' | ')
+    .replace(/[\r\n]+/g, ' | ');
+  if (/[",\n\r]/.test(text)) {
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+  return text;
+};
+
+const buildCsvFileTimestamp = (): string => {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const hh = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  const ss = String(now.getSeconds()).padStart(2, '0');
+  return `${yyyy}${mm}${dd}-${hh}${min}${ss}`;
+};
+
+const buildDemoExportCsv = (sessions: DemoSession[], phoneMap: Record<string, string>): string => {
+  const headers = [
+    'demoId',
+    'leadId',
+    'status',
+    'conversionStatus',
+    'outcome',
+    'parentName',
+    'parentPhone',
+    'childName',
+    'childGrade',
+    'childAge',
+    'courseInterested',
+    'source',
+    'demoMode',
+    'requestReceivedDate',
+    'preferredDateTimeText',
+    'timezone',
+    'assignedTeacherName',
+    'assignedTeacherId',
+    'teacherConfirmedDate',
+    'teacherConfirmedTime',
+    'teacherRemarks',
+    'teacherRecommendation',
+    'recommendedNextStep',
+    'recommendedCourse',
+    'recommendedClassType',
+    'recommendedFrequency',
+    'feeDiscussed',
+    'followUpDate',
+    'followUpCallStatus',
+    'followUpCallCompletedAt',
+    'admissionNotConfirmedReason',
+    'rescheduledFromDemoId',
+    'rescheduledToDemoId',
+    'adminNotes',
+    'createdAt',
+    'lastUpdatedAt',
+    'completedAt',
+    'createdBy',
+    'lastUpdatedBy',
+  ];
+
+  const lines = [headers.join(',')];
+
+  sessions.forEach((session) => {
+    const row = [
+      session.id,
+      normalizeText((session as { leadId?: string | null }).leadId),
+      normalizeText(normalizeDemoStatus(session.status) || session.status),
+      normalizeText(session.conversionStatus),
+      normalizeText(session.outcome),
+      normalizeText(session.parentName),
+      normalizeText(phoneMap[session.id]),
+      normalizeText(session.childName),
+      normalizeText(session.childGrade),
+      typeof session.childAge === 'number' ? session.childAge : '',
+      normalizeText(session.courseInterested),
+      normalizeText(session.source),
+      normalizeText(session.demoMode),
+      normalizeText(session.requestReceivedDate),
+      normalizeText(session.preferredDateTimeText),
+      normalizeText(session.timezone),
+      normalizeText(session.assignedTeacherName),
+      normalizeText(session.assignedTeacherId),
+      normalizeText(session.teacherConfirmedDate),
+      normalizeText(session.teacherConfirmedTime),
+      normalizeText(session.teacherRemarks),
+      normalizeText(session.teacherRecommendation),
+      normalizeText(session.recommendedNextStep),
+      normalizeText(session.recommendedCourse),
+      normalizeText(session.recommendedClassType),
+      normalizeText(session.recommendedFrequency),
+      normalizeText(session.feeDiscussed),
+      normalizeText(session.followUpDate),
+      normalizeText(session.followUpCallStatus),
+      normalizeText(session.followUpCallCompletedAt),
+      normalizeText(session.admissionNotConfirmedReason),
+      normalizeText(session.rescheduledFromDemoId),
+      normalizeText(session.rescheduledToDemoId),
+      normalizeText(session.adminNotes),
+      toIsoTimestamp(session.createdAt),
+      toIsoTimestamp(session.lastUpdatedAt),
+      toIsoTimestamp(session.completedAt),
+      normalizeText(session.createdBy),
+      normalizeText(session.lastUpdatedBy),
+    ];
+    lines.push(row.map(toCsvCell).join(','));
+  });
+
+  return lines.join('\n');
+};
+
 const getTeacherResponseItems = (demo: DemoSession | null): Array<{ label: string; value: string }> => {
   if (!demo) return [];
   const items: Array<{ label: string; value: string }> = [];
@@ -1350,6 +1470,10 @@ export default function LeadsInquiriesWorkspace({
   ]);
 
   const visibleRows = useMemo(() => filteredRows.slice(0, leadsPageSize), [filteredRows, leadsPageSize]);
+  const visibleDemoSessions = useMemo(
+    () => visibleRows.map((row) => row.demo).filter((session): session is DemoSession => Boolean(session)),
+    [visibleRows],
+  );
   const conversionTeacherResponses = useMemo(
     () => getTeacherResponseItems(conversionTarget?.demo || null),
     [conversionTarget?.demo],
@@ -1452,6 +1576,49 @@ export default function LeadsInquiriesWorkspace({
     setDemoRequestLeadId(null);
     setDemoRequestForm(buildInitialDemoRequestForm());
     setDemoRequestDialogOpen(true);
+  };
+
+  const handleExportDemoCsv = (scope: 'filtered' | 'all') => {
+    const sessions = scope === 'filtered' ? visibleDemoSessions : demos;
+    if (!sessions.length) {
+      toast({
+        title: 'No demos to export',
+        description:
+          scope === 'filtered'
+            ? 'No demo sessions match the current filters.'
+            : 'No demo sessions are available yet.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      toast({
+        title: 'CSV export unavailable',
+        description: 'Please try from a browser session.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const csv = buildDemoExportCsv(sessions, demoPhoneMap);
+    const suffix = scope === 'filtered' ? 'filtered' : 'all';
+    const filename = `demo-sessions-${suffix}-${buildCsvFileTimestamp()}.csv`;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.style.display = 'none';
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    window.URL.revokeObjectURL(url);
+
+    toast({
+      title: 'CSV exported',
+      description: `${sessions.length} demo session${sessions.length === 1 ? '' : 's'} exported.`,
+    });
   };
 
   const openLeadDialog = (lead?: LeadRecord | null) => {
@@ -2451,6 +2618,21 @@ export default function LeadsInquiriesWorkspace({
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button type="button" size="sm" variant="outline">
+                  Export CSV
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => handleExportDemoCsv('filtered')}>
+                  Export Current Page Demos ({visibleDemoSessions.length})
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => handleExportDemoCsv('all')}>
+                  Export All Demos ({demos.length})
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button type="button" size="sm" variant="outline" onClick={() => openLeadDialog()}>
               Add Lead
             </Button>
