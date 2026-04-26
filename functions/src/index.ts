@@ -127,7 +127,7 @@ export { whatsappWebhookV2 } from './whatsappWebhook';
 
 // Internal messaging
 export { createOrSyncMessageThread } from './messaging/createOrSyncMessageThread';
-export { sendMessage } from './messaging/sendMessage';
+export { sendMessage, markMessageThreadRead } from './messaging/sendMessage';
 export { syncMessageThreadsForActiveStudents } from './messaging/syncMessageThreadsForActiveStudents';
 export {
   onEnrollmentMessageThreadAutoSync,

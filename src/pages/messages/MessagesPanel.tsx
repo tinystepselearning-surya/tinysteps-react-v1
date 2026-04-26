@@ -9,7 +9,7 @@ import callFunction from '../../lib/callFunctions';
 import { isSuperUserEmail } from '../../constants/accessControl';
 import { useAuthStore } from '../../store/useAuthStore';
 import useMessageThreads, { type MessageThread } from '../../hooks/useMessageThreads';
-import useThreadMessages from '../../hooks/useThreadMessages';
+import useThreadMessages, { type ThreadMessage } from '../../hooks/useThreadMessages';
 
 type UserLabel = {
   displayName: string;
@@ -21,6 +21,7 @@ type ParticipantRole = 'parent' | 'teacher' | 'learningPartner';
 
 const MAX_USER_IDS_PER_QUERY = 10;
 const HIDDEN_BY_SAFETY_FILTER = 'Message hidden by safety filter';
+const READ_RECEIPT_TOLERANCE_MS = 2000;
 
 const asString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
@@ -118,6 +119,71 @@ const getUnreadCount = (thread: MessageThread, userId: string | undefined) => {
   return Number.isFinite(count) ? count : 0;
 };
 
+type ReadReceiptState = {
+  readByOther: boolean;
+  messageCreatedAtMs: number | null;
+  candidateReaderCount: number;
+  maxOtherReadAtMs: number | null;
+};
+
+const getReadReceiptState = (
+  thread: MessageThread,
+  message: ThreadMessage,
+  currentUserId: string | undefined,
+): ReadReceiptState => {
+  if (!currentUserId || message.senderId !== currentUserId) {
+    return {
+      readByOther: false,
+      messageCreatedAtMs: null,
+      candidateReaderCount: 0,
+      maxOtherReadAtMs: null,
+    };
+  }
+
+  const messageMs = Number(message.createdAtMs);
+  if (!Number.isFinite(messageMs) || messageMs <= 0) {
+    return {
+      readByOther: false,
+      messageCreatedAtMs: null,
+      candidateReaderCount: 0,
+      maxOtherReadAtMs: null,
+    };
+  }
+
+  const candidateReaderIds = dedupeIds([
+    ...thread.participantIds,
+    ...thread.parentIds,
+    ...thread.teacherIds,
+    ...thread.learningPartnerIds,
+    ...Object.keys(thread.lastReadAtByUser),
+  ]).filter((participantId) => {
+    const normalizedParticipantId = asString(participantId);
+    return Boolean(normalizedParticipantId && normalizedParticipantId !== message.senderId);
+  });
+
+  let maxOtherReadAtMs: number | null = null;
+  const readByOther = candidateReaderIds.some((participantId) => {
+    const normalizedParticipantId = asString(participantId);
+    if (!normalizedParticipantId) return false;
+
+    const lastReadMs = Number(thread.lastReadAtByUser[normalizedParticipantId] || 0);
+    if (!Number.isFinite(lastReadMs) || lastReadMs <= 0) return false;
+
+    if (maxOtherReadAtMs === null || lastReadMs > maxOtherReadAtMs) {
+      maxOtherReadAtMs = lastReadMs;
+    }
+
+    return lastReadMs + READ_RECEIPT_TOLERANCE_MS >= messageMs;
+  });
+
+  return {
+    readByOther,
+    messageCreatedAtMs: messageMs,
+    candidateReaderCount: candidateReaderIds.length,
+    maxOtherReadAtMs,
+  };
+};
+
 const getParticipantHint = (viewerRole: SupportedRole): string => {
   if (viewerRole === 'parent') return 'Teacher • Learning Partner';
   if (viewerRole === 'teacher') return 'Parent • Learning Partner';
@@ -198,6 +264,10 @@ export default function MessagesPanel({
   const [sendError, setSendError] = useState<string | null>(null);
   const [userLabels, setUserLabels] = useState<Record<string, UserLabel>>({});
   const listEndRef = useRef<HTMLDivElement | null>(null);
+  const markReadInFlightRef = useRef<Set<string>>(new Set());
+  const lastSelectedThreadIdRef = useRef<string | null>(null);
+  const lastIncomingMessageIdByThreadRef = useRef<Record<string, string>>({});
+  const readReceiptDebugKeyRef = useRef<Set<string>>(new Set());
 
   const isAdmin = Boolean(
     user &&
@@ -235,16 +305,81 @@ export default function MessagesPanel({
     () => threads.find((thread) => thread.id === selectedThreadId) || null,
     [selectedThreadId, threads],
   );
+  const selectedThreadUnread = selectedThread
+    ? getUnreadCount(selectedThread, user?.uid)
+    : 0;
+  const { messages, isLoading: isMessagesLoading, error: messagesError } = useThreadMessages(
+    selectedThread?.id || null,
+  );
+  const latestIncomingMessageId = useMemo(() => {
+    const currentUserId = user?.uid;
+    if (!currentUserId) return null;
+
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      const message = messages[index];
+      if (asString(message.senderId) && message.senderId !== currentUserId) {
+        return message.id;
+      }
+    }
+
+    return null;
+  }, [messages, user?.uid]);
+
+  useEffect(() => {
+    const threadId = selectedThread?.id;
+    const userId = user?.uid;
+
+    if (!threadId) {
+      lastSelectedThreadIdRef.current = null;
+      return;
+    }
+    if (!userId || isAdmin) return;
+
+    const isNewSelection = lastSelectedThreadIdRef.current !== threadId;
+    if (isNewSelection) {
+      lastSelectedThreadIdRef.current = threadId;
+    }
+    const previousIncomingId = lastIncomingMessageIdByThreadRef.current[threadId] || '';
+    const isNewIncomingMessage = Boolean(
+      latestIncomingMessageId && latestIncomingMessageId !== previousIncomingId,
+    );
+    if (latestIncomingMessageId) {
+      lastIncomingMessageIdByThreadRef.current[threadId] = latestIncomingMessageId;
+    }
+
+    const shouldMarkRead = isNewSelection || selectedThreadUnread > 0 || isNewIncomingMessage;
+    if (!shouldMarkRead) return;
+    if (markReadInFlightRef.current.has(threadId)) return;
+
+    markReadInFlightRef.current.add(threadId);
+    if (import.meta.env.DEV) {
+      const reason = isNewSelection
+        ? 'thread-open'
+        : isNewIncomingMessage
+          ? 'incoming-message'
+          : 'unread-count';
+      console.info('[messages] mark-read:called', { threadId, reason });
+    }
+    void callFunction<{ ok: boolean; updated: boolean }, { threadId: string }>(
+      'markMessageThreadRead',
+      { threadId },
+    )
+      .catch((error) => {
+        console.warn('[messages] markMessageThreadRead failed', {
+          threadId,
+          message: error instanceof Error ? error.message : String(error),
+        });
+      })
+      .finally(() => {
+        markReadInFlightRef.current.delete(threadId);
+      });
+  }, [isAdmin, latestIncomingMessageId, selectedThread?.id, selectedThreadUnread, user?.uid]);
 
   const filteredThreads = useMemo(() => {
     const queryText = threadSearch.trim().toLowerCase();
     if (!queryText) return threads;
     return threads.filter((thread) => resolveThreadTitle(thread).toLowerCase().includes(queryText));
   }, [threadSearch, threads]);
-
-  const { messages, isLoading: isMessagesLoading, error: messagesError } = useThreadMessages(
-    selectedThread?.id || null,
-  );
 
   const selectedRoleIds = useMemo(
     () => (selectedThread ? getRoleIds(selectedThread) : { parentIds: [], teacherIds: [], learningPartnerIds: [] }),
@@ -608,10 +743,44 @@ export default function MessagesPanel({
                   ) : (
                     messages.map((message) => {
                       const isOwn = Boolean(user?.uid && message.senderId === user.uid);
+                      const readReceiptState =
+                        isOwn && selectedThread
+                          ? getReadReceiptState(selectedThread, message, user?.uid)
+                          : {
+                              readByOther: false,
+                              messageCreatedAtMs: null,
+                              candidateReaderCount: 0,
+                              maxOtherReadAtMs: null,
+                            };
+                      const isReadByAnyOther = readReceiptState.readByOther;
                       const sender = resolveSenderMeta(message.senderId);
                       const senderMeta = sender.roleLabel && sender.displayName !== sender.roleLabel
                         ? `${sender.displayName} • ${sender.roleLabel}`
                         : sender.displayName;
+
+                      if (import.meta.env.DEV && isOwn && selectedThread) {
+                        const debugKey = [
+                          selectedThread.id,
+                          message.id,
+                          readReceiptState.readByOther ? '1' : '0',
+                          String(readReceiptState.maxOtherReadAtMs || 0),
+                        ].join(':');
+                        if (!readReceiptDebugKeyRef.current.has(debugKey)) {
+                          readReceiptDebugKeyRef.current.add(debugKey);
+                          if (readReceiptDebugKeyRef.current.size > 1000) {
+                            readReceiptDebugKeyRef.current.clear();
+                          }
+                          console.info('[messages] read-receipt:debug', {
+                            threadId: selectedThread.id,
+                            messageId: message.id,
+                            isMine: isOwn,
+                            messageCreatedAtMs: readReceiptState.messageCreatedAtMs,
+                            candidateReaderCount: readReceiptState.candidateReaderCount,
+                            maxOtherReadAtMs: readReceiptState.maxOtherReadAtMs,
+                            readByOther: readReceiptState.readByOther,
+                          });
+                        }
+                      }
 
                       return (
                         <div key={message.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
@@ -633,6 +802,11 @@ export default function MessagesPanel({
                             <p className={`mt-1 text-[11px] ${isOwn ? 'text-slate-300' : 'text-slate-400'}`}>
                               {toShortTime(message.createdAtMs)}
                             </p>
+                            {isOwn && isReadByAnyOther && (
+                              <p className="mt-1 text-[11px] text-slate-300">
+                                Read
+                              </p>
+                            )}
                           </div>
                         </div>
                       );

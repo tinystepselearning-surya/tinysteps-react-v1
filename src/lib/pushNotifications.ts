@@ -1,11 +1,16 @@
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
+import { toast } from '../components/hooks/use-toast';
 import { callFunction } from './callFunctions';
 
 const TOKEN_TIMEOUT_MS = 15_000;
 const PERMISSION_PROMPT_KEY_PREFIX = 'ts_push_permission_prompted_v1:';
 const LAST_TOKEN_KEY_PREFIX = 'ts_push_last_token_v1:';
+const PENDING_PUSH_OPEN_KEY = 'ts_pending_push_open_v1';
+const ANDROID_MESSAGES_CHANNEL_ID = 'messages';
+
+export const OPEN_MESSAGES_FROM_PUSH_EVENT = 'tinysteps:open-messages-from-push';
 
 type SupportedPlatform = 'ios' | 'android' | 'web';
 
@@ -17,6 +22,11 @@ type RegisterNotificationTokenPayload = {
 };
 
 type PushPermissionReceiveState = 'granted' | 'denied' | 'prompt' | string;
+type PendingPushOpenPayload = {
+  route: string;
+  threadId: string | null;
+  createdAtMs: number;
+};
 
 let listenersInitialized = false;
 let listenersInitPromise: Promise<void> | null = null;
@@ -68,6 +78,98 @@ const writeLocal = (key: string, value: string) => {
   }
 };
 
+const asOptionalString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+};
+
+const asRecord = (value: unknown): Record<string, unknown> => {
+  if (!value) return {};
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === 'object') {
+        return parsed as Record<string, unknown>;
+      }
+      return {};
+    } catch {
+      return {};
+    }
+  }
+  if (typeof value !== 'object') return {};
+  return value as Record<string, unknown>;
+};
+
+const normalizePushRoute = (value: unknown): string => {
+  const route = asOptionalString(value);
+  if (!route || !route.startsWith('/')) return '/messages';
+  return route;
+};
+
+const isMessagePush = (value: unknown): boolean =>
+  String(value || '').trim().toLowerCase() === 'message';
+
+export const queuePendingPushOpenRoute = (route: string, threadId?: string) => {
+  const payload: PendingPushOpenPayload = {
+    route: normalizePushRoute(route),
+    threadId: asOptionalString(threadId) || null,
+    createdAtMs: Date.now(),
+  };
+
+  try {
+    localStorage.setItem(PENDING_PUSH_OPEN_KEY, JSON.stringify(payload));
+  } catch {
+    // Ignore storage failures.
+  }
+};
+
+export const consumePendingPushOpenRoute = (): PendingPushOpenPayload | null => {
+  try {
+    const raw = localStorage.getItem(PENDING_PUSH_OPEN_KEY);
+    if (!raw) return null;
+    localStorage.removeItem(PENDING_PUSH_OPEN_KEY);
+    const data = asRecord(JSON.parse(raw));
+    const route = normalizePushRoute(data.route);
+    const threadId = asOptionalString(data.threadId) || null;
+    const createdAtMs = Number(data.createdAtMs);
+    return {
+      route,
+      threadId,
+      createdAtMs: Number.isFinite(createdAtMs) ? createdAtMs : Date.now(),
+    };
+  } catch {
+    return null;
+  }
+};
+
+const dispatchOpenMessagesEvent = (route: string, threadId?: string) => {
+  if (typeof window === 'undefined') return;
+
+  const normalizedRoute = normalizePushRoute(route);
+  const normalizedThreadId = asOptionalString(threadId) || null;
+  const detail = {
+    route: normalizedRoute,
+    threadId: normalizedThreadId,
+  };
+
+  try {
+    if (typeof CustomEvent !== 'function') {
+      queuePendingPushOpenRoute(normalizedRoute, normalizedThreadId || undefined);
+      return;
+    }
+
+    window.dispatchEvent(
+      new CustomEvent(OPEN_MESSAGES_FROM_PUSH_EVENT, {
+        detail,
+      }),
+    );
+  } catch (error) {
+    console.warn('[push] unable to dispatch open-messages event', error);
+    queuePendingPushOpenRoute(normalizedRoute, normalizedThreadId || undefined);
+  }
+};
+
 const resolvePlatform = (): SupportedPlatform => {
   const platform = String(Capacitor.getPlatform?.() || '').toLowerCase();
   if (platform === 'ios' || platform === 'android' || platform === 'web') {
@@ -91,34 +193,91 @@ const ensurePushListeners = async () => {
 
   listenersInitPromise = (async () => {
     await PushNotifications.addListener('registration', (token) => {
-      const value = typeof token?.value === 'string' ? token.value.trim() : '';
-      if (!value) {
-        if (rejectToken) {
-          rejectToken(new Error('Push registration returned an empty token'));
+      try {
+        const value = typeof token?.value === 'string' ? token.value.trim() : '';
+        if (!value) {
+          if (rejectToken) {
+            rejectToken(new Error('Push registration returned an empty token'));
+            clearTokenWaiter();
+          }
+          return;
+        }
+
+        logPush('token:received', { platform: resolvePlatform() });
+        if (resolveToken) {
+          resolveToken(value);
           clearTokenWaiter();
         }
-        return;
-      }
-
-      logPush('token:received', { platform: resolvePlatform() });
-      if (resolveToken) {
-        resolveToken(value);
-        clearTokenWaiter();
+      } catch (error) {
+        console.warn('[push] registration listener failed', error);
       }
     });
 
     await PushNotifications.addListener('registrationError', (error) => {
-      logPush('token:error', {
-        code: typeof (error as any)?.code === 'string' ? (error as any).code : undefined,
-      });
+      try {
+        logPush('token:error', {
+          code: typeof (error as any)?.code === 'string' ? (error as any).code : undefined,
+        });
 
-      if (rejectToken) {
-        const message =
-          typeof (error as any)?.error === 'string' && (error as any).error.trim()
-            ? (error as any).error.trim()
-            : 'Push registration failed';
-        rejectToken(new Error(message));
-        clearTokenWaiter();
+        if (rejectToken) {
+          const message =
+            typeof (error as any)?.error === 'string' && (error as any).error.trim()
+              ? (error as any).error.trim()
+              : 'Push registration failed';
+          rejectToken(new Error(message));
+          clearTokenWaiter();
+        }
+      } catch (nextError) {
+        console.warn('[push] registrationError listener failed', nextError);
+      }
+    });
+
+    await PushNotifications.addListener('pushNotificationReceived', (notification) => {
+      try {
+        const data = asRecord(notification?.data);
+        logPush('received', {
+          type: asOptionalString(data.type) || 'unknown',
+          foreground:
+            typeof document !== 'undefined'
+              ? document.visibilityState === 'visible'
+              : undefined,
+        });
+        if (!isMessagePush(data.type)) return;
+
+        if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+          // Skip foreground banner while backgrounded; native notification handles this case.
+          return;
+        }
+
+        const title = asOptionalString(notification?.title) || 'New message';
+        const body =
+          asOptionalString(notification?.body) ||
+          'Open Messages to view the latest update.';
+
+        toast({
+          title,
+          description: body,
+        });
+      } catch (error) {
+        console.warn('[push] pushNotificationReceived handler failed', error);
+      }
+    });
+
+    await PushNotifications.addListener('pushNotificationActionPerformed', (event) => {
+      try {
+        const data = asRecord(event?.notification?.data);
+        logPush('action', {
+          type: asOptionalString(data.type) || 'unknown',
+          route: normalizePushRoute(data.route),
+          hasThreadId: Boolean(asOptionalString(data.threadId)),
+        });
+        if (!isMessagePush(data.type)) return;
+
+        const route = normalizePushRoute(data.route);
+        const threadId = asOptionalString(data.threadId) || undefined;
+        dispatchOpenMessagesEvent(route, threadId);
+      } catch (error) {
+        console.warn('[push] pushNotificationActionPerformed handler failed', error);
       }
     });
 
@@ -129,6 +288,33 @@ const ensurePushListeners = async () => {
     await listenersInitPromise;
   } finally {
     listenersInitPromise = null;
+  }
+};
+
+const ensureAndroidMessageChannel = async () => {
+  const isAndroidNative =
+    Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+
+  if (!isAndroidNative) return;
+  if (typeof (PushNotifications as any).createChannel !== 'function') return;
+
+  try {
+    logPush('channel:create:start', { channelId: ANDROID_MESSAGES_CHANNEL_ID });
+    await (PushNotifications as any).createChannel({
+      id: ANDROID_MESSAGES_CHANNEL_ID,
+      name: 'Messages',
+      description: 'Tiny Steps message alerts',
+      importance: 5,
+      visibility: 1,
+      sound: 'default',
+    });
+    logPush('channel:create:success', { channelId: ANDROID_MESSAGES_CHANNEL_ID });
+  } catch (error) {
+    logPush('channel:create:error', {
+      channelId: ANDROID_MESSAGES_CHANNEL_ID,
+      message: error instanceof Error ? error.message : String(error),
+    });
+    console.warn('[push] unable to ensure android messages channel', error);
   }
 };
 
@@ -200,8 +386,27 @@ export async function registerNativePushNotifications(uid: string): Promise<void
 
     await ensurePushListeners();
 
+    const isAndroidNative =
+      Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
+
+    if (
+      isAndroidNative &&
+      typeof Capacitor.isPluginAvailable === 'function' &&
+      !Capacitor.isPluginAvailable('PushNotifications')
+    ) {
+      console.warn('[push] android native push plugin unavailable; skipping registration');
+      return;
+    }
+
+    await ensureAndroidMessageChannel();
+
     logPush('registration:start');
-    await PushNotifications.register();
+    try {
+      await PushNotifications.register();
+    } catch (error) {
+      console.warn('[push] PushNotifications.register() failed; skipping registration', error);
+      return;
+    }
     const token = await waitForToken();
 
     const lastTokenKey = `${LAST_TOKEN_KEY_PREFIX}${normalizedUid}`;

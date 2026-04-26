@@ -5,6 +5,7 @@ export interface MobileTabBarItem {
   id: string;
   label: string;
   icon: LucideIcon;
+  badgeCount?: number;
 }
 
 interface MobileTabBarProps {
@@ -36,6 +37,9 @@ export default function MobileTabBar({
           {items.map((item) => {
             const Icon = item.icon;
             const isActive = activeId === item.id;
+            const badgeCount = Math.max(0, Number(item.badgeCount || 0));
+            const hasBadge = badgeCount > 0;
+            const badgeLabel = badgeCount > 99 ? '99+' : String(badgeCount);
 
             return (
               <button
@@ -44,7 +48,7 @@ export default function MobileTabBar({
                 onClick={() => onSelect(item.id)}
                 aria-current={isActive ? 'page' : undefined}
                 className={cn(
-                  'flex min-h-[58px] min-w-[78px] flex-col items-center justify-center rounded-xl px-2 text-[11px] font-medium transition-all duration-200',
+                  'relative flex min-h-[58px] min-w-[78px] flex-col items-center justify-center rounded-xl px-2 text-[11px] font-medium transition-all duration-200',
                   isActive
                     ? 'bg-slate-900 text-white shadow-sm'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
@@ -52,6 +56,16 @@ export default function MobileTabBar({
               >
                 <Icon className="mb-1 h-4 w-4" />
                 <span className="truncate leading-tight">{item.label}</span>
+                {hasBadge && (
+                  <span
+                    className={cn(
+                      'absolute right-1.5 top-1.5 inline-flex min-w-[18px] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none',
+                      isActive ? 'bg-white/20 text-white' : 'bg-red-500 text-white',
+                    )}
+                  >
+                    {badgeLabel}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -61,4 +75,3 @@ export default function MobileTabBar({
     </nav>
   );
 }
-

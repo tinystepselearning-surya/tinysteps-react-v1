@@ -10,6 +10,7 @@ import { TeacherSidebar } from './components/layout/TeacherSidebar';
 import MobileTabBar, { type MobileTabBarItem } from '../../components/common/MobileTabBar';
 import HolidayCalendar2026 from '../../components/common/HolidayCalendar2026';
 import MessagesPanel from '../messages/MessagesPanel';
+import useMessageThreads from '../../hooks/useMessageThreads';
 
 import { useAuthStore } from '../../store/useAuthStore';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -153,6 +154,24 @@ export default function TeacherDashboard() {
   const [profileOpen, setProfileOpen] = useState(false);
 
   const teacherId = user?.uid;
+  const { threads: messageThreads } = useMessageThreads({
+    userId: user?.uid,
+    isAdmin: false,
+  });
+  const messageUnreadCount = React.useMemo(() => {
+    if (!user?.uid) return 0;
+    return messageThreads.reduce((sum, thread) => {
+      const next = Number(thread.unreadCounts?.[user.uid] || 0);
+      return sum + (Number.isFinite(next) && next > 0 ? next : 0);
+    }, 0);
+  }, [messageThreads, user?.uid]);
+  const teacherMobileTabs = React.useMemo(
+    () =>
+      TEACHER_MOBILE_TABS.map((item) =>
+        item.id === 'messages' ? { ...item, badgeCount: messageUnreadCount } : item,
+      ),
+    [messageUnreadCount],
+  );
   // Defer subscribing to sessions until the "today" tab is active
   // so heavy listeners don't block other tabs like Lesson Library.
   // Provide a placeholder empty array for header counts when not active.
@@ -202,6 +221,7 @@ export default function TeacherDashboard() {
               setMobileMenuOpen(false);
             }}
             todayCount={sessions.length}
+            messageUnreadCount={messageUnreadCount}
             teacherId={teacherId}
             teacherName={user.displayName || user.email || 'Teacher'}
           />
@@ -213,6 +233,7 @@ export default function TeacherDashboard() {
           active={tab}
           onSelect={setTabAndUrl}
           todayCount={sessions.length}
+          messageUnreadCount={messageUnreadCount}
           teacherId={teacherId}
           teacherName={user.displayName || user.email || 'Teacher'}
           className="hidden lg:block"
@@ -327,7 +348,7 @@ export default function TeacherDashboard() {
       </Dialog>
 
       <MobileTabBar
-        items={TEACHER_MOBILE_TABS}
+        items={teacherMobileTabs}
         activeId={tab}
         onSelect={setTabAndUrl}
       />
