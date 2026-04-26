@@ -313,7 +313,12 @@ const Layout: FC = () => {
 
     const activate = () => setShowDeferredSupportWidgets(true);
     const isDesktopViewport = window.matchMedia('(min-width: 768px)').matches;
-    const fallbackDelayMs = isDesktopViewport ? 6200 : 4800;
+    const fallbackDelayMs = isDesktopViewport ? 9000 : 12000;
+    const connection = (navigator as any)?.connection;
+    const effectiveType =
+      typeof connection?.effectiveType === 'string' ? connection.effectiveType.toLowerCase() : '';
+    const isConstrainedNetwork =
+      Boolean(connection?.saveData) || effectiveType === 'slow-2g' || effectiveType === '2g';
     let timeoutId: number | undefined;
 
     const onFirstInteraction = () => {
@@ -332,7 +337,9 @@ const Layout: FC = () => {
     window.addEventListener('keydown', onFirstInteraction, { once: true });
     window.addEventListener('touchstart', onFirstInteraction, { passive: true, once: true });
     window.addEventListener('scroll', onFirstInteraction, { passive: true, once: true });
-    timeoutId = window.setTimeout(onFirstInteraction, fallbackDelayMs);
+    if (!isConstrainedNetwork) {
+      timeoutId = window.setTimeout(onFirstInteraction, fallbackDelayMs);
+    }
 
     return () => {
       window.removeEventListener('pointerdown', onFirstInteraction);

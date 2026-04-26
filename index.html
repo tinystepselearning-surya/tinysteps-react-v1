@@ -19,6 +19,38 @@
     <meta name="author" content="Tiny Steps Online School" />
     <meta http-equiv="content-language" content="en-IN" />
     <link rel="canonical" href="https://tinystepslearning.com/" />
+    <script>
+      (function () {
+        try {
+          var origin = 'https://tinystepslearning.com';
+          var canonicalMap = {
+            '/phonics-classes-for-kids': '/phonics',
+            '/online-phonics-reading-classes': '/phonics',
+            '/english-grammar-writing-classes': '/grammar',
+            '/public-speaking-communication-kids': '/speaking',
+            '/spoken-english-classes-for-kids': '/speaking',
+            '/summer-english-camp-2026': '/summer-camps'
+          };
+          var pathname = window.location.pathname || '/';
+          if (pathname.length > 1) pathname = pathname.replace(/\/+$/, '');
+          var canonicalPath = canonicalMap[pathname] || pathname || '/';
+          var canonicalUrl = origin + (canonicalPath === '/' ? '/' : canonicalPath);
+
+          var canonicalEl = document.querySelector('link[rel="canonical"]');
+          if (!canonicalEl) {
+            canonicalEl = document.createElement('link');
+            canonicalEl.setAttribute('rel', 'canonical');
+            document.head.appendChild(canonicalEl);
+          }
+          canonicalEl.setAttribute('href', canonicalUrl);
+
+          var ogUrlEl = document.querySelector('meta[property="og:url"]');
+          if (ogUrlEl) ogUrlEl.setAttribute('content', canonicalUrl);
+        } catch (error) {
+          // Keep static SEO defaults if path normalization fails.
+        }
+      })();
+    </script>
     <link
       rel="alternate"
       type="application/rss+xml"
