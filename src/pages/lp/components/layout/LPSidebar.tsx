@@ -5,6 +5,7 @@ import { Card } from '@components/ui/card';
 interface LPSidebarProps {
   active: string;
   onSelect: (tab: string) => void;
+  messageUnreadCount?: number;
 }
 
 const MENU_ITEMS = [
@@ -18,7 +19,7 @@ const MENU_ITEMS = [
   { id: 'holidays', label: 'Holiday Calendar', icon: '🗓️' },
 ];
 
-export const LPSidebar: FC<LPSidebarProps> = ({ active, onSelect }) => {
+export const LPSidebar: FC<LPSidebarProps> = ({ active, onSelect, messageUnreadCount }) => {
   return (
     <aside className="w-64 hidden lg:block">
       <Card className="p-4">
@@ -31,7 +32,14 @@ export const LPSidebar: FC<LPSidebarProps> = ({ active, onSelect }) => {
               onClick={() => onSelect(item.id)}
             >
               <span className="mr-2">{item.icon}</span>
-              {item.label}
+              <span className="flex-1 text-left">{item.label}</span>
+              {item.id === 'messages' &&
+                typeof messageUnreadCount === 'number' &&
+                messageUnreadCount > 0 && (
+                  <span className="ml-auto rounded-full bg-red-500 px-2 py-0.5 text-xs font-semibold text-white">
+                    {messageUnreadCount > 99 ? '99+' : messageUnreadCount}
+                  </span>
+                )}
             </Button>
           ))}
         </nav>

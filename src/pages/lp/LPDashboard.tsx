@@ -8,6 +8,7 @@ import HolidayCalendar2026 from '../../components/common/HolidayCalendar2026';
 import MobileTabBar, { type MobileTabBarItem } from '../../components/common/MobileTabBar';
 import { BarChart2, Users, GraduationCap, HeadphonesIcon, MessageSquare, TrendingUp } from 'lucide-react';
 import MessagesPanel from '../messages/MessagesPanel';
+import useMessageThreads from '../../hooks/useMessageThreads';
 const LPStats = React.lazy(() => import('./components/overview/LPStats'));
 const ParentsList = React.lazy(() => import('./components/parents/ParentsList'));
 const TeachersList = React.lazy(() => import('./components/teachers/TeachersList'));
@@ -46,6 +47,24 @@ export default function LPDashboard() {
   const { user, isLoading } = useAuthStore();
   const [tab, setTab] = useState('overview');
   const lpId = user?.uid;
+  const { threads: messageThreads } = useMessageThreads({
+    userId: user?.uid,
+    isAdmin: false,
+  });
+  const messageUnreadCount = React.useMemo(() => {
+    if (!user?.uid) return 0;
+    return messageThreads.reduce((sum, thread) => {
+      const next = Number(thread.unreadCounts?.[user.uid] || 0);
+      return sum + (Number.isFinite(next) && next > 0 ? next : 0);
+    }, 0);
+  }, [messageThreads, user?.uid]);
+  const lpMobileTabs = React.useMemo(
+    () =>
+      LP_MOBILE_TABS.map((item) =>
+        item.id === 'messages' ? { ...item, badgeCount: messageUnreadCount } : item,
+      ),
+    [messageUnreadCount],
+  );
 
   const { teachers, loading: teachersLoading, error: teachersError } = useLPFilteredTeachers();
   const { parents, loading: parentsLoading, error: parentsError } = useLPFilteredParents();
@@ -66,7 +85,7 @@ export default function LPDashboard() {
     <div className="min-h-screen bg-muted/30 p-4 pb-28 md:p-8 lg:pb-8">
       <LPHeader name={user.displayName || user.email} />
       <div className="flex flex-col gap-6 lg:flex-row">
-        <LPSidebar active={tab} onSelect={setTab} />
+        <LPSidebar active={tab} onSelect={setTab} messageUnreadCount={messageUnreadCount} />
         <main className="flex-1 min-w-0 space-y-6">
           <Tabs value={tab} onValueChange={setTab} className="space-y-4">
             <TabsList className="lg:hidden">
@@ -165,7 +184,7 @@ export default function LPDashboard() {
       </div>
 
       <MobileTabBar
-        items={LP_MOBILE_TABS}
+        items={lpMobileTabs}
         activeId={tab}
         onSelect={setTab}
       />

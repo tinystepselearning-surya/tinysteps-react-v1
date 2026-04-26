@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "31484691215",
+    "project_id": "tinysteps-react-v1",
+    "storage_bucket": "tinysteps-react-v1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:31484691215:android:248c8398cf1e4fff63347a",
+        "android_client_info": {
+          "package_name": "com.tinystepslearning.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "31484691215-gqunsij3oi4plfl0egbbjjm1vav54qvn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_GTVUkWJ-NGG9EY74NYUO6ecyKWjSsGc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "31484691215-gqunsij3oi4plfl0egbbjjm1vav54qvn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

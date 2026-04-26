@@ -24,6 +24,7 @@ interface SidebarProps {
   active?: string;
   onSelect?: (value: string) => void;
   todayCount?: number;
+  messageUnreadCount?: number;
   teacherId?: string;
   teacherName?: string;
   className?: string;
@@ -42,7 +43,14 @@ const items = [
   { id: 'profile', label: 'Profile', icon: UserCircle },
 ];
 
-const TeacherSidebarComponent: FC<SidebarProps> = ({ active, onSelect, todayCount, teacherName, className }) => {
+const TeacherSidebarComponent: FC<SidebarProps> = ({
+  active,
+  onSelect,
+  todayCount,
+  messageUnreadCount,
+  teacherName,
+  className,
+}) => {
   const { clearUser } = useAuthStore();
   const navigate = useNavigate();
 
@@ -129,6 +137,18 @@ const TeacherSidebarComponent: FC<SidebarProps> = ({ active, onSelect, todayCoun
                     {todayCount}
                   </span>
                 )}
+                {item.id === 'messages' &&
+                  typeof messageUnreadCount === 'number' &&
+                  messageUnreadCount > 0 && (
+                    <span
+                      className={cn(
+                        'ml-auto rounded-full px-2 py-0.5 text-xs font-semibold',
+                        isActive ? 'bg-white/20 text-white' : 'bg-red-500 text-white',
+                      )}
+                    >
+                      {messageUnreadCount > 99 ? '99+' : messageUnreadCount}
+                    </span>
+                  )}
               </button>
             );
           })}

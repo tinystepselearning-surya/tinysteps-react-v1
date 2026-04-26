@@ -35,6 +35,7 @@ const FUNCTION_REGION_OVERRIDES: Record<string, string> = {
   updateDemoSessionSchedule: 'asia-south1',
   completeDemoSession: 'asia-south1',
   sendMessage: 'asia-south1',
+  markMessageThreadRead: 'asia-south1',
   reassignDemoSession: 'asia-south1',
   cancelDemoSession: 'asia-south1',
   releaseDemoSession: 'asia-south1',

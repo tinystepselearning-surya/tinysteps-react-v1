@@ -66,6 +66,7 @@ import TinyStepsBrand from "../../components/common/TinyStepsBrand";
 import MobileTabBar, { type MobileTabBarItem } from "../../components/common/MobileTabBar";
 import HolidayCalendar2026 from "../../components/common/HolidayCalendar2026";
 import MessagesPanel from "../messages/MessagesPanel";
+import useMessageThreads from "../../hooks/useMessageThreads";
  
 import { masteryKeyFromValue, masteryLabel, masteryPctFromKey, type MasteryKey } from "../../lib/mastery";
 import {
@@ -1358,6 +1359,24 @@ export default function ParentDashboard() {
   const shouldLoadClassSessions =
     activeTab === "classes" || activeTab === "payments" || activeTab === "dashboard";
   const shouldLoadFullClassHistory = activeTab === "classes";
+  const { threads: messageThreads } = useMessageThreads({
+    userId: user?.uid,
+    isAdmin: false,
+  });
+  const messageUnreadCount = useMemo(() => {
+    if (!user?.uid) return 0;
+    return messageThreads.reduce((sum, thread) => {
+      const next = Number(thread.unreadCounts?.[user.uid] || 0);
+      return sum + (Number.isFinite(next) && next > 0 ? next : 0);
+    }, 0);
+  }, [messageThreads, user?.uid]);
+  const parentMobileTabs = useMemo(
+    () =>
+      PARENT_MOBILE_TABS.map((item) =>
+        item.id === "messages" ? { ...item, badgeCount: messageUnreadCount } : item
+      ),
+    [messageUnreadCount]
+  );
 
   const setTab = (tab: TabKey) => {
     setSearchParams((prev) => {
@@ -4680,6 +4699,15 @@ export default function ParentDashboard() {
                           <Icon className="h-4 w-4" />
                         </span>
                         <span className="flex-1">{item.label}</span>
+                        {item.id === "messages" && messageUnreadCount > 0 && (
+                          <span
+                            className={`ml-auto inline-flex min-w-[20px] items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold ${
+                              isActive ? "bg-white/20 text-white" : "bg-red-500 text-white"
+                            }`}
+                          >
+                            {messageUnreadCount > 99 ? "99+" : messageUnreadCount}
+                          </span>
+                        )}
                       </button>
                     );
                   })}
@@ -6122,7 +6150,7 @@ export default function ParentDashboard() {
         </div>
       </div>
       <MobileTabBar
-        items={PARENT_MOBILE_TABS}
+        items={parentMobileTabs}
         activeId={activeTab}
         onSelect={(nextTab) => setTab(nextTab as TabKey)}
       />
