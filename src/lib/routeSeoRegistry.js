@@ -68,6 +68,7 @@ export const ROUTE_SEO_REGISTRY = {
     description:
       'Browse the public Tiny Steps sitemap, including phonics, grammar, communication, parent resources, blog content, and crawl feeds.',
     canonicalPath: '/sitemap',
+    robots: 'noindex, follow',
     ogType: 'website',
   },
   '/contact': {

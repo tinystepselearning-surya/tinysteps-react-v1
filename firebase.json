@@ -47,6 +47,10 @@
           {
             "key": "Cache-Control",
             "value": "no-cache, no-store, must-revalidate"
+          },
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex, follow"
           }
         ]
       },
@@ -70,6 +74,15 @@
       },
       {
         "source": "/kids/**",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex, nofollow, noarchive"
+          }
+        ]
+      },
+      {
+        "source": "/messages/**",
         "headers": [
           {
             "key": "X-Robots-Tag",
@@ -281,6 +294,8 @@
       { "source": "/main/courses/grammar/", "destination": "/grammar", "type": 301 },
       { "source": "/main/courses/public-speaking", "destination": "/speaking", "type": 301 },
       { "source": "/main/courses/public-speaking/", "destination": "/speaking", "type": 301 },
+      { "source": "/main/book-demo", "destination": "/book-demo", "type": 301 },
+      { "source": "/main/book-demo/", "destination": "/book-demo", "type": 301 },
       { "source": "/main/courses/phonics-foundation", "destination": "/courses/phonics-foundation", "type": 301 },
       { "source": "/main/courses/phonics-brush-up", "destination": "/courses/phonics-brush-up", "type": 301 },
       { "source": "/main/courses/phonics-advanced", "destination": "/courses/phonics-advanced", "type": 301 },

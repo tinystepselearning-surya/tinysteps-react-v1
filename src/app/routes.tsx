@@ -524,6 +524,8 @@ const router = createBrowserRouter(
         { path: 'main/courses/grammar/', element: <Navigate to="/grammar" replace /> },
         { path: 'main/courses/public-speaking', element: <Navigate to="/speaking" replace /> },
         { path: 'main/courses/public-speaking/', element: <Navigate to="/speaking" replace /> },
+        { path: 'main/book-demo', element: <Navigate to="/book-demo" replace /> },
+        { path: 'main/book-demo/', element: <Navigate to="/book-demo" replace /> },
         { path: 'main/parents', element: <Navigate to="/parents" replace /> },
         // Parents / Help hub
         { path: 'parents', element: <ParentsHubPage /> },

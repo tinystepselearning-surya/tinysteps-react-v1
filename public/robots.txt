@@ -6,6 +6,8 @@ Disallow: /surya/
 Disallow: /teacher/
 Disallow: /parent/
 Disallow: /kids/
+Disallow: /kid/
+Disallow: /messages/
 Disallow: /learning-partner/dashboard
 Disallow: /learning-partner/dashboard/
 Disallow: /learning-partner/login
@@ -35,6 +37,8 @@ Disallow: /surya/
 Disallow: /teacher/
 Disallow: /parent/
 Disallow: /kids/
+Disallow: /kid/
+Disallow: /messages/
 Disallow: /learning-partner/dashboard
 Disallow: /learning-partner/dashboard/
 Disallow: /learning-partner/login
@@ -55,6 +59,8 @@ Disallow: /surya/
 Disallow: /teacher/
 Disallow: /parent/
 Disallow: /kids/
+Disallow: /kid/
+Disallow: /messages/
 Disallow: /learning-partner/dashboard
 Disallow: /learning-partner/dashboard/
 Disallow: /learning-partner/login
@@ -75,6 +81,8 @@ Disallow: /surya/
 Disallow: /teacher/
 Disallow: /parent/
 Disallow: /kids/
+Disallow: /kid/
+Disallow: /messages/
 Disallow: /learning-partner/dashboard
 Disallow: /learning-partner/dashboard/
 Disallow: /learning-partner/login
@@ -95,6 +103,8 @@ Disallow: /surya/
 Disallow: /teacher/
 Disallow: /parent/
 Disallow: /kids/
+Disallow: /kid/
+Disallow: /messages/
 Disallow: /learning-partner/dashboard
 Disallow: /learning-partner/dashboard/
 Disallow: /learning-partner/login
@@ -115,6 +125,8 @@ Disallow: /surya/
 Disallow: /teacher/
 Disallow: /parent/
 Disallow: /kids/
+Disallow: /kid/
+Disallow: /messages/
 Disallow: /learning-partner/dashboard
 Disallow: /learning-partner/dashboard/
 Disallow: /learning-partner/login
@@ -137,6 +149,8 @@ Disallow: /surya/
 Disallow: /teacher/
 Disallow: /parent/
 Disallow: /kids/
+Disallow: /kid/
+Disallow: /messages/
 Disallow: /learning-partner/dashboard
 Disallow: /learning-partner/dashboard/
 Disallow: /learning-partner/login
@@ -157,6 +171,8 @@ Disallow: /surya/
 Disallow: /teacher/
 Disallow: /parent/
 Disallow: /kids/
+Disallow: /kid/
+Disallow: /messages/
 Disallow: /learning-partner/dashboard
 Disallow: /learning-partner/dashboard/
 Disallow: /learning-partner/login
@@ -177,6 +193,8 @@ Disallow: /surya/
 Disallow: /teacher/
 Disallow: /parent/
 Disallow: /kids/
+Disallow: /kid/
+Disallow: /messages/
 Disallow: /learning-partner/dashboard
 Disallow: /learning-partner/dashboard/
 Disallow: /learning-partner/login

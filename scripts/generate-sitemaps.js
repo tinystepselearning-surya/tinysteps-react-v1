@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { PARENT_HELP_ROUTES, STATIC_MARKETING_ROUTES, uniqueRoutes } from './seo-route-inventory.mjs';
+import { ROUTE_SEO_REGISTRY } from '../src/lib/routeSeoRegistry.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -88,6 +89,17 @@ function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
   return `\n  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod || fmt(new Date())}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
 }
 
+function isNoindexRobots(robots) {
+  return typeof robots === 'string' && /(^|[,\\s])noindex([,\\s]|$)/i.test(robots);
+}
+
+function isCanonicalSelfRoute(route) {
+  const cfg = ROUTE_SEO_REGISTRY[route];
+  if (!cfg) return true;
+  if (isNoindexRobots(cfg.robots)) return false;
+  return (cfg.canonicalPath || route) === route;
+}
+
 const MONEY_PAGES = new Set(['/phonics', '/grammar', '/speaking', '/summer-camps']);
 const SUPPORTING_LONG_TAIL = new Set([
   '/best-online-phonics-classes-india',
@@ -122,14 +134,11 @@ const SUPPORTING_LONG_TAIL = new Set([
 
   const staticRoutes = uniqueRoutes(STATIC_MARKETING_ROUTES);
   const EXCLUDE_FROM_SITEMAP = new Set([
-    '/summer-english-camp-2026', // legacy route; canonicalized to /summer-camps
-    '/phonics-classes-for-kids', // support guide canonicalized to /phonics
-    '/online-phonics-reading-classes', // redirects/canonicalized to /phonics
-    '/english-grammar-writing-classes', // canonicalized to /grammar
-    '/public-speaking-communication-kids', // canonicalized to /speaking
-    '/spoken-english-classes-for-kids', // legacy keyword variant; canonicalized to /speaking
+    '/sitemap', // utility HTML sitemap (noindex)
   ]);
-  const staticRoutesForSitemap = staticRoutes.filter((route) => !EXCLUDE_FROM_SITEMAP.has(route));
+  const staticRoutesForSitemap = staticRoutes.filter((route) =>
+    !EXCLUDE_FROM_SITEMAP.has(route) && isCanonicalSelfRoute(route)
+  );
   const parentRoutes = uniqueRoutes(PARENT_HELP_ROUTES);
   const today = fmt(new Date());
 
