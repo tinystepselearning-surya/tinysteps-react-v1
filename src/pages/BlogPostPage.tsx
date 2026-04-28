@@ -614,6 +614,39 @@ function buildMetaDescription(src: any) {
           items.push(blocks[j].content);
         }
 
+        const pipeRows = items
+          .map((txt) => txt.split('|').map((cell) => cell.trim()))
+          .filter((cells) => cells.length > 1);
+        const isPipeTable = pipeRows.length === items.length
+          && pipeRows.every((cells) => cells.length === pipeRows[0].length);
+
+        if (isPipeTable && pipeRows[0].length === 2) {
+          const [header, ...rows] = pipeRows;
+          const tableKey = `table-${slug || (post && post.slug) || i}-${i}`;
+          nodes.push(
+            <div key={tableKey} className="my-8 overflow-x-auto">
+              <table className="min-w-full border border-slate-300 text-left text-base">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="border border-slate-300 px-4 py-3 font-semibold text-slate-900">{header[0]}</th>
+                    <th className="border border-slate-300 px-4 py-3 font-semibold text-slate-900">{header[1]}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row, idx) => (
+                    <tr key={`${tableKey}-row-${idx}`}>
+                      <td className="border border-slate-300 px-4 py-3 align-top text-slate-700">{row[0]}</td>
+                      <td className="border border-slate-300 px-4 py-3 align-top text-slate-700">{row[1]}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>,
+          );
+          i = j - 1;
+          continue;
+        }
+
         const ulKey = `ul-${slug || (post && post.slug) || i}-${i}`;
         nodes.push(
           <ul key={ulKey}>

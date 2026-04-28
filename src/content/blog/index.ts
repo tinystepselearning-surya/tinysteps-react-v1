@@ -58,6 +58,7 @@ import post_week_23_grammar_speaking_bridge from './posts/grammar/week-23-gramma
 import post_week_24_speaking_family_showcase from './posts/public-speaking/week-24-speaking-family-showcase';
 import post_week_25_back_to_school_plan from './posts/parent-tips/week-25-back-to-school-plan';
 import post_week_26_screen_smart_summer_routine from './posts/parent-tips/week-26-screen-smart-summer-routine';
+import post_can_child_master_english_in_10_days from './posts/parent-tips/can-child-master-english-in-10-days';
 import post_week_27_prevent_summer_slide_reading from './posts/phonics/week-27-prevent-summer-slide-reading';
 import custom_post_phonics_for_parents_guide from './posts/research/phonics-for-parents-guide';
 
@@ -121,6 +122,7 @@ const rawBlogPosts: BlogPost[] = [
   post_week_24_speaking_family_showcase,
   post_week_25_back_to_school_plan,
   post_week_26_screen_smart_summer_routine,
+  post_can_child_master_english_in_10_days,
   post_week_27_prevent_summer_slide_reading,
 ];
 
