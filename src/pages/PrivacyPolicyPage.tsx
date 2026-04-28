@@ -2,13 +2,13 @@ import PageHero from '../components/common/PageHero';
 import Meta from '../components/common/Meta';
 import { PUBLIC_CONTACT_EMAIL } from '../constants/publicContact';
 
-const lastUpdated = 'March 6, 2026';
+const lastUpdated = 'April 28, 2026';
 
 const sections = [
   {
     title: 'Information collected',
     paragraphs: [
-      'Tiny Steps Learning collects information that parents or guardians choose to share when they book a free assessment, enquire about classes, enrol a child, or subscribe to our newsletter. This may include the parent or guardian name, email address, phone number or WhatsApp number, the child’s age, and the learning area the family is interested in such as phonics, grammar, reading, or public speaking.',
+      'Tiny Steps Learning collects parent or guardian contact information such as name, email address, and phone number or WhatsApp number when families enquire, create or use account-based services, schedule classes, request support, or enrol a child.',
       'Families may also share optional information to help us recommend the right course, including a child’s current reading, writing, or speaking level, school curriculum, preferred class timings, and learning goals. We collect this information only to personalise the learning experience and provide relevant follow-up.',
       'Like most websites, we also collect limited technical information automatically, including IP address, browser type, device information, approximate location, referral pages, cookies, and similar analytics data so that we can understand how the site is used and improve performance.',
     ],
@@ -16,9 +16,12 @@ const sections = [
   {
     title: 'Use of information',
     paragraphs: [
-      'We use personal information to schedule assessments and classes, confirm enrolment, process payments, send lesson reminders, share progress updates, answer support questions, and improve the Tiny Steps learning experience.',
+      'We use personal information for app functionality and account access, including class scheduling, attendance, learning progress, parent-teacher communication, billing support, diagnostics, security, and service improvement.',
+      'Tiny Steps Learning may process in-app or support messages for parent-teacher communication, learning support, and service safety. This data may be linked to the user’s Tiny Steps account because it is used for app functionality and account-based services.',
+      'Diagnostics and crash data may be used to improve app reliability and performance. This data is used for troubleshooting and service quality, not for tracking users across third-party apps or websites.',
       'If a parent subscribes to our newsletter or marketing updates, we may send emails, WhatsApp updates, offers, or educational content related to Tiny Steps programs. Families can opt out of marketing messages at any time by using the unsubscribe link in email messages or by contacting us directly.',
-      'We share information only with the Tiny Steps team members and trusted service providers who need it to deliver the service, such as teachers, learning partners, payment processors, email delivery tools, analytics providers, and secure hosting providers. We do not sell personal information to third parties.',
+      'We share information only with the Tiny Steps team members and trusted service providers who need it to deliver the service, such as teachers, learning partners, payment processors, email delivery tools, analytics providers, and secure hosting providers.',
+      'Tiny Steps Learning does not sell personal information, does not share personal information with data brokers or advertising networks, and does not track users across third-party apps or websites for targeted advertising or advertising measurement. The iOS app does not access the advertising identifier (IDFA) for tracking.',
     ],
   },
   {
@@ -31,7 +34,8 @@ const sections = [
   {
     title: 'Cookies and analytics',
     paragraphs: [
-      'The Tiny Steps website uses cookies and similar technologies, including Google Analytics, to understand traffic patterns, identify popular pages, improve content, and keep the website working smoothly.',
+      'The Tiny Steps website uses cookies and similar technologies, including analytics tools, to understand general usage patterns, identify popular pages, improve content, and keep the website working smoothly.',
+      'Analytics is used by Tiny Steps Learning to improve service performance and is not used to track users across other companies’ apps or websites for targeted advertising.',
       'Parents can control or disable cookies through browser settings. Please note that some features of the site may not work as intended if essential cookies are blocked.',
     ],
   },

@@ -1336,11 +1336,31 @@ function statusLabel(status: string) {
   }
 }
 
+const IOS_BILLING_ASSISTANCE_TEXT =
+  "Billing information is managed by Tiny Steps Learning. Please contact Tiny Steps support for billing assistance.";
+
+function isNativeIOSCapacitorRuntime(): boolean {
+  if (typeof window === "undefined") return false;
+  const cap = (window as any).Capacitor;
+  if (!cap || typeof cap.isNativePlatform !== "function") return false;
+
+  try {
+    if (!cap.isNativePlatform()) return false;
+    if (typeof cap.getPlatform === "function") {
+      return String(cap.getPlatform()).toLowerCase() === "ios";
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 export default function ParentDashboard() {
   const { user, isLoading, clearUser } = useAuthStore();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedKidId = searchParams.get("kidId")?.trim() || "";
+  const isNativeIOSApp = useMemo(() => isNativeIOSCapacitorRuntime(), []);
 
   const activeTab = safeTab(searchParams.get("tab"));
   const shouldLoadCurriculumData =
@@ -3814,65 +3834,112 @@ export default function ParentDashboard() {
           </div>
         ) : (
           <div className="max-h-[62vh] overflow-auto [scrollbar-gutter:stable]">
-            <table className="min-w-[920px] w-full text-sm">
-              <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur dark:bg-slate-950/95">
-                <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800">
-                  <th className="px-4 py-2 text-left font-semibold">Date</th>
-                  <th className="px-4 py-2 text-left font-semibold">Time</th>
-                  <th className="px-4 py-2 text-left font-semibold">Child</th>
-                  <th className="px-4 py-2 text-left font-semibold">Course</th>
-                  <th className="px-4 py-2 text-left font-semibold">Status</th>
-                  <th className="px-4 py-2 text-right font-semibold">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => {
-                  const { session, start, status } = row;
-                  const canJoin = canJoinSession(session, status);
-                  const joining = joiningSessionId === session.id;
-                  return (
-                    <tr
-                      key={session.id}
-                      className="border-b border-slate-200 align-middle last:border-b-0 dark:border-slate-800"
+            <div className="space-y-3 p-3 md:hidden">
+              {rows.map((row) => {
+                const { session, start, status } = row;
+                const canJoin = canJoinSession(session, status);
+                const joining = joiningSessionId === session.id;
+                return (
+                  <div
+                    key={`mobile-${session.id}`}
+                    className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/60"
+                  >
+                    <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      {start.toLocaleDateString("en-IN", {
+                        weekday: "short",
+                        day: "numeric",
+                        month: "short",
+                      })}
+                    </div>
+                    <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                      {formatSessionTimeRange(session)}
+                    </div>
+                    <div className="mt-2 text-sm font-medium text-slate-900 dark:text-slate-100">
+                      {resolveSessionChildName(session)}
+                    </div>
+                    <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                      {session.courseName || "—"}
+                    </div>
+                    <div className="mt-2">
+                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${statusBadgeClass(status)}`}>
+                        {statusLabel(status)}
+                      </span>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => openJoinClass(session)}
+                      disabled={!canJoin || joining}
+                      className="mt-3 h-8 w-full bg-gradient-to-r from-indigo-600 to-purple-600 px-3 text-white hover:from-indigo-700 hover:to-purple-700"
                     >
-                      <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
-                        {start.toLocaleDateString("en-IN", {
-                          weekday: "short",
-                          day: "numeric",
-                          month: "short",
-                        })}
-                      </td>
-                      <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                        {formatSessionTimeRange(session)}
-                      </td>
-                      <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                        {resolveSessionChildName(session)}
-                      </td>
-                      <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
-                        {session.courseName || "—"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${statusBadgeClass(status)}`}>
-                          {statusLabel(status)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => openJoinClass(session)}
-                          disabled={!canJoin || joining}
-                          className="h-8 bg-gradient-to-r from-indigo-600 to-purple-600 px-3 text-white hover:from-indigo-700 hover:to-purple-700"
-                        >
-                          {joining ? "Opening…" : "Join Class"}
-                          <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      {joining ? "Opening…" : "Join Class"}
+                      <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="hidden md:block">
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur dark:bg-slate-950/95">
+                  <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800">
+                    <th className="px-4 py-2 text-left font-semibold">Date</th>
+                    <th className="px-4 py-2 text-left font-semibold">Time</th>
+                    <th className="px-4 py-2 text-left font-semibold">Child</th>
+                    <th className="px-4 py-2 text-left font-semibold">Course</th>
+                    <th className="px-4 py-2 text-left font-semibold">Status</th>
+                    <th className="px-4 py-2 text-right font-semibold">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => {
+                    const { session, start, status } = row;
+                    const canJoin = canJoinSession(session, status);
+                    const joining = joiningSessionId === session.id;
+                    return (
+                      <tr
+                        key={session.id}
+                        className="border-b border-slate-200 align-middle last:border-b-0 dark:border-slate-800"
+                      >
+                        <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
+                          {start.toLocaleDateString("en-IN", {
+                            weekday: "short",
+                            day: "numeric",
+                            month: "short",
+                          })}
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                          {formatSessionTimeRange(session)}
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
+                          {resolveSessionChildName(session)}
+                        </td>
+                        <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
+                          {session.courseName || "—"}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${statusBadgeClass(status)}`}>
+                            {statusLabel(status)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => openJoinClass(session)}
+                            disabled={!canJoin || joining}
+                            className="h-8 whitespace-nowrap bg-gradient-to-r from-indigo-600 to-purple-600 px-3 text-white hover:from-indigo-700 hover:to-purple-700"
+                          >
+                            {joining ? "Opening…" : "Join Class"}
+                            <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </Card>
@@ -6078,31 +6145,37 @@ export default function ParentDashboard() {
                       </div>
                     </div>
 
-                    <div className="space-y-3">
-                      <Button
-                        onClick={() => setShowQrModal(true)}
-                        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-md"
-                      >
-                        Pay Now
-                      </Button>
-
-                      <div className="space-y-2">
-                        <Button
-                          onClick={handleConfirmPayment}
-                          disabled={confirmingPayment}
-                          variant="outline"
-                          className="w-full border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-950"
-                        >
-                          {confirmingPayment
-                            ? "Opening WhatsApp..."
-                            : "Confirm Payment"}
-                        </Button>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                          After clicking, attach payment screenshot in WhatsApp
-                          and send to admin
-                        </p>
+                    {isNativeIOSApp ? (
+                      <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200">
+                        {IOS_BILLING_ASSISTANCE_TEXT}
                       </div>
-                    </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <Button
+                          onClick={() => setShowQrModal(true)}
+                          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-md"
+                        >
+                          Pay Now
+                        </Button>
+
+                        <div className="space-y-2">
+                          <Button
+                            onClick={handleConfirmPayment}
+                            disabled={confirmingPayment}
+                            variant="outline"
+                            className="w-full border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-950"
+                          >
+                            {confirmingPayment
+                              ? "Opening WhatsApp..."
+                              : "Confirm Payment"}
+                          </Button>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                            After clicking, attach payment screenshot in WhatsApp
+                            and send to admin
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </Card>
 
                   <Dialog open={showQrModal} onOpenChange={setShowQrModal}>

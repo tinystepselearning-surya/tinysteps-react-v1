@@ -175,6 +175,20 @@ const isNativeCapacitorRuntime = () => {
   return protocol === 'capacitor:' || protocol === 'ionic:';
 };
 
+const isNativeIOSCapacitorRuntime = () => {
+  if (!isNativeCapacitorRuntime()) return false;
+  if (typeof window === 'undefined') return false;
+
+  const cap = (window as any).Capacitor;
+  if (!cap || typeof cap.getPlatform !== 'function') return false;
+
+  try {
+    return String(cap.getPlatform()).toLowerCase() === 'ios';
+  } catch {
+    return false;
+  }
+};
+
 const rootLandingElement = isNativeCapacitorRuntime()
   ? <Navigate to="/login" replace />
   : <HomePage />;
@@ -668,7 +682,12 @@ const router = createBrowserRouter(
             { path: 'games', loader: missionShellRedirectLoader },
             { path: 'games/hub', element: <KidsGamesHub /> },
             { path: 'games/english-excellence', element: <KidsEnglishExcellence /> },
-            { path: 'games/comet-courier', element: <CometCourierGame /> },
+            {
+              path: 'games/comet-courier',
+              element: isNativeIOSCapacitorRuntime()
+                ? <Navigate to="/kids/games/english-excellence" replace />
+                : <CometCourierGame />,
+            },
             { path: 'games/phonics', element: <KidsPhonicsLibrary /> },
             { path: 'games/phonics/letter-sound', element: <KidsPhonicsMission /> },
             { path: 'games/phonics/balloon-pop', element: <KidsBalloonPop /> },
