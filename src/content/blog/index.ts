@@ -59,6 +59,15 @@ import post_week_24_speaking_family_showcase from './posts/public-speaking/week-
 import post_week_25_back_to_school_plan from './posts/parent-tips/week-25-back-to-school-plan';
 import post_week_26_screen_smart_summer_routine from './posts/parent-tips/week-26-screen-smart-summer-routine';
 import post_can_child_master_english_in_10_days from './posts/parent-tips/can-child-master-english-in-10-days';
+import post_child_knows_letter_sounds_but_cannot_read from './posts/parent-tips/child-knows-letter-sounds-but-cannot-read';
+import post_can_child_improve_english_in_10_days from './posts/parent-tips/can-child-improve-english-in-10-days';
+import post_are_phonics_apps_enough_for_kids from './posts/parent-tips/are-phonics-apps-enough-for-kids';
+import post_sight_words_or_phonics_first from './posts/parent-tips/sight-words-or-phonics-first';
+import post_child_reads_in_class_but_forgets_at_home from './posts/parent-tips/child-reads-in-class-but-forgets-at-home';
+import post_child_knows_grammar_but_makes_mistakes from './posts/parent-tips/child-knows-grammar-but-makes-mistakes';
+import post_child_gives_one_word_answers from './posts/parent-tips/child-gives-one-word-answers';
+import post_child_understands_english_but_does_not_speak from './posts/parent-tips/child-understands-english-but-does-not-speak';
+import post_child_reads_words_but_does_not_understand_story from './posts/parent-tips/child-reads-words-but-does-not-understand-story';
 import post_week_27_prevent_summer_slide_reading from './posts/phonics/week-27-prevent-summer-slide-reading';
 import custom_post_phonics_for_parents_guide from './posts/research/phonics-for-parents-guide';
 
@@ -123,6 +132,15 @@ const rawBlogPosts: BlogPost[] = [
   post_week_25_back_to_school_plan,
   post_week_26_screen_smart_summer_routine,
   post_can_child_master_english_in_10_days,
+  post_child_knows_letter_sounds_but_cannot_read,
+  post_can_child_improve_english_in_10_days,
+  post_are_phonics_apps_enough_for_kids,
+  post_sight_words_or_phonics_first,
+  post_child_reads_in_class_but_forgets_at_home,
+  post_child_knows_grammar_but_makes_mistakes,
+  post_child_gives_one_word_answers,
+  post_child_understands_english_but_does_not_speak,
+  post_child_reads_words_but_does_not_understand_story,
   post_week_27_prevent_summer_slide_reading,
 ];
 
