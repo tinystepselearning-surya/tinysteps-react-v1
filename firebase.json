@@ -302,6 +302,7 @@
       { "source": "/blog/week10.html", "destination": "/blog/week-10-grammar-subject-verb", "type": 301 },
       { "source": "/blog/phonics-at-home-activities", "destination": "/blog/week-1-phonics-satpin-launch", "type": 301 },
       { "source": "/blog/phonics-at-home-activities/", "destination": "/blog/week-1-phonics-satpin-launch", "type": 301 },
+      { "source": "/blog/spoken-english-classes-for-kids-confidence", "destination": "/blog/child-understands-english-but-does-not-speak", "type": 301 },
       { "source": "/about", "destination": "/why-tiny-steps", "type": 301 },
       { "source": "/teachers", "destination": "/team", "type": 301 },
       { "source": "/teachers/", "destination": "/team", "type": 301 },

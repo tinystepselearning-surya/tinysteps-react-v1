@@ -112,6 +112,10 @@ const SUPPORTING_LONG_TAIL = new Set([
   '/phonics-learning-games',
 ]);
 
+const EXCLUDED_BLOG_SLUGS = new Set([
+  'spoken-english-classes-for-kids-confidence',
+]);
+
 (function main(){
   const root = path.resolve(__dirname, '..');
   const publicDir = path.join(root, 'public');
@@ -176,7 +180,9 @@ const SUPPORTING_LONG_TAIL = new Set([
 
   // sitemap-blog.xml
   let blogXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
-  const blogRoutes = uniqueRoutes([...blogSlugs, ...blogPostEntries.map((entry) => entry.slug), ...mdxSlugs]).filter(Boolean).sort();
+  const blogRoutes = uniqueRoutes([...blogSlugs, ...blogPostEntries.map((entry) => entry.slug), ...mdxSlugs])
+    .filter((slug) => Boolean(slug) && !EXCLUDED_BLOG_SLUGS.has(slug))
+    .sort();
   if (blogRoutes.length === 0) {
     // Guardrail: never ship an empty blog sitemap (Google flags it as a missing <url> tag issue).
     blogXml += toUrl('https://tinystepslearning.com/blog', lastmodFrom(blogTs), '0.8', 'daily');

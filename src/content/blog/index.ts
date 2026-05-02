@@ -33,7 +33,6 @@ import post_week_1_phonics_satpin_launch from './posts/phonics/week-1-phonics-sa
 import post_week_2_phonics_blending_club from './posts/phonics/week-2-phonics-blending-club';
 import post_online_english_classes_for_kids_india from './posts/parent-tips/online-english-classes-for-kids-india';
 import post_best_phonics_classes_for_kids from './posts/phonics/best-phonics-classes-for-kids';
-import post_spoken_english_classes_for_kids_confidence from './posts/public-speaking/spoken-english-classes-for-kids-confidence';
 import post_week_3_phonics_tricky_words from './posts/phonics/week-3-phonics-tricky-words';
 import post_week_4_phonics_long_vowels from './posts/phonics/week-4-phonics-long-vowels';
 import post_week_5_phonics_r_controlled from './posts/phonics/week-5-phonics-r-controlled';
@@ -106,7 +105,6 @@ const rawBlogPosts: BlogPost[] = [
   ...PHONICS_SEO_POSTS.map(makePhonicsPost),
   post_online_english_classes_for_kids_india,
   post_best_phonics_classes_for_kids,
-  post_spoken_english_classes_for_kids_confidence,
   post_week_3_phonics_tricky_words,
   post_week_4_phonics_long_vowels,
   post_week_5_phonics_r_controlled,

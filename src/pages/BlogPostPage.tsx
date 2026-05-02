@@ -283,13 +283,6 @@ const POST_CTA_OVERRIDES: Record<string, {
     learningPathLinks: [{ label: 'Grammar learning path', to: '/grammar' }],
     suppressCoursesFallback: true,
   },
-  'spoken-english-classes-for-kids-confidence': {
-    primaryAction: { label: 'Explore Tiny Steps speaking classes', to: '/speaking' },
-    learningPathIntro:
-      'If confidence is the bottleneck, move into the speaking pathway and track progress in guided stages.',
-    learningPathLinks: [{ label: 'Speaking confidence program', to: '/speaking' }],
-    suppressCoursesFallback: true,
-  },
   'online-english-classes-for-kids-india': {
     primaryAction: { label: 'Choose the right course', to: '/courses' },
     learningPathIntro:

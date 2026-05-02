@@ -35,7 +35,6 @@ const BLOG_PUBLICATION_DATES: Record<string, string> = {
   'r-controlled-vowels-explained': '2026-01-05',
   'week-6-phonics-comprehension': '2026-01-08',
   'online-english-classes-for-kids-india': '2026-01-10',
-  'spoken-english-classes-for-kids-confidence': '2026-01-13',
   'week-7-grammar-nouns-to-paragraphs': '2026-04-03',
   'week-8-grammar-tenses': '2026-01-20',
   'week-9-grammar-conjunctions': '2026-01-25',

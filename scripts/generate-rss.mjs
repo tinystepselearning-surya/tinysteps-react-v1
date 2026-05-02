@@ -33,6 +33,10 @@ const REQUIRED_URLS = [
   'https://tinystepslearning.com/writing-classes-for-kids',
 ];
 
+const EXCLUDED_BLOG_SLUGS = new Set([
+  'spoken-english-classes-for-kids-confidence',
+]);
+
 const BLOG_SLUG_PATH = path.join(ROOT_DIR, 'src/content/blog/posts');
 const BLOG_DEFAULTS_PATH = path.join(ROOT_DIR, 'src/content/blog/shared/defaults.ts');
 const PUBLIC_DIR = path.join(ROOT_DIR, 'public');
@@ -131,6 +135,7 @@ function parseBlogItemsFromSource() {
     const title = extractSingleQuotedField(content, 'title');
 
     if (!slug || !title) continue;
+    if (EXCLUDED_BLOG_SLUGS.has(slug)) continue;
 
     const dateFromPost = extractSingleQuotedField(content, 'date');
     const date = dateFromPost || publicationDates.get(slug) || '';
