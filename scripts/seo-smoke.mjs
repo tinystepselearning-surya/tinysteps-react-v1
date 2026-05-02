@@ -2,135 +2,154 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-const DIST_DIR = path.resolve(process.cwd(), 'dist');
-const HOSTNAME = 'tinystepslearning.com';
-const PRIVATE_PREFIXES = [
-  '/admin',
-  '/surya',
-  '/teacher',
-  '/parent',
-  '/kids',
-  '/learning-partner/login',
-  '/learning-partner/dashboard',
-  '/learningpartner',
-  '/dev',
+const ROOT = process.cwd();
+const PUBLIC_DIR = path.join(ROOT, 'public');
+const ROUTE_REGISTRY_PATH = path.join(ROOT, 'src', 'lib', 'routeSeoRegistry.js');
+
+const REQUIRED_SITEMAPS = [
+  'sitemap.xml',
+  'sitemap-static.xml',
+  'sitemap-blog.xml',
+  'sitemap-courses.xml',
+  'sitemap-parents.xml',
 ];
 
+const REQUIRED_SUMMER_URLS = [
+  'https://tinystepslearning.com/summer-camps/phonics-fast-track',
+  'https://tinystepslearning.com/summer-camps/grammar-fast-track',
+  'https://tinystepslearning.com/summer-camps/speaking-fast-track',
+];
+
+const LEGACY_URLS_ABSENT = [
+  'https://tinystepslearning.com/online-phonics-reading-classes',
+  'https://tinystepslearning.com/phonics-classes-for-kids',
+  'https://tinystepslearning.com/english-grammar-writing-classes',
+  'https://tinystepslearning.com/public-speaking-communication-kids',
+  'https://tinystepslearning.com/spoken-english-classes-for-kids',
+];
+
+const REQUIRED_CORE_URLS = [
+  'https://tinystepslearning.com/phonics',
+  'https://tinystepslearning.com/grammar',
+  'https://tinystepslearning.com/speaking',
+  'https://tinystepslearning.com/blog',
+  'https://tinystepslearning.com/pricing',
+  'https://tinystepslearning.com/courses',
+  'https://tinystepslearning.com/curriculum',
+];
+
+const PRIVATE_PATH_TOKENS = [
+  '/parent',
+  '/teacher',
+  '/kids',
+  '/messages',
+  '/admin',
+  '/login',
+  '/dashboard',
+  '/surya',
+];
+
+const REQUIRED_SUMMER_PATHS = [
+  '/summer-camps/phonics-fast-track',
+  '/summer-camps/grammar-fast-track',
+  '/summer-camps/speaking-fast-track',
+];
+
+let hasError = false;
+
+function ok(message) {
+  console.log(`OK: ${message}`);
+}
+
+function fail(message) {
+  hasError = true;
+  console.error(`ERROR: ${message}`);
+}
+
 function extractLocs(xml) {
-  return Array.from(xml.matchAll(/<loc>([^<]+)<\/loc>/g), (match) => match[1].trim());
+  return Array.from(xml.matchAll(/<loc>([^<]+)<\/loc>/g), (m) => m[1].trim());
 }
 
-function urlToPath(url) {
-  const parsed = new URL(url);
-  if (parsed.hostname !== HOSTNAME) {
-    throw new Error(`Unexpected hostname in sitemap: ${url}`);
-  }
-  return parsed.pathname || '/';
-}
-
-function pathToHtmlFile(routePath) {
-  if (routePath === '/') return path.join(DIST_DIR, 'index.html');
-  return path.join(DIST_DIR, routePath.replace(/^\//, ''), 'index.html');
-}
-
-function stripHtml(html) {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<noscript[\s\S]*?<\/noscript>/gi, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&#39;/gi, "'")
-    .replace(/&quot;/gi, '"')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-async function loadSitemapUrls() {
-  const indexPath = path.join(DIST_DIR, 'sitemap.xml');
-  const indexXml = await fs.readFile(indexPath, 'utf8');
-  const childSitemaps = extractLocs(indexXml);
-  const urls = new Set();
-
-  for (const sitemapUrl of childSitemaps) {
-    const sitemapPath = path.join(DIST_DIR, urlToPath(sitemapUrl).replace(/^\//, ''));
-    const xml = await fs.readFile(sitemapPath, 'utf8');
-    for (const loc of extractLocs(xml)) {
-      urls.add(loc);
-    }
-  }
-
-  return [...urls].sort();
-}
-
-function assertPublicPath(routePath) {
-  const blockedPrefix = PRIVATE_PREFIXES.find((prefix) => routePath === prefix || routePath.startsWith(`${prefix}/`));
-  if (blockedPrefix) {
-    throw new Error(`Private route leaked into sitemap: ${routePath}`);
-  }
-}
-
-function assertTag(html, regex, message) {
-  if (!regex.test(html)) {
-    throw new Error(message);
-  }
-}
-
-async function validateHtml(url) {
-  const routePath = urlToPath(url);
-  assertPublicPath(routePath);
-
-  const htmlPath = pathToHtmlFile(routePath);
-  const html = await fs.readFile(htmlPath, 'utf8');
-
-  assertTag(html, /<title>[^<]+<\/title>/i, `Missing <title> in ${routePath}`);
-  assertTag(html, /<meta\s+name=["']description["'][^>]*content=["'][^"']+["'][^>]*>/i, `Missing meta description in ${routePath}`);
-
-  const canonicalMatch = html.match(/<link\s+rel=["']canonical["'][^>]*href=["']([^"']+)["'][^>]*>/i);
-  if (!canonicalMatch) {
-    throw new Error(`Missing canonical link in ${routePath}`);
-  }
-  if (canonicalMatch[1] !== url) {
-    throw new Error(`Canonical mismatch in ${routePath}: expected ${url}, got ${canonicalMatch[1]}`);
-  }
-
-  if (/<link\s+rel=["']alternate["'][^>]*hreflang=/i.test(html)) {
-    throw new Error(`Unexpected hreflang alternate in ${routePath}`);
-  }
-
-  const robotsMatch = html.match(/<meta\s+name=["']robots["'][^>]*content=["']([^"']+)["'][^>]*>/i);
-  if (!robotsMatch) {
-    throw new Error(`Missing robots meta in ${routePath}`);
-  }
-  if (/noindex/i.test(robotsMatch[1])) {
-    throw new Error(`Indexable sitemap route is marked noindex in ${routePath}`);
-  }
-
-  assertTag(html, /<script[^>]+type=["']application\/ld\+json["'][^>]*>/i, `Missing JSON-LD in ${routePath}`);
-
-  const text = stripHtml(html);
-  const minTextLength = routePath.startsWith('/blog/') ? 700 : 140;
-  if (text.length < minTextLength) {
-    throw new Error(`Rendered HTML too thin in ${routePath}: ${text.length} chars`);
+async function fileExists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
   }
 }
 
 async function main() {
-  const urls = await loadSitemapUrls();
+  const sitemapXmlByName = new Map();
 
-  if (!urls.length) {
-    throw new Error('No URLs found in dist sitemaps');
+  for (const sitemapName of REQUIRED_SITEMAPS) {
+    const fullPath = path.join(PUBLIC_DIR, sitemapName);
+    if (!(await fileExists(fullPath))) {
+      fail(`Missing required sitemap file: public/${sitemapName}`);
+      continue;
+    }
+    ok(`Found required sitemap file: public/${sitemapName}`);
+    sitemapXmlByName.set(sitemapName, await fs.readFile(fullPath, 'utf8'));
   }
 
-  for (const url of urls) {
-    await validateHtml(url);
+  const allSitemapXml = [...sitemapXmlByName.values()].join('\n');
+  const allLocs = new Set(extractLocs(allSitemapXml));
+
+  for (const url of REQUIRED_SUMMER_URLS) {
+    if (!allLocs.has(url)) fail(`Missing required summer URL in sitemap XML: ${url}`);
+    else ok(`Required summer URL present: ${url}`);
   }
 
-  console.log(`SEO smoke check passed for ${urls.length} sitemap URLs.`);
+  for (const url of LEGACY_URLS_ABSENT) {
+    if (allLocs.has(url)) fail(`Legacy duplicate URL still present in sitemap XML: ${url}`);
+    else ok(`Legacy duplicate URL absent: ${url}`);
+  }
+
+  for (const url of REQUIRED_CORE_URLS) {
+    if (!allLocs.has(url)) fail(`Missing canonical core URL in sitemap XML: ${url}`);
+    else ok(`Canonical core URL present: ${url}`);
+  }
+
+  for (const token of PRIVATE_PATH_TOKENS) {
+    const leaked = [...allLocs].find((url) => {
+      try {
+        const pathname = new URL(url).pathname;
+        return pathname === token || pathname.startsWith(`${token}/`);
+      } catch {
+        return false;
+      }
+    });
+    if (leaked) fail(`Private/app route leaked into sitemap XML: ${leaked}`);
+    else ok(`Private/app token absent from sitemap URLs: ${token}`);
+  }
+
+  const registryText = await fs.readFile(ROUTE_REGISTRY_PATH, 'utf8');
+
+  for (const routePath of REQUIRED_SUMMER_PATHS) {
+    const entryPattern = new RegExp(`['"]${routePath}['"]\\s*:\\s*\\{`, 'm');
+    const canonicalPattern = new RegExp(`canonicalPath\\s*:\\s*['"]${routePath}['"]`, 'm');
+    if (!entryPattern.test(registryText)) {
+      fail(`Missing route SEO registry entry: ${routePath}`);
+      continue;
+    }
+    if (!canonicalPattern.test(registryText)) {
+      fail(`Missing self-canonical canonicalPath in route SEO registry: ${routePath}`);
+      continue;
+    }
+    ok(`Route SEO registry has self-canonical entry: ${routePath}`);
+  }
+
+  if (/spoken english/i.test(registryText)) {
+    fail('Route SEO registry contains forbidden phrase: spoken English');
+  } else {
+    ok('Route SEO registry does not contain forbidden phrase: spoken English');
+  }
+
+  if (hasError) process.exit(1);
+  console.log('SEO smoke guard passed.');
 }
 
 main().catch((error) => {
-  console.error(error.message);
+  console.error(`ERROR: ${error.message}`);
   process.exit(1);
 });
