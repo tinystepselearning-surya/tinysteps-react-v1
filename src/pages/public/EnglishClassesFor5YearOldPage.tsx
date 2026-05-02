@@ -162,7 +162,7 @@ export default function EnglishClassesFor5YearOldPage() {
           </li>
           <li>
             • For focused early decoding bridge:{' '}
-            <Link to="/online-phonics-reading-classes" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+            <Link to="/phonics" className="font-semibold underline underline-offset-2 hover:text-slate-900">
               Online Phonics and Reading Classes
             </Link>
           </li>

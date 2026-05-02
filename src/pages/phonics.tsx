@@ -426,7 +426,7 @@ export default function PhonicsPage({
           { label: 'Phonics Blending Explained', href: '/blog/phonics-blending-activities' },
           { label: 'CVC Words Guide', href: '/blog/cvc-words-explained-for-parents' },
           { label: 'How Kids Learn Blending', href: '/blog/how-kids-learn-blending' },
-          { label: 'Online Phonics Reading Classes', href: '/online-phonics-reading-classes' },
+          { label: 'Online Phonics Reading Classes', href: '/phonics' },
           { label: 'Phonics Games for Preschoolers', href: '/phonics-games-for-preschoolers' }
         ]}
       />
