@@ -52,6 +52,9 @@ export const STATIC_MARKETING_ROUTES = [
   '/summer-camp-for-kids-india',
   '/summer-reading-program-kids',
   '/summer-speaking-camp-kids',
+  '/summer-camps/phonics-fast-track',
+  '/summer-camps/grammar-fast-track',
+  '/summer-camps/speaking-fast-track',
 ];
 
 export const PARENT_HELP_ROUTES = [
