@@ -5,6 +5,7 @@ import parentsMeta from '../../content/parentsMeta';
 import AboutAuthor from '../../components/AboutAuthor';
 import Meta from '../../components/common/Meta';
 import AutoLinkedText from '../../components/seo/AutoLinkedText';
+import { createWebPageSchema, organizationSchema, websiteSchema } from '../../lib/schemas';
 
 const heroSignals = [
   'Practical guides for ages 3-12',
@@ -232,6 +233,16 @@ const parentsKeywords =
   'parents phonics help, how to teach phonics at home, reading help for kids at home, english classes for kids parents guide, grammar and speaking support for children';
 
 const ParentsHubPage: React.FC = () => {
+  const parentsWebPageSchema = useMemo(
+    () =>
+      createWebPageSchema({
+        name: metaTitle,
+        description: metaDescription,
+        url: parentsCanonicalUrl,
+      }),
+    [],
+  );
+
   const pageSchema = useMemo(
     () => ({
       ...(parentsMeta['/parents'].jsonLd as Record<string, unknown>),
@@ -249,7 +260,7 @@ const ParentsHubPage: React.FC = () => {
         description={metaDescription}
         keywords={parentsKeywords}
         canonical={parentsCanonicalUrl}
-        jsonLd={[pageSchema, breadcrumbSchema, faqSchema, founderSchema]}
+        jsonLd={[organizationSchema, websiteSchema, parentsWebPageSchema, pageSchema, breadcrumbSchema, faqSchema, founderSchema]}
       />
 
       <section className="relative overflow-hidden border-b border-slate-900 bg-slate-950 text-white">
