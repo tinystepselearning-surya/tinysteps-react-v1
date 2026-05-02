@@ -144,7 +144,7 @@ export const organizationSchema = {
     'https://www.facebook.com/tinystepslearning',
     'https://www.instagram.com/tinystepslearning',
     'https://www.youtube.com/@TinyStepsLearning-1157',
-    'https://www.linkedin.com/company/tinystepslearning',
+    'https://www.linkedin.com/company/tiny-steps-learning/',
     'https://wa.me/919618398383'
   ]
 };

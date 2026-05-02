@@ -7,7 +7,7 @@ const socialLinks = [
   { label: 'Facebook', href: 'https://www.facebook.com/tinystepslearning', icon: '📘' },
   { label: 'Instagram', href: 'https://www.instagram.com/tinystepslearning', icon: '📸' },
   { label: 'YouTube', href: 'https://www.youtube.com/@TinyStepsLearning-1157', icon: '▶️' },
-  { label: 'LinkedIn', href: 'https://www.linkedin.com/company/tinystepslearning', icon: '💼' },
+  { label: 'LinkedIn', href: 'https://www.linkedin.com/company/tiny-steps-learning/', icon: '💼' },
 ];
 
 const courseLinks = [
