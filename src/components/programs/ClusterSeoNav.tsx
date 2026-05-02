@@ -17,7 +17,7 @@ const CLUSTERS = {
     links: [
       { label: 'Tenses for Kids', href: '/blog/week-8-grammar-tenses' },
       { label: 'Writing Classes for Kids', href: '/writing-classes-for-kids' },
-      { label: 'English Grammar & Writing', href: '/english-grammar-writing-classes' }
+      { label: 'English Grammar & Writing', href: '/grammar' }
     ]
   },
   speaking: {

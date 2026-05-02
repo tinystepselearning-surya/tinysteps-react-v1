@@ -246,8 +246,8 @@ export default function SpeakingPage() {
       <TopicClusterLinks
         title="Learn More About Public Speaking for Kids"
         links={[
-          { label: 'Public Speaking & Communication', href: '/public-speaking-communication-kids' },
-          { label: 'Communication & Public Speaking for Kids', href: '/spoken-english-classes-for-kids' },
+          { label: 'Public Speaking & Communication', href: '/speaking' },
+          { label: 'Communication & Public Speaking for Kids', href: '/speaking' },
           { label: 'Helping a Shy Child Speak', href: '/shy-child-speaking-confidence' },
           { label: 'Confidence Building Programs', href: '/confidence-building-program-kids' },
           { label: 'Confidence Seeds (Parents Guide)', href: '/blog/week-12-speaking-confidence-seeds' },
@@ -304,7 +304,7 @@ export default function SpeakingPage() {
           },
           {
             label: 'Communication & Public Speaking for Kids',
-            href: '/spoken-english-classes-for-kids',
+            href: '/speaking',
             description: 'Communication confidence with sentence support',
             icon: '🗣️'
           },
