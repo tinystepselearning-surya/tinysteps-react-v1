@@ -49,9 +49,19 @@ const quickAnswerFaqItems = [
       'Grammar growth usually moves in stages: words, sentence patterns, accuracy, and then clear short writing.',
   },
   {
+    question: 'Which age group are Tiny Steps grammar classes designed for?',
+    answer:
+      'Tiny Steps grammar classes are designed for children aged 3–12, with the starting level adjusted after assessment.',
+  },
+  {
     question: 'How do you place a child in the right grammar level?',
     answer:
       'Placement checks sentence formation, punctuation control, tense usage, and writing clarity instead of relying only on age or school grade.',
+  },
+  {
+    question: 'Are classes live and interactive?',
+    answer:
+      'Yes. Classes are live and interactive, so children practise grammar through sentence formation, writing, and guided speaking.',
   },
   {
     question: 'What do parents usually notice first?',
@@ -59,10 +69,25 @@ const quickAnswerFaqItems = [
       'Parents typically notice fewer sentence errors and better punctuation in homework and daily writing.',
   },
   {
+    question: 'How do parents track progress?',
+    answer:
+      'Parents receive progress updates, class feedback, and next-step recommendations through stage-based reviews and writing samples.',
+  },
+  {
     question: 'How is grammar taught beyond worksheets?',
     answer:
       'Children apply rules through speaking prompts, editing drills, and guided writing tasks so grammar becomes usable, not memorized.',
-  }
+  },
+  {
+    question: 'Can hesitant children build confidence through grammar classes?',
+    answer:
+      'Yes. Children who feel hesitant can build confidence when grammar, sentence formation, and speaking practice are taught together.',
+  },
+  {
+    question: 'What is the best next step for parents?',
+    answer:
+      'Book a free assessment to understand your child’s current grammar and sentence formation level and choose the right starting point.',
+  },
 ];
 
 const faqItems = [
@@ -265,6 +290,18 @@ export default function GrammarPage() {
             description: 'Compare all phonics, grammar & speaking courses',
             icon: '🏫'
           },
+          {
+            label: 'Phonics Pathway',
+            href: '/phonics',
+            description: 'Strengthen reading foundations alongside grammar growth',
+            icon: '🔤'
+          },
+          {
+            label: 'Speaking Pathway',
+            href: '/speaking',
+            description: 'Build communication confidence with structured speaking',
+            icon: '🎤'
+          },
           { 
             label: 'Grammar Nouns Guide', 
             href: '/blog/week-7-grammar-nouns-to-paragraphs', 
@@ -294,6 +331,12 @@ export default function GrammarPage() {
             href: '/parents/choosing-course', 
             description: 'Find the right level for your child',
             icon: '🧑‍🏫'
+          },
+          {
+            label: 'Parents Hub',
+            href: '/parents',
+            description: 'Parent-friendly guides for routines, support, and progress',
+            icon: '👨‍👩‍👧'
           },
           { 
             label: 'Helping with Homework', 
@@ -330,6 +373,12 @@ export default function GrammarPage() {
             href: '/english-classes-for-7-10-year-old',
             description: 'Grammar usage, writing clarity, and communication support',
             icon: '🔟'
+          },
+          {
+            label: 'Class Samples',
+            href: '/class-samples',
+            description: 'See real class moments before you decide',
+            icon: '🎬'
           },
         ]}
       />
