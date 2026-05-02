@@ -904,7 +904,7 @@ export default function Week12SpeakingConfidenceSeedsPage() {
                 Explore Tiny Steps speaking classes
               </Link>
               <Link
-                to="/spoken-english-classes-for-kids"
+                to="/speaking"
                 className="inline-flex items-center rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
               >
                 Communication classes for kids

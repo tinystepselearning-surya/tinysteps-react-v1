@@ -102,7 +102,7 @@ export default function SummerSpeakingCampKidsPage() {
             public speaking classes for kids
           </Link>
           {' • '}
-          <Link to="/spoken-english-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+          <Link to="/speaking" className="font-semibold underline underline-offset-2 hover:text-slate-900">
             communication classes for kids
           </Link>
           {' • '}
