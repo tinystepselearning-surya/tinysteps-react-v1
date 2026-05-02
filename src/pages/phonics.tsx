@@ -60,9 +60,19 @@ const quickAnswerFaqItems = [
       'Phonics teaches children to connect sounds with letters and blend those sounds into words. This is the foundation that turns letter recognition into real reading.',
   },
   {
+    question: 'Which age group are Tiny Steps phonics classes designed for?',
+    answer:
+      'Tiny Steps phonics classes are designed for children aged 3–12, with the starting level adjusted after assessment.',
+  },
+  {
     question: 'What happens in a structured phonics class?',
     answer:
       'Children practice a clear sequence: sound awareness, blending, word reading, spelling patterns, and short reading tasks, with live correction at each step.',
+  },
+  {
+    question: 'Are classes live and interactive?',
+    answer:
+      'Yes. Classes are live and interactive, so children practise sounds, blending, reading, and confidence with teacher support in 1:1 or small group formats.',
   },
   {
     question: 'Phonics vs general reading practice: what is the difference?',
@@ -70,9 +80,19 @@ const quickAnswerFaqItems = [
       'General reading practice builds exposure. Phonics builds decoding skill. When decoding becomes stable, children can read new words with less guessing.',
   },
   {
+    question: 'How do parents track progress?',
+    answer:
+      'Parents track learning through progress updates, class feedback, and next-step recommendations shared during the program.',
+  },
+  {
     question: 'What do parents usually notice first?',
     answer:
       'Most parents first notice cleaner blending and fewer reading pauses. After that, word accuracy and reading confidence improve steadily.',
+  },
+  {
+    question: 'What is the best next step if I am unsure where to start?',
+    answer:
+      'Book a free assessment to understand your child’s current reading level and choose the most suitable starting point.',
   },
 ];
 
@@ -441,6 +461,18 @@ export default function PhonicsPage({
             description: 'Compare all phonics, grammar & speaking courses',
             icon: '🏫'
           },
+          {
+            label: 'Grammar Pathway',
+            href: '/grammar',
+            description: 'Build sentence accuracy and writing clarity after decoding',
+            icon: '✍️'
+          },
+          {
+            label: 'Speaking Pathway',
+            href: '/speaking',
+            description: 'Develop communication confidence alongside reading growth',
+            icon: '🎤'
+          },
           { 
             label: 'Full Curriculum', 
             href: '/curriculum', 
@@ -477,6 +509,12 @@ export default function PhonicsPage({
             description: 'How to prepare for your first assessment',
             icon: '🎓'
           },
+          {
+            label: 'Parents Hub',
+            href: '/parents',
+            description: 'Parent guides for routines, support, and progress clarity',
+            icon: '👨‍👩‍👧'
+          },
           { 
             label: 'Daily Phonics Practice', 
             href: '/parents/phonics-mission', 
@@ -500,6 +538,12 @@ export default function PhonicsPage({
             href: '/phonics-fees-india',
             description: 'Compare fee-to-outcome fit before enrollment',
             icon: '₹'
+          },
+          {
+            label: 'Class Samples',
+            href: '/class-samples',
+            description: 'See real class moments before you decide',
+            icon: '🎬'
           },
         ]}
       />
