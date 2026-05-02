@@ -5,7 +5,7 @@ import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../../constants/pub
 
 const socialLinks = [
   { label: 'Facebook', href: 'https://www.facebook.com/tinystepslearning', icon: '📘' },
-  { label: 'Instagram', href: 'https://www.instagram.com/tinystepslearning', icon: '📸' },
+  { label: 'Instagram', href: 'https://www.instagram.com/tiny_steps_oel/', icon: '📸' },
   { label: 'YouTube', href: 'https://www.youtube.com/@TinyStepsLearning-1157', icon: '▶️' },
   { label: 'LinkedIn', href: 'https://www.linkedin.com/company/tiny-steps-learning/', icon: '💼' },
 ];
