@@ -252,6 +252,30 @@ export const ROUTE_SEO_REGISTRY = {
     keywords:
       'summer camp for kids,online summer camp for kids,summer classes for kids online,online summer camp india,summer camp for kids india,phonics summer camp,grammar summer camp for kids,public speaking summer camp for kids,english summer camp for kids,online phonics summer camp mumbai,grammar summer classes for kids delhi ncr,public speaking summer camp bengaluru,best online summer camp for 8 year olds,how do online summer camps work,live online summer camp with recordings,free level assessment for kids summer camp',
   },
+  '/summer-camps/phonics-fast-track': {
+    title: 'Phonics Fast Track Summer Camp for Kids | Tiny Steps Learning',
+    description:
+      'Phonics Fast Track is a live online summer camp track for children focused on letter sounds, blending, decoding, reading confidence, and structured phonics practice.',
+    canonicalPath: '/summer-camps/phonics-fast-track',
+    robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
+    ogType: 'website',
+  },
+  '/summer-camps/grammar-fast-track': {
+    title: 'Grammar Fast Track Summer Camp for Kids | Tiny Steps Learning',
+    description:
+      'Grammar Fast Track is a live online summer camp track for children focused on sentence formation, grammar accuracy, punctuation, writing clarity, and confident expression.',
+    canonicalPath: '/summer-camps/grammar-fast-track',
+    robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
+    ogType: 'website',
+  },
+  '/summer-camps/speaking-fast-track': {
+    title: 'Speaking Fast Track Summer Camp for Kids | Tiny Steps Learning',
+    description:
+      'Speaking Fast Track is a live online summer camp track for children focused on communication confidence, vocabulary, structured answers, storytelling, and presentation readiness.',
+    canonicalPath: '/summer-camps/speaking-fast-track',
+    robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
+    ogType: 'website',
+  },
   '/summer-camp-for-kids-india': {
     title: 'Summer Camp for Kids India (Parent Planning Guide) | Tiny Steps Learning',
     description:
