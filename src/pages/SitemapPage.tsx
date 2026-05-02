@@ -32,7 +32,7 @@ const sections = [
         description: 'Reading fluency and comprehension support for primary-stage learners.',
       },
       {
-        to: '/online-phonics-reading-classes',
+        to: '/phonics',
         label: 'Online Phonics and Reading Classes',
         description: 'Early literacy track focused on sound-to-reading progression.',
       },

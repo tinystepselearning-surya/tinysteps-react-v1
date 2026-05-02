@@ -245,7 +245,7 @@ export default function GrammarPage() {
       <TopicClusterLinks
         title="Learn More About Grammar & Writing"
         links={[
-          { label: 'English Grammar & Writing Classes', href: '/english-grammar-writing-classes' },
+          { label: 'English Grammar & Writing Classes', href: '/grammar' },
           { label: 'Writing Classes for Kids', href: '/writing-classes-for-kids' },
           { label: 'From Nouns to Paragraphs', href: '/blog/week-7-grammar-nouns-to-paragraphs' },
           { label: 'Tenses for Kids', href: '/blog/week-8-grammar-tenses' },
