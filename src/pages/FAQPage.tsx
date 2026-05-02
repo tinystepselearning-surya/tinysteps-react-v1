@@ -86,21 +86,68 @@ const quickRoutes = [
   },
 ];
 
+const schemaFaqItems: Array<{ question: string; answer: string }> = [
+  {
+    question: 'What does Tiny Steps Learning teach?',
+    answer:
+      'Tiny Steps teaches phonics, reading, grammar, sentence formation, communication confidence, and public speaking through structured live online classes for children.',
+  },
+  {
+    question: 'Which age group is Tiny Steps Learning for?',
+    answer:
+      'Programs are designed for children aged 3 to 12 years, with level-based progression and age-appropriate learning goals.',
+  },
+  {
+    question: 'How does the free assessment work?',
+    answer:
+      'The free assessment is a short one-on-one session where a mentor checks your child’s current level, learning needs, and next-step goals.',
+  },
+  {
+    question: 'How are phonics classes structured?',
+    answer:
+      'Phonics classes follow a structured sequence of sounds, blending, decodable reading, and review practice so children build reading confidence step by step.',
+  },
+  {
+    question: 'Do children also learn grammar and sentence formation?',
+    answer:
+      'Yes. Tiny Steps includes grammar and sentence formation pathways to help children use correct structures in speaking and writing.',
+  },
+  {
+    question: 'How do parents track progress?',
+    answer:
+      'Parents receive stage-based updates, topic-level observations, and practical next steps to support learning at home.',
+  },
+  {
+    question: 'Are classes live and interactive?',
+    answer:
+      'Yes. Classes are live online sessions with teacher guidance, interaction, and real-time correction based on the child’s level.',
+  },
+  {
+    question: 'Can shy children improve communication confidence?',
+    answer:
+      'Yes. Shy children can improve with low-pressure guided practice, sentence support, and consistent confidence-building routines.',
+  },
+  {
+    question: 'How are class timings handled?',
+    answer:
+      'Tiny Steps offers flexible online timings, including weekday and weekend options, based on teacher availability and family schedules.',
+  },
+  {
+    question: 'How can parents book a class?',
+    answer:
+      'Parents can request a free assessment through the booking flow or contact support, then choose the right class plan after level guidance.',
+  },
+];
+
 const faqSchema = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
-  mainEntity: items.map((item) => ({
+  mainEntity: schemaFaqItems.map((item) => ({
     '@type': 'Question',
     name: item.question,
     acceptedAnswer: {
       '@type': 'Answer',
       text: item.answer
-    },
-    // Speakable for voice assistants
-    speakable: {
-      '@type': 'SpeakableSpecification',
-      cssSelector: ['.faq-question', '.faq-answer'],
-      xpath: ['//h3[@class="faq-question"]', '//p[@class="faq-answer"]'],
     }
   }))
 };
