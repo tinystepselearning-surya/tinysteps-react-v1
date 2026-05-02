@@ -55,6 +55,24 @@ const REQUIRED_SUMMER_PATHS = [
   '/summer-camps/speaking-fast-track',
 ];
 
+const ALLOWED_CANONICAL_MISSING_FROM_SITEMAP = new Set([
+  '/sitemap',
+  '/terms-and-conditions',
+  '/refund-guarantee',
+  '/login',
+  '/teacher/login',
+  '/parent/login',
+  '/learning-partner/login',
+  '/surya/login',
+  '/admin/login',
+  '/unauthorized',
+  '/surya',
+  '/teacher',
+  '/parent',
+  '/kids',
+  '/learning-partner/dashboard',
+]);
+
 let hasError = false;
 
 function ok(message) {
@@ -68,6 +86,13 @@ function fail(message) {
 
 function extractLocs(xml) {
   return Array.from(xml.matchAll(/<loc>([^<]+)<\/loc>/g), (m) => m[1].trim());
+}
+
+function extractCanonicalPaths(registryText) {
+  return Array.from(
+    registryText.matchAll(/canonicalPath\s*:\s*['"]([^'"]+)['"]/g),
+    (m) => m[1].trim(),
+  );
 }
 
 async function fileExists(filePath) {
@@ -124,6 +149,32 @@ async function main() {
   }
 
   const registryText = await fs.readFile(ROUTE_REGISTRY_PATH, 'utf8');
+  const canonicalPaths = [...new Set(extractCanonicalPaths(registryText))];
+  const missingCanonicalPaths = canonicalPaths.filter(
+    (routePath) => !allLocs.has(`https://tinystepslearning.com${routePath}`),
+  );
+
+  const unexpectedMissingCanonicalPaths = missingCanonicalPaths.filter(
+    (routePath) => !ALLOWED_CANONICAL_MISSING_FROM_SITEMAP.has(routePath),
+  );
+
+  if (unexpectedMissingCanonicalPaths.length > 0) {
+    for (const routePath of unexpectedMissingCanonicalPaths) {
+      fail(`Public canonicalPath missing from sitemap XML: ${routePath}`);
+    }
+  } else {
+    ok(
+      `Canonical sitemap coverage check passed (${missingCanonicalPaths.length} intentional exception${
+        missingCanonicalPaths.length === 1 ? '' : 's'
+      })`,
+    );
+  }
+
+  for (const routePath of missingCanonicalPaths) {
+    if (ALLOWED_CANONICAL_MISSING_FROM_SITEMAP.has(routePath)) {
+      ok(`Allowed canonicalPath missing from sitemap XML: ${routePath}`);
+    }
+  }
 
   for (const routePath of REQUIRED_SUMMER_PATHS) {
     const entryPattern = new RegExp(`['"]${routePath}['"]\\s*:\\s*\\{`, 'm');
