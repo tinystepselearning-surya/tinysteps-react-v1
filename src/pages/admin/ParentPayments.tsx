@@ -1,5 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, doc, documentId, getDoc, getDocs, onSnapshot, query, where } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  documentId,
+  getDoc,
+  getDocs,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+  where,
+} from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebaseConfig';
 import { normalizeFinanceStatus } from '../../lib/statuses';
@@ -29,6 +40,125 @@ type ParentUser = {
   email?: string;
   role?: string;
   roles?: string[];
+};
+
+type WalletSummary = {
+  currentBalance?: number;
+  openingDeficit?: number;
+  totalTopups?: number;
+  totalDeductions?: number;
+  totalAdjustments?: number;
+  status?: string;
+  currency?: string;
+  lastUpdatedAt?: any;
+};
+
+type WalletTransaction = {
+  id: string;
+  type?: string;
+  direction?: string;
+  amount?: number;
+  signedAmount?: number;
+  balanceBefore?: number;
+  balanceAfter?: number;
+  description?: string;
+  method?: string;
+  paidAt?: any;
+  note?: string;
+  reference?: string;
+  reason?: string;
+  createdAt?: any;
+  createdBy?: string;
+  idempotencyKey?: string;
+  sourceSystem?: string;
+};
+
+type WalletAdjustmentDirection = 'credit' | 'debit';
+
+type OpeningDeficitMigrationResult = {
+  ok?: boolean;
+  dryRun?: boolean;
+  parentId?: string;
+  outstandingAmount?: number;
+  chargesScanned?: number;
+  chargesIncluded?: number;
+  chargesExcluded?: number;
+  transactionCreated?: boolean;
+  idempotentReplay?: boolean;
+  balanceAfter?: number;
+  idempotencyKey?: string;
+  warnings?: string[];
+};
+
+type OpeningDeficitPreviewInput = {
+  cutoverMonthKey: string;
+  cutoverDate: string;
+  note: string;
+};
+
+type WalletReconcileSeverity = 'info' | 'warning' | 'critical';
+
+type WalletReconcileAnomaly = {
+  code?: string;
+  message?: string;
+  transactionId?: string;
+  severity?: WalletReconcileSeverity | string;
+};
+
+type WalletReconcileResult = {
+  ok?: boolean;
+  parentId?: string;
+  walletExists?: boolean;
+  transactionCount?: number;
+  summary?: {
+    currentBalance?: number;
+    openingDeficit?: number;
+    totalTopups?: number;
+    totalDeductions?: number;
+    totalAdjustments?: number;
+  };
+  computed?: {
+    ledgerBalance?: number;
+    openingDeficit?: number;
+    totalTopups?: number;
+    totalDeductions?: number;
+    totalAdjustments?: number;
+    creditCount?: number;
+    debitCount?: number;
+  };
+  drift?: {
+    currentBalance?: number;
+    openingDeficit?: number;
+    totalTopups?: number;
+    totalDeductions?: number;
+    totalAdjustments?: number;
+    hasDrift?: boolean;
+  };
+  anomalies?: WalletReconcileAnomaly[];
+  warnings?: string[];
+  fixSummary?: boolean;
+  summaryFixed?: boolean;
+  fixedFields?: string[];
+};
+
+type WalletAutomationConfigSnapshot = {
+  walletClassDeductionsEnabled?: boolean;
+  walletCutoverMonthKey?: string | null;
+  walletCutoverDate?: string | null;
+  updatedAt?: string | null;
+  updatedBy?: string | null;
+  lastEnabledAt?: string | null;
+  lastDisabledAt?: string | null;
+};
+
+type WalletAutomationConfigResult = {
+  ok?: boolean;
+  exists?: boolean;
+  config?: WalletAutomationConfigSnapshot;
+  changed?: {
+    enabledChanged?: boolean;
+    cutoverChanged?: boolean;
+  };
 };
 
 const monthKeyFromDate = (date: Date) => {
@@ -88,6 +218,57 @@ const createPaymentRequestKey = () => {
   return `payment_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 };
 
+const createWalletTopupRequestKey = (parentId: string) => {
+  const randomSuffix = Math.random().toString(36).slice(2, 10);
+  const raw = `admin_topup_${parentId}_${Date.now()}_${randomSuffix}`;
+  return raw.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 120);
+};
+
+const createWalletAdjustmentRequestKey = (parentId: string) => {
+  const randomSuffix = Math.random().toString(36).slice(2, 10);
+  const raw = `admin_adjust_${parentId}_${Date.now()}_${randomSuffix}`;
+  return raw.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 120);
+};
+
+const isMonthKeyLike = (value: string) => /^\d{4}-\d{2}$/.test(value.trim());
+
+const formatDateYmd = (value: any) => {
+  const ms = toMillis(value);
+  if (!ms) return '—';
+  return new Date(ms).toISOString().slice(0, 10);
+};
+
+const toDateInputYmd = (value: any) => {
+  const ms = toMillis(value);
+  if (!ms) return '';
+  return new Date(ms).toISOString().slice(0, 10);
+};
+
+const walletTransactionTypeLabel = (value: any) => {
+  const type = String(value || '').trim().toLowerCase();
+  if (type === 'topup') return 'Top-up';
+  if (type === 'manual_adjustment') return 'Manual adjustment';
+  if (type === 'opening_deficit') return 'Opening deficit';
+  if (type === 'class_deduction') return 'Class deduction';
+  if (type === 'refund') return 'Refund';
+  return type ? type.replace(/_/g, ' ') : '—';
+};
+
+const formatWalletTransactionAmount = (tx: WalletTransaction) => {
+  const signed = Number(tx.signedAmount);
+  if (Number.isFinite(signed)) {
+    const abs = formatMoney(Math.abs(signed));
+    return signed >= 0 ? `+${abs}` : `-${abs}`;
+  }
+  const amount = Number(tx.amount);
+  if (!Number.isFinite(amount)) return '₹0';
+  const direction = String(tx.direction || '').trim().toLowerCase();
+  const abs = formatMoney(Math.abs(amount));
+  if (direction === 'credit') return `+${abs}`;
+  if (direction === 'debit') return `-${abs}`;
+  return formatMoney(amount);
+};
+
 const normalizeAttendanceStatus = (entry: any): string => {
   if (!entry) return '';
   if (typeof entry === 'string') return entry.trim().toLowerCase();
@@ -133,6 +314,63 @@ export default function ParentPayments(): JSX.Element {
   const [paymentRequestKey, setPaymentRequestKey] = useState('');
   const [paymentSaving, setPaymentSaving] = useState(false);
   const [correctionSavingId, setCorrectionSavingId] = useState<string | null>(null);
+  const [selectedWalletParentId, setSelectedWalletParentId] = useState<string>('');
+  const [selectedWalletParentName, setSelectedWalletParentName] = useState<string>('');
+  const [walletSummary, setWalletSummary] = useState<WalletSummary | null>(null);
+  const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>([]);
+  const [walletSummaryLoading, setWalletSummaryLoading] = useState(false);
+  const [walletTransactionsLoading, setWalletTransactionsLoading] = useState(false);
+  const [walletSummaryError, setWalletSummaryError] = useState<string>('');
+  const [walletTransactionsError, setWalletTransactionsError] = useState<string>('');
+  const [walletTopupOpen, setWalletTopupOpen] = useState(false);
+  const [walletTopupAmount, setWalletTopupAmount] = useState('');
+  const [walletTopupMethod, setWalletTopupMethod] = useState('');
+  const [walletTopupPaidAt, setWalletTopupPaidAt] = useState<string>(
+    new Date().toISOString().slice(0, 10)
+  );
+  const [walletTopupReference, setWalletTopupReference] = useState('');
+  const [walletTopupNote, setWalletTopupNote] = useState('');
+  const [walletTopupRequestKey, setWalletTopupRequestKey] = useState('');
+  const [walletTopupSaving, setWalletTopupSaving] = useState(false);
+  const [walletAdjustmentOpen, setWalletAdjustmentOpen] = useState(false);
+  const [walletAdjustmentDirection, setWalletAdjustmentDirection] = useState<WalletAdjustmentDirection | ''>('');
+  const [walletAdjustmentAmount, setWalletAdjustmentAmount] = useState('');
+  const [walletAdjustmentReason, setWalletAdjustmentReason] = useState('');
+  const [walletAdjustmentReference, setWalletAdjustmentReference] = useState('');
+  const [walletAdjustmentNote, setWalletAdjustmentNote] = useState('');
+  const [walletAdjustmentRequestKey, setWalletAdjustmentRequestKey] = useState('');
+  const [walletAdjustmentSaving, setWalletAdjustmentSaving] = useState(false);
+  const [walletOpeningDeficitOpen, setWalletOpeningDeficitOpen] = useState(false);
+  const [walletOpeningDeficitCutoverMonthKey, setWalletOpeningDeficitCutoverMonthKey] = useState('');
+  const [walletOpeningDeficitCutoverDate, setWalletOpeningDeficitCutoverDate] = useState('');
+  const [walletOpeningDeficitNote, setWalletOpeningDeficitNote] = useState(
+    'Opening deficit from historical unpaid dues'
+  );
+  const [walletOpeningDeficitPreviewSaving, setWalletOpeningDeficitPreviewSaving] = useState(false);
+  const [walletOpeningDeficitApplySaving, setWalletOpeningDeficitApplySaving] = useState(false);
+  const [walletOpeningDeficitError, setWalletOpeningDeficitError] = useState('');
+  const [walletOpeningDeficitResult, setWalletOpeningDeficitResult] =
+    useState<OpeningDeficitMigrationResult | null>(null);
+  const [walletOpeningDeficitPreviewInput, setWalletOpeningDeficitPreviewInput] =
+    useState<OpeningDeficitPreviewInput | null>(null);
+  const [walletReconcileOpen, setWalletReconcileOpen] = useState(false);
+  const [walletReconcileReportSaving, setWalletReconcileReportSaving] = useState(false);
+  const [walletReconcileFixSaving, setWalletReconcileFixSaving] = useState(false);
+  const [walletReconcileError, setWalletReconcileError] = useState('');
+  const [walletReconcileResult, setWalletReconcileResult] =
+    useState<WalletReconcileResult | null>(null);
+  const [walletAutomationOpen, setWalletAutomationOpen] = useState(false);
+  const [walletAutomationLoading, setWalletAutomationLoading] = useState(false);
+  const [walletAutomationSaving, setWalletAutomationSaving] = useState(false);
+  const [walletAutomationError, setWalletAutomationError] = useState('');
+  const [walletAutomationExists, setWalletAutomationExists] = useState(false);
+  const [walletAutomationConfig, setWalletAutomationConfig] =
+    useState<WalletAutomationConfigSnapshot | null>(null);
+  const [walletAutomationEnabled, setWalletAutomationEnabled] = useState(false);
+  const [walletAutomationCutoverMonthKey, setWalletAutomationCutoverMonthKey] = useState('');
+  const [walletAutomationCutoverDate, setWalletAutomationCutoverDate] = useState('');
+  const [walletAutomationNote, setWalletAutomationNote] = useState('');
+  const [walletAutomationConfirmationText, setWalletAutomationConfirmationText] = useState('');
 
   useEffect(() => {
     const loadRefs = async () => {
@@ -351,6 +589,89 @@ export default function ParentPayments(): JSX.Element {
       .sort((a, b) => b.due - a.due);
   }, [charges, payments, parents]);
 
+  const walletParentOptions = useMemo(
+    () =>
+      rows
+        .map((row) => ({ parentId: row.parentId, parentName: row.parentName }))
+        .sort((a, b) => a.parentName.localeCompare(b.parentName)),
+    [rows]
+  );
+
+  useEffect(() => {
+    if (!selectedWalletParentId) {
+      setSelectedWalletParentName('');
+      return;
+    }
+    const selected = walletParentOptions.find((item) => item.parentId === selectedWalletParentId);
+    setSelectedWalletParentName(selected?.parentName || fallbackParentLabel(selectedWalletParentId));
+  }, [selectedWalletParentId, walletParentOptions]);
+
+  useEffect(() => {
+    if (!selectedWalletParentId) {
+      setWalletSummary(null);
+      setWalletSummaryError('');
+      setWalletSummaryLoading(false);
+      return;
+    }
+
+    setWalletSummaryLoading(true);
+    setWalletSummaryError('');
+    const walletRef = doc(db, 'parentWallets', selectedWalletParentId);
+    const unsub = onSnapshot(
+      walletRef,
+      (snap) => {
+        setWalletSummary(snap.exists() ? (snap.data() as WalletSummary) : null);
+        setWalletSummaryLoading(false);
+      },
+      (err) => {
+        console.error('[ParentPayments] Failed to load wallet summary', err);
+        setWalletSummary(null);
+        setWalletSummaryLoading(false);
+        setWalletSummaryError(
+          'Unable to load wallet summary. If wallet rules are not deployed yet, deploy Phase 1 backend first.'
+        );
+      }
+    );
+
+    return () => unsub();
+  }, [selectedWalletParentId]);
+
+  useEffect(() => {
+    if (!selectedWalletParentId) {
+      setWalletTransactions([]);
+      setWalletTransactionsError('');
+      setWalletTransactionsLoading(false);
+      return;
+    }
+
+    setWalletTransactionsLoading(true);
+    setWalletTransactionsError('');
+    const transactionsQuery = query(
+      collection(db, 'parentWallets', selectedWalletParentId, 'transactions'),
+      orderBy('createdAt', 'desc'),
+      limit(20)
+    );
+    const unsub = onSnapshot(
+      transactionsQuery,
+      (snap) => {
+        setWalletTransactions(
+          snap.docs.map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() as WalletTransaction) }))
+        );
+        setWalletTransactionsLoading(false);
+      },
+      (err) => {
+        console.error('[ParentPayments] Failed to load wallet transactions', err);
+        setWalletTransactions([]);
+        setWalletTransactionsLoading(false);
+        setWalletTransactionsError(
+          'Unable to load wallet transactions. If wallet rules are not deployed yet, deploy Phase 1 backend first.'
+        );
+      }
+    );
+
+    return () => unsub();
+  }, [selectedWalletParentId]);
+
   const breakdownByParent = useMemo(() => {
     const byParent = new Map<
       string,
@@ -497,6 +818,8 @@ export default function ParentPayments(): JSX.Element {
   };
 
   const openPaymentModal = (row: { parentId: string; parentName: string }) => {
+    setSelectedWalletParentId(row.parentId);
+    setSelectedWalletParentName(row.parentName || fallbackParentLabel(row.parentId));
     setPaymentParentId(row.parentId);
     setPaymentParentName(row.parentName);
     setPaymentEnrollmentId('');
@@ -508,6 +831,473 @@ export default function ParentPayments(): JSX.Element {
     setParentEnrollments([]);
     setPaymentOpen(true);
     void loadEnrollmentsForParent(row.parentId);
+  };
+
+  const openWalletTopupModal = () => {
+    if (!selectedWalletParentId) {
+      window.alert('Select a parent first to add wallet top-up.');
+      return;
+    }
+    setWalletTopupAmount('');
+    setWalletTopupMethod('');
+    setWalletTopupPaidAt(new Date().toISOString().slice(0, 10));
+    setWalletTopupReference('');
+    setWalletTopupNote('');
+    setWalletTopupRequestKey(createWalletTopupRequestKey(selectedWalletParentId));
+    setWalletTopupOpen(true);
+  };
+
+  const handleWalletTopup = async () => {
+    if (!selectedWalletParentId) {
+      window.alert('Missing parent');
+      return;
+    }
+
+    const amount = Number(walletTopupAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      window.alert('Enter an amount greater than zero');
+      return;
+    }
+
+    const requestKey =
+      walletTopupRequestKey || createWalletTopupRequestKey(selectedWalletParentId);
+    if (!walletTopupRequestKey) {
+      setWalletTopupRequestKey(requestKey);
+    }
+
+    try {
+      setWalletTopupSaving(true);
+      const fn = httpsCallable(functions, 'adminTopupParentWallet');
+      await fn({
+        parentId: selectedWalletParentId,
+        amount,
+        method: walletTopupMethod.trim() || undefined,
+        paidAt: walletTopupPaidAt || undefined,
+        reference: walletTopupReference.trim() || undefined,
+        note: walletTopupNote.trim() || undefined,
+        idempotencyKey: requestKey,
+      });
+      window.alert('Wallet top-up added');
+      setWalletTopupRequestKey('');
+      setWalletTopupOpen(false);
+    } catch (err: any) {
+      window.alert(err?.message || 'Failed to add wallet top-up');
+    } finally {
+      setWalletTopupSaving(false);
+    }
+  };
+
+  const openWalletAdjustmentModal = () => {
+    if (!selectedWalletParentId) {
+      window.alert('Select a parent first to add manual adjustment.');
+      return;
+    }
+    setWalletAdjustmentDirection('credit');
+    setWalletAdjustmentAmount('');
+    setWalletAdjustmentReason('');
+    setWalletAdjustmentReference('');
+    setWalletAdjustmentNote('');
+    setWalletAdjustmentRequestKey(createWalletAdjustmentRequestKey(selectedWalletParentId));
+    setWalletAdjustmentOpen(true);
+  };
+
+  const handleWalletAdjustment = async () => {
+    if (!selectedWalletParentId) {
+      window.alert('Missing parent');
+      return;
+    }
+
+    if (walletAdjustmentDirection !== 'credit' && walletAdjustmentDirection !== 'debit') {
+      window.alert('Select direction');
+      return;
+    }
+
+    const amount = Number(walletAdjustmentAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      window.alert('Enter an amount greater than zero');
+      return;
+    }
+
+    const reason = walletAdjustmentReason.trim();
+    if (!reason) {
+      window.alert('Reason is required');
+      return;
+    }
+
+    const requestKey =
+      walletAdjustmentRequestKey || createWalletAdjustmentRequestKey(selectedWalletParentId);
+    if (!walletAdjustmentRequestKey) {
+      setWalletAdjustmentRequestKey(requestKey);
+    }
+
+    try {
+      setWalletAdjustmentSaving(true);
+      const fn = httpsCallable(functions, 'adminAdjustParentWallet');
+      await fn({
+        parentId: selectedWalletParentId,
+        amount,
+        direction: walletAdjustmentDirection,
+        reason,
+        reference: walletAdjustmentReference.trim() || undefined,
+        note: walletAdjustmentNote.trim() || undefined,
+        idempotencyKey: requestKey,
+      });
+      window.alert('Wallet adjustment added');
+      setWalletAdjustmentDirection('credit');
+      setWalletAdjustmentAmount('');
+      setWalletAdjustmentReason('');
+      setWalletAdjustmentReference('');
+      setWalletAdjustmentNote('');
+      setWalletAdjustmentRequestKey('');
+      setWalletAdjustmentOpen(false);
+    } catch (err: any) {
+      window.alert(err?.message || 'Failed to add wallet adjustment');
+    } finally {
+      setWalletAdjustmentSaving(false);
+    }
+  };
+
+  const openWalletOpeningDeficitModal = () => {
+    if (!selectedWalletParentId) {
+      window.alert('Select a parent first to preview opening deficit.');
+      return;
+    }
+    setWalletOpeningDeficitCutoverMonthKey('');
+    setWalletOpeningDeficitCutoverDate('');
+    setWalletOpeningDeficitNote('Opening deficit from historical unpaid dues');
+    setWalletOpeningDeficitResult(null);
+    setWalletOpeningDeficitPreviewInput(null);
+    setWalletOpeningDeficitError('');
+    setWalletOpeningDeficitOpen(true);
+  };
+
+  const getOpeningDeficitCallableError = (err: any, fallback: string) => {
+    const original = String(err?.message || fallback);
+    const lower = original.toLowerCase();
+    if (
+      (lower.includes('function') && lower.includes('not found')) ||
+      lower.includes('function not found') ||
+      lower.includes('unavailable')
+    ) {
+      return 'Opening deficit function is not available yet. Please deploy the latest functions and try again.';
+    }
+    return original;
+  };
+
+  const handlePreviewOpeningDeficit = async () => {
+    if (!selectedWalletParentId) {
+      window.alert('Missing parent');
+      return;
+    }
+
+    const cutoverMonthKey = walletOpeningDeficitCutoverMonthKey.trim();
+    if (cutoverMonthKey && !isMonthKeyLike(cutoverMonthKey)) {
+      window.alert('cutoverMonthKey must be in YYYY-MM format');
+      return;
+    }
+
+    const cutoverDate = walletOpeningDeficitCutoverDate.trim();
+    const note = walletOpeningDeficitNote.trim();
+    const previewInput: OpeningDeficitPreviewInput = {
+      cutoverMonthKey,
+      cutoverDate,
+      note,
+    };
+
+    try {
+      setWalletOpeningDeficitPreviewSaving(true);
+      setWalletOpeningDeficitError('');
+      setWalletOpeningDeficitResult(null);
+      const fn = httpsCallable(functions, 'initParentWalletOpeningDeficit');
+      const response = await fn({
+        parentId: selectedWalletParentId,
+        cutoverMonthKey: cutoverMonthKey || undefined,
+        cutoverDate: cutoverDate || undefined,
+        dryRun: true,
+        note: note || undefined,
+      });
+      const result = (response.data || {}) as OpeningDeficitMigrationResult;
+      setWalletOpeningDeficitPreviewInput(previewInput);
+      setWalletOpeningDeficitResult(result);
+      if (Number(result.outstandingAmount || 0) <= 0) {
+        window.alert('No opening deficit found for this parent.');
+      }
+    } catch (err: any) {
+      const message = getOpeningDeficitCallableError(err, 'Failed to preview opening deficit');
+      setWalletOpeningDeficitError(message);
+      window.alert(message);
+    } finally {
+      setWalletOpeningDeficitPreviewSaving(false);
+    }
+  };
+
+  const handleApplyOpeningDeficit = async () => {
+    if (!selectedWalletParentId) {
+      window.alert('Missing parent');
+      return;
+    }
+    if (!walletOpeningDeficitPreviewInput || walletOpeningDeficitResult?.dryRun !== true) {
+      window.alert('Preview deficit first.');
+      return;
+    }
+
+    const outstandingAmount = Number(walletOpeningDeficitResult?.outstandingAmount || 0);
+    if (outstandingAmount <= 0) {
+      window.alert('No deficit applied because there are no unpaid historical dues.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `You are about to create a negative opening wallet balance of ${formatMoney(outstandingAmount)}. This cannot be edited directly later; corrections must be done through wallet adjustments.`
+    );
+    if (!confirmed) return;
+
+    try {
+      setWalletOpeningDeficitApplySaving(true);
+      setWalletOpeningDeficitError('');
+      const fn = httpsCallable(functions, 'initParentWalletOpeningDeficit');
+      const response = await fn({
+        parentId: selectedWalletParentId,
+        cutoverMonthKey: walletOpeningDeficitPreviewInput.cutoverMonthKey || undefined,
+        cutoverDate: walletOpeningDeficitPreviewInput.cutoverDate || undefined,
+        dryRun: false,
+        note: walletOpeningDeficitPreviewInput.note || undefined,
+      });
+      const result = (response.data || {}) as OpeningDeficitMigrationResult;
+      setWalletOpeningDeficitResult(result);
+
+      if (result.idempotentReplay === true) {
+        window.alert('Opening deficit was already applied earlier. No duplicate transaction was created.');
+      } else if (result.transactionCreated === true) {
+        window.alert('Opening deficit applied successfully.');
+      } else if (Number(result.outstandingAmount || 0) <= 0) {
+        window.alert('No deficit applied because there are no unpaid historical dues.');
+      } else {
+        window.alert('Opening deficit request completed.');
+      }
+
+      setWalletOpeningDeficitOpen(false);
+    } catch (err: any) {
+      const message = getOpeningDeficitCallableError(err, 'Failed to apply opening deficit');
+      setWalletOpeningDeficitError(message);
+      window.alert(message);
+    } finally {
+      setWalletOpeningDeficitApplySaving(false);
+    }
+  };
+
+  const openWalletReconcileModal = () => {
+    if (!selectedWalletParentId) {
+      window.alert('Select a parent first to run wallet reconciliation.');
+      return;
+    }
+    setWalletReconcileError('');
+    setWalletReconcileResult(null);
+    setWalletReconcileOpen(true);
+  };
+
+  const getWalletReconcileCallableError = (err: any, fallback: string) => {
+    const original = String(err?.message || fallback);
+    const lower = original.toLowerCase();
+    if (
+      (lower.includes('function') && lower.includes('not found')) ||
+      lower.includes('function not found') ||
+      lower.includes('unavailable')
+    ) {
+      return 'Wallet reconciliation function is not available yet. Please deploy the latest functions and try again.';
+    }
+    return original;
+  };
+
+  const handleRunWalletReconciliation = async () => {
+    if (!selectedWalletParentId) {
+      window.alert('Missing parent');
+      return;
+    }
+    try {
+      setWalletReconcileReportSaving(true);
+      setWalletReconcileError('');
+      setWalletReconcileResult(null);
+      const fn = httpsCallable(functions, 'reconcileParentWallet');
+      const response = await fn({
+        parentId: selectedWalletParentId,
+        fixSummary: false,
+      });
+      const result = (response.data || {}) as WalletReconcileResult;
+      setWalletReconcileResult(result);
+      if (result.walletExists === false) {
+        window.alert('No wallet exists for this parent yet. Add a top-up or opening deficit first.');
+      }
+    } catch (err: any) {
+      const message = getWalletReconcileCallableError(err, 'Failed to run wallet reconciliation');
+      setWalletReconcileError(message);
+      window.alert(message);
+    } finally {
+      setWalletReconcileReportSaving(false);
+    }
+  };
+
+  const handleFixWalletSummaryDrift = async () => {
+    if (!selectedWalletParentId) {
+      window.alert('Missing parent');
+      return;
+    }
+
+    if (!walletReconcileResult?.drift?.hasDrift) {
+      window.alert('No drift found to fix.');
+      return;
+    }
+
+    const hasCriticalAnomalies = (walletReconcileResult.anomalies || []).some(
+      (anomaly) => String(anomaly.severity || '').trim().toLowerCase() === 'critical'
+    );
+    if (hasCriticalAnomalies) {
+      window.alert('Cannot fix summary while critical anomalies are present.');
+      return;
+    }
+
+    if (walletReconcileResult.walletExists === false) {
+      window.alert('No wallet exists for this parent yet. Add a top-up or opening deficit first.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      'This will update only the wallet summary totals from the transaction ledger. It will not edit wallet transactions, historical payments, billing charges, or teacher earnings.'
+    );
+    if (!confirmed) return;
+
+    try {
+      setWalletReconcileFixSaving(true);
+      setWalletReconcileError('');
+      const fn = httpsCallable(functions, 'reconcileParentWallet');
+      const response = await fn({
+        parentId: selectedWalletParentId,
+        fixSummary: true,
+      });
+      const result = (response.data || {}) as WalletReconcileResult;
+      setWalletReconcileResult(result);
+      if (result.summaryFixed === true) {
+        const fields = Array.isArray(result.fixedFields) ? result.fixedFields.join(', ') : '';
+        window.alert(
+          fields
+            ? `Wallet summary drift fixed successfully. Updated fields: ${fields}`
+            : 'Wallet summary drift fixed successfully.'
+        );
+      } else {
+        window.alert('Fix summary request completed with no summary changes.');
+      }
+    } catch (err: any) {
+      const message = getWalletReconcileCallableError(err, 'Failed to fix wallet summary drift');
+      setWalletReconcileError(message);
+      window.alert(message);
+    } finally {
+      setWalletReconcileFixSaving(false);
+    }
+  };
+
+  const getWalletAutomationCallableError = (err: any, fallback: string) => {
+    const original = String(err?.message || fallback);
+    const lower = original.toLowerCase();
+    if (
+      (lower.includes('function') && lower.includes('not found')) ||
+      lower.includes('function not found') ||
+      lower.includes('unavailable')
+    ) {
+      return 'Wallet automation config function is not available yet. Please deploy the latest functions and try again.';
+    }
+    return original;
+  };
+
+  const loadWalletAutomationConfig = async () => {
+    try {
+      setWalletAutomationLoading(true);
+      setWalletAutomationError('');
+      const fn = httpsCallable(functions, 'getWalletAutomationConfig');
+      const response = await fn({});
+      const result = (response.data || {}) as WalletAutomationConfigResult;
+      const config = (result.config || {}) as WalletAutomationConfigSnapshot;
+      setWalletAutomationExists(result.exists === true);
+      setWalletAutomationConfig(config);
+      setWalletAutomationEnabled(config.walletClassDeductionsEnabled === true);
+      setWalletAutomationCutoverMonthKey(String(config.walletCutoverMonthKey || ''));
+      setWalletAutomationCutoverDate(toDateInputYmd(config.walletCutoverDate));
+      setWalletAutomationConfirmationText('');
+    } catch (err: any) {
+      const message = getWalletAutomationCallableError(err, 'Failed to load wallet automation settings');
+      setWalletAutomationError(message);
+      window.alert(message);
+    } finally {
+      setWalletAutomationLoading(false);
+    }
+  };
+
+  const openWalletAutomationModal = () => {
+    setWalletAutomationOpen(true);
+    setWalletAutomationError('');
+    setWalletAutomationExists(false);
+    setWalletAutomationConfig({
+      walletClassDeductionsEnabled: false,
+      walletCutoverMonthKey: null,
+      walletCutoverDate: null,
+      updatedAt: null,
+      updatedBy: null,
+      lastEnabledAt: null,
+      lastDisabledAt: null,
+    });
+    setWalletAutomationEnabled(false);
+    setWalletAutomationCutoverMonthKey('');
+    setWalletAutomationCutoverDate('');
+    setWalletAutomationNote('');
+    setWalletAutomationConfirmationText('');
+    void loadWalletAutomationConfig();
+  };
+
+  const handleSaveWalletAutomationConfig = async () => {
+    const cutoverMonthKey = walletAutomationCutoverMonthKey.trim();
+    if (cutoverMonthKey && !isMonthKeyLike(cutoverMonthKey)) {
+      window.alert('cutoverMonthKey must be in YYYY-MM format');
+      return;
+    }
+
+    const cutoverDate = walletAutomationCutoverDate.trim();
+    const note = walletAutomationNote.trim();
+    const confirmationText = walletAutomationConfirmationText.trim();
+
+    if (walletAutomationEnabled && !cutoverMonthKey && !cutoverDate) {
+      window.alert('Cannot enable wallet class deductions without a cutover month or cutover date.');
+      return;
+    }
+    if (walletAutomationEnabled && confirmationText !== 'ENABLE WALLET DEDUCTIONS') {
+      window.alert('Confirmation text is required to enable wallet class deductions.');
+      return;
+    }
+
+    try {
+      setWalletAutomationSaving(true);
+      setWalletAutomationError('');
+      const fn = httpsCallable(functions, 'setWalletAutomationConfig');
+      const response = await fn({
+        walletClassDeductionsEnabled: walletAutomationEnabled,
+        walletCutoverMonthKey: cutoverMonthKey || null,
+        walletCutoverDate: cutoverDate || null,
+        note: note || undefined,
+        confirmationText: confirmationText || undefined,
+      });
+      const result = (response.data || {}) as WalletAutomationConfigResult;
+      if (result.ok === true) {
+        window.alert('Wallet automation settings updated.');
+      } else {
+        window.alert('Wallet automation settings update completed.');
+      }
+      setWalletAutomationConfirmationText('');
+      await loadWalletAutomationConfig();
+    } catch (err: any) {
+      const message = getWalletAutomationCallableError(err, 'Failed to update wallet automation settings');
+      setWalletAutomationError(message);
+      window.alert(message);
+    } finally {
+      setWalletAutomationSaving(false);
+    }
   };
 
   const handleRecordPayment = async () => {
@@ -661,6 +1451,35 @@ export default function ParentPayments(): JSX.Element {
     }
   };
 
+  const walletCurrentBalance = Number(walletSummary?.currentBalance ?? 0);
+  const walletOpeningDeficit = Number(walletSummary?.openingDeficit ?? 0);
+  const walletTotalTopups = Number(walletSummary?.totalTopups ?? 0);
+  const walletTotalDeductions = Number(walletSummary?.totalDeductions ?? 0);
+  const walletTotalAdjustments = Number(walletSummary?.totalAdjustments ?? 0);
+
+  const walletBalanceLabel =
+    walletCurrentBalance > 0
+      ? 'Available balance'
+      : walletCurrentBalance < 0
+        ? 'Deficit / amount to be topped up'
+        : 'No balance available';
+  const walletReconcileAnomalies = Array.isArray(walletReconcileResult?.anomalies)
+    ? walletReconcileResult.anomalies
+    : [];
+  const walletReconcileWarnings = Array.isArray(walletReconcileResult?.warnings)
+    ? walletReconcileResult.warnings
+    : [];
+  const walletReconcileHasCriticalAnomalies = walletReconcileAnomalies.some(
+    (anomaly) => String(anomaly.severity || '').trim().toLowerCase() === 'critical'
+  );
+  const walletReconcileCanFixSummaryDrift =
+    walletReconcileResult?.walletExists === true &&
+    walletReconcileResult?.drift?.hasDrift === true &&
+    !walletReconcileHasCriticalAnomalies;
+  const walletAutomationCurrentConfig = walletAutomationConfig || {};
+  const walletAutomationIsEnabled =
+    walletAutomationCurrentConfig.walletClassDeductionsEnabled === true;
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -698,6 +1517,199 @@ export default function ParentPayments(): JSX.Element {
           <div className="text-xs text-muted-foreground">Unapplied</div>
           <div className="text-lg font-semibold">{formatMoney(totals.unapplied)}</div>
         </Card>
+      </div>
+
+      <Card className="p-4 space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="space-y-1">
+            <h3 className="text-base font-semibold">Parent Wallet</h3>
+            <p className="text-xs text-muted-foreground">
+              View wallet balance, add top-ups, and review recent wallet transactions.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              onClick={openWalletTopupModal}
+              disabled={!selectedWalletParentId}
+            >
+              Add wallet top-up
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={openWalletAdjustmentModal}
+              disabled={!selectedWalletParentId}
+            >
+              Manual adjustment
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={openWalletOpeningDeficitModal}
+              disabled={!selectedWalletParentId}
+            >
+              Opening deficit
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={openWalletReconcileModal}
+              disabled={!selectedWalletParentId}
+            >
+              Reconcile wallet
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={openWalletAutomationModal}
+            >
+              Wallet automation
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm font-medium">Selected parent</label>
+          <Select value={selectedWalletParentId} onValueChange={setSelectedWalletParentId}>
+            <SelectTrigger className="w-full md:w-[340px]">
+              <SelectValue placeholder="Select parent to view wallet" />
+            </SelectTrigger>
+            <SelectContent>
+              {walletParentOptions.length === 0 ? (
+                <SelectItem value="__no_parent" disabled>
+                  No parents available for this month
+                </SelectItem>
+              ) : (
+                walletParentOptions.map((item) => (
+                  <SelectItem key={item.parentId} value={item.parentId}>
+                    {item.parentName}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+          {selectedWalletParentId ? (
+            <div className="text-xs text-muted-foreground">
+              Parent ID: {selectedWalletParentId}
+            </div>
+          ) : null}
+        </div>
+
+        {!selectedWalletParentId ? (
+          <div className="text-sm text-muted-foreground">
+            Select a parent to view wallet details.
+          </div>
+        ) : walletSummaryLoading ? (
+          <div className="text-sm text-muted-foreground">Loading wallet summary…</div>
+        ) : walletSummaryError ? (
+          <div className="text-sm text-red-600">{walletSummaryError}</div>
+        ) : !walletSummary ? (
+          <div className="text-sm text-muted-foreground">
+            No wallet created yet. Add a top-up to create the wallet.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <Card className="p-3">
+                <div className="text-xs text-muted-foreground">{walletBalanceLabel}</div>
+                <div className="text-lg font-semibold">{formatMoney(walletCurrentBalance)}</div>
+              </Card>
+              <Card className="p-3">
+                <div className="text-xs text-muted-foreground">Opening deficit</div>
+                <div className="text-lg font-semibold">{formatMoney(walletOpeningDeficit)}</div>
+              </Card>
+              <Card className="p-3">
+                <div className="text-xs text-muted-foreground">Status</div>
+                <div className="text-lg font-semibold capitalize">
+                  {String(walletSummary.status || 'active')}
+                </div>
+              </Card>
+              <Card className="p-3">
+                <div className="text-xs text-muted-foreground">Total top-ups</div>
+                <div className="text-lg font-semibold">{formatMoney(walletTotalTopups)}</div>
+              </Card>
+              <Card className="p-3">
+                <div className="text-xs text-muted-foreground">Total deductions</div>
+                <div className="text-lg font-semibold">{formatMoney(walletTotalDeductions)}</div>
+              </Card>
+              <Card className="p-3">
+                <div className="text-xs text-muted-foreground">Total adjustments</div>
+                <div className="text-lg font-semibold">{formatMoney(walletTotalAdjustments)}</div>
+              </Card>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Currency: {String(walletSummary.currency || 'INR')} · Last updated:{' '}
+              {formatDateYmd(walletSummary.lastUpdatedAt)}
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <div className="text-sm font-medium">Recent wallet transactions</div>
+          {!selectedWalletParentId ? (
+            <div className="text-sm text-muted-foreground">
+              Select a parent to view wallet transactions.
+            </div>
+          ) : walletTransactionsLoading ? (
+            <div className="text-sm text-muted-foreground">Loading wallet transactions…</div>
+          ) : walletTransactionsError ? (
+            <div className="text-sm text-red-600">{walletTransactionsError}</div>
+          ) : walletTransactions.length === 0 ? (
+            <div className="text-sm text-muted-foreground">No wallet transactions yet.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm table-auto">
+                <thead>
+                  <tr className="text-left border-b">
+                    <th className="p-2">Date</th>
+                    <th className="p-2">Type</th>
+                    <th className="p-2">Direction</th>
+                    <th className="p-2">Amount</th>
+                    <th className="p-2">Balance after</th>
+                    <th className="p-2">Method / Reference</th>
+                    <th className="p-2">Note / Reason</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {walletTransactions.map((tx) => {
+                    const typeLabel = walletTransactionTypeLabel(tx.type);
+                    const direction = String(tx.direction || '').trim().toLowerCase();
+                    const directionLabel =
+                      direction === 'credit' ? 'Credit' : direction === 'debit' ? 'Debit' : '—';
+                    const method = String(tx.method || '').trim();
+                    const reference = String(tx.reference || '').trim();
+                    const note = String(tx.note || '').trim();
+                    const reason = String(tx.reason || '').trim();
+                    const description = String(tx.description || '').trim();
+                    return (
+                      <tr key={tx.id} className="border-b last:border-b-0">
+                        <td className="p-2">{formatDateYmd(tx.createdAt || tx.paidAt)}</td>
+                        <td className="p-2">{typeLabel}</td>
+                        <td className="p-2">{directionLabel}</td>
+                        <td className="p-2">{formatWalletTransactionAmount(tx)}</td>
+                        <td className="p-2">{formatMoney(tx.balanceAfter)}</td>
+                        <td className="p-2">
+                          {[method, reference].filter(Boolean).join(' / ') || '—'}
+                        </td>
+                        <td className="p-2">
+                          {[note, reason, description].filter(Boolean).join(' · ') || '—'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      <div>
+        <h3 className="text-base font-semibold">Legacy monthly billing / historical payments</h3>
+        <p className="text-xs text-muted-foreground">
+          Existing billingCharges/payments allocation flow remains unchanged.
+        </p>
       </div>
 
       <Card className="p-4">
@@ -743,6 +1755,13 @@ export default function ParentPayments(): JSX.Element {
                           <div className="flex flex-wrap gap-2">
                             <Button size="sm" variant="outline" onClick={() => openPaymentModal(row)}>
                               Record payment
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => setSelectedWalletParentId(row.parentId)}
+                            >
+                              Wallet
                             </Button>
                             <Button
                               size="sm"
@@ -818,6 +1837,589 @@ export default function ParentPayments(): JSX.Element {
           </table>
         </div>
       </Card>
+
+      <Dialog open={walletTopupOpen} onOpenChange={setWalletTopupOpen}>
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle>Add wallet top-up</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="text-sm">
+              Parent:{' '}
+              <span className="font-medium">
+                {selectedWalletParentName || fallbackParentLabel(selectedWalletParentId)}
+              </span>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Amount (₹)</label>
+              <Input
+                type="number"
+                step="1"
+                value={walletTopupAmount}
+                onChange={(e) => setWalletTopupAmount(e.target.value)}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Method (optional)</label>
+                <Input
+                  value={walletTopupMethod}
+                  onChange={(e) => setWalletTopupMethod(e.target.value)}
+                  placeholder="UPI / bank transfer / online"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Paid date (optional)</label>
+                <Input
+                  type="date"
+                  value={walletTopupPaidAt}
+                  onChange={(e) => setWalletTopupPaidAt(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Reference (optional)</label>
+              <Input
+                value={walletTopupReference}
+                onChange={(e) => setWalletTopupReference(e.target.value)}
+                placeholder="e.g., bank ref no."
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Note (optional)</label>
+              <Textarea
+                value={walletTopupNote}
+                onChange={(e) => setWalletTopupNote(e.target.value)}
+                placeholder="Optional admin note"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setWalletTopupOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleWalletTopup} disabled={walletTopupSaving}>
+              {walletTopupSaving ? 'Saving…' : 'Add wallet top-up'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={walletAdjustmentOpen} onOpenChange={setWalletAdjustmentOpen}>
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle>Manual wallet adjustment</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="text-sm">
+              Parent:{' '}
+              <span className="font-medium">
+                {selectedWalletParentName || fallbackParentLabel(selectedWalletParentId)}
+              </span>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Direction</label>
+              <Select
+                value={walletAdjustmentDirection}
+                onValueChange={(value) =>
+                  setWalletAdjustmentDirection(value as WalletAdjustmentDirection)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select direction" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="credit">Credit: Add balance</SelectItem>
+                  <SelectItem value="debit">Debit: Reduce balance</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Amount (₹)</label>
+              <Input
+                type="number"
+                step="1"
+                value={walletAdjustmentAmount}
+                onChange={(e) => setWalletAdjustmentAmount(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Reason</label>
+              <Input
+                value={walletAdjustmentReason}
+                onChange={(e) => setWalletAdjustmentReason(e.target.value)}
+                placeholder="Reason for this adjustment"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Reference (optional)</label>
+              <Input
+                value={walletAdjustmentReference}
+                onChange={(e) => setWalletAdjustmentReference(e.target.value)}
+                placeholder="e.g., ticket or approval ref"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Note (optional)</label>
+              <Textarea
+                value={walletAdjustmentNote}
+                onChange={(e) => setWalletAdjustmentNote(e.target.value)}
+                placeholder="Optional admin note"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setWalletAdjustmentOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleWalletAdjustment} disabled={walletAdjustmentSaving}>
+              {walletAdjustmentSaving ? 'Saving…' : 'Save adjustment'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={walletOpeningDeficitOpen} onOpenChange={setWalletOpeningDeficitOpen}>
+        <DialogContent className="sm:max-w-[560px]">
+          <DialogHeader>
+            <DialogTitle>Opening deficit migration</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="text-sm">
+              Parent:{' '}
+              <span className="font-medium">
+                {selectedWalletParentName || fallbackParentLabel(selectedWalletParentId)}
+              </span>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Preview unpaid historical dues first. Applying will create one opening deficit
+              transaction and reduce this wallet balance. Historical billing and payment records will
+              not be changed.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Cutover month key (optional)</label>
+                <Input
+                  value={walletOpeningDeficitCutoverMonthKey}
+                  onChange={(e) => setWalletOpeningDeficitCutoverMonthKey(e.target.value)}
+                  placeholder="YYYY-MM"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Cutover date (optional)</label>
+                <Input
+                  type="date"
+                  value={walletOpeningDeficitCutoverDate}
+                  onChange={(e) => setWalletOpeningDeficitCutoverDate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Note (optional)</label>
+              <Textarea
+                value={walletOpeningDeficitNote}
+                onChange={(e) => setWalletOpeningDeficitNote(e.target.value)}
+                placeholder="Opening deficit from historical unpaid dues"
+              />
+            </div>
+
+            {walletOpeningDeficitError ? (
+              <div className="text-sm text-red-600">{walletOpeningDeficitError}</div>
+            ) : null}
+
+            {walletOpeningDeficitResult ? (
+              <Card className="p-3 space-y-2">
+                <div className="text-xs text-muted-foreground">
+                  Preview status: {walletOpeningDeficitResult.dryRun === true ? 'Dry run' : 'Applied'}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                  <div>Outstanding amount: <span className="font-medium">{formatMoney(walletOpeningDeficitResult.outstandingAmount)}</span></div>
+                  <div>Charges scanned: <span className="font-medium">{walletOpeningDeficitResult.chargesScanned ?? 0}</span></div>
+                  <div>Charges included: <span className="font-medium">{walletOpeningDeficitResult.chargesIncluded ?? 0}</span></div>
+                  <div>Charges excluded: <span className="font-medium">{walletOpeningDeficitResult.chargesExcluded ?? 0}</span></div>
+                  <div>Idempotency key: <span className="font-mono text-xs">{walletOpeningDeficitResult.idempotencyKey || '—'}</span></div>
+                  <div>Balance after: <span className="font-medium">{formatMoney(walletOpeningDeficitResult.balanceAfter)}</span></div>
+                </div>
+                {Number(walletOpeningDeficitResult.outstandingAmount || 0) <= 0 ? (
+                  <div className="text-xs text-muted-foreground">
+                    No opening deficit found for this parent.
+                  </div>
+                ) : null}
+                {Array.isArray(walletOpeningDeficitResult.warnings) &&
+                walletOpeningDeficitResult.warnings.length > 0 ? (
+                  <div className="space-y-1">
+                    <div className="text-xs font-medium text-amber-700">Warnings</div>
+                    <ul className="list-disc pl-5 text-xs text-amber-700">
+                      {walletOpeningDeficitResult.warnings.map((warning, idx) => (
+                        <li key={`${warning}-${idx}`}>{warning}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </Card>
+            ) : null}
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setWalletOpeningDeficitOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handlePreviewOpeningDeficit}
+              disabled={walletOpeningDeficitPreviewSaving || walletOpeningDeficitApplySaving}
+            >
+              {walletOpeningDeficitPreviewSaving ? 'Previewing…' : 'Preview deficit'}
+            </Button>
+            {walletOpeningDeficitResult?.dryRun === true ? (
+              <Button
+                onClick={handleApplyOpeningDeficit}
+                disabled={
+                  walletOpeningDeficitApplySaving ||
+                  walletOpeningDeficitPreviewSaving ||
+                  Number(walletOpeningDeficitResult.outstandingAmount || 0) <= 0
+                }
+              >
+                {walletOpeningDeficitApplySaving ? 'Applying…' : 'Apply opening deficit'}
+              </Button>
+            ) : null}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={walletReconcileOpen} onOpenChange={setWalletReconcileOpen}>
+        <DialogContent className="sm:max-w-[680px]">
+          <DialogHeader>
+            <DialogTitle>Wallet reconciliation</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="text-sm">
+              Parent:{' '}
+              <span className="font-medium">
+                {selectedWalletParentName || fallbackParentLabel(selectedWalletParentId)}
+              </span>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Reconciliation compares the wallet summary with the transaction ledger. Report-only
+              mode does not change any data.
+            </p>
+
+            {walletReconcileError ? (
+              <div className="text-sm text-red-600">{walletReconcileError}</div>
+            ) : null}
+
+            {walletReconcileResult ? (
+              <Card className="p-3 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                  <div>
+                    Wallet exists:{' '}
+                    <span className="font-medium">
+                      {walletReconcileResult.walletExists ? 'Yes' : 'No'}
+                    </span>
+                  </div>
+                  <div>
+                    Transaction count:{' '}
+                    <span className="font-medium">{walletReconcileResult.transactionCount ?? 0}</span>
+                  </div>
+                </div>
+
+                {walletReconcileResult.walletExists === false ? (
+                  <div className="text-xs text-muted-foreground">
+                    No wallet exists for this parent yet. Add a top-up or opening deficit first.
+                  </div>
+                ) : null}
+
+                <div className="space-y-1">
+                  <div className="text-xs font-medium">Summary vs Ledger</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                    <Card className="p-2 space-y-1">
+                      <div className="text-xs text-muted-foreground">Summary</div>
+                      <div>Current balance: <span className="font-medium">{formatMoney(walletReconcileResult.summary?.currentBalance ?? 0)}</span></div>
+                      <div>Opening deficit: <span className="font-medium">{formatMoney(walletReconcileResult.summary?.openingDeficit ?? 0)}</span></div>
+                      <div>Total top-ups: <span className="font-medium">{formatMoney(walletReconcileResult.summary?.totalTopups ?? 0)}</span></div>
+                      <div>Total deductions: <span className="font-medium">{formatMoney(walletReconcileResult.summary?.totalDeductions ?? 0)}</span></div>
+                      <div>Total adjustments: <span className="font-medium">{formatMoney(walletReconcileResult.summary?.totalAdjustments ?? 0)}</span></div>
+                    </Card>
+                    <Card className="p-2 space-y-1">
+                      <div className="text-xs text-muted-foreground">Computed from ledger</div>
+                      <div>Current balance: <span className="font-medium">{formatMoney(walletReconcileResult.computed?.ledgerBalance ?? 0)}</span></div>
+                      <div>Opening deficit: <span className="font-medium">{formatMoney(walletReconcileResult.computed?.openingDeficit ?? 0)}</span></div>
+                      <div>Total top-ups: <span className="font-medium">{formatMoney(walletReconcileResult.computed?.totalTopups ?? 0)}</span></div>
+                      <div>Total deductions: <span className="font-medium">{formatMoney(walletReconcileResult.computed?.totalDeductions ?? 0)}</span></div>
+                      <div>Total adjustments: <span className="font-medium">{formatMoney(walletReconcileResult.computed?.totalAdjustments ?? 0)}</span></div>
+                    </Card>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="text-xs font-medium">Drift</div>
+                  {walletReconcileResult.drift?.hasDrift ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                      <div>Current balance drift: <span className="font-medium">{formatMoney(walletReconcileResult.drift?.currentBalance ?? 0)}</span></div>
+                      <div>Opening deficit drift: <span className="font-medium">{formatMoney(walletReconcileResult.drift?.openingDeficit ?? 0)}</span></div>
+                      <div>Total top-ups drift: <span className="font-medium">{formatMoney(walletReconcileResult.drift?.totalTopups ?? 0)}</span></div>
+                      <div>Total deductions drift: <span className="font-medium">{formatMoney(walletReconcileResult.drift?.totalDeductions ?? 0)}</span></div>
+                      <div>Total adjustments drift: <span className="font-medium">{formatMoney(walletReconcileResult.drift?.totalAdjustments ?? 0)}</span></div>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground">No drift found.</div>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <div className="text-xs font-medium">Anomalies</div>
+                  {walletReconcileAnomalies.length === 0 ? (
+                    <div className="text-xs text-muted-foreground">No anomalies reported.</div>
+                  ) : (
+                    <div className="space-y-2">
+                      {walletReconcileAnomalies.map((anomaly, idx) => {
+                        const severity = String(anomaly.severity || 'info').toLowerCase();
+                        const severityClass =
+                          severity === 'critical'
+                            ? 'border-red-200 bg-red-50 text-red-700'
+                            : severity === 'warning'
+                              ? 'border-amber-200 bg-amber-50 text-amber-700'
+                              : 'border-slate-200 bg-slate-50 text-slate-700';
+                        return (
+                          <div
+                            key={`${anomaly.code || 'anomaly'}-${idx}`}
+                            className={`rounded border p-2 text-xs ${severityClass}`}
+                          >
+                            <div className="font-medium capitalize">
+                              Severity: {severity || 'info'}
+                              {anomaly.transactionId ? ` · Tx: ${anomaly.transactionId}` : ''}
+                            </div>
+                            <div>{anomaly.message || anomaly.code || 'Unknown anomaly'}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <div className="text-xs font-medium">Warnings</div>
+                  {walletReconcileWarnings.length === 0 ? (
+                    <div className="text-xs text-muted-foreground">No warnings.</div>
+                  ) : (
+                    <ul className="list-disc pl-5 text-xs text-amber-700">
+                      {walletReconcileWarnings.map((warning, idx) => (
+                        <li key={`${warning}-${idx}`}>{warning}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {walletReconcileResult.summaryFixed === true ? (
+                  <div className="text-xs text-emerald-700">
+                    Summary fixed successfully.
+                    {Array.isArray(walletReconcileResult.fixedFields) &&
+                    walletReconcileResult.fixedFields.length > 0
+                      ? ` Updated fields: ${walletReconcileResult.fixedFields.join(', ')}`
+                      : ''}
+                  </div>
+                ) : null}
+              </Card>
+            ) : null}
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setWalletReconcileOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleRunWalletReconciliation}
+              disabled={walletReconcileReportSaving || walletReconcileFixSaving}
+            >
+              {walletReconcileReportSaving ? 'Running…' : 'Run report'}
+            </Button>
+            {walletReconcileCanFixSummaryDrift ? (
+              <Button
+                onClick={handleFixWalletSummaryDrift}
+                disabled={walletReconcileFixSaving || walletReconcileReportSaving}
+              >
+                {walletReconcileFixSaving ? 'Fixing…' : 'Fix summary drift'}
+              </Button>
+            ) : null}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={walletAutomationOpen} onOpenChange={setWalletAutomationOpen}>
+        <DialogContent className="sm:max-w-[640px]">
+          <DialogHeader>
+            <DialogTitle>Wallet automation settings</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Automatic wallet deductions are disabled by default. Enable only after setting a safe
+              cutover month or date.
+            </p>
+
+            {walletAutomationLoading ? (
+              <div className="text-sm text-muted-foreground">Loading wallet automation settings…</div>
+            ) : null}
+
+            {walletAutomationError ? (
+              <div className="text-sm text-red-600">{walletAutomationError}</div>
+            ) : null}
+
+            {!walletAutomationLoading ? (
+              <Card className="p-3 space-y-2">
+                <div className="text-xs font-medium">Current config</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                  <div>
+                    Status:{' '}
+                    <span className="font-medium">
+                      {walletAutomationIsEnabled ? 'Enabled' : 'Disabled'}
+                    </span>
+                  </div>
+                  <div>
+                    Cutover month:{' '}
+                    <span className="font-medium">
+                      {walletAutomationCurrentConfig.walletCutoverMonthKey || '—'}
+                    </span>
+                  </div>
+                  <div>
+                    Cutover date:{' '}
+                    <span className="font-medium">
+                      {formatDateYmd(walletAutomationCurrentConfig.walletCutoverDate)}
+                    </span>
+                  </div>
+                  <div>
+                    Updated at:{' '}
+                    <span className="font-medium">
+                      {formatDateYmd(walletAutomationCurrentConfig.updatedAt)}
+                    </span>
+                  </div>
+                  <div>
+                    Last enabled at:{' '}
+                    <span className="font-medium">
+                      {formatDateYmd(walletAutomationCurrentConfig.lastEnabledAt)}
+                    </span>
+                  </div>
+                  <div>
+                    Last disabled at:{' '}
+                    <span className="font-medium">
+                      {formatDateYmd(walletAutomationCurrentConfig.lastDisabledAt)}
+                    </span>
+                  </div>
+                  <div className="md:col-span-2">
+                    Updated by:{' '}
+                    <span className="font-medium">
+                      {walletAutomationCurrentConfig.updatedBy || '—'}
+                    </span>
+                  </div>
+                </div>
+                {!walletAutomationExists ? (
+                  <div className="text-xs text-muted-foreground">
+                    Automation is currently disabled.
+                  </div>
+                ) : null}
+              </Card>
+            ) : null}
+
+            <div className="space-y-1">
+              <label className="inline-flex items-center gap-2 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4"
+                  checked={walletAutomationEnabled}
+                  onChange={(e) => setWalletAutomationEnabled(e.target.checked)}
+                />
+                Enable automatic class deductions
+              </label>
+            </div>
+
+            {walletAutomationEnabled ? (
+              <div className="rounded border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
+                Warning: After this is enabled, future eligible billing charges on or after cutover
+                can deduct from parent wallets automatically.
+              </div>
+            ) : (
+              <div className="rounded border border-slate-200 bg-slate-50 p-2 text-xs text-slate-700">
+                Automatic wallet deductions are currently off. Completed classes will not deduct
+                wallet balance automatically.
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Cutover month key (optional)</label>
+                <Input
+                  value={walletAutomationCutoverMonthKey}
+                  onChange={(e) => setWalletAutomationCutoverMonthKey(e.target.value)}
+                  placeholder="YYYY-MM"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Cutover date (optional)</label>
+                <Input
+                  type="date"
+                  value={walletAutomationCutoverDate}
+                  onChange={(e) => setWalletAutomationCutoverDate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Note (optional)</label>
+              <Textarea
+                value={walletAutomationNote}
+                onChange={(e) => setWalletAutomationNote(e.target.value)}
+                placeholder="Optional admin note"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">
+                Confirmation text {walletAutomationEnabled ? '(required to enable)' : '(optional)'}
+              </label>
+              <Input
+                value={walletAutomationConfirmationText}
+                onChange={(e) => setWalletAutomationConfirmationText(e.target.value)}
+                placeholder="ENABLE WALLET DEDUCTIONS"
+              />
+              <div className="text-xs text-muted-foreground">
+                Type exactly: ENABLE WALLET DEDUCTIONS
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setWalletAutomationOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveWalletAutomationConfig}
+              disabled={walletAutomationSaving || walletAutomationLoading}
+            >
+              {walletAutomationSaving ? 'Saving…' : 'Save settings'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
         <DialogContent className="sm:max-w-[520px]">

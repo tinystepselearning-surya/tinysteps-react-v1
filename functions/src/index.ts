@@ -23,6 +23,15 @@ export {
   voidTeacherOrphanEarnings,
   adminVoidSessionCharge,
 } from "./revenue";
+export {
+  getWalletAutomationConfig,
+  setWalletAutomationConfig,
+  onBillingChargeWalletSync,
+  adminTopupParentWallet,
+  adminAdjustParentWallet,
+  initParentWalletOpeningDeficit,
+  reconcileParentWallet,
+} from "./wallet";
 export { runFinanceReconciliationAudit, runFinanceReconciliationAuditDaily } from "./financeReconciliationReport";
 export { recordLegacyFallbackUsage } from "./legacyFallbackMetrics";
 

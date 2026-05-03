@@ -703,6 +703,23 @@ service cloud.firestore {
     }
 
     // ----------------------------
+    // PARENT WALLETS (SERVER-WRITE ONLY)
+    // ----------------------------
+    match /parentWallets/{parentId} {
+      allow read: if isAdmin()
+        || (isParent() && request.auth.uid == parentId);
+      // Direct client writes are blocked; Cloud Functions/Admin SDK only.
+      allow create, update, delete: if false;
+
+      match /transactions/{transactionId} {
+        allow read: if isAdmin()
+          || (isParent() && request.auth.uid == parentId);
+        // Direct client writes are blocked; Cloud Functions/Admin SDK only.
+        allow create, update, delete: if false;
+      }
+    }
+
+    // ----------------------------
     // PARENT MONTHLY READ MODELS (projection docs)
     // ----------------------------
     match /parentMonthlyReadModels/{parentId}/months/{monthKey} {
