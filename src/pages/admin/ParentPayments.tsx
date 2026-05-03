@@ -161,6 +161,40 @@ type WalletAutomationConfigResult = {
   };
 };
 
+type ReceiveParentPaymentAllocationMode = 'legacy_then_wallet' | 'wallet_only';
+
+type ReceiveParentPaymentResult = {
+  ok?: boolean;
+  dryRun?: boolean;
+  parentId?: string;
+  paymentId?: string;
+  idempotentReplay?: boolean;
+  amountReceived?: number;
+  allocationModeUsed?: ReceiveParentPaymentAllocationMode | string;
+  legacyOutstandingBefore?: number;
+  appliedToLegacy?: number;
+  walletTopupAmount?: number;
+  remainingUnapplied?: number;
+  chargesScanned?: number;
+  chargesIncluded?: number;
+  allocationsPreview?: any[];
+  allocations?: any[];
+  walletTransactionId?: string | null;
+  walletBalanceAfter?: number;
+  migratedByOpeningDeficit?: boolean;
+  warnings?: string[];
+};
+
+type ReceiveParentPaymentPreviewInput = {
+  parentId: string;
+  amount: number;
+  paidAt: string;
+  method: string;
+  reference: string;
+  note: string;
+  allocationMode: ReceiveParentPaymentAllocationMode;
+};
+
 const monthKeyFromDate = (date: Date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -230,7 +264,22 @@ const createWalletAdjustmentRequestKey = (parentId: string) => {
   return raw.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 120);
 };
 
+const createReceiveParentPaymentRequestKey = (parentId: string) => {
+  const randomSuffix = Math.random().toString(36).slice(2, 10);
+  const raw = `receive_parent_payment_${parentId}_${Date.now()}_${randomSuffix}`;
+  return raw.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 140);
+};
+
 const isMonthKeyLike = (value: string) => /^\d{4}-\d{2}$/.test(value.trim());
+const isAllocationMode = (value: string): value is ReceiveParentPaymentAllocationMode =>
+  value === 'legacy_then_wallet' || value === 'wallet_only';
+
+const receiveParentPaymentModeLabel = (mode: any) => {
+  const normalized = String(mode || '').trim().toLowerCase();
+  if (normalized === 'wallet_only') return 'Wallet only';
+  if (normalized === 'legacy_then_wallet') return 'Legacy dues then wallet';
+  return normalized ? normalized.replace(/_/g, ' ') : '—';
+};
 
 const formatDateYmd = (value: any) => {
   const ms = toMillis(value);
@@ -371,6 +420,26 @@ export default function ParentPayments(): JSX.Element {
   const [walletAutomationCutoverDate, setWalletAutomationCutoverDate] = useState('');
   const [walletAutomationNote, setWalletAutomationNote] = useState('');
   const [walletAutomationConfirmationText, setWalletAutomationConfirmationText] = useState('');
+  const [receivePaymentOpen, setReceivePaymentOpen] = useState(false);
+  const [receivePaymentParentId, setReceivePaymentParentId] = useState<string>('');
+  const [receivePaymentParentName, setReceivePaymentParentName] = useState<string>('');
+  const [receivePaymentAmount, setReceivePaymentAmount] = useState('');
+  const [receivePaymentPaidAt, setReceivePaymentPaidAt] = useState<string>(
+    new Date().toISOString().slice(0, 10)
+  );
+  const [receivePaymentMethod, setReceivePaymentMethod] = useState('UPI');
+  const [receivePaymentReference, setReceivePaymentReference] = useState('');
+  const [receivePaymentNote, setReceivePaymentNote] = useState('');
+  const [receivePaymentAllocationMode, setReceivePaymentAllocationMode] =
+    useState<ReceiveParentPaymentAllocationMode>('legacy_then_wallet');
+  const [receivePaymentRequestKey, setReceivePaymentRequestKey] = useState('');
+  const [receivePaymentPreviewSaving, setReceivePaymentPreviewSaving] = useState(false);
+  const [receivePaymentApplySaving, setReceivePaymentApplySaving] = useState(false);
+  const [receivePaymentError, setReceivePaymentError] = useState('');
+  const [receivePaymentResult, setReceivePaymentResult] =
+    useState<ReceiveParentPaymentResult | null>(null);
+  const [receivePaymentPreviewInput, setReceivePaymentPreviewInput] =
+    useState<ReceiveParentPaymentPreviewInput | null>(null);
 
   useEffect(() => {
     const loadRefs = async () => {
@@ -1303,6 +1372,205 @@ export default function ParentPayments(): JSX.Element {
     }
   };
 
+  const openReceiveParentPaymentModal = (row: { parentId: string; parentName: string }) => {
+    const parentId = String(row.parentId || '').trim();
+    if (!parentId) {
+      window.alert('Missing parent');
+      return;
+    }
+    const parentName = row.parentName || fallbackParentLabel(parentId);
+    setSelectedWalletParentId(parentId);
+    setSelectedWalletParentName(parentName);
+    setReceivePaymentParentId(parentId);
+    setReceivePaymentParentName(parentName);
+    setReceivePaymentAmount('');
+    setReceivePaymentPaidAt(new Date().toISOString().slice(0, 10));
+    setReceivePaymentMethod('UPI');
+    setReceivePaymentReference('');
+    setReceivePaymentNote('');
+    setReceivePaymentAllocationMode('legacy_then_wallet');
+    setReceivePaymentRequestKey(createReceiveParentPaymentRequestKey(parentId));
+    setReceivePaymentResult(null);
+    setReceivePaymentPreviewInput(null);
+    setReceivePaymentError('');
+    setReceivePaymentOpen(true);
+  };
+
+  const getReceiveParentPaymentCallableError = (err: any, fallback: string) => {
+    const original = String(err?.message || fallback);
+    const lower = original.toLowerCase();
+    if (
+      (lower.includes('function') && lower.includes('not found')) ||
+      lower.includes('function not found') ||
+      lower.includes('unavailable')
+    ) {
+      return 'Receive parent payment function is not available yet. Please deploy the latest functions and try again.';
+    }
+    if (lower.includes('opening deficit') || (lower.includes('migrated') && lower.includes('wallet'))) {
+      return 'This parent already has opening deficit migration. Please use Wallet-only mode so payment is not applied twice to old dues.';
+    }
+    return original;
+  };
+
+  const buildReceivePaymentPreviewInput = (): ReceiveParentPaymentPreviewInput | null => {
+    const parentId = String(receivePaymentParentId || '').trim();
+    if (!parentId) {
+      window.alert('Missing parent');
+      return null;
+    }
+
+    const amount = Number(receivePaymentAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      window.alert('Enter an amount greater than zero');
+      return null;
+    }
+
+    const allocationModeRaw = String(receivePaymentAllocationMode || '').trim();
+    if (!isAllocationMode(allocationModeRaw)) {
+      window.alert('Select a valid allocation mode');
+      return null;
+    }
+
+    return {
+      parentId,
+      amount,
+      paidAt: receivePaymentPaidAt.trim(),
+      method: receivePaymentMethod.trim(),
+      reference: receivePaymentReference.trim(),
+      note: receivePaymentNote.trim(),
+      allocationMode: allocationModeRaw,
+    };
+  };
+
+  const isSameReceivePaymentPreviewInput = (
+    a: ReceiveParentPaymentPreviewInput | null,
+    b: ReceiveParentPaymentPreviewInput | null
+  ) => {
+    if (!a || !b) return false;
+    return (
+      a.parentId === b.parentId &&
+      a.amount === b.amount &&
+      a.paidAt === b.paidAt &&
+      a.method === b.method &&
+      a.reference === b.reference &&
+      a.note === b.note &&
+      a.allocationMode === b.allocationMode
+    );
+  };
+
+  const handlePreviewReceiveParentPayment = async () => {
+    const previewInput = buildReceivePaymentPreviewInput();
+    if (!previewInput) return;
+
+    const requestKey =
+      receivePaymentRequestKey || createReceiveParentPaymentRequestKey(previewInput.parentId);
+    if (!receivePaymentRequestKey) {
+      setReceivePaymentRequestKey(requestKey);
+    }
+
+    try {
+      setReceivePaymentPreviewSaving(true);
+      setReceivePaymentError('');
+      setReceivePaymentResult(null);
+      const fn = httpsCallable(functions, 'adminReceiveParentPayment');
+      const response = await fn({
+        parentId: previewInput.parentId,
+        amount: previewInput.amount,
+        paidAt: previewInput.paidAt || undefined,
+        method: previewInput.method || undefined,
+        reference: previewInput.reference || undefined,
+        note: previewInput.note || undefined,
+        allocationMode: previewInput.allocationMode,
+        dryRun: true,
+        idempotencyKey: requestKey,
+      });
+      const result = (response.data || {}) as ReceiveParentPaymentResult;
+      setReceivePaymentPreviewInput(previewInput);
+      setReceivePaymentResult(result);
+      if (Number(result.remainingUnapplied || 0) > 0) {
+        window.alert(
+          `Preview completed. Remaining unapplied amount: ${formatMoney(result.remainingUnapplied)}.`
+        );
+      }
+    } catch (err: any) {
+      const message = getReceiveParentPaymentCallableError(err, 'Failed to preview parent payment split');
+      setReceivePaymentError(message);
+      window.alert(message);
+    } finally {
+      setReceivePaymentPreviewSaving(false);
+    }
+  };
+
+  const handleApplyReceiveParentPayment = async () => {
+    const currentInput = buildReceivePaymentPreviewInput();
+    if (!currentInput) return;
+
+    if (!receivePaymentPreviewInput || receivePaymentResult?.dryRun !== true) {
+      window.alert('Preview split first.');
+      return;
+    }
+
+    if (!isSameReceivePaymentPreviewInput(currentInput, receivePaymentPreviewInput)) {
+      window.alert('Inputs changed after preview. Preview split again before applying payment.');
+      return;
+    }
+
+    const amountReceived = Number(receivePaymentResult.amountReceived ?? receivePaymentPreviewInput.amount);
+    const appliedToLegacy = Number(receivePaymentResult.appliedToLegacy || 0);
+    const walletTopupAmount = Number(receivePaymentResult.walletTopupAmount || 0);
+    const confirmed = window.confirm(
+      `You are about to receive ${formatMoney(amountReceived)}. The system will apply ${formatMoney(appliedToLegacy)} to old dues and add ${formatMoney(walletTopupAmount)} to wallet.`
+    );
+    if (!confirmed) return;
+
+    const requestKey =
+      receivePaymentRequestKey || createReceiveParentPaymentRequestKey(receivePaymentPreviewInput.parentId);
+    if (!receivePaymentRequestKey) {
+      setReceivePaymentRequestKey(requestKey);
+    }
+
+    try {
+      setReceivePaymentApplySaving(true);
+      setReceivePaymentError('');
+      const fn = httpsCallable(functions, 'adminReceiveParentPayment');
+      const response = await fn({
+        parentId: receivePaymentPreviewInput.parentId,
+        amount: receivePaymentPreviewInput.amount,
+        paidAt: receivePaymentPreviewInput.paidAt || undefined,
+        method: receivePaymentPreviewInput.method || undefined,
+        reference: receivePaymentPreviewInput.reference || undefined,
+        note: receivePaymentPreviewInput.note || undefined,
+        allocationMode: receivePaymentPreviewInput.allocationMode,
+        dryRun: false,
+        idempotencyKey: requestKey,
+      });
+      const result = (response.data || {}) as ReceiveParentPaymentResult;
+      setReceivePaymentResult(result);
+      if (result.idempotentReplay === true) {
+        window.alert('Payment was already applied earlier. No duplicate allocation was created.');
+      } else {
+        const lines = [
+          'Parent payment received successfully.',
+          `Payment received: ${formatMoney(result.amountReceived)}`,
+          `Applied to legacy dues: ${formatMoney(result.appliedToLegacy)}`,
+          `Wallet credited: ${formatMoney(result.walletTopupAmount)}`,
+          `Remaining unapplied: ${formatMoney(result.remainingUnapplied)}`,
+        ];
+        if (result.paymentId) lines.push(`Payment ID: ${result.paymentId}`);
+        if (Number.isFinite(Number(result.walletBalanceAfter))) {
+          lines.push(`Wallet balance after: ${formatMoney(result.walletBalanceAfter)}`);
+        }
+        window.alert(lines.join('\n'));
+      }
+    } catch (err: any) {
+      const message = getReceiveParentPaymentCallableError(err, 'Failed to receive parent payment');
+      setReceivePaymentError(message);
+      window.alert(message);
+    } finally {
+      setReceivePaymentApplySaving(false);
+    }
+  };
+
   const handleRecordPayment = async () => {
     if (!paymentParentId) {
       window.alert('Missing parent');
@@ -1482,6 +1750,18 @@ export default function ParentPayments(): JSX.Element {
   const walletAutomationCurrentConfig = walletAutomationConfig || {};
   const walletAutomationIsEnabled =
     walletAutomationCurrentConfig.walletClassDeductionsEnabled === true;
+  const receivePaymentWarnings = Array.isArray(receivePaymentResult?.warnings)
+    ? receivePaymentResult.warnings
+    : [];
+  const receivePaymentAllocations = Array.isArray(receivePaymentResult?.allocationsPreview)
+    ? receivePaymentResult?.allocationsPreview || []
+    : Array.isArray(receivePaymentResult?.allocations)
+      ? receivePaymentResult?.allocations || []
+      : [];
+  const receivePaymentCanApply =
+    receivePaymentResult?.dryRun === true &&
+    !!receivePaymentPreviewInput &&
+    !receivePaymentPreviewSaving;
 
   return (
     <div className="space-y-4">
@@ -1713,6 +1993,12 @@ export default function ParentPayments(): JSX.Element {
         <p className="text-xs text-muted-foreground">
           Existing billingCharges/payments allocation flow remains unchanged.
         </p>
+        <p className="text-xs text-muted-foreground">
+          Use Receive parent payment for new receipts. It clears old dues first and adds any excess to wallet.
+        </p>
+        <p className="text-xs text-amber-700">
+          Legacy record payment does not add excess to wallet. For normal new receipts, use Receive parent payment.
+        </p>
       </div>
 
       <Card className="p-4">
@@ -1756,8 +2042,11 @@ export default function ParentPayments(): JSX.Element {
                         </td>
                         <td className="p-2">
                           <div className="flex flex-wrap gap-2">
+                            <Button size="sm" onClick={() => openReceiveParentPaymentModal(row)}>
+                              Receive parent payment
+                            </Button>
                             <Button size="sm" variant="outline" onClick={() => openPaymentModal(row)}>
-                              Record payment
+                              Legacy record payment
                             </Button>
                             <Button
                               size="sm"
@@ -2424,10 +2713,265 @@ export default function ParentPayments(): JSX.Element {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={receivePaymentOpen} onOpenChange={setReceivePaymentOpen}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle>Receive parent payment</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="text-sm">
+              Parent:{' '}
+              <span className="font-medium">
+                {receivePaymentParentName || fallbackParentLabel(receivePaymentParentId)}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Amount (₹)</label>
+                <Input
+                  type="number"
+                  step="1"
+                  value={receivePaymentAmount}
+                  onChange={(e) => setReceivePaymentAmount(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Paid date</label>
+                <Input
+                  type="date"
+                  value={receivePaymentPaidAt}
+                  onChange={(e) => setReceivePaymentPaidAt(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Method (optional)</label>
+                <Input
+                  value={receivePaymentMethod}
+                  onChange={(e) => setReceivePaymentMethod(e.target.value)}
+                  placeholder="UPI / cash / bank transfer"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Reference (optional)</label>
+                <Input
+                  value={receivePaymentReference}
+                  onChange={(e) => setReceivePaymentReference(e.target.value)}
+                  placeholder="Txn/ref id"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Allocation mode</label>
+              <Select
+                value={receivePaymentAllocationMode}
+                onValueChange={(value) => {
+                  if (isAllocationMode(value)) {
+                    setReceivePaymentAllocationMode(value);
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select allocation mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="legacy_then_wallet">
+                    Clear old dues first, add excess to wallet
+                  </SelectItem>
+                  <SelectItem value="wallet_only">Add full amount to wallet</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Note (optional)</label>
+              <Textarea
+                value={receivePaymentNote}
+                onChange={(e) => setReceivePaymentNote(e.target.value)}
+                placeholder="Optional note for this receipt"
+              />
+            </div>
+
+            {receivePaymentError ? (
+              <div className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-700">
+                {receivePaymentError}
+              </div>
+            ) : null}
+
+            {receivePaymentResult?.migratedByOpeningDeficit === true &&
+            String(receivePaymentAllocationMode) === 'legacy_then_wallet' ? (
+              <div className="rounded border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
+                This parent appears migrated by opening deficit. Use wallet-only payment.
+              </div>
+            ) : null}
+
+            {receivePaymentResult ? (
+              <Card className="p-3 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                  <div>
+                    Dry run:{' '}
+                    <span className="font-medium">{receivePaymentResult.dryRun ? 'Yes' : 'No'}</span>
+                  </div>
+                  <div>
+                    Allocation mode used:{' '}
+                    <span className="font-medium">
+                      {receiveParentPaymentModeLabel(receivePaymentResult.allocationModeUsed)}
+                    </span>
+                  </div>
+                  <div>
+                    Amount received:{' '}
+                    <span className="font-medium">
+                      {formatMoney(receivePaymentResult.amountReceived)}
+                    </span>
+                  </div>
+                  <div>
+                    Legacy outstanding before:{' '}
+                    <span className="font-medium">
+                      {formatMoney(receivePaymentResult.legacyOutstandingBefore)}
+                    </span>
+                  </div>
+                  <div>
+                    Applied to legacy dues:{' '}
+                    <span className="font-medium">
+                      {formatMoney(receivePaymentResult.appliedToLegacy)}
+                    </span>
+                  </div>
+                  <div>
+                    Added to wallet:{' '}
+                    <span className="font-medium">
+                      {formatMoney(receivePaymentResult.walletTopupAmount)}
+                    </span>
+                  </div>
+                  <div>
+                    Remaining unapplied:{' '}
+                    <span className="font-medium">
+                      {formatMoney(receivePaymentResult.remainingUnapplied)}
+                    </span>
+                  </div>
+                  <div>
+                    Charges scanned / included:{' '}
+                    <span className="font-medium">
+                      {Number(receivePaymentResult.chargesScanned ?? 0)} /{' '}
+                      {Number(receivePaymentResult.chargesIncluded ?? 0)}
+                    </span>
+                  </div>
+                </div>
+
+                {Number(receivePaymentResult.walletTopupAmount || 0) > 0 ? (
+                  <div className="rounded border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-800">
+                    Excess amount will be added to wallet.
+                  </div>
+                ) : null}
+
+                {receivePaymentResult.idempotentReplay === true ? (
+                  <div className="text-xs text-slate-700">
+                    This request was already applied earlier. No duplicate write was created.
+                  </div>
+                ) : null}
+
+                {receivePaymentResult.paymentId ? (
+                  <div className="text-xs text-muted-foreground">
+                    Payment ID: {receivePaymentResult.paymentId}
+                  </div>
+                ) : null}
+                {Number.isFinite(Number(receivePaymentResult.walletBalanceAfter)) ? (
+                  <div className="text-xs text-muted-foreground">
+                    Wallet balance after: {formatMoney(receivePaymentResult.walletBalanceAfter)}
+                  </div>
+                ) : null}
+
+                <div className="space-y-1">
+                  <div className="text-xs font-medium">Warnings</div>
+                  {receivePaymentWarnings.length === 0 ? (
+                    <div className="text-xs text-muted-foreground">No warnings.</div>
+                  ) : (
+                    <ul className="list-disc pl-5 text-xs text-amber-700">
+                      {receivePaymentWarnings.map((warning, idx) => (
+                        <li key={`${warning}-${idx}`}>{warning}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <div className="text-xs font-medium">Allocation preview</div>
+                  {receivePaymentAllocations.length === 0 ? (
+                    <div className="text-xs text-muted-foreground">No charge-level allocations returned.</div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs table-auto">
+                        <thead>
+                          <tr className="text-left border-b">
+                            <th className="p-1">Charge</th>
+                            <th className="p-1">Amount</th>
+                            <th className="p-1">Before</th>
+                            <th className="p-1">After</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {receivePaymentAllocations.map((allocation: any, idx: number) => {
+                            const chargeId = String(
+                              allocation?.chargeId || allocation?.billingChargeId || allocation?.id || ''
+                            ).trim();
+                            const allocAmount = Number(
+                              allocation?.allocatedAmount ?? allocation?.amount ?? 0
+                            );
+                            const before = Number(
+                              allocation?.outstandingBefore ?? allocation?.before ?? 0
+                            );
+                            const after = Number(
+                              allocation?.outstandingAfter ?? allocation?.after ?? 0
+                            );
+                            return (
+                              <tr key={`${chargeId || 'allocation'}-${idx}`} className="border-b last:border-b-0">
+                                <td className="p-1">{chargeId || '—'}</td>
+                                <td className="p-1">{formatMoney(allocAmount)}</td>
+                                <td className="p-1">{formatMoney(before)}</td>
+                                <td className="p-1">{formatMoney(after)}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            ) : null}
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setReceivePaymentOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handlePreviewReceiveParentPayment}
+              disabled={receivePaymentPreviewSaving || receivePaymentApplySaving}
+            >
+              {receivePaymentPreviewSaving ? 'Previewing…' : 'Preview split'}
+            </Button>
+            {receivePaymentCanApply ? (
+              <Button
+                onClick={handleApplyReceiveParentPayment}
+                disabled={receivePaymentApplySaving || receivePaymentPreviewSaving}
+              >
+                {receivePaymentApplySaving ? 'Applying…' : 'Apply payment'}
+              </Button>
+            ) : null}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
         <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
-            <DialogTitle>Record Payment</DialogTitle>
+            <DialogTitle>Legacy record payment</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-3">
@@ -2469,6 +3013,9 @@ export default function ParentPayments(): JSX.Element {
               </Select>
               <div className="text-xs text-muted-foreground">
                 Payments apply to charges for the selected enrollment.
+              </div>
+              <div className="text-xs text-amber-700">
+                This legacy flow does not add excess amount to wallet. Use Receive parent payment for normal new receipts.
               </div>
             </div>
 
@@ -2526,7 +3073,7 @@ export default function ParentPayments(): JSX.Element {
               Cancel
             </Button>
             <Button onClick={handleRecordPayment} disabled={paymentSaving || loadingEnrollments}>
-              {paymentSaving ? 'Saving…' : 'Record payment'}
+              {paymentSaving ? 'Saving…' : 'Save legacy payment'}
             </Button>
           </DialogFooter>
         </DialogContent>

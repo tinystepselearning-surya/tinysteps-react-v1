@@ -71,6 +71,31 @@ interface SetWalletAutomationConfigRequest {
   confirmationText?: string;
 }
 
+type ParentPaymentAllocationMode = 'legacy_then_wallet' | 'wallet_only';
+
+interface AdminReceiveParentPaymentRequest {
+  parentId?: string;
+  amount?: number;
+  method?: string;
+  paidAt?: string;
+  note?: string;
+  reference?: string;
+  idempotencyKey?: string;
+  dryRun?: boolean;
+  allocationMode?: ParentPaymentAllocationMode;
+}
+
+interface LegacyPaymentAllocationPreview {
+  chargeId: string;
+  amount: number;
+  outstandingBefore: number;
+  outstandingAfter: number;
+  monthKey: string | null;
+  enrollmentId: string | null;
+  kidId: string | null;
+  courseId: string | null;
+}
+
 interface AppendWalletTransactionInput {
   parentId: string;
   type: WalletTransactionType;
@@ -202,6 +227,15 @@ function monthKeyFromDateIST(date: Date): string {
   return `${year}-${month}`;
 }
 
+function dayKeyFromDateIST(date: Date): string {
+  const istMs = date.getTime() + IST_OFFSET_MINUTES * 60 * 1000;
+  const istDate = new Date(istMs);
+  const year = istDate.getUTCFullYear();
+  const month = String(istDate.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(istDate.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 function resolveTopupPaidAt(value: unknown): admin.firestore.Timestamp {
   const parsed = value == null ? new Date() : toDate(value);
   if (!parsed) {
@@ -256,11 +290,30 @@ function normalizeStatus(value: unknown): string {
   return raw || 'active';
 }
 
+function normalizeOptionalPaymentMethod(value: unknown): string | null {
+  const raw = normalizeOptionalText(value, 80);
+  if (!raw) return null;
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === 'upi') return 'UPI';
+  if (normalized === 'bank_transfer' || normalized === 'bank' || normalized === 'transfer') {
+    return 'bank_transfer';
+  }
+  if (normalized === 'online') return 'online';
+  return raw;
+}
+
 function normalizeMonthKey(value: unknown): string | null {
   const raw = typeof value === 'string' ? value.trim() : '';
   if (!raw) return null;
   if (!/^\d{4}-\d{2}$/.test(raw)) return null;
   return raw;
+}
+
+function normalizeParentPaymentAllocationMode(value: unknown): ParentPaymentAllocationMode | null {
+  const raw = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  if (!raw) return null;
+  if (raw === 'legacy_then_wallet' || raw === 'wallet_only') return raw;
+  return null;
 }
 
 function normalizeChargeStatus(value: unknown): string {
@@ -285,6 +338,277 @@ function resolveChargePaidAmount(data: Record<string, unknown>, amount: number):
     return Math.max(amount, 0);
   }
   return 0;
+}
+
+function revenueMonthlyRef(db: admin.firestore.Firestore, monthKey: string) {
+  return db
+    .collection('adminStats')
+    .doc('revenueMonthly')
+    .collection('months')
+    .doc(monthKey);
+}
+
+interface BillingChargeEntry {
+  id: string;
+  ref: admin.firestore.DocumentReference;
+  data: Record<string, unknown>;
+}
+
+interface LegacyChargeCandidate extends BillingChargeEntry {
+  monthKey: string | null;
+  createdAtMs: number | null;
+  eventDateMs: number | null;
+  amountValue: number;
+  paidAmountValue: number;
+  outstanding: number;
+  enrollmentId: string | null;
+  kidId: string | null;
+  courseId: string | null;
+}
+
+interface LegacyChargeAllocationInternal extends LegacyPaymentAllocationPreview {
+  ref: admin.firestore.DocumentReference;
+  amountValue: number;
+  paidAmountValue: number;
+}
+
+interface LegacyChargeAllocationPlan {
+  chargesScanned: number;
+  chargesIncluded: number;
+  legacyOutstandingBefore: number;
+  appliedToLegacy: number;
+  walletTopupAmount: number;
+  remainingUnapplied: number;
+  allocations: LegacyPaymentAllocationPreview[];
+  allocationsInternal: LegacyChargeAllocationInternal[];
+  warnings: string[];
+}
+
+interface OpeningDeficitMigrationDetectionResult {
+  walletRef: admin.firestore.DocumentReference;
+  walletExists: boolean;
+  walletCurrentBalance: number;
+  openingDeficit: number;
+  migratedByOpeningDeficit: boolean;
+  openingDeficitTransactionFound: boolean;
+  warnings: string[];
+}
+
+function resolveChargeSortDateMs(data: Record<string, unknown>): number | null {
+  const candidates: unknown[] = [
+    data.chargeDate,
+    data.date,
+    data.sessionDate,
+    data.startAt,
+    data.endAt,
+    data.updatedAt,
+  ];
+  for (const value of candidates) {
+    const parsed = toDate(value);
+    if (parsed) return parsed.getTime();
+  }
+  return null;
+}
+
+function normalizeLegacyChargeEntries(entries: BillingChargeEntry[]): {
+  candidates: LegacyChargeCandidate[];
+  warnings: string[];
+} {
+  const warnings: string[] = [];
+  const pushWarning = (message: string) => {
+    if (warnings.length < 150) warnings.push(message);
+  };
+
+  const candidates: LegacyChargeCandidate[] = [];
+  for (const entry of entries) {
+    const data = entry.data;
+    const status = normalizeChargeStatus(data.status);
+    if (isExcludedBillingChargeStatus(status)) continue;
+
+    if (!Number.isFinite(Number(data.amount))) {
+      pushWarning(`charge ${entry.id}: missing/invalid amount, treated as 0`);
+    }
+    const amountValue = Math.max(normalizeNumber(data.amount, 0), 0);
+    if (amountValue <= 0) continue;
+
+    if (!Number.isFinite(Number(data.paidAmount))) {
+      pushWarning(`charge ${entry.id}: missing/invalid paidAmount, resolved using status fallback`);
+    }
+    const paidAmountValue = resolveChargePaidAmount(data, amountValue);
+    const outstanding = Math.max(amountValue - paidAmountValue, 0);
+    if (outstanding <= 0) continue;
+
+    const monthKey = normalizeMonthKey(data.monthKey);
+    candidates.push({
+      ...entry,
+      monthKey,
+      createdAtMs: toDate(data.createdAt)?.getTime() || null,
+      eventDateMs: resolveChargeSortDateMs(data),
+      amountValue,
+      paidAmountValue,
+      outstanding,
+      enrollmentId: normalizeOptionalId(data.enrollmentId),
+      kidId: normalizeOptionalId(data.kidId) || normalizeOptionalId(data.studentId),
+      courseId: normalizeOptionalId(data.courseId),
+    });
+  }
+
+  candidates.sort((left, right) => {
+    const leftMonth = left.monthKey || '9999-99';
+    const rightMonth = right.monthKey || '9999-99';
+    if (leftMonth !== rightMonth) return leftMonth.localeCompare(rightMonth);
+
+    const leftCreated = left.createdAtMs ?? Number.MAX_SAFE_INTEGER;
+    const rightCreated = right.createdAtMs ?? Number.MAX_SAFE_INTEGER;
+    if (leftCreated !== rightCreated) return leftCreated - rightCreated;
+
+    const leftEvent = left.eventDateMs ?? Number.MAX_SAFE_INTEGER;
+    const rightEvent = right.eventDateMs ?? Number.MAX_SAFE_INTEGER;
+    if (leftEvent !== rightEvent) return leftEvent - rightEvent;
+
+    return left.id.localeCompare(right.id);
+  });
+
+  return { candidates, warnings };
+}
+
+function buildLegacyChargeAllocationPlan(
+  entries: BillingChargeEntry[],
+  amountReceived: number
+): LegacyChargeAllocationPlan {
+  const normalizedAmount = Math.max(roundCurrency(amountReceived), 0);
+  const { candidates, warnings } = normalizeLegacyChargeEntries(entries);
+  const chargesScanned = entries.length;
+  const chargesIncluded = candidates.length;
+  const legacyOutstandingBefore = roundCurrency(
+    candidates.reduce((sum, item) => sum + item.outstanding, 0)
+  );
+
+  let remaining = normalizedAmount;
+  const allocationsInternal: LegacyChargeAllocationInternal[] = [];
+  for (const candidate of candidates) {
+    if (remaining <= 0) break;
+    const applyAmount = roundCurrency(Math.min(remaining, candidate.outstanding));
+    if (applyAmount <= 0) continue;
+    remaining = roundCurrency(remaining - applyAmount);
+    const outstandingAfter = roundCurrency(Math.max(candidate.outstanding - applyAmount, 0));
+    allocationsInternal.push({
+      ref: candidate.ref,
+      chargeId: candidate.id,
+      amount: applyAmount,
+      outstandingBefore: roundCurrency(candidate.outstanding),
+      outstandingAfter,
+      monthKey: candidate.monthKey,
+      enrollmentId: candidate.enrollmentId,
+      kidId: candidate.kidId,
+      courseId: candidate.courseId,
+      amountValue: candidate.amountValue,
+      paidAmountValue: candidate.paidAmountValue,
+    });
+  }
+
+  const appliedToLegacy = roundCurrency(normalizedAmount - remaining);
+  const walletTopupAmount = roundCurrency(Math.max(remaining, 0));
+  const remainingUnapplied = 0;
+
+  return {
+    chargesScanned,
+    chargesIncluded,
+    legacyOutstandingBefore,
+    appliedToLegacy,
+    walletTopupAmount,
+    remainingUnapplied,
+    allocations: allocationsInternal.map((item) => ({
+      chargeId: item.chargeId,
+      amount: item.amount,
+      outstandingBefore: item.outstandingBefore,
+      outstandingAfter: item.outstandingAfter,
+      monthKey: item.monthKey,
+      enrollmentId: item.enrollmentId,
+      kidId: item.kidId,
+      courseId: item.courseId,
+    })),
+    allocationsInternal,
+    warnings,
+  };
+}
+
+function resolveSingleAllocationValue(
+  allocations: LegacyPaymentAllocationPreview[],
+  field: 'enrollmentId' | 'kidId' | 'courseId'
+): string | null {
+  const values = Array.from(
+    new Set(
+      allocations
+        .map((allocation) => normalizeOptionalId(allocation[field]))
+        .filter((value): value is string => Boolean(value))
+    )
+  );
+  return values.length === 1 ? values[0] : null;
+}
+
+function assertExistingReceiveParentPaymentMatchesInput(
+  existing: Record<string, unknown>,
+  parentId: string,
+  amount: number,
+  idempotencyKey: string
+): void {
+  const existingParentId = String(existing.parentId || '').trim();
+  const existingAmount = normalizeNumber(existing.amount, Number.NaN);
+  const existingIdempotencyKey = String(existing.idempotencyKey || '').trim();
+  const sourceSystem = String(existing.sourceSystem || '').trim();
+
+  if (
+    (existingParentId && existingParentId !== parentId) ||
+    (Number.isFinite(existingAmount) && Math.abs(existingAmount - amount) > 0.01) ||
+    (existingIdempotencyKey && existingIdempotencyKey !== idempotencyKey) ||
+    (sourceSystem && sourceSystem !== 'admin_receive_parent_payment')
+  ) {
+    throw new HttpsError(
+      'failed-precondition',
+      'idempotencyKey already used for a different parent payment intake request'
+    );
+  }
+}
+
+async function detectOpeningDeficitMigration(
+  db: admin.firestore.Firestore,
+  parentId: string
+): Promise<OpeningDeficitMigrationDetectionResult> {
+  const walletRef = db.collection('parentWallets').doc(parentId);
+  const walletSnap = await walletRef.get();
+  const walletData = (walletSnap.data() || {}) as Record<string, unknown>;
+  const openingDeficit = Math.max(normalizeNumber(walletData.openingDeficit, 0), 0);
+  const walletCurrentBalance = normalizeNumber(walletData.currentBalance, 0);
+  const warnings: string[] = [];
+
+  let openingDeficitTransactionFound = false;
+  if (!(openingDeficit > 0)) {
+    try {
+      const openingDeficitTxSnap = await walletRef
+        .collection('transactions')
+        .where('type', '==', 'opening_deficit')
+        .limit(1)
+        .get();
+      openingDeficitTransactionFound = !openingDeficitTxSnap.empty;
+    } catch (err) {
+      warnings.push('Opening deficit transaction lookup failed; using wallet summary only.');
+      logger.warn('opening deficit migration detection: transaction lookup failed', {
+        parentId,
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  return {
+    walletRef,
+    walletExists: walletSnap.exists,
+    walletCurrentBalance,
+    openingDeficit,
+    migratedByOpeningDeficit: openingDeficit > 0 || openingDeficitTransactionFound,
+    openingDeficitTransactionFound,
+    warnings,
+  };
 }
 
 async function loadWalletAutomationConfig(
@@ -397,113 +721,121 @@ function assertExistingTransactionMatchesInput(
   }
 }
 
-async function appendWalletTransactionAtomic(
+async function appendWalletTransactionWithTx(
+  tx: admin.firestore.Transaction,
   db: admin.firestore.Firestore,
   input: AppendWalletTransactionInput
 ): Promise<AppendWalletTransactionResult> {
   const walletRef = db.collection('parentWallets').doc(input.parentId);
   const transactionRef = walletRef.collection('transactions').doc(walletTransactionDocId(input.idempotencyKey));
 
-  return db.runTransaction(async (tx) => {
-    const walletSnap = await tx.get(walletRef);
-    const existingTxSnap = await tx.get(transactionRef);
-    const walletData = (walletSnap.data() || {}) as Record<string, unknown>;
-    const walletCurrentBalance = normalizeNumber(walletData.currentBalance, 0);
+  const walletSnap = await tx.get(walletRef);
+  const existingTxSnap = await tx.get(transactionRef);
+  const walletData = (walletSnap.data() || {}) as Record<string, unknown>;
+  const walletCurrentBalance = normalizeNumber(walletData.currentBalance, 0);
 
-    if (existingTxSnap.exists) {
-      const existingTx = (existingTxSnap.data() || {}) as Record<string, unknown>;
-      assertExistingTransactionMatchesInput(existingTx, input);
+  if (existingTxSnap.exists) {
+    const existingTx = (existingTxSnap.data() || {}) as Record<string, unknown>;
+    assertExistingTransactionMatchesInput(existingTx, input);
 
-      const signedAmount = normalizeNumber(
-        existingTx.signedAmount,
-        resolveSignedAmount(input.amount, input.direction)
-      );
-      const balanceAfter = normalizeNumber(existingTx.balanceAfter, walletCurrentBalance);
-      const balanceBefore = normalizeNumber(existingTx.balanceBefore, balanceAfter - signedAmount);
-      const currentBalance = walletSnap.exists
-        ? walletCurrentBalance
-        : balanceAfter;
-
-      return {
-        parentId: input.parentId,
-        transactionId: existingTxSnap.id,
-        signedAmount,
-        balanceBefore,
-        balanceAfter,
-        currentBalance,
-        idempotentReplay: true,
-      };
-    }
-
-    const signedAmount = resolveSignedAmount(input.amount, input.direction);
-    const balanceBefore = walletCurrentBalance;
-    const balanceAfter = balanceBefore + signedAmount;
-    const currentTopups = normalizeNumber(walletData.totalTopups, 0);
-    const currentDeductions = normalizeNumber(walletData.totalDeductions, 0);
-    const currentAdjustments = normalizeNumber(walletData.totalAdjustments, 0);
-    const openingDeficit = normalizeNumber(walletData.openingDeficit, 0);
-
-    const topupIncrement = input.type === 'topup' && input.direction === 'credit' ? input.amount : 0;
-    const adjustmentIncrement = input.type === 'manual_adjustment' ? input.amount : 0;
-    const deductionIncrement =
-      input.type === 'class_deduction' && input.direction === 'debit' ? input.amount : 0;
-    const openingDeficitIncrement =
-      input.type === 'opening_deficit' && input.direction === 'debit' ? input.amount : 0;
-    const now = admin.firestore.FieldValue.serverTimestamp();
-
-    const walletPatch: Record<string, unknown> = {
-      parentId: input.parentId,
-      currentBalance: balanceAfter,
-      openingDeficit: openingDeficit + openingDeficitIncrement,
-      totalTopups: currentTopups + topupIncrement,
-      totalDeductions: currentDeductions + deductionIncrement,
-      totalAdjustments: currentAdjustments + adjustmentIncrement,
-      status: normalizeStatus(walletData.status),
-      currency: normalizeCurrency(walletData.currency),
-      lastUpdatedAt: now,
-      updatedBy: input.createdBy,
-    };
-
-    if (!walletSnap.exists) {
-      walletPatch.createdAt = now;
-    }
-
-    tx.set(walletRef, walletPatch, { merge: true });
-    tx.set(transactionRef, {
-      parentId: input.parentId,
-      type: input.type,
-      direction: input.direction,
-      amount: input.amount,
-      signedAmount,
-      balanceBefore,
-      balanceAfter,
-      studentId: input.studentId,
-      enrollmentId: input.enrollmentId,
-      classSessionId: input.classSessionId || null,
-      billingChargeId: input.billingChargeId || null,
-      monthKey: input.monthKey || null,
-      description: input.description,
-      method: input.method,
-      paidAt: input.paidAt,
-      note: input.note,
-      reference: input.reference,
-      reason: input.reason,
-      createdAt: now,
-      createdBy: input.createdBy,
-      idempotencyKey: input.idempotencyKey,
-      sourceSystem: input.sourceSystem || 'admin_callable',
-      reversalOfTransactionId: input.reversalOfTransactionId || null,
-    });
+    const signedAmount = normalizeNumber(
+      existingTx.signedAmount,
+      resolveSignedAmount(input.amount, input.direction)
+    );
+    const balanceAfter = normalizeNumber(existingTx.balanceAfter, walletCurrentBalance);
+    const balanceBefore = normalizeNumber(existingTx.balanceBefore, balanceAfter - signedAmount);
+    const currentBalance = walletSnap.exists
+      ? walletCurrentBalance
+      : balanceAfter;
 
     return {
       parentId: input.parentId,
-      transactionId: transactionRef.id,
+      transactionId: existingTxSnap.id,
       signedAmount,
       balanceBefore,
       balanceAfter,
-      currentBalance: balanceAfter,
-      idempotentReplay: false,
+      currentBalance,
+      idempotentReplay: true,
     };
+  }
+
+  const signedAmount = resolveSignedAmount(input.amount, input.direction);
+  const balanceBefore = walletCurrentBalance;
+  const balanceAfter = balanceBefore + signedAmount;
+  const currentTopups = normalizeNumber(walletData.totalTopups, 0);
+  const currentDeductions = normalizeNumber(walletData.totalDeductions, 0);
+  const currentAdjustments = normalizeNumber(walletData.totalAdjustments, 0);
+  const openingDeficit = normalizeNumber(walletData.openingDeficit, 0);
+
+  const topupIncrement = input.type === 'topup' && input.direction === 'credit' ? input.amount : 0;
+  const adjustmentIncrement = input.type === 'manual_adjustment' ? input.amount : 0;
+  const deductionIncrement =
+    input.type === 'class_deduction' && input.direction === 'debit' ? input.amount : 0;
+  const openingDeficitIncrement =
+    input.type === 'opening_deficit' && input.direction === 'debit' ? input.amount : 0;
+  const now = admin.firestore.FieldValue.serverTimestamp();
+
+  const walletPatch: Record<string, unknown> = {
+    parentId: input.parentId,
+    currentBalance: balanceAfter,
+    openingDeficit: openingDeficit + openingDeficitIncrement,
+    totalTopups: currentTopups + topupIncrement,
+    totalDeductions: currentDeductions + deductionIncrement,
+    totalAdjustments: currentAdjustments + adjustmentIncrement,
+    status: normalizeStatus(walletData.status),
+    currency: normalizeCurrency(walletData.currency),
+    lastUpdatedAt: now,
+    updatedBy: input.createdBy,
+  };
+
+  if (!walletSnap.exists) {
+    walletPatch.createdAt = now;
+  }
+
+  tx.set(walletRef, walletPatch, { merge: true });
+  tx.set(transactionRef, {
+    parentId: input.parentId,
+    type: input.type,
+    direction: input.direction,
+    amount: input.amount,
+    signedAmount,
+    balanceBefore,
+    balanceAfter,
+    studentId: input.studentId,
+    enrollmentId: input.enrollmentId,
+    classSessionId: input.classSessionId || null,
+    billingChargeId: input.billingChargeId || null,
+    monthKey: input.monthKey || null,
+    description: input.description,
+    method: input.method,
+    paidAt: input.paidAt,
+    note: input.note,
+    reference: input.reference,
+    reason: input.reason,
+    createdAt: now,
+    createdBy: input.createdBy,
+    idempotencyKey: input.idempotencyKey,
+    sourceSystem: input.sourceSystem || 'admin_callable',
+    reversalOfTransactionId: input.reversalOfTransactionId || null,
+  });
+
+  return {
+    parentId: input.parentId,
+    transactionId: transactionRef.id,
+    signedAmount,
+    balanceBefore,
+    balanceAfter,
+    currentBalance: balanceAfter,
+    idempotentReplay: false,
+  };
+}
+
+async function appendWalletTransactionAtomic(
+  db: admin.firestore.Firestore,
+  input: AppendWalletTransactionInput
+): Promise<AppendWalletTransactionResult> {
+  return db.runTransaction(async (tx) => {
+    return appendWalletTransactionWithTx(tx, db, input);
   });
 }
 
@@ -1030,6 +1362,357 @@ export const onBillingChargeWalletSync = onDocumentWritten(
       }
       throw err;
     }
+  }
+);
+
+export const adminReceiveParentPayment = onCall(
+  {
+    region: REGION,
+    memory: '256MiB',
+    timeoutSeconds: 60,
+  },
+  async (request) => {
+    await ensureAdmin(request.auth);
+
+    const data = (request.data || {}) as AdminReceiveParentPaymentRequest;
+    const parentId = String(data.parentId || '').trim();
+    if (!parentId) throw new HttpsError('invalid-argument', 'parentId is required');
+
+    const amount = roundCurrency(Number(data.amount));
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new HttpsError('invalid-argument', 'amount must be a positive number');
+    }
+
+    const dryRun = data.dryRun !== false;
+    const requestedMode = normalizeParentPaymentAllocationMode(data.allocationMode);
+    if (hasOwnProp(data, 'allocationMode') && !requestedMode) {
+      throw new HttpsError(
+        'invalid-argument',
+        'allocationMode must be either legacy_then_wallet or wallet_only'
+      );
+    }
+
+    const paidAt = resolveTopupPaidAt(data.paidAt);
+    const paidAtDate = paidAt.toDate();
+    const monthKey = monthKeyFromDateIST(paidAtDate);
+    const dateKey = dayKeyFromDateIST(paidAtDate);
+    const method = normalizeOptionalPaymentMethod(data.method);
+    const note = normalizeOptionalText(data.note, 500);
+    const reference = normalizeOptionalText(data.reference, 150);
+    const createdBy = resolveActor(request.auth);
+
+    const db = admin.firestore();
+    const migration = await detectOpeningDeficitMigration(db, parentId);
+    const warnings: string[] = [...migration.warnings];
+
+    const allocationModeUsed: ParentPaymentAllocationMode = requestedMode
+      ? requestedMode
+      : migration.migratedByOpeningDeficit
+        ? 'wallet_only'
+        : 'legacy_then_wallet';
+
+    if (migration.migratedByOpeningDeficit && allocationModeUsed === 'legacy_then_wallet') {
+      throw new HttpsError(
+        'failed-precondition',
+        'Parent has opening deficit migration. legacy_then_wallet allocation is blocked to avoid double-counting historical dues.'
+      );
+    }
+    if (!requestedMode && allocationModeUsed === 'wallet_only' && migration.migratedByOpeningDeficit) {
+      warnings.push('Parent appears opening-deficit migrated; defaulted allocationModeUsed to wallet_only.');
+    }
+
+    if (dryRun) {
+      if (allocationModeUsed === 'wallet_only') {
+        return {
+          ok: true,
+          dryRun: true,
+          parentId,
+          amountReceived: amount,
+          allocationModeUsed,
+          legacyOutstandingBefore: 0,
+          appliedToLegacy: 0,
+          walletTopupAmount: amount,
+          remainingUnapplied: 0,
+          chargesScanned: 0,
+          chargesIncluded: 0,
+          allocationsPreview: [] as LegacyPaymentAllocationPreview[],
+          migratedByOpeningDeficit: migration.migratedByOpeningDeficit,
+          warnings,
+        };
+      }
+
+      const chargesSnap = await db
+        .collection('billingCharges')
+        .where('parentId', '==', parentId)
+        .get();
+      const chargeEntries: BillingChargeEntry[] = chargesSnap.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ref: docSnap.ref,
+        data: (docSnap.data() || {}) as Record<string, unknown>,
+      }));
+      const plan = buildLegacyChargeAllocationPlan(chargeEntries, amount);
+      const allWarnings = [...warnings, ...plan.warnings];
+
+      return {
+        ok: true,
+        dryRun: true,
+        parentId,
+        amountReceived: amount,
+        allocationModeUsed,
+        legacyOutstandingBefore: plan.legacyOutstandingBefore,
+        appliedToLegacy: plan.appliedToLegacy,
+        walletTopupAmount: plan.walletTopupAmount,
+        remainingUnapplied: plan.remainingUnapplied,
+        chargesScanned: plan.chargesScanned,
+        chargesIncluded: plan.chargesIncluded,
+        allocationsPreview: plan.allocations,
+        migratedByOpeningDeficit: migration.migratedByOpeningDeficit,
+        warnings: allWarnings,
+      };
+    }
+
+    const idempotencyKey = normalizeIdempotencyKey(data.idempotencyKey);
+    if (!idempotencyKey) {
+      throw new HttpsError('invalid-argument', 'idempotencyKey is required when dryRun is false');
+    }
+
+    const paymentDocId = `receive_parent_payment_${idempotencyKey}`.replace(/[^A-Za-z0-9_-]/g, '_');
+    const paymentRef = db.collection('payments').doc(paymentDocId);
+    const walletTopupIdempotencyKey = normalizeIdempotencyKey(
+      `receive_parent_payment_wallet_${idempotencyKey}`
+    );
+    if (!walletTopupIdempotencyKey) {
+      throw new HttpsError('internal', 'Failed to derive wallet idempotency key');
+    }
+    const rollupRef = revenueMonthlyRef(db, monthKey);
+
+    const writeResult = await db.runTransaction(async (tx) => {
+      const existingPaymentSnap = await tx.get(paymentRef);
+      if (existingPaymentSnap.exists) {
+        const existing = (existingPaymentSnap.data() || {}) as Record<string, unknown>;
+        assertExistingReceiveParentPaymentMatchesInput(existing, parentId, amount, idempotencyKey);
+
+        const replayAllocations =
+          Array.isArray(existing.allocations) && existing.allocations.length > 0
+            ? (existing.allocations as LegacyPaymentAllocationPreview[])
+            : Array.isArray(existing.appliedAllocations)
+              ? (existing.appliedAllocations as Array<Record<string, unknown>>).map((item) => ({
+                  chargeId: String(item.chargeId || '').trim(),
+                  amount: roundCurrency(normalizeNumber(item.amount, 0)),
+                  outstandingBefore: 0,
+                  outstandingAfter: 0,
+                  monthKey: null,
+                  enrollmentId: null,
+                  kidId: null,
+                  courseId: null,
+                }))
+              : [];
+
+        return {
+          paymentId: paymentRef.id,
+          idempotentReplay: true,
+          amountReceived: roundCurrency(normalizeNumber(existing.amount, amount)),
+          allocationModeUsed:
+            normalizeParentPaymentAllocationMode(existing.allocationModeUsed) || allocationModeUsed,
+          legacyOutstandingBefore: roundCurrency(normalizeNumber(existing.legacyOutstandingBefore, 0)),
+          appliedToLegacy: roundCurrency(
+            normalizeNumber(existing.legacyAppliedAmount, normalizeNumber(existing.appliedAmount, 0))
+          ),
+          walletTopupAmount: roundCurrency(normalizeNumber(existing.walletTopupAmount, 0)),
+          remainingUnapplied: roundCurrency(normalizeNumber(existing.unappliedAmount, 0)),
+          chargesScanned: Math.max(Math.floor(normalizeNumber(existing.chargesScanned, 0)), 0),
+          chargesIncluded: Math.max(Math.floor(normalizeNumber(existing.chargesIncluded, 0)), 0),
+          allocations: replayAllocations,
+          walletTransactionId: normalizeOptionalId(existing.walletTransactionId),
+          walletBalanceAfter: roundCurrency(normalizeNumber(existing.walletBalanceAfter, 0)),
+          migratedByOpeningDeficit:
+            existing.migratedByOpeningDeficit === true || migration.migratedByOpeningDeficit,
+          warnings:
+            Array.isArray(existing.warnings)
+              ? existing.warnings.map((item) => String(item || '').trim()).filter(Boolean)
+              : warnings,
+        };
+      }
+
+      const walletRef = db.collection('parentWallets').doc(parentId);
+      const walletSnap = await tx.get(walletRef);
+      const walletData = (walletSnap.data() || {}) as Record<string, unknown>;
+      const txOpeningDeficit = Math.max(normalizeNumber(walletData.openingDeficit, 0), 0);
+      if (allocationModeUsed === 'legacy_then_wallet' && txOpeningDeficit > 0) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Parent has opening deficit migration. legacy_then_wallet allocation is blocked to avoid double-counting historical dues.'
+        );
+      }
+
+      let plan: LegacyChargeAllocationPlan = {
+        chargesScanned: 0,
+        chargesIncluded: 0,
+        legacyOutstandingBefore: 0,
+        appliedToLegacy: 0,
+        walletTopupAmount: amount,
+        remainingUnapplied: 0,
+        allocations: [],
+        allocationsInternal: [],
+        warnings: [],
+      };
+
+      if (allocationModeUsed === 'legacy_then_wallet') {
+        const chargesQuery = db.collection('billingCharges').where('parentId', '==', parentId);
+        const chargesSnap = await tx.get(chargesQuery);
+        const chargeEntries: BillingChargeEntry[] = chargesSnap.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ref: docSnap.ref,
+          data: (docSnap.data() || {}) as Record<string, unknown>,
+        }));
+        plan = buildLegacyChargeAllocationPlan(chargeEntries, amount);
+
+        for (const allocation of plan.allocationsInternal) {
+          const nextPaid = roundCurrency(allocation.paidAmountValue + allocation.amount);
+          const updates: Record<string, unknown> = {
+            paidAmount: nextPaid,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            paymentIds: admin.firestore.FieldValue.arrayUnion(paymentRef.id),
+          };
+          if (nextPaid >= allocation.amountValue - 0.01) {
+            updates.status = 'paid';
+            updates.paidAt = paidAt;
+          } else {
+            updates.status = 'partial';
+            updates.paidAt = admin.firestore.FieldValue.delete();
+          }
+          tx.set(allocation.ref, updates, { merge: true });
+        }
+      }
+
+      const allWarnings = [...warnings, ...plan.warnings];
+      const walletTopupAmount = roundCurrency(plan.walletTopupAmount);
+      const legacyAppliedAmount = roundCurrency(plan.appliedToLegacy);
+      const remainingUnapplied =
+        walletTopupAmount > 0 ? 0 : roundCurrency(Math.max(plan.remainingUnapplied, 0));
+
+      let walletTransactionId: string | null = null;
+      let walletBalanceAfter = roundCurrency(normalizeNumber(walletData.currentBalance, 0));
+      if (walletTopupAmount > 0) {
+        const walletResult = await appendWalletTransactionWithTx(tx, db, {
+          parentId,
+          type: 'topup',
+          direction: 'credit',
+          amount: walletTopupAmount,
+          idempotencyKey: walletTopupIdempotencyKey,
+          monthKey,
+          description: 'Excess payment added to parent wallet',
+          method,
+          paidAt,
+          note,
+          reference,
+          reason: null,
+          studentId: null,
+          enrollmentId: null,
+          classSessionId: null,
+          billingChargeId: null,
+          reversalOfTransactionId: null,
+          createdBy,
+          sourceSystem: 'admin_receive_parent_payment',
+        });
+        walletTransactionId = walletResult.transactionId;
+        walletBalanceAfter = roundCurrency(walletResult.currentBalance);
+      }
+
+      const singleEnrollmentId = resolveSingleAllocationValue(plan.allocations, 'enrollmentId');
+      const singleKidId = resolveSingleAllocationValue(plan.allocations, 'kidId');
+      const singleCourseId = resolveSingleAllocationValue(plan.allocations, 'courseId');
+
+      tx.set(
+        paymentRef,
+        {
+          parentId,
+          enrollmentId: singleEnrollmentId,
+          kidId: singleKidId,
+          courseId: singleCourseId,
+          amount,
+          currency: 'INR',
+          paidAt,
+          monthKey,
+          date: dateKey,
+          method,
+          status: 'completed',
+          note: note || null,
+          reference: reference || null,
+          idempotencyKey,
+          sourceSystem: 'admin_receive_parent_payment',
+          allocationModeUsed,
+          legacyOutstandingBefore: plan.legacyOutstandingBefore,
+          legacyAppliedAmount,
+          walletTopupAmount,
+          appliedAmount: legacyAppliedAmount,
+          unappliedAmount: remainingUnapplied,
+          chargesScanned: plan.chargesScanned,
+          chargesIncluded: plan.chargesIncluded,
+          appliedChargeIds: plan.allocations.map((allocation) => allocation.chargeId),
+          appliedAllocations: plan.allocations.map((allocation) => ({
+            chargeId: allocation.chargeId,
+            amount: allocation.amount,
+          })),
+          allocations: plan.allocations,
+          walletTransactionId,
+          walletBalanceAfter,
+          migratedByOpeningDeficit: migration.migratedByOpeningDeficit,
+          warnings: allWarnings,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdBy,
+        },
+        { merge: true }
+      );
+
+      tx.set(
+        rollupRef,
+        {
+          earned: admin.firestore.FieldValue.increment(amount),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      return {
+        paymentId: paymentRef.id,
+        idempotentReplay: false,
+        amountReceived: amount,
+        allocationModeUsed,
+        legacyOutstandingBefore: plan.legacyOutstandingBefore,
+        appliedToLegacy: legacyAppliedAmount,
+        walletTopupAmount,
+        remainingUnapplied,
+        chargesScanned: plan.chargesScanned,
+        chargesIncluded: plan.chargesIncluded,
+        allocations: plan.allocations,
+        walletTransactionId,
+        walletBalanceAfter,
+        migratedByOpeningDeficit: migration.migratedByOpeningDeficit,
+        warnings: allWarnings,
+      };
+    });
+
+    return {
+      ok: true,
+      dryRun: false,
+      parentId,
+      paymentId: writeResult.paymentId,
+      idempotentReplay: writeResult.idempotentReplay === true,
+      amountReceived: writeResult.amountReceived,
+      allocationModeUsed: writeResult.allocationModeUsed,
+      legacyOutstandingBefore: writeResult.legacyOutstandingBefore,
+      appliedToLegacy: writeResult.appliedToLegacy,
+      walletTopupAmount: writeResult.walletTopupAmount,
+      remainingUnapplied: writeResult.remainingUnapplied,
+      chargesScanned: writeResult.chargesScanned,
+      chargesIncluded: writeResult.chargesIncluded,
+      allocations: writeResult.allocations,
+      walletTransactionId: writeResult.walletTransactionId,
+      walletBalanceAfter: writeResult.walletBalanceAfter,
+      migratedByOpeningDeficit: writeResult.migratedByOpeningDeficit,
+      warnings: writeResult.warnings,
+    };
   }
 );
 

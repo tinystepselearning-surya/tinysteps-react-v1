@@ -27,6 +27,7 @@ export {
   getWalletAutomationConfig,
   setWalletAutomationConfig,
   onBillingChargeWalletSync,
+  adminReceiveParentPayment,
   adminTopupParentWallet,
   adminAdjustParentWallet,
   initParentWalletOpeningDeficit,
