@@ -655,7 +655,10 @@ export default function ParentPayments(): JSX.Element {
       transactionsQuery,
       (snap) => {
         setWalletTransactions(
-          snap.docs.map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() as WalletTransaction) }))
+          snap.docs.map((docSnap) => ({
+            ...(docSnap.data() as Omit<WalletTransaction, 'id'>),
+            id: docSnap.id,
+          }))
         );
         setWalletTransactionsLoading(false);
       },
