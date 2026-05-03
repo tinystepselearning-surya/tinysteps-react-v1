@@ -3,14 +3,17 @@ import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { toast } from '../components/hooks/use-toast';
 import { callFunction } from './callFunctions';
+import {
+  asOptionalString,
+  normalizePushRoute,
+  OPEN_MESSAGES_FROM_PUSH_EVENT,
+  queuePendingPushOpenRoute,
+} from './pushNavigationState';
 
 const TOKEN_TIMEOUT_MS = 15_000;
 const PERMISSION_PROMPT_KEY_PREFIX = 'ts_push_permission_prompted_v1:';
 const LAST_TOKEN_KEY_PREFIX = 'ts_push_last_token_v1:';
-const PENDING_PUSH_OPEN_KEY = 'ts_pending_push_open_v1';
 const ANDROID_MESSAGES_CHANNEL_ID = 'messages';
-
-export const OPEN_MESSAGES_FROM_PUSH_EVENT = 'tinysteps:open-messages-from-push';
 
 type SupportedPlatform = 'ios' | 'android' | 'web';
 
@@ -22,11 +25,6 @@ type RegisterNotificationTokenPayload = {
 };
 
 type PushPermissionReceiveState = 'granted' | 'denied' | 'prompt' | string;
-type PendingPushOpenPayload = {
-  route: string;
-  threadId: string | null;
-  createdAtMs: number;
-};
 
 let listenersInitialized = false;
 let listenersInitPromise: Promise<void> | null = null;
@@ -78,12 +76,6 @@ const writeLocal = (key: string, value: string) => {
   }
 };
 
-const asOptionalString = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return trimmed ? trimmed : null;
-};
-
 const asRecord = (value: unknown): Record<string, unknown> => {
   if (!value) return {};
   if (typeof value === 'string') {
@@ -101,47 +93,8 @@ const asRecord = (value: unknown): Record<string, unknown> => {
   return value as Record<string, unknown>;
 };
 
-const normalizePushRoute = (value: unknown): string => {
-  const route = asOptionalString(value);
-  if (!route || !route.startsWith('/')) return '/messages';
-  return route;
-};
-
 const isMessagePush = (value: unknown): boolean =>
   String(value || '').trim().toLowerCase() === 'message';
-
-export const queuePendingPushOpenRoute = (route: string, threadId?: string) => {
-  const payload: PendingPushOpenPayload = {
-    route: normalizePushRoute(route),
-    threadId: asOptionalString(threadId) || null,
-    createdAtMs: Date.now(),
-  };
-
-  try {
-    localStorage.setItem(PENDING_PUSH_OPEN_KEY, JSON.stringify(payload));
-  } catch {
-    // Ignore storage failures.
-  }
-};
-
-export const consumePendingPushOpenRoute = (): PendingPushOpenPayload | null => {
-  try {
-    const raw = localStorage.getItem(PENDING_PUSH_OPEN_KEY);
-    if (!raw) return null;
-    localStorage.removeItem(PENDING_PUSH_OPEN_KEY);
-    const data = asRecord(JSON.parse(raw));
-    const route = normalizePushRoute(data.route);
-    const threadId = asOptionalString(data.threadId) || null;
-    const createdAtMs = Number(data.createdAtMs);
-    return {
-      route,
-      threadId,
-      createdAtMs: Number.isFinite(createdAtMs) ? createdAtMs : Date.now(),
-    };
-  } catch {
-    return null;
-  }
-};
 
 const dispatchOpenMessagesEvent = (route: string, threadId?: string) => {
   if (typeof window === 'undefined') return;

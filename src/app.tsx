@@ -1,16 +1,13 @@
 import React, { useCallback, useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
-import { onAuthStateChanged } from 'firebase/auth';
 import router from './app/routes';
 import { Toaster } from './components/ui/toaster';
 import useRevealAnimations from './hooks/useRevealAnimations';
-import { auth } from './lib/firebaseConfig';
 import {
   consumePendingPushOpenRoute,
   OPEN_MESSAGES_FROM_PUSH_EVENT,
   queuePendingPushOpenRoute,
-  registerNativePushNotifications,
-} from './lib/pushNotifications';
+} from './lib/pushNavigationState';
 
 const isNativeCapacitorRuntime = () => {
   if (typeof window === 'undefined') return false;
@@ -81,59 +78,93 @@ function App() {
   useEffect(() => {
     if (!isNativeCapacitorRuntime()) return;
 
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      const uid = firebaseUser?.uid?.trim();
-      if (!uid) return;
-      void registerNativePushNotifications(uid);
+    let unsubscribeAuth: (() => void) | null = null;
+    let cancelled = false;
 
-      const pendingPushOpen = consumePendingPushOpenRoute();
-      if (!pendingPushOpen) return;
-      const didNavigate = navigateFromPushPayload(
-        pendingPushOpen.route,
-        pendingPushOpen.threadId,
-      );
-      if (!didNavigate) {
-        queuePendingPushOpenRoute(pendingPushOpen.route, pendingPushOpen.threadId || undefined);
+    const setupNativePush = async () => {
+      try {
+        const [
+          { onAuthStateChanged },
+          { auth },
+          { registerNativePushNotifications },
+        ] = await Promise.all([
+          import('firebase/auth'),
+          import('./lib/firebaseConfig'),
+          import('./lib/pushNotifications'),
+        ]);
+
+        if (cancelled) return;
+
+        unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+          const uid = firebaseUser?.uid?.trim();
+          if (!uid) return;
+
+          void registerNativePushNotifications(uid);
+
+          const pendingPushOpen = consumePendingPushOpenRoute();
+          if (!pendingPushOpen) return;
+
+          const didNavigate = navigateFromPushPayload(
+            pendingPushOpen.route,
+            pendingPushOpen.threadId,
+          );
+
+          if (!didNavigate) {
+            queuePendingPushOpenRoute(pendingPushOpen.route, pendingPushOpen.threadId || undefined);
+          }
+        });
+      } catch (error) {
+        console.warn('[push] native initialization failed', error);
       }
-    });
+    };
 
-    return () => unsubscribe();
+    void setupNativePush();
+
+    return () => {
+      cancelled = true;
+      unsubscribeAuth?.();
+    };
   }, [navigateFromPushPayload]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (!isNativeCapacitorRuntime()) return;
 
     const onOpenFromPush = (event: Event) => {
-      try {
-        const detail =
-          typeof CustomEvent === 'function' &&
-          event instanceof CustomEvent &&
-          event.detail &&
-          typeof event.detail === 'object'
-            ? (event.detail as { route?: unknown; threadId?: unknown })
-            : {};
-        const route = detail.route;
-        const threadId = detail.threadId;
+      void (async () => {
+        try {
+          const detail =
+            typeof CustomEvent === 'function' &&
+            event instanceof CustomEvent &&
+            event.detail &&
+            typeof event.detail === 'object'
+              ? (event.detail as { route?: unknown; threadId?: unknown })
+              : {};
 
-        // If auth has not settled yet, pending route will be consumed on auth ready.
-        if (!auth.currentUser) {
-          queuePendingPushOpenRoute(
-            typeof route === 'string' ? route : '/messages',
-            typeof threadId === 'string' ? threadId : undefined,
-          );
-          return;
-        }
+          const route = detail.route;
+          const threadId = detail.threadId;
+          const { auth } = await import('./lib/firebaseConfig');
 
-        const didNavigate = navigateFromPushPayload(route, threadId);
-        if (!didNavigate) {
-          queuePendingPushOpenRoute(
-            typeof route === 'string' ? route : '/messages',
-            typeof threadId === 'string' ? threadId : undefined,
-          );
+          // If auth has not settled yet, pending route will be consumed on auth ready.
+          if (!auth.currentUser) {
+            queuePendingPushOpenRoute(
+              typeof route === 'string' ? route : '/messages',
+              typeof threadId === 'string' ? threadId : undefined,
+            );
+            return;
+          }
+
+          const didNavigate = navigateFromPushPayload(route, threadId);
+          if (!didNavigate) {
+            queuePendingPushOpenRoute(
+              typeof route === 'string' ? route : '/messages',
+              typeof threadId === 'string' ? threadId : undefined,
+            );
+          }
+        } catch (error) {
+          console.warn('[push] open-messages event handler failed', error);
         }
-      } catch (error) {
-        console.warn('[push] open-messages event handler failed', error);
-      }
+      })();
     };
 
     window.addEventListener(OPEN_MESSAGES_FROM_PUSH_EVENT, onOpenFromPush);
