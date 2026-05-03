@@ -2786,6 +2786,9 @@ export default function ParentPayments(): JSX.Element {
                   <SelectItem value="wallet_only">Add full amount to wallet</SelectItem>
                 </SelectContent>
               </Select>
+              <div className="text-xs text-muted-foreground">
+                This flow checks all unpaid old dues across months, not only the selected month.
+              </div>
             </div>
 
             <div className="space-y-1">
@@ -2890,11 +2893,22 @@ export default function ParentPayments(): JSX.Element {
                   {receivePaymentWarnings.length === 0 ? (
                     <div className="text-xs text-muted-foreground">No warnings.</div>
                   ) : (
-                    <ul className="list-disc pl-5 text-xs text-amber-700">
-                      {receivePaymentWarnings.map((warning, idx) => (
-                        <li key={`${warning}-${idx}`}>{warning}</li>
-                      ))}
-                    </ul>
+                    <div className="space-y-2">
+                      <div className="text-xs text-amber-700">
+                        Some old charge records need cleanup, but the preview used safe fallback
+                        rules.
+                      </div>
+                      <details className="rounded border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
+                        <summary className="cursor-pointer font-medium">
+                          Technical warning details
+                        </summary>
+                        <ul className="list-disc pl-5 pt-2">
+                          {receivePaymentWarnings.map((warning, idx) => (
+                            <li key={`${warning}-${idx}`}>{warning}</li>
+                          ))}
+                        </ul>
+                      </details>
+                    </div>
                   )}
                 </div>
 
