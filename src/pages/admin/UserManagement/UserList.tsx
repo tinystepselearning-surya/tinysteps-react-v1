@@ -69,7 +69,7 @@ interface UserRoleCounts {
   students: number;
 }
 
-type UserSortField = 'email' | 'name' | 'role' | 'status' | 'createdAt';
+type UserSortField = 'email' | 'name' | 'role' | 'status' | 'phone' | 'createdAt';
 type SortDirection = 'asc' | 'desc';
 type UserPageSize = 'all' | 25 | 50 | 100;
 
@@ -88,6 +88,64 @@ function UserTable({
   sortDirection,
   onSort,
 }: UserTableProps) {
+  const getFirstNonEmpty = (...values: unknown[]) => {
+    for (const value of values) {
+      if (typeof value !== 'string') continue;
+      const trimmed = value.trim();
+      if (trimmed) return trimmed;
+    }
+    return '';
+  };
+
+  const normalizeCountryCode = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return '';
+    const digits = trimmed.replace(/[^\d]/g, '');
+    if (!digits) return '';
+    return `+${digits}`;
+  };
+
+  const normalizePhoneValue = (value: string) => value.trim().replace(/\s+/g, ' ');
+
+  const getParentPhoneInfo = (user: User) => {
+    const countryCode = normalizeCountryCode(getFirstNonEmpty(user.phoneCountryCode, user.countryCode));
+    const phoneLocal = normalizePhoneValue(
+      getFirstNonEmpty(user.phoneLocal, user.phoneNumber, user.mobile, user.contactNumber)
+    );
+    const phoneCombined = normalizePhoneValue(getFirstNonEmpty(user.phone));
+    const phoneValue = phoneLocal || phoneCombined;
+
+    if (countryCode && phoneValue) {
+      const displayPhone =
+        phoneLocal.length > 0
+          ? `${countryCode} ${phoneLocal}`
+          : phoneCombined.startsWith(countryCode)
+            ? phoneCombined
+            : `${countryCode} ${phoneCombined}`;
+      return { text: displayPhone, badge: 'Complete', tone: 'complete' as const };
+    }
+
+    if (countryCode && !phoneValue) {
+      return { text: 'Missing phone', badge: 'Missing phone', tone: 'warning' as const };
+    }
+
+    if (!countryCode && phoneValue) {
+      return { text: 'Missing country code', badge: 'Missing country code', tone: 'warning' as const };
+    }
+
+    return { text: 'Not added', badge: 'Not added', tone: 'empty' as const };
+  };
+
+  const getPhoneBadgeClassName = (tone: 'complete' | 'warning' | 'empty') => {
+    if (tone === 'complete') {
+      return 'border-emerald-200 bg-emerald-50 text-emerald-700';
+    }
+    if (tone === 'warning') {
+      return 'border-amber-200 bg-amber-50 text-amber-700';
+    }
+    return 'border-slate-200 bg-slate-50 text-slate-600';
+  };
+
   const getRoleBadgeVariant = (role?: string) => {
     switch (role) {
       case 'admin':
@@ -120,7 +178,7 @@ function UserTable({
   };
 
   return (
-    <Table className="w-full min-w-[940px] text-sm">
+    <Table className="w-full min-w-[1080px] text-sm">
       <TableHeader>
         <TableRow>
           {([
@@ -128,6 +186,7 @@ function UserTable({
             { field: 'name', label: 'Name', className: 'px-3 py-2 text-xs font-semibold min-w-[180px]' },
             { field: 'role', label: 'Role', className: 'px-3 py-2 text-xs font-semibold min-w-[110px]' },
             { field: 'status', label: 'Status', className: 'px-3 py-2 text-xs font-semibold min-w-[110px]' },
+            { field: 'phone', label: 'Phone', className: 'px-3 py-2 text-xs font-semibold min-w-[190px]' },
             { field: 'createdAt', label: 'Created', className: 'px-3 py-2 text-xs font-semibold min-w-[120px]' },
           ] as Array<{ field: UserSortField; label: string; className: string }>).map((column) => (
             <TableHead key={column.field} className={column.className}>
@@ -172,6 +231,39 @@ function UserTable({
               <Badge variant={getStatusBadgeVariant(user.status)}>
                 {user.status || 'unknown'}
               </Badge>
+            </TableCell>
+
+            <TableCell className="px-3 py-2 whitespace-nowrap">
+              {(() => {
+                const role = String(user.role || '').trim().toLowerCase();
+                const isParent = role === 'parent';
+                if (!isParent) {
+                  const rawPhone = normalizePhoneValue(
+                    getFirstNonEmpty(
+                      user.phoneCountryCode && user.phoneLocal
+                        ? `${normalizeCountryCode(user.phoneCountryCode)} ${user.phoneLocal}`
+                        : '',
+                      user.phone,
+                      user.phoneNumber,
+                      user.mobile,
+                      user.contactNumber
+                    )
+                  );
+                  return rawPhone || '—';
+                }
+
+                const phoneInfo = getParentPhoneInfo(user);
+                return (
+                  <div className="flex items-center gap-2">
+                    <span className="max-w-[130px] truncate" title={phoneInfo.text}>
+                      {phoneInfo.text}
+                    </span>
+                    <Badge variant="outline" className={getPhoneBadgeClassName(phoneInfo.tone)}>
+                      {phoneInfo.badge}
+                    </Badge>
+                  </div>
+                );
+              })()}
             </TableCell>
 
             <TableCell className="px-3 py-2 whitespace-nowrap">
@@ -289,6 +381,13 @@ export function UserList() {
           uid: data.uid || d.id,
           email: data.email || '',
           name: data.name || data.displayName || '',
+          phone: typeof data.phone === 'string' ? data.phone : '',
+          phoneCountryCode: typeof data.phoneCountryCode === 'string' ? data.phoneCountryCode : '',
+          phoneLocal: typeof data.phoneLocal === 'string' ? data.phoneLocal : '',
+          phoneNumber: typeof data.phoneNumber === 'string' ? data.phoneNumber : '',
+          mobile: typeof data.mobile === 'string' ? data.mobile : '',
+          contactNumber: typeof data.contactNumber === 'string' ? data.contactNumber : '',
+          countryCode: typeof data.countryCode === 'string' ? data.countryCode : '',
           role:
             (data.role as
               | 'parent'

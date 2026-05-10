@@ -9,6 +9,7 @@ if (!admin.apps.length) {
 
 const REGION = 'asia-south1';
 const VALID_STATUS = ['active', 'suspended', 'archived'] as const;
+const COUNTRY_CODE_REGEX = /^[A-Z]{2}$/;
 
 type StudentStatus = (typeof VALID_STATUS)[number];
 
@@ -18,6 +19,7 @@ interface AdminCreateStudentRequest {
   ageYears: number;
   grade: string;
   status?: StudentStatus;
+  countryCode?: string;
 }
 
 function normalizeNameForCompare(name: string): string {
@@ -26,6 +28,19 @@ function normalizeNameForCompare(name: string): string {
 
 function normalizeNameForStore(name: string): string {
   return name.trim().replace(/\s+/g, ' ');
+}
+
+function normalizeCountryCode(value: unknown): string | null {
+  if (value == null) return null;
+  if (typeof value !== 'string') {
+    throw new HttpsError('invalid-argument', 'countryCode must be a string');
+  }
+  const normalized = value.trim().toUpperCase();
+  if (!normalized) return null;
+  if (!COUNTRY_CODE_REGEX.test(normalized)) {
+    throw new HttpsError('invalid-argument', 'countryCode must be a 2-letter uppercase code');
+  }
+  return normalized;
 }
 
 function validateRequest(data: AdminCreateStudentRequest) {
@@ -56,6 +71,8 @@ function validateRequest(data: AdminCreateStudentRequest) {
   if (data.status != null && !VALID_STATUS.includes(data.status)) {
     throw new HttpsError('invalid-argument', `status must be one of: ${VALID_STATUS.join(', ')}`);
   }
+
+  normalizeCountryCode(data.countryCode);
 }
 
 export const adminCreateStudent = onCall(
@@ -72,6 +89,7 @@ export const adminCreateStudent = onCall(
     const grade = payload.grade.trim();
     const ageYears = payload.ageYears;
     const status: StudentStatus = payload.status || 'active';
+    const countryCode = normalizeCountryCode(payload.countryCode);
 
     const db = admin.firestore();
 
@@ -121,6 +139,7 @@ export const adminCreateStudent = onCall(
       age: ageYears,
       grade,
       status,
+      ...(countryCode ? { countryCode } : {}),
       parentId,
       parentIds: [parentId],
       primaryParentId: parentId,
@@ -162,4 +181,3 @@ export const adminCreateStudent = onCall(
     };
   }
 );
-

@@ -8,7 +8,7 @@ import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
 import AutoLinkedText from "../components/seo/AutoLinkedText";
 const ParentReassurance = lazy(() => import("../components/programs/ParentReassurance"));
-const GlobalImpactSection = lazy(() => import("../components/Home/GlobalImpactSection"));
+const GlobalLearnersMapSection = lazy(() => import("../components/Home/GlobalLearnersMapSection"));
 const DemoShowcase = lazy(() => import("../components/Home/StatsProofSection"));
 const StepTimeline = lazy(() => import("../components/Home/StepTimeline"));
 const PricingCrispSection = lazy(() => import("../components/Home/PricingCrispSection"));
@@ -30,7 +30,6 @@ const PARENT_HELP_POINTS = [
   "Home routines that fit real schedules",
   "Friendly support for common phonics questions",
 ];
-const WORLDWIDE_COUNTRIES = ['India','UAE','Vietnam','Singapore','Malaysia','UK','Canada','USA','Sweden','Germany','Australia','Sri Lanka','Pakistan'];
 const CORE_PROGRAMS_TEXT = `${PUBLIC_FACTS.corePrograms[0]}, ${PUBLIC_FACTS.corePrograms[1]}, and ${PUBLIC_FACTS.corePrograms[2]}`;
 const homeSeo = getRouteConfig("/");
 const homeSeoTitle = homeSeo?.title ?? "Tiny Steps Learning | Premium Online English Learning for Children";
@@ -83,6 +82,15 @@ export default function HomePage() {
     if (typeof navigator !== "undefined" && navigator.webdriver) return;
 
     const activate = () => setShowDeferredSections(true);
+    const isMobileViewport = window.matchMedia("(max-width: 767px)").matches;
+    const connection = (navigator as any)?.connection;
+    const effectiveType =
+      typeof connection?.effectiveType === "string" ? connection.effectiveType.toLowerCase() : "";
+    const isConstrainedNetwork =
+      Boolean(connection?.saveData) || effectiveType === "slow-2g" || effectiveType === "2g";
+    const fallbackDelayMs = isMobileViewport
+      ? isConstrainedNetwork ? 9200 : 6800
+      : isConstrainedNetwork ? 12000 : 9800;
     const win = window as Window & {
       requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
       cancelIdleCallback?: (id: number) => void;
@@ -91,7 +99,19 @@ export default function HomePage() {
     let idleId: number | undefined;
     let timeoutId: number | undefined;
 
+    const clearScheduledActivation = () => {
+      if (idleId !== undefined && typeof win.cancelIdleCallback === "function") {
+        win.cancelIdleCallback(idleId);
+        idleId = undefined;
+      }
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+        timeoutId = undefined;
+      }
+    };
+
     const onFirstInteraction = () => {
+      clearScheduledActivation();
       activate();
       window.removeEventListener("pointerdown", onFirstInteraction);
       window.removeEventListener("keydown", onFirstInteraction);
@@ -104,9 +124,9 @@ export default function HomePage() {
     window.addEventListener("scroll", onFirstInteraction, { passive: true, once: true });
 
     if (typeof win.requestIdleCallback === "function") {
-      idleId = win.requestIdleCallback(activate, { timeout: 2800 });
+      idleId = win.requestIdleCallback(activate, { timeout: fallbackDelayMs });
     } else {
-      timeoutId = window.setTimeout(activate, 2400);
+      timeoutId = window.setTimeout(activate, fallbackDelayMs);
     }
 
     return () => {
@@ -114,12 +134,7 @@ export default function HomePage() {
       window.removeEventListener("keydown", onFirstInteraction);
       window.removeEventListener("touchstart", onFirstInteraction);
       window.removeEventListener("scroll", onFirstInteraction);
-      if (idleId !== undefined && typeof win.cancelIdleCallback === "function") {
-        win.cancelIdleCallback(idleId);
-      }
-      if (timeoutId !== undefined) {
-        window.clearTimeout(timeoutId);
-      }
+      clearScheduledActivation();
     };
   }, []);
 
@@ -304,9 +319,8 @@ export default function HomePage() {
 
       {showDeferredSections ? (
         <>
-          {/* ✅ Restored sections */}
           <Suspense fallback={null}>
-            <GlobalImpactSection />
+            <GlobalLearnersMapSection />
           </Suspense>
 
           <Suspense fallback={null}>
@@ -405,25 +419,6 @@ export default function HomePage() {
             <FinalCTASection />
           </Suspense>
 
-          {/* Locations served — helps 'near me' intent while clarifying we're online */}
-          <section className="px-6 py-10">
-            <div className="mx-auto max-w-6xl">
-              <div className="rounded-[32px] border border-slate-200/80 bg-gradient-to-br from-white via-white to-sky-50 p-6 shadow-[0_24px_60px_rgba(15,23,42,0.06)] sm:p-8">
-                <h2 className="text-2xl font-semibold text-slate-900 sm:text-3xl">English classes for kids worldwide</h2>
-                <p className="mt-3 max-w-3xl text-gray-700"><AutoLinkedText text={`Tiny Steps supports ${PUBLIC_FACTS.geography}. Families join us from India, the UAE, Vietnam, Singapore, Malaysia, the UK, Canada, the USA, Sweden, Germany, Australia, Sri Lanka, Pakistan, and more.`} /></p>
-
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {WORLDWIDE_COUNTRIES.map((c) => (
-                    <span key={c} className="rounded-full border border-white bg-white px-3 py-1 text-sm font-medium text-slate-700 shadow-sm">{c}</span>
-                  ))}
-                </div>
-
-                <div className="mt-6">
-                  <a href="/courses" className="inline-flex items-center rounded-full bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-primary-700">See courses</a>
-                </div>
-              </div>
-            </div>
-          </section>
         </>
       ) : null}
 

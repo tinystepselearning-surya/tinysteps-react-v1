@@ -83,6 +83,7 @@ import {
   worksheetMatchesContext,
   type ParentWorksheetItem,
 } from "../../lib/parentWorksheets";
+import { hapticLight, hapticSelection, hapticSuccess, hapticWarning } from "../../lib/nativeHaptics";
 import {
   buildDashboardHeroMessage,
   buildDashboardRecommendedNext,
@@ -127,7 +128,6 @@ const PARENT_MOBILE_TABS: MobileTabBarItem[] = [
   { id: "messages", label: "Messages", icon: MessageSquare },
   { id: "payments", label: "Payments", icon: CreditCard },
   { id: "insights", label: "Insights", icon: TrendingUp },
-  { id: "games-progress", label: "Games", icon: Gamepad2 },
 ];
 
 const shouldDebugParentDashboard =
@@ -1319,6 +1319,23 @@ function statusBadgeClass(status: string) {
   }
 }
 
+function statusDotClass(status: string) {
+  switch (status) {
+    case "completed":
+      return "bg-green-500";
+    case "in_progress":
+      return "bg-blue-500";
+    case "cancelled":
+      return "bg-gray-400";
+    case "no_show":
+      return "bg-orange-500";
+    case "reschedule_requested":
+      return "bg-amber-500";
+    default:
+      return "bg-indigo-500";
+  }
+}
+
 function statusLabel(status: string) {
   switch (status) {
     case "completed":
@@ -1406,7 +1423,18 @@ export default function ParentDashboard() {
     });
   };
 
+  const openMobileMenu = () => {
+    hapticLight();
+    setMobileMenuOpen(true);
+  };
+
+  const handleMobileMenuOpenChange = (open: boolean) => {
+    if (!open) hapticLight();
+    setMobileMenuOpen(open);
+  };
+
   const handleLogout = async () => {
+    hapticLight();
     try {
       await signOut(auth);
       clearUser();
@@ -2268,6 +2296,10 @@ export default function ParentDashboard() {
   const [classesView, setClassesView] = useState<
     "today" | "upcoming" | "completed" | "rescheduled" | "calendar" | "worksheets"
   >("today");
+  const selectClassesView = (view: typeof classesView) => {
+    hapticSelection();
+    setClassesView(view);
+  };
   const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
   const [classesCalendarMonth, setClassesCalendarMonth] = useState<Date>(() => {
     const d = new Date();
@@ -2624,6 +2656,7 @@ export default function ParentDashboard() {
 
   const openJoinClass = async (session: KidSession) => {
     if (joiningSessionId === session.id) return;
+    hapticLight();
     setJoiningSessionId(session.id);
     try {
       const directJoinUrl =
@@ -3688,8 +3721,8 @@ export default function ParentDashboard() {
             </div>
             <div className="text-sm text-slate-600 dark:text-slate-300">
               {user?.email || "Email not available"}
-            </div>
-          </Card>
+                </div>
+              </Card>
           <Card className="p-4">
             <div className="text-xs uppercase tracking-wide text-slate-400">Children</div>
             {hasKids ? (
@@ -3833,7 +3866,7 @@ export default function ParentDashboard() {
             {emptyText}
           </div>
         ) : (
-          <div className="max-h-[62vh] overflow-auto [scrollbar-gutter:stable]">
+          <div className="md:max-h-[62vh] md:overflow-auto md:[scrollbar-gutter:stable]">
             <div className="space-y-3 p-3 md:hidden">
               {rows.map((row) => {
                 const { session, start, status } = row;
@@ -4207,7 +4240,7 @@ export default function ParentDashboard() {
   ) => {
     if (!stageSummaries || stageSummaries.length === 0) {
       return (
-        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+        <div className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900 sm:p-4">
           <div className="text-sm text-gray-600 dark:text-gray-400">
             {emptyLabel || "Stage breakdown isn’t available yet."}
           </div>
@@ -4216,7 +4249,7 @@ export default function ParentDashboard() {
     }
 
     return (
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
         {stageSummaries.map((stage, index) => {
           const displayOrder =
             typeof stage.order === "number" && stage.order > 0 ? stage.order : index + 1;
@@ -4241,19 +4274,19 @@ export default function ParentDashboard() {
           return (
             <div
               key={`${displayOrder}-${stage.label}`}
-              className="rounded-2xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm"
+              className="rounded-xl border border-gray-200 p-3 shadow-none dark:border-gray-700 sm:rounded-2xl sm:p-4 sm:shadow-sm"
               style={{
                 background: `linear-gradient(135deg, ${colors.soft} 0%, #ffffff 60%)`,
               }}
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start justify-between gap-2 sm:gap-3">
                 <div>
                   <div
                     className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${colors.badgeBg} ${colors.badgeText}`}
                   >
                     Stage {displayOrder}
                   </div>
-                  <div className="mt-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    <div className="mt-1.5 text-sm font-semibold text-gray-900 dark:text-gray-100 sm:mt-2">
                     {title}
                   </div>
                   {stageHint && (
@@ -4263,19 +4296,19 @@ export default function ParentDashboard() {
                   )}
                 </div>
                 <div
-                  className="h-12 w-12 rounded-full p-[3px] flex-shrink-0"
+                    className="h-10 w-10 flex-shrink-0 rounded-full p-[3px] sm:h-12 sm:w-12"
                   style={{
                     background: `conic-gradient(${colors.accent} ${progressPct}%, ${colors.soft} ${progressPct}% 100%)`,
                   }}
                 >
-                  <div className="h-full w-full rounded-full bg-white flex items-center justify-center text-[10px] font-semibold">
+                    <div className="flex h-full w-full items-center justify-center rounded-full bg-white text-[10px] font-semibold">
                     <span style={{ color: colors.accent }}>{progressPct}%</span>
                   </div>
                 </div>
               </div>
 
               {expectations.length > 0 && (
-                <div className="mt-3">
+                  <div className="mt-2 sm:mt-3">
                   <div className="text-[10px] uppercase tracking-wide text-gray-500">
                     What to expect
                   </div>
@@ -4288,7 +4321,7 @@ export default function ParentDashboard() {
               )}
 
               {stage.focusChips?.length > 0 && (
-                <div className="mt-3">
+                  <div className="mt-2 sm:mt-3">
                   <div className="text-[10px] uppercase tracking-wide text-gray-500">
                     Next focus
                   </div>
@@ -4298,7 +4331,7 @@ export default function ParentDashboard() {
                 </div>
               )}
 
-              <div className="mt-3">
+                <div className="mt-2 sm:mt-3">
                 <div className="flex items-center justify-between text-[11px] text-gray-500">
                   <span>Progress</span>
                   <span className="font-semibold text-gray-700">{statusText}</span>
@@ -4310,7 +4343,7 @@ export default function ParentDashboard() {
                     </span>
                   </div>
                 )}
-                <div className="mt-2 h-2 rounded-full bg-white/70 border border-white">
+                  <div className="mt-2 h-2 rounded-full border border-white bg-white/70">
                   <div
                     className={`h-2 rounded-full ${colors.bar}`}
                     style={{ width: `${progressPct}%` }}
@@ -4398,7 +4431,7 @@ export default function ParentDashboard() {
         : `Calculated from completed classes in ${classesMonthLabel}.`;
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <ParentDashboardHero
           childName={childName}
           heroMessage={dashboardHeroMessage}
@@ -4424,7 +4457,7 @@ export default function ParentDashboard() {
           billingMetaText={billingMetaText}
         />
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+        <div className="grid gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
           <ParentProgressOverview
             childName={childName}
             isRefetching={phonicsProgressQuery.isRefetching}
@@ -4448,7 +4481,7 @@ export default function ParentDashboard() {
           />
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-2">
+        <div className="grid gap-4 sm:gap-6 xl:grid-cols-2">
           <ParentAttendanceSummary
             classesCounts={classesCounts}
             upcomingPreviewRows={upcomingPreviewRows}
@@ -4513,7 +4546,7 @@ export default function ParentDashboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-[100dvh] items-center justify-center overflow-x-hidden">
         Loading…
       </div>
     );
@@ -4521,14 +4554,23 @@ export default function ParentDashboard() {
   if (!user) return null;
 
   return (
-    <div className="mobile-app-scroll h-screen overflow-hidden bg-gradient-to-b from-slate-100 to-slate-50 dark:bg-slate-950 lg:bg-slate-50">
-      <div className="mx-auto h-full max-w-7xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
-        <Dialog open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-          <DialogContent className="left-0 top-0 h-screen w-[85vw] max-w-[340px] translate-x-0 translate-y-0 rounded-none border-r border-slate-200 p-4 sm:rounded-none">
-            <DialogHeader>
-              <DialogTitle>Parent Menu</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
+    <div className={`mobile-app-scroll w-full min-w-0 max-w-full bg-gradient-to-b from-slate-100 to-slate-50 dark:bg-slate-950 lg:h-screen lg:overflow-hidden lg:bg-slate-50 ${
+      isNativeIOSApp
+        ? "ts-native-app-shell ts-native-no-x overflow-hidden"
+        : "min-h-[100dvh] overflow-x-hidden [overscroll-behavior-x:none]"
+    }`}>
+      <div className={`mx-auto w-full min-w-0 max-w-7xl overflow-x-hidden px-3 sm:px-6 lg:h-full lg:min-h-0 lg:px-8 lg:py-6 ${
+        isNativeIOSApp
+          ? "flex min-h-0 flex-1 flex-col pt-0"
+          : "min-h-[100dvh] pt-4 sm:pt-6"
+      }`}>
+        <Dialog open={mobileMenuOpen} onOpenChange={handleMobileMenuOpenChange}>
+          <DialogContent className="ts-native-no-x left-0 top-0 h-[100dvh] max-h-[100dvh] w-[min(88vw,360px)] min-w-0 max-w-[calc(100vw-1rem)] translate-x-0 translate-y-0 overflow-hidden rounded-r-3xl rounded-l-none border-r border-slate-200 bg-white p-0 shadow-2xl [overscroll-behavior:none] data-[state=closed]:slide-out-to-left-full data-[state=open]:slide-in-from-left-full sm:rounded-l-none sm:rounded-r-3xl [&>button]:right-3 [&>button]:top-[calc(env(safe-area-inset-top)+0.75rem)]">
+            <div className="ts-native-scroll ts-native-no-x h-full w-full px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] pt-[calc(env(safe-area-inset-top)+1.25rem)]">
+              <DialogHeader className="pl-1 pr-14 text-left">
+                <DialogTitle>Parent Menu</DialogTitle>
+              </DialogHeader>
+              <div className="mt-4 space-y-4">
               <div className="min-h-[92px] rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm">
                 <div className="flex items-start justify-between gap-2">
                   <TinyStepsBrand
@@ -4547,9 +4589,9 @@ export default function ParentDashboard() {
                       }}
                       title="View profile"
                       aria-label="View profile"
-                      className="h-8 w-8 rounded-full bg-slate-100/80 text-slate-900 ring-1 ring-slate-200 hover:bg-slate-200"
+                      className="h-11 w-11 rounded-full bg-slate-100/80 text-slate-900 ring-1 ring-slate-200 transition active:scale-95 hover:bg-slate-200"
                     >
-                      <CircleUser className="h-4 w-4" />
+                      <CircleUser className="h-5 w-5" />
                     </Button>
                     <Button
                       variant="ghost"
@@ -4557,9 +4599,9 @@ export default function ParentDashboard() {
                       onClick={handleLogout}
                       title="Logout"
                       aria-label="Logout"
-                      className="h-8 w-8 rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                      className="h-11 w-11 rounded-full text-slate-600 transition active:scale-95 hover:bg-slate-100 hover:text-slate-900"
                     >
-                      <LogOut className="h-4 w-4" />
+                      <LogOut className="h-5 w-5" />
                     </Button>
                   </div>
                 </div>
@@ -4621,35 +4663,39 @@ export default function ParentDashboard() {
                       key={item.id}
                       type="button"
                       onClick={() => {
+                        hapticSelection();
                         setTab(item.id);
                         setMobileMenuOpen(false);
                       }}
                       aria-current={isActive ? "page" : undefined}
-                      className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium transition ${
+                      className={`group flex min-h-12 w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium transition active:scale-[0.99] ${
                         isActive
-                          ? "bg-slate-900 text-white shadow-sm"
-                          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                          ? "bg-slate-900 text-white shadow-[0_8px_18px_rgba(15,23,42,0.14)]"
+                          : "text-slate-600 active:bg-slate-100 hover:bg-slate-100 hover:text-slate-900"
                       }`}
                     >
                       <span
-                        className={`flex h-9 w-9 items-center justify-center rounded-lg transition ${
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition ${
                           isActive
                             ? "bg-white/15 text-white"
                             : "bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-slate-900"
                         }`}
                       >
-                        <Icon className="h-4 w-4" />
+                        <Icon className="h-5 w-5" />
                       </span>
                       <span className="flex-1">{item.label}</span>
                     </button>
                   );
                 })}
               </nav>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
 
-        <div className="flex h-full min-h-0 flex-col gap-6 pb-24 lg:flex-row lg:pb-0">
+        <div className={`flex min-h-0 w-full min-w-0 max-w-full flex-col gap-6 overflow-x-hidden lg:h-full lg:flex-row lg:pb-0 ${
+          isNativeIOSApp ? "h-full flex-1 overflow-hidden pb-0" : "pb-[var(--ts-mobile-tabbar-reserve)]"
+        }`}>
           <aside className="hidden w-full shrink-0 lg:sticky lg:top-6 lg:block lg:w-72 lg:self-start">
             <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900 shadow-sm overflow-hidden">
               <div className="px-4 pb-4 pt-3 space-y-4">
@@ -4783,14 +4829,18 @@ export default function ParentDashboard() {
             </div>
           </aside>
 
-          <main className="flex min-h-0 min-w-0 flex-1 flex-col">
-            <div className="sticky top-0 z-30 bg-slate-50/90 backdrop-blur dark:bg-slate-950/80 pt-safe">
+          <main className={`flex min-h-0 min-w-0 max-w-full flex-1 flex-col overflow-x-hidden ${
+            isNativeIOSApp ? "h-full w-full overflow-hidden" : ""
+          }`}>
+            <div className={`sticky top-0 z-30 shrink-0 bg-slate-50/90 backdrop-blur dark:bg-slate-950/80 ${
+              isNativeIOSApp ? "ts-native-safe-top pb-2" : "pt-safe"
+            }`}>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 className="gap-2 lg:hidden"
-                onClick={() => setMobileMenuOpen(true)}
+                onClick={openMobileMenu}
               >
                 <Menu className="h-4 w-4" />
                 Menu
@@ -4806,7 +4856,11 @@ export default function ParentDashboard() {
               </DialogContent>
             </Dialog>
 
-            <div className="mt-4 min-h-0 space-y-6 overflow-y-auto [scrollbar-gutter:stable] pb-6 pr-1">
+            <div className={`${activeTab === "dashboard" ? "mt-3 space-y-4 sm:mt-4 sm:space-y-6" : "mt-4 space-y-6"} min-h-0 w-full max-w-full overflow-x-hidden [scrollbar-gutter:stable] pr-1 ${
+              isNativeIOSApp
+                ? "ts-native-scroll ts-native-no-x ts-native-tabbar-reserve flex-1"
+                : "pb-6 lg:overflow-y-auto"
+            }`}>
               {/* Content */}
               {activeTab === "dashboard" && renderDashboardHome()}
 
@@ -4823,9 +4877,9 @@ export default function ParentDashboard() {
         )}
 
         {activeTab === "insights" && (
-          <div className="space-y-6">
-            <Card className="p-6 space-y-4">
-              <div className="flex items-start justify-between gap-4">
+          <div className="space-y-4 sm:space-y-6">
+            <Card className="space-y-3 p-4 sm:space-y-4 sm:p-6">
+              <div className="flex items-start justify-between gap-3 sm:gap-4">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     Insights
@@ -4844,7 +4898,7 @@ export default function ParentDashboard() {
               )}
 
               {insightsCourseOptions.length > 0 && (
-                <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Course
@@ -4853,7 +4907,7 @@ export default function ParentDashboard() {
                       <select
                         value={insightsCourseId}
                         onChange={(e) => setInsightsCourseId(e.target.value)}
-                        className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                          className="mt-1 min-h-11 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 sm:min-h-0"
                       >
                         {insightsCourseOptions.map((opt) => (
                           <option key={opt.courseId} value={opt.courseId}>
@@ -4862,7 +4916,7 @@ export default function ParentDashboard() {
                         ))}
                       </select>
                     ) : (
-                      <div className="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                        <div className="mt-1 flex min-h-11 items-center text-sm text-gray-700 dark:text-gray-300 sm:min-h-0">
                         {insightsCourseOptions[0]?.label || insightsCourseOptions[0]?.courseId}
                       </div>
                     )}
@@ -4873,8 +4927,8 @@ export default function ParentDashboard() {
               {insightsCourseOptions.length > 0 && (
                 <>
                   {recentTeacherRatingsSummary?.latestLesson && (
-                    <div className="rounded-xl border border-sky-100 bg-sky-50/70 px-4 py-3">
-                      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                      <div className="rounded-xl border border-sky-100 bg-sky-50/70 px-3 py-3 shadow-sm sm:px-4">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                         <div>
                           <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
                             Teacher ratings
@@ -4889,7 +4943,7 @@ export default function ParentDashboard() {
                               : ""}
                           </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                          <div className="flex flex-wrap items-center gap-2 text-xs md:justify-end">
                           <span className="rounded-full bg-white px-2.5 py-1 font-semibold text-slate-700">
                             Recent average {recentTeacherRatingsSummary.averageRecentRating.toFixed(1)}/4
                           </span>
@@ -5434,69 +5488,72 @@ export default function ParentDashboard() {
 
         {/* Classes tab: Today's + Upcoming sessions */}
         {activeTab === "classes" && (
-          <div className="space-y-4">
-            <Card className="sticky top-0 z-20 p-4 sm:p-5">
+          <div className="space-y-3 sm:space-y-4">
+            <Card className="sticky top-[calc(env(safe-area-inset-top)+3.25rem)] z-20 p-3 sm:top-0 sm:p-5">
               <div className="flex flex-wrap items-center gap-2">
-                <div className="inline-flex flex-wrap rounded-full border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800 gap-1">
+                <div className="flex w-full flex-wrap gap-1 rounded-2xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800 sm:inline-flex sm:w-auto sm:rounded-full">
                     <button
                       type="button"
-                      onClick={() => setClassesView("today")}
-                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs sm:text-sm font-semibold transition ${
+                      onClick={() => selectClassesView("today")}
+                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
                         classesView === "today"
                           ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
                           : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                       }`}
                     >
                       <CalendarCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="hidden xs:inline">Today</span> ({todayClassSessions.length})
+                      <span>Today</span> ({todayClassSessions.length})
                     </button>
                     <button
                       type="button"
-                      onClick={() => setClassesView("upcoming")}
-                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs sm:text-sm font-semibold transition ${
+                      onClick={() => selectClassesView("upcoming")}
+                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
                         classesView === "upcoming"
                           ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
                           : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                       }`}
                     >
                       <CalendarClock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="hidden xs:inline">Upcoming</span> ({upcomingClassSessions.length})
+                      <span className="sm:hidden">Next</span>
+                      <span className="hidden sm:inline">Upcoming</span> ({upcomingClassSessions.length})
                     </button>
                     <button
                       type="button"
-                      onClick={() => setClassesView("completed")}
-                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs sm:text-sm font-semibold transition ${
+                      onClick={() => selectClassesView("completed")}
+                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
                         classesView === "completed"
                           ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
                           : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                       }`}
                     >
                       <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="hidden xs:inline">Done</span> ({completedClassSessions.length})
+                      <span>Done</span> ({completedClassSessions.length})
                     </button>
                     <button
                       type="button"
-                      onClick={() => setClassesView("rescheduled")}
-                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs sm:text-sm font-semibold transition ${
+                      onClick={() => selectClassesView("rescheduled")}
+                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
                         classesView === "rescheduled"
                           ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
                           : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                       }`}
                     >
-                      <CalendarClock className="h-4 w-4" />
-                      Rescheduled ({rescheduledClassSessions.length})
+                      <CalendarClock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span className="sm:hidden">Resched</span>
+                      <span className="hidden sm:inline">Rescheduled</span> ({rescheduledClassSessions.length})
                     </button>
                     <button
                       type="button"
-                      onClick={() => setClassesView("worksheets")}
-                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs sm:text-sm font-semibold transition ${
+                      onClick={() => selectClassesView("worksheets")}
+                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
                         classesView === "worksheets"
                           ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
                           : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                       }`}
                     >
                       <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="hidden xs:inline">Worksheets</span> ({visibleParentWorksheets.length})
+                      <span className="sm:hidden">Sheets</span>
+                      <span className="hidden sm:inline">Worksheets</span> ({visibleParentWorksheets.length})
                     </button>
                     <button
                       type="button"
@@ -5504,15 +5561,15 @@ export default function ParentDashboard() {
                         const now = new Date();
                         setClassesCalendarMonth(new Date(now.getFullYear(), now.getMonth(), 1));
                         setClassesCalendarSelectedDayKey(toYMD(now));
-                        setClassesView("calendar");
+                        selectClassesView("calendar");
                       }}
-                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
                         classesView === "calendar"
                           ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
                           : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                       }`}
                     >
-                      <CalendarDays className="h-4 w-4" />
+                      <CalendarDays className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       Calendar
                     </button>
                     <button
@@ -5522,14 +5579,15 @@ export default function ParentDashboard() {
                         window.open(parentRecordingFolderUrl, "_blank", "noopener,noreferrer");
                       }}
                       disabled={!parentRecordingFolderUrl}
-                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs sm:text-sm font-semibold transition ${
+                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
                         parentRecordingFolderUrl
                           ? "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                           : "cursor-not-allowed text-slate-400 dark:text-slate-500"
                       }`}
                     >
                       <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="hidden xs:inline">Class Recordings</span>
+                      <span className="sm:hidden">Recordings</span>
+                      <span className="hidden sm:inline">Class Recordings</span>
                     </button>
                 </div>
               </div>
@@ -5637,10 +5695,10 @@ export default function ParentDashboard() {
                 )}
               </Card>
             ) : (
-              <Card className="p-6">
+              <Card className="p-3 sm:p-6">
                 <div className="space-y-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex min-w-0 items-center gap-2">
+                    <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
                       <div className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-100">
                         {classesCalendarMonthLabel}
                       </div>
@@ -5672,13 +5730,14 @@ export default function ParentDashboard() {
                         </div>
                       ) : null}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex w-full items-center gap-2 sm:w-auto">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() =>
                           setClassesCalendarMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))
                         }
+                        className="flex-1 sm:flex-none"
                       >
                         Prev
                       </Button>
@@ -5688,22 +5747,23 @@ export default function ParentDashboard() {
                         onClick={() =>
                           setClassesCalendarMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))
                         }
+                        className="flex-1 sm:flex-none"
                       >
                         Next
                       </Button>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold uppercase tracking-wide text-slate-500 sm:gap-2 sm:text-xs">
                     {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((label) => (
                       <div key={label}>{label}</div>
                     ))}
                   </div>
 
-                  <div className="grid grid-cols-7 gap-2">
+                  <div className="grid grid-cols-7 gap-1 sm:gap-2">
                     {classesCalendarDays.map((cell) => {
                       if (!cell.date) {
-                        return <div key={cell.key} className="h-16 rounded-lg bg-transparent" />;
+                        return <div key={cell.key} className="h-12 rounded-lg bg-transparent sm:h-16" />;
                       }
 
                       const dayKey = toYMD(cell.date);
@@ -5724,35 +5784,62 @@ export default function ParentDashboard() {
                           key={dayKey}
                           type="button"
                           onClick={() => setClassesCalendarSelectedDayKey(dayKey)}
-                          className={`h-16 rounded-lg border px-2 py-1 text-left transition ${
+                          className={`h-12 rounded-lg border px-1.5 py-1 text-left transition sm:h-16 sm:px-2 ${
                             isSelected
                               ? "border-indigo-400 bg-indigo-50 dark:border-indigo-600 dark:bg-indigo-950/30"
                               : "border-slate-200 bg-white hover:shadow-sm dark:border-slate-700 dark:bg-slate-900"
                           }`}
                         >
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 sm:text-sm">
                               {cell.date.getDate()}
                             </span>
                             {list.length > 0 ? (
-                              <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-200">
+                              <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium leading-none text-slate-600 dark:bg-slate-800 dark:text-slate-200">
                                 {list.length}
                               </span>
                             ) : null}
                           </div>
-                          <div className="mt-1">
+                          <div className="mt-1 min-h-3">
                             {dominantStatus ? (
-                              <span className={`inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${statusBadgeClass(dominantStatus)}`}>
-                                {statusLabel(dominantStatus)}
-                              </span>
+                              <>
+                                <span className={`inline-block h-2 w-2 rounded-full sm:hidden ${statusDotClass(dominantStatus)}`} />
+                                <span className={`hidden rounded-full px-1.5 py-0.5 text-[10px] font-semibold sm:inline-flex ${statusBadgeClass(dominantStatus)}`}>
+                                  {statusLabel(dominantStatus)}
+                                </span>
+                              </>
                             ) : (
-                              <span className="text-[10px] text-slate-400">—</span>
+                              <span className="text-[10px] leading-none text-slate-400">—</span>
                             )}
                           </div>
                         </button>
                       );
                     })}
                   </div>
+                  {classesCalendarSelectedRows.length > 0 ? (
+                    <div className="space-y-2">
+                      {classesCalendarSelectedRows.map(({ session, status }, index) => (
+                        <div
+                          key={`calendar-selected-${session.id}-${index}`}
+                          className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                {formatSessionTimeRange(session)}
+                              </div>
+                              <div className="mt-0.5 truncate text-xs text-slate-600 dark:text-slate-300">
+                                {resolveSessionChildName(session)} · {session.courseName || "—"}
+                              </div>
+                            </div>
+                            <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusBadgeClass(status)}`}>
+                              {statusLabel(status)}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               </Card>
             )}
@@ -5881,7 +5968,9 @@ export default function ParentDashboard() {
                     createdAt: serverTimestamp(),
                     status: "pending",
                   });
+                  hapticSuccess();
                 } catch (error) {
+                  hapticWarning();
                   console.error("Failed to create payment confirmation:", error);
                 }
 
@@ -5903,283 +5992,358 @@ export default function ParentDashboard() {
 
               return (
                 <>
-                  <Card className="p-6">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                  <Card className="p-4 sm:p-6">
+                    <h2 className="mb-2 text-xl font-bold text-gray-900 dark:text-gray-100">
                       Payments
                     </h2>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                    <p className="mb-4 text-sm text-gray-600 dark:text-gray-400 sm:mb-6">
                       {selectedKid?.fullName
                         ? `Viewing: ${selectedKid.fullName}`
                         : "Select a child"}
                     </p>
 
-                    <div className="mb-6">
-                      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                        Membership
-                      </h3>
-                      <div className="p-4 rounded-lg bg-gradient-to-br from-white to-gray-50 dark:from-slate-800 dark:to-slate-900 border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                            Status
-                          </span>
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                              isActive
-                                ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                                : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-                            }`}
-                          >
-                            {isActive ? "Active" : "Expired"}
-                          </span>
+                    <div className="flex flex-col">
+                      <div className="order-1 mb-4 sm:mb-6">
+                        <h3 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
+                          Membership
+                        </h3>
+                        <div className="rounded-lg border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-3 dark:border-gray-700 dark:from-slate-800 dark:to-slate-900 sm:p-4">
+                          <div className="mb-3 flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                              Status
+                            </span>
+                            <span
+                              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                isActive
+                                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                                  : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
+                              }`}
+                            >
+                              {isActive ? "Active" : "Expired"}
+                            </span>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex justify-between gap-3 text-sm">
+                              <span className="text-gray-600 dark:text-gray-400">
+                                Enrollment Date
+                              </span>
+                              <span className="font-medium text-gray-900 dark:text-gray-100">
+                                {enrollmentDate
+                                  ? enrollmentDate.toLocaleDateString("en-IN")
+                                  : "—"}
+                              </span>
+                            </div>
+                            <div className="flex justify-between gap-3 text-sm">
+                              <span className="text-gray-600 dark:text-gray-400">
+                                Start Date
+                              </span>
+                              <span className="font-medium text-gray-900 dark:text-gray-100">
+                                {displayStartDate
+                                  ? displayStartDate.toLocaleDateString("en-IN")
+                                  : "—"}
+                              </span>
+                            </div>
+                            <div className="flex justify-between gap-3 text-sm">
+                              <span className="text-gray-600 dark:text-gray-400">
+                                End Date
+                              </span>
+                              <span className="font-medium text-gray-900 dark:text-gray-100">
+                                {membershipEndDate
+                                  ? membershipEndDate.toLocaleDateString("en-IN")
+                                  : "—"}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Enrollment Date
-                            </span>
-                            <span className="font-medium text-gray-900 dark:text-gray-100">
-                              {enrollmentDate
-                                ? enrollmentDate.toLocaleDateString("en-IN")
-                                : "—"}
-                            </span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Start Date
-                            </span>
-                            <span className="font-medium text-gray-900 dark:text-gray-100">
-                              {displayStartDate
-                                ? displayStartDate.toLocaleDateString("en-IN")
-                                : "—"}
-                            </span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              End Date
-                            </span>
-                            <span className="font-medium text-gray-900 dark:text-gray-100">
-                              {membershipEndDate
-                                ? membershipEndDate.toLocaleDateString("en-IN")
-                                : "—"}
-                            </span>
+                      </div>
+
+                      <div className="order-2 mb-4 sm:mb-6">
+                        <h3 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
+                          Class Fees & Dues
+                        </h3>
+                        <div className="rounded-lg border border-indigo-100 bg-gradient-to-br from-sky-50 to-indigo-50 p-3 dark:border-indigo-900/30 dark:from-slate-900 dark:to-indigo-950 sm:p-4">
+                          {billingLoading ? (
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              Loading fees…
+                            </div>
+                          ) : billingSummary.totalCharges === 0 ? (
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                Due now: ₹0
+                              </div>
+                              <div className="mt-1 text-xs text-gray-500 dark:text-gray-500">
+                                No charges yet this month.
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
+                              <div>
+                                Completed this month: {billingSummary.chargesThisMonth}
+                              </div>
+                              {billingSummary.avgRate > 0 && (
+                                <div>
+                                  Rate per class: ₹{billingSummary.avgRate.toLocaleString("en-IN")}
+                                </div>
+                              )}
+                              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                Due now: ₹{billingSummary.dueNow.toLocaleString("en-IN")}
+                              </div>
+                              {billingSummary.chargesThisMonth > 0 && (
+                                <div>
+                                  Billed this month: ₹{billingSummary.billedThisMonth.toLocaleString("en-IN")}
+                                </div>
+                              )}
+                              {billingSummary.paidThisMonth > 0 && (
+                                <div>
+                                  Paid this month: ₹{billingSummary.paidThisMonth.toLocaleString("en-IN")}
+                                </div>
+                              )}
+                              <div className="text-xs text-gray-500 dark:text-gray-500">
+                                Charges: {billingSummary.totalCharges}
+                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-500">
+                                {billingSummary.source === "read_model"
+                                  ? `Server summary for ${classesMonthLabel}${
+                                      toDateOrNull(billingSummary.refreshedAt)
+                                        ? ` • refreshed ${toDateOrNull(
+                                            billingSummary.refreshedAt
+                                          )?.toLocaleString("en-IN")}`
+                                        : ""
+                                    }.`
+                                  : `Calculated from ${billingSummary.chargesThisMonth} completed classes (Present/Late) in ${classesMonthLabel}.`}
+                              </div>
+                            </div>
+                          )}
+                          <div className="mt-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setTab("classes")}
+                            >
+                              View classes
+                            </Button>
                           </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="mb-6">
-                      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                        Class Fees & Dues
-                      </h3>
-                      <div className="p-4 rounded-lg bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-slate-900 dark:to-indigo-950 border border-indigo-100 dark:border-indigo-900/30">
-                        {billingLoading ? (
-                          <div className="text-sm text-gray-600 dark:text-gray-400">
-                            Loading fees…
-                          </div>
-                        ) : billingSummary.totalCharges === 0 ? (
-                          <div className="text-sm text-gray-600 dark:text-gray-400">
-                            Due now: ₹0
-                            <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                              No charges yet this month.
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
-                            <div>
-                              Completed this month: {billingSummary.chargesThisMonth}
-                            </div>
-                            {billingSummary.avgRate > 0 && (
-                              <div>
-                                Rate per class: ₹{billingSummary.avgRate.toLocaleString("en-IN")}
-                              </div>
-                            )}
-                            <div>
-                              Due now: ₹{billingSummary.dueNow.toLocaleString("en-IN")}
-                            </div>
-                            {billingSummary.chargesThisMonth > 0 && (
-                              <div>
-                                Billed this month: ₹{billingSummary.billedThisMonth.toLocaleString("en-IN")}
-                              </div>
-                            )}
-                            {billingSummary.paidThisMonth > 0 && (
-                              <div>
-                                Paid this month: ₹{billingSummary.paidThisMonth.toLocaleString("en-IN")}
-                              </div>
-                            )}
-                            <div className="text-xs text-gray-500 dark:text-gray-500">
-                              Charges: {billingSummary.totalCharges}
-                            </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-500">
-                              {billingSummary.source === "read_model"
-                                ? `Server summary for ${classesMonthLabel}${
-                                    toDateOrNull(billingSummary.refreshedAt)
-                                      ? ` • refreshed ${toDateOrNull(
-                                          billingSummary.refreshedAt
-                                        )?.toLocaleString("en-IN")}`
-                                      : ""
-                                  }.`
-                                : `Calculated from ${billingSummary.chargesThisMonth} completed classes (Present/Late) in ${classesMonthLabel}.`}
-                            </div>
-                          </div>
-                        )}
-                        <div className="mt-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setTab("classes")}
-                          >
-                            View classes
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mb-6">
-                      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                        Payment History
-                      </h3>
-                      <div className="p-4 rounded-lg bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700">
-                        {parentPaymentsQuery.isLoading ? (
-                          <div className="text-sm text-gray-600 dark:text-gray-400">
-                            Loading payments…
-                          </div>
-                        ) : sortedPayments.length === 0 ? (
-                          <div className="text-sm text-gray-600 dark:text-gray-400">
-                            No payments recorded yet.
+                      <div className="order-3 mb-4 sm:order-4 sm:mb-0">
+                        {isNativeIOSApp ? (
+                          <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200">
+                            {IOS_BILLING_ASSISTANCE_TEXT}
                           </div>
                         ) : (
                           <div className="space-y-3">
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-                              <div className="rounded border p-3">
-                                <div className="text-xs text-muted-foreground">
-                                  Total paid
-                                </div>
-                                <div className="text-lg font-semibold">
-                                  ₹{paymentTotals.total.toLocaleString("en-IN")}
-                                </div>
-                              </div>
-                              <div className="rounded border p-3">
-                                <div className="text-xs text-muted-foreground">
-                                  Applied to dues
-                                </div>
-                                <div className="text-lg font-semibold">
-                                  ₹{paymentTotals.applied.toLocaleString("en-IN")}
-                                </div>
-                              </div>
-                              <div className="rounded border p-3">
-                                <div className="text-xs text-muted-foreground">
-                                  Unapplied
-                                </div>
-                                <div className="text-lg font-semibold">
-                                  ₹{paymentTotals.unapplied.toLocaleString("en-IN")}
-                                </div>
-                              </div>
-                            </div>
+                            <Button
+                              onClick={() => {
+                                hapticLight();
+                                setShowQrModal(true);
+                              }}
+                              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 font-semibold text-white shadow-md hover:from-indigo-700 hover:to-purple-700"
+                            >
+                              Pay Now
+                            </Button>
 
-                            <div className="border rounded overflow-x-auto">
-                              <div className="min-w-[600px]">
-                              <div className="grid grid-cols-5 gap-2 px-3 py-2 text-xs uppercase text-muted-foreground border-b">
-                                <div>Date</div>
-                                <div>Amount</div>
-                                <div>Applied</div>
-                                <div>Unapplied</div>
-                                <div>Method</div>
-                              </div>
-                              {sortedPayments.map((payment) => {
-                                const rawAmount = Number(payment?.amount ?? 0);
-                                const amount = Number.isFinite(rawAmount)
-                                  ? rawAmount
-                                  : 0;
-                                const rawApplied = Number(
-                                  payment?.appliedAmount ?? NaN
-                                );
-                                const applied = Number.isFinite(rawApplied)
-                                  ? rawApplied
-                                  : (() => {
-                                      const rawUnapplied = Number(
-                                        payment?.unappliedAmount ?? 0
-                                      );
-                                      const unapplied = Number.isFinite(rawUnapplied)
-                                        ? rawUnapplied
-                                        : 0;
-                                      return amount - unapplied;
-                                    })();
-                                const rawUnapplied = Number(
-                                  payment?.unappliedAmount ?? NaN
-                                );
-                                const unapplied = Number.isFinite(rawUnapplied)
-                                  ? rawUnapplied
-                                  : amount - applied;
-                                const paidAt = toDateOrNull(
-                                  payment.paidAt || payment.createdAt
-                                );
-                                return (
-                                  <div
-                                    key={payment.id}
-                                    className="grid grid-cols-5 gap-2 px-3 py-2 text-sm border-b last:border-b-0"
-                                  >
-                                    <div>
-                                      {paidAt
-                                        ? paidAt.toLocaleDateString("en-IN")
-                                        : "—"}
-                                    </div>
-                                    <div>
-                                      ₹{amount.toLocaleString("en-IN")}
-                                    </div>
-                                    <div>
-                                      ₹{applied.toLocaleString("en-IN")}
-                                    </div>
-                                    <div>
-                                      ₹{unapplied.toLocaleString("en-IN")}
-                                    </div>
-                                    <div className="capitalize">
-                                      {String(payment.method || "—")}
-                                    </div>
-                                  </div>
-                                );
-                              })}
+                            <div className="space-y-2">
+                              <Button
+                                onClick={handleConfirmPayment}
+                                disabled={confirmingPayment}
+                                variant="outline"
+                                className="w-full border-green-200 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-300 dark:hover:bg-green-950"
+                              >
+                                {confirmingPayment
+                                  ? "Opening WhatsApp..."
+                                  : "Confirm Payment"}
+                              </Button>
+                              <p className="text-center text-xs text-gray-500 dark:text-gray-400">
+                                After clicking, attach payment screenshot in WhatsApp
+                                and send to admin
+                              </p>
                             </div>
                           </div>
-                            </div>
                         )}
                       </div>
-                    </div>
 
-                    {isNativeIOSApp ? (
-                      <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200">
-                        {IOS_BILLING_ASSISTANCE_TEXT}
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <Button
-                          onClick={() => setShowQrModal(true)}
-                          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-md"
-                        >
-                          Pay Now
-                        </Button>
+                      <div className="order-4 mb-4 sm:order-3 sm:mb-6">
+                        <h3 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
+                          Payment History
+                        </h3>
+                        <div className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-slate-900 sm:p-4">
+                          {parentPaymentsQuery.isLoading ? (
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              Loading payments…
+                            </div>
+                          ) : sortedPayments.length === 0 ? (
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              No payments recorded yet.
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+                                <div className="rounded border p-3">
+                                  <div className="text-xs text-muted-foreground">
+                                    Total paid
+                                  </div>
+                                  <div className="text-lg font-semibold">
+                                    ₹{paymentTotals.total.toLocaleString("en-IN")}
+                                  </div>
+                                </div>
+                                <div className="rounded border p-3">
+                                  <div className="text-xs text-muted-foreground">
+                                    Applied to dues
+                                  </div>
+                                  <div className="text-lg font-semibold">
+                                    ₹{paymentTotals.applied.toLocaleString("en-IN")}
+                                  </div>
+                                </div>
+                                <div className="rounded border p-3">
+                                  <div className="text-xs text-muted-foreground">
+                                    Unapplied
+                                  </div>
+                                  <div className="text-lg font-semibold">
+                                    ₹{paymentTotals.unapplied.toLocaleString("en-IN")}
+                                  </div>
+                                </div>
+                              </div>
 
-                        <div className="space-y-2">
-                          <Button
-                            onClick={handleConfirmPayment}
-                            disabled={confirmingPayment}
-                            variant="outline"
-                            className="w-full border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-950"
-                          >
-                            {confirmingPayment
-                              ? "Opening WhatsApp..."
-                              : "Confirm Payment"}
-                          </Button>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                            After clicking, attach payment screenshot in WhatsApp
-                            and send to admin
-                          </p>
+                              <div className="space-y-2 sm:hidden">
+                                {sortedPayments.map((payment) => {
+                                  const rawAmount = Number(payment?.amount ?? 0);
+                                  const amount = Number.isFinite(rawAmount)
+                                    ? rawAmount
+                                    : 0;
+                                  const rawApplied = Number(
+                                    payment?.appliedAmount ?? NaN
+                                  );
+                                  const applied = Number.isFinite(rawApplied)
+                                    ? rawApplied
+                                    : (() => {
+                                        const rawUnapplied = Number(
+                                          payment?.unappliedAmount ?? 0
+                                        );
+                                        const unapplied = Number.isFinite(rawUnapplied)
+                                          ? rawUnapplied
+                                          : 0;
+                                        return amount - unapplied;
+                                      })();
+                                  const rawUnapplied = Number(
+                                    payment?.unappliedAmount ?? NaN
+                                  );
+                                  const unapplied = Number.isFinite(rawUnapplied)
+                                    ? rawUnapplied
+                                    : amount - applied;
+                                  const paidAt = toDateOrNull(
+                                    payment.paidAt || payment.createdAt
+                                  );
+                                  return (
+                                    <div
+                                      key={`mobile-payment-${payment.id}`}
+                                      className="rounded-lg border border-gray-200 px-3 py-3 text-sm dark:border-gray-700"
+                                    >
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div className="font-medium text-gray-900 dark:text-gray-100">
+                                          ₹{amount.toLocaleString("en-IN")}
+                                        </div>
+                                        <div className="shrink-0 text-xs text-muted-foreground">
+                                          {paidAt
+                                            ? paidAt.toLocaleDateString("en-IN")
+                                            : "—"}
+                                        </div>
+                                      </div>
+                                      <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                                        <div>
+                                          <div className="text-muted-foreground">Applied</div>
+                                          <div className="font-medium">
+                                            ₹{applied.toLocaleString("en-IN")}
+                                          </div>
+                                        </div>
+                                        <div>
+                                          <div className="text-muted-foreground">Unapplied</div>
+                                          <div className="font-medium">
+                                            ₹{unapplied.toLocaleString("en-IN")}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div className="mt-2 text-xs capitalize text-muted-foreground">
+                                        {String(payment.method || "—")}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              <div className="hidden rounded border sm:block sm:overflow-x-auto">
+                                <div className="sm:min-w-[600px]">
+                                  <div className="grid grid-cols-5 gap-2 border-b px-3 py-2 text-xs uppercase text-muted-foreground">
+                                    <div>Date</div>
+                                    <div>Amount</div>
+                                    <div>Applied</div>
+                                    <div>Unapplied</div>
+                                    <div>Method</div>
+                                  </div>
+                                  {sortedPayments.map((payment) => {
+                                    const rawAmount = Number(payment?.amount ?? 0);
+                                    const amount = Number.isFinite(rawAmount)
+                                      ? rawAmount
+                                      : 0;
+                                    const rawApplied = Number(
+                                      payment?.appliedAmount ?? NaN
+                                    );
+                                    const applied = Number.isFinite(rawApplied)
+                                      ? rawApplied
+                                      : (() => {
+                                          const rawUnapplied = Number(
+                                            payment?.unappliedAmount ?? 0
+                                          );
+                                          const unapplied = Number.isFinite(rawUnapplied)
+                                            ? rawUnapplied
+                                            : 0;
+                                          return amount - unapplied;
+                                        })();
+                                    const rawUnapplied = Number(
+                                      payment?.unappliedAmount ?? NaN
+                                    );
+                                    const unapplied = Number.isFinite(rawUnapplied)
+                                      ? rawUnapplied
+                                      : amount - applied;
+                                    const paidAt = toDateOrNull(
+                                      payment.paidAt || payment.createdAt
+                                    );
+                                    return (
+                                      <div
+                                        key={payment.id}
+                                        className="grid grid-cols-5 gap-2 border-b px-3 py-2 text-sm last:border-b-0"
+                                      >
+                                        <div>
+                                          {paidAt
+                                            ? paidAt.toLocaleDateString("en-IN")
+                                            : "—"}
+                                        </div>
+                                        <div>
+                                          ₹{amount.toLocaleString("en-IN")}
+                                        </div>
+                                        <div>
+                                          ₹{applied.toLocaleString("en-IN")}
+                                        </div>
+                                        <div>
+                                          ₹{unapplied.toLocaleString("en-IN")}
+                                        </div>
+                                        <div className="capitalize">
+                                          {String(payment.method || "—")}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
-                    )}
+                    </div>
                   </Card>
 
                   <Dialog open={showQrModal} onOpenChange={setShowQrModal}>
-                    <DialogContent className="max-w-md">
+                    <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-md overflow-y-auto [-webkit-overflow-scrolling:touch]">
                       <DialogHeader>
                         <DialogTitle>Pay via UPI</DialogTitle>
                       </DialogHeader>
@@ -6189,7 +6353,7 @@ export default function ParentDashboard() {
                             <img
                               src={qrUrl}
                               alt="UPI QR Code"
-                              className="w-64 h-64 object-contain border border-gray-200 dark:border-gray-700 rounded-lg"
+                              className="h-auto max-h-[55vh] w-full max-w-64 rounded-lg border border-gray-200 object-contain dark:border-gray-700"
                             />
                             <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
                               Scan using any UPI app

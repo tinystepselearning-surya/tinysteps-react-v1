@@ -2,6 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import router from './app/routes';
 import { Toaster } from './components/ui/toaster';
+import NativeLayoutDebug from './components/debug/NativeLayoutDebug';
 import useRevealAnimations from './hooks/useRevealAnimations';
 import {
   consumePendingPushOpenRoute,
@@ -177,6 +178,7 @@ function App() {
     <>
       <RouterProvider router={router} />
       <Toaster />
+      <NativeLayoutDebug />
     </>
   );
 }

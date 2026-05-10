@@ -44,6 +44,8 @@
 @layer base {
   :root {
     --radius: 0.75rem;
+    --ts-mobile-tabbar-height: 5.5rem;
+    --ts-mobile-tabbar-reserve: calc(var(--ts-mobile-tabbar-height) + env(safe-area-inset-bottom, 0px) + 1rem);
   }
 
   * {
@@ -82,32 +84,71 @@ html {
   scroll-behavior: smooth;
 }
 
-html.ts-capacitor-native {
-  --ts-safe-area-top: env(safe-area-inset-top);
-  --ts-safe-area-bottom: env(safe-area-inset-bottom);
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
-html.ts-capacitor-native body {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-  padding-top: var(--ts-safe-area-top, 0px);
-  padding-bottom: var(--ts-safe-area-bottom, 0px);
-}
-
+html.ts-capacitor-native,
+html.ts-capacitor-native body,
 html.ts-capacitor-native #root {
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   min-height: 100%;
   overflow-x: hidden;
 }
 
-html.ts-capacitor-native .fixed.top-0,
-html.ts-capacitor-native .sticky.top-0 {
-  top: var(--ts-safe-area-top, 0px);
+html.ts-capacitor-native {
+  --ts-safe-area-top: env(safe-area-inset-top);
+  --ts-safe-area-bottom: env(safe-area-inset-bottom);
+  height: 100%;
+  overscroll-behavior-x: none;
+}
+
+html.ts-capacitor-native body {
+  overscroll-behavior-x: none;
+}
+
+html.ts-capacitor-native #root {
+  overscroll-behavior-x: none;
+}
+
+html.ts-capacitor-native .ts-native-app-shell {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--ts-native-app-bg, #f8fafc);
+}
+
+html.ts-capacitor-native .ts-native-scroll {
+  min-height: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+}
+
+html.ts-capacitor-native .ts-native-no-x {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+html.ts-capacitor-native .ts-native-safe-top {
+  padding-top: max(env(safe-area-inset-top, 0px), 0px);
+}
+
+html.ts-capacitor-native .ts-native-safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
+}
+
+html.ts-capacitor-native .ts-native-tabbar-reserve {
+  padding-bottom: var(--ts-mobile-tabbar-reserve);
 }
 
 body.custom-cursor-enabled {
@@ -337,18 +378,22 @@ body.custom-cursor-enabled .hover-highlight:hover {
 }
 
 @media (max-width: 1023px) {
-  html,
-  body,
-  #root {
+  html:not(.ts-capacitor-native),
+  html:not(.ts-capacitor-native) body,
+  html:not(.ts-capacitor-native) #root {
     min-height: 100dvh;
   }
 
-  body {
+  html:not(.ts-capacitor-native) body {
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior-y: contain;
   }
 
   .mobile-app-scroll {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
     -webkit-overflow-scrolling: touch;
   }
 }

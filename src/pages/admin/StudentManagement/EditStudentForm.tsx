@@ -29,6 +29,26 @@ interface Props {
   onUpdated?: () => void;
 }
 
+const COUNTRY_OPTIONS = [
+  { label: 'India', code: 'IN' },
+  { label: 'United Arab Emirates', code: 'AE' },
+  { label: 'Australia', code: 'AU' },
+  { label: 'United States', code: 'US' },
+  { label: 'United Kingdom', code: 'GB' },
+  { label: 'Singapore', code: 'SG' },
+] as const;
+
+const COUNTRY_CODE_REGEX = /^[A-Z]{2}$/;
+const COUNTRY_NONE_VALUE = '__none__';
+
+function normalizeCountryCode(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toUpperCase();
+  if (!normalized) return null;
+  if (!COUNTRY_CODE_REGEX.test(normalized)) return null;
+  return normalized;
+}
+
 function computeAgeYearsFromDob(dob?: string): number | null {
   try {
     if (!dob) return null;
@@ -76,6 +96,9 @@ export default function EditStudentForm({ student, open, onClose, onUpdated }: P
   const [ageYears, setAgeYears] = useState(initialAgeYears);
   const [grade, setGrade] = useState(student.grade || '');
   const [status, setStatus] = useState(student.status || 'active');
+  const [countryCode, setCountryCode] = useState(
+    normalizeCountryCode((student as any)?.countryCode) || COUNTRY_NONE_VALUE,
+  );
   const [loading, setLoading] = useState(false);
 
   // ✅ Keep state synced when student changes / dialog opens
@@ -84,6 +107,7 @@ export default function EditStudentForm({ student, open, onClose, onUpdated }: P
     setAgeYears(initialAgeYears);
     setGrade(student.grade || '');
     setStatus(student.status || 'active');
+    setCountryCode(normalizeCountryCode((student as any)?.countryCode) || COUNTRY_NONE_VALUE);
   }, [student, initialAgeYears, open]);
 
   const handleUpdate = async () => {
@@ -114,6 +138,10 @@ export default function EditStudentForm({ student, open, onClose, onUpdated }: P
         age: ageNum, // ✅ store only "age" going forward
         grade,
         status,
+        countryCode:
+          countryCode === COUNTRY_NONE_VALUE
+            ? deleteField()
+            : (normalizeCountryCode(countryCode) || deleteField()),
 
         // ✅ Remove legacy fields so we stop storing DOB
         dob: deleteField(),
@@ -210,6 +238,20 @@ export default function EditStudentForm({ student, open, onClose, onUpdated }: P
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="suspended">Suspended</SelectItem>
               <SelectItem value="archived">Archived</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={countryCode} onValueChange={setCountryCode} disabled={!canEdit}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Country (optional)" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={COUNTRY_NONE_VALUE}>Other / blank</SelectItem>
+              {COUNTRY_OPTIONS.map((option) => (
+                <SelectItem key={option.code} value={option.code}>
+                  {option.label} — {option.code}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

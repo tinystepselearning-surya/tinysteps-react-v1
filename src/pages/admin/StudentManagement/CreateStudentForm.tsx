@@ -38,6 +38,26 @@ import { toast } from '@components/hooks/use-toast';
 
 import { User } from '../../../types/User';
 
+const COUNTRY_OPTIONS = [
+  { label: 'India', code: 'IN' },
+  { label: 'United Arab Emirates', code: 'AE' },
+  { label: 'Australia', code: 'AU' },
+  { label: 'United States', code: 'US' },
+  { label: 'United Kingdom', code: 'GB' },
+  { label: 'Singapore', code: 'SG' },
+] as const;
+
+const COUNTRY_CODE_REGEX = /^[A-Z]{2}$/;
+const COUNTRY_NONE_VALUE = '__none__';
+
+function normalizeCountryCode(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toUpperCase();
+  if (!normalized) return null;
+  if (!COUNTRY_CODE_REGEX.test(normalized)) return null;
+  return normalized;
+}
+
 const createStudentSchema = z.object({
   parentId: z.string().min(1, 'Select a parent'),
   fullName: z.string().min(2, 'Name required'),
@@ -62,6 +82,7 @@ const createStudentSchema = z.object({
 
   // With default() zod makes this optional in the TS type
   status: z.enum(['active', 'suspended', 'archived']).default('active'),
+  countryCode: z.string().optional(),
 });
 
 type FormData = z.infer<typeof createStudentSchema>;
@@ -86,6 +107,7 @@ export function CreateStudentForm({ onStudentCreated, defaultParentId }: Props) 
       ageYears: '' as any, // start empty, validated by schema on submit
       grade: '',
       status: 'active',
+      countryCode: COUNTRY_NONE_VALUE,
     } as any,
   });
 
@@ -136,6 +158,10 @@ export function CreateStudentForm({ onStudentCreated, defaultParentId }: Props) 
         ageYears: values.ageYears,
         grade: values.grade,
         status,
+        countryCode:
+          values.countryCode === COUNTRY_NONE_VALUE
+            ? undefined
+            : normalizeCountryCode(values.countryCode),
       };
 
       const createStudentFn = httpsCallable(functions, 'adminCreateStudent');
@@ -161,6 +187,7 @@ export function CreateStudentForm({ onStudentCreated, defaultParentId }: Props) 
         ageYears: '' as any,
         grade: '',
         status: 'active',
+        countryCode: COUNTRY_NONE_VALUE,
       } as any);
 
       onStudentCreated?.(created.kidId);
@@ -291,6 +318,35 @@ export function CreateStudentForm({ onStudentCreated, defaultParentId }: Props) 
                         <SelectItem value="Grade 1">Grade 1</SelectItem>
                         <SelectItem value="Grade 2">Grade 2</SelectItem>
                         <SelectItem value="Grade 3">Grade 3</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control as any}
+              name="countryCode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Country (optional)</FormLabel>
+                  <FormControl>
+                    <Select
+                      value={(field.value || COUNTRY_NONE_VALUE) as string}
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select country" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={COUNTRY_NONE_VALUE}>Other / blank</SelectItem>
+                        {COUNTRY_OPTIONS.map((option) => (
+                          <SelectItem key={option.code} value={option.code}>
+                            {option.label} — {option.code}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </FormControl>

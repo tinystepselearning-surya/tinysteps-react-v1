@@ -18,6 +18,7 @@ export interface Student {
   ageYears: number;
 
   grade: string;
+  countryCode?: string;
 
   parentIds: string[];
   primaryParentId: string;

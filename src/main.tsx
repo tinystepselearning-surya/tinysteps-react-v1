@@ -111,15 +111,73 @@ const scheduleNonCriticalBoot = () => {
 
   const win = window as Window & {
     requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    cancelIdleCallback?: (id: number) => void;
+  };
+  const isMobileViewport = window.matchMedia?.('(max-width: 767px)').matches;
+  const connection = (navigator as any)?.connection;
+  const effectiveType =
+    typeof connection?.effectiveType === 'string' ? connection.effectiveType.toLowerCase() : '';
+  const isConstrainedNetwork =
+    Boolean(connection?.saveData) || effectiveType === 'slow-2g' || effectiveType === '2g';
+  const fallbackDelayMs = isMobileViewport
+    ? isConstrainedNetwork ? 14000 : 11000
+    : isConstrainedNetwork ? 18000 : 15000;
+
+  let hasBooted = false;
+  let idleId: number | undefined;
+  let timeoutId: number | undefined;
+
+  const removeInteractionListeners = () => {
+    window.removeEventListener('pointerdown', onFirstInteraction);
+    window.removeEventListener('keydown', onFirstInteraction);
+    window.removeEventListener('touchstart', onFirstInteraction);
+    window.removeEventListener('scroll', onFirstInteraction);
   };
 
-  window.requestAnimationFrame(() => {
-    if (typeof win.requestIdleCallback === 'function') {
-      win.requestIdleCallback(boot, { timeout: 2500 });
-    } else {
-      window.setTimeout(boot, 1200);
+  const clearTimers = () => {
+    if (idleId !== undefined && typeof win.cancelIdleCallback === 'function') {
+      win.cancelIdleCallback(idleId);
+      idleId = undefined;
     }
-  });
+    if (timeoutId !== undefined) {
+      window.clearTimeout(timeoutId);
+      timeoutId = undefined;
+    }
+  };
+
+  const scheduleBoot = (idleTimeoutMs: number, timeoutMs: number) => {
+    if (hasBooted) return;
+    if (typeof win.requestIdleCallback === 'function') {
+      idleId = win.requestIdleCallback(() => {
+        if (hasBooted) return;
+        hasBooted = true;
+        boot();
+      }, { timeout: idleTimeoutMs });
+      return;
+    }
+    timeoutId = window.setTimeout(() => {
+      if (hasBooted) return;
+      hasBooted = true;
+      boot();
+    }, timeoutMs);
+  };
+
+  const onFirstInteraction = () => {
+    removeInteractionListeners();
+    clearTimers();
+    scheduleBoot(8000, 1800);
+  };
+
+  window.addEventListener('pointerdown', onFirstInteraction, { passive: true, once: true });
+  window.addEventListener('keydown', onFirstInteraction, { once: true });
+  window.addEventListener('touchstart', onFirstInteraction, { passive: true, once: true });
+  window.addEventListener('scroll', onFirstInteraction, { passive: true, once: true });
+
+  timeoutId = window.setTimeout(() => {
+    removeInteractionListeners();
+    clearTimers();
+    scheduleBoot(10000, 2400);
+  }, fallbackDelayMs);
 };
 
 scheduleNonCriticalBoot();

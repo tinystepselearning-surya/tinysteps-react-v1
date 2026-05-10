@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@comp
 import { Button } from '@components/ui/button';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import TinyStepsBrand from '../../../components/common/TinyStepsBrand';
+import { hapticSuccess, hapticWarning } from '../../../lib/nativeHaptics';
 
 const PaymentCallbackComponent: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -22,6 +23,7 @@ const PaymentCallbackComponent: React.FC = () => {
       try {
         // Get payment parameters from URL
         if (!transactionId) {
+          hapticWarning();
           setStatus('failed');
           setMessage('Invalid payment response - missing transaction ID');
           return;
@@ -41,6 +43,7 @@ const PaymentCallbackComponent: React.FC = () => {
         };
 
         if (success) {
+          hapticSuccess();
           setStatus('success');
           setMessage(resultMessage || 'Payment completed successfully!');
           toast({
@@ -48,6 +51,7 @@ const PaymentCallbackComponent: React.FC = () => {
             description: 'Your payment has been processed successfully.',
           });
         } else {
+          hapticWarning();
           setStatus('failed');
           setMessage(resultMessage || 'Payment verification failed');
           toast({
@@ -58,6 +62,7 @@ const PaymentCallbackComponent: React.FC = () => {
         }
       } catch (error: any) {
         console.error('Payment verification error:', error);
+        hapticWarning();
         setStatus('failed');
         setMessage('An error occurred while verifying payment');
         toast({
@@ -76,8 +81,8 @@ const PaymentCallbackComponent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="mx-auto flex min-h-screen max-w-4xl flex-col justify-center gap-6">
+    <div className="min-h-[100dvh] overflow-x-hidden bg-gray-50 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)] pt-[calc(env(safe-area-inset-top,0px)+1rem)]">
+      <div className="mx-auto flex min-h-[calc(100dvh-env(safe-area-inset-top,0px)-env(safe-area-inset-bottom,0px)-2rem)] max-w-4xl flex-col justify-center gap-6">
         <TinyStepsBrand subtitle="Parent billing" className="w-fit" />
         <Card className="w-full max-w-md self-center">
         <CardHeader className="text-center">

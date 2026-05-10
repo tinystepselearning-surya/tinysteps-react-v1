@@ -8,6 +8,7 @@ export interface Kid {
 
   // ✅ NEW: store age (years) instead of DOB/birthdate
   ageYears: number;
+  countryCode?: string;
 
   // ✅ Your newer schema uses parentIds + primaryParentId.
   // Keep parentId optional only for legacy docs.

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { applySeo } from '../lib/seo';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { handleLogin } from '../lib/auth';
+import { hapticSuccess, hapticWarning } from '../lib/nativeHaptics';
 import type { AuthRole } from '../store/useAuthStore';
 import TinyStepsBrand from '../components/common/TinyStepsBrand';
 import { Mail, Lock } from 'lucide-react';
@@ -21,6 +22,50 @@ const ROLE_LABELS: Record<AuthRole, string> = {
   parent: 'Parent',
   kid: 'Kid',
   learningPartner: 'Learning Partner',
+};
+
+const LOGIN_FLOW_TIMEOUT_MS = 45_000;
+const REDIRECT_RECOVERY_DELAY_MS = 1_500;
+const LOGIN_TIMEOUT_MESSAGE =
+  'Login is taking longer than expected. Please check your internet connection and try again.';
+const REDIRECT_RECOVERY_MESSAGE =
+  'We signed you in, but could not open your workspace. Please try again or contact Tiny Steps on WhatsApp.';
+const CREDENTIAL_ERROR_MESSAGE =
+  "We couldn't sign you in. Please check your login ID and password, then try again.";
+const FALLBACK_LOGIN_ERROR_MESSAGE =
+  'Login failed. Please try again. If this continues, contact Tiny Steps on WhatsApp.';
+
+const CREDENTIAL_ERROR_CODES = new Set([
+  'auth/invalid-credential',
+  'auth/wrong-password',
+  'auth/user-not-found',
+  'auth/invalid-login-credentials',
+]);
+
+const delay = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+const createLoginTimeoutError = () => {
+  const error = new Error(LOGIN_TIMEOUT_MESSAGE);
+  error.name = 'LoginFlowTimeoutError';
+  return error;
+};
+
+const formatLoginError = (err: unknown): string => {
+  const code = typeof (err as any)?.code === 'string' ? (err as any).code : '';
+  if (CREDENTIAL_ERROR_CODES.has(code)) {
+    return CREDENTIAL_ERROR_MESSAGE;
+  }
+
+  const message = typeof (err as any)?.message === 'string' ? (err as any).message.trim() : '';
+  if (!message) {
+    return FALLBACK_LOGIN_ERROR_MESSAGE;
+  }
+
+  if (message === LOGIN_TIMEOUT_MESSAGE || message.toLowerCase().includes('taking longer than expected')) {
+    return LOGIN_TIMEOUT_MESSAGE;
+  }
+
+  return message;
 };
 
 const isNativeCapacitorRuntime = () => {
@@ -84,13 +129,37 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setIsSubmitting(true);
+    let timeoutId: ReturnType<typeof window.setTimeout> | null = null;
+
     try {
       const normalizedLoginId = loginId.trim();
-      await handleLogin(normalizedLoginId, password, expectedRole || undefined);
-      // handleLogin will redirect based on role
-    } catch (err: any) {
-      setError(err?.message || 'Login failed');
+      const loginPathBeforeSubmit =
+        typeof window !== 'undefined' ? window.location.pathname : location.pathname;
+
+      await Promise.race([
+        handleLogin(normalizedLoginId, password, expectedRole || undefined),
+        new Promise<never>((_, reject) => {
+          timeoutId = window.setTimeout(() => {
+            reject(createLoginTimeoutError());
+          }, LOGIN_FLOW_TIMEOUT_MS);
+        }),
+      ]);
+      hapticSuccess();
+
+      if (isNativeRuntime) {
+        await delay(REDIRECT_RECOVERY_DELAY_MS);
+        if (window.location.pathname === loginPathBeforeSubmit) {
+          hapticWarning();
+          setError(REDIRECT_RECOVERY_MESSAGE);
+        }
+      }
+    } catch (err) {
+      hapticWarning();
+      setError(formatLoginError(err));
     } finally {
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+      }
       setIsSubmitting(false);
     }
   };
@@ -115,10 +184,10 @@ export default function LoginPage() {
 
   if (isNativeRuntime) {
     return (
-      <div className="relative min-h-[100svh] w-full overflow-hidden bg-[linear-gradient(180deg,#f5faff_0%,#edf5ff_56%,#f8fbff_100%)]">
+      <div className="ts-native-app-shell ts-native-no-x relative overflow-hidden bg-[linear-gradient(180deg,#f5faff_0%,#edf5ff_56%,#f8fbff_100%)]">
         <div className="pointer-events-none absolute left-1/2 top-[28%] h-[220px] w-[220px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(191,219,254,0.45)_0%,rgba(191,219,254,0)_72%)]" />
-        <div className="mx-auto flex min-h-[100svh] w-full flex-col items-center justify-center px-0 pb-[max(env(safe-area-inset-bottom),1.25rem)] pt-[max(env(safe-area-inset-top),1.1rem)]">
-          <div className="-mt-5 mb-6 flex w-[calc(100%-40px)] max-w-[360px] flex-col items-center text-center">
+        <div className="ts-native-scroll ts-native-no-x relative z-10 mx-auto flex min-h-0 w-full max-w-full flex-1 flex-col items-center px-0 pb-[calc(env(safe-area-inset-bottom,0px)+1.75rem)] pt-[max(env(safe-area-inset-top),2.5rem)]">
+          <div className="mb-6 flex w-[calc(100%-40px)] max-w-[360px] flex-col items-center text-center">
             <img
               src="/logo-header-compact.png"
               alt="Tiny Steps logo"
@@ -136,7 +205,7 @@ export default function LoginPage() {
               </div>
             ) : null}
 
-            <form className="space-y-3.5 pb-[max(env(safe-area-inset-bottom),0px)]" onSubmit={onSubmit}>
+            <form className="space-y-3.5" onSubmit={onSubmit}>
               <input
                 value={loginId}
                 onChange={(e) => setLoginId(e.target.value)}
@@ -168,7 +237,7 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                className={`h-[52px] w-full rounded-2xl text-[15px] font-semibold text-white transition ${
+                className={`h-[52px] w-full rounded-2xl text-[15px] font-semibold text-white transition active:scale-[0.98] disabled:active:scale-100 ${
                   isSubmitting
                     ? 'cursor-not-allowed bg-slate-400'
                     : 'bg-slate-900 shadow-[0_12px_26px_rgba(15,23,42,0.20)] hover:bg-slate-800'
@@ -189,7 +258,7 @@ export default function LoginPage() {
                 href={passwordResetWhatsAppUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-semibold text-slate-700 underline underline-offset-2"
+                className="inline-flex min-h-8 items-center px-1 font-semibold text-slate-700 underline underline-offset-2"
               >
                 Chat on WhatsApp
               </a>
@@ -274,7 +343,7 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                className={`mt-1 h-12 w-full rounded-xl font-semibold text-white shadow-[0_14px_30px_rgba(15,23,42,0.25)] transition ${
+                className={`mt-1 h-12 w-full rounded-xl font-semibold text-white shadow-[0_14px_30px_rgba(15,23,42,0.25)] transition active:scale-[0.98] disabled:active:scale-100 ${
                   isSubmitting
                     ? 'cursor-not-allowed bg-slate-400'
                     : 'bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 hover:brightness-110'

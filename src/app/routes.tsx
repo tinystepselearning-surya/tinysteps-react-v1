@@ -286,7 +286,14 @@ const Layout: FC = () => {
 
     const activate = () => setShowDeferredChrome(true);
     const isMobileViewport = window.matchMedia('(max-width: 767px)').matches;
-    const fallbackDelayMs = isMobileViewport ? 4800 : 2200;
+    const connection = (navigator as any)?.connection;
+    const effectiveType =
+      typeof connection?.effectiveType === 'string' ? connection.effectiveType.toLowerCase() : '';
+    const isConstrainedNetwork =
+      Boolean(connection?.saveData) || effectiveType === 'slow-2g' || effectiveType === '2g';
+    const fallbackDelayMs = isMobileViewport
+      ? isConstrainedNetwork ? 8200 : 6200
+      : isConstrainedNetwork ? 14000 : 11000;
     let timeoutId: number | undefined;
 
     const onFirstInteraction = () => {
@@ -327,7 +334,7 @@ const Layout: FC = () => {
 
     const activate = () => setShowDeferredSupportWidgets(true);
     const isDesktopViewport = window.matchMedia('(min-width: 768px)').matches;
-    const fallbackDelayMs = isDesktopViewport ? 9000 : 12000;
+    const fallbackDelayMs = isDesktopViewport ? 16000 : 22000;
     const connection = (navigator as any)?.connection;
     const effectiveType =
       typeof connection?.effectiveType === 'string' ? connection.effectiveType.toLowerCase() : '';

@@ -6,6 +6,7 @@ import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
 import { db } from '../../lib/firebaseConfig';
 import callFunction from '../../lib/callFunctions';
+import { hapticSuccess, hapticWarning } from '../../lib/nativeHaptics';
 import { isSuperUserEmail } from '../../constants/accessControl';
 import { useAuthStore } from '../../store/useAuthStore';
 import useMessageThreads, { type MessageThread } from '../../hooks/useMessageThreads';
@@ -538,7 +539,9 @@ export default function MessagesPanel({
         },
       );
       setDraft('');
+      hapticSuccess();
     } catch (error) {
+      hapticWarning();
       setSendError(normalizeCallableError(error));
     } finally {
       setIsSending(false);
@@ -572,12 +575,14 @@ export default function MessagesPanel({
 
   const showConversationList = !selectedThread;
   const showConversationDetail = Boolean(selectedThread);
-  const threadPaneHeightClass = embedded ? 'max-h-[52vh]' : 'max-h-[72vh]';
-  const detailPaneHeightClass = embedded ? 'h-[52vh] min-h-[360px]' : 'h-[72vh] min-h-[420px]';
-  const detailEmptyStateClass = embedded ? 'min-h-[360px]' : 'min-h-[420px]';
+  const threadPaneHeightClass = embedded ? 'lg:max-h-[52vh]' : 'max-h-[72vh]';
+  const detailPaneHeightClass = embedded
+    ? 'h-[calc(100dvh-var(--ts-mobile-tabbar-reserve)-8rem)] min-h-[22rem] lg:h-[52vh] lg:min-h-[360px]'
+    : 'h-[72vh] min-h-[420px]';
+  const detailEmptyStateClass = embedded ? 'min-h-[14rem] lg:min-h-[360px]' : 'min-h-[420px]';
 
   return (
-    <div className={embedded ? 'min-h-0 min-w-0 overflow-x-hidden pb-safe' : 'min-h-screen overflow-x-hidden bg-slate-50 pb-safe'}>
+    <div className={embedded ? 'min-h-0 min-w-0 overflow-x-hidden' : 'min-h-screen overflow-x-hidden bg-slate-50 pb-safe'}>
       <div className={embedded ? 'w-full min-w-0' : 'mx-auto w-full max-w-6xl p-3 sm:p-4 lg:p-6'}>
         {!embedded && (
           <header className="mb-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
@@ -611,7 +616,7 @@ export default function MessagesPanel({
                 className="mt-2"
               />
             </div>
-            <div className={`${threadPaneHeightClass} overflow-y-auto p-2`}>
+            <div className={`${threadPaneHeightClass} overflow-y-auto p-2 [-webkit-overflow-scrolling:touch]`}>
               {isThreadsLoading ? (
                 <div className="px-3 py-6 text-sm text-slate-500">Loading conversations…</div>
               ) : threadsError ? (
@@ -728,7 +733,7 @@ export default function MessagesPanel({
                   )}
                 </div>
 
-                <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50/70 p-3">
+                <div className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-slate-50/70 p-3 pb-4 [-webkit-overflow-scrolling:touch]">
                   {isMessagesLoading ? (
                     <p className="text-sm text-slate-500">Loading messages…</p>
                   ) : messagesError ? (
@@ -815,7 +820,7 @@ export default function MessagesPanel({
                   <div ref={listEndRef} />
                 </div>
 
-                <div className="border-t border-slate-200 bg-white px-3 pb-safe pt-3">
+                <div className={`shrink-0 border-t border-slate-200 bg-white px-3 pt-3 ${embedded ? 'pb-3' : 'pb-safe'}`}>
                   {viewerRole === 'admin' ? (
                     <p className="pb-2 text-xs text-slate-500">
                       Admin oversight is read-only here.
@@ -837,6 +842,7 @@ export default function MessagesPanel({
                           onChange={(event) => setDraft(event.target.value)}
                           placeholder="Type your message"
                           autoComplete="off"
+                          className="min-h-11"
                           onKeyDown={(event) => {
                             if (event.key === 'Enter' && !event.shiftKey) {
                               event.preventDefault();
@@ -848,7 +854,7 @@ export default function MessagesPanel({
                           type="button"
                           onClick={() => void handleSend()}
                           disabled={!draft.trim() || isSending}
-                          className="gap-1"
+                          className="min-h-11 shrink-0 gap-1"
                         >
                           <Send className="h-4 w-4" />
                           {isSending ? 'Sending…' : 'Send'}

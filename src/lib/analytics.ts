@@ -3,8 +3,12 @@ let initialized = false;
 let interactionArmed = false;
 let scriptQueued = false;
 let fallbackTimerId: number | undefined;
+let idleLoadTimerId: number | undefined;
 
 const DISABLED_PREFIXES = ['/admin', '/teacher', '/parent', '/kid', '/lp', '/dev'];
+const DESKTOP_FALLBACK_DELAY_MS = 18000;
+const MOBILE_FALLBACK_DELAY_MS = 12000;
+const IDLE_LOAD_TIMEOUT_MS = 9000;
 
 function isAllowedPath(path: string) {
   return !DISABLED_PREFIXES.some((p) => path.startsWith(p));
@@ -54,15 +58,25 @@ const queueScriptLoad = (id: string) => {
   };
 
   if (typeof win.requestIdleCallback === 'function') {
-    win.requestIdleCallback(() => loadScript(id), { timeout: 1500 });
+    win.requestIdleCallback(() => loadScript(id), { timeout: IDLE_LOAD_TIMEOUT_MS });
   } else {
-    window.setTimeout(() => loadScript(id), 600);
+    idleLoadTimerId = window.setTimeout(() => {
+      idleLoadTimerId = undefined;
+      loadScript(id);
+    }, 2200);
   }
 };
 
 const armInteractionLoader = (id: string) => {
   if (interactionArmed) return;
   interactionArmed = true;
+  const isMobileViewport = window.matchMedia?.('(max-width: 767px)').matches;
+  const connection = (navigator as any)?.connection;
+  const effectiveType =
+    typeof connection?.effectiveType === 'string' ? connection.effectiveType.toLowerCase() : '';
+  const isConstrainedNetwork =
+    Boolean(connection?.saveData) || effectiveType === 'slow-2g' || effectiveType === '2g';
+  const fallbackDelayMs = isMobileViewport ? MOBILE_FALLBACK_DELAY_MS : DESKTOP_FALLBACK_DELAY_MS;
 
   const clearFallbackTimer = () => {
     if (fallbackTimerId !== undefined) {
@@ -87,10 +101,12 @@ const armInteractionLoader = (id: string) => {
   window.addEventListener('pointerdown', loadOnInteraction, { once: true, passive: true });
   window.addEventListener('keydown', loadOnInteraction, { once: true, passive: true });
 
-  fallbackTimerId = window.setTimeout(() => {
-    clearFallbackTimer();
-    loadOnInteraction();
-  }, 6000);
+  if (!isConstrainedNetwork) {
+    fallbackTimerId = window.setTimeout(() => {
+      clearFallbackTimer();
+      loadOnInteraction();
+    }, fallbackDelayMs);
+  }
 };
 
 export const initAnalytics = () => {

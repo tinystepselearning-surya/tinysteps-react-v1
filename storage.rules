@@ -1,6 +1,12 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    // Public learners rollup JSON (safe aggregated country-level data only)
+    match /public-stats/global-learners.json {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Game images - public read, admin write
     match /images/{allPaths=**} {
       allow read: if true;

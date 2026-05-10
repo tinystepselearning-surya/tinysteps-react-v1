@@ -28,6 +28,7 @@ export interface Kid {
   dob?: string; // YYYY-MM-DD
 
   grade: string;
+  countryCode?: string;
 
   parentIds: string[];
   primaryParentId?: string;

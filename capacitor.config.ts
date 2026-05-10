@@ -3,6 +3,9 @@ const config = {
   appName: 'Tiny Steps',
   webDir: 'dist',
   bundledWebRuntime: false,
+  ios: {
+    scrollEnabled: false,
+  },
 };
 
 export default config;
