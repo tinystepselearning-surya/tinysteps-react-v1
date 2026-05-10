@@ -120,6 +120,10 @@ const TREND_METRIC_CONFIG: Record<TrendMetricKey, { label: string; stroke: strin
   completed: { label: 'Completed', stroke: '#16a34a' },
   enrolled: { label: 'Enrolled', stroke: '#db2777' },
 };
+const isArchivedRecord = (value: unknown): boolean => {
+  if (!value || typeof value !== 'object') return false;
+  return (value as { archived?: unknown }).archived === true;
+};
 
 const toDateInput = (date: Date): string => {
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -503,7 +507,7 @@ export default function DemoSessionsManagement({
 
   useEffect(() => {
     const unsubSessions = listenAllDemoSessions(
-      (next) => setSessions(next),
+      (next) => setSessions(next.filter((session) => !isArchivedRecord(session))),
       (error) => {
         toast({
           title: 'Failed to load demo sessions',

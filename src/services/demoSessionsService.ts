@@ -80,6 +80,7 @@ export async function createDemoSession(
   const parentPhone = input.parentPhone.trim();
   const childName = input.childName.trim();
   const childGrade = input.childGrade.trim();
+  const leadType = input.leadType === 'Group Class' ? 'Group Class' : '1:1';
   const courseInterested = input.courseInterested.trim();
   const source = input.source?.trim() || null;
   const demoMode = input.demoMode?.trim() || null;
@@ -102,6 +103,7 @@ export async function createDemoSession(
       forceCreate: input.forceCreate === true,
       childName,
       childGrade,
+      leadType,
       childAge: typeof input.childAge === 'number' ? input.childAge : null,
       courseInterested,
       source,

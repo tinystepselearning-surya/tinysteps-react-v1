@@ -583,6 +583,7 @@ interface AdminUpsertDemoSessionRequest {
   forceCreate?: boolean;
   parentName: string;
   parentPhone: string;
+  leadType?: string | null;
   childName: string;
   childGrade: string;
   childAge?: number | null;
@@ -869,6 +870,7 @@ export const adminCreateDemoSession = onCall<AdminUpsertDemoSessionRequest>(
 
     const parentName = cleanRequiredText(request.data?.parentName, 'parentName', 120);
     const parentPhone = cleanRequiredText(request.data?.parentPhone, 'parentPhone', 60);
+    const leadType = request.data?.leadType === 'Group Class' ? 'Group Class' : '1:1';
     const childName = cleanRequiredText(request.data?.childName, 'childName', 120);
     const childGrade = cleanRequiredText(request.data?.childGrade, 'childGrade', 60);
     const childAge = cleanOptionalAge(request.data?.childAge);
@@ -903,6 +905,7 @@ export const adminCreateDemoSession = onCall<AdminUpsertDemoSessionRequest>(
 
       tx.set(demoRef, {
         parentName,
+        leadType,
         childName,
         childGrade,
         childAge,
@@ -953,6 +956,7 @@ export const adminCreateDemoSession = onCall<AdminUpsertDemoSessionRequest>(
         followUpCallStatus: null,
         followUpCallCompletedAt: null,
         admissionNotConfirmedReason: null,
+        archived: false,
         completedAt: null,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         createdBy: caller.uid,

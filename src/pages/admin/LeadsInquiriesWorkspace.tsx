@@ -3,7 +3,7 @@ import {
   addDoc,
   collection,
   doc,
-  limit,
+  getDocs,
   onSnapshot,
   orderBy,
   type QueryConstraint,
@@ -12,6 +12,7 @@ import {
   Timestamp,
   updateDoc,
   where,
+  writeBatch,
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { Button } from '@components/ui/button';
@@ -112,6 +113,7 @@ type CommunicationPresetKey =
   | 'parent_replied'
   | 'demo_reminder'
   | 'admission_follow_up';
+type LeadType = '1:1' | 'Group Class';
 type WhatsAppTemplateKey =
   | 'first_response'
   | 'follow_up_no_response'
@@ -122,6 +124,11 @@ type WhatsAppTemplateKey =
 
 interface LeadRecord {
   id: string;
+  archived?: boolean;
+  archivedAt?: Timestamp | null;
+  archivedBy?: string | null;
+  archiveReason?: string | null;
+  archiveBatchId?: string | null;
   parentName?: string;
   primaryPhone?: string;
   phoneNormalized?: string;
@@ -209,7 +216,7 @@ interface DemoRequestFormState {
   childAge: string;
   courseInterested: string;
   source: string;
-  demoMode: string;
+  leadType: LeadType;
   requestReceivedDate: string;
   preferredDateTimeText: string;
   timezone: string;
@@ -300,8 +307,8 @@ const EMPTY_DEMO_REQUEST_FORM: DemoRequestFormState = {
   childGrade: '',
   childAge: '',
   courseInterested: '',
-  source: '',
-  demoMode: '',
+  source: 'WhatsApp',
+  leadType: '1:1',
   requestReceivedDate: '',
   preferredDateTimeText: '',
   timezone: '',
@@ -443,6 +450,7 @@ const DEMO_MODE_OPTIONS = [
   'Phone Call',
   'WhatsApp Call',
 ] as const;
+const LEAD_TYPE_OPTIONS: LeadType[] = ['1:1', 'Group Class'];
 
 const TIMEZONE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'IST', label: 'IST (UTC+05:30) - India Standard Time' },
@@ -503,6 +511,13 @@ const FOLLOW_UP_TERMINAL_STATUSES = new Set<LeadStatus>([
   'lost',
 ]);
 const LEADS_PAGE_SIZE_OPTIONS = [5, 10, 25, 50, 100] as const;
+const ARCHIVE_REASON = 'fresh_start_cleanup';
+const ARCHIVE_BATCH_WRITE_LIMIT = 400;
+
+const isArchivedRecord = (value: unknown): boolean => {
+  if (!value || typeof value !== 'object') return false;
+  return (value as { archived?: unknown }).archived === true;
+};
 
 const toMs = (value: unknown): number => {
   if (!value) return 0;
@@ -629,6 +644,7 @@ const buildInitialDemoRequestForm = (): DemoRequestFormState => ({
 
 const buildDemoRequestFormFromLead = (lead: LeadRecord): DemoRequestFormState => {
   const phone = splitPhoneForForm(lead.primaryPhone || '');
+  const source = leadSourceToDemoSource(lead.source || 'whatsapp');
   return {
     parentName: lead.parentName || '',
     parentPhoneCountryCode: phone.countryCode,
@@ -637,8 +653,8 @@ const buildDemoRequestFormFromLead = (lead: LeadRecord): DemoRequestFormState =>
     childGrade: lead.childGrade || '',
     childAge: typeof lead.childAge === 'number' ? String(lead.childAge) : '',
     courseInterested: interestTrackToCourse(lead.interestTrack || 'phonics'),
-    source: leadSourceToDemoSource(lead.source || 'manual'),
-    demoMode: '',
+    source: source || 'WhatsApp',
+    leadType: '1:1',
     requestReceivedDate: TODAY_DATE_INPUT,
     preferredDateTimeText: lead.preferredTimingText || '',
     timezone: lead.timezone || '',
@@ -868,6 +884,14 @@ const buildCsvFileTimestamp = (): string => {
   return `${yyyy}${mm}${dd}-${hh}${min}${ss}`;
 };
 
+const buildArchiveBatchId = (): string => {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  return `leads_fresh_start_${yyyy}${mm}${dd}`;
+};
+
 const buildDemoExportCsv = (sessions: DemoSession[], phoneMap: Record<string, string>): string => {
   const headers = [
     'demoId',
@@ -881,6 +905,7 @@ const buildDemoExportCsv = (sessions: DemoSession[], phoneMap: Record<string, st
     'childGrade',
     'childAge',
     'courseInterested',
+    'leadType',
     'source',
     'demoMode',
     'requestReceivedDate',
@@ -926,6 +951,7 @@ const buildDemoExportCsv = (sessions: DemoSession[], phoneMap: Record<string, st
       normalizeText(session.childGrade),
       typeof session.childAge === 'number' ? session.childAge : '',
       normalizeText(session.courseInterested),
+      normalizeText((session as { leadType?: string | null }).leadType),
       normalizeText(session.source),
       normalizeText(session.demoMode),
       normalizeText(session.requestReceivedDate),
@@ -1146,6 +1172,9 @@ export default function LeadsInquiriesWorkspace({
   const [reassignTeacherId, setReassignTeacherId] = useState('');
   const [timelineViewTarget, setTimelineViewTarget] = useState<DemoSession | null>(null);
   const [dialogSavingAction, setDialogSavingAction] = useState<string | null>(null);
+  const [archiveInProgress, setArchiveInProgress] = useState(false);
+  const canArchiveExistingRecords =
+    user?.role === 'admin' || normalizeText(user?.email).toLowerCase() === 'suryaz@tinysteps.com';
 
   useEffect(() => {
     setFocusFilter(view === 'demos' ? 'all_demos' : 'all');
@@ -1163,7 +1192,6 @@ export default function LeadsInquiriesWorkspace({
       constraints.push(where('createdAt', '<', Timestamp.fromMillis(updatedToMs + DAY_MS)));
     }
     constraints.push(orderBy('createdAt', 'desc'));
-    constraints.push(limit(leadsPageSize));
     const q = query(collection(db, LEADS_COLLECTION), ...constraints);
     const unsub = onSnapshot(
       q,
@@ -1191,7 +1219,6 @@ export default function LeadsInquiriesWorkspace({
     appliedLeadStatusFilter,
     appliedUpdatedFromDate,
     appliedUpdatedToDate,
-    leadsPageSize,
     toast,
   ]);
 
@@ -1288,16 +1315,26 @@ export default function LeadsInquiriesWorkspace({
     return unsubscribe;
   }, [toast]);
 
+  const activeLeads = useMemo(
+    () => leads.filter((lead) => !isArchivedRecord(lead)),
+    [leads],
+  );
+
+  const activeDemos = useMemo(
+    () => demos.filter((demo) => !isArchivedRecord(demo)),
+    [demos],
+  );
+
   const mergedRows = useMemo<UnifiedRow[]>(() => {
     const demoByLeadId = new Map<string, DemoSession>();
     const leadById = new Map<string, LeadRecord>();
     const rows: UnifiedRow[] = [];
 
-    leads.forEach((lead) => {
+    activeLeads.forEach((lead) => {
       leadById.set(lead.id, lead);
     });
 
-    demos.forEach((demo) => {
+    activeDemos.forEach((demo) => {
       const leadId = normalizeText((demo as any).leadId);
       if (!leadId) return;
       const existing = demoByLeadId.get(leadId);
@@ -1306,10 +1343,10 @@ export default function LeadsInquiriesWorkspace({
       }
     });
 
-    leads.forEach((lead) => {
+    activeLeads.forEach((lead) => {
       const linkedDemo =
         demoByLeadId.get(lead.id) ||
-        (lead.demoSessionId ? demos.find((demo) => demo.id === lead.demoSessionId) || null : null);
+        (lead.demoSessionId ? activeDemos.find((demo) => demo.id === lead.demoSessionId) || null : null);
       const parentName = normalizeText(linkedDemo?.parentName) || normalizeText(lead.parentName) || '—';
       const childName = normalizeText(linkedDemo?.childName) || normalizeText(lead.childName) || '—';
       const parentPhone =
@@ -1347,7 +1384,7 @@ export default function LeadsInquiriesWorkspace({
       });
     });
 
-    demos.forEach((demo) => {
+    activeDemos.forEach((demo) => {
       const leadId = normalizeText((demo as any).leadId);
       if (leadId && leadById.has(leadId)) return;
       const stage = deriveLifecycleStage(null, demo);
@@ -1370,7 +1407,7 @@ export default function LeadsInquiriesWorkspace({
     });
 
     return rows.sort((a, b) => b.updatedAtMs - a.updatedAtMs);
-  }, [demoPhoneMap, demos, leads]);
+  }, [activeDemos, activeLeads, demoPhoneMap]);
 
   const sourceOptions = useMemo(
     () =>
@@ -1497,7 +1534,7 @@ export default function LeadsInquiriesWorkspace({
   const demoSnapshot = useMemo(() => {
     const summary = { open: 0, assigned: 0, completed: 0 };
     const teacherCountMap = new Map<string, number>();
-    demos.forEach((demo) => {
+    activeDemos.forEach((demo) => {
       const state = resolveDemoWorkflowState(demo);
       if (!state) return;
       if (state === 'open') summary.open += 1;
@@ -1513,7 +1550,7 @@ export default function LeadsInquiriesWorkspace({
     });
     const teacherWise = Array.from(teacherCountMap.entries()).sort((a, b) => b[1] - a[1]);
     return { ...summary, teacherWise };
-  }, [demos]);
+  }, [activeDemos]);
 
   const focusCounts = useMemo<Record<FocusFilter, number>>(() => {
     const counts: Record<FocusFilter, number> = {
@@ -1579,7 +1616,7 @@ export default function LeadsInquiriesWorkspace({
   };
 
   const handleExportDemoCsv = (scope: 'filtered' | 'all') => {
-    const sessions = scope === 'filtered' ? visibleDemoSessions : demos;
+    const sessions = scope === 'filtered' ? visibleDemoSessions : activeDemos;
     if (!sessions.length) {
       toast({
         title: 'No demos to export',
@@ -1621,33 +1658,122 @@ export default function LeadsInquiriesWorkspace({
     });
   };
 
-  const openLeadDialog = (lead?: LeadRecord | null) => {
-    if (lead) {
-      setLeadEditTarget(lead);
-      setLeadForm({
-        parentName: lead.parentName || '',
-        primaryPhone: lead.primaryPhone || '',
-        parentEmail: lead.parentEmail || '',
-        childName: lead.childName || '',
-        childAge: typeof lead.childAge === 'number' ? String(lead.childAge) : '',
-        childGrade: lead.childGrade || '',
-        interestTrack: lead.interestTrack || 'phonics',
-        source: lead.source || 'manual',
-        sourceDetail: lead.sourceDetail || '',
-        country: lead.country || '',
-        timezone: lead.timezone || '',
-        preferredTimingText: lead.preferredTimingText || '',
-        initialMessageSnippet: lead.initialMessageSnippet || '',
-        status: lead.status || 'new',
-        priority: lead.priority || 'normal',
-        nextFollowUpDate: toDateInput(lead.nextFollowUpAt),
-        notes: lead.notes || '',
-        tagsText: Array.isArray(lead.tags) ? lead.tags.join(', ') : '',
+  const handleArchiveExistingRecords = async () => {
+    if (!canArchiveExistingRecords || !user?.uid) {
+      toast({
+        title: 'Admin access required',
+        description: 'Only admin users can archive records.',
+        variant: 'destructive',
       });
-    } else {
-      setLeadEditTarget(null);
-      setLeadForm(buildInitialLeadForm());
+      return;
     }
+
+    const confirmed = window.confirm(
+      'This will archive all currently visible existing Leads & Enquiries records and start the dashboard fresh. Archived records will not be deleted. Continue?',
+    );
+    if (!confirmed) return;
+
+    setArchiveInProgress(true);
+    try {
+      const [leadsSnap, demosSnap] = await Promise.all([
+        getDocs(collection(db, LEADS_COLLECTION)),
+        getDocs(collection(db, 'demoSessions')),
+      ]);
+
+      const leadDocs = leadsSnap.docs.filter((docSnap) => !isArchivedRecord(docSnap.data()));
+      const demoDocs = demosSnap.docs.filter((docSnap) => !isArchivedRecord(docSnap.data()));
+      const archiveBatchId = buildArchiveBatchId();
+      const archivedBy = [user.uid, normalizeText(user.email)].filter(Boolean).join('|') || user.uid;
+      const archivePayload = {
+        archived: true,
+        archivedAt: serverTimestamp(),
+        archivedBy,
+        archiveReason: ARCHIVE_REASON,
+        archiveBatchId,
+      };
+
+      let batch = writeBatch(db);
+      let pendingWrites = 0;
+      let archivedCount = 0;
+      const flushBatch = async () => {
+        if (pendingWrites === 0) return;
+        await batch.commit();
+        batch = writeBatch(db);
+        pendingWrites = 0;
+      };
+
+      for (const leadDoc of leadDocs) {
+        batch.update(leadDoc.ref, {
+          ...archivePayload,
+          updatedAt: serverTimestamp(),
+          updatedBy: user.uid,
+        });
+        pendingWrites += 1;
+        archivedCount += 1;
+        if (pendingWrites >= ARCHIVE_BATCH_WRITE_LIMIT) {
+          await flushBatch();
+        }
+      }
+
+      for (const demoDoc of demoDocs) {
+        batch.update(demoDoc.ref, {
+          ...archivePayload,
+          lastUpdatedAt: serverTimestamp(),
+          lastUpdatedBy: user.uid,
+        });
+        pendingWrites += 1;
+        archivedCount += 1;
+        if (pendingWrites >= ARCHIVE_BATCH_WRITE_LIMIT) {
+          await flushBatch();
+        }
+      }
+
+      await flushBatch();
+
+      toast({
+        title: 'Archive completed',
+        description: `Archived ${archivedCount} records. Leads & Enquiries tracking is now fresh.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Failed to archive records',
+        description: error?.message || 'Unexpected error while archiving records.',
+        variant: 'destructive',
+      });
+    } finally {
+      setArchiveInProgress(false);
+    }
+  };
+
+  const openLeadDialog = (lead?: LeadRecord | null) => {
+    if (!lead) {
+      toast({
+        title: 'Use Create Demo Request',
+        description: 'New entries should be added using Create Demo Request.',
+      });
+      return;
+    }
+    setLeadEditTarget(lead);
+    setLeadForm({
+      parentName: lead.parentName || '',
+      primaryPhone: lead.primaryPhone || '',
+      parentEmail: lead.parentEmail || '',
+      childName: lead.childName || '',
+      childAge: typeof lead.childAge === 'number' ? String(lead.childAge) : '',
+      childGrade: lead.childGrade || '',
+      interestTrack: lead.interestTrack || 'phonics',
+      source: lead.source || 'manual',
+      sourceDetail: lead.sourceDetail || '',
+      country: lead.country || '',
+      timezone: lead.timezone || '',
+      preferredTimingText: lead.preferredTimingText || '',
+      initialMessageSnippet: lead.initialMessageSnippet || '',
+      status: lead.status || 'new',
+      priority: lead.priority || 'normal',
+      nextFollowUpDate: toDateInput(lead.nextFollowUpAt),
+      notes: lead.notes || '',
+      tagsText: Array.isArray(lead.tags) ? lead.tags.join(', ') : '',
+    });
     setLeadDialogOpen(true);
   };
 
@@ -1713,17 +1839,15 @@ export default function LeadsInquiriesWorkspace({
     setLeadSaving(true);
     try {
       const payload = buildLeadPayload();
-      if (leadEditTarget) {
-        await updateDoc(doc(db, LEADS_COLLECTION, leadEditTarget.id), payload);
-        toast({ title: 'Lead updated' });
-      } else {
-        await addDoc(collection(db, LEADS_COLLECTION), {
-          ...payload,
-          createdAt: serverTimestamp(),
-          createdBy: user.uid,
+      if (!leadEditTarget) {
+        toast({
+          title: 'Use Create Demo Request',
+          description: 'New entries should be added using Create Demo Request.',
         });
-        toast({ title: 'Lead created' });
+        return;
       }
+      await updateDoc(doc(db, LEADS_COLLECTION, leadEditTarget.id), payload);
+      toast({ title: 'Lead updated' });
       setLeadDialogOpen(false);
       setLeadEditTarget(null);
       setLeadForm(buildInitialLeadForm());
@@ -2096,8 +2220,8 @@ export default function LeadsInquiriesWorkspace({
           childGrade: demoRequestForm.childGrade.trim(),
           childAge: parsedChildAge,
           courseInterested: demoRequestForm.courseInterested.trim(),
-          source: demoRequestForm.source.trim() || null,
-          demoMode: demoRequestForm.demoMode.trim() || null,
+          source: demoRequestForm.source.trim() || 'WhatsApp',
+          leadType: demoRequestForm.leadType,
           preferredDateTimeText: demoRequestForm.preferredDateTimeText.trim(),
           requestReceivedDate: demoRequestForm.requestReceivedDate.trim() || null,
           timezone: demoRequestForm.timezone.trim() || null,
@@ -2629,16 +2753,24 @@ export default function LeadsInquiriesWorkspace({
                   Export Current Page Demos ({visibleDemoSessions.length})
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => handleExportDemoCsv('all')}>
-                  Export All Demos ({demos.length})
+                  Export All Demos ({activeDemos.length})
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button type="button" size="sm" variant="outline" onClick={() => openLeadDialog()}>
-              Add Lead
-            </Button>
             <Button type="button" size="sm" onClick={handleCreateDemoRequest}>
               Create Demo Request
             </Button>
+            {canArchiveExistingRecords ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => void handleArchiveExistingRecords()}
+                disabled={archiveInProgress}
+              >
+                {archiveInProgress ? 'Archiving...' : 'Archive existing records'}
+              </Button>
+            ) : null}
           </div>
         </div>
       </Card>
@@ -2946,7 +3078,14 @@ export default function LeadsInquiriesWorkspace({
                       </TableCell>
                       <TableCell>{row.childName}</TableCell>
                       <TableCell>{row.source || '—'}</TableCell>
-                      <TableCell>{row.courseLabel}</TableCell>
+                      <TableCell>
+                        <div>{row.courseLabel}</div>
+                        {normalizeText((row.demo as { leadType?: string | null } | null)?.leadType) ? (
+                          <div className="text-xs text-muted-foreground">
+                            Lead Type: {normalizeText((row.demo as { leadType?: string | null }).leadType)}
+                          </div>
+                        ) : null}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={lifecycleVariant(row.lifecycleStage)}>
                           {lifecycleLabel(row.lifecycleStage)}
@@ -3169,7 +3308,7 @@ export default function LeadsInquiriesWorkspace({
       <Dialog open={leadDialogOpen} onOpenChange={setLeadDialogOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
-            <DialogTitle>{leadEditTarget ? 'Edit Lead' : 'Add Lead'}</DialogTitle>
+            <DialogTitle>Edit Lead</DialogTitle>
             <DialogDescription className="sr-only">
               Manage lead details, enquiry fields, and follow-up metadata.
             </DialogDescription>
@@ -3305,7 +3444,7 @@ export default function LeadsInquiriesWorkspace({
                 Cancel
               </Button>
               <Button type="submit" disabled={leadSaving}>
-                {leadSaving ? 'Saving...' : leadEditTarget ? 'Save Changes' : 'Create Lead'}
+                {leadSaving ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
           </form>
@@ -3401,10 +3540,9 @@ export default function LeadsInquiriesWorkspace({
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label>Source</Label>
-                <Select value={demoRequestForm.source || 'not_set'} onValueChange={(value) => setDemoRequestField('source', value === 'not_set' ? '' : value)}>
+                <Select value={demoRequestForm.source} onValueChange={(value) => setDemoRequestField('source', value)}>
                   <SelectTrigger><SelectValue placeholder="Select source" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="not_set">Not set</SelectItem>
                     {SOURCE_OPTIONS.map((option) => (
                       <SelectItem key={option} value={option}>{option}</SelectItem>
                     ))}
@@ -3412,12 +3550,11 @@ export default function LeadsInquiriesWorkspace({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Demo Mode</Label>
-                <Select value={demoRequestForm.demoMode || 'not_set'} onValueChange={(value) => setDemoRequestField('demoMode', value === 'not_set' ? '' : value)}>
-                  <SelectTrigger><SelectValue placeholder="Select demo mode" /></SelectTrigger>
+                <Label>Lead Type</Label>
+                <Select value={demoRequestForm.leadType} onValueChange={(value) => setDemoRequestField('leadType', value as LeadType)}>
+                  <SelectTrigger><SelectValue placeholder="Select lead type" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="not_set">Not set</SelectItem>
-                    {DEMO_MODE_OPTIONS.map((option) => (
+                    {LEAD_TYPE_OPTIONS.map((option) => (
                       <SelectItem key={option} value={option}>{option}</SelectItem>
                     ))}
                   </SelectContent>

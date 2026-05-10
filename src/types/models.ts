@@ -162,6 +162,7 @@ export interface DemoSessionHistoryEntry {
 export interface DemoSession {
   id: string;
   leadId?: string | null;
+  leadType?: '1:1' | 'Group Class' | null;
   parentName: string;
   childName: string;
   childGrade: string;
@@ -225,6 +226,7 @@ export interface CreateDemoSessionInput {
   parentName: string;
   parentPhone: string;
   forceCreate?: boolean;
+  leadType?: '1:1' | 'Group Class' | null;
   childName: string;
   childGrade: string;
   childAge?: number | null;
