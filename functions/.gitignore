@@ -1,5 +1,5 @@
 # Build output (TypeScript → JavaScript)
-lib/
+/lib/
 # If you ever generate types here
 typings/
 
