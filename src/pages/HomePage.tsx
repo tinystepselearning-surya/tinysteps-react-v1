@@ -1,12 +1,11 @@
 // src/pages/HomePage.tsx
 // @ts-nocheck
 import React, { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { getRouteConfig } from "../lib/seo";
 import { localBusinessSchema, PUBLIC_FACTS } from "../lib/schemas";
 import { Link } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
-import AutoLinkedText from "../components/seo/AutoLinkedText";
+const AutoLinkedText = lazy(() => import("../components/seo/AutoLinkedText"));
 const ParentReassurance = lazy(() => import("../components/programs/ParentReassurance"));
 const GlobalLearnersMapSection = lazy(() => import("../components/Home/GlobalLearnersMapSection"));
 const DemoShowcase = lazy(() => import("../components/Home/StatsProofSection"));
@@ -31,12 +30,10 @@ const PARENT_HELP_POINTS = [
   "Friendly support for common phonics questions",
 ];
 const CORE_PROGRAMS_TEXT = `${PUBLIC_FACTS.corePrograms[0]}, ${PUBLIC_FACTS.corePrograms[1]}, and ${PUBLIC_FACTS.corePrograms[2]}`;
-const homeSeo = getRouteConfig("/");
-const homeSeoTitle = homeSeo?.title ?? "Tiny Steps Learning | Premium Online English Learning for Children";
+const homeSeoTitle = "Tiny Steps Learning | Premium Online English Learning for Children";
 const homeSeoDescription =
-  homeSeo?.description ??
   "Tiny Steps Learning is a premium online English learning school for children aged 3–12, offering structured phonics, grammar, reading, sentence formation, communication, and public speaking programs.";
-const homeCanonicalPath = homeSeo?.canonicalPath ?? "/";
+const homeCanonicalPath = "/";
 const homeCanonicalUrl =
   homeCanonicalPath === "/" ? `${PUBLIC_FACTS.primaryWebsite}/` : `${PUBLIC_FACTS.primaryWebsite}${homeCanonicalPath}`;
 const quickAnswerFaqItems = [
@@ -363,7 +360,9 @@ export default function HomePage() {
                 Master reading, writing & speaking step by step
               </p>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
-                <AutoLinkedText text="Give your child meaningful daily practice through guided English learning games that build strong foundations in letters & sounds, spelling, vocabulary, sentence making, reading, grammar, and confident speaking." />
+                <Suspense fallback={<>Give your child meaningful daily practice through guided English learning games that build strong foundations in letters & sounds, spelling, vocabulary, sentence making, reading, grammar, and confident speaking.</>}>
+                  <AutoLinkedText text="Give your child meaningful daily practice through guided English learning games that build strong foundations in letters & sounds, spelling, vocabulary, sentence making, reading, grammar, and confident speaking." />
+                </Suspense>
               </p>
             </div>
             <Link
@@ -419,7 +418,11 @@ export default function HomePage() {
                   <div className="max-w-2xl">
                     <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary-700">For parents</p>
                     <h2 className="mt-2 text-2xl font-semibold text-slate-900 sm:text-3xl">Parents Help Hub</h2>
-                    <p className="mt-3 text-gray-700 sm:text-base"><AutoLinkedText text="Clear, step-by-step guides for parents asking what phonics is, why it matters, how to teach it at home, and how to make daily reading support feel manageable." /></p>
+                    <p className="mt-3 text-gray-700 sm:text-base">
+                      <Suspense fallback={<>Clear, step-by-step guides for parents asking what phonics is, why it matters, how to teach it at home, and how to make daily reading support feel manageable.</>}>
+                        <AutoLinkedText text="Clear, step-by-step guides for parents asking what phonics is, why it matters, how to teach it at home, and how to make daily reading support feel manageable." />
+                      </Suspense>
+                    </p>
                   </div>
                   <div className="grid gap-2 sm:grid-cols-3 lg:w-[360px] lg:grid-cols-1">
                     {PARENT_HELP_POINTS.map((item) => (
