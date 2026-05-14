@@ -1,7 +1,7 @@
 export type BlogPost = {
   slug: string;
   title: string;
-  category: 'Phonics' | 'Grammar' | 'Public Speaking' | 'Parent Tips' | 'Research';
+  category: 'Phonics' | 'Grammar' | 'Public Speaking' | 'English Communication' | 'Parent Tips' | 'Research';
   author: string;
   date: string; // ISO date
   readTime: string;
@@ -54,4 +54,3 @@ export type WeeklyPlaybook = {
   outcomes: string[];
   parentQuestions: string[];
 };
-

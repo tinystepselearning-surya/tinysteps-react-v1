@@ -11,7 +11,7 @@ import Meta from '../components/common/Meta';
 import NewsletterForm from '../components/common/NewsletterForm';
 import AboutAuthor from '../components/AboutAuthor';
 
-const TOPIC_OPTIONS = ['All', 'Phonics', 'Grammar', 'Public Speaking', 'Parent Tips', 'Research'] as const;
+const TOPIC_OPTIONS = ['All', 'Phonics', 'Grammar', 'Public Speaking', 'English Communication', 'Parent Tips', 'Research'] as const;
 const SORT_OPTIONS = ['Newest', 'Most Popular', 'Most Read'] as const;
 const FOUNDER_AUTHOR_NAME = 'Priya';
 const TEAM_AUTHOR_LABEL = 'Tiny Steps Academic Team';
@@ -143,6 +143,12 @@ const CATEGORY_THEME = {
     chip: 'bg-amber-100 text-amber-700',
     panel: 'from-[#fff5ea] to-[#eef6ff]',
     helper: 'Confidence, fluency, presentation habits, and speaking practice.',
+  },
+  'English Communication': {
+    text: 'text-indigo-700',
+    chip: 'bg-indigo-100 text-indigo-700',
+    panel: 'from-[#eef2ff] to-[#eef6ff]',
+    helper: 'Integrated reading, sentence building, grammar use, and communication confidence.',
   },
   'Parent Tips': {
     text: 'text-rose-700',

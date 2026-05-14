@@ -2,6 +2,11 @@ import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { containsPhoneNumber } from './moderation';
+import {
+  hasApnsConfiguration,
+  isApnsInvalidTokenReason,
+  sendApnsAlert,
+} from '../lib/sendApnsAlert';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -34,6 +39,9 @@ interface MarkMessageThreadReadInput {
 interface NotificationTokenDoc {
   docId: string;
   token: string;
+  platform: NotificationPlatform;
+  provider: NotificationProvider;
+  providerWasUnknown: boolean;
 }
 
 interface PushSendSummary {
@@ -41,6 +49,9 @@ interface PushSendSummary {
   failureCount: number;
   invalidTokenDocIds: string[];
 }
+
+type NotificationPlatform = 'ios' | 'android' | 'web';
+type NotificationProvider = 'apns' | 'fcm';
 
 function asOptionalString(value: unknown): string | null {
   if (typeof value !== 'string') return null;
@@ -64,6 +75,24 @@ function asStringList(value: unknown): string[] {
 function asRecord(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object') return {};
   return value as Record<string, unknown>;
+}
+
+function normalizePlatform(value: unknown): NotificationPlatform {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (normalized === 'ios' || normalized === 'android' || normalized === 'web') {
+    return normalized;
+  }
+  return 'ios';
+}
+
+function normalizeProvider(
+  value: unknown,
+  platform: NotificationPlatform,
+): NotificationProvider {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (normalized === 'apns') return 'apns';
+  if (normalized === 'fcm') return 'fcm';
+  return platform === 'ios' ? 'apns' : 'fcm';
 }
 
 function chunk<T>(items: T[], size: number): T[][] {
@@ -174,10 +203,18 @@ async function fetchActiveTokensForUsers(
       const data = asRecord(docSnap.data());
       const token = asOptionalString(data.token);
       if (!token) return;
+      const platform = normalizePlatform(data.platform);
+      const providerRaw = String(data.provider || '').trim().toLowerCase();
+      const providerWasUnknown =
+        Boolean(providerRaw) && providerRaw !== 'apns' && providerRaw !== 'fcm';
+      const provider = normalizeProvider(data.provider, platform);
       seenDocIds.add(docSnap.id);
       docs.push({
         docId: docSnap.id,
         token,
+        platform,
+        provider,
+        providerWasUnknown,
       });
     });
   }
@@ -198,8 +235,11 @@ async function sendPushToTokenDocs(
   let successCount = 0;
   let failureCount = 0;
   const invalidTokenDocIds = new Set<string>();
+  const fcmTokenDocs = tokenDocs.filter((item) => item.provider === 'fcm');
+  const apnsTokenDocs = tokenDocs.filter((item) => item.provider === 'apns');
+  const fcmFailureCodes: Record<string, number> = {};
 
-  for (const tokenChunk of chunk(tokenDocs, FCM_BATCH_SIZE)) {
+  for (const tokenChunk of chunk(fcmTokenDocs, FCM_BATCH_SIZE)) {
     const response = await admin.messaging().sendEachForMulticast({
       tokens: tokenChunk.map((item) => item.token),
       notification: { title, body },
@@ -229,6 +269,8 @@ async function sendPushToTokenDocs(
 
       failureCount += 1;
       const code = String(sendResponse.error?.code || '').trim();
+      const normalizedCode = code || 'unknown';
+      fcmFailureCodes[normalizedCode] = (fcmFailureCodes[normalizedCode] || 0) + 1;
       if (
         code === 'messaging/registration-token-not-registered' ||
         code === 'messaging/invalid-registration-token'
@@ -236,6 +278,63 @@ async function sendPushToTokenDocs(
         invalidTokenDocIds.add(tokenChunk[index].docId);
       }
     });
+  }
+
+  if (Object.keys(fcmFailureCodes).length > 0) {
+    logger.info('sendMessage:fcm_failure_codes', {
+      codes: fcmFailureCodes,
+    });
+  }
+
+  if (apnsTokenDocs.length > 0 && !hasApnsConfiguration()) {
+    logger.warn('sendMessage:apns_config_missing', {
+      apnsTokenCount: apnsTokenDocs.length,
+    });
+    failureCount += apnsTokenDocs.length;
+  }
+
+  for (const tokenDoc of apnsTokenDocs) {
+    if (!hasApnsConfiguration()) break;
+    try {
+      const outcome = await sendApnsAlert({
+        deviceToken: tokenDoc.token,
+        title,
+        body,
+        threadId: dataPayload.threadId,
+        data: dataPayload,
+      });
+
+      logger.info('sendMessage:apns_send_result', {
+        tokenDocId: tokenDoc.docId,
+        ok: outcome.ok,
+        status: outcome.status,
+        reason: outcome.reason || 'none',
+        host: outcome.host || 'unknown',
+        environment: outcome.environment || 'unknown',
+      });
+
+      if (outcome.ok) {
+        successCount += 1;
+        continue;
+      }
+
+      failureCount += 1;
+      if (isApnsInvalidTokenReason(outcome.reason)) {
+        invalidTokenDocIds.add(tokenDoc.docId);
+      }
+
+      logger.warn('sendMessage:apns_send_failed', {
+        tokenDocId: tokenDoc.docId,
+        status: outcome.status,
+        reason: outcome.reason || 'unknown',
+      });
+    } catch (error) {
+      failureCount += 1;
+      logger.warn('sendMessage:apns_send_exception', {
+        tokenDocId: tokenDoc.docId,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   return {
@@ -271,7 +370,12 @@ async function deactivateInvalidTokens(
 }
 
 export const sendMessage = onCall(
-  { region: REGION, timeoutSeconds: 60, memory: '256MiB' },
+  {
+    region: REGION,
+    timeoutSeconds: 60,
+    memory: '256MiB',
+    secrets: ['APNS_PRIVATE_KEY'],
+  },
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Authentication required');
@@ -373,6 +477,9 @@ export const sendMessage = onCall(
     await batch.commit();
     const recipientCount = recipientIds.length;
     let tokenCount = 0;
+    let apnsTokenCount = 0;
+    let fcmTokenCount = 0;
+    let unknownProviderCount = 0;
     let successCount = 0;
     let failureCount = 0;
 
@@ -382,6 +489,21 @@ export const sendMessage = onCall(
       const body = buildPushMessagePreview(textRaw);
       const tokenDocs = await fetchActiveTokensForUsers(db, recipientIds);
       tokenCount = tokenDocs.length;
+      apnsTokenCount = tokenDocs.filter((item) => item.provider === 'apns').length;
+      fcmTokenCount = tokenDocs.filter((item) => item.provider === 'fcm').length;
+      unknownProviderCount = tokenDocs.filter((item) => item.providerWasUnknown).length;
+
+      logger.info('sendMessage:fanout_plan', {
+        threadId,
+        messageId: messageRef.id,
+        senderId,
+        recipientIds,
+        activeTokenCount: tokenCount,
+        apnsTokenCount,
+        fcmTokenCount,
+        unknownProviderCount,
+        apnsConfigured: hasApnsConfiguration(),
+      });
 
       if (tokenDocs.length > 0) {
         const summary = await sendPushToTokenDocs(tokenDocs, title, body, {
@@ -412,6 +534,9 @@ export const sendMessage = onCall(
       messageId: messageRef.id,
       recipients: recipientCount,
       tokens: tokenCount,
+      apnsTokens: apnsTokenCount,
+      fcmTokens: fcmTokenCount,
+      unknownProviderCount,
       successCount,
       failureCount,
     });

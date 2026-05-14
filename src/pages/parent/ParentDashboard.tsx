@@ -1479,6 +1479,7 @@ export default function ParentDashboard() {
   const [insightsCourseId, setInsightsCourseId] = useState<string>("");
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [messagesActiveThreadId, setMessagesActiveThreadId] = useState<string | null>(null);
   const [gamesRefreshStatus, setGamesRefreshStatus] = useState<{
     tone: "neutral" | "success" | "info" | "error";
     message: string | null;
@@ -1486,6 +1487,15 @@ export default function ParentDashboard() {
   const [isRefreshingGames, setIsRefreshingGames] = useState(false);
   const [lastGamesSeenSignalMs, setLastGamesSeenSignalMs] = useState(0);
   const [lastGamesHeadSeenMs, setLastGamesHeadSeenMs] = useState(0);
+
+  useEffect(() => {
+    if (activeTab !== "messages") {
+      setMessagesActiveThreadId(null);
+    }
+  }, [activeTab]);
+
+  const isNativeMessagesThreadFocus =
+    isNativeIOSApp && activeTab === "messages" && Boolean(messagesActiveThreadId);
 
   useEffect(() => {
     if (kids.length === 0) return;
@@ -4554,9 +4564,9 @@ export default function ParentDashboard() {
   if (!user) return null;
 
   return (
-    <div className={`mobile-app-scroll w-full min-w-0 max-w-full bg-gradient-to-b from-slate-100 to-slate-50 dark:bg-slate-950 lg:h-screen lg:overflow-hidden lg:bg-slate-50 ${
+    <div className={`mobile-app-scroll ts-native-no-x-scroll w-full min-w-0 max-w-full bg-gradient-to-b from-slate-100 to-slate-50 dark:bg-slate-950 lg:h-screen lg:overflow-hidden lg:bg-slate-50 ${
       isNativeIOSApp
-        ? "ts-native-app-shell ts-native-no-x overflow-hidden"
+        ? "ts-native-app-shell ts-native-no-x-scroll overflow-hidden"
         : "min-h-[100dvh] overflow-x-hidden [overscroll-behavior-x:none]"
     }`}>
       <div className={`mx-auto w-full min-w-0 max-w-7xl overflow-x-hidden px-3 sm:px-6 lg:h-full lg:min-h-0 lg:px-8 lg:py-6 ${
@@ -4832,20 +4842,22 @@ export default function ParentDashboard() {
           <main className={`flex min-h-0 min-w-0 max-w-full flex-1 flex-col overflow-x-hidden ${
             isNativeIOSApp ? "h-full w-full overflow-hidden" : ""
           }`}>
-            <div className={`sticky top-0 z-30 shrink-0 bg-slate-50/90 backdrop-blur dark:bg-slate-950/80 ${
-              isNativeIOSApp ? "ts-native-safe-top pb-2" : "pt-safe"
-            }`}>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="gap-2 lg:hidden"
-                onClick={openMobileMenu}
-              >
-                <Menu className="h-4 w-4" />
-                Menu
-              </Button>
-            </div>
+            {!isNativeMessagesThreadFocus && (
+              <div className={`sticky top-0 z-30 shrink-0 bg-slate-50/90 backdrop-blur dark:bg-slate-950/80 ${
+                isNativeIOSApp ? "ts-native-header-safe pb-2" : "pt-safe"
+              }`}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 lg:hidden"
+                  onClick={openMobileMenu}
+                >
+                  <Menu className="h-4 w-4" />
+                  Menu
+                </Button>
+              </div>
+            )}
 
             <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
               <DialogContent className="max-w-3xl">
@@ -4856,23 +4868,40 @@ export default function ParentDashboard() {
               </DialogContent>
             </Dialog>
 
-            <div className={`${activeTab === "dashboard" ? "mt-3 space-y-4 sm:mt-4 sm:space-y-6" : "mt-4 space-y-6"} min-h-0 w-full max-w-full overflow-x-hidden [scrollbar-gutter:stable] pr-1 ${
+            <div className={`${
+              isNativeMessagesThreadFocus
+                ? "mt-0 flex min-h-0 flex-1 flex-col space-y-0"
+                : activeTab === "dashboard"
+                  ? "mt-3 space-y-4 sm:mt-4 sm:space-y-6"
+                  : "mt-4 space-y-6"
+            } min-h-0 w-full max-w-full overflow-x-hidden [scrollbar-gutter:stable] ${
+              isNativeMessagesThreadFocus ? "pr-0" : "pr-1"
+            } ${
               isNativeIOSApp
-                ? "ts-native-scroll ts-native-no-x ts-native-tabbar-reserve flex-1"
+                ? isNativeMessagesThreadFocus
+                  ? "ts-native-no-x-scroll flex-1 overflow-hidden pb-0"
+                  : "ts-native-scroll ts-native-no-x-scroll ts-native-tabbar-reserve flex-1"
                 : "pb-6 lg:overflow-y-auto"
             }`}>
               {/* Content */}
               {activeTab === "dashboard" && renderDashboardHome()}
 
         {activeTab === "messages" && (
-          <div className="space-y-4">
-            <Card className="p-4">
-              <h3 className="text-base font-semibold text-slate-900">Messages</h3>
-              <p className="text-xs text-slate-500">
-                Student-wise Tiny Steps conversations
-              </p>
-            </Card>
-            <MessagesPanel embedded />
+          <div className={isNativeMessagesThreadFocus ? "flex min-h-0 flex-1 flex-col overflow-hidden" : "space-y-4"}>
+            {!isNativeMessagesThreadFocus && (
+              <Card className="p-4">
+                <h3 className="text-base font-semibold text-slate-900">Messages</h3>
+                <p className="text-xs text-slate-500">
+                  Student-wise Tiny Steps conversations
+                </p>
+              </Card>
+            )}
+            <MessagesPanel
+              embedded
+              nativeChatFocus={isNativeMessagesThreadFocus}
+              autoSelectFirstThread={false}
+              onThreadChange={setMessagesActiveThreadId}
+            />
           </div>
         )}
 
@@ -5489,7 +5518,7 @@ export default function ParentDashboard() {
         {/* Classes tab: Today's + Upcoming sessions */}
         {activeTab === "classes" && (
           <div className="space-y-3 sm:space-y-4">
-            <Card className="sticky top-[calc(env(safe-area-inset-top)+3.25rem)] z-20 p-3 sm:top-0 sm:p-5">
+            <Card className={`sticky z-20 p-3 sm:p-5 ${isNativeIOSApp ? "top-0" : "top-[calc(env(safe-area-inset-top)+3.25rem)] sm:top-0"}`}>
               <div className="flex flex-wrap items-center gap-2">
                 <div className="flex w-full flex-wrap gap-1 rounded-2xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800 sm:inline-flex sm:w-auto sm:rounded-full">
                     <button
@@ -6386,11 +6415,13 @@ export default function ParentDashboard() {
           </main>
         </div>
       </div>
-      <MobileTabBar
-        items={parentMobileTabs}
-        activeId={activeTab}
-        onSelect={(nextTab) => setTab(nextTab as TabKey)}
-      />
+      {!isNativeMessagesThreadFocus && (
+        <MobileTabBar
+          items={parentMobileTabs}
+          activeId={activeTab}
+          onSelect={(nextTab) => setTab(nextTab as TabKey)}
+        />
+      )}
     </div>
   );
 }

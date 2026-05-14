@@ -11,15 +11,16 @@ import {
 } from './pushNavigationState';
 
 const TOKEN_TIMEOUT_MS = 15_000;
-const PERMISSION_PROMPT_KEY_PREFIX = 'ts_push_permission_prompted_v1:';
 const LAST_TOKEN_KEY_PREFIX = 'ts_push_last_token_v1:';
 const ANDROID_MESSAGES_CHANNEL_ID = 'messages';
 
 type SupportedPlatform = 'ios' | 'android' | 'web';
+type SupportedProvider = 'apns' | 'fcm';
 
 type RegisterNotificationTokenPayload = {
   token: string;
   platform: SupportedPlatform;
+  provider: SupportedProvider;
   deviceId?: string;
   appVersion?: string;
 };
@@ -58,6 +59,25 @@ const logPush = (event: string, data?: Record<string, unknown>) => {
     return;
   }
   console.info(`[push] ${event}`);
+};
+
+const maskToken = (token: string): string => {
+  const normalized = token.trim();
+  if (normalized.length <= 10) return `${normalized.slice(0, 3)}***`;
+  return `${normalized.slice(0, 6)}...${normalized.slice(-4)}`;
+};
+
+const sha256Hex = async (value: string): Promise<string | null> => {
+  try {
+    if (!globalThis.crypto?.subtle) return null;
+    const bytes = new TextEncoder().encode(value);
+    const hash = await globalThis.crypto.subtle.digest('SHA-256', bytes);
+    return Array.from(new Uint8Array(hash))
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('');
+  } catch {
+    return null;
+  }
 };
 
 const readLocal = (key: string): string | null => {
@@ -131,6 +151,9 @@ const resolvePlatform = (): SupportedPlatform => {
   return 'ios';
 };
 
+const resolveProvider = (platform: SupportedPlatform): SupportedProvider =>
+  platform === 'ios' ? 'apns' : 'fcm';
+
 const clearTokenWaiter = () => {
   if (tokenTimeoutHandle) {
     clearTimeout(tokenTimeoutHandle);
@@ -156,7 +179,10 @@ const ensurePushListeners = async () => {
           return;
         }
 
-        logPush('token:received', { platform: resolvePlatform() });
+        logPush('token:received', {
+          platform: resolvePlatform(),
+          tokenPreview: maskToken(value),
+        });
         if (resolveToken) {
           resolveToken(value);
           clearTokenWaiter();
@@ -168,8 +194,11 @@ const ensurePushListeners = async () => {
 
     await PushNotifications.addListener('registrationError', (error) => {
       try {
+        const errorMessage =
+          typeof (error as any)?.error === 'string' ? (error as any).error : undefined;
         logPush('token:error', {
           code: typeof (error as any)?.code === 'string' ? (error as any).code : undefined,
+          message: errorMessage,
         });
 
         if (rejectToken) {
@@ -291,10 +320,10 @@ const waitForToken = async (): Promise<string> => {
   return tokenPromise;
 };
 
-const ensurePushPermission = async (uid: string): Promise<boolean> => {
-  const promptKey = `${PERMISSION_PROMPT_KEY_PREFIX}${uid}`;
+const ensurePushPermission = async (): Promise<boolean> => {
   const permission = await PushNotifications.checkPermissions();
   const receive = permission.receive as PushPermissionReceiveState;
+  logPush('permission:check', { receive });
 
   if (receive === 'granted') return true;
 
@@ -303,16 +332,10 @@ const ensurePushPermission = async (uid: string): Promise<boolean> => {
     return false;
   }
 
-  const alreadyPrompted = readLocal(promptKey) === '1';
-  if (alreadyPrompted) {
-    logPush('permission:prompt-skipped');
-    return false;
-  }
-
-  writeLocal(promptKey, '1');
   const requested = await PushNotifications.requestPermissions();
   const granted = requested.receive === 'granted';
 
+  logPush('permission:request-result', { receive: requested.receive });
   logPush(granted ? 'permission:granted' : 'permission:not-granted');
   return granted;
 };
@@ -334,7 +357,7 @@ export async function registerNativePushNotifications(uid: string): Promise<void
 
   inFlightUsers.add(normalizedUid);
   try {
-    const hasPermission = await ensurePushPermission(normalizedUid);
+    const hasPermission = await ensurePushPermission();
     if (!hasPermission) return;
 
     await ensurePushListeners();
@@ -354,9 +377,13 @@ export async function registerNativePushNotifications(uid: string): Promise<void
     await ensureAndroidMessageChannel();
 
     logPush('registration:start');
+    logPush('registration:register-called', { platform: resolvePlatform() });
     try {
       await PushNotifications.register();
     } catch (error) {
+      logPush('registration:register-error', {
+        message: error instanceof Error ? error.message : String(error),
+      });
       console.warn('[push] PushNotifications.register() failed; skipping registration', error);
       return;
     }
@@ -365,13 +392,22 @@ export async function registerNativePushNotifications(uid: string): Promise<void
     const lastTokenKey = `${LAST_TOKEN_KEY_PREFIX}${normalizedUid}`;
     const previousToken = readLocal(lastTokenKey);
     const platform = resolvePlatform();
+    const provider = resolveProvider(platform);
     const appVersion = await resolveAppVersion();
 
     const payload: RegisterNotificationTokenPayload = {
       token,
       platform,
+      provider,
       appVersion,
     };
+
+    logPush('registration:save-request', {
+      platform,
+      provider,
+      tokenPreview: maskToken(token),
+      tokenCollection: 'notificationTokens',
+    });
 
     // Keep backend lastSeenAt fresh even when token did not rotate.
     await callFunction<{ ok: boolean }, RegisterNotificationTokenPayload>(
@@ -379,11 +415,18 @@ export async function registerNativePushNotifications(uid: string): Promise<void
       payload,
     );
 
+    const tokenDocId = await sha256Hex(token);
+    const tokenDocPath = tokenDocId ? `notificationTokens/${tokenDocId}` : 'notificationTokens/<sha256(token)>';
+
     if (previousToken !== token) {
       writeLocal(lastTokenKey, token);
     }
 
-    logPush('registration:stored', { platform });
+    logPush('registration:stored', {
+      platform,
+      provider,
+      tokenDocPath,
+    });
   } catch (error) {
     logPush('registration:failed', {
       message: error instanceof Error ? error.message : String(error),

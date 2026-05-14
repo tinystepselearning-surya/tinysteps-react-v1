@@ -55,13 +55,17 @@ const BLOG_PUBLICATION_DATES: Record<string, string> = {
   'week-24-speaking-family-showcase': '2026-03-14',
   'week-25-back-to-school-plan': '2026-03-16',
   'week-26-screen-smart-summer-routine': '2026-03-23',
-  'week-27-prevent-summer-slide-reading': '2026-03-30'
+  'week-27-prevent-summer-slide-reading': '2026-03-30',
+  'engage-children-phonics-grammar-speaking-at-home': '2026-05-14',
+  'june-school-reopening-english-readiness-plan': '2026-05-14',
+  'phonics-grammar-speaking-connected-english-communication': '2026-05-14',
 };
 
 const DEFAULT_HERO_BY_CATEGORY: Record<BlogPost['category'], string> = {
   Phonics: '/blog/hero-phonics.jpg',
   Grammar: '/blog/hero-grammar.jpg',
   'Public Speaking': '/blog/hero-speaking.jpg',
+  'English Communication': '/blog/hero-speaking.jpg',
   'Parent Tips': '/blog/hero-parent-tips.jpg',
   Research: '/blog/hero-research.jpg'
 };

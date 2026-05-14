@@ -290,6 +290,36 @@ const POST_CTA_OVERRIDES: Record<string, {
     learningPathLinks: [{ label: 'Course chooser', to: '/courses' }],
     suppressCoursesFallback: true,
   },
+  'engage-children-phonics-grammar-speaking-at-home': {
+    primaryAction: { label: 'Choose the right course', to: '/courses' },
+    learningPathIntro:
+      'If your child needs structured support across phonics, grammar, and speaking, use the course chooser to pick one clear starting route.',
+    learningPathLinks: [
+      { label: 'Course chooser', to: '/courses' },
+      { label: 'Book a free assessment', to: '/?book=1' },
+    ],
+    suppressCoursesFallback: true,
+  },
+  'june-school-reopening-english-readiness-plan': {
+    primaryAction: { label: 'Book a June readiness assessment', to: '/?book=1' },
+    learningPathIntro:
+      'Before school reopens, use a short structured pathway to refresh phonics, grammar, reading, and speaking with clear weekly goals.',
+    learningPathLinks: [
+      { label: 'Start 2-week refreshment route', to: '/courses' },
+      { label: 'Check English readiness now', to: '/contact' },
+    ],
+    suppressCoursesFallback: true,
+  },
+  'phonics-grammar-speaking-connected-english-communication': {
+    primaryAction: { label: 'Explore integrated course options', to: '/courses' },
+    learningPathIntro:
+      'When reading, grammar, and speaking gaps appear together, an integrated English pathway helps children apply all three skills in real communication.',
+    learningPathLinks: [
+      { label: 'View curriculum roadmap', to: '/curriculum' },
+      { label: 'Why parents choose Tiny Steps', to: '/why-tiny-steps' },
+    ],
+    suppressCoursesFallback: true,
+  },
   'how-to-choose-phonics-classes': {
     primaryAction: { label: 'Explore Tiny Steps phonics classes', to: '/phonics' },
     learningPathIntro:

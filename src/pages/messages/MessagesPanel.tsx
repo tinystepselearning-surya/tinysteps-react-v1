@@ -11,6 +11,7 @@ import { isSuperUserEmail } from '../../constants/accessControl';
 import { useAuthStore } from '../../store/useAuthStore';
 import useMessageThreads, { type MessageThread } from '../../hooks/useMessageThreads';
 import useThreadMessages, { type ThreadMessage } from '../../hooks/useThreadMessages';
+import useNativeIOSKeyboard from '../../hooks/useNativeIOSKeyboard';
 
 type UserLabel = {
   displayName: string;
@@ -246,6 +247,8 @@ const participantNameFromThread = (thread: MessageThread, userId: string): strin
 
 interface MessagesPanelProps {
   embedded?: boolean;
+  nativeChatFocus?: boolean;
+  autoSelectFirstThread?: boolean;
   routeThreadId?: string | null;
   onThreadChange?: (threadId: string | null) => void;
   onBack?: () => void;
@@ -253,6 +256,8 @@ interface MessagesPanelProps {
 
 export default function MessagesPanel({
   embedded = false,
+  nativeChatFocus = false,
+  autoSelectFirstThread = true,
   routeThreadId = null,
   onThreadChange,
   onBack,
@@ -269,6 +274,12 @@ export default function MessagesPanel({
   const lastSelectedThreadIdRef = useRef<string | null>(null);
   const lastIncomingMessageIdByThreadRef = useRef<Record<string, string>>({});
   const readReceiptDebugKeyRef = useRef<Set<string>>(new Set());
+  const suppressAutoSelectRef = useRef(false);
+  const shouldUseThreadBackHold = embedded && nativeChatFocus;
+  const threadMessagesListRef = useRef<HTMLDivElement | null>(null);
+  const { keyboardOpen } = useNativeIOSKeyboard({
+    hideAccessoryBar: embedded && nativeChatFocus,
+  });
 
   const isAdmin = Boolean(
     user &&
@@ -286,14 +297,20 @@ export default function MessagesPanel({
 
   useEffect(() => {
     if (routeThreadId) {
+      if (shouldUseThreadBackHold) suppressAutoSelectRef.current = false;
       setSelectedThreadId(routeThreadId);
       return;
     }
 
-    if (!selectedThreadId && threads.length > 0) {
+    if (
+      !selectedThreadId &&
+      threads.length > 0 &&
+      autoSelectFirstThread &&
+      (!shouldUseThreadBackHold || !suppressAutoSelectRef.current)
+    ) {
       setSelectedThreadId(threads[0].id);
     }
-  }, [routeThreadId, selectedThreadId, threads]);
+  }, [autoSelectFirstThread, routeThreadId, selectedThreadId, shouldUseThreadBackHold, threads]);
 
   useEffect(() => {
     if (!selectedThreadId) return;
@@ -306,6 +323,10 @@ export default function MessagesPanel({
     () => threads.find((thread) => thread.id === selectedThreadId) || null,
     [selectedThreadId, threads],
   );
+  useEffect(() => {
+    onThreadChange?.(selectedThreadId || null);
+  }, [onThreadChange, selectedThreadId]);
+
   const selectedThreadUnread = selectedThread
     ? getUnreadCount(selectedThread, user?.uid)
     : 0;
@@ -390,6 +411,32 @@ export default function MessagesPanel({
   useEffect(() => {
     listEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages, selectedThread?.id]);
+
+  const scrollMessagesToBottom = useCallback((behavior: ScrollBehavior = 'auto') => {
+    const node = threadMessagesListRef.current;
+    if (!node) return;
+    node.scrollTo({ top: node.scrollHeight, behavior });
+  }, []);
+
+  useEffect(() => {
+    if (!selectedThread?.id) return;
+    const timer = window.setTimeout(() => {
+      scrollMessagesToBottom('auto');
+    }, 50);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [scrollMessagesToBottom, selectedThread?.id]);
+
+  useEffect(() => {
+    if (!selectedThread?.id || !keyboardOpen) return;
+    const timer = window.setTimeout(() => {
+      scrollMessagesToBottom('smooth');
+    }, 40);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [keyboardOpen, scrollMessagesToBottom, selectedThread?.id]);
 
   useEffect(() => {
     if (!selectedThread) return;
@@ -514,13 +561,13 @@ export default function MessagesPanel({
   }, [resolveRoleParticipantName, selectedRoleIds.learningPartnerIds, selectedRoleIds.parentIds, selectedRoleIds.teacherIds, selectedThread, viewerRole]);
 
   const handleSelectThread = (threadId: string) => {
+    if (shouldUseThreadBackHold) suppressAutoSelectRef.current = false;
     setSelectedThreadId(threadId);
-    onThreadChange?.(threadId);
   };
 
   const handleBackToConversations = () => {
+    if (shouldUseThreadBackHold) suppressAutoSelectRef.current = true;
     setSelectedThreadId(null);
-    onThreadChange?.(null);
   };
 
   const handleSend = async () => {
@@ -540,6 +587,9 @@ export default function MessagesPanel({
       );
       setDraft('');
       hapticSuccess();
+      window.setTimeout(() => {
+        scrollMessagesToBottom('smooth');
+      }, 30);
     } catch (error) {
       hapticWarning();
       setSendError(normalizeCallableError(error));
@@ -575,15 +625,36 @@ export default function MessagesPanel({
 
   const showConversationList = !selectedThread;
   const showConversationDetail = Boolean(selectedThread);
-  const threadPaneHeightClass = embedded ? 'lg:max-h-[52vh]' : 'max-h-[72vh]';
-  const detailPaneHeightClass = embedded
-    ? 'h-[calc(100dvh-var(--ts-mobile-tabbar-reserve)-8rem)] min-h-[22rem] lg:h-[52vh] lg:min-h-[360px]'
+  const isEmbeddedNativeChatFocus = embedded && nativeChatFocus && showConversationDetail;
+  const threadPaneHeightClass = embedded
+    ? 'max-h-[calc(100dvh-var(--ts-mobile-tabbar-reserve)-10rem)] lg:max-h-[52vh]'
+    : 'max-h-[72vh]';
+  const detailPaneHeightClass = isEmbeddedNativeChatFocus
+    ? 'h-full min-h-0'
+    : embedded
+    ? 'h-[calc(100dvh-var(--ts-mobile-tabbar-reserve)-8.75rem)] min-h-[22rem] lg:h-[52vh] lg:min-h-[360px]'
     : 'h-[72vh] min-h-[420px]';
   const detailEmptyStateClass = embedded ? 'min-h-[14rem] lg:min-h-[360px]' : 'min-h-[420px]';
 
+  useEffect(() => {
+    if (!isEmbeddedNativeChatFocus || typeof document === 'undefined') return;
+
+    const body = document.body;
+    const previousOverflow = body.style.overflow;
+    body.style.overflow = 'hidden';
+
+    return () => {
+      body.style.overflow = previousOverflow;
+    };
+  }, [isEmbeddedNativeChatFocus]);
+
   return (
-    <div className={embedded ? 'min-h-0 min-w-0 overflow-x-hidden' : 'min-h-screen overflow-x-hidden bg-slate-50 pb-safe'}>
-      <div className={embedded ? 'w-full min-w-0' : 'mx-auto w-full max-w-6xl p-3 sm:p-4 lg:p-6'}>
+    <div className={embedded
+      ? `ts-native-no-x-scroll min-h-0 min-w-0 overflow-x-hidden ${isEmbeddedNativeChatFocus ? 'flex h-[100dvh] flex-col overflow-hidden' : ''}`
+      : 'min-h-screen overflow-x-hidden bg-slate-50 pb-safe'}>
+      <div className={embedded
+        ? `${isEmbeddedNativeChatFocus ? 'flex min-h-0 w-full min-w-0 flex-1 flex-col' : 'w-full min-w-0'}`
+        : 'mx-auto w-full max-w-6xl p-3 sm:p-4 lg:p-6'}>
         {!embedded && (
           <header className="mb-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
             <div className="flex items-center justify-between gap-3">
@@ -605,7 +676,7 @@ export default function MessagesPanel({
           </header>
         )}
 
-        <div className="grid min-w-0 gap-4 lg:grid-cols-[320px,1fr]">
+        <div className={`grid min-w-0 gap-4 lg:grid-cols-[320px,1fr] ${isEmbeddedNativeChatFocus ? 'min-h-0 flex-1 overflow-hidden gap-0' : ''}`}>
           <Card className={`min-w-0 overflow-hidden ${showConversationDetail ? 'lg:block hidden' : ''}`}>
             <div className="border-b border-slate-200 px-4 py-3">
               <h2 className="text-sm font-semibold text-slate-800">Conversations</h2>
@@ -689,14 +760,14 @@ export default function MessagesPanel({
             </div>
           </Card>
 
-          <Card className={`min-w-0 overflow-hidden ${showConversationList ? 'lg:block hidden' : ''}`}>
+          <Card className={`min-w-0 overflow-hidden ${showConversationList ? 'lg:block hidden' : ''} ${isEmbeddedNativeChatFocus ? 'ts-chat-focus-screen ts-native-no-x-scroll rounded-none border-0 shadow-none' : ''}`}>
             {!showConversationDetail ? (
               <div className={`flex items-center justify-center px-6 text-center text-sm text-slate-500 ${detailEmptyStateClass}`}>
                 Select a conversation to view messages.
               </div>
             ) : (
-              <div className={`flex min-w-0 flex-col ${detailPaneHeightClass}`}>
-                <div className="border-b border-slate-200 px-4 py-3">
+              <div className={`flex min-w-0 flex-col overflow-hidden ${detailPaneHeightClass}`}>
+                <div className={`border-b border-slate-200 px-4 py-3 ${isEmbeddedNativeChatFocus ? 'ts-chat-focus-header' : ''}`}>
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <h2 className="truncate text-sm font-semibold text-slate-900">{resolveThreadTitle(selectedThread!)}</h2>
@@ -709,31 +780,39 @@ export default function MessagesPanel({
                       className="lg:hidden"
                       onClick={handleBackToConversations}
                     >
-                      Back to conversations
+                      Back
                     </Button>
                   </div>
 
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {visibleParticipants.map((item) => (
-                      <span key={item.label} className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-700">
-                        {item.label}: {item.value}
-                      </span>
-                    ))}
-                  </div>
+                  {!isEmbeddedNativeChatFocus && (
+                    <>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {visibleParticipants.map((item) => (
+                          <span key={item.label} className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-700">
+                            {item.label}: {item.value}
+                          </span>
+                        ))}
+                      </div>
 
-                  <p className="mt-2 text-[11px] text-slate-500">
-                    {viewerRole === 'admin'
-                      ? 'Admin oversight view'
-                      : 'Tiny Steps may review conversations for safety and support.'}
-                  </p>
-                  {viewerRole === 'admin' && (
-                    <p className="mt-1 text-[11px] text-slate-500">
-                      Admin oversight is read-only here.
-                    </p>
+                      <p className="mt-2 text-[11px] text-slate-500">
+                        {viewerRole === 'admin'
+                          ? 'Admin oversight view'
+                          : 'Tiny Steps may review conversations for safety and support.'}
+                      </p>
+                      {viewerRole === 'admin' && (
+                        <p className="mt-1 text-[11px] text-slate-500">
+                          Admin oversight is read-only here.
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
 
-                <div className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-slate-50/70 p-3 pb-4 [-webkit-overflow-scrolling:touch]">
+                <div ref={threadMessagesListRef} className={`min-h-0 flex-1 space-y-3 overflow-y-auto bg-slate-50/70 p-3 [-webkit-overflow-scrolling:touch] ${
+                  isEmbeddedNativeChatFocus ? 'ts-chat-focus-list' : ''
+                } ${
+                  embedded ? (isEmbeddedNativeChatFocus ? 'pb-4' : 'pb-24') : 'pb-4'
+                }`}>
                   {isMessagesLoading ? (
                     <p className="text-sm text-slate-500">Loading messages…</p>
                   ) : messagesError ? (
@@ -820,7 +899,15 @@ export default function MessagesPanel({
                   <div ref={listEndRef} />
                 </div>
 
-                <div className={`shrink-0 border-t border-slate-200 bg-white px-3 pt-3 ${embedded ? 'pb-3' : 'pb-safe'}`}>
+                <div className={`shrink-0 border-t border-slate-200 bg-white px-3 pt-3 ${
+                  isEmbeddedNativeChatFocus ? 'ts-chat-focus-composer' : ''
+                } ${
+                  embedded
+                    ? isEmbeddedNativeChatFocus
+                      ? 'pb-[max(env(safe-area-inset-bottom,0px),0.5rem)]'
+                      : 'sticky bottom-0 z-10 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]'
+                    : 'sticky bottom-0 z-10 pb-safe'
+                }`}>
                   {viewerRole === 'admin' ? (
                     <p className="pb-2 text-xs text-slate-500">
                       Admin oversight is read-only here.
@@ -842,7 +929,12 @@ export default function MessagesPanel({
                           onChange={(event) => setDraft(event.target.value)}
                           placeholder="Type your message"
                           autoComplete="off"
-                          className="min-h-11"
+                          className="min-h-11 text-base"
+                          onFocus={() => {
+                            window.setTimeout(() => {
+                              scrollMessagesToBottom('smooth');
+                            }, 30);
+                          }}
                           onKeyDown={(event) => {
                             if (event.key === 'Enter' && !event.shiftKey) {
                               event.preventDefault();

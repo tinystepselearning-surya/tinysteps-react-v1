@@ -67,6 +67,9 @@ import post_child_knows_grammar_but_makes_mistakes from './posts/parent-tips/chi
 import post_child_gives_one_word_answers from './posts/parent-tips/child-gives-one-word-answers';
 import post_child_understands_english_but_does_not_speak from './posts/parent-tips/child-understands-english-but-does-not-speak';
 import post_child_reads_words_but_does_not_understand_story from './posts/parent-tips/child-reads-words-but-does-not-understand-story';
+import post_engage_children_phonics_grammar_speaking_at_home from './posts/parent-tips/engage-children-phonics-grammar-speaking-at-home';
+import post_june_school_reopening_english_readiness_plan from './posts/parent-tips/june-school-reopening-english-readiness-plan';
+import post_phonics_grammar_speaking_connected_english_communication from './posts/parent-tips/phonics-grammar-speaking-connected-english-communication';
 import post_week_27_prevent_summer_slide_reading from './posts/phonics/week-27-prevent-summer-slide-reading';
 import custom_post_phonics_for_parents_guide from './posts/research/phonics-for-parents-guide';
 
@@ -139,6 +142,9 @@ const rawBlogPosts: BlogPost[] = [
   post_child_gives_one_word_answers,
   post_child_understands_english_but_does_not_speak,
   post_child_reads_words_but_does_not_understand_story,
+  post_engage_children_phonics_grammar_speaking_at_home,
+  post_june_school_reopening_english_readiness_plan,
+  post_phonics_grammar_speaking_connected_english_communication,
   post_week_27_prevent_summer_slide_reading,
 ];
 

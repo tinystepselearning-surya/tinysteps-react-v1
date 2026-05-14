@@ -7,6 +7,7 @@ import { hapticSuccess, hapticWarning } from '../lib/nativeHaptics';
 import type { AuthRole } from '../store/useAuthStore';
 import TinyStepsBrand from '../components/common/TinyStepsBrand';
 import { Mail, Lock } from 'lucide-react';
+import useNativeIOSKeyboard from '../hooks/useNativeIOSKeyboard';
 
 const VALID_ROLES: AuthRole[] = [
   'admin',
@@ -124,6 +125,9 @@ export default function LoginPage() {
 
   const expectedRole = getExpectedRole();
   const isNativeRuntime = isNativeCapacitorRuntime();
+  const { isNativeIOS, keyboardOpen } = useNativeIOSKeyboard({
+    hideAccessoryBar: true,
+  });
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,10 +188,12 @@ export default function LoginPage() {
 
   if (isNativeRuntime) {
     return (
-      <div className="ts-native-app-shell ts-native-no-x relative overflow-hidden bg-[linear-gradient(180deg,#f5faff_0%,#edf5ff_56%,#f8fbff_100%)]">
-        <div className="pointer-events-none absolute left-1/2 top-[28%] h-[220px] w-[220px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(191,219,254,0.45)_0%,rgba(191,219,254,0)_72%)]" />
-        <div className="ts-native-scroll ts-native-no-x relative z-10 mx-auto flex min-h-0 w-full max-w-full flex-1 flex-col items-center px-0 pb-[calc(env(safe-area-inset-bottom,0px)+1.75rem)] pt-[max(env(safe-area-inset-top),2.5rem)]">
-          <div className="mb-6 flex w-[calc(100%-40px)] max-w-[360px] flex-col items-center text-center">
+      <div className="ts-native-app-shell ts-native-no-x-scroll relative overflow-hidden bg-[linear-gradient(180deg,#f5faff_0%,#edf5ff_56%,#f8fbff_100%)]">
+        <div className="pointer-events-none absolute left-1/2 top-[26%] h-[220px] w-[220px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(191,219,254,0.45)_0%,rgba(191,219,254,0)_72%)]" />
+        <div className="ts-login-native-shell ts-native-no-x-scroll relative z-10 mx-auto w-full max-w-[420px]">
+          <div className="ts-login-native-spacer" aria-hidden="true" />
+
+          <div className={`mb-5 flex w-full max-w-[360px] flex-col items-center self-center text-center transition-transform duration-200 ${keyboardOpen ? 'scale-[0.96]' : ''}`}>
             <img
               src="/logo-header-compact.png"
               alt="Tiny Steps logo"
@@ -198,7 +204,7 @@ export default function LoginPage() {
             </h1>
           </div>
 
-          <div className="w-[calc(100%-40px)] max-w-[360px] rounded-[26px] border border-[rgba(15,23,42,0.06)] bg-white p-[22px] shadow-[0_16px_34px_rgba(15,23,42,0.10)]">
+          <div className={`w-full max-w-[360px] self-center rounded-[26px] border border-[rgba(15,23,42,0.06)] bg-white p-[22px] shadow-[0_16px_34px_rgba(15,23,42,0.10)] ${isNativeIOS ? 'mb-0' : ''}`}>
             {error ? (
               <div className="mb-4 rounded-2xl border border-red-200/80 bg-red-50/85 px-4 py-3 text-sm text-red-700">
                 {error}
@@ -216,7 +222,7 @@ export default function LoginPage() {
                 autoCapitalize="none"
                 autoCorrect="off"
                 spellCheck={false}
-                className="h-[52px] w-full rounded-2xl border border-slate-200 bg-[#fbfdff] px-4 text-[15px] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white"
+                className="h-[52px] w-full rounded-2xl border border-slate-200 bg-[#fbfdff] px-4 text-base text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white"
                 required
                 aria-label="Email, username, or phone number"
               />
@@ -230,7 +236,7 @@ export default function LoginPage() {
                 autoCapitalize="none"
                 autoCorrect="off"
                 spellCheck={false}
-                className="h-[52px] w-full rounded-2xl border border-slate-200 bg-[#fbfdff] px-4 text-[15px] text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white"
+                className="h-[52px] w-full rounded-2xl border border-slate-200 bg-[#fbfdff] px-4 text-base text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white"
                 required
                 aria-label="Password"
               />

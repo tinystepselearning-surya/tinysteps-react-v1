@@ -4,6 +4,11 @@ import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { ensureAdmin } from '../helpers/adminGuard';
+import {
+  hasApnsConfiguration,
+  isApnsInvalidTokenReason,
+  sendApnsAlert,
+} from '../lib/sendApnsAlert';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -21,6 +26,7 @@ const MAX_BODY_LENGTH = 180;
 const TOKEN_MIN_LENGTH = 20;
 
 type NotificationPlatform = 'ios' | 'android' | 'web';
+type NotificationProvider = 'apns' | 'fcm';
 
 type AuthLike = {
   uid: string;
@@ -30,6 +36,7 @@ type AuthLike = {
 interface RegisterNotificationTokenInput {
   token?: unknown;
   platform?: unknown;
+  provider?: unknown;
   deviceId?: unknown;
   appVersion?: unknown;
 }
@@ -44,6 +51,8 @@ interface NotificationTokenDoc {
   docId: string;
   token: string;
   userId: string;
+  platform: NotificationPlatform;
+  provider: NotificationProvider;
 }
 
 interface PushSendSummary {
@@ -111,6 +120,17 @@ function normalizePlatform(value: unknown): NotificationPlatform {
     return platform;
   }
   throw new HttpsError('invalid-argument', 'platform must be ios, android, or web');
+}
+
+function normalizeProvider(
+  value: unknown,
+  platform: NotificationPlatform,
+): NotificationProvider {
+  const provider = String(value || '').trim().toLowerCase();
+  if (provider === 'apns' || provider === 'fcm') {
+    return provider;
+  }
+  return platform === 'ios' ? 'apns' : 'fcm';
 }
 
 function normalizeLimitedString(value: unknown, maxLength: number): string | null {
@@ -233,11 +253,15 @@ async function fetchActiveTokensForUsers(
       const token = asOptionalString(data.token);
       const userId = asOptionalString(data.userId);
       if (!token || !userId) return;
+      const platform = normalizePlatform(data.platform);
+      const provider = normalizeProvider(data.provider, platform);
       seenDocIds.add(docSnap.id);
       docs.push({
         docId: docSnap.id,
         token,
         userId,
+        platform,
+        provider,
       });
     });
   }
@@ -258,8 +282,10 @@ async function sendPushToTokenDocs(
   let successCount = 0;
   let failureCount = 0;
   const invalidTokenDocIds = new Set<string>();
+  const fcmTokenDocs = tokenDocs.filter((item) => item.provider === 'fcm');
+  const apnsTokenDocs = tokenDocs.filter((item) => item.provider === 'apns');
 
-  for (const tokenChunk of chunk(tokenDocs, FCM_BATCH_SIZE)) {
+  for (const tokenChunk of chunk(fcmTokenDocs, FCM_BATCH_SIZE)) {
     const response = await admin.messaging().sendEachForMulticast({
       tokens: tokenChunk.map((item) => item.token),
       notification: {
@@ -291,6 +317,50 @@ async function sendPushToTokenDocs(
         invalidTokenDocIds.add(tokenChunk[index].docId);
       }
     });
+  }
+
+  if (apnsTokenDocs.length > 0 && !hasApnsConfiguration()) {
+    logger.warn('notifications:apns_config_missing', {
+      apnsTokenCount: apnsTokenDocs.length,
+    });
+    failureCount += apnsTokenDocs.length;
+  }
+
+  for (const tokenDoc of apnsTokenDocs) {
+    if (!hasApnsConfiguration()) break;
+    const threadId = dataPayload.threadId || dataPayload.sessionId || 'tinysteps';
+
+    try {
+      const outcome = await sendApnsAlert({
+        deviceToken: tokenDoc.token,
+        title,
+        body,
+        threadId,
+        data: dataPayload,
+      });
+
+      if (outcome.ok) {
+        successCount += 1;
+        continue;
+      }
+
+      failureCount += 1;
+      if (isApnsInvalidTokenReason(outcome.reason)) {
+        invalidTokenDocIds.add(tokenDoc.docId);
+      }
+
+      logger.warn('notifications:apns_send_failed', {
+        tokenDocId: tokenDoc.docId,
+        status: outcome.status,
+        reason: outcome.reason || 'unknown',
+      });
+    } catch (error) {
+      failureCount += 1;
+      logger.warn('notifications:apns_send_exception', {
+        tokenDocId: tokenDoc.docId,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   return {
@@ -374,8 +444,18 @@ export const registerNotificationToken = onCall(
     }
 
     const platform = normalizePlatform(input.platform);
+    const provider = normalizeProvider(input.provider, platform);
     const deviceId = normalizeLimitedString(input.deviceId, 120);
     const appVersion = normalizeLimitedString(input.appVersion, 64);
+
+    logger.info('registerNotificationToken:request', {
+      uid: auth.uid,
+      platform,
+      provider,
+      tokenLength: token.length,
+      hasDeviceId: Boolean(deviceId),
+      hasAppVersion: Boolean(appVersion),
+    });
 
     const db = admin.firestore();
     const role = await resolveUserRole(db, auth);
@@ -395,6 +475,7 @@ export const registerNotificationToken = onCall(
           role: role || null,
           token,
           platform,
+          provider,
           active: true,
           deviceId: deviceId || null,
           appVersion: appVersion || null,
@@ -409,7 +490,9 @@ export const registerNotificationToken = onCall(
     logger.info('registerNotificationToken:stored', {
       uid: auth.uid,
       platform,
+      provider,
       tokenDocId,
+      tokenDocPath: `notificationTokens/${tokenDocId}`,
     });
 
     return { ok: true };
@@ -417,7 +500,12 @@ export const registerNotificationToken = onCall(
 );
 
 export const sendTestPushNotification = onCall(
-  { region: REGION, timeoutSeconds: 60, memory: '256MiB' },
+  {
+    region: REGION,
+    timeoutSeconds: 60,
+    memory: '256MiB',
+    secrets: ['APNS_PRIVATE_KEY'],
+  },
   async (request) => {
     await ensureAdmin(request.auth);
 
@@ -469,6 +557,7 @@ export const sendClassReminder10Min = onSchedule(
     timeZone: 'Asia/Kolkata',
     timeoutSeconds: 540,
     memory: '512MiB',
+    secrets: ['APNS_PRIVATE_KEY'],
   },
   async () => {
     const db = admin.firestore();
