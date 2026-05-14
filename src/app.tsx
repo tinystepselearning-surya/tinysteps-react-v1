@@ -1,14 +1,16 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import router from './app/routes';
 import { Toaster } from './components/ui/toaster';
-import NativeLayoutDebug from './components/debug/NativeLayoutDebug';
 import useRevealAnimations from './hooks/useRevealAnimations';
 import {
   consumePendingPushOpenRoute,
   OPEN_MESSAGES_FROM_PUSH_EVENT,
   queuePendingPushOpenRoute,
 } from './lib/pushNavigationState';
+
+const NativeLayoutDebug = lazy(() => import('./components/debug/NativeLayoutDebug'));
+const NATIVE_DEBUG_STORAGE_KEY = 'ts_native_layout_debug';
 
 const isNativeCapacitorRuntime = () => {
   if (typeof window === 'undefined') return false;
@@ -28,6 +30,7 @@ const isNativeCapacitorRuntime = () => {
 
 function App() {
   useRevealAnimations();
+  const [showNativeDebug, setShowNativeDebug] = useState(false);
 
   const navigateFromPushPayload = useCallback((route: unknown, threadId: unknown) => {
     const normalizedRoute =
@@ -73,6 +76,32 @@ function App() {
 
     return () => {
       root.classList.remove('ts-capacitor-native');
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isNativeCapacitorRuntime()) {
+      setShowNativeDebug(false);
+      return;
+    }
+
+    const syncDebugState = () => {
+      try {
+        setShowNativeDebug(window.localStorage.getItem(NATIVE_DEBUG_STORAGE_KEY) === '1');
+      } catch {
+        setShowNativeDebug(false);
+      }
+    };
+
+    syncDebugState();
+    const intervalId = window.setInterval(syncDebugState, 1500);
+    window.addEventListener('storage', syncDebugState);
+    window.addEventListener('focus', syncDebugState);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('storage', syncDebugState);
+      window.removeEventListener('focus', syncDebugState);
     };
   }, []);
 
@@ -178,7 +207,11 @@ function App() {
     <>
       <RouterProvider router={router} />
       <Toaster />
-      <NativeLayoutDebug />
+      {showNativeDebug ? (
+        <Suspense fallback={null}>
+          <NativeLayoutDebug />
+        </Suspense>
+      ) : null}
     </>
   );
 }

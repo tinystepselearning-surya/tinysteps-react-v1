@@ -1,6 +1,6 @@
 // src/pages/HomePage.tsx
 // @ts-nocheck
-import React, { lazy, Suspense, useEffect, useState } from "react";
+import React, { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { getRouteConfig } from "../lib/seo";
 import { localBusinessSchema, PUBLIC_FACTS } from "../lib/schemas";
 import { Link } from "react-router-dom";
@@ -76,7 +76,62 @@ const quickAnswerFaqSchema = {
 };
 
 export default function HomePage() {
+  const belowFoldAnchorRef = useRef<HTMLDivElement | null>(null);
+  const [showPrimaryBelowFoldSections, setShowPrimaryBelowFoldSections] = useState(false);
   const [showDeferredSections, setShowDeferredSections] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let settled = false;
+    let observer: IntersectionObserver | null = null;
+    let fallbackTimer: number | undefined;
+
+    const reveal = () => {
+      if (settled) return;
+      settled = true;
+      setShowPrimaryBelowFoldSections(true);
+      observer?.disconnect();
+      if (fallbackTimer !== undefined) {
+        window.clearTimeout(fallbackTimer);
+        fallbackTimer = undefined;
+      }
+      window.removeEventListener("scroll", reveal);
+      window.removeEventListener("pointerdown", reveal);
+      window.removeEventListener("touchstart", reveal);
+      window.removeEventListener("keydown", reveal);
+    };
+
+    const target = belowFoldAnchorRef.current;
+    if (target && "IntersectionObserver" in window) {
+      observer = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) {
+            reveal();
+          }
+        },
+        { rootMargin: "900px 0px 900px 0px", threshold: 0.01 }
+      );
+      observer.observe(target);
+    }
+
+    window.addEventListener("scroll", reveal, { passive: true, once: true });
+    window.addEventListener("pointerdown", reveal, { passive: true, once: true });
+    window.addEventListener("touchstart", reveal, { passive: true, once: true });
+    window.addEventListener("keydown", reveal, { once: true });
+    fallbackTimer = window.setTimeout(reveal, 2200);
+
+    return () => {
+      observer?.disconnect();
+      if (fallbackTimer !== undefined) {
+        window.clearTimeout(fallbackTimer);
+      }
+      window.removeEventListener("scroll", reveal);
+      window.removeEventListener("pointerdown", reveal);
+      window.removeEventListener("touchstart", reveal);
+      window.removeEventListener("keydown", reveal);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof navigator !== "undefined" && navigator.webdriver) return;
@@ -151,6 +206,10 @@ export default function HomePage() {
       {/* HERO */}
       <ConversionHero />
 
+      <div ref={belowFoldAnchorRef} className="h-px w-full" aria-hidden="true" />
+
+      {showPrimaryBelowFoldSections ? (
+        <>
       <section className="px-6 py-8">
         <div className="mx-auto max-w-6xl rounded-[30px] border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-sky-50 p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
           <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Quick Answer for Parents</h2>
@@ -316,6 +375,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+        </>
+      ) : null}
 
       {showDeferredSections ? (
         <>
