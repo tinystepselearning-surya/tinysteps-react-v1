@@ -374,7 +374,6 @@ export const sendMessage = onCall(
     region: REGION,
     timeoutSeconds: 60,
     memory: '256MiB',
-    secrets: ['APNS_PRIVATE_KEY'],
   },
   async (request) => {
     if (!request.auth?.uid) {

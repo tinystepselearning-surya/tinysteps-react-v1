@@ -504,7 +504,6 @@ export const sendTestPushNotification = onCall(
     region: REGION,
     timeoutSeconds: 60,
     memory: '256MiB',
-    secrets: ['APNS_PRIVATE_KEY'],
   },
   async (request) => {
     await ensureAdmin(request.auth);
@@ -557,7 +556,6 @@ export const sendClassReminder10Min = onSchedule(
     timeZone: 'Asia/Kolkata',
     timeoutSeconds: 540,
     memory: '512MiB',
-    secrets: ['APNS_PRIVATE_KEY'],
   },
   async () => {
     const db = admin.firestore();
