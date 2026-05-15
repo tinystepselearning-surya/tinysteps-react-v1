@@ -152,7 +152,10 @@ const PHONICS_SEO_KEYWORDS = [
   'why phonics is important',
   'how to teach phonics at home',
   'online phonics classes for kids',
+  'online phonics classes for kids in India',
   'phonics classes in India',
+  'phonics classes for kids',
+  'reading classes for kids',
   'SATPIN phonics',
 ];
 
@@ -183,15 +186,15 @@ export default function PhonicsPage({
   const [openFaqIndexes, setOpenFaqIndexes] = useState<number[]>([0]);
   const canonicalPath = seoOverrides?.canonicalPath ?? "/phonics";
   const registry = getRouteConfig(canonicalPath);
-  const title = seoOverrides?.title ?? registry?.title ?? "Online Phonics Classes for Kids | Tiny Steps Learning";
+  const title = seoOverrides?.title ?? registry?.title ?? "Online Phonics Classes for Kids in India | Tiny Steps Learning";
   const description =
     seoOverrides?.description ??
     registry?.description ??
-    "Phonics reading starts with sound-letter links, blending, and decoding. See how children move from sounds to words and sentence reading.";
+    "Phonics classes for kids that build sound-letter links, blending, and decoding. Ideal for parents looking for online reading classes for kids in India.";
   const breadcrumbName = seoOverrides?.breadcrumbName ?? "Phonics";
   const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
-  const heroTitle = heroTitleOverride ?? "Phonics Classes for Kids";
-  const heroSubtitle = heroSubtitleOverride ?? "How phonics helps reading: children learn sound-letter links, blending, and decoding in a clear sequence, then apply these skills to words and sentences. Start with a level check to choose the right entry stage.";
+  const heroTitle = heroTitleOverride ?? "Online Phonics Classes for Kids in India";
+  const heroSubtitle = heroSubtitleOverride ?? "How phonics classes help reading: children learn sound-letter links, blending, and decoding in a clear sequence, then apply these skills to words and sentences with confidence.";
   const allFaqOpen = openFaqIndexes.length === faqItems.length;
 
   const toggleFaq = (index: number) => {
@@ -265,7 +268,7 @@ export default function PhonicsPage({
       />
 
       <section className="mx-4 my-8 max-w-4xl rounded-2xl border border-sky-100 bg-gradient-to-r from-slate-50 to-sky-50 p-5 shadow-sm sm:mx-auto sm:p-6">
-        <h2 className="text-lg font-semibold text-gray-900">How do phonics classes help my child read?</h2>
+        <h2 className="text-lg font-semibold text-gray-900">How do online phonics classes help children read?</h2>
         <p className="mt-2 text-base text-gray-800">
           Phonics classes help children read by teaching how sounds connect to letters and how to blend those sounds
           into words. This builds decoding, so children can read unfamiliar words instead of guessing. Parents usually
@@ -554,24 +557,24 @@ export default function PhonicsPage({
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {[
             {
-              to: '/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading',
-              title: 'What is Jolly Phonics?',
-              helper: 'Understand the method parents often ask about',
+              to: '/blog/satpin-phonics-guide',
+              title: 'SATPIN Phonics Guide for Parents',
+              helper: 'Understand the SATPIN sequence and home practice flow',
             },
             {
-              to: '/blog/synthetic-phonics-vs-traditional-reading',
-              title: 'What is Synthetic Phonics?',
-              helper: 'Learn how reading actually develops',
+              to: '/blog/how-phonics-grammar-and-communication-work-together',
+              title: 'How Phonics, Grammar and Communication Work Together',
+              helper: 'See how reading connects to sentence formation and expression',
             },
             {
-              to: '/blog/child-knows-abc-but-cannot-read',
-              title: 'My Child Knows ABC but Cannot Read',
-              helper: 'Why children get stuck at ABC stage',
+              to: '/blog/how-to-engage-kids-in-english-learning-at-home',
+              title: 'How to Engage Kids in English Learning at Home',
+              helper: 'Use short daily routines that combine phonics, grammar, and communication',
             },
             {
-              to: '/blog/what-age-to-start-phonics',
-              title: 'What is the Right Age to Start Phonics?',
-              helper: 'Know when to start phonics',
+              to: '/blog/child-knows-letter-sounds-but-cannot-read',
+              title: 'Child Knows Sounds but Cannot Read Words',
+              helper: 'Understand why blending breaks down and how to support reading at home',
             },
           ].map((item) => (
             <article key={item.to} className="rounded-xl border border-slate-200 bg-slate-50 p-4">

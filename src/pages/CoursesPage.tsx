@@ -7,10 +7,10 @@ import { createCourseListSchema, PUBLIC_FACTS } from '../lib/schemas';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
 
 const coursesSeo = getRouteConfig('/courses');
-const coursesSeoTitle = coursesSeo?.title ?? 'Choose the Right English Course for Kids | Tiny Steps Learning';
+const coursesSeoTitle = coursesSeo?.title ?? 'English Courses for Kids: Phonics, Grammar and Public Speaking | Tiny Steps Learning';
 const coursesSeoDescription =
   coursesSeo?.description ??
-  'Choose your child’s starting program by main need: reading gaps, sentence accuracy, or expression confidence across Phonics, Grammar, and Public Speaking.';
+  'Compare Tiny Steps Phonics, Grammar, and Public Speaking pathways and choose the right starting course for your child after a free assessment.';
 const coursesCanonicalPath = coursesSeo?.canonicalPath ?? '/courses';
 const coursesCanonicalUrl = `https://tinystepslearning.com${coursesCanonicalPath}`;
 const BOOK_ASSESSMENT_HREF = '/courses?book=1';
@@ -169,7 +169,7 @@ function CoursesPage() {
         <div className="mx-auto max-w-6xl">
           <div className="rounded-[32px] border border-slate-200/80 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-7 text-white shadow-[0_24px_60px_rgba(15,23,42,0.24)] sm:p-10">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/75">Trusted by families across 15+ countries</p>
-            <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight sm:text-4xl md:text-5xl">A Complete English Learning Journey for Your Child</h1>
+            <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight sm:text-4xl md:text-5xl">Choose the Right English Course: Phonics, Grammar, or Public Speaking</h1>
             <p className="mt-4 max-w-3xl text-sm text-white/85 sm:text-base">
               <AutoLinkedText text="Phonics, grammar, reading, sentence formation, communication, and public speaking — taught step by step with clarity, care, and proven results." />
             </p>
@@ -185,7 +185,7 @@ function CoursesPage() {
                 href={BOOK_ASSESSMENT_HREF}
                 className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-100"
               >
-                Book Free Assessment
+                Start Free Assessment
               </a>
               <a
                 href="#program-overview"
@@ -265,6 +265,9 @@ function CoursesPage() {
             Phonics first, sentence accuracy and writing gaps usually need Grammar first, and hesitation or expression
             gaps usually need Speaking first. This focused start makes progress easier to see and avoids overload.
             Next step: book one assessment to confirm the starting track and level.
+          </p>
+          <p className="mt-3 max-w-4xl text-sm text-slate-700">
+            Parent help reads: <Link to="/blog/child-knows-letter-sounds-but-cannot-read" className="font-medium underline underline-offset-2 hover:text-slate-900">child knows sounds but cannot read words</Link>, <Link to="/blog/how-to-improve-sentence-formation-in-kids" className="font-medium underline underline-offset-2 hover:text-slate-900">improve sentence formation in kids</Link>, and <Link to="/blog/why-child-answers-only-in-one-word" className="font-medium underline underline-offset-2 hover:text-slate-900">child answers only in one word</Link>.
           </p>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">

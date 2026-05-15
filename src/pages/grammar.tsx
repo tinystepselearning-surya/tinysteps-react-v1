@@ -44,9 +44,9 @@ const stages = [
 
 const quickAnswerFaqItems = [
   {
-    question: 'What does grammar progress look like for children?',
+    question: 'What do online grammar classes improve first?',
     answer:
-      'Grammar growth usually moves in stages: words, sentence patterns, accuracy, and then clear short writing.',
+      'Grammar growth usually moves in stages: sentence patterns, accuracy, punctuation, and then clearer short writing.',
   },
   {
     question: 'Which age group are Tiny Steps grammar classes designed for?',
@@ -165,15 +165,15 @@ export default function GrammarPage() {
   return (
     <div>
       <Meta
-        title={grammarSeo?.title ?? 'Online Grammar and Writing Classes for Kids | Tiny Steps Learning'}
-        description={grammarSeo?.description ?? 'Grammar lessons build sentence control, punctuation accuracy, and writing clarity. See how children progress from word types to clearer expression.'}
+        title={grammarSeo?.title ?? 'Online Grammar Classes for Kids | Sentence Formation and Writing'}
+        description={grammarSeo?.description ?? 'Online grammar classes for kids focused on sentence formation, grammar accuracy, and writing clarity through live guided practice.'}
         canonical={`https://tinystepslearning.com${grammarSeo?.canonicalPath ?? '/grammar'}`}
         jsonLd={jsonLd}
       />
       <ProgramHero
         program="Grammar"
-        title="Online Grammar and Writing Classes for Kids"
-        subtitle="How grammar improves real language use: children move from word types to sentence control and clear writing through guided live practice."
+        title="Online Grammar Classes for Kids"
+        subtitle="Build sentence formation, grammar accuracy, and writing clarity through guided live practice."
         badges={['Ages 3–12', 'Live feedback', 'Lesson-based writing samples']}
         highlights={[
           'Sentence dice, grammar bingo, editing relays',
@@ -184,7 +184,7 @@ export default function GrammarPage() {
 
       <section className="mx-auto max-w-4xl px-6 pt-8">
         <div className="rounded-2xl border border-emerald-100 bg-gradient-to-r from-slate-50 to-emerald-50 p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">How do grammar classes improve real language use?</h2>
+          <h2 className="text-lg font-semibold text-slate-900">How do online grammar classes improve sentence formation?</h2>
           <p className="mt-2 text-base text-slate-800">
             Grammar classes improve real language use by helping children build correct sentences they can use in both
             speech and writing. Lessons move from word types to sentence structure, punctuation, and guided writing.
@@ -271,12 +271,12 @@ export default function GrammarPage() {
         title="Learn More About Grammar & Writing"
         links={[
           { label: 'English Grammar & Writing Classes', href: '/grammar' },
-          { label: 'Writing Classes for Kids', href: '/writing-classes-for-kids' },
+          { label: 'Improve Sentence Formation in Kids', href: '/blog/how-to-improve-sentence-formation-in-kids' },
           { label: 'From Nouns to Paragraphs', href: '/blog/week-7-grammar-nouns-to-paragraphs' },
-          { label: 'Tenses for Kids', href: '/blog/week-8-grammar-tenses' },
+          { label: 'Child Answers Only in One Word', href: '/blog/why-child-answers-only-in-one-word' },
+          { label: 'How Phonics, Grammar and Communication Work Together', href: '/blog/how-phonics-grammar-and-communication-work-together' },
           { label: 'Using Conjunctions Effectively', href: '/blog/week-9-grammar-conjunctions' },
-          { label: 'Subject-Verb Agreement', href: '/blog/week-10-grammar-subject-verb' },
-          { label: 'English Foundation Program', href: '/english-foundation-program' }
+          { label: 'Subject-Verb Agreement', href: '/blog/week-10-grammar-subject-verb' }
         ]}
       />
 

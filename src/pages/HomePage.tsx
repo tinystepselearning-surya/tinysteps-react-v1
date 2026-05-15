@@ -30,9 +30,9 @@ const PARENT_HELP_POINTS = [
   "Friendly support for common phonics questions",
 ];
 const CORE_PROGRAMS_TEXT = `${PUBLIC_FACTS.corePrograms[0]}, ${PUBLIC_FACTS.corePrograms[1]}, and ${PUBLIC_FACTS.corePrograms[2]}`;
-const homeSeoTitle = "Tiny Steps Learning | Premium Online English Learning for Children";
+const homeSeoTitle = "Premium Online English Classes for Kids in India | Tiny Steps Learning";
 const homeSeoDescription =
-  "Tiny Steps Learning is a premium online English learning school for children aged 3–12, offering structured phonics, grammar, reading, sentence formation, communication, and public speaking programs.";
+  "Tiny Steps offers premium 1:1 online English classes for children aged 3–12 across phonics, grammar, reading, sentence formation, communication, and public speaking.";
 const homeCanonicalPath = "/";
 const homeCanonicalUrl =
   homeCanonicalPath === "/" ? `${PUBLIC_FACTS.primaryWebsite}/` : `${PUBLIC_FACTS.primaryWebsite}${homeCanonicalPath}`;
@@ -195,7 +195,7 @@ export default function HomePage() {
       <Meta
         title={homeSeoTitle}
         description={homeSeoDescription}
-        keywords="phonics classes online India, grammar classes for kids, public speaking courses children, premium online English learning school for children ages 3-12, communication and public speaking programs for kids India"
+        keywords="online english classes for kids india, phonics classes for kids, online grammar classes for kids, public speaking classes for kids online, premium 1:1 english classes for children"
         canonical={homeCanonicalUrl}
         jsonLd={[localBusinessSchema, quickAnswerFaqSchema]}
       />
@@ -212,7 +212,7 @@ export default function HomePage() {
           <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Quick Answer for Parents</h2>
           <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-700 sm:text-base">
             {PUBLIC_FACTS.brandName} offers {PUBLIC_FACTS.positioning}, with core programs in {CORE_PROGRAMS_TEXT}. Tiny Steps supports children who need
-            help with reading confidence, grammar foundations, clear expression, structured speaking, and confident
+            help with reading confidence, grammar foundations, sentence formation, clear expression, and confident
             communication. Founded by Priya, Tiny Steps is led by an academic team focused on structured, child-friendly teaching.
             Classes are conducted through {PUBLIC_FACTS.deliveryModel} in one-on-one and small-group formats, with teacher-led
             practice, child-friendly activities, guided correction, and parent progress updates.
@@ -336,7 +336,7 @@ export default function HomePage() {
                   to="/summer-camps"
                   className="inline-flex items-center justify-center rounded-full bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-800"
                 >
-                  Book Free Level Check
+                  Book Free Assessment
                 </Link>
                 <Link
                   to="/summer-camps"

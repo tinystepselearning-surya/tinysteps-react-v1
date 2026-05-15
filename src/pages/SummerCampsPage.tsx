@@ -797,7 +797,7 @@ function SummerCampLeadForm() {
 export default function SummerCampsPage() {
   useEffect(() => {
     const pageDescription =
-      `Join Tiny Steps Summer Camp 2026 for children in India. Summer Camp Season: ${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Each child joins one track-specific ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, and limited batch start dates: ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}. Choose Phonics Fast Track, Grammar Fast Track, or Speaking Fast Track.`;
+      `Join Tiny Steps Summer Camp 2026, an online summer English camp for kids in India. Choose one focused track: phonics, grammar, or speaking. Each child joins one track-specific ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, and limited batch start dates: ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}.`;
 
     const faqSchema = {
       '@context': 'https://schema.org',
@@ -849,7 +849,7 @@ export default function SummerCampsPage() {
       '@type': 'WebPage',
       '@id': 'https://tinystepslearning.com/summer-camps#webpage',
       url: 'https://tinystepslearning.com/summer-camps',
-      name: 'Tiny Steps Summer Camp 2026 | 24 Live Classes for Kids | 27 Apr to 13 Jun',
+      name: 'Online Summer English Camp for Kids in India | Tiny Steps Summer Camp 2026',
       description: pageDescription,
       inLanguage: 'en-IN',
       audience: {
@@ -961,7 +961,7 @@ export default function SummerCampsPage() {
     });
 
     applySeo({
-      title: 'Tiny Steps Summer Camp 2026 | 24 Live Classes for Kids | 27 Apr to 13 Jun',
+      title: 'Online Summer English Camp for Kids in India | Tiny Steps Summer Camp 2026',
       description: pageDescription,
       keywords: SUMMER_CAMP_SEO_KEYWORDS,
       canonicalPath: '/summer-camps',
@@ -1004,10 +1004,10 @@ export default function SummerCampsPage() {
                   Tiny Steps Summer Camp 2026
                 </p>
                 <h1 className="mt-3 text-3xl font-black leading-tight text-slate-900 sm:text-4xl md:text-5xl">
-                  Tiny Steps Summer Camp 2026
+                  Online Summer English Camp 2026 for Kids in India
                 </h1>
                 <p className="mt-4 max-w-3xl text-base text-slate-700 sm:text-lg">
-                  A focused summer learning season for children ages 4–12. Summer Camp Season: {SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Parents choose one separate focus track for each child: Phonics Fast Track, Grammar Fast Track, or Speaking Fast Track.
+                  A focused summer learning season for children ages 4–12. Summer Camp Season: {SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Parents choose one focus track for each child: Phonics Fast Track, Grammar Fast Track, or Speaking Fast Track.
                 </p>
                 
                 <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm shadow-sm">

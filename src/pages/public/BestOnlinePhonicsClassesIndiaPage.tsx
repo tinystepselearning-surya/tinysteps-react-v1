@@ -207,15 +207,15 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
 
   useEffect(() => {
     applySeo({
-      title: "Best Online Phonics Classes in India (2026) — Parent Checklist | Tiny Steps Learning",
-      description: "Looking for online phonics classes in India? Learn what makes classes effective, what to check before enrolling, and how Tiny Steps' 1:1 approach helps kids master reading.",
+      title: "Best Online Phonics Classes in India: Parent Comparison Checklist (2026) | Tiny Steps Learning",
+      description: "Compare online phonics classes in India with this parent checklist covering teaching method, teacher quality, class format, pricing clarity, and progress tracking.",
       canonicalPath: "/best-online-phonics-classes-india",
       ogType: "article",
       jsonLd: [
         {
           "@context": "https://schema.org",
           "@type": "Article",
-          "headline": "Best Online Phonics Classes in India (2026) — Parent Checklist",
+          "headline": "Best Online Phonics Classes in India: Parent Comparison Checklist (2026)",
           "description": "A comprehensive guide for Indian parents to evaluate and choose the best online phonics classes for their children ages 3–12.",
           "author": {
             "@type": "Organization",
@@ -361,8 +361,8 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
   return (
     <div className="bg-white">
       <Meta
-        title="Best Online Phonics Classes in India (2026) | Tiny Steps Learning"
-        description="Use this parent checklist to compare online phonics classes in India and understand what to look for before enrolling your child."
+        title="Best Online Phonics Classes in India: Parent Comparison Checklist (2026) | Tiny Steps Learning"
+        description="Use this parent checklist to compare online phonics classes in India by method, teacher quality, class format, pricing, and progress visibility."
         canonical="https://tinystepslearning.com/best-online-phonics-classes-india"
       />
 
@@ -387,7 +387,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
       <section className="mb-12 rounded-2xl border border-sky-100 bg-gradient-to-r from-slate-50 to-sky-50 p-6 shadow-sm">
         <h2 className="mb-2 text-lg font-bold text-slate-900">What are the best online phonics classes in India?</h2>
         <p className="leading-relaxed text-slate-700">
-          The best online phonics classes for Indian children provide 1:1 personalized instruction using systematic synthetic phonics (SATPIN, Jolly Phonics), live mentor feedback, stage-based progress updates, and curricula aligned to IB/CBSE standards. Tiny Steps Learning offers 1:1 online phonics, grammar, and public speaking classes for ages 3–12, combining proven methods with AI-guided practice, lesson recordings, and parent transparency—helping children master reading in 12–16 weeks with consistent practice.
+          The best online phonics classes for Indian children usually include systematic synthetic phonics, live mentor feedback, clear progression, and visible parent updates. Use this checklist to compare class quality, teacher support, pricing clarity, and progress tracking before you enroll. If you are comparing providers, prioritize outcomes and consistency over marketing claims.
         </p>
       </section>
 
@@ -676,13 +676,17 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
             <h3 className="mb-2 font-bold text-slate-900">Reading Classes for Kids</h3>
             <p className="text-sm text-gray-700">Support-focused path from decoding to confident reading</p>
           </Link>
-          <Link to="/reading-fluency-program" className="rounded-lg border border-gray-200 p-4 transition hover:border-sky-300 hover:shadow-md">
-            <h3 className="mb-2 font-bold text-slate-900">Reading Fluency Program</h3>
-            <p className="text-sm text-gray-700">Improve pace, flow, and reading confidence</p>
+          <Link to="/courses" className="rounded-lg border border-gray-200 p-4 transition hover:border-sky-300 hover:shadow-md">
+            <h3 className="mb-2 font-bold text-slate-900">All Courses</h3>
+            <p className="text-sm text-gray-700">Compare phonics, grammar, and public speaking pathways</p>
           </Link>
-          <Link to="/phonics-fees-india" className="rounded-lg border border-gray-200 p-4 transition hover:border-sky-300 hover:shadow-md">
-            <h3 className="mb-2 font-bold text-slate-900">Phonics Fees in India</h3>
-            <p className="text-sm text-gray-700">Understand fee-to-outcome fit before enrolling</p>
+          <Link to="/curriculum" className="rounded-lg border border-gray-200 p-4 transition hover:border-sky-300 hover:shadow-md">
+            <h3 className="mb-2 font-bold text-slate-900">Curriculum Roadmap</h3>
+            <p className="text-sm text-gray-700">See how reading, grammar, and communication progress by stage</p>
+          </Link>
+          <Link to="/parents" className="rounded-lg border border-gray-200 p-4 transition hover:border-sky-300 hover:shadow-md">
+            <h3 className="mb-2 font-bold text-slate-900">Parents Hub</h3>
+            <p className="text-sm text-gray-700">Practical home routines and decision guides for English learning</p>
           </Link>
         </div>
       </section>

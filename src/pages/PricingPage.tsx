@@ -86,9 +86,9 @@ const plans = ONE_TO_ONE_MONTHLY_PACKAGES.map((pkg) => {
 
 const quickAnswerFaqItems = [
   {
-    question: 'What is included in Tiny Steps pricing?',
+    question: 'What is included in Tiny Steps premium pricing?',
     answer:
-      'Pricing covers live online classes, teacher-led practice, guided correction, learning activities, and parent progress updates based on the selected program.',
+      'Pricing includes live online classes, teacher-led practice, guided correction, learning activities, and parent progress updates for the selected package.',
   },
   {
     question: 'Are phonics, grammar, and public speaking programs priced separately?',
@@ -96,9 +96,9 @@ const quickAnswerFaqItems = [
       'Pricing may vary based on the selected program, class format, and number of sessions. Parents can review the available plans and choose what suits the child’s learning need.',
   },
   {
-    question: 'Can parents choose one-on-one classes?',
+    question: 'Can parents choose premium 1:1 classes?',
     answer:
-      'Yes. Tiny Steps offers one-on-one online classes for children who need focused attention, guided correction, and a personalized learning pace.',
+      'Yes. Tiny Steps offers premium 1:1 online classes for children who need focused attention, guided correction, and a personalized learning pace.',
   },
   {
     question: 'How should parents select the right plan?',
@@ -123,10 +123,10 @@ const quickAnswerFaqSchema = {
 
 type PricingProgram = 'premium' | 'ultra';
 const pricingSeo = getRouteConfig('/pricing');
-const pricingSeoTitle = pricingSeo?.title ?? 'Pricing & Plans | Tiny Steps Learning';
+const pricingSeoTitle = pricingSeo?.title ?? 'Premium 1:1 Online English Class Pricing | Tiny Steps Learning';
 const pricingSeoDescription =
   pricingSeo?.description ??
-  'Premium, transparent pricing for Tiny Steps Learning: a structured online English learning school for children aged 3–12 across phonics, grammar, reading, sentence formation, communication, and public speaking.';
+  'Clear premium pricing for Tiny Steps 1:1 online English classes. Compare packages for phonics, grammar, reading, sentence formation, communication, and public speaking.';
 const pricingCanonicalPath = pricingSeo?.canonicalPath ?? '/pricing';
 const pricingCanonicalUrl = `https://tinystepslearning.com${pricingCanonicalPath}`;
 
@@ -305,11 +305,11 @@ const PricingPage: FC = () => {
               ? `Tiny Steps Premium Classes • Starting from ${formatINR(premiumMinPerClass)} to ${formatINR(premiumMaxPerClass)} per class`
               : `Tiny Steps Ultra Premium • Native English-speaking teachers • Starting from ${formatINR(ultraMinPerClass)} to ${formatINR(ultraMaxPerClass)} per class`}
           </div>
-          <h1 className="mt-3 text-3xl font-bold text-gray-900 md:text-4xl">Tiny Steps Program Pricing</h1>
+          <h1 className="mt-3 text-3xl font-bold text-gray-900 md:text-4xl">Premium 1:1 Online English Class Pricing</h1>
           <p className="mt-3 text-gray-700">
             Compare plans for Tiny Steps phonics, grammar, reading, sentence formation, communication, and public
-            speaking programs. Choose Premium Classes with expert Indian teachers, or Ultra Premium with native
-            English-speaking teachers.
+            speaking programs. Packages are structured for clarity, with monthly class counts and transparent fee views.
+            Choose Premium Classes with expert Indian teachers, or Ultra Premium with native English-speaking teachers.
           </p>
           <div className="mt-6 mx-auto grid max-w-3xl gap-3 sm:grid-cols-2">
             <button
@@ -353,10 +353,9 @@ const PricingPage: FC = () => {
         <div className="rounded-3xl border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-blue-50 p-6 shadow-card-hover sm:p-8">
           <h2 className="text-2xl font-semibold text-gray-900">Quick Answer for Parents</h2>
           <p className="mt-3 max-w-4xl text-sm text-gray-700 sm:text-base">
-            Tiny Steps Learning offers online English learning classes for children across phonics, grammar, sentence
-            formation, communication, and public speaking. Pricing depends on the class format, number of sessions, and
-            selected program. Parents can choose one-on-one online classes for focused personal attention or
-            small-group classes where available, with teacher-led practice and parent progress updates.
+            Tiny Steps Learning offers premium online classes across phonics, grammar, sentence formation,
+            communication, and public speaking. Parents can choose 1:1 or small-group formats where available,
+            compare monthly class packages, and start with a free assessment before enrollment.
           </p>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {quickAnswerFaqItems.map((item) => (
@@ -366,6 +365,9 @@ const PricingPage: FC = () => {
               </article>
             ))}
           </div>
+          <p className="mt-4 text-sm text-slate-700">
+            Compare learning pathways before choosing a plan: <Link to="/courses" className="font-semibold underline">all courses</Link>, <Link to="/phonics" className="font-semibold underline">phonics</Link>, <Link to="/grammar" className="font-semibold underline">grammar</Link>, and <Link to="/speaking" className="font-semibold underline">public speaking</Link>.
+          </p>
         </div>
       </section>
 
@@ -420,7 +422,7 @@ const PricingPage: FC = () => {
                     }`}
                     onClick={() => navigate('/?book=1')}
                   >
-                    Enroll now
+                    Start with Free Assessment
                   </button>
                   <p className="mt-2 text-[11px] text-gray-500">
                     Need EMI or split payments? WhatsApp us and we’ll arrange it.

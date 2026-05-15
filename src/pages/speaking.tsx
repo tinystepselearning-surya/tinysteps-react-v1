@@ -141,15 +141,15 @@ export default function SpeakingPage() {
   return (
     <div>
       <Meta
-        title={speakingSeo?.title ?? 'Online Public Speaking Classes for Kids | Tiny Steps Learning'}
-        description={speakingSeo?.description ?? 'Speaking confidence grows through guided stages, from short responses to structured expression. Explore clarity, vocabulary, and presentation practice.'}
+        title={speakingSeo?.title ?? 'Public Speaking Classes for Kids Online | Tiny Steps Learning'}
+        description={speakingSeo?.description ?? 'Public speaking classes for kids online that build communication skills, clarity, and confidence speaking through structured live practice.'}
         canonical={`https://tinystepslearning.com${speakingSeo?.canonicalPath ?? '/speaking'}`}
         jsonLd={jsonLd}
       />
       <ProgramHero
         program="Public Speaking"
-        title="Online Public Speaking Classes for Kids"
-        subtitle="How speaking classes build confidence: children practise guided speaking in stages, from short responses to structured presentations."
+        title="Public Speaking Classes for Kids Online"
+        subtitle="Build communication skills and confidence speaking through guided practice, from short responses to structured presentations."
         badges={['Ages 3–12', 'S.P.E.A.K habit', 'Parent video notes']}
         highlights={[
           'Show & tell, storytelling, debates, persuasive speeches',
@@ -160,7 +160,7 @@ export default function SpeakingPage() {
 
       <section className="mx-auto max-w-4xl px-6 pt-8">
         <div className="rounded-2xl border border-amber-100 bg-gradient-to-r from-slate-50 to-amber-50 p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">How do speaking classes build confidence?</h2>
+          <h2 className="text-lg font-semibold text-slate-900">How do public speaking classes build communication confidence?</h2>
           <p className="mt-2 text-base text-slate-800">
             Speaking classes build confidence through repeated, guided speaking turns in a safe live setting. Children
             move from short responses to picture talk, storytelling, and structured speaking. Parents usually notice
@@ -247,9 +247,9 @@ export default function SpeakingPage() {
         title="Learn More About Public Speaking for Kids"
         links={[
           { label: 'Public Speaking & Communication', href: '/speaking' },
-          { label: 'Communication & Public Speaking for Kids', href: '/speaking' },
-          { label: 'Helping a Shy Child Speak', href: '/shy-child-speaking-confidence' },
-          { label: 'Confidence Building Programs', href: '/confidence-building-program-kids' },
+          { label: 'Child Answers Only in One Word', href: '/blog/why-child-answers-only-in-one-word' },
+          { label: 'Improve Sentence Formation in Kids', href: '/blog/how-to-improve-sentence-formation-in-kids' },
+          { label: 'How Phonics, Grammar and Communication Work Together', href: '/blog/how-phonics-grammar-and-communication-work-together' },
           { label: 'Confidence Seeds (Parents Guide)', href: '/blog/week-12-speaking-confidence-seeds' },
           { label: 'Structuring a Speech', href: '/blog/week-13-speaking-structure' },
           { label: 'Visual Aids & Expression', href: '/blog/week-14-speaking-visual-aids' }

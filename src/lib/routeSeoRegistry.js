@@ -1,16 +1,16 @@
 export const ROUTE_SEO_REGISTRY = {
   '/': {
-    title: 'Tiny Steps Learning | Premium Online English Learning for Children',
+    title: 'Premium Online English Classes for Kids in India | Tiny Steps Learning',
     description:
-      'Tiny Steps Learning is a premium online English learning school for children aged 3–12, offering structured phonics, grammar, reading, sentence formation, communication, and public speaking programs.',
+      'Tiny Steps offers premium 1:1 online English classes for children aged 3–12 across phonics, grammar, reading, sentence formation, communication, and public speaking.',
     canonicalPath: '/',
     ogType: 'website',
     ogImage: '/og-default.jpg',
   },
   '/courses': {
-    title: 'Choose the Right English Course for Kids | Tiny Steps Learning',
+    title: 'English Courses for Kids: Phonics, Grammar and Public Speaking | Tiny Steps Learning',
     description:
-      'Compare structured phonics, grammar, reading, sentence formation, communication, and public speaking pathways for children aged 3–12, then choose the right starting program.',
+      'Compare Tiny Steps Phonics, Grammar, and Public Speaking pathways for children aged 3–12 and choose the right starting course after a free assessment.',
     canonicalPath: '/courses',
     ogType: 'website',
   },
@@ -22,23 +22,23 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/phonics': {
-    title: 'Online Phonics Classes for Kids | Tiny Steps Learning',
+    title: 'Online Phonics Classes for Kids in India | Tiny Steps Learning',
     description:
-      'Phonics reading starts with sound-letter links, blending, and decoding. See how children move from sounds to words and sentence reading.',
+      'Phonics classes for kids that build sound-letter links, blending, and decoding. Ideal for parents looking for online reading classes for kids in India.',
     canonicalPath: '/phonics',
     ogType: 'website',
   },
   '/grammar': {
-    title: 'Online Grammar and Writing Classes for Kids | Tiny Steps Learning',
+    title: 'Online Grammar Classes for Kids | Sentence Formation and Writing',
     description:
-      'Grammar lessons build sentence control, punctuation accuracy, and writing clarity. See how children progress from word types to clearer expression.',
+      'Online grammar classes for kids focused on sentence formation, grammar accuracy, and writing clarity through live guided practice.',
     canonicalPath: '/grammar',
     ogType: 'website',
   },
   '/speaking': {
-    title: 'Online Public Speaking Classes for Kids | Tiny Steps Learning',
+    title: 'Public Speaking Classes for Kids Online | Tiny Steps Learning',
     description:
-      'Speaking confidence grows through guided stages, from short responses to structured expression. Explore clarity, vocabulary, and presentation practice.',
+      'Public speaking classes for kids online that build communication skills, clarity, and confidence speaking through structured live practice.',
     canonicalPath: '/speaking',
     ogType: 'website',
   },
@@ -57,9 +57,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/pricing': {
-    title: 'Pricing & Plans | Tiny Steps Learning',
+    title: 'Premium 1:1 Online English Class Pricing | Tiny Steps Learning',
     description:
-      'Premium, transparent pricing for Tiny Steps Learning: a structured online English learning school for children aged 3–12 across phonics, grammar, reading, sentence formation, communication, and public speaking.',
+      'Clear premium pricing for Tiny Steps 1:1 online English classes. Compare packages for phonics, grammar, reading, sentence formation, communication, and public speaking.',
     canonicalPath: '/pricing',
     ogType: 'website',
   },
@@ -243,9 +243,9 @@ export const ROUTE_SEO_REGISTRY = {
       'summer camp for kids,online summer camp for kids,summer classes for kids online,phonics summer camp,grammar summer camp for kids,public speaking summer camp for kids,online summer camp india,english summer camp for kids',
   },
   '/summer-camps': {
-    title: 'Tiny Steps Summer Camp 2026 | 24 Live Classes for Kids | 27 Apr to 13 Jun',
+    title: 'Online Summer English Camp for Kids in India | Tiny Steps Summer Camp 2026',
     description:
-      'Join Tiny Steps Summer Camp 2026 for children in India. Summer Camp Season: 27 April to 13 June 2026. Each child joins one track-specific 24 live-class batch in 4 weeks. Choose Phonics Fast Track, Grammar Fast Track, or Speaking Fast Track, with Monday to Saturday batches, Sunday holiday, and limited start dates on 27 April, 4 May, 11 May and 18 May 2026.',
+      'Join Tiny Steps Summer Camp 2026 for children in India with focused tracks in phonics, grammar, and speaking. Includes 24 live classes in 4 weeks with limited start dates.',
     canonicalPath: '/summer-camps',
     robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
     ogType: 'website',
@@ -305,9 +305,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/best-online-phonics-classes-india': {
-    title: 'Best Online Phonics Classes in India | Tiny Steps Learning',
+    title: 'Best Online Phonics Classes in India: Parent Checklist (2026) | Tiny Steps',
     description:
-      'Compare online phonics classes in India with a clear parent checklist covering method, teacher quality, class format, pricing, and progress tracking.',
+      'Use this parent comparison checklist to evaluate online phonics classes in India by method, teacher quality, class format, pricing, and progress tracking.',
     canonicalPath: '/best-online-phonics-classes-india',
     ogType: 'website',
   },

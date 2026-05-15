@@ -70,6 +70,14 @@ import post_child_reads_words_but_does_not_understand_story from './posts/parent
 import post_engage_children_phonics_grammar_speaking_at_home from './posts/parent-tips/engage-children-phonics-grammar-speaking-at-home';
 import post_june_school_reopening_english_readiness_plan from './posts/parent-tips/june-school-reopening-english-readiness-plan';
 import post_phonics_grammar_speaking_connected_english_communication from './posts/parent-tips/phonics-grammar-speaking-connected-english-communication';
+import post_how_to_engage_kids_in_english_learning_at_home from './posts/parent-tips/how-to-engage-kids-in-english-learning-at-home';
+import post_june_school_readiness_english_revision_plan from './posts/parent-tips/june-school-readiness-english-revision-plan';
+import post_how_phonics_grammar_and_communication_work_together from './posts/parent-tips/how-phonics-grammar-and-communication-work-together';
+import post_why_child_knows_letter_sounds_but_cannot_read_words from './posts/parent-tips/why-child-knows-letter-sounds-but-cannot-read-words';
+import post_how_to_improve_sentence_formation_in_kids from './posts/parent-tips/how-to-improve-sentence-formation-in-kids';
+import post_why_child_answers_only_in_one_word from './posts/parent-tips/why-child-answers-only-in-one-word';
+import post_how_long_does_it_take_child_to_learn_phonics from './posts/parent-tips/how-long-does-it-take-child-to-learn-phonics';
+import post_best_age_to_start_phonics_classes_for_kids from './posts/parent-tips/best-age-to-start-phonics-classes-for-kids';
 import post_week_27_prevent_summer_slide_reading from './posts/phonics/week-27-prevent-summer-slide-reading';
 import custom_post_phonics_for_parents_guide from './posts/research/phonics-for-parents-guide';
 
@@ -145,6 +153,14 @@ const rawBlogPosts: BlogPost[] = [
   post_engage_children_phonics_grammar_speaking_at_home,
   post_june_school_reopening_english_readiness_plan,
   post_phonics_grammar_speaking_connected_english_communication,
+  post_how_to_engage_kids_in_english_learning_at_home,
+  post_june_school_readiness_english_revision_plan,
+  post_how_phonics_grammar_and_communication_work_together,
+  post_why_child_knows_letter_sounds_but_cannot_read_words,
+  post_how_to_improve_sentence_formation_in_kids,
+  post_why_child_answers_only_in_one_word,
+  post_how_long_does_it_take_child_to_learn_phonics,
+  post_best_age_to_start_phonics_classes_for_kids,
   post_week_27_prevent_summer_slide_reading,
 ];
 
