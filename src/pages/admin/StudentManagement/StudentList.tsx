@@ -1841,101 +1841,6 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     () => formatWeeklySlotSummary(weeklySlots),
     [weeklySlots],
   );
-  const selectedScheduleEnrollment = useMemo(() => {
-    if (!scheduleFor || !scheduleEnrollmentId) return null;
-    const enrollments = enrollmentsByStudent[scheduleFor.id] || [];
-    return enrollments.find((enrollment) => enrollment.id === scheduleEnrollmentId) || null;
-  }, [enrollmentsByStudent, scheduleEnrollmentId, scheduleFor]);
-  useEffect(() => {
-    let cancelled = false;
-    const run = async () => {
-      if (!selectedScheduleEnrollment?.id) {
-        setScheduleLiveStats(null);
-        return;
-      }
-      try {
-        const sessionsSnap = await getDocs(
-          query(collection(db, 'classSessions'), where('enrollmentId', '==', selectedScheduleEnrollment.id)),
-        );
-        const nowMs = Date.now();
-        let consumedCount = 0;
-        let activeFutureCount = 0;
-        let pausedFutureCount = 0;
-
-        sessionsSnap.docs.forEach((docSnap) => {
-          const row = docSnap.data() as Record<string, unknown>;
-          if (!doesSessionMatchEnrollmentSchedule(row, selectedScheduleEnrollment as unknown as Record<string, unknown>)) {
-            return;
-          }
-          if (isScheduleExceptionSessionDoc(row)) return;
-
-          const status = normalizeSessionStatus(row.status);
-          const startMs = resolveSessionStartMsForStats(row);
-          const isFuture = startMs !== null && startMs > nowMs;
-
-          if (CONSUMED_SESSION_STATUSES.has(status)) {
-            consumedCount += 1;
-            return;
-          }
-          if (isFuture && status === 'paused') {
-            pausedFutureCount += 1;
-            return;
-          }
-          if (isFuture && ACTIVE_FUTURE_SESSION_STATUSES.has(status)) {
-            activeFutureCount += 1;
-          }
-        });
-
-        if (!cancelled) {
-          setScheduleLiveStats({ consumedCount, activeFutureCount, pausedFutureCount });
-        }
-      } catch (error) {
-        if (!cancelled) {
-          console.error('schedule live stats fetch error', error);
-          setScheduleLiveStats(null);
-        }
-      }
-    };
-    void run();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedScheduleEnrollment]);
-  const plannedTargetForDisplay = Math.max(
-    0,
-    safeNumber(
-      selectedScheduleEnrollment?.scheduleProgress?.plannedSessionsTarget ??
-      selectedScheduleEnrollment?.schedule?.plannedSessions ??
-      plannedSessions,
-      0,
-    ),
-  );
-  const plannedConsumedForDisplay = Math.max(
-    0,
-    safeNumber(
-      scheduleLiveStats?.consumedCount ??
-      selectedScheduleEnrollment?.scheduleProgress?.consumedCount,
-      0,
-    ),
-  );
-  const plannedRemainingForDisplay = plannedTargetForDisplay > 0 ?
-    Math.max(0, plannedTargetForDisplay - plannedConsumedForDisplay) :
-    0;
-  const activePauseCountForDisplay = Math.max(
-    0,
-    safeNumber(selectedScheduleEnrollment?.schedulePause?.remainingCount, 0),
-  );
-  const hasActivePauseForDisplay =
-    Boolean(selectedScheduleEnrollment?.schedulePause?.active) && activePauseCountForDisplay > 0;
-  const pausedFutureForDisplay = Math.max(
-    0,
-    safeNumber(
-      scheduleLiveStats?.pausedFutureCount ??
-      selectedScheduleEnrollment?.scheduleProgress?.pausedFutureCount,
-      0,
-    ),
-  );
-  const hasResumablePauseForDisplay = hasActivePauseForDisplay || pausedFutureForDisplay > 0;
   const plannedCoveragePreview = useMemo(
     () =>
       estimatePlannedCoverage({
@@ -2319,6 +2224,104 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     });
     return map;
   }, [enrollmentsQuery.data]);
+
+  const selectedScheduleEnrollment = useMemo(() => {
+    if (!scheduleFor || !scheduleEnrollmentId) return null;
+    const enrollments = enrollmentsByStudent[scheduleFor.id] || [];
+    return enrollments.find((enrollment) => enrollment.id === scheduleEnrollmentId) || null;
+  }, [enrollmentsByStudent, scheduleEnrollmentId, scheduleFor]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!selectedScheduleEnrollment?.id) {
+        setScheduleLiveStats(null);
+        return;
+      }
+      try {
+        const sessionsSnap = await getDocs(
+          query(collection(db, 'classSessions'), where('enrollmentId', '==', selectedScheduleEnrollment.id)),
+        );
+        const nowMs = Date.now();
+        let consumedCount = 0;
+        let activeFutureCount = 0;
+        let pausedFutureCount = 0;
+
+        sessionsSnap.docs.forEach((docSnap) => {
+          const row = docSnap.data() as Record<string, unknown>;
+          if (!doesSessionMatchEnrollmentSchedule(row, selectedScheduleEnrollment as unknown as Record<string, unknown>)) {
+            return;
+          }
+          if (isScheduleExceptionSessionDoc(row)) return;
+
+          const status = normalizeSessionStatus(row.status);
+          const startMs = resolveSessionStartMsForStats(row);
+          const isFuture = startMs !== null && startMs > nowMs;
+
+          if (CONSUMED_SESSION_STATUSES.has(status)) {
+            consumedCount += 1;
+            return;
+          }
+          if (isFuture && status === 'paused') {
+            pausedFutureCount += 1;
+            return;
+          }
+          if (isFuture && ACTIVE_FUTURE_SESSION_STATUSES.has(status)) {
+            activeFutureCount += 1;
+          }
+        });
+
+        if (!cancelled) {
+          setScheduleLiveStats({ consumedCount, activeFutureCount, pausedFutureCount });
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('schedule live stats fetch error', error);
+          setScheduleLiveStats(null);
+        }
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedScheduleEnrollment]);
+
+  const plannedTargetForDisplay = Math.max(
+    0,
+    safeNumber(
+      selectedScheduleEnrollment?.scheduleProgress?.plannedSessionsTarget ??
+      selectedScheduleEnrollment?.schedule?.plannedSessions ??
+      plannedSessions,
+      0,
+    ),
+  );
+  const plannedConsumedForDisplay = Math.max(
+    0,
+    safeNumber(
+      scheduleLiveStats?.consumedCount ??
+      selectedScheduleEnrollment?.scheduleProgress?.consumedCount,
+      0,
+    ),
+  );
+  const plannedRemainingForDisplay = plannedTargetForDisplay > 0 ?
+    Math.max(0, plannedTargetForDisplay - plannedConsumedForDisplay) :
+    0;
+  const activePauseCountForDisplay = Math.max(
+    0,
+    safeNumber(selectedScheduleEnrollment?.schedulePause?.remainingCount, 0),
+  );
+  const hasActivePauseForDisplay =
+    Boolean(selectedScheduleEnrollment?.schedulePause?.active) && activePauseCountForDisplay > 0;
+  const pausedFutureForDisplay = Math.max(
+    0,
+    safeNumber(
+      scheduleLiveStats?.pausedFutureCount ??
+      selectedScheduleEnrollment?.scheduleProgress?.pausedFutureCount,
+      0,
+    ),
+  );
+  const hasResumablePauseForDisplay = hasActivePauseForDisplay || pausedFutureForDisplay > 0;
 
   const studentById = useMemo(() => {
     const map = new Map<string, Student>();
