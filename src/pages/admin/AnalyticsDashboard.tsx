@@ -249,7 +249,7 @@ export default function AnalyticsDashboard(): JSX.Element {
       (snap) =>
         setCharges(
           snap.docs
-            .map((d) => ({ id: d.id, ...d.data() }))
+            .map((d) => ({ id: d.id, ...(d.data() as any) }))
             .filter((charge) => charge.archived !== true)
         ),
       (err) => setFsError(err?.message || 'Some analytics data could not be loaded.')
@@ -259,7 +259,7 @@ export default function AnalyticsDashboard(): JSX.Element {
       (snap) =>
         setPayments(
           snap.docs
-            .map((d) => ({ id: d.id, ...d.data() }))
+            .map((d) => ({ id: d.id, ...(d.data() as any) }))
             .filter((payment) => payment.archived !== true)
         ),
       (err) => setFsError(err?.message || 'Some analytics data could not be loaded.')
@@ -269,7 +269,7 @@ export default function AnalyticsDashboard(): JSX.Element {
       (snap) =>
         setTeacherEarningsEntries(
           snap.docs
-            .map((d) => ({ id: d.id, ...d.data() }))
+            .map((d) => ({ id: d.id, ...(d.data() as any) }))
             .filter((entry) => entry.archived !== true)
         ),
       (err) => setFsError(err?.message || 'Some analytics data could not be loaded.')
