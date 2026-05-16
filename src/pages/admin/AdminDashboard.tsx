@@ -1,5 +1,5 @@
 // src/pages/admin/AdminDashboard.tsx
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, startTransition, useState, useEffect } from 'react';
 import { Tabs, TabsContent } from '@components/ui/tabs';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
@@ -556,12 +556,20 @@ export default function AdminDashboard() {
   }, [location.pathname, location.search, navigate]);
 
   const handleLeadsWorkspaceViewChange = (nextView: LeadsWorkspaceView) => {
-    setLeadsWorkspaceView(nextView);
-    const params = new URLSearchParams(location.search);
-    params.set('tab', 'leads');
-    if (nextView === 'demos') params.set('leadView', 'demos');
-    else params.delete('leadView');
-    navigate(`/surya?${params.toString()}`, { replace: true });
+    startTransition(() => {
+      setLeadsWorkspaceView(nextView);
+      const params = new URLSearchParams(location.search);
+      params.set('tab', 'leads');
+      if (nextView === 'demos') params.set('leadView', 'demos');
+      else params.delete('leadView');
+      navigate(`/surya?${params.toString()}`, { replace: true });
+    });
+  };
+
+  const handleTabChange = (nextTab: string) => {
+    startTransition(() => {
+      setSelectedTab(nextTab);
+    });
   };
 
   const { data: stats, isLoading: statsLoading, error: statsError } = useAdminStats(canViewAdmin);
@@ -582,7 +590,7 @@ export default function AdminDashboard() {
           </DialogHeader>
           <Sidebar
             selectedTab={selectedTab}
-            onTabChange={setSelectedTab}
+            onTabChange={handleTabChange}
             onNavigate={() => setMobileMenuOpen(false)}
             className="w-full h-full overflow-y-auto"
           />
@@ -592,7 +600,7 @@ export default function AdminDashboard() {
       <div className="flex flex-1 min-w-0 min-h-0 pb-24 lg:pb-0">
         <Sidebar
           selectedTab={selectedTab}
-          onTabChange={setSelectedTab}
+          onTabChange={handleTabChange}
           className="hidden h-[calc(100vh-57px)] overflow-y-auto lg:sticky lg:top-[57px] lg:block"
         />
 
@@ -628,13 +636,15 @@ export default function AdminDashboard() {
             </Card>
           )}
 
-          <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+          <Tabs value={selectedTab} onValueChange={handleTabChange}>
             <TabsContent value="users" className="mt-0">
               <UserManagement />
             </TabsContent>
 
             <TabsContent value="students" className="mt-0">
-              <StudentManagementTab />
+              <Suspense fallback={<div className="p-4 text-sm text-slate-500">Loading students...</div>}>
+                <StudentManagementTab />
+              </Suspense>
             </TabsContent>
 
             <TabsContent value="leads" className="mt-0">
@@ -735,8 +745,10 @@ export default function AdminDashboard() {
         items={ADMIN_MOBILE_TABS}
         activeId={selectedTab}
         onSelect={(nextTab) => {
-          setSelectedTab(nextTab);
-          navigate(`/surya?tab=${nextTab}`, { replace: true });
+          startTransition(() => {
+            setSelectedTab(nextTab);
+            navigate(`/surya?tab=${nextTab}`, { replace: true });
+          });
         }}
       />
     </div>

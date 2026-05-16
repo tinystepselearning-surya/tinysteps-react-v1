@@ -1286,10 +1286,14 @@ export default function TodaysNotifications() {
         const hasValidDate = isYmdDateKey(sessionDateKey);
         const hasValidTime = classTime !== 'Time TBD';
         const hasStatus = Boolean(statusLabel);
+        const normalizedSessionStatus = normalizeStatusLike(statusLabel);
         const hasTeacherIdentity = Boolean(teacherRef && teacherUserResolved && resolvedTeacherName);
         const hasParentIdentity = Boolean(parentRef && parentUserResolved && resolvedParentName);
 
         if (!hasValidDate || !hasValidTime || !hasStatus) {
+          return null;
+        }
+        if (normalizedSessionStatus === 'paused') {
           return null;
         }
         if (!enrollmentRef || !isEnrollmentOperationallyActive(enrollment)) {

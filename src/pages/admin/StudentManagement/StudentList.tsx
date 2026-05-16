@@ -17,6 +17,7 @@ import {
 } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../../../lib/firebaseConfig';
+import { doesSessionMatchEnrollmentSchedule } from '../../../lib/sessionScheduleIntegrity';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
@@ -1299,6 +1300,21 @@ type EnrollmentLite = {
     plannedSessions?: number;
     endDateYmd?: string;
   };
+  scheduleProgress?: {
+    plannedSessionsTarget?: number | null;
+    consumedCount?: number;
+    activeFutureCount?: number;
+    pausedFutureCount?: number;
+    remainingCount?: number;
+    plannedCompleted?: boolean;
+    completionMessage?: string | null;
+  };
+  schedulePause?: {
+    active?: boolean;
+    batchId?: string | null;
+    requestedCount?: number;
+    remainingCount?: number;
+  };
   startDate?: any; // Timestamp
   startDateYmd?: string;
   classesStartDate?: any; // Timestamp
@@ -1532,6 +1548,41 @@ function dateLikeToYmd(value: any): string | null {
   return null;
 }
 
+const SCHEDULE_EXCEPTION_SOURCE_TOKENS = ['ad_hoc', 'adhoc', 'makeup', 'reschedule', 'manual_one_off', 'approved_request', 'one_off'];
+const CONSUMED_SESSION_STATUSES = new Set(['completed', 'consumed', 'settled', 'paid']);
+const ACTIVE_FUTURE_SESSION_STATUSES = new Set(['scheduled', 'upcoming', 'planned', 'open', 'in_progress']);
+
+function normalizeSessionStatus(value: unknown): string {
+  const raw = String(value || '').trim().toLowerCase();
+  if (raw === 'canceled') return 'cancelled';
+  if (!raw) return 'scheduled';
+  return raw;
+}
+
+function isScheduleExceptionSessionDoc(sessionLike: Record<string, unknown>): boolean {
+  if (sessionLike.isAdHoc === true || sessionLike.isMakeup === true) return true;
+  if (sessionLike.makeupCreditId || sessionLike.makeupForSessionId) return true;
+  const adHocType = String(sessionLike.adHocType || '').trim().toLowerCase();
+  if (adHocType && (adHocType.includes('one_off') || adHocType.includes('adhoc') || adHocType.includes('ad_hoc'))) {
+    return true;
+  }
+  const source = String(sessionLike.source || '').trim().toLowerCase();
+  return SCHEDULE_EXCEPTION_SOURCE_TOKENS.some((token) => source.includes(token));
+}
+
+function resolveSessionStartMsForStats(sessionLike: Record<string, unknown>): number | null {
+  const fromStartAt = dateLikeToDate(sessionLike.startAt);
+  if (fromStartAt) return fromStartAt.getTime();
+  const dateKey = String(sessionLike.date || '').trim();
+  const timeKey = String(sessionLike.startTime || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return null;
+  const iso = /^\d{2}:\d{2}$/.test(timeKey)
+    ? `${dateKey}T${timeKey}:00+05:30`
+    : `${dateKey}T00:00:00+05:30`;
+  const parsed = Date.parse(iso);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
 function parseYmdToUtcDate(ymd: string): Date | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ymd || '').trim());
   if (!match) return null;
@@ -1720,6 +1771,14 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const [endDate, setEndDate] = useState<string>(''); // optional
   const [meetingLink, setMeetingLink] = useState<string>(''); // optional (Zoom/Meet)
   const [savingSchedule, setSavingSchedule] = useState<boolean>(false);
+  const [pauseUpcomingCount, setPauseUpcomingCount] = useState<number>(1);
+  const [pausingSchedule, setPausingSchedule] = useState<boolean>(false);
+  const [resumingSchedule, setResumingSchedule] = useState<boolean>(false);
+  const [scheduleLiveStats, setScheduleLiveStats] = useState<{
+    consumedCount: number;
+    activeFutureCount: number;
+    pausedFutureCount: number;
+  } | null>(null);
   const [adHocFor, setAdHocFor] = useState<Student | null>(null);
   const [adHocEnrollmentId, setAdHocEnrollmentId] = useState<string>('');
   const [adHocDate, setAdHocDate] = useState<string>(toISODate(new Date()));
@@ -1782,6 +1841,101 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     () => formatWeeklySlotSummary(weeklySlots),
     [weeklySlots],
   );
+  const selectedScheduleEnrollment = useMemo(() => {
+    if (!scheduleFor || !scheduleEnrollmentId) return null;
+    const enrollments = enrollmentsByStudent[scheduleFor.id] || [];
+    return enrollments.find((enrollment) => enrollment.id === scheduleEnrollmentId) || null;
+  }, [enrollmentsByStudent, scheduleEnrollmentId, scheduleFor]);
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!selectedScheduleEnrollment?.id) {
+        setScheduleLiveStats(null);
+        return;
+      }
+      try {
+        const sessionsSnap = await getDocs(
+          query(collection(db, 'classSessions'), where('enrollmentId', '==', selectedScheduleEnrollment.id)),
+        );
+        const nowMs = Date.now();
+        let consumedCount = 0;
+        let activeFutureCount = 0;
+        let pausedFutureCount = 0;
+
+        sessionsSnap.docs.forEach((docSnap) => {
+          const row = docSnap.data() as Record<string, unknown>;
+          if (!doesSessionMatchEnrollmentSchedule(row, selectedScheduleEnrollment as unknown as Record<string, unknown>)) {
+            return;
+          }
+          if (isScheduleExceptionSessionDoc(row)) return;
+
+          const status = normalizeSessionStatus(row.status);
+          const startMs = resolveSessionStartMsForStats(row);
+          const isFuture = startMs !== null && startMs > nowMs;
+
+          if (CONSUMED_SESSION_STATUSES.has(status)) {
+            consumedCount += 1;
+            return;
+          }
+          if (isFuture && status === 'paused') {
+            pausedFutureCount += 1;
+            return;
+          }
+          if (isFuture && ACTIVE_FUTURE_SESSION_STATUSES.has(status)) {
+            activeFutureCount += 1;
+          }
+        });
+
+        if (!cancelled) {
+          setScheduleLiveStats({ consumedCount, activeFutureCount, pausedFutureCount });
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('schedule live stats fetch error', error);
+          setScheduleLiveStats(null);
+        }
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedScheduleEnrollment]);
+  const plannedTargetForDisplay = Math.max(
+    0,
+    safeNumber(
+      selectedScheduleEnrollment?.scheduleProgress?.plannedSessionsTarget ??
+      selectedScheduleEnrollment?.schedule?.plannedSessions ??
+      plannedSessions,
+      0,
+    ),
+  );
+  const plannedConsumedForDisplay = Math.max(
+    0,
+    safeNumber(
+      scheduleLiveStats?.consumedCount ??
+      selectedScheduleEnrollment?.scheduleProgress?.consumedCount,
+      0,
+    ),
+  );
+  const plannedRemainingForDisplay = plannedTargetForDisplay > 0 ?
+    Math.max(0, plannedTargetForDisplay - plannedConsumedForDisplay) :
+    0;
+  const activePauseCountForDisplay = Math.max(
+    0,
+    safeNumber(selectedScheduleEnrollment?.schedulePause?.remainingCount, 0),
+  );
+  const hasActivePauseForDisplay =
+    Boolean(selectedScheduleEnrollment?.schedulePause?.active) && activePauseCountForDisplay > 0;
+  const pausedFutureForDisplay = Math.max(
+    0,
+    safeNumber(
+      scheduleLiveStats?.pausedFutureCount ??
+      selectedScheduleEnrollment?.scheduleProgress?.pausedFutureCount,
+      0,
+    ),
+  );
+  const hasResumablePauseForDisplay = hasActivePauseForDisplay || pausedFutureForDisplay > 0;
   const plannedCoveragePreview = useMemo(
     () =>
       estimatePlannedCoverage({
@@ -2212,6 +2366,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     setScheduleEnrollmentId(first.id);
     setGenerateWeeks(8);
     setEndDate('');
+    setPauseUpcomingCount(1);
     applyScheduleFormFromEnrollment(first);
   }
 
@@ -2349,6 +2504,10 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
           replaced?: number;
           plannedSessionsTarget?: number | null;
           plannedSessionsGenerated?: number;
+          plannedSessionsConsumed?: number;
+          plannedSessionsActiveFuture?: number;
+          plannedSessionsPausedFuture?: number;
+          plannedSessionsRemaining?: number;
           plannedSessionsUnfilled?: number;
           plannedSessionsCapReached?: boolean;
           rangeStart: string;
@@ -2374,7 +2533,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         currency: 'INR',
         weeklySlots: slotsToSave,
         weeksAhead: weeks,
-        ...(planned > 0 ? { plannedSessions: planned } : {}),
+        plannedSessions: planned,
         ...(endDate ? { endDate } : {}),
         idempotencyKey,
       });
@@ -2384,26 +2543,40 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         skipped,
         replaced,
         plannedSessionsTarget,
-        plannedSessionsGenerated,
-        plannedSessionsUnfilled,
+        plannedSessionsConsumed,
+        plannedSessionsActiveFuture,
+        plannedSessionsPausedFuture,
+        plannedSessionsRemaining,
         plannedSessionsCapReached,
         idempotentReplay,
       } = result.data;
       const plannedSummary =
-        plannedSessionsTarget && plannedSessionsGenerated !== undefined
-          ? ` · ${plannedSessionsGenerated} of ${plannedSessionsTarget} planned classes generated`
+        plannedSessionsTarget && plannedSessionsConsumed !== undefined
+          ? ` · ${plannedSessionsConsumed} of ${plannedSessionsTarget} planned classes completed`
+          : '';
+      const remainingSummary =
+        plannedSessionsTarget && plannedSessionsRemaining !== undefined
+          ? ` · ${plannedSessionsRemaining} remaining`
+          : '';
+      const futureSummary =
+        plannedSessionsActiveFuture !== undefined
+          ? ` · ${plannedSessionsActiveFuture} active future scheduled`
+          : '';
+      const pausedSummary =
+        plannedSessionsPausedFuture && plannedSessionsPausedFuture > 0
+          ? ` · ${plannedSessionsPausedFuture} paused future session${plannedSessionsPausedFuture === 1 ? '' : 's'}`
           : '';
       const capReachedSummary =
-        plannedSessionsTarget && (plannedSessionsCapReached || plannedSessionsUnfilled === 0)
+        plannedSessionsTarget && plannedSessionsCapReached
           ? ' · Planned class limit reached. Increase planned classes to continue future scheduling.'
           : '';
       const replaySummary = idempotentReplay ? ' · replayed prior success' : '';
       const additionalSummary =
-        plannedSessionsTarget && created > 0
+        plannedSessionsTarget && created > 0 && !plannedSessionsCapReached
           ? ` · ${created} additional future session${created === 1 ? '' : 's'} created`
           : '';
       const noNewBecauseCapSummary =
-        plannedSessionsTarget && created === 0 && (plannedSessionsCapReached || plannedSessionsUnfilled === 0)
+        plannedSessionsTarget && created === 0 && plannedSessionsCapReached
           ? ' · No new sessions created because the planned class limit is already reached.'
           : '';
 
@@ -2411,8 +2584,8 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         title: 'Schedule saved',
         description:
           typeof replaced === 'number'
-            ? `✅ Updated schedule: replaced ${replaced}, created ${created}, skipped ${skipped}${plannedSummary}${additionalSummary}${noNewBecauseCapSummary}${capReachedSummary}${replaySummary}`
-            : `✅ Created ${created} sessions (${skipped} already existed)${plannedSummary}${additionalSummary}${noNewBecauseCapSummary}${capReachedSummary}${replaySummary}`,
+            ? `✅ Updated schedule: replaced ${replaced}, created ${created}, skipped ${skipped}${plannedSummary}${remainingSummary}${futureSummary}${pausedSummary}${additionalSummary}${noNewBecauseCapSummary}${capReachedSummary}${replaySummary}`
+            : `✅ Created ${created} sessions (${skipped} already existed)${plannedSummary}${remainingSummary}${futureSummary}${pausedSummary}${additionalSummary}${noNewBecauseCapSummary}${capReachedSummary}${replaySummary}`,
       });
 
       setScheduleFor(null);
@@ -2439,6 +2612,97 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       });
     } finally {
       setSavingSchedule(false);
+    }
+  }
+
+  async function handlePauseUpcomingSchedule() {
+    if (!scheduleFor || !scheduleEnrollmentId) return;
+    setPausingSchedule(true);
+    try {
+      const functions = getFunctions(undefined, 'asia-south1');
+      const pauseEnrollmentUpcomingSessions = httpsCallable<
+        { enrollmentId: string; count: number },
+        {
+          pausedCount: number;
+          plannedSessionsTarget?: number | null;
+          plannedSessionsConsumed?: number;
+          plannedSessionsRemaining?: number;
+          plannedSessionsCapReached?: boolean;
+        }
+      >(functions, 'pauseEnrollmentUpcomingSessions');
+      const result = await pauseEnrollmentUpcomingSessions({
+        enrollmentId: scheduleEnrollmentId,
+        count: pauseUpcomingCount,
+      });
+      const pausedCount = safeNumber(result.data?.pausedCount, 0);
+      const plannedTarget = safeNumber(result.data?.plannedSessionsTarget, 0);
+      const consumedCount = safeNumber(result.data?.plannedSessionsConsumed, 0);
+      const remainingCount = safeNumber(result.data?.plannedSessionsRemaining, 0);
+      const capReached = Boolean(result.data?.plannedSessionsCapReached);
+      toast({
+        title: 'Classes paused',
+        description:
+          `Paused ${pausedCount} upcoming regular session${pausedCount === 1 ? '' : 's'}.` +
+          (plannedTarget > 0 ?
+            ` ${consumedCount} of ${plannedTarget} planned classes completed. ${remainingCount} remaining.` :
+            '') +
+          (capReached ? ' Planned class limit reached.' : ''),
+      });
+      enrollmentsQuery.refetch();
+    } catch (err: any) {
+      console.error('Error pausing upcoming schedule:', err);
+      toast({
+        title: 'Error',
+        description: err?.message || 'Failed to pause upcoming classes.',
+        variant: 'destructive',
+      });
+    } finally {
+      setPausingSchedule(false);
+    }
+  }
+
+  async function handleResumeSchedule() {
+    if (!scheduleFor || !scheduleEnrollmentId) return;
+    setResumingSchedule(true);
+    try {
+      const functions = getFunctions(undefined, 'asia-south1');
+      const resumeEnrollmentSchedule = httpsCallable<
+        { enrollmentId: string },
+        {
+          resumedCount: number;
+          plannedSessionsTarget?: number | null;
+          plannedSessionsConsumed?: number;
+          plannedSessionsRemaining?: number;
+          plannedSessionsCapReached?: boolean;
+        }
+      >(functions, 'resumeEnrollmentSchedule');
+      const result = await resumeEnrollmentSchedule({
+        enrollmentId: scheduleEnrollmentId,
+      });
+      const resumedCount = safeNumber(result.data?.resumedCount, 0);
+      const plannedTarget = safeNumber(result.data?.plannedSessionsTarget, 0);
+      const consumedCount = safeNumber(result.data?.plannedSessionsConsumed, 0);
+      const remainingCount = safeNumber(result.data?.plannedSessionsRemaining, 0);
+      const capReached = Boolean(result.data?.plannedSessionsCapReached);
+      toast({
+        title: 'Schedule resumed',
+        description:
+          `Resumed ${resumedCount} paused future session${resumedCount === 1 ? '' : 's'}.` +
+          (plannedTarget > 0 ?
+            ` ${consumedCount} of ${plannedTarget} planned classes completed. ${remainingCount} remaining.` :
+            '') +
+          (capReached ? ' Planned class limit reached.' : ''),
+      });
+      enrollmentsQuery.refetch();
+    } catch (err: any) {
+      console.error('Error resuming schedule:', err);
+      toast({
+        title: 'Error',
+        description: err?.message || 'Failed to resume schedule.',
+        variant: 'destructive',
+      });
+    } finally {
+      setResumingSchedule(false);
     }
   }
 
@@ -3672,7 +3936,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                     onChange={(e) => setGenerateWeeks(safeNumber(e.target.value, 8))}
                   />
                   <div className="text-xs text-gray-500 mt-1">
-                    We will create future sessions in Firestore → sessions.
+                    Lookahead window for future recurring sessions. Planned classes and end date still control completion.
                   </div>
                 </div>
 
@@ -3687,12 +3951,74 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                     placeholder="e.g., 28"
                   />
                   <div className="text-xs text-gray-500 mt-1">
-                    If set, schedule creation stops after this many class slots.
+                    If set, this is the total number of regular classes to be completed for this enrollment.
                   </div>
                   {plannedCoveragePreview?.capStopsAtYmd ? (
                     <div className="text-xs text-amber-700 mt-1">
-                      Planned cap will be exhausted on {formatYmdForAdminDisplay(plannedCoveragePreview.capStopsAtYmd)}.
-                      Sessions after this date will not be generated unless you increase planned classes.
+                      At current weekly cadence, planned classes may be completed around {formatYmdForAdminDisplay(plannedCoveragePreview.capStopsAtYmd)} if classes run without pauses/reschedules.
+                    </div>
+                  ) : null}
+                  {plannedTargetForDisplay > 0 ? (
+                    <div className="text-xs text-gray-700 mt-1">
+                      {plannedConsumedForDisplay} of {plannedTargetForDisplay} planned classes completed. {plannedRemainingForDisplay} remaining.
+                    </div>
+                  ) : null}
+                  {plannedTargetForDisplay > 0 && plannedRemainingForDisplay <= 0 ? (
+                    <div className="text-xs text-amber-700 mt-1">
+                      Planned classes completed. Increase planned classes to continue scheduling.
+                    </div>
+                  ) : null}
+                  {typeof selectedScheduleEnrollment?.scheduleProgress?.completionMessage === 'string' &&
+                  selectedScheduleEnrollment.scheduleProgress.completionMessage.trim() ? (
+                    <div className="text-xs text-amber-700 mt-1">
+                      {selectedScheduleEnrollment.scheduleProgress.completionMessage.trim()}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div>
+                  <div className="text-sm font-medium mb-1">Pause upcoming classes</div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Select
+                      value={String(pauseUpcomingCount)}
+                      onValueChange={(value) => setPauseUpcomingCount(safeNumber(value, 1))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Count" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[1, 2, 3, 5, 10].map((option) => (
+                          <SelectItem key={option} value={String(option)}>
+                            {option} session{option === 1 ? '' : 's'}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={pausingSchedule || resumingSchedule || !scheduleEnrollmentId}
+                      onClick={handlePauseUpcomingSchedule}
+                    >
+                      {pausingSchedule ? 'Pausing...' : 'Pause'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={pausingSchedule || resumingSchedule || !scheduleEnrollmentId || !hasResumablePauseForDisplay}
+                      onClick={handleResumeSchedule}
+                    >
+                      {resumingSchedule ? 'Resuming...' : 'Resume'}
+                    </Button>
+                  </div>
+                  {hasActivePauseForDisplay ? (
+                    <div className="text-xs text-amber-700 mt-1">
+                      Classes are paused for the next {activePauseCountForDisplay} scheduled session{activePauseCountForDisplay === 1 ? '' : 's'}.
+                    </div>
+                  ) : null}
+                  {!hasActivePauseForDisplay && pausedFutureForDisplay > 0 ? (
+                    <div className="text-xs text-amber-700 mt-1">
+                      {pausedFutureForDisplay} future paused session{pausedFutureForDisplay === 1 ? '' : 's'} can be resumed.
                     </div>
                   ) : null}
                 </div>

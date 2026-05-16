@@ -408,6 +408,8 @@ export const useTeacherSessions = (
         ),
       );
       const canonicalOnly = filtered.filter((session) => {
+        const status = toCleanText((session as any)?.status).toLowerCase();
+        if (status === 'paused') return false;
         const enrollmentId = toCleanText((session as any)?.enrollmentId);
         if (!enrollmentId) return false;
         const enrollment = enrollmentMap.get(enrollmentId);

@@ -57,7 +57,11 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
     });
   };
 
-  const handleAttendanceSubmit = async (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: string; topics?: string[] }>; sessionNotes: string }) => {
+  const handleAttendanceSubmit = async (data: {
+    attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: string; topics?: string[] }>;
+    sessionNotes: string;
+    meta?: { attendanceOnly?: boolean };
+  }) => {
     if (!selectedSession) return;
     try {
       const functions = getFunctions(undefined, 'asia-south1');
@@ -66,7 +70,7 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
         sessionId: selectedSession.id,
         attendance: data.attendance,
         sessionNotes: data.sessionNotes,
-        meta: { attendanceOnly: false },
+        meta: { attendanceOnly: data.meta?.attendanceOnly === true },
       });
       const hasPresentOrLate = response?.data?.hasPresentOrLate === true;
       if (hasPresentOrLate) {
@@ -76,7 +80,7 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
         });
         toast({ title: 'Attendance saved', description: 'Attendance recorded and session completed.' });
       } else {
-        toast({ title: 'Attendance saved', description: 'Attendance and curriculum completion recorded.' });
+        toast({ title: 'Attendance saved', description: 'Attendance recorded.' });
       }
     } catch (err) {
       console.error(err);
@@ -344,6 +348,7 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
         session={selectedSession}
         onClose={() => setSelectedSession(null)}
         onSubmit={handleAttendanceSubmit}
+        attendanceOnly
       />
     </div>
   );

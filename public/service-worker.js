@@ -43,10 +43,15 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(event.request)
         .then((networkResponse) => {
-          // Cache ONLY the app shell for offline fallback (avoid caching /courses, /pricing separately)
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put("/index.html", networkResponse.clone());
-          });
+          if (networkResponse && networkResponse.ok) {
+            const responseForCache = networkResponse.clone();
+            event.waitUntil(
+              caches
+                .open(CACHE_NAME)
+                .then((cache) => cache.put("/index.html", responseForCache))
+                .catch(() => undefined)
+            );
+          }
           return networkResponse;
         })
         .catch(() =>
@@ -63,9 +68,15 @@ self.addEventListener("fetch", (event) => {
 
       return fetch(event.request)
         .then((networkResponse) => {
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, networkResponse.clone());
-          });
+          if (networkResponse && networkResponse.ok) {
+            const responseForCache = networkResponse.clone();
+            event.waitUntil(
+              caches
+                .open(CACHE_NAME)
+                .then((cache) => cache.put(event.request, responseForCache))
+                .catch(() => undefined)
+            );
+          }
           return networkResponse;
         })
         .catch(() => caches.match("/offline.html"));

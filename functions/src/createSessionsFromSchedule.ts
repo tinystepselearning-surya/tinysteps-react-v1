@@ -14,6 +14,8 @@ const MAX_BATCH = 400; // Firestore limit is 500
 const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_HHMM_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const REPLACEABLE_SESSION_STATUSES = new Set(["", "scheduled", "upcoming", "planned", "open"]);
+const PAUSED_SESSION_STATUS = "paused";
+const ACTIVE_FUTURE_OPERATIONAL_STATUSES = new Set(["", "scheduled", "upcoming", "planned", "open", "in_progress"]);
 const NON_REPLACEABLE_SESSION_STATUSES = new Set([
   "completed",
   "in_progress",
@@ -28,6 +30,8 @@ const NON_REPLACEABLE_SESSION_STATUSES = new Set([
   "paid",
   "locked",
 ]);
+const CONSUMED_SESSION_STATUSES = new Set(["completed", "consumed", "settled", "paid"]);
+const NON_ACTIVE_ENROLLMENT_STATUSES = new Set(["completed", "discontinued", "expired", "cancelled", "archived", "inactive"]);
 const SCHEDULE_EXCEPTION_SOURCE_TOKENS = [
   "ad_hoc",
   "adhoc",
@@ -107,6 +111,10 @@ interface CreateSessionsResponse {
   replaced: number;
   plannedSessionsTarget: number | null;
   plannedSessionsGenerated: number;
+  plannedSessionsConsumed: number;
+  plannedSessionsActiveFuture: number;
+  plannedSessionsPausedFuture: number;
+  plannedSessionsRemaining: number;
   plannedSessionsUnfilled: number;
   plannedSessionsCapReached: boolean;
   rangeStart: string;
@@ -134,10 +142,36 @@ interface SaveEnrollmentScheduleAndGenerateResponse extends CreateSessionsRespon
   orchestrationState: "generated" | "replayed";
 }
 
+interface PauseEnrollmentUpcomingSessionsRequest {
+  enrollmentId: string;
+  count: number;
+}
+
+interface PauseEnrollmentUpcomingSessionsResponse extends CreateSessionsResponse {
+  pausedCount: number;
+  pauseBatchId: string;
+}
+
+interface ResumeEnrollmentScheduleRequest {
+  enrollmentId: string;
+}
+
+interface ResumeEnrollmentScheduleResponse extends CreateSessionsResponse {
+  resumedCount: number;
+}
+
 function normalizeIdempotencyKey(value: unknown): string {
   const raw = typeof value === "string" ? value.trim() : "";
   if (!raw) return "";
   return raw.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 120);
+}
+
+function toPauseCount(value: unknown): number {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  const parsed = Math.floor(n);
+  if (![1, 2, 3, 5, 10].includes(parsed)) return 0;
+  return parsed;
 }
 
 function isValidYmd(value: string): boolean {
@@ -266,6 +300,23 @@ function toDateMaybe(value: unknown): Date | null {
 
 function normalizeStatus(value: unknown): string {
   return String(value || "").trim().toLowerCase();
+}
+
+function normalizeEnrollmentStatus(value: unknown): string {
+  const raw = normalizeStatus(value);
+  if (!raw) return "active";
+  if (raw === "pending_teacher") return "trial";
+  if (raw === "pending_payment" || raw === "pending_lp") return "active";
+  if (raw === "enrolled" || raw === "current" || raw === "ongoing") return "active";
+  if (raw === "canceled") return "cancelled";
+  return raw;
+}
+
+function isEnrollmentOperationallyActive(enrollmentLike: Record<string, unknown>): boolean {
+  if (enrollmentLike.archivedAt || enrollmentLike.archived === true || enrollmentLike.isArchived === true) {
+    return false;
+  }
+  return !NON_ACTIVE_ENROLLMENT_STATUSES.has(normalizeEnrollmentStatus(enrollmentLike.status));
 }
 
 function resolveSessionStartMs(raw: Record<string, unknown>): number | null {
@@ -444,6 +495,129 @@ function resolveSessionSlotPattern(args: {
   return `${weekday}|${timeHHmm}|${durationMinutes}|${teacherIdRaw}`;
 }
 
+function resolvePrimarySessionKidId(raw: Record<string, unknown>): string | null {
+  const direct = String(raw.kidId || raw.studentId || "").trim();
+  if (direct) return direct;
+  if (Array.isArray(raw.kidIds) && raw.kidIds.length > 0) {
+    const first = String(raw.kidIds[0] || "").trim();
+    if (first) return first;
+  }
+  return null;
+}
+
+function resolveAttendanceStatus(raw: Record<string, unknown>, kidId: string | null): string | null {
+  if (!kidId) return null;
+  const attendanceRaw = raw.attendance;
+  if (!attendanceRaw || typeof attendanceRaw !== "object") return null;
+  const attendance = attendanceRaw as Record<string, unknown>;
+  const entry = attendance[kidId];
+  if (!entry) return null;
+  if (typeof entry === "string") return normalizeStatus(entry);
+  if (entry && typeof entry === "object") {
+    return normalizeStatus((entry as Record<string, unknown>).status);
+  }
+  return null;
+}
+
+function hasPresentOrLateAttendance(raw: Record<string, unknown>): boolean {
+  const kidId = resolvePrimarySessionKidId(raw);
+  const attendanceStatus = resolveAttendanceStatus(raw, kidId);
+  return attendanceStatus === "present" || attendanceStatus === "late";
+}
+
+function isRegularConsumedSession(raw: Record<string, unknown>, financial: SessionFinancialLinkState | undefined): boolean {
+  if (isScheduleExceptionSession(raw)) return false;
+  if (normalizeStatus(raw.status) === PAUSED_SESSION_STATUS) return false;
+  if (raw.revenueSuppressed === true) return false;
+  if (raw.revenueAccrued === true) return true;
+  if (hasFinancialLink(financial)) return true;
+  const status = normalizeStatus(raw.status);
+  if (!CONSUMED_SESSION_STATUSES.has(status)) return false;
+  if (status !== "completed") return true;
+  const attendanceRaw = raw.attendance;
+  if (!attendanceRaw || typeof attendanceRaw !== "object") return true;
+  return hasPresentOrLateAttendance(raw);
+}
+
+function isFutureOperationalRegularSession(args: {
+  raw: Record<string, unknown>;
+  nowMs: number;
+  configuredSlotPatterns: Set<string>;
+  fallbackTeacherId: string | null;
+}): boolean {
+  const { raw, nowMs, configuredSlotPatterns, fallbackTeacherId } = args;
+  if (isScheduleExceptionSession(raw)) return false;
+  const status = normalizeStatus(raw.status);
+  if (!ACTIVE_FUTURE_OPERATIONAL_STATUSES.has(status)) return false;
+  if (status === PAUSED_SESSION_STATUS) return false;
+  const startMs = resolveSessionStartMs(raw);
+  if (startMs === null || startMs <= nowMs) return false;
+  const slotPattern = resolveSessionSlotPattern({ raw, fallbackTeacherId });
+  if (!slotPattern || !configuredSlotPatterns.has(slotPattern)) return false;
+  return true;
+}
+
+function isFuturePausedRegularSession(args: {
+  raw: Record<string, unknown>;
+  nowMs: number;
+  configuredSlotPatterns: Set<string>;
+  fallbackTeacherId: string | null;
+}): boolean {
+  const { raw, nowMs, configuredSlotPatterns, fallbackTeacherId } = args;
+  if (isScheduleExceptionSession(raw)) return false;
+  const status = normalizeStatus(raw.status);
+  if (status !== PAUSED_SESSION_STATUS) return false;
+  const startMs = resolveSessionStartMs(raw);
+  if (startMs === null || startMs <= nowMs) return false;
+  const slotPattern = resolveSessionSlotPattern({ raw, fallbackTeacherId });
+  if (!slotPattern || !configuredSlotPatterns.has(slotPattern)) return false;
+  return true;
+}
+
+async function fetchFinancialStateBySessionId(
+  db: admin.firestore.Firestore,
+  sessionIds: string[],
+): Promise<Map<string, SessionFinancialLinkState>> {
+  const financialBySessionId = new Map<string, SessionFinancialLinkState>();
+  if (!sessionIds.length) return financialBySessionId;
+  for (let i = 0; i < sessionIds.length; i += MAX_BATCH) {
+    const idChunk = sessionIds.slice(i, i + MAX_BATCH);
+    const chargeRefs = idChunk.map((sessionId) => db.collection("billingCharges").doc(sessionId));
+    const earningRefs = idChunk.map((sessionId) => db.collection("teacherEarnings").doc(sessionId));
+    const [chargeSnaps, earningSnaps] = await Promise.all([
+      db.getAll(...chargeRefs),
+      db.getAll(...earningRefs),
+    ]);
+
+    chargeSnaps.forEach((chargeSnap, idx) => {
+      const sessionId = idChunk[idx];
+      const existing = financialBySessionId.get(sessionId) || defaultFinancialLinkState();
+      const chargeData = chargeSnap.data() || {};
+      const paidRaw = Number(chargeData.paidAmount);
+      financialBySessionId.set(sessionId, {
+        ...existing,
+        chargeExists: chargeSnap.exists,
+        chargeStatus: normalizeStatus(chargeData.status),
+        chargePaidAmount: Number.isFinite(paidRaw) && paidRaw > 0 ? paidRaw : 0,
+      });
+    });
+
+    earningSnaps.forEach((earningSnap, idx) => {
+      const sessionId = idChunk[idx];
+      const existing = financialBySessionId.get(sessionId) || defaultFinancialLinkState();
+      const earningData = earningSnap.data() || {};
+      const paidRaw = Number(earningData.paidAmount);
+      financialBySessionId.set(sessionId, {
+        ...existing,
+        earningExists: earningSnap.exists,
+        earningStatus: normalizeStatus(earningData.status),
+        earningPaidAmount: Number.isFinite(paidRaw) && paidRaw > 0 ? paidRaw : 0,
+      });
+    });
+  }
+  return financialBySessionId;
+}
+
 function isValidWeekday(value: unknown): value is number {
   return Number.isInteger(value) && Number(value) >= 0 && Number(value) <= 6;
 }
@@ -584,6 +758,9 @@ async function generateSessionsFromScheduleInternal(
   }
 
   const enrollment = enrollmentSnap.data() as EnrollmentDoc;
+  if (!isEnrollmentOperationallyActive(enrollment as unknown as Record<string, unknown>)) {
+    throw new HttpsError("failed-precondition", "Enrollment is not active");
+  }
   const schedule = enrollment.schedule;
   const weeklySlots = normalizeScheduleSlotsOrThrow(schedule);
   if (weeklySlots.length === 0 && !replaceFuture) {
@@ -623,8 +800,11 @@ async function generateSessionsFromScheduleInternal(
     }
     rangeEndDate = explicitEnd;
   } else {
+    const lookaheadDaysFromWeeks = weeksAhead * 7;
+    const lookaheadDaysForPlanned = plannedSessionsTarget ? 400 : lookaheadDaysFromWeeks;
+    const lookaheadDays = Math.max(lookaheadDaysFromWeeks, lookaheadDaysForPlanned);
     rangeEndDate = new Date(rangeStartDate.getTime());
-    rangeEndDate.setUTCDate(rangeEndDate.getUTCDate() + (weeksAhead * 7 - 1));
+    rangeEndDate.setUTCDate(rangeEndDate.getUTCDate() + (lookaheadDays - 1));
   }
 
   const rangeEndYmd = toYmdFromContextDate(rangeEndDate);
@@ -642,6 +822,11 @@ async function generateSessionsFromScheduleInternal(
   const existingSnap = await db.collection("classSessions")
     .where("enrollmentId", "==", enrollmentId)
     .get();
+  const nowMs = Date.now();
+  const financialBySessionId = await fetchFinancialStateBySessionId(
+    db,
+    existingSnap.docs.map((docSnap) => docSnap.id),
+  );
 
   const configuredSessionSignatures = new Set<string>();
   const configuredSlotPatterns = new Set<string>();
@@ -662,79 +847,20 @@ async function generateSessionsFromScheduleInternal(
       configuredSessionSignatures.add(`${ymd}|${slot.timeHHmm}|${slot.durationMinutes}|${teacherId || ""}`);
     }
   }
-  const cappedAllowedSessionSignatures = new Set<string>();
-  if (plannedSessionsTarget) {
-    let candidateCounter = 0;
-    for (
-      let d = new Date(rangeStartDate.getTime());
-      d.getTime() <= rangeEndDate.getTime();
-      d.setUTCDate(d.getUTCDate() + 1)
-    ) {
-      const dayOfWeek = d.getUTCDay();
-      const daySlots = slotsByWeekday.get(dayOfWeek);
-      if (!daySlots || daySlots.length === 0) continue;
-      const ymd = toYmdFromContextDate(d);
-      for (const slot of daySlots) {
-        candidateCounter += 1;
-        if (candidateCounter > plannedSessionsTarget) break;
-        cappedAllowedSessionSignatures.add(`${ymd}|${slot.timeHHmm}|${slot.durationMinutes}|${teacherId || ""}`);
-      }
-      if (candidateCounter >= plannedSessionsTarget) break;
-    }
-  }
-
   const sessionSignatureCounts = new Map<string, number>();
   for (const sessionDoc of existingSnap.docs) {
     const raw = sessionDoc.data() as Record<string, unknown>;
     const signature = resolveSessionSignature({raw, fallbackTeacherId: teacherId});
-    if (!signature) continue;
-    const [sessionYmd] = signature.split("|");
-    if (sessionYmd < rangeStartYmd || sessionYmd > rangeEndYmd) continue;
-    sessionSignatureCounts.set(signature, (sessionSignatureCounts.get(signature) || 0) + 1);
+    if (signature) {
+      const [sessionYmd] = signature.split("|");
+      if (sessionYmd >= rangeStartYmd && sessionYmd <= rangeEndYmd) {
+        sessionSignatureCounts.set(signature, (sessionSignatureCounts.get(signature) || 0) + 1);
+      }
+    }
   }
 
   let replaced = 0;
   if (replaceFuture) {
-    const nowMs = Date.now();
-    const financialBySessionId = new Map<string, SessionFinancialLinkState>();
-
-    const existingSessionIds = existingSnap.docs.map((docSnap) => docSnap.id);
-    for (let i = 0; i < existingSessionIds.length; i += MAX_BATCH) {
-      const idChunk = existingSessionIds.slice(i, i + MAX_BATCH);
-      const chargeRefs = idChunk.map((sessionId) => db.collection("billingCharges").doc(sessionId));
-      const earningRefs = idChunk.map((sessionId) => db.collection("teacherEarnings").doc(sessionId));
-      const [chargeSnaps, earningSnaps] = await Promise.all([
-        db.getAll(...chargeRefs),
-        db.getAll(...earningRefs),
-      ]);
-
-      chargeSnaps.forEach((chargeSnap, idx) => {
-        const sessionId = idChunk[idx];
-        const existing = financialBySessionId.get(sessionId) || defaultFinancialLinkState();
-        const chargeData = chargeSnap.data() || {};
-        const paidRaw = Number(chargeData.paidAmount);
-        financialBySessionId.set(sessionId, {
-          ...existing,
-          chargeExists: chargeSnap.exists,
-          chargeStatus: normalizeStatus(chargeData.status),
-          chargePaidAmount: Number.isFinite(paidRaw) && paidRaw > 0 ? paidRaw : 0,
-        });
-      });
-
-      earningSnaps.forEach((earningSnap, idx) => {
-        const sessionId = idChunk[idx];
-        const existing = financialBySessionId.get(sessionId) || defaultFinancialLinkState();
-        const earningData = earningSnap.data() || {};
-        const paidRaw = Number(earningData.paidAmount);
-        financialBySessionId.set(sessionId, {
-          ...existing,
-          earningExists: earningSnap.exists,
-          earningStatus: normalizeStatus(earningData.status),
-          earningPaidAmount: Number.isFinite(paidRaw) && paidRaw > 0 ? paidRaw : 0,
-        });
-      });
-    }
-
     let deleteBatch = db.batch();
     let deleteOps = 0;
 
@@ -754,13 +880,7 @@ async function generateSessionsFromScheduleInternal(
       const isRemovedOrChangedSignature =
         isWithinReplacementRange && (!signature || !configuredSessionSignatures.has(signature));
       const isDuplicateUpcomingSignature = signature ? (sessionSignatureCounts.get(signature) || 0) > 1 : false;
-      const isBeyondPlannedCap =
-        Boolean(plannedSessionsTarget) &&
-        isWithinReplacementRange &&
-        Boolean(signature) &&
-        configuredSessionSignatures.has(signature || "") &&
-        !cappedAllowedSessionSignatures.has(signature || "");
-      if (!isRemovedOrChangedSignature && !isDuplicateUpcomingSignature && !isSlotPatternStale && !isBeyondPlannedCap) continue;
+      if (!isRemovedOrChangedSignature && !isDuplicateUpcomingSignature && !isSlotPatternStale) continue;
 
       deleteBatch.delete(sessionDoc.ref);
       deleteOps += 1;
@@ -845,15 +965,107 @@ async function generateSessionsFromScheduleInternal(
 
   sessionCandidates.sort((a, b) => a.startAtDate.getTime() - b.startAtDate.getTime());
 
-  for (const candidate of sessionCandidates) {
-    if (plannedSessionsTarget && plannedSessionsGenerated >= plannedSessionsTarget) {
-      break;
+  const postCleanupSnap = replaceFuture ?
+    await db.collection("classSessions").where("enrollmentId", "==", enrollmentId).get() :
+    existingSnap;
+
+  const activeFutureRegularDocs: Array<{
+    docRef: admin.firestore.DocumentReference;
+    signature: string;
+    startMs: number;
+  }> = [];
+  const pausedFutureRegularDocs: Array<{ signature: string; startMs: number }> = [];
+  let plannedSessionsConsumed = 0;
+  const occupiedRegularSignatures = new Set<string>();
+  const postCleanupSignatureCounts = new Map<string, number>();
+
+  for (const sessionDoc of postCleanupSnap.docs) {
+    const raw = sessionDoc.data() as Record<string, unknown>;
+    const signature = resolveSessionSignature({ raw, fallbackTeacherId: teacherId });
+    if (!signature) continue;
+    occupiedRegularSignatures.add(signature);
+    postCleanupSignatureCounts.set(signature, (postCleanupSignatureCounts.get(signature) || 0) + 1);
+
+    const financial = financialBySessionId.get(sessionDoc.id);
+    if (isRegularConsumedSession(raw, financial)) {
+      plannedSessionsConsumed += 1;
+      continue;
     }
-    plannedSessionsGenerated += 1;
+
+    const startMs = resolveSessionStartMs(raw);
+    if (startMs === null) continue;
+
+    if (
+      isFutureOperationalRegularSession({
+        raw,
+        nowMs,
+        configuredSlotPatterns,
+        fallbackTeacherId: teacherId,
+      })
+    ) {
+      activeFutureRegularDocs.push({
+        docRef: sessionDoc.ref,
+        signature,
+        startMs,
+      });
+      continue;
+    }
+
+    if (
+      isFuturePausedRegularSession({
+        raw,
+        nowMs,
+        configuredSlotPatterns,
+        fallbackTeacherId: teacherId,
+      })
+    ) {
+      pausedFutureRegularDocs.push({ signature, startMs });
+    }
+  }
+
+  activeFutureRegularDocs.sort((a, b) => a.startMs - b.startMs);
+  pausedFutureRegularDocs.sort((a, b) => a.startMs - b.startMs);
+
+  const targetActiveFutureRegular = plannedSessionsTarget ?
+    Math.max(plannedSessionsTarget - plannedSessionsConsumed, 0) :
+    Number.MAX_SAFE_INTEGER;
+
+  if (replaceFuture && activeFutureRegularDocs.length > targetActiveFutureRegular) {
+    let trimBatch = db.batch();
+    let trimOps = 0;
+    const removable = activeFutureRegularDocs.slice(targetActiveFutureRegular);
+    for (const entry of removable) {
+      trimBatch.delete(entry.docRef);
+      trimOps += 1;
+      replaced += 1;
+      occupiedRegularSignatures.delete(entry.signature);
+      const current = postCleanupSignatureCounts.get(entry.signature) || 0;
+      if (current <= 1) {
+        postCleanupSignatureCounts.delete(entry.signature);
+      } else {
+        postCleanupSignatureCounts.set(entry.signature, current - 1);
+      }
+      if (trimOps >= MAX_BATCH) {
+        await trimBatch.commit();
+        trimBatch = db.batch();
+        trimOps = 0;
+      }
+    }
+    if (trimOps > 0) {
+      await trimBatch.commit();
+    }
+    activeFutureRegularDocs.splice(targetActiveFutureRegular);
+  }
+
+  let additionalNeeded = Math.max(targetActiveFutureRegular - activeFutureRegularDocs.length, 0);
+  plannedSessionsGenerated = plannedSessionsConsumed + activeFutureRegularDocs.length;
+
+  for (const candidate of sessionCandidates) {
+    if (additionalNeeded <= 0) break;
 
     const candidateYmd = toYmdFromContextDate(candidate.sessionDate);
     const candidateSignature = `${candidateYmd}|${candidate.startTime}|${candidate.durationMinutes}|${teacherId || ""}`;
-    if ((sessionSignatureCounts.get(candidateSignature) || 0) > 0) {
+    if (occupiedRegularSignatures.has(candidateSignature) || (postCleanupSignatureCounts.get(candidateSignature) || 0) > 0) {
       skipped += 1;
       continue;
     }
@@ -895,7 +1107,10 @@ async function generateSessionsFromScheduleInternal(
     writeBatch.set(classSessionRef, payload);
     created += 1;
     writeOps += 1;
-    sessionSignatureCounts.set(candidateSignature, (sessionSignatureCounts.get(candidateSignature) || 0) + 1);
+    occupiedRegularSignatures.add(candidateSignature);
+    postCleanupSignatureCounts.set(candidateSignature, (postCleanupSignatureCounts.get(candidateSignature) || 0) + 1);
+    additionalNeeded -= 1;
+    plannedSessionsGenerated += 1;
 
     if (writeOps >= MAX_BATCH) {
       await writeBatch.commit();
@@ -932,10 +1147,15 @@ async function generateSessionsFromScheduleInternal(
 
   const rangeStartIso = `${rangeStartYmd}T00:00:00+05:30`;
   const rangeEndIso = `${rangeEndYmd}T23:59:59+05:30`;
+  const plannedSessionsActiveFuture = plannedSessionsGenerated - plannedSessionsConsumed;
+  const plannedSessionsRemaining = plannedSessionsTarget ?
+    Math.max(plannedSessionsTarget - plannedSessionsConsumed, 0) :
+    0;
   const plannedSessionsUnfilled = plannedSessionsTarget ?
     Math.max(plannedSessionsTarget - plannedSessionsGenerated, 0) :
     0;
-  const plannedSessionsCapReached = Boolean(plannedSessionsTarget && plannedSessionsUnfilled === 0);
+  const plannedSessionsCapReached = Boolean(plannedSessionsTarget && plannedSessionsConsumed >= plannedSessionsTarget);
+  const plannedSessionsPausedFuture = pausedFutureRegularDocs.length;
 
   logger.info("Sessions generated from schedule", {
     enrollmentId,
@@ -945,6 +1165,10 @@ async function generateSessionsFromScheduleInternal(
     replaced,
     plannedSessionsTarget,
     plannedSessionsGenerated,
+    plannedSessionsConsumed,
+    plannedSessionsActiveFuture,
+    plannedSessionsPausedFuture,
+    plannedSessionsRemaining,
     plannedSessionsUnfilled,
     plannedSessionsCapReached,
     rangeStartYmd,
@@ -959,6 +1183,10 @@ async function generateSessionsFromScheduleInternal(
     replaced,
     plannedSessionsTarget,
     plannedSessionsGenerated,
+    plannedSessionsConsumed,
+    plannedSessionsActiveFuture,
+    plannedSessionsPausedFuture,
+    plannedSessionsRemaining,
     plannedSessionsUnfilled,
     plannedSessionsCapReached,
     rangeStart: rangeStartIso,
@@ -1214,11 +1442,49 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
         enrollmentId,
         replay,
       });
+      const replayConsumed =
+        typeof replay.plannedSessionsConsumed === "number" ?
+          replay.plannedSessionsConsumed :
+          0;
+      const replayActiveFuture =
+        typeof replay.plannedSessionsActiveFuture === "number" ?
+          replay.plannedSessionsActiveFuture :
+          Math.max((replay.plannedSessionsGenerated || 0) - replayConsumed, 0);
+      const replayPausedFuture =
+        typeof replay.plannedSessionsPausedFuture === "number" ? replay.plannedSessionsPausedFuture : 0;
+      const replayRemaining =
+        typeof replay.plannedSessionsRemaining === "number" ?
+          replay.plannedSessionsRemaining :
+          Math.max((replay.plannedSessionsTarget || 0) - replayConsumed, 0);
       const replayCapReached =
         replay.plannedSessionsCapReached ??
-        Boolean(replay.plannedSessionsTarget && replay.plannedSessionsUnfilled === 0);
+        Boolean(replay.plannedSessionsTarget && replayConsumed >= replay.plannedSessionsTarget);
+      await enrollmentRef.set(
+        {
+          scheduleProgress: {
+            plannedSessionsTarget: replay.plannedSessionsTarget ?? null,
+            consumedCount: replayConsumed,
+            activeFutureCount: replayActiveFuture,
+            pausedFutureCount: replayPausedFuture,
+            remainingCount: replayRemaining,
+            plannedCompleted: replayCapReached,
+            completionMessage: replayCapReached ?
+              "Planned classes completed. Please contact Tiny Steps to continue the schedule." :
+              null,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedBy: actorUid,
+          },
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedBy: actorUid,
+        },
+        {merge: true},
+      );
       return {
         ...replay,
+        plannedSessionsConsumed: replayConsumed,
+        plannedSessionsActiveFuture: replayActiveFuture,
+        plannedSessionsPausedFuture: replayPausedFuture,
+        plannedSessionsRemaining: replayRemaining,
         plannedSessionsCapReached: replayCapReached,
         idempotentReplay: true,
         orchestrationState: "replayed",
@@ -1258,6 +1524,19 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
             completedBy: actorUid,
             lastResult: result,
             error: admin.firestore.FieldValue.delete(),
+          },
+          scheduleProgress: {
+            plannedSessionsTarget: result.plannedSessionsTarget ?? null,
+            consumedCount: result.plannedSessionsConsumed,
+            activeFutureCount: result.plannedSessionsActiveFuture,
+            pausedFutureCount: result.plannedSessionsPausedFuture,
+            remainingCount: result.plannedSessionsRemaining,
+            plannedCompleted: result.plannedSessionsCapReached,
+            completionMessage: result.plannedSessionsCapReached ?
+              "Planned classes completed. Please contact Tiny Steps to continue the schedule." :
+              null,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedBy: actorUid,
           },
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           updatedBy: actorUid,
@@ -1307,5 +1586,288 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
         {originalError: message},
       );
     }
+  },
+);
+
+export const pauseEnrollmentUpcomingSessions = onCall(
+  {region: REGION},
+  async (request): Promise<PauseEnrollmentUpcomingSessionsResponse> => {
+    await ensureAdmin(request.auth);
+    const input = (request.data || {}) as Partial<PauseEnrollmentUpcomingSessionsRequest>;
+    const enrollmentId = typeof input.enrollmentId === "string" ? input.enrollmentId.trim() : "";
+    const pauseCount = toPauseCount(input.count);
+    if (!enrollmentId || pauseCount <= 0) {
+      throw new HttpsError("invalid-argument", "enrollmentId and valid count (1,2,3,5,10) are required");
+    }
+
+    const db = admin.firestore();
+    const enrollmentRef = db.collection("enrollments").doc(enrollmentId);
+    const enrollmentSnap = await enrollmentRef.get();
+    if (!enrollmentSnap.exists) {
+      throw new HttpsError("not-found", `Enrollment ${enrollmentId} not found`);
+    }
+    const enrollment = enrollmentSnap.data() as EnrollmentDoc;
+    if (!isEnrollmentOperationallyActive(enrollment as unknown as Record<string, unknown>)) {
+      throw new HttpsError("failed-precondition", "Enrollment is not active");
+    }
+    const weeklySlots = normalizeScheduleSlotsOrThrow(enrollment.schedule);
+    if (!weeklySlots.length) {
+      throw new HttpsError("failed-precondition", "Enrollment has no active weekly schedule");
+    }
+
+    const configuredSlotPatterns = new Set<string>();
+    const teacherId = enrollment.teacherId || null;
+    weeklySlots.forEach((slot) => {
+      configuredSlotPatterns.add(`${slot.weekday}|${slot.timeHHmm}|${slot.durationMinutes}|${teacherId || ""}`);
+    });
+
+    const sessionsSnap = await db.collection("classSessions").where("enrollmentId", "==", enrollmentId).get();
+    const financialBySessionId = await fetchFinancialStateBySessionId(
+      db,
+      sessionsSnap.docs.map((docSnap) => docSnap.id),
+    );
+    const nowMs = Date.now();
+    const candidates: Array<{ ref: admin.firestore.DocumentReference; startMs: number }> = [];
+    for (const docSnap of sessionsSnap.docs) {
+      const raw = docSnap.data() as Record<string, unknown>;
+      const financial = financialBySessionId.get(docSnap.id);
+      if (!isSessionReplaceable({raw, financial, nowMs})) continue;
+      if (normalizeStatus(raw.status) === PAUSED_SESSION_STATUS) continue;
+      if (
+        !isFutureOperationalRegularSession({
+          raw,
+          nowMs,
+          configuredSlotPatterns,
+          fallbackTeacherId: teacherId,
+        })
+      ) {
+        continue;
+      }
+      const startMs = resolveSessionStartMs(raw);
+      if (startMs === null) continue;
+      candidates.push({ ref: docSnap.ref, startMs });
+    }
+    candidates.sort((a, b) => a.startMs - b.startMs);
+    const toPause = candidates.slice(0, pauseCount);
+    const pauseBatchId = `pause_${enrollmentId}_${Date.now()}`;
+
+    if (toPause.length > 0) {
+      let batch = db.batch();
+      let ops = 0;
+      for (const entry of toPause) {
+        batch.set(
+          entry.ref,
+          {
+            status: PAUSED_SESSION_STATUS,
+            pauseBy: request.auth?.uid || null,
+            pauseBatchId,
+            pauseReason: "admin_pause",
+            pausedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedBy: request.auth?.uid || null,
+          },
+          {merge: true},
+        );
+        ops += 1;
+        if (ops >= MAX_BATCH) {
+          await batch.commit();
+          batch = db.batch();
+          ops = 0;
+        }
+      }
+      if (ops > 0) await batch.commit();
+    }
+
+    await enrollmentRef.set(
+      {
+        schedulePause: {
+          active: toPause.length > 0,
+          batchId: toPause.length > 0 ? pauseBatchId : null,
+          requestedCount: pauseCount,
+          remainingCount: toPause.length,
+          pausedAt: admin.firestore.FieldValue.serverTimestamp(),
+          pausedBy: request.auth?.uid || null,
+          resumedAt: null,
+          resumedBy: null,
+        },
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedBy: request.auth?.uid || null,
+      },
+      {merge: true},
+    );
+
+    const regen = await generateSessionsFromScheduleInternal({
+      enrollmentId,
+      weeksAhead: Number(enrollment.schedule?.weeksAhead || 8),
+      plannedSessions: toPlannedSessions(enrollment.schedule?.plannedSessions) || undefined,
+      replaceFuture: true,
+      startDate:
+        toYmdFromDateLike(enrollment.classesStartDateYmd) ||
+        toYmdFromDateLike(enrollment.classesStartDate) ||
+        toYmdFromDateLike(enrollment.startDateYmd) ||
+        toYmdFromDateLike(enrollment.startDate) ||
+        toIstTodayYmd(),
+      endDate: typeof enrollment.schedule?.endDateYmd === "string" && enrollment.schedule.endDateYmd.trim() ?
+        enrollment.schedule.endDateYmd.trim() :
+        undefined,
+    });
+
+    await enrollmentRef.set(
+      {
+        scheduleProgress: {
+          plannedSessionsTarget: regen.plannedSessionsTarget ?? null,
+          consumedCount: regen.plannedSessionsConsumed,
+          activeFutureCount: regen.plannedSessionsActiveFuture,
+          pausedFutureCount: regen.plannedSessionsPausedFuture,
+          remainingCount: regen.plannedSessionsRemaining,
+          plannedCompleted: regen.plannedSessionsCapReached,
+          completionMessage: regen.plannedSessionsCapReached ?
+            "Planned classes completed. Please contact Tiny Steps to continue the schedule." :
+            null,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedBy: request.auth?.uid || null,
+        },
+      },
+      {merge: true},
+    );
+
+    return {
+      ...regen,
+      pausedCount: toPause.length,
+      pauseBatchId,
+    };
+  },
+);
+
+export const resumeEnrollmentSchedule = onCall(
+  {region: REGION},
+  async (request): Promise<ResumeEnrollmentScheduleResponse> => {
+    await ensureAdmin(request.auth);
+    const input = (request.data || {}) as Partial<ResumeEnrollmentScheduleRequest>;
+    const enrollmentId = typeof input.enrollmentId === "string" ? input.enrollmentId.trim() : "";
+    if (!enrollmentId) {
+      throw new HttpsError("invalid-argument", "enrollmentId required");
+    }
+
+    const db = admin.firestore();
+    const enrollmentRef = db.collection("enrollments").doc(enrollmentId);
+    const enrollmentSnap = await enrollmentRef.get();
+    if (!enrollmentSnap.exists) {
+      throw new HttpsError("not-found", `Enrollment ${enrollmentId} not found`);
+    }
+    const enrollment = enrollmentSnap.data() as EnrollmentDoc & { schedulePause?: Record<string, unknown> };
+    if (!isEnrollmentOperationallyActive(enrollment as unknown as Record<string, unknown>)) {
+      throw new HttpsError("failed-precondition", "Enrollment is not active");
+    }
+    const weeklySlots = normalizeScheduleSlotsOrThrow(enrollment.schedule);
+    if (!weeklySlots.length) {
+      throw new HttpsError("failed-precondition", "Enrollment has no active weekly schedule");
+    }
+    const configuredSlotPatterns = new Set<string>();
+    const teacherId = enrollment.teacherId || null;
+    weeklySlots.forEach((slot) => {
+      configuredSlotPatterns.add(`${slot.weekday}|${slot.timeHHmm}|${slot.durationMinutes}|${teacherId || ""}`);
+    });
+
+    const pauseBatchId =
+      enrollment.schedulePause && typeof enrollment.schedulePause.batchId === "string" ?
+        enrollment.schedulePause.batchId.trim() :
+        "";
+
+    const sessionsSnap = await db.collection("classSessions").where("enrollmentId", "==", enrollmentId).get();
+    const nowMs = Date.now();
+    const toResume: admin.firestore.DocumentReference[] = [];
+    for (const docSnap of sessionsSnap.docs) {
+      const raw = docSnap.data() as Record<string, unknown>;
+      if (normalizeStatus(raw.status) !== PAUSED_SESSION_STATUS) continue;
+      const startMs = resolveSessionStartMs(raw);
+      if (startMs === null || startMs <= nowMs) continue;
+      if (pauseBatchId) {
+        const rowBatchId = typeof raw.pauseBatchId === "string" ? raw.pauseBatchId.trim() : "";
+        if (rowBatchId !== pauseBatchId) continue;
+      }
+      const slotPattern = resolveSessionSlotPattern({raw, fallbackTeacherId: teacherId});
+      if (!slotPattern || !configuredSlotPatterns.has(slotPattern)) continue;
+      toResume.push(docSnap.ref);
+    }
+
+    if (toResume.length > 0) {
+      let batch = db.batch();
+      let ops = 0;
+      for (const ref of toResume) {
+        batch.set(
+          ref,
+          {
+            status: "scheduled",
+            resumedAt: admin.firestore.FieldValue.serverTimestamp(),
+            resumedBy: request.auth?.uid || null,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedBy: request.auth?.uid || null,
+          },
+          {merge: true},
+        );
+        ops += 1;
+        if (ops >= MAX_BATCH) {
+          await batch.commit();
+          batch = db.batch();
+          ops = 0;
+        }
+      }
+      if (ops > 0) await batch.commit();
+    }
+
+    await enrollmentRef.set(
+      {
+        schedulePause: {
+          active: false,
+          remainingCount: 0,
+          resumedAt: admin.firestore.FieldValue.serverTimestamp(),
+          resumedBy: request.auth?.uid || null,
+        },
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedBy: request.auth?.uid || null,
+      },
+      {merge: true},
+    );
+
+    const regen = await generateSessionsFromScheduleInternal({
+      enrollmentId,
+      weeksAhead: Number(enrollment.schedule?.weeksAhead || 8),
+      plannedSessions: toPlannedSessions(enrollment.schedule?.plannedSessions) || undefined,
+      replaceFuture: true,
+      startDate:
+        toYmdFromDateLike(enrollment.classesStartDateYmd) ||
+        toYmdFromDateLike(enrollment.classesStartDate) ||
+        toYmdFromDateLike(enrollment.startDateYmd) ||
+        toYmdFromDateLike(enrollment.startDate) ||
+        toIstTodayYmd(),
+      endDate: typeof enrollment.schedule?.endDateYmd === "string" && enrollment.schedule.endDateYmd.trim() ?
+        enrollment.schedule.endDateYmd.trim() :
+        undefined,
+    });
+
+    await enrollmentRef.set(
+      {
+        scheduleProgress: {
+          plannedSessionsTarget: regen.plannedSessionsTarget ?? null,
+          consumedCount: regen.plannedSessionsConsumed,
+          activeFutureCount: regen.plannedSessionsActiveFuture,
+          pausedFutureCount: regen.plannedSessionsPausedFuture,
+          remainingCount: regen.plannedSessionsRemaining,
+          plannedCompleted: regen.plannedSessionsCapReached,
+          completionMessage: regen.plannedSessionsCapReached ?
+            "Planned classes completed. Please contact Tiny Steps to continue the schedule." :
+            null,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedBy: request.auth?.uid || null,
+        },
+      },
+      {merge: true},
+    );
+
+    return {
+      ...regen,
+      resumedCount: toResume.length,
+    };
   },
 );

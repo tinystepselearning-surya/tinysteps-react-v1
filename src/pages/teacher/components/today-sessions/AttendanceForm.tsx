@@ -779,7 +779,11 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Mark Attendance</DialogTitle>
-          <DialogDescription>Mark attendance for the selected session. Only the assigned teacher or an LP can update attendance.</DialogDescription>
+          <DialogDescription>
+            {attendanceOnly
+              ? 'Mark attendance and optional class notes only. Update topics/progress from My Students.'
+              : 'Mark attendance for the selected session. Only the assigned teacher or an LP can update attendance.'}
+          </DialogDescription>
         </DialogHeader>
         {!session ? (
           <p className="text-sm text-muted-foreground">Select a session to mark attendance.</p>
@@ -801,8 +805,10 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
                 const displayName = kidNameFromHookById.get(kidId) || 
                                    kidNameById[kidId] || 
                                    `Student (${kidId.slice(0, 6)}…)`;
+                const selectedStatus = formState[kidId]?.status;
                 const isRescheduleRequested =
-                  formState[kidId]?.status === 'reschedule_requested';
+                  selectedStatus === 'reschedule_requested';
+                const isAbsent = selectedStatus === 'absent';
                 
                 return (
                   <div key={kidId} className="border rounded-lg p-4 space-y-2">
@@ -872,17 +878,20 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
                       )}
                     </>
                   )}
-                  <Textarea
-                    placeholder="Notes (optional)"
-                    value={formState[kidId]?.notes || ''}
-                    onChange={(event) => handleNotesChange(kidId, event.target.value)}
-                  />
+                  <div className="space-y-1">
+                    <Label>{isAbsent || isRescheduleRequested ? 'Reason (optional)' : 'Class note (optional)'}</Label>
+                    <Textarea
+                      placeholder={isAbsent || isRescheduleRequested ? 'Add reason (optional)' : 'Add class note (optional)'}
+                      value={formState[kidId]?.notes || ''}
+                      onChange={(event) => handleNotesChange(kidId, event.target.value)}
+                    />
+                  </div>
                 </div>
                 );
               })
             )}
             <div>
-              <Label>Session Notes</Label>
+              <Label>Class feedback (optional)</Label>
               <Textarea
                 placeholder="How was the session? Any issues?"
                 value={sessionNotes}

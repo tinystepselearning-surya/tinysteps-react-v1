@@ -73,6 +73,8 @@ const fetchSessions = async (childIds: string[]): Promise<ParentSession[]> => {
 
   const sessions: ParentSession[] = rawRows
     .filter(({ data }) => {
+      const status = String(data?.status || '').trim().toLowerCase();
+      if (status === 'paused') return false;
       const enrollmentId = String(data?.enrollmentId || '').trim();
       if (!enrollmentId) return false;
       const enrollment = enrollmentMap.get(enrollmentId);

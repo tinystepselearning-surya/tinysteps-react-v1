@@ -1294,7 +1294,7 @@ function formatSessionTimeRange(s: KidSession): string {
 
 function normalizeStatus(raw?: string): string {
   const s = (raw || "").toLowerCase().trim();
-  if (s === "scheduled" || s === "in_progress" || s === "completed" || s === "cancelled" || s === "canceled" || s === "no_show" || s === "noshow" || s === "reschedule_requested" || s === "rescheduled") {
+  if (s === "scheduled" || s === "in_progress" || s === "completed" || s === "cancelled" || s === "canceled" || s === "no_show" || s === "noshow" || s === "reschedule_requested" || s === "rescheduled" || s === "paused") {
     if (s === "canceled") return "cancelled";
     if (s === "noshow") return "no_show";
     if (s === "rescheduled") return "reschedule_requested";
@@ -2552,6 +2552,7 @@ export default function ParentDashboard() {
   const allKidSessions = useMemo(() => {
     const sessions = (kidSessionsQuery.data ?? []) as KidSession[];
     return sessions.filter((session) => {
+      if (normalizeStatus(session.status) === 'paused') return false;
       const sessionLike = session as unknown as Record<string, unknown>;
       const enrollmentIdFromDoc = String((session as any)?.enrollmentId || "").trim();
       const enrollmentIdFromSessionId =

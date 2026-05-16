@@ -110,6 +110,8 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
         );
         const filtered = allSessions.filter((s) => dates.includes(String(s.date || '')));
         const canonicalOnly = filtered.filter((session) => {
+          const status = String((session as any)?.status || '').trim().toLowerCase();
+          if (status === 'paused') return false;
           const enrollmentId = String((session as any)?.enrollmentId || '').trim();
           if (!enrollmentId) return false;
           const enrollment = enrollmentMap.get(enrollmentId);
@@ -150,6 +152,8 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
             ),
           );
           const canonicalOnly = next.filter((session) => {
+            const status = String((session as any)?.status || '').trim().toLowerCase();
+            if (status === 'paused') return false;
             const enrollmentId = String((session as any)?.enrollmentId || '').trim();
             if (!enrollmentId) return false;
             const enrollment = enrollmentMap.get(enrollmentId);

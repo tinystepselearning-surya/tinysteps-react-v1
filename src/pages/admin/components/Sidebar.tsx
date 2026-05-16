@@ -1,4 +1,4 @@
-// React default import removed
+import { startTransition } from 'react';
 import { cn } from '@components/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -67,9 +67,11 @@ export default function Sidebar({ selectedTab, onTabChange, className, onNavigat
                 : 'text-slate-300 hover:bg-slate-800 hover:text-white'
             )}
             onClick={() => {
-              onTabChange(tab.id);
-              navigate(`/surya?tab=${tab.id}`);
-              onNavigate?.();
+              startTransition(() => {
+                onTabChange(tab.id);
+                navigate(`/surya?tab=${tab.id}`);
+                onNavigate?.();
+              });
             }}
           >
             <tab.icon
