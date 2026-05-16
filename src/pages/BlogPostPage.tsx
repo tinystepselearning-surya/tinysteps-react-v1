@@ -380,6 +380,53 @@ function slugifyHeading(value: string) {
     .slice(0, 80) || 'section';
 }
 
+const PHONICS_ROUTE = {
+  label: 'Online Phonics Classes',
+  to: '/phonics',
+};
+
+const GRAMMAR_ROUTE = {
+  label: 'Grammar & Sentence Formation',
+  to: '/grammar',
+};
+
+const SPEAKING_ROUTE = {
+  label: 'Communication & Public Speaking',
+  to: '/speaking',
+};
+
+const GENERIC_ROUTE = {
+  label: 'Find the Right Course',
+  to: '/courses',
+};
+
+const PHONICS_KEYWORDS = ['phonics', 'reading', 'blend', 'cvc', 'vowel', 'digraph', 'spelling', 'sight words'];
+const GRAMMAR_KEYWORDS = ['grammar', 'sentence', 'writing', 'noun', 'verb', 'tense', 'punctuation', 'paragraph'];
+const SPEAKING_KEYWORDS = ['speaking', 'communication', 'confidence', 'public speaking', 'shy', 'one-word', 'answers'];
+
+function hasAnyKeyword(text: string, keywords: string[]) {
+  return keywords.some((keyword) => text.includes(keyword));
+}
+
+function resolveNextStepRoute(params: { category?: unknown; slug?: unknown; title?: unknown }) {
+  const category = String(params.category || '').toLowerCase();
+  if (category.includes('phonics')) return PHONICS_ROUTE;
+  if (category.includes('grammar')) return GRAMMAR_ROUTE;
+  if (
+    category.includes('public speaking')
+    || category.includes('speaking')
+    || category.includes('communication')
+  ) {
+    return SPEAKING_ROUTE;
+  }
+
+  const classifierText = `${String(params.slug || '')} ${String(params.title || '')}`.toLowerCase();
+  if (hasAnyKeyword(classifierText, PHONICS_KEYWORDS)) return PHONICS_ROUTE;
+  if (hasAnyKeyword(classifierText, GRAMMAR_KEYWORDS)) return GRAMMAR_ROUTE;
+  if (hasAnyKeyword(classifierText, SPEAKING_KEYWORDS)) return SPEAKING_ROUTE;
+  return GENERIC_ROUTE;
+}
+
 function buildHeadingMeta(blocks: Array<{ type: string; content: string }> = []) {
   const counts = new Map<string, number>();
 
@@ -602,6 +649,10 @@ function buildMetaDescription(src: any) {
   const suppressCoursesFallback = Boolean(postCtaOverride?.suppressCoursesFallback);
   const hasCoursesLink = learningPathLinks.some((link) => link?.to === '/courses');
   const heroDescription = metaSource.metaDescription || metaSource.excerpt || buildMetaDescription(metaSource);
+  const nextStepPrimaryRoute = useMemo(
+    () => resolveNextStepRoute({ category: metaSource.category, slug, title: metaSource.title }),
+    [metaSource.category, metaSource.title, slug],
+  );
   const headingItems = useMemo(() => buildHeadingMeta(post?.body || []), [post]);
   const articleNodes = useMemo(() => {
     if (!post) return MdxComp ? <MdxComp /> : null;
@@ -822,6 +873,25 @@ function buildMetaDescription(src: any) {
             </section>
 
             <AboutAuthor variant={metaSource.category === 'Research' ? 'research' : 'standard'} />
+
+            <section className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#eef8f2_100%)] p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Parent Guidance</p>
+              <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Next Step for Parents</h2>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+                If your child is facing this challenge, start with the right learning path instead of trying random worksheets. Tiny Steps can help identify whether your child needs support with phonics, grammar, reading, sentence formation, or speaking confidence.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold">
+                <Link to={nextStepPrimaryRoute.to} className="inline-flex items-center rounded-full bg-slate-950 px-5 py-3 text-white transition hover:bg-slate-800">
+                  {nextStepPrimaryRoute.label}
+                </Link>
+                <Link to="/courses" className="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-3 text-slate-900 shadow-sm transition hover:bg-slate-50">
+                  Explore Courses
+                </Link>
+                <Link to="/book-demo" className="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-3 text-slate-900 shadow-sm transition hover:bg-slate-50">
+                  Book Free Assessment
+                </Link>
+              </div>
+            </section>
 
             <section className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#fff8ef_0%,#f6faff_100%)] p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Recommended Next for Parents</p>

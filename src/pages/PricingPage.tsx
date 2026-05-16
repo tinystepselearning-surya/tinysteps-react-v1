@@ -32,6 +32,7 @@ const planMeta = {
     name: 'Starter',
     title: '12 Classes / Month',
     badge: 'New families',
+    bestFor: 'Best for starting or a short-term level check.',
     highlight: false,
     color: 'from-white via-[#fff7ec] to-[#ffe0b5]',
     features: [
@@ -45,6 +46,7 @@ const planMeta = {
     name: 'Growth',
     title: '16 Classes / Month',
     badge: 'Most popular',
+    bestFor: 'Best for consistent month-on-month improvement.',
     highlight: true,
     color: 'from-[#fff1d6] via-white to-[#dff1ff]',
     features: [
@@ -58,6 +60,7 @@ const planMeta = {
     name: 'Intensive',
     title: '24 Classes / Month',
     badge: 'Fast-track',
+    bestFor: 'Best for long-term structured progress.',
     highlight: false,
     color: 'from-white via-[#e8f3ff] to-[#f4e8ff]',
     features: [
@@ -78,6 +81,7 @@ const plans = ONE_TO_ONE_MONTHLY_PACKAGES.map((pkg) => {
     price: formatINR(pkg.monthlyFee),
     title: meta.title,
     badge: meta.badge,
+    bestFor: meta.bestFor,
     highlight: meta.highlight,
     color: meta.color,
     features: meta.features,
@@ -86,24 +90,29 @@ const plans = ONE_TO_ONE_MONTHLY_PACKAGES.map((pkg) => {
 
 const quickAnswerFaqItems = [
   {
-    question: 'What is included in Tiny Steps premium pricing?',
+    question: 'How much do Tiny Steps online English classes cost?',
     answer:
-      'Pricing includes live online classes, teacher-led practice, guided correction, learning activities, and parent progress updates for the selected package.',
+      'Tiny Steps pricing depends on the selected class package and program. Parents can review available plans on the pricing page and book a free assessment before choosing the right path.',
   },
   {
-    question: 'Are phonics, grammar, and public speaking programs priced separately?',
+    question: 'Should I choose a course before paying?',
     answer:
-      'Pricing may vary based on the selected program, class format, and number of sessions. Parents can review the available plans and choose what suits the child’s learning need.',
+      'It is better to start with a free assessment. The assessment helps identify whether the child needs phonics, reading, grammar, sentence formation, public speaking, or a combined learning path.',
   },
   {
-    question: 'Can parents choose premium 1:1 classes?',
+    question: 'Are Tiny Steps classes 1:1?',
     answer:
-      'Yes. Tiny Steps offers premium 1:1 online classes for children who need focused attention, guided correction, and a personalized learning pace.',
+      'Tiny Steps offers premium 1:1 online classes and may also offer small-group options depending on availability and program fit.',
   },
   {
-    question: 'How should parents select the right plan?',
+    question: 'What is included in the class fee?',
     answer:
-      'Parents should choose based on the child’s current need, preferred class format, learning goals, and the number of sessions they want to begin with.',
+      'The class fee includes live teacher-guided sessions, structured learning activities, child-level practice, parent communication, and progress visibility over time.',
+  },
+  {
+    question: 'Is there a trial or assessment before enrollment?',
+    answer:
+      'Yes. Parents can book a free assessment to understand the child’s current English level and receive a suitable course recommendation before enrollment.',
   },
 ];
 
@@ -126,7 +135,7 @@ const pricingSeo = getRouteConfig('/pricing');
 const pricingSeoTitle = pricingSeo?.title ?? 'Premium 1:1 Online English Class Pricing | Tiny Steps Learning';
 const pricingSeoDescription =
   pricingSeo?.description ??
-  'Clear premium pricing for Tiny Steps 1:1 online English classes. Compare packages for phonics, grammar, reading, sentence formation, communication, and public speaking.';
+  'View Tiny Steps pricing for premium 1:1 online English classes for kids. Book a free assessment before choosing phonics, grammar, reading, or public speaking support.';
 const pricingCanonicalPath = pricingSeo?.canonicalPath ?? '/pricing';
 const pricingCanonicalUrl = `https://tinystepslearning.com${pricingCanonicalPath}`;
 
@@ -305,12 +314,31 @@ const PricingPage: FC = () => {
               ? `Tiny Steps Premium Classes • Starting from ${formatINR(premiumMinPerClass)} to ${formatINR(premiumMaxPerClass)} per class`
               : `Tiny Steps Ultra Premium • Native English-speaking teachers • Starting from ${formatINR(ultraMinPerClass)} to ${formatINR(ultraMaxPerClass)} per class`}
           </div>
-          <h1 className="mt-3 text-3xl font-bold text-gray-900 md:text-4xl">Premium 1:1 Online English Class Pricing</h1>
+          <h1 className="mt-3 text-3xl font-bold text-gray-900 md:text-4xl">Transparent Pricing for Premium 1:1 English Classes</h1>
           <p className="mt-3 text-gray-700">
-            Compare plans for Tiny Steps phonics, grammar, reading, sentence formation, communication, and public
-            speaking programs. Packages are structured for clarity, with monthly class counts and transparent fee views.
-            Choose Premium Classes with expert Indian teachers, or Ultra Premium with native English-speaking teachers.
+            Choose the right learning path for your child after a free assessment. Tiny Steps offers live guided classes
+            for phonics, reading, grammar, sentence formation, and public speaking.
           </p>
+          <ul className="mt-5 grid gap-2 text-sm text-gray-700 sm:grid-cols-2 sm:text-left">
+            <li>Live online classes with teacher guidance</li>
+            <li>Personalized learning path after assessment</li>
+            <li>Parent-friendly progress updates</li>
+            <li>Premium 1:1 learning experience</li>
+          </ul>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              to="/book-demo"
+              className="rounded-2xl bg-gray-900 px-5 py-3 text-sm font-semibold text-white shadow-2xl"
+            >
+              Book Free Assessment
+            </Link>
+            <Link
+              to="/courses"
+              className="rounded-2xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-900 hover:border-gray-400"
+            >
+              Explore Courses
+            </Link>
+          </div>
           <div className="mt-6 mx-auto grid max-w-3xl gap-3 sm:grid-cols-2">
             <button
               onClick={() => setProgram('premium')}
@@ -351,11 +379,10 @@ const PricingPage: FC = () => {
 
       <section className="mx-auto max-w-6xl px-6 pb-10">
         <div className="rounded-3xl border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-blue-50 p-6 shadow-card-hover sm:p-8">
-          <h2 className="text-2xl font-semibold text-gray-900">Quick Answer for Parents</h2>
+          <h2 className="text-2xl font-semibold text-gray-900">Pricing Questions Parents Ask</h2>
           <p className="mt-3 max-w-4xl text-sm text-gray-700 sm:text-base">
-            Tiny Steps Learning offers premium online classes across phonics, grammar, sentence formation,
-            communication, and public speaking. Parents can choose 1:1 or small-group formats where available,
-            compare monthly class packages, and start with a free assessment before enrollment.
+            Tiny Steps Learning offers premium online classes across phonics, grammar, sentence formation, communication,
+            and public speaking. Start with a free assessment, compare package options, and then choose a plan with clarity.
           </p>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {quickAnswerFaqItems.map((item) => (
@@ -368,6 +395,32 @@ const PricingPage: FC = () => {
           <p className="mt-4 text-sm text-slate-700">
             Compare learning pathways before choosing a plan: <Link to="/courses" className="font-semibold underline">all courses</Link>, <Link to="/phonics" className="font-semibold underline">phonics</Link>, <Link to="/grammar" className="font-semibold underline">grammar</Link>, and <Link to="/speaking" className="font-semibold underline">public speaking</Link>.
           </p>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 pb-12">
+        <div className="grid gap-6 md:grid-cols-2">
+          <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-card-hover">
+            <h2 className="text-2xl font-semibold text-gray-900">What is included?</h2>
+            <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-gray-700">
+              <li>Live guided class with teacher support</li>
+              <li>Child-level assessment before course recommendation</li>
+              <li>Structured curriculum path</li>
+              <li>Reading, grammar, sentence formation, or speaking practice based on the program</li>
+              <li>Class feedback and parent communication</li>
+              <li>Progress visibility over time</li>
+            </ul>
+          </article>
+          <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-card-hover">
+            <h2 className="text-2xl font-semibold text-gray-900">How to choose the right plan</h2>
+            <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-gray-700">
+              <li>Start with a free assessment.</li>
+              <li>Understand your child&apos;s current level.</li>
+              <li>Choose the course path: Phonics, Grammar, Reading, or Public Speaking.</li>
+              <li>Select the class package based on consistency and learning goals.</li>
+              <li>Review progress and continue with the next stage when ready.</li>
+            </ol>
+          </article>
         </div>
       </section>
 
@@ -405,6 +458,9 @@ const PricingPage: FC = () => {
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
                     {`${formatINR(DEFAULT_PACK_RATE)} per class • ${plan.sessions} live classes`}
+                  </p>
+                  <p className="mt-2 text-xs font-medium text-gray-700">
+                    {plan.bestFor}
                   </p>
                   <ul className="mt-4 space-y-2 text-sm text-gray-700">
                     {plan.features.map((feature) => (

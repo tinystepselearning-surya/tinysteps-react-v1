@@ -2,106 +2,142 @@ import { useEffect } from 'react';
 import ClusterSeoNav from '../../components/programs/ClusterSeoNav';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
+import { createCourseSchema, createFAQPageSchema } from '../../lib/schemas';
 
 const faqItems = [
   {
-    question: 'What do online reading classes help with first?',
+    question: 'Who needs online reading classes?',
     answer:
-      'Most children first improve word decoding accuracy and reading confidence. As decoding becomes easier, reading fluency and comprehension usually improve more steadily.',
+      'Online reading classes can help children who read slowly, guess words, avoid reading, forget words often, or struggle to understand short passages and stories.',
   },
   {
-    question: 'How can I help my child who reads slowly?',
+    question: 'Are reading classes different from phonics classes?',
     answer:
-      'Slow reading often improves with structured phonics and fluency practice. Live guided reading helps children reduce pauses, read more smoothly, and build confidence.',
+      'Yes. Phonics classes focus on decoding sounds and words. Reading classes focus more on fluency, accuracy, expression, comprehension, and confidence while reading sentences and passages.',
   },
   {
-    question: 'Are online reading classes effective for kids?',
+    question: 'What age group is reading support suitable for?',
     answer:
-      'Yes. Online reading classes are effective when sessions are live, level-based, and consistent. Two to three classes per week with short home practice is a strong rhythm for progress.',
+      'Reading support is suitable for children who are ready for words, sentences, or passages, usually from around age 4 onward, depending on the child’s current level.',
+  },
+  {
+    question: 'Will reading classes improve comprehension?',
+    answer:
+      'Yes. Reading classes can support comprehension by helping children read carefully, understand meaning, discuss story ideas, and answer simple questions after reading.',
+  },
+  {
+    question: 'How do I know if my child needs phonics or reading support?',
+    answer:
+      'A free assessment helps identify whether the child needs phonics, blending, fluency, comprehension, grammar, or a combined learning path.',
   },
 ];
 
 export default function ReadingClassesForKidsPage() {
   useEffect(() => {
+    const courseSchema = createCourseSchema({
+      name: 'Online Reading Classes for Kids',
+      description:
+        'Live online reading classes for children aged 4–12 who need support with reading fluency, passage reading, comprehension, accuracy, and reading confidence.',
+      url: 'https://tinystepslearning.com/reading-classes-for-kids',
+      educationalLevel: 'Foundation to Intermediate',
+    });
+
+    const faqSchema = {
+      ...createFAQPageSchema(faqItems),
+      '@id': 'https://tinystepslearning.com/reading-classes-for-kids#faq',
+    };
+
     applySeo({
       title: 'Online Reading Classes for Kids | Tiny Steps Learning',
       description:
-        'Online reading classes for kids focused on blending, reading fluency, confidence, and early comprehension support through live guided practice.',
+        'Live online reading classes for kids who read slowly, guess words, avoid passages, or need stronger fluency, comprehension, and reading confidence.',
       canonicalPath: '/reading-classes-for-kids',
       ogType: 'website',
-      jsonLd: [
-        {
-          '@context': 'https://schema.org',
-          '@type': 'FAQPage',
-          mainEntity: faqItems.map((item) => ({
-            '@type': 'Question',
-            name: item.question,
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: item.answer,
-            },
-          })),
-        },
-      ],
+      jsonLd: [courseSchema, faqSchema],
     });
   }, []);
 
   return (
     <div className="container mx-auto max-w-4xl px-6 py-12">
       <section className="mb-12 text-center">
-        <h1 className="text-4xl font-bold text-slate-900 md:text-5xl">Help Your Child Read Confidently and Fluently</h1>
+        <h1 className="text-4xl font-bold text-slate-900 md:text-5xl">Online Reading Classes for Kids</h1>
         <p className="mt-4 text-lg text-slate-700">
-          Tiny Steps live online reading classes help children move from slow, hesitant reading to smoother sentence reading with confidence.
+          Live guided reading support for children who read slowly, guess words, forget words, or need stronger fluency, comprehension, and reading confidence.
         </p>
+        <ul className="mx-auto mt-5 grid max-w-2xl gap-2 text-left text-sm text-slate-700 sm:grid-cols-2">
+          <li>• For children aged 4–12</li>
+          <li>• Reading fluency and comprehension support</li>
+          <li>• Teacher-guided live practice</li>
+          <li>• Free assessment before recommendation</li>
+        </ul>
+        <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            to="/book-demo"
+            className="inline-block rounded-lg bg-slate-900 px-8 py-3 font-semibold text-white transition hover:bg-slate-800"
+          >
+            Book Free Assessment
+          </Link>
+          <Link
+            to="/courses"
+            className="inline-block rounded-lg border border-slate-300 px-8 py-3 font-semibold text-slate-900 transition hover:border-slate-400"
+          >
+            Explore Courses
+          </Link>
+        </div>
         <Link
           to="/book-demo"
-          className="mt-8 inline-block rounded-lg bg-slate-900 px-8 py-3 font-semibold text-white transition hover:bg-slate-800"
+          className="mt-3 inline-block text-sm font-medium text-slate-700 underline underline-offset-2"
         >
-          Book Free Assessment Class
+          Prefer direct help? Book a free assessment now.
         </Link>
-        <p className="mt-2 text-sm text-slate-600">Takes 30 seconds • No commitment</p>
       </section>
 
       <section className="mb-10 rounded-xl border border-sky-100 bg-sky-50 p-6">
         <h2 className="mb-2 text-lg font-bold text-slate-900">What are online reading classes for kids?</h2>
         <p className="text-slate-700">
-          Online reading classes for kids help children improve phonics-based decoding, reading fluency, and confidence through live guided teaching. They are especially useful for children who know some words but are not yet reading smoothly, accurately, or comfortably.
+          Online reading classes for kids help children improve fluency, reading accuracy, confidence, and comprehension through live guided teaching. They are especially useful for children who can read some words but are not yet reading smoothly, accurately, or confidently in passages.
         </p>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">Why parents choose reading support</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">When does a child need reading support?</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Child reads words but struggles to read sentences smoothly.</li>
-          <li>• Child guesses words instead of decoding carefully.</li>
-          <li>• Reading confidence drops during school homework.</li>
-          <li>• Parent wants stronger comprehension foundations, not rote reading.</li>
+          <li>• Your child reads very slowly.</li>
+          <li>• Your child guesses words instead of reading carefully.</li>
+          <li>• Your child forgets words they read earlier.</li>
+          <li>• Your child avoids reading books or passages.</li>
+          <li>• Your child can read words but struggles to understand the story.</li>
+          <li>• Your child reads in class but loses confidence at home.</li>
         </ul>
       </section>
 
       <section className="mb-10 rounded-xl border border-emerald-100 bg-emerald-50 p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">How Tiny Steps helps</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">How Tiny Steps builds reading confidence</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Live 1:1 or small-group reading classes with active teacher feedback.</li>
-          <li>• Structured progression from sound blending to sentence reading.</li>
-          <li>• Age-appropriate reading tasks for children who need confidence and flow.</li>
-          <li>• Parent-friendly updates on accuracy, fluency, and next reading goals.</li>
-          <li>• Trusted by 250+ families with 4.9/5 parent satisfaction and weekly progress updates.</li>
+          <li>1. We check the child&apos;s current reading level.</li>
+          <li>2. We identify whether the gap is phonics, blending, fluency, vocabulary, or comprehension.</li>
+          <li>3. We practise reading through guided words, sentences, and short passages.</li>
+          <li>4. We support expression, pace, accuracy, and understanding.</li>
+          <li>5. Parents receive clear next-step guidance.</li>
         </ul>
-        <p className="mt-4 text-sm text-slate-700">
-          Core foundation page:{' '}
-          <Link to="/phonics" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-            phonics classes for kids
-          </Link>
-          {' • '}
-          <Link to="/reading-fluency-program" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-            reading fluency program
-          </Link>
-          {' • '}
-          <Link to="/slow-reader-child-help" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-            slow reader child help
-          </Link>
-        </p>
+      </section>
+
+      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Phonics support vs Reading support</h2>
+        <div className="grid gap-4 md:grid-cols-2">
+          <article className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <h3 className="text-lg font-semibold text-slate-900">Phonics support</h3>
+            <p className="mt-2 text-sm text-slate-700">
+              Best when the child struggles to decode words, blend sounds, read CVC words, or understand spelling patterns.
+            </p>
+          </article>
+          <article className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <h3 className="text-lg font-semibold text-slate-900">Reading support</h3>
+            <p className="mt-2 text-sm text-slate-700">
+              Best when the child can read some words but reads slowly, lacks fluency, forgets words, avoids passages, or struggles with comprehension.
+            </p>
+          </article>
+        </div>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-slate-50 p-6">
@@ -117,16 +153,16 @@ export default function ReadingClassesForKidsPage() {
       </section>
 
       <section className="rounded-xl bg-slate-900 p-8 text-center text-white">
-        <p className="mb-3 text-sm text-slate-300">If your child is facing this, the next step is simple:</p>
-        <h2 className="text-2xl font-bold">Want your child to read with confidence?</h2>
-        <p className="mt-2 text-slate-200">Book a free assessment and get the right starting plan.</p>
+        <h2 className="text-2xl font-bold">Not sure whether your child needs phonics or reading support?</h2>
+        <p className="mt-3 text-slate-200">
+          Start with a free assessment. Tiny Steps will check your child&apos;s reading stage and recommend whether the right starting point is phonics, reading fluency, grammar, or a combined path.
+        </p>
         <Link
           to="/book-demo"
           className="mt-6 inline-block rounded-lg bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100"
         >
-          Book Free Assessment Class
+          Book Free Assessment
         </Link>
-        <p className="mt-2 text-sm text-slate-300">Takes 30 seconds • No commitment</p>
       </section>
       <ClusterSeoNav cluster="phonics" />
     </div>

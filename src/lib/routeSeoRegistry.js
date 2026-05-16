@@ -10,7 +10,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/courses': {
     title: 'English Courses for Kids: Phonics, Grammar and Public Speaking | Tiny Steps Learning',
     description:
-      'Compare Tiny Steps Phonics, Grammar, and Public Speaking pathways for children aged 3–12 and choose the right starting course after a free assessment.',
+      'Compare Tiny Steps English courses for children aged 3–12 across phonics, reading, grammar, sentence formation, and public speaking. Book a free assessment to choose the right path.',
     canonicalPath: '/courses',
     ogType: 'website',
   },
@@ -43,9 +43,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/book-demo': {
-    title: 'Book Free Assessment Class | Tiny Steps Learning',
+    title: 'Book Free English Assessment Class for Kids | Tiny Steps Learning',
     description:
-      'Book a free 1:1 assessment class for your child (ages 3-12). Discover their English level and get a personalized learning plan. Live online classes with expert mentors. No credit card required.',
+      'Book a free 1:1 online English assessment for your child. Understand their level in phonics, reading, grammar, sentence formation, and speaking confidence.',
     canonicalPath: '/book-demo',
     ogType: 'website',
   },
@@ -59,7 +59,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/pricing': {
     title: 'Premium 1:1 Online English Class Pricing | Tiny Steps Learning',
     description:
-      'Clear premium pricing for Tiny Steps 1:1 online English classes. Compare packages for phonics, grammar, reading, sentence formation, communication, and public speaking.',
+      'View Tiny Steps pricing for premium 1:1 online English classes for kids. Book a free assessment before choosing phonics, grammar, reading, or public speaking support.',
     canonicalPath: '/pricing',
     ogType: 'website',
   },
@@ -335,7 +335,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/reading-classes-for-kids': {
     title: 'Online Reading Classes for Kids | Tiny Steps Learning',
     description:
-      'Online reading classes for kids focused on blending, reading fluency, confidence, and early comprehension support through live guided practice.',
+      'Live online reading classes for kids who read slowly, guess words, avoid passages, or need stronger fluency, comprehension, and reading confidence.',
     canonicalPath: '/reading-classes-for-kids',
     ogType: 'website',
   },
@@ -398,14 +398,14 @@ export const ROUTE_SEO_REGISTRY = {
   '/child-not-reading-properly': {
     title: 'Child Not Reading Properly? Parent Support Guide | Tiny Steps Learning',
     description:
-      'If your child is not reading properly, learn common causes like phonics and blending gaps, slow decoding, and low confidence—plus practical guided support.',
+      'If your child is not reading properly, learn whether the gap is phonics, blending, fluency, comprehension, or confidence. Book a free reading assessment.',
     canonicalPath: '/child-not-reading-properly',
     ogType: 'website',
   },
   '/slow-reader-child-help': {
-    title: 'Slow Reader Child Help | Reading Fluency Support | Tiny Steps Learning',
+    title: 'Slow Reader Child Help | Reading Support for Kids | Tiny Steps Learning',
     description:
-      'Slow reader child help for parents focused on reading pace, fluency flow, and comprehension stamina through structured guided practice.',
+      'Is your child reading slowly? Learn whether the gap is phonics, blending, fluency, comprehension, or confidence. Book a free reading assessment.',
     canonicalPath: '/slow-reader-child-help',
     ogType: 'website',
   },

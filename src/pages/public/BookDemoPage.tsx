@@ -1,17 +1,46 @@
 import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
-import { organizationSchema } from '../../lib/schemas';
+import { createFAQPageSchema } from '../../lib/schemas';
 import PublicAssessmentForm from '../../components/forms/PublicAssessmentForm';
+
+const assessmentFaqItems = [
+  {
+    question: 'Is the Tiny Steps assessment class free?',
+    answer:
+      'Yes. The Tiny Steps assessment class is free. It helps parents understand the child\'s current English level and the right learning path before choosing a course.',
+  },
+  {
+    question: 'What will be checked in the assessment?',
+    answer:
+      'The assessment may check phonics, reading, grammar, sentence formation, and speaking confidence depending on the child\'s age and current level.',
+  },
+  {
+    question: 'How long is the assessment class?',
+    answer:
+      'The assessment is usually a short live online session designed to understand the child\'s level and recommend the right next step.',
+  },
+  {
+    question: 'Will parents get a course recommendation?',
+    answer:
+      'Yes. Parents receive a clear recommendation on whether the child should start with phonics, grammar, reading, public speaking, or a combined learning path.',
+  },
+  {
+    question: 'Is there pressure to enroll after the assessment?',
+    answer:
+      'No. The assessment is meant to give parents clarity. Families can decide after understanding the child\'s needs and the recommended learning path.',
+  },
+];
 
 export default function BookDemoPage() {
   useEffect(() => {
     applySeo({
-      title: 'Book Free Assessment Class | Tiny Steps Learning',
-      description: 'Book a free 1:1 assessment class for your child (ages 3-12). Discover their English level and get a personalized learning plan. Live online classes with expert mentors. No credit card required.',
+      title: 'Book Free English Assessment Class for Kids | Tiny Steps Learning',
+      description:
+        'Book a free 1:1 online English assessment for your child. Understand their level in phonics, reading, grammar, sentence formation, and speaking confidence.',
       canonicalPath: '/book-demo',
       ogType: 'website',
       jsonLd: [
-        organizationSchema,
         {
           '@context': 'https://schema.org',
           '@type': 'Service',
@@ -27,49 +56,66 @@ export default function BookDemoPage() {
             priceCurrency: 'INR',
           },
         },
+        createFAQPageSchema(assessmentFaqItems),
       ],
     });
   }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
-      {/* Hero Section */}
-      <section className="mx-auto max-w-4xl px-6 py-16 text-center">
+      <section className="mx-auto max-w-5xl px-6 py-14 text-center md:py-16">
         <h1 className="font-heading text-4xl font-bold leading-tight md:text-5xl">
-          Book Your Free Assessment Class
+          Book a Free English Assessment Class for Your Child
         </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-700">
-          Discover your child's English level and get a personalized learning plan. 
-          Our expert mentors will assess reading, speaking, and comprehension in a 
-          fun, pressure-free 1:1 session.
+        <p className="mx-auto mt-6 max-w-3xl text-lg text-gray-700">
+          A friendly 1:1 online assessment to understand your child&apos;s current level in phonics, reading, grammar, sentence formation, and speaking confidence.
         </p>
+
+        <ul className="mx-auto mt-6 grid max-w-3xl gap-3 text-left text-sm text-slate-700 sm:grid-cols-2">
+          <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">For children aged 3–12</li>
+          <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">Live online assessment</li>
+          <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">Personalized course recommendation</li>
+          <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">No pressure to enroll</li>
+        </ul>
+
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <a
+            href="#assessment-form"
+            className="inline-flex items-center rounded-2xl bg-gradient-to-r from-tiny-blue-600 to-tiny-purple-600 px-6 py-3 text-base font-semibold text-white shadow-lg transition hover:shadow-xl"
+          >
+            Book Free Assessment
+          </a>
+          <Link
+            to="/courses"
+            className="inline-flex items-center rounded-2xl border border-slate-300 bg-white px-6 py-3 text-base font-semibold text-slate-900 transition hover:bg-slate-50"
+          >
+            Explore Courses
+          </Link>
+        </div>
 
         <div id="assessment-form" className="mx-auto mt-12 max-w-2xl">
           <PublicAssessmentForm source="book_demo_page" autoFocusFirstField />
         </div>
       </section>
 
-      {/* What to Expect Section */}
       <section className="mx-auto max-w-4xl px-6 py-12">
-        <h2 className="mb-8 text-center text-3xl font-bold">What to Expect</h2>
-        <div className="grid gap-6 md:grid-cols-3">
+        <h2 className="mb-8 text-center text-3xl font-bold">What happens in the assessment?</h2>
+        <div className="grid gap-6 md:grid-cols-2">
           <div className="rounded-2xl border border-gray-200 bg-white p-6">
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
               <span className="text-2xl font-bold text-blue-600">1</span>
             </div>
-            <h3 className="mb-2 text-lg font-semibold">Quick Chat</h3>
-            <p className="text-gray-600">
-              Our mentor will introduce themselves and chat with your child to build rapport.
-            </p>
+            <h3 className="mb-2 text-lg font-semibold">Understand Current Stage</h3>
+            <p className="text-gray-600">We understand your child&apos;s age and current English level.</p>
           </div>
 
           <div className="rounded-2xl border border-gray-200 bg-white p-6">
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
               <span className="text-2xl font-bold text-purple-600">2</span>
             </div>
-            <h3 className="mb-2 text-lg font-semibold">Fun Assessment</h3>
+            <h3 className="mb-2 text-lg font-semibold">Skill Check</h3>
             <p className="text-gray-600">
-              Age-appropriate activities to check reading, speaking, and comprehension skills.
+              We check reading, phonics, grammar, sentence formation, or speaking needs based on the child&apos;s stage.
             </p>
           </div>
 
@@ -77,95 +123,48 @@ export default function BookDemoPage() {
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
               <span className="text-2xl font-bold text-green-600">3</span>
             </div>
-            <h3 className="mb-2 text-lg font-semibold">Get Your Plan</h3>
+            <h3 className="mb-2 text-lg font-semibold">Path Recommendation</h3>
             <p className="text-gray-600">
-              Receive a personalized learning roadmap and course recommendation.
+              We identify the right learning path: Phonics, Grammar, Reading, or Public Speaking.
             </p>
           </div>
-        </div>
-      </section>
 
-      {/* Why Tiny Steps Section */}
-      <section className="bg-gradient-to-r from-tiny-blue-50 to-tiny-purple-50 py-16">
-        <div className="mx-auto max-w-4xl px-6">
-          <h2 className="mb-8 text-center text-3xl font-bold">Why Parents Choose Tiny Steps</h2>
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="flex gap-4">
-              <div className="flex-shrink-0">
-                <svg className="h-6 w-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold">Expert Mentors</h3>
-                <p className="text-gray-700">Kind, trained teachers who make learning fun</p>
-              </div>
+          <div className="rounded-2xl border border-gray-200 bg-white p-6">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
+              <span className="text-2xl font-bold text-orange-600">4</span>
             </div>
-
-            <div className="flex gap-4">
-              <div className="flex-shrink-0">
-                <svg className="h-6 w-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold">1:1 Personalized</h3>
-                <p className="text-gray-700">Every lesson tailored to your child's pace</p>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="flex-shrink-0">
-                <svg className="h-6 w-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold">IB-Aligned Curriculum</h3>
-                <p className="text-gray-700">Structured phonics, grammar & speaking programs</p>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="flex-shrink-0">
-                <svg className="h-6 w-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold">AI-Guided Practice</h3>
-                <p className="text-gray-700">Smart games and activities between classes</p>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="flex-shrink-0">
-                <svg className="h-6 w-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold">Simple Progress Updates</h3>
-                <p className="text-gray-700">Stage-based updates show exactly what your child learned</p>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="flex-shrink-0">
-                <svg className="h-6 w-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="font-semibold">Worldwide Families</h3>
-                <p className="text-gray-700">Trusted by families across 15+ countries</p>
-              </div>
-            </div>
+            <h3 className="mb-2 text-lg font-semibold">Clear Next Step</h3>
+            <p className="text-gray-600">Parents receive a clear recommendation for the next step.</p>
           </div>
         </div>
       </section>
 
-      {/* Final CTA */}
+      <section className="bg-gradient-to-r from-tiny-blue-50 to-tiny-purple-50 py-14">
+        <div className="mx-auto max-w-4xl px-6">
+          <h2 className="mb-8 text-center text-3xl font-bold">Who should book this?</h2>
+          <div className="rounded-2xl border border-slate-200 bg-white p-6">
+            <ul className="space-y-3 text-gray-700">
+              <li>• Your child knows letters but cannot read words confidently.</li>
+              <li>• Your child reads slowly or guesses words.</li>
+              <li>• Your child speaks in one-word answers or short broken sentences.</li>
+              <li>• Your child knows grammar rules but makes mistakes while speaking or writing.</li>
+              <li>• Your child is shy or lacks confidence while speaking.</li>
+              <li>• You are unsure which Tiny Steps course is right.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-4xl px-6 py-12">
+        <h2 className="mb-8 text-center text-3xl font-bold">Assessment outcomes</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 font-medium text-slate-800">Current level clarity</div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 font-medium text-slate-800">Right course recommendation</div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 font-medium text-slate-800">Suggested learning path</div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 font-medium text-slate-800">Parent-friendly next steps</div>
+        </div>
+      </section>
+
       <section className="mx-auto max-w-4xl px-6 py-16 text-center">
         <h2 className="mb-4 text-3xl font-bold">Ready to Get Started?</h2>
         <p className="mx-auto mb-8 max-w-2xl text-gray-700">

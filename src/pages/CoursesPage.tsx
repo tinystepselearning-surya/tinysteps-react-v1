@@ -3,33 +3,32 @@ import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo, getRouteConfig } from '../lib/seo';
 import { catalogs } from '../content/courses';
-import { createCourseListSchema, PUBLIC_FACTS } from '../lib/schemas';
+import { createCourseListSchema, createFAQPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
 
 const coursesSeo = getRouteConfig('/courses');
 const coursesSeoTitle = coursesSeo?.title ?? 'English Courses for Kids: Phonics, Grammar and Public Speaking | Tiny Steps Learning';
 const coursesSeoDescription =
   coursesSeo?.description ??
-  'Compare Tiny Steps Phonics, Grammar, and Public Speaking pathways and choose the right starting course for your child after a free assessment.';
+  'Compare Tiny Steps English courses for children aged 3–12 across phonics, reading, grammar, sentence formation, and public speaking. Book a free assessment to choose the right path.';
 const coursesCanonicalPath = coursesSeo?.canonicalPath ?? '/courses';
 const coursesCanonicalUrl = `https://tinystepslearning.com${coursesCanonicalPath}`;
-const BOOK_ASSESSMENT_HREF = '/courses?book=1';
+const BOOK_ASSESSMENT_HREF = '/book-demo';
+const VIEW_PRICING_HREF = '/pricing';
 const CORE_PROGRAMS_TEXT = `${PUBLIC_FACTS.corePrograms[0]}, ${PUBLIC_FACTS.corePrograms[1]}, and ${PUBLIC_FACTS.corePrograms[2]}`;
 
 const trustPoints = [
-  '1:1 personalized attention',
-  'Structured curriculum',
-  'Weekly parent updates',
-  'Age-appropriate learning paths',
-  'AI-supported practice',
-  'International teaching quality',
+  'Courses for children aged 3–12',
+  'Phonics, Grammar, Reading, and Public Speaking paths',
+  'Live teacher-guided classes',
+  'Free assessment before course recommendation',
 ];
 
 const howItWorksSteps = [
-  'Book free assessment',
-  'We understand your child’s level',
-  'Get a personalized learning plan',
-  'Start classes with expert teachers',
+  'We understand your child’s age, school level, and parent concerns.',
+  'We check reading, phonics, grammar, sentence formation, and speaking confidence based on age.',
+  'We identify the strongest starting point: Phonics, Grammar, Reading, Public Speaking, or a combined path.',
+  'Parents receive a simple next-step recommendation after the assessment.',
 ];
 
 const phonicsCards = [
@@ -88,39 +87,34 @@ const speakingCards = [
 
 const quickAnswerFaqItems = [
   {
-    question: 'Which course should my child start with?',
+    question: 'Which Tiny Steps course is right for my child?',
     answer:
-      'Start with Phonics when reading and blending are weak, Grammar when sentence accuracy is the main gap, and Speaking when confidence and expression need the most support.',
+      'The right course depends on the child’s current level. Children who struggle with reading may need phonics or reading support, while children who make sentence mistakes may need grammar. Children who are shy or give short answers may benefit from public speaking and communication practice.',
   },
   {
-    question: 'How do parents decide between Grammar and Speaking first?',
+    question: 'Should my child start with phonics or grammar?',
     answer:
-      'If school writing has frequent errors, start with Grammar. If your child knows ideas but hesitates to express them, start with Speaking.',
+      'If the child cannot read words confidently, phonics usually comes first. If the child can read but struggles to form correct sentences, grammar and sentence formation may be the better starting point.',
   },
   {
-    question: 'What if my child needs support in more than one area?',
+    question: 'Does Tiny Steps offer public speaking classes for kids?',
     answer:
-      'We recommend one starting priority after assessment, then sequence the next pathway so progress stays focused and manageable.',
+      'Yes. Tiny Steps offers online public speaking and communication classes that help children speak in full sentences, explain ideas, tell stories, and build confidence.',
   },
   {
-    question: 'Can course placement change later?',
+    question: 'Can one child take more than one course?',
     answer:
-      'Yes. Placement is reviewed as your child progresses, so level or pathway can be adjusted when the child is ready.',
+      'Yes. Some children may need a combined path, such as phonics with reading fluency or grammar with public speaking, depending on their current level and goals.',
+  },
+  {
+    question: 'How do I know where to start?',
+    answer:
+      'Parents can book a free assessment. The assessment helps identify the child’s current level and recommends the most suitable Tiny Steps course path.',
   },
 ];
-
 const quickAnswerFaqSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
+  ...createFAQPageSchema(quickAnswerFaqItems),
   '@id': 'https://tinystepslearning.com/courses#quick-answer-faq',
-  mainEntity: quickAnswerFaqItems.map((item) => ({
-    '@type': 'Question',
-    name: item.question,
-    acceptedAnswer: {
-      '@type': 'Answer',
-      text: item.answer,
-    },
-  })),
 };
 
 function CoursesPage() {
@@ -154,12 +148,28 @@ function CoursesPage() {
       })),
     });
 
+    const mainPathItemListSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      '@id': 'https://tinystepslearning.com/courses#main-paths',
+      name: 'Tiny Steps core learning paths',
+      itemListOrder: 'https://schema.org/ItemListOrderAscending',
+      numberOfItems: 5,
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Phonics', url: 'https://tinystepslearning.com/phonics' },
+        { '@type': 'ListItem', position: 2, name: 'Grammar', url: 'https://tinystepslearning.com/grammar' },
+        { '@type': 'ListItem', position: 3, name: 'Reading Classes', url: 'https://tinystepslearning.com/reading-classes-for-kids' },
+        { '@type': 'ListItem', position: 4, name: 'Public Speaking', url: 'https://tinystepslearning.com/speaking' },
+        { '@type': 'ListItem', position: 5, name: 'Courses', url: 'https://tinystepslearning.com/courses' },
+      ],
+    };
+
     applySeo({
       title: coursesSeoTitle,
       description: coursesSeoDescription,
       canonicalPath: coursesCanonicalPath,
       ogType: 'website',
-      jsonLd: [breadcrumb, courseListSchema, quickAnswerFaqSchema],
+      jsonLd: [breadcrumb, courseListSchema, mainPathItemListSchema, quickAnswerFaqSchema],
     });
   }, []);
 
@@ -168,31 +178,31 @@ function CoursesPage() {
       <section className="px-6 py-14 md:py-16">
         <div className="mx-auto max-w-6xl">
           <div className="rounded-[32px] border border-slate-200/80 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-7 text-white shadow-[0_24px_60px_rgba(15,23,42,0.24)] sm:p-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/75">Trusted by families across 15+ countries</p>
-            <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight sm:text-4xl md:text-5xl">Choose the Right English Course: Phonics, Grammar, or Public Speaking</h1>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/75">Course Selection Hub</p>
+            <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight sm:text-4xl md:text-5xl">Find the Right English Course for Your Child</h1>
             <p className="mt-4 max-w-3xl text-sm text-white/85 sm:text-base">
-              <AutoLinkedText text="Phonics, grammar, reading, sentence formation, communication, and public speaking — taught step by step with clarity, care, and proven results." />
+              Tiny Steps helps children build stronger reading, grammar, sentence formation, and speaking confidence through structured live online classes.
             </p>
 
-            <div className="mt-7 flex flex-wrap gap-3 sm:gap-3.5">
-              <span className="rounded-full border border-white/30 bg-white/10 px-3.5 py-1.5 text-[11px] font-semibold leading-none">4.9/5 parent satisfaction</span>
-              <span className="rounded-full border border-white/30 bg-white/10 px-3.5 py-1.5 text-[11px] font-semibold leading-none">Trusted by 250+ families</span>
-              <span className="rounded-full border border-white/30 bg-white/10 px-3.5 py-1.5 text-[11px] font-semibold leading-none">Weekly progress updates</span>
+            <div className="mt-6 grid gap-2 text-sm text-white/90 sm:grid-cols-2">
+              {trustPoints.map((point) => (
+                <p key={point}>• {point}</p>
+              ))}
             </div>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <a
-                href={BOOK_ASSESSMENT_HREF}
+              <Link
+                to={BOOK_ASSESSMENT_HREF}
                 className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-100"
               >
-                Start Free Assessment
-              </a>
-              <a
-                href="#program-overview"
+                Book Free Assessment
+              </Link>
+              <Link
+                to={VIEW_PRICING_HREF}
                 className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
               >
-                Explore Programs
-              </a>
+                View Pricing
+              </Link>
             </div>
           </div>
         </div>
@@ -202,55 +212,48 @@ function CoursesPage() {
         <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
           <div className="text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Journey overview</p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Choose the Right Starting Point</h2>
+            <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Which course should my child start with?</h2>
             <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-600 sm:text-base">
-              <AutoLinkedText text="Every child starts at a different level. We guide them step by step to confident English." />
+              Every child starts at a different level. Use this quick guide to pick the best starting point.
             </p>
           </div>
 
-          <div className="mt-7 grid gap-3 md:grid-cols-3">
+          <div className="mt-7 grid gap-4 md:grid-cols-2">
             {[
               {
                 title: 'Phonics',
-                subtitle: 'Reading foundation',
-                helper: 'Best first step when your child knows letters but struggles to blend or read words.',
-                icon: '🔤',
+                bestFor: 'Children who know letters but cannot read words confidently, guess while reading, or struggle with blending.',
+                ctaLabel: 'Explore Phonics',
+                href: '/phonics',
               },
               {
                 title: 'Grammar',
-                subtitle: 'Sentence accuracy',
-                helper: 'Best first step when your child reads but makes frequent sentence or writing errors.',
-                icon: '✍️',
+                bestFor: 'Children who make sentence mistakes, struggle with tenses, punctuation, articles, prepositions, or writing clear sentences.',
+                ctaLabel: 'Explore Grammar',
+                href: '/grammar',
               },
               {
-                title: 'Speaking',
-                subtitle: 'Confidence and expression',
-                helper: 'Best first step when your child hesitates to speak or struggles to organize responses.',
-                icon: '🎤',
+                title: 'Reading',
+                bestFor: 'Children who read slowly, forget words, avoid reading, or need fluency and comprehension support.',
+                ctaLabel: 'Explore Reading Support',
+                href: '/reading-classes-for-kids',
               },
-            ].map((item, index) => (
+              {
+                title: 'Public Speaking',
+                bestFor: 'Children who give one-word answers, feel shy, speak unclearly, or need confidence while expressing ideas.',
+                ctaLabel: 'Explore Public Speaking',
+                href: '/speaking',
+              },
+            ].map((item) => (
               <div
                 key={item.title}
-                role="button"
-                tabIndex={0}
-                onClick={() => {
-                  const sectionId = `${item.title.toLowerCase()}-program-section`;
-                  document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    const sectionId = `${item.title.toLowerCase()}-program-section`;
-                    document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }
-                }}
-                className="group relative cursor-pointer rounded-2xl border border-slate-200/90 bg-gradient-to-br from-white via-slate-50/80 to-white p-5 text-center shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-slate-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-300/80"
+                className="rounded-2xl border border-slate-200/90 bg-gradient-to-br from-white via-slate-50/80 to-white p-5 shadow-sm"
               >
-                <p className="mx-auto mb-2 inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-base">{item.icon}</p>
-                <p className="text-lg font-bold text-slate-900">{item.title}</p>
-                <p className="mt-1 text-sm font-medium text-slate-600">{item.subtitle}</p>
-                <p className="mt-2 text-xs leading-relaxed text-slate-500">{item.helper}</p>
-                <p className="mt-3 text-base font-semibold text-slate-400 transition-transform duration-200 group-hover:translate-x-1">→</p>
+                <h3 className="text-lg font-bold text-slate-900">{item.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.bestFor}</p>
+                <Link to={item.href} className="mt-4 inline-flex text-sm font-semibold text-slate-900 underline underline-offset-2">
+                  {item.ctaLabel}
+                </Link>
               </div>
             ))}
           </div>
@@ -259,7 +262,7 @@ function CoursesPage() {
 
       <section id="phonics-program-section" className="px-6 py-10">
         <div className="mx-auto max-w-6xl mb-8 rounded-[28px] border border-slate-200 bg-gradient-to-r from-slate-50 via-white to-sky-50 p-6 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-8">
-          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Which course should I choose first?</h2>
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Parent FAQs before choosing a course</h2>
           <p className="mt-3 max-w-4xl text-sm text-slate-700 sm:text-base">
             Choose the first course based on your child&apos;s main bottleneck. Reading and blending gaps usually need
             Phonics first, sentence accuracy and writing gaps usually need Grammar first, and hesitation or expression
@@ -415,7 +418,7 @@ function CoursesPage() {
 
       <section className="px-6 py-10">
         <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-gradient-to-r from-slate-50 to-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-8">
-          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">How It Works</h2>
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">How we recommend the right path</h2>
           <div className="mt-6 grid gap-3 md:grid-cols-4">
             {howItWorksSteps.map((step, index) => (
               <div key={step} className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-700 shadow-sm">
@@ -423,6 +426,19 @@ function CoursesPage() {
                 <p className="mt-2 font-semibold text-slate-900">{step}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-6 pb-8">
+        <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-8">
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Common parent situations</h2>
+          <div className="mt-4 grid gap-3 text-sm text-slate-700 md:grid-cols-2">
+            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">&ldquo;My child knows ABC but cannot read words.&rdquo; → Start with <Link to="/phonics" className="font-semibold underline underline-offset-2">Phonics</Link></p>
+            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">&ldquo;My child reads but makes many sentence mistakes.&rdquo; → Start with <Link to="/grammar" className="font-semibold underline underline-offset-2">Grammar</Link></p>
+            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">&ldquo;My child gives one-word answers.&rdquo; → Start with <Link to="/speaking" className="font-semibold underline underline-offset-2">Public Speaking and Sentence Formation</Link></p>
+            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">&ldquo;My child reads slowly and avoids books.&rdquo; → Start with <Link to="/reading-classes-for-kids" className="font-semibold underline underline-offset-2">Reading Fluency support</Link></p>
+            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 md:col-span-2">&ldquo;I am not sure where to start.&rdquo; → <Link to={BOOK_ASSESSMENT_HREF} className="font-semibold underline underline-offset-2">Book Free Assessment</Link></p>
           </div>
         </div>
       </section>
