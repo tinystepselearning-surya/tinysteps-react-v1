@@ -1532,6 +1532,102 @@ function dateLikeToYmd(value: any): string | null {
   return null;
 }
 
+function parseYmdToUtcDate(ymd: string): Date | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ymd || '').trim());
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
+  const dt = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+  return Number.isNaN(dt.getTime()) ? null : dt;
+}
+
+function toYmdFromUtcDate(dt: Date): string {
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}-${String(dt.getUTCDate()).padStart(2, '0')}`;
+}
+
+function formatYmdForAdminDisplay(ymd: string): string {
+  const dt = parseYmdToUtcDate(ymd);
+  if (!dt) return ymd;
+  return new Intl.DateTimeFormat('en-IN', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(dt);
+}
+
+type PlannedCoveragePreview = {
+  totalSlotsInRange: number;
+  capStopsAtYmd: string | null;
+};
+
+function estimatePlannedCoverage(options: {
+  classesStartDate: string;
+  weeklySlots: ScheduleWeeklySlot[];
+  generateWeeks: number;
+  endDate?: string;
+  plannedSessions: number;
+}): PlannedCoveragePreview | null {
+  const planned = Math.max(0, Math.floor(safeNumber(options.plannedSessions, 0)));
+  if (planned <= 0) return null;
+
+  const start = parseYmdToUtcDate(options.classesStartDate);
+  if (!start) return null;
+
+  const endFromInput = options.endDate ? parseYmdToUtcDate(options.endDate) : null;
+  const fallbackEnd = new Date(start.getTime());
+  const weeks = Math.max(1, Math.min(52, Math.floor(safeNumber(options.generateWeeks, 8))));
+  fallbackEnd.setUTCDate(fallbackEnd.getUTCDate() + (weeks * 7 - 1));
+  const end = endFromInput || fallbackEnd;
+  if (end.getTime() < start.getTime()) return null;
+
+  const normalizedSlots = sortWeeklySlots(options.weeklySlots)
+    .map((slot) => ({
+      weekday: slot.weekday,
+      time: slot.time,
+      durationMinutes: clampDurationMinutes(slot.durationMinutes, 35),
+    }))
+    .filter((slot) => isValidWeekday(slot.weekday) && isValidTimeHHmm(slot.time));
+  const uniqueSlotMap = new Map<string, { weekday: number; time: string; durationMinutes: number }>();
+  normalizedSlots.forEach((slot) => {
+    uniqueSlotMap.set(`${slot.weekday}|${slot.time}|${slot.durationMinutes}`, slot);
+  });
+  const uniqueSlots = Array.from(uniqueSlotMap.values());
+  if (!uniqueSlots.length) return null;
+
+  const slotsByWeekday = new Map<number, { weekday: number; time: string; durationMinutes: number }[]>();
+  uniqueSlots.forEach((slot) => {
+    const existing = slotsByWeekday.get(slot.weekday) || [];
+    existing.push(slot);
+    slotsByWeekday.set(slot.weekday, existing);
+  });
+
+  let slotCount = 0;
+  let capStopsAtYmd: string | null = null;
+  for (
+    let day = new Date(start.getTime());
+    day.getTime() <= end.getTime();
+    day.setUTCDate(day.getUTCDate() + 1)
+  ) {
+    const daySlots = slotsByWeekday.get(day.getUTCDay());
+    if (!daySlots || !daySlots.length) continue;
+    for (let idx = 0; idx < daySlots.length; idx += 1) {
+      slotCount += 1;
+      if (!capStopsAtYmd && slotCount === planned) {
+        capStopsAtYmd = toYmdFromUtcDate(day);
+      }
+    }
+  }
+
+  return {
+    totalSlotsInRange: slotCount,
+    capStopsAtYmd: planned <= slotCount ? capStopsAtYmd : null,
+  };
+}
+
 function formatYMDCompact(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -1685,6 +1781,17 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const weeklySlotsSummary = useMemo(
     () => formatWeeklySlotSummary(weeklySlots),
     [weeklySlots],
+  );
+  const plannedCoveragePreview = useMemo(
+    () =>
+      estimatePlannedCoverage({
+        classesStartDate,
+        weeklySlots,
+        generateWeeks,
+        endDate,
+        plannedSessions,
+      }),
+    [classesStartDate, endDate, generateWeeks, plannedSessions, weeklySlots],
   );
 
   const handleDeleteEnrollment = async (enrollmentId: string) => {
@@ -2242,6 +2349,8 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
           replaced?: number;
           plannedSessionsTarget?: number | null;
           plannedSessionsGenerated?: number;
+          plannedSessionsUnfilled?: number;
+          plannedSessionsCapReached?: boolean;
           rangeStart: string;
           rangeEnd: string;
           rangeStartYmd?: string;
@@ -2276,20 +2385,34 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         replaced,
         plannedSessionsTarget,
         plannedSessionsGenerated,
+        plannedSessionsUnfilled,
+        plannedSessionsCapReached,
         idempotentReplay,
       } = result.data;
       const plannedSummary =
         plannedSessionsTarget && plannedSessionsGenerated !== undefined
-          ? ` · planned ${plannedSessionsGenerated}/${plannedSessionsTarget}`
+          ? ` · ${plannedSessionsGenerated} of ${plannedSessionsTarget} planned classes generated`
+          : '';
+      const capReachedSummary =
+        plannedSessionsTarget && (plannedSessionsCapReached || plannedSessionsUnfilled === 0)
+          ? ' · Planned class limit reached. Increase planned classes to continue future scheduling.'
           : '';
       const replaySummary = idempotentReplay ? ' · replayed prior success' : '';
+      const additionalSummary =
+        plannedSessionsTarget && created > 0
+          ? ` · ${created} additional future session${created === 1 ? '' : 's'} created`
+          : '';
+      const noNewBecauseCapSummary =
+        plannedSessionsTarget && created === 0 && (plannedSessionsCapReached || plannedSessionsUnfilled === 0)
+          ? ' · No new sessions created because the planned class limit is already reached.'
+          : '';
 
       toast({
         title: 'Schedule saved',
         description:
           typeof replaced === 'number'
-            ? `✅ Updated schedule: replaced ${replaced}, created ${created}, skipped ${skipped}${plannedSummary}${replaySummary}`
-            : `✅ Created ${created} sessions (${skipped} already existed)${plannedSummary}${replaySummary}`,
+            ? `✅ Updated schedule: replaced ${replaced}, created ${created}, skipped ${skipped}${plannedSummary}${additionalSummary}${noNewBecauseCapSummary}${capReachedSummary}${replaySummary}`
+            : `✅ Created ${created} sessions (${skipped} already existed)${plannedSummary}${additionalSummary}${noNewBecauseCapSummary}${capReachedSummary}${replaySummary}`,
       });
 
       setScheduleFor(null);
@@ -3566,6 +3689,12 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                   <div className="text-xs text-gray-500 mt-1">
                     If set, schedule creation stops after this many class slots.
                   </div>
+                  {plannedCoveragePreview?.capStopsAtYmd ? (
+                    <div className="text-xs text-amber-700 mt-1">
+                      Planned cap will be exhausted on {formatYmdForAdminDisplay(plannedCoveragePreview.capStopsAtYmd)}.
+                      Sessions after this date will not be generated unless you increase planned classes.
+                    </div>
+                  ) : null}
                 </div>
 
                 <div>

@@ -108,6 +108,7 @@ interface CreateSessionsResponse {
   plannedSessionsTarget: number | null;
   plannedSessionsGenerated: number;
   plannedSessionsUnfilled: number;
+  plannedSessionsCapReached: boolean;
   rangeStart: string;
   rangeEnd: string;
   rangeStartYmd: string;
@@ -661,6 +662,26 @@ async function generateSessionsFromScheduleInternal(
       configuredSessionSignatures.add(`${ymd}|${slot.timeHHmm}|${slot.durationMinutes}|${teacherId || ""}`);
     }
   }
+  const cappedAllowedSessionSignatures = new Set<string>();
+  if (plannedSessionsTarget) {
+    let candidateCounter = 0;
+    for (
+      let d = new Date(rangeStartDate.getTime());
+      d.getTime() <= rangeEndDate.getTime();
+      d.setUTCDate(d.getUTCDate() + 1)
+    ) {
+      const dayOfWeek = d.getUTCDay();
+      const daySlots = slotsByWeekday.get(dayOfWeek);
+      if (!daySlots || daySlots.length === 0) continue;
+      const ymd = toYmdFromContextDate(d);
+      for (const slot of daySlots) {
+        candidateCounter += 1;
+        if (candidateCounter > plannedSessionsTarget) break;
+        cappedAllowedSessionSignatures.add(`${ymd}|${slot.timeHHmm}|${slot.durationMinutes}|${teacherId || ""}`);
+      }
+      if (candidateCounter >= plannedSessionsTarget) break;
+    }
+  }
 
   const sessionSignatureCounts = new Map<string, number>();
   for (const sessionDoc of existingSnap.docs) {
@@ -733,7 +754,13 @@ async function generateSessionsFromScheduleInternal(
       const isRemovedOrChangedSignature =
         isWithinReplacementRange && (!signature || !configuredSessionSignatures.has(signature));
       const isDuplicateUpcomingSignature = signature ? (sessionSignatureCounts.get(signature) || 0) > 1 : false;
-      if (!isRemovedOrChangedSignature && !isDuplicateUpcomingSignature && !isSlotPatternStale) continue;
+      const isBeyondPlannedCap =
+        Boolean(plannedSessionsTarget) &&
+        isWithinReplacementRange &&
+        Boolean(signature) &&
+        configuredSessionSignatures.has(signature || "") &&
+        !cappedAllowedSessionSignatures.has(signature || "");
+      if (!isRemovedOrChangedSignature && !isDuplicateUpcomingSignature && !isSlotPatternStale && !isBeyondPlannedCap) continue;
 
       deleteBatch.delete(sessionDoc.ref);
       deleteOps += 1;
@@ -908,6 +935,7 @@ async function generateSessionsFromScheduleInternal(
   const plannedSessionsUnfilled = plannedSessionsTarget ?
     Math.max(plannedSessionsTarget - plannedSessionsGenerated, 0) :
     0;
+  const plannedSessionsCapReached = Boolean(plannedSessionsTarget && plannedSessionsUnfilled === 0);
 
   logger.info("Sessions generated from schedule", {
     enrollmentId,
@@ -918,6 +946,7 @@ async function generateSessionsFromScheduleInternal(
     plannedSessionsTarget,
     plannedSessionsGenerated,
     plannedSessionsUnfilled,
+    plannedSessionsCapReached,
     rangeStartYmd,
     rangeEndYmd,
     weeksAhead,
@@ -931,6 +960,7 @@ async function generateSessionsFromScheduleInternal(
     plannedSessionsTarget,
     plannedSessionsGenerated,
     plannedSessionsUnfilled,
+    plannedSessionsCapReached,
     rangeStart: rangeStartIso,
     rangeEnd: rangeEndIso,
     rangeStartYmd,
@@ -1184,8 +1214,12 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
         enrollmentId,
         replay,
       });
+      const replayCapReached =
+        replay.plannedSessionsCapReached ??
+        Boolean(replay.plannedSessionsTarget && replay.plannedSessionsUnfilled === 0);
       return {
         ...replay,
+        plannedSessionsCapReached: replayCapReached,
         idempotentReplay: true,
         orchestrationState: "replayed",
       };
