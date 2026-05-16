@@ -277,7 +277,11 @@ export default function TeacherPayments(): JSX.Element {
       where('monthKey', '==', selectedMonth)
     );
     const unsub = onSnapshot(q, (snap) => {
-      setPayouts(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })));
+      setPayouts(
+        snap.docs
+          .map((d) => ({ id: d.id, ...(d.data() as any) }))
+          .filter((payout) => payout.archived !== true)
+      );
     });
     return () => unsub();
   }, [selectedMonth]);
@@ -292,7 +296,11 @@ export default function TeacherPayments(): JSX.Element {
       where('monthKey', '==', selectedMonth)
     );
     const unsub = onSnapshot(q, (snap) => {
-      setEarnings(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })));
+      setEarnings(
+        snap.docs
+          .map((d) => ({ id: d.id, ...(d.data() as any) }))
+          .filter((earning) => earning.archived !== true)
+      );
     });
     return () => unsub();
   }, [selectedMonth]);
@@ -644,6 +652,9 @@ export default function TeacherPayments(): JSX.Element {
           <h2 className="text-xl font-semibold">Teacher Payments</h2>
           <p className="text-sm text-muted-foreground">
             Monthly earnings vs payouts for each teacher, with correction tools for invalid session earnings.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Archived records are excluded from active teacher payment totals.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

@@ -50,7 +50,10 @@ export const useParentPayments = (parentId: string) => {
     queryFn: async () => {
       const q = query(collection(db, 'payments'), where('parentId', '==', parentId), orderBy('date', 'desc'));
       const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ParentPayment));
+      return snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() } as ParentPayment & { archived?: boolean }))
+        .filter((row) => row.archived !== true)
+        .map((row) => row as ParentPayment);
     },
     enabled: !!parentId,
   });

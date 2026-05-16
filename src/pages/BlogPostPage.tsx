@@ -22,23 +22,6 @@ const getArticleAuthorLabel = (author: unknown): string =>
     ? `${FOUNDER_AUTHOR_NAME} • Founder, ${PUBLIC_FACTS.brandName}`
     : TEAM_AUTHOR_LABEL;
 
-const getArticleAuthorSchema = (author: unknown) =>
-  isFounderAuthor(author)
-    ? {
-        '@type': 'Person',
-        '@id': `${SITE_ORIGIN}/#priya-founder`,
-        name: FOUNDER_AUTHOR_NAME,
-        jobTitle: 'Founder',
-        worksFor: {
-          '@id': ORGANIZATION_ID,
-        },
-      }
-    : {
-        '@type': 'Organization',
-        '@id': ORGANIZATION_ID,
-        name: PUBLIC_FACTS.brandName,
-      };
-
 const CATEGORY_ARTICLE_CONFIG = {
   Phonics: {
     primaryAction: { label: 'Explore Tiny Steps phonics classes', to: '/phonics' },
@@ -510,15 +493,20 @@ function buildMetaDescription(src: any) {
   return '';
 }
 
+  const canonicalArticleUrl = useMemo(
+    () => `${SITE_ORIGIN}/blog/${slug || metaSource.slug || ''}`,
+    [metaSource.slug, slug],
+  );
+
   const breadcrumbSchema = useMemo(() => ({
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
       { '@type': 'ListItem', position: 2, name: 'Blog', item: `${SITE_ORIGIN}/blog` },
-      { '@type': 'ListItem', position: 3, name: metaSource.title || 'Article', item: `${SITE_ORIGIN}/blog/${slug}` },
+      { '@type': 'ListItem', position: 3, name: metaSource.title || 'Article', item: canonicalArticleUrl },
     ],
-  }), [metaSource, slug]);
+  }), [canonicalArticleUrl, metaSource.title]);
 
   const articleSchema = useMemo(() => {
     if (!post && !metaSource) return null;
@@ -526,15 +514,22 @@ function buildMetaDescription(src: any) {
       '@context': 'https://schema.org',
       '@type': 'BlogPosting',
       headline: metaSource.title,
-      author: getArticleAuthorSchema(metaSource.author),
+      author: {
+        '@type': 'Organization',
+        name: PUBLIC_FACTS.brandName,
+      },
+      url: canonicalArticleUrl,
       // Add dates only when present in metadata (do not invent dates)
-      image: metaSource.hero ? (metaSource.hero.startsWith('http') ? metaSource.hero : `${SITE_ORIGIN}${metaSource.hero}`) : undefined,
+      image: metaSource.hero
+        ? (metaSource.hero.startsWith('http') ? metaSource.hero : `${SITE_ORIGIN}${metaSource.hero}`)
+        : `${SITE_ORIGIN}/og-default.jpg`,
       description: buildMetaDescription(metaSource) || undefined,
       articleSection: metaSource.category || undefined,
       mainEntityOfPage: {
         '@type': 'WebPage',
-        '@id': `${SITE_ORIGIN}/blog/${slug}`,
+        '@id': canonicalArticleUrl,
       },
+      inLanguage: 'en-IN',
       wordCount: post && Array.isArray(post.body) ? post.body.map((b) => (b.content || '')).join('\n').split(/\s+/).length : 2500,
       articleBody: post ? post.body.map((b) => b.content).join('\n') : '',
     };
@@ -564,7 +559,7 @@ function buildMetaDescription(src: any) {
     }
 
     return obj;
-  }, [post, metaSource, slug]);
+  }, [canonicalArticleUrl, metaSource, post]);
 
   const faqSchema = useMemo(() => {
     if (!post?.faq?.length) return null;

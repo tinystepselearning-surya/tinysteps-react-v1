@@ -120,6 +120,13 @@ export default function ReadingClassesForKidsPage() {
           <li>4. We support expression, pace, accuracy, and understanding.</li>
           <li>5. Parents receive clear next-step guidance.</li>
         </ul>
+        <p className="mt-4 text-sm text-slate-700">
+          Parents looking for Hyderabad-based online English support can start with a free assessment and choose the right path through{' '}
+          <Link to="/online-english-classes-hyderabad" className="font-semibold text-slate-900 underline underline-offset-2 hover:text-slate-700">
+            Online English Classes for Kids in Hyderabad
+          </Link>
+          .
+        </p>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">

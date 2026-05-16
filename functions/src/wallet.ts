@@ -8,6 +8,7 @@ if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
 const IST_OFFSET_MINUTES = 330;
+const MIN_WALLET_DEDUCTION_CUTOVER_MONTH_KEY = '2026-05';
 
 type WalletDirection = 'credit' | 'debit';
 type WalletTransactionType =
@@ -69,6 +70,18 @@ interface SetWalletAutomationConfigRequest {
   walletCutoverDate?: string | null;
   note?: string;
   confirmationText?: string;
+}
+
+interface PreviewMissingWalletDeductionsRequest {
+  monthKey?: string;
+  batchLimit?: number;
+}
+
+interface BackfillMissingWalletDeductionsRequest {
+  monthKey?: string;
+  dryRun?: boolean;
+  confirmationText?: string;
+  batchLimit?: number;
 }
 
 type ParentPaymentAllocationMode = 'legacy_then_wallet' | 'wallet_only';
@@ -164,7 +177,7 @@ interface WalletAutomationConfigResolved {
   exists: boolean;
   walletClassDeductionsEnabled: boolean;
   walletCutoverMonthKey: string | null;
-  walletCutoverDate: Date | null;
+  walletCutoverDate: string | null;
   updatedAt: Date | null;
   updatedBy: string | null;
   lastEnabledAt: Date | null;
@@ -307,6 +320,17 @@ function normalizeMonthKey(value: unknown): string | null {
   if (!raw) return null;
   if (!/^\d{4}-\d{2}$/.test(raw)) return null;
   return raw;
+}
+
+function normalizeDateOnlyYmd(value: unknown): string | null {
+  if (typeof value === 'string') {
+    const raw = value.trim();
+    if (!raw) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  }
+  const parsed = toDate(value);
+  if (!parsed) return null;
+  return dayKeyFromDateIST(parsed);
 }
 
 function normalizeParentPaymentAllocationMode(value: unknown): ParentPaymentAllocationMode | null {
@@ -619,7 +643,8 @@ async function loadWalletAutomationConfig(
 
   const walletClassDeductionsEnabled = financeData.walletClassDeductionsEnabled === true;
   const walletCutoverMonthKey = normalizeMonthKey(financeData.walletCutoverMonthKey);
-  const parsedCutoverDate = toDate(financeData.walletCutoverDate);
+  const walletCutoverDateKey = normalizeDateOnlyYmd(financeData.walletCutoverDate);
+  const parsedCutoverDate = walletCutoverDateKey ? toDate(walletCutoverDateKey) : null;
   const walletCutoverDate = parsedCutoverDate && !isNaN(parsedCutoverDate.getTime())
     ? parsedCutoverDate
     : null;
@@ -640,7 +665,7 @@ function resolveWalletAutomationConfigFromData(
     exists,
     walletClassDeductionsEnabled: source.walletClassDeductionsEnabled === true,
     walletCutoverMonthKey: normalizeMonthKey(source.walletCutoverMonthKey),
-    walletCutoverDate: toDate(source.walletCutoverDate),
+    walletCutoverDate: normalizeDateOnlyYmd(source.walletCutoverDate),
     updatedAt: toDate(source.updatedAt),
     updatedBy: normalizeOptionalId(source.updatedBy),
     lastEnabledAt: toDate(source.lastEnabledAt),
@@ -652,7 +677,7 @@ function toWalletAutomationConfigResponse(config: WalletAutomationConfigResolved
   return {
     walletClassDeductionsEnabled: config.walletClassDeductionsEnabled === true,
     walletCutoverMonthKey: config.walletCutoverMonthKey,
-    walletCutoverDate: config.walletCutoverDate ? config.walletCutoverDate.toISOString() : null,
+    walletCutoverDate: config.walletCutoverDate || null,
     updatedAt: config.updatedAt ? config.updatedAt.toISOString() : null,
     updatedBy: config.updatedBy,
     lastEnabledAt: config.lastEnabledAt ? config.lastEnabledAt.toISOString() : null,
@@ -686,6 +711,21 @@ function resolveChargeClassSessionId(chargeId: string, data: Record<string, unkn
   if (sessionId && sessionId === chargeId) return chargeId;
   const source = normalizeOptionalText(data.source, 120);
   if (!sessionId && source === 'session_present_completed') return chargeId;
+  return null;
+}
+
+function resolveChargeStudentName(data: Record<string, unknown>): string | null {
+  const candidates: unknown[] = [
+    data.kidName,
+    data.studentName,
+    data.childName,
+    data.kidDisplayName,
+    data.studentDisplayName,
+  ];
+  for (const candidate of candidates) {
+    const normalized = normalizeOptionalText(candidate, 120);
+    if (normalized) return normalized;
+  }
   return null;
 }
 
@@ -992,15 +1032,15 @@ export const setWalletAutomationConfig = onCall(
       }
     }
 
-    let normalizedCutoverDateInput: Date | null | undefined;
+    let normalizedCutoverDateInput: string | null | undefined;
     if (hasWalletCutoverDate) {
       const rawDate = data.walletCutoverDate;
       if (rawDate == null || String(rawDate).trim() === '') {
         normalizedCutoverDateInput = null;
       } else {
-        const parsedDate = toDate(rawDate);
+        const parsedDate = normalizeDateOnlyYmd(rawDate);
         if (!parsedDate) {
-          throw new HttpsError('invalid-argument', 'walletCutoverDate must be a valid date');
+          throw new HttpsError('invalid-argument', 'walletCutoverDate must be in YYYY-MM-DD format');
         }
         normalizedCutoverDateInput = parsedDate;
       }
@@ -1035,6 +1075,20 @@ export const setWalletAutomationConfig = onCall(
       const nextWalletCutoverDate = hasWalletCutoverDate
         ? (normalizedCutoverDateInput ?? null)
         : previousConfig.walletCutoverDate;
+      const nextEffectiveCutoverMonthKey =
+        nextWalletCutoverMonthKey ||
+        (nextWalletCutoverDate ? nextWalletCutoverDate.slice(0, 7) : null);
+
+      if (
+        (walletClassDeductionsEnabled || hasWalletCutoverMonthKey || hasWalletCutoverDate) &&
+        nextEffectiveCutoverMonthKey &&
+        nextEffectiveCutoverMonthKey.localeCompare(MIN_WALLET_DEDUCTION_CUTOVER_MONTH_KEY) < 0
+      ) {
+        throw new HttpsError(
+          'invalid-argument',
+          `wallet cutover cannot be earlier than ${MIN_WALLET_DEDUCTION_CUTOVER_MONTH_KEY}`
+        );
+      }
 
       if (
         walletClassDeductionsEnabled &&
@@ -1049,21 +1103,15 @@ export const setWalletAutomationConfig = onCall(
 
       const enabledChanged =
         previousConfig.walletClassDeductionsEnabled !== walletClassDeductionsEnabled;
-      const previousCutoverDateMs = previousConfig.walletCutoverDate
-        ? previousConfig.walletCutoverDate.getTime()
-        : null;
-      const nextCutoverDateMs = nextWalletCutoverDate ? nextWalletCutoverDate.getTime() : null;
       const cutoverChanged =
         previousConfig.walletCutoverMonthKey !== nextWalletCutoverMonthKey ||
-        previousCutoverDateMs !== nextCutoverDateMs;
+        previousConfig.walletCutoverDate !== nextWalletCutoverDate;
 
       const now = admin.firestore.FieldValue.serverTimestamp();
       const patch: Record<string, unknown> = {
         walletClassDeductionsEnabled,
         walletCutoverMonthKey: nextWalletCutoverMonthKey || null,
-        walletCutoverDate: nextWalletCutoverDate
-          ? admin.firestore.Timestamp.fromDate(nextWalletCutoverDate)
-          : null,
+        walletCutoverDate: nextWalletCutoverDate || null,
         updatedAt: now,
         updatedBy: actor,
         updatedByEmail: actorEmail,
@@ -1101,6 +1149,760 @@ export const setWalletAutomationConfig = onCall(
       ok: true,
       config: toWalletAutomationConfigResponse(latestConfig),
       changed: txOutcome,
+    };
+  }
+);
+
+export const previewMissingWalletDeductions = onCall(
+  {
+    region: REGION,
+    memory: '256MiB',
+    timeoutSeconds: 60,
+  },
+  async (request) => {
+    await ensureAdmin(request.auth);
+
+    const data = (request.data || {}) as PreviewMissingWalletDeductionsRequest;
+    if (hasOwnProp(data, 'monthKey') && data.monthKey != null && typeof data.monthKey !== 'string') {
+      throw new HttpsError('invalid-argument', 'monthKey must be a string in YYYY-MM format');
+    }
+    const rawMonthKey = typeof data.monthKey === 'string' ? data.monthKey.trim() : '';
+    const monthKey = rawMonthKey ? normalizeMonthKey(rawMonthKey) : '2026-05';
+    if (!monthKey) {
+      throw new HttpsError('invalid-argument', 'monthKey must be in YYYY-MM format');
+    }
+    if (monthKey.localeCompare(MIN_WALLET_DEDUCTION_CUTOVER_MONTH_KEY) < 0) {
+      throw new HttpsError(
+        'invalid-argument',
+        `monthKey cannot be earlier than ${MIN_WALLET_DEDUCTION_CUTOVER_MONTH_KEY}`
+      );
+    }
+
+    const batchLimitRaw = hasOwnProp(data, 'batchLimit') ? Number(data.batchLimit) : 300;
+    if (!Number.isFinite(batchLimitRaw)) {
+      throw new HttpsError('invalid-argument', 'batchLimit must be a number');
+    }
+    const batchLimit = Math.floor(batchLimitRaw);
+    if (batchLimit < 1 || batchLimit > 400) {
+      throw new HttpsError('invalid-argument', 'batchLimit must be between 1 and 400');
+    }
+
+    const db = admin.firestore();
+    const chargesSnap = await db
+      .collection('billingCharges')
+      .where('monthKey', '==', monthKey)
+      .limit(batchLimit + 1)
+      .get();
+
+    const hasMoreCharges = chargesSnap.size > batchLimit;
+    const chargeDocs = hasMoreCharges ? chargesSnap.docs.slice(0, batchLimit) : chargesSnap.docs;
+
+    const warnings: string[] = [];
+    const missingParentIdsSample: string[] = [];
+    const invalidAmountSample: string[] = [];
+    const ambiguousMatchSample: string[] = [];
+    const addWarning = (message: string) => {
+      if (warnings.length < 150) warnings.push(message);
+    };
+    const addSample = (target: string[], id: string) => {
+      if (!id) return;
+      if (target.length >= 20) return;
+      if (!target.includes(id)) target.push(id);
+    };
+
+    type EligibleCharge = {
+      chargeId: string;
+      parentId: string;
+      amount: number;
+      classSessionMatchKeys: string[];
+      sessionId: string | null;
+      studentName: string | null;
+    };
+    const eligibleCharges: EligibleCharge[] = [];
+
+    for (const chargeSnap of chargeDocs) {
+      const chargeId = chargeSnap.id;
+      const chargeData = (chargeSnap.data() || {}) as Record<string, unknown>;
+      if (chargeData.archived === true) continue;
+
+      const status = normalizeChargeStatus(chargeData.status);
+      const voidedByFlag =
+        chargeData.voided === true ||
+        chargeData.isVoided === true ||
+        chargeData.cancelled === true ||
+        chargeData.canceled === true;
+      if (isExcludedBillingChargeStatus(status) || voidedByFlag) continue;
+
+      const parentId = normalizeOptionalId(chargeData.parentId);
+      if (!parentId) {
+        addSample(missingParentIdsSample, chargeId);
+        addWarning(`charge ${chargeId}: missing parentId`);
+        continue;
+      }
+
+      const amountRaw = Number(chargeData.amount);
+      if (!Number.isFinite(amountRaw) || amountRaw <= 0) {
+        addSample(invalidAmountSample, chargeId);
+        addWarning(`charge ${chargeId}: missing/invalid amount`);
+        continue;
+      }
+      const amount = roundCurrency(Math.max(amountRaw, 0));
+      if (!(amount > 0)) {
+        addSample(invalidAmountSample, chargeId);
+        addWarning(`charge ${chargeId}: amount must be greater than zero`);
+        continue;
+      }
+
+      eligibleCharges.push({
+        chargeId,
+        parentId,
+        amount,
+        classSessionMatchKeys: Array.from(
+          new Set(
+            [
+              resolveChargeClassSessionId(chargeId, chargeData),
+              normalizeOptionalId(chargeData.sessionId),
+            ].filter((value): value is string => Boolean(value))
+          )
+        ),
+        sessionId: normalizeOptionalId(chargeData.sessionId),
+        studentName: resolveChargeStudentName(chargeData),
+      });
+    }
+
+    const parentIds = Array.from(new Set(eligibleCharges.map((charge) => charge.parentId)));
+    const parentTxSnaps = await Promise.all(
+      parentIds.map((parentId) =>
+        db
+          .collection('parentWallets')
+          .doc(parentId)
+          .collection('transactions')
+          .where('type', '==', 'class_deduction')
+          .get()
+      )
+    );
+
+    type WalletDeductionTx = {
+      transactionId: string;
+      billingChargeId: string | null;
+      classSessionId: string | null;
+      monthKey: string | null;
+    };
+    const txByParent = new Map<string, WalletDeductionTx[]>();
+    parentTxSnaps.forEach((snap, index) => {
+      const parentId = parentIds[index];
+      const entries: WalletDeductionTx[] = [];
+      snap.docs.forEach((docSnap) => {
+        const txData = (docSnap.data() || {}) as Record<string, unknown>;
+        if (normalizeDirection(txData.direction) !== 'debit') return;
+        entries.push({
+          transactionId: docSnap.id,
+          billingChargeId: normalizeOptionalId(txData.billingChargeId),
+          classSessionId: normalizeOptionalId(txData.classSessionId),
+          monthKey: normalizeMonthKey(txData.monthKey),
+        });
+      });
+      txByParent.set(parentId, entries);
+    });
+
+    const missingByParent = new Map<string, { missingCount: number; missingAmountTotal: number; sampleChargeIds: string[] }>();
+    const sampleMissingCharges: Array<{
+      chargeId: string;
+      parentId: string;
+      studentName: string | null;
+      amount: number;
+      sessionId: string | null;
+    }> = [];
+
+    let chargesWithExistingDeductionCount = 0;
+    let missingDeductionCount = 0;
+    let amountMissingDeductionTotal = 0;
+
+    for (const charge of eligibleCharges) {
+      const parentTransactions = txByParent.get(charge.parentId) || [];
+      const directMatches = parentTransactions.filter(
+        (tx) => tx.billingChargeId === charge.chargeId
+      );
+      if (directMatches.length > 0) {
+        chargesWithExistingDeductionCount += 1;
+        if (directMatches.length > 1) {
+          addSample(ambiguousMatchSample, charge.chargeId);
+          addWarning(
+            `charge ${charge.chargeId}: multiple class_deduction transactions matched by billingChargeId`
+          );
+        }
+        continue;
+      }
+
+      if (charge.classSessionMatchKeys.length > 0) {
+        const sessionMatches = parentTransactions.filter((tx) => {
+          if (!tx.classSessionId) return false;
+          if (!(tx.monthKey === monthKey || !tx.monthKey)) return false;
+          return charge.classSessionMatchKeys.includes(tx.classSessionId);
+        });
+        if (sessionMatches.length > 1) {
+          addSample(ambiguousMatchSample, charge.chargeId);
+          addWarning(
+            `charge ${charge.chargeId}: ambiguous classSessionId match for class_deduction transaction`
+          );
+        } else if (sessionMatches.length === 1) {
+          const matchedTx = sessionMatches[0];
+          if (!matchedTx.billingChargeId) {
+            chargesWithExistingDeductionCount += 1;
+            addWarning(
+              `charge ${charge.chargeId}: matched class_deduction by classSessionId because billingChargeId was missing`
+            );
+            continue;
+          }
+          addSample(ambiguousMatchSample, charge.chargeId);
+          addWarning(
+            `charge ${charge.chargeId}: classSessionId matched a deduction with a different billingChargeId`
+          );
+        }
+      }
+
+      missingDeductionCount += 1;
+      amountMissingDeductionTotal = roundCurrency(amountMissingDeductionTotal + charge.amount);
+
+      const parentRow = missingByParent.get(charge.parentId) || {
+        missingCount: 0,
+        missingAmountTotal: 0,
+        sampleChargeIds: [],
+      };
+      parentRow.missingCount += 1;
+      parentRow.missingAmountTotal = roundCurrency(parentRow.missingAmountTotal + charge.amount);
+      if (parentRow.sampleChargeIds.length < 10 && !parentRow.sampleChargeIds.includes(charge.chargeId)) {
+        parentRow.sampleChargeIds.push(charge.chargeId);
+      }
+      missingByParent.set(charge.parentId, parentRow);
+
+      if (sampleMissingCharges.length < 30) {
+        sampleMissingCharges.push({
+          chargeId: charge.chargeId,
+          parentId: charge.parentId,
+          studentName: charge.studentName,
+          amount: charge.amount,
+          sessionId: charge.sessionId,
+        });
+      }
+    }
+
+    if (hasMoreCharges) {
+      addWarning(
+        `Scan truncated at batchLimit=${batchLimit}. More billingCharges exist for month ${monthKey}.`
+      );
+    }
+    if (missingParentIdsSample.length > 0) {
+      addWarning(`missing parentId sample chargeIds: ${missingParentIdsSample.join(', ')}`);
+    }
+    if (invalidAmountSample.length > 0) {
+      addWarning(`missing/invalid amount sample chargeIds: ${invalidAmountSample.join(', ')}`);
+    }
+    if (ambiguousMatchSample.length > 0) {
+      addWarning(`ambiguous transaction matching sample chargeIds: ${ambiguousMatchSample.join(', ')}`);
+    }
+
+    const parentWise = Array.from(missingByParent.entries())
+      .map(([parentId, row]) => ({
+        parentId,
+        missingCount: row.missingCount,
+        missingAmountTotal: roundCurrency(row.missingAmountTotal),
+        sampleChargeIds: row.sampleChargeIds,
+      }))
+      .sort((left, right) => {
+        if (right.missingAmountTotal !== left.missingAmountTotal) {
+          return right.missingAmountTotal - left.missingAmountTotal;
+        }
+        if (right.missingCount !== left.missingCount) return right.missingCount - left.missingCount;
+        return left.parentId.localeCompare(right.parentId);
+      });
+
+    return {
+      ok: true,
+      monthKey,
+      batchLimit,
+      scannedChargesCount: chargeDocs.length,
+      eligibleChargesCount: eligibleCharges.length,
+      chargesWithExistingDeductionCount,
+      missingDeductionCount,
+      amountMissingDeductionTotal: roundCurrency(amountMissingDeductionTotal),
+      parentWise,
+      sampleMissingCharges,
+      warnings,
+      hasMoreCharges,
+    };
+  }
+);
+
+export const backfillMissingWalletDeductions = onCall(
+  {
+    region: REGION,
+    memory: '256MiB',
+    timeoutSeconds: 120,
+  },
+  async (request) => {
+    await ensureAdmin(request.auth);
+
+    const data = (request.data || {}) as BackfillMissingWalletDeductionsRequest;
+    if (hasOwnProp(data, 'monthKey') && data.monthKey != null && typeof data.monthKey !== 'string') {
+      throw new HttpsError('invalid-argument', 'monthKey must be a string in YYYY-MM format');
+    }
+    const rawMonthKey = typeof data.monthKey === 'string' ? data.monthKey.trim() : '';
+    const monthKey = rawMonthKey ? normalizeMonthKey(rawMonthKey) : MIN_WALLET_DEDUCTION_CUTOVER_MONTH_KEY;
+    if (!monthKey) {
+      throw new HttpsError('invalid-argument', 'monthKey must be in YYYY-MM format');
+    }
+    if (monthKey.localeCompare(MIN_WALLET_DEDUCTION_CUTOVER_MONTH_KEY) < 0) {
+      throw new HttpsError(
+        'invalid-argument',
+        `monthKey cannot be earlier than ${MIN_WALLET_DEDUCTION_CUTOVER_MONTH_KEY}`
+      );
+    }
+
+    const dryRun = data.dryRun !== false;
+    const applyMonthKey = MIN_WALLET_DEDUCTION_CUTOVER_MONTH_KEY;
+    const applyConfirmationText = 'BACKFILL WALLET DEDUCTIONS FOR 2026-05';
+    if (!dryRun) {
+      if (monthKey !== applyMonthKey) {
+        throw new HttpsError(
+          'failed-precondition',
+          `dryRun=false is only allowed for monthKey ${applyMonthKey}`
+        );
+      }
+      const confirmationText = typeof data.confirmationText === 'string' ? data.confirmationText : '';
+      if (confirmationText !== applyConfirmationText) {
+        throw new HttpsError(
+          'failed-precondition',
+          `confirmationText must be exactly: ${applyConfirmationText}`
+        );
+      }
+    }
+
+    const batchLimitRaw = hasOwnProp(data, 'batchLimit') ? Number(data.batchLimit) : 100;
+    if (!Number.isFinite(batchLimitRaw)) {
+      throw new HttpsError('invalid-argument', 'batchLimit must be a number');
+    }
+    const batchLimit = Math.floor(batchLimitRaw);
+    if (batchLimit < 1 || batchLimit > 200) {
+      throw new HttpsError('invalid-argument', 'batchLimit must be between 1 and 200');
+    }
+
+    const db = admin.firestore();
+    const chargeDocs: admin.firestore.QueryDocumentSnapshot[] = [];
+    const MAX_CHARGES_SCAN = 2000;
+    const CHARGE_SCAN_PAGE_SIZE = 400;
+    let lastChargeDoc: admin.firestore.QueryDocumentSnapshot | null = null;
+    let hasUnscannedCharges = false;
+    let scanTruncatedByCap = false;
+
+    while (chargeDocs.length < MAX_CHARGES_SCAN) {
+      const remaining = MAX_CHARGES_SCAN - chargeDocs.length;
+      const pageLimit = Math.min(CHARGE_SCAN_PAGE_SIZE, remaining);
+      let chargesQuery = db
+        .collection('billingCharges')
+        .where('monthKey', '==', monthKey)
+        .orderBy(admin.firestore.FieldPath.documentId())
+        .limit(pageLimit);
+      if (lastChargeDoc) {
+        chargesQuery = chargesQuery.startAfter(lastChargeDoc);
+      }
+      const pageSnap = await chargesQuery.get();
+      if (pageSnap.empty) {
+        hasUnscannedCharges = false;
+        break;
+      }
+
+      chargeDocs.push(...pageSnap.docs);
+      lastChargeDoc = pageSnap.docs[pageSnap.docs.length - 1];
+
+      if (pageSnap.size < pageLimit) {
+        hasUnscannedCharges = false;
+        break;
+      }
+
+      hasUnscannedCharges = true;
+      if (chargeDocs.length >= MAX_CHARGES_SCAN) {
+        scanTruncatedByCap = true;
+        break;
+      }
+    }
+
+    const warnings: string[] = [];
+    const missingParentIdsSample: string[] = [];
+    const invalidAmountSample: string[] = [];
+    const ambiguousMatchSample: string[] = [];
+    const addWarning = (message: string) => {
+      if (warnings.length < 200) warnings.push(message);
+    };
+    const addSample = (target: string[], id: string) => {
+      if (!id) return;
+      if (target.length >= 20) return;
+      if (!target.includes(id)) target.push(id);
+    };
+
+    type EligibleCharge = {
+      chargeId: string;
+      parentId: string;
+      amount: number;
+      monthKey: string;
+      classSessionMatchKeys: string[];
+      sessionId: string | null;
+      studentName: string | null;
+      studentId: string | null;
+      enrollmentId: string | null;
+      deductionClassSessionId: string | null;
+    };
+    const eligibleCharges: EligibleCharge[] = [];
+    let skippedInvalidCount = 0;
+
+    for (const chargeSnap of chargeDocs) {
+      const chargeId = chargeSnap.id;
+      const chargeData = (chargeSnap.data() || {}) as Record<string, unknown>;
+      if (chargeData.archived === true) {
+        skippedInvalidCount += 1;
+        continue;
+      }
+
+      const status = normalizeChargeStatus(chargeData.status);
+      const voidedByFlag =
+        chargeData.voided === true ||
+        chargeData.isVoided === true ||
+        chargeData.cancelled === true ||
+        chargeData.canceled === true;
+      if (isExcludedBillingChargeStatus(status) || voidedByFlag) {
+        skippedInvalidCount += 1;
+        continue;
+      }
+
+      const parentId = normalizeOptionalId(chargeData.parentId);
+      if (!parentId) {
+        skippedInvalidCount += 1;
+        addSample(missingParentIdsSample, chargeId);
+        addWarning(`charge ${chargeId}: missing parentId`);
+        continue;
+      }
+
+      const amountRaw = Number(chargeData.amount);
+      if (!Number.isFinite(amountRaw) || amountRaw <= 0) {
+        skippedInvalidCount += 1;
+        addSample(invalidAmountSample, chargeId);
+        addWarning(`charge ${chargeId}: missing/invalid amount`);
+        continue;
+      }
+      const amount = roundCurrency(Math.max(amountRaw, 0));
+      if (!(amount > 0)) {
+        skippedInvalidCount += 1;
+        addSample(invalidAmountSample, chargeId);
+        addWarning(`charge ${chargeId}: amount must be greater than zero`);
+        continue;
+      }
+
+      const normalizedChargeMonthKey = normalizeMonthKey(chargeData.monthKey);
+      if (!normalizedChargeMonthKey) {
+        skippedInvalidCount += 1;
+        addWarning(`charge ${chargeId}: missing/invalid monthKey`);
+        continue;
+      }
+      if (normalizedChargeMonthKey.localeCompare(MIN_WALLET_DEDUCTION_CUTOVER_MONTH_KEY) < 0) {
+        skippedInvalidCount += 1;
+        continue;
+      }
+
+      const explicitSessionId = normalizeOptionalId(chargeData.sessionId);
+      eligibleCharges.push({
+        chargeId,
+        parentId,
+        amount,
+        monthKey: normalizedChargeMonthKey,
+        classSessionMatchKeys: Array.from(
+          new Set(
+            [resolveChargeClassSessionId(chargeId, chargeData), explicitSessionId].filter(
+              (value): value is string => Boolean(value)
+            )
+          )
+        ),
+        sessionId: explicitSessionId,
+        studentName: resolveChargeStudentName(chargeData),
+        studentId: resolveChargeStudentId(chargeData),
+        enrollmentId: normalizeOptionalId(chargeData.enrollmentId),
+        deductionClassSessionId: resolveChargeClassSessionId(chargeId, chargeData),
+      });
+    }
+
+    const parentIds = Array.from(new Set(eligibleCharges.map((charge) => charge.parentId)));
+    const parentTxSnaps = await Promise.all(
+      parentIds.map((parentId) =>
+        db
+          .collection('parentWallets')
+          .doc(parentId)
+          .collection('transactions')
+          .where('type', '==', 'class_deduction')
+          .get()
+      )
+    );
+
+    type WalletDeductionTx = {
+      billingChargeId: string | null;
+      classSessionId: string | null;
+      monthKey: string | null;
+    };
+    const txByParent = new Map<string, WalletDeductionTx[]>();
+    parentTxSnaps.forEach((snap, index) => {
+      const parentId = parentIds[index];
+      const entries: WalletDeductionTx[] = [];
+      snap.docs.forEach((docSnap) => {
+        const txData = (docSnap.data() || {}) as Record<string, unknown>;
+        if (normalizeDirection(txData.direction) !== 'debit') return;
+        entries.push({
+          billingChargeId: normalizeOptionalId(txData.billingChargeId),
+          classSessionId: normalizeOptionalId(txData.classSessionId),
+          monthKey: normalizeMonthKey(txData.monthKey),
+        });
+      });
+      txByParent.set(parentId, entries);
+    });
+
+    type MissingCharge = EligibleCharge & { ambiguous: boolean };
+    const missingCharges: MissingCharge[] = [];
+
+    let alreadyDeductedCount = 0;
+    let skippedAmbiguousCount = 0;
+    let missingDeductionCount = 0;
+    let amountMissingDeductionTotal = 0;
+    let additionalMissingBeyondBatch = false;
+
+    for (const charge of eligibleCharges) {
+      const parentTransactions = txByParent.get(charge.parentId) || [];
+      const directMatches = parentTransactions.filter(
+        (tx) => tx.billingChargeId === charge.chargeId
+      );
+      if (directMatches.length > 0) {
+        alreadyDeductedCount += 1;
+        if (directMatches.length > 1) {
+          addSample(ambiguousMatchSample, charge.chargeId);
+          addWarning(
+            `charge ${charge.chargeId}: multiple class_deduction transactions matched by billingChargeId`
+          );
+        }
+        continue;
+      }
+
+      if (charge.classSessionMatchKeys.length > 0) {
+        const sessionMatches = parentTransactions.filter((tx) => {
+          if (!tx.classSessionId) return false;
+          if (!(tx.monthKey === monthKey || !tx.monthKey)) return false;
+          return charge.classSessionMatchKeys.includes(tx.classSessionId);
+        });
+        if (sessionMatches.length > 1) {
+          skippedAmbiguousCount += 1;
+          addSample(ambiguousMatchSample, charge.chargeId);
+          addWarning(
+            `charge ${charge.chargeId}: ambiguous classSessionId match for class_deduction transaction`
+          );
+          continue;
+        } else if (sessionMatches.length === 1) {
+          const matchedTx = sessionMatches[0];
+          if (!matchedTx.billingChargeId) {
+            alreadyDeductedCount += 1;
+            addWarning(
+              `charge ${charge.chargeId}: matched class_deduction by classSessionId because billingChargeId was missing`
+            );
+            continue;
+          }
+          skippedAmbiguousCount += 1;
+          addSample(ambiguousMatchSample, charge.chargeId);
+          addWarning(
+            `charge ${charge.chargeId}: classSessionId matched a deduction with a different billingChargeId`
+          );
+          continue;
+        }
+      }
+
+      if (missingCharges.length < batchLimit) {
+        missingDeductionCount += 1;
+        amountMissingDeductionTotal = roundCurrency(amountMissingDeductionTotal + charge.amount);
+        missingCharges.push({ ...charge, ambiguous: false });
+      } else {
+        additionalMissingBeyondBatch = true;
+      }
+    }
+
+    const parentWiseMap = new Map<
+      string,
+      { missingCount: number; backfilledCount: number; amountTotal: number; sampleChargeIds: string[] }
+    >();
+    const upsertParentWise = (
+      parentId: string,
+      patch: { missing?: number; backfilled?: number; amount?: number; sampleChargeId?: string | null }
+    ) => {
+      const row = parentWiseMap.get(parentId) || {
+        missingCount: 0,
+        backfilledCount: 0,
+        amountTotal: 0,
+        sampleChargeIds: [],
+      };
+      row.missingCount += patch.missing || 0;
+      row.backfilledCount += patch.backfilled || 0;
+      row.amountTotal = roundCurrency(row.amountTotal + (patch.amount || 0));
+      const sampleChargeId = String(patch.sampleChargeId || '').trim();
+      if (sampleChargeId && row.sampleChargeIds.length < 10 && !row.sampleChargeIds.includes(sampleChargeId)) {
+        row.sampleChargeIds.push(sampleChargeId);
+      }
+      parentWiseMap.set(parentId, row);
+    };
+    missingCharges.forEach((charge) => {
+      upsertParentWise(charge.parentId, {
+        missing: 1,
+        amount: charge.amount,
+        sampleChargeId: charge.chargeId,
+      });
+    });
+
+    const sampleMissingCharges: Array<{
+      chargeId: string;
+      parentId: string;
+      studentName: string | null;
+      amount: number;
+      sessionId: string | null;
+    }> = [];
+    for (const charge of missingCharges) {
+      if (sampleMissingCharges.length >= 30) break;
+      sampleMissingCharges.push({
+        chargeId: charge.chargeId,
+        parentId: charge.parentId,
+        studentName: charge.studentName,
+        amount: charge.amount,
+        sessionId: charge.sessionId,
+      });
+    }
+
+    let backfilledCount = 0;
+    let amountBackfilledTotal = 0;
+    const sampleBackfilledCharges: Array<{
+      chargeId: string;
+      parentId: string;
+      studentName: string | null;
+      amount: number;
+      sessionId: string | null;
+    }> = [];
+
+    if (!dryRun) {
+      for (const charge of missingCharges) {
+        const idempotencyKey = normalizeIdempotencyKey(`charge_${charge.chargeId}`);
+        if (!idempotencyKey) {
+          skippedInvalidCount += 1;
+          addWarning(`charge ${charge.chargeId}: failed to build idempotency key`);
+          continue;
+        }
+        try {
+          const result = await appendWalletTransactionAtomic(db, {
+            parentId: charge.parentId,
+            type: 'class_deduction',
+            direction: 'debit',
+            amount: charge.amount,
+            idempotencyKey,
+            monthKey: charge.monthKey,
+            description: 'Class fee deduction',
+            method: null,
+            paidAt: null,
+            note: null,
+            reference: null,
+            reason: null,
+            studentId: charge.studentId,
+            enrollmentId: charge.enrollmentId,
+            classSessionId: charge.deductionClassSessionId,
+            billingChargeId: charge.chargeId,
+            reversalOfTransactionId: null,
+            createdBy: 'system:billing_charge_trigger',
+            sourceSystem: 'billing_charge_trigger',
+          });
+
+          if (result.idempotentReplay) {
+            alreadyDeductedCount += 1;
+            addWarning(`charge ${charge.chargeId}: deduction already exists (idempotent replay)`);
+            continue;
+          }
+
+          backfilledCount += 1;
+          amountBackfilledTotal = roundCurrency(amountBackfilledTotal + charge.amount);
+          upsertParentWise(charge.parentId, {
+            backfilled: 1,
+          });
+          if (sampleBackfilledCharges.length < 30) {
+            sampleBackfilledCharges.push({
+              chargeId: charge.chargeId,
+              parentId: charge.parentId,
+              studentName: charge.studentName,
+              amount: charge.amount,
+              sessionId: charge.sessionId,
+            });
+          }
+        } catch (err) {
+          if (err instanceof HttpsError && err.code === 'failed-precondition') {
+            skippedAmbiguousCount += 1;
+            addWarning(`charge ${charge.chargeId}: skipped due to idempotency conflict (${err.message})`);
+            continue;
+          }
+          throw err;
+        }
+      }
+    }
+
+    const hasMoreCharges = additionalMissingBeyondBatch || hasUnscannedCharges;
+
+    if (additionalMissingBeyondBatch) {
+      addWarning(
+        `More missing deductions exist beyond batchLimit=${batchLimit}. Run another batch to continue.`
+      );
+    }
+    if (scanTruncatedByCap || hasUnscannedCharges) {
+      addWarning(
+        `Charge scan reached internal limit (${MAX_CHARGES_SCAN}) or more charges remain for month ${monthKey}; run again to continue scanning.`
+      );
+    }
+    if (missingParentIdsSample.length > 0) {
+      addWarning(`missing parentId sample chargeIds: ${missingParentIdsSample.join(', ')}`);
+    }
+    if (invalidAmountSample.length > 0) {
+      addWarning(`missing/invalid amount sample chargeIds: ${invalidAmountSample.join(', ')}`);
+    }
+    if (ambiguousMatchSample.length > 0) {
+      addWarning(`ambiguous transaction matching sample chargeIds: ${ambiguousMatchSample.join(', ')}`);
+    }
+
+    const parentWise = Array.from(parentWiseMap.entries())
+      .map(([parentId, row]) => ({
+        parentId,
+        missingCount: row.missingCount,
+        backfilledCount: row.backfilledCount,
+        amountTotal: roundCurrency(row.amountTotal),
+        sampleChargeIds: row.sampleChargeIds,
+      }))
+      .sort((left, right) => {
+        if (right.amountTotal !== left.amountTotal) return right.amountTotal - left.amountTotal;
+        if (right.missingCount !== left.missingCount) return right.missingCount - left.missingCount;
+        return left.parentId.localeCompare(right.parentId);
+      });
+
+    return {
+      ok: true,
+      monthKey,
+      dryRun,
+      batchLimit,
+      scannedChargesCount: chargeDocs.length,
+      eligibleChargesCount: eligibleCharges.length,
+      alreadyDeductedCount,
+      missingDeductionCount,
+      backfilledCount,
+      skippedAmbiguousCount,
+      skippedInvalidCount,
+      amountMissingDeductionTotal: roundCurrency(amountMissingDeductionTotal),
+      amountBackfilledTotal: roundCurrency(amountBackfilledTotal),
+      parentWise,
+      sampleBackfilledCharges,
+      sampleMissingCharges,
+      warnings,
+      hasMoreCharges,
     };
   }
 );
@@ -1256,6 +2058,13 @@ export const onBillingChargeWalletSync = onDocumentWritten(
       });
       return;
     }
+    if (afterData.archived === true) {
+      logger.info('wallet billing sync no-op: billing charge archived', {
+        chargeId,
+        parentId,
+      });
+      return;
+    }
 
     const amount = Math.max(normalizeNumber(afterData.amount, 0), 0);
     if (!(amount > 0)) {
@@ -1269,6 +2078,18 @@ export const onBillingChargeWalletSync = onDocumentWritten(
     }
 
     const chargeMonthKey = normalizeMonthKey(afterData.monthKey);
+    if (
+      chargeMonthKey &&
+      chargeMonthKey.localeCompare(MIN_WALLET_DEDUCTION_CUTOVER_MONTH_KEY) < 0
+    ) {
+      logger.info('wallet billing sync no-op: charge before global wallet cutover month', {
+        chargeId,
+        parentId,
+        chargeMonthKey,
+        minCutoverMonthKey: MIN_WALLET_DEDUCTION_CUTOVER_MONTH_KEY,
+      });
+      return;
+    }
     if (config.walletCutoverMonthKey) {
       if (!chargeMonthKey) {
         logger.warn('wallet billing sync no-op: missing charge monthKey while cutover month is enabled', {
@@ -1405,11 +2226,10 @@ export const adminReceiveParentPayment = onCall(
     const migration = await detectOpeningDeficitMigration(db, parentId);
     const warnings: string[] = [...migration.warnings];
 
-    const allocationModeUsed: ParentPaymentAllocationMode = requestedMode
-      ? requestedMode
-      : migration.migratedByOpeningDeficit
-        ? 'wallet_only'
-        : 'legacy_then_wallet';
+    // Post cutover (May 2026 onward), normal parent receipts should default to
+    // wallet ledger behavior. legacy_then_wallet remains available only when
+    // explicitly requested for controlled/manual backfill cases.
+    const allocationModeUsed: ParentPaymentAllocationMode = requestedMode || 'wallet_only';
 
     if (migration.migratedByOpeningDeficit && allocationModeUsed === 'legacy_then_wallet') {
       throw new HttpsError(
@@ -1417,8 +2237,8 @@ export const adminReceiveParentPayment = onCall(
         'Parent has opening deficit migration. legacy_then_wallet allocation is blocked to avoid double-counting historical dues.'
       );
     }
-    if (!requestedMode && allocationModeUsed === 'wallet_only' && migration.migratedByOpeningDeficit) {
-      warnings.push('Parent appears opening-deficit migrated; defaulted allocationModeUsed to wallet_only.');
+    if (!requestedMode) {
+      warnings.push('Defaulted allocationModeUsed to wallet_only (post-cutover default).');
     }
 
     if (dryRun) {

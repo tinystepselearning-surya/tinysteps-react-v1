@@ -713,6 +713,14 @@ async function recomputeTeacherMonthlyRollup(
     .where('teacherId', '==', teacherId)
     .where('monthKey', '==', monthKey)
     .get();
+  const activeEarningDocs = earningsSnap.docs.filter((docSnap) => {
+    const data = (docSnap.data() || {}) as Record<string, unknown>;
+    return data.archived !== true;
+  });
+  const activePayoutDocs = payoutsSnap.docs.filter((docSnap) => {
+    const data = (docSnap.data() || {}) as Record<string, unknown>;
+    return data.archived !== true;
+  });
 
   let totalEarnings = 0;
   let pendingEarnings = 0;
@@ -751,7 +759,7 @@ async function recomputeTeacherMonthlyRollup(
     return incoming.sortMs > current.sortMs ? incoming : current;
   };
 
-  for (const docSnap of earningsSnap.docs) {
+  for (const docSnap of activeEarningDocs) {
     const earning = docSnap.data() || {};
     const status = normalizeChargeStatus(earning.status);
     const source = normalizeStatus(earning.source);
@@ -808,7 +816,7 @@ async function recomputeTeacherMonthlyRollup(
     }
   }
 
-  const payments = payoutsSnap.docs
+  const payments = activePayoutDocs
     .map((docSnap) => {
       const payout = docSnap.data() || {};
       const paidAtMs =
@@ -1775,6 +1783,430 @@ function normalizeStoredMonthKey(value: any): string | null {
   const raw = String(value || '').trim();
   return /^\d{4}-\d{2}$/.test(raw) ? raw : null;
 }
+
+type FinanceArchiveCollectionName =
+  | 'billingCharges'
+  | 'payments'
+  | 'teacherEarnings'
+  | 'teacherPayouts'
+  | 'parentWallets';
+
+interface FinanceArchiveMonthBucket {
+  count: number;
+  amountTotal: number;
+  paidAmountTotal: number;
+  alreadyArchivedCount: number;
+  activeCount: number;
+}
+
+interface FinanceArchiveCollectionTotals extends FinanceArchiveMonthBucket {
+  monthWise: Record<string, FinanceArchiveMonthBucket>;
+}
+
+function coerceFiniteNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
+function isAlreadyArchivedRecord(data: Record<string, unknown>): boolean {
+  if (data.archived === true) return true;
+  if (data.isArchived === true) return true;
+  if (data.archivedAt != null) return true;
+  if (data.deletedAt != null) return true;
+  const status = normalizeStatus(data.status);
+  return status === 'archived';
+}
+
+function emptyFinanceArchiveBucket(): FinanceArchiveMonthBucket {
+  return {
+    count: 0,
+    amountTotal: 0,
+    paidAmountTotal: 0,
+    alreadyArchivedCount: 0,
+    activeCount: 0,
+  };
+}
+
+function addRecordToFinanceArchiveBucket(
+  bucket: FinanceArchiveMonthBucket,
+  data: Record<string, unknown>
+): void {
+  bucket.count += 1;
+
+  const amount = coerceFiniteNumber(data.amount);
+  if (amount != null) bucket.amountTotal += amount;
+
+  const paidAmount = coerceFiniteNumber(data.paidAmount);
+  if (paidAmount != null) bucket.paidAmountTotal += paidAmount;
+
+  if (isAlreadyArchivedRecord(data)) {
+    bucket.alreadyArchivedCount += 1;
+  } else {
+    bucket.activeCount += 1;
+  }
+}
+
+async function previewFinanceCutoverArchiveForCollection(
+  db: admin.firestore.Firestore,
+  collectionName: FinanceArchiveCollectionName,
+  archiveThroughMonthKey: string
+): Promise<{ totals: FinanceArchiveCollectionTotals; warning: string | null }> {
+  const snap = await db.collection(collectionName).get();
+  const totals: FinanceArchiveCollectionTotals = {
+    ...emptyFinanceArchiveBucket(),
+    monthWise: {},
+  };
+
+  let missingMonthKeyCount = 0;
+  const missingMonthKeySampleIds: string[] = [];
+
+  for (const docSnap of snap.docs) {
+    const data = (docSnap.data() || {}) as Record<string, unknown>;
+    const monthKey = normalizeStoredMonthKey(data.monthKey);
+
+    if (!monthKey) {
+      missingMonthKeyCount += 1;
+      if (missingMonthKeySampleIds.length < 10) {
+        missingMonthKeySampleIds.push(docSnap.id);
+      }
+      continue;
+    }
+
+    if (monthKey.localeCompare(archiveThroughMonthKey) > 0) continue;
+
+    addRecordToFinanceArchiveBucket(totals, data);
+    if (!totals.monthWise[monthKey]) {
+      totals.monthWise[monthKey] = emptyFinanceArchiveBucket();
+    }
+    addRecordToFinanceArchiveBucket(totals.monthWise[monthKey], data);
+  }
+
+  const warning =
+    missingMonthKeyCount > 0
+      ? `${collectionName}: ${missingMonthKeyCount} docs missing/invalid monthKey (sample ids: ${missingMonthKeySampleIds.join(', ') || 'n/a'})`
+      : null;
+
+  return { totals, warning };
+}
+
+function normalizeArchiveThroughMonthKeyOrThrow(value: any): string {
+  const raw = String(value || '').trim();
+  if (!raw) {
+    throw new HttpsError('invalid-argument', 'archiveThroughMonthKey is required');
+  }
+  if (!/^\d{4}-\d{2}$/.test(raw)) {
+    throw new HttpsError(
+      'invalid-argument',
+      'archiveThroughMonthKey must be in YYYY-MM format'
+    );
+  }
+  return raw;
+}
+
+export const previewFinanceCutoverArchive = onCall(
+  {
+    region: REGION,
+    memory: '512MiB',
+    timeoutSeconds: 300,
+  },
+  async (request) => {
+    await ensureAdmin(request.auth);
+
+    const archiveThroughMonthKey = normalizeArchiveThroughMonthKeyOrThrow(
+      request.data?.archiveThroughMonthKey
+    );
+
+    const db = admin.firestore();
+    const collections: FinanceArchiveCollectionName[] = [
+      'billingCharges',
+      'payments',
+      'teacherEarnings',
+      'teacherPayouts',
+      'parentWallets',
+    ];
+
+    const totalsByCollection: Record<FinanceArchiveCollectionName, FinanceArchiveCollectionTotals> = {
+      billingCharges: { ...emptyFinanceArchiveBucket(), monthWise: {} },
+      payments: { ...emptyFinanceArchiveBucket(), monthWise: {} },
+      teacherEarnings: { ...emptyFinanceArchiveBucket(), monthWise: {} },
+      teacherPayouts: { ...emptyFinanceArchiveBucket(), monthWise: {} },
+      parentWallets: { ...emptyFinanceArchiveBucket(), monthWise: {} },
+    };
+    const warnings: string[] = [];
+
+    for (const collectionName of collections) {
+      const result = await previewFinanceCutoverArchiveForCollection(
+        db,
+        collectionName,
+        archiveThroughMonthKey
+      );
+      totalsByCollection[collectionName] = result.totals;
+      if (result.warning) warnings.push(result.warning);
+    }
+
+    return {
+      ok: true,
+      archiveThroughMonthKey,
+      totalsByCollection,
+      warnings,
+    };
+  }
+);
+
+type FinanceWritableArchiveCollectionName =
+  | 'billingCharges'
+  | 'payments'
+  | 'teacherEarnings'
+  | 'teacherPayouts';
+
+interface FinanceArchiveWriteMonthSummary {
+  eligibleCount: number;
+  alreadyArchivedCount: number;
+  archivedCount: number;
+}
+
+interface FinanceArchiveWriteCollectionSummary {
+  scannedCount: number;
+  eligibleCount: number;
+  alreadyArchivedCount: number;
+  missingOrInvalidMonthKeyCount: number;
+  archivedCount: number;
+  monthWise: Record<string, FinanceArchiveWriteMonthSummary>;
+  warningSampleDocIds: string[];
+}
+
+const FINANCE_ARCHIVE_CONFIRMATION_TEXT = 'ARCHIVE FINANCE THROUGH 2026-04';
+const FINANCE_ARCHIVE_REASON =
+  'Finance cutover: archived historical finance records through April 2026';
+const FINANCE_CUTOVER_VERSION = 'may_2026_v1';
+
+function resolveDryRunOrThrow(value: any): boolean {
+  if (value === undefined) return true;
+  if (typeof value !== 'boolean') {
+    throw new HttpsError('invalid-argument', 'dryRun must be a boolean');
+  }
+  return value;
+}
+
+function resolveArchiveBatchLimitOrThrow(value: any): number {
+  if (value === undefined || value === null || value === '') return 300;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    throw new HttpsError('invalid-argument', 'batchLimit must be a valid number');
+  }
+  const normalized = Math.floor(parsed);
+  if (normalized < 1) {
+    throw new HttpsError('invalid-argument', 'batchLimit must be at least 1');
+  }
+  if (normalized > 400) {
+    throw new HttpsError('invalid-argument', 'batchLimit cannot exceed 400');
+  }
+  return normalized;
+}
+
+function emptyFinanceArchiveWriteMonthSummary(): FinanceArchiveWriteMonthSummary {
+  return {
+    eligibleCount: 0,
+    alreadyArchivedCount: 0,
+    archivedCount: 0,
+  };
+}
+
+function emptyFinanceArchiveWriteCollectionSummary(): FinanceArchiveWriteCollectionSummary {
+  return {
+    scannedCount: 0,
+    eligibleCount: 0,
+    alreadyArchivedCount: 0,
+    missingOrInvalidMonthKeyCount: 0,
+    archivedCount: 0,
+    monthWise: {},
+    warningSampleDocIds: [],
+  };
+}
+
+function appendWarningSample(summary: FinanceArchiveWriteCollectionSummary, docId: string): void {
+  if (summary.warningSampleDocIds.length < 10) {
+    summary.warningSampleDocIds.push(docId);
+  }
+}
+
+function upsertFinanceArchiveWriteMonthSummary(
+  monthWise: Record<string, FinanceArchiveWriteMonthSummary>,
+  monthKey: string
+): FinanceArchiveWriteMonthSummary {
+  if (!monthWise[monthKey]) {
+    monthWise[monthKey] = emptyFinanceArchiveWriteMonthSummary();
+  }
+  return monthWise[monthKey];
+}
+
+export const archiveFinanceRecordsThroughMonth = onCall(
+  {
+    region: REGION,
+    memory: '512MiB',
+    timeoutSeconds: 300,
+  },
+  async (request) => {
+    await ensureAdmin(request.auth);
+
+    const archiveThroughMonthKey = normalizeArchiveThroughMonthKeyOrThrow(
+      request.data?.archiveThroughMonthKey
+    );
+    const dryRun = resolveDryRunOrThrow(request.data?.dryRun);
+    const batchLimit = resolveArchiveBatchLimitOrThrow(request.data?.batchLimit);
+
+    if (!dryRun) {
+      const confirmationText = String(request.data?.confirmationText || '').trim();
+      if (confirmationText !== FINANCE_ARCHIVE_CONFIRMATION_TEXT) {
+        throw new HttpsError(
+          'failed-precondition',
+          `confirmationText must exactly match "${FINANCE_ARCHIVE_CONFIRMATION_TEXT}"`
+        );
+      }
+    }
+
+    const db = admin.firestore();
+    const actorUid = request.auth?.uid || null;
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    const collections: FinanceWritableArchiveCollectionName[] = [
+      'billingCharges',
+      'payments',
+      'teacherEarnings',
+      'teacherPayouts',
+    ];
+    const perCollection: Record<
+      FinanceWritableArchiveCollectionName,
+      FinanceArchiveWriteCollectionSummary
+    > = {
+      billingCharges: emptyFinanceArchiveWriteCollectionSummary(),
+      payments: emptyFinanceArchiveWriteCollectionSummary(),
+      teacherEarnings: emptyFinanceArchiveWriteCollectionSummary(),
+      teacherPayouts: emptyFinanceArchiveWriteCollectionSummary(),
+    };
+    const monthWiseSummary: Record<string, FinanceArchiveWriteMonthSummary> = {};
+    const warnings: string[] = [];
+
+    let writeCount = 0;
+    let hasMore = false;
+    const batch = db.batch();
+
+    for (const collectionName of collections) {
+      const summary = perCollection[collectionName];
+      const snap = await db.collection(collectionName).get();
+
+      for (const docSnap of snap.docs) {
+        summary.scannedCount += 1;
+        const data = (docSnap.data() || {}) as Record<string, unknown>;
+        const monthKey = normalizeStoredMonthKey(data.monthKey);
+
+        if (!monthKey) {
+          summary.missingOrInvalidMonthKeyCount += 1;
+          appendWarningSample(summary, docSnap.id);
+          continue;
+        }
+
+        if (monthKey.localeCompare(archiveThroughMonthKey) > 0) continue;
+
+        const collectionMonthSummary = upsertFinanceArchiveWriteMonthSummary(
+          summary.monthWise,
+          monthKey
+        );
+        const overallMonthSummary = upsertFinanceArchiveWriteMonthSummary(
+          monthWiseSummary,
+          monthKey
+        );
+
+        if (data.archived === true) {
+          summary.alreadyArchivedCount += 1;
+          collectionMonthSummary.alreadyArchivedCount += 1;
+          overallMonthSummary.alreadyArchivedCount += 1;
+          continue;
+        }
+
+        summary.eligibleCount += 1;
+        collectionMonthSummary.eligibleCount += 1;
+        overallMonthSummary.eligibleCount += 1;
+
+        if (dryRun) continue;
+
+        if (writeCount < batchLimit) {
+          batch.set(
+            docSnap.ref,
+            {
+              archived: true,
+              archivedAt: now,
+              archivedBy: actorUid,
+              archiveReason: FINANCE_ARCHIVE_REASON,
+              financeCutoverVersion: FINANCE_CUTOVER_VERSION,
+              updatedAt: now,
+            },
+            { merge: true }
+          );
+          writeCount += 1;
+          summary.archivedCount += 1;
+          collectionMonthSummary.archivedCount += 1;
+          overallMonthSummary.archivedCount += 1;
+        } else {
+          hasMore = true;
+        }
+      }
+
+      if (summary.missingOrInvalidMonthKeyCount > 0) {
+        warnings.push(
+          `${collectionName}: ${summary.missingOrInvalidMonthKeyCount} docs missing/invalid monthKey (sample ids: ${summary.warningSampleDocIds.join(', ') || 'n/a'})`
+        );
+      }
+    }
+
+    if (!dryRun && writeCount > 0) {
+      await batch.commit();
+    }
+
+    const scannedCount = collections.reduce(
+      (sum, collectionName) => sum + perCollection[collectionName].scannedCount,
+      0
+    );
+    const eligibleCount = collections.reduce(
+      (sum, collectionName) => sum + perCollection[collectionName].eligibleCount,
+      0
+    );
+    const alreadyArchivedCount = collections.reduce(
+      (sum, collectionName) => sum + perCollection[collectionName].alreadyArchivedCount,
+      0
+    );
+    const missingOrInvalidMonthKeyCount = collections.reduce(
+      (sum, collectionName) => sum + perCollection[collectionName].missingOrInvalidMonthKeyCount,
+      0
+    );
+    const archivedCount = collections.reduce(
+      (sum, collectionName) => sum + perCollection[collectionName].archivedCount,
+      0
+    );
+
+    return {
+      ok: true,
+      archiveThroughMonthKey,
+      dryRun,
+      batchLimit,
+      scannedCount,
+      eligibleCount,
+      alreadyArchivedCount,
+      missingOrInvalidMonthKeyCount,
+      archivedCount,
+      skippedAlreadyArchivedCount: alreadyArchivedCount,
+      skippedInvalidMonthKeyCount: missingOrInvalidMonthKeyCount,
+      perCollection,
+      monthWiseSummary,
+      warnings,
+      hasMore: dryRun ? false : hasMore,
+      financeCutoverVersion: FINANCE_CUTOVER_VERSION,
+    };
+  }
+);
 
 export const reconcileSessionRevenueMonthKeys = onCall(
   {

@@ -11,6 +11,7 @@ import {
   type ClassSampleCategory,
   type ClassSampleItem,
 } from '../lib/classSamples';
+import { createFAQPageSchema } from '../lib/schemas';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
 import TestimonialsSection from '../components/seo/TestimonialsSection';
 import TestimonialSubmissionForm from '../components/seo/TestimonialSubmissionForm';
@@ -28,81 +29,89 @@ const FILTERS: Array<{ value: FilterCategory; label: string }> = [
     label: CLASS_SAMPLE_CATEGORY_LABELS[category],
   })),
 ];
-const quickAnswerFaqItems = [
+const faqItems = [
   {
-    question: 'What can parents learn from Tiny Steps class samples?',
+    question: 'What can parents see on the class samples page?',
     answer:
-      'Parents can see how teachers explain concepts, guide children, correct mistakes, use visuals, and encourage active participation during live online classes.',
+      'Parents can understand how Tiny Steps online classes are structured, how teachers guide children, and what kind of phonics, reading, grammar, sentence formation, or public speaking practice may happen.',
   },
   {
-    question: 'Do class samples show phonics, grammar, and communication teaching?',
+    question: 'Are Tiny Steps classes live or recorded?',
     answer:
-      'Yes. Class samples may include phonics, reading, grammar, sentence formation, communication activities, and public speaking practice depending on the selected examples.',
+      'Tiny Steps classes are live teacher-guided online classes. Class samples or learning examples are used to help parents understand the teaching style.',
   },
   {
-    question: 'Can class samples help parents choose a program?',
+    question: 'Will my child only watch the teacher?',
     answer:
-      "Yes. Parents can use class samples to understand the teaching style, child interaction, class pace, and whether the program matches the child's learning need.",
+      'No. Tiny Steps focuses on child participation. Children are encouraged to read, speak, answer, practise, and try again with teacher support.',
   },
   {
-    question: 'Do all children respond the same way in online classes?',
+    question: 'How does the teacher correct mistakes?',
     answer:
-      'No. Every child responds differently based on age, comfort level, current skills, consistency, and practice outside class.',
+      'Teachers guide children gently during the activity, helping them correct reading, sentence, grammar, or speaking mistakes without pressure.',
+  },
+  {
+    question: 'Should I watch samples before booking?',
+    answer:
+      'Samples can help parents understand the teaching approach, but the best next step is a free assessment because every child starts at a different level.',
   },
 ];
-const quickAnswerFaqSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  '@id': 'https://tinystepslearning.com/class-samples#quick-answer-faq',
-  mainEntity: quickAnswerFaqItems.map((item) => ({
-    '@type': 'Question',
-    name: item.question,
-    acceptedAnswer: {
-      '@type': 'Answer',
-      text: item.answer,
-    },
-  })),
+const faqSchema = {
+  ...createFAQPageSchema(faqItems),
+  '@id': 'https://tinystepslearning.com/class-samples#faq',
 };
+const parentObservationItems = [
+  'The teacher guides the child step by step.',
+  'The child gets chances to read, speak, answer, and try again.',
+  'Corrections are given gently during the activity.',
+  'Activities are matched to the child’s age and level.',
+  'Parents can understand what skill is being practised.',
+];
 
-const parentNoticeItems = [
+const sampleLearningMoments = [
   {
-    title: 'Stronger confidence',
-    description: 'Children answer with more ease because the teacher gives space, prompts gently, and celebrates effort.',
+    title: 'Phonics',
+    description: 'Child practises sounds and blending.',
   },
   {
-    title: 'Better reading flow',
-    description: 'You can hear smoother blending, more natural pacing, and less stopping on familiar words.',
+    title: 'Reading',
+    description: 'Child reads words, sentences, or short passages.',
   },
   {
-    title: 'Improved participation',
-    description: 'Even quieter children begin taking turns, repeating clearly, and staying present in the lesson.',
+    title: 'Grammar',
+    description: 'Child builds and corrects sentences.',
   },
   {
-    title: 'Clearer sentence formation',
-    description: 'Short answers are stretched into fuller, clearer sentences children can use again outside class.',
+    title: 'Public Speaking',
+    description: 'Child answers prompts, describes pictures, or tells a short story.',
   },
 ];
 
 const classExpectations = [
   {
     step: '01',
-    title: 'Warm welcome & revision',
-    description: 'Each class starts by settling the child in, revisiting one earlier idea, and creating momentum quickly.',
+    title: 'Quick warm-up or revision',
+    description: 'Classes begin with a short recap to settle the child and activate earlier learning.',
   },
   {
     step: '02',
-    title: 'Guided teaching',
-    description: 'The teacher introduces one focused concept at a time with clear modelling and just enough repetition.',
+    title: 'Skill-based teaching activity',
+    description: 'The teacher introduces one focused concept clearly and keeps the child engaged in the task.',
   },
   {
     step: '03',
-    title: 'Child practice & correction',
-    description: 'Children respond often. Corrections are immediate, kind, and specific so the right pattern sticks.',
+    title: 'Guided child practice',
+    description: 'Children respond actively while the teacher supports each attempt in real time.',
   },
   {
     step: '04',
-    title: 'Next-step support',
-    description: 'Parents leave knowing what was covered, what improved, and what Tiny Steps will build next.',
+    title: 'Correction and encouragement',
+    description: 'Mistakes are corrected gently and children are encouraged to keep trying without pressure.',
+  },
+  {
+    step: '05',
+    title: 'Parent-friendly next step',
+    description: 'Families get a simple next-step or practice suggestion after class or milestone progress.',
   },
 ];
 
@@ -316,32 +325,14 @@ export default function ClassSamplesPage() {
     [activeVideos],
   );
 
-  const videoSchemas = useMemo(
-    () =>
-      activeVideos
-        .filter((video) => isValidYouTubeVideoId(video.youtubeVideoId))
-        .map((video) => ({
-          '@context': 'https://schema.org',
-          '@type': 'VideoObject',
-          name: video.title,
-          description: video.description,
-          embedUrl: `https://www.youtube-nocookie.com/embed/${video.youtubeVideoId}`,
-          contentUrl: video.youtubeUrl || `https://www.youtube.com/watch?v=${video.youtubeVideoId}`,
-          url: `${CANONICAL_URL}#${video.id}`,
-          genre: CLASS_SAMPLE_CATEGORY_LABELS[video.category],
-          isFamilyFriendly: true,
-        })),
-    [activeVideos],
-  );
-
   return (
     <main className="min-h-screen bg-[#fcfcfb] text-slate-900">
       <Meta
-        title="Real Class Sample Videos for Parents | Tiny Steps Learning"
-        description="Watch real Tiny Steps online phonics classes, reading lessons, grammar teaching, and communication moments. See what our online English classes for kids actually look like before you book a demo."
+        title="Tiny Steps Class Samples | See Online English Classes for Kids"
+        description="See how Tiny Steps online English classes help children practise phonics, reading, grammar, sentence formation, and public speaking through live guided learning."
         keywords="online phonics classes, English classes for kids, real class samples, what Tiny Steps classes look like, online reading classes for kids, grammar classes for children"
         canonical={CANONICAL_URL}
-        jsonLd={[breadcrumbSchema, collectionPageSchema, itemListSchema, ...videoSchemas, quickAnswerFaqSchema]}
+        jsonLd={[breadcrumbSchema, collectionPageSchema, itemListSchema, faqSchema]}
       />
 
       <section className="relative overflow-hidden">
@@ -355,10 +346,10 @@ export default function ClassSamplesPage() {
           <div className="max-w-2xl self-center">
             <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-500">Real Class Moments</p>
             <h1 className="mt-5 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-[3.6rem] lg:leading-[1.02]">
-              See how Tiny Steps classes actually feel
+              See How Tiny Steps Online Classes Work
             </h1>
             <p className="mt-5 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">
-              <AutoLinkedText text="Watch real class sample videos from Tiny Steps phonics, reading, grammar, and communication lessons before enrolling. These parent-consented clips are calm, clear, and close to what families actually experience in our online English classes for kids." />
+              <AutoLinkedText text="Explore how Tiny Steps teaches phonics, reading, grammar, sentence formation, and public speaking through live, child-friendly online practice." />
             </p>
             <p className="mt-4 max-w-xl text-sm leading-6 text-slate-500">
               <AutoLinkedText text="If you are comparing online phonics classes, reading support, or English classes for kids with visible progress, this page gives you a direct feel for the teaching quality, pace, and child participation Tiny Steps is known for." />
@@ -366,23 +357,24 @@ export default function ClassSamplesPage() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
-                to="/?book=1"
+                to="/book-demo"
                 className="inline-flex h-12 items-center justify-center rounded-full bg-slate-950 px-6 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(15,23,42,0.18)] transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
               >
-                Book Free Demo
+                Book Free Assessment
               </Link>
               <Link
                 to="/courses"
                 className="inline-flex h-12 items-center justify-center rounded-full border border-slate-200 bg-white px-6 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2"
               >
-                View Courses
+                Explore Courses
               </Link>
             </div>
 
             <div className="mt-8 flex flex-wrap gap-2 text-sm text-slate-600">
-              <span className="rounded-full border border-white/80 bg-white/80 px-3 py-1.5 shadow-sm">Parent-consented clips</span>
-              <span className="rounded-full border border-white/80 bg-white/80 px-3 py-1.5 shadow-sm">No autoplay audio</span>
-              <span className="rounded-full border border-white/80 bg-white/80 px-3 py-1.5 shadow-sm">1:1 teaching moments</span>
+              <span className="rounded-full border border-white/80 bg-white/80 px-3 py-1.5 shadow-sm">Live teacher-guided learning</span>
+              <span className="rounded-full border border-white/80 bg-white/80 px-3 py-1.5 shadow-sm">Child participation, not passive watching</span>
+              <span className="rounded-full border border-white/80 bg-white/80 px-3 py-1.5 shadow-sm">Gentle correction and guided practice</span>
+              <span className="rounded-full border border-white/80 bg-white/80 px-3 py-1.5 shadow-sm">Free assessment before course recommendation</span>
             </div>
           </div>
 
@@ -469,23 +461,12 @@ export default function ClassSamplesPage() {
 
       <section className="mx-auto max-w-6xl px-4 pb-2 pt-4 lg:px-6">
         <div className="rounded-[28px] border border-white/80 bg-white/82 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-8">
-          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Quick Answer for Parents</h2>
-          <p className="mt-3 max-w-4xl text-sm leading-6 text-slate-700 sm:text-base">
-            Tiny Steps class samples help parents see how our live online English learning classes are conducted for
-            children across phonics, grammar, sentence formation, communication, and public speaking. Parents can
-            observe teacher guidance, child participation, use of visuals, guided correction, reading practice,
-            speaking practice, and the overall class flow before choosing a program. These samples are meant to show
-            the teaching experience, while each child&apos;s progress may vary based on age, current level, consistency,
-            and practice.
-          </p>
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            {quickAnswerFaqItems.map((item) => (
-              <article key={item.question} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <h3 className="text-sm font-semibold text-slate-900">{item.question}</h3>
-                <p className="mt-2 text-sm text-slate-700">{item.answer}</p>
-              </article>
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">What parents can observe in our classes</h2>
+          <ul className="mt-4 space-y-2 text-sm text-slate-700 sm:text-base">
+            {parentObservationItems.map((item) => (
+              <li key={item}>• {item}</li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
 
@@ -574,11 +555,11 @@ export default function ClassSamplesPage() {
       <section className="mx-auto max-w-6xl px-4 pb-10 pt-8 lg:px-6">
         <div className="rounded-[28px] border border-white/80 bg-white/82 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-8">
           <div className="text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">What to notice</p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Signs of real learning progress</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Sample teaching contexts</p>
+            <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Sample learning moments</h2>
           </div>
           <div className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {parentNoticeItems.map((item) => (
+            {sampleLearningMoments.map((item) => (
               <div key={item.title} className="rounded-2xl border border-slate-200/90 bg-slate-50/70 p-5 shadow-sm">
                 <h3 className="text-lg font-semibold text-slate-900">{item.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600"><AutoLinkedText text={item.description} usedHrefs={parentNoticeUsedHrefs} /></p>
@@ -592,7 +573,7 @@ export default function ClassSamplesPage() {
         <div className="rounded-[28px] border border-white/80 bg-white/82 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-8">
           <div className="text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">How classes feel</p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">The Tiny Steps teaching rhythm</h2>
+            <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">What a Tiny Steps class usually includes</h2>
           </div>
           <div className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {classExpectations.map((item) => (
@@ -645,6 +626,20 @@ export default function ClassSamplesPage() {
         viewAllHref="/testimonials"
       />
 
+      <section className="mx-auto max-w-6xl px-4 pb-6 pt-8 lg:px-6">
+        <div className="rounded-[28px] border border-white/80 bg-white/82 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-8">
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Frequently Asked Questions</h2>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {faqItems.map((item) => (
+              <article key={item.question} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <h3 className="text-sm font-semibold text-slate-900">{item.question}</h3>
+                <p className="mt-2 text-sm text-slate-700">{item.answer}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <TestimonialSubmissionForm
         pageTag="class-samples"
         title="Share feedback after watching class samples"
@@ -656,18 +651,18 @@ export default function ClassSamplesPage() {
         <div className="rounded-[32px] bg-[radial-gradient(circle_at_top_left,_rgba(250,204,21,0.18),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(125,211,252,0.2),_transparent_32%),linear-gradient(180deg,_#ffffff_0%,_#f8fafc_100%)] px-6 py-10 ring-1 ring-slate-200 sm:px-8">
           <div className="max-w-2xl">
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Next Step</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">Ready to see which class track fits your child best?</h2>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">Want to see the right class style for your child?</h2>
             <p className="mt-4 text-sm leading-6 text-slate-600 sm:text-base">
-              <AutoLinkedText text="Book a free demo to get a level check, course recommendation, and a clearer plan for phonics, reading, grammar, or communication support." />
+              <AutoLinkedText text="Start with a free assessment. Tiny Steps will understand your child’s current level and recommend whether the right starting point is phonics, reading, grammar, sentence formation, or public speaking." />
             </p>
           </div>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
-              to="/?book=1"
+              to="/book-demo"
               className="inline-flex h-12 items-center justify-center rounded-full bg-slate-950 px-6 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(15,23,42,0.16)] transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
             >
-              Book Free Demo
+              Book Free Assessment
             </Link>
             <a
               href={WHATSAPP_URL}

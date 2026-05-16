@@ -200,6 +200,8 @@ const monthKeyFromDate = (date: Date) => {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   return `${year}-${month}`;
 };
+const DEFAULT_WALLET_AUTOMATION_CUTOVER_MONTH_KEY = '2026-05';
+const DEFAULT_WALLET_AUTOMATION_CUTOVER_DATE = '2026-05-01';
 
 const formatMoney = (value: any) => {
   const num = Number(value);
@@ -236,6 +238,14 @@ const toMillis = (value: any) => {
   if (Number.isFinite(value?.seconds)) return value.seconds * 1000;
   const parsed = new Date(value).getTime();
   return Number.isFinite(parsed) ? parsed : null;
+};
+
+const normalizeDateOnlyYmd = (value: any): string | null => {
+  if (typeof value !== 'string') return null;
+  const raw = value.trim();
+  if (!raw) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  return null;
 };
 
 const chunkIds = (ids: string[], size = 10) => {
@@ -282,12 +292,16 @@ const receiveParentPaymentModeLabel = (mode: any) => {
 };
 
 const formatDateYmd = (value: any) => {
+  const dateOnly = normalizeDateOnlyYmd(value);
+  if (dateOnly) return dateOnly;
   const ms = toMillis(value);
   if (!ms) return '—';
   return new Date(ms).toISOString().slice(0, 10);
 };
 
 const toDateInputYmd = (value: any) => {
+  const dateOnly = normalizeDateOnlyYmd(value);
+  if (dateOnly) return dateOnly;
   const ms = toMillis(value);
   if (!ms) return '';
   return new Date(ms).toISOString().slice(0, 10);
@@ -416,8 +430,12 @@ export default function ParentPayments(): JSX.Element {
   const [walletAutomationConfig, setWalletAutomationConfig] =
     useState<WalletAutomationConfigSnapshot | null>(null);
   const [walletAutomationEnabled, setWalletAutomationEnabled] = useState(false);
-  const [walletAutomationCutoverMonthKey, setWalletAutomationCutoverMonthKey] = useState('');
-  const [walletAutomationCutoverDate, setWalletAutomationCutoverDate] = useState('');
+  const [walletAutomationCutoverMonthKey, setWalletAutomationCutoverMonthKey] = useState(
+    DEFAULT_WALLET_AUTOMATION_CUTOVER_MONTH_KEY
+  );
+  const [walletAutomationCutoverDate, setWalletAutomationCutoverDate] = useState(
+    DEFAULT_WALLET_AUTOMATION_CUTOVER_DATE
+  );
   const [walletAutomationNote, setWalletAutomationNote] = useState('');
   const [walletAutomationConfirmationText, setWalletAutomationConfirmationText] = useState('');
   const [receivePaymentOpen, setReceivePaymentOpen] = useState(false);
@@ -431,7 +449,7 @@ export default function ParentPayments(): JSX.Element {
   const [receivePaymentReference, setReceivePaymentReference] = useState('');
   const [receivePaymentNote, setReceivePaymentNote] = useState('');
   const [receivePaymentAllocationMode, setReceivePaymentAllocationMode] =
-    useState<ReceiveParentPaymentAllocationMode>('legacy_then_wallet');
+    useState<ReceiveParentPaymentAllocationMode>('wallet_only');
   const [receivePaymentRequestKey, setReceivePaymentRequestKey] = useState('');
   const [receivePaymentPreviewSaving, setReceivePaymentPreviewSaving] = useState(false);
   const [receivePaymentApplySaving, setReceivePaymentApplySaving] = useState(false);
@@ -539,7 +557,11 @@ export default function ParentPayments(): JSX.Element {
       where('monthKey', '==', selectedMonth)
     );
     const unsub = onSnapshot(q, (snap) => {
-      setCharges(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })));
+      setCharges(
+        snap.docs
+          .map((d) => ({ id: d.id, ...(d.data() as any) }))
+          .filter((charge) => charge.archived !== true)
+      );
     });
     return () => unsub();
   }, [selectedMonth]);
@@ -551,7 +573,11 @@ export default function ParentPayments(): JSX.Element {
     }
     const q = query(collection(db, 'payments'), where('monthKey', '==', selectedMonth));
     const unsub = onSnapshot(q, (snap) => {
-      setPayments(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })));
+      setPayments(
+        snap.docs
+          .map((d) => ({ id: d.id, ...(d.data() as any) }))
+          .filter((payment) => payment.archived !== true)
+      );
     });
     return () => unsub();
   }, [selectedMonth]);
@@ -1291,8 +1317,12 @@ export default function ParentPayments(): JSX.Element {
       setWalletAutomationExists(result.exists === true);
       setWalletAutomationConfig(config);
       setWalletAutomationEnabled(config.walletClassDeductionsEnabled === true);
-      setWalletAutomationCutoverMonthKey(String(config.walletCutoverMonthKey || ''));
-      setWalletAutomationCutoverDate(toDateInputYmd(config.walletCutoverDate));
+      setWalletAutomationCutoverMonthKey(
+        String(config.walletCutoverMonthKey || DEFAULT_WALLET_AUTOMATION_CUTOVER_MONTH_KEY)
+      );
+      setWalletAutomationCutoverDate(
+        toDateInputYmd(config.walletCutoverDate) || DEFAULT_WALLET_AUTOMATION_CUTOVER_DATE
+      );
       setWalletAutomationConfirmationText('');
     } catch (err: any) {
       const message = getWalletAutomationCallableError(err, 'Failed to load wallet automation settings');
@@ -1317,8 +1347,8 @@ export default function ParentPayments(): JSX.Element {
       lastDisabledAt: null,
     });
     setWalletAutomationEnabled(false);
-    setWalletAutomationCutoverMonthKey('');
-    setWalletAutomationCutoverDate('');
+    setWalletAutomationCutoverMonthKey(DEFAULT_WALLET_AUTOMATION_CUTOVER_MONTH_KEY);
+    setWalletAutomationCutoverDate(DEFAULT_WALLET_AUTOMATION_CUTOVER_DATE);
     setWalletAutomationNote('');
     setWalletAutomationConfirmationText('');
     void loadWalletAutomationConfig();
@@ -1388,7 +1418,7 @@ export default function ParentPayments(): JSX.Element {
     setReceivePaymentMethod('UPI');
     setReceivePaymentReference('');
     setReceivePaymentNote('');
-    setReceivePaymentAllocationMode('legacy_then_wallet');
+    setReceivePaymentAllocationMode('wallet_only');
     setReceivePaymentRequestKey(createReceiveParentPaymentRequestKey(parentId));
     setReceivePaymentResult(null);
     setReceivePaymentPreviewInput(null);
@@ -1519,7 +1549,7 @@ export default function ParentPayments(): JSX.Element {
     const appliedToLegacy = Number(receivePaymentResult.appliedToLegacy || 0);
     const walletTopupAmount = Number(receivePaymentResult.walletTopupAmount || 0);
     const confirmed = window.confirm(
-      `You are about to receive ${formatMoney(amountReceived)}. The system will apply ${formatMoney(appliedToLegacy)} to old dues and add ${formatMoney(walletTopupAmount)} to wallet.`
+      `You are about to receive ${formatMoney(amountReceived)}. Added to wallet: ${formatMoney(walletTopupAmount)}. Applied to legacy dues: ${formatMoney(appliedToLegacy)}.`
     );
     if (!confirmed) return;
 
@@ -1771,6 +1801,9 @@ export default function ParentPayments(): JSX.Element {
           <p className="text-sm text-muted-foreground">
             Monthly dues and payments by parent.
           </p>
+          <p className="text-xs text-muted-foreground">
+            Archived records are excluded from active parent payment totals.
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium">Month</label>
@@ -1994,7 +2027,7 @@ export default function ParentPayments(): JSX.Element {
           Existing billingCharges/payments allocation flow remains unchanged.
         </p>
         <p className="text-xs text-muted-foreground">
-          Use Receive parent payment for new receipts. It clears old dues first and adds any excess to wallet.
+          New receipts are added to the parent wallet. Class deductions reduce the wallet balance automatically.
         </p>
         <p className="text-xs text-amber-700">
           Legacy record payment does not add excess to wallet. For normal new receipts, use Receive parent payment.
@@ -2046,7 +2079,7 @@ export default function ParentPayments(): JSX.Element {
                               Receive parent payment
                             </Button>
                             <Button size="sm" variant="outline" onClick={() => openPaymentModal(row)}>
-                              Legacy record payment
+                              Legacy record payment (manual)
                             </Button>
                             <Button
                               size="sm"
@@ -2568,6 +2601,9 @@ export default function ParentPayments(): JSX.Element {
               Automatic wallet deductions are disabled by default. Enable only after setting a safe
               cutover month or date.
             </p>
+            <p className="text-xs text-muted-foreground">
+              Wallet class deductions should start from May 2026. Earlier finance records are archived and excluded from active totals.
+            </p>
 
             {walletAutomationLoading ? (
               <div className="text-sm text-muted-foreground">Loading wallet automation settings…</div>
@@ -2780,14 +2816,14 @@ export default function ParentPayments(): JSX.Element {
                   <SelectValue placeholder="Select allocation mode" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="legacy_then_wallet">
-                    Clear old dues first, add excess to wallet
-                  </SelectItem>
                   <SelectItem value="wallet_only">Add full amount to wallet</SelectItem>
+                  <SelectItem value="legacy_then_wallet">
+                    Legacy/manual: clear old dues first, add excess to wallet
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <div className="text-xs text-muted-foreground">
-                This flow checks all unpaid old dues across months, not only the selected month.
+                New receipts are added to the parent wallet. Class deductions reduce the wallet balance automatically.
               </div>
             </div>
 
@@ -2983,10 +3019,10 @@ export default function ParentPayments(): JSX.Element {
       </Dialog>
 
       <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
-        <DialogContent className="sm:max-w-[520px]">
-          <DialogHeader>
-            <DialogTitle>Legacy record payment</DialogTitle>
-          </DialogHeader>
+          <DialogContent className="sm:max-w-[520px]">
+            <DialogHeader>
+            <DialogTitle>Legacy record payment (manual)</DialogTitle>
+            </DialogHeader>
 
           <div className="space-y-3">
             <div className="text-sm">

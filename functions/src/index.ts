@@ -19,6 +19,8 @@ export {
   onTeacherEarningsRollupWrite,
   recordPayment,
   recordTeacherPayout,
+  previewFinanceCutoverArchive,
+  archiveFinanceRecordsThroughMonth,
   reconcileSessionRevenueMonthKeys,
   voidTeacherOrphanEarnings,
   adminVoidSessionCharge,
@@ -26,6 +28,8 @@ export {
 export {
   getWalletAutomationConfig,
   setWalletAutomationConfig,
+  previewMissingWalletDeductions,
+  backfillMissingWalletDeductions,
   onBillingChargeWalletSync,
   adminReceiveParentPayment,
   adminTopupParentWallet,

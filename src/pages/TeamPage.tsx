@@ -1,17 +1,56 @@
 import { useEffect } from 'react';
 import { applySeo, getRouteConfig } from '../lib/seo';
-import { CORE_PROGRAMS_TEXT, ORGANIZATION_ID, PUBLIC_FACTS, SITE_ORIGIN, organizationSchema } from '../lib/schemas';
+import {
+  CORE_PROGRAMS_TEXT,
+  ORGANIZATION_ID,
+  PUBLIC_FACTS,
+  SITE_ORIGIN,
+  createFAQPageSchema,
+  organizationSchema,
+} from '../lib/schemas';
 import { Link } from 'react-router-dom';
 
 const teamSeo = getRouteConfig('/team');
-const teamSeoTitle = teamSeo?.title ?? 'Meet the Founder-Led Academic Team | Tiny Steps Learning';
+const teamSeoTitle = teamSeo?.title ?? 'Tiny Steps Learning Team | Online English Teachers for Kids';
 const teamSeoDescription =
   teamSeo?.description ??
-  'Get to know the founder-led academic team behind Tiny Steps Learning and how teaching quality is shaped across core programs.';
+  'Meet the Tiny Steps Learning team and learn how our child-friendly online teachers support phonics, reading, grammar, sentence formation, and public speaking.';
 const teamCanonicalPath = teamSeo?.canonicalPath ?? '/team';
+const teamFaqItems = [
+  {
+    question: 'Who teaches Tiny Steps classes?',
+    answer:
+      'Tiny Steps classes are taught by online teachers trained to support children through guided practice in phonics, reading, grammar, sentence formation, and public speaking.',
+  },
+  {
+    question: 'How does Tiny Steps maintain teaching quality?',
+    answer:
+      'Tiny Steps uses structured curriculum paths, child-level assessment, guided lesson planning, teacher feedback, and parent communication to maintain teaching quality.',
+  },
+  {
+    question: 'Are Tiny Steps teachers child-friendly?',
+    answer:
+      'Yes. Tiny Steps focuses on patient, child-friendly teaching where children are encouraged to read, speak, write, and participate without fear.',
+  },
+  {
+    question: 'How do teachers decide what my child should learn?',
+    answer:
+      'The starting point is usually decided after a free assessment that checks the child’s current level in reading, phonics, grammar, sentence formation, or speaking confidence.',
+  },
+  {
+    question: 'Will parents receive updates?',
+    answer:
+      'Yes. Tiny Steps focuses on parent-friendly updates so families understand what the child is learning, where the child is improving, and what needs more practice.',
+  },
+];
 
 export default function TeamPage() {
   useEffect(() => {
+    const faqSchema = {
+      ...createFAQPageSchema(teamFaqItems),
+      '@id': `${SITE_ORIGIN}/team#faq`,
+    };
+
     applySeo({
       title: teamSeoTitle,
       description: teamSeoDescription,
@@ -62,7 +101,8 @@ export default function TeamPage() {
               item: `${SITE_ORIGIN}/team`
             }
           ]
-        }
+        },
+        faqSchema,
       ]
     });
   }, []);
@@ -72,54 +112,73 @@ export default function TeamPage() {
       {/* Hero Section */}
       <section className="mx-auto max-w-4xl px-6 py-16 text-center">
         <h1 className="font-heading text-4xl font-bold leading-tight md:text-5xl">
-          Meet the Team
+          Meet the Tiny Steps Learning Team
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-700">
-          Tiny Steps is a founder-led academic team serving learners in India and globally through live online classes.
-          We build clear, child-friendly pathways in {CORE_PROGRAMS_TEXT} so families can see steady progress.
+          Tiny Steps Learning is guided by a child-focused academic approach, trained online teachers, and parent-friendly progress communication for children aged 3–12.
         </p>
+        <ul className="mx-auto mt-6 grid max-w-3xl gap-2 text-left text-sm text-slate-700 sm:grid-cols-2">
+          <li>• Child-friendly online teaching approach</li>
+          <li>• Phonics, Grammar, Reading, and Public Speaking support</li>
+          <li>• Teacher-guided live practice</li>
+          <li>• Parent updates and progress visibility</li>
+        </ul>
+        <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            to="/book-demo"
+            className="inline-block rounded-lg bg-slate-900 px-8 py-3 font-semibold text-white transition hover:bg-slate-800"
+          >
+            Book Free Assessment
+          </Link>
+          <Link
+            to="/courses"
+            className="inline-block rounded-lg border border-slate-300 px-8 py-3 font-semibold text-slate-900 transition hover:border-slate-400"
+          >
+            Explore Courses
+          </Link>
+        </div>
       </section>
 
-      {/* Teaching Approach Section */}
+      {/* Teacher Support Section */}
       <section className="bg-gradient-to-r from-tiny-blue-50 to-tiny-purple-50 py-16">
         <div className="mx-auto max-w-4xl px-6">
-          <h2 className="mb-8 text-center text-3xl font-bold">Our Teaching Approach</h2>
-          <div className="grid gap-6 md:grid-cols-3">
-            <div className="rounded-2xl border border-gray-200 bg-white p-6">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-              </div>
-              <h3 className="mb-2 text-lg font-semibold">Systematic Curriculum</h3>
-              <p className="text-gray-600">
-                Structured Phonics, Grammar, and Public Speaking programs with clear milestones and mastery checks at every level.
-              </p>
-            </div>
+          <h2 className="mb-6 text-center text-3xl font-bold">How Tiny Steps teachers support children</h2>
+          <div className="rounded-2xl border border-gray-200 bg-white p-6">
+            <ul className="space-y-3 text-gray-700">
+              <li>• Teachers guide children through live, interactive practice instead of only giving lectures.</li>
+              <li>• Children get correction while reading, speaking, writing, and forming sentences.</li>
+              <li>• Lessons are adapted based on the child&apos;s age, confidence, and current level.</li>
+              <li>• Teachers encourage children gently so they speak, read, and try without fear.</li>
+              <li>• Parent updates help families understand what improved and what needs practice.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
 
-            <div className="rounded-2xl border border-gray-200 bg-white p-6">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-purple-100">
-                <svg className="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-                </svg>
-              </div>
-              <h3 className="mb-2 text-lg font-semibold">Child-First Philosophy</h3>
-              <p className="text-gray-600">
-                We celebrate effort over perfection, build confidence before fluency, and adapt to each child's unique pace and learning style.
-              </p>
-            </div>
+      <section className="mx-auto max-w-4xl px-6 py-14">
+        <h2 className="mb-6 text-center text-3xl font-bold">Our academic quality approach</h2>
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <ul className="space-y-3 text-gray-700">
+            <li>• Structured curriculum paths for Phonics, Grammar, Reading, and Public Speaking.</li>
+            <li>• Free assessment before recommending a course.</li>
+            <li>• Stage-wise learning instead of random worksheets.</li>
+            <li>• Lesson planning focused on child participation and guided practice.</li>
+            <li>• Ongoing review of teaching quality and parent feedback.</li>
+          </ul>
+        </div>
+      </section>
 
-            <div className="rounded-2xl border border-gray-200 bg-white p-6">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-                <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                </svg>
-              </div>
-              <h3 className="mb-2 text-lg font-semibold">Progress Tracking</h3>
-              <p className="text-gray-600">
-                Stage-based parent updates, topic-level mastery bands, and clear next-step guidance so you always know where your child stands.
-              </p>
-            </div>
+      <section className="bg-slate-50 py-14">
+        <div className="mx-auto max-w-4xl px-6">
+          <h2 className="mb-6 text-center text-3xl font-bold">What parents can expect from our teachers</h2>
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <ul className="space-y-3 text-gray-700">
+              <li>• Warm but structured online classes.</li>
+              <li>• Age-appropriate activities.</li>
+              <li>• Clear correction and guided practice.</li>
+              <li>• Progress-focused feedback.</li>
+              <li>• Respectful communication with parents.</li>
+            </ul>
           </div>
         </div>
       </section>
@@ -258,30 +317,30 @@ export default function TeamPage() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-4xl px-6 py-14">
+        <h2 className="mb-6 text-center text-3xl font-bold">Frequently Asked Questions</h2>
+        <div className="space-y-4">
+          {teamFaqItems.map((item) => (
+            <article key={item.question} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+              <h3 className="text-base font-semibold text-slate-900">{item.question}</h3>
+              <p className="mt-2 text-sm text-slate-700">{item.answer}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="mx-auto max-w-4xl px-6 py-16 text-center">
-        <h2 className="mb-4 text-3xl font-bold">Ready to Get Started?</h2>
+        <h2 className="mb-4 text-3xl font-bold">Want to understand which teacher-led path fits your child?</h2>
         <p className="mx-auto mb-8 max-w-2xl text-gray-700">
-          Book a free assessment class and discover how our expert mentors can help your child build confidence in English.
+          Start with a free assessment. Tiny Steps will check your child’s current level and recommend the right starting point for phonics, reading, grammar, sentence formation, or public speaking.
         </p>
-        <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+        <div className="flex items-center justify-center">
           <Link
-            to="/courses"
+            to="/book-demo"
             className="inline-block rounded-2xl bg-gradient-to-r from-tiny-blue-600 to-tiny-purple-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition hover:shadow-xl"
           >
-            View Courses
-          </Link>
-          <Link
-            to="/pricing"
-            className="inline-block rounded-2xl border-2 border-gray-300 bg-white px-8 py-4 text-lg font-semibold text-gray-700 transition hover:border-gray-400"
-          >
-            See Pricing
-          </Link>
-          <Link
-            to="/contact"
-            className="inline-block rounded-2xl border-2 border-gray-300 bg-white px-8 py-4 text-lg font-semibold text-gray-700 transition hover:border-gray-400"
-          >
-            Contact Us
+            Book Free Assessment
           </Link>
         </div>
       </section>

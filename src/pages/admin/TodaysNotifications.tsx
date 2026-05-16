@@ -146,8 +146,15 @@ const COUNTRY_OPTIONS = [
   { id: 'NO', code: '+47', label: 'Norway (+47)' },
 ] as const;
 const CUSTOM_COUNTRY_ID = 'CUSTOM';
-const DEFAULT_PARENT_TEMPLATE =
-  "Hello [Parent Name], this is a gentle reminder that [Child Name]'s Tiny Steps class is scheduled at [Time]. Please be ready a few minutes before class. Thank you.";
+const DEFAULT_PARENT_TEMPLATE = `Hello! 😊
+
+Quick reminder: [Child Name] has Tiny Steps class today at [Time].
+
+Please join on time for a fun and focused session.
+
+Kindly inform us in advance for any changes/cancellations. Repeated no-shows may be penalised.
+
+– Tiny Steps`;
 const DEFAULT_TEACHER_TEMPLATE =
   "Hello [Teacher Name], this is a reminder for Tiny Steps class with [Child Name] at [Time]. Please be ready and join on time.";
 const UPCOMING_RANGE_OPTIONS = [3, 7, 14, 30] as const;

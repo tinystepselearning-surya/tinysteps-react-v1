@@ -23,15 +23,18 @@ const fetchInvoices = async (parentId: string): Promise<ParentInvoice[]> => {
 const fetchPayments = async (parentId: string): Promise<ParentPayment[]> => {
   const q = query(collection(db, 'payments'), where('parentId', '==', parentId), orderBy('date', 'desc'));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((docSnap) => ({
-    id: docSnap.id,
-    invoiceId: (docSnap.data() as any).invoiceId,
-    amount: (docSnap.data() as any).amount,
-    date: (docSnap.data() as any).date,
-    method: (docSnap.data() as any).method,
-    status: (docSnap.data() as any).status,
-    receiptUrl: (docSnap.data() as any).receiptUrl,
-  }));
+  return snapshot.docs
+    .map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() as any) }))
+    .filter((row) => row.archived !== true)
+    .map((row) => ({
+      id: row.id,
+      invoiceId: row.invoiceId,
+      amount: row.amount,
+      date: row.date,
+      method: row.method,
+      status: row.status,
+      receiptUrl: row.receiptUrl,
+    }));
 };
 
 export const useInvoices = (parentId?: string) => {

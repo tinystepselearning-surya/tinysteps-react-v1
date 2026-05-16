@@ -433,6 +433,13 @@ function CoursesPage() {
       <section className="px-6 pb-8">
         <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-8">
           <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Common parent situations</h2>
+          <p className="mt-3 text-sm text-slate-700">
+            For parents in Hyderabad, Tiny Steps offers live online classes across phonics, reading, grammar, sentence formation, and public speaking through{' '}
+            <Link to="/online-english-classes-hyderabad" className="font-semibold underline underline-offset-2">
+              Online English Classes in Hyderabad
+            </Link>
+            .
+          </p>
           <div className="mt-4 grid gap-3 text-sm text-slate-700 md:grid-cols-2">
             <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">&ldquo;My child knows ABC but cannot read words.&rdquo; → Start with <Link to="/phonics" className="font-semibold underline underline-offset-2">Phonics</Link></p>
             <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">&ldquo;My child reads but makes many sentence mistakes.&rdquo; → Start with <Link to="/grammar" className="font-semibold underline underline-offset-2">Grammar</Link></p>

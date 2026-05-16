@@ -245,6 +245,7 @@ export default function HomePage() {
               </Link>.
               <br className="hidden sm:block" />
               Not sure where to begin? See <Link to="/class-samples" className="font-medium underline underline-offset-2 hover:text-slate-900">live class samples</Link>, discover <Link to="/why-tiny-steps" className="font-medium underline underline-offset-2 hover:text-slate-900">why parents choose us</Link>, or browse <Link to="/courses" className="font-medium underline underline-offset-2 hover:text-slate-900">all online courses</Link>.
+              {' '}Parents in Hyderabad can also explore <Link to="/online-english-classes-hyderabad" className="font-medium underline underline-offset-2 hover:text-slate-900">Hyderabad Online English Classes</Link>.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-3">

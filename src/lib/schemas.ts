@@ -372,6 +372,51 @@ export function createFAQPageSchema(items: Array<{ question: string; answer: str
 }
 
 /**
+ * Create Service schema for local SEO landing pages
+ * @param name - Service name
+ * @param description - Service description
+ * @param serviceType - Generic service type label
+ * @param areaServed - Geographic area served
+ * @param url - Canonical URL of the service page
+ * @param audienceType - Optional audience type (e.g., "Children")
+ * @returns Service schema object
+ */
+export function createServiceSchema(params: {
+  name: string;
+  description: string;
+  serviceType: string;
+  areaServed: string | string[];
+  url: string;
+  audienceType?: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: params.name,
+    description: params.description,
+    serviceType: params.serviceType,
+    provider: {
+      '@id': ORGANIZATION_ID,
+      '@type': 'EducationalOrganization',
+      name: PUBLIC_FACTS.brandName,
+      url: SITE_ORIGIN,
+    },
+    areaServed: params.areaServed,
+    ...(params.audienceType
+      ? {
+          audience: {
+            '@type': 'EducationalAudience',
+            educationalRole: 'student',
+            audienceType: params.audienceType,
+          },
+        }
+      : {}),
+    url: params.url,
+    inLanguage: 'en-IN',
+  };
+}
+
+/**
  * Create Course schema for program pages (Phonics, Grammar, Speaking)
  * @param name - Course name
  * @param description - Course description
@@ -532,6 +577,7 @@ export default {
   createHowToSchema,
   createBlogPostingSchema,
   createFAQPageSchema,
+  createServiceSchema,
   createCourseSchema,
   createCourseListSchema,
   createEventSchema

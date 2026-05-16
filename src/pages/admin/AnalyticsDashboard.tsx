@@ -246,18 +246,32 @@ export default function AnalyticsDashboard(): JSX.Element {
       );
     const unsubCharges = onSnapshot(
       chargesQuery,
-      (snap) => setCharges(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      (snap) =>
+        setCharges(
+          snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }))
+            .filter((charge) => charge.archived !== true)
+        ),
       (err) => setFsError(err?.message || 'Some analytics data could not be loaded.')
     );
     const unsubPayments = onSnapshot(
       paymentsQuery,
-      (snap) => setPayments(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      (snap) =>
+        setPayments(
+          snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }))
+            .filter((payment) => payment.archived !== true)
+        ),
       (err) => setFsError(err?.message || 'Some analytics data could not be loaded.')
     );
     const unsubTeacherEarnings = onSnapshot(
       teacherEarningsQuery,
       (snap) =>
-        setTeacherEarningsEntries(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+        setTeacherEarningsEntries(
+          snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }))
+            .filter((entry) => entry.archived !== true)
+        ),
       (err) => setFsError(err?.message || 'Some analytics data could not be loaded.')
     );
     const unsubClassSessions = classSessionsQuery

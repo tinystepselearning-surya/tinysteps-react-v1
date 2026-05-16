@@ -79,9 +79,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/why-tiny-steps': {
-    title: 'Why Parents Choose Tiny Steps | Founder-Led Online English for Children',
+    title: 'Why Choose Tiny Steps Learning | Online English Classes for Kids',
     description:
-      'Understand why parents choose Tiny Steps Learning: a premium online English learning school for children aged 3–12 with structured live teaching and clear progress visibility.',
+      'See why parents choose Tiny Steps Learning for child-friendly online phonics, reading, grammar, sentence formation, and public speaking classes.',
     canonicalPath: '/why-tiny-steps',
     ogType: 'website',
   },

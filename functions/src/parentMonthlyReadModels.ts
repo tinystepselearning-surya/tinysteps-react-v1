@@ -296,6 +296,14 @@ async function recomputeParentMonthBillingReadModel(
       .where('monthKey', '==', monthKey)
       .get(),
   ]);
+  const activeChargeDocs = chargesSnap.docs.filter((docSnap) => {
+    const data = (docSnap.data() || {}) as Record<string, unknown>;
+    return data.archived !== true;
+  });
+  const activePaymentDocs = paymentsSnap.docs.filter((docSnap) => {
+    const data = (docSnap.data() || {}) as Record<string, unknown>;
+    return data.archived !== true;
+  });
 
   const totals = {
     chargesCount: 0,
@@ -342,7 +350,7 @@ async function recomputeParentMonthBillingReadModel(
     return bucket;
   };
 
-  chargesSnap.docs.forEach((docSnap) => {
+  activeChargeDocs.forEach((docSnap) => {
     const charge = (docSnap.data() || {}) as Record<string, unknown>;
     const status = normalizeFinancialStatus(charge.status);
     if (status === 'void') return;
@@ -364,7 +372,7 @@ async function recomputeParentMonthBillingReadModel(
     bucket.dueAmount += dueAmount;
   });
 
-  paymentsSnap.docs.forEach((docSnap) => {
+  activePaymentDocs.forEach((docSnap) => {
     const payment = (docSnap.data() || {}) as Record<string, unknown>;
     const amount = normalizeAmount(payment.amount);
     const appliedRaw = normalizeAmount(payment.appliedAmount);

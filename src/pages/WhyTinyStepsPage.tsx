@@ -5,7 +5,7 @@ import Meta from "../components/common/Meta";
 import AutoLinkedText from "../components/seo/AutoLinkedText";
 import TestimonialsSection from "../components/seo/TestimonialsSection";
 import TestimonialSubmissionForm from "../components/seo/TestimonialSubmissionForm";
-import { PUBLIC_FACTS } from "../lib/schemas";
+import { PUBLIC_FACTS, createFAQPageSchema } from "../lib/schemas";
 import { getRouteConfig } from "../lib/seo";
 
 type Item = {
@@ -22,10 +22,10 @@ type ComparisonRow = {
 const WHATSAPP_URL = "https://wa.me/919618398383";
 const CORE_PROGRAMS_TEXT = `${PUBLIC_FACTS.corePrograms[0]}, ${PUBLIC_FACTS.corePrograms[1]}, and ${PUBLIC_FACTS.corePrograms[2]}`;
 const whyTinyStepsSeo = getRouteConfig("/why-tiny-steps");
-const whyTinyStepsSeoTitle = whyTinyStepsSeo?.title ?? "Why Parents Choose Tiny Steps | Founder-Led Online English for Children";
+const whyTinyStepsSeoTitle = whyTinyStepsSeo?.title ?? "Why Choose Tiny Steps Learning | Online English Classes for Kids";
 const whyTinyStepsSeoDescription =
   whyTinyStepsSeo?.description ??
-  "Understand why parents choose Tiny Steps: founder-led academic direction, structured live teaching, and clear learning progress visibility.";
+  "See why parents choose Tiny Steps Learning for child-friendly online phonics, reading, grammar, sentence formation, and public speaking classes.";
 const whyTinyStepsCanonicalPath = whyTinyStepsSeo?.canonicalPath ?? "/why-tiny-steps";
 const whyTinyStepsCanonicalUrl =
   whyTinyStepsCanonicalPath === "/"
@@ -33,10 +33,10 @@ const whyTinyStepsCanonicalUrl =
     : `${PUBLIC_FACTS.primaryWebsite}${whyTinyStepsCanonicalPath}`;
 
 const valuePills = [
-  "Ages 3–12 across programs",
-  "Live classes, real teachers",
-  "Structured curriculum",
-  "Parent-visible progress",
+  "Free assessment before course recommendation",
+  "Structured paths for Phonics, Reading, Grammar, and Public Speaking",
+  "Child participation, not passive watching",
+  "Parent-friendly progress communication",
 ];
 
 const trustStrip = [
@@ -48,39 +48,35 @@ const trustStrip = [
 
 const quickAnswerFaqItems = [
   {
-    question: "What makes Tiny Steps different from generic online classes?",
+    question: "Why should parents choose Tiny Steps Learning?",
     answer:
-      "Tiny Steps focuses on structured learning, child-friendly teaching, guided correction, active participation, and parent-visible progress instead of only completing topics quickly.",
+      "Parents choose Tiny Steps because classes are live, child-friendly, structured, and focused on helping children build confidence in phonics, reading, grammar, sentence formation, and public speaking.",
   },
   {
-    question: "Which programs does Tiny Steps offer?",
+    question: "How is Tiny Steps different from random worksheets or videos?",
     answer:
-      `Tiny Steps offers ${PUBLIC_FACTS.deliveryModel} through ${CORE_PROGRAMS_TEXT} programs for children.`,
+      "Tiny Steps uses live teacher-guided practice, correction, and stage-wise learning. Children do not only watch videos or complete random worksheets; they practise with support.",
   },
   {
-    question: "How does Tiny Steps support children who are shy or struggling?",
+    question: "Does Tiny Steps check my child’s level before recommending a course?",
     answer:
-      "Teachers use guided prompts, visuals, examples, activities, correction, and gradual practice so children can build confidence step by step.",
+      "Yes. Tiny Steps offers a free assessment to understand the child’s current level and recommend the right learning path.",
   },
   {
-    question: "How do parents track progress at Tiny Steps?",
+    question: "How do parents know if the child is improving?",
     answer:
-      "Parents receive updates about the child’s topic understanding, participation, confidence, strengths, and areas that need more practice.",
+      "Parents receive updates about what the child is learning, where the child is improving, and which areas need more practice.",
+  },
+  {
+    question: "What programs does Tiny Steps offer?",
+    answer:
+      "Tiny Steps offers structured programs for phonics, reading, grammar, sentence formation, and public speaking for children aged 3–12.",
   },
 ];
 
 const quickAnswerFaqSchema = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
+  ...createFAQPageSchema(quickAnswerFaqItems),
   "@id": "https://tinystepslearning.com/why-tiny-steps#quick-answer-faq",
-  mainEntity: quickAnswerFaqItems.map((item) => ({
-    "@type": "Question",
-    name: item.question,
-    acceptedAnswer: {
-      "@type": "Answer",
-      text: item.answer,
-    },
-  })),
 };
 
 type Outcome = {
@@ -176,8 +172,8 @@ const trustPillars: Item[] = [
 
 const methodSteps: Array<Item & { accent: Outcome["accent"] }> = [
   {
-    title: "Systematic teaching",
-    desc: "Sequence phonics, grammar, reading, and speaking in an order that supports natural learning.",
+    title: "Assessment First",
+    desc: "We check the child’s current level before recommending phonics, reading, grammar, sentence formation, or public speaking support.",
     icon: <IconBlocks />,
     accent: {
       bg: "from-slate-50 to-white",
@@ -188,8 +184,8 @@ const methodSteps: Array<Item & { accent: Outcome["accent"] }> = [
     },
   },
   {
-    title: "Engaging practice",
-    desc: "Match activities to children's attention spans and learning styles with multisensory practice.",
+    title: "Structured Curriculum",
+    desc: "Children move stage by stage instead of jumping between random topics.",
     icon: <IconSpark />,
     accent: {
       bg: "from-indigo-50 to-white",
@@ -200,8 +196,8 @@ const methodSteps: Array<Item & { accent: Outcome["accent"] }> = [
     },
   },
   {
-    title: "Real application",
-    desc: "Children use what they learn in stories, conversations, and writing tasks.",
+    title: "Guided Practice",
+    desc: "Teachers give children chances to read, speak, answer, write, correct, and try again.",
     icon: <IconMic />,
     accent: {
       bg: "from-sky-50 to-white",
@@ -212,8 +208,8 @@ const methodSteps: Array<Item & { accent: Outcome["accent"] }> = [
     },
   },
   {
-    title: "Steady mastery",
-    desc: "Build each skill fully before advancing—steady progress, always supported.",
+    title: "Parent Visibility",
+    desc: "Parents understand what the child learned, what improved, and what needs more practice.",
     icon: <IconChart />,
     accent: {
       bg: "from-emerald-50 to-white",
@@ -223,6 +219,23 @@ const methodSteps: Array<Item & { accent: Outcome["accent"] }> = [
       ring: "ring-emerald-500/20",
     },
   },
+];
+
+const whatMakesUsDifferentPoints = [
+  "We start by understanding the child’s current level.",
+  "We recommend the right path instead of giving random worksheets.",
+  "Classes are live and teacher-guided.",
+  "Children practise reading, speaking, sentence formation, and correction actively.",
+  "Parents receive clear updates about learning progress and practice needs.",
+];
+
+const bestForFamiliesPoints = [
+  "A child-friendly online class experience.",
+  "Reading and phonics support without confusion.",
+  "Grammar and sentence formation practice that children can apply.",
+  "Speaking confidence through gentle guided practice.",
+  "Clear learning direction before paying for a course.",
+  "Progress communication that parents can understand.",
 ];
 
 const comparison: ComparisonRow[] = [
@@ -270,11 +283,11 @@ const WhyTinyStepsPage: FC = () => {
             </span>
 
             <h1 className="mt-5 text-4xl md:text-6xl font-extrabold tracking-tight">
-              Premium English learning built on phonics, grammar, and confidence
+              Why Parents Choose Tiny Steps Learning
             </h1>
 
             <p className="mt-4 text-lg md:text-xl text-slate-600">
-              <AutoLinkedText text="Live 1:1 and small-group classes with trained mentors, structured curriculum you can understand, and transparent progress tracking parents trust." />
+              <AutoLinkedText text="Tiny Steps helps children aged 3–12 build stronger English foundations through live teacher-guided classes, structured learning paths, child-friendly practice, and parent-visible progress." />
             </p>
 
             <div className="mt-6 flex flex-wrap justify-center gap-2">
@@ -292,17 +305,18 @@ const WhyTinyStepsPage: FC = () => {
             </div>
 
             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3">
-              <Link to="/?book=1" className="w-full sm:w-auto">
-                <PrimaryButton>Book Free Assessment Class</PrimaryButton>
+              <Link to="/book-demo" className="w-full sm:w-auto">
+                <PrimaryButton>Book Free Assessment</PrimaryButton>
               </Link>
               <Link to="/courses" className="w-full sm:w-auto">
-                <SecondaryButton>View Courses</SecondaryButton>
+                <SecondaryButton>Explore Courses</SecondaryButton>
               </Link>
             </div>
 
             <div className="mt-4 flex flex-wrap justify-center gap-4 text-sm text-slate-600">
-              <Link to="/curriculum" className="hover:text-slate-900">See curriculum</Link>
-              <Link to="/contact" className="hover:text-slate-900">Contact team</Link>
+              <Link to="/team" className="hover:text-slate-900">Meet Our Team</Link>
+              <Link to="/courses" className="hover:text-slate-900">Explore Courses</Link>
+              <Link to="/book-demo" className="hover:text-slate-900">Book Free Assessment</Link>
               <a href={WHATSAPP_URL} target="_blank" rel="noreferrer" className="hover:text-slate-900">
                 Chat on WhatsApp - opens new window
               </a>
@@ -359,8 +373,8 @@ const WhyTinyStepsPage: FC = () => {
       <section className="mx-auto max-w-6xl px-4 py-8">
         <SectionHeading
           kicker="Our approach"
-          title="How children learn best"
-          desc="Systematic teaching, engaging practice, real application, and steady mastery."
+          title="Our learning approach"
+          desc="Assessment first, structured curriculum, guided practice, and parent visibility."
           center
         />
 
@@ -445,9 +459,17 @@ const WhyTinyStepsPage: FC = () => {
       <section className="mx-auto max-w-6xl px-4 py-8">
         <SectionHeading
           kicker="What makes us different"
-          title="Premium, structured English learning"
-          desc="Not random lessons—a complete learning pathway."
+          title="What makes Tiny Steps different?"
+          desc="A clear learning journey, live guidance, and progress updates parents can trust."
         />
+
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <ul className="space-y-2 text-slate-700">
+            {whatMakesUsDifferentPoints.map((point) => (
+              <li key={point}>• {point}</li>
+            ))}
+          </ul>
+        </div>
 
         <div className="mt-8 grid gap-4 lg:grid-cols-2">
           <CompareCard
@@ -475,6 +497,21 @@ const WhyTinyStepsPage: FC = () => {
           {trustPillars.map((it) => (
             <IconCard key={it.title} {...it} />
           ))}
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-8">
+        <SectionHeading
+          kicker="Best fit"
+          title="Tiny Steps is best for families who want"
+          desc="A structured, child-friendly English learning path with clear parent visibility."
+        />
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <ul className="grid gap-2 text-slate-700 sm:grid-cols-2">
+            {bestForFamiliesPoints.map((point) => (
+              <li key={point}>• {point}</li>
+            ))}
+          </ul>
         </div>
       </section>
 
@@ -593,6 +630,37 @@ const WhyTinyStepsPage: FC = () => {
         limit={6}
         viewAllHref="/testimonials"
       />
+
+      <section className="mx-auto max-w-6xl px-4 py-8">
+        <SectionHeading
+          kicker="Trust signals"
+          title="Explore proof before booking"
+          desc="Review team, parent stories, and class format before choosing your next step."
+        />
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="text-lg font-extrabold text-slate-900">Meet the Team</h3>
+            <p className="mt-2 text-sm text-slate-700">Learn how Tiny Steps teachers support children.</p>
+            <Link to="/team" className="mt-4 inline-block text-sm font-semibold text-blue-700 hover:underline">
+              Meet the Team
+            </Link>
+          </article>
+          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="text-lg font-extrabold text-slate-900">Parent Stories</h3>
+            <p className="mt-2 text-sm text-slate-700">Read how parents describe their child’s learning progress.</p>
+            <Link to="/testimonials" className="mt-4 inline-block text-sm font-semibold text-blue-700 hover:underline">
+              Parent Stories
+            </Link>
+          </article>
+          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="text-lg font-extrabold text-slate-900">Class Samples</h3>
+            <p className="mt-2 text-sm text-slate-700">See how Tiny Steps online classes are structured.</p>
+            <Link to="/class-samples" className="mt-4 inline-block text-sm font-semibold text-blue-700 hover:underline">
+              Class Samples
+            </Link>
+          </article>
+        </div>
+      </section>
 
       <div id="share-feedback" className="scroll-mt-28">
         <TestimonialSubmissionForm
@@ -739,13 +807,13 @@ const WhyTinyStepsPage: FC = () => {
             <div className="grid gap-8 lg:grid-cols-2 items-center">
               <div>
                 <div className="text-xs font-bold tracking-[0.22em] uppercase text-slate-500">
-                  Book free assessment class
+                  Free assessment
                 </div>
                 <h3 className="mt-2 text-3xl md:text-4xl font-extrabold tracking-tight">
-                  Find the right starting point through a free assessment
+                  Not sure if Tiny Steps is right for your child?
                 </h3>
                 <p className="mt-4 text-slate-600 leading-relaxed">
-                  Understand your child's current level and receive a clear recommendation—so progress feels natural and motivating from day one.
+                  Start with a free assessment. Tiny Steps will understand your child’s current level and recommend whether the right starting point is phonics, reading, grammar, sentence formation, or public speaking.
                 </p>
 
                 <ul className="mt-6 space-y-3 text-slate-700">
@@ -761,19 +829,19 @@ const WhyTinyStepsPage: FC = () => {
 
               <div className="rounded-2xl border bg-gradient-to-br from-slate-50 to-white p-6">
                 <div className="flex flex-col gap-3">
-                  <Link to="/?book=1">
-                    <PrimaryButton>Book Free Assessment Class</PrimaryButton>
+                  <Link to="/book-demo">
+                    <PrimaryButton>Book Free Assessment</PrimaryButton>
                   </Link>
 
                   <div className="flex flex-wrap gap-4 text-sm text-slate-600">
                     <Link to="/courses" className="hover:text-slate-900">
-                      View courses
+                      Explore courses
                     </Link>
-                    <Link to="/curriculum" className="hover:text-slate-900">
-                      See curriculum
+                    <Link to="/team" className="hover:text-slate-900">
+                      Meet our team
                     </Link>
-                    <Link to="/contact" className="hover:text-slate-900">
-                      Contact team
+                    <Link to="/class-samples" className="hover:text-slate-900">
+                      Class samples
                     </Link>
                   </div>
                 </div>

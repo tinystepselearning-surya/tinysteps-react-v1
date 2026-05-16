@@ -2242,7 +2242,9 @@ export default function ParentDashboard() {
         ),
       );
       if (canonicalSnap.size > 0) {
-        return canonicalSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+        return canonicalSnap.docs
+          .map((d) => ({ id: d.id, ...(d.data() as any) }))
+          .filter((row) => (row as any)?.archived !== true);
       }
 
       const legacySnap = await getDocs(
@@ -2254,6 +2256,7 @@ export default function ParentDashboard() {
       return legacySnap.docs
         .map((d) => ({ id: d.id, ...(d.data() as any) }))
         .filter((row) => {
+          if ((row as any)?.archived === true) return false;
           const date = toDateOrNull((row as any)?.createdAt);
           if (!date) return false;
           return toMonthKey(date) === monthKey;
@@ -2272,7 +2275,9 @@ export default function ParentDashboard() {
       if (!user?.uid) return [];
       const q = query(collection(db, "payments"), where("parentId", "==", user.uid));
       const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+      return snap.docs
+        .map((d) => ({ id: d.id, ...(d.data() as any) }))
+        .filter((row) => (row as any)?.archived !== true);
     },
   });
 

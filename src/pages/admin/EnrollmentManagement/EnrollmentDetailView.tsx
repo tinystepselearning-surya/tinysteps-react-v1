@@ -39,6 +39,7 @@ interface EnrollmentDetailViewProps {
 
 type Charge = {
   id: string;
+  archived?: boolean;
   createdAt?: any;
   updatedAt?: any;
   paidAt?: any;
@@ -50,6 +51,7 @@ type Charge = {
 
 type Payment = {
   id: string;
+  archived?: boolean;
   createdAt?: any;
   paidAt?: any;
   amount?: number;
@@ -293,14 +295,14 @@ export default function EnrollmentDetailView({
             id: docSnap.id,
             ...docSnap.data(),
           }) as Charge
-      );
+      ).filter((charge) => charge.archived !== true);
       const nextPayments: Payment[] = paymentsSnap.docs.map(
         (docSnap) =>
           ({
             id: docSnap.id,
             ...docSnap.data(),
           }) as Payment
-      );
+      ).filter((payment) => payment.archived !== true);
 
       const toSortKey = (value: any) => {
         const d = toDateOrNull(value);

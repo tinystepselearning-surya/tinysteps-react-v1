@@ -5,42 +5,58 @@ import {
   TESTIMONIAL_PROGRAM_ORDER,
   type StaticTestimonial,
 } from '../lib/staticTestimonials';
+import { createFAQPageSchema } from '../lib/schemas';
 
-const quickAnswerFaqItems = [
+const faqItems = [
   {
-    question: 'Why do we keep only a small sample on this page?',
+    question: 'What do parents say about Tiny Steps Learning?',
     answer:
-      'This page shows a curated sample so parents can quickly understand class experience. Ongoing public feedback is encouraged on trusted third-party review platforms.',
+      'Parents often look for child-friendly teaching, visible progress, structured practice, and clear communication. Tiny Steps focuses on helping parents understand what their child is learning and what needs more practice.',
   },
   {
-    question: 'What do these parent reviews usually cover?',
+    question: 'Can Tiny Steps help children who are not confident in English?',
     answer:
-      'Most reviews mention reading confidence, phonics blending, grammar clarity, sentence formation, speaking confidence, and teacher attention during live classes.',
+      'Tiny Steps supports children through guided live practice in phonics, reading, grammar, sentence formation, and public speaking so they can build confidence step by step.',
   },
   {
-    question: 'Do all children progress at the same pace?',
+    question: 'How do parents know if their child is improving?',
     answer:
-      'No. Progress depends on starting level, consistency, participation, and home practice support. The learning pathway is structured, but pace is child-specific.',
+      'Parents receive updates about the child’s learning, strengths, practice needs, and next steps. Progress is built gradually through stage-wise learning and teacher-guided correction.',
   },
   {
-    question: 'How should parents use this page?',
+    question: 'Are Tiny Steps classes suitable for shy children?',
     answer:
-      'Use these reviews as examples of parent experience, then match them with your child’s current learning need before choosing a program track.',
+      'Yes. Tiny Steps uses gentle prompts, child-friendly topics, and repeated speaking opportunities to help shy children participate more comfortably.',
+  },
+  {
+    question: 'Should I book a class directly or start with assessment?',
+    answer:
+      'It is better to start with a free assessment. The assessment helps identify the child’s current level and the most suitable course path.',
   },
 ];
 
-const quickAnswerFaqSchema = {
+const faqSchema = {
+  ...createFAQPageSchema(faqItems),
+  '@id': 'https://tinystepslearning.com/testimonials#faq',
+};
+
+const breadcrumbSchema = {
   '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  '@id': 'https://tinystepslearning.com/testimonials#quick-answer-faq',
-  mainEntity: quickAnswerFaqItems.map((item) => ({
-    '@type': 'Question',
-    name: item.question,
-    acceptedAnswer: {
-      '@type': 'Answer',
-      text: item.answer,
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Home',
+      item: 'https://tinystepslearning.com/',
     },
-  })),
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Testimonials',
+      item: 'https://tinystepslearning.com/testimonials',
+    },
+  ],
 };
 
 function ReviewCard({ item }: { item: StaticTestimonial }) {
@@ -67,48 +83,60 @@ export default function TestimonialsPage() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <Meta
-        title="Parent Reviews | Tiny Steps Learning"
-        description="Browse a curated sample of parent feedback across Tiny Steps phonics, grammar, and public speaking programs."
+        title="Tiny Steps Learning Reviews and Parent Stories"
+        description="Read parent stories about Tiny Steps Learning and how children build confidence in phonics, reading, grammar, sentence formation, and public speaking."
         canonical="https://tinystepslearning.com/testimonials"
-        jsonLd={[quickAnswerFaqSchema]}
+        jsonLd={[breadcrumbSchema, faqSchema]}
       />
 
       <section className="mx-auto max-w-6xl px-6 py-10">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Parent Feedback</p>
-        <h1 className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">Parent Feedback Across Programs</h1>
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Parent Stories</p>
+        <h1 className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">Parent Stories and Tiny Steps Learning Reviews</h1>
         <p className="mt-3 text-sm leading-6 text-slate-700 sm:text-base">
-          Tiny Steps continues to collect ongoing parent feedback through trusted third-party platforms.
-          We keep a small, curated sample here so families can review class experiences quickly.
+          See how parents describe their child’s progress in phonics, reading, grammar, sentence formation, and public speaking through Tiny Steps live online classes.
         </p>
-        <p className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-          For fresh public reviews, parents may also check our third-party review profiles such as Trustpilot, JustDial, and Reddit.
-        </p>
+        <ul className="mt-4 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
+          <li>• Parent-friendly progress communication</li>
+          <li>• Child-focused live online classes</li>
+          <li>• Reading, grammar, and speaking confidence support</li>
+          <li>• Free assessment before course recommendation</li>
+        </ul>
 
         <div className="mt-5 flex flex-wrap gap-3">
           <Link
-            to="/why-tiny-steps#share-feedback"
+            to="/book-demo"
             className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
-            Share parent feedback
+            Book Free Assessment
           </Link>
           <Link
             to="/courses"
             className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
           >
-            Explore courses
+            Explore Courses
           </Link>
         </div>
 
         <section className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:p-6">
-          <h2 className="text-2xl font-bold text-slate-900">Quick Answer for Parents</h2>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {quickAnswerFaqItems.map((item) => (
-              <article key={item.question} className="rounded-xl border border-slate-200 bg-white p-4">
-                <h3 className="text-sm font-semibold text-slate-900">{item.question}</h3>
-                <p className="mt-2 text-sm text-slate-700">{item.answer}</p>
-              </article>
-            ))}
-          </div>
+          <h2 className="text-2xl font-bold text-slate-900">What parents usually notice first</h2>
+          <ul className="mt-4 space-y-2 text-sm text-slate-700">
+            <li>• Children become more willing to participate.</li>
+            <li>• Reading and blending confidence improves gradually.</li>
+            <li>• Sentence formation becomes clearer with guided practice.</li>
+            <li>• Children start giving longer answers instead of only short responses.</li>
+            <li>• Parents understand what the child is learning and what needs practice.</li>
+          </ul>
+        </section>
+
+        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+          <h2 className="text-2xl font-bold text-slate-900">How Tiny Steps builds visible progress</h2>
+          <ul className="mt-4 space-y-2 text-sm text-slate-700">
+            <li>• Free assessment to understand the child’s starting level.</li>
+            <li>• Structured course path instead of random worksheets.</li>
+            <li>• Live teacher correction during reading, speaking, and writing practice.</li>
+            <li>• Parent updates after classes or learning milestones.</li>
+            <li>• Stage-wise movement from basics to confidence.</li>
+          </ul>
         </section>
 
         <div className="mt-10 space-y-10">
@@ -127,6 +155,31 @@ export default function TestimonialsPage() {
             );
           })}
         </div>
+
+        <section className="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:p-6">
+          <h2 className="text-2xl font-bold text-slate-900">Frequently Asked Questions</h2>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {faqItems.map((item) => (
+              <article key={item.question} className="rounded-xl border border-slate-200 bg-white p-4">
+                <h3 className="text-sm font-semibold text-slate-900">{item.question}</h3>
+                <p className="mt-2 text-sm text-slate-700">{item.answer}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-10 rounded-2xl bg-slate-900 p-8 text-center text-white">
+          <h2 className="text-2xl font-bold">Want to see the right path for your child?</h2>
+          <p className="mx-auto mt-3 max-w-3xl text-sm text-slate-200 sm:text-base">
+            Start with a free assessment. Tiny Steps will check your child’s current level and recommend the right starting point for phonics, reading, grammar, sentence formation, or public speaking.
+          </p>
+          <Link
+            to="/book-demo"
+            className="mt-6 inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
+          >
+            Book Free Assessment
+          </Link>
+        </section>
       </section>
     </main>
   );
