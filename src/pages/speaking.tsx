@@ -9,7 +9,7 @@ import ParentReassurance from '../components/programs/ParentReassurance';
 import NextStepsLinks from '../components/programs/NextStepsLinks';
 import TopicClusterLinks from '../components/programs/TopicClusterLinks';
 import Meta from '../components/common/Meta';
-import { createCourseSchema, PUBLIC_FACTS } from '../lib/schemas';
+import { createCourseSchema, createFAQPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import { getRouteConfig } from '../lib/seo';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
 import ContentTrustNote from '../components/seo/ContentTrustNote';
@@ -45,24 +45,29 @@ const stages = [
 
 const quickAnswerFaqItems = [
   {
-    question: 'How does speaking confidence grow for children?',
+    question: 'Do public speaking classes help shy children?',
     answer:
-      'Speaking confidence usually grows in stages: comfort, sentence flow, and then structured presentation. Children improve fastest with regular guided speaking turns.',
+      'Yes. Public speaking classes can help shy children speak more clearly and confidently when the class uses gentle practice, guided prompts, storytelling, picture talk, and repeated speaking opportunities.',
   },
   {
-    question: 'Is this useful for shy children who speak very little?',
+    question: 'What do children learn in online public speaking classes?',
     answer:
-      'Yes. Lessons start with low-pressure prompts and short responses, then build toward longer answers, storytelling, and independent speaking.',
+      'Children learn self-introduction, full-sentence speaking, storytelling, picture description, voice clarity, expression, presentation structure, and confidence while speaking.',
   },
   {
-    question: 'What happens in a live speaking lesson?',
+    question: 'Are public speaking classes suitable for young children?',
     answer:
-      'Children practice picture talk, story structure, vocabulary expansion, pronunciation, and feedback-based speaking tasks in live online sessions.',
+      'Yes. Young children can start with simple speaking activities such as introductions, show and tell, picture talk, and story retelling. The level should match the child’s age and confidence.',
   },
   {
-    question: 'What do parents usually notice first?',
+    question: 'How does Tiny Steps build speaking confidence?',
     answer:
-      'Parents usually notice better participation first. Then children begin speaking in longer, clearer sentences with more confidence.',
+      'Tiny Steps builds speaking confidence through live guided practice, teacher prompts, child-friendly topics, sentence-building support, storytelling, and regular feedback.',
+  },
+  {
+    question: 'What signs show that a child needs speaking support?',
+    answer:
+      'A child may need speaking support if they give one-word answers, avoid speaking in class, struggle to explain ideas, speak unclearly, or feel nervous while talking to others.',
   }
 ];
 
@@ -84,7 +89,7 @@ const faqItems = [
     answer: 'Parents receive stage-based progress updates with strengths, targets, and recorded speaking evidence. This makes confidence and communication growth measurable over time.'
   }
 ];
-const schemaFaqItems = [...quickAnswerFaqItems, faqItems[1]];
+const schemaFaqItems = quickAnswerFaqItems;
 
 const speakingSeo = getRouteConfig('/speaking');
 
@@ -104,12 +109,11 @@ export default function SpeakingPage() {
   const courseSchema = useMemo(
     () =>
       createCourseSchema({
-        name: "Public Speaking Classes for Kids",
-        description: "How speaking classes build confidence: children move from guided short responses to story-based and structured speaking with live feedback.",
+        name: "Public Speaking Classes for Kids Online",
+        description:
+          "Online public speaking and communication classes for children aged 5–12, focused on confidence, clarity, expression, storytelling, and structured speaking practice.",
         url: `${PUBLIC_FACTS.primaryWebsite}/speaking`,
-        courseMode: 'online',
-        ageRange: 'Ages 3-12',
-        educationalLevel: 'Elementary to Middle School'
+        educationalLevel: 'Beginner to Advanced'
       }),
     [],
   );
@@ -124,18 +128,7 @@ export default function SpeakingPage() {
         { "@type": "ListItem", "position": 2, "name": "Public Speaking", "item": "https://tinystepslearning.com/speaking" }
       ]
     },
-    {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      "mainEntity": schemaFaqItems.map(item => ({
-        "@type": "Question",
-        "name": item.question,
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": item.answer
-        }
-      }))
-    }
+    createFAQPageSchema(schemaFaqItems)
   ];
 
   return (

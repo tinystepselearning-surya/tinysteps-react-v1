@@ -18,6 +18,16 @@ const REGION = 'asia-south1';
 const REMINDER_WINDOW_START_MIN = 9;
 const REMINDER_WINDOW_END_MIN = 11;
 const VALID_SESSION_STATUSES = new Set(['scheduled', 'upcoming']);
+const NON_ACTIVE_ENROLLMENT_STATUSES = new Set([
+  'completed',
+  'discontinued',
+  'expired',
+  'cancelled',
+  'canceled',
+  'archived',
+  'inactive',
+]);
+const ONE_OFF_SOURCE_TOKENS = ['ad_hoc', 'adhoc', 'makeup', 'reschedule', 'manual_one_off', 'approved_request', 'one_off'];
 const ACTIVE_TOKEN_QUERY_CHUNK = 10;
 const FCM_BATCH_SIZE = 500;
 const TOKEN_DOC_BATCH_SIZE = 400;
@@ -112,6 +122,192 @@ function normalizeRole(value: unknown): string | null {
 
 function normalizeSessionStatus(value: unknown): string {
   return String(value || '').trim().toLowerCase();
+}
+
+function normalizeLookupId(value: unknown): string {
+  return String(value || '').trim();
+}
+
+function normalizeTimeHHmm(value: unknown): string {
+  const raw = String(value || '').trim();
+  if (/^([01]\d|2[0-3]):([0-5]\d)$/.test(raw)) return raw;
+  const match = /^(\d{1,2}):(\d{2})$/.exec(raw);
+  if (!match) return '';
+  const hh = Number(match[1]);
+  const mm = Number(match[2]);
+  if (!Number.isFinite(hh) || !Number.isFinite(mm) || hh < 0 || hh > 23 || mm < 0 || mm > 59) return '';
+  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
+function normalizeDurationMinutes(value: unknown, fallback = 35): number {
+  const n = Number(value);
+  const safe = Number.isFinite(n) ? n : fallback;
+  return Math.max(10, Math.min(180, Math.floor(safe)));
+}
+
+function isValidWeekday(value: unknown): value is number {
+  return Number.isInteger(value) && Number(value) >= 0 && Number(value) <= 6;
+}
+
+type ReminderScheduleSlot = {
+  weekday: number;
+  time: string;
+  durationMinutes: number;
+};
+
+function normalizeEnrollmentScheduleSlots(enrollmentLike: Record<string, unknown>): ReminderScheduleSlot[] {
+  const scheduleLike = asRecord(enrollmentLike.schedule);
+  const weeklySlots = Array.isArray(scheduleLike.weeklySlots) ? scheduleLike.weeklySlots : [];
+  const parsedWeeklySlots = weeklySlots
+    .map((item) => {
+      const slot = asRecord(item);
+      const weekday = Number(slot.weekday);
+      const time = normalizeTimeHHmm(slot.time);
+      const durationMinutes = normalizeDurationMinutes(slot.durationMinutes ?? slot.durationMins, 35);
+      if (!isValidWeekday(weekday) || !time) return null;
+      return { weekday, time, durationMinutes };
+    })
+    .filter((slot): slot is ReminderScheduleSlot => Boolean(slot));
+  if (parsedWeeklySlots.length > 0) return parsedWeeklySlots;
+
+  const weekdays = Array.isArray(scheduleLike.weekdays)
+    ? scheduleLike.weekdays.map((day) => Number(day)).filter((day): day is number => isValidWeekday(day))
+    : [];
+  const legacyTime = normalizeTimeHHmm(scheduleLike.timeHHmm);
+  if (!weekdays.length || !legacyTime) return [];
+  const durationMinutes = normalizeDurationMinutes(scheduleLike.durationMins, 35);
+  return Array.from(new Set(weekdays)).map((weekday) => ({ weekday, time: legacyTime, durationMinutes }));
+}
+
+function resolveSessionWeekday(sessionLike: Record<string, unknown>): number | null {
+  const ymd = String(sessionLike.date || '').trim();
+  const ymdMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+  if (ymdMatch) {
+    const y = Number(ymdMatch[1]);
+    const m = Number(ymdMatch[2]);
+    const d = Number(ymdMatch[3]);
+    if (Number.isFinite(y) && Number.isFinite(m) && Number.isFinite(d)) {
+      return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+    }
+  }
+  const startAt = resolveSessionStartAt(sessionLike);
+  if (!startAt) return null;
+  const shifted = new Date(startAt.getTime() + 330 * 60 * 1000);
+  return shifted.getUTCDay();
+}
+
+function resolveSessionStartTime(sessionLike: Record<string, unknown>): string {
+  const direct = normalizeTimeHHmm(sessionLike.startTime);
+  if (direct) return direct;
+  const startAt = resolveSessionStartAt(sessionLike);
+  if (!startAt) return '';
+  const shifted = new Date(startAt.getTime() + 330 * 60 * 1000);
+  return `${String(shifted.getUTCHours()).padStart(2, '0')}:${String(shifted.getUTCMinutes()).padStart(2, '0')}`;
+}
+
+function resolveSessionDuration(sessionLike: Record<string, unknown>): number | null {
+  const raw = Number(sessionLike.durationMinutes ?? sessionLike.durationMins);
+  if (!Number.isFinite(raw) || raw <= 0) return null;
+  return normalizeDurationMinutes(raw, 35);
+}
+
+function isOneOffSession(sessionLike: Record<string, unknown>): boolean {
+  if (sessionLike.isAdHoc === true || sessionLike.isMakeup === true) return true;
+  if (sessionLike.makeupCreditId || sessionLike.makeupForSessionId) return true;
+  const adHocType = String(sessionLike.adHocType || '').trim().toLowerCase();
+  if (adHocType && (adHocType.includes('one_off') || adHocType.includes('adhoc') || adHocType.includes('ad_hoc'))) {
+    return true;
+  }
+  const source = String(sessionLike.source || '').trim().toLowerCase();
+  return ONE_OFF_SOURCE_TOKENS.some((token) => source.includes(token));
+}
+
+function collectIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return Array.from(new Set(value.map((item) => normalizeLookupId(item)).filter(Boolean)));
+}
+
+function collectSessionKidIds(sessionLike: Record<string, unknown>): string[] {
+  return Array.from(
+    new Set(
+      [
+        ...collectIds(sessionLike.kidIds),
+        normalizeLookupId(sessionLike.kidId),
+        normalizeLookupId(sessionLike.studentId),
+        normalizeLookupId(sessionLike.childId),
+      ].filter(Boolean),
+    ),
+  );
+}
+
+function collectEnrollmentKidIds(enrollmentLike: Record<string, unknown>): string[] {
+  return Array.from(
+    new Set(
+      [
+        ...collectIds(enrollmentLike.kidIds),
+        normalizeLookupId(enrollmentLike.kidId),
+        normalizeLookupId(enrollmentLike.studentId),
+        normalizeLookupId(enrollmentLike.childId),
+      ].filter(Boolean),
+    ),
+  );
+}
+
+function collectEnrollmentTeacherIds(enrollmentLike: Record<string, unknown>): string[] {
+  return Array.from(
+    new Set(
+      [
+        ...collectIds(enrollmentLike.teacherIds),
+        normalizeLookupId(enrollmentLike.teacherId),
+      ].filter(Boolean),
+    ),
+  );
+}
+
+function isEnrollmentOperationallyActive(enrollmentLike: Record<string, unknown>): boolean {
+  if (enrollmentLike.archivedAt || enrollmentLike.archived === true || enrollmentLike.isArchived === true) return false;
+  const status = normalizeSessionStatus(enrollmentLike.status);
+  const normalized = status === 'enrolled' || status === 'current' || status === 'ongoing' || status === '' ? 'active' : status;
+  return !NON_ACTIVE_ENROLLMENT_STATUSES.has(normalized);
+}
+
+function isCanonicalScheduledSession(
+  sessionLike: Record<string, unknown>,
+  enrollmentLike: Record<string, unknown>,
+): boolean {
+  if (!isEnrollmentOperationallyActive(enrollmentLike)) return false;
+  const sessionEnrollmentId = normalizeLookupId(sessionLike.enrollmentId);
+  const enrollmentId = normalizeLookupId(enrollmentLike.id);
+  if (!sessionEnrollmentId) return false;
+  if (enrollmentId && sessionEnrollmentId !== enrollmentId) return false;
+
+  const enrollmentCourseId = normalizeLookupId(enrollmentLike.courseId);
+  const sessionCourseId = normalizeLookupId(sessionLike.courseId);
+  if (enrollmentCourseId && (!sessionCourseId || sessionCourseId !== enrollmentCourseId)) return false;
+
+  const teacherIds = collectEnrollmentTeacherIds(enrollmentLike);
+  const sessionTeacherId = normalizeLookupId(sessionLike.teacherId);
+  if (teacherIds.length > 0 && (!sessionTeacherId || !teacherIds.includes(sessionTeacherId))) return false;
+
+  const enrollmentKidIds = collectEnrollmentKidIds(enrollmentLike);
+  const sessionKidIds = collectSessionKidIds(sessionLike);
+  if (!enrollmentKidIds.length || !sessionKidIds.length) return false;
+  if (!sessionKidIds.every((kidId) => enrollmentKidIds.includes(kidId))) return false;
+
+  if (isOneOffSession(sessionLike)) return true;
+
+  const slots = normalizeEnrollmentScheduleSlots(enrollmentLike);
+  if (!slots.length) return false;
+  const weekday = resolveSessionWeekday(sessionLike);
+  const startTime = resolveSessionStartTime(sessionLike);
+  if (weekday === null || !startTime) return false;
+  const duration = resolveSessionDuration(sessionLike);
+  return slots.some((slot) => {
+    if (slot.weekday !== weekday) return false;
+    if (slot.time !== startTime) return false;
+    if (duration === null) return true;
+    return slot.durationMinutes === duration;
+  });
 }
 
 function normalizePlatform(value: unknown): NotificationPlatform {
@@ -576,12 +772,31 @@ export const sendClassReminder10Min = onSchedule(
     let skipped = 0;
     let noTokens = 0;
     let failures = 0;
+    const enrollmentCache = new Map<string, Record<string, unknown> | null>();
 
     for (const docSnap of sessionsSnap.docs) {
       scanned += 1;
       const initialData = asRecord(docSnap.data());
       const status = normalizeSessionStatus(initialData.status);
       if (!VALID_SESSION_STATUSES.has(status)) {
+        skipped += 1;
+        continue;
+      }
+
+      const enrollmentId = normalizeLookupId(initialData.enrollmentId);
+      if (!enrollmentId) {
+        skipped += 1;
+        continue;
+      }
+      if (!enrollmentCache.has(enrollmentId)) {
+        const enrollmentSnap = await db.collection('enrollments').doc(enrollmentId).get();
+        enrollmentCache.set(
+          enrollmentId,
+          enrollmentSnap.exists ? ({ id: enrollmentSnap.id, ...(enrollmentSnap.data() || {}) } as Record<string, unknown>) : null,
+        );
+      }
+      const enrollmentLike = enrollmentCache.get(enrollmentId);
+      if (!enrollmentLike || !isCanonicalScheduledSession(initialData, enrollmentLike)) {
         skipped += 1;
         continue;
       }

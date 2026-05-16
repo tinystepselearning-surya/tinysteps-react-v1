@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, documentId, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
+import { isSessionCanonicalForEnrollment } from '../../../lib/sessionScheduleIntegrity';
 import { ParentSession } from '../../../types/Parent';
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
@@ -19,9 +20,17 @@ const timeFromDoc = (data: any) => {
   return undefined;
 };
 
+const chunkIds = (ids: string[], size = 10): string[][] => {
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += size) {
+    chunks.push(ids.slice(i, i + size));
+  }
+  return chunks;
+};
+
 const fetchSessions = async (childIds: string[]): Promise<ParentSession[]> => {
   if (!childIds.length) return [];
-  const sessions: ParentSession[] = [];
+  const rawRows: Array<{ id: string; childId: string; data: any }> = [];
   const seen = new Set<string>();
   await Promise.all(
     childIds.map(async (childId) => {
@@ -37,21 +46,49 @@ const fetchSessions = async (childIds: string[]): Promise<ParentSession[]> => {
         const date = dateFromDoc(data);
         if (!date || date < todayIso()) return;
         seen.add(docSnap.id);
-        sessions.push({
-          id: docSnap.id,
-          kidId: childId,
-          kidName: data.kidNames?.[childId] || data.kidName || 'Child',
-          courseName: data.courseName || data.courseId,
-          date,
-          startTime: timeFromDoc(data) || '00:00',
-          status: data.status || 'scheduled',
-          teacherName: data.teacherName,
-        });
+        rawRows.push({ id: docSnap.id, childId, data });
       };
 
       classSnap.forEach(addDoc);
     })
   );
+
+  const enrollmentIds = Array.from(
+    new Set(
+      rawRows
+        .map(({ data }) => String(data?.enrollmentId || '').trim())
+        .filter(Boolean),
+    ),
+  );
+  const enrollmentMap = new Map<string, Record<string, unknown>>();
+  for (const chunk of chunkIds(enrollmentIds, 10)) {
+    if (!chunk.length) continue;
+    const enrollmentSnap = await getDocs(
+      query(collection(db, 'enrollments'), where(documentId(), 'in', chunk)),
+    );
+    enrollmentSnap.docs.forEach((docSnap) => {
+      enrollmentMap.set(docSnap.id, { id: docSnap.id, ...(docSnap.data() as Record<string, unknown>) });
+    });
+  }
+
+  const sessions: ParentSession[] = rawRows
+    .filter(({ data }) => {
+      const enrollmentId = String(data?.enrollmentId || '').trim();
+      if (!enrollmentId) return false;
+      const enrollment = enrollmentMap.get(enrollmentId);
+      return isSessionCanonicalForEnrollment(data as Record<string, unknown>, enrollment);
+    })
+    .map(({ id, childId, data }) => ({
+      id,
+      kidId: childId,
+      kidName: data.kidNames?.[childId] || data.kidName || 'Child',
+      courseName: data.courseName || data.courseId,
+      date: dateFromDoc(data) || '',
+      startTime: timeFromDoc(data) || '00:00',
+      status: data.status || 'scheduled',
+      teacherName: data.teacherName,
+    }));
+
   return sessions.sort((a, b) => `${a.date}T${a.startTime}`.localeCompare(`${b.date}T${b.startTime}`));
 };
 

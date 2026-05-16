@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { collection, documentId, getDocs, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { db } from '../../../lib/firebaseConfig';
+import { isSessionCanonicalForEnrollment } from '../../../lib/sessionScheduleIntegrity';
 import { TeacherSession } from '../../../types/Teacher';
 
 interface UseTeacherSessionsResult {
@@ -321,6 +322,28 @@ const sortSessions = (rows: TeacherSession[]): TeacherSession[] => {
   });
 };
 
+const chunkIds = (ids: string[], size = 10): string[][] => {
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += size) {
+    chunks.push(ids.slice(i, i + size));
+  }
+  return chunks;
+};
+
+const fetchEnrollmentsByIds = async (ids: string[]): Promise<Map<string, Record<string, unknown>>> => {
+  const map = new Map<string, Record<string, unknown>>();
+  for (const chunk of chunkIds(ids, 10)) {
+    if (!chunk.length) continue;
+    const snap = await getDocs(
+      query(collection(db, 'enrollments'), where(documentId(), 'in', chunk)),
+    );
+    snap.docs.forEach((docSnap) => {
+      map.set(docSnap.id, { id: docSnap.id, ...(docSnap.data() as Record<string, unknown>) });
+    });
+  }
+  return map;
+};
+
 export const useTeacherSessions = (
   teacherId?: string,
   startDate?: string,
@@ -375,7 +398,23 @@ export const useTeacherSessions = (
         ? rows
         : rows.filter((session) => toCleanText((session as any)?.teacherId) === teacherKey);
 
-      const enriched = await enrichSessionsWithKidNames(filtered);
+      const enrollmentMap = await fetchEnrollmentsByIds(
+        Array.from(
+          new Set(
+            filtered
+              .map((session) => toCleanText((session as any)?.enrollmentId))
+              .filter(Boolean),
+          ),
+        ),
+      );
+      const canonicalOnly = filtered.filter((session) => {
+        const enrollmentId = toCleanText((session as any)?.enrollmentId);
+        if (!enrollmentId) return false;
+        const enrollment = enrollmentMap.get(enrollmentId);
+        return isSessionCanonicalForEnrollment(session as unknown as Record<string, unknown>, enrollment);
+      });
+
+      const enriched = await enrichSessionsWithKidNames(canonicalOnly);
       if (cancelled || currentBatch !== batchCounter) return;
       setSessions(sortSessions(enriched).slice(0, 400));
       setError(null);

@@ -373,63 +373,40 @@ export function createFAQPageSchema(items: Array<{ question: string; answer: str
 
 /**
  * Create Course schema for program pages (Phonics, Grammar, Speaking)
- * @param name - Course name (e.g., "Phonics Reading Program")
+ * @param name - Course name
  * @param description - Course description
- * @param provider - Provider name (default: "Tiny Steps Learning")
  * @param url - Course landing page URL
- * @param price - Course price in INR (optional)
- * @returns Course schema object with speakable markup
+ * @returns Course schema object
  */
 export function createCourseSchema(params: {
   name: string;
   description: string;
-  provider?: string;
   url: string;
-  price?: number;
-  courseMode?: 'online' | 'offline' | 'blended';
+  provider?: string;
   educationalLevel?: string;
-  ageRange?: string;
 }) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Course',
     name: params.name,
     description: params.description,
+    url: params.url,
     provider: {
-      '@type': 'Organization',
       '@id': ORGANIZATION_ID,
+      '@type': 'EducationalOrganization',
       name: params.provider || PUBLIC_FACTS.brandName,
       url: SITE_ORIGIN
     },
-    url: params.url,
-    ...(params.price && {
-      offers: {
-        '@type': 'Offer',
-        price: params.price,
-        priceCurrency: 'INR',
-        availability: 'https://schema.org/InStock',
-        url: params.url
-      }
-    }),
-    ...(params.courseMode && {
-      courseMode: params.courseMode
-    }),
     ...(params.educationalLevel && {
       educationalLevel: params.educationalLevel
     }),
-    ...(params.ageRange && {
-      audience: {
-        '@type': 'EducationalAudience',
-        educationalRole: 'student',
-        audienceType: params.ageRange
-      }
-    }),
-    // Speakable for voice search
-    speakable: {
-      '@type': 'SpeakableSpecification',
-      cssSelector: ['h1', '.course-description', '.course-outcomes'],
-      xpath: ['/html/body//h1', '/html/body//p[@class="course-description"]']
-    }
+    audience: {
+      '@type': 'EducationalAudience',
+      educationalRole: 'student',
+      audienceType: 'Children',
+    },
+    inLanguage: 'en-IN',
+    isAccessibleForFree: false,
   };
 }
 

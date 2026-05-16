@@ -8,7 +8,7 @@ import ParentReassurance from '../components/programs/ParentReassurance';
 import NextStepsLinks from '../components/programs/NextStepsLinks';
 import TopicClusterLinks from '../components/programs/TopicClusterLinks';
 import Meta from '../components/common/Meta';
-import { createCourseSchema, PUBLIC_FACTS } from '../lib/schemas';
+import { createCourseSchema, createFAQPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import { getRouteConfig } from '../lib/seo';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
 import ContentTrustNote from '../components/seo/ContentTrustNote';
@@ -44,49 +44,29 @@ const stages = [
 
 const quickAnswerFaqItems = [
   {
-    question: 'What do online grammar classes improve first?',
+    question: 'Do grammar classes help children with sentence formation?',
     answer:
-      'Grammar growth usually moves in stages: sentence patterns, accuracy, punctuation, and then clearer short writing.',
+      'Yes. Grammar classes help children understand how words work in a sentence, including nouns, verbs, adjectives, articles, prepositions, tenses, and punctuation. This improves sentence formation, speaking, and writing.',
   },
   {
-    question: 'Which age group are Tiny Steps grammar classes designed for?',
+    question: 'What age group are Tiny Steps grammar classes for?',
     answer:
-      'Tiny Steps grammar classes are designed for children aged 3–12, with the starting level adjusted after assessment.',
+      'Tiny Steps grammar classes are designed mainly for children aged 5 to 12, with beginner and advanced levels based on the child’s current grammar and writing ability.',
   },
   {
-    question: 'How do you place a child in the right grammar level?',
+    question: 'Will grammar classes improve writing skills?',
     answer:
-      'Placement checks sentence formation, punctuation control, tense usage, and writing clarity instead of relying only on age or school grade.',
+      'Yes. Grammar practice supports better writing because children learn to build complete sentences, organize ideas, use punctuation, and correct common mistakes.',
   },
   {
-    question: 'Are classes live and interactive?',
+    question: 'Are grammar classes only about rules?',
     answer:
-      'Yes. Classes are live and interactive, so children practise grammar through sentence formation, writing, and guided speaking.',
+      'No. Tiny Steps grammar classes focus on using grammar in sentences, speaking, reading, and writing activities instead of only memorizing rules.',
   },
   {
-    question: 'What do parents usually notice first?',
+    question: 'How do I know if my child needs grammar support?',
     answer:
-      'Parents typically notice fewer sentence errors and better punctuation in homework and daily writing.',
-  },
-  {
-    question: 'How do parents track progress?',
-    answer:
-      'Parents receive progress updates, class feedback, and next-step recommendations through stage-based reviews and writing samples.',
-  },
-  {
-    question: 'How is grammar taught beyond worksheets?',
-    answer:
-      'Children apply rules through speaking prompts, editing drills, and guided writing tasks so grammar becomes usable, not memorized.',
-  },
-  {
-    question: 'Can hesitant children build confidence through grammar classes?',
-    answer:
-      'Yes. Children who feel hesitant can build confidence when grammar, sentence formation, and speaking practice are taught together.',
-  },
-  {
-    question: 'What is the best next step for parents?',
-    answer:
-      'Book a free assessment to understand your child’s current grammar and sentence formation level and choose the right starting point.',
+      'A child may need grammar support if they speak in broken sentences, make frequent tense mistakes, avoid writing, use one-word answers, or know grammar rules but cannot apply them while speaking or writing.',
   },
 ];
 
@@ -108,7 +88,7 @@ const faqItems = [
     answer: 'Parents get stage-based updates with writing samples, strengths, and next-step goals. This makes improvement in sentence quality and paragraph structure easy to track.'
   }
 ];
-const schemaFaqItems = [...quickAnswerFaqItems, faqItems[2]];
+const schemaFaqItems = quickAnswerFaqItems;
 
 const grammarSeo = getRouteConfig('/grammar');
 
@@ -128,12 +108,11 @@ export default function GrammarPage() {
   const courseSchema = useMemo(
     () =>
       createCourseSchema({
-        name: "Grammar & Writing Classes for Kids",
-        description: "How grammar classes improve real language use: children move from word types to sentence control, punctuation, and clearer writing.",
+        name: "Online Grammar Classes for Kids",
+        description:
+          "Online grammar and sentence formation classes for children aged 5–12, focused on grammar accuracy, sentence building, writing clarity, and confident expression.",
         url: `${PUBLIC_FACTS.primaryWebsite}/grammar`,
-        courseMode: 'online',
-        ageRange: 'Ages 3-12',
-        educationalLevel: 'Elementary to Middle School'
+        educationalLevel: 'Beginner to Advanced'
       }),
     [],
   );
@@ -148,18 +127,7 @@ export default function GrammarPage() {
         { "@type": "ListItem", "position": 2, "name": "Grammar", "item": "https://tinystepslearning.com/grammar" }
       ]
     },
-    {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      "mainEntity": schemaFaqItems.map(item => ({
-        "@type": "Question",
-        "name": item.question,
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": item.answer
-        }
-      }))
-    }
+    createFAQPageSchema(schemaFaqItems)
   ];
 
   return (

@@ -7,8 +7,54 @@ import { getCourseWeeksOverride } from '../content/curriculumLoader';
 import Meta from '../components/common/Meta';
 import { WeekAccordion } from '../components/curriculum/WeekAccordion';
 import { applySeo } from '../lib/seo';
+import { createCourseSchema } from '../lib/schemas';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
 import TestimonialsSection from '../components/seo/TestimonialsSection';
+
+const COURSE_SCHEMA_BY_SLUG: Record<string, { name: string; description: string; educationalLevel: string }> = {
+  'phonics-foundation': {
+    name: 'Phonics Foundation Program',
+    description:
+      'Beginner phonics program for children who are starting letter sounds, early blending, CVC words, and reading readiness.',
+    educationalLevel: 'Foundation',
+  },
+  'phonics-brush-up': {
+    name: 'Phonics Brush-Up Program',
+    description:
+      'Revision-focused phonics program for children who know some phonics but need stronger blending, decoding, fluency, and confidence.',
+    educationalLevel: 'Intermediate',
+  },
+  'phonics-advanced': {
+    name: 'Advanced Phonics Program',
+    description:
+      'Advanced phonics program covering digraphs, long vowels, vowel teams, tricky words, spelling patterns, reading fluency, and passage reading.',
+    educationalLevel: 'Advanced',
+  },
+  'basic-grammar': {
+    name: 'Basic Grammar Program',
+    description:
+      'Foundational grammar program for children covering nouns, verbs, adjectives, articles, prepositions, punctuation, and sentence formation.',
+    educationalLevel: 'Beginner',
+  },
+  'advanced-grammar': {
+    name: 'Advanced Grammar Program',
+    description:
+      'Advanced grammar program for children focused on tenses, sentence structure, writing accuracy, paragraph writing, editing, and confident communication.',
+    educationalLevel: 'Advanced',
+  },
+  'basic-public-speaking': {
+    name: 'Basic Public Speaking Program',
+    description:
+      'Beginner public speaking program for children focused on self-introduction, full-sentence speaking, picture talk, storytelling, and confidence.',
+    educationalLevel: 'Beginner',
+  },
+  'advanced-public-speaking': {
+    name: 'Advanced Public Speaking Program',
+    description:
+      'Advanced public speaking program for children focused on structured speeches, debates, presentations, storytelling, voice modulation, and audience confidence.',
+    educationalLevel: 'Advanced',
+  },
+};
 
 const CourseDetailPage: FC = () => {
   const params = useParams();
@@ -81,30 +127,19 @@ const CourseDetailPage: FC = () => {
     );
   }
 
-  const priceNumber =
-    (course.price || '').match(/₹\s*([\d,]+)/)?.[1]?.replace(/,/g, '') || '0';
   const canonicalUrl = `https://tinystepslearning.com/courses/${course.slug}`;
-
-  const jsonLd: any = {
-    '@context': 'https://schema.org',
-    '@type': 'Course',
+  const courseSchemaConfig = COURSE_SCHEMA_BY_SLUG[course.slug] || {
     name: course.name,
     description: `${course.name} — ${course.overview.join(', ')}`,
-    provider: { '@type': 'Organization', name: 'Tiny Steps Online School', sameAs: 'https://tinystepslearning.com' },
-    courseCode: course.slug.toUpperCase().replace(/-/g, '_'),
-    educationLevel: course.level,
-    audience: { '@type': 'EducationalAudience', educationalRole: 'student', age: course.age.replace('Ages ', '') },
-    hasCourseInstance: {
-      '@type': 'CourseInstance',
-      courseMode: 'OnlineCoursePlatform',
-      offers: {
-        '@type': 'Offer',
-        price: priceNumber,
-        priceCurrency: 'INR',
-        availability: 'https://schema.org/InStock'
-      }
-    },
+    educationalLevel: course.level,
   };
+
+  const jsonLd = createCourseSchema({
+    name: courseSchemaConfig.name,
+    description: courseSchemaConfig.description,
+    url: canonicalUrl,
+    educationalLevel: courseSchemaConfig.educationalLevel,
+  });
 
   return (
     <div className="bg-white">

@@ -28,6 +28,15 @@ const NON_REPLACEABLE_SESSION_STATUSES = new Set([
   "paid",
   "locked",
 ]);
+const SCHEDULE_EXCEPTION_SOURCE_TOKENS = [
+  "ad_hoc",
+  "adhoc",
+  "makeup",
+  "reschedule",
+  "manual_one_off",
+  "approved_request",
+  "one_off",
+];
 
 interface WeeklySlotConfigRaw {
   weekday?: number;
@@ -325,6 +334,20 @@ function hasFinancialLink(state: SessionFinancialLinkState | undefined): boolean
   return hasChargeLink || hasEarningLink || state.chargePaidAmount > 0 || state.earningPaidAmount > 0;
 }
 
+function isScheduleExceptionSession(raw: Record<string, unknown>): boolean {
+  if (raw.isAdHoc === true || raw.isMakeup === true) return true;
+  if (raw.makeupCreditId || raw.makeupForSessionId) return true;
+
+  const adHocType = String(raw.adHocType || "").trim().toLowerCase();
+  if (adHocType && (adHocType.includes("one_off") || adHocType.includes("adhoc") || adHocType.includes("ad_hoc"))) {
+    return true;
+  }
+
+  const source = String(raw.source || "").trim().toLowerCase();
+  if (!source) return false;
+  return SCHEDULE_EXCEPTION_SOURCE_TOKENS.some((token) => source.includes(token));
+}
+
 function isSessionReplaceable(args: {
   raw: Record<string, unknown>;
   financial: SessionFinancialLinkState | undefined;
@@ -385,6 +408,39 @@ function resolveSessionSignature(args: {
       (fallbackTeacherId || "");
 
   return `${ymd}|${timeHHmm}|${durationMinutes}|${teacherIdRaw}`;
+}
+
+function resolveSessionSlotPattern(args: {
+  raw: Record<string, unknown>;
+  fallbackTeacherId: string | null;
+}): string | null {
+  const {raw, fallbackTeacherId} = args;
+  const ymd = resolveSessionYmd(raw);
+  if (!ymd || !isValidYmd(ymd)) return null;
+  const parsedDate = toContextDateFromYmd(ymd);
+  if (!parsedDate) return null;
+  const weekday = parsedDate.getUTCDay();
+
+  let timeHHmm = typeof raw.startTime === "string" ? raw.startTime.trim() : "";
+  if (!TIME_HHMM_RE.test(timeHHmm)) {
+    const startAt = toDateMaybe(raw.startAt);
+    if (startAt) {
+      const contextMs = startAt.getTime() + IST_OFFSET_MINUTES * 60 * 1000;
+      timeHHmm = formatHHmmFromContextMs(contextMs);
+    }
+  }
+  if (!TIME_HHMM_RE.test(timeHHmm)) return null;
+
+  const durationRaw = Number(raw.durationMinutes ?? raw.durationMins);
+  if (!Number.isFinite(durationRaw) || durationRaw <= 0) return null;
+  const durationMinutes = normalizeDurationMinutes(durationRaw);
+
+  const teacherIdRaw =
+    typeof raw.teacherId === "string" && raw.teacherId.trim() ?
+      raw.teacherId.trim() :
+      (fallbackTeacherId || "");
+
+  return `${weekday}|${timeHHmm}|${durationMinutes}|${teacherIdRaw}`;
 }
 
 function isValidWeekday(value: unknown): value is number {
@@ -529,7 +585,7 @@ async function generateSessionsFromScheduleInternal(
   const enrollment = enrollmentSnap.data() as EnrollmentDoc;
   const schedule = enrollment.schedule;
   const weeklySlots = normalizeScheduleSlotsOrThrow(schedule);
-  if (weeklySlots.length === 0) {
+  if (weeklySlots.length === 0 && !replaceFuture) {
     throw new HttpsError("failed-precondition", "Enrollment has no schedule configured");
   }
   const requestedPlannedSessions = toPlannedSessions(input.plannedSessions);
@@ -587,6 +643,10 @@ async function generateSessionsFromScheduleInternal(
     .get();
 
   const configuredSessionSignatures = new Set<string>();
+  const configuredSlotPatterns = new Set<string>();
+  weeklySlots.forEach((slot) => {
+    configuredSlotPatterns.add(`${slot.weekday}|${slot.timeHHmm}|${slot.durationMinutes}|${teacherId || ""}`);
+  });
   for (
     let d = new Date(rangeStartDate.getTime());
     d.getTime() <= rangeEndDate.getTime();
@@ -661,15 +721,19 @@ async function generateSessionsFromScheduleInternal(
       const raw = sessionDoc.data() as Record<string, unknown>;
       const financial = financialBySessionId.get(sessionDoc.id);
       const signature = resolveSessionSignature({raw, fallbackTeacherId: teacherId});
+      const slotPattern = resolveSessionSlotPattern({raw, fallbackTeacherId: teacherId});
       const sessionYmd = resolveSessionYmd(raw);
 
-      if (!sessionYmd || sessionYmd < rangeStartYmd || sessionYmd > rangeEndYmd) continue;
-
       if (!isSessionReplaceable({raw, financial, nowMs})) continue;
+      if (isScheduleExceptionSession(raw)) continue;
 
-      const isRemovedOrChangedSignature = !signature || !configuredSessionSignatures.has(signature);
+      const isWithinReplacementRange =
+        typeof sessionYmd === "string" && sessionYmd >= rangeStartYmd && sessionYmd <= rangeEndYmd;
+      const isSlotPatternStale = !!slotPattern && !configuredSlotPatterns.has(slotPattern);
+      const isRemovedOrChangedSignature =
+        isWithinReplacementRange && (!signature || !configuredSessionSignatures.has(signature));
       const isDuplicateUpcomingSignature = signature ? (sessionSignatureCounts.get(signature) || 0) > 1 : false;
-      if (!isRemovedOrChangedSignature && !isDuplicateUpcomingSignature) continue;
+      if (!isRemovedOrChangedSignature && !isDuplicateUpcomingSignature && !isSlotPatternStale) continue;
 
       deleteBatch.delete(sessionDoc.ref);
       deleteOps += 1;

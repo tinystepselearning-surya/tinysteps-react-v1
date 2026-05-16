@@ -84,6 +84,7 @@ import {
   type ParentWorksheetItem,
 } from "../../lib/parentWorksheets";
 import { hapticLight, hapticSelection, hapticSuccess, hapticWarning } from "../../lib/nativeHaptics";
+import { isSessionCanonicalForEnrollment } from "../../lib/sessionScheduleIntegrity";
 import {
   buildDashboardHeroMessage,
   buildDashboardRecommendedNext,
@@ -2538,7 +2539,31 @@ export default function ParentDashboard() {
     },
   });
 
-  const allKidSessions = useMemo(() => (kidSessionsQuery.data ?? []) as KidSession[], [kidSessionsQuery.data]);
+  const activeEnrollmentById = useMemo(() => {
+    const map = new Map<string, Record<string, unknown>>();
+    ((enrollmentsQuery.data ?? []) as Enrollment[]).forEach((enrollment) => {
+      const enrollmentId = String((enrollment as any)?.id || "").trim();
+      if (!enrollmentId) return;
+      map.set(enrollmentId, enrollment as Record<string, unknown>);
+    });
+    return map;
+  }, [enrollmentsQuery.data]);
+
+  const allKidSessions = useMemo(() => {
+    const sessions = (kidSessionsQuery.data ?? []) as KidSession[];
+    return sessions.filter((session) => {
+      const sessionLike = session as unknown as Record<string, unknown>;
+      const enrollmentIdFromDoc = String((session as any)?.enrollmentId || "").trim();
+      const enrollmentIdFromSessionId =
+        typeof session.id === "string" && session.id.includes("_")
+          ? session.id.split("_")[0].trim()
+          : "";
+      const enrollmentId = enrollmentIdFromDoc || enrollmentIdFromSessionId;
+      if (!enrollmentId) return false;
+      const enrollment = activeEnrollmentById.get(enrollmentId);
+      return isSessionCanonicalForEnrollment(sessionLike, enrollment);
+    });
+  }, [kidSessionsQuery.data, activeEnrollmentById]);
   const sortedClassSessions = useMemo(() => {
     return allKidSessions
       .map((session) => ({

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo, getRouteConfig } from '../lib/seo';
-import { createCourseSchema, PUBLIC_FACTS } from '../lib/schemas';
+import { createCourseSchema, createFAQPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import PageHero from '../components/common/PageHero';
 import LevelTabs from '../components/programs/LevelTabs';
 import LearningJourney from '../components/programs/LearningJourney';
@@ -55,44 +55,29 @@ import AutoLinkedText from '../components/seo/AutoLinkedText';
 
 const quickAnswerFaqItems = [
   {
-    question: 'What is phonics, and why does it matter in early reading?',
+    question: 'Are online phonics classes useful for kids?',
     answer:
-      'Phonics teaches children to connect sounds with letters and blend those sounds into words. This is the foundation that turns letter recognition into real reading.',
+      'Yes. Online phonics classes are useful when they teach letter sounds, blending, decoding, and reading practice in a clear sequence with live correction. This helps children move from knowing letters to reading words and sentences.',
   },
   {
-    question: 'Which age group are Tiny Steps phonics classes designed for?',
+    question: 'What age is best to start phonics classes?',
     answer:
-      'Tiny Steps phonics classes are designed for children aged 3–12, with the starting level adjusted after assessment.',
+      'Many children can start early phonics around ages 3 to 5 when they are ready for sounds, listening games, and letter recognition. Older children can also benefit if they need help with blending, reading fluency, or spelling patterns.',
   },
   {
-    question: 'What happens in a structured phonics class?',
+    question: 'How do phonics classes help a child read?',
     answer:
-      'Children practice a clear sequence: sound awareness, blending, word reading, spelling patterns, and short reading tasks, with live correction at each step.',
+      'Phonics classes help children connect sounds with letters and blend those sounds into words. This builds decoding skill, so children can read unfamiliar words instead of guessing.',
   },
   {
-    question: 'Are classes live and interactive?',
+    question: 'Does Tiny Steps teach phonics through live classes?',
     answer:
-      'Yes. Classes are live and interactive, so children practise sounds, blending, reading, and confidence with teacher support in 1:1 or small group formats.',
+      'Yes. Tiny Steps teaches phonics through live guided online classes with teacher support, reading practice, correction, and stage-based progress.',
   },
   {
-    question: 'Phonics vs general reading practice: what is the difference?',
+    question: 'How can parents know if their child needs phonics support?',
     answer:
-      'General reading practice builds exposure. Phonics builds decoding skill. When decoding becomes stable, children can read new words with less guessing.',
-  },
-  {
-    question: 'How do parents track progress?',
-    answer:
-      'Parents track learning through progress updates, class feedback, and next-step recommendations shared during the program.',
-  },
-  {
-    question: 'What do parents usually notice first?',
-    answer:
-      'Most parents first notice cleaner blending and fewer reading pauses. After that, word accuracy and reading confidence improve steadily.',
-  },
-  {
-    question: 'What is the best next step if I am unsure where to start?',
-    answer:
-      'Book a free assessment to understand your child’s current reading level and choose the most suitable starting point.',
+      'A child may need phonics support if they know the alphabet but cannot read words, guess while reading, struggle with blending, forget words often, or read very slowly.',
   },
 ];
 
@@ -138,7 +123,7 @@ const faqItems = [
       'Most children can begin around ages 3–4 with playful sound work. Older children can also catch up effectively when gaps are addressed with structured synthetic phonics.',
   },
 ];
-const schemaFaqItems = [...quickAnswerFaqItems, faqItems[3]];
+const schemaFaqItems = quickAnswerFaqItems;
 const PHONICS_RESEARCH_GUIDE_PATH = '/blog/phonics-for-parents-guide';
 const PHONICS_SEO_KEYWORDS = [
   'phonics for kids',
@@ -209,11 +194,10 @@ export default function PhonicsPage({
   useEffect(() => {
     const courseSchema = createCourseSchema({
       name: "Online Phonics Classes for Kids",
-      description: "How phonics helps children read: a structured live online pathway from sound-letter links and blending to decoding words and sentences.",
+      description:
+        "Structured online phonics classes for children aged 3–12, covering letter sounds, blending, decoding, reading fluency, and confidence through live guided practice.",
       url: canonicalUrl,
-      courseMode: 'online',
-      ageRange: 'Ages 3-12',
-      educationalLevel: 'Beginner to Advanced'
+      educationalLevel: 'Foundation to Advanced'
     });
 
     const baseJsonLd = [
@@ -226,18 +210,7 @@ export default function PhonicsPage({
           { "@type": "ListItem", "position": 2, "name": breadcrumbName, "item": canonicalUrl }
         ]
       },
-      {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        "mainEntity": schemaFaqItems.map((item) => ({
-          "@type": "Question",
-          "name": item.question,
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": item.answer
-          }
-        }))
-      }
+      createFAQPageSchema(schemaFaqItems)
     ];
 
     applySeo({

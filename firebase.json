@@ -38,6 +38,10 @@
           {
             "key": "Cache-Control",
             "value": "no-cache, no-store, must-revalidate"
+          },
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex"
           }
         ]
       },
@@ -47,6 +51,55 @@
           {
             "key": "Cache-Control",
             "value": "no-cache, no-store, must-revalidate"
+          },
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex"
+          }
+        ]
+      },
+      {
+        "source": "/llms.txt",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex"
+          }
+        ]
+      },
+      {
+        "source": "/rss.xml",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex"
+          }
+        ]
+      },
+      {
+        "source": "/feed.xml",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex"
+          }
+        ]
+      },
+      {
+        "source": "/blog/rss.xml",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex"
+          }
+        ]
+      },
+      {
+        "source": "/blog/feed.xml",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex"
           }
         ]
       },
@@ -320,6 +373,7 @@
       { "source": "/english-grammar-writing-classes", "destination": "/grammar", "type": 301 },
       { "source": "/public-speaking-communication-kids", "destination": "/speaking", "type": 301 },
       { "source": "/spoken-english-classes-for-kids", "destination": "/speaking", "type": 301 },
+      { "source": "/summer-english-camp-2026", "destination": "/summer-camps", "type": 301 },
       { "source": "/main/courses", "destination": "/courses", "type": 301 },
       { "source": "/main/courses/", "destination": "/courses", "type": 301 },
       { "source": "/main/courses/phonics", "destination": "/phonics", "type": 301 },

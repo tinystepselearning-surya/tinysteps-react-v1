@@ -40,6 +40,7 @@ import {
 } from '@components/ui/table';
 import { useToast } from '@components/hooks/use-toast';
 import { db } from '../../lib/firebaseConfig';
+import { doesSessionMatchEnrollmentSchedule } from '../../lib/sessionScheduleIntegrity';
 import { useAuthStore } from '../../store/useAuthStore';
 
 interface ClassSessionDoc {
@@ -743,7 +744,7 @@ async function fetchDocsByIds(
     const q = query(collection(db, collectionName), where(documentId(), 'in', idChunk));
     const snap = await getDocs(q);
     snap.docs.forEach((docSnap) => {
-      out[docSnap.id] = docSnap.data() as Record<string, any>;
+      out[docSnap.id] = { id: docSnap.id, ...(docSnap.data() as Record<string, any>) };
     });
   }
   return out;
@@ -1292,6 +1293,9 @@ export default function TodaysNotifications() {
           return null;
         }
         if (!enrollmentRef || !isEnrollmentOperationallyActive(enrollment)) {
+          return null;
+        }
+        if (!doesSessionMatchEnrollmentSchedule(session as unknown as Record<string, unknown>, enrollment)) {
           return null;
         }
         if (!linkedKidIds.length || !enrollmentKidIds.length) {

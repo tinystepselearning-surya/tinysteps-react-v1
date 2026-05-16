@@ -1,0 +1,6 @@
+http://localhost:5173
+http://localhost:5173/summer-english-camp-2026
+http://localhost:5173/{your-slug}
+http://localhost:5174
+http://localhost:5183/
+http://localhost:9099
