@@ -757,7 +757,7 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
       const seen = new Set<string>();
       const addKidToParents = (docSnap: any) => {
         const data = docSnap.data() as KidDoc;
-        const kid: KidDoc = { id: docSnap.id, ...data };
+        const kid: KidDoc = { ...data, id: docSnap.id };
         const name = pickKidName(kid);
         if (!isReadableName(name)) return;
         const linkedParentIds = Array.from(

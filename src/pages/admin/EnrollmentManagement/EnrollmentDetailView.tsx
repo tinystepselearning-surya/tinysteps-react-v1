@@ -1,6 +1,8 @@
 // src/pages/admin/EnrollmentManagement/EnrollmentDetailView.tsx
 import React, { useCallback, useEffect, useState } from 'react';
 import {
+  type DocumentData,
+  type DocumentSnapshot,
   doc,
   getDoc,
   updateDoc,
@@ -209,7 +211,13 @@ export default function EnrollmentDetailView({
         tSnap,
         lSnap,
         pSnap,
-      ] = await Promise.all(fetches);
+      ] = (await Promise.all(fetches)) as [
+        Record<string, unknown> | null,
+        DocumentSnapshot<DocumentData> | null,
+        DocumentSnapshot<DocumentData> | null,
+        DocumentSnapshot<DocumentData> | null,
+        DocumentSnapshot<DocumentData> | null,
+      ];
 
       const enrollmentLevelStudentName = pickFirstReadableName(
         data.studentName,
