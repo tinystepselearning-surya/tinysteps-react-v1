@@ -12,10 +12,14 @@ export default function ParentPayments() {
       <ParentHeader name={user?.displayName || 'Parent'} />
 
       <div className="mt-6 max-w-3xl">
-        <h2 className="text-xl font-semibold mb-4">Payment Methods & Invoices</h2>
+        <h2 className="text-xl font-semibold mb-4">Wallet & Payments</h2>
         <div className="bg-white dark:bg-slate-800 p-4 rounded shadow">
-          <p className="mb-2">Manage your payment methods and view invoices here.</p>
-          <p className="text-sm text-muted-foreground">No payment methods on file.</p>
+          <p className="mb-2">
+            Your wallet is the source of truth for dues and advance balance.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Open the parent dashboard Payments tab to review wallet balance, class deductions, and recent wallet activity.
+          </p>
         </div>
       </div>
     </div>

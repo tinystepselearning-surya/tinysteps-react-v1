@@ -18,8 +18,6 @@ type Enrollment = {
   kidIds?: string[];
   studentIds?: string[]; // fallback if your schema uses studentIds
   status?: string;
-  creditsRemaining?: number;
-  creditsTotal?: number;
   createdAt?: any;
 };
 
@@ -120,7 +118,7 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
       const studentNames =
         kidIds?.map((id) => {
           const s = studentMap[id];
-          return s?.name || s?.fullName || s?.displayName || id;
+          return s?.name || s?.fullName || s?.displayName || 'Name not found';
         }) ?? [];
 
       const courseName = course?.name || e.courseId || '—';
@@ -152,7 +150,6 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
             <TableHead>Course</TableHead>
             <TableHead>Students</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Credits</TableHead>
           </TableRow>
         </TableHeader>
 
@@ -176,10 +173,6 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
                 <Badge variant={e.status === 'active' ? 'default' : 'secondary'}>
                   {e.status ?? 'unknown'}
                 </Badge>
-              </TableCell>
-
-              <TableCell className="align-top">
-                {(e.creditsRemaining ?? 0)} / {(e.creditsTotal ?? 0)}
               </TableCell>
             </TableRow>
           ))}

@@ -63,7 +63,7 @@ export default function ParentDashboardKpis(props: ParentDashboardKpisProps) {
       <Card className="rounded-2xl border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Billing Snapshot</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Wallet Snapshot</p>
             <p className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">{billingLabel}</p>
             <p className="mt-1 text-xs text-slate-500">{billingMetaText}</p>
           </div>

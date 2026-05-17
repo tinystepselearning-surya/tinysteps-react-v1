@@ -269,27 +269,55 @@ export default function AssignCourseModal({
 
     try {
       setSaving(true);
+      const selectedKidId = String(student.id || '').trim();
+      if (!selectedKidId) {
+        toast({
+          title: 'Missing student',
+          description: 'Select a valid student before assigning a course.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const studentDoc = await getDoc(doc(db, 'kids', selectedKidId));
+      if (!studentDoc.exists()) {
+        toast({
+          title: 'Invalid student link',
+          description:
+            'Selected student is not found in the canonical kids collection. Please refresh Student Management and try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const studentData = studentDoc.data() as any;
+      const canonicalStudentName = String(
+        studentData?.fullName ||
+          studentData?.name ||
+          studentData?.displayName ||
+          selectedKidId
+      ).trim();
 
       // Prevent duplicate enrollment for same student + course across canonical + legacy fields.
       const [existingByStudentId, existingByKidId, existingByKidIds] = await Promise.all([
         getDocs(
           query(
             collection(db, 'enrollments'),
-            where('studentId', '==', student.id),
+            where('studentId', '==', selectedKidId),
             where('courseId', '==', selected),
           ),
         ),
         getDocs(
           query(
             collection(db, 'enrollments'),
-            where('kidId', '==', student.id),
+            where('kidId', '==', selectedKidId),
             where('courseId', '==', selected),
           ),
         ),
         getDocs(
           query(
             collection(db, 'enrollments'),
-            where('kidIds', 'array-contains', student.id),
+            where('kidIds', 'array-contains', selectedKidId),
             where('courseId', '==', selected),
           ),
         ),
@@ -303,12 +331,6 @@ export default function AssignCourseModal({
         });
         return;
       }
-
-      // Read primary parent from kid doc
-      const studentDoc = await getDoc(doc(db, 'kids', student.id));
-      const studentData = studentDoc.exists()
-        ? (studentDoc.data() as any)
-        : (student as any);
 
       const primaryParentId =
         studentData.primaryParentId ||
@@ -330,21 +352,33 @@ export default function AssignCourseModal({
       if (primaryParentId && !parentIds.includes(primaryParentId)) {
         parentIds.push(primaryParentId);
       }
+      if (!primaryParentId) {
+        toast({
+          title: 'Missing parent link',
+          description: 'Selected student is not linked to a parent. Update student profile first.',
+          variant: 'destructive',
+        });
+        return;
+      }
 
       const enrollmentRef = doc(collection(db, 'enrollments'));
 
       await setDoc(enrollmentRef, {
         enrollmentId: enrollmentRef.id,
-        studentId: student.id,
-        kidId: student.id,
-        kidIds: [student.id],
+        studentId: selectedKidId,
+        kidId: selectedKidId,
+        kidIds: [selectedKidId],
+        studentName: canonicalStudentName,
+        childName: canonicalStudentName,
+        kidName: canonicalStudentName,
+        kidNames: [canonicalStudentName],
         courseId: selected,
         teacherId: null,
         teacherIds: [],
         lpId: null,
         parentId: primaryParentId,
         parentIds,
-        status: 'trial',
+        status: 'active',
         feePerClass,
         ratePerSession: feePerClass,
         teacherPayPerSession,

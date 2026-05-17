@@ -177,9 +177,41 @@ export default function CreateEnrollmentForm({ onCreated }: CreateEnrollmentForm
 
     try {
       setCreating(true);
+      const canonicalKidId = String(selectedStudentId || '').trim();
+      if (!canonicalKidId || canonicalKidId === '__none__') {
+        toast({
+          title: 'Missing student',
+          description: 'Select a valid student before creating enrollment.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const canonicalKidSnap = await getDoc(doc(db, 'kids', canonicalKidId));
+      if (!canonicalKidSnap.exists()) {
+        toast({
+          title: 'Invalid student link',
+          description:
+            'Selected student is not found in the canonical kids collection. Please refresh and try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      const canonicalKidData = canonicalKidSnap.data() as any;
+      const canonicalKidName = String(
+        canonicalKidData?.fullName ||
+          canonicalKidData?.name ||
+          canonicalKidData?.displayName ||
+          selectedStudent?.fullName ||
+          selectedStudent?.name ||
+          selectedStudent?.displayName ||
+          canonicalKidId
+      ).trim();
 
       // Prefer canonical parentId; fall back to parentIds[0] and then a fresh kid read.
       let parentId: string | null =
+        canonicalKidData?.parentId ??
+        (Array.isArray(canonicalKidData?.parentIds) ? canonicalKidData.parentIds[0] : null) ??
         (selectedStudent as any)?.parentId ??
         (Array.isArray((selectedStudent as any)?.parentIds) ? (selectedStudent as any).parentIds[0] : null) ??
         null;
@@ -187,18 +219,19 @@ export default function CreateEnrollmentForm({ onCreated }: CreateEnrollmentForm
         ? (selectedStudent as any).parentIds.map(String).filter(Boolean)
         : [];
 
-      if (!parentId) {
-        const studentSnap = await getDoc(doc(db, 'kids', selectedStudentId));
-        if (studentSnap.exists()) {
-          const studentData = studentSnap.data() as any;
-          parentId = studentData?.parentId ?? (Array.isArray(studentData?.parentIds) ? studentData.parentIds[0] : null);
-          if (Array.isArray(studentData?.parentIds)) {
-            parentIds = studentData.parentIds.map(String).filter(Boolean);
-          }
-        }
+      if (Array.isArray(canonicalKidData?.parentIds)) {
+        parentIds = canonicalKidData.parentIds.map(String).filter(Boolean);
       }
       if (parentId && !parentIds.includes(parentId)) {
         parentIds.push(parentId);
+      }
+      if (!parentId) {
+        toast({
+          title: 'Missing parent link',
+          description: 'Selected student is not linked to a parent. Update student profile first.',
+          variant: 'destructive',
+        });
+        return;
       }
 
       const enrollmentRef = doc(collection(db, 'enrollments'));
@@ -207,9 +240,12 @@ export default function CreateEnrollmentForm({ onCreated }: CreateEnrollmentForm
       await setDoc(enrollmentRef, {
         // IDs
         enrollmentId: enrollmentRef.id,
-        studentId: selectedStudentId,
-        kidId: selectedStudentId,
-        kidIds: [selectedStudentId],
+        studentId: canonicalKidId,
+        kidId: canonicalKidId,
+        kidIds: [canonicalKidId],
+        studentName: canonicalKidName,
+        childName: canonicalKidName,
+        kidName: canonicalKidName,
         courseId: selectedCourseId,
         parentId,
         parentIds,
@@ -218,12 +254,12 @@ export default function CreateEnrollmentForm({ onCreated }: CreateEnrollmentForm
         lpId: null,
 
         // ✅ denormalized labels (THIS FIXES “showing IDs”)
-        kidNames: [studentLabel],
+        kidNames: [canonicalKidName],
         courseName: courseLabel,
         parentLabel: parentLabel,
 
         // billing / credits
-        status: 'trial',
+        status: 'active',
         ratePerSession,
         billingCycle,
         creditsTotal: credits,
@@ -356,7 +392,7 @@ export default function CreateEnrollmentForm({ onCreated }: CreateEnrollmentForm
                   Course: <strong>{courseLabel}</strong>
                 </div>
                 <div>
-                  Status: <strong>Trial</strong>
+                  Status: <strong>Active</strong>
                 </div>
                 <div>
                   Estimated sessions: <strong>{estimatedSessions}</strong>

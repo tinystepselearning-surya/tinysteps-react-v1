@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useMemo, useState, type ComponentType } 
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
-  addDoc,
   collection,
   doc,
   documentId,
@@ -12,7 +11,6 @@ import {
   limit,
   query,
   orderBy,
-  serverTimestamp,
   where,
 } from "firebase/firestore";
 import { signOut } from "firebase/auth";
@@ -83,7 +81,7 @@ import {
   worksheetMatchesContext,
   type ParentWorksheetItem,
 } from "../../lib/parentWorksheets";
-import { hapticLight, hapticSelection, hapticSuccess, hapticWarning } from "../../lib/nativeHaptics";
+import { hapticLight, hapticSelection, hapticSuccess } from "../../lib/nativeHaptics";
 import { isSessionCanonicalForEnrollment } from "../../lib/sessionScheduleIntegrity";
 import {
   buildDashboardHeroMessage,
@@ -228,6 +226,27 @@ type ParentPaymentRecord = {
   createdAt?: any;
   kidId?: string;
   enrollmentId?: string;
+  [key: string]: any;
+};
+
+type ParentWalletSummary = {
+  currentBalance?: number;
+  lastUpdatedAt?: any;
+  [key: string]: any;
+};
+
+type ParentWalletTransaction = {
+  id: string;
+  type?: string;
+  direction?: string;
+  amount?: number;
+  signedAmount?: number;
+  balanceAfter?: number;
+  note?: string;
+  reason?: string;
+  description?: string;
+  createdAt?: any;
+  paidAt?: any;
   [key: string]: any;
 };
 
@@ -1244,6 +1263,15 @@ function toDateOrNull(value: any): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
+function formatCurrencySignedINR(value?: number | null): string {
+  const amount = Number(value ?? 0);
+  if (!Number.isFinite(amount)) return "₹0";
+  const abs = `₹${Math.abs(amount).toLocaleString("en-IN")}`;
+  if (amount < 0) return `-${abs}`;
+  if (amount > 0) return `+${abs}`;
+  return abs;
+}
+
 function sessionStartDate(s: KidSession): Date | null {
   // Preferred: startAt Timestamp
   if (s?.startAt?.toDate) return s.startAt.toDate();
@@ -2210,19 +2238,6 @@ export default function ParentDashboard() {
     }
   };
 
-  // ---- Payments config ----
-  const paymentsConfigQuery = useQuery({
-    queryKey: ["paymentsConfig"],
-    enabled: activeTab === "payments",
-    staleTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    queryFn: async () => {
-      const snap = await getDoc(doc(db, "config", "payments"));
-      return snap.exists() ? (snap.data() as any) : null;
-    },
-  });
-
   // ---- Billing charges (Fees & Dues) ----
   const billingChargesQuery = useQuery({
     queryKey: ["billingCharges", user?.uid, "currentMonth"],
@@ -2278,6 +2293,37 @@ export default function ParentDashboard() {
       return snap.docs
         .map((d) => ({ id: d.id, ...(d.data() as any) }))
         .filter((row) => (row as any)?.archived !== true);
+    },
+  });
+
+  const parentWalletSummaryQuery = useQuery({
+    queryKey: ["parentWalletSummary", user?.uid],
+    enabled: !!user?.uid && shouldLoadBillingData,
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    queryFn: async (): Promise<ParentWalletSummary | null> => {
+      if (!user?.uid) return null;
+      const snap = await getDoc(doc(db, "parentWallets", user.uid));
+      return snap.exists() ? ({ id: snap.id, ...(snap.data() as any) } as ParentWalletSummary) : null;
+    },
+  });
+
+  const parentWalletTransactionsQuery = useQuery({
+    queryKey: ["parentWalletTransactions", user?.uid],
+    enabled: !!user?.uid && shouldLoadPaymentHistory,
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    queryFn: async (): Promise<ParentWalletTransaction[]> => {
+      if (!user?.uid) return [];
+      const q = query(
+        collection(db, "parentWallets", user.uid, "transactions"),
+        orderBy("createdAt", "desc"),
+        limit(20),
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
     },
   });
 
@@ -3566,6 +3612,25 @@ export default function ParentDashboard() {
     };
   }, [billingChargesQuery.data, monthSessions, parentMonthlyBillingReadModelQuery.data, selectedKidId]);
 
+  const walletBalance = useMemo(() => {
+    const raw = Number(parentWalletSummaryQuery.data?.currentBalance);
+    return Number.isFinite(raw) ? raw : null;
+  }, [parentWalletSummaryQuery.data]);
+
+  const walletAmountToPay = walletBalance !== null && walletBalance < 0 ? Math.abs(walletBalance) : 0;
+  const walletAdvanceBalance = walletBalance !== null && walletBalance > 0 ? walletBalance : 0;
+  const walletStatusLabel =
+    walletBalance === null
+      ? "Wallet not available"
+      : walletBalance < 0
+        ? `Amount to pay: ₹${Math.abs(walletBalance).toLocaleString("en-IN")}`
+        : walletBalance > 0
+          ? `Advance balance: ₹${walletBalance.toLocaleString("en-IN")}`
+          : "No pending amount";
+  const walletLastUpdatedText = toDateOrNull(parentWalletSummaryQuery.data?.lastUpdatedAt)
+    ? toDateOrNull(parentWalletSummaryQuery.data?.lastUpdatedAt)!.toLocaleString("en-IN")
+    : "—";
+
   const profilePaymentsSummary = useMemo(() => {
     const kidId = selectedKidId ? String(selectedKidId) : null;
     const billingProjection = parentMonthlyBillingReadModelQuery.data;
@@ -3580,16 +3645,8 @@ export default function ParentDashboard() {
       const total = Number(
         projectionRow?.paymentsTotal ?? projectionTotals?.paymentsTotal ?? 0
       );
-      const applied = Number(
-        projectionRow?.paymentsApplied ?? projectionTotals?.paymentsApplied ?? 0
-      );
-      const unapplied = Number(
-        projectionRow?.paymentsUnapplied ?? projectionTotals?.paymentsUnapplied ?? 0
-      );
       return {
         total: Number.isFinite(total) ? total : 0,
-        applied: Number.isFinite(applied) ? applied : 0,
-        unapplied: Number.isFinite(unapplied) ? unapplied : 0,
         count: Number.isFinite(count) ? count : 0,
       };
     }
@@ -3602,25 +3659,11 @@ export default function ParentDashboard() {
       (acc, payment) => {
         const rawAmount = Number(payment?.amount ?? 0);
         const amount = Number.isFinite(rawAmount) ? rawAmount : 0;
-        const rawApplied = Number(payment?.appliedAmount ?? NaN);
-        const applied = Number.isFinite(rawApplied)
-          ? rawApplied
-          : (() => {
-              const rawUnapplied = Number(payment?.unappliedAmount ?? 0);
-              const unapplied = Number.isFinite(rawUnapplied) ? rawUnapplied : 0;
-              return amount - unapplied;
-            })();
-        const rawUnapplied = Number(payment?.unappliedAmount ?? NaN);
-        const unapplied = Number.isFinite(rawUnapplied)
-          ? rawUnapplied
-          : amount - applied;
         acc.total += amount;
-        acc.applied += applied;
-        acc.unapplied += unapplied;
         acc.count += 1;
         return acc;
       },
-      { total: 0, applied: 0, unapplied: 0, count: 0 }
+      { total: 0, count: 0 }
     );
   }, [parentMonthlyBillingReadModelQuery.data, parentPaymentsQuery.data, selectedKidId]);
 
@@ -3823,21 +3866,21 @@ export default function ParentDashboard() {
           <div className="text-xs uppercase tracking-wide text-slate-400">Payments</div>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
-              <div className="text-xs text-slate-500">Due now</div>
+              <div className="text-xs text-slate-500">Wallet Balance</div>
               <div className="text-lg font-semibold">
-                ₹{billingSummary.dueNow.toLocaleString("en-IN")}
+                {walletBalance === null ? "—" : formatCurrencySignedINR(walletBalance)}
               </div>
               <div className="mt-1 text-xs text-slate-500">
-                Billed this month: ₹{billingSummary.billedThisMonth.toLocaleString("en-IN")}
+                {walletStatusLabel}
               </div>
             </div>
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
-              <div className="text-xs text-slate-500">Paid so far</div>
+              <div className="text-xs text-slate-500">Payments Received (This Month)</div>
               <div className="text-lg font-semibold">
                 ₹{profilePaymentsSummary.total.toLocaleString("en-IN")}
               </div>
               <div className="mt-1 text-xs text-slate-500">
-                Payments recorded: {profilePaymentsSummary.count}
+                Last updated: {walletLastUpdatedText}
               </div>
             </div>
           </div>
@@ -3847,7 +3890,7 @@ export default function ParentDashboard() {
           <div className="text-xs uppercase tracking-wide text-slate-400">Class Insights</div>
           <div className="mt-3 grid gap-3 sm:grid-cols-4">
             <div className="rounded-lg border border-slate-200 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-200">
-              <div className="text-xs text-slate-500">Completed (this month)</div>
+              <div className="text-xs text-slate-500">Completed classes this month</div>
               <div className="text-lg font-semibold">{billingSummary.chargesThisMonth}</div>
             </div>
             <div className="rounded-lg border border-slate-200 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-200">
@@ -3859,8 +3902,10 @@ export default function ParentDashboard() {
               <div className="text-lg font-semibold">{classesCounts.reschedule_requested}</div>
             </div>
             <div className="rounded-lg border border-slate-200 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-200">
-              <div className="text-xs text-slate-500">Total this month</div>
-              <div className="text-lg font-semibold">{classesCounts.total}</div>
+              <div className="text-xs text-slate-500">Class deductions this month</div>
+              <div className="text-lg font-semibold">
+                ₹{billingSummary.billedThisMonth.toLocaleString("en-IN")}
+              </div>
             </div>
           </div>
         </Card>
@@ -4022,7 +4067,15 @@ export default function ParentDashboard() {
 
   // ---- Payments tab state ----
   const [showQrModal, setShowQrModal] = useState(false);
-  const [confirmingPayment, setConfirmingPayment] = useState(false);
+  const [upiPaymentMethod, setUpiPaymentMethod] = useState<"UPI" | "Bank Transfer">("UPI");
+  const [upiAmountInput, setUpiAmountInput] = useState("");
+  const [upiQrImageLoadFailed, setUpiQrImageLoadFailed] = useState(false);
+  const [classPaymentMonth, setClassPaymentMonth] = useState<string>(() => toMonthKey(new Date()));
+  const [classPaymentStatusTab, setClassPaymentStatusTab] = useState<
+    "all_classes" | "pending_payment" | "paid_classes" | "payments_received"
+  >("all_classes");
+  const TINYSTEPS_WHATSAPP_NUMBER = "919618398383";
+  const TINYSTEPS_UPI_QR_PATH = "/payments/tinysteps-upi-qr.webp";
 
   // ---- Overview metrics ----
   const overviewMetrics = useMemo(() => {
@@ -4421,8 +4474,8 @@ export default function ParentDashboard() {
     const latestTeacherLesson = recentTeacherRatingsSummary?.latestLesson ?? null;
     const upcomingPreviewRows = upcomingClassSessions.slice(0, 2);
     const dashboardAlerts: string[] = [];
-    if (billingSummary.dueNow > 0) {
-      dashboardAlerts.push(`${formatCurrencyINR(billingSummary.dueNow)} due this month`);
+    if (walletBalance !== null && walletBalance < 0) {
+      dashboardAlerts.push(`${formatCurrencyINR(Math.abs(walletBalance))} amount to pay`);
     }
     if (classesCounts.reschedule_requested > 0) {
       dashboardAlerts.push(`${classesCounts.reschedule_requested} class update needs attention`);
@@ -4464,12 +4517,17 @@ export default function ParentDashboard() {
         : "Based on recent sessions";
     const attendanceLabel = `${classesCounts.completed}/${classesCounts.total || 0}`;
     const attendanceMetaText = `${todayClassSessions.length} today · ${classesCounts.reschedule_requested} rescheduled`;
-    const billingLabel = formatCurrencyINR(billingSummary.dueNow);
-    const billingMetaText = `Due now · ${formatCurrencyINR(billingSummary.billedThisMonth)} billed`;
+    const billingLabel =
+      walletBalance === null
+        ? "Wallet unavailable"
+        : walletBalance < 0
+          ? `${formatCurrencyINR(Math.abs(walletBalance))} to pay`
+          : walletBalance > 0
+            ? `${formatCurrencyINR(walletBalance)} advance`
+            : "No pending amount";
+    const billingMetaText = `Class deductions this month · ${formatCurrencyINR(billingSummary.billedThisMonth)}`;
     const billingDetailText =
-      billingSummary.source === "read_model"
-        ? `Server projection for ${classesMonthLabel}${toDateOrNull(billingSummary.refreshedAt) ? ` · refreshed ${toDateOrNull(billingSummary.refreshedAt)?.toLocaleString("en-IN")}` : ""}.`
-        : `Calculated from completed classes in ${classesMonthLabel}.`;
+      `Your wallet is updated automatically after each completed class. Payments add balance to your wallet. Class fees reduce the wallet balance.`;
 
     return (
       <div className="space-y-4 sm:space-y-6">
@@ -4535,9 +4593,9 @@ export default function ParentDashboard() {
 
           <ParentBillingSummary
             billingLoading={billingLoading}
-            dueNowText={formatCurrencyINR(billingSummary.dueNow)}
+            dueNowText={walletStatusLabel}
             billedText={formatCurrencyINR(billingSummary.billedThisMonth)}
-            paidText={formatCurrencyINR(billingSummary.paidThisMonth)}
+            paidText={formatCurrencyINR(profilePaymentsSummary.total)}
             billingDetailText={billingDetailText}
             onOpenPayments={() => setTab("payments")}
           />
@@ -5916,7 +5974,7 @@ export default function ParentDashboard() {
           renderProfileContent()
         )}
 
-        {/* PAYMENTS TAB - unchanged */}
+        {/* PAYMENTS TAB */}
         {activeTab === "payments" && (
           <div className="space-y-4">
             {(() => {
@@ -5970,9 +6028,6 @@ export default function ParentDashboard() {
                 hasActiveClasses ||
                 hasActiveEnrollment;
 
-              const paymentsConfig = paymentsConfigQuery.data;
-              const qrUrl = paymentsConfig?.upiQrUrl || null;
-              const adminWhatsApp = paymentsConfig?.adminWhatsApp || "919876543210";
               const paymentRows = (parentPaymentsQuery.data ?? []) as ParentPaymentRecord[];
               const kidPayments = selectedKid?.id
                 ? paymentRows.filter(
@@ -5990,64 +6045,160 @@ export default function ParentDashboard() {
                 (acc, payment) => {
                   const rawAmount = Number(payment?.amount ?? 0);
                   const amount = Number.isFinite(rawAmount) ? rawAmount : 0;
-                  const rawApplied = Number(payment?.appliedAmount ?? NaN);
-                  const applied = Number.isFinite(rawApplied)
-                    ? rawApplied
-                    : (() => {
-                        const rawUnapplied = Number(
-                          payment?.unappliedAmount ?? 0
-                        );
-                        const unapplied = Number.isFinite(rawUnapplied)
-                          ? rawUnapplied
-                          : 0;
-                        return amount - unapplied;
-                      })();
-                  const rawUnapplied = Number(payment?.unappliedAmount ?? NaN);
-                  const unapplied = Number.isFinite(rawUnapplied)
-                    ? rawUnapplied
-                    : amount - applied;
                   acc.total += amount;
-                  acc.applied += applied;
-                  acc.unapplied += unapplied;
                   return acc;
                 },
-                { total: 0, applied: 0, unapplied: 0 }
+                { total: 0 }
+              );
+              const walletTransactions = (parentWalletTransactionsQuery.data ?? []) as ParentWalletTransaction[];
+              const sortedWalletTransactions = [...walletTransactions].sort((a, b) => {
+                const aTime = toDateOrNull(a.createdAt || a.paidAt)?.getTime() || 0;
+                const bTime = toDateOrNull(b.createdAt || b.paidAt)?.getTime() || 0;
+                return bTime - aTime;
+              });
+              const cutoverStartMs = new Date("2026-05-01T00:00:00").getTime();
+
+              const normalizedWalletRows = sortedWalletTransactions
+                .map((tx) => {
+                  const txDate = toDateOrNull(tx.createdAt || tx.paidAt);
+                  if (!txDate) return null;
+                  const txMs = txDate.getTime();
+                  if (!Number.isFinite(txMs) || txMs < cutoverStartMs) return null;
+
+                  const rawSigned = Number(tx.signedAmount);
+                  const rawAmount = Number(tx.amount);
+                  const direction = String(tx.direction || "").trim().toLowerCase();
+                  const type = String(tx.type || "").trim().toLowerCase();
+                  const note = String(tx.note || tx.reason || tx.description || "").trim();
+                  const amountValue = Number.isFinite(rawSigned)
+                    ? rawSigned
+                    : Number.isFinite(rawAmount)
+                      ? direction === "debit"
+                        ? -Math.abs(rawAmount)
+                        : direction === "credit"
+                          ? Math.abs(rawAmount)
+                          : rawAmount
+                      : 0;
+                  const amountAbs = Math.abs(amountValue);
+                  const monthKey = toMonthKey(txDate);
+                  const studentName = String(
+                    (tx as any).studentName ||
+                    (tx as any).childName ||
+                    (tx as any).kidName ||
+                    (tx as any).kidLabel ||
+                    ""
+                  ).trim() || "—";
+
+                  const classDebitByType = type.includes("class_deduction") || type.includes("class deduction");
+                  const paymentCreditByType =
+                    type.includes("payment") ||
+                    type.includes("topup") ||
+                    type.includes("top-up") ||
+                    type.includes("recharge") ||
+                    type.includes("credit");
+
+                  const isClassDebit =
+                    amountAbs > 0 &&
+                    (amountValue < 0 || direction === "debit" || classDebitByType);
+                  const isPaymentCredit =
+                    amountAbs > 0 &&
+                    (amountValue > 0 || direction === "credit" || paymentCreditByType);
+
+                  return {
+                    id: tx.id,
+                    txDate,
+                    txMs,
+                    monthKey,
+                    type,
+                    direction,
+                    amountValue,
+                    amountAbs,
+                    studentName,
+                    note,
+                    balanceAfter: Number.isFinite(Number(tx.balanceAfter))
+                      ? Number(tx.balanceAfter)
+                      : null,
+                    isClassDebit,
+                    isPaymentCredit,
+                  };
+                })
+                .filter((row): row is NonNullable<typeof row> => Boolean(row));
+
+              const classDebitRowsForAllocation = normalizedWalletRows
+                .filter((row) => row.isClassDebit)
+                .sort((a, b) => a.txMs - b.txMs);
+              const paymentCreditRowsForAllocation = normalizedWalletRows
+                .filter((row) => row.isPaymentCredit)
+                .sort((a, b) => a.txMs - b.txMs)
+                .map((row) => ({ ...row, remainingAmount: row.amountAbs }));
+
+              const classRowsWithPaymentStatus = classDebitRowsForAllocation.map((row) => {
+                let remainingClassAmount = row.amountAbs;
+                let paidAmount = 0;
+                for (const credit of paymentCreditRowsForAllocation) {
+                  if (remainingClassAmount <= 0) break;
+                  if (credit.remainingAmount <= 0) continue;
+                  const applied = Math.min(remainingClassAmount, credit.remainingAmount);
+                  remainingClassAmount -= applied;
+                  credit.remainingAmount -= applied;
+                  paidAmount += applied;
+                }
+                const pendingAmount = Math.max(row.amountAbs - paidAmount, 0);
+                const status =
+                  pendingAmount <= 0
+                    ? "Paid"
+                    : paidAmount <= 0
+                      ? "Pending"
+                      : "Partially Paid";
+                return {
+                  ...row,
+                  classFee: row.amountAbs,
+                  paidAmount,
+                  pendingAmount,
+                  status,
+                };
+              });
+
+              const classRowsForSelectedMonth = classRowsWithPaymentStatus.filter(
+                (row) => row.monthKey === classPaymentMonth
+              );
+              const pendingClassRows = classRowsForSelectedMonth.filter(
+                (row) => row.status === "Pending" || row.status === "Partially Paid"
+              );
+              const paidClassRows = classRowsForSelectedMonth.filter(
+                (row) => row.status === "Paid"
+              );
+              const paymentsReceivedRowsForSelectedMonth = normalizedWalletRows.filter(
+                (row) => row.isPaymentCredit && row.monthKey === classPaymentMonth
               );
 
-              const handleConfirmPayment = async () => {
-                setConfirmingPayment(true);
+              const statusRowsToRender =
+                classPaymentStatusTab === "pending_payment"
+                  ? pendingClassRows
+                  : classPaymentStatusTab === "paid_classes"
+                    ? paidClassRows
+                    : classRowsForSelectedMonth;
 
-                try {
-                  await addDoc(collection(db, "paymentConfirmations"), {
-                    parentUid: user?.uid || null,
-                    parentName: user?.displayName || user?.email || "Unknown",
-                    childId: selectedKid?.id || null,
-                    childName: selectedKid?.fullName || "Unknown",
-                    membershipStartDate: membershipStartDate || enrollmentStartDate,
-                    membershipEndDate: membershipEndDate,
-                    createdAt: serverTimestamp(),
-                    status: "pending",
-                  });
-                  hapticSuccess();
-                } catch (error) {
-                  hapticWarning();
-                  console.error("Failed to create payment confirmation:", error);
-                }
+              const handleConfirmPayment = () => {
+                const parentName =
+                  String(user?.displayName || "").trim() ||
+                  String(user?.email || "").trim() ||
+                  "Parent not provided";
+                const childName =
+                  String(selectedKid?.fullName || selectedKid?.name || "").trim() ||
+                  "Child not selected";
+                const amountPaidText =
+                  upiAmountInput.trim().length > 0
+                    ? `₹${upiAmountInput.trim()}`
+                    : "[Please enter amount]";
+                const paymentDate = new Date().toLocaleDateString("en-IN");
 
-                const childName = selectedKid?.fullName || "my child";
-                const startStr = (membershipStartDate || enrollmentStartDate)
-                  ? (membershipStartDate || enrollmentStartDate)!.toLocaleDateString("en-IN")
-                  : "N/A";
-                const endStr = membershipEndDate
-                  ? membershipEndDate.toLocaleDateString("en-IN")
-                  : "N/A";
-                const message = `Hi, I paid Tiny Steps membership for ${childName}. Membership: ${startStr} to ${endStr}. I am attaching the payment screenshot.`;
-                const whatsappUrl = `https://wa.me/${adminWhatsApp}?text=${encodeURIComponent(
+                const message = `Hello Tiny Steps Team,\n\nI have completed a payment for my child.\n\nParent name: ${parentName}\nChild name: ${childName}\nAmount paid: ${amountPaidText}\nPayment method: ${upiPaymentMethod}\nPayment date: ${paymentDate}\n\nPlease find the payment screenshot attached for verification and update the wallet balance.\n\nThank you.`;
+                const whatsappUrl = `https://wa.me/${TINYSTEPS_WHATSAPP_NUMBER}?text=${encodeURIComponent(
                   message
                 )}`;
-                window.open(whatsappUrl, "_blank");
-
-                setConfirmingPayment(false);
+                window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+                hapticSuccess();
               };
 
               return (
@@ -6119,58 +6270,42 @@ export default function ParentDashboard() {
 
                       <div className="order-2 mb-4 sm:mb-6">
                         <h3 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
-                          Class Fees & Dues
+                          Wallet Summary
                         </h3>
                         <div className="rounded-lg border border-indigo-100 bg-gradient-to-br from-sky-50 to-indigo-50 p-3 dark:border-indigo-900/30 dark:from-slate-900 dark:to-indigo-950 sm:p-4">
                           {billingLoading ? (
                             <div className="text-sm text-gray-600 dark:text-gray-400">
-                              Loading fees…
-                            </div>
-                          ) : billingSummary.totalCharges === 0 ? (
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                Due now: ₹0
-                              </div>
-                              <div className="mt-1 text-xs text-gray-500 dark:text-gray-500">
-                                No charges yet this month.
-                              </div>
+                              Loading wallet summary…
                             </div>
                           ) : (
-                            <div className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                              <div>
-                                Completed this month: {billingSummary.chargesThisMonth}
-                              </div>
-                              {billingSummary.avgRate > 0 && (
-                                <div>
-                                  Rate per class: ₹{billingSummary.avgRate.toLocaleString("en-IN")}
-                                </div>
-                              )}
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
                               <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                Due now: ₹{billingSummary.dueNow.toLocaleString("en-IN")}
+                                {walletStatusLabel}
                               </div>
-                              {billingSummary.chargesThisMonth > 0 && (
-                                <div>
-                                  Billed this month: ₹{billingSummary.billedThisMonth.toLocaleString("en-IN")}
-                                </div>
-                              )}
-                              {billingSummary.paidThisMonth > 0 && (
-                                <div>
-                                  Paid this month: ₹{billingSummary.paidThisMonth.toLocaleString("en-IN")}
-                                </div>
-                              )}
-                              <div className="text-xs text-gray-500 dark:text-gray-500">
-                                Charges: {billingSummary.totalCharges}
+                              <div className="mt-1 text-xs text-gray-500 dark:text-gray-500">
+                                Wallet balance: {walletBalance === null ? "—" : formatCurrencySignedINR(walletBalance)}
                               </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-500">
-                                {billingSummary.source === "read_model"
-                                  ? `Server summary for ${classesMonthLabel}${
-                                      toDateOrNull(billingSummary.refreshedAt)
-                                        ? ` • refreshed ${toDateOrNull(
-                                            billingSummary.refreshedAt
-                                          )?.toLocaleString("en-IN")}`
-                                        : ""
-                                    }.`
-                                  : `Calculated from ${billingSummary.chargesThisMonth} completed classes (Present/Late) in ${classesMonthLabel}.`}
+                              <div className="mt-3 space-y-1 text-sm text-gray-700 dark:text-gray-300">
+                                <div>
+                                  Completed classes this month: {billingSummary.chargesThisMonth}
+                                </div>
+                                {billingSummary.avgRate > 0 && (
+                                  <div>
+                                    Rate per class: ₹{billingSummary.avgRate.toLocaleString("en-IN")}
+                                  </div>
+                                )}
+                                <div>
+                                  Class deductions this month: ₹{billingSummary.billedThisMonth.toLocaleString("en-IN")}
+                                </div>
+                                <div>
+                                  Payments received this month: ₹{profilePaymentsSummary.total.toLocaleString("en-IN")}
+                                </div>
+                                <div className="text-xs text-gray-500 dark:text-gray-500">
+                                  Last updated: {walletLastUpdatedText}
+                                </div>
+                                <div className="text-xs text-gray-500 dark:text-gray-500">
+                                  Your wallet is updated automatically after each completed class. Payments add balance to your wallet. Class fees reduce the wallet balance.
+                                </div>
                               </div>
                             </div>
                           )}
@@ -6196,27 +6331,26 @@ export default function ParentDashboard() {
                             <Button
                               onClick={() => {
                                 hapticLight();
+                                setUpiQrImageLoadFailed(false);
+                                setUpiPaymentMethod("UPI");
+                                setUpiAmountInput("");
                                 setShowQrModal(true);
                               }}
                               className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 font-semibold text-white shadow-md hover:from-indigo-700 hover:to-purple-700"
                             >
-                              Pay Now
+                              Pay via UPI
                             </Button>
 
                             <div className="space-y-2">
                               <Button
                                 onClick={handleConfirmPayment}
-                                disabled={confirmingPayment}
                                 variant="outline"
                                 className="w-full border-green-200 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-300 dark:hover:bg-green-950"
                               >
-                                {confirmingPayment
-                                  ? "Opening WhatsApp..."
-                                  : "Confirm Payment"}
+                                Confirm on WhatsApp
                               </Button>
                               <p className="text-center text-xs text-gray-500 dark:text-gray-400">
-                                After clicking, attach payment screenshot in WhatsApp
-                                and send to admin
+                                Use WhatsApp confirmation after payment so Tiny Steps can verify and update wallet balance.
                               </p>
                             </div>
                           </div>
@@ -6225,23 +6359,152 @@ export default function ParentDashboard() {
 
                       <div className="order-4 mb-4 sm:order-3 sm:mb-6">
                         <h3 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
-                          Payment History
+                          Class Payment Status
                         </h3>
                         <div className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-slate-900 sm:p-4">
-                          {parentPaymentsQuery.isLoading ? (
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                              Loading payments…
+                          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                                Month
+                              </label>
+                              <input
+                                type="month"
+                                value={classPaymentMonth}
+                                onChange={(e) => setClassPaymentMonth(e.target.value)}
+                                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-indigo-500 focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                              />
                             </div>
-                          ) : sortedPayments.length === 0 ? (
+                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                              Class payment status is shown from May 2026 onward.
+                            </div>
+                          </div>
+
+                          <div className="mb-3 flex flex-wrap gap-2">
+                            <Button
+                              size="sm"
+                              variant={classPaymentStatusTab === "all_classes" ? "default" : "outline"}
+                              onClick={() => setClassPaymentStatusTab("all_classes")}
+                            >
+                              All Classes
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={classPaymentStatusTab === "pending_payment" ? "default" : "outline"}
+                              onClick={() => setClassPaymentStatusTab("pending_payment")}
+                            >
+                              Pending Payment
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={classPaymentStatusTab === "paid_classes" ? "default" : "outline"}
+                              onClick={() => setClassPaymentStatusTab("paid_classes")}
+                            >
+                              Paid Classes
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={classPaymentStatusTab === "payments_received" ? "default" : "outline"}
+                              onClick={() => setClassPaymentStatusTab("payments_received")}
+                            >
+                              Payments Received
+                            </Button>
+                          </div>
+
+                          {classPaymentStatusTab === "payments_received" ? (
+                            paymentsReceivedRowsForSelectedMonth.length === 0 ? (
+                              <div className="text-sm text-gray-600 dark:text-gray-400">
+                                No payments received for this month.
+                              </div>
+                            ) : (
+                              <div className="overflow-x-auto rounded border">
+                                <div className="min-w-[680px]">
+                                  <div className="grid grid-cols-4 gap-2 border-b px-3 py-2 text-xs uppercase text-muted-foreground">
+                                    <div>Date</div>
+                                    <div>Amount</div>
+                                    <div>Payment Method / Type</div>
+                                    <div>Note / Reason</div>
+                                  </div>
+                                  {paymentsReceivedRowsForSelectedMonth.map((row) => (
+                                    <div
+                                      key={`payments-received-${row.id}`}
+                                      className="grid grid-cols-4 gap-2 border-b px-3 py-2 text-sm last:border-b-0"
+                                    >
+                                      <div>{row.txDate.toLocaleDateString("en-IN")}</div>
+                                      <div>{formatCurrencyINR(row.amountAbs)}</div>
+                                      <div className="capitalize">{row.type.replace(/_/g, " ") || "—"}</div>
+                                      <div>{row.note || "—"}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )
+                          ) : statusRowsToRender.length === 0 ? (
                             <div className="text-sm text-gray-600 dark:text-gray-400">
-                              No payments recorded yet.
+                              {classPaymentStatusTab === "pending_payment"
+                                ? "No pending payment classes for this month."
+                                : classPaymentStatusTab === "paid_classes"
+                                  ? "No paid classes for this month."
+                                  : "No classes found for this month."}
+                            </div>
+                          ) : (
+                            <div className="overflow-x-auto rounded border">
+                              <div className="min-w-[900px]">
+                                <div className="grid grid-cols-7 gap-2 border-b px-3 py-2 text-xs uppercase text-muted-foreground">
+                                  <div>Date</div>
+                                  <div>Child / Student</div>
+                                  <div>Class Fee</div>
+                                  <div>Paid Amount</div>
+                                  <div>Pending Amount</div>
+                                  <div>Status</div>
+                                  <div>Note / Reason</div>
+                                </div>
+                                {statusRowsToRender.map((row) => (
+                                  <div
+                                    key={`class-status-${row.id}`}
+                                    className="grid grid-cols-7 gap-2 border-b px-3 py-2 text-sm last:border-b-0"
+                                  >
+                                    <div>{row.txDate.toLocaleDateString("en-IN")}</div>
+                                    <div>{row.studentName || "—"}</div>
+                                    <div>{formatCurrencyINR(row.classFee)}</div>
+                                    <div>{formatCurrencyINR(row.paidAmount)}</div>
+                                    <div>{formatCurrencyINR(row.pendingAmount)}</div>
+                                    <div>{row.status}</div>
+                                    <div>{row.note || "—"}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="order-5 mb-4 sm:order-4 sm:mb-6">
+                        <h3 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
+                          Recent Wallet Activity
+                        </h3>
+                        <div className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-slate-900 sm:p-4">
+                          {parentPaymentsQuery.isLoading || parentWalletTransactionsQuery.isLoading ? (
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              Loading wallet activity…
+                            </div>
+                          ) : sortedPayments.length === 0 && sortedWalletTransactions.length === 0 ? (
+                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                              No wallet activity recorded yet.
                             </div>
                           ) : (
                             <div className="space-y-3">
-                              <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
+                              <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-4">
                                 <div className="rounded border p-3">
                                   <div className="text-xs text-muted-foreground">
-                                    Total paid
+                                    Wallet Balance
+                                  </div>
+                                  <div className="text-lg font-semibold">
+                                    {walletBalance === null ? "—" : formatCurrencySignedINR(walletBalance)}
+                                  </div>
+                                </div>
+                                <div className="rounded border p-3">
+                                  <div className="text-xs text-muted-foreground">
+                                    Payments Received
                                   </div>
                                   <div className="text-lg font-semibold">
                                     ₹{paymentTotals.total.toLocaleString("en-IN")}
@@ -6249,82 +6512,68 @@ export default function ParentDashboard() {
                                 </div>
                                 <div className="rounded border p-3">
                                   <div className="text-xs text-muted-foreground">
-                                    Applied to dues
+                                    Class Deductions This Month
                                   </div>
                                   <div className="text-lg font-semibold">
-                                    ₹{paymentTotals.applied.toLocaleString("en-IN")}
+                                    ₹{billingSummary.billedThisMonth.toLocaleString("en-IN")}
                                   </div>
                                 </div>
                                 <div className="rounded border p-3">
                                   <div className="text-xs text-muted-foreground">
-                                    Unapplied
+                                    Amount to Pay / Advance
                                   </div>
                                   <div className="text-lg font-semibold">
-                                    ₹{paymentTotals.unapplied.toLocaleString("en-IN")}
+                                    {walletAmountToPay > 0
+                                      ? `Collect ₹${walletAmountToPay.toLocaleString("en-IN")}`
+                                      : walletAdvanceBalance > 0
+                                        ? `Advance ₹${walletAdvanceBalance.toLocaleString("en-IN")}`
+                                        : "No pending amount"}
                                   </div>
                                 </div>
                               </div>
 
                               <div className="space-y-2 sm:hidden">
-                                {sortedPayments.map((payment) => {
-                                  const rawAmount = Number(payment?.amount ?? 0);
-                                  const amount = Number.isFinite(rawAmount)
-                                    ? rawAmount
-                                    : 0;
-                                  const rawApplied = Number(
-                                    payment?.appliedAmount ?? NaN
-                                  );
-                                  const applied = Number.isFinite(rawApplied)
-                                    ? rawApplied
-                                    : (() => {
-                                        const rawUnapplied = Number(
-                                          payment?.unappliedAmount ?? 0
-                                        );
-                                        const unapplied = Number.isFinite(rawUnapplied)
-                                          ? rawUnapplied
-                                          : 0;
-                                        return amount - unapplied;
-                                      })();
-                                  const rawUnapplied = Number(
-                                    payment?.unappliedAmount ?? NaN
-                                  );
-                                  const unapplied = Number.isFinite(rawUnapplied)
-                                    ? rawUnapplied
-                                    : amount - applied;
-                                  const paidAt = toDateOrNull(
-                                    payment.paidAt || payment.createdAt
-                                  );
+                                {sortedWalletTransactions.slice(0, 8).map((tx) => {
+                                  const txDate = toDateOrNull(tx.createdAt || tx.paidAt);
+                                  const rawSigned = Number(tx.signedAmount);
+                                  const rawAmount = Number(tx.amount);
+                                  const amountValue = Number.isFinite(rawSigned)
+                                    ? rawSigned
+                                    : Number.isFinite(rawAmount)
+                                      ? (String(tx.direction || "").toLowerCase() === "debit" ? -rawAmount : rawAmount)
+                                      : 0;
+                                  const directionLabel = amountValue < 0 ? "Debit" : amountValue > 0 ? "Credit" : "—";
                                   return (
                                     <div
-                                      key={`mobile-payment-${payment.id}`}
+                                      key={`mobile-wallet-${tx.id}`}
                                       className="rounded-lg border border-gray-200 px-3 py-3 text-sm dark:border-gray-700"
                                     >
                                       <div className="flex items-start justify-between gap-3">
                                         <div className="font-medium text-gray-900 dark:text-gray-100">
-                                          ₹{amount.toLocaleString("en-IN")}
+                                          {formatCurrencySignedINR(amountValue)}
                                         </div>
                                         <div className="shrink-0 text-xs text-muted-foreground">
-                                          {paidAt
-                                            ? paidAt.toLocaleDateString("en-IN")
+                                          {txDate
+                                            ? txDate.toLocaleDateString("en-IN")
                                             : "—"}
                                         </div>
                                       </div>
                                       <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                                         <div>
-                                          <div className="text-muted-foreground">Applied</div>
+                                          <div className="text-muted-foreground">Type</div>
                                           <div className="font-medium">
-                                            ₹{applied.toLocaleString("en-IN")}
+                                            {String(tx.type || "transaction").replace(/_/g, " ")}
                                           </div>
                                         </div>
                                         <div>
-                                          <div className="text-muted-foreground">Unapplied</div>
+                                          <div className="text-muted-foreground">Direction</div>
                                           <div className="font-medium">
-                                            ₹{unapplied.toLocaleString("en-IN")}
+                                            {directionLabel}
                                           </div>
                                         </div>
                                       </div>
                                       <div className="mt-2 text-xs capitalize text-muted-foreground">
-                                        {String(payment.method || "—")}
+                                        Balance after: {Number.isFinite(Number(tx.balanceAfter)) ? formatCurrencySignedINR(Number(tx.balanceAfter)) : "—"}
                                       </div>
                                     </div>
                                   );
@@ -6332,63 +6581,49 @@ export default function ParentDashboard() {
                               </div>
 
                               <div className="hidden rounded border sm:block sm:overflow-x-auto">
-                                <div className="sm:min-w-[600px]">
-                                  <div className="grid grid-cols-5 gap-2 border-b px-3 py-2 text-xs uppercase text-muted-foreground">
+                                <div className="sm:min-w-[760px]">
+                                  <div className="grid grid-cols-6 gap-2 border-b px-3 py-2 text-xs uppercase text-muted-foreground">
                                     <div>Date</div>
+                                    <div>Type</div>
+                                    <div>Credit/Debit</div>
                                     <div>Amount</div>
-                                    <div>Applied</div>
-                                    <div>Unapplied</div>
-                                    <div>Method</div>
+                                    <div>Balance After</div>
+                                    <div>Note / Reason</div>
                                   </div>
-                                  {sortedPayments.map((payment) => {
-                                    const rawAmount = Number(payment?.amount ?? 0);
-                                    const amount = Number.isFinite(rawAmount)
-                                      ? rawAmount
-                                      : 0;
-                                    const rawApplied = Number(
-                                      payment?.appliedAmount ?? NaN
-                                    );
-                                    const applied = Number.isFinite(rawApplied)
-                                      ? rawApplied
-                                      : (() => {
-                                          const rawUnapplied = Number(
-                                            payment?.unappliedAmount ?? 0
-                                          );
-                                          const unapplied = Number.isFinite(rawUnapplied)
-                                            ? rawUnapplied
-                                            : 0;
-                                          return amount - unapplied;
-                                        })();
-                                    const rawUnapplied = Number(
-                                      payment?.unappliedAmount ?? NaN
-                                    );
-                                    const unapplied = Number.isFinite(rawUnapplied)
-                                      ? rawUnapplied
-                                      : amount - applied;
-                                    const paidAt = toDateOrNull(
-                                      payment.paidAt || payment.createdAt
-                                    );
+                                  {sortedWalletTransactions.map((tx) => {
+                                    const txDate = toDateOrNull(tx.createdAt || tx.paidAt);
+                                    const rawSigned = Number(tx.signedAmount);
+                                    const rawAmount = Number(tx.amount);
+                                    const amountValue = Number.isFinite(rawSigned)
+                                      ? rawSigned
+                                      : Number.isFinite(rawAmount)
+                                        ? (String(tx.direction || "").toLowerCase() === "debit" ? -rawAmount : rawAmount)
+                                        : 0;
+                                    const directionLabel = amountValue < 0 ? "Debit" : amountValue > 0 ? "Credit" : "—";
                                     return (
                                       <div
-                                        key={payment.id}
-                                        className="grid grid-cols-5 gap-2 border-b px-3 py-2 text-sm last:border-b-0"
+                                        key={tx.id}
+                                        className="grid grid-cols-6 gap-2 border-b px-3 py-2 text-sm last:border-b-0"
                                       >
                                         <div>
-                                          {paidAt
-                                            ? paidAt.toLocaleDateString("en-IN")
+                                          {txDate
+                                            ? txDate.toLocaleDateString("en-IN")
                                             : "—"}
                                         </div>
                                         <div>
-                                          ₹{amount.toLocaleString("en-IN")}
+                                          {String(tx.type || "transaction").replace(/_/g, " ")}
                                         </div>
                                         <div>
-                                          ₹{applied.toLocaleString("en-IN")}
+                                          {directionLabel}
                                         </div>
                                         <div>
-                                          ₹{unapplied.toLocaleString("en-IN")}
+                                          {formatCurrencySignedINR(amountValue)}
                                         </div>
-                                        <div className="capitalize">
-                                          {String(payment.method || "—")}
+                                        <div>
+                                          {Number.isFinite(Number(tx.balanceAfter)) ? formatCurrencySignedINR(Number(tx.balanceAfter)) : "—"}
+                                        </div>
+                                        <div className="truncate">
+                                          {String(tx.note || tx.reason || tx.description || "—")}
                                         </div>
                                       </div>
                                     );
@@ -6408,25 +6643,89 @@ export default function ParentDashboard() {
                         <DialogTitle>Pay via UPI</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4">
-                        {qrUrl ? (
+                        <div className="rounded border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-200">
+                          {walletBalance === null ? (
+                            <div>Wallet balance: —</div>
+                          ) : walletBalance < 0 ? (
+                            <div>Amount to pay: ₹{Math.abs(walletBalance).toLocaleString("en-IN")}</div>
+                          ) : walletBalance > 0 ? (
+                            <div>Advance balance available: ₹{walletBalance.toLocaleString("en-IN")}</div>
+                          ) : (
+                            <div>No pending amount. You may still add an advance payment if required.</div>
+                          )}
+                        </div>
+
+                        {!upiQrImageLoadFailed ? (
                           <div className="flex flex-col items-center space-y-3">
                             <img
-                              src={qrUrl}
+                              src={TINYSTEPS_UPI_QR_PATH}
                               alt="UPI QR Code"
                               className="h-auto max-h-[55vh] w-full max-w-64 rounded-lg border border-gray-200 object-contain dark:border-gray-700"
+                              onError={() => setUpiQrImageLoadFailed(true)}
                             />
                             <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-                              Scan using any UPI app
+                              Scan the QR code using any UPI app. After payment, click Confirm on WhatsApp and share your payment screenshot.
                             </p>
                           </div>
                         ) : (
                           <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                            <p className="mb-2">QR code not available</p>
-                            <p className="text-xs">
-                              Please contact admin for payment details
-                            </p>
+                            <p className="mb-2">QR code not available. Please contact Tiny Steps for payment details.</p>
                           </div>
                         )}
+                        <div className="space-y-1">
+                          <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                            Payment method
+                          </label>
+                          <select
+                            value={upiPaymentMethod}
+                            onChange={(e) =>
+                              setUpiPaymentMethod(e.target.value === "Bank Transfer" ? "Bank Transfer" : "UPI")
+                            }
+                            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-indigo-500 focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                          >
+                            <option value="UPI">UPI</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                          </select>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                            Amount paid (optional)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={upiAmountInput}
+                            onChange={(e) => setUpiAmountInput(e.target.value)}
+                            placeholder="Enter amount paid"
+                            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-indigo-500 placeholder:text-slate-400 focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                          />
+                        </div>
+
+                        <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm dark:border-slate-700 dark:bg-slate-900/60">
+                          <h4 className="mb-2 font-semibold text-slate-900 dark:text-slate-100">
+                            Bank Transfer Details
+                          </h4>
+                          <div className="grid grid-cols-1 gap-1 text-slate-700 dark:text-slate-200 sm:grid-cols-2">
+                            <div>Account Type: Current</div>
+                            <div>Account Number: 50200108987663</div>
+                            <div>Bank Name: HDFC</div>
+                            <div>IFSC: HDFC0002352</div>
+                            <div>Account Name: TINY STEPS</div>
+                            <div>UPI ID: tinystepslearning@ybl</div>
+                          </div>
+                          <p className="mt-3 text-xs text-slate-600 dark:text-slate-300">
+                            After completing the payment, please send the screenshot on WhatsApp for verification. Your wallet balance will be updated after Tiny Steps confirms the payment.
+                          </p>
+                        </div>
+
+                        <Button
+                          onClick={handleConfirmPayment}
+                          className="w-full border-green-200 bg-green-600 text-white hover:bg-green-700"
+                        >
+                          Confirm on WhatsApp
+                        </Button>
                         <Button
                           onClick={() => setShowQrModal(false)}
                           variant="outline"

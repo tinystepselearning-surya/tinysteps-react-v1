@@ -29,7 +29,7 @@ const NON_REASSIGNABLE_SESSION_STATUSES = new Set([
 ]);
 
 function resolveKidIdFromEnrollment(data: any): string | null {
-  return data?.kidId || data?.studentId || (Array.isArray(data?.kidIds) ? data.kidIds[0] : null) || null;
+  return data?.kidId || (Array.isArray(data?.kidIds) ? data.kidIds[0] : null) || data?.studentId || null;
 }
 
 function toStringList(value: unknown): string[] {
@@ -130,6 +130,8 @@ async function cancelFutureSessionsByKidId(kidId: string, reason: string) {
 async function updateSessionsTeacherByEnrollmentId(
   enrollmentId: string,
   newTeacherId: string,
+  newTeacherName: string | null,
+  previousTeacherId: string | null,
   actorUid: string | null
 ) {
   const db = admin.firestore();
@@ -167,20 +169,33 @@ async function updateSessionsTeacherByEnrollmentId(
   };
 
   // Guardrail: never reassign already-finalized/billed sessions.
+  const hasAttendanceMarked = (data: any): boolean => {
+    const attendance = data?.attendance;
+    if (!attendance) return false;
+    if (attendance === null) return false;
+    if (Array.isArray(attendance)) return attendance.length > 0;
+    if (typeof attendance === 'object') return Object.keys(attendance as Record<string, unknown>).length > 0;
+    return true;
+  };
+
   const eligibleDocs = snap.docs.filter((docSnap) => {
     const data = docSnap.data() || {};
     if (!isFutureSession(data)) return false;
     const status = String(data.status || '').trim().toLowerCase();
     if (NON_REASSIGNABLE_SESSION_STATUSES.has(status)) return false;
     if (data.revenueAccrued === true) return false;
+    if (hasAttendanceMarked(data)) return false;
     return true;
   });
 
-  const updates = {
+  const updates: Record<string, unknown> = {
     teacherId: newTeacherId,
+    teacherIds: admin.firestore.FieldValue.arrayUnion(newTeacherId),
     updatedBy: actorUid,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    reassignedFromTeacherId: previousTeacherId || null,
   };
+  if (newTeacherName) updates.teacherName = newTeacherName;
   const count = await batchUpdate(eligibleDocs, updates);
   return count;
 }
@@ -243,6 +258,10 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
   if (!enrollmentId || !newTeacherId) {
     throw new HttpsError('invalid-argument', 'enrollmentId and newTeacherId are required');
   }
+  const actorIdentity =
+    (typeof request.auth?.token?.email === 'string' && request.auth?.token?.email.trim())
+      ? request.auth.token.email.trim()
+      : (request.auth?.uid || null);
 
   const db = admin.firestore();
   const enrRef = db.collection('enrollments').doc(enrollmentId);
@@ -253,40 +272,94 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
   }
 
   const enrollment = (enrSnap.data() || {}) as Record<string, unknown>;
-  const kidId = resolveKidIdFromEnrollment(enrollment);
+  const canonicalKidId = toOptionalId(enrollment.kidId);
+  if (!canonicalKidId) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Cannot reassign teacher because this enrollment has a broken student link. Repair the student link first.'
+    );
+  }
+
+  const canonicalKidSnap = await db.collection('kids').doc(canonicalKidId).get();
+  if (!canonicalKidSnap.exists) {
+    throw new HttpsError(
+      'failed-precondition',
+      'Cannot reassign teacher because the linked child profile no longer exists.'
+    );
+  }
+
+  const courseId = toOptionalId(enrollment.courseId) || toOptionalId((enrollment as any).course_id) || toOptionalId((enrollment as any).course);
+  if (courseId) {
+    const duplicatesSnap = await db
+      .collection('enrollments')
+      .where('kidId', '==', canonicalKidId)
+      .where('courseId', '==', courseId)
+      .get();
+    const hasOtherActiveLike = duplicatesSnap.docs.some((docSnap) => {
+      if (docSnap.id === enrollmentId) return false;
+      const data = docSnap.data() || {};
+      const archived = data.archived === true || Boolean(data.archivedAt);
+      if (archived) return false;
+      const status = normalizeEnrollmentStatus(String(data.status || ''));
+      return !TERMINAL.has(status);
+    });
+    if (hasOtherActiveLike) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Cannot reassign teacher because another active enrollment exists for the same child and course. Resolve duplicate active enrollments first.'
+      );
+    }
+  }
+
+  const previousTeacherId = toOptionalId(enrollment.teacherId);
+  const previousTeacherName = toOptionalId((enrollment as any).teacherName);
   const teacherIds = toStringList(enrollment.teacherIds);
   if (!teacherIds.includes(newTeacherId)) teacherIds.unshift(newTeacherId);
 
-  await enrRef.set(
-    {
-      ...buildEnrollmentCanonicalPatch(enrollmentId, enrollment),
-      teacherId: newTeacherId,
-      teacherIds,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedBy: request.auth?.uid || null,
-    },
-    { merge: true }
-  );
+  const teacherSnap = await db.collection('users').doc(newTeacherId).get();
+  if (!teacherSnap.exists) {
+    throw new HttpsError('failed-precondition', 'Selected teacher profile does not exist.');
+  }
+  const teacherData = (teacherSnap.data() || {}) as Record<string, unknown>;
+  const newTeacherName = toOptionalId((teacherData as any).displayName)
+    || toOptionalId((teacherData as any).name)
+    || toOptionalId((teacherData as any).email);
+  const reassignmentReason = toOptionalId(request.data?.reassignmentReason);
 
-  if (kidId) {
-    await db
-      .collection('kids')
-      .doc(kidId)
-      .set(
+  const enrollmentPatch: Record<string, unknown> = {
+    teacherId: newTeacherId,
+    teacherIds,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedBy: actorIdentity,
+    reassignedAt: admin.firestore.FieldValue.serverTimestamp(),
+    reassignedBy: actorIdentity,
+    previousTeacherId: previousTeacherId || null,
+    previousTeacherName: previousTeacherName || null,
+  };
+  if (newTeacherName) enrollmentPatch.teacherName = newTeacherName;
+  if (reassignmentReason) enrollmentPatch.reassignmentReason = reassignmentReason;
+
+  await enrRef.set(enrollmentPatch, { merge: true });
+
+  await db
+    .collection('kids')
+    .doc(canonicalKidId)
+    .set(
         {
           teacherIds: admin.firestore.FieldValue.arrayUnion(newTeacherId),
           teacherId: newTeacherId,
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedBy: request.auth?.uid || null,
+          updatedBy: actorIdentity,
         },
         { merge: true }
       );
-  }
 
   const updatedSessions = await updateSessionsTeacherByEnrollmentId(
     enrollmentId,
     newTeacherId,
-    request.auth?.uid || null
+    newTeacherName,
+    previousTeacherId,
+    actorIdentity
   );
 
   return {

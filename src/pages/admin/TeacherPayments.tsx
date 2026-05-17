@@ -52,6 +52,21 @@ const formatMoney = (value: any) => {
   return `₹${Math.round(num).toLocaleString('en-IN')}`;
 };
 
+const isReadableDisplayName = (value: unknown) => {
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  const lower = trimmed.toLowerCase();
+  if (lower === 'unknown' || lower === 'name not found' || lower === 'n/a' || lower === 'na') {
+    return false;
+  }
+  const hasWhitespace = /\s/.test(trimmed);
+  const looksLikeLongId =
+    !hasWhitespace &&
+    ((/^[a-f0-9]{16,}$/i.test(trimmed)) || (/^[A-Za-z0-9_-]{20,}$/.test(trimmed)));
+  return !looksLikeLongId;
+};
+
 const normalizeStatus = (value: any) => String(value || '').trim().toLowerCase();
 
 const isSettledStatus = (status: string) => status === 'paid' || status === 'settled';
@@ -172,12 +187,12 @@ export default function TeacherPayments(): JSX.Element {
                     data?.displayName ||
                     data?.name ||
                     ''
-                ).trim() || undefined;
+                ).trim();
 
               nextEnrollmentMap[docSnap.id] = {
                 kidId: resolvedKidId,
                 courseId: resolvedCourseId,
-                studentName,
+                studentName: isReadableDisplayName(studentName) ? studentName : undefined,
               };
 
               if (resolvedKidId) kidIds.add(resolvedKidId);
@@ -220,8 +235,11 @@ export default function TeacherPayments(): JSX.Element {
                 data?.studentName ||
                 data?.firstName ||
                 '';
-              nextKidMap[docSnap.id] = name || docSnap.id;
-              if (data?.studentId) nextKidMap[data.studentId] = name || docSnap.id;
+              const normalizedName = isReadableDisplayName(name) ? String(name).trim() : '';
+              if (normalizedName) {
+                nextKidMap[docSnap.id] = normalizedName;
+                if (data?.studentId) nextKidMap[data.studentId] = normalizedName;
+              }
             });
 
             const studentsSnap = await getDocs(
@@ -236,8 +254,11 @@ export default function TeacherPayments(): JSX.Element {
                 data?.studentName ||
                 data?.firstName ||
                 '';
-              nextKidMap[docSnap.id] = name || nextKidMap[docSnap.id] || docSnap.id;
-              if (data?.kidId) nextKidMap[data.kidId] = name || data.kidId;
+              const normalizedName = isReadableDisplayName(name) ? String(name).trim() : '';
+              if (normalizedName) {
+                nextKidMap[docSnap.id] = normalizedName;
+                if (data?.kidId) nextKidMap[data.kidId] = normalizedName;
+              }
             });
           }
           setKidMap(nextKidMap);
@@ -781,10 +802,19 @@ export default function TeacherPayments(): JSX.Element {
                                         : undefined;
                                       const resolvedKidId =
                                         entry.kidId || enrollmentRef?.kidId || '';
+                                      const sessionName = isReadableDisplayName(entry.studentName)
+                                        ? entry.studentName.trim()
+                                        : '';
+                                      const enrollmentName = isReadableDisplayName(enrollmentRef?.studentName)
+                                        ? String(enrollmentRef?.studentName || '').trim()
+                                        : '';
+                                      const kidName = isReadableDisplayName(kidMap[resolvedKidId])
+                                        ? String(kidMap[resolvedKidId] || '').trim()
+                                        : '';
                                       const studentLabel =
-                                        kidMap[resolvedKidId] ||
-                                        entry.studentName ||
-                                        enrollmentRef?.studentName ||
+                                        sessionName ||
+                                        enrollmentName ||
+                                        kidName ||
                                         resolvedKidId ||
                                         'Unknown';
                                       const resolvedCourseId =

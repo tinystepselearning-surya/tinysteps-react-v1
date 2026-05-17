@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
@@ -32,9 +32,35 @@ interface TeacherEarningLedgerRow {
   kidId: string;
   courseId: string;
   paidAmount: number;
+  perClassRate: number | null;
   monthKey: string;
   earnedAt: Date | null;
+  enrollmentId: string;
+  studentName: string;
+  childName: string;
+  kidName: string;
 }
+
+type EnrollmentRateDoc = {
+  id: string;
+  teacherId: string;
+  courseId: string;
+  kidId: string;
+  studentId: string;
+  childId: string;
+  teacherRate: number | null;
+  studentName: string;
+  childName: string;
+  kidName: string;
+  updatedAtMs: number;
+};
+
+type ResolvedEarningRow = TeacherEarningLedgerRow & {
+  effectiveAmount: number;
+  effectiveRate: number | null;
+  studentDisplayName: string;
+  studentGroupKey: string;
+};
 
 interface MonthOption {
   value: string;
@@ -79,6 +105,75 @@ const normalizeMonthKey = (value: unknown): string => {
 };
 
 const formatCurrency = (value: number): string => `₹${Math.round(value).toLocaleString('en-IN')}`;
+
+const isReadableName = (value: unknown): boolean => {
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  const lower = trimmed.toLowerCase();
+  if (
+    lower === 'unknown' ||
+    lower === 'name not found' ||
+    lower === 'n/a' ||
+    lower === 'na' ||
+    lower === 'null' ||
+    lower === 'undefined'
+  ) {
+    return false;
+  }
+  const hasWhitespace = /\s/.test(trimmed);
+  const looksLikeLongId =
+    !hasWhitespace &&
+    ((/^[a-f0-9]{16,}$/i.test(trimmed)) || (/^[A-Za-z0-9_-]{20,}$/.test(trimmed)));
+  return !looksLikeLongId;
+};
+
+const pickReadableName = (...values: unknown[]): string | null => {
+  for (const value of values) {
+    if (isReadableName(value)) return String(value).trim();
+  }
+  return null;
+};
+
+const pickPerClassRate = (data: Record<string, unknown>): number | null => {
+  const candidates = [
+    data.perSessionRate,
+    data.ratePerClass,
+    data.teacherRate,
+    data.payoutRate,
+    data.rate,
+  ];
+  for (const candidate of candidates) {
+    const value = toNumber(candidate, Number.NaN);
+    if (Number.isFinite(value) && value > 0) return value;
+  }
+  return null;
+};
+
+const pickEnrollmentTeacherRate = (data: Record<string, unknown>): number | null => {
+  const candidates = [
+    data.teacherPayPerSession,
+    data.teacherRatePerSession,
+    data.teacherFee,
+    data.teacherPayoutRate,
+    data.rateTeacher,
+    data.teacherRate,
+    data.teacherPay,
+    data.payoutRate,
+    data.ratePerClass,
+    data.ratePerSession,
+  ];
+  for (const candidate of candidates) {
+    const value = toNumber(candidate, Number.NaN);
+    if (Number.isFinite(value) && value > 0) return value;
+  }
+  return null;
+};
+
+const isPaidLikeStatus = (status: string): boolean => {
+  const normalized = String(status || '').trim().toLowerCase();
+  return normalized === 'paid' || normalized === 'settled' || normalized === 'processed';
+};
 
 const parseMonthKey = (value: string): { year: number; monthIndex: number } | null => {
   const match = /^(\d{4})-(\d{2})$/.exec(value.trim());
@@ -215,18 +310,138 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showSessionDetails, setShowSessionDetails] = useState(false);
   const [showDemoDetails, setShowDemoDetails] = useState(false);
+  const [studentNameLookup, setStudentNameLookup] = useState<Map<string, string>>(new Map());
+  const [enrollmentsById, setEnrollmentsById] = useState<Map<string, EnrollmentRateDoc>>(new Map());
 
-  const studentNameById = useMemo(() => {
+  const baseStudentNameById = useMemo(() => {
     const map = new Map<string, string>();
     students.forEach((student: any) => {
-      const name = student.fullName || student.studentName || student.displayName || student.name || '';
+      const name = pickReadableName(
+        student.fullName,
+        student.studentName,
+        student.displayName,
+        student.name
+      );
       if (!name) return;
-      if (student.uid) map.set(String(student.uid), String(name));
-      if (student.id) map.set(String(student.id), String(name));
-      if (student.userId) map.set(String(student.userId), String(name));
+      if (student.uid) map.set(String(student.uid), name);
+      if (student.id) map.set(String(student.id), name);
+      if (student.userId) map.set(String(student.userId), name);
     });
     return map;
   }, [students]);
+
+  const studentNameById = useMemo(() => {
+    const map = new Map<string, string>(baseStudentNameById);
+    studentNameLookup.forEach((name, id) => {
+      if (!map.has(id)) map.set(id, name);
+    });
+    return map;
+  }, [baseStudentNameById, studentNameLookup]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadTeacherEnrollments = async () => {
+      if (!resolvedTeacherId) {
+        setEnrollmentsById(new Map());
+        return;
+      }
+      try {
+        const enrollmentsQuery = query(
+          collection(db, 'enrollments'),
+          where('teacherId', '==', resolvedTeacherId)
+        );
+        const snap = await getDocs(enrollmentsQuery);
+        if (cancelled) return;
+        const map = new Map<string, EnrollmentRateDoc>();
+        snap.docs.forEach((docSnap) => {
+          const data = docSnap.data() as Record<string, unknown>;
+          map.set(docSnap.id, {
+            id: docSnap.id,
+            teacherId: String(data.teacherId || '').trim(),
+            courseId: String(data.courseId || '').trim(),
+            kidId: String(data.kidId || '').trim(),
+            studentId: String(data.studentId || '').trim(),
+            childId: String(data.childId || '').trim(),
+            teacherRate: pickEnrollmentTeacherRate(data),
+            studentName: String(data.studentName || ''),
+            childName: String(data.childName || ''),
+            kidName: String(data.kidName || ''),
+            updatedAtMs:
+              toDate(data.updatedAt)?.getTime() ||
+              toDate(data.createdAt)?.getTime() ||
+              0,
+          });
+        });
+        setEnrollmentsById(map);
+      } catch (error) {
+        if (!cancelled) setEnrollmentsById(new Map());
+      }
+    };
+
+    void loadTeacherEnrollments();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [resolvedTeacherId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadStudentNamesFromDocs = async () => {
+      const candidateIds = new Set<string>();
+      ledgerRows.forEach((row) => {
+        const kidId = String(row.kidId || '').trim();
+        if (kidId) candidateIds.add(kidId);
+      });
+      enrollmentsById.forEach((enrollment) => {
+        [enrollment.kidId, enrollment.studentId, enrollment.childId]
+          .map((id) => String(id || '').trim())
+          .filter(Boolean)
+          .forEach((id) => candidateIds.add(id));
+      });
+
+      const ids = Array.from(candidateIds);
+      if (ids.length === 0) {
+        setStudentNameLookup(new Map());
+        return;
+      }
+
+      const map = new Map<string, string>();
+      for (const id of ids) {
+        if (baseStudentNameById.has(id)) continue;
+        const collectionsToTry = ['kids', 'students', 'children'];
+        for (const collectionName of collectionsToTry) {
+          const snap = await getDoc(doc(db, collectionName, id));
+          if (!snap.exists()) continue;
+          const data = snap.data() as Record<string, unknown>;
+          const name = pickReadableName(
+            data.studentName,
+            data.childName,
+            data.kidName,
+            data.fullName,
+            data.displayName,
+            data.name
+          );
+          if (name) {
+            map.set(id, name);
+            break;
+          }
+        }
+      }
+
+      if (!cancelled) {
+        setStudentNameLookup(map);
+      }
+    };
+
+    void loadStudentNamesFromDocs();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [baseStudentNameById, enrollmentsById, ledgerRows]);
 
   useEffect(() => {
     let cancelled = false;
@@ -259,11 +474,16 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
             source: String(data.source || '').toLowerCase(),
             demoId: String(data.demoId || ''),
             sessionId: String(data.sessionId || ''),
-            kidId: String(data.kidId || ''),
+            kidId: String(data.kidId || data.studentId || data.childId || ''),
             courseId: String(data.courseId || ''),
             paidAmount: toNumber(data.paidAmount, 0),
+            perClassRate: pickPerClassRate(data),
             monthKey,
             earnedAt,
+            enrollmentId: String(data.enrollmentId || ''),
+            studentName: String(data.studentName || ''),
+            childName: String(data.childName || ''),
+            kidName: String(data.kidName || ''),
           };
         });
 
@@ -337,21 +557,81 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
     [filterPreset, ledgerRows, range.end, range.start, selectedMonth],
   );
 
-  const effectiveRows = useMemo(
-    () => dedupeSessionLedgerRows(filteredRows).filter((row) => row.status !== 'void'),
-    [filteredRows],
-  );
+  const resolveEnrollmentForRow = (row: TeacherEarningLedgerRow): EnrollmentRateDoc | null => {
+    const directEnrollmentId = String(row.enrollmentId || '').trim();
+    if (directEnrollmentId && enrollmentsById.has(directEnrollmentId)) {
+      return enrollmentsById.get(directEnrollmentId) || null;
+    }
+
+    const rowKidId = String(row.kidId || '').trim();
+    const rowCourseId = String(row.courseId || '').trim();
+    let bestMatch: EnrollmentRateDoc | null = null;
+    for (const enrollment of enrollmentsById.values()) {
+      const enrollmentKidIds = [enrollment.kidId, enrollment.studentId, enrollment.childId]
+        .map((value) => String(value || '').trim())
+        .filter(Boolean);
+      const kidMatch = rowKidId ? enrollmentKidIds.includes(rowKidId) : false;
+      const courseMatch = rowCourseId ? String(enrollment.courseId || '').trim() === rowCourseId : true;
+      if (!kidMatch || !courseMatch) continue;
+      if (!bestMatch || enrollment.updatedAtMs > bestMatch.updatedAtMs) {
+        bestMatch = enrollment;
+      }
+    }
+    return bestMatch;
+  };
+
+  const resolvedRows = useMemo<ResolvedEarningRow[]>(() => {
+    return dedupeSessionLedgerRows(filteredRows)
+      .filter((row) => row.status !== 'void')
+      .map((row) => {
+        const enrollment = resolveEnrollmentForRow(row);
+        const kidId = String(row.kidId || '').trim();
+        const enrollmentKidId = String(
+          enrollment?.kidId || enrollment?.studentId || enrollment?.childId || ''
+        ).trim();
+        const canonicalKidId = kidId || enrollmentKidId;
+        const studentDisplayName =
+          pickReadableName(
+            row.studentName,
+            row.childName,
+            row.kidName,
+            enrollment?.studentName,
+            enrollment?.childName,
+            enrollment?.kidName,
+            canonicalKidId ? studentNameById.get(canonicalKidId) : null
+          ) || 'Name not found';
+
+        const enrollmentRate = enrollment?.teacherRate ?? null;
+        const useEnrollmentRate =
+          isSessionLinkedRow(row) && !isPaidLikeStatus(row.status) && Number.isFinite(enrollmentRate) && (enrollmentRate || 0) > 0;
+        const effectiveRate = useEnrollmentRate ? (enrollmentRate as number) : row.perClassRate;
+        const effectiveAmount = useEnrollmentRate ? (enrollmentRate as number) : toNumber(row.amount, 0);
+        const studentGroupKey =
+          canonicalKidId ||
+          String(row.enrollmentId || '').trim() ||
+          String(row.sessionId || '').trim() ||
+          row.id;
+
+        return {
+          ...row,
+          effectiveAmount,
+          effectiveRate: Number.isFinite(effectiveRate) && (effectiveRate || 0) > 0 ? (effectiveRate as number) : null,
+          studentDisplayName,
+          studentGroupKey,
+        };
+      });
+  }, [enrollmentsById, filteredRows, studentNameById]);
 
   const categorizedRows = useMemo(() => {
-    const demoCompletedRows = effectiveRows.filter((row) => row.source === 'demo_completed');
-    const demoConvertedRows = effectiveRows.filter((row) => row.source === 'demo_enrolled_bonus');
-    const sessionRows = effectiveRows.filter((row) => {
+    const demoCompletedRows = resolvedRows.filter((row) => row.source === 'demo_completed');
+    const demoConvertedRows = resolvedRows.filter((row) => row.source === 'demo_enrolled_bonus');
+    const sessionRows = resolvedRows.filter((row) => {
       const hasDemoMarker = row.demoId.length > 0;
       const isDemoSource = row.source === 'demo_completed' || row.source === 'demo_enrolled_bonus';
       return !hasDemoMarker && !isDemoSource;
     });
     return { demoCompletedRows, demoConvertedRows, sessionRows };
-  }, [effectiveRows]);
+  }, [resolvedRows]);
 
   const metrics = useMemo(() => {
     const { demoCompletedRows, demoConvertedRows, sessionRows } = categorizedRows;
@@ -363,18 +643,18 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
       demoConvertedRows.map((row) => row.demoId).filter((value) => value.length > 0),
     );
 
-    const sumAmount = (rows: TeacherEarningLedgerRow[]) =>
-      rows.reduce((acc, row) => acc + toNumber(row.amount, 0), 0);
+    const sumAmount = (rows: ResolvedEarningRow[]) =>
+      rows.reduce((acc, row) => acc + toNumber(row.effectiveAmount, 0), 0);
 
-    const totalEarnings = sumAmount(effectiveRows);
+    const totalEarnings = sumAmount(resolvedRows);
     const sessionEarnings = sumAmount(sessionRows);
     const demoCompletedEarnings = sumAmount(demoCompletedRows);
     const demoConvertedEarnings = sumAmount(demoConvertedRows);
 
-    const paymentsReceived = effectiveRows.reduce((acc, row) => {
+    const paymentsReceived = resolvedRows.reduce((acc, row) => {
       const paidAmount = toNumber(row.paidAmount, 0);
       if (paidAmount > 0) return acc + paidAmount;
-      if (row.status === 'paid') return acc + toNumber(row.amount, 0);
+      if (row.status === 'paid') return acc + toNumber(row.effectiveAmount, 0);
       return acc;
     }, 0);
 
@@ -391,37 +671,62 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
       paymentsReceived,
       pendingEarnings,
     };
-  }, [categorizedRows, effectiveRows]);
+  }, [categorizedRows, resolvedRows]);
 
   const sessionDetails = useMemo(() => {
-    const bucket = new Map<string, { name: string; count: number; amount: number }>();
+    const bucket = new Map<
+      string,
+      {
+        name: string;
+        count: number;
+        amount: number;
+        minExplicitRate: number | null;
+        maxExplicitRate: number | null;
+        explicitRateCount: number;
+      }
+    >();
     categorizedRows.sessionRows.forEach((row) => {
-      const kidId = String(row.kidId || '').trim();
-      const fallbackName = kidId ? `Student (${kidId.slice(0, 6)})` : 'Unknown student';
-      const studentName = kidId ? studentNameById.get(kidId) || fallbackName : fallbackName;
-      const key = kidId || fallbackName;
-      const existing = bucket.get(key) || { name: studentName, count: 0, amount: 0 };
+      const studentName = row.studentDisplayName || 'Name not found';
+      const key = row.studentGroupKey;
+      const existing =
+        bucket.get(key) || {
+          name: studentName,
+          count: 0,
+          amount: 0,
+          minExplicitRate: null,
+          maxExplicitRate: null,
+          explicitRateCount: 0,
+        };
       existing.count += 1;
-      existing.amount += toNumber(row.amount, 0);
+      existing.amount += toNumber(row.effectiveAmount, 0);
+      if (Number.isFinite(row.effectiveRate) && row.effectiveRate && row.effectiveRate > 0) {
+        existing.explicitRateCount += 1;
+        existing.minExplicitRate =
+          existing.minExplicitRate === null
+            ? row.effectiveRate
+            : Math.min(existing.minExplicitRate, row.effectiveRate);
+        existing.maxExplicitRate =
+          existing.maxExplicitRate === null
+            ? row.effectiveRate
+            : Math.max(existing.maxExplicitRate, row.effectiveRate);
+      }
       bucket.set(key, existing);
     });
     return Array.from(bucket.values()).sort((a, b) => b.count - a.count || b.amount - a.amount);
-  }, [categorizedRows.sessionRows, studentNameById]);
+  }, [categorizedRows.sessionRows]);
 
   const demoDetails = useMemo(() => {
     const bucket = new Map<string, { name: string; count: number; amount: number }>();
     categorizedRows.demoCompletedRows.forEach((row) => {
-      const kidId = String(row.kidId || '').trim();
-      const fallbackName = kidId ? `Student (${kidId.slice(0, 6)})` : 'Unknown demo student';
-      const studentName = kidId ? studentNameById.get(kidId) || fallbackName : fallbackName;
-      const key = kidId || `${row.demoId || 'demo'}_${studentName}`;
+      const studentName = row.studentDisplayName || 'Name not found';
+      const key = row.studentGroupKey || `${row.demoId || 'demo'}_${row.id}`;
       const existing = bucket.get(key) || { name: studentName, count: 0, amount: 0 };
       existing.count += 1;
-      existing.amount += toNumber(row.amount, 0);
+      existing.amount += toNumber(row.effectiveAmount, 0);
       bucket.set(key, existing);
     });
     return Array.from(bucket.values()).sort((a, b) => b.count - a.count || b.amount - a.amount);
-  }, [categorizedRows.demoCompletedRows, studentNameById]);
+  }, [categorizedRows.demoCompletedRows]);
 
   if (!resolvedTeacherId) {
     return (
@@ -609,7 +914,25 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
                   <div key={`session-detail-${row.name}-${index}`} className="flex items-center justify-between text-sm">
                     <span>{row.name}</span>
                     <span className="text-muted-foreground">
-                      {row.count} classes · {formatCurrency(row.amount)}
+                      {row.count} {row.count === 1 ? 'class' : 'classes'}
+                      {row.count > 0
+                        ? (() => {
+                            if (row.explicitRateCount === 0 && row.amount <= 0) {
+                              return ' · Rate missing';
+                            }
+                            const fallbackRate = row.amount / row.count;
+                            const hasExplicitRate = row.explicitRateCount > 0;
+                            const hasMixedExplicitRate =
+                              hasExplicitRate &&
+                              row.minExplicitRate !== null &&
+                              row.maxExplicitRate !== null &&
+                              Math.abs(row.maxExplicitRate - row.minExplicitRate) > 0.01;
+                            const rateLabel = hasMixedExplicitRate ? 'Avg ' : '';
+                            return ` · ${rateLabel}${formatCurrency(fallbackRate)}/class`;
+                          })()
+                        : ''}
+                      {' · '}
+                      {formatCurrency(row.amount)}
                     </span>
                   </div>
                 ))}

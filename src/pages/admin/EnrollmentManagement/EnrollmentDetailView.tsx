@@ -1,13 +1,9 @@
 // src/pages/admin/EnrollmentManagement/EnrollmentDetailView.tsx
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  collection,
   doc,
   getDoc,
-  getDocs,
-  query,
   updateDoc,
-  where,
   serverTimestamp,
 } from 'firebase/firestore';
 import { db, functions } from '../../../lib/firebaseConfig';
@@ -20,13 +16,6 @@ import {
 import { Button } from '@components/ui/button';
 import { Badge } from '@components/ui/badge';
 import { Input } from '@components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@components/ui/select';
 import { Textarea } from '@components/ui/textarea';
 import { useToast } from '@components/hooks/use-toast';
 import { httpsCallable } from 'firebase/functions';
@@ -37,35 +26,33 @@ interface EnrollmentDetailViewProps {
   onClose: () => void;
 }
 
-type Charge = {
-  id: string;
-  archived?: boolean;
-  createdAt?: any;
-  updatedAt?: any;
-  paidAt?: any;
-  amount?: number;
-  paidAmount?: number;
-  status?: string;
-  sessionId?: string;
-};
-
-type Payment = {
-  id: string;
-  archived?: boolean;
-  createdAt?: any;
-  paidAt?: any;
-  amount?: number;
-  appliedAmount?: number;
-  unappliedAmount?: number;
-  method?: string;
-};
-
-const createPaymentRequestKey = () => {
-  const cryptoApi = globalThis.crypto;
-  if (cryptoApi && typeof cryptoApi.randomUUID === 'function') {
-    return cryptoApi.randomUUID();
+const isReadableName = (value: unknown): boolean => {
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  const lower = trimmed.toLowerCase();
+  if (
+    lower === 'unknown' ||
+    lower === 'name not found' ||
+    lower === 'n/a' ||
+    lower === 'na' ||
+    lower === 'null' ||
+    lower === 'undefined'
+  ) {
+    return false;
   }
-  return `payment_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  const hasWhitespace = /\s/.test(trimmed);
+  const looksLikeLongId =
+    !hasWhitespace &&
+    ((/^[a-f0-9]{16,}$/i.test(trimmed)) || (/^[A-Za-z0-9_-]{20,}$/.test(trimmed)));
+  return !looksLikeLongId;
+};
+
+const pickFirstReadableName = (...values: unknown[]): string | null => {
+  for (const value of values) {
+    if (isReadableName(value)) return String(value).trim();
+  }
+  return null;
 };
 
 export default function EnrollmentDetailView({
@@ -81,22 +68,6 @@ export default function EnrollmentDetailView({
   const [note, setNote] = useState('');
   const [showAssignTeacher, setShowAssignTeacher] = useState(false);
   const [actionBusy, setActionBusy] = useState<string | null>(null);
-  const [paymentAmount, setPaymentAmount] = useState('');
-  const [paymentPaidAt, setPaymentPaidAt] = useState(() => {
-    const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  });
-  const [paymentMethod, setPaymentMethod] = useState<'UPI' | 'bank_transfer' | 'online'>('UPI');
-  const [paymentNote, setPaymentNote] = useState('');
-  const [paymentRequestKey, setPaymentRequestKey] = useState<string>(() => createPaymentRequestKey());
-  const [paymentSaving, setPaymentSaving] = useState(false);
-  const [charges, setCharges] = useState<Charge[]>([]);
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [financialsLoading, setFinancialsLoading] = useState(false);
-  const [voidingChargeId, setVoidingChargeId] = useState<string | null>(null);
   const [rateEditOpen, setRateEditOpen] = useState(false);
   const [parentRateInput, setParentRateInput] = useState('');
   const [teacherRateInput, setTeacherRateInput] = useState('');
@@ -106,46 +77,10 @@ export default function EnrollmentDetailView({
 
   /* ---------------- helpers ---------------- */
 
-  const toDateOrNull = (value: any): Date | null => {
-    if (!value) return null;
-    if (value instanceof Date && !isNaN(value.getTime())) return value;
-    if (typeof value?.toDate === 'function') {
-      const d = value.toDate();
-      return d instanceof Date && !isNaN(d.getTime()) ? d : null;
-    }
-    const d = new Date(value);
-    return isNaN(d.getTime()) ? null : d;
-  };
-
-  const formatDate = (value: any, fallback = '—') => {
-    const d = toDateOrNull(value);
-    return d ? d.toLocaleDateString() : fallback;
-  };
-
   const formatMoney = (value: any) => {
     const num = Number(value);
     if (!Number.isFinite(num)) return '₹0';
     return `₹${Math.round(num).toLocaleString('en-IN')}`;
-  };
-
-  const chargePaidAmount = (charge: any) => {
-    const amount = Number(charge?.amount ?? 0);
-    const paid = Number(charge?.paidAmount ?? 0);
-    const status = String(charge?.status ?? '').toLowerCase().trim();
-    const safeAmount = Number.isFinite(amount) ? amount : 0;
-    const safePaid = Number.isFinite(paid) ? paid : 0;
-    if (safePaid > 0) return Math.min(safePaid, safeAmount);
-    if (status === 'paid' || status === 'settled') return safeAmount;
-    return 0;
-  };
-
-  const normalizeChargeEntryStatus = (value?: string) =>
-    String(value || '').trim().toLowerCase();
-
-  const isChargeVoidable = (charge: Charge) => {
-    const status = normalizeChargeEntryStatus(charge.status);
-    if (status === 'void' || status === 'paid' || status === 'settled') return false;
-    return chargePaidAmount(charge) <= 0;
   };
 
   const normalizeStatus = (value?: string) => {
@@ -162,7 +97,7 @@ export default function EnrollmentDetailView({
     const normalized = normalizeStatus(status);
     switch (normalized) {
       case 'trial':
-        return <Badge variant="secondary">🟡 Trial</Badge>;
+        return <Badge variant="secondary">🟡 Legacy Trial</Badge>;
       case 'active':
         return <Badge variant="default">🟢 Active</Badge>;
       case 'paused':
@@ -173,6 +108,8 @@ export default function EnrollmentDetailView({
         return <Badge variant="outline">⚪ Discontinued</Badge>;
       case 'expired':
         return <Badge variant="outline">⚪ Expired</Badge>;
+      case 'archived':
+        return <Badge variant="outline">📦 Archived</Badge>;
       case 'cancelled':
         return <Badge variant="destructive">🔴 Cancelled</Badge>;
       default:
@@ -186,11 +123,12 @@ export default function EnrollmentDetailView({
       normalized === 'completed' ||
       normalized === 'discontinued' ||
       normalized === 'expired' ||
-      normalized === 'cancelled'
+      normalized === 'cancelled' ||
+      normalized === 'archived'
     ) {
       return 'Past';
     }
-    if (normalized === 'trial') return 'Trial';
+    if (normalized === 'trial') return 'Legacy Trial';
     if (normalized === 'paused') return 'Paused';
     return 'Active';
   };
@@ -218,18 +156,39 @@ export default function EnrollmentDetailView({
       setEnrollment(data);
 
       const studentId =
-        data.studentId ||
         data.kidId ||
+        data.studentId ||
         data.childId ||
         (Array.isArray(data.kidIds) ? data.kidIds[0] : null);
 
       const courseId =
         data.courseId || data.course_id || data.course;
 
+      const loadStudentProfile = async (id: string) => {
+        const collectionsToTry = ['kids'];
+        for (const collectionName of collectionsToTry) {
+          try {
+            const snap = await getDoc(doc(db, collectionName, id));
+            if (snap.exists()) {
+              return { id: snap.id, ...snap.data() } as Record<string, unknown>;
+            }
+          } catch (error) {
+            if (import.meta.env.DEV) {
+              console.debug('[EnrollmentDetail student profile read failed]', {
+                collectionName,
+                docId: id,
+                enrollmentId,
+                errorCode: (error as any)?.code || '',
+                errorMessage: (error as any)?.message || '',
+              });
+            }
+          }
+        }
+        return null;
+      };
+
       const fetches = [
-        studentId
-          ? getDoc(doc(db, 'kids', studentId))
-          : null,
+        studentId ? loadStudentProfile(String(studentId)) : null,
         courseId
           ? getDoc(doc(db, 'courses', courseId))
           : null,
@@ -252,7 +211,23 @@ export default function EnrollmentDetailView({
         pSnap,
       ] = await Promise.all(fetches);
 
-      setStudent(sSnap?.exists() ? { id: sSnap.id, ...sSnap.data() } : null);
+      const enrollmentLevelStudentName = pickFirstReadableName(
+        data.studentName,
+        data.childName,
+        data.kidName,
+        data.kid?.name,
+        data.student?.name
+      );
+      setStudent(
+        sSnap
+          ? {
+              ...sSnap,
+              resolvedEnrollmentName: enrollmentLevelStudentName,
+            }
+          : enrollmentLevelStudentName
+            ? { resolvedEnrollmentName: enrollmentLevelStudentName }
+            : null
+      );
       setCourse(cSnap?.exists() ? { id: cSnap.id, ...cSnap.data() } : null);
       setTeacher(tSnap?.exists() ? { id: tSnap.id, ...tSnap.data() } : null);
       setLp(lSnap?.exists() ? { id: lSnap.id, ...lSnap.data() } : null);
@@ -271,73 +246,6 @@ export default function EnrollmentDetailView({
   useEffect(() => {
     void loadEnrollment();
   }, [loadEnrollment]);
-
-  const loadFinancials = useCallback(async () => {
-    try {
-      setFinancialsLoading(true);
-      const chargesQuery = query(
-        collection(db, 'billingCharges'),
-        where('enrollmentId', '==', enrollmentId)
-      );
-      const paymentsQuery = query(
-        collection(db, 'payments'),
-        where('enrollmentId', '==', enrollmentId)
-      );
-
-      const [chargesSnap, paymentsSnap] = await Promise.all([
-        getDocs(chargesQuery),
-        getDocs(paymentsQuery),
-      ]);
-
-      const nextCharges: Charge[] = chargesSnap.docs.map(
-        (docSnap) =>
-          ({
-            id: docSnap.id,
-            ...docSnap.data(),
-          }) as Charge
-      ).filter((charge) => charge.archived !== true);
-      const nextPayments: Payment[] = paymentsSnap.docs.map(
-        (docSnap) =>
-          ({
-            id: docSnap.id,
-            ...docSnap.data(),
-          }) as Payment
-      ).filter((payment) => payment.archived !== true);
-
-      const toSortKey = (value: any) => {
-        const d = toDateOrNull(value);
-        return d ? d.getTime() : 0;
-      };
-
-      nextCharges.sort((a, b) => {
-        const aKey = toSortKey(a.createdAt || a.updatedAt || a.paidAt);
-        const bKey = toSortKey(b.createdAt || b.updatedAt || b.paidAt);
-        return bKey - aKey;
-      });
-
-      nextPayments.sort((a, b) => {
-        const aKey = toSortKey(a.paidAt || a.createdAt);
-        const bKey = toSortKey(b.paidAt || b.createdAt);
-        return bKey - aKey;
-      });
-
-      setCharges(nextCharges);
-      setPayments(nextPayments);
-    } catch (err: any) {
-      console.error(err);
-      toast({
-        title: 'Error',
-        description: err?.message || 'Failed to load payment allocations',
-        variant: 'destructive',
-      });
-    } finally {
-      setFinancialsLoading(false);
-    }
-  }, [enrollmentId, toast]);
-
-  useEffect(() => {
-    void loadFinancials();
-  }, [loadFinancials]);
 
   /* ---------------- notes ---------------- */
 
@@ -374,45 +282,6 @@ export default function EnrollmentDetailView({
     return <div className="p-4 text-sm">Loading enrollment…</div>;
   }
 
-  const activeCharges = charges.filter(
-    (charge) => normalizeChargeEntryStatus(charge.status) !== 'void'
-  );
-
-  const totalCharges = activeCharges.reduce((sum, charge) => {
-    const raw = Number(charge?.amount ?? 0);
-    const amount = Number.isFinite(raw) ? raw : 0;
-    return sum + amount;
-  }, 0);
-  const totalPaid = activeCharges.reduce((sum, charge) => sum + chargePaidAmount(charge), 0);
-  const outstanding = Math.max(totalCharges - totalPaid, 0);
-  const totalPayments = payments.reduce((sum, payment) => {
-    const raw = Number(payment?.amount ?? 0);
-    const amount = Number.isFinite(raw) ? raw : 0;
-    return sum + amount;
-  }, 0);
-  const totalApplied = payments.reduce((sum, payment) => {
-    const rawApplied = Number(payment?.appliedAmount ?? NaN);
-    const applied = Number.isFinite(rawApplied)
-      ? rawApplied
-      : (() => {
-        const rawAmount = Number(payment?.amount ?? 0);
-        const amount = Number.isFinite(rawAmount) ? rawAmount : 0;
-        const rawUnapplied = Number(payment?.unappliedAmount ?? 0);
-        const unapplied = Number.isFinite(rawUnapplied) ? rawUnapplied : 0;
-        return amount - unapplied;
-      })();
-    return sum + applied;
-  }, 0);
-  const totalUnapplied = payments.reduce((sum, payment) => {
-    const raw = Number(payment?.unappliedAmount ?? NaN);
-    if (Number.isFinite(raw)) return sum + raw;
-    const rawAmount = Number(payment?.amount ?? 0);
-    const amount = Number.isFinite(rawAmount) ? rawAmount : 0;
-    const rawApplied = Number(payment?.appliedAmount ?? 0);
-    const applied = Number.isFinite(rawApplied) ? rawApplied : 0;
-    return sum + (amount - applied);
-  }, 0);
-
   const parentRateRaw =
     enrollment.ratePerSession ??
     enrollment.feePerClass ??
@@ -425,11 +294,33 @@ export default function EnrollmentDetailView({
     0;
   const parentRate = Number.isFinite(Number(parentRateRaw)) ? Number(parentRateRaw) : 0;
   const teacherRate = Number.isFinite(Number(teacherRateRaw)) ? Number(teacherRateRaw) : 0;
-
-  const topicProgress =
-    typeof enrollment.topicProgress === 'object'
-      ? enrollment.topicProgress
-      : {};
+  const resolvedStudentName =
+    pickFirstReadableName(
+      student?.name,
+      student?.fullName,
+      student?.studentName,
+      student?.displayName,
+      student?.childName,
+      student?.kidName,
+      student?.resolvedEnrollmentName,
+      enrollment.studentName,
+      enrollment.childName,
+      enrollment.kidName,
+      enrollment.kid?.name,
+      enrollment.student?.name
+    ) || 'Name not found';
+  const resolvedStudentId =
+    String(
+      student?.id ||
+        enrollment.studentId ||
+        enrollment.kidId ||
+        enrollment.childId ||
+        (Array.isArray(enrollment.kidIds) ? enrollment.kidIds[0] : '') ||
+        ''
+    ).trim();
+  const showStudentIdHint = resolvedStudentName === 'Name not found' && resolvedStudentId.length > 0;
+  const enrollmentStatusForDisplay =
+    enrollment.archived === true || enrollment.archivedAt ? 'archived' : enrollment.status;
 
   /* ---------------- UI ---------------- */
 
@@ -476,118 +367,6 @@ export default function EnrollmentDetailView({
       });
     } finally {
       setActionBusy(null);
-    }
-  };
-
-  const handleRecordPayment = async () => {
-    if (!enrollment) return;
-    const amount = Number(paymentAmount);
-    if (!Number.isFinite(amount) || amount === 0) {
-      toast({
-        title: 'Invalid amount',
-        description: 'Enter a non-zero payment amount.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    if (!paymentPaidAt) {
-      toast({
-        title: 'Missing date',
-        description: 'Select the payment date.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      setPaymentSaving(true);
-      const requestKey = paymentRequestKey || createPaymentRequestKey();
-      if (!paymentRequestKey) setPaymentRequestKey(requestKey);
-      const fn = httpsCallable(functions, 'recordPayment');
-      await fn({
-        enrollmentId: enrollment.id,
-        amount,
-        paidAt: paymentPaidAt,
-        method: paymentMethod,
-        note: paymentNote || undefined,
-        idempotencyKey: requestKey,
-      });
-      toast({ title: 'Payment recorded' });
-      setPaymentAmount('');
-      setPaymentNote('');
-      setPaymentRequestKey(createPaymentRequestKey());
-      await loadFinancials();
-    } catch (err: any) {
-      toast({
-        title: 'Error',
-        description: err?.message || 'Failed to record payment',
-        variant: 'destructive',
-      });
-    } finally {
-      setPaymentSaving(false);
-    }
-  };
-
-  const handleVoidSessionCharge = async (charge: Charge) => {
-    const sessionId = String(charge.sessionId || '').trim();
-    if (!sessionId) {
-      toast({
-        title: 'Session mapping missing',
-        description: 'This charge is not linked to a session, so it cannot be voided here.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!isChargeVoidable(charge)) {
-      toast({
-        title: 'Charge cannot be voided',
-        description: 'Paid/settled charges must be adjusted via payment reversal first.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const confirmation = window.prompt(
-      `Type VOID to reverse session financials for ${sessionId}.`
-    );
-    if (confirmation !== 'VOID') return;
-
-    const reasonRaw = window.prompt(
-      'Optional reason for audit log (leave blank for default):'
-    );
-    const reason = typeof reasonRaw === 'string' ? reasonRaw.trim() : '';
-
-    try {
-      setVoidingChargeId(charge.id);
-      const fn = httpsCallable(functions, 'adminVoidSessionCharge');
-      const response: any = await fn({
-        sessionId,
-        reason: reason || undefined,
-      });
-      const data = response?.data || {};
-      const changedParts = [
-        data?.chargeVoided ? 'parent charge' : null,
-        data?.earningVoided ? 'teacher earning' : null,
-        data?.revenueRollupReversed ? 'revenue rollup' : null,
-      ].filter(Boolean);
-
-      toast({
-        title: changedParts.length > 0 ? 'Session charge reversed' : 'No changes needed',
-        description:
-          changedParts.length > 0
-            ? `${sessionId}: reversed ${changedParts.join(', ')}.`
-            : `${sessionId}: entries were already void or unavailable.`,
-      });
-      await Promise.all([loadFinancials(), loadEnrollment()]);
-    } catch (err: any) {
-      toast({
-        title: 'Void failed',
-        description: err?.message || 'Failed to void this session charge',
-        variant: 'destructive',
-      });
-    } finally {
-      setVoidingChargeId(null);
     }
   };
 
@@ -659,8 +438,8 @@ export default function EnrollmentDetailView({
           Enrollment Details
         </h3>
         <div className="flex items-center gap-3">
-          {getStatusBadge(enrollment.status)}
-          <Badge variant="outline">Canonical: {getCanonicalBucket(enrollment.status)}</Badge>
+          {getStatusBadge(enrollmentStatusForDisplay)}
+          <Badge variant="outline">Canonical: {getCanonicalBucket(enrollmentStatusForDisplay)}</Badge>
           <Button
             size="sm"
             variant="outline"
@@ -680,7 +459,8 @@ export default function EnrollmentDetailView({
           <CardTitle>Student & Course</CardTitle>
         </CardHeader>
         <CardContent className="text-sm space-y-1">
-          <div><strong>Student:</strong> {student?.name || student?.fullName || 'Unknown'}</div>
+          <div><strong>Student:</strong> {resolvedStudentName}</div>
+          {showStudentIdHint && <div><strong>Student ID:</strong> {resolvedStudentId}</div>}
           <div><strong>Course:</strong> {course?.name || course?.title || 'Unknown'}</div>
           <div><strong>Teacher:</strong> {teacher?.name || 'Unassigned'}</div>
           <div><strong>Learning Partner:</strong> {lp?.name || 'Unassigned'}</div>
@@ -757,36 +537,6 @@ export default function EnrollmentDetailView({
         </CardContent>
       </Card>
 
-      {/* Progress */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Topic Progress</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {Object.keys(topicProgress).length === 0 ? (
-            <div className="text-sm text-gray-500">
-              No progress recorded yet.
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {Object.entries(topicProgress).map(
-                ([topicId, t]: any) => (
-                  <div
-                    key={topicId}
-                    className="border rounded p-2 text-sm"
-                  >
-                    <div><strong>{t?.name || topicId}</strong></div>
-                    <div>Status: {t?.status || 'unknown'}</div>
-                    <div>Mastery: {t?.mastery ?? 0}%</div>
-                    <div>Updated: {formatDate(t?.lastUpdated)}</div>
-                  </div>
-                ),
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Notes */}
       <Card>
         <CardHeader>
@@ -804,216 +554,6 @@ export default function EnrollmentDetailView({
           <Button className="mt-2" onClick={saveNote}>
             Save Note
           </Button>
-        </CardContent>
-      </Card>
-
-      {/* Payment allocation */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Payment Allocation</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
-            <div className="rounded border p-3">
-              <div className="text-xs text-muted-foreground">Total charges</div>
-              <div className="text-lg font-semibold">{formatMoney(totalCharges)}</div>
-            </div>
-            <div className="rounded border p-3">
-              <div className="text-xs text-muted-foreground">Paid / applied</div>
-              <div className="text-lg font-semibold">{formatMoney(totalPaid)}</div>
-            </div>
-            <div className="rounded border p-3">
-              <div className="text-xs text-muted-foreground">Outstanding</div>
-              <div className="text-lg font-semibold">{formatMoney(outstanding)}</div>
-            </div>
-            <div className="rounded border p-3">
-              <div className="text-xs text-muted-foreground">Unapplied payments</div>
-              <div className="text-lg font-semibold">{formatMoney(totalUnapplied)}</div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold">Charges</div>
-                <div className="text-xs text-muted-foreground">
-                  {financialsLoading ? 'Loading…' : `${charges.length} items`}
-                </div>
-              </div>
-              <div className="border rounded">
-                <div className="grid grid-cols-6 gap-2 px-3 py-2 text-xs uppercase text-muted-foreground border-b">
-                  <div>Date</div>
-                  <div>Amount</div>
-                  <div>Paid</div>
-                  <div>Status</div>
-                  <div>Session</div>
-                  <div>Action</div>
-                </div>
-                {charges.length === 0 ? (
-                  <div className="px-3 py-3 text-sm text-muted-foreground">No charges yet.</div>
-                ) : (
-                  charges.map((charge) => {
-                    const status = normalizeChargeEntryStatus(charge.status) || 'open';
-                    const sessionId = String(charge.sessionId || '').trim();
-                    const hasSession = Boolean(sessionId);
-                    const canVoid = isChargeVoidable(charge) && hasSession;
-                    const isVoiding = voidingChargeId === charge.id;
-                    return (
-                      <div
-                        key={charge.id}
-                        className="grid grid-cols-6 gap-2 px-3 py-2 text-sm border-b last:border-b-0"
-                      >
-                        <div>{formatDate(charge.createdAt || charge.updatedAt || charge.paidAt)}</div>
-                        <div>{formatMoney(charge.amount)}</div>
-                        <div>{formatMoney(chargePaidAmount(charge))}</div>
-                        <div className="capitalize">{status}</div>
-                        <div className="truncate" title={String(charge.sessionId || charge.id)}>
-                          {String(charge.sessionId || charge.id)}
-                        </div>
-                        <div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleVoidSessionCharge(charge)}
-                            disabled={!canVoid || isVoiding}
-                          >
-                            {isVoiding
-                              ? 'Voiding…'
-                              : status === 'void'
-                                ? 'Voided'
-                                : !hasSession
-                                  ? 'No session'
-                                  : canVoid
-                                    ? 'Void'
-                                    : 'Settled'}
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-semibold">Payments</div>
-                <div className="text-xs text-muted-foreground">
-                  {financialsLoading ? 'Loading…' : `${payments.length} items`}
-                </div>
-              </div>
-              <div className="border rounded">
-                <div className="grid grid-cols-5 gap-2 px-3 py-2 text-xs uppercase text-muted-foreground border-b">
-                  <div>Date</div>
-                  <div>Amount</div>
-                  <div>Applied</div>
-                  <div>Unapplied</div>
-                  <div>Method</div>
-                </div>
-                {payments.length === 0 ? (
-                  <div className="px-3 py-3 text-sm text-muted-foreground">No payments yet.</div>
-                ) : (
-                  payments.map((payment) => {
-                    const rawApplied = Number(payment?.appliedAmount ?? NaN);
-                    const applied = Number.isFinite(rawApplied)
-                      ? rawApplied
-                      : (() => {
-                        const rawAmount = Number(payment?.amount ?? 0);
-                        const amount = Number.isFinite(rawAmount) ? rawAmount : 0;
-                        const rawUnapplied = Number(payment?.unappliedAmount ?? 0);
-                        const unapplied = Number.isFinite(rawUnapplied) ? rawUnapplied : 0;
-                        return amount - unapplied;
-                      })();
-                    const rawUnapplied = Number(payment?.unappliedAmount ?? NaN);
-                    const unapplied = Number.isFinite(rawUnapplied)
-                      ? rawUnapplied
-                      : (() => {
-                        const rawAmount = Number(payment?.amount ?? 0);
-                        const amount = Number.isFinite(rawAmount) ? rawAmount : 0;
-                        return amount - applied;
-                      })();
-                    return (
-                      <div
-                        key={payment.id}
-                        className="grid grid-cols-5 gap-2 px-3 py-2 text-sm border-b last:border-b-0"
-                      >
-                        <div>{formatDate(payment.paidAt || payment.createdAt)}</div>
-                        <div>{formatMoney(payment.amount)}</div>
-                        <div>{formatMoney(applied)}</div>
-                        <div>{formatMoney(unapplied)}</div>
-                        <div className="capitalize">{String(payment.method || '—')}</div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                Total payments: {formatMoney(totalPayments)} · Applied: {formatMoney(totalApplied)}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Record payment */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Record Payment</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Amount (₹)</label>
-              <Input
-                type="number"
-                min={1}
-                step={1}
-                placeholder="e.g., 1000"
-                value={paymentAmount}
-                onChange={(e) => setPaymentAmount(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Paid at</label>
-              <Input
-                type="date"
-                value={paymentPaidAt}
-                onChange={(e) => setPaymentPaidAt(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Method</label>
-              <Select
-                value={paymentMethod}
-                onValueChange={(value) => setPaymentMethod(value as 'UPI' | 'bank_transfer' | 'online')}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select method" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="UPI">UPI</SelectItem>
-                  <SelectItem value="bank_transfer">Bank transfer</SelectItem>
-                  <SelectItem value="online">Online</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Note (optional)</label>
-            <Textarea
-              value={paymentNote}
-              onChange={(e) => setPaymentNote(e.target.value)}
-              placeholder="e.g., adjustment or reference"
-            />
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button onClick={handleRecordPayment} disabled={paymentSaving}>
-              {paymentSaving ? 'Saving…' : 'Save Payment'}
-            </Button>
-            <span className="text-xs text-muted-foreground">
-              Edits/deletes are not supported. Use a negative payment for adjustments.
-            </span>
-          </div>
         </CardContent>
       </Card>
 
