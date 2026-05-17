@@ -9,6 +9,13 @@ export const SITE_ORIGIN = 'https://tinystepslearning.com';
 export const PUBLIC_FACTS = {
   brandName: 'Tiny Steps Learning',
   shortBrandName: 'Tiny Steps',
+  founder: {
+    displayName: 'Priya',
+    fullName: 'Vannala Ravali Priya',
+    givenName: 'Ravali Priya',
+    familyName: 'Vannala',
+    alternateNames: ['Priya', 'Ravali Priya', 'Vannala Ravali Priya', 'Vannal Ravali Priya'] as const,
+  },
   positioning: 'premium online English learning school for children aged 3–12',
   corePrograms: ['Phonics', 'Grammar', 'Public Speaking'] as const,
   sessionDuration: '35–40 minutes per session',
@@ -47,9 +54,9 @@ export const OFFSITE_CORROBORATION_PACK = {
 
   founderBio: {
     short:
-      `Priya is the Founder of ${PUBLIC_FACTS.brandName}, where she leads the academic direction for premium live-online English learning in ${CORE_PROGRAMS_TEXT}.`,
+      `${PUBLIC_FACTS.founder.fullName}, known as ${PUBLIC_FACTS.founder.displayName}, is the Founder of ${PUBLIC_FACTS.brandName}, where she leads the academic direction for premium live-online English learning in ${CORE_PROGRAMS_TEXT}.`,
     medium:
-      `Priya is the Founder of ${PUBLIC_FACTS.brandName}. She leads curriculum direction and classroom quality across the platform's live online programs in ${CORE_PROGRAMS_TEXT}. Her focus is to keep learning structured, child-friendly, and practical for families who want clear English progression with confidence, communication, and reading growth.`,
+      `${PUBLIC_FACTS.founder.fullName}, known as ${PUBLIC_FACTS.founder.displayName}, is the Founder of ${PUBLIC_FACTS.brandName}. She leads curriculum direction and classroom quality across the platform's live online programs in ${CORE_PROGRAMS_TEXT}. Her focus is to keep learning structured, child-friendly, and practical for families who want clear English progression with confidence, communication, and reading growth.`,
   },
 
   coreCategories: [
@@ -90,6 +97,7 @@ export const OFFSITE_CORROBORATION_PACK = {
 
 export const ORGANIZATION_ID = `${SITE_ORIGIN}/#organization`;
 export const WEBSITE_ID = `${SITE_ORIGIN}/#website`;
+export const FOUNDER_ID = `${SITE_ORIGIN}/#founder`;
 
 export const organizationSchema = {
   '@context': 'https://schema.org',
@@ -104,9 +112,15 @@ export const organizationSchema = {
   },
   founder: {
     '@type': 'Person',
-    '@id': `${SITE_ORIGIN}/#priya-founder`,
-    name: 'Priya',
-    jobTitle: 'Founder'
+    '@id': FOUNDER_ID,
+    name: PUBLIC_FACTS.founder.fullName,
+    givenName: PUBLIC_FACTS.founder.givenName,
+    familyName: PUBLIC_FACTS.founder.familyName,
+    alternateName: [...PUBLIC_FACTS.founder.alternateNames],
+    jobTitle: 'Founder',
+    worksFor: {
+      '@id': ORGANIZATION_ID,
+    },
   },
   description:
     'Tiny Steps Learning is a premium online English learning school for children aged 3–12, offering structured phonics, grammar, reading, sentence formation, communication, and public speaking programs.',

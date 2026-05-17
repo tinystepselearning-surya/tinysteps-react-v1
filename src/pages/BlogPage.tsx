@@ -6,7 +6,7 @@ import { applySeo } from '../lib/seo';
 import { blogPosts } from '../content/blog';
 import { fetchMdxPosts } from '../content/blogMdx';
 import { formatBlogDate, isoDateFromYMD } from '../lib/date';
-import { ORGANIZATION_ID, PUBLIC_FACTS, SITE_ORIGIN } from '../lib/schemas';
+import { FOUNDER_ID, ORGANIZATION_ID, PUBLIC_FACTS, SITE_ORIGIN } from '../lib/schemas';
 import Meta from '../components/common/Meta';
 import NewsletterForm from '../components/common/NewsletterForm';
 import AboutAuthor from '../components/AboutAuthor';
@@ -26,8 +26,11 @@ const toArticleAuthorSchema = (author: unknown) =>
   isFounderAuthor(author)
     ? {
         '@type': 'Person',
-        '@id': `${SITE_ORIGIN}/#priya-founder`,
-        name: FOUNDER_AUTHOR_NAME,
+        '@id': FOUNDER_ID,
+        name: PUBLIC_FACTS.founder.fullName,
+        givenName: PUBLIC_FACTS.founder.givenName,
+        familyName: PUBLIC_FACTS.founder.familyName,
+        alternateName: [...PUBLIC_FACTS.founder.alternateNames],
         jobTitle: 'Founder',
         worksFor: { '@id': ORGANIZATION_ID },
       }

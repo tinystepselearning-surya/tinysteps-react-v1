@@ -695,27 +695,30 @@ const WhyTinyStepsPage: FC = () => {
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Founder</p>
                     <p className="text-lg font-extrabold text-slate-900">Priya</p>
+                    <p className="text-xs font-medium text-slate-600">Founder: Vannala Ravali Priya</p>
                   </div>
                 </div>
                 <p className="mt-3 text-sm leading-relaxed text-slate-700">
-                  With 10+ years in early childhood English education, Priya built Tiny Steps to help children ages
-                  3-12 strengthen phonics, grammar, reading, sentence formation, communication, and public speaking with calm, structured teaching.
+                  Vannala Ravali Priya, known as Priya, is the founder of Tiny Steps Learning. With 10+ years in early childhood English education, Priya built Tiny Steps to help children ages 3–12 strengthen phonics, grammar, reading, sentence formation, communication, and public speaking with calm, structured teaching.
                 </p>
               </div>
             </div>
 
             <div className="md:col-span-2 space-y-4 text-slate-700 leading-relaxed">
               <p>
-                Tiny Steps Learning was founded by educators who saw firsthand how structured, kind instruction helps struggling readers become more confident communicators.
+                Tiny Steps Learning was founded by Vannala Ravali Priya, known as Priya, with a clear belief: structured, kind instruction can help children become stronger readers, clearer speakers, and more confident communicators.
               </p>
               <p>
-                The founding team realized that many children were not getting systematic, age-appropriate English support. Generic after-school English support often rushed through content. App-only practice lacked live guidance. Parents felt unsure about what to do next.
+                Tiny Steps delivers live online English programs for children ages 3–12 across phonics, reading, grammar, sentence formation, communication, and public speaking. Every class is designed to be age-appropriate, interactive, and guided by a trained mentor.
               </p>
               <p>
-                Tiny Steps was built to solve this: <strong>live 1:1 or small-group classes</strong> with trained mentors, <strong>structured curriculum</strong> parents can understand, and <strong>transparent progress tracking</strong> so families see real improvement—not vague promises.
+                The founding team saw that many children were not getting systematic English support. Generic after-school support often rushed through content, while app-only practice lacked live correction, expression practice, and parent-visible progress.
+              </p>
+              <p>
+                Tiny Steps was built to solve this through live 1:1 and small-group classes, structured curriculum, guided worksheets, interactive activities, and transparent progress tracking so families can clearly see what the child is learning and improving.
               </p>
               <p className="text-sm text-slate-600">
-                Today, Tiny Steps supports learners in India and globally through live online classes across phonics, grammar, reading, sentence formation, communication, and public speaking.
+                Today, Tiny Steps supports learners in India and globally with calm, premium, child-friendly teaching that focuses on real learning outcomes — not vague promises.
               </p>
             </div>
           </div>

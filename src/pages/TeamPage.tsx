@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { applySeo, getRouteConfig } from '../lib/seo';
 import {
   CORE_PROGRAMS_TEXT,
+  FOUNDER_ID,
   ORGANIZATION_ID,
   PUBLIC_FACTS,
   SITE_ORIGIN,
@@ -73,8 +74,11 @@ export default function TeamPage() {
         {
           '@context': 'https://schema.org',
           '@type': 'Person',
-          '@id': `${SITE_ORIGIN}/#priya-founder`,
-          name: 'Priya',
+          '@id': FOUNDER_ID,
+          name: PUBLIC_FACTS.founder.fullName,
+          givenName: PUBLIC_FACTS.founder.givenName,
+          familyName: PUBLIC_FACTS.founder.familyName,
+          alternateName: [...PUBLIC_FACTS.founder.alternateNames],
           jobTitle: 'Founder',
           worksFor: {
             '@type': 'Organization',

@@ -5,7 +5,7 @@ import parentsMeta from '../../content/parentsMeta';
 import AboutAuthor from '../../components/AboutAuthor';
 import Meta from '../../components/common/Meta';
 import AutoLinkedText from '../../components/seo/AutoLinkedText';
-import { createWebPageSchema, organizationSchema, websiteSchema } from '../../lib/schemas';
+import { FOUNDER_ID, PUBLIC_FACTS, createWebPageSchema, organizationSchema, websiteSchema } from '../../lib/schemas';
 
 const heroSignals = [
   'Identify the exact learning concern quickly',
@@ -230,14 +230,15 @@ const faqSchema = {
 const founderSchema = {
   '@context': 'https://schema.org',
   '@type': 'Person',
-  '@id': 'https://tinystepslearning.com/#priya-founder',
-  name: 'Priya',
+  '@id': FOUNDER_ID,
+  name: PUBLIC_FACTS.founder.fullName,
+  givenName: PUBLIC_FACTS.founder.givenName,
+  familyName: PUBLIC_FACTS.founder.familyName,
+  alternateName: [...PUBLIC_FACTS.founder.alternateNames],
   jobTitle: 'Founder',
   image: 'https://tinystepslearning.com/priya-founder-tiny-steps-learning.webp',
   worksFor: {
-    '@type': 'Organization',
-    name: 'Tiny Steps Learning',
-    url: 'https://tinystepslearning.com/',
+    '@id': 'https://tinystepslearning.com/#organization',
   },
 };
 const parentsSeo = getRouteConfig('/parents');
@@ -265,7 +266,7 @@ const ParentsHubPage: React.FC = () => {
     () => ({
       ...(parentsMeta['/parents'].jsonLd as Record<string, unknown>),
       about: {
-        '@id': 'https://tinystepslearning.com/#priya-founder',
+        '@id': FOUNDER_ID,
       },
     }),
     [],
