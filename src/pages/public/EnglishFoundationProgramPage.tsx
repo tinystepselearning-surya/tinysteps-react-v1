@@ -1,149 +1,223 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
+import { createFAQPageSchema } from '../../lib/schemas';
 
 const faqItems = [
   {
     question: 'What is an English foundation program for kids?',
     answer:
-      'An English foundation program is a structured multi-skill plan that strengthens reading, grammar, writing, and speaking basics together. It is useful when a child needs balanced core improvement rather than one isolated skill class.',
+      'An English foundation program is a structured pathway that builds reading, grammar, sentence formation, writing readiness, and communication confidence together before advanced language demands increase.',
   },
   {
-    question: 'How do I know if my child needs foundation support instead of only phonics or only grammar?',
+    question: 'How do I know if my child has foundation gaps?',
     answer:
-      'If your child shows mixed gaps across two or more areas (for example reading accuracy plus weak sentence writing or low speaking confidence), a foundation pathway is usually better than a single-skill class.',
+      'A child may have foundation gaps when progress is uneven across skills, such as weak blending, slow reading, grammar mistakes, incomplete sentences, low vocabulary use, or hesitant communication.',
   },
   {
-    question: 'Which age group is this best for?',
+    question: 'Is this program different from regular online English classes?',
     answer:
-      'This format is commonly useful for ages 5-12, especially during transitions when school language demands increase and children need stronger basics across comprehension, writing, and communication.',
+      'Yes. This foundation page focuses on baseline skill sequencing and placement clarity, while broad class pages usually present general options and program listings.',
   },
   {
-    question: 'How is this different from general online English classes?',
+    question: 'Does the program include phonics, reading, and grammar?',
     answer:
-      'General English pages describe broad offerings. This page focuses on a baseline-building pathway with clear sequencing across core language pillars and weekly parent-visible progression.',
+      'Yes. The pathway can include phonics basics, blending, reading readiness, vocabulary, grammar basics, and sentence formation based on the child’s current stage.',
   },
   {
-    question: 'When should parents seek a structured foundation program?',
+    question: 'Can this program help with sentence formation and confidence?',
     answer:
-      'Choose structured foundation support when progress is uneven across reading, grammar, writing, and speaking despite regular effort, or when school expectations are rising faster than current language confidence.',
+      'Yes. Tiny Steps connects sentence formation practice with guided communication tasks so children learn to express ideas more clearly and confidently.',
+  },
+  {
+    question: 'What happens in a Tiny Steps foundation assessment?',
+    answer:
+      'The assessment checks phonics, blending, reading readiness, grammar control, sentence formation, writing readiness, and communication confidence, then recommends the right starting pathway.',
   },
 ];
 
 export default function EnglishFoundationProgramPage() {
   useEffect(() => {
+    const faqSchema = {
+      ...createFAQPageSchema(faqItems),
+      '@id': 'https://tinystepslearning.com/english-foundation-program#faq',
+    };
+
     applySeo({
-      title: 'English Foundation Program for Kids: Core Skills Pathway | Tiny Steps Learning',
+      title: 'English Foundation Program for Kids: Reading, Grammar, and Confidence | Tiny Steps Learning',
       description:
-        'Parent guide to our English foundation program for kids: who it fits, baseline checks across reading-grammar-writing-speaking, and when to choose a structured core-skills pathway.',
+        'English foundation program for kids covering phonics, reading readiness, grammar basics, sentence formation, writing readiness, and communication confidence.',
       canonicalPath: '/english-foundation-program',
       ogType: 'website',
-      jsonLd: [
-        {
-          '@context': 'https://schema.org',
-          '@type': 'FAQPage',
-          mainEntity: faqItems.map((item) => ({
-            '@type': 'Question',
-            name: item.question,
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: item.answer,
-            },
-          })),
-        },
-      ],
+      jsonLd: [faqSchema],
     });
   }, []);
 
   return (
     <div className="container mx-auto max-w-4xl px-6 py-12">
       <section className="mb-12 text-center">
-        <h1 className="text-4xl font-bold text-slate-900 md:text-5xl">English Foundation Program for Kids</h1>
+        <h1 className="text-4xl font-bold text-slate-900 md:text-5xl">
+          English Foundation Program for Kids: Reading, Grammar, and Confidence
+        </h1>
         <p className="mt-4 text-lg text-slate-700">
-          Build strong language basics across reading, grammar, writing, and speaking through one structured core-skills pathway.
+          A structured foundation pathway for children who need stronger basics before advanced English learning.
         </p>
-        <Link
-          to="/book-demo"
-          className="mt-8 inline-block rounded-lg bg-slate-900 px-8 py-3 font-semibold text-white transition hover:bg-slate-800"
-        >
-          Book Free Assessment
-        </Link>
+        <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            to="/book-demo"
+            className="inline-block rounded-lg bg-slate-900 px-8 py-3 font-semibold text-white transition hover:bg-slate-800"
+          >
+            Book Free Assessment
+          </Link>
+          <Link
+            to="/courses"
+            className="inline-block rounded-lg border border-slate-300 px-6 py-3 font-semibold text-slate-900 transition hover:border-slate-400"
+          >
+            Explore Courses
+          </Link>
+        </div>
       </section>
 
       <section className="mb-10 rounded-xl border border-sky-100 bg-sky-50 p-6">
-        <h2 className="mb-2 text-lg font-bold text-slate-900">Quick answer</h2>
+        <h2 className="mb-2 text-lg font-bold text-slate-900">Quick Answer for Parents</h2>
         <p className="text-slate-700">
-          This program is for children who need dependable English basics across multiple skills, not one narrow fix. It is most useful when reading, grammar, writing, and speaking progress are uneven or disconnected.
+          This page is for parents who feel their child needs stronger English basics before moving into advanced coursework. The foundation pathway builds skills in sequence so reading, grammar, sentence formation, writing, and confidence improve together.
         </p>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">Who this foundation pathway is for</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Who this foundation program is for</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Child can perform in one area but struggles to transfer skills into school tasks.</li>
-          <li>• Parent sees mixed patterns: reading okay, writing weak; grammar okay, speaking hesitant.</li>
-          <li>• Child needs stronger sentence control, comprehension consistency, and communication confidence.</li>
-          <li>• Family wants one coherent pathway instead of separate disconnected classes.</li>
+          <li>• Children who know some basics but struggle to apply them in school reading, writing, and communication tasks.</li>
+          <li>• Children showing mixed gaps across phonics, reading, grammar, sentence formation, and confidence.</li>
+          <li>• Parents looking for one coherent baseline-building pathway instead of disconnected short-term activities.</li>
+          <li>• Children who need structured reinforcement before joining a more advanced language path.</li>
         </ul>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">Use this as a decision page: foundation vs single-skill</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Common signs a child needs English foundation support</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Choose foundation pathway when 2-4 domains need support together.</li>
-          <li>• Choose phonics-first when decoding is the primary blocker in reading.</li>
-          <li>• Choose grammar-focused support when sentence accuracy is the main issue.</li>
-          <li>• Choose speaking-focused support when expression confidence is the main issue.</li>
+          <li>• The child knows letters or rules but cannot apply them confidently in real reading or writing.</li>
+          <li>• Reading is hesitant, sentence formation is weak, and grammar errors repeat across tasks.</li>
+          <li>• Vocabulary use is limited, resulting in short or incomplete answers.</li>
+          <li>• The child avoids communication tasks because of low confidence.</li>
         </ul>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What to check at home this week</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Foundation gaps vs reading, grammar, and confidence gaps</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Reading: can your child read short grade-level passages with stable understanding?</li>
-          <li>• Grammar: can your child apply basic rules in their own sentence writing, not only identify errors?</li>
-          <li>• Writing: can your child produce clear 3-5 sentence responses with logical flow?</li>
-          <li>• Speaking: can your child explain one idea in complete sentences with low hesitation?</li>
+          <li>• Foundation gaps: multiple basics are unstable together, so progress breaks across skills.</li>
+          <li>• Reading gaps: decoding, fluency, or comprehension is the core blocker.</li>
+          <li>• Grammar gaps: sentence accuracy and rule application remain weak.</li>
+          <li>• Confidence gaps: child knows some content but hesitates to express clearly.</li>
+        </ul>
+      </section>
+
+      <section className="mb-10 rounded-xl border border-indigo-100 bg-indigo-50 p-6">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">What “foundation” means at Tiny Steps</h2>
+        <ul className="space-y-2 text-slate-700">
+          <li>• A stage-wise plan that builds essential language blocks in the right sequence.</li>
+          <li>• Live guided support that links reading, grammar, writing readiness, and communication tasks.</li>
+          <li>• Parent-visible progression with clear next steps based on the child’s stage.</li>
+          <li>• Practical transfer from class activities to school responses and daily expression.</li>
         </ul>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What each result usually suggests</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Skills developed in this program</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• One domain weak, others stable: start with targeted single-skill support.</li>
-          <li>• Two or more domains weak: foundation pathway is usually the better fit.</li>
-          <li>• Good worksheet performance but weak real communication: add speaking and applied writing tasks.</li>
-          <li>• Strong oral language but weak reading/writing transfer: reinforce structured literacy and sentence construction together.</li>
-        </ul>
-      </section>
-
-      <section className="mb-10 rounded-xl border border-emerald-100 bg-emerald-50 p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What to start doing now</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>• Use one weekly plan that includes reading, grammar, writing, and speaking practice in short cycles.</li>
-          <li>• Track one clear outcome per domain each week instead of one broad “English improved” goal.</li>
-          <li>• Keep routines consistent and level-appropriate before increasing difficulty.</li>
-          <li>• Review progress weekly and adjust focus to the weakest domain without abandoning the others.</li>
-        </ul>
-      </section>
-
-      <section className="mb-10 rounded-xl border border-rose-100 bg-rose-50 p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What to avoid</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>• Do not split learning into random disconnected activities every week.</li>
-          <li>• Do not assume rule memorization equals real language transfer.</li>
-          <li>• Do not focus only on marks while ignoring expression confidence.</li>
-          <li>• Do not overload one skill and neglect the others for long periods.</li>
+          <li>• Phonics basics and blending accuracy</li>
+          <li>• Reading readiness and vocabulary growth</li>
+          <li>• Sentence formation and grammar basics</li>
+          <li>• Writing readiness for clearer school responses</li>
+          <li>• Communication confidence through guided speaking practice</li>
         </ul>
       </section>
 
       <section className="mb-10 rounded-xl border border-amber-100 bg-amber-50 p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">When to choose structured foundation support</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">How this page is different from the full course catalog</h2>
+        <p className="text-slate-700">
+          The <Link to="/courses" className="font-semibold underline underline-offset-2 hover:text-slate-900">courses page</Link> is a full program catalog.
+          This page is a foundation pathway guide for children who need baseline skills strengthened before moving to advanced tracks. For broader India-level
+          program discovery, see{' '}
+          <Link
+            to="/online-english-classes-for-kids-india"
+            className="font-semibold underline underline-offset-2 hover:text-slate-900"
+          >
+            Online English Classes for Kids in India
+          </Link>
+          .
+        </p>
+      </section>
+
+      <section className="mb-10 rounded-xl border border-sky-100 bg-sky-50 p-6">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Recommended learning path</h2>
+        <p className="text-slate-700">
+          sounds → blending → reading readiness → vocabulary → sentence formation → grammar basics → writing readiness → confident communication
+        </p>
+      </section>
+
+      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">What we check before suggesting this pathway</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• School tasks show recurring weaknesses across more than one language area.</li>
-          <li>• Home effort is regular but progress remains inconsistent.</li>
-          <li>• Child confidence is dropping because language gaps appear in multiple contexts.</li>
-          <li>• Parent needs a clear sequenced plan with weekly direction.</li>
+          <li>• Letter-sound and blending stability</li>
+          <li>• Reading readiness, pace, and basic comprehension</li>
+          <li>• Sentence construction and grammar application</li>
+          <li>• Writing readiness for age-level tasks</li>
+          <li>• Communication confidence and expression clarity</li>
+        </ul>
+      </section>
+
+      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Helpful next-step links</h2>
+        <ul className="space-y-2 text-slate-700">
+          <li>
+            • Program catalog:{' '}
+            <Link to="/courses" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Explore Courses
+            </Link>
+          </li>
+          <li>
+            • Phonics pathway:{' '}
+            <Link to="/phonics" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Online Phonics Classes
+            </Link>
+          </li>
+          <li>
+            • Grammar pathway:{' '}
+            <Link to="/grammar" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Grammar Classes for Kids
+            </Link>
+          </li>
+          <li>
+            • Reading support pathway:{' '}
+            <Link to="/reading-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Reading Classes for Kids
+            </Link>
+          </li>
+          <li>
+            • Writing support pathway:{' '}
+            <Link to="/writing-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Writing Classes for Kids
+            </Link>
+          </li>
+          <li>
+            • Communication pathway:{' '}
+            <Link to="/speaking" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Communication & Public Speaking
+            </Link>
+          </li>
+          <li>
+            • National page overview:{' '}
+            <Link
+              to="/online-english-classes-for-kids-india"
+              className="font-semibold underline underline-offset-2 hover:text-slate-900"
+            >
+              Online English Classes for Kids in India
+            </Link>
+          </li>
         </ul>
       </section>
 
@@ -159,50 +233,16 @@ export default function EnglishFoundationProgramPage() {
         </div>
       </section>
 
-      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">Relevant next-step links</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>
-            • For broad English options overview:{' '}
-            <Link to="/online-english-classes-for-kids-india" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              Online English Classes for Kids India
-            </Link>
-          </li>
-          <li>
-            • For age-specific planning (7-10):{' '}
-            <Link to="/english-classes-for-7-10-year-old" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              English Classes for 7 to 10 Year Old
-            </Link>
-          </li>
-          <li>
-            • For decoding-first pathway:{' '}
-            <Link to="/phonics" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              Phonics
-            </Link>
-          </li>
-          <li>
-            • For grammar-first pathway:{' '}
-            <Link to="/grammar" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              Grammar
-            </Link>
-          </li>
-          <li>
-            • For speaking-first pathway:{' '}
-            <Link to="/speaking" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              Speaking
-            </Link>
-          </li>
-        </ul>
-      </section>
-
       <section className="rounded-xl bg-slate-900 p-8 text-center text-white">
-        <h2 className="text-2xl font-bold">Ready to build strong English fundamentals?</h2>
-        <p className="mt-2 text-slate-200">Book a free assessment and get a structured foundation roadmap.</p>
+        <h2 className="text-2xl font-bold">Parent action: choose the right starting point</h2>
+        <p className="mt-2 text-slate-200">
+          Book a free assessment to check whether your child should start with phonics, reading support, grammar strengthening, or a complete foundation pathway.
+        </p>
         <Link
           to="/book-demo"
           className="mt-6 inline-block rounded-lg bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100"
         >
-          Book Demo
+          Book Free Assessment
         </Link>
       </section>
     </div>

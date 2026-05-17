@@ -2,70 +2,90 @@ import { useEffect } from 'react';
 import ClusterSeoNav from '../../components/programs/ClusterSeoNav';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
+import { createFAQPageSchema } from '../../lib/schemas';
 
 const faqItems = [
   {
-    question: 'My child talks at home but goes silent in class. Is this common?',
+    question: 'Why is my child shy to speak in English?',
     answer:
-      'Yes, this is very common. Many children are verbally capable in safe settings but shut down in performance or peer settings. This is usually a confidence-transfer issue, not a language deficit.',
+      'This is common. Many children understand language but hesitate in class because of fear of mistakes, low speaking confidence, or difficulty forming complete sentences quickly.',
   },
   {
-    question: 'What helps a shy child speak with confidence without pressure?',
+    question: 'What if my child understands English but gives only short answers?',
     answer:
-      'Use low-pressure speaking ladders: one-word answer, short sentence, two-sentence response, then short share. Predictable routines and calm feedback build confidence faster than forcing longer speaking tasks.',
+      'Short answers often indicate a sentence formation or confidence gap. Children usually improve when they receive guided prompts, sentence starters, and low-pressure speaking practice.',
   },
   {
-    question: 'Should I push my child to speak more in front of everyone?',
+    question: 'Is this a confidence issue or a sentence formation issue?',
     answer:
-      'Not at the start. Forced public speaking can increase avoidance. Build success in smaller audiences first, then gradually increase challenge.',
+      'It can be both. Some children know what to say but hesitate to speak, while others need help turning ideas into full sentences. A structured assessment helps identify the main gap.',
   },
   {
-    question: 'How do I know if my child needs structured speaking support?',
+    question: 'Can online classes help a shy child speak more confidently?',
     answer:
-      'If school participation remains very low, speaking avoidance is increasing, or your child cannot move beyond very short responses despite consistent home support, structured guidance is usually helpful.',
+      'Yes. Online classes can help when the child gets gentle speaking practice, guided response building, and consistent feedback in a supportive setting.',
   },
   {
-    question: 'Will confidence support also improve vocabulary and sentence quality?',
+    question: 'How does Tiny Steps encourage children without pressure?',
     answer:
-      'Yes. As hesitation drops, children use longer responses and clearer sentence structure more consistently. Confidence and language quality often improve together.',
+      'Tiny Steps uses child-friendly prompts, predictable speaking routines, and step-by-step confidence ladders. Children are encouraged to progress gradually, not forced into sudden performance.',
+  },
+  {
+    question: 'What happens in a Tiny Steps communication assessment?',
+    answer:
+      'Tiny Steps checks vocabulary use, sentence formation, response length, clarity, and confidence patterns. Parents then receive a clear communication pathway recommendation.',
   },
 ];
 
 export default function ShyChildSpeakingConfidencePage() {
   useEffect(() => {
+    const faqSchema = {
+      ...createFAQPageSchema(faqItems),
+      '@id': 'https://tinystepslearning.com/shy-child-speaking-confidence#faq',
+    };
+
     applySeo({
-      title: 'Shy Child Speaking Confidence: Parent Support Guide | Tiny Steps Learning',
+      title: 'Shy Child Speaking Confidence Help | Tiny Steps Learning',
       description:
-        'Practical support for shy child speaking confidence: identify hesitation patterns, use low-pressure speaking ladders, and build classroom participation step by step.',
+        'Support for shy child speaking confidence with guided communication practice, sentence support, vocabulary building, and public speaking readiness.',
       canonicalPath: '/shy-child-speaking-confidence',
       ogType: 'website',
+      jsonLd: [faqSchema],
     });
   }, []);
 
   return (
     <div className="container mx-auto max-w-4xl px-6 py-12">
       <section className="mb-12 text-center">
-        <h1 className="text-4xl font-bold text-slate-900 md:text-5xl">Shy Child Speaking Confidence: A Practical Parent Guide</h1>
+        <h1 className="text-4xl font-bold text-slate-900 md:text-5xl">Shy Child Speaking Confidence Help for Parents</h1>
         <p className="mt-4 text-lg text-slate-700">
-          If your child understands well but hesitates to speak, this page helps you diagnose why and build confidence safely in small, consistent steps.
+          If your child understands well but hesitates to speak, Tiny Steps helps identify the real gap and build communication confidence through gentle guided practice.
         </p>
-        <Link
-          to="/book-demo"
-          className="mt-8 inline-block rounded-lg bg-slate-900 px-8 py-3 font-semibold text-white transition hover:bg-slate-800"
-        >
-          Book Free Assessment
-        </Link>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            to="/book-demo"
+            className="inline-block rounded-lg bg-slate-900 px-8 py-3 font-semibold text-white transition hover:bg-slate-800"
+          >
+            Book Free Assessment
+          </Link>
+          <Link
+            to="/speaking"
+            className="inline-block rounded-lg border border-slate-300 px-6 py-3 font-semibold text-slate-900 transition hover:border-slate-400"
+          >
+            Explore Speaking Program
+          </Link>
+        </div>
       </section>
 
       <section className="mb-10 rounded-xl border border-sky-100 bg-sky-50 p-6">
-        <h2 className="mb-2 text-lg font-bold text-slate-900">Quick answer</h2>
+        <h2 className="mb-2 text-lg font-bold text-slate-900">Quick Answer for Parents</h2>
         <p className="text-slate-700">
-          Shy speaking usually means confidence is context-dependent: your child may speak in safe spaces but freeze in groups, class settings, or performance moments. The right approach is gradual exposure with sentence support, not pressure.
+          Shy speaking is usually not just “personality.” It often includes confidence, vocabulary, and sentence formation gaps that appear under class pressure. The right approach is structured, low-pressure speaking progression.
         </p>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What shy speaking can look like</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Common signs of a shy or hesitant speaker</h2>
         <ul className="space-y-2 text-slate-700">
           <li>• Speaks comfortably at home but gives one-word answers in class.</li>
           <li>• Knows the answer but avoids eye contact and stays silent.</li>
@@ -76,72 +96,52 @@ export default function ShyChildSpeakingConfidencePage() {
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">Parent symptom map (shy speaking edition)</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Why some children understand English but avoid speaking</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Child behavior: whispers or avoids eye contact. What it may mean: social-performance stress is high. Next step: begin with 1:1 speaking rounds.</li>
-          <li>• Child behavior: says “I know” but will not answer. What it may mean: fear of mistakes. Next step: use sentence starters and praise attempt, not perfection.</li>
-          <li>• Child behavior: freezes in groups only. What it may mean: audience size is the trigger. Next step: move from one trusted listener to small-group speaking.</li>
-          <li>• Child behavior: gives very short replies. What it may mean: response planning confidence is weak. Next step: use 2-part response frames (answer + one reason).</li>
-          <li>• Child behavior: avoids speaking tasks repeatedly. What it may mean: confidence cycle is shrinking. Next step: create daily micro-success speaking goals.</li>
+          <li>• They fear making mistakes in front of others.</li>
+          <li>• They need more vocabulary support to express ideas clearly.</li>
+          <li>• They struggle to build full sentences quickly under pressure.</li>
+          <li>• They have low confidence despite understanding lessons.</li>
+          <li>• They need guided transition from home-speaking comfort to class-speaking confidence.</li>
         </ul>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What to check at home this week</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Difference between shyness, lack of vocabulary, weak sentence formation, and low confidence</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Response length: does your child stay at one word or expand to full sentences?</li>
-          <li>• Audience comfort: can your child speak with one adult, two people, then a small group?</li>
-          <li>• Voice clarity: is volume steady or does it drop under pressure?</li>
-          <li>• Recovery behavior: after a mistake, does your child retry or shut down?</li>
-          <li>• Participation pattern: is speaking getting easier across the week or harder?</li>
-        </ul>
-      </section>
-
-      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What each result suggests</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>• Home speaking strong, class speaking weak: focus on confidence transfer routines.</li>
-          <li>• One-word replies only: build sentence frames before open-ended speaking.</li>
-          <li>• Good language, low volume: focus on voice projection practice and confidence cues.</li>
-          <li>• Frequent freeze after errors: reduce correction intensity and add retry routines.</li>
-          <li>• Avoidance increasing: move to structured guided speaking support.</li>
+          <li>• Shyness: child hesitates mainly in social or class settings.</li>
+          <li>• Lack of vocabulary: child wants to speak but cannot find enough words.</li>
+          <li>• Weak sentence formation: child has ideas but cannot structure full answers smoothly.</li>
+          <li>• Low confidence: child avoids speaking even when vocabulary and ideas are available.</li>
         </ul>
       </section>
 
       <section className="mb-10 rounded-xl border border-emerald-100 bg-emerald-50 p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What to start doing</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">How Tiny Steps builds speaking confidence gently</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Use a daily 8-10 minute speaking ladder: one-word answer -&gt; short sentence -&gt; two-sentence share.</li>
-          <li>• Give sentence starters like “I think… because…” or “My idea is…”.</li>
-          <li>• Keep speaking topics familiar first, then introduce new topics gradually.</li>
-          <li>• End each session with one clear speaking win your child can repeat tomorrow.</li>
+          <li>• We use low-pressure speaking ladders and child-friendly prompts.</li>
+          <li>• We strengthen vocabulary and sentence formation before longer responses.</li>
+          <li>• We build comfort in small steps: guided answers, short shares, and structured expression.</li>
+          <li>• We connect confidence work with grammar clarity and communication practice.</li>
+          <li>• We keep parent communication clear with practical next steps.</li>
         </ul>
       </section>
 
-      <section className="mb-10 rounded-xl border border-rose-100 bg-rose-50 p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What to avoid</h2>
+      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">What we check before suggesting a communication path</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Do not label your child as “not a speaker” or compare with louder peers.</li>
-          <li>• Do not force sudden public performance without smaller preparation steps.</li>
-          <li>• Do not over-correct every sentence while confidence is still fragile.</li>
-          <li>• Do not switch between too many speaking methods every week.</li>
+          <li>• Child comfort level in one-to-one and group speaking moments</li>
+          <li>• Vocabulary readiness for age-appropriate expression</li>
+          <li>• Sentence formation quality in guided answers</li>
+          <li>• Clarity, voice confidence, and response length patterns</li>
+          <li>• Reading and grammar support needs that may affect speaking confidence</li>
         </ul>
       </section>
 
-      <section className="mb-10 rounded-xl border border-amber-100 bg-amber-50 p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">When to seek structured speaking help</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>• Child participation remains minimal despite consistent home speaking routines.</li>
-          <li>• Speaking anxiety is increasing before school presentations or class responses.</li>
-          <li>• Child cannot move beyond very short answers in academic settings.</li>
-          <li>• You need a guided confidence progression with measurable milestones.</li>
-        </ul>
-        <p className="mt-4 text-sm text-slate-700">
-          If you want a structured next step, explore{' '}
-          <Link to="/speaking" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-            speaking support
-          </Link>
-          .
+      <section className="mb-10 rounded-xl border border-sky-100 bg-sky-50 p-6">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Recommended learning path</h2>
+        <p className="text-slate-700">
+          comfort → vocabulary → sentence formation → guided answers → expression → confident communication
         </p>
       </section>
 
@@ -161,7 +161,7 @@ export default function ShyChildSpeakingConfidencePage() {
         <h2 className="mb-4 text-2xl font-bold text-slate-900">Relevant next-step links</h2>
         <ul className="space-y-2 text-slate-700">
           <li>
-            • For broader speaking-confidence program fit:{' '}
+            • For broader speaking-confidence support:{' '}
             <Link to="/confidence-building-program-kids" className="font-semibold underline underline-offset-2 hover:text-slate-900">
               Confidence Building Program for Kids
             </Link>
@@ -173,23 +173,49 @@ export default function ShyChildSpeakingConfidencePage() {
             </Link>
           </li>
           <li>
-            • For conversational fluency support:{' '}
-            <Link to="/speaking" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              Communication & Public Speaking for Kids
+            • For sentence formation support:{' '}
+            <Link to="/grammar" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Grammar Program
+            </Link>
+          </li>
+          <li>
+            • For language confidence through reading support:{' '}
+            <Link to="/reading-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Reading Classes for Kids
+            </Link>
+          </li>
+          <li>
+            • For comparing all public pathways:{' '}
+            <Link to="/courses" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Explore Courses
+            </Link>
+          </li>
+          <li>
+            • For assessment booking:{' '}
+            <Link to="/book-demo" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Book Free Assessment
             </Link>
           </li>
         </ul>
       </section>
 
       <section className="rounded-xl bg-slate-900 p-8 text-center text-white">
-        <h2 className="text-2xl font-bold">Want a calm plan for your shy child’s speaking confidence?</h2>
-        <p className="mt-2 text-slate-200">Book a free assessment and get a step-by-step confidence roadmap.</p>
-        <Link
-          to="/book-demo"
-          className="mt-6 inline-block rounded-lg bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100"
-        >
-          Book Demo
-        </Link>
+        <h2 className="text-2xl font-bold">Parent action: book a free assessment first</h2>
+        <p className="mt-2 text-slate-200">Get a calm, structured communication confidence plan for your child.</p>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            to="/book-demo"
+            className="inline-block rounded-lg bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100"
+          >
+            Book Free Assessment
+          </Link>
+          <Link
+            to="/courses"
+            className="inline-block rounded-lg border border-white/40 px-6 py-3 font-semibold text-white transition hover:border-white/70"
+          >
+            Explore Courses
+          </Link>
+        </div>
       </section>
       <ClusterSeoNav cluster="speaking" />
     </div>

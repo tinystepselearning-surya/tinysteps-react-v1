@@ -2,52 +2,58 @@ import type { PhonicsSeoPost } from '../../types';
 
 const post: PhonicsSeoPost = {
   slug: 'phonics-games-for-letter-sounds',
-  title: 'Phonics Games for Letter Sounds: How to Build Fast, Accurate Sound Recall',
-  focus: 'phonics games for letter sounds',
-  quickAnswer: 'Letter-sound games help when children must produce accurate pure sounds and apply them immediately in blending. Games that only reward fast tapping without sound production usually improve engagement, not decoding.',
+  title: 'Phonics Games for Letter Sounds: Parent Routine for Daily Practice',
+  focus: 'phonics letter-sound daily practice routine',
+  quickAnswer: 'If your child is still building early reading basics, start with short daily letter-sound practice before pushing harder blending tasks. Accurate sound recall is the foundation for blending readiness, reading confidence, and smoother sentence-level decoding later.',
   homePlan: [
-    'Pick 3-5 target sounds for the week and keep game tasks tied only to that set.',
-    'Run a short game loop: 2 minutes sound recall, 3-4 minutes game challenge, 2 minutes blend transfer on simple words.',
-    'Use a pure-sound check while playing (for example /m/, not "muh") and correct gently in real time.',
-    'Rotate game formats lightly (card flip, sound hunt, matching race) while keeping the same sound goal.',
-    'Track one signal daily: response speed, sound accuracy, and ability to use those sounds in a blended word.',
-    'If sound accuracy is unstable for a week, reduce target sounds and increase oral-only reps before adding new game complexity.'
+    'Clear start for parents: letter names and letter sounds are not the same. Alphabet names help identification, but reading begins when children can produce sounds quickly and accurately.',
+    'Why this matters before blending: if sound recall is slow or confused, blending feels hard and children guess words instead of decoding.',
+    '10-minute daily routine, step 1 (warm-up sound hunt, 2 minutes): ask your child to find 3 objects for target sounds and say each sound clearly.',
+    '10-minute daily routine, step 2 (show letter, say sound, 2 minutes): flash one lowercase letter at a time and ask for the pure sound, not letter-name recitation.',
+    '10-minute daily routine, step 3 (first-sound game, 2 minutes): say simple words and ask for the first sound only, for example sun -> /s/, map -> /m/.',
+    '10-minute daily routine, step 4 (sound sorting, 2 minutes): sort picture or word cards into two target sound groups to build sound discrimination.',
+    '10-minute daily routine, step 5 (quick blending readiness check, 1 minute): test 2-3 oral blends such as /s/ /a/ /t/ and /m/ /a/ /p/.',
+    '10-minute daily routine, step 6 (praise and stop before fatigue, 1 minute): end with one success sentence and avoid over-practice when focus drops.',
+    'Game ideas by skill: sound recognition (sound flashcards), first-sound identification (sound detective), sound discrimination (same or different), blending readiness (oral sound join), listening confidence (repeat-and-point games).'
   ],
-  classChecklistFocus: 'Choose games or classes that require spoken sound output, include immediate correction, and verify transfer from sound game to blended word reading.',
-  avoidFocus: 'Avoid reward-first games where children can score without producing sounds accurately. Avoid introducing too many new sounds in one session.',
-  progress: 'Typical pattern: better sound recall in 1-2 weeks, cleaner sound production in 2-4 weeks, and more reliable blending transfer in 4-6 weeks with consistent routines.',
-  support: 'If your child can play games but still cannot apply sounds in blending after 6-8 weeks, move to structured teacher-led decoding support.',
+  classChecklistFocus: 'How Tiny Steps uses games purposefully: games are tied to one skill goal, teacher correction is immediate, and every game is followed by blending or reading transfer so practice builds real decoding.',
+  avoidFocus: 'Mistakes to avoid: teaching only alphabet names, mixing too many sounds at once, rushing into words too early, and making practice feel like a test instead of guided confidence-building.',
+  progress: 'How to know your child is ready for blending: they can produce target sounds accurately, identify first sounds in simple words, sort sounds with low prompting, and attempt 2-3 oral blends without guessing.',
+  support: 'If your child still struggles with sound recall, blending attempts, or early reading confidence after consistent daily practice, choose structured support with assessment and a stage-wise phonics pathway.',
   faq: [{
-    question: 'Are digital phonics games enough by themselves?',
-    answer: 'Usually not. Children still need guided adult feedback and explicit transfer practice so game skills become reading skills.'
+    question: 'What are the best phonics games for learning letter sounds?',
+    answer: 'The best games require children to hear, identify, and say sounds clearly, then apply those sounds in simple blending tasks. Keep games short, focused, and linked to one skill goal at a time.'
   }, {
-    question: 'How long should a phonics game session be?',
-    answer: 'About 5-8 focused minutes is usually enough before moving to blending, reading, or spelling transfer.'
+    question: 'Should children learn alphabet names or letter sounds first?',
+    answer: 'Children should learn both, but letter sounds need stronger daily practice for reading. Alphabet names alone do not help children decode words smoothly.'
   }, {
-    question: 'What is a sign a letter-sound game is high quality?',
-    answer: 'A strong sign is that your child must say sounds correctly, receives immediate correction, and then applies those sounds in real words.'
+    question: 'How many letter sounds should parents practise at one time?',
+    answer: 'For most children, 3-5 target sounds in one cycle works best. Too many sounds at once can reduce accuracy and increase confusion.'
   }, {
-    question: 'Should I teach letter names and letter sounds together in games?',
-    answer: 'You can include both, but prioritize sound production for early reading. Letter names should not replace sound practice.'
+    question: 'When is a child ready to start blending sounds?',
+    answer: 'A child is usually ready when they can say target sounds accurately, identify first sounds in simple words, and respond with low prompting across short practice rounds.'
   }, {
-    question: 'My child says sounds correctly in games but forgets during reading. Why?',
-    answer: 'Transfer is not yet automatic. Add a short post-game blending step every session so sounds move into word reading.'
+    question: 'Can games really help with phonics learning?',
+    answer: 'Yes, when games are used as purposeful practice with correction and transfer. Games without sound accuracy checks may entertain, but they may not improve decoding.'
   }, {
-    question: 'How many sounds should I teach at once?',
-    answer: 'Start small with 3-5 sounds and expand only when recall and pronunciation are stable with low prompting.'
+    question: 'What happens in a Tiny Steps phonics assessment?',
+    answer: 'Tiny Steps checks sound recall, blending readiness, decoding habits, and confidence, then recommends the right starting level and next learning path.'
   }],
   relatedReads: [{
-    label: 'Online phonics games',
+    label: 'Broader guide: online phonics games',
     to: '/blog/online-phonics-games'
   }, {
-    label: 'Phonics blending activities',
-    to: '/blog/phonics-blending-activities'
+    label: 'Explore online phonics classes',
+    to: '/phonics'
   }, {
-    label: 'How kids learn blending',
-    to: '/blog/how-kids-learn-blending'
+    label: 'Reading classes for kids',
+    to: '/reading-classes-for-kids'
   }, {
-    label: 'What is phonics for kids?',
-    to: '/blog/what-is-phonics-for-kids'
+    label: 'Parent support: child not reading properly',
+    to: '/child-not-reading-properly'
+  }, {
+    label: 'Book free assessment',
+    to: '/book-demo'
   }]
 };
 

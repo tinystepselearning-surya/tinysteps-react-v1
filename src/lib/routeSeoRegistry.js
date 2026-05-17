@@ -367,6 +367,13 @@ export const ROUTE_SEO_REGISTRY = {
     canonicalPath: '/online-english-classes-for-kids-india',
     ogType: 'website',
   },
+  '/online-english-classes-hyderabad': {
+    title: 'Online English Classes for Kids in Hyderabad | Tiny Steps Learning',
+    description:
+      'Live online English classes for kids in Hyderabad covering phonics, reading, grammar, sentence formation, and communication confidence. Book a free assessment.',
+    canonicalPath: '/online-english-classes-hyderabad',
+    ogType: 'website',
+  },
   '/english-classes-for-4-year-old': {
     title: 'English Classes for 4 Year Old | Tiny Steps Learning',
     description:

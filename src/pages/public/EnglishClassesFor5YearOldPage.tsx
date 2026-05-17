@@ -1,70 +1,100 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
+import { createFAQPageSchema } from '../../lib/schemas';
 
 const faqItems = [
   {
-    question: 'What should English classes for a 5 year old focus on first?',
+    question: 'What should a 5-year-old learn in online English classes?',
     answer:
-      'At age 5, the priority is the transition from readiness to early reading: stable letter sounds, blending into simple words, short-sentence speaking, and confidence with classroom responses.',
+      'At age 5, children should focus on letter sounds, blending readiness, early reading, vocabulary growth, simple sentence formation, and confident responses.',
   },
   {
-    question: 'My 5-year-old knows letters but cannot read words yet. Is that normal?',
+    question: 'Is age 5 the right time to start phonics?',
     answer:
-      'Yes, this is common. Many children at this age know letter names before decoding is automatic. Structured blending and decodable reading routines usually help bridge that gap.',
+      'Yes. Age 5 is a strong stage to begin or strengthen phonics, especially when classes are interactive and focused on sounds, blending, and early reading confidence.',
   },
   {
-    question: 'How is this page different from classes for 4-year-olds and 6-year-olds?',
+    question: 'What if my 5-year-old knows letters but cannot read words?',
     answer:
-      'Age 4 is more listening-and-sound readiness. Age 6 usually expects stronger fluency and sentence-level grammar transfer. Age 5 is the bridge where first real reading habits should become stable.',
+      'This is common at age 5. Many children know letter names before blending becomes automatic. Guided phonics and blending practice usually helps bridge this gap.',
   },
   {
-    question: 'Will speaking confidence improve along with early reading?',
+    question: 'How long should a class be for a 5-year-old?',
     answer:
-      'Yes. As children decode with less stress, they usually speak in fuller sentences and participate more comfortably in class and daily conversation.',
+      'At this age, classes should be short, focused, and interactive. Children learn best when activities are structured into small segments with active participation.',
   },
   {
-    question: 'When should parents seek structured support at this age?',
+    question: 'Can online classes keep a 5-year-old engaged?',
     answer:
-      'Seek structured support if blending remains weak, reading avoidance increases, or your child cannot move from letter knowledge to simple word reading after consistent guided practice.',
+      'Yes. Online classes can keep 5-year-olds engaged when lessons use guided interaction, age-appropriate tasks, quick transitions, and positive feedback.',
+  },
+  {
+    question: 'What happens in a Tiny Steps assessment for a 5-year-old?',
+    answer:
+      'Tiny Steps checks letter-sound readiness, blending, early reading behavior, vocabulary use, sentence responses, and confidence. Parents then receive a clear next-step recommendation.',
   },
 ];
 
 export default function EnglishClassesFor5YearOldPage() {
   useEffect(() => {
+    const faqSchema = {
+      ...createFAQPageSchema(faqItems),
+      '@id': 'https://tinystepslearning.com/english-classes-for-5-year-old#faq',
+    };
+
     applySeo({
-      title: 'English Classes for 5 Year Old: Early Reading Bridge Support | Tiny Steps Learning',
+      title: 'English Classes for 5 Year Old | Tiny Steps Learning',
       description:
-        'Parent guide to English classes for 5 year olds: age-specific support for sound-to-word blending, early reading confidence, sentence speaking, and classroom readiness.',
+        'English classes for 5 year old children focused on phonics blending, reading readiness, sentence speaking, and confidence in class participation.',
       canonicalPath: '/english-classes-for-5-year-old',
       ogType: 'website',
+      jsonLd: [faqSchema],
     });
   }, []);
 
   return (
     <div className="container mx-auto max-w-4xl px-6 py-12">
       <section className="mb-12 text-center">
-        <h1 className="text-4xl font-bold text-slate-900 md:text-5xl">English Classes for 5 Year Old</h1>
+        <h1 className="text-4xl font-bold text-slate-900 md:text-5xl">Online English Classes for 5-Year-Old Children</h1>
         <p className="mt-4 text-lg text-slate-700">
-          Age-5 support focused on the key bridge: from letter familiarity to confident first-word reading and clearer sentence speaking.
+          Age-5 support focused on the key bridge from letter sounds to early reading, simple sentences, and confident communication.
         </p>
-        <Link
-          to="/book-demo"
-          className="mt-8 inline-block rounded-lg bg-slate-900 px-8 py-3 font-semibold text-white transition hover:bg-slate-800"
-        >
-          Book Free Assessment
-        </Link>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            to="/book-demo"
+            className="inline-block rounded-lg bg-slate-900 px-8 py-3 font-semibold text-white transition hover:bg-slate-800"
+          >
+            Book Free Assessment
+          </Link>
+          <Link
+            to="/courses"
+            className="inline-block rounded-lg border border-slate-300 px-6 py-3 font-semibold text-slate-900 transition hover:border-slate-400"
+          >
+            Explore Courses
+          </Link>
+        </div>
       </section>
 
       <section className="mb-10 rounded-xl border border-sky-100 bg-sky-50 p-6">
-        <h2 className="mb-2 text-lg font-bold text-slate-900">Quick answer</h2>
+        <h2 className="mb-2 text-lg font-bold text-slate-900">Quick Answer for Parents</h2>
         <p className="text-slate-700">
-          At age 5, children should begin turning sounds into words and words into simple sentence reading. This page is for that transition stage, where gentle but structured phonics-and-speaking support makes the biggest difference.
+          At age 5, children should move from letter familiarity to blending, early reading, and simple sentence confidence. The best results come from interactive, age-appropriate classes with step-by-step guidance.
         </p>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What age-5 learners usually need</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Who this page is for</h2>
+        <ul className="space-y-2 text-slate-700">
+          <li>• Parents of 5-year-olds who need structured early English support.</li>
+          <li>• Children who know some letters but are not yet reading confidently.</li>
+          <li>• Children who give short answers and need sentence confidence.</li>
+          <li>• Families looking for a clear next step before choosing a full program.</li>
+        </ul>
+      </section>
+
+      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">What a 5-year-old usually needs at this stage</h2>
         <ul className="space-y-2 text-slate-700">
           <li>• Sound recall that is consistent (not only letter-name recitation).</li>
           <li>• Blending practice for short words with less guessing.</li>
@@ -74,62 +104,53 @@ export default function EnglishClassesFor5YearOldPage() {
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">Parent symptom map at age 5</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Common parent concerns at age 5</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Child behavior: knows letters but cannot blend. What it may mean: decoding bridge is not stable. Next step: oral plus print blending routines.</li>
-          <li>• Child behavior: guesses from picture cues. What it may mean: sound-to-word habit is weak. Next step: controlled decodable reading.</li>
-          <li>• Child behavior: reads a few words but avoids sentence reading. What it may mean: confidence threshold is low. Next step: short success-first sentence practice.</li>
-          <li>• Child behavior: understands but gives very short spoken replies. What it may mean: expressive sentence confidence is limited. Next step: sentence starter routines.</li>
-        </ul>
-      </section>
-
-      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What to check at home this week</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>• Can your child produce sounds for common lowercase letters reliably?</li>
-          <li>• Can your child blend 4-6 short words without heavy prompting?</li>
-          <li>• Can your child read 1-2 short decodable sentences with support?</li>
-          <li>• Can your child answer using a full short sentence in conversation?</li>
-        </ul>
-      </section>
-
-      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What each result usually suggests</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>• Sounds low, blending low: return to structured sound mapping first.</li>
-          <li>• Sounds okay, blending weak: focus on repeated blending loops.</li>
-          <li>• Word reading okay, sentence confidence low: increase short sentence routines.</li>
-          <li>• Reading improving, speaking still short: add sentence expansion prompts daily.</li>
+          <li>• Letter sounds are inconsistent even though alphabet names are known.</li>
+          <li>• Blending readiness is low and word reading remains effortful.</li>
+          <li>• Child gives short answers and avoids longer responses.</li>
+          <li>• Vocabulary range is limited during conversation.</li>
+          <li>• Attention span drops when tasks are too long or repetitive.</li>
+          <li>• Confidence decreases when reading or answering in class-like settings.</li>
         </ul>
       </section>
 
       <section className="mb-10 rounded-xl border border-emerald-100 bg-emerald-50 p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What to start doing</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">What Tiny Steps teaches for 5-year-olds</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Keep one short daily routine: sounds, blend, read, speak.</li>
-          <li>• Use consistent prompts like “say sounds first, then blend.”</li>
-          <li>• End with one easy reading and speaking success each session.</li>
-          <li>• Track one weekly marker: blending ease, sentence reading, or speaking length.</li>
+          <li>• Letter sounds and blending foundations for early reading readiness.</li>
+          <li>• Age-appropriate vocabulary building through guided interaction.</li>
+          <li>• Simple sentence formation for clearer responses.</li>
+          <li>• Early reading routines that reduce guessing and build confidence.</li>
+          <li>• Communication practice for confident short classroom-style answers.</li>
         </ul>
       </section>
 
-      <section className="mb-10 rounded-xl border border-rose-100 bg-rose-50 p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What to avoid</h2>
+      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">How we keep classes interactive and age-appropriate</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Do not jump to hard readers before blending is stable.</li>
-          <li>• Do not rely only on alphabet recitation as reading progress.</li>
-          <li>• Do not force long sessions that increase avoidance.</li>
-          <li>• Do not compare your child’s pace with older learners.</li>
+          <li>• Short, focused learning segments that match age-5 attention patterns.</li>
+          <li>• Guided prompts and visual cues to support comprehension and participation.</li>
+          <li>• Frequent response opportunities instead of passive listening.</li>
+          <li>• Positive correction and repeat practice to build confidence gradually.</li>
         </ul>
       </section>
 
-      <section className="mb-10 rounded-xl border border-amber-100 bg-amber-50 p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">When to seek structured support</h2>
+      <section className="mb-10 rounded-xl border border-sky-100 bg-sky-50 p-6">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Recommended learning path</h2>
+        <p className="text-slate-700">
+          letter sounds → blending readiness → early reading → vocabulary → simple sentences → confident responses
+        </p>
+      </section>
+
+      <section className="mb-10 rounded-xl border border-slate-200 bg-slate-50 p-6">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">What we check in the assessment</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Blending does not improve despite steady home effort.</li>
-          <li>• Reading confidence is dropping, not rising.</li>
-          <li>• Child resists early reading tasks repeatedly.</li>
-          <li>• Parent needs a clear step-by-step progression for this stage.</li>
+          <li>• Letter-sound stability and blending readiness</li>
+          <li>• Early reading behavior and decoding confidence</li>
+          <li>• Vocabulary use and response length</li>
+          <li>• Sentence formation quality for age-appropriate speaking</li>
+          <li>• Confidence and participation patterns in guided tasks</li>
         </ul>
       </section>
 
@@ -149,41 +170,61 @@ export default function EnglishClassesFor5YearOldPage() {
         <h2 className="mb-4 text-2xl font-bold text-slate-900">Relevant next-step links</h2>
         <ul className="space-y-2 text-slate-700">
           <li>
-            • For younger readiness stage:{' '}
-            <Link to="/english-classes-for-4-year-old" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              English Classes for 4 Year Old
-            </Link>
-          </li>
-          <li>
-            • For next-stage progression:{' '}
-            <Link to="/english-classes-for-6-year-old" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              English Classes for 6 Year Old
-            </Link>
-          </li>
-          <li>
-            • For focused early decoding bridge:{' '}
+            • For focused phonics support:{' '}
             <Link to="/phonics" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              Online Phonics and Reading Classes
+              Phonics Program
             </Link>
           </li>
           <li>
-            • For core phonics pathway:{' '}
-            <Link to="/phonics" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              Phonics Classes for Kids
+            • For reading-readiness progression:{' '}
+            <Link to="/reading-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Reading Classes for Kids
+            </Link>
+          </li>
+          <li>
+            • For age progression after this stage:{' '}
+            <Link to="/english-classes-for-7-10-year-old" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              English Classes for 7-10 Year Old
+            </Link>
+          </li>
+          <li>
+            • For broader national pathway overview:{' '}
+            <Link to="/online-english-classes-for-kids-india" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Online English Classes for Kids in India
+            </Link>
+          </li>
+          <li>
+            • For course comparison before enrollment:{' '}
+            <Link to="/courses" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Explore Courses
+            </Link>
+          </li>
+          <li>
+            • For immediate assessment booking:{' '}
+            <Link to="/book-demo" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Book Free Assessment
             </Link>
           </li>
         </ul>
       </section>
 
       <section className="rounded-xl bg-slate-900 p-8 text-center text-white">
-        <h2 className="text-2xl font-bold">Ready to support your 5-year-old’s English growth?</h2>
-        <p className="mt-2 text-slate-200">Book a free assessment and get a focused age-5 learning plan.</p>
-        <Link
-          to="/book-demo"
-          className="mt-6 inline-block rounded-lg bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100"
-        >
-          Book Demo
-        </Link>
+        <h2 className="text-2xl font-bold">Parent action: book a free assessment first</h2>
+        <p className="mt-2 text-slate-200">Get a clear age-5 plan for phonics, early reading, vocabulary, and confident responses.</p>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            to="/book-demo"
+            className="inline-block rounded-lg bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100"
+          >
+            Book Free Assessment
+          </Link>
+          <Link
+            to="/courses"
+            className="inline-block rounded-lg border border-white/40 px-6 py-3 font-semibold text-white transition hover:border-white/70"
+          >
+            Explore Courses
+          </Link>
+        </div>
       </section>
     </div>
   );

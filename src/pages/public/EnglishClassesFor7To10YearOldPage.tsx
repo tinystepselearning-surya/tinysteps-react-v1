@@ -1,137 +1,158 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
+import { createFAQPageSchema } from '../../lib/schemas';
 
 const faqItems = [
   {
-    question: 'What should English classes for 7 to 10 year olds focus on first?',
+    question: 'What should children aged 7-10 learn in online English classes?',
     answer:
-      'At this stage, children usually need stronger comprehension, sentence construction, paragraph writing, and confident oral explanation. The focus should move beyond basic word reading into applied school language skills.',
+      'At this stage, children should build reading fluency, grammar accuracy, sentence formation, paragraph writing, and confident oral responses. Learning should be connected to real school tasks and clear expression.',
   },
   {
-    question: 'My child reads the chapter but cannot explain answers clearly. Is this common at 7-10?',
+    question: 'Can Tiny Steps help if my child reads but makes grammar mistakes?',
     answer:
-      'Yes, this is common. Many children can read text but struggle to convert understanding into clear spoken and written responses. Structured practice in explanation and answer framing helps.',
+      'Yes. Many children in this age band can read but struggle with grammar transfer while speaking or writing. Tiny Steps focuses on applied grammar through guided sentence and answer practice.',
   },
   {
-    question: 'How is this different from an English foundation program?',
+    question: 'What if my child gives short answers or avoids speaking?',
     answer:
-      'Foundation programs are broader and can include younger stages. This page is specifically for 7-10 needs: school-style comprehension, written response quality, grammar transfer, and class participation confidence.',
+      'This often indicates a confidence and sentence-formation gap. Tiny Steps uses guided prompts, response structures, and communication practice to help children move from short replies to clearer explanations.',
   },
   {
-    question: 'Can one plan improve reading, grammar, writing, and speaking together?',
+    question: 'Do these classes include writing and sentence formation?',
     answer:
-      'Yes, when activities are sequenced by age-level expectations and each skill reinforces the others. Children progress faster when comprehension, sentence quality, and expression are trained together.',
+      'Yes. Writing and sentence formation are core parts of the 7-10 pathway, along with reading fluency, grammar accuracy, and communication confidence.',
   },
   {
-    question: 'When should parents seek structured support for this age group?',
+    question: 'How do you decide whether my child needs grammar, reading, or communication support?',
     answer:
-      'Seek structured support when school feedback shows repeated gaps in comprehension, writing clarity, or participation, and home practice is not creating stable progress across these areas.',
+      'Tiny Steps uses a structured assessment to identify the main gap first, then recommends a clear path across reading, grammar, sentence formation, writing, and communication.',
+  },
+  {
+    question: 'What happens in a Tiny Steps assessment for ages 7-10?',
+    answer:
+      'The assessment checks reading fluency, comprehension, grammar usage, sentence quality, writing structure, and response confidence. Parents receive a practical next-step recommendation.',
   },
 ];
 
 export default function EnglishClassesFor7To10YearOldPage() {
   useEffect(() => {
+    const faqSchema = {
+      ...createFAQPageSchema(faqItems),
+      '@id': 'https://tinystepslearning.com/english-classes-for-7-10-year-old#faq',
+    };
+
     applySeo({
-      title: 'English Classes for 7 to 10 Year Old: Age-Stage Learning Support | Tiny Steps Learning',
+      title: 'English Classes for 7 to 10 Year Old | Tiny Steps Learning',
       description:
-        'Parent guide to English classes for 7 to 10 year olds: age-stage expectations, common school-language gaps, and structured support across reading, grammar, writing, and speaking.',
+        'English classes for 7 to 10 year old children focused on reading comprehension, grammar usage, writing clarity, speaking confidence, and communication skills.',
       canonicalPath: '/english-classes-for-7-10-year-old',
       ogType: 'website',
+      jsonLd: [faqSchema],
     });
   }, []);
 
   return (
     <div className="container mx-auto max-w-4xl px-6 py-12">
       <section className="mb-12 text-center">
-        <h1 className="text-4xl font-bold text-slate-900 md:text-5xl">English Classes for 7 to 10 Year Old</h1>
+        <h1 className="text-4xl font-bold text-slate-900 md:text-5xl">Online English Classes for Ages 7-10</h1>
         <p className="mt-4 text-lg text-slate-700">
-          Age-stage support for school English demands: stronger comprehension, clearer writing, better grammar transfer, and more confident speaking.
+          Age-band support for children who need stronger reading fluency, grammar accuracy, writing quality, and confident communication for school and daily expression.
         </p>
-        <Link
-          to="/book-demo"
-          className="mt-8 inline-block rounded-lg bg-slate-900 px-8 py-3 font-semibold text-white transition hover:bg-slate-800"
-        >
-          Book Free Assessment
-        </Link>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            to="/book-demo"
+            className="inline-block rounded-lg bg-slate-900 px-8 py-3 font-semibold text-white transition hover:bg-slate-800"
+          >
+            Book Free Assessment
+          </Link>
+          <Link
+            to="/courses"
+            className="inline-block rounded-lg border border-slate-300 px-6 py-3 font-semibold text-slate-900 transition hover:border-slate-400"
+          >
+            Explore Courses
+          </Link>
+        </div>
       </section>
 
       <section className="mb-10 rounded-xl border border-sky-100 bg-sky-50 p-6">
-        <h2 className="mb-2 text-lg font-bold text-slate-900">Quick answer</h2>
+        <h2 className="mb-2 text-lg font-bold text-slate-900">Quick Answer for Parents</h2>
         <p className="text-slate-700">
-          For ages 7-10, English learning should move from “basic correctness” to “school-ready application.” Children need to read for meaning, write complete structured responses, and explain ideas confidently in class.
+          For ages 7-10, children need to move from basic correctness to independent expression. That means better reading fluency, clearer grammar use, stronger writing structure, and confident spoken answers.
         </p>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What changes at ages 7-10</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Who this page is for</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Reading tasks become meaning-focused, not just word decoding.</li>
-          <li>• Writing expectations shift from short lines to structured paragraph answers.</li>
-          <li>• Grammar must transfer into real writing and speech, not only workbook correction.</li>
-          <li>• Classroom participation and oral explanation start affecting overall confidence.</li>
-          <li>• Children are expected to justify answers, not only select them.</li>
+          <li>• Parents of children aged 7-10 who need targeted English skill growth.</li>
+          <li>• Children who read but struggle with grammar, writing, or response quality.</li>
+          <li>• Children who avoid speaking or give very short classroom answers.</li>
+          <li>• Families seeking a stage-based plan instead of disconnected tuition activities.</li>
         </ul>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">Parent symptom map for this age band</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">What children aged 7-10 usually need at this stage</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Child behavior: reads passage but cannot explain answers. What it may mean: comprehension expression gap. Next step: teach answer framing with evidence from text.</li>
-          <li>• Child behavior: knows grammar rules but repeats writing errors. What it may mean: transfer gap. Next step: apply grammar in child’s own sentences daily.</li>
-          <li>• Child behavior: writes very short responses. What it may mean: weak structure planning. Next step: use simple response template (point, reason, example).</li>
-          <li>• Child behavior: avoids speaking in class. What it may mean: performance confidence gap. Next step: build short oral explanation routines.</li>
-          <li>• Child behavior: performs unevenly across tasks. What it may mean: unbalanced skill development. Next step: use integrated weekly plan across reading-writing-speaking.</li>
+          <li>• Reading fluency with stronger understanding, not only word recognition.</li>
+          <li>• Grammar accuracy that appears in everyday writing and speaking.</li>
+          <li>• Sentence formation that supports complete, logical responses.</li>
+          <li>• Paragraph writing structure for school answer quality.</li>
+          <li>• Clear communication confidence in class discussions and oral responses.</li>
         </ul>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What to check at home this week</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Common parent concerns for ages 7-10</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Comprehension: can your child answer who/why/how questions with evidence from text?</li>
-          <li>• Writing: can your child write 4-6 connected sentences with clear flow?</li>
-          <li>• Grammar transfer: can your child self-correct common sentence errors?</li>
-          <li>• Speaking: can your child explain one idea in complete sentences without freezing?</li>
-        </ul>
-      </section>
-
-      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What each result suggests</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>• Reading okay, writing weak: prioritize response-structure writing practice.</li>
-          <li>• Grammar knowledge okay, usage weak: increase applied sentence-editing tasks.</li>
-          <li>• Writing okay, speaking weak: add short oral explanation and presentation routines.</li>
-          <li>• Multiple areas weak: use an integrated age-stage support pathway.</li>
+          <li>• Reading fluency is weak despite regular school reading.</li>
+          <li>• Grammar mistakes repeat in writing and speech.</li>
+          <li>• Sentence formation is unclear or incomplete.</li>
+          <li>• Child gives short answers and avoids detailed speaking.</li>
+          <li>• Writing gaps appear in paragraph structure and clarity.</li>
+          <li>• Confidence drops during class participation or assessments.</li>
         </ul>
       </section>
 
       <section className="mb-10 rounded-xl border border-emerald-100 bg-emerald-50 p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What to start doing</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">What Tiny Steps teaches for ages 7-10</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Use one weekly cycle: read, discuss, write, explain aloud.</li>
-          <li>• Practise answer quality with short prompts instead of only worksheet completion.</li>
-          <li>• Keep grammar correction linked to child-created writing samples.</li>
-          <li>• Track one visible gain per week in comprehension, writing, and speaking.</li>
+          <li>• Reading fluency and comprehension for meaning-focused learning.</li>
+          <li>• Applied grammar for accurate writing and speaking.</li>
+          <li>• Sentence formation practice for complete and structured answers.</li>
+          <li>• Paragraph writing support for stronger school responses.</li>
+          <li>• Communication practice for confident oral expression.</li>
         </ul>
       </section>
 
-      <section className="mb-10 rounded-xl border border-rose-100 bg-rose-50 p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What to avoid</h2>
+      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">How classes move from basics to independent expression</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Do not treat this age as only grammar-drill stage.</li>
-          <li>• Do not separate reading, writing, and speaking into disconnected routines for long.</li>
-          <li>• Do not measure progress only by test scores without expression quality checks.</li>
-          <li>• Do not overload advanced content before core response skills are stable.</li>
+          <li>• Start with reading clarity and fluency baseline.</li>
+          <li>• Strengthen grammar usage in real sentence contexts.</li>
+          <li>• Build sentence and paragraph structure with guided templates.</li>
+          <li>• Train structured oral answers with explanation cues.</li>
+          <li>• Progress toward independent written and spoken expression.</li>
         </ul>
       </section>
 
-      <section className="mb-10 rounded-xl border border-amber-100 bg-amber-50 p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">When to choose structured support</h2>
+      <section className="mb-10 rounded-xl border border-sky-100 bg-sky-50 p-6">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Recommended learning path</h2>
+        <p className="text-slate-700">
+          reading fluency → grammar accuracy → sentence formation → paragraph writing → structured answers → confident communication
+        </p>
+      </section>
+
+      <section className="mb-10 rounded-xl border border-slate-200 bg-slate-50 p-6">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">What we check in the assessment</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• School feedback repeatedly flags comprehension and answer-quality concerns.</li>
-          <li>• Child works hard but written and spoken response clarity stays low.</li>
-          <li>• Parent sees mixed performance and cannot identify the right focus sequence.</li>
-          <li>• Child confidence drops before class participation or assessments.</li>
+          <li>• Reading fluency and comprehension level</li>
+          <li>• Grammar control in written and spoken responses</li>
+          <li>• Sentence and paragraph structure quality</li>
+          <li>• Response depth in oral explanations</li>
+          <li>• Confidence patterns in communication tasks</li>
         </ul>
       </section>
 
@@ -157,9 +178,9 @@ export default function EnglishClassesFor7To10YearOldPage() {
             </Link>
           </li>
           <li>
-            • For baseline multi-skill pathway:{' '}
-            <Link to="/english-foundation-program" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              English Foundation Program
+            • For earlier-stage pathway context:{' '}
+            <Link to="/english-classes-for-5-year-old" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              English Classes for 5-Year-Old Children
             </Link>
           </li>
           <li>
@@ -180,18 +201,44 @@ export default function EnglishClassesFor7To10YearOldPage() {
               Speaking Classes
             </Link>
           </li>
+          <li>
+            • For writing-focused support:{' '}
+            <Link to="/writing-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Writing Classes for Kids
+            </Link>
+          </li>
+          <li>
+            • For course comparison:{' '}
+            <Link to="/courses" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Explore Courses
+            </Link>
+          </li>
+          <li>
+            • For immediate assessment booking:{' '}
+            <Link to="/book-demo" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Book Free Assessment
+            </Link>
+          </li>
         </ul>
       </section>
 
       <section className="rounded-xl bg-slate-900 p-8 text-center text-white">
-        <h2 className="text-2xl font-bold">Ready to strengthen age-appropriate English skills for 7-10?</h2>
-        <p className="mt-2 text-slate-200">Book a free assessment and get a clear next-step plan.</p>
-        <Link
-          to="/book-demo"
-          className="mt-6 inline-block rounded-lg bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100"
-        >
-          Book Demo
-        </Link>
+        <h2 className="text-2xl font-bold">Parent action: book a free assessment first</h2>
+        <p className="mt-2 text-slate-200">Get a clear ages 7-10 pathway for reading, grammar, writing, and confident communication.</p>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            to="/book-demo"
+            className="inline-block rounded-lg bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100"
+          >
+            Book Free Assessment
+          </Link>
+          <Link
+            to="/courses"
+            className="inline-block rounded-lg border border-white/40 px-6 py-3 font-semibold text-white transition hover:border-white/70"
+          >
+            Explore Courses
+          </Link>
+        </div>
       </section>
     </div>
   );

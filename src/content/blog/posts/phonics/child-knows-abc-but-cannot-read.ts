@@ -2,50 +2,59 @@ import type { PhonicsSeoPost } from '../../types';
 
 const post: PhonicsSeoPost = {
   slug: 'child-knows-abc-but-cannot-read',
-  title: 'My Child Knows ABC but Cannot Read: What Parents Should Do Next',
-  focus: 'child knows ABC but cannot read',
-  quickAnswer: 'Parent question: "My child knows letters, so why is reading still hard?" The usual reason is a stage mismatch, not low ability: letter names are in place, but sound mapping, blending, and decodable reading are not yet automatic. Identify the exact break point and run one calm, daily phonics routine that targets that step first.',
+  title: 'Child Knows ABC but Cannot Read: What Parents Should Check First',
+  focus: 'child knows ABC but cannot read words',
+  quickAnswer: 'If your child can recite ABC but still cannot read words, the issue is usually not intelligence or effort. Most children need stronger letter-sound connection, blending, and early decoding routines before reading becomes automatic. Start with a simple at-home diagnostic checklist, then focus practice on the exact weak step.',
   homePlan: [
-    'Run a 3-minute parent self-check before practice: (1) sound recall on 8 lowercase letters, (2) oral blending of 3 words like /m/ /a/ /t/, (3) reading 5 no-picture CVC words.',
-    'Interpret results quickly: names-not-sounds usually means sound-mapping gap; sounds-but-no-blending means sequencing gap; first-letter or picture guessing means decoding stamina is weak; refusal/avoidance often means confidence load is high.',
-    'Start this week with one focused routine only: 2 minutes sound review, 4 minutes blending, 4 minutes decodable reading. Keep the same pattern for 7 days before changing materials.',
-    'Use tightly controlled practice words (for example: mat, sat, pin, top, sun) and ask for full left-to-right decoding before your child says the word.',
-    'After each session, note one signal in a parent log: accurate sounds, smoother blending, reduced guessing, or lower avoidance. This tells you what to teach next.',
-    'If blending improves but sentence reading still stalls, add one short decodable sentence daily and ask one meaning question after reading.',
-    'If no improvement appears after 2-3 weeks of consistent practice, move from home-only practice to structured guided support.'
+    'At-home diagnostic checklist, step 1: Can your child identify letter sounds (not just letter names) for common lowercase letters?',
+    'At-home diagnostic checklist, step 2: Can your child hear first, middle, and last sounds in simple words like cat, pin, sun?',
+    'At-home diagnostic checklist, step 3: Can your child blend two sounds smoothly, for example /a/ + /t/ = at?',
+    'At-home diagnostic checklist, step 4: Can your child blend three sounds, for example /c/ /a/ /t/ = cat?',
+    'At-home diagnostic checklist, step 5: Can your child read simple CVC words without heavy prompting?',
+    'At-home diagnostic checklist, step 6: Does your child guess words from pictures instead of decoding letters?',
+    'At-home diagnostic checklist, step 7: Does your child forget sounds while reading and restart often?',
+    'Common reasons this happens: children may memorize alphabet names but still have weak letter-sound mapping, weak blending, weak phonemic awareness, too much guessing, or not enough structured daily practice.',
+    'What parents can do at home: use short sound games, oral blending before print, simple CVC blending, and one calm 10-minute routine daily. Avoid pressure and avoid random word lists without sequence.',
+    'If progress stays flat after 2-3 weeks of consistent guided practice, move from home-only support to structured reading intervention.'
   ],
-  classChecklistFocus: 'Ask whether the teacher can identify your child’s exact break point (sound recall, blending, or decodable reading), then show a plan to fix that step first rather than reteaching everything at once.',
-  avoidFocus: 'Do not rely on alphabet recitation, picture clues, or random app play as your main reading method. Do not push harder books before your child can decode short decodable words accurately.',
-  progress: 'In the first 1-2 weeks, parents should usually see clearer sound recall and less random guessing. By weeks 3-4, many children can decode a small set of unfamiliar CVC words more steadily when routines stay consistent.',
-  support: 'Seek structured phonics support when your child can name letters but still cannot blend basic words after 6-8 weeks of consistent practice, or when reading avoidance keeps increasing despite low-pressure routines.',
+  classChecklistFocus: 'Distinct parent decision rule: if your child cannot pass the checklist steps above, start with phonics and blending support first. If decoding improves but passage reading stays slow, add reading-fluency support next.',
+  avoidFocus: 'Knowing ABC is not the same as reading. Reading needs sound awareness, blending, decoding, and practice transfer. Avoid relying only on alphabet recitation, picture guessing, or unsystematic worksheets.',
+  progress: 'In many children, the first wins are better sound recall and less guessing. Next comes smoother CVC blending, then stronger early sentence reading and confidence. Keep routines short, consistent, and stage-matched.',
+  support: 'Seek structured support when your child still cannot blend simple words after consistent home practice, avoids reading more over time, or decodes words but cannot progress toward fluency. Tiny Steps starts with assessment, phonics gap checks, blending practice, then a reading fluency pathway with confidence-building.',
   faq: [{
-    question: 'My child can say A to Z but cannot read simple words. Is this normal?',
-    answer: 'Yes, this is common. Alphabet recitation and word reading are different skills. Reading needs sound mapping plus blending, not letter names alone.'
+    question: 'Why does my child know ABC but cannot read words?',
+    answer: 'Because alphabet names and reading are different skills. Reading needs letter-sound mapping, blending, and decoding practice before words become automatic.'
   }, {
-    question: 'How do I know whether the real issue is sounds or blending?',
-    answer: 'Do a quick split test: ask for letter sounds in isolation, then ask for oral blending. If sounds are correct but blending fails, teach blending directly. If sounds are inconsistent, rebuild sound recall first.'
+    question: 'Should I teach letter names or letter sounds first?',
+    answer: 'Teach both, but prioritize letter sounds for reading. Children use sounds, not names, to decode words.'
   }, {
-    question: 'My child guesses from pictures or the first letter. What should I do?',
-    answer: 'Switch to decodable text with minimal picture support for practice sessions. Use the prompt: "Show me each sound, then blend." This retrains decoding habits.'
+    question: 'What is blending in phonics?',
+    answer: 'Blending is joining separate sounds to form a word, for example /c/ /a/ /t/ to read cat. It is a core bridge between knowing sounds and real reading.'
   }, {
-    question: 'How much phonics screen time is useful for this problem?',
-    answer: 'Short, targeted use can help, but games should support the exact weak skill and transfer to print reading. Keep game time limited and follow with real-word or sentence decoding.'
+    question: 'How can I help my child read simple words at home?',
+    answer: 'Use short daily routines: sound recall, oral blending, then simple CVC decoding with low pressure. Keep practice consistent and avoid random word memorization.'
   }, {
-    question: 'When are games and home practice not enough?',
-    answer: 'If your child still cannot blend basic words after several weeks of consistent guided practice, or anxiety rises around reading, move to structured phonics instruction with clear progress checks.'
+    question: 'When should I get reading support for my child?',
+    answer: 'Get structured support when blending does not improve after consistent practice, guessing patterns persist, or reading confidence keeps dropping.'
   }, {
-    question: 'Should I teach sight words first if blending is hard?',
-    answer: 'Use a small sight-word set only as support. Keep decoding and blending as the core, because that is what enables independent reading of new words.'
+    question: 'Can Tiny Steps assess my child’s reading gaps?',
+    answer: 'Yes. Tiny Steps can assess phonics and blending gaps, identify the current reading stage, and recommend the right next pathway.'
   }],
   relatedReads: [{
+    label: 'Parent support guide: child not reading properly',
+    to: '/child-not-reading-properly'
+  }, {
     label: 'Explore structured phonics support',
     to: '/phonics'
   }, {
-    label: 'What is phonics for kids?',
-    to: '/blog/what-is-phonics-for-kids'
+    label: 'Explore reading classes for kids',
+    to: '/reading-classes-for-kids'
   }, {
-    label: 'How phonics classes help kids read',
-    to: '/blog/how-phonics-classes-help-kids-read'
+    label: 'Slow reader child help guide',
+    to: '/slow-reader-child-help'
+  }, {
+    label: 'Book free assessment',
+    to: '/book-demo'
   }]
 };
 

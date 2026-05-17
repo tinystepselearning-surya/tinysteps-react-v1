@@ -6,29 +6,34 @@ import { createFAQPageSchema } from '../../lib/schemas';
 
 const faqItems = [
   {
-    question: 'Why is my child not reading properly?',
+    question: 'Why does my child know letters but still not read words?',
     answer:
-      'A child may struggle with reading because of gaps in letter sounds, blending, decoding, reading fluency, vocabulary, comprehension, or confidence. The exact gap should be identified before choosing worksheets or classes.',
+      'Many children know letter names but still struggle with letter sounds, blending, or decoding. Reading improves when the exact gap is identified and taught in a clear sequence.',
   },
   {
-    question: 'My child knows ABC but cannot read words. What should I do?',
+    question: 'Should I start with phonics or reading practice?',
     answer:
-      'If a child knows letters but cannot read words, they may need phonics and blending support. Start with letter sounds, simple blending, and guided word reading instead of memorizing word lists.',
+      'If your child cannot decode words, phonics and blending should come first. If your child can decode but reads slowly or misses meaning, focused reading fluency and comprehension practice may be the better starting point.',
   },
   {
-    question: 'What is the difference between phonics support and reading support?',
+    question: 'How do I know if my child needs reading support?',
     answer:
-      'Phonics support helps children decode sounds and words. Reading support helps children improve fluency, expression, comprehension, and confidence while reading sentences and passages.',
+      'A child may need reading support if they read slowly, guess words, avoid passages, forget words quickly, or cannot explain what they read after finishing.',
   },
   {
-    question: 'Can online classes help a child who reads slowly?',
+    question: 'Can online classes help a child who is not reading properly?',
     answer:
-      'Yes. Live online reading classes can help when the teacher checks the child’s reading stage, corrects mistakes, builds fluency, and gives guided practice through words, sentences, and passages.',
+      'Yes. Live online classes can help when the teacher identifies the child’s gap, gives guided correction, and builds skills step by step through words, sentences, passages, and comprehension tasks.',
   },
   {
-    question: 'How do I know which course my child needs?',
+    question: 'How long does reading improvement usually take?',
     answer:
-      'A free assessment can help identify whether the child needs phonics, reading fluency, comprehension, grammar, or a combined learning path.',
+      'Improvement timelines differ by age, starting level, and consistency. Many parents notice early confidence and accuracy improvements first, followed by stronger fluency and comprehension with regular guided practice.',
+  },
+  {
+    question: 'What happens in a Tiny Steps assessment?',
+    answer:
+      'In the assessment, Tiny Steps checks reading stage, phonics, blending, fluency, comprehension, sentence formation, and communication confidence. Parents then receive a clear recommendation for the next learning path.',
   },
 ];
 
@@ -85,7 +90,26 @@ export default function ChildNotReadingProperlyPage() {
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">Why children may not read properly</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Quick Answer for Parents</h2>
+        <p className="text-slate-700">
+          If your child is not reading properly, the issue is usually not effort. It is usually a skill-sequencing gap in phonics, blending, reading fluency, comprehension, or confidence. The fastest progress comes from identifying the exact gap first, then following the right learning path.
+        </p>
+      </section>
+
+      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Common signs parents notice</h2>
+        <ul className="space-y-2 text-slate-700">
+          <li>• Your child knows letters but cannot read simple words.</li>
+          <li>• Your child guesses words instead of decoding carefully.</li>
+          <li>• Your child reads one word at a time with long pauses.</li>
+          <li>• Your child forgets words and avoids reading passages.</li>
+          <li>• Your child can read but cannot explain what was read.</li>
+          <li>• Your child becomes nervous or shuts down during reading.</li>
+        </ul>
+      </section>
+
+      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Why children may know letters but still struggle to read</h2>
         <ul className="space-y-2 text-slate-700">
           <li>• They know letter names but not letter sounds.</li>
           <li>• They know sounds but cannot blend them into words.</li>
@@ -140,14 +164,49 @@ export default function ChildNotReadingProperlyPage() {
       </section>
 
       <section className="mb-10 rounded-xl border border-sky-100 bg-sky-50 p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">How Tiny Steps helps</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Tiny Steps reading support approach</h2>
         <ul className="space-y-2 text-slate-700">
           <li>1. We understand the child’s age, school level, and reading concern.</li>
-          <li>2. We check whether the gap is phonics, blending, fluency, comprehension, or confidence.</li>
-          <li>3. We recommend the right path: phonics, reading support, or a combined plan.</li>
-          <li>4. The child practises through live guided words, sentences, passages, and correction.</li>
-          <li>5. Parents receive clear next-step guidance and progress updates.</li>
+          <li>2. We identify whether the root gap is phonics, blending, fluency, comprehension, or confidence.</li>
+          <li>3. We use live teacher-guided practice with correction, repetition, and stage-based progression.</li>
+          <li>4. We connect reading skills with grammar, sentence formation, communication, and confidence growth.</li>
+          <li>5. Parents receive clear next steps and practical home support guidance.</li>
         </ul>
+      </section>
+
+      <section className="mb-10 rounded-xl border border-sky-100 bg-sky-50 p-6">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">What we check in the assessment</h2>
+        <ul className="space-y-2 text-slate-700">
+          <li>• Letter-sound awareness and decoding readiness</li>
+          <li>• Blending accuracy and word-reading speed</li>
+          <li>• Sentence reading fluency and expression</li>
+          <li>• Passage understanding and retelling</li>
+          <li>• Sentence formation, communication, and confidence indicators</li>
+        </ul>
+      </section>
+
+      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Recommended learning path</h2>
+        <p className="text-slate-700">
+          phonics → blending → reading fluency → comprehension → confidence
+        </p>
+        <p className="mt-3 text-sm text-slate-700">
+          This pathway helps children build reading skill in the right order instead of jumping to random worksheets or memorization.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3 text-sm font-semibold">
+          <Link to="/phonics" className="underline underline-offset-2">
+            Explore Phonics
+          </Link>
+          <Link to="/reading-classes-for-kids" className="underline underline-offset-2">
+            Explore Reading Support
+          </Link>
+          <Link to="/courses" className="underline underline-offset-2">
+            Compare All Courses
+          </Link>
+          <Link to="/slow-reader-child-help" className="underline underline-offset-2">
+            Read Slow Reader Help
+          </Link>
+        </div>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-slate-50 p-6">
@@ -163,16 +222,24 @@ export default function ChildNotReadingProperlyPage() {
       </section>
 
       <section className="rounded-xl bg-slate-900 p-8 text-center text-white">
-        <h2 className="text-2xl font-bold">Not sure why your child is struggling to read?</h2>
+        <h2 className="text-2xl font-bold">Parent action: start with a free assessment</h2>
         <p className="mt-3 text-slate-200">
           Start with a free assessment. Tiny Steps will check your child&apos;s reading stage and recommend whether the right starting point is phonics, reading support, grammar, or a combined path.
         </p>
-        <Link
-          to="/book-demo"
-          className="mt-6 inline-block rounded-lg bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100"
-        >
-          Book Free Assessment
-        </Link>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            to="/book-demo"
+            className="inline-block rounded-lg bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100"
+          >
+            Book Free Assessment
+          </Link>
+          <Link
+            to="/courses"
+            className="inline-block rounded-lg border border-white/40 px-6 py-3 font-semibold text-white transition hover:border-white/70"
+          >
+            Explore Courses
+          </Link>
+        </div>
       </section>
       <ClusterSeoNav cluster="phonics" />
     </div>
