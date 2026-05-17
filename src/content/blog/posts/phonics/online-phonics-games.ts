@@ -2,52 +2,58 @@ import type { PhonicsSeoPost } from '../../types';
 
 const post: PhonicsSeoPost = {
   slug: 'online-phonics-games',
-  title: 'Online Phonics Games: What Helps, What Wastes Time, and What to Do Next',
-  focus: 'online phonics games',
-  quickAnswer: 'Online phonics games are useful as reinforcement, not as the full reading plan. They work when parents pick games by exact skill gap, keep sessions short, and force transfer to print reading immediately after play.',
+  title: 'Online Phonics Games for Kids: What Actually Builds Reading',
+  focus: 'online phonics games evaluation for reading progress',
+  quickAnswer: 'Online phonics games can help, but only when they build real reading skills instead of screen entertainment. Useful games improve sound accuracy, blending, and reading transfer. If a game is fun but does not improve decoding, it is not enough.',
   homePlan: [
-    'Select one game goal per week: sound recall, blending, segmenting, tricky words, or early fluency.',
-    'Run a fixed game block (8-10 minutes) followed by a transfer block (3-5 minutes of print blending or sentence reading).',
-    'Use one verification check after each session: can your child decode an unfamiliar word related to the game target?',
-    'Track one metric daily: guesses reduced, retry quality, or independent decoding attempts.',
-    'Keep the same game target for 3-4 days before switching so skill consolidation happens.',
-    'If progress stalls for 2 weeks, reduce game variety and increase guided correction outside the app.'
+    'Start with one clear goal: sound accuracy, blending, early reading, fluency, or comprehension support.',
+    'Use the parent checklist: does the game teach sounds correctly, support blending, match age level, include reading transfer, reduce guessing, and give meaningful feedback?',
+    'Keep short sessions and follow each game with print or oral transfer to check real reading progress.',
+    'For children who know letters but cannot read, prioritize sound-to-blending games over random rewards.',
+    'For slow readers, use fluency-friendly tasks only after decoding basics are stable.',
+    'If no measurable reading improvement appears in 4-6 weeks, move to structured teacher-led support.'
   ],
-  classChecklistFocus: 'Use games as assigned homework only when a teacher or parent reviews transfer evidence weekly and adjusts targets by stage.',
-  avoidFocus: 'Avoid random game hopping, reward-heavy tapping games, or screen-only routines without reading transfer. Engagement without transfer is not reading progress.',
-  progress: 'Common pattern: first improved attention and sound recognition, then better blending control, then stronger short sentence decoding when transfer routines are consistent.',
-  support: 'If your child still guesses heavily, cannot blend basic words, or avoids print after 6-8 weeks of guided game-plus-transfer practice, switch to structured live instruction.',
+  classChecklistFocus: 'Choose games that move from letter sounds to blending to reading transfer, with feedback parents can observe and track weekly.',
+  avoidFocus: 'Avoid game-only routines that reward tapping speed, guessing, or random progress badges without decoding and reading outcomes.',
+  progress: 'Expected sequence: better sound recognition first, then blending stability, then improved word reading and sentence confidence when transfer practice is consistent.',
+  support: 'Games are not enough for every child. If your child still guesses, struggles with blending, reads slowly, avoids reading, or loses confidence, structured phonics and reading support may be needed.',
   faq: [{
-    question: 'How much screen time is enough for online phonics games?',
-    answer: 'For most children, 8-12 focused minutes is enough when followed immediately by 3-5 minutes of offline blending, reading, or spelling.'
+    question: 'Are online phonics games good for children?',
+    answer: 'Yes, when games are used as guided skill practice with reading transfer. They work best when parents choose stage-appropriate games and track whether decoding actually improves.'
   }, {
-    question: 'Do children still need a live teacher or parent when using phonics games?',
-    answer: 'Yes. Games help with repetition, but children still need guided correction and stage-appropriate next steps from a teacher or parent.'
+    question: 'What kind of phonics games help with reading?',
+    answer: 'Games that teach sound accuracy, blending, and decoding transfer are most useful. Choose games where children must hear, say, and apply sounds in words and short reading tasks.'
   }, {
-    question: 'When are online phonics games not enough on their own?',
-    answer: 'If your child keeps guessing words, cannot blend reliably, or reads with repeated breakdowns after 6-8 weeks, structured live teaching is usually needed.'
+    question: 'Can games help a child who knows letters but cannot read words?',
+    answer: 'Yes, especially when games focus on sound-to-blending progression. But children still need guided correction and structured follow-through for reliable reading growth.'
   }, {
-    question: 'How do I know a phonics game is actually teaching, not just entertaining?',
-    answer: 'Check whether your child can apply the target skill on new words outside the game. If transfer is absent, the game is likely entertainment-heavy.'
+    question: 'Are phonics apps enough without teacher support?',
+    answer: 'Not always. Apps can reinforce practice, but many children need teacher or parent feedback to correct errors, prevent guessing, and build confidence.'
   }, {
-    question: 'Should I use different games every day to avoid boredom?',
-    answer: 'No. Keep the skill target stable and rotate lightly. Frequent full switches often reduce retention and make progress hard to measure.'
+    question: 'How should parents choose online phonics games?',
+    answer: 'Use a practical checklist: sound accuracy, blending support, age fit, reading transfer, anti-guessing design, useful feedback, and clear stage alignment.'
   }, {
-    question: 'Can games help children who resist worksheets?',
-    answer: 'Yes, as an entry point. But add a short print or oral transfer step after play so game success becomes reading success.'
+    question: 'What happens in a Tiny Steps phonics assessment?',
+    answer: 'Tiny Steps checks sound clarity, blending readiness, decoding behavior, reading pace signals, and confidence, then recommends the right next pathway.'
   }],
   relatedReads: [{
-    label: 'Phonics games for letter sounds',
+    label: 'Daily routine for letter-sound practice',
     to: '/blog/phonics-games-for-letter-sounds'
   }, {
-    label: 'Phonics activities at home',
-    to: '/blog/phonics-activities-for-kids-at-home'
+    label: 'Explore Tiny Steps phonics program',
+    to: '/phonics'
   }, {
-    label: 'Child knows ABC but cannot read',
-    to: '/blog/child-knows-abc-but-cannot-read'
+    label: 'Reading classes for kids',
+    to: '/reading-classes-for-kids'
   }, {
-    label: 'Phonics for parents guide',
-    to: '/blog/phonics-for-parents-guide'
+    label: 'Parent support: child not reading properly',
+    to: '/child-not-reading-properly'
+  }, {
+    label: 'Slow reader child help guide',
+    to: '/slow-reader-child-help'
+  }, {
+    label: 'Book free assessment',
+    to: '/book-demo'
   }]
 };
 

@@ -8,34 +8,52 @@ import AutoLinkedText from '../../components/seo/AutoLinkedText';
 import { createWebPageSchema, organizationSchema, websiteSchema } from '../../lib/schemas';
 
 const heroSignals = [
-  'Practical guides for ages 3-12',
-  'Phonics, grammar, speaking, and home routines',
-  'Built for busy and multilingual families',
+  'Identify the exact learning concern quickly',
+  'Route to the right phonics, reading, grammar, or speaking support',
+  'Move from confusion to a clear next step',
 ];
 
 const quickRoutes = [
   {
-    title: 'My child is just starting phonics',
-    detail: 'Start with the first steps, daily sound practice, and a calm beginner routine.',
-    to: '/parents/getting-started',
+    title: 'Child knows letters but cannot read words',
+    detail: 'Start with the right reading-gap support page before trying random worksheets.',
+    to: '/child-not-reading-properly',
     accent: 'from-[#fff3e0] to-[#f8fbff]',
   },
   {
-    title: 'My child knows some sounds but reading is inconsistent',
-    detail: 'Use the phonics mission and reading-at-home routine to tighten decoding and fluency.',
-    to: '/parents/phonics-mission',
+    title: 'Child reads slowly',
+    detail: 'Use the slow-reader support guide to diagnose blending, fluency, and confidence gaps.',
+    to: '/slow-reader-child-help',
     accent: 'from-[#eef6ff] to-[#fff8ef]',
   },
   {
-    title: 'Homework is turning into stress',
-    detail: 'Use parent scripts, time limits, and lower-pressure support instead of over-correcting.',
-    to: '/parents/helping-with-homework',
+    title: 'Child needs reading classes',
+    detail: 'Go to the evergreen reading support page for fluency and comprehension progression.',
+    to: '/reading-classes-for-kids',
     accent: 'from-[#fff5f2] to-[#fffaf5]',
   },
   {
-    title: 'I want to know if progress is actually happening',
-    detail: 'Review milestones, what to expect by age, and how to notice meaningful changes at home.',
-    to: '/parents/tracking-progress',
+    title: 'Child makes grammar mistakes',
+    detail: 'Use the grammar pathway for sentence accuracy, writing clarity, and application.',
+    to: '/grammar',
+    accent: 'from-[#f3f8ef] to-[#eef6ff]',
+  },
+  {
+    title: 'Child needs sentence formation or writing support',
+    detail: 'Use the writing support page for sentence-building and writing progression.',
+    to: '/writing-classes-for-kids',
+    accent: 'from-[#eef6ff] to-[#fff8ef]',
+  },
+  {
+    title: 'Child gives short answers or lacks confidence',
+    detail: 'Use the shy-child communication guide for confidence and expressive speaking support.',
+    to: '/shy-child-speaking-confidence',
+    accent: 'from-[#fff5f2] to-[#fffaf5]',
+  },
+  {
+    title: 'Parent unsure which course to choose',
+    detail: 'Use the dedicated choosing-course page to match the child’s current gap to the right path.',
+    to: '/parents/choosing-course',
     accent: 'from-[#f3f8ef] to-[#eef6ff]',
   },
 ];
@@ -132,60 +150,60 @@ const helpLanes = [
 ];
 const quickAnswerFaqItems = [
   {
-    question: 'What can parents find on the Tiny Steps Parents page?',
+    question: 'Find your child’s current concern quickly',
     answer:
-      'Parents can find guidance about online classes, learning programs, progress updates, parent support, and how Tiny Steps helps children build English foundations.',
+      'Use concern-based routes for reading, grammar, writing, and communication confidence so you start from the real gap.',
   },
   {
-    question: 'How does Tiny Steps keep parents informed?',
+    question: 'Choose the right support page',
     answer:
-      'Tiny Steps shares updates about what the child is learning, how the child is participating, where the child is improving, and which areas need more practice.',
+      'Move directly to the right page for phonics, reading, grammar, writing, or communication instead of mixing unrelated activities.',
   },
   {
-    question: 'Which learning areas can parents understand through Tiny Steps?',
+    question: 'Understand how decisions are made',
     answer:
-      'Parents can understand support for phonics, reading, grammar, sentence formation, vocabulary use, communication skills, and public speaking.',
+      'Tiny Steps uses assessment, gap identification, and stage-wise recommendations before suggesting a course path.',
   },
   {
-    question: 'How should parents use this page?',
+    question: 'Track progress with clarity',
     answer:
-      'Parents can use this page to explore programs, understand the learning approach, review support resources, and decide the next step for their child.',
+      'Parents can review progress indicators and next-step guidance so home support stays practical and consistent.',
   },
 ];
 
 const parentFaqs = [
   {
-    question: 'Where should I start if my child is 3-6 and still learning early sounds?',
+    question: 'What can parents do from the Tiny Steps Parents Hub?',
     answer:
-      'Start with Getting Started and Phonics Mission. Those two pages give the clearest first-week path for sound-letter links, blending, and low-pressure home routines.',
+      'Parents can identify the child’s main learning concern, open the most relevant support page, and move to a clear next-step plan for classes and home support.',
   },
   {
-    question: 'What if my child is older but still struggles to read fluently?',
+    question: 'How do I know which course my child needs?',
     answer:
-      'Use Reading at Home, Tracking Progress, and the Phonics for Parents research guide. Older children often still need structured decoding support, just presented with more maturity.',
+      'Start with the concern-specific route and then use assessment guidance to identify whether the child needs phonics, reading, grammar, writing, communication, or a combined path.',
   },
   {
-    question: 'How much daily practice is realistic for most families?',
+    question: 'What if my child knows letters but cannot read words?',
     answer:
-      'For many homes, 10 calm minutes is enough. The goal is repetition and confidence, not long study sessions that increase resistance.',
+      'Use the child-not-reading-properly support page first. This usually indicates decoding or blending gaps that need structured phonics and reading guidance.',
   },
   {
-    question: 'Can I use these guides even if we speak another language at home?',
+    question: 'What if my child reads slowly or avoids reading?',
     answer:
-      'Yes. Tiny Steps content is written with multilingual families in mind. Home language can support understanding while English reading practice builds decoding and fluency.',
+      'Use the slow-reader and reading-classes support pages to check whether the gap is blending, fluency, comprehension, confidence, or a mix.',
   },
   {
-    question: 'Should I read every parent page before taking action?',
+    question: 'How does Tiny Steps track a child’s progress?',
     answer:
-      'No. This hub is designed for routing. Pick the playbook that best matches your current problem, use it for a week, then come back only if you need a deeper next step.',
+      'Tiny Steps tracks progress through stage-based learning goals, teacher observations, and practical next-step guidance that parents can follow at home.',
   },
   {
-    question: 'Where do I go for a more complete question bank?',
+    question: 'Should I book an assessment before choosing a course?',
     answer:
-      'Use the full FAQ page if you want answers on classes, pricing, phonics, grammar, speaking confidence, scheduling, and parent support questions in one place.',
+      'Yes. Assessment helps identify the real learning gap first, so parents can choose the right path with more confidence and less trial-and-error.',
   },
 ];
-const combinedFaqItems = [...quickAnswerFaqItems, ...parentFaqs];
+const combinedFaqItems = [...parentFaqs];
 
 const breadcrumbSchema = {
   '@context': 'https://schema.org',
@@ -275,12 +293,11 @@ const ParentsHubPage: React.FC = () => {
                 Tiny Steps Parents Hub
               </div>
               <h1 className="mt-6 max-w-4xl text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-[4rem] lg:leading-[1.02]">
-                A premium parent help desk for phonics, reading, grammar, and speaking growth
+                Parents Hub: Choose the Right Learning Path for Your Child
               </h1>
               <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-200">
-                Use this hub when you need the next right move for your child, not a long random scroll.
-                Every page is written to help parents choose a routine, fix a blocker, and support progress
-                at home with clarity.
+                Use this hub to identify your child’s current learning concern and move directly to the right
+                support page across phonics, reading, grammar, writing, communication, and progress tracking.
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3 text-sm text-slate-100">
@@ -293,7 +310,7 @@ const ParentsHubPage: React.FC = () => {
 
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
-                  to="/?book=1"
+                  to="/book-demo"
                   className="inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
                 >
                   Book Free Assessment
@@ -308,7 +325,7 @@ const ParentsHubPage: React.FC = () => {
             </div>
 
             <div className="rounded-[2.2rem] border border-white/12 bg-slate-900/72 p-6 shadow-[0_30px_80px_rgba(2,6,23,0.4)] backdrop-blur">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">Start with your child’s current blocker</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">Common parent concerns and next-step pages</p>
               <div className="mt-5 divide-y divide-white/12">
                 {quickRoutes.map((route) => (
                   <Link key={route.title} to={route.to} className="group block py-4 first:pt-0 last:pb-0">
@@ -333,10 +350,8 @@ const ParentsHubPage: React.FC = () => {
         <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
           <h2 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">Quick Answer for Parents</h2>
           <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600 sm:text-base">
-            The Tiny Steps Parents page helps families understand how online English learning works for children across
-            phonics, grammar, sentence formation, communication, and public speaking. Parents can use this page to
-            explore learning support, understand program options, review class expectations, and learn how progress
-            updates help them see what the child is learning and what needs more practice.
+            This hub helps parents move from concern to action. Start with your child’s exact blocker, open the
+            right support page, and follow a clear path from assessment to recommendation to progress tracking.
           </p>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {quickAnswerFaqItems.map((item) => (
@@ -384,10 +399,10 @@ const ParentsHubPage: React.FC = () => {
         <section className="mt-10 grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)]">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Parent playbooks</p>
-            <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-950">Use the hub like a decision library, not a content dump</h2>
+            <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-950">What parents can do from this hub</h2>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-              Choose the page that matches the problem you are dealing with now, use that one deeply for a few
-              days, and only then move to the next layer. This keeps support practical and stops parent overload.
+              Use these pages to choose the right path, track progress, and support your child with practical
+              next steps instead of random activities.
             </p>
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               {parentPlaybooks.map((item) => (
@@ -425,7 +440,7 @@ const ParentsHubPage: React.FC = () => {
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <Link
-                  to="/?book=1"
+                  to="/book-demo"
                   className="inline-flex items-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                 >
                   Book Free Assessment
@@ -459,6 +474,59 @@ const ParentsHubPage: React.FC = () => {
                 <p className="mt-3 text-sm leading-7 text-slate-600">{item.detail}</p>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="mt-10 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Path Selection</p>
+          <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">How Tiny Steps decides the right path</h2>
+          <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <article className="rounded-[1.2rem] border border-slate-200 bg-slate-50/70 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary-700">Step 1</p>
+              <p className="mt-2 text-sm font-semibold text-slate-900">Assessment</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Understand current level, age context, and parent concerns.</p>
+            </article>
+            <article className="rounded-[1.2rem] border border-slate-200 bg-slate-50/70 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary-700">Step 2</p>
+              <p className="mt-2 text-sm font-semibold text-slate-900">Gap Identification</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Pinpoint phonics, reading, grammar, writing, or communication gaps.</p>
+            </article>
+            <article className="rounded-[1.2rem] border border-slate-200 bg-slate-50/70 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary-700">Step 3</p>
+              <p className="mt-2 text-sm font-semibold text-slate-900">Course Recommendation</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Choose the right route instead of trial-and-error planning.</p>
+            </article>
+            <article className="rounded-[1.2rem] border border-slate-200 bg-slate-50/70 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary-700">Step 4</p>
+              <p className="mt-2 text-sm font-semibold text-slate-900">Progress Tracking</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Track outcomes and adjust the next step clearly.</p>
+            </article>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3 text-sm">
+            <Link to="/parents/choosing-course" className="font-semibold text-primary-700 underline underline-offset-2">Choosing Course Guide</Link>
+            <Link to="/parents/tracking-progress" className="font-semibold text-primary-700 underline underline-offset-2">Tracking Progress Guide</Link>
+            <Link to="/phonics" className="font-semibold text-primary-700 underline underline-offset-2">Phonics</Link>
+            <Link to="/grammar" className="font-semibold text-primary-700 underline underline-offset-2">Grammar</Link>
+            <Link to="/speaking" className="font-semibold text-primary-700 underline underline-offset-2">Speaking</Link>
+            <Link to="/reading-classes-for-kids" className="font-semibold text-primary-700 underline underline-offset-2">Reading Classes</Link>
+            <Link to="/writing-classes-for-kids" className="font-semibold text-primary-700 underline underline-offset-2">Writing Classes</Link>
+          </div>
+        </section>
+
+        <section className="mt-10 rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#f8fbff,#fff6e8)] p-6 sm:p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Parent Progress and Support</p>
+          <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">Track progress and choose the next step with confidence</h2>
+          <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-600">
+            Use the progress page to review what is improving, what needs more support, and how to keep home
+            routines practical and consistent.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link to="/parents/tracking-progress" className="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:border-slate-400 hover:bg-slate-50">
+              Open Tracking Progress
+            </Link>
+            <Link to="/courses" className="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:border-slate-400 hover:bg-slate-50">
+              Explore Courses
+            </Link>
           </div>
         </section>
 
@@ -521,6 +589,12 @@ const ParentsHubPage: React.FC = () => {
                 Get slow reader child help
               </Link>
               <Link
+                to="/shy-child-speaking-confidence"
+                className="block rounded-[1.25rem] border border-white/80 bg-white/85 px-4 py-3 text-sm font-semibold text-slate-900 transition hover:border-slate-300"
+              >
+                Support shy child speaking confidence
+              </Link>
+              <Link
                 to="/english-classes-for-5-year-old"
                 className="block rounded-[1.25rem] border border-white/80 bg-white/85 px-4 py-3 text-sm font-semibold text-slate-900 transition hover:border-slate-300"
               >
@@ -546,16 +620,16 @@ const ParentsHubPage: React.FC = () => {
         <section className="mt-12 rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#101828,#1b2a46)] px-6 py-8 text-white shadow-[0_30px_80px_rgba(15,23,42,0.18)] sm:px-8">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">Need a structured next step?</p>
-              <h2 className="mt-3 text-3xl font-black tracking-tight">Turn parent questions into a plan you can use this week</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">Recommended Next Step</p>
+              <h2 className="mt-3 text-3xl font-black tracking-tight">Book an assessment before choosing the course path</h2>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-200">
-                Book a free assessment for a level-based recommendation, or browse courses and curriculum if you
-                want a clearer view of where your child fits right now.
+                Use assessment-first guidance to identify the strongest starting point in phonics, reading,
+                grammar, writing, or communication confidence.
               </p>
             </div>
             <div className="flex flex-wrap gap-3 lg:justify-end">
               <Link
-                to="/?book=1"
+                to="/book-demo"
                 className="inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
               >
                 Book Free Assessment

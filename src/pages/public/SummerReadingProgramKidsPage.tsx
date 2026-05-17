@@ -2,66 +2,64 @@ import { useEffect } from 'react';
 import ClusterSeoNav from '../../components/programs/ClusterSeoNav';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
+import { createFAQPageSchema } from '../../lib/schemas';
 
 const faqItems = [
   {
     question: 'What is a summer reading program for kids?',
     answer:
-      'A summer reading program is a short seasonal plan designed to protect reading momentum during school break. It focuses on consistency, fluency retention, and school-readiness rather than heavy academic overload.',
+      'A summer reading program is a focused seasonal learning plan that helps children maintain and improve reading fluency, comprehension, and confidence during school break.',
   },
   {
-    question: 'How is this different from a regular reading fluency program?',
+    question: 'Can summer reading classes help a slow reader?',
     answer:
-      'A regular fluency program is year-round and deeper in scope. This summer version is a focused bridge: maintain gains, prevent backslide, and return to school with steadier reading confidence.',
+      'Yes. Summer reading support can help slow readers through guided practice in blending, sentence reading, fluency, and confidence without school-term pressure.',
   },
   {
-    question: 'My child reads slowly and avoids books during vacation. Is this suitable?',
+    question: 'Is this different from regular reading classes?',
     answer:
-      'Yes. This is a common summer pattern. Short guided routines can reduce avoidance, rebuild flow, and keep reading from slipping during the break.',
+      'Yes. This page focuses on seasonal reading catch-up and school-readiness, while regular reading classes are year-round and broader in progression.',
   },
   {
-    question: 'How many weeks of summer reading support are usually useful?',
+    question: 'What if my child knows letters but cannot read words?',
     answer:
-      'Many families benefit from a focused multi-week block with steady weekly practice and clear goals. The key is consistency and right-level text, not long daily sessions.',
+      'That usually indicates phonics or blending gaps. Tiny Steps checks decoding readiness first and then recommends the right path for phonics, reading, or combined support.',
   },
   {
-    question: 'When should parents seek structured summer support?',
+    question: 'Do you check phonics and fluency before suggesting a path?',
     answer:
-      'Choose structured summer support if reading confidence dipped in the last school term, home practice is inconsistent, or your child returns from breaks with noticeable loss in fluency or accuracy.',
+      'Yes. Tiny Steps checks phonics, blending, sentence reading, reading pace, comprehension, and confidence before recommending a reading path.',
+  },
+  {
+    question: 'What happens in a Tiny Steps reading assessment?',
+    answer:
+      'The assessment identifies the child’s current reading stage and key gaps, then provides a clear next-step recommendation for seasonal and year-round support.',
   },
 ];
 
 export default function SummerReadingProgramKidsPage() {
   useEffect(() => {
+    const faqSchema = {
+      ...createFAQPageSchema(faqItems),
+      '@id': 'https://tinystepslearning.com/summer-reading-program-kids#faq',
+    };
+
     applySeo({
       title: 'Summer Reading Program for Kids: Prevent Reading Slide | Tiny Steps Learning',
       description:
         'Parent guide to our summer reading program for kids: prevent reading slide, keep fluency steady during vacation, and return to school with stronger reading confidence.',
       canonicalPath: '/summer-reading-program-kids',
       ogType: 'website',
-      jsonLd: [
-        {
-          '@context': 'https://schema.org',
-          '@type': 'FAQPage',
-          mainEntity: faqItems.map((item) => ({
-            '@type': 'Question',
-            name: item.question,
-            acceptedAnswer: {
-              '@type': 'Answer',
-              text: item.answer,
-            },
-          })),
-        },
-      ],
+      jsonLd: [faqSchema],
     });
   }, []);
 
   return (
     <div className="container mx-auto max-w-4xl px-6 py-12">
       <section className="mb-12 text-center">
-        <h1 className="text-4xl font-bold text-slate-900 md:text-5xl">Summer Reading Program for Kids</h1>
+        <h1 className="text-4xl font-bold text-slate-900 md:text-5xl">Summer Reading Program for Kids: Fluency and Confidence</h1>
         <p className="mt-4 text-lg text-slate-700">
-          Keep reading momentum through vacation with a focused summer plan that protects fluency, confidence, and school restart readiness.
+          A seasonal reading improvement pathway with evergreen value for fluency, comprehension, confidence, and smoother school readiness.
         </p>
         <Link
           to="/book-demo"
@@ -72,79 +70,137 @@ export default function SummerReadingProgramKidsPage() {
       </section>
 
       <section className="mb-10 rounded-xl border border-sky-100 bg-sky-50 p-6">
-        <h2 className="mb-2 text-lg font-bold text-slate-900">Quick answer</h2>
+        <h2 className="mb-2 text-lg font-bold text-slate-900">Quick Answer for Parents</h2>
         <p className="text-slate-700">
-          This summer reading program helps children maintain and strengthen reading habits during school break. The goal is to prevent summer slide, keep pace and accuracy stable, and reduce restart stress when school reopens.
+          This page is for parents who want a practical summer reading plan that also supports year-round progress. It helps children strengthen reading fluency, comprehension, and confidence while addressing phonics and blending gaps early.
         </p>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">Who this summer program is for</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Who this summer reading program is for</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Children who improved during term but lose consistency during long breaks.</li>
-          <li>• Children who read slowly and avoid reading when routines become unstructured.</li>
-          <li>• Families who want short, guided summer continuity instead of random worksheets.</li>
-          <li>• Parents who want school restart to feel smoother, not like starting over.</li>
+          <li>• Children who read slowly or lose reading consistency during school holidays.</li>
+          <li>• Children who need guided support in phonics, blending, and reading confidence.</li>
+          <li>• Families who want structured reading catch-up without heavy school pressure.</li>
+          <li>• Parents who want better school readiness before the next term starts.</li>
         </ul>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">Summer-specific reading risks this page addresses</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Common summer reading concerns</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Fluency drop after 2-4 weeks without guided reading.</li>
-          <li>• Increased guessing habits when children stop decoding routines.</li>
-          <li>• Lower reading stamina after irregular practice.</li>
-          <li>• Confidence dip when school resumes with higher text demand.</li>
+          <li>• Reading very slowly and pausing too often</li>
+          <li>• Guessing words instead of decoding carefully</li>
+          <li>• Avoiding books or reading practice at home</li>
+          <li>• Weak comprehension after reading short passages</li>
+          <li>• Forgetting phonics and blending routines</li>
+          <li>• Low confidence when asked to read aloud</li>
         </ul>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What to check at home this week</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>• Can your child read short passages with similar confidence as during school term?</li>
-          <li>• Are pauses and restarts increasing compared to last month?</li>
-          <li>• Can your child answer one simple meaning question after reading?</li>
-          <li>• Is reading becoming a daily routine or getting skipped repeatedly?</li>
-        </ul>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Why summer is useful for reading catch-up without school pressure</h2>
+        <p className="text-slate-700">
+          Summer gives children space to rebuild reading habits at a calmer pace. With fewer school deadlines, children can strengthen decoding, fluency, and comprehension through short guided routines that improve confidence before the next academic term.
+        </p>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What each result suggests</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">What Tiny Steps focuses on</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Confidence and pace stable: continue light maintenance routine.</li>
-          <li>• Accuracy stable but pace slipping: add repeated passage reading with guided correction.</li>
-          <li>• Guessing or avoidance rising: return to controlled decoding plus short fluency cycles.</li>
-          <li>• Comprehension dropping with passage length: add short chunk reading with immediate meaning checks.</li>
-        </ul>
-      </section>
-
-      <section className="mb-10 rounded-xl border border-emerald-100 bg-emerald-50 p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What to start doing this summer</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>• Keep one short daily reading slot, even on travel days.</li>
-          <li>• Use a simple loop: review, read, check meaning, end with one success.</li>
-          <li>• Track one weekly metric (smoothness, accuracy, or reading willingness).</li>
-          <li>• Keep text level manageable so confidence remains high.</li>
-        </ul>
-      </section>
-
-      <section className="mb-10 rounded-xl border border-rose-100 bg-rose-50 p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What to avoid in summer reading</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>• Do not pause reading completely for long stretches.</li>
-          <li>• Do not jump to harder books only to “catch up quickly.”</li>
-          <li>• Do not replace all guided reading with passive app time.</li>
-          <li>• Do not wait until school reopen week to restart reading routines.</li>
+          <li>• Phonics gaps and sound clarity</li>
+          <li>• Blending accuracy for smoother word reading</li>
+          <li>• Sentence reading with reduced guessing</li>
+          <li>• Reading fluency and pace control</li>
+          <li>• Comprehension and vocabulary support</li>
+          <li>• Confidence-building through guided correction</li>
         </ul>
       </section>
 
       <section className="mb-10 rounded-xl border border-amber-100 bg-amber-50 p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">When to choose structured summer reading support</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Difference between this page and regular reading classes</h2>
+        <p className="text-slate-700">
+          This page is a seasonal reading improvement route focused on summer catch-up and school-readiness. For year-round evergreen planning, use{' '}
+          <Link to="/reading-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+            Reading Classes for Kids
+          </Link>
+          . For broader seasonal options, see{' '}
+          <Link to="/summer-camps" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+            Summer Camps
+          </Link>
+          .
+        </p>
+      </section>
+
+      <section className="mb-10 rounded-xl border border-sky-100 bg-sky-50 p-6">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Recommended learning path</h2>
+        <p className="text-slate-700">
+          phonics check → blending accuracy → sentence reading → fluency → comprehension → confidence
+        </p>
+      </section>
+
+      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">What we check before suggesting a reading path</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Reading momentum dropped at the end of the last term.</li>
-          <li>• Child resists reading unless heavily prompted.</li>
-          <li>• Parent wants a practical bridge into the next term.</li>
-          <li>• Home-only plans are not staying consistent through vacation.</li>
+          <li>• Sound-letter decoding and phonics stability</li>
+          <li>• Blending accuracy and word-reading behavior</li>
+          <li>• Sentence-level reading pace and fluency</li>
+          <li>• Passage understanding and vocabulary use</li>
+          <li>• Reading confidence and response patterns</li>
+        </ul>
+      </section>
+
+      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Helpful next-step links</h2>
+        <ul className="space-y-2 text-slate-700">
+          <li>
+            • Seasonal hub:{' '}
+            <Link to="/summer-camps" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Summer Camps
+            </Link>
+          </li>
+          <li>
+            • Year-round reading support:{' '}
+            <Link to="/reading-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Reading Classes for Kids
+            </Link>
+          </li>
+          <li>
+            • Phonics pathway:{' '}
+            <Link to="/phonics" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Phonics Classes
+            </Link>
+          </li>
+          <li>
+            • Parent support guide:{' '}
+            <Link to="/child-not-reading-properly" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Child Not Reading Properly
+            </Link>
+          </li>
+          <li>
+            • Slow reader support:{' '}
+            <Link to="/slow-reader-child-help" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Slow Reader Child Help
+            </Link>
+          </li>
+          <li>
+            • Reading fluency pathway:{' '}
+            <Link to="/reading-fluency-program" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Reading Fluency Program
+            </Link>
+          </li>
+          <li>
+            • Full course options:{' '}
+            <Link to="/courses" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Explore Courses
+            </Link>
+          </li>
+          <li>
+            • Book assessment:{' '}
+            <Link to="/book-demo" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              Book Free Assessment
+            </Link>
+          </li>
         </ul>
       </section>
 
@@ -160,44 +216,14 @@ export default function SummerReadingProgramKidsPage() {
         </div>
       </section>
 
-      <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">Relevant next-step links</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>
-            • For full seasonal track options:{' '}
-            <Link to="/summer-camps" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              Summer Camps
-            </Link>
-          </li>
-          <li>
-            • For year-round fluency planning:{' '}
-            <Link to="/reading-fluency-program" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              Reading Fluency Program
-            </Link>
-          </li>
-          <li>
-            • For practical parent summer routine ideas:{' '}
-            <Link to="/blog/week-27-prevent-summer-slide-reading" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              Prevent Summer Slide Reading Guide
-            </Link>
-          </li>
-          <li>
-            • For decoding-first support:{' '}
-            <Link to="/phonics" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              Phonics Classes
-            </Link>
-          </li>
-        </ul>
-      </section>
-
       <section className="rounded-xl bg-slate-900 p-8 text-center text-white">
-        <h2 className="text-2xl font-bold">Want a clear summer reading plan for your child?</h2>
-        <p className="mt-2 text-slate-200">Book a free assessment and get a focused summer reading roadmap.</p>
+        <h2 className="text-2xl font-bold">Parent action: choose the right reading path now</h2>
+        <p className="mt-2 text-slate-200">Book a free assessment for a clear next-step recommendation in phonics, reading fluency, and confidence support.</p>
         <Link
           to="/book-demo"
           className="mt-6 inline-block rounded-lg bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100"
         >
-          Book Demo
+          Book Free Assessment
         </Link>
       </section>
       <ClusterSeoNav cluster="phonics" />

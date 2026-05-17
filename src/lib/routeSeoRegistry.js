@@ -160,8 +160,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/parents': {
-    title: 'Parents Hub | Tiny Steps Learning',
-    description: "Resources and guides for parents. Learn how to support your child's English learning journey at home.",
+    title: 'Parents Hub: Choose the Right Learning Path | Tiny Steps',
+    description:
+      "Parent hub for choosing the right Tiny Steps path for your child across phonics, reading, grammar, sentence formation, writing, communication, and progress support.",
     canonicalPath: '/parents',
     ogType: 'website',
     ogImage: '/og-parents.png',
@@ -174,8 +175,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'article',
   },
   '/parents/choosing-course': {
-    title: 'Choosing the Right Course for Your Child | Parents Hub | Tiny Steps Learning',
-    description: "How to choose the best English course for your child's age, level, and learning goals.",
+    title: 'Choose the Right English Course for Your Child | Tiny Steps',
+    description:
+      "Use this parent decision guide to choose phonics, reading, grammar, sentence formation, writing, or communication support based on your child’s current level.",
     canonicalPath: '/parents/choosing-course',
     ogType: 'article',
   },
@@ -284,16 +286,16 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/summer-reading-program-kids': {
-    title: 'Summer Reading Program for Kids | Tiny Steps Learning',
+    title: 'Summer Reading Program for Kids | Tiny Steps',
     description:
-      'Summer reading program for kids focused on phonics-backed reading fluency, confidence, and comprehension readiness through live guided sessions.',
+      'Seasonal reading support for children who read slowly, guess words, or avoid passages, with phonics checks, fluency practice, comprehension guidance, and confidence-building.',
     canonicalPath: '/summer-reading-program-kids',
     ogType: 'website',
   },
   '/summer-speaking-camp-kids': {
-    title: 'Summer Speaking Camp for Kids | Tiny Steps Learning',
+    title: 'Summer Speaking Camp for Kids | Tiny Steps',
     description:
-      'Summer speaking camp for kids focused on communication confidence, expressive speaking, vocabulary growth, and presentation readiness through live sessions.',
+      'Seasonal communication confidence program focused on vocabulary, sentence formation, storytelling, guided speaking, expression, and presentation readiness for children.',
     canonicalPath: '/summer-speaking-camp-kids',
     ogType: 'website',
   },
@@ -361,9 +363,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/online-english-classes-for-kids-india': {
-    title: 'Online English Classes for Kids India | Tiny Steps Learning',
+    title: 'Online English Classes for Kids in India | Tiny Steps',
     description:
-      'Online English classes for kids in India covering phonics-based reading, grammar and writing, and speaking confidence through live guided learning.',
+      'Live online English classes for kids in India with assessment-first guidance across phonics, reading, grammar, sentence formation, communication, and confidence.',
     canonicalPath: '/online-english-classes-for-kids-india',
     ogType: 'website',
   },
@@ -382,9 +384,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/english-classes-for-5-year-old': {
-    title: 'English Classes for 5 Year Old | Tiny Steps Learning',
+    title: 'Online English Classes for 5-Year-Old Children | Tiny Steps',
     description:
-      'English classes for 5 year old children focused on phonics blending, reading readiness, sentence speaking, and confidence in class participation.',
+      'Age-focused online English support for 5-year-olds covering letter sounds, blending readiness, early reading, vocabulary, simple sentences, and communication confidence.',
     canonicalPath: '/english-classes-for-5-year-old',
     ogType: 'website',
   },
@@ -396,51 +398,51 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/english-classes-for-7-10-year-old': {
-    title: 'English Classes for 7 to 10 Year Old | Tiny Steps Learning',
+    title: 'Online English Classes for Ages 7-10 | Tiny Steps',
     description:
-      'English classes for 7 to 10 year old children focused on reading comprehension, grammar usage, writing clarity, speaking confidence, and communication skills.',
+      'Online English classes for ages 7-10 focused on reading fluency, grammar accuracy, sentence formation, writing clarity, and confident communication.',
     canonicalPath: '/english-classes-for-7-10-year-old',
     ogType: 'website',
   },
   '/child-not-reading-properly': {
-    title: 'Child Not Reading Properly? Parent Support Guide | Tiny Steps Learning',
+    title: 'Child Not Reading Properly? Find the Real Gap | Tiny Steps',
     description:
-      'If your child is not reading properly, learn whether the gap is phonics, blending, fluency, comprehension, or confidence. Book a free reading assessment.',
+      'Understand whether your child’s reading gap is phonics, blending, fluency, comprehension, or confidence, and get the right assessment-first learning path.',
     canonicalPath: '/child-not-reading-properly',
     ogType: 'website',
   },
   '/slow-reader-child-help': {
-    title: 'Slow Reader Child Help | Reading Support for Kids | Tiny Steps Learning',
+    title: 'Slow Reader Child Help & Reading Support | Tiny Steps',
     description:
-      'Is your child reading slowly? Learn whether the gap is phonics, blending, fluency, comprehension, or confidence. Book a free reading assessment.',
+      'Get parent-friendly guidance for slow readers by identifying decoding, blending, fluency, comprehension, and confidence gaps before choosing support.',
     canonicalPath: '/slow-reader-child-help',
     ogType: 'website',
   },
   '/shy-child-speaking-confidence': {
-    title: 'Shy Child Speaking Confidence Help | Tiny Steps Learning',
+    title: 'Shy Child Speaking Confidence Help | Tiny Steps',
     description:
-      'Support for shy child speaking confidence with guided communication practice, sentence support, vocabulary building, and public speaking readiness.',
+      'Help your child move from hesitation to confident communication through guided vocabulary, sentence formation, storytelling, expression, and speaking practice.',
     canonicalPath: '/shy-child-speaking-confidence',
     ogType: 'website',
   },
   '/reading-fluency-program': {
-    title: 'Reading Fluency Program for Kids | Tiny Steps Learning',
+    title: 'Reading Fluency Program for Kids Who Read Slowly | Tiny Steps',
     description:
-      'Reading fluency program for kids focused on decoding-to-fluency progression, smoother reading pace, stronger accuracy, confidence, and comprehension support.',
+      'Reading fluency support for children who read slowly, pause often, or lose meaning, with a clear path from decoding and blending to fluency and comprehension.',
     canonicalPath: '/reading-fluency-program',
     ogType: 'website',
   },
   '/confidence-building-program-kids': {
-    title: 'Confidence Building Program for Kids | Tiny Steps Learning',
+    title: 'Confidence Building Program for Kids | Tiny Steps',
     description:
-      'Confidence building program for kids focused on expressive speaking, communication confidence, reduced hesitation, vocabulary growth, and public speaking readiness.',
+      'Structured communication pathway for children needing stronger vocabulary, sentence formation, guided speaking, storytelling, expression, and confidence.',
     canonicalPath: '/confidence-building-program-kids',
     ogType: 'website',
   },
   '/english-foundation-program': {
-    title: 'English Foundation Program for Kids | Tiny Steps Learning',
+    title: 'English Foundation Program for Kids | Tiny Steps',
     description:
-      'English foundation program for kids covering reading, grammar, and speaking basics through age-appropriate progression and live guided support.',
+      'Foundation pathway for children who need basics strengthened across phonics, reading readiness, grammar, sentence formation, writing readiness, and communication confidence.',
     canonicalPath: '/english-foundation-program',
     ogType: 'website',
   },

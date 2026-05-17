@@ -1,6 +1,6 @@
 # Sitemap Indexability Audit
 
-Generated: 2026-05-16T14:45:29.933Z
+Generated: 2026-05-17T06:44:18.448Z
 
 ## Files Inspected
 - public/sitemap.xml
@@ -14,8 +14,8 @@ Generated: 2026-05-16T14:45:29.933Z
 
 ## Summary
 - Total sitemap resources: 4
-- Total page URLs audited: 140
-- OK page URLs: 140
+- Total page URLs audited: 128
+- OK page URLs: 128
 - Non-OK page URLs: 0
 
 ## Findings (Page URLs)
@@ -72,31 +72,19 @@ Generated: 2026-05-16T14:45:29.933Z
 | /blog/synthetic-phonics-vs-traditional-reading | https://tinystepslearning.com/blog/synthetic-phonics-vs-traditional-reading | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/week-1-phonics-satpin-launch | https://tinystepslearning.com/blog/week-1-phonics-satpin-launch | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/week-10-grammar-subject-verb | https://tinystepslearning.com/blog/week-10-grammar-subject-verb | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-11-grammar-creative-writing | https://tinystepslearning.com/blog/week-11-grammar-creative-writing | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-12-speaking-confidence-seeds | https://tinystepslearning.com/blog/week-12-speaking-confidence-seeds | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/week-13-speaking-structure | https://tinystepslearning.com/blog/week-13-speaking-structure | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-14-speaking-visual-aids | https://tinystepslearning.com/blog/week-14-speaking-visual-aids | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-15-speaking-debate-starters | https://tinystepslearning.com/blog/week-15-speaking-debate-starters | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-16-phonics-summer-plan | https://tinystepslearning.com/blog/week-16-phonics-summer-plan | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-17-grammar-assessment | https://tinystepslearning.com/blog/week-17-grammar-assessment | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/week-18-speaking-video-feedback | https://tinystepslearning.com/blog/week-18-speaking-video-feedback | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-19-phonics-multisyllabic | https://tinystepslearning.com/blog/week-19-phonics-multisyllabic | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/week-2-phonics-blending-club | https://tinystepslearning.com/blog/week-2-phonics-blending-club | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/week-20-grammar-editing-camp | https://tinystepslearning.com/blog/week-20-grammar-editing-camp | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/week-21-speaking-competition-prep | https://tinystepslearning.com/blog/week-21-speaking-competition-prep | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-22-phonics-diagnostics | https://tinystepslearning.com/blog/week-22-phonics-diagnostics | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-23-grammar-speaking-bridge | https://tinystepslearning.com/blog/week-23-grammar-speaking-bridge | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/week-24-speaking-family-showcase | https://tinystepslearning.com/blog/week-24-speaking-family-showcase | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/week-25-back-to-school-plan | https://tinystepslearning.com/blog/week-25-back-to-school-plan | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-26-screen-smart-summer-routine | https://tinystepslearning.com/blog/week-26-screen-smart-summer-routine | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/week-27-prevent-summer-slide-reading | https://tinystepslearning.com/blog/week-27-prevent-summer-slide-reading | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-3-phonics-tricky-words | https://tinystepslearning.com/blog/week-3-phonics-tricky-words | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/week-4-phonics-long-vowels | https://tinystepslearning.com/blog/week-4-phonics-long-vowels | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/week-5-phonics-r-controlled | https://tinystepslearning.com/blog/week-5-phonics-r-controlled | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/week-6-phonics-comprehension | https://tinystepslearning.com/blog/week-6-phonics-comprehension | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/week-7-grammar-nouns-to-paragraphs | https://tinystepslearning.com/blog/week-7-grammar-nouns-to-paragraphs | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/week-8-grammar-tenses | https://tinystepslearning.com/blog/week-8-grammar-tenses | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-9-grammar-conjunctions | https://tinystepslearning.com/blog/week-9-grammar-conjunctions | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/what-age-to-start-phonics | https://tinystepslearning.com/blog/what-age-to-start-phonics | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/what-is-phonics-for-kids | https://tinystepslearning.com/blog/what-is-phonics-for-kids | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/why-child-answers-only-in-one-word | https://tinystepslearning.com/blog/why-child-answers-only-in-one-word | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
