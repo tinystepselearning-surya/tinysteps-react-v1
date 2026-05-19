@@ -24,7 +24,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/phonics': {
     title: 'Online Phonics Classes for Kids in India | Tiny Steps Learning',
     description:
-      'Phonics classes for kids that build sound-letter links, blending, and decoding. Ideal for parents looking for online reading classes for kids in India.',
+      'Premium 1:1 online phonics classes for kids aged 3–12. Learn letter sounds, blending, reading fluency and spelling confidence with interactive teachers. Book a free assessment.',
     canonicalPath: '/phonics',
     ogType: 'website',
   },
@@ -302,8 +302,8 @@ export const ROUTE_SEO_REGISTRY = {
   '/online-phonics-reading-classes': {
     title: 'Early Reading & Phonics Support Classes (Ages 3-8) | Tiny Steps Learning',
     description:
-      'Early-reader support for ages 3-8 with letter sounds, blending, and CVC reading practice. For broad reading classes, use Tiny Steps reading classes page.',
-    canonicalPath: '/phonics',
+      'Early-reader phonics and reading support for ages 3-8 with letter sounds, blending, CVC decoding, and first-sentence reading confidence for families in India and globally.',
+    canonicalPath: '/online-phonics-reading-classes',
     ogType: 'website',
   },
   '/best-online-phonics-classes-india': {

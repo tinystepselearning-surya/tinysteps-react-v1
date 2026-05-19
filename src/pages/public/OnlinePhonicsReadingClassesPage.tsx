@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import ClusterSeoNav from '../../components/programs/ClusterSeoNav';
-import { applySeo } from '../../lib/seo';
+import { applySeo, getRouteConfig } from '../../lib/seo';
 import { Link } from 'react-router-dom';
+import { PUBLIC_FACTS } from '../../lib/schemas';
 
 const faqItems = [
   {
@@ -37,18 +38,25 @@ const faqItems = [
 ];
 
 export default function OnlinePhonicsReadingClassesPage() {
+  const routeConfig = getRouteConfig('/online-phonics-reading-classes');
+  const canonicalPath = routeConfig?.canonicalPath ?? '/online-phonics-reading-classes';
+  const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
+  const seoTitle = routeConfig?.title ?? 'Online Phonics and Reading Classes (Ages 3-8) | Tiny Steps Learning';
+  const seoDescription =
+    routeConfig?.description ??
+    'Early-reader online phonics and reading classes for ages 3-8 focused on letter sounds, blending, CVC decoding, and first sentence reading with live guided support.';
+
   useEffect(() => {
     applySeo({
-      title: 'Online Phonics and Reading Classes (Ages 3-8) | Tiny Steps Learning',
-      description:
-        'Early-reader online phonics and reading classes for ages 3-8 focused on letter sounds, blending, CVC decoding, and first sentence reading with live guided support.',
-      canonicalPath: '/online-phonics-reading-classes',
-      ogType: 'website',
+      title: seoTitle,
+      description: seoDescription,
+      canonicalPath,
+      ogType: routeConfig?.ogType ?? 'website',
       jsonLd: [
         {
           '@context': 'https://schema.org',
           '@type': 'Course',
-          '@id': 'https://tinystepslearning.com/online-phonics-reading-classes#course',
+          '@id': `${canonicalUrl}#course`,
           name: 'Online Phonics and Reading Classes',
           description:
             'Live online early-reader classes for ages 3-8 focused on structured synthetic phonics, blending, CVC decoding, and first sentence reading confidence.',
@@ -58,7 +66,7 @@ export default function OnlinePhonicsReadingClassesPage() {
             name: 'Tiny Steps Learning',
             url: 'https://tinystepslearning.com',
           },
-          url: 'https://tinystepslearning.com/online-phonics-reading-classes',
+          url: canonicalUrl,
           hasCourseInstance: {
             '@type': 'CourseInstance',
             courseMode: 'OnlineCoursePlatform',
@@ -74,14 +82,14 @@ export default function OnlinePhonicsReadingClassesPage() {
               '@type': 'ListItem',
               position: 3,
               name: 'Online Phonics and Reading Classes',
-              item: 'https://tinystepslearning.com/online-phonics-reading-classes',
+              item: canonicalUrl,
             },
           ],
         },
         {
           '@context': 'https://schema.org',
           '@type': 'FAQPage',
-          '@id': 'https://tinystepslearning.com/online-phonics-reading-classes#faq',
+          '@id': `${canonicalUrl}#faq`,
           mainEntity: faqItems.map((item) => ({
             '@type': 'Question',
             name: item.question,
@@ -93,7 +101,7 @@ export default function OnlinePhonicsReadingClassesPage() {
         },
       ],
     });
-  }, []);
+  }, [canonicalPath, canonicalUrl, routeConfig?.ogType, seoDescription, seoTitle]);
 
   return (
     <div className="container mx-auto px-6 py-12 max-w-4xl">

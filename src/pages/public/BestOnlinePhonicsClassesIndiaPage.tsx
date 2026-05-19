@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import ClusterSeoNav from '../../components/programs/ClusterSeoNav';
-import { applySeo } from '../../lib/seo';
+import { applySeo, getRouteConfig } from '../../lib/seo';
 import { Link } from 'react-router-dom';
 import Meta from '../../components/common/Meta';
 import PageHero from '../../components/common/PageHero';
+import { PUBLIC_FACTS } from '../../lib/schemas';
 import {
   formatINR,
   ONE_TO_ONE_MONTHLY_PACKAGES,
@@ -174,6 +175,13 @@ const faqItems = [
 ];
 
 export default function BestOnlinePhonicsClassesIndiaPage() {
+  const routeConfig = getRouteConfig('/best-online-phonics-classes-india');
+  const canonicalPath = routeConfig?.canonicalPath ?? '/best-online-phonics-classes-india';
+  const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
+  const seoTitle = routeConfig?.title ?? 'Best Online Phonics Classes in India: Parent Comparison Checklist (2026) | Tiny Steps Learning';
+  const seoDescription =
+    routeConfig?.description ??
+    'Compare online phonics classes in India with this parent checklist covering teaching method, teacher quality, class format, pricing clarity, and progress tracking.';
   const [activeProgram, setActiveProgram] = useState<PricingProgram>('premium');
   const [activeProgressStep, setActiveProgressStep] = useState(0);
   const [activeAudienceTab, setActiveAudienceTab] = useState(0);
@@ -207,10 +215,10 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
 
   useEffect(() => {
     applySeo({
-      title: "Best Online Phonics Classes in India: Parent Comparison Checklist (2026) | Tiny Steps Learning",
-      description: "Compare online phonics classes in India with this parent checklist covering teaching method, teacher quality, class format, pricing clarity, and progress tracking.",
-      canonicalPath: "/best-online-phonics-classes-india",
-      ogType: "article",
+      title: seoTitle,
+      description: seoDescription,
+      canonicalPath,
+      ogType: routeConfig?.ogType ?? 'website',
       jsonLd: [
         {
           "@context": "https://schema.org",
@@ -259,6 +267,18 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
               "item": "https://tinystepslearning.com/best-online-phonics-classes-india"
             }
           ]
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          "@id": `${canonicalUrl}#comparison-checklist`,
+          "name": "Parent checklist for comparing online phonics classes in India",
+          "itemListElement": checklistPoints.map((point, index) => ({
+            "@type": "ListItem",
+            "position": index + 1,
+            "name": point.title,
+            "description": point.detail,
+          })),
         },
         {
           "@context": "https://schema.org",
@@ -356,14 +376,14 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
         }
       ]
     });
-  }, []);
+  }, [canonicalPath, canonicalUrl, routeConfig?.ogType, seoDescription, seoTitle]);
 
   return (
     <div className="bg-white">
       <Meta
-        title="Best Online Phonics Classes in India: Parent Comparison Checklist (2026) | Tiny Steps Learning"
-        description="Use this parent checklist to compare online phonics classes in India by method, teacher quality, class format, pricing, and progress visibility."
-        canonical="https://tinystepslearning.com/best-online-phonics-classes-india"
+        title={seoTitle}
+        description={seoDescription}
+        canonical={canonicalUrl}
       />
 
       <PageHero

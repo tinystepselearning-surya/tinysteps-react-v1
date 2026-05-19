@@ -55,6 +55,11 @@ import AutoLinkedText from '../components/seo/AutoLinkedText';
 
 const quickAnswerFaqItems = [
   {
+    question: 'What makes Tiny Steps phonics classes different?',
+    answer:
+      'Tiny Steps focuses on personalized 1:1 phonics learning, step-by-step blending, interactive digital worksheets, reading practice, and clear parent progress updates so children build reading confidence gradually.',
+  },
+  {
     question: 'Are online phonics classes useful for kids?',
     answer:
       'Yes. Online phonics classes are useful when they teach letter sounds, blending, decoding, and reading practice in a clear sequence with live correction. This helps children move from knowing letters to reading words and sentences.',
@@ -122,8 +127,15 @@ const faqItems = [
     answer:
       'Most children can begin around ages 3–4 with playful sound work. Older children can also catch up effectively when gaps are addressed with structured synthetic phonics.',
   },
+  {
+    question: 'Do you offer online phonics classes for families across India?',
+    answer:
+      'Yes. Tiny Steps supports families across India through live online phonics classes, and also supports learners globally with level-based teaching and parent-visible progress updates.',
+  },
 ];
-const schemaFaqItems = quickAnswerFaqItems;
+const schemaFaqItems = Array.from(
+  new Map([...quickAnswerFaqItems, ...faqItems].map((item) => [item.question, item])).values(),
+);
 const PHONICS_RESEARCH_GUIDE_PATH = '/blog/phonics-for-parents-guide';
 const PHONICS_SEO_KEYWORDS = [
   'phonics for kids',
@@ -179,7 +191,7 @@ export default function PhonicsPage({
   const breadcrumbName = seoOverrides?.breadcrumbName ?? "Phonics";
   const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
   const heroTitle = heroTitleOverride ?? "Online Phonics Classes for Kids in India";
-  const heroSubtitle = heroSubtitleOverride ?? "How phonics classes help reading: children learn sound-letter links, blending, and decoding in a clear sequence, then apply these skills to words and sentences with confidence.";
+  const heroSubtitle = heroSubtitleOverride ?? "Help your child move from letter sounds to blending, reading, spelling, and reading confidence through premium 1:1 online phonics classes.";
   const allFaqOpen = openFaqIndexes.length === faqItems.length;
 
   const toggleFaq = (index: number) => {
@@ -199,9 +211,25 @@ export default function PhonicsPage({
       url: canonicalUrl,
       educationalLevel: 'Foundation to Advanced'
     });
+    const phonicsPathwaySchema = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      '@id': `${canonicalUrl}#phonics-pathway`,
+      name: 'Phonics learning pathway for children',
+      itemListElement: stages.map((stage, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item: {
+          '@type': 'Thing',
+          name: stage.title,
+          description: `${stage.duration} — ${stage.description}`,
+        },
+      })),
+    };
 
     const baseJsonLd = [
       courseSchema,
+      phonicsPathwaySchema,
       {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
@@ -231,22 +259,27 @@ export default function PhonicsPage({
         description={heroSubtitle}
         badges={['Ages 3–12', 'Live 1:1 or pods', '35–40 minute sessions']}
         actions={(
-          <Link
-            to="/?book=1"
-            className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-          >
-            Book Free Assessment
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              to="/book-demo"
+              className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              Book Free Assessment
+            </Link>
+            <Link
+              to="/phonics#program"
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:border-slate-400 hover:bg-slate-50"
+            >
+              Explore Phonics Program
+            </Link>
+          </div>
         )}
       />
 
       <section className="mx-4 my-8 max-w-4xl rounded-2xl border border-sky-100 bg-gradient-to-r from-slate-50 to-sky-50 p-5 shadow-sm sm:mx-auto sm:p-6">
-        <h2 className="text-lg font-semibold text-gray-900">How do online phonics classes help children read?</h2>
+        <h2 className="text-lg font-semibold text-gray-900">What makes Tiny Steps phonics classes different?</h2>
         <p className="mt-2 text-base text-gray-800">
-          Phonics classes help children read by teaching how sounds connect to letters and how to blend those sounds
-          into words. This builds decoding, so children can read unfamiliar words instead of guessing. Parents usually
-          notice cleaner blending first, then smoother word and sentence reading. Next step: start with an assessment
-          so your child begins at the right phonics stage.
+          Tiny Steps focuses on personalized 1:1 phonics learning, step-by-step blending, interactive digital worksheets, reading practice, and clear parent progress updates so children build reading confidence gradually.
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {quickAnswerFaqItems.map((item) => (
@@ -256,6 +289,31 @@ export default function PhonicsPage({
             </article>
           ))}
         </div>
+      </section>
+
+      <section className="mx-4 my-8 max-w-4xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:mx-auto sm:p-6">
+        <h2 className="text-xl font-bold text-slate-900">What your child learns</h2>
+        <ul className="mt-4 space-y-2 text-sm text-slate-700">
+          <li>• Letter sounds and sound recognition</li>
+          <li>• Blending sounds into words</li>
+          <li>• CVC words and short vowel reading</li>
+          <li>• Digraphs, blends, and advanced phonics patterns</li>
+          <li>• Reading fluency and spelling confidence</li>
+          <li>• Grammar and sentence formation support where needed</li>
+        </ul>
+      </section>
+
+      <section className="mx-4 my-8 max-w-4xl rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-900 via-[#1f2a44] to-[#263e6d] p-6 text-white shadow-sm sm:mx-auto sm:p-8">
+        <h2 className="text-2xl font-bold text-white">Not sure where your child should start?</h2>
+        <p className="mt-3 text-slate-100">
+          Book a free assessment and we will identify your child’s current reading level, phonics gaps, and the right learning path.
+        </p>
+        <Link
+          to="/book-demo"
+          className="mt-5 inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
+        >
+          Book Free Assessment
+        </Link>
       </section>
 
       <ContentTrustNote text="This page is created by the Tiny Steps academic team and reviewed by the founder to help parents understand structured phonics and reading development." />
@@ -315,18 +373,20 @@ export default function PhonicsPage({
       </section>
 
       {/* Program Facts */}
-      <ProgramFacts
-        ageRange="Ages 3-12"
-        format="Live 1:1 or small group online"
-        duration={`${PUBLIC_FACTS.sessionDuration}, 2-3x per week`}
-        structure="3 levels, 36+ lessons with stage-based progression"
-        outcomes={[
-          'Master letter sounds and blending—typically within 4-6 lessons',
-          'Read CVC words and simple sentences with phonics-based reading confidence',
-          'Build fluency with digraphs, vowel teams, and tricky words',
-          'Progress from individual sounds to reading full passages with comprehension',
-        ]}
-      />
+      <section id="program">
+        <ProgramFacts
+          ageRange="Ages 3-12"
+          format="Live 1:1 or small group online"
+          duration={`${PUBLIC_FACTS.sessionDuration}, 2-3x per week`}
+          structure="3 levels, 36+ lessons with stage-based progression"
+          outcomes={[
+            'Master letter sounds and blending—typically within 4-6 lessons',
+            'Read CVC words and simple sentences with phonics-based reading confidence',
+            'Build fluency with digraphs, vowel teams, and tricky words',
+            'Progress from individual sounds to reading full passages with comprehension',
+          ]}
+        />
+      </section>
 
       {afterHeroContent}
       <LevelTabs levels={levels} />

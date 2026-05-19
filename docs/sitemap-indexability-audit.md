@@ -1,6 +1,6 @@
 # Sitemap Indexability Audit
 
-Generated: 2026-05-17T06:44:18.448Z
+Generated: 2026-05-19T15:09:59.362Z
 
 ## Files Inspected
 - public/sitemap.xml
