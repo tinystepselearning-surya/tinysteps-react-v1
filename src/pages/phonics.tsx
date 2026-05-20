@@ -446,7 +446,7 @@ export default function PhonicsPage({
           to="/best-online-phonics-classes-india"
           className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-6 py-3 font-semibold text-white transition hover:bg-slate-800"
         >
-          Read the buyer guide: Best Online Phonics Programs in India
+          Read the buyer guide: best online phonics classes in India
           <span className="text-lg">→</span>
         </Link>
       </section>
@@ -685,7 +685,7 @@ export default function PhonicsPage({
             Book a free 35–40 minute assessment session with our mentors to understand your child's current level and get a personalized phonics learning plan.
           </p>
           <Link
-            to="/?book=1"
+            to="/book-demo"
             className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:bg-slate-100"
           >
             Book Free Assessment

@@ -243,6 +243,11 @@ export default function HomePage() {
               <Link to="/english-classes-for-5-year-old" className="font-medium underline underline-offset-2 hover:text-slate-900">
                 support for 5-year-old children
               </Link>.
+              {' '}Families comparing providers can also review our{' '}
+              <Link to="/best-online-phonics-classes-india" className="font-medium underline underline-offset-2 hover:text-slate-900">
+                best online phonics classes in India
+              </Link>{' '}
+              guide.
               <br className="hidden sm:block" />
               Not sure where to begin? See <Link to="/class-samples" className="font-medium underline underline-offset-2 hover:text-slate-900">live class samples</Link>, discover <Link to="/why-tiny-steps" className="font-medium underline underline-offset-2 hover:text-slate-900">why parents choose us</Link>, or browse <Link to="/courses" className="font-medium underline underline-offset-2 hover:text-slate-900">all online courses</Link>.
               {' '}Parents in Hyderabad can also explore <Link to="/online-english-classes-hyderabad" className="font-medium underline underline-offset-2 hover:text-slate-900">Hyderabad Online English Classes</Link>.

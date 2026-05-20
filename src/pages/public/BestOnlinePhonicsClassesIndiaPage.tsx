@@ -4,7 +4,7 @@ import { applySeo, getRouteConfig } from '../../lib/seo';
 import { Link } from 'react-router-dom';
 import Meta from '../../components/common/Meta';
 import PageHero from '../../components/common/PageHero';
-import { PUBLIC_FACTS } from '../../lib/schemas';
+import { createFAQPageSchema, PUBLIC_FACTS } from '../../lib/schemas';
 import {
   formatINR,
   ONE_TO_ONE_MONTHLY_PACKAGES,
@@ -36,16 +36,11 @@ const planMeta = {
 } as const;
 
 const checklistPoints = [
-  { title: 'Proven curriculum', detail: 'Uses systematic synthetic phonics (SATPIN, Jolly Phonics, Letters and Sounds) with clear progression from sounds to blending to reading.' },
-  { title: '1:1 vs group', detail: "1:1 classes adapt to your child's pace and finish faster (12 weeks vs 20+ weeks for groups)." },
-  { title: 'Qualified teachers', detail: 'Mentors with phonics certifications (Jolly Phonics, TESOL, B.Ed) and ongoing training.' },
-  { title: 'Free trial/assessment', detail: "Quality programs should offer a free assessment to recommend the right starting point." },
-  { title: 'Progress transparency', detail: 'Stage-based reports with mastered skills, upcoming topics, and home practice tips.' },
-  { title: 'Pronunciation focus', detail: 'Live correction for Indian English clarity (R/L/TH/W-V sounds), not only reading drills.' },
-  { title: 'Flexible scheduling', detail: 'Weekend and evening slots with simple rescheduling options.' },
-  { title: 'Age-appropriate tracks', detail: 'Separate pathways for beginners (3–5), elementary (6–8), and catch-up (7–12).' },
-  { title: 'Home practice support', detail: 'Short daily activities (5–10 min) with clear parent instructions.' },
-  { title: 'School alignment', detail: 'Works with IB, CBSE, ICSE, and international syllabi without conflict.' },
+  { title: 'Step-by-step letter sound and blending practice', detail: 'Choose classes that progress in a clear sequence from letter sounds to blending and early decoding.' },
+  { title: 'Live teacher correction, not only app practice', detail: 'Prefer teacher-led sessions where your child gets immediate guidance and correction.' },
+  { title: 'Reading practice with CVC words, digraphs, and vowel patterns', detail: 'Look for structured reading practice, not just alphabet drills or random worksheets.' },
+  { title: 'Clear parent progress updates', detail: 'Pick programs that share regular updates on mastered skills and next focus areas.' },
+  { title: 'Activities that keep young children engaged', detail: 'Strong programs use interactive routines that hold attention and build confidence gradually.' },
 ];
 
 const offeringPoints = [
@@ -181,7 +176,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
   const seoTitle = routeConfig?.title ?? 'Best Online Phonics Classes in India: Parent Comparison Checklist (2026) | Tiny Steps Learning';
   const seoDescription =
     routeConfig?.description ??
-    'Compare online phonics classes in India with this parent checklist covering teaching method, teacher quality, class format, pricing clarity, and progress tracking.';
+    'Tiny Steps helps parents compare premium 1:1 online phonics classes in India with a practical checklist focused on blending, reading confidence, and parent progress visibility.';
   const [activeProgram, setActiveProgram] = useState<PricingProgram>('premium');
   const [activeProgressStep, setActiveProgressStep] = useState(0);
   const [activeAudienceTab, setActiveAudienceTab] = useState(0);
@@ -280,100 +275,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
             "description": point.detail,
           })),
         },
-        {
-          "@context": "https://schema.org",
-          "@type": "FAQPage",
-          "mainEntity": [
-            {
-              "@type": "Question",
-              "name": "What age is best for online phonics classes?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Ages 3–8 are ideal for foundational phonics. Children can recognize sounds and begin blending by age 3–4. Older kids (7–12) struggling with reading benefit from intensive phonics catch-up programs. Start with a free assessment to determine the right level."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Do online phonics classes offer free trial lessons?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Most quality programs offer a free assessment or trial class. Tiny Steps provides a free 35-minute session where mentors evaluate your child's current level, learning style, and recommend a personalized plan. No credit card required."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "What's better: 1:1 or group phonics classes?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "1:1 classes adapt to your child's pace, provide instant feedback, and finish faster (12 weeks vs 20+ weeks). Group classes cost less but work best for children who follow instructions well. For phonics mastery, 1:1 delivers better outcomes."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Which phonics curriculum is used in online classes?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Quality programs use systematic synthetic phonics (like Jolly Phonics, Letters and Sounds, or SATPIN-based). Tiny Steps uses a SATPIN-first approach with multisensory actions, blending drills, and progression aligned to IB/CBSE school expectations."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "How often should my child attend phonics classes?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "2–3 sessions per week is optimal for steady progress. Daily 10-minute home practice between classes reinforces learning. Most children complete foundational phonics in 12–16 weeks with consistent attendance."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "How long does it take to see reading improvement with phonics?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Many children show early gains in blending and decoding within 3–4 weeks of consistent practice (2–3 sessions per week plus daily home practice). Full reading fluency takes longer and depends on starting level, attendance consistency, and home reinforcement. Children starting from zero typically need 12–16 weeks to reach basic fluency, while catch-up learners may see faster progress in targeted areas."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Do I get progress reports for online phonics classes?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Yes. Quality programs provide stage-based progress updates showing mastered skills, upcoming topics, and home practice tips. Tiny Steps includes lesson recordings, mastery bands, and monthly parent calls for full transparency."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Will online classes fix my child's pronunciation?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Yes, if the program includes explicit pronunciation coaching. Look for mentors trained in phonetic clarity (R/L/TH/W-V sounds). Tiny Steps targets Indian English clarity with live correction and pronunciation practice in every lesson."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "What materials do I need for online phonics classes?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "You need a device (laptop/tablet), stable internet, and a quiet space. Quality programs provide digital materials: worksheets, flashcards, and practice games. No expensive workbooks or physical kits required."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Are online phonics teachers properly trained?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Check for teachers with phonics certifications (Jolly Phonics, TESOL, B.Ed). Tiny Steps mentors complete 40+ hours of phonics methodology training and ongoing quality reviews. All sessions are recorded for accountability."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Can international students join online phonics classes from India?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Yes. Online classes work globally. Tiny Steps serves families in India, UAE, Singapore, UK, and US with flexible time slots (6 AM–9 PM IST). Classes adapt to IB, CBSE, or international curriculum needs."
-              }
-            }
-          ]
-        }
+        createFAQPageSchema(faqItems)
       ]
     });
   }, [canonicalPath, canonicalUrl, routeConfig?.ogType, seoDescription, seoTitle]);
@@ -393,7 +295,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
         badges={['India-focused checklist', 'For ages 3–12', '1:1 vs group explained']}
         actions={(
           <Link
-            to="/?book=1"
+            to="/book-demo"
             className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
             Book Free Assessment
@@ -402,20 +304,27 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
       />
 
       <div className="container mx-auto max-w-4xl px-6 pb-12">
+      <nav className="mb-6 flex flex-wrap items-center gap-2 text-sm text-slate-600" aria-label="Breadcrumb">
+        <Link to="/" className="hover:text-slate-900 hover:underline">Home</Link>
+        <span>/</span>
+        <Link to="/phonics" className="hover:text-slate-900 hover:underline">Phonics</Link>
+        <span>/</span>
+        <span className="font-medium text-slate-800">Best Online Phonics Classes in India</span>
+      </nav>
 
       {/* AEO Direct Answer Block */}
       <section className="mb-12 rounded-2xl border border-sky-100 bg-gradient-to-r from-slate-50 to-sky-50 p-6 shadow-sm">
-        <h2 className="mb-2 text-lg font-bold text-slate-900">What are the best online phonics classes in India?</h2>
+        <h2 className="mb-2 text-lg font-bold text-slate-900">What makes Tiny Steps phonics classes different?</h2>
         <p className="leading-relaxed text-slate-700">
-          The best online phonics classes for Indian children usually include systematic synthetic phonics, live mentor feedback, clear progression, and visible parent updates. Use this checklist to compare class quality, teacher support, pricing clarity, and progress tracking before you enroll. If you are comparing providers, prioritize outcomes and consistency over marketing claims.
+          Tiny Steps is designed for parents looking for structured online phonics classes that help children move from letter sounds to blending, word reading, spelling, and reading confidence through personalised 1:1 support.
         </p>
       </section>
 
       {/* How to Choose Checklist */}
       <section id="checklist" className="mb-12">
-        <h2 className="mb-6 text-3xl font-bold text-slate-900">How to choose online phonics classes: parent checklist</h2>
+        <h2 className="mb-6 text-3xl font-bold text-slate-900">How to choose the best online phonics class for your child</h2>
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="mb-4 text-slate-700">Before enrolling, evaluate programs using these criteria:</p>
+          <p className="mb-4 text-slate-700">Use this compact parent checklist before enrolling:</p>
           <ul className="space-y-3 text-slate-700">
             {checklistPoints.map((point) => (
               <li key={point.title} className="flex items-start gap-3">
@@ -425,6 +334,17 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
             ))}
           </ul>
         </div>
+      </section>
+
+      <section className="mb-12 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Why parents choose Tiny Steps</h2>
+        <ul className="space-y-2 text-slate-700">
+          <li>• Personalised 1:1 classes based on each child’s level and pace</li>
+          <li>• Structured phonics pathway from sounds to blending and reading confidence</li>
+          <li>• Interactive worksheets and games that keep children engaged</li>
+          <li>• Reading and spelling support built into regular practice</li>
+          <li>• Parent-friendly progress updates after key learning stages</li>
+        </ul>
       </section>
 
       {/* What Tiny Steps Includes */}
@@ -443,7 +363,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
         </ul>
         <div className="mt-6">
           <Link to="/phonics" className="font-semibold text-slate-900 hover:text-sky-700 hover:underline">
-            View phonics program details →
+            Explore the complete phonics program →
           </Link>
         </div>
       </section>
@@ -688,7 +608,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
             <h3 className="mb-2 font-bold text-slate-900">Speaking Program</h3>
             <p className="text-sm text-gray-700">Public speaking and communication programs for children</p>
           </Link>
-          <Link to="/?book=1" className="rounded-lg border border-gray-200 p-4 transition hover:border-sky-300 hover:shadow-md">
+          <Link to="/book-demo" className="rounded-lg border border-gray-200 p-4 transition hover:border-sky-300 hover:shadow-md">
             <h3 className="mb-2 font-bold text-slate-900">Book Free Assessment</h3>
             <p className="text-sm text-gray-700">Get personalized recommendations and trial class details</p>
           </Link>
@@ -771,7 +691,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
           Book a free 35-minute session to see if Tiny Steps phonics classes are right for your child.
         </p>
         <Link
-          to="/?book=1"
+          to="/book-demo"
           className="inline-block rounded-full bg-white px-8 py-3 font-bold text-slate-900 transition hover:-translate-y-0.5 hover:bg-slate-100"
         >
           Book Free Assessment

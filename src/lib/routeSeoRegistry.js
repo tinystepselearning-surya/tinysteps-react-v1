@@ -307,9 +307,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/best-online-phonics-classes-india': {
-    title: 'Best Online Phonics Classes in India: Parent Checklist (2026) | Tiny Steps',
+    title: 'Best Online Phonics Classes in India | Parent Checklist | Tiny Steps',
     description:
-      'Use this parent comparison checklist to evaluate online phonics classes in India by method, teacher quality, class format, pricing, and progress tracking.',
+      'Compare premium 1:1 online phonics classes in India with a parent checklist focused on blending, reading confidence, live teacher support, and clear progress updates.',
     canonicalPath: '/best-online-phonics-classes-india',
     ogType: 'website',
   },
