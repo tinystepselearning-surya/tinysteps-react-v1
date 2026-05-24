@@ -544,10 +544,7 @@ export default function PhonicsPage({
                           }}
                         >
                           <div className="pointer-events-none absolute left-[8%] right-[8%] top-0 h-px bg-white/80" />
-                          <div className="flex h-[54px] min-h-[52px] items-center justify-center gap-3 text-center">
-                            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-300/80 bg-white text-xs font-bold text-slate-800 shadow-sm">
-                              {level.step}
-                            </span>
+                          <div className="flex h-[54px] min-h-[52px] items-center justify-center text-center">
                             <span className="block">
                               <span className="block text-sm font-extrabold text-slate-950">{level.title}</span>
                               <span className={`block text-[11px] leading-tight text-slate-600 ${index === 0 ? 'hidden sm:block' : ''}`}>
