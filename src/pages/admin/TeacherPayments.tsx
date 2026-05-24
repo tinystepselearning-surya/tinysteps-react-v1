@@ -660,6 +660,7 @@ export default function TeacherPayments(): JSX.Element {
         '—';
 
       const sortMs = resolveEarningDateMillis(session, earning) || 0;
+      const includeInTotals = normalizeStatus(earning.status) !== 'void';
       const statusLabel = resolveTeacherDetailStatusLabel(includeInTotals, session, earning);
 
       const row = {
@@ -673,7 +674,6 @@ export default function TeacherPayments(): JSX.Element {
         amount,
       };
 
-      const includeInTotals = normalizeStatus(earning.status) !== 'void';
       const bucket = ensureBucket(teacherId);
       if (includeInTotals) {
         bucket.included.push(row);
