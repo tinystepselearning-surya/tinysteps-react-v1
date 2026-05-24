@@ -50,8 +50,10 @@ const PhonicsGamesPreschoolersPage = lazy(() => import('../pages/public/PhonicsG
 const OnlinePhonicsReadingClassesPage = lazy(() => import('../pages/public/OnlinePhonicsReadingClassesPage'));
 const EnglishGrammarWritingClassesPage = lazy(() => import('../pages/public/EnglishGrammarWritingClassesPage'));
 const LearningGamesMarketingPage = lazy(() => import('../pages/public/LearningGamesMarketingPage'));
+const FreeGamesHubPage = lazy(() => import('../pages/public/FreeGamesHubPage'));
 const FreeLetterTracingGamePage = lazy(() => import('../pages/public/FreeLetterTracingGamePage'));
 const LetterTracingWithSoundsGamePage = lazy(() => import('../pages/public/LetterTracingWithSoundsGamePage'));
+const FreeBalloonPopGamePage = lazy(() => import('../pages/public/FreeBalloonPopGamePage'));
 const PublicSpeakingCommunicationKidsPage = lazy(() => import('../pages/public/PublicSpeakingCommunicationKidsPage'));
 const BookDemoPage = lazy(() => import('../pages/public/BookDemoPage'));
 const CareersPage = lazy(() => import('../pages/public/CareersPage'));
@@ -576,8 +578,11 @@ const router = createBrowserRouter(
         { path: 'phonics-apps-for-preschoolers-india', element: <PhonicsAppsPreschoolersIndiaPage /> },
         { path: 'phonics-games-for-preschoolers', element: <PhonicsGamesPreschoolersPage /> },
         { path: 'phonics-learning-games', element: <LearningGamesMarketingPage /> },
+        { path: 'free-games-for-kids', element: <FreeGamesHubPage /> },
         { path: 'free-letter-tracing-game-for-kids', element: <FreeLetterTracingGamePage /> },
         { path: 'letter-tracing-with-sounds-game', element: <LetterTracingWithSoundsGamePage /> },
+        { path: 'free-letter-tracing-with-sounds-game-for-kids', element: <Navigate to="/letter-tracing-with-sounds-game" replace /> },
+        { path: 'free-balloon-pop-phonics-game-for-kids', element: <FreeBalloonPopGamePage /> },
         { path: 'free-games/word-meaning-flashcards', element: <WordMeaningFlashcards /> },
         { path: 'reading-classes-for-kids', element: <ReadingClassesForKidsPage /> },
         { path: 'spoken-english-classes-for-kids', element: <SpokenEnglishClassesForKidsPage /> },

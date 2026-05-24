@@ -1003,27 +1003,44 @@ export default function LetterTracingGame({
   const colorInk = (hex: string) => hexToRgba(hex, 0.72);
   const colorGuide = (hex: string) => hexToRgba(hex, 0.22);
 
-  // ✅ Stop page scrolling/selection while playing
+  // ✅ Stop page scrolling/selection only in fullscreen/immersive play
   useEffect(() => {
     if (mode !== "play") return;
 
+    const shouldLock = fs || !!document.fullscreenElement;
+    const body = document.body;
+    const html = document.documentElement;
+
+    // Defensive clear in non-fullscreen play to avoid stale lock from prior sessions/navigation.
+    if (!shouldLock) {
+      if (body.style.overflow === "hidden") body.style.overflow = "";
+      if (html.style.overflow === "hidden") html.style.overflow = "";
+      if ((body.style as any).touchAction === "none") (body.style as any).touchAction = "";
+      if ((body.style as any).webkitUserSelect === "none") (body.style as any).webkitUserSelect = "";
+      if ((body.style as any).userSelect === "none") (body.style as any).userSelect = "";
+      return;
+    }
+
     const prevOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
     const prevTouchAction = (document.body.style as any).touchAction;
     const prevWebkitUserSelect = (document.body.style as any).webkitUserSelect;
     const prevUserSelect = (document.body.style as any).userSelect;
 
     document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
     (document.body.style as any).touchAction = "none";
     (document.body.style as any).webkitUserSelect = "none";
     (document.body.style as any).userSelect = "none";
 
     return () => {
       document.body.style.overflow = prevOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
       (document.body.style as any).touchAction = prevTouchAction;
       (document.body.style as any).webkitUserSelect = prevWebkitUserSelect;
       (document.body.style as any).userSelect = prevUserSelect;
     };
-  }, [mode]);
+  }, [mode, fs]);
 
   // ✅ If user exits *native* fullscreen (ESC), sync fs=1 only if we truly were native-fullscreen
   
@@ -2066,6 +2083,7 @@ const futureTapTargets = useMemo(() => {
     : isTap
       ? "Tap the glowing dot."
       : "Start at the star. Follow the star and trace the line.";
+  const playCardSizeClass = fs ? "flex-1 min-h-0" : "h-[clamp(360px,64svh,620px)]";
 
   // fs=1 is immersive mode, even if native fullscreen isn't supported (iOS)
   const wrapperClass = fs ? "fixed left-0 right-0 top-0 z-[9999] bg-slate-50" : "mx-auto w-full max-w-6xl px-4 py-6";
@@ -2088,9 +2106,6 @@ const futureTapTargets = useMemo(() => {
               WebkitTapHighlightColor: "transparent",
             }
           : {
-              touchAction: "none",
-              WebkitUserSelect: "none",
-              userSelect: "none",
               WebkitTapHighlightColor: "transparent",
             }
       }
@@ -2224,7 +2239,7 @@ const futureTapTargets = useMemo(() => {
         </div>
 
         <div
-          className={`relative overflow-hidden rounded-2xl border shadow-sm ${fs ? "flex-1 min-h-0" : ""}`}
+          className={`relative overflow-hidden rounded-2xl border shadow-sm ${playCardSizeClass}`}
           style={{
             background:
               "radial-gradient(circle at 20% 20%, rgba(56,189,248,0.18), transparent 55%), radial-gradient(circle at 80% 30%, rgba(244,114,182,0.16), transparent 55%), radial-gradient(circle at 45% 85%, rgba(34,197,94,0.10), transparent 55%), linear-gradient(135deg, #f8fbff 0%, #fff7fb 45%, #fffdf7 100%)",
@@ -2239,24 +2254,25 @@ const futureTapTargets = useMemo(() => {
             onClose={() => setColorOpen(false)}
           />
 
-          <div className="relative h-full w-full" style={!fs ? { aspectRatio: "16 / 9", minHeight: "55vh" } : {}}>
-            <svg
-              ref={svgRef}
-              viewBox={renderViewBox}
-              preserveAspectRatio="xMidYMid meet"
-              className="absolute inset-0 h-full w-full touch-none select-none"
-              style={{
-                touchAction: "none",
-                WebkitUserSelect: "none",
-                userSelect: "none",
-                WebkitTouchCallout: "none",
-              }}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onPointerCancel={handlePointerUp}
-              onContextMenu={(e) => e.preventDefault()}
-            >
+          <div className="relative flex h-full w-full flex-col">
+            <div className="relative min-h-0 flex-1">
+              <svg
+                ref={svgRef}
+                viewBox={renderViewBox}
+                preserveAspectRatio="xMidYMid meet"
+                className="absolute inset-0 h-full w-full touch-none select-none"
+                style={{
+                  touchAction: "none",
+                  WebkitUserSelect: "none",
+                  userSelect: "none",
+                  WebkitTouchCallout: "none",
+                }}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+                onContextMenu={(e) => e.preventDefault()}
+              >
               {/* 1) Full letter outline */}
               {allTraceStrokes.map((s, i) => {
                 const c = STROKE_COLORS[i % STROKE_COLORS.length];
@@ -2423,12 +2439,13 @@ const futureTapTargets = useMemo(() => {
                   )}
                 </>
               )}
-            </svg>
-          </div>
+              </svg>
+            </div>
 
-          {/* Instruction bar */}
-          <div className="absolute bottom-0 left-0 right-0 bg-white/55 px-4 py-3 text-center text-sm font-semibold text-slate-700 backdrop-blur">
-            {instructionText}
+            {/* Instruction bar */}
+            <div className="shrink-0 bg-[#fbf5ec] px-4 py-3 text-center text-sm font-medium text-slate-700">
+              {instructionText}
+            </div>
           </div>
 
           {/* ✅ Completion: big animated next arrow (match new game) */}

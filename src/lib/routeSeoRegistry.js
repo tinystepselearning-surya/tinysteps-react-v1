@@ -334,6 +334,20 @@ export const ROUTE_SEO_REGISTRY = {
     canonicalPath: '/phonics-learning-games',
     ogType: 'website',
   },
+  '/free-games-for-kids': {
+    title: 'Free Learning Games for Kids | Tracing, Phonics & Spelling Practice',
+    description:
+      'Play free learning games for kids from Tiny Steps. Practise letter tracing, phonics sounds, balloon pop, spelling, vocabulary, and early reading skills through interactive activities.',
+    canonicalPath: '/free-games-for-kids',
+    ogType: 'website',
+  },
+  '/free-balloon-pop-phonics-game-for-kids': {
+    title: 'Free Balloon Pop Phonics Game for Kids | Tiny Steps',
+    description:
+      'Play a free balloon pop phonics game for kids. Children listen to letter sounds, choose the correct balloon, and build early phonics recognition through play.',
+    canonicalPath: '/free-balloon-pop-phonics-game-for-kids',
+    ogType: 'website',
+  },
   '/free-letter-tracing-game-for-kids': {
     title: 'Free Letter Tracing Game for Kids | Online Alphabet Tracing',
     description:

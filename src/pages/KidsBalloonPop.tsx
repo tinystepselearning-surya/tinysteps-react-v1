@@ -185,6 +185,17 @@ const SFX_URLS: Record<SfxKey, string> = {
 
 const letterSoundUrl = (letter: string) => `${LETTER_BASE}/${(letter || "").toLowerCase()}.mp3`;
 
+type KidsBalloonPopProps = {
+  baseRoute?: string;
+  missionReturnHrefOverride?: string;
+  missionBackLabel?: string;
+  hideNoKidNotice?: boolean;
+  publicMode?: boolean;
+  unlockAllLevels?: boolean;
+  showTopBackButton?: boolean;
+  disableFullscreen?: boolean;
+};
+
 function makePool(src: string, poolSize = 4) {
   const pool = Array.from({ length: poolSize }, () => {
     const a = new Audio(src);
@@ -281,12 +292,22 @@ function useBalloonPopSfx() {
   return { prime, playSfx, playLetter, primeLetters };
 }
 
-const KidsBalloonPop: React.FC = () => {
+const KidsBalloonPop: React.FC<KidsBalloonPopProps> = ({
+  baseRoute = "/kids/games/phonics/balloon-pop",
+  missionReturnHrefOverride,
+  missionBackLabel = "← Back to Mission",
+  hideNoKidNotice = false,
+  publicMode = false,
+  unlockAllLevels = false,
+  showTopBackButton = true,
+  disableFullscreen = false,
+}) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const kidId = searchParams.get("kidId") || "";
-  const eemTile = searchParams.get("eemTile") || "";
-  const missionReturnHref = buildMissionReturnHref(searchParams, kidId);
+  const rawKidId = searchParams.get("kidId") || "";
+  const kidId = publicMode ? "" : rawKidId;
+  const eemTile = publicMode ? "" : (searchParams.get("eemTile") || "");
+  const missionReturnHref = missionReturnHrefOverride ?? buildMissionReturnHref(searchParams, kidId);
   const missionDoneStorageKey = pendingMissionDoneKey(kidId);
 
   const sfx = useBalloonPopSfx();
@@ -306,18 +327,22 @@ const KidsBalloonPop: React.FC = () => {
 
   const navigateWithKid = useCallback(
     (path: string) => {
+      if (publicMode) {
+        navigate(path);
+        return;
+      }
       const [pathname, queryString = ""] = path.split("?");
       const params = new URLSearchParams(queryString);
       applyKidAndMissionContext(params, searchParams, kidId);
       const query = params.toString();
       navigate(query ? `${pathname}?${query}` : pathname);
     },
-    [kidId, navigate, searchParams]
+    [kidId, navigate, publicMode, searchParams]
   );
 
   const goToLevels = useCallback(() => {
-    navigateWithKid("/kids/games/phonics/balloon-pop");
-  }, [navigateWithKid]);
+    navigateWithKid(baseRoute);
+  }, [baseRoute, navigateWithKid]);
 
   const [balloons, setBalloons] = useState<Balloon[]>([]);
   const [hasStarted, setHasStarted] = useState(false);
@@ -415,7 +440,7 @@ const KidsBalloonPop: React.FC = () => {
   // --- Fullscreen helpers ---
   const playLevel = useCallback(
     async (levelId: number) => {
-      if (levelId > progress.unlocked) return;
+      if (!unlockAllLevels && levelId > progress.unlocked) return;
 
       setFeedback(null);
       setSessionMastered(false);
@@ -425,23 +450,27 @@ const KidsBalloonPop: React.FC = () => {
       setFsBlocked(false);
 
       // Fullscreen is best-effort; gameplay should still work when blocked.
-      try {
-        const elem = document.documentElement;
-        if (elem.requestFullscreen) await elem.requestFullscreen();
-        else if ((elem as any).webkitRequestFullscreen) await (elem as any).webkitRequestFullscreen();
-      } catch {
-        setFsBlocked(true);
-        if (fsNoticeTimeoutRef.current) {
-          window.clearTimeout(fsNoticeTimeoutRef.current);
+      if (!disableFullscreen) {
+        try {
+          const elem = document.documentElement;
+          if (elem.requestFullscreen) await elem.requestFullscreen();
+          else if ((elem as any).webkitRequestFullscreen) await (elem as any).webkitRequestFullscreen();
+        } catch {
+          setFsBlocked(true);
+          if (fsNoticeTimeoutRef.current) {
+            window.clearTimeout(fsNoticeTimeoutRef.current);
+          }
+          fsNoticeTimeoutRef.current = window.setTimeout(() => setFsBlocked(false), 2200);
         }
-        fsNoticeTimeoutRef.current = window.setTimeout(() => setFsBlocked(false), 2200);
       }
 
       // Update URL
       const params = new URLSearchParams();
-      applyKidAndMissionContext(params, searchParams, kidId);
+      if (!publicMode) {
+        applyKidAndMissionContext(params, searchParams, kidId);
+      }
       params.set("level", String(levelId));
-      navigate(`/kids/games/phonics/balloon-pop?${params.toString()}`, { replace: true });
+      navigate(`${baseRoute}?${params.toString()}`, { replace: true });
 
       // Init balloons
       const level = JOLLY_LEVELS.find((l) => l.id === levelId);
@@ -479,7 +508,7 @@ const KidsBalloonPop: React.FC = () => {
       setLevelComplete(false);
       lastCorrectPopRef.current = Date.now();
     },
-    [kidId, navigate, progress.unlocked, searchParams]
+    [baseRoute, disableFullscreen, kidId, navigate, progress.unlocked, publicMode, searchParams, unlockAllLevels]
   );
 
   const exitFullscreen = useCallback(() => {
@@ -491,8 +520,10 @@ const KidsBalloonPop: React.FC = () => {
     }
 
     try {
-      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
-      else if ((document as any).webkitExitFullscreen) (document as any).webkitExitFullscreen();
+      if (!disableFullscreen) {
+        if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+        else if ((document as any).webkitExitFullscreen) (document as any).webkitExitFullscreen();
+      }
     } catch {}
 
     if ((levelComplete || missionCompletionPending) && eemTile) {
@@ -502,9 +533,10 @@ const KidsBalloonPop: React.FC = () => {
     }
 
     goToLevels();
-  }, [eemTile, goToLevels, levelComplete, missionBackHref, missionCompletionPending, navigate, setMissionDonePending]);
+  }, [disableFullscreen, eemTile, goToLevels, levelComplete, missionBackHref, missionCompletionPending, navigate, setMissionDonePending]);
 
   useEffect(() => {
+    if (disableFullscreen) return;
     const handleFSChange = () => {
       const isFull = !!(document.fullscreenElement || (document as any).webkitFullscreenElement);
       if (isFull) {
@@ -530,14 +562,14 @@ const KidsBalloonPop: React.FC = () => {
         fsNoticeTimeoutRef.current = null;
       }
     };
-  }, [fullscreenMode]);
+  }, [disableFullscreen, fullscreenMode]);
 
   useEffect(() => {
-    document.body.style.overflow = fullscreenMode ? "hidden" : "";
+    document.body.style.overflow = fullscreenMode && !disableFullscreen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [fullscreenMode]);
+  }, [disableFullscreen, fullscreenMode]);
 
   // Respawn balloon by id (same id, no new balloon ids)
   const respawn = useCallback(
@@ -645,7 +677,7 @@ const KidsBalloonPop: React.FC = () => {
     saveProgress(kidId, newProgress);
 
     // Optional: recordLevelResult (kept as you had; safe best-effort)
-    if (kidId) {
+    if (kidId && !publicMode) {
       (async () => {
         try {
           const { recordLevelResult } = await import("../games/engine/recordLevelResult");
@@ -730,14 +762,14 @@ const KidsBalloonPop: React.FC = () => {
         }
       })();
     }
-  }, [correctCount, currentLevel, eemTile, kidId, mistakes, progress, sfx, setMissionDonePending]);
+  }, [correctCount, currentLevel, eemTile, kidId, mistakes, progress, publicMode, sfx, setMissionDonePending]);
 
   const playNextLevel = useCallback(() => {
     if (!currentLevel || currentLevel.id >= 7) return;
     const nextLevelId = currentLevel.id + 1;
-    if (nextLevelId > progress.unlocked) return;
+    if (!unlockAllLevels && nextLevelId > progress.unlocked) return;
     playLevel(nextLevelId);
-  }, [currentLevel, progress.unlocked, playLevel]);
+  }, [currentLevel, progress.unlocked, playLevel, unlockAllLevels]);
 
   const replayLevel = useCallback(() => {
     if (!currentLevel) return;
@@ -994,7 +1026,7 @@ const KidsBalloonPop: React.FC = () => {
   if (!fullscreenMode) {
     return (
       <div
-        className="min-h-screen flex flex-col items-center justify-start py-8 px-4"
+        className="relative min-h-screen flex flex-col items-center justify-start py-8 px-4"
         style={{ background: "linear-gradient(180deg, #667eea 0%, #764ba2 100%)" }}
       >
         <style>{`
@@ -1004,19 +1036,21 @@ const KidsBalloonPop: React.FC = () => {
           @media (prefers-reduced-motion: reduce) { .level-card { transition:none !important; transform:none !important; } }
         `}</style>
 
-        <Link
-          to={missionBackHref()}
-          className="absolute top-3 right-3 px-4 py-2 bg-black/90 hover:bg-black/95 text-white font-semibold rounded-full shadow-lg transition-all duration-200"
-          style={{ zIndex: 50 }}
-        >
-          ← Back to Mission
-        </Link>
+        {showTopBackButton && (
+          <Link
+            to={missionBackHref()}
+            className="absolute top-3 right-3 px-4 py-2 bg-black/90 hover:bg-black/95 text-white font-semibold rounded-full shadow-lg transition-all duration-200"
+            style={{ zIndex: 50 }}
+          >
+            {missionBackLabel}
+          </Link>
+        )}
 
         <div className="w-full max-w-6xl mx-auto text-center mb-8">
           <h1 className="text-5xl font-bold text-white">Choose Level</h1>
           <p className="text-white/70 mt-2">Pick a Jolly Phonics level to play Balloon Pop</p>
 
-          {!kidId && (
+          {!kidId && !hideNoKidNotice && (
             <div className="mt-6 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-lg max-w-md mx-auto">
               <p className="text-yellow-200 font-semibold mb-3">⚠️ No child selected</p>
               <p className="text-yellow-100/80 text-sm mb-4">
@@ -1034,7 +1068,7 @@ const KidsBalloonPop: React.FC = () => {
 
         <div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
           {JOLLY_LEVELS.map((level) => {
-            const locked = level.id > progress.unlocked;
+            const locked = !unlockAllLevels && level.id > progress.unlocked;
             const completed = progress.completed[level.id];
             const stars = completed ? "⭐".repeat(completed.stars) : "";
             return (
@@ -1076,11 +1110,15 @@ const KidsBalloonPop: React.FC = () => {
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-[9999] overflow-hidden"
+      className={
+        disableFullscreen
+          ? "relative w-full overflow-hidden rounded-3xl"
+          : "fixed inset-0 z-[9999] overflow-hidden"
+      }
       style={{
         background: "linear-gradient(180deg, #87CEEB 0%, #B0E8FF 40%, #E0F6FF 70%, #F0F9FF 100%)",
-        width: "100vw",
-        height: "100vh",
+        width: disableFullscreen ? "100%" : "100vw",
+        height: disableFullscreen ? "min(88vh, 780px)" : "100vh",
       }}
     >
       <style>{`

@@ -90,9 +90,6 @@ const STAR_END_SIZE = 14;
 // viewBox padding
 const VIEWBOX_PAD = 10;
 
-// Reserve space for the bottom instruction bar so SVG doesn't get covered
-const INSTRUCTION_BAR_H = 56;
-
 /* --------------------
    Small helpers
 -------------------- */
@@ -1422,36 +1419,6 @@ export default function LetterTracingWithSounds({
   const timersRef = useRef<{ strokeAdvance?: number; confettiOff?: number }>({});
   const celebrateTokenRef = useRef(0);
 
-  // measure the instruction bar's real height (handles iPad safe-area / font scaling)
-  const instructionBarRef = useRef<HTMLDivElement | null>(null);
-  const [instructionBarH, setInstructionBarH] = useState(INSTRUCTION_BAR_H);
-
-  useLayoutEffect(() => {
-    const el = instructionBarRef.current;
-    if (!el) return;
-
-    const update = () => {
-      const h = el.getBoundingClientRect().height;
-      setInstructionBarH(h > 0 ? Math.ceil(h) : INSTRUCTION_BAR_H);
-    };
-
-    update();
-
-    let ro: ResizeObserver | null = null;
-    try {
-      ro = new ResizeObserver(() => update());
-      ro.observe(el);
-    } catch {
-      // ResizeObserver not available → fall back to resize only
-    }
-
-    window.addEventListener("resize", update);
-    return () => {
-      window.removeEventListener("resize", update);
-      ro?.disconnect();
-    };
-  }, [fs, isPretrace, currentLetterId, strokeIndex, letterDone]);
-
   const clearTimers = useCallback(() => {
     celebrateTokenRef.current += 1;
     if (timersRef.current.strokeAdvance) {
@@ -1642,12 +1609,24 @@ export default function LetterTracingWithSounds({
   const colorInk = (hex: string) => hexToRgba(hex, 0.72);
   const colorGuide = (hex: string) => hexToRgba(hex, 0.22);
 
-  // Prevent scrolling + iOS bounce while playing (especially in fullscreen)
+  // Prevent scrolling + iOS bounce only in fullscreen play.
   useEffect(() => {
     if (mode !== "play") return;
 
+    const shouldLock = fs || !!document.fullscreenElement;
     const body = document.body;
     const html = document.documentElement;
+
+    if (!shouldLock) {
+      if (body.style.overflow === "hidden") body.style.overflow = "";
+      if (html.style.overflow === "hidden") html.style.overflow = "";
+      if ((body.style as any).touchAction === "none") (body.style as any).touchAction = "";
+      if ((body.style as any).webkitUserSelect === "none") (body.style as any).webkitUserSelect = "";
+      if ((body.style as any).userSelect === "none") (body.style as any).userSelect = "";
+      if ((body.style as any).webkitTouchCallout === "none") (body.style as any).webkitTouchCallout = "";
+      if ((body.style as any).overscrollBehavior === "none") (body.style as any).overscrollBehavior = "";
+      return;
+    }
 
     const prev = {
       bodyOverflow: body.style.overflow,
@@ -2847,6 +2826,7 @@ export default function LetterTracingWithSounds({
     : `Level 1 • ${step === 0 ? "Capital" : "Small"} • Letter: ${currentLetterId ?? ""} • Stroke ${strokeNo}/${totalStrokes}`;
 
   const wrapperClass = fs ? "fixed inset-0 z-[9999] bg-slate-50" : "mx-auto w-full max-w-6xl px-4 py-6";
+  const playCardSizeClass = fs ? "flex-1 min-h-0" : "h-[clamp(360px,64svh,620px)]";
 
   return (
     <div
@@ -2869,12 +2849,7 @@ export default function LetterTracingWithSounds({
               userSelect: "none",
               WebkitTapHighlightColor: "transparent",
             }
-          : {
-              touchAction: "none",
-              WebkitUserSelect: "none",
-              userSelect: "none",
-              WebkitTapHighlightColor: "transparent",
-            }
+          : undefined
       }
       onContextMenu={(e) => e.preventDefault()}
     >
@@ -3090,12 +3065,13 @@ export default function LetterTracingWithSounds({
 
         {/* Main board */}
         <div
-          className={`relative overflow-hidden rounded-2xl border shadow-sm flex flex-col ${fs ? "flex-1 min-h-0" : ""}`}
+          className={`relative overflow-hidden rounded-2xl border shadow-sm ${playCardSizeClass}`}
           style={{
             background: `radial-gradient(circle at 50% 50%, ${hexToRgba(effectiveColor, 0.08)}, transparent 60%), radial-gradient(circle at 20% 20%, rgba(56,189,248,0.18), transparent 55%), radial-gradient(circle at 80% 30%, rgba(244,114,182,0.16), transparent 55%), radial-gradient(circle at 45% 85%, rgba(34,197,94,0.10), transparent 55%), linear-gradient(135deg, #f8fbff 0%, #fff7fb 45%, #fffdf7 100%)`,
           }}
         >
           <ConfettiBurst fire={confetti} />
+          <div className="relative flex h-full w-full flex-col">
 
           {/* ✅ Green tick on completion */}
           {letterDone && (
@@ -3132,30 +3108,17 @@ export default function LetterTracingWithSounds({
             </div>
           )}
 
-          {/* Stage (IMPORTANT: no h-full when using aspectRatio in non-fs) */}
-          <div
-            className={fs ? "relative flex-1 min-h-0 w-full" : "relative w-full"}
-            style={
-              fs
-                ? { minHeight: 0 }
-                : { aspectRatio: "16 / 9", minHeight: "55vh" }
-            }
-          >
+          <div className="relative min-h-0 flex-1">
             <svg
               ref={svgRef}
               viewBox={renderViewBox}
               preserveAspectRatio="xMidYMid meet"
-              width="100%"
-              height="100%"
-              className="absolute inset-0 w-full h-full touch-none select-none"
+              className="absolute inset-0 h-full w-full touch-none select-none"
               style={{
                 touchAction: "none",
                 WebkitUserSelect: "none",
                 userSelect: "none",
                 WebkitTouchCallout: "none",
-
-                // reserve exactly the instruction bar's REAL height
-                bottom: instructionBarH,
 
                 transform: shiftRightForSound
                   ? "translateX(clamp(12px, 3vw, 56px))"
@@ -3323,13 +3286,11 @@ export default function LetterTracingWithSounds({
               )}
             </svg>
 
-            {/* Instruction bar (let it auto-size; we measure it) */}
-            <div
-              ref={instructionBarRef}
-              className="absolute bottom-0 left-0 right-0 bg-white/55 px-4 py-3 text-center text-sm font-semibold text-slate-700 backdrop-blur"
-            >
+            {/* Instruction bar */}
+          </div>
+          <div className="shrink-0 bg-white/55 px-4 py-3 text-center text-sm font-semibold text-slate-700 backdrop-blur">
               {isTap ? "Tap the glowing dot." : "Start at the star. Follow the star and trace the line."}
-            </div>
+          </div>
           </div>
 
           {/* Completion: big next arrow */}
