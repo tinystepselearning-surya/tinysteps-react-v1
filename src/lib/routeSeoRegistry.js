@@ -24,7 +24,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/phonics': {
     title: 'Online Phonics Classes for Kids in India | Tiny Steps Learning',
     description:
-      'Premium 1:1 online phonics classes for kids aged 3–12. Learn letter sounds, blending, reading fluency and spelling confidence with interactive teachers. Book a free assessment.',
+      'Premium online phonics classes for kids in India. Live 1:1 guided lessons for letter sounds, blending, CVC words, reading fluency, spelling, and parent progress updates. Book a free assessment.',
     canonicalPath: '/phonics',
     ogType: 'website',
   },
