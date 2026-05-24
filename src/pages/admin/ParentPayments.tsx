@@ -11,6 +11,7 @@ import {
   where,
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
+import jsPDF from 'jspdf';
 import { db, functions } from '../../lib/firebaseConfig';
 import { normalizeFinanceStatus } from '../../lib/statuses';
 import { Card } from '@components/ui/card';
@@ -173,6 +174,163 @@ type ReceiveParentPaymentPreviewInput = {
   allocationMode: ReceiveParentPaymentAllocationMode;
 };
 
+type ParentInvoiceNormalizedRow = {
+  stableKey: string;
+  sessionId: string;
+  chargeId: string;
+  monthKey: string;
+  dateLabel: string;
+  weekdayLabel: string;
+  dateSortValue: number;
+  timeLabel: string;
+  startDateTimeSortValue: number;
+  studentName: string;
+  courseName: string;
+  teacherName: string;
+  sessionTypeLabel: 'Regular' | 'Rescheduled' | 'Makeup' | 'One-off';
+  sessionTypeDetailLabel?: string;
+  statusLabel: string;
+  amount: number;
+  rawDateDebugSource: string;
+  rawTimeDebugSource: string;
+  sourceStatus: string;
+  rawSessionStatus: string;
+};
+
+type InvoiceMonthSection = {
+  monthKey: string;
+  monthLabel: string;
+  rows: ParentInvoiceNormalizedRow[];
+  monthClassCount: number;
+  monthTotalAmount: number;
+};
+
+type ParentInvoiceData = {
+  parentId: string;
+  parentName: string;
+  generatedDateLabel: string;
+  rows: ParentInvoiceNormalizedRow[];
+  monthSections: InvoiceMonthSection[];
+  studentNames: string[];
+  courseNames: string[];
+  teacherNames: string[];
+  totalCompletedClasses: number;
+  totalClassCharges: number;
+  totalPaid: number;
+  balanceToCollect: number;
+  sessionTypeBreakdown: {
+    regular: number;
+    rescheduledOrMakeup: number;
+    oneOff: number;
+  };
+};
+
+const PDF_LOGO_CANDIDATE_PATHS = [
+  '/logo-main.webp',
+  '/logo-header.webp',
+  '/logo-square.webp',
+  '/apple-touch-icon.png',
+  '/logo-header-compact.png',
+  '/logo-footer-compact.png',
+] as const;
+
+type PdfLogoAsset = {
+  path: string;
+  dataUrl: string;
+  format: 'PNG' | 'JPEG' | 'WEBP';
+  width: number;
+  height: number;
+};
+
+const mmToPt = (mm: number) => (mm * 72) / 25.4;
+const PDF_LOGO_MAX_WIDTH_PT = mmToPt(34);
+const PDF_LOGO_MAX_HEIGHT_PT = mmToPt(18);
+
+let pdfLogoAssetPromise: Promise<PdfLogoAsset | null> | null = null;
+
+const dataUrlToPdfFormat = (dataUrl: string): 'PNG' | 'JPEG' | 'WEBP' => {
+  if (dataUrl.startsWith('data:image/png')) return 'PNG';
+  if (dataUrl.startsWith('data:image/jpeg') || dataUrl.startsWith('data:image/jpg')) return 'JPEG';
+  if (dataUrl.startsWith('data:image/webp')) return 'WEBP';
+  return 'PNG';
+};
+
+const resolveLogoFitSize = (
+  naturalWidth: number,
+  naturalHeight: number,
+  maxWidth: number,
+  maxHeight: number
+) => {
+  const safeWidth = Math.max(naturalWidth, 1);
+  const safeHeight = Math.max(naturalHeight, 1);
+  const aspectRatio = safeWidth / safeHeight;
+
+  let finalWidth = Math.min(maxWidth, maxHeight * aspectRatio);
+  let finalHeight = finalWidth / aspectRatio;
+  if (finalHeight > maxHeight) {
+    finalHeight = maxHeight;
+    finalWidth = finalHeight * aspectRatio;
+  }
+
+  return { width: finalWidth, height: finalHeight };
+};
+
+const readImageDataUrl = async (path: string): Promise<string | null> => {
+  try {
+    const response = await fetch(path, { cache: 'force-cache' });
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    return await new Promise<string | null>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : null);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+};
+
+const readImageNaturalSize = async (
+  dataUrl: string
+): Promise<{ width: number; height: number } | null> => {
+  try {
+    const image = new Image();
+    return await new Promise<{ width: number; height: number } | null>((resolve) => {
+      image.onload = () =>
+        resolve({
+          width: image.naturalWidth || 0,
+          height: image.naturalHeight || 0,
+        });
+      image.onerror = () => resolve(null);
+      image.src = dataUrl;
+    });
+  } catch {
+    return null;
+  }
+};
+
+const getPdfLogoAsset = async (): Promise<PdfLogoAsset | null> => {
+  if (pdfLogoAssetPromise) return pdfLogoAssetPromise;
+  pdfLogoAssetPromise = (async () => {
+    for (const path of PDF_LOGO_CANDIDATE_PATHS) {
+      const dataUrl = await readImageDataUrl(path);
+      if (!dataUrl) continue;
+      const size = await readImageNaturalSize(dataUrl);
+      if (!size || size.width <= 0 || size.height <= 0) continue;
+      return {
+        path,
+        dataUrl,
+        format: dataUrlToPdfFormat(dataUrl),
+        width: size.width,
+        height: size.height,
+      };
+    }
+    return null;
+  })();
+  return pdfLogoAssetPromise;
+};
+
 const monthKeyFromDate = (date: Date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -185,6 +343,26 @@ const formatMoney = (value: any) => {
   const num = Number(value);
   if (!Number.isFinite(num)) return '₹0';
   return `₹${Math.round(num).toLocaleString('en-IN')}`;
+};
+
+const formatPdfMoney = (value: any) => {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return 'Rs. 0';
+  return `Rs. ${Math.round(num).toLocaleString('en-IN')}`;
+};
+
+const formatDateForFileName = (date: Date) => {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const year = parts.find((part) => part.type === 'year')?.value || '';
+  const month = parts.find((part) => part.type === 'month')?.value || '';
+  const day = parts.find((part) => part.type === 'day')?.value || '';
+  if (!year || !month || !day) return date.toISOString().slice(0, 10);
+  return `${year}-${month}-${day}`;
 };
 
 const resolveParentNameCandidate = (row: any): string => {
@@ -214,6 +392,27 @@ const toMillis = (value: any) => {
   if (!value) return null;
   if (typeof value?.toDate === 'function') return value.toDate().getTime();
   if (Number.isFinite(value?.seconds)) return value.seconds * 1000;
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value > 0 ? value : null;
+  }
+  if (typeof value === 'string') {
+    const text = value.trim();
+    if (!text) return null;
+    if (/^\d{13}$/.test(text)) {
+      const ms = Number(text);
+      return Number.isFinite(ms) ? ms : null;
+    }
+    if (/^\d{10}$/.test(text)) {
+      const seconds = Number(text);
+      return Number.isFinite(seconds) ? seconds * 1000 : null;
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+      const [year, month, day] = text.split('-').map(Number);
+      if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
+        return Date.UTC(year, month - 1, day);
+      }
+    }
+  }
   const parsed = new Date(value).getTime();
   return Number.isFinite(parsed) ? parsed : null;
 };
@@ -224,6 +423,56 @@ const normalizeDateOnlyYmd = (value: any): string | null => {
   if (!raw) return null;
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
   return null;
+};
+
+const parseHHMM = (value?: string): { hh: number; mm: number } | null => {
+  if (!value) return null;
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
+  if (!match) return null;
+  const hh = Number(match[1]);
+  const mm = Number(match[2]);
+  if (!Number.isFinite(hh) || !Number.isFinite(mm) || hh < 0 || hh > 23 || mm < 0 || mm > 59) {
+    return null;
+  }
+  return { hh, mm };
+};
+
+const extractSessionDocId = (value: any): string => {
+  if (!value) return '';
+  if (typeof value === 'string') {
+    const text = value.trim();
+    if (!text) return '';
+    if (text.includes('/')) {
+      const parts = text.split('/').filter(Boolean);
+      return String(parts[parts.length - 1] || '').trim();
+    }
+    return text;
+  }
+  if (typeof value === 'object') {
+    const refId = String((value as any).id || '').trim();
+    if (refId) return refId;
+    const refPath = String((value as any).path || '').trim();
+    if (refPath) {
+      const parts = refPath.split('/').filter(Boolean);
+      return String(parts[parts.length - 1] || '').trim();
+    }
+  }
+  return '';
+};
+
+const resolveChargeSessionId = (charge: any): string => {
+  const sessionCandidates = [
+    charge?.sessionId,
+    charge?.classSessionId,
+    charge?.sessionRef,
+    charge?.session,
+    charge?.id,
+  ];
+  for (const candidate of sessionCandidates) {
+    const id = extractSessionDocId(candidate);
+    if (id) return id;
+  }
+  return '';
 };
 
 const chunkIds = (ids: string[], size = 10) => {
@@ -278,6 +527,335 @@ const toDateInputYmd = (value: any) => {
   return new Date(ms).toISOString().slice(0, 10);
 };
 
+const formatDateDisplay = (value: any) => {
+  const ms = toMillis(value);
+  if (!ms) return '—';
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'Asia/Kolkata',
+  }).format(new Date(ms));
+};
+
+const formatWeekdayLabel = (value: any) => {
+  const ms = toMillis(value);
+  if (!ms) return '—';
+  return new Intl.DateTimeFormat('en-GB', {
+    weekday: 'short',
+    timeZone: 'Asia/Kolkata',
+  }).format(new Date(ms));
+};
+
+const formatDayMonthShort = (value: any) => {
+  const ms = toMillis(value);
+  if (!ms) return '';
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    timeZone: 'Asia/Kolkata',
+  }).format(new Date(ms));
+};
+
+const hasAnySourceToken = (value: unknown, tokens: string[]) => {
+  const source = String(value || '').trim().toLowerCase();
+  if (!source) return false;
+  return tokens.some((token) => source.includes(token));
+};
+
+const formatStatusLabel = (value: any) => {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return '—';
+  return raw
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+const isSessionCompletedLike = (value: unknown): boolean => {
+  const normalized = normalizeFinanceStatus(value);
+  return (
+    normalized === 'completed' ||
+    normalized === 'present' ||
+    normalized === 'late' ||
+    normalized === 'attendance_marked' ||
+    normalized === 'billable_completed'
+  );
+};
+
+const isSessionRescheduledOrCancelled = (value: unknown): boolean => {
+  const normalized = normalizeFinanceStatus(value);
+  return (
+    normalized.includes('reschedule') ||
+    normalized === 'cancelled' ||
+    normalized === 'canceled'
+  );
+};
+
+const getIstTimePartsFromMs = (ms: number): { hour: number; minute: number } | null => {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kolkata',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date(ms));
+  const hourText = parts.find((part) => part.type === 'hour')?.value;
+  const minuteText = parts.find((part) => part.type === 'minute')?.value;
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null;
+  return { hour, minute };
+};
+
+const formatMinutesToLabel = (minutes: number): string => {
+  const safeMinutes = Math.max(0, Math.min(minutes, 23 * 60 + 59));
+  const hour = Math.floor(safeMinutes / 60);
+  const minute = safeMinutes % 60;
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+};
+
+const resolveDateWithSource = (
+  session: any,
+  charge: any
+): { ms: number; source: string } => {
+  const candidates: Array<{ label: string; value: any }> = [
+    { label: 'session.date', value: session?.date },
+    { label: 'session.sessionDate', value: session?.sessionDate },
+    { label: 'session.classDate', value: session?.classDate },
+    { label: 'session.startAt', value: session?.startAt },
+    { label: 'session.scheduledStartAt', value: session?.scheduledStartAt },
+    { label: 'session.startTime', value: session?.startTime },
+    { label: 'charge.date', value: charge?.date },
+    { label: 'charge.sessionDate', value: charge?.sessionDate },
+    { label: 'charge.classDate', value: charge?.classDate },
+    { label: 'charge.startAt', value: charge?.startAt },
+    { label: 'charge.scheduledStartAt', value: charge?.scheduledStartAt },
+    { label: 'charge.startTime', value: charge?.startTime },
+    { label: 'charge.createdAt', value: charge?.createdAt },
+    { label: 'charge.updatedAt', value: charge?.updatedAt },
+  ];
+  for (const candidate of candidates) {
+    if (
+      typeof candidate.value === 'string' &&
+      (candidate.label.endsWith('startTime') || candidate.label.endsWith('endTime'))
+    ) {
+      if (parseHHMM(candidate.value.trim())) continue;
+    }
+    const ms = toMillis(candidate.value);
+    if (Number.isFinite(ms) && ms! > 0) return { ms: ms as number, source: candidate.label };
+  }
+  return { ms: 0, source: 'unresolved' };
+};
+
+const pickTimeValue = (
+  candidates: Array<{ label: string; value: any }>
+): { label: string; text: string; ms: number | null; minutes: number | null } => {
+  for (const candidate of candidates) {
+    if (candidate.value === null || candidate.value === undefined) continue;
+    if (typeof candidate.value === 'string') {
+      const text = candidate.value.trim();
+      if (!text || /^\d{4}-\d{2}-\d{2}$/.test(text)) continue;
+      const parsed = parseHHMM(text);
+      if (parsed) {
+        return {
+          label: candidate.label,
+          text: `${formatMinutesToLabel(parsed.hh * 60 + parsed.mm)}`,
+          ms: null,
+          minutes: parsed.hh * 60 + parsed.mm,
+        };
+      }
+      return { label: candidate.label, text, ms: null, minutes: null };
+    }
+    const ms = toMillis(candidate.value);
+    if (!Number.isFinite(ms) || ms! <= 0) continue;
+    const parts = getIstTimePartsFromMs(ms as number);
+    if (!parts) continue;
+    return {
+      label: candidate.label,
+      text: formatMinutesToLabel(parts.hour * 60 + parts.minute),
+      ms: ms as number,
+      minutes: parts.hour * 60 + parts.minute,
+    };
+  }
+  return { label: 'unresolved', text: '', ms: null, minutes: null };
+};
+
+const resolveSessionTimeLabel = (
+  session: any,
+  charge: any,
+  dateSortValue: number
+): { timeLabel: string; startDateTimeSortValue: number; rawTimeDebugSource: string } => {
+  const start = pickTimeValue([
+    { label: 'session.startAt', value: session?.startAt },
+    { label: 'session.startTime', value: session?.startTime },
+    { label: 'session.scheduledStartAt', value: session?.scheduledStartAt },
+    { label: 'charge.startAt', value: charge?.startAt },
+    { label: 'charge.startTime', value: charge?.startTime },
+    { label: 'charge.scheduledStartAt', value: charge?.scheduledStartAt },
+  ]);
+  const end = pickTimeValue([
+    { label: 'session.endAt', value: session?.endAt },
+    { label: 'session.endTime', value: session?.endTime },
+    { label: 'session.scheduledEndAt', value: session?.scheduledEndAt },
+    { label: 'charge.endAt', value: charge?.endAt },
+    { label: 'charge.endTime', value: charge?.endTime },
+    { label: 'charge.scheduledEndAt', value: charge?.scheduledEndAt },
+  ]);
+
+  const startDateTimeSortValue =
+    start.ms && start.ms > 0
+      ? start.ms
+      : dateSortValue > 0 && Number.isFinite(start.minutes)
+        ? dateSortValue + Number(start.minutes) * 60 * 1000
+        : dateSortValue;
+
+  if (!start.text) {
+    return {
+      timeLabel: '—',
+      startDateTimeSortValue,
+      rawTimeDebugSource: 'unresolved',
+    };
+  }
+
+  if (!end.text) {
+    return {
+      timeLabel: start.text,
+      startDateTimeSortValue,
+      rawTimeDebugSource: start.label,
+    };
+  }
+
+  return {
+    timeLabel: `${start.text} - ${end.text}`,
+    startDateTimeSortValue,
+    rawTimeDebugSource: `${start.label} + ${end.label}`,
+  };
+};
+
+const resolveSessionType = (
+  session: any,
+  charge: any,
+): { sessionTypeLabel: 'Regular' | 'Rescheduled' | 'Makeup' | 'One-off'; sessionTypeDetailLabel?: string } => {
+  const sessionSource = String(
+    session?.source || session?.sessionSource || session?.scheduleType || session?.sessionType || session?.type || ''
+  )
+    .trim()
+    .toLowerCase();
+  const chargeSource = String(charge?.source || '').trim().toLowerCase();
+  const adHocType = String(session?.adHocType || charge?.adHocType || '').trim().toLowerCase();
+
+  const hasMakeupMetadata =
+    session?.isMakeup === true ||
+    charge?.isMakeup === true ||
+    Boolean(session?.makeupCreditId || session?.makeupForSessionId || charge?.makeupCreditId || charge?.makeupForSessionId) ||
+    hasAnySourceToken(sessionSource, ['makeup']) ||
+    hasAnySourceToken(chargeSource, ['makeup']);
+  if (hasMakeupMetadata) return { sessionTypeLabel: 'Makeup' };
+
+  const originalDateCandidate = [
+    session?.rescheduledFromDate,
+    session?.originalDate,
+    session?.sourceSessionDate,
+    charge?.rescheduledFromDate,
+    charge?.originalDate,
+    charge?.sourceSessionDate,
+  ].find((value) => value !== null && value !== undefined && String(value).trim() !== '');
+  let originalDateLabel = '';
+  if (originalDateCandidate) {
+    const weekday = formatWeekdayLabel(originalDateCandidate);
+    const dayMonth = formatDayMonthShort(originalDateCandidate);
+    if (weekday !== '—' && dayMonth) {
+      originalDateLabel = `${weekday}, ${dayMonth}`;
+    }
+  }
+
+  const hasRescheduleMetadata =
+    session?.isRescheduled === true ||
+    charge?.isRescheduled === true ||
+    normalizeFinanceStatus(session?.status).includes('reschedule') ||
+    Boolean(
+      session?.rescheduled ||
+      session?.rescheduledFrom ||
+      session?.rescheduledFromDate ||
+      session?.originalDate ||
+      session?.originalSessionId ||
+      session?.sourceSessionId ||
+      charge?.rescheduled ||
+      charge?.rescheduledFrom ||
+      charge?.rescheduledFromDate ||
+      charge?.originalDate ||
+      charge?.originalSessionId ||
+      charge?.sourceSessionId
+    ) ||
+    hasAnySourceToken(sessionSource, ['reschedule']) ||
+    hasAnySourceToken(chargeSource, ['reschedule']);
+  if (hasRescheduleMetadata) {
+    return {
+      sessionTypeLabel: 'Rescheduled',
+      ...(originalDateLabel ? { sessionTypeDetailLabel: `from ${originalDateLabel}` } : {}),
+    };
+  }
+
+  const hasOneOffMetadata =
+    session?.isAdHoc === true ||
+    charge?.isAdHoc === true ||
+    session?.isOneOff === true ||
+    charge?.isOneOff === true ||
+    hasAnySourceToken(adHocType, ['one_off', 'adhoc', 'ad_hoc', 'extra']) ||
+    hasAnySourceToken(sessionSource, ['one_off', 'adhoc', 'ad_hoc', 'manual_one_off', 'approved_request']) ||
+    hasAnySourceToken(chargeSource, ['one_off', 'adhoc', 'ad_hoc', 'manual_one_off', 'approved_request']);
+  if (hasOneOffMetadata) return { sessionTypeLabel: 'One-off' };
+
+  return { sessionTypeLabel: 'Regular' };
+};
+
+const resolveParentDetailStatusLabel = (
+  includeInTotals: boolean,
+  session: any,
+  charge: any
+): string => {
+  const sessionStatus = normalizeFinanceStatus(session?.status);
+  if (isSessionCompletedLike(sessionStatus)) return 'Completed';
+  if (isSessionRescheduledOrCancelled(sessionStatus)) return formatStatusLabel(sessionStatus);
+  const chargeStatus = normalizeFinanceStatus(charge?.status);
+  if (isSessionRescheduledOrCancelled(chargeStatus)) return formatStatusLabel(chargeStatus);
+  if (includeInTotals) return 'Included in monthly charges';
+  return chargeStatus ? formatStatusLabel(chargeStatus) : '—';
+};
+
+const monthKeyFromMsIST = (ms: number): string => {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+  }).formatToParts(new Date(ms));
+  const year = parts.find((part) => part.type === 'year')?.value || '';
+  const month = parts.find((part) => part.type === 'month')?.value || '';
+  if (!year || !month) return '';
+  return `${year}-${month}`;
+};
+
+const monthLabelFromKey = (monthKey: string): string => {
+  if (!/^\d{4}-\d{2}$/.test(monthKey)) return monthKey || 'Unknown month';
+  const [yearText, monthText] = monthKey.split('-');
+  const year = Number(yearText);
+  const month = Number(monthText);
+  if (!Number.isFinite(year) || !Number.isFinite(month)) return monthKey;
+  return new Intl.DateTimeFormat('en-GB', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Asia/Kolkata',
+  }).format(new Date(Date.UTC(year, month - 1, 1)));
+};
+
+const normalizeNameList = (values: string[]) =>
+  Array.from(
+    new Set(
+      values
+        .map((value) => String(value || '').trim())
+        .filter(Boolean)
+    )
+  );
+
 const walletTransactionTypeLabel = (value: any) => {
   const type = String(value || '').trim().toLowerCase();
   if (type === 'topup') return 'Top-up';
@@ -312,6 +890,8 @@ export default function ParentPayments(): JSX.Element {
   const [payments, setPayments] = useState<any[]>([]);
   const [kidMap, setKidMap] = useState<Record<string, string>>({});
   const [courseMap, setCourseMap] = useState<Record<string, string>>({});
+  const [teacherMap, setTeacherMap] = useState<Record<string, string>>({});
+  const [sessionMap, setSessionMap] = useState<Record<string, any>>({});
   const [expandedParents, setExpandedParents] = useState<Set<string>>(new Set());
   const [selectedWalletParentId, setSelectedWalletParentId] = useState<string>('');
   const [selectedWalletParentName, setSelectedWalletParentName] = useState<string>('');
@@ -381,6 +961,11 @@ export default function ParentPayments(): JSX.Element {
     useState<ReceiveParentPaymentResult | null>(null);
   const [receivePaymentPreviewInput, setReceivePaymentPreviewInput] =
     useState<ReceiveParentPaymentPreviewInput | null>(null);
+  const [invoiceOpen, setInvoiceOpen] = useState(false);
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [invoiceError, setInvoiceError] = useState('');
+  const [invoiceData, setInvoiceData] = useState<ParentInvoiceData | null>(null);
+  const [invoicePdfSaving, setInvoicePdfSaving] = useState(false);
 
   useEffect(() => {
     const loadRefs = async () => {
@@ -388,6 +973,8 @@ export default function ParentPayments(): JSX.Element {
         const parentIds = new Set<string>();
         const kidIds = new Set<string>();
         const courseIds = new Set<string>();
+        const teacherIds = new Set<string>();
+        const sessionIds = new Set<string>();
 
         charges.forEach((charge) => {
           const parentId = String(charge.parentId || '');
@@ -396,6 +983,10 @@ export default function ParentPayments(): JSX.Element {
           if (kidId) kidIds.add(kidId);
           const courseId = String(charge.courseId || '');
           if (courseId) courseIds.add(courseId);
+          const teacherId = String(charge.teacherId || '');
+          if (teacherId) teacherIds.add(teacherId);
+          const sessionId = resolveChargeSessionId(charge);
+          if (sessionId) sessionIds.add(sessionId);
         });
 
         payments.forEach((payment) => {
@@ -462,6 +1053,38 @@ export default function ParentPayments(): JSX.Element {
             });
           }
           setCourseMap(nextCourseMap);
+        }
+
+        if (teacherIds.size === 0) {
+          setTeacherMap({});
+        } else {
+          const nextTeacherMap: Record<string, string> = {};
+          for (const chunk of chunkIds(Array.from(teacherIds))) {
+            const snap = await getDocs(
+              query(collection(db, 'users'), where(documentId(), 'in', chunk))
+            );
+            snap.docs.forEach((docSnap) => {
+              const data = docSnap.data() as any;
+              nextTeacherMap[docSnap.id] =
+                String(data?.displayName || data?.name || data?.email || '').trim() || docSnap.id;
+            });
+          }
+          setTeacherMap(nextTeacherMap);
+        }
+
+        if (sessionIds.size === 0) {
+          setSessionMap({});
+        } else {
+          const nextSessionMap: Record<string, any> = {};
+          for (const chunk of chunkIds(Array.from(sessionIds))) {
+            const snap = await getDocs(
+              query(collection(db, 'classSessions'), where(documentId(), 'in', chunk))
+            );
+            snap.docs.forEach((docSnap) => {
+              nextSessionMap[docSnap.id] = docSnap.data() as any;
+            });
+          }
+          setSessionMap(nextSessionMap);
         }
       } catch (err) {
         console.warn('[ParentPayments] Failed to load referenced data', err);
@@ -662,68 +1285,172 @@ export default function ParentPayments(): JSX.Element {
     return () => unsub();
   }, [selectedWalletParentId]);
 
-  const breakdownByParent = useMemo(() => {
-    const byParent = new Map<
-      string,
-      Map<
-        string,
-        {
-          enrollmentId: string;
-          kidId: string;
-          courseId: string;
-          sessions: number;
-          classCharges: number;
-        }
-      >
-    >();
-
-    charges.forEach((charge) => {
-      const parentId = String(charge.parentId || '');
-      if (!parentId) return;
-      const status = normalizeFinanceStatus(charge.status);
-      if (status === 'void') return;
-      const amountRaw = Number(charge.amount ?? 0);
-      const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
-      if (amount <= 0) return;
-      const enrollmentId = String(charge.enrollmentId || '');
-      const kidId = String(charge.kidId || '');
-      const courseId = String(charge.courseId || '');
-      const key = enrollmentId || `${kidId}:${courseId}`;
-
-      if (!byParent.has(parentId)) byParent.set(parentId, new Map());
-      const bucket = byParent.get(parentId)!;
-      if (!bucket.has(key)) {
-        bucket.set(key, {
-          enrollmentId,
-          kidId,
-          courseId,
-          sessions: 0,
-          classCharges: 0,
-        });
-      }
-      const entry = bucket.get(key)!;
-      entry.sessions += 1;
-      entry.classCharges += amount;
-    });
-
+  const classDetailsByParent = useMemo(() => {
     const result = new Map<
       string,
-      Array<{
-        enrollmentId: string;
-        kidId: string;
-        courseId: string;
-        sessions: number;
-        classCharges: number;
-      }>
+      {
+        included: ParentInvoiceNormalizedRow[];
+        excluded: ParentInvoiceNormalizedRow[];
+        completedCount: number;
+        totalClassCharges: number;
+      }
     >();
 
-    byParent.forEach((bucket, parentId) => {
-      const entries = Array.from(bucket.values()).sort((a, b) => b.classCharges - a.classCharges);
-      result.set(parentId, entries);
+    const ensureBucket = (parentId: string) => {
+      let bucket = result.get(parentId);
+      if (!bucket) {
+        bucket = { included: [], excluded: [], completedCount: 0, totalClassCharges: 0 };
+        result.set(parentId, bucket);
+      }
+      return bucket;
+    };
+
+    charges.forEach((charge) => {
+      const parentId = String(charge.parentId || '').trim();
+      if (!parentId) return;
+      const amountRaw = Number(charge.amount ?? 0);
+      const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
+      const chargeId = String(charge.id || '').trim();
+      const sessionId = resolveChargeSessionId(charge);
+      const session = sessionId ? sessionMap[sessionId] : undefined;
+      const chargeStatus = normalizeFinanceStatus(charge.status);
+      const includeInTotals = chargeStatus !== 'void' && amount > 0;
+
+      const kidId = String(charge.kidId || session?.kidId || session?.studentId || '').trim();
+      const courseId = String(charge.courseId || session?.courseId || '').trim();
+      const teacherId = String(charge.teacherId || session?.teacherId || '').trim();
+      const studentName = kidMap[kidId] || kidId || 'Unknown';
+      const courseName = courseMap[courseId] || courseId || '—';
+      const teacherName =
+        teacherMap[teacherId] ||
+        String(session?.teacherName || session?.teacherDisplayName || '').trim() ||
+        teacherId ||
+        '—';
+      const { ms: dateSortValue, source: rawDateDebugSource } = resolveDateWithSource(session, charge);
+      const { timeLabel, startDateTimeSortValue, rawTimeDebugSource } = resolveSessionTimeLabel(
+        session,
+        charge,
+        dateSortValue,
+      );
+      const { sessionTypeLabel, sessionTypeDetailLabel } = resolveSessionType(session, charge);
+      const statusLabel = resolveParentDetailStatusLabel(includeInTotals, session, charge);
+      const monthFromCharge = String(charge?.monthKey || '').trim();
+      const monthSortValue = dateSortValue > 0 ? dateSortValue : startDateTimeSortValue;
+      const monthKey =
+        (/^\d{4}-\d{2}$/.test(monthFromCharge) && monthFromCharge) ||
+        (monthSortValue > 0 ? monthKeyFromMsIST(monthSortValue) : 'unknown');
+      const sourceStatus = normalizeFinanceStatus(session?.status || charge?.status);
+      const rawSessionStatus = String(session?.status || '').trim();
+
+      const row: ParentInvoiceNormalizedRow = {
+        stableKey: `${chargeId || 'charge'}_${sessionId || 'session'}_${parentId}`,
+        sessionId,
+        chargeId,
+        monthKey,
+        dateLabel: dateSortValue > 0 ? formatDateDisplay(dateSortValue) : '—',
+        weekdayLabel: dateSortValue > 0 ? formatWeekdayLabel(dateSortValue) : '—',
+        dateSortValue,
+        timeLabel,
+        startDateTimeSortValue,
+        studentName,
+        courseName,
+        teacherName,
+        sessionTypeLabel,
+        ...(sessionTypeDetailLabel ? { sessionTypeDetailLabel } : {}),
+        statusLabel,
+        amount: Number.isFinite(amount) ? amount : 0,
+        rawDateDebugSource,
+        rawTimeDebugSource,
+        sourceStatus,
+        rawSessionStatus,
+      };
+      if (import.meta.env.DEV && row.timeLabel === '—') {
+        console.debug('[ParentPayments] Time unresolved for included charge row', {
+          parentId,
+          chargeId,
+          sessionId,
+          rawDateDebugSource,
+          rawTimeDebugSource,
+        });
+      }
+
+      const bucket = ensureBucket(parentId);
+      if (includeInTotals) {
+        bucket.included.push(row);
+        bucket.completedCount += 1;
+        bucket.totalClassCharges += amount;
+      } else {
+        bucket.excluded.push(row);
+      }
+    });
+
+    result.forEach((bucket, parentId) => {
+      bucket.included.sort(
+        (a, b) => b.startDateTimeSortValue - a.startDateTimeSortValue || a.stableKey.localeCompare(b.stableKey)
+      );
+      bucket.excluded.sort(
+        (a, b) => b.startDateTimeSortValue - a.startDateTimeSortValue || a.stableKey.localeCompare(b.stableKey)
+      );
+
+      if (import.meta.env.DEV) {
+        const groupedByStudentDate = new Map<string, ParentInvoiceNormalizedRow[]>();
+        bucket.included.forEach((entry) => {
+          const key = `${entry.studentName}__${entry.dateLabel}`;
+          if (!groupedByStudentDate.has(key)) groupedByStudentDate.set(key, []);
+          groupedByStudentDate.get(key)!.push(entry);
+        });
+
+        groupedByStudentDate.forEach((entries, studentDateKey) => {
+          if (entries.length <= 1) return;
+          console.info('Same-day multiple classes detected', {
+            parentId,
+            studentDateKey,
+            rowCount: entries.length,
+          });
+          console.table(
+            entries.map((entry) => ({
+              dateLabel: entry.dateLabel,
+              timeLabel: entry.timeLabel,
+              studentName: entry.studentName,
+              sessionId: entry.sessionId || '—',
+              chargeId: entry.chargeId || '—',
+              amount: entry.amount,
+              statusLabel: entry.statusLabel,
+              rawDateDebugSource: entry.rawDateDebugSource,
+              rawTimeDebugSource: entry.rawTimeDebugSource,
+            }))
+          );
+
+          const sessionCounts = new Map<string, number>();
+          const chargeCounts = new Map<string, number>();
+          entries.forEach((entry) => {
+            if (entry.sessionId) {
+              sessionCounts.set(entry.sessionId, (sessionCounts.get(entry.sessionId) || 0) + 1);
+            }
+            if (entry.chargeId) {
+              chargeCounts.set(entry.chargeId, (chargeCounts.get(entry.chargeId) || 0) + 1);
+            }
+          });
+          const repeatedSessionIds = Array.from(sessionCounts.entries())
+            .filter(([, count]) => count > 1)
+            .map(([id]) => id);
+          const repeatedChargeIds = Array.from(chargeCounts.entries())
+            .filter(([, count]) => count > 1)
+            .map(([id]) => id);
+          if (repeatedSessionIds.length > 0 || repeatedChargeIds.length > 0) {
+            console.warn('Possible duplicate billing row detected.', {
+              parentId,
+              studentDateKey,
+              repeatedSessionIds,
+              repeatedChargeIds,
+            });
+          }
+        });
+      }
     });
 
     return result;
-  }, [charges]);
+  }, [charges, sessionMap, kidMap, courseMap, teacherMap]);
 
   const totals = useMemo(() => {
     return rows.reduce(
@@ -1277,6 +2004,416 @@ export default function ParentPayments(): JSX.Element {
     }
   };
 
+  const openInvoiceModal = (row: { parentId: string; parentName: string }) => {
+    const parentId = String(row.parentId || '').trim();
+    if (!parentId) return;
+
+    setInvoiceOpen(true);
+    setInvoiceLoading(true);
+    setInvoiceError('');
+    setInvoiceData(null);
+
+    try {
+      const details = classDetailsByParent.get(parentId) || {
+        included: [],
+        excluded: [],
+        completedCount: 0,
+        totalClassCharges: 0,
+      };
+      const includedRows = [...details.included];
+      const rows = [...includedRows]
+        .sort(
+          (a, b) =>
+            a.startDateTimeSortValue - b.startDateTimeSortValue || a.stableKey.localeCompare(b.stableKey)
+        );
+
+      const monthBucket = new Map<string, ParentInvoiceNormalizedRow[]>();
+      rows.forEach((rowItem) => {
+        if (!monthBucket.has(rowItem.monthKey)) monthBucket.set(rowItem.monthKey, []);
+        monthBucket.get(rowItem.monthKey)!.push(rowItem);
+      });
+
+      const monthSections: InvoiceMonthSection[] = Array.from(monthBucket.entries())
+        .map(([monthKey, monthRows]) => ({
+          monthKey,
+          monthLabel: monthLabelFromKey(monthKey),
+          rows: monthRows,
+          monthClassCount: monthRows.length,
+          monthTotalAmount: monthRows.reduce((sum, rowItem) => sum + rowItem.amount, 0),
+        }))
+        .sort((a, b) => a.monthKey.localeCompare(b.monthKey));
+
+      const totalClassCharges = rows.reduce((sum, rowItem) => sum + rowItem.amount, 0);
+      const sessionTypeBreakdown = rows.reduce(
+        (acc, rowItem) => {
+          if (rowItem.sessionTypeLabel === 'Regular') {
+            acc.regular += 1;
+          } else if (rowItem.sessionTypeLabel === 'One-off') {
+            acc.oneOff += 1;
+          } else {
+            acc.rescheduledOrMakeup += 1;
+          }
+          return acc;
+        },
+        { regular: 0, rescheduledOrMakeup: 0, oneOff: 0 },
+      );
+      const totalPaid = payments
+        .filter((payment) => String(payment.parentId || '').trim() === parentId)
+        .reduce((sum, payment) => {
+        const amount = Number(payment.amount ?? 0);
+        return Number.isFinite(amount) ? sum + amount : sum;
+      }, 0);
+      const parentName = row.parentName || fallbackParentLabel(parentId);
+
+      setInvoiceData({
+        parentId,
+        parentName,
+        generatedDateLabel: formatDateDisplay(new Date()),
+        rows,
+        monthSections,
+        studentNames: normalizeNameList(rows.map((rowItem) => rowItem.studentName)),
+        courseNames: normalizeNameList(rows.map((rowItem) => rowItem.courseName)),
+        teacherNames: normalizeNameList(rows.map((rowItem) => rowItem.teacherName)),
+        totalCompletedClasses: rows.length,
+        totalClassCharges,
+        totalPaid,
+        balanceToCollect: totalClassCharges - totalPaid,
+        sessionTypeBreakdown,
+      });
+    } catch (err: any) {
+      console.error('[ParentPayments] invoice build failed', {
+        parentId,
+        source: 'classDetailsByParent/payments',
+        error: err,
+      });
+      setInvoiceError('Unable to load invoice preview right now.');
+    } finally {
+      setInvoiceLoading(false);
+    }
+  };
+
+  const handleDownloadInvoicePdf = async () => {
+    if (!invoiceData || invoicePdfSaving) return;
+
+    setInvoicePdfSaving(true);
+    try {
+      const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 36;
+      const contentWidth = pageWidth - margin * 2;
+      const logoHeight = 26;
+      const lineHeight = 11;
+      const tableHeaderHeight = 20;
+      const tablePaddingX = 3;
+      const rowPaddingY = 4;
+      const valueColWidth = 150;
+      const detailLabelColWidth = 100;
+      const detailValueColWidth = (contentWidth / 2) - detailLabelColWidth;
+      const shouldShowStudentCourseContext =
+        invoiceData.studentNames.length > 1 || invoiceData.courseNames.length > 1;
+      const uniqueFeeValues = Array.from(
+        new Set(
+          invoiceData.rows
+            .map((rowItem) => Number(rowItem.amount))
+            .filter((value) => Number.isFinite(value))
+            .map((value) => Math.round(value))
+        )
+      );
+      const classFeePatternValue =
+        uniqueFeeValues.length === 1
+          ? formatPdfMoney(uniqueFeeValues[0])
+          : uniqueFeeValues.length > 1
+            ? 'Class fees vary by class'
+            : '—';
+
+      const tableColumns = [
+        { key: 'date', label: 'Date', width: mmToPt(28) },
+        { key: 'day', label: 'Day', width: mmToPt(14) },
+        { key: 'time', label: 'Time', width: mmToPt(36) },
+        { key: 'session', label: 'Session', width: mmToPt(42) },
+        { key: 'status', label: 'Status', width: mmToPt(32) },
+      ] as const;
+
+      let y = margin;
+
+      const ensureSpace = (needed: number, addTopGap = 0) => {
+        if (addTopGap > 0) y += addTopGap;
+        if (y + needed <= pageHeight - margin) return;
+        pdf.addPage();
+        y = margin;
+      };
+
+      const fitSingleLineText = (text: string, maxWidth: number) => {
+        const normalized = String(text || '—');
+        if (pdf.getTextWidth(normalized) <= maxWidth) return normalized;
+        let current = normalized;
+        while (current.length > 1 && pdf.getTextWidth(`${current}…`) > maxWidth) {
+          current = current.slice(0, -1);
+        }
+        return `${current}…`;
+      };
+
+      const drawSingleLineText = (
+        text: string,
+        x: number,
+        yTop: number,
+        maxWidth: number,
+        align: 'left' | 'right' = 'left',
+      ) => {
+        const fitted = fitSingleLineText(text, maxWidth);
+        const textY = yTop + rowPaddingY + lineHeight;
+        if (align === 'right') {
+          pdf.text(fitted, x + maxWidth, textY, { align: 'right' });
+        } else {
+          pdf.text(fitted, x, textY);
+        }
+      };
+
+      const drawKeyValueRow = (leftLabel: string, leftValue: string, rightLabel: string, rightValue: string) => {
+        const startY = y;
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(9);
+        pdf.text(leftLabel, margin + 8, startY + 13);
+        pdf.text(rightLabel, margin + contentWidth / 2 + 8, startY + 13);
+
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9);
+        const leftValueLines = pdf.splitTextToSize(leftValue || '—', detailValueColWidth - 10) as string[];
+        const rightValueLines = pdf.splitTextToSize(rightValue || '—', detailValueColWidth - 10) as string[];
+        const linesCount = Math.max(leftValueLines.length || 1, rightValueLines.length || 1);
+        const rowHeight = Math.max(24, linesCount * lineHeight + 8);
+
+        leftValueLines.forEach((line, idx) => {
+          pdf.text(line, margin + 8 + detailLabelColWidth, startY + 13 + idx * lineHeight);
+        });
+        rightValueLines.forEach((line, idx) => {
+          pdf.text(line, margin + contentWidth / 2 + 8 + detailLabelColWidth, startY + 13 + idx * lineHeight);
+        });
+        y += rowHeight;
+      };
+
+      const drawTableHeader = () => {
+        pdf.setDrawColor(203, 213, 225);
+        pdf.setFillColor(241, 245, 249);
+        pdf.rect(margin, y, contentWidth, tableHeaderHeight, 'FD');
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(9);
+        let x = margin;
+        tableColumns.forEach((column) => {
+          pdf.line(x, y, x, y + tableHeaderHeight);
+          pdf.text(column.label, x + tablePaddingX, y + 13);
+          x += column.width;
+        });
+        pdf.line(x, y, x, y + tableHeaderHeight);
+        y += tableHeaderHeight;
+      };
+
+      const drawClassTableRow = (rowItem: ParentInvoiceNormalizedRow) => {
+        const statusText = 'Completed';
+        const sessionText = rowItem.sessionTypeLabel;
+        const compactDateLabel =
+          rowItem.dateSortValue > 0 ? formatDayMonthShort(rowItem.dateSortValue) : rowItem.dateLabel;
+        const textByCol: Record<string, string> = {
+          date: compactDateLabel,
+          day: rowItem.weekdayLabel,
+          time: rowItem.timeLabel,
+          session: sessionText,
+          status: statusText,
+        };
+
+        const rowHeight = rowPaddingY * 2 + lineHeight;
+
+        ensureSpace(rowHeight);
+        if (y === margin) {
+          drawTableHeader();
+        }
+
+        let x = margin;
+        pdf.setDrawColor(226, 232, 240);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(8.5);
+        tableColumns.forEach((column) => {
+          pdf.rect(x, y, column.width, rowHeight, 'S');
+          drawSingleLineText(
+            textByCol[column.key],
+            x + tablePaddingX,
+            y,
+            column.width - tablePaddingX * 2,
+            'left',
+          );
+          x += column.width;
+        });
+        y += rowHeight;
+      };
+
+      const logoAsset = await getPdfLogoAsset();
+      const headerTop = y;
+      let renderedLogoWidth = 0;
+      let renderedLogoHeight = 0;
+
+      if (logoAsset) {
+        const fit = resolveLogoFitSize(
+          logoAsset.width,
+          logoAsset.height,
+          PDF_LOGO_MAX_WIDTH_PT,
+          PDF_LOGO_MAX_HEIGHT_PT,
+        );
+        renderedLogoWidth = fit.width;
+        renderedLogoHeight = fit.height;
+        try {
+          const logoY = headerTop + Math.max((logoHeight - renderedLogoHeight) / 2, 0);
+          pdf.addImage(logoAsset.dataUrl, logoAsset.format, margin, logoY, renderedLogoWidth, renderedLogoHeight);
+        } catch (error) {
+          console.warn('[ParentPayments] Failed to render PDF logo image', {
+            path: logoAsset.path,
+            error,
+          });
+          renderedLogoWidth = 0;
+          renderedLogoHeight = 0;
+        }
+      }
+
+      const leftTitleX = margin + (renderedLogoWidth > 0 ? renderedLogoWidth + 10 : 0);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(16);
+      pdf.text('Tiny Steps Learning', leftTitleX, headerTop + 12);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(11);
+      pdf.text('Parent Invoice', leftTitleX, headerTop + 26);
+      pdf.setFontSize(9);
+      pdf.text(`Generated: ${invoiceData.generatedDateLabel}`, pageWidth - margin, headerTop + 12, {
+        align: 'right',
+      });
+      pdf.text('Invoice period: Till date (month-wise)', pageWidth - margin, headerTop + 26, {
+        align: 'right',
+      });
+
+      const headerHeight = Math.max(logoHeight, renderedLogoHeight, 30);
+      y = headerTop + headerHeight + 14;
+
+      ensureSpace(150);
+      pdf.setDrawColor(203, 213, 225);
+      pdf.rect(margin, y, contentWidth, 128, 'S');
+      const detailsTop = y + 8;
+      y = detailsTop;
+      drawKeyValueRow('Parent', invoiceData.parentName, 'Generated date', invoiceData.generatedDateLabel);
+      drawKeyValueRow('Students', invoiceData.studentNames.join(', ') || '—', 'Courses', invoiceData.courseNames.join(', ') || '—');
+      drawKeyValueRow('Teachers', invoiceData.teacherNames.join(', ') || '—', 'Invoice type', 'Month-wise class invoice');
+      drawKeyValueRow('Class fee', classFeePatternValue, '', '');
+      y += 12;
+
+      invoiceData.monthSections.forEach((section) => {
+        ensureSpace(44, 4);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(11);
+        pdf.text(section.monthLabel, margin, y + 12);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9);
+        pdf.text(`Completed classes: ${section.monthClassCount}`, margin, y + 26);
+        pdf.text(`Month total: ${formatPdfMoney(section.monthTotalAmount)}`, pageWidth - margin, y + 26, {
+          align: 'right',
+        });
+        y += 34;
+
+        if (shouldShowStudentCourseContext) {
+          const studentCoursePairs = normalizeNameList(
+            section.rows.map((rowItem) => `${rowItem.studentName} — ${rowItem.courseName}`)
+          );
+          const contextLine = `Student/Course: ${studentCoursePairs.join('; ') || '—'}`;
+          ensureSpace(14);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(8);
+          pdf.setTextColor(71, 85, 105);
+          pdf.text(fitSingleLineText(contextLine, contentWidth), margin, y + 10);
+          pdf.setTextColor(15, 23, 42);
+          y += 14;
+        }
+
+        if (section.rows.length === 0) {
+          ensureSpace(22);
+          pdf.setDrawColor(226, 232, 240);
+          pdf.rect(margin, y, contentWidth, 20, 'S');
+          pdf.setFontSize(8.5);
+          pdf.text('No completed classes found for this month.', margin + 6, y + 13);
+          y += 24;
+          return;
+        }
+
+        drawTableHeader();
+        section.rows.forEach((rowItem) => drawClassTableRow(rowItem));
+        y += 8;
+      });
+
+      ensureSpace(120, 6);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(11);
+      pdf.text('Final Summary', margin, y + 12);
+      y += 18;
+
+      const summaryRows: Array<{ label: string; value: string }> = [
+        { label: 'Total completed classes', value: String(invoiceData.totalCompletedClasses) },
+        { label: 'Total class charges', value: formatPdfMoney(invoiceData.totalClassCharges) },
+        { label: 'Total paid', value: formatPdfMoney(invoiceData.totalPaid) },
+        { label: 'Balance / Amount to collect', value: formatPdfMoney(invoiceData.balanceToCollect) },
+      ];
+      if (invoiceData.sessionTypeBreakdown.regular > 0) {
+        summaryRows.push({
+          label: 'Regular classes',
+          value: String(invoiceData.sessionTypeBreakdown.regular),
+        });
+      }
+      if (invoiceData.sessionTypeBreakdown.rescheduledOrMakeup > 0) {
+        summaryRows.push({
+          label: 'Rescheduled / Makeup classes',
+          value: String(invoiceData.sessionTypeBreakdown.rescheduledOrMakeup),
+        });
+      }
+      if (invoiceData.sessionTypeBreakdown.oneOff > 0) {
+        summaryRows.push({
+          label: 'One-off / Extra classes',
+          value: String(invoiceData.sessionTypeBreakdown.oneOff),
+        });
+      }
+
+      const summaryRowHeight = 22;
+      const summaryTableHeight = summaryRows.length * summaryRowHeight;
+      ensureSpace(summaryTableHeight + 2);
+
+      pdf.setDrawColor(203, 213, 225);
+      summaryRows.forEach((row, idx) => {
+        const rowY = y + idx * summaryRowHeight;
+        if (idx % 2 === 0) {
+          pdf.setFillColor(248, 250, 252);
+          pdf.rect(margin, rowY, contentWidth, summaryRowHeight, 'F');
+        }
+        pdf.rect(margin, rowY, contentWidth, summaryRowHeight, 'S');
+        pdf.line(pageWidth - margin - valueColWidth, rowY, pageWidth - margin - valueColWidth, rowY + summaryRowHeight);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9.5);
+        pdf.text(row.label, margin + 8, rowY + 14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(row.value, pageWidth - margin - 8, rowY + 14, { align: 'right' });
+      });
+      y += summaryTableHeight + 8;
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text('Tiny Steps Learning · Admin Invoice Export', margin, pageHeight - margin + 6);
+
+      const safeParent = invoiceData.parentName
+        .replace(/[^A-Za-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '');
+      const generatedDate = formatDateForFileName(new Date());
+      pdf.save(`tiny-steps-invoice-${safeParent || invoiceData.parentId}-${generatedDate}.pdf`);
+    } catch (err) {
+      console.error('[ParentPayments] Failed to generate invoice PDF', err);
+    } finally {
+      setInvoicePdfSaving(false);
+    }
+  };
+
   const toggleParent = (parentId: string) => {
     setExpandedParents((prev) => {
       const next = new Set(prev);
@@ -1590,7 +2727,12 @@ export default function ParentPayments(): JSX.Element {
               ) : (
                 rows.map((row) => {
                   const isExpanded = expandedParents.has(row.parentId);
-                  const breakdown = breakdownByParent.get(row.parentId) || [];
+                  const details = classDetailsByParent.get(row.parentId) || {
+                    included: [],
+                    excluded: [],
+                    completedCount: 0,
+                    totalClassCharges: 0,
+                  };
                   const walletBalance = walletBalanceByParent.get(row.parentId);
                   const hasWalletBalance = Number.isFinite(walletBalance);
                   const collectOrAdvanceLabel = !hasWalletBalance
@@ -1613,6 +2755,9 @@ export default function ParentPayments(): JSX.Element {
                             <Button size="sm" onClick={() => openReceiveParentPaymentModal(row)}>
                               Receive parent payment
                             </Button>
+                            <Button size="sm" variant="outline" onClick={() => openInvoiceModal(row)}>
+                              View Invoice
+                            </Button>
                           </div>
                         </td>
                         <td className="p-2">
@@ -1628,38 +2773,126 @@ export default function ParentPayments(): JSX.Element {
                       {isExpanded && (
                         <tr>
                           <td colSpan={7} className="p-2 bg-muted/30">
-                            {breakdown.length === 0 ? (
+                            {details.included.length === 0 ? (
                               <div className="text-xs text-muted-foreground">
-                                No enrollment-level data found for this month.
+                                No completed classes found for this period.
                               </div>
                             ) : (
-                              <div className="overflow-x-auto">
-                                <table className="w-full text-xs table-auto">
-                                  <thead>
-                                    <tr className="text-left border-b">
-                                      <th className="p-2">Student</th>
-                                      <th className="p-2">Course</th>
-                                      <th className="p-2">Classes</th>
-                                      <th className="p-2">Class charges</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {breakdown.map((entry, idx) => {
-                                      const studentLabel =
-                                        kidMap[entry.kidId] || entry.kidId || 'Unknown';
-                                      const courseLabel =
-                                        courseMap[entry.courseId] || entry.courseId || '—';
-                                      return (
-                                        <tr key={`${entry.enrollmentId || entry.kidId}-${idx}`}>
-                                          <td className="p-2">{studentLabel}</td>
-                                          <td className="p-2">{courseLabel}</td>
-                                          <td className="p-2">{entry.sessions}</td>
-                                          <td className="p-2">{formatMoney(entry.classCharges)}</td>
+                              <div className="space-y-3">
+                                <div className="overflow-x-auto">
+                                  <table className="w-full text-xs table-auto">
+                                    <thead>
+                                      <tr className="text-left border-b">
+                                        <th className="p-2 whitespace-nowrap">Date</th>
+                                        <th className="p-2 whitespace-nowrap">Day</th>
+                                        <th className="p-2 whitespace-nowrap">Time</th>
+                                        <th className="p-2 whitespace-nowrap">Student</th>
+                                        <th className="p-2 whitespace-nowrap">Course</th>
+                                        <th className="p-2 whitespace-nowrap">Session</th>
+                                        <th className="p-2 whitespace-nowrap">Status</th>
+                                        <th className="p-2 whitespace-nowrap">Class charge</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {details.included.map((entry) => (
+                                        <tr key={entry.stableKey} className="border-b last:border-b-0">
+                                          <td className="p-2 whitespace-nowrap">{entry.dateLabel}</td>
+                                          <td className="p-2 whitespace-nowrap">{entry.weekdayLabel}</td>
+                                          <td className="p-2 whitespace-nowrap">{entry.timeLabel}</td>
+                                          <td className="p-2">
+                                            <div className="max-w-[140px] truncate" title={entry.studentName}>
+                                              {entry.studentName}
+                                            </div>
+                                          </td>
+                                          <td className="p-2">
+                                            <div className="max-w-[180px] truncate" title={entry.courseName}>
+                                              {entry.courseName}
+                                            </div>
+                                          </td>
+                                          <td className="p-2 whitespace-nowrap">
+                                            <div
+                                              className="max-w-[170px] truncate"
+                                              title={
+                                                entry.sessionTypeDetailLabel
+                                                  ? `${entry.sessionTypeLabel} · ${entry.sessionTypeDetailLabel}`
+                                                  : entry.sessionTypeLabel
+                                              }
+                                            >
+                                              {entry.sessionTypeLabel}
+                                            </div>
+                                          </td>
+                                          <td className="p-2 whitespace-nowrap">{entry.statusLabel}</td>
+                                          <td className="p-2 whitespace-nowrap">{formatMoney(entry.amount)}</td>
                                         </tr>
-                                      );
-                                    })}
-                                  </tbody>
-                                </table>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Total completed classes: {details.completedCount} · Total class charges:{' '}
+                                  {formatMoney(details.totalClassCharges)} · Paid:{' '}
+                                  {formatMoney(row.walletPaymentsReceived)} · Balance / Amount to collect:{' '}
+                                  {formatMoney(details.totalClassCharges - row.walletPaymentsReceived)}
+                                </div>
+                                {details.excluded.length > 0 ? (
+                                  <div className="space-y-2">
+                                    <div className="text-xs font-medium">
+                                      Reschedules / Cancellations
+                                    </div>
+                                    <div className="overflow-x-auto">
+                                      <table className="w-full text-xs table-auto">
+                                        <thead>
+                                          <tr className="text-left border-b">
+                                            <th className="p-2 whitespace-nowrap">Date</th>
+                                            <th className="p-2 whitespace-nowrap">Day</th>
+                                            <th className="p-2 whitespace-nowrap">Time</th>
+                                            <th className="p-2 whitespace-nowrap">Student</th>
+                                            <th className="p-2 whitespace-nowrap">Course</th>
+                                            <th className="p-2 whitespace-nowrap">Session</th>
+                                            <th className="p-2 whitespace-nowrap">Status</th>
+                                            <th className="p-2 whitespace-nowrap">Class charge</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {details.excluded.map((entry) => (
+                                            <tr key={`${entry.stableKey}_excluded`} className="border-b last:border-b-0">
+                                              <td className="p-2 whitespace-nowrap">{entry.dateLabel}</td>
+                                              <td className="p-2 whitespace-nowrap">{entry.weekdayLabel}</td>
+                                              <td className="p-2 whitespace-nowrap">{entry.timeLabel}</td>
+                                              <td className="p-2">
+                                                <div className="max-w-[140px] truncate" title={entry.studentName}>
+                                                  {entry.studentName}
+                                                </div>
+                                              </td>
+                                              <td className="p-2">
+                                                <div className="max-w-[180px] truncate" title={entry.courseName}>
+                                                  {entry.courseName}
+                                                </div>
+                                              </td>
+                                              <td className="p-2 whitespace-nowrap">
+                                                <div
+                                                  className="max-w-[170px] truncate"
+                                                  title={
+                                                    entry.sessionTypeDetailLabel
+                                                      ? `${entry.sessionTypeLabel} · ${entry.sessionTypeDetailLabel}`
+                                                      : entry.sessionTypeLabel
+                                                  }
+                                                >
+                                                  {entry.sessionTypeLabel}
+                                                </div>
+                                              </td>
+                                              <td className="p-2 whitespace-nowrap">{entry.statusLabel}</td>
+                                              <td className="p-2 whitespace-nowrap">{formatMoney(entry.amount)}</td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                    <div className="text-[11px] text-muted-foreground">
+                                      Excluded from completed-class totals unless already included by existing billing status rules.
+                                    </div>
+                                  </div>
+                                ) : null}
                               </div>
                             )}
                           </td>
@@ -1673,6 +2906,148 @@ export default function ParentPayments(): JSX.Element {
           </table>
         </div>
       </Card>
+
+      <Dialog open={invoiceOpen} onOpenChange={setInvoiceOpen}>
+        <DialogContent className="sm:max-w-[980px] max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Parent Invoice</DialogTitle>
+          </DialogHeader>
+
+          {invoiceLoading ? (
+            <div className="text-sm text-muted-foreground">Loading invoice…</div>
+          ) : invoiceError ? (
+            <div className="text-sm text-red-600">{invoiceError}</div>
+          ) : !invoiceData ? (
+            <div className="text-sm text-muted-foreground">No invoice data found.</div>
+          ) : (
+            <div className="space-y-4">
+              <Card className="p-4 space-y-1">
+                <div className="text-lg font-semibold">Tiny Steps Learning</div>
+                <div className="text-sm">Parent: {invoiceData.parentName}</div>
+                <div className="text-sm">
+                  Students: {invoiceData.studentNames.join(', ') || '—'}
+                </div>
+                <div className="text-sm">
+                  Courses: {invoiceData.courseNames.join(', ') || '—'}
+                </div>
+                <div className="text-sm">
+                  Teachers: {invoiceData.teacherNames.join(', ') || '—'}
+                </div>
+                <div className="text-sm">Completed classes: {invoiceData.rows.length}</div>
+                <div className="text-xs text-muted-foreground">
+                  Generated date: {invoiceData.generatedDateLabel}
+                </div>
+              </Card>
+
+              {invoiceData.monthSections.length === 0 ? (
+                <div className="text-sm text-muted-foreground">
+                  No completed classes found for this period.
+                </div>
+              ) : (
+                invoiceData.monthSections.map((section) => (
+                  <Card key={section.monthKey} className="p-3 space-y-2">
+                    <div className="font-medium">{section.monthLabel}</div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs table-auto">
+                        <thead>
+                          <tr className="text-left border-b">
+                            <th className="p-2 whitespace-nowrap">Date</th>
+                            <th className="p-2 whitespace-nowrap">Day</th>
+                            <th className="p-2 whitespace-nowrap">Time</th>
+                            <th className="p-2 whitespace-nowrap">Student</th>
+                            <th className="p-2 whitespace-nowrap">Course</th>
+                            <th className="p-2 whitespace-nowrap">Session</th>
+                            <th className="p-2 whitespace-nowrap">Status</th>
+                            <th className="p-2 whitespace-nowrap">Class fee</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {section.rows.map((rowItem) => (
+                            <tr key={rowItem.stableKey} className="border-b last:border-b-0">
+                              <td className="p-2 whitespace-nowrap">{rowItem.dateLabel}</td>
+                              <td className="p-2 whitespace-nowrap">{rowItem.weekdayLabel}</td>
+                              <td className="p-2 whitespace-nowrap">{rowItem.timeLabel}</td>
+                              <td className="p-2">
+                                <div className="max-w-[160px] truncate" title={rowItem.studentName}>
+                                  {rowItem.studentName}
+                                </div>
+                              </td>
+                              <td className="p-2">
+                                <div className="max-w-[210px] truncate" title={rowItem.courseName}>
+                                  {rowItem.courseName}
+                                </div>
+                              </td>
+                              <td className="p-2 whitespace-nowrap">
+                                <div
+                                  className="max-w-[170px] truncate"
+                                  title={
+                                    rowItem.sessionTypeDetailLabel
+                                      ? `${rowItem.sessionTypeLabel} · ${rowItem.sessionTypeDetailLabel}`
+                                      : rowItem.sessionTypeLabel
+                                  }
+                                >
+                                  {rowItem.sessionTypeLabel}
+                                </div>
+                              </td>
+                              <td className="p-2 whitespace-nowrap">{rowItem.statusLabel}</td>
+                              <td className="p-2 whitespace-nowrap">{formatMoney(rowItem.amount)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Month completed class count: {section.monthClassCount} · Month total amount:{' '}
+                      {formatMoney(section.monthTotalAmount)}
+                    </div>
+                  </Card>
+                ))
+              )}
+
+              <Card className="p-4 space-y-1">
+                <div className="font-medium">Final Summary</div>
+                <div className="text-sm">
+                  Total completed classes: {invoiceData.totalCompletedClasses}
+                </div>
+                <div className="text-sm">
+                  Total class charges: {formatMoney(invoiceData.totalClassCharges)}
+                </div>
+                <div className="text-sm">Total paid: {formatMoney(invoiceData.totalPaid)}</div>
+                <div className="text-sm">
+                  Balance / Amount to collect: {formatMoney(invoiceData.balanceToCollect)}
+                </div>
+                {invoiceData.sessionTypeBreakdown.regular > 0 ? (
+                  <div className="text-sm">
+                    Regular classes: {invoiceData.sessionTypeBreakdown.regular}
+                  </div>
+                ) : null}
+                {invoiceData.sessionTypeBreakdown.rescheduledOrMakeup > 0 ? (
+                  <div className="text-sm">
+                    Rescheduled / Makeup classes: {invoiceData.sessionTypeBreakdown.rescheduledOrMakeup}
+                  </div>
+                ) : null}
+                {invoiceData.sessionTypeBreakdown.oneOff > 0 ? (
+                  <div className="text-sm">
+                    One-off / Extra classes: {invoiceData.sessionTypeBreakdown.oneOff}
+                  </div>
+                ) : null}
+              </Card>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setInvoiceOpen(false)}>
+              Close
+            </Button>
+            <Button
+              onClick={handleDownloadInvoicePdf}
+              disabled={invoiceLoading || !invoiceData || invoicePdfSaving}
+            >
+              {invoicePdfSaving ? 'Preparing PDF…' : 'Download PDF'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={walletTopupOpen} onOpenChange={setWalletTopupOpen}>
         <DialogContent className="sm:max-w-[520px]">

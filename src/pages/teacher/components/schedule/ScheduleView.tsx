@@ -1,8 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Badge } from '@components/ui/badge';
 import { Input } from '@components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@components/ui/select';
 import { useTeacherSessions } from '../../hooks/useTeacherSessions';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 import { AttendanceForm } from '../today-sessions/AttendanceForm';
@@ -167,6 +174,12 @@ const timestampToMillis = (value: unknown): number => {
   return Number.isFinite(asNumber) ? asNumber : 0;
 };
 
+const toCleanText = (value: unknown): string => {
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  return '';
+};
+
 const completeSessionViaBackend = async (
   sessionId: string,
   payload?: {
@@ -187,6 +200,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'workweek' | 'day'>('month');
   const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<string>('all');
   const [rescheduleCredits, setRescheduleCredits] = useState<RescheduleCreditRecord[]>([]);
   const [rescheduleCreditsLoading, setRescheduleCreditsLoading] = useState<boolean>(false);
   const [makeupDraftByCredit, setMakeupDraftByCredit] = useState<Record<string, MakeupDraft>>({});
@@ -270,13 +284,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     return map;
   }, [students]);
 
-  const toCleanText = (value: unknown): string => {
-    if (typeof value === 'string') return value.trim();
-    if (typeof value === 'number' && Number.isFinite(value)) return String(value);
-    return '';
-  };
-
-  const getSessionStudentLabel = (session?: Partial<TeacherSession>): string => {
+  const getSessionStudentLabel = useCallback((session?: Partial<TeacherSession>): string => {
     if (!session) return 'Student';
     const row = session as any;
     const firstFromSession =
@@ -301,7 +309,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     const kidIds: string[] = Array.isArray(row.kidIds) ? row.kidIds.map((id: unknown) => String(id)) : [];
     const fromLookup = kidIds.map((id) => studentNameById.get(id)).filter(Boolean).join(', ');
     return fromLookup || 'Student';
-  };
+  }, [studentNameById]);
 
   const getCourseLabel = (session?: Partial<TeacherSession>): string => {
     if (!session) return '';
@@ -338,13 +346,78 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     return `${value.slice(0, max - 3)}...`;
   };
 
+  const getSessionKidIds = useCallback((session?: Partial<TeacherSession>): string[] => {
+    if (!session) return [];
+    const row = session as any;
+    const fromList = Array.isArray(row.kidIds) ? row.kidIds : [];
+    const fromSingles = [row.kidId, row.studentId, row.childId];
+    return Array.from(
+      new Set(
+        [...fromList, ...fromSingles]
+          .map((value) => toCleanText(value))
+          .filter((value) => value.length > 0),
+      ),
+    );
+  }, []);
+
+  const getPrimarySessionKidId = useCallback(
+    (session?: Partial<TeacherSession>): string => getSessionKidIds(session)[0] || '',
+    [getSessionKidIds],
+  );
+
+  const studentFilterOptions = useMemo(() => {
+    const byId = new Map<string, { id: string; label: string }>();
+    sessions.forEach((session) => {
+      const kidId = getPrimarySessionKidId(session);
+      if (!kidId) return;
+      const label = getSessionStudentLabel(session);
+      if (!byId.has(kidId)) {
+        byId.set(kidId, {
+          id: kidId,
+          label: label || studentNameById.get(kidId) || kidId,
+        });
+      }
+    });
+    return Array.from(byId.values()).sort((a, b) => a.label.localeCompare(b.label));
+  }, [sessions, studentNameById, getPrimarySessionKidId, getSessionStudentLabel]);
+
+  useEffect(() => {
+    if (selectedStudentId === 'all') return;
+    if (!studentFilterOptions.some((item) => item.id === selectedStudentId)) {
+      setSelectedStudentId('all');
+    }
+  }, [selectedStudentId, studentFilterOptions]);
+
+  const filteredSessions = useMemo(() => {
+    if (selectedStudentId === 'all') return sessions;
+    return sessions.filter((session) => getSessionKidIds(session).includes(selectedStudentId));
+  }, [sessions, selectedStudentId, getSessionKidIds]);
+
+  const attendanceSummary = useMemo(() => {
+    let completedPresent = 0;
+    let absentMissed = 0;
+    let rescheduled = 0;
+    let upcoming = 0;
+    const todayYmd = format(new Date(), 'yyyy-MM-dd');
+
+    filteredSessions.forEach((session) => {
+      const tone = resolveSessionBadgeTone(session);
+      if (tone === 'completed') completedPresent += 1;
+      if (tone === 'absent') absentMissed += 1;
+      if (tone === 'reschedule_requested') rescheduled += 1;
+      if (tone === 'scheduled' && String(session.date || '') >= todayYmd) upcoming += 1;
+    });
+
+    return { completedPresent, absentMissed, rescheduled, upcoming };
+  }, [filteredSessions]);
+
   const sessionsByDate = useMemo(
-    () => sessions.reduce((acc, session) => {
+    () => filteredSessions.reduce((acc, session) => {
       if (!acc[session.date]) acc[session.date] = [];
       acc[session.date].push(session);
       return acc;
     }, {} as Record<string, TeacherSession[]>),
-    [sessions],
+    [filteredSessions],
   );
 
   useEffect(() => {
@@ -418,6 +491,20 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
       },
     }));
   };
+
+  const visibleRescheduleCredits = useMemo(() => {
+    if (selectedStudentId === 'all') return rescheduleCredits;
+    return rescheduleCredits.filter((credit) => String(credit.kidId || '').trim() === selectedStudentId);
+  }, [rescheduleCredits, selectedStudentId]);
+
+  useEffect(() => {
+    if (!selectedSession) return;
+    if (selectedStudentId === 'all') return;
+    const matchesSelected = getSessionKidIds(selectedSession).includes(selectedStudentId);
+    if (!matchesSelected) {
+      setSelectedSession(null);
+    }
+  }, [selectedSession, selectedStudentId, getSessionKidIds]);
 
   const handleCreateMakeupSession = async (credit: RescheduleCreditRecord) => {
     const draft = makeupDraftByCredit[credit.creditId] || {
@@ -599,7 +686,43 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           </Button>
         </div>
 
-        <p className="mt-3 text-sm text-slate-500">{getTitle()}</p>
+        <div className="mt-3 flex flex-wrap items-end gap-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-600">Student</label>
+            <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
+              <SelectTrigger className="h-9 w-[240px] bg-white">
+                <SelectValue placeholder="All students" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All students</SelectItem>
+                {studentFilterOptions.map((student) => (
+                  <SelectItem key={student.id} value={student.id}>
+                    {student.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="text-sm text-slate-500">{getTitle()}</div>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2 text-xs md:grid-cols-4">
+          <Card className="p-2">
+            <div className="text-slate-500">Completed / Present</div>
+            <div className="font-semibold text-slate-900">{attendanceSummary.completedPresent}</div>
+          </Card>
+          <Card className="p-2">
+            <div className="text-slate-500">Absent / Missed</div>
+            <div className="font-semibold text-slate-900">{attendanceSummary.absentMissed}</div>
+          </Card>
+          <Card className="p-2">
+            <div className="text-slate-500">Rescheduled</div>
+            <div className="font-semibold text-slate-900">{attendanceSummary.rescheduled}</div>
+          </Card>
+          <Card className="p-2">
+            <div className="text-slate-500">Upcoming</div>
+            <div className="font-semibold text-slate-900">{attendanceSummary.upcoming}</div>
+          </Card>
+        </div>
       </Card>
 
       <Card className="border-slate-200 bg-white/95 p-4 shadow-sm md:p-5">
@@ -612,7 +735,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
-              {rescheduleCredits.length} open
+              {visibleRescheduleCredits.length} open
             </Badge>
             <Button
               type="button"
@@ -632,13 +755,13 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
               <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
                 Loading credits...
               </div>
-            ) : rescheduleCredits.length === 0 ? (
+            ) : visibleRescheduleCredits.length === 0 ? (
               <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
                 No open reschedule credits right now.
               </div>
             ) : (
               <div className="mt-3 space-y-3">
-                {rescheduleCredits.map((credit) => {
+                {visibleRescheduleCredits.map((credit) => {
                   const draft = makeupDraftByCredit[credit.creditId] || {
                     date: buildDefaultMakeupDate(),
                     startTime: '16:00',

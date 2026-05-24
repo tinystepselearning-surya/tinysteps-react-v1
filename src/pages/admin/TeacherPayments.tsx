@@ -104,6 +104,95 @@ const createPayoutRequestKey = () => {
   return `payout_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 };
 
+const toMillis = (value: any): number | null => {
+  if (!value) return null;
+  if (typeof value?.toDate === 'function') return value.toDate().getTime();
+  if (Number.isFinite(value?.seconds)) return value.seconds * 1000;
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value.trim())) {
+    const [year, month, day] = value.trim().split('-').map(Number);
+    if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
+      return Date.UTC(year, month - 1, day);
+    }
+  }
+  const parsed = new Date(value).getTime();
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const formatDateDisplay = (value: any) => {
+  const ms = toMillis(value);
+  if (!ms) return '—';
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'Asia/Kolkata',
+  }).format(new Date(ms));
+};
+
+const formatStatusLabel = (value: any) => {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return '—';
+  return raw
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+const isSessionCompletedLike = (value: unknown): boolean => {
+  const normalized = normalizeStatus(value);
+  return (
+    normalized === 'completed' ||
+    normalized === 'present' ||
+    normalized === 'late' ||
+    normalized === 'attendance_marked' ||
+    normalized === 'billable_completed'
+  );
+};
+
+const isSessionRescheduledOrCancelled = (value: unknown): boolean => {
+  const normalized = normalizeStatus(value);
+  return (
+    normalized.includes('reschedule') ||
+    normalized === 'cancelled' ||
+    normalized === 'canceled'
+  );
+};
+
+const resolveEarningDateMillis = (session: any, earning: any): number | null => {
+  const orderedCandidates = [
+    session?.date,
+    session?.sessionDate,
+    session?.classDate,
+    session?.startAt,
+    session?.scheduledStartAt,
+    session?.startTime,
+    earning?.date,
+    earning?.sessionDate,
+    earning?.classDate,
+    earning?.startAt,
+    earning?.createdAt,
+    earning?.updatedAt,
+  ];
+  for (const candidate of orderedCandidates) {
+    const ms = toMillis(candidate);
+    if (Number.isFinite(ms) && ms! > 0) return ms as number;
+  }
+  return null;
+};
+
+const resolveTeacherDetailStatusLabel = (
+  includeInTotals: boolean,
+  session: any,
+  earning: any
+): string => {
+  const sessionStatus = normalizeStatus(session?.status);
+  if (isSessionCompletedLike(sessionStatus)) return 'Completed';
+  if (isSessionRescheduledOrCancelled(sessionStatus)) return formatStatusLabel(sessionStatus);
+  const earningStatus = normalizeStatus(earning?.status);
+  if (isSessionRescheduledOrCancelled(earningStatus)) return formatStatusLabel(earningStatus);
+  if (includeInTotals) return 'Included in payout';
+  return earningStatus ? formatStatusLabel(earningStatus) : '—';
+};
+
 export default function TeacherPayments(): JSX.Element {
   const [selectedMonth, setSelectedMonth] = useState<string>(() =>
     monthKeyFromDate(new Date())
@@ -119,6 +208,8 @@ export default function TeacherPayments(): JSX.Element {
   const [expandedTeachers, setExpandedTeachers] = useState<Set<string>>(new Set());
   const [kidMap, setKidMap] = useState<Record<string, string>>({});
   const [courseMap, setCourseMap] = useState<Record<string, string>>({});
+  const [parentMap, setParentMap] = useState<Record<string, string>>({});
+  const [sessionMap, setSessionMap] = useState<Record<string, any>>({});
   const [enrollmentMap, setEnrollmentMap] = useState<
     Record<string, { kidId?: string; courseId?: string; studentName?: string }>
   >({});
@@ -135,9 +226,11 @@ export default function TeacherPayments(): JSX.Element {
     const loadRefs = async () => {
       try {
         const teacherIds = new Set<string>();
+        const parentIds = new Set<string>();
         const kidIds = new Set<string>();
         const courseIds = new Set<string>();
         const enrollmentIds = new Set<string>();
+        const sessionIds = new Set<string>();
 
         payouts.forEach((p) => {
           const tid = String(p.teacherId || '');
@@ -147,6 +240,8 @@ export default function TeacherPayments(): JSX.Element {
         earnings.forEach((e) => {
           const tid = String(e.teacherId || '');
           if (tid) teacherIds.add(tid);
+          const parentId = String(e.parentId || '');
+          if (parentId) parentIds.add(parentId);
           const kidId = String(e.kidId || e.studentId || '');
           if (kidId) kidIds.add(kidId);
           if (Array.isArray(e.kidIds)) {
@@ -159,6 +254,8 @@ export default function TeacherPayments(): JSX.Element {
           if (courseId) courseIds.add(courseId);
           const enrollmentId = String(e.enrollmentId || '');
           if (enrollmentId) enrollmentIds.add(enrollmentId);
+          const sessionId = String(e.sessionId || e.id || '').trim();
+          if (sessionId && isSessionEarning(e)) sessionIds.add(sessionId);
         });
 
         const nextEnrollmentMap: Record<
@@ -216,6 +313,23 @@ export default function TeacherPayments(): JSX.Element {
             );
           }
           setTeachers(teacherDocs.filter(isTeacherUser));
+        }
+
+        if (parentIds.size === 0) {
+          setParentMap({});
+        } else {
+          const nextParentMap: Record<string, string> = {};
+          for (const chunk of chunkIds(Array.from(parentIds))) {
+            const snap = await getDocs(
+              query(collection(db, 'users'), where(documentId(), 'in', chunk))
+            );
+            snap.docs.forEach((docSnap) => {
+              const data = docSnap.data() as any;
+              nextParentMap[docSnap.id] =
+                String(data?.displayName || data?.name || data?.email || '').trim() || docSnap.id;
+            });
+          }
+          setParentMap(nextParentMap);
         }
 
         if (kidIds.size === 0) {
@@ -280,6 +394,21 @@ export default function TeacherPayments(): JSX.Element {
             });
           }
           setCourseMap(nextCourseMap);
+        }
+
+        if (sessionIds.size === 0) {
+          setSessionMap({});
+        } else {
+          const nextSessionMap: Record<string, any> = {};
+          for (const chunk of chunkIds(Array.from(sessionIds))) {
+            const snap = await getDocs(
+              query(collection(db, 'classSessions'), where(documentId(), 'in', chunk))
+            );
+            snap.docs.forEach((docSnap) => {
+              nextSessionMap[docSnap.id] = docSnap.data() as any;
+            });
+          }
+          setSessionMap(nextSessionMap);
         }
       } catch (err) {
         console.warn('[TeacherPayments] Failed to load referenced data', err);
@@ -446,84 +575,122 @@ export default function TeacherPayments(): JSX.Element {
     });
   }, [teachers, rollups, paidByTeacher, earningsByTeacher]);
 
-  const breakdownByTeacher = useMemo(() => {
-    const byTeacher = new Map<
+  const classDetailsByTeacher = useMemo(() => {
+    const result = new Map<
       string,
-      Map<
-        string,
-        {
-          enrollmentId: string;
-          kidId: string;
-          courseId: string;
-          studentName: string;
-          sessions: number;
-          earned: number;
-          paid: number;
-        }
-      >
+      {
+        included: Array<{
+          key: string;
+          dateLabel: string;
+          sortMs: number;
+          studentLabel: string;
+          courseLabel: string;
+          parentLabel: string;
+          statusLabel: string;
+          amount: number;
+        }>;
+        excluded: Array<{
+          key: string;
+          dateLabel: string;
+          sortMs: number;
+          studentLabel: string;
+          courseLabel: string;
+          parentLabel: string;
+          statusLabel: string;
+          amount: number;
+        }>;
+        completedCount: number;
+        totalEarned: number;
+      }
     >();
 
+    const ensureBucket = (teacherId: string) => {
+      let bucket = result.get(teacherId);
+      if (!bucket) {
+        bucket = { included: [], excluded: [], completedCount: 0, totalEarned: 0 };
+        result.set(teacherId, bucket);
+      }
+      return bucket;
+    };
+
     earnings.forEach((earning) => {
-      const teacherId = String(earning.teacherId || '');
-      if (!teacherId) return;
-      const status = normalizeStatus(earning.status);
-      if (status === 'void') return;
-      const enrollmentId = String(earning.enrollmentId || '');
-      const kidId = String(earning.kidId || earning.studentId || earning.kidIds?.[0] || '');
-      const courseId = String(earning.courseId || '');
-      const studentName = String(
-        earning.studentName || earning.kidName || earning.childName || ''
-      ).trim();
-      const key = enrollmentId || kidId || studentName || earning.id;
+      const teacherId = String(earning.teacherId || '').trim();
+      if (!teacherId || !isSessionEarning(earning)) return;
+
       const amountRaw = Number(earning.amount ?? 0);
       const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
-      const paidAmount = resolvePaidAmount(earning, amount);
+      const sessionId = String(earning.sessionId || earning.id || '').trim();
+      const session = sessionId ? sessionMap[sessionId] : undefined;
+      const enrollmentId = String(earning.enrollmentId || session?.enrollmentId || '').trim();
+      const enrollmentRef = enrollmentId ? enrollmentMap[enrollmentId] : undefined;
+      const kidId = String(
+        earning.kidId ||
+          earning.studentId ||
+          earning.kidIds?.[0] ||
+          session?.kidId ||
+          session?.studentId ||
+          enrollmentRef?.kidId ||
+          ''
+      ).trim();
+      const courseId = String(
+        earning.courseId || session?.courseId || enrollmentRef?.courseId || ''
+      ).trim();
+      const parentId = String(earning.parentId || session?.parentId || '').trim();
 
-      if (!byTeacher.has(teacherId)) byTeacher.set(teacherId, new Map());
-      const bucket = byTeacher.get(teacherId)!;
-      if (!bucket.has(key)) {
-        bucket.set(key, {
-          enrollmentId,
-          kidId,
-          courseId,
-          studentName,
-          sessions: 0,
-          earned: 0,
-          paid: 0,
-        });
+      const sessionStudentName = String(
+        session?.studentName || session?.kidName || session?.childName || ''
+      ).trim();
+      const earningStudentName = String(
+        earning.studentName || earning.kidName || earning.childName || ''
+      ).trim();
+      const enrollmentStudentName = String(enrollmentRef?.studentName || '').trim();
+      const studentLabel =
+        (isReadableDisplayName(earningStudentName) && earningStudentName) ||
+        (isReadableDisplayName(sessionStudentName) && sessionStudentName) ||
+        (isReadableDisplayName(enrollmentStudentName) && enrollmentStudentName) ||
+        (isReadableDisplayName(kidMap[kidId]) && String(kidMap[kidId]).trim()) ||
+        kidId ||
+        'Unknown';
+
+      const courseLabel = courseMap[courseId] || courseId || '—';
+      const parentLabel =
+        parentMap[parentId] ||
+        String(session?.parentName || session?.parentDisplayName || '').trim() ||
+        parentId ||
+        '—';
+
+      const sortMs = resolveEarningDateMillis(session, earning) || 0;
+      const statusLabel = resolveTeacherDetailStatusLabel(includeInTotals, session, earning);
+
+      const row = {
+        key: `${sessionId || earning.id || 'earning'}_${teacherId}`,
+        dateLabel: sortMs > 0 ? formatDateDisplay(sortMs) : '—',
+        sortMs,
+        studentLabel,
+        courseLabel,
+        parentLabel,
+        statusLabel,
+        amount,
+      };
+
+      const includeInTotals = normalizeStatus(earning.status) !== 'void';
+      const bucket = ensureBucket(teacherId);
+      if (includeInTotals) {
+        bucket.included.push(row);
+        bucket.completedCount += 1;
+        bucket.totalEarned += amount;
+      } else {
+        bucket.excluded.push(row);
       }
-      const entry = bucket.get(key)!;
-      if (!entry.studentName && studentName) {
-        entry.studentName = studentName;
-      }
-      entry.sessions += 1;
-      entry.earned += amount;
-      entry.paid += paidAmount;
     });
 
-    const result = new Map<string, Array<{
-      enrollmentId: string;
-      kidId: string;
-      courseId: string;
-      studentName: string;
-      sessions: number;
-      earned: number;
-      paid: number;
-      balance: number;
-    }>>();
-
-    byTeacher.forEach((bucket, teacherId) => {
-      const entries = Array.from(bucket.values())
-        .map((entry) => ({
-          ...entry,
-          balance: entry.earned - entry.paid,
-        }))
-        .sort((a, b) => b.balance - a.balance);
-      result.set(teacherId, entries);
+    result.forEach((bucket) => {
+      bucket.included.sort((a, b) => b.sortMs - a.sortMs);
+      bucket.excluded.sort((a, b) => b.sortMs - a.sortMs);
     });
 
     return result;
-  }, [earnings]);
+  }, [earnings, sessionMap, enrollmentMap, kidMap, courseMap, parentMap]);
 
   const visibleRows = useMemo(() => {
     if (teacherFilter === 'all') return rows;
@@ -729,7 +896,12 @@ export default function TeacherPayments(): JSX.Element {
               ) : (
                 visibleRows.map((row) => {
                   const isExpanded = expandedTeachers.has(row.teacherId);
-                  const breakdown = breakdownByTeacher.get(row.teacherId) || [];
+                  const details = classDetailsByTeacher.get(row.teacherId) || {
+                    included: [],
+                    excluded: [],
+                    completedCount: 0,
+                    totalEarned: 0,
+                  };
                   return (
                     <React.Fragment key={row.teacherId}>
                       <tr className="border-b last:border-b-0">
@@ -778,64 +950,78 @@ export default function TeacherPayments(): JSX.Element {
                       {isExpanded && (
                         <tr>
                           <td colSpan={9} className="p-2 bg-muted/30">
-                            {breakdown.length === 0 ? (
+                            {details.included.length === 0 ? (
                               <div className="text-xs text-muted-foreground">
-                                No earnings found for this month.
+                                No completed classes found for this period.
                               </div>
                             ) : (
-                              <div className="overflow-x-auto">
-                                <table className="w-full text-xs table-auto">
-                                  <thead>
-                                    <tr className="text-left border-b">
-                                      <th className="p-2">Student</th>
-                                      <th className="p-2">Course</th>
-                                      <th className="p-2">Sessions</th>
-                                      <th className="p-2">Earned</th>
-                                      <th className="p-2">Paid</th>
-                                      <th className="p-2">Balance</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {breakdown.map((entry, idx) => {
-                                      const enrollmentRef = entry.enrollmentId
-                                        ? enrollmentMap[entry.enrollmentId]
-                                        : undefined;
-                                      const resolvedKidId =
-                                        entry.kidId || enrollmentRef?.kidId || '';
-                                      const sessionName = isReadableDisplayName(entry.studentName)
-                                        ? entry.studentName.trim()
-                                        : '';
-                                      const enrollmentName = isReadableDisplayName(enrollmentRef?.studentName)
-                                        ? String(enrollmentRef?.studentName || '').trim()
-                                        : '';
-                                      const kidName = isReadableDisplayName(kidMap[resolvedKidId])
-                                        ? String(kidMap[resolvedKidId] || '').trim()
-                                        : '';
-                                      const studentLabel =
-                                        sessionName ||
-                                        enrollmentName ||
-                                        kidName ||
-                                        resolvedKidId ||
-                                        'Unknown';
-                                      const resolvedCourseId =
-                                        entry.courseId || enrollmentRef?.courseId || '';
-                                      const courseLabel =
-                                        courseMap[resolvedCourseId] ||
-                                        resolvedCourseId ||
-                                        '—';
-                                      return (
-                                        <tr key={`${entry.enrollmentId || entry.kidId}-${idx}`}>
-                                          <td className="p-2">{studentLabel}</td>
-                                          <td className="p-2">{courseLabel}</td>
-                                          <td className="p-2">{entry.sessions}</td>
-                                          <td className="p-2">{formatMoney(entry.earned)}</td>
-                                          <td className="p-2">{formatMoney(entry.paid)}</td>
-                                          <td className="p-2">{formatMoney(entry.balance)}</td>
+                              <div className="space-y-3">
+                                <div className="overflow-x-auto">
+                                  <table className="w-full text-xs table-auto">
+                                    <thead>
+                                      <tr className="text-left border-b">
+                                        <th className="p-2">Date</th>
+                                        <th className="p-2">Student</th>
+                                        <th className="p-2">Course</th>
+                                        <th className="p-2">Parent</th>
+                                        <th className="p-2">Status</th>
+                                        <th className="p-2">Teacher earning amount</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {details.included.map((entry) => (
+                                        <tr key={entry.key} className="border-b last:border-b-0">
+                                          <td className="p-2">{entry.dateLabel}</td>
+                                          <td className="p-2">{entry.studentLabel}</td>
+                                          <td className="p-2">{entry.courseLabel}</td>
+                                          <td className="p-2">{entry.parentLabel}</td>
+                                          <td className="p-2">{entry.statusLabel}</td>
+                                          <td className="p-2">{formatMoney(entry.amount)}</td>
                                         </tr>
-                                      );
-                                    })}
-                                  </tbody>
-                                </table>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Total completed classes: {details.completedCount} · Total earned:{' '}
+                                  {formatMoney(details.totalEarned)}
+                                </div>
+                                {details.excluded.length > 0 ? (
+                                  <div className="space-y-2">
+                                    <div className="text-xs font-medium">
+                                      Reschedules / Cancellations
+                                    </div>
+                                    <div className="overflow-x-auto">
+                                      <table className="w-full text-xs table-auto">
+                                        <thead>
+                                          <tr className="text-left border-b">
+                                            <th className="p-2">Date</th>
+                                            <th className="p-2">Student</th>
+                                            <th className="p-2">Course</th>
+                                            <th className="p-2">Parent</th>
+                                            <th className="p-2">Status</th>
+                                            <th className="p-2">Teacher earning amount</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {details.excluded.map((entry) => (
+                                            <tr key={`${entry.key}_excluded`} className="border-b last:border-b-0">
+                                              <td className="p-2">{entry.dateLabel}</td>
+                                              <td className="p-2">{entry.studentLabel}</td>
+                                              <td className="p-2">{entry.courseLabel}</td>
+                                              <td className="p-2">{entry.parentLabel}</td>
+                                              <td className="p-2">{entry.statusLabel}</td>
+                                              <td className="p-2">{formatMoney(entry.amount)}</td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                    <div className="text-[11px] text-muted-foreground">
+                                      Excluded from payout totals unless already included by existing earning status rules.
+                                    </div>
+                                  </div>
+                                ) : null}
                               </div>
                             )}
                           </td>
