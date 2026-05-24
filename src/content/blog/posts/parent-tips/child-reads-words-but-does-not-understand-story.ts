@@ -177,6 +177,19 @@ const post: BlogPost = {
       content: 'Minute 10: Praise effort and one strong answer.',
     },
     {
+      type: 'h3',
+      content: 'Try Word Meaning Flashcards',
+    },
+    {
+      type: 'p',
+      content:
+        'Help your child learn useful words with simple meanings and example sentences. This can make story vocabulary easier to understand during daily reading.',
+    },
+    {
+      type: 'li',
+      content: 'Play Free: /free-games/word-meaning-flashcards',
+    },
+    {
       type: 'h2',
       content: '9. When Structured Reading Support Helps',
     },

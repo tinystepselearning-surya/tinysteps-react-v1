@@ -15,6 +15,8 @@ const GAME_CARDS = [
       'Children start with pre-writing lines and curves, then move into capital and small letter tracing with guided visual support.',
     points: ['Pre-tracing warm-up', 'Capital to small letters', 'Guided dots and stroke flow'],
     emoji: '✍️',
+    href: '/free-letter-tracing-game-for-kids',
+    linkLabel: 'Play free letter tracing',
   },
   {
     title: 'Sound Practice Games',
@@ -320,6 +322,14 @@ export default function LearningGamesMarketingPage() {
                     </div>
                   ))}
                 </div>
+                {'href' in card && card.href ? (
+                  <Link
+                    to={card.href}
+                    className="mt-5 inline-flex items-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-100"
+                  >
+                    {'linkLabel' in card && card.linkLabel ? card.linkLabel : 'Open game'}
+                  </Link>
+                ) : null}
               </div>
             ))}
           </div>

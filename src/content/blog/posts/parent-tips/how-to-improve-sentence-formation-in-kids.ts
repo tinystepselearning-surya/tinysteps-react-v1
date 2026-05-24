@@ -141,6 +141,19 @@ const post: BlogPost = {
         'Explore grammar support: /grammar. Build communication confidence: /speaking. Compare learning routes: /courses. Read connected-skill guide: /blog/how-phonics-grammar-and-communication-work-together. Try home routine ideas: /blog/how-to-engage-kids-in-english-learning-at-home.',
     },
     {
+      type: 'h3',
+      content: 'Try Word Meaning Flashcards',
+    },
+    {
+      type: 'p',
+      content:
+        'Help your child learn useful words with simple meanings and example sentences. Stronger vocabulary often leads to clearer sentence formation in speaking and writing.',
+    },
+    {
+      type: 'li',
+      content: 'Play Free: /free-games/word-meaning-flashcards',
+    },
+    {
       type: 'h2',
       content: '6. Clear Next Step for Parents',
     },

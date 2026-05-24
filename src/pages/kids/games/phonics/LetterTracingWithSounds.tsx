@@ -27,6 +27,7 @@ import { applyKidAndMissionContext, buildMissionReturnHref } from "./missionNavi
 const BASE_ROUTE = "/kids/games/phonics/letter-tracing-sounds";
 const TRACING_SOUNDS_GAME_ID = "letter-tracing-sounds";
 const TRACING_SOUNDS_PROGRESS_DOC_ID = "phonics_letter_tracing_sounds";
+const PUBLIC_ANON_STORAGE_KEY = "__public_letter_tracing_with_sounds__";
 
 type Mode = "levels" | "play";
 type CaseStep = 0 | 1; // 0=Upper, 1=Lower
@@ -1021,7 +1022,23 @@ function ConfettiBurst({ fire }: { fire: boolean }) {
 /* --------------------
    Main component
 -------------------- */
-export default function LetterTracingWithSounds() {
+type LetterTracingWithSoundsProps = {
+  baseRoute?: string;
+  missionReturnHrefOverride?: string;
+  showMissionBackButton?: boolean;
+  showProgressControls?: boolean;
+  forceAnonymousMode?: boolean;
+  anonymousProgressStorageKey?: string;
+};
+
+export default function LetterTracingWithSounds({
+  baseRoute,
+  missionReturnHrefOverride,
+  showMissionBackButton = true,
+  showProgressControls = true,
+  forceAnonymousMode = false,
+  anonymousProgressStorageKey = PUBLIC_ANON_STORAGE_KEY,
+}: LetterTracingWithSoundsProps = {}) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -1030,7 +1047,11 @@ export default function LetterTracingWithSounds() {
 
   
 
-  const kidId = searchParams.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
+  const resolvedBaseRoute = baseRoute || BASE_ROUTE;
+  const kidId = forceAnonymousMode
+    ? ""
+    : searchParams.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
+  const localProgressKey = kidId || (forceAnonymousMode ? anonymousProgressStorageKey : "");
   const fs = searchParams.get("fs") === "1";
 
   // ✅ Route params / derived mode (must be declared before hooks that reference `mode`)
@@ -1166,13 +1187,13 @@ export default function LetterTracingWithSounds() {
   });
 
   const loadLocalProgress = useCallback(() => {
-    if (!kidId) {
+    if (!localProgressKey) {
       setProgress({ status: "idle", mastered: new Set<string>(), lastPos: null });
       return;
     }
 
     setProgress((p) => ({ ...p, status: "loading" }));
-    const local = readLocalState(kidId);
+    const local = readLocalState(localProgressKey);
     const localMastered = uniqStrings(local?.masteredItems);
     setProgress({
       status: "ready",
@@ -1180,24 +1201,24 @@ export default function LetterTracingWithSounds() {
       lastPos: local?.lastPos ?? null,
       updatedAtMs: local?.updatedAtMs,
     });
-  }, [kidId]);
+  }, [localProgressKey]);
 
   useEffect(() => {
-    if (!kidId) return;
+    if (!localProgressKey) return;
     loadLocalProgress();
-  }, [kidId, loadLocalProgress]);
+  }, [localProgressKey, loadLocalProgress]);
 
   const persistLocalProgress = useCallback(
     (next: { masteredItems?: string[]; lastPos?: LastPos | null; updatedAtMs?: number }) => {
-      if (!kidId) return;
-      const prev = readLocalState(kidId) ?? {};
+      if (!localProgressKey) return;
+      const prev = readLocalState(localProgressKey) ?? {};
       const mergedMastered = uniqStrings([...(prev.masteredItems ?? []), ...(next.masteredItems ?? [])]);
       const merged: TracingLocalState = {
         masteredItems: mergedMastered,
         lastPos: next.lastPos ?? prev.lastPos ?? null,
         updatedAtMs: next.updatedAtMs ?? prev.updatedAtMs ?? Date.now(),
       };
-      writeLocalState(kidId, merged);
+      writeLocalState(localProgressKey, merged);
       setProgress((curr) => ({
         ...curr,
         status: "ready",
@@ -1206,7 +1227,7 @@ export default function LetterTracingWithSounds() {
         updatedAtMs: merged.updatedAtMs,
       }));
     },
-    [kidId]
+    [localProgressKey]
   );
 
   const persistLocalLastPos = useCallback(
@@ -1223,12 +1244,12 @@ export default function LetterTracingWithSounds() {
   }, [mode, isPretrace, safePairIndex, step, persistLocalLastPos]);
 
   const resetLocalProgress = useCallback(() => {
-    if (!kidId) return;
+    if (!localProgressKey) return;
     const ok = window.confirm("Reset Letter Tracing (With Sounds) progress for this child on this device?");
     if (!ok) return;
 
     try {
-      localStorage.removeItem(localStateKey(kidId));
+      localStorage.removeItem(localStateKey(localProgressKey));
     } catch {
       // ignore localStorage errors
     }
@@ -1239,7 +1260,7 @@ export default function LetterTracingWithSounds() {
       lastPos: null,
       updatedAtMs: Date.now(),
     });
-  }, [kidId]);
+  }, [localProgressKey]);
 
   type ProgressCounts = {
     preDone: number;
@@ -2010,11 +2031,11 @@ export default function LetterTracingWithSounds() {
   -------------------- */
   function navigateTo(sp: URLSearchParams, replace: boolean) {
     const query = sp.toString();
-    const url = query ? `${BASE_ROUTE}?${query}` : BASE_ROUTE;
+    const url = query ? `${resolvedBaseRoute}?${query}` : resolvedBaseRoute;
     navigate(url, { replace });
   }
 
-  const missionReturnHref = buildMissionReturnHref(searchParams, kidId);
+  const missionReturnHref = missionReturnHrefOverride ?? buildMissionReturnHref(searchParams, kidId);
 
   function goGamesPortal() {
     navigate(missionReturnHref, { replace: true });
@@ -2491,34 +2512,40 @@ export default function LetterTracingWithSounds() {
               </div>
 
               <div className="flex shrink-0 items-center flex-wrap gap-2">
-                <button
-                  onClick={goGamesPortal}
-                  className="rounded-full border bg-white/80 px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md"
-                >
-                  ← Back to Mission
-                </button>
+                {showMissionBackButton ? (
+                  <button
+                    onClick={goGamesPortal}
+                    className="rounded-full border bg-white/80 px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md"
+                  >
+                    ← Back to Mission
+                  </button>
+                ) : null}
 
-                <button
-                  onClick={() => void loadLocalProgress()}
-                  disabled={!kidId || progress.status === "loading"}
-                  className={[
-                    "rounded-full border bg-white/80 px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md",
-                    !kidId || progress.status === "loading" ? "opacity-60 cursor-not-allowed" : "",
-                  ].join(" ")}
-                >
-                  {progress.status === "loading" ? "Refreshing…" : "Refresh progress"}
-                </button>
+                {showProgressControls ? (
+                  <>
+                    <button
+                      onClick={() => void loadLocalProgress()}
+                      disabled={!localProgressKey || progress.status === "loading"}
+                      className={[
+                        "rounded-full border bg-white/80 px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md",
+                        !localProgressKey || progress.status === "loading" ? "opacity-60 cursor-not-allowed" : "",
+                      ].join(" ")}
+                    >
+                      {progress.status === "loading" ? "Refreshing…" : "Refresh progress"}
+                    </button>
 
-                <button
-                  onClick={resetLocalProgress}
-                  disabled={!kidId}
-                  className={[
-                    "rounded-full border border-rose-200 bg-rose-50/90 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm hover:shadow-md",
-                    !kidId ? "opacity-60 cursor-not-allowed" : "",
-                  ].join(" ")}
-                >
-                  Reset Progress
-                </button>
+                    <button
+                      onClick={resetLocalProgress}
+                      disabled={!localProgressKey}
+                      className={[
+                        "rounded-full border border-rose-200 bg-rose-50/90 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm hover:shadow-md",
+                        !localProgressKey ? "opacity-60 cursor-not-allowed" : "",
+                      ].join(" ")}
+                    >
+                      Reset Progress
+                    </button>
+                  </>
+                ) : null}
               </div>
             </div>
 

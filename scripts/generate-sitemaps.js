@@ -106,6 +106,8 @@ const SUPPORTING_LONG_TAIL = new Set([
   '/phonics-apps-for-preschoolers-india',
   '/phonics-games-for-preschoolers',
   '/phonics-learning-games',
+  '/free-letter-tracing-game-for-kids',
+  '/letter-tracing-with-sounds-game',
 ]);
 
 const EXCLUDED_BLOG_SLUGS = new Set([

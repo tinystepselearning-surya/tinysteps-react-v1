@@ -14,7 +14,13 @@ const post: PhonicsSeoPost = {
     '10-minute daily routine, step 4 (sound sorting, 2 minutes): sort picture or word cards into two target sound groups to build sound discrimination.',
     '10-minute daily routine, step 5 (quick blending readiness check, 1 minute): test 2-3 oral blends such as /s/ /a/ /t/ and /m/ /a/ /p/.',
     '10-minute daily routine, step 6 (praise and stop before fatigue, 1 minute): end with one success sentence and avoid over-practice when focus drops.',
-    'Game ideas by skill: sound recognition (sound flashcards), first-sound identification (sound detective), sound discrimination (same or different), blending readiness (oral sound join), listening confidence (repeat-and-point games).'
+    'Game ideas by skill: sound recognition (sound flashcards), first-sound identification (sound detective), sound discrimination (same or different), blending readiness (oral sound join), listening confidence (repeat-and-point games).',
+    'Try the Free Letter Tracing Game',
+    'Help your child practise letter formation on screen with a simple tracing activity.',
+    'Play Free: /free-letter-tracing-game-for-kids',
+    'Try Letter Tracing with Sounds',
+    'Help your child connect letter shapes with letter sounds through simple tracing practice.',
+    'Play Free: /letter-tracing-with-sounds-game'
   ],
   classChecklistFocus: 'How Tiny Steps uses games purposefully: games are tied to one skill goal, teacher correction is immediate, and every game is followed by blending or reading transfer so practice builds real decoding.',
   avoidFocus: 'Mistakes to avoid: teaching only alphabet names, mixing too many sounds at once, rushing into words too early, and making practice feel like a test instead of guided confidence-building.',

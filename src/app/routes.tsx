@@ -50,6 +50,8 @@ const PhonicsGamesPreschoolersPage = lazy(() => import('../pages/public/PhonicsG
 const OnlinePhonicsReadingClassesPage = lazy(() => import('../pages/public/OnlinePhonicsReadingClassesPage'));
 const EnglishGrammarWritingClassesPage = lazy(() => import('../pages/public/EnglishGrammarWritingClassesPage'));
 const LearningGamesMarketingPage = lazy(() => import('../pages/public/LearningGamesMarketingPage'));
+const FreeLetterTracingGamePage = lazy(() => import('../pages/public/FreeLetterTracingGamePage'));
+const LetterTracingWithSoundsGamePage = lazy(() => import('../pages/public/LetterTracingWithSoundsGamePage'));
 const PublicSpeakingCommunicationKidsPage = lazy(() => import('../pages/public/PublicSpeakingCommunicationKidsPage'));
 const BookDemoPage = lazy(() => import('../pages/public/BookDemoPage'));
 const CareersPage = lazy(() => import('../pages/public/CareersPage'));
@@ -128,6 +130,7 @@ const CollocationBuilderFillSentence = lazy(() => import('../pages/kids/games/gr
 const StoryReadingGame = lazy(() => import('../pages/kids/games/reading/StoryReading/StoryReadingGame'));
 const ComprehensionGame = lazy(() => import('../pages/kids/games/reading/ComprehensionGame/ComprehensionGame'));
 const NewWordsFromReading = lazy(() => import('../pages/kids/games/reading/NewWordsFromReading/NewWordsFromReading'));
+const WordMeaningFlashcards = lazy(() => import('../pages/kids/games/reading/WordMeaningFlashcards'));
 // BetaAnalytics component removed - file does not exist
 // const BetaAnalytics = lazy(
 //   () => import('../pages/admin/beta-analytics.jsx') as any,
@@ -573,6 +576,9 @@ const router = createBrowserRouter(
         { path: 'phonics-apps-for-preschoolers-india', element: <PhonicsAppsPreschoolersIndiaPage /> },
         { path: 'phonics-games-for-preschoolers', element: <PhonicsGamesPreschoolersPage /> },
         { path: 'phonics-learning-games', element: <LearningGamesMarketingPage /> },
+        { path: 'free-letter-tracing-game-for-kids', element: <FreeLetterTracingGamePage /> },
+        { path: 'letter-tracing-with-sounds-game', element: <LetterTracingWithSoundsGamePage /> },
+        { path: 'free-games/word-meaning-flashcards', element: <WordMeaningFlashcards /> },
         { path: 'reading-classes-for-kids', element: <ReadingClassesForKidsPage /> },
         { path: 'spoken-english-classes-for-kids', element: <SpokenEnglishClassesForKidsPage /> },
         { path: 'writing-classes-for-kids', element: <WritingClassesForKidsPage /> },
@@ -721,6 +727,7 @@ const router = createBrowserRouter(
             { path: 'games/reading/story-reading', element: <StoryReadingGame /> },
             { path: 'games/reading/comprehension', element: <ComprehensionGame /> },
             { path: 'games/reading/new-words', element: <NewWordsFromReading /> },
+            { path: 'games/reading/word-meaning-flashcards', element: <WordMeaningFlashcards /> },
             { path: 'games/grammar', loader: missionShellRedirectLoader },
             { path: 'games/speaking', loader: missionShellRedirectLoader },
             { path: 'games/phonics/sound-detective', element: <SoundDetectiveGame /> },

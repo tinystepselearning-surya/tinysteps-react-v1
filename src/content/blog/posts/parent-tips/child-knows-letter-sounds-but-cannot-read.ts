@@ -122,6 +122,19 @@ const post: BlogPost = {
         'Read 5 to 10 CVC words daily and repeat the same set for several days. Consistency helps the brain blend faster and with less guessing.',
     },
     {
+      type: 'h3',
+      content: 'Try the Free Letter Tracing Game',
+    },
+    {
+      type: 'p',
+      content:
+        'Help your child practise letter formation on screen with a simple tracing activity.',
+    },
+    {
+      type: 'li',
+      content: 'Play Free: /free-letter-tracing-game-for-kids',
+    },
+    {
       type: 'h2',
       content: '6. Tiny Steps Method for Children Who Know Sounds but Cannot Read',
     },

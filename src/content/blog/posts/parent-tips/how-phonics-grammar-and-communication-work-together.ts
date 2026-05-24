@@ -141,6 +141,19 @@ const post: BlogPost = {
       content: 'Program comparison: /courses',
     },
     {
+      type: 'h3',
+      content: 'Try Word Meaning Flashcards',
+    },
+    {
+      type: 'p',
+      content:
+        'Help your child learn useful words with simple meanings and example sentences. It is a practical way to connect word understanding with better sentence use and communication.',
+    },
+    {
+      type: 'li',
+      content: 'Play Free: /free-games/word-meaning-flashcards',
+    },
+    {
       type: 'h2',
       content: '6. Next Step: Book a Free Assessment or Demo',
     },

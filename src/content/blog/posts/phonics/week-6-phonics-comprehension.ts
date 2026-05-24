@@ -156,6 +156,15 @@ const post: BlogPost = {
     type: 'p',
     content: 'Example: word = “park”. Say: “We will go to the park.” Then: point to a toy car and say, “The car goes to the park.” Later, ask the child to show the park with a toy.'
   }, {
+    type: 'h3',
+    content: 'Try Word Meaning Flashcards'
+  }, {
+    type: 'p',
+    content: 'Help your child learn useful words with simple meanings and example sentences. It is a simple follow-up activity after comprehension practice.'
+  }, {
+    type: 'li',
+    content: 'Play Free: /free-games/word-meaning-flashcards'
+  }, {
     type: 'h2',
     content: 'Troubleshooting: child reads but doesn’t understand / rushes / guesses'
   }, {

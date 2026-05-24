@@ -11,7 +11,10 @@ const post: PhonicsSeoPost = {
     'Practise high-utility SATPIN words (sat, pin, tap, sit, tin) with minimal picture cues.',
     'Use multisensory cues (actions, sound cards, finger taps) to stabilize sound production and recall.',
     'Check weekly whether your child can decode unfamiliar SATPIN combinations, not just memorized words.',
-    'Move to broader CVC sets only when SATPIN blending is accurate with low prompting across several sessions.'
+    'Move to broader CVC sets only when SATPIN blending is accurate with low prompting across several sessions.',
+    'Try Letter Tracing with Sounds',
+    'Help your child connect letter shapes with letter sounds through simple tracing practice.',
+    'Play Free: /letter-tracing-with-sounds-game'
   ],
   classChecklistFocus: 'Good SATPIN teaching includes pure sound modeling, immediate blending application, cumulative review, and clear evidence that children can decode new SATPIN words independently.',
   avoidFocus: 'Avoid teaching all six sounds in one sitting, mixing letter names into blending drills, or staying too long on isolated sound drills without word application.',

@@ -696,6 +696,7 @@ type Tile = {
   desc: string;
   route?: string;
   comingSoon?: boolean;
+  isFreeGame?: boolean; // free/open tile override (does not affect other tiles)
   /** Game status label: 'live' (actively playable), 'legacyLive' (older version still playable), 'ready' (functional but not prioritized), 'comingSoon' (planned, not yet implemented), 'replaced' (superseded but both exist), 'hidden' (intentionally removed) */
   status?: 'live' | 'legacyLive' | 'ready' | 'comingSoon' | 'replaced' | 'hidden';
   /** If non-null, indicates this game was replaced by the referenced gameId */
@@ -855,7 +856,16 @@ const STAGES: Stage[] = [
       { gameId: "eem-g19-comprehension-questions", gameTitle: "Comprehension Questions", moduleId: "eem-m10-comprehension-vocabulary", gameOrder: 3, desc: "who/what/where/why questions", route: "/kids/games/reading/comprehension", status: 'live' },
       { gameId: "eem-g20-new-words-from-reading", gameTitle: "New Words from Reading", moduleId: "eem-m10-comprehension-vocabulary", gameOrder: 4, desc: "discover vocabulary in context", route: "/kids/games/reading/new-words", status: 'live' },
       { gameId: "eem-g20b-summarize-simply", gameTitle: "Summarize Simply", moduleId: "eem-m10-comprehension-vocabulary", gameOrder: 5, desc: "write simple summaries of stories", route: "/kids/games/reading/new-words", status: 'live' },
-      { gameId: "eem-g21-meaning-from-context", gameTitle: "Meaning from Context", moduleId: "eem-m11-context-meaning-relations", gameOrder: 6, desc: "figure out word meaning", comingSoon: true, status: 'comingSoon' },
+      {
+        gameId: "eem-g21-meaning-from-context",
+        gameTitle: "Word Meaning Flashcards",
+        moduleId: "eem-m11-context-meaning-relations",
+        gameOrder: 6,
+        desc: "Learn new words, meanings, and example sentences through fun flip cards.",
+        route: "/free-games/word-meaning-flashcards",
+        isFreeGame: true,
+        status: 'live',
+      },
       { gameId: "eem-g22-synonym-antonym-hunt", gameTitle: "Synonym & Antonym Hunt", moduleId: "eem-m11-context-meaning-relations", gameOrder: 7, desc: "find similar/opposite words", comingSoon: true, status: 'comingSoon' },
       { gameId: "eem-g23-crossword-from-reading", gameTitle: "Crossword from Reading", moduleId: "eem-m12-reading-crossword-recall", gameOrder: 8, desc: "puzzle based on passage", comingSoon: true, status: 'comingSoon' },
     ],
@@ -1276,6 +1286,7 @@ const isTileUnlocked = (store: ProgressStore, stageId: string, gameId: string): 
   const tile = stage.tiles[tileIndex];
   if (tile.comingSoon) return false; // Always locked if comingSoon
   if (!tile.route) return false;
+  if (tile.isFreeGame) return true;
 
   // Stage 1 + Stage 2 are fully playable mission stages:
   // if a real route exists, keep tiles directly tappable.
@@ -2251,7 +2262,11 @@ const KidsEnglishExcellence: React.FC = () => {
                       : "bg-slate-700/30 border-slate-500/35 text-slate-200";
                   const badgeClass = grammarTrackUi?.badgeClass || defaultBadgeClass;
                   const badgeText = grammarTrackUi?.badge || statusLabel(status);
-                  const footerText = grammarTrackUi?.footer || (locked ? "Locked" : status === "completed" ? "Replay anytime" : "Tap to open");
+                  const isWordMeaningFlashcardsTile = tile.gameId === "eem-g21-meaning-from-context";
+                  const footerText = grammarTrackUi?.footer || (
+                    locked ? "Locked" : status === "completed" ? "Replay anytime" : isWordMeaningFlashcardsTile ? "Play Free" : "Tap to open"
+                  );
+                  const tileCtaText = locked ? "Soon" : isWordMeaningFlashcardsTile ? "Play Free" : "Play";
 
                   const isPulse = pulseTileId === tileId;
 
@@ -2326,7 +2341,7 @@ const KidsEnglishExcellence: React.FC = () => {
                             }
                           `}
                         >
-                          {locked ? "Soon" : "Play"}
+                          {tileCtaText}
                         </div>
                       </div>
                     </div>

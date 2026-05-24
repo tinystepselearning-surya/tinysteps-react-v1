@@ -471,6 +471,22 @@ export default function PhonicsPage({
         </Link>
       </section>
 
+      <section className="mx-4 my-8 max-w-4xl rounded-2xl border border-sky-200 bg-sky-50/60 p-5 shadow-sm sm:mx-auto sm:p-6">
+        <h2 className="text-xl font-bold text-slate-900">Free tracing practice for home</h2>
+        <p className="mt-2 text-sm leading-7 text-slate-700">
+          Parents looking for immediate practice can use our free browser games:
+          {' '}
+          <Link to="/free-letter-tracing-game-for-kids" className="font-semibold text-sky-900 underline underline-offset-4">
+            Free Letter Tracing Game
+          </Link>
+          {' '}and{' '}
+          <Link to="/letter-tracing-with-sounds-game" className="font-semibold text-sky-900 underline underline-offset-4">
+            Letter Tracing With Sounds Game
+          </Link>
+          .
+        </p>
+      </section>
+
       {afterContent}
 
       <TopicClusterLinks

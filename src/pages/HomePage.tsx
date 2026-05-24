@@ -370,6 +370,17 @@ export default function HomePage() {
                   <AutoLinkedText text="Give your child meaningful daily practice through guided English learning games that build strong foundations in letters & sounds, spelling, vocabulary, sentence making, reading, grammar, and confident speaking." />
                 </Suspense>
               </p>
+              <p className="mt-2 text-sm text-slate-700">
+                Try the free web versions:{' '}
+                <Link to="/free-letter-tracing-game-for-kids" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+                  Letter Tracing
+                </Link>
+                {' '}and{' '}
+                <Link to="/letter-tracing-with-sounds-game" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+                  Tracing With Sounds
+                </Link>
+                .
+              </p>
             </div>
             <Link
               to="/games/english-excellence"

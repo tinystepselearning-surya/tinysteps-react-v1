@@ -11,7 +11,13 @@ const post: PhonicsSeoPost = {
     'Use oral blending before print: say separated sounds and ask your child to merge them into a word.',
     'Run a 10-minute start routine: 3 minutes sound review, 4 minutes blending, 2 minutes decodable reading, 1 minute recap.',
     'Add one short spelling transfer task: say a word, child taps sounds, writes, then reads back.',
-    'After one week, check if your child is relying less on guessing and more on sound-by-sound decoding.'
+    'After one week, check if your child is relying less on guessing and more on sound-by-sound decoding.',
+    'Try the Free Letter Tracing Game',
+    'Help your child practise letter formation on screen with a simple tracing activity.',
+    'Play Free: /free-letter-tracing-game-for-kids',
+    'Try Letter Tracing with Sounds',
+    'Help your child connect letter shapes with letter sounds through simple tracing practice.',
+    'Play Free: /letter-tracing-with-sounds-game'
   ],
   classChecklistFocus: 'Good phonics teaching is explicit and cumulative: pure sound modeling, guided blending, decodable text practice, and regular review of previously taught patterns.',
   avoidFocus: 'Do not reduce phonics to alphabet naming, random worksheets, or picture-guessing strategies. Children need active sound manipulation and decoding routines.',

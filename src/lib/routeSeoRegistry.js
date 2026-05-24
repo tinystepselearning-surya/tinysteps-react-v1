@@ -334,6 +334,27 @@ export const ROUTE_SEO_REGISTRY = {
     canonicalPath: '/phonics-learning-games',
     ogType: 'website',
   },
+  '/free-letter-tracing-game-for-kids': {
+    title: 'Free Letter Tracing Game for Kids | Online Alphabet Tracing',
+    description:
+      'Let your child practise lines, curves, capital letters, and small letters with a free online tracing game for kids. Start from the red dot and follow the guide.',
+    canonicalPath: '/free-letter-tracing-game-for-kids',
+    ogType: 'website',
+  },
+  '/letter-tracing-with-sounds-game': {
+    title: 'Letter Tracing With Sounds Game for Kids | Phonics Practice',
+    description:
+      'Help your child trace letters and connect each letter with its sound through a simple online phonics tracing game for kids.',
+    canonicalPath: '/letter-tracing-with-sounds-game',
+    ogType: 'website',
+  },
+  '/free-games/word-meaning-flashcards': {
+    title: 'Word Meaning Flashcards for Kids | Free Vocabulary Game | Tiny Steps',
+    description:
+      'Play a free word meaning flashcards game for kids. Learn 50 useful vocabulary words with simple meanings and example sentences.',
+    canonicalPath: '/free-games/word-meaning-flashcards',
+    ogType: 'website',
+  },
   '/reading-classes-for-kids': {
     title: 'Online Reading Classes for Kids | Tiny Steps Learning',
     description:
