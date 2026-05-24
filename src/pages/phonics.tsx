@@ -177,20 +177,45 @@ const parentSearchProblems = [
 ];
 const comparisonItems = [
   {
+    badge: 'Good for repetition',
     title: 'Phonics apps',
-    detail: 'Useful for repetition, but live correction is limited.',
+    body: [
+      'Apps can help children repeat sounds, match letters, and practise simple games at home.',
+      'They are useful after a concept is taught, but they may not notice why a child is guessing, skipping sounds, or blending incorrectly.',
+    ],
+    footerLabel: 'Best for',
+    footerText: 'extra practice after guided teaching',
   },
   {
+    badge: 'Good for exposure',
     title: 'School reading practice',
-    detail: 'Helpful, but often moves at class pace.',
+    body: [
+      'School reading builds routine, vocabulary, classroom confidence, and regular exposure to books.',
+      'But in a group setting, the teacher may not always have time to correct each child’s decoding, sound confusion, or blending gap immediately.',
+    ],
+    footerLabel: 'Limitation',
+    footerText: 'often moves at class pace',
   },
   {
+    badge: 'Good for bonding',
     title: 'General reading at home',
-    detail: 'Builds exposure, but may not fix decoding gaps.',
+    body: [
+      'Reading with parents builds listening, vocabulary, story understanding, and love for books.',
+      'But if the child has not mastered sound-letter links and blending, more reading alone may not fix word-reading difficulty.',
+    ],
+    footerLabel: 'Best for',
+    footerText: 'comprehension, confidence, and reading habit',
   },
   {
+    badge: 'Best for guided correction',
     title: 'Tiny Steps live phonics classes',
-    detail: 'Structured path, live correction, blending practice, digital activities, and parent-visible progress.',
+    body: [
+      'Tiny Steps uses a structured phonics path: letter sounds, blending, CVC words, digraphs, vowel teams, spelling, fluency, and sentence reading.',
+      'A trained mentor checks the child’s current level, corrects mistakes live, and gives parents visible progress updates.',
+    ],
+    footerLabel: 'Best for',
+    footerText: 'children who need explicit, level-based reading support',
+    checklist: ['structured sequence', 'live correction', 'blending practice', 'parent progress updates'],
   },
 ];
 const methodSteps = [
@@ -481,20 +506,25 @@ export default function PhonicsPage({
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Your child&apos;s reading journey</p>
               <p className="mt-1 text-sm font-medium text-slate-600">From first sounds to confident reading</p>
 
-              <div className="mt-3 flex flex-wrap gap-2">
-                {['Live correction', 'Level-based path', 'Parent updates'].map((status) => (
-                  <span
+              <div className="mt-3 flex w-full flex-wrap items-center justify-center gap-2 sm:gap-3">
+                {[
+                  ['Live correction', '#method'],
+                  ['Level-based path', '#program'],
+                  ['Parent updates', '#assessment'],
+                ].map(([status, href]) => (
+                  <a
                     key={status}
-                    className="rounded-full border border-slate-200/70 bg-white/75 px-3 py-1 text-[11px] font-semibold text-slate-700 shadow-sm"
+                    href={href}
+                    className="rounded-full border border-slate-200 bg-white/95 px-4 py-2 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-sky-300 hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:text-sm"
                   >
                     {status}
-                  </span>
+                  </a>
                 ))}
               </div>
 
               <div className="mt-4">
                 <div className="relative mx-auto flex max-w-[29rem] flex-col items-center">
-                  <div className="pointer-events-none absolute inset-x-8 bottom-8 top-10 rounded-[2rem] bg-gradient-to-b from-orange-50/15 via-sky-50/15 to-sky-100/25 opacity-25 blur-2xl" />
+                  <div className="pointer-events-none absolute inset-x-8 bottom-8 top-10 rounded-[2rem] bg-gradient-to-b from-orange-50/10 via-sky-50/12 to-sky-100/20 opacity-20 blur-2xl" />
                   <div className="pointer-events-none absolute bottom-9 left-1/2 h-44 w-40 -translate-x-1/2 rounded-full bg-gradient-to-b from-sky-100/20 via-sky-100/30 to-orange-100/25 opacity-35 blur-2xl" />
                   <div className="pointer-events-none absolute -bottom-2 left-1/2 h-5 w-[68%] -translate-x-1/2 rounded-full bg-slate-300/35 blur-xl" />
                   {pyramidLevels.map((level, index) => {
@@ -510,14 +540,14 @@ export default function PhonicsPage({
                               : 'w-full';
                     const toneClass =
                       index === 0
-                        ? 'bg-gradient-to-r from-orange-200/75 via-amber-100/80 to-orange-100/70 border-orange-300/90'
+                        ? 'bg-gradient-to-r from-orange-200/85 via-amber-100/85 to-orange-100/80 border-orange-300/90'
                         : index === 1
-                          ? 'bg-gradient-to-r from-sky-100/90 via-slate-50 to-orange-100/65 border-sky-300/90'
+                          ? 'bg-gradient-to-r from-orange-100/60 via-amber-50/90 to-sky-100/65 border-orange-200/80'
                           : index === 2
-                            ? 'bg-gradient-to-r from-sky-200/75 via-sky-100/80 to-white border-sky-400/70'
+                            ? 'bg-gradient-to-r from-sky-200/80 via-sky-100/85 to-sky-50/80 border-sky-300/85'
                             : index === 3
-                              ? 'bg-gradient-to-r from-cyan-200/70 via-sky-100/90 to-white border-cyan-400/70'
-                              : 'bg-gradient-to-r from-sky-300/65 via-sky-100/90 to-orange-100/70 border-sky-500/60';
+                              ? 'bg-gradient-to-r from-cyan-200/75 via-sky-100/95 to-sky-50/80 border-cyan-300/85'
+                              : 'bg-gradient-to-r from-sky-300/75 via-sky-100/90 to-sky-100/80 border-sky-400/80';
                     const lipClass =
                       index === 0
                         ? 'bg-orange-300/70'
@@ -569,14 +599,40 @@ export default function PhonicsPage({
                 </div>
               </div>
 
-              <div className="mt-3.5 rounded-2xl border border-slate-200/70 bg-white/85 px-4 py-2.5 shadow-sm sm:pr-10 lg:pr-32 xl:pr-40">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
+              <div className="mt-4 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-sm">
+                <div className="flex flex-col items-start gap-2">
+                  <span className="w-fit rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold tracking-wide text-slate-700 sm:text-xs">
                     We keep parents updated
                   </span>
-                  <span className="text-xs font-medium text-slate-600 sm:text-sm">
-                    Assessment → level plan → practice → progress
-                  </span>
+                  <div className="flex w-full max-w-full flex-nowrap items-center justify-center gap-1.5 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-2">
+                    <Link
+                      to="/book-demo"
+                      className="shrink-0 rounded-full bg-[#0B1B3A] px-2.5 py-1.5 text-[11px] font-semibold leading-none text-white shadow-sm transition hover:bg-[#102A56] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:px-3 sm:text-xs"
+                    >
+                      Assessment
+                    </Link>
+                    <span className="flex shrink-0 items-center text-[11px] text-slate-400 sm:text-xs">→</span>
+                    <a
+                      href="#program"
+                      className="shrink-0 rounded-full bg-[#0B1B3A] px-2.5 py-1.5 text-[11px] font-semibold leading-none text-white shadow-sm transition hover:bg-[#102A56] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:px-3 sm:text-xs"
+                    >
+                      Level plan
+                    </a>
+                    <span className="flex shrink-0 items-center text-[11px] text-slate-400 sm:text-xs">→</span>
+                    <Link
+                      to="/free-letter-tracing-game-for-kids"
+                      className="shrink-0 rounded-full bg-[#0B1B3A] px-2.5 py-1.5 text-[11px] font-semibold leading-none text-white shadow-sm transition hover:bg-[#102A56] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:px-3 sm:text-xs"
+                    >
+                      Practice
+                    </Link>
+                    <span className="flex shrink-0 items-center text-[11px] text-slate-400 sm:text-xs">→</span>
+                    <a
+                      href="#overview"
+                      className="shrink-0 rounded-full bg-[#0B1B3A] px-2.5 py-1.5 text-[11px] font-semibold leading-none text-white shadow-sm transition hover:bg-[#102A56] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:px-3 sm:text-xs"
+                    >
+                      Progress
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
@@ -697,7 +753,7 @@ export default function PhonicsPage({
         <div className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-white via-slate-50/60 to-sky-50/40 p-6 shadow-xl sm:p-8">
           <SectionHeader
             title="Online phonics classes vs apps vs school reading practice"
-            subtitle="A respectful comparison to help parents choose the right support model."
+            subtitle="A respectful comparison to help parents choose the right support when a child knows letters but still struggles to blend, read, or spell confidently."
           />
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {comparisonItems.map((item) => (
@@ -711,24 +767,34 @@ export default function PhonicsPage({
               >
                 {item.title === 'Tiny Steps live phonics classes' ? (
                   <AccentBadge className="mb-3 border-orange-200 bg-white text-[11px] tracking-[0.06em]">
-                    Guided correction + parent progress
+                    {item.badge}
                   </AccentBadge>
-                ) : null}
+                ) : (
+                  <AccentBadge className="mb-3 border-slate-200 bg-white text-[11px] tracking-[0.06em]">
+                    {item.badge}
+                  </AccentBadge>
+                )}
                 <h3 className="text-base font-semibold text-slate-900">{item.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-700">{item.detail}</p>
+                <div className="mt-2 space-y-2 text-sm leading-relaxed text-slate-700">
+                  {item.body.map((line) => (
+                    <p key={line}>{line}</p>
+                  ))}
+                </div>
                 {item.title === 'Tiny Steps live phonics classes' ? (
                   <ul className="mt-3 space-y-1.5 text-xs font-medium text-slate-700">
-                    <li>✓ structured sequence</li>
-                    <li>✓ live correction</li>
-                    <li>✓ blending practice</li>
-                    <li>✓ progress updates</li>
+                    {item.checklist?.map((point) => (
+                      <li key={point}>✓ {point}</li>
+                    ))}
                   </ul>
                 ) : null}
+                <p className="mt-3 border-t border-slate-100 pt-2 text-xs font-medium text-slate-600">
+                  <span className="font-semibold text-slate-700">{item.footerLabel}:</span> {item.footerText}
+                </p>
               </PremiumCard>
             ))}
           </div>
           <p className="mt-5 text-sm leading-relaxed text-slate-700">
-            Explore the complete{' '}
+            Most children benefit from all three: school reading, home reading, and practice tools. But when a child knows letters and still cannot read words, structured live phonics support helps identify the missing step and rebuild the reading path. Explore the complete{' '}
             <Link to="/phonics" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
               phonics program
             </Link>{' '}
@@ -736,7 +802,11 @@ export default function PhonicsPage({
             <Link to="/phonics-fees-india" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
               phonics fees in India
             </Link>{' '}
-            before booking your free assessment.
+            before booking your{' '}
+            <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
+              free assessment
+            </Link>
+            .
           </p>
         </div>
       </SectionShell>
