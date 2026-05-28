@@ -398,9 +398,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/online-english-classes-for-kids-india': {
-    title: 'Online English Classes for Kids in India | Tiny Steps',
+    title: 'Online English Classes for Kids in India | Tiny Steps Learning',
     description:
-      'Live online English classes for kids in India with assessment-first guidance across phonics, reading, grammar, sentence formation, communication, and confidence.',
+      'Book a free assessment for online English classes in India. Tiny Steps helps children build phonics, reading, grammar and communication with live guidance.',
     canonicalPath: '/online-english-classes-for-kids-india',
     ogType: 'website',
   },
