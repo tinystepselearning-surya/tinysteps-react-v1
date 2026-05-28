@@ -453,15 +453,15 @@ export default function PhonicsPage({
       <div className="pointer-events-none absolute -left-24 top-24 h-64 w-64 rounded-full bg-sky-200/35 blur-3xl" />
       <div className="pointer-events-none absolute -right-12 top-10 h-72 w-72 rounded-full bg-orange-200/35 blur-3xl" />
 
-      <section className="relative overflow-hidden px-6 py-16 sm:py-20">
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#FFF8EF] via-white to-[#EEF8FF] px-6 py-10 md:py-12 lg:px-8 lg:py-14">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,_rgba(251,146,60,0.18),_transparent_34%),radial-gradient(circle_at_85%_0%,_rgba(125,211,252,0.24),_transparent_40%),linear-gradient(180deg,_rgba(255,247,237,0.95),_rgba(248,250,252,0.95))]" />
         <div className="pointer-events-none absolute -right-16 top-8 h-64 w-64 rounded-full bg-orange-200/35 blur-3xl" />
         <div className="pointer-events-none absolute -left-20 bottom-0 h-72 w-72 rounded-full bg-sky-200/35 blur-3xl" />
-        <div className="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:pr-16">
+        <div className="relative mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">Tiny Steps Phonics</p>
-            <h1 className="mt-4 max-w-3xl text-4xl font-black leading-[1.08] tracking-tight text-slate-950 sm:text-5xl">{heroTitle}</h1>
-            <p className="mt-5 max-w-2xl text-base leading-relaxed text-slate-700 sm:text-lg">{heroSubtitle}</p>
+            <h1 className="mt-4 max-w-[680px] text-[40px] font-black leading-[1.03] tracking-[-0.035em] text-slate-950 md:text-[48px] lg:text-[56px]">{heroTitle}</h1>
+            <p className="mt-5 max-w-[660px] text-base leading-7 text-slate-700 md:text-lg md:leading-8">{heroSubtitle}</p>
             <div className="mt-7 flex flex-wrap gap-2.5">
               {trustChips.map((chip) => (
                 <Pill key={chip}>{chip}</Pill>
@@ -498,137 +498,82 @@ export default function PhonicsPage({
             </p>
           </div>
 
-          <PremiumCard className="relative overflow-hidden rounded-[2.25rem] border border-white/80 bg-gradient-to-br from-white via-sky-50/60 to-orange-50/30 p-6 shadow-2xl shadow-slate-300/30 backdrop-blur sm:p-7">
-            <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-sky-100/45 blur-3xl" />
-            <div className="pointer-events-none absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-orange-100/28 blur-3xl" />
+          <PremiumCard className="mx-auto w-full max-w-[560px] rounded-[28px] border border-slate-200/70 bg-white/94 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)] md:p-6 lg:ml-auto lg:p-7">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500 md:text-xs">Your child&apos;s reading journey</p>
+              <p className="mt-1 text-sm text-slate-700 md:text-base">From first sounds to confident reading</p>
 
-            <div className="relative">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Your child&apos;s reading journey</p>
-              <p className="mt-1 text-sm font-medium text-slate-600">From first sounds to confident reading</p>
+              <div className="mt-5 mx-auto flex max-w-[450px] flex-col items-center">
+                {pyramidLevels.map((level, index) => {
+                  const widthClass =
+                    index === 0
+                      ? 'w-[50%]'
+                      : index === 1
+                        ? 'w-[62%]'
+                        : index === 2
+                          ? 'w-[74%]'
+                          : index === 3
+                            ? 'w-[86%]'
+                            : 'w-[98%]';
+                  const background = index === 0
+                    ? '#FFB562'
+                    : index === 1
+                      ? '#BFE7F2'
+                      : index === 2
+                        ? '#8ED8E8'
+                        : index === 3
+                          ? '#58C4DD'
+                          : '#2E8FD0';
+                  const textColor = index >= 3 ? '#FFFFFF' : '#0A192F';
 
-              <div className="mt-3 flex w-full flex-wrap items-center justify-center gap-2 sm:gap-3">
-                {[
-                  ['Live correction', '#method'],
-                  ['Level-based path', '#program'],
-                  ['Parent updates', '#assessment'],
-                ].map(([status, href]) => (
-                  <a
-                    key={status}
-                    href={href}
-                    className="rounded-full border border-slate-200 bg-white/95 px-4 py-2 text-xs font-semibold text-slate-800 shadow-sm transition hover:border-sky-300 hover:bg-sky-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:text-sm"
-                  >
-                    {status}
-                  </a>
-                ))}
-              </div>
-
-              <div className="mt-4">
-                <div className="relative mx-auto flex max-w-[29rem] flex-col items-center">
-                  <div className="pointer-events-none absolute inset-x-8 bottom-8 top-10 rounded-[2rem] bg-gradient-to-b from-orange-50/10 via-sky-50/12 to-sky-100/20 opacity-20 blur-2xl" />
-                  <div className="pointer-events-none absolute bottom-9 left-1/2 h-44 w-40 -translate-x-1/2 rounded-full bg-gradient-to-b from-sky-100/20 via-sky-100/30 to-orange-100/25 opacity-35 blur-2xl" />
-                  <div className="pointer-events-none absolute -bottom-2 left-1/2 h-5 w-[68%] -translate-x-1/2 rounded-full bg-slate-300/35 blur-xl" />
-                  {pyramidLevels.map((level, index) => {
-                    const widthClass =
-                      index === 0
-                        ? 'w-[72%] sm:w-[46%] sm:min-w-[13rem]'
-                        : index === 1
-                          ? 'w-[80%] sm:w-[58%] sm:min-w-[16rem]'
-                          : index === 2
-                            ? 'w-[88%] sm:w-[70%] sm:min-w-[19rem]'
-                            : index === 3
-                              ? 'w-[95%] sm:w-[84%] sm:min-w-[22rem]'
-                              : 'w-full';
-                    const toneClass =
-                      index === 0
-                        ? 'bg-gradient-to-r from-orange-200/85 via-amber-100/85 to-orange-100/80 border-orange-300/90'
-                        : index === 1
-                          ? 'bg-gradient-to-r from-orange-100/60 via-amber-50/90 to-sky-100/65 border-orange-200/80'
-                          : index === 2
-                            ? 'bg-gradient-to-r from-sky-200/80 via-sky-100/85 to-sky-50/80 border-sky-300/85'
-                            : index === 3
-                              ? 'bg-gradient-to-r from-cyan-200/75 via-sky-100/95 to-sky-50/80 border-cyan-300/85'
-                              : 'bg-gradient-to-r from-sky-300/75 via-sky-100/90 to-sky-100/80 border-sky-400/80';
-                    const lipClass =
-                      index === 0
-                        ? 'bg-orange-300/70'
-                        : index === 1
-                          ? 'bg-sky-300/70'
-                          : index === 2
-                            ? 'bg-sky-400/60'
-                            : index === 3
-                              ? 'bg-cyan-400/60'
-                              : 'bg-sky-500/50';
-                    return (
+                  return (
+                    <div key={level.step} className={`${index === 0 ? '' : '-mt-[1px]'} ${widthClass} mx-auto`}>
                       <div
-                        key={level.step}
-                        className={`${index === 0 ? '' : 'mt-[4px]'} ${widthClass} relative`}
+                        className="flex h-[44px] items-center justify-center border border-white/70 px-4 text-center shadow-[0_5px_14px_rgba(15,23,42,0.05)] md:h-[48px] lg:h-[50px]"
+                        style={{
+                          clipPath: 'polygon(8% 0%, 92% 0%, 100% 100%, 0% 100%)',
+                          background,
+                        }}
                       >
-                        <div
-                          className={`relative z-10 border px-6 ring-1 ring-white/70 shadow-sm drop-shadow-[0_8px_12px_rgba(15,23,42,0.10)] ${toneClass}`}
-                          style={{
-                            clipPath:
-                              index === 0
-                                ? 'polygon(13% 0%, 87% 0%, 100% 100%, 0% 100%)'
-                                : 'polygon(7% 0%, 93% 0%, 100% 100%, 0% 100%)',
-                            borderRadius: '0.95rem',
-                          }}
-                        >
-                          <div className="pointer-events-none absolute left-[8%] right-[8%] top-0 h-px bg-white/80" />
-                          <div className="flex h-[54px] min-h-[52px] items-center justify-center text-center">
-                            <span className="block">
-                              <span className="block text-sm font-extrabold text-slate-950">{level.title}</span>
-                              <span className={`block text-[11px] leading-tight text-slate-600 ${index === 0 ? 'hidden sm:block' : ''}`}>
-                                {level.helper}
-                              </span>
-                            </span>
-                          </div>
-                        </div>
-                        <div
-                          className={`pointer-events-none absolute inset-x-0 bottom-0 h-2.5 opacity-75 ${lipClass}`}
-                          style={{
-                            clipPath:
-                              index === 0
-                                ? 'polygon(13% 0%, 87% 0%, 100% 100%, 0% 100%)'
-                                : 'polygon(7% 0%, 93% 0%, 100% 100%, 0% 100%)',
-                            borderRadius: '0.95rem',
-                          }}
-                        />
+                        <span className="text-[14px] font-bold leading-tight md:text-[15px] lg:text-[16px]" style={{ color: textColor }}>
+                          {level.title}
+                        </span>
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  );
+                })}
               </div>
 
-              <div className="mt-4 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 shadow-sm">
-                <div className="flex flex-col items-start gap-2">
-                  <span className="w-fit rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold tracking-wide text-slate-700 sm:text-xs">
+              <div className="mt-5 rounded-[20px] border border-slate-200 bg-[#F8FAFC] px-4 py-4 md:px-5">
+                <div className="flex flex-col gap-3">
+                  <span className="w-fit rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
                     We keep parents updated
                   </span>
-                  <div className="flex w-full max-w-full flex-nowrap items-center justify-center gap-1.5 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-2">
+                  <div className="flex flex-nowrap items-center justify-center gap-1 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     <Link
                       to="/book-demo"
-                      className="shrink-0 rounded-full bg-[#0B1B3A] px-2.5 py-1.5 text-[11px] font-semibold leading-none text-white shadow-sm transition hover:bg-[#102A56] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:px-3 sm:text-xs"
+                      className="rounded-full bg-[#0B1B44] px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm md:px-3 md:text-[11px] whitespace-nowrap"
                     >
                       Assessment
                     </Link>
-                    <span className="flex shrink-0 items-center text-[11px] text-slate-400 sm:text-xs">→</span>
+                    <span className="text-[10px] text-slate-400 md:text-[11px]">→</span>
                     <a
                       href="#program"
-                      className="shrink-0 rounded-full bg-[#0B1B3A] px-2.5 py-1.5 text-[11px] font-semibold leading-none text-white shadow-sm transition hover:bg-[#102A56] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:px-3 sm:text-xs"
+                      className="rounded-full bg-[#0B1B44] px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm md:px-3 md:text-[11px] whitespace-nowrap"
                     >
                       Level plan
                     </a>
-                    <span className="flex shrink-0 items-center text-[11px] text-slate-400 sm:text-xs">→</span>
+                    <span className="text-[10px] text-slate-400 md:text-[11px]">→</span>
                     <Link
                       to="/free-letter-tracing-game-for-kids"
-                      className="shrink-0 rounded-full bg-[#0B1B3A] px-2.5 py-1.5 text-[11px] font-semibold leading-none text-white shadow-sm transition hover:bg-[#102A56] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:px-3 sm:text-xs"
+                      className="rounded-full bg-[#0B1B44] px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm md:px-3 md:text-[11px] whitespace-nowrap"
                     >
                       Practice
                     </Link>
-                    <span className="flex shrink-0 items-center text-[11px] text-slate-400 sm:text-xs">→</span>
+                    <span className="text-[10px] text-slate-400 md:text-[11px]">→</span>
                     <a
                       href="#overview"
-                      className="shrink-0 rounded-full bg-[#0B1B3A] px-2.5 py-1.5 text-[11px] font-semibold leading-none text-white shadow-sm transition hover:bg-[#102A56] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:px-3 sm:text-xs"
+                      className="rounded-full bg-[#0B1B44] px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm md:px-3 md:text-[11px] whitespace-nowrap"
                     >
                       Progress
                     </a>
