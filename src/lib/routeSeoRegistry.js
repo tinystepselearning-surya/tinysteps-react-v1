@@ -29,16 +29,16 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/grammar': {
-    title: 'Online Grammar Classes for Kids | Sentence Formation and Writing',
+    title: 'Grammar Classes for Kids in India | Tiny Steps Learning',
     description:
-      'Online grammar classes for kids focused on sentence formation, grammar accuracy, and writing clarity through live guided practice.',
+      'Book a free assessment for online grammar classes for kids. Tiny Steps helps children improve grammar, sentence formation, writing clarity, and confidence.',
     canonicalPath: '/grammar',
     ogType: 'website',
   },
   '/speaking': {
-    title: 'Public Speaking Classes for Kids Online | Tiny Steps Learning',
+    title: 'Public Speaking Classes for Kids in India | Tiny Steps Learning',
     description:
-      'Public speaking classes for kids online that build communication skills, clarity, and confidence speaking through structured live practice.',
+      'Book a free assessment for online public speaking classes for kids. Tiny Steps helps children build clear expression, structured answers, storytelling, and communication confidence.',
     canonicalPath: '/speaking',
     ogType: 'website',
   },
@@ -370,9 +370,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/reading-classes-for-kids': {
-    title: 'Online Reading Classes for Kids | Tiny Steps Learning',
+    title: 'Reading Classes for Kids in India | Tiny Steps Learning',
     description:
-      'Live online reading classes for kids who read slowly, guess words, avoid passages, or need stronger fluency, comprehension, and reading confidence.',
+      'Book a free assessment for online reading classes for kids. Tiny Steps helps children improve phonics, reading fluency, comprehension, and confidence.',
     canonicalPath: '/reading-classes-for-kids',
     ogType: 'website',
   },

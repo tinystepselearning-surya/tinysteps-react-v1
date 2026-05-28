@@ -127,7 +127,7 @@ const PHONICS_SEO_KEYWORDS = [
 
 const trustChips = ['Ages 3–12', 'Live 1:1 guidance', '35–40 minute sessions', 'Parent progress updates'];
 const pyramidLevels = [
-  { step: '5', title: 'Reading fluency', helper: 'Read with smoother confidence' },
+  { step: '5', title: 'Decodable reading fluency', helper: 'Read with smoother confidence' },
   { step: '4', title: 'Digraphs', helper: 'Add vowel teams and patterns' },
   { step: '3', title: 'CVC words', helper: 'Read short vowel words' },
   { step: '2', title: 'Blending', helper: 'Join sounds into words' },
