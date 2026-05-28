@@ -81,6 +81,7 @@ const NON_PLANNED_SESSION_STATUSES = new Set([
   'locked',
 ]);
 const SCHEDULE_SESSION_SOURCES = new Set(['enrollmentschedule', 'enrollmentschedulereplace']);
+const UPCOMING_SESSION_STATUSES = new Set(['scheduled', 'open', 'upcoming']);
 
 const normalizeEnrollmentStatus = (enrollment: any): string => {
   const raw = normalizeStatus(enrollment?.status);
@@ -92,6 +93,7 @@ const normalizeEnrollmentStatus = (enrollment: any): string => {
     return archivedLike ? 'archived' : 'active';
   }
   if (raw === 'pending_teacher') return 'trial';
+  // TODO: Confirm whether pending_payment enrollments should be included in projected revenue.
   if (raw === 'pending_payment' || raw === 'pending_lp' || raw === 'pending_lp_assignment') {
     return 'active';
   }
@@ -161,14 +163,18 @@ const MetricCard = ({
   label,
   value,
   sub,
+  valueClassName,
 }: {
   label: string;
   value: string | number;
   sub?: string;
+  valueClassName?: string;
 }) => (
   <Card className="p-4 shadow-sm">
     <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
-    <div className="mt-2 text-2xl font-semibold text-foreground">{value}</div>
+    <div className={`mt-2 text-xl font-semibold leading-tight text-foreground md:text-2xl ${valueClassName || ''}`}>
+      {value}
+    </div>
     {sub ? <div className="mt-1 text-xs text-muted-foreground">{sub}</div> : null}
   </Card>
 );
@@ -350,11 +356,12 @@ export default function AnalyticsDashboard(): JSX.Element {
 
   const expectedRevenue = revenueTotals.chargesTotal;
   const earnedRevenue = revenueTotals.appliedTotal;
-  const outstandingRevenue = revenueTotals.dueTotal;
+  const balanceDueRevenue = Math.max(0, expectedRevenue - earnedRevenue);
   const completedSessionsMonth = revenueTotals.sessionChargesCount;
 
   const plannedProjection = useMemo(() => {
     let plannedSessions = 0;
+    let remainingScheduledSessions = 0;
     let projectedRevenue = 0;
     let missingFeeSessions = 0;
     const enrollmentIds = new Set<string>();
@@ -387,6 +394,9 @@ export default function AnalyticsDashboard(): JSX.Element {
       if (!enrollment || !isEnrollmentProjectable(enrollment)) return;
 
       plannedSessions += 1;
+      if (UPCOMING_SESSION_STATUSES.has(normalizeStatus(session?.status))) {
+        remainingScheduledSessions += 1;
+      }
       enrollmentIds.add(enrollmentId);
 
       const course = courseById.get(String(session?.courseId || enrollment?.courseId || '').trim());
@@ -408,6 +418,7 @@ export default function AnalyticsDashboard(): JSX.Element {
 
     return {
       plannedSessions,
+      remainingScheduledSessions,
       scheduleDrivenEnrollments: enrollmentIds.size,
       projectedRevenue,
       avgProjectedRevenuePerSession: plannedSessions > 0 ? projectedRevenue / plannedSessions : 0,
@@ -601,28 +612,42 @@ export default function AnalyticsDashboard(): JSX.Element {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <MetricCard
-          label="Expected (month)"
+          label="Billed Revenue (Month)"
           value={formatMoney(expectedRevenue)}
-          sub="Current billed expectation (completed sessions)"
+          sub="Current billed charges for the selected month (non-void only)"
         />
-        <MetricCard label="Earned (month)" value={formatMoney(earnedRevenue)} />
-        <MetricCard label="Outstanding" value={formatMoney(outstandingRevenue)} />
+        <MetricCard
+          label="Collected Payments (Month)"
+          value={formatMoney(earnedRevenue)}
+          sub="Payments applied/recorded for the selected month"
+        />
+        <MetricCard
+          label="Balance Due"
+          value={formatMoney(balanceDueRevenue)}
+          sub="Billed revenue minus collected payments"
+        />
         <MetricCard label="Completed sessions (billed)" value={completedSessionsMonth} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <MetricCard
-          label="Planned sessions (month)"
+          label="Scheduled Sessions in Month"
           value={plannedProjection.plannedSessions}
-          sub={`${plannedProjection.scheduleDrivenEnrollments} active enrollments with planned sessions`}
+          sub="Completed + upcoming scheduled sessions for the selected month"
         />
         <MetricCard
-          label="Projected revenue (if all planned complete)"
+          label="Remaining Scheduled Sessions"
+          value={plannedProjection.remainingScheduledSessions}
+          sub="Upcoming sessions yet to be completed"
+        />
+        <MetricCard
+          label="Full-Month Scheduled Revenue"
           value={formatMoney(plannedProjection.projectedRevenue)}
+          valueClassName="whitespace-nowrap text-lg md:text-xl"
           sub={
             plannedProjection.missingFeeSessions > 0
-              ? `Avg/session ${formatMoney(plannedProjection.avgProjectedRevenuePerSession)} • ${plannedProjection.missingFeeSessions} sessions missing fee config`
-              : `Avg/session ${formatMoney(plannedProjection.avgProjectedRevenuePerSession)}`
+              ? `Revenue estimate from all scheduled sessions in the selected month. Avg/session ${formatMoney(plannedProjection.avgProjectedRevenuePerSession)} • ${plannedProjection.missingFeeSessions} sessions missing fee config`
+              : `Revenue estimate from all scheduled sessions in the selected month. Avg/session ${formatMoney(plannedProjection.avgProjectedRevenuePerSession)}`
           }
         />
         <MetricCard
@@ -645,9 +670,9 @@ export default function AnalyticsDashboard(): JSX.Element {
           sub={`${teacherEarningsSummary.totalDemoCount} demos completed/enrolled`}
         />
         <MetricCard 
-          label="Session earnings (month)" 
+          label="Session Net Revenue (Month)" 
           value={formatMoney(sessionNetEarningsMonth)}
-          sub={`${revenueTotals.sessionChargesCount} sessions billed • Gross ${formatMoney(revenueTotals.sessionChargesTotal)} - Teacher payout ${formatMoney(teacherEarningsSummary.totalSessionEarned)}`}
+          sub="Session charges minus teacher payout"
         />
         <MetricCard 
           label="Total teacher payout" 
