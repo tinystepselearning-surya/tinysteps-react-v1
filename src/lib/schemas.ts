@@ -443,6 +443,8 @@ export function createCourseSchema(params: {
   url: string;
   provider?: string;
   educationalLevel?: string;
+  teaches?: string[];
+  areaServed?: string | string[];
 }) {
   return {
     '@context': 'https://schema.org',
@@ -458,6 +460,12 @@ export function createCourseSchema(params: {
     },
     ...(params.educationalLevel && {
       educationalLevel: params.educationalLevel
+    }),
+    ...(params.teaches?.length && {
+      teaches: params.teaches
+    }),
+    ...(params.areaServed && {
+      areaServed: params.areaServed
     }),
     audience: {
       '@type': 'EducationalAudience',

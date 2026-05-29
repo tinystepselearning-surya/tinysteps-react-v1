@@ -5,34 +5,29 @@ import { createFAQPageSchema, PUBLIC_FACTS } from '../../lib/schemas';
 
 const faqItems = [
   {
-    question: 'What do online English classes for kids include?',
+    question: 'How do I know which English class my child needs first?',
     answer:
-      'Online English classes for kids may include phonics, reading, grammar, sentence formation, comprehension, and communication practice. At Tiny Steps, the exact path depends on the child’s current level and learning gap.',
+      'Start with an assessment-first check. Some children need phonics foundation, while others need reading fluency, grammar clarity, sentence formation, or communication confidence. The right first class depends on the child’s current gap, not age alone.',
   },
   {
-    question: 'How do I know which class my child needs first?',
+    question: 'Are online English classes useful for young children?',
     answer:
-      'The best way is to begin with an assessment. Some children need phonics before reading fluency, while others need grammar, sentence formation, or communication practice. Tiny Steps recommends the starting point after checking the child’s level.',
+      'Yes, when classes are age-appropriate and structured. Young children benefit from guided listening, phonics foundation, blending, simple reading, and early sentence responses with live teacher support.',
   },
   {
-    question: 'Are these classes useful if my child reads words but does not understand stories?',
+    question: 'Can these classes help if my child reads but does not understand?',
     answer:
-      'Yes. Reading words and understanding stories are different skills. A child may decode words but still need help with fluency, vocabulary, comprehension, and answering questions.',
+      'Yes. Word reading and story understanding are different skills. Children may need reading fluency, vocabulary, comprehension checks, and guided answer practice to improve understanding.',
   },
   {
-    question: 'Can online English classes help with grammar mistakes?',
+    question: 'Can grammar and sentence formation improve school answers?',
     answer:
-      'Yes. Grammar improves when children practise rules inside real sentences, short answers, reading tasks, and writing activities. Tiny Steps focuses on applying grammar, not only memorising rules.',
+      'Yes. When children apply grammar in sentence formation and answer writing, school responses become clearer, longer, and more accurate over time.',
   },
   {
-    question: 'My child gives only one-word answers. Can this help?',
+    question: 'How does Tiny Steps show progress to parents?',
     answer:
-      'Yes. Tiny Steps helps children expand short answers into complete sentences through prompts, guided practice, sentence frames, storytelling, and repeated speaking opportunities.',
-  },
-  {
-    question: 'What happens after the free assessment?',
-    answer:
-      'After the assessment, Tiny Steps suggests the right learning path for your child. Parents can then choose the suitable class plan and schedule.',
+      'Parents receive practical progress visibility: what the child practised, strengths, current gaps, and next-step guidance across phonics, reading fluency, grammar clarity, sentence formation, and communication confidence.',
   },
 ];
 
@@ -42,7 +37,7 @@ const pathwayCourses = [
     description: 'Letter sounds, blending, CVC words, digraphs, long vowels, and early reading confidence.',
     url: `${PUBLIC_FACTS.primaryWebsite}/phonics`,
     linkPath: '/phonics',
-    anchor: 'online phonics classes for kids in India',
+    anchor: 'online phonics classes for kids',
   },
   {
     name: 'Reading fluency',
@@ -59,11 +54,18 @@ const pathwayCourses = [
     anchor: 'grammar classes for kids',
   },
   {
-    name: 'Sentence formation and communication confidence',
-    description: 'Longer answers, structured thinking, clear expression, storytelling, and school communication practice.',
+    name: 'Sentence formation',
+    description: 'Longer answers, structured thinking, and clear expression in writing and speaking tasks.',
+    url: `${PUBLIC_FACTS.primaryWebsite}/grammar`,
+    linkPath: '/grammar',
+    anchor: 'grammar classes for kids',
+  },
+  {
+    name: 'Communication confidence and public speaking readiness',
+    description: 'School speaking practice, story sharing, organised thoughts, and confident public speaking responses.',
     url: `${PUBLIC_FACTS.primaryWebsite}/speaking`,
     linkPath: '/speaking',
-    anchor: 'communication and public speaking classes for kids',
+    anchor: 'public speaking and communication classes',
   },
 ];
 
@@ -110,6 +112,7 @@ export default function OnlineEnglishClassesForKidsIndiaPage() {
           '@type': 'Course',
           name: course.name,
           description: course.description,
+          areaServed: 'India',
           provider: {
             '@type': 'Organization',
             '@id': 'https://tinystepslearning.com/#organization',
@@ -126,15 +129,15 @@ export default function OnlineEnglishClassesForKidsIndiaPage() {
     };
 
     applySeo({
-      title: 'Online English Classes for Kids in India | Tiny Steps Learning',
+      title: 'Online English Classes for Kids in India | Tiny Steps',
       description:
-        'Book a free assessment for online English classes in India. Tiny Steps helps children build phonics, reading, grammar and communication with live guidance.',
+        'Live online English classes for kids in India. Build phonics, reading fluency, grammar, sentence formation and communication confidence. Book a free assessment.',
       canonicalPath,
       robots: 'index,follow',
       ogType: 'website',
       jsonLd: [breadcrumbSchema, pathwayItemListSchema, faqSchema],
     });
-  }, [canonicalPath, canonicalUrl, pathwayCourses]);
+  }, [canonicalPath, canonicalUrl]);
 
   return (
     <div className="bg-gradient-to-b from-[#FFF8EF] via-white to-[#EEF8FF] pb-16">
@@ -146,10 +149,10 @@ export default function OnlineEnglishClassesForKidsIndiaPage() {
                 </p>
                 <h1 className="mt-4 max-w-full text-[34px] font-bold leading-[1.05] tracking-[-0.035em] text-slate-900 sm:text-[38px] md:max-w-[680px] md:text-[46px] lg:text-[52px]">Online English Classes for Kids in India</h1>
                 <p className="mt-4 max-w-full text-base leading-7 text-slate-700 md:mt-5 md:max-w-[660px] md:text-lg md:leading-8">
-                  Help your child build stronger phonics, reading, grammar, sentence formation, and communication confidence through structured live online classes.
+                  Help your child build phonics, reading, grammar, sentence formation, and communication confidence through live online guidance.
                 </p>
                 <p className="mt-3 max-w-full text-base leading-7 text-slate-700 md:mt-4 md:max-w-[660px] md:text-lg md:leading-8">
-                  Tiny Steps begins with a free assessment, understands your child&apos;s current learning gap, and then recommends the right path instead of placing every child into the same programme.
+                  Tiny Steps uses an assessment-first learning path to identify your child&apos;s current gap and recommend the right level instead of placing every child into the same class. Ready to move forward? <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2 hover:text-sky-700">book a free assessment</Link>.
                 </p>
                 <div className="mt-7">
                   <Link
@@ -161,7 +164,7 @@ export default function OnlineEnglishClassesForKidsIndiaPage() {
                   <p className="mt-3 text-sm text-slate-600 md:text-[15px]">Takes 20-30 seconds • No commitment</p>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {['Free assessment', 'Personalised path', 'Parent progress visibility'].map((chip) => (
+                  {['Free assessment', 'Assessment-first path', 'Parent progress visibility'].map((chip) => (
                     <span key={chip} className="rounded-full border border-slate-200 bg-white/85 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm sm:text-sm sm:px-3.5">
                       {chip}
                     </span>
@@ -227,13 +230,9 @@ export default function OnlineEnglishClassesForKidsIndiaPage() {
             <p className="inline-flex rounded-full bg-[#FFF2C7] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7A4A10] md:text-[11px] md:tracking-[0.18em]">
               Parent clarity
             </p>
-            <h2 className="mb-3 mt-3 text-2xl font-bold leading-tight text-slate-900 md:text-[30px]">Quick Answer for Parents</h2>
-            <p className="max-w-[920px] text-base leading-7 text-slate-700 md:text-[17px]">Looking for online English classes for your child in India? Start by identifying the real gap first.</p>
-            <p className="mt-3 max-w-[920px] text-base leading-7 text-slate-700 md:text-[17px]">
-              Some children know letters but cannot blend words. Some can read words but struggle to understand stories. Others need help with grammar, sentence formation, or speaking in complete answers.
-            </p>
-            <p className="mt-3 max-w-[920px] text-base leading-7 text-slate-700 md:text-[17px]">
-              Tiny Steps begins with a free assessment and then recommends the right learning path across phonics, reading, grammar, sentence formation, and communication confidence.
+            <h2 className="mb-3 mt-3 text-2xl font-bold leading-tight text-slate-900 md:text-[30px]">Quick Answer: What do online English classes for kids include?</h2>
+            <p className="max-w-[920px] text-base leading-7 text-slate-700 md:text-[17px]">
+              Online English classes for kids should help children build phonics, reading fluency, grammar clarity, sentence formation, and communication confidence. Tiny Steps begins with a free assessment, identifies the child&apos;s current gap, and recommends the right learning path instead of placing every child into the same class. This keeps support personalized, level-based, and practical for parents.
             </p>
           </article>
         </div>
@@ -241,45 +240,68 @@ export default function OnlineEnglishClassesForKidsIndiaPage() {
 
       <section className="px-4 pb-8 pt-8 sm:px-5 md:pb-12 md:pt-12 lg:px-6 lg:pb-14 lg:pt-14">
         <div className="mx-auto max-w-6xl">
-          <h2 className="mb-6 text-2xl font-bold text-slate-900 sm:text-3xl">Which child is this programme right for?</h2>
+          <h2 className="mb-6 text-2xl font-bold text-slate-900 sm:text-3xl">Choose the right starting point</h2>
           <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {[
               {
-                pill: 'Reading start gap',
-                title: 'Child knows letters but cannot read words',
-                body: 'Best for children who recognise letters and sounds but still struggle to blend them into words like cat, pin, shop, or cake.',
+                pill: 'Phonics foundation',
+                problem: 'Child knows letters but cannot read words',
+                meaning: 'Letter recognition is present, but blending sounds into words is still unstable.',
+                path: 'Suggested Tiny Steps path: phonics foundation',
+                href: '/phonics',
+                anchor: 'online phonics classes for kids',
               },
               {
-                pill: 'Story understanding',
-                title: 'Child reads words but does not understand stories well',
-                body: 'Best for children who can read short words or sentences but need better reading fluency, comprehension, and confidence while reading aloud.',
+                pill: 'Reading fluency',
+                problem: 'Child reads slowly or guesses words',
+                meaning: 'Decoding may be inconsistent and fluency may need guided practice.',
+                path: 'Suggested Tiny Steps path: reading fluency',
+                href: '/reading-classes-for-kids',
+                anchor: 'reading classes for kids',
               },
               {
-                pill: 'Grammar support',
-                title: 'Child struggles with grammar and sentence formation',
-                body: 'Best for children who know some grammar rules but still make mistakes while writing sentences, answering questions, or speaking in class.',
+                pill: 'Comprehension and vocabulary',
+                problem: 'Child reads words but does not understand stories',
+                meaning: 'Word reading is present, but story understanding and vocabulary depth need support.',
+                path: 'Suggested Tiny Steps path: comprehension and vocabulary support',
+                href: '/reading-classes-for-kids',
+                anchor: 'reading classes for kids',
               },
               {
-                pill: 'Short answer support',
-                title: 'Child gives very short answers while speaking',
-                body: 'Best for children who answer in one or two words and need guided practice to speak in fuller, clearer sentences.',
+                pill: 'Grammar clarity',
+                problem: 'Child makes grammar mistakes',
+                meaning: 'Rules may be known, but application in answers and writing may be weak.',
+                path: 'Suggested Tiny Steps path: grammar clarity',
+                href: '/grammar',
+                anchor: 'grammar classes for kids',
               },
               {
-                pill: 'School confidence',
-                title: 'Child needs confidence for school communication',
-                body: 'Best for children who understand English but hesitate during reading aloud, oral answers, show-and-tell, presentations, or classroom discussions.',
+                pill: 'Sentence formation',
+                problem: 'Child writes or says very short answers',
+                meaning: 'Sentence building and structured responses may need direct practice.',
+                path: 'Suggested Tiny Steps path: sentence formation',
+                href: '/grammar',
+                anchor: 'grammar classes for kids',
+              },
+              {
+                pill: 'Communication confidence',
+                problem: 'Child hesitates while speaking',
+                meaning: 'The child may need safe guided speaking turns and clear expression routines.',
+                path: 'Suggested Tiny Steps path: communication confidence',
+                href: '/speaking',
+                anchor: 'public speaking and communication classes',
               },
             ].map((item) => (
               <article
-                key={item.title}
+                key={item.problem}
                 className={`rounded-2xl border p-5 shadow-[0_10px_28px_rgba(15,23,42,0.05)] transition hover:shadow-[0_16px_36px_rgba(15,23,42,0.08)] md:min-h-[190px] md:rounded-3xl md:p-6 ${
-                  item.pill === 'Reading start gap'
+                  item.pill === 'Phonics foundation'
                     ? 'bg-[#F3FAFF] border-[#D7ECFA]'
-                    : item.pill === 'Story understanding'
+                    : item.pill === 'Reading fluency'
                       ? 'bg-[#FFF8F0] border-[#F6D9B9]'
-                      : item.pill === 'Grammar support'
+                      : item.pill === 'Comprehension and vocabulary'
                         ? 'bg-[#F3FFF6] border-[#CFEFD7]'
-                        : item.pill === 'Short answer support'
+                        : item.pill === 'Grammar clarity'
                           ? 'bg-[#F7F5FF] border-[#E2DBFF]'
                           : 'bg-[#FFFBEA] border-[#F4E2A0]'
                 }`}
@@ -287,11 +309,28 @@ export default function OnlineEnglishClassesForKidsIndiaPage() {
                 <span className="mb-3 inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.10em] bg-white/70 border border-white/70 text-slate-700 md:mb-4 md:text-[11px] md:tracking-[0.12em]">
                   {item.pill}
                 </span>
-                <h3 className="text-lg md:text-xl font-bold leading-snug text-slate-950">{item.title}</h3>
-                <p className="mt-2.5 text-[15px] text-slate-700 leading-6 md:mt-3 md:text-base">{item.body}</p>
+                <h3 className="text-lg md:text-xl font-bold leading-snug text-slate-950">{item.problem}</h3>
+                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">What it may mean</p>
+                <p className="mt-1 text-[15px] text-slate-700 leading-6 md:text-base">{item.meaning}</p>
+                <p className="mt-3 text-sm font-semibold text-slate-900">{item.path}</p>
+                <Link to={item.href} className="mt-2 inline-block text-sm font-semibold text-slate-900 underline underline-offset-2">
+                  {item.anchor}
+                </Link>
               </article>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="px-4 pb-8 sm:px-5 md:pb-12 lg:px-6">
+        <div className="mx-auto max-w-6xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:rounded-3xl md:p-7">
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Online English classes for kids across India</h2>
+          <p className="mt-3 text-base leading-7 text-slate-700">
+            Tiny Steps supports children across India through live online classes. Parents from Hyderabad, Bangalore, Chennai, Mumbai, Delhi, Pune, Kolkata, and other locations can <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2">book a free assessment</Link> and receive a level-based English learning path.
+          </p>
+          <p className="mt-3 text-sm leading-6 text-slate-700">
+            If your child needs a stronger reading start, compare our <Link to="/best-online-phonics-classes-india" className="font-semibold text-slate-900 underline underline-offset-2">best online phonics classes in India</Link> guide before choosing the pathway.
+          </p>
         </div>
       </section>
 
@@ -322,6 +361,44 @@ export default function OnlineEnglishClassesForKidsIndiaPage() {
                 <Link to={course.linkPath} className="mt-4 inline-block text-sm font-semibold text-slate-900 underline underline-offset-2">
                   {course.anchor}
                 </Link>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
+        <div className="mx-auto max-w-6xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:rounded-[30px] md:p-8">
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Why parents choose Tiny Steps</h2>
+          <p className="mt-3 text-slate-700">
+            Tiny Steps is designed as a single decision page that guides parents to the right starting point across <Link to="/phonics" className="font-semibold text-slate-900 underline underline-offset-2">online phonics classes for kids</Link>, <Link to="/reading-classes-for-kids" className="font-semibold text-slate-900 underline underline-offset-2">reading classes for kids</Link>, <Link to="/grammar" className="font-semibold text-slate-900 underline underline-offset-2">grammar and sentence formation support</Link>, and <Link to="/speaking" className="font-semibold text-slate-900 underline underline-offset-2">public speaking and communication classes</Link>.
+          </p>
+          <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              'Assessment-first placement',
+              'Live teacher correction',
+              'Structured learning path',
+              '1:1 attention',
+              'Parent progress visibility',
+              'Age-wise learning outcomes',
+              'Phonics + reading + grammar + communication under one path',
+            ].map((item) => (
+              <li key={item} className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm font-medium text-slate-800">
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section className="bg-[#fffaf3] px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
+        <div className="mx-auto max-w-6xl rounded-2xl border border-[#F1D8A8] bg-white/95 p-5 shadow-sm md:rounded-3xl md:p-7">
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Parent questions in simple terms</h2>
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            {faqItems.map((item) => (
+              <article key={item.question} className="rounded-2xl border border-slate-200 bg-white p-5">
+                <h3 className="text-base font-semibold text-slate-900">{item.question}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-700">{item.answer}</p>
               </article>
             ))}
           </div>
@@ -368,7 +445,7 @@ export default function OnlineEnglishClassesForKidsIndiaPage() {
             </table>
           </div>
           <p className="mt-4 max-w-[900px] text-slate-700">
-            The best online English class is not just the one with more activities. It should help parents understand what the child needs next, give the child enough guided practice, and show visible progress over time.
+            The best online English class is not just the one with more activities. It should help parents understand what the child needs next, give the child enough guided practice, and show visible progress over time. Check <Link to="/pricing" className="font-semibold text-slate-900 underline underline-offset-2">class pricing</Link> and <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2">book a free assessment</Link> when you are ready.
           </p>
         </div>
       </section>
@@ -380,10 +457,7 @@ export default function OnlineEnglishClassesForKidsIndiaPage() {
             <article className="flex h-full flex-col rounded-2xl border border-amber-100 bg-gradient-to-br from-white to-amber-50/70 p-5 shadow-sm md:rounded-3xl md:p-6">
               <span className="inline-flex w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-800">Ages 4-6</span>
               <p className="mt-3 text-sm text-slate-700">
-                Children in this age group usually need a strong foundation in letter sounds, phonics, blending, early reading, listening, and simple sentence responses.
-              </p>
-              <p className="mt-2 text-sm text-slate-700">
-                Tiny Steps helps young learners build comfort with sounds, words, short reading tasks, and guided speaking in a playful but structured way.
+                Phonics foundation, listening, letter sounds, blending, simple words, and early sentence responses.
               </p>
               <Link to="/phonics" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">
                 Explore phonics foundation
@@ -392,10 +466,7 @@ export default function OnlineEnglishClassesForKidsIndiaPage() {
             <article className="flex h-full flex-col rounded-2xl border border-sky-100 bg-gradient-to-br from-white to-sky-50/70 p-5 shadow-sm md:rounded-3xl md:p-6">
               <span className="inline-flex w-fit rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-sky-800">Ages 7-10</span>
               <p className="mt-3 text-sm text-slate-700">
-                Children in this age group often need support with reading fluency, grammar usage, sentence formation, comprehension, and clearer answers in school.
-              </p>
-              <p className="mt-2 text-sm text-slate-700">
-                Tiny Steps helps them move from short responses to better sentences, stronger reading understanding, and more confident communication.
+                Reading fluency, comprehension, grammar clarity, sentence formation, and clearer school answers.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <Link to="/reading-classes-for-kids" className="text-sm font-semibold underline underline-offset-2">
@@ -409,10 +480,7 @@ export default function OnlineEnglishClassesForKidsIndiaPage() {
             <article className="flex h-full flex-col rounded-2xl border border-indigo-100 bg-gradient-to-br from-white to-indigo-50/70 p-5 shadow-sm md:rounded-3xl md:p-6">
               <span className="inline-flex w-fit rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-800">Ages 11-12</span>
               <p className="mt-3 text-sm text-slate-700">
-                Children in this age group need stronger comprehension, paragraph-quality answers, grammar accuracy, organised thinking, and confidence while explaining ideas.
-              </p>
-              <p className="mt-2 text-sm text-slate-700">
-                Tiny Steps helps older children speak and write with more structure, clarity, and confidence for school tasks, discussions, and presentations.
+                Paragraph-level answers, grammar accuracy, organized thinking, public speaking confidence, and clear expression.
               </p>
               <Link to="/book-demo" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">
                 Book a free assessment
@@ -523,7 +591,7 @@ export default function OnlineEnglishClassesForKidsIndiaPage() {
             </Link>
           </div>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-200">
-            <Link to="/pricing" className="font-semibold underline underline-offset-2 hover:text-white">pricing for online English classes</Link>
+            <Link to="/pricing" className="font-semibold underline underline-offset-2 hover:text-white">class pricing</Link>
             <span className="hidden sm:inline text-slate-400">•</span>
             <Link to="/class-samples" className="font-semibold underline underline-offset-2 hover:text-white">real class samples for parents</Link>
             <span className="hidden sm:inline text-slate-400">•</span>

@@ -6,34 +6,29 @@ import { createFAQPageSchema, PUBLIC_FACTS } from '../../lib/schemas';
 
 const faqItems = [
   {
-    question: 'What do reading classes for kids include?',
+    question: 'How do I know if my child needs reading support?',
     answer:
-      'Reading classes for kids may include phonics support, word reading, sentence reading, reading fluency, comprehension practice, and reading confidence building.',
+      'Common signs include slow word-by-word reading, guessing words, weak story understanding, avoiding reading aloud, or struggling with school reading tasks. A reading assessment helps identify the exact gap.',
   },
   {
-    question: 'How do I know if my child needs phonics or reading fluency support?',
+    question: 'What is the difference between phonics and reading fluency?',
     answer:
-      'A free assessment helps identify whether the child is stuck at phonics and blending, or needs fluency, comprehension, and reading confidence support.',
+      'Phonics helps children decode words by connecting letters and sounds. Reading fluency is the ability to read words and sentences smoothly, accurately, and with better pace and expression.',
   },
   {
-    question: 'My child reads words but does not understand stories. Can this help?',
+    question: 'Why can my child read words but not understand stories?',
     answer:
-      'Yes. Children may decode words but still need guided support with comprehension, vocabulary, sequencing, and answering story questions.',
+      'Word reading and story comprehension are different skills. A child may decode text but still need support with vocabulary, meaning, sequencing, and explaining what they read.',
   },
   {
     question: 'Can reading classes improve reading aloud confidence?',
     answer:
-      'Yes. Structured reading-aloud practice helps children reduce hesitation, improve expression, and respond with more confidence in school.',
+      'Yes. With live guidance and repeated reading-aloud practice, children reduce hesitation, improve expression, and build better confidence while reading in school and at home.',
   },
   {
-    question: 'Are online reading classes useful for young children?',
+    question: 'How does Tiny Steps show reading progress to parents?',
     answer:
-      'Yes. With level-based guidance, young children can build early reading habits through phonics, word reading, short sentences, and story practice.',
-  },
-  {
-    question: 'What happens after the free assessment?',
-    answer:
-      'After the assessment, Tiny Steps shares the child’s reading gap, recommends the right reading path, and explains next steps to parents.',
+      'Parents get clear progress visibility: what was practised, strengths, current gaps, and next steps across phonics, reading fluency, comprehension, vocabulary, and reading aloud confidence.',
   },
 ];
 
@@ -42,34 +37,49 @@ const readingPathwayCards = [
     name: 'Phonics foundation',
     description: 'Letter sounds, blending, and decoding basics for stronger reading readiness.',
     href: '/phonics',
-    anchor: 'online phonics classes for kids in India',
+    anchor: 'online phonics classes for kids',
     url: `${PUBLIC_FACTS.primaryWebsite}/phonics`,
   },
   {
-    name: 'Word and sentence reading',
-    description: 'Move from isolated words to smoother sentence reading with confidence.',
+    name: 'Word reading',
+    description: 'Build accurate decoding and smoother word reading habits.',
     href: '/reading-classes-for-kids',
     anchor: 'reading classes for kids',
     url: `${PUBLIC_FACTS.primaryWebsite}/reading-classes-for-kids`,
   },
   {
-    name: 'Grammar and sentence clarity',
-    description: 'Support reading understanding through stronger sentence structure and grammar awareness.',
-    href: '/grammar',
-    anchor: 'grammar classes for kids',
-    url: `${PUBLIC_FACTS.primaryWebsite}/grammar`,
+    name: 'Sentence reading',
+    description: 'Move from words to clear, connected sentence reading.',
+    href: '/reading-classes-for-kids',
+    anchor: 'reading classes for kids',
+    url: `${PUBLIC_FACTS.primaryWebsite}/reading-classes-for-kids`,
   },
   {
-    name: 'Reading confidence and expression',
-    description: 'Build confident reading aloud, expression, and communication clarity.',
+    name: 'Reading fluency',
+    description: 'Improve pace, accuracy, and smoother reading flow.',
+    href: '/reading-classes-for-kids',
+    anchor: 'reading classes for kids',
+    url: `${PUBLIC_FACTS.primaryWebsite}/reading-classes-for-kids`,
+  },
+  {
+    name: 'Story comprehension',
+    description: 'Strengthen story understanding, vocabulary, and answer-building.',
+    href: '/reading-classes-for-kids',
+    anchor: 'reading classes for kids',
+    url: `${PUBLIC_FACTS.primaryWebsite}/reading-classes-for-kids`,
+  },
+  {
+    name: 'Reading aloud confidence',
+    description: 'Build expressive reading and confident communication while reading aloud.',
     href: '/speaking',
-    anchor: 'communication and public speaking classes for kids',
+    anchor: 'public speaking and communication classes',
     url: `${PUBLIC_FACTS.primaryWebsite}/speaking`,
   },
 ];
 
 const readingPyramidLevels = [
-  'Confident story understanding',
+  'Reading aloud confidence',
+  'Story comprehension',
   'Reading fluency',
   'Sentence reading',
   'Word reading',
@@ -102,6 +112,12 @@ export default function ReadingClassesForKidsPage() {
         '@type': 'ListItem',
         position: index + 1,
         url: card.url,
+        item: {
+          '@type': 'Course',
+          name: card.name,
+          description: card.description,
+          areaServed: 'India',
+        },
       })),
     };
 
@@ -111,9 +127,9 @@ export default function ReadingClassesForKidsPage() {
     };
 
     applySeo({
-      title: 'Reading Classes for Kids in India | Tiny Steps Learning',
+      title: 'Reading Classes for Kids in India | Tiny Steps',
       description:
-        'Book a free assessment for online reading classes for kids. Tiny Steps helps children improve phonics, reading fluency, comprehension, and confidence.',
+        'Live online reading classes for kids in India. Build word reading, reading fluency, story comprehension, vocabulary and reading aloud confidence. Book a free assessment.',
       canonicalPath,
       robots: 'index,follow',
       ogType: 'website',
@@ -148,10 +164,10 @@ export default function ReadingClassesForKidsPage() {
                 Reading Classes for Kids in India
               </h1>
               <p className="mt-4 max-w-full text-base leading-7 text-slate-700 md:mt-5 md:max-w-[660px] md:text-lg md:leading-8">
-                Help your child move from word reading to fluent reading, story understanding, comprehension, and confident reading aloud through structured live online reading classes.
+                Help your child build reading fluency, story comprehension, and reading aloud confidence through structured live online reading classes for kids in India.
               </p>
               <p className="mt-3 max-w-full text-base leading-7 text-slate-700 md:mt-4 md:max-w-[660px] md:text-lg md:leading-8">
-                Tiny Steps begins with a free assessment to understand whether your child needs phonics support, reading fluency practice, comprehension help, or confidence while reading aloud.
+                Tiny Steps follows an assessment-first reading path to understand whether your child needs phonics support, fluency practice, comprehension help, or reading-aloud confidence building. Ready to move forward? <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2 hover:text-sky-700">book a free assessment</Link>.
               </p>
 
               <div className="mt-7">
@@ -237,15 +253,9 @@ export default function ReadingClassesForKidsPage() {
             <p className="inline-flex rounded-full bg-[#FFF2C7] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7A4A10] md:text-[11px] md:tracking-[0.18em]">
               Parent clarity
             </p>
-            <h2 className="mb-3 mt-3 text-2xl font-bold leading-tight text-slate-900 md:text-[30px]">Quick Answer for Parents</h2>
+            <h2 className="mb-3 mt-3 text-2xl font-bold leading-tight text-slate-900 md:text-[30px]">Quick Answer: What do reading classes for kids include?</h2>
             <p className="max-w-[920px] text-base leading-7 text-slate-700 md:text-[17px]">
-              Looking for reading classes for your child? Start by checking what is blocking reading progress.
-            </p>
-            <p className="mt-3 max-w-[920px] text-base leading-7 text-slate-700 md:text-[17px]">
-              Some children can identify letters but cannot blend words. Some can read words but pause too much. Some read sentences but do not understand the story. Others can read silently but hesitate when asked to read aloud.
-            </p>
-            <p className="mt-3 max-w-[920px] text-base leading-7 text-slate-700 md:text-[17px]">
-              Tiny Steps begins with a free assessment and then recommends the right reading path across phonics foundation, word reading, sentence reading, fluency, comprehension, and reading confidence.
+              Reading classes for kids should help children move from word reading to sentence reading, reading fluency, story understanding, vocabulary, comprehension, and reading aloud confidence. Tiny Steps begins with a free assessment to identify whether the child needs phonics support, fluency practice, comprehension help, or confidence while reading aloud.
             </p>
           </article>
         </div>
@@ -253,45 +263,68 @@ export default function ReadingClassesForKidsPage() {
 
       <section className="px-4 pb-8 pt-8 sm:px-5 md:pb-12 md:pt-12 lg:px-6 lg:pb-14 lg:pt-14">
         <div className="mx-auto max-w-6xl">
-          <h2 className="mb-6 text-2xl font-bold text-slate-900 sm:text-3xl">Which child needs reading support?</h2>
+          <h2 className="mb-6 text-2xl font-bold text-slate-900 sm:text-3xl">Find your child&apos;s reading gap</h2>
           <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {[
               {
-                pill: 'Letter-to-word gap',
-                title: 'Child knows letters but cannot read words',
-                body: 'Best for children who recognise letters and sounds but struggle to blend sounds into words.',
+                pill: 'Phonics and blending support',
+                problem: 'Child knows letters but cannot read words',
+                meaning: 'Letter recognition may be present, but blending and decoding are not stable yet.',
+                support: 'Suggested Tiny Steps support: phonics and blending foundation',
+                href: '/phonics',
+                anchor: 'online phonics classes for kids',
               },
               {
-                pill: 'Slow reading',
-                title: 'Child reads word by word very slowly',
-                body: 'Best for children who can read some words but need smoother reading fluency and more confidence.',
+                pill: 'Reading fluency practice',
+                problem: 'Child reads word by word very slowly',
+                meaning: 'Reading pace and smooth sentence flow may need repeated guided practice.',
+                support: 'Suggested Tiny Steps support: reading fluency practice',
+                href: '/reading-classes-for-kids',
+                anchor: 'reading classes for kids',
               },
               {
-                pill: 'Story understanding',
-                title: 'Child reads but does not understand stories',
-                body: 'Best for children who decode words but need help with meaning, vocabulary, sequencing, and answering questions.',
+                pill: 'Decoding and accuracy support',
+                problem: 'Child guesses words while reading',
+                meaning: 'The child may be predicting words instead of decoding sound by sound.',
+                support: 'Suggested Tiny Steps support: decoding and reading accuracy',
+                href: '/phonics',
+                anchor: 'online phonics classes for kids',
               },
               {
-                pill: 'Reading aloud hesitation',
-                title: 'Child avoids reading aloud',
-                body: 'Best for children who feel shy, pause often, or lack confidence while reading in front of others.',
+                pill: 'Comprehension and vocabulary support',
+                problem: 'Child reads words but does not understand stories',
+                meaning: 'Word reading may be present, but story meaning and vocabulary depth need support.',
+                support: 'Suggested Tiny Steps support: comprehension and vocabulary',
+                href: '/reading-classes-for-kids',
+                anchor: 'reading classes for kids',
               },
               {
-                pill: 'School reading confidence',
-                title: 'Child needs better reading for school',
-                body: 'Best for children who need stronger reading stamina, comprehension, and clear oral reading for classroom tasks.',
+                pill: 'Reading aloud confidence and expression',
+                problem: 'Child avoids reading aloud',
+                meaning: 'Hesitation and low expression can affect oral responses in school settings.',
+                support: 'Suggested Tiny Steps support: reading aloud confidence and expression',
+                href: '/speaking',
+                anchor: 'public speaking and communication classes',
+              },
+              {
+                pill: 'Fluency + comprehension + answer building',
+                problem: 'Child struggles with school reading tasks',
+                meaning: 'The child may need integrated fluency, story understanding, and response-building support.',
+                support: 'Suggested Tiny Steps support: school-reading confidence pathway',
+                href: '/online-english-classes-for-kids-india',
+                anchor: 'online English classes for kids in India',
               },
             ].map((item) => (
               <article
-                key={item.title}
+                key={item.problem}
                 className={`rounded-2xl border p-5 shadow-[0_10px_28px_rgba(15,23,42,0.05)] transition hover:shadow-[0_16px_36px_rgba(15,23,42,0.08)] md:min-h-[190px] md:rounded-3xl md:p-6 ${
-                  item.pill === 'Letter-to-word gap'
+                  item.pill === 'Phonics and blending support'
                     ? 'bg-[#F3FAFF] border-[#D7ECFA]'
-                    : item.pill === 'Slow reading'
+                    : item.pill === 'Reading fluency practice'
                       ? 'bg-[#FFF8F0] border-[#F6D9B9]'
-                      : item.pill === 'Story understanding'
+                      : item.pill === 'Decoding and accuracy support'
                         ? 'bg-[#F3FFF6] border-[#CFEFD7]'
-                        : item.pill === 'Reading aloud hesitation'
+                        : item.pill === 'Comprehension and vocabulary support'
                           ? 'bg-[#F7F5FF] border-[#E2DBFF]'
                           : 'bg-[#FFFBEA] border-[#F4E2A0]'
                 }`}
@@ -299,11 +332,28 @@ export default function ReadingClassesForKidsPage() {
                 <span className="mb-3 inline-flex rounded-full border border-white/70 bg-white/70 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.10em] text-slate-700 md:mb-4 md:text-[11px] md:tracking-[0.12em]">
                   {item.pill}
                 </span>
-                <h3 className="text-lg font-bold leading-snug text-slate-950 md:text-xl">{item.title}</h3>
-                <p className="mt-2.5 text-[15px] leading-6 text-slate-700 md:mt-3 md:text-base">{item.body}</p>
+                <h3 className="text-lg font-bold leading-snug text-slate-950 md:text-xl">{item.problem}</h3>
+                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">What it may mean</p>
+                <p className="mt-1 text-[15px] leading-6 text-slate-700 md:text-base">{item.meaning}</p>
+                <p className="mt-3 text-sm font-semibold text-slate-900">{item.support}</p>
+                <Link to={item.href} className="mt-2 inline-block text-sm font-semibold text-slate-900 underline underline-offset-2">
+                  {item.anchor}
+                </Link>
               </article>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="px-4 pb-8 sm:px-5 md:pb-12 lg:px-6">
+        <div className="mx-auto max-w-6xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:rounded-3xl md:p-7">
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Online reading classes for kids across India</h2>
+          <p className="mt-3 text-base leading-7 text-slate-700">
+            Tiny Steps supports children across India through live online reading classes. Parents from Hyderabad, Bangalore, Chennai, Mumbai, Delhi, Pune, Kolkata, and other locations can <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2">book a free assessment</Link> and receive a level-based reading path.
+          </p>
+          <p className="mt-3 text-sm leading-6 text-slate-700">
+            If your child needs decoding support first, compare our <Link to="/best-online-phonics-classes-india" className="font-semibold text-slate-900 underline underline-offset-2">best online phonics classes in India</Link> guide.
+          </p>
         </div>
       </section>
 
@@ -312,7 +362,7 @@ export default function ReadingClassesForKidsPage() {
           <h2 className="mb-4 text-2xl font-bold text-slate-900 sm:text-3xl">Tiny Steps reading pathway</h2>
 
           <div className="flex flex-wrap gap-2">
-            {['1 Phonics', '2 Words', '3 Sentences', '4 Fluency', '5 Comprehension', '6 Confidence'].map((step) => (
+            {['1 Phonics foundation', '2 Word reading', '3 Sentence reading', '4 Reading fluency', '5 Story comprehension', '6 Reading aloud confidence'].map((step) => (
               <span key={step} className="rounded-full border border-sky-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800">
                 {step}
               </span>
@@ -320,7 +370,7 @@ export default function ReadingClassesForKidsPage() {
           </div>
 
           <p className="mt-4 text-sm leading-6 text-slate-700 md:text-base md:leading-7">
-            Phonics foundation -&gt; Word reading -&gt; Sentence reading -&gt; Reading fluency -&gt; Story comprehension -&gt; Confident reading aloud
+            Phonics foundation -&gt; Word reading -&gt; Sentence reading -&gt; Reading fluency -&gt; Story comprehension -&gt; Reading aloud confidence
           </p>
           <p className="mt-3 text-slate-700">
             Children do not all struggle at the same reading stage. A young child may need phonics and blending support, while an older child may need fluency, comprehension, vocabulary, or reading-aloud confidence.
@@ -337,6 +387,48 @@ export default function ReadingClassesForKidsPage() {
                 <Link to={card.href} className="mt-4 inline-block text-sm font-semibold text-slate-900 underline underline-offset-2">
                   {card.anchor}
                 </Link>
+              </article>
+            ))}
+          </div>
+          <p className="mt-4 text-sm leading-6 text-slate-700">
+            For connected language development, combine reading support with <Link to="/grammar" className="font-semibold text-slate-900 underline underline-offset-2">grammar and sentence formation support</Link>.
+          </p>
+        </div>
+      </section>
+
+      <section className="px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
+        <div className="mx-auto max-w-6xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:rounded-[30px] md:p-8">
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Why parents choose Tiny Steps reading support</h2>
+          <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              'Assessment-first reading placement',
+              'Live teacher correction',
+              'Phonics + fluency + comprehension path',
+              '1:1 attention',
+              'Reading aloud practice',
+              'Parent progress visibility',
+              'School-reading confidence',
+              'Practice support through free games',
+            ].map((item) => (
+              <li key={item} className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm font-medium text-slate-800">
+                {item}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-4 text-sm leading-6 text-slate-700">
+            Reinforce class learning at home with <Link to="/free-games" className="font-semibold text-slate-900 underline underline-offset-2">free learning games</Link>, review <Link to="/pricing" className="font-semibold text-slate-900 underline underline-offset-2">class pricing</Link>, and <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2">book a free assessment</Link> when ready.
+          </p>
+        </div>
+      </section>
+
+      <section className="bg-[#fffaf3] px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
+        <div className="mx-auto max-w-6xl rounded-2xl border border-[#F1D8A8] bg-white/95 p-5 shadow-sm md:rounded-3xl md:p-7">
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Reading questions parents ask</h2>
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            {faqItems.map((item) => (
+              <article key={item.question} className="rounded-2xl border border-slate-200 bg-white p-5">
+                <h3 className="text-base font-semibold text-slate-900">{item.question}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-700">{item.answer}</p>
               </article>
             ))}
           </div>
@@ -397,7 +489,7 @@ export default function ReadingClassesForKidsPage() {
             <article className="flex h-full flex-col rounded-2xl border border-amber-100 bg-gradient-to-br from-white to-amber-50/70 p-5 shadow-sm md:rounded-3xl md:p-6">
               <span className="inline-flex w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-800">Ages 4-6</span>
               <p className="mt-3 text-sm text-slate-700">
-                Children usually need letter sounds, blending, CVC words, short vowel reading, and early confidence with simple words and sentences.
+                Letter sounds, blending, simple words, short sentences, and early reading confidence.
               </p>
               <Link to="/phonics" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">
                 Explore phonics foundation
@@ -407,7 +499,7 @@ export default function ReadingClassesForKidsPage() {
             <article className="flex h-full flex-col rounded-2xl border border-sky-100 bg-gradient-to-br from-white to-sky-50/70 p-5 shadow-sm md:rounded-3xl md:p-6">
               <span className="inline-flex w-fit rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-sky-800">Ages 7-10</span>
               <p className="mt-3 text-sm text-slate-700">
-                Children often need smoother word reading, sentence reading, reading fluency, story comprehension, vocabulary, and confidence while reading aloud.
+                Word reading, sentence reading, reading fluency, vocabulary, story comprehension, and reading aloud confidence.
               </p>
               <Link to="/reading-classes-for-kids" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">
                 Build reading fluency
@@ -417,7 +509,7 @@ export default function ReadingClassesForKidsPage() {
             <article className="flex h-full flex-col rounded-2xl border border-indigo-100 bg-gradient-to-br from-white to-indigo-50/70 p-5 shadow-sm md:rounded-3xl md:p-6">
               <span className="inline-flex w-fit rounded-full bg-indigo-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-800">Ages 11-12</span>
               <p className="mt-3 text-sm text-slate-700">
-                Children need stronger comprehension, expression, paragraph-level reading, vocabulary, inference, and confidence while explaining what they read.
+                Paragraph reading, inference, vocabulary, expressive reading, explanation of what they read, and school comprehension confidence.
               </p>
               <Link to="/book-demo" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">
                 Book a free assessment
@@ -529,11 +621,11 @@ export default function ReadingClassesForKidsPage() {
             </Link>
           </div>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-200">
-            <Link to="/phonics" className="font-semibold underline underline-offset-2 hover:text-white">phonics classes for kids</Link>
+            <Link to="/phonics" className="font-semibold underline underline-offset-2 hover:text-white">online phonics classes for kids</Link>
             <span className="hidden sm:inline text-slate-400">•</span>
-            <Link to="/grammar" className="font-semibold underline underline-offset-2 hover:text-white">grammar classes for kids</Link>
+            <Link to="/grammar" className="font-semibold underline underline-offset-2 hover:text-white">grammar and sentence formation support</Link>
             <span className="hidden sm:inline text-slate-400">•</span>
-            <Link to="/pricing" className="font-semibold underline underline-offset-2 hover:text-white">pricing for reading classes</Link>
+            <Link to="/pricing" className="font-semibold underline underline-offset-2 hover:text-white">class pricing</Link>
           </div>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-300">
             <Link to="/online-english-classes-for-kids-india" className="underline underline-offset-2 hover:text-white">online English classes for kids in India</Link>

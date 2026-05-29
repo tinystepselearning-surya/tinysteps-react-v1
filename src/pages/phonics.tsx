@@ -69,9 +69,9 @@ const faqItems = [
       'Yes. Online phonics classes are useful when they teach sound-letter links, blending, decoding, and reading practice in a clear sequence with live correction.',
   },
   {
-    question: 'What age is best to start phonics classes?',
+    question: 'At what age should a child start phonics?',
     answer:
-      'Many children start around ages 3 to 5 with playful sound work and listening practice. Older children also benefit when blending, reading fluency, or spelling patterns need support.',
+      'Many children start around ages 3 to 5 with playful sound work. Older children also benefit when blending, reading fluency, or spelling patterns are weak. The right start depends on current reading readiness, not only age.',
   },
   {
     question: 'How do I know if my child needs phonics support?',
@@ -79,14 +79,14 @@ const faqItems = [
       'Signs include knowing letters but not reading words, guessing while reading, struggling to blend sounds, reading very slowly, or frequent spelling confusion.',
   },
   {
-    question: 'What is the difference between phonics classes and reading practice?',
+    question: 'How are phonics classes different from reading practice?',
     answer:
       'Phonics classes build decoding skills by teaching sound patterns and blending routines. Reading practice builds fluency and understanding after decoding begins to stabilize.',
   },
   {
-    question: 'How long does it take for a child to start blending words?',
+    question: 'How long does it take to see progress in blending?',
     answer:
-      'With consistent guided practice, many children begin blending first words within 4–6 lessons. Progress depends on starting level, class consistency, and home reinforcement.',
+      'Many children show early blending progress in about 4–6 guided lessons. Timelines vary by starting level, attendance consistency, and home reinforcement. Progress is usually step-by-step rather than instant.',
   },
   {
     question: 'Do phonics classes help with spelling?',
@@ -122,10 +122,12 @@ const PHONICS_SEO_KEYWORDS = [
   'phonics classes in India',
   'phonics classes for kids',
   'reading classes for kids',
+  'live 1:1 online phonics classes',
+  'free phonics assessment',
   'SATPIN phonics',
 ];
 
-const trustChips = ['Ages 3–12', 'Live 1:1 guidance', '35–40 minute sessions', 'Parent progress updates'];
+const trustChips = ['Ages 3–12', 'Live 1:1 online classes', 'Free phonics assessment', 'Parent progress updates'];
 const pyramidLevels = [
   { step: '5', title: 'Decodable reading fluency', helper: 'Read with smoother confidence' },
   { step: '4', title: 'Digraphs', helper: 'Add vowel teams and patterns' },
@@ -135,44 +137,61 @@ const pyramidLevels = [
 ];
 const differentiators = [
   {
-    title: 'Live correction, not passive videos',
-    detail: 'Children get immediate guidance and feedback from a trained mentor during each session.',
+    title: 'Assessment-first placement',
+    detail: 'Each child starts with a free phonics assessment before we recommend a level and learning path.',
+  },
+  {
+    title: 'Live teacher correction',
+    detail: 'Teachers correct blending, decoding, and pronunciation in real time during every class.',
   },
   {
     title: 'Structured synthetic phonics path',
     detail: 'Learning follows a clear progression from sound-letter links to blending, decoding, and reading.',
   },
   {
-    title: 'Parent-visible progress after key milestones',
+    title: 'Parent progress updates',
     detail: 'Families receive practical updates on mastered skills and the next focus area.',
+  },
+  {
+    title: '1:1 attention in every session',
+    detail: 'The lesson pace adjusts to the child so weak spots can be addressed early and clearly.',
+  },
+  {
+    title: 'Practice support through free games',
+    detail: 'Classroom learning is reinforced with simple at-home phonics practice games.',
   },
 ];
 const intentSupportChips = ['Letter sounds', 'Blending', 'CVC words', 'Reading fluency'];
 const parentSearchProblems = [
   {
     icon: '🔤',
-    title: 'My child knows letters but cannot read',
-    explanation: 'Blending may not be stable yet.',
+    title: 'Child knows letters but cannot read words',
+    explanation: 'This usually points to a missing blending routine.',
+  },
+  {
+    icon: '🧩',
+    title: 'Child struggles with blending',
+    explanation: 'Sounds may be known, but sound-joining is not stable yet.',
   },
   {
     icon: '👀',
-    title: 'My child guesses words while reading',
-    explanation: 'Decoding routines may need guided practice.',
+    title: 'Child guesses words while reading',
+    explanation: 'Decoding habits may need direct correction and guided practice.',
   },
   {
     icon: '🐢',
-    title: 'My child reads very slowly',
-    explanation: 'Fluency needs repeated structured reading.',
-  },
-  {
-    icon: '🔁',
-    title: 'My child forgets words often',
-    explanation: 'Sound-pattern recognition may need reinforcement.',
+    title: 'Child reads slowly',
+    explanation: 'Reading fluency usually needs repeated level-based text practice.',
   },
   {
     icon: '✍️',
-    title: 'My child struggles with spelling',
-    explanation: 'Phonics patterns and word families may need explicit teaching.',
+    title: 'Child has spelling confusion',
+    explanation: 'Phonics patterns may need explicit and systematic reinforcement.',
+  },
+  {
+    icon: '🏠',
+    title: 'Parent wants structured reading support at home',
+    explanation: 'Families often need a clear plan with consistent teacher guidance.',
   },
 ];
 const comparisonItems = [
@@ -378,17 +397,17 @@ export default function PhonicsPage({
   const [openFaqIndexes, setOpenFaqIndexes] = useState<number[]>([0]);
   const canonicalPath = seoOverrides?.canonicalPath ?? "/phonics";
   const registry = getRouteConfig(canonicalPath);
-  const title = seoOverrides?.title ?? registry?.title ?? "Online Phonics Classes for Kids in India | Tiny Steps Learning";
+  const title = seoOverrides?.title ?? registry?.title ?? "Online Phonics Classes for Kids in India | Tiny Steps";
   const description =
     seoOverrides?.description ??
     registry?.description ??
-    "Phonics classes for kids that build sound-letter links, blending, and decoding. Ideal for parents looking for online reading classes for kids in India.";
+    "Live 1:1 online phonics classes for kids in India. Build letter sounds, blending, CVC words, digraphs, reading fluency and spelling. Book a free assessment.";
   const breadcrumbName = seoOverrides?.breadcrumbName ?? "Phonics";
   const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
   const heroTitle = heroTitleOverride ?? "Online Phonics Classes for Kids in India";
   const heroSubtitle =
     heroSubtitleOverride ??
-    "Help your child move from letter sounds to blending, reading, spelling, and confident reading through live, structured 1:1 online phonics guidance.";
+    "Premium phonics for kids in India through live 1:1 online phonics classes. We guide children from letter sounds to blending and reading, with structured spelling support and parent-visible progress. Start with a free phonics assessment to choose the right level.";
   const allFaqOpen = openFaqIndexes.length === faqItems.length;
 
   const toggleFaq = (index: number) => {
@@ -406,7 +425,9 @@ export default function PhonicsPage({
       description:
         "Structured online phonics classes for children aged 3–12, covering letter sounds, blending, decoding, reading fluency, and confidence through live guided practice.",
       url: canonicalUrl,
-      educationalLevel: 'Foundation to Advanced'
+      educationalLevel: 'Foundation to Advanced',
+      teaches: ['letter sounds', 'blending', 'CVC words', 'digraphs', 'vowel teams', 'reading fluency', 'spelling'],
+      areaServed: 'India',
     });
     const phonicsPathwaySchema = {
       '@context': 'https://schema.org',
@@ -590,7 +611,7 @@ export default function PhonicsPage({
           <nav className="flex items-center gap-2 overflow-x-auto px-1 text-xs font-semibold text-slate-700 sm:text-sm">
             {[
               ['Overview', '#overview'],
-              ['Problems', '#problems'],
+              ['Who It’s For', '#problems'],
               ['Method', '#method'],
               ['Program', '#program'],
               ['FAQ', '#faq'],
@@ -614,9 +635,9 @@ export default function PhonicsPage({
           <div className="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Quick answer for parents</p>
-              <h2 className="mt-2 text-2xl font-bold leading-tight text-slate-900 sm:text-3xl">Online Phonics Classes for Kids: What Parents Need to Know</h2>
+              <h2 className="mt-2 text-2xl font-bold leading-tight text-slate-900 sm:text-3xl">Quick Answer: What are online phonics classes for kids?</h2>
               <p className="mt-3 max-w-4xl text-base leading-relaxed text-slate-700">
-                Online phonics classes for kids help children connect letter sounds with letters, blend sounds into words, read CVC words, understand digraphs and vowel teams, and build reading fluency through guided practice. Tiny Steps offers live 1:1 online phonics classes for children aged 3–12 with structured lessons, correction, reading practice, and parent progress updates.
+                Online phonics classes help children connect letters with sounds, blend sounds into words, read CVC words, understand digraphs and vowel teams, and build early reading fluency. Tiny Steps uses live 1:1 guidance, assessment-first placement, and parent-visible progress updates so families can follow a clear, level-based phonics path from first sounds to independent reading with confidence.
               </p>
               <div className="mt-6 flex flex-wrap gap-2.5">
                 {intentSupportChips.map((label) => (
@@ -636,11 +657,11 @@ export default function PhonicsPage({
               </p>
             </div>
             <PremiumCard className="h-fit border-slate-200 bg-gradient-to-br from-orange-50/80 to-sky-50/80 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Best for</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Who this page is for</p>
               <ul className="mt-3 space-y-2 text-sm font-medium text-slate-800">
-                <li className="rounded-xl bg-white/90 px-3 py-2">Children who know letters but cannot read</li>
-                <li className="rounded-xl bg-white/90 px-3 py-2">Children learning blending</li>
-                <li className="rounded-xl bg-white/90 px-3 py-2">Children needing reading fluency</li>
+                <li className="rounded-xl bg-white/90 px-3 py-2">Children who know letters but cannot read words</li>
+                <li className="rounded-xl bg-white/90 px-3 py-2">Children who struggle with blending and decoding</li>
+                <li className="rounded-xl bg-white/90 px-3 py-2">Parents who want structured reading support at home</li>
               </ul>
             </PremiumCard>
           </div>
@@ -650,10 +671,10 @@ export default function PhonicsPage({
       <SectionShell id="problems">
         <div className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-white via-sky-50/35 to-orange-50/35 p-6 shadow-xl sm:p-8">
           <SectionHeader
-            title="Why parents search for online phonics classes"
-            subtitle="These concerns usually point to decoding, blending, or fluency gaps."
+            title="Who this page is for"
+            subtitle="These parent concerns usually point to decoding, blending, fluency, or spelling gaps."
           />
-          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {parentSearchProblems.map((item, index) => (
               <PremiumCard
                 key={item.title}
@@ -691,6 +712,75 @@ export default function PhonicsPage({
             </Link>
             .
           </p>
+        </div>
+      </SectionShell>
+
+      <SectionShell>
+        <div className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-white via-orange-50/35 to-sky-50/35 p-6 shadow-xl sm:p-8">
+          <SectionHeader
+            title="Online phonics classes for kids across India"
+            subtitle="Live online support without location barriers."
+          />
+          <p className="mt-4 text-sm leading-relaxed text-slate-700">
+            Tiny Steps supports children across India through live online classes. Parents from cities such as Hyderabad, Bangalore, Chennai, Mumbai, Delhi, Pune, Kolkata, and other locations can book a free assessment and receive a level-based phonics path.
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-slate-700">
+            Families often combine phonics with{' '}
+            <Link to="/reading-classes-for-kids" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
+              reading classes for kids
+            </Link>
+            ,{' '}
+            <Link to="/grammar" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
+              grammar and sentence formation support
+            </Link>
+            ,{' '}
+            <Link to="/speaking" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
+              public speaking and communication classes
+            </Link>
+            , and broader{' '}
+            <Link to="/online-english-classes-for-kids-india" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
+              online English classes for kids in India
+            </Link>
+            .
+          </p>
+        </div>
+      </SectionShell>
+
+      <SectionShell>
+        <div className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-sky-50/45 via-white to-orange-50/35 p-6 shadow-xl sm:p-8">
+          <SectionHeader
+            title="Common phonics questions parents ask"
+            subtitle="Short, direct answers for quick decision-making."
+          />
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {[
+              {
+                question: 'At what age should a child start phonics?',
+                answer:
+                  'Many children begin around ages 3 to 5 with playful sound awareness. Older children can also start effectively when blending, decoding, or reading fluency needs support.',
+              },
+              {
+                question: 'How do I know my child needs phonics support?',
+                answer:
+                  'Common signs include knowing letters but not reading words, guessing words, slow reading pace, blending difficulty, or frequent spelling confusion.',
+              },
+              {
+                question: 'How are phonics classes different from reading practice?',
+                answer:
+                  'Phonics classes teach decoding through sound-letter links and blending routines. Reading practice builds fluency and understanding after decoding becomes more stable.',
+              },
+              {
+                question: 'How long does it take to see progress in blending?',
+                answer:
+                  'Many children show early blending progress in 4–6 guided lessons, though timing depends on starting level, lesson consistency, and home reinforcement.',
+              },
+            ].map((item) => (
+              <PremiumCard key={item.question} className="p-5">
+                <h3 className="text-base font-semibold text-slate-900">{item.question}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-700">{item.answer}</p>
+              </PremiumCard>
+            ))}
+          </div>
         </div>
       </SectionShell>
 
@@ -952,6 +1042,17 @@ export default function PhonicsPage({
                   Tracing With Sounds
                 </Link>
               </div>
+              <p className="mt-3 text-xs leading-relaxed text-slate-700">
+                Start with our{' '}
+                <Link to="/free-letter-tracing-game-for-kids" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
+                  free letter tracing game
+                </Link>{' '}
+                and{' '}
+                <Link to="/letter-tracing-with-sounds-game" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
+                  letter tracing with sounds
+                </Link>
+                .
+              </p>
             </PremiumCard>
           </div>
         </div>

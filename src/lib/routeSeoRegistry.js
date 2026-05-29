@@ -22,23 +22,23 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/phonics': {
-    title: 'Online Phonics Classes for Kids in India | Tiny Steps Learning',
+    title: 'Online Phonics Classes for Kids in India | Tiny Steps',
     description:
-      'Premium online phonics classes for kids in India. Live 1:1 guided lessons for letter sounds, blending, CVC words, reading fluency, spelling, and parent progress updates. Book a free assessment.',
+      'Live 1:1 online phonics classes for kids in India. Build letter sounds, blending, CVC words, digraphs, reading fluency and spelling. Book a free assessment.',
     canonicalPath: '/phonics',
     ogType: 'website',
   },
   '/grammar': {
-    title: 'Grammar Classes for Kids in India | Tiny Steps Learning',
+    title: 'Grammar Classes for Kids in India | Tiny Steps',
     description:
-      'Book a free assessment for online grammar classes for kids. Tiny Steps helps children improve grammar, sentence formation, writing clarity, and confidence.',
+      'Live online grammar classes for kids in India. Build sentence formation, tenses, punctuation, writing clarity and school-answer confidence. Book a free assessment.',
     canonicalPath: '/grammar',
     ogType: 'website',
   },
   '/speaking': {
-    title: 'Public Speaking Classes for Kids in India | Tiny Steps Learning',
+    title: 'Public Speaking Classes for Kids in India | Tiny Steps',
     description:
-      'Book a free assessment for online public speaking classes for kids. Tiny Steps helps children build clear expression, structured answers, storytelling, and communication confidence.',
+      'Live online public speaking classes for kids in India. Build sentence formation, storytelling, show-and-tell, clear expression and confidence. Book a free assessment.',
     canonicalPath: '/speaking',
     ogType: 'website',
   },
@@ -370,9 +370,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/reading-classes-for-kids': {
-    title: 'Reading Classes for Kids in India | Tiny Steps Learning',
+    title: 'Reading Classes for Kids in India | Tiny Steps',
     description:
-      'Book a free assessment for online reading classes for kids. Tiny Steps helps children improve phonics, reading fluency, comprehension, and confidence.',
+      'Live online reading classes for kids in India. Build word reading, reading fluency, story comprehension, vocabulary and reading aloud confidence. Book a free assessment.',
     canonicalPath: '/reading-classes-for-kids',
     ogType: 'website',
   },
@@ -398,9 +398,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/online-english-classes-for-kids-india': {
-    title: 'Online English Classes for Kids in India | Tiny Steps Learning',
+    title: 'Online English Classes for Kids in India | Tiny Steps',
     description:
-      'Book a free assessment for online English classes in India. Tiny Steps helps children build phonics, reading, grammar and communication with live guidance.',
+      'Live online English classes for kids in India. Build phonics, reading fluency, grammar, sentence formation and communication confidence. Book a free assessment.',
     canonicalPath: '/online-english-classes-for-kids-india',
     ogType: 'website',
   },
