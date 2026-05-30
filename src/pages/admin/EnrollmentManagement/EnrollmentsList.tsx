@@ -624,6 +624,7 @@ function pickCourseName(c?: CourseDoc) {
 
 export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
   const [statusTab, setStatusTab] = useState<'active' | 'past' | 'archived' | 'broken' | 'duplicates'>('active');
+  const [searchQuery, setSearchQuery] = useState('');
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
   const [page, setPage] = useState<number>(1);
   const [issuesPage, setIssuesPage] = useState<number>(1);
@@ -1439,12 +1440,35 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
     return enrollmentRows;
   }, [enrollmentRows, reconciliation, statusTab]);
 
-  const totalFilteredRows = filteredEnrollmentRows.length;
+  const searchedEnrollmentRows = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return filteredEnrollmentRows;
+
+    return filteredEnrollmentRows.filter((row) => {
+      const haystack = [
+        row.enrollmentId,
+        row.studentName,
+        row.studentIdHint,
+        row.courseDisplay,
+        row.status,
+        row.parentDisplay,
+        row.teacherDisplay,
+        String(row.enrollment.billingCycle || ''),
+        String(row.enrollment.parentId || ''),
+        String(row.enrollment.teacherId || ''),
+      ]
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [filteredEnrollmentRows, searchQuery]);
+
+  const totalFilteredRows = searchedEnrollmentRows.length;
   const totalPages = Math.max(1, Math.ceil(totalFilteredRows / rowsPerPage));
 
   useEffect(() => {
     setPage(1);
-  }, [rowsPerPage, statusTab]);
+  }, [rowsPerPage, statusTab, searchQuery]);
 
   useEffect(() => {
     if (page > totalPages) {
@@ -1454,8 +1478,8 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
 
   const pagedEnrollmentRows = useMemo(() => {
     const start = (page - 1) * rowsPerPage;
-    return filteredEnrollmentRows.slice(start, start + rowsPerPage);
-  }, [filteredEnrollmentRows, page, rowsPerPage]);
+    return searchedEnrollmentRows.slice(start, start + rowsPerPage);
+  }, [searchedEnrollmentRows, page, rowsPerPage]);
 
   const issuesRowsPerPage = 10;
   const totalIssueRows = reconciliation.issues.length;
@@ -2257,7 +2281,14 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
             Possible Duplicates
           </button>
         </div>
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <Input
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Search student, course, parent..."
+            className="h-8 w-[240px] text-xs"
+            aria-label="Search enrollments"
+          />
           <span className="text-muted-foreground">Rows per page</span>
           <Select value={String(rowsPerPage)} onValueChange={(value) => setRowsPerPage(Number(value))}>
             <SelectTrigger className="h-8 w-[90px]">
