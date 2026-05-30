@@ -11,6 +11,7 @@ import { collection, doc, documentId, endAt, getDoc, getDocs, onSnapshot, orderB
 import { db } from '../../../../lib/firebaseConfig';
 import { toast } from '@components/hooks/use-toast';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../../../store/useAuthStore';
 
 interface AttendanceFormProps {
   open: boolean;
@@ -140,6 +141,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
   onSubmit,
   attendanceOnly = false,
 }) => {
+  const { user } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -154,6 +156,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
   const [expandedTopics, setExpandedTopics] = useState<Record<string, Record<string, boolean>>>({});
   const [savedTopicProgressByKidId, setSavedTopicProgressByKidId] = useState<Record<string, Record<string, SavedTopicProgress>>>({});
   const [savedTopicProgressLoading, setSavedTopicProgressLoading] = useState(false);
+  const canOverrideAttendanceTime = String((user as any)?.role || '').trim().toLowerCase() === 'admin';
 
   const { students } = useTeacherFilteredStudents();
 
@@ -347,6 +350,45 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
     return '';
   };
 
+  const toDateMaybe = (value: any): Date | null => {
+    if (!value) return null;
+    if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+    if (typeof value?.toDate === 'function') {
+      const date = value.toDate();
+      if (date instanceof Date && !Number.isNaN(date.getTime())) return date;
+    }
+    if (typeof value === 'string' || typeof value === 'number') {
+      const date = new Date(value);
+      if (!Number.isNaN(date.getTime())) return date;
+    }
+    return null;
+  };
+
+  const normalizeStartTime = (value: unknown): string | null => {
+    const raw = typeof value === 'string' ? value.trim() : '';
+    if (!raw) return null;
+    const match = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(raw);
+    if (!match) return null;
+    const seconds = match[3] || '00';
+    return `${match[1]}:${match[2]}:${seconds}`;
+  };
+
+  const getSessionStartMillis = (): number | null => {
+    const fromStartAt = toDateMaybe((session as any)?.startAt);
+    if (fromStartAt) return fromStartAt.getTime();
+    const dateYmd = typeof session?.date === 'string' ? session.date.trim() : '';
+    const startTime = normalizeStartTime(session?.startTime);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateYmd) || !startTime) return null;
+    const parsed = Date.parse(`${dateYmd}T${startTime}+05:30`);
+    return Number.isNaN(parsed) ? null : parsed;
+  };
+
+  const getAttendanceAllowedAtMillis = (): number | null => {
+    const startMs = getSessionStartMillis();
+    if (startMs === null) return null;
+    return startMs + 30 * 60 * 1000;
+  };
+
   useEffect(() => {
     if (session) {
       const defaults: Record<string, AttendanceEntryState> = {};
@@ -524,6 +566,25 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
         variant: 'destructive',
       });
       return;
+    }
+    if (!canOverrideAttendanceTime) {
+      const allowedAt = getAttendanceAllowedAtMillis();
+      if (allowedAt === null) {
+        toast({
+          title: 'Attendance unavailable',
+          description: 'Attendance time could not be verified. Please contact admin.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      if (Date.now() < allowedAt) {
+        toast({
+          title: 'Attendance unavailable',
+          description: `Attendance opens at ${new Date(allowedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}.`,
+          variant: 'destructive',
+        });
+        return;
+      }
     }
     setIsSubmitting(true);
     try {
@@ -782,7 +843,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
           <DialogDescription>
             {attendanceOnly
               ? 'Mark attendance and optional class notes only. Update topics/progress from My Students.'
-              : 'Mark attendance for the selected session. Only the assigned teacher or an LP can update attendance.'}
+              : 'Mark attendance for the selected session. Only the assigned teacher or admin can update attendance.'}
           </DialogDescription>
         </DialogHeader>
         {!session ? (

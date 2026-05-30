@@ -9,6 +9,7 @@ import { AttendanceForm } from './AttendanceForm';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { toast } from '@components/hooks/use-toast';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
+import { useAuthStore } from '../../../../store/useAuthStore';
 
 interface TodaySessionsListProps {
   teacherId?: string;
@@ -17,11 +18,13 @@ interface TodaySessionsListProps {
 type SessionViewFilter = 'all' | 'soon' | 'pending' | 'completed';
 
 export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId }) => {
+  const { user } = useAuthStore();
   const { sessions, isLoading, error } = useTeacherSessions(teacherId);
   const { students } = useTeacherFilteredStudents();
   const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewFilter, setViewFilter] = useState<SessionViewFilter>('all');
+  const canOverrideAttendanceTime = String((user as any)?.role || '').trim().toLowerCase() === 'admin';
 
   const studentNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -63,6 +66,17 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
     meta?: { attendanceOnly?: boolean };
   }) => {
     if (!selectedSession) return;
+    if (!isAttendanceAllowedNow(selectedSession)) {
+      const startMs = getSessionStartMillis(selectedSession);
+      toast({
+        title: 'Attendance unavailable',
+        description: startMs === null
+          ? 'Attendance time could not be verified. Please contact admin.'
+          : 'Attendance can be marked only after 30 minutes of the class start time.',
+        variant: 'destructive',
+      });
+      return;
+    }
     try {
       const functions = getFunctions(undefined, 'asia-south1');
       const saveTeacherSessionProgress = httpsCallable(functions, 'saveTeacherSessionProgress');
@@ -123,6 +137,32 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
     if (fromFallback) return fromFallback;
     const durationMins = Number((session as any).durationMins) || Number((session as any).durationMinutes) || 30;
     return new Date(start.getTime() + Math.max(durationMins, 30) * 60 * 1000);
+  };
+
+  const normalizeStartTime = (value: unknown): string | null => {
+    const raw = typeof value === 'string' ? value.trim() : '';
+    if (!raw) return null;
+    const match = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(raw);
+    if (!match) return null;
+    const seconds = match[3] || '00';
+    return `${match[1]}:${match[2]}:${seconds}`;
+  };
+
+  const getSessionStartMillis = (session: TeacherSession): number | null => {
+    const fromStartAt = toDateMaybe((session as any).startAt);
+    if (fromStartAt) return fromStartAt.getTime();
+    const dateYmd = typeof session.date === 'string' ? session.date.trim() : '';
+    const startTime = normalizeStartTime(session.startTime);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateYmd) || !startTime) return null;
+    const parsed = Date.parse(`${dateYmd}T${startTime}+05:30`);
+    return Number.isNaN(parsed) ? null : parsed;
+  };
+
+  const isAttendanceAllowedNow = (session: TeacherSession): boolean => {
+    if (canOverrideAttendanceTime) return true;
+    const startMs = getSessionStartMillis(session);
+    if (startMs === null) return false;
+    return Date.now() >= startMs + 30 * 60 * 1000;
   };
 
   const getKnownNames = (session: TeacherSession): string[] => {

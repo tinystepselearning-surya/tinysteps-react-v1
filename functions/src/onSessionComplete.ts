@@ -26,6 +26,9 @@ interface SessionData {
   studentId?: string;
   status?: string;
   notes?: string;
+  date?: string;
+  startTime?: string;
+  startAt?: unknown;
 
   // NEW: attendance stored directly in the session doc by Teacher UI
   attendance?: Record<string, AttendanceEntry>;
@@ -105,6 +108,13 @@ function normalizeStatus(value: unknown): string {
   return String(value || "").trim().toLowerCase();
 }
 
+function normalizeCallerRole(value: unknown): string {
+  const raw = String(value || "").trim().toLowerCase();
+  if (!raw) return "";
+  if (raw === "learningpartner") return "learning-partner";
+  return raw;
+}
+
 function normalizeEnrollmentStatus(value: unknown): string {
   const raw = String(value || "").trim().toLowerCase();
   if (!raw) return "active";
@@ -122,6 +132,47 @@ function getTimestampMillis(value: unknown): number {
     return Number.isFinite(parsed) ? parsed : 0;
   }
   return 0;
+}
+
+function normalizeTimeForIstParse(value: unknown): string | null {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+  const match = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(raw);
+  if (!match) return null;
+  const seconds = match[3] || "00";
+  return `${match[1]}:${match[2]}:${seconds}`;
+}
+
+function getSessionStartMillis(session: SessionData): number | null {
+  const startAtMs = getTimestampMillis(session.startAt);
+  if (startAtMs > 0) return startAtMs;
+
+  const dateYmd = String(session.date || "").trim();
+  const startTime = normalizeTimeForIstParse(session.startTime);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateYmd) || !startTime) return null;
+  const parsed = Date.parse(`${dateYmd}T${startTime}+05:30`);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function getAttendanceAllowedAtMillis(session: SessionData): number | null {
+  const startMs = getSessionStartMillis(session);
+  if (startMs === null) return null;
+  return startMs + 30 * 60 * 1000;
+}
+
+function canCallerOverrideAttendanceTime(role: string): boolean {
+  return role === "admin";
+}
+
+async function resolveCallerRoleFromAuth(
+  auth: { uid?: string; token?: Record<string, unknown> } | null,
+): Promise<string> {
+  const tokenRole = normalizeCallerRole(auth?.token?.role);
+  if (tokenRole) return tokenRole;
+  const uid = String(auth?.uid || "").trim();
+  if (!uid) return "";
+  const userSnap = await admin.firestore().collection("users").doc(uid).get();
+  return normalizeCallerRole(userSnap.data()?.role);
 }
 
 function resolveEnrollmentKidIds(enrollment: any): string[] {
@@ -625,6 +676,28 @@ export const onSessionComplete = onCall(
 
     const session = sessionSnap.data() as SessionData;
     await assertCanFinalizeSession(uid, session);
+    const callerRole = await resolveCallerRoleFromAuth({
+      uid,
+      token: (request.auth?.token || {}) as Record<string, unknown>,
+    });
+
+    const attendanceAllowedAtMs = getAttendanceAllowedAtMillis(session);
+    if (
+      !canCallerOverrideAttendanceTime(callerRole)
+    ) {
+      if (attendanceAllowedAtMs === null) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Attendance time could not be verified. Please contact admin."
+        );
+      }
+      if (Date.now() < attendanceAllowedAtMs) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Attendance can be marked only after 30 minutes of the class start time."
+        );
+      }
+    }
 
     const currentStatus = normalizeStatus(session.status);
     if (COMPLETION_BLOCKED_STATUSES.has(currentStatus)) {

@@ -18,6 +18,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { auth, db } from '../../../../lib/firebaseConfig';
 import { toast } from '@components/hooks/use-toast';
+import { useAuthStore } from '../../../../store/useAuthStore';
 import {
   format,
   startOfMonth,
@@ -180,6 +181,33 @@ const toCleanText = (value: unknown): string => {
   return '';
 };
 
+const normalizeStartTime = (value: unknown): string | null => {
+  const raw = typeof value === 'string' ? value.trim() : '';
+  if (!raw) return null;
+  const match = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(raw);
+  if (!match) return null;
+  const seconds = match[3] || '00';
+  return `${match[1]}:${match[2]}:${seconds}`;
+};
+
+const getSessionStartMillis = (session: Partial<TeacherSession> | null | undefined): number | null => {
+  if (!session) return null;
+  const fromStartAt = timestampToMillis((session as any).startAt);
+  if (fromStartAt > 0) return fromStartAt;
+
+  const dateYmd = typeof session.date === 'string' ? session.date.trim() : '';
+  const startTime = normalizeStartTime(session.startTime);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateYmd) || !startTime) return null;
+  const parsed = Date.parse(`${dateYmd}T${startTime}+05:30`);
+  return Number.isNaN(parsed) ? null : parsed;
+};
+
+const getAttendanceAllowedAtMillis = (session: Partial<TeacherSession> | null | undefined): number | null => {
+  const startMs = getSessionStartMillis(session);
+  if (startMs === null) return null;
+  return startMs + 30 * 60 * 1000;
+};
+
 const completeSessionViaBackend = async (
   sessionId: string,
   payload?: {
@@ -197,6 +225,7 @@ const completeSessionViaBackend = async (
 };
 
 export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
+  const { user } = useAuthStore();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'workweek' | 'day'>('month');
   const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
@@ -206,6 +235,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   const [makeupDraftByCredit, setMakeupDraftByCredit] = useState<Record<string, MakeupDraft>>({});
   const [schedulingCreditId, setSchedulingCreditId] = useState<string | null>(null);
   const [isReschedulePanelExpanded, setIsReschedulePanelExpanded] = useState<boolean>(false);
+  const canOverrideAttendanceTime = String((user as any)?.role || '').trim().toLowerCase() === 'admin';
 
   const { rangeStart, rangeEnd } = useMemo(() => {
     if (view === 'month') {
@@ -364,6 +394,29 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     (session?: Partial<TeacherSession>): string => getSessionKidIds(session)[0] || '',
     [getSessionKidIds],
   );
+
+  const isAttendanceAllowedNow = useCallback((session?: Partial<TeacherSession> | null): boolean => {
+    if (canOverrideAttendanceTime) return true;
+    const allowedAt = getAttendanceAllowedAtMillis(session);
+    if (allowedAt === null) return false;
+    return Date.now() >= allowedAt;
+  }, [canOverrideAttendanceTime]);
+
+  const tryOpenAttendance = useCallback((session: TeacherSession) => {
+    if (!isAttendanceAllowedNow(session)) {
+      const allowedAt = getAttendanceAllowedAtMillis(session);
+      const message = allowedAt !== null
+        ? `Attendance opens at ${format(new Date(allowedAt), 'h:mm a')}.`
+        : 'Attendance time could not be verified. Please contact admin.';
+      toast({
+        title: 'Attendance unavailable',
+        description: message,
+        variant: 'destructive',
+      });
+      return;
+    }
+    setSelectedSession(session);
+  }, [isAttendanceAllowedNow]);
 
   const studentFilterOptions = useMemo(() => {
     const byId = new Map<string, { id: string; label: string }>();
@@ -566,6 +619,18 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
 
   const handleAttendanceSubmit = async (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: string; topics?: string[]; topicUpdates?: TopicUpdatePayload[] }>; sessionNotes: string; meta?: { courseId?: string; courseLabel?: string; attendanceOnly?: boolean } }) => {
     if (!selectedSession) return;
+    if (!isAttendanceAllowedNow(selectedSession)) {
+      const allowedAt = getAttendanceAllowedAtMillis(selectedSession);
+      const message = allowedAt !== null
+        ? `Attendance opens at ${format(new Date(allowedAt), 'h:mm a')}.`
+        : 'Attendance time could not be verified. Please contact admin.';
+      toast({
+        title: 'Attendance unavailable',
+        description: message,
+        variant: 'destructive',
+      });
+      return;
+    }
     try {
       const functions = getFunctions(undefined, 'asia-south1');
       const saveTeacherSessionProgress = httpsCallable(functions, 'saveTeacherSessionProgress');
@@ -909,7 +974,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                           key={session.id || `${dateStr}_${idx}`}
                           type="button"
                           className={`w-full rounded-lg border px-2.5 py-2 text-left text-xs transition hover:opacity-95 ${sessionBadgeToneClass[badgeTone]}`}
-                          onClick={() => setSelectedSession(session)}
+                          onClick={() => tryOpenAttendance(session)}
                         >
                           <div className="font-medium">
                             {sessionBadgeToneLabel[badgeTone]} · {session.startTime}
@@ -943,7 +1008,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                   key={session.id || `day_${idx}`}
                   type="button"
                   className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
-                  onClick={() => setSelectedSession(session)}
+                  onClick={() => tryOpenAttendance(session)}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>

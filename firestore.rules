@@ -535,13 +535,7 @@ service cloud.firestore {
         && isAdmin();
 
       allow update: if isValidClassSession(request.resource.data)
-        && (isAdmin()
-          || (isTeacher()
-            && resource.data.teacherId == request.auth.uid
-            && request.resource.data.teacherId == resource.data.teacherId
-            && teacherClassSessionStateMutableForTeacher()
-            && teacherClassSessionOperationalUpdateOnly()
-            && teacherClassSessionStatusAllowed()));
+        && isAdmin();
 
       allow delete: if isAdmin();
     }

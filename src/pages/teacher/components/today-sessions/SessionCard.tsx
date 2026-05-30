@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../../lib/firebaseConfig';
 import { toast } from '@components/hooks/use-toast';
+import { useAuthStore } from '../../../../store/useAuthStore';
 
 interface SessionCardProps {
   session: TeacherSession;
@@ -24,6 +25,7 @@ const statusMap: Record<
 };
 
 export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames, onMarkAttendance }) => {
+  const { user } = useAuthStore();
   const [isStartingClass, setIsStartingClass] = useState(false);
 
   const toDateMaybe = (value: any): Date | null => {
@@ -61,6 +63,35 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
   const hasStarted = sessionStart.getTime() <= now.getTime();
   const hasEnded = sessionEnd.getTime() < now.getTime();
   const isLiveNow = hasStarted && !hasEnded;
+  const normalizeStartTime = (value: unknown): string | null => {
+    const raw = typeof value === 'string' ? value.trim() : '';
+    if (!raw) return null;
+    const match = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(raw);
+    if (!match) return null;
+    const seconds = match[3] || '00';
+    return `${match[1]}:${match[2]}:${seconds}`;
+  };
+
+  const getSessionStartMillis = (): number | null => {
+    if (startAtFallback) return startAtFallback.getTime();
+    const dateYmd = typeof session.date === 'string' ? session.date.trim() : '';
+    const startTime = normalizeStartTime(session.startTime);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateYmd) || !startTime) return null;
+    const parsed = Date.parse(`${dateYmd}T${startTime}+05:30`);
+    return Number.isNaN(parsed) ? null : parsed;
+  };
+
+  const sessionStartMs = getSessionStartMillis();
+  const attendanceAllowedAtMs = sessionStartMs === null ? null : sessionStartMs + 30 * 60 * 1000;
+  const canOverrideAttendanceTime = String((user as any)?.role || '').trim().toLowerCase() === 'admin';
+  const isAttendanceTimeUnverified = !canOverrideAttendanceTime && attendanceAllowedAtMs === null;
+  const isAttendanceLocked =
+    !canOverrideAttendanceTime && (
+      attendanceAllowedAtMs === null ||
+      Date.now() < attendanceAllowedAtMs
+    );
+  const attendanceOpensLabel =
+    attendanceAllowedAtMs !== null ? format(new Date(attendanceAllowedAtMs), 'h:mm a') : null;
 
   const getAttendanceStatus = (value: any): string | undefined => {
     if (!value) return undefined;
@@ -229,11 +260,25 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
           >
             {isStartingClass ? 'Opening…' : 'Start Class'}
           </Button>
-          <Button size="sm" onClick={() => onMarkAttendance(session)} variant="secondary">
+          <Button
+            size="sm"
+            onClick={() => onMarkAttendance(session)}
+            variant="secondary"
+            disabled={isAttendanceLocked}
+          >
             Mark Attendance
           </Button>
         </div>
       </div>
+      {isAttendanceLocked ? (
+        <div className="mt-2 text-right text-xs text-amber-700">
+          {isAttendanceTimeUnverified
+            ? 'Attendance time could not be verified. Please contact admin.'
+            : attendanceOpensLabel
+              ? `Attendance opens at ${attendanceOpensLabel}`
+              : 'Attendance opens 30 minutes after class start'}
+        </div>
+      ) : null}
     </div>
   );
 };

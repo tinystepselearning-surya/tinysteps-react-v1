@@ -59,6 +59,57 @@ function sanitizeText(value: unknown, maxLen = 500): string {
   return value.trim().slice(0, maxLen);
 }
 
+function toDateMaybe(value: unknown): Date | null {
+  if (!value) return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+  if (typeof value === 'object' && value !== null) {
+    const maybeTimestamp = value as { toDate?: () => Date; seconds?: number };
+    if (typeof maybeTimestamp.toDate === 'function') {
+      const dt = maybeTimestamp.toDate();
+      if (dt instanceof Date && !Number.isNaN(dt.getTime())) return dt;
+    }
+    if (typeof maybeTimestamp.seconds === 'number') {
+      const dt = new Date(maybeTimestamp.seconds * 1000);
+      if (!Number.isNaN(dt.getTime())) return dt;
+    }
+  }
+  if (typeof value === 'string' || typeof value === 'number') {
+    const dt = new Date(value);
+    if (!Number.isNaN(dt.getTime())) return dt;
+  }
+  return null;
+}
+
+function normalizeTimeForIstParse(value: unknown): string | null {
+  const raw = sanitizeText(value, 16);
+  if (!raw) return null;
+  const match = /^([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(raw);
+  if (!match) return null;
+  const seconds = match[3] || '00';
+  return `${match[1]}:${match[2]}:${seconds}`;
+}
+
+function getSessionStartMillis(session: Record<string, unknown>): number | null {
+  const fromStartAt = toDateMaybe(session.startAt);
+  if (fromStartAt) return fromStartAt.getTime();
+
+  const dateYmd = sanitizeText(session.date, 16);
+  const startTime = normalizeTimeForIstParse(session.startTime);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateYmd) || !startTime) return null;
+  const parsed = Date.parse(`${dateYmd}T${startTime}+05:30`);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function getAttendanceAllowedAtMillis(session: Record<string, unknown>): number | null {
+  const startMs = getSessionStartMillis(session);
+  if (startMs === null) return null;
+  return startMs + 30 * 60 * 1000;
+}
+
+function canCallerOverrideAttendanceTime(role: string): boolean {
+  return role === 'admin';
+}
+
 function normalizeStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value
@@ -218,16 +269,33 @@ export const saveTeacherSessionProgress = onCall(
     const session = (sessionSnap.data() || {}) as Record<string, unknown>;
     assertCanSaveSession(uid, role, session);
 
+    const attendanceAllowedAtMs = getAttendanceAllowedAtMillis(session);
+    if (
+      role === 'teacher' &&
+      !canCallerOverrideAttendanceTime(role)
+    ) {
+      if (attendanceAllowedAtMs === null) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Attendance time could not be verified. Please contact admin.',
+        );
+      }
+      if (Date.now() < attendanceAllowedAtMs) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Attendance can be marked only after 30 minutes of the class start time.',
+        );
+      }
+    }
+
     const attendanceOnly = payload.meta?.attendanceOnly === true;
     const incomingAttendance = payload.attendance as Record<string, unknown>;
     const nextAttendance: Record<string, Record<string, unknown>> = {};
     const sessionKidIds = Array.isArray(session.kidIds)
       ? (session.kidIds as unknown[]).map((kidId) => String(kidId || '').trim()).filter(Boolean)
       : [];
-    const allowedAttendanceKidIds = new Set<string>([
-      ...sessionKidIds,
-      ...Object.keys(incomingAttendance).map((kidId) => String(kidId || '').trim()).filter(Boolean),
-    ]);
+    const allowedAttendanceKidIds = new Set<string>(sessionKidIds);
+    const enforceKidMembership = allowedAttendanceKidIds.size > 0;
 
     if (attendanceOnly) {
       const existingAttendanceRaw = session.attendance;
@@ -239,7 +307,7 @@ export const saveTeacherSessionProgress = onCall(
       for (const [kidId, rawEntry] of Object.entries(existingAttendance)) {
         const normalizedKidId = String(kidId || '').trim();
         if (
-          allowedAttendanceKidIds.size > 0 &&
+          enforceKidMembership &&
           (!normalizedKidId || !allowedAttendanceKidIds.has(normalizedKidId))
         ) {
           continue;
@@ -260,6 +328,12 @@ export const saveTeacherSessionProgress = onCall(
         if (!normalizedKidId) {
           throw new HttpsError('invalid-argument', 'Invalid attendance kidId');
         }
+        if (enforceKidMembership && !allowedAttendanceKidIds.has(normalizedKidId)) {
+          throw new HttpsError(
+            'invalid-argument',
+            `Attendance kid ${normalizedKidId} is not assigned to this session.`,
+          );
+        }
         const entry = toAttendanceEntry(rawEntry);
         if (!entry.status) {
           throw new HttpsError('invalid-argument', `Invalid attendance status for kid ${normalizedKidId}`);
@@ -276,11 +350,21 @@ export const saveTeacherSessionProgress = onCall(
       }
     } else {
       for (const [kidId, rawEntry] of Object.entries(incomingAttendance)) {
+        const normalizedKidId = String(kidId || '').trim();
+        if (!normalizedKidId) {
+          throw new HttpsError('invalid-argument', 'Invalid attendance kidId');
+        }
+        if (enforceKidMembership && !allowedAttendanceKidIds.has(normalizedKidId)) {
+          throw new HttpsError(
+            'invalid-argument',
+            `Attendance kid ${normalizedKidId} is not assigned to this session.`,
+          );
+        }
         const entry = toAttendanceEntry(rawEntry);
         if (!entry.status) {
           throw new HttpsError('invalid-argument', `Invalid attendance status for kid ${kidId}`);
         }
-        nextAttendance[kidId] = {
+        nextAttendance[normalizedKidId] = {
           status: entry.status,
           ...(entry.notes ? { notes: entry.notes } : {}),
           ...(entry.mastery ? { mastery: entry.mastery } : {}),
