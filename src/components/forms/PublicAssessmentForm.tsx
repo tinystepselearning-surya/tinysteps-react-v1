@@ -10,6 +10,7 @@ type AgeOption = '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12';
 
 type PublicAssessmentFormState = {
   parentName: string;
+  childName: string;
   whatsapp: string;
   childAge: string;
   interest: InterestOption;
@@ -42,6 +43,7 @@ export default function PublicAssessmentForm({
 
   const initialState: PublicAssessmentFormState = {
     parentName: '',
+    childName: '',
     whatsapp: '',
     childAge: '',
     interest: defaultInterest,
@@ -51,7 +53,7 @@ export default function PublicAssessmentForm({
   const [form, setForm] = useState<PublicAssessmentFormState>(initialState);
   const [submitted, setSubmitted] = useState(false);
   const [lastOpenedWaLink, setLastOpenedWaLink] = useState('');
-  const [errors, setErrors] = useState<{ parentName?: string; whatsapp?: string; childAge?: string; interest?: string }>({});
+  const [errors, setErrors] = useState<{ parentName?: string; childName?: string; whatsapp?: string; childAge?: string; interest?: string }>({});
   const firstFieldRef = useRef<HTMLInputElement | null>(null);
   const hasTrackedFormStartRef = useRef(false);
 
@@ -60,10 +62,11 @@ export default function PublicAssessmentForm({
       const raw = window.localStorage.getItem(PREFILL_STORAGE_KEY);
       if (!raw) return;
 
-      const parsed = JSON.parse(raw) as { parentName?: string; whatsapp?: string };
+      const parsed = JSON.parse(raw) as { parentName?: string; childName?: string; whatsapp?: string };
       setForm((prev) => ({
         ...prev,
         parentName: typeof parsed.parentName === 'string' ? parsed.parentName.slice(0, 80) : prev.parentName,
+        childName: typeof parsed.childName === 'string' ? parsed.childName.slice(0, 80) : prev.childName,
         whatsapp: typeof parsed.whatsapp === 'string' ? parsed.whatsapp.slice(0, 20) : prev.whatsapp,
       }));
     } catch {
@@ -77,13 +80,14 @@ export default function PublicAssessmentForm({
         PREFILL_STORAGE_KEY,
         JSON.stringify({
           parentName: form.parentName,
+          childName: form.childName,
           whatsapp: form.whatsapp,
         })
       );
     } catch {
       return;
     }
-  }, [form.parentName, form.whatsapp]);
+  }, [form.parentName, form.childName, form.whatsapp]);
 
   useEffect(() => {
     if (!autoFocusFirstField) return;
@@ -107,6 +111,7 @@ export default function PublicAssessmentForm({
       'I would like to book a free assessment class.',
       '',
       `Parent name: ${form.parentName || '-'}`,
+      `Child name: ${form.childName || '-'}`,
       `WhatsApp number: ${form.whatsapp || '-'}`,
       `Child age: ${form.childAge || '-'}`,
       `Interest: ${form.interest || '-'}`,
@@ -123,10 +128,14 @@ export default function PublicAssessmentForm({
   }, [form]);
 
   const validate = () => {
-    const nextErrors: { parentName?: string; whatsapp?: string; childAge?: string; interest?: string } = {};
+    const nextErrors: { parentName?: string; childName?: string; whatsapp?: string; childAge?: string; interest?: string } = {};
 
     if (!form.parentName.trim()) {
       nextErrors.parentName = 'Please enter parent name.';
+    }
+
+    if (!form.childName.trim()) {
+      nextErrors.childName = 'Please enter child name.';
     }
 
     if (!form.whatsapp.trim()) {
@@ -188,27 +197,51 @@ export default function PublicAssessmentForm({
       </div>
 
       <form onSubmit={handleSubmit} onFocusCapture={trackFormStartOnce} className="relative space-y-4">
-        <div className="group space-y-1">
-          <label htmlFor="assessment-parent-name" className="text-[11px] font-bold uppercase text-slate-700 transition-colors group-focus-within:text-orange-700">
-            Parent Name *
-          </label>
-          <input
-            ref={firstFieldRef}
-            id="assessment-parent-name"
-            name="parentName"
-            type="text"
-            autoComplete="name"
-            placeholder="e.g. Priya Sharma"
-            value={form.parentName}
-            onChange={(e) => {
-              setForm((p) => ({ ...p, parentName: e.target.value }));
-              if (errors.parentName) setErrors((prev) => ({ ...prev, parentName: undefined }));
-            }}
-            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
-            required
-            aria-invalid={Boolean(errors.parentName)}
-          />
-          {errors.parentName ? <p className="text-xs text-rose-600">{errors.parentName}</p> : null}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="group space-y-1">
+            <label htmlFor="assessment-parent-name" className="text-[11px] font-bold uppercase text-slate-700 transition-colors group-focus-within:text-orange-700">
+              Parent Name *
+            </label>
+            <input
+              ref={firstFieldRef}
+              id="assessment-parent-name"
+              name="parentName"
+              type="text"
+              autoComplete="name"
+              placeholder="e.g. Priya Sharma"
+              value={form.parentName}
+              onChange={(e) => {
+                setForm((p) => ({ ...p, parentName: e.target.value }));
+                if (errors.parentName) setErrors((prev) => ({ ...prev, parentName: undefined }));
+              }}
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+              required
+              aria-invalid={Boolean(errors.parentName)}
+            />
+            {errors.parentName ? <p className="text-xs text-rose-600">{errors.parentName}</p> : null}
+          </div>
+
+          <div className="group space-y-1">
+            <label htmlFor="assessment-child-name" className="text-[11px] font-bold uppercase text-slate-700 transition-colors group-focus-within:text-orange-700">
+              Child Name *
+            </label>
+            <input
+              id="assessment-child-name"
+              name="childName"
+              type="text"
+              autoComplete="off"
+              placeholder="e.g. Aarav Sharma"
+              value={form.childName}
+              onChange={(e) => {
+                setForm((p) => ({ ...p, childName: e.target.value }));
+                if (errors.childName) setErrors((prev) => ({ ...prev, childName: undefined }));
+              }}
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+              required
+              aria-invalid={Boolean(errors.childName)}
+            />
+            {errors.childName ? <p className="text-xs text-rose-600">{errors.childName}</p> : null}
+          </div>
         </div>
 
         <div className="group space-y-1">
