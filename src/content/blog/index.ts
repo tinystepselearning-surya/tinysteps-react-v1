@@ -75,6 +75,8 @@ import post_june_school_readiness_english_revision_plan from './posts/parent-tip
 import post_how_phonics_grammar_and_communication_work_together from './posts/parent-tips/how-phonics-grammar-and-communication-work-together';
 import post_why_child_knows_letter_sounds_but_cannot_read_words from './posts/parent-tips/why-child-knows-letter-sounds-but-cannot-read-words';
 import post_how_to_improve_sentence_formation_in_kids from './posts/parent-tips/how-to-improve-sentence-formation-in-kids';
+import post_how_to_improve_reading_fluency_in_children from './posts/parent-tips/how-to-improve-reading-fluency-in-children';
+import post_why_child_reads_words_but_does_not_understand_story from './posts/parent-tips/why-child-reads-words-but-does-not-understand-story';
 import post_why_child_answers_only_in_one_word from './posts/parent-tips/why-child-answers-only-in-one-word';
 import post_how_long_does_it_take_child_to_learn_phonics from './posts/parent-tips/how-long-does-it-take-child-to-learn-phonics';
 import post_best_age_to_start_phonics_classes_for_kids from './posts/parent-tips/best-age-to-start-phonics-classes-for-kids';
@@ -158,6 +160,8 @@ const rawBlogPosts: BlogPost[] = [
   post_how_phonics_grammar_and_communication_work_together,
   post_why_child_knows_letter_sounds_but_cannot_read_words,
   post_how_to_improve_sentence_formation_in_kids,
+  post_how_to_improve_reading_fluency_in_children,
+  post_why_child_reads_words_but_does_not_understand_story,
   post_why_child_answers_only_in_one_word,
   post_how_long_does_it_take_child_to_learn_phonics,
   post_best_age_to_start_phonics_classes_for_kids,

@@ -27,6 +27,11 @@ const post: BlogPost = {
         'Reading comprehension for kids develops alongside decoding, not automatically after it. Children often need explicit meaning-focused practice.',
     },
     {
+      type: 'p',
+      content:
+        'If you want the deeper parent guide first, read [why children read words but do not understand stories](/blog/why-child-reads-words-but-does-not-understand-story). This article stays focused on quick practical actions you can start this week.',
+    },
+    {
       type: 'h2',
       content: '2. Reading Words Is Not the Same as Understanding',
     },

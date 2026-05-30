@@ -363,6 +363,52 @@ function slugifyHeading(value: string) {
     .slice(0, 80) || 'section';
 }
 
+function renderInlineContent(text: string) {
+  if (typeof text !== 'string' || text.length === 0) return text;
+
+  const nodes: any[] = [];
+  const pattern = /\[([^\]]+)\]\((\/[a-z0-9][^)\s]*|https?:\/\/[^)\s]+)\)/gi;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(text)) !== null) {
+    const [raw, label, href] = match;
+    const start = match.index;
+
+    if (start > lastIndex) {
+      nodes.push(text.slice(lastIndex, start));
+    }
+
+    if (href.startsWith('/')) {
+      nodes.push(
+        <Link key={`inline-link-${start}-${href}`} to={href} className="text-slate-900 underline hover:text-sky-700">
+          {label}
+        </Link>,
+      );
+    } else {
+      nodes.push(
+        <a
+          key={`inline-link-${start}-${href}`}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-slate-900 underline hover:text-sky-700"
+        >
+          {label}
+        </a>,
+      );
+    }
+
+    lastIndex = start + raw.length;
+  }
+
+  if (lastIndex < text.length) {
+    nodes.push(text.slice(lastIndex));
+  }
+
+  return nodes.length ? nodes : text;
+}
+
 const PHONICS_ROUTE = {
   label: 'Online Phonics Classes',
   to: '/phonics',
@@ -453,6 +499,7 @@ function deriveEyebrowSecondaryLabel(title: string, category: string, isWeekRoad
 const BlogPostPage: FC = () => {
   const { slug } = useParams();
   const post = useMemo(() => blogPosts.find((p) => p.slug === slug), [slug]);
+  const isStoryUnderstandingPillar = slug === 'why-child-reads-words-but-does-not-understand-story';
   const [MdxComp, setMdxComp] = useState<any>(null);
   const [mdxMeta, setMdxMeta] = useState<any>(null);
   useEffect(() => {
@@ -732,7 +779,7 @@ function buildMetaDescription(src: any) {
                   </li>
                 );
               }
-              return <li key={`${ulKey}-li-${k}`}>{txt}</li>;
+              return <li key={`${ulKey}-li-${k}`}>{renderInlineContent(txt)}</li>;
             })}
           </ul>,
         );
@@ -740,7 +787,35 @@ function buildMetaDescription(src: any) {
         continue;
       }
 
-      nodes.push(<p key={`p-${i}`}>{block.content}</p>);
+      if (block.type === 'p') {
+        const calloutMatch = block.content.match(/^@@card:\s*([^|]+)\|(.+)$/);
+        if (calloutMatch) {
+          const title = calloutMatch[1].trim();
+          const entries = calloutMatch[2]
+            .split('|')
+            .map((item) => item.trim())
+            .filter(Boolean);
+          nodes.push(
+            <section
+              key={`card-${i}`}
+              className="not-prose my-8 rounded-[1.4rem] border border-slate-200 bg-[linear-gradient(135deg,#fff8ef_0%,#f6faff_100%)] p-5 shadow-[0_14px_35px_rgba(15,23,42,0.05)] ring-1 ring-slate-200/70 sm:p-6"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-700">{title}</p>
+              <ul className="mt-3 space-y-2.5 text-[0.99rem] leading-7 text-slate-700">
+                {entries.map((entry, index) => (
+                  <li key={`card-${i}-entry-${index}`} className="flex gap-2">
+                    <span className="mt-[0.45rem] h-1.5 w-1.5 shrink-0 rounded-full bg-slate-500" />
+                    <span>{renderInlineContent(entry)}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>,
+          );
+          continue;
+        }
+      }
+
+      nodes.push(<p key={`p-${i}`}>{renderInlineContent(block.content)}</p>);
     }
 
     if (MdxComp) {
@@ -775,53 +850,26 @@ function buildMetaDescription(src: any) {
       />
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
-        <div className="mb-6">
-          <Link to="/blog" className="inline-flex items-center text-sm font-semibold text-primary-700">← Back to Blogs</Link>
-        </div>
-
-        <section className={`grid gap-6 ${metaSource.hero ? 'xl:grid-cols-[minmax(0,1.12fr)_360px]' : ''}`}>
-          {metaSource.hero ? (
-            <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-              <img
-                src={metaSource.hero}
-                alt={metaSource.title}
-                className="aspect-[1.68/1] w-full bg-slate-100 object-cover"
-                loading="lazy"
-                decoding="async"
-              />
-            </div>
-          ) : null}
-
-          <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Article snapshot</p>
-            <div className="mt-4 rounded-[1.6rem] border border-slate-200 bg-[linear-gradient(135deg,#fff5e7,#eef6ff)] p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Quick answer</p>
-              <p className="ts-blog-quick-answer mt-3 text-base leading-8 text-slate-700">
-                {metaSource.excerpt || buildMetaDescription(metaSource)}
-              </p>
-            </div>
-
-            <div className="mt-5 space-y-4">
-              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Category</p>
-                <p className="mt-2 text-sm font-semibold text-slate-900">{metaSource.category || 'Parent Tips'}</p>
-              </div>
-              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Best next move</p>
-                <p className="mt-2 text-sm leading-7 text-slate-600">{categoryConfig.sidebarDescription}</p>
-              </div>
-              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Content ownership</p>
-                <p className="mt-2 text-sm leading-7 text-slate-600">
-                  Published by {PUBLIC_FACTS.brandName}. This article is prepared by the Tiny Steps academic team to help parents make practical English-learning decisions.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <div className="mt-10 grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="min-w-0 space-y-8">
+            <div>
+              <Link to="/blog" className="inline-flex items-center text-sm font-semibold text-primary-700">← Back to Blogs</Link>
+            </div>
+
+            {metaSource.hero ? (
+              <div className="self-start overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
+                <div className={`aspect-[1.68/1] w-full ${isStoryUnderstandingPillar ? 'xl:aspect-[2.25/1]' : 'xl:aspect-[2.05/1]'}`}>
+                  <img
+                    src={metaSource.hero}
+                    alt={metaSource.title}
+                    className="h-full w-full bg-slate-100 object-cover object-center"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+              </div>
+            ) : null}
+
             <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Quick answer</p>
               <h2 className="ts-blog-hero-title mt-3 text-2xl font-black tracking-tight text-slate-950 sm:text-4xl">
@@ -833,7 +881,7 @@ function buildMetaDescription(src: any) {
             </section>
 
             <article className="rounded-[2rem] border border-slate-200 bg-white px-6 py-8 shadow-[0_24px_60px_rgba(15,23,42,0.06)] sm:px-8">
-              <div className="prose prose-slate prose-lg max-w-none prose-headings:font-black prose-headings:tracking-tight prose-h2:mt-14 prose-h2:text-3xl sm:prose-h2:text-4xl prose-h2:text-slate-950 prose-h3:mt-8 prose-h3:text-2xl prose-h3:text-slate-900 prose-p:text-[1.04rem] prose-p:leading-8 prose-p:text-slate-700 prose-ul:my-6 prose-li:my-2 prose-li:text-slate-700">
+              <div className={`prose prose-slate prose-lg max-w-none prose-headings:font-black prose-headings:tracking-tight ${isStoryUnderstandingPillar ? 'prose-h2:mt-24 prose-h3:mt-12' : 'prose-h2:mt-20 prose-h3:mt-11'} prose-h2:mb-6 prose-h2:border-b prose-h2:border-slate-200 prose-h2:pb-2 prose-h2:text-3xl sm:prose-h2:text-[2.2rem] prose-h2:text-slate-950 prose-h3:mb-3 prose-h3:text-xl sm:prose-h3:text-[1.55rem] prose-h3:text-slate-900 prose-p:my-5 prose-p:text-[1.04rem] prose-p:leading-8 prose-p:text-slate-700 prose-ul:my-6 prose-li:my-2 prose-li:text-slate-700`}>
                 {articleNodes}
               </div>
             </article>
@@ -915,17 +963,46 @@ function buildMetaDescription(src: any) {
             </section>
           </div>
 
-          <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+          <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Article snapshot</p>
+              <div className="mt-4 rounded-[1.6rem] border border-slate-200 bg-[linear-gradient(135deg,#fff5e7,#eef6ff)] p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Quick answer</p>
+                <p className="ts-blog-quick-answer mt-3 text-base leading-8 text-slate-700">
+                  {metaSource.excerpt || buildMetaDescription(metaSource)}
+                </p>
+              </div>
+
+              <div className="mt-5 space-y-4">
+                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Category</p>
+                  <p className="mt-2 text-sm font-semibold text-slate-900">{metaSource.category || 'Parent Tips'}</p>
+                </div>
+                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Best next move</p>
+                  <p className="mt-2 text-sm leading-7 text-slate-600">{categoryConfig.sidebarDescription}</p>
+                </div>
+                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Content ownership</p>
+                  <p className="mt-2 text-sm leading-7 text-slate-600">
+                    Published by {PUBLIC_FACTS.brandName}. This article is prepared by the Tiny Steps academic team to help parents make practical English-learning decisions.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {headingItems.length ? (
               <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">On this page</p>
-                <nav className="mt-5 space-y-3">
+                <nav className="mt-5 space-y-2">
                   {headingItems.map((item) => (
                     <a
                       key={item.id}
                       href={`#${item.id}`}
-                      className={`block text-sm leading-6 transition hover:text-primary-700 ${
-                        item.level === 'h3' ? 'pl-4 text-slate-500' : 'font-semibold text-slate-900'
+                      className={`block transition hover:text-primary-700 ${
+                        item.level === 'h3'
+                          ? 'pl-4 text-xs leading-5 text-slate-500'
+                          : 'text-sm font-semibold leading-6 text-slate-900'
                       }`}
                     >
                       {item.title}
