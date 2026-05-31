@@ -100,7 +100,7 @@ function resolveAttendanceStatus(session: any, kidId: string | null): string | n
 }
 
 function isBillableAttendance(status: string | null): boolean {
-  return status === 'present' || status === 'late';
+  return status === 'present';
 }
 
 function hasAnyBillableAttendance(session: any): boolean {

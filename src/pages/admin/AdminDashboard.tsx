@@ -103,7 +103,14 @@ const AccessMessage = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-type AttendanceCorrectionStatus = 'present' | 'absent' | 'late' | 'reschedule_requested';
+type AttendanceCorrectionStatus =
+  | 'present'
+  | 'absent'
+  | 'cancelled'
+  | 'rescheduled'
+  | 'no_show'
+  | 'reschedule_requested'
+  | 'late';
 type AttendanceCorrectionSession = {
   id: string;
   date: string;
@@ -116,8 +123,11 @@ type AttendanceCorrectionSession = {
 const ATTENDANCE_CORRECTION_STATUS_OPTIONS: AttendanceCorrectionStatus[] = [
   'present',
   'absent',
-  'late',
+  'cancelled',
+  'rescheduled',
+  'no_show',
   'reschedule_requested',
+  'late',
 ];
 
 const toIsoDate = (value: Date): string => {

@@ -16,6 +16,14 @@ const CALLABLE_CORS_ORIGINS: Array<string | RegExp> = [
 ];
 
 type AttendanceStatus = 'present' | 'absent' | 'late' | 'reschedule_requested';
+type AdminAttendanceStatus =
+  | 'present'
+  | 'absent'
+  | 'late'
+  | 'reschedule_requested'
+  | 'rescheduled'
+  | 'cancelled'
+  | 'no_show';
 
 interface TopicUpdateInput {
   topicId?: unknown;
@@ -66,6 +74,27 @@ function normalizeAttendanceStatus(value: unknown): AttendanceStatus | null {
     raw === 'reschedule_requested'
   ) {
     return raw;
+  }
+  return null;
+}
+
+function normalizeAdminAttendanceStatus(value: unknown): AdminAttendanceStatus | null {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return null;
+  if (raw === 'present') return 'present';
+  if (raw === 'absent') return 'absent';
+  if (raw === 'late') return 'late';
+  if (raw === 'reschedule_requested' || raw === 'reschedule-requested') return 'reschedule_requested';
+  if (raw === 'rescheduled' || raw === 'reschedule') return 'rescheduled';
+  if (raw === 'cancelled' || raw === 'canceled') return 'cancelled';
+  if (raw === 'no_show' || raw === 'noshow' || raw === 'no-show') return 'no_show';
+  return null;
+}
+
+function resolveAdminAttendanceStatus(entry: unknown): AdminAttendanceStatus | null {
+  if (typeof entry === 'string') return normalizeAdminAttendanceStatus(entry);
+  if (entry && typeof entry === 'object' && typeof (entry as { status?: unknown }).status === 'string') {
+    return normalizeAdminAttendanceStatus((entry as { status: string }).status);
   }
   return null;
 }
@@ -255,6 +284,382 @@ function assertCanSaveSession(
   const sessionTeacherId = String(session.teacherId || '').trim();
   if (role === 'teacher' && sessionTeacherId && sessionTeacherId === uid) return;
   throw new HttpsError('permission-denied', 'Not allowed to update this session.');
+}
+
+const ACTIVE_ENROLLMENT_STATUSES = [
+  'trial',
+  'active',
+  'paused',
+  'pending_teacher',
+  'pending_payment',
+  'enrolled',
+  'current',
+  'ongoing',
+] as const;
+
+function normalizeFinancialStatus(value: unknown): string {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return '';
+  if (raw === 'canceled') return 'cancelled';
+  return raw;
+}
+
+function normalizeMoney(value: unknown): number {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return n;
+}
+
+function isSettledFinancialStatus(status: string): boolean {
+  return status === 'paid' || status === 'settled';
+}
+
+function resolveMonthKeyFromSession(session: Record<string, unknown>): string | null {
+  const base =
+    toDateMaybe(session.startAt) ||
+    toDateMaybe(session.endAt) ||
+    toDateMaybe(session.date);
+  if (!base) return null;
+  const istMs = base.getTime() + 330 * 60 * 1000;
+  const istDate = new Date(istMs);
+  const year = istDate.getUTCFullYear();
+  const month = String(istDate.getUTCMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+}
+
+function resolveSessionKidId(session: Record<string, unknown>, preferredKidId?: string): string | null {
+  const direct = String(preferredKidId || '').trim();
+  if (direct) return direct;
+  const fromKidId = String(session.kidId || session.studentId || '').trim();
+  if (fromKidId) return fromKidId;
+  if (Array.isArray(session.kidIds)) {
+    const first = session.kidIds.map((id) => String(id || '').trim()).find(Boolean);
+    if (first) return first;
+  }
+  return null;
+}
+
+function resolveFeeAmount(session: Record<string, unknown>, enrollment: Record<string, unknown>): number {
+  return normalizeMoney(
+    session.feeAmount ??
+      session.feePerClass ??
+      enrollment.ratePerSession ??
+      enrollment.feePerClass ??
+      enrollment.feePerSession ??
+      0
+  );
+}
+
+function resolveTeacherPay(enrollment: Record<string, unknown>): number {
+  return normalizeMoney(
+    enrollment.teacherPayPerSession ??
+      enrollment.teacherRatePerSession ??
+      enrollment.teacherPay ??
+      0
+  );
+}
+
+async function resolveEnrollmentIdForSession(
+  db: admin.firestore.Firestore,
+  session: Record<string, unknown>,
+  preferredKidId?: string | null
+): Promise<string | null> {
+  const existing = String(session.enrollmentId || '').trim();
+  if (existing) return existing;
+
+  const kidId = resolveSessionKidId(session, String(preferredKidId || '').trim() || undefined);
+  const courseId = String(session.courseId || '').trim();
+  if (!kidId || !courseId) return null;
+
+  const runStatusQueries: Array<() => Promise<admin.firestore.QuerySnapshot>> = [
+    () =>
+      db
+        .collection('enrollments')
+        .where('kidId', '==', kidId)
+        .where('courseId', '==', courseId)
+        .where('status', 'in', Array.from(ACTIVE_ENROLLMENT_STATUSES))
+        .limit(1)
+        .get(),
+    () =>
+      db
+        .collection('enrollments')
+        .where('studentId', '==', kidId)
+        .where('courseId', '==', courseId)
+        .where('status', 'in', Array.from(ACTIVE_ENROLLMENT_STATUSES))
+        .limit(1)
+        .get(),
+    () =>
+      db
+        .collection('enrollments')
+        .where('kidIds', 'array-contains', kidId)
+        .where('courseId', '==', courseId)
+        .where('status', 'in', Array.from(ACTIVE_ENROLLMENT_STATUSES))
+        .limit(1)
+        .get(),
+  ];
+
+  for (const runQuery of runStatusQueries) {
+    try {
+      const snap = await runQuery();
+      if (!snap.empty) return snap.docs[0].id;
+    } catch {
+      break;
+    }
+  }
+
+  const runFallbackQueries: Array<() => Promise<admin.firestore.QuerySnapshot>> = [
+    () =>
+      db
+        .collection('enrollments')
+        .where('kidId', '==', kidId)
+        .where('courseId', '==', courseId)
+        .limit(1)
+        .get(),
+    () =>
+      db
+        .collection('enrollments')
+        .where('studentId', '==', kidId)
+        .where('courseId', '==', courseId)
+        .limit(1)
+        .get(),
+    () =>
+      db
+        .collection('enrollments')
+        .where('kidIds', 'array-contains', kidId)
+        .where('courseId', '==', courseId)
+        .limit(1)
+        .get(),
+  ];
+
+  for (const runQuery of runFallbackQueries) {
+    const snap = await runQuery();
+    if (!snap.empty) return snap.docs[0].id;
+  }
+
+  return null;
+}
+
+function resolveChargePaidAmount(data: Record<string, unknown>, amount: number): number {
+  const paidAmount = normalizeMoney(data.paidAmount);
+  if (paidAmount > 0) return Math.min(paidAmount, Math.max(amount, 0));
+  const status = normalizeFinancialStatus(data.status);
+  if (isSettledFinancialStatus(status)) {
+    return Math.max(amount, 0);
+  }
+  return 0;
+}
+
+function resolveTeacherEarningPaidAmount(data: Record<string, unknown>, amount: number): number {
+  const paidAmount = normalizeMoney(data.paidAmount);
+  if (paidAmount > 0) return Math.min(paidAmount, Math.max(amount, 0));
+  const status = normalizeFinancialStatus(data.status);
+  if (isSettledFinancialStatus(status)) {
+    return Math.max(amount, 0);
+  }
+  return 0;
+}
+
+type AttendanceCorrectionFinanceAction =
+  | 'mark_billable'
+  | 'mark_non_billable'
+  | 'no_finance_change';
+
+type AttendanceCorrectionFinanceResult = {
+  action: AttendanceCorrectionFinanceAction;
+  chargeChanged: boolean;
+  earningChanged: boolean;
+};
+
+async function reconcileAttendanceCorrectionFinance(args: {
+  db: admin.firestore.Firestore;
+  batch: admin.firestore.WriteBatch;
+  sessionId: string;
+  session: Record<string, unknown>;
+  kidId: string;
+  previousStatus: AdminAttendanceStatus | null;
+  newStatus: AdminAttendanceStatus;
+  correctedByUid: string;
+  attendanceCorrectionId: string;
+  reason: string;
+}): Promise<AttendanceCorrectionFinanceResult> {
+  const {
+    db,
+    batch,
+    sessionId,
+    session,
+    kidId,
+    previousStatus,
+    newStatus,
+    correctedByUid,
+    attendanceCorrectionId,
+    reason,
+  } = args;
+
+  const wasBillable = previousStatus === 'present';
+  const isBillableNow = newStatus === 'present';
+  const chargeRef = db.collection('billingCharges').doc(sessionId);
+  const earningRef = db.collection('teacherEarnings').doc(sessionId);
+  const [chargeSnap, earningSnap] = await Promise.all([chargeRef.get(), earningRef.get()]);
+
+  const metadata: Record<string, unknown> = {
+    attendanceCorrectionId,
+    reconciledAt: admin.firestore.FieldValue.serverTimestamp(),
+    reconciledByUid: correctedByUid,
+    reconciliationSource: 'admin-attendance-correction',
+    previousAttendanceStatus: previousStatus || 'not_marked',
+    newAttendanceStatus: newStatus,
+    correctionReason: reason,
+  };
+
+  if (!wasBillable && !isBillableNow) {
+    return { action: 'no_finance_change', chargeChanged: false, earningChanged: false };
+  }
+
+  if (isBillableNow) {
+    const enrollmentId = await resolveEnrollmentIdForSession(db, session, kidId);
+    if (!enrollmentId) {
+      throw new HttpsError('failed-precondition', 'Unable to resolve enrollment for finance reconciliation.');
+    }
+
+    const enrollmentSnap = await db.collection('enrollments').doc(enrollmentId).get();
+    if (!enrollmentSnap.exists) {
+      throw new HttpsError('failed-precondition', 'Enrollment not found for finance reconciliation.');
+    }
+    const enrollment = (enrollmentSnap.data() || {}) as Record<string, unknown>;
+
+    const monthKey = resolveMonthKeyFromSession(session);
+    if (!monthKey) {
+      throw new HttpsError('failed-precondition', 'Unable to determine session month for finance reconciliation.');
+    }
+
+    const sessionTeacherId = String(session.teacherId || '').trim();
+    const teacherId = sessionTeacherId || String(enrollment.teacherId || '').trim() || null;
+    const parentId = String(session.parentId || '').trim() || String(enrollment.parentId || '').trim() || null;
+    const courseId = String(session.courseId || '').trim() || String(enrollment.courseId || '').trim() || null;
+    const currency = String(session.currency || enrollment.currency || 'INR');
+    const billableKidId = resolveSessionKidId(session, kidId);
+    const amount = resolveFeeAmount(session, enrollment);
+    const teacherAmount = resolveTeacherPay(enrollment);
+
+    const existingChargeData = (chargeSnap.data() || {}) as Record<string, unknown>;
+    const chargeStatus = normalizeFinancialStatus(existingChargeData.status);
+    const nextChargeStatus = !chargeSnap.exists || chargeStatus === 'void' ? 'open' : chargeStatus || 'open';
+
+    const existingEarningData = (earningSnap.data() || {}) as Record<string, unknown>;
+    const earningStatus = normalizeFinancialStatus(existingEarningData.status);
+    const nextEarningStatus = !earningSnap.exists || earningStatus === 'void' ? 'unpaid' : earningStatus || 'unpaid';
+
+    const chargePayload: Record<string, unknown> = {
+      sessionId,
+      enrollmentId,
+      kidId: billableKidId,
+      parentId,
+      teacherId,
+      courseId,
+      amount,
+      currency,
+      status: nextChargeStatus,
+      source: 'session_present_completed',
+      monthKey,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      ...metadata,
+      voidedAt: admin.firestore.FieldValue.delete(),
+      voidReason: admin.firestore.FieldValue.delete(),
+      correctedBy: admin.firestore.FieldValue.delete(),
+      correctedAt: admin.firestore.FieldValue.delete(),
+    };
+    if (!chargeSnap.exists) {
+      chargePayload.createdAt = admin.firestore.FieldValue.serverTimestamp();
+    }
+
+    const earningPayload: Record<string, unknown> = {
+      sessionId,
+      enrollmentId,
+      kidId: billableKidId,
+      teacherId,
+      parentId,
+      courseId,
+      amount: teacherAmount,
+      currency,
+      status: nextEarningStatus,
+      source: 'session_present_completed',
+      monthKey,
+      earnedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      ...metadata,
+      voidedAt: admin.firestore.FieldValue.delete(),
+      voidReason: admin.firestore.FieldValue.delete(),
+      correctedBy: admin.firestore.FieldValue.delete(),
+      correctedAt: admin.firestore.FieldValue.delete(),
+    };
+    if (!earningSnap.exists) {
+      earningPayload.createdAt = admin.firestore.FieldValue.serverTimestamp();
+    }
+
+    batch.set(chargeRef, chargePayload, { merge: true });
+    batch.set(earningRef, earningPayload, { merge: true });
+    return { action: 'mark_billable', chargeChanged: true, earningChanged: true };
+  }
+
+  const chargeData = (chargeSnap.data() || {}) as Record<string, unknown>;
+  const chargeStatus = normalizeFinancialStatus(chargeData.status);
+  const chargeAmount = Math.max(normalizeMoney(chargeData.amount ?? session.accruedAmount), 0);
+  const chargePaidAmount = resolveChargePaidAmount(chargeData, chargeAmount);
+  if (chargeSnap.exists && chargeStatus !== 'void' && chargePaidAmount > 0) {
+    throw new HttpsError(
+      'failed-precondition',
+      'This charge already has payment applied. Reverse payment allocation first.'
+    );
+  }
+
+  const earningData = (earningSnap.data() || {}) as Record<string, unknown>;
+  const earningStatus = normalizeFinancialStatus(earningData.status);
+  const earningAmount = Math.max(normalizeMoney(earningData.amount), 0);
+  const earningPaidAmount = resolveTeacherEarningPaidAmount(earningData, earningAmount);
+  if (earningSnap.exists && earningStatus !== 'void' && earningPaidAmount > 0) {
+    throw new HttpsError(
+      'failed-precondition',
+      'This teacher earning is already paid. Reverse payout allocation first.'
+    );
+  }
+
+  let chargeChanged = false;
+  if (chargeSnap.exists && chargeStatus !== 'void') {
+    batch.set(
+      chargeRef,
+      {
+        status: 'void',
+        voidedAt: admin.firestore.FieldValue.serverTimestamp(),
+        voidReason: reason,
+        correctedBy: correctedByUid,
+        correctedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        ...metadata,
+      },
+      { merge: true },
+    );
+    chargeChanged = true;
+  }
+
+  let earningChanged = false;
+  if (earningSnap.exists && earningStatus !== 'void') {
+    batch.set(
+      earningRef,
+      {
+        status: 'void',
+        voidedAt: admin.firestore.FieldValue.serverTimestamp(),
+        voidReason: reason,
+        correctedBy: correctedByUid,
+        correctedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        ...metadata,
+      },
+      { merge: true },
+    );
+    earningChanged = true;
+  }
+
+  return { action: 'mark_non_billable', chargeChanged, earningChanged };
 }
 
 export const saveTeacherSessionProgress = onCall(
@@ -626,7 +1031,7 @@ export const adminAttendanceCorrection = onCall(
     const sessionId = sanitizeText(payload.sessionId, 160);
     const kidId = sanitizeText(payload.kidId, 160);
     const reason = sanitizeText(payload.reason, 2000);
-    const newStatus = normalizeAttendanceStatus(payload.newStatus);
+    const newStatus = normalizeAdminAttendanceStatus(payload.newStatus);
 
     if (!sessionId) {
       throw new HttpsError('invalid-argument', 'sessionId is required.');
@@ -661,7 +1066,7 @@ export const adminAttendanceCorrection = onCall(
         ? (session.attendance as Record<string, unknown>)
         : {};
     const previousRawEntry = attendanceRaw[kidId];
-    const previousStatus = toAttendanceEntry(previousRawEntry).status || null;
+    const previousStatus = resolveAdminAttendanceStatus(previousRawEntry);
     const previousEntryObject =
       previousRawEntry && typeof previousRawEntry === 'object' && !Array.isArray(previousRawEntry)
         ? { ...(previousRawEntry as Record<string, unknown>) }
@@ -687,6 +1092,23 @@ export const adminAttendanceCorrection = onCall(
     const correctedByEmail = sanitizeText(userData.email, 320) || tokenEmail || null;
 
     const batch = db.batch();
+    const auditRef = sessionRef.collection('attendanceCorrections').doc();
+    const financeReconciliation = await reconcileAttendanceCorrectionFinance({
+      db,
+      batch,
+      sessionId,
+      session: {
+        ...session,
+        attendance: nextAttendance,
+      },
+      kidId,
+      previousStatus,
+      newStatus,
+      correctedByUid: uid,
+      attendanceCorrectionId: auditRef.id,
+      reason,
+    });
+
     batch.set(
       sessionRef,
       {
@@ -697,7 +1119,6 @@ export const adminAttendanceCorrection = onCall(
       { merge: true },
     );
 
-    const auditRef = sessionRef.collection('attendanceCorrections').doc();
     batch.set(auditRef, {
       source: 'admin-attendance-correction',
       sessionId,
@@ -705,10 +1126,12 @@ export const adminAttendanceCorrection = onCall(
       previousStatus,
       newStatus,
       reason,
+      correctedBy: uid,
       correctedByUid: uid,
       correctedByName,
       correctedByEmail,
       correctedAt: admin.firestore.FieldValue.serverTimestamp(),
+      financeReconciliation,
     });
 
     await batch.commit();
