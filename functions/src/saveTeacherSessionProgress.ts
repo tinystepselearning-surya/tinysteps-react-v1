@@ -5,6 +5,15 @@ import * as logger from 'firebase-functions/logger';
 if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
+const ATTENDANCE_OPEN_DELAY_MS = 30 * 60 * 1000;
+const ATTENDANCE_CLOSE_WINDOW_MS = 24 * 60 * 60 * 1000;
+const CALLABLE_CORS_ORIGINS: Array<string | RegExp> = [
+  'http://localhost:5173',
+  /https:\/\/([a-z0-9-]+\.)?tinysteps\.com$/,
+  /https:\/\/([a-z0-9-]+\.)?tinysteps\.in$/,
+  'https://tinysteps-react-v1.web.app',
+  'https://tinysteps-react-v1.firebaseapp.com',
+];
 
 type AttendanceStatus = 'present' | 'absent' | 'late' | 'reschedule_requested';
 
@@ -32,6 +41,13 @@ interface SaveTeacherSessionProgressRequest {
     courseLabel?: unknown;
     attendanceOnly?: unknown;
   };
+}
+
+interface AdminAttendanceCorrectionRequest {
+  sessionId?: unknown;
+  kidId?: unknown;
+  newStatus?: unknown;
+  reason?: unknown;
 }
 
 function normalizeRole(value: unknown): string {
@@ -103,7 +119,13 @@ function getSessionStartMillis(session: Record<string, unknown>): number | null 
 function getAttendanceAllowedAtMillis(session: Record<string, unknown>): number | null {
   const startMs = getSessionStartMillis(session);
   if (startMs === null) return null;
-  return startMs + 30 * 60 * 1000;
+  return startMs + ATTENDANCE_OPEN_DELAY_MS;
+}
+
+function getAttendanceWindowCloseMillis(session: Record<string, unknown>): number | null {
+  const startMs = getSessionStartMillis(session);
+  if (startMs === null) return null;
+  return startMs + ATTENDANCE_CLOSE_WINDOW_MS;
 }
 
 function canCallerOverrideAttendanceTime(role: string): boolean {
@@ -270,11 +292,12 @@ export const saveTeacherSessionProgress = onCall(
     assertCanSaveSession(uid, role, session);
 
     const attendanceAllowedAtMs = getAttendanceAllowedAtMillis(session);
+    const attendanceWindowCloseMs = getAttendanceWindowCloseMillis(session);
     if (
       role === 'teacher' &&
       !canCallerOverrideAttendanceTime(role)
     ) {
-      if (attendanceAllowedAtMs === null) {
+      if (attendanceAllowedAtMs === null || attendanceWindowCloseMs === null) {
         throw new HttpsError(
           'failed-precondition',
           'Attendance time could not be verified. Please contact admin.',
@@ -283,7 +306,13 @@ export const saveTeacherSessionProgress = onCall(
       if (Date.now() < attendanceAllowedAtMs) {
         throw new HttpsError(
           'failed-precondition',
-          'Attendance can be marked only after 30 minutes of the class start time.',
+          'Attendance can be marked 30 minutes after class start.',
+        );
+      }
+      if (Date.now() > attendanceWindowCloseMs) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Attendance window has closed. Please contact admin to update this attendance.',
         );
       }
     }
@@ -573,4 +602,133 @@ export const saveTeacherSessionProgress = onCall(
       consumedMakeupCreditId: makeupCreditId || null,
     };
   }
+);
+
+export const adminAttendanceCorrection = onCall(
+  {
+    region: REGION,
+    memory: '256MiB',
+    timeoutSeconds: 90,
+    cors: CALLABLE_CORS_ORIGINS,
+  },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError('unauthenticated', 'Sign in required.');
+    }
+
+    const uid = request.auth.uid;
+    const role = await resolveCallerRole(request.auth);
+    if (role !== 'admin') {
+      throw new HttpsError('permission-denied', 'Admin access required.');
+    }
+
+    const payload = (request.data || {}) as AdminAttendanceCorrectionRequest;
+    const sessionId = sanitizeText(payload.sessionId, 160);
+    const kidId = sanitizeText(payload.kidId, 160);
+    const reason = sanitizeText(payload.reason, 2000);
+    const newStatus = normalizeAttendanceStatus(payload.newStatus);
+
+    if (!sessionId) {
+      throw new HttpsError('invalid-argument', 'sessionId is required.');
+    }
+    if (!kidId) {
+      throw new HttpsError('invalid-argument', 'kidId is required.');
+    }
+    if (!newStatus) {
+      throw new HttpsError('invalid-argument', 'newStatus is required.');
+    }
+    if (!reason) {
+      throw new HttpsError('invalid-argument', 'reason is required.');
+    }
+
+    const db = admin.firestore();
+    const sessionRef = db.collection('classSessions').doc(sessionId);
+    const sessionSnap = await sessionRef.get();
+    if (!sessionSnap.exists) {
+      throw new HttpsError('not-found', 'Session not found.');
+    }
+
+    const session = (sessionSnap.data() || {}) as Record<string, unknown>;
+    const sessionKidIds = Array.isArray(session.kidIds)
+      ? (session.kidIds as unknown[]).map((id) => String(id || '').trim()).filter(Boolean)
+      : [];
+    if (sessionKidIds.length > 0 && !sessionKidIds.includes(kidId)) {
+      throw new HttpsError('invalid-argument', 'Selected student is not assigned to this session.');
+    }
+
+    const attendanceRaw =
+      session.attendance && typeof session.attendance === 'object' && !Array.isArray(session.attendance)
+        ? (session.attendance as Record<string, unknown>)
+        : {};
+    const previousRawEntry = attendanceRaw[kidId];
+    const previousStatus = toAttendanceEntry(previousRawEntry).status || null;
+    const previousEntryObject =
+      previousRawEntry && typeof previousRawEntry === 'object' && !Array.isArray(previousRawEntry)
+        ? { ...(previousRawEntry as Record<string, unknown>) }
+        : {};
+
+    const nextAttendance: Record<string, unknown> = {
+      ...attendanceRaw,
+      [kidId]: {
+        ...previousEntryObject,
+        status: newStatus,
+      },
+    };
+
+    const userSnap = await db.collection('users').doc(uid).get();
+    const userData = (userSnap.data() || {}) as Record<string, unknown>;
+    const tokenEmail = sanitizeText(request.auth?.token?.email, 320);
+    const correctedByName =
+      sanitizeText(userData.fullName, 320) ||
+      sanitizeText(userData.name, 320) ||
+      sanitizeText(userData.displayName, 320) ||
+      tokenEmail ||
+      uid;
+    const correctedByEmail = sanitizeText(userData.email, 320) || tokenEmail || null;
+
+    const batch = db.batch();
+    batch.set(
+      sessionRef,
+      {
+        attendance: nextAttendance,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedBy: uid,
+      },
+      { merge: true },
+    );
+
+    const auditRef = sessionRef.collection('attendanceCorrections').doc();
+    batch.set(auditRef, {
+      source: 'admin-attendance-correction',
+      sessionId,
+      kidId,
+      previousStatus,
+      newStatus,
+      reason,
+      correctedByUid: uid,
+      correctedByName,
+      correctedByEmail,
+      correctedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    await batch.commit();
+
+    logger.info('adminAttendanceCorrection: applied', {
+      sessionId,
+      kidId,
+      previousStatus,
+      newStatus,
+      correctedByUid: uid,
+      correctionId: auditRef.id,
+    });
+
+    return {
+      ok: true,
+      sessionId,
+      kidId,
+      previousStatus,
+      newStatus,
+      correctionId: auditRef.id,
+    };
+  },
 );

@@ -208,6 +208,12 @@ const getAttendanceAllowedAtMillis = (session: Partial<TeacherSession> | null | 
   return startMs + 30 * 60 * 1000;
 };
 
+const getAttendanceWindowCloseMillis = (session: Partial<TeacherSession> | null | undefined): number | null => {
+  const startMs = getSessionStartMillis(session);
+  if (startMs === null) return null;
+  return startMs + 24 * 60 * 60 * 1000;
+};
+
 const completeSessionViaBackend = async (
   sessionId: string,
   payload?: {
@@ -398,16 +404,23 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   const isAttendanceAllowedNow = useCallback((session?: Partial<TeacherSession> | null): boolean => {
     if (canOverrideAttendanceTime) return true;
     const allowedAt = getAttendanceAllowedAtMillis(session);
-    if (allowedAt === null) return false;
-    return Date.now() >= allowedAt;
+    const windowCloseAt = getAttendanceWindowCloseMillis(session);
+    if (allowedAt === null || windowCloseAt === null) return false;
+    const nowMs = Date.now();
+    return nowMs >= allowedAt && nowMs <= windowCloseAt;
   }, [canOverrideAttendanceTime]);
 
   const tryOpenAttendance = useCallback((session: TeacherSession) => {
     if (!isAttendanceAllowedNow(session)) {
       const allowedAt = getAttendanceAllowedAtMillis(session);
-      const message = allowedAt !== null
-        ? `Attendance opens at ${format(new Date(allowedAt), 'h:mm a')}.`
-        : 'Attendance time could not be verified. Please contact admin.';
+      const windowCloseAt = getAttendanceWindowCloseMillis(session);
+      const nowMs = Date.now();
+      const message =
+        allowedAt === null || windowCloseAt === null
+          ? 'Attendance time could not be verified. Please contact admin.'
+          : nowMs > windowCloseAt
+            ? 'Attendance window has closed. Please contact admin to update this attendance.'
+            : `Attendance opens at ${format(new Date(allowedAt), 'h:mm a')}.`;
       toast({
         title: 'Attendance unavailable',
         description: message,
@@ -621,9 +634,14 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     if (!selectedSession) return;
     if (!isAttendanceAllowedNow(selectedSession)) {
       const allowedAt = getAttendanceAllowedAtMillis(selectedSession);
-      const message = allowedAt !== null
-        ? `Attendance opens at ${format(new Date(allowedAt), 'h:mm a')}.`
-        : 'Attendance time could not be verified. Please contact admin.';
+      const windowCloseAt = getAttendanceWindowCloseMillis(selectedSession);
+      const nowMs = Date.now();
+      const message =
+        allowedAt === null || windowCloseAt === null
+          ? 'Attendance time could not be verified. Please contact admin.'
+          : nowMs > windowCloseAt
+            ? 'Attendance window has closed. Please contact admin to update this attendance.'
+            : `Attendance opens at ${format(new Date(allowedAt), 'h:mm a')}.`;
       toast({
         title: 'Attendance unavailable',
         description: message,

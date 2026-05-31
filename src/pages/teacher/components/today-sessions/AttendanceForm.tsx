@@ -389,6 +389,12 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
     return startMs + 30 * 60 * 1000;
   };
 
+  const getAttendanceWindowCloseMillis = (): number | null => {
+    const startMs = getSessionStartMillis();
+    if (startMs === null) return null;
+    return startMs + 24 * 60 * 60 * 1000;
+  };
+
   useEffect(() => {
     if (session) {
       const defaults: Record<string, AttendanceEntryState> = {};
@@ -569,7 +575,9 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
     }
     if (!canOverrideAttendanceTime) {
       const allowedAt = getAttendanceAllowedAtMillis();
-      if (allowedAt === null) {
+      const windowCloseAt = getAttendanceWindowCloseMillis();
+      const nowMs = Date.now();
+      if (allowedAt === null || windowCloseAt === null) {
         toast({
           title: 'Attendance unavailable',
           description: 'Attendance time could not be verified. Please contact admin.',
@@ -577,10 +585,18 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
         });
         return;
       }
-      if (Date.now() < allowedAt) {
+      if (nowMs < allowedAt) {
         toast({
           title: 'Attendance unavailable',
           description: `Attendance opens at ${new Date(allowedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+      if (nowMs > windowCloseAt) {
+        toast({
+          title: 'Attendance unavailable',
+          description: 'Attendance window has closed. Please contact admin to update this attendance.',
           variant: 'destructive',
         });
         return;

@@ -25,6 +25,8 @@ const statusMap: Record<
 };
 
 export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames, onMarkAttendance }) => {
+  const ATTENDANCE_OPEN_DELAY_MS = 30 * 60 * 1000;
+  const ATTENDANCE_CLOSE_WINDOW_MS = 24 * 60 * 60 * 1000;
   const { user } = useAuthStore();
   const [isStartingClass, setIsStartingClass] = useState(false);
 
@@ -82,14 +84,17 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
   };
 
   const sessionStartMs = getSessionStartMillis();
-  const attendanceAllowedAtMs = sessionStartMs === null ? null : sessionStartMs + 30 * 60 * 1000;
+  const attendanceAllowedAtMs = sessionStartMs === null ? null : sessionStartMs + ATTENDANCE_OPEN_DELAY_MS;
+  const attendanceWindowCloseMs = sessionStartMs === null ? null : sessionStartMs + ATTENDANCE_CLOSE_WINDOW_MS;
   const canOverrideAttendanceTime = String((user as any)?.role || '').trim().toLowerCase() === 'admin';
-  const isAttendanceTimeUnverified = !canOverrideAttendanceTime && attendanceAllowedAtMs === null;
-  const isAttendanceLocked =
-    !canOverrideAttendanceTime && (
-      attendanceAllowedAtMs === null ||
-      Date.now() < attendanceAllowedAtMs
-    );
+  const nowMs = Date.now();
+  const isAttendanceTimeUnverified =
+    !canOverrideAttendanceTime && (attendanceAllowedAtMs === null || attendanceWindowCloseMs === null);
+  const isAttendanceTooEarly =
+    !canOverrideAttendanceTime && attendanceAllowedAtMs !== null && nowMs < attendanceAllowedAtMs;
+  const isAttendanceWindowClosed =
+    !canOverrideAttendanceTime && attendanceWindowCloseMs !== null && nowMs > attendanceWindowCloseMs;
+  const isAttendanceLocked = isAttendanceTimeUnverified || isAttendanceTooEarly || isAttendanceWindowClosed;
   const attendanceOpensLabel =
     attendanceAllowedAtMs !== null ? format(new Date(attendanceAllowedAtMs), 'h:mm a') : null;
 
@@ -274,6 +279,8 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
         <div className="mt-2 text-right text-xs text-amber-700">
           {isAttendanceTimeUnverified
             ? 'Attendance time could not be verified. Please contact admin.'
+            : isAttendanceWindowClosed
+              ? 'Attendance window has closed. Please contact admin to update this attendance.'
             : attendanceOpensLabel
               ? `Attendance opens at ${attendanceOpensLabel}`
               : 'Attendance opens 30 minutes after class start'}

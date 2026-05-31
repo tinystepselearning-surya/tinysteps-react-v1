@@ -35,6 +35,7 @@ export default function Sidebar({ selectedTab, onTabChange, className, onNavigat
     { id: 'students', label: 'Student Management', icon: GraduationCap },
     { id: 'leads', label: 'Leads & Enquiries', icon: ContactRound },
     { id: 'enrollments', label: 'Enrollment Management', icon: ClipboardList },
+    { id: 'attendance-corrections', label: 'Attendance Corrections', icon: ClipboardList },
     { id: 'relationships', label: 'Relationship Management', icon: Handshake },
     { id: 'courses', label: 'Course Management', icon: BookCopy },
     { id: 'today-notifications', label: 'Sessions Management', icon: BellDot },

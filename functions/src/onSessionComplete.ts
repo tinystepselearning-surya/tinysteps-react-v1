@@ -8,6 +8,8 @@ if (!admin.apps.length) {
 }
 
 const REGION = "asia-south1";
+const ATTENDANCE_OPEN_DELAY_MS = 30 * 60 * 1000;
+const ATTENDANCE_CLOSE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 type AttendanceStatus = "present" | "absent" | "late" | "excused" | "unknown";
 
@@ -157,7 +159,13 @@ function getSessionStartMillis(session: SessionData): number | null {
 function getAttendanceAllowedAtMillis(session: SessionData): number | null {
   const startMs = getSessionStartMillis(session);
   if (startMs === null) return null;
-  return startMs + 30 * 60 * 1000;
+  return startMs + ATTENDANCE_OPEN_DELAY_MS;
+}
+
+function getAttendanceWindowCloseMillis(session: SessionData): number | null {
+  const startMs = getSessionStartMillis(session);
+  if (startMs === null) return null;
+  return startMs + ATTENDANCE_CLOSE_WINDOW_MS;
 }
 
 function canCallerOverrideAttendanceTime(role: string): boolean {
@@ -682,10 +690,11 @@ export const onSessionComplete = onCall(
     });
 
     const attendanceAllowedAtMs = getAttendanceAllowedAtMillis(session);
+    const attendanceWindowCloseMs = getAttendanceWindowCloseMillis(session);
     if (
       !canCallerOverrideAttendanceTime(callerRole)
     ) {
-      if (attendanceAllowedAtMs === null) {
+      if (attendanceAllowedAtMs === null || attendanceWindowCloseMs === null) {
         throw new HttpsError(
           "failed-precondition",
           "Attendance time could not be verified. Please contact admin."
@@ -694,7 +703,13 @@ export const onSessionComplete = onCall(
       if (Date.now() < attendanceAllowedAtMs) {
         throw new HttpsError(
           "failed-precondition",
-          "Attendance can be marked only after 30 minutes of the class start time."
+          "Attendance can be marked 30 minutes after class start."
+        );
+      }
+      if (Date.now() > attendanceWindowCloseMs) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Attendance window has closed. Please contact admin to update this attendance."
         );
       }
     }

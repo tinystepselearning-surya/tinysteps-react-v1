@@ -46,7 +46,7 @@ export { saveEnrollmentScheduleAndGenerateSessions } from "./createSessionsFromS
 export { pauseEnrollmentUpcomingSessions } from "./createSessionsFromSchedule";
 export { resumeEnrollmentSchedule } from "./createSessionsFromSchedule";
 export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";
-export { saveTeacherSessionProgress } from "./saveTeacherSessionProgress";
+export { saveTeacherSessionProgress, adminAttendanceCorrection } from "./saveTeacherSessionProgress";
 export {
   onBillingChargeReadModelWrite,
   onPaymentReadModelWrite,

@@ -18,6 +18,8 @@ interface TodaySessionsListProps {
 type SessionViewFilter = 'all' | 'soon' | 'pending' | 'completed';
 
 export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId }) => {
+  const ATTENDANCE_OPEN_DELAY_MS = 30 * 60 * 1000;
+  const ATTENDANCE_CLOSE_WINDOW_MS = 24 * 60 * 60 * 1000;
   const { user } = useAuthStore();
   const { sessions, isLoading, error } = useTeacherSessions(teacherId);
   const { students } = useTeacherFilteredStudents();
@@ -68,11 +70,16 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
     if (!selectedSession) return;
     if (!isAttendanceAllowedNow(selectedSession)) {
       const startMs = getSessionStartMillis(selectedSession);
+      const windowCloseMs = startMs === null ? null : startMs + ATTENDANCE_CLOSE_WINDOW_MS;
+      const nowMs = Date.now();
       toast({
         title: 'Attendance unavailable',
-        description: startMs === null
-          ? 'Attendance time could not be verified. Please contact admin.'
-          : 'Attendance can be marked only after 30 minutes of the class start time.',
+        description:
+          startMs === null
+            ? 'Attendance time could not be verified. Please contact admin.'
+            : windowCloseMs !== null && nowMs > windowCloseMs
+              ? 'Attendance window has closed. Please contact admin to update this attendance.'
+              : 'Attendance can be marked 30 minutes after class start.',
         variant: 'destructive',
       });
       return;
@@ -162,7 +169,10 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
     if (canOverrideAttendanceTime) return true;
     const startMs = getSessionStartMillis(session);
     if (startMs === null) return false;
-    return Date.now() >= startMs + 30 * 60 * 1000;
+    const nowMs = Date.now();
+    const allowedAtMs = startMs + ATTENDANCE_OPEN_DELAY_MS;
+    const windowCloseMs = startMs + ATTENDANCE_CLOSE_WINDOW_MS;
+    return nowMs >= allowedAtMs && nowMs <= windowCloseMs;
   };
 
   const getKnownNames = (session: TeacherSession): string[] => {

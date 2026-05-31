@@ -643,11 +643,13 @@ const router = createBrowserRouter(
           children: [
             { index: true, element: <AdminDashboard /> },
             { path: 'analytics', element: <AdminDashboard /> },
+            { path: 'attendance-corrections', element: <Navigate to="/surya?tab=attendance-corrections" replace /> },
             { path: 'leads', element: <Navigate to="/surya?tab=leads" replace /> },
             { path: 'class-samples', element: <Navigate to="/surya?tab=class-samples" replace /> },
             { path: 'testimonials', element: <Navigate to="/surya?tab=testimonials" replace /> },
           ],
         },
+        { path: 'admin/attendance-corrections', element: <Navigate to="/surya?tab=attendance-corrections" replace /> },
         { path: 'admin', element: <Navigate to="/surya/login" replace /> },
         { path: 'Surya', element: <Navigate to="/surya" replace /> },
 
