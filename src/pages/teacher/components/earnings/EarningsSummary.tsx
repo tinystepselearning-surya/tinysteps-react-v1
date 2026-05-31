@@ -644,7 +644,7 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
           const fallbackDate = String(session.date || '').trim();
           const startAt = toDate(session.startAt);
           const startTime = normalizeStartTime(session.startTime) || (startAt ? `${pad2(startAt.getHours())}:${pad2(startAt.getMinutes())}` : '');
-          const endTime = normalizeStartTime(session.endTime);
+          const endTime = normalizeStartTime(session.endTime) || '';
           const studentId =
             toIdFromValue(session.kidId) ||
             toIdFromValue(session.studentId) ||
