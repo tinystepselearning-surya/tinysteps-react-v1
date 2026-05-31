@@ -41,10 +41,32 @@ interface TeacherEarningLedgerRow {
   kidName: string;
 }
 
+interface TeacherMonthSessionRow {
+  id: string;
+  teacherId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  startAt: Date | null;
+  studentId: string;
+  studentName: string;
+  studentAltName: string;
+  childName: string;
+  courseId: string;
+  courseName: string;
+  courseTitle: string;
+  courseRaw: string;
+  enrollmentId: string;
+  makeupForSessionId: string;
+  sessionTypeRaw: string;
+  classStatus: string;
+}
+
 type EnrollmentRateDoc = {
   id: string;
   teacherId: string;
   courseId: string;
+  courseName: string;
   kidId: string;
   studentId: string;
   childId: string;
@@ -65,6 +87,32 @@ type ResolvedEarningRow = TeacherEarningLedgerRow & {
 interface MonthOption {
   value: string;
   label: string;
+}
+
+interface SessionDetailRow {
+  id: string;
+  studentKey: string;
+  studentName: string;
+  displayDate: Date | null;
+  date: string;
+  startTime: string;
+  endTime: string;
+  courseName: string;
+  sessionTypeLabel: string;
+  classStatusLabel: string;
+  classStatus: string;
+  earningStatusLabel: string;
+  amount: number;
+}
+
+interface StudentSessionSummaryRow {
+  studentKey: string;
+  studentName: string;
+  totalClasses: number;
+  payableClasses: number;
+  nonPayableClasses: number;
+  totalEarning: number;
+  rows: SessionDetailRow[];
 }
 
 const toNumber = (value: unknown, fallback = 0): number => {
@@ -105,6 +153,137 @@ const normalizeMonthKey = (value: unknown): string => {
 };
 
 const formatCurrency = (value: number): string => `₹${Math.round(value).toLocaleString('en-IN')}`;
+
+const toTitleCase = (value: string): string =>
+  value
+    .split(' ')
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(' ');
+
+const toCleanString = (value: unknown): string =>
+  typeof value === 'string' ? value.trim() : typeof value === 'number' ? String(value) : '';
+
+const getObjectName = (value: unknown): string => {
+  if (!value || typeof value !== 'object') return '';
+  const row = value as Record<string, unknown>;
+  return toCleanString(row.name) ||
+    toCleanString(row.fullName) ||
+    toCleanString(row.displayName) ||
+    toCleanString(row.studentName) ||
+    toCleanString(row.kidName) ||
+    toCleanString(row.childName);
+};
+
+const toIdFromValue = (value: unknown): string => {
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  if (value && typeof value === 'object') {
+    const row = value as Record<string, unknown>;
+    return toCleanString(row.id) || toCleanString(row.uid) || toCleanString(row.userId);
+  }
+  return '';
+};
+
+const normalizeStatusToken = (value: unknown): string => {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return '';
+  return raw.replace(/\s+/g, '_').replace(/-/g, '_');
+};
+
+const normalizeClassStatus = (value: unknown): string => {
+  const normalized = normalizeStatusToken(value);
+  if (normalized === 'canceled') return 'cancelled';
+  if (normalized === 'noshow') return 'no_show';
+  if (normalized === 'no_show') return 'no_show';
+  if (normalized === 'no_showed') return 'no_show';
+  if (normalized === 'reschedule_request') return 'reschedule_requested';
+  if (normalized === 'rescheduled_requested') return 'reschedule_requested';
+  return normalized;
+};
+
+const normalizeSessionTypeToken = (value: unknown): string =>
+  String(value || '').trim().toLowerCase().replace(/\s+/g, '_').replace(/-/g, '_');
+
+const getSessionTypeLabel = (
+  rawType: unknown,
+  classStatus: string,
+  makeupForSessionId: string,
+): string => {
+  if (makeupForSessionId) return 'Makeup';
+
+  const normalized = normalizeSessionTypeToken(rawType);
+  if (!normalized) {
+    if (classStatus === 'rescheduled' || classStatus === 'reschedule_requested') return 'Rescheduled';
+    return 'Regular';
+  }
+  if (normalized === 'regular') return 'Regular';
+  if (normalized === 'rescheduled' || normalized === 'reschedule_requested') return 'Rescheduled';
+  if (normalized === 'makeup' || normalized === 'make_up') return 'Makeup';
+  if (normalized === 'one_off' || normalized === 'oneoff') return 'One-off';
+  if (normalized === 'enrollmentschedulereplace') {
+    return classStatus === 'rescheduled' || classStatus === 'reschedule_requested' ? 'Rescheduled' : 'Regular';
+  }
+
+  return toTitleCase(normalized.replace(/_/g, ' '));
+};
+
+const getClassStatusLabel = (value: string): string => {
+  switch (normalizeClassStatus(value)) {
+    case 'present':
+      return 'Present';
+    case 'absent':
+      return 'Absent';
+    case 'cancelled':
+      return 'Cancelled';
+    case 'rescheduled':
+      return 'Rescheduled';
+    case 'no_show':
+      return 'No-show';
+    case 'reschedule_requested':
+      return 'Reschedule requested';
+    case 'late':
+      return 'Late';
+    case 'not_marked':
+      return 'Not marked';
+    default:
+      return 'Not marked';
+  }
+};
+
+const normalizeStartTime = (rawValue: unknown): string | null => {
+  if (typeof rawValue !== 'string') return null;
+  const value = rawValue.trim();
+  const match = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(value);
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const seconds = match[3] ? Number(match[3]) : 0;
+  if (
+    !Number.isFinite(hours) ||
+    !Number.isFinite(minutes) ||
+    !Number.isFinite(seconds) ||
+    hours < 0 ||
+    hours > 23 ||
+    minutes < 0 ||
+    minutes > 59 ||
+    seconds < 0 ||
+    seconds > 59
+  ) {
+    return null;
+  }
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+};
+
+const getMonthDateRange = (monthKey: string): { startDate: string; endDate: string } | null => {
+  const parsed = parseMonthKey(monthKey);
+  if (!parsed) return null;
+  const monthStart = new Date(parsed.year, parsed.monthIndex, 1);
+  const monthEnd = new Date(parsed.year, parsed.monthIndex + 1, 0);
+  const startDate = `${monthStart.getFullYear()}-${pad2(monthStart.getMonth() + 1)}-${pad2(monthStart.getDate())}`;
+  const endDate = `${monthEnd.getFullYear()}-${pad2(monthEnd.getMonth() + 1)}-${pad2(monthEnd.getDate())}`;
+  return { startDate, endDate };
+};
 
 const isReadableName = (value: unknown): boolean => {
   if (typeof value !== 'string') return false;
@@ -294,6 +473,53 @@ const dedupeSessionLedgerRows = (
   return [...nonSessionRows, ...Array.from(sessionRowsBySessionId.values())];
 };
 
+const resolveSessionClassStatus = (session: Record<string, unknown>): string => {
+  const statusCandidates = [
+    session.attendanceStatus,
+    session.attendance_state,
+    session.classStatus,
+    session.class_status,
+    session.sessionAttendanceStatus,
+  ];
+  for (const candidate of statusCandidates) {
+    const normalized = normalizeClassStatus(candidate);
+    if (normalized) return normalized;
+  }
+
+  const attendance = session.attendance;
+  if (attendance && typeof attendance === 'object') {
+    const statuses = Object.values(attendance as Record<string, unknown>)
+      .map((value) => {
+        if (typeof value === 'string') return normalizeClassStatus(value);
+        if (value && typeof value === 'object' && 'status' in (value as Record<string, unknown>)) {
+          return normalizeClassStatus((value as Record<string, unknown>).status);
+        }
+        return '';
+      })
+      .filter(Boolean);
+
+    if (statuses.includes('present')) return 'present';
+    if (statuses.includes('late')) return 'late';
+    if (statuses.length > 0) return statuses[0];
+  }
+
+  const fallbackStatus = normalizeClassStatus(session.status);
+  if (
+    fallbackStatus === 'absent' ||
+    fallbackStatus === 'cancelled' ||
+    fallbackStatus === 'rescheduled' ||
+    fallbackStatus === 'no_show' ||
+    fallbackStatus === 'reschedule_requested' ||
+    fallbackStatus === 'late' ||
+    fallbackStatus === 'not_marked' ||
+    fallbackStatus === 'present'
+  ) {
+    return fallbackStatus;
+  }
+
+  return 'not_marked';
+};
+
 export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
   const { user } = useAuthStore();
   const { students } = useTeacherFilteredStudents();
@@ -309,9 +535,11 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showSessionDetails, setShowSessionDetails] = useState(false);
+  const [selectedSessionStudentKey, setSelectedSessionStudentKey] = useState<string | null>(null);
   const [showDemoDetails, setShowDemoDetails] = useState(false);
   const [studentNameLookup, setStudentNameLookup] = useState<Map<string, string>>(new Map());
   const [enrollmentsById, setEnrollmentsById] = useState<Map<string, EnrollmentRateDoc>>(new Map());
+  const [monthSessions, setMonthSessions] = useState<TeacherMonthSessionRow[]>([]);
 
   const baseStudentNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -360,6 +588,12 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
             id: docSnap.id,
             teacherId: String(data.teacherId || '').trim(),
             courseId: String(data.courseId || '').trim(),
+            courseName:
+              toCleanString(data.courseName) ||
+              toCleanString(data.courseTitle) ||
+              toCleanString(data.courseLabel) ||
+              toCleanString(data.programName) ||
+              toCleanString(data.subject),
             kidId: String(data.kidId || '').trim(),
             studentId: String(data.studentId || '').trim(),
             childId: String(data.childId || '').trim(),
@@ -389,6 +623,164 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
   useEffect(() => {
     let cancelled = false;
 
+    const loadMonthSessions = async () => {
+      if (!resolvedTeacherId) {
+        setMonthSessions([]);
+        return;
+      }
+
+      const monthRange = getMonthDateRange(selectedMonth);
+      if (!monthRange) {
+        setMonthSessions([]);
+        return;
+      }
+
+      const mapDocs = (docs: Array<{ id: string; data: Record<string, unknown> }>): TeacherMonthSessionRow[] => {
+        const sessionMap = new Map<string, TeacherMonthSessionRow>();
+        docs.forEach((docRow) => {
+          const session = docRow.data;
+          const teacherId = String(session.teacherId || '').trim();
+          if (teacherId !== resolvedTeacherId) return;
+          const fallbackDate = String(session.date || '').trim();
+          const startAt = toDate(session.startAt);
+          const startTime = normalizeStartTime(session.startTime) || (startAt ? `${pad2(startAt.getHours())}:${pad2(startAt.getMinutes())}` : '');
+          const endTime = normalizeStartTime(session.endTime);
+          const studentId =
+            toIdFromValue(session.kidId) ||
+            toIdFromValue(session.studentId) ||
+            toIdFromValue(session.childId) ||
+            toIdFromValue(session.student) ||
+            toIdFromValue(session.kid) ||
+            toIdFromValue(session.child) ||
+            (Array.isArray(session.kidIds) ? toIdFromValue(session.kidIds[0]) : '') ||
+            (Array.isArray(session.studentIds) ? toIdFromValue(session.studentIds[0]) : '') ||
+            (Array.isArray(session.childIds) ? toIdFromValue(session.childIds[0]) : '');
+          const studentName =
+            pickReadableName(
+              session.studentName,
+              session.kidName,
+              session.childName,
+              getObjectName(session.student),
+              getObjectName(session.kid),
+              Array.isArray(session.studentNames) ? session.studentNames[0] : null,
+              Array.isArray(session.kidNames) ? session.kidNames[0] : null,
+              Array.isArray(session.childNames) ? session.childNames[0] : null,
+            ) ||
+            '';
+
+          const studentAltName =
+            pickReadableName(
+              session.kidName,
+              session.childName,
+              getObjectName(session.kid),
+              getObjectName(session.child),
+            ) || '';
+
+          const sessionTypeRaw =
+            String(session.sessionType || '').trim() ||
+            String(session.type || '').trim() ||
+            String(session.source || '').trim() ||
+            String(session.sessionKind || '').trim() ||
+            'regular';
+
+          const classStatus = resolveSessionClassStatus(session);
+          const date =
+            /^\d{4}-\d{2}-\d{2}$/.test(fallbackDate)
+              ? fallbackDate
+              : startAt
+              ? `${startAt.getFullYear()}-${pad2(startAt.getMonth() + 1)}-${pad2(startAt.getDate())}`
+              : '';
+
+          if (!date) return;
+          if (date < monthRange.startDate || date > monthRange.endDate) return;
+
+          sessionMap.set(docRow.id, {
+            id: docRow.id,
+            teacherId,
+            date,
+            startTime,
+            endTime,
+            startAt,
+            studentId,
+            studentName,
+            studentAltName,
+            childName: toCleanString(session.childName),
+            courseId: toIdFromValue(session.courseId),
+            courseName:
+              toCleanString(session.courseName) ||
+              toCleanString(session.courseLabel) ||
+              toCleanString(session.subject),
+            courseTitle:
+              toCleanString(session.courseTitle) ||
+              getObjectName(session.course),
+            courseRaw: toCleanString(session.course),
+            enrollmentId: toIdFromValue(session.enrollmentId),
+            makeupForSessionId: toIdFromValue(session.makeupForSessionId),
+            sessionTypeRaw,
+            classStatus,
+          });
+        });
+
+        return Array.from(sessionMap.values()).sort((a, b) => {
+          const aStart = a.startAt
+            ? a.startAt.getTime()
+            : Date.parse(`${a.date}T${a.startTime || '00:00'}:00`);
+          const bStart = b.startAt
+            ? b.startAt.getTime()
+            : Date.parse(`${b.date}T${b.startTime || '00:00'}:00`);
+          const aMs = Number.isFinite(aStart) ? aStart : 0;
+          const bMs = Number.isFinite(bStart) ? bStart : 0;
+          return bMs - aMs;
+        });
+      };
+
+      try {
+        const primaryQuery = query(
+          collection(db, 'classSessions'),
+          where('teacherId', '==', resolvedTeacherId),
+          where('date', '>=', monthRange.startDate),
+          where('date', '<=', monthRange.endDate),
+        );
+        const snap = await getDocs(primaryQuery);
+        if (!cancelled) {
+          setMonthSessions(
+            mapDocs(snap.docs.map((docSnap) => ({ id: docSnap.id, data: docSnap.data() as Record<string, unknown> }))),
+          );
+        }
+      } catch (error) {
+        const fallbackSnap = await getDocs(
+          query(collection(db, 'classSessions'), where('teacherId', '==', resolvedTeacherId)),
+        );
+        if (!cancelled) {
+          setMonthSessions(
+            mapDocs(
+              fallbackSnap.docs.map((docSnap) => ({ id: docSnap.id, data: docSnap.data() as Record<string, unknown> })),
+            ),
+          );
+        }
+      }
+    };
+
+    void loadMonthSessions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [resolvedTeacherId, selectedMonth]);
+
+  useEffect(() => {
+    if (!showSessionDetails) {
+      setSelectedSessionStudentKey(null);
+    }
+  }, [showSessionDetails]);
+
+  useEffect(() => {
+    setSelectedSessionStudentKey(null);
+  }, [selectedMonth]);
+
+  useEffect(() => {
+    let cancelled = false;
+
     const loadStudentNamesFromDocs = async () => {
       const candidateIds = new Set<string>();
       ledgerRows.forEach((row) => {
@@ -400,6 +792,10 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
           .map((id) => String(id || '').trim())
           .filter(Boolean)
           .forEach((id) => candidateIds.add(id));
+      });
+      monthSessions.forEach((session) => {
+        const studentId = String(session.studentId || '').trim();
+        if (studentId) candidateIds.add(studentId);
       });
 
       const ids = Array.from(candidateIds);
@@ -441,7 +837,7 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
     return () => {
       cancelled = true;
     };
-  }, [baseStudentNameById, enrollmentsById, ledgerRows]);
+  }, [baseStudentNameById, enrollmentsById, ledgerRows, monthSessions]);
 
   useEffect(() => {
     let cancelled = false;
@@ -673,48 +1069,6 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
     };
   }, [categorizedRows, resolvedRows]);
 
-  const sessionDetails = useMemo(() => {
-    const bucket = new Map<
-      string,
-      {
-        name: string;
-        count: number;
-        amount: number;
-        minExplicitRate: number | null;
-        maxExplicitRate: number | null;
-        explicitRateCount: number;
-      }
-    >();
-    categorizedRows.sessionRows.forEach((row) => {
-      const studentName = row.studentDisplayName || 'Name not found';
-      const key = row.studentGroupKey;
-      const existing =
-        bucket.get(key) || {
-          name: studentName,
-          count: 0,
-          amount: 0,
-          minExplicitRate: null,
-          maxExplicitRate: null,
-          explicitRateCount: 0,
-        };
-      existing.count += 1;
-      existing.amount += toNumber(row.effectiveAmount, 0);
-      if (Number.isFinite(row.effectiveRate) && row.effectiveRate && row.effectiveRate > 0) {
-        existing.explicitRateCount += 1;
-        existing.minExplicitRate =
-          existing.minExplicitRate === null
-            ? row.effectiveRate
-            : Math.min(existing.minExplicitRate, row.effectiveRate);
-        existing.maxExplicitRate =
-          existing.maxExplicitRate === null
-            ? row.effectiveRate
-            : Math.max(existing.maxExplicitRate, row.effectiveRate);
-      }
-      bucket.set(key, existing);
-    });
-    return Array.from(bucket.values()).sort((a, b) => b.count - a.count || b.amount - a.amount);
-  }, [categorizedRows.sessionRows]);
-
   const demoDetails = useMemo(() => {
     const bucket = new Map<string, { name: string; count: number; amount: number }>();
     categorizedRows.demoCompletedRows.forEach((row) => {
@@ -727,6 +1081,129 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
     });
     return Array.from(bucket.values()).sort((a, b) => b.count - a.count || b.amount - a.amount);
   }, [categorizedRows.demoCompletedRows]);
+
+  const earningsBySessionId = useMemo(() => {
+    const map = new Map<string, TeacherEarningLedgerRow>();
+    dedupeSessionLedgerRows(ledgerRows)
+      .filter((row) => isSessionLinkedRow(row))
+      .forEach((row) => {
+        const sessionId = String(row.sessionId || '').trim();
+        if (!sessionId) return;
+        map.set(sessionId, row);
+      });
+    return map;
+  }, [ledgerRows]);
+
+  const sessionDateWiseDetails = useMemo<SessionDetailRow[]>(() => {
+    return monthSessions.map((session) => {
+      const earning = earningsBySessionId.get(session.id);
+      const classStatus = normalizeClassStatus(session.classStatus) || 'not_marked';
+      const earningStatusRaw = String(earning?.status || '').trim().toLowerCase();
+      const isVoid = earningStatusRaw === 'void';
+      const isPaid = Boolean(earning && (isPaidLikeStatus(earningStatusRaw) || toNumber(earning.paidAmount, 0) > 0));
+      const isPresent = classStatus === 'present';
+
+      let earningStatusLabel = 'Not payable';
+      if (isVoid) {
+        earningStatusLabel = 'Voided';
+      } else if (isPresent) {
+        earningStatusLabel = isPaid ? 'Paid' : 'Payable';
+      }
+
+      const amount = !isVoid && isPresent && earning ? Math.max(toNumber(earning.amount, 0), 0) : 0;
+      const displayDate = session.startAt || (/^\d{4}-\d{2}-\d{2}$/.test(session.date)
+        ? new Date(`${session.date}T${session.startTime || '00:00'}:00`)
+        : null);
+
+      let enrollment = session.enrollmentId ? enrollmentsById.get(session.enrollmentId) || null : null;
+      if (!enrollment) {
+        for (const candidate of enrollmentsById.values()) {
+          const candidateIds = [candidate.kidId, candidate.studentId, candidate.childId]
+            .map((value) => String(value || '').trim())
+            .filter(Boolean);
+          const idMatch = session.studentId ? candidateIds.includes(session.studentId) : false;
+          const courseMatch = session.courseId ? candidate.courseId === session.courseId : true;
+          if (idMatch && courseMatch) {
+            enrollment = candidate;
+            break;
+          }
+        }
+      }
+      const studentName =
+        pickReadableName(
+          session.studentName,
+          session.studentAltName,
+          session.childName,
+          enrollment?.studentName,
+          enrollment?.kidName,
+          enrollment?.childName,
+          session.studentId ? studentNameById.get(session.studentId) : null,
+        ) || 'Student';
+
+      const studentKey = session.studentId || studentName.toLowerCase();
+      const courseName =
+        pickReadableName(
+          session.courseName,
+          session.courseTitle,
+          session.courseRaw,
+          enrollment?.courseName,
+        ) || 'Course';
+
+      return {
+        id: session.id,
+        studentKey,
+        studentName,
+        displayDate: displayDate && !Number.isNaN(displayDate.getTime()) ? displayDate : null,
+        date: session.date,
+        startTime: session.startTime,
+        endTime: session.endTime,
+        courseName,
+        sessionTypeLabel: getSessionTypeLabel(session.sessionTypeRaw, classStatus, session.makeupForSessionId),
+        classStatusLabel: getClassStatusLabel(classStatus),
+        classStatus,
+        earningStatusLabel,
+        amount,
+      };
+    });
+  }, [earningsBySessionId, enrollmentsById, monthSessions, studentNameById]);
+
+  const studentSessionSummary = useMemo<StudentSessionSummaryRow[]>(() => {
+    const bucket = new Map<string, StudentSessionSummaryRow>();
+
+    sessionDateWiseDetails.forEach((row) => {
+      const isPayable = row.classStatus === 'present';
+      const existing = bucket.get(row.studentKey) || {
+        studentKey: row.studentKey,
+        studentName: row.studentName,
+        totalClasses: 0,
+        payableClasses: 0,
+        nonPayableClasses: 0,
+        totalEarning: 0,
+        rows: [],
+      };
+
+      existing.totalClasses += 1;
+      if (isPayable) {
+        existing.payableClasses += 1;
+      } else {
+        existing.nonPayableClasses += 1;
+      }
+      existing.totalEarning += toNumber(row.amount, 0);
+      existing.rows.push(row);
+      bucket.set(row.studentKey, existing);
+    });
+
+    return Array.from(bucket.values())
+      .map((row) => ({
+        ...row,
+        rows: [...row.rows].sort((a, b) => {
+          const aMs = a.displayDate?.getTime() || Date.parse(`${a.date}T${a.startTime || '00:00'}:00`) || 0;
+          const bMs = b.displayDate?.getTime() || Date.parse(`${b.date}T${b.startTime || '00:00'}:00`) || 0;
+          return bMs - aMs;
+        }),
+      }))
+      .sort((a, b) => b.totalEarning - a.totalEarning || a.studentName.localeCompare(b.studentName));
+  }, [sessionDateWiseDetails]);
 
   if (!resolvedTeacherId) {
     return (
@@ -906,36 +1383,102 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
         {showSessionDetails && (
           <div className="mt-4 rounded-md border p-3">
             <h4 className="text-sm font-semibold mb-2">Sessions Conducted: Student-wise</h4>
-            {sessionDetails.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No session details in this range.</p>
+            {studentSessionSummary.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No sessions found for this month.</p>
             ) : (
-              <div className="space-y-1">
-                {sessionDetails.map((row, index) => (
-                  <div key={`session-detail-${row.name}-${index}`} className="flex items-center justify-between text-sm">
-                    <span>{row.name}</span>
-                    <span className="text-muted-foreground">
-                      {row.count} {row.count === 1 ? 'class' : 'classes'}
-                      {row.count > 0
-                        ? (() => {
-                            if (row.explicitRateCount === 0 && row.amount <= 0) {
-                              return ' · Rate missing';
-                            }
-                            const fallbackRate = row.amount / row.count;
-                            const hasExplicitRate = row.explicitRateCount > 0;
-                            const hasMixedExplicitRate =
-                              hasExplicitRate &&
-                              row.minExplicitRate !== null &&
-                              row.maxExplicitRate !== null &&
-                              Math.abs(row.maxExplicitRate - row.minExplicitRate) > 0.01;
-                            const rateLabel = hasMixedExplicitRate ? 'Avg ' : '';
-                            return ` · ${rateLabel}${formatCurrency(fallbackRate)}/class`;
-                          })()
-                        : ''}
-                      {' · '}
-                      {formatCurrency(row.amount)}
-                    </span>
-                  </div>
-                ))}
+              <div className="overflow-x-auto space-y-4">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student</TableHead>
+                      <TableHead>Total classes</TableHead>
+                      <TableHead>Payable classes</TableHead>
+                      <TableHead>Non-payable classes</TableHead>
+                      <TableHead className="text-right">Total earning</TableHead>
+                      <TableHead className="text-right">Details</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {studentSessionSummary.map((row) => {
+                      const isSelected = selectedSessionStudentKey === row.studentKey;
+                      const colSpan = 6;
+
+                      return [
+                        <TableRow key={row.studentKey}>
+                            <TableCell>{row.studentName}</TableCell>
+                            <TableCell>{row.totalClasses}</TableCell>
+                            <TableCell>{row.payableClasses}</TableCell>
+                            <TableCell>{row.nonPayableClasses}</TableCell>
+                            <TableCell className="text-right">{formatCurrency(row.totalEarning)}</TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedSessionStudentKey((prev) => (prev === row.studentKey ? null : row.studentKey));
+                                }}
+                              >
+                                {isSelected ? 'Hide details' : 'View details'}
+                              </Button>
+                            </TableCell>
+                        </TableRow>,
+                        isSelected ? (
+                          <TableRow key={`${row.studentKey}-details`}>
+                            <TableCell colSpan={colSpan} className="p-0">
+                              <div className="border-t bg-slate-50/40 p-3">
+                                <h5 className="text-sm font-semibold mb-2">Date-wise details: {row.studentName}</h5>
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Date</TableHead>
+                                      <TableHead>Day</TableHead>
+                                      <TableHead>Time</TableHead>
+                                      <TableHead>Course</TableHead>
+                                      <TableHead>Session type</TableHead>
+                                      <TableHead>Class status</TableHead>
+                                      <TableHead>Earning status</TableHead>
+                                      <TableHead className="text-right">Amount</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {row.rows.map((detailRow) => {
+                                      const dateLabel = detailRow.displayDate
+                                        ? detailRow.displayDate.toLocaleDateString('en-IN', {
+                                            day: '2-digit',
+                                            month: 'short',
+                                            year: 'numeric',
+                                          })
+                                        : detailRow.date || '—';
+                                      const dayLabel = detailRow.displayDate
+                                        ? detailRow.displayDate.toLocaleDateString('en-IN', { weekday: 'short' })
+                                        : '—';
+                                      const timeLabel = detailRow.startTime && detailRow.endTime
+                                        ? `${detailRow.startTime} - ${detailRow.endTime}`
+                                        : detailRow.startTime || '—';
+
+                                      return (
+                                        <TableRow key={`${detailRow.id}-${detailRow.date}-${detailRow.startTime}`}>
+                                          <TableCell>{dateLabel}</TableCell>
+                                          <TableCell>{dayLabel}</TableCell>
+                                          <TableCell>{timeLabel}</TableCell>
+                                          <TableCell>{detailRow.courseName}</TableCell>
+                                          <TableCell>{detailRow.sessionTypeLabel}</TableCell>
+                                          <TableCell>{detailRow.classStatusLabel}</TableCell>
+                                          <TableCell>{detailRow.earningStatusLabel}</TableCell>
+                                          <TableCell className="text-right">{formatCurrency(detailRow.amount)}</TableCell>
+                                        </TableRow>
+                                      );
+                                    })}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ) : null,
+                      ];
+                    })}
+                  </TableBody>
+                </Table>
               </div>
             )}
           </div>

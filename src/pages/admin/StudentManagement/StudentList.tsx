@@ -1551,6 +1551,7 @@ function dateLikeToYmd(value: any): string | null {
 const SCHEDULE_EXCEPTION_SOURCE_TOKENS = ['ad_hoc', 'adhoc', 'makeup', 'reschedule', 'manual_one_off', 'approved_request', 'one_off'];
 const CONSUMED_SESSION_STATUSES = new Set(['completed', 'consumed', 'settled', 'paid']);
 const ACTIVE_FUTURE_SESSION_STATUSES = new Set(['scheduled', 'upcoming', 'planned', 'open', 'in_progress']);
+const RESCHEDULE_PENDING_STATUSES = new Set(['reschedule_requested', 'rescheduled']);
 
 function normalizeSessionStatus(value: unknown): string {
   const raw = String(value || '').trim().toLowerCase();
@@ -1735,6 +1736,24 @@ function isPastEnrollmentStatus(status: string): boolean {
   );
 }
 
+function normalizeStudentLifecycleStatus(value: unknown): string {
+  return String(value || '').trim().toLowerCase();
+}
+
+function isPastStudentStatus(status: string): boolean {
+  return (
+    status === 'archived' ||
+    status === 'inactive' ||
+    status === 'suspended' ||
+    status === 'completed' ||
+    status === 'discontinued' ||
+    status === 'paused' ||
+    status === 'expired' ||
+    status === 'cancelled' ||
+    status === 'canceled'
+  );
+}
+
 export default function StudentList({ onEdit, onDelete, onAssignCourse }: StudentListProps) {
   const [students, setStudents] = useState<Student[]>([]);
   const [parents, setParents] = useState<User[]>([]);
@@ -1746,6 +1765,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const [sortField, setSortField] = useState<StudentSortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [enrollmentStatusTab, setEnrollmentStatusTab] = useState<'active' | 'past'>('active');
+  const [showCreditsMonitor, setShowCreditsMonitor] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(DEFAULT_PAGE_SIZE);
 
@@ -1778,6 +1798,8 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     consumedCount: number;
     activeFutureCount: number;
     pausedFutureCount: number;
+    makeupRescheduleCount: number;
+    pendingMakeupCount: number;
   } | null>(null);
   const [adHocFor, setAdHocFor] = useState<Student | null>(null);
   const [adHocEnrollmentId, setAdHocEnrollmentId] = useState<string>('');
@@ -2138,6 +2160,11 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     if (gradeFilter !== 'all') list = list.filter(s => s.grade === gradeFilter);
     if (statusFilter !== 'all') list = list.filter(s => (s as any).status === statusFilter);
     if (parentFilter !== 'all') list = list.filter(s => (s.parentIds || []).includes(parentFilter));
+    list = list.filter((student) => {
+      const status = normalizeStudentLifecycleStatus((student as any).status);
+      const isPast = isPastStudentStatus(status);
+      return enrollmentStatusTab === 'active' ? !isPast : isPast;
+    });
 
     if (sortField) {
       const directionFactor = sortDirection === 'asc' ? 1 : -1;
@@ -2180,6 +2207,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     gradeFilter,
     statusFilter,
     parentFilter,
+    enrollmentStatusTab,
     parents,
     sortField,
     sortDirection,
@@ -2246,17 +2274,32 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         let consumedCount = 0;
         let activeFutureCount = 0;
         let pausedFutureCount = 0;
+        let makeupRescheduleCount = 0;
+        let pendingMakeupCount = 0;
 
         sessionsSnap.docs.forEach((docSnap) => {
           const row = docSnap.data() as Record<string, unknown>;
-          if (!doesSessionMatchEnrollmentSchedule(row, selectedScheduleEnrollment as unknown as Record<string, unknown>)) {
-            return;
-          }
-          if (isScheduleExceptionSessionDoc(row)) return;
-
           const status = normalizeSessionStatus(row.status);
           const startMs = resolveSessionStartMsForStats(row);
           const isFuture = startMs !== null && startMs > nowMs;
+          const isException = isScheduleExceptionSessionDoc(row);
+          const isRescheduleState = RESCHEDULE_PENDING_STATUSES.has(status);
+          const matchesRegularSchedule = doesSessionMatchEnrollmentSchedule(
+            row,
+            selectedScheduleEnrollment as unknown as Record<string, unknown>,
+          );
+
+          if (isException || isRescheduleState) {
+            makeupRescheduleCount += 1;
+            if (
+              isRescheduleState ||
+              (isException && isFuture && ACTIVE_FUTURE_SESSION_STATUSES.has(status))
+            ) {
+              pendingMakeupCount += 1;
+            }
+          }
+
+          if (!matchesRegularSchedule || isException) return;
 
           if (CONSUMED_SESSION_STATUSES.has(status)) {
             consumedCount += 1;
@@ -2272,7 +2315,13 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         });
 
         if (!cancelled) {
-          setScheduleLiveStats({ consumedCount, activeFutureCount, pausedFutureCount });
+          setScheduleLiveStats({
+            consumedCount,
+            activeFutureCount,
+            pausedFutureCount,
+            makeupRescheduleCount,
+            pendingMakeupCount,
+          });
         }
       } catch (error) {
         if (!cancelled) {
@@ -2322,6 +2371,14 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     ),
   );
   const hasResumablePauseForDisplay = hasActivePauseForDisplay || pausedFutureForDisplay > 0;
+  const makeupRescheduleCountForDisplay = Math.max(
+    0,
+    safeNumber(scheduleLiveStats?.makeupRescheduleCount, 0),
+  );
+  const pendingMakeupCountForDisplay = Math.max(
+    0,
+    safeNumber(scheduleLiveStats?.pendingMakeupCount, 0),
+  );
 
   const studentById = useMemo(() => {
     const map = new Map<string, Student>();
@@ -3292,57 +3349,71 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
               <div className="text-sm font-medium text-gray-700">Reschedule Credits Monitor</div>
               <div className="text-xs text-gray-500">Operational status by student and teacher</div>
             </div>
-            <div className="text-xs text-gray-600">
-              Open: <span className="font-semibold">{rescheduleCreditsTotals.open}</span>
-              <span className="mx-2 text-gray-300">|</span>
-              Scheduled: <span className="font-semibold">{rescheduleCreditsTotals.scheduled}</span>
-              <span className="mx-2 text-gray-300">|</span>
-              Consumed: <span className="font-semibold">{rescheduleCreditsTotals.consumed}</span>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="text-xs text-gray-600">
+                Open: <span className="font-semibold">{rescheduleCreditsTotals.open}</span>
+                <span className="mx-2 text-gray-300">|</span>
+                Scheduled: <span className="font-semibold">{rescheduleCreditsTotals.scheduled}</span>
+                <span className="mx-2 text-gray-300">|</span>
+                Consumed: <span className="font-semibold">{rescheduleCreditsTotals.consumed}</span>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-xs"
+                onClick={() => setShowCreditsMonitor((prev) => !prev)}
+              >
+                {showCreditsMonitor ? 'Hide credits monitor' : 'Show credits monitor'}
+              </Button>
             </div>
           </div>
 
-          {rescheduleCreditsMonitorLoading ? (
-            <div className="p-4 text-sm text-gray-500">Loading reschedule credits...</div>
-          ) : rescheduleCreditsMonitorRows.length === 0 ? (
-            <div className="p-4 text-sm text-gray-500">No reschedule credits yet.</div>
-          ) : (
-            <div className="max-h-56 overflow-auto">
-              <Table className="w-full text-sm">
-                <TableHeader className="sticky top-0 z-20 bg-slate-50">
-                  <TableRow>
-                    <TableHead className="w-[220px]">Student</TableHead>
-                    <TableHead className="w-[220px]">Teacher</TableHead>
-                    <TableHead className="w-[90px] text-right">Open</TableHead>
-                    <TableHead className="w-[90px] text-right">Scheduled</TableHead>
-                    <TableHead className="w-[90px] text-right">Consumed</TableHead>
-                    <TableHead className="w-[90px] text-right">Total</TableHead>
-                    <TableHead className="w-[180px]">Last Update</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rescheduleCreditsMonitorRows.map((row) => (
-                    <TableRow key={row.key}>
-                      <TableCell className="font-medium">
-                        <div className="truncate" title={row.studentName}>{row.studentName}</div>
-                        <div className="text-[11px] text-gray-500">{row.kidId}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="truncate" title={row.teacherName}>{row.teacherName}</div>
-                        <div className="text-[11px] text-gray-500">{row.teacherId || 'unassigned'}</div>
-                      </TableCell>
-                      <TableCell className="text-right font-semibold text-amber-700">{row.open}</TableCell>
-                      <TableCell className="text-right font-semibold text-blue-700">{row.scheduled}</TableCell>
-                      <TableCell className="text-right font-semibold text-emerald-700">{row.consumed}</TableCell>
-                      <TableCell className="text-right">{row.total}</TableCell>
-                      <TableCell className="text-xs text-gray-600">
-                        {row.lastUpdatedAt ? formatDateTime(row.lastUpdatedAt) : '—'}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+          {showCreditsMonitor ? (
+            <>
+              {rescheduleCreditsMonitorLoading ? (
+                <div className="p-4 text-sm text-gray-500">Loading reschedule credits...</div>
+              ) : rescheduleCreditsMonitorRows.length === 0 ? (
+                <div className="p-4 text-sm text-gray-500">No reschedule credits yet.</div>
+              ) : (
+                <div className="max-h-56 overflow-auto">
+                  <Table className="w-full text-sm">
+                    <TableHeader className="sticky top-0 z-20 bg-slate-50">
+                      <TableRow>
+                        <TableHead className="w-[220px]">Student</TableHead>
+                        <TableHead className="w-[220px]">Teacher</TableHead>
+                        <TableHead className="w-[90px] text-right">Open</TableHead>
+                        <TableHead className="w-[90px] text-right">Scheduled</TableHead>
+                        <TableHead className="w-[90px] text-right">Consumed</TableHead>
+                        <TableHead className="w-[90px] text-right">Total</TableHead>
+                        <TableHead className="w-[180px]">Last Update</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {rescheduleCreditsMonitorRows.map((row) => (
+                        <TableRow key={row.key}>
+                          <TableCell className="font-medium">
+                            <div className="truncate" title={row.studentName}>{row.studentName}</div>
+                            <div className="text-[11px] text-gray-500">{row.kidId}</div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="truncate" title={row.teacherName}>{row.teacherName}</div>
+                            <div className="text-[11px] text-gray-500">{row.teacherId || 'unassigned'}</div>
+                          </TableCell>
+                          <TableCell className="text-right font-semibold text-amber-700">{row.open}</TableCell>
+                          <TableCell className="text-right font-semibold text-blue-700">{row.scheduled}</TableCell>
+                          <TableCell className="text-right font-semibold text-emerald-700">{row.consumed}</TableCell>
+                          <TableCell className="text-right">{row.total}</TableCell>
+                          <TableCell className="text-xs text-gray-600">
+                            {row.lastUpdatedAt ? formatDateTime(row.lastUpdatedAt) : '—'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </>
+          ) : null}
         </Card>
       ) : null}
 
@@ -3966,6 +4037,12 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                       {plannedConsumedForDisplay} of {plannedTargetForDisplay} planned classes completed. {plannedRemainingForDisplay} remaining.
                     </div>
                   ) : null}
+                  <div className="text-xs text-gray-700 mt-1">
+                    Regular planned classes: {plannedTargetForDisplay > 0 ? plannedTargetForDisplay : 0} · Regular completed classes: {plannedConsumedForDisplay} · Remaining regular classes: {plannedTargetForDisplay > 0 ? plannedRemainingForDisplay : 0}
+                  </div>
+                  <div className="text-xs text-gray-700 mt-1">
+                    Makeup/reschedule sessions: {makeupRescheduleCountForDisplay} · Pending makeup sessions: {pendingMakeupCountForDisplay}
+                  </div>
                   {plannedTargetForDisplay > 0 && plannedRemainingForDisplay <= 0 ? (
                     <div className="text-xs text-amber-700 mt-1">
                       Planned classes completed. Increase planned classes to continue scheduling.

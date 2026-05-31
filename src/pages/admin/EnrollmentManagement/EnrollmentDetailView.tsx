@@ -635,6 +635,16 @@ export default function EnrollmentDetailView({
       {showAssignTeacher ? (
         <AssignTeacherModal
           enrollment={enrollment}
+          studentName={resolvedStudentName}
+          courseName={course?.name || course?.title || enrollment.courseId || 'Unknown'}
+          currentTeacherId={enrollment.teacherId}
+          currentTeacherName={
+            teacher?.displayName ||
+            teacher?.name ||
+            enrollment.teacherName ||
+            ''
+          }
+          currentTeacherEmail={teacher?.email || enrollment.teacherEmail || ''}
           onClose={() => {
             setShowAssignTeacher(false);
             void loadEnrollment();

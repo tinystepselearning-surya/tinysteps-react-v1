@@ -186,24 +186,49 @@ function normalizeTeacherId(value: any): string | null {
   return raw ? raw : null;
 }
 
-function resolveFeeAmount(session: any, enrollment: any): number {
-  const raw =
-    session?.feeAmount ??
-    session?.feePerClass ??
-    enrollment?.ratePerSession ??
-    enrollment?.feePerClass ??
-    enrollment?.feePerSession ??
-    0;
-  return normalizeNumber(raw, 0);
+function pickFirstPositiveNumber(...values: any[]): number {
+  for (const value of values) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  }
+  return 0;
 }
 
-function resolveTeacherPay(enrollment: any): number {
-  const raw =
-    enrollment?.teacherPayPerSession ??
-    enrollment?.teacherRatePerSession ??
-    enrollment?.teacherPay ??
-    0;
-  return normalizeNumber(raw, 0);
+function resolveFeeAmount(session: any, enrollment: any): number {
+  return pickFirstPositiveNumber(
+    enrollment?.ratePerSession,
+    enrollment?.feePerSession,
+    enrollment?.feePerClass,
+    enrollment?.parentRate,
+    enrollment?.parentClassRate,
+    enrollment?.classFee,
+    enrollment?.feeAmount,
+    session?.feeAmount,
+    session?.feePerClass,
+    session?.feePerSession,
+    session?.ratePerSession,
+    session?.parentRate,
+    session?.classFee,
+  );
+}
+
+function resolveTeacherPay(session: any, enrollment: any): number {
+  return pickFirstPositiveNumber(
+    enrollment?.teacherPayPerSession,
+    enrollment?.teacherRatePerSession,
+    enrollment?.teacherPay,
+    enrollment?.teacherRate,
+    enrollment?.teacherFee,
+    enrollment?.teacherClassRate,
+    enrollment?.rateTeacher,
+    enrollment?.payoutRate,
+    session?.teacherPayPerSession,
+    session?.teacherRatePerSession,
+    session?.teacherPay,
+    session?.teacherRate,
+    session?.teacherFee,
+    session?.teacherClassRate,
+  );
 }
 
 function isSessionRevenueSuppressed(session: any): boolean {
@@ -228,6 +253,59 @@ function normalizeCorrectionReason(value: any, fallback: string): string {
   return raw.slice(0, 300);
 }
 
+function normalizeEnrollmentLifecycleStatus(value: any): string {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return 'active';
+  if (raw === 'canceled') return 'cancelled';
+  return raw;
+}
+
+function resolveEnrollmentKidIds(enrollment: any): string[] {
+  const out: string[] = [];
+  const push = (value: unknown) => {
+    const id = String(value || '').trim();
+    if (id) out.push(id);
+  };
+
+  push(enrollment?.kidId);
+  push(enrollment?.studentId);
+  if (Array.isArray(enrollment?.kidIds)) {
+    enrollment.kidIds.forEach((kidId: unknown) => push(kidId));
+  }
+
+  return Array.from(new Set(out));
+}
+
+const ENROLLMENT_STATUS_PRIORITY: Record<string, number> = {
+  current: 100,
+  active: 95,
+  enrolled: 90,
+  ongoing: 88,
+  trial: 84,
+  pending_teacher: 80,
+  pending_payment: 78,
+  paused: 70,
+};
+
+function scoreEnrollmentCandidate(enrollmentData: any, kidId: string): { score: number; recencyMs: number } {
+  const status = normalizeEnrollmentLifecycleStatus(enrollmentData?.status);
+  const statusScore = ENROLLMENT_STATUS_PRIORITY[status] ?? (ACTIVE_LIKE.has(status) ? 40 : 0);
+  const enrollmentKidIds = resolveEnrollmentKidIds(enrollmentData);
+  const directKidMatch = String(enrollmentData?.kidId || '').trim() === kidId ? 6 : 0;
+  const studentIdMatch = String(enrollmentData?.studentId || '').trim() === kidId ? 4 : 0;
+  const kidArrayMatch = enrollmentKidIds.includes(kidId) ? 2 : 0;
+  const recencyMs =
+    toMillis(enrollmentData?.updatedAt) ||
+    toMillis(enrollmentData?.enrollmentDate) ||
+    toMillis(enrollmentData?.createdAt) ||
+    0;
+
+  return {
+    score: statusScore + directKidMatch + studentIdMatch + kidArrayMatch,
+    recencyMs,
+  };
+}
+
 async function resolveEnrollmentId(
   db: admin.firestore.Firestore,
   session: any,
@@ -240,77 +318,68 @@ async function resolveEnrollmentId(
   if (!kidId || !courseId) return null;
 
   const statusList = Array.from(ACTIVE_LIKE);
-  const queryAttempts: Array<() => Promise<admin.firestore.QuerySnapshot>> = [
-    () =>
-      db
-        .collection('enrollments')
-        .where('kidId', '==', kidId)
-        .where('courseId', '==', courseId)
-        .where('status', 'in', statusList)
-        .limit(1)
-        .get(),
-    () =>
-      db
-        .collection('enrollments')
-        .where('studentId', '==', kidId)
-        .where('courseId', '==', courseId)
-        .where('status', 'in', statusList)
-        .limit(1)
-        .get(),
-    () =>
-      db
-        .collection('enrollments')
-        .where('kidIds', 'array-contains', kidId)
-        .where('courseId', '==', courseId)
-        .where('status', 'in', statusList)
-        .limit(1)
-        .get(),
-  ];
+  const candidates = new Map<string, admin.firestore.QueryDocumentSnapshot>();
 
-  for (const runQuery of queryAttempts) {
-    try {
-      const snap = await runQuery();
-      if (!snap.empty) return snap.docs[0].id;
-    } catch (err) {
-      logger.warn('resolveEnrollmentId: query failed, will retry without status filter', {
-        kidId,
-        courseId,
-        error: err instanceof Error ? err.message : String(err),
-      });
-      break;
-    }
+  const runCandidateQueries = async (withStatusFilter: boolean): Promise<boolean> => {
+    let queryFailed = false;
+    const runQuery = async (
+      source: 'kidId' | 'studentId' | 'kidIds',
+      baseQuery: admin.firestore.Query,
+    ) => {
+      try {
+        const queryRef = withStatusFilter
+          ? baseQuery.where('status', 'in', statusList)
+          : baseQuery;
+        const snap = await queryRef.limit(10).get();
+        snap.docs.forEach((docSnap) => {
+          candidates.set(docSnap.id, docSnap);
+        });
+      } catch (err) {
+        queryFailed = true;
+        logger.warn('resolveEnrollmentId: enrollment candidate query failed', {
+          kidId,
+          courseId,
+          source,
+          withStatusFilter,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    };
+
+    await runQuery(
+      'kidId',
+      db.collection('enrollments').where('kidId', '==', kidId).where('courseId', '==', courseId),
+    );
+    await runQuery(
+      'studentId',
+      db.collection('enrollments').where('studentId', '==', kidId).where('courseId', '==', courseId),
+    );
+    await runQuery(
+      'kidIds',
+      db.collection('enrollments').where('kidIds', 'array-contains', kidId).where('courseId', '==', courseId),
+    );
+
+    return queryFailed;
+  };
+
+  const statusQueriesFailed = await runCandidateQueries(true);
+  if (candidates.size === 0 || statusQueriesFailed) {
+    await runCandidateQueries(false);
   }
 
-  const fallbackQueries: Array<() => Promise<admin.firestore.QuerySnapshot>> = [
-    () =>
-      db
-        .collection('enrollments')
-        .where('kidId', '==', kidId)
-        .where('courseId', '==', courseId)
-        .limit(1)
-        .get(),
-    () =>
-      db
-        .collection('enrollments')
-        .where('studentId', '==', kidId)
-        .where('courseId', '==', courseId)
-        .limit(1)
-        .get(),
-    () =>
-      db
-        .collection('enrollments')
-        .where('kidIds', 'array-contains', kidId)
-        .where('courseId', '==', courseId)
-        .limit(1)
-        .get(),
-  ];
+  if (candidates.size === 0) return null;
 
-  for (const runQuery of fallbackQueries) {
-    const snap = await runQuery();
-    if (!snap.empty) return snap.docs[0].id;
-  }
+  const ranked = Array.from(candidates.values())
+    .map((docSnap) => {
+      const rank = scoreEnrollmentCandidate(docSnap.data() || {}, kidId);
+      return { docSnap, score: rank.score, recencyMs: rank.recencyMs };
+    })
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return b.recencyMs - a.recencyMs;
+    });
 
-  return null;
+  return ranked[0]?.docSnap.id || null;
 }
 
 export const onSessionRevenueWrite = onDocumentWritten(
@@ -374,7 +443,7 @@ export const onSessionRevenueWrite = onDocumentWritten(
 
         const enrollment = enrollmentSnap.data() || {};
         const ratePerSession = resolveFeeAmount(session, enrollment);
-        const teacherPayPerSession = resolveTeacherPay(enrollment);
+        const teacherPayPerSession = resolveTeacherPay(session, enrollment);
         const currency = session.currency || enrollment.currency || 'INR';
         // Keep teacher attribution anchored to the session itself.
         // Do not fallback to mutable enrollment.teacherId, otherwise reassignments can
@@ -407,6 +476,13 @@ export const onSessionRevenueWrite = onDocumentWritten(
         const chargeStatus = chargeStatusRaw.toLowerCase();
         const nextChargeStatus =
           !chargeSnap.exists || chargeStatus === 'void' ? 'open' : chargeStatus;
+        const existingChargeData = (chargeSnap.data() || {}) as any;
+        const existingChargeAmount = normalizeNumber(existingChargeData.amount, 0);
+        const existingChargePaidAmount = resolveChargePaidAmount(existingChargeData, existingChargeAmount);
+        const shouldPreserveChargeAmount =
+          chargeSnap.exists &&
+          (isSettledCharge(nextChargeStatus) || existingChargePaidAmount > 0);
+        const chargeAmount = shouldPreserveChargeAmount ? existingChargeAmount : ratePerSession;
 
         const chargePayload: Record<string, any> = {
           sessionId,
@@ -415,7 +491,7 @@ export const onSessionRevenueWrite = onDocumentWritten(
           parentId: session.parentId || enrollment.parentId || null,
           teacherId: resolvedTeacherId,
           courseId: session.courseId || enrollment.courseId || null,
-          amount: ratePerSession,
+          amount: chargeAmount,
           currency,
           status: nextChargeStatus || 'open',
           source: 'session_present_completed',
@@ -432,6 +508,15 @@ export const onSessionRevenueWrite = onDocumentWritten(
         const earningStatus = earningStatusRaw.toLowerCase();
         const nextEarningStatus =
           !earningSnap.exists || earningStatus === 'void' ? 'unpaid' : earningStatus;
+        const existingEarningData = (earningSnap.data() || {}) as any;
+        const existingEarningAmount = normalizeNumber(existingEarningData.amount, 0);
+        const existingEarningPaidAmount = resolveTeacherEarningPaidAmount(existingEarningData, existingEarningAmount);
+        const shouldPreserveEarningAmount =
+          earningSnap.exists &&
+          (isSettledCharge(nextEarningStatus) || existingEarningPaidAmount > 0);
+        const teacherEarningAmount = shouldPreserveEarningAmount
+          ? existingEarningAmount
+          : teacherPayPerSession;
         const earningPayload: Record<string, any> = {
           sessionId,
           enrollmentId,
@@ -439,7 +524,7 @@ export const onSessionRevenueWrite = onDocumentWritten(
           teacherId: resolvedTeacherId,
           parentId: session.parentId || enrollment.parentId || null,
           courseId: session.courseId || enrollment.courseId || null,
-          amount: teacherPayPerSession,
+          amount: teacherEarningAmount,
           currency,
           status: nextEarningStatus || 'unpaid',
           earnedAt: admin.firestore.FieldValue.serverTimestamp(),

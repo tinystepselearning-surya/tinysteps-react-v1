@@ -71,6 +71,14 @@ interface ClassSessionDoc {
   subject?: string;
   parentNotified?: boolean;
   teacherNotified?: boolean;
+  source?: string;
+  isMakeup?: boolean;
+  makeupCreditId?: string;
+  makeupForSessionId?: string;
+  replacementSessionId?: string;
+  rescheduledFromSessionId?: string;
+  sessionType?: string;
+  createdByFlow?: string;
 }
 
 interface EnrollmentDoc {
@@ -942,6 +950,58 @@ const toReadableStatus = (status: string): string => {
   return value.charAt(0).toUpperCase() + value.slice(1);
 };
 
+type SessionTypeLabel = 'Regular' | 'Makeup' | 'Rescheduled' | 'Replacement' | 'Manual';
+
+const toSessionTypeStyle = (type: SessionTypeLabel): string => {
+  if (type === 'Regular') return 'bg-slate-100 text-slate-700';
+  if (type === 'Makeup') return 'bg-amber-100 text-amber-800';
+  if (type === 'Rescheduled') return 'bg-rose-100 text-rose-700';
+  if (type === 'Replacement') return 'bg-emerald-100 text-emerald-700';
+  return 'bg-indigo-100 text-indigo-700';
+};
+
+const resolveSessionTypeLabel = (session: ClassSessionDoc): SessionTypeLabel => {
+  const source = normalizeStatusLike(session.source);
+  const status = normalizeStatusLike(session.status);
+  const sessionType = normalizeStatusLike(session.sessionType);
+  const createdByFlow = normalizeStatusLike(session.createdByFlow);
+  const makeupCreditId = normalizeLookupId(session.makeupCreditId);
+  const makeupForSessionId = normalizeLookupId(session.makeupForSessionId);
+  const rescheduledFromSessionId = normalizeLookupId(session.rescheduledFromSessionId);
+  const replacementSessionId = normalizeLookupId(session.replacementSessionId);
+  const hasMakeupMarkers = Boolean(
+    session.isMakeup === true ||
+      makeupCreditId ||
+      makeupForSessionId,
+  );
+  const hasReplacementMarkers = Boolean(
+    rescheduledFromSessionId ||
+      replacementSessionId,
+  );
+  const isManualSource =
+    source.includes('manual') ||
+    source.includes('ad_hoc') ||
+    source.includes('adhoc') ||
+    source.includes('one_off') ||
+    source.includes('approved_request') ||
+    sessionType.includes('manual') ||
+    createdByFlow.includes('manual');
+  const isReplacementSource =
+    source.includes('replacement') ||
+    source.includes('replace') ||
+    sessionType.includes('replacement');
+  const isMakeupSource =
+    source.includes('makeup') ||
+    source.includes('teacher_makeup_from_reschedule') ||
+    sessionType.includes('makeup');
+
+  if (isMakeupSource || hasMakeupMarkers) return 'Makeup';
+  if (status === 'reschedule_requested' || status === 'rescheduled') return 'Rescheduled';
+  if (isReplacementSource || hasReplacementMarkers) return 'Replacement';
+  if (isManualSource) return 'Manual';
+  return 'Regular';
+};
+
 const getKidNames = (session: ClassSessionDoc, kidMap: Record<string, KidDoc>): string[] => {
   const names = new Set<string>();
   const sessionKidNames = session.kidNames;
@@ -1420,6 +1480,7 @@ export default function TodaysNotifications() {
           teacherUserMissing: Boolean(teacherRef && !teacherUserResolved),
           courseLabel,
           statusLabel,
+          sessionTypeLabel: resolveSessionTypeLabel(session),
         };
       })
       .filter((row): row is any => Boolean(row));
@@ -2155,6 +2216,7 @@ export default function TodaysNotifications() {
                   <TableHead className="w-[178px] whitespace-nowrap">Teacher</TableHead>
                   <TableHead className="w-[146px] whitespace-nowrap">Course / Subject</TableHead>
                   <TableHead className="w-[102px] whitespace-nowrap">Session Status</TableHead>
+                  <TableHead className="w-[110px] whitespace-nowrap">Session Type</TableHead>
                   {isNotificationActionsEnabled ? (
                     <>
                       <TableHead className="w-[280px] whitespace-nowrap">Actions</TableHead>
@@ -2426,6 +2488,15 @@ export default function TodaysNotifications() {
                         </div>
                       </TableCell>
                       <TableCell className="align-top whitespace-nowrap capitalize">{row.statusLabel}</TableCell>
+                      <TableCell className="align-top whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center rounded px-2 py-0.5 text-[11px] font-medium ${toSessionTypeStyle(
+                            row.sessionTypeLabel || 'Regular',
+                          )}`}
+                        >
+                          {row.sessionTypeLabel || 'Regular'}
+                        </span>
+                      </TableCell>
                       {isNotificationActionsEnabled ? (
                         <>
                           <TableCell className="align-top whitespace-nowrap">

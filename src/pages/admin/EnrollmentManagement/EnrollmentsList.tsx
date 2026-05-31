@@ -628,6 +628,7 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
   const [page, setPage] = useState<number>(1);
   const [issuesPage, setIssuesPage] = useState<number>(1);
+  const [showCleanupActions, setShowCleanupActions] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editEnrollment, setEditEnrollment] = useState<Enrollment | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -2084,163 +2085,177 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
           <div><span className="text-muted-foreground">Legacy trial-status enrollments:</span> <span className="font-medium">{reconciliation.legacyTrialEnrollments}</span></div>
         </div>
         <div className="rounded border p-3 space-y-2">
-          <div className="text-sm font-semibold">Enrollment Cleanup Actions</div>
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-sm font-semibold">Enrollment Cleanup Actions</div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-xs"
+              onClick={() => setShowCleanupActions((prev) => !prev)}
+            >
+              {showCleanupActions ? 'Hide cleanup actions' : 'Show cleanup actions'}
+            </Button>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
             <div><span className="text-muted-foreground">Broken enrollment links:</span> <span className="font-medium">{reconciliation.brokenLinks}</span></div>
             <div><span className="text-muted-foreground">Active linked to inactive/archived child:</span> <span className="font-medium">{reconciliation.inactiveStudentLinkedEnrollments}</span></div>
             <div><span className="text-muted-foreground">Active students without active enrollment:</span> <span className="font-medium">{reconciliation.activeStudentsWithoutEnrollment}</span></div>
             <div><span className="text-muted-foreground">Possible duplicate active enrollments:</span> <span className="font-medium">{reconciliation.duplicateActiveEnrollments}</span></div>
           </div>
-          <div className="text-xs text-muted-foreground">
-            Cleanup actions archive or repair enrollment records only. They do not change schedules, attendance, payments, or teacher earnings.
-          </div>
-          {noMatchBrokenIssues.length > 0 ? (
-            <div>
-              <Button
-                size="sm"
-                variant="secondary"
-                className="h-7 px-2 text-xs"
-                onClick={() => void handleBulkArchiveNoMatchBrokenLinks()}
-                disabled={saving}
-              >
-                Archive all no-match broken links
-              </Button>
-            </div>
+          {showCleanupActions ? (
+            <>
+              <div className="text-xs text-muted-foreground">
+                Cleanup actions archive or repair enrollment records only. They do not change schedules, attendance, payments, or teacher earnings.
+              </div>
+              {noMatchBrokenIssues.length > 0 ? (
+                <div>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => void handleBulkArchiveNoMatchBrokenLinks()}
+                    disabled={saving}
+                  >
+                    Archive all no-match broken links
+                  </Button>
+                </div>
+              ) : null}
+              {reconciliation.issues.length > 0 ? (
+                <div className="overflow-x-auto border rounded">
+                  <Table className="w-full table-fixed text-xs">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[170px]">Issue</TableHead>
+                        <TableHead className="w-[240px]">Student / Parent</TableHead>
+                        <TableHead className="w-[180px]">Course</TableHead>
+                        <TableHead className="w-[160px]">Teacher</TableHead>
+                        <TableHead className="w-[170px]">Enrollment ID</TableHead>
+                        <TableHead className="w-[170px]">Current Kid/Student ID</TableHead>
+                        <TableHead className="w-[220px]">Suggested action</TableHead>
+                        <TableHead className="w-[210px]">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {pagedIssueRows.map((issue, index) => (
+                        <TableRow key={`${issue.issue}_${issue.enrollmentId}_${index}`}>
+                          <TableCell>{issue.issue}</TableCell>
+                          <TableCell className="truncate" title={issue.studentParent}>{issue.studentParent}</TableCell>
+                          <TableCell className="truncate" title={issue.course}>{issue.course}</TableCell>
+                          <TableCell className="truncate" title={issue.teacher}>{issue.teacher}</TableCell>
+                          <TableCell className="truncate" title={issue.enrollmentId}>{issue.enrollmentId}</TableCell>
+                          <TableCell className="truncate" title={issue.currentId}>{issue.currentId}</TableCell>
+                          <TableCell className="truncate" title={issue.suggestedAction}>{issue.suggestedAction}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {issue.actionType === 'repair_link' && issue.repairCandidateKidId && issue.repairCandidateName ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2 text-[11px]"
+                                  onClick={() => void handleRepairBrokenLink(issue)}
+                                  disabled={saving}
+                                >
+                                  Repair Link
+                                </Button>
+                              ) : null}
+                              {issue.actionType === 'restore_child_profile' ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2 text-[11px]"
+                                  onClick={() => openRestoreChildProfile(issue)}
+                                  disabled={saving || restoreSubmitting}
+                                >
+                                  Restore Child Profile
+                                </Button>
+                              ) : null}
+                              {issue.actionType === 'repair_link' || issue.actionType === 'archive_stale' ? (
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  className="h-7 px-2 text-[11px]"
+                                  onClick={() => void handleArchiveStaleEnrollment(issue)}
+                                  disabled={saving || issue.enrollmentId === '—'}
+                                >
+                                  Archive Stale Enrollment
+                                </Button>
+                              ) : null}
+                              {issue.actionType === 'convert_trial' ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2 text-[11px]"
+                                  onClick={() => void handleConvertLegacyTrialToActive(issue)}
+                                  disabled={saving}
+                                >
+                                  Convert to Active
+                                </Button>
+                              ) : null}
+                              {issue.actionType === 'archive_inactive_link' ? (
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  className="h-7 px-2 text-[11px]"
+                                  onClick={() => void handleArchiveInactiveLinkedEnrollment(issue)}
+                                  disabled={saving || issue.enrollmentId === '—'}
+                                >
+                                  Archive Enrollment
+                                </Button>
+                              ) : null}
+                              {issue.actionType === 'review_student' ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2 text-[11px]"
+                                  onClick={() => {
+                                    toast({
+                                      title: 'Review in Student Management',
+                                      description: `Search kidId: ${issue.kidId || issue.currentId || '—'} (${issue.parentLabel || 'Parent not available'})`,
+                                    });
+                                  }}
+                                >
+                                  Review in Student Management
+                                </Button>
+                              ) : null}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  <div className="flex items-center justify-between border-t px-3 py-2 text-xs text-muted-foreground">
+                    <div>
+                      Showing {(issuesPage - 1) * issuesRowsPerPage + 1}–{Math.min(issuesPage * issuesRowsPerPage, totalIssueRows)} of {totalIssueRows}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => setIssuesPage((prev) => Math.max(1, prev - 1))}
+                        disabled={issuesPage <= 1}
+                      >
+                        Previous
+                      </Button>
+                      <span>Page {issuesPage} / {issuesTotalPages}</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => setIssuesPage((prev) => Math.min(issuesTotalPages, prev + 1))}
+                        disabled={issuesPage >= issuesTotalPages}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground">No reconciliation issues found.</div>
+              )}
+            </>
           ) : null}
         </div>
-        {reconciliation.issues.length > 0 ? (
-          <div className="overflow-x-auto border rounded">
-            <Table className="w-full table-fixed text-xs">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[170px]">Issue</TableHead>
-                  <TableHead className="w-[240px]">Student / Parent</TableHead>
-                  <TableHead className="w-[180px]">Course</TableHead>
-                  <TableHead className="w-[160px]">Teacher</TableHead>
-                  <TableHead className="w-[170px]">Enrollment ID</TableHead>
-                  <TableHead className="w-[170px]">Current Kid/Student ID</TableHead>
-                  <TableHead className="w-[220px]">Suggested action</TableHead>
-                  <TableHead className="w-[210px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pagedIssueRows.map((issue, index) => (
-                  <TableRow key={`${issue.issue}_${issue.enrollmentId}_${index}`}>
-                    <TableCell>{issue.issue}</TableCell>
-                    <TableCell className="truncate" title={issue.studentParent}>{issue.studentParent}</TableCell>
-                    <TableCell className="truncate" title={issue.course}>{issue.course}</TableCell>
-                    <TableCell className="truncate" title={issue.teacher}>{issue.teacher}</TableCell>
-                    <TableCell className="truncate" title={issue.enrollmentId}>{issue.enrollmentId}</TableCell>
-                    <TableCell className="truncate" title={issue.currentId}>{issue.currentId}</TableCell>
-                    <TableCell className="truncate" title={issue.suggestedAction}>{issue.suggestedAction}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {issue.actionType === 'repair_link' && issue.repairCandidateKidId && issue.repairCandidateName ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 px-2 text-[11px]"
-                            onClick={() => void handleRepairBrokenLink(issue)}
-                            disabled={saving}
-                          >
-                            Repair Link
-                          </Button>
-                        ) : null}
-                        {issue.actionType === 'restore_child_profile' ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 px-2 text-[11px]"
-                            onClick={() => openRestoreChildProfile(issue)}
-                            disabled={saving || restoreSubmitting}
-                          >
-                            Restore Child Profile
-                          </Button>
-                        ) : null}
-                        {issue.actionType === 'repair_link' || issue.actionType === 'archive_stale' ? (
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="h-7 px-2 text-[11px]"
-                            onClick={() => void handleArchiveStaleEnrollment(issue)}
-                            disabled={saving || issue.enrollmentId === '—'}
-                          >
-                            Archive Stale Enrollment
-                          </Button>
-                        ) : null}
-                        {issue.actionType === 'convert_trial' ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 px-2 text-[11px]"
-                            onClick={() => void handleConvertLegacyTrialToActive(issue)}
-                            disabled={saving}
-                          >
-                            Convert to Active
-                          </Button>
-                        ) : null}
-                        {issue.actionType === 'archive_inactive_link' ? (
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="h-7 px-2 text-[11px]"
-                            onClick={() => void handleArchiveInactiveLinkedEnrollment(issue)}
-                            disabled={saving || issue.enrollmentId === '—'}
-                          >
-                            Archive Enrollment
-                          </Button>
-                        ) : null}
-                        {issue.actionType === 'review_student' ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 px-2 text-[11px]"
-                            onClick={() => {
-                              toast({
-                                title: 'Review in Student Management',
-                                description: `Search kidId: ${issue.kidId || issue.currentId || '—'} (${issue.parentLabel || 'Parent not available'})`,
-                              });
-                            }}
-                          >
-                            Review in Student Management
-                          </Button>
-                        ) : null}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <div className="flex items-center justify-between border-t px-3 py-2 text-xs text-muted-foreground">
-              <div>
-                Showing {(issuesPage - 1) * issuesRowsPerPage + 1}–{Math.min(issuesPage * issuesRowsPerPage, totalIssueRows)} of {totalIssueRows}
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 px-2 text-xs"
-                  onClick={() => setIssuesPage((prev) => Math.max(1, prev - 1))}
-                  disabled={issuesPage <= 1}
-                >
-                  Previous
-                </Button>
-                <span>Page {issuesPage} / {issuesTotalPages}</span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 px-2 text-xs"
-                  onClick={() => setIssuesPage((prev) => Math.min(issuesTotalPages, prev + 1))}
-                  disabled={issuesPage >= issuesTotalPages}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="text-xs text-muted-foreground">No reconciliation issues found.</div>
-        )}
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
