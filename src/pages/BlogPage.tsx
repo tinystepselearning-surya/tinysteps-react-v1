@@ -639,9 +639,14 @@ const BlogPage: FC = () => {
 
                 {leadPost.hero ? (
                   <div className="hidden shrink-0 md:block w-[160px] pr-3">
-                    <div
-                      className="h-[96px] w-full rounded-xl bg-slate-100 bg-cover bg-center transition duration-500 hover:scale-[1.03]"
-                      style={{ backgroundImage: `url(${leadPost.hero})` }}
+                    <img
+                      src={leadPost.hero}
+                      alt={leadPost.title}
+                      width={160}
+                      height={96}
+                      loading="lazy"
+                      decoding="async"
+                      className="h-[96px] w-full rounded-xl bg-slate-100 object-cover object-center transition duration-500 hover:scale-[1.03]"
                     />
                   </div>
                 ) : (
@@ -716,10 +721,17 @@ const BlogPage: FC = () => {
                     className="overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-[0_7px_18px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]"
                   >
                     {post.hero ? (
-                      <div
-                        className="aspect-[2.8/1] bg-slate-100 bg-cover bg-center transition duration-500 hover:scale-[1.03]"
-                        style={{ backgroundImage: `url(${post.hero})` }}
-                      />
+                      <div className="aspect-[2.8/1] overflow-hidden bg-slate-100">
+                        <img
+                          src={post.hero}
+                          alt={post.title}
+                          width={1120}
+                          height={400}
+                          loading="lazy"
+                          decoding="async"
+                          className="h-full w-full object-cover object-center transition duration-500 hover:scale-[1.03]"
+                        />
+                      </div>
                     ) : (
                       <div className={`aspect-[2.8/1] bg-gradient-to-br ${theme.panel}`} />
                     )}
@@ -788,10 +800,17 @@ const BlogPage: FC = () => {
                       className="group overflow-hidden rounded-[1.35rem] border border-slate-200/90 bg-white shadow-[0_7px_18px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]"
                     >
                       {post.hero ? (
-                        <div
-                          className="aspect-[2.8/1] bg-slate-100 bg-cover bg-center transition duration-500 group-hover:scale-[1.03]"
-                          style={{ backgroundImage: `url(${post.hero})` }}
-                        />
+                        <div className="aspect-[2.8/1] overflow-hidden bg-slate-100">
+                          <img
+                            src={post.hero}
+                            alt={post.title}
+                            width={1120}
+                            height={400}
+                            loading="lazy"
+                            decoding="async"
+                            className="h-full w-full object-cover object-center transition duration-500 group-hover:scale-[1.03]"
+                          />
+                        </div>
                       ) : (
                         <div className={`aspect-[2.8/1] bg-gradient-to-br ${theme.panel}`} />
                       )}

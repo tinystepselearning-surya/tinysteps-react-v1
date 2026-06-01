@@ -1,12 +1,14 @@
 import type { FC } from "react";
-import React, { useMemo, useState } from "react";
+import React, { lazy, Suspense, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import AutoLinkedText from "../components/seo/AutoLinkedText";
-import TestimonialsSection from "../components/seo/TestimonialsSection";
-import TestimonialSubmissionForm from "../components/seo/TestimonialSubmissionForm";
+import LazySection from "../components/common/LazySection";
 import { PUBLIC_FACTS, createFAQPageSchema } from "../lib/schemas";
 import { getRouteConfig } from "../lib/seo";
+
+const TestimonialsSection = lazy(() => import("../components/seo/TestimonialsSection"));
+const TestimonialSubmissionForm = lazy(() => import("../components/seo/TestimonialSubmissionForm"));
 
 type Item = {
   title: string;
@@ -623,13 +625,17 @@ const WhyTinyStepsPage: FC = () => {
         </div>
       </section>
 
-      <TestimonialsSection
-        title="Parent trust, in their own words"
-        subtitle="Approved testimonials from families who experienced Tiny Steps classes."
-        pageTag="why-tiny-steps"
-        limit={6}
-        viewAllHref="/testimonials"
-      />
+      <LazySection minHeightClassName="min-h-[320px]">
+        <Suspense fallback={null}>
+          <TestimonialsSection
+            title="Parent trust, in their own words"
+            subtitle="Approved testimonials from families who experienced Tiny Steps classes."
+            pageTag="why-tiny-steps"
+            limit={6}
+            viewAllHref="/testimonials"
+          />
+        </Suspense>
+      </LazySection>
 
       <section className="mx-auto max-w-6xl px-4 py-8">
         <SectionHeading
@@ -663,12 +669,16 @@ const WhyTinyStepsPage: FC = () => {
       </section>
 
       <div id="share-feedback" className="scroll-mt-28">
-        <TestimonialSubmissionForm
-          pageTag="why-tiny-steps"
-          title="Share your Tiny Steps experience"
-          description="We review every submission before publishing. Your feedback helps other families choose confidently."
-          compact
-        />
+        <LazySection minHeightClassName="min-h-[220px]">
+          <Suspense fallback={null}>
+            <TestimonialSubmissionForm
+              pageTag="why-tiny-steps"
+              title="Share your Tiny Steps experience"
+              description="We review every submission before publishing. Your feedback helps other families choose confidently."
+              compact
+            />
+          </Suspense>
+        </LazySection>
       </div>
 
       {/* FOUNDER STORY SNIPPET */}

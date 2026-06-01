@@ -1,8 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, getDocs, limit, query, where } from 'firebase/firestore';
 import Meta from '../components/common/Meta';
-import { db } from '../lib/firebaseConfig';
 import {
   CLASS_SAMPLE_CATEGORIES,
   CLASS_SAMPLE_CATEGORY_LABELS,
@@ -13,8 +11,10 @@ import {
 } from '../lib/classSamples';
 import { createFAQPageSchema } from '../lib/schemas';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
-import TestimonialsSection from '../components/seo/TestimonialsSection';
-import TestimonialSubmissionForm from '../components/seo/TestimonialSubmissionForm';
+import LazySection from '../components/common/LazySection';
+
+const TestimonialsSection = lazy(() => import('../components/seo/TestimonialsSection'));
+const TestimonialSubmissionForm = lazy(() => import('../components/seo/TestimonialSubmissionForm'));
 
 type FilterCategory = 'all' | ClassSampleCategory;
 
@@ -260,6 +260,11 @@ export default function ClassSamplesPage() {
       setLoadError(null);
 
       try {
+        const [{ collection, getDocs, limit, query, where }, { db }] = await Promise.all([
+          import('firebase/firestore'),
+          import('../lib/firebaseConfig'),
+        ]);
+
         const ref = query(
           collection(db, 'classSamples'),
           where('active', '==', true),
@@ -617,14 +622,18 @@ export default function ClassSamplesPage() {
         </div>
       </section>
 
-      <TestimonialsSection
-        title="What parents noticed in real classes"
-        subtitle="Reviews focused on class quality, teacher attention, and child engagement."
-        pageTag="class-samples"
-        limit={4}
-        compact
-        viewAllHref="/testimonials"
-      />
+      <LazySection minHeightClassName="min-h-[280px]">
+        <Suspense fallback={null}>
+          <TestimonialsSection
+            title="What parents noticed in real classes"
+            subtitle="Reviews focused on class quality, teacher attention, and child engagement."
+            pageTag="class-samples"
+            limit={4}
+            compact
+            viewAllHref="/testimonials"
+          />
+        </Suspense>
+      </LazySection>
 
       <section className="mx-auto max-w-6xl px-4 pb-6 pt-8 lg:px-6">
         <div className="rounded-[28px] border border-white/80 bg-white/82 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-8">
@@ -640,12 +649,16 @@ export default function ClassSamplesPage() {
         </div>
       </section>
 
-      <TestimonialSubmissionForm
-        pageTag="class-samples"
-        title="Share feedback after watching class samples"
-        description="If these samples helped you evaluate class quality, share your experience. Submissions are moderation-first and never auto-published."
-        compact
-      />
+      <LazySection minHeightClassName="min-h-[220px]">
+        <Suspense fallback={null}>
+          <TestimonialSubmissionForm
+            pageTag="class-samples"
+            title="Share feedback after watching class samples"
+            description="If these samples helped you evaluate class quality, share your experience. Submissions are moderation-first and never auto-published."
+            compact
+          />
+        </Suspense>
+      </LazySection>
 
       <section className="mx-auto max-w-6xl px-4 pb-16 pt-10 lg:px-6">
         <div className="rounded-[32px] bg-[radial-gradient(circle_at_top_left,_rgba(250,204,21,0.18),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(125,211,252,0.2),_transparent_32%),linear-gradient(180deg,_#ffffff_0%,_#f8fafc_100%)] px-6 py-10 ring-1 ring-slate-200 sm:px-8">

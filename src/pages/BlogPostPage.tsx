@@ -863,7 +863,10 @@ function buildMetaDescription(src: any) {
                     src={metaSource.hero}
                     alt={metaSource.title}
                     className="h-full w-full bg-slate-100 object-cover object-center"
-                    loading="lazy"
+                    width={1600}
+                    height={900}
+                    loading="eager"
+                    fetchPriority="high"
                     decoding="async"
                   />
                 </div>
