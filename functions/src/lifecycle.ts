@@ -98,6 +98,34 @@ function toOptionalId(value: unknown): string | null {
   return null;
 }
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (!value || typeof value !== 'object') return false;
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+}
+
+function removeUndefinedDeep(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    const cleanedItems = value
+      .map((item) => removeUndefinedDeep(item))
+      .filter((item) => item !== undefined);
+    return cleanedItems;
+  }
+
+  if (isPlainObject(value)) {
+    const cleaned: Record<string, unknown> = {};
+    Object.entries(value).forEach(([key, item]) => {
+      const nextValue = removeUndefinedDeep(item);
+      if (nextValue !== undefined) {
+        cleaned[key] = nextValue;
+      }
+    });
+    return cleaned;
+  }
+
+  return value;
+}
+
 function normalizeStatusValue(value: unknown): string {
   return String(value || '').trim().toLowerCase();
 }
@@ -412,6 +440,14 @@ export const setEnrollmentStatus = onCall({ region: REGION }, async (request) =>
   const rawStatus = String(request.data?.status || '').trim();
   const reason = request.data?.reason ? String(request.data.reason) : null;
   const actor = request.auth?.uid || null;
+  const callerRoleRaw = request.auth?.token?.role;
+  const callerRolesRaw = request.auth?.token?.roles;
+  const callerRole =
+    typeof callerRoleRaw === 'string'
+      ? callerRoleRaw
+      : Array.isArray(callerRolesRaw)
+        ? callerRolesRaw.filter((role) => typeof role === 'string').join(',')
+        : 'unknown';
 
   if (!enrollmentId || !rawStatus) {
     throw new HttpsError('invalid-argument', 'enrollmentId and status are required');
@@ -441,7 +477,9 @@ export const setEnrollmentStatus = onCall({ region: REGION }, async (request) =>
     if (reason) updates.endReason = reason;
     if (isTerminal) updates.endedAt = admin.firestore.FieldValue.serverTimestamp();
 
-    await enrRef.set(updates, { merge: true });
+    const cleanPatch = removeUndefinedDeep(updates) as Record<string, unknown>;
+    console.log('[setEnrollmentStatus] writing patch keys', Object.keys(cleanPatch));
+    await enrRef.set(cleanPatch, { merge: true });
 
     let cancelledSessions = 0;
     if (canonicalStatus === 'paused') {
@@ -461,6 +499,14 @@ export const setEnrollmentStatus = onCall({ region: REGION }, async (request) =>
       throw error;
     }
 
+    console.error('[setEnrollmentStatus] unexpected failure', {
+      enrollmentId,
+      requestedStatus: rawStatus || 'unknown',
+      callerUid: actor,
+      callerRole,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+    });
     logger.error('setEnrollmentStatus failed', {
       enrollmentId,
       requestedStatus: rawStatus || 'unknown',
