@@ -1754,6 +1754,26 @@ function isPastStudentStatus(status: string): boolean {
   );
 }
 
+function extractCallableErrorMessage(error: unknown, fallback: string): string {
+  const err = error as Record<string, unknown> | null;
+  if (!err) return fallback;
+
+  const details = err.details;
+  if (typeof details === 'string' && details.trim()) return details.trim();
+  if (details && typeof details === 'object') {
+    const detailMessage = (details as Record<string, unknown>).message;
+    if (typeof detailMessage === 'string' && detailMessage.trim()) return detailMessage.trim();
+  }
+
+  const message = typeof err.message === 'string' ? err.message.trim() : '';
+  if (message && message.toLowerCase() !== 'internal') return message;
+
+  const code = typeof err.code === 'string' ? err.code.trim() : '';
+  if (code) return `${fallback} (${code})`;
+
+  return fallback;
+}
+
 export default function StudentList({ onEdit, onDelete, onAssignCourse }: StudentListProps) {
   const [students, setStudents] = useState<Student[]>([]);
   const [parents, setParents] = useState<User[]>([]);
@@ -1889,7 +1909,11 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       enrollmentsQuery.refetch();
     } catch (err) {
       console.error(err);
-      toast({ title: 'Error', description: 'Failed to discontinue enrollment', variant: 'destructive' });
+      toast({
+        title: 'Error',
+        description: extractCallableErrorMessage(err, 'Failed to discontinue enrollment'),
+        variant: 'destructive',
+      });
     }
   };
 

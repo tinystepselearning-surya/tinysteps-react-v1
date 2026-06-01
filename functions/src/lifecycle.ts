@@ -1,5 +1,6 @@
 import * as admin from 'firebase-admin';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import * as logger from 'firebase-functions/logger';
 import { ensureAdmin } from './helpers/adminGuard';
 import { normalizeEnrollmentStatus } from './helpers/status';
 
@@ -45,7 +46,13 @@ const SCHEDULE_EXCEPTION_SOURCE_TOKENS = [
 ] as const;
 
 function resolveKidIdFromEnrollment(data: any): string | null {
-  return data?.kidId || (Array.isArray(data?.kidIds) ? data.kidIds[0] : null) || data?.studentId || null;
+  return (
+    toOptionalId(data?.kidId) ||
+    toOptionalId(Array.isArray(data?.kidIds) ? data.kidIds[0] : null) ||
+    toOptionalId(data?.studentId) ||
+    toOptionalId(data?.childId) ||
+    null
+  );
 }
 
 function toStringList(value: unknown): string[] {
@@ -62,9 +69,33 @@ function toStringList(value: unknown): string[] {
 }
 
 function toOptionalId(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
-  const normalized = value.trim();
-  return normalized ? normalized : null;
+  if (typeof value === 'string') {
+    const normalized = value.trim();
+    return normalized ? normalized : null;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+  if (value && typeof value === 'object') {
+    const row = value as Record<string, unknown>;
+    const direct =
+      toOptionalId(row.id) ||
+      toOptionalId(row.uid) ||
+      toOptionalId(row.userId) ||
+      toOptionalId(row.kidId) ||
+      toOptionalId(row.studentId);
+    if (direct) return direct;
+    if (typeof row.path === 'string') {
+      const parts = row.path.split('/').filter(Boolean);
+      if (parts.length > 0) return parts[parts.length - 1];
+    }
+    const pathLike = (row as any)._path;
+    if (pathLike && Array.isArray(pathLike.segments)) {
+      const segs = pathLike.segments.filter((seg: unknown) => typeof seg === 'string');
+      if (segs.length > 0) return String(segs[segs.length - 1] || '').trim() || null;
+    }
+  }
+  return null;
 }
 
 function normalizeStatusValue(value: unknown): string {
@@ -135,7 +166,12 @@ function buildEnrollmentCanonicalPatch(enrollmentId: string, enrollment: Record<
   if (parentIds.length > 0) patch.parentIds = parentIds;
 
   const teacherIds = toStringList(enrollment.teacherIds);
-  const teacherId = toOptionalId(enrollment.teacherId) || teacherIds[0] || null;
+  const teacherId =
+    toOptionalId(enrollment.teacherId) ||
+    toOptionalId((enrollment as any).assignedTeacherId) ||
+    toOptionalId((enrollment as any).assignedTeacher) ||
+    teacherIds[0] ||
+    null;
   if (teacherId && !teacherIds.includes(teacherId)) teacherIds.unshift(teacherId);
   if (teacherId) patch.teacherId = teacherId;
   if (teacherIds.length > 0) patch.teacherIds = teacherIds;
@@ -289,7 +325,7 @@ async function updateSessionsTeacherByEnrollmentId(
         return 'linked';
       }
       return 'clear';
-    } catch (_error) {
+    } catch {
       return 'unverified';
     }
   };
@@ -372,52 +408,69 @@ async function updateSessionsTeacherByEnrollmentId(
 }
 
 export const setEnrollmentStatus = onCall({ region: REGION }, async (request) => {
-  await ensureAdmin(request.auth);
-
   const enrollmentId = String(request.data?.enrollmentId || '').trim();
   const rawStatus = String(request.data?.status || '').trim();
   const reason = request.data?.reason ? String(request.data.reason) : null;
+  const actor = request.auth?.uid || null;
 
   if (!enrollmentId || !rawStatus) {
     throw new HttpsError('invalid-argument', 'enrollmentId and status are required');
   }
 
-  const db = admin.firestore();
-  const enrRef = db.collection('enrollments').doc(enrollmentId);
-  const enrSnap = await enrRef.get();
+  try {
+    await ensureAdmin(request.auth);
 
-  if (!enrSnap.exists) {
-    throw new HttpsError('not-found', 'Enrollment not found');
+    const db = admin.firestore();
+    const enrRef = db.collection('enrollments').doc(enrollmentId);
+    const enrSnap = await enrRef.get();
+
+    if (!enrSnap.exists) {
+      throw new HttpsError('not-found', 'Enrollment not found');
+    }
+
+    const canonicalStatus = normalizeEnrollmentStatus(rawStatus);
+    const isTerminal = TERMINAL.has(canonicalStatus);
+    const enrollmentData = (enrSnap.data() || {}) as Record<string, unknown>;
+    const updates: Record<string, any> = {
+      ...buildEnrollmentCanonicalPatch(enrollmentId, enrollmentData),
+      status: canonicalStatus,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedBy: actor,
+    };
+
+    if (reason) updates.endReason = reason;
+    if (isTerminal) updates.endedAt = admin.firestore.FieldValue.serverTimestamp();
+
+    await enrRef.set(updates, { merge: true });
+
+    let cancelledSessions = 0;
+    if (canonicalStatus === 'paused') {
+      cancelledSessions = await cancelFutureSessionsByEnrollmentId(enrollmentId, 'paused');
+    } else if (isTerminal) {
+      cancelledSessions = await cancelFutureSessionsByEnrollmentId(enrollmentId, 'enrollment_ended');
+    }
+
+    return {
+      ok: true,
+      updatedEnrollmentId: enrollmentId,
+      cancelledSessionsCount: cancelledSessions,
+      message: `Enrollment set to ${canonicalStatus}`,
+    };
+  } catch (error) {
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+
+    logger.error('setEnrollmentStatus failed', {
+      enrollmentId,
+      requestedStatus: rawStatus || 'unknown',
+      reason: reason || null,
+      actor,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    throw new HttpsError('internal', 'Failed to update enrollment status. Please retry or contact support.');
   }
-
-  const canonicalStatus = normalizeEnrollmentStatus(rawStatus);
-  const isTerminal = TERMINAL.has(canonicalStatus);
-  const enrollmentData = (enrSnap.data() || {}) as Record<string, unknown>;
-  const updates: Record<string, any> = {
-    ...buildEnrollmentCanonicalPatch(enrollmentId, enrollmentData),
-    status: canonicalStatus,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedBy: request.auth?.uid || null,
-  };
-
-  if (reason) updates.endReason = reason;
-  if (isTerminal) updates.endedAt = admin.firestore.FieldValue.serverTimestamp();
-
-  await enrRef.set(updates, { merge: true });
-
-  let cancelledSessions = 0;
-  if (canonicalStatus === 'paused') {
-    cancelledSessions = await cancelFutureSessionsByEnrollmentId(enrollmentId, 'paused');
-  } else if (isTerminal) {
-    cancelledSessions = await cancelFutureSessionsByEnrollmentId(enrollmentId, 'enrollment_ended');
-  }
-
-  return {
-    ok: true,
-    updatedEnrollmentId: enrollmentId,
-    cancelledSessionsCount: cancelledSessions,
-    message: `Enrollment set to ${canonicalStatus}`,
-  };
 });
 
 export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (request) => {

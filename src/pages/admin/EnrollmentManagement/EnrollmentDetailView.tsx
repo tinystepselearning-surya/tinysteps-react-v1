@@ -28,6 +28,26 @@ interface EnrollmentDetailViewProps {
   onClose: () => void;
 }
 
+const extractCallableErrorMessage = (error: unknown, fallback: string): string => {
+  const err = error as Record<string, unknown> | null;
+  if (!err) return fallback;
+
+  const details = err.details;
+  if (typeof details === 'string' && details.trim()) return details.trim();
+  if (details && typeof details === 'object') {
+    const detailMessage = (details as Record<string, unknown>).message;
+    if (typeof detailMessage === 'string' && detailMessage.trim()) return detailMessage.trim();
+  }
+
+  const message = typeof err.message === 'string' ? err.message.trim() : '';
+  if (message && message.toLowerCase() !== 'internal') return message;
+
+  const code = typeof err.code === 'string' ? err.code.trim() : '';
+  if (code) return `${fallback} (${code})`;
+
+  return fallback;
+};
+
 const isReadableName = (value: unknown): boolean => {
   if (typeof value !== 'string') return false;
   const trimmed = value.trim();
@@ -348,7 +368,7 @@ export default function EnrollmentDetailView({
     } catch (err: any) {
       toast({
         title: 'Error',
-        description: err?.message || 'Failed to update enrollment',
+        description: extractCallableErrorMessage(err, 'Failed to update enrollment'),
         variant: 'destructive',
       });
     } finally {
@@ -370,7 +390,7 @@ export default function EnrollmentDetailView({
     } catch (err: any) {
       toast({
         title: 'Error',
-        description: err?.message || 'Failed to archive kid',
+        description: extractCallableErrorMessage(err, 'Failed to archive kid'),
         variant: 'destructive',
       });
     } finally {
