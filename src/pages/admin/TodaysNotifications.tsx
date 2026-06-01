@@ -951,6 +951,10 @@ const toReadableStatus = (status: string): string => {
 };
 
 type SessionTypeLabel = 'Regular' | 'Makeup' | 'Rescheduled' | 'Replacement' | 'Manual';
+interface SessionTypeResolution {
+  label: SessionTypeLabel;
+  reason: string;
+}
 
 const toSessionTypeStyle = (type: SessionTypeLabel): string => {
   if (type === 'Regular') return 'bg-slate-100 text-slate-700';
@@ -960,7 +964,7 @@ const toSessionTypeStyle = (type: SessionTypeLabel): string => {
   return 'bg-indigo-100 text-indigo-700';
 };
 
-const resolveSessionTypeLabel = (session: ClassSessionDoc): SessionTypeLabel => {
+const resolveSessionTypeLabel = (session: ClassSessionDoc): SessionTypeResolution => {
   const source = normalizeStatusLike(session.source);
   const status = normalizeStatusLike(session.status);
   const sessionType = normalizeStatusLike(session.sessionType);
@@ -969,37 +973,44 @@ const resolveSessionTypeLabel = (session: ClassSessionDoc): SessionTypeLabel => 
   const makeupForSessionId = normalizeLookupId(session.makeupForSessionId);
   const rescheduledFromSessionId = normalizeLookupId(session.rescheduledFromSessionId);
   const replacementSessionId = normalizeLookupId(session.replacementSessionId);
-  const hasMakeupMarkers = Boolean(
-    session.isMakeup === true ||
-      makeupCreditId ||
-      makeupForSessionId,
-  );
-  const hasReplacementMarkers = Boolean(
-    rescheduledFromSessionId ||
-      replacementSessionId,
-  );
-  const isManualSource =
-    source.includes('manual') ||
-    source.includes('ad_hoc') ||
-    source.includes('adhoc') ||
-    source.includes('one_off') ||
-    source.includes('approved_request') ||
-    sessionType.includes('manual') ||
-    createdByFlow.includes('manual');
-  const isReplacementSource =
-    source.includes('replacement') ||
-    source.includes('replace') ||
-    sessionType.includes('replacement');
-  const isMakeupSource =
-    source.includes('makeup') ||
-    source.includes('teacher_makeup_from_reschedule') ||
-    sessionType.includes('makeup');
+  const containsAny = (value: string, tokens: string[]): boolean =>
+    tokens.some((token) => value.includes(token));
+  const sourceOrType = `${source} ${sessionType}`.trim();
+  const allTypeSignals = `${source} ${sessionType} ${createdByFlow}`.trim();
 
-  if (isMakeupSource || hasMakeupMarkers) return 'Makeup';
-  if (status === 'reschedule_requested' || status === 'rescheduled') return 'Rescheduled';
-  if (isReplacementSource || hasReplacementMarkers) return 'Replacement';
-  if (isManualSource) return 'Manual';
-  return 'Regular';
+  const isMakeupSource = containsAny(sourceOrType, ['makeup']);
+  const hasRescheduleMetadata = containsAny(allTypeSignals, [
+    'reschedule_requested',
+    'rescheduled',
+    'reschedule',
+    'reschedule_request',
+  ]);
+  const isManualSource = containsAny(allTypeSignals, [
+    'manual',
+    'one_off',
+    'one-off',
+    'ad_hoc',
+    'ad-hoc',
+    'adhoc',
+    'admin_created',
+    'admin-created',
+  ]);
+
+  if (session.isMakeup === true) return { label: 'Makeup', reason: 'isMakeup is true' };
+  if (makeupCreditId) return { label: 'Makeup', reason: 'makeupCreditId exists' };
+  if (makeupForSessionId) return { label: 'Makeup', reason: 'makeupForSessionId exists' };
+  if (isMakeupSource) return { label: 'Makeup', reason: 'source/sessionType contains makeup' };
+
+  if (replacementSessionId) return { label: 'Replacement', reason: 'replacementSessionId exists' };
+  if (rescheduledFromSessionId) return { label: 'Replacement', reason: 'rescheduledFromSessionId exists' };
+
+  if (status === 'reschedule_requested') return { label: 'Rescheduled', reason: 'status is reschedule_requested' };
+  if (status === 'rescheduled') return { label: 'Rescheduled', reason: 'status is rescheduled' };
+  if (hasRescheduleMetadata) return { label: 'Rescheduled', reason: 'reschedule metadata signal found' };
+
+  if (isManualSource) return { label: 'Manual', reason: 'source/sessionType/createdByFlow indicates manual one-off ad-hoc admin-created' };
+
+  return { label: 'Regular', reason: 'fallback: no special markers' };
 };
 
 const getKidNames = (session: ClassSessionDoc, kidMap: Record<string, KidDoc>): string[] => {
@@ -1450,6 +1461,8 @@ export default function TodaysNotifications() {
           ? `${classTimeParent} (${parentTimeZone}) / ${classTimeIst}`
           : classTimeIst;
 
+        const sessionTypeResolution = resolveSessionTypeLabel(session);
+
         return {
           ...session,
           sessionDateKey,
@@ -1480,7 +1493,8 @@ export default function TodaysNotifications() {
           teacherUserMissing: Boolean(teacherRef && !teacherUserResolved),
           courseLabel,
           statusLabel,
-          sessionTypeLabel: resolveSessionTypeLabel(session),
+          sessionTypeLabel: sessionTypeResolution.label,
+          sessionTypeReason: sessionTypeResolution.reason,
         };
       })
       .filter((row): row is any => Boolean(row));
@@ -2490,6 +2504,7 @@ export default function TodaysNotifications() {
                       <TableCell className="align-top whitespace-nowrap capitalize">{row.statusLabel}</TableCell>
                       <TableCell className="align-top whitespace-nowrap">
                         <span
+                          title={row.sessionTypeReason || 'fallback: no special markers'}
                           className={`inline-flex items-center rounded px-2 py-0.5 text-[11px] font-medium ${toSessionTypeStyle(
                             row.sessionTypeLabel || 'Regular',
                           )}`}
