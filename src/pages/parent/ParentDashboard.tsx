@@ -2433,37 +2433,11 @@ export default function ParentDashboard() {
         () => qA,
       );
 
-      const snapAParentIds = await readQueryDocs(
-        "Query A2",
-        () =>
-          query(
-            classSessionsCol,
-            where("parentIds", "array-contains", user.uid),
-          ),
-      );
-      const matchingSnapAParentIdsDocs = (snapAParentIds?.docs ?? []).filter((d) => {
-          const data = d.data() as any;
-          const kidIds = Array.isArray(data?.kidIds) ? data.kidIds.map((value: unknown) => String(value || '').trim()) : [];
-          const kidId = String(data?.kidId || '').trim();
-          const date = String(data?.date || '').trim();
-          const matchesKid = kidIds.includes(selectedKidId) || kidId === selectedKidId;
-          const matchesDate =
-            shouldLoadFullClassHistory ||
-            (date.length > 0 && date >= recentStartKey && date <= recentEndKey);
-          return matchesKid && matchesDate;
-      });
       debugParentDashboard("✅ [Query A] classSessions kidIds array-contains + parentId:", {
         count: snapA?.size ?? 0,
         docs: (snapA?.docs ?? []).map((d) => {
           const data = d.data() as any;
           return { id: d.id, parentId: data?.parentId, kidIds: data?.kidIds };
-        })
-      });
-      debugParentDashboard("✅ [Query A2] classSessions parentIds array-contains (kid-filtered client-side):", {
-        count: matchingSnapAParentIdsDocs.length,
-        docs: matchingSnapAParentIdsDocs.map((d) => {
-          const data = d.data() as any;
-          return { id: d.id, parentIds: data?.parentIds, kidIds: data?.kidIds };
         })
       });
 
@@ -2495,13 +2469,12 @@ export default function ParentDashboard() {
         emitParentLegacyFallbackTelemetry("classSessions_kidId", {
           kidId: selectedKidId,
           count: snapB?.size ?? 0,
-          canonicalHit: ((snapA?.size ?? 0) + matchingSnapAParentIdsDocs.length) > 0,
+          canonicalHit: (snapA?.size ?? 0) > 0,
         });
       }
 
       const map = new Map<string, KidSession>();
       (snapA?.docs ?? []).forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
-      matchingSnapAParentIdsDocs.forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
       (snapB?.docs ?? []).forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
 
       const all = Array.from(map.values());
