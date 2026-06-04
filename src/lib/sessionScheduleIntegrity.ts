@@ -74,6 +74,24 @@ const collectSessionKidIds = (sessionLike: Record<string, unknown>): string[] =>
   );
 };
 
+const collectSessionTeacherIds = (sessionLike: Record<string, unknown>): string[] => {
+  const fromTeacherIds = Array.isArray(sessionLike.teacherIds) ? sessionLike.teacherIds : [];
+  const fromSingles = [
+    sessionLike.teacherId,
+    sessionLike.assignedTeacherId,
+    sessionLike.primaryTeacherId,
+    sessionLike.teacherUid,
+    sessionLike.teacher_id,
+  ];
+  return Array.from(
+    new Set(
+      [...fromTeacherIds, ...fromSingles]
+        .map((item) => normalizeLookupId(item))
+        .filter(Boolean),
+    ),
+  );
+};
+
 const normalizeEnrollmentStatus = (value: unknown): string => {
   const raw = normalizeText(value).toLowerCase();
   if (!raw) return 'active';
@@ -205,7 +223,7 @@ const resolveSessionDuration = (sessionLike: Record<string, unknown>): number | 
   return clampDurationMinutes(raw, 35);
 };
 
-const isScheduleExceptionSession = (sessionLike: Record<string, unknown>): boolean => {
+export const isScheduleExceptionSession = (sessionLike: Record<string, unknown>): boolean => {
   if (sessionLike.isAdHoc === true || sessionLike.isMakeup === true) return true;
   const adHocType = normalizeText(sessionLike.adHocType).toLowerCase();
   if (adHocType.includes('one_off') || adHocType.includes('adhoc') || adHocType.includes('ad_hoc')) {
@@ -215,6 +233,17 @@ const isScheduleExceptionSession = (sessionLike: Record<string, unknown>): boole
   const source = normalizeText(sessionLike.source).toLowerCase();
   if (!source) return false;
   return SCHEDULE_EXCEPTION_SOURCES.some((token) => source.includes(token));
+};
+
+export const shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment = (
+  sessionLike: Record<string, unknown>,
+  teacherId: string,
+): boolean => {
+  const normalizedTeacherId = normalizeLookupId(teacherId);
+  if (!normalizedTeacherId) return false;
+  if (!isScheduleExceptionSession(sessionLike)) return false;
+  const sessionTeacherIds = collectSessionTeacherIds(sessionLike);
+  return sessionTeacherIds.includes(normalizedTeacherId);
 };
 
 const doesSessionMatchEnrollmentIdentity = (
@@ -237,13 +266,12 @@ const doesSessionMatchEnrollmentIdentity = (
     return false;
   }
 
-  const enrollmentTeacherId = normalizeLookupId(enrollmentLike.teacherId);
-  const sessionTeacherId = normalizeLookupId(sessionLike.teacherId);
   const enrollmentTeacherIds = collectEnrollmentTeacherIds(enrollmentLike);
-  if (enrollmentTeacherIds.length > 0 && (!sessionTeacherId || !enrollmentTeacherIds.includes(sessionTeacherId))) {
-    return false;
-  }
-  if (enrollmentTeacherId && (!sessionTeacherId || sessionTeacherId !== enrollmentTeacherId)) {
+  const sessionTeacherIds = collectSessionTeacherIds(sessionLike);
+  if (
+    enrollmentTeacherIds.length > 0 &&
+    (sessionTeacherIds.length === 0 || !sessionTeacherIds.some((teacherId) => enrollmentTeacherIds.includes(teacherId)))
+  ) {
     return false;
   }
 

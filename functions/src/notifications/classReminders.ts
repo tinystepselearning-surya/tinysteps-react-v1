@@ -264,6 +264,21 @@ function collectEnrollmentTeacherIds(enrollmentLike: Record<string, unknown>): s
   );
 }
 
+function collectSessionTeacherIds(sessionLike: Record<string, unknown>): string[] {
+  return Array.from(
+    new Set(
+      [
+        ...collectIds(sessionLike.teacherIds),
+        normalizeLookupId(sessionLike.teacherId),
+        normalizeLookupId(sessionLike.assignedTeacherId),
+        normalizeLookupId(sessionLike.primaryTeacherId),
+        normalizeLookupId(sessionLike.teacherUid),
+        normalizeLookupId(sessionLike.teacher_id),
+      ].filter(Boolean),
+    ),
+  );
+}
+
 function isEnrollmentOperationallyActive(enrollmentLike: Record<string, unknown>): boolean {
   if (enrollmentLike.archivedAt || enrollmentLike.archived === true || enrollmentLike.isArchived === true) return false;
   const status = normalizeSessionStatus(enrollmentLike.status);
@@ -286,8 +301,13 @@ function isCanonicalScheduledSession(
   if (enrollmentCourseId && (!sessionCourseId || sessionCourseId !== enrollmentCourseId)) return false;
 
   const teacherIds = collectEnrollmentTeacherIds(enrollmentLike);
-  const sessionTeacherId = normalizeLookupId(sessionLike.teacherId);
-  if (teacherIds.length > 0 && (!sessionTeacherId || !teacherIds.includes(sessionTeacherId))) return false;
+  const sessionTeacherIds = collectSessionTeacherIds(sessionLike);
+  if (
+    teacherIds.length > 0 &&
+    (sessionTeacherIds.length === 0 || !sessionTeacherIds.some((teacherId) => teacherIds.includes(teacherId)))
+  ) {
+    return false;
+  }
 
   const enrollmentKidIds = collectEnrollmentKidIds(enrollmentLike);
   const sessionKidIds = collectSessionKidIds(sessionLike);

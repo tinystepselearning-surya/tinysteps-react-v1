@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { collection, documentId, getDocs, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { db } from '../../../lib/firebaseConfig';
-import { isSessionCanonicalForEnrollment } from '../../../lib/sessionScheduleIntegrity';
+import {
+  isScheduleExceptionSession,
+  isSessionCanonicalForEnrollment,
+  shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment,
+} from '../../../lib/sessionScheduleIntegrity';
 import { TeacherSession } from '../../../types/Teacher';
 
 interface UseTeacherSessionsResult {
@@ -148,6 +152,23 @@ const normalizeKidIds = (doc: any): string[] => {
   return raw
     .map((id: unknown) => toCleanText(id))
     .filter((id: string) => id.length > 0);
+};
+
+const normalizeTeacherIds = (doc: any): string[] => {
+  const raw = Array.isArray(doc.teacherIds) ? doc.teacherIds : [];
+  const singles = [doc.teacherId, doc.assignedTeacherId, doc.primaryTeacherId, doc.teacherUid, doc.teacher_id];
+  return Array.from(
+    new Set(
+      [...raw, ...singles]
+        .map((id: unknown) => toCleanText(id))
+        .filter((id: string) => id.length > 0),
+    ),
+  );
+};
+
+const sessionBelongsToTeacher = (doc: any, teacherId: string): boolean => {
+  if (!teacherId) return false;
+  return normalizeTeacherIds(doc).includes(teacherId);
 };
 
 const resolveTeacherId = (doc: any): string => {
@@ -391,12 +412,13 @@ export const useTeacherSessions = (
 
     let cancelled = false;
     let batchCounter = 0;
+    const liveDocsBySource = new Map<string, Map<string, TeacherSession>>();
 
     const applyRows = async (rows: TeacherSession[]) => {
       const currentBatch = ++batchCounter;
       const filtered = includeAllTeachers
         ? rows
-        : rows.filter((session) => toCleanText((session as any)?.teacherId) === teacherKey);
+        : rows.filter((session) => sessionBelongsToTeacher(session as any, teacherKey));
 
       const enrollmentMap = await fetchEnrollmentsByIds(
         Array.from(
@@ -413,6 +435,16 @@ export const useTeacherSessions = (
         const enrollmentId = toCleanText((session as any)?.enrollmentId);
         if (!enrollmentId) return false;
         const enrollment = enrollmentMap.get(enrollmentId);
+        if (!enrollment) {
+          return (
+            sessionBelongsToTeacher(session as any, teacherKey) &&
+            isScheduleExceptionSession(session as unknown as Record<string, unknown>) &&
+            shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment(
+              session as unknown as Record<string, unknown>,
+              teacherKey,
+            )
+          );
+        }
         return isSessionCanonicalForEnrollment(session as unknown as Record<string, unknown>, enrollment);
       });
 
@@ -421,6 +453,18 @@ export const useTeacherSessions = (
       setSessions(sortSessions(enriched).slice(0, 400));
       setError(null);
       setIsLoading(false);
+    };
+
+    const publishMergedRows = () => {
+      const merged = new Map<string, TeacherSession>();
+      liveDocsBySource.forEach((sourceRows) => {
+        sourceRows.forEach((session, sessionId) => {
+          const date = toCleanText(session.date);
+          if (!date || date < start || date > end) return;
+          merged.set(sessionId, session);
+        });
+      });
+      void applyRows(Array.from(merged.values()));
     };
 
     const runFallback = async () => {
@@ -450,6 +494,11 @@ export const useTeacherSessions = (
                 orderBy('date', 'asc'),
               ),
               query(baseCollection, where('teacherId', '==', teacherKey)),
+              query(baseCollection, where('teacherIds', 'array-contains', teacherKey)),
+              query(baseCollection, where('assignedTeacherId', '==', teacherKey)),
+              query(baseCollection, where('primaryTeacherId', '==', teacherKey)),
+              query(baseCollection, where('teacherUid', '==', teacherKey)),
+              query(baseCollection, where('teacher_id', '==', teacherKey)),
               query(
                 baseCollection,
                 where('date', '>=', start),
@@ -467,27 +516,29 @@ export const useTeacherSessions = (
             ];
 
       let lastError: unknown = null;
+      const mergedFallbackSessions = new Map<string, TeacherSession>();
 
       try {
         for (const fallbackQuery of fallbackQueries) {
           try {
             const fallbackSnap = await getDocs(fallbackQuery);
-            const scopedSessions = fallbackSnap.docs.map((d) =>
-              toTeacherSession({ id: d.id, ...d.data() }),
-            );
-            const filteredByDate = scopedSessions.filter((session) => {
+            fallbackSnap.docs.forEach((d) => {
+              const session = toTeacherSession({ id: d.id, ...d.data() });
               const date = toCleanText(session.date);
-              return Boolean(date && date >= start && date <= end);
+              if (!date || date < start || date > end) return;
+              mergedFallbackSessions.set(d.id, session);
             });
-            await applyRows(filteredByDate);
-            if (import.meta.env.DEV && !cancelled) {
-              console.warn('useTeacherSessions: loaded fallback data because classSessions index is not ready');
-            }
-            return;
           } catch (fallbackErr) {
             lastError = fallbackErr;
             if (!isIndexError(fallbackErr)) throw fallbackErr;
           }
+        }
+        if (mergedFallbackSessions.size > 0) {
+          await applyRows(Array.from(mergedFallbackSessions.values()));
+          if (import.meta.env.DEV && !cancelled) {
+            console.warn('useTeacherSessions: loaded fallback data because classSessions index is not ready');
+          }
+          return;
         }
         if (!cancelled) {
           setError((lastError as Error) || new Error('useTeacherSessions fallback failed'));
@@ -501,33 +552,57 @@ export const useTeacherSessions = (
       }
     };
 
-    const unsub = onSnapshot(
-      classSessionsQuery,
-      (snapshot) => {
-        const classSessions = snapshot.docs.map((d) => toTeacherSession({ id: d.id, ...d.data() }));
-        void applyRows(classSessions);
-      },
-      (err) => {
-        console.error('useTeacherSessions error', err);
-        if (!cancelled) {
+    const listeners: Array<() => void> = [];
+    const attachListener = (
+      sourceKey: string,
+      listenerQuery: ReturnType<typeof query>,
+      fallbackToBatch = false,
+    ) => {
+      const unsubscribe = onSnapshot(
+        listenerQuery,
+        (snapshot) => {
+          liveDocsBySource.set(
+            sourceKey,
+            new Map(
+              snapshot.docs.map((d) => [
+                d.id,
+                toTeacherSession({ id: d.id, ...(d.data() as Record<string, unknown>) }),
+              ]),
+            ),
+          );
+          publishMergedRows();
+        },
+        (err) => {
+          console.error('useTeacherSessions error', err);
+          if (cancelled) return;
           const message = err instanceof Error ? err.message : String(err);
           if (
-            err?.code === 'failed-precondition' ||
-            /requires an index|index is currently building/i.test(message)
+            fallbackToBatch &&
+            (err?.code === 'failed-precondition' || /requires an index|index is currently building/i.test(message))
           ) {
-            unsub();
+            listeners.forEach((stop) => stop());
             void runFallback();
             return;
           }
           setError(err as Error);
           setIsLoading(false);
-        }
-      },
-    );
+        },
+      );
+      listeners.push(unsubscribe);
+    };
+
+    attachListener('primary', classSessionsQuery, true);
+    if (!includeAllTeachers && teacherKey) {
+      attachListener('teacherIds', query(baseCollection, where('teacherIds', 'array-contains', teacherKey)));
+      attachListener('assignedTeacherId', query(baseCollection, where('assignedTeacherId', '==', teacherKey)));
+      attachListener('primaryTeacherId', query(baseCollection, where('primaryTeacherId', '==', teacherKey)));
+      attachListener('teacherUid', query(baseCollection, where('teacherUid', '==', teacherKey)));
+      attachListener('teacher_id', query(baseCollection, where('teacher_id', '==', teacherKey)));
+    }
 
     return () => {
       cancelled = true;
-      unsub();
+      listeners.forEach((stop) => stop());
     };
   }, [teacherId, startDate, endDate, includeAllTeachers]);
 
