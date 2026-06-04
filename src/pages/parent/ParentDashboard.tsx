@@ -2356,7 +2356,7 @@ export default function ParentDashboard() {
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
   const [classesView, setClassesView] = useState<
-    "today" | "upcoming" | "completed" | "rescheduled" | "calendar" | "worksheets"
+    "today" | "upcoming" | "completed" | "rescheduled" | "past_pending" | "calendar" | "worksheets"
   >("today");
   const selectClassesView = (view: typeof classesView) => {
     hapticSelection();
@@ -2407,12 +2407,32 @@ export default function ParentDashboard() {
               where("date", "<=", recentEndKey),
             );
         const snapA = await getDocs(qA);
+        const qAParentIds = query(
+          classSessionsCol,
+          where("parentIds", "array-contains", user.uid),
+        );
+        const snapAParentIds = await getDocs(qAParentIds);
+        const matchingSnapAParentIdsDocs = snapAParentIds.docs.filter((d) => {
+          const data = d.data() as any;
+          const kidIds = Array.isArray(data?.kidIds) ? data.kidIds.map((value: unknown) => String(value || '').trim()) : [];
+          const kidId = String(data?.kidId || '').trim();
+          const date = String(data?.date || '').trim();
+          const matchesKid = kidIds.includes(selectedKidId) || kidId === selectedKidId;
+          const matchesDate =
+            shouldLoadFullClassHistory ||
+            (date.length > 0 && date >= recentStartKey && date <= recentEndKey);
+          return matchesKid && matchesDate;
+        });
         debugParentDashboard("✅ [Query A] classSessions kidIds array-contains + parentId:", {
           count: snapA.size,
           docs: snapA.docs.map(d => ({ id: d.id, parentId: d.data().parentId, kidIds: d.data().kidIds }))
         });
+        debugParentDashboard("✅ [Query A2] classSessions parentIds array-contains (kid-filtered client-side):", {
+          count: matchingSnapAParentIdsDocs.length,
+          docs: matchingSnapAParentIdsDocs.map(d => ({ id: d.id, parentIds: d.data().parentIds, kidIds: d.data().kidIds }))
+        });
 
-        const shouldRunLegacyKidIdQuery = shouldLoadFullClassHistory || snapA.size === 0;
+        const shouldRunLegacyKidIdQuery = shouldLoadFullClassHistory || (snapA.size + matchingSnapAParentIdsDocs.length) === 0;
         const qB = shouldLoadFullClassHistory
           ? query(
               classSessionsCol,
@@ -2435,12 +2455,13 @@ export default function ParentDashboard() {
           emitParentLegacyFallbackTelemetry("classSessions_kidId", {
             kidId: selectedKidId,
             count: snapB?.size ?? 0,
-            canonicalHit: snapA.size > 0,
+            canonicalHit: (snapA.size + matchingSnapAParentIdsDocs.length) > 0,
           });
         }
 
         const map = new Map<string, KidSession>();
         snapA.docs.forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
+        matchingSnapAParentIdsDocs.forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
         (snapB?.docs ?? []).forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
 
         const all = Array.from(map.values());
@@ -2651,6 +2672,15 @@ export default function ParentDashboard() {
       .filter((row) => row.status === "reschedule_requested")
       .sort((a, b) => b.start.getTime() - a.start.getTime());
   }, [sortedClassSessions]);
+
+  const pastPendingClassSessions = useMemo(() => {
+    return [...sortedClassSessions]
+      .filter((row) => {
+        if (toYMD(row.start) >= todayDayKey) return false;
+        return row.status === "scheduled" || row.status === "in_progress";
+      })
+      .sort((a, b) => b.start.getTime() - a.start.getTime());
+  }, [sortedClassSessions, todayDayKey]);
 
   const classesCalendarMonthLabel = useMemo(() => {
     return classesCalendarMonth.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
@@ -4472,7 +4502,12 @@ export default function ParentDashboard() {
       ? phonicsGradientsByCourseId[selectedCourse.courseId] || "from-slate-50 to-emerald-50"
       : "from-slate-50 to-emerald-50";
     const latestTeacherLesson = recentTeacherRatingsSummary?.latestLesson ?? null;
-    const upcomingPreviewRows = upcomingClassSessions.slice(0, 2);
+    const previewRows = [...todayClassSessions, ...upcomingClassSessions]
+      .filter((row) => {
+        const status = normalizeStatus(row.status);
+        return status !== "paused" && status !== "cancelled" && status !== "canceled";
+      })
+      .slice(0, 2);
     const dashboardAlerts: string[] = [];
     if (walletBalance !== null && walletBalance < 0) {
       dashboardAlerts.push(`${formatCurrencyINR(Math.abs(walletBalance))} amount to pay`);
@@ -4583,7 +4618,7 @@ export default function ParentDashboard() {
         <div className="grid gap-4 sm:gap-6 xl:grid-cols-2">
           <ParentAttendanceSummary
             classesCounts={classesCounts}
-            upcomingPreviewRows={upcomingPreviewRows}
+            upcomingPreviewRows={previewRows}
             joiningSessionId={joiningSessionId}
             onOpenClasses={() => setTab("classes")}
             onJoinSession={(session) => openJoinClass(session)}
@@ -5604,7 +5639,7 @@ export default function ParentDashboard() {
           </div>
         )}
 
-        {/* Classes tab: Today's + Upcoming sessions */}
+        {/* Classes tab: canonical sessions bucketed for parent review */}
         {activeTab === "classes" && (
           <div className="space-y-3 sm:space-y-4">
             <Card className={`sticky z-20 p-3 sm:p-5 ${isNativeIOSApp ? "top-0" : "top-[calc(env(safe-area-inset-top)+3.25rem)] sm:top-0"}`}>
@@ -5659,6 +5694,19 @@ export default function ParentDashboard() {
                       <CalendarClock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       <span className="sm:hidden">Resched</span>
                       <span className="hidden sm:inline">Rescheduled</span> ({rescheduledClassSessions.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => selectClassesView("past_pending")}
+                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
+                        classesView === "past_pending"
+                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
+                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+                      }`}
+                    >
+                      <Clock3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span className="sm:hidden">Review</span>
+                      <span className="hidden sm:inline">Needs Review</span> ({pastPendingClassSessions.length})
                     </button>
                     <button
                       type="button"
@@ -5723,6 +5771,12 @@ export default function ParentDashboard() {
               renderClassSessionsTable(completedClassSessions, "Completed Sessions", "No completed sessions yet.")
             ) : classesView === "rescheduled" ? (
               renderClassSessionsTable(rescheduledClassSessions, "Rescheduled Sessions", "No rescheduled sessions.")
+            ) : classesView === "past_pending" ? (
+              renderClassSessionsTable(
+                pastPendingClassSessions,
+                "Needs Review",
+                "No past pending sessions need review.",
+              )
             ) : classesView === "worksheets" ? (
               <Card className="p-6">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-2">

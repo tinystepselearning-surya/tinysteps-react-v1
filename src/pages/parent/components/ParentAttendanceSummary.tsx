@@ -64,10 +64,10 @@ export default function ParentAttendanceSummary(props: ParentAttendanceSummaryPr
       </div>
 
       <div className="mt-4 space-y-2">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Upcoming Classes</div>
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Today & Next Classes</div>
         {upcomingPreviewRows.length === 0 ? (
           <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
-            No upcoming classes are scheduled yet.
+            No today or upcoming classes are scheduled yet.
           </div>
         ) : (
           upcomingPreviewRows.map((row) => {
