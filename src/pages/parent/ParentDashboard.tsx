@@ -129,13 +129,12 @@ const PARENT_MOBILE_TABS: MobileTabBarItem[] = [
   { id: "insights", label: "Insights", icon: TrendingUp },
 ];
 
-const shouldDebugParentDashboard =
-  import.meta.env.DEV &&
-  typeof window !== "undefined" &&
-  (window as any).__TS_DEBUG_PARENT_DASHBOARD__ === true;
+const shouldDebugParentDashboard = () =>
+  typeof window !== "undefined"
+  && window.localStorage?.getItem("tsDebugParentSessions") === "1";
 
 const debugParentDashboard = (...args: unknown[]) => {
-  if (shouldDebugParentDashboard) {
+  if (shouldDebugParentDashboard()) {
     console.debug(...args);
   }
 };
@@ -2392,27 +2391,57 @@ export default function ParentDashboard() {
       const recentStartKey = toYMD(recentRangeStart);
       const recentEndKey = toYMD(recentRangeEnd);
 
-      try {
-        const qA = shouldLoadFullClassHistory
-          ? query(
-              classSessionsCol,
-              where("kidIds", "array-contains", selectedKidId),
-              where("parentId", "==", user.uid),
-            )
-          : query(
-              classSessionsCol,
-              where("kidIds", "array-contains", selectedKidId),
-              where("parentId", "==", user.uid),
-              where("date", ">=", recentStartKey),
-              where("date", "<=", recentEndKey),
-            );
-        const snapA = await getDocs(qA);
-        const qAParentIds = query(
-          classSessionsCol,
-          where("parentIds", "array-contains", user.uid),
-        );
-        const snapAParentIds = await getDocs(qAParentIds);
-        const matchingSnapAParentIdsDocs = snapAParentIds.docs.filter((d) => {
+      const logQueryError = (queryName: string, error: any) => {
+        console.warn(`⚠️ [ParentDashboard] ${queryName} query failed`, {
+          code: error?.code,
+          message: error?.message,
+        });
+        debugParentDashboard(`❌ [${queryName}] query failed`, {
+          code: error?.code,
+          message: error?.message,
+          details: error,
+        });
+      };
+
+      const readQueryDocs = async (
+        queryName: string,
+        buildQuery: () => ReturnType<typeof query>,
+      ) => {
+        try {
+          return await getDocs(buildQuery());
+        } catch (error: any) {
+          logQueryError(queryName, error);
+          return null;
+        }
+      };
+
+      const qA = shouldLoadFullClassHistory
+        ? query(
+            classSessionsCol,
+            where("kidIds", "array-contains", selectedKidId),
+            where("parentId", "==", user.uid),
+          )
+        : query(
+            classSessionsCol,
+            where("kidIds", "array-contains", selectedKidId),
+            where("parentId", "==", user.uid),
+            where("date", ">=", recentStartKey),
+            where("date", "<=", recentEndKey),
+          );
+      const snapA = await readQueryDocs(
+        "Query A",
+        () => qA,
+      );
+
+      const snapAParentIds = await readQueryDocs(
+        "Query A2",
+        () =>
+          query(
+            classSessionsCol,
+            where("parentIds", "array-contains", user.uid),
+          ),
+      );
+      const matchingSnapAParentIdsDocs = (snapAParentIds?.docs ?? []).filter((d) => {
           const data = d.data() as any;
           const kidIds = Array.isArray(data?.kidIds) ? data.kidIds.map((value: unknown) => String(value || '').trim()) : [];
           const kidId = String(data?.kidId || '').trim();
@@ -2422,67 +2451,70 @@ export default function ParentDashboard() {
             shouldLoadFullClassHistory ||
             (date.length > 0 && date >= recentStartKey && date <= recentEndKey);
           return matchesKid && matchesDate;
-        });
-        debugParentDashboard("✅ [Query A] classSessions kidIds array-contains + parentId:", {
-          count: snapA.size,
-          docs: snapA.docs.map(d => ({ id: d.id, parentId: d.data().parentId, kidIds: d.data().kidIds }))
-        });
-        debugParentDashboard("✅ [Query A2] classSessions parentIds array-contains (kid-filtered client-side):", {
-          count: matchingSnapAParentIdsDocs.length,
-          docs: matchingSnapAParentIdsDocs.map(d => ({ id: d.id, parentIds: d.data().parentIds, kidIds: d.data().kidIds }))
-        });
+      });
+      debugParentDashboard("✅ [Query A] classSessions kidIds array-contains + parentId:", {
+        count: snapA?.size ?? 0,
+        docs: (snapA?.docs ?? []).map((d) => {
+          const data = d.data() as any;
+          return { id: d.id, parentId: data?.parentId, kidIds: data?.kidIds };
+        })
+      });
+      debugParentDashboard("✅ [Query A2] classSessions parentIds array-contains (kid-filtered client-side):", {
+        count: matchingSnapAParentIdsDocs.length,
+        docs: matchingSnapAParentIdsDocs.map((d) => {
+          const data = d.data() as any;
+          return { id: d.id, parentIds: data?.parentIds, kidIds: data?.kidIds };
+        })
+      });
 
-        const shouldRunLegacyKidIdQuery = shouldLoadFullClassHistory || (snapA.size + matchingSnapAParentIdsDocs.length) === 0;
-        const qB = shouldLoadFullClassHistory
-          ? query(
-              classSessionsCol,
-              where("kidId", "==", selectedKidId),
-              where("parentId", "==", user.uid),
-            )
-          : query(
-              classSessionsCol,
-              where("kidId", "==", selectedKidId),
-              where("parentId", "==", user.uid),
-              where("date", ">=", recentStartKey),
-              where("date", "<=", recentEndKey),
-            );
-        const snapB = shouldRunLegacyKidIdQuery ? await getDocs(qB) : null;
-        debugParentDashboard("✅ [Query B] classSessions kidId equality + parentId:", {
+      const qB = shouldLoadFullClassHistory
+        ? query(
+            classSessionsCol,
+            where("kidId", "==", selectedKidId),
+            where("parentId", "==", user.uid),
+          )
+        : query(
+            classSessionsCol,
+            where("kidId", "==", selectedKidId),
+            where("parentId", "==", user.uid),
+            where("date", ">=", recentStartKey),
+            where("date", "<=", recentEndKey),
+          );
+      const snapB = await readQueryDocs(
+        "Query B",
+        () => qB,
+      );
+      debugParentDashboard("✅ [Query B] classSessions kidId equality + parentId:", {
+        count: snapB?.size ?? 0,
+        docs: (snapB?.docs ?? []).map((d) => {
+          const data = d.data() as any;
+          return { id: d.id, parentId: data?.parentId, kidId: data?.kidId };
+        })
+      });
+      if ((snapB?.size ?? 0) > 0) {
+        emitParentLegacyFallbackTelemetry("classSessions_kidId", {
+          kidId: selectedKidId,
           count: snapB?.size ?? 0,
-          docs: (snapB?.docs ?? []).map(d => ({ id: d.id, parentId: d.data().parentId, kidId: d.data().kidId }))
+          canonicalHit: ((snapA?.size ?? 0) + matchingSnapAParentIdsDocs.length) > 0,
         });
-        if ((snapB?.size ?? 0) > 0) {
-          emitParentLegacyFallbackTelemetry("classSessions_kidId", {
-            kidId: selectedKidId,
-            count: snapB?.size ?? 0,
-            canonicalHit: (snapA.size + matchingSnapAParentIdsDocs.length) > 0,
-          });
-        }
-
-        const map = new Map<string, KidSession>();
-        snapA.docs.forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
-        matchingSnapAParentIdsDocs.forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
-        (snapB?.docs ?? []).forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
-
-        const all = Array.from(map.values());
-        debugParentDashboard("📊 [Final Result] Total unique sessions:", all.length);
-
-        // Sort by start date (best effort)
-        all.sort((a, b) => {
-          const da = sessionStartDate(a)?.getTime() ?? 0;
-          const db = sessionStartDate(b)?.getTime() ?? 0;
-          return da - db;
-        });
-
-        return all;
-      } catch (error: any) {
-        console.error("❌ [ParentDashboard] Firestore query error:", {
-          code: error?.code,
-          message: error?.message,
-          details: error,
-        });
-        throw error;
       }
+
+      const map = new Map<string, KidSession>();
+      (snapA?.docs ?? []).forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
+      matchingSnapAParentIdsDocs.forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
+      (snapB?.docs ?? []).forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
+
+      const all = Array.from(map.values());
+      debugParentDashboard("📊 [Final Result] Total unique sessions:", all.length);
+
+      // Sort by start date (best effort)
+      all.sort((a, b) => {
+        const da = sessionStartDate(a)?.getTime() ?? 0;
+        const db = sessionStartDate(b)?.getTime() ?? 0;
+        return da - db;
+      });
+
+      return all;
     },
   });
 
