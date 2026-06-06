@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { addDays, format } from 'date-fns';
 import fs from 'node:fs';
+import path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -17,6 +18,8 @@ const {
   mockWhere: vi.fn((...args: unknown[]) => ({ kind: 'where', args })),
   mockOrderBy: vi.fn((...args: unknown[]) => ({ kind: 'orderBy', args })),
 }));
+const readRepoFile = (relativePath: string) =>
+  fs.readFileSync(path.resolve(process.cwd(), relativePath), 'utf8');
 
 vi.mock('firebase/firestore', () => ({
   collection: vi.fn((_db: unknown, name: string) => ({ kind: 'collection', name })),
@@ -157,11 +160,8 @@ describe('useUpcomingSessions', () => {
     });
   });
 
-  it('documents the alias upcoming-session indexes in firestore.indexes.json', () => {
-    const raw = fs.readFileSync(
-      '/Users/tinysteps/Documents/Tinysteps-react-v1/firestore.indexes.json',
-      'utf8',
-    );
+    it('documents the alias upcoming-session indexes in firestore.indexes.json', () => {
+    const raw = readRepoFile('firestore.indexes.json');
     const config = JSON.parse(raw) as { indexes?: Array<{ collectionGroup?: string; fields?: Array<{ fieldPath?: string; arrayConfig?: string; order?: string }> }> };
     const classSessionIndexes = (config.indexes || []).filter((entry) => entry.collectionGroup === 'classSessions');
 
@@ -183,10 +183,7 @@ describe('useUpcomingSessions', () => {
   });
 
   it('documents teacherIds ownership directly in the classSessions Firestore rule', () => {
-    const raw = fs.readFileSync(
-      '/Users/tinysteps/Documents/Tinysteps-react-v1/firestore.rules',
-      'utf8',
-    );
+    const raw = readRepoFile('firestore.rules');
 
     expect(raw).toContain("function teacherOwnsDocViaAliases(data)");
     expect(raw).toContain("|| request.auth.uid in data.teacherIds");
