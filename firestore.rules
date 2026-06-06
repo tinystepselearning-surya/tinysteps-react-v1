@@ -40,8 +40,39 @@ service cloud.firestore {
       );
     }
 
+    function tokenRole() {
+      return isSignedIn()
+        && request.auth.token != null
+        && request.auth.token.role is string
+        ? request.auth.token.role.lower()
+        : '';
+    }
+
+    function isAdminToken() {
+      return tokenRole() == 'admin';
+    }
+
+    function isTeacherToken() {
+      return tokenRole() == 'teacher';
+    }
+
+    function isParentToken() {
+      return tokenRole() == 'parent';
+    }
+
+    function isLPToken() {
+      return tokenRole() == 'learningpartner' || tokenRole() == 'learning-partner';
+    }
+
+    function isKidToken() {
+      return tokenRole() == 'kid';
+    }
+
     function isTeacher() {
-      return isSignedIn() && userDocExists(request.auth.uid) && userRole(request.auth.uid) == 'teacher';
+      return isSignedIn() && (
+        isTeacherToken()
+        || (userDocExists(request.auth.uid) && userRole(request.auth.uid) == 'teacher')
+      );
     }
 
     function isTeacherOrAdmin() {
@@ -49,18 +80,29 @@ service cloud.firestore {
     }
 
     function isParent() {
-      return isSignedIn() && userDocExists(request.auth.uid) && userRole(request.auth.uid) == 'parent';
+      return isSignedIn() && (
+        isParentToken()
+        || (userDocExists(request.auth.uid) && userRole(request.auth.uid) == 'parent')
+      );
     }
 
     function isLP() {
-      return isSignedIn() && userDocExists(request.auth.uid) && (
-        userRole(request.auth.uid) == 'learningpartner' ||
-        userRole(request.auth.uid) == 'learning-partner'
+      return isSignedIn() && (
+        isLPToken()
+        || (
+          userDocExists(request.auth.uid) && (
+            userRole(request.auth.uid) == 'learningpartner' ||
+            userRole(request.auth.uid) == 'learning-partner'
+          )
+        )
       );
     }
 
     function isKid() {
-      return isSignedIn() && userDocExists(request.auth.uid) && userRole(request.auth.uid) == 'kid';
+      return isSignedIn() && (
+        isKidToken()
+        || (userDocExists(request.auth.uid) && userRole(request.auth.uid) == 'kid')
+      );
     }
 
     function touchesAssignmentFields() {
@@ -143,68 +185,68 @@ service cloud.firestore {
     }
 
     function isParentOfKid(kidId) {
-      return isParent()
+  return isParent()
+    && (
+      (
+        kidExists(kidId)
         && (
-          (kidExists(kidId)
+          (
+            ('parentIds' in kidDoc(kidId))
             && (
-              (('parentIds' in kidDoc(kidId)) &&
-                (
-                  ((kidDoc(kidId).parentIds is list) && (request.auth.uid in kidDoc(kidId).parentIds)) ||
-                  ((kidDoc(kidId).parentIds is string) && (kidDoc(kidId).parentIds == request.auth.uid))
-                )
-              ) ||
-              (('primaryParentId' in kidDoc(kidId)) && (kidDoc(kidId).primaryParentId == request.auth.uid)) ||
-              (('parentId' in kidDoc(kidId)) && (kidDoc(kidId).parentId == request.auth.uid))
+              ((kidDoc(kidId).parentIds is list) && (request.auth.uid in kidDoc(kidId).parentIds))
+              || ((kidDoc(kidId).parentIds is string) && (kidDoc(kidId).parentIds == request.auth.uid))
             )
           )
-          ||
-          (studentExists(kidId)
+          || (('primaryParentId' in kidDoc(kidId)) && (kidDoc(kidId).primaryParentId == request.auth.uid))
+          || (('parentId' in kidDoc(kidId)) && (kidDoc(kidId).parentId == request.auth.uid))
+        )
+      )
+      ||
+      (
+        studentExists(kidId)
+        && (
+          (
+            ('parentIds' in studentDoc(kidId))
             && (
-              (('parentIds' in studentDoc(kidId)) &&
-                (
-                  ((studentDoc(kidId).parentIds is list) && (request.auth.uid in studentDoc(kidId).parentIds)) ||
-                  ((studentDoc(kidId).parentIds is string) && (studentDoc(kidId).parentIds == request.auth.uid))
-                )
-              ) ||
-              (('primaryParentId' in studentDoc(kidId)) && (studentDoc(kidId).primaryParentId == request.auth.uid)) ||
-              (('parentId' in studentDoc(kidId)) && (studentDoc(kidId).parentId == request.auth.uid))
+              ((studentDoc(kidId).parentIds is list) && (request.auth.uid in studentDoc(kidId).parentIds))
+              || ((studentDoc(kidId).parentIds is string) && (studentDoc(kidId).parentIds == request.auth.uid))
             )
           )
-        );
-    }
+          || (('primaryParentId' in studentDoc(kidId)) && (studentDoc(kidId).primaryParentId == request.auth.uid))
+          || (('parentId' in studentDoc(kidId)) && (studentDoc(kidId).parentId == request.auth.uid))
+        )
+      )
+    );
+}
 
-    function isTeacherOfKid(kidId) {
-      return isSignedIn()
-        && kidExists(kidId)
-        && (
-          (('teacherId' in kidDoc(kidId)) && kidDoc(kidId).teacherId == request.auth.uid)
-          || (
-            ('teacherIds' in kidDoc(kidId))
-            && (kidDoc(kidId).teacherIds is list)
-            && (request.auth.uid in kidDoc(kidId).teacherIds)
-          )
-          || (('assignedTeacherId' in kidDoc(kidId)) && kidDoc(kidId).assignedTeacherId == request.auth.uid)
-          || (('primaryTeacherId' in kidDoc(kidId)) && kidDoc(kidId).primaryTeacherId == request.auth.uid)
-          || (('teacherUid' in kidDoc(kidId)) && kidDoc(kidId).teacherUid == request.auth.uid)
-          || (('teacher_id' in kidDoc(kidId)) && kidDoc(kidId).teacher_id == request.auth.uid)
-        );
-    }
+function isTeacherOfKid(kidId) {
+  return isSignedIn()
+    && kidExists(kidId)
+    && (
+      (('teacherId' in kidDoc(kidId)) && kidDoc(kidId).teacherId == request.auth.uid)
+      || (
+        ('teacherIds' in kidDoc(kidId))
+        && (kidDoc(kidId).teacherIds is list)
+        && (request.auth.uid in kidDoc(kidId).teacherIds)
+      )
+      || (('assignedTeacherId' in kidDoc(kidId)) && kidDoc(kidId).assignedTeacherId == request.auth.uid)
+      || (('primaryTeacherId' in kidDoc(kidId)) && kidDoc(kidId).primaryTeacherId == request.auth.uid)
+      || (('teacherUid' in kidDoc(kidId)) && kidDoc(kidId).teacherUid == request.auth.uid)
+      || (('teacher_id' in kidDoc(kidId)) && kidDoc(kidId).teacher_id == request.auth.uid)
+    );
+}
 
-    function teacherOwnsDocViaAliases(data) {
-      return isSignedIn()
-        && (
-          (('teacherId' in data) && data.teacherId == request.auth.uid)
-          || (
-            ('teacherIds' in data)
-            && (data.teacherIds is list)
-            && (request.auth.uid in data.teacherIds)
-          )
-          || (('assignedTeacherId' in data) && data.assignedTeacherId == request.auth.uid)
-          || (('primaryTeacherId' in data) && data.primaryTeacherId == request.auth.uid)
-          || (('teacherUid' in data) && data.teacherUid == request.auth.uid)
-          || (('teacher_id' in data) && data.teacher_id == request.auth.uid)
-        );
-    }
+function teacherOwnsDocViaAliases(data) {
+  return isSignedIn()
+    && (
+      data.teacherId == request.auth.uid
+      || request.auth.uid in data.teacherIds
+      || data.assignedTeacherId == request.auth.uid
+      || data.primaryTeacherId == request.auth.uid
+      || data.teacherUid == request.auth.uid
+      || data.teacher_id == request.auth.uid
+    );
+}
 
     // Class session schema guardrail (canonical collection)
     function isValidClassSession(data) {
@@ -350,8 +392,8 @@ service cloud.firestore {
         && ('parentIds' in resource.data)
         && (request.auth.uid in resource.data.parentIds);
 
-      // Teacher read only for teacher-owned kids.
-      allow read: if isTeacher() && isTeacherOfKid(kidId);
+      // Teacher read only for teacher-owned kids through supported teacher alias fields.
+      allow read: if isTeacher() && teacherOwnsDocViaAliases(resource.data);
 
       // LP read if assignedLPs array exists & contains uid
       allow read: if isLP()
@@ -548,10 +590,15 @@ service cloud.firestore {
     // CLASS SESSIONS COLLECTION
     // ----------------------------
     match /classSessions/{sessionId} {
-      allow read: if isAdmin()
-        || (isTeacher() && teacherOwnsDocViaAliases(resource.data))
+      allow get: if isAdmin()
+        || teacherOwnsDocViaAliases(resource.data)
         || (isParent() && resource.data.parentId == request.auth.uid)
         || (isKid() && ('kidIds' in resource.data) && (request.auth.uid in resource.data.kidIds));
+
+      allow list: if isAdmin()
+        || teacherOwnsDocViaAliases(resource.data)
+        || (isParentToken() && resource.data.parentId == request.auth.uid)
+        || (isKidToken() && ('kidIds' in resource.data) && (request.auth.uid in resource.data.kidIds));
 
       allow create: if isValidClassSession(request.resource.data)
         && isAdmin();
