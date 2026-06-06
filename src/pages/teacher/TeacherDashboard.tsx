@@ -14,6 +14,7 @@ import useMessageThreads from '../../hooks/useMessageThreads';
 
 import { useAuthStore } from '../../store/useAuthStore';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { app } from '../../lib/firebaseConfig';
 
 // Lazy-loaded views
 const TodaySessionsView = React.lazy(() =>
@@ -176,6 +177,24 @@ export default function TeacherDashboard() {
   // so heavy listeners don't block other tabs like Lesson Library.
   // Provide a placeholder empty array for header counts when not active.
   const sessions = [];
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const shouldDebug =
+      window.localStorage.getItem('debugTeacherSessionNames') === '1' ||
+      params.get('debugNames') === '1';
+    if (!shouldDebug) return;
+
+    console.info('[TinyStepsBuildFingerprint]', {
+      buildTime: import.meta.env.VITE_BUILD_TIME,
+      appEnv: import.meta.env.MODE,
+      firebaseProjectId: app.options.projectId,
+      hostname: window.location.hostname,
+      tab,
+      authUid: user?.uid || null,
+    });
+  }, [tab, user?.uid]);
 
   if (isLoading) {
     return (

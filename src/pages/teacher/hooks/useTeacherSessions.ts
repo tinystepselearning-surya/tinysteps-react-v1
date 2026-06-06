@@ -478,90 +478,11 @@ export const useTeacherSessions = (
       void applyRows(Array.from(merged.values()));
     };
 
-    const runFallback = async () => {
-      const isIndexError = (value: unknown) => {
-        const message = value instanceof Error ? value.message : String(value);
-        const code = (value as any)?.code;
-        return code === 'failed-precondition' || /requires an index|index is currently building/i.test(message);
-      };
-
-      // Keep fallback queries scoped (teacher/date) to avoid broad classSessions reads.
-      const fallbackQueries = includeAllTeachers
-        ? [
-            query(
-              baseCollection,
-              where('date', '>=', start),
-              where('date', '<=', end),
-              orderBy('date', 'asc'),
-            ),
-          ]
-        : teacherKey
-          ? [
-              query(
-                baseCollection,
-                where('teacherId', '==', teacherKey),
-                where('date', '>=', start),
-                where('date', '<=', end),
-                orderBy('date', 'asc'),
-              ),
-              query(baseCollection, where('teacherIds', 'array-contains', teacherKey), where('date', '>=', start), where('date', '<=', end), orderBy('date', 'asc')),
-              query(baseCollection, where('assignedTeacherId', '==', teacherKey), where('date', '>=', start), where('date', '<=', end), orderBy('date', 'asc')),
-              query(baseCollection, where('primaryTeacherId', '==', teacherKey), where('date', '>=', start), where('date', '<=', end), orderBy('date', 'asc')),
-              query(baseCollection, where('teacherUid', '==', teacherKey), where('date', '>=', start), where('date', '<=', end), orderBy('date', 'asc')),
-              query(baseCollection, where('teacher_id', '==', teacherKey), where('date', '>=', start), where('date', '<=', end), orderBy('date', 'asc')),
-            ]
-          : [
-              query(
-                baseCollection,
-                where('date', '>=', start),
-                where('date', '<=', end),
-                orderBy('date', 'asc'),
-              ),
-            ];
-
-      let lastError: unknown = null;
-      const mergedFallbackSessions = new Map<string, TeacherSession>();
-
-      try {
-        for (const fallbackQuery of fallbackQueries) {
-          try {
-            const fallbackSnap = await getDocs(fallbackQuery);
-            fallbackSnap.docs.forEach((d) => {
-              const session = toTeacherSession({ id: d.id, ...d.data() });
-              const date = toCleanText(session.date);
-              if (!date || date < start || date > end) return;
-              mergedFallbackSessions.set(d.id, session);
-            });
-          } catch (fallbackErr) {
-            lastError = fallbackErr;
-            if (!isIndexError(fallbackErr)) throw fallbackErr;
-          }
-        }
-        if (mergedFallbackSessions.size > 0) {
-          await applyRows(Array.from(mergedFallbackSessions.values()));
-          if (import.meta.env.DEV && !cancelled) {
-            console.warn('useTeacherSessions: loaded fallback data because classSessions index is not ready');
-          }
-          return;
-        }
-        if (!cancelled) {
-          setError((lastError as Error) || new Error('useTeacherSessions fallback failed'));
-          setIsLoading(false);
-        }
-      } catch (fallbackErr) {
-        if (!cancelled) {
-          setError(fallbackErr as Error);
-          setIsLoading(false);
-        }
-      }
-    };
-
     const listeners: Array<() => void> = [];
     const attachListener = (
       sourceKey: string,
       aliasField: string,
       listenerQuery: ReturnType<typeof query>,
-      fallbackToBatch = false,
     ) => {
       devLogTeacherQuery('useTeacherSessions', 'listen', {
         queryName: sourceKey,
@@ -591,7 +512,6 @@ export const useTeacherSessions = (
           publishMergedRows();
         },
         (err) => {
-          console.error('useTeacherSessions error', err);
           devLogTeacherQuery('useTeacherSessions', 'error', {
             queryName: sourceKey,
             collection: 'classSessions',
@@ -601,15 +521,7 @@ export const useTeacherSessions = (
             code: (err as any)?.code || null,
           });
           if (cancelled) return;
-          const message = err instanceof Error ? err.message : String(err);
-          if (
-            fallbackToBatch &&
-            (err?.code === 'failed-precondition' || /requires an index|index is currently building/i.test(message))
-          ) {
-            listeners.forEach((stop) => stop());
-            void runFallback();
-            return;
-          }
+          console.error('useTeacherSessions error', err);
           setError(err as Error);
           setIsLoading(false);
         },
@@ -617,7 +529,7 @@ export const useTeacherSessions = (
       listeners.push(unsubscribe);
     };
 
-    attachListener('primary', includeAllTeachers ? 'all-teachers' : 'teacherId', classSessionsQuery, true);
+    attachListener('primary', includeAllTeachers ? 'all-teachers' : 'teacherId', classSessionsQuery);
     if (!includeAllTeachers && teacherKey) {
       attachListener(
         'teacherIds',
@@ -630,7 +542,6 @@ export const useTeacherSessions = (
           orderBy('date', 'asc'),
           orderBy('startTime', 'asc'),
         ),
-        true,
       );
       attachListener(
         'assignedTeacherId',
@@ -643,7 +554,6 @@ export const useTeacherSessions = (
           orderBy('date', 'asc'),
           orderBy('startTime', 'asc'),
         ),
-        true,
       );
       attachListener(
         'primaryTeacherId',
@@ -656,7 +566,6 @@ export const useTeacherSessions = (
           orderBy('date', 'asc'),
           orderBy('startTime', 'asc'),
         ),
-        true,
       );
       attachListener(
         'teacherUid',
@@ -669,7 +578,6 @@ export const useTeacherSessions = (
           orderBy('date', 'asc'),
           orderBy('startTime', 'asc'),
         ),
-        true,
       );
       attachListener(
         'teacher_id',
@@ -682,7 +590,6 @@ export const useTeacherSessions = (
           orderBy('date', 'asc'),
           orderBy('startTime', 'asc'),
         ),
-        true,
       );
     }
 

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
@@ -10,14 +10,51 @@ import { format, parseISO } from 'date-fns';
 import { CanvaLessonPlanModal } from '../lesson-plan/CanvaLessonPlanModal';
 import { FileText } from 'lucide-react';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
+import { useAuthStore } from '../../../../store/useAuthStore';
+import { app } from '../../../../lib/firebaseConfig';
+import {
+  getTeacherSessionEntityIdsByField,
+  getTeacherSessionInlineStudentNames as getResolvedInlineStudentNames,
+  resolveTeacherSessionStudentName,
+  type TeacherSessionStudentNameLookups,
+} from '../../utils/resolveTeacherSessionStudentName';
 
 interface UpcomingSessionsViewProps {
   teacherId?: string;
 }
 
+export const getSessionInlineStudentNames = (session: TeacherSession): string[] => {
+  return getResolvedInlineStudentNames(session as unknown as Record<string, unknown>);
+};
+
+export const getSessionStudentLabel = (
+  session: TeacherSession,
+  lookups?: TeacherSessionStudentNameLookups,
+): string => {
+  return resolveTeacherSessionStudentName(session, lookups).name;
+};
+
+const readLookupName = (row: Record<string, unknown>): string => {
+  const values = [
+    row.fullName,
+    row.studentName,
+    row.displayName,
+    row.name,
+    row.childName,
+    row.kidName,
+  ];
+
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) return value.trim();
+  }
+
+  return '';
+};
+
 export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teacherId }) => {
-  const { sessions, isLoading, error } = useUpcomingSessions(teacherId);
+  const { sessions, isLoading, error, enrollmentsById, entityDocById, deniedLookups } = useUpcomingSessions(teacherId);
   const { students } = useTeacherFilteredStudents();
+  const { user } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState('');
   const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
@@ -37,34 +74,175 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
   };
 
   const courseOptions = useMemo(() => {
-    const courses = new Set(sessions.map(s => s.courseName).filter(Boolean));
+    const courses = new Set(sessions.map((s) => s.courseName).filter(Boolean));
     return Array.from(courses) as string[];
   }, [sessions]);
 
-  const studentNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    students.forEach((s: any) => {
-      const id = s.uid || s.id;
-      const name = s.fullName || s.studentName || s.displayName || s.name || '';
-      if (id && name) map.set(String(id), String(name));
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+
+  const shouldDebugNameResolution = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    return window.localStorage.getItem('debugTeacherSessionNames') === '1' || params.get('debugNames') === '1';
+  }, []);
+
+  const teacherOwnedEntityDocById = useMemo(() => {
+    const map = new Map<string, Record<string, unknown>>();
+
+    students.forEach((student: any) => {
+      const id = String(student?.uid || student?.id || student?.userId || '').trim();
+      if (!id) return;
+
+      const row = student as Record<string, unknown>;
+      const name = readLookupName(row);
+      if (!name) return;
+
+      map.set(id, {
+        id,
+        name,
+        fullName: name,
+        displayName: name,
+        studentName: name,
+        childName: name,
+        kidName: name,
+      });
     });
+
     return map;
   }, [students]);
 
-  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const combinedEntityDocById = useMemo(() => {
+    const map = new Map<string, Record<string, unknown>>();
+    entityDocById.forEach((value, key) => map.set(key, value));
+    teacherOwnedEntityDocById.forEach((value, key) => map.set(key, value));
+    return map;
+  }, [entityDocById, teacherOwnedEntityDocById]);
+
+  const resolvedSessions = useMemo(() => {
+    return sessions.map((session) => {
+      const enrollmentId = typeof session.enrollmentId === 'string' ? session.enrollmentId.trim() : '';
+      const enrollment = enrollmentId ? enrollmentsById.get(enrollmentId) : undefined;
+      const resolved = resolveTeacherSessionStudentName(session, {
+        enrollment,
+        entityDocById: combinedEntityDocById,
+      });
+
+      return {
+        session,
+        enrollment,
+        resolved,
+      };
+    });
+  }, [combinedEntityDocById, enrollmentsById, sessions]);
+
+  useEffect(() => {
+    if (!shouldDebugNameResolution) return;
+
+    console.info('[TinyStepsBuildFingerprint]', {
+      buildTime: import.meta.env.VITE_BUILD_TIME,
+      appEnv: import.meta.env.MODE,
+      firebaseProjectId: app.options.projectId,
+      hostname: window.location.hostname,
+    });
+
+    console.info('[TeacherUpcomingRuntimeAudit]', {
+      hostname: window.location.hostname,
+      firebaseProjectId: app.options.projectId,
+      authUid: user?.uid || null,
+      teacherIdUsed: teacherId || null,
+      sessionCount: sessions.length,
+      firstFiveSessions: sessions.slice(0, 5).map((session) => ({
+        id: session.id,
+        enrollmentId: session.enrollmentId,
+        date: session.date,
+        startTime: session.startTime,
+        startAt: (session as any).startAt || null,
+        teacherId: session.teacherId,
+        teacherIds: session.teacherIds,
+        assignedTeacherId: (session as any).assignedTeacherId,
+        primaryTeacherId: (session as any).primaryTeacherId,
+        teacherUid: (session as any).teacherUid,
+        kidId: session.kidId,
+        studentId: session.studentId,
+        childId: session.childId,
+        kidIds: session.kidIds,
+        studentIds: session.studentIds,
+        childIds: session.childIds,
+        childrenIds: session.childrenIds,
+        studentName: session.studentName,
+        childName: session.childName,
+        kidName: session.kidName,
+        studentNames: session.studentNames,
+        childNames: session.childNames,
+        kidNames: session.kidNames,
+      })),
+      lookupMapSizes: {
+        enrollmentsById: enrollmentsById.size,
+        entityDocById: combinedEntityDocById.size,
+        teacherStudentLookup: teacherOwnedEntityDocById.size,
+      },
+    });
+
+    resolvedSessions.forEach(({ session, resolved }) => {
+      const ids = getTeacherSessionEntityIdsByField(session as unknown as Record<string, unknown>);
+      const enrollmentId = typeof session.enrollmentId === 'string' ? session.enrollmentId.trim() : '';
+      const enrollment = enrollmentId ? enrollmentsById.get(enrollmentId) : undefined;
+
+      console.info('[TeacherUpcomingNameResolution:RUNTIME]', {
+        sessionId: (session as any).id || (session as any).sessionId,
+        enrollmentId: session.enrollmentId,
+        ids: {
+          kidId: ids.kidId,
+          studentId: ids.studentId,
+          childId: ids.childId,
+          kidIds: ids.kidIds,
+          studentIds: ids.studentIds,
+          childIds: ids.childIds,
+          childrenIds: ids.childrenIds,
+        },
+        embeddedNames: {
+          studentName: (session as any).studentName,
+          childName: (session as any).childName,
+          kidName: (session as any).kidName,
+          studentNames: (session as any).studentNames,
+          childNames: (session as any).childNames,
+          kidNames: (session as any).kidNames,
+        },
+        enrollmentNameFields: {
+          studentName: enrollment?.studentName,
+          childName: enrollment?.childName,
+          kidName: enrollment?.kidName,
+          studentFullName: enrollment?.studentFullName,
+          childFullName: enrollment?.childFullName,
+          kidFullName: enrollment?.kidFullName,
+          name: enrollment?.name,
+          displayName: enrollment?.displayName,
+        },
+        lookupMapSizes: {
+          enrollmentsById: enrollmentsById.size,
+          entityDocById: combinedEntityDocById.size,
+        },
+        deniedLookups,
+        resolvedName: resolved.name,
+        resolvedFrom: resolved.source,
+      });
+    });
+  }, [
+    combinedEntityDocById,
+    deniedLookups,
+    enrollmentsById,
+    resolvedSessions,
+    sessions,
+    shouldDebugNameResolution,
+    teacherId,
+    teacherOwnedEntityDocById,
+    user?.uid,
+  ]);
 
   const filteredSessions = useMemo(() => {
-    const resolveStudentNames = (session: TeacherSession) =>
-      (session.kidIds || [])
-        .map((id) => studentNameById.get(String(id)))
-        .filter((name): name is string => Boolean(name && name.trim()));
-
-    return [...sessions]
-      .filter((session) => {
-        const studentNames = resolveStudentNames(session);
-        const displayDate = (() => {
-          return formatSessionDate(session.date, 'EEE, dd MMM');
-        })();
+    return [...resolvedSessions]
+      .filter(({ session, resolved }) => {
+        const displayDate = formatSessionDate(session.date, 'EEE, dd MMM');
 
         const haystack = [
           session.courseName || '',
@@ -72,28 +250,39 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
           displayDate,
           session.startTime || '',
           session.endTime || '',
-          ...studentNames,
+          resolved.name,
         ]
           .join(' ')
           .toLowerCase();
 
         const matchesSearch = !normalizedSearch || haystack.includes(normalizedSearch);
         const matchesCourse = !courseFilter || session.courseName === courseFilter;
+
         return matchesSearch && matchesCourse;
       })
       .sort((a, b) => {
-        const aKey = `${a.date || ''}T${a.startTime || '00:00'}`;
-        const bKey = `${b.date || ''}T${b.startTime || '00:00'}`;
+        const aSession = a.session;
+        const bSession = b.session;
+        const aKey = `${aSession.date || ''}T${aSession.startTime || '00:00'}`;
+        const bKey = `${bSession.date || ''}T${bSession.startTime || '00:00'}`;
         return aKey.localeCompare(bKey);
       });
-  }, [sessions, studentNameById, normalizedSearch, courseFilter]);
+  }, [resolvedSessions, normalizedSearch, courseFilter]);
 
   if (isLoading) {
-    return <Card className="p-6"><p>Loading upcoming sessions...</p></Card>;
+    return (
+      <Card className="p-6">
+        <p>Loading upcoming sessions...</p>
+      </Card>
+    );
   }
 
   if (error) {
-    return <Card className="p-6"><p className="text-muted-foreground">{error.message}</p></Card>;
+    return (
+      <Card className="p-6">
+        <p className="text-muted-foreground">{error.message}</p>
+      </Card>
+    );
   }
 
   return (
@@ -106,6 +295,7 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
             onChange={(e) => setSearchTerm(e.target.value)}
             className="h-10 md:max-w-md"
           />
+
           <Select
             value={courseFilter || 'all'}
             onValueChange={(value) => setCourseFilter(value === 'all' ? '' : value)}
@@ -122,6 +312,7 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
               ))}
             </SelectContent>
           </Select>
+
           <Badge variant="outline" className="h-8 w-fit px-3 text-xs font-medium">
             Upcoming {filteredSessions.length}
           </Badge>
@@ -143,33 +334,40 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Child Name</div>
                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Course</div>
                   <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Status</div>
-                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 text-right">Actions</div>
+                  <div className="text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Actions</div>
                 </div>
               </div>
 
-              {filteredSessions.map((session) => {
-                const childNames = (session.kidIds || [])
-                  .map((id) => studentNameById.get(String(id)))
-                  .filter((name): name is string => Boolean(name && name.trim()));
-
-                const childLabel =
-                  childNames.length > 0 ? childNames.join(', ') : `${session.kidIds?.length || 0} students`;
+              {filteredSessions.map(({ session, resolved }) => {
+                const childLabel = resolved.name;
 
                 return (
-                  <div key={session.id} className="border-b border-slate-100 px-4 py-3 last:border-b-0 hover:bg-slate-50/40">
+                  <div
+                    key={session.id}
+                    className="border-b border-slate-100 px-4 py-3 last:border-b-0 hover:bg-slate-50/40"
+                  >
                     <div className="grid grid-cols-[1fr_0.9fr_1.2fr_1fr_0.8fr_260px] items-center gap-3">
                       <div className="text-sm font-medium text-slate-700">
                         {formatSessionDate(session.date, 'EEE, dd MMM')}
                       </div>
+
                       <div className="text-sm font-medium text-slate-900">
                         {session.startTime}
                         {session.endTime ? ` - ${session.endTime}` : ''}
                       </div>
-                      <div className="truncate text-sm font-semibold text-slate-900">{childLabel}</div>
-                      <div className="truncate text-sm text-slate-800">{session.courseName}</div>
+
+                      <div className="truncate text-sm font-semibold text-slate-900">
+                        {childLabel}
+                      </div>
+
+                      <div className="truncate text-sm text-slate-800">
+                        {session.courseName}
+                      </div>
+
                       <div>
                         <Badge variant="secondary">Scheduled</Badge>
                       </div>
+
                       <div className="flex items-center justify-end gap-2">
                         {session.lessonPlanUrl ? (
                           <Button
@@ -182,9 +380,11 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
                             Plan
                           </Button>
                         ) : null}
+
                         <Button size="sm" variant="outline">
                           Set Reminder
                         </Button>
+
                         <Button size="sm" variant="outline">
                           View Details
                         </Button>
@@ -198,7 +398,6 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
         </Card>
       )}
 
-      {/* Canva Lesson Plan Modal */}
       {selectedSession?.lessonPlanUrl && (
         <CanvaLessonPlanModal
           isOpen={isLessonPlanModalOpen}

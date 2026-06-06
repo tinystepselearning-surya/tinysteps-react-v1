@@ -49,6 +49,7 @@ type TeacherIdentity = {
   teacherId: string;
   teacherIds: string[];
   teacherName: string | null;
+  teacherDisplayName: string | null;
   teacherEmail: string | null;
 };
 
@@ -56,9 +57,13 @@ type StudentIdentity = {
   kidId: string | null;
   kidIds: string[];
   studentId: string | null;
+  childId: string | null;
   studentName: string | null;
   kidName: string | null;
   childName: string | null;
+  studentFullName: string | null;
+  kidFullName: string | null;
+  childFullName: string | null;
 };
 
 type EnrollmentIdentity = {
@@ -209,14 +214,27 @@ function resolveStudentNameParts(record: Record<string, unknown> | undefined): {
   studentName: string | null;
   kidName: string | null;
   childName: string | null;
+  studentFullName: string | null;
+  kidFullName: string | null;
+  childFullName: string | null;
 } {
   if (!record) {
-    return { studentName: null, kidName: null, childName: null };
+    return {
+      studentName: null,
+      kidName: null,
+      childName: null,
+      studentFullName: null,
+      kidFullName: null,
+      childFullName: null,
+    };
   }
   const canonicalName =
     nonEmptyString((record as any).studentName) ||
     nonEmptyString((record as any).kidName) ||
     nonEmptyString((record as any).childName) ||
+    nonEmptyString((record as any).studentFullName) ||
+    nonEmptyString((record as any).kidFullName) ||
+    nonEmptyString((record as any).childFullName) ||
     nonEmptyString((record as any).fullName) ||
     nonEmptyString((record as any).displayName) ||
     nonEmptyString((record as any).name) ||
@@ -225,6 +243,9 @@ function resolveStudentNameParts(record: Record<string, unknown> | undefined): {
     studentName: nonEmptyString((record as any).studentName) || canonicalName,
     kidName: nonEmptyString((record as any).kidName) || canonicalName,
     childName: nonEmptyString((record as any).childName) || canonicalName,
+    studentFullName: nonEmptyString((record as any).studentFullName) || canonicalName,
+    kidFullName: nonEmptyString((record as any).kidFullName) || canonicalName,
+    childFullName: nonEmptyString((record as any).childFullName) || canonicalName,
   };
 }
 
@@ -243,12 +264,14 @@ function resolveCourseName(record: Record<string, unknown> | undefined): string 
 function buildTeacherIdentity(input: {
   teacherId: string;
   teacherName?: string | null;
+  teacherDisplayName?: string | null;
   teacherEmail?: string | null;
 }): TeacherIdentity {
   return {
     teacherId: input.teacherId,
     teacherIds: [input.teacherId],
     teacherName: input.teacherName || input.teacherId,
+    teacherDisplayName: input.teacherDisplayName || input.teacherName || input.teacherId,
     teacherEmail: input.teacherEmail || null,
   };
 }
@@ -276,9 +299,13 @@ function buildStudentIdentity(input: {
     kidId,
     kidIds: mergedKidIds,
     studentId: toOptionalId((input.enrollment as any).studentId) || kidId,
+    childId: toOptionalId((input.enrollment as any).childId) || kidId,
     studentName: enrollmentName.studentName || kidNameParts.studentName,
     kidName: enrollmentName.kidName || kidNameParts.kidName,
     childName: enrollmentName.childName || kidNameParts.childName,
+    studentFullName: enrollmentName.studentFullName || kidNameParts.studentFullName,
+    kidFullName: enrollmentName.kidFullName || kidNameParts.kidFullName,
+    childFullName: enrollmentName.childFullName || kidNameParts.childFullName,
   };
 }
 
@@ -355,6 +382,75 @@ function mergeDocMaps(
   });
 }
 
+type SessionRepairQueryPlan = {
+  key: string;
+  field: string;
+  op: '==' | 'array-contains';
+  value: string;
+  source:
+    | 'enrollmentId'
+    | 'kidId'
+    | 'studentId'
+    | 'childId'
+    | 'kidIds'
+    | 'studentIds'
+    | 'childIds'
+    | 'childrenIds';
+  legacy: boolean;
+};
+
+const appendSessionRepairQueryPlan = (
+  plans: SessionRepairQueryPlan[],
+  seen: Set<string>,
+  field: SessionRepairQueryPlan['field'],
+  op: SessionRepairQueryPlan['op'],
+  rawValue: unknown,
+  source: SessionRepairQueryPlan['source'],
+  legacy = false,
+) => {
+  const value = toOptionalId(rawValue);
+  if (!value) return;
+  const key = `${field}|${op}|${value}`;
+  if (seen.has(key)) return;
+  seen.add(key);
+  plans.push({ key, field, op, value, source, legacy });
+};
+
+export function buildSessionRepairQueryCoverage(
+  enrollmentId: string,
+  studentIdentity: StudentIdentity,
+): SessionRepairQueryPlan[] {
+  const plans: SessionRepairQueryPlan[] = [];
+  const seen = new Set<string>();
+
+  appendSessionRepairQueryPlan(plans, seen, 'enrollmentId', '==', enrollmentId, 'enrollmentId');
+
+  const kidId = toOptionalId(studentIdentity.kidId);
+  const studentId = toOptionalId(studentIdentity.studentId);
+  const childId = toOptionalId(studentIdentity.childId);
+
+  appendSessionRepairQueryPlan(plans, seen, 'kidId', '==', kidId, 'kidId');
+  appendSessionRepairQueryPlan(plans, seen, 'kidIds', 'array-contains', kidId, 'kidIds');
+
+  appendSessionRepairQueryPlan(plans, seen, 'studentId', '==', studentId, 'studentId');
+  appendSessionRepairQueryPlan(plans, seen, 'studentIds', 'array-contains', studentId, 'studentIds');
+  if (kidId && kidId !== studentId) {
+    appendSessionRepairQueryPlan(plans, seen, 'studentId', '==', kidId, 'studentId', true);
+    appendSessionRepairQueryPlan(plans, seen, 'studentIds', 'array-contains', kidId, 'studentIds', true);
+  }
+
+  appendSessionRepairQueryPlan(plans, seen, 'childId', '==', childId, 'childId');
+  appendSessionRepairQueryPlan(plans, seen, 'childIds', 'array-contains', childId, 'childIds');
+  appendSessionRepairQueryPlan(plans, seen, 'childrenIds', 'array-contains', childId, 'childrenIds');
+  if (kidId && kidId !== childId) {
+    appendSessionRepairQueryPlan(plans, seen, 'childId', '==', kidId, 'childId', true);
+    appendSessionRepairQueryPlan(plans, seen, 'childIds', 'array-contains', kidId, 'childIds', true);
+    appendSessionRepairQueryPlan(plans, seen, 'childrenIds', 'array-contains', kidId, 'childrenIds', true);
+  }
+
+  return plans;
+}
+
 function buildSessionRepairPatch(args: {
   existing: Record<string, unknown>;
   teacher: TeacherIdentity;
@@ -362,12 +458,27 @@ function buildSessionRepairPatch(args: {
   enrollment: EnrollmentIdentity;
   actorIdentity: string | null;
   previousTeacherId: string | null;
+  previousTeacherName?: string | null;
+  previousTeacherEmail?: string | null;
   includeEnrollmentId: boolean;
 }): Record<string, unknown> {
-  const { existing, teacher, student, enrollment, actorIdentity, previousTeacherId, includeEnrollmentId } = args;
+  const {
+    existing,
+    teacher,
+    student,
+    enrollment,
+    actorIdentity,
+    previousTeacherId,
+    previousTeacherName,
+    previousTeacherEmail,
+    includeEnrollmentId,
+  } = args;
   const currentStudentName = nonEmptyString((existing as any).studentName);
   const currentKidName = nonEmptyString((existing as any).kidName);
   const currentChildName = nonEmptyString((existing as any).childName);
+  const currentStudentFullName = nonEmptyString((existing as any).studentFullName);
+  const currentKidFullName = nonEmptyString((existing as any).kidFullName);
+  const currentChildFullName = nonEmptyString((existing as any).childFullName);
   const currentCourseName =
     nonEmptyString((existing as any).courseName) ||
     nonEmptyString((existing as any).courseTitle) ||
@@ -394,6 +505,7 @@ function buildSessionRepairPatch(args: {
     teacherId: teacher.teacherId,
     teacherIds: teacher.teacherIds,
     teacherName: teacher.teacherName,
+    teacherDisplayName: teacher.teacherDisplayName,
     teacherEmail: teacher.teacherEmail,
     assignedTeacherId: teacher.teacherId,
     primaryTeacherId: teacher.teacherId,
@@ -406,6 +518,9 @@ function buildSessionRepairPatch(args: {
     ...(currentStudentName ? {} : student.studentName ? { studentName: student.studentName } : {}),
     ...(currentKidName ? {} : student.kidName ? { kidName: student.kidName } : {}),
     ...(currentChildName ? {} : student.childName ? { childName: student.childName } : {}),
+    ...(currentStudentFullName ? {} : student.studentFullName ? { studentFullName: student.studentFullName } : {}),
+    ...(currentKidFullName ? {} : student.kidFullName ? { kidFullName: student.kidFullName } : {}),
+    ...(currentChildFullName ? {} : student.childFullName ? { childFullName: student.childFullName } : {}),
     ...(toOptionalId((existing as any).courseId) ? {} : enrollment.courseId ? { courseId: enrollment.courseId } : {}),
     ...(currentCourseName ? {} : enrollment.courseName ? { courseName: enrollment.courseName } : {}),
     ...(toOptionalId((existing as any).parentId) ? {} : enrollment.parentId ? { parentId: enrollment.parentId } : {}),
@@ -414,6 +529,9 @@ function buildSessionRepairPatch(args: {
     updatedBy: actorIdentity,
     reassignedFromTeacherId: previousTeacherId || null,
     teacherReassignedFrom: previousTeacherId || null,
+    ...(previousTeacherId ? { previousTeacherId } : {}),
+    ...(previousTeacherName ? { previousTeacherName } : {}),
+    ...(previousTeacherEmail ? { previousTeacherEmail } : {}),
     reassignedAt: admin.firestore.FieldValue.serverTimestamp(),
     teacherReassignedAt: admin.firestore.FieldValue.serverTimestamp(),
   }) as Record<string, unknown>;
@@ -609,6 +727,8 @@ async function repairFutureSessionsForEnrollment(args: {
   enrollment: Record<string, unknown>;
   teacher: TeacherIdentity;
   previousTeacherId: string | null;
+  previousTeacherName?: string | null;
+  previousTeacherEmail?: string | null;
   actorIdentity: string | null;
   kidRecord?: Record<string, unknown>;
   dryRun?: boolean;
@@ -618,6 +738,8 @@ async function repairFutureSessionsForEnrollment(args: {
     enrollment,
     teacher,
     previousTeacherId,
+    previousTeacherName,
+    previousTeacherEmail,
     actorIdentity,
     kidRecord,
     dryRun = false,
@@ -626,21 +748,14 @@ async function repairFutureSessionsForEnrollment(args: {
   const nowMs = Date.now();
   const studentIdentity = buildStudentIdentity({ enrollment, kid: kidRecord });
   const enrollmentIdentity = buildEnrollmentIdentity({ enrollmentId, enrollment });
-  const primaryDocs = await getQueryDocs(
-    db.collection('classSessions').where('enrollmentId', '==', enrollmentId),
+  const queryCoverage = buildSessionRepairQueryCoverage(enrollmentId, studentIdentity);
+  const primaryDocs = await Promise.all(
+    queryCoverage.map((plan) =>
+      getQueryDocs(db.collection('classSessions').where(plan.field, plan.op as any, plan.value)),
+    ),
   );
   const allDocs = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
-  mergeDocMaps(allDocs, primaryDocs);
-
-  if (studentIdentity.kidId) {
-    const legacyQueries = [
-      db.collection('classSessions').where('kidId', '==', studentIdentity.kidId),
-      db.collection('classSessions').where('studentId', '==', studentIdentity.kidId),
-      db.collection('classSessions').where('kidIds', 'array-contains', studentIdentity.kidId),
-    ];
-    const legacyDocs = await Promise.all(legacyQueries.map((queryRef) => getQueryDocs(queryRef)));
-    legacyDocs.forEach((docs) => mergeDocMaps(allDocs, docs));
-  }
+  primaryDocs.forEach((docs) => mergeDocMaps(allDocs, docs));
 
   const skipReasonCounts: Record<string, number> = {
     pastSession: 0,
@@ -801,6 +916,8 @@ async function repairFutureSessionsForEnrollment(args: {
       enrollment: enrollmentIdentity,
       actorIdentity,
       previousTeacherId,
+      previousTeacherName,
+      previousTeacherEmail,
       includeEnrollmentId: !matchedByEnrollmentId,
     });
     const backfilledIdentity =
@@ -835,15 +952,34 @@ async function repairFutureSessionsForEnrollment(args: {
 
   const sessionsScanned = allDocs.size;
   const sessionsSkipped = sessionsScanned - docsToUpdate.length;
-  return {
+  const summary = {
     sessionsScanned,
     sessionsMatchedByEnrollmentId,
     sessionsMatchedByLegacyIdentity,
     sessionsUpdated: docsToUpdate.length,
+    sessionsWouldUpdate: docsToUpdate.length,
     sessionsSkipped,
     identitySnapshotsBackfilled: docsToUpdate.filter((entry) => entry.backfilledIdentity).length,
     skipReasonCounts,
+    queryCoverageUsed: queryCoverage.map((plan) => `${plan.source}:${plan.field}:${plan.op}${plan.legacy ? ':legacy' : ''}`),
+    queriesAttempted: queryCoverage.length,
   };
+  logger.info('repairFutureSessionsForEnrollment summary', {
+    enrollmentId,
+    kidId: studentIdentity.kidId,
+    studentId: studentIdentity.studentId,
+    childId: studentIdentity.childId,
+    oldTeacherId: previousTeacherId || null,
+    newTeacherId: teacher.teacherId,
+    queriesAttempted: summary.queriesAttempted,
+    queryCoverageUsed: summary.queryCoverageUsed,
+    sessionsScanned: summary.sessionsScanned,
+    sessionsUpdated: summary.sessionsUpdated,
+    sessionsSkipped: summary.sessionsSkipped,
+    skipReasonCounts: summary.skipReasonCounts,
+    dryRun,
+  });
+  return summary;
 }
 
 export const setEnrollmentStatus = onCall({ region: REGION }, async (request) => {
@@ -1043,6 +1179,7 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
   const teacherIdentity = buildTeacherIdentity({
     teacherId: newTeacherId,
     teacherName: newTeacherName,
+    teacherDisplayName: newTeacherDisplayName || newTeacherName,
     teacherEmail: newTeacherEmail,
   });
   const studentIdentity = buildStudentIdentity({
@@ -1094,8 +1231,24 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
     },
     teacher: teacherIdentity,
     previousTeacherId,
+    previousTeacherName,
+    previousTeacherEmail,
     actorIdentity,
     kidRecord: canonicalKidSnap.exists ? ({ id: canonicalKidSnap.id, ...(canonicalKidSnap.data() || {}) } as Record<string, unknown>) : undefined,
+  });
+  logger.info('reassignEnrollmentTeacher completed', {
+    enrollmentId,
+    kidId: canonicalKidId,
+    studentId: studentIdentity.studentId,
+    childId: studentIdentity.childId,
+    oldTeacherId: previousTeacherId || null,
+    newTeacherId,
+    queriesAttempted: sessionUpdateSummary.queriesAttempted,
+    queryCoverageUsed: sessionUpdateSummary.queryCoverageUsed,
+    sessionsScanned: sessionUpdateSummary.sessionsScanned,
+    sessionsUpdated: sessionUpdateSummary.sessionsUpdated,
+    sessionsSkipped: sessionUpdateSummary.sessionsSkipped,
+    skipReasonCounts: sessionUpdateSummary.skipReasonCounts,
   });
   const kidSyncSummary = isActiveLikeEnrollmentStatus(enrollment.status)
     ? await syncKidTeacherOwnership({
@@ -1139,9 +1292,12 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
       sessionsMatchedByEnrollmentId: sessionUpdateSummary.sessionsMatchedByEnrollmentId,
       sessionsMatchedByLegacyIdentity: sessionUpdateSummary.sessionsMatchedByLegacyIdentity,
       sessionsUpdated: sessionUpdateSummary.sessionsUpdated,
+      sessionsWouldUpdate: sessionUpdateSummary.sessionsWouldUpdate,
       sessionsSkipped: sessionUpdateSummary.sessionsSkipped,
       identitySnapshotsBackfilled: sessionUpdateSummary.identitySnapshotsBackfilled,
       skipReasonCounts: sessionUpdateSummary.skipReasonCounts,
+      queryCoverageUsed: sessionUpdateSummary.queryCoverageUsed,
+      queriesAttempted: sessionUpdateSummary.queriesAttempted,
       kidUpdated: kidSyncSummary.kidUpdated,
       kidTeacherIds: kidSyncSummary.teacherIds,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -1158,8 +1314,11 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
     sessionsMatchedByLegacyIdentity: sessionUpdateSummary.sessionsMatchedByLegacyIdentity,
     sessionsSkipped: sessionUpdateSummary.sessionsSkipped,
     identitySnapshotsBackfilled: sessionUpdateSummary.identitySnapshotsBackfilled,
+    sessionsWouldUpdate: sessionUpdateSummary.sessionsWouldUpdate,
     kidsUpdated: kidSyncSummary.kidUpdated ? 1 : 0,
     skipReasonCounts: sessionUpdateSummary.skipReasonCounts,
+    queryCoverageUsed: sessionUpdateSummary.queryCoverageUsed,
+    queriesAttempted: sessionUpdateSummary.queriesAttempted,
     message: 'Enrollment teacher updated',
   };
 });
@@ -1195,6 +1354,8 @@ export const repairEnrollmentTeacherSessionConsistency = onCall({ region: REGION
   let kidsUpdated = 0;
   let identitySnapshotsBackfilled = 0;
   const skipReasonCounts: Record<string, number> = {};
+  const queryCoverageUsed = new Set<string>();
+  let queriesAttempted = 0;
 
   for (const docSnap of enrollmentDocs) {
     const enrollment = (docSnap.data() || {}) as Record<string, unknown>;
@@ -1214,11 +1375,17 @@ export const repairEnrollmentTeacherSessionConsistency = onCall({ region: REGION
           toOptionalId((enrollment as any).teacherName) ||
           toOptionalId((enrollment as any).teacherDisplayName) ||
           teacherId,
+        teacherDisplayName:
+          toOptionalId((enrollment as any).teacherDisplayName) ||
+          toOptionalId((enrollment as any).teacherName) ||
+          teacherId,
         teacherEmail: toOptionalId((enrollment as any).teacherEmail),
       }),
       previousTeacherId:
         toOptionalId((enrollment as any).previousTeacherId) ||
         teacherId,
+      previousTeacherName: toOptionalId((enrollment as any).previousTeacherName),
+      previousTeacherEmail: toOptionalId((enrollment as any).previousTeacherEmail),
       actorIdentity,
       kidRecord: kidSnap.exists ? ({ id: kidSnap.id, ...(kidSnap.data() || {}) } as Record<string, unknown>) : undefined,
       dryRun,
@@ -1229,6 +1396,8 @@ export const repairEnrollmentTeacherSessionConsistency = onCall({ region: REGION
     sessionsUpdated += summary.sessionsUpdated;
     sessionsSkipped += summary.sessionsSkipped;
     identitySnapshotsBackfilled += summary.identitySnapshotsBackfilled;
+    queriesAttempted += summary.queriesAttempted;
+    summary.queryCoverageUsed.forEach((entry) => queryCoverageUsed.add(entry));
     Object.entries(summary.skipReasonCounts).forEach(([key, value]) => {
       skipReasonCounts[key] = (skipReasonCounts[key] || 0) + value;
     });
@@ -1252,9 +1421,13 @@ export const repairEnrollmentTeacherSessionConsistency = onCall({ region: REGION
     sessionsMatchedByEnrollmentId,
     sessionsMatchedByLegacyIdentity,
     sessionsUpdated,
+    sessionsWouldUpdate: sessionsUpdated,
     sessionsSkipped,
     kidsUpdated,
     identitySnapshotsBackfilled,
+    skipReasonCounts,
+    queriesAttempted,
+    queryCoverageUsed: Array.from(queryCoverageUsed),
   });
 
   return {
@@ -1265,10 +1438,13 @@ export const repairEnrollmentTeacherSessionConsistency = onCall({ region: REGION
     sessionsMatchedByEnrollmentId,
     sessionsMatchedByLegacyIdentity,
     sessionsUpdated,
+    sessionsWouldUpdate: sessionsUpdated,
     sessionsSkipped,
     skipReasonCounts,
     kidsUpdated,
     identitySnapshotsBackfilled,
+    queriesAttempted,
+    queryCoverageUsed: Array.from(queryCoverageUsed),
   };
 });
 

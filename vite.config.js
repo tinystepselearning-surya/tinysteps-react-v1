@@ -4,8 +4,13 @@ import path from 'path';
 import tailwindcss from 'tailwindcss';
 import autoprefixer from 'autoprefixer';
 
+const buildTime = new Date().toISOString();
+
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    'import.meta.env.VITE_BUILD_TIME': JSON.stringify(buildTime),
+  },
   plugins: [react()],
   resolve: {
     alias: {

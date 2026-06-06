@@ -12,6 +12,28 @@ interface FilteredStudent {
   lastSessionDate?: string;
 }
 
+const normalizeTeacherIds = (row: Record<string, unknown> | undefined): string[] => {
+  if (!row) return [];
+  const teacherIds = Array.isArray(row.teacherIds) ? row.teacherIds : [];
+  const singles = [row.teacherId, row.assignedTeacherId, row.primaryTeacherId, row.teacherUid, row.teacher_id];
+  return Array.from(
+    new Set(
+      [...teacherIds, ...singles]
+        .map((value) => (typeof value === 'string' ? value.trim() : ''))
+        .filter(Boolean),
+    ),
+  );
+};
+
+const devLogStudentQuery = (
+  phase: 'listen' | 'snapshot' | 'error',
+  details: Record<string, unknown>,
+) => {
+  if (!import.meta.env.DEV) return;
+  const logger = phase === 'error' ? console.error : console.debug;
+  logger('[useTeacherFilteredStudents] ' + phase, details);
+};
+
 export function useTeacherFilteredStudents() {
   const { user } = useAuthStore();
   const [students, setStudents] = useState<FilteredStudent[]>([]);
@@ -69,6 +91,8 @@ export function useTeacherFilteredStudents() {
     const mergeAndPublish = () => {
       const byId = new Map<string, FilteredStudent>();
       [...latestDirectDocs, ...latestTeacherIdsDocs].forEach((docSnap) => {
+        const data = docSnap.data() as Record<string, unknown>;
+        if (!normalizeTeacherIds(data).includes(user.uid)) return;
         byId.set(docSnap.id, toFilteredStudent(docSnap));
       });
       setStudents(Array.from(byId.values()));
@@ -79,12 +103,27 @@ export function useTeacherFilteredStudents() {
     const unsubscribeDirect = onSnapshot(
       directTeacherQuery,
       (snapshot) => {
+        devLogStudentQuery('snapshot', {
+          queryName: 'kidsByTeacherId',
+          collection: 'kids',
+          aliasField: 'teacherId',
+          filters: [['teacherId', '==', user.uid]],
+          docsReturned: snapshot.docs.length,
+        });
         latestDirectDocs = snapshot.docs;
         mergeAndPublish();
       },
       (err) => {
         setError(err.message);
         setLoading(false);
+        devLogStudentQuery('error', {
+          queryName: 'kidsByTeacherId',
+          collection: 'kids',
+          aliasField: 'teacherId',
+          filters: [['teacherId', '==', user.uid]],
+          code: (err as any)?.code || null,
+          error: err instanceof Error ? err.message : String(err),
+        });
         console.error('Error fetching students:', err);
       }
     );
@@ -92,15 +131,43 @@ export function useTeacherFilteredStudents() {
     const unsubscribeTeacherIds = onSnapshot(
       teacherIdsQuery,
       (snapshot) => {
+        devLogStudentQuery('snapshot', {
+          queryName: 'kidsByTeacherIds',
+          collection: 'kids',
+          aliasField: 'teacherIds',
+          filters: [['teacherIds', 'array-contains', user.uid]],
+          docsReturned: snapshot.docs.length,
+        });
         latestTeacherIdsDocs = snapshot.docs;
         mergeAndPublish();
       },
       (err) => {
         setError(err.message);
         setLoading(false);
+        devLogStudentQuery('error', {
+          queryName: 'kidsByTeacherIds',
+          collection: 'kids',
+          aliasField: 'teacherIds',
+          filters: [['teacherIds', 'array-contains', user.uid]],
+          code: (err as any)?.code || null,
+          error: err instanceof Error ? err.message : String(err),
+        });
         console.error('Error fetching students:', err);
       }
     );
+
+    devLogStudentQuery('listen', {
+      queryName: 'kidsByTeacherId',
+      collection: 'kids',
+      aliasField: 'teacherId',
+      filters: [['teacherId', '==', user.uid]],
+    });
+    devLogStudentQuery('listen', {
+      queryName: 'kidsByTeacherIds',
+      collection: 'kids',
+      aliasField: 'teacherIds',
+      filters: [['teacherIds', 'array-contains', user.uid]],
+    });
 
     return () => {
       unsubscribeDirect();

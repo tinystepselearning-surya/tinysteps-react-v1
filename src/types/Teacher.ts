@@ -5,33 +5,68 @@ export type AttendanceStatus = 'present' | 'absent' | 'late' | 'reschedule_reque
 
 export interface TeacherSession {
   id: string;
+
   enrollmentId?: string;
+
   teacherId: string;
+  teacherIds?: string[];
+  assignedTeacherId?: string;
+  primaryTeacherId?: string;
+  teacherUid?: string;
+  teacher_id?: string;
+
   parentId?: string;
   parentIds?: string[];
+
   courseId: string;
   courseName?: string;
+
+  studentName?: string;
+  kidName?: string;
+  childName?: string;
+
+  studentNames?: string[] | Record<string, string>;
+  kidNames?: string[] | Record<string, string>;
+  childNames?: string[] | Record<string, string>;
+
   date: string; // YYYY-MM-DD
   startTime: string; // HH:MM
   endTime: string; // HH:MM
+
   durationMins?: number;
   durationMinutes?: number;
+
   kidIds: string[];
+  kidId?: string;
+  studentId?: string;
+  childId?: string;
+  studentIds?: string[];
+  childIds?: string[];
+  childrenIds?: string[];
+
   status: SessionStatus;
+
   joinUrl?: string;
   meetingLink?: string;
   lessonPlanUrl?: string; // Canva or other lesson plan embed URL
+
   notes?: string;
   feeAmount?: number;
   currency?: string;
   source?: string;
+
   attendance?: Record<string, AttendanceStatus | { status: AttendanceStatus; [key: string]: any }>;
+
   startAt?: Timestamp;
   endAt?: Timestamp;
   updatedAt?: Timestamp;
   updatedBy?: string;
+
   makeupCreditId?: string;
   makeupForSessionId?: string;
+
+  replacementSessionId?: string;
+  rescheduledFromSessionId?: string;
 }
 
 export interface TeacherStudent {

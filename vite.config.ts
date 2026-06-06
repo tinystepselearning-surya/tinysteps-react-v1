@@ -41,8 +41,12 @@ function filterTruthy(x: any) {
 }
 
 const mdxPlugin = tryMdxPlugin();
+const buildTime = new Date().toISOString();
 
 export default defineConfig({
+  define: {
+    'import.meta.env.VITE_BUILD_TIME': JSON.stringify(buildTime),
+  },
   plugins: mdxPlugin
     ? [
         mdxPlugin,

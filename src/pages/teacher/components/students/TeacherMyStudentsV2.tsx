@@ -111,6 +111,52 @@ function titleCaseFromId(value?: string | null): string {
   return raw.replace(/\b\w/g, (m) => m.toUpperCase());
 }
 
+function readName(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function resolveEnrollmentStudentName(enrollment: Enrollment, kid?: Kid): string {
+  const fromKid = readName(kid?.fullName) || readName(kid?.displayName) || readName(kid?.name);
+  if (fromKid) return fromKid;
+
+  const nestedStudent = enrollment.student as Record<string, unknown> | undefined;
+  const nestedChild = enrollment.child as Record<string, unknown> | undefined;
+  const nestedKid = enrollment.kid as Record<string, unknown> | undefined;
+  const studentDetails = enrollment.studentDetails as Record<string, unknown> | undefined;
+  const childDetails = enrollment.childDetails as Record<string, unknown> | undefined;
+  const kidDetails = enrollment.kidDetails as Record<string, unknown> | undefined;
+
+  return (
+    readName(enrollment.studentName) ||
+    readName(enrollment.childName) ||
+    readName(enrollment.kidName) ||
+    readName(enrollment.studentFullName) ||
+    readName(enrollment.childFullName) ||
+    readName(enrollment.kidFullName) ||
+    readName(nestedStudent?.name) ||
+    readName(nestedStudent?.fullName) ||
+    readName(nestedStudent?.displayName) ||
+    readName(nestedChild?.name) ||
+    readName(nestedChild?.fullName) ||
+    readName(nestedChild?.displayName) ||
+    readName(nestedKid?.name) ||
+    readName(nestedKid?.fullName) ||
+    readName(nestedKid?.displayName) ||
+    readName(studentDetails?.name) ||
+    readName(studentDetails?.fullName) ||
+    readName(studentDetails?.displayName) ||
+    readName(childDetails?.name) ||
+    readName(childDetails?.fullName) ||
+    readName(childDetails?.displayName) ||
+    readName(kidDetails?.name) ||
+    readName(kidDetails?.fullName) ||
+    readName(kidDetails?.displayName) ||
+    readName(enrollment.name) ||
+    readName(enrollment.displayName) ||
+    'Unnamed student'
+  );
+}
+
 export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
@@ -365,8 +411,7 @@ export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
 
       if (!enr.resolvedKidId) return false;
       const kid = kidsMap.get(enr.resolvedKidId);
-      if (!kid) return false;
-      const kidStatus = normalizeStatus(kid.status);
+      const kidStatus = normalizeStatus(kid?.status);
       const isArchived = Boolean(kidStatus && ARCHIVED_KID_STATUSES.has(kidStatus));
       if (tab === 'active' && (isArchived || !isActive)) return false;
       if (tab === 'past' && !isArchived && !isPast) return false;
@@ -379,7 +424,7 @@ export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
         coursesMap.get(enr.courseId || '')?.name ||
         coursesMap.get(enr.courseId || '')?.title ||
         titleCaseFromId(enr.courseId);
-      const name = (kid?.fullName || kid?.displayName || kid?.name || '').toLowerCase();
+      const name = resolveEnrollmentStudentName(enr, kid).toLowerCase();
       return name.includes(term) || courseLabel.toLowerCase().includes(term);
     });
   }, [enrollmentRows, kidsMap, coursesMap, search, tab]);
@@ -478,7 +523,7 @@ export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
 
               {filteredEnrollments.map((enr) => {
                 const kid = enr.resolvedKidId ? kidsMap.get(enr.resolvedKidId) : undefined;
-                const name = kid?.fullName || kid?.displayName || kid?.name || 'Unnamed student';
+                const name = resolveEnrollmentStudentName(enr, kid);
                 const status = normalizeStatus(enr.status);
                 const isPast = PAST_STATUSES.has(status);
                 const statusLabel = isPast ? 'Past' : 'Active';

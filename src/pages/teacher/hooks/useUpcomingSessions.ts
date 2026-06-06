@@ -1,5 +1,14 @@
 import { useEffect, useState } from 'react';
-import { collection, documentId, getDocs, onSnapshot, orderBy, query, where } from 'firebase/firestore';
+import {
+  collection,
+  documentId,
+  getDocs,
+  onSnapshot,
+  orderBy,
+  query,
+  where,
+  type Query,
+} from 'firebase/firestore';
 import { addDays, format } from 'date-fns';
 import { db } from '../../../lib/firebaseConfig';
 import {
@@ -8,25 +17,44 @@ import {
   shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment,
 } from '../../../lib/sessionScheduleIntegrity';
 import { TeacherSession } from '../../../types/Teacher';
+import { getTeacherSessionEntityIds } from '../utils/resolveTeacherSessionStudentName';
 
 interface UseUpcomingSessionsResult {
   sessions: TeacherSession[];
   isLoading: boolean;
   error: Error | null;
+  enrollmentsById: Map<string, Record<string, unknown>>;
+  entityDocById: Map<string, Record<string, unknown>>;
+  deniedLookups: Array<{ collection: string; code?: string | null; error: string }>;
 }
 
+const cleanString = (value: unknown): string => {
+  return typeof value === 'string' ? value.trim() : '';
+};
+
+const shouldDebugTeacherSessionNames = (): boolean => {
+  if (!import.meta.env.DEV || typeof window === 'undefined') return false;
+  const params = new URLSearchParams(window.location.search);
+  return window.localStorage.getItem('debugTeacherSessionNames') === '1' || params.get('debugNames') === '1';
+};
+
+const firstClean = (...values: unknown[]): string => {
+  for (const value of values) {
+    const cleaned = cleanString(value);
+    if (cleaned) return cleaned;
+  }
+
+  return '';
+};
+
 const normalizeKidIds = (doc: any): string[] => {
-  const raw =
-    Array.isArray(doc.kidIds) ? doc.kidIds :
-    doc.kidId ? [doc.kidId] :
-    doc.studentId ? [doc.studentId] :
-    [];
-  return raw.filter((id: unknown): id is string => typeof id === 'string' && id.trim().length > 0);
+  return getTeacherSessionEntityIds(doc as Record<string, unknown>);
 };
 
 const normalizeTeacherIds = (doc: any): string[] => {
   const raw = Array.isArray(doc.teacherIds) ? doc.teacherIds : [];
   const singles = [doc.teacherId, doc.assignedTeacherId, doc.primaryTeacherId, doc.teacherUid, doc.teacher_id];
+
   return Array.from(
     new Set(
       [...raw, ...singles]
@@ -47,9 +75,11 @@ const sessionBelongsToTeacher = (doc: any, teacherId: string): boolean => {
 
 const chunkIds = (ids: string[], size = 10): string[][] => {
   const chunks: string[][] = [];
+
   for (let i = 0; i < ids.length; i += size) {
     chunks.push(ids.slice(i, i + size));
   }
+
   return chunks;
 };
 
@@ -59,19 +89,29 @@ const devLogTeacherQuery = (
   details: Record<string, unknown>,
 ) => {
   if (!import.meta.env.DEV) return;
+
   const logger = phase === 'error' ? console.error : console.debug;
   logger(`[${hookName}] ${phase}`, details);
 };
 
 const fetchEnrollmentsByIds = async (ids: string[]): Promise<Map<string, Record<string, unknown>>> => {
   const map = new Map<string, Record<string, unknown>>();
+
   for (const chunk of chunkIds(ids, 10)) {
     if (!chunk.length) continue;
-    const snap = await getDocs(query(collection(db, 'enrollments'), where(documentId(), 'in', chunk)));
+
+    const snap = await getDocs(
+      query(collection(db, 'enrollments'), where(documentId(), 'in', chunk)),
+    );
+
     snap.docs.forEach((docSnap) => {
-      map.set(docSnap.id, { id: docSnap.id, ...(docSnap.data() as Record<string, unknown>) });
+      map.set(docSnap.id, {
+        id: docSnap.id,
+        ...(docSnap.data() as Record<string, unknown>),
+      });
     });
   }
+
   return map;
 };
 
@@ -79,6 +119,7 @@ const toTeacherSession = (doc: any): TeacherSession => ({
   ...(doc || {}),
   id: doc.id,
   teacherId: resolveTeacherId(doc),
+  teacherIds: normalizeTeacherIds(doc),
   enrollmentId: doc.enrollmentId,
   parentId: doc.parentId,
   parentIds: doc.parentIds,
@@ -88,6 +129,18 @@ const toTeacherSession = (doc: any): TeacherSession => ({
   startTime: doc.startTime,
   endTime: doc.endTime,
   kidIds: normalizeKidIds(doc),
+  kidId: cleanString(doc.kidId),
+  studentId: cleanString(doc.studentId),
+  childId: cleanString(doc.childId),
+  studentIds: Array.isArray(doc.studentIds)
+    ? doc.studentIds.map((id: unknown) => cleanString(id)).filter(Boolean)
+    : undefined,
+  childIds: Array.isArray(doc.childIds)
+    ? doc.childIds.map((id: unknown) => cleanString(id)).filter(Boolean)
+    : undefined,
+  childrenIds: Array.isArray(doc.childrenIds)
+    ? doc.childrenIds.map((id: unknown) => cleanString(id)).filter(Boolean)
+    : undefined,
   status: doc.status || 'scheduled',
   joinUrl: doc.joinUrl,
   notes: doc.notes,
@@ -99,64 +152,275 @@ const toTeacherSession = (doc: any): TeacherSession => ({
   updatedBy: doc.updatedBy,
   makeupCreditId: doc.makeupCreditId,
   makeupForSessionId: doc.makeupForSessionId,
-});
+
+  // Keep identity snapshots if they already exist on classSessions.
+  studentName: doc.studentName,
+  kidName: doc.kidName,
+  childName: doc.childName,
+  studentNames: doc.studentNames,
+  kidNames: doc.kidNames,
+  childNames: doc.childNames,
+} as TeacherSession);
+
+const namesFromValue = (value: unknown, preferredIds: string[]): string[] => {
+  if (Array.isArray(value)) {
+    return value.map((item) => cleanString(item)).filter(Boolean);
+  }
+
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    const names: string[] = [];
+
+    preferredIds.forEach((id) => {
+      const directValue = record[id];
+
+      if (Array.isArray(directValue)) {
+        directValue.forEach((item) => {
+          const cleaned = cleanString(item);
+          if (cleaned) names.push(cleaned);
+        });
+      } else {
+        const cleaned = cleanString(directValue);
+        if (cleaned) names.push(cleaned);
+      }
+    });
+
+    Object.values(record).forEach((item) => {
+      if (Array.isArray(item)) {
+        item.forEach((nestedItem) => {
+          const cleaned = cleanString(nestedItem);
+          if (cleaned) names.push(cleaned);
+        });
+      } else {
+        const cleaned = cleanString(item);
+        if (cleaned) names.push(cleaned);
+      }
+    });
+
+    return names;
+  }
+
+  const single = cleanString(value);
+  return single ? [single] : [];
+};
+
+const resolveEnrollmentStudentName = (
+  enrollment: Record<string, unknown> | undefined,
+  preferredIds: string[],
+): string => {
+  if (!enrollment) return '';
+
+  const directName = firstClean(
+    enrollment.studentName,
+    enrollment.kidName,
+    enrollment.childName,
+    enrollment.studentFullName,
+    enrollment.kidFullName,
+    enrollment.childFullName,
+    enrollment.studentDisplayName,
+    enrollment.kidDisplayName,
+    enrollment.childDisplayName,
+    (enrollment.student as Record<string, unknown> | undefined)?.name,
+    (enrollment.student as Record<string, unknown> | undefined)?.fullName,
+    (enrollment.student as Record<string, unknown> | undefined)?.displayName,
+    (enrollment.child as Record<string, unknown> | undefined)?.name,
+    (enrollment.child as Record<string, unknown> | undefined)?.fullName,
+    (enrollment.child as Record<string, unknown> | undefined)?.displayName,
+    (enrollment.kid as Record<string, unknown> | undefined)?.name,
+    (enrollment.kid as Record<string, unknown> | undefined)?.fullName,
+    (enrollment.kid as Record<string, unknown> | undefined)?.displayName,
+    (enrollment.studentDetails as Record<string, unknown> | undefined)?.name,
+    (enrollment.studentDetails as Record<string, unknown> | undefined)?.fullName,
+    (enrollment.studentDetails as Record<string, unknown> | undefined)?.displayName,
+    (enrollment.childDetails as Record<string, unknown> | undefined)?.name,
+    (enrollment.childDetails as Record<string, unknown> | undefined)?.fullName,
+    (enrollment.childDetails as Record<string, unknown> | undefined)?.displayName,
+    (enrollment.kidDetails as Record<string, unknown> | undefined)?.name,
+    (enrollment.kidDetails as Record<string, unknown> | undefined)?.fullName,
+    (enrollment.kidDetails as Record<string, unknown> | undefined)?.displayName,
+    enrollment.name,
+    enrollment.fullName,
+    enrollment.displayName,
+  );
+
+  if (directName) return directName;
+
+  const mappedNames = [
+    ...namesFromValue(enrollment.studentNames, preferredIds),
+    ...namesFromValue(enrollment.kidNames, preferredIds),
+    ...namesFromValue(enrollment.childNames, preferredIds),
+  ];
+
+  return mappedNames[0] || '';
+};
+
+const sessionAlreadyHasName = (session: TeacherSession): boolean => {
+  const sessionAny = session as unknown as Record<string, unknown>;
+  const kidIds = Array.isArray(session.kidIds) ? session.kidIds : [];
+
+  const names = [
+    ...namesFromValue(sessionAny.studentNames, kidIds),
+    ...namesFromValue(sessionAny.kidNames, kidIds),
+    ...namesFromValue(sessionAny.childNames, kidIds),
+    cleanString(sessionAny.studentName),
+    cleanString(sessionAny.kidName),
+    cleanString(sessionAny.childName),
+  ].filter(Boolean);
+
+  return names.length > 0;
+};
+
+const withEnrollmentIdentitySnapshots = (
+  session: TeacherSession,
+  enrollment?: Record<string, unknown>,
+): TeacherSession => {
+  const kidIds = Array.isArray(session.kidIds) ? session.kidIds : [];
+  const firstKidId = kidIds[0];
+
+  const enrollmentName = resolveEnrollmentStudentName(enrollment, kidIds);
+  const enrollmentCourseName = firstClean(enrollment?.courseName, enrollment?.courseTitle);
+
+  if (!enrollmentName && !enrollmentCourseName) return session;
+
+  const next: TeacherSession = {
+    ...session,
+    courseName: session.courseName || enrollmentCourseName || session.courseName,
+  };
+
+  if (!enrollmentName || sessionAlreadyHasName(session)) {
+    return next;
+  }
+
+  return {
+    ...next,
+    studentName: enrollmentName,
+    kidName: enrollmentName,
+    childName: enrollmentName,
+    studentNames: firstKidId ? { [firstKidId]: enrollmentName } : [enrollmentName],
+    kidNames: firstKidId ? { [firstKidId]: enrollmentName } : [enrollmentName],
+    childNames: firstKidId ? { [firstKidId]: enrollmentName } : [enrollmentName],
+  } as TeacherSession;
+};
 
 export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResult => {
   const [sessions, setSessions] = useState<TeacherSession[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(!!teacherId);
   const [error, setError] = useState<Error | null>(null);
+  const [enrollmentsById, setEnrollmentsById] = useState<Map<string, Record<string, unknown>>>(new Map());
+  const [entityDocById, setEntityDocById] = useState<Map<string, Record<string, unknown>>>(new Map());
+  const [deniedLookups, setDeniedLookups] = useState<Array<{ collection: string; code?: string | null; error: string }>>([]);
 
   useEffect(() => {
     if (!teacherId) {
+      setSessions([]);
       setIsLoading(false);
+      setError(null);
+      setEnrollmentsById(new Map());
+      setEntityDocById(new Map());
+      setDeniedLookups([]);
       return;
     }
 
+    setIsLoading(true);
+    setError(null);
+    setDeniedLookups([]);
+
+    let cancelled = false;
+
     const today = new Date();
     const dates: string[] = [];
+
     for (let i = 1; i <= 7; i++) {
       dates.push(format(addDays(today, i), 'yyyy-MM-dd'));
     }
 
     const baseCollection = collection(db, 'classSessions');
-    const q = query(
+
+    const primaryQuery = query(
       baseCollection,
       where('teacherId', '==', teacherId),
       where('date', 'in', dates),
       orderBy('date', 'asc'),
-      orderBy('startTime', 'asc')
+      orderBy('startTime', 'asc'),
     );
-    const teacherIdsQuery = query(baseCollection, where('teacherIds', 'array-contains', teacherId), where('date', 'in', dates), orderBy('date', 'asc'), orderBy('startTime', 'asc'));
-    const assignedTeacherQuery = query(baseCollection, where('assignedTeacherId', '==', teacherId), where('date', 'in', dates), orderBy('date', 'asc'), orderBy('startTime', 'asc'));
-    const primaryTeacherQuery = query(baseCollection, where('primaryTeacherId', '==', teacherId), where('date', 'in', dates), orderBy('date', 'asc'), orderBy('startTime', 'asc'));
-    const teacherUidQuery = query(baseCollection, where('teacherUid', '==', teacherId), where('date', 'in', dates), orderBy('date', 'asc'), orderBy('startTime', 'asc'));
-    const legacyTeacherIdQuery = query(baseCollection, where('teacher_id', '==', teacherId), where('date', 'in', dates), orderBy('date', 'asc'), orderBy('startTime', 'asc'));
+
+    const teacherIdsQuery = query(
+      baseCollection,
+      where('teacherIds', 'array-contains', teacherId),
+      where('date', 'in', dates),
+      orderBy('date', 'asc'),
+      orderBy('startTime', 'asc'),
+    );
+
+    const assignedTeacherQuery = query(
+      baseCollection,
+      where('assignedTeacherId', '==', teacherId),
+      where('date', 'in', dates),
+      orderBy('date', 'asc'),
+      orderBy('startTime', 'asc'),
+    );
+
+    const primaryTeacherQuery = query(
+      baseCollection,
+      where('primaryTeacherId', '==', teacherId),
+      where('date', 'in', dates),
+      orderBy('date', 'asc'),
+      orderBy('startTime', 'asc'),
+    );
+
+    const teacherUidQuery = query(
+      baseCollection,
+      where('teacherUid', '==', teacherId),
+      where('date', 'in', dates),
+      orderBy('date', 'asc'),
+      orderBy('startTime', 'asc'),
+    );
+
+    const legacyTeacherIdQuery = query(
+      baseCollection,
+      where('teacher_id', '==', teacherId),
+      where('date', 'in', dates),
+      orderBy('date', 'asc'),
+      orderBy('startTime', 'asc'),
+    );
+
     const liveDocsBySource = new Map<string, Map<string, TeacherSession>>();
 
     const publishMerged = async () => {
       const merged = new Map<string, TeacherSession>();
+
       liveDocsBySource.forEach((rows) => {
         rows.forEach((session, sessionId) => {
           if (!dates.includes(String(session.date || ''))) return;
           merged.set(sessionId, session);
         });
       });
-      const next = Array.from(merged.values()).filter((session) => sessionBelongsToTeacher(session as any, teacherId));
-      const enrollmentMap = await fetchEnrollmentsByIds(
-        Array.from(
-          new Set(
-            next
-              .map((session) => String((session as any)?.enrollmentId || '').trim())
-              .filter(Boolean),
-          ),
+
+      const next = Array.from(merged.values()).filter((session) =>
+        sessionBelongsToTeacher(session as any, teacherId),
+      );
+
+      const enrollmentIds = Array.from(
+        new Set(
+          next
+            .map((session) => String((session as any)?.enrollmentId || '').trim())
+            .filter(Boolean),
         ),
       );
+
+      const enrollmentMap = await fetchEnrollmentsByIds(enrollmentIds);
+
       const canonicalOnly = next.filter((session) => {
         const status = String((session as any)?.status || '').trim().toLowerCase();
+
         if (status === 'paused') return false;
+
         const enrollmentId = String((session as any)?.enrollmentId || '').trim();
+
         if (!enrollmentId) return false;
+
         const enrollment = enrollmentMap.get(enrollmentId);
+
         if (!enrollment) {
           return (
             sessionBelongsToTeacher(session as any, teacherId) &&
@@ -167,99 +431,88 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
             )
           );
         }
+
         return isSessionCanonicalForEnrollment(session as unknown as Record<string, unknown>, enrollment);
       });
-      const sorted = canonicalOnly.sort((a, b) => {
-        if (a.date !== b.date) return String(a.date).localeCompare(String(b.date));
-        return String(a.startTime || '').localeCompare(String(b.startTime || ''), undefined, { numeric: true });
+
+      const enriched = canonicalOnly.map((session) => {
+        const enrollmentId = String((session as any)?.enrollmentId || '').trim();
+        const enrollment = enrollmentId ? enrollmentMap.get(enrollmentId) : undefined;
+
+        return withEnrollmentIdentitySnapshots(session, enrollment);
       });
+
+      const entityIds = Array.from(
+        new Set(
+          enriched.flatMap((session) => getTeacherSessionEntityIds(session as unknown as Record<string, unknown>)),
+        ),
+      );
+      const nextEntityDocById = new Map<string, Record<string, unknown>>();
+
+      enriched.forEach((session) => {
+        const sessionEntityIds = new Set(
+          getTeacherSessionEntityIds(session as unknown as Record<string, unknown>),
+        );
+        const sessionRecord = session as unknown as Record<string, unknown>;
+
+        entityIds.forEach((id) => {
+          if (!sessionEntityIds.has(id)) return;
+
+          const embeddedNames = [
+            cleanString(sessionRecord.studentName),
+            cleanString(sessionRecord.kidName),
+            cleanString(sessionRecord.childName),
+          ].filter(Boolean);
+
+          if (!embeddedNames.length) return;
+
+          nextEntityDocById.set(id, {
+            id,
+            name: embeddedNames[0],
+            fullName: embeddedNames[0],
+            displayName: embeddedNames[0],
+            studentName: embeddedNames[0],
+            childName: embeddedNames[0],
+            kidName: embeddedNames[0],
+          });
+        });
+      });
+
+      const sorted = enriched.sort((a, b) => {
+        if (a.date !== b.date) return String(a.date).localeCompare(String(b.date));
+
+        return String(a.startTime || '').localeCompare(String(b.startTime || ''), undefined, {
+          numeric: true,
+        });
+      });
+
+      if (cancelled) return;
+
       setSessions(sorted);
+      setEnrollmentsById(new Map(enrollmentMap));
+      setEntityDocById(nextEntityDocById);
+      setDeniedLookups([]);
       setIsLoading(false);
       setError(null);
     };
 
-    const runFallback = async () => {
-      try {
-        const fallbackSnaps = await Promise.all([
-          getDocs(query(baseCollection, where('teacherId', '==', teacherId), where('date', 'in', dates), orderBy('date', 'asc'))),
-          getDocs(query(baseCollection, where('teacherIds', 'array-contains', teacherId), where('date', 'in', dates), orderBy('date', 'asc'))),
-          getDocs(query(baseCollection, where('assignedTeacherId', '==', teacherId), where('date', 'in', dates), orderBy('date', 'asc'))),
-          getDocs(query(baseCollection, where('primaryTeacherId', '==', teacherId), where('date', 'in', dates), orderBy('date', 'asc'))),
-          getDocs(query(baseCollection, where('teacherUid', '==', teacherId), where('date', 'in', dates), orderBy('date', 'asc'))),
-          getDocs(query(baseCollection, where('teacher_id', '==', teacherId), where('date', 'in', dates), orderBy('date', 'asc'))),
-        ]);
-        const mergedDocs = new Map<string, any>();
-        fallbackSnaps.forEach((snap) => {
-          snap.docs.forEach((docSnap) => {
-            mergedDocs.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
-          });
-        });
-        const allSessions = Array.from(mergedDocs.values()).map((payload) =>
-          toTeacherSession(payload)
-        );
-        const enrollmentMap = await fetchEnrollmentsByIds(
-          Array.from(
-            new Set(
-              allSessions
-                .map((session) => String((session as any)?.enrollmentId || '').trim())
-                .filter(Boolean),
-            ),
-          ),
-        );
-        const filtered = allSessions.filter(
-          (s) => dates.includes(String(s.date || '')) && sessionBelongsToTeacher(s as any, teacherId),
-        );
-        const canonicalOnly = filtered.filter((session) => {
-          const status = String((session as any)?.status || '').trim().toLowerCase();
-          if (status === 'paused') return false;
-          const enrollmentId = String((session as any)?.enrollmentId || '').trim();
-          if (!enrollmentId) return false;
-          const enrollment = enrollmentMap.get(enrollmentId);
-          if (!enrollment) {
-            return (
-              sessionBelongsToTeacher(session as any, teacherId) &&
-              isScheduleExceptionSession(session as unknown as Record<string, unknown>) &&
-              shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment(
-                session as unknown as Record<string, unknown>,
-                teacherId,
-              )
-            );
-          }
-          return isSessionCanonicalForEnrollment(session as unknown as Record<string, unknown>, enrollment);
-        });
-        const sorted = canonicalOnly.sort((a, b) => {
-          if (a.date !== b.date) return String(a.date).localeCompare(String(b.date));
-          return String(a.startTime || '').localeCompare(String(b.startTime || ''), undefined, {
-            numeric: true,
-          });
-        });
-        setSessions(sorted.slice(0, 200));
-        setIsLoading(false);
-        setError(null);
-        if (import.meta.env.DEV) {
-          console.warn(
-            'useUpcomingSessions: loaded fallback data because classSessions index is not ready'
-          );
-        }
-      } catch (fallbackErr) {
-        setError(fallbackErr as Error);
-        setIsLoading(false);
-      }
-    };
-
     const listeners: Array<() => void> = [];
+
     const attachListener = (
       sourceKey: string,
       aliasField: string,
-      listenerQuery: ReturnType<typeof query>,
-      fallbackToBatch = false,
+      op: '==' | 'array-contains',
+      listenerQuery: Query,
     ) => {
       devLogTeacherQuery('useUpcomingSessions', 'listen', {
         queryName: sourceKey,
         collection: 'classSessions',
         aliasField,
+        op,
         dateRange: { type: 'in', dates },
+        authUid: teacherId,
       });
+
       const unsubscribe = onSnapshot(
         listenerQuery,
         (snapshot) => {
@@ -268,59 +521,83 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
             collection: 'classSessions',
             aliasField,
             dateRange: { type: 'in', dates },
+            authUid: teacherId,
             docsReturned: snapshot.docs.length,
           });
+
           liveDocsBySource.set(
             sourceKey,
             new Map(
               snapshot.docs.map((d) => [
                 d.id,
-                toTeacherSession({ id: d.id, ...(d.data() as Record<string, unknown>) }),
+                toTeacherSession({
+                  id: d.id,
+                  ...(d.data() as Record<string, unknown>),
+                }),
               ]),
             ),
           );
+
           void publishMerged().catch((err) => {
-            console.error('useUpcomingSessions canonical filter error', err);
+            devLogTeacherQuery('useUpcomingSessions', 'error', {
+              queryName: 'canonical-filter',
+              collection: 'classSessions',
+              error: err instanceof Error ? err.message : String(err),
+              code: (err as any)?.code || null,
+            });
+
+            if (cancelled) return;
+
             setError(err as Error);
             setIsLoading(false);
           });
         },
         (err) => {
-          console.error('useUpcomingSessions error', err);
+          const errMessage = err instanceof Error ? err.message : String(err);
           devLogTeacherQuery('useUpcomingSessions', 'error', {
             queryName: sourceKey,
             collection: 'classSessions',
             aliasField,
+            op,
             dateRange: { type: 'in', dates },
-            error: err instanceof Error ? err.message : String(err),
+            authUid: teacherId,
+            error: errMessage,
             code: (err as any)?.code || null,
           });
-          const message = err instanceof Error ? err.message : String(err);
-          if (
-            fallbackToBatch &&
-            (err?.code === 'failed-precondition' ||
-            /requires an index|index is currently building/i.test(message))
-          ) {
-            listeners.forEach((stop) => stop());
-            runFallback();
-            return;
-          }
+
+          if (cancelled) return;
+
           setError(err as Error);
           setIsLoading(false);
-        }
+        },
       );
+
       listeners.push(unsubscribe);
     };
 
-    attachListener('primary', 'teacherId', q, true);
-    attachListener('teacherIds', 'teacherIds', teacherIdsQuery, true);
-    attachListener('assignedTeacherId', 'assignedTeacherId', assignedTeacherQuery, true);
-    attachListener('primaryTeacherId', 'primaryTeacherId', primaryTeacherQuery, true);
-    attachListener('teacherUid', 'teacherUid', teacherUidQuery, true);
-    attachListener('teacher_id', 'teacher_id', legacyTeacherIdQuery, true);
+    if (shouldDebugTeacherSessionNames()) {
+      const debugCollections = ['children'];
+      setDeniedLookups(
+        debugCollections.map((collectionName) => ({
+          collection: collectionName,
+          code: 'skipped',
+          error: 'Skipped unauthorized lookup source; relying on session/enrollment snapshots and teacher-owned student docs.',
+        })),
+      );
+    }
 
-    return () => listeners.forEach((stop) => stop());
+    attachListener('primary', 'teacherId', '==', primaryQuery);
+    attachListener('teacherIds', 'teacherIds', 'array-contains', teacherIdsQuery);
+    attachListener('assignedTeacherId', 'assignedTeacherId', '==', assignedTeacherQuery);
+    attachListener('primaryTeacherId', 'primaryTeacherId', '==', primaryTeacherQuery);
+    attachListener('teacherUid', 'teacherUid', '==', teacherUidQuery);
+    attachListener('teacher_id', 'teacher_id', '==', legacyTeacherIdQuery);
+
+    return () => {
+      cancelled = true;
+      listeners.forEach((stop) => stop());
+    };
   }, [teacherId]);
 
-  return { sessions, isLoading, error };
+  return { sessions, isLoading, error, enrollmentsById, entityDocById, deniedLookups };
 };

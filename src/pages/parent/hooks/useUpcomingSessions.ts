@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { collection, documentId, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import { db } from '../../../lib/firebaseConfig';
 import { isSessionCanonicalForEnrollment } from '../../../lib/sessionScheduleIntegrity';
 import { ParentSession } from '../../../types/Parent';
@@ -20,70 +21,107 @@ const timeFromDoc = (data: any) => {
   return undefined;
 };
 
-const chunkIds = (ids: string[], size = 10): string[][] => {
-  const chunks: string[][] = [];
-  for (let i = 0; i < ids.length; i += size) {
-    chunks.push(ids.slice(i, i + size));
+const asStringArray = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item || '').trim()).filter(Boolean);
   }
-  return chunks;
+
+  const single = String(value || '').trim();
+  return single ? [single] : [];
+};
+
+const getKidNameFromSession = (data: any, childId: string) => {
+  if (data?.kidNames && typeof data.kidNames === 'object' && data.kidNames[childId]) {
+    return String(data.kidNames[childId]);
+  }
+
+  if (data?.studentNames && typeof data.studentNames === 'object' && data.studentNames[childId]) {
+    return String(data.studentNames[childId]);
+  }
+
+  if (data?.childNames && typeof data.childNames === 'object' && data.childNames[childId]) {
+    return String(data.childNames[childId]);
+  }
+
+  return (
+    data?.studentName ||
+    data?.kidName ||
+    data?.childName ||
+    'Child'
+  );
 };
 
 const fetchSessions = async (childIds: string[]): Promise<ParentSession[]> => {
-  if (!childIds.length) return [];
+  const parentUid = getAuth().currentUser?.uid;
+
+  if (!parentUid || !childIds.length) return [];
+
+  const childIdSet = new Set(childIds.map((id) => String(id || '').trim()).filter(Boolean));
+  if (!childIdSet.size) return [];
+
   const rawRows: Array<{ id: string; childId: string; data: any }> = [];
   const seen = new Set<string>();
-  await Promise.all(
-    childIds.map(async (childId) => {
-      const classQuery = query(
-        collection(db, 'classSessions'),
-        where('kidIds', 'array-contains', childId)
-      );
-      const classSnap = await getDocs(classQuery);
 
-      const addDoc = (docSnap: any) => {
-        if (seen.has(docSnap.id)) return;
-        const data = docSnap.data() as any;
-        const date = dateFromDoc(data);
-        if (!date || date < todayIso()) return;
-        seen.add(docSnap.id);
-        rawRows.push({ id: docSnap.id, childId, data });
-      };
-
-      classSnap.forEach(addDoc);
-    })
+  // ✅ Rule-compatible parent-owned query.
+  // Firestore rules can prove this query is allowed because parentId == request.auth.uid.
+  const classQuery = query(
+    collection(db, 'classSessions'),
+    where('parentId', '==', parentUid),
   );
 
-  const enrollmentIds = Array.from(
-    new Set(
-      rawRows
-        .map(({ data }) => String(data?.enrollmentId || '').trim())
-        .filter(Boolean),
-    ),
-  );
+  const classSnap = await getDocs(classQuery);
+
+  classSnap.forEach((docSnap) => {
+    if (seen.has(docSnap.id)) return;
+
+    const data = docSnap.data() as any;
+    const date = dateFromDoc(data);
+
+    if (!date || date < todayIso()) return;
+
+    const sessionKidIds = asStringArray(data?.kidIds);
+    const sessionKidId = String(data?.kidId || '').trim();
+
+    const matchedChildId =
+      sessionKidIds.find((kidId) => childIdSet.has(kidId)) ||
+      (sessionKidId && childIdSet.has(sessionKidId) ? sessionKidId : '');
+
+    if (!matchedChildId) return;
+
+    seen.add(docSnap.id);
+    rawRows.push({ id: docSnap.id, childId: matchedChildId, data });
+  });
+
   const enrollmentMap = new Map<string, Record<string, unknown>>();
-  for (const chunk of chunkIds(enrollmentIds, 10)) {
-    if (!chunk.length) continue;
-    const enrollmentSnap = await getDocs(
-      query(collection(db, 'enrollments'), where(documentId(), 'in', chunk)),
-    );
-    enrollmentSnap.docs.forEach((docSnap) => {
-      enrollmentMap.set(docSnap.id, { id: docSnap.id, ...(docSnap.data() as Record<string, unknown>) });
+
+  // ✅ Rule-compatible parent-owned enrollment query.
+  // Avoid documentId() "in" query because rules may not be able to prove parent ownership.
+  const enrollmentSnap = await getDocs(
+    query(collection(db, 'enrollments'), where('parentId', '==', parentUid)),
+  );
+
+  enrollmentSnap.docs.forEach((docSnap) => {
+    enrollmentMap.set(docSnap.id, {
+      id: docSnap.id,
+      ...(docSnap.data() as Record<string, unknown>),
     });
-  }
+  });
 
   const sessions: ParentSession[] = rawRows
     .filter(({ data }) => {
       const status = String(data?.status || '').trim().toLowerCase();
       if (status === 'paused') return false;
+
       const enrollmentId = String(data?.enrollmentId || '').trim();
       if (!enrollmentId) return false;
+
       const enrollment = enrollmentMap.get(enrollmentId);
       return isSessionCanonicalForEnrollment(data as Record<string, unknown>, enrollment);
     })
     .map(({ id, childId, data }) => ({
       id,
       kidId: childId,
-      kidName: data.kidNames?.[childId] || data.kidName || 'Child',
+      kidName: getKidNameFromSession(data, childId),
       courseName: data.courseName || data.courseId,
       date: dateFromDoc(data) || '',
       startTime: timeFromDoc(data) || '00:00',
@@ -91,14 +129,18 @@ const fetchSessions = async (childIds: string[]): Promise<ParentSession[]> => {
       teacherName: data.teacherName,
     }));
 
-  return sessions.sort((a, b) => `${a.date}T${a.startTime}`.localeCompare(`${b.date}T${b.startTime}`));
+  return sessions.sort((a, b) =>
+    `${a.date}T${a.startTime}`.localeCompare(`${b.date}T${b.startTime}`),
+  );
 };
 
 export const useUpcomingSessions = (childIds: string[]) => {
+  const safeChildIds = [...childIds].map((id) => String(id || '').trim()).filter(Boolean).sort();
+
   return useQuery<ParentSession[]>({
-    queryKey: ['parentSessions', childIds.sort().join('-')],
-    queryFn: () => fetchSessions(childIds),
-    enabled: childIds.length > 0,
+    queryKey: ['parentSessions', safeChildIds.join('-')],
+    queryFn: () => fetchSessions(safeChildIds),
+    enabled: safeChildIds.length > 0,
     staleTime: 1000 * 60 * 5,
   });
 };

@@ -112,6 +112,7 @@ describe('useTeacherSessions', () => {
       const field = String(teacherClause?.[0] || '');
       const docsByField: Record<string, ReturnType<typeof makeDoc>[]> = {
         teacherId: [makeDoc('session-direct', { teacherId: 'teacher-1', enrollmentId: 'enr-direct', date: '2026-06-08', startTime: '20:00', kidId: 'kid-1', status: 'scheduled' })],
+        teacherIds: [makeDoc('session-array', { teacherId: 'teacher-1', teacherIds: ['teacher-1'], enrollmentId: 'enr-direct', date: '2026-06-08', startTime: '20:30', kidId: 'kid-1', status: 'scheduled' })],
         assignedTeacherId: [makeDoc('session-assigned', { assignedTeacherId: 'teacher-1', enrollmentId: 'enr-assigned', date: '2026-06-08', startTime: '21:00', kidId: 'kid-2', status: 'scheduled' })],
       };
       onNext({ docs: docsByField[field] || [] });
@@ -122,10 +123,11 @@ describe('useTeacherSessions', () => {
   it('keeps Today/Schedule teacher session queries date-scoped for alias reads and returns June 8 sessions', async () => {
     render(<TestComponent teacherId="teacher-1" startDate="2026-06-08" endDate="2026-06-08" />);
 
-    await waitFor(() => expect(screen.getByText('count:2')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('count:3')).toBeTruthy());
 
     expect(screen.getAllByTestId('session').map((node) => node.textContent)).toEqual([
       'session-direct:2026-06-08:teacher-1',
+      'session-array:2026-06-08:teacher-1',
       'session-assigned:2026-06-08:teacher-1',
     ]);
 
@@ -148,5 +150,37 @@ describe('useTeacherSessions', () => {
         ]),
       );
     });
+
+    const teacherIdsQueries = aliasQueries.filter((queryRef: any) =>
+      extractWhereClauses(queryRef).some((clause) => clause[0] === 'teacherIds' && clause[1] === 'array-contains' && clause[2] === 'teacher-1'),
+    );
+    expect(teacherIdsQueries).toHaveLength(1);
+  });
+
+  it('surfaces classSessions permission errors instead of running broader fallback reads', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockOnSnapshot.mockReset();
+    mockGetDocs.mockClear();
+
+    mockOnSnapshot.mockImplementation((_queryRef, _onNext, onError) => {
+      onError?.(Object.assign(new Error('Missing or insufficient permissions.'), { code: 'permission-denied' }));
+      return vi.fn();
+    });
+
+    render(<TestComponent teacherId="teacher-1" startDate="2026-06-08" endDate="2026-06-08" />);
+
+    await waitFor(() =>
+      expect(screen.getByText('error:Missing or insufficient permissions.')).toBeTruthy(),
+    );
+
+    const classSessionGetDocsCalls = mockGetDocs.mock.calls.filter(
+      ([queryRef]) => getCollectionName(queryRef as any) === 'classSessions',
+    );
+    expect(classSessionGetDocsCalls).toHaveLength(0);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'useTeacherSessions error',
+      expect.any(Error),
+    );
+    consoleErrorSpy.mockRestore();
   });
 });
