@@ -188,8 +188,8 @@ describe('useUpcomingSessions', () => {
       'utf8',
     );
 
-    expect(raw).toContain("(data.teacherIds is list)");
-    expect(raw).toContain("(request.auth.uid in data.teacherIds)");
+    expect(raw).toContain("function teacherOwnsDocViaAliases(data)");
+    expect(raw).toContain("|| request.auth.uid in data.teacherIds");
     expect(raw).toContain("allow get: if isAdmin()");
     expect(raw).toContain("|| teacherOwnsDocViaAliases(resource.data)");
     expect(raw).toContain("allow list: if isAdmin()");
@@ -275,8 +275,19 @@ describe('useUpcomingSessions', () => {
     );
     expect(classSessionGetDocsCalls).toHaveLength(0);
     expect(consoleErrorSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[useUpcomingSessions] denied alias=teacherId op==='),
-      expect.any(Error),
+      '[useUpcomingSessions] error',
+      expect.objectContaining({
+        queryName: 'primary',
+        collection: 'classSessions',
+        aliasField: 'teacherId',
+        op: '==',
+        code: 'permission-denied',
+        error: 'Missing or insufficient permissions.',
+        dateRange: expect.objectContaining({
+          type: 'in',
+        }),
+        authUid: 'teacher-1',
+      }),
     );
     consoleErrorSpy.mockRestore();
   });
@@ -325,24 +336,55 @@ describe('useUpcomingSessions', () => {
     );
     expect(classSessionGetDocsCalls).toHaveLength(0);
     expect(consoleErrorSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[useUpcomingSessions] denied alias=teacherIds op=array-contains'),
-      expect.any(Error),
+      '[useUpcomingSessions] error',
+      expect.objectContaining({
+        queryName: 'teacherIds',
+        collection: 'classSessions',
+        aliasField: 'teacherIds',
+        op: 'array-contains',
+        code: 'permission-denied',
+        error: 'Missing or insufficient permissions.',
+        authUid: 'teacher-1',
+        dateRange: expect.objectContaining({
+          type: 'in',
+        }),
+      }),
     );
     consoleErrorSpy.mockRestore();
   });
 
-  it('logs each listener alias in plain text before subscribing', async () => {
-    const consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+  it('logs each listener alias with structured metadata before subscribing', async () => {
+    const consoleDebugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
     render(<TestComponent teacherId="teacher-1" />);
 
     await waitFor(() => expect(screen.getByText('count:6')).toBeTruthy());
 
-    expect(consoleInfoSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[useUpcomingSessions] listen alias=teacherId op==='),
+    expect(consoleDebugSpy).toHaveBeenCalledWith(
+      '[useUpcomingSessions] listen',
+      expect.objectContaining({
+        queryName: 'primary',
+        collection: 'classSessions',
+        aliasField: 'teacherId',
+        op: '==',
+        authUid: 'teacher-1',
+        dateRange: expect.objectContaining({
+          type: 'in',
+        }),
+      }),
     );
-    expect(consoleInfoSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[useUpcomingSessions] listen alias=teacherIds op=array-contains'),
+    expect(consoleDebugSpy).toHaveBeenCalledWith(
+      '[useUpcomingSessions] listen',
+      expect.objectContaining({
+        queryName: 'teacherIds',
+        collection: 'classSessions',
+        aliasField: 'teacherIds',
+        op: 'array-contains',
+        authUid: 'teacher-1',
+        dateRange: expect.objectContaining({
+          type: 'in',
+        }),
+      }),
     );
-    consoleInfoSpy.mockRestore();
+    consoleDebugSpy.mockRestore();
   });
 });
