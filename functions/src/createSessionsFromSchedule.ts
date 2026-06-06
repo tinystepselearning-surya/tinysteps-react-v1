@@ -82,10 +82,18 @@ interface EnrollmentDoc {
   id?: string;
   kidId?: string;
   kidIds?: string[];
+  studentId?: string;
+  studentName?: string;
+  kidName?: string;
+  childName?: string;
   parentId?: string;
   parentIds?: string[];
   teacherId?: string;
+  teacherIds?: string[];
+  teacherName?: string;
+  teacherEmail?: string;
   courseId?: string;
+  courseName?: string;
   feePerClass?: number;
   currency?: string;
   joinUrl?: string;
@@ -164,6 +172,37 @@ function normalizeIdempotencyKey(value: unknown): string {
   const raw = typeof value === "string" ? value.trim() : "";
   if (!raw) return "";
   return raw.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 120);
+}
+
+function toOptionalText(value: unknown): string | null {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : null;
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+  return null;
+}
+
+function removeUndefinedDeep(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => removeUndefinedDeep(item)).filter((item) => item !== undefined);
+  }
+  if (value && typeof value === "object") {
+    const proto = Object.getPrototypeOf(value);
+    if (proto === Object.prototype || proto === null) {
+      const cleaned: Record<string, unknown> = {};
+      Object.entries(value as Record<string, unknown>).forEach(([key, item]) => {
+        const nextValue = removeUndefinedDeep(item);
+        if (nextValue !== undefined) {
+          cleaned[key] = nextValue;
+        }
+      });
+      return cleaned;
+    }
+  }
+  return value;
 }
 
 function toPauseCount(value: unknown): number {
@@ -811,13 +850,53 @@ async function generateSessionsFromScheduleInternal(
 
   const kidId = enrollment.kidId || (enrollment.kidIds && enrollment.kidIds[0]) || null;
   const kidIds = enrollment.kidIds || (kidId ? [kidId] : []);
+  const studentId = enrollment.studentId || kidId || null;
   const parentId = enrollment.parentId || (enrollment.parentIds && enrollment.parentIds[0]) || null;
   const parentIds = enrollment.parentIds || (parentId ? [parentId] : []);
   const teacherId = enrollment.teacherId || null;
+  const teacherIds = teacherId ? [teacherId] : [];
   const courseId = enrollment.courseId || null;
   const feeAmount = Number(enrollment.feePerClass || 0);
   const currency = enrollment.currency || "INR";
   const joinUrl = enrollment.joinUrl || null;
+  const [kidSnap, courseSnap, teacherSnap] = await Promise.all([
+    kidId ? db.collection("kids").doc(kidId).get() : Promise.resolve(null),
+    courseId ? db.collection("courses").doc(courseId).get() : Promise.resolve(null),
+    teacherId ? db.collection("users").doc(teacherId).get() : Promise.resolve(null),
+  ]);
+  const kidData = kidSnap?.exists ? (kidSnap.data() as Record<string, unknown>) : null;
+  const courseData = courseSnap?.exists ? (courseSnap.data() as Record<string, unknown>) : null;
+  const teacherData = teacherSnap?.exists ? (teacherSnap.data() as Record<string, unknown>) : null;
+  const studentName =
+    toOptionalText(enrollment.studentName) ||
+    toOptionalText(enrollment.kidName) ||
+    toOptionalText(enrollment.childName) ||
+    toOptionalText(kidData?.studentName) ||
+    toOptionalText(kidData?.fullName) ||
+    toOptionalText(kidData?.displayName) ||
+    toOptionalText(kidData?.name) ||
+    null;
+  const kidName = toOptionalText(enrollment.kidName) || studentName;
+  const childName = toOptionalText(enrollment.childName) || studentName;
+  const courseName =
+    toOptionalText(enrollment.courseName) ||
+    toOptionalText((enrollment as Record<string, unknown>).courseTitle) ||
+    toOptionalText((enrollment as Record<string, unknown>).courseLabel) ||
+    toOptionalText(courseData?.title) ||
+    toOptionalText(courseData?.name) ||
+    courseId ||
+    null;
+  const teacherName =
+    toOptionalText(enrollment.teacherName) ||
+    toOptionalText(teacherData?.displayName) ||
+    toOptionalText(teacherData?.name) ||
+    toOptionalText(teacherData?.email) ||
+    teacherId ||
+    null;
+  const teacherEmail =
+    toOptionalText(enrollment.teacherEmail) ||
+    toOptionalText(teacherData?.email) ||
+    null;
 
   const existingSnap = await db.collection("classSessions")
     .where("enrollmentId", "==", enrollmentId)
@@ -1077,14 +1156,23 @@ async function generateSessionsFromScheduleInternal(
       continue;
     }
 
-    const payload = {
+    const payload = removeUndefinedDeep({
       enrollmentId,
       kidId,
       kidIds,
+      ...(studentId ? {studentId} : {}),
+      ...(studentName ? {studentName} : {}),
+      ...(kidName ? {kidName} : {}),
+      ...(childName ? {childName} : {}),
       parentId,
       parentIds,
       teacherId,
+      ...(teacherIds.length > 0 ? {teacherIds} : {}),
+      ...(teacherName ? {teacherName} : {}),
+      ...(teacherEmail ? {teacherEmail} : {}),
+      ...(teacherId ? {assignedTeacherId: teacherId, primaryTeacherId: teacherId, teacherUid: teacherId, teacher_id: teacherId} : {}),
       courseId,
+      ...(courseName ? {courseName} : {}),
       startAt: admin.firestore.Timestamp.fromDate(candidate.startAtDate),
       endAt: admin.firestore.Timestamp.fromDate(candidate.endAtDate),
       date: candidateYmd,
@@ -1102,7 +1190,7 @@ async function generateSessionsFromScheduleInternal(
       createdBy: "system",
       updatedBy: "system",
       source: replaceFuture ? "enrollmentScheduleReplace" : "enrollmentSchedule",
-    };
+    }) as Record<string, unknown>;
 
     writeBatch.set(classSessionRef, payload);
     created += 1;

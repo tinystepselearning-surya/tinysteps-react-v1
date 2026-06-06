@@ -36,6 +36,10 @@ const normalizeTeacherIds = (doc: any): string[] => {
   );
 };
 
+const resolveTeacherId = (doc: any): string => {
+  return normalizeTeacherIds(doc)[0] || '';
+};
+
 const sessionBelongsToTeacher = (doc: any, teacherId: string): boolean => {
   if (!teacherId) return false;
   return normalizeTeacherIds(doc).includes(teacherId);
@@ -47,6 +51,16 @@ const chunkIds = (ids: string[], size = 10): string[][] => {
     chunks.push(ids.slice(i, i + size));
   }
   return chunks;
+};
+
+const devLogTeacherQuery = (
+  hookName: string,
+  phase: 'listen' | 'snapshot' | 'error',
+  details: Record<string, unknown>,
+) => {
+  if (!import.meta.env.DEV) return;
+  const logger = phase === 'error' ? console.error : console.debug;
+  logger(`[${hookName}] ${phase}`, details);
 };
 
 const fetchEnrollmentsByIds = async (ids: string[]): Promise<Map<string, Record<string, unknown>>> => {
@@ -62,8 +76,10 @@ const fetchEnrollmentsByIds = async (ids: string[]): Promise<Map<string, Record<
 };
 
 const toTeacherSession = (doc: any): TeacherSession => ({
+  ...(doc || {}),
   id: doc.id,
-  teacherId: doc.teacherId,
+  teacherId: resolveTeacherId(doc),
+  enrollmentId: doc.enrollmentId,
   parentId: doc.parentId,
   parentIds: doc.parentIds,
   courseId: doc.courseId,
@@ -110,11 +126,11 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
       orderBy('date', 'asc'),
       orderBy('startTime', 'asc')
     );
-    const teacherIdsQuery = query(baseCollection, where('teacherIds', 'array-contains', teacherId));
-    const assignedTeacherQuery = query(baseCollection, where('assignedTeacherId', '==', teacherId));
-    const primaryTeacherQuery = query(baseCollection, where('primaryTeacherId', '==', teacherId));
-    const teacherUidQuery = query(baseCollection, where('teacherUid', '==', teacherId));
-    const legacyTeacherIdQuery = query(baseCollection, where('teacher_id', '==', teacherId));
+    const teacherIdsQuery = query(baseCollection, where('teacherIds', 'array-contains', teacherId), where('date', 'in', dates), orderBy('date', 'asc'), orderBy('startTime', 'asc'));
+    const assignedTeacherQuery = query(baseCollection, where('assignedTeacherId', '==', teacherId), where('date', 'in', dates), orderBy('date', 'asc'), orderBy('startTime', 'asc'));
+    const primaryTeacherQuery = query(baseCollection, where('primaryTeacherId', '==', teacherId), where('date', 'in', dates), orderBy('date', 'asc'), orderBy('startTime', 'asc'));
+    const teacherUidQuery = query(baseCollection, where('teacherUid', '==', teacherId), where('date', 'in', dates), orderBy('date', 'asc'), orderBy('startTime', 'asc'));
+    const legacyTeacherIdQuery = query(baseCollection, where('teacher_id', '==', teacherId), where('date', 'in', dates), orderBy('date', 'asc'), orderBy('startTime', 'asc'));
     const liveDocsBySource = new Map<string, Map<string, TeacherSession>>();
 
     const publishMerged = async () => {
@@ -165,12 +181,12 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
     const runFallback = async () => {
       try {
         const fallbackSnaps = await Promise.all([
-          getDocs(query(baseCollection, where('teacherId', '==', teacherId))),
-          getDocs(query(baseCollection, where('teacherIds', 'array-contains', teacherId))),
-          getDocs(query(baseCollection, where('assignedTeacherId', '==', teacherId))),
-          getDocs(query(baseCollection, where('primaryTeacherId', '==', teacherId))),
-          getDocs(query(baseCollection, where('teacherUid', '==', teacherId))),
-          getDocs(query(baseCollection, where('teacher_id', '==', teacherId))),
+          getDocs(query(baseCollection, where('teacherId', '==', teacherId), where('date', 'in', dates), orderBy('date', 'asc'))),
+          getDocs(query(baseCollection, where('teacherIds', 'array-contains', teacherId), where('date', 'in', dates), orderBy('date', 'asc'))),
+          getDocs(query(baseCollection, where('assignedTeacherId', '==', teacherId), where('date', 'in', dates), orderBy('date', 'asc'))),
+          getDocs(query(baseCollection, where('primaryTeacherId', '==', teacherId), where('date', 'in', dates), orderBy('date', 'asc'))),
+          getDocs(query(baseCollection, where('teacherUid', '==', teacherId), where('date', 'in', dates), orderBy('date', 'asc'))),
+          getDocs(query(baseCollection, where('teacher_id', '==', teacherId), where('date', 'in', dates), orderBy('date', 'asc'))),
         ]);
         const mergedDocs = new Map<string, any>();
         fallbackSnaps.forEach((snap) => {
@@ -234,12 +250,26 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
     const listeners: Array<() => void> = [];
     const attachListener = (
       sourceKey: string,
+      aliasField: string,
       listenerQuery: ReturnType<typeof query>,
       fallbackToBatch = false,
     ) => {
+      devLogTeacherQuery('useUpcomingSessions', 'listen', {
+        queryName: sourceKey,
+        collection: 'classSessions',
+        aliasField,
+        dateRange: { type: 'in', dates },
+      });
       const unsubscribe = onSnapshot(
         listenerQuery,
         (snapshot) => {
+          devLogTeacherQuery('useUpcomingSessions', 'snapshot', {
+            queryName: sourceKey,
+            collection: 'classSessions',
+            aliasField,
+            dateRange: { type: 'in', dates },
+            docsReturned: snapshot.docs.length,
+          });
           liveDocsBySource.set(
             sourceKey,
             new Map(
@@ -257,6 +287,14 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
         },
         (err) => {
           console.error('useUpcomingSessions error', err);
+          devLogTeacherQuery('useUpcomingSessions', 'error', {
+            queryName: sourceKey,
+            collection: 'classSessions',
+            aliasField,
+            dateRange: { type: 'in', dates },
+            error: err instanceof Error ? err.message : String(err),
+            code: (err as any)?.code || null,
+          });
           const message = err instanceof Error ? err.message : String(err);
           if (
             fallbackToBatch &&
@@ -274,12 +312,12 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
       listeners.push(unsubscribe);
     };
 
-    attachListener('primary', q, true);
-    attachListener('teacherIds', teacherIdsQuery);
-    attachListener('assignedTeacherId', assignedTeacherQuery);
-    attachListener('primaryTeacherId', primaryTeacherQuery);
-    attachListener('teacherUid', teacherUidQuery);
-    attachListener('teacher_id', legacyTeacherIdQuery);
+    attachListener('primary', 'teacherId', q, true);
+    attachListener('teacherIds', 'teacherIds', teacherIdsQuery, true);
+    attachListener('assignedTeacherId', 'assignedTeacherId', assignedTeacherQuery, true);
+    attachListener('primaryTeacherId', 'primaryTeacherId', primaryTeacherQuery, true);
+    attachListener('teacherUid', 'teacherUid', teacherUidQuery, true);
+    attachListener('teacher_id', 'teacher_id', legacyTeacherIdQuery, true);
 
     return () => listeners.forEach((stop) => stop());
   }, [teacherId]);

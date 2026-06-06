@@ -45,6 +45,36 @@ const SCHEDULE_EXCEPTION_SOURCE_TOKENS = [
   'reschedule',
 ] as const;
 
+type TeacherIdentity = {
+  teacherId: string;
+  teacherIds: string[];
+  teacherName: string | null;
+  teacherEmail: string | null;
+};
+
+type StudentIdentity = {
+  kidId: string | null;
+  kidIds: string[];
+  studentId: string | null;
+  studentName: string | null;
+  kidName: string | null;
+  childName: string | null;
+};
+
+type EnrollmentIdentity = {
+  enrollmentId: string;
+  courseId: string | null;
+  courseName: string | null;
+  parentId: string | null;
+  parentIds: string[];
+};
+
+type KidSyncSummary = {
+  kidUpdated: boolean;
+  teacherIds: string[];
+  primaryTeacherId: string | null;
+};
+
 function resolveKidIdFromEnrollment(data: any): string | null {
   return (
     toOptionalId(data?.kidId) ||
@@ -128,6 +158,323 @@ function removeUndefinedDeep(value: unknown): unknown {
 
 function normalizeStatusValue(value: unknown): string {
   return String(value || '').trim().toLowerCase();
+}
+
+function isActiveLikeEnrollmentStatus(value: unknown): boolean {
+  return ACTIVE_LIKE.has(normalizeEnrollmentStatus(value));
+}
+
+function nonEmptyString(value: unknown): string | null {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : null;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+  return null;
+}
+
+function collectTeacherIds(record: Record<string, unknown> | undefined): string[] {
+  if (!record) return [];
+  return Array.from(
+    new Set(
+      [
+        ...toStringList(record.teacherIds),
+        toOptionalId(record.teacherId),
+        toOptionalId((record as any).assignedTeacherId),
+        toOptionalId((record as any).primaryTeacherId),
+        toOptionalId((record as any).teacherUid),
+        toOptionalId((record as any).teacher_id),
+      ].filter((item): item is string => Boolean(item)),
+    ),
+  );
+}
+
+function collectKidIds(record: Record<string, unknown> | undefined): string[] {
+  if (!record) return [];
+  return Array.from(
+    new Set(
+      [
+        ...toStringList(record.kidIds),
+        toOptionalId(record.kidId),
+        toOptionalId((record as any).studentId),
+        toOptionalId((record as any).childId),
+      ].filter((item): item is string => Boolean(item)),
+    ),
+  );
+}
+
+function resolveStudentNameParts(record: Record<string, unknown> | undefined): {
+  studentName: string | null;
+  kidName: string | null;
+  childName: string | null;
+} {
+  if (!record) {
+    return { studentName: null, kidName: null, childName: null };
+  }
+  const canonicalName =
+    nonEmptyString((record as any).studentName) ||
+    nonEmptyString((record as any).kidName) ||
+    nonEmptyString((record as any).childName) ||
+    nonEmptyString((record as any).fullName) ||
+    nonEmptyString((record as any).displayName) ||
+    nonEmptyString((record as any).name) ||
+    null;
+  return {
+    studentName: nonEmptyString((record as any).studentName) || canonicalName,
+    kidName: nonEmptyString((record as any).kidName) || canonicalName,
+    childName: nonEmptyString((record as any).childName) || canonicalName,
+  };
+}
+
+function resolveCourseName(record: Record<string, unknown> | undefined): string | null {
+  if (!record) return null;
+  return (
+    nonEmptyString((record as any).courseName) ||
+    nonEmptyString((record as any).courseTitle) ||
+    nonEmptyString((record as any).courseLabel) ||
+    nonEmptyString((record as any).programName) ||
+    nonEmptyString((record as any).subject) ||
+    null
+  );
+}
+
+function buildTeacherIdentity(input: {
+  teacherId: string;
+  teacherName?: string | null;
+  teacherEmail?: string | null;
+}): TeacherIdentity {
+  return {
+    teacherId: input.teacherId,
+    teacherIds: [input.teacherId],
+    teacherName: input.teacherName || input.teacherId,
+    teacherEmail: input.teacherEmail || null,
+  };
+}
+
+function buildStudentIdentity(input: {
+  enrollment: Record<string, unknown>;
+  kid: Record<string, unknown> | undefined;
+}): StudentIdentity {
+  const enrollmentKidIds = collectKidIds(input.enrollment);
+  const kidRecord = input.kid;
+  const kidId =
+    resolveKidIdFromEnrollment(input.enrollment) ||
+    toOptionalId(kidRecord?.id) ||
+    null;
+  const mergedKidIds = Array.from(
+    new Set([
+      ...enrollmentKidIds,
+      ...collectKidIds(kidRecord),
+      ...(kidId ? [kidId] : []),
+    ]),
+  );
+  const enrollmentName = resolveStudentNameParts(input.enrollment);
+  const kidNameParts = resolveStudentNameParts(kidRecord);
+  return {
+    kidId,
+    kidIds: mergedKidIds,
+    studentId: toOptionalId((input.enrollment as any).studentId) || kidId,
+    studentName: enrollmentName.studentName || kidNameParts.studentName,
+    kidName: enrollmentName.kidName || kidNameParts.kidName,
+    childName: enrollmentName.childName || kidNameParts.childName,
+  };
+}
+
+function buildEnrollmentIdentity(input: {
+  enrollmentId: string;
+  enrollment: Record<string, unknown>;
+}): EnrollmentIdentity {
+  const parentIds = toStringList(input.enrollment.parentIds);
+  const parentId = toOptionalId(input.enrollment.parentId) || parentIds[0] || null;
+  const mergedParentIds = Array.from(new Set([...(parentId ? [parentId] : []), ...parentIds]));
+  return {
+    enrollmentId: input.enrollmentId,
+    courseId:
+      toOptionalId(input.enrollment.courseId) ||
+      toOptionalId((input.enrollment as any).course_id) ||
+      toOptionalId((input.enrollment as any).course) ||
+      null,
+    courseName: resolveCourseName(input.enrollment),
+    parentId,
+    parentIds: mergedParentIds,
+  };
+}
+
+function resolveSessionTeacherIds(record: Record<string, unknown>): string[] {
+  return collectTeacherIds(record);
+}
+
+function resolveSessionKidIds(record: Record<string, unknown>): string[] {
+  return collectKidIds(record);
+}
+
+function resolveSessionIsFuture(raw: Record<string, unknown>, nowMs: number): boolean {
+  const startAt = raw?.startAt;
+  if (typeof (startAt as any)?.toMillis === 'function') {
+    return (startAt as any).toMillis() >= nowMs;
+  }
+  if (startAt) {
+    const parsedStartAt = new Date(startAt as any);
+    if (!Number.isNaN(parsedStartAt.getTime())) {
+      return parsedStartAt.getTime() >= nowMs;
+    }
+  }
+
+  const dateYmd = String(raw?.date || '').trim();
+  const startTime = String(raw?.startTime || '').trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateYmd)) {
+    const withTimeIso =
+      /^\d{2}:\d{2}$/.test(startTime)
+        ? `${dateYmd}T${startTime}:00+05:30`
+        : `${dateYmd}T00:00:00+05:30`;
+    const parsed = Date.parse(withTimeIso);
+    if (!Number.isNaN(parsed)) {
+      return parsed >= nowMs;
+    }
+  }
+  return false;
+}
+
+async function getQueryDocs(
+  queryRef: FirebaseFirestore.Query<FirebaseFirestore.DocumentData>,
+): Promise<FirebaseFirestore.QueryDocumentSnapshot[]> {
+  const snap = await queryRef.get();
+  return snap.docs;
+}
+
+function mergeDocMaps(
+  target: Map<string, FirebaseFirestore.QueryDocumentSnapshot>,
+  docs: FirebaseFirestore.QueryDocumentSnapshot[],
+) {
+  docs.forEach((docSnap) => {
+    if (!target.has(docSnap.id)) {
+      target.set(docSnap.id, docSnap);
+    }
+  });
+}
+
+function buildSessionRepairPatch(args: {
+  existing: Record<string, unknown>;
+  teacher: TeacherIdentity;
+  student: StudentIdentity;
+  enrollment: EnrollmentIdentity;
+  actorIdentity: string | null;
+  previousTeacherId: string | null;
+  includeEnrollmentId: boolean;
+}): Record<string, unknown> {
+  const { existing, teacher, student, enrollment, actorIdentity, previousTeacherId, includeEnrollmentId } = args;
+  const currentStudentName = nonEmptyString((existing as any).studentName);
+  const currentKidName = nonEmptyString((existing as any).kidName);
+  const currentChildName = nonEmptyString((existing as any).childName);
+  const currentCourseName =
+    nonEmptyString((existing as any).courseName) ||
+    nonEmptyString((existing as any).courseTitle) ||
+    nonEmptyString((existing as any).courseLabel);
+  const kidIds = resolveSessionKidIds(existing);
+  const mergedKidIds = Array.from(
+    new Set([
+      ...kidIds,
+      ...student.kidIds,
+      ...(student.kidId ? [student.kidId] : []),
+    ]),
+  );
+  const parentIds = Array.from(
+    new Set([
+      ...toStringList((existing as any).parentIds),
+      ...enrollment.parentIds,
+      ...((enrollment.parentId && !toStringList((existing as any).parentIds).includes(enrollment.parentId))
+        ? [enrollment.parentId]
+        : []),
+    ]),
+  );
+
+  return removeUndefinedDeep({
+    teacherId: teacher.teacherId,
+    teacherIds: teacher.teacherIds,
+    teacherName: teacher.teacherName,
+    teacherEmail: teacher.teacherEmail,
+    assignedTeacherId: teacher.teacherId,
+    primaryTeacherId: teacher.teacherId,
+    teacherUid: teacher.teacherId,
+    teacher_id: teacher.teacherId,
+    ...(includeEnrollmentId ? { enrollmentId: enrollment.enrollmentId } : {}),
+    ...(student.kidId && !toOptionalId((existing as any).kidId) ? { kidId: student.kidId } : {}),
+    ...(student.studentId && !toOptionalId((existing as any).studentId) ? { studentId: student.studentId } : {}),
+    ...(mergedKidIds.length > 0 ? { kidIds: mergedKidIds } : {}),
+    ...(currentStudentName ? {} : student.studentName ? { studentName: student.studentName } : {}),
+    ...(currentKidName ? {} : student.kidName ? { kidName: student.kidName } : {}),
+    ...(currentChildName ? {} : student.childName ? { childName: student.childName } : {}),
+    ...(toOptionalId((existing as any).courseId) ? {} : enrollment.courseId ? { courseId: enrollment.courseId } : {}),
+    ...(currentCourseName ? {} : enrollment.courseName ? { courseName: enrollment.courseName } : {}),
+    ...(toOptionalId((existing as any).parentId) ? {} : enrollment.parentId ? { parentId: enrollment.parentId } : {}),
+    ...(parentIds.length > 0 ? { parentIds } : {}),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedBy: actorIdentity,
+    reassignedFromTeacherId: previousTeacherId || null,
+    teacherReassignedFrom: previousTeacherId || null,
+    reassignedAt: admin.firestore.FieldValue.serverTimestamp(),
+    teacherReassignedAt: admin.firestore.FieldValue.serverTimestamp(),
+  }) as Record<string, unknown>;
+}
+
+async function syncKidTeacherOwnership(args: {
+  db: FirebaseFirestore.Firestore;
+  kidId: string;
+  newTeacherId: string;
+  enrollmentId: string;
+  actorIdentity: string | null;
+}): Promise<KidSyncSummary> {
+  const { db, kidId, newTeacherId, enrollmentId, actorIdentity } = args;
+  const kidRef = db.collection('kids').doc(kidId);
+  const kidSnap = await kidRef.get();
+  if (!kidSnap.exists) {
+    return { kidUpdated: false, teacherIds: [newTeacherId], primaryTeacherId: newTeacherId };
+  }
+
+  const enrollmentQueries = [
+    db.collection('enrollments').where('kidId', '==', kidId),
+    db.collection('enrollments').where('studentId', '==', kidId),
+    db.collection('enrollments').where('kidIds', 'array-contains', kidId),
+  ];
+  const activeTeacherIds = new Set<string>();
+  const seenEnrollmentIds = new Set<string>();
+  for (const enrollmentQuery of enrollmentQueries) {
+    const snap = await enrollmentQuery.get();
+    snap.docs.forEach((docSnap) => {
+      if (seenEnrollmentIds.has(docSnap.id)) return;
+      seenEnrollmentIds.add(docSnap.id);
+      const data = (docSnap.data() || {}) as Record<string, unknown>;
+      if (!isActiveLikeEnrollmentStatus(data.status) && docSnap.id !== enrollmentId) return;
+      collectTeacherIds(data).forEach((teacherId) => activeTeacherIds.add(teacherId));
+    });
+  }
+  activeTeacherIds.add(newTeacherId);
+
+  const kidData = (kidSnap.data() || {}) as Record<string, unknown>;
+  const currentPrimaryTeacherId = toOptionalId((kidData as any).teacherId);
+  const nextTeacherIds = Array.from(activeTeacherIds);
+  let nextPrimaryTeacherId: string | null = currentPrimaryTeacherId;
+  if (nextTeacherIds.length === 1) {
+    nextPrimaryTeacherId = nextTeacherIds[0];
+  } else if (!nextPrimaryTeacherId || !activeTeacherIds.has(nextPrimaryTeacherId)) {
+    nextPrimaryTeacherId = newTeacherId;
+  }
+
+  const patch = removeUndefinedDeep({
+    teacherIds: nextTeacherIds,
+    ...(nextPrimaryTeacherId ? { teacherId: nextPrimaryTeacherId } : {}),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedBy: actorIdentity,
+  }) as Record<string, unknown>;
+  await kidRef.set(patch, { merge: true });
+
+  return {
+    kidUpdated: true,
+    teacherIds: nextTeacherIds,
+    primaryTeacherId: nextPrimaryTeacherId,
+  };
 }
 
 function hasAttendanceMarked(raw: Record<string, unknown>): boolean {
@@ -257,47 +604,43 @@ async function cancelFutureSessionsByKidId(kidId: string, reason: string) {
   return count;
 }
 
-async function updateSessionsTeacherByEnrollmentId(
-  enrollmentId: string,
-  newTeacherId: string,
-  newTeacherName: string | null,
-  newTeacherEmail: string | null,
-  previousTeacherId: string | null,
-  actorUid: string | null
-) {
+async function repairFutureSessionsForEnrollment(args: {
+  enrollmentId: string;
+  enrollment: Record<string, unknown>;
+  teacher: TeacherIdentity;
+  previousTeacherId: string | null;
+  actorIdentity: string | null;
+  kidRecord?: Record<string, unknown>;
+  dryRun?: boolean;
+}) {
+  const {
+    enrollmentId,
+    enrollment,
+    teacher,
+    previousTeacherId,
+    actorIdentity,
+    kidRecord,
+    dryRun = false,
+  } = args;
   const db = admin.firestore();
   const nowMs = Date.now();
-  const snap = await db
-    .collection('classSessions')
-    .where('enrollmentId', '==', enrollmentId)
-    .get();
+  const studentIdentity = buildStudentIdentity({ enrollment, kid: kidRecord });
+  const enrollmentIdentity = buildEnrollmentIdentity({ enrollmentId, enrollment });
+  const primaryDocs = await getQueryDocs(
+    db.collection('classSessions').where('enrollmentId', '==', enrollmentId),
+  );
+  const allDocs = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+  mergeDocMaps(allDocs, primaryDocs);
 
-  const isFutureSession = (data: any): boolean => {
-    const startAt = data?.startAt;
-    if (typeof startAt?.toMillis === 'function') {
-      return startAt.toMillis() >= nowMs;
-    }
-    if (startAt) {
-      const parsedStartAt = new Date(startAt);
-      if (!Number.isNaN(parsedStartAt.getTime())) {
-        return parsedStartAt.getTime() >= nowMs;
-      }
-    }
-
-    const dateYmd = String(data?.date || '').trim();
-    const startTime = String(data?.startTime || '').trim();
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateYmd)) {
-      const withTimeIso =
-        /^\d{2}:\d{2}$/.test(startTime)
-          ? `${dateYmd}T${startTime}:00+05:30`
-          : `${dateYmd}T00:00:00+05:30`;
-      const parsed = Date.parse(withTimeIso);
-      if (!Number.isNaN(parsed)) {
-        return parsed >= nowMs;
-      }
-    }
-    return false;
-  };
+  if (studentIdentity.kidId) {
+    const legacyQueries = [
+      db.collection('classSessions').where('kidId', '==', studentIdentity.kidId),
+      db.collection('classSessions').where('studentId', '==', studentIdentity.kidId),
+      db.collection('classSessions').where('kidIds', 'array-contains', studentIdentity.kidId),
+    ];
+    const legacyDocs = await Promise.all(legacyQueries.map((queryRef) => getQueryDocs(queryRef)));
+    legacyDocs.forEach((docs) => mergeDocMaps(allDocs, docs));
+  }
 
   const skipReasonCounts: Record<string, number> = {
     pastSession: 0,
@@ -308,6 +651,9 @@ async function updateSessionsTeacherByEnrollmentId(
     makeupOrManual: 0,
     rescheduledOrException: 0,
     missingDateTime: 0,
+    teacherMismatch: 0,
+    courseMismatch: 0,
+    kidMismatch: 0,
   };
   const incrementSkip = (reason: keyof typeof skipReasonCounts) => {
     skipReasonCounts[reason] = (skipReasonCounts[reason] || 0) + 1;
@@ -358,9 +704,45 @@ async function updateSessionsTeacherByEnrollmentId(
     }
   };
 
-  const eligibleDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
-  for (const docSnap of snap.docs) {
+  const docsToUpdate: Array<{
+    ref: FirebaseFirestore.DocumentReference;
+    patch: Record<string, unknown>;
+    matchedBy: 'enrollmentId' | 'legacyIdentity';
+    backfilledIdentity: boolean;
+  }> = [];
+  const previousTeacherIds = previousTeacherId ? [previousTeacherId] : [];
+  let sessionsMatchedByEnrollmentId = 0;
+  let sessionsMatchedByLegacyIdentity = 0;
+
+  for (const docSnap of allDocs.values()) {
     const data = (docSnap.data() || {}) as Record<string, unknown>;
+    const matchedByEnrollmentId = toOptionalId((data as any).enrollmentId) === enrollmentId;
+    const sessionKidIds = resolveSessionKidIds(data);
+    const sessionTeacherIds = resolveSessionTeacherIds(data);
+    const sessionCourseId = toOptionalId((data as any).courseId);
+    const kidMatches =
+      studentIdentity.kidIds.length === 0 ||
+      sessionKidIds.some((kidId) => studentIdentity.kidIds.includes(kidId));
+    if (!kidMatches) {
+      incrementSkip('kidMismatch');
+      continue;
+    }
+    if (
+      enrollmentIdentity.courseId &&
+      sessionCourseId &&
+      sessionCourseId !== enrollmentIdentity.courseId
+    ) {
+      incrementSkip('courseMismatch');
+      continue;
+    }
+    const legacyTeacherMatch =
+      previousTeacherIds.length > 0 &&
+      sessionTeacherIds.some((teacherId) => previousTeacherIds.includes(teacherId));
+    if (!matchedByEnrollmentId && !legacyTeacherMatch) {
+      incrementSkip('teacherMismatch');
+      continue;
+    }
+
     const hasStartAt = Boolean(data.startAt);
     const hasDateAndTime =
       typeof data.date === 'string' &&
@@ -371,7 +753,7 @@ async function updateSessionsTeacherByEnrollmentId(
       incrementSkip('missingDateTime');
       continue;
     }
-    if (!isFutureSession(data)) {
+    if (!resolveSessionIsFuture(data, nowMs)) {
       incrementSkip('pastSession');
       continue;
     }
@@ -411,26 +793,55 @@ async function updateSessionsTeacherByEnrollmentId(
       incrementSkip('financeLinkUnverified');
       continue;
     }
-    eligibleDocs.push(docSnap);
+
+    const patch = buildSessionRepairPatch({
+      existing: data,
+      teacher,
+      student: studentIdentity,
+      enrollment: enrollmentIdentity,
+      actorIdentity,
+      previousTeacherId,
+      includeEnrollmentId: !matchedByEnrollmentId,
+    });
+    const backfilledIdentity =
+      (!nonEmptyString((data as any).studentName) && Boolean((patch as any).studentName)) ||
+      (!nonEmptyString((data as any).kidName) && Boolean((patch as any).kidName)) ||
+      (!nonEmptyString((data as any).childName) && Boolean((patch as any).childName)) ||
+      (!nonEmptyString((data as any).courseName) && Boolean((patch as any).courseName)) ||
+      (!Array.isArray((data as any).teacherIds) && Array.isArray((patch as any).teacherIds)) ||
+      (!toOptionalId((data as any).enrollmentId) && Boolean((patch as any).enrollmentId));
+    docsToUpdate.push({
+      ref: docSnap.ref,
+      patch,
+      matchedBy: matchedByEnrollmentId ? 'enrollmentId' : 'legacyIdentity',
+      backfilledIdentity,
+    });
+    if (matchedByEnrollmentId) {
+      sessionsMatchedByEnrollmentId += 1;
+    } else {
+      sessionsMatchedByLegacyIdentity += 1;
+    }
   }
 
-  const updates: Record<string, unknown> = {
-    teacherId: newTeacherId,
-    updatedBy: actorUid,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    teacherReassignedFrom: previousTeacherId || null,
-    teacherReassignedAt: admin.firestore.FieldValue.serverTimestamp(),
-    reassignedFromTeacherId: previousTeacherId || null,
-  };
-  if (newTeacherName) updates.teacherName = newTeacherName;
-  updates.teacherEmail = newTeacherEmail || null;
-  const count = await batchUpdate(eligibleDocs, updates);
-  const sessionsScanned = snap.docs.length;
-  const sessionsSkipped = sessionsScanned - count;
+  if (!dryRun) {
+    for (let index = 0; index < docsToUpdate.length; index += MAX_BATCH) {
+      const batch = db.batch();
+      docsToUpdate.slice(index, index + MAX_BATCH).forEach((entry) => {
+        batch.set(entry.ref, entry.patch, { merge: true });
+      });
+      await batch.commit();
+    }
+  }
+
+  const sessionsScanned = allDocs.size;
+  const sessionsSkipped = sessionsScanned - docsToUpdate.length;
   return {
     sessionsScanned,
-    sessionsUpdated: count,
+    sessionsMatchedByEnrollmentId,
+    sessionsMatchedByLegacyIdentity,
+    sessionsUpdated: docsToUpdate.length,
     sessionsSkipped,
+    identitySnapshotsBackfilled: docsToUpdate.filter((entry) => entry.backfilledIdentity).length,
     skipReasonCounts,
   };
 }
@@ -629,6 +1040,16 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
     }
   }
   const reassignmentReason = toOptionalId(request.data?.reassignmentReason);
+  const teacherIdentity = buildTeacherIdentity({
+    teacherId: newTeacherId,
+    teacherName: newTeacherName,
+    teacherEmail: newTeacherEmail,
+  });
+  const studentIdentity = buildStudentIdentity({
+    enrollment,
+    kid: canonicalKidSnap.exists ? ({ id: canonicalKidSnap.id, ...(canonicalKidSnap.data() || {}) } as Record<string, unknown>) : undefined,
+  });
+  const enrollmentIdentity = buildEnrollmentIdentity({ enrollmentId, enrollment });
 
   const enrollmentPatch: Record<string, unknown> = {
     teacherId: newTeacherId,
@@ -636,6 +1057,20 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
     teacherName: newTeacherName,
     teacherEmail: newTeacherEmail || null,
     teacherDisplayName: newTeacherDisplayName || newTeacherName,
+    assignedTeacherId: newTeacherId,
+    primaryTeacherId: newTeacherId,
+    teacherUid: newTeacherId,
+    teacher_id: newTeacherId,
+    ...(studentIdentity.kidId ? { kidId: studentIdentity.kidId } : {}),
+    ...(studentIdentity.studentId ? { studentId: studentIdentity.studentId } : {}),
+    ...(studentIdentity.kidIds.length > 0 ? { kidIds: studentIdentity.kidIds } : {}),
+    ...(studentIdentity.studentName ? { studentName: studentIdentity.studentName } : {}),
+    ...(studentIdentity.kidName ? { kidName: studentIdentity.kidName } : {}),
+    ...(studentIdentity.childName ? { childName: studentIdentity.childName } : {}),
+    ...(enrollmentIdentity.courseId ? { courseId: enrollmentIdentity.courseId } : {}),
+    ...(enrollmentIdentity.courseName ? { courseName: enrollmentIdentity.courseName } : {}),
+    ...(enrollmentIdentity.parentId ? { parentId: enrollmentIdentity.parentId } : {}),
+    ...(enrollmentIdentity.parentIds.length > 0 ? { parentIds: enrollmentIdentity.parentIds } : {}),
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     updatedBy: actorIdentity,
     teacherReassignedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -648,16 +1083,29 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
   };
   if (reassignmentReason) enrollmentPatch.reassignmentReason = reassignmentReason;
 
-  await enrRef.set(enrollmentPatch, { merge: true });
+  const cleanEnrollmentPatch = removeUndefinedDeep(enrollmentPatch) as Record<string, unknown>;
+  await enrRef.set(cleanEnrollmentPatch, { merge: true });
 
-  const sessionUpdateSummary = await updateSessionsTeacherByEnrollmentId(
+  const sessionUpdateSummary = await repairFutureSessionsForEnrollment({
     enrollmentId,
-    newTeacherId,
-    newTeacherName,
-    newTeacherEmail,
+    enrollment: {
+      ...enrollment,
+      ...cleanEnrollmentPatch,
+    },
+    teacher: teacherIdentity,
     previousTeacherId,
-    actorIdentity
-  );
+    actorIdentity,
+    kidRecord: canonicalKidSnap.exists ? ({ id: canonicalKidSnap.id, ...(canonicalKidSnap.data() || {}) } as Record<string, unknown>) : undefined,
+  });
+  const kidSyncSummary = isActiveLikeEnrollmentStatus(enrollment.status)
+    ? await syncKidTeacherOwnership({
+        db,
+        kidId: canonicalKidId,
+        newTeacherId,
+        enrollmentId,
+        actorIdentity,
+      })
+    : { kidUpdated: false, teacherIds: [], primaryTeacherId: null };
 
   const auditRef = enrRef.collection('teacherReassignments').doc();
   await auditRef.set(
@@ -688,9 +1136,14 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
       changedAt: admin.firestore.FieldValue.serverTimestamp(),
       reason: reassignmentReason || null,
       sessionsScanned: sessionUpdateSummary.sessionsScanned,
+      sessionsMatchedByEnrollmentId: sessionUpdateSummary.sessionsMatchedByEnrollmentId,
+      sessionsMatchedByLegacyIdentity: sessionUpdateSummary.sessionsMatchedByLegacyIdentity,
       sessionsUpdated: sessionUpdateSummary.sessionsUpdated,
       sessionsSkipped: sessionUpdateSummary.sessionsSkipped,
+      identitySnapshotsBackfilled: sessionUpdateSummary.identitySnapshotsBackfilled,
       skipReasonCounts: sessionUpdateSummary.skipReasonCounts,
+      kidUpdated: kidSyncSummary.kidUpdated,
+      kidTeacherIds: kidSyncSummary.teacherIds,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     },
     { merge: true }
@@ -701,9 +1154,121 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
     updatedEnrollmentId: enrollmentId,
     updatedSessionsCount: sessionUpdateSummary.sessionsUpdated,
     sessionsScanned: sessionUpdateSummary.sessionsScanned,
+    sessionsMatchedByEnrollmentId: sessionUpdateSummary.sessionsMatchedByEnrollmentId,
+    sessionsMatchedByLegacyIdentity: sessionUpdateSummary.sessionsMatchedByLegacyIdentity,
     sessionsSkipped: sessionUpdateSummary.sessionsSkipped,
+    identitySnapshotsBackfilled: sessionUpdateSummary.identitySnapshotsBackfilled,
+    kidsUpdated: kidSyncSummary.kidUpdated ? 1 : 0,
     skipReasonCounts: sessionUpdateSummary.skipReasonCounts,
     message: 'Enrollment teacher updated',
+  };
+});
+
+export const repairEnrollmentTeacherSessionConsistency = onCall({ region: REGION }, async (request) => {
+  await ensureAdmin(request.auth);
+
+  const dryRun = request.data?.dryRun === undefined ? true : Boolean(request.data?.dryRun);
+  const enrollmentIdFilter = toOptionalId(request.data?.enrollmentId);
+  const db = admin.firestore();
+  const actorIdentity =
+    (typeof request.auth?.token?.email === 'string' && request.auth?.token?.email.trim())
+      ? request.auth.token.email.trim()
+      : (request.auth?.uid || null);
+
+  const enrollmentDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
+  if (enrollmentIdFilter) {
+    const enrollmentSnap = await db.collection('enrollments').doc(enrollmentIdFilter).get();
+    if (enrollmentSnap.exists) {
+      enrollmentDocs.push(enrollmentSnap as FirebaseFirestore.QueryDocumentSnapshot);
+    }
+  } else {
+    const enrollmentsSnap = await db.collection('enrollments').get();
+    enrollmentDocs.push(...enrollmentsSnap.docs);
+  }
+
+  let totalEnrollmentsScanned = 0;
+  let sessionsScanned = 0;
+  let sessionsMatchedByEnrollmentId = 0;
+  let sessionsMatchedByLegacyIdentity = 0;
+  let sessionsUpdated = 0;
+  let sessionsSkipped = 0;
+  let kidsUpdated = 0;
+  let identitySnapshotsBackfilled = 0;
+  const skipReasonCounts: Record<string, number> = {};
+
+  for (const docSnap of enrollmentDocs) {
+    const enrollment = (docSnap.data() || {}) as Record<string, unknown>;
+    if (!isActiveLikeEnrollmentStatus(enrollment.status)) continue;
+    const teacherId = toOptionalId(enrollment.teacherId);
+    const kidId = resolveKidIdFromEnrollment(enrollment);
+    if (!teacherId || !kidId) continue;
+
+    totalEnrollmentsScanned += 1;
+    const kidSnap = await db.collection('kids').doc(kidId).get();
+    const summary = await repairFutureSessionsForEnrollment({
+      enrollmentId: docSnap.id,
+      enrollment,
+      teacher: buildTeacherIdentity({
+        teacherId,
+        teacherName:
+          toOptionalId((enrollment as any).teacherName) ||
+          toOptionalId((enrollment as any).teacherDisplayName) ||
+          teacherId,
+        teacherEmail: toOptionalId((enrollment as any).teacherEmail),
+      }),
+      previousTeacherId:
+        toOptionalId((enrollment as any).previousTeacherId) ||
+        teacherId,
+      actorIdentity,
+      kidRecord: kidSnap.exists ? ({ id: kidSnap.id, ...(kidSnap.data() || {}) } as Record<string, unknown>) : undefined,
+      dryRun,
+    });
+    sessionsScanned += summary.sessionsScanned;
+    sessionsMatchedByEnrollmentId += summary.sessionsMatchedByEnrollmentId;
+    sessionsMatchedByLegacyIdentity += summary.sessionsMatchedByLegacyIdentity;
+    sessionsUpdated += summary.sessionsUpdated;
+    sessionsSkipped += summary.sessionsSkipped;
+    identitySnapshotsBackfilled += summary.identitySnapshotsBackfilled;
+    Object.entries(summary.skipReasonCounts).forEach(([key, value]) => {
+      skipReasonCounts[key] = (skipReasonCounts[key] || 0) + value;
+    });
+
+    if (!dryRun) {
+      const kidSummary = await syncKidTeacherOwnership({
+        db,
+        kidId,
+        newTeacherId: teacherId,
+        enrollmentId: docSnap.id,
+        actorIdentity,
+      });
+      if (kidSummary.kidUpdated) kidsUpdated += 1;
+    }
+  }
+
+  logger.info('repairEnrollmentTeacherSessionConsistency completed', {
+    dryRun,
+    totalEnrollmentsScanned,
+    sessionsScanned,
+    sessionsMatchedByEnrollmentId,
+    sessionsMatchedByLegacyIdentity,
+    sessionsUpdated,
+    sessionsSkipped,
+    kidsUpdated,
+    identitySnapshotsBackfilled,
+  });
+
+  return {
+    ok: true,
+    dryRun,
+    totalEnrollmentsScanned,
+    sessionsScanned,
+    sessionsMatchedByEnrollmentId,
+    sessionsMatchedByLegacyIdentity,
+    sessionsUpdated,
+    sessionsSkipped,
+    skipReasonCounts,
+    kidsUpdated,
+    identitySnapshotsBackfilled,
   };
 });
 

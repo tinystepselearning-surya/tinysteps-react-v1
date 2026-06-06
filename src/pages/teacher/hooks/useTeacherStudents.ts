@@ -3,11 +3,31 @@ import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firesto
 import { db } from '../../../lib/firebaseConfig';
 import { TeacherStudent } from '../../../types/Teacher';
 
+const normalizeTeacherIds = (row: Record<string, unknown> | undefined): string[] => {
+  if (!row) return [];
+  const teacherIds = Array.isArray(row.teacherIds) ? row.teacherIds : [];
+  const singles = [row.teacherId, row.assignedTeacherId, row.primaryTeacherId, row.teacherUid, row.teacher_id];
+  return Array.from(
+    new Set(
+      [...teacherIds, ...singles]
+        .map((value) => (typeof value === 'string' ? value.trim() : ''))
+        .filter(Boolean),
+    ),
+  );
+};
+
 const fetchTeacherStudents = async (teacherId: string): Promise<TeacherStudent[]> => {
-  const kidsQuery = query(collection(db, 'kids'), where('teacherIds', 'array-contains', teacherId));
-  const kidsSnap = await getDocs(kidsQuery);
-  const kidDocs = kidsSnap.docs.map((doc) => ({ id: doc.id, data: doc.data() as any }));
+  const [kidsByTeacherIdsSnap, kidsByTeacherIdSnap] = await Promise.all([
+    getDocs(query(collection(db, 'kids'), where('teacherIds', 'array-contains', teacherId))),
+    getDocs(query(collection(db, 'kids'), where('teacherId', '==', teacherId))),
+  ]);
+  const kidDocMap = new Map<string, { id: string; data: any }>();
+  [...kidsByTeacherIdsSnap.docs, ...kidsByTeacherIdSnap.docs].forEach((docSnap) => {
+    kidDocMap.set(docSnap.id, { id: docSnap.id, data: docSnap.data() as any });
+  });
+  const kidDocs = Array.from(kidDocMap.values());
   const kidIds = kidDocs.map((k) => k.id);
+  const kidIdSet = new Set(kidIds);
 
   const courseMap = new Map<string, string>();
   const coursesSnap = await getDocs(collection(db, 'courses'));
@@ -19,19 +39,20 @@ const fetchTeacherStudents = async (teacherId: string): Promise<TeacherStudent[]
 
   const enrollmentsByKidId = new Map<string, any[]>();
   const enrollmentDocsById = new Map<string, any>();
-  const chunkSize = 10;
-  for (let i = 0; i < kidIds.length; i += chunkSize) {
-    const chunk = kidIds.slice(i, i + chunkSize);
-    const [snapByArray, snapById, snapByStudentId] = await Promise.all([
-      getDocs(query(collection(db, 'enrollments'), where('kidIds', 'array-contains-any', chunk))),
-      getDocs(query(collection(db, 'enrollments'), where('kidId', 'in', chunk))),
-      getDocs(query(collection(db, 'enrollments'), where('studentId', 'in', chunk))),
-    ]);
-    [...snapByArray.docs, ...snapById.docs, ...snapByStudentId.docs].forEach((doc) => {
-      if (enrollmentDocsById.has(doc.id)) return;
-      enrollmentDocsById.set(doc.id, { id: doc.id, ...(doc.data() as any) });
+  const teacherEnrollmentQueries = await Promise.all([
+    getDocs(query(collection(db, 'enrollments'), where('teacherId', '==', teacherId))),
+    getDocs(query(collection(db, 'enrollments'), where('teacherIds', 'array-contains', teacherId))),
+    getDocs(query(collection(db, 'enrollments'), where('assignedTeacherId', '==', teacherId))),
+    getDocs(query(collection(db, 'enrollments'), where('primaryTeacherId', '==', teacherId))),
+    getDocs(query(collection(db, 'enrollments'), where('teacherUid', '==', teacherId))),
+    getDocs(query(collection(db, 'enrollments'), where('teacher_id', '==', teacherId))),
+  ]);
+  teacherEnrollmentQueries.forEach((snap) => {
+    snap.docs.forEach((docSnap) => {
+      if (enrollmentDocsById.has(docSnap.id)) return;
+      enrollmentDocsById.set(docSnap.id, { id: docSnap.id, ...(docSnap.data() as any) });
     });
-  }
+  });
 
   enrollmentDocsById.forEach((enrollment) => {
     const ids = new Set<string>();
@@ -41,6 +62,7 @@ const fetchTeacherStudents = async (teacherId: string): Promise<TeacherStudent[]
       enrollment.kidIds.forEach((id: any) => ids.add(String(id)));
     }
     ids.forEach((id) => {
+      if (!kidIdSet.has(id)) return;
       if (!enrollmentsByKidId.has(id)) enrollmentsByKidId.set(id, []);
       enrollmentsByKidId.get(id)!.push(enrollment);
     });
@@ -103,7 +125,9 @@ const fetchTeacherStudents = async (teacherId: string): Promise<TeacherStudent[]
   };
 
   return kidDocs.map(({ id, data }) => {
-    const enrollments = enrollmentsByKidId.get(id) || [];
+    const enrollments = (enrollmentsByKidId.get(id) || []).filter((enrollment) =>
+      normalizeTeacherIds(enrollment as Record<string, unknown>).includes(teacherId),
+    );
     const preferredStatus = enrollments.filter((e) =>
       statusPriority.has(String(e.status || '').toLowerCase())
     );

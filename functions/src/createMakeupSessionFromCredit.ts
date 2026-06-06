@@ -46,6 +46,37 @@ function normalizeDurationMinutes(value: unknown): number {
   return Math.max(10, Math.min(180, Math.floor(safe)));
 }
 
+function toOptionalText(value: unknown): string | null {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : null;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+  return null;
+}
+
+function removeUndefinedDeep(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => removeUndefinedDeep(item)).filter((item) => item !== undefined);
+  }
+  if (value && typeof value === 'object') {
+    const proto = Object.getPrototypeOf(value);
+    if (proto === Object.prototype || proto === null) {
+      const cleaned: Record<string, unknown> = {};
+      Object.entries(value as Record<string, unknown>).forEach(([key, item]) => {
+        const nextValue = removeUndefinedDeep(item);
+        if (nextValue !== undefined) {
+          cleaned[key] = nextValue;
+        }
+      });
+      return cleaned;
+    }
+  }
+  return value;
+}
+
 function parseFutureStartAtOrThrow(dateYmd: string, startTime: string): Date {
   if (!YMD_RE.test(dateYmd)) {
     throw new HttpsError('invalid-argument', 'date must be YYYY-MM-DD');
@@ -258,6 +289,12 @@ export const createMakeupSessionFromCredit = onCall(
       if (!parentId || !courseId) {
         throw new HttpsError('failed-precondition', 'Missing parent/course linkage for selected credit');
       }
+      const kidRef = db.collection('kids').doc(creditKidId);
+      const [kidSnap, courseSnap, teacherSnap] = await Promise.all([
+        tx.get(kidRef),
+        tx.get(db.collection('courses').doc(courseId)),
+        tx.get(db.collection('users').doc(teacherId)),
+      ]);
 
       const parentIds = sanitizeParentIds(credit.parentIds, enrollment.parentIds, parentId);
       const feeAmount = Number(
@@ -270,6 +307,40 @@ export const createMakeupSessionFromCredit = onCall(
       const currency = String(credit.currency || enrollment.currency || 'INR');
       const joinUrlRaw = enrollment.joinUrl;
       const joinUrl = typeof joinUrlRaw === 'string' && joinUrlRaw.trim() ? joinUrlRaw.trim() : null;
+      const kidData = kidSnap.exists ? (kidSnap.data() as Record<string, unknown>) : {};
+      const courseData = courseSnap?.exists ? (courseSnap.data() as Record<string, unknown>) : {};
+      const teacherData = teacherSnap?.exists ? (teacherSnap.data() as Record<string, unknown>) : {};
+      const studentName =
+        toOptionalText(enrollment.studentName) ||
+        toOptionalText(enrollment.kidName) ||
+        toOptionalText(enrollment.childName) ||
+        toOptionalText(kidData.studentName) ||
+        toOptionalText(kidData.fullName) ||
+        toOptionalText(kidData.displayName) ||
+        toOptionalText(kidData.name) ||
+        null;
+      const kidName = toOptionalText(enrollment.kidName) || studentName;
+      const childName = toOptionalText(enrollment.childName) || studentName;
+      const courseName =
+        toOptionalText(enrollment.courseName) ||
+        toOptionalText((enrollment as any).courseTitle) ||
+        toOptionalText((enrollment as any).courseLabel) ||
+        toOptionalText(courseData.title) ||
+        toOptionalText(courseData.name) ||
+        courseId ||
+        null;
+      const teacherName =
+        toOptionalText(enrollment.teacherName) ||
+        toOptionalText((enrollment as any).teacherDisplayName) ||
+        toOptionalText(teacherData.displayName) ||
+        toOptionalText(teacherData.name) ||
+        toOptionalText(teacherData.email) ||
+        teacherId ||
+        null;
+      const teacherEmail =
+        toOptionalText(enrollment.teacherEmail) ||
+        toOptionalText(teacherData.email) ||
+        null;
 
       const ymdCompact = date.replace(/-/g, '');
       const hhmmCompact = startTime.replace(':', '');
@@ -332,14 +403,26 @@ export const createMakeupSessionFromCredit = onCall(
         }
       }
 
-      tx.create(sessionRef, {
+      tx.create(sessionRef, removeUndefinedDeep({
         enrollmentId,
         kidId: creditKidId,
         kidIds: [creditKidId],
+        studentId: String(enrollment.studentId || creditKidId).trim(),
+        ...(studentName ? {studentName} : {}),
+        ...(kidName ? {kidName} : {}),
+        ...(childName ? {childName} : {}),
         parentId,
         parentIds,
         teacherId,
+        teacherIds: [teacherId],
+        ...(teacherName ? {teacherName} : {}),
+        ...(teacherEmail ? {teacherEmail} : {}),
+        assignedTeacherId: teacherId,
+        primaryTeacherId: teacherId,
+        teacherUid: teacherId,
+        teacher_id: teacherId,
         courseId,
+        ...(courseName ? {courseName} : {}),
         startAt: admin.firestore.Timestamp.fromDate(startAt),
         endAt: admin.firestore.Timestamp.fromDate(endAt),
         date,
@@ -361,7 +444,7 @@ export const createMakeupSessionFromCredit = onCall(
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         createdBy: callerUid,
         updatedBy: callerUid,
-      });
+      }) as Record<string, unknown>);
 
       tx.set(
         creditRef,

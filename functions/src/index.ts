@@ -107,6 +107,7 @@ export { notFoundRoute } from "./notFoundRoute";
 export {
   setEnrollmentStatus,
   reassignEnrollmentTeacher,
+  repairEnrollmentTeacherSessionConsistency,
   archiveKid,
 } from "./lifecycle";
 export { adminBackfillEnrollmentCanonicalFields } from "./enrollmentCanonicalBackfill";

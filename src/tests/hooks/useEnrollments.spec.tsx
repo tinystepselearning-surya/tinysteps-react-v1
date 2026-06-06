@@ -14,7 +14,11 @@ vi.mock('firebase/firestore', async () => {
 });
 
 import { getDocs as mockGetDocs } from 'firebase/firestore';
-import { useEnrollments } from '../../hooks/useData';
+import {
+  clearEnrollmentsCacheForParent,
+  clearEnrollmentsCacheForStudents,
+  useEnrollments,
+} from '../../hooks/useData';
 
 function TestComponent({ parentId }: { parentId: string }) {
   const q = useEnrollments(parentId);
@@ -33,6 +37,7 @@ function TestComponent({ parentId }: { parentId: string }) {
 describe('useEnrollments', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    (globalThis as any).__enrollmentsCache = new Map();
   });
 
   it('fetches enrollments and performs batching, caches results', async () => {
@@ -68,5 +73,21 @@ describe('useEnrollments', () => {
 
     await waitFor(() => expect(screen.getByText('count:1')).toBeTruthy());
   expect((mockGetDocs as any).mock.calls.length).toBe(0);
+  });
+
+  it('clears enrollment cache entries for student and parent views', () => {
+    const cache = new Map<string, { data: unknown; expiresAt: number }>();
+    cache.set('enrollments:students:kid-1', { data: ['a'], expiresAt: Date.now() + 1000 });
+    cache.set('enrollments:parent-1', { data: ['b'], expiresAt: Date.now() + 1000 });
+    cache.set('other:key', { data: ['c'], expiresAt: Date.now() + 1000 });
+    (globalThis as any).__enrollmentsCache = cache;
+
+    clearEnrollmentsCacheForStudents(['kid-1']);
+    expect(cache.has('enrollments:students:kid-1')).toBe(false);
+    expect(cache.has('enrollments:parent-1')).toBe(true);
+
+    clearEnrollmentsCacheForParent('parent-1');
+    expect(cache.has('enrollments:parent-1')).toBe(false);
+    expect(cache.has('other:key')).toBe(true);
   });
 });

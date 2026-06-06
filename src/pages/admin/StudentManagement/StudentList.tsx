@@ -28,7 +28,7 @@ import AssignCourseModal from './AssignCourseModal';
 import AssignTeacherModal from './AssignTeacherModal';
 import AssignLPModal from './AssignLPModal';
 import { Student } from '../../../types/Student';
-import { useEnrollmentsForStudents } from '../../../hooks/useData';
+import { clearEnrollmentsCacheForStudents, useEnrollmentsForStudents } from '../../../hooks/useData';
 import { User } from '../../../types/User';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@components/ui/dialog';
@@ -1709,6 +1709,23 @@ function safeNumber(v: any, fallback = 0): number {
   return typeof n === 'number' && Number.isFinite(n) ? n : fallback;
 }
 
+function toOptionalText(value: unknown): string | null {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed ? trimmed : null;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+  return null;
+}
+
+function compactRecord<T extends Record<string, unknown>>(value: T): T {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, entry]) => entry !== undefined),
+  ) as T;
+}
+
 function enrollmentLabel(e: EnrollmentLite): string {
   const courseTitle = e.course?.title || e.courseId || 'Course';
   const teacher = e.teacher?.name || e.teacher?.email || e.teacherId || '';
@@ -2433,8 +2450,16 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     return byTeacher || enrollments[0];
   }
 
-  function openScheduleModal(student: Student) {
-    const enrolls = enrollmentsByStudent[student.id] || [];
+  async function openScheduleModal(student: Student) {
+    clearEnrollmentsCacheForStudents([student.id]);
+    const latest = await enrollmentsQuery.refetch();
+    const freshEnrollments = ((latest.data || []) as EnrollmentLite[]).filter((enrollment) => {
+      if (String((enrollment as any).kidId || '') === student.id) return true;
+      if (Array.isArray((enrollment as any).kidIds) && (enrollment as any).kidIds.some((id: unknown) => String(id) === student.id)) return true;
+      if (String((enrollment as any).studentId || '') === student.id) return true;
+      return false;
+    });
+    const enrolls = freshEnrollments.length > 0 ? freshEnrollments : (enrollmentsByStudent[student.id] || []);
     if (enrolls.length === 0) {
       toast({
         title: 'No enrollment found',
@@ -2840,6 +2865,31 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     const feeAmount = safeNumber(enrollment.feePerClass, 0);
     const currency = enrollment.currency || 'INR';
     const joinUrl = enrollment.joinUrl || null;
+    const studentName =
+      toOptionalText(student?.fullName) ||
+      toOptionalText((student as any)?.name) ||
+      toOptionalText((student as any)?.displayName) ||
+      toOptionalText((enrollment as any).studentName) ||
+      toOptionalText((enrollment as any).kidName) ||
+      null;
+    const courseName =
+      toOptionalText((enrollment as any).course?.title) ||
+      toOptionalText((enrollment as any).course?.name) ||
+      toOptionalText((enrollment as any).courseName) ||
+      toOptionalText((enrollment as any).courseLabel) ||
+      toOptionalText(enrollment.courseId) ||
+      null;
+    const teacherName =
+      toOptionalText((enrollment as any).teacher?.name) ||
+      toOptionalText((enrollment as any).teacher?.displayName) ||
+      toOptionalText((enrollment as any).teacherName) ||
+      toOptionalText((enrollment as any).teacher?.email) ||
+      toOptionalText(enrollment.teacherId) ||
+      null;
+    const teacherEmail =
+      toOptionalText((enrollment as any).teacher?.email) ||
+      toOptionalText((enrollment as any).teacherEmail) ||
+      null;
 
     setSavingAdHoc(true);
     try {
@@ -2849,14 +2899,26 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         throw new Error('A session already exists for this enrollment/date/time. Pick a different slot.');
       }
 
-      await setDoc(classSessionRef, {
+      await setDoc(classSessionRef, compactRecord({
         enrollmentId: enrollment.id,
         kidId: adHocFor.id,
         kidIds: [adHocFor.id],
+        studentId: adHocFor.id,
+        ...(studentName ? { studentName, kidName: studentName, childName: studentName } : {}),
         parentId,
         parentIds,
         teacherId: enrollment.teacherId,
+        ...(enrollment.teacherId ? {
+          teacherIds: [enrollment.teacherId],
+          assignedTeacherId: enrollment.teacherId,
+          primaryTeacherId: enrollment.teacherId,
+          teacherUid: enrollment.teacherId,
+          teacher_id: enrollment.teacherId,
+        } : {}),
+        ...(teacherName ? { teacherName } : {}),
+        ...(teacherEmail ? { teacherEmail } : {}),
         courseId: enrollment.courseId || null,
+        ...(courseName ? { courseName } : {}),
         startAt: Timestamp.fromDate(startAt),
         endAt: Timestamp.fromDate(endAt),
         date: dateStr,
@@ -2875,7 +2937,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         updatedAt: serverTimestamp(),
         createdBy: user?.uid || 'admin',
         updatedBy: user?.uid || 'admin',
-      });
+      }));
 
       toast({
         title: 'Ad hoc session created',
@@ -2914,6 +2976,29 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       const courseId = enrollment?.courseId || null;
       const joinUrl = enrollment?.joinUrl || null;
       const enrollmentId = enrollment?.id || null;
+      const studentName =
+        toOptionalText(student?.fullName) ||
+        toOptionalText((student as any)?.name) ||
+        toOptionalText((student as any)?.displayName) ||
+        toOptionalText((enrollment as any)?.studentName) ||
+        toOptionalText((enrollment as any)?.kidName) ||
+        null;
+      const courseName =
+        toOptionalText((enrollment as any)?.course?.title) ||
+        toOptionalText((enrollment as any)?.course?.name) ||
+        toOptionalText((enrollment as any)?.courseName) ||
+        toOptionalText((enrollment as any)?.courseLabel) ||
+        toOptionalText(courseId) ||
+        null;
+      const teacherName =
+        toOptionalText((enrollment as any)?.teacher?.name) ||
+        toOptionalText((enrollment as any)?.teacherName) ||
+        toOptionalText(req.teacherId) ||
+        null;
+      const teacherEmail =
+        toOptionalText((enrollment as any)?.teacher?.email) ||
+        toOptionalText((enrollment as any)?.teacherEmail) ||
+        null;
 
       const startAt = req.startAt;
       const endAt = req.endAt;
@@ -2926,14 +3011,26 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       }
       const sessionId = `${enrollmentId}_${dateStr.replace(/-/g, "")}_${hhmmCompact}`;
 
-      const payload = {
+      const payload = compactRecord({
         enrollmentId,
         kidId: req.kidId,
         kidIds: [req.kidId],
+        studentId: req.kidId,
+        ...(studentName ? { studentName, kidName: studentName, childName: studentName } : {}),
         parentId,
         parentIds,
         teacherId: req.teacherId,
+        ...(req.teacherId ? {
+          teacherIds: [req.teacherId],
+          assignedTeacherId: req.teacherId,
+          primaryTeacherId: req.teacherId,
+          teacherUid: req.teacherId,
+          teacher_id: req.teacherId,
+        } : {}),
+        ...(teacherName ? { teacherName } : {}),
+        ...(teacherEmail ? { teacherEmail } : {}),
         courseId,
+        ...(courseName ? { courseName } : {}),
         startAt: Timestamp.fromDate(startAt),
         endAt: Timestamp.fromDate(endAt),
         date: dateStr,
@@ -2950,7 +3047,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         createdBy: user?.uid || 'admin',
         updatedBy: user?.uid || 'admin',
         source: 'admin_approved_request',
-      };
+      });
 
       const classSessionRef = doc(getClassSessionsCollection(), sessionId);
       await setDoc(classSessionRef, payload, { merge: true });
@@ -3843,6 +3940,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
           student={assignTeacherFor}
           onClose={() => setAssignTeacherFor(null)}
           onAssigned={() => {
+            clearEnrollmentsCacheForStudents([assignTeacherFor.id]);
             setAssignTeacherFor(null);
             enrollmentsQuery.refetch();
           }}

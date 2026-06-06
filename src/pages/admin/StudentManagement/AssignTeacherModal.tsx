@@ -30,6 +30,7 @@ import { toast } from '@components/hooks/use-toast';
 import { Student } from '../../../types/Student';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { Enrollment } from '../../../types/Enrollment';
+import { clearEnrollmentsCacheForStudents } from '../../../hooks/useData';
 
 interface Props {
   student: Student;
@@ -213,6 +214,7 @@ export default function AssignTeacherModal({
         enrollmentId: selectedEnrollment,
         newTeacherId: selectedTeacher,
       });
+      clearEnrollmentsCacheForStudents([student.id]);
 
       toast({
         title: 'Assigned',

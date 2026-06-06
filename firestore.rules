@@ -176,8 +176,34 @@ service cloud.firestore {
     function isTeacherOfKid(kidId) {
       return isSignedIn()
         && kidExists(kidId)
-        && ('teacherIds' in kidDoc(kidId))
-        && (request.auth.uid in kidDoc(kidId).teacherIds);
+        && (
+          (('teacherId' in kidDoc(kidId)) && kidDoc(kidId).teacherId == request.auth.uid)
+          || (
+            ('teacherIds' in kidDoc(kidId))
+            && (kidDoc(kidId).teacherIds is list)
+            && (request.auth.uid in kidDoc(kidId).teacherIds)
+          )
+          || (('assignedTeacherId' in kidDoc(kidId)) && kidDoc(kidId).assignedTeacherId == request.auth.uid)
+          || (('primaryTeacherId' in kidDoc(kidId)) && kidDoc(kidId).primaryTeacherId == request.auth.uid)
+          || (('teacherUid' in kidDoc(kidId)) && kidDoc(kidId).teacherUid == request.auth.uid)
+          || (('teacher_id' in kidDoc(kidId)) && kidDoc(kidId).teacher_id == request.auth.uid)
+        );
+    }
+
+    function teacherOwnsDocViaAliases(data) {
+      return isSignedIn()
+        && (
+          (('teacherId' in data) && data.teacherId == request.auth.uid)
+          || (
+            ('teacherIds' in data)
+            && (data.teacherIds is list)
+            && (request.auth.uid in data.teacherIds)
+          )
+          || (('assignedTeacherId' in data) && data.assignedTeacherId == request.auth.uid)
+          || (('primaryTeacherId' in data) && data.primaryTeacherId == request.auth.uid)
+          || (('teacherUid' in data) && data.teacherUid == request.auth.uid)
+          || (('teacher_id' in data) && data.teacher_id == request.auth.uid)
+        );
     }
 
     // Class session schema guardrail (canonical collection)
@@ -324,8 +350,8 @@ service cloud.firestore {
         && ('parentIds' in resource.data)
         && (request.auth.uid in resource.data.parentIds);
 
-      // Teacher conservative read (as you had it)
-      allow read: if isTeacher();
+      // Teacher read only for teacher-owned kids.
+      allow read: if isTeacher() && isTeacherOfKid(kidId);
 
       // LP read if assignedLPs array exists & contains uid
       allow read: if isLP()
@@ -338,20 +364,20 @@ service cloud.firestore {
     // ----------------------------
     match /kids/{kidId}/progress/{topicId} {
       allow read: if isAdmin()
-        || (isTeacher() && get(/databases/$(database)/documents/kids/$(kidId)).data.teacherId == request.auth.uid)
+        || (isTeacher() && isTeacherOfKid(kidId))
         || (isParent() && get(/databases/$(database)/documents/kids/$(kidId)).data.primaryParentId == request.auth.uid);
 
       allow create, update, delete: if isAdmin()
-        || (isTeacher() && get(/databases/$(database)/documents/kids/$(kidId)).data.teacherId == request.auth.uid);
+        || (isTeacher() && isTeacherOfKid(kidId));
     }
 
     match /kids/{kidId}/curriculum/{topicId} {
       allow read: if isAdmin()
-        || (isTeacher() && get(/databases/$(database)/documents/kids/$(kidId)).data.teacherId == request.auth.uid)
+        || (isTeacher() && isTeacherOfKid(kidId))
         || (isParent() && get(/databases/$(database)/documents/kids/$(kidId)).data.primaryParentId == request.auth.uid);
 
       allow create, update, delete: if isAdmin()
-        || (isTeacher() && get(/databases/$(database)/documents/kids/$(kidId)).data.teacherId == request.auth.uid);
+        || (isTeacher() && isTeacherOfKid(kidId));
     }
 
     // ----------------------------
@@ -507,11 +533,7 @@ service cloud.firestore {
     match /enrollments/{enrollmentId} {
       allow read, write: if isAdmin();
       allow read: if isParent() && resource.data.parentId == request.auth.uid;
-      allow read: if isTeacher() && (
-        resource.data.teacherId == request.auth.uid
-        || (resource.data.kidId != null && isTeacherOfKid(resource.data.kidId))
-        || (resource.data.studentId != null && isTeacherOfKid(resource.data.studentId))
-      );
+      allow read: if isTeacher() && teacherOwnsDocViaAliases(resource.data);
       allow read: if isLP() && resource.data.lpId == request.auth.uid;
     }
 
@@ -527,7 +549,7 @@ service cloud.firestore {
     // ----------------------------
     match /classSessions/{sessionId} {
       allow read: if isAdmin()
-        || (isTeacher() && resource.data.teacherId == request.auth.uid)
+        || (isTeacher() && teacherOwnsDocViaAliases(resource.data))
         || (isParent() && resource.data.parentId == request.auth.uid)
         || (isKid() && ('kidIds' in resource.data) && (request.auth.uid in resource.data.kidIds));
 

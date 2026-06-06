@@ -15,6 +15,16 @@ interface UseTeacherSessionsResult {
   error: Error | null;
 }
 
+const devLogTeacherQuery = (
+  hookName: string,
+  phase: 'listen' | 'snapshot' | 'error',
+  details: Record<string, unknown>,
+) => {
+  if (!import.meta.env.DEV) return;
+  const logger = phase === 'error' ? console.error : console.debug;
+  logger(`[${hookName}] ${phase}`, details);
+};
+
 const toDateMaybe = (value: any): Date | null => {
   if (!value) return null;
   if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
@@ -175,6 +185,7 @@ const resolveTeacherId = (doc: any): string => {
   return (
     toCleanText(doc.teacherId) ||
     toCleanText(doc.assignedTeacherId) ||
+    toCleanText(doc.primaryTeacherId) ||
     toCleanText(doc.teacherUid) ||
     toCleanText(doc.teacher_id) ||
     ''
@@ -493,18 +504,11 @@ export const useTeacherSessions = (
                 where('date', '<=', end),
                 orderBy('date', 'asc'),
               ),
-              query(baseCollection, where('teacherId', '==', teacherKey)),
-              query(baseCollection, where('teacherIds', 'array-contains', teacherKey)),
-              query(baseCollection, where('assignedTeacherId', '==', teacherKey)),
-              query(baseCollection, where('primaryTeacherId', '==', teacherKey)),
-              query(baseCollection, where('teacherUid', '==', teacherKey)),
-              query(baseCollection, where('teacher_id', '==', teacherKey)),
-              query(
-                baseCollection,
-                where('date', '>=', start),
-                where('date', '<=', end),
-                orderBy('date', 'asc'),
-              ),
+              query(baseCollection, where('teacherIds', 'array-contains', teacherKey), where('date', '>=', start), where('date', '<=', end), orderBy('date', 'asc')),
+              query(baseCollection, where('assignedTeacherId', '==', teacherKey), where('date', '>=', start), where('date', '<=', end), orderBy('date', 'asc')),
+              query(baseCollection, where('primaryTeacherId', '==', teacherKey), where('date', '>=', start), where('date', '<=', end), orderBy('date', 'asc')),
+              query(baseCollection, where('teacherUid', '==', teacherKey), where('date', '>=', start), where('date', '<=', end), orderBy('date', 'asc')),
+              query(baseCollection, where('teacher_id', '==', teacherKey), where('date', '>=', start), where('date', '<=', end), orderBy('date', 'asc')),
             ]
           : [
               query(
@@ -555,12 +559,26 @@ export const useTeacherSessions = (
     const listeners: Array<() => void> = [];
     const attachListener = (
       sourceKey: string,
+      aliasField: string,
       listenerQuery: ReturnType<typeof query>,
       fallbackToBatch = false,
     ) => {
+      devLogTeacherQuery('useTeacherSessions', 'listen', {
+        queryName: sourceKey,
+        collection: 'classSessions',
+        aliasField,
+        dateRange: { start, end },
+      });
       const unsubscribe = onSnapshot(
         listenerQuery,
         (snapshot) => {
+          devLogTeacherQuery('useTeacherSessions', 'snapshot', {
+            queryName: sourceKey,
+            collection: 'classSessions',
+            aliasField,
+            dateRange: { start, end },
+            docsReturned: snapshot.docs.length,
+          });
           liveDocsBySource.set(
             sourceKey,
             new Map(
@@ -574,6 +592,14 @@ export const useTeacherSessions = (
         },
         (err) => {
           console.error('useTeacherSessions error', err);
+          devLogTeacherQuery('useTeacherSessions', 'error', {
+            queryName: sourceKey,
+            collection: 'classSessions',
+            aliasField,
+            dateRange: { start, end },
+            error: err instanceof Error ? err.message : String(err),
+            code: (err as any)?.code || null,
+          });
           if (cancelled) return;
           const message = err instanceof Error ? err.message : String(err);
           if (
@@ -591,13 +617,73 @@ export const useTeacherSessions = (
       listeners.push(unsubscribe);
     };
 
-    attachListener('primary', classSessionsQuery, true);
+    attachListener('primary', includeAllTeachers ? 'all-teachers' : 'teacherId', classSessionsQuery, true);
     if (!includeAllTeachers && teacherKey) {
-      attachListener('teacherIds', query(baseCollection, where('teacherIds', 'array-contains', teacherKey)));
-      attachListener('assignedTeacherId', query(baseCollection, where('assignedTeacherId', '==', teacherKey)));
-      attachListener('primaryTeacherId', query(baseCollection, where('primaryTeacherId', '==', teacherKey)));
-      attachListener('teacherUid', query(baseCollection, where('teacherUid', '==', teacherKey)));
-      attachListener('teacher_id', query(baseCollection, where('teacher_id', '==', teacherKey)));
+      attachListener(
+        'teacherIds',
+        'teacherIds',
+        query(
+          baseCollection,
+          where('teacherIds', 'array-contains', teacherKey),
+          where('date', '>=', start),
+          where('date', '<=', end),
+          orderBy('date', 'asc'),
+          orderBy('startTime', 'asc'),
+        ),
+        true,
+      );
+      attachListener(
+        'assignedTeacherId',
+        'assignedTeacherId',
+        query(
+          baseCollection,
+          where('assignedTeacherId', '==', teacherKey),
+          where('date', '>=', start),
+          where('date', '<=', end),
+          orderBy('date', 'asc'),
+          orderBy('startTime', 'asc'),
+        ),
+        true,
+      );
+      attachListener(
+        'primaryTeacherId',
+        'primaryTeacherId',
+        query(
+          baseCollection,
+          where('primaryTeacherId', '==', teacherKey),
+          where('date', '>=', start),
+          where('date', '<=', end),
+          orderBy('date', 'asc'),
+          orderBy('startTime', 'asc'),
+        ),
+        true,
+      );
+      attachListener(
+        'teacherUid',
+        'teacherUid',
+        query(
+          baseCollection,
+          where('teacherUid', '==', teacherKey),
+          where('date', '>=', start),
+          where('date', '<=', end),
+          orderBy('date', 'asc'),
+          orderBy('startTime', 'asc'),
+        ),
+        true,
+      );
+      attachListener(
+        'teacher_id',
+        'teacher_id',
+        query(
+          baseCollection,
+          where('teacher_id', '==', teacherKey),
+          where('date', '>=', start),
+          where('date', '<=', end),
+          orderBy('date', 'asc'),
+          orderBy('startTime', 'asc'),
+        ),
+        true,
+      );
     }
 
     return () => {

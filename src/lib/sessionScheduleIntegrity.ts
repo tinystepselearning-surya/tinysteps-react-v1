@@ -52,7 +52,13 @@ const collectEnrollmentKidIds = (enrollmentLike: Record<string, unknown> | undef
 
 const collectEnrollmentTeacherIds = (enrollmentLike: Record<string, unknown>): string[] => {
   const fromTeacherIds = Array.isArray(enrollmentLike.teacherIds) ? enrollmentLike.teacherIds : [];
-  const fromSingles = [enrollmentLike.teacherId];
+  const fromSingles = [
+    enrollmentLike.teacherId,
+    enrollmentLike.assignedTeacherId,
+    enrollmentLike.primaryTeacherId,
+    enrollmentLike.teacherUid,
+    enrollmentLike.teacher_id,
+  ];
   return Array.from(
     new Set(
       [...fromTeacherIds, ...fromSingles]

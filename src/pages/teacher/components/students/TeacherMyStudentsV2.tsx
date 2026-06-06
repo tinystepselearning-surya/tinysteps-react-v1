@@ -92,6 +92,19 @@ function normalizeStatus(value?: string | null): string {
   return String(value || '').trim().toLowerCase();
 }
 
+function normalizeTeacherIds(row: Record<string, unknown> | undefined): string[] {
+  if (!row) return [];
+  const teacherIds = Array.isArray(row.teacherIds) ? row.teacherIds : [];
+  const singles = [row.teacherId, row.assignedTeacherId, row.primaryTeacherId, row.teacherUid, row.teacher_id];
+  return Array.from(
+    new Set(
+      [...teacherIds, ...singles]
+        .map((value) => (typeof value === 'string' ? value.trim() : ''))
+        .filter(Boolean),
+    ),
+  );
+}
+
 function titleCaseFromId(value?: string | null): string {
   const raw = String(value || '').replace(/[-_]+/g, ' ').trim();
   if (!raw) return '—';
@@ -111,10 +124,22 @@ export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
     refetchOnMount: 'always',
     queryFn: async (): Promise<Enrollment[]> => {
       if (!teacherId) return [];
-      const snap = await getDocs(
-        query(collection(db, 'enrollments'), where('teacherId', '==', teacherId))
-      );
-      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+      const [byTeacherId, byTeacherIds, byAssignedTeacher, byPrimaryTeacher, byTeacherUid, byLegacyTeacherId] = await Promise.all([
+        getDocs(query(collection(db, 'enrollments'), where('teacherId', '==', teacherId))),
+        getDocs(query(collection(db, 'enrollments'), where('teacherIds', 'array-contains', teacherId))),
+        getDocs(query(collection(db, 'enrollments'), where('assignedTeacherId', '==', teacherId))),
+        getDocs(query(collection(db, 'enrollments'), where('primaryTeacherId', '==', teacherId))),
+        getDocs(query(collection(db, 'enrollments'), where('teacherUid', '==', teacherId))),
+        getDocs(query(collection(db, 'enrollments'), where('teacher_id', '==', teacherId))),
+      ]);
+      const merged = new Map<string, Enrollment>();
+      [...byTeacherId.docs, ...byTeacherIds.docs, ...byAssignedTeacher.docs, ...byPrimaryTeacher.docs, ...byTeacherUid.docs, ...byLegacyTeacherId.docs].forEach((docSnap) => {
+        const data = { id: docSnap.id, ...(docSnap.data() as any) } as Enrollment;
+        if (normalizeTeacherIds(data as unknown as Record<string, unknown>).includes(teacherId)) {
+          merged.set(docSnap.id, data);
+        }
+      });
+      return Array.from(merged.values());
     },
   });
 
@@ -132,22 +157,48 @@ export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
 
       const base = collection(db, 'classSessions');
       try {
-        const q = query(
-          base,
-          where('teacherId', '==', teacherId),
-          where('startAt', '>=', start),
-          where('startAt', '<=', end)
-        );
-        const snap = await getDocs(q);
-        return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+        const [byTeacherId, byTeacherIds, byAssignedTeacher, byPrimaryTeacher, byTeacherUid, byLegacyTeacherId] = await Promise.all([
+          getDocs(query(base, where('teacherId', '==', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
+          getDocs(query(base, where('teacherIds', 'array-contains', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
+          getDocs(query(base, where('assignedTeacherId', '==', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
+          getDocs(query(base, where('primaryTeacherId', '==', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
+          getDocs(query(base, where('teacherUid', '==', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
+          getDocs(query(base, where('teacher_id', '==', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
+        ]);
+        const merged = new Map<string, ClassSession>();
+        [...byTeacherId.docs, ...byTeacherIds.docs, ...byAssignedTeacher.docs, ...byPrimaryTeacher.docs, ...byTeacherUid.docs, ...byLegacyTeacherId.docs].forEach((docSnap) => {
+          const data = { id: docSnap.id, ...(docSnap.data() as any) } as ClassSession;
+          if (!normalizeTeacherIds(data as unknown as Record<string, unknown>).includes(teacherId)) return;
+          const startAtMs = toMillis(data.startAt);
+          if (startAtMs < start.toMillis() || startAtMs > end.toMillis()) return;
+          merged.set(docSnap.id, data);
+        });
+        return Array.from(merged.values());
       } catch (err: any) {
         const message = String(err?.message || '');
         if (
           err?.code === 'failed-precondition' ||
           /requires an index|index is currently building/i.test(message)
         ) {
-          const fallbackSnap = await getDocs(query(base, where('teacherId', '==', teacherId)));
-          const all = fallbackSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+          const fallbackSnaps = await Promise.all([
+            getDocs(query(base, where('teacherId', '==', teacherId))),
+            getDocs(query(base, where('teacherIds', 'array-contains', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
+            getDocs(query(base, where('assignedTeacherId', '==', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
+            getDocs(query(base, where('primaryTeacherId', '==', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
+            getDocs(query(base, where('teacherUid', '==', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
+            getDocs(query(base, where('teacher_id', '==', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
+          ]);
+          const all = Array.from(
+            fallbackSnaps.reduce((map, snap) => {
+              snap.docs.forEach((docSnap) => {
+                const data = { id: docSnap.id, ...(docSnap.data() as any) } as ClassSession;
+                if (normalizeTeacherIds(data as unknown as Record<string, unknown>).includes(teacherId)) {
+                  map.set(docSnap.id, data);
+                }
+              });
+              return map;
+            }, new Map<string, ClassSession>()).values(),
+          );
           return all.filter((session) => {
             const startAt = toMillis(session.startAt);
             return startAt >= start.toMillis() && startAt <= end.toMillis();

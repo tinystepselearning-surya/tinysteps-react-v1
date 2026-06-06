@@ -27,6 +27,44 @@ const chunk = <T,>(arr: T[], size = 10) => {
 };
 
 const legacyFallbackTelemetrySeen = new Set<string>();
+const ENROLLMENTS_CACHE_KEY_PREFIX = 'enrollments:';
+
+function getEnrollmentsCache(): Map<string, { data: unknown; expiresAt: number }> | null {
+  try {
+    const cache = (globalThis as any).__enrollmentsCache;
+    if (!cache || typeof cache.clear !== 'function') return null;
+    return cache as Map<string, { data: unknown; expiresAt: number }>;
+  } catch {
+    return null;
+  }
+}
+
+export function clearEnrollmentsCache(cacheKeyPrefix?: string) {
+  const cache = getEnrollmentsCache();
+  if (!cache) return;
+  if (!cacheKeyPrefix) {
+    cache.clear();
+    return;
+  }
+  Array.from(cache.keys()).forEach((key) => {
+    if (key.startsWith(cacheKeyPrefix)) {
+      cache.delete(key);
+    }
+  });
+}
+
+export function clearEnrollmentsCacheForStudents(studentIds: string[]) {
+  if (!Array.isArray(studentIds) || studentIds.length === 0) return;
+  const normalized = studentIds.map((id) => String(id || '').trim()).filter(Boolean);
+  if (normalized.length === 0) return;
+  clearEnrollmentsCache(`${ENROLLMENTS_CACHE_KEY_PREFIX}students:`);
+}
+
+export function clearEnrollmentsCacheForParent(parentId?: string | null) {
+  const normalizedParentId = String(parentId || '').trim();
+  if (!normalizedParentId) return;
+  clearEnrollmentsCache(`${ENROLLMENTS_CACHE_KEY_PREFIX}${normalizedParentId}`);
+}
 
 function emitLegacyFallbackTelemetry(
   reader: string,
@@ -85,15 +123,40 @@ export function useSessionsForTeacher(teacherId: string) {
         import('../lib/firebaseConfig'),
       ] as any);
 
-      const q = query(
-        collection(db, 'classSessions'),
-        where('teacherId', '==', teacherId),
-        where('status', 'in', ['scheduled', 'in_progress']),
-        orderBy('date', 'asc'),
-      );
-      const snapshot = await getDocs(q);
-      return snapshot.docs
-        .map((d: any) => ({ id: d.id, ...(d.data() as Session) }))
+      const classSessionsRef = collection(db, 'classSessions');
+      const snapshots = await Promise.all([
+        getDocs(query(classSessionsRef, where('teacherId', '==', teacherId), where('status', 'in', ['scheduled', 'in_progress']), orderBy('date', 'asc'))),
+        getDocs(query(classSessionsRef, where('teacherIds', 'array-contains', teacherId))),
+        getDocs(query(classSessionsRef, where('assignedTeacherId', '==', teacherId))),
+        getDocs(query(classSessionsRef, where('primaryTeacherId', '==', teacherId))),
+        getDocs(query(classSessionsRef, where('teacherUid', '==', teacherId))),
+        getDocs(query(classSessionsRef, where('teacher_id', '==', teacherId))),
+      ]);
+      const merged = new Map<string, Session>();
+      snapshots.forEach((snapshot) => {
+        snapshot.docs.forEach((docSnap: any) => {
+          const data = docSnap.data() as Record<string, unknown>;
+          const teacherIds = Array.from(
+            new Set(
+              [
+                ...(Array.isArray((data as any).teacherIds) ? (data as any).teacherIds : []),
+                data.teacherId,
+                (data as any).assignedTeacherId,
+                (data as any).primaryTeacherId,
+                (data as any).teacherUid,
+                (data as any).teacher_id,
+              ]
+                .map((value) => (typeof value === 'string' ? value.trim() : ''))
+                .filter(Boolean),
+            ),
+          );
+          const status = String(data.status || '').trim().toLowerCase();
+          if (!teacherIds.includes(teacherId)) return;
+          if (!['scheduled', 'in_progress'].includes(status)) return;
+          merged.set(docSnap.id, { id: docSnap.id, ...(data as Session) });
+        });
+      });
+      return Array.from(merged.values())
         .sort((a: any, b: any) => {
           const dateA = String(a?.date || '');
           const dateB = String(b?.date || '');
@@ -157,7 +220,7 @@ export function useEnrollments(parentId: string) {
     queryFn: async () => {
       // simple in-memory TTL cache to avoid refetching frequently during a dev session
       const CACHE_TTL = 60 * 1000; // 60 seconds
-      const cacheKey = `enrollments:${parentId}`;
+      const cacheKey = `${ENROLLMENTS_CACHE_KEY_PREFIX}${parentId}`;
 
       // @ts-ignore
       if ((globalThis as any).__enrollmentsCache && (globalThis as any).__enrollmentsCache.has(cacheKey)) {
@@ -279,7 +342,7 @@ export function useEnrollmentsForStudents(studentIds: string[]) {
       if (!studentIds || studentIds.length === 0) return [];
 
       const CACHE_TTL = 30 * 1000; // 30 seconds
-      const cacheKey = `enrollments:students:${studentIds.join(',')}`;
+      const cacheKey = `${ENROLLMENTS_CACHE_KEY_PREFIX}students:${studentIds.join(',')}`;
 
       // @ts-ignore
       if ((globalThis as any).__enrollmentsCache && (globalThis as any).__enrollmentsCache.has(cacheKey)) {
