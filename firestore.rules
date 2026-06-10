@@ -239,12 +239,16 @@ function isTeacherOfKid(kidId) {
 function teacherOwnsDocViaAliases(data) {
   return isSignedIn()
     && (
-      data.teacherId == request.auth.uid
-      || request.auth.uid in data.teacherIds
-      || data.assignedTeacherId == request.auth.uid
-      || data.primaryTeacherId == request.auth.uid
-      || data.teacherUid == request.auth.uid
-      || data.teacher_id == request.auth.uid
+      (('teacherId' in data) && data.teacherId == request.auth.uid)
+      || (
+        ('teacherIds' in data)
+        && (data.teacherIds is list)
+        && (request.auth.uid in data.teacherIds)
+      )
+      || (('assignedTeacherId' in data) && data.assignedTeacherId == request.auth.uid)
+      || (('primaryTeacherId' in data) && data.primaryTeacherId == request.auth.uid)
+      || (('teacherUid' in data) && data.teacherUid == request.auth.uid)
+      || (('teacher_id' in data) && data.teacher_id == request.auth.uid)
     );
 }
 

@@ -7,6 +7,10 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../../lib/firebaseConfig';
 import { toast } from '@components/hooks/use-toast';
 import { useAuthStore } from '../../../../store/useAuthStore';
+import {
+  cleanStudentDisplayName,
+  resolveTeacherSessionCourseLabel,
+} from '../../utils/resolveTeacherSessionStudentName';
 
 interface SessionCardProps {
   session: TeacherSession;
@@ -201,20 +205,15 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
   };
 
   const resolvedStudentNames = useMemo(
-    () => (studentNames || []).filter((name) => Boolean(name && name.trim())),
+    () => (studentNames || []).map((name) => cleanStudentDisplayName(name)).filter(Boolean),
     [studentNames],
   );
-  const courseLabel =
-    (session as any).courseLabel ||
-    session.courseName ||
-    (session as any).courseTitle ||
-    session.courseId ||
-    '';
+  const courseLabel = resolveTeacherSessionCourseLabel(session);
 
   const childName =
     resolvedStudentNames.length > 0
       ? resolvedStudentNames.join(', ')
-      : `${attendanceSummary.total} assigned`;
+      : 'Student';
 
   const timeText =
     `${session.startTime || format(sessionStart, 'HH:mm')}${

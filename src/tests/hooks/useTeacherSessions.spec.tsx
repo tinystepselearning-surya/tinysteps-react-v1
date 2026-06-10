@@ -62,6 +62,29 @@ function TestComponent({
   );
 }
 
+function DetailTestComponent({
+  teacherId,
+  startDate,
+  endDate,
+}: {
+  teacherId: string;
+  startDate: string;
+  endDate: string;
+}) {
+  const { sessions, isLoading, error } = useTeacherSessions(teacherId, startDate, endDate);
+  if (isLoading) return <div>loading</div>;
+  if (error) return <div>error:{error.message}</div>;
+  return (
+    <div>
+      {sessions.map((session) => (
+        <div key={session.id} data-testid="session-detail">
+          {session.id}:{session.childName || session.studentName || 'Student'}:{session.courseName || session.courseId}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const makeDoc = (id: string, data: Record<string, unknown>) => ({
   id,
   data: () => data,
@@ -88,16 +111,12 @@ describe('useTeacherSessions', () => {
       if (collectionName === 'enrollments') {
         return {
           docs: [
-            makeDoc('enr-direct', { teacherId: 'teacher-1', kidId: 'kid-1' }),
-            makeDoc('enr-assigned', { assignedTeacherId: 'teacher-1', kidId: 'kid-2' }),
-          ],
-        };
-      }
-      if (collectionName === 'kids') {
-        return {
-          docs: [
-            makeDoc('kid-1', { fullName: 'Shreenika' }),
-            makeDoc('kid-2', { fullName: 'Student Two' }),
+            makeDoc('enr-direct', { teacherId: 'teacher-1', kidId: 'kid-1', childName: 'Student One', courseName: 'Foundation Phonics' }),
+            makeDoc('enr-array', { teacherIds: ['teacher-1'], kidId: 'kid-2', childName: 'Student Two', courseName: 'Foundation Phonics' }),
+            makeDoc('enr-assigned', { assignedTeacherId: 'teacher-1', kidId: 'kid-3', childName: 'Student Three', courseName: 'Foundation Phonics' }),
+            makeDoc('enr-primary', { primaryTeacherId: 'teacher-1', kidId: 'kid-4', childName: 'Student Four', courseName: 'Foundation Phonics' }),
+            makeDoc('enr-uid', { teacherUid: 'teacher-1', kidId: 'kid-5', childName: 'Student Five', courseName: 'Foundation Phonics' }),
+            makeDoc('enr-legacy', { teacher_id: 'teacher-1', kidId: 'kid-6', childName: 'Student Six', courseName: 'Foundation Phonics' }),
           ],
         };
       }
@@ -112,8 +131,11 @@ describe('useTeacherSessions', () => {
       const field = String(teacherClause?.[0] || '');
       const docsByField: Record<string, ReturnType<typeof makeDoc>[]> = {
         teacherId: [makeDoc('session-direct', { teacherId: 'teacher-1', enrollmentId: 'enr-direct', date: '2026-06-08', startTime: '20:00', kidId: 'kid-1', status: 'scheduled' })],
-        teacherIds: [makeDoc('session-array', { teacherId: 'teacher-1', teacherIds: ['teacher-1'], enrollmentId: 'enr-direct', date: '2026-06-08', startTime: '20:30', kidId: 'kid-1', status: 'scheduled' })],
-        assignedTeacherId: [makeDoc('session-assigned', { assignedTeacherId: 'teacher-1', enrollmentId: 'enr-assigned', date: '2026-06-08', startTime: '21:00', kidId: 'kid-2', status: 'scheduled' })],
+        teacherIds: [makeDoc('session-array', { teacherIds: ['teacher-1'], enrollmentId: 'enr-array', date: '2026-06-08', startTime: '20:15', kidId: 'kid-2', status: 'scheduled' })],
+        assignedTeacherId: [makeDoc('session-assigned', { assignedTeacherId: 'teacher-1', enrollmentId: 'enr-assigned', date: '2026-06-08', startTime: '20:30', kidId: 'kid-3', status: 'scheduled' })],
+        primaryTeacherId: [makeDoc('session-primary', { primaryTeacherId: 'teacher-1', enrollmentId: 'enr-primary', date: '2026-06-08', startTime: '20:45', kidId: 'kid-4', status: 'scheduled' })],
+        teacherUid: [makeDoc('session-uid', { teacherUid: 'teacher-1', enrollmentId: 'enr-uid', date: '2026-06-08', startTime: '21:00', kidId: 'kid-5', status: 'scheduled' })],
+        teacher_id: [makeDoc('session-legacy', { teacher_id: 'teacher-1', enrollmentId: 'enr-legacy', date: '2026-06-08', startTime: '21:15', kidId: 'kid-6', status: 'scheduled' })],
       };
       onNext({ docs: docsByField[field] || [] });
       return vi.fn();
@@ -123,12 +145,15 @@ describe('useTeacherSessions', () => {
   it('keeps Today/Schedule teacher session queries date-scoped for alias reads and returns June 8 sessions', async () => {
     render(<TestComponent teacherId="teacher-1" startDate="2026-06-08" endDate="2026-06-08" />);
 
-    await waitFor(() => expect(screen.getByText('count:3')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('count:6')).toBeTruthy());
 
     expect(screen.getAllByTestId('session').map((node) => node.textContent)).toEqual([
       'session-direct:2026-06-08:teacher-1',
       'session-array:2026-06-08:teacher-1',
       'session-assigned:2026-06-08:teacher-1',
+      'session-primary:2026-06-08:teacher-1',
+      'session-uid:2026-06-08:teacher-1',
+      'session-legacy:2026-06-08:teacher-1',
     ]);
 
     const aliasQueries = mockOnSnapshot.mock.calls
@@ -158,7 +183,6 @@ describe('useTeacherSessions', () => {
   });
 
   it('surfaces classSessions permission errors instead of running broader fallback reads', async () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     mockOnSnapshot.mockReset();
     mockGetDocs.mockClear();
 
@@ -170,17 +194,85 @@ describe('useTeacherSessions', () => {
     render(<TestComponent teacherId="teacher-1" startDate="2026-06-08" endDate="2026-06-08" />);
 
     await waitFor(() =>
-      expect(screen.getByText('error:Missing or insufficient permissions.')).toBeTruthy(),
+      expect(
+        screen.getByText("error:Unable to load today's sessions. One or more teacher session queries were denied."),
+      ).toBeTruthy(),
     );
 
     const classSessionGetDocsCalls = mockGetDocs.mock.calls.filter(
       ([queryRef]) => getCollectionName(queryRef as any) === 'classSessions',
     );
     expect(classSessionGetDocsCalls).toHaveLength(0);
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      'useTeacherSessions error',
-      expect.any(Error),
+  });
+
+  it('keeps successful alias results visible when one alias listener fails with permission-denied', async () => {
+    mockOnSnapshot.mockReset();
+
+    mockOnSnapshot.mockImplementation((queryRef, onNext, onError) => {
+      const whereClauses = extractWhereClauses(queryRef as any);
+      const teacherIdsClause = whereClauses.find(
+        (args) => args[0] === 'teacherIds' && args[1] === 'array-contains',
+      );
+
+      if (teacherIdsClause) {
+        onError?.(Object.assign(new Error('Missing or insufficient permissions.'), { code: 'permission-denied' }));
+        return vi.fn();
+      }
+
+      const teacherClause = whereClauses.find((args) =>
+        ['teacherId', 'assignedTeacherId', 'primaryTeacherId', 'teacherUid', 'teacher_id'].includes(String(args[0] || '')),
+      );
+      const field = String(teacherClause?.[0] || '');
+      const docsByField: Record<string, ReturnType<typeof makeDoc>[]> = {
+        teacherId: [makeDoc('session-direct', { teacherId: 'teacher-1', enrollmentId: 'enr-direct', date: '2026-06-08', startTime: '20:00', kidId: 'kid-1', status: 'scheduled' })],
+        assignedTeacherId: [makeDoc('session-assigned', { assignedTeacherId: 'teacher-1', enrollmentId: 'enr-assigned', date: '2026-06-08', startTime: '20:30', kidId: 'kid-3', status: 'scheduled' })],
+        primaryTeacherId: [makeDoc('session-primary', { primaryTeacherId: 'teacher-1', enrollmentId: 'enr-primary', date: '2026-06-08', startTime: '20:45', kidId: 'kid-4', status: 'scheduled' })],
+        teacherUid: [makeDoc('session-uid', { teacherUid: 'teacher-1', enrollmentId: 'enr-uid', date: '2026-06-08', startTime: '21:00', kidId: 'kid-5', status: 'scheduled' })],
+        teacher_id: [makeDoc('session-legacy', { teacher_id: 'teacher-1', enrollmentId: 'enr-legacy', date: '2026-06-08', startTime: '21:15', kidId: 'kid-6', status: 'scheduled' })],
+      };
+      onNext({ docs: docsByField[field] || [] });
+      return vi.fn();
+    });
+
+    render(<TestComponent teacherId="teacher-1" startDate="2026-06-08" endDate="2026-06-08" />);
+
+    await waitFor(() => expect(screen.getByText('count:5')).toBeTruthy());
+    expect(screen.queryByText(/error:/)).toBeNull();
+  });
+
+  it('uses transferred enrollment child/course snapshots instead of assigned-count placeholders', async () => {
+    mockOnSnapshot.mockReset();
+
+    mockOnSnapshot.mockImplementation((queryRef, onNext) => {
+      const whereClauses = extractWhereClauses(queryRef as any);
+      const teacherClause = whereClauses.find((args) =>
+        ['teacherId', 'teacherIds', 'assignedTeacherId', 'primaryTeacherId', 'teacherUid', 'teacher_id'].includes(String(args[0] || '')),
+      );
+      const field = String(teacherClause?.[0] || '');
+      const docsByField: Record<string, ReturnType<typeof makeDoc>[]> = {
+        assignedTeacherId: [
+          makeDoc('session-transferred', {
+            assignedTeacherId: 'teacher-1',
+            teacherIds: ['teacher-1'],
+            enrollmentId: 'enr-assigned',
+            date: '2026-06-08',
+            startTime: '20:30',
+            kidId: 'kid-3',
+            childName: '1 assigned',
+            courseName: 'advanced-phonics',
+            courseId: 'advanced-phonics',
+            status: 'scheduled',
+          }),
+        ],
+      };
+      onNext({ docs: docsByField[field] || [] });
+      return vi.fn();
+    });
+
+    render(<DetailTestComponent teacherId="teacher-1" startDate="2026-06-08" endDate="2026-06-08" />);
+
+    await waitFor(() =>
+      expect(screen.getByText('session-transferred:Student Three:Foundation Phonics')).toBeTruthy(),
     );
-    consoleErrorSpy.mockRestore();
   });
 });

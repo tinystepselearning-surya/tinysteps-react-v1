@@ -180,6 +180,25 @@ function nonEmptyString(value: unknown): string | null {
   return null;
 }
 
+function cleanStudentDisplayName(value: unknown): string | null {
+  const text = nonEmptyString(value);
+  if (!text) return null;
+  if (/^\d+\s+assigned$/i.test(text)) return null;
+  if (/^assigned$/i.test(text)) return null;
+  if (/^\d+\s+students?$/i.test(text)) return null;
+  if (/^(student|child|kid)$/i.test(text)) return null;
+  return text;
+}
+
+function isLikelyCourseIdLike(value: unknown, courseId?: string | null): boolean {
+  const text = nonEmptyString(value);
+  if (!text) return false;
+  const lower = text.toLowerCase();
+  const normalizedCourseId = nonEmptyString(courseId)?.toLowerCase() || '';
+  if (normalizedCourseId && lower === normalizedCourseId) return true;
+  return /^[a-z0-9]+(?:[-_][a-z0-9]+)+$/i.test(text);
+}
+
 function collectTeacherIds(record: Record<string, unknown> | undefined): string[] {
   if (!record) return [];
   return Array.from(
@@ -229,23 +248,23 @@ function resolveStudentNameParts(record: Record<string, unknown> | undefined): {
     };
   }
   const canonicalName =
-    nonEmptyString((record as any).studentName) ||
-    nonEmptyString((record as any).kidName) ||
-    nonEmptyString((record as any).childName) ||
-    nonEmptyString((record as any).studentFullName) ||
-    nonEmptyString((record as any).kidFullName) ||
-    nonEmptyString((record as any).childFullName) ||
-    nonEmptyString((record as any).fullName) ||
-    nonEmptyString((record as any).displayName) ||
-    nonEmptyString((record as any).name) ||
+    cleanStudentDisplayName((record as any).studentName) ||
+    cleanStudentDisplayName((record as any).kidName) ||
+    cleanStudentDisplayName((record as any).childName) ||
+    cleanStudentDisplayName((record as any).studentFullName) ||
+    cleanStudentDisplayName((record as any).kidFullName) ||
+    cleanStudentDisplayName((record as any).childFullName) ||
+    cleanStudentDisplayName((record as any).fullName) ||
+    cleanStudentDisplayName((record as any).displayName) ||
+    cleanStudentDisplayName((record as any).name) ||
     null;
   return {
-    studentName: nonEmptyString((record as any).studentName) || canonicalName,
-    kidName: nonEmptyString((record as any).kidName) || canonicalName,
-    childName: nonEmptyString((record as any).childName) || canonicalName,
-    studentFullName: nonEmptyString((record as any).studentFullName) || canonicalName,
-    kidFullName: nonEmptyString((record as any).kidFullName) || canonicalName,
-    childFullName: nonEmptyString((record as any).childFullName) || canonicalName,
+    studentName: cleanStudentDisplayName((record as any).studentName) || canonicalName,
+    kidName: cleanStudentDisplayName((record as any).kidName) || canonicalName,
+    childName: cleanStudentDisplayName((record as any).childName) || canonicalName,
+    studentFullName: cleanStudentDisplayName((record as any).studentFullName) || canonicalName,
+    kidFullName: cleanStudentDisplayName((record as any).kidFullName) || canonicalName,
+    childFullName: cleanStudentDisplayName((record as any).childFullName) || canonicalName,
   };
 }
 
@@ -479,10 +498,21 @@ function buildSessionRepairPatch(args: {
   const currentStudentFullName = nonEmptyString((existing as any).studentFullName);
   const currentKidFullName = nonEmptyString((existing as any).kidFullName);
   const currentChildFullName = nonEmptyString((existing as any).childFullName);
+  const currentStudentNameClean = cleanStudentDisplayName(currentStudentName);
+  const currentKidNameClean = cleanStudentDisplayName(currentKidName);
+  const currentChildNameClean = cleanStudentDisplayName(currentChildName);
+  const currentStudentFullNameClean = cleanStudentDisplayName(currentStudentFullName);
+  const currentKidFullNameClean = cleanStudentDisplayName(currentKidFullName);
+  const currentChildFullNameClean = cleanStudentDisplayName(currentChildFullName);
   const currentCourseName =
     nonEmptyString((existing as any).courseName) ||
     nonEmptyString((existing as any).courseTitle) ||
     nonEmptyString((existing as any).courseLabel);
+  const enrollmentCourseDisplay = enrollment.courseName || null;
+  const shouldReplaceCourseSnapshot =
+    !currentCourseName ||
+    (enrollmentCourseDisplay &&
+      (isLikelyCourseIdLike(currentCourseName, enrollment.courseId) || currentCourseName !== enrollmentCourseDisplay));
   const kidIds = resolveSessionKidIds(existing);
   const mergedKidIds = Array.from(
     new Set([
@@ -514,15 +544,16 @@ function buildSessionRepairPatch(args: {
     ...(includeEnrollmentId ? { enrollmentId: enrollment.enrollmentId } : {}),
     ...(student.kidId && !toOptionalId((existing as any).kidId) ? { kidId: student.kidId } : {}),
     ...(student.studentId && !toOptionalId((existing as any).studentId) ? { studentId: student.studentId } : {}),
+    ...(student.childId && !toOptionalId((existing as any).childId) ? { childId: student.childId } : {}),
     ...(mergedKidIds.length > 0 ? { kidIds: mergedKidIds } : {}),
-    ...(currentStudentName ? {} : student.studentName ? { studentName: student.studentName } : {}),
-    ...(currentKidName ? {} : student.kidName ? { kidName: student.kidName } : {}),
-    ...(currentChildName ? {} : student.childName ? { childName: student.childName } : {}),
-    ...(currentStudentFullName ? {} : student.studentFullName ? { studentFullName: student.studentFullName } : {}),
-    ...(currentKidFullName ? {} : student.kidFullName ? { kidFullName: student.kidFullName } : {}),
-    ...(currentChildFullName ? {} : student.childFullName ? { childFullName: student.childFullName } : {}),
+    ...(currentStudentNameClean ? {} : student.studentName ? { studentName: student.studentName } : {}),
+    ...(currentKidNameClean ? {} : student.kidName ? { kidName: student.kidName } : {}),
+    ...(currentChildNameClean ? {} : student.childName ? { childName: student.childName } : {}),
+    ...(currentStudentFullNameClean ? {} : student.studentFullName ? { studentFullName: student.studentFullName } : {}),
+    ...(currentKidFullNameClean ? {} : student.kidFullName ? { kidFullName: student.kidFullName } : {}),
+    ...(currentChildFullNameClean ? {} : student.childFullName ? { childFullName: student.childFullName } : {}),
     ...(toOptionalId((existing as any).courseId) ? {} : enrollment.courseId ? { courseId: enrollment.courseId } : {}),
-    ...(currentCourseName ? {} : enrollment.courseName ? { courseName: enrollment.courseName } : {}),
+    ...(shouldReplaceCourseSnapshot && enrollment.courseName ? { courseName: enrollment.courseName, courseTitle: enrollment.courseName } : {}),
     ...(toOptionalId((existing as any).parentId) ? {} : enrollment.parentId ? { parentId: enrollment.parentId } : {}),
     ...(parentIds.length > 0 ? { parentIds } : {}),
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),

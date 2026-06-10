@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { collection, query, where, onSnapshot, type QueryDocumentSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebaseConfig';
 import { useAuthStore } from '../store/useAuthStore';
+import { cleanStudentDisplayName } from '../pages/teacher/utils/resolveTeacherSessionStudentName';
 
 interface FilteredStudent {
   uid: string;
@@ -72,12 +73,13 @@ export function useTeacherFilteredStudents() {
 
     const toFilteredStudent = (docSnap: QueryDocumentSnapshot): FilteredStudent => {
       const data = docSnap.data() as Record<string, any>;
-      const resolvedName =
+      const resolvedName = cleanStudentDisplayName(
         data.fullName ||
         data.studentName ||
         data.displayName ||
         data.name ||
-        '';
+        '',
+      );
       return {
         uid: docSnap.id,
         fullName: resolvedName,

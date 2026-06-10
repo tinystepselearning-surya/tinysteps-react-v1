@@ -83,6 +83,7 @@ interface EnrollmentDoc {
   kidId?: string;
   kidIds?: string[];
   studentId?: string;
+  childId?: string;
   studentName?: string;
   kidName?: string;
   childName?: string;
@@ -94,6 +95,8 @@ interface EnrollmentDoc {
   teacherEmail?: string;
   courseId?: string;
   courseName?: string;
+  courseTitle?: string;
+  courseLabel?: string;
   feePerClass?: number;
   currency?: string;
   joinUrl?: string;
@@ -183,6 +186,35 @@ function toOptionalText(value: unknown): string | null {
     return String(value);
   }
   return null;
+}
+
+function toStringList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return Array.from(
+    new Set(
+      value
+        .map((entry) => toOptionalText(entry))
+        .filter((entry): entry is string => Boolean(entry)),
+    ),
+  );
+}
+
+function resolveEnrollmentTeacherIdentity(enrollment: EnrollmentDoc): { teacherId: string | null; teacherIds: string[] } {
+  const teacherIds = toStringList(enrollment.teacherIds);
+  const teacherId =
+    toOptionalText(enrollment.teacherId) ||
+    toOptionalText((enrollment as Record<string, unknown>).assignedTeacherId) ||
+    toOptionalText((enrollment as Record<string, unknown>).primaryTeacherId) ||
+    toOptionalText((enrollment as Record<string, unknown>).teacherUid) ||
+    toOptionalText((enrollment as Record<string, unknown>).teacher_id) ||
+    teacherIds[0] ||
+    null;
+
+  if (teacherId && !teacherIds.includes(teacherId)) {
+    teacherIds.unshift(teacherId);
+  }
+
+  return { teacherId, teacherIds };
 }
 
 function removeUndefinedDeep(value: unknown): unknown {
@@ -851,10 +883,10 @@ async function generateSessionsFromScheduleInternal(
   const kidId = enrollment.kidId || (enrollment.kidIds && enrollment.kidIds[0]) || null;
   const kidIds = enrollment.kidIds || (kidId ? [kidId] : []);
   const studentId = enrollment.studentId || kidId || null;
+  const childId = enrollment.childId || kidId || null;
   const parentId = enrollment.parentId || (enrollment.parentIds && enrollment.parentIds[0]) || null;
   const parentIds = enrollment.parentIds || (parentId ? [parentId] : []);
-  const teacherId = enrollment.teacherId || null;
-  const teacherIds = teacherId ? [teacherId] : [];
+  const {teacherId, teacherIds} = resolveEnrollmentTeacherIdentity(enrollment);
   const courseId = enrollment.courseId || null;
   const feeAmount = Number(enrollment.feePerClass || 0);
   const currency = enrollment.currency || "INR";
@@ -880,8 +912,8 @@ async function generateSessionsFromScheduleInternal(
   const childName = toOptionalText(enrollment.childName) || studentName;
   const courseName =
     toOptionalText(enrollment.courseName) ||
-    toOptionalText((enrollment as Record<string, unknown>).courseTitle) ||
     toOptionalText((enrollment as Record<string, unknown>).courseLabel) ||
+    toOptionalText((enrollment as Record<string, unknown>).courseTitle) ||
     toOptionalText(courseData?.title) ||
     toOptionalText(courseData?.name) ||
     courseId ||
@@ -1161,6 +1193,7 @@ async function generateSessionsFromScheduleInternal(
       kidId,
       kidIds,
       ...(studentId ? {studentId} : {}),
+      ...(childId ? {childId} : {}),
       ...(studentName ? {studentName} : {}),
       ...(kidName ? {kidName} : {}),
       ...(childName ? {childName} : {}),
@@ -1173,6 +1206,7 @@ async function generateSessionsFromScheduleInternal(
       ...(teacherId ? {assignedTeacherId: teacherId, primaryTeacherId: teacherId, teacherUid: teacherId, teacher_id: teacherId} : {}),
       courseId,
       ...(courseName ? {courseName} : {}),
+      ...(courseName ? {courseTitle: courseName, courseLabel: courseName} : {}),
       startAt: admin.firestore.Timestamp.fromDate(candidate.startAtDate),
       endAt: admin.firestore.Timestamp.fromDate(candidate.endAtDate),
       date: candidateYmd,
@@ -1704,7 +1738,7 @@ export const pauseEnrollmentUpcomingSessions = onCall(
     }
 
     const configuredSlotPatterns = new Set<string>();
-    const teacherId = enrollment.teacherId || null;
+    const {teacherId} = resolveEnrollmentTeacherIdentity(enrollment);
     weeklySlots.forEach((slot) => {
       configuredSlotPatterns.add(`${slot.weekday}|${slot.timeHHmm}|${slot.durationMinutes}|${teacherId || ""}`);
     });
@@ -1852,7 +1886,7 @@ export const resumeEnrollmentSchedule = onCall(
       throw new HttpsError("failed-precondition", "Enrollment has no active weekly schedule");
     }
     const configuredSlotPatterns = new Set<string>();
-    const teacherId = enrollment.teacherId || null;
+    const {teacherId} = resolveEnrollmentTeacherIdentity(enrollment);
     weeklySlots.forEach((slot) => {
       configuredSlotPatterns.add(`${slot.weekday}|${slot.timeHHmm}|${slot.durationMinutes}|${teacherId || ""}`);
     });

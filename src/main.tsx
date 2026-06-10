@@ -98,6 +98,10 @@ if (shouldEnableLazyDebug) {
   }
 }
 
+if (import.meta.env.DEV) {
+  void import('./dev/transferTraceConsole');
+}
+
 const scheduleNonCriticalBoot = () => {
   const boot = () => {
     void initSentry();

@@ -17,7 +17,11 @@ import {
   shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment,
 } from '../../../lib/sessionScheduleIntegrity';
 import { TeacherSession } from '../../../types/Teacher';
-import { getTeacherSessionEntityIds } from '../utils/resolveTeacherSessionStudentName';
+import {
+  cleanStudentDisplayName,
+  getTeacherSessionEntityIds,
+  resolveTeacherSessionCourseLabel,
+} from '../utils/resolveTeacherSessionStudentName';
 
 interface UseUpcomingSessionsResult {
   sessions: TeacherSession[];
@@ -94,6 +98,12 @@ const devLogTeacherQuery = (
   logger(`[${hookName}] ${phase}`, details);
 };
 
+const createUpcomingSessionsError = (message: string, code?: string | null): Error => {
+  const error = new Error(message) as Error & { code?: string | null };
+  if (code) error.code = code;
+  return error;
+};
+
 const fetchEnrollmentsByIds = async (ids: string[]): Promise<Map<string, Record<string, unknown>>> => {
   const map = new Map<string, Record<string, unknown>>();
 
@@ -124,7 +134,7 @@ const toTeacherSession = (doc: any): TeacherSession => ({
   parentId: doc.parentId,
   parentIds: doc.parentIds,
   courseId: doc.courseId,
-  courseName: doc.courseName,
+  courseName: resolveTeacherSessionCourseLabel(doc) || cleanString(doc.courseId),
   date: doc.date,
   startTime: doc.startTime,
   endTime: doc.endTime,
@@ -164,7 +174,7 @@ const toTeacherSession = (doc: any): TeacherSession => ({
 
 const namesFromValue = (value: unknown, preferredIds: string[]): string[] => {
   if (Array.isArray(value)) {
-    return value.map((item) => cleanString(item)).filter(Boolean);
+    return value.map((item) => cleanStudentDisplayName(item)).filter(Boolean);
   }
 
   if (value && typeof value === 'object') {
@@ -176,11 +186,11 @@ const namesFromValue = (value: unknown, preferredIds: string[]): string[] => {
 
       if (Array.isArray(directValue)) {
         directValue.forEach((item) => {
-          const cleaned = cleanString(item);
+          const cleaned = cleanStudentDisplayName(item);
           if (cleaned) names.push(cleaned);
         });
       } else {
-        const cleaned = cleanString(directValue);
+        const cleaned = cleanStudentDisplayName(directValue);
         if (cleaned) names.push(cleaned);
       }
     });
@@ -188,11 +198,11 @@ const namesFromValue = (value: unknown, preferredIds: string[]): string[] => {
     Object.values(record).forEach((item) => {
       if (Array.isArray(item)) {
         item.forEach((nestedItem) => {
-          const cleaned = cleanString(nestedItem);
+          const cleaned = cleanStudentDisplayName(nestedItem);
           if (cleaned) names.push(cleaned);
         });
       } else {
-        const cleaned = cleanString(item);
+        const cleaned = cleanStudentDisplayName(item);
         if (cleaned) names.push(cleaned);
       }
     });
@@ -200,7 +210,7 @@ const namesFromValue = (value: unknown, preferredIds: string[]): string[] => {
     return names;
   }
 
-  const single = cleanString(value);
+  const single = cleanStudentDisplayName(value);
   return single ? [single] : [];
 };
 
@@ -210,7 +220,7 @@ const resolveEnrollmentStudentName = (
 ): string => {
   if (!enrollment) return '';
 
-  const directName = firstClean(
+  const directName = [
     enrollment.studentName,
     enrollment.kidName,
     enrollment.childName,
@@ -241,7 +251,9 @@ const resolveEnrollmentStudentName = (
     enrollment.name,
     enrollment.fullName,
     enrollment.displayName,
-  );
+  ]
+    .map((value) => cleanStudentDisplayName(value))
+    .find(Boolean) || '';
 
   if (directName) return directName;
 
@@ -262,9 +274,9 @@ const sessionAlreadyHasName = (session: TeacherSession): boolean => {
     ...namesFromValue(sessionAny.studentNames, kidIds),
     ...namesFromValue(sessionAny.kidNames, kidIds),
     ...namesFromValue(sessionAny.childNames, kidIds),
-    cleanString(sessionAny.studentName),
-    cleanString(sessionAny.kidName),
-    cleanString(sessionAny.childName),
+    cleanStudentDisplayName(sessionAny.studentName),
+    cleanStudentDisplayName(sessionAny.kidName),
+    cleanStudentDisplayName(sessionAny.childName),
   ].filter(Boolean);
 
   return names.length > 0;
@@ -278,13 +290,13 @@ const withEnrollmentIdentitySnapshots = (
   const firstKidId = kidIds[0];
 
   const enrollmentName = resolveEnrollmentStudentName(enrollment, kidIds);
-  const enrollmentCourseName = firstClean(enrollment?.courseName, enrollment?.courseTitle);
+  const enrollmentCourseName = resolveTeacherSessionCourseLabel(session, enrollment);
 
   if (!enrollmentName && !enrollmentCourseName) return session;
 
   const next: TeacherSession = {
     ...session,
-    courseName: session.courseName || enrollmentCourseName || session.courseName,
+    courseName: enrollmentCourseName || session.courseName || session.courseId,
   };
 
   if (!enrollmentName || sessionAlreadyHasName(session)) {
@@ -385,6 +397,32 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
     );
 
     const liveDocsBySource = new Map<string, Map<string, TeacherSession>>();
+    const sourceStates = new Map<string, { status: 'pending' | 'ready' | 'error'; error: Error | null }>([
+      ['primary', { status: 'pending', error: null }],
+      ['teacherIds', { status: 'pending', error: null }],
+      ['assignedTeacherId', { status: 'pending', error: null }],
+      ['primaryTeacherId', { status: 'pending', error: null }],
+      ['teacherUid', { status: 'pending', error: null }],
+      ['teacher_id', { status: 'pending', error: null }],
+    ]);
+
+    const setSettledState = () => {
+      if (cancelled) return;
+
+      const allSettled = Array.from(sourceStates.values()).every((state) => state.status !== 'pending');
+      if (!allSettled) return;
+
+      const hasVisibleSourceDocs = Array.from(liveDocsBySource.values()).some((rows) => rows.size > 0);
+      if (hasVisibleSourceDocs) {
+        setError(null);
+        setIsLoading(false);
+        return;
+      }
+
+      const firstError = Array.from(sourceStates.values()).find((state) => state.error)?.error || null;
+      if (firstError) setError(firstError);
+      setIsLoading(false);
+    };
 
     const publishMerged = async () => {
       const merged = new Map<string, TeacherSession>();
@@ -408,12 +446,30 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
         ),
       );
 
-      const enrollmentMap = await fetchEnrollmentsByIds(enrollmentIds);
+      let enrollmentLookupFailed = false;
+      let enrollmentMap = new Map<string, Record<string, unknown>>();
+      if (enrollmentIds.length > 0) {
+        try {
+          enrollmentMap = await fetchEnrollmentsByIds(enrollmentIds);
+        } catch (err) {
+          enrollmentLookupFailed = true;
+          devLogTeacherQuery('useUpcomingSessions', 'error', {
+            queryName: 'enrollmentLookups',
+            collection: 'enrollments',
+            aliasField: 'documentId',
+            error: err instanceof Error ? err.message : String(err),
+            code: (err as any)?.code || null,
+            authUid: teacherId,
+          });
+        }
+      }
 
-      const canonicalOnly = next.filter((session) => {
+      const baseVisibleRows = next.filter((session) => String((session as any)?.status || '').trim().toLowerCase() !== 'paused');
+      const canonicalOnly = (enrollmentLookupFailed ? baseVisibleRows : next).filter((session) => {
         const status = String((session as any)?.status || '').trim().toLowerCase();
 
         if (status === 'paused') return false;
+        if (enrollmentLookupFailed) return true;
 
         const enrollmentId = String((session as any)?.enrollmentId || '').trim();
 
@@ -459,9 +515,9 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
           if (!sessionEntityIds.has(id)) return;
 
           const embeddedNames = [
-            cleanString(sessionRecord.studentName),
-            cleanString(sessionRecord.kidName),
-            cleanString(sessionRecord.childName),
+            cleanStudentDisplayName(sessionRecord.studentName),
+            cleanStudentDisplayName(sessionRecord.kidName),
+            cleanStudentDisplayName(sessionRecord.childName),
           ].filter(Boolean);
 
           if (!embeddedNames.length) return;
@@ -494,6 +550,7 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
       setDeniedLookups([]);
       setIsLoading(false);
       setError(null);
+      setSettledState();
     };
 
     const listeners: Array<() => void> = [];
@@ -524,6 +581,7 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
             authUid: teacherId,
             docsReturned: snapshot.docs.length,
           });
+          sourceStates.set(sourceKey, { status: 'ready', error: null });
 
           liveDocsBySource.set(
             sourceKey,
@@ -544,11 +602,15 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
               collection: 'classSessions',
               error: err instanceof Error ? err.message : String(err),
               code: (err as any)?.code || null,
+              authUid: teacherId,
             });
 
             if (cancelled) return;
 
-            setError(err as Error);
+            setError(createUpcomingSessionsError(
+              'Unable to load upcoming sessions. Please contact admin if this keeps happening.',
+              (err as any)?.code || null,
+            ));
             setIsLoading(false);
           });
         },
@@ -567,8 +629,15 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
 
           if (cancelled) return;
 
-          setError(err as Error);
-          setIsLoading(false);
+          sourceStates.set(sourceKey, {
+            status: 'error',
+            error: createUpcomingSessionsError(
+              'Unable to load upcoming sessions. One or more teacher session queries were denied.',
+              (err as any)?.code || null,
+            ),
+          });
+          liveDocsBySource.set(sourceKey, new Map());
+          setSettledState();
         },
       );
 

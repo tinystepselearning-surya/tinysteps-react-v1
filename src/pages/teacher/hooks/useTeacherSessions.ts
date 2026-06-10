@@ -8,6 +8,10 @@ import {
   shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment,
 } from '../../../lib/sessionScheduleIntegrity';
 import { TeacherSession } from '../../../types/Teacher';
+import {
+  cleanStudentDisplayName,
+  resolveTeacherSessionCourseLabel,
+} from '../utils/resolveTeacherSessionStudentName';
 
 interface UseTeacherSessionsResult {
   sessions: TeacherSession[];
@@ -21,8 +25,17 @@ const devLogTeacherQuery = (
   details: Record<string, unknown>,
 ) => {
   if (!import.meta.env.DEV) return;
-  const logger = phase === 'error' ? console.error : console.debug;
+  const logger =
+    phase === 'error' ? console.error :
+    phase === 'listen' ? console.info :
+    console.debug;
   logger(`[${hookName}] ${phase}`, details);
+};
+
+const createTeacherSessionError = (message: string, code?: string | null): Error => {
+  const error = new Error(message) as Error & { code?: string | null };
+  if (code) error.code = code;
+  return error;
 };
 
 const toDateMaybe = (value: any): Date | null => {
@@ -56,15 +69,15 @@ const isLikelyHumanLabel = (value: string): boolean => {
 const getNameFromObject = (value: unknown): string => {
   if (!value || typeof value !== 'object') return '';
   const row = value as Record<string, unknown>;
-  const first = toCleanText(row.firstName);
-  const last = toCleanText(row.lastName);
+  const first = cleanStudentDisplayName(row.firstName);
+  const last = cleanStudentDisplayName(row.lastName);
   const combined = [first, last].filter(Boolean).join(' ').trim();
   return (
-    toCleanText(row.name) ||
-    toCleanText(row.fullName) ||
-    toCleanText(row.displayName) ||
-    toCleanText(row.studentName) ||
-    toCleanText(row.childName) ||
+    cleanStudentDisplayName(row.name) ||
+    cleanStudentDisplayName(row.fullName) ||
+    cleanStudentDisplayName(row.displayName) ||
+    cleanStudentDisplayName(row.studentName) ||
+    cleanStudentDisplayName(row.childName) ||
     combined
   );
 };
@@ -76,7 +89,7 @@ const extractNames = (...values: unknown[]): string[] => {
 
     if (Array.isArray(value)) {
       value.forEach((item) => {
-        const primitive = toCleanText(item);
+        const primitive = cleanStudentDisplayName(item);
         if (primitive) {
           names.push(primitive);
           return;
@@ -87,7 +100,7 @@ const extractNames = (...values: unknown[]): string[] => {
       return;
     }
 
-    const primitive = toCleanText(value);
+    const primitive = cleanStudentDisplayName(value);
     if (primitive) {
       names.push(primitive);
       return;
@@ -98,7 +111,7 @@ const extractNames = (...values: unknown[]): string[] => {
       if (nested) names.push(nested);
 
       const objectValues = Object.values(value as Record<string, unknown>)
-        .map((item) => toCleanText(item))
+        .map((item) => cleanStudentDisplayName(item))
         .filter((item) => isLikelyHumanLabel(item));
       names.push(...objectValues);
     }
@@ -182,14 +195,7 @@ const sessionBelongsToTeacher = (doc: any, teacherId: string): boolean => {
 };
 
 const resolveTeacherId = (doc: any): string => {
-  return (
-    toCleanText(doc.teacherId) ||
-    toCleanText(doc.assignedTeacherId) ||
-    toCleanText(doc.primaryTeacherId) ||
-    toCleanText(doc.teacherUid) ||
-    toCleanText(doc.teacher_id) ||
-    ''
-  );
+  return normalizeTeacherIds(doc)[0] || '';
 };
 
 const toTeacherSession = (doc: any): TeacherSession => {
@@ -229,9 +235,7 @@ const toTeacherSession = (doc: any): TeacherSession => {
   const mergedNames = Array.from(new Set(existingNames));
   const primaryName = mergedNames[0] || '';
   const courseLabel =
-    toCleanText(doc.courseLabel) ||
-    toCleanText(doc.courseName) ||
-    toCleanText(doc.courseTitle) ||
+    resolveTeacherSessionCourseLabel(doc) ||
     toCleanText(doc.course?.label) ||
     toCleanText(doc.course?.name) ||
     toCleanText(doc.course?.title) ||
@@ -249,12 +253,7 @@ const toTeacherSession = (doc: any): TeacherSession => {
     ...(toCleanText(doc.parentId) ? { parentId: toCleanText(doc.parentId) } : {}),
     ...(Array.isArray(doc.parentIds) ? { parentIds: doc.parentIds } : {}),
     courseId: toCleanText(doc.courseId),
-    courseName:
-      toCleanText(doc.courseName) ||
-      toCleanText(doc.courseLabel) ||
-      toCleanText(doc.courseTitle) ||
-      toCleanText(doc.programName) ||
-      toCleanText(doc.subject),
+    courseName: courseLabel || toCleanText(doc.courseId),
     ...(courseLabel ? { courseLabel } : {}),
     date,
     startTime,
@@ -281,68 +280,154 @@ const toTeacherSession = (doc: any): TeacherSession => {
   } as TeacherSession;
 };
 
-const enrichSessionsWithKidNames = async (rows: TeacherSession[]): Promise<TeacherSession[]> => {
-  const kidIdSet = new Set<string>();
-  rows.forEach((session) => {
-    normalizeKidIds(session as any).forEach((kidId) => kidIdSet.add(kidId));
-  });
-
-  const kidIds = Array.from(kidIdSet);
-  if (kidIds.length === 0) return rows;
-
-  const kidNameById = new Map<string, string>();
-
-  for (let index = 0; index < kidIds.length; index += 10) {
-    const chunkIds = kidIds.slice(index, index + 10);
-    const snap = await getDocs(
-      query(collection(db, 'kids'), where(documentId(), 'in', chunkIds)),
-    );
-    snap.docs.forEach((docSnap) => {
-      const data = docSnap.data() as Record<string, unknown>;
-      const name =
-        toCleanText(data.fullName) ||
-        toCleanText(data.studentName) ||
-        toCleanText(data.displayName) ||
-        toCleanText(data.name);
-      if (name) kidNameById.set(docSnap.id, name);
-    });
+const firstClean = (...values: unknown[]): string => {
+  for (const value of values) {
+    const cleaned = toCleanText(value);
+    if (cleaned) return cleaned;
   }
 
-  return rows.map((session) => {
-    const sessionAny = session as any;
-    const ids = normalizeKidIds(sessionAny);
-    const derived = ids
-      .map((kidId) => kidNameById.get(kidId) || '')
-      .map((name) => name.trim())
-      .filter(Boolean);
+  return '';
+};
 
-    if (derived.length === 0) return session;
+const namesFromValue = (value: unknown, preferredIds: string[]): string[] => {
+  if (Array.isArray(value)) {
+    return value.map((item) => cleanStudentDisplayName(item)).filter(Boolean);
+  }
 
-    const existing = extractNames(
-      sessionAny.studentName,
-      sessionAny.kidName,
-      sessionAny.childName,
-      sessionAny.studentNames,
-      sessionAny.kidNames,
-      sessionAny.childNames,
-      sessionAny.students,
-      sessionAny.kids,
-      sessionAny.children,
-    ).filter((name) => isLikelyHumanLabel(name));
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    const names: string[] = [];
 
-    const merged = Array.from(new Set([...existing, ...derived]));
-    if (merged.length === 0) return session;
+    preferredIds.forEach((id) => {
+      const directValue = record[id];
+      if (Array.isArray(directValue)) {
+        directValue.forEach((item) => {
+          const cleaned = cleanStudentDisplayName(item);
+          if (cleaned) names.push(cleaned);
+        });
+      } else {
+        const cleaned = cleanStudentDisplayName(directValue);
+        if (cleaned) names.push(cleaned);
+      }
+    });
 
-    const primary = merged[0];
-    return {
-      ...(sessionAny || {}),
-      studentNames: merged,
-      kidNames: merged,
-      studentName: toCleanText(sessionAny.studentName) || primary,
-      kidName: toCleanText(sessionAny.kidName) || primary,
-      childName: toCleanText(sessionAny.childName) || primary,
-    } as TeacherSession;
-  });
+    Object.values(record).forEach((item) => {
+      if (Array.isArray(item)) {
+        item.forEach((nestedItem) => {
+          const cleaned = cleanStudentDisplayName(nestedItem);
+          if (cleaned) names.push(cleaned);
+        });
+      } else {
+        const cleaned = cleanStudentDisplayName(item);
+        if (cleaned) names.push(cleaned);
+      }
+    });
+
+    return names;
+  }
+
+  const single = cleanStudentDisplayName(value);
+  return single ? [single] : [];
+};
+
+const resolveEnrollmentStudentName = (
+  enrollment: Record<string, unknown> | undefined,
+  preferredIds: string[],
+): string => {
+  if (!enrollment) return '';
+
+  const directName = [
+    enrollment.studentName,
+    enrollment.kidName,
+    enrollment.childName,
+    enrollment.studentFullName,
+    enrollment.kidFullName,
+    enrollment.childFullName,
+    enrollment.studentDisplayName,
+    enrollment.kidDisplayName,
+    enrollment.childDisplayName,
+    (enrollment.student as Record<string, unknown> | undefined)?.name,
+    (enrollment.student as Record<string, unknown> | undefined)?.fullName,
+    (enrollment.student as Record<string, unknown> | undefined)?.displayName,
+    (enrollment.child as Record<string, unknown> | undefined)?.name,
+    (enrollment.child as Record<string, unknown> | undefined)?.fullName,
+    (enrollment.child as Record<string, unknown> | undefined)?.displayName,
+    (enrollment.kid as Record<string, unknown> | undefined)?.name,
+    (enrollment.kid as Record<string, unknown> | undefined)?.fullName,
+    (enrollment.kid as Record<string, unknown> | undefined)?.displayName,
+    (enrollment.studentDetails as Record<string, unknown> | undefined)?.name,
+    (enrollment.studentDetails as Record<string, unknown> | undefined)?.fullName,
+    (enrollment.studentDetails as Record<string, unknown> | undefined)?.displayName,
+    (enrollment.childDetails as Record<string, unknown> | undefined)?.name,
+    (enrollment.childDetails as Record<string, unknown> | undefined)?.fullName,
+    (enrollment.childDetails as Record<string, unknown> | undefined)?.displayName,
+    (enrollment.kidDetails as Record<string, unknown> | undefined)?.name,
+    (enrollment.kidDetails as Record<string, unknown> | undefined)?.fullName,
+    (enrollment.kidDetails as Record<string, unknown> | undefined)?.displayName,
+    enrollment.name,
+    enrollment.fullName,
+    enrollment.displayName,
+  ]
+    .map((value) => cleanStudentDisplayName(value))
+    .find(Boolean) || '';
+
+  if (directName) return directName;
+
+  const mappedNames = [
+    ...namesFromValue(enrollment.studentNames, preferredIds),
+    ...namesFromValue(enrollment.kidNames, preferredIds),
+    ...namesFromValue(enrollment.childNames, preferredIds),
+  ];
+
+  return mappedNames[0] || '';
+};
+
+const sessionAlreadyHasName = (session: TeacherSession): boolean => {
+  const sessionAny = session as unknown as Record<string, unknown>;
+  const kidIds = Array.isArray(session.kidIds) ? session.kidIds : [];
+
+  const names = [
+    ...namesFromValue(sessionAny.studentNames, kidIds),
+    ...namesFromValue(sessionAny.kidNames, kidIds),
+    ...namesFromValue(sessionAny.childNames, kidIds),
+    cleanStudentDisplayName(sessionAny.studentName),
+    cleanStudentDisplayName(sessionAny.kidName),
+    cleanStudentDisplayName(sessionAny.childName),
+  ].filter(Boolean);
+
+  return names.length > 0;
+};
+
+const withEnrollmentIdentitySnapshots = (
+  session: TeacherSession,
+  enrollment?: Record<string, unknown>,
+): TeacherSession => {
+  const kidIds = Array.isArray(session.kidIds) ? session.kidIds : [];
+  const firstKidId = kidIds[0];
+
+  const enrollmentName = resolveEnrollmentStudentName(enrollment, kidIds);
+  const enrollmentCourseName = resolveTeacherSessionCourseLabel(session, enrollment);
+
+  if (!enrollmentName && !enrollmentCourseName) return session;
+
+  const next: TeacherSession = {
+    ...session,
+    courseName: enrollmentCourseName || session.courseName || session.courseId,
+  };
+
+  if (!enrollmentName || sessionAlreadyHasName(session)) {
+    return next;
+  }
+
+  return {
+    ...next,
+    studentName: enrollmentName,
+    kidName: enrollmentName,
+    childName: enrollmentName,
+    studentNames: firstKidId ? { [firstKidId]: enrollmentName } : [enrollmentName],
+    kidNames: firstKidId ? { [firstKidId]: enrollmentName } : [enrollmentName],
+    childNames: firstKidId ? { [firstKidId]: enrollmentName } : [enrollmentName],
+  } as TeacherSession;
 };
 
 const sortSessions = (rows: TeacherSession[]): TeacherSession[] => {
@@ -403,27 +488,129 @@ export const useTeacherSessions = (
 
     const baseCollection = collection(db, 'classSessions');
     const teacherKey = toCleanText(teacherId);
-    const classSessionsQuery =
-      !includeAllTeachers && teacherKey
-        ? query(
-            baseCollection,
-            where('teacherId', '==', teacherKey),
-            where('date', '>=', start),
-            where('date', '<=', end),
-            orderBy('date', 'asc'),
-            orderBy('startTime', 'asc'),
-          )
-        : query(
-            baseCollection,
-            where('date', '>=', start),
-            where('date', '<=', end),
-            orderBy('date', 'asc'),
-            orderBy('startTime', 'asc'),
-          );
+    const todayDate = start === end ? start : today;
+    const queryConfigs = includeAllTeachers || !teacherKey
+      ? [{
+          queryName: 'primary',
+          aliasField: includeAllTeachers ? 'all-teachers' : 'teacherId',
+          listenerQuery: includeAllTeachers
+            ? query(
+                baseCollection,
+                where('date', '>=', start),
+                where('date', '<=', end),
+                orderBy('date', 'asc'),
+                orderBy('startTime', 'asc'),
+              )
+            : query(
+                baseCollection,
+                where('teacherId', '==', teacherKey),
+                where('date', '>=', start),
+                where('date', '<=', end),
+                orderBy('date', 'asc'),
+                orderBy('startTime', 'asc'),
+              ),
+        }]
+      : [
+          {
+            queryName: 'primary',
+            aliasField: 'teacherId',
+            listenerQuery: query(
+              baseCollection,
+              where('teacherId', '==', teacherKey),
+              where('date', '>=', start),
+              where('date', '<=', end),
+              orderBy('date', 'asc'),
+              orderBy('startTime', 'asc'),
+            ),
+          },
+          {
+            queryName: 'teacherIds',
+            aliasField: 'teacherIds',
+            listenerQuery: query(
+              baseCollection,
+              where('teacherIds', 'array-contains', teacherKey),
+              where('date', '>=', start),
+              where('date', '<=', end),
+              orderBy('date', 'asc'),
+              orderBy('startTime', 'asc'),
+            ),
+          },
+          {
+            queryName: 'assignedTeacherId',
+            aliasField: 'assignedTeacherId',
+            listenerQuery: query(
+              baseCollection,
+              where('assignedTeacherId', '==', teacherKey),
+              where('date', '>=', start),
+              where('date', '<=', end),
+              orderBy('date', 'asc'),
+              orderBy('startTime', 'asc'),
+            ),
+          },
+          {
+            queryName: 'primaryTeacherId',
+            aliasField: 'primaryTeacherId',
+            listenerQuery: query(
+              baseCollection,
+              where('primaryTeacherId', '==', teacherKey),
+              where('date', '>=', start),
+              where('date', '<=', end),
+              orderBy('date', 'asc'),
+              orderBy('startTime', 'asc'),
+            ),
+          },
+          {
+            queryName: 'teacherUid',
+            aliasField: 'teacherUid',
+            listenerQuery: query(
+              baseCollection,
+              where('teacherUid', '==', teacherKey),
+              where('date', '>=', start),
+              where('date', '<=', end),
+              orderBy('date', 'asc'),
+              orderBy('startTime', 'asc'),
+            ),
+          },
+          {
+            queryName: 'teacher_id',
+            aliasField: 'teacher_id',
+            listenerQuery: query(
+              baseCollection,
+              where('teacher_id', '==', teacherKey),
+              where('date', '>=', start),
+              where('date', '<=', end),
+              orderBy('date', 'asc'),
+              orderBy('startTime', 'asc'),
+            ),
+          },
+        ];
 
     let cancelled = false;
     let batchCounter = 0;
     const liveDocsBySource = new Map<string, Map<string, TeacherSession>>();
+    const sourceStates = new Map<string, { status: 'pending' | 'ready' | 'error'; error: Error | null }>();
+    queryConfigs.forEach(({ queryName }) => {
+      sourceStates.set(queryName, { status: 'pending', error: null });
+    });
+
+    const setSettledState = () => {
+      if (cancelled) return;
+      const allSettled = Array.from(sourceStates.values()).every((state) => state.status !== 'pending');
+      if (!allSettled) return;
+
+      const hasVisibleSourceDocs = Array.from(liveDocsBySource.values()).some((rows) => rows.size > 0);
+      if (hasVisibleSourceDocs) {
+        setError(null);
+        setIsLoading(false);
+        return;
+      }
+
+      const firstError = Array.from(sourceStates.values()).find((state) => state.error)?.error || null;
+      if (firstError) {
+        setError(firstError);
+      }
+      setIsLoading(false);
+    };
 
     const applyRows = async (rows: TeacherSession[]) => {
       const currentBatch = ++batchCounter;
@@ -431,18 +618,39 @@ export const useTeacherSessions = (
         ? rows
         : rows.filter((session) => sessionBelongsToTeacher(session as any, teacherKey));
 
-      const enrollmentMap = await fetchEnrollmentsByIds(
-        Array.from(
-          new Set(
-            filtered
-              .map((session) => toCleanText((session as any)?.enrollmentId))
-              .filter(Boolean),
-          ),
+      let enrollmentLookupFailed = false;
+      let enrollmentMap = new Map<string, Record<string, unknown>>();
+      const enrollmentIds = Array.from(
+        new Set(
+          filtered
+            .map((session) => toCleanText((session as any)?.enrollmentId))
+            .filter(Boolean),
         ),
       );
-      const canonicalOnly = filtered.filter((session) => {
+
+      if (enrollmentIds.length > 0) {
+        try {
+          enrollmentMap = await fetchEnrollmentsByIds(enrollmentIds);
+        } catch (err) {
+          enrollmentLookupFailed = true;
+          devLogTeacherQuery('useTeacherSessions', 'error', {
+            queryName: 'enrollmentLookups',
+            collection: 'enrollments',
+            aliasField: 'documentId',
+            teacherUid: teacherKey || null,
+            todayDate,
+            dateRange: { start, end },
+            error: err instanceof Error ? err.message : String(err),
+            code: (err as any)?.code || null,
+          });
+        }
+      }
+
+      const baseVisibleRows = filtered.filter((session) => toCleanText((session as any)?.status).toLowerCase() !== 'paused');
+      const canonicalOnly = (enrollmentLookupFailed ? baseVisibleRows : filtered).filter((session) => {
         const status = toCleanText((session as any)?.status).toLowerCase();
         if (status === 'paused') return false;
+        if (enrollmentLookupFailed) return true;
         const enrollmentId = toCleanText((session as any)?.enrollmentId);
         if (!enrollmentId) return false;
         const enrollment = enrollmentMap.get(enrollmentId);
@@ -459,11 +667,21 @@ export const useTeacherSessions = (
         return isSessionCanonicalForEnrollment(session as unknown as Record<string, unknown>, enrollment);
       });
 
-      const enriched = await enrichSessionsWithKidNames(canonicalOnly);
       if (cancelled || currentBatch !== batchCounter) return;
-      setSessions(sortSessions(enriched).slice(0, 400));
+      setSessions(
+        sortSessions(
+          canonicalOnly.map((session) => {
+            const enrollmentId = toCleanText((session as any)?.enrollmentId);
+            return withEnrollmentIdentitySnapshots(
+              session,
+              enrollmentId ? enrollmentMap.get(enrollmentId) : undefined,
+            );
+          }),
+        ).slice(0, 400),
+      );
       setError(null);
       setIsLoading(false);
+      setSettledState();
     };
 
     const publishMergedRows = () => {
@@ -475,7 +693,24 @@ export const useTeacherSessions = (
           merged.set(sessionId, session);
         });
       });
-      void applyRows(Array.from(merged.values()));
+      void applyRows(Array.from(merged.values())).catch((err) => {
+        devLogTeacherQuery('useTeacherSessions', 'error', {
+          queryName: 'publishMergedRows',
+          collection: 'classSessions',
+          aliasField: 'merged',
+          teacherUid: teacherKey || null,
+          todayDate,
+          dateRange: { start, end },
+          error: err instanceof Error ? err.message : String(err),
+          code: (err as any)?.code || null,
+        });
+        if (cancelled) return;
+        setError(createTeacherSessionError(
+          'Unable to load today\'s sessions. Please contact admin if this keeps happening.',
+          (err as any)?.code || null,
+        ));
+        setIsLoading(false);
+      });
     };
 
     const listeners: Array<() => void> = [];
@@ -488,6 +723,8 @@ export const useTeacherSessions = (
         queryName: sourceKey,
         collection: 'classSessions',
         aliasField,
+        teacherUid: teacherKey || null,
+        todayDate,
         dateRange: { start, end },
       });
       const unsubscribe = onSnapshot(
@@ -497,9 +734,12 @@ export const useTeacherSessions = (
             queryName: sourceKey,
             collection: 'classSessions',
             aliasField,
+            teacherUid: teacherKey || null,
+            todayDate,
             dateRange: { start, end },
             docsReturned: snapshot.docs.length,
           });
+          sourceStates.set(sourceKey, { status: 'ready', error: null });
           liveDocsBySource.set(
             sourceKey,
             new Map(
@@ -516,82 +756,30 @@ export const useTeacherSessions = (
             queryName: sourceKey,
             collection: 'classSessions',
             aliasField,
+            teacherUid: teacherKey || null,
+            todayDate,
             dateRange: { start, end },
             error: err instanceof Error ? err.message : String(err),
             code: (err as any)?.code || null,
           });
           if (cancelled) return;
-          console.error('useTeacherSessions error', err);
-          setError(err as Error);
-          setIsLoading(false);
+          sourceStates.set(sourceKey, {
+            status: 'error',
+            error: createTeacherSessionError(
+              'Unable to load today\'s sessions. One or more teacher session queries were denied.',
+              (err as any)?.code || null,
+            ),
+          });
+          liveDocsBySource.set(sourceKey, new Map());
+          setSettledState();
         },
       );
       listeners.push(unsubscribe);
     };
 
-    attachListener('primary', includeAllTeachers ? 'all-teachers' : 'teacherId', classSessionsQuery);
-    if (!includeAllTeachers && teacherKey) {
-      attachListener(
-        'teacherIds',
-        'teacherIds',
-        query(
-          baseCollection,
-          where('teacherIds', 'array-contains', teacherKey),
-          where('date', '>=', start),
-          where('date', '<=', end),
-          orderBy('date', 'asc'),
-          orderBy('startTime', 'asc'),
-        ),
-      );
-      attachListener(
-        'assignedTeacherId',
-        'assignedTeacherId',
-        query(
-          baseCollection,
-          where('assignedTeacherId', '==', teacherKey),
-          where('date', '>=', start),
-          where('date', '<=', end),
-          orderBy('date', 'asc'),
-          orderBy('startTime', 'asc'),
-        ),
-      );
-      attachListener(
-        'primaryTeacherId',
-        'primaryTeacherId',
-        query(
-          baseCollection,
-          where('primaryTeacherId', '==', teacherKey),
-          where('date', '>=', start),
-          where('date', '<=', end),
-          orderBy('date', 'asc'),
-          orderBy('startTime', 'asc'),
-        ),
-      );
-      attachListener(
-        'teacherUid',
-        'teacherUid',
-        query(
-          baseCollection,
-          where('teacherUid', '==', teacherKey),
-          where('date', '>=', start),
-          where('date', '<=', end),
-          orderBy('date', 'asc'),
-          orderBy('startTime', 'asc'),
-        ),
-      );
-      attachListener(
-        'teacher_id',
-        'teacher_id',
-        query(
-          baseCollection,
-          where('teacher_id', '==', teacherKey),
-          where('date', '>=', start),
-          where('date', '<=', end),
-          orderBy('date', 'asc'),
-          orderBy('startTime', 'asc'),
-        ),
-      );
-    }
+    queryConfigs.forEach(({ queryName, aliasField, listenerQuery }) => {
+      attachListener(queryName, aliasField, listenerQuery);
+    });
 
     return () => {
       cancelled = true;

@@ -110,6 +110,10 @@ export {
   repairEnrollmentTeacherSessionConsistency,
   archiveKid,
 } from "./lifecycle";
+export { auditTeacherTodaySessions } from "./auditTeacherTodaySessions";
+export { auditAllTransferredSessionSnapshotIssues } from "./auditAllTransferredSessionSnapshotIssues";
+export { repairTransferredTeacherSessionSnapshots } from "./repairTransferredTeacherSessionSnapshots";
+export { traceStudentTransferHistory } from "./traceStudentTransferHistory";
 export { adminBackfillEnrollmentCanonicalFields } from "./enrollmentCanonicalBackfill";
 export {
   runEnrollmentCanonicalCoverage,

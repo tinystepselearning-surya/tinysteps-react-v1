@@ -186,7 +186,8 @@ describe('useUpcomingSessions', () => {
     const raw = readRepoFile('firestore.rules');
 
     expect(raw).toContain("function teacherOwnsDocViaAliases(data)");
-    expect(raw).toContain("|| request.auth.uid in data.teacherIds");
+    expect(raw).toContain("&& (data.teacherIds is list)");
+    expect(raw).toContain("&& (request.auth.uid in data.teacherIds)");
     expect(raw).toContain("allow get: if isAdmin()");
     expect(raw).toContain("|| teacherOwnsDocViaAliases(resource.data)");
     expect(raw).toContain("allow list: if isAdmin()");
@@ -212,7 +213,7 @@ describe('useUpcomingSessions', () => {
     expect(getSessionStudentLabel(session)).toBe('Idhiksha');
   });
 
-  it('falls back safely to a singular count label when no child name is available', () => {
+  it('falls back safely to Student when no child name is available', () => {
     const session = {
       id: 'session-2',
       teacherId: 'teacher-1',
@@ -225,7 +226,7 @@ describe('useUpcomingSessions', () => {
     };
 
     expect(getSessionInlineStudentNames(session)).toEqual([]);
-    expect(getSessionStudentLabel(session)).toBe('1 student');
+    expect(getSessionStudentLabel(session)).toBe('Student');
   });
 
   it('resolves a real child name from id-based lookup data before falling back to count labels', () => {
@@ -252,7 +253,6 @@ describe('useUpcomingSessions', () => {
   });
 
   it('surfaces classSessions permission errors instead of switching to broader fallback reads', async () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     mockOnSnapshot.mockReset();
     mockGetDocs.mockClear();
 
@@ -264,33 +264,18 @@ describe('useUpcomingSessions', () => {
     render(<TestComponent teacherId="teacher-1" />);
 
     await waitFor(() =>
-      expect(screen.getByText('error:Missing or insufficient permissions.')).toBeTruthy(),
+      expect(
+        screen.getByText('error:Unable to load upcoming sessions. One or more teacher session queries were denied.'),
+      ).toBeTruthy(),
     );
 
     const classSessionGetDocsCalls = mockGetDocs.mock.calls.filter(
       ([queryRef]) => getCollectionName(queryRef as any) === 'classSessions',
     );
     expect(classSessionGetDocsCalls).toHaveLength(0);
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      '[useUpcomingSessions] error',
-      expect.objectContaining({
-        queryName: 'primary',
-        collection: 'classSessions',
-        aliasField: 'teacherId',
-        op: '==',
-        code: 'permission-denied',
-        error: 'Missing or insufficient permissions.',
-        dateRange: expect.objectContaining({
-          type: 'in',
-        }),
-        authUid: 'teacher-1',
-      }),
-    );
-    consoleErrorSpy.mockRestore();
   });
 
-  it('keeps the teacherIds permission-denied path visible and does not create fallback classSessions reads', async () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  it('keeps successful upcoming sessions visible when the teacherIds alias listener is denied', async () => {
     mockOnSnapshot.mockReset();
     mockGetDocs.mockClear();
 
@@ -325,29 +310,14 @@ describe('useUpcomingSessions', () => {
     render(<TestComponent teacherId="teacher-1" />);
 
     await waitFor(() =>
-      expect(screen.getByText('error:Missing or insufficient permissions.')).toBeTruthy(),
+      expect(screen.getByText('count:5')).toBeTruthy(),
     );
 
     const classSessionGetDocsCalls = mockGetDocs.mock.calls.filter(
       ([queryRef]) => getCollectionName(queryRef as any) === 'classSessions',
     );
     expect(classSessionGetDocsCalls).toHaveLength(0);
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      '[useUpcomingSessions] error',
-      expect.objectContaining({
-        queryName: 'teacherIds',
-        collection: 'classSessions',
-        aliasField: 'teacherIds',
-        op: 'array-contains',
-        code: 'permission-denied',
-        error: 'Missing or insufficient permissions.',
-        authUid: 'teacher-1',
-        dateRange: expect.objectContaining({
-          type: 'in',
-        }),
-      }),
-    );
-    consoleErrorSpy.mockRestore();
+    expect(screen.queryByText(/error:/)).toBeNull();
   });
 
   it('logs each listener alias with structured metadata before subscribing', async () => {

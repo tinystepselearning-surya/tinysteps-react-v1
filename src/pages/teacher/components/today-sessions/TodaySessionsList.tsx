@@ -10,6 +10,10 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { toast } from '@components/hooks/use-toast';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 import { useAuthStore } from '../../../../store/useAuthStore';
+import {
+  cleanStudentDisplayName,
+  resolveTeacherSessionCourseLabel,
+} from '../../utils/resolveTeacherSessionStudentName';
 
 interface TodaySessionsListProps {
   teacherId?: string;
@@ -31,12 +35,13 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
   const studentNameById = useMemo(() => {
     const map = new Map<string, string>();
     students.forEach((student: any) => {
-      const name =
+      const name = cleanStudentDisplayName(
         student.fullName ||
         student.studentName ||
         student.displayName ||
         student.name ||
-        '';
+        '',
+      );
       if (!name) return;
 
       if (student.uid) map.set(String(student.uid), String(name));
@@ -183,8 +188,7 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
       (session as any).kidName,
       (session as any).childName,
     ]
-      .filter((value): value is string => typeof value === 'string')
-      .map((value) => value.trim())
+      .map((value) => cleanStudentDisplayName(value))
       .filter(Boolean);
 
     const fromIds = (session.kidIds || [])
@@ -247,9 +251,7 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
       const names = getKnownNames(session);
       const haystack = [
         ...names,
-        session.courseName,
-        (session as any).courseLabel,
-        (session as any).courseTitle,
+        resolveTeacherSessionCourseLabel(session),
         session.courseId,
         session.startTime,
         session.endTime,
@@ -382,9 +384,7 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
                 <SessionCard
                   key={session.id}
                   session={session}
-                  studentNames={session.kidIds
-                    .map((kidId) => studentNameById.get(String(kidId)))
-                    .filter((name): name is string => Boolean(name))}
+                  studentNames={getKnownNames(session)}
                   onMarkAttendance={setSelectedSession}
                 />
               ))

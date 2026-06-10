@@ -13,6 +13,8 @@ export interface TeacherSessionStudentNameResolution {
 }
 
 const GENERIC_COUNT_RE = /^\d+\s+students?$/i;
+const ASSIGNED_COUNT_RE = /^\d+\s+assigned$/i;
+const ASSIGNED_ONLY_RE = /^assigned$/i;
 
 const toCleanText = (value: unknown): string => {
   if (typeof value === 'string') return value.trim();
@@ -20,16 +22,26 @@ const toCleanText = (value: unknown): string => {
   return '';
 };
 
-const isUsableName = (value: unknown): value is string => {
+export const cleanStudentDisplayName = (value: unknown): string => {
   const text = toCleanText(value);
-  if (!text) return false;
+  if (!text) return '';
 
   const lower = text.toLowerCase();
-  if (lower === 'undefined' || lower === 'null') return false;
-  if (lower === 'student' || lower === 'child' || lower === 'kid') return false;
-  if (GENERIC_COUNT_RE.test(lower)) return false;
+  if (lower === 'undefined' || lower === 'null') return '';
+  if (lower === 'student' || lower === 'child' || lower === 'kid') return '';
+  if (GENERIC_COUNT_RE.test(text)) return '';
+  if (ASSIGNED_COUNT_RE.test(text)) return '';
+  if (ASSIGNED_ONLY_RE.test(text)) return '';
 
-  return true;
+  return text;
+};
+
+export const isRejectedStudentDisplayName = (value: unknown): boolean => {
+  return !cleanStudentDisplayName(value) && Boolean(toCleanText(value));
+};
+
+const isUsableName = (value: unknown): value is string => {
+  return Boolean(cleanStudentDisplayName(value));
 };
 
 const unique = (values: string[]): string[] => Array.from(new Set(values.filter(Boolean)));
@@ -40,9 +52,26 @@ const pickName = (
 ): TeacherSessionStudentNameResolution | null => {
   if (!isUsableName(value)) return null;
   return {
-    name: toCleanText(value),
+    name: cleanStudentDisplayName(value),
     source,
   };
+};
+
+const isLikelyCourseIdLike = (value: string, courseId?: string): boolean => {
+  const text = toCleanText(value);
+  if (!text) return false;
+  const lower = text.toLowerCase();
+  const normalizedCourseId = toCleanText(courseId).toLowerCase();
+  if (normalizedCourseId && lower === normalizedCourseId) return true;
+  return /^[a-z0-9]+(?:[-_][a-z0-9]+)+$/i.test(text);
+};
+
+const cleanCourseDisplayName = (value: unknown): string => {
+  const text = toCleanText(value);
+  if (!text) return '';
+  const lower = text.toLowerCase();
+  if (lower === 'undefined' || lower === 'null') return '';
+  return text;
 };
 
 const maybeRecord = (value: unknown): LooseRecord | null => {
@@ -180,6 +209,33 @@ export const getTeacherSessionCountLabel = (
   const count = getTeacherSessionEntityIds(session).length;
   if (count === 1) return '1 student';
   return `${count} students`;
+};
+
+export const resolveTeacherSessionCourseLabel = (
+  session: Partial<TeacherSession> | LooseRecord | undefined | null,
+  enrollment?: LooseRecord | null,
+): string => {
+  const row = (session || {}) as LooseRecord;
+  const enrollmentRow = (enrollment || {}) as LooseRecord;
+  const courseId =
+    cleanCourseDisplayName(row.courseId) ||
+    cleanCourseDisplayName(enrollmentRow.courseId) ||
+    cleanCourseDisplayName((row as any).course_id) ||
+    cleanCourseDisplayName((enrollmentRow as any).course_id);
+
+  const candidates = [
+    cleanCourseDisplayName(row.courseName),
+    cleanCourseDisplayName((row as any).courseTitle),
+    cleanCourseDisplayName((row as any).courseLabel),
+    cleanCourseDisplayName(enrollmentRow.courseName),
+    cleanCourseDisplayName((enrollmentRow as any).courseTitle),
+    cleanCourseDisplayName((enrollmentRow as any).courseLabel),
+  ].filter(Boolean);
+
+  const humanReadable = candidates.find((candidate) => !isLikelyCourseIdLike(candidate, courseId));
+  if (humanReadable) return humanReadable;
+
+  return candidates[0] || courseId || '';
 };
 
 export const resolveTeacherSessionStudentName = (
@@ -340,7 +396,7 @@ export const resolveTeacherSessionStudentName = (
   }
 
   return {
-    name: getTeacherSessionCountLabel(row),
-    source: 'fallback.count',
+    name: 'Student',
+    source: 'fallback.student',
   };
 };
