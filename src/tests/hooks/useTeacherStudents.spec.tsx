@@ -1,22 +1,23 @@
 import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   mockCollection,
-  mockOnSnapshot,
+  mockGetDocs,
   mockQuery,
   mockWhere,
 } = vi.hoisted(() => ({
   mockCollection: vi.fn((_db: unknown, name: string) => ({ kind: 'collection', name })),
-  mockOnSnapshot: vi.fn(),
+  mockGetDocs: vi.fn(),
   mockQuery: vi.fn((...args: unknown[]) => ({ kind: 'query', args })),
   mockWhere: vi.fn((...args: unknown[]) => ({ kind: 'where', args })),
 }));
 
 vi.mock('firebase/firestore', () => ({
   collection: mockCollection,
-  onSnapshot: mockOnSnapshot,
+  getDocs: mockGetDocs,
   query: mockQuery,
   where: mockWhere,
 }));
@@ -60,58 +61,118 @@ const makeDoc = (id: string, data: Record<string, unknown>) => ({
 const extractWhereClauses = (queryRef: { args: Array<{ kind?: string; args?: unknown[] }> }) =>
   queryRef.args.filter((entry) => entry?.kind === 'where').map((entry) => entry.args || []);
 
+const getCollectionName = (queryRef: { args: Array<{ kind?: string; name?: string }> }) => {
+  const base = queryRef.args.find((entry) => entry?.kind === 'collection');
+  return base?.name || '';
+};
+
+const getTeacherAliasField = (queryRef: { args: Array<{ kind?: string; args?: unknown[] }> }) => {
+  const whereClauses = extractWhereClauses(queryRef);
+  const teacherClause = whereClauses.find((clause) =>
+    ['teacherId', 'teacherIds', 'assignedTeacherId', 'primaryTeacherId', 'teacherUid', 'teacher_id'].includes(
+      String(clause[0] || ''),
+    ),
+  );
+  return String(teacherClause?.[0] || '');
+};
+
+function renderHookComponent() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  render(
+    <QueryClientProvider client={queryClient}>
+      <TestComponent />
+    </QueryClientProvider>,
+  );
+}
+
 describe('useTeacherFilteredStudents', () => {
   beforeEach(() => {
     mockCollection.mockClear();
-    mockOnSnapshot.mockReset();
+    mockGetDocs.mockReset();
     mockQuery.mockClear();
     mockWhere.mockClear();
-
-    mockOnSnapshot.mockImplementation((queryRef, onNext) => {
-      const whereClauses = extractWhereClauses(queryRef as any);
-      const teacherIdField = String(whereClauses[0]?.[0] || '');
-
-      if (teacherIdField === 'teacherId') {
-        onNext({
-          docs: [
-            makeDoc('kid-direct', { fullName: 'Shreenika', teacherId: 'teacher-1' }),
-          ],
-        });
-      } else if (teacherIdField === 'teacherIds') {
-        onNext({
-          docs: [
-            makeDoc('kid-array', { fullName: 'Student Two', teacherIds: ['teacher-1'] }),
-            makeDoc('kid-other', { fullName: 'Student Three', teacherIds: ['teacher-2'] }),
-          ],
-        });
-      }
-
-      return vi.fn();
-    });
   });
 
-  it('loads teacher-owned kids through narrow teacherId and teacherIds queries and filters out other teachers', async () => {
-    render(<TestComponent />);
+  it('reads teacher-owned enrollment snapshots only and never queries kids or students', async () => {
+    mockGetDocs.mockImplementation(async (queryRef: unknown) => {
+      const collectionName = getCollectionName(queryRef as any);
+      const aliasField = getTeacherAliasField(queryRef as any);
+
+      if (collectionName !== 'enrollments') return { docs: [] };
+
+      if (aliasField === 'teacherId') {
+        return {
+          docs: [
+            makeDoc('enr-direct', {
+              teacherId: 'teacher-1',
+              kidId: 'kid-1',
+              studentName: 'Shreenika',
+              status: 'active',
+            }),
+          ],
+        };
+      }
+
+      if (aliasField === 'teacherIds') {
+        return {
+          docs: [
+            makeDoc('enr-array', {
+              teacherIds: ['teacher-1'],
+              childId: 'child-2',
+              childSnapshot: { name: 'Student Two' },
+              status: 'active',
+            }),
+          ],
+        };
+      }
+
+      return { docs: [] };
+    });
+
+    renderHookComponent();
 
     await waitFor(() => expect(screen.getByText('count:2')).toBeTruthy());
 
     expect(screen.getAllByTestId('student').map((node) => node.textContent)).toEqual([
-      'kid-direct:Shreenika',
-      'kid-array:Student Two',
+      'kid-1:Shreenika',
+      'child-2:Student Two',
     ]);
 
-    const queryFields = mockOnSnapshot.mock.calls.map((call) => {
-      const whereClauses = extractWhereClauses(call[0] as any);
-      return whereClauses[0]?.slice(0, 3);
+    const collectionNames = mockCollection.mock.calls.map(([, name]) => name);
+    expect(collectionNames).toContain('enrollments');
+    expect(collectionNames).not.toContain('kids');
+    expect(collectionNames).not.toContain('students');
+  });
+
+  it('falls back to Student name pending when enrollment snapshots do not include a safe display name', async () => {
+    mockGetDocs.mockImplementation(async (queryRef: unknown) => {
+      const collectionName = getCollectionName(queryRef as any);
+      const aliasField = getTeacherAliasField(queryRef as any);
+
+      if (collectionName === 'enrollments' && aliasField === 'teacherId') {
+        return {
+          docs: [
+            makeDoc('enr-missing-name', {
+              teacherId: 'teacher-1',
+              kidId: 'kid-9',
+              status: 'active',
+            }),
+          ],
+        };
+      }
+
+      return { docs: [] };
     });
 
-    expect(queryFields).toEqual(
-      expect.arrayContaining([
-        ['teacherId', '==', 'teacher-1'],
-        ['teacherIds', 'array-contains', 'teacher-1'],
-      ]),
-    );
-    expect(mockCollection).toHaveBeenCalledWith({}, 'kids');
-    expect(screen.queryByText(/kid-other/)).toBeNull();
+    renderHookComponent();
+
+    await waitFor(() => expect(screen.getByText('kid-9:Student name pending')).toBeTruthy());
   });
 });

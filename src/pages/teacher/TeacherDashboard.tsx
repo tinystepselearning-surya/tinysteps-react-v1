@@ -98,12 +98,23 @@ const TEACHER_MOBILE_TABS: MobileTabBarItem[] = [
   { id: 'earnings', label: 'Earnings', icon: Wallet },
 ];
 
+function resolveTeacherDashboardTab(search: string): string {
+  try {
+    const params = new URLSearchParams(search);
+    const qTab = params.get('tab');
+    if (qTab && VALID_TEACHER_TAB_IDS.has(qTab)) return qTab;
+  } catch {
+    // ignore malformed search
+  }
+  return 'today';
+}
+
 export default function TeacherDashboard() {
   const { user, isLoading } = useAuthStore();
-  const [tab, setTab] = useState<string>('today');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const [tab, setTab] = useState<string>(() => resolveTeacherDashboardTab(location.search));
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Detect full-screen viewer params
   const [viewerState, setViewerState] = useState<{
@@ -114,13 +125,13 @@ export default function TeacherDashboard() {
   // Also detect viewer query params
   React.useEffect(() => {
     try {
-      const params = new URLSearchParams(location.search);
-      const qTab = params.get('tab');
-      if (qTab && VALID_TEACHER_TAB_IDS.has(qTab) && qTab !== tab) {
-        console.log('[TeacherDashboard] URL tab param:', qTab);
-        setTab(qTab);
+      const nextTab = resolveTeacherDashboardTab(location.search);
+      if (nextTab !== tab) {
+        console.log('[TeacherDashboard] URL tab param:', nextTab);
+        setTab(nextTab);
       }
 
+      const params = new URLSearchParams(location.search);
       // Check for full-screen viewer params
       const viewMode = params.get('viewMode');
       const accessId = params.get('accessId');
@@ -290,66 +301,82 @@ export default function TeacherDashboard() {
 
             {/* Upcoming */}
             <TabsContent value="upcoming">
-              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading upcoming sessions…</div>}>
-                <UpcomingSessionsView teacherId={teacherId} />
-              </React.Suspense>
+              {tab === 'upcoming' && (
+                <React.Suspense fallback={<div className="text-sm text-gray-600">Loading upcoming sessions…</div>}>
+                  <UpcomingSessionsView teacherId={teacherId} />
+                </React.Suspense>
+              )}
             </TabsContent>
 
             {/* Demo Classes */}
             <TabsContent value="demo-assignments">
-              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading demo assignments…</div>}>
-                <DemoAssignmentsView teacherId={teacherId} />
-              </React.Suspense>
+              {tab === 'demo-assignments' && (
+                <React.Suspense fallback={<div className="text-sm text-gray-600">Loading demo assignments…</div>}>
+                  <DemoAssignmentsView teacherId={teacherId} />
+                </React.Suspense>
+              )}
             </TabsContent>
 
             {/* Students */}
             <TabsContent value="students">
-              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading students…</div>}>
-                <TeacherMyStudentsV2 teacherId={teacherId} />
-              </React.Suspense>
+              {tab === 'students' && (
+                <React.Suspense fallback={<div className="text-sm text-gray-600">Loading students…</div>}>
+                  <TeacherMyStudentsV2 teacherId={teacherId} />
+                </React.Suspense>
+              )}
             </TabsContent>
 
             {/* Messages */}
             <TabsContent value="messages">
-              <div className="space-y-3">
-                <Card className="p-4">
-                  <h3 className="text-base font-semibold text-slate-900">Messages</h3>
-                  <p className="text-xs text-slate-500">
-                    Student-wise Tiny Steps conversations
-                  </p>
-                </Card>
-                <MessagesPanel embedded />
-              </div>
+              {tab === 'messages' && (
+                <div className="space-y-3">
+                  <Card className="p-4">
+                    <h3 className="text-base font-semibold text-slate-900">Messages</h3>
+                    <p className="text-xs text-slate-500">
+                      Student-wise Tiny Steps conversations
+                    </p>
+                  </Card>
+                  <MessagesPanel embedded />
+                </div>
+              )}
             </TabsContent>
 
             {/* Earnings */}
             <TabsContent value="earnings">
-              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading earnings…</div>}>
-                <EarningsSummary teacherId={teacherId} />
-              </React.Suspense>
+              {tab === 'earnings' && (
+                <React.Suspense fallback={<div className="text-sm text-gray-600">Loading earnings…</div>}>
+                  <EarningsSummary teacherId={teacherId} />
+                </React.Suspense>
+              )}
             </TabsContent>
 
             {/* Schedule */}
             <TabsContent value="schedule">
-              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading schedule…</div>}>
-                <ScheduleView teacherId={teacherId} />
-              </React.Suspense>
+              {tab === 'schedule' && (
+                <React.Suspense fallback={<div className="text-sm text-gray-600">Loading schedule…</div>}>
+                  <ScheduleView teacherId={teacherId} />
+                </React.Suspense>
+              )}
             </TabsContent>
 
             {/* Profile */}
             <TabsContent value="profile">
-              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading profile…</div>}>
-                <TeacherProfile teacherId={teacherId} />
-              </React.Suspense>
+              {tab === 'profile' && (
+                <React.Suspense fallback={<div className="text-sm text-gray-600">Loading profile…</div>}>
+                  <TeacherProfile teacherId={teacherId} />
+                </React.Suspense>
+              )}
             </TabsContent>
             <TabsContent value="holidays">
-              <HolidayCalendar2026 />
+              {tab === 'holidays' ? <HolidayCalendar2026 /> : null}
             </TabsContent>
             {/* Lesson Library (tab) */}
             <TabsContent value="lessons">
-              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading lessons…</div>}>
-                <LessonLibraryPage />
-              </React.Suspense>
+              {tab === 'lessons' && (
+                <React.Suspense fallback={<div className="text-sm text-gray-600">Loading lessons…</div>}>
+                  <LessonLibraryPage />
+                </React.Suspense>
+              )}
             </TabsContent>
           </Tabs>
         </main>

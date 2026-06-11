@@ -113,6 +113,7 @@ export {
 export { auditTeacherTodaySessions } from "./auditTeacherTodaySessions";
 export { auditAllTransferredSessionSnapshotIssues } from "./auditAllTransferredSessionSnapshotIssues";
 export { repairTransferredTeacherSessionSnapshots } from "./repairTransferredTeacherSessionSnapshots";
+export { adminRepairTeacherStudentSnapshots } from "./repairTeacherStudentSnapshots";
 export { traceStudentTransferHistory } from "./traceStudentTransferHistory";
 export { adminBackfillEnrollmentCanonicalFields } from "./enrollmentCanonicalBackfill";
 export {

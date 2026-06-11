@@ -1,51 +1,72 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { collection, documentId, getDocs, query, Timestamp, where } from 'firebase/firestore';
+import { collection, getDocs, query, Timestamp, where } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../../../../lib/firebaseConfig';
+import { useAuthStore } from '../../../../store/useAuthStore';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
-
-type Kid = {
-  id: string;
-  fullName?: string;
-  displayName?: string;
-  name?: string;
-  status?: string;
-  [key: string]: any;
-};
+import { isEnrollmentOperationallyActive } from '../../../../lib/sessionScheduleIntegrity';
 
 type Enrollment = {
   id: string;
+  enrollmentId?: string;
   teacherId?: string;
+  assignedTeacherId?: string;
+  primaryTeacherId?: string;
+  teacherUid?: string;
+  teacher_id?: string;
+  teacherIds?: string[];
   kidId?: string;
   studentId?: string;
+  childId?: string;
   kidIds?: string[];
+  studentIds?: string[];
+  childIds?: string[];
+  childrenIds?: string[];
   courseId?: string;
   courseLabel?: string;
   courseName?: string;
   status?: string;
-  [key: string]: any;
-};
-
-type Course = {
-  id: string;
-  label?: string;
-  name?: string;
-  title?: string;
+  archived?: boolean;
+  archivedAt?: unknown;
+  isArchived?: boolean;
+  studentName?: string;
+  childName?: string;
+  kidName?: string;
+  studentSnapshot?: Record<string, unknown>;
+  childSnapshot?: Record<string, unknown>;
+  kidSnapshot?: Record<string, unknown>;
+  parentName?: string;
   [key: string]: any;
 };
 
 type ClassSession = {
   id: string;
   teacherId?: string;
+  assignedTeacherId?: string;
+  primaryTeacherId?: string;
+  teacherUid?: string;
+  teacher_id?: string;
+  teacherIds?: string[];
   kidIds?: string[];
   kidId?: string;
+  studentId?: string;
+  childId?: string;
+  childIds?: string[];
+  studentIds?: string[];
+  childrenIds?: string[];
   enrollmentId?: string;
   courseId?: string;
   courseLabel?: string;
   courseName?: string;
+  studentName?: string;
+  childName?: string;
+  kidName?: string;
+  studentSnapshot?: Record<string, unknown>;
+  childSnapshot?: Record<string, unknown>;
+  kidSnapshot?: Record<string, unknown>;
   startAt?: any;
   status?: string;
   [key: string]: any;
@@ -53,19 +74,49 @@ type ClassSession = {
 
 type EnrollmentSummary = {
   enrollmentId: string;
-  kidId?: string | null;
+  entityId?: string | null;
   courseId?: string;
   nextSession?: ClassSession | null;
   lastSession?: ClassSession | null;
   totalSessions: number;
   completedCount: number;
   cancelledCount: number;
+  studentName?: string;
+  courseName?: string;
 };
 
+type TeacherAliasField =
+  | 'teacherId'
+  | 'teacherIds'
+  | 'assignedTeacherId'
+  | 'primaryTeacherId'
+  | 'teacherUid'
+  | 'teacher_id';
+
+type TeacherAliasQueryResult<T> = {
+  rows: T[];
+  deniedAliases: TeacherAliasField[];
+};
+
+type QueryError = Error & { code?: string | null };
+
 const WINDOW_DAYS = 60;
-const ACTIVE_STATUSES = new Set(['trial', 'active', 'paused', 'enrolled', 'current']);
-const PAST_STATUSES = new Set(['completed', 'discontinued', 'expired', 'cancelled', 'canceled']);
-const ARCHIVED_KID_STATUSES = new Set(['archived', 'inactive', 'test']);
+const ACTIVE_STATUSES = new Set(['trial', 'active', 'paused', 'enrolled', 'current', 'ongoing']);
+const PAST_STATUSES = new Set(['completed', 'discontinued', 'expired', 'cancelled', 'canceled', 'inactive', 'archived', 'ended', 'past']);
+const TEACHER_ENROLLMENT_ALIAS_FIELDS: Array<{ field: TeacherAliasField; operator: '==' | 'array-contains' }> = [
+  { field: 'teacherId', operator: '==' },
+  { field: 'assignedTeacherId', operator: '==' },
+  { field: 'primaryTeacherId', operator: '==' },
+  { field: 'teacherUid', operator: '==' },
+  { field: 'teacher_id', operator: '==' },
+];
+const TEACHER_SESSION_ALIAS_FIELDS: Array<{ field: Exclude<TeacherAliasField, 'teacherIds'>; operator: '==' }> = [
+  { field: 'teacherId', operator: '==' },
+  { field: 'assignedTeacherId', operator: '==' },
+  { field: 'primaryTeacherId', operator: '==' },
+  { field: 'teacherUid', operator: '==' },
+  { field: 'teacher_id', operator: '==' },
+];
 
 function toMillis(value: any): number {
   if (!value) return 0;
@@ -92,6 +143,24 @@ function normalizeStatus(value?: string | null): string {
   return String(value || '').trim().toLowerCase();
 }
 
+function normalizeEnrollmentStatus(value?: string | null): string {
+  const raw = normalizeStatus(value);
+  if (!raw) return 'active';
+  if (raw === 'pending_teacher') return 'trial';
+  if (raw === 'pending_payment' || raw === 'pending_lp' || raw === 'pending_lp_assignment') return 'active';
+  if (raw === 'enrolled' || raw === 'current' || raw === 'ongoing') return 'active';
+  if (raw === 'canceled') return 'cancelled';
+  return raw;
+}
+
+function readName(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function readNestedName(value: unknown): string {
+  return readName((value as Record<string, unknown> | undefined)?.name);
+}
+
 function normalizeTeacherIds(row: Record<string, unknown> | undefined): string[] {
   if (!row) return [];
   const teacherIds = Array.isArray(row.teacherIds) ? row.teacherIds : [];
@@ -111,54 +180,262 @@ function titleCaseFromId(value?: string | null): string {
   return raw.replace(/\b\w/g, (m) => m.toUpperCase());
 }
 
-function readName(value: unknown): string {
-  return typeof value === 'string' ? value.trim() : '';
+function createPermissionDeniedError(message: string): QueryError {
+  const error = new Error(message) as QueryError;
+  error.code = 'permission-denied';
+  return error;
 }
 
-function resolveEnrollmentStudentName(enrollment: Enrollment, kid?: Kid): string {
-  const fromKid = readName(kid?.fullName) || readName(kid?.displayName) || readName(kid?.name);
-  if (fromKid) return fromKid;
+function isPermissionDeniedError(error: unknown): boolean {
+  const code = typeof (error as QueryError | undefined)?.code === 'string'
+    ? String((error as QueryError).code).toLowerCase()
+    : '';
+  const message = error instanceof Error ? error.message.toLowerCase() : String(error || '').toLowerCase();
+  return code.includes('permission-denied') || message.includes('missing or insufficient permissions');
+}
 
-  const nestedStudent = enrollment.student as Record<string, unknown> | undefined;
-  const nestedChild = enrollment.child as Record<string, unknown> | undefined;
-  const nestedKid = enrollment.kid as Record<string, unknown> | undefined;
-  const studentDetails = enrollment.studentDetails as Record<string, unknown> | undefined;
-  const childDetails = enrollment.childDetails as Record<string, unknown> | undefined;
-  const kidDetails = enrollment.kidDetails as Record<string, unknown> | undefined;
+function isIndexError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error || '');
+  const code = typeof (error as QueryError | undefined)?.code === 'string'
+    ? String((error as QueryError).code).toLowerCase()
+    : '';
+  return code === 'failed-precondition' || /requires an index|index is currently building/i.test(message);
+}
 
+function devLogMyStudents(
+  phase: 'debug' | 'info',
+  message: string,
+  details?: Record<string, unknown>,
+) {
+  if (!import.meta.env.DEV) return;
+  const logger = phase === 'info' ? console.info : console.debug;
+  logger(`[TeacherMyStudentsV2] ${message}`, details || {});
+}
+
+function extractEntityIds(row: Record<string, unknown> | undefined): string[] {
+  if (!row) return [];
+
+  const arrayValues = [
+    Array.isArray(row.kidIds) ? row.kidIds : [],
+    Array.isArray(row.studentIds) ? row.studentIds : [],
+    Array.isArray(row.childIds) ? row.childIds : [],
+    Array.isArray(row.childrenIds) ? row.childrenIds : [],
+  ];
+
+  return Array.from(
+    new Set(
+      [
+        row.kidId,
+        row.studentId,
+        row.childId,
+        ...arrayValues.flat(),
+      ]
+        .map((value) => (typeof value === 'string' ? value.trim() : ''))
+        .filter(Boolean),
+    ),
+  );
+}
+
+function resolveEnrollmentEntityId(enrollment: Enrollment): string | null {
+  return extractEntityIds(enrollment as Record<string, unknown>)[0] || null;
+}
+
+function resolveSessionStudentName(session?: ClassSession | null): string {
+  if (!session) return '';
+  return (
+    readName(session.studentName) ||
+    readName(session.childName) ||
+    readName(session.kidName) ||
+    readNestedName((session as Record<string, unknown>).studentSnapshot) ||
+    readNestedName((session as Record<string, unknown>).childSnapshot) ||
+    readNestedName((session as Record<string, unknown>).kidSnapshot)
+  );
+}
+
+function resolveEnrollmentSnapshotName(enrollment: Enrollment): string {
   return (
     readName(enrollment.studentName) ||
     readName(enrollment.childName) ||
     readName(enrollment.kidName) ||
-    readName(enrollment.studentFullName) ||
-    readName(enrollment.childFullName) ||
-    readName(enrollment.kidFullName) ||
-    readName(nestedStudent?.name) ||
-    readName(nestedStudent?.fullName) ||
-    readName(nestedStudent?.displayName) ||
-    readName(nestedChild?.name) ||
-    readName(nestedChild?.fullName) ||
-    readName(nestedChild?.displayName) ||
-    readName(nestedKid?.name) ||
-    readName(nestedKid?.fullName) ||
-    readName(nestedKid?.displayName) ||
-    readName(studentDetails?.name) ||
-    readName(studentDetails?.fullName) ||
-    readName(studentDetails?.displayName) ||
-    readName(childDetails?.name) ||
-    readName(childDetails?.fullName) ||
-    readName(childDetails?.displayName) ||
-    readName(kidDetails?.name) ||
-    readName(kidDetails?.fullName) ||
-    readName(kidDetails?.displayName) ||
-    readName(enrollment.name) ||
-    readName(enrollment.displayName) ||
-    'Unnamed student'
+    readNestedName((enrollment as Record<string, unknown>).studentSnapshot) ||
+    readNestedName((enrollment as Record<string, unknown>).childSnapshot) ||
+    readNestedName((enrollment as Record<string, unknown>).kidSnapshot)
   );
+}
+
+function resolveEnrollmentStudentName(enrollment: Enrollment, summary?: EnrollmentSummary | null): string {
+  return (
+    resolveEnrollmentSnapshotName(enrollment) ||
+    readName(summary?.studentName) ||
+    'Student name pending'
+  );
+}
+
+function resolveEnrollmentCourseLabel(enrollment: Enrollment, summary?: EnrollmentSummary | null): string {
+  return (
+    readName(enrollment.courseName) ||
+    readName(enrollment.courseLabel) ||
+    readName(summary?.courseName) ||
+    titleCaseFromId(enrollment.courseId || summary?.courseId)
+  );
+}
+
+function resolveEnrollmentDedupKey(enrollment: Enrollment): string {
+  return (
+    readName(enrollment.id) ||
+    readName(enrollment.enrollmentId) ||
+    readName(enrollment.kidId) ||
+    readName(enrollment.childId) ||
+    readName(enrollment.studentId) ||
+    `${readName(enrollment.courseId)}::${resolveEnrollmentStudentName(enrollment)}`
+  );
+}
+
+async function fetchTeacherEnrollments(teacherId: string): Promise<TeacherAliasQueryResult<Enrollment>> {
+  const base = collection(db, 'enrollments');
+  const settled = await Promise.allSettled(
+    TEACHER_ENROLLMENT_ALIAS_FIELDS.map(async ({ field, operator }) => ({
+      alias: field,
+      snap: await getDocs(query(base, where(field, operator, teacherId))),
+    })),
+  );
+
+  const deniedAliases: TeacherAliasField[] = [];
+  const merged = new Map<string, Enrollment>();
+  let successCount = 0;
+  let firstError: unknown = null;
+
+  settled.forEach((result, index) => {
+    const alias = TEACHER_ENROLLMENT_ALIAS_FIELDS[index].field;
+
+    if (result.status === 'fulfilled') {
+      successCount += 1;
+      result.value.snap.docs.forEach((docSnap) => {
+        const data = { id: docSnap.id, ...(docSnap.data() as any) } as Enrollment;
+        if (!normalizeTeacherIds(data as Record<string, unknown>).includes(teacherId)) return;
+        const dedupeKey = resolveEnrollmentDedupKey(data);
+        merged.set(dedupeKey, { ...merged.get(dedupeKey), ...data });
+      });
+      return;
+    }
+
+    firstError ??= result.reason;
+    if (isPermissionDeniedError(result.reason)) deniedAliases.push(alias);
+
+    devLogMyStudents('info', 'enrollment alias query skipped', {
+      alias,
+      code: (result.reason as QueryError | undefined)?.code || null,
+      error: result.reason instanceof Error ? result.reason.message : String(result.reason),
+    });
+  });
+
+  if (successCount === 0) {
+    if (deniedAliases.length > 0) {
+      throw createPermissionDeniedError('Unable to load students due to permissions');
+    }
+    throw (firstError as Error) || new Error('Unable to load students.');
+  }
+
+  if (deniedAliases.length > 0) {
+    devLogMyStudents('info', 'partial enrollment alias permissions', {
+      deniedAliases,
+      visibleRows: merged.size,
+    });
+  } else {
+    devLogMyStudents('debug', 'loaded enrollment aliases', {
+      teacherId,
+      rows: merged.size,
+    });
+  }
+
+  return { rows: Array.from(merged.values()), deniedAliases };
+}
+
+async function fetchTeacherSessionsWindow(teacherId: string): Promise<TeacherAliasQueryResult<ClassSession>> {
+  const now = Date.now();
+  const start = Timestamp.fromMillis(now - WINDOW_DAYS * 24 * 60 * 60 * 1000);
+  const end = Timestamp.fromMillis(now + WINDOW_DAYS * 24 * 60 * 60 * 1000);
+  const startMs = start.toMillis();
+  const endMs = end.toMillis();
+  const base = collection(db, 'classSessions');
+
+  const settled = await Promise.allSettled(
+    TEACHER_SESSION_ALIAS_FIELDS.map(async ({ field, operator }) => {
+      const loadRangeQuery = () =>
+        getDocs(query(base, where(field, operator, teacherId), where('startAt', '>=', start), where('startAt', '<=', end)));
+      const loadFallbackQuery = () => getDocs(query(base, where(field, operator, teacherId)));
+
+      try {
+        return { alias: field, snap: await loadRangeQuery() };
+      } catch (error) {
+        if (!isIndexError(error)) throw error;
+
+        devLogMyStudents('info', 'falling back to alias-only classSessions query', {
+          alias: field,
+          code: (error as QueryError | undefined)?.code || null,
+          error: error instanceof Error ? error.message : String(error),
+        });
+
+        return { alias: field, snap: await loadFallbackQuery() };
+      }
+    }),
+  );
+
+  const deniedAliases: TeacherAliasField[] = [];
+  const merged = new Map<string, ClassSession>();
+  let successCount = 0;
+  let firstError: unknown = null;
+
+  settled.forEach((result, index) => {
+    const alias = TEACHER_SESSION_ALIAS_FIELDS[index].field;
+
+    if (result.status === 'fulfilled') {
+      successCount += 1;
+      result.value.snap.docs.forEach((docSnap) => {
+        const data = { id: docSnap.id, ...(docSnap.data() as any) } as ClassSession;
+        if (!normalizeTeacherIds(data as Record<string, unknown>).includes(teacherId)) return;
+        const startAtMs = toMillis(data.startAt);
+        if (!startAtMs || startAtMs < startMs || startAtMs > endMs) return;
+        merged.set(docSnap.id, data);
+      });
+      return;
+    }
+
+    firstError ??= result.reason;
+    if (isPermissionDeniedError(result.reason)) deniedAliases.push(alias);
+
+    devLogMyStudents('info', 'classSessions alias query skipped', {
+      alias,
+      code: (result.reason as QueryError | undefined)?.code || null,
+      error: result.reason instanceof Error ? result.reason.message : String(result.reason),
+    });
+  });
+
+  if (successCount === 0) {
+    if (deniedAliases.length > 0) {
+      throw createPermissionDeniedError('Unable to load session history due to permissions');
+    }
+    throw (firstError as Error) || new Error('Unable to load session history.');
+  }
+
+  if (deniedAliases.length > 0) {
+    devLogMyStudents('info', 'partial classSessions alias permissions', {
+      deniedAliases,
+      visibleRows: merged.size,
+    });
+  } else {
+    devLogMyStudents('debug', 'loaded classSessions aliases', {
+      teacherId,
+      rows: merged.size,
+    });
+  }
+
+  return { rows: Array.from(merged.values()), deniedAliases };
 }
 
 export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState<'active' | 'past'>('active');
 
@@ -166,26 +443,12 @@ export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
     queryKey: ['teacherEnrollments', teacherId],
     enabled: Boolean(teacherId),
     staleTime: 0,
+    retry: false,
     refetchOnWindowFocus: false,
     refetchOnMount: 'always',
-    queryFn: async (): Promise<Enrollment[]> => {
-      if (!teacherId) return [];
-      const [byTeacherId, byTeacherIds, byAssignedTeacher, byPrimaryTeacher, byTeacherUid, byLegacyTeacherId] = await Promise.all([
-        getDocs(query(collection(db, 'enrollments'), where('teacherId', '==', teacherId))),
-        getDocs(query(collection(db, 'enrollments'), where('teacherIds', 'array-contains', teacherId))),
-        getDocs(query(collection(db, 'enrollments'), where('assignedTeacherId', '==', teacherId))),
-        getDocs(query(collection(db, 'enrollments'), where('primaryTeacherId', '==', teacherId))),
-        getDocs(query(collection(db, 'enrollments'), where('teacherUid', '==', teacherId))),
-        getDocs(query(collection(db, 'enrollments'), where('teacher_id', '==', teacherId))),
-      ]);
-      const merged = new Map<string, Enrollment>();
-      [...byTeacherId.docs, ...byTeacherIds.docs, ...byAssignedTeacher.docs, ...byPrimaryTeacher.docs, ...byTeacherUid.docs, ...byLegacyTeacherId.docs].forEach((docSnap) => {
-        const data = { id: docSnap.id, ...(docSnap.data() as any) } as Enrollment;
-        if (normalizeTeacherIds(data as unknown as Record<string, unknown>).includes(teacherId)) {
-          merged.set(docSnap.id, data);
-        }
-      });
-      return Array.from(merged.values());
+    queryFn: async (): Promise<TeacherAliasQueryResult<Enrollment>> => {
+      if (!teacherId) return { rows: [], deniedAliases: [] };
+      return fetchTeacherEnrollments(teacherId);
     },
   });
 
@@ -193,162 +456,52 @@ export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
     queryKey: ['teacherSessionsWindow', teacherId],
     enabled: Boolean(teacherId),
     staleTime: 0,
+    retry: false,
     refetchOnWindowFocus: false,
     refetchOnMount: 'always',
-    queryFn: async (): Promise<ClassSession[]> => {
-      if (!teacherId) return [];
-      const now = Date.now();
-      const start = Timestamp.fromMillis(now - WINDOW_DAYS * 24 * 60 * 60 * 1000);
-      const end = Timestamp.fromMillis(now + WINDOW_DAYS * 24 * 60 * 60 * 1000);
-
-      const base = collection(db, 'classSessions');
-      try {
-        const [byTeacherId, byTeacherIds, byAssignedTeacher, byPrimaryTeacher, byTeacherUid, byLegacyTeacherId] = await Promise.all([
-          getDocs(query(base, where('teacherId', '==', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
-          getDocs(query(base, where('teacherIds', 'array-contains', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
-          getDocs(query(base, where('assignedTeacherId', '==', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
-          getDocs(query(base, where('primaryTeacherId', '==', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
-          getDocs(query(base, where('teacherUid', '==', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
-          getDocs(query(base, where('teacher_id', '==', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
-        ]);
-        const merged = new Map<string, ClassSession>();
-        [...byTeacherId.docs, ...byTeacherIds.docs, ...byAssignedTeacher.docs, ...byPrimaryTeacher.docs, ...byTeacherUid.docs, ...byLegacyTeacherId.docs].forEach((docSnap) => {
-          const data = { id: docSnap.id, ...(docSnap.data() as any) } as ClassSession;
-          if (!normalizeTeacherIds(data as unknown as Record<string, unknown>).includes(teacherId)) return;
-          const startAtMs = toMillis(data.startAt);
-          if (startAtMs < start.toMillis() || startAtMs > end.toMillis()) return;
-          merged.set(docSnap.id, data);
-        });
-        return Array.from(merged.values());
-      } catch (err: any) {
-        const message = String(err?.message || '');
-        if (
-          err?.code === 'failed-precondition' ||
-          /requires an index|index is currently building/i.test(message)
-        ) {
-          const fallbackSnaps = await Promise.all([
-            getDocs(query(base, where('teacherId', '==', teacherId))),
-            getDocs(query(base, where('teacherIds', 'array-contains', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
-            getDocs(query(base, where('assignedTeacherId', '==', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
-            getDocs(query(base, where('primaryTeacherId', '==', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
-            getDocs(query(base, where('teacherUid', '==', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
-            getDocs(query(base, where('teacher_id', '==', teacherId), where('startAt', '>=', start), where('startAt', '<=', end))),
-          ]);
-          const all = Array.from(
-            fallbackSnaps.reduce((map, snap) => {
-              snap.docs.forEach((docSnap) => {
-                const data = { id: docSnap.id, ...(docSnap.data() as any) } as ClassSession;
-                if (normalizeTeacherIds(data as unknown as Record<string, unknown>).includes(teacherId)) {
-                  map.set(docSnap.id, data);
-                }
-              });
-              return map;
-            }, new Map<string, ClassSession>()).values(),
-          );
-          return all.filter((session) => {
-            const startAt = toMillis(session.startAt);
-            return startAt >= start.toMillis() && startAt <= end.toMillis();
-          });
-        }
-        throw err;
-      }
+    queryFn: async (): Promise<TeacherAliasQueryResult<ClassSession>> => {
+      if (!teacherId) return { rows: [], deniedAliases: [] };
+      return fetchTeacherSessionsWindow(teacherId);
     },
   });
 
   const enrollmentRows = useMemo(() => {
-    const rows = (enrollmentsQuery.data ?? []) as Enrollment[];
-    return rows.map((enr) => {
-      const resolvedKidId = enr.kidId || enr.studentId || (enr.kidIds && enr.kidIds[0]) || null;
-      return { ...enr, resolvedKidId };
-    });
+    const rows = (enrollmentsQuery.data?.rows ?? []) as Enrollment[];
+    return rows.map((enrollment) => ({
+      ...enrollment,
+      resolvedEntityId: resolveEnrollmentEntityId(enrollment),
+    }));
   }, [enrollmentsQuery.data]);
 
-  const enrollmentKidIds = useMemo(() => {
-    const ids = new Set<string>();
-    enrollmentRows.forEach((enr) => {
-      if (enr.resolvedKidId) ids.add(enr.resolvedKidId);
-    });
-    return Array.from(ids);
-  }, [enrollmentRows]);
-
-  const kidsQuery = useQuery({
-    queryKey: ['teacherEnrollmentKids', teacherId, enrollmentKidIds.join('|')],
-    enabled: Boolean(teacherId) && enrollmentKidIds.length > 0,
-    staleTime: 0,
-    refetchOnWindowFocus: false,
-    refetchOnMount: 'always',
-    queryFn: async (): Promise<Kid[]> => {
-      if (!teacherId || enrollmentKidIds.length === 0) return [];
-      const kidsCol = collection(db, 'kids');
-      const chunks: string[][] = [];
-      for (let i = 0; i < enrollmentKidIds.length; i += 10) {
-        chunks.push(enrollmentKidIds.slice(i, i + 10));
-      }
-      const results = new Map<string, Kid>();
-      await Promise.all(
-        chunks.map(async (chunk) => {
-          const snap = await getDocs(query(kidsCol, where(documentId(), 'in', chunk)));
-          snap.docs.forEach((d) => results.set(d.id, { id: d.id, ...(d.data() as any) }));
-        }),
-      );
-      return Array.from(results.values());
-    },
-  });
-
-  const courseIds = useMemo(() => {
-    const ids = new Set<string>();
-    enrollmentRows.forEach((enr) => {
-      if (enr.courseId) ids.add(enr.courseId);
-    });
-    return Array.from(ids);
-  }, [enrollmentRows]);
-
-  const coursesQuery = useQuery({
-    queryKey: ['teacherEnrollmentCourses', courseIds.join('|')],
-    enabled: courseIds.length > 0,
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: 'always',
-    queryFn: async (): Promise<Course[]> => {
-      if (courseIds.length === 0) return [];
-      const coursesCol = collection(db, 'courses');
-      const chunks: string[][] = [];
-      for (let i = 0; i < courseIds.length; i += 10) {
-        chunks.push(courseIds.slice(i, i + 10));
-      }
-      const results = new Map<string, Course>();
-      await Promise.all(
-        chunks.map(async (chunk) => {
-          const snap = await getDocs(query(coursesCol, where(documentId(), 'in', chunk)));
-          snap.docs.forEach((d) => results.set(d.id, { id: d.id, ...(d.data() as any) }));
-        }),
-      );
-      return Array.from(results.values());
-    },
-  });
-
   const summaries = useMemo(() => {
-    const sessions = (sessionsQuery.data ?? []) as ClassSession[];
+    const sessions = (sessionsQuery.data?.rows ?? []) as ClassSession[];
     const now = Date.now();
     const byEnrollment = new Map<string, EnrollmentSummary>();
-    const byKidCourse = new Map<string, EnrollmentSummary>();
+    const byEntityCourse = new Map<string, EnrollmentSummary>();
 
     sessions.forEach((session) => {
-      const kidId = session.kidIds?.[0] || session.kidId;
-      const courseId = session.courseId;
-      const enrollmentId = session.enrollmentId;
-      if (!kidId) return;
-
-      const startAt = toMillis(session.startAt);
-      const status = String(session.status || '').toLowerCase();
-      const key = `${kidId}__${courseId || ''}`;
+      const entityId = extractEntityIds(session as Record<string, unknown>)[0] || null;
+      const courseId = readName(session.courseId);
+      const enrollmentId = readName(session.enrollmentId);
+      const key = entityId ? `${entityId}__${courseId}` : '';
 
       const updateSummary = (summary: EnrollmentSummary) => {
+        const startAt = toMillis(session.startAt);
+        const status = normalizeStatus(session.status);
+        const sessionName = resolveSessionStudentName(session);
+        const sessionCourseName =
+          readName(session.courseName) ||
+          readName(session.courseLabel) ||
+          titleCaseFromId(session.courseId);
+
         summary.totalSessions += 1;
         if (status === 'completed') summary.completedCount += 1;
         if (status === 'cancelled' || status === 'canceled' || status === 'no_show') {
           summary.cancelledCount += 1;
         }
+        if (!summary.studentName && sessionName) summary.studentName = sessionName;
+        if (!summary.courseName && sessionCourseName) summary.courseName = sessionCourseName;
+
         if (startAt >= now) {
           const currentNext = summary.nextSession ? toMillis(summary.nextSession.startAt) : Infinity;
           if (startAt < currentNext) summary.nextSession = session;
@@ -361,7 +514,7 @@ export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
       if (enrollmentId) {
         const existing = byEnrollment.get(enrollmentId) || {
           enrollmentId,
-          kidId,
+          entityId,
           courseId,
           totalSessions: 0,
           completedCount: 0,
@@ -373,70 +526,65 @@ export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
         byEnrollment.set(enrollmentId, existing);
       }
 
-      const existingFallback = byKidCourse.get(key) || {
-        enrollmentId: key,
-        kidId,
-        courseId,
-        totalSessions: 0,
-        completedCount: 0,
-        cancelledCount: 0,
-        nextSession: null,
-        lastSession: null,
-      };
-      updateSummary(existingFallback);
-      byKidCourse.set(key, existingFallback);
+      if (key) {
+        const existingFallback = byEntityCourse.get(key) || {
+          enrollmentId: key,
+          entityId,
+          courseId,
+          totalSessions: 0,
+          completedCount: 0,
+          cancelledCount: 0,
+          nextSession: null,
+          lastSession: null,
+        };
+        updateSummary(existingFallback);
+        byEntityCourse.set(key, existingFallback);
+      }
     });
 
-    return { byEnrollment, byKidCourse };
+    return { byEnrollment, byEntityCourse };
   }, [sessionsQuery.data]);
-
-  const kidsMap = useMemo(() => {
-    const map = new Map<string, Kid>();
-    (kidsQuery.data ?? []).forEach((kid) => map.set(kid.id, kid as Kid));
-    return map;
-  }, [kidsQuery.data]);
-
-  const coursesMap = useMemo(() => {
-    const map = new Map<string, Course>();
-    (coursesQuery.data ?? []).forEach((course) => map.set(course.id, course as Course));
-    return map;
-  }, [coursesQuery.data]);
 
   const filteredEnrollments = useMemo(() => {
     const term = search.trim().toLowerCase();
-    return enrollmentRows.filter((enr) => {
-      const status = normalizeStatus(enr.status);
-      const isPast = PAST_STATUSES.has(status);
-      const isActive = ACTIVE_STATUSES.has(status) || status === '' || (!isPast && !ACTIVE_STATUSES.has(status));
 
-      if (!enr.resolvedKidId) return false;
-      const kid = kidsMap.get(enr.resolvedKidId);
-      const kidStatus = normalizeStatus(kid?.status);
-      const isArchived = Boolean(kidStatus && ARCHIVED_KID_STATUSES.has(kidStatus));
-      if (tab === 'active' && (isArchived || !isActive)) return false;
-      if (tab === 'past' && !isArchived && !isPast) return false;
+    return enrollmentRows.filter((enrollment) => {
+      const status = normalizeEnrollmentStatus(enrollment.status);
+      const isActive = isEnrollmentOperationallyActive(enrollment as Record<string, unknown>);
+      const isPast = !isActive;
+
+      if (tab === 'active' && !isActive) return false;
+      if (tab === 'past' && !isPast) return false;
 
       if (!term) return true;
-      const courseLabel =
-        enr.courseLabel ||
-        enr.courseName ||
-        coursesMap.get(enr.courseId || '')?.label ||
-        coursesMap.get(enr.courseId || '')?.name ||
-        coursesMap.get(enr.courseId || '')?.title ||
-        titleCaseFromId(enr.courseId);
-      const name = resolveEnrollmentStudentName(enr, kid).toLowerCase();
-      return name.includes(term) || courseLabel.toLowerCase().includes(term);
+
+      const summary =
+        summaries.byEnrollment.get(enrollment.id) ||
+        (enrollment.resolvedEntityId
+          ? summaries.byEntityCourse.get(`${enrollment.resolvedEntityId}__${readName(enrollment.courseId)}`)
+          : null);
+
+      const name = resolveEnrollmentStudentName(enrollment, summary).toLowerCase();
+      const courseLabel = resolveEnrollmentCourseLabel(enrollment, summary).toLowerCase();
+      const parentName = readName(enrollment.parentName).toLowerCase();
+
+      return name.includes(term) || courseLabel.includes(term) || parentName.includes(term);
     });
-  }, [enrollmentRows, kidsMap, coursesMap, search, tab]);
+  }, [enrollmentRows, search, summaries, tab]);
 
   const devWarnings = useMemo(() => {
-    if (!import.meta.env.DEV) return null;
-    const missingKidId = enrollmentRows.filter((enr) => !enr.resolvedKidId).length;
-    const missingKid = enrollmentRows.filter((enr) => enr.resolvedKidId && !kidsMap.has(enr.resolvedKidId)).length;
-    const missingCourse = enrollmentRows.filter((enr) => !enr.courseId).length;
-    if (missingKidId === 0 && missingKid === 0 && missingCourse === 0) return null;
-    return { missingKidId, missingKid, missingCourse };
-  }, [enrollmentRows, kidsMap]);
+    if (!import.meta.env.DEV || user?.role !== 'admin') return null;
+    const missingEntityId = enrollmentRows.filter((enrollment) => !enrollment.resolvedEntityId).length;
+    const missingStudentName = enrollmentRows.filter((enrollment) => !resolveEnrollmentSnapshotName(enrollment)).length;
+    const missingCourseId = enrollmentRows.filter((enrollment) => !readName(enrollment.courseId)).length;
+
+    if (missingEntityId === 0 && missingStudentName === 0 && missingCourseId === 0) return null;
+    return { missingEntityId, missingStudentName, missingCourseId };
+  }, [enrollmentRows, user?.role]);
+
+  const studentsPermissionDenied = isPermissionDeniedError(enrollmentsQuery.error);
+  const sessionsPermissionDenied = isPermissionDeniedError(sessionsQuery.error);
+  const isLoading = enrollmentsQuery.isLoading || sessionsQuery.isLoading;
 
   return (
     <div className="space-y-4">
@@ -489,15 +637,25 @@ export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
 
       {import.meta.env.DEV && devWarnings ? (
         <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-          {devWarnings.missingKidId > 0 ? `Enrollments missing kidId: ${devWarnings.missingKidId}. ` : ''}
-          {devWarnings.missingKid > 0 ? `Enrollments missing kid docs: ${devWarnings.missingKid}. ` : ''}
-          {devWarnings.missingCourse > 0 ? `Enrollments missing courseId: ${devWarnings.missingCourse}.` : ''}
+          {devWarnings.missingEntityId > 0 ? `Enrollments missing entity id: ${devWarnings.missingEntityId}. ` : ''}
+          {devWarnings.missingStudentName > 0 ? `Enrollments missing snapshot name: ${devWarnings.missingStudentName}. ` : ''}
+          {devWarnings.missingCourseId > 0 ? `Enrollments missing courseId: ${devWarnings.missingCourseId}.` : ''}
         </div>
       ) : null}
 
-      {enrollmentsQuery.isLoading || kidsQuery.isLoading ? (
+      {sessionsPermissionDenied ? (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          Session history unavailable due to permissions.
+        </div>
+      ) : null}
+
+      {isLoading ? (
         <Card className="p-6">
           <div className="text-sm text-gray-600">Loading students...</div>
+        </Card>
+      ) : studentsPermissionDenied ? (
+        <Card className="p-6">
+          <div className="text-sm text-gray-600">Unable to load students due to permissions</div>
         </Card>
       ) : filteredEnrollments.length === 0 ? (
         <Card className="p-6">
@@ -521,27 +679,22 @@ export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
                 </div>
               </div>
 
-              {filteredEnrollments.map((enr) => {
-                const kid = enr.resolvedKidId ? kidsMap.get(enr.resolvedKidId) : undefined;
-                const name = resolveEnrollmentStudentName(enr, kid);
-                const status = normalizeStatus(enr.status);
-                const isPast = PAST_STATUSES.has(status);
-                const statusLabel = isPast ? 'Past' : 'Active';
-                const rawStatus = status || 'active';
-                const isUnknownStatus = !ACTIVE_STATUSES.has(status) && !PAST_STATUSES.has(status) && status !== '';
-                const kidStatus = normalizeStatus(kid?.status);
-                const isArchived = Boolean(kidStatus && ARCHIVED_KID_STATUSES.has(kidStatus));
-                const courseLabel =
-                  enr.courseLabel ||
-                  enr.courseName ||
-                  coursesMap.get(enr.courseId || '')?.label ||
-                  coursesMap.get(enr.courseId || '')?.name ||
-                  coursesMap.get(enr.courseId || '')?.title ||
-                  titleCaseFromId(enr.courseId);
+              {filteredEnrollments.map((enrollment) => {
                 const summary =
-                  (enr.id && summaries.byEnrollment.get(enr.id)) ||
-                  (enr.resolvedKidId && summaries.byKidCourse.get(`${enr.resolvedKidId}__${enr.courseId || ''}`)) ||
-                  null;
+                  summaries.byEnrollment.get(enrollment.id) ||
+                  (enrollment.resolvedEntityId
+                    ? summaries.byEntityCourse.get(`${enrollment.resolvedEntityId}__${readName(enrollment.courseId)}`)
+                    : null);
+                const name = resolveEnrollmentStudentName(enrollment, summary);
+                const parentName = readName(enrollment.parentName);
+                const status = normalizeEnrollmentStatus(enrollment.status);
+                const isPast = !isEnrollmentOperationallyActive(enrollment as Record<string, unknown>);
+                const statusLabel = isPast ? 'Past' : 'Active';
+                const rawStatus = enrollment.archived === true || Boolean(enrollment.archivedAt) || enrollment.isArchived === true
+                  ? 'archived'
+                  : status || 'active';
+                const isUnknownStatus = !ACTIVE_STATUSES.has(status) && !PAST_STATUSES.has(status) && status !== '';
+                const courseLabel = resolveEnrollmentCourseLabel(enrollment, summary);
                 const nextLabel = summary?.nextSession
                   ? formatDateTime(summary.nextSession.startAt)
                   : 'No upcoming class';
@@ -550,22 +703,25 @@ export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
                   : 'Getting started';
 
                 return (
-                  <div key={enr.id} className="border-b border-slate-100 px-4 py-3 last:border-b-0 hover:bg-slate-50/40">
+                  <div key={enrollment.id} className="border-b border-slate-100 px-4 py-3 last:border-b-0 hover:bg-slate-50/40">
                     <div className="grid grid-cols-[1.2fr_1fr_0.9fr_1fr_1fr_1fr_240px] items-center gap-3">
                       <div className="min-w-0">
                         <div className="truncate text-sm font-semibold text-slate-900">{name}</div>
                         <div className="text-xs uppercase tracking-wide text-slate-400">{rawStatus}</div>
+                        {parentName ? (
+                          <div className="truncate text-xs text-slate-500">Parent: {parentName}</div>
+                        ) : null}
                       </div>
 
                       <div className="min-w-0 truncate text-sm text-slate-800">{courseLabel}</div>
 
                       <div className="min-w-0">
                         <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
-                          isArchived || isPast
+                          isPast
                             ? 'bg-slate-100 text-slate-700'
                             : 'bg-emerald-100 text-emerald-700'
                         }`}>
-                          {isArchived ? 'Past' : statusLabel}
+                          {statusLabel}
                         </span>
                         {isUnknownStatus ? (
                           <div className="mt-1 text-[11px] font-semibold text-amber-600">Unknown</div>
@@ -593,12 +749,12 @@ export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
                           variant="outline"
                           onClick={() =>
                             navigate(
-                              `/teacher/students/${enr.resolvedKidId}/topic-progress?from=students&tab=topic${
-                                enr.courseId ? `&courseId=${encodeURIComponent(enr.courseId)}` : ''
-                              }&enrollmentId=${encodeURIComponent(enr.id)}`
+                              `/teacher/students/${enrollment.resolvedEntityId}/topic-progress?from=students&tab=topic${
+                                enrollment.courseId ? `&courseId=${encodeURIComponent(enrollment.courseId)}` : ''
+                              }&enrollmentId=${encodeURIComponent(enrollment.id)}`
                             )
                           }
-                          disabled={!enr.resolvedKidId}
+                          disabled={!enrollment.resolvedEntityId}
                         >
                           Open Topics
                         </Button>
