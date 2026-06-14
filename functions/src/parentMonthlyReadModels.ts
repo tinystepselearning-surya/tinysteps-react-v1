@@ -1,7 +1,8 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
-import { normalizeFinancialStatus, normalizeSessionStatus } from './helpers/status';
+import { normalizeSessionStatus } from './helpers/status';
+import { buildParentMonthlyBillingReadModel } from './parentMonthlyBillingReadModel';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -42,6 +43,8 @@ function normalizeParentId(value: unknown): string {
 
 function resolveMonthKey(data: Record<string, unknown> | null | undefined): string | null {
   if (!data) return null;
+  const receiptMonthKey = String(data.receiptMonthKey || '').trim();
+  if (/^\d{4}-\d{2}$/.test(receiptMonthKey)) return receiptMonthKey;
   const rawMonth = String(data.monthKey || '').trim();
   if (/^\d{4}-\d{2}$/.test(rawMonth)) return rawMonth;
   return monthKeyFromDateIST(
@@ -56,6 +59,36 @@ function toTarget(data: Record<string, unknown> | null | undefined): ParentMonth
   const monthKey = resolveMonthKey(data);
   if (!parentId || !monthKey) return null;
   return { parentId, monthKey };
+}
+
+export function collectParentMonthlyBillingTargets(
+  beforeData: Record<string, unknown> | null,
+  afterData: Record<string, unknown> | null
+): ParentMonthTarget[] {
+  const targets = new Map<string, ParentMonthTarget>();
+  const addTarget = (target: ParentMonthTarget | null) => {
+    if (!target) return;
+    targets.set(`${target.parentId}__${target.monthKey}`, target);
+  };
+  const addAllocationTargets = (record: Record<string, unknown> | null) => {
+    const parentId = normalizeParentId(record?.parentId);
+    if (!parentId) return;
+    const allocations = Array.isArray(record?.allocations) ? record.allocations : [];
+    allocations.forEach((raw) => {
+      if (!raw || typeof raw !== 'object') return;
+      const row = raw as Record<string, unknown>;
+      const monthKey =
+        String(row.monthKey || row.chargeMonthKey || '').trim();
+      if (!/^\d{4}-\d{2}$/.test(monthKey)) return;
+      addTarget({ parentId, monthKey });
+    });
+  };
+
+  addTarget(toTarget(beforeData));
+  addTarget(toTarget(afterData));
+  addAllocationTargets(beforeData);
+  addAllocationTargets(afterData);
+  return Array.from(targets.values());
 }
 
 function sanitizeKidId(value: unknown): string {
@@ -273,145 +306,32 @@ async function recomputeParentMonthAttendanceReadModel(
   );
 }
 
-function resolveChargePaidAmount(charge: Record<string, unknown>, amount: number): number {
-  const paidRaw = normalizeAmount(charge.paidAmount);
-  if (paidRaw > 0) return Math.min(Math.max(paidRaw, 0), Math.max(amount, 0));
-  const status = normalizeFinancialStatus(charge.status);
-  if (status === 'paid') return Math.max(amount, 0);
-  return 0;
-}
-
-async function recomputeParentMonthBillingReadModel(
+export async function recomputeParentMonthBillingReadModel(
   db: admin.firestore.Firestore,
   parentId: string,
   monthKey: string
 ): Promise<void> {
-  const [chargesSnap, paymentsSnap] = await Promise.all([
+  const [chargesSnap, walletSnap] = await Promise.all([
     db.collection('billingCharges')
       .where('parentId', '==', parentId)
       .where('monthKey', '==', monthKey)
       .get(),
-    db.collection('payments')
-      .where('parentId', '==', parentId)
-      .where('monthKey', '==', monthKey)
-      .get(),
+    db.collection('parentWallets').doc(parentId).get(),
   ]);
   const activeChargeDocs = chargesSnap.docs.filter((docSnap) => {
     const data = (docSnap.data() || {}) as Record<string, unknown>;
     return data.archived !== true;
   });
-  const activePaymentDocs = paymentsSnap.docs.filter((docSnap) => {
-    const data = (docSnap.data() || {}) as Record<string, unknown>;
-    return data.archived !== true;
+  const walletBalance = normalizeAmount((walletSnap.data() || {}).currentBalance);
+  const billingModel = buildParentMonthlyBillingReadModel({
+    parentId,
+    monthKey,
+    walletBalance,
+    charges: activeChargeDocs.map((docSnap) => ({
+      id: docSnap.id,
+      ...((docSnap.data() || {}) as Record<string, unknown>),
+    })),
   });
-
-  const totals = {
-    chargesCount: 0,
-    billedAmount: 0,
-    paidAmountFromCharges: 0,
-    dueAmount: 0,
-    paymentsCount: 0,
-    paymentsTotal: 0,
-    paymentsApplied: 0,
-    paymentsUnapplied: 0,
-  };
-
-  const byKid = new Map<string, {
-    kidId: string;
-    chargesCount: number;
-    billedAmount: number;
-    paidAmountFromCharges: number;
-    dueAmount: number;
-    paymentsCount: number;
-    paymentsTotal: number;
-    paymentsApplied: number;
-    paymentsUnapplied: number;
-    lastPaymentAtMs: number | null;
-  }>();
-
-  const getKidBucket = (kidId: string) => {
-    const key = sanitizeKidId(kidId);
-    let bucket = byKid.get(key);
-    if (!bucket) {
-      bucket = {
-        kidId: key,
-        chargesCount: 0,
-        billedAmount: 0,
-        paidAmountFromCharges: 0,
-        dueAmount: 0,
-        paymentsCount: 0,
-        paymentsTotal: 0,
-        paymentsApplied: 0,
-        paymentsUnapplied: 0,
-        lastPaymentAtMs: null,
-      };
-      byKid.set(key, bucket);
-    }
-    return bucket;
-  };
-
-  activeChargeDocs.forEach((docSnap) => {
-    const charge = (docSnap.data() || {}) as Record<string, unknown>;
-    const status = normalizeFinancialStatus(charge.status);
-    if (status === 'void') return;
-    const amount = Math.max(normalizeAmount(charge.amount), 0);
-    if (amount <= 0) return;
-    const paidAmount = resolveChargePaidAmount(charge, amount);
-    const dueAmount = Math.max(amount - paidAmount, 0);
-    const kidId = sanitizeKidId(charge.kidId);
-    const bucket = getKidBucket(kidId);
-
-    totals.chargesCount += 1;
-    totals.billedAmount += amount;
-    totals.paidAmountFromCharges += paidAmount;
-    totals.dueAmount += dueAmount;
-
-    bucket.chargesCount += 1;
-    bucket.billedAmount += amount;
-    bucket.paidAmountFromCharges += paidAmount;
-    bucket.dueAmount += dueAmount;
-  });
-
-  activePaymentDocs.forEach((docSnap) => {
-    const payment = (docSnap.data() || {}) as Record<string, unknown>;
-    const amount = normalizeAmount(payment.amount);
-    const appliedRaw = normalizeAmount(payment.appliedAmount);
-    const unappliedRaw = normalizeAmount(payment.unappliedAmount);
-    const applied =
-      Number.isFinite(Number(payment.appliedAmount)) ? appliedRaw : amount - unappliedRaw;
-    const unapplied =
-      Number.isFinite(Number(payment.unappliedAmount)) ? unappliedRaw : amount - applied;
-    const paidAtMs = toDate(payment.paidAt || payment.createdAt)?.getTime() || null;
-    const kidId = sanitizeKidId(payment.kidId);
-    const bucket = getKidBucket(kidId);
-
-    totals.paymentsCount += 1;
-    totals.paymentsTotal += amount;
-    totals.paymentsApplied += applied;
-    totals.paymentsUnapplied += unapplied;
-
-    bucket.paymentsCount += 1;
-    bucket.paymentsTotal += amount;
-    bucket.paymentsApplied += applied;
-    bucket.paymentsUnapplied += unapplied;
-    if (paidAtMs && (!bucket.lastPaymentAtMs || paidAtMs > bucket.lastPaymentAtMs)) {
-      bucket.lastPaymentAtMs = paidAtMs;
-    }
-  });
-
-  const byKidObject: Record<string, Record<string, unknown>> = {};
-  for (const [kidId, bucket] of byKid.entries()) {
-    byKidObject[kidId] = {
-      ...bucket,
-      // Keep client payload compact but deterministic.
-      billedAmount: Math.round(bucket.billedAmount),
-      paidAmountFromCharges: Math.round(bucket.paidAmountFromCharges),
-      dueAmount: Math.round(bucket.dueAmount),
-      paymentsTotal: Math.round(bucket.paymentsTotal),
-      paymentsApplied: Math.round(bucket.paymentsApplied),
-      paymentsUnapplied: Math.round(bucket.paymentsUnapplied),
-    };
-  }
 
   const docRef = db
     .collection('parentMonthlyReadModels')
@@ -423,21 +343,27 @@ async function recomputeParentMonthBillingReadModel(
     {
       parentId,
       monthKey,
-      schemaVersion: 1,
-      modelType: 'billing_v1',
+      schemaVersion: billingModel.schemaVersion,
+      modelType: billingModel.modelType,
+      allocationAware: billingModel.allocationAware,
+      computedFrom: billingModel.computedFrom,
       refreshedAt: admin.firestore.FieldValue.serverTimestamp(),
-      generatedAtMs: Date.now(),
-      totals: {
-        chargesCount: totals.chargesCount,
-        billedAmount: Math.round(totals.billedAmount),
-        paidAmountFromCharges: Math.round(totals.paidAmountFromCharges),
-        dueAmount: Math.round(totals.dueAmount),
-        paymentsCount: totals.paymentsCount,
-        paymentsTotal: Math.round(totals.paymentsTotal),
-        paymentsApplied: Math.round(totals.paymentsApplied),
-        paymentsUnapplied: Math.round(totals.paymentsUnapplied),
-      },
-      byKid: byKidObject,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      generatedAtMs: billingModel.generatedAtMs,
+      billedAmount: billingModel.billedAmount,
+      billedClassCount: billingModel.billedClassCount,
+      settledAmount: billingModel.settledAmount,
+      appliedAmount: billingModel.appliedAmount,
+      outstandingAmount: billingModel.outstandingAmount,
+      dueAmount: billingModel.dueAmount,
+      status: billingModel.status,
+      lastSettlementAtMs: billingModel.lastSettlementAtMs,
+      lastPaymentAtMs: billingModel.lastPaymentAtMs,
+      lastPaymentId: billingModel.lastPaymentId,
+      allocationRefs: billingModel.allocationRefs,
+      chargeIds: billingModel.chargeIds,
+      totals: billingModel.totals,
+      byKid: billingModel.byKid,
     },
     { merge: true }
   );
@@ -627,19 +553,11 @@ async function handleParentMonthProjectionUpdate(
   afterData: Record<string, unknown> | null,
   source: string
 ): Promise<void> {
-  const targets = new Map<string, ParentMonthTarget>();
-  const beforeTarget = toTarget(beforeData);
-  const afterTarget = toTarget(afterData);
-  if (beforeTarget) {
-    targets.set(`${beforeTarget.parentId}__${beforeTarget.monthKey}`, beforeTarget);
-  }
-  if (afterTarget) {
-    targets.set(`${afterTarget.parentId}__${afterTarget.monthKey}`, afterTarget);
-  }
-  if (targets.size === 0) return;
+  const targets = collectParentMonthlyBillingTargets(beforeData, afterData);
+  if (targets.length === 0) return;
 
   const db = admin.firestore();
-  for (const target of targets.values()) {
+  for (const target of targets) {
     await recomputeParentMonthBillingReadModel(db, target.parentId, target.monthKey);
     logger.debug('Refreshed parent monthly billing read model', {
       source,

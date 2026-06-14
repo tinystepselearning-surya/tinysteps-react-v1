@@ -14,6 +14,23 @@ import { httpsCallable } from 'firebase/functions';
 import jsPDF from 'jspdf';
 import { db, functions } from '../../lib/firebaseConfig';
 import { normalizeFinanceStatus } from '../../lib/statuses';
+import {
+  buildParentPaymentsReportingRow,
+  buildParentPaymentsSummaryCards,
+  type ParentMonthlyBillingReadModel,
+  type ParentPaymentsReportingRow,
+  resolveParentPaymentSettlementSummary,
+} from './parentPaymentsReporting';
+import {
+  DEFAULT_RECEIVE_PARENT_PAYMENT_ALLOCATION_MODE,
+  isSameReceiveParentPaymentPreviewInput,
+  isReceiveParentPaymentAllocationMode,
+  normalizeReceivePaymentAllocationRows,
+  RECEIVE_PARENT_PAYMENT_STALE_PREVIEW_MESSAGE,
+  receiveParentPaymentModeLabel,
+  type ReceiveParentPaymentAllocationMode,
+  type ReceiveParentPaymentPreviewInput,
+} from './parentPaymentReceive';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
 import { Button } from '@components/ui/button';
@@ -52,6 +69,8 @@ type WalletSummary = {
   currency?: string;
   lastUpdatedAt?: any;
 };
+
+type ParentWalletSummaryMap = Record<string, WalletSummary | null>;
 
 type WalletTransaction = {
   id: string;
@@ -140,8 +159,6 @@ type WalletAutomationConfigResult = {
   };
 };
 
-type ReceiveParentPaymentAllocationMode = 'legacy_then_wallet' | 'wallet_only';
-
 type ReceiveParentPaymentResult = {
   ok?: boolean;
   dryRun?: boolean;
@@ -150,9 +167,13 @@ type ReceiveParentPaymentResult = {
   idempotentReplay?: boolean;
   amountReceived?: number;
   allocationModeUsed?: ReceiveParentPaymentAllocationMode | string;
+  parentOutstandingBefore?: number;
   legacyOutstandingBefore?: number;
+  allocatedAmount?: number;
   appliedToLegacy?: number;
   walletTopupAmount?: number;
+  advanceAmount?: number;
+  unallocatedAmount?: number;
   remainingUnapplied?: number;
   chargesScanned?: number;
   chargesIncluded?: number;
@@ -162,16 +183,6 @@ type ReceiveParentPaymentResult = {
   walletBalanceAfter?: number;
   migratedByOpeningDeficit?: boolean;
   warnings?: string[];
-};
-
-type ReceiveParentPaymentPreviewInput = {
-  parentId: string;
-  amount: number;
-  paidAt: string;
-  method: string;
-  reference: string;
-  note: string;
-  allocationMode: ReceiveParentPaymentAllocationMode;
 };
 
 type ParentInvoiceNormalizedRow = {
@@ -209,6 +220,7 @@ type ParentInvoiceData = {
   parentId: string;
   parentName: string;
   generatedDateLabel: string;
+  invoicePeriodLabel: string;
   rows: ParentInvoiceNormalizedRow[];
   monthSections: InvoiceMonthSection[];
   studentNames: string[];
@@ -216,13 +228,24 @@ type ParentInvoiceData = {
   teacherNames: string[];
   totalCompletedClasses: number;
   totalClassCharges: number;
-  totalPaid: number;
-  balanceToCollect: number;
+  selectedMonthSettledAmount: number;
+  selectedMonthDueAmount: number;
+  settlementSourceLabel: 'Monthly read model' | 'Charge docs fallback';
   sessionTypeBreakdown: {
     regular: number;
     rescheduledOrMakeup: number;
     oneOff: number;
   };
+};
+
+type MonthlyChargeRow = {
+  parentId: string;
+  parentName: string;
+  classCharges: number;
+  receiptMonthPaymentsReceived: number;
+  chargesCount: number;
+  settledFromCharges: number;
+  dueFromCharges: number;
 };
 
 const PDF_LOGO_CANDIDATE_PATHS = [
@@ -500,16 +523,6 @@ const createReceiveParentPaymentRequestKey = (parentId: string) => {
 };
 
 const isMonthKeyLike = (value: string) => /^\d{4}-\d{2}$/.test(value.trim());
-
-const receiveParentPaymentModeLabel = (mode: any) => {
-  const normalized = String(mode || '').trim().toLowerCase();
-  if (normalized === 'wallet_only') return 'Wallet only';
-  if (normalized === 'legacy_then_wallet') return 'Legacy dues then wallet';
-  return normalized ? normalized.replace(/_/g, ' ') : '—';
-};
-
-const isAllocationMode = (value: string): value is ReceiveParentPaymentAllocationMode =>
-  value === 'legacy_then_wallet' || value === 'wallet_only';
 
 const formatDateYmd = (value: any) => {
   const dateOnly = normalizeDateOnlyYmd(value);
@@ -866,6 +879,42 @@ const walletTransactionTypeLabel = (value: any) => {
   return type ? type.replace(/_/g, ' ') : '—';
 };
 
+const resolveChargePaidAmount = (charge: any, amount: number) => {
+  const paidRaw = Number(charge?.paidAmount ?? 0);
+  if (Number.isFinite(paidRaw) && paidRaw > 0) {
+    return Math.min(Math.max(paidRaw, 0), Math.max(amount, 0));
+  }
+  const status = normalizeFinanceStatus(charge?.status);
+  if (status === 'paid') return Math.max(amount, 0);
+  return 0;
+};
+
+const parentPaymentStatusBadgeClassName = (statusLabel: ParentPaymentsReportingRow['statusLabel']) => {
+  if (statusLabel === 'Paid' || statusLabel === 'Advance') {
+    return 'bg-emerald-100 text-emerald-800';
+  }
+  if (statusLabel === 'Partial' || statusLabel === 'In Grace') {
+    return 'bg-amber-100 text-amber-800';
+  }
+  if (statusLabel === 'Current') {
+    return 'bg-slate-100 text-slate-700';
+  }
+  if (statusLabel === 'Overdue') {
+    return 'bg-rose-100 text-rose-800';
+  }
+  if (statusLabel === 'Wallet only') {
+    return 'bg-sky-100 text-sky-800';
+  }
+  return 'bg-slate-100 text-slate-700';
+};
+
+const followUpPrioritySortOrder: Record<ParentPaymentsReportingRow['followUpPriority'], number> = {
+  High: 0,
+  Medium: 1,
+  Low: 2,
+  None: 3,
+};
+
 const formatWalletTransactionAmount = (tx: WalletTransaction) => {
   const signed = Number(tx.signedAmount);
   if (Number.isFinite(signed)) {
@@ -896,7 +945,11 @@ export default function ParentPayments(): JSX.Element {
   const [selectedWalletParentId, setSelectedWalletParentId] = useState<string>('');
   const [selectedWalletParentName, setSelectedWalletParentName] = useState<string>('');
   const [walletSummary, setWalletSummary] = useState<WalletSummary | null>(null);
+  const [walletSummariesByParent, setWalletSummariesByParent] = useState<ParentWalletSummaryMap>({});
   const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>([]);
+  const [monthlyReadModelsByParent, setMonthlyReadModelsByParent] = useState<
+    Record<string, ParentMonthlyBillingReadModel | null>
+  >({});
   const [walletSummaryLoading, setWalletSummaryLoading] = useState(false);
   const [walletTransactionsLoading, setWalletTransactionsLoading] = useState(false);
   const [walletSummaryError, setWalletSummaryError] = useState<string>('');
@@ -952,7 +1005,7 @@ export default function ParentPayments(): JSX.Element {
   const [receivePaymentReference, setReceivePaymentReference] = useState('');
   const [receivePaymentNote, setReceivePaymentNote] = useState('');
   const [receivePaymentAllocationMode, setReceivePaymentAllocationMode] =
-    useState<ReceiveParentPaymentAllocationMode>('wallet_only');
+    useState<ReceiveParentPaymentAllocationMode>(DEFAULT_RECEIVE_PARENT_PAYMENT_ALLOCATION_MODE);
   const [receivePaymentRequestKey, setReceivePaymentRequestKey] = useState('');
   const [receivePaymentPreviewSaving, setReceivePaymentPreviewSaving] = useState(false);
   const [receivePaymentApplySaving, setReceivePaymentApplySaving] = useState(false);
@@ -1128,16 +1181,8 @@ export default function ParentPayments(): JSX.Element {
     return () => unsub();
   }, [selectedMonth]);
 
-  const rows = useMemo(() => {
-    const parentMap = new Map<
-      string,
-      {
-        parentId: string;
-        classCharges: number;
-        walletPaymentsReceived: number;
-        chargesCount: number;
-      }
-    >();
+  const monthlyChargeRows = useMemo(() => {
+    const parentMap = new Map<string, MonthlyChargeRow>();
 
     const getEntry = (parentId: string) => {
       let entry = parentMap.get(parentId);
@@ -1145,8 +1190,11 @@ export default function ParentPayments(): JSX.Element {
         entry = {
           parentId,
           classCharges: 0,
-          walletPaymentsReceived: 0,
+          receiptMonthPaymentsReceived: 0,
           chargesCount: 0,
+          settledFromCharges: 0,
+          dueFromCharges: 0,
+          parentName: '',
         };
         parentMap.set(parentId, entry);
       }
@@ -1161,9 +1209,12 @@ export default function ParentPayments(): JSX.Element {
       const amountRaw = Number(charge.amount ?? 0);
       const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
       if (amount <= 0) return;
+      const paidAmount = resolveChargePaidAmount(charge, amount);
       const entry = getEntry(parentId);
       entry.classCharges += amount;
       entry.chargesCount += 1;
+      entry.settledFromCharges += paidAmount;
+      entry.dueFromCharges += Math.max(amount - paidAmount, 0);
     });
 
     payments.forEach((payment) => {
@@ -1172,7 +1223,7 @@ export default function ParentPayments(): JSX.Element {
       const amountRaw = Number(payment.amount ?? 0);
       const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
       const entry = getEntry(parentId);
-      entry.walletPaymentsReceived += amount;
+      entry.receiptMonthPaymentsReceived += amount;
     });
 
     const parentNameById = new Map(
@@ -1199,13 +1250,82 @@ export default function ParentPayments(): JSX.Element {
       .sort((a, b) => b.classCharges - a.classCharges);
   }, [charges, payments, parents]);
 
+  const visibleParentIds = useMemo(
+    () => monthlyChargeRows.map((row) => row.parentId),
+    [monthlyChargeRows]
+  );
+  const visibleParentIdsKey = useMemo(() => visibleParentIds.join('|'), [visibleParentIds]);
+
   const walletParentOptions = useMemo(
     () =>
-      rows
+      monthlyChargeRows
         .map((row) => ({ parentId: row.parentId, parentName: row.parentName }))
         .sort((a, b) => a.parentName.localeCompare(b.parentName)),
-    [rows]
+    [monthlyChargeRows]
   );
+
+  useEffect(() => {
+    setWalletSummariesByParent({});
+    if (visibleParentIds.length === 0) return;
+
+    const unsubscribes = visibleParentIds.map((parentId) =>
+      onSnapshot(
+        doc(db, 'parentWallets', parentId),
+        (snap) => {
+          setWalletSummariesByParent((prev) => ({
+            ...prev,
+            [parentId]: snap.exists() ? (snap.data() as WalletSummary) : null,
+          }));
+        },
+        (err) => {
+          console.error('[ParentPayments] Failed to load row wallet summary', {
+            parentId,
+            error: err,
+          });
+          setWalletSummariesByParent((prev) => ({
+            ...prev,
+            [parentId]: null,
+          }));
+        }
+      )
+    );
+
+    return () => {
+      unsubscribes.forEach((unsubscribe) => unsubscribe());
+    };
+  }, [visibleParentIds, visibleParentIdsKey]);
+
+  useEffect(() => {
+    setMonthlyReadModelsByParent({});
+    if (!selectedMonth || visibleParentIds.length === 0) return;
+
+    const unsubscribes = visibleParentIds.map((parentId) =>
+      onSnapshot(
+        doc(db, 'parentMonthlyReadModels', parentId, 'months', selectedMonth),
+        (snap) => {
+          setMonthlyReadModelsByParent((prev) => ({
+            ...prev,
+            [parentId]: snap.exists() ? (snap.data() as ParentMonthlyBillingReadModel) : null,
+          }));
+        },
+        (err) => {
+          console.error('[ParentPayments] Failed to load monthly billing read model', {
+            parentId,
+            selectedMonth,
+            error: err,
+          });
+          setMonthlyReadModelsByParent((prev) => ({
+            ...prev,
+            [parentId]: null,
+          }));
+        }
+      )
+    );
+
+    return () => {
+      unsubscribes.forEach((unsubscribe) => unsubscribe());
+    };
+  }, [selectedMonth, visibleParentIds, visibleParentIdsKey]);
 
   useEffect(() => {
     if (!selectedWalletParentId) {
@@ -1452,22 +1572,56 @@ export default function ParentPayments(): JSX.Element {
     return result;
   }, [charges, sessionMap, kidMap, courseMap, teacherMap]);
 
-  const totals = useMemo(() => {
-    return rows.reduce(
-      (acc, row) => {
-        acc.classCharges += row.classCharges;
-        acc.walletPaymentsReceived += row.walletPaymentsReceived;
-        acc.walletDeductions += row.classCharges;
-        acc.netWalletMovement += row.walletPaymentsReceived - row.classCharges;
-        return acc;
-      },
-      { classCharges: 0, walletPaymentsReceived: 0, walletDeductions: 0, netWalletMovement: 0 }
-    );
-  }, [rows]);
+  const tableRows = useMemo(() => {
+    return monthlyChargeRows
+      .map((row) => {
+        const details = classDetailsByParent.get(row.parentId) || {
+          included: [],
+          excluded: [],
+          completedCount: 0,
+          totalClassCharges: 0,
+        };
+        const studentNames = normalizeNameList(
+          [...details.included, ...details.excluded].map((entry) => entry.studentName)
+        );
+        const walletBalance = Number(walletSummariesByParent[row.parentId]?.currentBalance);
+        return buildParentPaymentsReportingRow({
+          parentId: row.parentId,
+          parentName: row.parentName,
+          studentNames,
+          chargesCount: row.chargesCount,
+          classCharges: row.classCharges,
+          settledFromCharges: row.settledFromCharges,
+          dueFromCharges: row.dueFromCharges,
+          receiptMonthPaymentsReceived: row.receiptMonthPaymentsReceived,
+          walletBalance: Number.isFinite(walletBalance) ? walletBalance : null,
+          monthlyReadModel: monthlyReadModelsByParent[row.parentId] || null,
+          selectedMonth,
+        });
+      })
+      .sort((a, b) => {
+        const priorityDiff =
+          followUpPrioritySortOrder[a.followUpPriority] - followUpPrioritySortOrder[b.followUpPriority];
+        if (priorityDiff !== 0) return priorityDiff;
+        if (b.selectedMonthDue !== a.selectedMonthDue) return b.selectedMonthDue - a.selectedMonthDue;
+        if (b.selectedMonthCharges !== a.selectedMonthCharges) {
+          return b.selectedMonthCharges - a.selectedMonthCharges;
+        }
+        return a.parentName.localeCompare(b.parentName);
+      });
+  }, [
+    classDetailsByParent,
+    monthlyChargeRows,
+    monthlyReadModelsByParent,
+    selectedMonth,
+    walletSummariesByParent,
+  ]);
+
+  const summaryCards = useMemo(() => buildParentPaymentsSummaryCards(tableRows), [tableRows]);
 
   const openWalletTopupModal = () => {
     if (!selectedWalletParentId) {
-      window.alert('Select a parent first to add wallet top-up.');
+      window.alert('Select a parent first to add a manual advance wallet credit.');
       return;
     }
     setWalletTopupAmount('');
@@ -1509,11 +1663,13 @@ export default function ParentPayments(): JSX.Element {
         note: walletTopupNote.trim() || undefined,
         idempotencyKey: requestKey,
       });
-      window.alert('Wallet top-up added');
+      window.alert(
+        'Manual advance wallet credit added. This credits the wallet only and does not settle older dues.'
+      );
       setWalletTopupRequestKey('');
       setWalletTopupOpen(false);
     } catch (err: any) {
-      window.alert(err?.message || 'Failed to add wallet top-up');
+      window.alert(err?.message || 'Failed to add manual advance wallet credit');
     } finally {
       setWalletTopupSaving(false);
     }
@@ -1823,7 +1979,7 @@ export default function ParentPayments(): JSX.Element {
     setReceivePaymentMethod('UPI');
     setReceivePaymentReference('');
     setReceivePaymentNote('');
-    setReceivePaymentAllocationMode('wallet_only');
+    setReceivePaymentAllocationMode(DEFAULT_RECEIVE_PARENT_PAYMENT_ALLOCATION_MODE);
     setReceivePaymentRequestKey(createReceiveParentPaymentRequestKey(parentId));
     setReceivePaymentResult(null);
     setReceivePaymentPreviewInput(null);
@@ -1840,9 +1996,6 @@ export default function ParentPayments(): JSX.Element {
       lower.includes('unavailable')
     ) {
       return 'Receive parent payment function is not available yet. Please deploy the latest functions and try again.';
-    }
-    if (lower.includes('opening deficit') || (lower.includes('migrated') && lower.includes('wallet'))) {
-      return 'This parent already has opening deficit migration. Please use Wallet-only mode so payment is not applied twice to old dues.';
     }
     return original;
   };
@@ -1861,7 +2014,7 @@ export default function ParentPayments(): JSX.Element {
     }
 
     const allocationModeRaw = String(receivePaymentAllocationMode || '').trim();
-    if (!isAllocationMode(allocationModeRaw)) {
+    if (!isReceiveParentPaymentAllocationMode(allocationModeRaw)) {
       window.alert('Invalid receipt mode');
       return null;
     }
@@ -1875,22 +2028,6 @@ export default function ParentPayments(): JSX.Element {
       note: receivePaymentNote.trim(),
       allocationMode: allocationModeRaw,
     };
-  };
-
-  const isSameReceivePaymentPreviewInput = (
-    a: ReceiveParentPaymentPreviewInput | null,
-    b: ReceiveParentPaymentPreviewInput | null
-  ) => {
-    if (!a || !b) return false;
-    return (
-      a.parentId === b.parentId &&
-      a.amount === b.amount &&
-      a.paidAt === b.paidAt &&
-      a.method === b.method &&
-      a.reference === b.reference &&
-      a.note === b.note &&
-      a.allocationMode === b.allocationMode
-    );
   };
 
   const handlePreviewReceiveParentPayment = async () => {
@@ -1922,9 +2059,11 @@ export default function ParentPayments(): JSX.Element {
       const result = (response.data || {}) as ReceiveParentPaymentResult;
       setReceivePaymentPreviewInput(previewInput);
       setReceivePaymentResult(result);
-      if (Number(result.remainingUnapplied || 0) > 0) {
+      if (Number(result.unallocatedAmount ?? result.remainingUnapplied ?? 0) > 0) {
         window.alert(
-          `Preview completed. Unassigned amount: ${formatMoney(result.remainingUnapplied)}.`
+          `Preview completed. Advance after FIFO settlement: ${formatMoney(
+            result.unallocatedAmount ?? result.remainingUnapplied
+          )}.`
         );
       }
     } catch (err: any) {
@@ -1941,19 +2080,29 @@ export default function ParentPayments(): JSX.Element {
     if (!currentInput) return;
 
     if (!receivePaymentPreviewInput || receivePaymentResult?.dryRun !== true) {
-      window.alert('Preview split first.');
+      window.alert('Preview allocation first.');
       return;
     }
 
-    if (!isSameReceivePaymentPreviewInput(currentInput, receivePaymentPreviewInput)) {
-      window.alert('Inputs changed after preview. Preview split again before applying payment.');
+    if (!isSameReceiveParentPaymentPreviewInput(currentInput, receivePaymentPreviewInput)) {
+      window.alert(RECEIVE_PARENT_PAYMENT_STALE_PREVIEW_MESSAGE);
       return;
     }
 
     const amountReceived = Number(receivePaymentResult.amountReceived ?? receivePaymentPreviewInput.amount);
-    const walletTopupAmount = Number(receivePaymentResult.walletTopupAmount || 0);
+    const allocatedAmount = Number(
+      receivePaymentResult.allocatedAmount ?? receivePaymentResult.appliedToLegacy ?? 0
+    );
+    const advanceAmount = Number(
+      receivePaymentResult.unallocatedAmount ??
+        receivePaymentResult.advanceAmount ??
+        receivePaymentResult.remainingUnapplied ??
+        0
+    );
     const confirmed = window.confirm(
-      `You are about to receive ${formatMoney(amountReceived)}. Added to wallet: ${formatMoney(walletTopupAmount)}.`
+      `You are about to receive ${formatMoney(amountReceived)}. Auto-applied to oldest dues: ${formatMoney(
+        allocatedAmount
+      )}. Advance wallet balance: ${formatMoney(advanceAmount)}.`
     );
     if (!confirmed) return;
 
@@ -1986,8 +2135,13 @@ export default function ParentPayments(): JSX.Element {
         const lines = [
           'Parent payment received successfully.',
           `Payment received: ${formatMoney(result.amountReceived)}`,
-          `Wallet credited: ${formatMoney(result.walletTopupAmount)}`,
-          `Unassigned amount: ${formatMoney(result.remainingUnapplied)}`,
+          `Auto-applied to oldest dues: ${formatMoney(
+            result.allocatedAmount ?? result.appliedToLegacy
+          )}`,
+          `Advance wallet balance: ${formatMoney(
+            result.unallocatedAmount ?? result.advanceAmount ?? result.remainingUnapplied
+          )}`,
+          `Wallet credited: ${formatMoney(result.amountReceived)}`,
         ];
         if (result.paymentId) lines.push(`Payment ID: ${result.paymentId}`);
         if (Number.isFinite(Number(result.walletBalanceAfter))) {
@@ -2044,6 +2198,15 @@ export default function ParentPayments(): JSX.Element {
         .sort((a, b) => a.monthKey.localeCompare(b.monthKey));
 
       const totalClassCharges = rows.reduce((sum, rowItem) => sum + rowItem.amount, 0);
+      const monthlyChargeRow = monthlyChargeRows.find((entry) => entry.parentId === parentId);
+      const settlementSummary = resolveParentPaymentSettlementSummary({
+        chargesCount: monthlyChargeRow?.chargesCount ?? rows.length,
+        classCharges: monthlyChargeRow?.classCharges ?? totalClassCharges,
+        settledFromCharges: monthlyChargeRow?.settledFromCharges ?? 0,
+        dueFromCharges:
+          monthlyChargeRow?.dueFromCharges ?? Math.max(totalClassCharges, 0),
+        monthlyReadModel: monthlyReadModelsByParent[parentId] || null,
+      });
       const sessionTypeBreakdown = rows.reduce(
         (acc, rowItem) => {
           if (rowItem.sessionTypeLabel === 'Regular') {
@@ -2057,18 +2220,13 @@ export default function ParentPayments(): JSX.Element {
         },
         { regular: 0, rescheduledOrMakeup: 0, oneOff: 0 },
       );
-      const totalPaid = payments
-        .filter((payment) => String(payment.parentId || '').trim() === parentId)
-        .reduce((sum, payment) => {
-        const amount = Number(payment.amount ?? 0);
-        return Number.isFinite(amount) ? sum + amount : sum;
-      }, 0);
       const parentName = row.parentName || fallbackParentLabel(parentId);
 
       setInvoiceData({
         parentId,
         parentName,
         generatedDateLabel: formatDateDisplay(new Date()),
+        invoicePeriodLabel: monthLabelFromKey(selectedMonth),
         rows,
         monthSections,
         studentNames: normalizeNameList(rows.map((rowItem) => rowItem.studentName)),
@@ -2076,8 +2234,9 @@ export default function ParentPayments(): JSX.Element {
         teacherNames: normalizeNameList(rows.map((rowItem) => rowItem.teacherName)),
         totalCompletedClasses: rows.length,
         totalClassCharges,
-        totalPaid,
-        balanceToCollect: totalClassCharges - totalPaid,
+        selectedMonthSettledAmount: settlementSummary.selectedMonthSettled,
+        selectedMonthDueAmount: settlementSummary.selectedMonthDue,
+        settlementSourceLabel: settlementSummary.settlementSourceLabel,
         sessionTypeBreakdown,
       });
     } catch (err: any) {
@@ -2285,7 +2444,7 @@ export default function ParentPayments(): JSX.Element {
       pdf.text(`Generated: ${invoiceData.generatedDateLabel}`, pageWidth - margin, headerTop + 12, {
         align: 'right',
       });
-      pdf.text('Invoice period: Till date (month-wise)', pageWidth - margin, headerTop + 26, {
+      pdf.text(`Invoice period: ${invoiceData.invoicePeriodLabel}`, pageWidth - margin, headerTop + 26, {
         align: 'right',
       });
 
@@ -2300,7 +2459,7 @@ export default function ParentPayments(): JSX.Element {
       drawKeyValueRow('Parent', invoiceData.parentName, 'Generated date', invoiceData.generatedDateLabel);
       drawKeyValueRow('Students', invoiceData.studentNames.join(', ') || '—', 'Courses', invoiceData.courseNames.join(', ') || '—');
       drawKeyValueRow('Teachers', invoiceData.teacherNames.join(', ') || '—', 'Invoice type', 'Month-wise class invoice');
-      drawKeyValueRow('Class fee', classFeePatternValue, '', '');
+      drawKeyValueRow('Class fee', classFeePatternValue, 'Settlement source', invoiceData.settlementSourceLabel);
       y += 12;
 
       invoiceData.monthSections.forEach((section) => {
@@ -2354,8 +2513,14 @@ export default function ParentPayments(): JSX.Element {
       const summaryRows: Array<{ label: string; value: string }> = [
         { label: 'Total completed classes', value: String(invoiceData.totalCompletedClasses) },
         { label: 'Total class charges', value: formatPdfMoney(invoiceData.totalClassCharges) },
-        { label: 'Total paid', value: formatPdfMoney(invoiceData.totalPaid) },
-        { label: 'Balance / Amount to collect', value: formatPdfMoney(invoiceData.balanceToCollect) },
+        {
+          label: 'Settled for selected month',
+          value: formatPdfMoney(invoiceData.selectedMonthSettledAmount),
+        },
+        {
+          label: 'Selected month due',
+          value: formatPdfMoney(invoiceData.selectedMonthDueAmount),
+        },
       ];
       if (invoiceData.sessionTypeBreakdown.regular > 0) {
         summaryRows.push({
@@ -2454,23 +2619,16 @@ export default function ParentPayments(): JSX.Element {
   const walletAutomationCurrentConfig = walletAutomationConfig || {};
   const walletAutomationIsEnabled =
     walletAutomationCurrentConfig.walletClassDeductionsEnabled === true;
-  const walletBalanceByParent = useMemo(() => {
-    const balances = new Map<string, number>();
-    if (!selectedWalletParentId) return balances;
-    const balance = Number(walletSummary?.currentBalance);
-    if (Number.isFinite(balance)) {
-      balances.set(selectedWalletParentId, balance);
-    }
-    return balances;
-  }, [selectedWalletParentId, walletSummary]);
   const receivePaymentWarnings = Array.isArray(receivePaymentResult?.warnings)
     ? receivePaymentResult.warnings
     : [];
-  const receivePaymentAllocations = Array.isArray(receivePaymentResult?.allocationsPreview)
-    ? receivePaymentResult?.allocationsPreview || []
-    : Array.isArray(receivePaymentResult?.allocations)
-      ? receivePaymentResult?.allocations || []
-      : [];
+  const receivePaymentAllocations = normalizeReceivePaymentAllocationRows(
+    Array.isArray(receivePaymentResult?.allocationsPreview)
+      ? receivePaymentResult?.allocationsPreview || []
+      : Array.isArray(receivePaymentResult?.allocations)
+        ? receivePaymentResult?.allocations || []
+        : []
+  );
   const receivePaymentCanApply =
     receivePaymentResult?.dryRun === true &&
     !!receivePaymentPreviewInput &&
@@ -2482,7 +2640,7 @@ export default function ParentPayments(): JSX.Element {
         <div>
           <h2 className="text-xl font-semibold">Parent Payments</h2>
           <p className="text-sm text-muted-foreground">
-            Monthly class charges and wallet receipts by parent.
+            Selected-month billing status and till-date wallet position by parent.
           </p>
           <p className="text-xs text-muted-foreground">
             Archived records are excluded from active parent payment totals.
@@ -2499,31 +2657,69 @@ export default function ParentPayments(): JSX.Element {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         <Card className="p-4">
-          <div className="text-xs text-muted-foreground">Monthly class charges</div>
-          <div className="text-lg font-semibold">{formatMoney(totals.classCharges)}</div>
+          <div className="text-xs text-muted-foreground">Selected-month billed</div>
+          <div className="text-lg font-semibold">{formatMoney(summaryCards.selectedMonthBilled)}</div>
         </Card>
         <Card className="p-4">
-          <div className="text-xs text-muted-foreground">Wallet payments received</div>
-          <div className="text-lg font-semibold">{formatMoney(totals.walletPaymentsReceived)}</div>
+          <div className="text-xs text-muted-foreground">Selected-month settled / applied</div>
+          <div className="text-lg font-semibold">
+            {formatMoney(summaryCards.selectedMonthSettled)}
+          </div>
         </Card>
         <Card className="p-4">
-          <div className="text-xs text-muted-foreground">Wallet deductions</div>
-          <div className="text-lg font-semibold">{formatMoney(totals.walletDeductions)}</div>
+          <div className="text-xs text-muted-foreground">Selected-month outstanding</div>
+          <div className="text-lg font-semibold">
+            {formatMoney(summaryCards.selectedMonthOutstanding)}
+          </div>
         </Card>
         <Card className="p-4">
-          <div className="text-xs text-muted-foreground">Net wallet movement</div>
-          <div className="text-lg font-semibold">{formatMoney(totals.netWalletMovement)}</div>
+          <div className="text-xs text-muted-foreground">Paid parents</div>
+          <div className="text-lg font-semibold">{summaryCards.paidParents}</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-xs text-muted-foreground">Partial parents</div>
+          <div className="text-lg font-semibold">{summaryCards.partialParents}</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-xs text-muted-foreground">Follow-up / overdue parents</div>
+          <div className="text-lg font-semibold">{summaryCards.followUpParents}</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-xs text-muted-foreground">Total wallet deficit till date</div>
+          <div className="text-lg font-semibold">
+            {formatMoney(summaryCards.totalWalletDeficitTillDate)}
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-xs text-muted-foreground">Total advance wallet balance</div>
+          <div className="text-lg font-semibold">
+            {formatMoney(summaryCards.totalAdvanceWalletBalance)}
+          </div>
         </Card>
       </div>
+
+      <Card className="p-4 space-y-2">
+        <p className="text-sm text-muted-foreground">
+          Selected-month settlement is based on monthly allocation/read model data. Receipt-month
+          payments are not treated as settlement unless they are allocated to charges.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Overall wallet balance shows the till-date wallet position. Selected-month due shows the
+          service-month charge status. Receipt-month payments remain informational only and do not
+          mark a month as paid by themselves.
+        </p>
+      </Card>
 
       <Card className="p-4 space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="space-y-1">
             <h3 className="text-base font-semibold">Parent Wallet</h3>
             <p className="text-xs text-muted-foreground">
-              View wallet balance, add top-ups, and review recent wallet transactions.
+              View wallet balance, add manual advance credits, and review recent wallet
+              transactions. Use Receive parent payment for normal receipts that should settle dues
+              first.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -2532,7 +2728,7 @@ export default function ParentPayments(): JSX.Element {
               onClick={openWalletTopupModal}
               disabled={!selectedWalletParentId}
             >
-              Add wallet top-up
+              Manual advance wallet credit
             </Button>
             <Button
               size="sm"
@@ -2697,9 +2893,10 @@ export default function ParentPayments(): JSX.Element {
       </Card>
 
       <div>
-        <h3 className="text-base font-semibold">Monthly class charges</h3>
+        <h3 className="text-base font-semibold">Selected-month parent payment status</h3>
         <p className="text-xs text-muted-foreground">
-          Class charges are shown for monthly review. Parent wallet balance is the source of truth for dues and advance payments.
+          Read models are used when available. Otherwise, selected-month billed and due fall back to
+          charge documents without treating receipt-month payments as settlement.
         </p>
       </div>
 
@@ -2709,23 +2906,28 @@ export default function ParentPayments(): JSX.Element {
             <thead>
               <tr className="text-left border-b">
                 <th className="p-2">Parent</th>
-                <th className="p-2">Classes</th>
-                <th className="p-2">Class charges</th>
-                <th className="p-2">Wallet balance</th>
-                <th className="p-2">Amount to collect / Advance</th>
-                <th className="p-2">Action</th>
-                <th className="p-2">Details</th>
+                <th className="p-2">Student(s)</th>
+                <th className="p-2">Billed classes</th>
+                <th className="p-2">Selected-month charges</th>
+                <th className="p-2">Selected-month settled / applied</th>
+                <th className="p-2">Selected-month due</th>
+                <th className="p-2">Overall wallet balance</th>
+                <th className="p-2">Advance</th>
+                <th className="p-2">Status</th>
+                <th className="p-2">Last payment date</th>
+                <th className="p-2">Follow-up priority</th>
+                <th className="p-2">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {rows.length === 0 ? (
+              {tableRows.length === 0 ? (
                 <tr>
-                  <td className="p-3 text-muted-foreground" colSpan={7}>
+                  <td className="p-3 text-muted-foreground" colSpan={12}>
                     No parent charges found for this month.
                   </td>
                 </tr>
               ) : (
-                rows.map((row) => {
+                tableRows.map((row) => {
                   const isExpanded = expandedParents.has(row.parentId);
                   const details = classDetailsByParent.get(row.parentId) || {
                     included: [],
@@ -2733,23 +2935,49 @@ export default function ParentPayments(): JSX.Element {
                     completedCount: 0,
                     totalClassCharges: 0,
                   };
-                  const walletBalance = walletBalanceByParent.get(row.parentId);
-                  const hasWalletBalance = Number.isFinite(walletBalance);
-                  const collectOrAdvanceLabel = !hasWalletBalance
-                    ? '—'
-                    : walletBalance! < 0
-                      ? `Collect ${formatMoney(Math.abs(walletBalance!))}`
-                      : walletBalance! > 0
-                        ? `Advance ${formatMoney(walletBalance!)}`
+                  const hasWalletBalance = row.overallWalletBalance !== null;
+                  const walletDescriptor = !hasWalletBalance
+                    ? ''
+                    : row.overallWalletBalance! < 0
+                      ? `Deficit ${formatMoney(Math.abs(row.overallWalletBalance!))}`
+                      : row.overallWalletBalance! > 0
+                        ? `Advance ${formatMoney(row.overallWalletBalance!)}`
                         : 'Settled';
+                  const studentNamesLabel =
+                    row.studentNames.length > 0 ? row.studentNames.join(', ') : '—';
                   return (
                     <React.Fragment key={row.parentId}>
                       <tr className="border-b last:border-b-0">
                         <td className="p-2">{row.parentName}</td>
-                        <td className="p-2">{row.chargesCount}</td>
-                        <td className="p-2">{formatMoney(row.classCharges)}</td>
-                        <td className="p-2">{hasWalletBalance ? formatMoney(walletBalance) : '—'}</td>
-                        <td className="p-2">{collectOrAdvanceLabel}</td>
+                        <td className="p-2">
+                          <div className="max-w-[180px] truncate" title={studentNamesLabel}>
+                            {studentNamesLabel}
+                          </div>
+                        </td>
+                        <td className="p-2">{row.billedClasses}</td>
+                        <td className="p-2">{formatMoney(row.selectedMonthCharges)}</td>
+                        <td className="p-2">{formatMoney(row.selectedMonthSettled)}</td>
+                        <td className="p-2">{formatMoney(row.selectedMonthDue)}</td>
+                        <td className="p-2">
+                          <div>{hasWalletBalance ? formatMoney(row.overallWalletBalance) : '—'}</div>
+                          {walletDescriptor ? (
+                            <div className="text-[11px] text-muted-foreground">{walletDescriptor}</div>
+                          ) : null}
+                        </td>
+                        <td className="p-2">
+                          {row.advanceAmount > 0 ? formatMoney(row.advanceAmount) : '—'}
+                        </td>
+                        <td className="p-2">
+                          <span
+                            className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${parentPaymentStatusBadgeClassName(row.statusLabel)}`}
+                          >
+                            {row.statusLabel}
+                          </span>
+                        </td>
+                        <td className="p-2">
+                          {row.lastPaymentAtMs ? formatDateDisplay(row.lastPaymentAtMs) : '—'}
+                        </td>
+                        <td className="p-2">{row.followUpPriority}</td>
                         <td className="p-2">
                           <div className="flex flex-wrap gap-2">
                             <Button size="sm" onClick={() => openReceiveParentPaymentModal(row)}>
@@ -2758,21 +2986,19 @@ export default function ParentPayments(): JSX.Element {
                             <Button size="sm" variant="outline" onClick={() => openInvoiceModal(row)}>
                               View Invoice
                             </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => toggleParent(row.parentId)}
+                            >
+                              {isExpanded ? 'Hide details' : 'Details'}
+                            </Button>
                           </div>
-                        </td>
-                        <td className="p-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => toggleParent(row.parentId)}
-                          >
-                            {isExpanded ? 'Hide' : 'Details'}
-                          </Button>
                         </td>
                       </tr>
                       {isExpanded && (
                         <tr>
-                          <td colSpan={7} className="p-2 bg-muted/30">
+                          <td colSpan={12} className="p-2 bg-muted/30">
                             {details.included.length === 0 ? (
                               <div className="text-xs text-muted-foreground">
                                 No completed classes found for this period.
@@ -2829,10 +3055,12 @@ export default function ParentPayments(): JSX.Element {
                                   </table>
                                 </div>
                                 <div className="text-xs text-muted-foreground">
-                                  Total completed classes: {details.completedCount} · Total class charges:{' '}
-                                  {formatMoney(details.totalClassCharges)} · Paid:{' '}
-                                  {formatMoney(row.walletPaymentsReceived)} · Balance / Amount to collect:{' '}
-                                  {formatMoney(details.totalClassCharges - row.walletPaymentsReceived)}
+                                  Total completed classes: {details.completedCount} · Selected-month
+                                  charges: {formatMoney(row.selectedMonthCharges)} · Selected-month
+                                  settled / applied: {formatMoney(row.selectedMonthSettled)} ·
+                                  Selected-month due: {formatMoney(row.selectedMonthDue)} · Receipt-month
+                                  payments: {formatMoney(row.receiptMonthPaymentsReceived)} · Source:{' '}
+                                  {row.settlementSourceLabel}
                                 </div>
                                 {details.excluded.length > 0 ? (
                                   <div className="space-y-2">
@@ -3012,9 +3240,15 @@ export default function ParentPayments(): JSX.Element {
                 <div className="text-sm">
                   Total class charges: {formatMoney(invoiceData.totalClassCharges)}
                 </div>
-                <div className="text-sm">Total paid: {formatMoney(invoiceData.totalPaid)}</div>
                 <div className="text-sm">
-                  Balance / Amount to collect: {formatMoney(invoiceData.balanceToCollect)}
+                  Settled for selected month:{' '}
+                  {formatMoney(invoiceData.selectedMonthSettledAmount)}
+                </div>
+                <div className="text-sm">
+                  Selected month due: {formatMoney(invoiceData.selectedMonthDueAmount)}
+                </div>
+                <div className="text-sm">
+                  Settlement source: {invoiceData.settlementSourceLabel}
                 </div>
                 {invoiceData.sessionTypeBreakdown.regular > 0 ? (
                   <div className="text-sm">
@@ -3052,10 +3286,15 @@ export default function ParentPayments(): JSX.Element {
       <Dialog open={walletTopupOpen} onOpenChange={setWalletTopupOpen}>
         <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
-            <DialogTitle>Add wallet top-up</DialogTitle>
+            <DialogTitle>Manual advance wallet credit</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-3">
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              This credits the advance wallet only. It does not settle outstanding dues for the
+              selected month. Use Receive parent payment for normal receipts so dues are applied
+              FIFO first.
+            </div>
             <div className="text-sm">
               Parent:{' '}
               <span className="font-medium">
@@ -3116,7 +3355,7 @@ export default function ParentPayments(): JSX.Element {
               Cancel
             </Button>
             <Button onClick={handleWalletTopup} disabled={walletTopupSaving}>
-              {walletTopupSaving ? 'Saving…' : 'Add wallet top-up'}
+              {walletTopupSaving ? 'Saving…' : 'Save advance wallet credit'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -3578,10 +3817,35 @@ export default function ParentPayments(): JSX.Element {
 
             <div className="space-y-1">
               <label className="text-sm font-medium">Receipt mode</label>
-              <Input value="Wallet only" readOnly />
-              <div className="text-xs text-muted-foreground">
-                New receipts are added to the parent wallet. Class deductions reduce the wallet balance automatically.
-              </div>
+              <Select
+                value={receivePaymentAllocationMode}
+                onValueChange={(value) =>
+                  setReceivePaymentAllocationMode(
+                    isReceiveParentPaymentAllocationMode(value)
+                      ? value
+                      : DEFAULT_RECEIVE_PARENT_PAYMENT_ALLOCATION_MODE
+                  )
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select receipt mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fifo_then_wallet">Auto-apply to oldest dues</SelectItem>
+                  <SelectItem value="wallet_only">Advance wallet only</SelectItem>
+                </SelectContent>
+              </Select>
+              {receivePaymentAllocationMode === 'wallet_only' ? (
+                <div className="text-xs text-muted-foreground">
+                  Entire receipt will be added as advance wallet balance. No billing charges will be
+                  settled in this mode.
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground">
+                  This payment will auto-clear oldest unpaid dues first. Any remaining amount
+                  becomes advance wallet balance.
+                </div>
+              )}
             </div>
 
             <div className="space-y-1">
@@ -3619,15 +3883,21 @@ export default function ParentPayments(): JSX.Element {
                     </span>
                   </div>
                   <div>
-                    Added to wallet:{' '}
+                    Auto-applied to dues:{' '}
                     <span className="font-medium">
-                      {formatMoney(receivePaymentResult.walletTopupAmount)}
+                      {formatMoney(
+                        receivePaymentResult.allocatedAmount ?? receivePaymentResult.appliedToLegacy
+                      )}
                     </span>
                   </div>
                   <div>
-                    Unassigned amount:{' '}
+                    Advance wallet balance:{' '}
                     <span className="font-medium">
-                      {formatMoney(receivePaymentResult.remainingUnapplied)}
+                      {formatMoney(
+                        receivePaymentResult.unallocatedAmount ??
+                          receivePaymentResult.advanceAmount ??
+                          receivePaymentResult.remainingUnapplied
+                      )}
                     </span>
                   </div>
                   <div>
@@ -3639,9 +3909,14 @@ export default function ParentPayments(): JSX.Element {
                   </div>
                 </div>
 
-                {Number(receivePaymentResult.walletTopupAmount || 0) > 0 ? (
+                {Number(
+                  receivePaymentResult.unallocatedAmount ??
+                    receivePaymentResult.advanceAmount ??
+                    receivePaymentResult.remainingUnapplied ??
+                    0
+                ) > 0 ? (
                   <div className="rounded border border-emerald-200 bg-emerald-50 p-2 text-xs text-emerald-800">
-                    Excess amount will be added to wallet.
+                    Remaining amount after FIFO settlement will stay as advance wallet balance.
                   </div>
                 ) : null}
 
@@ -3687,40 +3962,51 @@ export default function ParentPayments(): JSX.Element {
                 </div>
 
                 <div className="space-y-1">
-                  <div className="text-xs font-medium">Charge mapping preview</div>
+                  <div className="text-xs font-medium">FIFO allocation preview</div>
                   {receivePaymentAllocations.length === 0 ? (
-                    <div className="text-xs text-muted-foreground">No charge-level mapping records returned.</div>
+                    <div className="text-xs text-muted-foreground">
+                      No charge-level allocation rows returned.
+                    </div>
                   ) : (
                     <div className="overflow-x-auto">
                       <table className="w-full text-xs table-auto">
                         <thead>
                           <tr className="text-left border-b">
+                            <th className="p-1">Month</th>
+                            <th className="p-1">Student / Date</th>
                             <th className="p-1">Charge</th>
-                            <th className="p-1">Amount</th>
-                            <th className="p-1">Before</th>
-                            <th className="p-1">After</th>
+                            <th className="p-1">Previous paid</th>
+                            <th className="p-1">Allocation</th>
+                            <th className="p-1">Remaining due</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {receivePaymentAllocations.map((allocation: any, idx: number) => {
-                            const chargeId = String(
-                              allocation?.chargeId || allocation?.billingChargeId || allocation?.id || ''
-                            ).trim();
-                            const allocAmount = Number(
-                              allocation?.allocatedAmount ?? allocation?.amount ?? 0
-                            );
-                            const before = Number(
-                              allocation?.outstandingBefore ?? allocation?.before ?? 0
-                            );
-                            const after = Number(
-                              allocation?.outstandingAfter ?? allocation?.after ?? 0
-                            );
+                          {receivePaymentAllocations.map((allocation, idx) => {
+                            const studentOrDate = [allocation.studentName, allocation.eventDateKey]
+                              .filter(Boolean)
+                              .join(' · ');
                             return (
-                              <tr key={`${chargeId || 'allocation'}-${idx}`} className="border-b last:border-b-0">
-                                <td className="p-1">{chargeId || '—'}</td>
-                                <td className="p-1">{formatMoney(allocAmount)}</td>
-                                <td className="p-1">{formatMoney(before)}</td>
-                                <td className="p-1">{formatMoney(after)}</td>
+                              <tr
+                                key={`${allocation.chargeId || 'allocation'}-${idx}`}
+                                className="border-b last:border-b-0"
+                              >
+                                <td className="p-1">{allocation.monthKey || '—'}</td>
+                                <td className="p-1">
+                                  <div>{studentOrDate || '—'}</div>
+                                  <div className="text-[11px] text-muted-foreground">
+                                    {allocation.chargeId || '—'}
+                                  </div>
+                                </td>
+                                <td className="p-1">{formatMoney(allocation.chargeAmount)}</td>
+                                <td className="p-1">
+                                  {formatMoney(allocation.previousPaidAmount)}
+                                </td>
+                                <td className="p-1">
+                                  {formatMoney(allocation.allocatedAmount)}
+                                </td>
+                                <td className="p-1">
+                                  {formatMoney(allocation.remainingDueAfter)}
+                                </td>
                               </tr>
                             );
                           })}
@@ -3742,7 +4028,7 @@ export default function ParentPayments(): JSX.Element {
               onClick={handlePreviewReceiveParentPayment}
               disabled={receivePaymentPreviewSaving || receivePaymentApplySaving}
             >
-              {receivePaymentPreviewSaving ? 'Previewing…' : 'Preview split'}
+              {receivePaymentPreviewSaving ? 'Previewing…' : 'Preview allocation'}
             </Button>
             {receivePaymentCanApply ? (
               <Button

@@ -3,6 +3,12 @@ import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { ensureAdmin } from './helpers/adminGuard';
+import {
+  buildParentPaymentAllocationPlan,
+  type BillingChargeDocLike,
+  type ParentPaymentAllocationPlan,
+  type ParentPaymentAllocationPreview,
+} from './parentPaymentAllocator';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -84,7 +90,8 @@ interface BackfillMissingWalletDeductionsRequest {
   batchLimit?: number;
 }
 
-type ParentPaymentAllocationMode = 'legacy_then_wallet' | 'wallet_only';
+type ParentPaymentAllocationMode = 'fifo_then_wallet' | 'wallet_only';
+type ParentPaymentAllocationModeInput = ParentPaymentAllocationMode | 'legacy_then_wallet';
 
 interface AdminReceiveParentPaymentRequest {
   parentId?: string;
@@ -95,18 +102,7 @@ interface AdminReceiveParentPaymentRequest {
   reference?: string;
   idempotencyKey?: string;
   dryRun?: boolean;
-  allocationMode?: ParentPaymentAllocationMode;
-}
-
-interface LegacyPaymentAllocationPreview {
-  chargeId: string;
-  amount: number;
-  outstandingBefore: number;
-  outstandingAfter: number;
-  monthKey: string | null;
-  enrollmentId: string | null;
-  kidId: string | null;
-  courseId: string | null;
+  allocationMode?: ParentPaymentAllocationModeInput;
 }
 
 interface AppendWalletTransactionInput {
@@ -140,6 +136,18 @@ interface AppendWalletTransactionResult {
   currentBalance: number;
   idempotentReplay: boolean;
 }
+
+interface PreparedAppendWalletTransactionState {
+  walletRef: admin.firestore.DocumentReference;
+  transactionRef: admin.firestore.DocumentReference;
+  walletExists: boolean;
+  walletData: Record<string, unknown>;
+  existingTransactionId: string | null;
+  existingTransactionData: Record<string, unknown> | null;
+}
+
+type WalletWriteOnlyTransaction = Pick<admin.firestore.Transaction, 'set'>;
+type ReceiveParentPaymentApplyStage = { current: string };
 
 type WalletAnomalySeverity = 'info' | 'warning' | 'critical';
 
@@ -185,7 +193,8 @@ interface WalletAutomationConfigResolved {
 }
 
 function normalizeNumber(value: unknown, fallback = 0): number {
-  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
 }
 
 function normalizeIdempotencyKey(value: unknown): string {
@@ -322,6 +331,103 @@ function normalizeMonthKey(value: unknown): string | null {
   return raw;
 }
 
+const BILLING_CHARGE_SETTLEMENT_ONLY_KEYS = new Set([
+  'paidamount',
+  'outstandingamount',
+  'paidat',
+  'lastallocatedat',
+  'lastpaymentid',
+  'lastallocationref',
+  'lastallocationreceiptmonthkey',
+  'paymentids',
+  'allocations',
+  'appliedamount',
+  'settledamount',
+  'allocationbackfilled',
+  'allocationbackfillversion',
+  'backfilledby',
+  'updatedat',
+  'updatedby',
+  'refreshedat',
+]);
+
+function stableValueForWalletChargeSync(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => stableValueForWalletChargeSync(item));
+  }
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+  if (typeof (value as { toDate?: unknown })?.toDate === 'function') {
+    const parsed = toDate(value);
+    return parsed ? parsed.toISOString() : null;
+  }
+  if (value && typeof value === 'object') {
+    return Object.keys(value as Record<string, unknown>)
+      .sort((left, right) => left.localeCompare(right))
+      .reduce<Record<string, unknown>>((acc, key) => {
+        acc[key] = stableValueForWalletChargeSync((value as Record<string, unknown>)[key]);
+        return acc;
+      }, {});
+  }
+  return value ?? null;
+}
+
+export function shouldSkipWalletChargeDeductionSync(
+  beforeData: Record<string, unknown> | null,
+  afterData: Record<string, unknown> | null
+): boolean {
+  if (!beforeData || !afterData) return false;
+
+  const triggerRelevantBefore = {
+    parentId: normalizeOptionalId(beforeData.parentId),
+    amount: roundCurrency(Math.max(normalizeNumber(beforeData.amount, 0), 0)),
+    status: normalizeChargeStatus(beforeData.status),
+    archived: beforeData.archived === true,
+    monthKey: normalizeMonthKey(beforeData.monthKey),
+    eventDate: resolveChargeEventDateForCutover(beforeData)?.toISOString() || null,
+    studentId: resolveChargeStudentId(beforeData),
+    enrollmentId: normalizeOptionalId(beforeData.enrollmentId),
+    classSessionId: resolveChargeClassSessionId('', beforeData),
+    source: normalizeOptionalText(beforeData.source, 150),
+  };
+  const triggerRelevantAfter = {
+    parentId: normalizeOptionalId(afterData.parentId),
+    amount: roundCurrency(Math.max(normalizeNumber(afterData.amount, 0), 0)),
+    status: normalizeChargeStatus(afterData.status),
+    archived: afterData.archived === true,
+    monthKey: normalizeMonthKey(afterData.monthKey),
+    eventDate: resolveChargeEventDateForCutover(afterData)?.toISOString() || null,
+    studentId: resolveChargeStudentId(afterData),
+    enrollmentId: normalizeOptionalId(afterData.enrollmentId),
+    classSessionId: resolveChargeClassSessionId('', afterData),
+    source: normalizeOptionalText(afterData.source, 150),
+  };
+  if (JSON.stringify(triggerRelevantBefore) === JSON.stringify(triggerRelevantAfter)) {
+    return true;
+  }
+
+  const changedKeys = new Set<string>();
+  Object.keys(beforeData).forEach((key) => {
+    if (
+      JSON.stringify(stableValueForWalletChargeSync(beforeData[key])) !==
+      JSON.stringify(stableValueForWalletChargeSync(afterData[key]))
+    ) {
+      changedKeys.add(key.toLowerCase());
+    }
+  });
+  Object.keys(afterData).forEach((key) => {
+    if (
+      JSON.stringify(stableValueForWalletChargeSync(beforeData[key])) !==
+      JSON.stringify(stableValueForWalletChargeSync(afterData[key]))
+    ) {
+      changedKeys.add(key.toLowerCase());
+    }
+  });
+
+  return changedKeys.size > 0 && Array.from(changedKeys).every((key) => BILLING_CHARGE_SETTLEMENT_ONLY_KEYS.has(key));
+}
+
 function normalizeDateOnlyYmd(value: unknown): string | null {
   if (typeof value === 'string') {
     const raw = value.trim();
@@ -336,7 +442,8 @@ function normalizeDateOnlyYmd(value: unknown): string | null {
 function normalizeParentPaymentAllocationMode(value: unknown): ParentPaymentAllocationMode | null {
   const raw = typeof value === 'string' ? value.trim().toLowerCase() : '';
   if (!raw) return null;
-  if (raw === 'legacy_then_wallet' || raw === 'wallet_only') return raw;
+  if (raw === 'wallet_only') return 'wallet_only';
+  if (raw === 'fifo_then_wallet' || raw === 'legacy_then_wallet') return 'fifo_then_wallet';
   return null;
 }
 
@@ -372,40 +479,8 @@ function revenueMonthlyRef(db: admin.firestore.Firestore, monthKey: string) {
     .doc(monthKey);
 }
 
-interface BillingChargeEntry {
-  id: string;
+interface BillingChargeEntry extends BillingChargeDocLike {
   ref: admin.firestore.DocumentReference;
-  data: Record<string, unknown>;
-}
-
-interface LegacyChargeCandidate extends BillingChargeEntry {
-  monthKey: string | null;
-  createdAtMs: number | null;
-  eventDateMs: number | null;
-  amountValue: number;
-  paidAmountValue: number;
-  outstanding: number;
-  enrollmentId: string | null;
-  kidId: string | null;
-  courseId: string | null;
-}
-
-interface LegacyChargeAllocationInternal extends LegacyPaymentAllocationPreview {
-  ref: admin.firestore.DocumentReference;
-  amountValue: number;
-  paidAmountValue: number;
-}
-
-interface LegacyChargeAllocationPlan {
-  chargesScanned: number;
-  chargesIncluded: number;
-  legacyOutstandingBefore: number;
-  appliedToLegacy: number;
-  walletTopupAmount: number;
-  remainingUnapplied: number;
-  allocations: LegacyPaymentAllocationPreview[];
-  allocationsInternal: LegacyChargeAllocationInternal[];
-  warnings: string[];
 }
 
 interface OpeningDeficitMigrationDetectionResult {
@@ -418,147 +493,8 @@ interface OpeningDeficitMigrationDetectionResult {
   warnings: string[];
 }
 
-function resolveChargeSortDateMs(data: Record<string, unknown>): number | null {
-  const candidates: unknown[] = [
-    data.chargeDate,
-    data.date,
-    data.sessionDate,
-    data.startAt,
-    data.endAt,
-    data.updatedAt,
-  ];
-  for (const value of candidates) {
-    const parsed = toDate(value);
-    if (parsed) return parsed.getTime();
-  }
-  return null;
-}
-
-function normalizeLegacyChargeEntries(entries: BillingChargeEntry[]): {
-  candidates: LegacyChargeCandidate[];
-  warnings: string[];
-} {
-  const warnings: string[] = [];
-  const pushWarning = (message: string) => {
-    if (warnings.length < 150) warnings.push(message);
-  };
-
-  const candidates: LegacyChargeCandidate[] = [];
-  for (const entry of entries) {
-    const data = entry.data;
-    const status = normalizeChargeStatus(data.status);
-    if (isExcludedBillingChargeStatus(status)) continue;
-
-    if (!Number.isFinite(Number(data.amount))) {
-      pushWarning(`charge ${entry.id}: missing/invalid amount, treated as 0`);
-    }
-    const amountValue = Math.max(normalizeNumber(data.amount, 0), 0);
-    if (amountValue <= 0) continue;
-
-    if (!Number.isFinite(Number(data.paidAmount))) {
-      pushWarning(`charge ${entry.id}: missing/invalid paidAmount, resolved using status fallback`);
-    }
-    const paidAmountValue = resolveChargePaidAmount(data, amountValue);
-    const outstanding = Math.max(amountValue - paidAmountValue, 0);
-    if (outstanding <= 0) continue;
-
-    const monthKey = normalizeMonthKey(data.monthKey);
-    candidates.push({
-      ...entry,
-      monthKey,
-      createdAtMs: toDate(data.createdAt)?.getTime() || null,
-      eventDateMs: resolveChargeSortDateMs(data),
-      amountValue,
-      paidAmountValue,
-      outstanding,
-      enrollmentId: normalizeOptionalId(data.enrollmentId),
-      kidId: normalizeOptionalId(data.kidId) || normalizeOptionalId(data.studentId),
-      courseId: normalizeOptionalId(data.courseId),
-    });
-  }
-
-  candidates.sort((left, right) => {
-    const leftMonth = left.monthKey || '9999-99';
-    const rightMonth = right.monthKey || '9999-99';
-    if (leftMonth !== rightMonth) return leftMonth.localeCompare(rightMonth);
-
-    const leftCreated = left.createdAtMs ?? Number.MAX_SAFE_INTEGER;
-    const rightCreated = right.createdAtMs ?? Number.MAX_SAFE_INTEGER;
-    if (leftCreated !== rightCreated) return leftCreated - rightCreated;
-
-    const leftEvent = left.eventDateMs ?? Number.MAX_SAFE_INTEGER;
-    const rightEvent = right.eventDateMs ?? Number.MAX_SAFE_INTEGER;
-    if (leftEvent !== rightEvent) return leftEvent - rightEvent;
-
-    return left.id.localeCompare(right.id);
-  });
-
-  return { candidates, warnings };
-}
-
-function buildLegacyChargeAllocationPlan(
-  entries: BillingChargeEntry[],
-  amountReceived: number
-): LegacyChargeAllocationPlan {
-  const normalizedAmount = Math.max(roundCurrency(amountReceived), 0);
-  const { candidates, warnings } = normalizeLegacyChargeEntries(entries);
-  const chargesScanned = entries.length;
-  const chargesIncluded = candidates.length;
-  const legacyOutstandingBefore = roundCurrency(
-    candidates.reduce((sum, item) => sum + item.outstanding, 0)
-  );
-
-  let remaining = normalizedAmount;
-  const allocationsInternal: LegacyChargeAllocationInternal[] = [];
-  for (const candidate of candidates) {
-    if (remaining <= 0) break;
-    const applyAmount = roundCurrency(Math.min(remaining, candidate.outstanding));
-    if (applyAmount <= 0) continue;
-    remaining = roundCurrency(remaining - applyAmount);
-    const outstandingAfter = roundCurrency(Math.max(candidate.outstanding - applyAmount, 0));
-    allocationsInternal.push({
-      ref: candidate.ref,
-      chargeId: candidate.id,
-      amount: applyAmount,
-      outstandingBefore: roundCurrency(candidate.outstanding),
-      outstandingAfter,
-      monthKey: candidate.monthKey,
-      enrollmentId: candidate.enrollmentId,
-      kidId: candidate.kidId,
-      courseId: candidate.courseId,
-      amountValue: candidate.amountValue,
-      paidAmountValue: candidate.paidAmountValue,
-    });
-  }
-
-  const appliedToLegacy = roundCurrency(normalizedAmount - remaining);
-  const walletTopupAmount = roundCurrency(Math.max(remaining, 0));
-  const remainingUnapplied = 0;
-
-  return {
-    chargesScanned,
-    chargesIncluded,
-    legacyOutstandingBefore,
-    appliedToLegacy,
-    walletTopupAmount,
-    remainingUnapplied,
-    allocations: allocationsInternal.map((item) => ({
-      chargeId: item.chargeId,
-      amount: item.amount,
-      outstandingBefore: item.outstandingBefore,
-      outstandingAfter: item.outstandingAfter,
-      monthKey: item.monthKey,
-      enrollmentId: item.enrollmentId,
-      kidId: item.kidId,
-      courseId: item.courseId,
-    })),
-    allocationsInternal,
-    warnings,
-  };
-}
-
 function resolveSingleAllocationValue(
-  allocations: LegacyPaymentAllocationPreview[],
+  allocations: ParentPaymentAllocationPreview[],
   field: 'enrollmentId' | 'kidId' | 'courseId'
 ): string | null {
   const values = Array.from(
@@ -593,6 +529,351 @@ function assertExistingReceiveParentPaymentMatchesInput(
       'idempotencyKey already used for a different parent payment intake request'
     );
   }
+}
+
+type ReceiveParentPaymentWriteResult = {
+  paymentId: string;
+  idempotentReplay: boolean;
+  amountReceived: number;
+  allocationModeUsed: ParentPaymentAllocationMode;
+  parentOutstandingBefore: number;
+  legacyOutstandingBefore: number;
+  allocatedAmount: number;
+  appliedToLegacy: number;
+  walletTopupAmount: number;
+  advanceAmount: number;
+  unallocatedAmount: number;
+  remainingUnapplied: number;
+  chargesScanned: number;
+  chargesIncluded: number;
+  allocations: ParentPaymentAllocationPreview[];
+  walletTransactionId: string | null;
+  walletBalanceAfter: number;
+  migratedByOpeningDeficit: boolean;
+  warnings: string[];
+};
+
+export function buildExistingReceiveParentPaymentReplayResult(params: {
+  existing: Record<string, unknown>;
+  parentId: string;
+  amount: number;
+  idempotencyKey: string;
+  allocationModeUsed: ParentPaymentAllocationMode;
+  migration: OpeningDeficitMigrationDetectionResult;
+  warnings: string[];
+  paymentId: string;
+}): ReceiveParentPaymentWriteResult {
+  const { existing, parentId, amount, idempotencyKey, allocationModeUsed, migration, warnings, paymentId } =
+    params;
+  assertExistingReceiveParentPaymentMatchesInput(existing, parentId, amount, idempotencyKey);
+
+  const replayAllocations =
+    Array.isArray(existing.allocations) && existing.allocations.length > 0
+      ? (existing.allocations as ParentPaymentAllocationPreview[])
+      : Array.isArray(existing.appliedAllocations)
+        ? (existing.appliedAllocations as Array<Record<string, unknown>>).map((item) => ({
+            sequence: 0,
+            chargeId: String(item.chargeId || '').trim(),
+            monthKey: null,
+            eventDateKey: null,
+            chargeAmount: 0,
+            previousPaidAmount: 0,
+            outstandingBefore: 0,
+            allocatedAmount: roundCurrency(normalizeNumber(item.amount, 0)),
+            remainingDueAfter: 0,
+            enrollmentId: null,
+            kidId: null,
+            courseId: null,
+            studentName: null,
+            classSessionId: null,
+          }))
+        : [];
+
+  const existingAllocatedAmount = roundCurrency(
+    normalizeNumber(
+      existing.allocatedAmount,
+      normalizeNumber(
+        existing.legacyAppliedAmount,
+        normalizeNumber(existing.appliedAmount, 0)
+      )
+    )
+  );
+  const existingUnallocatedAmount = roundCurrency(
+    normalizeNumber(
+      existing.unallocatedAmount,
+      normalizeNumber(existing.unappliedAmount, 0)
+    )
+  );
+  const existingOutstandingBefore = roundCurrency(
+    normalizeNumber(
+      existing.parentOutstandingBefore,
+      normalizeNumber(existing.legacyOutstandingBefore, 0)
+    )
+  );
+
+  return {
+    paymentId,
+    idempotentReplay: true,
+    amountReceived: roundCurrency(normalizeNumber(existing.amount, amount)),
+    allocationModeUsed:
+      normalizeParentPaymentAllocationMode(existing.allocationModeUsed) || allocationModeUsed,
+    parentOutstandingBefore: existingOutstandingBefore,
+    legacyOutstandingBefore: existingOutstandingBefore,
+    allocatedAmount: existingAllocatedAmount,
+    appliedToLegacy: existingAllocatedAmount,
+    walletTopupAmount: roundCurrency(
+      normalizeNumber(existing.walletTopupAmount, existingUnallocatedAmount)
+    ),
+    advanceAmount: roundCurrency(
+      normalizeNumber(existing.advanceAmount, existingUnallocatedAmount)
+    ),
+    unallocatedAmount: existingUnallocatedAmount,
+    remainingUnapplied: existingUnallocatedAmount,
+    chargesScanned: Math.max(Math.floor(normalizeNumber(existing.chargesScanned, 0)), 0),
+    chargesIncluded: Math.max(Math.floor(normalizeNumber(existing.chargesIncluded, 0)), 0),
+    allocations: replayAllocations,
+    walletTransactionId: normalizeOptionalId(existing.walletTransactionId),
+    walletBalanceAfter: roundCurrency(normalizeNumber(existing.walletBalanceAfter, 0)),
+    migratedByOpeningDeficit:
+      existing.migratedByOpeningDeficit === true || migration.migratedByOpeningDeficit,
+    warnings:
+      Array.isArray(existing.warnings)
+        ? existing.warnings.map((item) => String(item || '').trim()).filter(Boolean)
+        : warnings,
+  };
+}
+
+export function applyReceiveParentPaymentWithPreparedState(params: {
+  tx: WalletWriteOnlyTransaction;
+  paymentRef: admin.firestore.DocumentReference;
+  rollupRef: admin.firestore.DocumentReference;
+  parentId: string;
+  amount: number;
+  allocationModeUsed: ParentPaymentAllocationMode;
+  paidAt: admin.firestore.Timestamp;
+  dateKey: string;
+  monthKey: string;
+  method: string | null;
+  note: string | null;
+  reference: string | null;
+  idempotencyKey: string;
+  createdBy: string | null;
+  migration: OpeningDeficitMigrationDetectionResult;
+  warnings: string[];
+  chargeEntries: BillingChargeEntry[];
+  plan: ParentPaymentAllocationPlan;
+  preparedWalletState: PreparedAppendWalletTransactionState;
+  walletTopupIdempotencyKey: string;
+  stage?: ReceiveParentPaymentApplyStage;
+}): ReceiveParentPaymentWriteResult {
+  const {
+    tx,
+    paymentRef,
+    rollupRef,
+    parentId,
+    amount,
+    allocationModeUsed,
+    paidAt,
+    dateKey,
+    monthKey,
+    method,
+    note,
+    reference,
+    idempotencyKey,
+    createdBy,
+    migration,
+    warnings,
+    chargeEntries,
+    plan,
+    preparedWalletState,
+    walletTopupIdempotencyKey,
+    stage,
+  } = params;
+
+  const chargeEntryById = new Map(chargeEntries.map((entry) => [entry.id, entry]));
+  if (stage) stage.current = 'settle_billing_charges';
+  for (const allocation of plan.allocations) {
+    const chargeEntry = chargeEntryById.get(allocation.chargeId);
+    if (!chargeEntry) {
+      throw new HttpsError(
+        'failed-precondition',
+        `Charge ${allocation.chargeId} disappeared before allocation could be applied`
+      );
+    }
+
+    const nextPaid = roundCurrency(allocation.previousPaidAmount + allocation.allocatedAmount);
+    const nextOutstanding = roundCurrency(Math.max(allocation.chargeAmount - nextPaid, 0));
+    const updates: Record<string, unknown> = {
+      paidAmount: nextPaid,
+      outstandingAmount: nextOutstanding,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      paymentIds: admin.firestore.FieldValue.arrayUnion(paymentRef.id),
+      lastAllocatedAt: paidAt,
+      lastPaymentId: paymentRef.id,
+      lastAllocationRef: `payments/${paymentRef.id}/allocations/${String(allocation.sequence).padStart(4, '0')}`,
+      lastAllocationReceiptMonthKey: monthKey,
+    };
+    if (nextOutstanding <= 0.01) {
+      updates.status = 'paid';
+      updates.paidAt = paidAt;
+    } else {
+      updates.status = 'partial';
+      updates.paidAt = admin.firestore.FieldValue.delete();
+    }
+    tx.set(chargeEntry.ref, updates, { merge: true });
+  }
+
+  const allWarnings = [...warnings, ...plan.warnings];
+  const allocatedAmount = roundCurrency(plan.allocatedAmount);
+  const unallocatedAmount = roundCurrency(plan.unallocatedAmount);
+  const singleEnrollmentId = resolveSingleAllocationValue(plan.allocations, 'enrollmentId');
+  const singleKidId = resolveSingleAllocationValue(plan.allocations, 'kidId');
+  const singleCourseId = resolveSingleAllocationValue(plan.allocations, 'courseId');
+
+  if (stage) stage.current = 'wallet_credit';
+  const walletResult = appendWalletTransactionWithPreparedState(
+    tx,
+    {
+      parentId,
+      type: 'topup',
+      direction: 'credit',
+      amount,
+      idempotencyKey: walletTopupIdempotencyKey,
+      monthKey,
+      description:
+        allocationModeUsed === 'wallet_only'
+          ? 'Parent payment received (advance wallet only)'
+          : 'Parent payment received (auto-applied to oldest dues first)',
+      method,
+      paidAt,
+      note,
+      reference,
+      reason: null,
+      studentId: singleKidId,
+      enrollmentId: singleEnrollmentId,
+      classSessionId: null,
+      billingChargeId: null,
+      reversalOfTransactionId: null,
+      createdBy,
+      sourceSystem: 'admin_receive_parent_payment',
+    },
+    preparedWalletState
+  );
+
+  if (stage) stage.current = 'write_payment_doc';
+  tx.set(
+    paymentRef,
+    {
+      parentId,
+      enrollmentId: singleEnrollmentId,
+      kidId: singleKidId,
+      courseId: singleCourseId,
+      amount,
+      currency: 'INR',
+      paidAt,
+      paidDateKey: dateKey,
+      receiptMonthKey: monthKey,
+      monthKey,
+      date: dateKey,
+      method,
+      status: 'completed',
+      note: note || null,
+      reference: reference || null,
+      idempotencyKey,
+      sourceSystem: 'admin_receive_parent_payment',
+      sourceFunction: 'adminReceiveParentPayment',
+      allocationModeUsed,
+      parentOutstandingBefore: plan.outstandingBefore,
+      legacyOutstandingBefore: plan.outstandingBefore,
+      allocatedAmount,
+      legacyAppliedAmount: allocatedAmount,
+      appliedAmount: allocatedAmount,
+      unallocatedAmount,
+      unappliedAmount: unallocatedAmount,
+      advanceAmount: unallocatedAmount,
+      walletTopupAmount: unallocatedAmount,
+      walletCreditedAmount: amount,
+      chargesScanned: plan.chargesScanned,
+      chargesIncluded: plan.chargesIncluded,
+      appliedChargeIds: plan.allocations.map((allocation) => allocation.chargeId),
+      appliedAllocations: plan.allocations.map((allocation) => ({
+        chargeId: allocation.chargeId,
+        amount: allocation.allocatedAmount,
+      })),
+      allocations: plan.allocations,
+      walletTransactionId: walletResult.transactionId,
+      walletBalanceAfter: roundCurrency(walletResult.currentBalance),
+      migratedByOpeningDeficit: migration.migratedByOpeningDeficit,
+      warnings: allWarnings,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdBy,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  if (stage) stage.current = 'write_allocation_subdocs';
+  plan.allocations.forEach((allocation) => {
+    const allocationRef = paymentRef
+      .collection('allocations')
+      .doc(String(allocation.sequence).padStart(4, '0'));
+    tx.set(allocationRef, {
+      parentId,
+      paymentId: paymentRef.id,
+      chargeId: allocation.chargeId,
+      chargeMonthKey: allocation.monthKey,
+      eventDateKey: allocation.eventDateKey,
+      amount: allocation.allocatedAmount,
+      chargeAmount: allocation.chargeAmount,
+      previousPaidAmount: allocation.previousPaidAmount,
+      outstandingBefore: allocation.outstandingBefore,
+      remainingDueAfter: allocation.remainingDueAfter,
+      paidAt,
+      receiptMonthKey: monthKey,
+      sequence: allocation.sequence,
+      studentName: allocation.studentName,
+      kidId: allocation.kidId,
+      enrollmentId: allocation.enrollmentId,
+      courseId: allocation.courseId,
+      classSessionId: allocation.classSessionId,
+      source: 'adminReceiveParentPayment',
+      allocatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  });
+
+  if (stage) stage.current = 'write_revenue_rollup';
+  tx.set(
+    rollupRef,
+    {
+      earned: admin.firestore.FieldValue.increment(amount),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  if (stage) stage.current = 'complete';
+  return {
+    paymentId: paymentRef.id,
+    idempotentReplay: false,
+    amountReceived: amount,
+    allocationModeUsed,
+    parentOutstandingBefore: plan.outstandingBefore,
+    legacyOutstandingBefore: plan.outstandingBefore,
+    allocatedAmount,
+    appliedToLegacy: allocatedAmount,
+    walletTopupAmount: unallocatedAmount,
+    advanceAmount: unallocatedAmount,
+    unallocatedAmount,
+    remainingUnapplied: unallocatedAmount,
+    chargesScanned: plan.chargesScanned,
+    chargesIncluded: plan.chargesIncluded,
+    allocations: plan.allocations,
+    walletTransactionId: walletResult.transactionId,
+    walletBalanceAfter: roundCurrency(walletResult.currentBalance),
+    migratedByOpeningDeficit: migration.migratedByOpeningDeficit,
+    warnings: allWarnings,
+  };
 }
 
 async function detectOpeningDeficitMigration(
@@ -737,6 +1018,24 @@ function walletTransactionDocId(idempotencyKey: string): string {
   return `tx_${idempotencyKey}`.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 150);
 }
 
+export function prepareAppendWalletTransactionState(
+  walletRef: admin.firestore.DocumentReference,
+  transactionRef: admin.firestore.DocumentReference,
+  walletSnap: Pick<admin.firestore.DocumentSnapshot, 'exists' | 'data'>,
+  existingTxSnap: Pick<admin.firestore.DocumentSnapshot, 'exists' | 'id' | 'data'>
+): PreparedAppendWalletTransactionState {
+  return {
+    walletRef,
+    transactionRef,
+    walletExists: walletSnap.exists,
+    walletData: ((walletSnap.data() || {}) as Record<string, unknown>) || {},
+    existingTransactionId: existingTxSnap.exists ? existingTxSnap.id : null,
+    existingTransactionData: existingTxSnap.exists
+      ? (((existingTxSnap.data() || {}) as Record<string, unknown>) || {})
+      : null,
+  };
+}
+
 function assertExistingTransactionMatchesInput(
   existing: Record<string, unknown>,
   input: AppendWalletTransactionInput
@@ -761,21 +1060,16 @@ function assertExistingTransactionMatchesInput(
   }
 }
 
-async function appendWalletTransactionWithTx(
-  tx: admin.firestore.Transaction,
-  db: admin.firestore.Firestore,
-  input: AppendWalletTransactionInput
-): Promise<AppendWalletTransactionResult> {
-  const walletRef = db.collection('parentWallets').doc(input.parentId);
-  const transactionRef = walletRef.collection('transactions').doc(walletTransactionDocId(input.idempotencyKey));
-
-  const walletSnap = await tx.get(walletRef);
-  const existingTxSnap = await tx.get(transactionRef);
-  const walletData = (walletSnap.data() || {}) as Record<string, unknown>;
+export function appendWalletTransactionWithPreparedState(
+  tx: WalletWriteOnlyTransaction,
+  input: AppendWalletTransactionInput,
+  preparedState: PreparedAppendWalletTransactionState
+): AppendWalletTransactionResult {
+  const walletData = preparedState.walletData;
   const walletCurrentBalance = normalizeNumber(walletData.currentBalance, 0);
 
-  if (existingTxSnap.exists) {
-    const existingTx = (existingTxSnap.data() || {}) as Record<string, unknown>;
+  if (preparedState.existingTransactionData && preparedState.existingTransactionId) {
+    const existingTx = preparedState.existingTransactionData;
     assertExistingTransactionMatchesInput(existingTx, input);
 
     const signedAmount = normalizeNumber(
@@ -784,13 +1078,13 @@ async function appendWalletTransactionWithTx(
     );
     const balanceAfter = normalizeNumber(existingTx.balanceAfter, walletCurrentBalance);
     const balanceBefore = normalizeNumber(existingTx.balanceBefore, balanceAfter - signedAmount);
-    const currentBalance = walletSnap.exists
+    const currentBalance = preparedState.walletExists
       ? walletCurrentBalance
       : balanceAfter;
 
     return {
       parentId: input.parentId,
-      transactionId: existingTxSnap.id,
+      transactionId: preparedState.existingTransactionId,
       signedAmount,
       balanceBefore,
       balanceAfter,
@@ -828,12 +1122,12 @@ async function appendWalletTransactionWithTx(
     updatedBy: input.createdBy,
   };
 
-  if (!walletSnap.exists) {
+  if (!preparedState.walletExists) {
     walletPatch.createdAt = now;
   }
 
-  tx.set(walletRef, walletPatch, { merge: true });
-  tx.set(transactionRef, {
+  tx.set(preparedState.walletRef, walletPatch, { merge: true });
+  tx.set(preparedState.transactionRef, {
     parentId: input.parentId,
     type: input.type,
     direction: input.direction,
@@ -861,13 +1155,35 @@ async function appendWalletTransactionWithTx(
 
   return {
     parentId: input.parentId,
-    transactionId: transactionRef.id,
+    transactionId: preparedState.transactionRef.id,
     signedAmount,
     balanceBefore,
     balanceAfter,
     currentBalance: balanceAfter,
     idempotentReplay: false,
   };
+}
+
+async function appendWalletTransactionWithTx(
+  tx: admin.firestore.Transaction,
+  db: admin.firestore.Firestore,
+  input: AppendWalletTransactionInput
+): Promise<AppendWalletTransactionResult> {
+  const walletRef = db.collection('parentWallets').doc(input.parentId);
+  const transactionRef = walletRef.collection('transactions').doc(
+    walletTransactionDocId(input.idempotencyKey)
+  );
+
+  const walletSnap = await tx.get(walletRef);
+  const existingTxSnap = await tx.get(transactionRef);
+  const preparedState = prepareAppendWalletTransactionState(
+    walletRef,
+    transactionRef,
+    walletSnap,
+    existingTxSnap
+  );
+
+  return appendWalletTransactionWithPreparedState(tx, input, preparedState);
 }
 
 async function appendWalletTransactionAtomic(
@@ -2065,6 +2381,13 @@ export const onBillingChargeWalletSync = onDocumentWritten(
       });
       return;
     }
+    if (shouldSkipWalletChargeDeductionSync(beforeData, afterData)) {
+      logger.info('wallet billing sync no-op: settlement-only update', {
+        chargeId,
+        parentId,
+      });
+      return;
+    }
 
     const amount = Math.max(normalizeNumber(afterData.amount, 0), 0);
     if (!(amount > 0)) {
@@ -2209,7 +2532,7 @@ export const adminReceiveParentPayment = onCall(
     if (hasOwnProp(data, 'allocationMode') && !requestedMode) {
       throw new HttpsError(
         'invalid-argument',
-        'allocationMode must be either legacy_then_wallet or wallet_only'
+        'allocationMode must be either fifo_then_wallet or wallet_only'
       );
     }
 
@@ -2225,52 +2548,39 @@ export const adminReceiveParentPayment = onCall(
     const db = admin.firestore();
     const migration = await detectOpeningDeficitMigration(db, parentId);
     const warnings: string[] = [...migration.warnings];
-
-    // Post cutover (May 2026 onward), normal parent receipts should default to
-    // wallet ledger behavior. legacy_then_wallet remains available only when
-    // explicitly requested for controlled/manual backfill cases.
-    const allocationModeUsed: ParentPaymentAllocationMode = requestedMode || 'wallet_only';
-
-    if (migration.migratedByOpeningDeficit && allocationModeUsed === 'legacy_then_wallet') {
-      throw new HttpsError(
-        'failed-precondition',
-        'Parent has opening deficit migration. legacy_then_wallet allocation is blocked to avoid double-counting historical dues.'
+    if (migration.migratedByOpeningDeficit) {
+      warnings.push(
+        'Wallet opening deficit migration exists. FIFO allocation updates active billing charges only; historical migrated deficit remains represented through wallet balance.'
       );
     }
+
+    const allocationModeUsed: ParentPaymentAllocationMode = requestedMode || 'fifo_then_wallet';
     if (!requestedMode) {
-      warnings.push('Defaulted allocationModeUsed to wallet_only (post-cutover default).');
+      warnings.push('Defaulted allocationModeUsed to fifo_then_wallet.');
     }
 
     if (dryRun) {
-      if (allocationModeUsed === 'wallet_only') {
-        return {
-          ok: true,
-          dryRun: true,
-          parentId,
-          amountReceived: amount,
-          allocationModeUsed,
-          legacyOutstandingBefore: 0,
-          appliedToLegacy: 0,
-          walletTopupAmount: amount,
-          remainingUnapplied: 0,
-          chargesScanned: 0,
-          chargesIncluded: 0,
-          allocationsPreview: [] as LegacyPaymentAllocationPreview[],
-          migratedByOpeningDeficit: migration.migratedByOpeningDeficit,
-          warnings,
-        };
-      }
-
-      const chargesSnap = await db
-        .collection('billingCharges')
-        .where('parentId', '==', parentId)
-        .get();
-      const chargeEntries: BillingChargeEntry[] = chargesSnap.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ref: docSnap.ref,
-        data: (docSnap.data() || {}) as Record<string, unknown>,
-      }));
-      const plan = buildLegacyChargeAllocationPlan(chargeEntries, amount);
+      const plan: ParentPaymentAllocationPlan =
+        allocationModeUsed === 'wallet_only'
+          ? {
+              chargesScanned: 0,
+              chargesIncluded: 0,
+              outstandingBefore: 0,
+              allocatedAmount: 0,
+              unallocatedAmount: amount,
+              walletTopupAmount: amount,
+              allocations: [],
+              warnings: [],
+            }
+          : buildParentPaymentAllocationPlan(
+              (
+                await db.collection('billingCharges').where('parentId', '==', parentId).get()
+              ).docs.map((docSnap) => ({
+                id: docSnap.id,
+                data: (docSnap.data() || {}) as Record<string, unknown>,
+              })),
+              amount
+            );
       const allWarnings = [...warnings, ...plan.warnings];
 
       return {
@@ -2279,10 +2589,14 @@ export const adminReceiveParentPayment = onCall(
         parentId,
         amountReceived: amount,
         allocationModeUsed,
-        legacyOutstandingBefore: plan.legacyOutstandingBefore,
-        appliedToLegacy: plan.appliedToLegacy,
+        parentOutstandingBefore: plan.outstandingBefore,
+        legacyOutstandingBefore: plan.outstandingBefore,
+        allocatedAmount: plan.allocatedAmount,
+        appliedToLegacy: plan.allocatedAmount,
         walletTopupAmount: plan.walletTopupAmount,
-        remainingUnapplied: plan.remainingUnapplied,
+        advanceAmount: plan.unallocatedAmount,
+        unallocatedAmount: plan.unallocatedAmount,
+        remainingUnapplied: plan.unallocatedAmount,
         chargesScanned: plan.chargesScanned,
         chargesIncluded: plan.chargesIncluded,
         allocationsPreview: plan.allocations,
@@ -2306,233 +2620,135 @@ export const adminReceiveParentPayment = onCall(
     }
     const rollupRef = revenueMonthlyRef(db, monthKey);
 
-    const writeResult = await db.runTransaction(async (tx) => {
-      const existingPaymentSnap = await tx.get(paymentRef);
-      if (existingPaymentSnap.exists) {
-        const existing = (existingPaymentSnap.data() || {}) as Record<string, unknown>;
-        assertExistingReceiveParentPaymentMatchesInput(existing, parentId, amount, idempotencyKey);
+    const applyStage: ReceiveParentPaymentApplyStage = { current: 'start' };
 
-        const replayAllocations =
-          Array.isArray(existing.allocations) && existing.allocations.length > 0
-            ? (existing.allocations as LegacyPaymentAllocationPreview[])
-            : Array.isArray(existing.appliedAllocations)
-              ? (existing.appliedAllocations as Array<Record<string, unknown>>).map((item) => ({
-                  chargeId: String(item.chargeId || '').trim(),
-                  amount: roundCurrency(normalizeNumber(item.amount, 0)),
-                  outstandingBefore: 0,
-                  outstandingAfter: 0,
-                  monthKey: null,
-                  enrollmentId: null,
-                  kidId: null,
-                  courseId: null,
-                }))
-              : [];
+    try {
+      const writeResult = await db.runTransaction(async (tx) => {
+        applyStage.current = 'load_existing_payment';
+        const existingPaymentSnap = await tx.get(paymentRef);
+        if (existingPaymentSnap.exists) {
+          applyStage.current = 'existing_payment_replay';
+          const existing = (existingPaymentSnap.data() || {}) as Record<string, unknown>;
+          return buildExistingReceiveParentPaymentReplayResult({
+            existing,
+            parentId,
+            amount,
+            idempotencyKey,
+            allocationModeUsed,
+            migration,
+            warnings,
+            paymentId: paymentRef.id,
+          });
+        }
 
-        return {
-          paymentId: paymentRef.id,
-          idempotentReplay: true,
-          amountReceived: roundCurrency(normalizeNumber(existing.amount, amount)),
-          allocationModeUsed:
-            normalizeParentPaymentAllocationMode(existing.allocationModeUsed) || allocationModeUsed,
-          legacyOutstandingBefore: roundCurrency(normalizeNumber(existing.legacyOutstandingBefore, 0)),
-          appliedToLegacy: roundCurrency(
-            normalizeNumber(existing.legacyAppliedAmount, normalizeNumber(existing.appliedAmount, 0))
-          ),
-          walletTopupAmount: roundCurrency(normalizeNumber(existing.walletTopupAmount, 0)),
-          remainingUnapplied: roundCurrency(normalizeNumber(existing.unappliedAmount, 0)),
-          chargesScanned: Math.max(Math.floor(normalizeNumber(existing.chargesScanned, 0)), 0),
-          chargesIncluded: Math.max(Math.floor(normalizeNumber(existing.chargesIncluded, 0)), 0),
-          allocations: replayAllocations,
-          walletTransactionId: normalizeOptionalId(existing.walletTransactionId),
-          walletBalanceAfter: roundCurrency(normalizeNumber(existing.walletBalanceAfter, 0)),
-          migratedByOpeningDeficit:
-            existing.migratedByOpeningDeficit === true || migration.migratedByOpeningDeficit,
-          warnings:
-            Array.isArray(existing.warnings)
-              ? existing.warnings.map((item) => String(item || '').trim()).filter(Boolean)
-              : warnings,
-        };
-      }
-
-      const walletRef = db.collection('parentWallets').doc(parentId);
-      const walletSnap = await tx.get(walletRef);
-      const walletData = (walletSnap.data() || {}) as Record<string, unknown>;
-      const txOpeningDeficit = Math.max(normalizeNumber(walletData.openingDeficit, 0), 0);
-      if (allocationModeUsed === 'legacy_then_wallet' && txOpeningDeficit > 0) {
-        throw new HttpsError(
-          'failed-precondition',
-          'Parent has opening deficit migration. legacy_then_wallet allocation is blocked to avoid double-counting historical dues.'
+        applyStage.current = 'load_billing_charges';
+        const chargesSnap = await tx.get(
+          db.collection('billingCharges').where('parentId', '==', parentId)
         );
-      }
-
-      let plan: LegacyChargeAllocationPlan = {
-        chargesScanned: 0,
-        chargesIncluded: 0,
-        legacyOutstandingBefore: 0,
-        appliedToLegacy: 0,
-        walletTopupAmount: amount,
-        remainingUnapplied: 0,
-        allocations: [],
-        allocationsInternal: [],
-        warnings: [],
-      };
-
-      if (allocationModeUsed === 'legacy_then_wallet') {
-        const chargesQuery = db.collection('billingCharges').where('parentId', '==', parentId);
-        const chargesSnap = await tx.get(chargesQuery);
         const chargeEntries: BillingChargeEntry[] = chargesSnap.docs.map((docSnap) => ({
           id: docSnap.id,
           ref: docSnap.ref,
           data: (docSnap.data() || {}) as Record<string, unknown>,
         }));
-        plan = buildLegacyChargeAllocationPlan(chargeEntries, amount);
 
-        for (const allocation of plan.allocationsInternal) {
-          const nextPaid = roundCurrency(allocation.paidAmountValue + allocation.amount);
-          const updates: Record<string, unknown> = {
-            paidAmount: nextPaid,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            paymentIds: admin.firestore.FieldValue.arrayUnion(paymentRef.id),
-          };
-          if (nextPaid >= allocation.amountValue - 0.01) {
-            updates.status = 'paid';
-            updates.paidAt = paidAt;
-          } else {
-            updates.status = 'partial';
-            updates.paidAt = admin.firestore.FieldValue.delete();
-          }
-          tx.set(allocation.ref, updates, { merge: true });
-        }
-      }
+        const plan: ParentPaymentAllocationPlan =
+          allocationModeUsed === 'wallet_only'
+            ? {
+                chargesScanned: 0,
+                chargesIncluded: 0,
+                outstandingBefore: 0,
+                allocatedAmount: 0,
+                unallocatedAmount: amount,
+                walletTopupAmount: amount,
+                allocations: [],
+                warnings: [],
+              }
+            : buildParentPaymentAllocationPlan(chargeEntries, amount);
 
-      const allWarnings = [...warnings, ...plan.warnings];
-      const walletTopupAmount = roundCurrency(plan.walletTopupAmount);
-      const legacyAppliedAmount = roundCurrency(plan.appliedToLegacy);
-      const remainingUnapplied =
-        walletTopupAmount > 0 ? 0 : roundCurrency(Math.max(plan.remainingUnapplied, 0));
+        const walletRef = db.collection('parentWallets').doc(parentId);
+        const walletTransactionRef = walletRef
+          .collection('transactions')
+          .doc(walletTransactionDocId(walletTopupIdempotencyKey));
 
-      let walletTransactionId: string | null = null;
-      let walletBalanceAfter = roundCurrency(normalizeNumber(walletData.currentBalance, 0));
-      if (walletTopupAmount > 0) {
-        const walletResult = await appendWalletTransactionWithTx(tx, db, {
+        applyStage.current = 'load_wallet_doc';
+        const walletSnap = await tx.get(walletRef);
+        applyStage.current = 'load_wallet_transaction_doc';
+        const existingWalletTxSnap = await tx.get(walletTransactionRef);
+        const preparedWalletState = prepareAppendWalletTransactionState(
+          walletRef,
+          walletTransactionRef,
+          walletSnap,
+          existingWalletTxSnap
+        );
+
+        applyStage.current = 'apply_writes';
+        return applyReceiveParentPaymentWithPreparedState({
+          tx,
+          paymentRef,
+          rollupRef,
           parentId,
-          type: 'topup',
-          direction: 'credit',
-          amount: walletTopupAmount,
-          idempotencyKey: walletTopupIdempotencyKey,
-          monthKey,
-          description: 'Excess payment added to parent wallet',
-          method,
+          amount,
+          allocationModeUsed,
           paidAt,
+          dateKey,
+          monthKey,
+          method,
           note,
           reference,
-          reason: null,
-          studentId: null,
-          enrollmentId: null,
-          classSessionId: null,
-          billingChargeId: null,
-          reversalOfTransactionId: null,
-          createdBy,
-          sourceSystem: 'admin_receive_parent_payment',
-        });
-        walletTransactionId = walletResult.transactionId;
-        walletBalanceAfter = roundCurrency(walletResult.currentBalance);
-      }
-
-      const singleEnrollmentId = resolveSingleAllocationValue(plan.allocations, 'enrollmentId');
-      const singleKidId = resolveSingleAllocationValue(plan.allocations, 'kidId');
-      const singleCourseId = resolveSingleAllocationValue(plan.allocations, 'courseId');
-
-      tx.set(
-        paymentRef,
-        {
-          parentId,
-          enrollmentId: singleEnrollmentId,
-          kidId: singleKidId,
-          courseId: singleCourseId,
-          amount,
-          currency: 'INR',
-          paidAt,
-          monthKey,
-          date: dateKey,
-          method,
-          status: 'completed',
-          note: note || null,
-          reference: reference || null,
           idempotencyKey,
-          sourceSystem: 'admin_receive_parent_payment',
-          allocationModeUsed,
-          legacyOutstandingBefore: plan.legacyOutstandingBefore,
-          legacyAppliedAmount,
-          walletTopupAmount,
-          appliedAmount: legacyAppliedAmount,
-          unappliedAmount: remainingUnapplied,
-          chargesScanned: plan.chargesScanned,
-          chargesIncluded: plan.chargesIncluded,
-          appliedChargeIds: plan.allocations.map((allocation) => allocation.chargeId),
-          appliedAllocations: plan.allocations.map((allocation) => ({
-            chargeId: allocation.chargeId,
-            amount: allocation.amount,
-          })),
-          allocations: plan.allocations,
-          walletTransactionId,
-          walletBalanceAfter,
-          migratedByOpeningDeficit: migration.migratedByOpeningDeficit,
-          warnings: allWarnings,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
           createdBy,
-        },
-        { merge: true }
-      );
-
-      tx.set(
-        rollupRef,
-        {
-          earned: admin.firestore.FieldValue.increment(amount),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        },
-        { merge: true }
-      );
+          migration,
+          warnings,
+          chargeEntries,
+          plan,
+          preparedWalletState,
+          walletTopupIdempotencyKey,
+          stage: applyStage,
+        });
+      });
 
       return {
-        paymentId: paymentRef.id,
-        idempotentReplay: false,
-        amountReceived: amount,
-        allocationModeUsed,
-        legacyOutstandingBefore: plan.legacyOutstandingBefore,
-        appliedToLegacy: legacyAppliedAmount,
-        walletTopupAmount,
-        remainingUnapplied,
-        chargesScanned: plan.chargesScanned,
-        chargesIncluded: plan.chargesIncluded,
-        allocations: plan.allocations,
-        walletTransactionId,
-        walletBalanceAfter,
-        migratedByOpeningDeficit: migration.migratedByOpeningDeficit,
-        warnings: allWarnings,
+        ok: true,
+        dryRun: false,
+        parentId,
+        paymentId: writeResult.paymentId,
+        idempotentReplay: writeResult.idempotentReplay === true,
+        amountReceived: writeResult.amountReceived,
+        allocationModeUsed: writeResult.allocationModeUsed,
+        parentOutstandingBefore: writeResult.parentOutstandingBefore,
+        legacyOutstandingBefore: writeResult.legacyOutstandingBefore,
+        allocatedAmount: writeResult.allocatedAmount,
+        appliedToLegacy: writeResult.appliedToLegacy,
+        walletTopupAmount: writeResult.walletTopupAmount,
+        advanceAmount: writeResult.advanceAmount,
+        unallocatedAmount: writeResult.unallocatedAmount,
+        remainingUnapplied: writeResult.remainingUnapplied,
+        chargesScanned: writeResult.chargesScanned,
+        chargesIncluded: writeResult.chargesIncluded,
+        allocations: writeResult.allocations,
+        walletTransactionId: writeResult.walletTransactionId,
+        walletBalanceAfter: writeResult.walletBalanceAfter,
+        migratedByOpeningDeficit: writeResult.migratedByOpeningDeficit,
+        warnings: writeResult.warnings,
       };
-    });
-
-    return {
-      ok: true,
-      dryRun: false,
-      parentId,
-      paymentId: writeResult.paymentId,
-      idempotentReplay: writeResult.idempotentReplay === true,
-      amountReceived: writeResult.amountReceived,
-      allocationModeUsed: writeResult.allocationModeUsed,
-      legacyOutstandingBefore: writeResult.legacyOutstandingBefore,
-      appliedToLegacy: writeResult.appliedToLegacy,
-      walletTopupAmount: writeResult.walletTopupAmount,
-      remainingUnapplied: writeResult.remainingUnapplied,
-      chargesScanned: writeResult.chargesScanned,
-      chargesIncluded: writeResult.chargesIncluded,
-      allocations: writeResult.allocations,
-      walletTransactionId: writeResult.walletTransactionId,
-      walletBalanceAfter: writeResult.walletBalanceAfter,
-      migratedByOpeningDeficit: writeResult.migratedByOpeningDeficit,
-      warnings: writeResult.warnings,
-    };
+    } catch (err) {
+      logger.error('adminReceiveParentPayment apply failed', {
+        functionName: 'adminReceiveParentPayment',
+        stage: applyStage.current,
+        parentId,
+        amount,
+        allocationMode: allocationModeUsed,
+        dryRun: false,
+        paymentDocId,
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      });
+      if (err instanceof HttpsError) throw err;
+      throw new HttpsError(
+        'internal',
+        'Failed to apply parent payment. No payment was recorded. Please retry once.'
+      );
+    }
   }
 );
 

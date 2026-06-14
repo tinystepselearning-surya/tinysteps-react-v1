@@ -796,6 +796,19 @@ function teacherOwnsDocViaAliases(data) {
     }
 
     // ----------------------------
+    // PARENT PAYMENT BACKFILL RUNS (admin read only)
+    // ----------------------------
+    match /parentPaymentBackfillRuns/{runId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if false;
+
+      match /parents/{parentId} {
+        allow read: if isAdmin();
+        allow create, update, delete: if false;
+      }
+    }
+
+    // ----------------------------
     // TEACHER PAYOUTS COLLECTION
     // ----------------------------
     match /teacherPayouts/{payoutId} {

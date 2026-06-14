@@ -255,16 +255,37 @@ type ParentMonthlyBillingReadModel = {
   schemaVersion?: number;
   modelType?: string;
   refreshedAt?: any;
+  updatedAt?: any;
   generatedAtMs?: number;
+  billedAmount?: number;
+  billedClassCount?: number;
+  settledAmount?: number;
+  appliedAmount?: number;
+  outstandingAmount?: number;
+  dueAmount?: number;
+  status?: string;
+  lastSettlementAtMs?: number | null;
+  lastPaymentAtMs?: number | null;
+  lastPaymentId?: string | null;
+  allocationRefs?: string[];
+  chargeIds?: string[];
   totals?: {
     chargesCount?: number;
     billedAmount?: number;
+    billedClassCount?: number;
+    settledAmount?: number;
+    appliedAmount?: number;
     paidAmountFromCharges?: number;
+    outstandingAmount?: number;
     dueAmount?: number;
     paymentsCount?: number;
     paymentsTotal?: number;
     paymentsApplied?: number;
     paymentsUnapplied?: number;
+    status?: string;
+    lastSettlementAtMs?: number | null;
+    lastPaymentAtMs?: number | null;
+    lastPaymentId?: string | null;
   };
   byKid?: Record<
     string,
@@ -272,12 +293,18 @@ type ParentMonthlyBillingReadModel = {
       kidId?: string;
       chargesCount?: number;
       billedAmount?: number;
+      billedClassCount?: number;
+      settledAmount?: number;
+      appliedAmount?: number;
       paidAmountFromCharges?: number;
+      outstandingAmount?: number;
       dueAmount?: number;
       paymentsCount?: number;
       paymentsTotal?: number;
       paymentsApplied?: number;
       paymentsUnapplied?: number;
+      status?: string;
+      lastSettlementAtMs?: number | null;
       lastPaymentAtMs?: number | null;
     }
   >;

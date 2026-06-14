@@ -37,6 +37,8 @@ export {
   initParentWalletOpeningDeficit,
   reconcileParentWallet,
 } from "./wallet";
+export { auditParentPaymentBackfillDryRun } from "./parentPaymentBackfillDryRun";
+export { applyParentPaymentBackfillForSafeParents } from "./parentPaymentBackfillWriteMode";
 export { runFinanceReconciliationAudit, runFinanceReconciliationAuditDaily } from "./financeReconciliationReport";
 export { recordLegacyFallbackUsage } from "./legacyFallbackMetrics";
 
