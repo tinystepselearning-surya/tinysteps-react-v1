@@ -41,6 +41,7 @@ import {
 import { useToast } from '@components/hooks/use-toast';
 import { db } from '../../lib/firebaseConfig';
 import { doesSessionMatchEnrollmentSchedule } from '../../lib/sessionScheduleIntegrity';
+import { collectSessionTeacherRefs, resolvePreferredSessionTeacherRef } from '../../lib/sessionTeacherRefs';
 import { useAuthStore } from '../../store/useAuthStore';
 
 interface ClassSessionDoc {
@@ -1172,8 +1173,9 @@ export default function TodaysNotifications() {
             const parentId = getPrimaryParentId(session);
             if (parentId) parentIds.add(parentId);
 
-            const teacherId = normalizeLookupId(session.teacherId);
-            if (teacherId) teacherIds.add(teacherId);
+            collectSessionTeacherRefs(session as unknown as Record<string, unknown>).forEach((teacherId) => {
+              teacherIds.add(teacherId);
+            });
 
             getSessionKidIds(session).forEach((kidId) => kidIds.add(kidId));
 
@@ -1344,7 +1346,11 @@ export default function TodaysNotifications() {
         const enrollmentRef = normalizeLookupId(session.enrollmentId);
         const enrollment = enrollmentRef ? enrollmentMap[enrollmentRef] : undefined;
         const parentRef = getPrimaryParentId(session);
-        const teacherRef = normalizeLookupId(session.teacherId);
+        const enrollmentTeacherRefs = getEnrollmentTeacherRefs(enrollment);
+        const teacherRef = resolvePreferredSessionTeacherRef(
+          session as unknown as Record<string, unknown>,
+          enrollmentTeacherRefs,
+        );
         const parentUserResolved = parentRef ? usersMap[parentRef] : undefined;
         const teacherUserResolved = teacherRef ? usersMap[teacherRef] : undefined;
         const parentUser = parentUserResolved?.data;
@@ -1352,7 +1358,6 @@ export default function TodaysNotifications() {
         const kidIds = getSessionKidIds(session);
         const enrollmentKidIds = getEnrollmentKidIds(enrollment);
         const enrollmentParentRefs = getEnrollmentParentRefs(enrollment);
-        const enrollmentTeacherRefs = getEnrollmentTeacherRefs(enrollment);
         const linkedKidIds = kidIds.filter((kidId) => enrollmentKidIds.includes(kidId));
 
         const resolvedParentName =

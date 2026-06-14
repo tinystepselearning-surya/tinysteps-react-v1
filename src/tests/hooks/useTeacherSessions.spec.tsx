@@ -8,12 +8,18 @@ const {
   mockQuery,
   mockWhere,
   mockOrderBy,
+  mockIsSessionCanonicalForEnrollment,
+  mockIsScheduleExceptionSession,
+  mockShouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment,
 } = vi.hoisted(() => ({
   mockGetDocs: vi.fn(),
   mockOnSnapshot: vi.fn(),
   mockQuery: vi.fn((...args: unknown[]) => ({ kind: 'query', args })),
   mockWhere: vi.fn((...args: unknown[]) => ({ kind: 'where', args })),
   mockOrderBy: vi.fn((...args: unknown[]) => ({ kind: 'orderBy', args })),
+  mockIsSessionCanonicalForEnrollment: vi.fn((_: Record<string, unknown>) => true),
+  mockIsScheduleExceptionSession: vi.fn(() => false),
+  mockShouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment: vi.fn(() => false),
 }));
 
 vi.mock('firebase/firestore', () => ({
@@ -31,9 +37,9 @@ vi.mock('../../lib/firebaseConfig', () => ({
 }));
 
 vi.mock('../../lib/sessionScheduleIntegrity', () => ({
-  isScheduleExceptionSession: vi.fn(() => false),
-  isSessionCanonicalForEnrollment: vi.fn(() => true),
-  shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment: vi.fn(() => false),
+  isScheduleExceptionSession: mockIsScheduleExceptionSession,
+  isSessionCanonicalForEnrollment: mockIsSessionCanonicalForEnrollment,
+  shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment: mockShouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment,
 }));
 
 import { useTeacherSessions } from '../../pages/teacher/hooks/useTeacherSessions';
@@ -105,6 +111,12 @@ describe('useTeacherSessions', () => {
     mockQuery.mockClear();
     mockWhere.mockClear();
     mockOrderBy.mockClear();
+    mockIsSessionCanonicalForEnrollment.mockReset();
+    mockIsSessionCanonicalForEnrollment.mockImplementation(() => true);
+    mockIsScheduleExceptionSession.mockReset();
+    mockIsScheduleExceptionSession.mockImplementation(() => false);
+    mockShouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment.mockReset();
+    mockShouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment.mockImplementation(() => false);
 
     mockGetDocs.mockImplementation(async (queryRef: unknown) => {
       const collectionName = getCollectionName(queryRef as any);
@@ -274,5 +286,54 @@ describe('useTeacherSessions', () => {
     await waitFor(() =>
       expect(screen.getByText('session-transferred:Student Three:Foundation Phonics')).toBeTruthy(),
     );
+  });
+
+  it('keeps the repaired 18:45 session visible and filters the stale 18:30 future session after a schedule-time change', async () => {
+    mockIsSessionCanonicalForEnrollment.mockImplementation((sessionLike: Record<string, unknown>) => {
+      return String(sessionLike.startTime || '').trim() === '18:45';
+    });
+
+    mockOnSnapshot.mockReset();
+    mockOnSnapshot.mockImplementation((queryRef, onNext) => {
+      const whereClauses = extractWhereClauses(queryRef as any);
+      const teacherClause = whereClauses.find((args) =>
+        ['teacherId', 'teacherIds', 'assignedTeacherId', 'primaryTeacherId', 'teacherUid', 'teacher_id'].includes(String(args[0] || '')),
+      );
+      const field = String(teacherClause?.[0] || '');
+      const docsByField: Record<string, ReturnType<typeof makeDoc>[]> = {
+        teacherId: [
+          makeDoc('session-old-time', {
+            teacherId: 'teacher-1',
+            enrollmentId: 'enr-direct',
+            date: '2026-06-16',
+            startTime: '18:30',
+            endTime: '19:05',
+            kidId: 'kid-1',
+            status: 'scheduled',
+          }),
+          makeDoc('session-repaired', {
+            teacherId: 'teacher-1',
+            teacherIds: ['teacher-1'],
+            assignedTeacherId: 'teacher-1',
+            primaryTeacherId: 'teacher-1',
+            teacherUid: 'teacher-1',
+            enrollmentId: 'enr-direct',
+            date: '2026-06-16',
+            startTime: '18:45',
+            endTime: '19:20',
+            kidId: 'kid-1',
+            status: 'scheduled',
+          }),
+        ],
+      };
+      onNext({ docs: docsByField[field] || [] });
+      return vi.fn();
+    });
+
+    render(<TestComponent teacherId="teacher-1" startDate="2026-06-16" endDate="2026-06-16" />);
+
+    await waitFor(() => expect(screen.getByText('count:1')).toBeTruthy());
+    expect(screen.getByText('session-repaired:2026-06-16:teacher-1')).toBeTruthy();
+    expect(screen.queryByText('session-old-time:2026-06-16:teacher-1')).toBeNull();
   });
 });

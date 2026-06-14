@@ -171,6 +171,51 @@ interface ResumeEnrollmentScheduleResponse extends CreateSessionsResponse {
   resumedCount: number;
 }
 
+interface RepairEnrollmentFutureSessionsRequest {
+  enrollmentId: string;
+  dryRun?: boolean;
+}
+
+interface RepairPlanSessionPreview {
+  sessionId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  status: string;
+  action: "create" | "patch" | "cancel_duplicate" | "cancel_stale" | "cancel_excess" | "skip_unsafe";
+  reasons: string[];
+  replacementSessionId?: string | null;
+}
+
+interface RepairTeacherAliasProblem {
+  sessionId: string;
+  date: string | null;
+  startTime: string | null;
+  expectedTeacherId: string | null;
+  actualTeacherRefs: string[];
+  missingFields: string[];
+  mismatchedFields: string[];
+}
+
+interface RepairFinalCounts {
+  createCount: number;
+  patchCount: number;
+  cancelCount: number;
+  unsafeSkippedCount: number;
+  teacherAliasProblemCount: number;
+}
+
+interface RepairEnrollmentFutureSessionsResponse extends CreateSessionsResponse {
+  dryRun: boolean;
+  repairBatchId: string | null;
+  missingSessionsToCreate: RepairPlanSessionPreview[];
+  staleSessionsToUpdate: RepairPlanSessionPreview[];
+  duplicateOldTimeSessions: RepairPlanSessionPreview[];
+  unsafeSessionsSkipped: RepairPlanSessionPreview[];
+  teacherAliasProblems: RepairTeacherAliasProblem[];
+  finalCounts: RepairFinalCounts;
+}
+
 function normalizeIdempotencyKey(value: unknown): string {
   const raw = typeof value === "string" ? value.trim() : "";
   if (!raw) return "";
@@ -1318,6 +1363,860 @@ async function generateSessionsFromScheduleInternal(
   };
 }
 
+type RepairSessionDocInfo = {
+  id: string;
+  ref: admin.firestore.DocumentReference;
+  raw: Record<string, unknown>;
+  financial: SessionFinancialLinkState | undefined;
+  startMs: number | null;
+  signature: string | null;
+  slotPattern: string | null;
+};
+
+type RepairSessionCandidate = {
+  sessionId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+  signature: string;
+  startAtDate: Date;
+  endAtDate: Date;
+};
+
+type RepairContext = {
+  enrollmentId: string;
+  enrollment: EnrollmentDoc;
+  weeklySlots: NormalizedWeeklySlot[];
+  rangeStartYmd: string;
+  rangeEndYmd: string;
+  plannedSessionsTarget: number | null;
+  kidId: string | null;
+  kidIds: string[];
+  studentId: string | null;
+  childId: string | null;
+  parentId: string | null;
+  parentIds: string[];
+  teacherId: string | null;
+  teacherIds: string[];
+  courseId: string | null;
+  feeAmount: number;
+  currency: string;
+  joinUrl: string | null;
+  studentName: string | null;
+  kidName: string | null;
+  childName: string | null;
+  parentName: string | null;
+  teacherName: string | null;
+  teacherEmail: string | null;
+  courseName: string | null;
+  sessions: RepairSessionDocInfo[];
+  configuredSlotPatterns: Set<string>;
+};
+
+type RepairPlan = {
+  created: number;
+  skipped: number;
+  replaced: number;
+  plannedSessionsTarget: number | null;
+  plannedSessionsGenerated: number;
+  plannedSessionsConsumed: number;
+  plannedSessionsActiveFuture: number;
+  plannedSessionsPausedFuture: number;
+  plannedSessionsRemaining: number;
+  plannedSessionsUnfilled: number;
+  plannedSessionsCapReached: boolean;
+  rangeStartYmd: string;
+  rangeEndYmd: string;
+  missingSessionsToCreate: RepairPlanSessionPreview[];
+  staleSessionsToUpdate: RepairPlanSessionPreview[];
+  duplicateOldTimeSessions: RepairPlanSessionPreview[];
+  unsafeSessionsSkipped: RepairPlanSessionPreview[];
+  teacherAliasProblems: RepairTeacherAliasProblem[];
+  finalCounts: RepairFinalCounts;
+  createWrites: Array<{ ref: admin.firestore.DocumentReference; payload: Record<string, unknown> }>;
+  patchWrites: Array<{ ref: admin.firestore.DocumentReference; payload: Record<string, unknown> }>;
+  cancelWrites: Array<{ ref: admin.firestore.DocumentReference; payload: Record<string, unknown> }>;
+  auditWrites: Array<{ ref: admin.firestore.DocumentReference; payload: Record<string, unknown> }>;
+};
+
+function collectSessionTeacherRefs(raw: Record<string, unknown>): string[] {
+  return Array.from(
+    new Set(
+      [
+        ...(Array.isArray(raw.teacherIds) ? raw.teacherIds : []),
+        raw.teacherId,
+        raw.assignedTeacherId,
+        raw.primaryTeacherId,
+        raw.teacherUid,
+        raw.teacher_id,
+      ]
+        .map((entry) => toOptionalText(entry))
+        .filter((entry): entry is string => Boolean(entry)),
+    ),
+  );
+}
+
+function normalizeSnapshotName(value: unknown): string | null {
+  const name = toOptionalText(value);
+  if (!name) return null;
+  if (/^\d+\s+assigned$/i.test(name)) return null;
+  if (/^assigned$/i.test(name)) return null;
+  if (/^\d+\s+students?$/i.test(name)) return null;
+  if (/^(student|child|kid)$/i.test(name)) return null;
+  if (/^student name pending$/i.test(name)) return null;
+  return name;
+}
+
+function resolveUserName(data: Record<string, unknown> | null, fallback: unknown): string | null {
+  return (
+    normalizeSnapshotName(data?.displayName) ||
+    normalizeSnapshotName(data?.name) ||
+    normalizeSnapshotName(data?.fullName) ||
+    normalizeSnapshotName(data?.studentName) ||
+    normalizeSnapshotName(data?.childName) ||
+    normalizeSnapshotName(data?.kidName) ||
+    normalizeSnapshotName(fallback)
+  );
+}
+
+function buildCanonicalSessionFields(args: {
+  context: RepairContext;
+  candidate: RepairSessionCandidate;
+}): Record<string, unknown> {
+  const { context, candidate } = args;
+  return removeUndefinedDeep({
+    enrollmentId: context.enrollmentId,
+    kidId: context.kidId,
+    kidIds: context.kidIds,
+    ...(context.studentId ? { studentId: context.studentId } : {}),
+    ...(context.childId ? { childId: context.childId } : {}),
+    ...(context.studentName ? { studentName: context.studentName, studentNameSnapshot: context.studentName } : {}),
+    ...(context.kidName ? { kidName: context.kidName } : {}),
+    ...(context.childName ? { childName: context.childName } : {}),
+    ...(context.parentName ? { parentName: context.parentName, parentNameSnapshot: context.parentName } : {}),
+    parentId: context.parentId,
+    parentIds: context.parentIds,
+    teacherId: context.teacherId,
+    ...(context.teacherIds.length > 0 ? { teacherIds: context.teacherIds } : {}),
+    ...(context.teacherId ? {
+      assignedTeacherId: context.teacherId,
+      primaryTeacherId: context.teacherId,
+      teacherUid: context.teacherId,
+      teacher_id: context.teacherId,
+    } : {}),
+    ...(context.teacherName ? { teacherName: context.teacherName, teacherNameSnapshot: context.teacherName } : {}),
+    ...(context.teacherEmail ? { teacherEmail: context.teacherEmail } : {}),
+    courseId: context.courseId,
+    ...(context.courseName ? {
+      courseName: context.courseName,
+      courseTitle: context.courseName,
+      courseLabel: context.courseName,
+      subject: context.courseName,
+    } : {}),
+    startAt: admin.firestore.Timestamp.fromDate(candidate.startAtDate),
+    endAt: admin.firestore.Timestamp.fromDate(candidate.endAtDate),
+    date: candidate.date,
+    startTime: candidate.startTime,
+    endTime: candidate.endTime,
+    durationMinutes: candidate.durationMinutes,
+    durationMins: candidate.durationMinutes,
+    status: "scheduled",
+    attendance: null,
+    feeAmount: context.feeAmount,
+    currency: context.currency,
+    joinUrl: context.joinUrl,
+  }) as Record<string, unknown>;
+}
+
+function sameScalar(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  const aDate = toDateMaybe(a);
+  const bDate = toDateMaybe(b);
+  if (aDate && bDate) return aDate.getTime() === bDate.getTime();
+  if (Array.isArray(a) && Array.isArray(b)) {
+    return a.length === b.length && a.every((value, index) => sameScalar(value, b[index]));
+  }
+  return false;
+}
+
+function buildCanonicalPatch(existing: Record<string, unknown>, canonical: Record<string, unknown>): Record<string, unknown> {
+  const patch: Record<string, unknown> = {};
+  Object.entries(canonical).forEach(([key, value]) => {
+    if (!sameScalar(existing[key], value)) {
+      patch[key] = value;
+    }
+  });
+  return patch;
+}
+
+function inspectTeacherAliasProblem(
+  session: RepairSessionDocInfo,
+  expectedTeacherId: string | null,
+): RepairTeacherAliasProblem | null {
+  if (!expectedTeacherId) return null;
+  const raw = session.raw;
+  const actualTeacherRefs = collectSessionTeacherRefs(raw);
+  const missingFields: string[] = [];
+  const mismatchedFields: string[] = [];
+
+  const directAliases: Array<["teacherId" | "assignedTeacherId" | "primaryTeacherId" | "teacherUid" | "teacher_id", unknown]> = [
+    ["teacherId", raw.teacherId],
+    ["assignedTeacherId", raw.assignedTeacherId],
+    ["primaryTeacherId", raw.primaryTeacherId],
+    ["teacherUid", raw.teacherUid],
+    ["teacher_id", raw.teacher_id],
+  ];
+
+  directAliases.forEach(([field, value]) => {
+    const normalized = toOptionalText(value);
+    if (!normalized) {
+      missingFields.push(field);
+      return;
+    }
+    if (normalized !== expectedTeacherId) {
+      mismatchedFields.push(field);
+    }
+  });
+
+  const teacherIds = Array.isArray(raw.teacherIds) ? raw.teacherIds : [];
+  if (!teacherIds.length) {
+    missingFields.push("teacherIds");
+  } else if (!teacherIds.map((entry) => toOptionalText(entry)).includes(expectedTeacherId)) {
+    mismatchedFields.push("teacherIds");
+  }
+
+  if (missingFields.length === 0 && mismatchedFields.length === 0) return null;
+
+  return {
+    sessionId: session.id,
+    date: resolveSessionYmd(raw),
+    startTime: toOptionalText(raw.startTime),
+    expectedTeacherId,
+    actualTeacherRefs,
+    missingFields,
+    mismatchedFields,
+  };
+}
+
+function explainUnsafeRepairReasons(session: RepairSessionDocInfo, nowMs: number): string[] {
+  const reasons: string[] = [];
+  const { raw, financial } = session;
+  const startMs = session.startMs;
+  if (startMs === null || startMs <= nowMs) reasons.push("past_or_missing_start");
+  const status = normalizeStatus(raw.status);
+  if (NON_REPLACEABLE_SESSION_STATUSES.has(status)) reasons.push(`status_${status || "unknown"}`);
+  if (!REPLACEABLE_SESSION_STATUSES.has(status)) reasons.push(`non_replaceable_${status || "unknown"}`);
+  if (hasAttendanceMarked(raw)) reasons.push("attendance_marked");
+  if (hasSessionFinanceOrLockMarkers(raw)) reasons.push("finance_or_lock_marker");
+  if (hasFinancialLink(financial)) reasons.push("finance_linked");
+  if (isScheduleExceptionSession(raw)) reasons.push("schedule_exception");
+  return Array.from(new Set(reasons));
+}
+
+async function loadRepairContext(args: {
+  enrollmentId: string;
+}): Promise<RepairContext> {
+  const { enrollmentId } = args;
+  const db = admin.firestore();
+  const enrollmentRef = db.collection("enrollments").doc(enrollmentId);
+  const enrollmentSnap = await enrollmentRef.get();
+  if (!enrollmentSnap.exists) {
+    throw new HttpsError("not-found", `Enrollment ${enrollmentId} not found`);
+  }
+
+  const enrollment = enrollmentSnap.data() as EnrollmentDoc;
+  if (!isEnrollmentOperationallyActive(enrollment as unknown as Record<string, unknown>)) {
+    throw new HttpsError("failed-precondition", "Enrollment is not active");
+  }
+
+  const weeklySlots = normalizeScheduleSlotsOrThrow(enrollment.schedule);
+  if (weeklySlots.length === 0) {
+    throw new HttpsError("failed-precondition", "Enrollment has no schedule configured");
+  }
+
+  const plannedSessionsTarget = toPlannedSessions(enrollment.schedule?.plannedSessions);
+  const weeksAhead = Number.isFinite(Number(enrollment.schedule?.weeksAhead)) ?
+    Math.max(1, Math.min(52, Math.floor(Number(enrollment.schedule?.weeksAhead)))) :
+    8;
+  const rangeStartYmd =
+    toYmdFromDateLike(enrollment.classesStartDateYmd) ||
+    toYmdFromDateLike(enrollment.classesStartDate) ||
+    toYmdFromDateLike(enrollment.startDateYmd) ||
+    toYmdFromDateLike(enrollment.startDate) ||
+    toIstTodayYmd();
+  const requestedEndYmd =
+    typeof enrollment.schedule?.endDateYmd === "string" && enrollment.schedule.endDateYmd.trim() ?
+      enrollment.schedule.endDateYmd.trim() :
+      "";
+  const rangeStartDate = toContextDateFromYmd(rangeStartYmd);
+  if (!rangeStartDate) {
+    throw new HttpsError("invalid-argument", "Unable to resolve schedule start date");
+  }
+  const rangeEndDate = requestedEndYmd ?
+    toContextDateFromYmd(requestedEndYmd) :
+    new Date(rangeStartDate.getTime() + (Math.max(weeksAhead * 7, plannedSessionsTarget ? 400 : weeksAhead * 7) - 1) * 24 * 60 * 60 * 1000);
+  if (!rangeEndDate) {
+    throw new HttpsError("invalid-argument", "Unable to resolve schedule end date");
+  }
+  const rangeEndYmd = toYmdFromContextDate(rangeEndDate);
+
+  const kidId = enrollment.kidId || (enrollment.kidIds && enrollment.kidIds[0]) || null;
+  const kidIds = enrollment.kidIds || (kidId ? [kidId] : []);
+  const studentId = enrollment.studentId || kidId || null;
+  const childId = enrollment.childId || kidId || null;
+  const parentId = enrollment.parentId || (enrollment.parentIds && enrollment.parentIds[0]) || null;
+  const parentIds = enrollment.parentIds || (parentId ? [parentId] : []);
+  const { teacherId, teacherIds } = resolveEnrollmentTeacherIdentity(enrollment);
+  const courseId = enrollment.courseId || null;
+  const feeAmount = Number(enrollment.feePerClass || 0);
+  const currency = enrollment.currency || "INR";
+  const joinUrl = enrollment.joinUrl || null;
+
+  const [kidSnap, parentSnap, courseSnap, teacherSnap, sessionsSnap] = await Promise.all([
+    kidId ? db.collection("kids").doc(kidId).get() : Promise.resolve(null),
+    parentId ? db.collection("users").doc(parentId).get() : Promise.resolve(null),
+    courseId ? db.collection("courses").doc(courseId).get() : Promise.resolve(null),
+    teacherId ? db.collection("users").doc(teacherId).get() : Promise.resolve(null),
+    db.collection("classSessions").where("enrollmentId", "==", enrollmentId).get(),
+  ]);
+
+  const kidData = kidSnap?.exists ? (kidSnap.data() as Record<string, unknown>) : null;
+  const parentData = parentSnap?.exists ? (parentSnap.data() as Record<string, unknown>) : null;
+  const courseData = courseSnap?.exists ? (courseSnap.data() as Record<string, unknown>) : null;
+  const teacherData = teacherSnap?.exists ? (teacherSnap.data() as Record<string, unknown>) : null;
+
+  const studentName =
+    normalizeSnapshotName(enrollment.studentName) ||
+    normalizeSnapshotName(enrollment.kidName) ||
+    normalizeSnapshotName(enrollment.childName) ||
+    resolveUserName(kidData, null) ||
+    null;
+  const kidName = normalizeSnapshotName(enrollment.kidName) || studentName;
+  const childName = normalizeSnapshotName(enrollment.childName) || studentName;
+  const parentName = resolveUserName(parentData, (enrollment as Record<string, unknown>).parentName);
+  const teacherName =
+    resolveUserName(teacherData, enrollment.teacherName) ||
+    teacherId;
+  const teacherEmail = toOptionalText(enrollment.teacherEmail) || toOptionalText(teacherData?.email) || null;
+  const courseName =
+    normalizeSnapshotName(enrollment.courseName) ||
+    normalizeSnapshotName((enrollment as Record<string, unknown>).courseLabel) ||
+    normalizeSnapshotName((enrollment as Record<string, unknown>).courseTitle) ||
+    normalizeSnapshotName(courseData?.title) ||
+    normalizeSnapshotName(courseData?.name) ||
+    courseId ||
+    null;
+
+  const financialBySessionId = await fetchFinancialStateBySessionId(
+    db,
+    sessionsSnap.docs.map((docSnap) => docSnap.id),
+  );
+  const configuredSlotPatterns = new Set<string>();
+  weeklySlots.forEach((slot) => {
+    configuredSlotPatterns.add(`${slot.weekday}|${slot.timeHHmm}|${slot.durationMinutes}|${teacherId || ""}`);
+  });
+
+  const sessions = sessionsSnap.docs.map((docSnap) => {
+    const raw = (docSnap.data() || {}) as Record<string, unknown>;
+    return {
+      id: docSnap.id,
+      ref: docSnap.ref,
+      raw,
+      financial: financialBySessionId.get(docSnap.id),
+      startMs: resolveSessionStartMs(raw),
+      signature: resolveSessionSignature({ raw, fallbackTeacherId: teacherId }),
+      slotPattern: resolveSessionSlotPattern({ raw, fallbackTeacherId: teacherId }),
+    };
+  });
+
+  return {
+    enrollmentId,
+    enrollment,
+    weeklySlots,
+    rangeStartYmd,
+    rangeEndYmd,
+    plannedSessionsTarget,
+    kidId,
+    kidIds,
+    studentId,
+    childId,
+    parentId,
+    parentIds,
+    teacherId,
+    teacherIds,
+    courseId,
+    feeAmount,
+    currency,
+    joinUrl,
+    studentName,
+    kidName,
+    childName,
+    parentName,
+    teacherName,
+    teacherEmail,
+    courseName,
+    sessions,
+    configuredSlotPatterns,
+  };
+}
+
+export function buildRepairEnrollmentFutureSessionsPlan(args: {
+  context: RepairContext;
+  nowMs: number;
+  repairBatchId: string;
+  actorUid: string | null;
+}): RepairPlan {
+  const { context, nowMs, repairBatchId, actorUid } = args;
+  const actorIdentity = actorUid || "repairEnrollmentFutureSessionsFromSchedule";
+  const slotsByWeekday = new Map<number, NormalizedWeeklySlot[]>();
+  context.weeklySlots.forEach((slot) => {
+    const existing = slotsByWeekday.get(slot.weekday) || [];
+    existing.push(slot);
+    slotsByWeekday.set(slot.weekday, existing);
+  });
+
+  let plannedSessionsConsumed = 0;
+  const pausedFutureRegularDocs: RepairSessionDocInfo[] = [];
+  const safeFutureRegularBySignature = new Map<string, RepairSessionDocInfo[]>();
+  const safeFutureRegularOutsideTarget: RepairSessionDocInfo[] = [];
+  const unsafeFutureRegular = new Map<string, RepairSessionDocInfo[]>();
+  const teacherAliasProblems: RepairTeacherAliasProblem[] = [];
+
+  context.sessions.forEach((session) => {
+    const teacherAliasProblem = inspectTeacherAliasProblem(session, context.teacherId);
+    if (teacherAliasProblem) {
+      teacherAliasProblems.push(teacherAliasProblem);
+    }
+
+    if (isRegularConsumedSession(session.raw, session.financial)) {
+      plannedSessionsConsumed += 1;
+      return;
+    }
+
+    if (isFuturePausedRegularSession({
+      raw: session.raw,
+      nowMs,
+      configuredSlotPatterns: context.configuredSlotPatterns,
+      fallbackTeacherId: context.teacherId,
+    })) {
+      pausedFutureRegularDocs.push(session);
+      return;
+    }
+
+    if (session.startMs === null || session.startMs <= nowMs) return;
+    if (isScheduleExceptionSession(session.raw)) return;
+
+    if (!isSessionReplaceable({ raw: session.raw, financial: session.financial, nowMs })) {
+      const signature = session.signature || `unsafe:${session.id}`;
+      const existing = unsafeFutureRegular.get(signature) || [];
+      existing.push(session);
+      unsafeFutureRegular.set(signature, existing);
+      return;
+    }
+
+    if (session.signature) {
+      const existing = safeFutureRegularBySignature.get(session.signature) || [];
+      existing.push(session);
+      safeFutureRegularBySignature.set(session.signature, existing);
+    } else {
+      safeFutureRegularOutsideTarget.push(session);
+    }
+  });
+
+  const targetActiveFutureRegular = context.plannedSessionsTarget ?
+    Math.max(context.plannedSessionsTarget - plannedSessionsConsumed, 0) :
+    Number.MAX_SAFE_INTEGER;
+
+  const sessionCandidates: RepairSessionCandidate[] = [];
+  const rangeStartDate = toContextDateFromYmd(context.rangeStartYmd)!;
+  const rangeEndDate = toContextDateFromYmd(context.rangeEndYmd)!;
+  for (
+    let d = new Date(rangeStartDate.getTime());
+    d.getTime() <= rangeEndDate.getTime();
+    d.setUTCDate(d.getUTCDate() + 1)
+  ) {
+    const dayOfWeek = d.getUTCDay();
+    const daySlots = slotsByWeekday.get(dayOfWeek);
+    if (!daySlots || daySlots.length === 0) continue;
+
+    const year = d.getUTCFullYear();
+    const month = d.getUTCMonth();
+    const date = d.getUTCDate();
+    const ymd = toYmdFromContextDate(d);
+
+    for (const slot of daySlots) {
+      const istStartContextMs = Date.UTC(year, month, date, slot.hour, slot.minute, 0, 0);
+      const startAtUtcMs = istStartContextMs - IST_OFFSET_MINUTES * 60 * 1000;
+      const startAtDate = new Date(startAtUtcMs);
+      if (startAtDate.getTime() <= nowMs) continue;
+      const endAtDate = new Date(startAtUtcMs + slot.durationMinutes * 60 * 1000);
+      const hhmmCompact = `${String(slot.hour).padStart(2, "0")}${String(slot.minute).padStart(2, "0")}`;
+      sessionCandidates.push({
+        sessionId: `${context.enrollmentId}_${ymd.replace(/-/g, "")}_${hhmmCompact}`,
+        date: ymd,
+        startTime: slot.timeHHmm,
+        endTime: formatHHmmFromContextMs(istStartContextMs + slot.durationMinutes * 60 * 1000),
+        durationMinutes: slot.durationMinutes,
+        signature: `${ymd}|${slot.timeHHmm}|${slot.durationMinutes}|${context.teacherId || ""}`,
+        startAtDate,
+        endAtDate,
+      });
+    }
+  }
+
+  sessionCandidates.sort((a, b) => a.startAtDate.getTime() - b.startAtDate.getTime());
+  const targetCandidates = targetActiveFutureRegular === Number.MAX_SAFE_INTEGER ?
+    sessionCandidates :
+    sessionCandidates.slice(0, targetActiveFutureRegular);
+  const targetSignatures = new Set(targetCandidates.map((candidate) => candidate.signature));
+
+  const createWrites: RepairPlan["createWrites"] = [];
+  const patchWrites: RepairPlan["patchWrites"] = [];
+  const cancelWrites: RepairPlan["cancelWrites"] = [];
+  const auditWrites: RepairPlan["auditWrites"] = [];
+  const missingSessionsToCreate: RepairPlanSessionPreview[] = [];
+  const staleSessionsToUpdate: RepairPlanSessionPreview[] = [];
+  const duplicateOldTimeSessions: RepairPlanSessionPreview[] = [];
+  const unsafeSessionsSkipped: RepairPlanSessionPreview[] = [];
+
+  const buildAuditPayload = (
+    sessionId: string,
+    action: RepairPlanSessionPreview["action"],
+    reasons: string[],
+    before: Record<string, unknown> | null,
+    after: Record<string, unknown> | null,
+  ) => ({
+    type: "enrollment_future_session_schedule_repair",
+    enrollmentId: context.enrollmentId,
+    sessionId,
+    action,
+    reasons,
+    before,
+    after,
+    repairBatchId,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdBy: actorIdentity,
+  });
+
+  targetCandidates.forEach((candidate) => {
+    const safeMatches = [...(safeFutureRegularBySignature.get(candidate.signature) || [])].sort((a, b) => a.id.localeCompare(b.id));
+    const unsafeMatches = [...(unsafeFutureRegular.get(candidate.signature) || [])];
+    if (unsafeMatches.length > 0 && safeMatches.length === 0) {
+      unsafeMatches.forEach((session) => {
+        unsafeSessionsSkipped.push({
+          sessionId: session.id,
+          date: candidate.date,
+          startTime: candidate.startTime,
+          endTime: candidate.endTime,
+          status: toOptionalText(session.raw.status) || "scheduled",
+          action: "skip_unsafe",
+          reasons: explainUnsafeRepairReasons(session, nowMs),
+        });
+      });
+      return;
+    }
+
+    if (safeMatches.length === 0) {
+      const payload = {
+        ...buildCanonicalSessionFields({ context, candidate }),
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdBy: actorIdentity,
+        updatedBy: actorIdentity,
+        source: "enrollmentScheduleRepair",
+        repairBatchId,
+      };
+      createWrites.push({
+        ref: admin.firestore().collection("classSessions").doc(candidate.sessionId),
+        payload,
+      });
+      missingSessionsToCreate.push({
+        sessionId: candidate.sessionId,
+        date: candidate.date,
+        startTime: candidate.startTime,
+        endTime: candidate.endTime,
+        status: "scheduled",
+        action: "create",
+        reasons: ["missing_future_regular_session"],
+      });
+      auditWrites.push({
+        ref: admin.firestore().collection("auditLogs").doc(),
+        payload: buildAuditPayload(candidate.sessionId, "create", ["missing_future_regular_session"], null, {
+          date: candidate.date,
+          startTime: candidate.startTime,
+          endTime: candidate.endTime,
+          teacherId: context.teacherId,
+        }),
+      });
+      return;
+    }
+
+    const keepSession = safeMatches[0];
+    const canonicalFields = buildCanonicalSessionFields({ context, candidate });
+    const canonicalPatch = buildCanonicalPatch(keepSession.raw, canonicalFields);
+    if (Object.keys(canonicalPatch).length > 0) {
+      const patchPayload = {
+        ...canonicalPatch,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedBy: actorIdentity,
+        repairBatchId,
+      };
+      patchWrites.push({ ref: keepSession.ref, payload: patchPayload });
+      staleSessionsToUpdate.push({
+        sessionId: keepSession.id,
+        date: candidate.date,
+        startTime: candidate.startTime,
+        endTime: candidate.endTime,
+        status: "scheduled",
+        action: "patch",
+        reasons: ["denormalized_fields_out_of_sync"],
+      });
+      auditWrites.push({
+        ref: admin.firestore().collection("auditLogs").doc(),
+        payload: buildAuditPayload(keepSession.id, "patch", ["denormalized_fields_out_of_sync"], {
+          date: keepSession.raw.date,
+          startTime: keepSession.raw.startTime,
+          status: keepSession.raw.status,
+        }, {
+          date: candidate.date,
+          startTime: candidate.startTime,
+          status: "scheduled",
+        }),
+      });
+    }
+
+    safeMatches.slice(1).forEach((duplicate) => {
+      cancelWrites.push({
+        ref: duplicate.ref,
+        payload: {
+          status: "cancelled",
+          cancelledReason: "schedule_repair_duplicate",
+          replacedBySessionId: keepSession.id,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedBy: actorIdentity,
+          repairBatchId,
+        },
+      });
+      staleSessionsToUpdate.push({
+        sessionId: duplicate.id,
+        date: candidate.date,
+        startTime: candidate.startTime,
+        endTime: candidate.endTime,
+        status: "cancelled",
+        action: "cancel_duplicate",
+        reasons: ["duplicate_future_regular_session"],
+        replacementSessionId: keepSession.id,
+      });
+      auditWrites.push({
+        ref: admin.firestore().collection("auditLogs").doc(),
+        payload: buildAuditPayload(duplicate.id, "cancel_duplicate", ["duplicate_future_regular_session"], {
+          date: duplicate.raw.date,
+          startTime: duplicate.raw.startTime,
+          status: duplicate.raw.status,
+        }, {
+          status: "cancelled",
+          replacedBySessionId: keepSession.id,
+        }),
+      });
+    });
+  });
+
+  context.sessions.forEach((session) => {
+    if (session.startMs === null || session.startMs <= nowMs) return;
+    if (isScheduleExceptionSession(session.raw)) return;
+    if (!isSessionReplaceable({ raw: session.raw, financial: session.financial, nowMs })) {
+      if (resolveSessionSignature({ raw: session.raw, fallbackTeacherId: context.teacherId }) && !targetSignatures.has(resolveSessionSignature({ raw: session.raw, fallbackTeacherId: context.teacherId })!)) {
+        unsafeSessionsSkipped.push({
+          sessionId: session.id,
+          date: resolveSessionYmd(session.raw) || context.rangeStartYmd,
+          startTime: toOptionalText(session.raw.startTime) || "",
+          endTime: toOptionalText(session.raw.endTime) || "",
+          status: toOptionalText(session.raw.status) || "scheduled",
+          action: "skip_unsafe",
+          reasons: explainUnsafeRepairReasons(session, nowMs),
+        });
+      }
+      return;
+    }
+    const signature = session.signature;
+    if (!signature) {
+      unsafeSessionsSkipped.push({
+        sessionId: session.id,
+        date: resolveSessionYmd(session.raw) || context.rangeStartYmd,
+        startTime: toOptionalText(session.raw.startTime) || "",
+        endTime: toOptionalText(session.raw.endTime) || "",
+        status: toOptionalText(session.raw.status) || "scheduled",
+        action: "skip_unsafe",
+        reasons: ["missing_signature"],
+      });
+      return;
+    }
+    if (targetSignatures.has(signature)) return;
+
+    const slotPattern = session.slotPattern;
+    const date = resolveSessionYmd(session.raw) || context.rangeStartYmd;
+    const startTime = toOptionalText(session.raw.startTime) || "";
+    const endTime = toOptionalText(session.raw.endTime) || "";
+    const action = slotPattern && context.configuredSlotPatterns.has(slotPattern) ? "cancel_excess" : "cancel_stale";
+    const reasons = action === "cancel_excess" ? ["future_regular_session_beyond_planned_limit"] : ["future_regular_session_old_schedule_time"];
+
+    cancelWrites.push({
+      ref: session.ref,
+      payload: {
+        status: "cancelled",
+        cancelledReason: action === "cancel_excess" ? "schedule_repair_excess" : "schedule_repair_old_time",
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedBy: actorIdentity,
+        repairBatchId,
+      },
+    });
+
+    const preview: RepairPlanSessionPreview = {
+      sessionId: session.id,
+      date,
+      startTime,
+      endTime,
+      status: "cancelled",
+      action,
+      reasons,
+    };
+    if (action === "cancel_stale") {
+      duplicateOldTimeSessions.push(preview);
+    } else {
+      staleSessionsToUpdate.push(preview);
+    }
+
+    auditWrites.push({
+      ref: admin.firestore().collection("auditLogs").doc(),
+      payload: buildAuditPayload(session.id, action, reasons, {
+        date: session.raw.date,
+        startTime: session.raw.startTime,
+        status: session.raw.status,
+      }, {
+        status: "cancelled",
+      }),
+    });
+  });
+
+  const finalCounts: RepairFinalCounts = {
+    createCount: missingSessionsToCreate.length,
+    patchCount: staleSessionsToUpdate.filter((entry) => entry.action === "patch").length,
+    cancelCount: staleSessionsToUpdate.filter((entry) => entry.action !== "patch").length + duplicateOldTimeSessions.length,
+    unsafeSkippedCount: unsafeSessionsSkipped.length,
+    teacherAliasProblemCount: teacherAliasProblems.length,
+  };
+  const plannedSessionsGenerated = plannedSessionsConsumed + targetCandidates.length;
+  const plannedSessionsActiveFuture = targetCandidates.length;
+  const plannedSessionsRemaining = context.plannedSessionsTarget ?
+    Math.max(context.plannedSessionsTarget - plannedSessionsConsumed, 0) :
+    0;
+  const plannedSessionsUnfilled = context.plannedSessionsTarget ?
+    Math.max(context.plannedSessionsTarget - plannedSessionsGenerated, 0) :
+    0;
+  const plannedSessionsCapReached = Boolean(context.plannedSessionsTarget && plannedSessionsConsumed >= context.plannedSessionsTarget);
+
+  return {
+    created: missingSessionsToCreate.length,
+    skipped: targetCandidates.length - missingSessionsToCreate.length + unsafeSessionsSkipped.length,
+    replaced: finalCounts.patchCount + finalCounts.cancelCount,
+    plannedSessionsTarget: context.plannedSessionsTarget,
+    plannedSessionsGenerated,
+    plannedSessionsConsumed,
+    plannedSessionsActiveFuture,
+    plannedSessionsPausedFuture: pausedFutureRegularDocs.length,
+    plannedSessionsRemaining,
+    plannedSessionsUnfilled,
+    plannedSessionsCapReached,
+    rangeStartYmd: context.rangeStartYmd,
+    rangeEndYmd: context.rangeEndYmd,
+    missingSessionsToCreate,
+    staleSessionsToUpdate,
+    duplicateOldTimeSessions,
+    unsafeSessionsSkipped,
+    teacherAliasProblems,
+    finalCounts,
+    createWrites,
+    patchWrites,
+    cancelWrites,
+    auditWrites,
+  };
+}
+
+async function applyRepairPlan(plan: RepairPlan, dryRun: boolean): Promise<void> {
+  if (dryRun) return;
+  const db = admin.firestore();
+  const allWrites = [...plan.createWrites, ...plan.patchWrites, ...plan.cancelWrites, ...plan.auditWrites];
+  for (let index = 0; index < allWrites.length; index += MAX_BATCH) {
+    const batch = db.batch();
+    allWrites.slice(index, index + MAX_BATCH).forEach((entry) => {
+      batch.set(entry.ref, entry.payload, { merge: true });
+    });
+    await batch.commit();
+  }
+}
+
+export async function executeRepairEnrollmentFutureSessionsFromSchedule(args: {
+  loadContext: () => Promise<RepairContext>;
+  dryRun: boolean;
+  actorUid: string | null;
+  nowMs: number;
+  repairBatchId: string;
+  apply: (plan: RepairPlan, dryRun: boolean) => Promise<void>;
+}): Promise<RepairPlan> {
+  const context = await args.loadContext();
+  const plan = buildRepairEnrollmentFutureSessionsPlan({
+    context,
+    nowMs: args.nowMs,
+    repairBatchId: args.repairBatchId,
+    actorUid: args.actorUid,
+  });
+  await args.apply(plan, args.dryRun);
+  return plan;
+}
+
+async function repairEnrollmentFutureSessionsFromScheduleInternal(args: {
+  enrollmentId: string;
+  dryRun: boolean;
+  actorUid: string | null;
+}): Promise<RepairEnrollmentFutureSessionsResponse> {
+  const repairBatchId = `schedule_repair_${args.enrollmentId}_${Date.now()}`;
+  const plan = await executeRepairEnrollmentFutureSessionsFromSchedule({
+    loadContext: () => loadRepairContext({ enrollmentId: args.enrollmentId }),
+    dryRun: args.dryRun,
+    actorUid: args.actorUid,
+    nowMs: Date.now(),
+    repairBatchId,
+    apply: applyRepairPlan,
+  });
+
+  return {
+    created: plan.created,
+    skipped: plan.skipped,
+    replaced: plan.replaced,
+    plannedSessionsTarget: plan.plannedSessionsTarget,
+    plannedSessionsGenerated: plan.plannedSessionsGenerated,
+    plannedSessionsConsumed: plan.plannedSessionsConsumed,
+    plannedSessionsActiveFuture: plan.plannedSessionsActiveFuture,
+    plannedSessionsPausedFuture: plan.plannedSessionsPausedFuture,
+    plannedSessionsRemaining: plan.plannedSessionsRemaining,
+    plannedSessionsUnfilled: plan.plannedSessionsUnfilled,
+    plannedSessionsCapReached: plan.plannedSessionsCapReached,
+    rangeStart: `${plan.rangeStartYmd}T00:00:00+05:30`,
+    rangeEnd: `${plan.rangeEndYmd}T23:59:59+05:30`,
+    rangeStartYmd: plan.rangeStartYmd,
+    rangeEndYmd: plan.rangeEndYmd,
+    dryRun: args.dryRun,
+    repairBatchId,
+    missingSessionsToCreate: plan.missingSessionsToCreate,
+    staleSessionsToUpdate: plan.staleSessionsToUpdate,
+    duplicateOldTimeSessions: plan.duplicateOldTimeSessions,
+    unsafeSessionsSkipped: plan.unsafeSessionsSkipped,
+    teacherAliasProblems: plan.teacherAliasProblems,
+    finalCounts: plan.finalCounts,
+  };
+}
+
 export const createSessionsFromSchedule = onCall(
   {region: REGION},
   async (request): Promise<CreateSessionsResponse> => {
@@ -1614,25 +2513,18 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
     }
 
     try {
-      logger.info("Calling generateSessionsFromScheduleInternal", {
+      logger.info("Calling repairEnrollmentFutureSessionsFromScheduleInternal", {
         enrollmentId,
-        weeksAhead,
-        plannedSessions: plannedSessions ?? null,
-        replaceFuture: true,
-        startDate: classesStartDateYmd,
-        endDate: endDateYmd || null,
+        dryRun: false,
       });
       
-      const result = await generateSessionsFromScheduleInternal({
+      const result = await repairEnrollmentFutureSessionsFromScheduleInternal({
         enrollmentId,
-        weeksAhead,
-        ...(plannedSessions ? {plannedSessions} : {}),
-        replaceFuture: true,
-        startDate: classesStartDateYmd,
-        ...(endDateYmd ? {endDate: endDateYmd} : {}),
+        dryRun: false,
+        actorUid,
       });
 
-      logger.info("generateSessionsFromScheduleInternal succeeded", {
+      logger.info("repairEnrollmentFutureSessionsFromScheduleInternal succeeded", {
         enrollmentId,
         result,
       });
@@ -1708,6 +2600,24 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
         {originalError: message},
       );
     }
+  },
+);
+
+export const repairEnrollmentFutureSessionsFromSchedule = onCall(
+  { region: REGION, memory: "512MiB", timeoutSeconds: 300 },
+  async (request): Promise<RepairEnrollmentFutureSessionsResponse> => {
+    await ensureAdmin(request.auth);
+    const input = (request.data || {}) as Partial<RepairEnrollmentFutureSessionsRequest>;
+    const enrollmentId = typeof input.enrollmentId === "string" ? input.enrollmentId.trim() : "";
+    if (!enrollmentId) {
+      throw new HttpsError("invalid-argument", "enrollmentId required");
+    }
+
+    return repairEnrollmentFutureSessionsFromScheduleInternal({
+      enrollmentId,
+      dryRun: input.dryRun === true,
+      actorUid: request.auth?.uid || null,
+    });
   },
 );
 

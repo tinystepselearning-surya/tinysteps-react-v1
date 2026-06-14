@@ -13,7 +13,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     // Only include unit tests inside `src/` to avoid picking up Playwright specs
-    include: ['src/**/*.{test,spec}.{ts,tsx,js,jsx}'],
+    include: ['src/**/*.{test,spec}.{ts,tsx,js,jsx}', 'functions/test/**/*.spec.ts'],
 
     // Run global setup to mock Firebase analytics + silence noisy logs,
     // then your existing RTL/jest-dom setup.

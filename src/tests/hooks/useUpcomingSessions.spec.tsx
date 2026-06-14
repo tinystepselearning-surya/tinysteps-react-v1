@@ -11,12 +11,18 @@ const {
   mockQuery,
   mockWhere,
   mockOrderBy,
+  mockIsSessionCanonicalForEnrollment,
+  mockIsScheduleExceptionSession,
+  mockShouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment,
 } = vi.hoisted(() => ({
   mockGetDocs: vi.fn(),
   mockOnSnapshot: vi.fn(),
   mockQuery: vi.fn((...args: unknown[]) => ({ kind: 'query', args })),
   mockWhere: vi.fn((...args: unknown[]) => ({ kind: 'where', args })),
   mockOrderBy: vi.fn((...args: unknown[]) => ({ kind: 'orderBy', args })),
+  mockIsSessionCanonicalForEnrollment: vi.fn((_: Record<string, unknown>) => true),
+  mockIsScheduleExceptionSession: vi.fn(() => false),
+  mockShouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment: vi.fn(() => false),
 }));
 const readRepoFile = (relativePath: string) =>
   fs.readFileSync(path.resolve(process.cwd(), relativePath), 'utf8');
@@ -36,9 +42,9 @@ vi.mock('../../lib/firebaseConfig', () => ({
 }));
 
 vi.mock('../../lib/sessionScheduleIntegrity', () => ({
-  isScheduleExceptionSession: vi.fn(() => false),
-  isSessionCanonicalForEnrollment: vi.fn(() => true),
-  shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment: vi.fn(() => false),
+  isScheduleExceptionSession: mockIsScheduleExceptionSession,
+  isSessionCanonicalForEnrollment: mockIsSessionCanonicalForEnrollment,
+  shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment: mockShouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment,
 }));
 
 import { useUpcomingSessions } from '../../pages/teacher/hooks/useUpcomingSessions';
@@ -83,6 +89,12 @@ describe('useUpcomingSessions', () => {
     mockQuery.mockClear();
     mockWhere.mockClear();
     mockOrderBy.mockClear();
+    mockIsSessionCanonicalForEnrollment.mockReset();
+    mockIsSessionCanonicalForEnrollment.mockImplementation(() => true);
+    mockIsScheduleExceptionSession.mockReset();
+    mockIsScheduleExceptionSession.mockImplementation(() => false);
+    mockShouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment.mockReset();
+    mockShouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment.mockImplementation(() => false);
 
     mockGetDocs.mockImplementation(async (queryRef: unknown) => {
       if (getCollectionName(queryRef as any) === 'enrollments') {
@@ -353,5 +365,58 @@ describe('useUpcomingSessions', () => {
       }),
     );
     consoleDebugSpy.mockRestore();
+  });
+
+  it('shows the repaired upcoming 18:45 session and excludes the stale 18:30 future row', async () => {
+    mockIsSessionCanonicalForEnrollment.mockImplementation((sessionLike: Record<string, unknown>) => {
+      return String(sessionLike.startTime || '').trim() === '18:45';
+    });
+
+    mockOnSnapshot.mockReset();
+    mockOnSnapshot.mockImplementation((queryRef, onNext) => {
+      const whereClauses = extractWhereClauses(queryRef as any);
+      const teacherClause = whereClauses.find((args) =>
+        ['teacherId', 'teacherIds', 'assignedTeacherId', 'primaryTeacherId', 'teacherUid', 'teacher_id'].includes(String(args[0] || '')),
+      );
+      const field = String(teacherClause?.[0] || '');
+      const upcomingDates = Array.from({ length: 7 }, (_, index) =>
+        format(addDays(new Date(), index + 1), 'yyyy-MM-dd'),
+      );
+      const repairedDate = upcomingDates[1];
+      const docsByField: Record<string, ReturnType<typeof makeDoc>[]> = {
+        teacherId: [
+          makeDoc('session-old-time', {
+            teacherId: 'teacher-1',
+            enrollmentId: 'enr-1',
+            date: repairedDate,
+            startTime: '18:30',
+            endTime: '19:05',
+            kidId: 'kid-1',
+            status: 'scheduled',
+          }),
+          makeDoc('session-repaired', {
+            teacherId: 'teacher-1',
+            teacherIds: ['teacher-1'],
+            assignedTeacherId: 'teacher-1',
+            primaryTeacherId: 'teacher-1',
+            teacherUid: 'teacher-1',
+            enrollmentId: 'enr-1',
+            date: repairedDate,
+            startTime: '18:45',
+            endTime: '19:20',
+            kidId: 'kid-1',
+            status: 'scheduled',
+          }),
+        ],
+      };
+      onNext({ docs: docsByField[field] || [] });
+      return vi.fn();
+    });
+
+    render(<TestComponent teacherId="teacher-1" />);
+
+    await waitFor(() => expect(screen.getByText('count:1')).toBeTruthy());
+    expect(screen.getByText(/session-repaired:/)).toBeTruthy();
+    expect(screen.queryByText(/session-old-time:/)).toBeNull();
   });
 });

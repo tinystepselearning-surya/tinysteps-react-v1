@@ -45,6 +45,7 @@ export { recordLegacyFallbackUsage } from "./legacyFallbackMetrics";
 // Bulk session generator from enrollment schedule config
 export { createSessionsFromSchedule } from "./createSessionsFromSchedule";
 export { saveEnrollmentScheduleAndGenerateSessions } from "./createSessionsFromSchedule";
+export { repairEnrollmentFutureSessionsFromSchedule } from "./createSessionsFromSchedule";
 export { pauseEnrollmentUpcomingSessions } from "./createSessionsFromSchedule";
 export { resumeEnrollmentSchedule } from "./createSessionsFromSchedule";
 export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";
