@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { PUBLIC_CONTACT_EMAIL } from '../../constants/publicContact';
-import { trackLeadFormStart, trackLeadFormSubmit } from '../../lib/conversionTracking';
+import { buildLeadAttributionPayload, trackGenerateLead, trackLeadFormStart, trackLeadFormSubmit } from '../../lib/conversionTracking';
 
 type AdvisorContactFormProps = {
   topic?: string;
@@ -59,6 +59,7 @@ export default function AdvisorContactForm({
           topic,
           pagePath: typeof window !== 'undefined' ? window.location.pathname : '',
           submittedAt: new Date().toISOString(),
+          ...buildLeadAttributionPayload(),
         }),
       });
 
@@ -66,9 +67,18 @@ export default function AdvisorContactForm({
         throw new Error('Unable to submit contact form');
       }
 
+      const result = await response.json().catch(() => null);
+
       trackLeadFormSubmit({
         form_name: 'advisor_contact_form',
         source_context: topic,
+      });
+      trackGenerateLead({
+        form_name: 'advisor_contact_form',
+        source_context: topic,
+        lead_channel: 'contact_form',
+        lead_type: 'parent_inquiry',
+        submission_id: typeof result?.submissionId === 'string' ? result.submissionId : undefined,
       });
 
       setSubmitted(true);

@@ -61,6 +61,7 @@ const TOC = [
   { id: 'multilingual-homes', label: 'SATPIN in multilingual homes' },
   { id: 'troubleshooting', label: 'Troubleshooting and coaching' },
   { id: 'quality-checklist', label: 'What to look for in teaching' },
+  { id: 'move-beyond-satpin', label: 'When to move beyond SATPIN' },
   { id: 'faq', label: 'FAQ' },
   { id: 'sources', label: 'Sources' },
 ];
@@ -211,6 +212,13 @@ const CHECKLIST = [
   'Text practice is decodable and tightly matched to what has been taught.',
   'Sessions stay short, cumulative, and repeatable for real families.',
   'In multilingual homes, decoding is taught alongside oral language and meaning.',
+];
+
+const MOVE_BEYOND_SATPIN = [
+  'Your child can usually recall s, a, t, p, i, and n quickly without long pauses.',
+  'Your child can blend simple words like sat, pin, tap, pan, and tin with support.',
+  'Your child is ready for short decodable reading lines, not only isolated sound practice.',
+  'Your child now needs the next structured step: more CVC practice, digraphs, and guided reading fluency.',
 ];
 
 const FAQS = [
@@ -404,7 +412,7 @@ export default function Week1SatpinLaunchPage() {
         dateLabel={formatBlogDate(ARTICLE_DATE)}
         readTimeLabel={ARTICLE_READ_TIME}
         actions={[
-          { label: 'Book a free reading assessment', to: '/?book=1' },
+          { label: 'Book a free reading assessment', to: '/book-demo' },
           { label: 'Read the full phonics parent guide', to: '/blog/phonics-for-parents-guide', variant: 'secondary' },
         ]}
         searchPainPoints={SEARCH_PAIN_POINTS}
@@ -628,6 +636,48 @@ export default function Week1SatpinLaunchPage() {
           </SectionShell>
 
           <SectionShell
+            id="move-beyond-satpin"
+            eyebrow="Next Step"
+            title="When to move beyond SATPIN"
+            intro="Parents often stay too long at the first six sounds or move ahead too fast. A better rule is to move on once the first set is stable enough to support blending and simple decodable reading."
+          >
+            <div className="grid gap-5 lg:grid-cols-[1fr_0.95fr]">
+              <div className="rounded-[28px] border border-slate-200 bg-white p-6">
+                <h3 className="text-xl font-semibold text-slate-900">Signs your child is ready for the next phonics step</h3>
+                <ul className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
+                  {MOVE_BEYOND_SATPIN.map((item) => (
+                    <li key={item} className="flex gap-3">
+                      <span className="mt-2 h-2 w-2 rounded-full bg-primary-500" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="rounded-[28px] border border-amber-200 bg-amber-50/70 p-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-800">Tiny Steps parent path</p>
+                <p className="mt-3 text-lg font-semibold text-slate-900">
+                  Practise the first sounds, then connect them to a fuller reading plan.
+                </p>
+                <div className="mt-4 flex flex-col gap-3 text-sm font-semibold">
+                  <Link to="/phonics" className="text-slate-900 underline underline-offset-4">
+                    Explore Tiny Steps phonics classes
+                  </Link>
+                  <Link to="/free-letter-tracing-game-for-kids" className="text-slate-900 underline underline-offset-4">
+                    Use the free tracing game for extra letter practice
+                  </Link>
+                  <Link to="/blog/phonics-for-parents-guide" className="text-slate-900 underline underline-offset-4">
+                    Read the full phonics parent guide
+                  </Link>
+                  <Link to="/book-demo" className="text-slate-900 underline underline-offset-4">
+                    Book a Tiny Steps phonics assessment
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </SectionShell>
+
+          <SectionShell
             id="faq"
             eyebrow="Parents Also Ask"
             title="SATPIN week 1 FAQ"
@@ -678,7 +728,7 @@ export default function Week1SatpinLaunchPage() {
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
-                to="/?book=1"
+                to="/book-demo"
                 className="inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
               >
                 Book a free assessment

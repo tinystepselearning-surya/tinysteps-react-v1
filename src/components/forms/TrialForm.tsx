@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { trackEvent } from '../../lib/analytics';
-import { trackLeadFormStart, trackLeadFormSubmit, trackWhatsappClick } from '../../lib/conversionTracking';
+import { buildLeadAttributionPayload, trackGenerateLead, trackLeadFormStart, trackLeadFormSubmit } from '../../lib/conversionTracking';
 import { useAuthStore } from '../../store/useAuthStore';
 
 const schema = z.object({
@@ -43,11 +43,24 @@ export default function TrialForm({ compact = false, context = 'trial_form' }: {
       const { app } = await import('../../lib/firebaseConfig');
       const functions = getFunctions(app, 'asia-south1');
       const submitLead = httpsCallable(functions as any, 'subscribeNewsletter');
-      await submitLead({ email: data.email, parentName: data.parentName, phone: data.phone, childAge: data.childAge, source: 'trial' });
+      await submitLead({
+        email: data.email,
+        parentName: data.parentName,
+        phone: data.phone,
+        childAge: data.childAge,
+        source: 'trial',
+        ...buildLeadAttributionPayload(),
+      });
       trackEvent('trial_form_submit', { context, childAge: data.childAge });
       trackLeadFormSubmit({
         form_name: 'trial_form',
         source_context: context,
+      });
+      trackGenerateLead({
+        form_name: 'trial_form',
+        source_context: context,
+        lead_channel: 'trial_form',
+        lead_type: 'parent_trial_request',
       });
       reset();
     } catch (e) {
@@ -77,12 +90,11 @@ export default function TrialForm({ compact = false, context = 'trial_form' }: {
         <button aria-label="Book Free Assessment Class" className="w-full rounded-2xl bg-gradient-to-r from-primary-500 to-secondary-500 px-4 py-3 text-sm font-semibold text-white sm:flex-1" disabled={isSubmitting}>
           {isSubmitting ? 'Booking…' : 'Book Free Assessment Class'}
         </button>
-  {!user && (
+        {!user && (
           <a
             href="https://wa.me/919618398383"
             target="_blank"
             rel="noopener noreferrer"
-            onClick={() => trackWhatsappClick('trial_form')}
             className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-center text-sm font-semibold text-gray-800 sm:flex-1"
           >
             Chat on WhatsApp - opens new window

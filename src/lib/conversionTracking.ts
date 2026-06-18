@@ -13,7 +13,23 @@ export type PageCluster =
 
 export type FunnelProgram = 'phonics' | 'grammar' | 'speaking' | 'summer_camp' | 'general';
 
+type LeadAttribution = {
+  landingPage: string;
+  firstSeenAt: string;
+  referrer?: string;
+  referrerDomain?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmTerm?: string;
+  utmContent?: string;
+  gclid?: string;
+  fbclid?: string;
+  msclkid?: string;
+};
+
 const WEBSITE_LEAD_FUNNEL_NAME = 'website_lead_funnel';
+const LEAD_ATTRIBUTION_STORAGE_KEY = 'ts_lead_attribution_v1';
 const FUNNEL_LANDING_PATHS = new Set([
   '/',
   '/phonics',
@@ -88,6 +104,20 @@ export function isHighIntentPath(pathname: string): boolean {
   return Boolean(HIGH_INTENT_ROUTE_CLUSTER[normalizePath(pathname)]);
 }
 
+export function isProgramPagePath(pathname: string): boolean {
+  const path = normalizePath(pathname);
+  return path === '/phonics' || path === '/grammar' || path === '/speaking';
+}
+
+export function isFreeResourcePath(pathname: string): boolean {
+  const path = normalizePath(pathname);
+  return (
+    path === '/free-letter-tracing-game-for-kids' ||
+    path === '/letter-tracing-with-sounds-game' ||
+    path === '/phonics-learning-games'
+  );
+}
+
 export function inferProgramFromPath(pathname: string): FunnelProgram {
   const path = normalizePath(pathname);
   if (path === '/phonics' || path.includes('phonics')) return 'phonics';
@@ -113,6 +143,130 @@ function resolveProgram(program: FunnelProgram | undefined, pagePath: string): F
   return inferProgramFromPath(pagePath);
 }
 
+function sanitizeField(value: string | null | undefined, maxLength = 160): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  if (!normalized) return undefined;
+  return normalized.slice(0, maxLength);
+}
+
+function safeParseUrl(rawUrl: string): URL | null {
+  try {
+    return new URL(rawUrl);
+  } catch {
+    return null;
+  }
+}
+
+function readLeadAttribution(): LeadAttribution | null {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const raw = window.localStorage.getItem(LEAD_ATTRIBUTION_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as LeadAttribution;
+  } catch {
+    return null;
+  }
+}
+
+function writeLeadAttribution(attribution: LeadAttribution) {
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.localStorage.setItem(LEAD_ATTRIBUTION_STORAGE_KEY, JSON.stringify(attribution));
+  } catch {
+    return;
+  }
+}
+
+function collectAttributionPatch(pagePath: string): Partial<LeadAttribution> {
+  if (typeof window === 'undefined') return {};
+
+  const params = new URLSearchParams(window.location.search);
+  const referrerUrl = sanitizeField(document.referrer, 300);
+  const parsedReferrer = referrerUrl ? safeParseUrl(referrerUrl) : null;
+  const externalReferrer =
+    parsedReferrer && parsedReferrer.origin !== window.location.origin ? parsedReferrer : null;
+
+  return {
+    landingPage: pagePath,
+    firstSeenAt: new Date().toISOString(),
+    referrer: externalReferrer?.toString(),
+    referrerDomain: externalReferrer?.hostname,
+    utmSource: sanitizeField(params.get('utm_source')),
+    utmMedium: sanitizeField(params.get('utm_medium')),
+    utmCampaign: sanitizeField(params.get('utm_campaign')),
+    utmTerm: sanitizeField(params.get('utm_term')),
+    utmContent: sanitizeField(params.get('utm_content')),
+    gclid: sanitizeField(params.get('gclid')),
+    fbclid: sanitizeField(params.get('fbclid')),
+    msclkid: sanitizeField(params.get('msclkid')),
+  };
+}
+
+export function captureLeadAttribution(pathname?: string): LeadAttribution | null {
+  const pagePath = resolvePagePath(pathname);
+  const patch = collectAttributionPatch(pagePath);
+  const existing = readLeadAttribution();
+
+  const next: LeadAttribution = {
+    landingPage: existing?.landingPage || patch.landingPage || pagePath,
+    firstSeenAt: existing?.firstSeenAt || patch.firstSeenAt || new Date().toISOString(),
+    referrer: existing?.referrer || patch.referrer,
+    referrerDomain: existing?.referrerDomain || patch.referrerDomain,
+    utmSource: existing?.utmSource || patch.utmSource,
+    utmMedium: existing?.utmMedium || patch.utmMedium,
+    utmCampaign: existing?.utmCampaign || patch.utmCampaign,
+    utmTerm: existing?.utmTerm || patch.utmTerm,
+    utmContent: existing?.utmContent || patch.utmContent,
+    gclid: existing?.gclid || patch.gclid,
+    fbclid: existing?.fbclid || patch.fbclid,
+    msclkid: existing?.msclkid || patch.msclkid,
+  };
+
+  writeLeadAttribution(next);
+  return next;
+}
+
+function buildAttributionEventParams(pathname?: string) {
+  const attribution = captureLeadAttribution(pathname);
+  if (!attribution) return {};
+
+  return {
+    landing_page: attribution.landingPage,
+    lead_utm_source: attribution.utmSource,
+    lead_utm_medium: attribution.utmMedium,
+    lead_utm_campaign: attribution.utmCampaign,
+    lead_referrer_domain: attribution.referrerDomain,
+  };
+}
+
+export function buildLeadAttributionPayload(pathname?: string) {
+  const pagePath = resolvePagePath(pathname);
+  const attribution = captureLeadAttribution(pagePath);
+
+  return {
+    attribution: attribution
+      ? {
+          landingPage: attribution.landingPage,
+          conversionPage: pagePath,
+          firstSeenAt: attribution.firstSeenAt,
+          referrer: attribution.referrer,
+          referrerDomain: attribution.referrerDomain,
+          utmSource: attribution.utmSource,
+          utmMedium: attribution.utmMedium,
+          utmCampaign: attribution.utmCampaign,
+          utmTerm: attribution.utmTerm,
+          utmContent: attribution.utmContent,
+          gclid: attribution.gclid,
+          fbclid: attribution.fbclid,
+          msclkid: attribution.msclkid,
+        }
+      : undefined,
+  };
+}
+
 type FunnelBaseParams = {
   page_path?: string;
   funnel_name?: string;
@@ -134,6 +288,12 @@ type FunnelLeadFormParams = FunnelBaseParams & {
   form_name?: string;
 };
 
+type GenerateLeadParams = FunnelLeadFormParams & {
+  lead_channel?: string;
+  lead_type?: string;
+  submission_id?: string;
+};
+
 type FunnelDemoBookingCompleteParams = FunnelBaseParams & {
   booking_type: string;
 };
@@ -146,6 +306,7 @@ export function trackLandingPageView(params: FunnelLandingParams) {
     funnel_name: params.funnel_name || WEBSITE_LEAD_FUNNEL_NAME,
     program: resolveProgram(params.program, pagePath),
     source_context: params.source_context || 'route_tracker',
+    ...buildAttributionEventParams(pagePath),
   });
 }
 
@@ -158,6 +319,7 @@ export function trackCtaClick(params: FunnelCtaParams) {
     destination_path: params.destination_path,
     funnel_name: params.funnel_name || WEBSITE_LEAD_FUNNEL_NAME,
     program: resolveProgram(params.program, pagePath),
+    ...buildAttributionEventParams(pagePath),
   });
 }
 
@@ -213,16 +375,90 @@ export function isHighIntentCtaLabel(label: string): boolean {
 }
 
 export const trackBookDemoClick = (location: string) => {
+  const pagePath = resolvePagePath();
+  trackEvent('book_assessment_click', {
+    location,
+    page_path: pagePath,
+    ...buildAttributionEventParams(pagePath),
+  });
   trackEvent('book_demo_click', {
     location,
-    page: window.location.pathname,
+    page: pagePath,
   });
 };
 
 export const trackWhatsappClick = (location: string) => {
+  const pagePath = resolvePagePath();
   trackEvent('whatsapp_click', {
     location,
-    page: window.location.pathname,
+    page: pagePath,
+    page_path: pagePath,
+    ...buildAttributionEventParams(pagePath),
+  });
+};
+
+export const trackPhoneClick = (location: string) => {
+  const pagePath = resolvePagePath();
+  trackEvent('phone_click', {
+    location,
+    page_path: pagePath,
+    ...buildAttributionEventParams(pagePath),
+  });
+};
+
+export const trackEmailClick = (location: string) => {
+  const pagePath = resolvePagePath();
+  trackEvent('email_click', {
+    location,
+    page_path: pagePath,
+    ...buildAttributionEventParams(pagePath),
+  });
+};
+
+export const trackProgramCtaClick = (params: FunnelCtaParams) => {
+  const pagePath = resolvePagePath(params.page_path);
+  trackEvent('program_cta_click', {
+    page_path: pagePath,
+    cta_label: sanitizeLabel(params.cta_label),
+    cta_location: params.cta_location,
+    destination_path: params.destination_path,
+    program: resolveProgram(params.program, pagePath),
+    source_context: params.source_context || 'program_page',
+    ...buildAttributionEventParams(pagePath),
+  });
+};
+
+export const trackPricingCtaClick = (params: FunnelCtaParams) => {
+  const pagePath = resolvePagePath(params.page_path);
+  trackEvent('pricing_cta_click', {
+    page_path: pagePath,
+    cta_label: sanitizeLabel(params.cta_label),
+    cta_location: params.cta_location,
+    destination_path: params.destination_path,
+    program: resolveProgram(params.program, pagePath),
+    source_context: params.source_context || 'pricing_page',
+    ...buildAttributionEventParams(pagePath),
+  });
+};
+
+export const trackFreeResourceStart = (resourceName: string, pathname?: string) => {
+  const pagePath = resolvePagePath(pathname);
+  trackEvent('free_resource_start', {
+    page_path: pagePath,
+    resource_name: sanitizeLabel(resourceName),
+    ...buildAttributionEventParams(pagePath),
+  });
+};
+
+export const trackFreeResourceToTrialClick = (params: FunnelCtaParams) => {
+  const pagePath = resolvePagePath(params.page_path);
+  trackEvent('free_resource_to_trial_click', {
+    page_path: pagePath,
+    cta_label: sanitizeLabel(params.cta_label),
+    cta_location: params.cta_location,
+    destination_path: params.destination_path,
+    program: resolveProgram(params.program, pagePath),
+    ...buildAttributionEventParams(pagePath),
   });
 };
 
@@ -230,6 +466,9 @@ export const trackLeadFormStart = (params: FunnelLeadFormParams = {}) => {
   const pagePath = resolvePagePath(params.page_path);
   trackEvent('lead_form_start', {
     page: pagePath,
+    page_path: pagePath,
+    form_name: params.form_name || 'unknown_form',
+    ...buildAttributionEventParams(pagePath),
   });
   trackEvent('funnel_form_start', {
     page_path: pagePath,
@@ -237,6 +476,7 @@ export const trackLeadFormStart = (params: FunnelLeadFormParams = {}) => {
     funnel_name: params.funnel_name || WEBSITE_LEAD_FUNNEL_NAME,
     program: resolveProgram(params.program, pagePath),
     source_context: params.source_context || 'unknown',
+    ...buildAttributionEventParams(pagePath),
   });
 };
 
@@ -244,6 +484,9 @@ export const trackLeadFormSubmit = (params: FunnelLeadFormParams = {}) => {
   const pagePath = resolvePagePath(params.page_path);
   trackEvent('lead_form_submit', {
     page: pagePath,
+    page_path: pagePath,
+    form_name: params.form_name || 'unknown_form',
+    ...buildAttributionEventParams(pagePath),
   });
   trackEvent('funnel_form_submit', {
     page_path: pagePath,
@@ -251,6 +494,22 @@ export const trackLeadFormSubmit = (params: FunnelLeadFormParams = {}) => {
     funnel_name: params.funnel_name || WEBSITE_LEAD_FUNNEL_NAME,
     program: resolveProgram(params.program, pagePath),
     source_context: params.source_context || 'unknown',
+    ...buildAttributionEventParams(pagePath),
+  });
+};
+
+export const trackGenerateLead = (params: GenerateLeadParams = {}) => {
+  const pagePath = resolvePagePath(params.page_path);
+  trackEvent('generate_lead', {
+    page_path: pagePath,
+    form_name: params.form_name || 'unknown_form',
+    funnel_name: params.funnel_name || WEBSITE_LEAD_FUNNEL_NAME,
+    program: resolveProgram(params.program, pagePath),
+    source_context: params.source_context || 'unknown',
+    lead_channel: params.lead_channel || 'form_submit',
+    lead_type: params.lead_type || 'parent_inquiry',
+    submission_id: params.submission_id,
+    ...buildAttributionEventParams(pagePath),
   });
 };
 
@@ -262,6 +521,7 @@ export function trackDemoBookingComplete(params: FunnelDemoBookingCompleteParams
     funnel_name: params.funnel_name || WEBSITE_LEAD_FUNNEL_NAME,
     program: resolveProgram(params.program, pagePath),
     source_context: params.source_context || 'unknown',
+    ...buildAttributionEventParams(pagePath),
   });
 }
 

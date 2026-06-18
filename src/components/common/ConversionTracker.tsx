@@ -2,20 +2,28 @@ import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   buildBaseConversionParams,
+  captureLeadAttribution,
   extractDestinationPathFromHref,
   inferProgramFromPath,
   isBookDemoDestination,
   isBookDemoLabel,
+  isFreeResourcePath,
   isFunnelLandingPath,
   isHighIntentCtaLabel,
   isHighIntentPath,
   isMarketingPath,
+  isProgramPagePath,
   isWhatsAppDestination,
   sanitizeLabel,
   trackBookDemoClick,
   trackCtaClick,
   trackConversionEvent,
+  trackEmailClick,
+  trackFreeResourceToTrialClick,
   trackLandingPageView,
+  trackPhoneClick,
+  trackPricingCtaClick,
+  trackProgramCtaClick,
   trackWhatsappClick,
 } from '../../lib/conversionTracking';
 
@@ -49,6 +57,7 @@ export default function ConversionTracker() {
   useEffect(() => {
     const pagePath = location.pathname;
     if (!isMarketingPath(pagePath)) return;
+    captureLeadAttribution(pagePath);
 
     if (isFunnelLandingPath(pagePath) && lastTrackedLandingPathRef.current !== pagePath) {
       trackLandingPageView({
@@ -75,6 +84,15 @@ export default function ConversionTracker() {
       const ctaLocation = inferCtaLocation(node);
       const isWhatsApp = isWhatsAppDestination(href) || label.toLowerCase().includes('whatsapp');
       const isBookDemo = isBookDemoDestination(destinationPath) || isBookDemoLabel(label);
+      const isPhone = Boolean(href?.startsWith('tel:'));
+      const isEmail = Boolean(href?.startsWith('mailto:'));
+      const isLeadIntentCta =
+        isWhatsApp ||
+        isBookDemo ||
+        isPhone ||
+        isEmail ||
+        destinationPath === '/contact' ||
+        destinationPath === '/pricing';
       const isHighIntentFunnelCta = isHighIntentPath(pagePath) && destinationPath && isHighIntentCtaLabel(label);
 
       if (isWhatsApp || isBookDemo || isHighIntentFunnelCta) {
@@ -88,8 +106,48 @@ export default function ConversionTracker() {
         });
       }
 
+      if (isProgramPagePath(pagePath) && isLeadIntentCta) {
+        trackProgramCtaClick({
+          page_path: pagePath,
+          cta_label: label,
+          cta_location: ctaLocation,
+          destination_path: destinationPath,
+          program: inferProgramFromPath(pagePath),
+        });
+      }
+
+      if (pagePath === '/pricing' && isLeadIntentCta) {
+        trackPricingCtaClick({
+          page_path: pagePath,
+          cta_label: label,
+          cta_location: ctaLocation,
+          destination_path: destinationPath,
+          program: inferProgramFromPath(pagePath),
+        });
+      }
+
+      if (isFreeResourcePath(pagePath) && (destinationPath === '/phonics' || destinationPath === '/book-demo' || destinationPath === '/contact')) {
+        trackFreeResourceToTrialClick({
+          page_path: pagePath,
+          cta_label: label,
+          cta_location: ctaLocation,
+          destination_path: destinationPath,
+          program: inferProgramFromPath(pagePath),
+        });
+      }
+
       if (isWhatsApp) {
         trackWhatsappClick(`${pagePath}:${label}`);
+        return;
+      }
+
+      if (isPhone) {
+        trackPhoneClick(`${pagePath}:${label}`);
+        return;
+      }
+
+      if (isEmail) {
+        trackEmailClick(`${pagePath}:${label}`);
         return;
       }
 

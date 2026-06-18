@@ -146,19 +146,13 @@ export const trackPageView = (path: string) => {
 export function trackEvent(name: string, params?: Record<string, any>) {
   try {
     if (typeof window === 'undefined') return;
+    if (!ensureInit()) return;
 
     if (!window.gtag) {
-      console.warn('[GA] gtag not available');
       return;
     }
 
-    window.gtag('event', name, {
-      ...params,
-      debug_mode: true,
-      send_to: 'G-5RMQVF1HGD', // IMPORTANT: ensure correct measurement ID
-    });
-
-    console.log('[GA EVENT]', name, params);
+    window.gtag('event', name, params || {});
   } catch (err) {
     console.error('[GA ERROR]', err);
   }

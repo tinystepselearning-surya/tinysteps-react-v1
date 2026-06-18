@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../lib/seo';
 import { createEventSchema } from '../lib/schemas';
-import { trackLeadFormStart, trackLeadFormSubmit } from '../lib/conversionTracking';
+import { buildLeadAttributionPayload, trackGenerateLead, trackLeadFormStart, trackLeadFormSubmit } from '../lib/conversionTracking';
 
 type SummerCampLeadFormState = {
   name: string;
@@ -671,6 +671,7 @@ function SummerCampLeadForm() {
           topic: 'Summer camp inquiry',
           pagePath: typeof window !== 'undefined' ? window.location.pathname : '/summer-camps',
           submittedAt: new Date().toISOString(),
+          ...buildLeadAttributionPayload('/summer-camps'),
         }),
       });
 
@@ -678,10 +679,20 @@ function SummerCampLeadForm() {
         throw new Error('Unable to submit inquiry');
       }
 
+      const result = await response.json().catch(() => null);
+
       trackLeadFormSubmit({
         form_name: 'summer_camp_lead_form',
         program: 'summer_camp',
         source_context: 'summer_camps_page',
+      });
+      trackGenerateLead({
+        form_name: 'summer_camp_lead_form',
+        program: 'summer_camp',
+        source_context: 'summer_camps_page',
+        lead_channel: 'summer_camp_form',
+        lead_type: 'parent_inquiry',
+        submission_id: typeof result?.submissionId === 'string' ? result.submissionId : undefined,
       });
       setSubmitted(true);
       setForm(SUMMER_CAMP_LEAD_INITIAL_STATE);
