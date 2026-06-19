@@ -309,11 +309,18 @@ export const ROUTE_SEO_REGISTRY = {
     canonicalPath: '/phonics',
     ogType: 'website',
   },
-  '/best-online-phonics-classes-india': {
-    title: 'Best Online Phonics Classes in India | Parent Guide | Tiny Steps',
+  '/best-online-phonics-classes-for-kids-in-india': {
+    title: 'Best Online Phonics Classes for Kids in India | Tiny Steps Learning',
     description:
-      'Compare online phonics classes in India, 1:1 vs group vs app practice, reading outcomes, parent progress updates, and free assessment.',
-    canonicalPath: '/best-online-phonics-classes-india',
+      'Compare the best online phonics classes for kids in India. Review 1:1 vs group format, curriculum, pricing, progress updates, and why parents choose Tiny Steps Learning.',
+    canonicalPath: '/best-online-phonics-classes-for-kids-in-india',
+    ogType: 'website',
+  },
+  '/best-online-phonics-classes-india': {
+    title: 'Best Online Phonics Classes for Kids in India | Tiny Steps Learning',
+    description:
+      'Compare the best online phonics classes for kids in India. Review 1:1 vs group format, curriculum, pricing, progress updates, and why parents choose Tiny Steps Learning.',
+    canonicalPath: '/best-online-phonics-classes-for-kids-in-india',
     ogType: 'website',
   },
   '/phonics-apps-for-preschoolers-india': {

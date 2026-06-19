@@ -329,7 +329,7 @@ export default function OnlineEnglishClassesForKidsIndiaPage() {
             Tiny Steps supports children across India through live online classes. Parents from Hyderabad, Bangalore, Chennai, Mumbai, Delhi, Pune, Kolkata, and other locations can <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2">book a free assessment</Link> and receive a level-based English learning path.
           </p>
           <p className="mt-3 text-sm leading-6 text-slate-700">
-            If your child needs a stronger reading start, compare our <Link to="/best-online-phonics-classes-india" className="font-semibold text-slate-900 underline underline-offset-2">best online phonics classes in India</Link> guide before choosing the pathway.
+            If your child needs a stronger reading start, compare our <Link to="/best-online-phonics-classes-for-kids-in-india" className="font-semibold text-slate-900 underline underline-offset-2">best online phonics classes for kids in India</Link> guide before choosing the pathway.
           </p>
         </div>
       </section>

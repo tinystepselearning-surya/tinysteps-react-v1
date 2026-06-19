@@ -509,8 +509,8 @@ export default function PhonicsPage({
             </div>
             <p className="mt-5 text-sm leading-6 text-slate-700">
               Parents comparing providers often start with our{' '}
-              <Link to="/best-online-phonics-classes-india" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
-                best online phonics classes in India
+              <Link to="/best-online-phonics-classes-for-kids-in-india" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
+                best online phonics classes for kids in India
               </Link>{' '}
               guide before booking a free assessment.
             </p>
@@ -646,8 +646,8 @@ export default function PhonicsPage({
               </div>
               <p className="mt-4 text-sm leading-6 text-slate-700">
                 Compare options in our{' '}
-                <Link to="/best-online-phonics-classes-india" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
-                  best online phonics classes in India
+                <Link to="/best-online-phonics-classes-for-kids-in-india" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
+                  best online phonics classes for kids in India
                 </Link>{' '}
                 guide or{' '}
                 <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
@@ -1018,9 +1018,9 @@ export default function PhonicsPage({
           </p>
           <div className="mt-7 grid gap-4 md:grid-cols-3">
             <PremiumCard className="border-white/20 bg-white p-5 text-slate-900 shadow-xl transition hover:-translate-y-0.5 hover:shadow-2xl">
-              <h3 className="text-base font-semibold text-slate-900">🔍 Choosing the best online phonics classes in India</h3>
+              <h3 className="text-base font-semibold text-slate-900">🔍 Choosing the best online phonics classes for kids in India</h3>
               <p className="mt-2 text-sm text-slate-700">Compare quality and learning structure before enrollment.</p>
-              <Link to="/best-online-phonics-classes-india" className="mt-3 inline-flex rounded-full border border-slate-300 bg-slate-900 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-800">
+              <Link to="/best-online-phonics-classes-for-kids-in-india" className="mt-3 inline-flex rounded-full border border-slate-300 bg-slate-900 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-800">
                 Open guide
               </Link>
             </PremiumCard>
@@ -1092,7 +1092,7 @@ export default function PhonicsPage({
                 },
                 {
                   label: 'Phonics Buyer Guide',
-                  href: '/best-online-phonics-classes-india',
+                  href: '/best-online-phonics-classes-for-kids-in-india',
                   description: 'Parent checklist for finding the right fit',
                   icon: '🔍'
                 },

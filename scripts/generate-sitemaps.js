@@ -103,7 +103,7 @@ function isCanonicalSelfRoute(route) {
 
 const MONEY_PAGES = new Set(['/phonics', '/grammar', '/speaking', '/summer-camps']);
 const SUPPORTING_LONG_TAIL = new Set([
-  '/best-online-phonics-classes-india',
+  '/best-online-phonics-classes-for-kids-in-india',
   '/phonics-apps-for-preschoolers-india',
   '/phonics-games-for-preschoolers',
   '/phonics-learning-games',

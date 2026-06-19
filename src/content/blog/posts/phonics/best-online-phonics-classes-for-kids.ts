@@ -18,7 +18,7 @@ const post: PhonicsSeoPost = {
     'Choose by stage: ages 4-6 usually need sound and blending foundations; ages 7-10 with reading gaps may need phonics plus reading fluency support; children who know letters but cannot read need diagnostic blending-first placement.',
     'Final decision rule: pick the class that can explain your child’s current gap, show a 4-week plan, and provide measurable decoding and confidence signals.'
   ],
-  classChecklistFocus: 'Distinct value of this post: use it as a parent comparison tool before enrollment. Keep /phonics for program details and /best-online-phonics-classes-india for the India-focused commercial page.',
+  classChecklistFocus: 'Distinct value of this post: use it as a parent comparison tool before enrollment. Keep /phonics for program details and /best-online-phonics-classes-for-kids-in-india for the India-focused commercial page.',
   avoidFocus: 'Do not choose based only on app visuals, discounts, or marketing claims. Do not accept vague progress updates that cannot show decoding, blending, and reading transfer.',
   progress: 'In a strong-fit class, many children show less guessing and better blending within 2-4 weeks, then stronger unfamiliar-word reading and confidence by weeks 4-8.',
   support: 'If your child knows letters but still cannot read words, start with a structured diagnostic pathway before increasing class difficulty. Tiny Steps follows assessment first, phonics foundation, blending, reading fluency, and confidence-building progression.',
@@ -46,7 +46,7 @@ const post: PhonicsSeoPost = {
     to: '/phonics'
   }, {
     label: 'India comparison page for online phonics classes',
-    to: '/best-online-phonics-classes-india'
+    to: '/best-online-phonics-classes-for-kids-in-india'
   }, {
     label: 'Compare all course pathways',
     to: '/courses'

@@ -302,7 +302,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'Families can start with [reading classes for kids](/reading-classes-for-kids) when the main issue is slow, effortful reading. If decoding is the bottleneck, [online phonics classes for kids](/phonics) provide a structured base, and parents comparing options can review the [best online phonics classes in India](/best-online-phonics-classes-india) guide.',
+        'Families can start with [reading classes for kids](/reading-classes-for-kids) when the main issue is slow, effortful reading. If decoding is the bottleneck, [online phonics classes for kids](/phonics) provide a structured base, and parents comparing options can review the [best online phonics classes for kids in India](/best-online-phonics-classes-for-kids-in-india) guide.',
     },
     {
       type: 'p',

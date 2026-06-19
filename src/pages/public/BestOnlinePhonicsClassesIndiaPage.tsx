@@ -1,97 +1,167 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import AboutAuthor from '../../components/AboutAuthor';
 import ClusterSeoNav from '../../components/programs/ClusterSeoNav';
+import ContentTrustNote from '../../components/seo/ContentTrustNote';
+import TestimonialsSection from '../../components/seo/TestimonialsSection';
+import { ONE_TO_ONE_MONTHLY_PACKAGES, PER_CLASS_PRICE, formatINR } from '../../config/pricing';
 import { applySeo, getRouteConfig } from '../../lib/seo';
-import { createFAQPageSchema, PUBLIC_FACTS } from '../../lib/schemas';
-import { formatINR, ONE_TO_ONE_MONTHLY_PACKAGES } from '../../config/pricing';
+import { createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../../lib/schemas';
 
-const parentProblems = [
+const quickAnswerBlocks = [
   {
-    title: 'My child knows letters but cannot read words',
-    solution: 'Look for: step-by-step blending routines with live teacher correction.',
+    title: 'What makes a phonics class "best"?',
+    answer:
+      'The best online phonics class for kids in India checks the child’s current level first, teaches sounds and blending step by step, corrects mistakes live, and shows parents clear progress instead of vague promises.',
   },
   {
-    title: 'My child guesses words while reading',
-    solution: 'Look for: structured decoding practice using sounds, not memorisation or guessing.',
+    title: 'Who is Tiny Steps best for?',
+    answer:
+      'Tiny Steps is best for children who need personal attention, structured phonics, and a consistent mentor instead of large rotating batches or app-only practice.',
   },
   {
-    title: 'My child reads slowly',
-    solution: 'Look for: guided CVC and sentence reading with repeated fluency practice.',
-  },
-  {
-    title: 'My child struggles with spelling',
-    solution: 'Look for: explicit spelling patterns, digraphs, and vowel team reinforcement.',
-  },
-  {
-    title: 'My child loses confidence while reading',
-    solution: 'Look for: level-based goals, quick wins, and parent-visible progress milestones.',
+    title: 'What happens before enrollment?',
+    answer:
+      'Parents start with a free assessment, understand the child’s reading stage, and then choose the right class frequency and plan with a clear recommendation.',
   },
 ];
 
-const checklistPoints = [
-  'Current level assessment before enrollment',
-  'Live teacher correction',
-  'Structured synthetic phonics pathway',
-  'Blending and CVC word practice',
-  'Digraphs, vowel teams, magic-e, and spelling patterns',
-  'Reading fluency practice',
-  'Parent progress updates',
-  'Practice games or home reinforcement',
-  'Flexible scheduling',
-  'Lesson quality review or recordings',
+const parentQuestionRows = [
+  {
+    question: 'Is this 1:1 or group?',
+    answer: 'Live 1:1 online phonics classes are the core path. Small-group options may be available for some schedules or program fits.',
+  },
+  {
+    question: 'What age group is this for?',
+    answer:
+      'Tiny Steps serves ages 3–12. Most early phonics learners start around ages 3–7, while older children can join for decoding gaps, reading catch-up, or fluency support.',
+  },
+  {
+    question: 'What is teacher quality like?',
+    answer:
+      'Classes are guided by trained mentors using structured lesson flow, live correction, child-friendly pacing, and parent-visible next steps.',
+  },
+  {
+    question: 'What curriculum is used?',
+    answer:
+      'Tiny Steps follows a structured synthetic phonics path: sounds, blending, CVC words, digraphs, vowel teams, spelling patterns, sentence reading, and fluency.',
+  },
+  {
+    question: 'How long is each class?',
+    answer: `Each live class runs for ${PUBLIC_FACTS.sessionDuration}.`,
+  },
+  {
+    question: 'What platform is used?',
+    answer: 'Classes run live on Zoom, so families in India and abroad can join from home with a simple browser link.',
+  },
+  {
+    question: 'Do parents get support?',
+    answer:
+      'Yes. Parents receive progress updates, milestone visibility, and next-step guidance so home practice stays simple and targeted.',
+  },
+  {
+    question: 'What is the current pricing reference?',
+    answer:
+      'Current standard reference pricing is ₹400 per class, with the starter 12-class plan at ₹4,800 after the free assessment confirms fit.',
+  },
+  {
+    question: 'Is there a trial?',
+    answer:
+      'Tiny Steps uses a free assessment-first approach instead of asking parents to commit without knowing the child’s starting level.',
+  },
+  {
+    question: 'Why do parents shortlist Tiny Steps?',
+    answer:
+      'Founder-led curriculum direction, live 1:1 correction, structured phonics progression, parent-visible progress, and practical home reinforcement.',
+  },
 ];
 
-const comparisonRows = [
+const comparisonFactors = [
   {
-    option: '1:1 online phonics class',
-    bestFor: 'Children who need personalised correction and faster reading catch-up',
-    limitation: 'Higher fee than group or app-only options',
-    check: 'Mentor quality, structured roadmap, and regular parent progress updates',
+    factor: 'Class type',
+    parentCheck: 'Is it 1:1, small group, or mostly self-practice?',
+    tinySteps: 'Live 1:1 guidance is the main pathway, with personal correction in each class.',
   },
   {
-    option: 'Small group phonics class',
-    bestFor: 'Children comfortable learning with peers at shared pace',
-    limitation: 'Limited individual speaking and correction time',
-    check: 'Batch size, teacher feedback frequency, and makeup class policy',
+    factor: 'Teacher attention',
+    parentCheck: 'Will the child get direct correction, or mostly listen and follow?',
+    tinySteps: 'The mentor corrects blending, sound confusion, and reading attempts live.',
   },
   {
-    option: 'App-only phonics practice',
-    bestFor: 'Daily reinforcement after guided teaching',
-    limitation: 'No live correction for blending or pronunciation mistakes',
-    check: 'Clear progression, age-fit content, and parent dashboard visibility',
+    factor: 'Curriculum structure',
+    parentCheck: 'Is the path random worksheets, or a clear sound-to-reading sequence?',
+    tinySteps: 'Structured synthetic phonics: sounds to blending to reading and spelling transfer.',
   },
   {
-    option: 'School reading practice',
-    bestFor: 'General classroom exposure and routine reading',
-    limitation: 'Not always personalised for specific phonics gaps',
-    check: 'Whether school practice includes explicit sound-to-word routines',
+    factor: 'Child placement',
+    parentCheck: 'Does every child get the same material, or level-based placement?',
+    tinySteps: 'Assessment-first placement based on current reading level and decoding gaps.',
   },
   {
-    option: 'Local worksheet/coaching center',
-    bestFor: 'Families preferring in-person local support',
-    limitation: 'Quality and phonics structure can vary significantly',
-    check: 'Teacher phonics training, structured pathway, and outcome tracking',
+    factor: 'Reading goal',
+    parentCheck: 'Does the program stop at sounds, or move into real reading?',
+    tinySteps: 'Sounds to blending to words to sentences to fluency, not isolated sound drills.',
+  },
+  {
+    factor: 'Parent updates',
+    parentCheck: 'Will you know what improved, what still needs work, and what comes next?',
+    tinySteps: 'Parents get clear progress visibility and next-step guidance.',
+  },
+];
+
+const proofCards = [
+  {
+    title: '5000+ students',
+    detail: 'Tiny Steps already supports learners across India and 15+ countries through live online classes.',
+  },
+  {
+    title: '10+ years founder experience',
+    detail: 'Priya leads academic direction with long-form early childhood English teaching experience.',
+  },
+  {
+    title: '35–40 minute live sessions',
+    detail: 'Short, focused sessions match attention span, guided practice, and live correction better than long passive lessons.',
+  },
+  {
+    title: 'Real trust assets',
+    detail: 'Parents can review class samples, testimonials, pricing, and a free assessment path before deciding.',
   },
 ];
 
 const whyTinyStepsPoints = [
-  'Live 1:1 correction',
-  'Structured synthetic phonics path',
-  'Reading + spelling support',
-  'Parent-visible progress',
-  'Interactive worksheets and games',
-  'Free assessment before enrollment',
+  'Live 1:1 correction instead of only videos or worksheets',
+  'Structured synthetic phonics progression',
+  'Founder-led curriculum direction',
+  'Zoom-based live classes for India and global families',
+  'Progress updates and next-step guidance for parents',
+  'Free assessment before package selection',
 ];
 
-const methodSteps = [
-  'Free assessment',
-  'Sound recognition',
-  'Blending routine',
-  'CVC word reading',
-  'Digraphs and vowel teams',
-  'Spelling patterns',
-  'Reading fluency',
-  'Parent progress update',
+const fitCards = [
+  'Child knows letters but cannot blend sounds into words',
+  'Child guesses words instead of decoding them',
+  'Child reads slowly and loses confidence quickly',
+  'Child needs reading plus spelling support, not only flashcards',
+  'Parent wants a clear starting level before paying for classes',
+  'Family prefers mentor-led teaching over app-only practice',
+];
+
+const progressExamples = [
+  {
+    title: 'From letter names to blending',
+    before: 'Child can say letters but freezes on c-a-t.',
+    after: 'Child hears /c/ /a/ /t/, blends the sounds, and reads short CVC words with less guessing.',
+  },
+  {
+    title: 'From guessing to decoding',
+    before: 'Child looks at the picture and guesses the word.',
+    after: 'Child starts decoding unfamiliar words through sound-by-sound reading before asking for help.',
+  },
+  {
+    title: 'From word reading to sentence reading',
+    before: 'Child can read some words alone but breaks down inside short sentences.',
+    after: 'Child moves from isolated words to short sentence reading with smoother pacing and better confidence.',
+  },
 ];
 
 const learningCards = [
@@ -122,65 +192,115 @@ const practiceFeatures = [
   { title: 'Fun phonics games', icon: '🎮' },
   { title: 'Digital worksheets', icon: '🗂️' },
   { title: 'Progress tracking', icon: '📈' },
-  { title: 'Learn anytime, anywhere', icon: '🌍' },
+  { title: 'Learn from anywhere', icon: '🌍' },
+];
+
+const supportLinks = [
+  {
+    title: 'See class samples',
+    href: '/class-samples',
+    description: 'Review how teacher pacing, correction, and child participation look in real Tiny Steps classes.',
+    accent: 'border-[#F2D8B2] hover:bg-[#FFF8EC]',
+  },
+  {
+    title: 'Read parent testimonials',
+    href: '/testimonials',
+    description: 'See what families say about reading confidence, blending, and mentor support.',
+    accent: 'border-[#E2D5FB] hover:bg-[#FAF7FF]',
+  },
+  {
+    title: 'Review pricing',
+    href: '/pricing',
+    description: 'Compare current packages after the free assessment confirms the right starting point.',
+    accent: 'border-[#CFE6FA] hover:bg-[#F4FAFF]',
+  },
+  {
+    title: 'Explore the full phonics program',
+    href: '/phonics',
+    description: 'Go deeper into the complete phonics roadmap, learning levels, and placement guidance.',
+    accent: 'border-[#D6F0DE] hover:bg-[#F4FDF7]',
+  },
+];
+
+const clusterLinks = [
+  {
+    title: 'Online phonics classes for kids',
+    href: '/phonics',
+    description: 'Main program page with levels, placement logic, and learning path details.',
+  },
+  {
+    title: 'Reading classes for kids',
+    href: '/reading-classes-for-kids',
+    description: 'Useful when decoding is only one part of the reading problem and fluency support is also needed.',
+  },
+  {
+    title: 'Phonics apps for preschoolers in India',
+    href: '/phonics-apps-for-preschoolers-india',
+    description: 'Good for parents comparing live classes with app-only reinforcement.',
+  },
+  {
+    title: 'Parent comparison blog guide',
+    href: '/blog/best-online-phonics-classes-for-kids',
+    description: 'A non-sales checklist page for parents who want a wider comparison before choosing a provider.',
+  },
 ];
 
 const faqItems = [
   {
-    question: 'What age is best for online phonics classes?',
+    question: 'What is the best age to start phonics?',
     answer:
-      'Most children begin phonics between ages 3 and 8, but older children can also benefit when decoding gaps affect reading confidence.',
+      'Many children begin phonics around ages 3 to 7, but older children can also benefit when decoding gaps still affect reading confidence.',
   },
   {
-    question: 'Are 1:1 phonics classes better than group classes?',
+    question: 'Are online phonics classes effective for kids?',
     answer:
-      '1:1 classes usually provide faster correction and personalised pacing, while group classes can be useful for children who learn well with peers.',
+      'Yes, when classes include live correction, structured blending routines, real reading practice, and consistent home reinforcement instead of passive watching alone.',
   },
   {
-    question: 'How do I know if my child needs phonics support?',
+    question: 'Is Tiny Steps 1:1 or group?',
     answer:
-      'If your child knows letters but struggles with blending, guesses words, reads slowly, or avoids reading aloud, a phonics assessment is helpful.',
+      'The main Tiny Steps phonics path is live 1:1. Some families may also explore small-group options depending on fit, schedule, and program availability.',
   },
   {
-    question: 'How long does it take to see improvement?',
+    question: 'How long does it take for a child to start reading?',
     answer:
-      'Many children show early blending and decoding improvement within a few weeks, while fluency gains usually need consistent guided practice over a longer period.',
+      'Some children show early blending progress within weeks, while stronger sentence reading and fluency usually need consistent guided practice over a longer period.',
   },
   {
-    question: 'Do phonics classes help with spelling?',
+    question: 'What is included in the Tiny Steps phonics course?',
     answer:
-      'Yes. Structured phonics classes improve spelling by teaching sound patterns, digraphs, vowel teams, and rule-based word building.',
+      'The phonics pathway covers sound recognition, blending, CVC words, digraphs, vowel teams, spelling patterns, sentence reading, and fluency support with live mentor guidance.',
   },
   {
-    question: 'Are phonics apps enough?',
+    question: 'Is this suitable for Indian kids living abroad?',
     answer:
-      'Apps can reinforce practice, but most children still need live correction and guided feedback to fix blending and reading mistakes.',
+      'Yes. Classes are online, so Indian families abroad can join based on available schedule slots and Zoom access.',
   },
   {
-    question: 'What does Tiny Steps check in the free assessment?',
+    question: 'How much do online phonics classes cost?',
     answer:
-      'Tiny Steps checks current sound recognition, blending ability, word reading, early fluency, and confidence to recommend the right starting point.',
+      'Current standard reference pricing is ₹400 per class, with a 12-class starter plan at ₹4,800. Families should confirm the right package after the free assessment.',
   },
   {
-    question: 'Can children outside India join Tiny Steps?',
+    question: 'Do parents get progress updates?',
     answer:
-      'Yes. Classes are online, and families outside India can join based on available schedule slots.',
+      'Yes. Parents receive clear updates on what the child is learning, what improved, and what the next practice goal should be.',
   },
   {
-    question: 'What materials are needed for online phonics classes?',
-    answer:
-      'A stable internet connection, laptop or tablet, and a quiet learning space are usually enough. Digital worksheets and guided practice resources are provided.',
+    question: 'What platform do you use for online classes?',
+    answer: 'Tiny Steps uses Zoom for live sessions so families can join from India or abroad with a simple browser link.',
   },
 ];
 
 export default function BestOnlinePhonicsClassesIndiaPage() {
-  const routeConfig = getRouteConfig('/best-online-phonics-classes-india');
-  const canonicalPath = routeConfig?.canonicalPath ?? '/best-online-phonics-classes-india';
+  const routeConfig = getRouteConfig('/best-online-phonics-classes-for-kids-in-india');
+  const canonicalPath = routeConfig?.canonicalPath ?? '/best-online-phonics-classes-for-kids-in-india';
   const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
-  const seoTitle = routeConfig?.title ?? 'Best Online Phonics Classes in India | Parent Guide | Tiny Steps';
+  const seoTitle =
+    routeConfig?.title ?? 'Best Online Phonics Classes for Kids in India | Tiny Steps Learning';
   const seoDescription =
     routeConfig?.description ??
-    'Compare online phonics classes in India, 1:1 vs group vs app practice, reading outcomes, parent progress updates, and free assessment.';
+    'Compare the best online phonics classes for kids in India. Review 1:1 vs group format, curriculum, pricing, progress updates, and why parents choose Tiny Steps Learning.';
 
   const starterPlan = ONE_TO_ONE_MONTHLY_PACKAGES.find((pkg) => pkg.id === 'starter');
 
@@ -194,21 +314,21 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
         {
           '@type': 'ListItem',
           position: 3,
-          name: 'Best Online Phonics Classes in India',
+          name: 'Best Online Phonics Classes for Kids in India',
           item: canonicalUrl,
         },
       ],
     };
 
-    const checklistItemListSchema = {
+    const comparisonSchema = {
       '@context': 'https://schema.org',
       '@type': 'ItemList',
-      '@id': `${canonicalUrl}#parent-checklist`,
-      name: 'How to choose the best online phonics class',
-      itemListElement: checklistPoints.map((item, index) => ({
+      '@id': `${canonicalUrl}#comparison-factors`,
+      name: 'How parents compare online phonics classes for kids in India',
+      itemListElement: comparisonFactors.map((item, index) => ({
         '@type': 'ListItem',
         position: index + 1,
-        name: item,
+        name: item.factor,
       })),
     };
 
@@ -217,12 +337,25 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
       '@id': `${canonicalUrl}#faq`,
     };
 
+    const webpageSchema = createWebPageSchema({
+      name: 'Best Online Phonics Classes for Kids in India',
+      description: seoDescription,
+      url: canonicalUrl,
+    });
+
     applySeo({
       title: seoTitle,
       description: seoDescription,
       canonicalPath,
       ogType: routeConfig?.ogType ?? 'website',
-      jsonLd: [breadcrumbSchema, checklistItemListSchema, faqSchema],
+      keywords: [
+        'best online phonics classes for kids in India',
+        'online phonics classes for kids in India',
+        '1:1 phonics classes for kids',
+        'best phonics classes for kids',
+        'live online phonics classes',
+      ],
+      jsonLd: [breadcrumbSchema, comparisonSchema, faqSchema, webpageSchema],
     });
   }, [canonicalPath, canonicalUrl, routeConfig?.ogType, seoDescription, seoTitle]);
 
@@ -233,13 +366,13 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
           <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
             <div>
               <p className="inline-flex items-center rounded-full border border-orange-200 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-orange-700">
-                Parent Decision Guide 2026
+                Parent Comparison Guide 2026
               </p>
-              <h1 className="mt-4 max-w-full text-[34px] font-bold leading-[1.05] tracking-[-0.035em] text-slate-900 sm:text-[38px] md:max-w-[680px] md:text-[46px] lg:text-[52px]">
-                Best Online Phonics Classes in India
+              <h1 className="mt-4 max-w-full text-[34px] font-bold leading-[1.05] tracking-[-0.035em] text-slate-900 sm:text-[38px] md:max-w-[760px] md:text-[46px] lg:text-[52px]">
+                Best Online Phonics Classes for Kids in India
               </h1>
-              <p className="mt-4 max-w-full text-base leading-7 text-slate-700 md:mt-5 md:max-w-[660px] md:text-lg md:leading-8">
-                Compare teaching quality, class format, reading outcomes, parent progress visibility, and practice support before choosing the right phonics class for your child.
+              <p className="mt-4 max-w-full text-base leading-7 text-slate-700 md:mt-5 md:max-w-[700px] md:text-lg md:leading-8">
+                Compare class format, teacher attention, phonics curriculum, parent progress visibility, and pricing before choosing the right reading foundation for your child.
               </p>
 
               <div className="mt-7 flex flex-wrap gap-3">
@@ -258,8 +391,11 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                {['Ages 3–12', 'Live 1:1 guidance', 'Structured phonics path', 'Parent progress updates'].map((chip) => (
-                  <span key={chip} className="rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm sm:text-sm sm:px-3.5">
+                {['Ages 3–12', 'Live 1:1 guidance', 'Zoom classes', 'Parent progress updates'].map((chip) => (
+                  <span
+                    key={chip}
+                    className="rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm sm:px-3.5 sm:text-sm"
+                  >
                     {chip}
                   </span>
                 ))}
@@ -267,92 +403,81 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
             </div>
 
             <aside className="w-full rounded-3xl border border-[#E7DCF8] bg-white/95 p-5 shadow-[0_18px_45px_rgba(62,38,92,0.12)] md:p-6 lg:ml-auto lg:max-w-[560px]">
-              <h2 className="text-xl font-bold text-slate-900">Parent comparison snapshot</h2>
+              <h2 className="text-xl font-bold text-slate-900">Quick snapshot</h2>
               <p className="mt-3 text-slate-700">
-                Use this page to compare 1:1, group, app-only, school, and local options before you enroll. If your child is still stuck despite regular practice, review{' '}
-                <Link to="/child-not-reading-properly" className="font-semibold underline underline-offset-2">why a child is not reading properly</Link>{' '}
-                and then choose a level-based plan.
+                Tiny Steps offers live 1:1 online phonics classes for kids who need structured reading support, live correction, and a clear sound-to-reading path instead of guesswork.
               </p>
-              <div className="mt-5 rounded-2xl border border-[#F6D6AF] bg-[#FFF7E8] p-4 text-sm text-slate-700">
-                Strong decision order: assessment first, then pathway fit, then schedule and pricing.
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-[#F6D6AF] bg-[#FFF7E8] p-4 text-sm text-slate-700">
+                  <p className="font-semibold text-slate-900">Current reference pricing</p>
+                  <p className="mt-1">
+                    {formatINR(PER_CLASS_PRICE)} per class
+                    {starterPlan ? ` or ${formatINR(starterPlan.monthlyFee)} for ${starterPlan.classes} classes.` : '.'}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-[#DDE6F4] bg-[#F7FBFF] p-4 text-sm text-slate-700">
+                  <p className="font-semibold text-slate-900">Best first step</p>
+                  <p className="mt-1">Use the free assessment to confirm level, fit, and the right starting plan.</p>
+                </div>
               </div>
+              <p className="mt-4 text-sm text-slate-600">
+                If your child is still stuck despite practice, also review{' '}
+                <Link to="/child-not-reading-properly" className="font-semibold underline underline-offset-2">
+                  why a child is not reading properly
+                </Link>
+                .
+              </p>
             </aside>
           </div>
         </div>
       </section>
 
       <section className="bg-[#fffaf3] px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
-        <div className="mx-auto max-w-6xl rounded-3xl border border-[#F1D8A8] bg-white/95 p-5 shadow-[0_12px_30px_rgba(122,74,16,0.08)] md:p-7">
-          <h2 className="text-2xl font-bold text-slate-900 md:text-[30px]">Which online phonics class is best for my child?</h2>
-          <p className="mt-3 max-w-[980px] text-base leading-7 text-slate-700 md:text-[17px]">
-            The best online phonics class is one that checks your child&apos;s current reading level first, teaches letter sounds and blending step by step, corrects mistakes live, includes reading and spelling practice, and keeps parents updated with clear progress milestones. Tiny Steps uses live 1:1 phonics guidance, structured synthetic phonics, interactive practice, and parent-visible progress updates.
-          </p>
+        <div className="mx-auto grid max-w-6xl gap-4 lg:grid-cols-3">
+          {quickAnswerBlocks.map((item, index) => (
+            <article
+              key={item.title}
+              className={`rounded-3xl border p-5 shadow-[0_12px_30px_rgba(15,23,42,0.06)] md:p-6 ${
+                index === 0
+                  ? 'border-[#F1D8A8] bg-white'
+                  : index === 1
+                    ? 'border-[#D7ECFA] bg-[#F5FBFF]'
+                    : 'border-[#E6D8FA] bg-[#FCF9FF]'
+              }`}
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Answer block</p>
+              <h2 className="mt-2 text-xl font-bold text-slate-900">{item.title}</h2>
+              <p className="mt-3 text-[15px] leading-7 text-slate-700">{item.answer}</p>
+            </article>
+          ))}
         </div>
       </section>
 
       <section className="px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
-        <div className="mx-auto max-w-6xl">
-          <h2 className="mb-6 text-2xl font-bold text-slate-900 sm:text-3xl">Parent reading problems to solve first</h2>
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {parentProblems.map((item, index) => (
-              <article
-                key={item.title}
-                className={`rounded-2xl border p-5 shadow-[0_10px_28px_rgba(15,23,42,0.05)] transition hover:shadow-[0_16px_36px_rgba(15,23,42,0.08)] md:min-h-[200px] md:rounded-3xl md:p-6 ${
-                  index === 0
-                    ? 'bg-[#F3FAFF] border-[#D7ECFA]'
-                    : index === 1
-                      ? 'bg-[#FFF8F0] border-[#F6D9B9]'
-                      : index === 2
-                        ? 'bg-[#F3FFF6] border-[#CFEFD7]'
-                        : index === 3
-                          ? 'bg-[#F7F5FF] border-[#E2DBFF]'
-                          : 'bg-[#FFFBEA] border-[#F4E2A0]'
-                }`}
-              >
-                <h3 className="text-lg font-bold leading-snug text-slate-950 md:text-xl">{item.title}</h3>
-                <p className="mt-3 text-[15px] leading-6 text-slate-700 md:text-base">
-                  <span className="font-semibold text-slate-900">Look for:</span> {item.solution.replace('Look for: ', '')}
-                </p>
-              </article>
-            ))}
+        <div className="mx-auto max-w-6xl rounded-3xl border border-[#DDE8F8] bg-white/95 p-5 shadow-[0_12px_30px_rgba(55,97,143,0.12)] md:p-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Parent Questions</p>
+              <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Tiny Steps at a glance</h2>
+            </div>
+            <p className="max-w-2xl text-sm text-slate-600 sm:text-base">
+              This section answers the practical questions parents ask when searching for the best online phonics classes for kids in India.
+            </p>
           </div>
-        </div>
-      </section>
 
-      <section className="bg-[#eef7ff] px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
-        <div className="mx-auto max-w-6xl rounded-3xl border border-[#DCE9F8] bg-gradient-to-br from-[#F5FBFF] via-white to-[#FFF8EF] p-5 shadow-[0_14px_34px_rgba(69,90,123,0.12)] md:p-8">
-          <h2 className="mb-5 text-2xl font-bold text-slate-900 sm:text-3xl">How to choose the best online phonics class</h2>
-          <ul className="grid gap-3 md:grid-cols-2">
-            {checklistPoints.map((point) => (
-              <li key={point} className="flex items-start gap-3 rounded-2xl border border-[#DDE6F4] bg-white/95 px-4 py-3 text-[15px] text-slate-700 shadow-sm md:text-base">
-                <span className="mt-0.5 font-semibold text-emerald-600">✓</span>
-                <span>{point}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      <section className="px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
-        <div className="mx-auto max-w-6xl rounded-3xl border border-[#E4DDF7] bg-white/95 p-5 shadow-[0_14px_34px_rgba(76,63,127,0.1)] md:p-8">
-          <h2 className="mb-4 text-2xl font-bold text-slate-900 sm:text-3xl">1:1 online phonics vs group class vs app-only practice</h2>
-          <div className="overflow-x-auto rounded-2xl border border-[#DFE5F0] shadow-sm">
-            <table className="min-w-[760px] border-collapse text-left text-sm md:min-w-full md:text-base">
+          <div className="mt-6 overflow-x-auto rounded-2xl border border-[#DFE5F0] shadow-sm">
+            <table className="min-w-[760px] w-full border-collapse text-left text-sm md:text-base">
               <thead>
                 <tr>
-                  <th className="border border-slate-200 bg-slate-900 px-4 py-3 font-semibold text-white">Option</th>
-                  <th className="border border-slate-200 bg-slate-900 px-4 py-3 font-semibold text-white">Best for</th>
-                  <th className="border border-slate-200 bg-slate-900 px-4 py-3 font-semibold text-white">Limitation</th>
-                  <th className="border border-slate-200 bg-slate-900 px-4 py-3 font-semibold text-white">What parents should check</th>
+                  <th className="border border-slate-200 bg-slate-900 px-4 py-3 font-semibold text-white">Parent question</th>
+                  <th className="border border-slate-200 bg-slate-900 px-4 py-3 font-semibold text-white">Tiny Steps answer</th>
                 </tr>
               </thead>
               <tbody>
-                {comparisonRows.map((row, idx) => (
-                  <tr key={row.option} className={idx === 0 ? 'bg-emerald-50/60' : idx % 2 === 1 ? 'bg-slate-50/60' : 'bg-white'}>
-                    <td className="border border-slate-200 px-4 py-3.5 font-semibold text-slate-900">{row.option}</td>
-                    <td className="border border-slate-200 px-4 py-3.5 text-slate-700">{row.bestFor}</td>
-                    <td className="border border-slate-200 px-4 py-3.5 text-slate-700">{row.limitation}</td>
-                    <td className="border border-slate-200 px-4 py-3.5 text-slate-700">{row.check}</td>
+                {parentQuestionRows.map((row, index) => (
+                  <tr key={row.question} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'}>
+                    <td className="border border-slate-200 px-4 py-3.5 font-semibold text-slate-900">{row.question}</td>
+                    <td className="border border-slate-200 px-4 py-3.5 text-slate-700">{row.answer}</td>
                   </tr>
                 ))}
               </tbody>
@@ -361,12 +486,70 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
         </div>
       </section>
 
+      <section className="bg-[#eef7ff] px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
+        <div className="mx-auto max-w-6xl rounded-3xl border border-[#DCE9F8] bg-gradient-to-br from-[#F5FBFF] via-white to-[#FFF8EF] p-5 shadow-[0_14px_34px_rgba(69,90,123,0.12)] md:p-8">
+          <h2 className="mb-4 text-2xl font-bold text-slate-900 sm:text-3xl">
+            How to choose the best online phonics class for your child
+          </h2>
+          <p className="max-w-4xl text-slate-700">
+            Parents searching for "best" usually want more than marketing claims. The shortlist should help you compare class format, teacher attention, curriculum structure, reading outcomes, and visibility into progress.
+          </p>
+          <div className="mt-6 overflow-x-auto rounded-2xl border border-[#DFE5F0] shadow-sm">
+            <table className="min-w-[760px] w-full border-collapse text-left text-sm md:text-base">
+              <thead>
+                <tr>
+                  <th className="border border-slate-200 bg-slate-900 px-4 py-3 font-semibold text-white">Factor</th>
+                  <th className="border border-slate-200 bg-slate-900 px-4 py-3 font-semibold text-white">What parents should check</th>
+                  <th className="border border-slate-200 bg-slate-900 px-4 py-3 font-semibold text-white">Tiny Steps approach</th>
+                </tr>
+              </thead>
+              <tbody>
+                {comparisonFactors.map((row, index) => (
+                  <tr key={row.factor} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'}>
+                    <td className="border border-slate-200 px-4 py-3.5 font-semibold text-slate-900">{row.factor}</td>
+                    <td className="border border-slate-200 px-4 py-3.5 text-slate-700">{row.parentCheck}</td>
+                    <td className="border border-slate-200 px-4 py-3.5 text-slate-700">{row.tinySteps}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
+        <div className="mx-auto max-w-6xl rounded-3xl border border-[#E6D8FA] bg-white/95 p-5 shadow-[0_16px_36px_rgba(86,58,121,0.1)] md:p-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Program Fit</p>
+              <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Who this phonics program fits best</h2>
+            </div>
+            <p className="max-w-2xl text-sm text-slate-600 sm:text-base">
+              This page is most useful for parents comparing 1:1 online phonics classes for children who need structured, live reading support.
+            </p>
+          </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {fitCards.map((item) => (
+              <article
+                key={item}
+                className="rounded-2xl border border-[#E6DFF7] bg-gradient-to-br from-white to-[#FBF8FF] px-4 py-4 text-slate-700 shadow-sm"
+              >
+                <h3 className="font-semibold text-slate-900">{item}</h3>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="bg-[#fff6ec] px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
         <div className="mx-auto max-w-6xl rounded-3xl border border-[#F3D8B6] bg-white/95 p-5 shadow-[0_14px_34px_rgba(143,95,35,0.1)] md:p-8">
-          <h2 className="mb-5 text-2xl font-bold text-slate-900 sm:text-3xl">Why parents choose Tiny Steps for phonics</h2>
+          <h2 className="mb-5 text-2xl font-bold text-slate-900 sm:text-3xl">Why parents shortlist Tiny Steps for phonics</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {whyTinyStepsPoints.map((item) => (
-              <article key={item} className="rounded-2xl border border-[#E6DFF7] bg-gradient-to-br from-white to-[#FBF8FF] px-4 py-4 text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+              <article
+                key={item}
+                className="rounded-2xl border border-[#E6DFF7] bg-gradient-to-br from-white to-[#FBF8FF] px-4 py-4 text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              >
                 <h3 className="font-semibold text-slate-900">{item}</h3>
               </article>
             ))}
@@ -376,23 +559,98 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
 
       <section className="px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
         <div className="mx-auto max-w-6xl rounded-3xl border border-[#DDE8F8] bg-white/95 p-5 shadow-[0_12px_30px_rgba(55,97,143,0.12)] md:p-8">
-          <h2 className="mb-5 text-2xl font-bold text-slate-900 sm:text-3xl">Tiny Steps method</h2>
-          <ol className="grid gap-3 md:grid-cols-2">
-            {methodSteps.map((step, index) => (
-              <li key={step} className="flex items-center gap-3 rounded-2xl border border-[#DDE6F4] bg-gradient-to-r from-white to-[#F7FBFF] px-4 py-3 text-slate-700 shadow-sm">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-r from-[#7EA5FF] to-[#5D87EB] text-xs font-semibold text-white">{index + 1}</span>
-                <span>{step}</span>
-              </li>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Trust Signals</p>
+              <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Proof before promises</h2>
+            </div>
+            <p className="max-w-2xl text-sm text-slate-600 sm:text-base">
+              This page is built to help parents compare clearly, not just hear "we are the best."
+            </p>
+          </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {proofCards.map((item, index) => (
+              <article
+                key={item.title}
+                className={`rounded-2xl border p-5 shadow-sm ${
+                  index === 0
+                    ? 'border-[#F6D6AF] bg-[#FFF7E8]'
+                    : index === 1
+                      ? 'border-[#DDE6F4] bg-[#F7FBFF]'
+                      : index === 2
+                        ? 'border-[#E6D8FA] bg-[#FCF9FF]'
+                        : 'border-[#D8EEDC] bg-[#F6FFF7]'
+                }`}
+              >
+                <h3 className="text-lg font-bold text-slate-900">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-700">{item.detail}</p>
+              </article>
             ))}
-          </ol>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              to="/class-samples"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-50"
+            >
+              See Class Samples
+            </Link>
+            <Link
+              to="/testimonials"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-50"
+            >
+              Read Parent Testimonials
+            </Link>
+          </div>
         </div>
       </section>
 
       <section className="bg-gradient-to-b from-[#F4EEFF] via-[#FFF7F1] to-[#EEF7FF] px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
         <div className="mx-auto max-w-6xl rounded-3xl border border-[#E6D8FA] bg-gradient-to-br from-[#FFFDFE] via-[#FFF7FB] to-[#F4F8FF] p-5 shadow-[0_16px_36px_rgba(86,58,121,0.12)] md:p-8">
-          <h2 className="mb-3 text-2xl font-bold text-slate-900 sm:text-3xl">What your child learns</h2>
-          <div className="mb-5 h-1.5 w-20 rounded-full bg-gradient-to-r from-[#FF9CB7] via-[#B7A5FF] to-[#7CC9FF]" />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">What progress can look like</h2>
+              <p className="mt-2 max-w-3xl text-slate-700">
+                These are example reading shifts parents want to see. They are not guaranteed timelines, but they show the kind of movement a structured phonics path aims for.
+              </p>
+            </div>
+            <Link to="/reading-classes-for-kids" className="text-sm font-semibold text-slate-900 underline underline-offset-4">
+              Need fluency support too?
+            </Link>
+          </div>
+          <div className="mt-6 grid gap-4 lg:grid-cols-3">
+            {progressExamples.map((item, index) => (
+              <article
+                key={item.title}
+                className={`rounded-3xl border p-5 shadow-sm ${
+                  index === 0
+                    ? 'border-[#F5D2E1] bg-[#FFF3F8]'
+                    : index === 1
+                      ? 'border-[#D4E8FA] bg-[#F1F9FF]'
+                      : 'border-[#F3D8B6] bg-[#FFF8EC]'
+                }`}
+              >
+                <h3 className="text-lg font-bold text-slate-900">{item.title}</h3>
+                <div className="mt-4 rounded-2xl border border-white/80 bg-white/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Before</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-700">{item.before}</p>
+                </div>
+                <div className="mt-3 rounded-2xl border border-white/80 bg-white/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">After</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-700">{item.after}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
+        <div className="mx-auto max-w-6xl rounded-3xl border border-[#DDE8F8] bg-white/95 p-5 shadow-[0_12px_30px_rgba(55,97,143,0.12)] md:p-8">
+          <h2 className="mb-3 text-2xl font-bold text-slate-900 sm:text-3xl">What your child learns in the phonics path</h2>
+          <p className="max-w-3xl text-slate-700">
+            The goal is not only knowing sounds. The goal is moving from sound recognition into real reading, spelling patterns, and more confident decoding.
+          </p>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {learningCards.map((item, index) => {
               const style = learningCardStyles[index % learningCardStyles.length];
               return (
@@ -417,9 +675,9 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
         <div className="mx-auto max-w-6xl rounded-3xl border border-[#E9D8FB] bg-gradient-to-br from-white via-[#FFF9FD] to-[#F2F8FF] p-5 shadow-[0_16px_38px_rgba(90,58,130,0.11)] md:p-8">
           <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
             <div>
-              <h2 className="mb-4 text-2xl font-bold text-slate-900 sm:text-3xl">Practice support beyond live class</h2>
+              <h2 className="mb-4 text-2xl font-bold text-slate-900 sm:text-3xl">Practice support beyond the live class</h2>
               <p className="max-w-[980px] text-slate-700">
-                Children learn better when class teaching is supported by playful practice. Tiny Steps gives children free phonics games and digital practice activities so learning continues beyond the live class.
+                Children learn better when live teaching is supported by playful practice. Tiny Steps gives children reinforcement through games, digital worksheets, and progress visibility so home review stays realistic.
               </p>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 {practiceFeatures.map((feature, index) => (
@@ -439,52 +697,127 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
             </div>
 
             <div className="rounded-2xl border border-[#F2D8B2] bg-gradient-to-br from-[#FFF8EC] via-[#FFFDF8] to-[#F3F8FF] p-5 shadow-sm">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#8A5A1F]">Practice library</p>
-              <p className="mt-2 text-slate-700">Access child-friendly game links for daily reinforcement at home.</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#8A5A1F]">Parent proof pack</p>
+              <p className="mt-2 text-slate-700">Use these pages to validate fit before you enroll.</p>
               <div className="mt-4 grid gap-3">
-                <Link to="/free-games-for-kids" className="rounded-xl border border-[#F2D8B2] bg-white px-4 py-3 font-medium text-slate-900 hover:bg-[#FFF8EC]">Free games for kids</Link>
-                <Link to="/free-letter-tracing-game-for-kids" className="rounded-xl border border-[#E2D5FB] bg-white px-4 py-3 font-medium text-slate-900 hover:bg-[#FAF7FF]">Free letter tracing game</Link>
-                <Link to="/letter-tracing-with-sounds-game" className="rounded-xl border border-[#CFE6FA] bg-white px-4 py-3 font-medium text-slate-900 hover:bg-[#F4FAFF]">Letter tracing with sounds game</Link>
-                <Link to="/free-balloon-pop-phonics-game-for-kids" className="rounded-xl border border-[#D6F0DE] bg-white px-4 py-3 font-medium text-slate-900 hover:bg-[#F4FDF7]">Balloon pop phonics game</Link>
-                <Link to="/free-games/word-meaning-flashcards" className="rounded-xl border border-[#F9E6B8] bg-white px-4 py-3 font-medium text-slate-900 hover:bg-[#FFFBEF]">Word meaning flashcards</Link>
+                {supportLinks.map((item) => (
+                  <Link
+                    key={item.title}
+                    to={item.href}
+                    className={`rounded-xl border bg-white px-4 py-3 transition ${item.accent}`}
+                  >
+                    <p className="font-medium text-slate-900">{item.title}</p>
+                    <p className="mt-1 text-sm text-slate-600">{item.description}</p>
+                  </Link>
+                ))}
               </div>
             </div>
           </div>
-
-          <p className="mt-5 text-slate-700">
-            Related reading support: <Link to="/reading-classes-for-kids" className="font-semibold underline underline-offset-2">reading classes for kids</Link>.
-          </p>
         </div>
       </section>
 
       <section className="bg-[#fffaf3] px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
         <div className="mx-auto max-w-6xl rounded-3xl border border-[#F1D8A8] bg-white p-5 shadow-[0_12px_30px_rgba(122,74,16,0.08)] md:p-8">
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Related guides in the phonics topic cluster</h2>
+          <p className="mt-3 max-w-[940px] text-slate-700">
+            Parents often compare this page with the broader phonics program, reading support, app-based reinforcement, and a non-commercial comparison guide.
+          </p>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            {clusterLinks.map((item) => (
+              <Link
+                key={item.title}
+                to={item.href}
+                className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:shadow-md"
+              >
+                <h3 className="font-semibold text-slate-900">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
+        <div className="mx-auto max-w-6xl rounded-3xl border border-[#DDE8F8] bg-white/95 p-5 shadow-[0_12px_30px_rgba(55,97,143,0.12)] md:p-8">
           <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Pricing and next step</h2>
           <p className="mt-3 max-w-[940px] text-slate-700">
-            Start with a free assessment first. After the assessment, we recommend the right class frequency and plan based on your child&apos;s current reading level.
+            Start with the free assessment first. After the assessment, Tiny Steps recommends the right class frequency and package based on the child&apos;s current reading level.
           </p>
-          {starterPlan ? (
-            <p className="mt-3 text-slate-700">
-              Current starter reference: {starterPlan.classes} classes/month from {formatINR(starterPlan.monthlyFee)}.
-            </p>
-          ) : null}
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Current reference</p>
+              <p className="mt-2 text-lg font-bold text-slate-900">
+                {formatINR(PER_CLASS_PRICE)} per class
+                {starterPlan ? ` • ${formatINR(starterPlan.monthlyFee)} for ${starterPlan.classes} classes` : ''}
+              </p>
+              <p className="mt-2 text-sm text-slate-600">
+                Final recommendation depends on the child’s stage, pace, and schedule after assessment.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Assessment outcome</p>
+              <p className="mt-2 text-lg font-bold text-slate-900">You receive a clearer starting point</p>
+              <p className="mt-2 text-sm text-slate-600">
+                Families leave the assessment with level clarity, recommended next steps, and package options that fit the child.
+              </p>
+            </div>
+          </div>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link to="/pricing" className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-[#E4D8F7] bg-white px-6 py-3 font-semibold text-slate-900 hover:bg-[#FAF7FF]">
+            <Link
+              to="/pricing"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-[#E4D8F7] bg-white px-6 py-3 font-semibold text-slate-900 hover:bg-[#FAF7FF]"
+            >
               View Pricing
             </Link>
-            <Link to="/book-demo" className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-gradient-to-r from-[#FF7B66] to-[#FF9E7A] px-6 py-3 font-semibold text-white shadow-[0_12px_26px_rgba(255,126,99,0.35)] hover:from-[#FF715B] hover:to-[#FF9570]">
+            <Link
+              to="/book-demo"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-gradient-to-r from-[#FF7B66] to-[#FF9E7A] px-6 py-3 font-semibold text-white shadow-[0_12px_26px_rgba(255,126,99,0.35)] hover:from-[#FF715B] hover:to-[#FF9570]"
+            >
               Book Free Assessment
             </Link>
           </div>
         </div>
       </section>
 
+      <ContentTrustNote
+        text="This page is created by the Tiny Steps academic team and reviewed by the founder to help parents compare phonics options with clearer criteria, realistic expectations, and practical next steps."
+      />
+
+      <AboutAuthor
+        title="About the Founder Review"
+        intro="This landing page is written to help parents compare online phonics classes using practical factors such as teacher attention, curriculum structure, live correction, and parent visibility."
+        note="The goal is to reduce guesswork for families searching for the best online phonics classes for kids in India and to explain where Tiny Steps fits clearly."
+        highlights={[
+          { label: 'Experience', value: '10+ years in early childhood English education' },
+          { label: 'Focus', value: 'Phonics, reading confidence, grammar, and communication growth' },
+          { label: 'Why parents use this page', value: 'To compare fit before booking a free assessment' },
+        ]}
+        badges={['Founder reviewed', 'Parent comparison page']}
+        ctas={[
+          { label: 'Book a free assessment', to: '/book-demo', variant: 'primary' },
+          { label: 'Explore class samples', to: '/class-samples', variant: 'secondary' },
+        ]}
+      />
+
+      <TestimonialsSection
+        title="What parents say after starting phonics support"
+        subtitle="Selected parent feedback from phonics pathways. Use these reviews together with class samples and pricing to judge fit more clearly."
+        courseTag="phonics"
+        limit={6}
+        compact
+        viewAllHref="/testimonials"
+        viewAllLabel="View all parent reviews"
+      />
+
       <section id="faq" className="px-4 py-8 sm:px-5 md:py-12 lg:px-6 lg:py-14">
         <div className="mx-auto max-w-6xl rounded-3xl border border-[#E2D9F7] bg-white/95 p-5 shadow-[0_12px_30px_rgba(79,61,122,0.1)] md:p-8">
           <h2 className="mb-5 text-2xl font-bold text-slate-900 sm:text-3xl">Frequently asked questions</h2>
           <div className="space-y-3 md:space-y-4">
             {faqItems.map((item) => (
-              <article key={item.question} className="rounded-2xl border border-[#DDE6F4] bg-gradient-to-r from-white to-[#FAFCFF] p-5 shadow-sm">
+              <article
+                key={item.question}
+                className="rounded-2xl border border-[#DDE6F4] bg-gradient-to-r from-white to-[#FAFCFF] p-5 shadow-sm"
+              >
                 <h3 className="text-[17px] font-semibold text-slate-900 md:text-lg">{item.question}</h3>
                 <p className="mt-2 text-[15px] leading-6 text-slate-700 md:text-base">{item.answer}</p>
               </article>
@@ -497,7 +830,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
         <div className="mx-auto max-w-6xl rounded-3xl bg-gradient-to-r from-slate-900 via-[#1f2a44] to-slate-900 p-6 text-center text-white shadow-[0_20px_50px_rgba(15,23,42,0.18)] sm:p-8 md:p-10">
           <h2 className="text-2xl font-bold md:text-3xl">Ready to choose the right phonics path for your child?</h2>
           <p className="mx-auto mt-3 max-w-3xl text-base leading-7 text-slate-200">
-            Book a free assessment and get a clear starting level, learning path, and parent-friendly recommendation.
+            Book a free assessment and get a clear starting level, recommended path, current package guidance, and a practical next step for reading growth.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <Link
@@ -508,7 +841,9 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
             </Link>
           </div>
           <p className="mt-4 text-sm text-slate-300">
-            <Link to="/phonics" className="underline underline-offset-2 hover:text-white">Explore Full Phonics Program</Link>
+            <Link to="/phonics" className="underline underline-offset-2 hover:text-white">
+              Explore the full phonics program
+            </Link>
           </p>
         </div>
       </section>

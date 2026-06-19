@@ -1502,7 +1502,7 @@ export default function SummerCampsPage() {
             </div>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
-                to="/best-online-phonics-classes-india"
+                to="/best-online-phonics-classes-for-kids-in-india"
                 className="inline-flex min-h-[42px] items-center justify-center rounded-full border border-emerald-300 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
               >
                 Compare online phonics options

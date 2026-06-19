@@ -244,8 +244,8 @@ export default function HomePage() {
                 support for 5-year-old children
               </Link>.
               {' '}Families comparing providers can also review our{' '}
-              <Link to="/best-online-phonics-classes-india" className="font-medium underline underline-offset-2 hover:text-slate-900">
-                best online phonics classes in India
+              <Link to="/best-online-phonics-classes-for-kids-in-india" className="font-medium underline underline-offset-2 hover:text-slate-900">
+                best online phonics classes for kids in India
               </Link>{' '}
               guide.
               <br className="hidden sm:block" />

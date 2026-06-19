@@ -336,7 +336,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'Families looking for structured help can start with [reading classes for kids](/reading-classes-for-kids). For decoding and fluency foundations, explore [online phonics classes for kids](/phonics) and compare the [best online phonics classes in India](/best-online-phonics-classes-india).',
+        'Families looking for structured help can start with [reading classes for kids](/reading-classes-for-kids). For decoding and fluency foundations, explore [online phonics classes for kids](/phonics) and compare the [best online phonics classes for kids in India](/best-online-phonics-classes-for-kids-in-india).',
     },
     {
       type: 'p',
