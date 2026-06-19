@@ -146,6 +146,7 @@ const EXCLUDED_BLOG_SLUGS = new Set([
   const staticRoutes = uniqueRoutes(STATIC_MARKETING_ROUTES);
   const EXCLUDE_FROM_SITEMAP = new Set([
     '/sitemap', // utility HTML sitemap (noindex)
+    '/privacy-policy', // legal/trust page should remain accessible but not index-targeted
   ]);
   const staticRoutesForSitemap = staticRoutes.filter((route) =>
     !EXCLUDE_FROM_SITEMAP.has(route) && isCanonicalSelfRoute(route)

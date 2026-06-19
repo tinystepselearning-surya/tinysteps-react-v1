@@ -67,6 +67,7 @@ const REQUIRED_SUMMER_PATHS = [
 
 const ALLOWED_CANONICAL_MISSING_FROM_SITEMAP = new Set([
   '/sitemap',
+  '/privacy-policy',
   '/terms-and-conditions',
   '/refund-guarantee',
   '/login',

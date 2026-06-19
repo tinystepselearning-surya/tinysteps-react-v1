@@ -31,6 +31,7 @@ const FORBIDDEN_SITEMAP_URLS = [
   'https://tinystepslearning.com/sitemap-blog.xml',
   'https://tinystepslearning.com/sitemap-static.xml',
   'https://tinystepslearning.com/sitemap-courses.xml',
+  'https://tinystepslearning.com/privacy-policy',
   'https://tinystepslearning.com/privacy',
   'https://tinystepslearning.com/terms',
   'https://tinystepslearning.com/signup',

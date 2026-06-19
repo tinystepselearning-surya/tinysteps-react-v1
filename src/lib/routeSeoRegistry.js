@@ -143,6 +143,7 @@ export const ROUTE_SEO_REGISTRY = {
     description:
       "Read the Tiny Steps Learning privacy policy covering family data collection, children's privacy, cookies, security, retention, and parent rights.",
     canonicalPath: '/privacy-policy',
+    robots: 'noindex, follow',
     ogType: 'website',
   },
   '/terms-and-conditions': {
