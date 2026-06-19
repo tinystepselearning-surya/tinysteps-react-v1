@@ -16,7 +16,7 @@ const programs = [
     icon: '✍️',
     age: 'Ages 6-12',
     blurb: 'Parts of speech, tenses, and writing labs with stage checks.',
-    href: '/courses/basic-grammar',
+    href: '/courses/grammar',
     accent: 'from-amber-100 via-white to-rose-100'
   },
   {
@@ -24,7 +24,7 @@ const programs = [
     icon: '🎤',
     age: 'Ages 4-15',
     blurb: 'Confidence drills, clear speaking, and short presentations.',
-    href: '/courses/basic-public-speaking',
+    href: '/courses/public-speaking-foundations',
     accent: 'from-green-100 via-white to-sky-100'
   },
   {

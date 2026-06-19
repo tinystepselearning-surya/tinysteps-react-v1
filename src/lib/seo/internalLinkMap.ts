@@ -108,8 +108,22 @@ export const internalLinkMap: InternalLinkRule[] = [
   },
   {
     id: 'course-basic-grammar',
-    href: '/courses/basic-grammar',
+    href: '/courses/grammar',
     phrases: ['Beginner Grammar course'],
+    priority: 85,
+    cluster: 'courses',
+  },
+  {
+    id: 'course-advanced-grammar',
+    href: '/courses/grammar-mastery',
+    phrases: ['Advanced Grammar course', 'Grammar mastery course'],
+    priority: 85,
+    cluster: 'courses',
+  },
+  {
+    id: 'course-public-speaking-foundations',
+    href: '/courses/public-speaking-foundations',
+    phrases: ['Public Speaking Foundations course', 'Basic Public Speaking course'],
     priority: 85,
     cluster: 'courses',
   },

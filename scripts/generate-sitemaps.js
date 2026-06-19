@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { PARENT_HELP_ROUTES, STATIC_MARKETING_ROUTES, uniqueRoutes } from './seo-route-inventory.mjs';
 import { ROUTE_SEO_REGISTRY } from '../src/lib/routeSeoRegistry.js';
+import { getPublicCourseSitemapPaths } from '../src/lib/publicCoursePages.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -142,10 +143,6 @@ const EXCLUDED_BLOG_SLUGS = new Set([
   const blogPostSlugDateMap = new Map(blogPostEntries.filter((entry) => entry.date).map((entry) => [entry.slug, entry.date]));
   const blogPostSlugPathMap = new Map(blogPostEntries.map((entry) => [entry.slug, entry.sourcePath]));
   const mdxSlugs = listMdxSlugs(mdxDir);
-  const courseSlugs = extractSlugsFromFile(coursesTs, 'slug');
-
-  
-
   const staticRoutes = uniqueRoutes(STATIC_MARKETING_ROUTES);
   const EXCLUDE_FROM_SITEMAP = new Set([
     '/sitemap', // utility HTML sitemap (noindex)
@@ -217,9 +214,9 @@ const EXCLUDED_BLOG_SLUGS = new Set([
 
   // sitemap-courses.xml
   let courseXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
-  for (const slug of uniqueRoutes(courseSlugs)) {
+  for (const routePath of getPublicCourseSitemapPaths()) {
     const last = lastmodFrom(coursesTs);
-    courseXml += toUrl(`https://tinystepslearning.com/courses/${slug}`, last, '0.8', 'weekly');
+    courseXml += toUrl(`https://tinystepslearning.com${routePath}`, last, '0.8', 'weekly');
   }
   courseXml += `\n</urlset>`;
   writeXml(path.join(publicDir, 'sitemap-courses.xml'), courseXml);

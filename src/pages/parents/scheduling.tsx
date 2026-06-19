@@ -6,7 +6,20 @@ import AboutAuthor from '../../components/AboutAuthor';
 
 const Scheduling: React.FC = () => {
   useEffect(() => {
-    applySeo(parentsMeta['/parents/scheduling']);
+    const breadcrumbSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
+        { '@type': 'ListItem', position: 2, name: 'Parents Hub', item: 'https://tinystepslearning.com/parents' },
+        { '@type': 'ListItem', position: 3, name: 'Scheduling', item: 'https://tinystepslearning.com/parents/scheduling' },
+      ],
+    };
+
+    applySeo({
+      ...parentsMeta['/parents/scheduling'],
+      jsonLd: [parentsMeta['/parents/scheduling'].jsonLd, breadcrumbSchema],
+    });
   }, []);
 
   return (
@@ -36,12 +49,23 @@ const Scheduling: React.FC = () => {
     </ul>
 
     <div className="mt-8 flex flex-col gap-3">
-      <Link to="/courses" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
-        Browse & Schedule Classes →
+      <Link to="/book-demo" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
+        Book Free Assessment →
       </Link>
-      <Link to="/parents/phonics-mission" className="text-primary-600 text-sm font-medium hover:underline">
-        Set up daily practice routines between classes
-      </Link>
+      <div className="flex flex-wrap gap-3 text-sm">
+        <Link to="/parents/phonics-mission" className="text-primary-600 font-medium hover:underline">
+          Set up daily practice routines between classes
+        </Link>
+        <Link to="/courses/phonics-foundation" className="text-primary-600 font-medium hover:underline">
+          Phonics Foundation
+        </Link>
+        <Link to="/courses/grammar" className="text-primary-600 font-medium hover:underline">
+          Beginner Grammar
+        </Link>
+        <Link to="/courses/public-speaking-foundations" className="text-primary-600 font-medium hover:underline">
+          Speaking Foundations
+        </Link>
+      </div>
     </div>
 
     <div className="mt-10 border-t pt-8">

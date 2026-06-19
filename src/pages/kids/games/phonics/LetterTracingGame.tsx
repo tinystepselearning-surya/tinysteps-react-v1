@@ -1709,9 +1709,9 @@ const futureTapTargets = useMemo(() => {
           <div className="relative flex h-full flex-col">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="min-w-0">
-                <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+                <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
                   Letter Tracing Adventure
-                </h1>
+                </h2>
 
                 <p className="mt-1 max-w-2xl text-sm text-slate-700">
                   Start with warm-up shapes → then trace <span className="font-semibold">Capital</span> and{" "}

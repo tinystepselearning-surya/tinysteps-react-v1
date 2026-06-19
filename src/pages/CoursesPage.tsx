@@ -5,6 +5,7 @@ import { applySeo, getRouteConfig } from '../lib/seo';
 import { catalogs } from '../content/courses';
 import { createCourseListSchema, createFAQPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
+import { getPublicCoursePathForSlug } from '../lib/publicCoursePages.js';
 
 const coursesSeo = getRouteConfig('/courses');
 const coursesSeoTitle = coursesSeo?.title ?? 'English Courses for Kids: Phonics, Grammar and Public Speaking | Tiny Steps Learning';
@@ -38,6 +39,7 @@ const phonicsCards = [
     tag: 'Best for beginners',
     focus: ['Recognize letter sounds through structured synthetic phonics', 'Start blending simple words', 'Build confidence in reading'],
     outcome: 'Your child starts reading small words independently',
+    href: '/courses/phonics-foundation',
   },
   {
     title: 'Early Phonics',
@@ -45,6 +47,7 @@ const phonicsCards = [
     tag: 'Best for developing readers',
     focus: ['Blend 3–4 letter words', 'Learn digraphs like sh, ch, th', 'Improve decoding skills'],
     outcome: 'Your child reads sentences with confidence',
+    href: '/courses/phonics-brush-up',
   },
   {
     title: 'Advanced Phonics',
@@ -52,6 +55,7 @@ const phonicsCards = [
     tag: 'Best for fluent reading',
     focus: ['Long vowels and advanced patterns', 'R-controlled sounds', 'Reading fluency'],
     outcome: 'Your child reads books independently',
+    href: '/courses/phonics-advanced',
   },
 ];
 
@@ -61,12 +65,14 @@ const grammarCards = [
     age: 'Age: 5–10',
     focus: ['Nouns, verbs, adjectives', 'Sentence formation', 'Prepositions and articles'],
     outcome: 'Your child forms correct everyday sentences',
+    href: '/courses/grammar',
   },
   {
     title: 'Advanced Grammar',
     age: 'Age: 8–12',
     focus: ['Tenses mastery', 'Complex sentences', 'Paragraph writing'],
     outcome: 'Your child writes and speaks clearly',
+    href: '/courses/grammar-mastery',
   },
 ];
 
@@ -76,12 +82,14 @@ const speakingCards = [
     age: 'Age: 4–7',
     focus: ['Speak in simple sentences', 'Picture talk', 'Show and tell'],
     outcome: 'Your child starts speaking confidently',
+    href: '/courses/public-speaking-foundations',
   },
   {
     title: 'Advanced Public Speaking',
     age: 'Age: 7–12',
     focus: ['Structured speaking', 'Storytelling', 'Presentations and debates'],
     outcome: 'Your child speaks fluently and confidently',
+    href: '/courses/public-speaking-excellence',
   },
 ];
 
@@ -138,10 +146,10 @@ function CoursesPage() {
         `Which course should your child start with? Compare Tiny Steps ${CORE_PROGRAMS_TEXT} programs by learning need and starting priority.`,
       url: coursesCanonicalUrl,
       courses: catalogs.map((c) => ({
-        id: `https://tinystepslearning.com/courses/${c.slug}`,
+        id: `https://tinystepslearning.com${getPublicCoursePathForSlug(c.slug) || `/courses/${c.slug}`}`,
         name: c.name,
         description: `${c.duration} live ${c.track} program for ${c.age.toLowerCase()}. ${c.overview.join(', ')}.`,
-        url: `https://tinystepslearning.com/courses/${c.slug}`,
+        url: `https://tinystepslearning.com${getPublicCoursePathForSlug(c.slug) || `/courses/${c.slug}`}`,
         educationalLevel: c.level,
         audienceType: c.age,
         inLanguage: 'en-IN',
@@ -316,8 +324,8 @@ function CoursesPage() {
                   >
                     Book Free Assessment
                   </a>
-                  <Link to="/curriculum" className="w-full text-center text-[11px] font-medium text-slate-500 underline decoration-slate-300/80 underline-offset-2 transition hover:text-slate-700 sm:w-auto sm:text-left">
-                    View Full Curriculum
+                  <Link to={card.href} className="w-full text-center text-[11px] font-medium text-slate-500 underline decoration-slate-300/80 underline-offset-2 transition hover:text-slate-700 sm:w-auto sm:text-left">
+                    View course details
                   </Link>
                 </div>
               </article>
@@ -354,8 +362,8 @@ function CoursesPage() {
                   >
                     Book Free Assessment
                   </a>
-                  <Link to="/curriculum" className="w-full text-center text-[11px] font-medium text-slate-500 underline decoration-slate-300/80 underline-offset-2 transition hover:text-slate-700 sm:w-auto sm:text-left">
-                    View Full Curriculum
+                  <Link to={card.href} className="w-full text-center text-[11px] font-medium text-slate-500 underline decoration-slate-300/80 underline-offset-2 transition hover:text-slate-700 sm:w-auto sm:text-left">
+                    View course details
                   </Link>
                 </div>
               </article>
@@ -392,8 +400,8 @@ function CoursesPage() {
                   >
                     Book Free Assessment
                   </a>
-                  <Link to="/curriculum" className="w-full text-center text-[11px] font-medium text-slate-500 underline decoration-slate-300/80 underline-offset-2 transition hover:text-slate-700 sm:w-auto sm:text-left">
-                    View Full Curriculum
+                  <Link to={card.href} className="w-full text-center text-[11px] font-medium text-slate-500 underline decoration-slate-300/80 underline-offset-2 transition hover:text-slate-700 sm:w-auto sm:text-left">
+                    View course details
                   </Link>
                 </div>
               </article>

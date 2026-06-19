@@ -11,8 +11,8 @@ export type ParentMeta = {
 
 export const parentsMeta: Record<string, ParentMeta> = {
   '/parents': {
-    title: 'Parents Help Hub — Tiny Steps',
-    description: 'Practical guides for parents: choosing courses, scheduling, payments, and helping kids learn to read.',
+    title: 'Parents Hub: Course Choice, Reading Support, and Progress Guides | Tiny Steps',
+    description: 'Practical parent guides for choosing the right Tiny Steps course, scheduling classes, tracking progress, and helping children read with more confidence.',
     canonicalPath: '/parents',
     ogTitle: 'Parents Help Hub — Tiny Steps',
     ogDescription: 'Practical guides for parents on courses, scheduling and reading at home.',
@@ -58,8 +58,8 @@ export const parentsMeta: Record<string, ParentMeta> = {
     }
   },
   '/parents/choosing-course': {
-    title: 'Choosing the Right Course for Your Child | Tiny Steps Parents',
-    description: 'How to pick the right Tiny Steps course based on age, reading level and learning goals.',
+    title: 'How to Choose the Right Tiny Steps Course for Your Child',
+    description: 'Parent decision guide to choose phonics, grammar, reading, or speaking support based on your child’s real learning gap, not guesswork.',
     canonicalPath: '/parents/choosing-course',
     jsonLd: {
       "@context": "https://schema.org",
@@ -75,8 +75,8 @@ export const parentsMeta: Record<string, ParentMeta> = {
     }
   },
   '/parents/scheduling': {
-    title: 'Scheduling & Attendance Tips for Busy Families | Tiny Steps Parents',
-    description: 'Simple scheduling tips to keep progress steady: short routines, consistent days, and make-up options.',
+    title: 'Scheduling Online Classes for Kids: Parent Planning Guide | Tiny Steps',
+    description: 'Simple parent guidance for choosing class timings, keeping attendance steady, and building routines that protect progress between lessons.',
     canonicalPath: '/parents/scheduling',
     jsonLd: {
       "@context": "https://schema.org",
@@ -109,8 +109,8 @@ export const parentsMeta: Record<string, ParentMeta> = {
     }
   },
   '/parents/tracking-progress': {
-    title: 'Tracking Your Child’s Progress | Tiny Steps Parents',
-    description: 'How we measure progress, what to expect and simple ways parents can track improvement at home.',
+    title: 'How Parents Can Track English Learning Progress | Tiny Steps',
+    description: 'Learn what progress in phonics, grammar, reading, and speaking should look like, and how parents can track improvement without pressure.',
     canonicalPath: '/parents/tracking-progress',
     jsonLd: {
       "@context": "https://schema.org",
@@ -143,7 +143,7 @@ export const parentsMeta: Record<string, ParentMeta> = {
     }
   },
   '/parents/phonics-mission': {
-    title: 'Phonics Mission for Parents: 7-Day Daily Practice Plan | Tiny Steps Parents',
+    title: 'Phonics Mission for Parents: 7-Day Daily Practice Plan | Tiny Steps',
     description: 'Research-backed phonics routine for ages 3-10: a 7-day starter plan, 10-minute daily decoding practice, blending examples, and parent scripts for multilingual homes.',
     canonicalPath: '/parents/phonics-mission',
     jsonLd: {
@@ -194,8 +194,8 @@ export const parentsMeta: Record<string, ParentMeta> = {
     }
   },
   '/parents/common-mistakes': {
-    title: 'Common Reading Mistakes & How to Avoid Them | Tiny Steps Parents',
-    description: 'What to watch for, common pitfalls, and how parents can keep progress on track.',
+    title: 'Common Parent Mistakes That Slow Reading Progress | Tiny Steps',
+    description: 'Learn the common parent mistakes that slow phonics, reading, grammar, and speaking progress, plus practical replacements that keep learning calm and steady.',
     canonicalPath: '/parents/common-mistakes',
     jsonLd: {
       "@context": "https://schema.org",

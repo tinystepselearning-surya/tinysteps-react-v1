@@ -1,7 +1,61 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Meta from '../components/common/Meta';
 import Modal from '@/common/Modal';
 import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../constants/publicContact';
+
+const canonicalUrl = 'https://tinystepslearning.com/for-schools';
+const faqItems = [
+  {
+    question: 'What kind of schools or learning centres can partner with Tiny Steps?',
+    answer:
+      'Tiny Steps can support IB, CBSE, ICSE, and international schools or learning centres that want stronger phonics, grammar, reading, or speaking outcomes.',
+  },
+  {
+    question: 'Does Tiny Steps offer 1:1 or group formats for schools?',
+    answer:
+      'Yes. Schools can explore 1:1 interventions, small-group support, after-school clubs, or focused pilot cohorts depending on timetable and learning goals.',
+  },
+  {
+    question: 'How does a school partnership usually begin?',
+    answer:
+      'Most partnerships begin with a short discovery call, a pilot for a selected group of students, and clear observations before scaling further.',
+  },
+];
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
+    { '@type': 'ListItem', position: 2, name: 'For Schools', item: canonicalUrl },
+  ],
+};
+
+const pageSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  '@id': `${canonicalUrl}#webpage`,
+  name: 'English Program for Schools | Tiny Steps Learning',
+  description:
+    'School partnership overview for phonics, grammar, reading, and public speaking support through Tiny Steps.',
+  url: canonicalUrl,
+  inLanguage: 'en-IN',
+};
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  '@id': `${canonicalUrl}#faq`,
+  mainEntity: faqItems.map((item) => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: item.answer,
+    },
+  })),
+};
 
 const ForSchoolsPage: React.FC = () => {
   const [showSampleSchedule, setShowSampleSchedule] = useState(false);
@@ -11,6 +65,8 @@ const ForSchoolsPage: React.FC = () => {
       <Meta
         title="Tiny Steps for Schools – Premium 1:1 English Programs for Ages 3–12"
         description="Partner with Tiny Steps to bring IB-aligned phonics, grammar and public speaking programs to your school. 1:1 and small-group English mentoring with AI-guided practice and clear dashboards."
+        canonical={canonicalUrl}
+        jsonLd={[breadcrumbSchema, pageSchema, faqSchema]}
       />
 
       {/* Hero Section */}
@@ -137,6 +193,29 @@ const ForSchoolsPage: React.FC = () => {
         >
           View a sample lesson schedule
         </button>
+        <div className="mt-6 flex flex-wrap justify-center gap-3 text-sm">
+          <Link to="/courses/phonics-foundation" className="text-primary-700 underline hover:text-primary-800">
+            Phonics Foundation
+          </Link>
+          <Link to="/courses/grammar" className="text-primary-700 underline hover:text-primary-800">
+            Beginner Grammar
+          </Link>
+          <Link to="/courses/public-speaking-foundations" className="text-primary-700 underline hover:text-primary-800">
+            Speaking Foundations
+          </Link>
+        </div>
+      </section>
+
+      <section className="py-16 px-6 bg-white">
+        <h2 className="text-3xl font-semibold text-center mb-8">Frequently Asked Questions</h2>
+        <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-3">
+          {faqItems.map((item) => (
+            <article key={item.question} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <h3 className="text-lg font-semibold text-slate-900">{item.question}</h3>
+              <p className="mt-2 text-sm text-slate-700">{item.answer}</p>
+            </article>
+          ))}
+        </div>
       </section>
 
       <Modal

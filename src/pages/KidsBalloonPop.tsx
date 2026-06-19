@@ -1047,7 +1047,7 @@ const KidsBalloonPop: React.FC<KidsBalloonPopProps> = ({
         )}
 
         <div className="w-full max-w-6xl mx-auto text-center mb-8">
-          <h1 className="text-5xl font-bold text-white">Choose Level</h1>
+          <h2 className="text-5xl font-bold text-white">Choose Level</h2>
           <p className="text-white/70 mt-2">Pick a Jolly Phonics level to play Balloon Pop</p>
 
           {!kidId && !hideNoKidNotice && (

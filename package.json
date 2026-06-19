@@ -15,6 +15,8 @@
     "preview": "vite preview",
     "gen:sitemaps": "node scripts/generate-sitemaps.js",
     "seo:smoke": "node scripts/seo-smoke.mjs",
+    "seo:indexation-check": "node scripts/seo-indexation-guard.mjs",
+    "seo:rendered-check": "node scripts/seo-rendered-html-check.mjs",
     "indexnow:submit": "node scripts/indexnow-submit.mjs",
     "audit:firebase-upgrade": "bash scripts/audit-firebase-upgrade.sh",
     "inventory:firebase-auth": "bash scripts/inventory-firebase-auth.sh",

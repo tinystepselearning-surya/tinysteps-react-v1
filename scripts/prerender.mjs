@@ -3,6 +3,7 @@ import { spawn } from "child_process";
 import fs from "fs/promises";
 import path from "path";
 import { chromium } from "playwright";
+import { getPublicCourseSitemapPaths } from "../src/lib/publicCoursePages.js";
 import { ROUTE_SEO_REGISTRY as ROUTE_SEO_CONFIG } from "../src/lib/routeSeoRegistry.js";
 import { PARENT_HELP_ROUTES, STATIC_MARKETING_ROUTES, uniqueRoutes } from "./seo-route-inventory.mjs";
 
@@ -12,7 +13,6 @@ const HOST = `http://127.0.0.1:${PORT}`;
 const DEFAULT_INDEXABLE_ROBOTS =
   'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
 
-const COURSE_SOURCE = path.resolve(process.cwd(), "src", "content", "courses.ts");
 const BLOG_SOURCE = path.resolve(process.cwd(), "src", "content", "blog.ts");
 const BLOG_MDX_DIR = path.resolve(process.cwd(), "src", "content", "blog");
 
@@ -386,11 +386,10 @@ async function prerender() {
     try {
       browser = await chromium.launch();
       const page = await browser.newPage();
-      const courseSlugs = await extractSlugsFromFile(COURSE_SOURCE);
       const seedRoutes = uniqueRoutes([
         ...STATIC_MARKETING_ROUTES,
         ...PARENT_HELP_ROUTES,
-        ...courseSlugs.map((slug) => `/courses/${slug}`),
+        ...getPublicCourseSitemapPaths(),
       ]);
 
       // ✅ Auto-discover all blog post routes from /blog (AEO/SEO)

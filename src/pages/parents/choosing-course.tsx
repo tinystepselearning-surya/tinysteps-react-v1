@@ -40,6 +40,16 @@ const faqItems = [
 
 const ChoosingCourse: React.FC = () => {
   useEffect(() => {
+    const breadcrumbSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
+        { '@type': 'ListItem', position: 2, name: 'Parents Hub', item: 'https://tinystepslearning.com/parents' },
+        { '@type': 'ListItem', position: 3, name: 'Choosing a Course', item: 'https://tinystepslearning.com/parents/choosing-course' },
+      ],
+    };
+
     const faqSchema = {
       ...createFAQPageSchema(faqItems),
       '@id': 'https://tinystepslearning.com/parents/choosing-course#faq',
@@ -47,7 +57,7 @@ const ChoosingCourse: React.FC = () => {
 
     applySeo({
       ...parentsMeta['/parents/choosing-course'],
-      jsonLd: [faqSchema],
+      jsonLd: [parentsMeta['/parents/choosing-course'].jsonLd, breadcrumbSchema, faqSchema],
     });
   }, []);
 
@@ -76,7 +86,7 @@ const ChoosingCourse: React.FC = () => {
         <li>Reading attempts rely on guessing.</li>
       </ul>
       <p className="mt-2 text-sm text-gray-700">
-        Best next step: <Link to="/phonics" className="text-primary-600 font-medium hover:underline">Explore phonics support</Link>.
+        Best next step: <Link to="/courses/phonics-foundation" className="text-primary-600 font-medium hover:underline">Explore phonics foundation</Link>.
       </p>
     </section>
 
@@ -100,7 +110,7 @@ const ChoosingCourse: React.FC = () => {
         <li>Answer quality is unclear despite reading comprehension.</li>
       </ul>
       <p className="mt-2 text-sm text-gray-700">
-        Best next step: <Link to="/grammar" className="text-primary-600 font-medium hover:underline">Explore grammar support</Link>.
+        Best next step: <Link to="/courses/grammar" className="text-primary-600 font-medium hover:underline">Explore beginner grammar</Link>.
       </p>
     </section>
 
@@ -124,7 +134,7 @@ const ChoosingCourse: React.FC = () => {
         <li>Child understands but hesitates to express clearly.</li>
       </ul>
       <p className="mt-2 text-sm text-gray-700">
-        Best next step: <Link to="/speaking" className="text-primary-600 font-medium hover:underline">Explore communication support</Link>.
+        Best next step: <Link to="/courses/public-speaking-foundations" className="text-primary-600 font-medium hover:underline">Explore speaking foundations</Link>.
       </p>
     </section>
 
@@ -183,16 +193,16 @@ const ChoosingCourse: React.FC = () => {
           Explore Courses
         </Link>
         <span className="text-slate-400">•</span>
-        <Link to="/phonics" className="text-primary-600 font-medium hover:underline">
-          Phonics Classes
+        <Link to="/courses/phonics-foundation" className="text-primary-600 font-medium hover:underline">
+          Phonics Foundation
         </Link>
         <span className="text-slate-400">•</span>
-        <Link to="/grammar" className="text-primary-600 font-medium hover:underline">
-          Grammar Classes
+        <Link to="/courses/grammar" className="text-primary-600 font-medium hover:underline">
+          Beginner Grammar
         </Link>
         <span className="text-slate-400">•</span>
-        <Link to="/speaking" className="text-primary-600 font-medium hover:underline">
-          Speaking Classes
+        <Link to="/courses/public-speaking-foundations" className="text-primary-600 font-medium hover:underline">
+          Speaking Foundations
         </Link>
       </div>
       </div>

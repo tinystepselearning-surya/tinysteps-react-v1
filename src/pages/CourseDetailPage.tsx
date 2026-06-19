@@ -7,9 +7,14 @@ import { getCourseWeeksOverride } from '../content/curriculumLoader';
 import Meta from '../components/common/Meta';
 import { WeekAccordion } from '../components/curriculum/WeekAccordion';
 import { applySeo } from '../lib/seo';
-import { createCourseSchema } from '../lib/schemas';
+import { createCourseSchema, createFAQPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
 import TestimonialsSection from '../components/seo/TestimonialsSection';
+import {
+  getPublicCoursePathForSlug,
+  isCanonicalPublicCourseSlug,
+  resolvePublicCoursePageBySlug,
+} from '../lib/publicCoursePages.js';
 
 const COURSE_SCHEMA_BY_SLUG: Record<string, { name: string; description: string; educationalLevel: string }> = {
   'phonics-foundation': {
@@ -59,17 +64,9 @@ const COURSE_SCHEMA_BY_SLUG: Record<string, { name: string; description: string;
 const CourseDetailPage: FC = () => {
   const params = useParams();
   const rawSlug = params.slug ?? params.courseId;
-  const normalizeSlug = (value?: string | null) => {
-    const key = String(value ?? '').trim();
-    if (!key) return '';
-    const lower = key.toLowerCase();
-    if (lower === 'grammar-essentials') return 'basic-grammar';
-    if (lower === 'grammar-mastery') return 'advanced-grammar';
-    if (lower === 'public-speaking-foundations') return 'basic-public-speaking';
-    if (lower === 'public-speaking-excellence') return 'advanced-public-speaking';
-    return lower;
-  };
-  const slug = normalizeSlug(rawSlug);
+  const normalizedRawSlug = String(rawSlug ?? '').trim().toLowerCase();
+  const coursePageConfig = useMemo(() => resolvePublicCoursePageBySlug(rawSlug), [rawSlug]);
+  const slug = coursePageConfig?.internalSlug ?? normalizedRawSlug;
   const courseTrack = useMemo(() => {
     if (slug.includes('grammar')) return 'grammar';
     if (slug.includes('speaking') || slug.includes('communication')) return 'speaking';
@@ -78,14 +75,16 @@ const CourseDetailPage: FC = () => {
   const courseTag = courseTrack;
   const course = useMemo(() => catalogs.find((c) => c.slug === slug), [slug]);
   const usedHrefs = useMemo(() => new Set<string>(), []);
-  const base = curriculumBySlug[slug || ''] || curriculumBySlug[rawSlug || ''] || {};
+  const base = curriculumBySlug[slug || ''] || curriculumBySlug[normalizedRawSlug || ''] || {};
   const weeks = useMemo(() => base?.weeks ?? [], [base?.weeks]);
   const [weeksState, setWeeks] = useState(weeks);
+  const canonicalPath = coursePageConfig?.routePath ?? getPublicCoursePathForSlug(rawSlug) ?? (rawSlug ? `/courses/${rawSlug}` : '/courses');
+  const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
 
   useEffect(() => {
     (async () => {
       if (!slug) return;
-      const override = await getCourseWeeksOverride(rawSlug || slug);
+      const override = await getCourseWeeksOverride(slug);
       const baseWeeks = weeks;
       if (override && override.length && baseWeeks?.length && override.length === baseWeeks.length) {
         const merged = baseWeeks.map((baseItem, idx) => ({
@@ -104,19 +103,15 @@ const CourseDetailPage: FC = () => {
   }, [slug, rawSlug, weeks]);
 
   useEffect(() => {
-    if (course) document.title = `${course.name} | Tiny Steps`;
-  }, [course, slug]);
-
-  useEffect(() => {
     if (course) return;
     applySeo({
       title: 'Course not found | Tiny Steps Learning',
       description: 'The course you are looking for does not exist.',
-      canonicalPath: rawSlug ? `/courses/${rawSlug}` : '/courses',
+      canonicalPath,
       robots: 'noindex, follow',
       ogType: 'website',
     });
-  }, [course, rawSlug]);
+  }, [canonicalPath, course]);
 
   if (!course) {
     return (
@@ -127,34 +122,76 @@ const CourseDetailPage: FC = () => {
     );
   }
 
-  const canonicalUrl = `https://tinystepslearning.com/courses/${course.slug}`;
+  const seoTitle = coursePageConfig?.title ?? `${course.name} | Tiny Steps`;
+  const seoDescription =
+    coursePageConfig?.description ??
+    `${course.name}: ${course.overview.slice(0, 3).join(' • ')} • ${course.frequency} • ${course.price}`;
+  const courseHeading = coursePageConfig?.h1 ?? course.name;
+  const isCanonicalSlug = isCanonicalPublicCourseSlug(rawSlug);
   const courseSchemaConfig = COURSE_SCHEMA_BY_SLUG[course.slug] || {
     name: course.name,
     description: `${course.name} — ${course.overview.join(', ')}`,
     educationalLevel: course.level,
   };
 
-  const jsonLd = createCourseSchema({
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${PUBLIC_FACTS.primaryWebsite}/` },
+      { '@type': 'ListItem', position: 2, name: 'Courses', item: `${PUBLIC_FACTS.primaryWebsite}/courses` },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: coursePageConfig?.breadcrumbName ?? course.name,
+        item: canonicalUrl,
+      },
+    ],
+  };
+
+  const jsonLd = [breadcrumbSchema, createCourseSchema({
     name: courseSchemaConfig.name,
     description: courseSchemaConfig.description,
     url: canonicalUrl,
     educationalLevel: courseSchemaConfig.educationalLevel,
-  });
+  })];
+
+  if (Array.isArray(coursePageConfig?.faq) && coursePageConfig.faq.length > 0 && isCanonicalSlug) {
+    jsonLd.push({
+      ...createFAQPageSchema(coursePageConfig.faq),
+      '@id': `${canonicalUrl}#faq`,
+    });
+  }
 
   return (
     <div className="bg-white">
       <Meta
-        title={`${course.name} | Tiny Steps`}
-        description={`${course.name}: ${course.overview.slice(0,3).join(' • ')} • ${course.frequency} • ${course.price}`}
+        title={seoTitle}
+        description={seoDescription}
         canonical={canonicalUrl}
         jsonLd={jsonLd}
+        keywords={Array.isArray(coursePageConfig?.keywords) ? coursePageConfig.keywords.join(', ') : undefined}
       />
       <div className="mx-auto max-w-6xl px-6 py-10">
         <div className="flex items-center gap-2 text-2xl font-bold text-gray-900">
           <span className="text-3xl">{course.icon}</span>
-          <h1>{course.name}</h1>
+          <h1>{courseHeading}</h1>
         </div>
         <div className="mt-1 text-sm text-gray-600">{course.age} • {course.duration} • {course.frequency} • Level: {course.level}</div>
+        <p className="mt-4 max-w-3xl text-base leading-7 text-slate-700">
+          {seoDescription}
+        </p>
+        <div className="mt-5 flex flex-wrap gap-3 text-sm">
+          <Link
+            to="/book-demo"
+            className="inline-flex items-center rounded-full bg-primary-600 px-4 py-2 font-semibold text-white transition hover:bg-primary-700"
+          >
+            Book Free Assessment
+          </Link>
+          <Link to="/courses" className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900">
+            Compare All Courses
+          </Link>
+        </div>
         <div className="mt-4 grid gap-6 md:grid-cols-2">
           <div>
             <h2 className="font-semibold">Quick Overview</h2>
@@ -200,9 +237,23 @@ const CourseDetailPage: FC = () => {
           )}
         </div>
 
+        {Array.isArray(coursePageConfig?.faq) && coursePageConfig.faq.length > 0 ? (
+          <section id="faq" className="mt-12 rounded-2xl border border-slate-200 bg-white p-6">
+            <h2 className="font-heading text-2xl font-bold text-slate-900">Frequently Asked Questions</h2>
+            <div className="mt-5 space-y-4">
+              {coursePageConfig.faq.map((item) => (
+                <article key={item.question} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <h3 className="text-base font-semibold text-slate-900">{item.question}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-700">{item.answer}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         <div className="mt-12 rounded-2xl bg-slate-50 p-6">
           <h3 className="font-heading text-lg font-bold text-slate-900">Next Steps</h3>
-          <p className="mt-1 text-sm text-slate-600">Continue exploring or contact us for a personalized plan.</p>
+          <p className="mt-1 text-sm text-slate-600">Continue exploring related guidance or book a personalized assessment for your child.</p>
           <div className="mt-4 flex flex-wrap gap-4 text-sm font-medium">
             <Link to="/courses" className="text-primary-700 hover:underline">← All Courses</Link>
             {slug.includes('phonic') && <Link to="/phonics" className="text-primary-700 hover:underline">View Phonics Track</Link>}
@@ -212,6 +263,18 @@ const CourseDetailPage: FC = () => {
             <Link to="/class-samples" className="text-primary-700 hover:underline">See Class Samples</Link>
             <Link to="/contact?book=1" className="inline-flex items-center rounded-full bg-primary-600 px-4 py-1.5 text-white transition hover:bg-primary-700">Book Free Assessment</Link>
           </div>
+          {Array.isArray(coursePageConfig?.relatedLinks) && coursePageConfig.relatedLinks.length > 0 ? (
+            <div className="mt-6 border-t border-slate-200 pt-5">
+              <h4 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Related Parent Resources</h4>
+              <div className="mt-3 flex flex-wrap gap-3 text-sm">
+                {coursePageConfig.relatedLinks.map((item) => (
+                  <Link key={item.to} to={item.to} className="text-primary-700 hover:underline">
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
 
       </div>

@@ -20,7 +20,7 @@ const levels = [
       'Lesson-by-lesson practice prompts',
     ],
     pdf: '/curriculum',
-    courseHref: '/courses/phonics-foundations'
+    courseHref: '/courses/phonics-foundation'
   },
   {
     name: 'Early Phonics',
@@ -30,7 +30,7 @@ const levels = [
       'Stage check-ins for fluency',
     ],
     pdf: '/curriculum',
-    courseHref: '/courses/early-phonics'
+    courseHref: '/courses/phonics-brush-up'
   },
   {
     name: 'Advanced Phonics',
@@ -40,7 +40,7 @@ const levels = [
       'Fluency + comprehension practice',
     ],
     pdf: '/curriculum',
-    courseHref: '/courses/advanced-phonics'
+    courseHref: '/courses/phonics-advanced'
   }
 ];
 

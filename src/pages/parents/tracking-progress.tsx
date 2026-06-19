@@ -64,16 +64,20 @@ const TrackingProgress: React.FC = () => {
     </ul>
 
     <div className="mt-8 flex flex-col gap-3">
-      <Link to="/phonics" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
-        Explore Phonics Classes →
+      <Link to="/book-demo" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
+        Book Free Assessment →
       </Link>
       <div className="flex flex-wrap gap-2">
-        <Link to="/grammar" className="text-primary-600 text-sm font-medium hover:underline">
-          Grammar & Writing Classes
+        <Link to="/courses/phonics-foundation" className="text-primary-600 text-sm font-medium hover:underline">
+          Phonics Foundation
         </Link>
         <span className="text-slate-400">•</span>
-        <Link to="/speaking" className="text-primary-600 text-sm font-medium hover:underline">
-          Public Speaking Classes
+        <Link to="/courses/grammar" className="text-primary-600 text-sm font-medium hover:underline">
+          Beginner Grammar
+        </Link>
+        <span className="text-slate-400">•</span>
+        <Link to="/courses/public-speaking-foundations" className="text-primary-600 text-sm font-medium hover:underline">
+          Speaking Foundations
         </Link>
       </div>
     </div>

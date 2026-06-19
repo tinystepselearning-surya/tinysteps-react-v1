@@ -1,3 +1,5 @@
+import { PUBLIC_COURSE_PAGE_CONFIGS } from './publicCoursePages.js';
+
 export const ROUTE_SEO_REGISTRY = {
   '/': {
     title: 'Premium Online English Classes for Kids in India | Tiny Steps Learning',
@@ -580,6 +582,15 @@ export const ROUTE_SEO_REGISTRY = {
     robots: 'noindex, nofollow',
   },
 };
+
+for (const coursePage of PUBLIC_COURSE_PAGE_CONFIGS) {
+  ROUTE_SEO_REGISTRY[coursePage.routePath] = {
+    title: coursePage.title,
+    description: coursePage.description,
+    canonicalPath: coursePage.routePath,
+    ogType: 'website',
+  };
+}
 
 export function getRouteConfig(pathname) {
   const normalized = pathname.startsWith('/') ? pathname : `/${pathname}`;

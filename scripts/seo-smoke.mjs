@@ -26,6 +26,11 @@ const LEGACY_URLS_ABSENT = [
   'https://tinystepslearning.com/english-grammar-writing-classes',
   'https://tinystepslearning.com/public-speaking-communication-kids',
   'https://tinystepslearning.com/spoken-english-classes-for-kids',
+  'https://tinystepslearning.com/courses/phonics-foundations',
+  'https://tinystepslearning.com/courses/basic-grammar',
+  'https://tinystepslearning.com/courses/advanced-grammar',
+  'https://tinystepslearning.com/courses/basic-public-speaking',
+  'https://tinystepslearning.com/courses/advanced-public-speaking',
 ];
 
 const REQUIRED_CORE_URLS = [
@@ -36,6 +41,10 @@ const REQUIRED_CORE_URLS = [
   'https://tinystepslearning.com/pricing',
   'https://tinystepslearning.com/courses',
   'https://tinystepslearning.com/curriculum',
+  'https://tinystepslearning.com/courses/phonics-foundation',
+  'https://tinystepslearning.com/courses/grammar',
+  'https://tinystepslearning.com/courses/grammar-mastery',
+  'https://tinystepslearning.com/courses/public-speaking-foundations',
 ];
 
 const PRIVATE_PATH_TOKENS = [
@@ -47,6 +56,7 @@ const PRIVATE_PATH_TOKENS = [
   '/login',
   '/dashboard',
   '/surya',
+  '/main',
 ];
 
 const REQUIRED_SUMMER_PATHS = [
