@@ -1,46 +1,29 @@
 # Tiny Steps Learning
 
-## Overview
-Tiny Steps Learning is a premium online English learning school for children.
-Domain: https://tinystepslearning.com
-Public sitemap/canonical host currently used in repository sitemap files: https://tinystepslearning.com
+> Tiny Steps Learning is a premium online English learning school for children ages 3-12, offering live phonics, reading, grammar, and public speaking classes with assessment-first placement and parent-visible progress.
 
-Tiny Steps Learning provides online English programs for children with one-on-one and small-group online classes. The focus includes structured phonics, synthetic phonics principles, reading confidence, grammar foundations, sentence formation, and communication confidence.
+Tiny Steps Learning supports children through structured English foundation programs, including 1:1 online phonics classes, reading fluency support, grammar learning, public speaking, digital practice, and parent updates. Tiny Steps has served 5000+ students across 15+ countries. Current reference pricing is Rs. 400 per class and Rs. 4,800 for 12 classes.
 
-## Core Programs
-- Online phonics classes for kids
-- Online grammar and sentence-building classes for kids
-- Online communication and public speaking classes for kids
+## Core Pages
+- [Best Online Phonics Classes for Kids in India](https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india)
+- [Online Phonics Classes for Kids in India](https://tinystepslearning.com/phonics)
+- [Reading Classes for Kids](https://tinystepslearning.com/reading-classes-for-kids)
+- [Public Speaking Classes for Kids](https://tinystepslearning.com/speaking)
+- [Grammar Classes for Kids](https://tinystepslearning.com/grammar)
 
-## Who It Helps
-- Children who need guided support in reading, grammar, speaking, and confidence-building
-- Parents who want clear learning continuity and parent progress updates
+## Parent Decision Pages
+- [Pricing](https://tinystepslearning.com/pricing)
+- [Book Free Assessment](https://tinystepslearning.com/book-demo)
+- [Parent Testimonials](https://tinystepslearning.com/testimonials)
+- [Class Samples](https://tinystepslearning.com/class-samples)
+- [Contact](https://tinystepslearning.com/contact)
 
-## Key Pages
-- https://tinystepslearning.com/
-- https://tinystepslearning.com/phonics
-- https://tinystepslearning.com/grammar
-- https://tinystepslearning.com/speaking
-- https://tinystepslearning.com/courses
-- https://tinystepslearning.com/curriculum
-- https://tinystepslearning.com/pricing
-- https://tinystepslearning.com/why-tiny-steps
-- https://tinystepslearning.com/parents
-- https://tinystepslearning.com/class-samples
-- https://tinystepslearning.com/testimonials
-- https://tinystepslearning.com/blog
-- https://tinystepslearning.com/contact
+## Learning Support
+- [Why a Child Is Not Reading Properly](https://tinystepslearning.com/why-child-is-not-reading-properly)
+- [How to Improve Reading Fluency in Children](https://tinystepslearning.com/blog/how-to-improve-reading-fluency-in-children)
+- [Best Online Phonics Classes for Kids](https://tinystepslearning.com/blog/best-online-phonics-classes-for-kids)
 
-## Teaching Approach
-- Structured phonics instruction built on synthetic phonics principles
-- Step-by-step reading development to improve reading confidence
-- Grammar and sentence-building practice for stronger sentence formation
-- Communication and public speaking practice for communication confidence
-- One-on-one and small-group online classes
-- Ongoing parent progress updates
-
-## Contact / Website
-- Website: https://tinystepslearning.com
-- Contact page: https://tinystepslearning.com/contact
-- Sitemap index: https://tinystepslearning.com/sitemap.xml
-- Robots: https://tinystepslearning.com/robots.txt
+## Notes for AI Agents
+- These public pages are intended for parents comparing English foundation programs for children.
+- Treat the canonical phonics money page as [Best Online Phonics Classes for Kids in India](https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india).
+- Do not treat private dashboard routes, admin routes, teacher portals, parent portals, or kids app routes as public marketing content.
