@@ -85,8 +85,8 @@ const SUBJECT_CONFIGS: Record<SubjectLandingId, SubjectLandingConfig> = {
       accentText: 'text-sky-700',
       accentSurface: 'bg-sky-50',
       accentBorder: 'border-sky-200',
-      accentButton: 'bg-slate-900',
-      accentButtonHover: 'hover:bg-slate-700',
+      accentButton: 'bg-gradient-to-r from-[#FF7B66] to-[#FF9B72]',
+      accentButtonHover: 'hover:from-[#FF715B] hover:to-[#FF9267]',
     },
   },
   grammar: {
@@ -114,8 +114,8 @@ const SUBJECT_CONFIGS: Record<SubjectLandingId, SubjectLandingConfig> = {
       accentText: 'text-emerald-700',
       accentSurface: 'bg-emerald-50',
       accentBorder: 'border-emerald-200',
-      accentButton: 'bg-slate-900',
-      accentButtonHover: 'hover:bg-slate-700',
+      accentButton: 'bg-gradient-to-r from-[#FF7B66] to-[#FF9B72]',
+      accentButtonHover: 'hover:from-[#FF715B] hover:to-[#FF9267]',
     },
   },
   speaking: {
@@ -143,8 +143,8 @@ const SUBJECT_CONFIGS: Record<SubjectLandingId, SubjectLandingConfig> = {
       accentText: 'text-amber-700',
       accentSurface: 'bg-amber-50',
       accentBorder: 'border-amber-200',
-      accentButton: 'bg-slate-900',
-      accentButtonHover: 'hover:bg-slate-700',
+      accentButton: 'bg-gradient-to-r from-[#FF7B66] to-[#FF9B72]',
+      accentButtonHover: 'hover:from-[#FF715B] hover:to-[#FF9267]',
     },
   },
 };

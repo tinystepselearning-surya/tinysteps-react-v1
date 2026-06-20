@@ -139,6 +139,9 @@ export default function SpeakingPage() {
   return (
     <div className="bg-gradient-to-b from-[#FFF8EF] via-white to-[#EEF8FF] pb-16">
       <section className="relative overflow-hidden bg-gradient-to-br from-[#FFF8EF] via-white to-[#EEF8FF] px-4 py-8 sm:px-5 md:py-12 lg:px-8 lg:py-14">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_18%,rgba(255,184,120,0.2),transparent_28%),radial-gradient(circle_at_88%_8%,rgba(173,216,255,0.22),transparent_32%),radial-gradient(circle_at_68%_78%,rgba(217,196,255,0.15),transparent_24%)]" />
+        <div className="pointer-events-none absolute -left-16 top-10 h-44 w-44 rounded-full bg-[#FFD7AF]/40 blur-3xl" />
+        <div className="pointer-events-none absolute right-0 top-0 h-56 w-56 rounded-full bg-[#CFE5FF]/40 blur-3xl" />
         <div className="mx-auto max-w-7xl">
           <nav aria-label="Breadcrumb" className="mb-4 text-xs text-slate-600 sm:text-sm">
             <ol className="flex flex-wrap items-center gap-2">
@@ -154,9 +157,9 @@ export default function SpeakingPage() {
             </ol>
           </nav>
 
-          <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-            <div>
-              <p className="inline-flex items-center rounded-full border border-orange-200 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-orange-700">
+          <div className="relative grid grid-cols-1 items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="relative">
+              <p className="inline-flex items-center rounded-full border border-orange-200 bg-white/84 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-orange-700 shadow-sm backdrop-blur">
                 Communication confidence for children
               </p>
               <h1 className="mt-4 max-w-full text-[34px] font-bold leading-[1.05] tracking-[-0.035em] text-slate-900 sm:text-[38px] md:max-w-[680px] md:text-[46px] lg:text-[52px]">
@@ -172,7 +175,7 @@ export default function SpeakingPage() {
               <div className="mt-7">
                 <Link
                   to="/book-demo"
-                  className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-slate-900 px-6 py-3.5 text-base font-bold text-white shadow-[0_10px_24px_rgba(15,23,42,0.2)] transition hover:bg-slate-800 sm:w-auto sm:min-w-[230px] md:px-8 md:py-4"
+                  className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-gradient-to-r from-[#FF7B66] to-[#FF9B72] px-6 py-3.5 text-base font-bold text-white shadow-[0_14px_30px_rgba(255,126,99,0.3)] transition hover:from-[#FF715B] hover:to-[#FF9267] sm:w-auto sm:min-w-[230px] md:px-8 md:py-4"
                 >
                   Book Free Assessment
                 </Link>
@@ -180,15 +183,33 @@ export default function SpeakingPage() {
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                {['Clear expression', 'Storytelling confidence', 'Parent progress visibility'].map((chip) => (
-                  <span key={chip} className="rounded-full border border-slate-200 bg-white/85 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm sm:text-sm sm:px-3.5">
-                    {chip}
+                {[
+                  {
+                    label: 'Clear expression',
+                    className: 'border-[#F5DAB7] bg-[#FFF7EC] text-[#7A4A10]',
+                    dotClassName: 'bg-[#E58E41]',
+                  },
+                  {
+                    label: 'Storytelling confidence',
+                    className: 'border-[#D9E7F6] bg-[#F6FBFF] text-[#224764]',
+                    dotClassName: 'bg-[#65A7E3]',
+                  },
+                  {
+                    label: 'Parent progress visibility',
+                    className: 'border-[#E4DCF8] bg-[#FBF8FF] text-[#4E447C]',
+                    dotClassName: 'bg-[#9A88E6]',
+                  },
+                ].map((chip) => (
+                  <span key={chip.label} className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm backdrop-blur sm:px-3.5 sm:text-sm ${chip.className}`}>
+                    <span className={`h-2 w-2 rounded-full ${chip.dotClassName}`} aria-hidden="true" />
+                    {chip.label}
                   </span>
                 ))}
               </div>
             </div>
 
-            <aside className="mt-7 w-full overflow-hidden rounded-[24px] border border-slate-200/70 bg-white/95 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.07)] sm:mt-8 sm:p-5 md:rounded-[28px] md:p-6 md:shadow-[0_18px_45px_rgba(15,23,42,0.08)] lg:ml-auto lg:mt-0 lg:max-w-[560px] lg:p-7">
+            <aside className="relative mt-7 w-full overflow-hidden rounded-[24px] border border-slate-200/70 bg-[linear-gradient(150deg,rgba(255,255,255,0.98),rgba(248,251,255,0.95),rgba(255,249,241,0.94))] p-4 shadow-[0_12px_30px_rgba(15,23,42,0.07)] sm:mt-8 sm:p-5 md:rounded-[28px] md:p-6 md:shadow-[0_18px_45px_rgba(15,23,42,0.08)] lg:ml-auto lg:mt-0 lg:max-w-[560px] lg:p-7">
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#FFB878] via-[#A9CFFF] to-[#D9C0FF]" />
               <p className="mb-4 text-left text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500 sm:text-[11px] md:mb-5 md:text-xs md:tracking-[0.22em]">
                 SPEAKING JOURNEY PREVIEW
               </p>
@@ -237,7 +258,7 @@ export default function SpeakingPage() {
                 })}
               </div>
 
-              <div className="mx-auto mt-4 w-full max-w-full rounded-2xl border border-[#E9C68D] bg-gradient-to-br from-[#FFF8EC] to-[#FFF2DA] px-4 py-3.5 text-center shadow-[0_8px_22px_rgba(122,74,16,0.07)] md:mt-5 md:max-w-[450px] md:rounded-[22px] md:px-5 md:py-4">
+              <div className="mx-auto mt-4 w-full max-w-full rounded-2xl border border-[#E9C68D] bg-gradient-to-br from-[#FFF8EC] via-[#FFF6E8] to-[#FFF1D8] px-4 py-3.5 text-center shadow-[0_8px_22px_rgba(122,74,16,0.07)] md:mt-5 md:max-w-[450px] md:rounded-[22px] md:px-5 md:py-4">
                 <span className="block text-[16px] font-extrabold leading-snug text-[#6B3A0E] md:text-[19px]">We identify the child&apos;s speaking gap first.</span>
                 <span className="mt-1 block text-[14px] font-medium leading-snug text-[#7A4A10] md:mt-1.5 md:text-[16px]">Then we suggest the right confidence path.</span>
               </div>

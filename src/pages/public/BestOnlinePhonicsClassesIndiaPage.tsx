@@ -26,6 +26,29 @@ const quickAnswerBlocks = [
   },
 ];
 
+const heroChips = [
+  {
+    label: 'Ages 3–7 + catch-up to 12',
+    className: 'border-[#F4D7B2] bg-[#FFF7EA] text-[#7A4A10]',
+    dotClassName: 'bg-[#E78D3C]',
+  },
+  {
+    label: 'Live 1:1 guidance',
+    className: 'border-[#D8E7F6] bg-[#F6FBFF] text-[#214667]',
+    dotClassName: 'bg-[#67A8E3]',
+  },
+  {
+    label: 'Structured phonics path',
+    className: 'border-[#E3DCF8] bg-[#FBF8FF] text-[#4D417E]',
+    dotClassName: 'bg-[#9A86E5]',
+  },
+  {
+    label: 'Parent progress updates',
+    className: 'border-[#D4EDD9] bg-[#F4FFF7] text-[#236048]',
+    dotClassName: 'bg-[#55B784]',
+  },
+];
+
 const parentQuestionRows = [
   {
     question: 'Is this 1:1 or group?',
@@ -362,10 +385,14 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
   return (
     <div className="bg-gradient-to-b from-[#FFF7FA] via-[#FDFEFF] to-[#EDF6FF] pb-16">
       <section className="relative overflow-hidden bg-gradient-to-br from-[#FFF7FA] via-[#FFFDF8] to-[#EEF7FF] px-4 py-8 sm:px-5 md:py-12 lg:px-8 lg:py-14">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_18%,rgba(255,192,142,0.22),transparent_30%),radial-gradient(circle_at_88%_10%,rgba(167,210,251,0.24),transparent_34%),radial-gradient(circle_at_70%_78%,rgba(208,191,250,0.14),transparent_24%)]" />
+        <div className="pointer-events-none absolute -left-16 top-8 h-44 w-44 rounded-full bg-[#FFD8B3]/45 blur-3xl" />
+        <div className="pointer-events-none absolute right-0 top-0 h-56 w-56 rounded-full bg-[#CFE5FF]/45 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-2 right-1/3 h-36 w-36 rounded-full bg-[#E9D8FF]/30 blur-3xl" />
         <div className="mx-auto max-w-7xl">
-          <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-            <div>
-              <p className="inline-flex items-center rounded-full border border-orange-200 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-orange-700">
+          <div className="relative grid grid-cols-1 items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="relative">
+              <p className="inline-flex items-center rounded-full border border-orange-200/80 bg-white/88 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-orange-700 shadow-sm backdrop-blur">
                 Parent Comparison Guide 2026
               </p>
               <h1 className="mt-4 max-w-full text-[34px] font-bold leading-[1.05] tracking-[-0.035em] text-slate-900 sm:text-[38px] md:max-w-[760px] md:text-[46px] lg:text-[52px]">
@@ -384,43 +411,54 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
                 </Link>
                 <Link
                   to="/phonics"
-                  className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-[#E9DDF9] bg-white px-6 py-3.5 text-base font-semibold text-slate-900 transition hover:bg-[#FBF8FF]"
+                  className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-[#E9DDF9] bg-white/92 px-6 py-3.5 text-base font-semibold text-slate-900 shadow-[0_10px_24px_rgba(148,163,184,0.12)] transition hover:bg-white"
                 >
                   Explore Phonics Program
                 </Link>
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                {['Ages 3–12', 'Live 1:1 guidance', 'Zoom classes', 'Parent progress updates'].map((chip) => (
+                {heroChips.map((chip) => (
                   <span
-                    key={chip}
-                    className="rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm sm:px-3.5 sm:text-sm"
+                    key={chip.label}
+                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm backdrop-blur sm:px-3.5 sm:text-sm ${chip.className}`}
                   >
-                    {chip}
+                    <span className={`h-2 w-2 rounded-full ${chip.dotClassName}`} aria-hidden="true" />
+                    {chip.label}
                   </span>
                 ))}
               </div>
             </div>
 
-            <aside className="w-full rounded-3xl border border-[#E7DCF8] bg-white/95 p-5 shadow-[0_18px_45px_rgba(62,38,92,0.12)] md:p-6 lg:ml-auto lg:max-w-[560px]">
+            <aside className="relative w-full overflow-hidden rounded-[30px] border border-[#E7DCF8] bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(251,248,255,0.94))] p-5 shadow-[0_18px_45px_rgba(62,38,92,0.12)] md:p-6 lg:ml-auto lg:max-w-[560px]">
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#FFB878] via-[#A9CFFF] to-[#D4B9FF]" />
+              <div className="pointer-events-none absolute -right-10 top-8 h-28 w-28 rounded-full bg-[#E8DCFF]/50 blur-3xl" />
               <h2 className="text-xl font-bold text-slate-900">Quick snapshot</h2>
-              <p className="mt-3 text-slate-700">
-                Tiny Steps offers live 1:1 online phonics classes for kids who need structured reading support, live correction, and a clear sound-to-reading path instead of guesswork.
+              <p className="mt-3 max-w-[34rem] text-slate-700">
+                Tiny Steps offers live 1:1 online phonics classes for children who need structured reading support, live correction, and a clear sound-to-reading path.
               </p>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-[#F6D6AF] bg-[#FFF7E8] p-4 text-sm text-slate-700">
-                  <p className="font-semibold text-slate-900">Current reference pricing</p>
-                  <p className="mt-1">
-                    {formatINR(PER_CLASS_PRICE)} per class
-                    {starterPlan ? ` or ${formatINR(starterPlan.monthlyFee)} for ${starterPlan.classes} classes.` : '.'}
-                  </p>
+                <div className="rounded-[22px] border border-[#E3DCF8] bg-[linear-gradient(145deg,rgba(251,248,255,0.96),rgba(255,255,255,0.98))] p-4 text-sm text-slate-700 shadow-[0_10px_24px_rgba(125,96,181,0.08)] sm:col-span-2">
+                  <span className="inline-flex rounded-full border border-[#E3DCF8] bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[#5E4E8C]">
+                    Best for
+                  </span>
+                  <p className="mt-1">Children who need blending help, decoding support, and a structured reading foundation.</p>
                 </div>
-                <div className="rounded-2xl border border-[#DDE6F4] bg-[#F7FBFF] p-4 text-sm text-slate-700">
-                  <p className="font-semibold text-slate-900">Best first step</p>
-                  <p className="mt-1">Use the free assessment to confirm level, fit, and the right starting plan.</p>
+                <div className="rounded-[22px] border border-[#F6D6AF] bg-[linear-gradient(145deg,rgba(255,247,232,0.96),rgba(255,252,246,0.98))] p-4 text-sm text-slate-700 shadow-[0_10px_24px_rgba(176,118,41,0.08)]">
+                  <span className="inline-flex rounded-full border border-[#F6D6AF] bg-white/75 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#8C5316]">
+                    Current reference pricing
+                  </span>
+                  <p className="mt-2 text-lg font-bold text-slate-900">{formatINR(PER_CLASS_PRICE)} per class</p>
+                  {starterPlan ? <p className="mt-1 font-semibold text-slate-800">{formatINR(starterPlan.monthlyFee)} for {starterPlan.classes} classes</p> : null}
+                </div>
+                <div className="rounded-[22px] border border-[#DDE6F4] bg-[linear-gradient(145deg,rgba(247,251,255,0.96),rgba(255,255,255,0.98))] p-4 text-sm text-slate-700 shadow-[0_10px_24px_rgba(91,131,178,0.08)]">
+                  <span className="inline-flex rounded-full border border-[#DDE6F4] bg-white/85 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#345B84]">
+                    Best first step
+                  </span>
+                  <p className="mt-1">Book the free assessment to confirm the child&apos;s current level, fit, and recommended starting plan.</p>
                 </div>
               </div>
-              <p className="mt-4 text-sm text-slate-600">
+              <p className="mt-3 text-xs leading-6 text-slate-500 sm:text-sm">
                 If your child is still stuck despite practice, also review{' '}
                 <Link to="/child-not-reading-properly" className="font-semibold underline underline-offset-2">
                   why a child is not reading properly

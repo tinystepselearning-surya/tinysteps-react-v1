@@ -127,7 +127,28 @@ const PHONICS_SEO_KEYWORDS = [
   'SATPIN phonics',
 ];
 
-const trustChips = ['Ages 3–12', 'Live 1:1 online classes', 'Free phonics assessment', 'Parent progress updates'];
+const trustChips = [
+  {
+    label: 'Ages 3–12',
+    className: 'border-[#F5DAB7] bg-[#FFF7EC] text-[#7A4A10]',
+    dotClassName: 'bg-[#E58E41]',
+  },
+  {
+    label: 'Live 1:1 online classes',
+    className: 'border-[#D6E6F7] bg-[#F6FBFF] text-[#234764]',
+    dotClassName: 'bg-[#61A5E4]',
+  },
+  {
+    label: 'Free phonics assessment',
+    className: 'border-[#E4DCF8] bg-[#FBF8FF] text-[#4C4379]',
+    dotClassName: 'bg-[#9D88E5]',
+  },
+  {
+    label: 'Parent progress updates',
+    className: 'border-[#D4EFDF] bg-[#F4FFF8] text-[#235F49]',
+    dotClassName: 'bg-[#4FB37E]',
+  },
+];
 const pyramidLevels = [
   { step: '5', title: 'Decodable reading fluency', helper: 'Read with smoother confidence' },
   { step: '4', title: 'Digraphs', helper: 'Add vowel teams and patterns' },
@@ -354,9 +375,9 @@ function MetricPill({ children, className = '' }: MetricPillProps) {
   );
 }
 
-function Pill({ children }: { children: React.ReactNode }) {
+function Pill({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <span className="rounded-full border border-white/80 bg-white/85 px-3.5 py-1.5 text-sm font-medium text-slate-700 shadow-sm backdrop-blur">
+    <span className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold shadow-sm backdrop-blur ${className}`}>
       {children}
     </span>
   );
@@ -474,30 +495,34 @@ export default function PhonicsPage({
       <div className="pointer-events-none absolute -left-24 top-24 h-64 w-64 rounded-full bg-sky-200/35 blur-3xl" />
       <div className="pointer-events-none absolute -right-12 top-10 h-72 w-72 rounded-full bg-orange-200/35 blur-3xl" />
 
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#FFF8EF] via-white to-[#EEF8FF] px-6 py-10 md:py-12 lg:px-8 lg:py-14">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,_rgba(251,146,60,0.18),_transparent_34%),radial-gradient(circle_at_85%_0%,_rgba(125,211,252,0.24),_transparent_40%),linear-gradient(180deg,_rgba(255,247,237,0.95),_rgba(248,250,252,0.95))]" />
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#FFF8EF] via-[#FFFDF8] to-[#EEF8FF] px-6 py-10 md:py-12 lg:px-8 lg:py-14">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,_rgba(251,146,60,0.18),_transparent_34%),radial-gradient(circle_at_85%_0%,_rgba(125,211,252,0.24),_transparent_40%),radial-gradient(circle_at_60%_88%,_rgba(196,181,253,0.14),_transparent_26%),linear-gradient(180deg,_rgba(255,247,237,0.96),_rgba(248,250,252,0.94))]" />
         <div className="pointer-events-none absolute -right-16 top-8 h-64 w-64 rounded-full bg-orange-200/35 blur-3xl" />
         <div className="pointer-events-none absolute -left-20 bottom-0 h-72 w-72 rounded-full bg-sky-200/35 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-2 right-1/4 h-40 w-40 rounded-full bg-violet-200/20 blur-3xl" />
         <div className="relative mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">Tiny Steps Phonics</p>
+            <p className="inline-flex items-center rounded-full border border-orange-200/80 bg-white/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-700 shadow-sm backdrop-blur">Tiny Steps Phonics</p>
             <h1 className="mt-4 max-w-[680px] text-[40px] font-black leading-[1.03] tracking-[-0.035em] text-slate-950 md:text-[48px] lg:text-[56px]">{heroTitle}</h1>
             <p className="mt-5 max-w-[660px] text-base leading-7 text-slate-700 md:text-lg md:leading-8">{heroSubtitle}</p>
             <div className="mt-7 flex flex-wrap gap-2.5">
               {trustChips.map((chip) => (
-                <Pill key={chip}>{chip}</Pill>
+                <Pill key={chip.label} className={chip.className}>
+                  <span className={`h-2 w-2 rounded-full ${chip.dotClassName}`} aria-hidden="true" />
+                  {chip.label}
+                </Pill>
               ))}
             </div>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 to="/book-demo"
-                className="inline-flex items-center justify-center rounded-full bg-slate-950 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-slate-900"
+                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#FF7B66] to-[#FF9B72] px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(255,126,99,0.3)] transition hover:from-[#FF715B] hover:to-[#FF9267]"
               >
                 Book Free Assessment
               </Link>
               <Link
                 to="/phonics#learning-path"
-                className="inline-flex items-center justify-center rounded-full border border-orange-300 bg-orange-50 px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-orange-100"
+                className="inline-flex items-center justify-center rounded-full border border-[#E9D7C0] bg-white/88 px-6 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-white"
               >
                 See Learning Path
               </Link>
@@ -519,7 +544,7 @@ export default function PhonicsPage({
             </p>
           </div>
 
-          <PremiumCard className="mx-auto w-full max-w-[560px] rounded-[28px] border border-slate-200/70 bg-white/94 p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)] md:p-6 lg:ml-auto lg:p-7">
+          <PremiumCard className="mx-auto w-full max-w-[560px] rounded-[28px] border border-slate-200/70 bg-[linear-gradient(150deg,rgba(255,255,255,0.98),rgba(248,251,255,0.94),rgba(255,250,244,0.92))] p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)] md:p-6 lg:ml-auto lg:p-7">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500 md:text-xs">Your child&apos;s reading journey</p>
               <p className="mt-1 text-sm text-slate-700 md:text-base">From first sounds to confident reading</p>
@@ -565,9 +590,9 @@ export default function PhonicsPage({
                 })}
               </div>
 
-              <div className="mt-5 rounded-[20px] border border-slate-200 bg-[#F8FAFC] px-4 py-4 md:px-5">
+              <div className="mt-5 rounded-[20px] border border-white/80 bg-[linear-gradient(145deg,rgba(255,248,239,0.9),rgba(247,251,255,0.9))] px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)] md:px-5">
                 <div className="flex flex-col gap-3">
-                  <span className="w-fit rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+                  <span className="w-fit rounded-full border border-white/80 bg-white/92 px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm">
                     We keep parents updated
                   </span>
                   <div className="flex flex-nowrap items-center justify-center gap-1 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

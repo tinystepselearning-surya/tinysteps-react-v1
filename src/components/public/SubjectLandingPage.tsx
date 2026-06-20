@@ -10,10 +10,11 @@ type SubjectLandingPageProps = {
 };
 
 const sectionShell =
-  'mx-auto max-w-6xl rounded-[32px] border border-white/70 bg-white/90 px-6 py-8 shadow-sm backdrop-blur sm:px-8 sm:py-10';
-const cardShell = 'rounded-3xl border border-slate-200 bg-white p-5 shadow-sm';
+  'mx-auto max-w-6xl rounded-[32px] border border-white/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.97),rgba(248,250,252,0.94))] px-6 py-8 shadow-[0_18px_44px_rgba(15,23,42,0.07)] backdrop-blur sm:px-8 sm:py-10';
+const cardShell =
+  'rounded-3xl border border-slate-200/90 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(248,250,252,0.9))] p-5 shadow-[0_12px_28px_rgba(15,23,42,0.06)]';
 const ctaClass =
-  'inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white transition';
+  'inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(255,126,99,0.3)] transition';
 
 export default function SubjectLandingPage({ subject }: SubjectLandingPageProps) {
   const data = useMemo(() => getSubjectLandingData(subject), [subject]);
@@ -97,7 +98,7 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
   const collapseAllPhonicsFaq = () => setOpenPhonicsFaqIndexes([]);
 
   const activeSectionShell = isPhonicsLanding
-    ? 'mx-auto max-w-6xl rounded-[32px] border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-sky-50 px-6 py-8 shadow-sm sm:px-8 sm:py-10'
+    ? 'mx-auto max-w-6xl rounded-[32px] border border-slate-200/85 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(245,250,255,0.92),rgba(255,249,240,0.9))] px-6 py-8 shadow-[0_18px_44px_rgba(15,23,42,0.07)] sm:px-8 sm:py-10'
     : sectionShell;
 
   const breadcrumbSchema = useMemo(
@@ -176,7 +177,7 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
   ]);
 
   return (
-    <div className="space-y-6 pb-16">
+    <div className="space-y-6 bg-gradient-to-b from-[#FFF8F1] via-[#FDFEFF] to-[#EEF7FF] pb-16">
       <PageHero
         eyebrow={data.eyebrow}
         title={effectiveHeroTitle}
@@ -191,7 +192,7 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
 
       <section className="px-6">
         <div className={activeSectionShell}>
-          <div className={`max-w-4xl rounded-3xl border p-5 ${data.palette.accentBorder} ${data.palette.accentSurface}`}>
+          <div className={`max-w-4xl rounded-3xl border p-5 shadow-sm ${data.palette.accentBorder} ${data.palette.accentSurface}`}>
             <h2 className="text-2xl font-bold text-slate-900">{answerBlock.title}</h2>
             <p className="mt-3 text-base leading-7 text-slate-700">{answerBlock.body}</p>
             <p className="mt-3 text-sm font-medium text-slate-600">{answerBlock.intent}</p>
