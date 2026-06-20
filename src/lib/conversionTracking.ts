@@ -53,6 +53,7 @@ export const HIGH_INTENT_ROUTE_CLUSTER: Record<string, Exclude<PageCluster, 'blo
   '/spoken-english-classes-for-kids': 'money',
   '/writing-classes-for-kids': 'money',
   '/phonics-fees-india': 'money',
+  '/best-online-phonics-classes-for-kids-in-india': 'money',
   '/online-english-classes-for-kids-india': 'money',
 
   '/english-classes-for-4-year-old': 'age',
