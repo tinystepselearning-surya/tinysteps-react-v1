@@ -72,6 +72,7 @@ type EnrollmentIdentity = {
   courseName: string | null;
   parentId: string | null;
   parentIds: string[];
+  joinUrl: string | null;
 };
 
 type KidSyncSummary = {
@@ -280,6 +281,15 @@ function resolveCourseName(record: Record<string, unknown> | undefined): string 
   );
 }
 
+export function buildTeacherReassignmentJoinLinkPatch(joinUrl: string | null): Record<string, unknown> {
+  const normalizedJoinUrl = nonEmptyString(joinUrl);
+  return {
+    joinUrl: normalizedJoinUrl,
+    meetingLink: null,
+    classLink: null,
+  };
+}
+
 function buildTeacherIdentity(input: {
   teacherId: string;
   teacherName?: string | null;
@@ -345,6 +355,11 @@ function buildEnrollmentIdentity(input: {
     courseName: resolveCourseName(input.enrollment),
     parentId,
     parentIds: mergedParentIds,
+    joinUrl:
+      nonEmptyString((input.enrollment as any).joinUrl) ||
+      nonEmptyString((input.enrollment as any).meetingLink) ||
+      nonEmptyString((input.enrollment as any).classLink) ||
+      null,
   };
 }
 
@@ -470,7 +485,7 @@ export function buildSessionRepairQueryCoverage(
   return plans;
 }
 
-function buildSessionRepairPatch(args: {
+export function buildSessionRepairPatch(args: {
   existing: Record<string, unknown>;
   teacher: TeacherIdentity;
   student: StudentIdentity;
@@ -556,6 +571,7 @@ function buildSessionRepairPatch(args: {
     ...(shouldReplaceCourseSnapshot && enrollment.courseName ? { courseName: enrollment.courseName, courseTitle: enrollment.courseName } : {}),
     ...(toOptionalId((existing as any).parentId) ? {} : enrollment.parentId ? { parentId: enrollment.parentId } : {}),
     ...(parentIds.length > 0 ? { parentIds } : {}),
+    ...buildTeacherReassignmentJoinLinkPatch(enrollment.joinUrl),
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     updatedBy: actorIdentity,
     reassignedFromTeacherId: previousTeacherId || null,
@@ -1207,6 +1223,11 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
     }
   }
   const reassignmentReason = toOptionalId(request.data?.reassignmentReason);
+  const replacementJoinUrl =
+    nonEmptyString(request.data?.joinUrl) ||
+    nonEmptyString(request.data?.meetingLink) ||
+    nonEmptyString(request.data?.classLink) ||
+    null;
   const teacherIdentity = buildTeacherIdentity({
     teacherId: newTeacherId,
     teacherName: newTeacherName,
@@ -1248,6 +1269,7 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
     previousTeacherId: previousTeacherId || null,
     previousTeacherName: previousTeacherName || null,
     previousTeacherEmail: previousTeacherEmail || null,
+    ...buildTeacherReassignmentJoinLinkPatch(replacementJoinUrl),
   };
   if (reassignmentReason) enrollmentPatch.reassignmentReason = reassignmentReason;
 

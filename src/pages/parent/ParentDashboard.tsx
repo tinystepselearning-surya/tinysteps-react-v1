@@ -89,6 +89,7 @@ import {
   getSessionStartDate,
   isSessionTimeFallback,
 } from "../../lib/sessionTime";
+import { getJoinLinkCandidate, resolveSessionJoinLink } from "../../lib/sessionJoinLink";
 import { isSessionCanonicalForEnrollment } from "../../lib/sessionScheduleIntegrity";
 import {
   buildDashboardHeroMessage,
@@ -209,6 +210,19 @@ type KidSession = {
   kidId?: string;
   kidIds?: string[];
   [key: string]: any;
+};
+
+type JoinClassResolutionSource =
+  | "enrollment"
+  | "child_dashboard"
+  | "upcoming_session"
+  | "session_resolver"
+  | "unavailable";
+
+type JoinClassResolution = {
+  url: string;
+  source: JoinClassResolutionSource;
+  reason?: string;
 };
 
 type BillingCharge = {
@@ -397,6 +411,13 @@ type ParentWorksheetGroup = {
   label: string;
   items: ParentWorksheetItem[];
 };
+
+const HERO_JOIN_DISABLED_REASON = "Class link will appear once assigned.";
+
+const resolveSessionJoinClassUrl = (
+  session: KidSession,
+  enrollmentsById: Map<string, Record<string, unknown>>,
+): string => resolveSessionJoinLink(session, enrollmentsById);
 
 const chunkIds = <T,>(items: T[], size = 10): T[][] => {
   if (!items.length) return [];
@@ -2785,33 +2806,9 @@ export default function ParentDashboard() {
     hapticLight();
     setJoiningSessionId(session.id);
     try {
-      const directJoinUrl =
-        (typeof session.joinUrl === "string" && session.joinUrl.trim()) ||
-        (typeof (session as any).meetingLink === "string" && String((session as any).meetingLink).trim()) ||
-        "";
-      if (directJoinUrl) {
-        openMeetingLink(directJoinUrl);
-        return;
-      }
-
-      const enrollmentIdFromSession =
-        (typeof (session as any).enrollmentId === "string" && String((session as any).enrollmentId).trim()) ||
-        "";
-      const enrollmentIdFromSessionId =
-        typeof session.id === "string" && session.id.includes("_")
-          ? session.id.split("_")[0].trim()
-          : "";
-      const enrollmentId = enrollmentIdFromSession || enrollmentIdFromSessionId;
-      if (!enrollmentId) return;
-
-      const enrollmentSnap = await getDoc(doc(db, "enrollments", enrollmentId));
-      const data = enrollmentSnap.data() as any;
-      const fallbackJoinUrl =
-        (typeof data?.joinUrl === "string" && data.joinUrl.trim()) ||
-        (typeof data?.meetingLink === "string" && data.meetingLink.trim()) ||
-        "";
-      if (!fallbackJoinUrl) return;
-      openMeetingLink(fallbackJoinUrl);
+      const resolvedJoinUrl = resolveSessionJoinClassUrl(session, activeEnrollmentById);
+      if (!resolvedJoinUrl) return;
+      openMeetingLink(resolvedJoinUrl);
     } catch (error) {
       console.error("[ParentDashboard] Failed to open join class link", error);
     } finally {
@@ -3794,6 +3791,18 @@ export default function ParentDashboard() {
     });
   }, [enrollmentsQuery.data, selectedKidId, teacherLookupQuery.data, formatCourseLabel]);
 
+  const selectedKidEnrollmentDocs = useMemo(() => {
+    const enrollments = (enrollmentsQuery.data ?? []) as Enrollment[];
+    const kidId = selectedKidId ? String(selectedKidId) : "";
+    if (!kidId) return [] as Enrollment[];
+    return enrollments.filter((enr) => {
+      if (String(enr.kidId || "") === kidId) return true;
+      if (Array.isArray(enr.kidIds) && enr.kidIds.some((id) => String(id) === kidId)) return true;
+      if (String(enr.studentId || "") === kidId) return true;
+      return false;
+    });
+  }, [enrollmentsQuery.data, selectedKidId]);
+
   const visibleParentWorksheets = useMemo(() => {
     const worksheets = parentWorksheetsQuery.data ?? [];
     return worksheets
@@ -3963,12 +3972,7 @@ export default function ParentDashboard() {
       status !== "cancelled" &&
       status !== "no_show" &&
       status !== "reschedule_requested" &&
-      ((typeof session.joinUrl === "string" && session.joinUrl.trim().length > 0) ||
-        (typeof (session as any).meetingLink === "string" &&
-          String((session as any).meetingLink).trim().length > 0) ||
-        (typeof (session as any).enrollmentId === "string" &&
-          String((session as any).enrollmentId).trim().length > 0) ||
-        (typeof session.id === "string" && session.id.includes("_")))
+      resolveSessionJoinClassUrl(session, activeEnrollmentById).length > 0
     );
   };
 
@@ -4364,6 +4368,51 @@ export default function ParentDashboard() {
     selectedKid,
   ]);
 
+  const heroJoinClass = useMemo<JoinClassResolution>(() => {
+    const preferredStatuses = new Set(["active", "scheduled", "confirmed", "trial", "ongoing"]);
+    const nowMs = Date.now();
+    const orderedEnrollments = [...selectedKidEnrollmentDocs].sort((a, b) => {
+      const aStatus = String(a.status || "").trim().toLowerCase();
+      const bStatus = String(b.status || "").trim().toLowerCase();
+      const aRank = preferredStatuses.has(aStatus) ? 0 : 1;
+      const bRank = preferredStatuses.has(bStatus) ? 0 : 1;
+      if (aRank !== bRank) return aRank - bRank;
+      return String(a.id || "").localeCompare(String(b.id || ""));
+    });
+
+    for (const enrollment of orderedEnrollments) {
+      const enrollmentJoinUrl = getJoinLinkCandidate(enrollment);
+      if (enrollmentJoinUrl) {
+        return { url: enrollmentJoinUrl, source: "enrollment" };
+      }
+    }
+
+    const childDashboardJoinUrl = getJoinLinkCandidate(selectedKid);
+    if (childDashboardJoinUrl) {
+      return { url: childDashboardJoinUrl, source: "child_dashboard" };
+    }
+
+    const candidateRows = sortedClassSessions.filter((row) => {
+      if (row.status === "completed" || row.status === "cancelled" || row.status === "no_show") {
+        return false;
+      }
+      return row.start.getTime() >= nowMs - 2 * 60 * 60 * 1000;
+    });
+
+    for (const row of candidateRows) {
+      const resolvedSessionJoinUrl = resolveSessionJoinClassUrl(row.session, activeEnrollmentById);
+      if (resolvedSessionJoinUrl) {
+        return { url: resolvedSessionJoinUrl, source: "upcoming_session" };
+      }
+    }
+
+    return {
+      url: "",
+      source: "unavailable",
+      reason: HERO_JOIN_DISABLED_REASON,
+    };
+  }, [activeEnrollmentById, selectedKid, selectedKidEnrollmentDocs, sortedClassSessions]);
+
   const renderStageGrid = (
     stageSummaries: Array<any>,
     courseId: string | null,
@@ -4533,16 +4582,7 @@ export default function ParentDashboard() {
       ) {
         return false;
       }
-      if (typeof session.joinUrl === "string" && session.joinUrl.trim().length > 0) {
-        return true;
-      }
-      if (typeof (session as any).meetingLink === "string" && String((session as any).meetingLink).trim().length > 0) {
-        return true;
-      }
-      if (typeof (session as any).enrollmentId === "string" && String((session as any).enrollmentId).trim().length > 0) {
-        return true;
-      }
-      return typeof session.id === "string" && session.id.includes("_");
+      return resolveSessionJoinClassUrl(session, activeEnrollmentById).length > 0;
     };
 
     const selectedCourseLabel = selectedCourse?.courseLabel || "";
@@ -4585,6 +4625,8 @@ export default function ParentDashboard() {
           alertText={dashboardAlerts.length > 0 ? dashboardAlerts[0] : "No urgent alerts right now"}
           onViewInsights={() => setTab("insights")}
           onViewClasses={() => setTab("classes")}
+          joinClassUrl={heroJoinClass.url || undefined}
+          joinClassDisabledReason={heroJoinClass.reason || HERO_JOIN_DISABLED_REASON}
         />
 
         <ParentDashboardKpis

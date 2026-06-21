@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { buildSessionRepairQueryCoverage } from '../src/lifecycle';
+import {
+  buildSessionRepairPatch,
+  buildSessionRepairQueryCoverage,
+  buildTeacherReassignmentJoinLinkPatch,
+} from '../src/lifecycle';
 
 describe('buildSessionRepairQueryCoverage', () => {
   it('always includes the primary enrollmentId query', () => {
@@ -94,5 +98,70 @@ describe('buildSessionRepairQueryCoverage', () => {
     const keys = coverage.map((entry) => entry.key);
     expect(new Set(keys).size).toBe(keys.length);
     expect(coverage.filter((entry) => entry.legacy)).toHaveLength(0);
+  });
+});
+
+describe('teacher reassignment join-link handling', () => {
+  it('clears denormalized meeting-link aliases when no replacement link is provided', () => {
+    expect(buildTeacherReassignmentJoinLinkPatch(null)).toEqual({
+      joinUrl: null,
+      meetingLink: null,
+      classLink: null,
+    });
+  });
+
+  it('rewrites future session snapshots to remove stale meeting links during reassignment', () => {
+    const patch = buildSessionRepairPatch({
+      existing: {
+        enrollmentId: 'enr_123',
+        teacherId: 'teacher_old',
+        teacherIds: ['teacher_old'],
+        joinUrl: 'https://old-teacher.example.com/room',
+        meetingLink: 'https://old-teacher.example.com/room',
+        classLink: 'https://old-teacher.example.com/room',
+      },
+      teacher: {
+        teacherId: 'teacher_new',
+        teacherIds: ['teacher_new'],
+        teacherName: 'Teacher New',
+        teacherDisplayName: 'Teacher New',
+        teacherEmail: 'teacher.new@example.com',
+      },
+      student: {
+        kidId: 'kid_1',
+        kidIds: ['kid_1'],
+        studentId: 'kid_1',
+        childId: 'kid_1',
+        studentName: 'Student One',
+        kidName: 'Student One',
+        childName: 'Student One',
+        studentFullName: 'Student One',
+        kidFullName: 'Student One',
+        childFullName: 'Student One',
+      },
+      enrollment: {
+        enrollmentId: 'enr_123',
+        courseId: 'course_1',
+        courseName: 'Course One',
+        parentId: 'parent_1',
+        parentIds: ['parent_1'],
+        joinUrl: null,
+      },
+      actorIdentity: 'admin_1',
+      previousTeacherId: 'teacher_old',
+      previousTeacherName: 'Teacher Old',
+      previousTeacherEmail: 'teacher.old@example.com',
+      includeEnrollmentId: false,
+    });
+
+    expect(patch).toMatchObject({
+      teacherId: 'teacher_new',
+      teacherIds: ['teacher_new'],
+      assignedTeacherId: 'teacher_new',
+      primaryTeacherId: 'teacher_new',
+      joinUrl: null,
+      meetingLink: null,
+      classLink: null,
+    });
   });
 });

@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ExternalLink } from "lucide-react";
 
 type ParentDashboardHeroProps = {
   childName: string;
@@ -13,6 +14,8 @@ type ParentDashboardHeroProps = {
   alertText: string;
   onViewInsights: () => void;
   onViewClasses: () => void;
+  joinClassUrl?: string;
+  joinClassDisabledReason?: string;
 };
 
 export default function ParentDashboardHero(props: ParentDashboardHeroProps) {
@@ -28,6 +31,8 @@ export default function ParentDashboardHero(props: ParentDashboardHeroProps) {
     alertText,
     onViewInsights,
     onViewClasses,
+    joinClassUrl,
+    joinClassDisabledReason = "Class link will appear once assigned.",
   } = props;
 
   return (
@@ -63,8 +68,40 @@ export default function ParentDashboardHero(props: ParentDashboardHeroProps) {
             >
               View Classes
             </Button>
+            {joinClassUrl ? (
+              <Button
+                asChild
+                className="flex-1 border border-fuchsia-200/80 bg-gradient-to-r from-indigo-600 via-fuchsia-500 to-cyan-400 text-white shadow-[0_0_0_1px_rgba(255,255,255,0.18),0_0_16px_rgba(168,85,247,0.38),0_0_28px_rgba(59,130,246,0.28)] transition-all duration-200 hover:scale-[1.02] hover:from-indigo-500 hover:via-fuchsia-500 hover:to-cyan-300 hover:shadow-[0_0_0_1px_rgba(255,255,255,0.24),0_0_22px_rgba(168,85,247,0.5),0_0_34px_rgba(59,130,246,0.38)] focus-visible:ring-fuchsia-300 sm:flex-none"
+              >
+                <a
+                  href={joinClassUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Join Class in a new tab"
+                >
+                  Join Class
+                  <ExternalLink className="ml-1.5 h-4 w-4" />
+                </a>
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                disabled
+                aria-label={joinClassDisabledReason}
+                title={joinClassDisabledReason}
+                className="flex-1 border border-fuchsia-200/50 bg-gradient-to-r from-indigo-300 via-fuchsia-300 to-cyan-200 text-white opacity-60 shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_0_14px_rgba(168,85,247,0.22)] sm:flex-none"
+              >
+                Join Class
+                <ExternalLink className="ml-1.5 h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
+        {!joinClassUrl && (
+          <div className="-mt-1 text-xs text-slate-500 dark:text-slate-400">
+            {joinClassDisabledReason}
+          </div>
+        )}
 
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-xl border border-slate-200 bg-white/90 px-3 py-2.5 text-sm dark:border-slate-700 dark:bg-slate-900/80">

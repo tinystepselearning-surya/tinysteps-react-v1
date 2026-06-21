@@ -41,6 +41,7 @@ import {
 import { useToast } from '@components/hooks/use-toast';
 import { db } from '../../lib/firebaseConfig';
 import { doesSessionMatchEnrollmentSchedule } from '../../lib/sessionScheduleIntegrity';
+import { resolveSessionJoinLink } from '../../lib/sessionJoinLink';
 import { collectSessionTeacherRefs, resolvePreferredSessionTeacherRef } from '../../lib/sessionTeacherRefs';
 import { useAuthStore } from '../../store/useAuthStore';
 
@@ -1757,18 +1758,20 @@ export default function TodaysNotifications() {
 
     setJoiningSessionId(row.id);
     try {
-      const directJoinUrl =
-        (typeof row.joinUrl === 'string' && row.joinUrl.trim()) ||
-        (typeof row.meetingLink === 'string' && row.meetingLink.trim()) ||
-        '';
-      if (directJoinUrl) {
-        openMeetingLink(directJoinUrl);
-        return;
-      }
-
       const enrollmentId =
         (typeof row.enrollmentId === 'string' && row.enrollmentId.trim()) ||
         (typeof row.id === 'string' && row.id.includes('_') ? row.id.split('_')[0].trim() : '');
+      const cachedJoinUrl = resolveSessionJoinLink(
+        row,
+        enrollmentId && enrollmentMap[enrollmentId]
+          ? { [enrollmentId]: enrollmentMap[enrollmentId] as Record<string, unknown> }
+          : undefined,
+      );
+      if (cachedJoinUrl) {
+        openMeetingLink(cachedJoinUrl);
+        return;
+      }
+
       if (!enrollmentId) {
         toast({
           title: 'Meeting link unavailable',
@@ -1778,24 +1781,14 @@ export default function TodaysNotifications() {
         return;
       }
 
-      const cachedEnrollment = enrollmentMap[enrollmentId];
-      const cachedJoinUrl =
-        (typeof cachedEnrollment?.joinUrl === 'string' && cachedEnrollment.joinUrl.trim()) ||
-        (typeof cachedEnrollment?.meetingLink === 'string' && cachedEnrollment.meetingLink.trim()) ||
-        '';
-      if (cachedJoinUrl) {
-        openMeetingLink(cachedJoinUrl);
-        return;
-      }
-
       const enrollmentSnap = await getDoc(doc(db, 'enrollments', enrollmentId));
       const enrollmentData = enrollmentSnap.data() as EnrollmentDoc | undefined;
-      const fallbackJoinUrl =
-        (typeof enrollmentData?.joinUrl === 'string' && enrollmentData.joinUrl.trim()) ||
-        (typeof enrollmentData?.meetingLink === 'string' && enrollmentData.meetingLink.trim()) ||
-        '';
+      const resolvedJoinUrl = resolveSessionJoinLink(
+        row,
+        enrollmentData ? { [enrollmentId]: enrollmentData as unknown as Record<string, unknown> } : undefined,
+      );
 
-      if (!fallbackJoinUrl) {
+      if (!resolvedJoinUrl) {
         toast({
           title: 'Meeting link unavailable',
           description: 'No meeting link is configured for this class yet.',
@@ -1804,7 +1797,7 @@ export default function TodaysNotifications() {
         return;
       }
 
-      openMeetingLink(fallbackJoinUrl);
+      openMeetingLink(resolvedJoinUrl);
     } catch (error: any) {
       console.error('[TodaysNotifications] Failed to open class link', error);
       toast({

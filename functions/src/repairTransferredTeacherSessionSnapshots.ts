@@ -95,6 +95,15 @@ function resolveCourseSnapshot(
   };
 }
 
+function buildTransferredJoinLinkPatch(joinUrl: string | null): Record<string, unknown> {
+  const normalizedJoinUrl = toCleanText(joinUrl) || null;
+  return {
+    joinUrl: normalizedJoinUrl,
+    meetingLink: null,
+    classLink: null,
+  };
+}
+
 function collectTeacherAliasIds(row: FirestoreRow): string[] {
   return Array.from(
     new Set([
@@ -140,6 +149,11 @@ export const repairTransferredTeacherSessionSnapshots = onCall({ region: REGION 
   const fromTeacherUid = toCleanText(request.data?.fromTeacherUid);
   const toTeacherUid = toCleanText(request.data?.toTeacherUid);
   const fromDate = toCleanText(request.data?.fromDate);
+  const replacementJoinUrl =
+    toCleanText(request.data?.joinUrl) ||
+    toCleanText(request.data?.meetingLink) ||
+    toCleanText(request.data?.classLink) ||
+    '';
   const dryRun = request.data?.dryRun === true;
 
   if (!toTeacherUid || !fromDate) {
@@ -271,6 +285,7 @@ export const repairTransferredTeacherSessionSnapshots = onCall({ region: REGION 
       ...(studentSnapshot.childName ? { childName: studentSnapshot.childName } : {}),
       ...(courseSnapshot.courseId ? { courseId: courseSnapshot.courseId } : {}),
       ...(courseSnapshot.courseName ? { courseName: courseSnapshot.courseName, courseTitle: courseSnapshot.courseTitle, courseLabel: courseSnapshot.courseName } : {}),
+      ...buildTransferredJoinLinkPatch(replacementJoinUrl || null),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedBy: 'repairTransferredTeacherSessionSnapshots',
     };
