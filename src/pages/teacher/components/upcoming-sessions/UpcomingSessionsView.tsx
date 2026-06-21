@@ -5,8 +5,8 @@ import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { Badge } from '@components/ui/badge';
 import { useUpcomingSessions } from '../../hooks/useUpcomingSessions';
+import { INDIA_TIME_ZONE, formatSessionDate, formatSessionTimeRange, getSessionStartDate } from '../../../../lib/sessionTime';
 import { TeacherSession } from '../../../../types/Teacher';
-import { format, parseISO } from 'date-fns';
 import { CanvaLessonPlanModal } from '../lesson-plan/CanvaLessonPlanModal';
 import { FileText } from 'lucide-react';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
@@ -63,14 +63,6 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
   const handleViewLessonPlan = (session: TeacherSession) => {
     setSelectedSession(session);
     setIsLessonPlanModalOpen(true);
-  };
-
-  const formatSessionDate = (rawDate: string, pattern: string) => {
-    try {
-      return format(parseISO(rawDate), pattern);
-    } catch {
-      return rawDate || '-';
-    }
   };
 
   const courseOptions = useMemo(() => {
@@ -242,12 +234,17 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
   const filteredSessions = useMemo(() => {
     return [...resolvedSessions]
       .filter(({ session, resolved }) => {
-        const displayDate = formatSessionDate(session.date, 'EEE, dd MMM');
+        const displayDate = formatSessionDate(session, {
+          timeZone: INDIA_TIME_ZONE,
+          dateOptions: { weekday: 'short', day: '2-digit', month: 'short' },
+        });
+        const displayTime = formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE });
 
         const haystack = [
           session.courseName || '',
           session.date || '',
           displayDate,
+          displayTime,
           session.startTime || '',
           session.endTime || '',
           resolved.name,
@@ -261,11 +258,9 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
         return matchesSearch && matchesCourse;
       })
       .sort((a, b) => {
-        const aSession = a.session;
-        const bSession = b.session;
-        const aKey = `${aSession.date || ''}T${aSession.startTime || '00:00'}`;
-        const bKey = `${bSession.date || ''}T${bSession.startTime || '00:00'}`;
-        return aKey.localeCompare(bKey);
+        const aStart = getSessionStartDate(a.session)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        const bStart = getSessionStartDate(b.session)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        return aStart - bStart;
       });
   }, [resolvedSessions, normalizedSearch, courseFilter]);
 
@@ -348,12 +343,14 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
                   >
                     <div className="grid grid-cols-[1fr_0.9fr_1.2fr_1fr_0.8fr_260px] items-center gap-3">
                       <div className="text-sm font-medium text-slate-700">
-                        {formatSessionDate(session.date, 'EEE, dd MMM')}
+                        {formatSessionDate(session, {
+                          timeZone: INDIA_TIME_ZONE,
+                          dateOptions: { weekday: 'short', day: '2-digit', month: 'short' },
+                        })}
                       </div>
 
                       <div className="text-sm font-medium text-slate-900">
-                        {session.startTime}
-                        {session.endTime ? ` - ${session.endTime}` : ''}
+                        {formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE })}
                       </div>
 
                       <div className="truncate text-sm font-semibold text-slate-900">
@@ -406,7 +403,7 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
             setSelectedSession(null);
           }}
           lessonPlanUrl={selectedSession.lessonPlanUrl}
-          sessionTitle={`${selectedSession.courseName} - ${selectedSession.startTime}`}
+          sessionTitle={`${selectedSession.courseName} - ${formatSessionTimeRange(selectedSession, { timeZone: INDIA_TIME_ZONE })}`}
           courseName={selectedSession.courseName}
         />
       )}

@@ -19,9 +19,17 @@ export interface ParentSession {
   courseName: string;
   date: string;
   startTime: string;
+  endTime?: string;
   status: 'scheduled' | 'in_progress' | 'completed';
   teacherName?: string;
   joinUrl?: string;
+  meetingLink?: string;
+  startAt?: Timestamp;
+  endAt?: Timestamp;
+  scheduledStartAt?: Timestamp;
+  scheduledEndAt?: Timestamp;
+  durationMins?: number;
+  durationMinutes?: number;
 }
 
 export interface ParentInvoiceLineItem {

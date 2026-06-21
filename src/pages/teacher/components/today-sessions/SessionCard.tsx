@@ -2,11 +2,11 @@ import React, { useMemo, useState } from 'react';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { TeacherSession } from '../../../../types/Teacher';
-import { format } from 'date-fns';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../../lib/firebaseConfig';
 import { toast } from '@components/hooks/use-toast';
 import { useAuthStore } from '../../../../store/useAuthStore';
+import { INDIA_TIME_ZONE, formatSessionTimeRange, getSessionEndDate, getSessionStartDate } from '../../../../lib/sessionTime';
 import {
   cleanStudentDisplayName,
   resolveTeacherSessionCourseLabel,
@@ -33,37 +33,10 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
   const ATTENDANCE_CLOSE_WINDOW_MS = 24 * 60 * 60 * 1000;
   const { user } = useAuthStore();
   const [isStartingClass, setIsStartingClass] = useState(false);
-
-  const toDateMaybe = (value: any): Date | null => {
-    if (!value) return null;
-    if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
-    if (typeof value?.toDate === 'function') {
-      const date = value.toDate();
-      if (date instanceof Date && !Number.isNaN(date.getTime())) return date;
-    }
-    if (typeof value === 'string' || typeof value === 'number') {
-      const date = new Date(value);
-      if (!Number.isNaN(date.getTime())) return date;
-    }
-    return null;
-  };
-
-  const fromFieldsStart =
-    session.date && session.startTime ? new Date(`${session.date}T${session.startTime}`) : null;
-  const fromFieldsEnd =
-    session.date && session.endTime ? new Date(`${session.date}T${session.endTime}`) : null;
-  const startAtFallback = toDateMaybe((session as any).startAt);
-  const endAtFallback = toDateMaybe((session as any).endAt);
-
-  const sessionStart =
-    fromFieldsStart && !Number.isNaN(fromFieldsStart.getTime())
-      ? fromFieldsStart
-      : startAtFallback || new Date();
-
+  const sessionStart = getSessionStartDate(session) || new Date();
   const sessionEnd =
-    fromFieldsEnd && !Number.isNaN(fromFieldsEnd.getTime())
-      ? fromFieldsEnd
-      : endAtFallback || new Date(sessionStart.getTime() + 30 * 60 * 1000);
+    getSessionEndDate(session) ||
+    new Date(sessionStart.getTime() + 30 * 60 * 1000);
 
   const now = new Date();
   const hasStarted = sessionStart.getTime() <= now.getTime();
@@ -79,7 +52,8 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
   };
 
   const getSessionStartMillis = (): number | null => {
-    if (startAtFallback) return startAtFallback.getTime();
+    const resolved = getSessionStartDate(session);
+    if (resolved) return resolved.getTime();
     const dateYmd = typeof session.date === 'string' ? session.date.trim() : '';
     const startTime = normalizeStartTime(session.startTime);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateYmd) || !startTime) return null;
@@ -100,7 +74,14 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
     !canOverrideAttendanceTime && attendanceWindowCloseMs !== null && nowMs > attendanceWindowCloseMs;
   const isAttendanceLocked = isAttendanceTimeUnverified || isAttendanceTooEarly || isAttendanceWindowClosed;
   const attendanceOpensLabel =
-    attendanceAllowedAtMs !== null ? format(new Date(attendanceAllowedAtMs), 'h:mm a') : null;
+    attendanceAllowedAtMs !== null
+      ? new Intl.DateTimeFormat('en-GB', {
+          timeZone: INDIA_TIME_ZONE,
+          hour: '2-digit',
+          minute: '2-digit',
+          hourCycle: 'h23',
+        }).format(new Date(attendanceAllowedAtMs))
+      : null;
 
   const getAttendanceStatus = (value: any): string | undefined => {
     if (!value) return undefined;
@@ -215,12 +196,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
       ? resolvedStudentNames.join(', ')
       : 'Student';
 
-  const timeText =
-    `${session.startTime || format(sessionStart, 'HH:mm')}${
-      (session.endTime || format(sessionEnd, 'HH:mm'))
-        ? ` - ${session.endTime || format(sessionEnd, 'HH:mm')}`
-        : ''
-    }`;
+  const timeText = formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE });
 
   return (
     <div className="border-b border-slate-100 px-4 py-3 last:border-b-0 hover:bg-slate-50/40">

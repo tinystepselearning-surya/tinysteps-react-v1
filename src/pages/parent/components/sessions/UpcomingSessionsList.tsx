@@ -1,6 +1,13 @@
 import React, { useMemo } from 'react';
 import { Card } from '@components/ui/card';
 import { Badge } from '@components/ui/badge';
+import {
+  formatIndiaTimeRange,
+  formatSessionDate,
+  formatSessionTimeRange,
+  getSessionStartDate,
+  isSessionTimeFallback,
+} from '../../../../lib/sessionTime';
 import { ParentSession } from '../../../../types/Parent';
 
 interface UpcomingSessionsListProps {
@@ -10,10 +17,15 @@ interface UpcomingSessionsListProps {
 const groupSessions = (sessions: ParentSession[]) => {
   const groups: Record<string, ParentSession[]> = {};
   sessions.forEach((session) => {
-    groups[session.date] ||= [];
-    groups[session.date].push(session);
+    const dateLabel = formatSessionDate(session);
+    groups[dateLabel] ||= [];
+    groups[dateLabel].push(session);
   });
-  return Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]));
+  return Object.entries(groups).sort((a, b) => {
+    const aStart = getSessionStartDate(a[1][0])?.getTime() ?? Number.MAX_SAFE_INTEGER;
+    const bStart = getSessionStartDate(b[1][0])?.getTime() ?? Number.MAX_SAFE_INTEGER;
+    return aStart - bStart;
+  });
 };
 
 export const UpcomingSessionsList: React.FC<UpcomingSessionsListProps> = ({ sessions }) => {
@@ -35,7 +47,13 @@ export const UpcomingSessionsList: React.FC<UpcomingSessionsListProps> = ({ sess
             <div key={session.id} className="border rounded-lg p-3 flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="font-medium">{session.kidName} · {session.courseName}</p>
-                <p className="text-xs text-muted-foreground">{session.startTime} · {session.teacherName || 'Teacher assigned'}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatSessionTimeRange(session)} · {session.teacherName || 'Teacher assigned'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  India time: {formatIndiaTimeRange(session)}
+                  {isSessionTimeFallback(session) ? ' · based on legacy schedule fields' : ''}
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant={session.status === 'scheduled' ? 'secondary' : 'default'} className="capitalize">

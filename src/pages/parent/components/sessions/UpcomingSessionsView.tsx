@@ -4,6 +4,13 @@ import { Button } from '../../../../components/ui/button';
 import { Badge } from '../../../../components/ui/badge';
 import { Input } from '../../../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
+import {
+  formatIndiaTimeRange,
+  formatSessionDate,
+  formatSessionTimeRange,
+  getSessionStartDate,
+  isSessionTimeFallback,
+} from '../../../../lib/sessionTime';
 import { ParentSession } from '../../../../types/Parent';
 import useAuthStore from '../../../../store/useAuthStore';
 import { useUpcomingSessions } from '../../hooks/useUpcomingSessions';
@@ -19,7 +26,8 @@ const UpcomingSessionsView: React.FC = () => {
   const sessionsToUse = sessions;
 
   const groupedSessions = sessionsToUse.reduce((acc: Record<string, ParentSession[]>, session: ParentSession) => {
-    const date = new Date(session.date);
+    const startAt = getSessionStartDate(session);
+    if (!startAt) return acc;
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
@@ -27,11 +35,11 @@ const UpcomingSessionsView: React.FC = () => {
     nextWeek.setDate(today.getDate() + 7);
 
     let group = 'Later';
-    if (date.toDateString() === today.toDateString()) {
+    if (startAt.toDateString() === today.toDateString()) {
       group = 'Today';
-    } else if (date.toDateString() === tomorrow.toDateString()) {
+    } else if (startAt.toDateString() === tomorrow.toDateString()) {
       group = 'Tomorrow';
-    } else if (date <= nextWeek) {
+    } else if (startAt <= nextWeek) {
       group = 'This Week';
     }
 
@@ -117,10 +125,16 @@ const UpcomingSessionsView: React.FC = () => {
                         {session.kidName.charAt(0)}
                       </div>
                       <div>
-                        <p className="font-medium">{session.startTime} - {new Date(new Date(`2000-01-01T${session.startTime}`).getTime() + 30 * 60000).toTimeString().slice(0, 5)}</p>
+                        <p className="font-medium">
+                          {formatSessionDate(session)} · {formatSessionTimeRange(session)}
+                        </p>
                         <p className="text-sm text-gray-600">{session.kidName}</p>
                         <p className="text-sm text-gray-600">{session.courseName}</p>
                         <p className="text-sm text-gray-600">Teacher: {session.teacherName}</p>
+                        <p className="text-xs text-gray-500">
+                          India time: {formatIndiaTimeRange(session)}
+                          {isSessionTimeFallback(session) ? ' · based on legacy schedule fields' : ''}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">

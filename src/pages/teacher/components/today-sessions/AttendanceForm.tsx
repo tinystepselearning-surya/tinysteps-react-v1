@@ -12,6 +12,7 @@ import { db } from '../../../../lib/firebaseConfig';
 import { toast } from '@components/hooks/use-toast';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../../store/useAuthStore';
+import { INDIA_TIME_ZONE, formatSessionTimeRange, getSessionStartDate } from '../../../../lib/sessionTime';
 
 interface AttendanceFormProps {
   open: boolean;
@@ -374,7 +375,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
   };
 
   const getSessionStartMillis = (): number | null => {
-    const fromStartAt = toDateMaybe((session as any)?.startAt);
+    const fromStartAt = session ? getSessionStartDate(session) : null;
     if (fromStartAt) return fromStartAt.getTime();
     const dateYmd = typeof session?.date === 'string' ? session.date.trim() : '';
     const startTime = normalizeStartTime(session?.startTime);
@@ -871,7 +872,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
                 {session.courseName || session.courseId || 'Course'}
               </p>
               <p className="text-xs text-muted-foreground">
-                {session.startTime} - {session.endTime}
+                {formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE })}
               </p>
             </div>
             {kidIds.length === 0 ? (

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Card } from '@components/ui/card';
+import { INDIA_TIME_ZONE, getSessionStartDate } from '../../../../lib/sessionTime';
 
 type TeacherRow = {
   id: string;
@@ -48,6 +49,32 @@ function toDateKey(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+function formatDateKeyInTimeZone(date: Date, timeZone: string): string {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const year = parts.find((part) => part.type === 'year')?.value || '';
+  const month = parts.find((part) => part.type === 'month')?.value || '';
+  const day = parts.find((part) => part.type === 'day')?.value || '';
+  return year && month && day ? `${year}-${month}-${day}` : '';
+}
+
+function getMinutesInTimeZone(date: Date, timeZone: string): number | null {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date);
+  const hour = Number(parts.find((part) => part.type === 'hour')?.value);
+  const minute = Number(parts.find((part) => part.type === 'minute')?.value);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null;
+  return hour * 60 + minute;
+}
+
 function toCleanText(value: unknown): string {
   if (typeof value === 'string') return value.trim();
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
@@ -85,6 +112,8 @@ function parseTimeToMinutes(value: string): number | null {
 }
 
 function getSessionDateKey(session: any): string {
+  const resolvedStart = getSessionStartDate(session);
+  if (resolvedStart) return formatDateKeyInTimeZone(resolvedStart, INDIA_TIME_ZONE);
   const dateText = toCleanText(session?.date);
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateText)) return dateText;
   const parsedDate = toDateMaybe(dateText);
@@ -94,6 +123,8 @@ function getSessionDateKey(session: any): string {
 }
 
 function getSessionStartMinutes(session: any): number | null {
+  const resolvedStart = getSessionStartDate(session);
+  if (resolvedStart) return getMinutesInTimeZone(resolvedStart, INDIA_TIME_ZONE);
   const startTimeText = toCleanText(session?.startTime);
   const fromText = parseTimeToMinutes(startTimeText);
   if (fromText !== null) return fromText;

@@ -19,6 +19,7 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { auth, db } from '../../../../lib/firebaseConfig';
 import { toast } from '@components/hooks/use-toast';
 import { useAuthStore } from '../../../../store/useAuthStore';
+import { INDIA_TIME_ZONE, formatSessionTimeRange } from '../../../../lib/sessionTime';
 import {
   format,
   startOfMonth,
@@ -995,7 +996,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                           onClick={() => tryOpenAttendance(session)}
                         >
                           <div className="font-medium">
-                            {sessionBadgeToneLabel[badgeTone]} · {session.startTime}
+                            {sessionBadgeToneLabel[badgeTone]} · {formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE })}
                           </div>
                           <div className="mt-1 truncate text-[11px]">{kidNames}</div>
                           {courseLabel ? <div className="mt-1 truncate text-[11px] opacity-80">{truncateLabel(courseLabel, 20)}</div> : null}
@@ -1030,7 +1031,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <div className="text-sm font-semibold text-slate-900">{session.startTime} - {session.endTime}</div>
+                      <div className="text-sm font-semibold text-slate-900">
+                        {formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE })}
+                      </div>
                       <div className="mt-1 text-sm text-slate-600">{kidNames}</div>
                       {courseLabel ? <div className="mt-1 text-xs text-slate-500">{truncateLabel(courseLabel, 30)}</div> : null}
                     </div>

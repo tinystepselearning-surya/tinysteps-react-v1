@@ -10,6 +10,7 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { toast } from '@components/hooks/use-toast';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 import { useAuthStore } from '../../../../store/useAuthStore';
+import { getSessionEndDate, getSessionStartDate } from '../../../../lib/sessionTime';
 import {
   cleanStudentDisplayName,
   resolveTeacherSessionCourseLabel,
@@ -120,33 +121,13 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
 
   const orderedSessions = useMemo(() => sessions, [sessions]);
 
-  const toDateMaybe = (value: any): Date | null => {
-    if (!value) return null;
-    if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
-    if (typeof value?.toDate === 'function') {
-      const date = value.toDate();
-      if (date instanceof Date && !Number.isNaN(date.getTime())) return date;
-    }
-    if (typeof value === 'string' || typeof value === 'number') {
-      const date = new Date(value);
-      if (!Number.isNaN(date.getTime())) return date;
-    }
-    return null;
-  };
-
   const getSessionStart = (session: TeacherSession): Date | null => {
-    const fromFields =
-      session.date && session.startTime ? new Date(`${session.date}T${session.startTime}`) : null;
-    if (fromFields && !Number.isNaN(fromFields.getTime())) return fromFields;
-    return toDateMaybe((session as any).startAt);
+    return getSessionStartDate(session);
   };
 
   const getSessionEnd = (session: TeacherSession, start: Date): Date => {
-    const fromFields =
-      session.date && session.endTime ? new Date(`${session.date}T${session.endTime}`) : null;
-    if (fromFields && !Number.isNaN(fromFields.getTime())) return fromFields;
-    const fromFallback = toDateMaybe((session as any).endAt);
-    if (fromFallback) return fromFallback;
+    const resolved = getSessionEndDate(session);
+    if (resolved) return resolved;
     const durationMins = Number((session as any).durationMins) || Number((session as any).durationMinutes) || 30;
     return new Date(start.getTime() + Math.max(durationMins, 30) * 60 * 1000);
   };
@@ -161,7 +142,7 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
   };
 
   const getSessionStartMillis = (session: TeacherSession): number | null => {
-    const fromStartAt = toDateMaybe((session as any).startAt);
+    const fromStartAt = getSessionStartDate(session);
     if (fromStartAt) return fromStartAt.getTime();
     const dateYmd = typeof session.date === 'string' ? session.date.trim() : '';
     const startTime = normalizeStartTime(session.startTime);

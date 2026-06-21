@@ -11,6 +11,7 @@ import {
 } from 'firebase/firestore';
 import { addDays, format } from 'date-fns';
 import { db } from '../../../lib/firebaseConfig';
+import { getSessionStartDate } from '../../../lib/sessionTime';
 import {
   isScheduleExceptionSession,
   isSessionCanonicalForEnrollment,
@@ -158,6 +159,10 @@ const toTeacherSession = (doc: any): TeacherSession => ({
   currency: doc.currency,
   source: doc.source,
   attendance: doc.attendance,
+  startAt: doc.startAt,
+  endAt: doc.endAt,
+  scheduledStartAt: doc.scheduledStartAt,
+  scheduledEndAt: doc.scheduledEndAt,
   updatedAt: doc.updatedAt,
   updatedBy: doc.updatedBy,
   makeupCreditId: doc.makeupCreditId,
@@ -535,11 +540,11 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
       });
 
       const sorted = enriched.sort((a, b) => {
-        if (a.date !== b.date) return String(a.date).localeCompare(String(b.date));
+        const aStart = getSessionStartDate(a)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        const bStart = getSessionStartDate(b)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        if (aStart !== bStart) return aStart - bStart;
 
-        return String(a.startTime || '').localeCompare(String(b.startTime || ''), undefined, {
-          numeric: true,
-        });
+        return String(a.id || '').localeCompare(String(b.id || ''));
       });
 
       if (cancelled) return;

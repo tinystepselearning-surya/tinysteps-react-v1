@@ -59,6 +59,8 @@ export interface TeacherSession {
 
   startAt?: Timestamp;
   endAt?: Timestamp;
+  scheduledStartAt?: Timestamp;
+  scheduledEndAt?: Timestamp;
   updatedAt?: Timestamp;
   updatedBy?: string;
 

@@ -2,24 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { db } from '../../../lib/firebaseConfig';
+import { getSessionEndDate, getSessionStartDate } from '../../../lib/sessionTime';
 import { isSessionCanonicalForEnrollment } from '../../../lib/sessionScheduleIntegrity';
 import { ParentSession } from '../../../types/Parent';
-
-const todayIso = () => new Date().toISOString().slice(0, 10);
-
-const dateFromDoc = (data: any) => {
-  if (typeof data?.date === 'string') return data.date;
-  const startAt = data?.startAt;
-  if (startAt?.toDate) return startAt.toDate().toISOString().slice(0, 10);
-  return undefined;
-};
-
-const timeFromDoc = (data: any) => {
-  if (typeof data?.startTime === 'string') return data.startTime;
-  const startAt = data?.startAt;
-  if (startAt?.toDate) return startAt.toDate().toTimeString().slice(0, 5);
-  return undefined;
-};
 
 const asStringArray = (value: unknown): string[] => {
   if (Array.isArray(value)) {
@@ -75,9 +60,6 @@ const fetchSessions = async (childIds: string[]): Promise<ParentSession[]> => {
     if (seen.has(docSnap.id)) return;
 
     const data = docSnap.data() as any;
-    const date = dateFromDoc(data);
-
-    if (!date || date < todayIso()) return;
 
     const sessionKidIds = asStringArray(data?.kidIds);
     const sessionKidId = String(data?.kidId || '').trim();
@@ -123,15 +105,36 @@ const fetchSessions = async (childIds: string[]): Promise<ParentSession[]> => {
       kidId: childId,
       kidName: getKidNameFromSession(data, childId),
       courseName: data.courseName || data.courseId,
-      date: dateFromDoc(data) || '',
-      startTime: timeFromDoc(data) || '00:00',
+      date: typeof data?.date === 'string' ? data.date : '',
+      startTime: typeof data?.startTime === 'string' ? data.startTime : '',
+      endTime: typeof data?.endTime === 'string' ? data.endTime : '',
       status: data.status || 'scheduled',
       teacherName: data.teacherName,
+      joinUrl: data.joinUrl,
+      meetingLink: data.meetingLink,
+      startAt: data.startAt,
+      endAt: data.endAt,
+      scheduledStartAt: data.scheduledStartAt,
+      scheduledEndAt: data.scheduledEndAt,
+      durationMins: data.durationMins,
+      durationMinutes: data.durationMinutes,
     }));
 
-  return sessions.sort((a, b) =>
-    `${a.date}T${a.startTime}`.localeCompare(`${b.date}T${b.startTime}`),
-  );
+  const nowMs = Date.now();
+
+  return sessions
+    .filter((session) => {
+      const sessionEnd = getSessionEndDate(session);
+      if (sessionEnd) return sessionEnd.getTime() >= nowMs;
+
+      const sessionStart = getSessionStartDate(session);
+      return sessionStart ? sessionStart.getTime() >= nowMs : false;
+    })
+    .sort((a, b) => {
+      const aStart = getSessionStartDate(a)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+      const bStart = getSessionStartDate(b)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+      return aStart - bStart;
+    });
 };
 
 export const useUpcomingSessions = (childIds: string[]) => {

@@ -2,6 +2,12 @@ import { ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  formatIndiaTimeRange,
+  formatSessionDate,
+  formatSessionTimeRange,
+  isSessionTimeFallback,
+} from "../../../lib/sessionTime";
 
 type UpcomingRow = {
   session: any;
@@ -20,7 +26,6 @@ type ParentAttendanceSummaryProps = {
   onOpenClasses: () => void;
   onJoinSession: (session: any) => void;
   canJoinFromOverview: (row: UpcomingRow) => boolean;
-  formatSessionTimeRange: (session: any) => string;
 };
 
 export default function ParentAttendanceSummary(props: ParentAttendanceSummaryProps) {
@@ -31,7 +36,6 @@ export default function ParentAttendanceSummary(props: ParentAttendanceSummaryPr
     onOpenClasses,
     onJoinSession,
     canJoinFromOverview,
-    formatSessionTimeRange,
   } = props;
 
   return (
@@ -81,15 +85,14 @@ export default function ParentAttendanceSummary(props: ParentAttendanceSummaryPr
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      {row.start.toLocaleDateString("en-IN", {
-                        weekday: "short",
-                        day: "numeric",
-                        month: "short",
-                      })}{" "}
-                      · {formatSessionTimeRange(session)}
+                      {formatSessionDate(session)} · {formatSessionTimeRange(session)}
                     </div>
                     <div className="mt-1 text-xs text-slate-500">
                       {session.courseName || "Course"} {session.teacherName ? `· ${session.teacherName}` : ""}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">
+                      India time: {formatIndiaTimeRange(session)}
+                      {isSessionTimeFallback(session) ? ' · based on legacy schedule fields' : ''}
                     </div>
                   </div>
                   <Button

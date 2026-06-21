@@ -3,6 +3,7 @@ import { useRealtimeData } from '../../hooks/useRealtime';
 import { useAuthStore } from '../../store/useAuthStore';
 import { where } from 'firebase/firestore';
 import { format } from 'date-fns';
+import { INDIA_TIME_ZONE, formatSessionTimeRange } from '../../lib/sessionTime';
 
 export default function TeacherSessionList() {
   const { user } = useAuthStore();
@@ -22,7 +23,9 @@ export default function TeacherSessionList() {
     <div className="space-y-3">
       {sessions.map((session: any) => (
         <div key={session.id} className="p-4 bg-white rounded shadow">
-          <h3 className="font-semibold">{session.startTime || '—'} — {session.endTime || '—'}</h3>
+          <h3 className="font-semibold">
+            {formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE }) || '—'}
+          </h3>
           <p className="text-sm text-gray-600">Kids: {(session.kidIds || []).length}</p>
           <div className="mt-3">
             <a

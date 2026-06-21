@@ -82,6 +82,13 @@ import {
   type ParentWorksheetItem,
 } from "../../lib/parentWorksheets";
 import { hapticLight, hapticSelection, hapticSuccess } from "../../lib/nativeHaptics";
+import {
+  formatIndiaTimeRange,
+  formatSessionDate as formatSessionViewerDate,
+  formatSessionTimeRange as formatViewerSessionTimeRange,
+  getSessionStartDate,
+  isSessionTimeFallback,
+} from "../../lib/sessionTime";
 import { isSessionCanonicalForEnrollment } from "../../lib/sessionScheduleIntegrity";
 import {
   buildDashboardHeroMessage,
@@ -1299,51 +1306,21 @@ function formatCurrencySignedINR(value?: number | null): string {
 }
 
 function sessionStartDate(s: KidSession): Date | null {
-  // Preferred: startAt Timestamp
-  if (s?.startAt?.toDate) return s.startAt.toDate();
-
-  // Next: date string + startTime
-  const dateStr = typeof s.date === "string" ? s.date : null;
-  if (dateStr) {
-    const ymd = parseYMD(dateStr);
-    if (!ymd) return null;
-    const t = parseHHMM(s.startTime) ?? { hh: 0, mm: 0 };
-    return new Date(ymd.y, ymd.m - 1, ymd.d, t.hh, t.mm, 0, 0);
-  }
-
-  // Next: date Timestamp
-  if (s?.date?.toDate) {
-    const base = s.date.toDate();
-    const t = parseHHMM(s.startTime);
-    if (t) return new Date(base.getFullYear(), base.getMonth(), base.getDate(), t.hh, t.mm, 0, 0);
-    return base;
-  }
-
-  return null;
-}
-
-function sessionEndDate(s: KidSession, start: Date | null): Date | null {
-  if (s?.endAt?.toDate) return s.endAt.toDate();
-  if (start && typeof s.endTime === "string") {
-    const t = parseHHMM(s.endTime);
-    if (t) return new Date(start.getFullYear(), start.getMonth(), start.getDate(), t.hh, t.mm, 0, 0);
-  }
-  return null;
+  return getSessionStartDate(s);
 }
 
 function formatSessionTimeRange(s: KidSession): string {
-  const start = sessionStartDate(s);
-  if (!start) return s.startTime || "Time TBD";
-  const startLabel = typeof s.startTime === "string" && s.startTime.trim()
-    ? s.startTime.trim()
-    : `${pad2(start.getHours())}:${pad2(start.getMinutes())}`;
-  const end = sessionEndDate(s, start);
-  const endLabel = typeof s.endTime === "string" && s.endTime.trim()
-    ? s.endTime.trim()
-    : end
-      ? `${pad2(end.getHours())}:${pad2(end.getMinutes())}`
-      : "";
-  return endLabel ? `${startLabel} - ${endLabel}` : startLabel;
+  return formatViewerSessionTimeRange(s);
+}
+
+function formatSessionDateLabel(s: KidSession): string {
+  return formatSessionViewerDate(s);
+}
+
+function formatSessionIndiaLabel(s: KidSession): string {
+  const label = formatIndiaTimeRange(s);
+  if (!label) return "";
+  return `India time: ${label}${isSessionTimeFallback(s) ? " · based on legacy schedule fields" : ""}`;
 }
 
 function normalizeStatus(raw?: string): string {
@@ -4017,7 +3994,7 @@ export default function ParentDashboard() {
           <div className="md:max-h-[62vh] md:overflow-auto md:[scrollbar-gutter:stable]">
             <div className="space-y-3 p-3 md:hidden">
               {rows.map((row) => {
-                const { session, start, status } = row;
+                const { session, status } = row;
                 const canJoin = canJoinSession(session, status);
                 const joining = joiningSessionId === session.id;
                 return (
@@ -4026,14 +4003,13 @@ export default function ParentDashboard() {
                     className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/60"
                   >
                     <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      {start.toLocaleDateString("en-IN", {
-                        weekday: "short",
-                        day: "numeric",
-                        month: "short",
-                      })}
+                      {formatSessionDateLabel(session)}
                     </div>
                     <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
                       {formatSessionTimeRange(session)}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      {formatSessionIndiaLabel(session)}
                     </div>
                     <div className="mt-2 text-sm font-medium text-slate-900 dark:text-slate-100">
                       {resolveSessionChildName(session)}
@@ -4074,7 +4050,7 @@ export default function ParentDashboard() {
                 </thead>
                 <tbody>
                   {rows.map((row) => {
-                    const { session, start, status } = row;
+                    const { session, status } = row;
                     const canJoin = canJoinSession(session, status);
                     const joining = joiningSessionId === session.id;
                     return (
@@ -4083,11 +4059,10 @@ export default function ParentDashboard() {
                         className="border-b border-slate-200 align-middle last:border-b-0 dark:border-slate-800"
                       >
                         <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
-                          {start.toLocaleDateString("en-IN", {
-                            weekday: "short",
-                            day: "numeric",
-                            month: "short",
-                          })}
+                          <div>{formatSessionDateLabel(session)}</div>
+                          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            {formatSessionIndiaLabel(session)}
+                          </div>
                         </td>
                         <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
                           {formatSessionTimeRange(session)}
@@ -4655,7 +4630,6 @@ export default function ParentDashboard() {
             onOpenClasses={() => setTab("classes")}
             onJoinSession={(session) => openJoinClass(session)}
             canJoinFromOverview={canJoinFromOverview}
-            formatSessionTimeRange={formatSessionTimeRange}
           />
 
           <ParentBillingSummary
@@ -6031,6 +6005,9 @@ export default function ParentDashboard() {
                             <div className="min-w-0">
                               <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                                 {formatSessionTimeRange(session)}
+                              </div>
+                              <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                                {formatSessionIndiaLabel(session)}
                               </div>
                               <div className="mt-0.5 truncate text-xs text-slate-600 dark:text-slate-300">
                                 {resolveSessionChildName(session)} · {session.courseName || "—"}

@@ -14,6 +14,13 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { db } from '../../../../lib/firebaseConfig';
+import {
+  INDIA_TIME_ZONE,
+  formatSessionDate,
+  formatSessionTimeRange,
+  getSessionEndDate,
+  getSessionStartDate,
+} from '../../../../lib/sessionTime';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 
 type FilterPreset = 'week' | 'month' | 'custom';
@@ -48,6 +55,7 @@ interface TeacherMonthSessionRow {
   startTime: string;
   endTime: string;
   startAt: Date | null;
+  endAt: Date | null;
   studentId: string;
   studentName: string;
   studentAltName: string;
@@ -93,10 +101,11 @@ interface SessionDetailRow {
   id: string;
   studentKey: string;
   studentName: string;
-  displayDate: Date | null;
   date: string;
   startTime: string;
   endTime: string;
+  startAt: Date | null;
+  endAt: Date | null;
   courseName: string;
   sessionTypeLabel: string;
   classStatusLabel: string;
@@ -312,6 +321,30 @@ const pickReadableName = (...values: unknown[]): string | null => {
     if (isReadableName(value)) return String(value).trim();
   }
   return null;
+};
+
+const formatYmdInIndia = (date: Date): string => {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: INDIA_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+
+  const year = parts.find((part) => part.type === 'year')?.value || '';
+  const month = parts.find((part) => part.type === 'month')?.value || '';
+  const day = parts.find((part) => part.type === 'day')?.value || '';
+
+  return year && month && day ? `${year}-${month}-${day}` : '';
+};
+
+const formatTimeInIndia = (date: Date): string => {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: INDIA_TIME_ZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).format(date);
 };
 
 const pickPerClassRate = (data: Record<string, unknown>): number | null => {
@@ -642,9 +675,10 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
           const teacherId = String(session.teacherId || '').trim();
           if (teacherId !== resolvedTeacherId) return;
           const fallbackDate = String(session.date || '').trim();
-          const startAt = toDate(session.startAt);
-          const startTime = normalizeStartTime(session.startTime) || (startAt ? `${pad2(startAt.getHours())}:${pad2(startAt.getMinutes())}` : '');
-          const endTime = normalizeStartTime(session.endTime) || '';
+          const startAt = getSessionStartDate(session);
+          const endAt = getSessionEndDate(session);
+          const startTime = normalizeStartTime(session.startTime) || (startAt ? formatTimeInIndia(startAt) : '');
+          const endTime = normalizeStartTime(session.endTime) || (endAt ? formatTimeInIndia(endAt) : '');
           const studentId =
             toIdFromValue(session.kidId) ||
             toIdFromValue(session.studentId) ||
@@ -688,7 +722,7 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
             /^\d{4}-\d{2}-\d{2}$/.test(fallbackDate)
               ? fallbackDate
               : startAt
-              ? `${startAt.getFullYear()}-${pad2(startAt.getMonth() + 1)}-${pad2(startAt.getDate())}`
+              ? formatYmdInIndia(startAt)
               : '';
 
           if (!date) return;
@@ -701,6 +735,7 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
             startTime,
             endTime,
             startAt,
+            endAt,
             studentId,
             studentName,
             studentAltName,
@@ -722,14 +757,8 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
         });
 
         return Array.from(sessionMap.values()).sort((a, b) => {
-          const aStart = a.startAt
-            ? a.startAt.getTime()
-            : Date.parse(`${a.date}T${a.startTime || '00:00'}:00`);
-          const bStart = b.startAt
-            ? b.startAt.getTime()
-            : Date.parse(`${b.date}T${b.startTime || '00:00'}:00`);
-          const aMs = Number.isFinite(aStart) ? aStart : 0;
-          const bMs = Number.isFinite(bStart) ? bStart : 0;
+          const aMs = getSessionStartDate(a)?.getTime() ?? 0;
+          const bMs = getSessionStartDate(b)?.getTime() ?? 0;
           return bMs - aMs;
         });
       };
@@ -1111,10 +1140,6 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
       }
 
       const amount = !isVoid && isPresent && earning ? Math.max(toNumber(earning.amount, 0), 0) : 0;
-      const displayDate = session.startAt || (/^\d{4}-\d{2}-\d{2}$/.test(session.date)
-        ? new Date(`${session.date}T${session.startTime || '00:00'}:00`)
-        : null);
-
       let enrollment = session.enrollmentId ? enrollmentsById.get(session.enrollmentId) || null : null;
       if (!enrollment) {
         for (const candidate of enrollmentsById.values()) {
@@ -1153,10 +1178,11 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
         id: session.id,
         studentKey,
         studentName,
-        displayDate: displayDate && !Number.isNaN(displayDate.getTime()) ? displayDate : null,
         date: session.date,
         startTime: session.startTime,
         endTime: session.endTime,
+        startAt: session.startAt,
+        endAt: session.endAt,
         courseName,
         sessionTypeLabel: getSessionTypeLabel(session.sessionTypeRaw, classStatus, session.makeupForSessionId),
         classStatusLabel: getClassStatusLabel(classStatus),
@@ -1197,8 +1223,8 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
       .map((row) => ({
         ...row,
         rows: [...row.rows].sort((a, b) => {
-          const aMs = a.displayDate?.getTime() || Date.parse(`${a.date}T${a.startTime || '00:00'}:00`) || 0;
-          const bMs = b.displayDate?.getTime() || Date.parse(`${b.date}T${b.startTime || '00:00'}:00`) || 0;
+          const aMs = getSessionStartDate(a)?.getTime() ?? 0;
+          const bMs = getSessionStartDate(b)?.getTime() ?? 0;
           return bMs - aMs;
         }),
       }))
@@ -1442,19 +1468,22 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
                                   </TableHeader>
                                   <TableBody>
                                     {row.rows.map((detailRow) => {
-                                      const dateLabel = detailRow.displayDate
-                                        ? detailRow.displayDate.toLocaleDateString('en-IN', {
-                                            day: '2-digit',
-                                            month: 'short',
-                                            year: 'numeric',
-                                          })
-                                        : detailRow.date || '—';
-                                      const dayLabel = detailRow.displayDate
-                                        ? detailRow.displayDate.toLocaleDateString('en-IN', { weekday: 'short' })
-                                        : '—';
-                                      const timeLabel = detailRow.startTime && detailRow.endTime
-                                        ? `${detailRow.startTime} - ${detailRow.endTime}`
-                                        : detailRow.startTime || '—';
+                                      const dateLabel =
+                                        formatSessionDate(detailRow, {
+                                          timeZone: INDIA_TIME_ZONE,
+                                          dateOptions: { day: '2-digit', month: 'short', year: 'numeric' },
+                                          fallbackText: detailRow.date || '—',
+                                        }) || '—';
+                                      const dayLabel =
+                                        formatSessionDate(detailRow, {
+                                          timeZone: INDIA_TIME_ZONE,
+                                          dateOptions: { weekday: 'short' },
+                                          fallbackText: '—',
+                                        }) || '—';
+                                      const timeLabel = formatSessionTimeRange(detailRow, {
+                                        timeZone: INDIA_TIME_ZONE,
+                                        fallbackText: '—',
+                                      });
 
                                       return (
                                         <TableRow key={`${detailRow.id}-${detailRow.date}-${detailRow.startTime}`}>
