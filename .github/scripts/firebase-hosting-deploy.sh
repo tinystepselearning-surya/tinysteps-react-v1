@@ -39,19 +39,6 @@ cleanup() {
 trap cleanup EXIT
 
 if [[ "$MODE" == "channel" ]]; then
-  echo "Ensuring Firebase Hosting preview channel '$CHANNEL_ID' exists..."
-  if ! run_with_log npx firebase-tools@latest hosting:channel:create "$CHANNEL_ID" --project "$PROJECT_ID" --non-interactive; then
-    CREATE_OUTPUT="$(cat "$TMP_LOG")"
-
-    if grep -qi "HTTP Error: 409" <<<"$CREATE_OUTPUT" \
-      && grep -qi "Channel .* already exists" <<<"$CREATE_OUTPUT"; then
-      echo "Firebase Hosting reports preview channel '$CHANNEL_ID' already exists; continuing to deploy."
-    else
-      echo "Firebase Hosting preview channel setup for '$CHANNEL_ID' failed with a real error." >&2
-      exit 1
-    fi
-  fi
-
   echo "Deploying Firebase Hosting to ${TARGET_DESCRIPTION}..."
   if run_with_log npx firebase-tools@latest hosting:channel:deploy "$CHANNEL_ID" --project "$PROJECT_ID" --non-interactive; then
     echo "Firebase Hosting deploy to ${TARGET_DESCRIPTION} succeeded."
