@@ -21,11 +21,7 @@ const REQUIRED_SUMMER_URLS = [
 ];
 
 const LEGACY_URLS_ABSENT = [
-  'https://tinystepslearning.com/online-phonics-reading-classes',
   'https://tinystepslearning.com/phonics-classes-for-kids',
-  'https://tinystepslearning.com/english-grammar-writing-classes',
-  'https://tinystepslearning.com/public-speaking-communication-kids',
-  'https://tinystepslearning.com/spoken-english-classes-for-kids',
   'https://tinystepslearning.com/courses/phonics-foundations',
   'https://tinystepslearning.com/courses/basic-grammar',
   'https://tinystepslearning.com/courses/advanced-grammar',
@@ -45,6 +41,17 @@ const REQUIRED_CORE_URLS = [
   'https://tinystepslearning.com/courses/grammar',
   'https://tinystepslearning.com/courses/grammar-mastery',
   'https://tinystepslearning.com/courses/public-speaking-foundations',
+  'https://tinystepslearning.com/online-phonics-reading-classes',
+  'https://tinystepslearning.com/english-grammar-writing-classes',
+  'https://tinystepslearning.com/public-speaking-communication-kids',
+  'https://tinystepslearning.com/spoken-english-classes-for-kids',
+];
+
+const REQUIRED_SELF_CANONICAL_LONG_TAIL_PATHS = [
+  '/online-phonics-reading-classes',
+  '/english-grammar-writing-classes',
+  '/public-speaking-communication-kids',
+  '/spoken-english-classes-for-kids',
 ];
 
 const PRIVATE_PATH_TOKENS = [
@@ -106,6 +113,15 @@ function extractCanonicalPaths(registryText) {
   );
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function extractRouteEntry(registryText, routePath) {
+  const routePattern = new RegExp(`['"]${escapeRegExp(routePath)}['"]\\s*:\\s*\\{([\\s\\S]*?)\\n\\s*\\},`, 'm');
+  return registryText.match(routePattern)?.[1] ?? null;
+}
+
 async function fileExists(filePath) {
   try {
     await fs.access(filePath);
@@ -129,7 +145,8 @@ async function main() {
   }
 
   const allSitemapXml = [...sitemapXmlByName.values()].join('\n');
-  const allLocs = new Set(extractLocs(allSitemapXml));
+  const allLocList = extractLocs(allSitemapXml);
+  const allLocs = new Set(allLocList);
 
   for (const url of REQUIRED_SUMMER_URLS) {
     if (!allLocs.has(url)) fail(`Missing required summer URL in sitemap XML: ${url}`);
@@ -144,6 +161,12 @@ async function main() {
   for (const url of REQUIRED_CORE_URLS) {
     if (!allLocs.has(url)) fail(`Missing canonical core URL in sitemap XML: ${url}`);
     else ok(`Canonical core URL present: ${url}`);
+  }
+
+  for (const url of REQUIRED_CORE_URLS) {
+    const count = allLocList.filter((loc) => loc === url).length;
+    if (count !== 1) fail(`Canonical URL must appear exactly once across sitemap XML: ${url} (found ${count})`);
+    else ok(`Canonical URL appears exactly once across sitemap XML: ${url}`);
   }
 
   for (const token of PRIVATE_PATH_TOKENS) {
@@ -199,6 +222,23 @@ async function main() {
       continue;
     }
     ok(`Route SEO registry has self-canonical entry: ${routePath}`);
+  }
+
+  for (const routePath of REQUIRED_SELF_CANONICAL_LONG_TAIL_PATHS) {
+    const entry = extractRouteEntry(registryText, routePath);
+    if (!entry) {
+      fail(`Missing route SEO registry entry: ${routePath}`);
+      continue;
+    }
+    if (!new RegExp(`canonicalPath\\s*:\\s*['"]${escapeRegExp(routePath)}['"]`, 'm').test(entry)) {
+      fail(`Long-tail lead page is not self-canonical in route SEO registry: ${routePath}`);
+      continue;
+    }
+    if (/robots\s*:\s*['"][^'"]*noindex/i.test(entry)) {
+      fail(`Long-tail lead page must not be noindexed in route SEO registry: ${routePath}`);
+      continue;
+    }
+    ok(`Long-tail lead page is self-canonical and indexable in route SEO registry: ${routePath}`);
   }
 
   if (/spoken english/i.test(registryText)) {
