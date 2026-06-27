@@ -46,5 +46,12 @@ if grep -qi "is the current active version" <<<"$DEPLOY_OUTPUT" \
   exit 0
 fi
 
+if [[ "$MODE" == "channel" ]] \
+  && grep -qi "HTTP Error: 409" <<<"$DEPLOY_OUTPUT" \
+  && grep -qi "Channel .* already exists" <<<"$DEPLOY_OUTPUT"; then
+  echo "Firebase Hosting reports preview channel '$CHANNEL_ID' already exists; treating as a successful idempotent no-op."
+  exit 0
+fi
+
 echo "Firebase Hosting deploy to ${TARGET_DESCRIPTION} failed with a real error." >&2
 exit 1
