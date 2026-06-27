@@ -306,7 +306,7 @@ export const ROUTE_SEO_REGISTRY = {
     title: 'Early Reading & Phonics Support Classes (Ages 3-8) | Tiny Steps Learning',
     description:
       'Early-reader phonics and reading support for ages 3-8 with letter sounds, blending, CVC decoding, and first-sentence reading confidence for families in India and globally.',
-    canonicalPath: '/phonics',
+    canonicalPath: '/online-phonics-reading-classes',
     ogType: 'website',
   },
   '/best-online-phonics-classes-for-kids-in-india': {
@@ -390,7 +390,7 @@ export const ROUTE_SEO_REGISTRY = {
     title: 'Communication & Public Speaking for Kids India | Tiny Steps Learning',
     description:
       'Communication and public speaking classes for kids in India focused on communication confidence, vocabulary growth, sentence formation, and stage speaking readiness.',
-    canonicalPath: '/speaking',
+    canonicalPath: '/spoken-english-classes-for-kids',
     ogType: 'website',
   },
   '/writing-classes-for-kids': {
@@ -507,14 +507,14 @@ export const ROUTE_SEO_REGISTRY = {
     title: 'English Grammar & Writing Classes for Kids | Tiny Steps Learning',
     description:
       'Explore Tiny Steps English grammar and writing classes for kids with live online support for sentence structure, punctuation, grammar control, and writing clarity.',
-    canonicalPath: '/grammar',
+    canonicalPath: '/english-grammar-writing-classes',
     ogType: 'website',
   },
   '/public-speaking-communication-kids': {
     title: 'Public Speaking & Communication for Kids | Tiny Steps Learning',
     description:
       'Explore Tiny Steps public speaking and communication programs for kids with live online coaching for confidence, storytelling, structure, and presentation skills.',
-    canonicalPath: '/speaking',
+    canonicalPath: '/public-speaking-communication-kids',
     ogType: 'website',
   },
   '/login': {

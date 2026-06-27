@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { trackDemoBookingComplete, trackLeadFormStart, trackLeadFormSubmit, trackWhatsappClick } from '../../lib/conversionTracking';
+import { trackDemoBookingComplete, trackLeadFormError, trackLeadFormStart, trackLeadFormSubmit, trackWhatsappClick } from '../../lib/conversionTracking';
 
 const WHATSAPP_NUMBER = '919618398383';
 const SUN_ORANGE = '#ff6a00';
@@ -151,14 +151,27 @@ export default function PublicAssessmentForm({
     }
 
     setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
+    return {
+      isValid: Object.keys(nextErrors).length === 0,
+      nextErrors,
+    };
   };
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     setSubmitted(false);
 
-    if (!validate()) return;
+    const { isValid, nextErrors } = validate();
+    if (!isValid) {
+      const errorFields = Object.keys(nextErrors).filter(Boolean);
+      trackLeadFormError({
+        form_name: 'public_assessment_form',
+        source_context: source || 'public_assessment_form',
+        error_fields: errorFields,
+        error_message: 'validation_failed',
+      });
+      return;
+    }
 
     trackLeadFormSubmit({
       form_name: 'public_assessment_form',

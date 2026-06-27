@@ -4,6 +4,12 @@ import { applySeo } from '../../lib/seo';
 import parentsMeta from '../../content/parentsMeta';
 import AboutAuthor from '../../components/AboutAuthor';
 import { createFAQPageSchema } from '../../lib/schemas';
+import { trackParentCourseInterest } from '../../lib/conversionTracking';
+import { formatINR, ONE_TO_ONE_MONTHLY_PACKAGES } from '../../config/pricing';
+
+const WHATSAPP_CHOOSER_URL = `https://wa.me/919618398383?text=${encodeURIComponent(
+  "Hi Tiny Steps! I need help choosing the right course for my child."
+)}`;
 
 const faqItems = [
   {
@@ -39,6 +45,8 @@ const faqItems = [
 ];
 
 const ChoosingCourse: React.FC = () => {
+  const starterPlan = ONE_TO_ONE_MONTHLY_PACKAGES[0];
+
   useEffect(() => {
     const breadcrumbSchema = {
       '@context': 'https://schema.org',
@@ -63,12 +71,47 @@ const ChoosingCourse: React.FC = () => {
 
   return (
   <article className="mx-auto max-w-3xl px-6 py-8">
+    <nav aria-label="Breadcrumb" className="text-sm text-slate-500">
+      <Link to="/parents" className="hover:text-slate-700">Parents Hub</Link> / <span>Choosing a Course</span>
+    </nav>
     <h1 className="text-2xl font-bold">How to Choose the Right Tiny Steps Course for Your Child</h1>
 
     <div className="mt-4 rounded-lg bg-blue-50 p-4 border border-blue-200">
       <p className="text-sm font-medium text-blue-900">
         Choose the course based on your child&apos;s current skill gap, not only age. This page is a parent decision guide to help you place your child correctly before enrollment.
       </p>
+      <p className="mt-2 text-sm text-blue-900">
+        Most families start with a free assessment, then choose one clear first focus. Premium 1:1 pricing starts at {formatINR(400)}/class, with {formatINR(starterPlan.monthlyFee)} for the 12-class starter plan when that is the best fit.
+      </p>
+    </div>
+
+    <div className="mt-4 flex flex-wrap gap-3">
+      <Link
+        to="/book-demo"
+        onClick={() => trackParentCourseInterest({
+          page_path: '/parents/choosing-course',
+          cta_label: 'Book Free Assessment',
+          cta_location: 'hero',
+          destination_path: '/book-demo',
+        })}
+        className="inline-flex rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition"
+      >
+        Book Free Assessment
+      </Link>
+      <a
+        href={WHATSAPP_CHOOSER_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={() => trackParentCourseInterest({
+          page_path: '/parents/choosing-course',
+          cta_label: 'Talk to Academic Advisor',
+          cta_location: 'hero',
+          destination_path: '/contact',
+        })}
+        className="inline-flex rounded border border-emerald-300 bg-emerald-50 px-6 py-3 font-medium text-emerald-800 transition hover:bg-emerald-100"
+      >
+        Talk to Academic Advisor
+      </a>
     </div>
 
     <section className="mt-6">
@@ -86,7 +129,7 @@ const ChoosingCourse: React.FC = () => {
         <li>Reading attempts rely on guessing.</li>
       </ul>
       <p className="mt-2 text-sm text-gray-700">
-        Best next step: <Link to="/courses/phonics-foundation" className="text-primary-600 font-medium hover:underline">Explore phonics foundation</Link>.
+        Best next step: <Link to="/courses/phonics-foundation" onClick={() => trackParentCourseInterest({ page_path: '/parents/choosing-course', cta_label: 'Explore phonics foundation', cta_location: 'phonics_section', destination_path: '/courses/phonics-foundation', program: 'phonics' })} className="text-primary-600 font-medium hover:underline">Explore phonics foundation</Link>.
       </p>
     </section>
 
@@ -98,7 +141,7 @@ const ChoosingCourse: React.FC = () => {
         <li>Reading accuracy is present but flow is weak.</li>
       </ul>
       <p className="mt-2 text-sm text-gray-700">
-        Best next step: <Link to="/reading-classes-for-kids" className="text-primary-600 font-medium hover:underline">Explore reading support</Link>.
+        Best next step: <Link to="/reading-classes-for-kids" onClick={() => trackParentCourseInterest({ page_path: '/parents/choosing-course', cta_label: 'Explore reading support', cta_location: 'reading_section', destination_path: '/reading-classes-for-kids' })} className="text-primary-600 font-medium hover:underline">Explore reading support</Link>.
       </p>
     </section>
 
@@ -110,7 +153,7 @@ const ChoosingCourse: React.FC = () => {
         <li>Answer quality is unclear despite reading comprehension.</li>
       </ul>
       <p className="mt-2 text-sm text-gray-700">
-        Best next step: <Link to="/courses/grammar" className="text-primary-600 font-medium hover:underline">Explore beginner grammar</Link>.
+        Best next step: <Link to="/courses/grammar" onClick={() => trackParentCourseInterest({ page_path: '/parents/choosing-course', cta_label: 'Explore beginner grammar', cta_location: 'grammar_section', destination_path: '/courses/grammar', program: 'grammar' })} className="text-primary-600 font-medium hover:underline">Explore beginner grammar</Link>.
       </p>
     </section>
 
@@ -122,7 +165,7 @@ const ChoosingCourse: React.FC = () => {
         <li>Ideas are present but written expression lacks clarity.</li>
       </ul>
       <p className="mt-2 text-sm text-gray-700">
-        Best next step: <Link to="/writing-classes-for-kids" className="text-primary-600 font-medium hover:underline">Explore writing support</Link>.
+        Best next step: <Link to="/writing-classes-for-kids" onClick={() => trackParentCourseInterest({ page_path: '/parents/choosing-course', cta_label: 'Explore writing support', cta_location: 'writing_section', destination_path: '/writing-classes-for-kids' })} className="text-primary-600 font-medium hover:underline">Explore writing support</Link>.
       </p>
     </section>
 
@@ -134,7 +177,7 @@ const ChoosingCourse: React.FC = () => {
         <li>Child understands but hesitates to express clearly.</li>
       </ul>
       <p className="mt-2 text-sm text-gray-700">
-        Best next step: <Link to="/courses/public-speaking-foundations" className="text-primary-600 font-medium hover:underline">Explore speaking foundations</Link>.
+        Best next step: <Link to="/courses/public-speaking-foundations" onClick={() => trackParentCourseInterest({ page_path: '/parents/choosing-course', cta_label: 'Explore speaking foundations', cta_location: 'speaking_section', destination_path: '/courses/public-speaking-foundations', program: 'speaking' })} className="text-primary-600 font-medium hover:underline">Explore speaking foundations</Link>.
       </p>
     </section>
 

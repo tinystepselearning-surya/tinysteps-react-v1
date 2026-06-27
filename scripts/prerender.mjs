@@ -4,7 +4,9 @@ import fs from "fs/promises";
 import path from "path";
 import { chromium } from "playwright";
 import { getPublicCourseSitemapPaths } from "../src/lib/publicCoursePages.js";
+import { shouldIncludeBlogSlugInSitemap } from "../src/lib/blogIndexingPolicy.js";
 import { ROUTE_SEO_REGISTRY as ROUTE_SEO_CONFIG } from "../src/lib/routeSeoRegistry.js";
+import { extractBlogEntriesFromPostFiles, listMdxEntries } from "./blog-route-utils.mjs";
 import { PARENT_HELP_ROUTES, STATIC_MARKETING_ROUTES, uniqueRoutes } from "./seo-route-inventory.mjs";
 
 const DIST = path.resolve(process.cwd(), "dist");
@@ -13,38 +15,14 @@ const HOST = `http://127.0.0.1:${PORT}`;
 const DEFAULT_INDEXABLE_ROBOTS =
   'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
 
-const BLOG_SOURCE = path.resolve(process.cwd(), "src", "content", "blog.ts");
 const BLOG_MDX_DIR = path.resolve(process.cwd(), "src", "content", "blog");
+const BLOG_POSTS_DIR = path.resolve(process.cwd(), "src", "content", "blog", "posts");
 
 // Fallback blog posts (used only if auto-discovery finds 0)
 const BLOG_FALLBACK_ROUTES = [
   "/blog/week-1-phonics-satpin-launch",
   "/blog/week-2-phonics-blending-club",
 ];
-
-async function extractSlugsFromFile(filePath) {
-  try {
-    const src = await fs.readFile(filePath, "utf8");
-    const regex = /slug\s*:\s*['"`]([^'"`]+)['"`]/g;
-    const slugs = [];
-    let match;
-    while ((match = regex.exec(src))) slugs.push(match[1]);
-    return [...new Set(slugs)];
-  } catch {
-    return [];
-  }
-}
-
-async function extractMdxSlugsFromDir(dirPath) {
-  try {
-    const files = await fs.readdir(dirPath);
-    return files
-      .filter((file) => file.endsWith(".mdx"))
-      .map((file) => file.replace(/\.mdx$/, ""));
-  } catch {
-    return [];
-  }
-}
 
 function startPreview() {
   const bin = path.resolve(process.cwd(), "node_modules", ".bin", "vite");
@@ -160,6 +138,9 @@ function injectSeoMetadata(html, route) {
     ? (config.ogImage.startsWith('http') ? config.ogImage : `https://tinystepslearning.com${config.ogImage}`)
     : 'https://tinystepslearning.com/og-default.jpg';
   const ogType = config?.ogType || 'website';
+  const renderedRobotsMatch = html.match(/<meta name="robots" content="([^"]*)"/i);
+  const renderedGooglebotMatch = html.match(/<meta name="googlebot" content="([^"]*)"/i);
+  const renderedBingbotMatch = html.match(/<meta name="bingbot" content="([^"]*)"/i);
 
   let result = html;
 
@@ -189,11 +170,11 @@ function injectSeoMetadata(html, route) {
   result = result.replace(/<link rel="canonical"[^>]*>/i, canonicalLink) || result.replace('</head>', `${canonicalLink}</head>`);
 
   // Inject/replace <meta name="robots">
-  const robotsContent = config?.robots || DEFAULT_INDEXABLE_ROBOTS;
+  const robotsContent = config?.robots || renderedRobotsMatch?.[1] || DEFAULT_INDEXABLE_ROBOTS;
   const robotsMeta = `<meta name="robots" content="${robotsContent}">`;
   result = result.replace(/<meta name="robots"[^>]*>/i, robotsMeta) || result.replace('</head>', `${robotsMeta}</head>`);
-  const googlebotMeta = `<meta name="googlebot" content="${robotsContent}">`;
-  const bingbotMeta = `<meta name="bingbot" content="${robotsContent}">`;
+  const googlebotMeta = `<meta name="googlebot" content="${config?.robots || renderedGooglebotMatch?.[1] || robotsContent}">`;
+  const bingbotMeta = `<meta name="bingbot" content="${config?.robots || renderedBingbotMatch?.[1] || robotsContent}">`;
   result = result.replace(/<meta name="googlebot"[^>]*>/i, googlebotMeta) || result.replace('</head>', `${googlebotMeta}</head>`);
   result = result.replace(/<meta name="bingbot"[^>]*>/i, bingbotMeta) || result.replace('</head>', `${bingbotMeta}</head>`);
   const authorMeta = `<meta name="author" content="Tiny Steps Learning">`;
@@ -400,14 +381,16 @@ async function prerender() {
         console.warn("[prerender] Blog discovery failed; will fall back to fixed slugs.");
       }
 
-      const blogSourceSlugs = await extractSlugsFromFile(BLOG_SOURCE);
-      const mdxSourceSlugs = await extractMdxSlugsFromDir(BLOG_MDX_DIR);
+      const blogSourceSlugs = extractBlogEntriesFromPostFiles(BLOG_POSTS_DIR).map((entry) => entry.slug);
+      const mdxSourceSlugs = listMdxEntries(BLOG_MDX_DIR).map((entry) => entry.slug);
       const sourceBlogRoutes = uniqueRoutes([
         ...blogSourceSlugs.map((slug) => `/blog/${slug}`),
         ...mdxSourceSlugs.map((slug) => `/blog/${slug}`),
-      ]);
+      ]).filter((route) => shouldIncludeBlogSlugInSitemap(route.replace(/^\/blog\//, "")));
 
-      let blogRoutes = uniqueRoutes([...sourceBlogRoutes, ...discoveredBlogRoutes]);
+      let blogRoutes = uniqueRoutes([...sourceBlogRoutes, ...discoveredBlogRoutes]).filter((route) =>
+        shouldIncludeBlogSlugInSitemap(route.replace(/^\/blog\//, ""))
+      );
 
       if (blogRoutes.length === 0) {
         blogRoutes = BLOG_FALLBACK_ROUTES;

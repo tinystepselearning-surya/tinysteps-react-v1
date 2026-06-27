@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { useEffect, useMemo, useState } from 'react';
 import { applySeo } from '../lib/seo';
+import { shouldNoindexBlogSlug } from '../lib/blogIndexingPolicy.js';
 import { formatBlogDate, isoDateFromYMD } from '../lib/date';
 import type { FC } from 'react';
 import { useParams, Link } from 'react-router-dom';
@@ -658,6 +659,7 @@ function buildMetaDescription(src: any) {
       title,
       description,
       canonicalPath: canonical,
+      robots: shouldNoindexBlogSlug(slug) ? 'noindex, follow' : undefined,
       ogType: 'article',
       jsonLd,
     });

@@ -4,6 +4,11 @@ import { applySeo } from '../../lib/seo';
 import { createHowToSchema } from '../../lib/schemas';
 import parentsMeta from '../../content/parentsMeta';
 import AboutAuthor from '../../components/AboutAuthor';
+import { trackParentCourseInterest } from '../../lib/conversionTracking';
+
+const WHATSAPP_PHONICS_URL = `https://wa.me/919618398383?text=${encodeURIComponent(
+  "Hi Tiny Steps! I want help with my child's phonics routine and the right starting class."
+)}`;
 
 const trustPoints = [
   { label: 'Daily routine', value: '5-10 minutes' },
@@ -259,6 +264,9 @@ const PhonicsMission: React.FC = () => {
 
   return (
     <article className="mx-auto max-w-6xl px-6 py-8 md:py-12">
+      <nav aria-label="Breadcrumb" className="mb-4 text-sm text-slate-500">
+        <Link to="/parents" className="hover:text-slate-700">Parents Hub</Link> / <span>Phonics Mission</span>
+      </nav>
       <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#fff6ea_0%,#ffffff_42%,#eef6ff_100%)] shadow-sm">
         <div className="px-6 py-8 md:px-10 md:py-12">
           <div className="inline-flex items-center rounded-full border border-orange-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-700">
@@ -272,14 +280,39 @@ const PhonicsMission: React.FC = () => {
             letters to sounds, blend short words, and build reading confidence without pressure.
             It is designed for ages 3-10 and works well for multilingual homes too.
           </p>
+          <p className="mt-4 max-w-3xl rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-slate-700">
+            Trust signals parents already use: 5000+ students, families across 15+ countries, and a structured phonics pathway that moves from sound to blend to read.
+          </p>
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Link
               to="/?book=1"
+              onClick={() => trackParentCourseInterest({
+                page_path: '/parents/phonics-mission',
+                cta_label: 'Book Free Assessment',
+                cta_location: 'hero',
+                destination_path: '/book-demo',
+                program: 'phonics',
+              })}
               className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
               Book Free Assessment
             </Link>
+            <a
+              href={WHATSAPP_PHONICS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackParentCourseInterest({
+                page_path: '/parents/phonics-mission',
+                cta_label: 'WhatsApp for phonics help',
+                cta_location: 'hero',
+                destination_path: '/contact',
+                program: 'phonics',
+              })}
+              className="inline-flex items-center justify-center rounded-full border border-emerald-300 bg-emerald-50 px-6 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
+            >
+              WhatsApp for Phonics Help
+            </a>
             <Link
               to="/blog/phonics-for-parents-guide"
               className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-50"

@@ -15,6 +15,7 @@ export const STATIC_MARKETING_ROUTES = [
   '/curriculum',
   '/faq',
   '/best-online-phonics-classes-for-kids-in-india',
+  '/online-phonics-reading-classes',
   '/phonics-apps-for-preschoolers-india',
   '/phonics-games-for-preschoolers',
   '/phonics-learning-games',
@@ -33,6 +34,8 @@ export const STATIC_MARKETING_ROUTES = [
   '/reading-classes-for-kids',
   '/writing-classes-for-kids',
   '/phonics-fees-india',
+  '/english-grammar-writing-classes',
+  '/spoken-english-classes-for-kids',
   '/online-english-classes-for-kids-india',
   '/online-english-classes-hyderabad',
   // Intent-dominant expansion: age pages
@@ -48,6 +51,7 @@ export const STATIC_MARKETING_ROUTES = [
   '/reading-fluency-program',
   '/confidence-building-program-kids',
   '/english-foundation-program',
+  '/public-speaking-communication-kids',
   // Intent-dominant expansion: seasonal pages
   '/summer-camp-for-kids-india',
   '/summer-reading-program-kids',

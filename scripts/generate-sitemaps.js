@@ -3,82 +3,12 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { PARENT_HELP_ROUTES, STATIC_MARKETING_ROUTES, uniqueRoutes } from './seo-route-inventory.mjs';
+import { extractBlogEntriesFromPostFiles, listMdxEntries } from './blog-route-utils.mjs';
 import { ROUTE_SEO_REGISTRY } from '../src/lib/routeSeoRegistry.js';
+import { shouldIncludeBlogSlugInSitemap } from '../src/lib/blogIndexingPolicy.js';
 import { getPublicCourseSitemapPaths } from '../src/lib/publicCoursePages.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-function extractSlugsFromFile(filePath, key) {
-  try {
-    const src = fs.readFileSync(filePath, 'utf-8');
-    // match slug: 'value' or slug: "value" (simple robust literal)
-    const regex = /slug\s*:\s*['"`"]([^'"`]+)['"`]/g;
-    const slugs = [];
-    let match;
-    while ((match = regex.exec(src))) slugs.push(match[1]);
-    return slugs;
-  } catch (e) { return []; }
-}
-
-function extractBlogSlugDateMap(filePath) {
-  try {
-    const src = fs.readFileSync(filePath, 'utf-8');
-    const map = new Map();
-    const regex = /slug\s*:\s*['"`]([^'"`]+)['"`][\s\S]*?date\s*:\s*['"`]([0-9]{4}-[0-9]{2}-[0-9]{2})['"`]/g;
-    let match;
-    while ((match = regex.exec(src))) {
-      map.set(match[1], match[2]);
-    }
-    return map;
-  } catch (e) { return new Map(); }
-}
-
-function listMdxSlugs(dir) {
-  try {
-    return fs.readdirSync(dir).filter(f => f.endsWith('.mdx')).map(f => f.replace(/\.mdx$/, ''));
-  } catch (e) { return []; }
-}
-
-function listFilesRecursive(dir, ext = '.ts') {
-  try {
-    const out = [];
-    const stack = [dir];
-    while (stack.length > 0) {
-      const current = stack.pop();
-      for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
-        const fullPath = path.join(current, entry.name);
-        if (entry.isDirectory()) {
-          stack.push(fullPath);
-        } else if (entry.isFile() && entry.name.endsWith(ext)) {
-          out.push(fullPath);
-        }
-      }
-    }
-    return out.sort();
-  } catch (e) {
-    return [];
-  }
-}
-
-function extractBlogEntriesFromPostFiles(postsDir) {
-  const entries = [];
-  for (const filePath of listFilesRecursive(postsDir, '.ts')) {
-    try {
-      const src = fs.readFileSync(filePath, 'utf-8');
-      const slugMatch = src.match(/slug\s*:\s*['"`]([^'"`]+)['"`]/);
-      if (!slugMatch) continue;
-      const dateMatch = src.match(/date\s*:\s*['"`]([0-9]{4}-[0-9]{2}-[0-9]{2})['"`]/);
-      entries.push({
-        slug: slugMatch[1],
-        date: dateMatch ? dateMatch[1] : null,
-        sourcePath: filePath,
-      });
-    } catch (e) {
-      // ignore malformed files and continue scanning
-    }
-  }
-  return entries;
-}
 
 function writeXml(file, xml) {
   fs.writeFileSync(file, xml.trim() + '\n', 'utf-8');
@@ -115,7 +45,6 @@ const EXCLUDED_BLOG_SLUGS = new Set([
   'spoken-english-classes-for-kids-confidence',
   'week-26-screen-smart-summer-routine',
   'week-22-phonics-diagnostics',
-  'week-12-speaking-confidence-seeds',
   'week-16-phonics-summer-plan',
   'week-3-phonics-tricky-words',
   'week-19-phonics-multisyllabic',
@@ -130,19 +59,17 @@ const EXCLUDED_BLOG_SLUGS = new Set([
 (function main(){
   const root = path.resolve(__dirname, '..');
   const publicDir = path.join(root, 'public');
-  const blogTs = path.join(root, 'src', 'content', 'blog.ts');
   const coursesTs = path.join(root, 'src', 'content', 'courses.ts');
   const parentsMetaTs = path.join(root, 'src', 'content', 'parentsMeta.ts');
   const appRoutesTs = path.join(root, 'src', 'app', 'routes.tsx');
   const mdxDir = path.join(root, 'src', 'content', 'blog');
   const blogPostsDir = path.join(root, 'src', 'content', 'blog', 'posts');
 
-  const blogSlugs = extractSlugsFromFile(blogTs, 'slug');
-  const blogSlugDateMap = extractBlogSlugDateMap(blogTs);
   const blogPostEntries = extractBlogEntriesFromPostFiles(blogPostsDir);
+  const mdxEntries = listMdxEntries(mdxDir);
   const blogPostSlugDateMap = new Map(blogPostEntries.filter((entry) => entry.date).map((entry) => [entry.slug, entry.date]));
   const blogPostSlugPathMap = new Map(blogPostEntries.map((entry) => [entry.slug, entry.sourcePath]));
-  const mdxSlugs = listMdxSlugs(mdxDir);
+  const mdxSlugPathMap = new Map(mdxEntries.map((entry) => [entry.slug, entry.sourcePath]));
   const staticRoutes = uniqueRoutes(STATIC_MARKETING_ROUTES);
   const EXCLUDE_FROM_SITEMAP = new Set([
     '/sitemap', // utility HTML sitemap (noindex)
@@ -188,25 +115,28 @@ const EXCLUDED_BLOG_SLUGS = new Set([
 
   // sitemap-blog.xml
   let blogXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
-  const blogRoutes = uniqueRoutes([...blogSlugs, ...blogPostEntries.map((entry) => entry.slug), ...mdxSlugs])
-    .filter((slug) => Boolean(slug) && !EXCLUDED_BLOG_SLUGS.has(slug))
+  const blogRoutes = uniqueRoutes([
+    ...blogPostEntries.map((entry) => entry.slug),
+    ...mdxEntries.map((entry) => entry.slug),
+  ])
+    .filter((slug) => Boolean(slug) && !EXCLUDED_BLOG_SLUGS.has(slug) && shouldIncludeBlogSlugInSitemap(slug))
     .sort();
   if (blogRoutes.length === 0) {
     // Guardrail: never ship an empty blog sitemap (Google flags it as a missing <url> tag issue).
-    blogXml += toUrl('https://tinystepslearning.com/blog', lastmodFrom(blogTs), '0.8', 'daily');
+    blogXml += toUrl('https://tinystepslearning.com/blog', lastmodFrom(blogPostsDir), '0.8', 'daily');
     console.warn('[sitemap] No blog slugs detected; wrote /blog fallback URL.');
   } else {
     for (const slug of blogRoutes) {
-      const mappedDate = blogSlugDateMap.get(slug) || blogPostSlugDateMap.get(slug);
+      const mappedDate = blogPostSlugDateMap.get(slug);
       if (mappedDate && mappedDate > today) continue;
-      const mdxPath = path.join(mdxDir, `${slug}.mdx`);
+      const mdxPath = mdxSlugPathMap.get(slug);
       const postTsPath = blogPostSlugPathMap.get(slug);
       const last = mappedDate
-        || (fs.existsSync(mdxPath)
+        || (mdxPath
           ? lastmodFrom(mdxPath)
           : postTsPath
             ? lastmodFrom(postTsPath)
-            : lastmodFrom(blogTs));
+            : lastmodFrom(blogPostsDir));
       blogXml += toUrl(`https://tinystepslearning.com/blog/${slug}`, last, '0.8', 'weekly');
     }
   }

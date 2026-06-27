@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import Meta from '../components/common/Meta';
 import Modal from '@/common/Modal';
 import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../constants/publicContact';
+import { trackCoursePageCtaClick } from '../lib/conversionTracking';
 
 const canonicalUrl = 'https://tinystepslearning.com/for-schools';
+const schoolsWhatsAppUrl = 'https://wa.me/919618398383?text=Hi%20Tiny%20Steps!%20I%20want%20to%20explore%20a%20school%20partnership.';
 const faqItems = [
   {
     question: 'What kind of schools or learning centres can partner with Tiny Steps?',
@@ -80,6 +82,37 @@ const ForSchoolsPage: React.FC = () => {
         <p className="text-sm text-gray-500">
           Ideal for IB, CBSE, ICSE and international schools looking to strengthen English reading, writing and speaking outcomes.
         </p>
+        <div className="mx-auto mt-6 max-w-3xl rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-slate-700">
+          Trust markers for school leaders: 5000+ students served, families across 15+ countries, and core pathways in phonics, grammar, reading, and speaking that can be piloted before scaling.
+        </div>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <a
+            href={schoolsWhatsAppUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => trackCoursePageCtaClick({
+              page_path: '/for-schools',
+              cta_label: 'WhatsApp school partnership',
+              cta_location: 'hero',
+              destination_path: '/contact',
+            })}
+            className="inline-flex rounded-lg border border-emerald-300 bg-emerald-50 px-6 py-3 font-medium text-emerald-800 transition hover:bg-emerald-100"
+          >
+            WhatsApp Partnership Desk
+          </a>
+          <a
+            href={`${PUBLIC_CONTACT_MAILTO}?subject=School%20Partnership%20Inquiry`}
+            onClick={() => trackCoursePageCtaClick({
+              page_path: '/for-schools',
+              cta_label: 'Email school partnership',
+              cta_location: 'hero',
+              destination_path: '/contact',
+            })}
+            className="inline-flex rounded-lg bg-slate-900 px-6 py-3 font-medium text-white transition hover:bg-slate-800"
+          >
+            Talk to Academic Partnerships
+          </a>
+        </div>
       </section>
 
       {/* Why Partner Section */}
@@ -245,6 +278,12 @@ const ForSchoolsPage: React.FC = () => {
         </p>
         <a
           href={`${PUBLIC_CONTACT_MAILTO}?subject=School%20Partnership%20Inquiry`}
+          onClick={() => trackCoursePageCtaClick({
+            page_path: '/for-schools',
+            cta_label: 'Discuss a school partnership',
+            cta_location: 'footer',
+            destination_path: '/contact',
+          })}
           className="inline-block bg-white text-primary-500 font-medium px-6 py-3 rounded-lg shadow-md hover:bg-gray-100"
         >
           Discuss a school partnership with {PUBLIC_CONTACT_EMAIL}

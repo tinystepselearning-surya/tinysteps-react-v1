@@ -289,6 +289,11 @@ type FunnelLeadFormParams = FunnelBaseParams & {
   form_name?: string;
 };
 
+type FunnelLeadFormErrorParams = FunnelLeadFormParams & {
+  error_fields?: string[];
+  error_message?: string;
+};
+
 type GenerateLeadParams = FunnelLeadFormParams & {
   lead_channel?: string;
   lead_type?: string;
@@ -499,6 +504,20 @@ export const trackLeadFormSubmit = (params: FunnelLeadFormParams = {}) => {
   });
 };
 
+export const trackLeadFormError = (params: FunnelLeadFormErrorParams = {}) => {
+  const pagePath = resolvePagePath(params.page_path);
+  trackEvent('form_error', {
+    page_path: pagePath,
+    form_name: params.form_name || 'unknown_form',
+    error_fields: Array.isArray(params.error_fields) ? params.error_fields.join(',') : undefined,
+    error_message: params.error_message,
+    funnel_name: params.funnel_name || WEBSITE_LEAD_FUNNEL_NAME,
+    program: resolveProgram(params.program, pagePath),
+    source_context: params.source_context || 'unknown',
+    ...buildAttributionEventParams(pagePath),
+  });
+};
+
 export const trackGenerateLead = (params: GenerateLeadParams = {}) => {
   const pagePath = resolvePagePath(params.page_path);
   trackEvent('generate_lead', {
@@ -510,6 +529,32 @@ export const trackGenerateLead = (params: GenerateLeadParams = {}) => {
     lead_channel: params.lead_channel || 'form_submit',
     lead_type: params.lead_type || 'parent_inquiry',
     submission_id: params.submission_id,
+    ...buildAttributionEventParams(pagePath),
+  });
+};
+
+export const trackCoursePageCtaClick = (params: FunnelCtaParams) => {
+  const pagePath = resolvePagePath(params.page_path);
+  trackEvent('course_page_cta_click', {
+    page_path: pagePath,
+    cta_label: sanitizeLabel(params.cta_label),
+    cta_location: params.cta_location,
+    destination_path: params.destination_path,
+    funnel_name: params.funnel_name || WEBSITE_LEAD_FUNNEL_NAME,
+    program: resolveProgram(params.program, pagePath),
+    ...buildAttributionEventParams(pagePath),
+  });
+};
+
+export const trackParentCourseInterest = (params: FunnelCtaParams) => {
+  const pagePath = resolvePagePath(params.page_path);
+  trackEvent('parent_course_interest', {
+    page_path: pagePath,
+    cta_label: sanitizeLabel(params.cta_label),
+    cta_location: params.cta_location,
+    destination_path: params.destination_path,
+    funnel_name: params.funnel_name || WEBSITE_LEAD_FUNNEL_NAME,
+    program: resolveProgram(params.program, pagePath),
     ...buildAttributionEventParams(pagePath),
   });
 };
@@ -531,6 +576,9 @@ export function trackConversionEvent(
     | 'book_demo_click'
     | 'whatsapp_click'
     | 'lead_form_submit'
+    | 'form_error'
+    | 'course_page_cta_click'
+    | 'parent_course_interest'
     | 'high_intent_page_cta_click'
     | 'funnel_landing_page_view'
     | 'funnel_cta_click'

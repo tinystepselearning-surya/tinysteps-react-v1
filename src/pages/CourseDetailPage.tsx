@@ -10,6 +10,8 @@ import { applySeo } from '../lib/seo';
 import { createCourseSchema, createFAQPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
 import TestimonialsSection from '../components/seo/TestimonialsSection';
+import { ONE_TO_ONE_MONTHLY_PACKAGES, formatINR } from '../config/pricing';
+import { trackCoursePageCtaClick } from '../lib/conversionTracking';
 import {
   getPublicCoursePathForSlug,
   isCanonicalPublicCourseSlug,
@@ -60,6 +62,8 @@ const COURSE_SCHEMA_BY_SLUG: Record<string, { name: string; description: string;
     educationalLevel: 'Advanced',
   },
 };
+
+const WHATSAPP_BASE = 'https://wa.me/919618398383?text=';
 
 const CourseDetailPage: FC = () => {
   const params = useParams();
@@ -128,6 +132,10 @@ const CourseDetailPage: FC = () => {
     `${course.name}: ${course.overview.slice(0, 3).join(' • ')} • ${course.frequency} • ${course.price}`;
   const courseHeading = coursePageConfig?.h1 ?? course.name;
   const isCanonicalSlug = isCanonicalPublicCourseSlug(rawSlug);
+  const starterPackage = ONE_TO_ONE_MONTHLY_PACKAGES[0];
+  const whatsappHref = `${WHATSAPP_BASE}${encodeURIComponent(
+    `Hi Tiny Steps! I want help choosing the right ${courseHeading} option for my child.`
+  )}`;
   const courseSchemaConfig = COURSE_SCHEMA_BY_SLUG[course.slug] || {
     name: course.name,
     description: `${course.name} — ${course.overview.join(', ')}`,
@@ -181,13 +189,38 @@ const CourseDetailPage: FC = () => {
         <p className="mt-4 max-w-3xl text-base leading-7 text-slate-700">
           {seoDescription}
         </p>
+        <div className="mt-5 max-w-3xl rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-slate-700">
+          Premium 1:1 pricing starts at {formatINR(400)}/class, with the 12-class starter plan at {formatINR(starterPackage.monthlyFee)} when that format fits your child.
+        </div>
         <div className="mt-5 flex flex-wrap gap-3 text-sm">
           <Link
             to="/book-demo"
+            onClick={() => trackCoursePageCtaClick({
+              page_path: canonicalPath,
+              cta_label: 'Book Free Assessment',
+              cta_location: 'hero',
+              destination_path: '/book-demo',
+              program: courseTrack,
+            })}
             className="inline-flex items-center rounded-full bg-primary-600 px-4 py-2 font-semibold text-white transition hover:bg-primary-700"
           >
             Book Free Assessment
           </Link>
+          <a
+            href={whatsappHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => trackCoursePageCtaClick({
+              page_path: canonicalPath,
+              cta_label: 'WhatsApp Academic Advisor',
+              cta_location: 'hero',
+              destination_path: '/contact',
+              program: courseTrack,
+            })}
+            className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-4 py-2 font-semibold text-emerald-800 transition hover:bg-emerald-100"
+          >
+            WhatsApp Academic Advisor
+          </a>
           <Link to="/courses" className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900">
             Compare All Courses
           </Link>
@@ -210,7 +243,12 @@ const CourseDetailPage: FC = () => {
         <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Parent Trust</p>
           <p className="mt-2 text-sm text-slate-700">
-            This page includes a curated sample of parent feedback for this learning track.
+            This page includes a curated sample of parent feedback for this learning track. Tiny Steps serves 5000+ students across 15+ countries with structured phonics, grammar, reading, and speaking pathways.
+          </p>
+          <p className="mt-2 text-sm text-slate-700">
+            If you are unsure whether this is the right starting point, book a free assessment first and ask for the exact first 12-class plan before enrolling.
+          </p>
+          <p className="mt-2 text-sm text-slate-700">
             For fresh public reviews, parents may also check trusted third-party profiles such as Trustpilot, JustDial, and Reddit.
           </p>
         </div>

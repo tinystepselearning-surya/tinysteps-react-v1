@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { PUBLIC_CONTACT_EMAIL } from '../../constants/publicContact';
-import { buildLeadAttributionPayload, trackGenerateLead, trackLeadFormStart, trackLeadFormSubmit } from '../../lib/conversionTracking';
+import { buildLeadAttributionPayload, trackGenerateLead, trackLeadFormError, trackLeadFormStart, trackLeadFormSubmit } from '../../lib/conversionTracking';
 
 type AdvisorContactFormProps = {
   topic?: string;
@@ -84,6 +84,11 @@ export default function AdvisorContactForm({
       setSubmitted(true);
       setValues(initialValues);
     } catch {
+      trackLeadFormError({
+        form_name: 'advisor_contact_form',
+        source_context: topic,
+        error_message: 'network_submit_failed',
+      });
       setError(`We could not send your message right now. Please email ${PUBLIC_CONTACT_EMAIL}.`);
     } finally {
       setIsSubmitting(false);
