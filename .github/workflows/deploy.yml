@@ -97,13 +97,17 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Deploy to Firebase Staging
-        uses: FirebaseExtended/action-hosting-deploy@v0
+      - name: Authenticate to Google Cloud
+        id: staging-gcp-auth
+        uses: google-github-actions/auth@v2
         with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
-          projectId: ${{ env.FIREBASE_PROJECT_ID }}
-          channelId: live
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
+          create_credentials_file: true
+
+      - name: Deploy to Firebase Staging Preview Channel
+        run: bash .github/scripts/firebase-hosting-deploy.sh channel staging
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.staging-gcp-auth.outputs.credentials_file_path }}
 
   deploy-to-production:
     # Only run on push to main, after staging deploy
@@ -206,12 +210,9 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Deploy to Firebase Production
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
-          projectId: ${{ env.FIREBASE_PROJECT_ID }}
-          channelId: live
+        run: bash .github/scripts/firebase-hosting-deploy.sh live
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
 
       # Google and Bing deprecated anonymous sitemap ping endpoints.
       # We verify the live sitemap directly and use IndexNow for real-time URL notifications.
