@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import { describe, expect, it } from 'vitest';
 
 const repoRoot = path.resolve(__dirname, '../../..');
@@ -65,5 +66,21 @@ describe('SEO infrastructure', () => {
     expect(indexHtml).not.toContain("'/english-grammar-writing-classes': '/grammar'");
     expect(indexHtml).not.toContain("'/public-speaking-communication-kids': '/speaking'");
     expect(indexHtml).not.toContain("'/spoken-english-classes-for-kids': '/speaking'");
+  });
+
+  it('ships the blog indexing policy module for Node-based SEO scripts', async () => {
+    const policyPath = path.join(repoRoot, 'src/lib/blogIndexingPolicy.js');
+    expect(fs.existsSync(policyPath)).toBe(true);
+
+    const policy = await import(pathToFileURL(policyPath).href);
+    expect(Array.from(policy.INDEXABLE_WEEKLY_BLOG_SLUGS)).toEqual([
+      'week-1-phonics-satpin-launch',
+      'week-7-grammar-nouns-to-paragraphs',
+      'week-12-speaking-confidence-seeds',
+    ]);
+    expect(policy.shouldIncludeBlogSlugInSitemap('week-1-phonics-satpin-launch')).toBe(true);
+    expect(policy.shouldIncludeBlogSlugInSitemap('week-2-phonics-blending-club')).toBe(false);
+    expect(policy.shouldNoindexBlogSlug('week-2-phonics-blending-club')).toBe(true);
+    expect(policy.shouldNoindexBlogSlug('what-is-phonics-for-kids')).toBe(false);
   });
 });
