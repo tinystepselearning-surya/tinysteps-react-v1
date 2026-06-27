@@ -45,6 +45,13 @@ if [[ "$MODE" == "channel" ]]; then
     exit 0
   fi
 
+  DEPLOY_OUTPUT="$(cat "$TMP_LOG")"
+  if grep -qi "is the current active version" <<<"$DEPLOY_OUTPUT" \
+    && grep -qi "channels/$CHANNEL_ID" <<<"$DEPLOY_OUTPUT"; then
+    echo "Firebase Hosting reports preview channel '$CHANNEL_ID' is already serving the requested version; treating as a successful no-op."
+    exit 0
+  fi
+
   echo "Firebase Hosting deploy to ${TARGET_DESCRIPTION} failed with a real error." >&2
   exit 1
 fi
