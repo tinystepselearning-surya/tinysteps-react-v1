@@ -65,7 +65,7 @@ fi
 DEPLOY_OUTPUT="$(cat "$TMP_LOG")"
 
 if grep -qi "is the current active version" <<<"$DEPLOY_OUTPUT" \
-  && grep -qi "FAILED_PRECONDITION" <<<"$DEPLOY_OUTPUT"; then
+  && grep -qi "channels/live" <<<"$DEPLOY_OUTPUT"; then
   echo "Firebase Hosting reports the requested release is already active on ${TARGET_DESCRIPTION}; treating as a successful no-op."
   exit 0
 fi
