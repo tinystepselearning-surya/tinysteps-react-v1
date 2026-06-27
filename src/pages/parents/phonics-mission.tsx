@@ -1,5 +1,13 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  CourseCTAGroup,
+  FinalLeadCTA,
+  LeadCard,
+  LeadHero,
+  LeadPageShell,
+  LeadSection,
+} from '../../components/marketing/LeadPageSections';
 import { applySeo } from '../../lib/seo';
 import { createHowToSchema } from '../../lib/schemas';
 import parentsMeta from '../../content/parentsMeta';
@@ -214,6 +222,13 @@ const supportSignals = [
   'Your child seems to lose previously learned sounds or skills rather than gradually building them',
 ];
 
+const missionTrustStats = [
+  { label: 'Students guided', value: '5000+', helper: 'Structured phonics, reading, grammar, and speaking pathways' },
+  { label: 'Countries reached', value: '15+', helper: 'Useful for multilingual families in India and abroad' },
+  { label: 'Daily routine', value: '5-10 min', helper: 'Designed for parents who need something sustainable' },
+  { label: 'Primary goal', value: 'Sound -> blend -> read', helper: 'A simple anchor for home practice' },
+];
+
 const PhonicsMission: React.FC = () => {
   useEffect(() => {
     const howToSchema = createHowToSchema('How to Run a 7-Day Phonics Mission at Home', [
@@ -262,81 +277,110 @@ const PhonicsMission: React.FC = () => {
     });
   }, []);
 
+  const ctaItems = [
+    {
+      label: 'Book Free Assessment',
+      to: '/book-demo',
+      variant: 'primary' as const,
+      onClick: () =>
+        trackParentCourseInterest({
+          page_path: '/parents/phonics-mission',
+          cta_label: 'Book Free Assessment',
+          cta_location: 'hero',
+          destination_path: '/book-demo',
+          program: 'phonics',
+        }),
+    },
+    {
+      label: 'WhatsApp for Phonics Help',
+      href: WHATSAPP_PHONICS_URL,
+      variant: 'secondary' as const,
+      onClick: () =>
+        trackParentCourseInterest({
+          page_path: '/parents/phonics-mission',
+          cta_label: 'WhatsApp for phonics help',
+          cta_location: 'hero',
+          destination_path: '/contact',
+          program: 'phonics',
+        }),
+    },
+    {
+      label: 'Read Full Phonics Guide',
+      to: '/blog/phonics-for-parents-guide',
+      variant: 'ghost' as const,
+    },
+  ];
+
   return (
-    <article className="mx-auto max-w-6xl px-6 py-8 md:py-12">
-      <nav aria-label="Breadcrumb" className="mb-4 text-sm text-slate-500">
-        <Link to="/parents" className="hover:text-slate-700">Parents Hub</Link> / <span>Phonics Mission</span>
-      </nav>
-      <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#fff6ea_0%,#ffffff_42%,#eef6ff_100%)] shadow-sm">
-        <div className="px-6 py-8 md:px-10 md:py-12">
-          <div className="inline-flex items-center rounded-full border border-orange-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-700">
-            Tiny Steps • Parent Practice Guide
-          </div>
-          <h1 className="mt-4 max-w-4xl text-3xl font-bold tracking-tight text-slate-900 md:text-5xl">
-            Phonics Mission: A Research-Backed 7-Day Starter Plan for Parents
-          </h1>
-          <p className="mt-4 max-w-3xl text-base leading-7 text-slate-700 md:text-lg">
+    <LeadPageShell>
+      <LeadHero
+        eyebrow="Tiny Steps • Parent Practice Guide"
+        title="Phonics Mission: A Research-Backed 7-Day Starter Plan for Parents"
+        description={
+          <>
             Use this page when you want a simple daily phonics routine that helps your child connect
-            letters to sounds, blend short words, and build reading confidence without pressure.
-            It is designed for ages 3-10 and works well for multilingual homes too.
-          </p>
-          <p className="mt-4 max-w-3xl rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-slate-700">
-            Trust signals parents already use: 5000+ students, families across 15+ countries, and a structured phonics pathway that moves from sound to blend to read.
-          </p>
+            letters to sounds, blend short words, and build reading confidence without pressure. It is
+            designed for ages 3-10 and works well for multilingual homes too.
+          </>
+        }
+        trustChips={[
+          { label: 'Daily routine', tone: 'warm' },
+          { label: 'Ages 3-10', tone: 'cool' },
+          { label: 'Structured phonics practice', tone: 'neutral' },
+          { label: 'Parent-friendly scripts', tone: 'mint' },
+        ]}
+        stats={missionTrustStats}
+        supportingText="This page stays parent-guide oriented: it helps you practise at home first, then book live support if the reading gap needs more structure."
+        actions={
+          <CourseCTAGroup
+            items={ctaItems}
+            renderLink={(item, className) =>
+              item.to ? (
+                <Link
+                  key={item.label}
+                  to={item.to}
+                  onClick={item.onClick}
+                  className={`${className} ${item.variant === 'ghost' ? 'border border-slate-300 bg-white text-slate-900 hover:bg-slate-50' : ''}`}
+                >
+                  {item.label}
+                </Link>
+              ) : (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={item.onClick}
+                  className={className}
+                >
+                  {item.label}
+                </a>
+              )
+            }
+          />
+        }
+        aside={
+          <LeadCard className="bg-[linear-gradient(150deg,rgba(255,255,255,0.98),rgba(248,251,255,0.94),rgba(255,250,244,0.92))]">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Parent trust markers</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {trustPoints.map((point) => (
+                <div key={point.label} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{point.label}</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">{point.value}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-slate-700">
+              Families already use Tiny Steps across 15+ countries with a structured path that moves from sound to blend to read.
+            </div>
+          </LeadCard>
+        }
+      />
 
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <Link
-              to="/?book=1"
-              onClick={() => trackParentCourseInterest({
-                page_path: '/parents/phonics-mission',
-                cta_label: 'Book Free Assessment',
-                cta_location: 'hero',
-                destination_path: '/book-demo',
-                program: 'phonics',
-              })}
-              className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-            >
-              Book Free Assessment
-            </Link>
-            <a
-              href={WHATSAPP_PHONICS_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => trackParentCourseInterest({
-                page_path: '/parents/phonics-mission',
-                cta_label: 'WhatsApp for phonics help',
-                cta_location: 'hero',
-                destination_path: '/contact',
-                program: 'phonics',
-              })}
-              className="inline-flex items-center justify-center rounded-full border border-emerald-300 bg-emerald-50 px-6 py-3 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
-            >
-              WhatsApp for Phonics Help
-            </a>
-            <Link
-              to="/blog/phonics-for-parents-guide"
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-50"
-            >
-              Read Full Phonics Guide
-            </Link>
-            <Link
-              to="/blog/week-1-phonics-satpin-launch"
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-50"
-            >
-              Start with SATPIN Week 1
-            </Link>
-          </div>
-
-          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {trustPoints.map((point) => (
-              <div key={point.label} className="rounded-2xl border border-white/90 bg-white/85 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{point.label}</p>
-                <p className="mt-1 text-sm font-semibold text-slate-900">{point.value}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <article className="mx-auto max-w-6xl px-6 py-2 md:py-4">
+        <nav aria-label="Breadcrumb" className="mb-4 text-sm text-slate-500">
+          <Link to="/parents" className="hover:text-slate-700">Parents Hub</Link> / <span>Phonics Mission</span>
+        </nav>
 
       <section className="mt-10 grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_360px]">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -494,28 +538,59 @@ const PhonicsMission: React.FC = () => {
 
       <AboutAuthor className="mt-12" />
 
-      <section className="mt-12 rounded-3xl border border-slate-200 bg-slate-900 px-6 py-8 text-white md:px-8">
-        <h2 className="text-2xl font-bold">Need a personalized phonics plan?</h2>
-        <p className="mt-2 max-w-2xl text-sm text-slate-200 md:text-base">
-          Book a free assessment to identify your child&apos;s current reading stage and get a practical
-          home routine matched to that level. If you want structured live support, we can help with that too.
-        </p>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <Link
-            to="/?book=1"
-            className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
-          >
-            Book Free Assessment
-          </Link>
-          <Link
-            to="/phonics"
-            className="inline-flex items-center justify-center rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-          >
-            Explore Phonics Classes
-          </Link>
-        </div>
-      </section>
-    </article>
+        <LeadSection className="px-0 pb-0 pt-12">
+          <FinalLeadCTA
+            title="Need a personalized phonics plan?"
+            description={
+              <>
+                Book a free assessment to identify your child&apos;s current reading stage and get a practical
+                home routine matched to that level. You can also jump to the main{' '}
+                <Link to="/phonics" className="font-semibold text-white underline underline-offset-4">
+                  phonics pathway
+                </Link>{' '}
+                or the{' '}
+                <Link to="/courses/phonics-foundation" className="font-semibold text-white underline underline-offset-4">
+                  phonics foundation course
+                </Link>{' '}
+                if you are ready for live class support.
+              </>
+            }
+            actions={
+              <CourseCTAGroup
+                items={[
+                  ctaItems[0],
+                  { label: 'Explore Phonics Classes', to: '/phonics', variant: 'ghost' as const },
+                  { label: 'See Phonics Foundation', to: '/courses/phonics-foundation', variant: 'ghost' as const },
+                ]}
+                renderLink={(item, className) =>
+                  item.to ? (
+                    <Link
+                      key={item.label}
+                      to={item.to}
+                      onClick={item.onClick}
+                      className={`${className} ${item.variant === 'ghost' ? 'border-white/30 bg-transparent text-white hover:bg-white/10' : 'bg-white text-slate-900 hover:bg-slate-100'}`}
+                    >
+                      {item.label}
+                    </Link>
+                  ) : (
+                    <a
+                      key={item.label}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={item.onClick}
+                      className={className}
+                    >
+                      {item.label}
+                    </a>
+                  )
+                }
+              />
+            }
+          />
+        </LeadSection>
+      </article>
+    </LeadPageShell>
   );
 };
 

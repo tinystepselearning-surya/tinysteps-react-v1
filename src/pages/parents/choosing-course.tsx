@@ -1,52 +1,150 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { applySeo } from '../../lib/seo';
-import parentsMeta from '../../content/parentsMeta';
+import {
+  CourseCTAGroup,
+  FAQSection,
+  FinalLeadCTA,
+  LeadCard,
+  LeadHero,
+  LeadPageShell,
+  LeadSection,
+  LeadSectionHeading,
+} from '../../components/marketing/LeadPageSections';
 import AboutAuthor from '../../components/AboutAuthor';
+import parentsMeta from '../../content/parentsMeta';
 import { createFAQPageSchema } from '../../lib/schemas';
 import { trackParentCourseInterest } from '../../lib/conversionTracking';
+import { applySeo } from '../../lib/seo';
 import { formatINR, ONE_TO_ONE_MONTHLY_PACKAGES } from '../../config/pricing';
 
 const WHATSAPP_CHOOSER_URL = `https://wa.me/919618398383?text=${encodeURIComponent(
-  "Hi Tiny Steps! I need help choosing the right course for my child."
+  'Hi Tiny Steps! I need help choosing the right course for my child.',
 )}`;
 
 const faqItems = [
   {
     question: 'How do I know which Tiny Steps course is right for my child?',
     answer:
-      'Start with your child’s current gap, not only age. Tiny Steps uses a structured assessment to identify whether phonics, reading, grammar, writing, or communication support should come first.',
+      'Start with your child’s current learning gap, not only age. Tiny Steps uses a structured assessment to identify whether phonics, reading, grammar, writing, or communication should come first.',
   },
   {
     question: 'Should my child start with phonics, reading, grammar, or communication?',
     answer:
-      'If reading basics are weak, phonics or reading support usually comes first. If reading is stable but sentence or writing accuracy is low, grammar and writing support may be better. If ideas are clear but speaking is hesitant, communication confidence support is often the right start.',
+      'If reading basics are weak, phonics or reading support usually comes first. If reading is stable but sentence or writing accuracy is weak, grammar and writing support is often the better first step. If ideas are clear but spoken responses are hesitant, communication confidence support is usually the right start.',
   },
   {
-    question: 'What if my child reads but makes grammar mistakes?',
+    question: 'What if my child reads but still makes grammar mistakes?',
     answer:
-      'This usually means grammar transfer is weak. Your child may need applied grammar and sentence formation practice so correctness appears in real speaking and writing, not only worksheets.',
+      'That usually means grammar transfer is weak. The child may know rules in isolation but need applied sentence practice in writing and speaking.',
   },
   {
     question: 'What if my child understands English but gives short answers?',
     answer:
-      'Short answers often point to confidence or sentence-formation gaps. Tiny Steps helps children build response length and clarity through guided prompts and structured speaking routines.',
+      'Short answers often point to confidence or sentence-formation gaps. A guided communication pathway usually helps more than general reading practice alone.',
   },
   {
     question: 'Can Tiny Steps suggest a course after assessing my child?',
     answer:
-      'Yes. After the assessment, parents receive a clear recommended pathway based on the child’s present level, including what to start first and how to progress next.',
+      'Yes. Parents receive a clear first-step recommendation with the most useful starting pathway and the next stage after that.',
   },
   {
-    question: 'Is it better to book a demo before choosing a course?',
+    question: 'Is it better to book an assessment before choosing a course?',
     answer:
-      'Yes. Booking a free assessment first reduces guesswork and helps parents choose the right course path with more confidence.',
+      'Yes. A free assessment reduces guesswork, avoids wrong placement, and helps families choose with more confidence.',
   },
 ];
 
-const ChoosingCourse: React.FC = () => {
-  const starterPlan = ONE_TO_ONE_MONTHLY_PACKAGES[0];
+const decisionCards = [
+  {
+    title: 'Start with phonics',
+    destination: '/courses/phonics-foundation',
+    ctaLabel: 'Explore phonics foundation',
+    ctaLocation: 'decision_ladder',
+    helper: 'Best when reading basics are not stable yet.',
+    bullets: [
+      'Child knows letters but cannot decode words confidently.',
+      'Blending is slow, shaky, or depends on guessing.',
+      'Reading attempts feel effortful even with simple words.',
+    ],
+    program: 'phonics' as const,
+  },
+  {
+    title: 'Start with reading support',
+    destination: '/reading-classes-for-kids',
+    ctaLabel: 'Explore reading support',
+    ctaLocation: 'decision_ladder',
+    helper: 'Best when decoding exists but fluency is weak.',
+    bullets: [
+      'Child reads accurately but too slowly.',
+      'Longer text causes hesitation or loss of meaning.',
+      'Reading confidence drops as passage length increases.',
+    ],
+  },
+  {
+    title: 'Start with grammar',
+    destination: '/courses/grammar',
+    ctaLabel: 'Explore beginner grammar',
+    ctaLocation: 'decision_ladder',
+    helper: 'Best when correctness drops in writing and answers.',
+    bullets: [
+      'Tense, punctuation, or sentence errors repeat often.',
+      'Grammar rules are known but not applied in real work.',
+      'Written answers feel unclear despite decent comprehension.',
+    ],
+    program: 'grammar' as const,
+  },
+  {
+    title: 'Start with communication confidence',
+    destination: '/courses/public-speaking-foundations',
+    ctaLabel: 'Explore speaking foundations',
+    ctaLocation: 'decision_ladder',
+    helper: 'Best when the child understands but hesitates to express.',
+    bullets: [
+      'Responses stay too short in class or at home.',
+      'The child avoids oral answers despite understanding the question.',
+      'Confidence drops during speaking tasks or presentations.',
+    ],
+    program: 'speaking' as const,
+  },
+];
 
+const comparisonCards = [
+  {
+    title: 'Phonics Foundation',
+    path: '/courses/phonics-foundation',
+    helper: 'For ages 3–7 and beginners who need sound-to-word reading support.',
+    points: ['Letter sounds', 'Blending', 'CVC words', 'Early reading confidence'],
+  },
+  {
+    title: 'Reading Support',
+    path: '/reading-classes-for-kids',
+    helper: 'For children who read but need better pace, expression, and meaning.',
+    points: ['Reading fluency', 'Passage confidence', 'Comprehension support', 'Smoother reading rhythm'],
+  },
+  {
+    title: 'Beginner Grammar',
+    path: '/courses/grammar',
+    helper: 'For children whose writing and answers stay error-prone.',
+    points: ['Sentence formation', 'Grammar basics', 'Punctuation', 'Writing clarity'],
+  },
+  {
+    title: 'Speaking Foundations',
+    path: '/courses/public-speaking-foundations',
+    helper: 'For children who need stronger spoken response confidence.',
+    points: ['Longer answers', 'Guided speaking', 'Confidence routines', 'Clearer expression'],
+  },
+];
+
+const quickGuides = [
+  { label: 'Child not reading properly', to: '/child-not-reading-properly' },
+  { label: 'Slow reader support', to: '/slow-reader-child-help' },
+  { label: 'Shy child speaking confidence', to: '/shy-child-speaking-confidence' },
+  { label: 'Parent phonics mission', to: '/parents/phonics-mission' },
+];
+
+const starterPlan = ONE_TO_ONE_MONTHLY_PACKAGES[0];
+
+const ChoosingCourse: React.FC = () => {
   useEffect(() => {
     const breadcrumbSchema = {
       '@context': 'https://schema.org',
@@ -69,210 +167,263 @@ const ChoosingCourse: React.FC = () => {
     });
   }, []);
 
-  return (
-  <article className="mx-auto max-w-3xl px-6 py-8">
-    <nav aria-label="Breadcrumb" className="text-sm text-slate-500">
-      <Link to="/parents" className="hover:text-slate-700">Parents Hub</Link> / <span>Choosing a Course</span>
-    </nav>
-    <h1 className="text-2xl font-bold">How to Choose the Right Tiny Steps Course for Your Child</h1>
-
-    <div className="mt-4 rounded-lg bg-blue-50 p-4 border border-blue-200">
-      <p className="text-sm font-medium text-blue-900">
-        Choose the course based on your child&apos;s current skill gap, not only age. This page is a parent decision guide to help you place your child correctly before enrollment.
-      </p>
-      <p className="mt-2 text-sm text-blue-900">
-        Most families start with a free assessment, then choose one clear first focus. Premium 1:1 pricing starts at {formatINR(400)}/class, with {formatINR(starterPlan.monthlyFee)} for the 12-class starter plan when that is the best fit.
-      </p>
-    </div>
-
-    <div className="mt-4 flex flex-wrap gap-3">
-      <Link
-        to="/book-demo"
-        onClick={() => trackParentCourseInterest({
+  const ctaItems = [
+    {
+      label: 'Book Free Assessment',
+      to: '/book-demo',
+      variant: 'primary' as const,
+      onClick: () =>
+        trackParentCourseInterest({
           page_path: '/parents/choosing-course',
           cta_label: 'Book Free Assessment',
           cta_location: 'hero',
           destination_path: '/book-demo',
-        })}
-        className="inline-flex rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition"
-      >
-        Book Free Assessment
-      </Link>
-      <a
-        href={WHATSAPP_CHOOSER_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={() => trackParentCourseInterest({
+        }),
+    },
+    {
+      label: 'Talk to Academic Advisor',
+      href: WHATSAPP_CHOOSER_URL,
+      variant: 'secondary' as const,
+      onClick: () =>
+        trackParentCourseInterest({
           page_path: '/parents/choosing-course',
           cta_label: 'Talk to Academic Advisor',
           cta_location: 'hero',
           destination_path: '/contact',
-        })}
-        className="inline-flex rounded border border-emerald-300 bg-emerald-50 px-6 py-3 font-medium text-emerald-800 transition hover:bg-emerald-100"
-      >
-        Talk to Academic Advisor
-      </a>
-    </div>
+        }),
+    },
+  ];
 
-    <section className="mt-6">
-      <h2 className="font-semibold">Quick Answer for Parents</h2>
-      <p className="mt-2">
-        Start with the child&apos;s strongest gap first. If reading basics are weak, begin with phonics or reading support. If reading is stable but writing and sentence quality are weak, begin with grammar and writing support. If speaking is hesitant, begin with communication confidence support.
-      </p>
-    </section>
+  return (
+    <LeadPageShell>
+      <LeadHero
+        eyebrow="Tiny Steps • Parent Decision Guide"
+        title="How to Choose the Right Tiny Steps Course for Your Child"
+        description={
+          <>
+            Choose the first course based on your child&apos;s real learning gap, not only age or what sounds
+            popular. This page helps parents decide whether phonics, reading, grammar, writing, or speaking
+            confidence should come first.
+          </>
+        }
+        trustChips={[
+          { label: 'Assessment-first placement', tone: 'warm' },
+          { label: 'Parent-friendly course guidance', tone: 'cool' },
+          { label: `${formatINR(400)}/class`, tone: 'neutral' },
+          { label: `${formatINR(starterPlan.monthlyFee)} for 12 classes`, tone: 'mint' },
+        ]}
+        supportingText="Most families book a free assessment first, then choose one clear first focus instead of trying to fix everything at once."
+        stats={[
+          { label: 'Students guided', value: '5000+', helper: 'Structured pathways across phonics, grammar, reading, and speaking' },
+          { label: 'Countries served', value: '15+', helper: 'Parents use Tiny Steps from India and global school communities' },
+          { label: 'Decision style', value: 'Start here', helper: 'Pick the strongest gap, then layer the next goal later' },
+          { label: 'Typical first step', value: 'Assessment', helper: 'A clear starting plan before enrollment or package choice' },
+        ]}
+        actions={
+          <CourseCTAGroup
+            items={ctaItems}
+            renderLink={(item, className) =>
+              item.to ? (
+                <Link key={item.label} to={item.to} onClick={item.onClick} className={className}>
+                  {item.label}
+                </Link>
+              ) : (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={item.onClick}
+                  className={className}
+                >
+                  {item.label}
+                </a>
+              )
+            }
+          />
+        }
+        aside={
+          <LeadCard className="bg-[linear-gradient(150deg,rgba(255,255,255,0.98),rgba(248,251,255,0.94),rgba(255,250,244,0.92))]">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Start here decision ladder</p>
+            <div className="mt-4 space-y-3">
+              {[
+                'Reading basics weak -> start with phonics.',
+                'Decoding okay but flow weak -> start with reading support.',
+                'Writing full of errors -> start with grammar.',
+                'Understanding okay but speaking hesitant -> start with communication support.',
+              ].map((item) => (
+                <div key={item} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800">
+                  {item}
+                </div>
+              ))}
+            </div>
+          </LeadCard>
+        }
+      />
 
-    <section className="mt-6">
-      <h2 className="font-semibold">When to choose phonics</h2>
-      <ul className="list-disc ml-6 mt-2">
-        <li>Child knows letters but cannot decode words confidently.</li>
-        <li>Blending is slow or inconsistent.</li>
-        <li>Reading attempts rely on guessing.</li>
-      </ul>
-      <p className="mt-2 text-sm text-gray-700">
-        Best next step: <Link to="/courses/phonics-foundation" onClick={() => trackParentCourseInterest({ page_path: '/parents/choosing-course', cta_label: 'Explore phonics foundation', cta_location: 'phonics_section', destination_path: '/courses/phonics-foundation', program: 'phonics' })} className="text-primary-600 font-medium hover:underline">Explore phonics foundation</Link>.
-      </p>
-    </section>
+      <LeadSection>
+        <LeadCard className="bg-gradient-to-br from-white via-orange-50/45 to-sky-50/45">
+          <LeadSectionHeading
+            eyebrow="Course comparison"
+            title="A quick visual comparison of the most common starting pathways"
+            description="This is not a complete catalog. It is the parent-first shortlist most families compare before booking."
+          />
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {comparisonCards.map((item) => (
+              <LeadCard key={item.title} className="border-slate-100 bg-white">
+                <h3 className="text-lg font-semibold text-slate-900">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-700">{item.helper}</p>
+                <ul className="mt-4 space-y-2 text-sm text-slate-700">
+                  {item.points.map((point) => (
+                    <li key={point}>• {point}</li>
+                  ))}
+                </ul>
+                <Link to={item.path} className="mt-5 inline-flex text-sm font-semibold text-slate-900 underline underline-offset-4">
+                  Explore this pathway
+                </Link>
+              </LeadCard>
+            ))}
+          </div>
+        </LeadCard>
+      </LeadSection>
 
-    <section className="mt-6">
-      <h2 className="font-semibold">When to choose reading support</h2>
-      <ul className="list-disc ml-6 mt-2">
-        <li>Child reads slowly or loses meaning in passages.</li>
-        <li>Fluency and confidence drop in longer text.</li>
-        <li>Reading accuracy is present but flow is weak.</li>
-      </ul>
-      <p className="mt-2 text-sm text-gray-700">
-        Best next step: <Link to="/reading-classes-for-kids" onClick={() => trackParentCourseInterest({ page_path: '/parents/choosing-course', cta_label: 'Explore reading support', cta_location: 'reading_section', destination_path: '/reading-classes-for-kids' })} className="text-primary-600 font-medium hover:underline">Explore reading support</Link>.
-      </p>
-    </section>
-
-    <section className="mt-6">
-      <h2 className="font-semibold">When to choose grammar</h2>
-      <ul className="list-disc ml-6 mt-2">
-        <li>Child repeats tense, punctuation, or sentence errors.</li>
-        <li>Grammar rules are known but not applied while writing or speaking.</li>
-        <li>Answer quality is unclear despite reading comprehension.</li>
-      </ul>
-      <p className="mt-2 text-sm text-gray-700">
-        Best next step: <Link to="/courses/grammar" onClick={() => trackParentCourseInterest({ page_path: '/parents/choosing-course', cta_label: 'Explore beginner grammar', cta_location: 'grammar_section', destination_path: '/courses/grammar', program: 'grammar' })} className="text-primary-600 font-medium hover:underline">Explore beginner grammar</Link>.
-      </p>
-    </section>
-
-    <section className="mt-6">
-      <h2 className="font-semibold">When to choose sentence formation / writing support</h2>
-      <ul className="list-disc ml-6 mt-2">
-        <li>Child writes incomplete or disconnected sentences.</li>
-        <li>Paragraph structure is weak for age expectations.</li>
-        <li>Ideas are present but written expression lacks clarity.</li>
-      </ul>
-      <p className="mt-2 text-sm text-gray-700">
-        Best next step: <Link to="/writing-classes-for-kids" onClick={() => trackParentCourseInterest({ page_path: '/parents/choosing-course', cta_label: 'Explore writing support', cta_location: 'writing_section', destination_path: '/writing-classes-for-kids' })} className="text-primary-600 font-medium hover:underline">Explore writing support</Link>.
-      </p>
-    </section>
-
-    <section className="mt-6">
-      <h2 className="font-semibold">When to choose communication confidence support</h2>
-      <ul className="list-disc ml-6 mt-2">
-        <li>Child gives short answers or avoids speaking in class.</li>
-        <li>Confidence drops in oral response situations.</li>
-        <li>Child understands but hesitates to express clearly.</li>
-      </ul>
-      <p className="mt-2 text-sm text-gray-700">
-        Best next step: <Link to="/courses/public-speaking-foundations" onClick={() => trackParentCourseInterest({ page_path: '/parents/choosing-course', cta_label: 'Explore speaking foundations', cta_location: 'speaking_section', destination_path: '/courses/public-speaking-foundations', program: 'speaking' })} className="text-primary-600 font-medium hover:underline">Explore speaking foundations</Link>.
-      </p>
-    </section>
-
-    <section className="mt-6">
-      <h2 className="font-semibold">Common parent confusion</h2>
-      <ul className="list-disc ml-6 mt-2">
-        <li>Child knows letters but cannot read words.</li>
-        <li>Child reads slowly despite practice.</li>
-        <li>Child makes grammar mistakes repeatedly.</li>
-        <li>Child gives short answers and avoids speaking.</li>
-        <li>Child writes incomplete or unclear sentences.</li>
-      </ul>
-      <p className="mt-2 text-sm text-gray-700">
-        Useful guides: <Link to="/child-not-reading-properly" className="text-primary-600 font-medium hover:underline">child not reading properly</Link>,{' '}
-        <Link to="/slow-reader-child-help" className="text-primary-600 font-medium hover:underline">slow reader help</Link>,{' '}
-        <Link to="/shy-child-speaking-confidence" className="text-primary-600 font-medium hover:underline">shy child speaking confidence</Link>.
-      </p>
-    </section>
-
-    <section className="mt-6">
-      <h2 className="font-semibold">Age-based guidance</h2>
-      <ul className="list-disc ml-6 mt-2">
-        <li>Ages 4-6: start with phonics, blending, and early reading confidence.</li>
-        <li>Ages 7-10: focus on reading fluency, grammar transfer, writing clarity, and communication.</li>
-        <li>Ages 11-12: focus on structured answers, deeper comprehension, and confident expression.</li>
-      </ul>
-    </section>
-
-    <section className="mt-6">
-      <h2 className="font-semibold">Assessment-first approach</h2>
-      <p className="mt-2">
-        Tiny Steps checks the child&apos;s actual skill profile before suggesting a course path. This avoids wrong placement and gives parents a clearer, faster route to progress.
-      </p>
-    </section>
-
-    <section className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
-      <h2 className="font-semibold">FAQs</h2>
-      <div className="mt-3 space-y-3 text-sm">
-        {faqItems.map((item) => (
-          <article key={item.question}>
-            <h3 className="font-medium text-slate-900">{item.question}</h3>
-            <p className="mt-1 text-gray-700">{item.answer}</p>
-          </article>
-        ))}
-      </div>
-    </section>
-
-    <section className="mt-8">
-      <h2 className="font-semibold">Recommended next step</h2>
-      <div className="mt-3 flex flex-col gap-3">
-      <Link to="/book-demo" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
-        Book Free Assessment
-      </Link>
-      <div className="flex flex-wrap gap-2 text-sm">
-        <Link to="/courses" className="text-primary-600 font-medium hover:underline">
-          Explore Courses
-        </Link>
-        <span className="text-slate-400">•</span>
-        <Link to="/courses/phonics-foundation" className="text-primary-600 font-medium hover:underline">
-          Phonics Foundation
-        </Link>
-        <span className="text-slate-400">•</span>
-        <Link to="/courses/grammar" className="text-primary-600 font-medium hover:underline">
-          Beginner Grammar
-        </Link>
-        <span className="text-slate-400">•</span>
-        <Link to="/courses/public-speaking-foundations" className="text-primary-600 font-medium hover:underline">
-          Speaking Foundations
-        </Link>
-      </div>
-      </div>
-    </section>
-
-    <div className="mt-10 border-t pt-8">
-      <h3 className="text-lg font-semibold text-gray-900">Next steps</h3>
-      <div className="mt-4 grid grid-cols-1 gap-3 text-sm text-gray-700">
-        <div className="flex items-start gap-3">
-          <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
-          <span><strong>Book a free assessment:</strong> Get placement clarity before selecting a program.</span>
+      <LeadSection id="decision-ladder">
+        <LeadSectionHeading
+          eyebrow="Parent decision guide"
+          title="Pick the first course by the strongest gap"
+          description="The right first course lowers frustration fast. The wrong first course often makes families feel like nothing is working."
+        />
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          {decisionCards.map((item) => (
+            <LeadCard key={item.title}>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{item.helper}</p>
+              <h3 className="mt-2 text-xl font-semibold text-slate-900">{item.title}</h3>
+              <ul className="mt-4 space-y-2 text-sm leading-7 text-slate-700">
+                {item.bullets.map((bullet) => (
+                  <li key={bullet}>• {bullet}</li>
+                ))}
+              </ul>
+              <Link
+                to={item.destination}
+                onClick={() =>
+                  trackParentCourseInterest({
+                    page_path: '/parents/choosing-course',
+                    cta_label: item.ctaLabel,
+                    cta_location: item.ctaLocation,
+                    destination_path: item.destination,
+                    program: item.program,
+                  })
+                }
+                className="mt-5 inline-flex items-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+              >
+                {item.ctaLabel}
+              </Link>
+            </LeadCard>
+          ))}
         </div>
-        <div className="flex items-start gap-3">
-          <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
-          <span><strong>Choose the right pathway:</strong> Select the first focus area with better confidence.</span>
-        </div>
-        <div className="flex items-start gap-3">
-          <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
-          <span><strong>Track progress stage by stage:</strong> Build reading, grammar, writing, and communication with clear milestones.</span>
-        </div>
-      </div>
-    </div>
+      </LeadSection>
 
-    <AboutAuthor className="mt-10" />
-  </article>
-);
+      <LeadSection>
+        <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+          <LeadCard>
+            <LeadSectionHeading
+              eyebrow="Common confusion"
+              title="What parents are usually trying to solve"
+              description="These concerns usually point to one strongest first step, not five parallel programs."
+            />
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
+              {[
+                'Child knows letters but cannot read words.',
+                'Child reads too slowly despite practice.',
+                'Child keeps making grammar mistakes.',
+                'Child gives short answers and avoids speaking.',
+                'Child writes incomplete or unclear sentences.',
+                'Parent is unsure whether age or gap matters more.',
+              ].map((item) => (
+                <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50/90 px-4 py-3 text-sm font-medium text-slate-800">
+                  {item}
+                </div>
+              ))}
+            </div>
+          </LeadCard>
 
-}
+          <LeadCard className="bg-slate-900 text-white">
+            <LeadSectionHeading
+              eyebrow="Useful next guides"
+              title="Open the right parent guide next"
+              description={<span className="text-slate-200">These supporting pages help parents validate the diagnosis before or after the assessment.</span>}
+            />
+            <div className="mt-5 space-y-3">
+              {quickGuides.map((item) => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className="block rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </LeadCard>
+        </div>
+      </LeadSection>
+
+      <LeadSection id="faq">
+        <LeadCard>
+          <LeadSectionHeading
+            eyebrow="FAQs"
+            title="Parent questions before choosing a course"
+            description="These answers preserve the page intent as a decision guide, not a generic catalog page."
+          />
+          <div className="mt-6">
+            <FAQSection items={faqItems} />
+          </div>
+        </LeadCard>
+      </LeadSection>
+
+      <LeadSection className="pb-4">
+        <FinalLeadCTA
+          title="Need a clear first-step recommendation?"
+          description="Book the free assessment for placement clarity, or message the academic advisor if you want help deciding between phonics, reading, grammar, or speaking support before you book."
+          actions={
+            <CourseCTAGroup
+              items={[
+                ...ctaItems,
+                { label: 'Explore All Courses', to: '/courses', variant: 'ghost' as const },
+              ]}
+              renderLink={(item, className) =>
+                item.to ? (
+                  <Link
+                    key={item.label}
+                    to={item.to}
+                    onClick={item.onClick}
+                    className={`${className} ${item.variant === 'ghost' ? 'border-white/30 bg-transparent text-white hover:bg-white/10' : ''}`}
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={item.onClick}
+                    className={className}
+                  >
+                    {item.label}
+                  </a>
+                )
+              }
+            />
+          }
+        />
+      </LeadSection>
+
+      <LeadSection className="pt-2">
+        <AboutAuthor className="mx-auto max-w-5xl" />
+      </LeadSection>
+    </LeadPageShell>
+  );
+};
 
 export default ChoosingCourse;

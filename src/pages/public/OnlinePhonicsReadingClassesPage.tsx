@@ -1,50 +1,120 @@
 import { useEffect } from 'react';
-import ClusterSeoNav from '../../components/programs/ClusterSeoNav';
-import { applySeo, getRouteConfig } from '../../lib/seo';
 import { Link } from 'react-router-dom';
+import ClusterSeoNav from '../../components/programs/ClusterSeoNav';
+import {
+  CourseCTAGroup,
+  FAQSection,
+  FinalLeadCTA,
+  LeadCard,
+  LeadHero,
+  LeadPageShell,
+  LeadSection,
+  LeadSectionHeading,
+} from '../../components/marketing/LeadPageSections';
+import { trackCoursePageCtaClick } from '../../lib/conversionTracking';
+import { applySeo, getRouteConfig } from '../../lib/seo';
 import { PUBLIC_FACTS } from '../../lib/schemas';
 
 const faqItems = [
   {
     question: 'My child knows letters but cannot read words. Is this the right page?',
     answer:
-      'Yes. This page is for early readers who need the bridge from letter knowledge to decoding and first sentence reading. The focus is sound mapping, blending, and short decodable reading.',
+      'Yes. This page is designed for the bridge from letter familiarity to blending, CVC decoding, and first-sentence reading confidence.',
   },
   {
     question: 'How is this different from the main phonics page?',
     answer:
-      'The main phonics page covers the full pathway across wider stages. This page is a narrower early-reader track for ages 3-8 who need strong decoding foundations and first-reading confidence.',
+      'The main phonics page covers the full pathway. This page stays focused on parents specifically looking for online phonics and reading classes that solve early decoding gaps.',
   },
   {
     question: 'How is this different from general reading classes?',
     answer:
-      'General reading classes can include broader fluency and comprehension goals. This page focuses on early reading mechanics: letter sounds, blending, CVC words, and first sentence flow.',
+      'General reading support often works on fluency and comprehension. This landing page focuses first on the mechanics of reading: sound mapping, blending, decodable words, and early sentence flow.',
   },
   {
     question: 'What age is best to start phonics and early reading support?',
     answer:
-      'Many children can start around ages 3-4 with sound awareness and early blending. Older beginners also benefit when classes are level-matched and consistent.',
+      'Many children can start around ages 3 to 4 with playful sound work. Older beginners also benefit when classes are level-matched and taught with live correction.',
   },
   {
     question: 'How many classes per week are usually effective?',
     answer:
-      'Two to three live classes per week plus short home review is a practical routine for many families. Consistency matters more than long study sessions.',
+      'Two to three live sessions per week plus a short home review routine is a practical rhythm for many families. Consistency matters more than long homework sessions.',
   },
   {
     question: 'Do you use methods similar to Jolly Phonics?',
     answer:
-      'We use a structured synthetic phonics approach that includes principles families may know from methods such as Jolly Phonics: sound-to-letter mapping, blending, and decodable reading practice.',
+      'Tiny Steps uses a structured synthetic phonics approach with sound-letter mapping, blending routines, decodable reading, and parent-visible progress rather than random worksheets.',
   },
+];
+
+const trustStats = [
+  { label: 'Students guided', value: '5000+', helper: 'Across early reading, phonics, grammar, and speaking pathways' },
+  { label: 'Countries reached', value: '15+', helper: 'Families join from India and international school communities' },
+  { label: 'Price point', value: '₹400/class', helper: 'Clear premium 1:1 pricing for parents comparing providers' },
+  { label: 'Starter pack', value: '₹4,800', helper: '12 classes for assessment-led foundations when the fit is right' },
+];
+
+const outcomes = [
+  {
+    title: 'Letter sounds that stay clear',
+    detail: 'Children move from naming letters to hearing and producing the right sounds consistently.',
+  },
+  {
+    title: 'Blending that becomes automatic',
+    detail: 'We teach children how to join sounds into short words instead of guessing from memory.',
+  },
+  {
+    title: 'CVC reading confidence',
+    detail: 'Short-vowel words become smoother, less hesitant, and more accurate through live guided correction.',
+  },
+  {
+    title: 'First sentence reading flow',
+    detail: 'Children read short decodable lines with more confidence, less freezing, and better rhythm.',
+  },
+];
+
+const parentSignals = [
+  'Your child knows letters but cannot reliably read short words.',
+  'Reading attempts depend on guessing instead of sound-by-sound decoding.',
+  'Blending feels slow, effortful, or frustrating at home.',
+  'You want structured online reading support, not scattered worksheets.',
+];
+
+const pathwayCards = [
+  {
+    title: 'Assessment-first placement',
+    detail: 'We start with a free assessment to see what your child can already decode and where the gap begins.',
+  },
+  {
+    title: 'Live 1:1 correction',
+    detail: 'Teachers correct sound confusion, blending, pace, and decoding habits in real time.',
+  },
+  {
+    title: 'Small-step reading path',
+    detail: 'Lessons move from letter sounds to blending, CVC words, early sentences, and stronger reading confidence.',
+  },
+  {
+    title: 'Parent-visible progress',
+    detail: 'Families get a clear next-step plan instead of generic reassurance after class.',
+  },
+];
+
+const internalLinks = [
+  { label: 'Explore the full phonics pathway', to: '/phonics' },
+  { label: 'See the phonics foundation course detail', to: '/courses/phonics-foundation' },
+  { label: 'Read the parent phonics mission', to: '/parents/phonics-mission' },
+  { label: 'Learn what phonics means for kids', to: '/blog/what-is-phonics-for-kids' },
 ];
 
 export default function OnlinePhonicsReadingClassesPage() {
   const routeConfig = getRouteConfig('/online-phonics-reading-classes');
   const canonicalPath = routeConfig?.canonicalPath ?? '/online-phonics-reading-classes';
   const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
-  const seoTitle = routeConfig?.title ?? 'Online Phonics and Reading Classes (Ages 3-8) | Tiny Steps Learning';
+  const seoTitle = routeConfig?.title ?? 'Online Phonics and Reading Classes for Kids | Tiny Steps Learning';
   const seoDescription =
     routeConfig?.description ??
-    'Early-reader online phonics and reading classes for ages 3-8 focused on letter sounds, blending, CVC decoding, and first sentence reading with live guided support.';
+    'Premium online phonics and reading classes for kids focused on letter sounds, blending, CVC decoding, and first-sentence reading confidence with live 1:1 support.';
 
   useEffect(() => {
     applySeo({
@@ -59,7 +129,7 @@ export default function OnlinePhonicsReadingClassesPage() {
           '@id': `${canonicalUrl}#course`,
           name: 'Online Phonics and Reading Classes',
           description:
-            'Live online early-reader classes for ages 3-8 focused on structured synthetic phonics, blending, CVC decoding, and first sentence reading confidence.',
+            'Live online phonics and early reading classes focused on structured synthetic phonics, blending, CVC decoding, and first-sentence reading confidence.',
           provider: {
             '@type': 'Organization',
             '@id': 'https://tinystepslearning.com/#organization',
@@ -69,7 +139,7 @@ export default function OnlinePhonicsReadingClassesPage() {
           url: canonicalUrl,
           hasCourseInstance: {
             '@type': 'CourseInstance',
-            courseMode: 'OnlineCoursePlatform',
+            courseMode: 'OnlineCourse',
           },
         },
         {
@@ -78,12 +148,7 @@ export default function OnlinePhonicsReadingClassesPage() {
           itemListElement: [
             { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
             { '@type': 'ListItem', position: 2, name: 'Phonics', item: 'https://tinystepslearning.com/phonics' },
-            {
-              '@type': 'ListItem',
-              position: 3,
-              name: 'Online Phonics and Reading Classes',
-              item: canonicalUrl,
-            },
+            { '@type': 'ListItem', position: 3, name: 'Online Phonics and Reading Classes', item: canonicalUrl },
           ],
         },
         {
@@ -103,156 +168,225 @@ export default function OnlinePhonicsReadingClassesPage() {
     });
   }, [canonicalPath, canonicalUrl, routeConfig?.ogType, seoDescription, seoTitle]);
 
+  const ctaItems = [
+    {
+      label: 'Book Free Assessment',
+      to: '/book-demo',
+      variant: 'primary' as const,
+      onClick: () =>
+        trackCoursePageCtaClick({
+          page_path: canonicalPath,
+          cta_label: 'Book Free Assessment',
+          cta_location: 'hero',
+          destination_path: '/book-demo',
+          program: 'phonics',
+        }),
+    },
+    {
+      label: 'WhatsApp Academic Advisor',
+      href: 'https://wa.me/919618398383?text=Hi%20Tiny%20Steps!%20I%20want%20help%20choosing%20the%20right%20online%20phonics%20and%20reading%20classes%20for%20my%20child.',
+      variant: 'secondary' as const,
+      onClick: () =>
+        trackCoursePageCtaClick({
+          page_path: canonicalPath,
+          cta_label: 'WhatsApp Academic Advisor',
+          cta_location: 'hero',
+          destination_path: '/contact',
+          program: 'phonics',
+        }),
+    },
+  ];
+
   return (
-    <div className="container mx-auto px-6 py-12 max-w-4xl">
-      <section className="mb-12 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold text-[#2d5016] mb-4">Online Phonics and Reading Classes (Ages 3-8)</h1>
-        <p className="text-xl text-gray-700 mb-6">
-          Early-reader support that helps children move from letter familiarity to confident first-word and sentence reading.
-        </p>
-        <p className="text-gray-600 mb-8">
-          This page is for the early bridge stage: sound awareness, blending, CVC decoding, and first sentence flow through live guided teaching.
-        </p>
-        <Link
-          to="/?book=1"
-          className="inline-block bg-[#4a7c2c] hover:bg-[#2d5016] text-white font-bold py-3 px-8 rounded-lg transition"
-        >
-          Book a Free Assessment
-        </Link>
-      </section>
-
-      <section className="mb-10 bg-blue-50 border-l-4 border-[#4a7c2c] p-6 rounded-lg">
-        <h2 className="text-lg font-bold text-[#2d5016] mb-2">Quick answer for parents</h2>
-        <p className="text-gray-700 leading-relaxed">
-          If your child knows letters but struggles to read words, the missing bridge is usually decoding. These classes target that bridge directly: hear sound, map letter, blend, and read short decodable text with confidence.
-        </p>
-      </section>
-
-      <section className="mb-10 bg-green-50 p-8 rounded-lg">
-        <h2 className="text-3xl font-bold text-[#2d5016] mb-4">Who this is for</h2>
-        <ul className="space-y-2 text-gray-700 ml-4">
-          <li>• Ages 3-8 who are entering or consolidating first reading steps.</li>
-          <li>• Children who can name letters but cannot reliably blend sounds into words.</li>
-          <li>• Children who guess words instead of decoding left to right.</li>
-          <li>• Parents who want a structured early-reading plan, not random worksheets.</li>
-        </ul>
-      </section>
-
-      <section className="mb-10">
-        <h2 className="text-3xl font-bold text-[#2d5016] mb-6">What children learn in this early-reading track</h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="border border-gray-200 rounded-lg p-6 shadow-sm">
-            <h3 className="font-bold text-lg text-[#4a7c2c] mb-3">Foundation Skills</h3>
-            <ul className="space-y-2 text-sm text-gray-700">
-              <li>• Letter-sound mapping (not letter names only)</li>
-              <li>• Oral blending routines</li>
-              <li>• Early sound sequencing and correction</li>
-              <li>• Confidence routines for hesitant readers</li>
+    <LeadPageShell>
+      <LeadHero
+        eyebrow="Tiny Steps • Phonics Reading Track"
+        title="Online Phonics and Reading Classes for Kids"
+        description={
+          <>
+            A premium long-tail landing page for parents who need a clear answer: how to help a child move
+            from letter familiarity to confident word reading. Tiny Steps uses live 1:1 phonics support,
+            structured blending practice, and parent-visible progress to build first-reading confidence
+            without guesswork.
+          </>
+        }
+        trustChips={[
+          { label: 'Ages 3–8', tone: 'warm' },
+          { label: 'Live 1:1 online classes', tone: 'cool' },
+          { label: 'Free phonics assessment', tone: 'neutral' },
+          { label: 'Parent progress updates', tone: 'mint' },
+        ]}
+        supportingText={
+          <>
+            This page keeps a narrower intent than the main <Link to="/phonics" className="font-semibold text-slate-900 underline underline-offset-4">phonics page</Link>:
+            parents searching specifically for online phonics and reading classes that solve blending,
+            CVC decoding, and first-sentence reading gaps.
+          </>
+        }
+        stats={trustStats}
+        actions={
+          <CourseCTAGroup
+            items={ctaItems}
+            renderLink={(item, className) =>
+              item.to ? (
+                <Link key={item.label} to={item.to} onClick={item.onClick} className={className}>
+                  {item.label}
+                </Link>
+              ) : (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={item.onClick}
+                  className={className}
+                >
+                  {item.label}
+                </a>
+              )
+            }
+          />
+        }
+        aside={
+          <LeadCard className="bg-[linear-gradient(150deg,rgba(255,255,255,0.98),rgba(248,251,255,0.94),rgba(255,250,244,0.92))]">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">What parents usually want fixed</p>
+            <ul className="mt-4 space-y-3 text-sm font-medium text-slate-800">
+              {parentSignals.map((signal) => (
+                <li key={signal} className="rounded-2xl border border-slate-200 bg-white/90 px-4 py-3">
+                  {signal}
+                </li>
+              ))}
             </ul>
+            <p className="mt-4 text-sm leading-6 text-slate-700">
+              If that sounds familiar, the next right move is usually a free assessment followed by a level-based
+              plan, not more random reading worksheets.
+            </p>
+          </LeadCard>
+        }
+      />
+
+      <LeadSection>
+        <LeadCard className="bg-gradient-to-br from-white via-orange-50/40 to-sky-50/40">
+          <LeadSectionHeading
+            eyebrow="Quick answer for parents"
+            title="What children actually learn in these online phonics and reading classes"
+            description="We stay focused on the early reading bridge: sound -> blend -> read -> repeat with confidence."
+          />
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {outcomes.map((item) => (
+              <LeadCard key={item.title} className="border-slate-100 bg-white">
+                <h3 className="text-base font-semibold text-slate-900">{item.title}</h3>
+                <p className="mt-2 text-sm leading-7 text-slate-700">{item.detail}</p>
+              </LeadCard>
+            ))}
           </div>
-          <div className="border border-gray-200 rounded-lg p-6 shadow-sm">
-            <h3 className="font-bold text-lg text-[#4a7c2c] mb-3">Reading Skills</h3>
-            <ul className="space-y-2 text-sm text-gray-700">
-              <li>• CVC word decoding</li>
-              <li>• Early tricky-word support</li>
-              <li>• Short sentence reading with flow</li>
-              <li>• First-level reading confidence and clarity</li>
-            </ul>
+        </LeadCard>
+      </LeadSection>
+
+      <LeadSection>
+        <div className="grid gap-5 lg:grid-cols-2">
+          <LeadCard>
+            <LeadSectionHeading
+              eyebrow="Why Tiny Steps"
+              title="What makes this early-reading pathway feel premium to parents"
+              description="Strong trust is not only about visual polish. It is also about calm structure, clear pricing, and obvious next steps."
+            />
+            <div className="mt-5 space-y-4">
+              {pathwayCards.map((item) => (
+                <div key={item.title} className="rounded-2xl border border-slate-200 bg-slate-50/85 px-4 py-4">
+                  <h3 className="text-base font-semibold text-slate-900">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-7 text-slate-700">{item.detail}</p>
+                </div>
+              ))}
+            </div>
+          </LeadCard>
+
+          <LeadCard className="bg-slate-900 text-white">
+            <LeadSectionHeading
+              eyebrow="Internal next steps"
+              title="Parents usually compare these pages next"
+              description={
+                <span className="text-slate-200">
+                  These links keep search intent connected without redirecting this long-tail page away or weakening its self-canonical role.
+                </span>
+              }
+            />
+            <div className="mt-5 space-y-3">
+              {internalLinks.map((item) => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className="block rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </LeadCard>
+        </div>
+      </LeadSection>
+
+      <LeadSection id="faq">
+        <LeadCard>
+          <LeadSectionHeading
+            eyebrow="FAQs"
+            title="Questions parents ask before booking phonics support"
+            description="These answers stay specific to the online phonics + reading intent of this page."
+          />
+          <div className="mt-6">
+            <FAQSection items={faqItems} />
           </div>
-        </div>
-      </section>
+        </LeadCard>
+      </LeadSection>
 
-      <section className="mb-10 bg-green-50 p-8 rounded-lg">
-        <h2 className="text-3xl font-bold text-[#2d5016] mb-4">How parents can check progress this month</h2>
-        <ul className="space-y-3 text-gray-700">
-          <li>• Sound recall improves without repeated prompting.</li>
-          <li>• Child blends short words with fewer pauses.</li>
-          <li>• Guessing reduces and full decoding attempts increase.</li>
-          <li>• Child reads short sentences with less hesitation.</li>
-        </ul>
-      </section>
+      <LeadSection className="pb-4">
+        <FinalLeadCTA
+          title="Ready to move from letter familiarity to real reading confidence?"
+          description={
+            <>
+              Book a free phonics assessment for a clear starting plan, or message our academic advisor if you want
+              help choosing between the full <Link to="/phonics" className="font-semibold text-white underline underline-offset-4">phonics pathway</Link>,
+              the <Link to="/courses/phonics-foundation" className="font-semibold text-white underline underline-offset-4">phonics foundation course</Link>,
+              or your next parent guide.
+            </>
+          }
+          actions={
+            <CourseCTAGroup
+              items={[
+                ...ctaItems,
+                { label: 'See Pricing', to: '/pricing', variant: 'ghost' as const },
+              ]}
+              renderLink={(item, className) =>
+                item.to ? (
+                  <Link
+                    key={item.label}
+                    to={item.to}
+                    onClick={item.onClick}
+                    className={`${className} ${item.variant === 'ghost' ? 'border-white/30 bg-transparent text-white hover:bg-white/10' : ''}`}
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={item.onClick}
+                    className={className}
+                  >
+                    {item.label}
+                  </a>
+                )
+              }
+            />
+          }
+        />
+      </LeadSection>
 
-      <section className="mb-10">
-        <h2 className="text-3xl font-bold text-[#2d5016] mb-6">When to choose this page vs nearby pages</h2>
-        <ul className="space-y-2 text-gray-700">
-          <li>
-            • Use this page if your child is in the early bridge stage (letters -&gt; words -&gt; first sentences).
-          </li>
-          <li>
-            • Use{' '}
-            <Link to="/phonics" className="font-semibold text-[#2d5016] underline hover:text-[#4a7c2c]">
-              phonics classes
-            </Link>{' '}
-            for the broader full phonics progression.
-          </li>
-          <li>
-            • Use{' '}
-            <Link to="/reading-classes-for-kids" className="font-semibold text-[#2d5016] underline hover:text-[#4a7c2c]">
-              reading classes for kids
-            </Link>{' '}
-            when goals are broader fluency and reading confidence beyond the earliest stage.
-          </li>
-          <li>
-            • Use{' '}
-            <Link to="/reading-fluency-program" className="font-semibold text-[#2d5016] underline hover:text-[#4a7c2c]">
-              reading fluency program
-            </Link>{' '}
-            when decoding is mostly stable but pace is still too slow.
-          </li>
-        </ul>
-      </section>
-
-      <section className="mb-10 bg-gray-50 p-8 rounded-lg">
-        <h2 className="text-3xl font-bold text-[#2d5016] mb-6 text-center">Frequently Asked Questions</h2>
-        <div className="space-y-6 max-w-3xl mx-auto">
-          {faqItems.map((item) => (
-            <article key={item.question}>
-              <h3 className="font-bold text-lg mb-2 text-gray-900">{item.question}</h3>
-              <p className="text-gray-700 text-sm">{item.answer}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="mb-10 bg-gray-50 p-8 rounded-lg">
-        <h2 className="text-2xl font-bold text-[#2d5016] mb-4">Relevant next-step links</h2>
-        <div className="grid md:grid-cols-2 gap-4">
-          <Link to="/phonics" className="text-[#4a7c2c] hover:underline font-semibold block">
-            → Phonics Classes for Kids
-          </Link>
-          <Link to="/reading-classes-for-kids" className="text-[#4a7c2c] hover:underline font-semibold block">
-            → Online Reading Classes for Kids
-          </Link>
-          <Link to="/blog/child-knows-abc-but-cannot-read" className="text-[#4a7c2c] hover:underline font-semibold block">
-            → My Child Knows ABC but Cannot Read
-          </Link>
-          <Link to="/blog/phonics-for-parents-guide" className="text-[#4a7c2c] hover:underline font-semibold block">
-            → Phonics for Parents Guide
-          </Link>
-        </div>
-      </section>
-
-      <section className="bg-[#2d5016] text-white p-8 md:p-12 rounded-lg text-center">
-        <h2 className="text-3xl font-bold mb-4">Ready to build your child’s first reading confidence?</h2>
-        <p className="mb-6 text-lg max-w-2xl mx-auto">
-          Book a free assessment and get a clear starting plan for early phonics and reading progress.
-        </p>
-        <div className="flex flex-col md:flex-row gap-4 justify-center">
-          <Link
-            to="/?book=1"
-            className="bg-white text-[#2d5016] hover:bg-gray-100 font-bold py-4 px-8 rounded-lg transition text-lg"
-          >
-            Book Free Assessment
-          </Link>
-          <Link
-            to="/pricing"
-            className="border-2 border-white text-white hover:bg-white hover:text-[#2d5016] font-bold py-4 px-8 rounded-lg transition text-lg"
-          >
-            View Pricing
-          </Link>
-        </div>
-      </section>
-      <ClusterSeoNav cluster="phonics" />
-    </div>
+      <LeadSection className="pt-2">
+        <ClusterSeoNav cluster="phonics" />
+      </LeadSection>
+    </LeadPageShell>
   );
 }

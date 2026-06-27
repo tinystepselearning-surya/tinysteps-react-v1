@@ -1,17 +1,28 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import Meta from '../components/common/Meta';
-import Modal from '@/common/Modal';
+import {
+  CourseCTAGroup,
+  FAQSection,
+  FinalLeadCTA,
+  LeadCard,
+  LeadHero,
+  LeadPageShell,
+  LeadSection,
+  LeadSectionHeading,
+} from '../components/marketing/LeadPageSections';
 import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../constants/publicContact';
 import { trackCoursePageCtaClick } from '../lib/conversionTracking';
 
 const canonicalUrl = 'https://tinystepslearning.com/for-schools';
-const schoolsWhatsAppUrl = 'https://wa.me/919618398383?text=Hi%20Tiny%20Steps!%20I%20want%20to%20explore%20a%20school%20partnership.';
+const schoolsWhatsAppUrl =
+  'https://wa.me/919618398383?text=Hi%20Tiny%20Steps!%20I%20want%20to%20explore%20a%20school%20partnership.';
+
 const faqItems = [
   {
     question: 'What kind of schools or learning centres can partner with Tiny Steps?',
     answer:
-      'Tiny Steps can support IB, CBSE, ICSE, and international schools or learning centres that want stronger phonics, grammar, reading, or speaking outcomes.',
+      'Tiny Steps supports IB, CBSE, ICSE, and international schools or learning centres that want stronger phonics, grammar, reading, and speaking outcomes.',
   },
   {
     question: 'Does Tiny Steps offer 1:1 or group formats for schools?',
@@ -21,7 +32,12 @@ const faqItems = [
   {
     question: 'How does a school partnership usually begin?',
     answer:
-      'Most partnerships begin with a short discovery call, a pilot for a selected group of students, and clear observations before scaling further.',
+      'Most partnerships begin with a short discovery call, a small pilot, and clear observations before deciding how and where to scale.',
+  },
+  {
+    question: 'What reporting do school leaders receive?',
+    answer:
+      'School leaders receive practical progress reporting, attendance visibility, and parent-communication support so the partnership stays easy to explain internally.',
   },
 ];
 
@@ -59,237 +75,294 @@ const faqSchema = {
   })),
 };
 
+const partnershipCards = [
+  {
+    title: 'Pilot-first rollout',
+    detail: 'Start with a selected cohort, gather teacher observations, and scale only after the model proves useful in your context.',
+  },
+  {
+    title: 'School-friendly scheduling',
+    detail: 'Partnerships can fit inside English periods, lab blocks, after-school clubs, or exam-bridge schedules.',
+  },
+  {
+    title: 'Dashboards and reporting',
+    detail: 'Leadership gets clear visibility into attendance, progress, and parent-facing communication needs.',
+  },
+  {
+    title: 'Premium parent trust',
+    detail: 'Families already know Tiny Steps through structured pathways, teacher kindness, and progress-led communication.',
+  },
+];
+
+const pilotModel = [
+  {
+    step: '1. Discovery call',
+    detail: 'We align on board, grade range, English goals, parent expectations, and timetable constraints.',
+  },
+  {
+    step: '2. Cohort selection',
+    detail: 'Choose a grade, intervention group, or after-school cohort where stronger English outcomes are most urgent.',
+  },
+  {
+    step: '3. Pilot launch',
+    detail: 'Run a 4-8 week pilot with phonics, grammar, reading, or speaking pathways matched to the school need.',
+  },
+  {
+    step: '4. Review and scale',
+    detail: 'Leadership reviews reporting, parent response, and classroom outcomes before expanding to more students.',
+  },
+];
+
+const solutionCards = [
+  {
+    title: 'Foundational reading support',
+    detail: 'Phonics pathways for children who need stronger decoding, blending, reading confidence, or spelling support.',
+    link: '/courses/phonics-foundation',
+    label: 'Phonics Foundation',
+  },
+  {
+    title: 'Grammar and writing improvement',
+    detail: 'Structured grammar support for cleaner sentence work, better writing accuracy, and stronger school answers.',
+    link: '/courses/grammar',
+    label: 'Beginner Grammar',
+  },
+  {
+    title: 'Speaking and presentation confidence',
+    detail: 'Communication pathways for students who need longer answers, more confidence, and clearer oral expression.',
+    link: '/courses/public-speaking-foundations',
+    label: 'Speaking Foundations',
+  },
+];
+
+const leadershipStats = [
+  { label: 'Students served', value: '5000+', helper: 'Across phonics, grammar, reading, and speaking pathways' },
+  { label: 'Countries reached', value: '15+', helper: 'Useful for schools serving global or mobile families' },
+  { label: 'Model options', value: '1:1 + groups', helper: 'Flexible for intervention and enrichment use cases' },
+  { label: 'Partnership style', value: 'Pilot first', helper: 'School leaders can validate fit before wider rollout' },
+];
+
 const ForSchoolsPage: React.FC = () => {
-  const [showSampleSchedule, setShowSampleSchedule] = useState(false);
+  const ctaItems = [
+    {
+      label: 'WhatsApp Partnership Desk',
+      href: schoolsWhatsAppUrl,
+      variant: 'secondary' as const,
+      onClick: () =>
+        trackCoursePageCtaClick({
+          page_path: '/for-schools',
+          cta_label: 'WhatsApp school partnership',
+          cta_location: 'hero',
+          destination_path: '/contact',
+        }),
+    },
+    {
+      label: 'Talk to Academic Partnerships',
+      href: `${PUBLIC_CONTACT_MAILTO}?subject=School%20Partnership%20Inquiry`,
+      variant: 'primary' as const,
+      onClick: () =>
+        trackCoursePageCtaClick({
+          page_path: '/for-schools',
+          cta_label: 'Talk to Academic Partnerships',
+          cta_location: 'hero',
+          destination_path: '/contact',
+        }),
+    },
+  ];
 
   return (
-    <div className="page-gradient relative overflow-hidden">
+    <LeadPageShell>
       <Meta
-        title="Tiny Steps for Schools – Premium 1:1 English Programs for Ages 3–12"
-        description="Partner with Tiny Steps to bring IB-aligned phonics, grammar and public speaking programs to your school. 1:1 and small-group English mentoring with AI-guided practice and clear dashboards."
+        title="Tiny Steps for Schools – Premium English Partnerships for Ages 3-12"
+        description="Partner with Tiny Steps to bring phonics, grammar, reading, and speaking support to your school through pilot-first English programs, practical reporting, and parent-trust communication."
         canonical={canonicalUrl}
         jsonLd={[breadcrumbSchema, pageSchema, faqSchema]}
       />
 
-      {/* Hero Section */}
-      <section className="text-center py-16 px-6 bg-white">
-        <h1 className="text-4xl font-bold mb-4">
-          Tiny Steps for Schools & Learning Centres
-        </h1>
-        <p className="text-lg text-gray-700 mb-4">
-          Partner with a premium, international-standard 1:1 English program for ages 3–12. Tiny Steps blends IB-aligned phonics, grammar and public speaking with kind mentors and AI-guided practice, so your students gain real confidence in the classroom and beyond.
-        </p>
-        <p className="text-sm text-gray-500">
-          Ideal for IB, CBSE, ICSE and international schools looking to strengthen English reading, writing and speaking outcomes.
-        </p>
-        <div className="mx-auto mt-6 max-w-3xl rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-slate-700">
-          Trust markers for school leaders: 5000+ students served, families across 15+ countries, and core pathways in phonics, grammar, reading, and speaking that can be piloted before scaling.
-        </div>
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <a
-            href={schoolsWhatsAppUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => trackCoursePageCtaClick({
-              page_path: '/for-schools',
-              cta_label: 'WhatsApp school partnership',
-              cta_location: 'hero',
-              destination_path: '/contact',
-            })}
-            className="inline-flex rounded-lg border border-emerald-300 bg-emerald-50 px-6 py-3 font-medium text-emerald-800 transition hover:bg-emerald-100"
-          >
-            WhatsApp Partnership Desk
-          </a>
-          <a
-            href={`${PUBLIC_CONTACT_MAILTO}?subject=School%20Partnership%20Inquiry`}
-            onClick={() => trackCoursePageCtaClick({
-              page_path: '/for-schools',
-              cta_label: 'Email school partnership',
-              cta_location: 'hero',
-              destination_path: '/contact',
-            })}
-            className="inline-flex rounded-lg bg-slate-900 px-6 py-3 font-medium text-white transition hover:bg-slate-800"
-          >
-            Talk to Academic Partnerships
-          </a>
-        </div>
-      </section>
+      <LeadHero
+        eyebrow="Tiny Steps • School Partnerships"
+        title="English Program Partnerships for Schools and Learning Centres"
+        description={
+          <>
+            A stronger English support model for school leaders who want measurable reading, writing, and
+            communication gains without forcing a risky full-scale rollout on day one. Tiny Steps combines
+            phonics, grammar, reading, and speaking pathways with pilot-first planning, reporting, and
+            parent-friendly communication.
+          </>
+        }
+        trustChips={[
+          { label: 'IB, CBSE, ICSE, international', tone: 'warm' },
+          { label: 'Pilot-first rollout', tone: 'cool' },
+          { label: 'Dashboards and reporting', tone: 'neutral' },
+          { label: 'Parent trust built in', tone: 'mint' },
+        ]}
+        supportingText="This page is written for principals, coordinators, HODs, and school founders who need a serious partnership page rather than a parent-facing public course pitch."
+        stats={leadershipStats}
+        actions={
+          <CourseCTAGroup
+            items={ctaItems}
+            renderLink={(item, className) => (
+              <a
+                key={item.label}
+                href={item.href}
+                target={item.href?.startsWith('http') ? '_blank' : undefined}
+                rel={item.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+                onClick={item.onClick}
+                className={className}
+              >
+                {item.label}
+              </a>
+            )}
+          />
+        }
+        aside={
+          <LeadCard className="bg-[linear-gradient(150deg,rgba(255,255,255,0.98),rgba(248,251,255,0.94),rgba(255,250,244,0.92))]">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Why school leaders reach out</p>
+            <ul className="mt-4 space-y-3 text-sm font-medium text-slate-800">
+              {[
+                'Reading and speaking gaps show up clearly but internal capacity is stretched.',
+                'Parents want visible English progress, not vague reassurance.',
+                'The school wants a pilot that can be reviewed before scaling.',
+                'Leadership needs reporting, not just external teaching.',
+              ].map((item) => (
+                <li key={item} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </LeadCard>
+        }
+      />
 
-      {/* Why Partner Section */}
-      <section className="py-16 px-6 bg-gray-50">
-        <h2 className="text-3xl font-semibold text-center mb-8">
-          Why Partner with Tiny Steps
-        </h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <h3 className="text-xl font-medium mb-2">IB-aligned, school-friendly curriculum</h3>
-            <p className="text-gray-700 text-sm">
-              Our phonics, grammar and speaking modules are mapped to global standards and can plug into your existing English periods or after-school programs.
-            </p>
+      <LeadSection>
+        <LeadCard className="bg-gradient-to-br from-white via-orange-50/40 to-sky-50/40">
+          <LeadSectionHeading
+            eyebrow="Partnership strengths"
+            title="Why this partnership model feels safer for schools"
+            description="The page is designed to help leadership understand the operating model, not just the curriculum promise."
+          />
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {partnershipCards.map((item) => (
+              <LeadCard key={item.title} className="border-slate-100 bg-white">
+                <h3 className="text-base font-semibold text-slate-900">{item.title}</h3>
+                <p className="mt-2 text-sm leading-7 text-slate-700">{item.detail}</p>
+              </LeadCard>
+            ))}
           </div>
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <h3 className="text-xl font-medium mb-2">1:1 and small-group models</h3>
-            <p className="text-gray-700 text-sm">
-              Offer high-touch 1:1 mentoring or focused small groups without stretching your internal teacher capacity. Sessions can run before, during or after school hours.
-            </p>
-          </div>
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <h3 className="text-xl font-medium mb-2">Dashboards, reports and parent trust</h3>
-            <p className="text-gray-700 text-sm">
-              School leaders get clear dashboards for attendance and progress, while parents receive gentle, jargon-free updates that build trust in your institution.
-            </p>
-          </div>
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <h3 className="text-xl font-medium mb-2">Dedicated partnership support</h3>
-            <p className="text-gray-700 text-sm">
-              A dedicated relationship manager coordinates schedules, communication and reporting between the Tiny Steps team and your school.
-            </p>
-          </div>
+        </LeadCard>
+      </LeadSection>
+
+      <LeadSection>
+        <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+          <LeadCard>
+            <LeadSectionHeading
+              eyebrow="Pilot model"
+              title="How a Tiny Steps school partnership typically runs"
+              description="Start with a small, defensible pilot. Expand only after you have useful evidence."
+            />
+            <div className="mt-5 space-y-3">
+              {pilotModel.map((item) => (
+                <div key={item.step} className="rounded-2xl border border-slate-200 bg-slate-50/90 px-4 py-4">
+                  <h3 className="text-base font-semibold text-slate-900">{item.step}</h3>
+                  <p className="mt-2 text-sm leading-7 text-slate-700">{item.detail}</p>
+                </div>
+              ))}
+            </div>
+          </LeadCard>
+
+          <LeadCard className="bg-slate-900 text-white">
+            <LeadSectionHeading
+              eyebrow="What leaders get"
+              title="Reporting, coordination, and parent-facing clarity"
+              description={<span className="text-slate-200">A school partnership only works if the operational side feels as clear as the teaching side.</span>}
+            />
+            <ul className="mt-5 space-y-3 text-sm leading-7 text-slate-200">
+              <li>• Attendance visibility and cohort-level progress reporting.</li>
+              <li>• Support for leadership reviews and partnership check-ins.</li>
+              <li>• Parent-trust messaging that is warm, practical, and easy to share.</li>
+              <li>• A dedicated Tiny Steps partnership contact instead of fragmented communication.</li>
+            </ul>
+          </LeadCard>
         </div>
-      </section>
+      </LeadSection>
 
-      {/* How Partnership Works Section */}
-      <section className="py-16 px-6">
-        <h2 className="text-3xl font-semibold text-center mb-8">
-          How a Partnership Works
-        </h2>
-        <div className="grid gap-6 md:grid-cols-4">
-          <div className="text-center">
-            <h3 className="text-xl font-medium mb-2">Discovery call</h3>
-            <p className="text-gray-700 text-sm">
-              We understand your school’s context, board, timetable and current English outcomes.
-            </p>
+      <LeadSection>
+        <LeadCard>
+          <LeadSectionHeading
+            eyebrow="Program pathways"
+            title="What schools can pilot first"
+            description="Choose the pathway that matches the most visible English gap in the selected cohort."
+          />
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {solutionCards.map((item) => (
+              <LeadCard key={item.title} className="border-slate-100 bg-white">
+                <h3 className="text-lg font-semibold text-slate-900">{item.title}</h3>
+                <p className="mt-2 text-sm leading-7 text-slate-700">{item.detail}</p>
+                <Link to={item.link} className="mt-5 inline-flex text-sm font-semibold text-slate-900 underline underline-offset-4">
+                  {item.label}
+                </Link>
+              </LeadCard>
+            ))}
           </div>
-          <div className="text-center">
-            <h3 className="text-xl font-medium mb-2">Pilot with selected students</h3>
-            <p className="text-gray-700 text-sm">
-              We start with a small group or grade, run a 4–8 week pilot and share clear before/after observations.
-            </p>
-          </div>
-          <div className="text-center">
-            <h3 className="text-xl font-medium mb-2">Scale across classes or grades</h3>
-            <p className="text-gray-700 text-sm">
-              Based on results, we expand to more students with predictable schedules and reporting.
-            </p>
-          </div>
-          <div className="text-center">
-            <h3 className="text-xl font-medium mb-2">Ongoing improvement</h3>
-            <p className="text-gray-700 text-sm">
-              We refine the curriculum mix, share insights with English HODs, and keep parents informed.
-            </p>
-          </div>
-        </div>
-      </section>
+        </LeadCard>
+      </LeadSection>
 
-      {/* Partnership Models Section */}
-      <section className="py-16 px-6 bg-gray-50">
-        <h2 className="text-3xl font-semibold text-center mb-8">
-          Partnership Models
-        </h2>
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <h3 className="text-xl font-medium mb-2">After-school English clubs</h3>
-            <p className="text-gray-700 text-sm">
-              Offer Tiny Steps as a premium after-school add-on for interested parents.
-            </p>
+      <LeadSection id="faq">
+        <LeadCard>
+          <LeadSectionHeading
+            eyebrow="FAQs"
+            title="Questions school leaders usually ask first"
+            description="This keeps the page self-contained for B2B review while preserving its public SEO role."
+          />
+          <div className="mt-6">
+            <FAQSection items={faqItems} />
           </div>
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <h3 className="text-xl font-medium mb-2">In-school English lab</h3>
-            <p className="text-gray-700 text-sm">
-              Run Tiny Steps sessions during designated English lab/reading periods with school support.
-            </p>
-          </div>
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <h3 className="text-xl font-medium mb-2">Holiday or exam-bridge programs</h3>
-            <p className="text-gray-700 text-sm">
-              Use Tiny Steps intensives to support exam years or bridge language gaps during vacations.
-            </p>
-          </div>
-        </div>
-      </section>
+        </LeadCard>
+      </LeadSection>
 
-      {/* Your Child’s Learning Journey Section */}
-      <section className="py-16 px-6">
-        <h2 className="text-3xl font-semibold text-center mb-8">
-          Your Child’s Learning Journey
-        </h2>
-        <p className="text-lg text-gray-700 mb-4">
-          At Tiny Steps, we tailor the learning journey to each child's needs, ensuring a balanced focus on phonics, grammar, and speaking skills.
-        </p>
-        <p className="text-sm text-gray-500 mb-6">
-          Our program is designed to be flexible, fun, and effective, fitting seamlessly into your school's existing framework.
-        </p>
-        <button
-          type="button"
-          className="mt-3 text-sm font-medium text-primary underline"
-          onClick={() => setShowSampleSchedule(true)}
-        >
-          View a sample lesson schedule
-        </button>
-        <div className="mt-6 flex flex-wrap justify-center gap-3 text-sm">
-          <Link to="/courses/phonics-foundation" className="text-primary-700 underline hover:text-primary-800">
-            Phonics Foundation
-          </Link>
-          <Link to="/courses/grammar" className="text-primary-700 underline hover:text-primary-800">
-            Beginner Grammar
-          </Link>
-          <Link to="/courses/public-speaking-foundations" className="text-primary-700 underline hover:text-primary-800">
-            Speaking Foundations
-          </Link>
-        </div>
-      </section>
-
-      <section className="py-16 px-6 bg-white">
-        <h2 className="text-3xl font-semibold text-center mb-8">Frequently Asked Questions</h2>
-        <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-3">
-          {faqItems.map((item) => (
-            <article key={item.question} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <h3 className="text-lg font-semibold text-slate-900">{item.question}</h3>
-              <p className="mt-2 text-sm text-slate-700">{item.answer}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <Modal
-        isOpen={showSampleSchedule}
-        onClose={() => setShowSampleSchedule(false)}
-        title="Sample Weekly Schedule"
-        size="md"
-      >
-        {/* Replace this placeholder content later with the real schedule */}
-        <p className="text-sm text-muted-foreground mb-2">
-          Here’s an example of how Weeks 2–8 might look for most children.
-        </p>
-        <ul className="list-disc pl-5 space-y-1 text-sm text-foreground">
-          <li>Mon – Phonics & reading practice</li>
-          <li>Wed – Grammar & writing focus</li>
-          <li>Fri – Speaking & confidence activities</li>
-        </ul>
-      </Modal>
-
-      {/* Call-to-Action Section */}
-      <section className="py-16 px-6 bg-primary-500 text-white text-center">
-        <h2 className="text-3xl font-semibold mb-4">
-          Ready to explore Tiny Steps for your school?
-        </h2>
-        <p className="text-lg mb-6">
-          Share a few details about your school and we’ll schedule a short call to explore the right model for you.
-        </p>
-        <a
-          href={`${PUBLIC_CONTACT_MAILTO}?subject=School%20Partnership%20Inquiry`}
-          onClick={() => trackCoursePageCtaClick({
-            page_path: '/for-schools',
-            cta_label: 'Discuss a school partnership',
-            cta_location: 'footer',
-            destination_path: '/contact',
-          })}
-          className="inline-block bg-white text-primary-500 font-medium px-6 py-3 rounded-lg shadow-md hover:bg-gray-100"
-        >
-          Discuss a school partnership with {PUBLIC_CONTACT_EMAIL}
-        </a>
-      </section>
-    </div>
+      <LeadSection className="pb-4">
+        <FinalLeadCTA
+          title="Ready to discuss a school partnership pilot?"
+          description={
+            <>
+              Share your board, grade range, and main English goal. We will help you evaluate whether a pilot in
+              phonics, grammar, reading, or speaking makes the most sense before you scale anything. For email-based
+              coordination, write to <span className="font-semibold text-white">{PUBLIC_CONTACT_EMAIL}</span>.
+            </>
+          }
+          actions={
+            <CourseCTAGroup
+              items={[
+                ...ctaItems,
+                {
+                  label: 'Email Partnership Desk',
+                  href: `${PUBLIC_CONTACT_MAILTO}?subject=School%20Partnership%20Inquiry`,
+                  variant: 'ghost' as const,
+                  onClick: () =>
+                    trackCoursePageCtaClick({
+                      page_path: '/for-schools',
+                      cta_label: 'Email Partnership Desk',
+                      cta_location: 'footer',
+                      destination_path: '/contact',
+                    }),
+                },
+              ]}
+              renderLink={(item, className) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  target={item.href?.startsWith('http') ? '_blank' : undefined}
+                  rel={item.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
+                  onClick={item.onClick}
+                  className={`${className} ${item.variant === 'ghost' ? 'border-white/30 bg-transparent text-white hover:bg-white/10' : ''}`}
+                >
+                  {item.label}
+                </a>
+              )}
+            />
+          }
+        />
+      </LeadSection>
+    </LeadPageShell>
   );
 };
 

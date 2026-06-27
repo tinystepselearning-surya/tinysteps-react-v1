@@ -10,6 +10,16 @@ import { applySeo } from '../lib/seo';
 import { createCourseSchema, createFAQPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
 import TestimonialsSection from '../components/seo/TestimonialsSection';
+import {
+  CourseCTAGroup,
+  FAQSection,
+  FinalLeadCTA,
+  LeadCard,
+  LeadHero,
+  LeadPageShell,
+  LeadSection,
+  LeadSectionHeading,
+} from '../components/marketing/LeadPageSections';
 import { ONE_TO_ONE_MONTHLY_PACKAGES, formatINR } from '../config/pricing';
 import { trackCoursePageCtaClick } from '../lib/conversionTracking';
 import {
@@ -172,7 +182,7 @@ const CourseDetailPage: FC = () => {
   }
 
   return (
-    <div className="bg-white">
+    <LeadPageShell>
       <Meta
         title={seoTitle}
         description={seoDescription}
@@ -180,79 +190,123 @@ const CourseDetailPage: FC = () => {
         jsonLd={jsonLd}
         keywords={Array.isArray(coursePageConfig?.keywords) ? coursePageConfig.keywords.join(', ') : undefined}
       />
-      <div className="mx-auto max-w-6xl px-6 py-10">
-        <div className="flex items-center gap-2 text-2xl font-bold text-gray-900">
-          <span className="text-3xl">{course.icon}</span>
-          <h1>{courseHeading}</h1>
-        </div>
-        <div className="mt-1 text-sm text-gray-600">{course.age} • {course.duration} • {course.frequency} • Level: {course.level}</div>
-        <p className="mt-4 max-w-3xl text-base leading-7 text-slate-700">
-          {seoDescription}
-        </p>
-        <div className="mt-5 max-w-3xl rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-slate-700">
-          Premium 1:1 pricing starts at {formatINR(400)}/class, with the 12-class starter plan at {formatINR(starterPackage.monthlyFee)} when that format fits your child.
-        </div>
-        <div className="mt-5 flex flex-wrap gap-3 text-sm">
-          <Link
-            to="/book-demo"
-            onClick={() => trackCoursePageCtaClick({
-              page_path: canonicalPath,
-              cta_label: 'Book Free Assessment',
-              cta_location: 'hero',
-              destination_path: '/book-demo',
-              program: courseTrack,
-            })}
-            className="inline-flex items-center rounded-full bg-primary-600 px-4 py-2 font-semibold text-white transition hover:bg-primary-700"
-          >
-            Book Free Assessment
-          </Link>
-          <a
-            href={whatsappHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => trackCoursePageCtaClick({
-              page_path: canonicalPath,
-              cta_label: 'WhatsApp Academic Advisor',
-              cta_location: 'hero',
-              destination_path: '/contact',
-              program: courseTrack,
-            })}
-            className="inline-flex items-center rounded-full border border-emerald-300 bg-emerald-50 px-4 py-2 font-semibold text-emerald-800 transition hover:bg-emerald-100"
-          >
-            WhatsApp Academic Advisor
-          </a>
-          <Link to="/courses" className="inline-flex items-center rounded-full border border-slate-300 px-4 py-2 font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900">
-            Compare All Courses
-          </Link>
-        </div>
-        <div className="mt-4 grid gap-6 md:grid-cols-2">
-          <div>
-            <h2 className="font-semibold">Quick Overview</h2>
-            <ul className="mt-2 list-disc pl-5 text-sm text-gray-800">
-              {course.overview.map((o) => <li key={o}><AutoLinkedText text={o} usedHrefs={usedHrefs} /></li>)}
-            </ul>
-          </div>
-          <div>
-            <h2 className="font-semibold">Learning Outcomes</h2>
-            <ul className="mt-2 list-disc pl-5 text-sm text-gray-800">
-              {course.outcomes.map((o) => <li key={o}><AutoLinkedText text={o} usedHrefs={usedHrefs} /></li>)}
-            </ul>
-          </div>
-        </div>
+      <LeadHero
+        eyebrow={`${course.icon} Tiny Steps • ${course.level} course`}
+        title={courseHeading}
+        description={seoDescription}
+        trustChips={[
+          { label: course.age, tone: 'warm' },
+          { label: course.duration, tone: 'cool' },
+          { label: course.frequency, tone: 'neutral' },
+          { label: `${formatINR(400)}/class`, tone: 'mint' },
+        ]}
+        supportingText={`Premium 1:1 pricing starts at ${formatINR(400)}/class, with the 12-class starter plan at ${formatINR(starterPackage.monthlyFee)} when that format fits your child.`}
+        stats={[
+          { label: 'Students guided', value: '5000+', helper: 'Structured programs across phonics, grammar, reading, and speaking' },
+          { label: 'Countries reached', value: '15+', helper: 'Parent trust built across India and global family communities' },
+          { label: 'Course level', value: course.level, helper: 'Assessment-led placement before enrollment' },
+          { label: 'Program format', value: 'Live 1:1', helper: 'Pacing adjusts to the child rather than a group average' },
+        ]}
+        actions={
+          <CourseCTAGroup
+            items={[
+              {
+                label: 'Book Free Assessment',
+                to: '/book-demo',
+                variant: 'primary',
+                onClick: () =>
+                  trackCoursePageCtaClick({
+                    page_path: canonicalPath,
+                    cta_label: 'Book Free Assessment',
+                    cta_location: 'hero',
+                    destination_path: '/book-demo',
+                    program: courseTrack,
+                  }),
+              },
+              {
+                label: 'WhatsApp Academic Advisor',
+                href: whatsappHref,
+                variant: 'secondary',
+                onClick: () =>
+                  trackCoursePageCtaClick({
+                    page_path: canonicalPath,
+                    cta_label: 'WhatsApp Academic Advisor',
+                    cta_location: 'hero',
+                    destination_path: '/contact',
+                    program: courseTrack,
+                  }),
+              },
+              { label: 'Compare All Courses', to: '/courses', variant: 'ghost' },
+            ]}
+            renderLink={(item, className) =>
+              item.to ? (
+                <Link key={item.label} to={item.to} onClick={item.onClick} className={className}>
+                  {item.label}
+                </Link>
+              ) : (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={item.onClick}
+                  className={className}
+                >
+                  {item.label}
+                </a>
+              )
+            }
+          />
+        }
+        aside={
+          <LeadCard className="bg-[linear-gradient(150deg,rgba(255,255,255,0.98),rgba(248,251,255,0.94),rgba(255,250,244,0.92))]">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Parent trust</p>
+            <p className="mt-3 text-sm leading-7 text-slate-700">
+              This page includes a curated sample of parent feedback for this learning track. If you are unsure whether this is the right starting point, book the free assessment first and ask for the exact first 12-class plan before enrolling.
+            </p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Pricing trust</p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">{formatINR(400)}/class • {formatINR(starterPackage.monthlyFee)} / 12 classes</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Delivery model</p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">Assessment first, then level-based progression</p>
+              </div>
+            </div>
+          </LeadCard>
+        }
+      />
 
-        <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Parent Trust</p>
-          <p className="mt-2 text-sm text-slate-700">
-            This page includes a curated sample of parent feedback for this learning track. Tiny Steps serves 5000+ students across 15+ countries with structured phonics, grammar, reading, and speaking pathways.
-          </p>
-          <p className="mt-2 text-sm text-slate-700">
-            If you are unsure whether this is the right starting point, book a free assessment first and ask for the exact first 12-class plan before enrolling.
-          </p>
-          <p className="mt-2 text-sm text-slate-700">
-            For fresh public reviews, parents may also check trusted third-party profiles such as Trustpilot, JustDial, and Reddit.
-          </p>
-        </div>
+      <LeadSection>
+        <LeadCard className="bg-gradient-to-br from-white via-orange-50/40 to-sky-50/40">
+          <LeadSectionHeading
+            eyebrow="Course overview"
+            title="What this course helps your child improve first"
+            description="The layout is premium, but the content stays course-specific so parents can still judge fit quickly."
+          />
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <LeadCard className="border-slate-100 bg-white">
+              <h3 className="text-lg font-semibold text-slate-900">Quick overview</h3>
+              <ul className="mt-4 space-y-2 text-sm leading-7 text-slate-700">
+                {course.overview.map((o) => (
+                  <li key={o}>• <AutoLinkedText text={o} usedHrefs={usedHrefs} /></li>
+                ))}
+              </ul>
+            </LeadCard>
+            <LeadCard className="border-slate-100 bg-white">
+              <h3 className="text-lg font-semibold text-slate-900">Learning outcomes</h3>
+              <ul className="mt-4 space-y-2 text-sm leading-7 text-slate-700">
+                {course.outcomes.map((o) => (
+                  <li key={o}>• <AutoLinkedText text={o} usedHrefs={usedHrefs} /></li>
+                ))}
+              </ul>
+            </LeadCard>
+          </div>
+        </LeadCard>
+      </LeadSection>
 
+      <LeadSection className="pb-2">
         <TestimonialsSection
           title="Parent feedback for this learning track"
           subtitle="Approved reviews from families in the same course pathway."
@@ -263,60 +317,94 @@ const CourseDetailPage: FC = () => {
           viewAllHref="/testimonials"
           viewAllLabel="View all program reviews"
         />
+      </LeadSection>
 
-        <div className="mt-10">
-          <h2 className="font-heading text-2xl font-bold">Detailed Curriculum</h2>
+      <LeadSection>
+        <LeadCard>
+          <LeadSectionHeading
+            eyebrow="Lesson path"
+            title="How the course unfolds lesson by lesson"
+            description="Parents can see the learning path clearly before they commit."
+          />
           {weeksState && weeksState.length ? (
-            <div className="mt-3">
+            <div className="mt-5">
               <WeekAccordion items={weeksState} />
             </div>
           ) : (
-            <p className="mt-2 text-sm text-gray-700">Detailed lesson‑by‑lesson curriculum coming soon.</p>
+            <p className="mt-4 text-sm text-slate-700">Detailed lesson-by-lesson curriculum coming soon.</p>
           )}
-        </div>
+        </LeadCard>
+      </LeadSection>
 
-        {Array.isArray(coursePageConfig?.faq) && coursePageConfig.faq.length > 0 ? (
-          <section id="faq" className="mt-12 rounded-2xl border border-slate-200 bg-white p-6">
-            <h2 className="font-heading text-2xl font-bold text-slate-900">Frequently Asked Questions</h2>
-            <div className="mt-5 space-y-4">
-              {coursePageConfig.faq.map((item) => (
-                <article key={item.question} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <h3 className="text-base font-semibold text-slate-900">{item.question}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-700">{item.answer}</p>
-                </article>
+      {Array.isArray(coursePageConfig?.faq) && coursePageConfig.faq.length > 0 ? (
+        <LeadSection id="faq">
+          <LeadCard>
+            <LeadSectionHeading
+              eyebrow="FAQs"
+              title="Questions parents usually ask before enrolling"
+              description="FAQ content stays course-specific and continues to support valid structured data."
+            />
+            <div className="mt-6">
+              <FAQSection items={coursePageConfig.faq} />
+            </div>
+          </LeadCard>
+        </LeadSection>
+      ) : null}
+
+      <LeadSection className="pb-4">
+        <FinalLeadCTA
+          title="Need help confirming whether this is the right starting level?"
+          description="Continue exploring related guidance or book a personalized assessment before choosing the course pack."
+          actions={
+            <CourseCTAGroup
+              items={[
+                {
+                  label: 'Book Free Assessment',
+                  to: '/book-demo',
+                  variant: 'primary',
+                  onClick: () =>
+                    trackCoursePageCtaClick({
+                      page_path: canonicalPath,
+                      cta_label: 'Book Free Assessment',
+                      cta_location: 'footer',
+                      destination_path: '/book-demo',
+                      program: courseTrack,
+                    }),
+                },
+                { label: 'All Courses', to: '/courses', variant: 'ghost' },
+                slug.includes('phonic')
+                  ? { label: 'View Phonics Track', to: '/phonics', variant: 'ghost' }
+                  : slug.includes('grammar')
+                    ? { label: 'View Grammar Track', to: '/grammar', variant: 'ghost' }
+                    : { label: 'View Speaking Track', to: '/speaking', variant: 'ghost' },
+              ]}
+              renderLink={(item, className) => (
+                <Link
+                  key={item.label}
+                  to={item.to}
+                  onClick={item.onClick}
+                  className={`${className} ${item.variant === 'ghost' ? 'border-white/30 bg-transparent text-white hover:bg-white/10' : 'bg-white text-slate-900 hover:bg-slate-100'}`}
+                >
+                  {item.label}
+                </Link>
+              )}
+            />
+          }
+        />
+        {Array.isArray(coursePageConfig?.relatedLinks) && coursePageConfig.relatedLinks.length > 0 ? (
+          <div className="mx-auto mt-5 max-w-7xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Related parent resources</h3>
+            <div className="mt-3 flex flex-wrap gap-3 text-sm">
+              {coursePageConfig.relatedLinks.map((item) => (
+                <Link key={item.to} to={item.to} className="font-semibold text-slate-900 underline underline-offset-4">
+                  {item.label}
+                </Link>
               ))}
             </div>
-          </section>
-        ) : null}
-
-        <div className="mt-12 rounded-2xl bg-slate-50 p-6">
-          <h3 className="font-heading text-lg font-bold text-slate-900">Next Steps</h3>
-          <p className="mt-1 text-sm text-slate-600">Continue exploring related guidance or book a personalized assessment for your child.</p>
-          <div className="mt-4 flex flex-wrap gap-4 text-sm font-medium">
-            <Link to="/courses" className="text-primary-700 hover:underline">← All Courses</Link>
-            {slug.includes('phonic') && <Link to="/phonics" className="text-primary-700 hover:underline">View Phonics Track</Link>}
-            {slug.includes('grammar') && <Link to="/grammar" className="text-primary-700 hover:underline">View Grammar Track</Link>}
-            {(slug.includes('speaking') || slug.includes('communication')) && <Link to="/speaking" className="text-primary-700 hover:underline">View Speaking Track</Link>}
-            <Link to="/why-tiny-steps" className="text-primary-700 hover:underline">Why Choose Us?</Link>
-            <Link to="/class-samples" className="text-primary-700 hover:underline">See Class Samples</Link>
-            <Link to="/contact?book=1" className="inline-flex items-center rounded-full bg-primary-600 px-4 py-1.5 text-white transition hover:bg-primary-700">Book Free Assessment</Link>
           </div>
-          {Array.isArray(coursePageConfig?.relatedLinks) && coursePageConfig.relatedLinks.length > 0 ? (
-            <div className="mt-6 border-t border-slate-200 pt-5">
-              <h4 className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Related Parent Resources</h4>
-              <div className="mt-3 flex flex-wrap gap-3 text-sm">
-                {coursePageConfig.relatedLinks.map((item) => (
-                  <Link key={item.to} to={item.to} className="text-primary-700 hover:underline">
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </div>
-
-      </div>
-    </div>
+        ) : null}
+      </LeadSection>
+    </LeadPageShell>
   );
 };
 
