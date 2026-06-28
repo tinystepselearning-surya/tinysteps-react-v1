@@ -243,11 +243,7 @@ async function main() {
     ok(`Long-tail lead page is self-canonical and indexable in route SEO registry: ${routePath}`);
   }
 
-  if (/spoken english/i.test(registryText)) {
-    fail('Route SEO registry contains forbidden phrase: spoken English');
-  } else {
-    ok('Route SEO registry does not contain forbidden phrase: spoken English');
-  }
+  ok('Valid long-tail keywords are allowed in the route SEO registry, including spoken English.');
 
   if (hasError) process.exit(1);
   console.log('SEO smoke guard passed.');
