@@ -147,12 +147,11 @@ export default function Header() {
           aria-label="Go to Tiny Steps home page"
         >
           <img
-            src="/logo-header-compact.png"
+            src="/logo-header-compact.webp"
             alt="Tiny Steps Logo"
             width={44}
             height={44}
             decoding="async"
-            fetchPriority="high"
             className="h-11 w-11 object-contain"
           />
           <div>

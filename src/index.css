@@ -10,18 +10,6 @@
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
   }
-  .pl-safe {
-    padding-left: env(safe-area-inset-left);
-  }
-  .pr-safe {
-    padding-right: env(safe-area-inset-right);
-  }
-  .mt-safe {
-    margin-top: env(safe-area-inset-top);
-  }
-  .mb-safe {
-    margin-bottom: env(safe-area-inset-bottom);
-  }
 
   /* Hide scrollbar while keeping scroll functionality */
   .scrollbar-hide {
@@ -35,9 +23,6 @@
   /* Touch-action utility for better mobile scroll behavior */
   .touch-pan-x {
     touch-action: pan-x;
-  }
-  .touch-pan-y {
-    touch-action: pan-y;
   }
 }
 
@@ -71,10 +56,6 @@
 }
 
 @layer components {
-  .btn-primary {
-    @apply px-6 py-3 bg-gradient-to-r from-primary-500 to-secondary-500 text-white rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300;
-  }
-
   .card-hover {
     @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-2;
   }
@@ -361,29 +342,6 @@ body.custom-cursor-enabled .hover-highlight:hover {
 .interactive-input:focus {
   border-color: #0052CC;
   box-shadow: 0 0 15px rgba(0, 82, 204, 0.3);
-}
-
-.form-field {
-  position: relative;
-}
-
-.form-field label {
-  position: absolute;
-  top: 50%;
-  left: 1rem;
-  transform: translateY(-50%);
-  color: #6B7280;
-  font-size: 0.9rem;
-  pointer-events: none;
-  transition: transform 0.2s ease, color 0.2s ease, font-size 0.2s ease;
-}
-
-.form-field:focus-within label,
-.form-field input:not(:placeholder-shown) + label,
-.form-field textarea:not(:placeholder-shown) + label {
-  transform: translateY(-160%);
-  color: #0052CC;
-  font-size: 0.75rem;
 }
 
 .animated-gradient-text {

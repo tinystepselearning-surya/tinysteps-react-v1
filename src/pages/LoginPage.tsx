@@ -195,8 +195,8 @@ export default function LoginPage() {
 
           <div className={`mb-5 flex w-full max-w-[360px] flex-col items-center self-center text-center transition-transform duration-200 ${keyboardOpen ? 'scale-[0.96]' : ''}`}>
             <img
-              src="/logo-header-compact.png"
-              alt="Tiny Steps logo"
+              src="/logo-header-compact.webp"
+              alt="Tiny Steps Logo"
               className="h-[76px] w-[76px] rounded-[20px] object-contain shadow-[0_8px_20px_rgba(15,23,42,0.12)]"
             />
             <h1 className="mt-4 text-[23px] font-extrabold leading-tight tracking-[-0.015em] text-slate-900">
