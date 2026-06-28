@@ -22,6 +22,10 @@ type PublicAssessmentFormProps = {
   source?: string;
   autoFocusFirstField?: boolean;
   onSuccess?: () => void;
+  title?: string;
+  description?: string;
+  submitLabel?: string;
+  submitAriaLabel?: string;
 };
 
 const GlassCard = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
@@ -37,6 +41,10 @@ export default function PublicAssessmentForm({
   source,
   autoFocusFirstField = false,
   onSuccess,
+  title = 'Book Assessment',
+  description = 'Share a few details and we will confirm available slots on WhatsApp.',
+  submitLabel = 'Get Free Assessment on WhatsApp',
+  submitAriaLabel = 'Get Free Assessment on WhatsApp',
 }: PublicAssessmentFormProps) {
   const ageOptions: AgeOption[] = ['3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
   const interestOptions: InterestOption[] = ['Phonics', 'Reading', 'Grammar', 'Speaking'];
@@ -181,7 +189,7 @@ export default function PublicAssessmentForm({
       booking_type: 'whatsapp_assessment_request',
       source_context: source || 'public_assessment_form',
     });
-    trackWhatsappClick('public_assessment_form');
+    trackWhatsappClick(source || 'public_assessment_form');
 
     const popup = window.open(waLink, '_blank', 'noopener,noreferrer');
     if (!popup) {
@@ -205,8 +213,8 @@ export default function PublicAssessmentForm({
       <div className="pointer-events-none absolute inset-0 rounded-[24px] ring-1 ring-slate-100" />
 
       <div className="relative mb-6 sm:mb-7">
-        <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">Book Assessment</h2>
-        <p className="mt-2 text-sm text-slate-700">Share a few details and we will confirm available slots on WhatsApp.</p>
+        <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">{title}</h2>
+        <p className="mt-2 text-sm text-slate-700">{description}</p>
       </div>
 
       <form onSubmit={handleSubmit} onFocusCapture={trackFormStartOnce} className="relative space-y-4">
@@ -370,13 +378,13 @@ export default function PublicAssessmentForm({
 
         <button
           type="submit"
-          aria-label="Get Free Assessment on WhatsApp"
+          aria-label={submitAriaLabel}
           className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-2xl border border-white/30 px-6 py-4 text-base font-bold text-white shadow-lg shadow-orange-200/70 transition-all hover:shadow-orange-300/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 sm:py-6 md:text-lg"
           style={{
             background: `linear-gradient(90deg, ${SUN_ORANGE} 0%, #ff7a1a 55%, #ff6a00 100%)`,
           }}
         >
-          Get Free Assessment on WhatsApp
+          {submitLabel}
         </button>
 
         <p className="text-center text-xs text-slate-700">Takes 20–30 seconds • No commitment • Get slots instantly on WhatsApp</p>

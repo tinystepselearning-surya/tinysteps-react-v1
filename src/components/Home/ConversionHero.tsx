@@ -249,7 +249,14 @@ const ConversionHero: React.FC = () => {
               </div>
             </div>
 
-            <BookAssessmentForm defaultInterest="Phonics" />
+            <BookAssessmentForm
+              defaultInterest="Phonics"
+              source="homepage_hero_assessment"
+              title="Share Your Child's Details"
+              description="Book a free assessment to find the right starting point in phonics, reading, grammar, or speaking."
+              submitLabel="Book Free Assessment on WhatsApp"
+              submitAriaLabel="Book Free Assessment on WhatsApp"
+            />
 
             {/* Floating Decorative Element */}
             <div className="absolute -bottom-4 -left-2 h-20 w-20 motion-safe:animate-bounce motion-reduce:animate-none rounded-3xl bg-white p-4 shadow-xl [animation-duration:3.5s] md:-left-6">

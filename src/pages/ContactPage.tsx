@@ -1,44 +1,50 @@
 import type { FC } from 'react';
 import { Link } from 'react-router-dom';
 import Meta from '../components/common/Meta';
-import AdvisorContactForm from '../components/common/AdvisorContactForm';
+import BookAssessmentForm from '../components/forms/BookAssessmentForm';
 import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../constants/publicContact';
 import { getRouteConfig } from '../lib/seo';
 import { createFAQPageSchema, createWebPageSchema } from '../lib/schemas';
 
 const WHATSAPP_URL =
-  'https://wa.me/919618398383?text=Hi%20Tiny%20Steps!%20I%20want%20help%20choosing%20the%20right%20program%20for%20my%20child.';
+  'https://wa.me/919618398383?text=Hi%20Tiny%20Steps!%20I%20want%20help%20choosing%20the%20right%20English%20learning%20path%20for%20my%20child.';
 const PHONE_URL = 'tel:+919618398383';
 
 const contactSeo = getRouteConfig('/contact');
-const contactSeoTitle = contactSeo?.title ?? 'Contact Tiny Steps Learning | Book a Free Assessment';
+const contactSeoTitle =
+  contactSeo?.title ?? 'Book a Free Assessment for Your Child | Tiny Steps Learning';
 const contactSeoDescription =
   contactSeo?.description ??
-  'Contact Tiny Steps Learning for live online phonics, grammar, reading, and public speaking classes for children. Book a free assessment or message us on WhatsApp.';
+  'Book a free assessment for your child with Tiny Steps Learning. Share age, learning concern, and timing preference for phonics, reading, grammar, speaking, and online English support.';
 const contactCanonicalPath = contactSeo?.canonicalPath ?? '/contact';
 const contactCanonicalUrl = `https://tinystepslearning.com${contactCanonicalPath}`;
 
 const faqItems = [
   {
-    question: 'How can I contact Tiny Steps Learning?',
+    question: 'What should I share before booking a free assessment?',
     answer:
-      'Parents can contact Tiny Steps Learning by WhatsApp, phone, email, or the contact form on this page. The fastest route for admissions help is usually WhatsApp or a free assessment request.',
+      'Parents can share the child’s age, the main concern, and any preferred class timing. That is enough for Tiny Steps to recommend the right starting point.',
   },
   {
-    question: 'What should I share before booking an assessment?',
+    question: 'Can I contact Tiny Steps on WhatsApp instead of filling the form?',
     answer:
-      'It helps to share your child’s age, the main concern you want help with, and whether you are looking for phonics, grammar, reading, or public speaking support.',
+      'Yes. WhatsApp is the fastest route for quick parent questions, timing checks, and admissions support. The assessment form is useful when you want to share structured child details first.',
   },
   {
-    question: 'Do you work with families outside India?',
+    question: 'Do you support families outside India?',
     answer:
-      'Yes. Tiny Steps supports families in India and international families, including Indian children abroad, through live online classes.',
+      'Yes. Tiny Steps supports families in India, Hyderabad, and international families through live online English classes for kids.',
+  },
+  {
+    question: 'Will I get pricing before joining?',
+    answer:
+      'Yes. Parents can review current pricing, class samples, and the recommended starting path after the free assessment.',
   },
 ];
 
 const contactJsonLd = [
   createWebPageSchema({
-    name: 'Contact Tiny Steps Learning',
+    name: 'Book a Free Assessment for Your Child',
     description: contactSeoDescription,
     url: contactCanonicalUrl,
   }),
@@ -53,9 +59,48 @@ const contactJsonLd = [
   createFAQPageSchema(faqItems),
 ];
 
+const supportCards = [
+  {
+    title: 'WhatsApp support',
+    body: 'Best for quick parent questions, admissions guidance, and assessment slot coordination.',
+    href: WHATSAPP_URL,
+    tone: 'border-emerald-200 bg-emerald-50/85 text-emerald-900',
+    cta: 'Chat on WhatsApp',
+  },
+  {
+    title: 'Phone support',
+    body: 'Useful if you prefer a direct conversation about age, level, concern, and timing.',
+    href: PHONE_URL,
+    tone: 'border-amber-200 bg-amber-50/85 text-slate-900',
+    cta: '+91 96183 98383',
+  },
+  {
+    title: 'Email support',
+    body: 'Best when you want to share details in writing without long text overflow on mobile.',
+    href: PUBLIC_CONTACT_MAILTO,
+    tone: 'border-slate-200 bg-white text-slate-900',
+    cta: PUBLIC_CONTACT_EMAIL,
+  },
+];
+
+const quickGuidance = [
+  {
+    title: 'Pricing guidance',
+    body: 'Current approved pricing is ₹400 per class and ₹4,800 for 12 classes. You can review full details after the assessment confirms the right starting path.',
+  },
+  {
+    title: 'Timing guidance',
+    body: 'Share your preferred weekday or weekend window. Tiny Steps works with India-based and international families, so available slots are matched after the child details are reviewed.',
+  },
+  {
+    title: 'Response reassurance',
+    body: 'WhatsApp is usually the fastest path. Assessment requests and emails are reviewed with the child context so the reply is useful, not generic.',
+  },
+];
+
 const ContactPage: FC = () => {
   return (
-    <div className="bg-[linear-gradient(180deg,#fff9f2_0%,#f8fbff_38%,#ffffff_100%)]">
+    <div className="overflow-x-clip bg-[linear-gradient(180deg,#fff8ef_0%,#f8fbff_38%,#ffffff_100%)]">
       <Meta
         title={contactSeoTitle}
         description={contactSeoDescription}
@@ -63,145 +108,137 @@ const ContactPage: FC = () => {
         jsonLd={contactJsonLd}
       />
 
-      <section className="mx-auto max-w-6xl px-6 pb-10 pt-28 sm:pt-32 lg:pt-36">
-        <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="rounded-[32px] border border-slate-200 bg-white/95 p-7 shadow-[0_24px_60px_rgba(15,23,42,0.08)] sm:p-9">
-            <p className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-800">
-              Parent support
+      <section className="relative mx-auto max-w-7xl px-4 pb-12 pt-28 sm:px-6 sm:pt-32 lg:px-8 lg:pt-36">
+        <div className="pointer-events-none absolute left-0 top-28 h-44 w-44 rounded-full bg-orange-200/35 blur-3xl" />
+        <div className="pointer-events-none absolute right-0 top-16 h-56 w-56 rounded-full bg-sky-200/30 blur-3xl" />
+
+        <div className="grid gap-8 lg:grid-cols-[1.04fr_0.96fr]">
+          <div className="relative rounded-[32px] border border-slate-200/80 bg-white/92 p-7 shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur sm:p-9">
+            <p className="inline-flex rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-orange-700">
+              Parent admissions support
             </p>
-            <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-900 sm:text-5xl">
-              Contact Tiny Steps Learning
+            <h1 className="mt-4 max-w-3xl text-[36px] font-black leading-[1.03] tracking-[-0.035em] text-slate-950 sm:text-[48px]">
+              Book a Free Assessment for Your Child
             </h1>
-            <p className="mt-4 max-w-2xl text-base leading-8 text-slate-700 sm:text-lg">
-              Tiny Steps offers live online phonics, grammar, reading, and public speaking support for
-              children aged 4 to 15. If you want help choosing the right starting point, book a free
-              assessment or send us your question here.
+            <p className="mt-4 max-w-3xl text-base leading-8 text-slate-700 sm:text-lg">
+              Share your child’s age, current concern, and preferred timing. Tiny Steps will help you choose the right starting point across phonics, reading, grammar, spoken English, and public speaking support.
             </p>
 
-            <div className="mt-6 rounded-[28px] border border-sky-100 bg-sky-50/70 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-800">Quick answer</p>
-              <h2 className="mt-2 text-2xl font-bold text-slate-900">What is the best way for a parent to reach Tiny Steps?</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-700 sm:text-base">
-                If you want the fastest admissions help, use WhatsApp or book a free assessment. If you
-                prefer email or a callback, use the contact form and share your child&apos;s age plus the
-                skill area you want help with.
-              </p>
+            <div className="mt-6 flex flex-wrap gap-2.5">
+              {[
+                '5000+ students served',
+                'Families in 15+ countries',
+                'Live 1:1 and small-group classes',
+                'Weekly parent updates',
+              ].map((chip, index) => (
+                <span
+                  key={chip}
+                  className={`inline-flex items-center rounded-full border px-3.5 py-1.5 text-sm font-semibold shadow-sm ${
+                    index % 2 === 0
+                      ? 'border-orange-200 bg-orange-50 text-orange-900'
+                      : 'border-sky-200 bg-sky-50 text-sky-900'
+                  }`}
+                >
+                  {chip}
+                </span>
+              ))}
             </div>
 
-            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+            <div className="mt-6 flex flex-wrap gap-3">
               <a
-                href={WHATSAPP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-[24px] border border-emerald-200 bg-emerald-50 px-5 py-4 text-left transition hover:border-emerald-300 hover:bg-emerald-100/70"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-800">WhatsApp</p>
-                <p className="mt-2 text-base font-semibold text-slate-900">Talk to Us on WhatsApp</p>
-                <p className="mt-1 text-sm text-slate-600">Best for quick parent questions and assessment scheduling.</p>
-              </a>
-              <a
-                href={PHONE_URL}
-                className="rounded-[24px] border border-amber-200 bg-amber-50 px-5 py-4 text-left transition hover:border-amber-300 hover:bg-amber-100/70"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-800">Phone</p>
-                <p className="mt-2 text-base font-semibold text-slate-900">+91 96183 98383</p>
-                <p className="mt-1 text-sm text-slate-600">Use this if you prefer a direct conversation.</p>
-              </a>
-              <a
-                href={PUBLIC_CONTACT_MAILTO}
-                className="rounded-[24px] border border-slate-200 bg-slate-50 px-5 py-4 text-left transition hover:border-slate-300 hover:bg-slate-100/80"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">Email</p>
-                <p className="mt-2 text-base font-semibold text-slate-900">{PUBLIC_CONTACT_EMAIL}</p>
-                <p className="mt-1 text-sm text-slate-600">Best if you want to share details in writing.</p>
-              </a>
-            </div>
-
-            <div className="mt-7 flex flex-wrap gap-3">
-              <Link
-                to="/book-demo"
+                href="#assessment-form"
                 className="inline-flex items-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
               >
                 Book Free Assessment
-              </Link>
+              </a>
               <Link
-                to="/phonics"
-                className="inline-flex items-center rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-900 transition hover:border-slate-400 hover:bg-slate-50"
+                to="/pricing"
+                className="inline-flex items-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
               >
-                View Phonics Program
+                See Pricing
               </Link>
             </div>
 
-            <div className="mt-6 rounded-[24px] border border-slate-200 bg-slate-50/80 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Trust proof</p>
-              <p className="mt-3 text-sm font-semibold text-slate-900">5000+ students served • Families in 15+ countries</p>
-              <p className="mt-2 text-sm leading-7 text-slate-700">
-                Parents usually contact us when they want help choosing between phonics, grammar, reading, or speaking support and want a real person to guide the next step.
-              </p>
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              {supportCards.map((card) => (
+                <a
+                  key={card.title}
+                  href={card.href}
+                  target={card.href.startsWith('https://') ? '_blank' : undefined}
+                  rel={card.href.startsWith('https://') ? 'noopener noreferrer' : undefined}
+                  className={`rounded-[24px] border px-5 py-4 transition hover:-translate-y-0.5 hover:shadow-sm ${card.tone}`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em]">{card.title}</p>
+                  <p className="mt-2 text-base font-semibold break-words">{card.cta}</p>
+                  <p className="mt-2 text-sm leading-7 text-slate-700">{card.body}</p>
+                </a>
+              ))}
             </div>
 
-            <div className="mt-10 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-[24px] border border-slate-200 bg-slate-50/70 p-5">
-                <h2 className="text-lg font-semibold text-slate-900">Who this page is for</h2>
-                <ul className="mt-3 space-y-2 text-sm leading-7 text-slate-700">
-                  <li>Parents comparing phonics, grammar, reading, or speaking support</li>
-                  <li>Families in India and international families looking for live online classes</li>
-                  <li>Parents who want a clear next step instead of generic tuition inquiries</li>
-                </ul>
+            <div className="mt-8 rounded-[28px] border border-slate-200 bg-[linear-gradient(135deg,#fffaf2_0%,#ffffff_50%,#f4f9ff_100%)] p-6 shadow-[0_20px_50px_rgba(15,23,42,0.05)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">What parents usually need here</p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                {[
+                  'My child needs help but I am not sure whether to start with phonics, reading, grammar, or speaking.',
+                  'I want a real assessment path instead of a generic inquiry form.',
+                  'I need pricing, timing, and class-sample clarity before deciding.',
+                  'I want support for a child in India, Hyderabad, or an international timezone.',
+                ].map((item) => (
+                  <div key={item} className="rounded-2xl border border-white/90 bg-white/90 p-4 text-sm leading-7 text-slate-700 shadow-sm">
+                    {item}
+                  </div>
+                ))}
               </div>
-              <div className="rounded-[24px] border border-slate-200 bg-slate-50/70 p-5">
-                <h2 className="text-lg font-semibold text-slate-900">Popular next pages</h2>
-                <div className="mt-3 flex flex-col gap-2 text-sm font-medium text-slate-900">
-                  <Link to="/phonics" className="underline decoration-slate-300 underline-offset-4 hover:decoration-slate-700">
-                    Online phonics classes for kids
-                  </Link>
-                  <Link to="/grammar" className="underline decoration-slate-300 underline-offset-4 hover:decoration-slate-700">
-                    Grammar classes for children
-                  </Link>
-                  <Link to="/speaking" className="underline decoration-slate-300 underline-offset-4 hover:decoration-slate-700">
-                    Public speaking classes for kids
-                  </Link>
-                  <Link to="/pricing" className="underline decoration-slate-300 underline-offset-4 hover:decoration-slate-700">
-                    Pricing and assessment options
-                  </Link>
-                  <Link to="/class-samples" className="underline decoration-slate-300 underline-offset-4 hover:decoration-slate-700">
-                    Class samples for parents
-                  </Link>
+            </div>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              {quickGuidance.map((item) => (
+                <div key={item.title} className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_14px_34px_rgba(15,23,42,0.04)]">
+                  <h2 className="text-lg font-semibold text-slate-900">{item.title}</h2>
+                  <p className="mt-2 text-sm leading-7 text-slate-700">{item.body}</p>
                 </div>
-              </div>
+              ))}
             </div>
 
-            <div className="mt-4 grid gap-4 sm:grid-cols-3">
-              <div className="rounded-[24px] border border-slate-200 bg-white p-5">
-                <h2 className="text-lg font-semibold text-slate-900">Pricing and support</h2>
-                <p className="mt-2 text-sm leading-7 text-slate-700">
-                  If you want package clarity first, review <Link to="/pricing" className="font-semibold underline underline-offset-4">pricing</Link>. If you want teaching style proof, open <Link to="/class-samples" className="font-semibold underline underline-offset-4">class samples</Link>.
-                </p>
-              </div>
-              <div className="rounded-[24px] border border-slate-200 bg-white p-5">
-                <h2 className="text-lg font-semibold text-slate-900">Timing guidance</h2>
-                <p className="mt-2 text-sm leading-7 text-slate-700">
-                  Share your preferred weekday or weekend window. We support families in India and abroad, so morning and evening options are usually discussed during the assessment call.
-                </p>
-              </div>
-              <div className="rounded-[24px] border border-slate-200 bg-white p-5">
-                <h2 className="text-lg font-semibold text-slate-900">Response time</h2>
-                <p className="mt-2 text-sm leading-7 text-slate-700">
-                  WhatsApp is the fastest path. Form and email enquiries usually receive a response once the admissions team reviews the child details and preferred timing.
-                </p>
+            <div className="mt-8 rounded-[28px] border border-slate-200 bg-slate-900 p-6 text-white shadow-[0_22px_60px_rgba(15,23,42,0.18)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300">Useful next pages</p>
+              <div className="mt-4 flex flex-wrap gap-3 text-sm font-semibold">
+                <Link to="/pricing" className="rounded-full border border-white/15 bg-white/10 px-4 py-2 hover:bg-white/15">
+                  See Pricing
+                </Link>
+                <Link to="/class-samples" className="rounded-full border border-white/15 bg-white/10 px-4 py-2 hover:bg-white/15">
+                  See Class Samples
+                </Link>
+                <Link to="/phonics" className="rounded-full border border-white/15 bg-white/10 px-4 py-2 hover:bg-white/15">
+                  Phonics
+                </Link>
+                <Link to="/grammar" className="rounded-full border border-white/15 bg-white/10 px-4 py-2 hover:bg-white/15">
+                  Grammar
+                </Link>
+                <Link to="/speaking" className="rounded-full border border-white/15 bg-white/10 px-4 py-2 hover:bg-white/15">
+                  Speaking
+                </Link>
+                <Link to="/online-english-classes-for-kids" className="rounded-full border border-white/15 bg-white/10 px-4 py-2 hover:bg-white/15">
+                  Online English Classes for Kids
+                </Link>
               </div>
             </div>
           </div>
 
-          <div className="rounded-[32px] border border-slate-200 bg-white/95 p-7 shadow-[0_24px_60px_rgba(15,23,42,0.08)] sm:p-9">
-            <AdvisorContactForm
-              topic="Contact page inquiry"
-              title="Send your child&apos;s details"
-              description="Share your child&apos;s age, your main concern, and which program you want help choosing. We&apos;ll follow up by email or phone."
-              surface="plain"
+          <div
+            id="assessment-form"
+            className="relative rounded-[32px] border border-slate-200/80 bg-white/94 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur sm:p-8 lg:sticky lg:top-28 lg:self-start"
+          >
+            <BookAssessmentForm
+              defaultInterest="Phonics"
+              source="contact_page_assessment"
+              title="Share Your Child’s Details"
+              description="Use the regular Tiny Steps assessment flow. Parents can share age, main concern, and timing preference to get the right starting point."
+              submitLabel="Book Free Assessment on WhatsApp"
+              submitAriaLabel="Book Free Assessment on WhatsApp"
             />
 
-            <div className="mt-8 rounded-[24px] border border-slate-200 bg-slate-50/80 p-5">
+            <div className="mt-8 rounded-[24px] border border-slate-200 bg-slate-50/90 p-5">
               <h2 className="text-lg font-semibold text-slate-900">Parents also ask</h2>
               <div className="mt-4 space-y-4">
                 {faqItems.map((faq) => (

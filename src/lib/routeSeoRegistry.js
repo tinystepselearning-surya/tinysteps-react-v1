@@ -2,9 +2,9 @@ import { PUBLIC_COURSE_PAGE_CONFIGS } from './publicCoursePages.js';
 
 export const ROUTE_SEO_REGISTRY = {
   '/': {
-    title: 'Premium Online English Classes for Kids in India | Tiny Steps Learning',
+    title: 'Online English Classes for Kids That Build Reading, Grammar and Speaking Confidence | Tiny Steps Learning',
     description:
-      'Tiny Steps offers premium 1:1 online English classes for children aged 3–12 across phonics, grammar, reading, sentence formation, communication, and public speaking.',
+      'Live 1:1 and small-group online English classes for kids with phonics, reading, grammar, spoken-English support, free assessment, transparent pricing, and parent-visible progress.',
     canonicalPath: '/',
     ogType: 'website',
     ogImage: '/og-default.jpg',
@@ -74,9 +74,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/contact': {
-    title: 'Contact Us | Tiny Steps Learning',
+    title: 'Book a Free Assessment for Your Child | Tiny Steps Learning',
     description:
-      'Contact Tiny Steps Learning, a premium online English learning school for children aged 3–12 offering structured phonics, grammar, reading, sentence formation, communication, and public speaking programs.',
+      'Book a free assessment for your child with Tiny Steps Learning. Share age, learning concern, and timing preference for phonics, reading, grammar, speaking, and online English support.',
     canonicalPath: '/contact',
     ogType: 'website',
   },
@@ -359,9 +359,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/free-letter-tracing-game-for-kids': {
-    title: 'Free Letter Tracing Game for Kids | Online Alphabet Tracing',
+    title: 'Free Letter Tracing Game for Kids | Online Alphabet Tracing Practice',
     description:
-      'Let your child practise lines, curves, capital letters, and small letters with a free online tracing game for kids. Start from the red dot and follow the guide.',
+      'Free online letter tracing game for kids with alphabet tracing practice, pre-writing lines, and guided letter formation. Ideal for early learners building handwriting and phonics readiness.',
     canonicalPath: '/free-letter-tracing-game-for-kids',
     ogType: 'website',
   },
@@ -389,7 +389,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/spoken-english-classes-for-kids-online': {
     title: 'Spoken English Classes for Kids Online | Tiny Steps Learning',
     description:
-      'Live spoken English classes for kids online. Help children move beyond one-word answers, build sentence confidence, and speak more clearly with structured live support.',
+      'Live spoken English classes for kids online. Help children move past one-word answers, build sentence confidence, and speak clearly with grammar-linked support.',
     canonicalPath: '/spoken-english-classes-for-kids-online',
     ogType: 'website',
   },

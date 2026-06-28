@@ -2,30 +2,58 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
 import { createCourseSchema, createFAQPageSchema, PUBLIC_FACTS } from '../../lib/schemas';
+import {
+  CourseCTAGroup,
+  FAQSection,
+  FinalLeadCTA,
+  LeadCard,
+  LeadHero,
+  LeadPageShell,
+  LeadSection,
+  LeadSectionHeading,
+} from '../../components/marketing/LeadPageSections';
 
 const canonicalPath = '/online-english-classes-for-kids';
 const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
 
+const trustChips = [
+  { label: '5000+ students served', tone: 'warm' as const },
+  { label: 'Families in 15+ countries', tone: 'cool' as const },
+  { label: '1:1 and small-group options', tone: 'neutral' as const },
+  { label: 'Weekly parent updates', tone: 'mint' as const },
+];
+
+const heroStats = [
+  { label: 'Pricing', value: '₹400', helper: 'per class' },
+  { label: 'Parent pack', value: '₹4,800', helper: 'for 12 classes' },
+  { label: 'Assessment first', value: 'Free', helper: 'before enrollment' },
+  { label: 'Delivery', value: 'Live', helper: '1:1 and small-group classes' },
+];
+
 const programmeTracks = [
   {
     title: 'Phonics',
-    description: 'For children who know letters but need blending, decoding, and early reading confidence.',
+    description: 'For children who know letters but need blending, decoding, and an early reading system that actually sticks.',
     href: '/phonics',
+    accent: 'from-[#fff6e9] to-[#ffffff]',
   },
   {
     title: 'Reading',
-    description: 'For children who need fluency, comprehension, vocabulary growth, and reading-aloud support.',
+    description: 'For children who read slowly, forget words, or need fluency, comprehension, and reading-aloud confidence.',
     href: '/reading-classes-for-kids',
+    accent: 'from-[#eef8ff] to-[#ffffff]',
   },
   {
     title: 'Grammar',
-    description: 'For sentence formation, tense control, writing clarity, and stronger school answers.',
+    description: 'For sentence structure, tense clarity, school-answer confidence, and writing that feels more organized.',
     href: '/grammar',
+    accent: 'from-[#f6f4ff] to-[#ffffff]',
   },
   {
-    title: 'Spoken English and Public Speaking',
-    description: 'For shy speakers, one-word answers, sentence expansion, and clearer expression.',
+    title: 'Spoken English and public speaking',
+    description: 'For sentence expansion, confident responses, clearer expression, and children who stay too quiet in class.',
     href: '/speaking',
+    accent: 'from-[#fff0f3] to-[#ffffff]',
   },
 ];
 
@@ -40,7 +68,7 @@ const outcomeStages = [
   },
   {
     stage: 'Ages 9 to 13',
-    points: ['Reading comprehension', 'Clearer writing structure', 'Confident speaking and presentation readiness'],
+    points: ['Reading comprehension', 'Writing structure', 'Confident speaking and presentation readiness'],
   },
 ];
 
@@ -117,128 +145,173 @@ export default function OnlineEnglishClassesForKidsPage() {
   }, []);
 
   return (
-    <div className="bg-gradient-to-b from-[#FFF8EF] via-white to-[#EEF8FF] pb-16">
-      <section className="px-4 py-8 sm:px-6 md:py-12 lg:px-8 lg:py-14">
-        <div className="mx-auto max-w-7xl rounded-[32px] border border-slate-200 bg-white/95 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-8 lg:p-10">
-          <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-            <div>
-              <p className="inline-flex rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-orange-700">
-                India and worldwide
-              </p>
-              <h1 className="mt-4 text-[34px] font-bold leading-[1.05] tracking-[-0.035em] text-slate-900 sm:text-[40px] md:text-[50px]">
-                Online English Classes for Kids
-              </h1>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-700 md:text-lg md:leading-8">
-                Live 1:1 and small-group classes that help children build reading, grammar, spoken-English, and public-speaking confidence step by step.
-              </p>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-slate-700 md:text-lg md:leading-8">
-                Tiny Steps starts with a free assessment, shows parents the right learning path, keeps pricing transparent, and shares visible progress through weekly parent updates.
-              </p>
-
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link to="/book-demo" className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
-                  Book Free Assessment
-                </Link>
-                <Link to="/pricing" className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:border-slate-400 hover:bg-slate-50">
-                  See Pricing
-                </Link>
-                <Link to="/class-samples" className="inline-flex items-center justify-center rounded-full border border-sky-200 bg-sky-50 px-6 py-3 text-sm font-semibold text-sky-900 transition hover:bg-sky-100">
-                  Class Samples
-                </Link>
-              </div>
+    <LeadPageShell>
+      <LeadHero
+        eyebrow="India and worldwide"
+        title="Online English Classes for Kids That Build Reading, Grammar and Speaking Confidence"
+        description={
+          <>
+            <p>
+              Tiny Steps offers live 1:1 and small-group online English classes for kids who need a clear path across phonics, reading, grammar, spoken English, and presentation confidence.
+            </p>
+            <p className="mt-3">
+              Parents start with a free assessment, see transparent pricing, review class samples, and get visible progress through weekly updates instead of generic tuition promises.
+            </p>
+          </>
+        }
+        trustChips={trustChips}
+        stats={heroStats}
+        supportingText={
+          <>
+            Looking for a Hyderabad-focused page instead? Visit{' '}
+            <Link to="/online-english-classes-hyderabad" className="font-semibold underline underline-offset-4">
+              online English classes for kids in Hyderabad
+            </Link>
+            .
+          </>
+        }
+        actions={
+          <CourseCTAGroup
+            items={[
+              { to: '/book-demo', label: 'Book Free Assessment', variant: 'primary' },
+              { to: '/pricing', label: 'See Pricing', variant: 'ghost' },
+              { to: '/class-samples', label: 'See Class Samples', variant: 'secondary' },
+            ]}
+            renderLink={(item, className) => (
+              <Link key={item.label} to={item.to || '/'} className={className}>
+                {item.label}
+              </Link>
+            )}
+          />
+        }
+        aside={
+          <LeadCard className="overflow-hidden bg-[linear-gradient(145deg,#0f172a_0%,#172554_48%,#1d3557_100%)] text-white">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">Why parents choose Tiny Steps</p>
+            <div className="mt-4 grid gap-3">
+              {[
+                'Structured pathways instead of broad tuition coverage',
+                'Free assessment before recommending the first class plan',
+                'Founder and teacher-led learning quality',
+                'Class samples, pricing clarity, and parent-visible progress',
+              ].map((item) => (
+                <div key={item} className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm leading-7 text-slate-100">
+                  {item}
+                </div>
+              ))}
             </div>
+          </LeadCard>
+        }
+      />
 
-            <aside className="rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-orange-50 p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Why parents choose Tiny Steps</p>
-              <div className="mt-4 grid gap-3">
-                {[
-                  '5000+ students served',
-                  'Families in 15+ countries',
-                  '1:1 and small-group classes',
-                  'Founder and teacher-led learning',
-                  'Weekly parent updates',
-                  'Free assessment before enrollment',
-                ].map((item) => (
-                  <div key={item} className="rounded-2xl border border-white bg-white/90 px-4 py-3 text-sm font-medium text-slate-700 shadow-sm">
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </aside>
-          </div>
-        </div>
-      </section>
-
-      <section className="px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-2xl font-bold text-slate-900">Who this is for</h2>
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
+      <LeadSection>
+        <LeadCard>
+          <LeadSectionHeading
+            eyebrow="Who this is for"
+            title="Parents comparing English help, not generic tuition"
+            description="This page is designed for parents looking for online English classes for children, one-on-one English classes for kids, or a stronger English tutor experience online."
+          />
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
             {[
-              'Parents looking for online English classes for children instead of general tuition.',
-              'Children who need phonics, reading, grammar, or spoken-English support in one clear learning system.',
-              'Families comparing one-on-one English classes for kids and small-group options.',
-              'Parents in India or abroad who want live classes with visible progress and clear next steps.',
+              'Parents looking for online English classes for children instead of broad after-school tuition.',
+              'Children who need phonics, reading, grammar, or spoken-English support inside one structured learning system.',
+              'Families comparing one-on-one English classes for kids and small-group options before deciding.',
+              'Parents in India or abroad who want visible progress, transparent pricing, and a clear next step.',
             ].map((item) => (
-              <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-sm leading-7 text-slate-700">
+              <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm leading-7 text-slate-700">
                 {item}
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </LeadCard>
+      </LeadSection>
 
-      <section className="px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl">
-          <h2 className="text-2xl font-bold text-slate-900">Programme tracks</h2>
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
-            {programmeTracks.map((track) => (
-              <article key={track.title} className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-                <h3 className="text-lg font-semibold text-slate-900">{track.title}</h3>
-                <p className="mt-2 text-sm leading-7 text-slate-700">{track.description}</p>
-                <Link to={track.href} className="mt-3 inline-flex text-sm font-semibold text-slate-900 underline underline-offset-4">
-                  Explore {track.title}
-                </Link>
-              </article>
-            ))}
-          </div>
+      <LeadSection>
+        <LeadSectionHeading
+          eyebrow="Programme tracks"
+          title="Choose the right starting path"
+          description="Tiny Steps uses one system across the main learning needs parents usually search for first."
+        />
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {programmeTracks.map((track) => (
+            <LeadCard key={track.title} className={`bg-gradient-to-br ${track.accent}`}>
+              <h3 className="text-xl font-semibold text-slate-900">{track.title}</h3>
+              <p className="mt-3 text-sm leading-7 text-slate-700">{track.description}</p>
+              <Link to={track.href} className="mt-4 inline-flex text-sm font-semibold text-slate-900 underline underline-offset-4">
+                Explore {track.title}
+              </Link>
+            </LeadCard>
+          ))}
         </div>
-      </section>
+      </LeadSection>
 
-      <section className="px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-white p-6">
-          <h2 className="text-2xl font-bold text-slate-900">Outcomes by age and stage</h2>
-          <div className="mt-5 grid gap-4 md:grid-cols-3">
-            {outcomeStages.map((item) => (
-              <article key={item.stage} className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
-                <h3 className="text-lg font-semibold text-slate-900">{item.stage}</h3>
-                <ul className="mt-3 space-y-2 text-sm leading-7 text-slate-700">
-                  {item.points.map((point) => (
-                    <li key={point}>• {point}</li>
-                  ))}
-                </ul>
-              </article>
-            ))}
-          </div>
+      <LeadSection>
+        <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+          <LeadCard>
+            <LeadSectionHeading
+              eyebrow="Outcomes by age and stage"
+              title="The learning goal changes as the child grows"
+              description="Tiny Steps does not use the same classroom expectations for every age band."
+            />
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              {outcomeStages.map((item) => (
+                <div key={item.stage} className="rounded-2xl border border-slate-200 bg-slate-50/75 p-5">
+                  <h3 className="text-lg font-semibold text-slate-900">{item.stage}</h3>
+                  <ul className="mt-3 space-y-2 text-sm leading-7 text-slate-700">
+                    {item.points.map((point) => (
+                      <li key={point}>• {point}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </LeadCard>
+
+          <LeadCard className="bg-[linear-gradient(160deg,#fff8ef_0%,#ffffff_45%,#eef8ff_100%)]">
+            <LeadSectionHeading
+              eyebrow="Trust proof"
+              title="What parents want to know before booking"
+              description="This page is built for families looking for a national or global online English solution, not only a local city page."
+            />
+            <div className="mt-5 space-y-3">
+              {[
+                '5000+ students served',
+                'Families in 15+ countries',
+                'Founder and teacher-led learning approach',
+                'Class samples available before parents decide',
+                'Weekly parent updates after classes begin',
+              ].map((item) => (
+                <div key={item} className="rounded-2xl border border-white bg-white/90 px-4 py-3 text-sm font-medium text-slate-700 shadow-sm">
+                  {item}
+                </div>
+              ))}
+            </div>
+          </LeadCard>
         </div>
-      </section>
+      </LeadSection>
 
-      <section className="px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl grid gap-5 lg:grid-cols-2">
-          <article className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-2xl font-bold text-slate-900">How the free assessment works</h2>
-            <ol className="mt-4 space-y-3 text-sm leading-7 text-slate-700">
-              <li>1. Parents share the child&apos;s age, current concerns, and goals.</li>
+      <LeadSection>
+        <div className="grid gap-5 lg:grid-cols-2">
+          <LeadCard>
+            <LeadSectionHeading
+              eyebrow="How it works"
+              title="How the free assessment works"
+              description="Parents get a recommendation before they spend time or money."
+            />
+            <ol className="mt-5 space-y-3 text-sm leading-7 text-slate-700">
+              <li>1. Parents share the child’s age, current concerns, and goals.</li>
               <li>2. Tiny Steps checks reading, grammar, sentence formation, and speaking readiness.</li>
-              <li>3. Families receive a clear recommended starting path and next-step plan.</li>
-              <li>4. Parents then review class samples, pricing, and scheduling with context.</li>
+              <li>3. Families receive a practical recommended starting path with next-step guidance.</li>
+              <li>4. Parents then review pricing, class samples, and schedule fit with context.</li>
             </ol>
-          </article>
-          <article className="rounded-[28px] border border-emerald-200 bg-emerald-50/60 p-6 shadow-sm">
-            <h2 className="text-2xl font-bold text-slate-900">Pricing preview</h2>
-            <p className="mt-3 text-sm leading-7 text-slate-700">
-              Current approved pricing is simple and transparent:
-            </p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          </LeadCard>
+
+          <LeadCard className="bg-[linear-gradient(150deg,#ecfdf5_0%,#ffffff_50%,#fff8ef_100%)]">
+            <LeadSectionHeading
+              eyebrow="Pricing preview"
+              title="Transparent pricing before enrollment"
+              description="Simple pricing helps parents compare options without hidden course language."
+            />
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-emerald-200 bg-white p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Per class</p>
                 <p className="mt-2 text-3xl font-bold text-slate-900">₹400</p>
@@ -249,74 +322,83 @@ export default function OnlineEnglishClassesForKidsPage() {
               </div>
             </div>
             <p className="mt-4 text-sm leading-7 text-slate-700">
-              Parents can <Link to="/pricing" className="font-semibold underline underline-offset-4">review pricing</Link> and <Link to="/class-samples" className="font-semibold underline underline-offset-4">class samples</Link> after the free assessment confirms the right fit.
+              Parents can review the full{' '}
+              <Link to="/pricing" className="font-semibold underline underline-offset-4">
+                pricing page
+              </Link>{' '}
+              and open{' '}
+              <Link to="/class-samples" className="font-semibold underline underline-offset-4">
+                class samples
+              </Link>{' '}
+              after the assessment confirms the right fit.
             </p>
-          </article>
+          </LeadCard>
         </div>
-      </section>
+      </LeadSection>
 
-      <section className="px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-white p-6">
-          <h2 className="text-2xl font-bold text-slate-900">Available for Hyderabad and online learners worldwide</h2>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-700">
-            This page is the national and global parent-money page for families comparing online English classes for kids. If you are specifically searching for Hyderabad-focused English support, visit the local page for location-based context and messaging.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Link to="/online-english-classes-hyderabad" className="inline-flex rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">
-              Hyderabad page
-            </Link>
-            <Link to="/contact" className="inline-flex rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">
-              Talk to our team
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-white p-6">
-          <h2 className="text-2xl font-bold text-slate-900">Helpful next pages</h2>
-          <div className="mt-4 flex flex-wrap gap-3 text-sm font-semibold text-slate-900">
-            <Link to="/phonics" className="underline underline-offset-4">/phonics</Link>
-            <Link to="/grammar" className="underline underline-offset-4">/grammar</Link>
-            <Link to="/speaking" className="underline underline-offset-4">/speaking</Link>
-            <Link to="/reading-classes-for-kids" className="underline underline-offset-4">/reading-classes-for-kids</Link>
-            <Link to="/pricing" className="underline underline-offset-4">/pricing</Link>
-            <Link to="/class-samples" className="underline underline-offset-4">/class-samples</Link>
-            <Link to="/contact" className="underline underline-offset-4">/contact</Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-white p-6">
-          <h2 className="text-2xl font-bold text-slate-900">FAQs</h2>
-          <div className="mt-4 space-y-4">
-            {faqItems.map((faq) => (
-              <article key={faq.question}>
-                <h3 className="text-base font-semibold text-slate-900">{faq.question}</h3>
-                <p className="mt-1 text-sm leading-7 text-slate-700">{faq.answer}</p>
-              </article>
+      <LeadSection>
+        <LeadCard>
+          <LeadSectionHeading
+            eyebrow="Internal links"
+            title="Explore the most relevant next pages"
+            description="These links keep the national page distinct while still helping parents reach the exact subject or city page they need."
+          />
+          <div className="mt-6 flex flex-wrap gap-3 text-sm font-semibold text-slate-900">
+            {[
+              ['/phonics', 'Online phonics classes'],
+              ['/grammar', 'Grammar classes for kids'],
+              ['/speaking', 'Speaking and confidence classes'],
+              ['/reading-classes-for-kids', 'Reading classes for kids'],
+              ['/pricing', 'Pricing'],
+              ['/class-samples', 'Class samples'],
+              ['/contact', 'Contact Tiny Steps'],
+              ['/online-english-classes-hyderabad', 'Hyderabad page'],
+            ].map(([href, label]) => (
+              <Link key={href} to={href} className="rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm hover:border-slate-300">
+                {label}
+              </Link>
             ))}
           </div>
-        </div>
-      </section>
+        </LeadCard>
+      </LeadSection>
 
-      <section className="px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl rounded-[32px] bg-slate-900 p-8 text-white">
-          <h2 className="text-2xl font-bold">Ready to choose the right English path for your child?</h2>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-200">
-            Book a free assessment, review transparent pricing, and see class samples before you decide on phonics, reading, grammar, or spoken-English support.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Link to="/book-demo" className="inline-flex rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100">
-              Book Free Assessment
-            </Link>
-            <Link to="/class-samples" className="inline-flex rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
-              See Pricing and Class Samples
-            </Link>
+      <LeadSection>
+        <LeadCard>
+          <LeadSectionHeading eyebrow="Parents also ask" title="FAQs" />
+          <div className="mt-6">
+            <FAQSection
+              items={faqItems.map((item) => ({
+                question: item.question,
+                answer: item.answer,
+              }))}
+            />
           </div>
-        </div>
-      </section>
-    </div>
+        </LeadCard>
+      </LeadSection>
+
+      <LeadSection>
+        <FinalLeadCTA
+          title="Ready to choose the right English starting point for your child?"
+          description={
+            <>
+              Start with a free assessment, then review pricing, class samples, and the recommended path for phonics, reading, grammar, or speaking confidence.
+            </>
+          }
+          actions={
+            <CourseCTAGroup
+              items={[
+                { to: '/book-demo', label: 'Book Free Assessment', variant: 'primary' },
+                { to: '/class-samples', label: 'See Class Samples', variant: 'ghost' },
+              ]}
+              renderLink={(item, className) => (
+                <Link key={item.label} to={item.to || '/'} className={className}>
+                  {item.label}
+                </Link>
+              )}
+            />
+          }
+        />
+      </LeadSection>
+    </LeadPageShell>
   );
 }

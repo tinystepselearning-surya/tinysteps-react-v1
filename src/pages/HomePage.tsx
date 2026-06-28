@@ -226,7 +226,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl">
           <div className="mb-6 text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Choose Your Focus</p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Explore Our Core Programs</h2>
+            <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Explore the Main Tiny Steps Learning Paths</h2>
             <p className="mt-2 text-sm text-slate-600">
               For age-based pathways, parents can start with{' '}
               <Link to="/english-classes-for-4-year-old" className="font-medium underline underline-offset-2 hover:text-slate-900">
@@ -249,8 +249,9 @@ export default function HomePage() {
           <div className="grid gap-4 md:grid-cols-3">
             <Link
               to="/phonics"
-              className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-emerald-50/30 to-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+              className="group relative overflow-hidden rounded-[30px] border border-slate-200 bg-[linear-gradient(145deg,#ffffff_0%,#f3fff8_55%,#ffffff_100%)] p-6 shadow-[0_18px_44px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(15,23,42,0.12)]"
             >
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400/70 via-emerald-200/30 to-transparent" />
               <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-2xl">
                 📚
               </div>
@@ -267,8 +268,9 @@ export default function HomePage() {
 
             <Link
               to="/grammar"
-              className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-sky-50/30 to-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+              className="group relative overflow-hidden rounded-[30px] border border-slate-200 bg-[linear-gradient(145deg,#ffffff_0%,#f5fbff_55%,#ffffff_100%)] p-6 shadow-[0_18px_44px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(15,23,42,0.12)]"
             >
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-400/70 via-sky-200/30 to-transparent" />
               <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-2xl">
                 ✏️
               </div>
@@ -285,8 +287,9 @@ export default function HomePage() {
 
             <Link
               to="/speaking"
-              className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-amber-50/30 to-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+              className="group relative overflow-hidden rounded-[30px] border border-slate-200 bg-[linear-gradient(145deg,#ffffff_0%,#fff8ef_55%,#ffffff_100%)] p-6 shadow-[0_18px_44px_rgba(15,23,42,0.06)] transition hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(15,23,42,0.12)]"
             >
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-amber-400/70 via-orange-200/30 to-transparent" />
               <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-2xl">
                 🎤
               </div>
@@ -301,12 +304,34 @@ export default function HomePage() {
               </div>
             </Link>
           </div>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <Link
+              to="/online-english-classes-for-kids"
+              className="group rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-[0_18px_44px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:border-slate-300"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">National parent page</p>
+              <h3 className="mt-2 text-lg font-semibold text-slate-900">Online English Classes for Kids</h3>
+              <p className="mt-2 text-sm leading-7 text-slate-700">
+                Start here if you want the full Tiny Steps overview across phonics, reading, grammar, and speaking support.
+              </p>
+            </Link>
+            <Link
+              to="/spoken-english-classes-for-kids-online"
+              className="group rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-[0_18px_44px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:border-slate-300"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Speaking confidence page</p>
+              <h3 className="mt-2 text-lg font-semibold text-slate-900">Spoken English Classes for Kids Online</h3>
+              <p className="mt-2 text-sm leading-7 text-slate-700">
+                Best for children who give one-word answers, understand English but hesitate to speak, or need sentence expansion.
+              </p>
+            </Link>
+          </div>
         </div>
       </section>
 
       <section className="px-6 py-6">
         <div className="mx-auto max-w-6xl">
-          <div className="rounded-[32px] border border-slate-200 bg-gradient-to-r from-white via-slate-50 to-sky-50 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.05)] sm:p-8">
+          <div className="rounded-[32px] border border-slate-200 bg-[linear-gradient(145deg,#ffffff_0%,#f8fbff_48%,#fff8ef_100%)] p-6 shadow-[0_24px_70px_rgba(15,23,42,0.05)] sm:p-8">
             <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-700">Popular parent entry points</p>
@@ -332,13 +357,13 @@ export default function HomePage() {
       </section>
 
       <section className="px-6 py-2 pb-8">
-        <div className="mx-auto max-w-6xl rounded-[28px] border border-sky-100 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.04)]">
+        <div className="mx-auto max-w-6xl rounded-[28px] border border-sky-100 bg-[linear-gradient(145deg,#ffffff_0%,#f7fbff_52%,#fff8ef_100%)] p-6 shadow-[0_18px_50px_rgba(15,23,42,0.04)]">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-700">English Excellence</p>
-              <h2 className="mt-2 text-2xl font-semibold text-gray-900">English Excellence Mission</h2>
+              <h2 className="mt-2 text-2xl font-semibold text-gray-900">Free Practice Before Structured Learning</h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-700">
-                Master reading, writing & speaking step by step
+                Start with child-friendly games, then move into a stronger Tiny Steps learning path.
               </p>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
                 <Suspense fallback={<>Give your child meaningful daily practice through guided English learning games that build strong foundations in letters & sounds, spelling, vocabulary, sentence making, reading, grammar, and confident speaking.</>}>
@@ -353,6 +378,10 @@ export default function HomePage() {
                 {' '}and{' '}
                 <Link to="/letter-tracing-with-sounds-game" className="font-semibold underline underline-offset-2 hover:text-slate-900">
                   Tracing With Sounds
+                </Link>
+                . Parents can also move next to{' '}
+                <Link to="/online-english-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+                  online English classes for kids
                 </Link>
                 .
               </p>

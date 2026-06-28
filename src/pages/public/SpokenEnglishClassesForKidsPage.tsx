@@ -2,6 +2,16 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
 import { createCourseSchema, createFAQPageSchema, PUBLIC_FACTS } from '../../lib/schemas';
+import {
+  CourseCTAGroup,
+  FAQSection,
+  FinalLeadCTA,
+  LeadCard,
+  LeadHero,
+  LeadPageShell,
+  LeadSection,
+  LeadSectionHeading,
+} from '../../components/marketing/LeadPageSections';
 
 const canonicalPath = '/spoken-english-classes-for-kids-online';
 const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
@@ -74,72 +84,133 @@ export default function SpokenEnglishClassesForKidsPage() {
   }, []);
 
   return (
-    <div className="bg-gradient-to-b from-[#FFF8EF] via-white to-[#EEF8FF] pb-16">
-      <section className="px-4 py-8 sm:px-6 md:py-12 lg:px-8 lg:py-14">
-        <div className="mx-auto max-w-7xl rounded-[32px] border border-slate-200 bg-white/95 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-8 lg:p-10">
-          <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-            <div>
-              <p className="inline-flex rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-orange-700">
-                Speaking confidence support
-              </p>
-              <h1 className="mt-4 text-[34px] font-bold leading-[1.05] tracking-[-0.035em] text-slate-900 sm:text-[40px] md:text-[50px]">
-                Spoken English Classes for Kids Online
-              </h1>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-700 md:text-lg md:leading-8">
-                Help your child speak in fuller sentences, answer more confidently, and express ideas clearly through structured live spoken-English classes for kids online.
-              </p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                {painPoints.map((item) => (
-                  <span key={item} className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 sm:text-sm">
-                    {item}
-                  </span>
-                ))}
-              </div>
-
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link to="/book-demo" className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
-                  Book a Free Speaking Confidence Assessment
-                </Link>
-                <Link to="/class-samples" className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">
-                  See Pricing and Class Samples
-                </Link>
-              </div>
+    <LeadPageShell>
+      <LeadHero
+        eyebrow="Speaking confidence support"
+        title="Spoken English Classes for Kids Online"
+        description={
+          <>
+            <p>
+              Tiny Steps helps children speak in fuller sentences, answer more confidently, and express ideas clearly through structured live spoken-English classes for kids online.
+            </p>
+            <p className="mt-3">
+              This page is built for parents searching for spoken English classes for children, shy child speaking help, or stronger English speaking confidence for kids.
+            </p>
+          </>
+        }
+        trustChips={[
+          { label: '5000+ students served', tone: 'warm' as const },
+          { label: 'Families in 15+ countries', tone: 'cool' as const },
+          { label: 'Grammar-linked speaking support', tone: 'neutral' as const },
+          { label: 'Free speaking assessment', tone: 'mint' as const },
+        ]}
+        stats={[
+          { label: 'Per class', value: '₹400', helper: 'current approved pricing' },
+          { label: '12 classes', value: '₹4,800', helper: 'pricing preview for parents' },
+          { label: 'Class style', value: 'Live', helper: '1:1 and small-group formats' },
+          { label: 'Parent visibility', value: 'Weekly', helper: 'updates and next-step guidance' },
+        ]}
+        actions={
+          <CourseCTAGroup
+            items={[
+              { to: '/book-demo', label: 'Book a Free Speaking Confidence Assessment', variant: 'primary' },
+              { to: '/class-samples', label: 'See Class Samples', variant: 'secondary' },
+              { to: '/pricing', label: 'See Pricing', variant: 'ghost' },
+            ]}
+            renderLink={(item, className) => (
+              <Link key={item.label} to={item.to || '/'} className={className}>
+                {item.label}
+              </Link>
+            )}
+          />
+        }
+        aside={
+          <LeadCard className="bg-[linear-gradient(160deg,#fff8ef_0%,#ffffff_48%,#fff0f3_100%)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">When parents land on this page</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {painPoints.map((item) => (
+                <span key={item} className="rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm">
+                  {item}
+                </span>
+              ))}
             </div>
+            <p className="mt-4 text-sm leading-7 text-slate-700">
+              The child may understand English, but still freeze, shorten answers, or avoid speaking in class without structured support.
+            </p>
+          </LeadCard>
+        }
+      />
 
-            <aside className="rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-amber-50 p-6">
-              <h2 className="text-xl font-bold text-slate-900">When parents usually land on this page</h2>
-              <div className="mt-4 grid gap-3">
-                {[
-                  'The child can understand English but avoids speaking.',
-                  'Answers stop at one or two words.',
-                  'Sentence expansion feels hard during school responses.',
-                  'The child is shy in class, reading aloud, or presentations.',
-                ].map((item) => (
-                  <div key={item} className="rounded-2xl border border-white bg-white/90 px-4 py-3 text-sm leading-7 text-slate-700 shadow-sm">
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </aside>
-          </div>
+      <LeadSection>
+        <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
+          <LeadCard className="bg-[linear-gradient(145deg,#0f172a_0%,#1e293b_100%)] text-white">
+            <LeadSectionHeading
+              eyebrow="Why children struggle to speak"
+              title="Understanding is not the same as speaking confidence"
+              description="Many children know the words, but they do not yet know how to expand ideas into clear spoken answers."
+            />
+            <div className="mt-5 space-y-3 text-sm leading-7 text-slate-200">
+              <p>Some children hesitate because they are unsure of sentence structure.</p>
+              <p>Some stay brief because one-word answers feel safer than trying a full response.</p>
+              <p>Some are shy in class and need low-pressure speaking turns before they start participating more naturally.</p>
+            </div>
+          </LeadCard>
+
+          <LeadCard>
+            <LeadSectionHeading
+              eyebrow="How Tiny Steps helps"
+              title="Speaking confidence grows through structure"
+              description="Tiny Steps connects spoken English practice with grammar, sentence formation, and real-time guided speaking turns."
+            />
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              {[
+                'Builds response length through sentence starters and follow-up prompts.',
+                'Links speaking with grammar in use so children can apply better sentence structure while speaking.',
+                'Uses storytelling, show-and-tell, and answer routines to improve clarity and confidence.',
+                'Gives parents visibility into what improved and what needs more practice next.',
+              ].map((item) => (
+                <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm leading-7 text-slate-700">
+                  {item}
+                </div>
+              ))}
+            </div>
+            <p className="mt-5 text-sm leading-7 text-slate-700">
+              Parents often pair this page with{' '}
+              <Link to="/grammar" className="font-semibold underline underline-offset-4">
+                grammar
+              </Link>{' '}
+              and{' '}
+              <Link to="/speaking" className="font-semibold underline underline-offset-4">
+                speaking
+              </Link>{' '}
+              because fuller answers usually depend on both confidence and sentence structure.
+            </p>
+          </LeadCard>
         </div>
-      </section>
+      </LeadSection>
 
-      <section className="px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl grid gap-5 lg:grid-cols-2">
-          <article className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-2xl font-bold text-slate-900">How Tiny Steps helps</h2>
-            <ul className="mt-4 space-y-2 text-sm leading-7 text-slate-700">
-              <li>• Builds response length through sentence starters and follow-up prompts.</li>
-              <li>• Connects spoken English with <Link to="/grammar" className="font-semibold underline underline-offset-4">grammar</Link> so children can apply better sentence structure while speaking.</li>
-              <li>• Uses <Link to="/speaking" className="font-semibold underline underline-offset-4">speaking</Link> routines to improve clarity, expression, and confidence.</li>
-              <li>• Gives parents visibility into what improved and what needs more practice next.</li>
-            </ul>
-          </article>
+      <LeadSection>
+        <div className="grid gap-5 lg:grid-cols-2">
+          <LeadCard>
+            <LeadSectionHeading
+              eyebrow="Assessment path"
+              title="How the speaking confidence assessment works"
+              description="The goal is to identify why the child is getting stuck while speaking, not just whether they are shy."
+            />
+            <ol className="mt-5 space-y-3 text-sm leading-7 text-slate-700">
+              <li>1. Tiny Steps checks response length, clarity, sentence formation, and comfort while speaking.</li>
+              <li>2. We identify whether the next step is spoken-English practice, grammar-linked sentence work, or broader speaking-confidence support.</li>
+              <li>3. Parents receive a practical recommendation before enrollment.</li>
+            </ol>
+          </LeadCard>
 
-          <article className="rounded-[28px] border border-emerald-200 bg-emerald-50/60 p-6 shadow-sm">
-            <h2 className="text-2xl font-bold text-slate-900">Pricing preview and trust proof</h2>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <LeadCard className="bg-[linear-gradient(150deg,#ecfdf5_0%,#ffffff_45%,#fff8ef_100%)]">
+            <LeadSectionHeading
+              eyebrow="Pricing and trust proof"
+              title="Clear pricing, real trust signals"
+              description="Parents should be able to compare value before they decide."
+            />
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-emerald-200 bg-white p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Per class</p>
                 <p className="mt-2 text-3xl font-bold text-slate-900">₹400</p>
@@ -149,58 +220,52 @@ export default function SpokenEnglishClassesForKidsPage() {
                 <p className="mt-2 text-3xl font-bold text-slate-900">₹4,800</p>
               </div>
             </div>
-            <ul className="mt-4 space-y-2 text-sm leading-7 text-slate-700">
-              <li>• 5000+ students served</li>
-              <li>• Families in 15+ countries</li>
-              <li>• Founder and teacher-led live learning</li>
-              <li>• Class samples and assessment before parents decide</li>
-            </ul>
-          </article>
+            <div className="mt-4 space-y-2 text-sm leading-7 text-slate-700">
+              <p>• 5000+ students served</p>
+              <p>• Families in 15+ countries</p>
+              <p>• Founder and teacher-led live learning</p>
+              <p>• Class samples and assessment before parents decide</p>
+            </div>
+          </LeadCard>
         </div>
-      </section>
+      </LeadSection>
 
-      <section className="px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-white p-6">
-          <h2 className="text-2xl font-bold text-slate-900">How the speaking confidence assessment works</h2>
-          <ol className="mt-4 space-y-3 text-sm leading-7 text-slate-700">
-            <li>1. We understand where the child gets stuck while speaking.</li>
-            <li>2. We check response length, clarity, sentence formation, and confidence.</li>
-            <li>3. We identify whether the next step is spoken English practice, grammar-linked sentence work, or broader speaking confidence support.</li>
-            <li>4. Parents receive a practical recommendation before enrollment.</li>
-          </ol>
-        </div>
-      </section>
-
-      <section className="px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-white p-6">
-          <h2 className="text-2xl font-bold text-slate-900">FAQs</h2>
-          <div className="mt-4 space-y-4">
-            {faqItems.map((faq) => (
-              <article key={faq.question}>
-                <h3 className="text-base font-semibold text-slate-900">{faq.question}</h3>
-                <p className="mt-1 text-sm leading-7 text-slate-700">{faq.answer}</p>
-              </article>
-            ))}
+      <LeadSection>
+        <LeadCard>
+          <LeadSectionHeading
+            eyebrow="Parents also ask"
+            title="FAQs"
+            description="Answer-first wording helps parents compare whether this page matches their child’s current challenge."
+          />
+          <div className="mt-6">
+            <FAQSection items={faqItems.map((item) => ({ question: item.question, answer: item.answer }))} />
           </div>
-        </div>
-      </section>
+        </LeadCard>
+      </LeadSection>
 
-      <section className="px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl rounded-[32px] bg-slate-900 p-8 text-white">
-          <h2 className="text-2xl font-bold">Ready to help your child speak more confidently?</h2>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-200">
-            If your child gives one-word answers, hesitates in class, or needs sentence expansion support, start with a free speaking confidence assessment.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Link to="/book-demo" className="inline-flex rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100">
-              Book a Free Speaking Confidence Assessment
-            </Link>
-            <Link to="/contact" className="inline-flex rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
-              Contact Tiny Steps
-            </Link>
-          </div>
-        </div>
-      </section>
-    </div>
+      <LeadSection>
+        <FinalLeadCTA
+          title="Ready to help your child speak more confidently?"
+          description={
+            <>
+              If your child gives one-word answers, hesitates in class, or needs sentence expansion support, start with a free speaking confidence assessment.
+            </>
+          }
+          actions={
+            <CourseCTAGroup
+              items={[
+                { to: '/book-demo', label: 'Book a Free Speaking Confidence Assessment', variant: 'primary' },
+                { to: '/contact', label: 'Contact Tiny Steps', variant: 'ghost' },
+              ]}
+              renderLink={(item, className) => (
+                <Link key={item.label} to={item.to || '/'} className={className}>
+                  {item.label}
+                </Link>
+              )}
+            />
+          }
+        />
+      </LeadSection>
+    </LeadPageShell>
   );
 }
