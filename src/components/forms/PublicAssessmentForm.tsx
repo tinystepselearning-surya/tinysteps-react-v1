@@ -1,5 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { trackDemoBookingComplete, trackLeadFormError, trackLeadFormStart, trackLeadFormSubmit, trackWhatsappClick } from '../../lib/conversionTracking';
+import {
+  trackDemoBookingComplete,
+  trackGenerateLead,
+  trackLeadFormError,
+  trackLeadFormStart,
+  trackLeadFormSubmit,
+  trackWhatsappClick,
+} from '../../lib/conversionTracking';
 
 const WHATSAPP_NUMBER = '919618398383';
 const SUN_ORANGE = '#ff6a00';
@@ -184,6 +191,16 @@ export default function PublicAssessmentForm({
     trackLeadFormSubmit({
       form_name: 'public_assessment_form',
       source_context: source || 'public_assessment_form',
+    });
+    trackGenerateLead({
+      page_path: window.location.pathname,
+      form_name: 'public_assessment_form',
+      source_context: source || 'public_assessment_form',
+      lead_channel: 'assessment_form',
+      lead_type: 'parent_assessment_request',
+      form_id: 'public_assessment_form',
+      source: source || 'public_assessment_form',
+      value: 1,
     });
     trackDemoBookingComplete({
       booking_type: 'whatsapp_assessment_request',

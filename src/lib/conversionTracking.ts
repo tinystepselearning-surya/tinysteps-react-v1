@@ -298,6 +298,10 @@ type GenerateLeadParams = FunnelLeadFormParams & {
   lead_channel?: string;
   lead_type?: string;
   submission_id?: string;
+  form_id?: string;
+  source?: string;
+  value?: number;
+  currency?: string;
 };
 
 type FunnelDemoBookingCompleteParams = FunnelBaseParams & {
@@ -390,6 +394,7 @@ export const trackBookDemoClick = (location: string) => {
   trackEvent('book_demo_click', {
     location,
     page: pagePath,
+    page_path: pagePath,
   });
 };
 
@@ -523,12 +528,16 @@ export const trackGenerateLead = (params: GenerateLeadParams = {}) => {
   trackEvent('generate_lead', {
     page_path: pagePath,
     form_name: params.form_name || 'unknown_form',
+    form_id: params.form_id,
     funnel_name: params.funnel_name || WEBSITE_LEAD_FUNNEL_NAME,
     program: resolveProgram(params.program, pagePath),
     source_context: params.source_context || 'unknown',
+    source: params.source,
     lead_channel: params.lead_channel || 'form_submit',
     lead_type: params.lead_type || 'parent_inquiry',
     submission_id: params.submission_id,
+    value: params.value,
+    currency: params.currency,
     ...buildAttributionEventParams(pagePath),
   });
 };

@@ -4,6 +4,7 @@ import PublicAssessmentForm from '../../components/forms/PublicAssessmentForm';
 
 const trackingMocks = vi.hoisted(() => ({
   trackDemoBookingComplete: vi.fn(),
+  trackGenerateLead: vi.fn(),
   trackLeadFormError: vi.fn(),
   trackLeadFormStart: vi.fn(),
   trackLeadFormSubmit: vi.fn(),
@@ -25,9 +26,10 @@ describe('PublicAssessmentForm analytics', () => {
 
     expect(trackingMocks.trackLeadFormError).toHaveBeenCalledTimes(1);
     expect(trackingMocks.trackLeadFormSubmit).not.toHaveBeenCalled();
+    expect(trackingMocks.trackGenerateLead).not.toHaveBeenCalled();
   });
 
-  it('tracks one submit event for a valid submission', () => {
+  it('tracks one generate_lead event for a valid submission', () => {
     render(<PublicAssessmentForm />);
 
     fireEvent.change(screen.getByLabelText(/parent name/i), { target: { value: 'Priya' } });
@@ -39,6 +41,17 @@ describe('PublicAssessmentForm analytics', () => {
     fireEvent.submit(screen.getByRole('button', { name: /get free assessment on whatsapp/i }));
 
     expect(trackingMocks.trackLeadFormSubmit).toHaveBeenCalledTimes(1);
+    expect(trackingMocks.trackGenerateLead).toHaveBeenCalledTimes(1);
+    expect(trackingMocks.trackGenerateLead).toHaveBeenCalledWith({
+      page_path: '/',
+      form_name: 'public_assessment_form',
+      source_context: 'public_assessment_form',
+      lead_channel: 'assessment_form',
+      lead_type: 'parent_assessment_request',
+      form_id: 'public_assessment_form',
+      source: 'public_assessment_form',
+      value: 1,
+    });
     expect(trackingMocks.trackDemoBookingComplete).toHaveBeenCalledTimes(1);
     expect(trackingMocks.trackWhatsappClick).toHaveBeenCalledTimes(1);
     expect(trackingMocks.trackLeadFormError).not.toHaveBeenCalled();
