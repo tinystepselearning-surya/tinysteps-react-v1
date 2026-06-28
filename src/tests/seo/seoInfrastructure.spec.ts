@@ -60,12 +60,13 @@ describe('SEO infrastructure', () => {
     expect(ROUTE_SEO_REGISTRY['/online-phonics-reading-classes']?.canonicalPath).toBe('/online-phonics-reading-classes');
     expect(ROUTE_SEO_REGISTRY['/english-grammar-writing-classes']?.canonicalPath).toBe('/english-grammar-writing-classes');
     expect(ROUTE_SEO_REGISTRY['/public-speaking-communication-kids']?.canonicalPath).toBe('/public-speaking-communication-kids');
-    expect(ROUTE_SEO_REGISTRY['/spoken-english-classes-for-kids']?.canonicalPath).toBe('/spoken-english-classes-for-kids');
+    expect(ROUTE_SEO_REGISTRY['/spoken-english-classes-for-kids-online']?.canonicalPath).toBe('/spoken-english-classes-for-kids-online');
+    expect(ROUTE_SEO_REGISTRY['/online-english-classes-for-kids']?.canonicalPath).toBe('/online-english-classes-for-kids');
 
     expect(indexHtml).not.toContain("'/online-phonics-reading-classes': '/phonics'");
     expect(indexHtml).not.toContain("'/english-grammar-writing-classes': '/grammar'");
     expect(indexHtml).not.toContain("'/public-speaking-communication-kids': '/speaking'");
-    expect(indexHtml).not.toContain("'/spoken-english-classes-for-kids': '/speaking'");
+    expect(indexHtml).not.toContain("'/spoken-english-classes-for-kids-online': '/speaking'");
   });
 
   it('ships the blog indexing policy module for Node-based SEO scripts', async () => {

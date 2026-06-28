@@ -132,6 +132,14 @@ const ContactPage: FC = () => {
               </Link>
             </div>
 
+            <div className="mt-6 rounded-[24px] border border-slate-200 bg-slate-50/80 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Trust proof</p>
+              <p className="mt-3 text-sm font-semibold text-slate-900">5000+ students served • Families in 15+ countries</p>
+              <p className="mt-2 text-sm leading-7 text-slate-700">
+                Parents usually contact us when they want help choosing between phonics, grammar, reading, or speaking support and want a real person to guide the next step.
+              </p>
+            </div>
+
             <div className="mt-10 grid gap-4 sm:grid-cols-2">
               <div className="rounded-[24px] border border-slate-200 bg-slate-50/70 p-5">
                 <h2 className="text-lg font-semibold text-slate-900">Who this page is for</h2>
@@ -156,7 +164,31 @@ const ContactPage: FC = () => {
                   <Link to="/pricing" className="underline decoration-slate-300 underline-offset-4 hover:decoration-slate-700">
                     Pricing and assessment options
                   </Link>
+                  <Link to="/class-samples" className="underline decoration-slate-300 underline-offset-4 hover:decoration-slate-700">
+                    Class samples for parents
+                  </Link>
                 </div>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-[24px] border border-slate-200 bg-white p-5">
+                <h2 className="text-lg font-semibold text-slate-900">Pricing and support</h2>
+                <p className="mt-2 text-sm leading-7 text-slate-700">
+                  If you want package clarity first, review <Link to="/pricing" className="font-semibold underline underline-offset-4">pricing</Link>. If you want teaching style proof, open <Link to="/class-samples" className="font-semibold underline underline-offset-4">class samples</Link>.
+                </p>
+              </div>
+              <div className="rounded-[24px] border border-slate-200 bg-white p-5">
+                <h2 className="text-lg font-semibold text-slate-900">Timing guidance</h2>
+                <p className="mt-2 text-sm leading-7 text-slate-700">
+                  Share your preferred weekday or weekend window. We support families in India and abroad, so morning and evening options are usually discussed during the assessment call.
+                </p>
+              </div>
+              <div className="rounded-[24px] border border-slate-200 bg-white p-5">
+                <h2 className="text-lg font-semibold text-slate-900">Response time</h2>
+                <p className="mt-2 text-sm leading-7 text-slate-700">
+                  WhatsApp is the fastest path. Form and email enquiries usually receive a response once the admissions team reviews the child details and preferred timing.
+                </p>
               </div>
             </div>
           </div>

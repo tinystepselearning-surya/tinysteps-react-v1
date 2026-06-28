@@ -6,7 +6,7 @@ const HOST = 'http://127.0.0.1:5173';
 const PORT = 5173;
 const SLUGS = [
   'week-1-phonics-satpin-launch',
-  'online-english-classes-for-kids-india',
+  'online-english-classes-for-kids',
   'best-phonics-classes-for-kids',
 ];
 

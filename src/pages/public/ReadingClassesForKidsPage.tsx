@@ -311,7 +311,7 @@ export default function ReadingClassesForKidsPage() {
                 problem: 'Child struggles with school reading tasks',
                 meaning: 'The child may need integrated fluency, story understanding, and response-building support.',
                 support: 'Suggested Tiny Steps support: school-reading confidence pathway',
-                href: '/online-english-classes-for-kids-india',
+                href: '/online-english-classes-for-kids',
                 anchor: 'online English classes for kids in India',
               },
             ].map((item) => (
@@ -628,7 +628,7 @@ export default function ReadingClassesForKidsPage() {
             <Link to="/pricing" className="font-semibold underline underline-offset-2 hover:text-white">class pricing</Link>
           </div>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-300">
-            <Link to="/online-english-classes-for-kids-india" className="underline underline-offset-2 hover:text-white">online English classes for kids in India</Link>
+            <Link to="/online-english-classes-for-kids" className="underline underline-offset-2 hover:text-white">online English classes for kids</Link>
             <span className="hidden sm:inline text-slate-500">•</span>
             <Link to="/class-samples" className="underline underline-offset-2 hover:text-white">real class samples</Link>
           </div>

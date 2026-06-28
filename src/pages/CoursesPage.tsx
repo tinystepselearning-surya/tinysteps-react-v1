@@ -212,6 +212,15 @@ function CoursesPage() {
                 View Pricing
               </Link>
             </div>
+
+            <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold text-white/90">
+              <Link to="/online-english-classes-for-kids" className="underline underline-offset-4">
+                Online English Classes for Kids
+              </Link>
+              <Link to="/spoken-english-classes-for-kids-online" className="underline underline-offset-4">
+                Spoken English Classes Online
+              </Link>
+            </div>
           </div>
         </div>
       </section>

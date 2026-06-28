@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import ClusterSeoNav from '../components/programs/ClusterSeoNav';
 import { applySeo } from '../lib/seo';
-import { createFAQPageSchema, PUBLIC_FACTS } from '../lib/schemas';
+import { createCourseSchema, createFAQPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 
 const faqItems = [
   {
@@ -125,6 +125,16 @@ export default function GrammarPage() {
       '@id': `${canonicalUrl}#faq`,
     };
 
+    const courseSchema = createCourseSchema({
+      name: 'Grammar Classes for Kids',
+      description:
+        'Live online grammar classes for kids in India focused on sentence formation, tenses, punctuation, writing clarity, and confident school answers.',
+      url: canonicalUrl,
+      educationalLevel: 'Primary and middle-school grammar support',
+      teaches: ['grammar', 'sentence formation', 'tenses', 'punctuation', 'writing clarity'],
+      areaServed: 'India',
+    });
+
     applySeo({
       title: 'Grammar Classes for Kids in India | Tiny Steps',
       description:
@@ -132,7 +142,7 @@ export default function GrammarPage() {
       canonicalPath,
       robots: 'index,follow',
       ogType: 'website',
-      jsonLd: [breadcrumbSchema, pathwayItemListSchema, faqSchema],
+      jsonLd: [breadcrumbSchema, courseSchema, pathwayItemListSchema, faqSchema],
     });
   }, [canonicalPath, canonicalUrl]);
 
@@ -186,6 +196,9 @@ export default function GrammarPage() {
                   </span>
                 ))}
               </div>
+              <p className="mt-4 max-w-[660px] text-sm leading-7 text-slate-700">
+                Parents often combine this page with <Link to="/spoken-english-classes-for-kids-online" className="font-semibold underline underline-offset-4 hover:text-sky-700">spoken English classes for kids online</Link> when the child needs grammar in use while speaking.
+              </p>
             </div>
 
             <aside className="mt-7 w-full overflow-hidden rounded-[24px] border border-slate-200/70 bg-white/95 p-4 shadow-[0_12px_30px_rgba(15,23,42,0.07)] sm:mt-8 sm:p-5 md:rounded-[28px] md:p-6 md:shadow-[0_18px_45px_rgba(15,23,42,0.08)] lg:ml-auto lg:mt-0 lg:max-w-[560px] lg:p-7">
@@ -278,7 +291,7 @@ export default function GrammarPage() {
                 problem: 'Child struggles to build complete sentences',
                 meaning: 'Sentence structure and idea flow may need guided practice.',
                 support: 'Suggested Tiny Steps support: sentence formation support',
-                href: '/online-english-classes-for-kids-india',
+                href: '/online-english-classes-for-kids',
                 anchor: 'online English classes for kids in India',
               },
               {
@@ -650,7 +663,7 @@ export default function GrammarPage() {
             <Link to="/pricing" className="font-semibold underline underline-offset-2 hover:text-white">class pricing</Link>
           </div>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-300">
-            <Link to="/online-english-classes-for-kids-india" className="underline underline-offset-2 hover:text-white">online English classes for kids in India</Link>
+            <Link to="/online-english-classes-for-kids" className="underline underline-offset-2 hover:text-white">online English classes for kids</Link>
             <span className="hidden sm:inline text-slate-500">•</span>
             <Link to="/class-samples" className="underline underline-offset-2 hover:text-white">real class samples</Link>
           </div>

@@ -386,11 +386,11 @@ export const ROUTE_SEO_REGISTRY = {
     canonicalPath: '/reading-classes-for-kids',
     ogType: 'website',
   },
-  '/spoken-english-classes-for-kids': {
-    title: 'Communication & Public Speaking for Kids India | Tiny Steps Learning',
+  '/spoken-english-classes-for-kids-online': {
+    title: 'Spoken English Classes for Kids Online | Tiny Steps Learning',
     description:
-      'Communication and public speaking classes for kids in India focused on communication confidence, vocabulary growth, sentence formation, and stage speaking readiness.',
-    canonicalPath: '/spoken-english-classes-for-kids',
+      'Live spoken English classes for kids online. Help children move beyond one-word answers, build sentence confidence, and speak more clearly with structured live support.',
+    canonicalPath: '/spoken-english-classes-for-kids-online',
     ogType: 'website',
   },
   '/writing-classes-for-kids': {
@@ -407,11 +407,11 @@ export const ROUTE_SEO_REGISTRY = {
     canonicalPath: '/phonics-fees-india',
     ogType: 'website',
   },
-  '/online-english-classes-for-kids-india': {
-    title: 'Online English Classes for Kids in India | Tiny Steps',
+  '/online-english-classes-for-kids': {
+    title: 'Online English Classes for Kids in India and Worldwide | Tiny Steps',
     description:
-      'Live online English classes for kids in India. Build phonics, reading fluency, grammar, sentence formation and communication confidence. Book a free assessment.',
-    canonicalPath: '/online-english-classes-for-kids-india',
+      'Live online English classes for kids in India and worldwide. Build reading, grammar, spoken English, and confidence through structured 1:1 and small-group classes.',
+    canonicalPath: '/online-english-classes-for-kids',
     ogType: 'website',
   },
   '/online-english-classes-hyderabad': {

@@ -763,7 +763,7 @@ export default function PhonicsPage({
               public speaking and communication classes
             </Link>
             , and broader{' '}
-            <Link to="/online-english-classes-for-kids-india" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
+            <Link to="/online-english-classes-for-kids" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
               online English classes for kids in India
             </Link>
             .

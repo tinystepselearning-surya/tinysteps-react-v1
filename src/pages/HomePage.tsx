@@ -1,7 +1,7 @@
 // src/pages/HomePage.tsx
 // @ts-nocheck
 import React, { lazy, Suspense, useEffect, useRef, useState } from "react";
-import { localBusinessSchema, PUBLIC_FACTS } from "../lib/schemas";
+import { organizationSchema, PUBLIC_FACTS, websiteSchema } from "../lib/schemas";
 import { Link } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
@@ -17,22 +17,15 @@ const LearningJourneyRoadmapPPT = lazy(async () => {
   return { default: mod.LearningJourneyRoadmapPPT };
 });
 
-const SUMMER_CAMP_BADGES = [
-  "24 live classes in 4 weeks",
-  "Monday to Saturday batches",
-  "Sunday holiday",
-  "Season: 27 Apr to 13 Jun 2026",
-  "Batch starts: 27 Apr, 4 May, 11 May, 18 May",
-];
 const PARENT_HELP_POINTS = [
   "Short, practical guides",
   "Home routines that fit real schedules",
   "Friendly support for common phonics questions",
 ];
 const CORE_PROGRAMS_TEXT = `${PUBLIC_FACTS.corePrograms[0]}, ${PUBLIC_FACTS.corePrograms[1]}, and ${PUBLIC_FACTS.corePrograms[2]}`;
-const homeSeoTitle = "Premium Online English Classes for Kids in India | Tiny Steps Learning";
+const homeSeoTitle = "Online English Classes for Kids That Build Reading, Grammar and Speaking Confidence | Tiny Steps Learning";
 const homeSeoDescription =
-  "Tiny Steps offers premium 1:1 online English classes for children aged 3–12 across phonics, grammar, reading, sentence formation, communication, and public speaking.";
+  "Live 1:1 and small-group online English classes for kids with phonics, reading, grammar, spoken-English support, free assessment, transparent pricing, and parent-visible progress.";
 const homeCanonicalPath = "/";
 const homeCanonicalUrl =
   homeCanonicalPath === "/" ? `${PUBLIC_FACTS.primaryWebsite}/` : `${PUBLIC_FACTS.primaryWebsite}${homeCanonicalPath}`;
@@ -195,9 +188,9 @@ export default function HomePage() {
       <Meta
         title={homeSeoTitle}
         description={homeSeoDescription}
-        keywords="online english classes for kids india, phonics classes for kids, online grammar classes for kids, public speaking classes for kids online, premium 1:1 english classes for children"
+        keywords="online english classes for kids, online english classes for children, phonics classes for kids, online grammar classes for kids, spoken english classes for kids online, english tutor for kids online"
         canonical={homeCanonicalUrl}
-        jsonLd={[localBusinessSchema, quickAnswerFaqSchema]}
+        jsonLd={[organizationSchema, websiteSchema, quickAnswerFaqSchema]}
       />
 
       {/* HERO */}
@@ -250,7 +243,7 @@ export default function HomePage() {
               guide.
               <br className="hidden sm:block" />
               Not sure where to begin? See <Link to="/class-samples" className="font-medium underline underline-offset-2 hover:text-slate-900">live class samples</Link>, discover <Link to="/why-tiny-steps" className="font-medium underline underline-offset-2 hover:text-slate-900">why parents choose us</Link>, or browse <Link to="/courses" className="font-medium underline underline-offset-2 hover:text-slate-900">all online courses</Link>.
-              {' '}Parents in Hyderabad can also explore <Link to="/online-english-classes-hyderabad" className="font-medium underline underline-offset-2 hover:text-slate-900">Hyderabad Online English Classes</Link>.
+              {' '}Start with <Link to="/online-english-classes-for-kids" className="font-medium underline underline-offset-2 hover:text-slate-900">online English classes for kids</Link>, compare <Link to="/spoken-english-classes-for-kids-online" className="font-medium underline underline-offset-2 hover:text-slate-900">spoken English classes online</Link>, and if you are searching locally, explore <Link to="/online-english-classes-hyderabad" className="font-medium underline underline-offset-2 hover:text-slate-900">Hyderabad online English classes</Link>.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
@@ -311,44 +304,26 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Summer Camp CTA */}
       <section className="px-6 py-6">
         <div className="mx-auto max-w-6xl">
-          <div className="relative overflow-hidden rounded-[32px] border border-emerald-100/80 bg-gradient-to-r from-emerald-50 via-white to-sky-50 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.06)] sm:p-8">
-            <div className="pointer-events-none absolute -left-16 top-0 h-40 w-40 rounded-full bg-emerald-200/40 blur-3xl" />
-            <div className="pointer-events-none absolute bottom-0 right-0 h-48 w-48 rounded-full bg-sky-200/40 blur-3xl" />
-
-            <div className="relative flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+          <div className="rounded-[32px] border border-slate-200 bg-gradient-to-r from-white via-slate-50 to-sky-50 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.05)] sm:p-8">
+            <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">Summer Camp Season 2026 • 27 April to 13 June</p>
-                <h2 className="mt-2 text-2xl font-semibold text-gray-900 sm:text-3xl">A focused 4-week summer learning program for ages 4–12</h2>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-700">Popular parent entry points</p>
+                <h2 className="mt-2 text-2xl font-semibold text-gray-900 sm:text-3xl">Choose the right English starting page for your child</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-700 sm:text-base">
-                  Choose from 3 fast-track programs: <strong>Phonics</strong>, <strong>Grammar</strong>, or <strong>Speaking</strong>. {`Each child joins one 24 live-class batch in 4 weeks inside the Summer Camp Season from 27 April to 13 June 2026.`} Limited batch start dates are 27 April, 4 May, 11 May and 18 May 2026, with Sunday kept as a holiday.
+                  Compare the main national page for English support, a speaking-confidence page for hesitant communicators, and the Hyderabad-focused page for local parents.
                 </p>
-                <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-700 px-3 py-1 text-sm font-semibold text-white">
-                  <span className="line-through text-emerald-100">₹5,000</span>
-                  <span>Effective price: ₹2,400</span>
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {SUMMER_CAMP_BADGES.map((item) => (
-                    <span key={item} className="rounded-full border border-white/80 bg-white/75 px-3 py-1 text-xs font-semibold text-gray-700 shadow-sm backdrop-blur">
-                      {item}
-                    </span>
-                  ))}
-                </div>
               </div>
-              <div className="flex flex-col gap-3">
-                <Link
-                  to="/summer-camps"
-                  className="inline-flex items-center justify-center rounded-full bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-800"
-                >
-                  Book Free Assessment
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Link to="/online-english-classes-for-kids" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300">
+                  Online English Classes for Kids
                 </Link>
-                <Link
-                  to="/summer-camps"
-                  className="inline-flex items-center justify-center rounded-full border border-emerald-700 bg-white/70 px-5 py-2.5 text-sm font-semibold text-emerald-800 transition hover:-translate-y-0.5 hover:bg-emerald-50"
-                >
-                  Explore Summer Camp 2026
+                <Link to="/spoken-english-classes-for-kids-online" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300">
+                  Spoken English Classes Online
+                </Link>
+                <Link to="/online-english-classes-hyderabad" className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300">
+                  Hyderabad Parents
                 </Link>
               </div>
             </div>

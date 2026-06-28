@@ -62,7 +62,7 @@ const ReadingClassesForKidsPage = lazy(() => import('../pages/public/ReadingClas
 const SpokenEnglishClassesForKidsPage = lazy(() => import('../pages/public/SpokenEnglishClassesForKidsPage'));
 const WritingClassesForKidsPage = lazy(() => import('../pages/public/WritingClassesForKidsPage'));
 const PhonicsFeesIndiaPage = lazy(() => import('../pages/public/PhonicsFeesIndiaPage'));
-const OnlineEnglishClassesForKidsIndiaPage = lazy(() => import('../pages/public/OnlineEnglishClassesForKidsIndiaPage'));
+const OnlineEnglishClassesForKidsPage = lazy(() => import('../pages/public/OnlineEnglishClassesForKidsPage'));
 const OnlineEnglishClassesHyderabadPage = lazy(() => import('../pages/public/OnlineEnglishClassesHyderabadPage'));
 const EnglishClassesFor4YearOldPage = lazy(() => import('../pages/public/EnglishClassesFor4YearOldPage'));
 const EnglishClassesFor5YearOldPage = lazy(() => import('../pages/public/EnglishClassesFor5YearOldPage'));
@@ -605,10 +605,12 @@ const router = createBrowserRouter(
         { path: 'free-balloon-pop-phonics-game-for-kids', element: <FreeBalloonPopGamePage /> },
         { path: 'free-games/word-meaning-flashcards', element: <WordMeaningFlashcards /> },
         { path: 'reading-classes-for-kids', element: <ReadingClassesForKidsPage /> },
-        { path: 'spoken-english-classes-for-kids', element: <SpokenEnglishClassesForKidsPage /> },
+        { path: 'spoken-english-classes-for-kids', element: <Navigate to="/spoken-english-classes-for-kids-online" replace /> },
+        { path: 'spoken-english-classes-for-kids-online', element: <SpokenEnglishClassesForKidsPage /> },
         { path: 'writing-classes-for-kids', element: <WritingClassesForKidsPage /> },
         { path: 'phonics-fees-india', element: <PhonicsFeesIndiaPage /> },
-        { path: 'online-english-classes-for-kids-india', element: <OnlineEnglishClassesForKidsIndiaPage /> },
+        { path: 'online-english-classes-for-kids', element: <OnlineEnglishClassesForKidsPage /> },
+        { path: 'online-english-classes-for-kids-india', element: <Navigate to="/online-english-classes-for-kids" replace /> },
         { path: 'online-english-classes-hyderabad', element: <OnlineEnglishClassesHyderabadPage /> },
         { path: 'english-classes-for-4-year-old', element: <EnglishClassesFor4YearOldPage /> },
         { path: 'english-classes-for-5-year-old', element: <EnglishClassesFor5YearOldPage /> },

@@ -159,6 +159,9 @@ export default function OnlineEnglishClassesHyderabadPage() {
           <li>• Live teacher guidance gives correction, not just recorded videos.</li>
           <li>• The course path is chosen after checking the child&apos;s level.</li>
         </ul>
+        <p className="mt-4 text-sm leading-7 text-slate-700">
+          Need the broader India and worldwide page instead? Visit <Link to="/online-english-classes-for-kids" className="font-semibold underline underline-offset-4">online English classes for kids</Link> for the national parent-money page.
+        </p>
       </section>
 
       <section className="mb-10 rounded-xl border border-emerald-100 bg-emerald-50 p-6">

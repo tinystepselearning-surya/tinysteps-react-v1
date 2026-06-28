@@ -35,8 +35,8 @@ export const STATIC_MARKETING_ROUTES = [
   '/writing-classes-for-kids',
   '/phonics-fees-india',
   '/english-grammar-writing-classes',
-  '/spoken-english-classes-for-kids',
-  '/online-english-classes-for-kids-india',
+  '/spoken-english-classes-for-kids-online',
+  '/online-english-classes-for-kids',
   '/online-english-classes-hyderabad',
   // Intent-dominant expansion: age pages
   '/english-classes-for-4-year-old',

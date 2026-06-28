@@ -155,6 +155,16 @@ export default function FreeLetterTracingGamePage() {
         </p>
       </section>
 
+      <section className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/70 p-5">
+        <h2 className="text-xl font-bold text-slate-900">Tracing is step one. Want to know what your child should learn next?</h2>
+        <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-700">
+          This game keeps practice simple for children. If you want parent guidance on what comes after tracing, book a free reading readiness check and get a clear next step across phonics, reading, and early English foundations.
+        </p>
+        <Link to="/book-demo" className="mt-4 inline-flex rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
+          Get a Free Reading Readiness Check
+        </Link>
+      </section>
+
       <section className="mt-4 grid gap-4 sm:grid-cols-2">
         <article className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-5">
           <h2 className="text-xl font-bold text-slate-900">Want structured phonics classes after tracing practice?</h2>

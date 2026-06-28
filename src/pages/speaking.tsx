@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import ClusterSeoNav from '../components/programs/ClusterSeoNav';
 import { applySeo } from '../lib/seo';
-import { createFAQPageSchema, PUBLIC_FACTS } from '../lib/schemas';
+import { createCourseSchema, createFAQPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 
 const faqItems = [
   {
@@ -125,6 +125,16 @@ export default function SpeakingPage() {
       '@id': `${canonicalUrl}#faq`,
     };
 
+    const courseSchema = createCourseSchema({
+      name: 'Public Speaking Classes for Kids',
+      description:
+        'Live online public speaking classes for kids in India focused on sentence formation, storytelling, expression, and classroom speaking confidence.',
+      url: canonicalUrl,
+      educationalLevel: 'Primary and middle-school speaking support',
+      teaches: ['spoken English confidence', 'sentence expansion', 'storytelling', 'show and tell', 'presentation confidence'],
+      areaServed: 'India',
+    });
+
     applySeo({
       title: 'Public Speaking Classes for Kids in India | Tiny Steps',
       description:
@@ -132,7 +142,7 @@ export default function SpeakingPage() {
       canonicalPath,
       robots: 'index,follow',
       ogType: 'website',
-      jsonLd: [breadcrumbSchema, pathwayItemListSchema, faqSchema],
+      jsonLd: [breadcrumbSchema, courseSchema, pathwayItemListSchema, faqSchema],
     });
   }, [canonicalPath, canonicalUrl]);
 
@@ -206,6 +216,9 @@ export default function SpeakingPage() {
                   </span>
                 ))}
               </div>
+              <p className="mt-4 max-w-[660px] text-sm leading-7 text-slate-700">
+                Parents looking specifically for hesitant speakers can also review <Link to="/spoken-english-classes-for-kids-online" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">spoken English classes for kids online</Link> and connect it with <Link to="/grammar" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">grammar</Link> for fuller sentence answers.
+              </p>
             </div>
 
             <aside className="relative mt-7 w-full overflow-hidden rounded-[24px] border border-slate-200/70 bg-[linear-gradient(150deg,rgba(255,255,255,0.98),rgba(248,251,255,0.95),rgba(255,249,241,0.94))] p-4 shadow-[0_12px_30px_rgba(15,23,42,0.07)] sm:mt-8 sm:p-5 md:rounded-[28px] md:p-6 md:shadow-[0_18px_45px_rgba(15,23,42,0.08)] lg:ml-auto lg:mt-0 lg:max-w-[560px] lg:p-7">
@@ -315,7 +328,7 @@ export default function SpeakingPage() {
                 problem: 'Child needs confidence for show-and-tell',
                 meaning: 'The child may need school-communication practice in low-pressure speaking turns.',
                 support: 'Suggested Tiny Steps support: school communication and presentation practice',
-                href: '/online-english-classes-for-kids-india',
+                href: '/online-english-classes-for-kids',
                 anchor: 'online English classes for kids in India',
               },
               {
@@ -674,7 +687,7 @@ export default function SpeakingPage() {
             <Link to="/pricing" className="font-semibold underline underline-offset-2 hover:text-white">class pricing</Link>
           </div>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-300">
-            <Link to="/online-english-classes-for-kids-india" className="underline underline-offset-2 hover:text-white">online English classes for kids in India</Link>
+            <Link to="/online-english-classes-for-kids" className="underline underline-offset-2 hover:text-white">online English classes for kids</Link>
             <span className="hidden sm:inline text-slate-500">•</span>
             <Link to="/phonics" className="underline underline-offset-2 hover:text-white">online phonics classes for kids</Link>
             <span className="hidden sm:inline text-slate-500">•</span>

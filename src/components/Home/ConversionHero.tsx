@@ -1,30 +1,25 @@
 import React, { memo } from "react";
-import {
-  BookOpenText,
-  CheckCircle2,
-  Globe2,
-  Mic2,
-  Sparkles,
-} from "lucide-react";
+import { BookOpenText, CheckCircle2, Globe2, Mic2, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
 import BookAssessmentForm from "../forms/BookAssessmentForm";
 
 const heroHighlights = [
   {
     eyebrow: "THE APPROACH",
-    title: "Personalised Learning Pace",
-    desc: "1:1 and small-group classes designed around each child’s level, pace, and confidence.",
+    title: "Structured Learning Path",
+    desc: "Live 1:1 and small-group classes matched to each child’s reading, grammar, and speaking stage.",
     icon: <Sparkles className="h-5 w-5 text-orange-600" aria-hidden="true" />,
   },
   {
     eyebrow: "THE REACH",
-    title: "Global Families",
-    desc: "Trusted by families across 15+ countries in Asia, Europe, North America, and the Middle East.",
+    title: "Trusted Worldwide",
+    desc: "5000+ students served with families across 15+ countries choosing Tiny Steps for consistent live support.",
     icon: <Globe2 className="h-5 w-5 text-orange-600" aria-hidden="true" />,
   },
   {
     eyebrow: "THE OUTCOME",
-    title: "Confident English Skills",
-    desc: "Phonics, grammar, reading, and speaking built through calm routines and clear progress.",
+    title: "Visible Parent Progress",
+    desc: "Structured phonics, reading, grammar, and speaking growth with weekly parent updates.",
     icon: <Mic2 className="h-5 w-5 text-orange-600" aria-hidden="true" />,
   },
 ];
@@ -150,37 +145,47 @@ const ConversionHero: React.FC = () => {
                 <span className="motion-safe:animate-ping motion-reduce:animate-none absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-orange-500"></span>
               </span>
-              TRUSTED BY FAMILIES ACROSS 15+ COUNTRIES
+              LIVE ONLINE ENGLISH CLASSES FOR KIDS
             </div>
 
             <h1
               className="mt-6 max-w-4xl text-4xl font-black leading-[0.95] tracking-tight text-slate-900 md:text-6xl lg:text-7xl"
             >
-              Gentle, <span className="whitespace-nowrap">high-impact</span>
+              Online English Classes
+              <br className="hidden sm:block" />
+              <span className="sm:hidden"> </span>
+              for Kids That Build
               <br />
               <span className="bg-gradient-to-r from-orange-600 via-rose-500 to-amber-500 bg-clip-text text-transparent">
-                English foundations
+                Reading, Grammar and Speaking Confidence
               </span>
             </h1>
 
             <p
               className="mt-5 max-w-2xl text-base leading-relaxed text-slate-600 md:text-lg"
             >
-              Tiny Steps Learning is a premium online English learning school for children aged 3–12, offering phonics, grammar, reading, sentence formation, communication, and public speaking programs through live 1:1 and small-group classes.
+              Live 1:1 and small-group classes for children. Structured phonics, reading, grammar, and spoken-English support with free assessment, transparent pricing, and parent-visible progress.
             </p>
 
-            <div
-              className="mt-6 flex flex-wrap gap-3 text-sm font-semibold text-slate-700"
-            >
-              <a href="/phonics" className="underline decoration-slate-300 underline-offset-4 transition hover:text-slate-900">
-                phonics classes for kids
-              </a>
-              <a href="/grammar" className="underline decoration-slate-300 underline-offset-4 transition hover:text-slate-900">
-                grammar classes for kids
-              </a>
-              <a href="/speaking" className="underline decoration-slate-300 underline-offset-4 transition hover:text-slate-900">
-                public speaking classes for kids
-              </a>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                to="/book-demo"
+                className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+              >
+                Book Free Assessment
+              </Link>
+              <Link
+                to="/pricing"
+                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white/80 px-6 py-3 text-sm font-semibold text-slate-900 shadow-sm backdrop-blur transition hover:border-slate-400 hover:bg-white"
+              >
+                See Pricing
+              </Link>
+              <Link
+                to="/class-samples"
+                className="inline-flex items-center justify-center rounded-full border border-orange-200 bg-orange-50/80 px-6 py-3 text-sm font-semibold text-orange-800 shadow-sm backdrop-blur transition hover:border-orange-300 hover:bg-orange-100"
+              >
+                Class Samples
+              </Link>
             </div>
 
             {/* BENTO GRID VALUE PROPS */}
@@ -200,7 +205,7 @@ const ConversionHero: React.FC = () => {
               className="mt-4 max-w-2xl rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm text-slate-700 shadow-sm backdrop-blur"
             >
               <p className="font-medium text-slate-800">
-                Structured curriculum, trained teachers, weekly parent updates, and personalized pacing — designed to help children read, write, and speak with confidence.
+                5000+ students • Families in 15+ countries • 1:1 and small-group classes • Weekly parent updates
               </p>
               <p className="mt-1 text-slate-600">
                 Calm routines, clear milestones, and consistent feedback make progress easy to see.
@@ -221,7 +226,7 @@ const ConversionHero: React.FC = () => {
               </a>
               <span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 shadow-sm backdrop-blur">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
-                Free assessment • Weekly parent updates
+                Free assessment • Transparent pricing
               </span>
             </div>
           </div>

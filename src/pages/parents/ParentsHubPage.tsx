@@ -572,7 +572,7 @@ const ParentsHubPage: React.FC = () => {
                 Open the reading-at-home playbook
               </Link>
               <Link
-                to="/online-english-classes-for-kids-india"
+                to="/online-english-classes-for-kids"
                 className="block rounded-[1.25rem] border border-white/80 bg-white/85 px-4 py-3 text-sm font-semibold text-slate-900 transition hover:border-slate-300"
               >
                 Explore online english classes for kids india

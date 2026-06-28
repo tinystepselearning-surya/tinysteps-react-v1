@@ -44,14 +44,16 @@ const REQUIRED_CORE_URLS = [
   'https://tinystepslearning.com/online-phonics-reading-classes',
   'https://tinystepslearning.com/english-grammar-writing-classes',
   'https://tinystepslearning.com/public-speaking-communication-kids',
-  'https://tinystepslearning.com/spoken-english-classes-for-kids',
+  'https://tinystepslearning.com/spoken-english-classes-for-kids-online',
+  'https://tinystepslearning.com/online-english-classes-for-kids',
 ];
 
 const REQUIRED_SELF_CANONICAL_LONG_TAIL_PATHS = [
   '/online-phonics-reading-classes',
   '/english-grammar-writing-classes',
   '/public-speaking-communication-kids',
-  '/spoken-english-classes-for-kids',
+  '/spoken-english-classes-for-kids-online',
+  '/online-english-classes-for-kids',
 ];
 
 const PRIVATE_PATH_TOKENS = [
