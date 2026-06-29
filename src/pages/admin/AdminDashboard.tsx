@@ -26,7 +26,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
-import { collection, doc, documentId, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { Timestamp, collection, doc, documentId, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { db, functions } from '../../lib/firebaseConfig';
 import { type FunctionsError, httpsCallable } from 'firebase/functions';
@@ -639,14 +639,54 @@ function AttendanceCorrectionsPanel() {
 
       setLoadingSessions(true);
       try {
-        const snap = await getDocs(
-          query(collection(db, 'classSessions'), where('teacherId', '==', selectedTeacherId)),
-        );
+        const sessionMap = new Map<string, Record<string, unknown>>();
+        try {
+          const primarySnap = await getDocs(
+            query(
+              collection(db, 'classSessions'),
+              where('teacherId', '==', selectedTeacherId),
+              where('date', '==', selectedDate),
+            ),
+          );
+          primarySnap.docs.forEach((docSnap) => {
+            sessionMap.set(docSnap.id, (docSnap.data() || {}) as Record<string, unknown>);
+          });
+        } catch (primaryErr) {
+          console.warn('Attendance correction date query failed, falling back', primaryErr);
+        }
+
+        if (sessionMap.size === 0) {
+          const dayStart = new Date(`${selectedDate}T00:00:00`);
+          const nextDayStart = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+          try {
+            const boundedStartAtSnap = await getDocs(
+              query(
+                collection(db, 'classSessions'),
+                where('teacherId', '==', selectedTeacherId),
+                where('startAt', '>=', Timestamp.fromDate(dayStart)),
+                where('startAt', '<', Timestamp.fromDate(nextDayStart)),
+              ),
+            );
+            boundedStartAtSnap.docs.forEach((docSnap) => {
+              sessionMap.set(docSnap.id, (docSnap.data() || {}) as Record<string, unknown>);
+            });
+          } catch (boundedErr) {
+            console.warn('Attendance correction bounded startAt query failed, falling back', boundedErr);
+          }
+        }
+
+        if (sessionMap.size === 0) {
+          const fallbackSnap = await getDocs(
+            query(collection(db, 'classSessions'), where('teacherId', '==', selectedTeacherId)),
+          );
+          fallbackSnap.docs.forEach((docSnap) => {
+            sessionMap.set(docSnap.id, (docSnap.data() || {}) as Record<string, unknown>);
+          });
+        }
         if (cancelled) return;
 
-        const rows: AttendanceCorrectionSession[] = snap.docs
-          .map((docSnap) => {
-            const data = (docSnap.data() || {}) as Record<string, unknown>;
+        const rows: AttendanceCorrectionSession[] = Array.from(sessionMap.entries())
+          .map(([id, data]) => {
             const startAtDate = toDateMaybe(data.startAt);
             const date = typeof data.date === 'string' && data.date.trim()
               ? data.date.trim()
@@ -670,7 +710,7 @@ function AttendanceCorrectionsPanel() {
                 ? (data.attendance as Record<string, unknown>)
                 : {};
             return {
-              id: docSnap.id,
+              id,
               date,
               startTime,
               courseLabel,

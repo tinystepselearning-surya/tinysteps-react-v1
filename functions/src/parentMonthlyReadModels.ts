@@ -37,6 +37,20 @@ function monthKeyFromDateIST(value: unknown): string | null {
   return `${year}-${month}`;
 }
 
+function monthDateRangeFromKey(monthKey: string): { startYmd: string; endYmd: string } | null {
+  const parts = String(monthKey || '').split('-');
+  if (parts.length !== 2) return null;
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+    return null;
+  }
+  const startYmd = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-01`;
+  const lastDay = new Date(year, month, 0).getDate();
+  const endYmd = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  return { startYmd, endYmd };
+}
+
 function normalizeParentId(value: unknown): string {
   return String(value || '').trim();
 }
@@ -178,10 +192,27 @@ async function recomputeParentMonthAttendanceReadModel(
   parentId: string,
   monthKey: string
 ): Promise<void> {
-  const sessionsSnap = await db
-    .collection('classSessions')
-    .where('parentId', '==', parentId)
-    .get();
+  const monthRange = monthDateRangeFromKey(monthKey);
+  const sessionsQuery = db.collection('classSessions').where('parentId', '==', parentId);
+  let sessionsSnap;
+  try {
+    sessionsSnap = monthRange
+      ? await sessionsQuery
+          .where('date', '>=', monthRange.startYmd)
+          .where('date', '<=', monthRange.endYmd)
+          .get()
+      : await sessionsQuery.get();
+  } catch (err) {
+    logger.warn('Bounded parent month attendance query failed, falling back to parent scan', {
+      parentId,
+      monthKey,
+      error: err instanceof Error ? err.message : String(err || ''),
+    });
+    sessionsSnap = await sessionsQuery.get();
+  }
+  if (monthRange && sessionsSnap.empty) {
+    sessionsSnap = await sessionsQuery.get();
+  }
 
   const nowMs = Date.now();
   const totals = {

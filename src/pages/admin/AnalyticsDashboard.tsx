@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, getDocs, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../lib/firebaseConfig';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
@@ -181,7 +181,6 @@ const MetricCard = ({
 
 export default function AnalyticsDashboard(): JSX.Element {
   const [users, setUsers] = useState<any[]>([]);
-  const [students, setStudents] = useState<any[]>([]);
   const [enrollments, setEnrollments] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [charges, setCharges] = useState<any[]>([]);
@@ -191,20 +190,20 @@ export default function AnalyticsDashboard(): JSX.Element {
   const [fsError, setFsError] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => monthKeyFromDate(new Date()));
   const [teacherEarningsTab, setTeacherEarningsTab] = useState<'live' | 'archived'>('live');
+  const [monthRefreshKey, setMonthRefreshKey] = useState(0);
 
   useEffect(() => {
     let active = true;
     const loadCore = async () => {
       try {
-        const [usersSnap, studentsSnap, enrollSnap, coursesSnap] = await Promise.all([
+        const [usersSnap, enrollSnap, coursesSnap] = await Promise.all([
           getDocs(collection(db, 'users')),
-          getDocs(collection(db, 'kids')),
           getDocs(collection(db, 'enrollments')),
           getDocs(collection(db, 'courses')),
         ]);
         if (!active) return;
+        setFsError(null);
         setUsers(usersSnap.docs.map(d => ({ id: d.id, ...d.data() })));
-        setStudents(studentsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
         setEnrollments(enrollSnap.docs.map(d => ({ id: d.id, ...d.data() })));
         setCourses(coursesSnap.docs.map(d => ({ id: d.id, ...d.data() })));
       } catch (err: any) {
@@ -231,69 +230,58 @@ export default function AnalyticsDashboard(): JSX.Element {
     if (!monthRange) {
       setClassSessions([]);
     }
-    const chargesQuery = query(
-      collection(db, 'billingCharges'),
-      where('monthKey', '==', selectedMonth)
-    );
-    const paymentsQuery = query(
-      collection(db, 'payments'),
-      where('monthKey', '==', selectedMonth)
-    );
-    const teacherEarningsQuery = query(
-      collection(db, 'teacherEarnings'),
-      where('monthKey', '==', selectedMonth)
-    );
-    const classSessionsQuery =
-      monthRange &&
-      query(
-        collection(db, 'classSessions'),
-        where('date', '>=', monthRange.startYmd),
-        where('date', '<=', monthRange.endYmd)
-      );
-    const unsubCharges = onSnapshot(
-      chargesQuery,
-      (snap) =>
+    let active = true;
+    const loadMonthData = async () => {
+      try {
+        const [chargesSnap, paymentsSnap, teacherEarningsSnap, classSessionsSnap] =
+          await Promise.all([
+            getDocs(
+              query(collection(db, 'billingCharges'), where('monthKey', '==', selectedMonth))
+            ),
+            getDocs(query(collection(db, 'payments'), where('monthKey', '==', selectedMonth))),
+            getDocs(
+              query(collection(db, 'teacherEarnings'), where('monthKey', '==', selectedMonth))
+            ),
+            monthRange
+              ? getDocs(
+                  query(
+                    collection(db, 'classSessions'),
+                    where('date', '>=', monthRange.startYmd),
+                    where('date', '<=', monthRange.endYmd)
+                  )
+                )
+              : Promise.resolve(null),
+          ]);
+        if (!active) return;
+        setFsError(null);
         setCharges(
-          snap.docs
+          chargesSnap.docs
             .map((d) => ({ id: d.id, ...(d.data() as any) }))
             .filter((charge) => charge.archived !== true)
-        ),
-      (err) => setFsError(err?.message || 'Some analytics data could not be loaded.')
-    );
-    const unsubPayments = onSnapshot(
-      paymentsQuery,
-      (snap) =>
+        );
         setPayments(
-          snap.docs
+          paymentsSnap.docs
             .map((d) => ({ id: d.id, ...(d.data() as any) }))
             .filter((payment) => payment.archived !== true)
-        ),
-      (err) => setFsError(err?.message || 'Some analytics data could not be loaded.')
-    );
-    const unsubTeacherEarnings = onSnapshot(
-      teacherEarningsQuery,
-      (snap) =>
+        );
         setTeacherEarningsEntries(
-          snap.docs
+          teacherEarningsSnap.docs
             .map((d) => ({ id: d.id, ...(d.data() as any) }))
             .filter((entry) => entry.archived !== true)
-        ),
-      (err) => setFsError(err?.message || 'Some analytics data could not be loaded.')
-    );
-    const unsubClassSessions = classSessionsQuery
-      ? onSnapshot(
-        classSessionsQuery,
-        (snap) => setClassSessions(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
-        (err) => setFsError(err?.message || 'Some analytics data could not be loaded.')
-      )
-      : () => {};
-    return () => {
-      unsubCharges();
-      unsubPayments();
-      unsubClassSessions();
-      unsubTeacherEarnings();
+        );
+        setClassSessions(
+          classSessionsSnap?.docs.map((d) => ({ id: d.id, ...d.data() })) ?? []
+        );
+      } catch (err: any) {
+        if (!active) return;
+        setFsError(err?.message || 'Some analytics data could not be loaded.');
+      }
     };
-  }, [selectedMonth]);
+    void loadMonthData();
+    return () => {
+      active = false;
+    };
+  }, [selectedMonth, monthRefreshKey]);
 
   const revenueTotals = useMemo(() => {
     let chargesTotal = 0;
@@ -598,8 +586,16 @@ export default function AnalyticsDashboard(): JSX.Element {
             onChange={(e) => setSelectedMonth(e.target.value)}
             className="w-[160px]"
           />
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => setMonthRefreshKey((prev) => prev + 1)}
+          >
+            Refresh
+          </Button>
           <span className="text-xs text-muted-foreground px-2 py-1 rounded-full border">
-            Live from billing + class sessions
+            Manual refresh month snapshot
           </span>
         </div>
       </div>

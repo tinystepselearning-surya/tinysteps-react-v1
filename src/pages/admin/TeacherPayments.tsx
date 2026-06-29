@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   collection,
+  collectionGroup,
   doc,
   documentId,
   getDoc,
   getDocs,
-  onSnapshot,
+  limit,
+  orderBy,
   query,
   where,
 } from 'firebase/firestore';
@@ -36,9 +38,14 @@ type TeacherUser = {
   displayName?: string;
   name?: string;
   email?: string;
+  phone?: string;
+  phoneLocal?: string;
+  phoneNormalized?: string;
   role?: string;
   roles?: string[];
 };
+
+type TeacherLoadMode = 'none' | 'top10' | 'selected';
 
 const monthKeyFromDate = (date: Date) => {
   const year = date.getFullYear();
@@ -197,6 +204,14 @@ export default function TeacherPayments(): JSX.Element {
   const [selectedMonth, setSelectedMonth] = useState<string>(() =>
     monthKeyFromDate(new Date())
   );
+  const [loadMode, setLoadMode] = useState<TeacherLoadMode>('none');
+  const [loadedTeacherIds, setLoadedTeacherIds] = useState<string[]>([]);
+  const [scopeLoading, setScopeLoading] = useState(false);
+  const [teacherSearchTerm, setTeacherSearchTerm] = useState('');
+  const [teacherSearchResults, setTeacherSearchResults] = useState<TeacherUser[]>([]);
+  const [teacherSearchLoading, setTeacherSearchLoading] = useState(false);
+  const [selectedTeacherOptionId, setSelectedTeacherOptionId] = useState<string>('');
+  const [refreshKey, setRefreshKey] = useState(0);
   const [teachers, setTeachers] = useState<TeacherUser[]>([]);
   const [payouts, setPayouts] = useState<any[]>([]);
   const [earnings, setEarnings] = useState<any[]>([]);
@@ -204,7 +219,6 @@ export default function TeacherPayments(): JSX.Element {
   const [loadingRollups, setLoadingRollups] = useState(false);
   const [payoutSaving, setPayoutSaving] = useState<string | null>(null);
   const [correctionSaving, setCorrectionSaving] = useState<string | null>(null);
-  const [teacherFilter, setTeacherFilter] = useState<string>('all');
   const [expandedTeachers, setExpandedTeachers] = useState<Set<string>>(new Set());
   const [kidMap, setKidMap] = useState<Record<string, string>>({});
   const [courseMap, setCourseMap] = useState<Record<string, string>>({});
@@ -223,9 +237,69 @@ export default function TeacherPayments(): JSX.Element {
   const { toast } = useToast();
 
   useEffect(() => {
+    const searchTerm = teacherSearchTerm.trim();
+    if (searchTerm.length < 2) {
+      setTeacherSearchResults([]);
+      setTeacherSearchLoading(false);
+      return;
+    }
+
+    let active = true;
+    const loadTeacherSearchResults = async () => {
+      setTeacherSearchLoading(true);
+      try {
+        const byId = new Map<string, TeacherUser>();
+        const appendDocs = (docs: Array<{ id: string; data: () => any }>) => {
+          docs.forEach((docSnap) => {
+            const user = { id: docSnap.id, ...(docSnap.data() as any) } as TeacherUser;
+            if (!isTeacherUser(user)) return;
+            if (!byId.has(user.id)) byId.set(user.id, user);
+          });
+        };
+
+        const exactQueries = [
+          query(collection(db, 'users'), where('email', '==', searchTerm), limit(10)),
+          query(collection(db, 'users'), where('phone', '==', searchTerm), limit(10)),
+          query(collection(db, 'users'), where('phoneLocal', '==', searchTerm), limit(10)),
+          query(collection(db, 'users'), where('phoneNormalized', '==', searchTerm), limit(10)),
+          query(collection(db, 'users'), where('displayName', '==', searchTerm), limit(10)),
+          query(collection(db, 'users'), where('name', '==', searchTerm), limit(10)),
+        ];
+        const snaps = await Promise.all(exactQueries.map((ref) => getDocs(ref).catch(() => null)));
+        snaps.forEach((snap) => {
+          if (snap) appendDocs(snap.docs as Array<{ id: string; data: () => any }>);
+        });
+        const idSnap = await getDoc(doc(db, 'users', searchTerm)).catch(() => null);
+        if (idSnap?.exists()) {
+          appendDocs([{ id: idSnap.id, data: () => idSnap.data() }]);
+        }
+
+        if (!active) return;
+        setTeacherSearchResults(Array.from(byId.values()).slice(0, 10));
+      } finally {
+        if (active) setTeacherSearchLoading(false);
+      }
+    };
+
+    void loadTeacherSearchResults();
+    return () => {
+      active = false;
+    };
+  }, [teacherSearchTerm]);
+
+  const resetLoadedTeacherScope = () => {
+    setLoadMode('none');
+    setLoadedTeacherIds([]);
+    setTeachers([]);
+    setPayouts([]);
+    setEarnings([]);
+    setRollups({});
+    setExpandedTeachers(new Set());
+  };
+
+  useEffect(() => {
     const loadRefs = async () => {
       try {
-        const teacherIds = new Set<string>();
         const parentIds = new Set<string>();
         const kidIds = new Set<string>();
         const courseIds = new Set<string>();
@@ -233,13 +307,9 @@ export default function TeacherPayments(): JSX.Element {
         const sessionIds = new Set<string>();
 
         payouts.forEach((p) => {
-          const tid = String(p.teacherId || '');
-          if (tid) teacherIds.add(tid);
         });
 
         earnings.forEach((e) => {
-          const tid = String(e.teacherId || '');
-          if (tid) teacherIds.add(tid);
           const parentId = String(e.parentId || '');
           if (parentId) parentIds.add(parentId);
           const kidId = String(e.kidId || e.studentId || '');
@@ -299,21 +369,6 @@ export default function TeacherPayments(): JSX.Element {
         }
 
         setEnrollmentMap(nextEnrollmentMap);
-
-        if (teacherIds.size === 0) {
-          setTeachers([]);
-        } else {
-          const teacherDocs: TeacherUser[] = [];
-          for (const chunk of chunkIds(Array.from(teacherIds))) {
-            const snap = await getDocs(
-              query(collection(db, 'users'), where(documentId(), 'in', chunk))
-            );
-            snap.docs.forEach((docSnap) =>
-              teacherDocs.push({ id: docSnap.id, ...(docSnap.data() as any) })
-            );
-          }
-          setTeachers(teacherDocs.filter(isTeacherUser));
-        }
 
         if (parentIds.size === 0) {
           setParentMap({});
@@ -418,71 +473,89 @@ export default function TeacherPayments(): JSX.Element {
   }, [payouts, earnings]);
 
   useEffect(() => {
-    if (!selectedMonth) {
+    if (!selectedMonth || loadMode === 'none' || loadedTeacherIds.length === 0) {
+      setScopeLoading(false);
       setPayouts([]);
-      return;
-    }
-    const q = query(
-      collection(db, 'teacherPayouts'),
-      where('monthKey', '==', selectedMonth)
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      setPayouts(
-        snap.docs
-          .map((d) => ({ id: d.id, ...(d.data() as any) }))
-          .filter((payout) => payout.archived !== true)
-      );
-    });
-    return () => unsub();
-  }, [selectedMonth]);
-
-  useEffect(() => {
-    if (!selectedMonth) {
       setEarnings([]);
+      setTeachers([]);
+      setRollups({});
+      setLoadingRollups(false);
       return;
     }
-    const q = query(
-      collection(db, 'teacherEarnings'),
-      where('monthKey', '==', selectedMonth)
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      setEarnings(
-        snap.docs
-          .map((d) => ({ id: d.id, ...(d.data() as any) }))
-          .filter((earning) => earning.archived !== true)
-      );
-    });
-    return () => unsub();
-  }, [selectedMonth]);
-
-  useEffect(() => {
     let cancelled = false;
-    const loadRollups = async () => {
-      if (!selectedMonth || teachers.length === 0) {
-        setRollups({});
-        return;
-      }
+    const loadScopedTeacherFinance = async () => {
+      setScopeLoading(true);
       setLoadingRollups(true);
       try {
-        const snaps = await Promise.all(
-          teachers.map((t) =>
-            getDoc(doc(db, 'teachers', t.id, 'earnings', selectedMonth))
-          )
-        );
+        const teacherDocs: TeacherUser[] = [];
+        for (const chunk of chunkIds(loadedTeacherIds)) {
+          const snap = await getDocs(
+            query(collection(db, 'users'), where(documentId(), 'in', chunk))
+          );
+          snap.docs.forEach((docSnap) =>
+            teacherDocs.push({ id: docSnap.id, ...(docSnap.data() as any) })
+          );
+        }
+
+        const loadScopedCollection = async (collectionName: 'teacherPayouts' | 'teacherEarnings') => {
+          const rows: any[] = [];
+          for (const chunk of chunkIds(loadedTeacherIds)) {
+            try {
+              const snap = await getDocs(
+                query(
+                  collection(db, collectionName),
+                  where('monthKey', '==', selectedMonth),
+                  where('teacherId', 'in', chunk)
+                )
+              );
+              snap.docs.forEach((docSnap) => rows.push({ id: docSnap.id, ...(docSnap.data() as any) }));
+            } catch {
+              for (const teacherId of chunk) {
+                const snap = await getDocs(
+                  query(
+                    collection(db, collectionName),
+                    where('monthKey', '==', selectedMonth),
+                    where('teacherId', '==', teacherId)
+                  )
+                );
+                snap.docs.forEach((docSnap) => rows.push({ id: docSnap.id, ...(docSnap.data() as any) }));
+              }
+            }
+          }
+          return rows.filter((row) => row.archived !== true);
+        };
+
+        const [payoutRows, earningRows, snaps] = await Promise.all([
+          loadScopedCollection('teacherPayouts'),
+          loadScopedCollection('teacherEarnings'),
+          Promise.all(
+            loadedTeacherIds.map((teacherId) =>
+              getDoc(doc(db, 'teachers', teacherId, 'earnings', selectedMonth))
+            )
+          ),
+        ]);
+
         const map: Record<string, any> = {};
-        teachers.forEach((t, idx) => {
-          map[t.id] = snaps[idx].exists() ? snaps[idx].data() : null;
+        loadedTeacherIds.forEach((teacherId, idx) => {
+          map[teacherId] = snaps[idx].exists() ? snaps[idx].data() : null;
         });
-        if (!cancelled) setRollups(map);
+        if (cancelled) return;
+        setTeachers(teacherDocs.filter(isTeacherUser));
+        setPayouts(payoutRows);
+        setEarnings(earningRows);
+        setRollups(map);
       } finally {
-        if (!cancelled) setLoadingRollups(false);
+        if (!cancelled) {
+          setLoadingRollups(false);
+          setScopeLoading(false);
+        }
       }
     };
-    void loadRollups();
+    void loadScopedTeacherFinance();
     return () => {
       cancelled = true;
     };
-  }, [teachers, selectedMonth]);
+  }, [selectedMonth, loadMode, loadedTeacherIds, refreshKey]);
 
   const paidByTeacher = useMemo(() => {
     const map = new Map<string, number>();
@@ -692,10 +765,79 @@ export default function TeacherPayments(): JSX.Element {
     return result;
   }, [earnings, sessionMap, enrollmentMap, kidMap, courseMap, parentMap]);
 
-  const visibleRows = useMemo(() => {
-    if (teacherFilter === 'all') return rows;
-    return rows.filter((row) => row.teacherId === teacherFilter);
-  }, [rows, teacherFilter]);
+  const handleMonthChange = (value: string) => {
+    setSelectedMonth(value);
+    resetLoadedTeacherScope();
+  };
+
+  const handleLoadTop10Teachers = async () => {
+    if (!selectedMonth) return;
+    setScopeLoading(true);
+    try {
+      let nextTeacherIds: string[] = [];
+      try {
+        const topRollupSnap = await getDocs(
+          query(
+            collectionGroup(db, 'earnings'),
+            where('monthKey', '==', selectedMonth),
+            orderBy('teacherId', 'asc'),
+            limit(10)
+          )
+        );
+        nextTeacherIds = topRollupSnap.docs
+          .map((docSnap) => String((docSnap.data() as any)?.teacherId || '').trim())
+          .filter(Boolean);
+      } catch (err) {
+        console.warn('[TeacherPayments] Top10 rollup query failed, falling back to earnings', err);
+      }
+
+      if (nextTeacherIds.length === 0) {
+        const fallbackSnap = await getDocs(
+          query(
+            collection(db, 'teacherEarnings'),
+            where('monthKey', '==', selectedMonth),
+            orderBy('teacherId', 'asc'),
+            limit(10)
+          )
+        );
+        nextTeacherIds = Array.from(
+          new Set(
+            fallbackSnap.docs
+              .map((docSnap) => String((docSnap.data() as any)?.teacherId || '').trim())
+              .filter(Boolean)
+          )
+        ).slice(0, 10);
+      }
+
+      setExpandedTeachers(new Set());
+      setLoadMode('top10');
+      setLoadedTeacherIds(nextTeacherIds);
+      setRefreshKey((prev) => prev + 1);
+    } finally {
+      setScopeLoading(false);
+    }
+  };
+
+  const handleApplySelectedTeacher = () => {
+    if (!selectedTeacherOptionId) return;
+    setExpandedTeachers(new Set());
+    setLoadMode('selected');
+    setLoadedTeacherIds([selectedTeacherOptionId]);
+    setRefreshKey((prev) => prev + 1);
+  };
+
+  const handleRefreshLoadedTeachers = () => {
+    if (loadMode === 'none' || loadedTeacherIds.length === 0) return;
+    setRefreshKey((prev) => prev + 1);
+  };
+
+  const visibleRows = rows;
+  const loadedScopeLabel =
+    loadMode === 'top10'
+      ? 'Showing top 10 only.'
+      : loadMode === 'selected'
+        ? 'Showing selected teacher only.'
+        : 'No data loaded yet.';
 
   const toggleTeacher = (teacherId: string) => {
     setExpandedTeachers((prev) => {
@@ -765,6 +907,7 @@ export default function TeacherPayments(): JSX.Element {
         title: 'Payout recorded',
         description: `${selectedTeacher?.displayName || selectedTeacher?.name || selectedTeacher?.email || payoutTeacherId} · ₹${Math.round(amount).toLocaleString('en-IN')}`,
       });
+      setRefreshKey((prev) => prev + 1);
       setPayoutRequestKey('');
       setPayoutOpen(false);
     } catch (err: any) {
@@ -821,6 +964,7 @@ export default function TeacherPayments(): JSX.Element {
               ? `${row.teacherName}: ${orphanCount} orphan entries found but already paid/void.`
               : `${row.teacherName}: no orphan session earnings found for ${selectedMonth}.`,
       });
+      setRefreshKey((prev) => prev + 1);
     } catch (err: any) {
       const message = err?.message || 'Failed to apply corrections';
       toast({
@@ -850,25 +994,73 @@ export default function TeacherPayments(): JSX.Element {
           <Input
             type="month"
             value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
+            onChange={(e) => handleMonthChange(e.target.value)}
             className="w-[160px]"
           />
-          <label className="text-sm font-medium">Teacher</label>
-          <Select value={teacherFilter} onValueChange={setTeacherFilter}>
-            <SelectTrigger className="w-[220px]">
-              <SelectValue placeholder="All teachers" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All teachers</SelectItem>
-              {teachers.map((t) => (
-                <SelectItem key={t.id} value={t.id}>
-                  {t.displayName || t.name || t.email || t.id}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
       </div>
+
+      <Card className="p-4 space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_220px_auto] gap-3 items-end">
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Teacher search</label>
+            <Input
+              value={teacherSearchTerm}
+              onChange={(e) => setTeacherSearchTerm(e.target.value)}
+              placeholder="Search exact teacher email, phone, name, or ID"
+            />
+            <div className="text-xs text-muted-foreground">
+              Enter at least 2 characters. Search is limited to up to 10 matching teachers.
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Selected teacher</label>
+            <Select value={selectedTeacherOptionId} onValueChange={setSelectedTeacherOptionId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select teacher" />
+              </SelectTrigger>
+              <SelectContent>
+                {teacherSearchResults.length === 0 ? (
+                  <SelectItem value="__no_teacher_results" disabled>
+                    {teacherSearchLoading ? 'Searching…' : 'No search results'}
+                  </SelectItem>
+                ) : (
+                  teacherSearchResults.map((teacher) => (
+                    <SelectItem key={teacher.id} value={teacher.id}>
+                      {teacher.displayName || teacher.name || teacher.email || teacher.id}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" onClick={handleLoadTop10Teachers} disabled={scopeLoading}>
+              Load Top 10
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleApplySelectedTeacher}
+              disabled={!selectedTeacherOptionId || scopeLoading}
+            >
+              Apply / Load Selected
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleRefreshLoadedTeachers}
+              disabled={loadMode === 'none' || scopeLoading}
+            >
+              Refresh Loaded Results
+            </Button>
+          </div>
+        </div>
+        <div className="text-sm text-muted-foreground">
+          {loadedScopeLabel}
+          {loadMode === 'none' ? ' Select a teacher or click Load Top 10.' : ''}
+        </div>
+      </Card>
 
       <Card className="p-4">
         <div className="overflow-x-auto">
@@ -890,7 +1082,11 @@ export default function TeacherPayments(): JSX.Element {
               {visibleRows.length === 0 ? (
                 <tr>
                   <td className="p-3 text-muted-foreground" colSpan={9}>
-                    {loadingRollups ? 'Loading…' : 'No teachers found.'}
+                    {scopeLoading || loadingRollups
+                      ? 'Loading…'
+                      : loadMode === 'none'
+                        ? 'No data loaded yet. Select a teacher or click Load Top 10.'
+                        : 'No teachers found for the loaded scope.'}
                   </td>
                 </tr>
               ) : (

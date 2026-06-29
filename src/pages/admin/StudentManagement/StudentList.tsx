@@ -1851,6 +1851,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const [sessionRequestsOpen, setSessionRequestsOpen] = useState(false);
   const [rescheduleCreditsMonitorEntries, setRescheduleCreditsMonitorEntries] = useState<RescheduleCreditMonitorEntry[]>([]);
   const [rescheduleCreditsMonitorLoading, setRescheduleCreditsMonitorLoading] = useState<boolean>(false);
+  const [creditsRefreshKey, setCreditsRefreshKey] = useState(0);
   const [syncStatus, setSyncStatus] = useState({
     running: false,
   });
@@ -1954,16 +1955,25 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   }, []);
 
   useEffect(() => {
-    const q = query(collection(db, 'kids'), orderBy('createdAt', 'desc'), limit(1000));
-    const unsub = onSnapshot(
-      q,
-      snap => {
+    let active = true;
+    const loadStudents = async () => {
+      try {
+        const snap = await getDocs(
+          query(collection(db, 'kids'), orderBy('createdAt', 'desc'), limit(1000))
+        );
+        if (!active) return;
         const list = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as Student[];
         setStudents(list);
-      },
-      err => console.error(err)
-    );
-    return () => unsub();
+      } catch (err) {
+        console.error(err);
+        if (!active) return;
+        setStudents([]);
+      }
+    };
+    void loadStudents();
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -2019,17 +2029,23 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       setRescheduleCreditsMonitorLoading(false);
       return;
     }
+    if (!showCreditsMonitor) {
+      setRescheduleCreditsMonitorLoading(false);
+      return;
+    }
 
     setRescheduleCreditsMonitorLoading(true);
-    const q = query(
-      collection(db, 'rescheduleCredits'),
-      orderBy('updatedAt', 'desc'),
-      limit(2000),
-    );
-
-    const unsub = onSnapshot(
-      q,
-      (snapshot) => {
+    let active = true;
+    const loadRescheduleCreditsMonitor = async () => {
+      try {
+        const snapshot = await getDocs(
+          query(
+            collection(db, 'rescheduleCredits'),
+            orderBy('updatedAt', 'desc'),
+            limit(2000),
+          )
+        );
+        if (!active) return;
         const rows = snapshot.docs
           .map((d) => {
             const raw = d.data() as any;
@@ -2057,16 +2073,19 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
 
         setRescheduleCreditsMonitorEntries(rows);
         setRescheduleCreditsMonitorLoading(false);
-      },
-      (err) => {
+      } catch (err) {
         console.error('rescheduleCredits monitor onSnapshot error', err);
+        if (!active) return;
         setRescheduleCreditsMonitorEntries([]);
         setRescheduleCreditsMonitorLoading(false);
-      },
-    );
+      }
+    };
 
-    return () => unsub();
-  }, [user?.role]);
+    void loadRescheduleCreditsMonitor();
+    return () => {
+      active = false;
+    };
+  }, [creditsRefreshKey, showCreditsMonitor, user?.role]);
 
   const parentLabelById = useMemo(() => {
     const map = new Map<string, string>();
@@ -3486,6 +3505,16 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
               >
                 {showCreditsMonitor ? 'Hide credits monitor' : 'Show credits monitor'}
               </Button>
+              {showCreditsMonitor ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => setCreditsRefreshKey((prev) => prev + 1)}
+                >
+                  Refresh
+                </Button>
+              ) : null}
             </div>
           </div>
 

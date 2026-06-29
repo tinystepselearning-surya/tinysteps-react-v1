@@ -445,7 +445,6 @@ export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
     staleTime: 0,
     retry: false,
     refetchOnWindowFocus: false,
-    refetchOnMount: 'always',
     queryFn: async (): Promise<TeacherAliasQueryResult<Enrollment>> => {
       if (!teacherId) return { rows: [], deniedAliases: [] };
       return fetchTeacherEnrollments(teacherId);
@@ -458,7 +457,6 @@ export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
     staleTime: 0,
     retry: false,
     refetchOnWindowFocus: false,
-    refetchOnMount: 'always',
     queryFn: async (): Promise<TeacherAliasQueryResult<ClassSession>> => {
       if (!teacherId) return { rows: [], deniedAliases: [] };
       return fetchTeacherSessionsWindow(teacherId);

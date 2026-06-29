@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   collection,
+  collectionGroup,
   doc,
   documentId,
+  getDoc,
   getDocs,
   limit,
   onSnapshot,
@@ -55,9 +57,14 @@ type ParentUser = {
   displayName?: string;
   name?: string;
   email?: string;
+  phone?: string;
+  phoneLocal?: string;
+  phoneNormalized?: string;
   role?: string;
   roles?: string[];
 };
+
+type ParentLoadMode = 'none' | 'top10' | 'selected';
 
 type WalletSummary = {
   currentBalance?: number;
@@ -869,6 +876,11 @@ const normalizeNameList = (values: string[]) =>
     )
   );
 
+const isParentUser = (user: ParentUser) => {
+  if (Array.isArray(user.roles)) return user.roles.includes('parent');
+  return String(user.role || '').trim().toLowerCase() === 'parent';
+};
+
 const walletTransactionTypeLabel = (value: any) => {
   const type = String(value || '').trim().toLowerCase();
   if (type === 'topup') return 'Top-up';
@@ -934,6 +946,13 @@ export default function ParentPayments(): JSX.Element {
   const [selectedMonth, setSelectedMonth] = useState<string>(() =>
     monthKeyFromDate(new Date())
   );
+  const [loadMode, setLoadMode] = useState<ParentLoadMode>('none');
+  const [loadedParentIds, setLoadedParentIds] = useState<string[]>([]);
+  const [scopeLoading, setScopeLoading] = useState(false);
+  const [parentSearchTerm, setParentSearchTerm] = useState('');
+  const [parentSearchResults, setParentSearchResults] = useState<ParentUser[]>([]);
+  const [parentSearchLoading, setParentSearchLoading] = useState(false);
+  const [selectedParentOptionId, setSelectedParentOptionId] = useState<string>('');
   const [parents, setParents] = useState<ParentUser[]>([]);
   const [charges, setCharges] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
@@ -1014,6 +1033,7 @@ export default function ParentPayments(): JSX.Element {
     useState<ReceiveParentPaymentResult | null>(null);
   const [receivePaymentPreviewInput, setReceivePaymentPreviewInput] =
     useState<ReceiveParentPaymentPreviewInput | null>(null);
+  const [financeRefreshKey, setFinanceRefreshKey] = useState(0);
   const [invoiceOpen, setInvoiceOpen] = useState(false);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
   const [invoiceError, setInvoiceError] = useState('');
@@ -1021,17 +1041,82 @@ export default function ParentPayments(): JSX.Element {
   const [invoicePdfSaving, setInvoicePdfSaving] = useState(false);
 
   useEffect(() => {
+    const searchTerm = parentSearchTerm.trim();
+    if (searchTerm.length < 2) {
+      setParentSearchResults([]);
+      setParentSearchLoading(false);
+      return;
+    }
+
+    let active = true;
+    const loadParentSearchResults = async () => {
+      setParentSearchLoading(true);
+      try {
+        const byId = new Map<string, ParentUser>();
+        const appendDocs = (docs: Array<{ id: string; data: () => any }>) => {
+          docs.forEach((docSnap) => {
+            const user = { id: docSnap.id, ...(docSnap.data() as any) } as ParentUser;
+            if (!isParentUser(user)) return;
+            if (!byId.has(user.id)) byId.set(user.id, user);
+          });
+        };
+
+        const exactQueries = [
+          query(collection(db, 'users'), where('email', '==', searchTerm), limit(10)),
+          query(collection(db, 'users'), where('phone', '==', searchTerm), limit(10)),
+          query(collection(db, 'users'), where('phoneLocal', '==', searchTerm), limit(10)),
+          query(collection(db, 'users'), where('phoneNormalized', '==', searchTerm), limit(10)),
+          query(collection(db, 'users'), where('displayName', '==', searchTerm), limit(10)),
+          query(collection(db, 'users'), where('name', '==', searchTerm), limit(10)),
+        ];
+        const snaps = await Promise.all(exactQueries.map((ref) => getDocs(ref).catch(() => null)));
+        snaps.forEach((snap) => {
+          if (snap) appendDocs(snap.docs as Array<{ id: string; data: () => any }>);
+        });
+        const idSnap = await getDoc(doc(db, 'users', searchTerm)).catch(() => null);
+        if (idSnap?.exists()) {
+          appendDocs([{ id: idSnap.id, data: () => idSnap.data() }]);
+        }
+
+        if (!active) return;
+        setParentSearchResults(Array.from(byId.values()).slice(0, 10));
+      } finally {
+        if (active) setParentSearchLoading(false);
+      }
+    };
+
+    void loadParentSearchResults();
+    return () => {
+      active = false;
+    };
+  }, [parentSearchTerm]);
+
+  const resetLoadedParentScope = () => {
+    setLoadMode('none');
+    setLoadedParentIds([]);
+    setParents([]);
+    setCharges([]);
+    setPayments([]);
+    setWalletSummariesByParent({});
+    setMonthlyReadModelsByParent({});
+    setExpandedParents(new Set());
+    setSelectedWalletParentId('');
+    setSelectedWalletParentName('');
+    setWalletSummary(null);
+    setWalletTransactions([]);
+    setInvoiceData(null);
+    setInvoiceError('');
+  };
+
+  useEffect(() => {
     const loadRefs = async () => {
       try {
-        const parentIds = new Set<string>();
         const kidIds = new Set<string>();
         const courseIds = new Set<string>();
         const teacherIds = new Set<string>();
         const sessionIds = new Set<string>();
 
         charges.forEach((charge) => {
-          const parentId = String(charge.parentId || '');
-          if (parentId) parentIds.add(parentId);
           const kidId = String(charge.kidId || '');
           if (kidId) kidIds.add(kidId);
           const courseId = String(charge.courseId || '');
@@ -1043,28 +1128,11 @@ export default function ParentPayments(): JSX.Element {
         });
 
         payments.forEach((payment) => {
-          const parentId = String(payment.parentId || '');
-          if (parentId) parentIds.add(parentId);
           const kidId = String(payment.kidId || '');
           if (kidId) kidIds.add(kidId);
           const courseId = String(payment.courseId || '');
           if (courseId) courseIds.add(courseId);
         });
-
-        if (parentIds.size === 0) {
-          setParents([]);
-        } else {
-          const parentDocs: ParentUser[] = [];
-          for (const chunk of chunkIds(Array.from(parentIds))) {
-            const snap = await getDocs(
-              query(collection(db, 'users'), where(documentId(), 'in', chunk))
-            );
-            snap.docs.forEach((docSnap) =>
-              parentDocs.push({ id: docSnap.id, ...(docSnap.data() as any) })
-            );
-          }
-          setParents(parentDocs);
-        }
 
         if (kidIds.size === 0) {
           setKidMap({});
@@ -1147,39 +1215,109 @@ export default function ParentPayments(): JSX.Element {
   }, [charges, payments]);
 
   useEffect(() => {
-    if (!selectedMonth) {
+    if (!selectedMonth || loadMode === 'none' || loadedParentIds.length === 0) {
+      setScopeLoading(false);
       setCharges([]);
-      return;
-    }
-    const q = query(
-      collection(db, 'billingCharges'),
-      where('monthKey', '==', selectedMonth)
-    );
-    const unsub = onSnapshot(q, (snap) => {
-      setCharges(
-        snap.docs
-          .map((d) => ({ id: d.id, ...(d.data() as any) }))
-          .filter((charge) => charge.archived !== true)
-      );
-    });
-    return () => unsub();
-  }, [selectedMonth]);
-
-  useEffect(() => {
-    if (!selectedMonth) {
       setPayments([]);
+      setParents([]);
+      setWalletSummariesByParent({});
+      setMonthlyReadModelsByParent({});
       return;
     }
-    const q = query(collection(db, 'payments'), where('monthKey', '==', selectedMonth));
-    const unsub = onSnapshot(q, (snap) => {
-      setPayments(
-        snap.docs
-          .map((d) => ({ id: d.id, ...(d.data() as any) }))
-          .filter((payment) => payment.archived !== true)
-      );
-    });
-    return () => unsub();
-  }, [selectedMonth]);
+    let active = true;
+    const loadScopedFinanceData = async () => {
+      setScopeLoading(true);
+      try {
+        const parentDocs: ParentUser[] = [];
+        for (const chunk of chunkIds(loadedParentIds)) {
+          const snap = await getDocs(
+            query(collection(db, 'users'), where(documentId(), 'in', chunk))
+          );
+          snap.docs.forEach((docSnap) =>
+            parentDocs.push({ id: docSnap.id, ...(docSnap.data() as any) })
+          );
+        }
+
+        const loadScopedCollection = async (collectionName: 'billingCharges' | 'payments') => {
+          const rows: any[] = [];
+          for (const chunk of chunkIds(loadedParentIds)) {
+            try {
+              const snap = await getDocs(
+                query(
+                  collection(db, collectionName),
+                  where('monthKey', '==', selectedMonth),
+                  where('parentId', 'in', chunk)
+                )
+              );
+              snap.docs.forEach((docSnap) => rows.push({ id: docSnap.id, ...(docSnap.data() as any) }));
+            } catch {
+              for (const parentId of chunk) {
+                const snap = await getDocs(
+                  query(
+                    collection(db, collectionName),
+                    where('monthKey', '==', selectedMonth),
+                    where('parentId', '==', parentId)
+                  )
+                );
+                snap.docs.forEach((docSnap) => rows.push({ id: docSnap.id, ...(docSnap.data() as any) }));
+              }
+            }
+          }
+          return rows.filter((row) => row.archived !== true);
+        };
+
+        const [chargeRows, paymentRows, readModelEntries] = await Promise.all([
+          loadScopedCollection('billingCharges'),
+          loadScopedCollection('payments'),
+          Promise.all(
+            loadedParentIds.map(async (parentId) => {
+              const snap = await getDoc(
+                doc(db, 'parentMonthlyReadModels', parentId, 'months', selectedMonth)
+              );
+              return [
+                parentId,
+                snap.exists() ? (snap.data() as ParentMonthlyBillingReadModel) : null,
+              ] as const;
+            })
+          ),
+        ]);
+
+        const nextWalletSummaries: ParentWalletSummaryMap = {};
+        for (const chunk of chunkIds(loadedParentIds)) {
+          const snap = await getDocs(
+            query(collection(db, 'parentWallets'), where(documentId(), 'in', chunk))
+          );
+          snap.docs.forEach((docSnap) => {
+            nextWalletSummaries[docSnap.id] = docSnap.data() as WalletSummary;
+          });
+        }
+
+        if (!active) return;
+        loadedParentIds.forEach((parentId) => {
+          if (!(parentId in nextWalletSummaries)) nextWalletSummaries[parentId] = null;
+        });
+        setParents(parentDocs.filter(isParentUser));
+        setCharges(chargeRows);
+        setPayments(paymentRows);
+        setWalletSummariesByParent(nextWalletSummaries);
+        setMonthlyReadModelsByParent(Object.fromEntries(readModelEntries));
+      } catch (err) {
+        console.error('[ParentPayments] Failed to load scoped finance data', err);
+        if (!active) return;
+        setParents([]);
+        setCharges([]);
+        setPayments([]);
+        setWalletSummariesByParent({});
+        setMonthlyReadModelsByParent({});
+      } finally {
+        if (active) setScopeLoading(false);
+      }
+    };
+    void loadScopedFinanceData();
+    return () => {
+      active = false;
+    };
+  }, [selectedMonth, loadMode, loadedParentIds, financeRefreshKey]);
 
   const monthlyChargeRows = useMemo(() => {
     const parentMap = new Map<string, MonthlyChargeRow>();
@@ -1250,12 +1388,6 @@ export default function ParentPayments(): JSX.Element {
       .sort((a, b) => b.classCharges - a.classCharges);
   }, [charges, payments, parents]);
 
-  const visibleParentIds = useMemo(
-    () => monthlyChargeRows.map((row) => row.parentId),
-    [monthlyChargeRows]
-  );
-  const visibleParentIdsKey = useMemo(() => visibleParentIds.join('|'), [visibleParentIds]);
-
   const walletParentOptions = useMemo(
     () =>
       monthlyChargeRows
@@ -1263,69 +1395,6 @@ export default function ParentPayments(): JSX.Element {
         .sort((a, b) => a.parentName.localeCompare(b.parentName)),
     [monthlyChargeRows]
   );
-
-  useEffect(() => {
-    setWalletSummariesByParent({});
-    if (visibleParentIds.length === 0) return;
-
-    const unsubscribes = visibleParentIds.map((parentId) =>
-      onSnapshot(
-        doc(db, 'parentWallets', parentId),
-        (snap) => {
-          setWalletSummariesByParent((prev) => ({
-            ...prev,
-            [parentId]: snap.exists() ? (snap.data() as WalletSummary) : null,
-          }));
-        },
-        (err) => {
-          console.error('[ParentPayments] Failed to load row wallet summary', {
-            parentId,
-            error: err,
-          });
-          setWalletSummariesByParent((prev) => ({
-            ...prev,
-            [parentId]: null,
-          }));
-        }
-      )
-    );
-
-    return () => {
-      unsubscribes.forEach((unsubscribe) => unsubscribe());
-    };
-  }, [visibleParentIds, visibleParentIdsKey]);
-
-  useEffect(() => {
-    setMonthlyReadModelsByParent({});
-    if (!selectedMonth || visibleParentIds.length === 0) return;
-
-    const unsubscribes = visibleParentIds.map((parentId) =>
-      onSnapshot(
-        doc(db, 'parentMonthlyReadModels', parentId, 'months', selectedMonth),
-        (snap) => {
-          setMonthlyReadModelsByParent((prev) => ({
-            ...prev,
-            [parentId]: snap.exists() ? (snap.data() as ParentMonthlyBillingReadModel) : null,
-          }));
-        },
-        (err) => {
-          console.error('[ParentPayments] Failed to load monthly billing read model', {
-            parentId,
-            selectedMonth,
-            error: err,
-          });
-          setMonthlyReadModelsByParent((prev) => ({
-            ...prev,
-            [parentId]: null,
-          }));
-        }
-      )
-    );
-
-    return () => {
-      unsubscribes.forEach((unsubscribe) => unsubscribe());
-    };
-  }, [selectedMonth, visibleParentIds, visibleParentIdsKey]);
 
   useEffect(() => {
     if (!selectedWalletParentId) {
@@ -1337,7 +1406,7 @@ export default function ParentPayments(): JSX.Element {
   }, [selectedWalletParentId, walletParentOptions]);
 
   useEffect(() => {
-    if (!selectedWalletParentId) {
+    if (!selectedWalletParentId || loadMode === 'none' || !loadedParentIds.includes(selectedWalletParentId)) {
       setWalletSummary(null);
       setWalletSummaryError('');
       setWalletSummaryLoading(false);
@@ -1364,10 +1433,10 @@ export default function ParentPayments(): JSX.Element {
     );
 
     return () => unsub();
-  }, [selectedWalletParentId]);
+  }, [loadMode, loadedParentIds, selectedWalletParentId]);
 
   useEffect(() => {
-    if (!selectedWalletParentId) {
+    if (!selectedWalletParentId || loadMode === 'none' || !loadedParentIds.includes(selectedWalletParentId)) {
       setWalletTransactions([]);
       setWalletTransactionsError('');
       setWalletTransactionsLoading(false);
@@ -1403,7 +1472,7 @@ export default function ParentPayments(): JSX.Element {
     );
 
     return () => unsub();
-  }, [selectedWalletParentId]);
+  }, [loadMode, loadedParentIds, selectedWalletParentId]);
 
   const classDetailsByParent = useMemo(() => {
     const result = new Map<
@@ -1619,6 +1688,90 @@ export default function ParentPayments(): JSX.Element {
 
   const summaryCards = useMemo(() => buildParentPaymentsSummaryCards(tableRows), [tableRows]);
 
+  const handleMonthChange = (value: string) => {
+    setSelectedMonth(value);
+    resetLoadedParentScope();
+  };
+
+  const handleLoadTop10Parents = async () => {
+    if (!selectedMonth) return;
+    setScopeLoading(true);
+    try {
+      let nextParentIds: string[] = [];
+      try {
+        const topReadModelSnap = await getDocs(
+          query(
+            collectionGroup(db, 'months'),
+            where('monthKey', '==', selectedMonth),
+            orderBy('parentId', 'asc'),
+            limit(10)
+          )
+        );
+        nextParentIds = topReadModelSnap.docs
+          .map((docSnap) => String((docSnap.data() as any)?.parentId || '').trim())
+          .filter(Boolean);
+      } catch (err) {
+        console.warn('[ParentPayments] Top10 read-model query failed, falling back to charges', err);
+      }
+
+      if (nextParentIds.length === 0) {
+        const fallbackSnap = await getDocs(
+          query(
+            collection(db, 'billingCharges'),
+            where('monthKey', '==', selectedMonth),
+            orderBy('parentId', 'asc'),
+            limit(10)
+          )
+        );
+        nextParentIds = Array.from(
+          new Set(
+            fallbackSnap.docs
+              .map((docSnap) => String((docSnap.data() as any)?.parentId || '').trim())
+              .filter(Boolean)
+          )
+        ).slice(0, 10);
+      }
+
+      setExpandedParents(new Set());
+      setSelectedWalletParentId('');
+      setSelectedWalletParentName('');
+      setLoadMode('top10');
+      setLoadedParentIds(nextParentIds);
+      setFinanceRefreshKey((prev) => prev + 1);
+    } finally {
+      setScopeLoading(false);
+    }
+  };
+
+  const handleApplySelectedParent = () => {
+    if (!selectedParentOptionId) return;
+    const selectedUser =
+      parentSearchResults.find((parent) => parent.id === selectedParentOptionId) || null;
+    if (selectedUser) {
+      setParents([selectedUser]);
+      setSelectedWalletParentName(
+        selectedUser.displayName || selectedUser.name || selectedUser.email || selectedUser.id
+      );
+    }
+    setExpandedParents(new Set());
+    setSelectedWalletParentId(selectedParentOptionId);
+    setLoadMode('selected');
+    setLoadedParentIds([selectedParentOptionId]);
+    setFinanceRefreshKey((prev) => prev + 1);
+  };
+
+  const handleRefreshLoadedParents = () => {
+    if (loadMode === 'none' || loadedParentIds.length === 0) return;
+    setFinanceRefreshKey((prev) => prev + 1);
+  };
+
+  const loadedScopeLabel =
+    loadMode === 'top10'
+      ? 'Showing top 10 only.'
+      : loadMode === 'selected'
+        ? 'Showing selected parent only.'
+        : 'No data loaded yet.';
+
   const openWalletTopupModal = () => {
     if (!selectedWalletParentId) {
       window.alert('Select a parent first to add a manual advance wallet credit.');
@@ -1666,6 +1819,7 @@ export default function ParentPayments(): JSX.Element {
       window.alert(
         'Manual advance wallet credit added. This credits the wallet only and does not settle older dues.'
       );
+      setFinanceRefreshKey((prev) => prev + 1);
       setWalletTopupRequestKey('');
       setWalletTopupOpen(false);
     } catch (err: any) {
@@ -1737,6 +1891,7 @@ export default function ParentPayments(): JSX.Element {
       setWalletAdjustmentReference('');
       setWalletAdjustmentNote('');
       setWalletAdjustmentRequestKey('');
+      setFinanceRefreshKey((prev) => prev + 1);
       setWalletAdjustmentOpen(false);
     } catch (err: any) {
       window.alert(err?.message || 'Failed to add wallet adjustment');
@@ -1842,6 +1997,7 @@ export default function ParentPayments(): JSX.Element {
             ? `Wallet summary drift fixed successfully. Updated fields: ${fields}`
             : 'Wallet summary drift fixed successfully.'
         );
+        setFinanceRefreshKey((prev) => prev + 1);
       } else {
         window.alert('Fix summary request completed with no summary changes.');
       }
@@ -2149,6 +2305,7 @@ export default function ParentPayments(): JSX.Element {
         }
         window.alert(lines.join('\n'));
       }
+      setFinanceRefreshKey((prev) => prev + 1);
     } catch (err: any) {
       const message = getReceiveParentPaymentCallableError(err, 'Failed to receive parent payment');
       setReceivePaymentError(message);
@@ -2651,11 +2808,73 @@ export default function ParentPayments(): JSX.Element {
           <Input
             type="month"
             value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
+            onChange={(e) => handleMonthChange(e.target.value)}
             className="w-[160px]"
           />
         </div>
       </div>
+
+      <Card className="p-4 space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_220px_auto] gap-3 items-end">
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Parent search</label>
+            <Input
+              value={parentSearchTerm}
+              onChange={(e) => setParentSearchTerm(e.target.value)}
+              placeholder="Search exact parent email, phone, name, or ID"
+            />
+            <div className="text-xs text-muted-foreground">
+              Enter at least 2 characters. Search is limited to up to 10 matching parents.
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Selected parent</label>
+            <Select value={selectedParentOptionId} onValueChange={setSelectedParentOptionId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select parent" />
+              </SelectTrigger>
+              <SelectContent>
+                {parentSearchResults.length === 0 ? (
+                  <SelectItem value="__no_parent_results" disabled>
+                    {parentSearchLoading ? 'Searching…' : 'No search results'}
+                  </SelectItem>
+                ) : (
+                  parentSearchResults.map((parent) => (
+                    <SelectItem key={parent.id} value={parent.id}>
+                      {parent.displayName || parent.name || parent.email || parent.id}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" onClick={handleLoadTop10Parents} disabled={scopeLoading}>
+              Load Top 10
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleApplySelectedParent}
+              disabled={!selectedParentOptionId || scopeLoading}
+            >
+              Apply / Load Selected
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleRefreshLoadedParents}
+              disabled={loadMode === 'none' || scopeLoading}
+            >
+              Refresh Loaded Results
+            </Button>
+          </div>
+        </div>
+        <div className="text-sm text-muted-foreground">
+          {loadedScopeLabel}
+          {loadMode === 'none' ? ' Select a parent or click Load Top 10.' : ''}
+        </div>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         <Card className="p-4">
@@ -2765,7 +2984,7 @@ export default function ParentPayments(): JSX.Element {
             <SelectContent>
               {walletParentOptions.length === 0 ? (
                 <SelectItem value="__no_parent" disabled>
-                  No parents available for this month
+                  {loadMode === 'none' ? 'No data loaded yet' : 'No parents available for this scope'}
                 </SelectItem>
               ) : (
                 walletParentOptions.map((item) => (
@@ -2785,7 +3004,9 @@ export default function ParentPayments(): JSX.Element {
 
         {!selectedWalletParentId ? (
           <div className="text-sm text-muted-foreground">
-            Select a parent to view wallet details.
+            {loadMode === 'none'
+              ? 'No data loaded yet. Select a parent or click Load Top 10.'
+              : 'Select a parent to view wallet details.'}
           </div>
         ) : walletSummaryLoading ? (
           <div className="text-sm text-muted-foreground">Loading wallet summary…</div>
@@ -2923,7 +3144,11 @@ export default function ParentPayments(): JSX.Element {
               {tableRows.length === 0 ? (
                 <tr>
                   <td className="p-3 text-muted-foreground" colSpan={12}>
-                    No parent charges found for this month.
+                    {scopeLoading
+                      ? 'Loading…'
+                      : loadMode === 'none'
+                        ? 'No data loaded yet. Select a parent or click Load Top 10.'
+                        : 'No parent charges found for the loaded scope.'}
                   </td>
                 </tr>
               ) : (
