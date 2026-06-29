@@ -4,7 +4,7 @@ import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { Badge } from '@components/ui/badge';
-import { useUpcomingSessions } from '../../hooks/useUpcomingSessions';
+import { getDefaultUpcomingSelectedDate, useUpcomingSessions } from '../../hooks/useUpcomingSessions';
 import { INDIA_TIME_ZONE, formatSessionDate, formatSessionTimeRange, getSessionStartDate } from '../../../../lib/sessionTime';
 import { TeacherSession } from '../../../../types/Teacher';
 import { CanvaLessonPlanModal } from '../lesson-plan/CanvaLessonPlanModal';
@@ -52,13 +52,23 @@ const readLookupName = (row: Record<string, unknown>): string => {
 };
 
 export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teacherId }) => {
-  const { sessions, isLoading, error, enrollmentsById, entityDocById, deniedLookups } = useUpcomingSessions(teacherId);
+  const [draftSelectedDate, setDraftSelectedDate] = useState(getDefaultUpcomingSelectedDate);
+  const [appliedSelectedDate, setAppliedSelectedDate] = useState(getDefaultUpcomingSelectedDate);
+  const { sessions, isLoading, error, enrollmentsById, entityDocById, deniedLookups } = useUpcomingSessions(
+    teacherId,
+    appliedSelectedDate,
+  );
   const { students } = useTeacherFilteredStudents();
   const { user } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState('');
   const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
   const [isLessonPlanModalOpen, setIsLessonPlanModalOpen] = useState(false);
+
+  const handleLoadDate = () => {
+    if (!draftSelectedDate) return;
+    setAppliedSelectedDate(draftSelectedDate);
+  };
 
   const handleViewLessonPlan = (session: TeacherSession) => {
     setSelectedSession(session);
@@ -283,40 +293,64 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
   return (
     <div className="space-y-4">
       <Card className="border-slate-200 bg-white/95 p-3 shadow-sm">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center">
-          <Input
-            placeholder="Search by child, course, date, or time"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="h-10 md:max-w-md"
-          />
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center">
+            <Input
+              type="date"
+              aria-label="Upcoming session date"
+              value={draftSelectedDate}
+              onChange={(e) => setDraftSelectedDate(e.target.value)}
+              className="h-10 md:w-[220px]"
+            />
 
-          <Select
-            value={courseFilter || 'all'}
-            onValueChange={(value) => setCourseFilter(value === 'all' ? '' : value)}
-          >
-            <SelectTrigger className="h-10 md:w-[240px]">
-              <SelectValue placeholder="Filter by course" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Courses</SelectItem>
-              {courseOptions.map((course) => (
-                <SelectItem key={course} value={course}>
-                  {course}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Button
+              type="button"
+              onClick={handleLoadDate}
+              disabled={!draftSelectedDate || draftSelectedDate === appliedSelectedDate}
+            >
+              Load
+            </Button>
 
-          <Badge variant="outline" className="h-8 w-fit px-3 text-xs font-medium">
-            Upcoming {filteredSessions.length}
-          </Badge>
+            <Badge variant="outline" className="h-8 w-fit px-3 text-xs font-medium">
+              Upcoming {filteredSessions.length}
+            </Badge>
+          </div>
+
+          <p className="text-sm text-slate-600">
+            Showing one day at a time. Use the date filter to view another day.
+          </p>
+
+          <div className="flex flex-col gap-2 md:flex-row md:items-center">
+            <Input
+              placeholder="Search by child, course, date, or time"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-10 md:max-w-md"
+            />
+
+            <Select
+              value={courseFilter || 'all'}
+              onValueChange={(value) => setCourseFilter(value === 'all' ? '' : value)}
+            >
+              <SelectTrigger className="h-10 md:w-[240px]">
+                <SelectValue placeholder="Filter by course" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Courses</SelectItem>
+                {courseOptions.map((course) => (
+                  <SelectItem key={course} value={course}>
+                    {course}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </Card>
 
       {filteredSessions.length === 0 ? (
         <Card className="p-6 text-center">
-          <p>No upcoming sessions in the next 7 days.</p>
+          <p>No sessions found for this date.</p>
         </Card>
       ) : (
         <Card className="overflow-hidden border-slate-200 bg-white/95 shadow-sm">

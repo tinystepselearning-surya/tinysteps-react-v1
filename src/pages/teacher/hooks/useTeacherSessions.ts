@@ -12,6 +12,12 @@ import {
   cleanStudentDisplayName,
   resolveTeacherSessionCourseLabel,
 } from '../utils/resolveTeacherSessionStudentName';
+import {
+  buildCanonicalTeacherSessionQuery,
+  fetchTeacherSessionAliasFallbacks,
+  makeTeacherFallbackCacheKey,
+  mergeAndDedupeSessionDocs,
+} from './teacherSessionOwnership';
 
 interface UseTeacherSessionsResult {
   sessions: TeacherSession[];
@@ -489,109 +495,36 @@ export const useTeacherSessions = (
     const baseCollection = collection(db, 'classSessions');
     const teacherKey = toCleanText(teacherId);
     const todayDate = start === end ? start : today;
-    const queryConfigs = includeAllTeachers || !teacherKey
-      ? [{
-          queryName: 'primary',
-          aliasField: includeAllTeachers ? 'all-teachers' : 'teacherId',
-          listenerQuery: includeAllTeachers
-            ? query(
-                baseCollection,
-                where('date', '>=', start),
-                where('date', '<=', end),
-                orderBy('date', 'asc'),
-                orderBy('startTime', 'asc'),
-              )
-            : query(
-                baseCollection,
-                where('teacherId', '==', teacherKey),
-                where('date', '>=', start),
-                where('date', '<=', end),
-                orderBy('date', 'asc'),
-                orderBy('startTime', 'asc'),
-              ),
-        }]
-      : [
-          {
-            queryName: 'primary',
-            aliasField: 'teacherId',
-            listenerQuery: query(
-              baseCollection,
-              where('teacherId', '==', teacherKey),
-              where('date', '>=', start),
-              where('date', '<=', end),
-              orderBy('date', 'asc'),
-              orderBy('startTime', 'asc'),
-            ),
-          },
-          {
-            queryName: 'teacherIds',
-            aliasField: 'teacherIds',
-            listenerQuery: query(
-              baseCollection,
-              where('teacherIds', 'array-contains', teacherKey),
-              where('date', '>=', start),
-              where('date', '<=', end),
-              orderBy('date', 'asc'),
-              orderBy('startTime', 'asc'),
-            ),
-          },
-          {
-            queryName: 'assignedTeacherId',
-            aliasField: 'assignedTeacherId',
-            listenerQuery: query(
-              baseCollection,
-              where('assignedTeacherId', '==', teacherKey),
-              where('date', '>=', start),
-              where('date', '<=', end),
-              orderBy('date', 'asc'),
-              orderBy('startTime', 'asc'),
-            ),
-          },
-          {
-            queryName: 'primaryTeacherId',
-            aliasField: 'primaryTeacherId',
-            listenerQuery: query(
-              baseCollection,
-              where('primaryTeacherId', '==', teacherKey),
-              where('date', '>=', start),
-              where('date', '<=', end),
-              orderBy('date', 'asc'),
-              orderBy('startTime', 'asc'),
-            ),
-          },
-          {
-            queryName: 'teacherUid',
-            aliasField: 'teacherUid',
-            listenerQuery: query(
-              baseCollection,
-              where('teacherUid', '==', teacherKey),
-              where('date', '>=', start),
-              where('date', '<=', end),
-              orderBy('date', 'asc'),
-              orderBy('startTime', 'asc'),
-            ),
-          },
-          {
-            queryName: 'teacher_id',
-            aliasField: 'teacher_id',
-            listenerQuery: query(
-              baseCollection,
-              where('teacher_id', '==', teacherKey),
-              where('date', '>=', start),
-              where('date', '<=', end),
-              orderBy('date', 'asc'),
-              orderBy('startTime', 'asc'),
-            ),
-          },
-        ];
+    const buildScopedTeacherQuery = (
+      field: 'teacherId' | 'teacherIds' | 'assignedTeacherId' | 'primaryTeacherId' | 'teacherUid' | 'teacher_id',
+      operator: '==' | 'array-contains',
+    ) => query(
+      baseCollection,
+      where(field, operator, teacherKey),
+      where('date', '>=', start),
+      where('date', '<=', end),
+      orderBy('date', 'asc'),
+      orderBy('startTime', 'asc'),
+    );
+    const primaryQuery = includeAllTeachers || !teacherKey
+      ? query(
+          baseCollection,
+          where('date', '>=', start),
+          where('date', '<=', end),
+          orderBy('date', 'asc'),
+          orderBy('startTime', 'asc'),
+        )
+      : buildCanonicalTeacherSessionQuery((field, operator) => buildScopedTeacherQuery(field, operator));
 
     let cancelled = false;
     let batchCounter = 0;
     const liveDocsBySource = new Map<string, Map<string, TeacherSession>>();
-    const sourceStates = new Map<string, { status: 'pending' | 'ready' | 'error'; error: Error | null }>();
-    queryConfigs.forEach(({ queryName }) => {
-      sourceStates.set(queryName, { status: 'pending', error: null });
-    });
+    const sourceStates = new Map<string, { status: 'pending' | 'ready' | 'error'; error: Error | null }>([
+      ['primary', { status: 'pending', error: null }],
+    ]);
+    const fallbackCache = new Map<string, TeacherSession[]>();
+    const fallbackCacheKey = makeTeacherFallbackCacheKey(teacherKey, `${start}::${end}`);
+    let fallbackPromise: Promise<void> | null = null;
 
     const setSettledState = () => {
       if (cancelled) return;
@@ -685,15 +618,15 @@ export const useTeacherSessions = (
     };
 
     const publishMergedRows = () => {
-      const merged = new Map<string, TeacherSession>();
-      liveDocsBySource.forEach((sourceRows) => {
-        sourceRows.forEach((session, sessionId) => {
-          const date = toCleanText(session.date);
-          if (!date || date < start || date > end) return;
-          merged.set(sessionId, session);
-        });
+      const merged = mergeAndDedupeSessionDocs(
+        ...Array.from(liveDocsBySource.values()).map((sourceRows) => sourceRows.values()),
+        (fallbackCache.get(fallbackCacheKey) || []).values(),
+      );
+      const bounded = Array.from(merged.values()).filter((session) => {
+        const date = toCleanText(session.date);
+        return Boolean(date) && date >= start && date <= end;
       });
-      void applyRows(Array.from(merged.values())).catch((err) => {
+      void applyRows(bounded).catch((err) => {
         devLogTeacherQuery('useTeacherSessions', 'error', {
           queryName: 'publishMergedRows',
           collection: 'classSessions',
@@ -713,77 +646,133 @@ export const useTeacherSessions = (
       });
     };
 
-    const listeners: Array<() => void> = [];
-    const attachListener = (
-      sourceKey: string,
-      aliasField: string,
-      listenerQuery: ReturnType<typeof query>,
-    ) => {
-      devLogTeacherQuery('useTeacherSessions', 'listen', {
-        queryName: sourceKey,
-        collection: 'classSessions',
-        aliasField,
-        teacherUid: teacherKey || null,
-        todayDate,
-        dateRange: { start, end },
-      });
-      const unsubscribe = onSnapshot(
-        listenerQuery,
-        (snapshot) => {
-          devLogTeacherQuery('useTeacherSessions', 'snapshot', {
-            queryName: sourceKey,
+    const ensureFallbackRows = () => {
+      if (includeAllTeachers || !teacherKey) return;
+      if (fallbackCache.has(fallbackCacheKey) || fallbackPromise) return;
+
+      fallbackPromise = fetchTeacherSessionAliasFallbacks({
+        buildScopedQuery: (field, operator) => buildScopedTeacherQuery(field, operator),
+        mapDoc: (docSnap) => toTeacherSession({ id: docSnap.id, ...(docSnap.data() as Record<string, unknown>) }),
+        rowMatchesTeacher: (row) => sessionBelongsToTeacher(row as any, teacherKey),
+        onQuery: ({ field, operator }) => {
+          devLogTeacherQuery('useTeacherSessions', 'listen', {
+            queryName: `fallback-${field}`,
             collection: 'classSessions',
-            aliasField,
+            aliasField: field,
+            operator,
             teacherUid: teacherKey || null,
             todayDate,
             dateRange: { start, end },
-            docsReturned: snapshot.docs.length,
+            mode: 'getDocs-fallback',
           });
-          sourceStates.set(sourceKey, { status: 'ready', error: null });
-          liveDocsBySource.set(
-            sourceKey,
-            new Map(
-              snapshot.docs.map((d) => [
-                d.id,
-                toTeacherSession({ id: d.id, ...(d.data() as Record<string, unknown>) }),
-              ]),
-            ),
-          );
-          publishMergedRows();
         },
-        (err) => {
+        onQueryError: ({ field, operator, error }) => {
           devLogTeacherQuery('useTeacherSessions', 'error', {
-            queryName: sourceKey,
+            queryName: `fallback-${field}`,
             collection: 'classSessions',
-            aliasField,
+            aliasField: field,
+            operator,
+            teacherUid: teacherKey || null,
+            todayDate,
+            dateRange: { start, end },
+            error: error instanceof Error ? error.message : String(error),
+            code: (error as any)?.code || null,
+          });
+        },
+      })
+        .then((result) => {
+          if (cancelled) return;
+          fallbackCache.set(fallbackCacheKey, result.rows);
+          if (import.meta.env.DEV) {
+            console.info('[useTeacherSessions] fallback-used', {
+              teacherUid: teacherKey || null,
+              dateRange: { start, end },
+              cacheKey: fallbackCacheKey,
+              aliases: result.succeededAliases,
+              deniedAliases: result.deniedAliases,
+              rows: result.rows.length,
+            });
+          }
+          publishMergedRows();
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          devLogTeacherQuery('useTeacherSessions', 'error', {
+            queryName: 'fallback',
+            collection: 'classSessions',
+            aliasField: 'fallback',
             teacherUid: teacherKey || null,
             todayDate,
             dateRange: { start, end },
             error: err instanceof Error ? err.message : String(err),
             code: (err as any)?.code || null,
           });
-          if (cancelled) return;
-          sourceStates.set(sourceKey, {
-            status: 'error',
-            error: createTeacherSessionError(
-              'Unable to load today\'s sessions. One or more teacher session queries were denied.',
-              (err as any)?.code || null,
-            ),
-          });
-          liveDocsBySource.set(sourceKey, new Map());
-          setSettledState();
-        },
-      );
-      listeners.push(unsubscribe);
+        })
+        .finally(() => {
+          fallbackPromise = null;
+        });
     };
 
-    queryConfigs.forEach(({ queryName, aliasField, listenerQuery }) => {
-      attachListener(queryName, aliasField, listenerQuery);
+    devLogTeacherQuery('useTeacherSessions', 'listen', {
+      queryName: 'primary',
+      collection: 'classSessions',
+      aliasField: includeAllTeachers ? 'all-teachers' : 'teacherId',
+      teacherUid: teacherKey || null,
+      todayDate,
+      dateRange: { start, end },
     });
+    const unsubscribe = onSnapshot(
+      primaryQuery,
+      (snapshot) => {
+        devLogTeacherQuery('useTeacherSessions', 'snapshot', {
+          queryName: 'primary',
+          collection: 'classSessions',
+          aliasField: includeAllTeachers ? 'all-teachers' : 'teacherId',
+          teacherUid: teacherKey || null,
+          todayDate,
+          dateRange: { start, end },
+          docsReturned: snapshot.docs.length,
+        });
+        sourceStates.set('primary', { status: 'ready', error: null });
+        liveDocsBySource.set(
+          'primary',
+          new Map(
+            snapshot.docs.map((d) => [
+              d.id,
+              toTeacherSession({ id: d.id, ...(d.data() as Record<string, unknown>) }),
+            ]),
+          ),
+        );
+        publishMergedRows();
+        ensureFallbackRows();
+      },
+      (err) => {
+        devLogTeacherQuery('useTeacherSessions', 'error', {
+          queryName: 'primary',
+          collection: 'classSessions',
+          aliasField: includeAllTeachers ? 'all-teachers' : 'teacherId',
+          teacherUid: teacherKey || null,
+          todayDate,
+          dateRange: { start, end },
+          error: err instanceof Error ? err.message : String(err),
+          code: (err as any)?.code || null,
+        });
+        if (cancelled) return;
+        sourceStates.set('primary', {
+          status: 'error',
+          error: createTeacherSessionError(
+            'Unable to load today\'s sessions. One or more teacher session queries were denied.',
+            (err as any)?.code || null,
+          ),
+        });
+        liveDocsBySource.set('primary', new Map());
+        setSettledState();
+      },
+    );
 
     return () => {
       cancelled = true;
-      listeners.forEach((stop) => stop());
+      unsubscribe();
     };
   }, [teacherId, startDate, endDate, includeAllTeachers]);
 

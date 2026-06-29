@@ -23,6 +23,12 @@ import {
   getTeacherSessionEntityIds,
   resolveTeacherSessionCourseLabel,
 } from '../utils/resolveTeacherSessionStudentName';
+import {
+  buildCanonicalTeacherSessionQuery,
+  fetchTeacherSessionAliasFallbacks,
+  makeTeacherFallbackCacheKey,
+  mergeAndDedupeSessionDocs,
+} from './teacherSessionOwnership';
 
 interface UseUpcomingSessionsResult {
   sessions: TeacherSession[];
@@ -32,6 +38,8 @@ interface UseUpcomingSessionsResult {
   entityDocById: Map<string, Record<string, unknown>>;
   deniedLookups: Array<{ collection: string; code?: string | null; error: string }>;
 }
+
+export const getDefaultUpcomingSelectedDate = (): string => format(addDays(new Date(), 1), 'yyyy-MM-dd');
 
 const cleanString = (value: unknown): string => {
   return typeof value === 'string' ? value.trim() : '';
@@ -319,7 +327,10 @@ const withEnrollmentIdentitySnapshots = (
   } as TeacherSession;
 };
 
-export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResult => {
+export const useUpcomingSessions = (
+  teacherId?: string,
+  selectedDate = getDefaultUpcomingSelectedDate(),
+): UseUpcomingSessionsResult => {
   const [sessions, setSessions] = useState<TeacherSession[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(!!teacherId);
   const [error, setError] = useState<Error | null>(null);
@@ -344,72 +355,34 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
 
     let cancelled = false;
 
-    const today = new Date();
-    const dates: string[] = [];
-
-    for (let i = 1; i <= 7; i++) {
-      dates.push(format(addDays(today, i), 'yyyy-MM-dd'));
-    }
-
     const baseCollection = collection(db, 'classSessions');
+    const targetDate = cleanString(selectedDate) || getDefaultUpcomingSelectedDate();
 
-    const primaryQuery = query(
+    const buildScopedTeacherQuery = (
+      field: 'teacherId' | 'teacherIds' | 'assignedTeacherId' | 'primaryTeacherId' | 'teacherUid' | 'teacher_id',
+      operator: '==' | 'array-contains',
+    ) => query(
       baseCollection,
-      where('teacherId', '==', teacherId),
-      where('date', 'in', dates),
+      where(field, operator, teacherId),
+      where('date', '==', targetDate),
       orderBy('date', 'asc'),
       orderBy('startTime', 'asc'),
     );
 
-    const teacherIdsQuery = query(
-      baseCollection,
-      where('teacherIds', 'array-contains', teacherId),
-      where('date', 'in', dates),
-      orderBy('date', 'asc'),
-      orderBy('startTime', 'asc'),
+    const primaryQuery = buildCanonicalTeacherSessionQuery((field, operator) =>
+      buildScopedTeacherQuery(field, operator),
     );
 
-    const assignedTeacherQuery = query(
-      baseCollection,
-      where('assignedTeacherId', '==', teacherId),
-      where('date', 'in', dates),
-      orderBy('date', 'asc'),
-      orderBy('startTime', 'asc'),
-    );
-
-    const primaryTeacherQuery = query(
-      baseCollection,
-      where('primaryTeacherId', '==', teacherId),
-      where('date', 'in', dates),
-      orderBy('date', 'asc'),
-      orderBy('startTime', 'asc'),
-    );
-
-    const teacherUidQuery = query(
-      baseCollection,
-      where('teacherUid', '==', teacherId),
-      where('date', 'in', dates),
-      orderBy('date', 'asc'),
-      orderBy('startTime', 'asc'),
-    );
-
-    const legacyTeacherIdQuery = query(
-      baseCollection,
-      where('teacher_id', '==', teacherId),
-      where('date', 'in', dates),
-      orderBy('date', 'asc'),
-      orderBy('startTime', 'asc'),
-    );
+    const teacherIdsQuery = buildScopedTeacherQuery('teacherIds', 'array-contains');
 
     const liveDocsBySource = new Map<string, Map<string, TeacherSession>>();
     const sourceStates = new Map<string, { status: 'pending' | 'ready' | 'error'; error: Error | null }>([
       ['primary', { status: 'pending', error: null }],
       ['teacherIds', { status: 'pending', error: null }],
-      ['assignedTeacherId', { status: 'pending', error: null }],
-      ['primaryTeacherId', { status: 'pending', error: null }],
-      ['teacherUid', { status: 'pending', error: null }],
-      ['teacher_id', { status: 'pending', error: null }],
     ]);
+    const fallbackCache = new Map<string, TeacherSession[]>();
+    const fallbackCacheKey = makeTeacherFallbackCacheKey(teacherId, targetDate);
+    let fallbackPromise: Promise<void> | null = null;
 
     const setSettledState = () => {
       if (cancelled) return;
@@ -430,16 +403,13 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
     };
 
     const publishMerged = async () => {
-      const merged = new Map<string, TeacherSession>();
-
-      liveDocsBySource.forEach((rows) => {
-        rows.forEach((session, sessionId) => {
-          if (!dates.includes(String(session.date || ''))) return;
-          merged.set(sessionId, session);
-        });
-      });
+      const merged = mergeAndDedupeSessionDocs(
+        ...Array.from(liveDocsBySource.values()).map((rows) => rows.values()),
+        (fallbackCache.get(fallbackCacheKey) || []).values(),
+      );
 
       const next = Array.from(merged.values()).filter((session) =>
+        String(session.date || '') === targetDate &&
         sessionBelongsToTeacher(session as any, teacherId),
       );
 
@@ -559,6 +529,72 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
     };
 
     const listeners: Array<() => void> = [];
+    const ensureFallbackRows = () => {
+      if (fallbackCache.has(fallbackCacheKey) || fallbackPromise) return;
+
+      fallbackPromise = fetchTeacherSessionAliasFallbacks({
+        buildScopedQuery: (field, operator) => buildScopedTeacherQuery(field, operator),
+        includeAliases: ['assignedTeacherId', 'primaryTeacherId', 'teacherUid', 'teacher_id'],
+        mapDoc: (docSnap) => toTeacherSession({
+          id: docSnap.id,
+          ...(docSnap.data() as Record<string, unknown>),
+        }),
+        rowMatchesTeacher: (row) => sessionBelongsToTeacher(row as any, teacherId),
+        onQuery: ({ field, operator }) => {
+          devLogTeacherQuery('useUpcomingSessions', 'listen', {
+            queryName: `fallback-${field}`,
+            collection: 'classSessions',
+            aliasField: field,
+            op: operator,
+            dateRange: { type: 'single', date: targetDate },
+            authUid: teacherId,
+            mode: 'getDocs-fallback',
+          });
+        },
+        onQueryError: ({ field, operator, error }) => {
+          devLogTeacherQuery('useUpcomingSessions', 'error', {
+            queryName: `fallback-${field}`,
+            collection: 'classSessions',
+            aliasField: field,
+            op: operator,
+            dateRange: { type: 'single', date: targetDate },
+            authUid: teacherId,
+            error: error instanceof Error ? error.message : String(error),
+            code: (error as any)?.code || null,
+          });
+        },
+      })
+        .then((result) => {
+          if (cancelled) return;
+          fallbackCache.set(fallbackCacheKey, result.rows);
+          if (import.meta.env.DEV) {
+            console.info('[useUpcomingSessions] fallback-used', {
+              authUid: teacherId,
+              dateRange: { type: 'single', date: targetDate },
+              cacheKey: fallbackCacheKey,
+              aliases: result.succeededAliases,
+              deniedAliases: result.deniedAliases,
+              rows: result.rows.length,
+            });
+          }
+          void publishMerged();
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          devLogTeacherQuery('useUpcomingSessions', 'error', {
+            queryName: 'fallback',
+            collection: 'classSessions',
+            aliasField: 'fallback',
+            dateRange: { type: 'single', date: targetDate },
+            authUid: teacherId,
+            error: err instanceof Error ? err.message : String(err),
+            code: (err as any)?.code || null,
+          });
+        })
+        .finally(() => {
+          fallbackPromise = null;
+        });
+    };
 
     const attachListener = (
       sourceKey: string,
@@ -571,7 +607,7 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
         collection: 'classSessions',
         aliasField,
         op,
-        dateRange: { type: 'in', dates },
+        dateRange: { type: 'single', date: targetDate },
         authUid: teacherId,
       });
 
@@ -582,7 +618,7 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
             queryName: sourceKey,
             collection: 'classSessions',
             aliasField,
-            dateRange: { type: 'in', dates },
+            dateRange: { type: 'single', date: targetDate },
             authUid: teacherId,
             docsReturned: snapshot.docs.length,
           });
@@ -618,6 +654,9 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
             ));
             setIsLoading(false);
           });
+          if (sourceKey === 'primary' || sourceKey === 'teacherIds') {
+            ensureFallbackRows();
+          }
         },
         (err) => {
           const errMessage = err instanceof Error ? err.message : String(err);
@@ -626,7 +665,7 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
             collection: 'classSessions',
             aliasField,
             op,
-            dateRange: { type: 'in', dates },
+            dateRange: { type: 'single', date: targetDate },
             authUid: teacherId,
             error: errMessage,
             code: (err as any)?.code || null,
@@ -662,16 +701,12 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
 
     attachListener('primary', 'teacherId', '==', primaryQuery);
     attachListener('teacherIds', 'teacherIds', 'array-contains', teacherIdsQuery);
-    attachListener('assignedTeacherId', 'assignedTeacherId', '==', assignedTeacherQuery);
-    attachListener('primaryTeacherId', 'primaryTeacherId', '==', primaryTeacherQuery);
-    attachListener('teacherUid', 'teacherUid', '==', teacherUidQuery);
-    attachListener('teacher_id', 'teacher_id', '==', legacyTeacherIdQuery);
 
     return () => {
       cancelled = true;
       listeners.forEach((stop) => stop());
     };
-  }, [teacherId]);
+  }, [teacherId, selectedDate]);
 
   return { sessions, isLoading, error, enrollmentsById, entityDocById, deniedLookups };
 };
