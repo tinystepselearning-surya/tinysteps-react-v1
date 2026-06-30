@@ -18,11 +18,22 @@ const {
   mockQuery: vi.fn((...args: unknown[]) => ({ kind: 'query', args })),
   mockWhere: vi.fn((...args: unknown[]) => ({ kind: 'where', args })),
   mockOrderBy: vi.fn((...args: unknown[]) => ({ kind: 'orderBy', args })),
-  mockIsSessionCanonicalForEnrollment: vi.fn(() => true),
-  mockIsScheduleExceptionSession: vi.fn(() => false),
-  mockShouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment: vi.fn(() => false),
-}));
 
+  // Important: keep this mock typed with a session argument.
+  // Otherwise TypeScript infers it as () => boolean and rejects
+  // mockImplementation((sessionLike) => ...).
+  mockIsSessionCanonicalForEnrollment: vi.fn(
+    (_sessionLike?: Record<string, unknown>) => true,
+  ),
+
+  mockIsScheduleExceptionSession: vi.fn(
+    (_sessionLike?: Record<string, unknown>) => false,
+  ),
+
+  mockShouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment: vi.fn(
+    (_sessionLike?: Record<string, unknown>) => false,
+  ),
+}));
 vi.mock('firebase/firestore', () => ({
   collection: vi.fn((_db: unknown, name: string) => ({ kind: 'collection', name })),
   documentId: vi.fn(() => '__name__'),
@@ -96,11 +107,17 @@ describe('useUpcomingSessions', () => {
     mockWhere.mockClear();
     mockOrderBy.mockClear();
     mockIsSessionCanonicalForEnrollment.mockReset();
-    mockIsSessionCanonicalForEnrollment.mockImplementation(() => true);
+    mockIsSessionCanonicalForEnrollment.mockImplementation(
+      (_sessionLike?: Record<string, unknown>) => true,
+    );
     mockIsScheduleExceptionSession.mockReset();
-    mockIsScheduleExceptionSession.mockImplementation(() => false);
+    mockIsScheduleExceptionSession.mockImplementation(
+      (_sessionLike?: Record<string, unknown>) => false,
+    );
     mockShouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment.mockReset();
-    mockShouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment.mockImplementation(() => false);
+    mockShouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment.mockImplementation(
+      (_sessionLike?: Record<string, unknown>) => false,
+    );
 
     mockGetDocs.mockImplementation(async (queryRef: unknown) => {
       const collectionName = getCollectionName(queryRef as any);
@@ -241,10 +258,10 @@ describe('useUpcomingSessions', () => {
   });
 
   it('does not show moved future sessions to the previous teacher on the selected date', async () => {
-    mockIsSessionCanonicalForEnrollment.mockImplementation((sessionLike: Record<string, unknown>) => {
-      return String(sessionLike.id || '') !== 'session-moved-away';
+    mockIsSessionCanonicalForEnrollment.mockImplementation(function () {
+      const sessionLike = arguments[0] as Record<string, unknown> | undefined;
+      return String(sessionLike?.id || '') !== 'session-moved-away';
     });
-
     mockOnSnapshot.mockReset();
     mockOnSnapshot.mockImplementation((queryRef, onNext) => {
       const aliasField = getTeacherAliasField(queryRef as any);
