@@ -97,6 +97,16 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
+function formatUnknownError(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}
+
 function chunk<T>(items: T[], size: number): T[][] {
   const output: T[][] = [];
   for (let index = 0; index < items.length; index += size) {
@@ -774,6 +784,10 @@ export const sendClassReminder10Min = onSchedule(
     memory: '512MiB',
   },
   async () => {
+    // Manual reminder workflow is active. Scheduled reminder sending is disabled to avoid repeated Firestore reads.
+    logger.info('sendClassReminder10Min:disabled_manual_workflow');
+    return;
+
     const db = admin.firestore();
     const now = Date.now();
     const windowStart = new Date(now + REMINDER_WINDOW_START_MIN * 60 * 1000);
@@ -816,7 +830,12 @@ export const sendClassReminder10Min = onSchedule(
         );
       }
       const enrollmentLike = enrollmentCache.get(enrollmentId);
-      if (!enrollmentLike || !isCanonicalScheduledSession(initialData, enrollmentLike)) {
+      if (!enrollmentLike) {
+        skipped += 1;
+        continue;
+      }
+      const canonicalEnrollment = enrollmentLike as Record<string, unknown>;
+      if (!isCanonicalScheduledSession(initialData, canonicalEnrollment)) {
         skipped += 1;
         continue;
       }
@@ -829,7 +848,7 @@ export const sendClassReminder10Min = onSchedule(
         }
 
         claimed += 1;
-        const sessionData = claimResult.sessionData;
+        const sessionData = claimResult.sessionData as Record<string, unknown>;
         const recipientIds = resolveRecipientIds(sessionData);
         const teacherId = asOptionalString(sessionData.teacherId);
         const kidId = asOptionalString(sessionData.kidId) || asOptionalString(sessionData.studentId) || 'unknown';
@@ -924,11 +943,12 @@ export const sendClassReminder10Min = onSchedule(
           },
           { merge: true },
         );
-      } catch (error) {
+      } catch (error: unknown) {
         failures += 1;
+        const errorMessage = formatUnknownError(error);
         logger.error('sendClassReminder10Min:session_failed', {
           sessionId: docSnap.id,
-          message: error instanceof Error ? error.message : String(error),
+          message: errorMessage,
         });
 
         await docSnap.ref.set(

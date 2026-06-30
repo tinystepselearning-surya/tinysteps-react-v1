@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   collection,
   doc,
   documentId,
   getDoc,
   getDocs,
+  limit,
   onSnapshot,
   query,
   serverTimestamp,
@@ -40,10 +41,15 @@ import {
 } from '@components/ui/table';
 import { useToast } from '@components/hooks/use-toast';
 import { db } from '../../lib/firebaseConfig';
-import { doesSessionMatchEnrollmentSchedule } from '../../lib/sessionScheduleIntegrity';
 import { resolveSessionJoinLink } from '../../lib/sessionJoinLink';
 import { collectSessionTeacherRefs, resolvePreferredSessionTeacherRef } from '../../lib/sessionTeacherRefs';
 import { useAuthStore } from '../../store/useAuthStore';
+import {
+  loadManualReminderDayBuckets,
+  loadManualReminderSelectedDate,
+  readManualReminderCacheFromStorage,
+  writeManualReminderCacheToStorage,
+} from './todaysNotificationsManualData';
 
 interface ClassSessionDoc {
   id: string;
@@ -59,6 +65,7 @@ interface ClassSessionDoc {
   kidId?: string;
   kidIds?: string[];
   kidName?: string;
+  studentName?: string;
   childName?: string;
   kidNames?: Record<string, string> | string[];
   parentId?: string;
@@ -118,8 +125,6 @@ type CourseDoc = Record<string, any>;
 type UserPhoneField = 'phone' | 'mobile' | 'contactNumber' | 'whatsappPhone';
 type MessageRecipient = 'parent' | 'teacher';
 type NotificationMode = 'today' | 'upcoming' | 'overall-admissions';
-type UpcomingFilterMode = 'range' | 'specific-date';
-
 interface ResolvedUserDoc {
   docId: string;
   uid: string;
@@ -167,7 +172,6 @@ Kindly inform us in advance for any changes/cancellations. Repeated no-shows may
 – Tiny Steps`;
 const DEFAULT_TEACHER_TEMPLATE =
   "Hello [Teacher Name], this is a reminder for Tiny Steps class with [Child Name] at [Time]. Please be ready and join on time.";
-const UPCOMING_RANGE_OPTIONS = [3, 7, 14, 30] as const;
 const ALL_TEACHERS_FILTER = 'ALL_TEACHERS';
 const ALL_STATUSES_FILTER = 'ALL_STATUSES';
 const IST_OFFSET_MINUTES = 5.5 * 60;
@@ -811,6 +815,27 @@ async function fetchUsersByRefs(userRefs: string[]): Promise<Record<string, Reso
   return map;
 }
 
+async function fetchReminderSessionsForDate(dateKey: string): Promise<ClassSessionDoc[]> {
+  const sessionsQuery = query(
+    collection(db, 'classSessions'),
+    where('date', '==', dateKey),
+    limit(200),
+  );
+  const snap = await getDocs(sessionsQuery);
+  return snap.docs
+    .map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() as any) }))
+    .sort((left: ClassSessionDoc, right: ClassSessionDoc) => {
+      const startLeft = String(left.startTime || '');
+      const startRight = String(right.startTime || '');
+      if (startLeft !== startRight) {
+        return startLeft.localeCompare(startRight, undefined, { numeric: true });
+      }
+      const msLeft = toDateMaybe(left.startAt)?.getTime() || 0;
+      const msRight = toDateMaybe(right.startAt)?.getTime() || 0;
+      return msLeft - msRight;
+    });
+}
+
 const getSessionKidIds = (session: ClassSessionDoc): string[] => {
   const fromKidIds = Array.isArray(session.kidIds) ? session.kidIds : [];
   const fromKidId = session.kidId ? [session.kidId] : [];
@@ -1021,6 +1046,7 @@ const getKidNames = (session: ClassSessionDoc, kidMap: Record<string, KidDoc>): 
   const kidIds = getSessionKidIds(session);
 
   if (typeof session.kidName === 'string' && session.kidName.trim()) names.add(session.kidName.trim());
+  if (typeof session.studentName === 'string' && session.studentName.trim()) names.add(session.studentName.trim());
   if (typeof session.childName === 'string' && session.childName.trim()) names.add(session.childName.trim());
 
   if (Array.isArray(sessionKidNames)) {
@@ -1075,19 +1101,15 @@ export default function TodaysNotifications() {
   const [savingPhoneKey, setSavingPhoneKey] = useState<string | null>(null);
   const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
   const [mode, setMode] = useState<NotificationMode>('today');
-  const [upcomingDays, setUpcomingDays] = useState<number>(7);
-  const [upcomingFilterMode, setUpcomingFilterMode] = useState<UpcomingFilterMode>('range');
   const [upcomingSpecificDate, setUpcomingSpecificDate] = useState<string>('');
   const [teacherFilter, setTeacherFilter] = useState<string>(ALL_TEACHERS_FILTER);
   const [statusFilter, setStatusFilter] = useState<string>(ALL_STATUSES_FILTER);
+  const [reminderRefreshNonce, setReminderRefreshNonce] = useState(0);
+  const handledReminderRefreshNonceRef = useRef(0);
   const isNotificationActionsEnabled = mode !== 'overall-admissions';
 
   const todayDateKey = useMemo(() => getKolkataDateKey(), []);
-  const upcomingStartDateKey = useMemo(() => shiftDateKeyByDays(todayDateKey, 1), [todayDateKey]);
-  const upcomingEndDateKey = useMemo(
-    () => shiftDateKeyByDays(todayDateKey, upcomingDays),
-    [todayDateKey, upcomingDays],
-  );
+  const tomorrowDateKey = useMemo(() => shiftDateKeyByDays(todayDateKey, 1), [todayDateKey]);
   const todayLabel = useMemo(
     () =>
       new Intl.DateTimeFormat('en-IN', {
@@ -1099,10 +1121,9 @@ export default function TodaysNotifications() {
 
   useEffect(() => {
     if (mode !== 'upcoming') return;
-    if (upcomingFilterMode !== 'specific-date') return;
     if (upcomingSpecificDate) return;
-    setUpcomingSpecificDate(upcomingStartDateKey);
-  }, [mode, upcomingFilterMode, upcomingSpecificDate, upcomingStartDateKey]);
+    setUpcomingSpecificDate(tomorrowDateKey);
+  }, [mode, upcomingSpecificDate, tomorrowDateKey]);
 
   useEffect(() => {
     if (isNotificationActionsEnabled) return;
@@ -1120,121 +1141,78 @@ export default function TodaysNotifications() {
     }
 
     setIsLoading(true);
-    let q = query(collection(db, 'classSessions'), where('date', '==', todayDateKey));
-    if (mode === 'today') {
-      q = query(collection(db, 'classSessions'), where('date', '==', todayDateKey));
-    } else if (upcomingFilterMode === 'specific-date') {
-      if (!upcomingSpecificDate) {
-        setSessions([]);
-        setUsersMap({});
+    const selectedDateKey =
+      mode === 'today'
+        ? todayDateKey
+        : String(upcomingSpecificDate || '').trim() || tomorrowDateKey;
+    const forceRefresh = reminderRefreshNonce !== handledReminderRefreshNonceRef.current;
+    if (forceRefresh) {
+      handledReminderRefreshNonceRef.current = reminderRefreshNonce;
+    }
+
+    const loadSessions = async () => {
+      try {
+        const result =
+          selectedDateKey === todayDateKey || selectedDateKey === tomorrowDateKey
+            ? await loadManualReminderDayBuckets({
+                deps: {
+                  fetchEnrollmentsByIds: (ids) => fetchDocsByIds('enrollments', ids),
+                  fetchSessionsForDate: fetchReminderSessionsForDate,
+                  readCache: readManualReminderCacheFromStorage,
+                  writeCache: writeManualReminderCacheToStorage,
+                },
+                forceRefresh,
+                todayDateKey,
+                tomorrowDateKey,
+              })
+            : await loadManualReminderSelectedDate({
+                dateKey: selectedDateKey,
+                deps: {
+                  fetchEnrollmentsByIds: (ids) => fetchDocsByIds('enrollments', ids),
+                  fetchSessionsForDate: fetchReminderSessionsForDate,
+                },
+              });
+
+        const nextSessions =
+          'todaySessions' in result
+            ? selectedDateKey === todayDateKey
+              ? result.todaySessions
+              : result.tomorrowSessions
+            : result.sessions;
+
+        const parentIds = new Set<string>();
+        const teacherIds = new Set<string>();
+
+        nextSessions.forEach((session) => {
+          const parentId = getPrimaryParentId(session);
+          if (parentId) parentIds.add(parentId);
+          collectSessionTeacherRefs(session as unknown as Record<string, unknown>).forEach((teacherId) => {
+            teacherIds.add(teacherId);
+          });
+        });
+
+        const nextUsersMap = await fetchUsersByRefs(Array.from(new Set([...parentIds, ...teacherIds])));
+
+        if (!active) return;
+        setSessions(nextSessions);
+        setUsersMap(nextUsersMap);
         setKidMap({});
         setEnrollmentMap({});
         setCourseMap({});
         setIsLoading(false);
-        return () => {
-          active = false;
-        };
-      }
-      q = query(collection(db, 'classSessions'), where('date', '==', upcomingSpecificDate));
-    } else {
-      q = query(
-        collection(db, 'classSessions'),
-        where('date', '>', todayDateKey),
-        where('date', '<=', upcomingEndDateKey),
-      );
-    }
 
-    const unsubscribe = onSnapshot(
-      q,
-      async (snapshot) => {
-        try {
-          const nextSessions = snapshot.docs
-            .map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() as any) }))
-            .sort((a: ClassSessionDoc, b: ClassSessionDoc) => {
-              const startA = String(a.startTime || '');
-              const startB = String(b.startTime || '');
-              if (startA !== startB) {
-                return startA.localeCompare(startB, undefined, { numeric: true });
-              }
-              const msA = toDateMaybe(a.startAt)?.getTime() || 0;
-              const msB = toDateMaybe(b.startAt)?.getTime() || 0;
-              return msA - msB;
-            });
-
-          if (!active) return;
-          setSessions(nextSessions);
-
-          const parentIds = new Set<string>();
-          const teacherIds = new Set<string>();
-          const kidIds = new Set<string>();
-          const enrollmentIds = new Set<string>();
-          const courseIds = new Set<string>();
-
-          nextSessions.forEach((session) => {
-            const parentId = getPrimaryParentId(session);
-            if (parentId) parentIds.add(parentId);
-
-            collectSessionTeacherRefs(session as unknown as Record<string, unknown>).forEach((teacherId) => {
-              teacherIds.add(teacherId);
-            });
-
-            getSessionKidIds(session).forEach((kidId) => kidIds.add(kidId));
-
-            const enrollmentId = normalizeLookupId(session.enrollmentId);
-            if (enrollmentId) enrollmentIds.add(enrollmentId);
-
-            const courseId = String(session.courseId || '').trim();
-            if (courseId) courseIds.add(courseId);
-          });
-
-          const userIds = Array.from(new Set([...parentIds, ...teacherIds]));
-          const [nextUsersMap, nextKidMap, nextEnrollmentMap, nextCourseMap] = await Promise.all([
-            fetchUsersByRefs(userIds),
-            fetchDocsByIds('kids', Array.from(kidIds)),
-            fetchDocsByIds('enrollments', Array.from(enrollmentIds)),
-            fetchDocsByIds('courses', Array.from(courseIds)),
-          ]);
-
-          const missingKidIds = Array.from(kidIds).filter((kidId) => !nextKidMap[kidId]);
-          if (missingKidIds.length) {
-            const studentsFallback = await fetchDocsByIds('students', missingKidIds);
-            Object.keys(studentsFallback).forEach((kidId) => {
-              nextKidMap[kidId] = studentsFallback[kidId];
-            });
-          }
-
-          const parentRefsFromKids = Array.from(
-            new Set(
-              Object.values(nextKidMap)
-                .map((kidDoc) => normalizeLookupId(kidDoc?.parentId))
-                .filter(Boolean),
-            ),
-          );
-          const unresolvedParentRefsFromKids = parentRefsFromKids.filter((parentRef) => !nextUsersMap[parentRef]);
-          if (unresolvedParentRefsFromKids.length) {
-            const usersFromKidParents = await fetchUsersByRefs(unresolvedParentRefsFromKids);
-            Object.assign(nextUsersMap, usersFromKidParents);
-          }
-
-          if (!active) return;
-          setUsersMap(nextUsersMap);
-          setKidMap(nextKidMap);
-          setEnrollmentMap(nextEnrollmentMap);
-          setCourseMap(nextCourseMap);
-          setIsLoading(false);
-        } catch (error: any) {
-          console.error('[TodaysNotifications] Failed to build session rows', error);
-          if (!active) return;
-          setIsLoading(false);
-          toast({
-            title: 'Unable to load sessions',
-            description: error?.message || 'Please try again.',
-            variant: 'destructive',
+        if (import.meta.env.DEV) {
+          console.info('[TodaysNotifications] manualReminderLoad', {
+            dateLoaded: selectedDateKey,
+            elapsedMs: result.elapsedMs,
+            enrollmentFallbackReads: result.enrollmentFallbackReads,
+            screen: 'TodaysNotifications',
+            sessionsReturned: nextSessions.length,
+            source: result.source,
           });
         }
-      },
-      (error) => {
-        console.error('[TodaysNotifications] Snapshot error', error);
+      } catch (error: any) {
+        console.error('[TodaysNotifications] Failed to load sessions', error);
         if (!active) return;
         setIsLoading(false);
         toast({
@@ -1242,14 +1220,15 @@ export default function TodaysNotifications() {
           description: error?.message || 'Please try again.',
           variant: 'destructive',
         });
-      },
-    );
+      }
+    };
+
+    void loadSessions();
 
     return () => {
       active = false;
-      unsubscribe();
     };
-  }, [mode, todayDateKey, upcomingEndDateKey, upcomingFilterMode, upcomingSpecificDate, toast]);
+  }, [mode, reminderRefreshNonce, todayDateKey, tomorrowDateKey, upcomingSpecificDate, toast]);
 
   useEffect(() => {
     if (mode !== 'overall-admissions') return;
@@ -1344,74 +1323,31 @@ export default function TodaysNotifications() {
         const sessionDateKey = String(session.date || '').trim();
         const classTime = formatSessionTime(session);
         const statusLabel = String(session.status || '').trim();
-        const enrollmentRef = normalizeLookupId(session.enrollmentId);
-        const enrollment = enrollmentRef ? enrollmentMap[enrollmentRef] : undefined;
         const parentRef = getPrimaryParentId(session);
-        const enrollmentTeacherRefs = getEnrollmentTeacherRefs(enrollment);
         const teacherRef = resolvePreferredSessionTeacherRef(
           session as unknown as Record<string, unknown>,
-          enrollmentTeacherRefs,
+          [],
         );
         const parentUserResolved = parentRef ? usersMap[parentRef] : undefined;
         const teacherUserResolved = teacherRef ? usersMap[teacherRef] : undefined;
         const parentUser = parentUserResolved?.data;
         const teacherUser = teacherUserResolved?.data;
-        const kidIds = getSessionKidIds(session);
-        const enrollmentKidIds = getEnrollmentKidIds(enrollment);
-        const enrollmentParentRefs = getEnrollmentParentRefs(enrollment);
-        const linkedKidIds = kidIds.filter((kidId) => enrollmentKidIds.includes(kidId));
 
         const resolvedParentName =
-          getDisplayName(parentUser, '') || String(session.parentName || '').trim();
+          String(session.parentName || '').trim() || getDisplayName(parentUser, '') || 'Parent';
         const resolvedTeacherName =
-          getDisplayName(teacherUser, '') || String(session.teacherName || '').trim();
+          String(session.teacherName || '').trim() || getDisplayName(teacherUser, '') || 'Teacher';
         const parentTimeZone = resolveParentTimeZone(parentUser);
         const sessionTimeBounds = resolveSessionTimeBounds(session);
         const hasValidDate = isYmdDateKey(sessionDateKey);
         const hasValidTime = classTime !== 'Time TBD';
         const hasStatus = Boolean(statusLabel);
         const normalizedSessionStatus = normalizeStatusLike(statusLabel);
-        const hasTeacherIdentity = Boolean(teacherRef && teacherUserResolved && resolvedTeacherName);
-        const hasParentIdentity = Boolean(parentRef && parentUserResolved && resolvedParentName);
 
         if (!hasValidDate || !hasValidTime || !hasStatus) {
           return null;
         }
         if (normalizedSessionStatus === 'paused') {
-          return null;
-        }
-        if (!enrollmentRef || !isEnrollmentOperationallyActive(enrollment)) {
-          return null;
-        }
-        if (!doesSessionMatchEnrollmentSchedule(session as unknown as Record<string, unknown>, enrollment)) {
-          return null;
-        }
-        if (!linkedKidIds.length || !enrollmentKidIds.length) {
-          return null;
-        }
-        if (!hasParentIdentity || !enrollmentParentRefs.length) {
-          return null;
-        }
-        if (!hasTeacherIdentity || !enrollmentTeacherRefs.length) {
-          return null;
-        }
-        if (!isEntityOperationallyActive(parentUser)) return null;
-        if (!isEntityOperationallyActive(teacherUser) || !isTeacherUser(teacherUser)) return null;
-
-        const parentRefCandidates = new Set(
-          [parentRef, parentUserResolved?.docId, parentUserResolved?.uid]
-            .map((ref) => normalizeLookupId(ref))
-            .filter(Boolean),
-        );
-        if (!enrollmentParentRefs.some((ref) => parentRefCandidates.has(ref))) {
-          return null;
-        }
-        const teacherRefCandidates = new Set(
-          [teacherRef, teacherUserResolved?.docId, teacherUserResolved?.uid]
-            .map((ref) => normalizeLookupId(ref))
-            .filter(Boolean),
-        );
-        if (!enrollmentTeacherRefs.some((ref) => teacherRefCandidates.has(ref))) {
           return null;
         }
         if (
@@ -1423,31 +1359,20 @@ export default function TodaysNotifications() {
           return null;
         }
 
-        const activeKidNames = linkedKidIds
-          .map((kidId) => {
-            const kid = kidMap[kidId];
-            if (!isEntityOperationallyActive(kid)) return '';
-            const kidName = String(
-              kid?.fullName || kid?.name || kid?.displayName || kid?.studentName || '',
-            ).trim();
-            if (!kidName || looksLikeLegacyIdToken(kidName) || kidName === kidId) return '';
-            return kidName;
-          })
-          .filter(Boolean);
+        const activeKidNames = getKidNames(session, {})
+          .map((name) => String(name || '').trim())
+          .filter((name) => name && !looksLikeLegacyIdToken(name));
         if (!activeKidNames.length) {
-          return null;
+          activeKidNames.push('Student');
         }
 
         const parentPhoneInfo = resolvePhoneInfo(parentUser);
         const teacherPhoneInfo = resolvePhoneInfo(teacherUser);
 
-        const courseId = String(session.courseId || '').trim();
-        const courseDoc = courseId ? courseMap[courseId] : undefined;
         const courseLabel =
           String(session.courseName || '').trim() ||
           String(session.subject || '').trim() ||
-          String(courseDoc?.title || courseDoc?.name || '') ||
-          courseId ||
+          String(session.courseId || '').trim() ||
           '-';
 
         const studentLabel = activeKidNames.join(', ');
@@ -1498,13 +1423,14 @@ export default function TodaysNotifications() {
           teacherUserDocId: teacherUserResolved?.docId || '',
           teacherUserMissing: Boolean(teacherRef && !teacherUserResolved),
           courseLabel,
+          enrollmentId: normalizeLookupId(session.enrollmentId),
           statusLabel,
           sessionTypeLabel: sessionTypeResolution.label,
           sessionTypeReason: sessionTypeResolution.reason,
         };
       })
       .filter((row): row is any => Boolean(row));
-  }, [courseMap, enrollmentMap, kidMap, sessions, usersMap]);
+  }, [sessions, usersMap]);
 
   const admissionsRows = useMemo(() => {
     return enrollments
@@ -1979,9 +1905,7 @@ export default function TodaysNotifications() {
           {mode === 'today'
             ? `${todayLabel} (${TIMEZONE})`
             : mode === 'upcoming'
-              ? upcomingFilterMode === 'specific-date'
-                ? `Date: ${upcomingSpecificDate || 'Select date'} (${TIMEZONE})`
-                : `Upcoming: ${upcomingStartDateKey} to ${upcomingEndDateKey} (${TIMEZONE})`
+              ? `Date: ${upcomingSpecificDate || tomorrowDateKey} (${TIMEZONE})`
               : 'Active admissions with teacher/schedule readiness'}{' '}
           {isNotificationActionsEnabled
             ? '| Open WhatsApp, then manually tick notified.'
@@ -2008,7 +1932,7 @@ export default function TodaysNotifications() {
               variant={mode === 'upcoming' ? 'default' : 'ghost'}
               onClick={() => setMode('upcoming')}
             >
-              Upcoming
+              Tomorrow / Date
               {mode === 'upcoming' && (
                 <span className="ml-1.5 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums">
                   {sortedRows.length}
@@ -2045,6 +1969,16 @@ export default function TodaysNotifications() {
             </Select>
           </div>
           {mode !== 'overall-admissions' ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 px-3 text-xs"
+              onClick={() => setReminderRefreshNonce((value) => value + 1)}
+            >
+              Refresh sessions
+            </Button>
+          ) : null}
+          {mode !== 'overall-admissions' ? (
             <div className="flex items-center gap-1">
               <span className="text-xs text-muted-foreground">Status</span>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -2062,56 +1996,15 @@ export default function TodaysNotifications() {
             </div>
           ) : null}
           {mode === 'upcoming' ? (
-            <>
-              <div className="inline-flex items-center rounded-md border bg-white p-0.5">
-                <Button
-                  size="sm"
-                  className="h-7 px-2 text-xs"
-                  variant={upcomingFilterMode === 'range' ? 'default' : 'ghost'}
-                  onClick={() => setUpcomingFilterMode('range')}
-                >
-                  Range
-                </Button>
-                <Button
-                  size="sm"
-                  className="h-7 px-2 text-xs"
-                  variant={upcomingFilterMode === 'specific-date' ? 'default' : 'ghost'}
-                  onClick={() => setUpcomingFilterMode('specific-date')}
-                >
-                  Specific Date
-                </Button>
-              </div>
-              {upcomingFilterMode === 'range' ? (
-                <div className="flex items-center gap-1">
-                  <span className="text-xs text-muted-foreground">Range</span>
-                  <Select
-                    value={String(upcomingDays)}
-                    onValueChange={(value) => setUpcomingDays(Number(value) || 7)}
-                  >
-                    <SelectTrigger className="h-7 w-[110px] text-xs">
-                      <SelectValue placeholder="Days" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {UPCOMING_RANGE_OPTIONS.map((days) => (
-                        <SelectItem key={days} value={String(days)}>
-                          {days} days
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1">
-                  <span className="text-xs text-muted-foreground">Date</span>
-                  <Input
-                    type="date"
-                    value={upcomingSpecificDate}
-                    onChange={(event) => setUpcomingSpecificDate(event.target.value)}
-                    className="h-7 w-[148px] text-xs"
-                  />
-                </div>
-              )}
-            </>
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-muted-foreground">Date</span>
+              <Input
+                type="date"
+                value={upcomingSpecificDate}
+                onChange={(event) => setUpcomingSpecificDate(event.target.value)}
+                className="h-7 w-[148px] text-xs"
+              />
+            </div>
           ) : null}
         </div>
       </div>
@@ -2121,9 +2014,7 @@ export default function TodaysNotifications() {
           {mode === 'today'
             ? "Loading today's scheduled sessions..."
             : mode === 'upcoming'
-              ? upcomingFilterMode === 'specific-date'
-                ? 'Loading sessions for selected date...'
-                : 'Loading upcoming scheduled sessions...'
+              ? 'Loading sessions for selected date...'
               : 'Loading active admissions...'}
         </Card>
       ) : visibleRowsCount === 0 ? (
@@ -2140,14 +2031,9 @@ export default function TodaysNotifications() {
                   ? 'No sessions for selected filters.'
                   : 'No sessions today.';
               }
-              if (upcomingFilterMode === 'specific-date') {
-                return hasOperationalFilters
-                  ? 'No sessions for selected filters.'
-                  : 'No sessions on selected date.';
-              }
               return hasOperationalFilters
                 ? 'No sessions for selected filters.'
-                : 'No upcoming sessions in the selected range.';
+                : 'No sessions on selected date.';
             })()}
           </p>
         </Card>
