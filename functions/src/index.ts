@@ -165,5 +165,4 @@ export {
 export {
   registerNotificationToken,
   sendTestPushNotification,
-  sendClassReminder10Min,
 } from './notifications/classReminders';
