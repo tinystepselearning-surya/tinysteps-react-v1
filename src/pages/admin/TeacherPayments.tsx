@@ -208,6 +208,7 @@ export default function TeacherPayments(): JSX.Element {
   const [loadMode, setLoadMode] = useState<TeacherLoadMode>('none');
   const [loadedTeacherIds, setLoadedTeacherIds] = useState<string[]>([]);
   const [scopeLoading, setScopeLoading] = useState(false);
+  const [scopeError, setScopeError] = useState('');
   const [teacherSearchTerm, setTeacherSearchTerm] = useState('');
   const [teacherSearchResults, setTeacherSearchResults] = useState<TeacherUser[]>([]);
   const [teacherSearchLoading, setTeacherSearchLoading] = useState(false);
@@ -290,6 +291,7 @@ export default function TeacherPayments(): JSX.Element {
 
   const resetLoadedTeacherScope = () => {
     setLoadMode('none');
+    setScopeError('');
     setLoadedTeacherIds([]);
     setTeachers([]);
     setPayouts([]);
@@ -481,12 +483,14 @@ export default function TeacherPayments(): JSX.Element {
       setTeachers([]);
       setRollups({});
       setLoadingRollups(false);
+      setScopeError('');
       return;
     }
     let cancelled = false;
     const loadScopedTeacherFinance = async () => {
       setScopeLoading(true);
       setLoadingRollups(true);
+      setScopeError('');
       try {
         const teacherDocs: TeacherUser[] = [];
         for (const chunk of chunkIds(loadedTeacherIds)) {
@@ -545,6 +549,15 @@ export default function TeacherPayments(): JSX.Element {
         setPayouts(payoutRows);
         setEarnings(earningRows);
         setRollups(map);
+        setScopeError('');
+      } catch (err) {
+        console.error('[TeacherPayments] Failed to load scoped finance data', err);
+        if (cancelled) return;
+        setTeachers([]);
+        setPayouts([]);
+        setEarnings([]);
+        setRollups({});
+        setScopeError('Payment data could not be loaded. Check Firestore rules/indexes.');
       } finally {
         if (!cancelled) {
           setLoadingRollups(false);
@@ -768,12 +781,14 @@ export default function TeacherPayments(): JSX.Element {
 
   const handleMonthChange = (value: string) => {
     setSelectedMonth(value);
+    setScopeError('');
     resetLoadedTeacherScope();
   };
 
   const handleLoadTop10Teachers = async () => {
     if (!selectedMonth) return;
     setScopeLoading(true);
+    setScopeError('');
     try {
       let nextTeacherIds: string[] = [];
       try {
@@ -818,6 +833,16 @@ export default function TeacherPayments(): JSX.Element {
       setLoadMode('top10');
       setLoadedTeacherIds(nextTeacherIds);
       setRefreshKey((prev) => prev + 1);
+    } catch (err) {
+      console.error('[TeacherPayments] Failed to load top10 teachers', err);
+      setExpandedTeachers(new Set());
+      setLoadMode('none');
+      setLoadedTeacherIds([]);
+      setTeachers([]);
+      setPayouts([]);
+      setEarnings([]);
+      setRollups({});
+      setScopeError('Payment data could not be loaded. Check Firestore rules/indexes.');
     } finally {
       setScopeLoading(false);
     }
@@ -1065,6 +1090,7 @@ export default function TeacherPayments(): JSX.Element {
           {loadedScopeLabel}
           {loadMode === 'none' ? ' Select a teacher or click Load Top 10.' : ''}
         </div>
+        {scopeError ? <div className="text-sm text-red-600">{scopeError}</div> : null}
       </Card>
 
       <Card className="p-4">
@@ -1087,7 +1113,9 @@ export default function TeacherPayments(): JSX.Element {
               {visibleRows.length === 0 ? (
                 <tr>
                   <td className="p-3 text-muted-foreground" colSpan={9}>
-                    {scopeLoading || loadingRollups
+                    {scopeError
+                      ? 'Payment data could not be loaded. Check Firestore rules/indexes.'
+                      : scopeLoading || loadingRollups
                       ? 'Loading…'
                       : loadMode === 'none'
                         ? 'No data loaded yet. Select a teacher or click Load Top 10.'

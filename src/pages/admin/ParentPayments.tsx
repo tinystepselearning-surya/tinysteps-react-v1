@@ -955,6 +955,7 @@ export default function ParentPayments(): JSX.Element {
   const [loadMode, setLoadMode] = useState<ParentLoadMode>('none');
   const [loadedParentIds, setLoadedParentIds] = useState<string[]>([]);
   const [scopeLoading, setScopeLoading] = useState(false);
+  const [scopeError, setScopeError] = useState('');
   const [parentSearchTerm, setParentSearchTerm] = useState('');
   const [parentSearchResults, setParentSearchResults] = useState<ParentUser[]>([]);
   const [parentSearchLoading, setParentSearchLoading] = useState(false);
@@ -1099,6 +1100,7 @@ export default function ParentPayments(): JSX.Element {
 
   const resetLoadedParentScope = () => {
     setLoadMode('none');
+    setScopeError('');
     setLoadedParentIds([]);
     setParents([]);
     setCharges([]);
@@ -1228,11 +1230,13 @@ export default function ParentPayments(): JSX.Element {
       setParents([]);
       setWalletSummariesByParent({});
       setMonthlyReadModelsByParent({});
+      setScopeError('');
       return;
     }
     let active = true;
     const loadScopedFinanceData = async () => {
       setScopeLoading(true);
+      setScopeError('');
       try {
         const parentDocs: ParentUser[] = [];
         for (const chunk of chunkIds(loadedParentIds)) {
@@ -1307,6 +1311,7 @@ export default function ParentPayments(): JSX.Element {
         setPayments(paymentRows);
         setWalletSummariesByParent(nextWalletSummaries);
         setMonthlyReadModelsByParent(Object.fromEntries(readModelEntries));
+        setScopeError('');
       } catch (err) {
         console.error('[ParentPayments] Failed to load scoped finance data', err);
         if (!active) return;
@@ -1315,6 +1320,7 @@ export default function ParentPayments(): JSX.Element {
         setPayments([]);
         setWalletSummariesByParent({});
         setMonthlyReadModelsByParent({});
+        setScopeError('Payment data could not be loaded. Check Firestore rules/indexes.');
       } finally {
         if (active) setScopeLoading(false);
       }
@@ -1700,12 +1706,14 @@ export default function ParentPayments(): JSX.Element {
 
   const handleMonthChange = (value: string) => {
     setSelectedMonth(value);
+    setScopeError('');
     resetLoadedParentScope();
   };
 
   const handleLoadTop10Parents = async () => {
     if (!selectedMonth) return;
     setScopeLoading(true);
+    setScopeError('');
     try {
       let nextParentIds: string[] = [];
       try {
@@ -1752,6 +1760,19 @@ export default function ParentPayments(): JSX.Element {
       setLoadMode('top10');
       setLoadedParentIds(nextParentIds);
       setFinanceRefreshKey((prev) => prev + 1);
+    } catch (err) {
+      console.error('[ParentPayments] Failed to load top10 parents', err);
+      setExpandedParents(new Set());
+      setSelectedWalletParentId('');
+      setSelectedWalletParentName('');
+      setLoadMode('none');
+      setLoadedParentIds([]);
+      setParents([]);
+      setCharges([]);
+      setPayments([]);
+      setWalletSummariesByParent({});
+      setMonthlyReadModelsByParent({});
+      setScopeError('Payment data could not be loaded. Check Firestore rules/indexes.');
     } finally {
       setScopeLoading(false);
     }
@@ -2888,47 +2909,48 @@ export default function ParentPayments(): JSX.Element {
           {loadedScopeLabel}
           {loadMode === 'none' ? ' Select a parent or click Load Top 10.' : ''}
         </div>
+        {scopeError ? <div className="text-sm text-red-600">{scopeError}</div> : null}
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         <Card className="p-4">
           <div className="text-xs text-muted-foreground">Selected-month billed</div>
-          <div className="text-lg font-semibold">{formatMoney(summaryCards.selectedMonthBilled)}</div>
+          <div className="text-lg font-semibold">{scopeError ? '—' : formatMoney(summaryCards.selectedMonthBilled)}</div>
         </Card>
         <Card className="p-4">
           <div className="text-xs text-muted-foreground">Selected-month settled / applied</div>
           <div className="text-lg font-semibold">
-            {formatMoney(summaryCards.selectedMonthSettled)}
+            {scopeError ? '—' : formatMoney(summaryCards.selectedMonthSettled)}
           </div>
         </Card>
         <Card className="p-4">
           <div className="text-xs text-muted-foreground">Selected-month outstanding</div>
           <div className="text-lg font-semibold">
-            {formatMoney(summaryCards.selectedMonthOutstanding)}
+            {scopeError ? '—' : formatMoney(summaryCards.selectedMonthOutstanding)}
           </div>
         </Card>
         <Card className="p-4">
           <div className="text-xs text-muted-foreground">Paid parents</div>
-          <div className="text-lg font-semibold">{summaryCards.paidParents}</div>
+          <div className="text-lg font-semibold">{scopeError ? '—' : summaryCards.paidParents}</div>
         </Card>
         <Card className="p-4">
           <div className="text-xs text-muted-foreground">Partial parents</div>
-          <div className="text-lg font-semibold">{summaryCards.partialParents}</div>
+          <div className="text-lg font-semibold">{scopeError ? '—' : summaryCards.partialParents}</div>
         </Card>
         <Card className="p-4">
           <div className="text-xs text-muted-foreground">Follow-up / overdue parents</div>
-          <div className="text-lg font-semibold">{summaryCards.followUpParents}</div>
+          <div className="text-lg font-semibold">{scopeError ? '—' : summaryCards.followUpParents}</div>
         </Card>
         <Card className="p-4">
           <div className="text-xs text-muted-foreground">Total wallet deficit till date</div>
           <div className="text-lg font-semibold">
-            {formatMoney(summaryCards.totalWalletDeficitTillDate)}
+            {scopeError ? '—' : formatMoney(summaryCards.totalWalletDeficitTillDate)}
           </div>
         </Card>
         <Card className="p-4">
           <div className="text-xs text-muted-foreground">Total advance wallet balance</div>
           <div className="text-lg font-semibold">
-            {formatMoney(summaryCards.totalAdvanceWalletBalance)}
+            {scopeError ? '—' : formatMoney(summaryCards.totalAdvanceWalletBalance)}
           </div>
         </Card>
       </div>
@@ -3018,7 +3040,9 @@ export default function ParentPayments(): JSX.Element {
 
         {!selectedWalletParentId ? (
           <div className="text-sm text-muted-foreground">
-            {loadMode === 'none'
+            {scopeError
+              ? 'Payment data could not be loaded. Check Firestore rules/indexes.'
+              : loadMode === 'none'
               ? 'No data loaded yet. Select a parent or click Load Top 10.'
               : 'Select a parent to view wallet details.'}
           </div>

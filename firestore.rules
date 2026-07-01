@@ -374,6 +374,11 @@ function teacherOwnsDocViaAliases(data) {
       allow write: if false;
     }
 
+    match /{path=**}/earnings/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
     match /teachers/{teacherId}/sessionRequests/{requestId} {
       allow read, create, update, delete: if isAdmin() || (isSignedIn() && request.auth.uid == teacherId);
     }
@@ -793,6 +798,11 @@ function teacherOwnsDocViaAliases(data) {
       allow read: if isAdmin()
         || (isParent() && request.auth.uid == parentId);
       allow write: if isAdmin();
+    }
+
+    match /{path=**}/months/{monthKey} {
+      allow read: if isAdmin();
+      allow write: if false;
     }
 
     // ----------------------------
