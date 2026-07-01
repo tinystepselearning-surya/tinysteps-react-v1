@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react';
 import {
   collection,
   documentId,
-  getDocs,
-  onSnapshot,
   orderBy,
   query,
   where,
@@ -11,6 +9,7 @@ import {
 } from 'firebase/firestore';
 import { addDays, format } from 'date-fns';
 import { db } from '../../../lib/firebaseConfig';
+import { getDocsLogged, onSnapshotLogged } from '../../../lib/firestoreReadLogging';
 import { getSessionStartDate } from '../../../lib/sessionTime';
 import {
   isScheduleExceptionSession,
@@ -118,9 +117,11 @@ const fetchEnrollmentsByIds = async (ids: string[]): Promise<Map<string, Record<
 
   for (const chunk of chunkIds(ids, 10)) {
     if (!chunk.length) continue;
-
-    const snap = await getDocs(
-      query(collection(db, 'enrollments'), where(documentId(), 'in', chunk)),
+    const enrollmentQuery = query(collection(db, 'enrollments'), where(documentId(), 'in', chunk));
+    const snap = await getDocsLogged(
+      'useUpcomingSessions:enrollments-by-id',
+      enrollmentQuery,
+      { source: 'src/pages/teacher/hooks/useUpcomingSessions.ts' },
     );
 
     snap.docs.forEach((docSnap) => {
@@ -373,12 +374,9 @@ export const useUpcomingSessions = (
       buildScopedTeacherQuery(field, operator),
     );
 
-    const teacherIdsQuery = buildScopedTeacherQuery('teacherIds', 'array-contains');
-
     const liveDocsBySource = new Map<string, Map<string, TeacherSession>>();
     const sourceStates = new Map<string, { status: 'pending' | 'ready' | 'error'; error: Error | null }>([
       ['primary', { status: 'pending', error: null }],
-      ['teacherIds', { status: 'pending', error: null }],
     ]);
     const fallbackCache = new Map<string, TeacherSession[]>();
     const fallbackCacheKey = makeTeacherFallbackCacheKey(teacherId, targetDate);
@@ -534,7 +532,7 @@ export const useUpcomingSessions = (
 
       fallbackPromise = fetchTeacherSessionAliasFallbacks({
         buildScopedQuery: (field, operator) => buildScopedTeacherQuery(field, operator),
-        includeAliases: ['assignedTeacherId', 'primaryTeacherId', 'teacherUid', 'teacher_id'],
+        includeAliases: ['teacherIds', 'assignedTeacherId', 'primaryTeacherId', 'teacherUid', 'teacher_id'],
         mapDoc: (docSnap) => toTeacherSession({
           id: docSnap.id,
           ...(docSnap.data() as Record<string, unknown>),
@@ -563,6 +561,8 @@ export const useUpcomingSessions = (
             code: (error as any)?.code || null,
           });
         },
+        source: 'src/pages/teacher/hooks/useUpcomingSessions.ts',
+        labelPrefix: 'useUpcomingSessions:fallback',
       })
         .then((result) => {
           if (cancelled) return;
@@ -611,8 +611,10 @@ export const useUpcomingSessions = (
         authUid: teacherId,
       });
 
-      const unsubscribe = onSnapshot(
+      const unsubscribe = onSnapshotLogged(
+        `useUpcomingSessions:${sourceKey}`,
         listenerQuery,
+        { source: 'src/pages/teacher/hooks/useUpcomingSessions.ts' },
         (snapshot) => {
           devLogTeacherQuery('useUpcomingSessions', 'snapshot', {
             queryName: sourceKey,
@@ -654,7 +656,7 @@ export const useUpcomingSessions = (
             ));
             setIsLoading(false);
           });
-          if (sourceKey === 'primary' || sourceKey === 'teacherIds') {
+          if (sourceKey === 'primary') {
             ensureFallbackRows();
           }
         },
@@ -700,7 +702,6 @@ export const useUpcomingSessions = (
     }
 
     attachListener('primary', 'teacherId', '==', primaryQuery);
-    attachListener('teacherIds', 'teacherIds', 'array-contains', teacherIdsQuery);
 
     return () => {
       cancelled = true;

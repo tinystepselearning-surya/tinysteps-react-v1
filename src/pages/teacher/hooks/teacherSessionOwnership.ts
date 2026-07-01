@@ -1,4 +1,5 @@
-import { getDocs, type Query } from 'firebase/firestore';
+import { type Query } from 'firebase/firestore';
+import { getDocsLogged } from '../../../lib/firestoreReadLogging';
 
 export type TeacherSessionAliasField =
   | 'teacherId'
@@ -73,6 +74,8 @@ export const fetchTeacherSessionAliasFallbacks = async <T extends { id: string }
     operator: '==' | 'array-contains';
     error: unknown;
   }) => void;
+  source?: string;
+  labelPrefix?: string;
 }): Promise<TeacherSessionFallbackResult<T>> => {
   const {
     buildScopedQuery,
@@ -81,6 +84,8 @@ export const fetchTeacherSessionAliasFallbacks = async <T extends { id: string }
     rowMatchesTeacher,
     onQuery,
     onQueryError,
+    source = 'teacherSessionOwnership',
+    labelPrefix = 'teacher-session-fallback',
   } = params;
 
   const allowedAliases = includeAliases ? new Set(includeAliases) : null;
@@ -91,7 +96,12 @@ export const fetchTeacherSessionAliasFallbacks = async <T extends { id: string }
   const settled = await Promise.allSettled(
     aliases.map(async ({ field, operator }) => {
       onQuery?.({ field, operator });
-      const snap = await getDocs(buildScopedQuery(field, operator));
+      const scopedQuery = buildScopedQuery(field, operator);
+      const snap = await getDocsLogged(
+        `${labelPrefix}:${field}`,
+        scopedQuery,
+        { source },
+      );
       return { field, snap };
     }),
   );

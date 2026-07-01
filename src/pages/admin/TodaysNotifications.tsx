@@ -3,10 +3,7 @@ import {
   collection,
   doc,
   documentId,
-  getDoc,
-  getDocs,
   limit,
-  onSnapshot,
   query,
   serverTimestamp,
   setDoc,
@@ -41,6 +38,7 @@ import {
 } from '@components/ui/table';
 import { useToast } from '@components/hooks/use-toast';
 import { db } from '../../lib/firebaseConfig';
+import { getDocLogged, getDocsLogged } from '../../lib/firestoreReadLogging';
 import { resolveSessionJoinLink } from '../../lib/sessionJoinLink';
 import { collectSessionTeacherRefs, resolvePreferredSessionTeacherRef } from '../../lib/sessionTeacherRefs';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -775,7 +773,11 @@ async function fetchDocsByIds(
 
   for (const idChunk of chunkIds(unique, 10)) {
     const q = query(collection(db, collectionName), where(documentId(), 'in', idChunk));
-    const snap = await getDocs(q);
+    const snap = await getDocsLogged(
+      `TodaysNotifications:fetchDocsByIds:${collectionName}`,
+      q,
+      { source: 'src/pages/admin/TodaysNotifications.tsx' },
+    );
     snap.docs.forEach((docSnap) => {
       out[docSnap.id] = { id: docSnap.id, ...(docSnap.data() as Record<string, any>) };
     });
@@ -807,7 +809,11 @@ async function fetchUsersByRefs(userRefs: string[]): Promise<Record<string, Reso
 
   for (const idChunk of chunkIds(normalized, 10)) {
     const byDocIdQuery = query(collection(db, 'users'), where(documentId(), 'in', idChunk));
-    const byDocIdSnap = await getDocs(byDocIdQuery);
+    const byDocIdSnap = await getDocsLogged(
+      'TodaysNotifications:users-by-doc-id',
+      byDocIdQuery,
+      { source: 'src/pages/admin/TodaysNotifications.tsx' },
+    );
     byDocIdSnap.docs.forEach((docSnap) => {
       addResolvedUserToMap(map, docSnap.id, docSnap.data() as UserDoc);
     });
@@ -818,7 +824,11 @@ async function fetchUsersByRefs(userRefs: string[]): Promise<Record<string, Reso
 
   for (const idChunk of chunkIds(unresolved, 10)) {
     const byUidQuery = query(collection(db, 'users'), where('uid', 'in', idChunk));
-    const byUidSnap = await getDocs(byUidQuery);
+    const byUidSnap = await getDocsLogged(
+      'TodaysNotifications:users-by-uid',
+      byUidQuery,
+      { source: 'src/pages/admin/TodaysNotifications.tsx' },
+    );
     byUidSnap.docs.forEach((docSnap) => {
       addResolvedUserToMap(map, docSnap.id, docSnap.data() as UserDoc);
     });
@@ -833,7 +843,11 @@ async function fetchReminderSessionsForDate(dateKey: string): Promise<ClassSessi
     where('date', '==', dateKey),
     limit(200),
   );
-  const snap = await getDocs(sessionsQuery);
+  const snap = await getDocsLogged(
+    'TodaysNotifications:reminder-sessions-by-date',
+    sessionsQuery,
+    { source: 'src/pages/admin/TodaysNotifications.tsx' },
+  );
   return snap.docs
     .map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() as any) }))
     .sort((left: ClassSessionDoc, right: ClassSessionDoc) => {
@@ -1117,6 +1131,7 @@ export default function TodaysNotifications() {
   const [teacherFilter, setTeacherFilter] = useState<string>(ALL_TEACHERS_FILTER);
   const [statusFilter, setStatusFilter] = useState<string>(ALL_STATUSES_FILTER);
   const [reminderRefreshNonce, setReminderRefreshNonce] = useState(0);
+  const [admissionsRefreshNonce, setAdmissionsRefreshNonce] = useState(0);
   const handledReminderRefreshNonceRef = useRef(0);
   const isNotificationActionsEnabled = mode !== 'overall-admissions';
 
@@ -1248,71 +1263,63 @@ export default function TodaysNotifications() {
     setIsLoading(true);
     setSessions([]);
 
-    const admissionsQuery = query(collection(db, 'enrollments'));
-    const unsubscribe = onSnapshot(
-      admissionsQuery,
-      async (snapshot) => {
-        try {
-          const nextEnrollments = snapshot.docs
-            .map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() as any) }))
-            .sort((a: EnrollmentDoc, b: EnrollmentDoc) =>
-              String(a.id || '').localeCompare(String(b.id || ''), undefined, { sensitivity: 'base' }),
-            );
+    const loadAdmissions = async () => {
+      try {
+        const admissionsSnap = await getDocsLogged(
+          'TodaysNotifications:overall-admissions',
+          query(collection(db, 'enrollments'), limit(250)),
+          { source: 'src/pages/admin/TodaysNotifications.tsx' },
+        );
 
-          if (!active) return;
-          setEnrollments(nextEnrollments);
+        const nextEnrollments = admissionsSnap.docs
+          .map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() as any) }))
+          .sort((a: EnrollmentDoc, b: EnrollmentDoc) =>
+            String(a.id || '').localeCompare(String(b.id || ''), undefined, { sensitivity: 'base' }),
+          );
 
-          const nextEnrollmentMap: Record<string, Record<string, any>> = {};
-          const kidIds = new Set<string>();
-          const parentRefs = new Set<string>();
-          const teacherRefs = new Set<string>();
-          const courseIds = new Set<string>();
+        if (!active) return;
+        setEnrollments(nextEnrollments);
 
-          nextEnrollments.forEach((enrollment) => {
-            if (enrollment.id) nextEnrollmentMap[enrollment.id] = enrollment as Record<string, any>;
+        const nextEnrollmentMap: Record<string, Record<string, any>> = {};
+        const kidIds = new Set<string>();
+        const parentRefs = new Set<string>();
+        const teacherRefs = new Set<string>();
+        const courseIds = new Set<string>();
 
-            getEnrollmentKidIds(enrollment).forEach((kidId) => kidIds.add(kidId));
-            getEnrollmentParentRefs(enrollment).forEach((parentRef) => parentRefs.add(parentRef));
-            getEnrollmentTeacherRefs(enrollment).forEach((teacherRef) => teacherRefs.add(teacherRef));
+        nextEnrollments.forEach((enrollment) => {
+          if (enrollment.id) nextEnrollmentMap[enrollment.id] = enrollment as Record<string, any>;
 
-            const courseId = normalizeLookupId(enrollment.courseId);
-            if (courseId) courseIds.add(courseId);
-          });
+          getEnrollmentKidIds(enrollment).forEach((kidId) => kidIds.add(kidId));
+          getEnrollmentParentRefs(enrollment).forEach((parentRef) => parentRefs.add(parentRef));
+          getEnrollmentTeacherRefs(enrollment).forEach((teacherRef) => teacherRefs.add(teacherRef));
 
-          const userRefs = Array.from(new Set([...parentRefs, ...teacherRefs]));
-          const [nextUsersMap, nextKidMap, nextCourseMap] = await Promise.all([
-            fetchUsersByRefs(userRefs),
-            fetchDocsByIds('kids', Array.from(kidIds)),
-            fetchDocsByIds('courses', Array.from(courseIds)),
-          ]);
+          const courseId = normalizeLookupId(enrollment.courseId);
+          if (courseId) courseIds.add(courseId);
+        });
 
-          const missingKidIds = Array.from(kidIds).filter((kidId) => !nextKidMap[kidId]);
-          if (missingKidIds.length) {
-            const studentsFallback = await fetchDocsByIds('students', missingKidIds);
-            Object.keys(studentsFallback).forEach((kidId) => {
-              nextKidMap[kidId] = studentsFallback[kidId];
-            });
-          }
+        const userRefs = Array.from(new Set([...parentRefs, ...teacherRefs]));
+        const [nextUsersMap, nextKidMap, nextCourseMap] = await Promise.all([
+          fetchUsersByRefs(userRefs),
+          fetchDocsByIds('kids', Array.from(kidIds)),
+          fetchDocsByIds('courses', Array.from(courseIds)),
+        ]);
 
-          if (!active) return;
-          setUsersMap(nextUsersMap);
-          setKidMap(nextKidMap);
-          setCourseMap(nextCourseMap);
-          setEnrollmentMap(nextEnrollmentMap);
-          setIsLoading(false);
-        } catch (error: any) {
-          console.error('[TodaysNotifications] Failed to load admissions', error);
-          if (!active) return;
-          setIsLoading(false);
-          toast({
-            title: 'Unable to load admissions',
-            description: error?.message || 'Please try again.',
-            variant: 'destructive',
+        const missingKidIds = Array.from(kidIds).filter((kidId) => !nextKidMap[kidId]);
+        if (missingKidIds.length) {
+          const studentsFallback = await fetchDocsByIds('students', missingKidIds);
+          Object.keys(studentsFallback).forEach((kidId) => {
+            nextKidMap[kidId] = studentsFallback[kidId];
           });
         }
-      },
-      (error) => {
-        console.error('[TodaysNotifications] Admissions snapshot error', error);
+
+        if (!active) return;
+        setUsersMap(nextUsersMap);
+        setKidMap(nextKidMap);
+        setCourseMap(nextCourseMap);
+        setEnrollmentMap(nextEnrollmentMap);
+        setIsLoading(false);
+      } catch (error: any) {
+        console.error('[TodaysNotifications] Failed to load admissions', error);
         if (!active) return;
         setIsLoading(false);
         toast({
@@ -1320,14 +1327,15 @@ export default function TodaysNotifications() {
           description: error?.message || 'Please try again.',
           variant: 'destructive',
         });
-      },
-    );
+      }
+    };
+
+    void loadAdmissions();
 
     return () => {
       active = false;
-      unsubscribe();
     };
-  }, [mode, toast]);
+  }, [admissionsRefreshNonce, mode, toast]);
 
   const rows = useMemo(() => {
     return sessions
@@ -1727,7 +1735,12 @@ export default function TodaysNotifications() {
         return;
       }
 
-      const enrollmentSnap = await getDoc(doc(db, 'enrollments', enrollmentId));
+      const enrollmentRef = doc(db, 'enrollments', enrollmentId);
+      const enrollmentSnap = await getDocLogged(
+        'TodaysNotifications:open-session-enrollment',
+        enrollmentRef,
+        { source: 'src/pages/admin/TodaysNotifications.tsx' },
+      );
       const enrollmentData = enrollmentSnap.data() as EnrollmentDoc | undefined;
       const resolvedJoinUrl = resolveSessionJoinLink(
         row,
@@ -1998,7 +2011,16 @@ export default function TodaysNotifications() {
             >
               Refresh sessions
             </Button>
-          ) : null}
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 px-3 text-xs"
+              onClick={() => setAdmissionsRefreshNonce((value) => value + 1)}
+            >
+              Refresh admissions
+            </Button>
+          )}
           {mode !== 'overall-admissions' ? (
             <div className="flex items-center gap-1">
               <span className="text-xs text-muted-foreground">Status</span>

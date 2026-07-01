@@ -110,6 +110,7 @@ export function useKidProgress(kidId: string) {
       return snapshot.docs.map((d: any) => ({ id: d.id, ...d.data() })) as ProgressItem[];
     },
     enabled: !!kidId,
+    retry: false,
   });
 }
 
@@ -165,6 +166,7 @@ export function useSessionsForTeacher(teacherId: string) {
         });
     },
     enabled: !!teacherId,
+    retry: false,
   });
 }
 
@@ -210,6 +212,7 @@ export function useKidAttendance(kidId: string, monthStart: string) {
       return { total, present, late, absent, percentage };
     },
     enabled: !!kidId && !!monthStart,
+    retry: false,
   });
 }
 
@@ -311,6 +314,7 @@ export function useEnrollments(parentId: string) {
       return results;
     },
     enabled: !!parentId,
+    retry: false,
   });
 }
 
@@ -331,6 +335,7 @@ export function useAllEnrollments() {
       return snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as Enrollment) })) as Enrollment[];
     },
     staleTime: 30_000,
+    retry: false,
   });
 }
 
@@ -455,6 +460,7 @@ export function useEnrollmentsForStudents(studentIds: string[]) {
       return results;
     },
     enabled: Array.isArray(studentIds) && studentIds.length > 0,
+    retry: false,
   });
 }
 

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { collection, documentId, getDocs, onSnapshot, orderBy, query, where } from 'firebase/firestore';
+import { collection, documentId, orderBy, query, where } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { db } from '../../../lib/firebaseConfig';
+import { getDocsLogged, onSnapshotLogged } from '../../../lib/firestoreReadLogging';
 import {
   isScheduleExceptionSession,
   isSessionCanonicalForEnrollment,
@@ -457,8 +458,11 @@ const fetchEnrollmentsByIds = async (ids: string[]): Promise<Map<string, Record<
   const map = new Map<string, Record<string, unknown>>();
   for (const chunk of chunkIds(ids, 10)) {
     if (!chunk.length) continue;
-    const snap = await getDocs(
-      query(collection(db, 'enrollments'), where(documentId(), 'in', chunk)),
+    const enrollmentQuery = query(collection(db, 'enrollments'), where(documentId(), 'in', chunk));
+    const snap = await getDocsLogged(
+      'useTeacherSessions:enrollments-by-id',
+      enrollmentQuery,
+      { source: 'src/pages/teacher/hooks/useTeacherSessions.ts' },
     );
     snap.docs.forEach((docSnap) => {
       map.set(docSnap.id, { id: docSnap.id, ...(docSnap.data() as Record<string, unknown>) });
@@ -679,6 +683,8 @@ export const useTeacherSessions = (
             code: (error as any)?.code || null,
           });
         },
+        source: 'src/pages/teacher/hooks/useTeacherSessions.ts',
+        labelPrefix: 'useTeacherSessions:fallback',
       })
         .then((result) => {
           if (cancelled) return;
@@ -721,8 +727,10 @@ export const useTeacherSessions = (
       todayDate,
       dateRange: { start, end },
     });
-    const unsubscribe = onSnapshot(
+    const unsubscribe = onSnapshotLogged(
+      'useTeacherSessions:primary',
       primaryQuery,
+      { source: 'src/pages/teacher/hooks/useTeacherSessions.ts' },
       (snapshot) => {
         devLogTeacherQuery('useTeacherSessions', 'snapshot', {
           queryName: 'primary',

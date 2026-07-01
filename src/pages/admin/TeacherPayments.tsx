@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebaseConfig';
+import { getDocLogged, getDocsLogged } from '../../lib/firestoreReadLogging';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
 import { Button } from '@components/ui/button';
@@ -776,13 +777,15 @@ export default function TeacherPayments(): JSX.Element {
     try {
       let nextTeacherIds: string[] = [];
       try {
-        const topRollupSnap = await getDocs(
+        const topRollupSnap = await getDocsLogged(
+          'TeacherPayments:top10-rollup-earnings',
           query(
             collectionGroup(db, 'earnings'),
             where('monthKey', '==', selectedMonth),
             orderBy('teacherId', 'asc'),
             limit(10)
-          )
+          ),
+          { source: 'src/pages/admin/TeacherPayments.tsx' },
         );
         nextTeacherIds = topRollupSnap.docs
           .map((docSnap) => String((docSnap.data() as any)?.teacherId || '').trim())
@@ -792,13 +795,15 @@ export default function TeacherPayments(): JSX.Element {
       }
 
       if (nextTeacherIds.length === 0) {
-        const fallbackSnap = await getDocs(
+        const fallbackSnap = await getDocsLogged(
+          'TeacherPayments:top10-teacher-earnings-fallback',
           query(
             collection(db, 'teacherEarnings'),
             where('monthKey', '==', selectedMonth),
             orderBy('teacherId', 'asc'),
             limit(10)
-          )
+          ),
+          { source: 'src/pages/admin/TeacherPayments.tsx' },
         );
         nextTeacherIds = Array.from(
           new Set(

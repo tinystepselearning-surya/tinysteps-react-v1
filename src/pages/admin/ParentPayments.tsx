@@ -15,6 +15,12 @@ import {
 import { httpsCallable } from 'firebase/functions';
 import jsPDF from 'jspdf';
 import { db, functions } from '../../lib/firebaseConfig';
+import {
+  getDocLogged,
+  getDocsLogged,
+  onSnapshotLogged,
+  onSnapshotLoggedDoc,
+} from '../../lib/firestoreReadLogging';
 import { normalizeFinanceStatus } from '../../lib/statuses';
 import {
   buildParentPaymentsReportingRow,
@@ -1416,8 +1422,10 @@ export default function ParentPayments(): JSX.Element {
     setWalletSummaryLoading(true);
     setWalletSummaryError('');
     const walletRef = doc(db, 'parentWallets', selectedWalletParentId);
-    const unsub = onSnapshot(
+    const unsub = onSnapshotLoggedDoc(
+      'ParentPayments:wallet-summary',
       walletRef,
+      { source: 'src/pages/admin/ParentPayments.tsx' },
       (snap) => {
         setWalletSummary(snap.exists() ? (snap.data() as WalletSummary) : null);
         setWalletSummaryLoading(false);
@@ -1450,8 +1458,10 @@ export default function ParentPayments(): JSX.Element {
       orderBy('createdAt', 'desc'),
       limit(20)
     );
-    const unsub = onSnapshot(
+    const unsub = onSnapshotLogged(
+      'ParentPayments:wallet-transactions',
       transactionsQuery,
+      { source: 'src/pages/admin/ParentPayments.tsx' },
       (snap) => {
         setWalletTransactions(
           snap.docs.map((docSnap) => ({
@@ -1699,13 +1709,15 @@ export default function ParentPayments(): JSX.Element {
     try {
       let nextParentIds: string[] = [];
       try {
-        const topReadModelSnap = await getDocs(
+        const topReadModelSnap = await getDocsLogged(
+          'ParentPayments:top10-read-model-months',
           query(
             collectionGroup(db, 'months'),
             where('monthKey', '==', selectedMonth),
             orderBy('parentId', 'asc'),
             limit(10)
-          )
+          ),
+          { source: 'src/pages/admin/ParentPayments.tsx' },
         );
         nextParentIds = topReadModelSnap.docs
           .map((docSnap) => String((docSnap.data() as any)?.parentId || '').trim())
@@ -1715,13 +1727,15 @@ export default function ParentPayments(): JSX.Element {
       }
 
       if (nextParentIds.length === 0) {
-        const fallbackSnap = await getDocs(
+        const fallbackSnap = await getDocsLogged(
+          'ParentPayments:top10-billing-charges-fallback',
           query(
             collection(db, 'billingCharges'),
             where('monthKey', '==', selectedMonth),
             orderBy('parentId', 'asc'),
             limit(10)
-          )
+          ),
+          { source: 'src/pages/admin/ParentPayments.tsx' },
         );
         nextParentIds = Array.from(
           new Set(

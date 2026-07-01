@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { db } from '../../lib/firebaseConfig';
+import { getDocsLogged } from '../../lib/firestoreReadLogging';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
 import { Button } from '@components/ui/button';
@@ -191,15 +192,29 @@ export default function AnalyticsDashboard(): JSX.Element {
   const [selectedMonth, setSelectedMonth] = useState<string>(() => monthKeyFromDate(new Date()));
   const [teacherEarningsTab, setTeacherEarningsTab] = useState<'live' | 'archived'>('live');
   const [monthRefreshKey, setMonthRefreshKey] = useState(0);
+  const [coreAnalyticsEnabled, setCoreAnalyticsEnabled] = useState(false);
+  const [coreRefreshKey, setCoreRefreshKey] = useState(0);
 
   useEffect(() => {
+    if (!coreAnalyticsEnabled) {
+      setUsers([]);
+      setEnrollments([]);
+      setCourses([]);
+      return;
+    }
     let active = true;
     const loadCore = async () => {
       try {
         const [usersSnap, enrollSnap, coursesSnap] = await Promise.all([
-          getDocs(collection(db, 'users')),
-          getDocs(collection(db, 'enrollments')),
-          getDocs(collection(db, 'courses')),
+          getDocsLogged('AnalyticsDashboard:all-users', query(collection(db, 'users')), {
+            source: 'src/pages/admin/AnalyticsDashboard.tsx',
+          }),
+          getDocsLogged('AnalyticsDashboard:all-enrollments', query(collection(db, 'enrollments')), {
+            source: 'src/pages/admin/AnalyticsDashboard.tsx',
+          }),
+          getDocsLogged('AnalyticsDashboard:all-courses', query(collection(db, 'courses')), {
+            source: 'src/pages/admin/AnalyticsDashboard.tsx',
+          }),
         ]);
         if (!active) return;
         setFsError(null);
@@ -216,7 +231,7 @@ export default function AnalyticsDashboard(): JSX.Element {
     return () => {
       active = false;
     };
-  }, []);
+  }, [coreAnalyticsEnabled, coreRefreshKey]);
 
   useEffect(() => {
     if (!selectedMonth) {
@@ -235,20 +250,30 @@ export default function AnalyticsDashboard(): JSX.Element {
       try {
         const [chargesSnap, paymentsSnap, teacherEarningsSnap, classSessionsSnap] =
           await Promise.all([
-            getDocs(
-              query(collection(db, 'billingCharges'), where('monthKey', '==', selectedMonth))
+            getDocsLogged(
+              'AnalyticsDashboard:month-billing-charges',
+              query(collection(db, 'billingCharges'), where('monthKey', '==', selectedMonth)),
+              { source: 'src/pages/admin/AnalyticsDashboard.tsx' },
             ),
-            getDocs(query(collection(db, 'payments'), where('monthKey', '==', selectedMonth))),
-            getDocs(
-              query(collection(db, 'teacherEarnings'), where('monthKey', '==', selectedMonth))
+            getDocsLogged(
+              'AnalyticsDashboard:month-payments',
+              query(collection(db, 'payments'), where('monthKey', '==', selectedMonth)),
+              { source: 'src/pages/admin/AnalyticsDashboard.tsx' },
+            ),
+            getDocsLogged(
+              'AnalyticsDashboard:month-teacher-earnings',
+              query(collection(db, 'teacherEarnings'), where('monthKey', '==', selectedMonth)),
+              { source: 'src/pages/admin/AnalyticsDashboard.tsx' },
             ),
             monthRange
-              ? getDocs(
+              ? getDocsLogged(
+                  'AnalyticsDashboard:month-class-sessions',
                   query(
                     collection(db, 'classSessions'),
                     where('date', '>=', monthRange.startYmd),
                     where('date', '<=', monthRange.endYmd)
-                  )
+                  ),
+                  { source: 'src/pages/admin/AnalyticsDashboard.tsx' },
                 )
               : Promise.resolve(null),
           ]);
@@ -579,6 +604,20 @@ export default function AnalyticsDashboard(): JSX.Element {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant={coreAnalyticsEnabled ? 'outline' : 'default'}
+            onClick={() => {
+              if (coreAnalyticsEnabled) {
+                setCoreRefreshKey((prev) => prev + 1);
+                return;
+              }
+              setCoreAnalyticsEnabled(true);
+            }}
+          >
+            {coreAnalyticsEnabled ? 'Refresh core analytics' : 'Load core analytics'}
+          </Button>
           <label className="text-sm font-medium">Month</label>
           <Input
             type="month"
@@ -595,7 +634,9 @@ export default function AnalyticsDashboard(): JSX.Element {
             Refresh
           </Button>
           <span className="text-xs text-muted-foreground px-2 py-1 rounded-full border">
-            Manual refresh month snapshot
+            {coreAnalyticsEnabled
+              ? 'Core analytics loaded on demand'
+              : 'Heavy core analytics are paused until loaded manually'}
           </span>
         </div>
       </div>
@@ -604,6 +645,12 @@ export default function AnalyticsDashboard(): JSX.Element {
         <div className="text-xs text-amber-700 border border-amber-200 bg-amber-50 rounded px-3 py-2">
           {fsError}
         </div>
+      )}
+
+      {!coreAnalyticsEnabled && (
+        <Card className="p-4 text-sm text-muted-foreground">
+          Users, enrollments, and courses stay unloaded until you click `Load core analytics`.
+        </Card>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

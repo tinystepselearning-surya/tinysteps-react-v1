@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { collection, getDocs, query, Timestamp, where } from 'firebase/firestore';
+import { collection, query, Timestamp, where } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../../../../lib/firebaseConfig';
+import { getDocsLogged } from '../../../../lib/firestoreReadLogging';
+import { fetchTeacherSessionAliasFallbacks } from '../../hooks/teacherSessionOwnership';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
@@ -103,20 +105,6 @@ type QueryError = Error & { code?: string | null };
 const WINDOW_DAYS = 60;
 const ACTIVE_STATUSES = new Set(['trial', 'active', 'paused', 'enrolled', 'current', 'ongoing']);
 const PAST_STATUSES = new Set(['completed', 'discontinued', 'expired', 'cancelled', 'canceled', 'inactive', 'archived', 'ended', 'past']);
-const TEACHER_ENROLLMENT_ALIAS_FIELDS: Array<{ field: TeacherAliasField; operator: '==' | 'array-contains' }> = [
-  { field: 'teacherId', operator: '==' },
-  { field: 'assignedTeacherId', operator: '==' },
-  { field: 'primaryTeacherId', operator: '==' },
-  { field: 'teacherUid', operator: '==' },
-  { field: 'teacher_id', operator: '==' },
-];
-const TEACHER_SESSION_ALIAS_FIELDS: Array<{ field: Exclude<TeacherAliasField, 'teacherIds'>; operator: '==' }> = [
-  { field: 'teacherId', operator: '==' },
-  { field: 'assignedTeacherId', operator: '==' },
-  { field: 'primaryTeacherId', operator: '==' },
-  { field: 'teacherUid', operator: '==' },
-  { field: 'teacher_id', operator: '==' },
-];
 
 function toMillis(value: any): number {
   if (!value) return 0;
@@ -293,47 +281,41 @@ function resolveEnrollmentDedupKey(enrollment: Enrollment): string {
 
 async function fetchTeacherEnrollments(teacherId: string): Promise<TeacherAliasQueryResult<Enrollment>> {
   const base = collection(db, 'enrollments');
-  const settled = await Promise.allSettled(
-    TEACHER_ENROLLMENT_ALIAS_FIELDS.map(async ({ field, operator }) => ({
-      alias: field,
-      snap: await getDocs(query(base, where(field, operator, teacherId))),
-    })),
-  );
-
   const deniedAliases: TeacherAliasField[] = [];
   const merged = new Map<string, Enrollment>();
-  let successCount = 0;
-  let firstError: unknown = null;
-
-  settled.forEach((result, index) => {
-    const alias = TEACHER_ENROLLMENT_ALIAS_FIELDS[index].field;
-
-    if (result.status === 'fulfilled') {
-      successCount += 1;
-      result.value.snap.docs.forEach((docSnap) => {
-        const data = { id: docSnap.id, ...(docSnap.data() as any) } as Enrollment;
-        if (!normalizeTeacherIds(data as Record<string, unknown>).includes(teacherId)) return;
-        const dedupeKey = resolveEnrollmentDedupKey(data);
-        merged.set(dedupeKey, { ...merged.get(dedupeKey), ...data });
-      });
-      return;
-    }
-
-    firstError ??= result.reason;
-    if (isPermissionDeniedError(result.reason)) deniedAliases.push(alias);
-
-    devLogMyStudents('info', 'enrollment alias query skipped', {
-      alias,
-      code: (result.reason as QueryError | undefined)?.code || null,
-      error: result.reason instanceof Error ? result.reason.message : String(result.reason),
-    });
+  const primarySnap = await getDocsLogged(
+    'TeacherMyStudentsV2:enrollments:teacherId',
+    query(base, where('teacherId', '==', teacherId)),
+    { source: 'src/pages/teacher/components/students/TeacherMyStudentsV2.tsx' },
+  );
+  primarySnap.docs.forEach((docSnap) => {
+    const data = { id: docSnap.id, ...(docSnap.data() as any) } as Enrollment;
+    if (!normalizeTeacherIds(data as Record<string, unknown>).includes(teacherId)) return;
+    const dedupeKey = resolveEnrollmentDedupKey(data);
+    merged.set(dedupeKey, { ...merged.get(dedupeKey), ...data });
   });
 
-  if (successCount === 0) {
-    if (deniedAliases.length > 0) {
-      throw createPermissionDeniedError('Unable to load students due to permissions');
-    }
-    throw (firstError as Error) || new Error('Unable to load students.');
+  if (merged.size === 0) {
+    const fallback = await fetchTeacherSessionAliasFallbacks<Enrollment>({
+      buildScopedQuery: (field, operator) => query(base, where(field, operator, teacherId)),
+      includeAliases: ['teacherIds', 'assignedTeacherId', 'primaryTeacherId', 'teacherUid', 'teacher_id'],
+      mapDoc: (docSnap) => ({ id: docSnap.id, ...(docSnap.data() as any) } as Enrollment),
+      rowMatchesTeacher: (row) => normalizeTeacherIds(row as Record<string, unknown>).includes(teacherId),
+      onQueryError: ({ field, error }) => {
+        if (isPermissionDeniedError(error)) deniedAliases.push(field);
+        devLogMyStudents('info', 'enrollment alias query skipped', {
+          alias: field,
+          code: (error as QueryError | undefined)?.code || null,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      },
+      source: 'src/pages/teacher/components/students/TeacherMyStudentsV2.tsx',
+      labelPrefix: 'TeacherMyStudentsV2:enrollments-fallback',
+    });
+    fallback.rows.forEach((data) => {
+      const dedupeKey = resolveEnrollmentDedupKey(data);
+      merged.set(dedupeKey, { ...merged.get(dedupeKey), ...data });
+    });
   }
 
   if (deniedAliases.length > 0) {
@@ -359,63 +341,78 @@ async function fetchTeacherSessionsWindow(teacherId: string): Promise<TeacherAli
   const endMs = end.toMillis();
   const base = collection(db, 'classSessions');
 
-  const settled = await Promise.allSettled(
-    TEACHER_SESSION_ALIAS_FIELDS.map(async ({ field, operator }) => {
-      const loadRangeQuery = () =>
-        getDocs(query(base, where(field, operator, teacherId), where('startAt', '>=', start), where('startAt', '<=', end)));
-      const loadFallbackQuery = () => getDocs(query(base, where(field, operator, teacherId)));
-
-      try {
-        return { alias: field, snap: await loadRangeQuery() };
-      } catch (error) {
-        if (!isIndexError(error)) throw error;
-
-        devLogMyStudents('info', 'falling back to alias-only classSessions query', {
-          alias: field,
-          code: (error as QueryError | undefined)?.code || null,
-          error: error instanceof Error ? error.message : String(error),
-        });
-
-        return { alias: field, snap: await loadFallbackQuery() };
-      }
-    }),
-  );
-
   const deniedAliases: TeacherAliasField[] = [];
   const merged = new Map<string, ClassSession>();
-  let successCount = 0;
-  let firstError: unknown = null;
 
-  settled.forEach((result, index) => {
-    const alias = TEACHER_SESSION_ALIAS_FIELDS[index].field;
-
-    if (result.status === 'fulfilled') {
-      successCount += 1;
-      result.value.snap.docs.forEach((docSnap) => {
-        const data = { id: docSnap.id, ...(docSnap.data() as any) } as ClassSession;
-        if (!normalizeTeacherIds(data as Record<string, unknown>).includes(teacherId)) return;
-        const startAtMs = toMillis(data.startAt);
-        if (!startAtMs || startAtMs < startMs || startAtMs > endMs) return;
-        merged.set(docSnap.id, data);
-      });
-      return;
-    }
-
-    firstError ??= result.reason;
-    if (isPermissionDeniedError(result.reason)) deniedAliases.push(alias);
-
-    devLogMyStudents('info', 'classSessions alias query skipped', {
-      alias,
-      code: (result.reason as QueryError | undefined)?.code || null,
-      error: result.reason instanceof Error ? result.reason.message : String(result.reason),
+  try {
+    const primarySnap = await getDocsLogged(
+      'TeacherMyStudentsV2:sessions-window:teacherId',
+      query(base, where('teacherId', '==', teacherId), where('startAt', '>=', start), where('startAt', '<=', end)),
+      { source: 'src/pages/teacher/components/students/TeacherMyStudentsV2.tsx' },
+    );
+    primarySnap.docs.forEach((docSnap) => {
+      const data = { id: docSnap.id, ...(docSnap.data() as any) } as ClassSession;
+      if (!normalizeTeacherIds(data as Record<string, unknown>).includes(teacherId)) return;
+      const startAtMs = toMillis(data.startAt);
+      if (!startAtMs || startAtMs < startMs || startAtMs > endMs) return;
+      merged.set(docSnap.id, data);
     });
-  });
-
-  if (successCount === 0) {
-    if (deniedAliases.length > 0) {
+  } catch (error) {
+    if (isPermissionDeniedError(error)) {
       throw createPermissionDeniedError('Unable to load session history due to permissions');
     }
-    throw (firstError as Error) || new Error('Unable to load session history.');
+    if (!isIndexError(error)) throw error;
+
+    devLogMyStudents('info', 'canonical classSessions window query needs fallback', {
+      code: (error as QueryError | undefined)?.code || null,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  if (merged.size === 0) {
+    const runFallbackPass = async (bounded: boolean) =>
+      fetchTeacherSessionAliasFallbacks<ClassSession>({
+        buildScopedQuery: (field, operator) =>
+          bounded
+            ? query(base, where(field, operator, teacherId), where('startAt', '>=', start), where('startAt', '<=', end))
+            : query(base, where(field, operator, teacherId)),
+        includeAliases: ['teacherIds', 'assignedTeacherId', 'primaryTeacherId', 'teacherUid', 'teacher_id'],
+        mapDoc: (docSnap) => ({ id: docSnap.id, ...(docSnap.data() as any) } as ClassSession),
+        rowMatchesTeacher: (row) => {
+          if (!normalizeTeacherIds(row as Record<string, unknown>).includes(teacherId)) return false;
+          const startAtMs = toMillis(row.startAt);
+          return Boolean(startAtMs && startAtMs >= startMs && startAtMs <= endMs);
+        },
+        onQueryError: ({ field, error }) => {
+          if (isPermissionDeniedError(error)) deniedAliases.push(field);
+          devLogMyStudents('info', 'classSessions alias query skipped', {
+            alias: field,
+            code: (error as QueryError | undefined)?.code || null,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        },
+        source: 'src/pages/teacher/components/students/TeacherMyStudentsV2.tsx',
+        labelPrefix: bounded
+          ? 'TeacherMyStudentsV2:sessions-window-fallback'
+          : 'TeacherMyStudentsV2:sessions-alias-only-fallback',
+      });
+
+    const boundedFallback = await runFallbackPass(true);
+    boundedFallback.rows.forEach((row) => {
+      merged.set(row.id, row);
+    });
+
+    if (merged.size === 0 && isIndexError(boundedFallback.firstError)) {
+      devLogMyStudents('info', 'falling back to alias-only classSessions query', {
+        reason: boundedFallback.firstError instanceof Error
+          ? boundedFallback.firstError.message
+          : String(boundedFallback.firstError),
+      });
+      const unboundedFallback = await runFallbackPass(false);
+      unboundedFallback.rows.forEach((row) => {
+        merged.set(row.id, row);
+      });
+    }
   }
 
   if (deniedAliases.length > 0) {

@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, query, where } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
+import { getDocLogged, getDocsLogged } from '../../../lib/firestoreReadLogging';
+import { fetchTeacherSessionAliasFallbacks } from './teacherSessionOwnership';
 import { TeacherStudent } from '../../../types/Teacher';
 
 const normalizeTeacherIds = (row: Record<string, unknown> | undefined): string[] => {
@@ -17,42 +19,55 @@ const normalizeTeacherIds = (row: Record<string, unknown> | undefined): string[]
 };
 
 const fetchTeacherStudents = async (teacherId: string): Promise<TeacherStudent[]> => {
-  const [kidsByTeacherIdsSnap, kidsByTeacherIdSnap] = await Promise.all([
-    getDocs(query(collection(db, 'kids'), where('teacherIds', 'array-contains', teacherId))),
-    getDocs(query(collection(db, 'kids'), where('teacherId', '==', teacherId))),
-  ]);
+  const kidsByTeacherIdSnap = await getDocsLogged(
+    'useTeacherStudents:kids-by-teacherId',
+    query(collection(db, 'kids'), where('teacherId', '==', teacherId)),
+    { source: 'src/pages/teacher/hooks/useTeacherStudents.ts' },
+  );
   const kidDocMap = new Map<string, { id: string; data: any }>();
-  [...kidsByTeacherIdsSnap.docs, ...kidsByTeacherIdSnap.docs].forEach((docSnap) => {
+  kidsByTeacherIdSnap.docs.forEach((docSnap) => {
     kidDocMap.set(docSnap.id, { id: docSnap.id, data: docSnap.data() as any });
   });
+
+  if (kidDocMap.size === 0) {
+    const kidsByTeacherIdsSnap = await getDocsLogged(
+      'useTeacherStudents:kids-by-teacherIds-fallback',
+      query(collection(db, 'kids'), where('teacherIds', 'array-contains', teacherId)),
+      { source: 'src/pages/teacher/hooks/useTeacherStudents.ts' },
+    );
+    kidsByTeacherIdsSnap.docs.forEach((docSnap) => {
+      kidDocMap.set(docSnap.id, { id: docSnap.id, data: docSnap.data() as any });
+    });
+  }
   const kidDocs = Array.from(kidDocMap.values());
   const kidIds = kidDocs.map((k) => k.id);
   const kidIdSet = new Set(kidIds);
 
-  const courseMap = new Map<string, string>();
-  const coursesSnap = await getDocs(collection(db, 'courses'));
-  coursesSnap.docs.forEach((doc) => {
-    const data = doc.data() as any;
-    const title = data.title || data.name || doc.id;
-    courseMap.set(doc.id, title);
-  });
-
   const enrollmentsByKidId = new Map<string, any[]>();
   const enrollmentDocsById = new Map<string, any>();
-  const teacherEnrollmentQueries = await Promise.all([
-    getDocs(query(collection(db, 'enrollments'), where('teacherId', '==', teacherId))),
-    getDocs(query(collection(db, 'enrollments'), where('teacherIds', 'array-contains', teacherId))),
-    getDocs(query(collection(db, 'enrollments'), where('assignedTeacherId', '==', teacherId))),
-    getDocs(query(collection(db, 'enrollments'), where('primaryTeacherId', '==', teacherId))),
-    getDocs(query(collection(db, 'enrollments'), where('teacherUid', '==', teacherId))),
-    getDocs(query(collection(db, 'enrollments'), where('teacher_id', '==', teacherId))),
-  ]);
-  teacherEnrollmentQueries.forEach((snap) => {
-    snap.docs.forEach((docSnap) => {
-      if (enrollmentDocsById.has(docSnap.id)) return;
-      enrollmentDocsById.set(docSnap.id, { id: docSnap.id, ...(docSnap.data() as any) });
-    });
+  const enrollmentsBase = collection(db, 'enrollments');
+  const primaryEnrollmentsSnap = await getDocsLogged(
+    'useTeacherStudents:enrollments-teacherId',
+    query(enrollmentsBase, where('teacherId', '==', teacherId)),
+    { source: 'src/pages/teacher/hooks/useTeacherStudents.ts' },
+  );
+  primaryEnrollmentsSnap.docs.forEach((docSnap) => {
+    enrollmentDocsById.set(docSnap.id, { id: docSnap.id, ...(docSnap.data() as any) });
   });
+
+  if (enrollmentDocsById.size === 0) {
+    const fallback = await fetchTeacherSessionAliasFallbacks<Record<string, any> & { id: string }>({
+      buildScopedQuery: (field, operator) => query(enrollmentsBase, where(field, operator, teacherId)),
+      includeAliases: ['teacherIds', 'assignedTeacherId', 'primaryTeacherId', 'teacherUid', 'teacher_id'],
+      mapDoc: (docSnap) => ({ id: docSnap.id, ...(docSnap.data() as Record<string, unknown>) }),
+      rowMatchesTeacher: (row) => normalizeTeacherIds(row).includes(teacherId),
+      source: 'src/pages/teacher/hooks/useTeacherStudents.ts',
+      labelPrefix: 'useTeacherStudents:fallback',
+    });
+    fallback.rows.forEach((row) => {
+      enrollmentDocsById.set(row.id, row);
+    });
+  }
 
   enrollmentDocsById.forEach((enrollment) => {
     const ids = new Set<string>();
@@ -69,6 +84,7 @@ const fetchTeacherStudents = async (teacherId: string): Promise<TeacherStudent[]
   });
 
   const parentIds = new Set<string>();
+  const courseIds = new Set<string>();
   kidDocs.forEach(({ data }) => {
     const parentId =
       data.primaryParentId ||
@@ -76,17 +92,46 @@ const fetchTeacherStudents = async (teacherId: string): Promise<TeacherStudent[]
       (Array.isArray(data.parentIds) ? data.parentIds[0] : null);
     if (parentId) parentIds.add(String(parentId));
   });
+  enrollmentDocsById.forEach((enrollment) => {
+    const courseId = String(enrollment.courseId || '').trim();
+    if (courseId) courseIds.add(courseId);
+  });
+
+  const courseMap = new Map<string, string>();
+  if (courseIds.size > 0) {
+    const courseQueries = Array.from(courseIds).map((courseId) =>
+      getDocLogged(
+        'useTeacherStudents:course-by-id',
+        doc(db, 'courses', courseId),
+        { source: 'src/pages/teacher/hooks/useTeacherStudents.ts' },
+      ),
+    );
+    const courseSnaps = await Promise.all(courseQueries);
+    courseSnaps.forEach((courseSnap) => {
+      if (!courseSnap.exists()) return;
+      const data = courseSnap.data() as any;
+      courseMap.set(courseSnap.id, data.title || data.name || courseSnap.id);
+    });
+  }
 
   const parentById = new Map<string, { name?: string; email?: string }>();
   await Promise.all(
     Array.from(parentIds).map(async (pid) => {
-      const userSnap = await getDoc(doc(db, 'users', pid));
+      const userSnap = await getDocLogged(
+        'useTeacherStudents:parent-user-by-id',
+        doc(db, 'users', pid),
+        { source: 'src/pages/teacher/hooks/useTeacherStudents.ts' },
+      );
       if (userSnap.exists()) {
         const u = userSnap.data() as any;
         parentById.set(pid, { name: u.displayName || u.name, email: u.email });
         return;
       }
-      const parentSnap = await getDoc(doc(db, 'parents', pid));
+      const parentSnap = await getDocLogged(
+        'useTeacherStudents:parent-doc-by-id',
+        doc(db, 'parents', pid),
+        { source: 'src/pages/teacher/hooks/useTeacherStudents.ts' },
+      );
       if (parentSnap.exists()) {
         const p = parentSnap.data() as any;
         parentById.set(pid, { name: p.displayName || p.name, email: p.email });
@@ -168,6 +213,8 @@ export const useTeacherStudents = (teacherId?: string) => {
     queryKey: ['teacherStudents', teacherId],
     queryFn: () => (teacherId ? fetchTeacherStudents(teacherId) : Promise.resolve([])),
     enabled: Boolean(teacherId),
+    retry: false,
     staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
   });
 };

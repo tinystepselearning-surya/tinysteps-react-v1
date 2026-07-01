@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebaseConfig';
+import { getDocsLogged } from '../lib/firestoreReadLogging';
+import { fetchTeacherSessionAliasFallbacks } from '../pages/teacher/hooks/teacherSessionOwnership';
 import { useAuthStore } from '../store/useAuthStore';
 
 interface FilteredStudent {
@@ -18,24 +20,7 @@ type EnrollmentRow = Record<string, unknown> & {
   id: string;
 };
 
-type TeacherAliasField =
-  | 'teacherId'
-  | 'teacherIds'
-  | 'assignedTeacherId'
-  | 'primaryTeacherId'
-  | 'teacherUid'
-  | 'teacher_id';
-
 type QueryError = Error & { code?: string | null };
-
-const TEACHER_ALIAS_FIELDS: Array<{ field: TeacherAliasField; operator: '==' | 'array-contains' }> = [
-  { field: 'teacherId', operator: '==' },
-  { field: 'teacherIds', operator: 'array-contains' },
-  { field: 'assignedTeacherId', operator: '==' },
-  { field: 'primaryTeacherId', operator: '==' },
-  { field: 'teacherUid', operator: '==' },
-  { field: 'teacher_id', operator: '==' },
-];
 
 const ACTIVE_PROGRESS_STATUS = 'on_track';
 
@@ -105,71 +90,100 @@ const resolveSnapshotName = (row: EnrollmentRow): string => {
 
 async function fetchTeacherFilteredStudents(teacherId: string): Promise<FilteredStudent[]> {
   const base = collection(db, 'enrollments');
-  const settled = await Promise.allSettled(
-    TEACHER_ALIAS_FIELDS.map(async ({ field, operator }) => ({
-      alias: field,
-      snap: await getDocs(query(base, where(field, operator, teacherId))),
-    })),
-  );
-
   const merged = new Map<string, FilteredStudent>();
-  const deniedAliases: TeacherAliasField[] = [];
-  let successCount = 0;
-  let firstError: unknown = null;
+  const deniedAliases: string[] = [];
 
-  settled.forEach((result, index) => {
-    const alias = TEACHER_ALIAS_FIELDS[index].field;
+  const mergeRows = (rows: EnrollmentRow[]) => {
+    rows.forEach((row) => {
+      if (!normalizeTeacherIds(row).includes(teacherId)) return;
 
-    if (result.status === 'fulfilled') {
-      successCount += 1;
-      result.value.snap.docs.forEach((docSnap) => {
-        const row = { id: docSnap.id, ...(docSnap.data() as Record<string, unknown>) } as EnrollmentRow;
-        if (!normalizeTeacherIds(row).includes(teacherId)) return;
+      const uid = extractEntityIds(row)[0];
+      if (!uid) return;
 
-        const uid = extractEntityIds(row)[0];
-        if (!uid) return;
+      const fullName = resolveSnapshotName(row);
+      const next: FilteredStudent = {
+        uid,
+        fullName,
+        studentName: fullName,
+        progressStatus: ACTIVE_PROGRESS_STATUS,
+        enrollmentStatus: readName(row.status).toLowerCase() || undefined,
+      };
 
-        const fullName = resolveSnapshotName(row);
-        const next: FilteredStudent = {
-          uid,
-          fullName,
-          studentName: fullName,
-          progressStatus: ACTIVE_PROGRESS_STATUS,
-          enrollmentStatus: readName(row.status).toLowerCase() || undefined,
-        };
+      const previous = merged.get(uid);
+      if (!previous) {
+        merged.set(uid, next);
+        return;
+      }
 
-        const previous = merged.get(uid);
-        if (!previous) {
-          merged.set(uid, next);
-          return;
-        }
-
-        const preferNextName = previous.fullName === 'Student name pending' && next.fullName !== 'Student name pending';
-        if (preferNextName) {
-          merged.set(uid, { ...previous, ...next });
-        }
-      });
-      return;
-    }
-
-    firstError ??= result.reason;
-    if (isPermissionDeniedError(result.reason)) deniedAliases.push(alias);
-
-    devLogStudentQuery('info', {
-      phase: 'alias-query-skipped',
-      alias,
-      code: (result.reason as QueryError | undefined)?.code || null,
-      error: result.reason instanceof Error ? result.reason.message : String(result.reason),
+      const preferNextName = previous.fullName === 'Student name pending' && next.fullName !== 'Student name pending';
+      if (preferNextName) {
+        merged.set(uid, { ...previous, ...next });
+      }
     });
-  });
+  };
 
-  if (successCount === 0) {
-    if (deniedAliases.length > 0) {
+  const primaryQuery = query(base, where('teacherId', '==', teacherId));
+  let primarySnap;
+  try {
+    primarySnap = await getDocsLogged(
+      'useTeacherFilteredStudents:teacherId',
+      primaryQuery,
+      { source: 'src/hooks/useTeacherFilteredData.ts' },
+    );
+  } catch (error) {
+    if (isPermissionDeniedError(error)) {
       throw Object.assign(new Error('Unable to load teacher student snapshots due to permissions.'), {
         code: 'permission-denied',
       });
     }
-    throw (firstError as Error) || new Error('Unable to load teacher student snapshots.');
+    throw error;
+  }
+
+  mergeRows(
+    primarySnap.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...(docSnap.data() as Record<string, unknown>),
+    }) as EnrollmentRow),
+  );
+
+  const teacherIdsFallback = await fetchTeacherSessionAliasFallbacks<EnrollmentRow>({
+    buildScopedQuery: (field, operator) => query(base, where(field, operator, teacherId)),
+    includeAliases: ['teacherIds'],
+    mapDoc: (docSnap) => ({ id: docSnap.id, ...(docSnap.data() as Record<string, unknown>) }),
+    rowMatchesTeacher: (row) => normalizeTeacherIds(row).includes(teacherId),
+    onQueryError: ({ field, error }) => {
+      if (isPermissionDeniedError(error)) deniedAliases.push(field);
+      devLogStudentQuery('info', {
+        phase: 'alias-query-skipped',
+        alias: field,
+        code: (error as QueryError | undefined)?.code || null,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    },
+    source: 'src/hooks/useTeacherFilteredData.ts',
+    labelPrefix: 'useTeacherFilteredStudents:fallback',
+  });
+  mergeRows(teacherIdsFallback.rows);
+
+  if (merged.size === 0) {
+    const fallback = await fetchTeacherSessionAliasFallbacks<EnrollmentRow>({
+      buildScopedQuery: (field, operator) => query(base, where(field, operator, teacherId)),
+      includeAliases: ['assignedTeacherId', 'primaryTeacherId', 'teacherUid', 'teacher_id'],
+      mapDoc: (docSnap) => ({ id: docSnap.id, ...(docSnap.data() as Record<string, unknown>) }),
+      rowMatchesTeacher: (row) => normalizeTeacherIds(row).includes(teacherId),
+      onQueryError: ({ field, error }) => {
+        if (isPermissionDeniedError(error)) deniedAliases.push(field);
+        devLogStudentQuery('info', {
+          phase: 'alias-query-skipped',
+          alias: field,
+          code: (error as QueryError | undefined)?.code || null,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      },
+      source: 'src/hooks/useTeacherFilteredData.ts',
+      labelPrefix: 'useTeacherFilteredStudents:fallback',
+    });
+    mergeRows(fallback.rows);
   }
 
   devLogStudentQuery('debug', {
