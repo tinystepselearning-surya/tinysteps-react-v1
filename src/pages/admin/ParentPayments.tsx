@@ -262,6 +262,76 @@ type MonthlyChargeRow = {
   dueFromCharges: number;
 };
 
+const fetchParentIdsForMonth = async (
+  selectedMonth: string,
+  labels: {
+    primary: string;
+    fallback: string;
+    failureContext: string;
+  } = {
+    primary: 'ParentPayments:dropdown-read-model-months',
+    fallback: 'ParentPayments:dropdown-billing-charges-fallback',
+    failureContext: '[ParentPayments] Dropdown read-model query failed, falling back to charges',
+  }
+): Promise<string[]> => {
+  let nextParentIds: string[] = [];
+  try {
+    const topReadModelSnap = await getDocsLogged(
+      labels.primary,
+      query(
+        collectionGroup(db, 'months'),
+        where('monthKey', '==', selectedMonth),
+        orderBy('parentId', 'asc'),
+        limit(10)
+      ),
+      { source: 'src/pages/admin/ParentPayments.tsx' },
+    );
+    nextParentIds = topReadModelSnap.docs
+      .map((docSnap) => String((docSnap.data() as any)?.parentId || '').trim())
+      .filter(Boolean);
+  } catch (err) {
+    console.warn(labels.failureContext, err);
+  }
+
+  if (nextParentIds.length === 0) {
+    const fallbackSnap = await getDocsLogged(
+      labels.fallback,
+      query(
+        collection(db, 'billingCharges'),
+        where('monthKey', '==', selectedMonth),
+        orderBy('parentId', 'asc'),
+        limit(10)
+      ),
+      { source: 'src/pages/admin/ParentPayments.tsx' },
+    );
+    nextParentIds = Array.from(
+      new Set(
+        fallbackSnap.docs
+          .map((docSnap) => String((docSnap.data() as any)?.parentId || '').trim())
+          .filter(Boolean)
+      )
+    ).slice(0, 10);
+  }
+
+  return nextParentIds;
+};
+
+const fetchParentUsersByIds = async (parentIds: string[]): Promise<ParentUser[]> => {
+  if (parentIds.length === 0) return [];
+  const parentDocs: ParentUser[] = [];
+  for (const chunk of chunkIds(parentIds.slice(0, 10))) {
+    const snap = await getDocsLogged(
+      'ParentPayments:dropdown-users',
+      query(collection(db, 'users'), where(documentId(), 'in', chunk)),
+      { source: 'src/pages/admin/ParentPayments.tsx' },
+    );
+    snap.docs.forEach((docSnap) => {
+      parentDocs.push({ id: docSnap.id, ...(docSnap.data() as any) });
+    });
+  }
+  return parentDocs.filter(isParentUser);
+};
+
 const PDF_LOGO_CANDIDATE_PATHS = [
   '/logo-main.webp',
   '/logo-header.webp',
@@ -960,6 +1030,8 @@ export default function ParentPayments(): JSX.Element {
   const [parentSearchTerm, setParentSearchTerm] = useState('');
   const [parentSearchResults, setParentSearchResults] = useState<ParentUser[]>([]);
   const [parentSearchLoading, setParentSearchLoading] = useState(false);
+  const [initialParentOptions, setInitialParentOptions] = useState<ParentUser[]>([]);
+  const [initialParentOptionsLoading, setInitialParentOptionsLoading] = useState(true);
   const [selectedParentOptionId, setSelectedParentOptionId] = useState<string>('');
   const [parents, setParents] = useState<ParentUser[]>([]);
   const [charges, setCharges] = useState<any[]>([]);
@@ -1098,6 +1170,36 @@ export default function ParentPayments(): JSX.Element {
       active = false;
     };
   }, [parentSearchTerm]);
+
+  useEffect(() => {
+    if (!selectedMonth) {
+      setInitialParentOptions([]);
+      setInitialParentOptionsLoading(false);
+      return;
+    }
+
+    let active = true;
+    const loadInitialParentOptions = async () => {
+      setInitialParentOptionsLoading(true);
+      try {
+        const parentIds = await fetchParentIdsForMonth(selectedMonth);
+        const parentDocs = await fetchParentUsersByIds(parentIds);
+        if (!active) return;
+        setInitialParentOptions(parentDocs);
+      } catch (err) {
+        console.warn('[ParentPayments] Failed to load initial dropdown options', err);
+        if (!active) return;
+        setInitialParentOptions([]);
+      } finally {
+        if (active) setInitialParentOptionsLoading(false);
+      }
+    };
+
+    void loadInitialParentOptions();
+    return () => {
+      active = false;
+    };
+  }, [selectedMonth]);
 
   const resetLoadedParentScope = () => {
     setLoadMode('none');
@@ -1707,18 +1809,26 @@ export default function ParentPayments(): JSX.Element {
   const parentSelectOptions = useMemo(
     () =>
       buildParentPaymentSelectOptions({
-        loadedParents: parents,
+        loadedParents: [...initialParentOptions, ...parents],
         searchResults: parentSearchResults,
         tableRows,
         selectedParentId: selectedParentOptionId,
       }),
-    [parentSearchResults, parents, selectedParentOptionId, tableRows]
+    [initialParentOptions, parentSearchResults, parents, selectedParentOptionId, tableRows]
   );
   const selectedParentOption =
     parentSelectOptions.find((option) => option.id === selectedParentOptionId) || null;
+  const parentHasSearchTerm = parentSearchTerm.trim().length >= 2;
+  const parentSelectEmptyLabel =
+    initialParentOptionsLoading || parentSearchLoading
+      ? 'Loading options…'
+      : parentHasSearchTerm
+        ? 'No search results'
+        : 'No parents found for this month';
 
   const handleMonthChange = (value: string) => {
     setSelectedMonth(value);
+    setSelectedParentOptionId('');
     setScopeError('');
     resetLoadedParentScope();
   };
@@ -1728,44 +1838,11 @@ export default function ParentPayments(): JSX.Element {
     setScopeLoading(true);
     setScopeError('');
     try {
-      let nextParentIds: string[] = [];
-      try {
-        const topReadModelSnap = await getDocsLogged(
-          'ParentPayments:top10-read-model-months',
-          query(
-            collectionGroup(db, 'months'),
-            where('monthKey', '==', selectedMonth),
-            orderBy('parentId', 'asc'),
-            limit(10)
-          ),
-          { source: 'src/pages/admin/ParentPayments.tsx' },
-        );
-        nextParentIds = topReadModelSnap.docs
-          .map((docSnap) => String((docSnap.data() as any)?.parentId || '').trim())
-          .filter(Boolean);
-      } catch (err) {
-        console.warn('[ParentPayments] Top10 read-model query failed, falling back to charges', err);
-      }
-
-      if (nextParentIds.length === 0) {
-        const fallbackSnap = await getDocsLogged(
-          'ParentPayments:top10-billing-charges-fallback',
-          query(
-            collection(db, 'billingCharges'),
-            where('monthKey', '==', selectedMonth),
-            orderBy('parentId', 'asc'),
-            limit(10)
-          ),
-          { source: 'src/pages/admin/ParentPayments.tsx' },
-        );
-        nextParentIds = Array.from(
-          new Set(
-            fallbackSnap.docs
-              .map((docSnap) => String((docSnap.data() as any)?.parentId || '').trim())
-              .filter(Boolean)
-          )
-        ).slice(0, 10);
-      }
+      const nextParentIds = await fetchParentIdsForMonth(selectedMonth, {
+        primary: 'ParentPayments:top10-read-model-months',
+        fallback: 'ParentPayments:top10-billing-charges-fallback',
+        failureContext: '[ParentPayments] Top10 read-model query failed, falling back to charges',
+      });
 
       setExpandedParents(new Set());
       setSelectedWalletParentId('');
@@ -2887,7 +2964,7 @@ export default function ParentPayments(): JSX.Element {
               <SelectContent>
                 {parentSelectOptions.length === 0 ? (
                   <SelectItem value="__no_parent_results" disabled>
-                    {parentSearchLoading ? 'Searching…' : 'No search results'}
+                    {parentSelectEmptyLabel}
                   </SelectItem>
                 ) : (
                   parentSelectOptions.map((option) => (

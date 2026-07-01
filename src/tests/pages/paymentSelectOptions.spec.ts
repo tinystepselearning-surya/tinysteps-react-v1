@@ -5,7 +5,7 @@ import {
 } from '../../pages/admin/paymentSelectOptions';
 
 describe('payment select options', () => {
-  it('shows loaded top10 parents when search is empty', () => {
+  it('shows initial limited parent options when search is empty', () => {
     const options = buildParentPaymentSelectOptions({
       loadedParents: [
         {
@@ -33,7 +33,7 @@ describe('payment select options', () => {
     });
   });
 
-  it('dedupes parent search results against loaded top10 rows', () => {
+  it('dedupes parent search results against initial and loaded parent rows', () => {
     const options = buildParentPaymentSelectOptions({
       loadedParents: [
         {
@@ -122,6 +122,33 @@ describe('payment select options', () => {
 
     expect(options.map((option) => option.id)).toEqual(['teacher-1', 'teacher-2']);
     expect(options[0].label).toContain('Teacher One');
+  });
+
+  it('merges initial teacher options with loaded teacher rows without duplicates', () => {
+    const options = buildTeacherPaymentSelectOptions({
+      loadedTeachers: [
+        {
+          id: 'teacher-1',
+          displayName: 'Teacher One',
+          email: 'teacher1@example.com',
+        },
+        {
+          id: 'teacher-2',
+          displayName: 'Teacher Two',
+          email: 'teacher2@example.com',
+        },
+      ],
+      searchResults: [],
+      rows: [
+        {
+          teacherId: 'teacher-1',
+          teacherName: 'Teacher One',
+        },
+      ],
+      selectedTeacherId: '',
+    });
+
+    expect(options.map((option) => option.id)).toEqual(['teacher-1', 'teacher-2']);
   });
 
   it('keeps the selected teacher visible even if not in current search results', () => {

@@ -209,7 +209,7 @@ describe('Admin payment pages lazy loading', () => {
     });
   });
 
-  it('does not load parent or teacher payment data on initial page open', () => {
+  it('preloads limited month-scoped dropdown options without loading payment details', async () => {
     render(
       <div>
         <ParentPayments />
@@ -217,8 +217,42 @@ describe('Admin payment pages lazy loading', () => {
       </div>
     );
 
+    await waitFor(() =>
+      expect(
+        getDocsMock.mock.calls.some(
+          ([input]) =>
+            input?.kind === 'query' &&
+            input.args[0]?.kind === 'collectionGroup' &&
+            input.args[0]?.args?.[1] === 'months' &&
+            hasLimit(input, 10)
+        )
+      ).toBe(true)
+    );
+
+    expect(
+      getDocsMock.mock.calls.some(
+        ([input]) =>
+          input?.kind === 'query' &&
+          input.args[0]?.kind === 'collectionGroup' &&
+          input.args[0]?.args?.[1] === 'earnings' &&
+          hasLimit(input, 10)
+      )
+    ).toBe(true);
     expect(screen.getAllByText(/No data loaded yet\./).length).toBeGreaterThan(0);
-    expect(getDocsMock).not.toHaveBeenCalled();
+    expect(screen.getByRole('option', { name: /Parent One/ })).toBeTruthy();
+    expect(screen.getByRole('option', { name: /Teacher One/ })).toBeTruthy();
+    expect(
+      getDocsMock.mock.calls.some(([input]) => getCollectionName(input) === 'billingCharges')
+    ).toBe(false);
+    expect(
+      getDocsMock.mock.calls.some(([input]) => getCollectionName(input) === 'payments')
+    ).toBe(false);
+    expect(
+      getDocsMock.mock.calls.some(([input]) => getCollectionName(input) === 'teacherEarnings')
+    ).toBe(false);
+    expect(
+      getDocsMock.mock.calls.some(([input]) => getCollectionName(input) === 'teacherPayouts')
+    ).toBe(false);
     expect(onSnapshotMock).not.toHaveBeenCalled();
   });
 
@@ -236,14 +270,10 @@ describe('Admin payment pages lazy loading', () => {
     expect(screen.getByText('Showing top 10 only.')).toBeTruthy();
   });
 
-  it('loads only the selected parent scope', async () => {
+  it('loads only the selected parent scope from initial dropdown options', async () => {
     render(<ParentPayments />);
 
-    fireEvent.change(screen.getByPlaceholderText('Search exact parent email, phone, name, or ID'), {
-      target: { value: 'parent@example.com' },
-    });
-
-    await waitFor(() => expect(getDocsMock).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getByRole('option', { name: /Parent One/ })).toBeTruthy());
 
     fireEvent.change(screen.getAllByRole('combobox')[0], {
       target: { value: 'parent-1' },
@@ -264,14 +294,10 @@ describe('Admin payment pages lazy loading', () => {
     expect(screen.getByText('Showing selected parent only.')).toBeTruthy();
   });
 
-  it('loads only the selected teacher scope', async () => {
+  it('loads only the selected teacher scope from initial dropdown options', async () => {
     render(<TeacherPayments />);
 
-    fireEvent.change(screen.getByPlaceholderText('Search exact teacher email, phone, name, or ID'), {
-      target: { value: 'teacher@example.com' },
-    });
-
-    await waitFor(() => expect(getDocsMock).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getByRole('option', { name: /Teacher One/ })).toBeTruthy());
 
     fireEvent.change(screen.getAllByRole('combobox')[0], {
       target: { value: 'teacher-1' },

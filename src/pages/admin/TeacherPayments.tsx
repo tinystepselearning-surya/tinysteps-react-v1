@@ -146,6 +146,76 @@ const formatStatusLabel = (value: any) => {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
+const fetchTeacherIdsForMonth = async (
+  selectedMonth: string,
+  labels: {
+    primary: string;
+    fallback: string;
+    failureContext: string;
+  } = {
+    primary: 'TeacherPayments:dropdown-rollup-earnings',
+    fallback: 'TeacherPayments:dropdown-teacher-earnings-fallback',
+    failureContext: '[TeacherPayments] Dropdown rollup query failed, falling back to earnings',
+  }
+): Promise<string[]> => {
+  let nextTeacherIds: string[] = [];
+  try {
+    const topRollupSnap = await getDocsLogged(
+      labels.primary,
+      query(
+        collectionGroup(db, 'earnings'),
+        where('monthKey', '==', selectedMonth),
+        orderBy('teacherId', 'asc'),
+        limit(10)
+      ),
+      { source: 'src/pages/admin/TeacherPayments.tsx' },
+    );
+    nextTeacherIds = topRollupSnap.docs
+      .map((docSnap) => String((docSnap.data() as any)?.teacherId || '').trim())
+      .filter(Boolean);
+  } catch (err) {
+    console.warn(labels.failureContext, err);
+  }
+
+  if (nextTeacherIds.length === 0) {
+    const fallbackSnap = await getDocsLogged(
+      labels.fallback,
+      query(
+        collection(db, 'teacherEarnings'),
+        where('monthKey', '==', selectedMonth),
+        orderBy('teacherId', 'asc'),
+        limit(10)
+      ),
+      { source: 'src/pages/admin/TeacherPayments.tsx' },
+    );
+    nextTeacherIds = Array.from(
+      new Set(
+        fallbackSnap.docs
+          .map((docSnap) => String((docSnap.data() as any)?.teacherId || '').trim())
+          .filter(Boolean)
+      )
+    ).slice(0, 10);
+  }
+
+  return nextTeacherIds;
+};
+
+const fetchTeacherUsersByIds = async (teacherIds: string[]): Promise<TeacherUser[]> => {
+  if (teacherIds.length === 0) return [];
+  const teacherDocs: TeacherUser[] = [];
+  for (const chunk of chunkIds(teacherIds.slice(0, 10))) {
+    const snap = await getDocsLogged(
+      'TeacherPayments:dropdown-users',
+      query(collection(db, 'users'), where(documentId(), 'in', chunk)),
+      { source: 'src/pages/admin/TeacherPayments.tsx' },
+    );
+    snap.docs.forEach((docSnap) => {
+      teacherDocs.push({ id: docSnap.id, ...(docSnap.data() as any) });
+    });
+  }
+  return teacherDocs.filter(isTeacherUser);
+};
+
 const isSessionCompletedLike = (value: unknown): boolean => {
   const normalized = normalizeStatus(value);
   return (
@@ -213,6 +283,8 @@ export default function TeacherPayments(): JSX.Element {
   const [teacherSearchTerm, setTeacherSearchTerm] = useState('');
   const [teacherSearchResults, setTeacherSearchResults] = useState<TeacherUser[]>([]);
   const [teacherSearchLoading, setTeacherSearchLoading] = useState(false);
+  const [initialTeacherOptions, setInitialTeacherOptions] = useState<TeacherUser[]>([]);
+  const [initialTeacherOptionsLoading, setInitialTeacherOptionsLoading] = useState(true);
   const [selectedTeacherOptionId, setSelectedTeacherOptionId] = useState<string>('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [teachers, setTeachers] = useState<TeacherUser[]>([]);
@@ -289,6 +361,36 @@ export default function TeacherPayments(): JSX.Element {
       active = false;
     };
   }, [teacherSearchTerm]);
+
+  useEffect(() => {
+    if (!selectedMonth) {
+      setInitialTeacherOptions([]);
+      setInitialTeacherOptionsLoading(false);
+      return;
+    }
+
+    let active = true;
+    const loadInitialTeacherOptions = async () => {
+      setInitialTeacherOptionsLoading(true);
+      try {
+        const teacherIds = await fetchTeacherIdsForMonth(selectedMonth);
+        const teacherDocs = await fetchTeacherUsersByIds(teacherIds);
+        if (!active) return;
+        setInitialTeacherOptions(teacherDocs);
+      } catch (err) {
+        console.warn('[TeacherPayments] Failed to load initial dropdown options', err);
+        if (!active) return;
+        setInitialTeacherOptions([]);
+      } finally {
+        if (active) setInitialTeacherOptionsLoading(false);
+      }
+    };
+
+    void loadInitialTeacherOptions();
+    return () => {
+      active = false;
+    };
+  }, [selectedMonth]);
 
   const resetLoadedTeacherScope = () => {
     setLoadMode('none');
@@ -782,6 +884,7 @@ export default function TeacherPayments(): JSX.Element {
 
   const handleMonthChange = (value: string) => {
     setSelectedMonth(value);
+    setSelectedTeacherOptionId('');
     setScopeError('');
     resetLoadedTeacherScope();
   };
@@ -791,44 +894,11 @@ export default function TeacherPayments(): JSX.Element {
     setScopeLoading(true);
     setScopeError('');
     try {
-      let nextTeacherIds: string[] = [];
-      try {
-        const topRollupSnap = await getDocsLogged(
-          'TeacherPayments:top10-rollup-earnings',
-          query(
-            collectionGroup(db, 'earnings'),
-            where('monthKey', '==', selectedMonth),
-            orderBy('teacherId', 'asc'),
-            limit(10)
-          ),
-          { source: 'src/pages/admin/TeacherPayments.tsx' },
-        );
-        nextTeacherIds = topRollupSnap.docs
-          .map((docSnap) => String((docSnap.data() as any)?.teacherId || '').trim())
-          .filter(Boolean);
-      } catch (err) {
-        console.warn('[TeacherPayments] Top10 rollup query failed, falling back to earnings', err);
-      }
-
-      if (nextTeacherIds.length === 0) {
-        const fallbackSnap = await getDocsLogged(
-          'TeacherPayments:top10-teacher-earnings-fallback',
-          query(
-            collection(db, 'teacherEarnings'),
-            where('monthKey', '==', selectedMonth),
-            orderBy('teacherId', 'asc'),
-            limit(10)
-          ),
-          { source: 'src/pages/admin/TeacherPayments.tsx' },
-        );
-        nextTeacherIds = Array.from(
-          new Set(
-            fallbackSnap.docs
-              .map((docSnap) => String((docSnap.data() as any)?.teacherId || '').trim())
-              .filter(Boolean)
-          )
-        ).slice(0, 10);
-      }
+      const nextTeacherIds = await fetchTeacherIdsForMonth(selectedMonth, {
+        primary: 'TeacherPayments:top10-rollup-earnings',
+        fallback: 'TeacherPayments:top10-teacher-earnings-fallback',
+        failureContext: '[TeacherPayments] Top10 rollup query failed, falling back to earnings',
+      });
 
       setExpandedTeachers(new Set());
       setLoadMode('top10');
@@ -870,15 +940,22 @@ export default function TeacherPayments(): JSX.Element {
   const teacherSelectOptions = useMemo(
     () =>
       buildTeacherPaymentSelectOptions({
-        loadedTeachers: teachers,
+        loadedTeachers: [...initialTeacherOptions, ...teachers],
         searchResults: teacherSearchResults,
         rows: visibleRows,
         selectedTeacherId: selectedTeacherOptionId,
       }),
-    [selectedTeacherOptionId, teacherSearchResults, teachers, visibleRows]
+    [initialTeacherOptions, selectedTeacherOptionId, teacherSearchResults, teachers, visibleRows]
   );
   const selectedTeacherOption =
     teacherSelectOptions.find((option) => option.id === selectedTeacherOptionId) || null;
+  const teacherHasSearchTerm = teacherSearchTerm.trim().length >= 2;
+  const teacherSelectEmptyLabel =
+    initialTeacherOptionsLoading || teacherSearchLoading
+      ? 'Loading options…'
+      : teacherHasSearchTerm
+        ? 'No search results'
+        : 'No teachers found for this month';
   const loadedScopeLabel =
     loadMode === 'top10'
       ? 'Showing top 10 only.'
@@ -1069,7 +1146,7 @@ export default function TeacherPayments(): JSX.Element {
               <SelectContent>
                 {teacherSelectOptions.length === 0 ? (
                   <SelectItem value="__no_teacher_results" disabled>
-                    {teacherSearchLoading ? 'Searching…' : 'No search results'}
+                    {teacherSelectEmptyLabel}
                   </SelectItem>
                 ) : (
                   teacherSelectOptions.map((option) => (
