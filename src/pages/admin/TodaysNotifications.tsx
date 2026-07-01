@@ -161,17 +161,20 @@ const COUNTRY_OPTIONS = [
   { id: 'NO', code: '+47', label: 'Norway (+47)' },
 ] as const;
 const CUSTOM_COUNTRY_ID = 'CUSTOM';
-const DEFAULT_PARENT_TEMPLATE = `Hello! 😊
+const DEFAULT_PARENT_TEMPLATE = `Hello [Parent Name],
 
-Quick reminder: [Child Name] has Tiny Steps class today at [Time].
+Reminder: [Child Name] has Tiny Steps class today at [Time].
 
-Please join on time for a fun and focused session.
+Please join on time.
 
-Kindly inform us in advance for any changes/cancellations. Repeated no-shows may be penalised.
+Tiny Steps`;
+const DEFAULT_TEACHER_TEMPLATE = `Hello [Teacher Name],
 
-– Tiny Steps`;
-const DEFAULT_TEACHER_TEMPLATE =
-  "Hello [Teacher Name], this is a reminder for Tiny Steps class with [Child Name] at [Time]. Please be ready and join on time.";
+Reminder: [Child Name] has Tiny Steps class today at [Time].
+
+Please join on time.
+
+Tiny Steps`;
 const ALL_TEACHERS_FILTER = 'ALL_TEACHERS';
 const ALL_STATUSES_FILTER = 'ALL_STATUSES';
 const IST_OFFSET_MINUTES = 5.5 * 60;
@@ -553,6 +556,15 @@ const applyTemplatePlaceholders = (
     (message, [token, value]) => replaceToken(message, token, value),
     safeTemplate,
   );
+};
+
+const sanitizeReminderMessage = (message: string): string => {
+  return String(message || '')
+    .replace(/\uFFFD/g, '')
+    .replace(/[^\x20-\x7E\n]/g, '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 };
 
 const resolvePhoneInfo = (userLike: UserDoc | undefined): ResolvedPhoneInfo => {
@@ -1658,7 +1670,15 @@ export default function TodaysNotifications() {
       });
       return;
     }
-    const url = `https://wa.me/${sanitizedPhone}?text=${encodeURIComponent(message)}`;
+    const sanitizedMessage = sanitizeReminderMessage(message);
+    const url = `https://web.whatsapp.com/send?phone=${sanitizedPhone}&text=${encodeURIComponent(sanitizedMessage)}`;
+    if (import.meta.env.DEV) {
+      console.info('[TodaysNotifications] openWhatsApp', {
+        sanitizedPhone,
+        message: sanitizedMessage,
+        url,
+      });
+    }
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
@@ -1789,7 +1809,8 @@ export default function TodaysNotifications() {
           ? row.courseLabel
           : 'Tiny Steps class',
     };
-    return applyTemplatePlaceholders(template, context);
+    const resolvedMessage = applyTemplatePlaceholders(template, context);
+    return sanitizeReminderMessage(resolvedMessage);
   };
 
   const openMessageEditor = (sessionId: string, recipient: MessageRecipient) => {
@@ -2417,7 +2438,10 @@ export default function TodaysNotifications() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-56">
                                   <DropdownMenuItem
-                                    onSelect={() => openWhatsApp(parentPhoneDigits, parentMessage)}
+                                    onSelect={(event) => {
+                                      event.preventDefault();
+                                      openWhatsApp(parentPhoneDigits, parentMessage);
+                                    }}
                                     disabled={!parentPhoneDigits}
                                   >
                                     Notify Parent
@@ -2442,7 +2466,10 @@ export default function TodaysNotifications() {
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
-                                    onSelect={() => openWhatsApp(teacherPhoneDigits, teacherMessage)}
+                                    onSelect={(event) => {
+                                      event.preventDefault();
+                                      openWhatsApp(teacherPhoneDigits, teacherMessage);
+                                    }}
                                     disabled={!teacherPhoneDigits}
                                   >
                                     Notify Teacher
