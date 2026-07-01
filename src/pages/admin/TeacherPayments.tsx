@@ -14,6 +14,7 @@ import {
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebaseConfig';
 import { getDocLogged, getDocsLogged } from '../../lib/firestoreReadLogging';
+import { buildTeacherPaymentSelectOptions } from './paymentSelectOptions';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
 import { Button } from '@components/ui/button';
@@ -850,6 +851,10 @@ export default function TeacherPayments(): JSX.Element {
 
   const handleApplySelectedTeacher = () => {
     if (!selectedTeacherOptionId) return;
+    const selectedUser = selectedTeacherOption?.user || null;
+    if (selectedUser) {
+      setTeachers([selectedUser]);
+    }
     setExpandedTeachers(new Set());
     setLoadMode('selected');
     setLoadedTeacherIds([selectedTeacherOptionId]);
@@ -862,6 +867,18 @@ export default function TeacherPayments(): JSX.Element {
   };
 
   const visibleRows = rows;
+  const teacherSelectOptions = useMemo(
+    () =>
+      buildTeacherPaymentSelectOptions({
+        loadedTeachers: teachers,
+        searchResults: teacherSearchResults,
+        rows: visibleRows,
+        selectedTeacherId: selectedTeacherOptionId,
+      }),
+    [selectedTeacherOptionId, teacherSearchResults, teachers, visibleRows]
+  );
+  const selectedTeacherOption =
+    teacherSelectOptions.find((option) => option.id === selectedTeacherOptionId) || null;
   const loadedScopeLabel =
     loadMode === 'top10'
       ? 'Showing top 10 only.'
@@ -1050,14 +1067,14 @@ export default function TeacherPayments(): JSX.Element {
                 <SelectValue placeholder="Select teacher" />
               </SelectTrigger>
               <SelectContent>
-                {teacherSearchResults.length === 0 ? (
+                {teacherSelectOptions.length === 0 ? (
                   <SelectItem value="__no_teacher_results" disabled>
                     {teacherSearchLoading ? 'Searching…' : 'No search results'}
                   </SelectItem>
                 ) : (
-                  teacherSearchResults.map((teacher) => (
-                    <SelectItem key={teacher.id} value={teacher.id}>
-                      {teacher.displayName || teacher.name || teacher.email || teacher.id}
+                  teacherSelectOptions.map((option) => (
+                    <SelectItem key={option.id} value={option.id}>
+                      {option.label}
                     </SelectItem>
                   ))
                 )}

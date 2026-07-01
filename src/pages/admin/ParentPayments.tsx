@@ -29,6 +29,7 @@ import {
   type ParentPaymentsReportingRow,
   resolveParentPaymentSettlementSummary,
 } from './parentPaymentsReporting';
+import { buildParentPaymentSelectOptions } from './paymentSelectOptions';
 import {
   DEFAULT_RECEIVE_PARENT_PAYMENT_ALLOCATION_MODE,
   isSameReceiveParentPaymentPreviewInput,
@@ -1703,6 +1704,18 @@ export default function ParentPayments(): JSX.Element {
   ]);
 
   const summaryCards = useMemo(() => buildParentPaymentsSummaryCards(tableRows), [tableRows]);
+  const parentSelectOptions = useMemo(
+    () =>
+      buildParentPaymentSelectOptions({
+        loadedParents: parents,
+        searchResults: parentSearchResults,
+        tableRows,
+        selectedParentId: selectedParentOptionId,
+      }),
+    [parentSearchResults, parents, selectedParentOptionId, tableRows]
+  );
+  const selectedParentOption =
+    parentSelectOptions.find((option) => option.id === selectedParentOptionId) || null;
 
   const handleMonthChange = (value: string) => {
     setSelectedMonth(value);
@@ -1780,14 +1793,17 @@ export default function ParentPayments(): JSX.Element {
 
   const handleApplySelectedParent = () => {
     if (!selectedParentOptionId) return;
-    const selectedUser =
-      parentSearchResults.find((parent) => parent.id === selectedParentOptionId) || null;
+    const selectedUser = selectedParentOption?.user || null;
     if (selectedUser) {
       setParents([selectedUser]);
-      setSelectedWalletParentName(
-        selectedUser.displayName || selectedUser.name || selectedUser.email || selectedUser.id
-      );
     }
+    setSelectedWalletParentName(
+      selectedParentOption?.primaryLabel ||
+        selectedUser?.displayName ||
+        selectedUser?.name ||
+        selectedUser?.email ||
+        selectedParentOptionId
+    );
     setExpandedParents(new Set());
     setSelectedWalletParentId(selectedParentOptionId);
     setLoadMode('selected');
@@ -2869,14 +2885,14 @@ export default function ParentPayments(): JSX.Element {
                 <SelectValue placeholder="Select parent" />
               </SelectTrigger>
               <SelectContent>
-                {parentSearchResults.length === 0 ? (
+                {parentSelectOptions.length === 0 ? (
                   <SelectItem value="__no_parent_results" disabled>
                     {parentSearchLoading ? 'Searching…' : 'No search results'}
                   </SelectItem>
                 ) : (
-                  parentSearchResults.map((parent) => (
-                    <SelectItem key={parent.id} value={parent.id}>
-                      {parent.displayName || parent.name || parent.email || parent.id}
+                  parentSelectOptions.map((option) => (
+                    <SelectItem key={option.id} value={option.id}>
+                      {option.label}
                     </SelectItem>
                   ))
                 )}
