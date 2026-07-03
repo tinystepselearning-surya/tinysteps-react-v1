@@ -1,6 +1,72 @@
 {
   "indexes": [
     {
+      "collectionGroup": "months",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "monthKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "parentId",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "billingCharges",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "monthKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "parentId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "earnings",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "monthKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "teacherId",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "teacherEarnings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "monthKey",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "teacherId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
       "collectionGroup": "sessionRequests",
       "queryScope": "COLLECTION_GROUP",
       "fields": [

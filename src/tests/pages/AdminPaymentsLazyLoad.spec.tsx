@@ -13,6 +13,9 @@ const {
   onSnapshotMock,
   orderByMock,
   queryMock,
+  startAfterMock,
+  startAtMock,
+  endAtMock,
   whereMock,
   httpsCallableMock,
   toastSpy,
@@ -38,6 +41,9 @@ const {
     direction: direction || 'asc',
   })),
   queryMock: vi.fn((...args: any[]) => ({ kind: 'query', args })),
+  startAfterMock: vi.fn((value: string) => ({ kind: 'startAfter', value })),
+  startAtMock: vi.fn((value: string) => ({ kind: 'startAt', value })),
+  endAtMock: vi.fn((value: string) => ({ kind: 'endAt', value })),
   whereMock: vi.fn((field: string, op: string, value: any) => ({
     kind: 'where',
     field,
@@ -59,6 +65,9 @@ vi.mock('firebase/firestore', () => ({
   onSnapshot: onSnapshotMock,
   orderBy: orderByMock,
   query: queryMock,
+  startAfter: startAfterMock,
+  startAt: startAtMock,
+  endAt: endAtMock,
   where: whereMock,
 }));
 
@@ -126,6 +135,25 @@ const makeDoc = (id: string, data: Record<string, unknown>) => ({
   exists: () => true,
 });
 
+const buildSequentialDocs = (prefix: 'parent' | 'teacher', start: number, count: number, monthKey = '2026-06') =>
+  Array.from({ length: count }, (_, index) => {
+    const value = start + index;
+    return makeDoc(`${prefix}-doc-${value}`, {
+      [`${prefix}Id`]: `${prefix}-${value}`,
+      monthKey,
+    });
+  });
+
+const formatUserLabel = (id: string) => {
+  const [prefix, suffix] = String(id || '').split('-');
+  if (!prefix || !suffix) return id;
+  const smallNumberLabels: Record<string, string> = {
+    '1': 'One',
+    '2': 'Two',
+  };
+  return `${prefix.charAt(0).toUpperCase()}${prefix.slice(1)} ${smallNumberLabels[suffix] || suffix}`;
+};
+
 const getQueryParts = (input: any) => (input?.kind === 'query' ? input.args.slice(1) : []);
 const hasWhere = (input: any, field: string, op?: string, matcher?: (value: any) => boolean) =>
   getQueryParts(input).some(
@@ -137,6 +165,16 @@ const hasWhere = (input: any, field: string, op?: string, matcher?: (value: any)
   );
 const hasLimit = (input: any, value: number) =>
   getQueryParts(input).some((part: any) => part?.kind === 'limit' && part.value === value);
+const hasOrderBy = (input: any, field: string) =>
+  getQueryParts(input).some((part: any) => part?.kind === 'orderBy' && part.field === field);
+const hasStartAt = (input: any, matcher: (value: string) => boolean) =>
+  getQueryParts(input).some(
+    (part: any) => part?.kind === 'startAt' && matcher(String(part.value || ''))
+  );
+const hasStartAfter = (input: any, matcher: (value: string) => boolean) =>
+  getQueryParts(input).some(
+    (part: any) => part?.kind === 'startAfter' && matcher(String(part.value || ''))
+  );
 const getCollectionName = (input: any) => input?.args?.[0]?.args?.[1] || input?.args?.[1];
 
 describe('Admin payment pages lazy loading', () => {
@@ -150,7 +188,12 @@ describe('Admin payment pages lazy loading', () => {
     getDocsMock.mockImplementation(async (input: any) => {
       const collectionName = getCollectionName(input);
 
-      if (input?.kind === 'query' && input.args[0]?.kind === 'collectionGroup' && input.args[0]?.args?.[1] === 'months') {
+      if (
+        input?.kind === 'query' &&
+        input.args[0]?.kind === 'collectionGroup' &&
+        input.args[0]?.args?.[1] === 'months' &&
+        hasLimit(input, 10)
+      ) {
         return {
           docs: [
             makeDoc('month-parent-1', { parentId: 'parent-1', monthKey: '2026-06' }),
@@ -159,12 +202,65 @@ describe('Admin payment pages lazy loading', () => {
         };
       }
 
-      if (input?.kind === 'query' && input.args[0]?.kind === 'collectionGroup' && input.args[0]?.args?.[1] === 'earnings') {
+      if (
+        input?.kind === 'query' &&
+        input.args[0]?.kind === 'collectionGroup' &&
+        input.args[0]?.args?.[1] === 'months' &&
+        hasLimit(input, 25) &&
+        !hasStartAfter(input, () => true)
+      ) {
+        return {
+          docs: buildSequentialDocs('parent', 1, 25),
+        };
+      }
+
+      if (
+        input?.kind === 'query' &&
+        input.args[0]?.kind === 'collectionGroup' &&
+        input.args[0]?.args?.[1] === 'months' &&
+        hasLimit(input, 25) &&
+        hasStartAfter(input, (value) => value === 'parent-25')
+      ) {
+        return {
+          docs: buildSequentialDocs('parent', 26, 25),
+        };
+      }
+
+      if (
+        input?.kind === 'query' &&
+        input.args[0]?.kind === 'collectionGroup' &&
+        input.args[0]?.args?.[1] === 'earnings' &&
+        hasLimit(input, 10)
+      ) {
         return {
           docs: [
             makeDoc('teacher-rollup-1', { teacherId: 'teacher-1', monthKey: '2026-06' }),
             makeDoc('teacher-rollup-2', { teacherId: 'teacher-2', monthKey: '2026-06' }),
           ],
+        };
+      }
+
+      if (
+        input?.kind === 'query' &&
+        input.args[0]?.kind === 'collectionGroup' &&
+        input.args[0]?.args?.[1] === 'earnings' &&
+        hasLimit(input, 25) &&
+        !hasStartAfter(input, () => true)
+      ) {
+        return {
+          docs: buildSequentialDocs('teacher', 1, 25),
+        };
+      }
+
+      if (
+        input?.kind === 'query' &&
+        input.args[0]?.kind === 'collectionGroup' &&
+        input.args[0]?.args?.[1] === 'earnings' &&
+        hasLimit(input, 25) &&
+        hasStartAfter(input, (value) => value === 'teacher-25')
+      ) {
+        return {
+          docs: buildSequentialDocs('teacher', 26, 25),
         };
       }
 
@@ -192,16 +288,130 @@ describe('Admin payment pages lazy loading', () => {
         };
       }
 
+      if (
+        collectionName === 'users' &&
+        hasOrderBy(input, 'displayName') &&
+        hasStartAt(input, (value) => value === 'Par' || value === 'par')
+      ) {
+        return {
+          docs: [
+            makeDoc('parent-99', {
+              displayName: 'Parent Prefix Match',
+              email: 'prefix.parent@example.com',
+              role: 'parent',
+            }),
+          ],
+        };
+      }
+
+      if (
+        collectionName === 'users' &&
+        hasOrderBy(input, 'email') &&
+        hasStartAt(input, (value) => value === 'teach' || value === 'Teach')
+      ) {
+        return {
+          docs: [
+            makeDoc('teacher-99', {
+              displayName: 'Teacher Prefix Match',
+              email: 'teacher.prefix@example.com',
+              role: 'teacher',
+            }),
+          ],
+        };
+      }
+
+      if (
+        collectionName === 'users' &&
+        hasOrderBy(input, 'phoneNormalized') &&
+        hasStartAt(input, (value) => value === '9199')
+      ) {
+        return {
+          docs: [
+            makeDoc('teacher-98', {
+              displayName: 'Teacher Phone Match',
+              phoneNormalized: '919912345678',
+              role: 'teacher',
+            }),
+          ],
+        };
+      }
+
       if (collectionName === 'users' && hasWhere(input, '__name__', 'in')) {
         const ids = getQueryParts(input).find((part: any) => part?.kind === 'where' && part.field === '__name__')?.value || [];
         return {
           docs: ids.map((id: string) =>
             makeDoc(id, {
-              displayName: id === 'parent-1' ? 'Parent One' : id === 'teacher-1' ? 'Teacher One' : id,
+              displayName: formatUserLabel(id),
               email: `${id}@example.com`,
               role: id.startsWith('parent') ? 'parent' : 'teacher',
             })
           ),
+        };
+      }
+
+      if (collectionName === 'billingCharges' && hasWhere(input, 'parentId', 'in')) {
+        const ids =
+          getQueryParts(input).find((part: any) => part?.kind === 'where' && part.field === 'parentId')
+            ?.value || [];
+        return {
+          docs: ids.map((id: string, idx: number) =>
+            makeDoc(`charge-${id}`, {
+              parentId: id,
+              monthKey: '2026-06',
+              amount: 1000 + idx,
+              status: 'pending',
+            })
+          ),
+        };
+      }
+
+      if (collectionName === 'billingCharges' && hasWhere(input, 'parentId', '==')) {
+        const id =
+          getQueryParts(input).find((part: any) => part?.kind === 'where' && part.field === 'parentId')
+            ?.value || '';
+        return {
+          docs: [
+            makeDoc(`charge-${id}`, {
+              parentId: id,
+              monthKey: '2026-06',
+              amount: 1000,
+              status: 'pending',
+            }),
+          ],
+        };
+      }
+
+      if (collectionName === 'teacherEarnings' && hasWhere(input, 'teacherId', 'in')) {
+        const ids =
+          getQueryParts(input).find((part: any) => part?.kind === 'where' && part.field === 'teacherId')
+            ?.value || [];
+        return {
+          docs: ids.map((id: string, idx: number) =>
+            makeDoc(`earning-${id}`, {
+              teacherId: id,
+              monthKey: '2026-06',
+              amount: 800 + idx,
+              status: 'pending',
+              sessionId: `session-${id}`,
+            })
+          ),
+        };
+      }
+
+      if (collectionName === 'teacherEarnings' && hasWhere(input, 'teacherId', '==')) {
+        const id =
+          getQueryParts(input).find((part: any) => part?.kind === 'where' && part.field === 'teacherId')
+            ?.value || '';
+        return {
+          docs: [
+            makeDoc(`earning-${id}`, {
+              teacherId: id,
+              monthKey: '2026-06',
+              amount: 800,
+              status: 'pending',
+              sessionId: `session-${id}`,
+            }),
+          ],
         };
       }
 
@@ -256,18 +466,24 @@ describe('Admin payment pages lazy loading', () => {
     expect(onSnapshotMock).not.toHaveBeenCalled();
   });
 
-  it('loads parent top 10 with limit(10) only after explicit action', async () => {
+  it('loads the first 25 month-scoped parents only after explicit action', async () => {
     render(<ParentPayments />);
 
-    fireEvent.click(screen.getByText('Load Top 10'));
+    fireEvent.click(screen.getByText('Load First 25'));
 
     await waitFor(() =>
       expect(
-        getDocsMock.mock.calls.some(([input]) => hasLimit(input, 10))
+        getDocsMock.mock.calls.some(
+          ([input]) =>
+            input?.kind === 'query' &&
+            input.args[0]?.kind === 'collectionGroup' &&
+            input.args[0]?.args?.[1] === 'months' &&
+            hasLimit(input, 25)
+        )
       ).toBe(true)
     );
 
-    expect(screen.getByText('Showing top 10 only.')).toBeTruthy();
+    expect(screen.getByText('Showing 25 loaded month records.')).toBeTruthy();
   });
 
   it('loads only the selected parent scope from initial dropdown options', async () => {
@@ -316,5 +532,75 @@ describe('Admin payment pages lazy loading', () => {
     );
 
     expect(screen.getByText('Showing selected teacher only.')).toBeTruthy();
+  });
+
+  it('merges parent prefix search results into the limited dropdown options', async () => {
+    render(<ParentPayments />);
+
+    await waitFor(() => expect(screen.getByRole('option', { name: /Parent One/ })).toBeTruthy());
+
+    fireEvent.change(screen.getByPlaceholderText('Search parent by name, email, phone, or ID'), {
+      target: { value: 'Par' },
+    });
+
+    await waitFor(() =>
+      expect(screen.getByRole('option', { name: /Parent Prefix Match/ })).toBeTruthy()
+    , { timeout: 1200 });
+
+    expect(screen.getByRole('option', { name: /Parent One/ })).toBeTruthy();
+  });
+
+  it('finds teachers by prefix email and normalized phone without broad loads', async () => {
+    render(<TeacherPayments />);
+
+    await waitFor(() => expect(screen.getByRole('option', { name: /Teacher One/ })).toBeTruthy());
+
+    fireEvent.change(screen.getByPlaceholderText('Search teacher by name, email, phone, or ID'), {
+      target: { value: 'teach' },
+    });
+
+    await waitFor(() =>
+      expect(screen.getByRole('option', { name: /Teacher Prefix Match/ })).toBeTruthy()
+    , { timeout: 1200 });
+
+    fireEvent.change(screen.getByPlaceholderText('Search teacher by name, email, phone, or ID'), {
+      target: { value: '9199' },
+    });
+
+    await waitFor(() =>
+      expect(screen.getByRole('option', { name: /Teacher Phone Match/ })).toBeTruthy()
+    , { timeout: 1200 });
+  });
+
+  it('loads more month-scoped parents and merges the next page into dropdown options and table rows', async () => {
+    render(<ParentPayments />);
+
+    await waitFor(() => expect(screen.getByRole('option', { name: /Parent One/ })).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Load First 25'));
+
+    await waitFor(() => expect(screen.getByText('Showing 25 loaded month records.')).toBeTruthy());
+    expect(screen.getAllByText('Parent 25').length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByText('Load More'));
+
+    await waitFor(() => expect(screen.getByText('Showing 50 loaded month records.')).toBeTruthy());
+    expect(screen.getAllByRole('option', { name: /Parent 26/ }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Parent 50').length).toBeGreaterThan(0);
+  });
+
+  it('loads more month-scoped teachers and merges the next page into dropdown options', async () => {
+    render(<TeacherPayments />);
+
+    await waitFor(() => expect(screen.getByRole('option', { name: /Teacher One/ })).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Load First 25'));
+
+    await waitFor(() => expect(screen.getByText('Showing 25 loaded month records.')).toBeTruthy());
+
+    fireEvent.click(screen.getByText('Load More'));
+
+    await waitFor(() => expect(screen.getByText('Showing 50 loaded month records.')).toBeTruthy());
+    expect(screen.getAllByRole('option', { name: /Teacher 26/ }).length).toBeGreaterThan(0);
   });
 });
