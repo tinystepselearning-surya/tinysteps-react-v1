@@ -9,10 +9,19 @@ import {
   limit,
   orderBy,
   query,
+  startAfter,
   where,
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebaseConfig';
+import { getDocLogged, getDocsLogged } from '../../lib/firestoreReadLogging';
+import { buildTeacherPaymentSelectOptions } from './paymentSelectOptions';
+import {
+  PAYMENT_USER_SEARCH_DEBOUNCE_MS,
+  PAYMENT_USER_SEARCH_MIN_CHARS,
+  searchPaymentUsers,
+  useDebouncedValue,
+} from './paymentUserSearch';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
 import { Button } from '@components/ui/button';
@@ -45,7 +54,30 @@ type TeacherUser = {
   roles?: string[];
 };
 
-type TeacherLoadMode = 'none' | 'top10' | 'selected';
+type TeacherLoadMode = 'none' | 'month' | 'selected';
+
+const INITIAL_MONTH_TEACHER_OPTION_LIMIT = 10;
+const MONTH_TEACHER_PAGE_SIZE = 25;
+
+type TeacherMonthPageResult = {
+  ids: string[];
+  nextCursor: string | null;
+  hasMore: boolean;
+  missingIndex: boolean;
+};
+
+const isMissingIndexError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+  const code = typeof (error as { code?: unknown }).code === 'string' ? (error as { code: string }).code : '';
+  const message =
+    typeof (error as { message?: unknown }).message === 'string'
+      ? (error as { message: string }).message
+      : '';
+  return code === 'failed-precondition' && /requires an index/i.test(message);
+};
+
+const mergeUniqueIds = (currentIds: string[], nextIds: string[]): string[] =>
+  Array.from(new Set([...currentIds, ...nextIds].filter(Boolean)));
 
 const monthKeyFromDate = (date: Date) => {
   const year = date.getFullYear();
@@ -144,6 +176,121 @@ const formatStatusLabel = (value: any) => {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
+const fetchTeacherIdsForMonthPage = async (
+  selectedMonth: string,
+  options?: {
+    pageSize?: number;
+    cursor?: string | null;
+  },
+  labels: {
+    primary: string;
+    fallback: string;
+    failureContext: string;
+  } = {
+    primary: 'TeacherPayments:dropdown-rollup-earnings',
+    fallback: 'TeacherPayments:dropdown-teacher-earnings-fallback',
+    failureContext: '[TeacherPayments] Dropdown rollup query failed, falling back to earnings',
+  }
+): Promise<TeacherMonthPageResult> => {
+  const pageSize = Math.max(1, options?.pageSize ?? MONTH_TEACHER_PAGE_SIZE);
+  const cursor = String(options?.cursor || '').trim();
+  let nextTeacherIds: string[] = [];
+  let nextCursor: string | null = null;
+  let hasMore = false;
+  let missingIndex = false;
+  try {
+    const rollupQuery = query(
+      collectionGroup(db, 'earnings'),
+      where('monthKey', '==', selectedMonth),
+      orderBy('teacherId', 'asc'),
+      ...(cursor ? [startAfter(cursor)] : []),
+      limit(pageSize)
+    );
+    const topRollupSnap = await getDocsLogged(
+      labels.primary,
+      rollupQuery,
+      { source: 'src/pages/admin/TeacherPayments.tsx' },
+    );
+    nextTeacherIds = topRollupSnap.docs
+      .map((docSnap) => String((docSnap.data() as any)?.teacherId || '').trim())
+      .filter(Boolean);
+    nextCursor =
+      topRollupSnap.docs.length > 0
+        ? String((topRollupSnap.docs[topRollupSnap.docs.length - 1].data() as any)?.teacherId || '').trim() || null
+        : null;
+    hasMore = topRollupSnap.docs.length === pageSize;
+  } catch (err) {
+    console.warn(labels.failureContext, err);
+    missingIndex = isMissingIndexError(err);
+  }
+
+  if (nextTeacherIds.length === 0) {
+    const dedupedIds: string[] = [];
+    const seenIds = new Set<string>();
+    let fallbackCursor = cursor;
+    let exhausted = false;
+
+    while (!exhausted && dedupedIds.length < pageSize) {
+      const fallbackQuery = query(
+        collection(db, 'teacherEarnings'),
+        where('monthKey', '==', selectedMonth),
+        orderBy('teacherId', 'asc'),
+        ...(fallbackCursor ? [startAfter(fallbackCursor)] : []),
+        limit(pageSize)
+      );
+      const fallbackSnap = await getDocsLogged(labels.fallback, fallbackQuery, {
+        source: 'src/pages/admin/TeacherPayments.tsx',
+      });
+      const docs = fallbackSnap.docs;
+      if (docs.length === 0) {
+        exhausted = true;
+        break;
+      }
+
+      docs.forEach((docSnap) => {
+        const teacherId = String((docSnap.data() as any)?.teacherId || '').trim();
+        if (!teacherId || seenIds.has(teacherId) || dedupedIds.length >= pageSize) return;
+        seenIds.add(teacherId);
+        dedupedIds.push(teacherId);
+      });
+
+      const lastTeacherId = String((docs[docs.length - 1].data() as any)?.teacherId || '').trim();
+      fallbackCursor = lastTeacherId || fallbackCursor;
+      nextCursor = lastTeacherId || nextCursor;
+      exhausted = docs.length < pageSize;
+      hasMore = docs.length === pageSize;
+    }
+
+    nextTeacherIds = dedupedIds;
+    if (!nextCursor && nextTeacherIds.length === 0) {
+      hasMore = false;
+    }
+  }
+
+  return {
+    ids: nextTeacherIds,
+    nextCursor,
+    hasMore: hasMore && Boolean(nextCursor),
+    missingIndex,
+  };
+};
+
+const fetchTeacherUsersByIds = async (teacherIds: string[]): Promise<TeacherUser[]> => {
+  if (teacherIds.length === 0) return [];
+  const teacherDocs: TeacherUser[] = [];
+  for (const chunk of chunkIds(teacherIds)) {
+    const snap = await getDocsLogged(
+      'TeacherPayments:dropdown-users',
+      query(collection(db, 'users'), where(documentId(), 'in', chunk)),
+      { source: 'src/pages/admin/TeacherPayments.tsx' },
+    );
+    snap.docs.forEach((docSnap) => {
+      teacherDocs.push({ id: docSnap.id, ...(docSnap.data() as any) });
+    });
+  }
+  return teacherDocs.filter(isTeacherUser);
+};
+
 const isSessionCompletedLike = (value: unknown): boolean => {
   const normalized = normalizeStatus(value);
   return (
@@ -207,9 +354,15 @@ export default function TeacherPayments(): JSX.Element {
   const [loadMode, setLoadMode] = useState<TeacherLoadMode>('none');
   const [loadedTeacherIds, setLoadedTeacherIds] = useState<string[]>([]);
   const [scopeLoading, setScopeLoading] = useState(false);
+  const [scopeError, setScopeError] = useState('');
   const [teacherSearchTerm, setTeacherSearchTerm] = useState('');
   const [teacherSearchResults, setTeacherSearchResults] = useState<TeacherUser[]>([]);
   const [teacherSearchLoading, setTeacherSearchLoading] = useState(false);
+  const [initialTeacherOptions, setInitialTeacherOptions] = useState<TeacherUser[]>([]);
+  const [initialTeacherOptionsLoading, setInitialTeacherOptionsLoading] = useState(true);
+  const [monthTeacherHasMore, setMonthTeacherHasMore] = useState(false);
+  const [monthTeacherCursor, setMonthTeacherCursor] = useState<string | null>(null);
+  const [monthTeacherNotice, setMonthTeacherNotice] = useState('');
   const [selectedTeacherOptionId, setSelectedTeacherOptionId] = useState<string>('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [teachers, setTeachers] = useState<TeacherUser[]>([]);
@@ -235,10 +388,14 @@ export default function TeacherPayments(): JSX.Element {
   const [payoutError, setPayoutError] = useState<string | null>(null);
   const [payoutRequestKey, setPayoutRequestKey] = useState<string>('');
   const { toast } = useToast();
+  const debouncedTeacherSearchTerm = useDebouncedValue(
+    teacherSearchTerm,
+    PAYMENT_USER_SEARCH_DEBOUNCE_MS
+  );
 
   useEffect(() => {
-    const searchTerm = teacherSearchTerm.trim();
-    if (searchTerm.length < 2) {
+    const searchTerm = debouncedTeacherSearchTerm.trim();
+    if (searchTerm.length < PAYMENT_USER_SEARCH_MIN_CHARS) {
       setTeacherSearchResults([]);
       setTeacherSearchLoading(false);
       return;
@@ -248,34 +405,16 @@ export default function TeacherPayments(): JSX.Element {
     const loadTeacherSearchResults = async () => {
       setTeacherSearchLoading(true);
       try {
-        const byId = new Map<string, TeacherUser>();
-        const appendDocs = (docs: Array<{ id: string; data: () => any }>) => {
-          docs.forEach((docSnap) => {
-            const user = { id: docSnap.id, ...(docSnap.data() as any) } as TeacherUser;
-            if (!isTeacherUser(user)) return;
-            if (!byId.has(user.id)) byId.set(user.id, user);
-          });
-        };
-
-        const exactQueries = [
-          query(collection(db, 'users'), where('email', '==', searchTerm), limit(10)),
-          query(collection(db, 'users'), where('phone', '==', searchTerm), limit(10)),
-          query(collection(db, 'users'), where('phoneLocal', '==', searchTerm), limit(10)),
-          query(collection(db, 'users'), where('phoneNormalized', '==', searchTerm), limit(10)),
-          query(collection(db, 'users'), where('displayName', '==', searchTerm), limit(10)),
-          query(collection(db, 'users'), where('name', '==', searchTerm), limit(10)),
-        ];
-        const snaps = await Promise.all(exactQueries.map((ref) => getDocs(ref).catch(() => null)));
-        snaps.forEach((snap) => {
-          if (snap) appendDocs(snap.docs as Array<{ id: string; data: () => any }>);
+        const results = await searchPaymentUsers<TeacherUser>({
+          db,
+          searchTerm,
+          isValidUser: isTeacherUser,
         });
-        const idSnap = await getDoc(doc(db, 'users', searchTerm)).catch(() => null);
-        if (idSnap?.exists()) {
-          appendDocs([{ id: idSnap.id, data: () => idSnap.data() }]);
-        }
-
         if (!active) return;
-        setTeacherSearchResults(Array.from(byId.values()).slice(0, 10));
+        setTeacherSearchResults(results);
+      } catch {
+        if (!active) return;
+        setTeacherSearchResults([]);
       } finally {
         if (active) setTeacherSearchLoading(false);
       }
@@ -285,10 +424,52 @@ export default function TeacherPayments(): JSX.Element {
     return () => {
       active = false;
     };
-  }, [teacherSearchTerm]);
+  }, [debouncedTeacherSearchTerm]);
+
+  useEffect(() => {
+    if (!selectedMonth) {
+      setInitialTeacherOptions([]);
+      setInitialTeacherOptionsLoading(false);
+      return;
+    }
+
+    let active = true;
+    const loadInitialTeacherOptions = async () => {
+      setInitialTeacherOptionsLoading(true);
+      setMonthTeacherNotice('');
+      try {
+        const page = await fetchTeacherIdsForMonthPage(
+          selectedMonth,
+          {
+            pageSize: INITIAL_MONTH_TEACHER_OPTION_LIMIT,
+            cursor: null,
+          }
+        );
+        const teacherDocs = await fetchTeacherUsersByIds(page.ids);
+        if (!active) return;
+        setInitialTeacherOptions(teacherDocs);
+        setMonthTeacherNotice(page.missingIndex ? 'Month list index is not ready. Search still works.' : '');
+      } catch (err) {
+        console.warn('[TeacherPayments] Failed to load initial dropdown options', err);
+        if (!active) return;
+        setInitialTeacherOptions([]);
+        setMonthTeacherNotice('');
+      } finally {
+        if (active) setInitialTeacherOptionsLoading(false);
+      }
+    };
+
+    void loadInitialTeacherOptions();
+    return () => {
+      active = false;
+    };
+  }, [selectedMonth]);
 
   const resetLoadedTeacherScope = () => {
     setLoadMode('none');
+    setScopeError('');
+    setMonthTeacherHasMore(false);
+    setMonthTeacherCursor(null);
     setLoadedTeacherIds([]);
     setTeachers([]);
     setPayouts([]);
@@ -480,12 +661,14 @@ export default function TeacherPayments(): JSX.Element {
       setTeachers([]);
       setRollups({});
       setLoadingRollups(false);
+      setScopeError('');
       return;
     }
     let cancelled = false;
     const loadScopedTeacherFinance = async () => {
       setScopeLoading(true);
       setLoadingRollups(true);
+      setScopeError('');
       try {
         const teacherDocs: TeacherUser[] = [];
         for (const chunk of chunkIds(loadedTeacherIds)) {
@@ -544,6 +727,15 @@ export default function TeacherPayments(): JSX.Element {
         setPayouts(payoutRows);
         setEarnings(earningRows);
         setRollups(map);
+        setScopeError('');
+      } catch (err) {
+        console.error('[TeacherPayments] Failed to load scoped finance data', err);
+        if (cancelled) return;
+        setTeachers([]);
+        setPayouts([]);
+        setEarnings([]);
+        setRollups({});
+        setScopeError('Payment data could not be loaded. Check Firestore rules/indexes.');
       } finally {
         if (!cancelled) {
           setLoadingRollups(false);
@@ -767,52 +959,77 @@ export default function TeacherPayments(): JSX.Element {
 
   const handleMonthChange = (value: string) => {
     setSelectedMonth(value);
+    setSelectedTeacherOptionId('');
+    setScopeError('');
     resetLoadedTeacherScope();
   };
 
-  const handleLoadTop10Teachers = async () => {
+  const handleLoadFirstMonthTeachers = async () => {
     if (!selectedMonth) return;
     setScopeLoading(true);
+    setScopeError('');
+    setMonthTeacherNotice('');
     try {
-      let nextTeacherIds: string[] = [];
-      try {
-        const topRollupSnap = await getDocs(
-          query(
-            collectionGroup(db, 'earnings'),
-            where('monthKey', '==', selectedMonth),
-            orderBy('teacherId', 'asc'),
-            limit(10)
-          )
-        );
-        nextTeacherIds = topRollupSnap.docs
-          .map((docSnap) => String((docSnap.data() as any)?.teacherId || '').trim())
-          .filter(Boolean);
-      } catch (err) {
-        console.warn('[TeacherPayments] Top10 rollup query failed, falling back to earnings', err);
-      }
-
-      if (nextTeacherIds.length === 0) {
-        const fallbackSnap = await getDocs(
-          query(
-            collection(db, 'teacherEarnings'),
-            where('monthKey', '==', selectedMonth),
-            orderBy('teacherId', 'asc'),
-            limit(10)
-          )
-        );
-        nextTeacherIds = Array.from(
-          new Set(
-            fallbackSnap.docs
-              .map((docSnap) => String((docSnap.data() as any)?.teacherId || '').trim())
-              .filter(Boolean)
-          )
-        ).slice(0, 10);
-      }
+      const page = await fetchTeacherIdsForMonthPage(selectedMonth, {
+        pageSize: MONTH_TEACHER_PAGE_SIZE,
+        cursor: null,
+      }, {
+        primary: 'TeacherPayments:month-page-rollup-earnings',
+        fallback: 'TeacherPayments:month-page-teacher-earnings-fallback',
+        failureContext: '[TeacherPayments] Month page rollup query failed, falling back to earnings',
+      });
 
       setExpandedTeachers(new Set());
-      setLoadMode('top10');
-      setLoadedTeacherIds(nextTeacherIds);
+      setLoadMode('month');
+      setLoadedTeacherIds(page.ids);
+      setMonthTeacherCursor(page.nextCursor);
+      setMonthTeacherHasMore(page.hasMore);
+      setMonthTeacherNotice(page.missingIndex ? 'Month list index is not ready. Search still works.' : '');
       setRefreshKey((prev) => prev + 1);
+    } catch (err) {
+      console.error('[TeacherPayments] Failed to load first month teachers', err);
+      setExpandedTeachers(new Set());
+      setLoadMode('none');
+      setMonthTeacherHasMore(false);
+      setMonthTeacherCursor(null);
+      setLoadedTeacherIds([]);
+      setTeachers([]);
+      setPayouts([]);
+      setEarnings([]);
+      setRollups({});
+      setScopeError('Payment data could not be loaded. Check Firestore rules/indexes.');
+    } finally {
+      setScopeLoading(false);
+    }
+  };
+
+  const handleLoadMoreTeachers = async () => {
+    if (!selectedMonth || !monthTeacherHasMore || !monthTeacherCursor) return;
+    setScopeLoading(true);
+    setScopeError('');
+    setMonthTeacherNotice('');
+    try {
+      const page = await fetchTeacherIdsForMonthPage(
+        selectedMonth,
+        {
+          pageSize: MONTH_TEACHER_PAGE_SIZE,
+          cursor: monthTeacherCursor,
+        },
+        {
+          primary: 'TeacherPayments:month-more-rollup-earnings',
+          fallback: 'TeacherPayments:month-more-teacher-earnings-fallback',
+          failureContext: '[TeacherPayments] Month more rollup query failed, falling back to earnings',
+        }
+      );
+      setLoadMode('month');
+      setLoadedTeacherIds((prev) => mergeUniqueIds(prev, page.ids));
+      setMonthTeacherCursor(page.nextCursor);
+      setMonthTeacherHasMore(page.hasMore);
+      setMonthTeacherNotice(page.missingIndex ? 'Month list index is not ready. Search still works.' : '');
+      setRefreshKey((prev) => prev + 1);
+    } catch (err) {
+      console.error('[TeacherPayments] Failed to load more month teachers', err);
+      setScopeError('Payment data could not be loaded. Check Firestore rules/indexes.');
     } finally {
       setScopeLoading(false);
     }
@@ -820,7 +1037,13 @@ export default function TeacherPayments(): JSX.Element {
 
   const handleApplySelectedTeacher = () => {
     if (!selectedTeacherOptionId) return;
+    const selectedUser = selectedTeacherOption?.user || null;
+    if (selectedUser) {
+      setTeachers([selectedUser]);
+    }
     setExpandedTeachers(new Set());
+    setMonthTeacherHasMore(false);
+    setMonthTeacherCursor(null);
     setLoadMode('selected');
     setLoadedTeacherIds([selectedTeacherOptionId]);
     setRefreshKey((prev) => prev + 1);
@@ -832,9 +1055,29 @@ export default function TeacherPayments(): JSX.Element {
   };
 
   const visibleRows = rows;
+  const teacherSelectOptions = useMemo(
+    () =>
+      buildTeacherPaymentSelectOptions({
+        loadedTeachers: [...initialTeacherOptions, ...teachers],
+        searchResults: teacherSearchResults,
+        rows: visibleRows,
+        selectedTeacherId: selectedTeacherOptionId,
+      }),
+    [initialTeacherOptions, selectedTeacherOptionId, teacherSearchResults, teachers, visibleRows]
+  );
+  const selectedTeacherOption =
+    teacherSelectOptions.find((option) => option.id === selectedTeacherOptionId) || null;
+  const teacherHasSearchTerm =
+    debouncedTeacherSearchTerm.trim().length >= PAYMENT_USER_SEARCH_MIN_CHARS;
+  const teacherSelectEmptyLabel =
+    initialTeacherOptionsLoading || teacherSearchLoading
+      ? 'Loading options…'
+      : teacherHasSearchTerm
+        ? 'No matches found. Try a fuller name, email, phone, or user ID.'
+        : 'Limited month-scoped list. Type to search all teachers.';
   const loadedScopeLabel =
-    loadMode === 'top10'
-      ? 'Showing top 10 only.'
+    loadMode === 'month'
+      ? `Showing ${loadedTeacherIds.length} loaded month records.`
       : loadMode === 'selected'
         ? 'Showing selected teacher only.'
         : 'No data loaded yet.';
@@ -1007,10 +1250,10 @@ export default function TeacherPayments(): JSX.Element {
             <Input
               value={teacherSearchTerm}
               onChange={(e) => setTeacherSearchTerm(e.target.value)}
-              placeholder="Search exact teacher email, phone, name, or ID"
+              placeholder="Search teacher by name, email, phone, or ID"
             />
             <div className="text-xs text-muted-foreground">
-              Enter at least 2 characters. Search is limited to up to 10 matching teachers.
+              Type at least 2 characters to search by name, email, phone, or ID. The dropdown starts with a limited month-scoped list, and results stay capped for performance.
             </div>
           </div>
           <div className="space-y-1">
@@ -1020,14 +1263,14 @@ export default function TeacherPayments(): JSX.Element {
                 <SelectValue placeholder="Select teacher" />
               </SelectTrigger>
               <SelectContent>
-                {teacherSearchResults.length === 0 ? (
+                {teacherSelectOptions.length === 0 ? (
                   <SelectItem value="__no_teacher_results" disabled>
-                    {teacherSearchLoading ? 'Searching…' : 'No search results'}
+                    {teacherSelectEmptyLabel}
                   </SelectItem>
                 ) : (
-                  teacherSearchResults.map((teacher) => (
-                    <SelectItem key={teacher.id} value={teacher.id}>
-                      {teacher.displayName || teacher.name || teacher.email || teacher.id}
+                  teacherSelectOptions.map((option) => (
+                    <SelectItem key={option.id} value={option.id}>
+                      {option.label}
                     </SelectItem>
                   ))
                 )}
@@ -1035,8 +1278,16 @@ export default function TeacherPayments(): JSX.Element {
             </Select>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button type="button" onClick={handleLoadTop10Teachers} disabled={scopeLoading}>
-              Load Top 10
+            <Button type="button" onClick={handleLoadFirstMonthTeachers} disabled={scopeLoading}>
+              Load First 25
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleLoadMoreTeachers}
+              disabled={loadMode !== 'month' || !monthTeacherHasMore || scopeLoading}
+            >
+              Load More
             </Button>
             <Button
               type="button"
@@ -1058,8 +1309,15 @@ export default function TeacherPayments(): JSX.Element {
         </div>
         <div className="text-sm text-muted-foreground">
           {loadedScopeLabel}
-          {loadMode === 'none' ? ' Select a teacher or click Load Top 10.' : ''}
+          {loadMode === 'none' ? ' Select a teacher or click Load First 25.' : ''}
         </div>
+        {loadMode === 'month' && monthTeacherHasMore ? (
+          <div className="text-xs text-muted-foreground">
+            Load more to see additional teachers for this month.
+          </div>
+        ) : null}
+        {monthTeacherNotice ? <div className="text-xs text-amber-700">{monthTeacherNotice}</div> : null}
+        {scopeError ? <div className="text-sm text-red-600">{scopeError}</div> : null}
       </Card>
 
       <Card className="p-4">
@@ -1082,10 +1340,12 @@ export default function TeacherPayments(): JSX.Element {
               {visibleRows.length === 0 ? (
                 <tr>
                   <td className="p-3 text-muted-foreground" colSpan={9}>
-                    {scopeLoading || loadingRollups
+                    {scopeError
+                      ? 'Payment data could not be loaded. Check Firestore rules/indexes.'
+                      : scopeLoading || loadingRollups
                       ? 'Loading…'
                       : loadMode === 'none'
-                        ? 'No data loaded yet. Select a teacher or click Load Top 10.'
+                        ? 'No data loaded yet. Select a teacher or click Load First 25.'
                         : 'No teachers found for the loaded scope.'}
                   </td>
                 </tr>
