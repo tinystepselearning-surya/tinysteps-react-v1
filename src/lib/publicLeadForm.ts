@@ -1,12 +1,14 @@
 export type InterestOption = 'Phonics' | 'Reading' | 'Grammar' | 'Speaking';
 export type MainConcernOption =
-  | 'Knows ABC but cannot read words'
-  | 'Struggles with blending'
-  | 'Reads slowly'
-  | 'Makes grammar mistakes'
-  | 'Gives one-word answers'
-  | 'Hesitates to speak English'
-  | 'Needs public speaking confidence'
+  | 'Starting to read words after learning ABC/sounds'
+  | 'Blending sounds to read words'
+  | 'Reading speed and word accuracy'
+  | 'Spelling while reading and writing'
+  | 'Understanding what they read'
+  | 'Grammar while speaking or writing'
+  | 'Answering in full sentences'
+  | 'Speaking English with confidence'
+  | 'Confidence for speaking / presentations'
   | 'Not sure where to start';
 
 export type PublicAssessmentFormState = {
@@ -14,10 +16,8 @@ export type PublicAssessmentFormState = {
   childName: string;
   whatsapp: string;
   childAge: string;
-  interest: InterestOption;
   mainConcern: MainConcernOption | '';
   urgency: '' | 'Today' | 'This week' | 'This month' | 'Just exploring';
-  details: string;
 };
 
 export type PublicLeadAttribution = {
@@ -34,6 +34,27 @@ const INTEREST_TRACK_BY_OPTION: Partial<Record<InterestOption, 'phonics' | 'gram
   Grammar: 'grammar',
   Speaking: 'public_speaking',
 };
+
+function deriveInterestFromConcern(mainConcern: MainConcernOption | ''): InterestOption | null {
+  switch (mainConcern) {
+    case 'Starting to read words after learning ABC/sounds':
+    case 'Blending sounds to read words':
+      return 'Phonics';
+    case 'Reading speed and word accuracy':
+    case 'Spelling while reading and writing':
+    case 'Understanding what they read':
+    case 'Not sure where to start':
+      return 'Reading';
+    case 'Grammar while speaking or writing':
+      return 'Grammar';
+    case 'Answering in full sentences':
+    case 'Speaking English with confidence':
+    case 'Confidence for speaking / presentations':
+      return 'Speaking';
+    default:
+      return null;
+  }
+}
 
 export function getPublicLeadAttribution(): PublicLeadAttribution {
   if (typeof window === 'undefined') {
@@ -62,6 +83,7 @@ export function buildPublicLeadPayload(
   const parsedChildAge = Number(form.childAge);
   const attribution = opts.attribution || getPublicLeadAttribution();
   const normalizedWhatsapp = form.whatsapp.trim();
+  const derivedInterest = deriveInterestFromConcern(form.mainConcern);
 
   return {
     parentName: form.parentName.trim(),
@@ -70,12 +92,12 @@ export function buildPublicLeadPayload(
     phoneNormalized: normalizedWhatsapp.replace(/[^\d+]/g, ''),
     childName: form.childName.trim(),
     childAge: Number.isFinite(parsedChildAge) ? parsedChildAge : null,
-    interestTrack: INTEREST_TRACK_BY_OPTION[form.interest] ?? null,
-    programInterest: form.interest,
+    interestTrack: derivedInterest ? INTEREST_TRACK_BY_OPTION[derivedInterest] ?? null : null,
+    programInterest: derivedInterest,
     source: 'website',
     sourceDetail: opts.source || 'public_assessment_form',
     urgency: form.urgency || null,
-    initialMessageSnippet: form.details.trim() || null,
+    initialMessageSnippet: null,
     mainConcern: form.mainConcern,
     timezone: opts.timezone || null,
     sourcePath: attribution.sourcePath,
@@ -99,17 +121,12 @@ export function buildPublicWhatsappMessage(form: PublicAssessmentFormState) {
     `Child name: ${form.childName || '-'}`,
     `WhatsApp number: ${form.whatsapp || '-'}`,
     `Child age: ${form.childAge || '-'}`,
-    `Interest: ${form.interest || '-'}`,
-    `Main concern: ${form.mainConcern || '-'}`,
+    `Support area: ${form.mainConcern || '-'}`,
     '',
   ];
 
   if (form.urgency) {
     lines.push(`When do you want to start: ${form.urgency}`, '');
-  }
-
-  if (form.details.trim()) {
-    lines.push(form.details.trim(), '');
   }
 
   lines.push('Please share available slots. Thank you.');

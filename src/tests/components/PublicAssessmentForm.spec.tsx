@@ -29,9 +29,8 @@ function fillValidForm() {
   fireEvent.change(screen.getByLabelText(/child name/i), { target: { value: 'Aarav' } });
   fireEvent.change(screen.getByLabelText(/whatsapp number/i), { target: { value: '+919999999999' } });
   fireEvent.change(screen.getByLabelText(/child age/i), { target: { value: '7' } });
-  fireEvent.click(screen.getByRole('radio', { name: 'Phonics' }));
-  fireEvent.change(screen.getByLabelText(/what is your child struggling with most/i), {
-    target: { value: 'Struggles with blending' },
+  fireEvent.change(screen.getByLabelText(/choose the area where your child needs support/i), {
+    target: { value: 'Blending sounds to read words' },
   });
 }
 
@@ -61,12 +60,37 @@ describe('PublicAssessmentForm analytics', () => {
     fireEvent.change(screen.getByLabelText(/child name/i), { target: { value: 'Aarav' } });
     fireEvent.change(screen.getByLabelText(/whatsapp number/i), { target: { value: '+919999999999' } });
     fireEvent.change(screen.getByLabelText(/child age/i), { target: { value: '7' } });
-    fireEvent.click(screen.getByRole('radio', { name: 'Phonics' }));
 
     fireEvent.submit(screen.getByRole('button', { name: /get free assessment on whatsapp/i }));
 
-    expect(screen.getByText(/please select the main concern/i)).toBeInTheDocument();
+    expect(screen.getByText(/please select the support area/i)).toBeInTheDocument();
     expect(trackingMocks.trackLeadFormSubmit).not.toHaveBeenCalled();
+  });
+
+  it('renders only the required support-area dropdown with the exact options', () => {
+    render(<PublicAssessmentForm />);
+
+    expect(screen.queryByRole('radio', { name: /phonics|reading|grammar|speaking/i })).toBeNull();
+    expect(screen.queryByLabelText(/optional details/i)).toBeNull();
+
+    const supportArea = screen.getByLabelText(/choose the area where your child needs support/i);
+    expect(supportArea).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Choose the area where your child needs support' })).toBeInTheDocument();
+
+    [
+      'Starting to read words after learning ABC/sounds',
+      'Blending sounds to read words',
+      'Reading speed and word accuracy',
+      'Spelling while reading and writing',
+      'Understanding what they read',
+      'Grammar while speaking or writing',
+      'Answering in full sentences',
+      'Speaking English with confidence',
+      'Confidence for speaking / presentations',
+      'Not sure where to start',
+    ].forEach((option) => {
+      expect(screen.getByRole('option', { name: option })).toBeInTheDocument();
+    });
   });
 
   it('fires generate_lead only after a successful save and before WhatsApp opens', async () => {
@@ -87,7 +111,7 @@ describe('PublicAssessmentForm analytics', () => {
         primaryPhone: '+919999999999',
         childAge: 7,
         programInterest: 'Phonics',
-        mainConcern: 'Struggles with blending',
+        mainConcern: 'Blending sounds to read words',
         urgency: null,
         requestedAt: 'server-timestamp',
         createdAt: 'server-timestamp',
@@ -108,8 +132,7 @@ describe('PublicAssessmentForm analytics', () => {
       source: 'public_assessment_form',
       submission_id: 'lead-123',
       childAge: '7',
-      interest: 'Phonics',
-      mainConcern: 'Struggles with blending',
+      mainConcern: 'Blending sounds to read words',
       value: 1,
     }));
     expect(trackingMocks.trackDemoBookingComplete).toHaveBeenCalledTimes(1);

@@ -230,7 +230,6 @@ const ContactPage: FC = () => {
             className="relative rounded-[32px] border border-slate-200/80 bg-white/94 p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] backdrop-blur sm:p-8 lg:sticky lg:top-28 lg:self-start"
           >
             <BookAssessmentForm
-              defaultInterest="Phonics"
               source="contact_page_assessment"
               title="Share Your Child’s Details"
               description="Use the regular Tiny Steps assessment flow. Parents can share age, main concern, and timing preference to get the right starting point."

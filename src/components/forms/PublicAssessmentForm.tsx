@@ -14,7 +14,6 @@ import {
   buildPublicLeadPayload,
   buildPublicWhatsappMessage,
   getPublicLeadAttribution,
-  type InterestOption,
   type MainConcernOption,
   type PublicAssessmentFormState,
 } from '../../lib/publicLeadForm';
@@ -29,7 +28,6 @@ const NAVY_TEXT_STRONG = `text-[#142449] ${NAVY_TEXT_OUTLINE}`;
 type AgeOption = '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12';
 
 type PublicAssessmentFormProps = {
-  defaultInterest?: InterestOption;
   source?: string;
   autoFocusFirstField?: boolean;
   onSuccess?: () => void;
@@ -48,7 +46,6 @@ const GlassCard = ({ children, className = '' }: { children: React.ReactNode; cl
 );
 
 export default function PublicAssessmentForm({
-  defaultInterest = 'Phonics',
   source,
   autoFocusFirstField = false,
   onSuccess,
@@ -58,15 +55,16 @@ export default function PublicAssessmentForm({
   submitAriaLabel = 'Get Free Assessment on WhatsApp',
 }: PublicAssessmentFormProps) {
   const ageOptions: AgeOption[] = ['3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
-  const interestOptions: InterestOption[] = ['Phonics', 'Reading', 'Grammar', 'Speaking'];
   const mainConcernOptions: MainConcernOption[] = [
-    'Knows ABC but cannot read words',
-    'Struggles with blending',
-    'Reads slowly',
-    'Makes grammar mistakes',
-    'Gives one-word answers',
-    'Hesitates to speak English',
-    'Needs public speaking confidence',
+    'Starting to read words after learning ABC/sounds',
+    'Blending sounds to read words',
+    'Reading speed and word accuracy',
+    'Spelling while reading and writing',
+    'Understanding what they read',
+    'Grammar while speaking or writing',
+    'Answering in full sentences',
+    'Speaking English with confidence',
+    'Confidence for speaking / presentations',
     'Not sure where to start',
   ];
   const initialState: PublicAssessmentFormState = {
@@ -74,10 +72,8 @@ export default function PublicAssessmentForm({
     childName: '',
     whatsapp: '',
     childAge: '',
-    interest: defaultInterest,
     mainConcern: '',
     urgency: '',
-    details: '',
   };
 
   const [form, setForm] = useState<PublicAssessmentFormState>(initialState);
@@ -85,7 +81,7 @@ export default function PublicAssessmentForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [lastOpenedWaLink, setLastOpenedWaLink] = useState('');
-  const [errors, setErrors] = useState<{ parentName?: string; childName?: string; whatsapp?: string; childAge?: string; interest?: string; mainConcern?: string }>({});
+  const [errors, setErrors] = useState<{ parentName?: string; childName?: string; whatsapp?: string; childAge?: string; mainConcern?: string }>({});
   const firstFieldRef = useRef<HTMLInputElement | null>(null);
   const hasTrackedFormStartRef = useRef(false);
 
@@ -138,7 +134,6 @@ export default function PublicAssessmentForm({
       utm_campaign: attribution.utm_campaign,
       utm_content: attribution.utm_content,
       utm_term: attribution.utm_term,
-      interest: form.interest,
       urgency: form.urgency,
     });
     // mount-only event
@@ -159,7 +154,6 @@ export default function PublicAssessmentForm({
       utm_content: attribution.utm_content,
       utm_term: attribution.utm_term,
       childAge: form.childAge,
-      interest: form.interest,
       mainConcern: form.mainConcern,
       urgency: form.urgency,
     });
@@ -170,7 +164,7 @@ export default function PublicAssessmentForm({
   }, [form]);
 
   const validate = () => {
-    const nextErrors: { parentName?: string; childName?: string; whatsapp?: string; childAge?: string; interest?: string; mainConcern?: string } = {};
+    const nextErrors: { parentName?: string; childName?: string; whatsapp?: string; childAge?: string; mainConcern?: string } = {};
 
     if (!form.parentName.trim()) {
       nextErrors.parentName = 'Please enter parent name.';
@@ -188,12 +182,8 @@ export default function PublicAssessmentForm({
       nextErrors.childAge = 'Please select child age.';
     }
 
-    if (!form.interest) {
-      nextErrors.interest = 'Please select one interest.';
-    }
-
     if (!form.mainConcern) {
-      nextErrors.mainConcern = 'Please select the main concern.';
+      nextErrors.mainConcern = 'Please select the support area.';
     }
 
     setErrors(nextErrors);
@@ -231,7 +221,6 @@ export default function PublicAssessmentForm({
       utm_content: attribution.utm_content,
       utm_term: attribution.utm_term,
       childAge: form.childAge,
-      interest: form.interest,
       mainConcern: form.mainConcern,
       urgency: form.urgency,
     };
@@ -381,126 +370,64 @@ export default function PublicAssessmentForm({
           {errors.whatsapp ? <p className="text-xs text-rose-600">{errors.whatsapp}</p> : null}
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-start">
-          <div className="space-y-4">
-            <div className="group space-y-1">
-              <label htmlFor="assessment-child-age" className="sr-only">
-                Child Age *
-              </label>
-              <select
-                id="assessment-child-age"
-                name="childAge"
-                aria-label="Child Age"
-                value={form.childAge}
-                onChange={(e) => {
-                  setForm((p) => ({ ...p, childAge: e.target.value }));
-                  if (errors.childAge) setErrors((prev) => ({ ...prev, childAge: undefined }));
-                }}
-                className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-100 ${NAVY_TEXT}`}
-                required
-                aria-invalid={Boolean(errors.childAge)}
-              >
-                <option value="" disabled>
-                  Child Age
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] sm:items-start">
+          <div className="group space-y-1">
+            <label htmlFor="assessment-child-age" className="sr-only">
+              Child Age *
+            </label>
+            <select
+              id="assessment-child-age"
+              name="childAge"
+              aria-label="Child Age"
+              value={form.childAge}
+              onChange={(e) => {
+                setForm((p) => ({ ...p, childAge: e.target.value }));
+                if (errors.childAge) setErrors((prev) => ({ ...prev, childAge: undefined }));
+              }}
+              className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-100 ${NAVY_TEXT}`}
+              required
+              aria-invalid={Boolean(errors.childAge)}
+            >
+              <option value="" disabled>
+                Child Age
+              </option>
+              {ageOptions.map((age) => (
+                <option key={age} value={age}>
+                  {age}
                 </option>
-                {ageOptions.map((age) => (
-                  <option key={age} value={age}>
-                    {age}
-                  </option>
-                ))}
-              </select>
-              {errors.childAge ? <p className="text-xs text-rose-600">{errors.childAge}</p> : null}
-            </div>
-
-            <div className="group space-y-1">
-              <label htmlFor="assessment-main-concern" className="sr-only">
-                What is your child struggling with most? *
-              </label>
-              <select
-                id="assessment-main-concern"
-                name="mainConcern"
-                aria-label="What is your child struggling with most?"
-                value={form.mainConcern}
-                onChange={(e) => {
-                  setForm((p) => ({ ...p, mainConcern: e.target.value as MainConcernOption }));
-                  if (errors.mainConcern) setErrors((prev) => ({ ...prev, mainConcern: undefined }));
-                }}
-                className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-100 ${NAVY_TEXT}`}
-                required
-                aria-invalid={Boolean(errors.mainConcern)}
-              >
-                <option value="" disabled>
-                  What is your child struggling with?
-                </option>
-                {mainConcernOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-              {errors.mainConcern ? <p className="text-xs text-rose-600">{errors.mainConcern}</p> : null}
-            </div>
-
+              ))}
+            </select>
+            {errors.childAge ? <p className="text-xs text-rose-600">{errors.childAge}</p> : null}
           </div>
 
           <div className="group space-y-1">
-            <label className={`text-[10px] font-semibold uppercase tracking-[0.18em] ${NAVY_TEXT}`}>
-              Interest *
+            <label htmlFor="assessment-main-concern" className="sr-only">
+              Choose the area where your child needs support *
             </label>
-            <div
-              className="grid grid-cols-2 gap-2"
-              role="radiogroup"
-              aria-label="Interest"
-              aria-invalid={Boolean(errors.interest)}
+            <select
+              id="assessment-main-concern"
+              name="mainConcern"
+              aria-label="Choose the area where your child needs support"
+              value={form.mainConcern}
+              onChange={(e) => {
+                setForm((p) => ({ ...p, mainConcern: e.target.value as MainConcernOption }));
+                if (errors.mainConcern) setErrors((prev) => ({ ...prev, mainConcern: undefined }));
+              }}
+              className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-100 ${NAVY_TEXT}`}
+              required
+              aria-invalid={Boolean(errors.mainConcern)}
             >
-              {interestOptions.map((option) => {
-                const isSelected = form.interest === option;
-                return (
-                  <button
-                    key={option}
-                    type="button"
-                    role="radio"
-                    aria-checked={isSelected}
-                    onClick={() => {
-                      setForm((p) => ({ ...p, interest: option }));
-                      if (errors.interest) setErrors((prev) => ({ ...prev, interest: undefined }));
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        setForm((p) => ({ ...p, interest: option }));
-                        if (errors.interest) setErrors((prev) => ({ ...prev, interest: undefined }));
-                      }
-                    }}
-                    className={`rounded-xl border px-3 py-2 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-orange-200 ${
-                      isSelected
-                        ? `border-orange-500 bg-orange-50 text-orange-800 shadow-sm ${NAVY_TEXT_STRONG}`
-                        : `border-slate-300 bg-white hover:border-orange-300 hover:bg-orange-50/60 ${NAVY_TEXT}`
-                    }`}
-                  >
-                    {option}
-                  </button>
-                );
-              })}
-            </div>
-            {errors.interest ? <p className="text-xs text-rose-600">{errors.interest}</p> : null}
+              <option value="" disabled>
+                Choose the area where your child needs support
+              </option>
+              {mainConcernOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+            {errors.mainConcern ? <p className="text-xs text-rose-600">{errors.mainConcern}</p> : null}
           </div>
-        </div>
-
-        <div className="group space-y-1">
-          <label htmlFor="assessment-details" className="sr-only">
-            Optional Details
-          </label>
-          <textarea
-            id="assessment-details"
-            name="details"
-            rows={2}
-            aria-label="Optional Details"
-            placeholder="Optional details: reading help, shy speaker, preferred time, etc."
-            value={form.details}
-            onChange={(e) => setForm((p) => ({ ...p, details: e.target.value }))}
-            className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition-all placeholder:text-[#44597f] focus:border-orange-500 focus:ring-2 focus:ring-orange-100 ${NAVY_TEXT}`}
-          />
         </div>
 
         <button

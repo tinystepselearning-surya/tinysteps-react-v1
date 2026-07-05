@@ -274,7 +274,6 @@ const ConversionHero: React.FC = () => {
             </div>
 
             <BookAssessmentForm
-              defaultInterest="Phonics"
               source="homepage_hero_assessment"
               title="Share Your Child's Details"
               description="Book a free assessment to find the right starting point in phonics, reading, grammar, or speaking."

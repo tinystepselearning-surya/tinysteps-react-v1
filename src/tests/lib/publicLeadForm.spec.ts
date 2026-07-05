@@ -9,10 +9,8 @@ describe('publicLeadForm helpers', () => {
         childName: 'Aarav',
         whatsapp: '+919999999999',
         childAge: '7',
-        interest: 'Reading',
-        mainConcern: 'Reads slowly',
+        mainConcern: 'Reading speed and word accuracy',
         urgency: 'This week',
-        details: 'Needs after-school timing',
       },
       {
         source: 'homepage_hero_assessment',
@@ -32,8 +30,9 @@ describe('publicLeadForm helpers', () => {
       childName: 'Aarav',
       childAge: 7,
       programInterest: 'Reading',
-      mainConcern: 'Reads slowly',
+      mainConcern: 'Reading speed and word accuracy',
       urgency: 'This week',
+      initialMessageSnippet: null,
       sourcePath: '/',
     });
     expect(payload).not.toHaveProperty('status');
@@ -44,19 +43,18 @@ describe('publicLeadForm helpers', () => {
     });
   });
 
-  it('includes mainConcern and urgency in the WhatsApp message', () => {
+  it('includes support area and urgency in the WhatsApp message', () => {
     const message = buildPublicWhatsappMessage({
       parentName: 'Priya',
       childName: 'Aarav',
       whatsapp: '+919999999999',
       childAge: '7',
-      interest: 'Speaking',
-      mainConcern: 'Gives one-word answers',
+      mainConcern: 'Answering in full sentences',
       urgency: 'Today',
-      details: '',
     });
 
-    expect(message).toContain('Main concern: Gives one-word answers');
+    expect(message).toContain('Support area: Answering in full sentences');
     expect(message).toContain('When do you want to start: Today');
+    expect(message).not.toContain('Interest:');
   });
 });
