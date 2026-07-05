@@ -29,7 +29,6 @@ function fillValidForm() {
   fireEvent.change(screen.getByLabelText(/child name/i), { target: { value: 'Aarav' } });
   fireEvent.change(screen.getByLabelText(/whatsapp number/i), { target: { value: '+919999999999' } });
   fireEvent.change(screen.getByLabelText(/child age/i), { target: { value: '7' } });
-  fireEvent.change(screen.getByLabelText(/when do you want to start/i), { target: { value: 'This week' } });
   fireEvent.click(screen.getByRole('radio', { name: 'Phonics' }));
   fireEvent.change(screen.getByLabelText(/what is your child struggling with most/i), {
     target: { value: 'Struggles with blending' },
@@ -89,7 +88,7 @@ describe('PublicAssessmentForm analytics', () => {
         childAge: 7,
         programInterest: 'Phonics',
         mainConcern: 'Struggles with blending',
-        urgency: 'This week',
+        urgency: null,
         requestedAt: 'server-timestamp',
         createdAt: 'server-timestamp',
         updatedAt: 'server-timestamp',
@@ -111,7 +110,6 @@ describe('PublicAssessmentForm analytics', () => {
       childAge: '7',
       interest: 'Phonics',
       mainConcern: 'Struggles with blending',
-      urgency: 'This week',
       value: 1,
     }));
     expect(trackingMocks.trackDemoBookingComplete).toHaveBeenCalledTimes(1);
@@ -146,9 +144,9 @@ describe('PublicAssessmentForm analytics', () => {
     expect(screen.queryByRole('status')).toBeNull();
   });
 
-  it('renders an optional urgency field in the public form', () => {
+  it('does not render the urgency field in the public form', () => {
     render(<PublicAssessmentForm />);
 
-    expect(screen.getByLabelText(/when do you want to start/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/when do you want to start/i)).toBeNull();
   });
 });
