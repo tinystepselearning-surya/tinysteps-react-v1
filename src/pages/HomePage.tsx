@@ -23,9 +23,9 @@ const PARENT_HELP_POINTS = [
   "Friendly support for common phonics questions",
 ];
 const CORE_PROGRAMS_TEXT = `${PUBLIC_FACTS.corePrograms[0]}, ${PUBLIC_FACTS.corePrograms[1]}, and ${PUBLIC_FACTS.corePrograms[2]}`;
-const homeSeoTitle = "Online English Classes for Kids That Build Reading, Grammar and Speaking Confidence | Tiny Steps Learning";
+const homeSeoTitle = "Online English Classes for Kids in India | Tiny Steps";
 const homeSeoDescription =
-  "Live 1:1 and small-group online English classes for kids with phonics, reading, grammar, spoken-English support, free assessment, transparent pricing, and parent-visible progress.";
+  "Live 1:1 online English classes for kids ages 3–12. Phonics, reading, grammar and speaking with a free assessment and parent updates.";
 const homeCanonicalPath = "/";
 const homeCanonicalUrl =
   homeCanonicalPath === "/" ? `${PUBLIC_FACTS.primaryWebsite}/` : `${PUBLIC_FACTS.primaryWebsite}${homeCanonicalPath}`;
@@ -195,6 +195,90 @@ export default function HomePage() {
 
       {/* HERO */}
       <ConversionHero />
+
+      <section className="px-6 pb-6">
+        <div className="mx-auto max-w-6xl rounded-[30px] border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.98)_0%,rgba(247,250,255,0.98)_55%,rgba(255,251,245,0.98)_100%)] p-6 shadow-[0_22px_60px_rgba(15,23,42,0.06)] ring-1 ring-white/70 sm:p-8">
+          <div className="inline-flex rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-600 shadow-sm">
+            Tiny Steps approach
+          </div>
+          <h2 className="mt-4 text-2xl font-semibold tracking-[-0.03em] text-slate-900 sm:text-3xl">Structured support before parents choose a plan</h2>
+          <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-700 sm:text-base">
+            Tiny Steps classes are designed by Priya and the Tiny Steps academic team for children who need structured support in phonics, reading, grammar, sentence formation and confident speaking.
+          </p>
+        </div>
+      </section>
+
+      <section id="free-assessment-checklist" className="px-6 py-4">
+        <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="relative overflow-hidden rounded-[32px] border border-amber-100/80 bg-[linear-gradient(155deg,rgba(255,255,255,0.98)_0%,rgba(255,248,239,0.97)_48%,rgba(247,251,255,0.97)_100%)] p-6 shadow-[0_24px_70px_rgba(15,23,42,0.07)] ring-1 ring-white/70 sm:p-8">
+            <div className="pointer-events-none absolute right-0 top-0 h-32 w-32 rounded-full bg-amber-100/45 blur-3xl" />
+            <div className="relative inline-flex rounded-full border border-amber-200/80 bg-white/88 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.26em] text-amber-800 shadow-sm">
+              Free assessment
+            </div>
+            <h2 className="mt-4 text-2xl font-semibold tracking-[-0.03em] text-slate-900 sm:text-3xl">What we check in the free assessment</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-700 sm:text-base">
+              The assessment helps Tiny Steps understand where your child is currently getting stuck before recommending the best starting point.
+            </p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              {[
+                'Letter-sound knowledge',
+                'Blending ability',
+                'CVC word reading',
+                'Reading fluency',
+                'Sentence formation',
+                'Grammar accuracy',
+                'Speaking confidence',
+                'Pronunciation clarity',
+              ].map((item) => (
+                <div key={item} className="rounded-2xl border border-white/80 bg-white/88 px-4 py-3 text-sm font-medium text-slate-700 shadow-[0_10px_26px_rgba(15,23,42,0.05)] backdrop-blur">
+                  {item}
+                </div>
+              ))}
+            </div>
+            <div className="mt-6">
+              <Link
+                to="/book-demo"
+                className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+              >
+                Book Free Assessment
+              </Link>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden rounded-[32px] border border-sky-100/90 bg-[linear-gradient(155deg,rgba(255,255,255,0.98)_0%,rgba(246,250,255,0.98)_52%,rgba(255,251,245,0.97)_100%)] p-6 shadow-[0_24px_70px_rgba(15,23,42,0.07)] ring-1 ring-white/70 sm:p-8">
+            <div className="pointer-events-none absolute left-0 top-0 h-32 w-32 rounded-full bg-sky-100/40 blur-3xl" />
+            <div className="relative inline-flex rounded-full border border-sky-200/80 bg-white/88 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.26em] text-sky-800 shadow-sm">
+              Age guidance
+            </div>
+            <h2 className="mt-4 text-2xl font-semibold tracking-[-0.03em] text-slate-900 sm:text-3xl">Common starting points by age</h2>
+            <div className="mt-5 overflow-hidden rounded-[24px] border border-slate-200/80 bg-white/90 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
+              <table className="w-full border-collapse text-left text-sm text-slate-700">
+                <thead className="bg-[linear-gradient(180deg,#f8fbff_0%,#f8fafc_100%)] text-slate-900">
+                  <tr>
+                    <th className="px-4 py-3 font-semibold">Age</th>
+                    <th className="px-4 py-3 font-semibold">Parent concern</th>
+                    <th className="px-4 py-3 font-semibold">Tiny Steps focus</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    ['3–4', 'Not speaking clearly', 'Vocabulary, sounds, confidence'],
+                    ['5–6', 'Knows letters but cannot read', 'Phonics, blending, CVC'],
+                    ['7–8', 'Reads slowly, grammar mistakes', 'Fluency + grammar basics'],
+                    ['9–12', 'Hesitates to speak', 'Public speaking, sentence confidence'],
+                  ].map(([age, concern, focus]) => (
+                    <tr key={age} className="border-t border-slate-200/80 odd:bg-white even:bg-slate-50/45">
+                      <td className="px-4 py-3 font-semibold text-slate-900">{age}</td>
+                      <td className="px-4 py-3">{concern}</td>
+                      <td className="px-4 py-3">{focus}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div ref={belowFoldAnchorRef} className="h-px w-full" aria-hidden="true" />
 

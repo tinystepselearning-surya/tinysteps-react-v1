@@ -1006,7 +1006,141 @@ function teacherOwnsDocViaAliases(data) {
     // DEMO SESSIONS
     // ----------------------------
     match /leads/{leadId} {
-      allow read, write: if isAdmin();
+      allow read, update, delete: if isAdmin();
+      allow create: if isAdmin() || (
+        request.resource.data.keys().hasOnly([
+          'parentName',
+          'whatsappNumber',
+          'primaryPhone',
+          'phoneNormalized',
+          'childName',
+          'childAge',
+          'interestTrack',
+          'programInterest',
+          'source',
+          'sourceDetail',
+          'initialMessageSnippet',
+          'mainConcern',
+          'urgency',
+          'timezone',
+          'sourcePath',
+          'attribution',
+          'requestedAt',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'parentName',
+          'whatsappNumber',
+          'primaryPhone',
+          'phoneNormalized',
+          'childName',
+          'childAge',
+          'programInterest',
+          'source',
+          'sourceDetail',
+          'mainConcern',
+          'sourcePath',
+          'attribution',
+          'requestedAt',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.parentName is string
+        && request.resource.data.parentName.size() >= 2
+        && request.resource.data.parentName.size() <= 80
+        && request.resource.data.whatsappNumber is string
+        && request.resource.data.whatsappNumber.size() >= 8
+        && request.resource.data.whatsappNumber.size() <= 24
+        && request.resource.data.primaryPhone is string
+        && request.resource.data.primaryPhone.size() >= 8
+        && request.resource.data.primaryPhone.size() <= 24
+        && request.resource.data.primaryPhone == request.resource.data.whatsappNumber
+        && request.resource.data.phoneNormalized is string
+        && request.resource.data.phoneNormalized.size() >= 8
+        && request.resource.data.phoneNormalized.size() <= 24
+        && request.resource.data.childName is string
+        && request.resource.data.childName.size() >= 1
+        && request.resource.data.childName.size() <= 80
+        && request.resource.data.childAge is number
+        && request.resource.data.childAge >= 3
+        && request.resource.data.childAge <= 12
+        && request.resource.data.childAge % 1 == 0
+        && (
+          !('interestTrack' in request.resource.data)
+          || request.resource.data.interestTrack == null
+          || request.resource.data.interestTrack in ['phonics', 'grammar', 'public_speaking']
+        )
+        && request.resource.data.programInterest in ['Phonics', 'Reading', 'Grammar', 'Speaking']
+        && request.resource.data.source == 'website'
+        && request.resource.data.sourceDetail is string
+        && request.resource.data.sourceDetail.size() >= 1
+        && request.resource.data.sourceDetail.size() <= 120
+        && (
+          !('initialMessageSnippet' in request.resource.data)
+          || request.resource.data.initialMessageSnippet == null
+          || (request.resource.data.initialMessageSnippet is string && request.resource.data.initialMessageSnippet.size() <= 1000)
+        )
+        && request.resource.data.mainConcern in [
+          'Knows ABC but cannot read words',
+          'Struggles with blending',
+          'Reads slowly',
+          'Makes grammar mistakes',
+          'Gives one-word answers',
+          'Hesitates to speak English',
+          'Needs public speaking confidence',
+          'Not sure where to start'
+        ]
+        && (
+          !('urgency' in request.resource.data)
+          || request.resource.data.urgency == null
+          || request.resource.data.urgency in ['Today', 'This week', 'This month', 'Just exploring']
+        )
+        && (
+          !('timezone' in request.resource.data)
+          || request.resource.data.timezone == null
+          || (request.resource.data.timezone is string && request.resource.data.timezone.size() <= 80)
+        )
+        && request.resource.data.sourcePath is string
+        && request.resource.data.sourcePath.size() >= 1
+        && request.resource.data.sourcePath.size() <= 200
+        && request.resource.data.attribution is map
+        && request.resource.data.attribution.keys().hasOnly([
+          'utm_source',
+          'utm_medium',
+          'utm_campaign',
+          'utm_content',
+          'utm_term'
+        ])
+        && (
+          !('utm_source' in request.resource.data.attribution)
+          || request.resource.data.attribution.utm_source == null
+          || (request.resource.data.attribution.utm_source is string && request.resource.data.attribution.utm_source.size() <= 120)
+        )
+        && (
+          !('utm_medium' in request.resource.data.attribution)
+          || request.resource.data.attribution.utm_medium == null
+          || (request.resource.data.attribution.utm_medium is string && request.resource.data.attribution.utm_medium.size() <= 120)
+        )
+        && (
+          !('utm_campaign' in request.resource.data.attribution)
+          || request.resource.data.attribution.utm_campaign == null
+          || (request.resource.data.attribution.utm_campaign is string && request.resource.data.attribution.utm_campaign.size() <= 160)
+        )
+        && (
+          !('utm_content' in request.resource.data.attribution)
+          || request.resource.data.attribution.utm_content == null
+          || (request.resource.data.attribution.utm_content is string && request.resource.data.attribution.utm_content.size() <= 160)
+        )
+        && (
+          !('utm_term' in request.resource.data.attribution)
+          || request.resource.data.attribution.utm_term == null
+          || (request.resource.data.attribution.utm_term is string && request.resource.data.attribution.utm_term.size() <= 160)
+        )
+        && request.resource.data.requestedAt is timestamp
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp
+      );
     }
 
     match /leads/{leadId}/communications/{communicationId} {

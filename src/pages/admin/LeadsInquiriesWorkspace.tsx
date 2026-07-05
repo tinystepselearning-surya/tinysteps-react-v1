@@ -137,6 +137,7 @@ interface LeadRecord {
   childAge?: number | null;
   childGrade?: string | null;
   interestTrack?: InterestTrack | null;
+  programInterest?: string | null;
   source?: LeadSource | null;
   sourceDetail?: string | null;
   country?: string | null;
@@ -1357,6 +1358,7 @@ export default function LeadsInquiriesWorkspace({
       const source = normalizeText(linkedDemo?.source) || normalizeText(lead.source) || 'manual';
       const courseLabel =
         normalizeText(linkedDemo?.courseInterested) ||
+        normalizeText((lead as LeadRecord).programInterest) ||
         (normalizeText(lead.interestTrack)
           ? interestTrackToCourse(normalizeText(lead.interestTrack))
           : '—');

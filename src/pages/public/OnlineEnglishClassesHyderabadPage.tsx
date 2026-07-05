@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
-import { createFAQPageSchema, createServiceSchema } from '../../lib/schemas';
+import { ORGANIZATION_ID, createFAQPageSchema, createServiceSchema } from '../../lib/schemas';
 import {
   CourseCTAGroup,
   FAQSection,
@@ -93,13 +93,27 @@ export default function OnlineEnglishClassesHyderabadPage() {
       url: canonicalUrl,
     });
 
+    const hyderabadEducationalOrganizationSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'EducationalOrganization',
+      '@id': `${canonicalUrl}#educational-organization`,
+      name: 'Tiny Steps Learning',
+      url: canonicalUrl,
+      parentOrganization: {
+        '@id': ORGANIZATION_ID,
+      },
+      areaServed: 'Hyderabad, Telangana, India',
+      description:
+        'Tiny Steps offers live online English classes for children in Hyderabad with support in phonics, reading, grammar, sentence formation, and speaking confidence.',
+    };
+
     applySeo({
       title: 'Online English Classes for Kids in Hyderabad | Tiny Steps Learning',
       description:
         'Live online English classes for kids in Hyderabad covering phonics, reading, grammar, sentence formation, and communication confidence. Book a free assessment.',
       canonicalPath,
       ogType: 'website',
-      jsonLd: [breadcrumbSchema, serviceSchema, faqSchema],
+      jsonLd: [breadcrumbSchema, hyderabadEducationalOrganizationSchema, serviceSchema, faqSchema],
     });
   }, []);
 

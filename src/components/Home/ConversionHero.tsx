@@ -105,6 +105,16 @@ const ConversionHero: React.FC = () => {
         {/* gentle warm veil (kept light so it doesn't look orange everywhere) */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_18%,rgba(255,170,120,0.10),transparent_62%)]" />
 
+        {/* brand wash behind the headline to improve contrast and identity */}
+        <div
+          className="absolute left-[2%] top-[4%] h-[360px] w-[360px] rounded-full blur-[95px] md:h-[440px] md:w-[520px]"
+          style={{
+            background:
+              "radial-gradient(circle at 32% 35%, rgba(255,196,71,0.28) 0%, rgba(255,142,43,0.18) 34%, rgba(255,255,255,0) 72%)",
+          }}
+          aria-hidden
+        />
+
         {/* ✅ white spotlight behind the form (right side pop) */}
         <div
           style={{
@@ -139,50 +149,64 @@ const ConversionHero: React.FC = () => {
           {/* LEFT CONTENT */}
           <div className="flex flex-col justify-center">
             <div
-              className="inline-flex w-fit items-center gap-3 rounded-full border border-orange-200/60 bg-white/80 px-4 py-2 text-[12px] font-bold text-orange-800 shadow-sm backdrop-blur-md"
+              className="inline-flex w-fit items-center gap-3 rounded-full border border-amber-200/80 bg-white/90 px-4 py-2 text-[12px] font-extrabold tracking-[0.06em] text-[#9A3412] shadow-[0_12px_30px_rgba(251,146,60,0.14)] backdrop-blur-md"
             >
               <span className="relative flex h-2 w-2">
-                <span className="motion-safe:animate-ping motion-reduce:animate-none absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                <span className="motion-safe:animate-ping motion-reduce:animate-none absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-orange-500"></span>
               </span>
               LIVE ONLINE ENGLISH CLASSES FOR KIDS
             </div>
 
             <h1
-              className="mt-6 max-w-4xl text-4xl font-black leading-[0.95] tracking-tight text-slate-900 md:text-6xl lg:text-7xl"
+              className="mt-6 max-w-4xl text-[2.95rem] font-black leading-[0.92] tracking-[-0.05em] text-[#172033] md:text-[4.7rem] lg:text-[5.6rem]"
             >
-              Online English Classes
-              <br className="hidden sm:block" />
-              <span className="sm:hidden"> </span>
-              for Kids That Build
-              <br />
-              <span className="bg-gradient-to-r from-orange-600 via-rose-500 to-amber-500 bg-clip-text text-transparent">
-                Reading, Grammar and Speaking Confidence
+              <span
+                className="text-white [text-shadow:-1px_-1px_0_rgba(245,115,22,0.9),1px_-1px_0_rgba(245,115,22,0.9),-1px_1px_0_rgba(245,115,22,0.9),1px_1px_0_rgba(245,115,22,0.9),0_8px_24px_rgba(251,146,60,0.22)] [-webkit-text-stroke:0.35px_rgba(245,115,22,0.72)]"
+              >
+                Online{" "}
+              </span>
+              <span className="bg-gradient-to-r from-[#F59E0B] via-[#F97316] to-[#FBBF24] bg-clip-text text-transparent [text-shadow:0_10px_28px_rgba(245,158,11,0.18)]">
+                English Classes
+              </span>
+              <span
+                className="text-white [text-shadow:-1px_-1px_0_rgba(245,115,22,0.9),1px_-1px_0_rgba(245,115,22,0.9),-1px_1px_0_rgba(245,115,22,0.9),1px_1px_0_rgba(245,115,22,0.9),0_8px_24px_rgba(251,146,60,0.22)] [-webkit-text-stroke:0.35px_rgba(245,115,22,0.72)]"
+              >
+                {" "}for{" "}
+              </span>
+              <span
+                className="text-white [text-shadow:-1px_-1px_0_rgba(245,115,22,0.9),1px_-1px_0_rgba(245,115,22,0.9),-1px_1px_0_rgba(245,115,22,0.9),1px_1px_0_rgba(245,115,22,0.9),0_8px_24px_rgba(251,146,60,0.22)] [-webkit-text-stroke:0.35px_rgba(245,115,22,0.72)]"
+              >
+                Kids
               </span>
             </h1>
 
             <p
-              className="mt-5 max-w-2xl text-base leading-relaxed text-slate-600 md:text-lg"
+              className="mt-5 max-w-2xl text-[1.04rem] font-semibold leading-8 text-[#182B57] [text-shadow:-0.7px_-0.7px_0_rgba(255,255,255,0.78),0.7px_-0.7px_0_rgba(255,255,255,0.78),-0.7px_0.7px_0_rgba(255,255,255,0.78),0.7px_0.7px_0_rgba(255,255,255,0.78)] md:text-[1.16rem] md:leading-9"
             >
-              Live 1:1 and small-group classes for children. Structured phonics, reading, grammar, and spoken-English support with free assessment, transparent pricing, and parent-visible progress.
+              Build{" "}
+              <span className="font-extrabold text-[#142449] [text-shadow:-0.7px_-0.7px_0_rgba(255,255,255,0.78),0.7px_-0.7px_0_rgba(255,255,255,0.78),-0.7px_0.7px_0_rgba(255,255,255,0.78),0.7px_0.7px_0_rgba(255,255,255,0.78)]">
+                reading, grammar and speaking confidence
+              </span>{" "}
+              through live 1:1 and small-group classes.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 to="/book-demo"
-                className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+                className="inline-flex items-center justify-center rounded-full bg-[#182338] px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_34px_rgba(23,32,51,0.20)] transition hover:bg-[#111B2D]"
               >
                 Book Free Assessment
               </Link>
               <Link
                 to="/pricing"
-                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white/80 px-6 py-3 text-sm font-semibold text-slate-900 shadow-sm backdrop-blur transition hover:border-slate-400 hover:bg-white"
+                className="inline-flex items-center justify-center rounded-full border border-[#182338]/18 bg-white/88 px-6 py-3 text-sm font-semibold text-[#182338] shadow-[0_10px_24px_rgba(23,32,51,0.08)] backdrop-blur transition hover:border-[#182338]/28 hover:bg-white"
               >
                 See Pricing
               </Link>
               <Link
                 to="/class-samples"
-                className="inline-flex items-center justify-center rounded-full border border-orange-200 bg-orange-50/80 px-6 py-3 text-sm font-semibold text-orange-800 shadow-sm backdrop-blur transition hover:border-orange-300 hover:bg-orange-100"
+                className="inline-flex items-center justify-center rounded-full border border-amber-200 bg-gradient-to-r from-[#FFF7DB] to-[#FFEBD5] px-6 py-3 text-sm font-semibold text-[#9A3412] shadow-[0_10px_24px_rgba(245,158,11,0.12)] backdrop-blur transition hover:border-orange-300 hover:from-[#FFF2C2] hover:to-[#FFE4C6]"
               >
                 Class Samples
               </Link>

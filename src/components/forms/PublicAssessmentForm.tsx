@@ -1,28 +1,32 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import {
   trackDemoBookingComplete,
+  trackLeadFormView,
   trackGenerateLead,
   trackLeadFormError,
   trackLeadFormStart,
   trackLeadFormSubmit,
   trackWhatsappClick,
 } from '../../lib/conversionTracking';
+import { db } from '../../lib/firebaseConfig';
+import {
+  buildPublicLeadPayload,
+  buildPublicWhatsappMessage,
+  getPublicLeadAttribution,
+  type InterestOption,
+  type MainConcernOption,
+  type PublicAssessmentFormState,
+} from '../../lib/publicLeadForm';
 
 const WHATSAPP_NUMBER = '919618398383';
 const SUN_ORANGE = '#ff6a00';
 const PREFILL_STORAGE_KEY = 'ts_public_assessment_prefill_v1';
+const NAVY_TEXT_OUTLINE = '[text-shadow:-0.7px_-0.7px_0_rgba(255,255,255,0.78),0.7px_-0.7px_0_rgba(255,255,255,0.78),-0.7px_0.7px_0_rgba(255,255,255,0.78),0.7px_0.7px_0_rgba(255,255,255,0.78)]';
+const NAVY_TEXT = `text-[#182B57] ${NAVY_TEXT_OUTLINE}`;
+const NAVY_TEXT_STRONG = `text-[#142449] ${NAVY_TEXT_OUTLINE}`;
 
-type InterestOption = 'Phonics' | 'Reading' | 'Grammar' | 'Speaking';
 type AgeOption = '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12';
-
-type PublicAssessmentFormState = {
-  parentName: string;
-  childName: string;
-  whatsapp: string;
-  childAge: string;
-  interest: InterestOption;
-  details: string;
-};
 
 type PublicAssessmentFormProps = {
   defaultInterest?: InterestOption;
@@ -55,20 +59,33 @@ export default function PublicAssessmentForm({
 }: PublicAssessmentFormProps) {
   const ageOptions: AgeOption[] = ['3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
   const interestOptions: InterestOption[] = ['Phonics', 'Reading', 'Grammar', 'Speaking'];
-
+  const mainConcernOptions: MainConcernOption[] = [
+    'Knows ABC but cannot read words',
+    'Struggles with blending',
+    'Reads slowly',
+    'Makes grammar mistakes',
+    'Gives one-word answers',
+    'Hesitates to speak English',
+    'Needs public speaking confidence',
+    'Not sure where to start',
+  ];
   const initialState: PublicAssessmentFormState = {
     parentName: '',
     childName: '',
     whatsapp: '',
     childAge: '',
     interest: defaultInterest,
+    mainConcern: '',
+    urgency: '',
     details: '',
   };
 
   const [form, setForm] = useState<PublicAssessmentFormState>(initialState);
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [lastOpenedWaLink, setLastOpenedWaLink] = useState('');
-  const [errors, setErrors] = useState<{ parentName?: string; childName?: string; whatsapp?: string; childAge?: string; interest?: string }>({});
+  const [errors, setErrors] = useState<{ parentName?: string; childName?: string; whatsapp?: string; childAge?: string; interest?: string; mainConcern?: string }>({});
   const firstFieldRef = useRef<HTMLInputElement | null>(null);
   const hasTrackedFormStartRef = useRef(false);
 
@@ -110,40 +127,50 @@ export default function PublicAssessmentForm({
     return () => window.clearTimeout(timer);
   }, [autoFocusFirstField]);
 
+  useEffect(() => {
+    const attribution = getPublicLeadAttribution();
+    trackLeadFormView({
+      form_name: 'public_assessment_form',
+      source_context: source || 'public_assessment_form',
+      sourcePath: attribution.sourcePath,
+      utm_source: attribution.utm_source,
+      utm_medium: attribution.utm_medium,
+      utm_campaign: attribution.utm_campaign,
+      utm_content: attribution.utm_content,
+      utm_term: attribution.utm_term,
+      interest: form.interest,
+      urgency: form.urgency,
+    });
+    // mount-only event
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const trackFormStartOnce = () => {
     if (hasTrackedFormStartRef.current) return;
     hasTrackedFormStartRef.current = true;
+    const attribution = getPublicLeadAttribution();
     trackLeadFormStart({
       form_name: 'public_assessment_form',
       source_context: source || 'public_assessment_form',
+      sourcePath: attribution.sourcePath,
+      utm_source: attribution.utm_source,
+      utm_medium: attribution.utm_medium,
+      utm_campaign: attribution.utm_campaign,
+      utm_content: attribution.utm_content,
+      utm_term: attribution.utm_term,
+      childAge: form.childAge,
+      interest: form.interest,
+      mainConcern: form.mainConcern,
+      urgency: form.urgency,
     });
   };
 
   const waLink = useMemo(() => {
-    const lines = [
-      'Hello Tiny Steps,',
-      '',
-      'I would like to book a free assessment class.',
-      '',
-      `Parent name: ${form.parentName || '-'}`,
-      `Child name: ${form.childName || '-'}`,
-      `WhatsApp number: ${form.whatsapp || '-'}`,
-      `Child age: ${form.childAge || '-'}`,
-      `Interest: ${form.interest || '-'}`,
-      '',
-    ];
-
-    if (form.details.trim()) {
-      lines.push(form.details.trim(), '');
-    }
-
-    lines.push('Please share available slots. Thank you.');
-
-    return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`;
+    return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(buildPublicWhatsappMessage(form))}`;
   }, [form]);
 
   const validate = () => {
-    const nextErrors: { parentName?: string; childName?: string; whatsapp?: string; childAge?: string; interest?: string } = {};
+    const nextErrors: { parentName?: string; childName?: string; whatsapp?: string; childAge?: string; interest?: string; mainConcern?: string } = {};
 
     if (!form.parentName.trim()) {
       nextErrors.parentName = 'Please enter parent name.';
@@ -165,6 +192,10 @@ export default function PublicAssessmentForm({
       nextErrors.interest = 'Please select one interest.';
     }
 
+    if (!form.mainConcern) {
+      nextErrors.mainConcern = 'Please select the main concern.';
+    }
+
     setErrors(nextErrors);
     return {
       isValid: Object.keys(nextErrors).length === 0,
@@ -172,9 +203,10 @@ export default function PublicAssessmentForm({
     };
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setSubmitted(false);
+    setSubmitError('');
 
     const { isValid, nextErrors } = validate();
     if (!isValid) {
@@ -188,41 +220,82 @@ export default function PublicAssessmentForm({
       return;
     }
 
+    const attribution = getPublicLeadAttribution();
+    const trackingPayload = {
+      form_name: 'public_assessment_form',
+      source_context: source || 'public_assessment_form',
+      sourcePath: attribution.sourcePath,
+      utm_source: attribution.utm_source,
+      utm_medium: attribution.utm_medium,
+      utm_campaign: attribution.utm_campaign,
+      utm_content: attribution.utm_content,
+      utm_term: attribution.utm_term,
+      childAge: form.childAge,
+      interest: form.interest,
+      mainConcern: form.mainConcern,
+      urgency: form.urgency,
+    };
+
     trackLeadFormSubmit({
-      form_name: 'public_assessment_form',
-      source_context: source || 'public_assessment_form',
+      ...trackingPayload,
     });
-    trackGenerateLead({
-      page_path: window.location.pathname,
-      form_name: 'public_assessment_form',
-      source_context: source || 'public_assessment_form',
-      lead_channel: 'assessment_form',
-      lead_type: 'parent_assessment_request',
-      form_id: 'public_assessment_form',
-      source: source || 'public_assessment_form',
-      value: 1,
-    });
-    trackDemoBookingComplete({
-      booking_type: 'whatsapp_assessment_request',
-      source_context: source || 'public_assessment_form',
-    });
-    trackWhatsappClick(source || 'public_assessment_form');
 
-    const popup = window.open(waLink, '_blank', 'noopener,noreferrer');
-    if (!popup) {
-      const link = document.createElement('a');
-      link.href = waLink;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    setIsSubmitting(true);
+    try {
+      const payload = buildPublicLeadPayload(form, {
+        source,
+        attribution,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      });
+      const leadRef = await addDoc(collection(db, 'leads'), {
+        ...payload,
+        createdAt: serverTimestamp(),
+        requestedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+
+      trackGenerateLead({
+        ...trackingPayload,
+        page_path: window.location.pathname,
+        lead_channel: 'assessment_form',
+        lead_type: 'parent_assessment_request',
+        form_id: 'public_assessment_form',
+        source: source || 'public_assessment_form',
+        submission_id: leadRef.id,
+        value: 1,
+      });
+      trackDemoBookingComplete({
+        booking_type: 'whatsapp_assessment_request',
+        source_context: source || 'public_assessment_form',
+      });
+
+      const popup = window.open(waLink, '_blank', 'noopener,noreferrer');
+      if (!popup) {
+        const link = document.createElement('a');
+        link.href = waLink;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      trackWhatsappClick(source || 'public_assessment_form', trackingPayload);
+      setLastOpenedWaLink(waLink);
+      setSubmitted(true);
+      onSuccess?.();
+    } catch (error) {
+      console.error('[PublicAssessmentForm] lead save failed', error);
+      trackLeadFormError({
+        ...trackingPayload,
+        error_fields: ['save'],
+        error_message: 'lead_save_failed',
+      });
+      setSubmitError('We could not save your request. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setLastOpenedWaLink(waLink);
-    setSubmitted(true);
-    onSuccess?.();
   };
 
   return (
@@ -230,14 +303,14 @@ export default function PublicAssessmentForm({
       <div className="pointer-events-none absolute inset-0 rounded-[24px] ring-1 ring-slate-100" />
 
       <div className="relative mb-6 sm:mb-7">
-        <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">{title}</h2>
-        <p className="mt-2 text-sm text-slate-700">{description}</p>
+        <h2 className={`text-xl font-bold sm:text-2xl ${NAVY_TEXT_STRONG}`}>{title}</h2>
+        <p className={`mt-2 text-sm ${NAVY_TEXT}`}>{description}</p>
       </div>
 
-      <form onSubmit={handleSubmit} onFocusCapture={trackFormStartOnce} className="relative space-y-4">
+      <form onSubmit={handleSubmit} onFocusCapture={trackFormStartOnce} className="relative space-y-4 pb-6 sm:space-y-5 sm:pb-10">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="group space-y-1">
-            <label htmlFor="assessment-parent-name" className="text-[11px] font-bold uppercase text-slate-700 transition-colors group-focus-within:text-orange-700">
+            <label htmlFor="assessment-parent-name" className="sr-only">
               Parent Name *
             </label>
             <input
@@ -246,13 +319,14 @@ export default function PublicAssessmentForm({
               name="parentName"
               type="text"
               autoComplete="name"
-              placeholder="e.g. Priya Sharma"
+              aria-label="Parent Name"
+              placeholder="Parent Name"
               value={form.parentName}
               onChange={(e) => {
                 setForm((p) => ({ ...p, parentName: e.target.value }));
                 if (errors.parentName) setErrors((prev) => ({ ...prev, parentName: undefined }));
               }}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+              className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition-all placeholder:text-[#44597f] focus:border-orange-500 focus:ring-2 focus:ring-orange-100 ${NAVY_TEXT}`}
               required
               aria-invalid={Boolean(errors.parentName)}
             />
@@ -260,7 +334,7 @@ export default function PublicAssessmentForm({
           </div>
 
           <div className="group space-y-1">
-            <label htmlFor="assessment-child-name" className="text-[11px] font-bold uppercase text-slate-700 transition-colors group-focus-within:text-orange-700">
+            <label htmlFor="assessment-child-name" className="sr-only">
               Child Name *
             </label>
             <input
@@ -268,13 +342,14 @@ export default function PublicAssessmentForm({
               name="childName"
               type="text"
               autoComplete="off"
-              placeholder="e.g. Aarav Sharma"
+              aria-label="Child Name"
+              placeholder="Child Name"
               value={form.childName}
               onChange={(e) => {
                 setForm((p) => ({ ...p, childName: e.target.value }));
                 if (errors.childName) setErrors((prev) => ({ ...prev, childName: undefined }));
               }}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+              className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition-all placeholder:text-[#44597f] focus:border-orange-500 focus:ring-2 focus:ring-orange-100 ${NAVY_TEXT}`}
               required
               aria-invalid={Boolean(errors.childName)}
             />
@@ -283,7 +358,7 @@ export default function PublicAssessmentForm({
         </div>
 
         <div className="group space-y-1">
-          <label htmlFor="assessment-whatsapp" className="text-[11px] font-bold uppercase text-slate-700 transition-colors group-focus-within:text-orange-700">
+          <label htmlFor="assessment-whatsapp" className="sr-only">
             WhatsApp Number *
           </label>
           <input
@@ -292,50 +367,84 @@ export default function PublicAssessmentForm({
             type="tel"
             autoComplete="tel"
             inputMode="tel"
-            placeholder="+91 00000 00000"
+            aria-label="WhatsApp Number"
+            placeholder="WhatsApp Number"
             value={form.whatsapp}
             onChange={(e) => {
               setForm((p) => ({ ...p, whatsapp: e.target.value }));
               if (errors.whatsapp) setErrors((prev) => ({ ...prev, whatsapp: undefined }));
             }}
-            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+            className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition-all placeholder:text-[#44597f] focus:border-orange-500 focus:ring-2 focus:ring-orange-100 ${NAVY_TEXT}`}
             required
             aria-invalid={Boolean(errors.whatsapp)}
           />
           {errors.whatsapp ? <p className="text-xs text-rose-600">{errors.whatsapp}</p> : null}
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="group space-y-1">
-            <label htmlFor="assessment-child-age" className="text-[11px] font-bold uppercase text-slate-700">
-              Child Age *
-            </label>
-            <select
-              id="assessment-child-age"
-              name="childAge"
-              value={form.childAge}
-              onChange={(e) => {
-                setForm((p) => ({ ...p, childAge: e.target.value }));
-                if (errors.childAge) setErrors((prev) => ({ ...prev, childAge: undefined }));
-              }}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
-              required
-              aria-invalid={Boolean(errors.childAge)}
-            >
-              <option value="" disabled>
-                Select age
-              </option>
-              {ageOptions.map((age) => (
-                <option key={age} value={age}>
-                  {age}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-start">
+          <div className="space-y-4">
+            <div className="group space-y-1">
+              <label htmlFor="assessment-child-age" className="sr-only">
+                Child Age *
+              </label>
+              <select
+                id="assessment-child-age"
+                name="childAge"
+                aria-label="Child Age"
+                value={form.childAge}
+                onChange={(e) => {
+                  setForm((p) => ({ ...p, childAge: e.target.value }));
+                  if (errors.childAge) setErrors((prev) => ({ ...prev, childAge: undefined }));
+                }}
+                className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-100 ${NAVY_TEXT}`}
+                required
+                aria-invalid={Boolean(errors.childAge)}
+              >
+                <option value="" disabled>
+                  Child Age
                 </option>
-              ))}
-            </select>
-            {errors.childAge ? <p className="text-xs text-rose-600">{errors.childAge}</p> : null}
+                {ageOptions.map((age) => (
+                  <option key={age} value={age}>
+                    {age}
+                  </option>
+                ))}
+              </select>
+              {errors.childAge ? <p className="text-xs text-rose-600">{errors.childAge}</p> : null}
+            </div>
+
+            <div className="group space-y-1">
+              <label htmlFor="assessment-main-concern" className="sr-only">
+                What is your child struggling with most? *
+              </label>
+              <select
+                id="assessment-main-concern"
+                name="mainConcern"
+                aria-label="What is your child struggling with most?"
+                value={form.mainConcern}
+                onChange={(e) => {
+                  setForm((p) => ({ ...p, mainConcern: e.target.value as MainConcernOption }));
+                  if (errors.mainConcern) setErrors((prev) => ({ ...prev, mainConcern: undefined }));
+                }}
+                className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-100 ${NAVY_TEXT}`}
+                required
+                aria-invalid={Boolean(errors.mainConcern)}
+              >
+                <option value="" disabled>
+                  What is your child struggling with?
+                </option>
+                {mainConcernOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              {errors.mainConcern ? <p className="text-xs text-rose-600">{errors.mainConcern}</p> : null}
+            </div>
+
           </div>
 
           <div className="group space-y-1">
-            <label className="text-[11px] font-bold uppercase text-slate-700">
+            <label className={`text-[10px] font-semibold uppercase tracking-[0.18em] ${NAVY_TEXT}`}>
               Interest *
             </label>
             <div
@@ -365,8 +474,8 @@ export default function PublicAssessmentForm({
                     }}
                     className={`rounded-xl border px-3 py-2 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-orange-200 ${
                       isSelected
-                        ? 'border-orange-500 bg-orange-50 text-orange-800 shadow-sm'
-                        : 'border-slate-300 bg-white text-slate-700 hover:border-orange-300 hover:bg-orange-50/60'
+                        ? `border-orange-500 bg-orange-50 text-orange-800 shadow-sm ${NAVY_TEXT_STRONG}`
+                        : `border-slate-300 bg-white hover:border-orange-300 hover:bg-orange-50/60 ${NAVY_TEXT}`
                     }`}
                   >
                     {option}
@@ -379,32 +488,40 @@ export default function PublicAssessmentForm({
         </div>
 
         <div className="group space-y-1">
-          <label htmlFor="assessment-details" className="text-[11px] font-bold uppercase text-slate-700 transition-colors group-focus-within:text-orange-700">
+          <label htmlFor="assessment-details" className="sr-only">
             Optional Details
           </label>
           <textarea
             id="assessment-details"
             name="details"
             rows={2}
-            placeholder="Reading help, shy speaker, preferred time, etc."
+            aria-label="Optional Details"
+            placeholder="Optional details: reading help, shy speaker, preferred time, etc."
             value={form.details}
             onChange={(e) => setForm((p) => ({ ...p, details: e.target.value }))}
-            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-100"
+            className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition-all placeholder:text-[#44597f] focus:border-orange-500 focus:ring-2 focus:ring-orange-100 ${NAVY_TEXT}`}
           />
         </div>
 
         <button
           type="submit"
           aria-label={submitAriaLabel}
+          disabled={isSubmitting}
           className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-2xl border border-white/30 px-6 py-4 text-base font-bold text-white shadow-lg shadow-orange-200/70 transition-all hover:shadow-orange-300/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 sm:py-6 md:text-lg"
           style={{
             background: `linear-gradient(90deg, ${SUN_ORANGE} 0%, #ff7a1a 55%, #ff6a00 100%)`,
           }}
         >
-          {submitLabel}
+          {isSubmitting ? 'Saving your request...' : submitLabel}
         </button>
 
-        <p className="text-center text-xs text-slate-700">Takes 20–30 seconds • No commitment • Get slots instantly on WhatsApp</p>
+        <p className={`text-center text-xs ${NAVY_TEXT}`}>Takes 20–30 seconds • No commitment • Get slots instantly on WhatsApp</p>
+
+        {submitError ? (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700" role="alert">
+            {submitError}
+          </div>
+        ) : null}
 
         {submitted ? (
           <div className="space-y-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" role="status" aria-live="polite">

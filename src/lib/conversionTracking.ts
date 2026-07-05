@@ -287,6 +287,16 @@ type FunnelCtaParams = FunnelBaseParams & {
 
 type FunnelLeadFormParams = FunnelBaseParams & {
   form_name?: string;
+  sourcePath?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_content?: string;
+  utm_term?: string;
+  childAge?: string | number;
+  interest?: string;
+  mainConcern?: string;
+  urgency?: string;
 };
 
 type FunnelLeadFormErrorParams = FunnelLeadFormParams & {
@@ -306,6 +316,32 @@ type GenerateLeadParams = FunnelLeadFormParams & {
 
 type FunnelDemoBookingCompleteParams = FunnelBaseParams & {
   booking_type: string;
+};
+
+function buildLeadDetailEventParams(params: FunnelLeadFormParams, pagePath: string) {
+  return {
+    sourcePath: params.sourcePath || pagePath,
+    utm_source: params.utm_source,
+    utm_medium: params.utm_medium,
+    utm_campaign: params.utm_campaign,
+    utm_content: params.utm_content,
+    utm_term: params.utm_term,
+    childAge: params.childAge,
+    interest: params.interest,
+    mainConcern: params.mainConcern,
+    urgency: params.urgency,
+  };
+}
+
+export const trackLeadFormView = (params: FunnelLeadFormParams = {}) => {
+  const pagePath = resolvePagePath(params.page_path);
+  trackEvent('lead_form_view', {
+    page: pagePath,
+    page_path: pagePath,
+    form_name: params.form_name || 'unknown_form',
+    ...buildLeadDetailEventParams(params, pagePath),
+    ...buildAttributionEventParams(pagePath),
+  });
 };
 
 export function trackLandingPageView(params: FunnelLandingParams) {
@@ -398,12 +434,13 @@ export const trackBookDemoClick = (location: string) => {
   });
 };
 
-export const trackWhatsappClick = (location: string) => {
+export const trackWhatsappClick = (location: string, params: FunnelLeadFormParams = {}) => {
   const pagePath = resolvePagePath();
   trackEvent('whatsapp_click', {
     location,
     page: pagePath,
     page_path: pagePath,
+    ...buildLeadDetailEventParams(params, pagePath),
     ...buildAttributionEventParams(pagePath),
   });
 };
@@ -479,6 +516,7 @@ export const trackLeadFormStart = (params: FunnelLeadFormParams = {}) => {
     page: pagePath,
     page_path: pagePath,
     form_name: params.form_name || 'unknown_form',
+    ...buildLeadDetailEventParams(params, pagePath),
     ...buildAttributionEventParams(pagePath),
   });
   trackEvent('funnel_form_start', {
@@ -497,6 +535,7 @@ export const trackLeadFormSubmit = (params: FunnelLeadFormParams = {}) => {
     page: pagePath,
     page_path: pagePath,
     form_name: params.form_name || 'unknown_form',
+    ...buildLeadDetailEventParams(params, pagePath),
     ...buildAttributionEventParams(pagePath),
   });
   trackEvent('funnel_form_submit', {
@@ -538,6 +577,37 @@ export const trackGenerateLead = (params: GenerateLeadParams = {}) => {
     submission_id: params.submission_id,
     value: params.value,
     currency: params.currency,
+    ...buildLeadDetailEventParams(params, pagePath),
+    ...buildAttributionEventParams(pagePath),
+  });
+};
+
+export const trackAssessmentBooked = (params: FunnelBaseParams = {}) => {
+  const pagePath = resolvePagePath(params.page_path);
+  trackEvent('assessment_booked', {
+    page_path: pagePath,
+    funnel_name: params.funnel_name || WEBSITE_LEAD_FUNNEL_NAME,
+    source_context: params.source_context || 'unknown',
+    ...buildAttributionEventParams(pagePath),
+  });
+};
+
+export const trackAssessmentDone = (params: FunnelBaseParams = {}) => {
+  const pagePath = resolvePagePath(params.page_path);
+  trackEvent('assessment_done', {
+    page_path: pagePath,
+    funnel_name: params.funnel_name || WEBSITE_LEAD_FUNNEL_NAME,
+    source_context: params.source_context || 'unknown',
+    ...buildAttributionEventParams(pagePath),
+  });
+};
+
+export const trackPaymentDone = (params: FunnelBaseParams = {}) => {
+  const pagePath = resolvePagePath(params.page_path);
+  trackEvent('payment_done', {
+    page_path: pagePath,
+    funnel_name: params.funnel_name || WEBSITE_LEAD_FUNNEL_NAME,
+    source_context: params.source_context || 'unknown',
     ...buildAttributionEventParams(pagePath),
   });
 };

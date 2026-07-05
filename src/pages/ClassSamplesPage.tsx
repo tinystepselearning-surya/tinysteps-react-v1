@@ -330,6 +330,23 @@ export default function ClassSamplesPage() {
     [activeVideos],
   );
 
+  const videoObjectSchemas = useMemo(
+    () =>
+      filteredVideos
+        .filter((video) => isValidYouTubeVideoId(video.youtubeVideoId))
+        .map((video) => ({
+          '@context': 'https://schema.org',
+          '@type': 'VideoObject',
+          '@id': `${CANONICAL_URL}#video-${video.id}`,
+          name: video.title,
+          description: video.description,
+          embedUrl: getYoutubeEmbedUrl(video.youtubeVideoId),
+          url: video.youtubeUrl || `${CANONICAL_URL}#${video.id}`,
+          thumbnailUrl: `https://i.ytimg.com/vi/${video.youtubeVideoId}/hqdefault.jpg`,
+        })),
+    [filteredVideos],
+  );
+
   return (
     <main className="min-h-screen bg-[#fcfcfb] text-slate-900">
       <Meta
@@ -337,7 +354,7 @@ export default function ClassSamplesPage() {
         description="See how Tiny Steps online English classes help children practise phonics, reading, grammar, sentence formation, and public speaking through live guided learning."
         keywords="online phonics classes, English classes for kids, real class samples, what Tiny Steps classes look like, online reading classes for kids, grammar classes for children"
         canonical={CANONICAL_URL}
-        jsonLd={[breadcrumbSchema, collectionPageSchema, itemListSchema, faqSchema]}
+        jsonLd={[breadcrumbSchema, collectionPageSchema, itemListSchema, faqSchema, ...videoObjectSchemas]}
       />
 
       <section className="relative overflow-hidden">

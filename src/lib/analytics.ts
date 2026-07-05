@@ -5,6 +5,8 @@ let scriptQueued = false;
 let fallbackTimerId: number | undefined;
 let idleLoadTimerId: number | undefined;
 
+const PRODUCTION_GA_MEASUREMENT_ID = 'G-J3TTBH8CN9';
+
 const DISABLED_PREFIXES = ['/admin', '/teacher', '/parent', '/kid', '/lp', '/dev'];
 const DESKTOP_FALLBACK_DELAY_MS = 18000;
 const MOBILE_FALLBACK_DELAY_MS = 12000;
@@ -115,7 +117,8 @@ export const initAnalytics = () => {
 
   if (initialized) return;
 
-  const measurementId = import.meta.env.VITE_GA_MEASUREMENT_ID;
+  const measurementId =
+    import.meta.env.VITE_GA_MEASUREMENT_ID || PRODUCTION_GA_MEASUREMENT_ID;
   if (!measurementId) return;
 
   window.dataLayer = window.dataLayer || [];
