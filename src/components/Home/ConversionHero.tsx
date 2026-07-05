@@ -225,34 +225,6 @@ const ConversionHero: React.FC = () => {
               ))}
             </div>
 
-            <div
-              className="mt-4 max-w-2xl rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm text-slate-700 shadow-sm backdrop-blur"
-            >
-              <p className="font-medium text-slate-800">
-                5000+ students • Families in 15+ countries • 1:1 and small-group classes • Weekly parent updates
-              </p>
-              <p className="mt-1 text-slate-600">
-                Calm routines, clear milestones, and consistent feedback make progress easy to see.
-              </p>
-            </div>
-
-            <div
-              className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600"
-            >
-              <a
-                href="https://wa.me/919618398383?text=Hi!%20I%27d%20like%20to%20learn%20more%20about%20Tiny%20Steps%20classes%20for%20my%20child."
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2.5 font-semibold text-emerald-800 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:bg-emerald-100"
-              >
-                <span className="text-lg">💬</span>
-                Quick questions? WhatsApp us
-              </a>
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 shadow-sm backdrop-blur">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
-                Free assessment • Transparent pricing
-              </span>
-            </div>
           </div>
 
           {/* RIGHT FORM CARD */}
@@ -280,6 +252,31 @@ const ConversionHero: React.FC = () => {
               submitLabel="Book Free Assessment on WhatsApp"
               submitAriaLabel="Book Free Assessment on WhatsApp"
             />
+
+            <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/88 px-4 py-4 text-sm text-slate-700 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur sm:px-5">
+              <p className="font-medium leading-6 text-slate-800">
+                5000+ students • Families in 15+ countries • 1:1 and small-group classes • Weekly parent updates
+              </p>
+              <p className="mt-1.5 text-slate-600">
+                Calm routines, clear milestones, and consistent feedback make progress easy to see.
+              </p>
+
+              <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+                <a
+                  href="https://wa.me/919618398383?text=Hi!%20I%27d%20like%20to%20learn%20more%20about%20Tiny%20Steps%20classes%20for%20my%20child."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2.5 font-semibold text-emerald-800 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:bg-emerald-100"
+                >
+                  <span className="text-lg">💬</span>
+                  Quick questions? WhatsApp us
+                </a>
+                <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 shadow-sm backdrop-blur">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                  Free assessment • Transparent pricing
+                </span>
+              </div>
+            </div>
 
             {/* Floating Decorative Element */}
             <div className="absolute -bottom-4 -left-2 h-20 w-20 motion-safe:animate-bounce motion-reduce:animate-none rounded-3xl bg-white p-4 shadow-xl [animation-duration:3.5s] md:-left-6">

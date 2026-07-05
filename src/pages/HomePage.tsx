@@ -209,14 +209,16 @@ export default function HomePage() {
       </section>
 
       <section id="free-assessment-checklist" className="px-6 py-4">
-        <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="relative overflow-hidden rounded-[32px] border border-amber-100/80 bg-[linear-gradient(155deg,rgba(255,255,255,0.98)_0%,rgba(255,248,239,0.97)_48%,rgba(247,251,255,0.97)_100%)] p-6 shadow-[0_24px_70px_rgba(15,23,42,0.07)] ring-1 ring-white/70 sm:p-8">
-            <div className="pointer-events-none absolute right-0 top-0 h-32 w-32 rounded-full bg-amber-100/45 blur-3xl" />
-            <div className="relative inline-flex rounded-full border border-amber-200/80 bg-white/88 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.26em] text-amber-800 shadow-sm">
+        <div className="mx-auto grid max-w-[84rem] gap-6 lg:grid-cols-[1.08fr_0.92fr] xl:gap-8">
+          <div className="relative overflow-hidden rounded-[34px] border border-white/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.95)_0%,rgba(245,252,255,0.96)_30%,rgba(236,245,255,0.96)_62%,rgba(255,248,238,0.95)_100%)] p-6 shadow-[0_30px_90px_rgba(62,84,120,0.14)] ring-1 ring-white/80 sm:p-8">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[linear-gradient(90deg,rgba(99,102,241,0.08)_0%,rgba(56,189,248,0.08)_48%,rgba(251,191,36,0.06)_100%)]" />
+            <div className="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-sky-200/30 blur-3xl" />
+            <div className="pointer-events-none absolute -left-8 bottom-0 h-36 w-36 rounded-full bg-indigo-100/35 blur-3xl" />
+            <div className="relative inline-flex rounded-full border border-sky-200/80 bg-white/82 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.30em] text-sky-900 shadow-[0_10px_25px_rgba(125,160,210,0.16)] backdrop-blur">
               Free assessment
             </div>
-            <h2 className="mt-4 text-2xl font-semibold tracking-[-0.03em] text-slate-900 sm:text-3xl">What we check in the free assessment</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-700 sm:text-base">
+            <h2 className="mt-5 max-w-xl text-2xl font-semibold tracking-[-0.04em] text-slate-900 sm:text-[2.15rem] sm:leading-[1.05]">What we check in the free assessment</h2>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-700 sm:text-[1.02rem]">
               The assessment helps Tiny Steps understand where your child is currently getting stuck before recommending the best starting point.
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -230,7 +232,10 @@ export default function HomePage() {
                 'Speaking confidence',
                 'Pronunciation clarity',
               ].map((item) => (
-                <div key={item} className="rounded-2xl border border-white/80 bg-white/88 px-4 py-3 text-sm font-medium text-slate-700 shadow-[0_10px_26px_rgba(15,23,42,0.05)] backdrop-blur">
+                <div
+                  key={item}
+                  className="rounded-[22px] border border-white/80 bg-[linear-gradient(135deg,rgba(255,255,255,0.92)_0%,rgba(248,251,255,0.96)_100%)] px-4 py-3.5 text-sm font-medium tracking-[-0.01em] text-slate-700 shadow-[0_14px_34px_rgba(76,98,136,0.08)] backdrop-blur"
+                >
                   {item}
                 </div>
               ))}
@@ -238,26 +243,33 @@ export default function HomePage() {
             <div className="mt-6">
               <Link
                 to="/book-demo"
-                className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                className="inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#0f172a_0%,#1e3a8a_100%)] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(37,99,235,0.28)] transition hover:brightness-110"
               >
                 Book Free Assessment
               </Link>
             </div>
           </div>
 
-          <div className="relative overflow-hidden rounded-[32px] border border-sky-100/90 bg-[linear-gradient(155deg,rgba(255,255,255,0.98)_0%,rgba(246,250,255,0.98)_52%,rgba(255,251,245,0.97)_100%)] p-6 shadow-[0_24px_70px_rgba(15,23,42,0.07)] ring-1 ring-white/70 sm:p-8">
-            <div className="pointer-events-none absolute left-0 top-0 h-32 w-32 rounded-full bg-sky-100/40 blur-3xl" />
-            <div className="relative inline-flex rounded-full border border-sky-200/80 bg-white/88 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.26em] text-sky-800 shadow-sm">
+          <div className="relative overflow-hidden rounded-[34px] border border-white/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.95)_0%,rgba(240,248,255,0.97)_34%,rgba(236,247,255,0.96)_64%,rgba(247,244,255,0.95)_100%)] p-6 shadow-[0_30px_90px_rgba(62,84,120,0.14)] ring-1 ring-white/80 sm:p-8">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[linear-gradient(90deg,rgba(56,189,248,0.08)_0%,rgba(14,165,233,0.08)_45%,rgba(99,102,241,0.08)_100%)]" />
+            <div className="pointer-events-none absolute -left-8 top-0 h-40 w-40 rounded-full bg-sky-200/30 blur-3xl" />
+            <div className="pointer-events-none absolute -right-8 bottom-0 h-36 w-36 rounded-full bg-violet-100/35 blur-3xl" />
+            <div className="relative inline-flex rounded-full border border-sky-200/80 bg-white/82 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.30em] text-sky-900 shadow-[0_10px_25px_rgba(125,160,210,0.16)] backdrop-blur">
               Age guidance
             </div>
-            <h2 className="mt-4 text-2xl font-semibold tracking-[-0.03em] text-slate-900 sm:text-3xl">Common starting points by age</h2>
-            <div className="mt-5 overflow-hidden rounded-[24px] border border-slate-200/80 bg-white/90 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
-              <table className="w-full border-collapse text-left text-sm text-slate-700">
-                <thead className="bg-[linear-gradient(180deg,#f8fbff_0%,#f8fafc_100%)] text-slate-900">
+            <h2 className="mt-5 max-w-xl text-2xl font-semibold tracking-[-0.04em] text-slate-900 sm:text-[2.15rem] sm:leading-[1.05]">Common starting points by age</h2>
+            <div className="mt-5 overflow-hidden rounded-[26px] border border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.95)_0%,rgba(247,250,255,0.97)_100%)] shadow-[0_18px_44px_rgba(76,98,136,0.08)] backdrop-blur">
+              <table className="w-full table-fixed border-collapse text-left text-sm text-slate-700">
+                <colgroup>
+                  <col className="w-[15%] min-w-[84px]" />
+                  <col className="w-[38%]" />
+                  <col className="w-[47%]" />
+                </colgroup>
+                <thead className="bg-[linear-gradient(180deg,#f8fcff_0%,#eef6ff_100%)] text-slate-900">
                   <tr>
-                    <th className="px-4 py-3 font-semibold">Age</th>
-                    <th className="px-4 py-3 font-semibold">Parent concern</th>
-                    <th className="px-4 py-3 font-semibold">Tiny Steps focus</th>
+                    <th className="px-5 py-4 text-[0.95rem] font-semibold tracking-[-0.01em]">Age</th>
+                    <th className="px-5 py-4 text-[0.95rem] font-semibold tracking-[-0.01em]">Parent concern</th>
+                    <th className="px-5 py-4 text-[0.95rem] font-semibold tracking-[-0.01em]">Tiny Steps focus</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -267,10 +279,10 @@ export default function HomePage() {
                     ['7–8', 'Reads slowly, grammar mistakes', 'Fluency + grammar basics'],
                     ['9–12', 'Hesitates to speak', 'Public speaking, sentence confidence'],
                   ].map(([age, concern, focus]) => (
-                    <tr key={age} className="border-t border-slate-200/80 odd:bg-white even:bg-slate-50/45">
-                      <td className="px-4 py-3 font-semibold text-slate-900">{age}</td>
-                      <td className="px-4 py-3">{concern}</td>
-                      <td className="px-4 py-3">{focus}</td>
+                    <tr key={age} className="border-t border-slate-200/70 odd:bg-white/85 even:bg-sky-50/30">
+                      <td className="whitespace-nowrap px-5 py-4 align-middle text-base font-semibold tracking-[-0.02em] text-slate-900">{age}</td>
+                      <td className="px-5 py-4 align-middle text-[0.98rem] leading-7 text-slate-700">{concern}</td>
+                      <td className="px-5 py-4 align-middle text-[0.98rem] leading-7 text-slate-700">{focus}</td>
                     </tr>
                   ))}
                 </tbody>
