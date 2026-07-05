@@ -357,7 +357,7 @@ const FAQPage: FC = () => {
                 Explore Parents Hub
               </Link>
               <Link
-                to="/?book=1"
+                to="/book-demo"
                 className="inline-flex items-center rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
               >
                 Book Free Assessment

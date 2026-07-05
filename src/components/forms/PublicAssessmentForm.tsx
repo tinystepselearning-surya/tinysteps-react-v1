@@ -243,6 +243,7 @@ export default function PublicAssessmentForm({
         updatedAt: serverTimestamp(),
       });
 
+      // Keep conversion events tied to a successfully saved public lead.
       trackGenerateLead({
         ...trackingPayload,
         page_path: window.location.pathname,
@@ -442,7 +443,12 @@ export default function PublicAssessmentForm({
           {isSubmitting ? 'Saving your request...' : submitLabel}
         </button>
 
-        <p className={`text-center text-xs ${NAVY_TEXT}`}>Takes 20–30 seconds • No commitment • Get slots instantly on WhatsApp</p>
+        <div className="space-y-1 text-center">
+          <p className={`text-xs ${NAVY_TEXT}`}>Takes 20–30 seconds • No commitment • Get slots instantly on WhatsApp</p>
+          <p className="text-xs text-slate-600">
+            After you submit, we will reply on WhatsApp with the recommended starting path, available slots, and pricing clarity.
+          </p>
+        </div>
 
         {submitError ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700" role="alert">
@@ -452,16 +458,27 @@ export default function PublicAssessmentForm({
 
         {submitted ? (
           <div className="space-y-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" role="status" aria-live="polite">
-            <p className="font-medium">WhatsApp opened in a new tab.</p>
-            <p>If it did not open, click below.</p>
-            <a
-              href={lastOpenedWaLink || waLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
-            >
-              Open WhatsApp again
-            </a>
+            <p className="font-medium">
+              Thank you! We received your request. Our team will reply on WhatsApp with the recommended starting path,
+              available slots, and pricing details.
+            </p>
+            <p>WhatsApp should also open in a new tab now. If it did not open, use the options below.</p>
+            <div className="flex flex-wrap gap-2">
+              <a
+                href={lastOpenedWaLink || waLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
+              >
+                Open WhatsApp again
+              </a>
+              <a
+                href="/class-samples"
+                className="inline-flex items-center rounded-lg border border-emerald-200 bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-900 hover:bg-emerald-200"
+              >
+                View Class Samples
+              </a>
+            </div>
           </div>
         ) : null}
       </form>

@@ -1020,6 +1020,26 @@ export default function SummerCampsPage() {
                 <p className="mt-4 max-w-3xl text-base text-slate-700 sm:text-lg">
                   A focused summer learning season for children ages 4–12. Summer Camp Season: {SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Parents choose one focus track for each child: Phonics Fast Track, Grammar Fast Track, or Speaking Fast Track.
                 </p>
+
+                <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-sm">
+                  <p className="font-semibold">
+                    Summer Camp 2026 has ended. You can still book a free assessment for phonics, grammar, reading, or public speaking classes.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-3">
+                    <Link
+                      to="/book-demo"
+                      className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    >
+                      Book Free Assessment
+                    </Link>
+                    <Link
+                      to="/contact"
+                      className="inline-flex items-center justify-center rounded-full border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
+                    >
+                      Contact Tiny Steps
+                    </Link>
+                  </div>
+                </div>
                 
                 <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm shadow-sm">
                   <span className="text-lg">⏰</span>

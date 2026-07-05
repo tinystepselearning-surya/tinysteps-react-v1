@@ -141,7 +141,7 @@ export default function WhatIsJollyPhonicsBestWayPage() {
           Book a free assessment and we will recommend the right phonics stage based on your child’s current reading level.
         </p>
         <div className="mt-5 flex flex-wrap gap-3">
-          <Link to="/?book=1" className="inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-slate-900">
+          <Link to="/book-demo" className="inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-slate-900">
             Book Free Assessment
           </Link>
           <Link to="/phonics" className="inline-flex rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white">

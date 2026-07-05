@@ -79,7 +79,7 @@ export default function ParentReassurance({ programName = 'this program' }: Pare
 
           <div className="mt-6 text-center">
             <Link
-              to="/?book=1"
+              to="/book-demo"
               className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
               Book Your Free Assessment

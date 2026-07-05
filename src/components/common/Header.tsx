@@ -19,7 +19,7 @@ const PRIMARY_LINKS: LinkItem[] = [
   { label: 'Curriculum', href: '/curriculum' },
   { label: 'Blog', href: '/blog' },
   { label: 'Pricing', href: '/pricing' },
-  { label: 'Summer Camp', href: '/summer-camps' },
+  { label: 'Class Samples', href: '/class-samples' },
   { label: 'Contact', href: '/contact' },
 ];
 

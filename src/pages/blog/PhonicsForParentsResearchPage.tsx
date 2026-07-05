@@ -921,7 +921,7 @@ export default function PhonicsForParentsResearchPage() {
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link
-                  to="/?book=1"
+                  to="/book-demo"
                   className="inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
                 >
                   Book a TinySteps assessment

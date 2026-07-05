@@ -356,7 +356,7 @@ function safeCourse(value: string | null): string | null {
             </ul>
             <p className="mt-3 text-sm font-medium text-gray-800">Outcome: Your child reads with better accuracy and confidence.</p>
             <div className="mt-4">
-              <Link to="/?book=1" className="inline-block rounded bg-primary-500 px-4 py-2 text-white">Book Free Assessment Class</Link>
+              <Link to="/book-demo" className="inline-block rounded bg-primary-500 px-4 py-2 text-white">Book Free Assessment Class</Link>
             </div>
           </article>
 
@@ -371,7 +371,7 @@ function safeCourse(value: string | null): string | null {
             </ul>
             <p className="mt-3 text-sm font-medium text-gray-800">Outcome: Your child builds correct, usable grammar in daily writing and speech.</p>
             <div className="mt-4">
-              <Link to="/?book=1" className="inline-block rounded bg-primary-500 px-4 py-2 text-white">Book Free Assessment Class</Link>
+              <Link to="/book-demo" className="inline-block rounded bg-primary-500 px-4 py-2 text-white">Book Free Assessment Class</Link>
             </div>
           </article>
 
@@ -386,7 +386,7 @@ function safeCourse(value: string | null): string | null {
             </ul>
             <p className="mt-3 text-sm font-medium text-gray-800">Outcome: Your child speaks with more clarity, structure, and confidence.</p>
             <div className="mt-4">
-              <Link to="/?book=1" className="inline-block rounded bg-primary-500 px-4 py-2 text-white">Book Free Assessment Class</Link>
+              <Link to="/book-demo" className="inline-block rounded bg-primary-500 px-4 py-2 text-white">Book Free Assessment Class</Link>
             </div>
           </article>
         </div>
@@ -622,7 +622,7 @@ function safeCourse(value: string | null): string | null {
         <p className="mt-4 text-sm text-gray-700">
           If this sounds familiar, start with a free assessment and we will place your child at the right stage.
           {' '}
-          <Link to="/?book=1" className="font-semibold text-primary-600">Book Free Assessment Class</Link>
+          <Link to="/book-demo" className="font-semibold text-primary-600">Book Free Assessment Class</Link>
         </p>
       </section>
 
@@ -640,7 +640,7 @@ function safeCourse(value: string | null): string | null {
 
       {/* Sticky CTA for mobile */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 md:hidden z-50">
-        <Link to="/?book=1" className="block w-full text-center bg-primary-500 text-white py-3 rounded font-semibold">Book Free Assessment Class</Link>
+        <Link to="/book-demo" className="block w-full text-center bg-primary-500 text-white py-3 rounded font-semibold">Book Free Assessment Class</Link>
       </div>
 
     </div>

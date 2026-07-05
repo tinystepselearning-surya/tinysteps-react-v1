@@ -184,11 +184,8 @@ const ConversionHero: React.FC = () => {
             <p
               className="mt-5 max-w-2xl text-[1.04rem] font-semibold leading-8 text-[#182B57] [text-shadow:-0.7px_-0.7px_0_rgba(255,255,255,0.78),0.7px_-0.7px_0_rgba(255,255,255,0.78),-0.7px_0.7px_0_rgba(255,255,255,0.78),0.7px_0.7px_0_rgba(255,255,255,0.78)] md:text-[1.16rem] md:leading-9"
             >
-              Build{" "}
-              <span className="font-extrabold text-[#142449] [text-shadow:-0.7px_-0.7px_0_rgba(255,255,255,0.78),0.7px_-0.7px_0_rgba(255,255,255,0.78),-0.7px_0.7px_0_rgba(255,255,255,0.78),0.7px_0.7px_0_rgba(255,255,255,0.78)]">
-                reading, grammar and speaking confidence
-              </span>{" "}
-              through live 1:1 and small-group classes.
+              Book a free assessment and find whether your child should start with phonics, reading, grammar,
+              sentence formation, or speaking confidence.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
@@ -248,7 +245,7 @@ const ConversionHero: React.FC = () => {
             <BookAssessmentForm
               source="homepage_hero_assessment"
               title="Share Your Child's Details"
-              description="Book a free assessment to find the right starting point in phonics, reading, grammar, or speaking."
+              description="Book a free assessment and find whether your child should start with phonics, reading, grammar, sentence formation, or speaking confidence."
               submitLabel="Book Free Assessment on WhatsApp"
               submitAriaLabel="Book Free Assessment on WhatsApp"
             />

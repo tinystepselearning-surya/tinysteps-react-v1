@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import ClusterSeoNav from '../components/programs/ClusterSeoNav';
+import TestimonialSnippets from '../components/common/TestimonialSnippets';
 import { applySeo } from '../lib/seo';
 import { createCourseSchema, createFAQPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 
@@ -353,6 +354,33 @@ export default function GrammarPage() {
                 </Link>
               </article>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-4 pb-8 sm:px-5 md:pb-12 lg:px-6">
+        <div className="mx-auto max-w-6xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:rounded-3xl md:p-7">
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Not sure where the grammar gap is?</h2>
+          <p className="mt-3 max-w-3xl text-base leading-7 text-slate-700">
+            Tell us what your child struggles with: sentence formation, tenses, punctuation, short answers, or grammar
+            while speaking. We&apos;ll recommend the right starting level after a free assessment.
+          </p>
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <Link
+              to="/book-demo"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.2)] transition hover:bg-slate-800"
+            >
+              Check My Child&apos;s Grammar Level
+            </Link>
+            <Link
+              to="/pricing"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
+            >
+              See Pricing
+            </Link>
+          </div>
+          <div className="mt-6">
+            <TestimonialSnippets courseTag="grammar" title="What grammar parents noticed first" />
           </div>
         </div>
       </section>

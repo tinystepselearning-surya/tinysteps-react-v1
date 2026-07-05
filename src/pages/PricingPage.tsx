@@ -92,7 +92,7 @@ const quickAnswerFaqItems = [
   {
     question: 'How much do Tiny Steps online English classes cost?',
     answer:
-      'Tiny Steps pricing depends on the selected class package and program. Parents can review available plans on the pricing page and book a free assessment before choosing the right path.',
+      'Tiny Steps standard pricing is ₹400 per class or ₹4,800 for 12 classes. We recommend starting with a free assessment first, so the child is placed in the right path before parents choose a package.',
   },
   {
     question: 'Should I choose a course before paying?',
@@ -316,8 +316,8 @@ const PricingPage: FC = () => {
           </div>
           <h1 className="mt-3 text-3xl font-bold text-gray-900 md:text-4xl">Transparent Pricing for Premium 1:1 English Classes</h1>
           <p className="mt-3 text-gray-700">
-            Choose the right learning path for your child after a free assessment. Tiny Steps offers live guided classes
-            for phonics, reading, grammar, sentence formation, and public speaking.
+            Tiny Steps standard pricing is ₹400 per class or ₹4,800 for 12 classes. We recommend starting with a free
+            assessment first, so the child is placed in the right path before parents choose a package.
           </p>
           <ul className="mt-5 grid gap-2 text-sm text-gray-700 sm:grid-cols-2 sm:text-left">
             <li>Live online classes with teacher guidance</li>
@@ -382,7 +382,8 @@ const PricingPage: FC = () => {
           <h2 className="text-2xl font-semibold text-gray-900">Pricing Questions Parents Ask</h2>
           <p className="mt-3 max-w-4xl text-sm text-gray-700 sm:text-base">
             Tiny Steps Learning offers premium online classes across phonics, grammar, sentence formation, communication,
-            and public speaking. Start with a free assessment, compare package options, and then choose a plan with clarity.
+            and public speaking. Parents can start with the standard price, take a free assessment, and then choose the
+            package that fits the child&apos;s level and schedule.
           </p>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {quickAnswerFaqItems.map((item) => (

@@ -149,7 +149,7 @@ export default function OnlineEnglishClassesForKidsIndiaPage() {
                 </p>
                 <h1 className="mt-4 max-w-full text-[34px] font-bold leading-[1.05] tracking-[-0.035em] text-slate-900 sm:text-[38px] md:max-w-[680px] md:text-[46px] lg:text-[52px]">Online English Classes for Kids in India</h1>
                 <p className="mt-4 max-w-full text-base leading-7 text-slate-700 md:mt-5 md:max-w-[660px] md:text-lg md:leading-8">
-                  Help your child build phonics, reading, grammar, sentence formation, and communication confidence through live online guidance.
+                  For children who need help with phonics, reading fluency, grammar mistakes, sentence formation, or speaking confidence.
                 </p>
                 <p className="mt-3 max-w-full text-base leading-7 text-slate-700 md:mt-4 md:max-w-[660px] md:text-lg md:leading-8">
                   Tiny Steps uses an assessment-first learning path to identify your child&apos;s current gap and recommend the right level instead of placing every child into the same class. Ready to move forward? <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2 hover:text-sky-700">book a free assessment</Link>.

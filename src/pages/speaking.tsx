@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import ClusterSeoNav from '../components/programs/ClusterSeoNav';
+import TestimonialSnippets from '../components/common/TestimonialSnippets';
 import { applySeo } from '../lib/seo';
 import { createCourseSchema, createFAQPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 
@@ -173,10 +174,10 @@ export default function SpeakingPage() {
                 Communication confidence for children
               </p>
               <h1 className="mt-4 max-w-full text-[34px] font-bold leading-[1.05] tracking-[-0.035em] text-slate-900 sm:text-[38px] md:max-w-[680px] md:text-[46px] lg:text-[52px]">
-                Public Speaking Classes for Kids in India
+                Public Speaking & Communication Classes for Kids
               </h1>
               <p className="mt-4 max-w-full text-base leading-7 text-slate-700 md:mt-5 md:max-w-[660px] md:text-lg md:leading-8">
-                Help your child build communication confidence, sentence formation, storytelling flow, show-and-tell readiness, and presentation confidence through structured live online public speaking classes for kids in India.
+                Tiny Steps offers online public speaking and communication classes for kids who give short answers, hesitate to speak, struggle to explain ideas, or need confidence for school presentations. Children start with a free speaking assessment, then move into Basic or Advanced Public Speaking based on age and confidence level.
               </p>
               <p className="mt-3 max-w-full text-base leading-7 text-slate-700 md:mt-4 md:max-w-[660px] md:text-lg md:leading-8">
                 Tiny Steps follows an assessment-first speaking path to understand whether your child needs sentence expansion, speaking comfort, storytelling support, reading aloud confidence, or clear expression coaching. Ready to move forward? <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2 hover:text-sky-700">book a free assessment</Link>.
@@ -671,6 +672,9 @@ export default function SpeakingPage() {
           <p className="mx-auto mt-3 max-w-3xl text-base leading-7 text-slate-200">
             Book a free assessment and let Tiny Steps identify whether your child needs sentence expansion, structured answers, storytelling, reading aloud confidence, presentation skills, or communication confidence support first.
           </p>
+          <div className="mt-6 text-left">
+            <TestimonialSnippets courseTag="speaking" title="What speaking parents noticed first" />
+          </div>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <Link
               to="/book-demo"

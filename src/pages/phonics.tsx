@@ -10,6 +10,7 @@ import NextStepsLinks from '../components/programs/NextStepsLinks';
 import TopicClusterLinks from '../components/programs/TopicClusterLinks';
 import ContentTrustNote from '../components/seo/ContentTrustNote';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
+import TestimonialSnippets from '../components/common/TestimonialSnippets';
 
 const levels = [
   {
@@ -737,6 +738,33 @@ export default function PhonicsPage({
             </Link>
             .
           </p>
+        </div>
+      </SectionShell>
+
+      <SectionShell>
+        <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl sm:p-8">
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Not sure if your child needs phonics?</h2>
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-700 sm:text-base">
+            Send us your child&apos;s age and main reading concern on WhatsApp. We&apos;ll check whether the child needs
+            letter sounds, blending, CVC reading, fluency, or spelling support first.
+          </p>
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <Link
+              to="/book-demo"
+              className="inline-flex items-center justify-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              Check My Child&apos;s Reading Level
+            </Link>
+            <Link
+              to="/class-samples"
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
+            >
+              See Class Samples
+            </Link>
+          </div>
+          <div className="mt-6">
+            <TestimonialSnippets courseTag="phonics" title="What phonics parents noticed first" />
+          </div>
         </div>
       </SectionShell>
 

@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { Link } from 'react-router-dom';
 import Meta from '../components/common/Meta';
+import TestimonialSnippets from '../components/common/TestimonialSnippets';
 import BookAssessmentForm from '../components/forms/BookAssessmentForm';
 import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../constants/publicContact';
 import { getRouteConfig } from '../lib/seo';
@@ -236,6 +237,18 @@ const ContactPage: FC = () => {
               submitLabel="Book Free Assessment on WhatsApp"
               submitAriaLabel="Book Free Assessment on WhatsApp"
             />
+            <p className="mt-4 text-sm leading-6 text-slate-600">
+              After you submit, the team usually replies on WhatsApp within 12 hours with the recommended starting path,
+              slot options, and pricing details.
+            </p>
+
+            <div className="mt-6">
+              <TestimonialSnippets
+                pageTag="why-tiny-steps"
+                limit={3}
+                title="Quick parent proof before you submit"
+              />
+            </div>
 
             <div className="mt-8 rounded-[24px] border border-slate-200 bg-slate-50/90 p-5">
               <h2 className="text-lg font-semibold text-slate-900">Parents also ask</h2>
