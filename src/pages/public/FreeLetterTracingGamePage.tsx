@@ -1,8 +1,10 @@
-import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import Meta from '../../components/common/Meta';
 import LetterTracingGame from '../kids/games/phonics/LetterTracingGame';
-import { trackFreeResourceStart } from '../../lib/conversionTracking';
+import { LETTER_IDS, isLetterReady } from '../kids/games/phonics/tracing/traceLetters';
+import { trackEvent } from '../../lib/analytics';
+import { trackFreeResourceStart, trackFreeResourceToTrialClick } from '../../lib/conversionTracking';
 import { applySeo } from '../../lib/seo';
 import { createFAQPageSchema, createWebPageSchema } from '../../lib/schemas';
 
@@ -11,26 +13,26 @@ const PAGE_URL = `https://tinystepslearning.com${PAGE_PATH}`;
 
 const faqItems = [
   {
-    question: 'Do we need to sign in to play this free tracing game?',
-    answer: 'No. This free tracing game works in your browser without login, so parents can start immediately.',
+    question: 'Is this letter tracing game free?',
+    answer: 'Yes. Children can practise pre-writing strokes and letter tracing online for free.',
   },
   {
-    question: 'What age group is this tracing game best for?',
-    answer: 'It is best for early learners aged around 3 to 6 who are practising pre-writing strokes, capital letters, and small letters.',
+    question: 'What age is this letter tracing game for?',
+    answer: 'It is best for preschool, kindergarten, and early phonics learners who are starting alphabet writing.',
   },
   {
-    question: 'How often should my child play?',
-    answer: 'Short daily sessions of around 10 minutes are enough for steady improvement in control and confidence.',
+    question: 'Should my child start with letters or lines?',
+    answer: 'Children who are new to writing should start with Level 0 lines and curves before moving to capital and small letters.',
   },
   {
-    question: 'Can this replace guided phonics teaching?',
-    answer: 'This game is excellent for practice, but guided phonics teaching helps children connect tracing, sounds, and reading skills more deeply.',
+    question: 'Does tracing help with reading?',
+    answer: 'Tracing helps children recognise letter shapes and formation. For reading, children also need letter sounds, blending, and phonics practice.',
   },
   {
-    question: 'How is tracing connected to reading and spelling?',
-    answer: 'Tracing strengthens hand control and letter familiarity. Guided phonics teaching then helps children connect those letters to sounds, blending, reading, and spelling.',
+    question: 'Can my child practise one letter at a time?',
+    answer: 'Yes. Children can choose individual letters and practise capital and small letter formation step by step.',
   },
-];
+] as const;
 
 const breadcrumbSchema = {
   '@context': 'https://schema.org',
@@ -51,7 +53,7 @@ const appSchema = {
   operatingSystem: 'Any',
   url: PAGE_URL,
   description:
-    'Free online letter tracing game where kids practise lines, curves, capital letters, and small letters by starting at the red dot and following the guide.',
+    'Play a free online letter tracing game for kids. Practise pre-writing strokes, capital letters, small letters, and early phonics readiness with Tiny Steps.',
   isAccessibleForFree: true,
   offers: {
     '@type': 'Offer',
@@ -66,90 +68,159 @@ const appSchema = {
 };
 
 export default function FreeLetterTracingGamePage() {
+  const [searchParams] = useSearchParams();
+  const isPlayMode = searchParams.get('level') !== null;
+  const readyLetters = useMemo(
+    () =>
+      LETTER_IDS.filter((letterId) => letterId === letterId.toUpperCase() && isLetterReady(letterId) && isLetterReady(letterId.toLowerCase() as typeof letterId))
+        .map((upper, index) => {
+          const lower = upper.toLowerCase();
+          return {
+            upper,
+            lower,
+            pairIndex: index,
+            anchorId: `trace-letter-${lower}`,
+            href: `${PAGE_PATH}?level=1&pair=${index}&step=0&fs=1#play`,
+          };
+        }),
+    [],
+  );
+  const practiceLetters = useMemo(
+    () =>
+      Array.from({ length: 26 }, (_, index) => {
+        const upper = String.fromCharCode(65 + index);
+        return {
+          label: `Trace letter ${upper}`,
+          href: `${PAGE_PATH}?level=1&pair=${index}&step=0#play`,
+        };
+      }),
+    [],
+  );
+
   useEffect(() => {
     applySeo({
-      title: 'Free Letter Tracing Game for Kids | Online Alphabet Tracing Practice',
+      title: 'Free Letter Tracing Game for Kids | Tiny Steps',
       description:
-        'Free online letter tracing game for kids with alphabet tracing practice, pre-writing lines, and guided letter formation. Ideal for early learners building handwriting and phonics readiness.',
+        'Play a free online letter tracing game for kids. Practise pre-writing strokes, capital letters, small letters, and early phonics readiness with Tiny Steps.',
       canonicalPath: PAGE_PATH,
       ogType: 'website',
       jsonLd: [
         createWebPageSchema({
           name: 'Free Letter Tracing Game for Kids',
           description:
-            'Free online letter tracing game for kids with guided alphabet tracing practice and parent-friendly support for handwriting and phonics readiness.',
+            'Play a free online letter tracing game for kids with pre-writing strokes, uppercase and lowercase tracing, and phonics-readiness support.',
           url: PAGE_URL,
         }),
         appSchema,
         breadcrumbSchema,
-        createFAQPageSchema(faqItems),
+        createFAQPageSchema([...faqItems]),
       ],
     });
   }, []);
 
+  const handleHeroStart = () => {
+    trackFreeResourceStart('free_letter_tracing_game', PAGE_PATH);
+    trackEvent('letter_tracing_game_start', {
+      page_path: PAGE_PATH,
+      game_id: 'letter-tracing',
+      source_context: 'hero_cta',
+    });
+  };
+
+  const handleBookDemoClick = () => {
+    trackFreeResourceToTrialClick({
+      page_path: PAGE_PATH,
+      cta_label: 'Book Free Phonics Assessment',
+      cta_location: 'post_game_cta',
+      destination_path: '/book-demo',
+      program: 'phonics',
+    });
+    trackEvent('letter_tracing_book_demo_click', {
+      page_path: PAGE_PATH,
+      game_id: 'letter-tracing',
+      destination_path: '/book-demo',
+      source_context: 'post_game_cta',
+    });
+  };
+
+  const handleLetterStart = (upper: string, lower: string, sourceContext: string) => {
+    trackFreeResourceStart(`letter_tracing_${lower}`, PAGE_PATH);
+    trackEvent('letter_tracing_level_start', {
+      page_path: PAGE_PATH,
+      game_id: 'letter-tracing',
+      source_context: sourceContext,
+      level: 1,
+      item_id: upper,
+      item_type: 'letter',
+    });
+  };
+
   return (
     <div className="overflow-x-clip bg-[linear-gradient(180deg,#fff8ef_0%,#f7fbff_38%,#ffffff_100%)]">
       <Meta
-        title="Free Letter Tracing Game for Kids | Online Alphabet Tracing Practice"
-        description="Free online letter tracing game for kids with alphabet tracing practice, pre-writing lines, and guided letter formation. Ideal for early learners building handwriting and phonics readiness."
+        title="Free Letter Tracing Game for Kids | Tiny Steps"
+        description="Play a free online letter tracing game for kids. Practise pre-writing strokes, capital letters, small letters, and early phonics readiness with Tiny Steps."
         canonical={PAGE_URL}
       />
 
       <div className="mx-auto w-full max-w-7xl px-4 pb-14 pt-4 sm:px-6 lg:px-8">
-        <header className="relative overflow-hidden rounded-[32px] border border-slate-200 bg-[linear-gradient(145deg,#ffffff_0%,#f5fbff_50%,#fff7ec_100%)] p-6 shadow-[0_22px_60px_rgba(15,23,42,0.08)] sm:p-8">
-          <div className="pointer-events-none absolute -left-10 top-8 h-40 w-40 rounded-full bg-orange-200/30 blur-3xl" />
-          <div className="pointer-events-none absolute right-0 top-0 h-48 w-48 rounded-full bg-sky-200/30 blur-3xl" />
-          <div className="relative grid gap-6 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
-            <div>
-              <p className="inline-flex rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-orange-700">
-                Free parent-friendly tracing practice
-              </p>
-              <h1 className="mt-4 text-[34px] font-black leading-[1.04] tracking-[-0.035em] text-slate-950 sm:text-[44px]">
-                Free Letter Tracing Game for Kids
-              </h1>
-              <p className="mt-4 max-w-3xl text-base leading-7 text-slate-700 sm:text-lg sm:leading-8">
-                Help your child practise alphabet tracing online with guided strokes, simple warm-up patterns, and letter-formation support before moving into stronger phonics and reading readiness work.
-              </p>
+        {!isPlayMode ? (
+          <header className="relative overflow-hidden rounded-[32px] border border-slate-200 bg-[linear-gradient(145deg,#ffffff_0%,#f5fbff_50%,#fff7ec_100%)] p-6 shadow-[0_22px_60px_rgba(15,23,42,0.08)] sm:p-8">
+            <div className="pointer-events-none absolute -left-10 top-8 h-40 w-40 rounded-full bg-orange-200/30 blur-3xl" />
+            <div className="pointer-events-none absolute right-0 top-0 h-48 w-48 rounded-full bg-sky-200/30 blur-3xl" />
+            <div className="relative grid gap-6 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
+              <div>
+                <p className="inline-flex rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-orange-700">
+                  Free parent-friendly tracing practice
+                </p>
+                <h1 className="mt-4 text-[34px] font-black leading-[1.04] tracking-[-0.035em] text-slate-950 sm:text-[44px]">
+                  Free Letter Tracing Game for Kids
+                </h1>
+                <p className="mt-4 max-w-3xl text-base leading-7 text-slate-700 sm:text-lg sm:leading-8">
+                  Help your child practise pre-writing strokes, capital letters, and small letters with a simple online tracing game designed for preschool and early phonics learners.
+                </p>
 
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link
-                  to={`${PAGE_PATH}?level=0&pair=0&step=0&fs=1#play`}
-                  onClick={() => trackFreeResourceStart('free_letter_tracing_game', PAGE_PATH)}
-                  className="inline-flex items-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-                >
-                  Start Free Tracing Game
-                </Link>
-                <Link
-                  to="/online-english-classes-for-kids"
-                  className="inline-flex items-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
-                >
-                  Explore Online English Classes
-                </Link>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Link
+                    to={`${PAGE_PATH}?level=0&pair=0&step=0&fs=1#play`}
+                    onClick={handleHeroStart}
+                    className="inline-flex items-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  >
+                    Start pre-writing strokes
+                  </Link>
+                  <Link
+                    to={`${PAGE_PATH}?level=1&pair=0&step=0&fs=1#play`}
+                    onClick={handleHeroStart}
+                    className="inline-flex items-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
+                  >
+                    Start capital and small letter tracing
+                  </Link>
+                </div>
               </div>
+
+              <aside className="rounded-[28px] border border-slate-200 bg-white/88 p-5 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Quick answer for parents</p>
+                <p className="mt-3 text-sm leading-7 text-slate-700">
+                  Tracing helps children learn letter formation and pencil control. It is useful for writing readiness, but children still need letter sounds, blending, and phonics practice for reading.
+                </p>
+                <div className="mt-4 grid gap-3">
+                  {[
+                    'No login required',
+                    'Best for preschool and kindergarten',
+                    'Works on desktop, tablet, and mobile',
+                    'Useful before deeper phonics and blending practice',
+                  ].map((item) => (
+                    <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm font-medium text-slate-700">
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </aside>
             </div>
+          </header>
+        ) : null}
 
-            <aside className="rounded-[28px] border border-slate-200 bg-white/88 p-5 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Quick answer for parents</p>
-              <p className="mt-3 text-sm leading-7 text-slate-700">
-                Tracing helps children learn how letters are formed. It does not replace phonics, but it supports the control and familiarity children need before they connect letters to sounds, reading, and early writing.
-              </p>
-              <div className="mt-4 grid gap-3">
-                {[
-                  'No login required',
-                  'Best for ages 3 to 6',
-                  'Short sessions work well on mobile',
-                  'Works as a gentle lead-in to phonics readiness',
-                ].map((item) => (
-                  <div key={item} className="rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm font-medium text-slate-700">
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </aside>
-          </div>
-        </header>
-
-        <section className="mt-5 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+        <section className={isPlayMode ? '' : 'mt-5'}>
           <div id="play" className="rounded-[32px] border border-slate-200 bg-white p-2 shadow-[0_18px_44px_rgba(15,23,42,0.06)]">
             <LetterTracingGame
               baseRoute={PAGE_PATH}
@@ -160,93 +231,142 @@ export default function FreeLetterTracingGamePage() {
               anonymousProgressStorageKey="__public_letter_tracing_free__"
             />
           </div>
-
-          <div className="space-y-4">
-            <article className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-              <h2 className="text-xl font-bold text-slate-900">What your child practises</h2>
-              <ul className="mt-3 space-y-2 text-sm leading-7 text-slate-700">
-                <li>• Pre-writing lines and curve patterns</li>
-                <li>• Hand control and stroke direction</li>
-                <li>• Capital letter formation</li>
-                <li>• Small letter formation</li>
-              </ul>
-            </article>
-
-            <article className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-              <h2 className="text-xl font-bold text-slate-900">Age and usage guide</h2>
-              <ol className="mt-3 space-y-2 text-sm leading-7 text-slate-700">
-                <li>1. Best for ages 3 to 6, or older beginners who need letter-formation practice.</li>
-                <li>2. Start with warm-up shapes before letters and ask your child to begin from the red dot.</li>
-                <li>3. Keep sessions short, calm, and consistent rather than long and tiring.</li>
-              </ol>
-            </article>
-          </div>
         </section>
 
-        <section className="mt-5 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
-          <article className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_18px_44px_rgba(15,23,42,0.05)]">
-            <h2 className="text-xl font-bold text-slate-900">Why tracing helps early writing and phonics readiness</h2>
-            <p className="mt-3 text-sm leading-7 text-slate-700">
-              Tracing builds fine-motor control, visual direction tracking, and muscle memory. These are core foundations children use later for neat handwriting, spelling confidence, and easier written expression. Once children recognise and form letters more comfortably, it becomes easier to connect those letters to sounds during phonics practice.
-            </p>
-          </article>
-
-          <article className="rounded-[28px] border border-amber-200 bg-[linear-gradient(145deg,#fff8ef_0%,#ffffff_55%,#fef3c7_100%)] p-6 shadow-[0_18px_44px_rgba(15,23,42,0.05)]">
-            <h2 className="text-xl font-bold text-slate-900">Tracing is step one. Want to know what your child should learn next?</h2>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-700">
-              This page keeps gameplay simple for children. If you want parent guidance on what comes after tracing, book a free reading readiness check and get a clear next step across phonics, reading, and early English foundations.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <Link to="/book-demo" className="inline-flex rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
-                Get a Free Reading Readiness Check
-              </Link>
-              <Link to="/phonics" className="inline-flex rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">
-                Explore Phonics Classes
-              </Link>
-            </div>
-          </article>
-        </section>
-
-        <section className="mt-5 grid gap-4 md:grid-cols-2">
-          <article className="rounded-[28px] border border-emerald-200 bg-emerald-50/60 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.04)]">
-            <h2 className="text-xl font-bold text-slate-900">Want structured phonics classes after tracing practice?</h2>
-            <p className="mt-2 text-sm leading-7 text-slate-700">
-              Free tracing is a good start, but structured live support helps children move from letter practice to blending, reading, and spelling.
-            </p>
-            <div className="mt-4 flex flex-col gap-2 text-sm font-semibold">
-              <Link to="/phonics" className="text-emerald-800 underline underline-offset-4">
-                Explore Tiny Steps phonics classes
-              </Link>
-              <Link to="/online-english-classes-for-kids" className="text-slate-900 underline underline-offset-4">
-                See the full online English pathway
-              </Link>
-            </div>
-          </article>
-
-          <article className="rounded-[28px] border border-sky-200 bg-sky-50/60 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.04)]">
-            <h2 className="text-xl font-bold text-slate-900">Other free learning options</h2>
-            <div className="mt-3 flex flex-col gap-2 text-sm font-semibold">
-              <Link to="/letter-tracing-with-sounds-game" className="text-sky-900 underline underline-offset-4">
-                Letter Tracing With Sounds Game
-              </Link>
-              <Link to="/phonics-learning-games" className="text-sky-900 underline underline-offset-4">
-                More Tiny Steps learning games
-              </Link>
-            </div>
-          </article>
-        </section>
-
-        <section className="mt-5 rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_18px_44px_rgba(15,23,42,0.05)]">
-          <h2 className="text-xl font-bold text-slate-900">Parent FAQ</h2>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            {faqItems.map((faq) => (
-              <article key={faq.question} className="rounded-2xl border border-slate-200 bg-slate-50/75 p-4">
-                <h3 className="text-base font-semibold text-slate-900">{faq.question}</h3>
-                <p className="mt-2 text-sm leading-7 text-slate-700">{faq.answer}</p>
+        {!isPlayMode ? (
+          <>
+            <section className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <article className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+                <h2 className="text-xl font-bold text-slate-900">What children practise</h2>
+                <ul className="mt-3 space-y-2 text-sm leading-7 text-slate-700">
+                  <li>• Standing lines, sleeping lines, slanting lines, and curves</li>
+                  <li>• Capital and small letter formation</li>
+                  <li>• Starting from the correct point</li>
+                  <li>• Hand-eye coordination for early writing</li>
+                </ul>
               </article>
-            ))}
-          </div>
-        </section>
+
+              <article className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+                <h2 className="text-xl font-bold text-slate-900">How to play</h2>
+                <ul className="mt-3 space-y-2 text-sm leading-7 text-slate-700">
+                  <li>• Choose Level 0 for lines and curves</li>
+                  <li>• Move to letter levels after pre-writing practice</li>
+                  <li>• Start from the red dot and follow the blue guide</li>
+                  <li>• Practise capital and small letters together</li>
+                </ul>
+              </article>
+
+              <article className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+                <h2 className="text-xl font-bold text-slate-900">Best for</h2>
+                <ul className="mt-3 space-y-2 text-sm leading-7 text-slate-700">
+                  <li>• Preschool and kindergarten children</li>
+                  <li>• Children starting alphabet writing</li>
+                  <li>• Children who know letters but need writing confidence</li>
+                  <li>• Parents looking for a simple online letter tracing activity</li>
+                </ul>
+              </article>
+
+              <article className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+                <h2 className="text-xl font-bold text-slate-900">Next step after tracing</h2>
+                <p className="mt-3 text-sm leading-7 text-slate-700">
+                  Letter tracing helps children recognise shapes and letter formation. For reading, children also need letter sounds, blending, and phonics practice. Book a free phonics assessment if you want to know the right starting level for your child.
+                </p>
+              </article>
+            </section>
+
+            <section className="mt-5 rounded-[28px] border border-amber-200 bg-[linear-gradient(145deg,#fff8ef_0%,#ffffff_55%,#fef3c7_100%)] p-6 shadow-[0_18px_44px_rgba(15,23,42,0.05)]">
+              <h2 className="text-2xl font-bold text-slate-900">Practice letter tracing A to Z</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-700">
+                Choose a letter to practise capital and small letter formation. Children can start with pre-writing strokes first, then move to alphabet tracing.
+              </p>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {readyLetters.map((item) => (
+                  <a
+                    key={`jump-${item.upper}`}
+                    href={`#${item.anchorId}`}
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-sky-300 hover:text-slate-900"
+                  >
+                    {item.upper}
+                  </a>
+                ))}
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {readyLetters.map((item) => (
+                  <article
+                    key={item.upper}
+                    id={item.anchorId}
+                    className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm scroll-mt-28"
+                  >
+                    <h3 className="text-lg font-bold text-slate-900">Trace letter {item.upper}</h3>
+                    <p className="mt-1 text-sm font-semibold text-slate-700">
+                      Capital {item.upper} and small {item.lower}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      Start at the red dot and follow the blue guide.
+                    </p>
+                    <Link
+                      to={item.href}
+                      onClick={() => handleLetterStart(item.upper, item.lower, 'letter_section_card')}
+                      className="mt-4 inline-flex rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    >
+                      Trace letter {item.upper}
+                    </Link>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="mt-4 rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_rgba(15,23,42,0.04)]">
+              <p className="text-sm leading-7 text-slate-700">
+                If your child traces letters but struggles to read sounds or blend words,{' '}
+                <Link
+                  to="/book-demo"
+                  onClick={handleBookDemoClick}
+                  className="font-semibold text-slate-900 underline underline-offset-4"
+                >
+                  book a free phonics assessment
+                </Link>
+                .
+              </p>
+            </section>
+
+            <section className="mt-5 rounded-[28px] border border-amber-200 bg-[linear-gradient(145deg,#fff8ef_0%,#ffffff_55%,#fef3c7_100%)] p-6 shadow-[0_18px_44px_rgba(15,23,42,0.05)]">
+              <h2 className="text-2xl font-bold text-slate-900">Want to know your child&apos;s phonics level?</h2>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-700">
+                If your child enjoys tracing but struggles with sounds, blending, or reading words, book a free Tiny Steps phonics assessment.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link
+                  to="/book-demo"
+                  onClick={handleBookDemoClick}
+                  className="inline-flex rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                >
+                  Book Free Phonics Assessment
+                </Link>
+                <Link
+                  to="/phonics-learning-games"
+                  className="inline-flex rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
+                >
+                  Explore more phonics games
+                </Link>
+              </div>
+            </section>
+
+            <section className="mt-5 rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_18px_44px_rgba(15,23,42,0.05)]">
+              <h2 className="text-xl font-bold text-slate-900">Parent FAQ</h2>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                {faqItems.map((faq) => (
+                  <article key={faq.question} className="rounded-2xl border border-slate-200 bg-slate-50/75 p-4">
+                    <h3 className="text-base font-semibold text-slate-900">{faq.question}</h3>
+                    <p className="mt-2 text-sm leading-7 text-slate-700">{faq.answer}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+          </>
+        ) : null}
       </div>
     </div>
   );

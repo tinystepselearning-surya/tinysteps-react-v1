@@ -12,7 +12,8 @@
 // IMPORTANT: traceLetters.ts must be PURE TS (no JSX). JSX belongs here (.tsx).
 
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { trackEvent } from "../../../../lib/analytics";
 
 import {
   TRACE_LETTERS,
@@ -672,6 +673,45 @@ export default function LetterTracingGame({
   }, [isPretrace, pairIndex, enabledPairs.length]);
 
   const currentPair = !isPretrace && mode === "play" ? enabledPairs[safePairIndex] ?? null : null;
+
+  const buildPlayHref = useCallback(
+    (levelNum: number, pairIdx: number, stepNum: CaseStep, fullscreen = false) => {
+      const sp = new URLSearchParams();
+      applyKidAndMissionContext(sp, searchParams, kidId);
+
+      const level = levelNum === 0 ? 0 : 1;
+      const maxPair = level === 0 ? Math.max(0, PRETRACE_LEVEL.items.length - 1) : Math.max(0, allLetterPairs.length - 1);
+      const safePair = clamp(Number(pairIdx) || 0, 0, maxPair);
+      const safeStep: CaseStep = stepNum === 1 ? 1 : 0;
+
+      sp.set("level", String(level));
+      sp.set("pair", String(safePair));
+      sp.set("step", String(safeStep));
+
+      if (fullscreen) sp.set("fs", "1");
+
+      return `${resolvedBaseRoute}?${sp.toString()}`;
+    },
+    [allLetterPairs.length, kidId, resolvedBaseRoute, searchParams]
+  );
+
+  const trackTracingGameEvent = useCallback(
+    (
+      eventName:
+        | "letter_tracing_game_start"
+        | "letter_tracing_level_start"
+        | "letter_tracing_item_complete"
+        | "letter_tracing_book_demo_click",
+      params: Record<string, unknown> = {}
+    ) => {
+      trackEvent(eventName, {
+        page_path: resolvedBaseRoute,
+        game_id: TRACING_GAME_ID,
+        ...params,
+      });
+    },
+    [resolvedBaseRoute]
+  );
 
   const currentLetterId: LetterId | null =
     !isPretrace && mode === "play" && currentPair?.upper
@@ -1401,27 +1441,6 @@ const futureTapTargets = useMemo(() => {
     navigateTo(sp, replace);
   }
 
-  async function handlePlayButtonClick(levelNum: number, pairIdx: number, stepNum: CaseStep) {
-    clearTimers();
-
-    const sp = new URLSearchParams();
-    applyKidAndMissionContext(sp, searchParams, kidId);
-
-    const level = levelNum === 0 ? 0 : 1;
-    const maxPair = level === 0 ? Math.max(0, PRETRACE_LEVEL.items.length - 1) : Math.max(0, allLetterPairs.length - 1);
-    const safePair = clamp(Number(pairIdx) || 0, 0, maxPair);
-    const safeStep: CaseStep = stepNum === 1 ? 1 : 0;
-
-    sp.set("level", String(level));
-    sp.set("pair", String(safePair));
-    sp.set("step", String(safeStep));
-
-    // ✅ Always immersive flag (iOS-safe, no native fullscreen)
-    sp.set("fs", "1");
-
-    navigateTo(sp, false);
-  }
-
   function setFs(on: boolean) {
     clearTimers();
     const sp = new URLSearchParams(window.location.search);
@@ -1526,6 +1545,13 @@ const futureTapTargets = useMemo(() => {
     }
 
     setLetterDone(true);
+    trackTracingGameEvent("letter_tracing_item_complete", {
+      level: isPretrace ? 0 : 1,
+      pair: safePairIndex,
+      step,
+      item_id: isPretrace ? pretraceId ?? "" : currentLetterId ?? "",
+      item_type: isPretrace ? "pretrace" : "letter",
+    });
 
     setConfetti(true);
     timersRef.current.confettiOff = window.setTimeout(() => setConfetti(false), 4000);
@@ -1710,12 +1736,11 @@ const futureTapTargets = useMemo(() => {
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="min-w-0">
                 <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-                  Letter Tracing Adventure
+                  Free Letter Tracing Game for Kids
                 </h2>
 
                 <p className="mt-1 max-w-2xl text-sm text-slate-700">
-                  Start with warm-up shapes → then trace <span className="font-semibold">Capital</span> and{" "}
-                  <span className="font-semibold">Small</span> letters.
+                  Help your child practise pre-writing strokes, capital letters, and small letters with a simple online tracing game designed for preschool and early phonics learners.
                 </p>
 
                 <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -1782,18 +1807,32 @@ const futureTapTargets = useMemo(() => {
                 <div className="rounded-2xl border border-white/60 bg-white/65 p-3 shadow-sm backdrop-blur lg:h-full lg:overflow-auto">
                   <div className="space-y-3">
                     {/* Level 0 */}
-                    <button
-                      onClick={() =>
-                        void handlePlayButtonClick(0, progressCounts.resume0.pair, progressCounts.resume0.step)
-                      }
+                    <Link
+                      to={buildPlayHref(0, progressCounts.resume0.pair, progressCounts.resume0.step, true)}
+                      onClick={() => {
+                        trackTracingGameEvent("letter_tracing_game_start", {
+                          level: 0,
+                          pair: progressCounts.resume0.pair,
+                          step: progressCounts.resume0.step,
+                          item_type: "pretrace",
+                          source_context: "levels_level_0",
+                        });
+                        trackTracingGameEvent("letter_tracing_level_start", {
+                          level: 0,
+                          pair: progressCounts.resume0.pair,
+                          step: progressCounts.resume0.step,
+                          item_type: "pretrace",
+                          source_context: "levels_level_0",
+                        });
+                      }}
                       className={[
-                        "group w-full rounded-2xl border border-white/60 bg-gradient-to-r from-white/85 to-sky-50/60 p-3 text-left shadow-sm transition",
+                        "group block w-full rounded-2xl border border-white/60 bg-gradient-to-r from-white/85 to-sky-50/60 p-3 text-left shadow-sm transition",
                         "hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0",
                       ].join(" ")}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="text-base font-extrabold text-slate-900">🚀 {PRETRACE_LEVEL.title}</div>
+                          <div className="text-base font-extrabold text-slate-900">🚀 Level 0: lines and curves</div>
                           <div className="mt-0.5 text-xs font-semibold text-slate-600">{PRETRACE_LEVEL.subtitle}</div>
                         </div>
 
@@ -1835,10 +1874,12 @@ const futureTapTargets = useMemo(() => {
                       </div>
 
                       <div className="mt-2 flex items-center justify-between">
-                        <div className="text-xs font-semibold text-slate-600">Start here to warm up hand control ✨</div>
-                        <div className="text-sm font-black text-slate-900/50 transition group-hover:translate-x-1">Start →</div>
+                        <div className="text-xs font-semibold text-slate-600">Start pre-writing strokes and warm up hand control.</div>
+                        <div className="text-sm font-black text-slate-900/50 transition group-hover:translate-x-1">
+                          Start pre-writing strokes →
+                        </div>
                       </div>
-                    </button>
+                    </Link>
 
                     {/* Level 1 */}
                     {LEVELS.map((lv) => {
@@ -1881,21 +1922,38 @@ const futureTapTargets = useMemo(() => {
                                 Ready • {lp.done}/{lp.total}
                               </span>
 
-                              <button
-                                type="button"
-                                disabled={!ready}
-                                onClick={() =>
-                                  void handlePlayButtonClick(lv.levelId, progressCounts.resume1.pair, progressCounts.resume1.step)
-                                }
+                              <Link
+                                to={buildPlayHref(lv.levelId, progressCounts.resume1.pair, progressCounts.resume1.step, true)}
+                                aria-disabled={!ready}
+                                onClick={(event) => {
+                                  if (!ready) {
+                                    event.preventDefault();
+                                    return;
+                                  }
+                                  trackTracingGameEvent("letter_tracing_game_start", {
+                                    level: lv.levelId,
+                                    pair: progressCounts.resume1.pair,
+                                    step: progressCounts.resume1.step,
+                                    item_type: "letter",
+                                    source_context: "levels_level_1",
+                                  });
+                                  trackTracingGameEvent("letter_tracing_level_start", {
+                                    level: lv.levelId,
+                                    pair: progressCounts.resume1.pair,
+                                    step: progressCounts.resume1.step,
+                                    item_type: "letter",
+                                    source_context: "levels_level_1",
+                                  });
+                                }}
                                 className={[
                                   "rounded-full px-5 py-2.5 text-sm font-extrabold shadow-sm transition",
                                   ready
                                     ? "bg-slate-900 text-white hover:bg-slate-800"
-                                    : "cursor-not-allowed bg-slate-400 text-white",
+                                    : "pointer-events-none bg-slate-400 text-white",
                                 ].join(" ")}
                               >
-                                Start →
-                              </button>
+                                Start capital and small letter tracing
+                              </Link>
                             </div>
                           </div>
 
@@ -1937,10 +1995,19 @@ const futureTapTargets = useMemo(() => {
                                   {upperLetters.map((ch, pairIdx) => {
                                     const done = mastered.has(ch);
                                     return (
-                                      <button
+                                      <Link
                                         key={`U-${ch}`}
-                                        type="button"
-                                        onClick={() => navigatePlay(1, pairIdx, 0, false)}
+                                        to={buildPlayHref(1, pairIdx, 0, true)}
+                                        onClick={() => {
+                                          trackTracingGameEvent("letter_tracing_level_start", {
+                                            level: 1,
+                                            pair: pairIdx,
+                                            step: 0,
+                                            item_id: ch,
+                                            item_type: "letter",
+                                            source_context: "capital_preview",
+                                          });
+                                        }}
                                         title={`Trace capital ${ch}`}
                                         className={[
                                           "relative flex h-8 items-center justify-center rounded-lg text-xs font-extrabold ring-1 transition",
@@ -1951,7 +2018,7 @@ const futureTapTargets = useMemo(() => {
                                         ].join(" ")}
                                       >
                                         {ch}
-                                      </button>
+                                      </Link>
                                     );
                                   })}
                                 </div>
@@ -1966,10 +2033,19 @@ const futureTapTargets = useMemo(() => {
                                   {lowerLetters.map((ch, pairIdx) => {
                                     const done = mastered.has(ch);
                                     return (
-                                      <button
+                                      <Link
                                         key={`L-${ch}`}
-                                        type="button"
-                                        onClick={() => navigatePlay(1, pairIdx, 1, false)}
+                                        to={buildPlayHref(1, pairIdx, 1, true)}
+                                        onClick={() => {
+                                          trackTracingGameEvent("letter_tracing_level_start", {
+                                            level: 1,
+                                            pair: pairIdx,
+                                            step: 1,
+                                            item_id: ch,
+                                            item_type: "letter",
+                                            source_context: "small_preview",
+                                          });
+                                        }}
                                         title={`Trace small ${ch}`}
                                         className={[
                                           "relative flex h-8 items-center justify-center rounded-lg text-xs font-extrabold ring-1 transition",
@@ -1980,7 +2056,7 @@ const futureTapTargets = useMemo(() => {
                                         ].join(" ")}
                                       >
                                         {ch}
-                                      </button>
+                                      </Link>
                                     );
                                   })}
                                 </div>
@@ -1989,11 +2065,45 @@ const futureTapTargets = useMemo(() => {
                           )}
 
                           <div className="mt-2 text-xs font-semibold text-slate-600">
-                            Capital then small letter, one pair at a time.
+                            Capital then small letter, one pair at a time. Next: small letter after each capital letter.
                           </div>
                         </div>
                       );
                     })}
+
+                    <section className="rounded-2xl border border-white/60 bg-white/70 p-3 shadow-sm">
+                      <div className="flex items-center justify-between gap-3">
+                        <h2 className="text-base font-extrabold text-slate-900">Practice alphabet tracing</h2>
+                        <span className="text-[11px] font-semibold text-slate-600">Ready letters</span>
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                        {allLetterPairs.map((pair, pairIdx) => {
+                          const letter = String(pair.upper ?? "");
+                          if (!letter) return null;
+
+                          return (
+                            <Link
+                              key={`practice-${letter}`}
+                              to={buildPlayHref(1, pairIdx, 0, true)}
+                              onClick={() => {
+                                trackTracingGameEvent("letter_tracing_level_start", {
+                                  level: 1,
+                                  pair: pairIdx,
+                                  step: 0,
+                                  item_id: letter,
+                                  item_type: "letter",
+                                  source_context: "practice_by_letter",
+                                });
+                              }}
+                              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-800 transition hover:border-sky-300 hover:bg-sky-50"
+                            >
+                              Trace letter {letter}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </section>
                   </div>
                 </div>
               </div>
@@ -2012,7 +2122,7 @@ const futureTapTargets = useMemo(() => {
                       </span>
                       <div>
                         <div className="font-bold text-slate-900">Warm-up first</div>
-                        <div className="text-slate-600">Lines & curves make handwriting easy.</div>
+                        <div className="text-slate-600">Choose Level 0 for lines and curves before letters.</div>
                       </div>
                     </li>
 
@@ -2022,7 +2132,7 @@ const futureTapTargets = useMemo(() => {
                       </span>
                       <div>
                         <div className="font-bold text-slate-900">Capital → Small</div>
-                        <div className="text-slate-600">Trace big letter, then small letter.</div>
+                        <div className="text-slate-600">Practise capital and small letters together.</div>
                       </div>
                     </li>
 
@@ -2031,8 +2141,8 @@ const futureTapTargets = useMemo(() => {
                         3
                       </span>
                       <div>
-                        <div className="font-bold text-slate-900">Slow & steady</div>
-                        <div className="text-slate-600">Follow the moving star carefully.</div>
+                        <div className="font-bold text-slate-900">Start from the red dot</div>
+                        <div className="text-slate-600">Start from the red dot and follow the blue guide.</div>
                       </div>
                     </li>
                   </ol>
@@ -2040,7 +2150,7 @@ const futureTapTargets = useMemo(() => {
                   <div className="mt-3 rounded-2xl bg-slate-900/90 p-3 text-white">
                     <div className="text-sm font-extrabold">Pro tip</div>
                     <p className="mt-1 text-sm text-white/80">
-                      Start at the ⭐ star and lift your finger between strokes for cleaner letters.
+                      Start from the red dot and follow the blue dot. Lift your finger between strokes for cleaner letters.
                     </p>
                   </div>
                 </div>
@@ -2076,13 +2186,13 @@ const futureTapTargets = useMemo(() => {
         currentLetterId ?? ""
       } • Stroke ${strokeNo}/${totalStrokes}`;
 
-  const nextCtaLabel = isPretrace ? "Next shape" : step === 0 ? "Small letter" : "Next letter";
+  const nextCtaLabel = isPretrace ? "Next shape" : step === 0 ? "Next: small letter" : "Next letter";
 
   const instructionText = letterDone
     ? `Perfect! Tap the arrow for ${nextCtaLabel}.`
     : isTap
       ? "Tap the glowing dot."
-      : "Start at the star. Follow the star and trace the line.";
+      : "Start from the red dot and follow the blue dot.";
   const playCardSizeClass = fs ? "flex-1 min-h-0" : "h-[clamp(360px,64svh,620px)]";
 
   // fs=1 is immersive mode, even if native fullscreen isn't supported (iOS)

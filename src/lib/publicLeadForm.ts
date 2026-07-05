@@ -1,3 +1,5 @@
+import { captureLeadAttribution } from './leadAttribution';
+
 export type InterestOption = 'Phonics' | 'Reading' | 'Grammar' | 'Speaking';
 export type MainConcernOption =
   | 'Starting to read words after learning ABC/sounds'
@@ -22,11 +24,17 @@ export type PublicAssessmentFormState = {
 
 export type PublicLeadAttribution = {
   sourcePath: string;
+  landingPage?: string;
+  submittedFromPath?: string;
+  submittedFromUrl?: string;
+  referrer?: string;
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;
   utm_content?: string;
   utm_term?: string;
+  gclid?: string;
+  fbclid?: string;
 };
 
 const INTEREST_TRACK_BY_OPTION: Partial<Record<InterestOption, 'phonics' | 'grammar' | 'public_speaking'>> = {
@@ -57,18 +65,20 @@ function deriveInterestFromConcern(mainConcern: MainConcernOption | ''): Interes
 }
 
 export function getPublicLeadAttribution(): PublicLeadAttribution {
-  if (typeof window === 'undefined') {
-    return { sourcePath: '/' };
-  }
-
-  const params = new URLSearchParams(window.location.search);
+  const attribution = captureLeadAttribution();
   return {
-    sourcePath: window.location.pathname || '/',
-    utm_source: params.get('utm_source') || undefined,
-    utm_medium: params.get('utm_medium') || undefined,
-    utm_campaign: params.get('utm_campaign') || undefined,
-    utm_content: params.get('utm_content') || undefined,
-    utm_term: params.get('utm_term') || undefined,
+    sourcePath: attribution.submittedFromPath || '/',
+    landingPage: attribution.landingPage,
+    submittedFromPath: attribution.submittedFromPath,
+    submittedFromUrl: attribution.submittedFromUrl,
+    referrer: attribution.referrer,
+    utm_source: attribution.utmSource,
+    utm_medium: attribution.utmMedium,
+    utm_campaign: attribution.utmCampaign,
+    utm_content: attribution.utmContent,
+    utm_term: attribution.utmTerm,
+    gclid: attribution.gclid,
+    fbclid: attribution.fbclid,
   };
 }
 
@@ -101,6 +111,7 @@ export function buildPublicLeadPayload(
     mainConcern: form.mainConcern,
     timezone: opts.timezone || null,
     sourcePath: attribution.sourcePath,
+    // Firestore rules currently allow only the UTM subset inside `attribution`.
     attribution: {
       utm_source: attribution.utm_source || null,
       utm_medium: attribution.utm_medium || null,
