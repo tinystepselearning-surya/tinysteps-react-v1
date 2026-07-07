@@ -469,7 +469,7 @@ export default function HomePage() {
               <p className="mt-2 text-sm text-slate-700">
                 Try the free web versions:{' '}
                 <Link to="/free-letter-tracing-game-for-kids" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-                  Letter Tracing
+                  Free ABC Tracing Game
                 </Link>
                 {' '}and{' '}
                 <Link to="/letter-tracing-with-sounds-game" className="font-semibold underline underline-offset-2 hover:text-slate-900">

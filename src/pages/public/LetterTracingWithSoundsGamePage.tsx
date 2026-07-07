@@ -145,7 +145,7 @@ export default function LetterTracingWithSoundsGamePage() {
           <h2 className="text-xl font-bold text-slate-900">Link to other free learning games</h2>
           <div className="mt-2 flex flex-col gap-2 text-sm">
             <Link to="/free-letter-tracing-game-for-kids" className="font-semibold text-sky-900 underline underline-offset-4">
-              Free Letter Tracing Game for Kids
+              Free ABC Tracing Game for Kids
             </Link>
             <Link to="/phonics-learning-games" className="font-semibold text-sky-900 underline underline-offset-4">
               More Tiny Steps learning games

@@ -12,6 +12,7 @@
 // IMPORTANT: traceLetters.ts must be PURE TS (no JSX). JSX belongs here (.tsx).
 
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { trackEvent } from "../../../../lib/analytics";
 
@@ -36,6 +37,17 @@ const PUBLIC_ANON_STORAGE_KEY = "__public_letter_tracing__";
 type Mode = "levels" | "play";
 type CaseStep = 0 | 1; // 0=Upper, 1=Lower
 type Pt = { x: number; y: number; t: number; len: number };
+type FlatPt = { x: number; y: number; len: number };
+type PrintArrow = { x: number; y: number; angle: number; key: string };
+type PrintStrokeGuide = {
+  id: string;
+  index: number;
+  kind: TraceStroke["kind"];
+  pathD: string;
+  startPoint: { x: number; y: number } | null;
+  badgePoint: { x: number; y: number } | null;
+  arrows: PrintArrow[];
+};
 
 // (prevents implicit-any even if TRACE_LEVELS is loosely typed)
 type LevelPairView = { upper?: LetterId; lower?: LetterId };
@@ -70,6 +82,180 @@ function parseLine(pathD: string): { a: { x: number; y: number }; b: { x: number
     a: { x: Number(m[1]), y: Number(m[2]) },
     b: { x: Number(m[3]), y: Number(m[4]) },
   };
+}
+
+function lerp(a: number, b: number, t: number) {
+  return a + (b - a) * t;
+}
+
+function buildLineSamples(a: { x: number; y: number }, b: { x: number; y: number }, steps: number): FlatPt[] {
+  const safeSteps = Math.max(2, Math.floor(steps));
+  const points: FlatPt[] = [];
+  let last = { x: a.x, y: a.y };
+  let len = 0;
+
+  for (let i = 0; i <= safeSteps; i++) {
+    const t = i / safeSteps;
+    const x = lerp(a.x, b.x, t);
+    const y = lerp(a.y, b.y, t);
+    if (i > 0) {
+      len += dist(last, { x, y });
+    }
+    points.push({ x, y, len });
+    last = { x, y };
+  }
+
+  return points;
+}
+
+function measureStrokePoints(stroke: TraceStroke): FlatPt[] {
+  if (stroke.kind !== "trace") return [];
+
+  const d = (stroke.pathD ?? "").trim();
+  if (!d) return [];
+
+  const startT0 = typeof stroke.startT === "number" ? stroke.startT : 0;
+  const endT0 = typeof stroke.endT === "number" ? stroke.endT : 1;
+  const startT = clamp(startT0, 0, 0.999);
+  const endT = clamp(endT0, startT + 0.001, 1);
+
+  if (typeof document !== "undefined") {
+    try {
+      const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      pathEl.setAttribute("d", d);
+
+      if (typeof pathEl.getTotalLength === "function" && typeof pathEl.getPointAtLength === "function") {
+        const totalLen = pathEl.getTotalLength();
+        if (Number.isFinite(totalLen) && totalLen > 0) {
+          const startLen = totalLen * startT;
+          const endLen = totalLen * endT;
+          const trimmedLen = Math.max(0.001, endLen - startLen);
+          const steps = clamp(Math.round(trimmedLen / 8), 24, 140);
+          const pts: FlatPt[] = [];
+          let prev: { x: number; y: number } | null = null;
+          let accLen = 0;
+
+          for (let i = 0; i <= steps; i++) {
+            const t = i / steps;
+            const sampleLen = lerp(startLen, endLen, t);
+            const p = pathEl.getPointAtLength(sampleLen);
+            if (prev) {
+              accLen += dist(prev, p);
+            }
+            pts.push({ x: p.x, y: p.y, len: accLen });
+            prev = { x: p.x, y: p.y };
+          }
+
+          return pts;
+        }
+      }
+    } catch {
+      // fall through to simpler parsing
+    }
+  }
+
+  const line = parseLine(d);
+  if (!line) return [];
+
+  const trimmedA = {
+    x: lerp(line.a.x, line.b.x, startT),
+    y: lerp(line.a.y, line.b.y, startT),
+  };
+  const trimmedB = {
+    x: lerp(line.a.x, line.b.x, endT),
+    y: lerp(line.a.y, line.b.y, endT),
+  };
+
+  return buildLineSamples(trimmedA, trimmedB, 24);
+}
+
+function buildPrintArrows(points: FlatPt[], strokeIndex: number): PrintArrow[] {
+  if (points.length < 2) return [];
+
+  const totalLen = points[points.length - 1]?.len ?? 0;
+  if (!Number.isFinite(totalLen) || totalLen <= 0.01) return [];
+
+  const count = clamp(Math.round(totalLen / 58), 3, 6);
+  const arrows: PrintArrow[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const fraction = (i + 1) / (count + 1);
+    const idx = clamp(Math.round(fraction * (points.length - 1)), 1, points.length - 2);
+    const point = points[idx];
+    const next = points[Math.min(points.length - 1, idx + 2)] ?? point;
+    const prev = points[Math.max(0, idx - 2)] ?? point;
+
+    let dx = next.x - point.x;
+    let dy = next.y - point.y;
+    if (Math.abs(dx) + Math.abs(dy) < 0.0001) {
+      dx = point.x - prev.x;
+      dy = point.y - prev.y;
+    }
+
+    arrows.push({
+      x: point.x,
+      y: point.y,
+      angle: (Math.atan2(dy, dx) * 180) / Math.PI,
+      key: `stroke-${strokeIndex}-arrow-${idx}`,
+    });
+  }
+
+  return arrows;
+}
+
+function buildPrintStrokeGuides(strokes: TraceStroke[]): PrintStrokeGuide[] {
+  const guides = strokes.map((stroke, index) => {
+    if (stroke.kind === "tap") {
+      const tapPoint = parseTapPoint(stroke.pathD);
+      return {
+        id: stroke.id ?? `stroke-${index}`,
+        index,
+        kind: stroke.kind,
+        pathD: "",
+        startPoint: tapPoint,
+        badgePoint: tapPoint,
+        arrows: [],
+      };
+    }
+
+    const points = measureStrokePoints(stroke);
+    return {
+      id: stroke.id ?? `stroke-${index}`,
+      index,
+      kind: stroke.kind,
+      pathD: (stroke.pathD ?? "").trim(),
+      startPoint: points[0] ? { x: points[0].x, y: points[0].y } : null,
+      badgePoint: points[0] ? { x: points[0].x, y: points[0].y } : null,
+      arrows: buildPrintArrows(points, index),
+    };
+  });
+
+  return guides.map((guide, guideIndex) => {
+    if (!guide.startPoint) return guide;
+    const guideStartPoint = guide.startPoint;
+
+    const overlapIndex = guides
+      .slice(0, guideIndex + 1)
+      .filter((other) => {
+        if (!other.startPoint) return false;
+        return dist(other.startPoint, guideStartPoint) < 18;
+      }).length - 1;
+
+    const angleDeg = guide.arrows[0]?.angle ?? -90;
+    const angle = (angleDeg * Math.PI) / 180;
+    const backX = -Math.cos(angle) * 14;
+    const backY = -Math.sin(angle) * 14;
+    const sideX = -Math.sin(angle) * overlapIndex * 12;
+    const sideY = Math.cos(angle) * overlapIndex * 12;
+
+    return {
+      ...guide,
+      badgePoint: {
+        x: guideStartPoint.x + backX + sideX,
+        y: guideStartPoint.y + backY + sideY,
+      },
+    };
+  });
 }
 
 // --------------------
@@ -622,7 +808,12 @@ export default function LetterTracingGame({
   const [searchParams, setSearchParams] = useSearchParams();
 
   const fsRef = useRef<HTMLDivElement | null>(null);
-  
+  const printPortalNodeRef = useRef<HTMLDivElement | null>(null);
+  const printAfterHandlerRef = useRef<(() => void) | null>(null);
+  const printTimeoutRef = useRef<number | null>(null);
+  const printRafRefs = useRef<number[]>([]);
+  const [isPrintPortalOpen, setIsPrintPortalOpen] = useState(false);
+
   const resolvedBaseRoute = baseRoute || BASE_ROUTE;
   const kidId = forceAnonymousMode
     ? ""
@@ -729,6 +920,8 @@ export default function LetterTracingGame({
     : currentLetterId
       ? (TRACE_LETTERS[currentLetterId] as TraceLetter | undefined) ?? null
       : null;
+
+  const printStrokeGuides = useMemo(() => buildPrintStrokeGuides(letterData?.strokes ?? []), [letterData?.strokes]);
 
   // --------------------
   // Progress (no polling)
@@ -1055,30 +1248,57 @@ export default function LetterTracingGame({
     if (!shouldLock) {
       if (body.style.overflow === "hidden") body.style.overflow = "";
       if (html.style.overflow === "hidden") html.style.overflow = "";
+      if (body.style.width === "100%") body.style.width = "";
+      if (html.style.width === "100%") html.style.width = "";
+      if (body.style.maxWidth === "100%") body.style.maxWidth = "";
+      if (html.style.maxWidth === "100%") html.style.maxWidth = "";
+      if ((body.style as any).overscrollBehavior === "none") (body.style as any).overscrollBehavior = "";
+      if ((html.style as any).overscrollBehavior === "none") (html.style as any).overscrollBehavior = "";
       if ((body.style as any).touchAction === "none") (body.style as any).touchAction = "";
       if ((body.style as any).webkitUserSelect === "none") (body.style as any).webkitUserSelect = "";
       if ((body.style as any).userSelect === "none") (body.style as any).userSelect = "";
+      body.classList.remove("ts-letter-tracing-immersive");
       return;
     }
 
     const prevOverflow = document.body.style.overflow;
     const prevHtmlOverflow = document.documentElement.style.overflow;
+    const prevBodyWidth = document.body.style.width;
+    const prevHtmlWidth = document.documentElement.style.width;
+    const prevBodyMaxWidth = document.body.style.maxWidth;
+    const prevHtmlMaxWidth = document.documentElement.style.maxWidth;
+    const prevBodyOverscroll = (document.body.style as any).overscrollBehavior;
+    const prevHtmlOverscroll = (document.documentElement.style as any).overscrollBehavior;
     const prevTouchAction = (document.body.style as any).touchAction;
     const prevWebkitUserSelect = (document.body.style as any).webkitUserSelect;
     const prevUserSelect = (document.body.style as any).userSelect;
 
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
+    document.body.style.width = "100%";
+    document.documentElement.style.width = "100%";
+    document.body.style.maxWidth = "100%";
+    document.documentElement.style.maxWidth = "100%";
+    (document.body.style as any).overscrollBehavior = "none";
+    (document.documentElement.style as any).overscrollBehavior = "none";
     (document.body.style as any).touchAction = "none";
     (document.body.style as any).webkitUserSelect = "none";
     (document.body.style as any).userSelect = "none";
+    document.body.classList.add("ts-letter-tracing-immersive");
 
     return () => {
       document.body.style.overflow = prevOverflow;
       document.documentElement.style.overflow = prevHtmlOverflow;
+      document.body.style.width = prevBodyWidth;
+      document.documentElement.style.width = prevHtmlWidth;
+      document.body.style.maxWidth = prevBodyMaxWidth;
+      document.documentElement.style.maxWidth = prevHtmlMaxWidth;
+      (document.body.style as any).overscrollBehavior = prevBodyOverscroll;
+      (document.documentElement.style as any).overscrollBehavior = prevHtmlOverscroll;
       (document.body.style as any).touchAction = prevTouchAction;
       (document.body.style as any).webkitUserSelect = prevWebkitUserSelect;
       (document.body.style as any).userSelect = prevUserSelect;
+      document.body.classList.remove("ts-letter-tracing-immersive");
     };
   }, [mode, fs]);
 
@@ -1111,6 +1331,44 @@ export default function LetterTracingGame({
       window.removeEventListener("resize", setVh);
     };
   }, [mode, fs]);
+
+  const cleanupPrintSession = useCallback(() => {
+    if (typeof window === "undefined" || typeof document === "undefined") return;
+
+    document.body.classList.remove("ts-letter-worksheet-printing");
+    setIsPrintPortalOpen(false);
+
+    if (printAfterHandlerRef.current) {
+      window.removeEventListener("afterprint", printAfterHandlerRef.current);
+      printAfterHandlerRef.current = null;
+    }
+
+    if (printTimeoutRef.current !== null) {
+      window.clearTimeout(printTimeoutRef.current);
+      printTimeoutRef.current = null;
+    }
+
+    if (printRafRefs.current.length > 0) {
+      printRafRefs.current.forEach((id) => window.cancelAnimationFrame(id));
+      printRafRefs.current = [];
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const portalNode = document.createElement("div");
+    portalNode.className = "tsLetterWorksheetPrintPortal";
+    portalNode.setAttribute("data-testid", "print-worksheet-portal");
+    document.body.appendChild(portalNode);
+    printPortalNodeRef.current = portalNode;
+
+    return () => {
+      cleanupPrintSession();
+      printPortalNodeRef.current = null;
+      portalNode.remove();
+    };
+  }, [cleanupPrintSession]);
 
   // -------- block pinch/zoom/scroll gestures (match LetterTracingWithSounds) --------
   useEffect(() => {
@@ -2187,42 +2445,171 @@ const futureTapTargets = useMemo(() => {
       } • Stroke ${strokeNo}/${totalStrokes}`;
 
   const nextCtaLabel = isPretrace ? "Next shape" : step === 0 ? "Next: small letter" : "Next letter";
+  const printWorksheetTitle = "ABC Tracing Worksheet";
+  const printItemLabel = isPretrace
+    ? `Pre-writing practice: ${letterData.label}`
+    : `Trace ${step === 0 ? "uppercase" : "lowercase"} ${currentLetterId ?? ""}`;
 
   const instructionText = letterDone
     ? `Perfect! Tap the arrow for ${nextCtaLabel}.`
     : isTap
       ? "Tap the glowing dot."
       : "Start from the red dot and follow the blue dot.";
-  const playCardSizeClass = fs ? "flex-1 min-h-0" : "h-[clamp(360px,64svh,620px)]";
+  const playCardSizeClass = fs ? "flex-1 min-h-0" : "flex-1 min-h-[320px]";
 
   // fs=1 is immersive mode, even if native fullscreen isn't supported (iOS)
-  const wrapperClass = fs ? "fixed left-0 right-0 top-0 z-[9999] bg-slate-50" : "mx-auto w-full max-w-6xl px-4 py-6";
+  const wrapperClass = fs
+    ? "fixed inset-0 z-[9999] w-screen overflow-hidden bg-slate-50"
+    : "mx-auto flex min-h-[calc(100dvh-5rem)] w-full max-w-6xl min-w-0 flex-col overflow-hidden px-2 py-2 sm:px-3 sm:py-3";
+  const handlePrintWorksheet = () => {
+    if (typeof window === "undefined" || typeof document === "undefined" || !printPortalNodeRef.current) return;
+
+    cleanupPrintSession();
+    setIsPrintPortalOpen(true);
+    document.body.classList.add("ts-letter-worksheet-printing");
+
+    const afterPrint = () => cleanupPrintSession();
+    printAfterHandlerRef.current = afterPrint;
+    window.addEventListener("afterprint", afterPrint);
+
+    const raf1 = window.requestAnimationFrame(() => {
+      const raf2 = window.requestAnimationFrame(() => {
+        window.print();
+      });
+      printRafRefs.current.push(raf2);
+    });
+    printRafRefs.current.push(raf1);
+
+    printTimeoutRef.current = window.setTimeout(() => {
+      cleanupPrintSession();
+    }, 4000);
+  };
+
+  const printWorksheetPortal =
+    isPrintPortalOpen && printPortalNodeRef.current
+      ? createPortal(
+          <div className="tsPrintOnly px-4 py-4">
+            <div className="tsPrintSheet mx-auto max-w-[190mm] rounded-2xl border border-slate-300 bg-white px-5 py-4 text-slate-900">
+              <div className="text-center">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">Tiny Steps</div>
+                <h2 className="mt-1.5 text-[28px] font-bold">{printWorksheetTitle}</h2>
+                <p className="mt-1.5 text-base font-semibold">{printItemLabel}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-700">
+                  Start at number 1. Follow the arrows. Practise the same letter on paper.
+                </p>
+              </div>
+
+              <div className="tsPrintLetterBox mt-4 rounded-2xl border border-slate-300 p-3.5">
+                <svg
+                  viewBox={renderViewBox}
+                  preserveAspectRatio="xMidYMid meet"
+                  data-testid="print-worksheet-svg"
+                  className="mx-auto block w-full"
+                  style={{ height: "132mm", maxWidth: "170mm" }}
+                >
+                  {printStrokeGuides.map((guide) =>
+                    guide.pathD ? (
+                      <path
+                        key={`print-outline-${guide.id}`}
+                        d={guide.pathD}
+                        fill="none"
+                        stroke="#334155"
+                        strokeOpacity="0.28"
+                        strokeWidth={10}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    ) : null,
+                  )}
+
+                  {printStrokeGuides.flatMap((guide) =>
+                    guide.arrows.map((arrow) => (
+                      <g
+                        key={arrow.key}
+                        data-testid="print-arrow-glyph"
+                        transform={`translate(${arrow.x}, ${arrow.y}) rotate(${arrow.angle}) scale(0.86)`}
+                        opacity={0.62}
+                      >
+                        <path
+                          d="M -7 0 L 4 0 M 4 0 L 0 -3.2 M 4 0 L 0 3.2"
+                          fill="none"
+                          stroke="#0f172a"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </g>
+                    )),
+                  )}
+
+                  {printStrokeGuides.map((guide) => {
+                    if (!guide.badgePoint) return null;
+
+                    return (
+                      <g key={`print-number-${guide.id}`} data-testid="print-stroke-number">
+                        <circle cx={guide.badgePoint.x} cy={guide.badgePoint.y} r={9.5} fill="#dc2626" />
+                        <text
+                          x={guide.badgePoint.x}
+                          y={guide.badgePoint.y}
+                          fill="#ffffff"
+                          fontSize="8.5"
+                          fontWeight="700"
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                        >
+                          {guide.index + 1}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </svg>
+              </div>
+
+              <div className="mt-4 space-y-3">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="border-b border-slate-300 pb-4" />
+                ))}
+              </div>
+
+              <div className="mt-3 text-center text-[11px] font-medium tracking-[0.06em] text-slate-500">
+                Tiny Steps Learning
+              </div>
+            </div>
+          </div>,
+          printPortalNodeRef.current,
+        )
+      : null;
 
   return (
-    <div
-      ref={fsRef}
-      className={wrapperClass}
-      style={
-        fs
+    <React.Fragment>
+      <div
+        ref={fsRef}
+        className={wrapperClass}
+        style={
+          fs
             ? {
-              height: "var(--ts-vh, 100dvh)",
-              paddingTop: "calc(16px + env(safe-area-inset-top))",
-              paddingBottom: "calc(16px + env(safe-area-inset-bottom))",
-              paddingLeft: "calc(16px + env(safe-area-inset-left))",
-              paddingRight: "calc(16px + env(safe-area-inset-right))",
-              touchAction: "none",
-              WebkitUserSelect: "none",
-              userSelect: "none",
-              WebkitTapHighlightColor: "transparent",
-            }
-          : {
-              WebkitTapHighlightColor: "transparent",
-            }
-      }
-      onContextMenu={(e) => e.preventDefault()}
-    >
-      <audio ref={traceAudioRef} src={TRACE_AUDIO_SRC} preload="auto" />
-      <audio ref={confettiAudioRef} src={CONFETTI_AUDIO_SRC} preload="auto" />
+                width: "100vw",
+                height: "var(--ts-vh, 100dvh)",
+                paddingTop: "calc(8px + env(safe-area-inset-top))",
+                paddingBottom: "calc(8px + env(safe-area-inset-bottom))",
+                paddingLeft: "calc(8px + env(safe-area-inset-left))",
+                paddingRight: "calc(8px + env(safe-area-inset-right))",
+                touchAction: "none",
+                WebkitUserSelect: "none",
+                userSelect: "none",
+                WebkitTapHighlightColor: "transparent",
+                overflow: "hidden",
+              }
+            : {
+                minHeight: "calc(100dvh - 5rem)",
+                WebkitTapHighlightColor: "transparent",
+                overflow: "hidden",
+              }
+        }
+        onContextMenu={(e) => e.preventDefault()}
+      >
+        <audio ref={traceAudioRef} src={TRACE_AUDIO_SRC} preload="auto" />
+        <audio ref={confettiAudioRef} src={CONFETTI_AUDIO_SRC} preload="auto" />
 
       {/* Next-arrow animations (match LetterTracingWithSounds) */}
       <style>{`
@@ -2243,35 +2630,106 @@ const futureTapTargets = useMemo(() => {
 .tsNextPulse { animation: tsNextPulse 1.1s ease-in-out infinite; }
 .tsNextHalo  { animation: tsNextHalo  1.1s ease-in-out infinite; }
 .tsNextNudge { animation: tsNextNudge 1.1s ease-in-out infinite; }
+.tsLetterWorksheetPrintPortal { display: none; }
+body.ts-letter-tracing-immersive [data-floating-assistant="1"],
+body.ts-letter-tracing-immersive button[aria-label="Back to top"],
+body.ts-letter-tracing-immersive footer {
+  display: none !important;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  html,
+  body {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  body.ts-letter-worksheet-printing {
+    margin: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  body.ts-letter-worksheet-printing > * {
+    display: none !important;
+  }
+
+  body.ts-letter-worksheet-printing > .tsLetterWorksheetPrintPortal {
+    display: block !important;
+  }
+
+  .tsLetterWorksheetPrintPortal {
+    position: static !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .tsPrintOnly {
+    display: block !important;
+  }
+
+  .tsPrintSheet,
+  .tsPrintLetterBox {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    break-after: avoid;
+    page-break-after: avoid;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+
+  .tsPrintSheet {
+    max-width: none !important;
+    border: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .tsPrintLetterBox {
+    margin-top: 10px !important;
+    padding: 10px !important;
+  }
+}
       `}</style>
 
-      <div className={fs ? "flex h-full w-full flex-col gap-3" : ""}>
-        <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-2">
-          <div className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-slate-800">
-            {headerLabel}
+      <div className="flex h-full min-h-0 min-w-0 flex-col gap-1.5 overflow-hidden">
+        <div className="tsPrintHide flex min-w-0 flex-shrink-0 flex-col gap-1.5 overflow-hidden">
+          <div className="flex min-w-0">
+            <div className="max-w-full truncate rounded-full border bg-white px-3 py-1.5 text-[10px] font-semibold text-slate-800 sm:px-4 sm:text-xs">
+              {headerLabel}
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {!isPretrace && jumpOptions.length > 0 && (
-              <select
-                value={`${safePairIndex}|${step}`}
-                onChange={(e) => {
-                  const [pi, st] = e.target.value.split("|").map((x) => Number(x));
-                  navigatePlay(1, Number.isFinite(pi) ? pi : 0, st === 1 ? 1 : 0, false);
-                }}
-                className="rounded-full border bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800"
-              >
-                {jumpOptions.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            )}
+          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+              {!isPretrace && jumpOptions.length > 0 && (
+                <select
+                  value={`${safePairIndex}|${step}`}
+                  onChange={(e) => {
+                    const [pi, st] = e.target.value.split("|").map((x) => Number(x));
+                    navigatePlay(1, Number.isFinite(pi) ? pi : 0, st === 1 ? 1 : 0, false);
+                  }}
+                  className="min-w-0 flex-[1_1_220px] rounded-full border bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-800 sm:max-w-[250px] sm:text-xs"
+                  aria-label="Choose letter pair"
+                >
+                  {jumpOptions.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              )}
 
-            {/* 🎨 Color picker (quick dots + More sheet) */}
-            <div className="rounded-full border bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800 flex items-center gap-2">
-              <span className="mr-1">Color</span>
+            <div className="flex min-w-0 flex-wrap items-center gap-1.5 rounded-full border bg-white px-2.5 py-1.5 text-[11px] font-semibold text-slate-800 sm:text-xs">
+              <span className="mr-1 shrink-0">Color</span>
 
               {STROKE_COLORS.map((c) => {
                 const active = c.toLowerCase() === inkColor.toLowerCase();
@@ -2313,7 +2771,7 @@ const futureTapTargets = useMemo(() => {
               <button
                 type="button"
                 onClick={() => setColorOpen(true)}
-                className="ml-1 rounded-full border bg-white px-2 py-1 text-xs font-extrabold shadow-sm hover:shadow"
+                className="ml-1 rounded-full border bg-white px-1.5 py-0.5 text-[11px] font-extrabold shadow-sm hover:shadow"
                 aria-label="More colors"
                 title="More colors"
               >
@@ -2321,48 +2779,71 @@ const futureTapTargets = useMemo(() => {
               </button>
             </div>
 
-            <button onClick={goNext} className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold">
-              Next
-            </button>
+            <div className="flex min-w-0 flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={goNext}
+                className="rounded-full border bg-white px-3 py-1.5 text-[11px] font-semibold sm:px-3.5 sm:text-xs"
+              >
+                Next
+              </button>
 
-            <button
-              onClick={() => void goLevels()}
-              className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold"
-            >
-              Exit
-            </button>
+              <button
+                type="button"
+                onClick={handlePrintWorksheet}
+                className="rounded-full border bg-white px-3 py-1.5 text-[11px] font-semibold sm:px-3.5 sm:text-xs"
+                aria-label="Print Worksheet"
+                title="Print Worksheet"
+              >
+                Print
+              </button>
 
-            <button
-              onClick={() => void setFs(!fs)}
-              className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold"
-            >
-              {fs ? "Windowed" : "Fullscreen"}
-            </button>
+              <button
+                type="button"
+                onClick={() => void goLevels()}
+                className="rounded-full border bg-white px-3 py-1.5 text-[11px] font-semibold sm:px-3.5 sm:text-xs"
+              >
+                Exit
+              </button>
 
-            <button
-              onClick={() => void goLevels()}
-              className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold"
-            >
-              Levels
-            </button>
+              <button
+                type="button"
+                onClick={() => void setFs(!fs)}
+                className="rounded-full border bg-white px-3 py-1.5 text-[11px] font-semibold sm:px-3.5 sm:text-xs"
+                aria-label={fs ? "Windowed mode" : "Fullscreen mode"}
+                title={fs ? "Windowed mode" : "Fullscreen mode"}
+              >
+                <span className="sm:hidden">{fs ? "Window" : "Full"}</span>
+                <span className="hidden sm:inline">{fs ? "Windowed" : "Fullscreen"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void goLevels()}
+                className="rounded-full border bg-white px-3 py-1.5 text-[11px] font-semibold sm:px-3.5 sm:text-xs"
+              >
+                Levels
+              </button>
+            </div>
           </div>
         </div>
 
-        <div
-          className={`relative overflow-hidden rounded-2xl border shadow-sm ${playCardSizeClass}`}
-          style={{
-            background:
-              "radial-gradient(circle at 20% 20%, rgba(56,189,248,0.18), transparent 55%), radial-gradient(circle at 80% 30%, rgba(244,114,182,0.16), transparent 55%), radial-gradient(circle at 45% 85%, rgba(34,197,94,0.10), transparent 55%), linear-gradient(135deg, #f8fbff 0%, #fff7fb 45%, #fffdf7 100%)",
-          }}
-        >
-          <ConfettiBurst fire={confetti} />
+        <div className="tsPrintHide flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <div
+            className={`relative min-w-0 overflow-hidden rounded-xl border shadow-sm sm:rounded-2xl ${playCardSizeClass}`}
+            style={{
+              background:
+                "radial-gradient(circle at 20% 20%, rgba(56,189,248,0.18), transparent 55%), radial-gradient(circle at 80% 30%, rgba(244,114,182,0.16), transparent 55%), radial-gradient(circle at 45% 85%, rgba(34,197,94,0.10), transparent 55%), linear-gradient(135deg, #f8fbff 0%, #fff7fb 45%, #fffdf7 100%)",
+            }}
+          >
+            <ConfettiBurst fire={confetti} />
 
-          <ColorPickerSheet
-            open={colorOpen}
-            value={inkColor}
-            onChange={(c) => setInkColor(c)}
-            onClose={() => setColorOpen(false)}
-          />
+            <ColorPickerSheet
+              open={colorOpen}
+              value={inkColor}
+              onChange={(c) => setInkColor(c)}
+              onClose={() => setColorOpen(false)}
+            />
 
           <div className="relative flex h-full w-full flex-col">
             <div className="relative min-h-0 flex-1">
@@ -2370,6 +2851,7 @@ const futureTapTargets = useMemo(() => {
                 ref={svgRef}
                 viewBox={renderViewBox}
                 preserveAspectRatio="xMidYMid meet"
+                data-testid="letter-tracing-board"
                 className="absolute inset-0 h-full w-full touch-none select-none"
                 style={{
                   touchAction: "none",
@@ -2553,7 +3035,7 @@ const futureTapTargets = useMemo(() => {
             </div>
 
             {/* Instruction bar */}
-            <div className="shrink-0 bg-[#fbf5ec] px-4 py-3 text-center text-sm font-medium text-slate-700">
+            <div className="shrink-0 bg-[#fbf5ec] px-3 py-2 text-center text-xs font-medium text-slate-700 sm:px-4 sm:py-2.5">
               {instructionText}
             </div>
           </div>
@@ -2599,6 +3081,9 @@ const futureTapTargets = useMemo(() => {
           )}
         </div>
       </div>
-    </div>
+      </div>
+      </div>
+      {printWorksheetPortal}
+    </React.Fragment>
   );
 }

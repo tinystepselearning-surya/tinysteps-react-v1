@@ -1089,7 +1089,7 @@ export default function PhonicsPage({
               <p className="mt-2 text-sm text-slate-700">Short exercises for sound and letter practice between classes.</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link to="/free-letter-tracing-game-for-kids" className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-slate-900 hover:bg-sky-100">
-                  Letter Tracing Game
+                  Free ABC Tracing Game
                 </Link>
                 <Link to="/letter-tracing-with-sounds-game" className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold text-slate-900 hover:bg-orange-100">
                   Tracing With Sounds
@@ -1098,7 +1098,7 @@ export default function PhonicsPage({
               <p className="mt-3 text-xs leading-relaxed text-slate-700">
                 Start with our{' '}
                 <Link to="/free-letter-tracing-game-for-kids" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
-                  free letter tracing game
+                  free ABC tracing game
                 </Link>{' '}
                 and{' '}
                 <Link to="/letter-tracing-with-sounds-game" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">

@@ -30,20 +30,32 @@ describe('FreeLetterTracingGamePage', () => {
     renderPage('/free-letter-tracing-game-for-kids');
 
     expect(
-      screen.getByRole('heading', { level: 1, name: /free letter tracing game for kids/i }),
+      screen.getByRole('heading', { level: 1, name: /free abc tracing game for kids/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 2, name: /for teachers and homeschool use/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { level: 2, name: /practice letter tracing a to z/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 2, name: /printable worksheet option/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/choose a letter first and use the print button on the tracing screen/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/can i print this abc tracing activity as a worksheet\?/i),
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'A' })).toHaveAttribute('href', '#trace-letter-a');
     expect(screen.getByRole('link', { name: /book free phonics assessment/i })).toHaveAttribute('href', '/book-demo');
     expect(screen.getByRole('link', { name: /trace letter a/i })).toHaveAttribute(
       'href',
-      '/free-letter-tracing-game-for-kids?level=1&pair=0&step=0&fs=1#play',
+      '/free-letter-tracing-game-for-kids?level=1&pair=0&step=0#play',
     );
     expect(screen.getByRole('link', { name: /trace letter z/i })).toHaveAttribute(
       'href',
-      '/free-letter-tracing-game-for-kids?level=1&pair=25&step=0&fs=1#play',
+      '/free-letter-tracing-game-for-kids?level=1&pair=25&step=0#play',
     );
   });
 
@@ -53,6 +65,8 @@ describe('FreeLetterTracingGamePage', () => {
     expect(screen.getByTestId('letter-tracing-game')).toBeInTheDocument();
     expect(screen.queryByText(/what children practise/i)).toBeNull();
     expect(screen.queryByText(/practice letter tracing a to z/i)).toBeNull();
-    expect(screen.queryByRole('heading', { level: 1, name: /free letter tracing game for kids/i })).toBeNull();
+    expect(screen.queryByText(/printable worksheet option/i)).toBeNull();
+    expect(screen.queryByRole('heading', { level: 1, name: /free abc tracing game for kids/i })).toBeNull();
+    expect(screen.queryByText(/who can use this abc tracing game/i)).toBeNull();
   });
 });

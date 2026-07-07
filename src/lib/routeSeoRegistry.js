@@ -359,9 +359,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/free-letter-tracing-game-for-kids': {
-    title: 'Free Letter Tracing Game for Kids | Tiny Steps',
+    title: 'Free ABC Tracing Game for Kids | Alphabet Letter Tracing Online',
     description:
-      'Play a free online letter tracing game for kids. Practise pre-writing strokes, capital letters, small letters, and early phonics readiness with Tiny Steps.',
+      'Play a free online ABC tracing game for kids. Practise pre-writing strokes, uppercase letters, lowercase letters, and English alphabet formation for preschool and kindergarten learners.',
     canonicalPath: '/free-letter-tracing-game-for-kids',
     ogType: 'website',
   },

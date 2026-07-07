@@ -267,7 +267,11 @@ function safeCourse(value: string | null): string | null {
           <h1 className="font-heading text-3xl md:text-4xl">Tiny Steps Curriculum (Ages 3–12)</h1>
           <p className="mt-3 text-base text-gray-700">What does the full learning journey look like? This curriculum maps a clear pathway across phonics, grammar, reading, sentence formation, communication, and public speaking so parents know exactly what comes next.</p>
           <p className="mt-2 text-sm text-gray-600">
-            For daily home reinforcement, explore our <Link to="/phonics-learning-games" className="font-semibold text-primary-600">phonics games</Link> with tracing, sound practice, and a 3-day free trial.
+            For daily home reinforcement, explore our <Link to="/phonics-learning-games" className="font-semibold text-primary-600">phonics games</Link> with tracing, sound practice, and a 3-day free trial. Parents who want an easier warm-up can also use{' '}
+            <Link to="/free-letter-tracing-game-for-kids" className="font-semibold text-primary-600">
+              pre-writing strokes and letter tracing
+            </Link>
+            {' '}before reading practice.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-3 text-sm text-gray-600">
             <span className="rounded-full bg-white/80 px-4 py-1">Phonics mastery</span>

@@ -376,6 +376,13 @@ export default function ClassSamplesPage() {
             <p className="mt-4 max-w-xl text-sm leading-6 text-slate-500">
               <AutoLinkedText text="If you are comparing online phonics classes, reading support, or English classes for kids with visible progress, this page gives you a direct feel for the teaching quality, pace, and child participation Tiny Steps is known for." />
             </p>
+            <p className="mt-4 max-w-xl text-sm leading-6 text-slate-500">
+              Want a simple home activity after watching? Children can{' '}
+              <Link to="/free-letter-tracing-game-for-kids" className="font-semibold text-slate-900 underline underline-offset-4">
+                practise letter tracing
+              </Link>
+              {' '}online before moving into sound blending and reading.
+            </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link

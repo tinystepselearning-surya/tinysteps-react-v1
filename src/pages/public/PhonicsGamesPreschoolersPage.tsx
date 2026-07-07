@@ -149,6 +149,13 @@ export default function PhonicsGamesPreschoolersPage() {
         <p className="text-gray-700 leading-relaxed">
           No-print phonics games help preschoolers ages 3–6 practice sounds, blending, and early reading through short, playful routines. The best games use movement, objects at home, and quick repetition. Aim for 10 minutes a day and keep it fun, guided, and consistent.
         </p>
+        <p className="mt-3 text-sm text-gray-600">
+          Need a simple fine-motor warm-up before sound work? Try our{' '}
+          <Link to="/free-letter-tracing-game-for-kids" className="font-semibold text-[#2d5016] underline">
+            free alphabet tracing game for kids
+          </Link>
+          .
+        </p>
       </section>
 
       <section className="mb-12">

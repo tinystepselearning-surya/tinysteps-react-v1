@@ -135,6 +135,13 @@ export default function PhonicsAppsPreschoolersIndiaPage() {
         <p className="text-gray-700 leading-relaxed">
           Good phonics apps for preschoolers in India help ages 3–6 practice letter sounds, blending, and short words through playful, daily activities. Look for clear audio, step-by-step progression, and parent tracking. Apps work best when paired with guided reading or a mentor.
         </p>
+        <p className="mt-3 text-sm text-gray-600">
+          If your child also needs pencil-control practice, add a short{' '}
+          <Link to="/free-letter-tracing-game-for-kids" className="font-semibold text-[#2d5016] underline">
+            online alphabet tracing activity
+          </Link>
+          {' '}before or after app time.
+        </p>
       </section>
 
       <section className="mb-12">
