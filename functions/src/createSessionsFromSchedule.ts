@@ -120,6 +120,8 @@ interface CreateSessionsResponse {
   created: number;
   skipped: number;
   replaced: number;
+  cancelledBlockersRestored: number;
+  cancelledBlockersSkipped: number;
   plannedSessionsTarget: number | null;
   plannedSessionsGenerated: number;
   plannedSessionsConsumed: number;
@@ -176,6 +178,11 @@ interface RepairEnrollmentFutureSessionsRequest {
   dryRun?: boolean;
 }
 
+interface RepairCancelledFutureRegularSessionsForEnrollmentRequest {
+  enrollmentId: string;
+  dryRun?: boolean;
+}
+
 interface RepairPlanSessionPreview {
   sessionId: string;
   date: string;
@@ -201,6 +208,8 @@ interface RepairFinalCounts {
   createCount: number;
   patchCount: number;
   cancelCount: number;
+  restoreCount: number;
+  cancelledBlockersSkippedCount: number;
   unsafeSkippedCount: number;
   teacherAliasProblemCount: number;
 }
@@ -212,8 +221,22 @@ interface RepairEnrollmentFutureSessionsResponse extends CreateSessionsResponse 
   staleSessionsToUpdate: RepairPlanSessionPreview[];
   duplicateOldTimeSessions: RepairPlanSessionPreview[];
   unsafeSessionsSkipped: RepairPlanSessionPreview[];
+  cancelledBlockersRestoredPreview: RepairPlanSessionPreview[];
+  cancelledBlockersSkippedPreview: RepairPlanSessionPreview[];
   teacherAliasProblems: RepairTeacherAliasProblem[];
   finalCounts: RepairFinalCounts;
+}
+
+interface RepairCancelledFutureRegularSessionsForEnrollmentResponse {
+  enrollmentId: string;
+  dryRun: boolean;
+  repairBatchId: string;
+  cancelledBlockersRestoredPreview: RepairPlanSessionPreview[];
+  cancelledBlockersSkippedPreview: RepairPlanSessionPreview[];
+  finalCounts: {
+    restoreCount: number;
+    skippedCount: number;
+  };
 }
 
 function normalizeIdempotencyKey(value: unknown): string {
@@ -1131,6 +1154,8 @@ async function generateSessionsFromScheduleInternal(
     startMs: number;
   }> = [];
   const pausedFutureRegularDocs: Array<{ signature: string; startMs: number }> = [];
+  const restorableCancelledBySignature = new Map<string, RepairSessionDocInfo[]>();
+  const skippedCancelledBySignature = new Map<string, RepairSessionDocInfo[]>();
   let plannedSessionsConsumed = 0;
   const occupiedRegularSignatures = new Set<string>();
   const postCleanupSignatureCounts = new Map<string, number>();
@@ -1138,11 +1163,37 @@ async function generateSessionsFromScheduleInternal(
   for (const sessionDoc of postCleanupSnap.docs) {
     const raw = sessionDoc.data() as Record<string, unknown>;
     const signature = resolveSessionSignature({ raw, fallbackTeacherId: teacherId });
+    const financial = financialBySessionId.get(sessionDoc.id);
+    const sessionInfo: RepairSessionDocInfo = {
+      id: sessionDoc.id,
+      ref: sessionDoc.ref,
+      raw,
+      financial,
+      startMs: resolveSessionStartMs(raw),
+      signature,
+      slotPattern: resolveSessionSlotPattern({ raw, fallbackTeacherId: teacherId }),
+    };
+    if (signature && isCancelledStatus(raw.status)) {
+      const safeToRestore = canRestoreFutureCancelledRegularSession({
+        session: sessionInfo,
+        nowMs,
+        configuredSlotPatterns,
+        fallbackTeacherId: teacherId,
+        rangeStartYmd,
+        rangeEndYmd,
+      });
+      const targetMap = safeToRestore ? restorableCancelledBySignature : skippedCancelledBySignature;
+      const existing = targetMap.get(signature) || [];
+      existing.push(sessionInfo);
+      targetMap.set(signature, existing);
+      if (safeToRestore) {
+        continue;
+      }
+    }
     if (!signature) continue;
     occupiedRegularSignatures.add(signature);
     postCleanupSignatureCounts.set(signature, (postCleanupSignatureCounts.get(signature) || 0) + 1);
 
-    const financial = financialBySessionId.get(sessionDoc.id);
     if (isRegularConsumedSession(raw, financial)) {
       plannedSessionsConsumed += 1;
       continue;
@@ -1185,6 +1236,7 @@ async function generateSessionsFromScheduleInternal(
   const targetActiveFutureRegular = plannedSessionsTarget ?
     Math.max(plannedSessionsTarget - plannedSessionsConsumed, 0) :
     Number.MAX_SAFE_INTEGER;
+  const regenerationRepairBatchId = `schedule_regeneration_${enrollmentId}_${Date.now()}`;
 
   if (replaceFuture && activeFutureRegularDocs.length > targetActiveFutureRegular) {
     let trimBatch = db.batch();
@@ -1215,12 +1267,63 @@ async function generateSessionsFromScheduleInternal(
 
   let additionalNeeded = Math.max(targetActiveFutureRegular - activeFutureRegularDocs.length, 0);
   plannedSessionsGenerated = plannedSessionsConsumed + activeFutureRegularDocs.length;
+  let cancelledBlockersRestored = 0;
+  let cancelledBlockersSkipped = 0;
 
   for (const candidate of sessionCandidates) {
     if (additionalNeeded <= 0) break;
 
     const candidateYmd = toYmdFromContextDate(candidate.sessionDate);
     const candidateSignature = `${candidateYmd}|${candidate.startTime}|${candidate.durationMinutes}|${teacherId || ""}`;
+    const restorableCancelledMatches = [...(restorableCancelledBySignature.get(candidateSignature) || [])]
+      .sort((a, b) => a.id.localeCompare(b.id));
+    if (restorableCancelledMatches.length > 0) {
+      const restoreTarget = restorableCancelledMatches[0];
+      const restorePayload = {
+        ...buildCanonicalPatch(
+          restoreTarget.raw,
+          removeUndefinedDeep({
+            startAt: admin.firestore.Timestamp.fromDate(candidate.startAtDate),
+            endAt: admin.firestore.Timestamp.fromDate(candidate.endAtDate),
+            date: candidateYmd,
+            startTime: candidate.startTime,
+            endTime: candidate.endTime,
+            durationMins: candidate.durationMinutes,
+            durationMinutes: candidate.durationMinutes,
+            feeAmount,
+            currency,
+            joinUrl,
+            status: "scheduled",
+            attendance: null,
+          }) as Record<string, unknown>,
+        ),
+        ...buildCancelledRestorePatch({
+          raw: restoreTarget.raw,
+          actorIdentity: "system",
+          repairBatchId: regenerationRepairBatchId,
+        }),
+      };
+      writeBatch.set(restoreTarget.ref, restorePayload, { merge: true });
+      cancelledBlockersRestored += 1;
+      writeOps += 1;
+      occupiedRegularSignatures.add(candidateSignature);
+      postCleanupSignatureCounts.set(candidateSignature, (postCleanupSignatureCounts.get(candidateSignature) || 0) + 1);
+      additionalNeeded -= 1;
+      plannedSessionsGenerated += 1;
+      if (restorableCancelledMatches.length > 1) {
+        cancelledBlockersSkipped += restorableCancelledMatches.length - 1;
+      }
+      if (writeOps >= MAX_BATCH) {
+        await writeBatch.commit();
+        writeBatch = db.batch();
+        writeOps = 0;
+      }
+      continue;
+    }
+    const skippedCancelledMatches = skippedCancelledBySignature.get(candidateSignature) || [];
+    if (skippedCancelledMatches.length > 0) {
+      cancelledBlockersSkipped += skippedCancelledMatches.length;
+    }
     if (occupiedRegularSignatures.has(candidateSignature) || (postCleanupSignatureCounts.get(candidateSignature) || 0) > 0) {
       skipped += 1;
       continue;
@@ -1330,6 +1433,8 @@ async function generateSessionsFromScheduleInternal(
     created,
     skipped,
     replaced,
+    cancelledBlockersRestored,
+    cancelledBlockersSkipped,
     plannedSessionsTarget,
     plannedSessionsGenerated,
     plannedSessionsConsumed,
@@ -1348,6 +1453,8 @@ async function generateSessionsFromScheduleInternal(
     created,
     skipped,
     replaced,
+    cancelledBlockersRestored,
+    cancelledBlockersSkipped,
     plannedSessionsTarget,
     plannedSessionsGenerated,
     plannedSessionsConsumed,
@@ -1418,6 +1525,8 @@ type RepairPlan = {
   created: number;
   skipped: number;
   replaced: number;
+  cancelledBlockersRestoredCount: number;
+  cancelledBlockersSkippedCount: number;
   plannedSessionsTarget: number | null;
   plannedSessionsGenerated: number;
   plannedSessionsConsumed: number;
@@ -1432,6 +1541,8 @@ type RepairPlan = {
   staleSessionsToUpdate: RepairPlanSessionPreview[];
   duplicateOldTimeSessions: RepairPlanSessionPreview[];
   unsafeSessionsSkipped: RepairPlanSessionPreview[];
+  cancelledBlockersRestored: RepairPlanSessionPreview[];
+  cancelledBlockersSkipped: RepairPlanSessionPreview[];
   teacherAliasProblems: RepairTeacherAliasProblem[];
   finalCounts: RepairFinalCounts;
   createWrites: Array<{ ref: admin.firestore.DocumentReference; payload: Record<string, unknown> }>;
@@ -1614,6 +1725,128 @@ function explainUnsafeRepairReasons(session: RepairSessionDocInfo, nowMs: number
   return Array.from(new Set(reasons));
 }
 
+function isCancelledStatus(value: unknown): boolean {
+  const status = normalizeStatus(value);
+  return status === "cancelled" || status === "canceled";
+}
+
+function isSystemGeneratedCancellation(raw: Record<string, unknown>): boolean {
+  const cancelledReason =
+    toOptionalText(raw.cancelledReason) ||
+    toOptionalText((raw as Record<string, unknown>).canceledReason) ||
+    "";
+  const normalizedReason = cancelledReason.trim().toLowerCase();
+  if (normalizedReason.startsWith("schedule_repair_")) {
+    return true;
+  }
+  if (normalizedReason) {
+    return false;
+  }
+
+  const source = (toOptionalText(raw.source) || "").toLowerCase();
+  if (source === "enrollmentschedule" || source === "enrollmentschedulereplace" || source === "enrollmentschedulerepair") {
+    return true;
+  }
+
+  const actorFields = [
+    raw.createdBy,
+    raw.updatedBy,
+    raw.cancelledBy,
+    (raw as Record<string, unknown>).canceledBy,
+  ];
+  return actorFields
+    .map((value) => (toOptionalText(value) || "").toLowerCase())
+    .some((value) => value === "system" || value === "repairenrollmentfuturesessionsfromschedule");
+}
+
+function explainCancelledRestoreSkipReasons(session: RepairSessionDocInfo, nowMs: number): string[] {
+  const reasons: string[] = [];
+  const { raw, financial } = session;
+  if (!isCancelledStatus(raw.status)) reasons.push(`status_${normalizeStatus(raw.status) || "unknown"}`);
+  if (session.startMs === null || session.startMs <= nowMs) reasons.push("past_or_missing_start");
+  if (hasAttendanceMarked(raw)) reasons.push("attendance_marked");
+  if (hasSessionFinanceOrLockMarkers(raw)) reasons.push("finance_or_lock_marker");
+  if (hasFinancialLink(financial)) reasons.push("finance_linked");
+  if (isScheduleExceptionSession(raw)) reasons.push("schedule_exception");
+  if (!isSystemGeneratedCancellation(raw)) reasons.push("manual_cancel_reason");
+  return Array.from(new Set(reasons));
+}
+
+function canRestoreFutureCancelledRegularSession(args: {
+  session: RepairSessionDocInfo;
+  nowMs: number;
+  configuredSlotPatterns: Set<string>;
+  fallbackTeacherId: string | null;
+  rangeStartYmd: string;
+  rangeEndYmd: string;
+}): boolean {
+  const { session, nowMs, configuredSlotPatterns, fallbackTeacherId, rangeStartYmd, rangeEndYmd } = args;
+  const { raw, financial } = session;
+  if (!isCancelledStatus(raw.status)) return false;
+  if (session.startMs === null || session.startMs <= nowMs) return false;
+  if (hasAttendanceMarked(raw)) return false;
+  if (hasSessionFinanceOrLockMarkers(raw)) return false;
+  if (hasFinancialLink(financial)) return false;
+  if (isScheduleExceptionSession(raw)) return false;
+  if (!isSystemGeneratedCancellation(raw)) return false;
+  const sessionYmd = resolveSessionYmd(raw);
+  if (!sessionYmd || sessionYmd < rangeStartYmd || sessionYmd > rangeEndYmd) return false;
+  const slotPattern = session.slotPattern || resolveSessionSlotPattern({ raw, fallbackTeacherId });
+  if (!slotPattern || !configuredSlotPatterns.has(slotPattern)) return false;
+  const signature = session.signature || resolveSessionSignature({ raw, fallbackTeacherId });
+  return Boolean(signature);
+}
+
+function buildCancelledRestorePatch(args: {
+  raw: Record<string, unknown>;
+  actorIdentity: string;
+  repairBatchId: string;
+}): Record<string, unknown> {
+  const { raw, actorIdentity, repairBatchId } = args;
+  const canonicalBase = {
+    status: "scheduled",
+    attendance: null,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedBy: actorIdentity,
+    restoredFromCancelled: true,
+    restoreReason: "future_regular_session_regeneration_restore",
+    repairBatchId,
+  } as Record<string, unknown>;
+
+  const deleteIfPresent = (field: string) => {
+    if (field in raw) {
+      canonicalBase[field] = admin.firestore.FieldValue.delete();
+    }
+  };
+
+  deleteIfPresent("cancelledReason");
+  deleteIfPresent("canceledReason");
+  deleteIfPresent("cancelledAt");
+  deleteIfPresent("canceledAt");
+  deleteIfPresent("cancelledBy");
+  deleteIfPresent("canceledBy");
+
+  return canonicalBase;
+}
+
+function buildCancelledBlockerPreview(args: {
+  session: RepairSessionDocInfo;
+  candidate: RepairSessionCandidate;
+  action: "patch" | "skip_unsafe";
+  reasons: string[];
+}): RepairPlanSessionPreview {
+  const { session, candidate, action, reasons } = args;
+  return {
+    sessionId: session.id,
+    date: candidate.date,
+    startTime: candidate.startTime,
+    endTime: candidate.endTime,
+    status: action === "patch" ? "scheduled" : (toOptionalText(session.raw.status) || "cancelled"),
+    action,
+    reasons,
+  };
+}
+
 async function loadRepairContext(args: {
   enrollmentId: string;
 }): Promise<RepairContext> {
@@ -1761,6 +1994,136 @@ async function loadRepairContext(args: {
   };
 }
 
+function planCancelledFutureRegularRestorations(args: {
+  context: RepairContext;
+  targetCandidates: RepairSessionCandidate[];
+  nowMs: number;
+  actorIdentity: string;
+  repairBatchId: string;
+}) {
+  const { context, targetCandidates, nowMs, actorIdentity, repairBatchId } = args;
+  const targetBySignature = new Map<string, RepairSessionCandidate>();
+  targetCandidates.forEach((candidate) => {
+    targetBySignature.set(candidate.signature, candidate);
+  });
+
+  const restorableBySignature = new Map<string, RepairSessionDocInfo[]>();
+  const cancelledBlockersSkipped: RepairPlanSessionPreview[] = [];
+  const restoreWrites: Array<{ ref: admin.firestore.DocumentReference; payload: Record<string, unknown> }> = [];
+  const restoreAudits: Array<{ ref: admin.firestore.DocumentReference; payload: Record<string, unknown> }> = [];
+  const cancelledBlockersRestored: RepairPlanSessionPreview[] = [];
+
+  const buildAuditPayload = (
+    sessionId: string,
+    action: "patch" | "skip_unsafe",
+    reasons: string[],
+    before: Record<string, unknown> | null,
+    after: Record<string, unknown> | null,
+  ) => ({
+    type: "enrollment_future_session_schedule_repair",
+    enrollmentId: context.enrollmentId,
+    sessionId,
+    action,
+    reasons,
+    before,
+    after,
+    repairBatchId,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdBy: actorIdentity,
+  });
+
+  context.sessions.forEach((session) => {
+    if (!isCancelledStatus(session.raw.status)) return;
+    const signature = session.signature || resolveSessionSignature({ raw: session.raw, fallbackTeacherId: context.teacherId });
+    if (!signature) return;
+    const candidate = targetBySignature.get(signature);
+    if (!candidate) return;
+
+    if (canRestoreFutureCancelledRegularSession({
+      session,
+      nowMs,
+      configuredSlotPatterns: context.configuredSlotPatterns,
+      fallbackTeacherId: context.teacherId,
+      rangeStartYmd: context.rangeStartYmd,
+      rangeEndYmd: context.rangeEndYmd,
+    })) {
+      const existing = restorableBySignature.get(signature) || [];
+      existing.push(session);
+      restorableBySignature.set(signature, existing);
+      return;
+    }
+
+    const reasons = explainCancelledRestoreSkipReasons(session, nowMs);
+    cancelledBlockersSkipped.push(buildCancelledBlockerPreview({
+      session,
+      candidate,
+      action: "skip_unsafe",
+      reasons,
+    }));
+  });
+
+  targetCandidates.forEach((candidate) => {
+    const matches = [...(restorableBySignature.get(candidate.signature) || [])].sort((a, b) => a.id.localeCompare(b.id));
+    if (!matches.length) return;
+
+    const keepSession = matches[0];
+    const canonicalFields = buildCanonicalSessionFields({ context, candidate });
+    const canonicalPatch = buildCanonicalPatch(keepSession.raw, canonicalFields);
+    const restorePayload = {
+      ...canonicalPatch,
+      ...buildCancelledRestorePatch({
+        raw: keepSession.raw,
+        actorIdentity,
+        repairBatchId,
+      }),
+    };
+    restoreWrites.push({ ref: keepSession.ref, payload: restorePayload });
+    cancelledBlockersRestored.push(buildCancelledBlockerPreview({
+      session: keepSession,
+      candidate,
+      action: "patch",
+      reasons: ["restored_cancelled_future_regular_session"],
+    }));
+    restoreAudits.push({
+      ref: admin.firestore().collection("auditLogs").doc(),
+      payload: buildAuditPayload(
+        keepSession.id,
+        "patch",
+        ["restored_cancelled_future_regular_session"],
+        {
+          date: keepSession.raw.date,
+          startTime: keepSession.raw.startTime,
+          status: keepSession.raw.status,
+          cancelledReason: keepSession.raw.cancelledReason ?? (keepSession.raw as Record<string, unknown>).canceledReason ?? null,
+        },
+        {
+          date: candidate.date,
+          startTime: candidate.startTime,
+          status: "scheduled",
+          restoredFromCancelled: true,
+        },
+      ),
+    });
+
+    matches.slice(1).forEach((duplicate) => {
+      cancelledBlockersSkipped.push(buildCancelledBlockerPreview({
+        session: duplicate,
+        candidate,
+        action: "skip_unsafe",
+        reasons: ["duplicate_cancelled_blocker"],
+      }));
+    });
+  });
+
+  return {
+    restorableBySignature,
+    cancelledBlockersRestored,
+    cancelledBlockersSkipped,
+    restoreWrites,
+    restoreAudits,
+  };
+}
+
 export function buildRepairEnrollmentFutureSessionsPlan(args: {
   context: RepairContext;
   nowMs: number;
@@ -1870,15 +2233,24 @@ export function buildRepairEnrollmentFutureSessionsPlan(args: {
     sessionCandidates :
     sessionCandidates.slice(0, targetActiveFutureRegular);
   const targetSignatures = new Set(targetCandidates.map((candidate) => candidate.signature));
+  const cancelledRestorationPlan = planCancelledFutureRegularRestorations({
+    context,
+    targetCandidates,
+    nowMs,
+    actorIdentity,
+    repairBatchId,
+  });
 
   const createWrites: RepairPlan["createWrites"] = [];
-  const patchWrites: RepairPlan["patchWrites"] = [];
+  const patchWrites: RepairPlan["patchWrites"] = [...cancelledRestorationPlan.restoreWrites];
   const cancelWrites: RepairPlan["cancelWrites"] = [];
-  const auditWrites: RepairPlan["auditWrites"] = [];
+  const auditWrites: RepairPlan["auditWrites"] = [...cancelledRestorationPlan.restoreAudits];
   const missingSessionsToCreate: RepairPlanSessionPreview[] = [];
   const staleSessionsToUpdate: RepairPlanSessionPreview[] = [];
   const duplicateOldTimeSessions: RepairPlanSessionPreview[] = [];
   const unsafeSessionsSkipped: RepairPlanSessionPreview[] = [];
+  const cancelledBlockersRestored = [...cancelledRestorationPlan.cancelledBlockersRestored];
+  const cancelledBlockersSkipped = [...cancelledRestorationPlan.cancelledBlockersSkipped];
 
   const buildAuditPayload = (
     sessionId: string,
@@ -1901,8 +2273,11 @@ export function buildRepairEnrollmentFutureSessionsPlan(args: {
 
   targetCandidates.forEach((candidate) => {
     const safeMatches = [...(safeFutureRegularBySignature.get(candidate.signature) || [])].sort((a, b) => a.id.localeCompare(b.id));
+    const cancelledRestoreMatches = [
+      ...(cancelledRestorationPlan.restorableBySignature.get(candidate.signature) || []),
+    ].sort((a, b) => a.id.localeCompare(b.id));
     const unsafeMatches = [...(unsafeFutureRegular.get(candidate.signature) || [])];
-    if (unsafeMatches.length > 0 && safeMatches.length === 0) {
+    if (unsafeMatches.length > 0 && safeMatches.length === 0 && cancelledRestoreMatches.length === 0) {
       unsafeMatches.forEach((session) => {
         unsafeSessionsSkipped.push({
           sessionId: session.id,
@@ -1917,7 +2292,7 @@ export function buildRepairEnrollmentFutureSessionsPlan(args: {
       return;
     }
 
-    if (safeMatches.length === 0) {
+    if (safeMatches.length === 0 && cancelledRestoreMatches.length === 0) {
       const payload = {
         ...buildCanonicalSessionFields({ context, candidate }),
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -1953,37 +2328,39 @@ export function buildRepairEnrollmentFutureSessionsPlan(args: {
     }
 
     const keepSession = safeMatches[0];
-    const canonicalFields = buildCanonicalSessionFields({ context, candidate });
-    const canonicalPatch = buildCanonicalPatch(keepSession.raw, canonicalFields);
-    if (Object.keys(canonicalPatch).length > 0) {
-      const patchPayload = {
-        ...canonicalPatch,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedBy: actorIdentity,
-        repairBatchId,
-      };
-      patchWrites.push({ ref: keepSession.ref, payload: patchPayload });
-      staleSessionsToUpdate.push({
-        sessionId: keepSession.id,
-        date: candidate.date,
-        startTime: candidate.startTime,
-        endTime: candidate.endTime,
-        status: "scheduled",
-        action: "patch",
-        reasons: ["denormalized_fields_out_of_sync"],
-      });
-      auditWrites.push({
-        ref: admin.firestore().collection("auditLogs").doc(),
-        payload: buildAuditPayload(keepSession.id, "patch", ["denormalized_fields_out_of_sync"], {
-          date: keepSession.raw.date,
-          startTime: keepSession.raw.startTime,
-          status: keepSession.raw.status,
-        }, {
+    if (keepSession) {
+      const canonicalFields = buildCanonicalSessionFields({ context, candidate });
+      const canonicalPatch = buildCanonicalPatch(keepSession.raw, canonicalFields);
+      if (Object.keys(canonicalPatch).length > 0) {
+        const patchPayload = {
+          ...canonicalPatch,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedBy: actorIdentity,
+          repairBatchId,
+        };
+        patchWrites.push({ ref: keepSession.ref, payload: patchPayload });
+        staleSessionsToUpdate.push({
+          sessionId: keepSession.id,
           date: candidate.date,
           startTime: candidate.startTime,
+          endTime: candidate.endTime,
           status: "scheduled",
-        }),
-      });
+          action: "patch",
+          reasons: ["denormalized_fields_out_of_sync"],
+        });
+        auditWrites.push({
+          ref: admin.firestore().collection("auditLogs").doc(),
+          payload: buildAuditPayload(keepSession.id, "patch", ["denormalized_fields_out_of_sync"], {
+            date: keepSession.raw.date,
+            startTime: keepSession.raw.startTime,
+            status: keepSession.raw.status,
+          }, {
+            date: candidate.date,
+            startTime: candidate.startTime,
+            status: "scheduled",
+          }),
+        });
+      }
     }
 
     safeMatches.slice(1).forEach((duplicate) => {
@@ -2103,6 +2480,8 @@ export function buildRepairEnrollmentFutureSessionsPlan(args: {
     createCount: missingSessionsToCreate.length,
     patchCount: staleSessionsToUpdate.filter((entry) => entry.action === "patch").length,
     cancelCount: staleSessionsToUpdate.filter((entry) => entry.action !== "patch").length + duplicateOldTimeSessions.length,
+    restoreCount: cancelledBlockersRestored.length,
+    cancelledBlockersSkippedCount: cancelledBlockersSkipped.length,
     unsafeSkippedCount: unsafeSessionsSkipped.length,
     teacherAliasProblemCount: teacherAliasProblems.length,
   };
@@ -2119,7 +2498,9 @@ export function buildRepairEnrollmentFutureSessionsPlan(args: {
   return {
     created: missingSessionsToCreate.length,
     skipped: targetCandidates.length - missingSessionsToCreate.length + unsafeSessionsSkipped.length,
-    replaced: finalCounts.patchCount + finalCounts.cancelCount,
+    replaced: finalCounts.patchCount + finalCounts.cancelCount + finalCounts.restoreCount,
+    cancelledBlockersRestoredCount: cancelledBlockersRestored.length,
+    cancelledBlockersSkippedCount: cancelledBlockersSkipped.length,
     plannedSessionsTarget: context.plannedSessionsTarget,
     plannedSessionsGenerated,
     plannedSessionsConsumed,
@@ -2134,6 +2515,8 @@ export function buildRepairEnrollmentFutureSessionsPlan(args: {
     staleSessionsToUpdate,
     duplicateOldTimeSessions,
     unsafeSessionsSkipped,
+    cancelledBlockersRestored,
+    cancelledBlockersSkipped,
     teacherAliasProblems,
     finalCounts,
     createWrites,
@@ -2175,6 +2558,122 @@ export async function executeRepairEnrollmentFutureSessionsFromSchedule(args: {
   return plan;
 }
 
+async function repairCancelledFutureRegularSessionsForEnrollmentInternal(args: {
+  enrollmentId: string;
+  dryRun: boolean;
+  actorUid: string | null;
+}): Promise<RepairCancelledFutureRegularSessionsForEnrollmentResponse> {
+  const repairBatchId = `cancelled_future_restore_${args.enrollmentId}_${Date.now()}`;
+  const context = await loadRepairContext({ enrollmentId: args.enrollmentId });
+  const actorIdentity = args.actorUid || "repairCancelledFutureRegularSessionsForEnrollment";
+  const slotsByWeekday = new Map<number, NormalizedWeeklySlot[]>();
+  context.weeklySlots.forEach((slot) => {
+    const existing = slotsByWeekday.get(slot.weekday) || [];
+    existing.push(slot);
+    slotsByWeekday.set(slot.weekday, existing);
+  });
+
+  let plannedSessionsConsumed = 0;
+  const activeFutureRegularDocs: RepairSessionDocInfo[] = [];
+  const rangeStartDate = toContextDateFromYmd(context.rangeStartYmd)!;
+  const rangeEndDate = toContextDateFromYmd(context.rangeEndYmd)!;
+
+  context.sessions.forEach((session) => {
+    if (isRegularConsumedSession(session.raw, session.financial)) {
+      plannedSessionsConsumed += 1;
+      return;
+    }
+    if (
+      isFutureOperationalRegularSession({
+        raw: session.raw,
+        nowMs: Date.now(),
+        configuredSlotPatterns: context.configuredSlotPatterns,
+        fallbackTeacherId: context.teacherId,
+      })
+    ) {
+      activeFutureRegularDocs.push(session);
+    }
+  });
+
+  const sessionCandidates: RepairSessionCandidate[] = [];
+  for (
+    let d = new Date(rangeStartDate.getTime());
+    d.getTime() <= rangeEndDate.getTime();
+    d.setUTCDate(d.getUTCDate() + 1)
+  ) {
+    const daySlots = slotsByWeekday.get(d.getUTCDay());
+    if (!daySlots?.length) continue;
+    const year = d.getUTCFullYear();
+    const month = d.getUTCMonth();
+    const date = d.getUTCDate();
+    const ymd = toYmdFromContextDate(d);
+    for (const slot of daySlots) {
+      const istStartContextMs = Date.UTC(year, month, date, slot.hour, slot.minute, 0, 0);
+      const startAtUtcMs = istStartContextMs - IST_OFFSET_MINUTES * 60 * 1000;
+      const startAtDate = new Date(startAtUtcMs);
+      if (startAtDate.getTime() <= Date.now()) continue;
+      const endAtDate = new Date(startAtUtcMs + slot.durationMinutes * 60 * 1000);
+      const hhmmCompact = `${String(slot.hour).padStart(2, "0")}${String(slot.minute).padStart(2, "0")}`;
+      sessionCandidates.push({
+        sessionId: `${context.enrollmentId}_${ymd.replace(/-/g, "")}_${hhmmCompact}`,
+        date: ymd,
+        startTime: slot.timeHHmm,
+        endTime: formatHHmmFromContextMs(istStartContextMs + slot.durationMinutes * 60 * 1000),
+        durationMinutes: slot.durationMinutes,
+        signature: `${ymd}|${slot.timeHHmm}|${slot.durationMinutes}|${context.teacherId || ""}`,
+        startAtDate,
+        endAtDate,
+      });
+    }
+  }
+
+  sessionCandidates.sort((a, b) => a.startAtDate.getTime() - b.startAtDate.getTime());
+  activeFutureRegularDocs.sort((a, b) => (a.startMs || 0) - (b.startMs || 0));
+
+  const targetActiveFutureRegular = context.plannedSessionsTarget ?
+    Math.max(context.plannedSessionsTarget - plannedSessionsConsumed, 0) :
+    Number.MAX_SAFE_INTEGER;
+  const unlimitedTarget = targetActiveFutureRegular === Number.MAX_SAFE_INTEGER;
+  const additionalNeeded = unlimitedTarget ? Number.MAX_SAFE_INTEGER : Math.max(targetActiveFutureRegular - activeFutureRegularDocs.length, 0);
+  const targetCandidates = unlimitedTarget ?
+    sessionCandidates :
+    sessionCandidates
+      .filter((candidate) => !activeFutureRegularDocs.some((session) => session.signature === candidate.signature))
+      .slice(0, additionalNeeded);
+
+  const restorePlan = planCancelledFutureRegularRestorations({
+    context,
+    targetCandidates,
+    nowMs: Date.now(),
+    actorIdentity,
+    repairBatchId,
+  });
+
+  if (!args.dryRun) {
+    const db = admin.firestore();
+    const batchEntries = [...restorePlan.restoreWrites, ...restorePlan.restoreAudits];
+    for (let index = 0; index < batchEntries.length; index += MAX_BATCH) {
+      const batch = db.batch();
+      batchEntries.slice(index, index + MAX_BATCH).forEach((entry) => {
+        batch.set(entry.ref, entry.payload, { merge: true });
+      });
+      await batch.commit();
+    }
+  }
+
+  return {
+    enrollmentId: args.enrollmentId,
+    dryRun: args.dryRun,
+    repairBatchId,
+    cancelledBlockersRestoredPreview: restorePlan.cancelledBlockersRestored,
+    cancelledBlockersSkippedPreview: restorePlan.cancelledBlockersSkipped,
+    finalCounts: {
+      restoreCount: restorePlan.cancelledBlockersRestored.length,
+      skippedCount: restorePlan.cancelledBlockersSkipped.length,
+    },
+  };
+}
+
 async function repairEnrollmentFutureSessionsFromScheduleInternal(args: {
   enrollmentId: string;
   dryRun: boolean;
@@ -2194,6 +2693,8 @@ async function repairEnrollmentFutureSessionsFromScheduleInternal(args: {
     created: plan.created,
     skipped: plan.skipped,
     replaced: plan.replaced,
+    cancelledBlockersRestored: plan.cancelledBlockersRestoredCount,
+    cancelledBlockersSkipped: plan.cancelledBlockersSkippedCount,
     plannedSessionsTarget: plan.plannedSessionsTarget,
     plannedSessionsGenerated: plan.plannedSessionsGenerated,
     plannedSessionsConsumed: plan.plannedSessionsConsumed,
@@ -2212,6 +2713,8 @@ async function repairEnrollmentFutureSessionsFromScheduleInternal(args: {
     staleSessionsToUpdate: plan.staleSessionsToUpdate,
     duplicateOldTimeSessions: plan.duplicateOldTimeSessions,
     unsafeSessionsSkipped: plan.unsafeSessionsSkipped,
+    cancelledBlockersRestoredPreview: plan.cancelledBlockersRestored,
+    cancelledBlockersSkippedPreview: plan.cancelledBlockersSkipped,
     teacherAliasProblems: plan.teacherAliasProblems,
     finalCounts: plan.finalCounts,
   };
@@ -2614,6 +3117,24 @@ export const repairEnrollmentFutureSessionsFromSchedule = onCall(
     }
 
     return repairEnrollmentFutureSessionsFromScheduleInternal({
+      enrollmentId,
+      dryRun: input.dryRun === true,
+      actorUid: request.auth?.uid || null,
+    });
+  },
+);
+
+export const repairCancelledFutureRegularSessionsForEnrollment = onCall(
+  { region: REGION, memory: "512MiB", timeoutSeconds: 300 },
+  async (request): Promise<RepairCancelledFutureRegularSessionsForEnrollmentResponse> => {
+    await ensureAdmin(request.auth);
+    const input = (request.data || {}) as Partial<RepairCancelledFutureRegularSessionsForEnrollmentRequest>;
+    const enrollmentId = typeof input.enrollmentId === "string" ? input.enrollmentId.trim() : "";
+    if (!enrollmentId) {
+      throw new HttpsError("invalid-argument", "enrollmentId required");
+    }
+
+    return repairCancelledFutureRegularSessionsForEnrollmentInternal({
       enrollmentId,
       dryRun: input.dryRun === true,
       actorUid: request.auth?.uid || null,

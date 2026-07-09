@@ -17,6 +17,29 @@ const makeSession = (
   slotPattern: `2|${String(data.startTime || '')}|${Number(data.durationMinutes || data.durationMins || 35)}|teacher-aditi`,
 });
 
+const withFinancial = (
+  session: ReturnType<typeof makeSession>,
+  financial: {
+    chargeExists?: boolean;
+    chargeStatus?: string;
+    chargePaidAmount?: number;
+    earningExists?: boolean;
+    earningStatus?: string;
+    earningPaidAmount?: number;
+  },
+) => ({
+  ...session,
+  financial: {
+    chargeExists: false,
+    chargeStatus: '',
+    chargePaidAmount: 0,
+    earningExists: false,
+    earningStatus: '',
+    earningPaidAmount: 0,
+    ...financial,
+  },
+});
+
 const baseContext = {
   enrollmentId: 'enr-inayah',
   enrollment: {
@@ -161,5 +184,150 @@ describe('repairEnrollmentFutureSessionsFromSchedule planning', () => {
     });
 
     expect(calls).toEqual(['read', 'write']);
+  });
+
+  it('restores a future cancelled deterministic recurring session instead of leaving the slot empty', () => {
+    const plan = buildRepairEnrollmentFutureSessionsPlan({
+      context: {
+        ...baseContext,
+        sessions: [
+          makeSession('session-cancelled-blocker', {
+            enrollmentId: 'enr-inayah',
+            teacherId: 'teacher-aditi',
+            teacherIds: ['teacher-aditi'],
+            assignedTeacherId: 'teacher-aditi',
+            primaryTeacherId: 'teacher-aditi',
+            teacherUid: 'teacher-aditi',
+            teacher_id: 'teacher-aditi',
+            kidId: 'kid-inayah',
+            kidIds: ['kid-inayah'],
+            parentId: 'parent-1',
+            parentIds: ['parent-1'],
+            courseId: 'course-phonics',
+            date: '2026-06-16',
+            startTime: '18:45',
+            endTime: '19:20',
+            durationMinutes: 35,
+            startAt: '2026-06-16T13:15:00.000Z',
+            status: 'cancelled',
+            source: 'enrollmentScheduleReplace',
+            attendance: null,
+          }),
+        ],
+      } as any,
+      nowMs: Date.parse('2026-06-15T12:00:00.000Z'),
+      repairBatchId: 'repair-batch-restore',
+      actorUid: 'admin-1',
+    });
+
+    expect(plan.missingSessionsToCreate.map((entry) => `${entry.date} ${entry.startTime}`)).not.toContain('2026-06-16 18:45');
+    expect(plan.cancelledBlockersRestored).toEqual([
+      expect.objectContaining({
+        sessionId: 'session-cancelled-blocker',
+        date: '2026-06-16',
+        action: 'patch',
+      }),
+    ]);
+    expect(plan.finalCounts.restoreCount).toBe(1);
+    expect(plan.patchWrites).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ref: expect.objectContaining({ id: 'session-cancelled-blocker' }),
+          payload: expect.objectContaining({
+            status: 'scheduled',
+            restoredFromCancelled: true,
+            restoreReason: 'future_regular_session_regeneration_restore',
+          }),
+        }),
+      ]),
+    );
+  });
+
+  it('does not restore a manually cancelled future session with attendance or billing markers', () => {
+    const plan = buildRepairEnrollmentFutureSessionsPlan({
+      context: {
+        ...baseContext,
+        sessions: [
+          withFinancial(
+            makeSession('session-manual-cancelled', {
+              enrollmentId: 'enr-inayah',
+              teacherId: 'teacher-aditi',
+              teacherIds: ['teacher-aditi'],
+              assignedTeacherId: 'teacher-aditi',
+              primaryTeacherId: 'teacher-aditi',
+              teacherUid: 'teacher-aditi',
+              teacher_id: 'teacher-aditi',
+              kidId: 'kid-inayah',
+              kidIds: ['kid-inayah'],
+              parentId: 'parent-1',
+              parentIds: ['parent-1'],
+              courseId: 'course-phonics',
+              date: '2026-06-16',
+              startTime: '18:45',
+              endTime: '19:20',
+              durationMinutes: 35,
+              startAt: '2026-06-16T13:15:00.000Z',
+              status: 'cancelled',
+              cancelledReason: 'parent_requested_manual_cancel',
+              attendance: { 'kid-inayah': { status: 'absent' } },
+            }),
+            { chargeExists: true, chargeStatus: 'open' },
+          ),
+        ],
+      } as any,
+      nowMs: Date.parse('2026-06-15T12:00:00.000Z'),
+      repairBatchId: 'repair-batch-manual',
+      actorUid: 'admin-1',
+    });
+
+    expect(plan.cancelledBlockersRestored).toHaveLength(0);
+    expect(plan.cancelledBlockersSkipped).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sessionId: 'session-manual-cancelled',
+          action: 'skip_unsafe',
+        }),
+      ]),
+    );
+    expect(plan.finalCounts.restoreCount).toBe(0);
+    expect(plan.finalCounts.cancelledBlockersSkippedCount).toBeGreaterThan(0);
+  });
+
+  it('keeps paused future sessions in the paused bucket and does not treat them as cancelled restores', () => {
+    const plan = buildRepairEnrollmentFutureSessionsPlan({
+      context: {
+        ...baseContext,
+        sessions: [
+          makeSession('session-paused', {
+            enrollmentId: 'enr-inayah',
+            teacherId: 'teacher-aditi',
+            teacherIds: ['teacher-aditi'],
+            assignedTeacherId: 'teacher-aditi',
+            primaryTeacherId: 'teacher-aditi',
+            teacherUid: 'teacher-aditi',
+            teacher_id: 'teacher-aditi',
+            kidId: 'kid-inayah',
+            kidIds: ['kid-inayah'],
+            parentId: 'parent-1',
+            parentIds: ['parent-1'],
+            courseId: 'course-phonics',
+            date: '2026-06-16',
+            startTime: '18:45',
+            endTime: '19:20',
+            durationMinutes: 35,
+            startAt: '2026-06-16T13:15:00.000Z',
+            status: 'paused',
+            attendance: null,
+          }),
+        ],
+      } as any,
+      nowMs: Date.parse('2026-06-15T12:00:00.000Z'),
+      repairBatchId: 'repair-batch-paused',
+      actorUid: 'admin-1',
+    });
+
+    expect(plan.plannedSessionsPausedFuture).toBe(1);
+    expect(plan.cancelledBlockersRestored).toHaveLength(0);
+    expect(plan.cancelledBlockersSkipped).toHaveLength(0);
   });
 });

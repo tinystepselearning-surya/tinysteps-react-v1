@@ -46,6 +46,7 @@ export { recordLegacyFallbackUsage } from "./legacyFallbackMetrics";
 export { createSessionsFromSchedule } from "./createSessionsFromSchedule";
 export { saveEnrollmentScheduleAndGenerateSessions } from "./createSessionsFromSchedule";
 export { repairEnrollmentFutureSessionsFromSchedule } from "./createSessionsFromSchedule";
+export { repairCancelledFutureRegularSessionsForEnrollment } from "./createSessionsFromSchedule";
 export { pauseEnrollmentUpcomingSessions } from "./createSessionsFromSchedule";
 export { resumeEnrollmentSchedule } from "./createSessionsFromSchedule";
 export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";

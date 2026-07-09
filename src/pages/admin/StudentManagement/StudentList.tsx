@@ -2630,6 +2630,8 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
           created: number;
           skipped: number;
           replaced?: number;
+          cancelledBlockersRestored?: number;
+          cancelledBlockersSkipped?: number;
           plannedSessionsTarget?: number | null;
           plannedSessionsGenerated?: number;
           plannedSessionsConsumed?: number;
@@ -2670,6 +2672,8 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         created,
         skipped,
         replaced,
+        cancelledBlockersRestored,
+        cancelledBlockersSkipped,
         plannedSessionsTarget,
         plannedSessionsConsumed,
         plannedSessionsActiveFuture,
@@ -2694,6 +2698,14 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         plannedSessionsPausedFuture && plannedSessionsPausedFuture > 0
           ? ` · ${plannedSessionsPausedFuture} paused future session${plannedSessionsPausedFuture === 1 ? '' : 's'}`
           : '';
+      const restoredCancelledSummary =
+        cancelledBlockersRestored && cancelledBlockersRestored > 0
+          ? ` · restored ${cancelledBlockersRestored} cancelled blocker${cancelledBlockersRestored === 1 ? '' : 's'}`
+          : '';
+      const skippedCancelledSummary =
+        cancelledBlockersSkipped && cancelledBlockersSkipped > 0
+          ? ` · skipped ${cancelledBlockersSkipped} unsafe cancelled blocker${cancelledBlockersSkipped === 1 ? '' : 's'}`
+          : '';
       const capReachedSummary =
         plannedSessionsTarget && plannedSessionsCapReached
           ? ' · Planned class limit reached. Increase planned classes to continue future scheduling.'
@@ -2712,8 +2724,8 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         title: 'Schedule saved',
         description:
           typeof replaced === 'number'
-            ? `✅ Updated schedule: replaced ${replaced}, created ${created}, skipped ${skipped}${plannedSummary}${remainingSummary}${futureSummary}${pausedSummary}${additionalSummary}${noNewBecauseCapSummary}${capReachedSummary}${replaySummary}`
-            : `✅ Created ${created} sessions (${skipped} already existed)${plannedSummary}${remainingSummary}${futureSummary}${pausedSummary}${additionalSummary}${noNewBecauseCapSummary}${capReachedSummary}${replaySummary}`,
+            ? `✅ Updated schedule: replaced ${replaced}, created ${created}, skipped ${skipped}${plannedSummary}${remainingSummary}${futureSummary}${pausedSummary}${restoredCancelledSummary}${skippedCancelledSummary}${additionalSummary}${noNewBecauseCapSummary}${capReachedSummary}${replaySummary}`
+            : `✅ Created ${created} sessions (${skipped} already existed)${plannedSummary}${remainingSummary}${futureSummary}${pausedSummary}${restoredCancelledSummary}${skippedCancelledSummary}${additionalSummary}${noNewBecauseCapSummary}${capReachedSummary}${replaySummary}`,
       });
 
       setScheduleFor(null);
