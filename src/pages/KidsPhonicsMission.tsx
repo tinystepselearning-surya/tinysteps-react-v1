@@ -189,6 +189,7 @@ const getIntroducedGraphemes = (levelId: number) =>
 const STORAGE_KEY = "ts_phonics_unlocked_level";
 const BEST_KEY = "ts_phonics_level_bestStars_v1";
 const PROGRESS_KEY = "ts_phonics_level_progress_v1";
+const PUBLIC_LETTER_SOUNDS_PLAY_PATH = "/free-letter-sounds-game-for-kids?play=1";
 
 // --- Web Audio Helper: Clap-Clap Sound ---
 let audioCtx: AudioContext | null = null;
@@ -590,6 +591,11 @@ const KidsPhonicsMission: React.FC<KidsPhonicsMissionProps> = ({
           const newParams = new URLSearchParams(searchParams);
           newParams.set("kidId", stored);
           navigate({ pathname: location.pathname, search: newParams.toString() }, { replace: true });
+          return;
+        }
+
+        if (location.pathname === "/kids/games/phonics/letter-sound") {
+          navigate(PUBLIC_LETTER_SOUNDS_PLAY_PATH, { replace: true });
         }
       } catch {
         // ignore
