@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import PublicAssessmentForm from '../../components/forms/PublicAssessmentForm';
+import { PUBLIC_MAIN_CONCERN_OPTIONS } from '../../lib/publicLeadForm';
 
 const trackingMocks = vi.hoisted(() => ({
   trackDemoBookingComplete: vi.fn(),
@@ -35,12 +36,41 @@ function fillValidForm() {
 }
 
 describe('PublicAssessmentForm analytics', () => {
+  const popupLocationReplace = vi.fn();
+  const popupWindow: {
+    closed: boolean;
+    opener: Window | null;
+    location: {
+      replace: typeof popupLocationReplace;
+    };
+  } = {
+    closed: false,
+    opener: window,
+    location: {
+      replace: popupLocationReplace,
+    },
+  };
+  const anchorClick = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+  const locationAssignMock = vi.fn();
+
   beforeEach(() => {
     Object.values(trackingMocks).forEach((mock) => mock.mockReset());
     Object.values(firestoreMocks).forEach((mock) => mock.mockReset());
-    vi.stubGlobal('open', vi.fn(() => ({ closed: false })));
+    popupLocationReplace.mockReset();
+    locationAssignMock.mockReset();
+    anchorClick.mockClear();
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {
+        ...window.location,
+        assign: locationAssignMock,
+      },
+    });
+    vi.stubGlobal('open', vi.fn(() => popupWindow));
     firestoreMocks.collection.mockReturnValue('leads-collection');
     firestoreMocks.serverTimestamp.mockReturnValue('server-timestamp');
+    popupWindow.closed = false;
+    popupWindow.opener = window;
   });
 
   it('tracks a single form_error event when validation fails', () => {
@@ -77,18 +107,7 @@ describe('PublicAssessmentForm analytics', () => {
     expect(supportArea).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Choose the area where your child needs support' })).toBeInTheDocument();
 
-    [
-      'Starting to read words after learning ABC/sounds',
-      'Blending sounds to read words',
-      'Reading speed and word accuracy',
-      'Spelling while reading and writing',
-      'Understanding what they read',
-      'Grammar while speaking or writing',
-      'Answering in full sentences',
-      'Speaking English with confidence',
-      'Confidence for speaking / presentations',
-      'Not sure where to start',
-    ].forEach((option) => {
+    PUBLIC_MAIN_CONCERN_OPTIONS.forEach((option) => {
       expect(screen.getByRole('option', { name: option })).toBeInTheDocument();
     });
   });
@@ -139,18 +158,51 @@ describe('PublicAssessmentForm analytics', () => {
     expect(trackingMocks.trackWhatsappClick).toHaveBeenCalledTimes(1);
     expect(trackingMocks.trackLeadFormError).not.toHaveBeenCalled();
     expect(globalThis.open).toHaveBeenCalledTimes(1);
+    expect(globalThis.open).toHaveBeenCalledWith('about:blank', 'tinyStepsAssessmentWhatsApp');
+    expect(popupWindow.opener).toBeNull();
+    expect(popupLocationReplace).toHaveBeenCalledTimes(1);
+    expect(locationAssignMock).not.toHaveBeenCalled();
+    expect(anchorClick).not.toHaveBeenCalled();
 
+    const whatsappUrl = popupLocationReplace.mock.calls[0]?.[0];
+    expect(decodeURIComponent(whatsappUrl)).toContain('Parent name: Priya');
+    expect(decodeURIComponent(whatsappUrl)).toContain('Child name: Aarav');
+    expect(decodeURIComponent(whatsappUrl)).toContain('WhatsApp number: +919999999999');
+    expect(decodeURIComponent(whatsappUrl)).toContain('Child age: 7');
+    expect(decodeURIComponent(whatsappUrl)).toContain('Support area: Blending sounds to read words');
+
+    const openOrder = (globalThis.open as any).mock.invocationCallOrder[0];
     const saveOrder = firestoreMocks.addDoc.mock.invocationCallOrder[0];
     const generateLeadOrder = trackingMocks.trackGenerateLead.mock.invocationCallOrder[0];
-    const openOrder = (globalThis.open as any).mock.invocationCallOrder[0];
+    const navigateOrder = popupLocationReplace.mock.invocationCallOrder[0];
     const whatsappOrder = trackingMocks.trackWhatsappClick.mock.invocationCallOrder[0];
 
+    expect(openOrder).toBeLessThan(saveOrder);
     expect(saveOrder).toBeLessThan(generateLeadOrder);
-    expect(generateLeadOrder).toBeLessThan(openOrder);
-    expect(openOrder).toBeLessThan(whatsappOrder);
+    expect(generateLeadOrder).toBeLessThan(navigateOrder);
+    expect(navigateOrder).toBeLessThan(whatsappOrder);
   });
 
-  it('does not fire generate_lead or open WhatsApp when lead save fails', async () => {
+  it('uses same-tab fallback once when the popup is blocked', async () => {
+    vi.stubGlobal('open', vi.fn(() => null));
+    firestoreMocks.addDoc.mockResolvedValue({ id: 'lead-123' });
+    render(<PublicAssessmentForm />);
+
+    fillValidForm();
+
+    fireEvent.submit(screen.getByRole('button', { name: /get free assessment on whatsapp/i }));
+
+    await waitFor(() => expect(firestoreMocks.addDoc).toHaveBeenCalledTimes(1));
+    expect(globalThis.open).toHaveBeenCalledTimes(1);
+    expect(locationAssignMock).toHaveBeenCalledTimes(1);
+    expect(locationAssignMock.mock.calls[0]?.[0]).toContain('https://wa.me/919618398383?text=');
+    expect(popupLocationReplace).not.toHaveBeenCalled();
+    expect(anchorClick).not.toHaveBeenCalled();
+    expect(trackingMocks.trackGenerateLead).toHaveBeenCalledTimes(1);
+    expect(trackingMocks.trackWhatsappClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('still opens WhatsApp and shows a warning when lead save fails', async () => {
     firestoreMocks.addDoc.mockRejectedValue(new Error('save failed'));
     render(<PublicAssessmentForm />);
 
@@ -161,10 +213,43 @@ describe('PublicAssessmentForm analytics', () => {
     await waitFor(() => expect(firestoreMocks.addDoc).toHaveBeenCalledTimes(1));
     expect(trackingMocks.trackLeadFormSubmit).toHaveBeenCalledTimes(1);
     expect(trackingMocks.trackGenerateLead).not.toHaveBeenCalled();
-    expect(trackingMocks.trackWhatsappClick).not.toHaveBeenCalled();
-    expect(globalThis.open).not.toHaveBeenCalled();
-    expect(screen.getByRole('alert')).toHaveTextContent('We could not save your request. Please try again.');
+    expect(trackingMocks.trackDemoBookingComplete).not.toHaveBeenCalled();
+    expect(trackingMocks.trackWhatsappClick).toHaveBeenCalledTimes(1);
+    expect(globalThis.open).toHaveBeenCalledTimes(1);
+    expect(popupLocationReplace).toHaveBeenCalledTimes(1);
+    expect(locationAssignMock).not.toHaveBeenCalled();
+    expect(anchorClick).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'We could not save your request on the website, but WhatsApp is opening with your completed message. Please send it so we can help you.'
+    );
     expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('prevents duplicate lead creation on double submit', async () => {
+    let resolveSave: ((value: { id: string }) => void) | undefined;
+    firestoreMocks.addDoc.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSave = resolve;
+        }),
+    );
+    render(<PublicAssessmentForm />);
+
+    fillValidForm();
+
+    const submitButton = screen.getByRole('button', { name: /get free assessment on whatsapp/i });
+    fireEvent.click(submitButton);
+    fireEvent.click(submitButton);
+
+    expect(firestoreMocks.addDoc).toHaveBeenCalledTimes(1);
+    expect(globalThis.open).toHaveBeenCalledTimes(1);
+
+    resolveSave?.({ id: 'lead-123' });
+
+    await waitFor(() => expect(trackingMocks.trackGenerateLead).toHaveBeenCalledTimes(1));
+    expect(popupLocationReplace).toHaveBeenCalledTimes(1);
+    expect(locationAssignMock).not.toHaveBeenCalled();
+    expect(anchorClick).not.toHaveBeenCalled();
   });
 
   it('does not render the urgency field in the public form', () => {

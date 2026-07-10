@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildPublicLeadPayload, buildPublicWhatsappMessage } from '../../lib/publicLeadForm';
+import { buildPublicLeadPayload, buildPublicWhatsappMessage, PUBLIC_MAIN_CONCERN_OPTIONS } from '../../lib/publicLeadForm';
 
 describe('publicLeadForm helpers', () => {
   it('includes mainConcern and urgency in the saved lead payload', () => {
@@ -55,6 +55,25 @@ describe('publicLeadForm helpers', () => {
 
     expect(message).toContain('Support area: Answering in full sentences');
     expect(message).toContain('When do you want to start: Today');
+    expect(message).toContain('Parent name: Priya');
+    expect(message).toContain('Child name: Aarav');
+    expect(message).toContain('WhatsApp number: +919999999999');
+    expect(message).toContain('Child age: 7');
     expect(message).not.toContain('Interest:');
+  });
+
+  it('exports the exact supported public mainConcern options', () => {
+    expect(PUBLIC_MAIN_CONCERN_OPTIONS).toEqual([
+      'Starting to read words after learning ABC/sounds',
+      'Blending sounds to read words',
+      'Reading speed and word accuracy',
+      'Spelling while reading and writing',
+      'Understanding what they read',
+      'Grammar while speaking or writing',
+      'Answering in full sentences',
+      'Speaking English with confidence',
+      'Confidence for speaking / presentations',
+      'Not sure where to start',
+    ]);
   });
 });

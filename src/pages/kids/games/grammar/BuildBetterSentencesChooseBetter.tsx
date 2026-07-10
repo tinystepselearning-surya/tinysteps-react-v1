@@ -80,10 +80,20 @@ const STAGE_ITEMS: ChooseBestItem[] = [
 
 const isMissionReturnPath = (path: string) => path.startsWith('/kids/games/english-excellence');
 
-export default function BuildBetterSentencesChooseBetter() {
+type BuildBetterSentencesChooseBetterProps = {
+  forceAnonymousMode?: boolean;
+  missionReturnHrefOverride?: string;
+  missionBackLabel?: string;
+};
+
+export default function BuildBetterSentencesChooseBetter({
+  forceAnonymousMode = false,
+  missionReturnHrefOverride,
+  missionBackLabel = 'Back to Mission',
+}: BuildBetterSentencesChooseBetterProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const kidId = searchParams.get('kidId') || '';
+  const kidId = forceAnonymousMode ? '' : searchParams.get('kidId') || '';
 
   const [itemIndex, setItemIndex] = useState(0);
   const [hintStep, setHintStep] = useState(0);
@@ -103,13 +113,14 @@ export default function BuildBetterSentencesChooseBetter() {
   const accuracyPct = submissions > 0 ? Math.round((correctSubmissions / submissions) * 100) : 0;
   const mastered = stageDone && accuracyPct >= 80 && hintsUsed <= 2;
   const missionTileId = searchParams.get('eemTile') || 'eem-g15-better-sentences';
-  const stage1CUnlocked = progress[BBS_STAGE_1C].unlocked || canAccessStage1C(kidId);
-  const stage1DUnlocked = progress[BBS_STAGE_1D].unlocked || canAccessStage1D(kidId);
+  const stage1CUnlocked = forceAnonymousMode || progress[BBS_STAGE_1C].unlocked || canAccessStage1C(kidId);
+  const stage1DUnlocked = !forceAnonymousMode && (progress[BBS_STAGE_1D].unlocked || canAccessStage1D(kidId));
 
   useEffect(() => {
+    if (forceAnonymousMode) return;
     if (stage1CUnlocked) return;
     setLockedReason('Stage 1C is locked. Master Stage 1B (80%+ accuracy and max 2 hints) to unlock.');
-  }, [stage1CUnlocked]);
+  }, [forceAnonymousMode, stage1CUnlocked]);
 
   useEffect(() => {
     if (!stageDone || stageResultRecorded) return;
@@ -123,6 +134,8 @@ export default function BuildBetterSentencesChooseBetter() {
   }, [accuracyPct, hintsUsed, kidId, retryCount, stageDone, stageResultRecorded]);
 
   const buildMissionReturnHref = (markComplete: boolean) => {
+    if (missionReturnHrefOverride) return missionReturnHrefOverride;
+
     const rawReturn = searchParams.get('eemReturn') || '/kids/games/english-excellence';
     const safeReturn = rawReturn.startsWith('/') && isMissionReturnPath(rawReturn)
       ? rawReturn
@@ -141,6 +154,20 @@ export default function BuildBetterSentencesChooseBetter() {
       url.searchParams.set('eemDone', missionTileId);
     }
     return `${url.pathname}${url.search}${url.hash}`;
+  };
+
+  const resetStage = () => {
+    setItemIndex(0);
+    setHintStep(0);
+    setHintsUsed(0);
+    setFeedback('Choose the better sentence.');
+    setSubmissions(0);
+    setCorrectSubmissions(0);
+    setRetryCount(0);
+    setCompletedItemIds([]);
+    setStageDone(false);
+    setLastChoiceIndex(null);
+    setStageResultRecorded(false);
   };
 
   const advanceToNext = () => {
@@ -191,6 +218,10 @@ export default function BuildBetterSentencesChooseBetter() {
   };
 
   const openStage1D = () => {
+    if (forceAnonymousMode) {
+      resetStage();
+      return;
+    }
     if (!stage1DUnlocked) {
       setFeedback('Stage 1D is locked. Master Stage 1C first.');
       return;
@@ -209,10 +240,10 @@ export default function BuildBetterSentencesChooseBetter() {
           </div>
           <button
             type="button"
-            onClick={() => navigate('/kids/games/grammar/build-better-sentences/fill-missing-word')}
+            onClick={() => navigate(forceAnonymousMode ? buildMissionReturnHref(false) : '/kids/games/grammar/build-better-sentences/fill-missing-word')}
             className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
-            Stage 1B
+            {forceAnonymousMode ? missionBackLabel : 'Stage 1B'}
           </button>
         </div>
 
@@ -260,7 +291,7 @@ export default function BuildBetterSentencesChooseBetter() {
                 onClick={() => navigate(buildMissionReturnHref(false))}
                 className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
-                Back to Mission
+                {missionBackLabel}
               </button>
             </div>
           </div>
@@ -311,7 +342,7 @@ export default function BuildBetterSentencesChooseBetter() {
                 onClick={() => navigate(buildMissionReturnHref(false))}
                 className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
-                Back to Mission
+                {missionBackLabel}
               </button>
             </div>
 
@@ -333,45 +364,35 @@ export default function BuildBetterSentencesChooseBetter() {
                 onClick={() => navigate(buildMissionReturnHref(mastered))}
                 className="rounded-xl border border-emerald-700 bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
               >
-                Back to Mission
+                {missionBackLabel}
               </button>
               <button
                 type="button"
                 onClick={openStage1D}
-                disabled={!stage1DUnlocked}
+                disabled={!stage1DUnlocked && !forceAnonymousMode}
                 className={`rounded-xl px-4 py-2 text-sm font-semibold ${
-                  stage1DUnlocked
+                  stage1DUnlocked || forceAnonymousMode
                     ? 'border border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-700'
                     : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'
                 }`}
               >
-                {stage1DUnlocked ? 'Continue to Stage 1D' : 'Stage 1D Locked'}
+                {forceAnonymousMode ? 'Play Again' : stage1DUnlocked ? 'Continue to Stage 1D' : 'Stage 1D Locked'}
               </button>
+              {!forceAnonymousMode ? (
+                <button
+                  type="button"
+                  onClick={() => navigate('/kids/games/grammar/build-better-sentences/fill-missing-word')}
+                  className="rounded-xl border border-indigo-600 bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+                >
+                  Play Stage 1B
+                </button>
+              ) : null}
               <button
                 type="button"
-                onClick={() => navigate('/kids/games/grammar/build-better-sentences/fill-missing-word')}
-                className="rounded-xl border border-indigo-600 bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-              >
-                Play Stage 1B
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setItemIndex(0);
-                  setHintStep(0);
-                  setHintsUsed(0);
-                  setFeedback('Choose the better sentence.');
-                  setSubmissions(0);
-                  setCorrectSubmissions(0);
-                  setRetryCount(0);
-                  setCompletedItemIds([]);
-                  setStageDone(false);
-                  setLastChoiceIndex(null);
-                  setStageResultRecorded(false);
-                }}
+                onClick={resetStage}
                 className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-white"
               >
-                Play Again
+                Replay
               </button>
             </div>
             <p className="mt-3 text-xs text-slate-500">Retries in this run: {retryCount}</p>

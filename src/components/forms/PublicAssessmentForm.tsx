@@ -11,6 +11,7 @@ import {
 } from '../../lib/conversionTracking';
 import { db } from '../../lib/firebaseConfig';
 import {
+  PUBLIC_MAIN_CONCERN_OPTIONS,
   buildPublicLeadPayload,
   buildPublicWhatsappMessage,
   getPublicLeadAttribution,
@@ -55,18 +56,7 @@ export default function PublicAssessmentForm({
   submitAriaLabel = 'Get Free Assessment on WhatsApp',
 }: PublicAssessmentFormProps) {
   const ageOptions: AgeOption[] = ['3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
-  const mainConcernOptions: MainConcernOption[] = [
-    'Starting to read words after learning ABC/sounds',
-    'Blending sounds to read words',
-    'Reading speed and word accuracy',
-    'Spelling while reading and writing',
-    'Understanding what they read',
-    'Grammar while speaking or writing',
-    'Answering in full sentences',
-    'Speaking English with confidence',
-    'Confidence for speaking / presentations',
-    'Not sure where to start',
-  ];
+  const mainConcernOptions = PUBLIC_MAIN_CONCERN_OPTIONS;
   const initialState: PublicAssessmentFormState = {
     parentName: '',
     childName: '',
@@ -84,6 +74,7 @@ export default function PublicAssessmentForm({
   const [errors, setErrors] = useState<{ parentName?: string; childName?: string; whatsapp?: string; childAge?: string; mainConcern?: string }>({});
   const firstFieldRef = useRef<HTMLInputElement | null>(null);
   const hasTrackedFormStartRef = useRef(false);
+  const submitLockRef = useRef(false);
 
   useEffect(() => {
     try {
@@ -163,6 +154,45 @@ export default function PublicAssessmentForm({
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(buildPublicWhatsappMessage(form))}`;
   }, [form]);
 
+  const openWhatsappPopup = () => {
+    try {
+      const popup = window.open('about:blank', 'tinyStepsAssessmentWhatsApp');
+      if (popup) {
+        try {
+          popup.opener = null;
+        } catch {
+          // Ignore cross-browser opener assignment differences.
+        }
+      }
+
+      return popup;
+    } catch {
+      return null;
+    }
+  };
+
+  const navigateToWhatsapp = (popup: Window | null, url: string) => {
+    if (popup && !popup.closed) {
+      try {
+        if (typeof popup.location.replace === 'function') {
+          popup.location.replace(url);
+          return;
+        }
+      } catch {
+        // Fall through to assignment on the same popup if replace is unavailable.
+      }
+
+      try {
+        popup.location.href = url;
+        return;
+      } catch {
+        // Fall through to same-tab navigation below.
+      }
+    }
+
+    window.location.assign(url);
+  };
+
   const validate = () => {
     const nextErrors: { parentName?: string; childName?: string; whatsapp?: string; childAge?: string; mainConcern?: string } = {};
 
@@ -195,6 +225,8 @@ export default function PublicAssessmentForm({
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (submitLockRef.current || isSubmitting) return;
+
     setSubmitted(false);
     setSubmitError('');
 
@@ -210,6 +242,12 @@ export default function PublicAssessmentForm({
       return;
     }
 
+    submitLockRef.current = true;
+
+    const submittedForm = { ...form };
+    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(buildPublicWhatsappMessage(submittedForm))}`;
+    const whatsappWindow = openWhatsappPopup();
+
     const attribution = getPublicLeadAttribution();
     const trackingPayload = {
       form_name: 'public_assessment_form',
@@ -220,9 +258,9 @@ export default function PublicAssessmentForm({
       utm_campaign: attribution.utm_campaign,
       utm_content: attribution.utm_content,
       utm_term: attribution.utm_term,
-      childAge: form.childAge,
-      mainConcern: form.mainConcern,
-      urgency: form.urgency,
+      childAge: submittedForm.childAge,
+      mainConcern: submittedForm.mainConcern,
+      urgency: submittedForm.urgency,
     };
 
     trackLeadFormSubmit({
@@ -231,7 +269,7 @@ export default function PublicAssessmentForm({
 
     setIsSubmitting(true);
     try {
-      const payload = buildPublicLeadPayload(form, {
+      const payload = buildPublicLeadPayload(submittedForm, {
         source,
         attribution,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -258,21 +296,9 @@ export default function PublicAssessmentForm({
         booking_type: 'whatsapp_assessment_request',
         source_context: source || 'public_assessment_form',
       });
-
-      const popup = window.open(waLink, '_blank', 'noopener,noreferrer');
-      if (!popup) {
-        const link = document.createElement('a');
-        link.href = waLink;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-
+      navigateToWhatsapp(whatsappWindow, whatsappUrl);
       trackWhatsappClick(source || 'public_assessment_form', trackingPayload);
-      setLastOpenedWaLink(waLink);
+      setLastOpenedWaLink(whatsappUrl);
       setSubmitted(true);
       onSuccess?.();
     } catch (error) {
@@ -282,8 +308,12 @@ export default function PublicAssessmentForm({
         error_fields: ['save'],
         error_message: 'lead_save_failed',
       });
-      setSubmitError('We could not save your request. Please try again.');
+      navigateToWhatsapp(whatsappWindow, whatsappUrl);
+      trackWhatsappClick(source || 'public_assessment_form', trackingPayload);
+      setLastOpenedWaLink(whatsappUrl);
+      setSubmitError('We could not save your request on the website, but WhatsApp is opening with your completed message. Please send it so we can help you.');
     } finally {
+      submitLockRef.current = false;
       setIsSubmitting(false);
     }
   };

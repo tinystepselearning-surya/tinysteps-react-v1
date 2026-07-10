@@ -195,38 +195,70 @@ type SupportMode = "GUIDED_NEXT_ONLY" | "GUIDED_REDIRECTS";
 const CANONICAL_GAME_ID = "sentence-stepper";
 const CANONICAL_PROGRESS_DOC_ID = "sentence-stepper";
 
-export default function SentenceStepperStage4() {
+type SentenceStepperStage4Props = {
+  forceAnonymousMode?: boolean;
+  missionReturnHrefOverride?: string;
+  missionBackLabel?: string;
+  forcedPackId?: PackId;
+  activityContextLabelOverride?: string;
+};
+
+export default function SentenceStepperStage4({
+  forceAnonymousMode = false,
+  missionReturnHrefOverride,
+  missionBackLabel = "← Back to Mission",
+  forcedPackId,
+  activityContextLabelOverride,
+}: SentenceStepperStage4Props) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const kidId = searchParams.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
-  const missionReturnHref = buildMissionReturnHref(searchParams, kidId);
+  const fixedPackIndex =
+    forcedPackId && PACK_ORDER.includes(forcedPackId)
+      ? PACK_ORDER.indexOf(forcedPackId)
+      : null;
+  const kidId =
+    forceAnonymousMode
+      ? ""
+      : searchParams.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
+  const missionReturnHref =
+    missionReturnHrefOverride ?? buildMissionReturnHref(searchParams, kidId);
   const missionStage = searchParams.get("eemStage");
   const missionTile = (searchParams.get("eemTile") || "").toLowerCase();
   const activityContextLabel =
-    missionStage === "3"
+    activityContextLabelOverride ??
+    (missionStage === "3"
       ? missionTile.includes("read_sentences")
         ? "Stage 3 • Read Sentences"
         : missionTile.includes("early_reader_fluency")
           ? "Stage 3 • Early Reader Fluency"
           : "Stage 3 • Make Sentences"
-      : "Early Reader Fluency";
+      : "Early Reader Fluency");
   const roundsPerPack = 10;
 
   // Fullscreen element ref
   const fullscreenRef = useRef<HTMLDivElement>(null);
 
   // Unlock progression
-  const unlockedKey = useMemo(() => `ts_sentence_stepper_stage4_unlocked_v1_${kidId || "anon"}`, [kidId]);
-  const storedUnlocked = Number(localStorage.getItem(unlockedKey) || "0");
-  const [unlockedPackIndex, setUnlockedPackIndex] = useState<number>(clamp(storedUnlocked, 0, PACK_ORDER.length - 1));
+  const unlockedKey = useMemo(
+    () => `ts_sentence_stepper_stage4_unlocked_v1_${kidId || "anon"}`,
+    [kidId],
+  );
+  const storedUnlocked =
+    forceAnonymousMode || fixedPackIndex !== null || typeof window === "undefined"
+      ? 0
+      : Number(localStorage.getItem(unlockedKey) || "0");
+  const [unlockedPackIndex, setUnlockedPackIndex] = useState<number>(
+    fixedPackIndex ?? clamp(storedUnlocked, 0, PACK_ORDER.length - 1),
+  );
 
   // Start screen / selection
   const startPackParam = (searchParams.get("pack") as PackId) || undefined;
   const initialPackIndex = useMemo(() => {
+    if (fixedPackIndex !== null) return fixedPackIndex;
     if (startPackParam && PACK_ORDER.includes(startPackParam)) return PACK_ORDER.indexOf(startPackParam);
     return 0;
-  }, [startPackParam]);
+  }, [fixedPackIndex, startPackParam]);
 
   const [hasStarted, setHasStarted] = useState(false);
   const [selectedPackIndex, setSelectedPackIndex] = useState<number>(clamp(initialPackIndex, 0, PACK_ORDER.length - 1));
@@ -710,7 +742,7 @@ export default function SentenceStepperStage4() {
     setLastMastery({ mastery, accuracy, hintRate });
     setShowLevelComplete(true);
 
-    if (mastery) {
+    if (mastery && !forceAnonymousMode && fixedPackIndex === null) {
       const nextUnlocked = Math.max(unlockedPackIndex, packIndex + 1);
       if (nextUnlocked !== unlockedPackIndex) {
         setUnlockedPackIndex(clamp(nextUnlocked, 0, PACK_ORDER.length - 1));
@@ -733,6 +765,11 @@ export default function SentenceStepperStage4() {
 
   function continueAfterLevel() {
     setShowLevelComplete(false);
+
+    if (fixedPackIndex !== null) {
+      resetPackState(packIndex);
+      return;
+    }
 
     if (!lastMastery?.mastery) {
       resetPackState(packIndex);
@@ -769,37 +806,51 @@ export default function SentenceStepperStage4() {
               onClick={goBackToLibrary}
               className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 active:scale-[0.99] transition"
             >
-              ← Back to Mission
+              {missionBackLabel}
             </button>
           </div>
 
           <div className="mt-5">
-            <div className="text-slate-800 font-semibold">Choose a level</div>
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {LEVELS.map((lvl, idx) => {
-                const locked = idx > unlockedPackIndex;
-                const selected = idx === selectedPackIndex;
-                return (
-                  <button
-                    key={lvl.packId}
-                    disabled={locked}
-                    onClick={() => !locked && setSelectedPackIndex(idx)}
-                    className={[
-                      "rounded-2xl border p-4 text-left transition",
-                      selected ? "border-sky-300 bg-sky-50" : "border-slate-200 bg-white",
-                      locked ? "opacity-50 cursor-not-allowed" : "hover:bg-slate-50",
-                    ].join(" ")}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-slate-900 font-semibold">{lvl.title}</div>
-                      <div className="text-xs text-slate-500">{locked ? "🔒 Locked" : "✅ Available"}</div>
-                    </div>
-                    <div className="text-slate-600 text-sm mt-1">{lvl.focus}</div>
-                    <div className="text-slate-500 text-xs mt-2">Pack {lvl.packId}</div>
-                  </button>
-                );
-              })}
-            </div>
+            {fixedPackIndex === null ? (
+              <>
+                <div className="text-slate-800 font-semibold">Choose a level</div>
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {LEVELS.map((lvl, idx) => {
+                    const locked = idx > unlockedPackIndex;
+                    const selected = idx === selectedPackIndex;
+                    return (
+                      <button
+                        key={lvl.packId}
+                        disabled={locked}
+                        onClick={() => !locked && setSelectedPackIndex(idx)}
+                        className={[
+                          "rounded-2xl border p-4 text-left transition",
+                          selected ? "border-sky-300 bg-sky-50" : "border-slate-200 bg-white",
+                          locked ? "opacity-50 cursor-not-allowed" : "hover:bg-slate-50",
+                        ].join(" ")}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-slate-900 font-semibold">{lvl.title}</div>
+                          <div className="text-xs text-slate-500">{locked ? "🔒 Locked" : "✅ Available"}</div>
+                        </div>
+                        <div className="text-slate-600 text-sm mt-1">{lvl.focus}</div>
+                        <div className="text-slate-500 text-xs mt-2">Pack {lvl.packId}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            ) : (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div className="text-slate-800 font-semibold">Public sentence practice</div>
+                <div className="mt-2 text-sm text-slate-600">
+                  Start with the sentence-building pack and tap words in order to read and build short English sentences.
+                </div>
+                <div className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  {LEVELS[fixedPackIndex].title} • Pack {LEVELS[fixedPackIndex].packId}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="mt-6 flex items-center justify-end gap-3">
@@ -824,7 +875,7 @@ export default function SentenceStepperStage4() {
               onClick={goBackToLibrary}
               className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 active:scale-[0.99] transition"
             >
-              ← Back to Mission
+              {missionBackLabel}
             </button>
 
             <button

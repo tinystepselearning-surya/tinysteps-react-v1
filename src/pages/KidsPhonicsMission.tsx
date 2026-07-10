@@ -55,6 +55,12 @@ type LevelDef = {
   choicesCount: number;
 };
 
+type KidsPhonicsMissionProps = {
+  forceAnonymousMode?: boolean;
+  missionReturnHrefOverride?: string;
+  missionBackLabel?: string;
+};
+
 const LEVELS: LevelDef[] = [
   // Group 1: s, a, t, i, p, n
   {
@@ -533,12 +539,16 @@ const generateQuestionsForLevel = (levelDef: LevelDef): Question[] => {
 };
 
 // --- Main Component ---
-const KidsPhonicsMission: React.FC = () => {
+const KidsPhonicsMission: React.FC<KidsPhonicsMissionProps> = ({
+  forceAnonymousMode = false,
+  missionReturnHrefOverride,
+  missionBackLabel = "← Back to Mission",
+}) => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
 
-  let kidId = searchParams.get("kidId") || "";
+  const kidId = forceAnonymousMode ? "" : searchParams.get("kidId") || "";
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentRound, setCurrentRound] = useState(0);
@@ -547,7 +557,9 @@ const KidsPhonicsMission: React.FC = () => {
   const [lastTappedChoice, setLastTappedChoice] = useState<string | null>(null);
   const [isComplete, setIsComplete] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
-  const [highestUnlocked, setHighestUnlocked] = useState<number>(getUnlockedLevel(kidId));
+  const [highestUnlocked, setHighestUnlocked] = useState<number>(
+    forceAnonymousMode ? 1 : getUnlockedLevel(kidId),
+  );
 
   const currentLevelDef = useMemo(
     () => (selectedLevel ? LEVELS.find((l) => l.id === selectedLevel) || null : null),
@@ -570,6 +582,7 @@ const KidsPhonicsMission: React.FC = () => {
 
   // Auto-recover kidId from localStorage if missing in URL
   useEffect(() => {
+    if (forceAnonymousMode) return;
     if (!kidId) {
       try {
         const stored = localStorage.getItem("ts_active_kid_v1");
@@ -582,10 +595,11 @@ const KidsPhonicsMission: React.FC = () => {
         // ignore
       }
     }
-  }, [kidId, searchParams, location.pathname, navigate]);
+  }, [forceAnonymousMode, kidId, searchParams, location.pathname, navigate]);
 
   // Persist kidId to localStorage when present
   useEffect(() => {
+    if (forceAnonymousMode) return;
     if (kidId) {
       try {
         localStorage.setItem("ts_active_kid_v1", kidId);
@@ -593,9 +607,11 @@ const KidsPhonicsMission: React.FC = () => {
         // ignore
       }
     }
-  }, [kidId]);
+  }, [forceAnonymousMode, kidId]);
 
-  const missionReturnHref = buildMissionReturnHref(searchParams, kidId);
+  const missionReturnHref =
+    missionReturnHrefOverride ?? buildMissionReturnHref(searchParams, kidId);
+  const levelRouteBase = forceAnonymousMode ? location.pathname : "/kids/games/phonics/letter-sound";
 
   // Helper to preserve kidId in all navigation
   const withKid = (path: string) => {
@@ -604,6 +620,12 @@ const KidsPhonicsMission: React.FC = () => {
     applyKidAndMissionContext(params, searchParams, kidId);
     const query = params.toString();
     return query ? `${pathname}?${query}` : pathname;
+  };
+  const buildLevelRoute = (level?: number) => {
+    if (forceAnonymousMode) {
+      return level ? `${levelRouteBase}?level=${level}` : levelRouteBase;
+    }
+    return withKid(level ? `${levelRouteBase}?level=${level}` : levelRouteBase);
   };
 
   const timeoutsRef = useRef<number[]>([]);
@@ -615,7 +637,9 @@ const KidsPhonicsMission: React.FC = () => {
     timeoutsRef.current = [];
   };
 
-  const [bestStarsMap, setBestStarsMap] = useState<Record<number, number>>(() => readBestStars(kidId));
+  const [bestStarsMap, setBestStarsMap] = useState<Record<number, number>>(() =>
+    forceAnonymousMode ? {} : readBestStars(kidId),
+  );
 
   // Session logging refs
   const sessionStartMsRef = useRef<number | null>(null);
@@ -840,8 +864,8 @@ const KidsPhonicsMission: React.FC = () => {
 
       let resumeData: SavedProgress | null = null;
 
-      // Fallback to localStorage resume (STRICT validation)
-      if (!resumeData) {
+      // Fallback to localStorage resume (STRICT validation) only in tracked mode.
+      if (!forceAnonymousMode && !resumeData) {
         const progressMap = readProgressMap(kidId);
         const saved = progressMap[levelId];
         const levelDef = LEVELS.find((l) => l.id === levelId);
@@ -888,7 +912,7 @@ const KidsPhonicsMission: React.FC = () => {
         setStarsEarned(0);
       }
     },
-    [kidId]
+    [forceAnonymousMode, kidId]
   );
 
   // If opened with ?level=..., use startLevel (resume logic)
@@ -896,14 +920,14 @@ const KidsPhonicsMission: React.FC = () => {
     const levelParam = searchParams.get("level");
     const lp = levelParam ? parseInt(levelParam, 10) : NaN;
 
-    const unlocked = getUnlockedLevel(kidId);
+    const unlocked = forceAnonymousMode ? highestUnlocked : getUnlockedLevel(kidId);
     setHighestUnlocked(unlocked);
 
     if (!Number.isNaN(lp) && lp >= 1 && lp <= 7 && lp <= unlocked) {
       void startLevel(lp);
       return;
     }
-  }, [searchParams, kidId, startLevel]);
+  }, [searchParams, forceAnonymousMode, kidId, startLevel]);
 
   // Play prompt (manual)
   const playSound = useCallback(() => {
@@ -952,6 +976,7 @@ const KidsPhonicsMission: React.FC = () => {
 
   // Save progress to localStorage
   useEffect(() => {
+    if (forceAnonymousMode) return;
     if (selectedLevel && questions.length > 0 && !isComplete) {
       saveLevelProgress(
         selectedLevel,
@@ -965,7 +990,7 @@ const KidsPhonicsMission: React.FC = () => {
         kidId
       );
     }
-  }, [selectedLevel, starsEarned, currentRound, questions, isComplete, kidId]);
+  }, [selectedLevel, starsEarned, currentRound, questions, isComplete, forceAnonymousMode, kidId]);
 
   // Listen for fullscreen changes (ESC) to ensure cleanup
   useEffect(() => {
@@ -1190,13 +1215,17 @@ const KidsPhonicsMission: React.FC = () => {
           if (finalStars > prevBest) {
             const nextMap = { ...bestStarsMap, [selectedLevel]: finalStars };
             setBestStarsMap(nextMap);
-            writeBestStars(nextMap, kidId);
+            if (!forceAnonymousMode) {
+              writeBestStars(nextMap, kidId);
+            }
           }
 
-          clearLevelProgress(selectedLevel, kidId);
+          if (!forceAnonymousMode) {
+            clearLevelProgress(selectedLevel, kidId);
+          }
 
           // Log session summary (best-effort)
-          if (kidId && sessionStartMsRef.current && !sessionLoggedRef.current) {
+          if (!forceAnonymousMode && kidId && sessionStartMsRef.current && !sessionLoggedRef.current) {
             sessionLoggedRef.current = true;
 
             const endMs = Date.now();
@@ -1251,7 +1280,7 @@ const KidsPhonicsMission: React.FC = () => {
           }
 
           // Save completion to Firestore
-          if (kidId && finalStars > prevBest) {
+          if (!forceAnonymousMode && kidId && finalStars > prevBest) {
             const mergedBest = { ...bestStarsMap, [selectedLevel]: finalStars };
             const bestByLevel: Record<string, number> = {};
             Object.entries(mergedBest).forEach(([k, v]) => (bestByLevel[k] = v));
@@ -1279,8 +1308,12 @@ const KidsPhonicsMission: React.FC = () => {
 
           // Unlock next level if criteria met
           if (finalStars >= MASTERY_UNLOCK_STARS && selectedLevel < 7) {
-            const newUnlocked = Math.max(getUnlockedLevel(kidId), selectedLevel + 1);
-            setUnlockedLevel(newUnlocked, kidId);
+            const newUnlocked = forceAnonymousMode
+              ? Math.max(highestUnlocked, selectedLevel + 1)
+              : Math.max(getUnlockedLevel(kidId), selectedLevel + 1);
+            if (!forceAnonymousMode) {
+              setUnlockedLevel(newUnlocked, kidId);
+            }
             setHighestUnlocked(newUnlocked);
           }
         }
@@ -1401,7 +1434,7 @@ const KidsPhonicsMission: React.FC = () => {
             className="absolute top-5 right-5 px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full hover:bg-white/20 transition-all duration-200 font-semibold shadow-lg text-white hover:text-white focus:text-white"
             style={{ zIndex: 50 }}
           >
-            ← Back to Mission
+            {missionBackLabel}
           </Link>
 
           <div className="w-full max-w-6xl mx-auto text-center mb-8">
@@ -1409,7 +1442,7 @@ const KidsPhonicsMission: React.FC = () => {
             <p className="text-white/70 mt-2">Listen to a sound, then tap the matching letter.</p>
             <p className="text-white/60 mt-1 text-sm">Unlock rule: earn {MASTERY_UNLOCK_STARS}+ mastery stars to open the next level.</p>
 
-            {!kidId && (
+            {!kidId && !forceAnonymousMode && (
               <div className="mt-6 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-lg max-w-md mx-auto">
                 <p className="text-yellow-200 font-semibold mb-3">⚠️ No child selected</p>
                 <p className="text-yellow-100/80 text-sm mb-4">
@@ -1429,7 +1462,7 @@ const KidsPhonicsMission: React.FC = () => {
             {LEVELS.map((l) => {
               const locked = l.id > highestUnlocked;
               const best = bestStarsMap[l.id] || 0;
-              const progressMap = readProgressMap(kidId);
+              const progressMap = forceAnonymousMode ? {} : readProgressMap(kidId);
               const savedProgress = progressMap[l.id];
 
               let badge = "Not started";
@@ -1576,7 +1609,7 @@ const KidsPhonicsMission: React.FC = () => {
               setIsComplete(false);
               setStarsEarned(0);
               setCurrentRound(0);
-              navigate(withKid("/kids/games/phonics/letter-sound"), { replace: true });
+              navigate(buildLevelRoute(), { replace: true });
             }}
             className="absolute top-5 right-5 px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full hover:bg-white/20 transition-all duration-200 font-semibold shadow-lg text-white hover:text-white focus:text-white"
             style={{ zIndex: 50 }}
@@ -1619,7 +1652,7 @@ const KidsPhonicsMission: React.FC = () => {
                     setQuestions([]);
                     setFeedback(null);
                     setLastTappedChoice(null);
-                    navigate(withKid("/kids/games/phonics/letter-sound"), { replace: true });
+                    navigate(buildLevelRoute(), { replace: true });
                   }}
                   className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-2xl text-lg font-semibold"
                   type="button"
@@ -1634,7 +1667,7 @@ const KidsPhonicsMission: React.FC = () => {
                       const unlocked = getUnlockedLevel(kidId);
                       if (next <= unlocked) {
                         void startLevel(next);
-                        navigate(withKid(`/kids/games/phonics/letter-sound?level=${next}`), { replace: true });
+                        navigate(buildLevelRoute(next), { replace: true });
                       }
                     }}
                     className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 rounded-2xl text-lg font-bold text-white"

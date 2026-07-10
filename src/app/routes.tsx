@@ -51,6 +51,9 @@ const OnlinePhonicsReadingClassesPage = lazy(() => import('../pages/public/Onlin
 const EnglishGrammarWritingClassesPage = lazy(() => import('../pages/public/EnglishGrammarWritingClassesPage'));
 const LearningGamesMarketingPage = lazy(() => import('../pages/public/LearningGamesMarketingPage'));
 const FreeGamesHubPage = lazy(() => import('../pages/public/FreeGamesHubPage'));
+const FreeEnglishGamesHubPage = lazy(() => import('../pages/public/FreeEnglishGamesHubPage'));
+const FreeEnglishGamesCategoryPage = lazy(() => import('../pages/public/FreeEnglishGamesCategoryPage'));
+const FreeEnglishGameLandingPage = lazy(() => import('../pages/public/FreeEnglishGameLandingPage'));
 const FreeLetterTracingGamePage = lazy(() => import('../pages/public/FreeLetterTracingGamePage'));
 const LetterTracingWithSoundsGamePage = lazy(() => import('../pages/public/LetterTracingWithSoundsGamePage'));
 const FreeBalloonPopGamePage = lazy(() => import('../pages/public/FreeBalloonPopGamePage'));
@@ -600,10 +603,26 @@ const router = createBrowserRouter(
         { path: 'phonics-games-for-preschoolers', element: <PhonicsGamesPreschoolersPage /> },
         { path: 'phonics-learning-games', element: <LearningGamesMarketingPage /> },
         { path: 'free-games-for-kids', element: <FreeGamesHubPage /> },
+        { path: 'free-english-games-for-kids', element: <FreeEnglishGamesHubPage /> },
+        { path: 'free-phonics-games-for-kids', element: <FreeEnglishGamesCategoryPage /> },
+        { path: 'free-letter-sound-games-for-kids', element: <FreeEnglishGamesCategoryPage /> },
+        { path: 'free-word-building-games-for-kids', element: <FreeEnglishGamesCategoryPage /> },
+        { path: 'free-sentence-building-games-for-kids', element: <FreeEnglishGamesCategoryPage /> },
+        { path: 'free-reading-games-for-kids', element: <FreeEnglishGamesCategoryPage /> },
+        { path: 'free-grammar-games-for-kids', element: <FreeEnglishGamesCategoryPage /> },
+        { path: 'free-speaking-games-for-kids', element: <FreeEnglishGamesCategoryPage /> },
+        { path: 'free-letter-sounds-game-for-kids', element: <FreeEnglishGameLandingPage /> },
+        { path: 'free-sound-listening-game-for-kids', element: <FreeEnglishGameLandingPage /> },
+        { path: 'free-word-building-game-for-kids', element: <FreeEnglishGameLandingPage /> },
+        { path: 'free-sentence-making-game-for-kids', element: <FreeEnglishGameLandingPage /> },
+        { path: 'free-reading-fluency-game-for-kids', element: <FreeEnglishGameLandingPage /> },
+        { path: 'free-grammar-practice-game-for-kids', element: <FreeEnglishGameLandingPage /> },
+        { path: 'free-speaking-practice-game-for-kids', element: <FreeEnglishGameLandingPage /> },
         { path: 'free-letter-tracing-game-for-kids', element: <FreeLetterTracingGamePage /> },
         { path: 'letter-tracing-with-sounds-game', element: <LetterTracingWithSoundsGamePage /> },
         { path: 'free-letter-tracing-with-sounds-game-for-kids', element: <Navigate to="/letter-tracing-with-sounds-game" replace /> },
         { path: 'free-balloon-pop-phonics-game-for-kids', element: <FreeBalloonPopGamePage /> },
+        { path: 'free-phonics-balloon-pop-game-for-kids', element: <Navigate to="/free-balloon-pop-phonics-game-for-kids" replace /> },
         { path: 'free-games/word-meaning-flashcards', element: <WordMeaningFlashcards /> },
         { path: 'reading-classes-for-kids', element: <ReadingClassesForKidsPage /> },
         { path: 'spoken-english-classes-for-kids', element: <Navigate to="/spoken-english-classes-for-kids-online" replace /> },

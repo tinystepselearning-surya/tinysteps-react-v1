@@ -96,7 +96,7 @@ export default function LetterTracingWithSoundsGamePage() {
       <section id="play" className="mt-5 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm">
         <LetterTracingWithSounds
           baseRoute={PAGE_PATH}
-          missionReturnHrefOverride="/phonics-learning-games"
+          missionReturnHrefOverride="/free-english-games-for-kids"
           showMissionBackButton={false}
           showProgressControls={false}
           forceAnonymousMode

@@ -14,6 +14,7 @@ type Props = {
   kidId: string;
   groupId: VowelGroupId;
   group: VowelGroup;
+  forceAnonymousMode?: boolean;
 
   // existing
   onBackToGroups: () => void;
@@ -36,6 +37,7 @@ export default function TapWordGame({
   kidId,
   groupId,
   group,
+  forceAnonymousMode = false,
   onBackToGroups,
   onNextGroup,
   onBackToLevels,
@@ -232,7 +234,7 @@ export default function TapWordGame({
   }
 
   function recordRunCompletion() {
-    if (!kidId) return;
+    if (forceAnonymousMode || !kidId) return;
     if (runResultSentRef.current) return;
 
     const spentMs =

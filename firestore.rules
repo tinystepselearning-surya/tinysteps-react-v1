@@ -1082,13 +1082,15 @@ function teacherOwnsDocViaAliases(data) {
           || (request.resource.data.initialMessageSnippet is string && request.resource.data.initialMessageSnippet.size() <= 1000)
         )
         && request.resource.data.mainConcern in [
-          'Knows ABC but cannot read words',
-          'Struggles with blending',
-          'Reads slowly',
-          'Makes grammar mistakes',
-          'Gives one-word answers',
-          'Hesitates to speak English',
-          'Needs public speaking confidence',
+          'Starting to read words after learning ABC/sounds',
+          'Blending sounds to read words',
+          'Reading speed and word accuracy',
+          'Spelling while reading and writing',
+          'Understanding what they read',
+          'Grammar while speaking or writing',
+          'Answering in full sentences',
+          'Speaking English with confidence',
+          'Confidence for speaking / presentations',
           'Not sure where to start'
         ]
         && (

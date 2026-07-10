@@ -1,9 +1,10 @@
 // src/pages/KidsEnglishExcellence.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import TinyStepsBrand from "../components/common/TinyStepsBrand";
-import MagicBento from "../components/common/MagicBento";
-import LiquidEther from "../components/components/LiquidEther";
+import EnglishExcellenceHub, {
+  type EnglishExcellenceHubCard,
+  type EnglishExcellenceHubStat,
+} from "../components/games/EnglishExcellenceHub";
 import {
   BBS_STAGE_1A,
   BBS_STAGE_1B,
@@ -1438,7 +1439,9 @@ const KidsEnglishExcellence: React.FC = () => {
   // Auto-scroll active tab into view
   useEffect(() => {
     const activeTab = tabsRef.current[selectedStageIndex];
-    if (activeTab) activeTab.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    if (activeTab && typeof activeTab.scrollIntoView === "function") {
+      activeTab.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    }
   }, [selectedStageIndex]);
 
   // Optional completion hook: ?eemDone=<tileId>
@@ -1642,718 +1645,190 @@ const KidsEnglishExcellence: React.FC = () => {
     });
   };
 
+  const stats: EnglishExcellenceHubStat[] = [
+    { label: "Tracks", value: STAGES.length },
+    { label: "Games Ready", value: totalReadyTracks },
+    { label: "Completed", value: overallStats.completed },
+    { label: "Overall", value: `${overallStats.pct}%` },
+  ];
+
+  const cards: EnglishExcellenceHubCard[] = currentStage.tiles.map((tile) => {
+    const isGrammarFixTile =
+      currentStage.stageId === "eem-stage-5-grammar-practice" && tile.gameId === "eem-g14-grammar-fix";
+    const isCollocationTile =
+      currentStage.stageId === "eem-stage-5-grammar-practice" && tile.gameId === "eem-g16-collocation-builder";
+    const isUnlocked = isGrammarFixTile
+      ? isBbsMasteredForGrammarUnlock
+      : isCollocationTile
+        ? isGrammarFixMasteredForCollocationUnlock
+        : !tile.comingSoon && !!tile.route && isTileUnlocked(store, currentStage.stageId, tile.gameId);
+
+    const grammarTrackUi = currentStage.stageId === "eem-stage-5-grammar-practice"
+      ? (() => {
+          if (tile.gameId === "eem-g15-better-sentences") {
+            if (isBbsMasteredForGrammarUnlock) {
+              return {
+                locked: false,
+                badge: "Complete",
+                badgeClass: "bg-emerald-500/15 border-emerald-400/40 text-emerald-200",
+                footer: "Replay anytime",
+              };
+            }
+            if (isBbsInProgress) {
+              return {
+                locked: false,
+                badge: "In Progress",
+                badgeClass: "bg-sky-500/15 border-sky-400/40 text-sky-200",
+                footer: "Tap to continue",
+              };
+            }
+            return {
+              locked: false,
+              badge: "Ready",
+              badgeClass: "bg-violet-500/15 border-violet-400/40 text-violet-200",
+              footer: "Tap to open",
+            };
+          }
+
+          if (tile.gameId === "eem-g14-grammar-fix") {
+            if (!isBbsMasteredForGrammarUnlock) {
+              return {
+                locked: true,
+                badge: "Locked",
+                badgeClass: "bg-slate-700/30 border-slate-500/35 text-slate-200",
+                footer: "Locked",
+              };
+            }
+            if (isGrammarFixMasteredForCollocationUnlock) {
+              return {
+                locked: false,
+                badge: "Complete",
+                badgeClass: "bg-emerald-500/15 border-emerald-400/40 text-emerald-200",
+                footer: "Replay anytime",
+              };
+            }
+            if (isGrammarFixInProgress) {
+              return {
+                locked: false,
+                badge: "In Progress",
+                badgeClass: "bg-sky-500/15 border-sky-400/40 text-sky-200",
+                footer: "Tap to continue",
+              };
+            }
+            return {
+              locked: false,
+              badge: "Ready",
+              badgeClass: "bg-violet-500/15 border-violet-400/40 text-violet-200",
+              footer: "Tap to open",
+            };
+          }
+
+          if (tile.gameId === "eem-g16-collocation-builder") {
+            if (!isGrammarFixMasteredForCollocationUnlock) {
+              return {
+                locked: true,
+                badge: "Locked",
+                badgeClass: "bg-slate-700/30 border-slate-500/35 text-slate-200",
+                footer: "Locked",
+              };
+            }
+            if (isCollocationMastered) {
+              return {
+                locked: false,
+                badge: "Complete",
+                badgeClass: "bg-emerald-500/15 border-emerald-400/40 text-emerald-200",
+                footer: "Replay anytime",
+              };
+            }
+            if (isCollocationInProgress) {
+              return {
+                locked: false,
+                badge: "In Progress",
+                badgeClass: "bg-sky-500/15 border-sky-400/40 text-sky-200",
+                footer: "Tap to continue",
+              };
+            }
+            return {
+              locked: false,
+              badge: "Ready",
+              badgeClass: "bg-violet-500/15 border-violet-400/40 text-violet-200",
+              footer: "Tap to open",
+            };
+          }
+
+          if (tile.gameId === "eem-g17-idiom-in-a-sentence") {
+            return {
+              locked: true,
+              badge: "Locked",
+              badgeClass: "bg-slate-700/30 border-slate-500/35 text-slate-200",
+              footer: "Locked",
+            };
+          }
+
+          return null;
+        })()
+      : null;
+
+    const locked = grammarTrackUi ? grammarTrackUi.locked : !isUnlocked;
+    const displayTitle = tile.gameTitle ?? tile.title;
+    const tileId = getTileId(currentStage.stageNumber, displayTitle, tile.gameId);
+    const icon = getIcon(displayTitle);
+    const status = getTileStatus(tileId);
+    const defaultBadgeClass =
+      status === "completed"
+        ? "bg-emerald-500/15 border-emerald-400/40 text-emerald-200"
+        : status === "in_progress"
+          ? "bg-sky-500/15 border-sky-400/40 text-sky-200"
+          : "bg-slate-700/30 border-slate-500/35 text-slate-200";
+    const isWordMeaningFlashcardsTile = tile.gameId === "eem-g21-meaning-from-context";
+
+    return {
+      tile,
+      icon,
+      badgeText: grammarTrackUi?.badge || statusLabel(status),
+      badgeClassName: grammarTrackUi?.badgeClass || defaultBadgeClass,
+      footerText:
+        grammarTrackUi?.footer ||
+        (locked
+          ? "Locked"
+          : status === "completed"
+            ? "Replay anytime"
+            : isWordMeaningFlashcardsTile
+              ? "Play Free"
+              : "Tap to open"),
+      ctaText: locked ? "Soon" : isWordMeaningFlashcardsTile ? "Play Free" : "Play",
+      locked,
+      isCompleted: status === "completed",
+      pulse: pulseTileId === tileId,
+    };
+  });
+
   return (
-    <div className="relative min-h-screen xl:h-screen flex flex-col items-center justify-start py-4 px-4 overflow-hidden text-slate-900 bg-gradient-to-br from-sky-50 via-indigo-50 to-cyan-50">
-      <style>{`
-        /* Tabs */
-        .tab-pill { transition: all 0.22s ease; }
-        .tab-pill.active { box-shadow: 0 8px 24px rgba(99,102,241,0.20); transform: scale(1.02); }
-
-        /* Compact tiles (dark gaming) */
-        .tile {
-          background: linear-gradient(180deg, rgba(2, 2, 14, 0.97) 0%, rgba(8, 4, 22, 0.93) 100%);
-          border: 1px solid rgba(167, 139, 250, 0.32);
-          backdrop-filter: blur(10px);
-          transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
-          position: relative;
-          overflow: hidden;
-        }
-        .tile:hover {
-          transform: translateY(-3px);
-          border-color: rgba(168, 85, 247, 0.82);
-          box-shadow: 0 18px 32px -18px rgba(2, 6, 23, 0.95), 0 0 0 1px rgba(147, 51, 234, 0.3) inset;
-        }
-        .tile.locked { opacity: 0.72; cursor: not-allowed; }
-
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px);} to { opacity: 1; transform: translateY(0);} }
-
-        /* First-open pulse (soft) */
-        @keyframes tilePulse {
-          0% { box-shadow: 0 0 0 rgba(99,102,241,0); }
-          30% { box-shadow: 0 0 32px rgba(99,102,241,0.30); }
-          100% { box-shadow: 0 0 0 rgba(99,102,241,0); }
-        }
-        .pulse { animation: tilePulse 0.70s ease-in-out 1; }
-        .pulse::after{
-          content: "";
-          position: absolute;
-          inset: -2px;
-          border-radius: 16px;
-          border: 2px solid rgba(99,102,241,0.24);
-          opacity: 0;
-          animation: ring 0.70s ease-in-out 1;
-          pointer-events: none;
-        }
-        @keyframes ring {
-          0% { opacity: 0; transform: scale(0.99); }
-          30% { opacity: 1; transform: scale(1.00); }
-          100% { opacity: 0; transform: scale(1.02); }
-        }
-
-        /* Grid */
-        .tiles-grid {
-          display: grid;
-          grid-template-columns: repeat(1, minmax(0, 1fr));
-          gap: 14px;
-        }
-        @media (min-width: 640px) {
-          .tiles-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-        }
-        @media (min-width: 1024px) {
-          .tiles-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
-        }
-
-        /* LMS dashboard cards */
-        .lms-kpi {
-          border: 1px solid rgba(167, 139, 250, 0.22);
-          background: linear-gradient(180deg, rgba(10, 7, 26, 0.85) 0%, rgba(16, 10, 34, 0.78) 100%);
-          border-radius: 16px;
-          padding: 14px;
-          box-shadow: 0 8px 24px -18px rgba(15, 23, 42, 0.65);
-          backdrop-filter: blur(8px);
-        }
-
-        .track-card {
-          border: 1px solid rgba(15, 23, 42, 0.10);
-          background: rgba(255,255,255,0.72);
-          border-radius: 16px;
-          padding: 14px;
-          min-width: 220px;
-          text-align: left;
-          transition: all 180ms ease;
-          box-shadow: 0 8px 20px -18px rgba(15, 23, 42, 0.4);
-        }
-        .track-card:hover {
-          transform: translateY(-2px);
-          background: rgba(255,255,255,0.85);
-          border-color: rgba(59, 130, 246, 0.3);
-        }
-        .track-card.active {
-          border-color: rgba(79, 70, 229, 0.35);
-          box-shadow: 0 14px 28px -18px rgba(79, 70, 229, 0.45);
-          background: rgba(255,255,255,0.9);
-        }
-
-        .track-progress {
-          height: 8px;
-          border-radius: 999px;
-          background: rgba(15, 23, 42, 0.08);
-          overflow: hidden;
-        }
-        .track-progress > span {
-          display: block;
-          height: 100%;
-          border-radius: inherit;
-          background: linear-gradient(90deg, #4f46e5, #0284c7);
-        }
-
-        /* ========== PLANET STYLES ========== */
-        
-        /* Planet orb animations */
-        @keyframes pSpin {
-          0% { transform: rotateZ(0deg); }
-          100% { transform: rotateZ(360deg); }
-        }
-        
-        @keyframes pFloat {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-6px); }
-        }
-
-        /* Base planet styling */
-        .ts-planet {
-          cursor: pointer;
-          transition: all 220ms ease;
-          position: relative;
-        }
-
-        .ts-planet.isActive {
-          filter: drop-shadow(0 0 16px rgba(99, 102, 241, 0.6));
-          transform: scale(1.15);
-        }
-
-        .ts-planet .orb {
-          display: block;
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          animation: pSpin 8s linear infinite, pFloat 2.8s ease-in-out infinite;
-          box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25), inset -2px -2px 4px rgba(0, 0, 0, 0.15);
-          position: relative;
-        }
-
-        .ts-planet .ring {
-          display: none;
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          width: 70px;
-          height: 24px;
-          border: 3px solid rgba(217, 119, 6, 0.7);
-          border-radius: 50%;
-          transform: translate(-50%, -50%) rotateX(75deg);
-          animation: pSpin 10s linear infinite reverse;
-          box-shadow: 0 0 8px rgba(217, 119, 6, 0.3);
-        }
-
-        .ts-planet .shine {
-          position: absolute;
-          top: 4px;
-          left: 8px;
-          width: 16px;
-          height: 16px;
-          border-radius: 50%;
-          background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0));
-          opacity: 0.8;
-          animation: pFloat 4.2s ease-in-out infinite 0.4s;
-        }
-
-        .ts-planet .label {
-          position: absolute;
-          top: 56px;
-          left: 50%;
-          transform: translateX(-50%);
-          font-size: 11px;
-          font-weight: 700;
-          white-space: nowrap;
-          color: rgba(15, 23, 42, 0.7);
-          background: rgba(255, 255, 255, 0.85);
-          padding: 4px 8px;
-          border-radius: 4px;
-          pointer-events: none;
-          border: 1px solid rgba(99, 102, 241, 0.15);
-          opacity: 0;
-          transition: opacity 220ms ease;
-        }
-
-        .ts-planet:hover .label, .ts-planet.isActive .label {
-          opacity: 1;
-        }
-
-        /* Mercury: Gray */
-        .ts-planet.mercury .orb {
-          background: linear-gradient(135deg, #a8a9ad 0%, #6f7073 50%, #4a4b4e 100%);
-          animation-duration: 7.2s;
-        }
-
-        /* Venus: Yellow with stripes */
-        .ts-planet.venus .orb {
-          background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 40%, #d97706 70%, #b45309 100%);
-          background-size: 100% 100%;
-          box-shadow: 0 6px 18px rgba(217, 119, 6, 0.35), inset -2px -2px 4px rgba(120, 53, 15, 0.25);
-          animation-duration: 8.4s;
-        }
-
-        /* Earth: Blue with green swirl */
-        .ts-planet.earth .orb {
-          background: conic-gradient(
-            from 0deg at 50% 50%,
-            #0369a1 0%,
-            #06b6d4 25%,
-            #10b981 35%,
-            #84cc16 45%,
-            #0369a1 70%,
-            #0369a1 100%
-          );
-          animation-duration: 8s;
-        }
-
-        /* Mars: Red */
-        .ts-planet.mars .orb {
-          background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);
-          animation-duration: 7.6s;
-        }
-
-        /* Jupiter: Brown with stripes */
-        .ts-planet.jupiter .orb {
-          background: repeating-linear-gradient(
-            90deg,
-            #92400e 0px,
-            #b45309 4px,
-            #d97706 8px,
-            #f59e0b 12px,
-            #d97706 16px,
-            #b45309 20px,
-            #92400e 24px
-          );
-          animation-duration: 9.2s;
-        }
-
-        /* Saturn: Yellow with rings */
-        .ts-planet.saturn .orb {
-          background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
-          animation-duration: 10s;
-        }
-
-        .ts-planet.saturn .ring {
-          display: block;
-        }
-
-        /* Uranus: Cyan */
-        .ts-planet.uranus .orb {
-          background: linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #0e7490 100%);
-          animation-duration: 8.8s;
-        }
-
-        /* Neptune: Deep blue */
-        .ts-planet.neptune .orb {
-          background: linear-gradient(135deg, #0c4a6e 0%, #075985 50%, #0369a1 100%);
-          animation-duration: 9.6s;
-        }
-
-        /* ========== SUN STYLING ========== */
-        
-        @keyframes tsRaysSpin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-
-        @keyframes tsRaysPulse {
-          0%, 100% { opacity: 0.4; }
-          50% { opacity: 0.8; }
-        }
-
-        .ts-sunFar {
-          position: absolute;
-          width: 52px;
-          height: 52px;
-          top: 16px;
-          left: 20px;
-          border-radius: 50%;
-          background: radial-gradient(circle at 35% 35%, #fef3c7, #fcd34d 30%, #fbbf24 60%, #f59e0b 100%);
-          box-shadow: 0 0 28px rgba(251, 191, 36, 0.8), 0 0 56px rgba(251, 191, 36, 0.4), inset -2px -2px 4px rgba(217, 119, 6, 0.3);
-          z-index: 5;
-        }
-
-        .ts-sunRays {
-          position: absolute;
-          inset: -14px;
-          border-radius: 50%;
-          animation: tsRaysSpin 18s linear infinite;
-          z-index: 3;
-        }
-
-        .ts-sunRay {
-          position: absolute;
-          width: 4px;
-          height: 12px;
-          background: linear-gradient(to top, rgba(251, 191, 36, 0.8), rgba(251, 191, 36, 0));
-          left: 50%;
-          top: 0;
-          transform: translateX(-50%);
-          border-radius: 2px;
-          animation: tsRaysPulse 3.5s ease-in-out infinite;
-        }
-
-        /* ========== STAGE BUTTONS (BOTTOM) ========== */
-        
-        .ts-stageRow {
-          display: flex;
-          gap: 8px;
-          flex-wrap: wrap;
-          justify-content: center;
-          margin-top: 12px;
-          padding: 0 12px;
-        }
-
-        .ts-stageBtn {
-          font-size: 12px;
-          font-weight: 800;
-          padding: 7px 10px;
-          border-radius: 999px;
-          border: 1px solid rgba(15, 23, 42, 0.10);
-          background: rgba(255, 255, 255, 0.75);
-          color: #0f172a;
-          cursor: pointer;
-          transition: all 200ms ease;
-        }
-
-        .ts-stageBtn:hover {
-          background: rgba(255, 255, 255, 0.9);
-          border-color: rgba(99, 102, 241, 0.25);
-        }
-
-        .ts-stageBtn.active {
-          background: rgba(249, 115, 22, 0.12);
-          border-color: rgba(249, 115, 22, 0.42);
-          color: #ea580c;
-          font-weight: 900;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .tile { transition: none !important; }
-          .pulse, .pulse::after { animation: none !important; }
-          .ts-planet .orb { animation: none !important; }
-          .ts-planet .shine { animation: none !important; }
-          .ts-planet .ring { animation: none !important; }
-          .ts-sunRays { animation: none !important; }
-          .ts-sunRay { animation: none !important; }
-        }
-      `}</style>
-
-      {/* Background Layer */}
-      <div className="absolute inset-0 pointer-events-none">
-        <LiquidEther
-          className="absolute inset-0 opacity-95"
-          style={{ width: "100%", height: "100%" }}
-          mouseForce={20}
-          cursorSize={100}
-          isViscous
-          viscous={30}
-          colors={["#1A063F", "#3B1289", "#6D28D9"]}
-          autoDemo
-          autoSpeed={0.5}
-          autoIntensity={2.2}
-          isBounce={false}
-          resolution={0.5}
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#04020d]/74 via-[#090318]/60 to-[#12042c]/76" />
-      </div>
-
-      {/* In-layer top strip */}
-      <div className="relative z-20 w-full max-w-6xl mx-auto px-4 mb-2">
-        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-slate-900/10 bg-white/65 backdrop-blur-md px-3 py-2 shadow-sm">
-          <TinyStepsBrand
-            to=""
-            subtitle="Kid workspace"
-            className="pointer-events-none px-0 py-0 hover:bg-transparent"
-            titleClassName="text-base"
-            subtitleClassName="tracking-[0.18em]"
-          />
-
-          <div className="flex justify-center">
-            <div className="inline-flex items-center rounded-full border border-indigo-400/40 bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 px-4 py-1.5 shadow-[0_8px_24px_rgba(59,130,246,0.35)]">
-              <span
-                className="text-center text-sm md:text-2xl font-black tracking-[0.02em] text-white whitespace-nowrap overflow-hidden text-ellipsis"
-                style={{ textShadow: "0 2px 8px rgba(2, 6, 23, 0.45)" }}
-              >
-                English Excellence Mission
-              </span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleBackNavigation}
-            className="inline-flex items-center gap-1 rounded-full border border-slate-900/15 bg-white/80 px-3 py-1.5 text-xs font-extrabold text-slate-800 shadow-sm hover:bg-white"
-            aria-label="Go back"
-            title="Go back"
-          >
-            <span aria-hidden>←</span> Back
-          </button>
-        </div>
-      </div>
-
-      {/* LMS Workspace Layout */}
-      <div className="relative z-10 w-full max-w-[1320px] mx-auto px-4 pb-4 xl:h-[calc(100vh-124px)]">
-        <div className="grid grid-cols-1 xl:grid-cols-[240px_minmax(0,1fr)] gap-3 items-start xl:h-full">
-          {/* Left: Vertical training tracks panel */}
-          <aside className="rounded-2xl border border-violet-300/20 bg-slate-950/42 backdrop-blur-md shadow-sm p-2.5 xl:h-full xl:flex xl:flex-col">
-            <div className="mb-2 inline-flex items-center gap-2 rounded-lg border border-cyan-300/35 bg-slate-900/65 px-2.5 py-1 shadow-[0_6px_18px_rgba(34,211,238,0.25)]">
-              <span
-                className="bg-gradient-to-r from-cyan-200 via-fuchsia-200 to-lime-200 bg-clip-text text-xs font-black uppercase tracking-[0.2em] text-transparent"
-                style={{ textShadow: "0 0 10px rgba(34, 211, 238, 0.42)" }}
-              >
-                Training Tracks
-              </span>
-            </div>
-            <div
-              className="grid gap-1.5 xl:flex-1 xl:min-h-0"
-              style={{ gridTemplateRows: `repeat(${trainingTracks.length}, minmax(0, 1fr))` }}
-            >
-              {trainingTracks.map((track, idx) => (
-                <button
-                  key={track.stageId}
-                  ref={(el) => {
-                    tabsRef.current[idx] = el;
-                  }}
-                  onClick={() => setSelectedStageIndex(idx)}
-                  type="button"
-                  className={`w-full h-full min-h-0 overflow-hidden text-left rounded-xl border px-2 py-1.5 transition-all ${
-                    idx === selectedStageIndex
-                      ? "border-violet-400/60 bg-violet-500/12 shadow-sm"
-                      : "border-violet-300/20 bg-slate-900/45 hover:bg-slate-900/60 hover:border-violet-300/35"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <span className="inline-flex h-5 min-w-5 px-1.5 items-center justify-center rounded-full bg-indigo-600 text-white text-[10px] font-black">
-                      {track.stageNumber}
-                    </span>
-                    <span className="text-[10px] font-bold text-violet-100/85">
-                      {track.completed}/{track.total}
-                    </span>
-                  </div>
-                  <div className="text-[13px] font-extrabold text-slate-100 leading-tight">{track.title}</div>
-                  <div className="text-[10px] font-semibold text-slate-300 mt-0.5">{track.playable} ready</div>
-                  <div className="mt-1.5 h-1.5 rounded-full bg-slate-700/70 overflow-hidden">
-                    <span
-                      className="block h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500"
-                      style={{ width: `${track.pct}%` }}
-                    />
-                  </div>
-                </button>
-              ))}
-            </div>
-          </aside>
-
-          {/* Center: KPIs + modules (games area scrolls, layout stays fixed) */}
-          <main className="rounded-2xl border border-violet-300/20 bg-slate-950/52 backdrop-blur-md shadow-sm p-3 xl:h-full xl:flex xl:flex-col">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-              <div className="lms-kpi">
-                <div className="text-[10px] uppercase tracking-[0.16em] font-bold text-violet-200/80">Tracks</div>
-                <div className="mt-1 text-xl font-black text-slate-100">{STAGES.length}</div>
-              </div>
-              <div className="lms-kpi">
-                <div className="text-[10px] uppercase tracking-[0.16em] font-bold text-violet-200/80">Games Ready</div>
-                <div className="mt-1 text-xl font-black text-slate-100">{totalReadyTracks}</div>
-              </div>
-              <div className="lms-kpi">
-                <div className="text-[10px] uppercase tracking-[0.16em] font-bold text-violet-200/80">Completed</div>
-                <div className="mt-1 text-xl font-black text-slate-100">{overallStats.completed}</div>
-              </div>
-              <div className="lms-kpi">
-                <div className="text-[10px] uppercase tracking-[0.16em] font-bold text-violet-200/80">Overall</div>
-                <div className="mt-1 text-xl font-black text-slate-100">{overallStats.pct}%</div>
-              </div>
-            </div>
-
-            <div className="mt-3 xl:flex-1 xl:min-h-0 xl:overflow-y-auto pr-1">
-              <MagicBento
-                textAutoHide
-                enableStars
-                enableSpotlight
-                enableBorderGlow
-                enableTilt={false}
-                enableMagnetism={false}
-                clickEffect
-                spotlightRadius={400}
-                particleCount={12}
-                glowColor="168, 85, 247"
-                disableAnimations={false}
-              >
-                <div className="tiles-grid">
-                {currentStage.tiles.map((tile, idx) => {
-                  const isGrammarFixTile =
-                    currentStage.stageId === "eem-stage-5-grammar-practice" && tile.gameId === "eem-g14-grammar-fix";
-                  const isCollocationTile =
-                    currentStage.stageId === "eem-stage-5-grammar-practice" && tile.gameId === "eem-g16-collocation-builder";
-                  const isUnlocked = isGrammarFixTile
-                    ? isBbsMasteredForGrammarUnlock
-                    : isCollocationTile
-                      ? isGrammarFixMasteredForCollocationUnlock
-                    : !tile.comingSoon && !!tile.route && isTileUnlocked(store, currentStage.stageId, tile.gameId);
-                  const grammarTrackUi = currentStage.stageId === "eem-stage-5-grammar-practice"
-                    ? (() => {
-                        if (tile.gameId === "eem-g15-better-sentences") {
-                          if (isBbsMasteredForGrammarUnlock) {
-                            return {
-                              locked: false,
-                              badge: "Complete",
-                              badgeClass: "bg-emerald-500/15 border-emerald-400/40 text-emerald-200",
-                              footer: "Replay anytime",
-                            };
-                          }
-                          if (isBbsInProgress) {
-                            return {
-                              locked: false,
-                              badge: "In Progress",
-                              badgeClass: "bg-sky-500/15 border-sky-400/40 text-sky-200",
-                              footer: "Tap to continue",
-                            };
-                          }
-                          return {
-                            locked: false,
-                            badge: "Ready",
-                            badgeClass: "bg-violet-500/15 border-violet-400/40 text-violet-200",
-                            footer: "Tap to open",
-                          };
-                        }
-
-                        if (tile.gameId === "eem-g14-grammar-fix") {
-                          if (!isBbsMasteredForGrammarUnlock) {
-                            return {
-                              locked: true,
-                              badge: "Locked",
-                              badgeClass: "bg-slate-700/30 border-slate-500/35 text-slate-200",
-                              footer: "Locked",
-                            };
-                          }
-                          if (isGrammarFixMasteredForCollocationUnlock) {
-                            return {
-                              locked: false,
-                              badge: "Complete",
-                              badgeClass: "bg-emerald-500/15 border-emerald-400/40 text-emerald-200",
-                              footer: "Replay anytime",
-                            };
-                          }
-                          if (isGrammarFixInProgress) {
-                            return {
-                              locked: false,
-                              badge: "In Progress",
-                              badgeClass: "bg-sky-500/15 border-sky-400/40 text-sky-200",
-                              footer: "Tap to continue",
-                            };
-                          }
-                          return {
-                            locked: false,
-                            badge: "Ready",
-                            badgeClass: "bg-violet-500/15 border-violet-400/40 text-violet-200",
-                            footer: "Tap to open",
-                          };
-                        }
-
-                        if (tile.gameId === "eem-g16-collocation-builder") {
-                          if (!isGrammarFixMasteredForCollocationUnlock) {
-                            return {
-                              locked: true,
-                              badge: "Locked",
-                              badgeClass: "bg-slate-700/30 border-slate-500/35 text-slate-200",
-                              footer: "Locked",
-                            };
-                          }
-                          if (isCollocationMastered) {
-                            return {
-                              locked: false,
-                              badge: "Complete",
-                              badgeClass: "bg-emerald-500/15 border-emerald-400/40 text-emerald-200",
-                              footer: "Replay anytime",
-                            };
-                          }
-                          if (isCollocationInProgress) {
-                            return {
-                              locked: false,
-                              badge: "In Progress",
-                              badgeClass: "bg-sky-500/15 border-sky-400/40 text-sky-200",
-                              footer: "Tap to continue",
-                            };
-                          }
-                          return {
-                            locked: false,
-                            badge: "Ready",
-                            badgeClass: "bg-violet-500/15 border-violet-400/40 text-violet-200",
-                            footer: "Tap to open",
-                          };
-                        }
-
-                        if (tile.gameId === "eem-g17-idiom-in-a-sentence") {
-                          return {
-                            locked: true,
-                            badge: "Locked",
-                            badgeClass: "bg-slate-700/30 border-slate-500/35 text-slate-200",
-                            footer: "Locked",
-                          };
-                        }
-
-                        return null;
-                      })()
-                    : null;
-
-                  const locked = grammarTrackUi ? grammarTrackUi.locked : !isUnlocked;
-                  const displayTitle = tile.gameTitle ?? tile.title;
-                  const tileId = getTileId(currentStage.stageNumber, displayTitle, tile.gameId);
-                  const icon = getIcon(displayTitle);
-                  const status = getTileStatus(tileId);
-
-                  const defaultBadgeClass =
-                    status === "completed"
-                      ? "bg-emerald-500/15 border-emerald-400/40 text-emerald-200"
-                    : status === "in_progress"
-                      ? "bg-sky-500/15 border-sky-400/40 text-sky-200"
-                      : "bg-slate-700/30 border-slate-500/35 text-slate-200";
-                  const badgeClass = grammarTrackUi?.badgeClass || defaultBadgeClass;
-                  const badgeText = grammarTrackUi?.badge || statusLabel(status);
-                  const isWordMeaningFlashcardsTile = tile.gameId === "eem-g21-meaning-from-context";
-                  const footerText = grammarTrackUi?.footer || (
-                    locked ? "Locked" : status === "completed" ? "Replay anytime" : isWordMeaningFlashcardsTile ? "Play Free" : "Tap to open"
-                  );
-                  const tileCtaText = locked ? "Soon" : isWordMeaningFlashcardsTile ? "Play Free" : "Play";
-
-                  const isPulse = pulseTileId === tileId;
-
-                  return (
-                    <div
-                      key={tile.gameId}
-                      onClick={() => handleTileClick(currentStage.stageNumber, tile)}
-                      className={`magic-bento-card tile rounded-2xl p-4 flex flex-col gap-3 ${locked ? "locked" : "cursor-pointer"} ${
-                        isPulse ? "pulse" : ""
-                      }`}
-                      style={{
-                        animationFillMode: "both",
-                        animationDuration: "0.35s",
-                        animationDelay: `${idx * 35}ms`,
-                        animationName: "fadeInUp",
-                      }}
-                      onAnimationEnd={() => {
-                        if (isPulse) setPulseTileId(null);
-                      }}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="w-10 h-10 rounded-xl bg-slate-900/60 border border-slate-300/20 flex items-center justify-center text-xl shadow-inner">
-                          {icon}
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`px-2.5 py-1 rounded-full text-[10px] uppercase font-extrabold tracking-wider border ${badgeClass}`}
-                            title={`Status: ${badgeText}`}
-                          >
-                            {badgeText}
-                          </div>
-
-                          {!locked && (
-                            <button
-                              type="button"
-                              onClick={(e) => toggleCompleted(e, currentStage.stageNumber, tile)}
-                              className={`
-                                w-8 h-8 rounded-full border flex items-center justify-center text-sm font-black
-                                ${
-                                  status === "completed"
-                                    ? "bg-emerald-500/15 border-emerald-400/40 text-emerald-200"
-                                    : "bg-slate-900/45 border-slate-300/25 text-slate-200 hover:bg-slate-800/70 hover:text-white"
-                                }
-                              `}
-                              title={status === "completed" ? "Set to In progress" : "Mark as Completed"}
-                              aria-label={status === "completed" ? "Set to In progress" : "Mark as Completed"}
-                            >
-                              ✓
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="min-h-[56px]">
-                        <div className="magic-bento-title text-base font-extrabold text-slate-100 leading-snug">{displayTitle}</div>
-                        <div className="magic-bento-description text-xs text-slate-300/85 font-semibold mt-1">{tile.desc}</div>
-                      </div>
-
-                      <div className="mt-auto flex items-center justify-between">
-                        <div className="text-[11px] text-slate-300/80 font-bold">
-                          {footerText}
-                        </div>
-
-                        <div
-                          className={`
-                            text-xs font-extrabold px-3 py-1.5 rounded-xl border shadow-sm
-                            ${
-                              locked
-                                ? "bg-slate-800/70 border-slate-400/20 text-slate-300"
-                                : "bg-gradient-to-r from-indigo-600 to-sky-600 border-white/40 text-white"
-                            }
-                          `}
-                        >
-                          {tileCtaText}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-                </div>
-              </MagicBento>
-            </div>
-          </main>
-        </div>
-      </div>
-    </div>
+    <EnglishExcellenceHub
+      brandSubtitle="Kid workspace"
+      title="English Excellence Mission"
+      topRight={
+        <button
+          type="button"
+          onClick={handleBackNavigation}
+          className="inline-flex items-center gap-1 rounded-full border border-slate-900/15 bg-white/80 px-3 py-1.5 text-xs font-extrabold text-slate-800 shadow-sm hover:bg-white"
+          aria-label="Go back"
+          title="Go back"
+        >
+          <span aria-hidden>←</span> Back
+        </button>
+      }
+      currentStage={currentStage}
+      trainingTracks={trainingTracks}
+      stats={stats}
+      cards={cards}
+      selectedStageIndex={selectedStageIndex}
+      onSelectStage={setSelectedStageIndex}
+      onTileClick={handleTileClick}
+      onToggleComplete={toggleCompleted}
+      onPulseEnd={() => setPulseTileId(null)}
+      tabsRef={tabsRef}
+    />
   );
 };
 

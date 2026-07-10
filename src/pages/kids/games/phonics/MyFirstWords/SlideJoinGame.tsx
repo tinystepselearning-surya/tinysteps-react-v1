@@ -23,6 +23,7 @@ type SlideJoinGameProps = {
   group: VowelGroup;
   onBackToGroups: () => void;
   forcedMode?: "slide_join" | null;
+  forceAnonymousMode?: boolean;
 };
 
 // Motor-friendly thresholds + scaffolding ladder
@@ -32,7 +33,13 @@ const AUTO_HINT_MS = 4000;    // visual nudge if idle
 const FAILS_FOR_ASSIST = 2;   // show Join button
 const FAILS_FOR_GUIDED = 3;   // auto-slide “watch me”
 
-export default function SlideJoinGame({ kidId, groupId, group, onBackToGroups }: SlideJoinGameProps) {
+export default function SlideJoinGame({
+  kidId,
+  groupId,
+  group,
+  onBackToGroups,
+  forceAnonymousMode = false,
+}: SlideJoinGameProps) {
   const stageRef = useRef<HTMLDivElement | null>(null);
 
   const [stageW, setStageW] = useState(0);
@@ -320,7 +327,7 @@ export default function SlideJoinGame({ kidId, groupId, group, onBackToGroups }:
   }
 
   function recordRunCompletion() {
-    if (!kidId) return;
+    if (forceAnonymousMode || !kidId) return;
     if (runResultSentRef.current) return;
 
     try {

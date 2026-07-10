@@ -52,6 +52,12 @@ const IMAGE_CATALOG = [
 type Option = { id: string; imgSrc: string };
 type AnswerState = "idle" | "correct" | "wrong";
 
+type SoundDetectiveGameProps = {
+  forceAnonymousMode?: boolean;
+  missionReturnHrefOverride?: string;
+  missionBackLabel?: string;
+};
+
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -161,7 +167,11 @@ const scheduleRoundsForLevel = (levelId: number): string[] => {
   return rounds;
 };
 
-export default function SoundDetectiveGame() {
+export default function SoundDetectiveGame({
+  forceAnonymousMode = false,
+  missionReturnHrefOverride,
+  missionBackLabel = "← Back to Mission",
+}: SoundDetectiveGameProps) {
   const fsRef = useRef<HTMLDivElement | null>(null);
 
   // --- audio refs ---
@@ -176,18 +186,21 @@ export default function SoundDetectiveGame() {
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const urlKidId = searchParams.get("kidId") || "";
+  const urlKidId = forceAnonymousMode ? "" : searchParams.get("kidId") || "";
   const storedKidId =
-    typeof window !== "undefined" ? (localStorage.getItem("ts_active_kid_v1") || "") : "";
+    forceAnonymousMode || typeof window === "undefined"
+      ? ""
+      : localStorage.getItem("ts_active_kid_v1") || "";
   const kidId = urlKidId || storedKidId;
-  const missionReturnHref = buildMissionReturnHref(searchParams, kidId);
+  const missionReturnHref =
+    missionReturnHrefOverride ?? buildMissionReturnHref(searchParams, kidId);
 
   useEffect(() => {
-    if (!kidId) return;
+    if (forceAnonymousMode || !kidId) return;
     try {
       localStorage.setItem("ts_active_kid_v1", kidId);
     } catch {}
-  }, [kidId]);
+  }, [forceAnonymousMode, kidId]);
 
   const [isFs, setIsFs] = useState(false);
 
@@ -476,7 +489,7 @@ export default function SoundDetectiveGame() {
   }, [selectedLevel, roundIndex, isComplete, playSoundInternal]);
 
   const submitLevelResult = async (levelId: number, completed: boolean) => {
-    if (!kidId) return;
+    if (forceAnonymousMode || !kidId) return;
     if (levelResultSentRef.current) return;
     levelResultSentRef.current = true;
 
@@ -706,7 +719,7 @@ export default function SoundDetectiveGame() {
           className="px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full hover:bg-white/20 transition-all duration-200 font-semibold text-white"
           style={{ zIndex: 50 }}
         >
-          ← Back to Mission
+          {missionBackLabel}
         </Link>
       </div>
 

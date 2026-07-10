@@ -158,7 +158,7 @@ export default function FreeLetterTracingGamePage() {
 
         <LetterTracingGame
           baseRoute={PAGE_PATH}
-          missionReturnHrefOverride="/phonics-learning-games"
+          missionReturnHrefOverride="/free-english-games-for-kids"
           showMissionBackButton={false}
           showProgressControls={false}
           forceAnonymousMode
@@ -235,7 +235,7 @@ export default function FreeLetterTracingGamePage() {
           <div id="play" className="rounded-[32px] border border-slate-200 bg-white p-2 shadow-[0_18px_44px_rgba(15,23,42,0.06)]">
             <LetterTracingGame
               baseRoute={PAGE_PATH}
-              missionReturnHrefOverride="/phonics-learning-games"
+              missionReturnHrefOverride="/free-english-games-for-kids"
               showMissionBackButton={false}
               showProgressControls={false}
               forceAnonymousMode

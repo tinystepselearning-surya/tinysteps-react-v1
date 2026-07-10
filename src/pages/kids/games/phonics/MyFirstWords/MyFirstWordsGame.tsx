@@ -11,14 +11,25 @@ import {
 } from "./myFirstWordsData";
 import { applyKidAndMissionContext, buildMissionReturnHref } from "../missionNavigation";
 
-export default function MyFirstWordsGame() {
+type MyFirstWordsGameProps = {
+  forceAnonymousMode?: boolean;
+  missionReturnHrefOverride?: string;
+  missionBackLabel?: string;
+};
+
+export default function MyFirstWordsGame({
+  forceAnonymousMode = false,
+  missionReturnHrefOverride,
+  missionBackLabel = "← Back to Mission",
+}: MyFirstWordsGameProps) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   const kidId =
-    searchParams.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
-  const missionReturnHref = buildMissionReturnHref(searchParams, kidId);
+    forceAnonymousMode ? "" : searchParams.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
+  const missionReturnHref =
+    missionReturnHrefOverride ?? buildMissionReturnHref(searchParams, kidId);
 
   type Mode = "slide_join" | "tap_word";
 
@@ -175,6 +186,7 @@ export default function MyFirstWordsGame() {
               groupId={activeGroup.id}
               group={activeGroup}
               onBackToGroups={onBackToGroups}
+              forceAnonymousMode={forceAnonymousMode}
             />
           ) : (
             <TapWordGame
@@ -182,6 +194,7 @@ export default function MyFirstWordsGame() {
               groupId={activeGroup.id}
               group={activeGroup}
               onBackToGroups={onBackToGroups}
+              forceAnonymousMode={forceAnonymousMode}
               onNextGroup={() => {
                 const ids = VOWEL_GROUPS.map((g) => g.id);
                 const i = Math.max(0, ids.indexOf(activeGroup.id));
@@ -198,7 +211,7 @@ export default function MyFirstWordsGame() {
             onClick={goBack}
             className="absolute top-6 right-6 px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold rounded-full shadow-lg hover:bg-white/20 hover:scale-105 transition-all duration-200 z-10"
           >
-            ← Back to Mission
+            {missionBackLabel}
           </button>
 
           <div className="w-full max-w-6xl mx-auto text-center mb-8 relative z-10">

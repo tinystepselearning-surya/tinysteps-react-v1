@@ -13,6 +13,19 @@ export type MainConcernOption =
   | 'Confidence for speaking / presentations'
   | 'Not sure where to start';
 
+export const PUBLIC_MAIN_CONCERN_OPTIONS: MainConcernOption[] = [
+  'Starting to read words after learning ABC/sounds',
+  'Blending sounds to read words',
+  'Reading speed and word accuracy',
+  'Spelling while reading and writing',
+  'Understanding what they read',
+  'Grammar while speaking or writing',
+  'Answering in full sentences',
+  'Speaking English with confidence',
+  'Confidence for speaking / presentations',
+  'Not sure where to start',
+];
+
 export type PublicAssessmentFormState = {
   parentName: string;
   childName: string;

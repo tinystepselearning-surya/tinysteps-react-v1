@@ -55,7 +55,7 @@ export default function FreeBalloonPopGamePage() {
 
       <div className="mb-3 flex justify-end">
         <Link
-          to="/free-games-for-kids"
+          to="/free-english-games-for-kids"
           className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:border-slate-400"
         >
           ← Back to Free Games
@@ -78,7 +78,7 @@ export default function FreeBalloonPopGamePage() {
       <section id="play" className="mt-5 rounded-3xl border border-slate-200 bg-white p-2 shadow-sm">
         <KidsBalloonPop
           baseRoute={PAGE_PATH}
-          missionReturnHrefOverride="/free-games-for-kids"
+          missionReturnHrefOverride="/free-english-games-for-kids"
           missionBackLabel="← Back to Free Games"
           hideNoKidNotice
           publicMode

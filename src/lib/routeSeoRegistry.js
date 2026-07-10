@@ -351,6 +351,111 @@ export const ROUTE_SEO_REGISTRY = {
     canonicalPath: '/free-games-for-kids',
     ogType: 'website',
   },
+  '/free-english-games-for-kids': {
+    title: 'Free English Games for Kids | Phonics, Reading, Grammar & Speaking',
+    description:
+      'Play free English learning games for kids from Tiny Steps. Practise phonics, letter sounds, reading, grammar, sentence building and speaking confidence. No login required.',
+    canonicalPath: '/free-english-games-for-kids',
+    ogType: 'website',
+  },
+  '/free-phonics-games-for-kids': {
+    title: 'Free Phonics Games for Kids | Letter Sounds, Tracing & Listening',
+    description:
+      'Play free phonics games for kids from Tiny Steps. Practise letter tracing, letter sounds, sound listening and early reading skills online. No login required.',
+    canonicalPath: '/free-phonics-games-for-kids',
+    ogType: 'website',
+  },
+  '/free-letter-sound-games-for-kids': {
+    title: 'Free Letter Sound Games for Kids | ABC Phonics Practice',
+    description:
+      'Help children practise alphabet sounds, phonics listening and early letter recognition with free online letter sound games from Tiny Steps.',
+    canonicalPath: '/free-letter-sound-games-for-kids',
+    ogType: 'website',
+  },
+  '/free-word-building-games-for-kids': {
+    title: 'Free Word Building Games for Kids | CVC & Blending Practice',
+    description:
+      'Play free word building games for kids. Practise blending sounds, building simple words and improving early reading confidence online.',
+    canonicalPath: '/free-word-building-games-for-kids',
+    ogType: 'website',
+  },
+  '/free-sentence-building-games-for-kids': {
+    title: 'Free Sentence Building Games for Kids | English Practice Online',
+    description:
+      'Help children build simple English sentences with free online sentence games from Tiny Steps. Practise grammar, word order and clear expression.',
+    canonicalPath: '/free-sentence-building-games-for-kids',
+    ogType: 'website',
+  },
+  '/free-reading-games-for-kids': {
+    title: 'Free Reading Games for Kids | Online Reading Practice',
+    description:
+      'Play free reading games for kids. Build fluency, word recognition and reading confidence with child-friendly English practice from Tiny Steps.',
+    canonicalPath: '/free-reading-games-for-kids',
+    ogType: 'website',
+  },
+  '/free-grammar-games-for-kids': {
+    title: 'Free Grammar Games for Kids | English Grammar Practice Online',
+    description:
+      'Practise English grammar with free online games for kids. Learn sentences, grammar rules and language skills through child-friendly activities.',
+    canonicalPath: '/free-grammar-games-for-kids',
+    ogType: 'website',
+  },
+  '/free-speaking-games-for-kids': {
+    title: 'Free Speaking Games for Kids | Confidence & Communication Practice',
+    description:
+      'Explore free speaking games for kids from Tiny Steps. Help children practise clear speaking, confidence, expression and communication skills.',
+    canonicalPath: '/free-speaking-games-for-kids',
+    ogType: 'website',
+  },
+  '/free-letter-sounds-game-for-kids': {
+    title: 'Free Letter Sounds Game for Kids | ABC Phonics Practice',
+    description:
+      'Play a free letter sounds game for kids from Tiny Steps. Help children match alphabet letters with phonics sounds through child-friendly online practice.',
+    canonicalPath: '/free-letter-sounds-game-for-kids',
+    ogType: 'website',
+  },
+  '/free-sound-listening-game-for-kids': {
+    title: 'Free Sound Listening Game for Kids | Phonics Listening Practice',
+    description:
+      'Help children listen carefully and identify phonics sounds with a free online sound listening game from Tiny Steps. No login required.',
+    canonicalPath: '/free-sound-listening-game-for-kids',
+    ogType: 'website',
+  },
+  '/free-word-building-game-for-kids': {
+    title: 'Free Word Building Game for Kids | CVC & Blending Practice',
+    description:
+      'Play a free word building game for kids. Practise blending sounds, building simple words and improving early reading confidence online.',
+    canonicalPath: '/free-word-building-game-for-kids',
+    ogType: 'website',
+  },
+  '/free-sentence-making-game-for-kids': {
+    title: 'Free Sentence Making Game for Kids | English Sentence Practice',
+    description:
+      'Help children build simple English sentences with a free sentence making game from Tiny Steps. Practise word order, grammar and expression online.',
+    canonicalPath: '/free-sentence-making-game-for-kids',
+    ogType: 'website',
+  },
+  '/free-reading-fluency-game-for-kids': {
+    title: 'Free Reading Fluency Game for Kids | Online Reading Practice',
+    description:
+      'Play a free reading fluency game for kids. Build word recognition, smooth reading and English confidence through child-friendly practice.',
+    canonicalPath: '/free-reading-fluency-game-for-kids',
+    ogType: 'website',
+  },
+  '/free-grammar-practice-game-for-kids': {
+    title: 'Free Grammar Practice Game for Kids | English Grammar Online',
+    description:
+      'Practise English grammar with a free online grammar game for kids from Tiny Steps. Build sentence sense, grammar awareness and confidence.',
+    canonicalPath: '/free-grammar-practice-game-for-kids',
+    ogType: 'website',
+  },
+  '/free-speaking-practice-game-for-kids': {
+    title: 'Free Speaking Practice Game for Kids | Confidence & Communication',
+    description:
+      'Explore a free speaking practice game for kids. Help children build clear speaking, confidence, expression and communication skills.',
+    canonicalPath: '/free-speaking-practice-game-for-kids',
+    ogType: 'website',
+  },
   '/free-balloon-pop-phonics-game-for-kids': {
     title: 'Free Balloon Pop Phonics Game for Kids | Tiny Steps',
     description:
