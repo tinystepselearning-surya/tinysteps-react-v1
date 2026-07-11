@@ -1,4 +1,5 @@
 import type { MouseEvent, ReactNode, RefObject } from "react";
+import { Link } from "react-router-dom";
 import TinyStepsBrand from "../common/TinyStepsBrand";
 import MagicBento from "../common/MagicBento";
 import type { EnglishExcellenceStage, EnglishExcellenceTile } from "../../lib/englishExcellenceMission";
@@ -41,7 +42,8 @@ type EnglishExcellenceHubProps = {
   cards: EnglishExcellenceHubCard[];
   selectedStageIndex: number;
   onSelectStage: (idx: number) => void;
-  onTileClick: (stageNumber: number, tile: EnglishExcellenceTile) => void;
+  onTileClick?: (stageNumber: number, tile: EnglishExcellenceTile) => void;
+  linkPlayableTiles?: boolean;
   onToggleComplete?: (
     event: MouseEvent<HTMLButtonElement>,
     stageNumber: number,
@@ -63,6 +65,7 @@ export default function EnglishExcellenceHub({
   selectedStageIndex,
   onSelectStage,
   onTileClick,
+  linkPlayableTiles = false,
   onToggleComplete,
   onPulseEnd,
   tabsRef,
@@ -230,11 +233,13 @@ export default function EnglishExcellenceHub({
                 disableAnimations={false}
               >
                 <div className="tiles-grid">
-                  {cards.map((card, idx) => (
-                    <div
+                  {cards.map((card, idx) => {
+                    const linkRoute = linkPlayableTiles && !card.locked ? card.tile.route : undefined;
+                    return (
+                    <article
                       key={card.tile.gameId}
-                      onClick={() => onTileClick(currentStage.stageNumber, card.tile)}
-                    className={`magic-bento-card tile rounded-lg p-3 flex flex-col gap-2 ${card.locked ? "locked" : "cursor-pointer"} ${
+                      onClick={linkRoute ? undefined : () => onTileClick?.(currentStage.stageNumber, card.tile)}
+                      className={`magic-bento-card tile relative rounded-lg p-3 flex flex-col gap-2 ${card.locked ? "locked" : "cursor-pointer"} ${
                         card.pulse ? "pulse" : ""
                       }`}
                       style={{
@@ -247,6 +252,15 @@ export default function EnglishExcellenceHub({
                         if (card.pulse) onPulseEnd?.();
                       }}
                     >
+                      {linkRoute ? (
+                        <Link
+                          to={linkRoute}
+                          className="absolute inset-0 z-10 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                          aria-label={`Play ${card.tile.gameTitle ?? card.tile.title}`}
+                        >
+                          <span className="sr-only">Play {card.tile.gameTitle ?? card.tile.title}</span>
+                        </Link>
+                      ) : null}
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300/20 bg-slate-900/60 text-lg shadow-inner">
                           {card.icon}
@@ -263,9 +277,13 @@ export default function EnglishExcellenceHub({
                           {!card.locked && onToggleComplete ? (
                             <button
                               type="button"
-                              onClick={(event) => onToggleComplete(event, currentStage.stageNumber, card.tile)}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                event.preventDefault();
+                                onToggleComplete(event, currentStage.stageNumber, card.tile);
+                              }}
                               className={`
-                                w-8 h-8 rounded-full border flex items-center justify-center text-sm font-black
+                                relative z-20 w-8 h-8 rounded-full border flex items-center justify-center text-sm font-black
                                 ${
                                   card.isCompleted
                                     ? "bg-emerald-500/15 border-emerald-400/40 text-emerald-200"
@@ -302,8 +320,9 @@ export default function EnglishExcellenceHub({
                           {card.ctaText}
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    </article>
+                    );
+                  })}
                 </div>
               </MagicBento>
             </div>

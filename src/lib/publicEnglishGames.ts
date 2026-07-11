@@ -74,7 +74,7 @@ export const PUBLIC_TILE_ROUTES: Record<string, PublicTileRoute> = {
     footer: "Play free in browser",
   },
   "eem-g00b-letter-tracing-sounds": {
-    route: "/free-letter-tracing-with-sounds-game-for-kids",
+    route: "/letter-tracing-with-sounds-game",
     enabled: true,
     footer: "Play free in browser",
   },
@@ -84,7 +84,7 @@ export const PUBLIC_TILE_ROUTES: Record<string, PublicTileRoute> = {
     footer: "Play free in browser",
   },
   "eem-g04b-balloon-pop": {
-    route: "/free-phonics-balloon-pop-game-for-kids",
+    route: "/free-balloon-pop-phonics-game-for-kids",
     enabled: true,
     footer: "Play free in browser",
   },
@@ -314,6 +314,13 @@ export const PUBLIC_ENGLISH_GAMES_CATEGORY_CONFIGS: PublicEnglishGamesCategoryCo
 export const PUBLIC_ENGLISH_GAMES_CATEGORY_ROUTES = PUBLIC_ENGLISH_GAMES_CATEGORY_CONFIGS.map(
   (config) => config.route,
 );
+
+export type PublicEnglishGameDirectoryEntry = {
+  route: string;
+  title: string;
+  description: string;
+  stage: string;
+};
 
 export const PUBLIC_ENGLISH_GAME_LANDING_CONFIGS: PublicEnglishGameLandingConfig[] = [
   {
@@ -648,6 +655,29 @@ export const PUBLIC_ENGLISH_GAME_LANDING_CONFIGS: PublicEnglishGameLandingConfig
 export const PUBLIC_ENGLISH_GAME_LANDING_ROUTES = PUBLIC_ENGLISH_GAME_LANDING_CONFIGS.map(
   (config) => config.publicPath,
 );
+
+export function getPublicEnglishGameDirectoryEntries(): PublicEnglishGameDirectoryEntry[] {
+  const entriesByRoute = new Map<string, PublicEnglishGameDirectoryEntry>();
+
+  for (const stage of ENGLISH_EXCELLENCE_STAGES) {
+    for (const tile of stage.tiles) {
+      const publicRoute = PUBLIC_TILE_ROUTES[tile.gameId];
+      if (!publicRoute?.enabled || !publicRoute.route || entriesByRoute.has(publicRoute.route)) continue;
+
+      const landing = PUBLIC_ENGLISH_GAME_LANDING_CONFIGS.find(
+        (config) => config.publicPath === publicRoute.route && config.isPublicPageReady && config.isPublicPlayReady,
+      );
+      entriesByRoute.set(publicRoute.route, {
+        route: publicRoute.route,
+        title: landing?.h1 || `Free ${tile.gameTitle} Game for Kids`,
+        description: landing?.seoDescription || tile.desc,
+        stage: stage.stageTitle,
+      });
+    }
+  }
+
+  return [...entriesByRoute.values()];
+}
 
 export function parsePublicProgress(raw: string | null): PublicProgressStore | null {
   if (!raw) return null;

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Meta from "../../components/common/Meta";
 import EnglishExcellenceHub, {
   type EnglishExcellenceHubCard,
@@ -11,9 +11,11 @@ import {
 } from "../../lib/englishExcellenceMission";
 import {
   PUBLIC_ENGLISH_GAMES_HUB_PATH,
+  PUBLIC_ENGLISH_GAMES_CATEGORY_CONFIGS,
   PUBLIC_PROGRESS_STORAGE_KEY,
   PUBLIC_TILE_ROUTES,
   createEmptyPublicProgress,
+  getPublicEnglishGameDirectoryEntries,
   parsePublicProgress,
 } from "../../lib/publicEnglishGames";
 import { applySeo } from "../../lib/seo";
@@ -32,7 +34,6 @@ const breadcrumbSchema = {
 };
 
 export default function FreeEnglishGamesHubPage() {
-  const navigate = useNavigate();
   const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
   const [selectedStageIndex, setSelectedStageIndex] = useState(0);
   const [progress, setProgress] = useState(() => {
@@ -159,6 +160,8 @@ export default function FreeEnglishGamesHubPage() {
     };
   });
 
+  const gameDirectory = useMemo(() => getPublicEnglishGameDirectoryEntries(), []);
+
   return (
     <div className="min-h-screen bg-[#05010f]">
       <Meta
@@ -182,11 +185,7 @@ export default function FreeEnglishGamesHubPage() {
         cards={cards}
         selectedStageIndex={selectedStageIndex}
         onSelectStage={setSelectedStageIndex}
-        onTileClick={(_, tile) => {
-          const route = PUBLIC_TILE_ROUTES[tile.gameId];
-          if (!route?.route) return;
-          navigate(route.route);
-        }}
+        linkPlayableTiles
         onToggleComplete={(event, _stageNumber, tile) => {
           event.stopPropagation();
           event.preventDefault();
@@ -194,6 +193,53 @@ export default function FreeEnglishGamesHubPage() {
         }}
         tabsRef={tabsRef}
       />
+
+      <div className="mx-auto w-full max-w-7xl space-y-4 px-3 pb-10 sm:px-5">
+        <section
+          aria-labelledby="browse-games-by-skill"
+          className="rounded-lg border border-violet-300/20 bg-slate-950/60 p-4 backdrop-blur-md"
+        >
+          <h2 id="browse-games-by-skill" className="text-xl font-black text-white sm:text-2xl">
+            Browse English Games by Skill
+          </h2>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {PUBLIC_ENGLISH_GAMES_CATEGORY_CONFIGS.map((category) => (
+              <article key={category.route} className="rounded-lg border border-violet-300/15 bg-slate-900/55 p-4">
+                <h3 className="text-base font-extrabold text-cyan-100">
+                  <Link className="hover:text-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300" to={category.route}>
+                    {category.h1}
+                  </Link>
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-slate-300">{category.intro}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section
+          aria-labelledby="play-free-english-games"
+          className="rounded-lg border border-violet-300/20 bg-slate-950/60 p-4 backdrop-blur-md"
+        >
+          <h2 id="play-free-english-games" className="text-xl font-black text-white sm:text-2xl">
+            Play Free English Games
+          </h2>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {gameDirectory.map((game) => (
+              <article key={game.route} className="rounded-lg border border-violet-300/15 bg-slate-900/55 p-4">
+                <h3 className="text-base font-extrabold text-white">{game.title}</h3>
+                <p className="mt-1 text-xs font-bold uppercase tracking-wider text-violet-200">{game.stage}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-300">{game.description}</p>
+                <Link
+                  className="mt-3 inline-flex rounded-lg border border-cyan-300/40 bg-cyan-400/10 px-3 py-2 text-sm font-extrabold text-cyan-100 hover:bg-cyan-400/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-300"
+                  to={game.route}
+                >
+                  Play {game.title}
+                </Link>
+              </article>
+            ))}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
