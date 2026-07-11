@@ -31,6 +31,7 @@ export const STATIC_MARKETING_ROUTES = [
   '/free-letter-sounds-game-for-kids',
   '/free-sound-listening-game-for-kids',
   '/free-word-building-game-for-kids',
+  '/free-spelling-game-for-kids',
   '/free-sentence-making-game-for-kids',
   '/free-reading-fluency-game-for-kids',
   '/free-grammar-practice-game-for-kids',

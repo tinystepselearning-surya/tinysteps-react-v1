@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import FreeEnglishGamesCategoryPage from "../../../pages/public/FreeEnglishGamesCategoryPage";
@@ -104,6 +104,14 @@ describe("FreeEnglishGamesCategoryPage", () => {
     expect(screen.getAllByText("Play Free").length).toBeGreaterThan(0);
 
     wordBuildingView.unmount();
+    const spellingView = renderRoute("/free-word-building-games-for-kids");
+
+    expect(screen.getAllByText("Spelling Practice").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Play Free").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("FREE TO PLAY").length).toBeGreaterThan(0);
+    expect(categoryMocks.recordLevelResultMock).not.toHaveBeenCalled();
+    spellingView.unmount();
+
     const sentenceMakingView = renderRoute("/free-sentence-building-games-for-kids");
 
     expect(screen.getAllByText("Sentence Builder").length).toBeGreaterThan(0);
@@ -123,7 +131,30 @@ describe("FreeEnglishGamesCategoryPage", () => {
 
     renderRoute("/free-reading-games-for-kids");
 
-    expect(screen.getAllByText(/coming soon/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Fluent Reading").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Play Free").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("FREE TO PLAY").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/ready soon|coming soon/i).length).toBeGreaterThan(0);
+    expect(categoryMocks.recordLevelResultMock).not.toHaveBeenCalled();
+  });
+
+  it("does not allow non-playable public games to be manually marked completed", () => {
+    localStorage.setItem(
+      "ts_public_game_progress_v1",
+      JSON.stringify({ v: 1, completedTileIds: ["eem-g19-comprehension-questions"] }),
+    );
+
+    renderRoute("/free-reading-games-for-kids");
+
+    const disabledMarkButtons = screen.getAllByRole("button", { name: /mark .* as completed/i })
+      .filter((button) => button.hasAttribute("disabled"));
+
+    expect(disabledMarkButtons.length).toBeGreaterThan(0);
+    expect(screen.queryByText("PLAYED HERE")).not.toBeInTheDocument();
+
+    fireEvent.click(disabledMarkButtons[0]);
+
+    expect(screen.queryByRole("button", { name: /set .* to in progress/i })).not.toBeInTheDocument();
     expect(categoryMocks.recordLevelResultMock).not.toHaveBeenCalled();
   });
 });

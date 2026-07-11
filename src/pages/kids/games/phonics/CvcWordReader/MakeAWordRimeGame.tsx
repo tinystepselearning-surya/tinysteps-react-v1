@@ -19,6 +19,30 @@ type FamilyConfig = {
 
 type Tile = { id: string; ch: string };
 
+type PublicSpellingMode = "build" | "family" | "missing" | "choice";
+
+type PublicSpellingChallenge = {
+  id: string;
+  mode: PublicSpellingMode;
+  word: string;
+  clue: string;
+  img?: string;
+  tiles?: string[];
+  rime?: string;
+  onset?: string;
+  pattern?: string;
+  choices?: string[];
+  review?: boolean;
+};
+
+type PublicSpellingLevel = {
+  id: string;
+  title: string;
+  shortTitle: string;
+  instruction: string;
+  challenges: PublicSpellingChallenge[];
+};
+
 type ConfettiPiece = {
   id: string;
   leftPct: number;
@@ -346,6 +370,10 @@ const EMOJI: Record<string, string> = {
   nut: "🥜",
   cut: "✂️",
   hut: "🛖",
+  elephant: "🐘",
+  fish: "🐟",
+  tiger: "🐯",
+  queen: "👑",
 };
 
 // NOTE: TTS consonant sounds are imperfect. Replace with recorded phoneme audio when available.
@@ -383,6 +411,59 @@ const CONFETTI_COLORS = [
 ];
 
 const CHEERS = ["YAY! 🎉", "GREAT JOB! 🌟", "WOOHOO! 🥳", "SUPER! ⭐", "NICE! 😄"];
+
+const PUBLIC_IMAGE_BASE = "/games/maw";
+
+const PUBLIC_SPELLING_LEVELS: PublicSpellingLevel[] = [
+  {
+    id: "build-it",
+    title: "Build It",
+    shortTitle: "Build",
+    instruction: "Look at the picture. Tap the letters in order to build the word.",
+    challenges: [
+      { id: "build-cat", mode: "build", word: "cat", clue: "A small pet that says meow.", img: `${PUBLIC_IMAGE_BASE}/cat.png`, tiles: ["t", "c", "a"] },
+      { id: "build-dog", mode: "build", word: "dog", clue: "A friendly pet that can bark.", img: `${PUBLIC_IMAGE_BASE}/dog.png`, tiles: ["g", "d", "o"] },
+      { id: "build-sun", mode: "build", word: "sun", clue: "It shines in the daytime sky.", img: `${PUBLIC_IMAGE_BASE}/sun.png`, tiles: ["n", "s", "u"] },
+      { id: "build-pig", mode: "build", word: "pig", clue: "A farm animal with a curly tail.", img: `${PUBLIC_IMAGE_BASE}/pig.png`, tiles: ["i", "g", "p"] },
+    ],
+  },
+  {
+    id: "word-families",
+    title: "Word Families",
+    shortTitle: "Families",
+    instruction: "Use the picture and ending. Choose the missing first letter.",
+    challenges: [
+      { id: "family-cat", mode: "family", word: "cat", clue: "This animal is a pet.", img: `${PUBLIC_IMAGE_BASE}/cat.png`, rime: "at", onset: "c", tiles: ["b", "c", "h", "m"] },
+      { id: "family-map", mode: "family", word: "map", clue: "It helps you find places.", img: `${PUBLIC_IMAGE_BASE}/map.png`, rime: "ap", onset: "m", tiles: ["c", "n", "m", "t"] },
+      { id: "family-dog", mode: "family", word: "dog", clue: "This animal can bark.", img: `${PUBLIC_IMAGE_BASE}/dog.png`, rime: "og", onset: "d", tiles: ["l", "d", "f", "h"] },
+      { id: "family-sun", mode: "family", word: "sun", clue: "It gives light in the day.", img: `${PUBLIC_IMAGE_BASE}/sun.png`, rime: "un", onset: "s", tiles: ["b", "r", "s", "n"] },
+    ],
+  },
+  {
+    id: "complete-it",
+    title: "Complete It",
+    shortTitle: "Complete",
+    instruction: "Read the clue. Choose the missing letter to complete the word.",
+    challenges: [
+      { id: "missing-cat", mode: "missing", word: "cat", clue: "A small pet.", img: `${PUBLIC_IMAGE_BASE}/cat.png`, pattern: "c _ t", onset: "a", tiles: ["a", "o", "u", "e"] },
+      { id: "missing-sun", mode: "missing", word: "sun", clue: "It shines in the sky.", img: `${PUBLIC_IMAGE_BASE}/sun.png`, pattern: "s _ n", onset: "u", tiles: ["a", "u", "i", "e"] },
+      { id: "missing-pig", mode: "missing", word: "pig", clue: "A farm animal.", img: `${PUBLIC_IMAGE_BASE}/pig.png`, pattern: "p _ g", onset: "i", tiles: ["i", "a", "o", "u"] },
+      { id: "missing-hen", mode: "missing", word: "hen", clue: "A bird that can lay eggs.", pattern: "h _ n", onset: "e", tiles: ["a", "e", "i", "o"] },
+    ],
+  },
+  {
+    id: "choose-it",
+    title: "Choose It",
+    shortTitle: "Choose",
+    instruction: "Look at the clue. Choose the correctly spelled word.",
+    challenges: [
+      { id: "choose-fish", mode: "choice", word: "fish", clue: "This animal swims in water.", img: `${PUBLIC_IMAGE_BASE}/fish.png`, choices: ["fesh", "fish", "fissh"] },
+      { id: "choose-elephant", mode: "choice", word: "elephant", clue: "A very big animal with a long trunk.", img: `${PUBLIC_IMAGE_BASE}/elephant.png`, choices: ["elefant", "elephant", "eliphant"] },
+      { id: "choose-tiger", mode: "choice", word: "tiger", clue: "A big striped wild cat.", img: `${PUBLIC_IMAGE_BASE}/tiger.png`, choices: ["tiger", "tigar", "tieger"] },
+      { id: "choose-queen", mode: "choice", word: "queen", clue: "A woman who rules a kingdom.", img: `${PUBLIC_IMAGE_BASE}/queen.png`, choices: ["qween", "queen", "quean"] },
+    ],
+  },
+];
 
 function safeRequestFullscreen(el: HTMLElement) {
   const anyEl = el as any;
@@ -463,11 +544,487 @@ function clamp(n: number, lo: number, hi: number) {
   return Math.max(lo, Math.min(hi, n));
 }
 
-export default function MakeAWordRimeGame() {
+type MakeAWordRimeGameProps = {
+  forceAnonymousMode?: boolean;
+  missionReturnHrefOverride?: string;
+  missionBackLabel?: string;
+  forcedFamilyId?: string;
+  activityContextLabelOverride?: string;
+  disableAudio?: boolean;
+  publicSpellingAdventure?: boolean;
+};
+
+type PublicSpellingAdventureProps = {
+  missionReturnHref: string;
+  missionBackLabel: string;
+  activityContextLabel?: string;
+};
+
+function PublicSpellingAdventure({
+  missionReturnHref,
+  missionBackLabel,
+  activityContextLabel,
+}: PublicSpellingAdventureProps) {
+  const navigate = useNavigate();
+  const [screen, setScreen] = useState<"intro" | "play" | "complete">("intro");
+  const [levelIndex, setLevelIndex] = useState(0);
+  const [queue, setQueue] = useState<PublicSpellingChallenge[]>([]);
+  const [builtLetters, setBuiltLetters] = useState<string[]>([]);
+  const [feedback, setFeedback] = useState<"idle" | "correct" | "wrong">("idle");
+  const [isAdvancing, setIsAdvancing] = useState(false);
+  const [currentWrongCount, setCurrentWrongCount] = useState(0);
+  const [imgOk, setImgOk] = useState(true);
+  const [correctChallenges, setCorrectChallenges] = useState(0);
+  const [attempts, setAttempts] = useState(0);
+  const [completedChallenges, setCompletedChallenges] = useState(0);
+
+  const currentLevel = PUBLIC_SPELLING_LEVELS[levelIndex] ?? PUBLIC_SPELLING_LEVELS[0];
+  const current = queue[0] ?? currentLevel.challenges[0];
+  const totalChallenges = PUBLIC_SPELLING_LEVELS.reduce((sum, level) => sum + level.challenges.length, 0);
+  const completedBeforeLevel = PUBLIC_SPELLING_LEVELS
+    .slice(0, levelIndex)
+    .reduce((sum, level) => sum + level.challenges.length, 0);
+  const displayedProgress = Math.min(totalChallenges, completedChallenges + (feedback === "correct" ? 1 : 0));
+  const accuracy = attempts > 0 ? Math.round((correctChallenges / attempts) * 100) : 100;
+
+  useEffect(() => {
+    setImgOk(true);
+    setBuiltLetters([]);
+    setFeedback("idle");
+    setCurrentWrongCount(0);
+  }, [current?.id]);
+
+  const goBack = () => {
+    navigate(missionReturnHref, { replace: true });
+  };
+
+  const startLevel = (index: number) => {
+    const safeIndex = Math.max(0, Math.min(index, PUBLIC_SPELLING_LEVELS.length - 1));
+    const level = PUBLIC_SPELLING_LEVELS[safeIndex];
+    setLevelIndex(safeIndex);
+    setQueue(level.challenges);
+    setBuiltLetters([]);
+    setFeedback("idle");
+    setIsAdvancing(false);
+    setCurrentWrongCount(0);
+    setScreen("play");
+  };
+
+  const startJourney = () => {
+    setCorrectChallenges(0);
+    setAttempts(0);
+    setCompletedChallenges(0);
+    startLevel(0);
+  };
+
+  const replayJourney = () => {
+    setCorrectChallenges(0);
+    setAttempts(0);
+    setCompletedChallenges(0);
+    startLevel(0);
+  };
+
+  const goToNextChallenge = (hadError: boolean) => {
+    window.setTimeout(() => {
+      setQueue((prev) => {
+        if (prev.length === 0) return prev;
+        const [done, ...rest] = prev;
+        let nextQueue = rest;
+        if (hadError && !done.review) {
+          const reviewChallenge = { ...done, id: `${done.id}-review`, review: true };
+          const insertAt = Math.min(2, nextQueue.length);
+          nextQueue = [
+            ...nextQueue.slice(0, insertAt),
+            reviewChallenge,
+            ...nextQueue.slice(insertAt),
+          ];
+        }
+        if (nextQueue.length > 0) return nextQueue;
+
+        const nextLevelIndex = levelIndex + 1;
+        if (nextLevelIndex < PUBLIC_SPELLING_LEVELS.length) {
+          const nextLevel = PUBLIC_SPELLING_LEVELS[nextLevelIndex];
+          setLevelIndex(nextLevelIndex);
+          return nextLevel.challenges;
+        }
+
+        setScreen("complete");
+        return [];
+      });
+      setBuiltLetters([]);
+      setFeedback("idle");
+      setIsAdvancing(false);
+      setCurrentWrongCount(0);
+    }, 900);
+  };
+
+  const markCorrect = () => {
+    if (isAdvancing) return;
+    const hadError = currentWrongCount > 0;
+    setAttempts((value) => value + 1);
+    setCompletedChallenges((value) => value + 1);
+    if (!hadError) setCorrectChallenges((value) => value + 1);
+    setFeedback("correct");
+    setIsAdvancing(true);
+    goToNextChallenge(hadError);
+  };
+
+  const markWrong = () => {
+    if (isAdvancing) return;
+    setAttempts((value) => value + 1);
+    setCurrentWrongCount((value) => value + 1);
+    setFeedback("wrong");
+    window.setTimeout(() => setFeedback("idle"), 520);
+  };
+
+  const handleBuildLetter = (letter: string) => {
+    if (!current || current.mode !== "build" || isAdvancing) return;
+    const expected = current.word[builtLetters.length];
+    if (letter !== expected) {
+      markWrong();
+      return;
+    }
+    const nextLetters = [...builtLetters, letter];
+    setBuiltLetters(nextLetters);
+    if (nextLetters.join("") === current.word) {
+      markCorrect();
+    }
+  };
+
+  const handleOption = (value: string) => {
+    if (!current || isAdvancing) return;
+    const expected =
+      current.mode === "choice"
+        ? current.word
+        : current.mode === "family" || current.mode === "missing"
+          ? current.onset
+          : "";
+    if (value === expected) markCorrect();
+    else markWrong();
+  };
+
+  const renderPicture = (challenge: PublicSpellingChallenge) => (
+    <div className="flex h-28 w-28 items-center justify-center rounded-3xl border border-white/35 bg-white/25 shadow-inner sm:h-36 sm:w-36">
+      {challenge.img && imgOk ? (
+        <img
+          src={challenge.img}
+          alt={challenge.word}
+          draggable={false}
+          className="h-24 w-24 object-contain sm:h-32 sm:w-32"
+          onError={() => setImgOk(false)}
+        />
+      ) : (
+        <div className="text-6xl sm:text-7xl" aria-label={challenge.word}>
+          {EMOJI[challenge.word] ?? "⭐"}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderBuildChallenge = (challenge: PublicSpellingChallenge) => {
+    const letters = challenge.word.split("");
+    return (
+      <>
+        <div className="flex justify-center gap-2" aria-label={`Build ${challenge.word}`}>
+          {letters.map((letter, index) => (
+            <div
+              key={`${challenge.id}-slot-${index}`}
+              className={[
+                "flex h-14 w-14 items-center justify-center rounded-2xl border-2 text-3xl font-black sm:h-16 sm:w-16",
+                builtLetters[index]
+                  ? "border-emerald-300 bg-emerald-100 text-emerald-900"
+                  : "border-sky-300 bg-white/85 text-slate-400",
+              ].join(" ")}
+            >
+              {builtLetters[index] ?? ""}
+            </div>
+          ))}
+        </div>
+        <div className="mt-5 flex flex-wrap justify-center gap-3">
+          {(challenge.tiles ?? letters).map((letter, index) => (
+            <button
+              key={`${challenge.id}-tile-${letter}-${index}`}
+              type="button"
+              disabled={isAdvancing}
+              onClick={() => handleBuildLetter(letter)}
+              className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-sky-300 bg-sky-100 text-4xl font-black text-slate-950 shadow-sm transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-yellow-300 disabled:opacity-55"
+              aria-label={`Letter ${letter}`}
+            >
+              {letter}
+            </button>
+          ))}
+        </div>
+      </>
+    );
+  };
+
+  const renderFamilyChallenge = (challenge: PublicSpellingChallenge) => (
+    <>
+      <div className="flex items-center justify-center gap-3">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-sky-300 bg-white/85 text-3xl font-black text-slate-400">
+          ?
+        </div>
+        <div className="text-6xl font-black text-slate-950">{challenge.rime}</div>
+      </div>
+      <div className="mt-5 flex flex-wrap justify-center gap-3">
+        {(challenge.tiles ?? []).map((letter) => (
+          <button
+            key={`${challenge.id}-${letter}`}
+            type="button"
+            disabled={isAdvancing}
+            onClick={() => handleOption(letter)}
+            className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-sky-300 bg-sky-100 text-4xl font-black text-slate-950 shadow-sm transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-yellow-300 disabled:opacity-55"
+            aria-label={`Letter ${letter}`}
+          >
+            {letter}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+
+  const renderMissingChallenge = (challenge: PublicSpellingChallenge) => (
+    <>
+      <div className="text-center text-6xl font-black tracking-wide text-slate-950">
+        {challenge.pattern}
+      </div>
+      <div className="mt-5 flex flex-wrap justify-center gap-3">
+        {(challenge.tiles ?? []).map((letter) => (
+          <button
+            key={`${challenge.id}-${letter}`}
+            type="button"
+            disabled={isAdvancing}
+            onClick={() => handleOption(letter)}
+            className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-sky-300 bg-sky-100 text-4xl font-black text-slate-950 shadow-sm transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-yellow-300 disabled:opacity-55"
+            aria-label={`Missing letter ${letter}`}
+          >
+            {letter}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+
+  const renderChoiceChallenge = (challenge: PublicSpellingChallenge) => (
+    <div className="grid gap-3 sm:grid-cols-3">
+      {(challenge.choices ?? []).map((choice) => (
+        <button
+          key={`${challenge.id}-${choice}`}
+          type="button"
+          disabled={isAdvancing}
+          onClick={() => handleOption(choice)}
+          className="rounded-2xl border-2 border-sky-300 bg-white px-4 py-4 text-2xl font-black text-slate-950 shadow-sm transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-yellow-300 disabled:opacity-55"
+          aria-label={`Spelling ${choice}`}
+        >
+          {choice}
+        </button>
+      ))}
+    </div>
+  );
+
+  const renderCurrentChallenge = () => {
+    if (!current) return null;
+    if (current.mode === "build") return renderBuildChallenge(current);
+    if (current.mode === "family") return renderFamilyChallenge(current);
+    if (current.mode === "missing") return renderMissingChallenge(current);
+    return renderChoiceChallenge(current);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_50%_30%,#8be8ff_0%,#64d2ff_32%,#ff6aa8_100%)] px-3 py-3 text-slate-950"
+      data-testid="public-spelling-adventure"
+    >
+      <div className="absolute left-3 top-3 right-3 z-10 flex items-center justify-between gap-2 sm:left-5 sm:right-5 sm:top-5">
+        <div className="rounded-full border border-white/40 bg-white/25 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-white shadow-sm sm:px-4">
+          {activityContextLabel ?? "Guest Play Mode • Spelling Adventure"}
+        </div>
+        <button
+          type="button"
+          onClick={goBack}
+          className="rounded-full border border-white/45 bg-white/20 px-3 py-2 text-xs font-black text-white shadow-sm transition hover:bg-white/30 focus:outline-none focus:ring-4 focus:ring-yellow-200 sm:px-4"
+        >
+          {missionBackLabel}
+        </button>
+      </div>
+
+      {screen === "intro" && (
+        <section className="mt-12 w-[min(980px,96vw)] rounded-[28px] border border-white/45 bg-white/90 p-5 shadow-2xl sm:p-7">
+          <div className="text-center">
+            <h2 className="text-3xl font-black text-slate-950 sm:text-4xl">Spelling Adventure</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-sm font-semibold leading-6 text-slate-600 sm:text-base">
+              Build words, complete missing letters, and choose the correct spelling. No audio needed.
+            </p>
+          </div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {PUBLIC_SPELLING_LEVELS.map((level, index) => (
+              <button
+                key={level.id}
+                type="button"
+                onClick={() => {
+                  setCorrectChallenges(0);
+                  setAttempts(0);
+                  setCompletedChallenges(
+                    PUBLIC_SPELLING_LEVELS
+                      .slice(0, index)
+                      .reduce((sum, item) => sum + item.challenges.length, 0),
+                  );
+                  startLevel(index);
+                }}
+                className="rounded-2xl border-2 border-sky-200 bg-sky-50 px-4 py-5 text-left shadow-sm transition hover:bg-white focus:outline-none focus:ring-4 focus:ring-yellow-300"
+              >
+                <div className="text-xs font-black uppercase tracking-[0.14em] text-sky-700">
+                  Step {index + 1}
+                </div>
+                <div className="mt-1 text-xl font-black text-slate-950">{level.title}</div>
+                <div className="mt-2 text-sm font-semibold leading-5 text-slate-600">{level.instruction}</div>
+              </button>
+            ))}
+          </div>
+          <div className="mt-6 flex justify-center">
+            <button
+              type="button"
+              onClick={startJourney}
+              className="rounded-full bg-slate-950 px-7 py-3 text-sm font-black uppercase tracking-[0.12em] text-white shadow-lg transition hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-yellow-300"
+            >
+              Start Spelling Adventure
+            </button>
+          </div>
+        </section>
+      )}
+
+      {screen === "play" && current && (
+        <main className="mt-14 flex h-[calc(100vh-4.5rem)] w-[min(1040px,96vw)] flex-col rounded-[28px] border border-white/45 bg-white/92 p-4 shadow-2xl sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-black uppercase tracking-[0.16em] text-sky-700">
+                Step {levelIndex + 1} of {PUBLIC_SPELLING_LEVELS.length}
+              </div>
+              <h2 className="text-2xl font-black text-slate-950 sm:text-3xl">{currentLevel.title}</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              {PUBLIC_SPELLING_LEVELS.map((level, index) => (
+                <button
+                  key={level.id}
+                  type="button"
+                  onClick={() => startLevel(index)}
+                  className={[
+                    "rounded-full px-3 py-2 text-xs font-black transition focus:outline-none focus:ring-4 focus:ring-yellow-300",
+                    index === levelIndex
+                      ? "bg-slate-950 text-white"
+                      : "bg-slate-100 text-slate-700 hover:bg-slate-200",
+                  ].join(" ")}
+                  aria-label={`Go to ${level.title}`}
+                >
+                  {level.shortTitle}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-200">
+            <div
+              className="h-full rounded-full bg-emerald-500 transition-all"
+              style={{ width: `${Math.max(4, (displayedProgress / totalChallenges) * 100)}%` }}
+            />
+          </div>
+          <div className="mt-2 flex justify-between text-xs font-bold text-slate-500">
+            <span>{Math.min(queue.length, currentLevel.challenges.length)} left in this step</span>
+            <span>{displayedProgress}/{totalChallenges} done</span>
+          </div>
+
+          <div className="grid flex-1 items-center gap-4 py-3 lg:grid-cols-[0.42fr_0.58fr]">
+            <section className="flex flex-col items-center justify-center rounded-3xl bg-sky-100/80 p-4 text-center">
+              {renderPicture(current)}
+              <p className="mt-4 text-lg font-black text-slate-950">{current.clue}</p>
+              {current.review ? (
+                <span className="mt-3 rounded-full bg-amber-100 px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-amber-800">
+                  Review
+                </span>
+              ) : null}
+            </section>
+
+            <section
+              className={[
+                "relative rounded-3xl border-2 p-4 text-center shadow-inner sm:p-6",
+                feedback === "wrong"
+                  ? "border-rose-300 bg-rose-50"
+                  : feedback === "correct"
+                    ? "border-emerald-300 bg-emerald-50"
+                    : "border-sky-200 bg-white",
+              ].join(" ")}
+            >
+              <p className="mb-5 text-sm font-black uppercase tracking-[0.14em] text-slate-500">
+                {currentLevel.instruction}
+              </p>
+              {renderCurrentChallenge()}
+              <div className="mt-5 min-h-[34px] text-lg font-black">
+                {feedback === "wrong" ? (
+                  <span className="text-rose-700">Try again.</span>
+                ) : feedback === "correct" ? (
+                  <span className="text-emerald-700">Correct: {current.word}</span>
+                ) : (
+                  <span className="text-slate-500">Choose carefully.</span>
+                )}
+              </div>
+            </section>
+          </div>
+        </main>
+      )}
+
+      {screen === "complete" && (
+        <section className="mt-12 w-[min(680px,94vw)] rounded-[28px] border border-white/45 bg-white/92 p-6 text-center shadow-2xl sm:p-8">
+          <h2 className="text-4xl font-black text-slate-950">Spelling Journey Complete!</h2>
+          <p className="mt-3 text-base font-semibold text-slate-600">
+            You completed the spelling journey. First-try accuracy: {accuracy}% • Turns played: {completedChallenges}
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={replayJourney}
+              className="rounded-full bg-slate-950 px-6 py-3 text-sm font-black uppercase tracking-[0.12em] text-white transition hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-yellow-300"
+            >
+              Replay
+            </button>
+            <button
+              type="button"
+              onClick={goBack}
+              className="rounded-full bg-sky-100 px-6 py-3 text-sm font-black uppercase tracking-[0.12em] text-slate-950 transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-yellow-300"
+            >
+              {missionBackLabel}
+            </button>
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
+export default function MakeAWordRimeGame({
+  forceAnonymousMode = false,
+  missionReturnHrefOverride,
+  missionBackLabel = "← Back to Mission",
+  forcedFamilyId,
+  activityContextLabelOverride,
+  disableAudio = false,
+  publicSpellingAdventure = false,
+}: MakeAWordRimeGameProps = {}) {
   const navigate = useNavigate();
   const [sp] = useSearchParams();
-  const kidId = sp.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
-  const missionReturnHref = buildMissionReturnHref(sp, kidId);
+  const kidId = forceAnonymousMode ? "" : sp.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
+  const missionReturnHref = missionReturnHrefOverride ?? buildMissionReturnHref(sp, kidId);
+  const publicNonAudioMode = forceAnonymousMode && disableAudio;
+  const resolvedForcedFamilyId = forcedFamilyId && FAMILIES[forcedFamilyId] ? forcedFamilyId : null;
+
+  if (forceAnonymousMode && disableAudio && publicSpellingAdventure) {
+    return (
+      <PublicSpellingAdventure
+        missionReturnHref={missionReturnHref}
+        missionBackLabel={missionBackLabel}
+        activityContextLabel={activityContextLabelOverride}
+      />
+    );
+  }
 
   // Celebration (shorter + calmer than before)
   const CONFETTI_MS = 2800;
@@ -475,7 +1032,7 @@ export default function MakeAWordRimeGame() {
   const [screen, setScreen] = useState<Screen>("levels");
   const [phase, setPhase] = useState<PlayPhase>("cue");
 
-  const [familyId, setFamilyId] = useState<string>("at");
+  const [familyId, setFamilyId] = useState<string>(resolvedForcedFamilyId ?? "at");
   const family = FAMILIES[familyId] ?? FAMILIES.at;
 
   const [tiles, setTiles] = useState<Tile[]>(() => makeTiles(family));
@@ -562,6 +1119,7 @@ export default function MakeAWordRimeGame() {
   const onsetSoundText = useCallback((ch: string) => LETTER_PHONEME[ch.toLowerCase()] ?? ch, []);
 
   const cancelSpeech = () => {
+    if (publicNonAudioMode) return;
     try {
       if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     } catch {
@@ -575,6 +1133,10 @@ export default function MakeAWordRimeGame() {
    */
   const speakAsyncSafe = (text: string, timeoutMs = 1400) =>
     new Promise<{ started: boolean }>((resolve) => {
+      if (publicNonAudioMode) {
+        resolve({ started: false });
+        return;
+      }
       let done = false;
       let started = false;
 
@@ -630,6 +1192,7 @@ export default function MakeAWordRimeGame() {
     });
 
   const speak = useCallback((text: string) => {
+    if (publicNonAudioMode) return;
     try {
       if (!("speechSynthesis" in window)) return;
       window.speechSynthesis.cancel();
@@ -640,7 +1203,7 @@ export default function MakeAWordRimeGame() {
     } catch {
       // ignore
     }
-  }, []);
+  }, [publicNonAudioMode]);
 
   const playCueSequenceSafe = async () => {
     const onset = current.onset.toLowerCase();
@@ -664,20 +1227,21 @@ export default function MakeAWordRimeGame() {
 
   // ---------- Celebration ----------
   useEffect(() => {
+    if (publicNonAudioMode) return;
     try {
       audioRef.current = new Audio("/confetti.mp3");
       audioRef.current.volume = 0.65;
     } catch {
       audioRef.current = null;
     }
-  }, []);
+  }, [publicNonAudioMode]);
 
   const burstConfetti = (big: boolean) => {
     if (confettiClearRef.current) window.clearTimeout(confettiClearRef.current);
     setConfetti(makeConfettiPieces(big ? 90 : 70, 2200));
 
     try {
-      if (audioRef.current) {
+      if (!publicNonAudioMode && audioRef.current) {
         audioRef.current.currentTime = 0;
         audioRef.current.play().catch(() => {});
       }
@@ -698,6 +1262,11 @@ export default function MakeAWordRimeGame() {
   useEffect(() => {
     setScreen("levels");
   }, []);
+
+  useEffect(() => {
+    if (!resolvedForcedFamilyId) return;
+    setFamilyId(resolvedForcedFamilyId);
+  }, [resolvedForcedFamilyId]);
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -797,6 +1366,24 @@ export default function MakeAWordRimeGame() {
       if (screen !== "play") return;
       if (!currentEntry) return;
 
+      if (publicNonAudioMode) {
+        setPhase("act");
+        const now = Date.now();
+        setActStartMs(now);
+        setHasActedThisRound(false);
+        setFirstActionMs(null);
+        logEvent("round_start", {
+          word: current.word,
+          onset: current.onset,
+          rime: current.rime,
+          origin: currentEntry.origin,
+          dueIn: currentEntry.dueIn,
+          repeats: currentEntry.repeats,
+          audio_disabled: true,
+        });
+        return;
+      }
+
       setPhase("cue");
 
       // small visual settle
@@ -881,15 +1468,38 @@ export default function MakeAWordRimeGame() {
     completionRecordedRef.current = false;
 
     setFamilyId(fam.id);
+    setTiles(makeTiles(fam));
+    initQueueForFamily(fam);
+    setPlaced(null);
+    setFlash("none");
+    setShowBuiltWord(false);
+    setImgOk(true);
+    setWrongCount(0);
+    setHintLevel(0);
+    setPulseCorrect(false);
+    setCheer(null);
+    setIsCelebrating(false);
+    setNearState({ isNear: false, isCorrectNear: false });
+    setDragState(null);
+    dragRef.current = null;
+    setIndependentStreak(0);
+    setPhase("cue");
+    setHasActedThisRound(false);
+    setFirstActionMs(null);
     setScreen("play");
   };
 
   const pickFamily = (id: string) => {
+    if (resolvedForcedFamilyId && id !== resolvedForcedFamilyId) return;
     if (rootRef.current) safeRequestFullscreen(rootRef.current);
     goToFamily(id);
   };
 
   const nextFamily = () => {
+    if (resolvedForcedFamilyId) {
+      repeatLevel();
+      return;
+    }
     const i = FAMILY_ORDER.indexOf(familyId as any);
     const next = FAMILY_ORDER[(i + 1) % FAMILY_ORDER.length];
     goToFamily(next);
@@ -1119,7 +1729,7 @@ export default function MakeAWordRimeGame() {
     const onsetTxt = onsetSoundText(current.onset);
 
     if (nextWrong === 1) {
-      speak(`Try again. First sound: ${onsetTxt}.`);
+      if (!publicNonAudioMode) speak(`Try again. First sound: ${onsetTxt}.`);
       window.setTimeout(() => setPhase("act"), 650);
       return;
     }
@@ -1128,7 +1738,7 @@ export default function MakeAWordRimeGame() {
       setHintLevel((h) => Math.max(h, 1));
       setPulseCorrect(true);
       window.setTimeout(() => setPulseCorrect(false), 1100);
-      speak(`Listen. First sound: ${onsetTxt}.`);
+      if (!publicNonAudioMode) speak(`Listen. First sound: ${onsetTxt}.`);
       window.setTimeout(() => setPhase("act"), 800);
       return;
     }
@@ -1137,7 +1747,7 @@ export default function MakeAWordRimeGame() {
       setHintLevel((h) => Math.max(h, 2));
       setPulseCorrect(true);
       window.setTimeout(() => setPulseCorrect(false), 1200);
-      speak(`Let's do it together. First sound: ${onsetTxt}.`);
+      if (!publicNonAudioMode) speak(`Let's do it together. First sound: ${onsetTxt}.`);
 
       // guided success: don’t rely on phase state update timing
       window.setTimeout(() => {
@@ -1150,7 +1760,7 @@ export default function MakeAWordRimeGame() {
     setHintLevel((h) => Math.max(h, 3));
     setPulseCorrect(true);
     window.setTimeout(() => setPulseCorrect(false), 1400);
-    speak(`${current.word}. First sound: ${onsetTxt}. Choose this one.`);
+    if (!publicNonAudioMode) speak(`${current.word}. First sound: ${onsetTxt}. Choose this one.`);
     window.setTimeout(() => setPhase("act"), 900);
   };
 
@@ -1317,9 +1927,11 @@ export default function MakeAWordRimeGame() {
       }}
     >
       {/* Debug badge */}
-      <div className="absolute top-4 left-4 z-[10000] px-3 py-1 rounded-full bg-black/35 text-white text-xs font-extrabold border border-white/20">
-        MAW v4 — LISTEN GATE + TAP-PLACE + SPACED REVIEW (FIXED)
-      </div>
+      {!forceAnonymousMode ? (
+        <div className="absolute top-4 left-4 z-[10000] px-3 py-1 rounded-full bg-black/35 text-white text-xs font-extrabold border border-white/20">
+          MAW v4 — LISTEN GATE + TAP-PLACE + SPACED REVIEW (FIXED)
+        </div>
+      ) : null}
 
       {/* Confetti overlay */}
       {confetti.length > 0 && (
@@ -1363,7 +1975,7 @@ export default function MakeAWordRimeGame() {
           className="px-4 py-2 rounded-full bg-white/15 text-white border border-white/30 hover:bg-white/20 active:scale-[0.98] transition"
           onClick={goBackToMission}
         >
-          ← Back to Mission
+          {missionBackLabel}
         </button>
       </div>
 
@@ -1372,20 +1984,35 @@ export default function MakeAWordRimeGame() {
         <div className="absolute inset-0 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-[28px] p-7 shadow-2xl w-[min(1120px,95vw)] max-h-[86vh] overflow-auto border border-slate-200">
             <div className="flex items-center justify-between gap-3 mb-3">
-              <div className="text-3xl font-extrabold text-slate-900">Choose a Level</div>
+              <div>
+                {activityContextLabelOverride ? (
+                  <div className="mb-1 text-xs font-black uppercase tracking-[0.16em] text-sky-700">
+                    {activityContextLabelOverride}
+                  </div>
+                ) : null}
+                <div className="text-3xl font-extrabold text-slate-900">Choose a Level</div>
+              </div>
               <button
                 onClick={goBackToMission}
                 className="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold transition active:scale-[0.98]"
               >
-                ← Back to Mission
+                {missionBackLabel}
               </button>
             </div>
 
             <div className="text-slate-600 mb-6">
-              You’ll <b>listen first</b>, then <b>drag</b> or <b>tap</b> the first letter to make the word.
-              <div className="text-slate-500 text-sm mt-1">
-                If you don’t hear audio, the game will still start — tap 🔊 any time to replay.
-              </div>
+              {publicNonAudioMode ? (
+                <>
+                  Look at the picture and word family. Then <b>drag</b> or <b>tap</b> the missing first letter to make the word.
+                </>
+              ) : (
+                <>
+                  You’ll <b>listen first</b>, then <b>drag</b> or <b>tap</b> the first letter to make the word.
+                  <div className="text-slate-500 text-sm mt-1">
+                    If you don’t hear audio, the game will still start — tap 🔊 any time to replay.
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1404,11 +2031,13 @@ export default function MakeAWordRimeGame() {
                       <button
                         key={id}
                         onClick={() => pickFamily(id)}
+                        disabled={Boolean(resolvedForcedFamilyId && id !== resolvedForcedFamilyId)}
                         className={[
                           "h-16 px-5 rounded-2xl border-2 font-extrabold text-2xl leading-none",
                           "bg-white hover:bg-sky-50 border-sky-200 text-slate-900",
                           "shadow-sm hover:shadow-md transition active:scale-[0.98]",
                           "whitespace-nowrap min-w-[90px]",
+                          resolvedForcedFamilyId && id !== resolvedForcedFamilyId ? "opacity-35 cursor-not-allowed" : "",
                           familyId === id ? "ring-4 ring-sky-300" : "",
                         ].join(" ")}
                         title={`Play -${id}`}
@@ -1422,7 +2051,7 @@ export default function MakeAWordRimeGame() {
             </div>
 
             <div className="mt-6 flex items-center justify-between gap-4 flex-wrap">
-              <div className="text-xs text-slate-500">Tip: Wrong answers trigger helpful hints (no freezing).</div>
+              <div className="text-xs text-slate-500">Tip: Wrong answers trigger helpful hints.</div>
               <div className="text-xs text-slate-500">Tap-to-place works for low motor control.</div>
             </div>
           </div>
@@ -1433,9 +2062,9 @@ export default function MakeAWordRimeGame() {
       {screen === "complete" && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/45">
           <div className="bg-white rounded-[28px] p-7 shadow-2xl w-[min(620px,92vw)] text-center border border-slate-200">
-            <div className="text-4xl font-extrabold text-slate-900 mb-2 animate-[popIn_260ms_ease-out]">
+            <h2 className="text-4xl font-extrabold text-slate-900 mb-2 animate-[popIn_260ms_ease-out]">
               Level Complete! 🎉
-            </div>
+            </h2>
             <div className="text-slate-700 mb-6">
               You finished the <b>-{family.rime}</b> family.
             </div>
@@ -1468,7 +2097,7 @@ export default function MakeAWordRimeGame() {
                 onClick={goBackToMission}
                 className="text-sm font-bold text-slate-600 hover:text-slate-900 underline underline-offset-4"
               >
-                ← Back to Mission
+                {missionBackLabel}
               </button>
             </div>
           </div>
@@ -1485,21 +2114,29 @@ export default function MakeAWordRimeGame() {
               <span className="bg-white/15 px-3 py-1 rounded-full border border-white/25">
                 -{family.rime}
               </span>
-              <span className="ml-3 text-white/80 text-sm font-bold">(magnet: {magnetRadius}px)</span>
+              {!forceAnonymousMode ? (
+                <span className="ml-3 text-white/80 text-sm font-bold">(magnet: {magnetRadius}px)</span>
+              ) : null}
             </div>
 
-            <button
-              onClick={speakFirstSound}
-              disabled={isCelebrating}
-              className={[
-                "px-4 py-2 rounded-full bg-white/15 text-white border border-white/30 font-extrabold",
-                "hover:bg-white/20 transition active:scale-[0.98]",
-                isCelebrating ? "opacity-60 cursor-not-allowed" : "",
-              ].join(" ")}
-              title="Replay first sound"
-            >
-              🔊 First Sound
-            </button>
+            {publicNonAudioMode ? (
+              <div className="px-4 py-2 rounded-full bg-white/15 text-white border border-white/30 font-extrabold">
+                Picture clue
+              </div>
+            ) : (
+              <button
+                onClick={speakFirstSound}
+                disabled={isCelebrating}
+                className={[
+                  "px-4 py-2 rounded-full bg-white/15 text-white border border-white/30 font-extrabold",
+                  "hover:bg-white/20 transition active:scale-[0.98]",
+                  isCelebrating ? "opacity-60 cursor-not-allowed" : "",
+                ].join(" ")}
+                title="Replay first sound"
+              >
+                🔊 First Sound
+              </button>
+            )}
           </div>
 
           {/* letters row */}
@@ -1521,6 +2158,11 @@ export default function MakeAWordRimeGame() {
                     onPointerUp={endDrag}
                     onPointerCancel={endDrag}
                     onClick={() => tapTile(tile)}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter" && event.key !== " ") return;
+                      event.preventDefault();
+                      tapTile(tile);
+                    }}
                     className={[
                       "w-24 h-24 rounded-2xl bg-sky-200 shadow-lg border-4 border-sky-300",
                       "flex items-center justify-center select-none",
@@ -1534,8 +2176,10 @@ export default function MakeAWordRimeGame() {
                       transform: isDragging ? `translate3d(${dx}px, ${dy}px, 0)` : "translate3d(0,0,0)",
                       transition: isDragging ? "none" : "transform 220ms ease",
                     }}
+                    role="button"
+                    tabIndex={isInteractingDisabled ? -1 : 0}
                     aria-label={`Letter ${tile.ch}`}
-                    title={isInteractingDisabled ? "Listen first…" : "Drag or tap"}
+                    title={publicNonAudioMode ? "Drag or tap" : isInteractingDisabled ? "Listen first…" : "Drag or tap"}
                   >
                     {tile.ch}
                   </div>
@@ -1545,14 +2189,14 @@ export default function MakeAWordRimeGame() {
           </div>
 
           <div className="mt-3 text-white/85 font-semibold text-center">
-            {phase === "cue" ? (
+            {phase === "cue" && !publicNonAudioMode ? (
               <>
                 Listening… <span className="text-white/70">(then choose)</span>
               </>
             ) : (
               <>
-                Drag <b>or tap</b> the correct first letter 👇
-                <div className="text-white/70 text-sm">(Only “near the box” counts as a wrong drag — motor misses don’t.)</div>
+                Drag <b>or tap</b> the missing first letter 👇
+                <div className="text-white/70 text-sm">(Use the picture clue and the -{family.rime} word family.)</div>
               </>
             )}
           </div>
@@ -1585,8 +2229,9 @@ export default function MakeAWordRimeGame() {
                       pulseCorrect && phase === "act" ? "ring-8 ring-yellow-300/60" : "",
                     ].join(" ")}
                     aria-label="Target box"
-                    title={phase === "act" ? "Tap to replay cue" : "Listening…"}
+                    title={phase === "act" ? "Target box" : "Preparing…"}
                     onClick={() => {
+                      if (publicNonAudioMode) return;
                       if (screen !== "play") return;
                       if (phase === "cue") return;
                       speak(`${current.word}. First sound: ${onsetSoundText(current.onset)}.`);
@@ -1623,7 +2268,7 @@ export default function MakeAWordRimeGame() {
                 </div>
               )}
 
-              {phase === "cue" && (
+              {phase === "cue" && !publicNonAudioMode && (
                 <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                   <div className="px-7 py-3 rounded-full bg-white/70 text-slate-900 text-2xl font-black shadow-lg animate-[pop_0.35s_ease-out]">
                     👂 Listen…
@@ -1638,12 +2283,13 @@ export default function MakeAWordRimeGame() {
             <div
               className="w-44 h-44 md:w-56 md:h-56 flex items-center justify-center"
               onClick={() => {
+                if (publicNonAudioMode) return;
                 if (screen !== "play") return;
                 speakWord();
                 logEvent("image_tap_word", { word: current.word });
               }}
               style={{ cursor: screen === "play" ? "pointer" : "default" }}
-              title="Tap picture to hear the word"
+              title={publicNonAudioMode ? "Picture clue" : "Tap picture to hear the word"}
             >
               {imgOk ? (
                 <img

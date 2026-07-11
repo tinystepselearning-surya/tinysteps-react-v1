@@ -28,7 +28,7 @@ export type BuildBetterSentencesProgress = {
 
 const STORAGE_PREFIX = 'ts_bbs_progress_v1';
 
-const defaultProgress = (): BuildBetterSentencesProgress => ({
+export const createDefaultBbsProgress = (): BuildBetterSentencesProgress => ({
   [BBS_STAGE_1A]: {
     unlocked: true,
     completed: false,
@@ -73,9 +73,9 @@ const getStorageKey = (kidId: string) => `${STORAGE_PREFIX}:${kidId || 'anonymou
 export const loadBbsProgress = (kidId: string): BuildBetterSentencesProgress => {
   try {
     const raw = sessionStorage.getItem(getStorageKey(kidId));
-    if (!raw) return defaultProgress();
+    if (!raw) return createDefaultBbsProgress();
     const parsed = JSON.parse(raw) as Partial<BuildBetterSentencesProgress>;
-    const merged = defaultProgress();
+    const merged = createDefaultBbsProgress();
     return {
       [BBS_STAGE_1A]: { ...merged[BBS_STAGE_1A], ...(parsed[BBS_STAGE_1A] || {}) },
       [BBS_STAGE_1B]: { ...merged[BBS_STAGE_1B], ...(parsed[BBS_STAGE_1B] || {}) },
@@ -84,7 +84,7 @@ export const loadBbsProgress = (kidId: string): BuildBetterSentencesProgress => 
       gameCompleted: typeof parsed.gameCompleted === 'boolean' ? parsed.gameCompleted : merged.gameCompleted,
     };
   } catch {
-    return defaultProgress();
+    return createDefaultBbsProgress();
   }
 };
 

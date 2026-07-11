@@ -95,9 +95,18 @@ describe("FreeEnglishGamesHubPage", () => {
     expect(screen.getByText("Sound Listening")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /build words/i }));
     expect(screen.getByText("Blend 2 Sounds")).toBeInTheDocument();
+    expect(screen.getByText("Spelling Practice")).toBeInTheDocument();
+    expect(screen.getAllByText("Play Free").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("FREE TO PLAY").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: /make sentences/i }));
     expect(screen.getByText("Sentence Builder")).toBeInTheDocument();
     expect(screen.getAllByText("Play Free").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/ready soon|coming soon/i).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: /fluent reading/i }));
+    expect(screen.getAllByText("Fluent Reading").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Play Free").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("FREE TO PLAY").length).toBeGreaterThan(0);
+    expect(screen.getByText("Story Reading")).toBeInTheDocument();
     expect(screen.getAllByText(/ready soon|coming soon/i).length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: /grammar practice/i }));
     expect(screen.getByText("Build Better Sentences")).toBeInTheDocument();

@@ -65,7 +65,19 @@ export default function FreeEnglishGamesHubPage() {
     }
   }, [selectedStageIndex]);
 
-  const completedSet = useMemo(() => new Set(progress.completedTileIds), [progress.completedTileIds]);
+  const playableTileIds = useMemo(
+    () =>
+      new Set(
+        ENGLISH_EXCELLENCE_STAGES.flatMap((stage) => stage.tiles)
+          .filter((tile) => PUBLIC_TILE_ROUTES[tile.gameId]?.enabled)
+          .map((tile) => tile.gameId),
+      ),
+    [],
+  );
+  const completedSet = useMemo(
+    () => new Set(progress.completedTileIds.filter((id) => playableTileIds.has(id))),
+    [playableTileIds, progress.completedTileIds],
+  );
   const currentStage = ENGLISH_EXCELLENCE_STAGES[selectedStageIndex];
 
   const trainingTracks = useMemo(
@@ -96,11 +108,12 @@ export default function FreeEnglishGamesHubPage() {
   const stats: EnglishExcellenceHubStat[] = [
     { label: "Tracks", value: 7 },
     { label: "Free Games", value: totalReadyGames },
-    { label: "Completed Here", value: progress.completedTileIds.length },
+    { label: "Completed Here", value: completedSet.size },
     { label: "Temporary", value: "Browser Only" },
   ];
 
   const toggleCompleted = (gameId: string) => {
+    if (!playableTileIds.has(gameId)) return;
     setProgress((prev) => {
       const completed = new Set(prev.completedTileIds);
       if (completed.has(gameId)) completed.delete(gameId);

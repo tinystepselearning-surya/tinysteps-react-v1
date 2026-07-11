@@ -428,6 +428,13 @@ export const ROUTE_SEO_REGISTRY = {
     canonicalPath: '/free-word-building-game-for-kids',
     ogType: 'website',
   },
+  '/free-spelling-game-for-kids': {
+    title: 'Free Spelling Game for Kids | Online Word & Spelling Practice',
+    description:
+      'Play a free spelling game for kids from Tiny Steps. Practise word formation, missing letters and correct spellings through interactive online English activities. No login required.',
+    canonicalPath: '/free-spelling-game-for-kids',
+    ogType: 'website',
+  },
   '/free-sentence-making-game-for-kids': {
     title: 'Free Sentence Making Game for Kids | English Sentence Practice',
     description:

@@ -104,7 +104,7 @@ export const PUBLIC_TILE_ROUTES: Record<string, PublicTileRoute> = {
     footer: "Play free in browser",
   },
   "eem-g10-spelling-practice": {
-    route: "/free-word-building-game-for-kids",
+    route: "/free-spelling-game-for-kids",
     enabled: true,
     footer: "Play free in browser",
   },
@@ -124,11 +124,10 @@ export const PUBLIC_TILE_ROUTES: Record<string, PublicTileRoute> = {
     enabled: true,
     footer: "Play free in browser",
   },
-  // TODO(phase-2c): add reading public gameplay before enabling these routes.
   "eem-g18-fluent-reading": {
     route: "/free-reading-fluency-game-for-kids",
-    enabled: false,
-    footer: "Public version coming soon",
+    enabled: true,
+    footer: "Play free in browser",
   },
   "eem-g18b-story-reading": {
     route: "/free-reading-fluency-game-for-kids",
@@ -391,6 +390,32 @@ export const PUBLIC_ENGLISH_GAME_LANDING_CONFIGS: PublicEnglishGameLandingConfig
     statusText: "Play free",
   },
   {
+    publicPath: "/free-spelling-game-for-kids",
+    categoryPath: "/free-word-building-games-for-kids",
+    seoTitle: "Free Spelling Game for Kids | Online Word & Spelling Practice",
+    seoDescription:
+      "Play a free spelling game for kids from Tiny Steps. Practise word formation, missing letters and correct spellings through interactive online English activities. No login required.",
+    h1: "Free Spelling Game for Kids",
+    intro:
+      "This public Tiny Steps spelling game helps children build words, complete missing letters, practise word families, and identify correct spellings through child-friendly challenges.",
+    ageRange: "Ages 5 to 8",
+    skills: ["Spelling formation", "Word families", "Missing letters", "Correct spelling choices"],
+    howToPlay: [
+      "Look at the picture or clue before choosing letters or spelling options.",
+      "Build short words, complete missing letters, and choose the correctly spelled word.",
+      "Use the instant feedback to try again, continue to the next activity, or replay the spelling journey.",
+    ],
+    skillAnswer:
+      "This game practises spelling formation, missing-letter recall, word-family patterns, and correct-spelling recognition.",
+    differenceAnswer:
+      "Free Tiny Steps spelling practice is useful for short home repetition, while teacher-guided classes add correction, sequencing, and saved progress.",
+    gameIds: ["eem-g10-spelling-practice"],
+    isPublicPageReady: true,
+    isPublicPlayReady: true,
+    playPath: "/free-spelling-game-for-kids?play=1",
+    statusText: "Play free",
+  },
+  {
     publicPath: "/free-sentence-making-game-for-kids",
     categoryPath: "/free-sentence-building-games-for-kids",
     seoTitle: "Free Sentence Making Game for Kids | English Sentence Practice",
@@ -444,8 +469,9 @@ export const PUBLIC_ENGLISH_GAME_LANDING_CONFIGS: PublicEnglishGameLandingConfig
       "eem-g20b-summarize-simply",
     ],
     isPublicPageReady: true,
-    isPublicPlayReady: false,
-    statusText: "Ready soon",
+    isPublicPlayReady: true,
+    playPath: "/free-reading-fluency-game-for-kids?play=1",
+    statusText: "Play free",
   },
   {
     publicPath: "/free-grammar-practice-game-for-kids",

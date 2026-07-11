@@ -68,14 +68,24 @@ export default function FreeEnglishGamesCategoryPage() {
     );
   }, [completedTileIds]);
 
-  const completedSet = useMemo(() => new Set(completedTileIds), [completedTileIds]);
+  const tiles = useMemo(
+    () => (config ? getPublicEnglishGamesTilesForCategory(config) : []),
+    [config],
+  );
+  const playableTileIds = useMemo(
+    () => new Set(tiles.filter(({ tile }) => isPublicTilePlayable(tile.gameId)).map(({ tile }) => tile.gameId)),
+    [tiles],
+  );
+  const completedSet = useMemo(
+    () => new Set(completedTileIds.filter((id) => playableTileIds.has(id))),
+    [completedTileIds, playableTileIds],
+  );
 
   if (!config) {
     return <Navigate to={PUBLIC_ENGLISH_GAMES_HUB_PATH} replace />;
   }
 
   const pageUrl = `${SITE_ORIGIN}${config.route}`;
-  const tiles = getPublicEnglishGamesTilesForCategory(config);
   const tracks = getPublicCategoryTrackSummary(config);
   const playableCards = tiles.filter(({ tile }) => isPublicTilePlayable(tile.gameId));
   const quickLinks = playableCards.map(({ tile }) => ({
@@ -198,7 +208,7 @@ export default function FreeEnglishGamesCategoryPage() {
             </div>
             <div className="public-category-kpi">
               <div className="text-[10px] uppercase tracking-[0.16em] font-bold text-violet-200/80">Completed Here</div>
-              <div className="mt-1 text-xl font-black text-slate-100">{completedTileIds.length}</div>
+              <div className="mt-1 text-xl font-black text-slate-100">{completedSet.size}</div>
             </div>
           </div>
 
@@ -339,14 +349,20 @@ export default function FreeEnglishGamesCategoryPage() {
 
                           <button
                             type="button"
+                            disabled={!isPlayable}
                             onClick={() => {
+                              if (!isPlayable) return;
                               setCompletedTileIds((prev) => (
                                 prev.includes(tile.gameId)
                                   ? prev.filter((id) => id !== tile.gameId)
                                   : [...prev, tile.gameId]
                               ));
                             }}
-                            className="inline-flex rounded-xl border border-violet-400/35 bg-violet-500/10 px-3 py-2 text-xs font-bold text-violet-100"
+                            className={`inline-flex rounded-xl border px-3 py-2 text-xs font-bold ${
+                              isPlayable
+                                ? "border-violet-400/35 bg-violet-500/10 text-violet-100"
+                                : "cursor-not-allowed border-slate-600/50 bg-slate-800/45 text-slate-500"
+                            }`}
                             aria-label={isCompleted ? `Set ${tile.gameTitle} to in progress` : `Mark ${tile.gameTitle} as completed`}
                           >
                             {isCompleted ? "Set to In Progress" : "Mark Completed"}

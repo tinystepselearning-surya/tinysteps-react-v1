@@ -40,7 +40,7 @@ export default function FreeEnglishGameLandingPage() {
 
     const faqItems = [
       { question: "Is this game free?", answer: "Yes. This Tiny Steps public game page is free to open in your browser." },
-      { question: "Does this game require login?", answer: "No. You do not need a login or a kidId to use this public page." },
+      { question: "Does this game require login?", answer: "No. You do not need a login or child profile to use this public page." },
       { question: "Is progress saved?", answer: "Progress is saved only temporarily in this browser." },
       { question: "What age is this game for?", answer: `${config.h1} is best for ${config.ageRange.toLowerCase()}.` },
       { question: "What skill does this game practise?", answer: config.skillAnswer },
@@ -64,7 +64,7 @@ export default function FreeEnglishGameLandingPage() {
   const tiles = getPublicEnglishGameLandingTiles(config);
   const faqItems = [
     { question: "Is this game free?", answer: "Yes. This Tiny Steps public game page is free to open in your browser." },
-    { question: "Does this game require login?", answer: "No. You do not need a login or a kidId to use this public page." },
+    { question: "Does this game require login?", answer: "No. You do not need a login or child profile to use this public page." },
     { question: "Is progress saved?", answer: "Progress is saved only temporarily in this browser." },
     { question: "What age is this game for?", answer: `${config.h1} is best for ${config.ageRange.toLowerCase()}.` },
     { question: "What skill does this game practise?", answer: config.skillAnswer },
@@ -266,6 +266,11 @@ export default function FreeEnglishGameLandingPage() {
                 const route = getPublicTileRoute(tile.gameId);
                 const isPlayable = isPublicTilePlayable(tile.gameId);
                 const isSelfRoute = route?.route === config.publicPath;
+                const relatedStatusText = isPlayable
+                  ? "FREE TO PLAY"
+                  : tile.comingSoon
+                    ? "COMING SOON"
+                    : "READY SOON";
                 return (
                   <article key={tile.gameId} className="public-game-card rounded-2xl p-4">
                     <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
@@ -278,10 +283,12 @@ export default function FreeEnglishGameLandingPage() {
                         className={`rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${
                           isPlayable
                             ? "border-emerald-300/35 bg-emerald-400/15 text-emerald-100"
-                            : "border-violet-300/35 bg-violet-400/15 text-violet-100"
+                            : tile.comingSoon
+                              ? "border-slate-500/35 bg-slate-700/30 text-slate-200"
+                              : "border-violet-300/35 bg-violet-400/15 text-violet-100"
                         }`}
                       >
-                        {isPlayable ? "FREE TO PLAY" : config.statusText.toUpperCase()}
+                        {relatedStatusText}
                       </span>
 
                       {!isSelfRoute && route?.route ? (

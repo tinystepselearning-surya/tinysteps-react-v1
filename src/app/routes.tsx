@@ -614,6 +614,7 @@ const router = createBrowserRouter(
         { path: 'free-letter-sounds-game-for-kids', element: <FreeEnglishGameLandingPage /> },
         { path: 'free-sound-listening-game-for-kids', element: <FreeEnglishGameLandingPage /> },
         { path: 'free-word-building-game-for-kids', element: <FreeEnglishGameLandingPage /> },
+        { path: 'free-spelling-game-for-kids', element: <FreeEnglishGameLandingPage /> },
         { path: 'free-sentence-making-game-for-kids', element: <FreeEnglishGameLandingPage /> },
         { path: 'free-reading-fluency-game-for-kids', element: <FreeEnglishGameLandingPage /> },
         { path: 'free-grammar-practice-game-for-kids', element: <FreeEnglishGameLandingPage /> },

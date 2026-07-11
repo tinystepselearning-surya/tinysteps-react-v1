@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import FreeEnglishGameLandingPage from "../../../pages/public/FreeEnglishGameLandingPage";
@@ -71,6 +71,7 @@ function renderRoute(initialEntry: string) {
 
 describe("FreeEnglishGameLandingPage", () => {
   beforeEach(() => {
+    vi.useRealTimers();
     landingMocks.recordLevelResultMock.mockReset();
     landingMocks.getFirestoreMock.mockReset();
     localStorage.clear();
@@ -93,6 +94,7 @@ describe("FreeEnglishGameLandingPage", () => {
     ["/free-letter-sounds-game-for-kids", "Free Letter Sounds Game for Kids", "/free-letter-sound-games-for-kids"],
     ["/free-sound-listening-game-for-kids", "Free Sound Listening Game for Kids", "/free-phonics-games-for-kids"],
     ["/free-word-building-game-for-kids", "Free Word Building Game for Kids", "/free-word-building-games-for-kids"],
+    ["/free-spelling-game-for-kids", "Free Spelling Game for Kids", "/free-word-building-games-for-kids"],
     ["/free-sentence-making-game-for-kids", "Free Sentence Making Game for Kids", "/free-sentence-building-games-for-kids"],
     ["/free-reading-fluency-game-for-kids", "Free Reading Fluency Game for Kids", "/free-reading-games-for-kids"],
     ["/free-grammar-practice-game-for-kids", "Free Grammar Practice Game for Kids", "/free-grammar-games-for-kids"],
@@ -121,6 +123,7 @@ describe("FreeEnglishGameLandingPage", () => {
         "/free-letter-sounds-game-for-kids",
         "/free-sound-listening-game-for-kids",
         "/free-word-building-game-for-kids",
+        "/free-spelling-game-for-kids",
         "/free-sentence-making-game-for-kids",
         "/free-reading-fluency-game-for-kids",
         "/free-grammar-practice-game-for-kids",
@@ -180,6 +183,148 @@ describe("FreeEnglishGameLandingPage", () => {
     getItemSpy.mockRestore();
   });
 
+  it("renders and completes the expanded public spelling journey without auth, kidId, audio, active-kid recovery, Firestore, or tracked results", async () => {
+    vi.useFakeTimers();
+    const getItemSpy = vi.spyOn(Storage.prototype, "getItem");
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+    const speechSynthesisMock = {
+      cancel: vi.fn(),
+      speak: vi.fn(),
+      getVoices: vi.fn(() => []),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      speaking: false,
+      pending: false,
+    };
+    const SpeechSynthesisUtteranceMock = vi.fn();
+    const AudioMock = vi.fn().mockImplementation(() => ({
+      preload: "",
+      currentTime: 0,
+      volume: 0,
+      pause: vi.fn(),
+      play: vi.fn(() => Promise.resolve()),
+    }));
+    vi.stubGlobal("Audio", AudioMock);
+    vi.stubGlobal("speechSynthesis", speechSynthesisMock);
+    vi.stubGlobal("SpeechSynthesisUtterance", SpeechSynthesisUtteranceMock);
+
+    renderRoute("/free-spelling-game-for-kids?play=1");
+
+    expect(screen.getByRole("heading", { name: /free spelling game for kids/i, level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /guest play mode/i, level: 2 })).toBeInTheDocument();
+    expect(screen.getByText(/guest play mode • spelling adventure/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /spelling adventure/i })).toBeInTheDocument();
+    expect(screen.getByText(/build words, complete missing letters, and choose the correct spelling/i)).toBeInTheDocument();
+    expect(screen.getByText("Build It")).toBeInTheDocument();
+    expect(screen.getByText("Word Families")).toBeInTheDocument();
+    expect(screen.getByText("Complete It")).toBeInTheDocument();
+    expect(screen.getByText("Choose It")).toBeInTheDocument();
+    expect(screen.getByTestId("location-probe")).toHaveTextContent("/free-spelling-game-for-kids?play=1");
+    expect(screen.queryByText(/no child selected/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/kidId|synced child tracking|synced per-child tracking/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /start spelling adventure/i }));
+
+    expect(screen.getByRole("heading", { name: "Build It" })).toBeInTheDocument();
+    expect(screen.queryByText(/listen/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/magnet:/i)).not.toBeInTheDocument();
+    expect(screen.getByAltText("cat")).toBeInTheDocument();
+    expect(screen.getByText(/0\/16 done/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /letter t/i }));
+    await act(async () => {
+      vi.advanceTimersByTime(540);
+    });
+    expect(screen.getByText(/try again/i)).toBeInTheDocument();
+
+    const clickLetter = (letter: string) => {
+      fireEvent.click(screen.getByRole("button", { name: new RegExp(`letter ${letter}`, "i") }));
+    };
+    const finishCorrect = async (word: string) => {
+      await act(async () => {
+        vi.advanceTimersByTime(40);
+      });
+      expect(screen.getByText(new RegExp(`correct: ${word}`, "i"))).toBeInTheDocument();
+      await act(async () => {
+        vi.advanceTimersByTime(950);
+      });
+    };
+    const buildWord = async (word: string) => {
+      for (const letter of word.split("")) clickLetter(letter);
+      await finishCorrect(word);
+    };
+    const chooseLetter = async (letter: string, word: string) => {
+      clickLetter(letter);
+      await finishCorrect(word);
+    };
+    const chooseMissing = async (letter: string, word: string) => {
+      fireEvent.click(screen.getByRole("button", { name: new RegExp(`missing letter ${letter}`, "i") }));
+      await finishCorrect(word);
+    };
+    const chooseSpelling = async (choice: string, word: string) => {
+      fireEvent.click(screen.getByRole("button", { name: new RegExp(`spelling ${choice}`, "i") }));
+      await finishCorrect(word);
+    };
+
+    await buildWord("cat");
+    await buildWord("dog");
+    await buildWord("sun");
+    await buildWord("cat");
+    await buildWord("pig");
+
+    expect(screen.getByRole("heading", { name: "Word Families" })).toBeInTheDocument();
+    expect(screen.getByAltText("cat")).toBeInTheDocument();
+    await chooseLetter("c", "cat");
+    await chooseLetter("m", "map");
+    await chooseLetter("d", "dog");
+    await chooseLetter("s", "sun");
+
+    expect(screen.getByRole("heading", { name: "Complete It" })).toBeInTheDocument();
+    expect(screen.getByText("c _ t")).toBeInTheDocument();
+    await chooseMissing("a", "cat");
+    await chooseMissing("u", "sun");
+    await chooseMissing("i", "pig");
+    await chooseMissing("e", "hen");
+
+    expect(screen.getByRole("heading", { name: "Choose It" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /spelling fish/i })).toBeInTheDocument();
+    await chooseSpelling("fish", "fish");
+    await chooseSpelling("elephant", "elephant");
+    await chooseSpelling("tiger", "tiger");
+    await chooseSpelling("queen", "queen");
+
+    expect(screen.getByRole("heading", { name: /spelling journey complete/i })).toBeInTheDocument();
+    expect(screen.getByText(/first-try accuracy:/i)).toHaveTextContent("Turns played: 17");
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /replay/i }));
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+    });
+
+    expect(screen.getByRole("heading", { name: "Build It" })).toBeInTheDocument();
+    expect(screen.getByAltText("cat")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /letter c/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /back to free games/i }));
+
+    expect(screen.getByTestId("location-probe")).toHaveTextContent("/free-spelling-game-for-kids");
+    expect(getItemSpy).not.toHaveBeenCalledWith("ts_active_kid_v1");
+    expect(getItemSpy.mock.calls.some(([key]) => String(key).includes("progress"))).toBe(false);
+    expect(setItemSpy.mock.calls.some(([key]) => String(key).includes("progress"))).toBe(false);
+    expect(AudioMock).not.toHaveBeenCalled();
+    expect(speechSynthesisMock.cancel).not.toHaveBeenCalled();
+    expect(speechSynthesisMock.speak).not.toHaveBeenCalled();
+    expect(SpeechSynthesisUtteranceMock).not.toHaveBeenCalled();
+    expect(landingMocks.recordLevelResultMock).not.toHaveBeenCalled();
+    expect(landingMocks.getFirestoreMock).not.toHaveBeenCalled();
+
+    getItemSpy.mockRestore();
+    setItemSpy.mockRestore();
+    vi.useRealTimers();
+  });
+
   it("renders the public sentence making play experience without auth, kidId, or active-kid recovery", () => {
     const getItemSpy = vi.spyOn(Storage.prototype, "getItem");
 
@@ -201,6 +346,7 @@ describe("FreeEnglishGameLandingPage", () => {
 
   it("renders the public grammar play experience without auth, kidId, or active-kid recovery", () => {
     const getItemSpy = vi.spyOn(Storage.prototype, "getItem");
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
 
     renderRoute("/free-grammar-practice-game-for-kids?play=1");
 
@@ -212,6 +358,74 @@ describe("FreeEnglishGameLandingPage", () => {
     expect(screen.queryByText(/no child selected/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/synced per-child tracking/i)).not.toBeInTheDocument();
     expect(screen.getByTestId("location-probe")).toHaveTextContent("/free-grammar-practice-game-for-kids?play=1");
+    expect(getItemSpy).not.toHaveBeenCalledWith("ts_active_kid_v1");
+    expect(getItemSpy.mock.calls.some(([key]) => String(key).startsWith("ts_bbs_progress_v1"))).toBe(false);
+    expect(setItemSpy.mock.calls.some(([key]) => String(key).startsWith("ts_bbs_progress_v1"))).toBe(false);
+    expect(landingMocks.recordLevelResultMock).not.toHaveBeenCalled();
+    expect(landingMocks.getFirestoreMock).not.toHaveBeenCalled();
+    getItemSpy.mockRestore();
+    setItemSpy.mockRestore();
+  });
+
+  it("lets public grammar gameplay complete without tracked persistence and returns to the public landing URL", async () => {
+    vi.useFakeTimers();
+    const getItemSpy = vi.spyOn(Storage.prototype, "getItem");
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+
+    renderRoute("/free-grammar-practice-game-for-kids?play=1");
+
+    const correctAnswers = [
+      /she goes to school every day\./i,
+      /i saw an elephant at the zoo\./i,
+      /riya and sam are friends\. they play together\./i,
+      /the book is on the table\./i,
+      /we are playing in the park\./i,
+      /he quickly finished his homework\./i,
+    ];
+
+    for (const answer of correctAnswers) {
+      fireEvent.click(screen.getByRole("button", { name: answer }));
+      await act(async () => {
+        vi.advanceTimersByTime(500);
+      });
+    }
+
+    expect(screen.getByRole("heading", { name: /stage summary/i })).toBeInTheDocument();
+    expect(screen.getByText(/accuracy:/i)).toHaveTextContent("100%");
+    expect(getItemSpy).not.toHaveBeenCalledWith("ts_active_kid_v1");
+    expect(getItemSpy.mock.calls.some(([key]) => String(key).startsWith("ts_bbs_progress_v1"))).toBe(false);
+    expect(setItemSpy.mock.calls.some(([key]) => String(key).startsWith("ts_bbs_progress_v1"))).toBe(false);
+    expect(landingMocks.recordLevelResultMock).not.toHaveBeenCalled();
+    expect(landingMocks.getFirestoreMock).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getAllByRole("button", { name: /back to english games/i })[0]);
+
+    expect(screen.getByTestId("location-probe")).toHaveTextContent("/free-grammar-practice-game-for-kids");
+    expect(screen.queryByRole("heading", { name: /guest play mode/i, level: 2 })).not.toBeInTheDocument();
+
+    getItemSpy.mockRestore();
+    setItemSpy.mockRestore();
+    vi.useRealTimers();
+  });
+
+  it("renders the public reading fluency play experience without auth, kidId, active-kid recovery, Firestore, or tracked result calls", () => {
+    const getItemSpy = vi.spyOn(Storage.prototype, "getItem");
+
+    renderRoute("/free-reading-fluency-game-for-kids?play=1");
+
+    expect(screen.getByRole("heading", { name: /free reading fluency game for kids/i, level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /guest play mode/i, level: 2 })).toBeInTheDocument();
+    expect(screen.getByText(/guest play mode • reading fluency/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/story reading/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/the bear's balloon/i)).toBeInTheDocument();
+    expect(screen.queryByText(/no child selected/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/synced child tracking|synced per-child tracking/i)).not.toBeInTheDocument();
+    expect(screen.getByTestId("location-probe")).toHaveTextContent("/free-reading-fluency-game-for-kids?play=1");
+
+    fireEvent.click(screen.getByRole("button", { name: /the bear's balloon/i }));
+
+    expect(screen.getByText(/a little bear went to the market/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /i'm finished reading/i })).toBeInTheDocument();
     expect(getItemSpy).not.toHaveBeenCalledWith("ts_active_kid_v1");
     expect(landingMocks.recordLevelResultMock).not.toHaveBeenCalled();
     expect(landingMocks.getFirestoreMock).not.toHaveBeenCalled();
@@ -235,6 +449,15 @@ describe("FreeEnglishGameLandingPage", () => {
     );
 
     wordBuildingView.unmount();
+    const spellingView = renderRoute("/free-spelling-game-for-kids");
+
+    expect(screen.getByRole("link", { name: "Play Free" })).toHaveAttribute(
+      "href",
+      "/free-spelling-game-for-kids?play=1",
+    );
+    expect(screen.getAllByText("FREE TO PLAY").length).toBeGreaterThan(0);
+
+    spellingView.unmount();
     const sentenceMakingView = renderRoute("/free-sentence-making-game-for-kids");
 
     expect(screen.getByRole("link", { name: "Play Free" })).toHaveAttribute(
@@ -249,9 +472,21 @@ describe("FreeEnglishGameLandingPage", () => {
       "href",
       "/free-grammar-practice-game-for-kids?play=1",
     );
+    expect(screen.getAllByText("FREE TO PLAY").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/ready soon|coming soon/i).length).toBeGreaterThan(0);
 
     grammarView.unmount();
-    renderRoute("/free-reading-fluency-game-for-kids");
+    const readingView = renderRoute("/free-reading-fluency-game-for-kids");
+
+    expect(screen.getByRole("link", { name: "Play Free" })).toHaveAttribute(
+      "href",
+      "/free-reading-fluency-game-for-kids?play=1",
+    );
+    expect(screen.getAllByText("FREE TO PLAY").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/ready soon|coming soon/i).length).toBeGreaterThan(0);
+
+    readingView.unmount();
+    renderRoute("/free-speaking-practice-game-for-kids");
 
     expect(screen.queryByRole("link", { name: "Play Free" })).not.toBeInTheDocument();
     expect(screen.getAllByText(/ready soon|coming soon/i).length).toBeGreaterThan(0);

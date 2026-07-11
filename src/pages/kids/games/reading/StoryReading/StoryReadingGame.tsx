@@ -14,16 +14,37 @@ function resolvePackLevelId(pack: ReadingPack): number {
   return Math.max(1, Number(pack.level) || 1);
 }
 
+type StoryReadingGameProps = {
+  forceAnonymousMode?: boolean;
+  missionReturnHrefOverride?: string;
+  missionBackLabel?: string;
+  forcedPackId?: string;
+  activityContextLabelOverride?: string;
+};
+
 // ============================================================================
 // COMPONENT
 // ============================================================================
 
-export default function StoryReadingGame() {
+export default function StoryReadingGame({
+  forceAnonymousMode = false,
+  missionReturnHrefOverride,
+  missionBackLabel = "← Back to Mission",
+  forcedPackId,
+  activityContextLabelOverride,
+}: StoryReadingGameProps = {}) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const kidId = searchParams.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
-  const missionReturnHref = buildMissionReturnHref(searchParams, kidId);
+  const kidId = forceAnonymousMode
+    ? ""
+    : searchParams.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
+  const missionReturnHref =
+    missionReturnHrefOverride ?? buildMissionReturnHref(searchParams, kidId);
   const missionTileId = searchParams.get("eemTile") || 'story-reading';
+  const publicPacks = forcedPackId
+    ? READING_PACKS.filter((pack) => pack.id === forcedPackId)
+    : READING_PACKS;
+  const packsToShow = publicPacks.length > 0 ? publicPacks : READING_PACKS;
 
   const [selectedPack, setSelectedPack] = useState<ReadingPack | null>(null);
   const packStartedAtRef = useRef<number>(0);
@@ -107,11 +128,14 @@ export default function StoryReadingGame() {
   return (
     <div className="fixed inset-0 z-[9999] bg-gradient-to-b from-sky-50 to-indigo-50 flex flex-col items-center justify-start p-4 pt-12">
         <div className="w-full max-w-4xl text-center">
+            <div className="text-sm font-semibold uppercase tracking-[0.14em] text-sky-700">
+              {activityContextLabelOverride || "Fluent Reading"}
+            </div>
             <h1 className="text-3xl font-bold text-slate-800">Story Reading</h1>
-            <p className="mt-2 text-lg text-slate-600">Choose a story to read.</p>
+            <p className="mt-2 text-lg text-slate-600">Choose a story to read smoothly from beginning to end.</p>
         </div>
         <div className="mt-8 w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {READING_PACKS.map((pack: ReadingPack) => (
+            {packsToShow.map((pack: ReadingPack) => (
                 <button
                     key={pack.id}
                     onClick={() => selectPack(pack)}
@@ -126,7 +150,7 @@ export default function StoryReadingGame() {
             onClick={handleFinish}
             className="mt-8 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 active:scale-[0.99] transition"
         >
-            &larr; Back to Mission
+            {missionBackLabel}
         </button>
     </div>
   );

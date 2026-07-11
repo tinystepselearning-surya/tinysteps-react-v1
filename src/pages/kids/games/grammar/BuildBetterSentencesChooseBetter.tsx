@@ -8,6 +8,7 @@ import {
   BBS_STAGE_1D,
   canAccessStage1C,
   canAccessStage1D,
+  createDefaultBbsProgress,
   loadBbsProgress,
 } from './buildBetterSentencesProgress';
 
@@ -106,7 +107,9 @@ export default function BuildBetterSentencesChooseBetter({
   const [stageDone, setStageDone] = useState(false);
   const [stageResultRecorded, setStageResultRecorded] = useState(false);
   const [lastChoiceIndex, setLastChoiceIndex] = useState<number | null>(null);
-  const [progress, setProgress] = useState(() => loadBbsProgress(kidId));
+  const [progress, setProgress] = useState(() => (
+    forceAnonymousMode ? createDefaultBbsProgress() : loadBbsProgress(kidId)
+  ));
   const [lockedReason, setLockedReason] = useState('');
 
   const item = STAGE_ITEMS[itemIndex];
@@ -124,6 +127,10 @@ export default function BuildBetterSentencesChooseBetter({
 
   useEffect(() => {
     if (!stageDone || stageResultRecorded) return;
+    if (forceAnonymousMode) {
+      setStageResultRecorded(true);
+      return;
+    }
     const next = applyStage1CResult(kidId, {
       accuracyPct,
       hintCount: hintsUsed,
@@ -131,7 +138,7 @@ export default function BuildBetterSentencesChooseBetter({
     });
     setProgress(next);
     setStageResultRecorded(true);
-  }, [accuracyPct, hintsUsed, kidId, retryCount, stageDone, stageResultRecorded]);
+  }, [accuracyPct, forceAnonymousMode, hintsUsed, kidId, retryCount, stageDone, stageResultRecorded]);
 
   const buildMissionReturnHref = (markComplete: boolean) => {
     if (missionReturnHrefOverride) return missionReturnHrefOverride;
