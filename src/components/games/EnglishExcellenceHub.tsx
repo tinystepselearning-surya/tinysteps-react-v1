@@ -1,7 +1,6 @@
 import type { MouseEvent, ReactNode, RefObject } from "react";
 import TinyStepsBrand from "../common/TinyStepsBrand";
 import MagicBento from "../common/MagicBento";
-import LiquidEther from "../components/LiquidEther";
 import type { EnglishExcellenceStage, EnglishExcellenceTile } from "../../lib/englishExcellenceMission";
 
 export type EnglishExcellenceHubTrack = {
@@ -69,19 +68,19 @@ export default function EnglishExcellenceHub({
   tabsRef,
 }: EnglishExcellenceHubProps) {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#05010f] p-3 sm:p-4">
+    <div className="relative min-h-screen overflow-hidden bg-[#05010f] px-3 pb-3 pt-12 sm:px-5 sm:py-3">
       <style>{`
         .lms-kpi {
           border: 1px solid rgba(196, 181, 253, 0.18);
           background: linear-gradient(180deg, rgba(18, 12, 38, 0.95) 0%, rgba(12, 9, 28, 0.92) 100%);
-          border-radius: 1.25rem;
-          padding: 0.9rem 1rem;
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 10px 24px rgba(2, 6, 23, 0.26);
+          border-radius: 0.625rem;
+          padding: 0.6rem 0.75rem;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
         }
         .tiles-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 0.9rem;
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+          gap: 0.65rem;
           align-items: stretch;
         }
         .tile {
@@ -91,7 +90,7 @@ export default function EnglishExcellenceHub({
           border: 1px solid rgba(196, 181, 253, 0.14);
           box-shadow:
             inset 0 1px 0 rgba(255,255,255,0.05),
-            0 16px 36px rgba(2, 6, 23, 0.36);
+            0 8px 20px rgba(2, 6, 23, 0.28);
           transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
           min-height: 170px;
         }
@@ -138,57 +137,30 @@ export default function EnglishExcellenceHub({
         }
       `}</style>
 
-      <div className="absolute inset-0 pointer-events-none">
-        <LiquidEther
-          className="absolute inset-0 opacity-95"
-          style={{ width: "100%", height: "100%" }}
-          mouseForce={20}
-          cursorSize={100}
-          isViscous
-          viscous={30}
-          colors={["#1A063F", "#3B1289", "#6D28D9"]}
-          autoDemo
-          autoSpeed={0.5}
-          autoIntensity={2.2}
-          isBounce={false}
-          resolution={0.5}
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#04020d]/74 via-[#090318]/60 to-[#12042c]/76" />
-      </div>
-
-      <div className="relative z-20 w-full max-w-6xl mx-auto px-4 mb-2">
-        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-slate-900/10 bg-white/65 backdrop-blur-md px-3 py-2 shadow-sm">
+      <div className="relative z-20 mx-auto mb-3 w-full max-w-7xl">
+        <header className="grid gap-3 rounded-lg border border-white/10 bg-slate-950/70 px-3 py-3 backdrop-blur-md lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center">
           <TinyStepsBrand
             to=""
             subtitle={brandSubtitle}
-            className="pointer-events-none px-0 py-0 hover:bg-transparent"
-            titleClassName="text-base"
-            subtitleClassName="tracking-[0.18em]"
+            className="pointer-events-none hidden px-0 py-0 hover:bg-transparent lg:flex"
+            titleClassName="text-sm"
+            subtitleClassName="text-[9px] tracking-[0.12em]"
           />
 
-          <div className="flex justify-center">
-            <div className="inline-flex items-center rounded-full border border-indigo-400/40 bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 px-4 py-1.5 shadow-[0_8px_24px_rgba(59,130,246,0.35)]">
-              <span
-                className="text-center text-sm md:text-2xl font-black tracking-[0.02em] text-white whitespace-nowrap overflow-hidden text-ellipsis"
-                style={{ textShadow: "0 2px 8px rgba(2, 6, 23, 0.45)" }}
-              >
-                {title}
-              </span>
-            </div>
+          <div className="min-w-0">
+            <h1 className="truncate text-xl font-black text-white sm:text-2xl">{title}</h1>
+            {trustLine ? (
+              <p className="mt-1 text-xs font-semibold text-emerald-200/90 sm:text-sm">{trustLine}</p>
+            ) : null}
           </div>
 
-          <div className="flex justify-end">{topRight}</div>
-        </div>
-        {trustLine ? (
-          <p className="mt-2 text-center text-xs font-semibold tracking-[0.01em] text-slate-200 sm:text-sm">
-            {trustLine}
-          </p>
-        ) : null}
+          <div className="flex justify-start lg:justify-end">{topRight}</div>
+        </header>
       </div>
 
-      <div className="relative z-10 w-full max-w-[1320px] mx-auto px-4 pb-4 xl:h-[calc(100vh-124px)]">
-        <div className="grid grid-cols-1 xl:grid-cols-[240px_minmax(0,1fr)] gap-3 items-start xl:h-full xl:min-h-0">
-          <aside className="rounded-2xl border border-violet-300/20 bg-slate-950/42 backdrop-blur-md shadow-sm p-2.5 xl:h-full xl:min-h-0 xl:flex xl:flex-col">
+      <div className="relative z-10 mx-auto w-full max-w-7xl pb-3">
+        <div className="grid grid-cols-1 gap-3 items-start">
+          <aside className="rounded-lg border border-violet-300/20 bg-slate-950/55 p-2.5 backdrop-blur-md">
             <div className="mb-2 inline-flex items-center gap-2 rounded-lg border border-cyan-300/35 bg-slate-900/65 px-2.5 py-1 shadow-[0_6px_18px_rgba(34,211,238,0.25)]">
               <span
                 className="bg-gradient-to-r from-cyan-200 via-fuchsia-200 to-lime-200 bg-clip-text text-xs font-black uppercase tracking-[0.2em] text-transparent"
@@ -197,7 +169,7 @@ export default function EnglishExcellenceHub({
                 Training Tracks
               </span>
             </div>
-            <div className="grid gap-1.5 xl:flex-1 xl:min-h-0 xl:overflow-y-auto xl:pr-1">
+            <div className="flex gap-2 overflow-x-auto pb-1">
               {trainingTracks.map((track, idx) => (
                 <button
                   key={track.stageId}
@@ -206,7 +178,7 @@ export default function EnglishExcellenceHub({
                   }}
                   onClick={() => onSelectStage(idx)}
                   type="button"
-                  className={`w-full h-full min-h-0 overflow-hidden text-left rounded-xl border px-2 py-1.5 transition-all ${
+                  className={`min-w-40 overflow-hidden rounded-lg border px-2 py-1.5 text-left transition-all ${
                     idx === selectedStageIndex
                       ? "border-violet-400/60 bg-violet-500/12 shadow-sm"
                       : "border-violet-300/20 bg-slate-900/45 hover:bg-slate-900/60 hover:border-violet-300/35"
@@ -233,8 +205,8 @@ export default function EnglishExcellenceHub({
             </div>
           </aside>
 
-          <main className="rounded-2xl border border-violet-300/20 bg-slate-950/52 backdrop-blur-md shadow-sm p-3 xl:h-full xl:flex xl:flex-col">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+          <main className="rounded-lg border border-violet-300/20 bg-slate-950/60 p-3 backdrop-blur-md">
+            <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
               {stats.map((stat) => (
                 <div key={stat.label} className="lms-kpi">
                   <div className="text-[10px] uppercase tracking-[0.16em] font-bold text-violet-200/80">{stat.label}</div>
@@ -243,7 +215,7 @@ export default function EnglishExcellenceHub({
               ))}
             </div>
 
-            <div className="mt-3 xl:flex-1 xl:min-h-0 xl:overflow-y-auto pr-1">
+            <div className="mt-3">
               <MagicBento
                 textAutoHide
                 enableStars
@@ -262,7 +234,7 @@ export default function EnglishExcellenceHub({
                     <div
                       key={card.tile.gameId}
                       onClick={() => onTileClick(currentStage.stageNumber, card.tile)}
-                      className={`magic-bento-card tile rounded-2xl p-4 flex flex-col gap-3 ${card.locked ? "locked" : "cursor-pointer"} ${
+                    className={`magic-bento-card tile rounded-lg p-3 flex flex-col gap-2 ${card.locked ? "locked" : "cursor-pointer"} ${
                         card.pulse ? "pulse" : ""
                       }`}
                       style={{
@@ -276,7 +248,7 @@ export default function EnglishExcellenceHub({
                       }}
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <div className="w-10 h-10 rounded-xl bg-slate-900/60 border border-slate-300/20 flex items-center justify-center text-xl shadow-inner">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300/20 bg-slate-900/60 text-lg shadow-inner">
                           {card.icon}
                         </div>
 

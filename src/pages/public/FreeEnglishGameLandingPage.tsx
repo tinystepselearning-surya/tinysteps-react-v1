@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { Link, Navigate, useLocation, useSearchParams } from "react-router-dom";
 import Meta from "../../components/common/Meta";
 import TinyStepsBrand from "../../components/common/TinyStepsBrand";
-import LiquidEther from "../../components/components/LiquidEther";
 import { createFAQPageSchema } from "../../lib/schemas";
 import { applySeo } from "../../lib/seo";
 import { trackFreeResourceToTrialClick } from "../../lib/conversionTracking";
@@ -114,9 +113,9 @@ export default function FreeEnglishGameLandingPage() {
       <style>{`
         .public-game-panel {
           border: 1px solid rgba(196, 181, 253, 0.18);
-          background: linear-gradient(180deg, rgba(18, 12, 38, 0.95) 0%, rgba(12, 9, 28, 0.92) 100%);
-          border-radius: 1.5rem;
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 12px 30px rgba(2, 6, 23, 0.28);
+          background: rgba(12, 9, 28, 0.86);
+          border-radius: 0.75rem;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
         }
         .public-game-card {
           background:
@@ -125,80 +124,55 @@ export default function FreeEnglishGameLandingPage() {
           border: 1px solid rgba(196, 181, 253, 0.14);
           box-shadow:
             inset 0 1px 0 rgba(255,255,255,0.05),
-            0 16px 36px rgba(2, 6, 23, 0.36);
+            0 8px 20px rgba(2, 6, 23, 0.26);
         }
       `}</style>
 
-      <div className="absolute inset-0 pointer-events-none">
-        <LiquidEther
-          className="absolute inset-0 opacity-95"
-          style={{ width: "100%", height: "100%" }}
-          mouseForce={20}
-          cursorSize={100}
-          isViscous
-          viscous={30}
-          colors={["#1A063F", "#3B1289", "#6D28D9"]}
-          autoDemo
-          autoSpeed={0.5}
-          autoIntensity={2.2}
-          isBounce={false}
-          resolution={0.5}
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#04020d]/74 via-[#090318]/60 to-[#12042c]/76" />
-      </div>
-
-      <div className="relative z-10 mx-auto max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
-        <div className="rounded-[28px] border border-white/12 bg-white/8 p-4 shadow-2xl backdrop-blur-md sm:p-6">
-          <div className="grid gap-4 rounded-2xl border border-slate-900/10 bg-white/65 px-4 py-4 text-slate-900 shadow-sm md:grid-cols-[auto_1fr_auto] md:items-center">
+      <div className="relative z-10 mx-auto max-w-7xl px-3 pb-3 pt-12 sm:px-5 sm:py-3">
+        <div className="rounded-xl border border-white/12 bg-[#090616]/88 p-3 shadow-xl backdrop-blur-md sm:p-4">
+          <header className="grid gap-3 rounded-lg border border-white/10 bg-slate-950/65 px-3 py-3 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center">
             <TinyStepsBrand
               to=""
               subtitle="FREE LEARNING GAMES"
-              className="pointer-events-none px-0 py-0 hover:bg-transparent"
-              titleClassName="text-base"
-              subtitleClassName="tracking-[0.18em]"
+              className="pointer-events-none hidden px-0 py-0 hover:bg-transparent lg:flex"
+              titleClassName="text-sm"
+              subtitleClassName="text-[9px] tracking-[0.12em]"
             />
 
-            <div className="flex flex-col items-start justify-center md:items-center">
-              <div className="inline-flex items-center rounded-full border border-indigo-400/40 bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 px-4 py-1.5 shadow-[0_8px_24px_rgba(59,130,246,0.35)]">
-                <h1
-                  className="text-sm font-black tracking-[0.02em] text-white sm:text-xl md:text-2xl"
-                  style={{ textShadow: "0 2px 8px rgba(2, 6, 23, 0.45)" }}
-                >
-                  {config.h1}
-                </h1>
-              </div>
-              <p className="mt-3 max-w-3xl text-sm font-medium text-slate-700 md:text-center">
+            <div className="min-w-0">
+              <h1 className="text-xl font-black text-white sm:text-2xl">{config.h1}</h1>
+              <p className="mt-1 max-w-3xl text-sm leading-5 text-slate-300">
                 {config.intro}
               </p>
-              <p className="mt-2 text-xs font-semibold text-slate-600 md:text-center">
+              <p className="mt-1 text-xs font-semibold text-emerald-200/90">
                 No login required. Progress is saved only temporarily in this browser.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 md:justify-end">
+            <nav className="flex max-w-full flex-wrap items-center gap-2 lg:justify-end" aria-label="Game page links">
               <Link
                 to={PUBLIC_ENGLISH_GAMES_HUB_PATH}
-                className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-slate-800"
+                className="shrink-0 rounded-lg border border-white/15 bg-white/8 px-3 py-2 text-xs font-bold text-slate-100"
               >
                 All English Games
               </Link>
               <Link
                 to={config.categoryPath}
-                className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-slate-800"
+                className="shrink-0 rounded-lg border border-white/15 bg-white/8 px-3 py-2 text-xs font-bold text-slate-100"
               >
                 Category Page
               </Link>
               <Link
                 to="/book-demo"
-                className="inline-flex rounded-full border border-amber-300/50 bg-amber-300 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-slate-900"
+                className="shrink-0 rounded-lg bg-amber-300 px-3 py-2 text-xs font-black text-slate-900"
               >
                 Book Free Demo
               </Link>
-            </div>
-          </div>
+            </nav>
+          </header>
 
-          <section className="mt-4 grid gap-4 lg:grid-cols-[0.55fr_0.45fr]">
-            <div className="public-game-panel p-5">
+          <section className="mt-3 grid gap-3 lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="public-game-panel p-4">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="rounded-full border border-cyan-300/35 bg-cyan-400/15 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-cyan-100">
                   {config.ageRange}
@@ -216,8 +190,8 @@ export default function FreeEnglishGameLandingPage() {
 
               {config.benefits ? (
                 <>
-                  <h2 className="mt-4 text-2xl font-black text-slate-100">What children learn</h2>
-                  <ul className="mt-3 space-y-2 text-sm leading-7 text-slate-300">
+                  <h2 className="mt-3 text-xl font-black text-slate-100">What children learn</h2>
+                  <ul className="mt-2 grid gap-x-4 gap-y-1 text-sm leading-6 text-slate-300 sm:grid-cols-2">
                     {config.benefits.map((benefit) => (
                       <li key={benefit} className="flex gap-2">
                         <span className="mt-1 text-cyan-400">•</span>
@@ -228,11 +202,11 @@ export default function FreeEnglishGameLandingPage() {
                 </>
               ) : (
                 <>
-                  <h2 className="mt-4 text-2xl font-black text-slate-100">What this page covers</h2>
-                  <p className="mt-3 text-sm leading-7 text-slate-300">
+                  <h2 className="mt-3 text-xl font-black text-slate-100">What this page covers</h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">
                     {config.seoDescription}
                   </p>
-                  <div className="mt-5 flex flex-wrap gap-2">
+                  <div className="mt-3 flex flex-wrap gap-1.5">
                     {config.skills.map((skill) => (
                       <span
                         key={skill}
@@ -245,7 +219,7 @@ export default function FreeEnglishGameLandingPage() {
                 </>
               )}
 
-              <div className="mt-6">
+              <div className="mt-4">
                 {config.isPublicPlayReady && config.playPath ? (
                   <Link
                     to={config.playPath}
@@ -261,9 +235,9 @@ export default function FreeEnglishGameLandingPage() {
               </div>
             </div>
 
-            <div className="public-game-panel p-5">
-              <h2 className="text-2xl font-black text-slate-100">How to play</h2>
-              <ol className="mt-4 space-y-3 text-sm leading-7 text-slate-300">
+            <div className="public-game-panel p-4">
+              <h2 className="text-xl font-black text-slate-100">How to play</h2>
+              <ol className="mt-3 space-y-2 text-sm leading-6 text-slate-300">
                 {config.howToPlay.map((step, index) => (
                   <li key={step} className="flex gap-3">
                     <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xs font-black text-white">
@@ -275,14 +249,14 @@ export default function FreeEnglishGameLandingPage() {
               </ol>
 
               {config.parentGuidance ? (
-                <div className="mt-6 rounded-2xl border border-amber-300/20 bg-amber-400/10 p-4">
+                <div className="mt-4 rounded-lg border border-amber-300/20 bg-amber-400/10 p-3">
                   <h3 className="text-sm font-black uppercase tracking-[0.12em] text-amber-200">Parent Guidance</h3>
                   <p className="mt-2 text-sm leading-6 text-slate-100">
                     {config.parentGuidance}
                   </p>
                 </div>
               ) : (
-                <div className="mt-6 rounded-2xl border border-emerald-300/20 bg-emerald-400/10 p-4">
+                <div className="mt-4 rounded-lg border border-emerald-300/20 bg-emerald-400/10 p-3">
                   <p className="text-sm font-semibold text-slate-100">
                     Want saved progress and teacher guidance?{" "}
                     <Link to="/book-demo" className="font-black text-cyan-200 underline underline-offset-4">
@@ -320,7 +294,7 @@ export default function FreeEnglishGameLandingPage() {
           ) : null}
 
           {config.commonMistakes && (
-            <section className="mt-4 public-game-panel p-5">
+            <section className="mt-3 public-game-panel p-4">
               <h2 className="text-lg font-black text-slate-100">Helpful tip</h2>
               <p className="mt-3 text-sm leading-7 text-slate-300">
                 {config.commonMistakes}
@@ -329,8 +303,8 @@ export default function FreeEnglishGameLandingPage() {
           )}
 
           {nextGameTile && (
-            <section className="mt-4 public-game-panel p-5">
-              <h2 className="text-2xl font-black text-slate-100">Ready for the next step?</h2>
+            <section className="mt-3 public-game-panel p-4">
+              <h2 className="text-xl font-black text-slate-100">Ready for the next step?</h2>
               <p className="mt-2 text-sm text-slate-300">
                 After {config.h1.toLowerCase()}, try:
               </p>
@@ -352,9 +326,9 @@ export default function FreeEnglishGameLandingPage() {
             </section>
           )}
 
-          <section className="mt-4 public-game-panel p-5">
-            <h2 className="text-2xl font-black text-slate-100">Related game skills</h2>
-            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <section className="mt-3 public-game-panel p-4">
+            <h2 className="text-xl font-black text-slate-100">Related game skills</h2>
+            <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
               {relatedTiles.map(({ stage, tile }: { stage: EnglishExcellenceStage; tile: EnglishExcellenceTile }) => {
                 const route = getPublicTileRoute(tile.gameId);
                 const isPlayable = isPublicTilePlayable(tile.gameId);
@@ -365,7 +339,7 @@ export default function FreeEnglishGameLandingPage() {
                     ? "COMING SOON"
                     : "READY SOON";
                 return (
-                  <article key={tile.gameId} className="public-game-card rounded-2xl p-4">
+                  <article key={tile.gameId} className="public-game-card rounded-lg p-3">
                     <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
                       Track {stage.stageNumber}
                     </p>
@@ -400,24 +374,24 @@ export default function FreeEnglishGameLandingPage() {
           </section>
         </div>
 
-        <section className="mt-6 grid gap-4 lg:grid-cols-[0.56fr_0.44fr]">
-          <div className="public-game-panel p-5">
-            <h2 className="text-2xl font-black text-slate-100">Parent FAQ</h2>
-            <div className="mt-4 space-y-4">
+        <section className="mt-3 grid gap-3 lg:grid-cols-[0.56fr_0.44fr]">
+          <div className="public-game-panel p-4">
+            <h2 className="text-xl font-black text-slate-100">Parent FAQ</h2>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {faqItems.map((item) => (
-                <article key={item.question} className="rounded-2xl border border-white/10 bg-slate-950/42 p-4">
-                  <h3 className="faq-question text-base font-extrabold text-slate-100">{item.question}</h3>
-                  <p className="faq-answer mt-2 text-sm leading-7 text-slate-300">{item.answer}</p>
+                <article key={item.question} className="rounded-lg border border-white/10 bg-slate-950/42 p-3">
+                  <h3 className="faq-question text-sm font-extrabold text-slate-100">{item.question}</h3>
+                  <p className="faq-answer mt-1 text-xs leading-5 text-slate-300">{item.answer}</p>
                 </article>
               ))}
             </div>
           </div>
 
-          <div className="public-game-panel p-5">
+          <div className="public-game-panel p-4">
             {config.assessmentBridge ? (
               <>
-                <h2 className="text-2xl font-black text-slate-100">Take the next step</h2>
-                <div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-400/10 p-5">
+                <h2 className="text-xl font-black text-slate-100">Take the next step</h2>
+                <div className="mt-3 rounded-lg border border-amber-300/20 bg-amber-400/10 p-4">
                   <h3 className="text-base font-bold text-slate-100">From free games to guided learning</h3>
                   <p className="mt-3 text-sm leading-6 text-slate-200">
                     {config.assessmentBridge}
@@ -447,8 +421,8 @@ export default function FreeEnglishGameLandingPage() {
               </>
             ) : (
               <>
-                <h2 className="text-2xl font-black text-slate-100">Quick links</h2>
-                <div className="mt-4 grid gap-3">
+                <h2 className="text-xl font-black text-slate-100">Quick links</h2>
+                <div className="mt-3 grid gap-2">
                   <Link
                     to={PUBLIC_ENGLISH_GAMES_HUB_PATH}
                     className="rounded-2xl border border-white/10 bg-slate-950/42 px-4 py-4 text-sm font-bold text-slate-100"

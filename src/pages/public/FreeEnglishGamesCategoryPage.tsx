@@ -3,7 +3,6 @@ import { Link, Navigate, useLocation } from "react-router-dom";
 import Meta from "../../components/common/Meta";
 import MagicBento from "../../components/common/MagicBento";
 import TinyStepsBrand from "../../components/common/TinyStepsBrand";
-import LiquidEther from "../../components/components/LiquidEther";
 import { createFAQPageSchema } from "../../lib/schemas";
 import { applySeo } from "../../lib/seo";
 import { getEnglishExcellenceIcon } from "../../lib/englishExcellenceMission";
@@ -109,14 +108,14 @@ export default function FreeEnglishGamesCategoryPage() {
         .public-category-kpi {
           border: 1px solid rgba(196, 181, 253, 0.18);
           background: linear-gradient(180deg, rgba(18, 12, 38, 0.95) 0%, rgba(12, 9, 28, 0.92) 100%);
-          border-radius: 1.25rem;
-          padding: 0.9rem 1rem;
-          box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 10px 24px rgba(2, 6, 23, 0.26);
+          border-radius: 0.625rem;
+          padding: 0.65rem 0.8rem;
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
         }
         .public-category-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 0.9rem;
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+          gap: 0.65rem;
           align-items: stretch;
         }
         .public-category-card {
@@ -126,74 +125,49 @@ export default function FreeEnglishGamesCategoryPage() {
           border: 1px solid rgba(196, 181, 253, 0.14);
           box-shadow:
             inset 0 1px 0 rgba(255,255,255,0.05),
-            0 16px 36px rgba(2, 6, 23, 0.36);
-          min-height: 220px;
+            0 8px 20px rgba(2, 6, 23, 0.26);
+          min-height: 178px;
         }
       `}</style>
 
-      <div className="absolute inset-0 pointer-events-none">
-        <LiquidEther
-          className="absolute inset-0 opacity-95"
-          style={{ width: "100%", height: "100%" }}
-          mouseForce={20}
-          cursorSize={100}
-          isViscous
-          viscous={30}
-          colors={["#1A063F", "#3B1289", "#6D28D9"]}
-          autoDemo
-          autoSpeed={0.5}
-          autoIntensity={2.2}
-          isBounce={false}
-          resolution={0.5}
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#04020d]/74 via-[#090318]/60 to-[#12042c]/76" />
-      </div>
-
-      <div className="relative z-10 mx-auto max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
-        <div className="rounded-[28px] border border-white/12 bg-white/8 p-4 shadow-2xl backdrop-blur-md sm:p-6">
-          <div className="grid gap-4 rounded-2xl border border-slate-900/10 bg-white/65 px-4 py-4 text-slate-900 shadow-sm md:grid-cols-[auto_1fr_auto] md:items-center">
+      <div className="relative z-10 mx-auto max-w-7xl px-3 pb-3 pt-12 sm:px-5 sm:py-3">
+        <div className="rounded-xl border border-white/12 bg-[#090616]/88 p-3 shadow-xl backdrop-blur-md sm:p-4">
+          <header className="grid gap-3 rounded-lg border border-white/10 bg-slate-950/65 px-3 py-3 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center">
             <TinyStepsBrand
               to=""
               subtitle="FREE LEARNING GAMES"
-              className="pointer-events-none px-0 py-0 hover:bg-transparent"
-              titleClassName="text-base"
-              subtitleClassName="tracking-[0.18em]"
+              className="pointer-events-none hidden px-0 py-0 hover:bg-transparent lg:flex"
+              titleClassName="text-sm"
+              subtitleClassName="text-[9px] tracking-[0.12em]"
             />
 
-            <div className="flex flex-col items-start justify-center md:items-center">
-              <div className="inline-flex items-center rounded-full border border-indigo-400/40 bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 px-4 py-1.5 shadow-[0_8px_24px_rgba(59,130,246,0.35)]">
-                <h1
-                  className="text-sm font-black tracking-[0.02em] text-white sm:text-xl md:text-2xl"
-                  style={{ textShadow: "0 2px 8px rgba(2, 6, 23, 0.45)" }}
-                >
-                  {config.h1}
-                </h1>
-              </div>
-              <p className="mt-3 max-w-3xl text-sm font-medium text-slate-700 md:text-center">
+            <div className="min-w-0">
+              <h1 className="text-xl font-black text-white sm:text-2xl">{config.h1}</h1>
+              <p className="mt-1 max-w-3xl text-sm leading-5 text-slate-300">
                 {config.intro}
               </p>
-              <p className="mt-2 text-xs font-semibold text-slate-600 md:text-center">
+              <p className="mt-1 text-xs font-semibold text-emerald-200/90">
                 No login required. Public progress is saved only temporarily in this browser.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 md:justify-end">
+            <nav className="flex max-w-full flex-wrap items-center gap-2 lg:justify-end" aria-label="Category page links">
               <Link
                 to={PUBLIC_ENGLISH_GAMES_HUB_PATH}
-                className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-slate-800"
+                className="shrink-0 rounded-lg border border-white/15 bg-white/8 px-3 py-2 text-xs font-bold text-slate-100"
               >
                 All English Games
               </Link>
               <Link
                 to="/book-demo"
-                className="inline-flex rounded-full border border-amber-300/50 bg-amber-300 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-slate-900"
+                className="shrink-0 rounded-lg bg-amber-300 px-3 py-2 text-xs font-black text-slate-900"
               >
                 Book Free Demo
               </Link>
-            </div>
-          </div>
+            </nav>
+          </header>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-4">
             <div className="public-category-kpi">
               <div className="text-[10px] uppercase tracking-[0.16em] font-bold text-violet-200/80">Tracks Covered</div>
               <div className="mt-1 text-xl font-black text-slate-100">{tracks.length}</div>
@@ -212,17 +186,17 @@ export default function FreeEnglishGamesCategoryPage() {
             </div>
           </div>
 
-          <div className="mt-4 grid gap-4 lg:grid-cols-[0.3fr_0.7fr]">
-            <aside className="rounded-2xl border border-violet-300/20 bg-slate-950/42 p-4 backdrop-blur-md">
+          <div className="mt-3 grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)]">
+            <aside className="rounded-lg border border-violet-300/20 bg-slate-950/42 p-3 backdrop-blur-md">
               <h2 className="text-xs font-black uppercase tracking-[0.2em] text-cyan-200">Tracks Included</h2>
-              <div className="mt-3 grid gap-2">
+              <div className="mt-2 flex gap-2 overflow-x-auto pb-1 lg:grid lg:overflow-visible">
                 {tracks.map((stage) => {
                   const stageTiles = tiles.filter((entry) => entry.stage.stageId === stage.stageId);
                   const readyNow = stageTiles.filter((entry) => isPublicTilePlayable(entry.tile.gameId)).length;
                   return (
                     <div
                       key={stage.stageId}
-                      className="rounded-xl border border-violet-300/20 bg-slate-900/55 px-3 py-3"
+                      className="min-w-40 rounded-lg border border-violet-300/20 bg-slate-900/55 px-3 py-2 lg:min-w-0"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-indigo-600 px-2 text-[11px] font-black text-white">
@@ -232,14 +206,14 @@ export default function FreeEnglishGamesCategoryPage() {
                           {readyNow}/{stageTiles.length} ready
                         </span>
                       </div>
-                      <p className="mt-2 text-sm font-extrabold text-slate-100">{stage.stageTitle}</p>
+                      <p className="mt-1 text-xs font-extrabold text-slate-100">{stage.stageTitle}</p>
                     </div>
                   );
                 })}
               </div>
 
               {quickLinks.length > 0 ? (
-                <div className="mt-5">
+                <div className="mt-3">
                   <h2 className="text-xs font-black uppercase tracking-[0.2em] text-cyan-200">Playable Now</h2>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {quickLinks.map((link) => (
@@ -256,10 +230,10 @@ export default function FreeEnglishGamesCategoryPage() {
               ) : null}
             </aside>
 
-            <section className="rounded-2xl border border-violet-300/20 bg-slate-950/52 p-4 backdrop-blur-md">
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <section className="rounded-lg border border-violet-300/20 bg-slate-950/52 p-3 backdrop-blur-md">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h2 className="text-xl font-black text-slate-100">Category Games</h2>
+                  <h2 className="text-lg font-black text-slate-100">Category Games</h2>
                   <p className="mt-1 text-sm text-slate-300">
                     Relevant public games and browser-only previews from the shared English Excellence catalog.
                   </p>
@@ -306,9 +280,9 @@ export default function FreeEnglishGamesCategoryPage() {
                     }
 
                     return (
-                      <article key={tile.gameId} className="public-category-card rounded-2xl p-4">
+                      <article key={tile.gameId} className="public-category-card rounded-lg p-3">
                         <div className="flex items-center justify-between gap-3">
-                          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-violet-300/20 bg-slate-900/65 text-xl">
+                          <div className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-violet-300/20 bg-slate-900/65 text-lg">
                             {getEnglishExcellenceIcon(tile.gameTitle ?? tile.title ?? "")}
                           </div>
                           <span
@@ -318,18 +292,18 @@ export default function FreeEnglishGamesCategoryPage() {
                           </span>
                         </div>
 
-                        <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                        <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
                           Track {stage.stageNumber}
                         </p>
-                        <h3 className="mt-1 text-2xl font-black text-slate-100">
+                        <h3 className="mt-1 text-lg font-black text-slate-100">
                           {tile.gameTitle}
                         </h3>
                         <p className="mt-2 text-sm text-slate-300">{tile.desc}</p>
-                        <p className="mt-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+                        <p className="mt-2 text-[11px] font-semibold text-slate-400">
                           {footerText}
                         </p>
 
-                        <div className="mt-4 flex flex-wrap items-center gap-2">
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
                           {publicRoute?.route ? (
                             <Link
                               to={publicRoute.route}
@@ -376,7 +350,7 @@ export default function FreeEnglishGamesCategoryPage() {
             </section>
           </div>
 
-          <div className="mt-4 rounded-2xl border border-violet-300/20 bg-slate-950/42 p-5 backdrop-blur-md">
+          <div className="mt-3 rounded-lg border border-violet-300/20 bg-slate-950/42 px-4 py-3 backdrop-blur-md">
             <p className="text-sm font-semibold text-slate-200">
               Want saved progress and teacher guidance?{" "}
               <Link to="/book-demo" className="font-black text-cyan-300 underline underline-offset-4">
@@ -386,35 +360,35 @@ export default function FreeEnglishGamesCategoryPage() {
           </div>
         </div>
 
-        <section className="mt-6 grid gap-4 lg:grid-cols-[0.56fr_0.44fr]">
-          <div className="rounded-3xl border border-white/10 bg-white/8 p-5 shadow-xl backdrop-blur-md sm:p-6">
-            <h2 className="text-2xl font-black text-white">Quick Answers for Parents</h2>
-            <div className="mt-4 space-y-4">
+        <section className="mt-3 grid gap-3 lg:grid-cols-[0.62fr_0.38fr]">
+          <div className="rounded-lg border border-white/10 bg-slate-950/70 p-4 backdrop-blur-md">
+            <h2 className="text-xl font-black text-white">Quick Answers for Parents</h2>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {faqItems.map((item) => (
-                <article key={item.question} className="rounded-2xl border border-white/10 bg-slate-950/42 p-4">
-                  <h3 className="faq-question text-base font-extrabold text-slate-100">{item.question}</h3>
-                  <p className="faq-answer mt-2 text-sm leading-7 text-slate-300">{item.answer}</p>
+                <article key={item.question} className="rounded-lg border border-white/10 bg-white/5 p-3">
+                  <h3 className="faq-question text-sm font-extrabold text-slate-100">{item.question}</h3>
+                  <p className="faq-answer mt-1 text-xs leading-5 text-slate-300">{item.answer}</p>
                 </article>
               ))}
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-white/8 p-5 shadow-xl backdrop-blur-md sm:p-6">
-            <h2 className="text-2xl font-black text-white">Why Tiny Steps Works Better</h2>
-            <div className="mt-4 space-y-3">
+          <div className="rounded-lg border border-white/10 bg-slate-950/70 p-4 backdrop-blur-md">
+            <h2 className="text-xl font-black text-white">Why Tiny Steps Works Better</h2>
+            <div className="mt-3 space-y-2">
               {[
                 "Short browser-based practice with no login barrier",
                 "Shared mission catalog that mirrors the structured Tiny Steps learning journey",
                 "Useful for daily repetition while parents explore full guided classes",
                 "Clear next step when families want saved progress and teacher support",
               ].map((point) => (
-                <div key={point} className="rounded-2xl border border-white/10 bg-slate-950/42 px-4 py-3 text-sm text-slate-200">
+                <div key={point} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200">
                   {point}
                 </div>
               ))}
             </div>
 
-            <div className="mt-5 rounded-2xl border border-cyan-300/20 bg-cyan-400/10 p-4">
+            <div className="mt-3 rounded-lg border border-cyan-300/20 bg-cyan-400/10 p-3">
               <p className="text-sm font-semibold text-slate-100">
                 Browse the full public catalog anytime from{" "}
                 <Link
