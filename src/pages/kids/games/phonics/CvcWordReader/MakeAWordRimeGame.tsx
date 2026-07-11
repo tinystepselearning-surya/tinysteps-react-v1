@@ -1000,21 +1000,18 @@ function PublicSpellingAdventure({
   );
 }
 
-export default function MakeAWordRimeGame({
-  forceAnonymousMode = false,
-  missionReturnHrefOverride,
-  missionBackLabel = "← Back to Mission",
-  forcedFamilyId,
-  activityContextLabelOverride,
-  disableAudio = false,
-  publicSpellingAdventure = false,
-}: MakeAWordRimeGameProps = {}) {
-  const navigate = useNavigate();
+export default function MakeAWordRimeGame(props: MakeAWordRimeGameProps = {}) {
+  const {
+    forceAnonymousMode = false,
+    missionReturnHrefOverride,
+    missionBackLabel = "← Back to Mission",
+    activityContextLabelOverride,
+    disableAudio = false,
+    publicSpellingAdventure = false,
+  } = props;
   const [sp] = useSearchParams();
   const kidId = forceAnonymousMode ? "" : sp.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
   const missionReturnHref = missionReturnHrefOverride ?? buildMissionReturnHref(sp, kidId);
-  const publicNonAudioMode = forceAnonymousMode && disableAudio;
-  const resolvedForcedFamilyId = forcedFamilyId && FAMILIES[forcedFamilyId] ? forcedFamilyId : null;
 
   if (forceAnonymousMode && disableAudio && publicSpellingAdventure) {
     return (
@@ -1025,6 +1022,24 @@ export default function MakeAWordRimeGame({
       />
     );
   }
+
+  return <MakeAWordRimeGameCore {...props} />;
+}
+
+function MakeAWordRimeGameCore({
+  forceAnonymousMode = false,
+  missionReturnHrefOverride,
+  missionBackLabel = "← Back to Mission",
+  forcedFamilyId,
+  activityContextLabelOverride,
+  disableAudio = false,
+}: MakeAWordRimeGameProps = {}) {
+  const navigate = useNavigate();
+  const [sp] = useSearchParams();
+  const kidId = forceAnonymousMode ? "" : sp.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
+  const missionReturnHref = missionReturnHrefOverride ?? buildMissionReturnHref(sp, kidId);
+  const publicNonAudioMode = forceAnonymousMode && disableAudio;
+  const resolvedForcedFamilyId = forcedFamilyId && FAMILIES[forcedFamilyId] ? forcedFamilyId : null;
 
   // Celebration (shorter + calmer than before)
   const CONFETTI_MS = 2800;
