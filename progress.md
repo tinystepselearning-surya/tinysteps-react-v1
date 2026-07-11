@@ -46,3 +46,11 @@ TODO / next-agent suggestions:
 - Updated collocation progress semantics so game completion is now tied to Stage 3B completion/mastery (instead of Stage 3A).
 - 2026-03-14 Phase 18 (Grammar Practice): added Collocation Builder Stage 3C (`fill-sentence`) with 3B->3C mastery gating, sentence-blank gameplay, and end-of-stage summary.
 - Updated collocation progression model: Stage 3B now unlocks Stage 3C; Collocation `gameCompleted` now records at Stage 3C completion.
+- 2026-07-11 Public Spelling Adventure: added typed Fix It and Spell It stages to the existing public-only `MakeAWordRimeGame` branch.
+- Added exact trim/case normalization, Enter submission, browser spelling-assistance controls, typed review coverage, and core-vs-review scoring separation.
+- Verified the six-stage public flow with Vitest, TypeScript, and the web-game Playwright client.
+- Follow-up: expand curated spelling and vocabulary content through validated packs before adding another public spelling route.
+- 2026-07-11 Public Spelling Content: extracted the six-mode catalog and validator to `src/lib/publicSpellingContent.ts`, expanding the journey from 24 to 36 curated challenges.
+- Reused existing MAW pictures, tracked short-vowel curriculum patterns, and selected meanings from Word Meaning Flashcards; added CCVC/CVCC, digraph, Magic E, correction, and vocabulary-recall coverage.
+- Fixed public-only stale level-switch timers, direct-stage accuracy accounting, immediate typed-submit locking, and responsive horizontally scrollable stage navigation.
+- Validation passed: typecheck; 38 public/content/tracked-portal tests; KidsPhonicsMission test. Browser viewport QA was attempted but blocked by the environment execution-usage limit, so fresh mobile/tablet screenshots remain pending.

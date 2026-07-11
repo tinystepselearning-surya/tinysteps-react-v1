@@ -34,12 +34,12 @@ const GAME_CARDS = [
     icon: '🔊',
   },
   {
-    title: 'Spelling Flashcards Game',
+    title: 'Vocabulary Adventure Game',
     description:
-      'Children practise spelling, word meaning, and vocabulary through simple flashcard-style activities.',
-    skills: ['Spelling', 'Vocabulary', 'Word meaning'],
+      'Children practise word meanings through matching, context clues, synonyms, antonyms, and word recall challenges.',
+    skills: ['Vocabulary', 'Word meaning', 'Context clues'],
     route: '/free-games/word-meaning-flashcards',
-    buttonLabel: 'Play Flashcards Game',
+    buttonLabel: 'Play Vocabulary Adventure',
     icon: '📚',
   },
   {
@@ -223,7 +223,7 @@ export default function FreeGamesHubPage() {
         <ol className="mt-4 space-y-3 rounded-3xl border border-slate-200 bg-white p-6 text-sm leading-7 text-slate-700 sm:text-base">
           <li>1. Start with letter tracing.</li>
           <li>2. Practise tracing with sounds.</li>
-          <li>3. Move to spelling and word flashcards.</li>
+          <li>3. Move to word meaning and vocabulary adventure practice.</li>
           <li>4. Book a free assessment if your child needs a structured learning plan.</li>
         </ol>
       </section>

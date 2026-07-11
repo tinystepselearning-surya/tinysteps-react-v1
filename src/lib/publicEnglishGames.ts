@@ -394,19 +394,19 @@ export const PUBLIC_ENGLISH_GAME_LANDING_CONFIGS: PublicEnglishGameLandingConfig
     categoryPath: "/free-word-building-games-for-kids",
     seoTitle: "Free Spelling Game for Kids | Online Word & Spelling Practice",
     seoDescription:
-      "Play a free spelling game for kids from Tiny Steps. Practise word formation, missing letters and correct spellings through interactive online English activities. No login required.",
+      "Play a free spelling game for kids from Tiny Steps. Build words, complete missing letters, correct mistakes and spell whole words from clues. No login required.",
     h1: "Free Spelling Game for Kids",
     intro:
-      "This public Tiny Steps spelling game helps children build words, complete missing letters, practise word families, and identify correct spellings through child-friendly challenges.",
+      "This public Tiny Steps spelling game moves from short-word foundations into blends, digraphs, long-vowel patterns, spelling correction, and whole-word recall from clear vocabulary clues.",
     ageRange: "Ages 5 to 8",
-    skills: ["Spelling formation", "Word families", "Missing letters", "Correct spelling choices"],
+    skills: ["Spelling formation", "Blends and digraphs", "Long-vowel patterns", "Spelling correction", "Vocabulary recall"],
     howToPlay: [
-      "Look at the picture or clue before choosing letters or spelling options.",
-      "Build short words, complete missing letters, and choose the correctly spelled word.",
+      "Look at the picture, meaning, or sentence clue before choosing letters or typing a word.",
+      "Build words, complete missing letters, choose correct spellings, fix mistakes, and spell whole words as the challenge grows.",
       "Use the instant feedback to try again, continue to the next activity, or replay the spelling journey.",
     ],
     skillAnswer:
-      "This game practises spelling formation, missing-letter recall, word-family patterns, and correct-spelling recognition.",
+      "This game practises short-word formation, blends, digraphs, long-vowel patterns, spelling correction, and vocabulary-based whole-word recall.",
     differenceAnswer:
       "Free Tiny Steps spelling practice is useful for short home repetition, while teacher-guided classes add correction, sequencing, and saved progress.",
     gameIds: ["eem-g10-spelling-practice"],

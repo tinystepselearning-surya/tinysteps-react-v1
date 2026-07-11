@@ -485,9 +485,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/free-games/word-meaning-flashcards': {
-    title: 'Word Meaning Flashcards for Kids | Free Vocabulary Game | Tiny Steps',
+    title: 'Vocabulary Adventure for Kids | Free Word Meaning Game | Tiny Steps',
     description:
-      'Play a free word meaning flashcards game for kids. Learn 50 useful vocabulary words with simple meanings and example sentences.',
+      'Play a free vocabulary adventure game for kids. Practise word meanings, context clues, synonyms, antonyms, and word recall with child-friendly challenges.',
     canonicalPath: '/free-games/word-meaning-flashcards',
     ogType: 'website',
   },

@@ -179,10 +179,10 @@ export const ENGLISH_EXCELLENCE_STAGES: EnglishExcellenceStage[] = [
       { gameId: "eem-g20b-summarize-simply", gameTitle: "Summarize Simply", moduleId: "eem-m10-comprehension-vocabulary", gameOrder: 5, desc: "write simple summaries of stories", route: "/kids/games/reading/new-words", status: "live" },
       {
         gameId: "eem-g21-meaning-from-context",
-        gameTitle: "Word Meaning Flashcards",
+        gameTitle: "Vocabulary Adventure",
         moduleId: "eem-m11-context-meaning-relations",
         gameOrder: 6,
-        desc: "Learn new words, meanings, and example sentences through fun flip cards.",
+        desc: "Match meanings, use context clues, and solve synonym-antonym word challenges.",
         route: "/free-games/word-meaning-flashcards",
         isFreeGame: true,
         status: "live",

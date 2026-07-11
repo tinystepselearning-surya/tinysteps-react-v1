@@ -1,415 +1,460 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import {
+  PUBLIC_VOCABULARY_LEVELS,
+  PUBLIC_VOCABULARY_WORDS,
+  PUBLIC_VOCABULARY_WORDS_BY_ID,
+  normalizeVocabularyAnswer,
+  type PublicVocabularyChallenge,
+} from "../../../../lib/publicVocabularyContent";
 
-type Flashcard = {
-  word: string;
-  meaning: string;
-  sentence: string;
-};
+type Screen = "intro" | "play" | "complete";
 
-type FlashcardLevel = {
-  id: string;
-  levelNumber: number;
-  title: string;
-  subtitle: string;
-  subtopic: string;
-  cards: Flashcard[];
+type RuntimeChallenge = {
+  runtimeId: string;
+  challenge: PublicVocabularyChallenge;
+  review: boolean;
 };
 
 type PersistedState = {
-  completedLevelIds: string[];
-  lastSelectedLevelId?: string;
-  lastCardIndexByLevel?: Record<string, number>;
+  levelIndex: number;
+  completedLevelIndices: number[];
 };
 
-type Screen = 'levels' | 'play' | 'complete';
+const STORAGE_KEY = "ts_word_meaning_flashcards_v2";
 
-const STORAGE_KEY = 'ts_free_word_meaning_flashcards_v1';
+function createRuntimeQueue(levelIndex: number): RuntimeChallenge[] {
+  const level = PUBLIC_VOCABULARY_LEVELS[levelIndex];
+  return level.challenges.map((challenge) => ({
+    runtimeId: `${level.id}-${challenge.id}`,
+    challenge,
+    review: false,
+  }));
+}
 
-const LEVELS: FlashcardLevel[] = [
-  {
-    id: 'level-1-action-words',
-    levelNumber: 1,
-    title: 'Action Words',
-    subtitle: 'Learn words that show actions.',
-    subtopic: 'action-words',
-    cards: [
-      { word: 'run', meaning: 'to move fast using your legs', sentence: 'I run in the park.' },
-      { word: 'jump', meaning: 'to push your body up into the air', sentence: 'The boy jumps over the rope.' },
-      { word: 'eat', meaning: 'to put food in your mouth and swallow it', sentence: 'I eat an apple.' },
-      { word: 'read', meaning: 'to look at words and understand them', sentence: 'She reads a storybook.' },
-      { word: 'write', meaning: 'to make letters or words on paper', sentence: 'I write my name.' },
-      { word: 'draw', meaning: 'to make a picture with a pencil, crayon, or pen', sentence: 'I draw a flower.' },
-      { word: 'sing', meaning: 'to make music with your voice', sentence: 'We sing a happy song.' },
-      { word: 'dance', meaning: 'to move your body to music', sentence: 'The children dance on the stage.' },
-      { word: 'carry', meaning: 'to hold something and take it with you', sentence: 'I carry my school bag.' },
-      { word: 'open', meaning: 'to move something so it is not closed', sentence: 'Please open the door.' },
-    ],
-  },
-  {
-    id: 'level-2-feeling-words',
-    levelNumber: 2,
-    title: 'Feeling Words',
-    subtitle: 'Learn words that tell how someone feels.',
-    subtopic: 'feeling-words',
-    cards: [
-      { word: 'happy', meaning: 'feeling good or joyful', sentence: 'The child is happy.' },
-      { word: 'sad', meaning: 'feeling unhappy', sentence: 'The girl is sad.' },
-      { word: 'angry', meaning: 'feeling upset or mad', sentence: 'He is angry because his toy broke.' },
-      { word: 'tired', meaning: 'needing rest or sleep', sentence: 'I am tired after playing.' },
-      { word: 'excited', meaning: 'feeling very happy and eager', sentence: 'She is excited for her birthday.' },
-      { word: 'scared', meaning: 'feeling afraid', sentence: 'The puppy is scared of thunder.' },
-      { word: 'proud', meaning: 'feeling happy about something you did well', sentence: 'I am proud of my drawing.' },
-      { word: 'bored', meaning: 'feeling uninterested', sentence: 'He is bored during the long wait.' },
-      { word: 'calm', meaning: 'peaceful and not worried', sentence: 'I feel calm after taking a deep breath.' },
-      { word: 'surprised', meaning: 'feeling amazed because something unexpected happened', sentence: 'She was surprised by the gift.' },
-    ],
-  },
-  {
-    id: 'level-3-describing-words',
-    levelNumber: 3,
-    title: 'Describing Words',
-    subtitle: 'Learn words that describe people, animals, places, and things.',
-    subtopic: 'describing-words',
-    cards: [
-      { word: 'big', meaning: 'large in size', sentence: 'The elephant is big.' },
-      { word: 'small', meaning: 'little in size', sentence: 'The cup is small.' },
-      { word: 'soft', meaning: 'smooth and gentle to touch', sentence: 'The pillow is soft.' },
-      { word: 'loud', meaning: 'making a lot of sound', sentence: 'The drum is loud.' },
-      { word: 'bright', meaning: 'full of light or colour', sentence: 'The sun is bright.' },
-      { word: 'clean', meaning: 'not dirty', sentence: 'My room is clean.' },
-      { word: 'cold', meaning: 'having a low temperature', sentence: 'The water is cold.' },
-      { word: 'sweet', meaning: 'tasting like sugar', sentence: 'The mango is sweet.' },
-      { word: 'fast', meaning: 'moving quickly', sentence: 'The rabbit is fast.' },
-      { word: 'slow', meaning: 'moving with little speed', sentence: 'The turtle is slow.' },
-    ],
-  },
-  {
-    id: 'level-4-school-words',
-    levelNumber: 4,
-    title: 'School Words',
-    subtitle: 'Learn useful classroom words.',
-    subtopic: 'school-words',
-    cards: [
-      { word: 'pencil', meaning: 'a tool used for writing or drawing', sentence: 'I write with a pencil.' },
-      { word: 'teacher', meaning: 'a person who helps children learn', sentence: 'My teacher explains the lesson.' },
-      { word: 'classroom', meaning: 'a room where children learn', sentence: 'We sit in the classroom.' },
-      { word: 'lesson', meaning: 'something we learn', sentence: "Today's lesson is about words." },
-      { word: 'homework', meaning: 'school work done at home', sentence: 'I finish my homework.' },
-      { word: 'notebook', meaning: 'a book used for writing notes or work', sentence: 'I write answers in my notebook.' },
-      { word: 'question', meaning: 'something we ask to get an answer', sentence: 'The teacher asks a question.' },
-      { word: 'answer', meaning: 'what we say or write for a question', sentence: 'I know the answer.' },
-      { word: 'library', meaning: 'a place where books are kept', sentence: 'We read books in the library.' },
-      { word: 'practice', meaning: 'doing something again to get better', sentence: 'I practice reading every day.' },
-    ],
-  },
-  {
-    id: 'level-5-everyday-words',
-    levelNumber: 5,
-    title: 'Everyday Words',
-    subtitle: 'Learn words used in daily life.',
-    subtopic: 'everyday-words',
-    cards: [
-      { word: 'family', meaning: 'people who live with us or care for us', sentence: 'I love my family.' },
-      { word: 'garden', meaning: 'a place where plants and flowers grow', sentence: 'The flowers are in the garden.' },
-      { word: 'market', meaning: 'a place where people buy and sell things', sentence: 'We buy fruits from the market.' },
-      { word: 'bottle', meaning: 'a container used to hold water or other liquids', sentence: 'I drink water from a bottle.' },
-      { word: 'window', meaning: 'an opening in a wall that lets in light and air', sentence: 'I opened the window.' },
-      { word: 'kitchen', meaning: 'a room where food is cooked', sentence: 'Mother is in the kitchen.' },
-      { word: 'blanket', meaning: 'a warm cover used while sleeping', sentence: 'I sleep under a blanket.' },
-      { word: 'street', meaning: 'a road in a town or city', sentence: 'Cars move on the street.' },
-      { word: 'neighbour', meaning: 'a person who lives near your home', sentence: 'Our neighbour has a dog.' },
-      { word: 'morning', meaning: 'the early part of the day', sentence: 'I brush my teeth in the morning.' },
-    ],
-  },
-];
+function getHubPath(pathname: string) {
+  return pathname.startsWith("/kids/") ? "/kids/games/english-excellence" : "/free-games-for-kids";
+}
 
-const readPersisted = (): PersistedState => {
+function getWord(wordId: string) {
+  return PUBLIC_VOCABULARY_WORDS_BY_ID[wordId];
+}
+
+function readPersisted(): PersistedState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { completedLevelIds: [], lastCardIndexByLevel: {} };
-
-    const parsed = JSON.parse(raw) as Partial<PersistedState>;
+    if (!raw) return { levelIndex: 0, completedLevelIndices: [] };
+    const parsed = JSON.parse(raw);
     return {
-      completedLevelIds: Array.isArray(parsed.completedLevelIds) ? parsed.completedLevelIds : [],
-      lastSelectedLevelId:
-        typeof parsed.lastSelectedLevelId === 'string' ? parsed.lastSelectedLevelId : undefined,
-      lastCardIndexByLevel:
-        parsed.lastCardIndexByLevel && typeof parsed.lastCardIndexByLevel === 'object'
-          ? parsed.lastCardIndexByLevel
-          : {},
+      levelIndex: typeof parsed.levelIndex === "number" ? parsed.levelIndex : 0,
+      completedLevelIndices: Array.isArray(parsed.completedLevelIndices) ? parsed.completedLevelIndices : [],
     };
   } catch {
-    return { completedLevelIds: [], lastCardIndexByLevel: {} };
+    return { levelIndex: 0, completedLevelIndices: [] };
   }
-};
+}
 
-const writePersisted = (next: PersistedState) => {
+function writePersisted(state: PersistedState): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch {
-    // Storage can fail in private mode or restricted environments.
+    // Storage may fail in private mode or restricted environments.
   }
-};
+}
 
 export default function WordMeaningFlashcards() {
-  const [screen, setScreen] = useState<Screen>('levels');
-  const [selectedLevelId, setSelectedLevelId] = useState<string | null>(null);
-  const [cardIndex, setCardIndex] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [completedLevelIds, setCompletedLevelIds] = useState<string[]>([]);
-  const [lastCardIndexByLevel, setLastCardIndexByLevel] = useState<Record<string, number>>({});
+  const location = useLocation();
+  const hubPath = getHubPath(location.pathname);
+  const isAuthenticatedRoute = location.pathname.startsWith("/kids/");
 
+  const [screen, setScreen] = useState<Screen>("intro");
+  const [levelIndex, setLevelIndex] = useState(0);
+  const [completedLevelIndices, setCompletedLevelIndices] = useState<number[]>([]);
+  const [queue, setQueue] = useState<RuntimeChallenge[]>([]);
+  const [cursor, setCursor] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [typedAnswer, setTypedAnswer] = useState("");
+  const [feedback, setFeedback] = useState<"idle" | "correct" | "wrong">("idle");
+  const [reviewMessage, setReviewMessage] = useState("");
+  const [wrongAttemptsByRuntimeId, setWrongAttemptsByRuntimeId] = useState<Record<string, number>>({});
+  const [reviewScheduledBySourceId, setReviewScheduledBySourceId] = useState<Record<string, boolean>>({});
+  const [completedBaseCount, setCompletedBaseCount] = useState(0);
+  const [firstTryCorrectCount, setFirstTryCorrectCount] = useState(0);
+
+  // Restore persisted state on mount (authenticated routes only)
   useEffect(() => {
-    const persisted = readPersisted();
-    setCompletedLevelIds(persisted.completedLevelIds);
-    setLastCardIndexByLevel(persisted.lastCardIndexByLevel || {});
-  }, []);
+    if (isAuthenticatedRoute) {
+      const persisted = readPersisted();
+      setLevelIndex(persisted.levelIndex);
+      setCompletedLevelIndices(persisted.completedLevelIndices);
+    }
+  }, [isAuthenticatedRoute]);
 
-  const selectedLevel = useMemo(
-    () => LEVELS.find((level) => level.id === selectedLevelId) || null,
-    [selectedLevelId]
-  );
+  const totalBaseChallenges = PUBLIC_VOCABULARY_LEVELS[levelIndex]?.challenges.length ?? 1;
+  const accuracy = Math.round((firstTryCorrectCount / Math.max(1, totalBaseChallenges)) * 100);
 
-  const currentCard = selectedLevel ? selectedLevel.cards[cardIndex] : null;
+  const currentRuntime = queue[cursor] ?? null;
+  const current = currentRuntime?.challenge ?? null;
 
-  const persistState = (patch: Partial<PersistedState>) => {
-    const base = readPersisted();
-    const merged: PersistedState = {
-      completedLevelIds: patch.completedLevelIds ?? base.completedLevelIds,
-      lastSelectedLevelId: patch.lastSelectedLevelId ?? base.lastSelectedLevelId,
-      lastCardIndexByLevel: patch.lastCardIndexByLevel ?? base.lastCardIndexByLevel ?? {},
-    };
-    writePersisted(merged);
+  const completedTurns = useMemo(() => queue.filter((_, index) => index < cursor).length, [queue, cursor]);
+  const progressPercent = queue.length > 0 ? ((completedTurns + (feedback === "correct" ? 1 : 0)) / queue.length) * 100 : 0;
+
+  const resetRound = (nextLevelIndex: number) => {
+    setLevelIndex(nextLevelIndex);
+    setQueue(createRuntimeQueue(nextLevelIndex));
+    setCursor(0);
+    setSelectedOption(null);
+    setTypedAnswer("");
+    setFeedback("idle");
+    setReviewMessage("");
+    setWrongAttemptsByRuntimeId({});
+    setReviewScheduledBySourceId({});
+    setCompletedBaseCount(0);
+    setFirstTryCorrectCount(0);
+    setScreen("play");
+    if (isAuthenticatedRoute) {
+      writePersisted({ levelIndex: nextLevelIndex, completedLevelIndices });
+    }
   };
 
-  const handleStartLevel = (level: FlashcardLevel) => {
-    const savedIndex = lastCardIndexByLevel[level.id] ?? 0;
-    const safeIndex = Math.max(0, Math.min(savedIndex, level.cards.length - 1));
+  const goToNext = () => {
+    setSelectedOption(null);
+    setTypedAnswer("");
+    setFeedback("idle");
+    setReviewMessage("");
 
-    setSelectedLevelId(level.id);
-    setCardIndex(safeIndex);
-    setIsFlipped(false);
-    setScreen('play');
-
-    persistState({ lastSelectedLevelId: level.id });
+    const nextCursor = cursor + 1;
+    if (nextCursor >= queue.length) {
+      setScreen("complete");
+      return;
+    }
+    setCursor(nextCursor);
   };
 
-  const handleBackToLevels = () => {
-    setScreen('levels');
-    setSelectedLevelId(null);
-    setCardIndex(0);
-    setIsFlipped(false);
+  const handleWrongAttempt = () => {
+    if (!currentRuntime || !current) return;
+
+    setFeedback("wrong");
+    setWrongAttemptsByRuntimeId((prev) => ({
+      ...prev,
+      [currentRuntime.runtimeId]: (prev[currentRuntime.runtimeId] ?? 0) + 1,
+    }));
+
+    if (!currentRuntime.review && !reviewScheduledBySourceId[current.id]) {
+      const reviewRuntime: RuntimeChallenge = {
+        runtimeId: `${currentRuntime.runtimeId}-review`,
+        challenge: current,
+        review: true,
+      };
+      setQueue((prev) => [...prev, reviewRuntime]);
+      setReviewScheduledBySourceId((prev) => ({ ...prev, [current.id]: true }));
+      setReviewMessage("Review round added.");
+    }
   };
 
-  const handleFlip = () => {
-    setIsFlipped((prev) => !prev);
+  const handleCorrectAttempt = () => {
+    if (!currentRuntime || !current) return;
+
+    const wrongAttempts = wrongAttemptsByRuntimeId[currentRuntime.runtimeId] ?? 0;
+    if (!currentRuntime.review) {
+      setCompletedBaseCount((prev) => prev + 1);
+      if (wrongAttempts === 0) {
+        setFirstTryCorrectCount((prev) => prev + 1);
+      }
+    }
+
+    setFeedback("correct");
+    window.setTimeout(() => {
+      goToNext();
+    }, 450);
   };
 
-  const handleNextCard = () => {
-    if (!selectedLevel) return;
+  const checkChoice = (choice: string) => {
+    if (!current) return;
+    setSelectedOption(choice);
 
-    const isLastCard = cardIndex >= selectedLevel.cards.length - 1;
-
-    if (isLastCard) {
-      const nextCompleted = completedLevelIds.includes(selectedLevel.id)
-        ? completedLevelIds
-        : [...completedLevelIds, selectedLevel.id];
-
-      const nextLastCardMap = { ...lastCardIndexByLevel, [selectedLevel.id]: 0 };
-
-      setCompletedLevelIds(nextCompleted);
-      setLastCardIndexByLevel(nextLastCardMap);
-      persistState({
-        completedLevelIds: nextCompleted,
-        lastCardIndexByLevel: nextLastCardMap,
-        lastSelectedLevelId: selectedLevel.id,
-      });
-
-      setScreen('complete');
-      setIsFlipped(false);
+    if (current.mode === "synonym" || current.mode === "antonym") {
+      if (normalizeVocabularyAnswer(choice) === normalizeVocabularyAnswer(current.correctChoice)) {
+        handleCorrectAttempt();
+      } else {
+        handleWrongAttempt();
+      }
       return;
     }
 
-    const nextIndex = cardIndex + 1;
-    const nextLastCardMap = { ...lastCardIndexByLevel, [selectedLevel.id]: nextIndex };
+    if (current.mode === "match-it") {
+      const correctMeaning = getWord(current.correctWordId)?.meaning ?? "";
+      if (choice === correctMeaning) {
+        handleCorrectAttempt();
+      } else {
+        handleWrongAttempt();
+      }
+      return;
+    }
 
-    setCardIndex(nextIndex);
-    setIsFlipped(false);
-    setLastCardIndexByLevel(nextLastCardMap);
-    persistState({
-      lastCardIndexByLevel: nextLastCardMap,
-      lastSelectedLevelId: selectedLevel.id,
-    });
+    if (current.mode === "find-word" || current.mode === "context-clues") {
+      const correctWord = getWord(current.correctWordId)?.word ?? "";
+      if (normalizeVocabularyAnswer(choice) === normalizeVocabularyAnswer(correctWord)) {
+        handleCorrectAttempt();
+      } else {
+        handleWrongAttempt();
+      }
+    }
   };
 
-  const handleReplayLevel = () => {
-    if (!selectedLevel) return;
-
-    const nextLastCardMap = { ...lastCardIndexByLevel, [selectedLevel.id]: 0 };
-    setCardIndex(0);
-    setIsFlipped(false);
-    setScreen('play');
-    setLastCardIndexByLevel(nextLastCardMap);
-    persistState({
-      lastCardIndexByLevel: nextLastCardMap,
-      lastSelectedLevelId: selectedLevel.id,
-    });
+  const checkTyped = () => {
+    if (!current || current.mode !== "word-detective") return;
+    const answers = [current.answerWord, ...(current.acceptableAnswers ?? [])].map((value) =>
+      normalizeVocabularyAnswer(value),
+    );
+    if (answers.includes(normalizeVocabularyAnswer(typedAnswer))) {
+      handleCorrectAttempt();
+      return;
+    }
+    handleWrongAttempt();
   };
 
-  const handleNextLevel = () => {
-    if (!selectedLevel) return;
-    const currentLevelIndex = LEVELS.findIndex((lvl) => lvl.id === selectedLevel.id);
-    const nextLevel = LEVELS[currentLevelIndex + 1];
-    if (!nextLevel) return;
-    handleStartLevel(nextLevel);
-  };
+  const currentLevel = PUBLIC_VOCABULARY_LEVELS[levelIndex];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-sky-50 to-emerald-50 px-4 py-6 text-slate-900 sm:px-6 sm:py-8">
-      <div className="mx-auto w-full max-w-5xl">
-        <header className="mb-6 text-center sm:mb-8">
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-            Word Meaning Flashcards
-          </h1>
-          <p className="mt-2 text-sm text-slate-600 sm:text-base">
-            Learn 50 useful words with simple meanings and example sentences.
-          </p>
-          <p className="mt-2 text-xs text-slate-500 sm:text-sm">
-            Choose a level, flip the card, read the meaning, and say the sentence aloud.
-          </p>
-        </header>
+    <div
+      className="min-h-screen bg-gradient-to-br from-indigo-50 via-sky-50 to-emerald-50 px-3 py-4 text-slate-900 sm:px-5 sm:py-6"
+      data-testid="vocabulary-adventure"
+    >
+      <div className="mx-auto w-full max-w-6xl">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="rounded-full border border-indigo-200 bg-white/80 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-indigo-700 sm:text-sm">
+            {isAuthenticatedRoute ? "Your Progress Saved" : "Guest Mode"} • Vocabulary Adventure
+          </div>
+          <Link
+            to={hubPath}
+            className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-slate-700"
+          >
+            Back
+          </Link>
+        </div>
 
-        {screen === 'levels' && (
-          <section>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {LEVELS.map((level) => {
-                const isCompleted = completedLevelIds.includes(level.id);
+        {screen === "intro" && (
+          <section className="rounded-3xl border border-white/70 bg-white/85 p-5 shadow-sm backdrop-blur sm:p-7">
+            <h1 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Vocabulary Adventure</h1>
+            <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
+              Build meaning confidence through matching, context clues, synonyms, antonyms, and word recall.
+              No audio, no login, no child profile.
+            </p>
+            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+              {PUBLIC_VOCABULARY_WORDS.length} reusable words from Tiny Steps vocabulary sets
+            </p>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {PUBLIC_VOCABULARY_LEVELS.map((level, index) => {
+                const isCompleted = completedLevelIndices.includes(index);
                 return (
-                  <div
+                  <button
                     key={level.id}
-                    className="rounded-3xl border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur"
+                    type="button"
+                    onClick={() => resetRound(index)}
+                    className="rounded-2xl border border-indigo-200 bg-indigo-50/60 p-4 text-left transition hover:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-200"
                   >
-                    <div className="mb-3 flex items-start justify-between gap-2">
-                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                        Level {level.levelNumber}
-                      </p>
-                      {isCompleted && (
-                        <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-                          Completed
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-[0.14em] text-indigo-700">Activity {index + 1}</p>
+                        <h2 className="mt-1 text-xl font-black text-slate-950">{level.title}</h2>
+                      </div>
+                      {isCompleted && isAuthenticatedRoute ? (
+                        <span className="inline-flex rounded-full bg-emerald-100 px-2 py-1 text-xs font-black uppercase tracking-[0.12em] text-emerald-700">
+                          ✓
                         </span>
-                      )}
+                      ) : null}
                     </div>
-                    <h2 className="text-xl font-bold text-slate-900">{level.title}</h2>
-                    <p className="mt-2 text-sm text-slate-600">{level.subtitle}</p>
-                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                      {level.cards.length} words
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => handleStartLevel(level)}
-                      className="mt-4 w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-                    >
-                      Start Level
-                    </button>
-                  </div>
+                    <p className="mt-2 text-sm text-slate-600">{level.instruction}</p>
+                  </button>
                 );
               })}
             </div>
           </section>
         )}
 
-        {screen === 'play' && selectedLevel && currentCard && (
-          <section className="mx-auto max-w-3xl">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        {screen === "play" && current && (
+          <main className="rounded-3xl border border-white/70 bg-white/90 p-4 shadow-sm backdrop-blur sm:p-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-indigo-700">
+                  Activity {levelIndex + 1} of {PUBLIC_VOCABULARY_LEVELS.length}
+                </p>
+                <h2 className="text-3xl font-black text-slate-950">{currentLevel.title}</h2>
+              </div>
               <button
                 type="button"
-                onClick={handleBackToLevels}
-                className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                onClick={() => setScreen("intro")}
+                className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-slate-700"
               >
-                Back to Levels
+                Change Activity
               </button>
-              <div className="text-right">
-                <p className="text-sm font-semibold text-slate-700">{selectedLevel.title}</p>
-                <p className="text-xs text-slate-500">
-                  Card {cardIndex + 1} of {selectedLevel.cards.length}
-                </p>
-              </div>
             </div>
 
-            <div className="rounded-[28px] border border-white/80 bg-white/90 p-6 shadow-sm backdrop-blur sm:p-8">
-              {!isFlipped ? (
-                <div className="flex min-h-[260px] flex-col items-center justify-center rounded-3xl bg-gradient-to-br from-indigo-50 to-sky-50 p-6 text-center sm:min-h-[300px]">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-indigo-500">Word</p>
-                  <h3 className="mt-4 text-5xl font-black tracking-tight text-indigo-900 sm:text-6xl">
-                    {currentCard.word}
-                  </h3>
-                </div>
-              ) : (
-                <div className="min-h-[260px] rounded-3xl bg-gradient-to-br from-emerald-50 to-cyan-50 p-6 sm:min-h-[300px]">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-600">Meaning</p>
-                  <p className="mt-3 text-xl font-bold leading-8 text-emerald-900 sm:text-2xl">
-                    {currentCard.meaning}
-                  </p>
+            <div className="mt-4 h-3 rounded-full bg-slate-200">
+              <div
+                className="h-full rounded-full bg-emerald-500 transition-all"
+                style={{ width: `${Math.max(3, progressPercent)}%` }}
+              />
+            </div>
+            <div className="mt-2 flex justify-between text-xs font-bold text-slate-500">
+              <span>
+                Challenge {Math.min(cursor + 1, queue.length)} of {queue.length}
+              </span>
+              <span>First-try accuracy: {accuracy}%</span>
+            </div>
 
-                  <p className="mt-8 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-600">Sentence</p>
-                  <p className="mt-3 text-lg leading-8 text-emerald-900 sm:text-xl">
-                    {currentCard.sentence}
-                  </p>
-                </div>
+            <section className="mt-4 rounded-3xl border border-indigo-200 bg-indigo-50/40 p-4 sm:p-6">
+              <p className="text-sm font-black uppercase tracking-[0.14em] text-indigo-700">{currentLevel.instruction}</p>
+              <p className="mt-2 text-base font-semibold text-slate-700">{current.clue}</p>
+              {currentRuntime?.review ? (
+                <span className="mt-3 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-amber-800">
+                  Review
+                </span>
+              ) : null}
+
+              {(current.mode === "match-it" || current.mode === "find-word" || current.mode === "context-clues") && (
+                <>
+                  {current.mode === "match-it" ? (
+                    <div className="mt-4 rounded-2xl bg-white p-4 text-center text-3xl font-black text-slate-950">
+                      {getWord(current.wordId)?.word}
+                    </div>
+                  ) : null}
+                  {current.mode === "find-word" ? (
+                    <div className="mt-4 rounded-2xl bg-white p-4 text-center text-base font-semibold leading-7 text-slate-800">
+                      {getWord(current.meaningWordId)?.meaning}
+                    </div>
+                  ) : null}
+                  {current.mode === "context-clues" ? (
+                    <div className="mt-4 rounded-2xl bg-white p-4 text-center text-base font-semibold leading-7 text-slate-800">
+                      {current.sentence}
+                    </div>
+                  ) : null}
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {(current.mode === "match-it"
+                      ? current.choiceWordIds.map((wordId) => getWord(wordId)?.meaning ?? "")
+                      : current.choiceWordIds.map((wordId) => getWord(wordId)?.word ?? "")
+                    ).map((choice) => (
+                      <button
+                        key={choice}
+                        type="button"
+                        onClick={() => checkChoice(choice)}
+                        className="min-h-12 rounded-2xl border-2 border-sky-300 bg-white px-4 py-3 text-left text-sm font-bold text-slate-800 transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-sky-200"
+                      >
+                        {choice}
+                      </button>
+                    ))}
+                  </div>
+                </>
               )}
 
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={handleFlip}
-                  className="w-full rounded-2xl border border-indigo-300 bg-indigo-50 px-4 py-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100"
+              {(current.mode === "synonym" || current.mode === "antonym") && (
+                <>
+                  <div className="mt-4 rounded-2xl bg-white p-4 text-center">
+                    <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">Target Word</p>
+                    <p className="mt-1 text-3xl font-black text-slate-950">{current.targetWord}</p>
+                  </div>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {current.choices.map((choice) => (
+                      <button
+                        key={choice}
+                        type="button"
+                        onClick={() => checkChoice(choice)}
+                        className="min-h-12 rounded-2xl border-2 border-sky-300 bg-white px-4 py-3 text-left text-sm font-bold text-slate-800 transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-sky-200"
+                      >
+                        {choice}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {current.mode === "word-detective" && (
+                <form
+                  className="mt-4"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    checkTyped();
+                  }}
                 >
-                  {isFlipped ? 'Show Word' : 'Flip Card'}
-                </button>
-                <button
-                  type="button"
-                  disabled={!isFlipped}
-                  onClick={handleNextCard}
-                  className="w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
-                >
-                  Next Card
-                </button>
+                  <label htmlFor="word-detective-answer" className="text-sm font-black text-slate-700">
+                    Type the mystery word
+                  </label>
+                  <input
+                    id="word-detective-answer"
+                    type="text"
+                    value={typedAnswer}
+                    onChange={(event) => setTypedAnswer(event.target.value)}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    className="mt-2 min-h-12 w-full rounded-2xl border-2 border-sky-300 bg-white px-4 py-3 text-lg font-black text-slate-900 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-200"
+                  />
+                  <button
+                    type="submit"
+                    className="mt-3 min-h-12 w-full rounded-full bg-slate-950 px-5 py-3 text-sm font-black uppercase tracking-[0.12em] text-white transition hover:bg-slate-800"
+                  >
+                    Check Answer
+                  </button>
+                </form>
+              )}
+
+              <div className="mt-4 min-h-[34px] text-sm font-black">
+                {feedback === "correct" ? <span className="text-emerald-700">Correct! Great job.</span> : null}
+                {feedback === "wrong" ? <span className="text-rose-700">Not yet. Try again.</span> : null}
+                {feedback === "idle" ? <span className="text-slate-500">Take your time and think carefully.</span> : null}
               </div>
-            </div>
-          </section>
+              {reviewMessage ? <p className="text-xs font-semibold text-amber-700">{reviewMessage}</p> : null}
+            </section>
+          </main>
         )}
 
-        {screen === 'complete' && selectedLevel && (
-          <section className="mx-auto max-w-3xl rounded-[28px] border border-white/80 bg-white/90 p-6 text-center shadow-sm backdrop-blur sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-600">Level Complete</p>
-            <h2 className="mt-3 text-3xl font-black text-slate-900 sm:text-4xl">Great work!</h2>
+        {screen === "complete" && (
+          <section className="rounded-3xl border border-white/70 bg-white/90 p-6 text-center shadow-sm backdrop-blur sm:p-8">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-600">Vocabulary Adventure Complete</p>
+            <h2 className="mt-2 text-4xl font-black text-slate-950">Amazing effort!</h2>
             <p className="mt-3 text-sm text-slate-600 sm:text-base">
-              You completed {selectedLevel.title}. Keep going to learn more words.
+              You finished {currentLevel.title}. First-try accuracy: {accuracy}% • Base challenges solved: {completedBaseCount}
             </p>
 
             <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
               <button
                 type="button"
-                onClick={handleReplayLevel}
-                className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                onClick={() => {
+                  if (isAuthenticatedRoute && !completedLevelIndices.includes(levelIndex)) {
+                    const nextCompleted = [...completedLevelIndices, levelIndex];
+                    setCompletedLevelIndices(nextCompleted);
+                    writePersisted({ levelIndex, completedLevelIndices: nextCompleted });
+                  }
+                  resetRound(levelIndex);
+                }}
+                className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-black text-white hover:bg-slate-800"
               >
-                Replay Level
+                Replay Activity
               </button>
               <button
                 type="button"
-                onClick={handleBackToLevels}
-                className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                onClick={() => {
+                  if (isAuthenticatedRoute && !completedLevelIndices.includes(levelIndex)) {
+                    const nextCompleted = [...completedLevelIndices, levelIndex];
+                    setCompletedLevelIndices(nextCompleted);
+                    writePersisted({ levelIndex, completedLevelIndices: nextCompleted });
+                  }
+                  setScreen("intro");
+                }}
+                className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-black text-slate-700"
               >
-                Back to Levels
+                Change Activity
               </button>
-              <button
-                type="button"
-                onClick={handleNextLevel}
-                disabled={LEVELS.findIndex((lvl) => lvl.id === selectedLevel.id) >= LEVELS.length - 1}
-                className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+              <Link
+                to={hubPath}
+                className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-black text-slate-700"
               >
-                Next Level
-              </button>
+                Back
+              </Link>
             </div>
           </section>
         )}

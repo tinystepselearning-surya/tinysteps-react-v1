@@ -214,11 +214,13 @@ describe("FreeEnglishGameLandingPage", () => {
     expect(screen.getByRole("heading", { name: /guest play mode/i, level: 2 })).toBeInTheDocument();
     expect(screen.getByText(/guest play mode • spelling adventure/i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /spelling adventure/i })).toBeInTheDocument();
-    expect(screen.getByText(/build words, complete missing letters, and choose the correct spelling/i)).toBeInTheDocument();
+    expect(screen.getByText(/build words, complete missing letters, fix mistakes, and spell whole words/i)).toBeInTheDocument();
     expect(screen.getByText("Build It")).toBeInTheDocument();
     expect(screen.getByText("Word Families")).toBeInTheDocument();
     expect(screen.getByText("Complete It")).toBeInTheDocument();
     expect(screen.getByText("Choose It")).toBeInTheDocument();
+    expect(screen.getByText("Fix It")).toBeInTheDocument();
+    expect(screen.getByText("Spell It")).toBeInTheDocument();
     expect(screen.getByTestId("location-probe")).toHaveTextContent("/free-spelling-game-for-kids?play=1");
     expect(screen.queryByText(/no child selected/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/kidId|synced child tracking|synced per-child tracking/i)).not.toBeInTheDocument();
@@ -229,13 +231,13 @@ describe("FreeEnglishGameLandingPage", () => {
     expect(screen.queryByText(/listen/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/magnet:/i)).not.toBeInTheDocument();
     expect(screen.getByAltText("cat")).toBeInTheDocument();
-    expect(screen.getByText(/0\/16 done/i)).toBeInTheDocument();
+    expect(screen.getByText(/0\/36 done/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /letter t/i }));
+    expect(screen.getByText(/^try again\.$/i)).toBeInTheDocument();
     await act(async () => {
       vi.advanceTimersByTime(540);
     });
-    expect(screen.getByText(/try again/i)).toBeInTheDocument();
 
     const clickLetter = (letter: string) => {
       fireEvent.click(screen.getByRole("button", { name: new RegExp(`letter ${letter}`, "i") }));
@@ -265,12 +267,21 @@ describe("FreeEnglishGameLandingPage", () => {
       fireEvent.click(screen.getByRole("button", { name: new RegExp(`spelling ${choice}`, "i") }));
       await finishCorrect(word);
     };
+    const typeAnswer = async (answer: string, word: string, useEnter = false) => {
+      const input = screen.getByRole("textbox");
+      fireEvent.change(input, { target: { value: answer } });
+      if (useEnter) fireEvent.keyDown(input, { key: "Enter", code: "Enter" });
+      else fireEvent.click(screen.getByRole("button", { name: /check answer/i }));
+      await finishCorrect(word);
+    };
 
     await buildWord("cat");
     await buildWord("dog");
     await buildWord("sun");
     await buildWord("cat");
     await buildWord("pig");
+    await buildWord("train");
+    await buildWord("nest");
 
     expect(screen.getByRole("heading", { name: "Word Families" })).toBeInTheDocument();
     expect(screen.getByAltText("cat")).toBeInTheDocument();
@@ -278,6 +289,8 @@ describe("FreeEnglishGameLandingPage", () => {
     await chooseLetter("m", "map");
     await chooseLetter("d", "dog");
     await chooseLetter("s", "sun");
+    await chooseLetter("p", "pig");
+    await chooseLetter("r", "ring");
 
     expect(screen.getByRole("heading", { name: "Complete It" })).toBeInTheDocument();
     expect(screen.getByText("c _ t")).toBeInTheDocument();
@@ -285,6 +298,8 @@ describe("FreeEnglishGameLandingPage", () => {
     await chooseMissing("u", "sun");
     await chooseMissing("i", "pig");
     await chooseMissing("e", "hen");
+    await chooseMissing("i", "fish");
+    await chooseMissing("i", "kite");
 
     expect(screen.getByRole("heading", { name: "Choose It" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /spelling fish/i })).toBeInTheDocument();
@@ -292,9 +307,54 @@ describe("FreeEnglishGameLandingPage", () => {
     await chooseSpelling("elephant", "elephant");
     await chooseSpelling("tiger", "tiger");
     await chooseSpelling("queen", "queen");
+    await chooseSpelling("whale", "whale");
+    await chooseSpelling("grape", "grape");
+
+    expect(screen.getByRole("heading", { name: "Fix It" })).toBeInTheDocument();
+    expect(screen.getByText("frend")).toBeInTheDocument();
+    const fixInput = screen.getByRole("textbox", { name: /correct spelling/i });
+    expect(fixInput).toHaveAttribute("spellcheck", "false");
+    expect(fixInput).toHaveAttribute("autocomplete", "off");
+    expect(fixInput).toHaveAttribute("autocorrect", "off");
+    fireEvent.change(fixInput, { target: { value: "freind" } });
+    fireEvent.click(screen.getByRole("button", { name: /check answer/i }));
+    fireEvent.click(screen.getByRole("button", { name: /check answer/i }));
+    expect(screen.getByText(/^try again\.$/i)).toBeInTheDocument();
+    await act(async () => {
+      vi.advanceTimersByTime(540);
+    });
+    await typeAnswer("  FRIEND  ", "friend", true);
+    await typeAnswer("because", "because");
+    await typeAnswer("elephant", "elephant");
+    expect(screen.getByText(/review/i)).toBeInTheDocument();
+    await typeAnswer("FrIeNd", "friend");
+    await typeAnswer("people", "people");
+    await typeAnswer("watch", "watch");
+    await typeAnswer("school", "school");
+
+    expect(screen.getByRole("heading", { name: "Spell It" })).toBeInTheDocument();
+    expect(screen.getByText(/the ___ shines brightly during the day/i)).toBeInTheDocument();
+    expect(screen.queryByText(/^sun$/i)).not.toBeInTheDocument();
+    const spellInput = screen.getByRole("textbox", { name: /your spelling/i });
+    fireEvent.change(spellInput, { target: { value: "son" } });
+    fireEvent.click(screen.getByRole("button", { name: /check answer/i }));
+    expect(screen.getByText(/^try again\.$/i)).toBeInTheDocument();
+    await act(async () => {
+      vi.advanceTimersByTime(540);
+    });
+    await typeAnswer("sun", "sun");
+    expect(screen.getByRole("textbox")).toHaveValue("");
+    await typeAnswer("friend", "friend");
+    await typeAnswer("queen", "queen");
+    expect(screen.getByText(/review/i)).toBeInTheDocument();
+    await typeAnswer("SUN", "sun");
+    await typeAnswer("elephant", "elephant");
+    await typeAnswer("train", "train");
+    await typeAnswer("library", "library");
 
     expect(screen.getByRole("heading", { name: /spelling journey complete/i })).toBeInTheDocument();
-    expect(screen.getByText(/first-try accuracy:/i)).toHaveTextContent("Turns played: 17");
+    expect(screen.getByText(/first-try accuracy:/i)).toHaveTextContent("First-try accuracy: 92%");
+    expect(screen.getByText(/first-try accuracy:/i)).toHaveTextContent("Turns played: 39");
 
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: /replay/i }));
@@ -322,6 +382,40 @@ describe("FreeEnglishGameLandingPage", () => {
 
     getItemSpy.mockRestore();
     setItemSpy.mockRestore();
+    vi.useRealTimers();
+  });
+
+  it("starts focused practice at a later spelling level and cancels stale advancement when switching levels", async () => {
+    vi.useFakeTimers();
+    renderRoute("/free-spelling-game-for-kids?play=1");
+
+    fireEvent.click(screen.getByRole("button", { name: /start at spell it/i }));
+
+    expect(screen.getByRole("heading", { name: "Spell It" })).toBeInTheDocument();
+    expect(screen.getByText(/30\/36 done/i)).toBeInTheDocument();
+    expect(screen.getByText(/the ___ shines brightly during the day/i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole("textbox", { name: /your spelling/i }), {
+      target: { value: "SUN" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /check answer/i }));
+    expect(screen.getByText(/correct: sun/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: /go to fix it/i }));
+    expect(screen.getByRole("heading", { name: "Fix It" })).toBeInTheDocument();
+    expect(screen.getByText("frend")).toBeInTheDocument();
+    expect(screen.getByText(/24\/36 done/i)).toBeInTheDocument();
+
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(screen.getByRole("heading", { name: "Fix It" })).toBeInTheDocument();
+    expect(screen.getByText("frend")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /correct spelling/i })).toHaveValue("");
+
+    fireEvent.click(screen.getByRole("button", { name: /back to free games/i }));
+    expect(screen.getByTestId("location-probe")).toHaveTextContent("/free-spelling-game-for-kids");
     vi.useRealTimers();
   });
 
