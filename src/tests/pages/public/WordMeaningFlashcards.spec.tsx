@@ -49,7 +49,7 @@ describe("WordMeaningFlashcards (Vocabulary Adventure)", () => {
     expect(screen.getByRole("button", { name: /word detective/i })).toBeInTheDocument();
 
     const backLink = screen.getByRole("link", { name: /back/i });
-    expect(backLink.getAttribute("href")).toBe("/free-games-for-kids");
+    expect(backLink.getAttribute("href")).toBe("/free-english-games-for-kids");
     expect(screen.getByTestId("location-probe")).toHaveTextContent("/free-games/word-meaning-flashcards");
   });
 

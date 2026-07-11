@@ -33,7 +33,7 @@ function createRuntimeQueue(levelIndex: number): RuntimeChallenge[] {
 }
 
 function getHubPath(pathname: string) {
-  return pathname.startsWith("/kids/") ? "/kids/games/english-excellence" : "/free-games-for-kids";
+  return pathname.startsWith("/kids/") ? "/kids/games/english-excellence" : "/free-english-games-for-kids";
 }
 
 function getWord(wordId: string) {

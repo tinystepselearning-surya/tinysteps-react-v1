@@ -148,7 +148,7 @@ export default function LearningGamesMarketingPage() {
               <p className="mt-4 text-sm font-medium text-slate-600">
                 All game subscription enquiries open WhatsApp directly with a ready-to-send message for Tiny Steps.
               </p>
-              <Link to="/free-games-for-kids" className="mt-2 inline-flex text-sm font-semibold text-sky-800 underline underline-offset-4">
+              <Link to="/free-english-games-for-kids" className="mt-2 inline-flex text-sm font-semibold text-sky-800 underline underline-offset-4">
                 Prefer free options? Browse all free learning games.
               </Link>
 

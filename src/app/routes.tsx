@@ -50,7 +50,7 @@ const PhonicsGamesPreschoolersPage = lazy(() => import('../pages/public/PhonicsG
 const OnlinePhonicsReadingClassesPage = lazy(() => import('../pages/public/OnlinePhonicsReadingClassesPage'));
 const EnglishGrammarWritingClassesPage = lazy(() => import('../pages/public/EnglishGrammarWritingClassesPage'));
 const LearningGamesMarketingPage = lazy(() => import('../pages/public/LearningGamesMarketingPage'));
-const FreeGamesHubPage = lazy(() => import('../pages/public/FreeGamesHubPage'));
+const LegacyFreeGamesHubRedirect = lazy(() => import('../pages/public/LegacyFreeGamesHubRedirect'));
 const FreeEnglishGamesHubPage = lazy(() => import('../pages/public/FreeEnglishGamesHubPage'));
 const FreeEnglishGamesCategoryPage = lazy(() => import('../pages/public/FreeEnglishGamesCategoryPage'));
 const FreeEnglishGameLandingPage = lazy(() => import('../pages/public/FreeEnglishGameLandingPage'));
@@ -602,7 +602,7 @@ const router = createBrowserRouter(
         { path: 'phonics-apps-for-preschoolers-india', element: <PhonicsAppsPreschoolersIndiaPage /> },
         { path: 'phonics-games-for-preschoolers', element: <PhonicsGamesPreschoolersPage /> },
         { path: 'phonics-learning-games', element: <LearningGamesMarketingPage /> },
-        { path: 'free-games-for-kids', element: <FreeGamesHubPage /> },
+        { path: 'free-games-for-kids', element: <LegacyFreeGamesHubRedirect /> },
         { path: 'free-english-games-for-kids', element: <FreeEnglishGamesHubPage /> },
         { path: 'free-phonics-games-for-kids', element: <FreeEnglishGamesCategoryPage /> },
         { path: 'free-letter-sound-games-for-kids', element: <FreeEnglishGamesCategoryPage /> },

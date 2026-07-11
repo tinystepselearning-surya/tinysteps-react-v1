@@ -19,7 +19,6 @@ export const STATIC_MARKETING_ROUTES = [
   '/phonics-apps-for-preschoolers-india',
   '/phonics-games-for-preschoolers',
   '/phonics-learning-games',
-  '/free-games-for-kids',
   '/free-english-games-for-kids',
   '/free-phonics-games-for-kids',
   '/free-letter-sound-games-for-kids',
