@@ -4,6 +4,9 @@ import {
   type EnglishExcellenceTile,
 } from "./englishExcellenceMission";
 
+export { ENGLISH_EXCELLENCE_STAGES };
+export type { EnglishExcellenceStage, EnglishExcellenceTile };
+
 export const PUBLIC_ENGLISH_GAMES_HUB_PATH = "/free-english-games-for-kids";
 export const PUBLIC_PROGRESS_STORAGE_KEY = "ts_public_game_progress_v1";
 
@@ -49,6 +52,14 @@ export type PublicEnglishGameLandingConfig = {
   isPublicPlayReady: boolean;
   playPath?: string;
   statusText: string;
+  // Phase 1 extensions: learning journey + conversion content
+  benefits?: string[];
+  parentGuidance?: string;
+  commonMistakes?: string;
+  nextGameId?: string;
+  relatedGameIds?: string[];
+  assessmentBridge?: string;
+  faqs?: Array<{ question: string; answer: string }>;
 };
 
 export type PublicCategoryTileEntry = {
@@ -330,6 +341,42 @@ export const PUBLIC_ENGLISH_GAME_LANDING_CONFIGS: PublicEnglishGameLandingConfig
     isPublicPlayReady: true,
     playPath: "/free-letter-sounds-game-for-kids?play=1",
     statusText: "Play free",
+    benefits: [
+      "Connects each letter with its phonics sound",
+      "Builds alphabet recognition and sound recall",
+      "Prepares children for blending and word reading",
+      "Develops phonics listening confidence",
+    ],
+    parentGuidance:
+      "Start with 3–5 letter sounds your child already recognizes by shape. Practice each sound daily for a week before adding new letters. If your child confuses similar sounds like /b/ and /d/, focus on one at a time until it becomes automatic.",
+    commonMistakes:
+      "Children often say the letter name instead of the sound. Gently remind them: 'We're listening for the sound the letter makes, not its name.' Keep practice playful and pressure-free.",
+    nextGameId: "eem-g06-blend-2-sounds",
+    relatedGameIds: ["eem-g00-letter-tracing", "eem-g05-sound-listening", "eem-g04b-balloon-pop"],
+    assessmentBridge:
+      "Letter sounds are the foundation of reading. See how Tiny Steps teachers guide children through the complete phonics journey—from sounds to blending to fluent reading—with live feedback and weekly progress tracking.",
+    faqs: [
+      {
+        question: "Should my child learn letter names or sounds first?",
+        answer: "Sounds first. Children need letter sounds to decode words. Letter names can be learned alongside or after sounds are secure.",
+      },
+      {
+        question: "How many letter sounds should my child practice at once?",
+        answer: "Start with 3–5 sounds. Add new sounds only after your child can recall the first group quickly and accurately.",
+      },
+      {
+        question: "My child keeps saying the letter name instead of the sound. What should I do?",
+        answer: "This is very common. Gently correct: 'That's the letter's name. What sound does it make?' Use the sound in simple words to reinforce the difference.",
+      },
+      {
+        question: "How long does it take to learn all letter sounds?",
+        answer: "Most children learn the basic 26 letter sounds in 8–12 weeks with daily 5–10 minute practice. Progress varies by age and prior exposure.",
+      },
+      {
+        question: "Can this game replace phonics classes?",
+        answer: "This game builds sound recognition. Phonics classes add blending, decoding strategies, spelling rules, teacher correction, and progress tracking for complete reading readiness.",
+      },
+    ],
   },
   {
     publicPath: "/free-sound-listening-game-for-kids",
@@ -414,6 +461,42 @@ export const PUBLIC_ENGLISH_GAME_LANDING_CONFIGS: PublicEnglishGameLandingConfig
     isPublicPlayReady: true,
     playPath: "/free-spelling-game-for-kids?play=1",
     statusText: "Play free",
+    benefits: [
+      "Builds spelling confidence from short words to complex patterns",
+      "Practises blends, digraphs, and long-vowel spelling rules",
+      "Develops error-spotting and self-correction skills",
+      "Strengthens vocabulary and word meaning recall",
+    ],
+    parentGuidance:
+      "Let your child sound out each word aloud before spelling. If they struggle with a pattern (like 'ai' vs 'ay'), pause and practice just that pattern with 3–4 words before returning to the game. Celebrate progress, not perfection.",
+    commonMistakes:
+      "Children often spell words exactly as they sound, missing silent letters or tricky patterns. Use these mistakes as teaching moments: 'Good try! This word has a silent e at the end that makes the vowel say its name.'",
+    nextGameId: "eem-g21-meaning-from-context",
+    relatedGameIds: ["eem-g06-blend-2-sounds", "eem-g09-word-families", "eem-g08b-read-tiny-words"],
+    assessmentBridge:
+      "Spelling is more than memorization—it's understanding patterns and rules. Tiny Steps classes teach spelling strategies step-by-step, with teacher guidance to catch and fix misconceptions early.",
+    faqs: [
+      {
+        question: "At what age should my child start spelling practice?",
+        answer: "Children can start simple CVC spelling (like 'cat', 'dog') around age 5–6, once they know letter sounds. More complex patterns come later, typically ages 6–8.",
+      },
+      {
+        question: "My child spells words the way they sound. Is that okay?",
+        answer: "Phonetic spelling is a great first step. It shows your child understands sounds. Gradually introduce spelling patterns and rules to move from 'sed' to 'said'.",
+      },
+      {
+        question: "Should I correct every spelling mistake?",
+        answer: "Correct mistakes gently and focus on patterns, not isolated words. For example, if your child misspells 'rain' as 'rane', teach the 'ai' pattern with several examples.",
+      },
+      {
+        question: "How is this different from spelling lists at school?",
+        answer: "This game teaches spelling through patterns and clues, not memorization. It builds understanding of how English spelling works, which helps with new words your child hasn't seen before.",
+      },
+      {
+        question: "Can this game help with spelling tests?",
+        answer: "Yes, it builds foundational spelling skills. For test-specific practice, combine this with targeted word practice and teacher-guided pattern instruction.",
+      },
+    ],
   },
   {
     publicPath: "/free-sentence-making-game-for-kids",
@@ -440,6 +523,42 @@ export const PUBLIC_ENGLISH_GAME_LANDING_CONFIGS: PublicEnglishGameLandingConfig
     isPublicPlayReady: true,
     playPath: "/free-sentence-making-game-for-kids?play=1",
     statusText: "Play free",
+    benefits: [
+      "Teaches correct English word order naturally",
+      "Builds grammar intuition through sentence construction",
+      "Strengthens reading fluency and comprehension",
+      "Develops clearer spoken and written expression",
+    ],
+    parentGuidance:
+      "Encourage your child to say each sentence aloud after building it. If the sentence doesn't sound right, ask: 'Does this sound like how we talk?' This builds grammar intuition without formal rules. Keep sessions short (5–10 minutes) to maintain focus.",
+    commonMistakes:
+      "Many children arrange words in the order they appear on screen, rather than thinking about meaning. Pause and ask: 'Who is doing what in this sentence?' before they start arranging. This helps them focus on sentence structure, not random order.",
+    nextGameId: "eem-g15-better-sentences",
+    relatedGameIds: ["eem-g18-fluent-reading", "eem-g13-fill-the-blank", "eem-g12b-early-reader-fluency"],
+    assessmentBridge:
+      "Sentence-making builds grammar foundations. In Tiny Steps classes, teachers help children not just arrange words, but speak and write sentences with confidence, clarity, and correct grammar patterns.",
+    faqs: [
+      {
+        question: "What age should my child start making sentences?",
+        answer: "Most children are ready around age 6, once they can read simple words. Start with 3–4 word sentences and gradually increase complexity.",
+      },
+      {
+        question: "My child puts words in the wrong order. How can I help?",
+        answer: "Ask them to say the sentence aloud in their own words first, then arrange the written words to match. This connects spoken grammar knowledge to written structure.",
+      },
+      {
+        question: "Should I explain grammar rules?",
+        answer: "Not yet. At this stage, focus on building intuition: 'Does this sound right?' Formal grammar rules can come later, once children have strong sentence sense.",
+      },
+      {
+        question: "How does this help with writing?",
+        answer: "Children who can build sentences understand word order and sentence structure, which directly transfers to clearer writing and better composition skills.",
+      },
+      {
+        question: "Is this enough for school sentence work?",
+        answer: "This game builds foundational sentence skills. School work often requires more complex sentences, punctuation, and varied structures—skills taught in structured English classes.",
+      },
+    ],
   },
   {
     publicPath: "/free-reading-fluency-game-for-kids",

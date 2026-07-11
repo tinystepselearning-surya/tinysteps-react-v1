@@ -216,7 +216,7 @@ describe("FreeEnglishGameLandingPage", () => {
     expect(screen.getByRole("heading", { name: /spelling adventure/i })).toBeInTheDocument();
     expect(screen.getByText(/build words, complete missing letters, fix mistakes, and spell whole words/i)).toBeInTheDocument();
     expect(screen.getByText("Build It")).toBeInTheDocument();
-    expect(screen.getByText("Word Families")).toBeInTheDocument();
+    expect(screen.getAllByText("Word Families").length).toBeGreaterThan(0);
     expect(screen.getByText("Complete It")).toBeInTheDocument();
     expect(screen.getByText("Choose It")).toBeInTheDocument();
     expect(screen.getByText("Fix It")).toBeInTheDocument();
@@ -283,7 +283,7 @@ describe("FreeEnglishGameLandingPage", () => {
     await buildWord("train");
     await buildWord("nest");
 
-    expect(screen.getByRole("heading", { name: "Word Families" })).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: "Word Families" }).length).toBeGreaterThan(0);
     expect(screen.getByAltText("cat")).toBeInTheDocument();
     await chooseLetter("c", "cat");
     await chooseLetter("m", "map");
@@ -585,5 +585,121 @@ describe("FreeEnglishGameLandingPage", () => {
     expect(screen.queryByRole("link", { name: "Play Free" })).not.toBeInTheDocument();
     expect(screen.getAllByText(/ready soon|coming soon/i).length).toBeGreaterThan(0);
     expect(landingMocks.recordLevelResultMock).not.toHaveBeenCalled();
+  });
+
+  describe("Phase 1: Learning journey and conversion content", () => {
+    it("renders unique benefits list for Letter Sounds", () => {
+      renderRoute("/free-letter-sounds-game-for-kids");
+
+      expect(screen.getByRole("heading", { name: /what children learn/i, level: 2 })).toBeInTheDocument();
+      expect(screen.getByText(/connects each letter with its phonics sound/i)).toBeInTheDocument();
+      expect(screen.getByText(/builds alphabet recognition and sound recall/i)).toBeInTheDocument();
+      expect(screen.getByText(/prepares children for blending and word reading/i)).toBeInTheDocument();
+    });
+
+    it("renders parent guidance for Letter Sounds", () => {
+      renderRoute("/free-letter-sounds-game-for-kids");
+
+      expect(screen.getByText(/parent guidance/i)).toBeInTheDocument();
+      expect(screen.getByText(/start with 3–5 letter sounds/i)).toBeInTheDocument();
+    });
+
+    it("renders unique FAQs for Letter Sounds", () => {
+      renderRoute("/free-letter-sounds-game-for-kids");
+
+      expect(screen.getByText(/should my child learn letter names or sounds first/i)).toBeInTheDocument();
+      expect(screen.getByText(/how many letter sounds should my child practice at once/i)).toBeInTheDocument();
+      expect(screen.queryByText(/is this game free\?/i)).not.toBeInTheDocument();
+    });
+
+    it("renders next game recommendation for Letter Sounds", () => {
+      renderRoute("/free-letter-sounds-game-for-kids");
+
+      expect(screen.getByRole("heading", { name: /ready for the next step/i, level: 2 })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: /blend 2 sounds/i, level: 3 })).toBeInTheDocument();
+    });
+
+    it("renders assessment bridge CTA for Letter Sounds", () => {
+      renderRoute("/free-letter-sounds-game-for-kids");
+
+      expect(screen.getByRole("heading", { name: /take the next step/i, level: 2 })).toBeInTheDocument();
+      expect(screen.getByText(/from free games to guided learning/i)).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /book free assessment/i })).toHaveAttribute("href", "/book-demo");
+    });
+
+    it("renders helpful tip for Letter Sounds", () => {
+      renderRoute("/free-letter-sounds-game-for-kids");
+
+      expect(screen.getByRole("heading", { name: /helpful tip/i, level: 2 })).toBeInTheDocument();
+      expect(screen.getByText(/children often say the letter name instead of the sound/i)).toBeInTheDocument();
+    });
+
+    it("renders curated related games for Letter Sounds", () => {
+      renderRoute("/free-letter-sounds-game-for-kids");
+
+      expect(screen.getByRole("heading", { name: /related game skills/i, level: 2 })).toBeInTheDocument();
+      expect(screen.getByText(/letter tracing/i)).toBeInTheDocument();
+      expect(screen.getByText(/sound listening|sound detective/i)).toBeInTheDocument();
+    });
+
+    it("renders unique benefits for Spelling", () => {
+      renderRoute("/free-spelling-game-for-kids");
+
+      expect(screen.getByRole("heading", { name: /what children learn/i, level: 2 })).toBeInTheDocument();
+      expect(screen.getByText(/builds spelling confidence from short words to complex patterns/i)).toBeInTheDocument();
+      expect(screen.getByText(/practises blends, digraphs, and long-vowel spelling rules/i)).toBeInTheDocument();
+    });
+
+    it("renders unique FAQs for Spelling", () => {
+      renderRoute("/free-spelling-game-for-kids");
+
+      expect(screen.getByText(/at what age should my child start spelling practice/i)).toBeInTheDocument();
+      expect(screen.getByText(/my child spells words the way they sound/i)).toBeInTheDocument();
+      expect(screen.queryByText(/is this game free\?/i)).not.toBeInTheDocument();
+    });
+
+    it("renders next game for Spelling pointing to Vocabulary", () => {
+      renderRoute("/free-spelling-game-for-kids");
+
+      expect(screen.getByRole("heading", { name: /ready for the next step/i, level: 2 })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: /vocabulary adventure/i, level: 3 })).toBeInTheDocument();
+    });
+
+    it("renders unique benefits for Sentence Making", () => {
+      renderRoute("/free-sentence-making-game-for-kids");
+
+      expect(screen.getByRole("heading", { name: /what children learn/i, level: 2 })).toBeInTheDocument();
+      expect(screen.getByText(/teaches correct english word order naturally/i)).toBeInTheDocument();
+      expect(screen.getByText(/builds grammar intuition through sentence construction/i)).toBeInTheDocument();
+    });
+
+    it("renders unique FAQs for Sentence Making", () => {
+      renderRoute("/free-sentence-making-game-for-kids");
+
+      expect(screen.getByText(/what age should my child start making sentences/i)).toBeInTheDocument();
+      expect(screen.getByText(/my child puts words in the wrong order/i)).toBeInTheDocument();
+      expect(screen.queryByText(/is this game free\?/i)).not.toBeInTheDocument();
+    });
+
+    it("renders next game for Sentence Making pointing to Grammar", () => {
+      renderRoute("/free-sentence-making-game-for-kids");
+
+      expect(screen.getByRole("heading", { name: /ready for the next step/i, level: 2 })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: /build better sentences/i, level: 3 })).toBeInTheDocument();
+    });
+
+    it("preserves existing public play behavior for all three enhanced games", () => {
+      renderRoute("/free-letter-sounds-game-for-kids?play=1");
+      expect(screen.getAllByRole("heading", { name: /guest play mode/i, level: 2 }).length).toBeGreaterThanOrEqual(1);
+      expect(landingMocks.recordLevelResultMock).not.toHaveBeenCalled();
+
+      renderRoute("/free-spelling-game-for-kids?play=1");
+      expect(screen.getAllByRole("heading", { name: /guest play mode/i, level: 2 }).length).toBeGreaterThanOrEqual(1);
+      expect(landingMocks.recordLevelResultMock).not.toHaveBeenCalled();
+
+      renderRoute("/free-sentence-making-game-for-kids?play=1");
+      expect(screen.getAllByRole("heading", { name: /guest play mode/i, level: 2 }).length).toBeGreaterThanOrEqual(1);
+      expect(landingMocks.recordLevelResultMock).not.toHaveBeenCalled();
+    });
   });
 });

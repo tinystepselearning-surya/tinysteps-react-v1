@@ -5,6 +5,7 @@ import TinyStepsBrand from "../../components/common/TinyStepsBrand";
 import LiquidEther from "../../components/components/LiquidEther";
 import { createFAQPageSchema } from "../../lib/schemas";
 import { applySeo } from "../../lib/seo";
+import { trackFreeResourceToTrialClick } from "../../lib/conversionTracking";
 import PublicEnglishGamePlayer from "./PublicEnglishGamePlayer";
 import {
   PUBLIC_ENGLISH_GAMES_HUB_PATH,
@@ -12,6 +13,10 @@ import {
   getPublicEnglishGameLandingTiles,
   getPublicTileRoute,
   isPublicTilePlayable,
+  ENGLISH_EXCELLENCE_STAGES,
+  type PublicEnglishGameLandingConfig,
+  type EnglishExcellenceStage,
+  type EnglishExcellenceTile,
 } from "../../lib/publicEnglishGames";
 
 const SITE_ORIGIN = "https://tinystepslearning.com";
@@ -19,7 +24,7 @@ const SITE_ORIGIN = "https://tinystepslearning.com";
 export default function FreeEnglishGameLandingPage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const config = getPublicEnglishGameLandingByPath(location.pathname);
+  const config: PublicEnglishGameLandingConfig | null = getPublicEnglishGameLandingByPath(location.pathname);
   const isPlayMode = searchParams.get("play") === "1";
   const shouldRenderPlayer = !!config?.isPublicPlayReady && isPlayMode;
 
@@ -38,7 +43,8 @@ export default function FreeEnglishGameLandingPage() {
       ],
     };
 
-    const faqItems = [
+    // Use custom FAQs if provided, otherwise fall back to generic
+    const faqItems = config.faqs || [
       { question: "Is this game free?", answer: "Yes. This Tiny Steps public game page is free to open in your browser." },
       { question: "Does this game require login?", answer: "No. You do not need a login or child profile to use this public page." },
       { question: "Is progress saved?", answer: "Progress is saved only temporarily in this browser." },
@@ -62,7 +68,9 @@ export default function FreeEnglishGameLandingPage() {
 
   const pageUrl = `${SITE_ORIGIN}${config.publicPath}`;
   const tiles = getPublicEnglishGameLandingTiles(config);
-  const faqItems = [
+
+  // Use custom FAQs if provided, otherwise fall back to generic
+  const faqItems = config.faqs || [
     { question: "Is this game free?", answer: "Yes. This Tiny Steps public game page is free to open in your browser." },
     { question: "Does this game require login?", answer: "No. You do not need a login or child profile to use this public page." },
     { question: "Is progress saved?", answer: "Progress is saved only temporarily in this browser." },
@@ -70,6 +78,34 @@ export default function FreeEnglishGameLandingPage() {
     { question: "What skill does this game practise?", answer: config.skillAnswer },
     { question: "How is Tiny Steps different from free practice games?", answer: config.differenceAnswer },
   ];
+
+  // Get curated related games if specified, otherwise use all from config
+  const relatedTiles: Array<{ stage: EnglishExcellenceStage; tile: EnglishExcellenceTile }> = config.relatedGameIds
+    ? ENGLISH_EXCELLENCE_STAGES.flatMap((stage: EnglishExcellenceStage) =>
+        stage.tiles
+          .filter((tile: EnglishExcellenceTile) => config.relatedGameIds?.includes(tile.gameId))
+          .map((tile: EnglishExcellenceTile) => ({ stage, tile }))
+      )
+    : tiles;
+
+  // Find next game tile if specified
+  const nextGameTile: { stage: EnglishExcellenceStage; tile: EnglishExcellenceTile } | null = config.nextGameId
+    ? ENGLISH_EXCELLENCE_STAGES.flatMap((stage: EnglishExcellenceStage) =>
+        stage.tiles
+          .filter((tile: EnglishExcellenceTile) => tile.gameId === config.nextGameId)
+          .map((tile: EnglishExcellenceTile) => ({ stage, tile }))
+      )[0]
+    : null;
+
+  const handleAssessmentClick = () => {
+    trackFreeResourceToTrialClick({
+      page_path: config.publicPath,
+      cta_label: "Book Free Assessment",
+      cta_location: "assessment_bridge",
+      destination_path: "/book-demo",
+      program: "phonics",
+    });
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#05010f] text-slate-100">
@@ -178,21 +214,36 @@ export default function FreeEnglishGameLandingPage() {
                 </span>
               </div>
 
-              <h2 className="mt-4 text-2xl font-black text-slate-100">What this page covers</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-300">
-                {config.seoDescription}
-              </p>
-
-              <div className="mt-5 flex flex-wrap gap-2">
-                {config.skills.map((skill) => (
-                  <span
-                    key={skill}
-                    className="rounded-full border border-sky-300/25 bg-sky-400/10 px-3 py-1.5 text-xs font-bold text-sky-100"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
+              {config.benefits ? (
+                <>
+                  <h2 className="mt-4 text-2xl font-black text-slate-100">What children learn</h2>
+                  <ul className="mt-3 space-y-2 text-sm leading-7 text-slate-300">
+                    {config.benefits.map((benefit) => (
+                      <li key={benefit} className="flex gap-2">
+                        <span className="mt-1 text-cyan-400">•</span>
+                        <span>{benefit}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <>
+                  <h2 className="mt-4 text-2xl font-black text-slate-100">What this page covers</h2>
+                  <p className="mt-3 text-sm leading-7 text-slate-300">
+                    {config.seoDescription}
+                  </p>
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    {config.skills.map((skill) => (
+                      <span
+                        key={skill}
+                        className="rounded-full border border-sky-300/25 bg-sky-400/10 px-3 py-1.5 text-xs font-bold text-sky-100"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              )}
 
               <div className="mt-6">
                 {config.isPublicPlayReady && config.playPath ? (
@@ -223,14 +274,23 @@ export default function FreeEnglishGameLandingPage() {
                 ))}
               </ol>
 
-              <div className="mt-6 rounded-2xl border border-emerald-300/20 bg-emerald-400/10 p-4">
-                <p className="text-sm font-semibold text-slate-100">
-                  Want saved progress and teacher guidance?{" "}
-                  <Link to="/book-demo" className="font-black text-cyan-200 underline underline-offset-4">
-                    Book a free demo.
-                  </Link>
-                </p>
-              </div>
+              {config.parentGuidance ? (
+                <div className="mt-6 rounded-2xl border border-amber-300/20 bg-amber-400/10 p-4">
+                  <h3 className="text-sm font-black uppercase tracking-[0.12em] text-amber-200">Parent Guidance</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-100">
+                    {config.parentGuidance}
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-6 rounded-2xl border border-emerald-300/20 bg-emerald-400/10 p-4">
+                  <p className="text-sm font-semibold text-slate-100">
+                    Want saved progress and teacher guidance?{" "}
+                    <Link to="/book-demo" className="font-black text-cyan-200 underline underline-offset-4">
+                      Book a free demo.
+                    </Link>
+                  </p>
+                </div>
+              )}
             </div>
           </section>
 
@@ -259,10 +319,43 @@ export default function FreeEnglishGameLandingPage() {
             </section>
           ) : null}
 
+          {config.commonMistakes && (
+            <section className="mt-4 public-game-panel p-5">
+              <h2 className="text-lg font-black text-slate-100">Helpful tip</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-300">
+                {config.commonMistakes}
+              </p>
+            </section>
+          )}
+
+          {nextGameTile && (
+            <section className="mt-4 public-game-panel p-5">
+              <h2 className="text-2xl font-black text-slate-100">Ready for the next step?</h2>
+              <p className="mt-2 text-sm text-slate-300">
+                After {config.h1.toLowerCase()}, try:
+              </p>
+              <article className="mt-4 public-game-card rounded-2xl p-4">
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                  Track {nextGameTile.stage.stageNumber}
+                </p>
+                <h3 className="mt-2 text-xl font-black text-slate-100">{nextGameTile.tile.gameTitle}</h3>
+                <p className="mt-2 text-sm text-slate-300">{nextGameTile.tile.desc}</p>
+                {getPublicTileRoute(nextGameTile.tile.gameId)?.route && (
+                  <Link
+                    to={getPublicTileRoute(nextGameTile.tile.gameId)!.route!}
+                    className="mt-4 inline-flex rounded-xl bg-cyan-400 px-4 py-2 text-sm font-black text-slate-900 hover:bg-cyan-300"
+                  >
+                    Try {nextGameTile.tile.gameTitle}
+                  </Link>
+                )}
+              </article>
+            </section>
+          )}
+
           <section className="mt-4 public-game-panel p-5">
             <h2 className="text-2xl font-black text-slate-100">Related game skills</h2>
             <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {tiles.map(({ stage, tile }) => {
+              {relatedTiles.map(({ stage, tile }: { stage: EnglishExcellenceStage; tile: EnglishExcellenceTile }) => {
                 const route = getPublicTileRoute(tile.gameId);
                 const isPlayable = isPublicTilePlayable(tile.gameId);
                 const isSelfRoute = route?.route === config.publicPath;
@@ -321,27 +414,62 @@ export default function FreeEnglishGameLandingPage() {
           </div>
 
           <div className="public-game-panel p-5">
-            <h2 className="text-2xl font-black text-slate-100">Quick links</h2>
-            <div className="mt-4 grid gap-3">
-              <Link
-                to={PUBLIC_ENGLISH_GAMES_HUB_PATH}
-                className="rounded-2xl border border-white/10 bg-slate-950/42 px-4 py-4 text-sm font-bold text-slate-100"
-              >
-                Back to Free English Games for Kids
-              </Link>
-              <Link
-                to={config.categoryPath}
-                className="rounded-2xl border border-white/10 bg-slate-950/42 px-4 py-4 text-sm font-bold text-slate-100"
-              >
-                Open the related category page
-              </Link>
-              <Link
-                to="/book-demo"
-                className="rounded-2xl border border-cyan-300/20 bg-cyan-400/10 px-4 py-4 text-sm font-bold text-cyan-100"
-              >
-                Want saved progress and teacher guidance? Book a free demo.
-              </Link>
-            </div>
+            {config.assessmentBridge ? (
+              <>
+                <h2 className="text-2xl font-black text-slate-100">Take the next step</h2>
+                <div className="mt-4 rounded-2xl border border-amber-300/20 bg-amber-400/10 p-5">
+                  <h3 className="text-base font-bold text-slate-100">From free games to guided learning</h3>
+                  <p className="mt-3 text-sm leading-6 text-slate-200">
+                    {config.assessmentBridge}
+                  </p>
+                  <Link
+                    to="/book-demo"
+                    onClick={handleAssessmentClick}
+                    className="mt-4 inline-flex rounded-xl bg-amber-400 px-5 py-3 text-sm font-black text-slate-900 hover:bg-amber-300"
+                  >
+                    Book Free Assessment
+                  </Link>
+                </div>
+                <div className="mt-4 grid gap-3">
+                  <Link
+                    to={PUBLIC_ENGLISH_GAMES_HUB_PATH}
+                    className="rounded-2xl border border-white/10 bg-slate-950/42 px-4 py-4 text-sm font-bold text-slate-100"
+                  >
+                    Back to Free English Games for Kids
+                  </Link>
+                  <Link
+                    to={config.categoryPath}
+                    className="rounded-2xl border border-white/10 bg-slate-950/42 px-4 py-4 text-sm font-bold text-slate-100"
+                  >
+                    Open the related category page
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-2xl font-black text-slate-100">Quick links</h2>
+                <div className="mt-4 grid gap-3">
+                  <Link
+                    to={PUBLIC_ENGLISH_GAMES_HUB_PATH}
+                    className="rounded-2xl border border-white/10 bg-slate-950/42 px-4 py-4 text-sm font-bold text-slate-100"
+                  >
+                    Back to Free English Games for Kids
+                  </Link>
+                  <Link
+                    to={config.categoryPath}
+                    className="rounded-2xl border border-white/10 bg-slate-950/42 px-4 py-4 text-sm font-bold text-slate-100"
+                  >
+                    Open the related category page
+                  </Link>
+                  <Link
+                    to="/book-demo"
+                    className="rounded-2xl border border-cyan-300/20 bg-cyan-400/10 px-4 py-4 text-sm font-bold text-cyan-100"
+                  >
+                    Want saved progress and teacher guidance? Book a free demo.
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
         </section>
       </div>
