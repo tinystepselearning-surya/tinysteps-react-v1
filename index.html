@@ -113,6 +113,48 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
 
+    <!-- Microsoft Clarity: public routes only -->
+    <script type="text/javascript">
+      (function () {
+        var pathname = (window.location.pathname || '/').toLowerCase();
+        var blockedPrefixes = [
+          '/admin', '/surya', '/teacher', '/parent', '/student', '/kids', '/kid',
+          '/login', '/signup', '/auth', '/account', '/profile', '/payment',
+          '/payments', '/checkout', '/messages', '/learning-partner/dashboard',
+          '/learningpartner/dashboard', '/unauthorized', '/dev'
+        ];
+        var allowedExactPaths = [
+          '/', '/pricing', '/sitemap', '/contact', '/why-tiny-steps',
+          '/learning-partner', '/privacy-policy', '/terms-and-conditions',
+          '/refund-guarantee', '/team', '/class-samples', '/testimonials',
+          '/careers', '/curriculum', '/faq', '/for-schools', '/book-demo',
+          '/grammar', '/speaking', '/games/english-excellence'
+        ];
+        var allowedPrefixes = [
+          '/blog', '/courses', '/free-', '/free-games', '/summer-', '/phonics',
+          '/online-', '/best-online-', '/english-', '/public-speaking-',
+          '/reading-', '/writing-', '/spoken-', '/child-', '/slow-', '/shy-',
+          '/confidence-', '/letter-', '/seasonal/'
+        ];
+
+        if (blockedPrefixes.some(function (prefix) { return pathname.indexOf(prefix) === 0; })) {
+          return;
+        }
+        if (
+          allowedExactPaths.indexOf(pathname) === -1 &&
+          !allowedPrefixes.some(function (prefix) { return pathname.indexOf(prefix) === 0; })
+        ) {
+          return;
+        }
+
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "xl3yemvlms");
+      })();
+    </script>
+    <!-- End Microsoft Clarity -->
   </head>
 
   <body>

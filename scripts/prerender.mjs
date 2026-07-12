@@ -7,6 +7,7 @@ import { getPublicCourseSitemapPaths } from "../src/lib/publicCoursePages.js";
 import { shouldIncludeBlogSlugInSitemap } from "../src/lib/blogIndexingPolicy.js";
 import { ROUTE_SEO_REGISTRY as ROUTE_SEO_CONFIG } from "../src/lib/routeSeoRegistry.js";
 import { extractBlogEntriesFromPostFiles, listMdxEntries } from "./blog-route-utils.mjs";
+import { isClarityAllowedPath } from "./clarity-route-policy.mjs";
 import { PARENT_HELP_ROUTES, STATIC_MARKETING_ROUTES, uniqueRoutes } from "./seo-route-inventory.mjs";
 
 const DIST = path.resolve(process.cwd(), "dist");
@@ -254,9 +255,17 @@ function escapeHtml(text) {
 
 async function writeRouteHtml(route, html) {
   // Strip browser-runtime preload/script artifacts that bloat critical head payload.
-  const sanitizedHtml = html
+  let sanitizedHtml = html
     .replace(/<link rel="modulepreload"[^>]*>/gi, "")
-    .replace(/<script[^>]*src="https:\/\/www\.googletagmanager\.com\/gtag\/js[^"]*"[^>]*><\/script>/gi, "");
+    .replace(/<script[^>]*src="https:\/\/www\.googletagmanager\.com\/gtag\/js[^"]*"[^>]*><\/script>/gi, "")
+    .replace(/<script[^>]*src="https:\/\/www\.clarity\.ms\/tag\/[^"]*"[^>]*><\/script>/gi, "");
+
+  if (!isClarityAllowedPath(route)) {
+    sanitizedHtml = sanitizedHtml.replace(
+      /\s*<!-- Microsoft Clarity: public routes only -->[\s\S]*?<!-- End Microsoft Clarity -->/i,
+      ""
+    );
+  }
 
   // Inject SEO metadata before writing
   const seoInjectedHtml = injectSeoMetadata(sanitizedHtml, route);
