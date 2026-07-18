@@ -62,6 +62,40 @@ const OPERATIONAL_ENROLLMENT_KEYS_COLLECTION = 'operationalEnrollmentKeys';
 const ENROLLMENT_CREATION_OPERATIONS_COLLECTION = 'enrollmentCreationOperations';
 const ENROLLMENT_TRANSITIONS_COLLECTION = 'enrollmentCourseTransitions';
 
+async function ensureEnrollmentCreator(auth: any, kidId: string): Promise<void> {
+  if (!auth?.uid) {
+    throw new HttpsError('unauthenticated', 'Authentication required');
+  }
+
+  if (auth.token?.role === 'admin' || auth.token?.admin === true) return;
+
+  const db = admin.firestore();
+  const userSnap = await db.collection('users').doc(auth.uid).get();
+  const user = userSnap.data() || {};
+  const roles = Array.isArray(user.roles) ? user.roles.map((role: unknown) => String(role)) : [];
+  const isAdmin = user.role === 'admin' || roles.includes('admin');
+  if (isAdmin) return;
+
+  const normalizedRole = String(user.role || '').replace(/[-_\s]/g, '').toLowerCase();
+  const isLearningPartner = normalizedRole === 'learningpartner' ||
+    roles.some((role: string) => role.replace(/[-_\s]/g, '').toLowerCase() === 'learningpartner');
+  if (!isLearningPartner) {
+    throw new HttpsError('permission-denied', 'Admin or assigned Learning Partner access required');
+  }
+
+  const kidSnap = await db.collection('kids').doc(kidId).get();
+  if (!kidSnap.exists) throw new HttpsError('not-found', 'Canonical child was not found');
+  const kid = kidSnap.data() || {};
+  const assignedLearningPartners = new Set([
+    toOptionalId(kid.lpId),
+    toOptionalId(kid.primaryLpId),
+    ...toStringList(kid.assignedLPs),
+  ].filter((uid): uid is string => Boolean(uid)));
+  if (!assignedLearningPartners.has(auth.uid)) {
+    throw new HttpsError('permission-denied', 'Learning Partner is not assigned to this child');
+  }
+}
+
 type TeacherIdentity = {
   teacherId: string;
   teacherIds: string[];
@@ -209,6 +243,9 @@ async function createEnrollmentInternal(
   const course = (courseSnap.data() || {}) as Record<string, unknown>;
   const canonicalKidId = kidSnap.id;
   const canonicalCourseId = courseSnap.id;
+  if (String(course.status || '').trim().toLowerCase() !== 'active') {
+    throw new HttpsError('failed-precondition', 'Selected course is not active and cannot be assigned');
+  }
   const existingOperational = await findOperationalSameCourseEnrollmentIds({
     db,
     kidId: canonicalKidId,
@@ -229,8 +266,8 @@ async function createEnrollmentInternal(
   const ratePerSession = Number(data.ratePerSession ?? data.feePerClass ?? course.ratePerSession ?? 0);
   const teacherPayPerSession = Number(data.teacherPayPerSession ?? 0);
   const creditsTotal = Math.max(0, Math.floor(Number(data.creditsTotal ?? 0)));
-  if (!Number.isFinite(ratePerSession) || ratePerSession < 0) {
-    throw new HttpsError('invalid-argument', 'ratePerSession must be a non-negative number');
+  if (!Number.isFinite(ratePerSession) || ratePerSession <= 0) {
+    throw new HttpsError('invalid-argument', 'fee per class must be a positive number');
   }
   if (!Number.isFinite(teacherPayPerSession) || teacherPayPerSession < 0) {
     throw new HttpsError('invalid-argument', 'teacherPayPerSession must be a non-negative number');
@@ -244,6 +281,8 @@ async function createEnrollmentInternal(
   const parentId = toOptionalId(kid.primaryParentId) || toOptionalId(kid.parentId) || parentIds[0] || null;
   if (!parentId) throw new HttpsError('failed-precondition', 'Child is not linked to a parent');
   if (!parentIds.includes(parentId)) parentIds.unshift(parentId);
+  const assignedLpId =
+    toOptionalId(kid.lpId) || toOptionalId(kid.primaryLpId) || toStringList(kid.assignedLPs)[0] || null;
   const kidName =
     toOptionalId(kid.fullName) || toOptionalId(kid.name) || toOptionalId(kid.displayName) || canonicalKidId;
   const courseName =
@@ -277,7 +316,7 @@ async function createEnrollmentInternal(
       courseName,
       teacherId,
       teacherIds: teacherId ? [teacherId] : [],
-      lpId: null,
+      lpId: assignedLpId,
       status: 'active',
       ratePerSession,
       feePerClass: ratePerSession,
@@ -335,9 +374,14 @@ async function createEnrollmentInternal(
 }
 
 export const createEnrollment = onCall({ region: REGION }, async (request) => {
-  await ensureAdmin(request.auth);
+  const data = (request.data || {}) as Record<string, unknown>;
+  const requestedKidId = String(data.kidId || data.studentId || '').trim();
+  if (request.auth?.uid && !requestedKidId) {
+    throw new HttpsError('invalid-argument', 'operationId, kidId, and courseId are required');
+  }
+  await ensureEnrollmentCreator(request.auth, requestedKidId);
   return createEnrollmentInternal(
-    (request.data || {}) as Record<string, unknown>,
+    data,
     request.auth?.uid || 'admin',
   );
 });

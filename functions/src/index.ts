@@ -107,7 +107,7 @@ export { createLessonAccessSession, resolveLessonAccessViewer } from "./createLe
 export { contactForm } from "./contactForm";
 export { notFoundRoute } from "./notFoundRoute";
 
-// Enrollment lifecycle (admin-only)
+// Enrollment lifecycle (createEnrollment also permits the assigned Learning Partner)
 export {
   setEnrollmentStatus,
   reassignEnrollmentTeacher,

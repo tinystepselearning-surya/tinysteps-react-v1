@@ -13,10 +13,10 @@ import {
   orderBy,
   where,
 } from "firebase/firestore";
-import { signOut } from "firebase/auth";
 
 import { useAuthStore } from "../../store/useAuthStore";
-import { db, auth, logCustomEvent } from "../../lib/firebaseConfig";
+import { db, logCustomEvent } from "../../lib/firebaseConfig";
+import { performAppLogout } from "../../lib/auth";
 import callFunction from "../../lib/callFunctions";
 
 import { ParentGamesProgress } from "./components/progress/ParentGamesProgress";
@@ -1426,7 +1426,7 @@ function isNativeIOSCapacitorRuntime(): boolean {
 }
 
 export default function ParentDashboard() {
-  const { user, isLoading, clearUser } = useAuthStore();
+  const { user, isLoading } = useAuthStore();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedKidId = searchParams.get("kidId")?.trim() || "";
@@ -1489,8 +1489,7 @@ export default function ParentDashboard() {
   const handleLogout = async () => {
     hapticLight();
     try {
-      await signOut(auth);
-      clearUser();
+      await performAppLogout('user-clicked-logout');
       navigate("/login");
     } catch (error) {
       console.error("Logout error:", error);

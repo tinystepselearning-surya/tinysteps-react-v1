@@ -5,10 +5,19 @@ import {
   GoogleAuthProvider,
   signOut,
 } from 'firebase/auth';
-import { auth } from '../lib/firebaseConfig';
+import { auth, ensureNativeAuthPersistence } from '../lib/firebaseConfig';
 import { callFunction } from './callFunctions';
 import { useAuthStore } from '../store/useAuthStore';
 import type { AuthUser, AuthRole } from '../store/useAuthStore';
+import { clearPendingPushOpenRoute } from './pushNavigationState';
+import { schedulePostLoginAuthDiagnostics } from './nativeAuthDiagnostics';
+
+export type AppLogoutReason =
+  | 'user-clicked-logout'
+  | 'admin-security-rejection'
+  | 'role-mismatch'
+  | 'account-disabled'
+  | 'test-only';
 
 const VALID_ROLES: AuthRole[] = [
   'admin',
@@ -24,6 +33,30 @@ const roleRedirectMap: Record<AuthRole, string> = {
   parent: '/parent',
   kid: '/parent/kids',
   learningPartner: '/learning-partner/dashboard',
+};
+
+export const getRoleRedirectPath = (role: AuthRole): string =>
+  roleRedirectMap[role] ?? '/';
+
+export const getSafeInternalRedirect = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const destination = value.trim();
+  if (
+    !destination.startsWith('/') ||
+    destination.startsWith('//') ||
+    destination.includes('\\') ||
+    /[\u0000-\u001f]/.test(destination)
+  ) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(destination, 'https://tinysteps.invalid');
+    if (parsed.origin !== 'https://tinysteps.invalid') return null;
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return null;
+  }
 };
 
 const LOGIN_ID_NOT_FOUND_MESSAGE =
@@ -70,33 +103,6 @@ const logLoginStage = (event: string, data?: Record<string, unknown>) => {
     return;
   }
   console.info(`[auth] ${event}`);
-};
-
-const redirectAfterLogin = (destination: string) => {
-  if (typeof window === 'undefined') return;
-
-  const isNativeRuntime = isNativeCapacitorRuntime();
-  const mode = isNativeRuntime ? 'native-spa' : 'web-reload';
-  logLoginStage('login:redirect', { path: destination, mode });
-
-  if (!isNativeRuntime) {
-    window.location.href = destination;
-    return;
-  }
-
-  try {
-    const targetUrl = new URL(destination, window.location.origin);
-    const nextPath = `${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`;
-    const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-
-    if (currentPath !== nextPath) {
-      window.history.replaceState(window.history.state, '', nextPath);
-    }
-  } catch {
-    window.history.replaceState(window.history.state, '', destination);
-  }
-
-  window.dispatchEvent(new PopStateEvent('popstate'));
 };
 
 const getErrorCode = (err: unknown): string | undefined =>
@@ -214,6 +220,10 @@ async function resolveLoginEmail(loginId: string): Promise<string> {
 async function handleAdminLogin(loginId: string, password: string) {
   const normalizedEmail = await resolveLoginEmail(loginId);
 
+  if (isNativeCapacitorRuntime()) {
+    await ensureNativeAuthPersistence();
+  }
+
   logLoginStage('login:firebase:start', { mode: 'admin' });
   let credential;
   try {
@@ -227,6 +237,12 @@ async function handleAdminLogin(loginId: string, password: string) {
       'firebase',
     );
     logLoginStage('login:firebase:success', { mode: 'admin' });
+    if (isNativeCapacitorRuntime()) {
+      console.info('[auth-persistence] login-current-user-present', {
+        present: Boolean(auth.currentUser),
+      });
+      schedulePostLoginAuthDiagnostics();
+    }
   } catch (err) {
     if (isLoginTimeoutError(err)) {
       logLoginStage('login:firebase:timeout', { mode: 'admin' });
@@ -270,7 +286,7 @@ async function handleAdminLogin(loginId: string, password: string) {
 
   if (!isAdmin) {
     // This account is NOT allowed to be an admin → sign out + hard error
-    await signOut(auth);
+    await performAppLogout('admin-security-rejection');
     throw new Error(
       'This account is not authorized for Surya Admin access.',
     );
@@ -284,8 +300,7 @@ async function handleAdminLogin(loginId: string, password: string) {
   };
 
   useAuthStore.getState().setUser(authUser);
-
-  redirectAfterLogin(roleRedirectMap.admin);
+  return authUser;
 }
 
 /**
@@ -316,6 +331,10 @@ async function handleNonAdminLogin(
 ) {
   const normalizedEmail = await resolveLoginEmail(loginId);
 
+  if (isNativeCapacitorRuntime()) {
+    await ensureNativeAuthPersistence();
+  }
+
   logLoginStage('login:firebase:start', {
     mode: 'non-admin',
     expectedRole: expectedRole ?? null,
@@ -332,6 +351,12 @@ async function handleNonAdminLogin(
       'firebase',
     );
     logLoginStage('login:firebase:success', { mode: 'non-admin' });
+    if (isNativeCapacitorRuntime()) {
+      console.info('[auth-persistence] login-current-user-present', {
+        present: Boolean(auth.currentUser),
+      });
+      schedulePostLoginAuthDiagnostics();
+    }
   } catch (err) {
     if (isLoginTimeoutError(err)) {
       logLoginStage('login:firebase:timeout', { mode: 'non-admin' });
@@ -378,7 +403,7 @@ async function handleNonAdminLogin(
     roleFromClaims &&
     roleFromClaims !== expectedRole
   ) {
-    await signOut(auth);
+    await performAppLogout('role-mismatch');
     throw new Error(
       `This account is not a ${expectedRole} account. Please use the correct login page.`,
     );
@@ -392,9 +417,7 @@ async function handleNonAdminLogin(
   };
 
   useAuthStore.getState().setUser(authUser);
-
-  const destination = roleRedirectMap[role] ?? '/';
-  redirectAfterLogin(destination);
+  return authUser;
 }
 
 // ---------- PUBLIC API USED BY LoginPage & Surya Login ----------
@@ -428,6 +451,9 @@ export async function handleLogin(
 export async function handleLoginWithGoogle(expectedRole?: string) {
   const provider = new GoogleAuthProvider();
   const credential = await signInWithPopup(auth, provider);
+  if (isNativeCapacitorRuntime()) {
+    schedulePostLoginAuthDiagnostics();
+  }
   const firebaseUser = credential.user;
 
   const tokenResult = await firebaseUser.getIdTokenResult();
@@ -445,7 +471,7 @@ export async function handleLoginWithGoogle(expectedRole?: string) {
     roleFromClaims &&
     roleFromClaims !== expectedRole
   ) {
-    await signOut(auth);
+    await performAppLogout('role-mismatch');
     throw new Error(
       `This Google account is not a ${expectedRole} account.`,
     );
@@ -459,12 +485,23 @@ export async function handleLoginWithGoogle(expectedRole?: string) {
   };
 
   useAuthStore.getState().setUser(authUser);
+  return authUser;
+}
 
-  const destination = roleRedirectMap[role] ?? '/';
-  redirectAfterLogin(destination);
+export async function performAppLogout(reason: AppLogoutReason): Promise<void> {
+  console.info('[auth-diagnostics] logout-called', { reason });
+  try {
+    await signOut(auth);
+  } finally {
+    useAuthStore.getState().resolveAuth(
+      'unauthenticated',
+      null,
+      `logout:${reason}`,
+    );
+    clearPendingPushOpenRoute();
+  }
 }
 
 export async function handleLogout() {
-  await signOut(auth);
-  useAuthStore.getState().clearUser();
+  await performAppLogout('user-clicked-logout');
 }

@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
+import { performAppLogout } from '../../lib/auth';
 
 type LinkItem = { label: string; href: string };
 
@@ -26,7 +27,7 @@ const PRIMARY_LINKS: LinkItem[] = [
 const LOGIN_LINK: LinkItem = { label: 'Login', href: '/login' };
 
 export default function Header() {
-  const { user, clearUser } = useAuthStore();
+  const { user } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
@@ -60,18 +61,12 @@ export default function Header() {
 
   const handleLogout = useCallback(async () => {
     try {
-      const [{ signOut }, { auth }] = await Promise.all([
-        import('firebase/auth'),
-        import('../../lib/firebaseConfig'),
-      ]);
-      await signOut(auth);
+      await performAppLogout('user-clicked-logout');
     } catch (error) {
       console.error('Error signing out of Firebase', error);
     }
-
-    clearUser();
     navigate('/login');
-  }, [clearUser, navigate]);
+  }, [navigate]);
 
   const handleBookAssessment = useCallback(() => {
     const params = new URLSearchParams(location.search);

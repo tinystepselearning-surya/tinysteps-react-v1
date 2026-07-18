@@ -1,8 +1,6 @@
 import type { FC } from 'react';
 import { Button } from '@components/ui/button';
-import { signOut } from 'firebase/auth';
-import { auth } from '../../../../lib/firebaseConfig';
-import { useAuthStore } from '../../../../store/useAuthStore';
+import { performAppLogout } from '../../../../lib/auth';
 import { useNavigate } from 'react-router-dom';
 import AppShellHeader from '../../../../components/common/AppShellHeader';
 
@@ -11,13 +9,11 @@ interface LPHeaderProps {
 }
 
 export const LPHeader: FC<LPHeaderProps> = ({ name }) => {
-  const { clearUser } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
-      clearUser();
+      await performAppLogout('user-clicked-logout');
       navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);

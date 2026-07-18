@@ -58,10 +58,19 @@ describe('admin lifecycle routing', () => {
   });
 
   it('routes both enrollment creation UIs through the centralized backend invariant', () => {
-    expect(createEnrollmentSource).toContain("httpsCallable(getFunctions(), 'createEnrollment')");
-    expect(assignCourseSource).toContain("httpsCallable(getFunctions(), 'createEnrollment')");
+    expect(createEnrollmentSource).toContain('createEnrollment({');
+    expect(assignCourseSource).toContain('createEnrollment({');
+    expect(createEnrollmentSource).toContain("from '../../../lib/createEnrollmentCallable'");
+    expect(assignCourseSource).toContain("from '../../../lib/createEnrollmentCallable'");
     expect(createEnrollmentSource).not.toContain("setDoc(enrollmentRef");
     expect(assignCourseSource).not.toContain("setDoc(enrollmentRef");
+    expect(assignCourseSource).toContain('disabled={!canAssign || saving || !selected || coursesLoading}');
+    expect(assignCourseSource).toContain("description: 'Course assigned to student.'");
+    expect(assignCourseSource.indexOf('onAssigned?.()')).toBeGreaterThan(
+      assignCourseSource.indexOf("description: 'Course assigned to student.'"),
+    );
+    expect(assignCourseSource.indexOf('onClose();')).toBeGreaterThan(assignCourseSource.indexOf('onAssigned?.()'));
+    expect(assignCourseSource).toContain('getCreateEnrollmentErrorMessage(err)');
   });
 
   it('routes complete-and-start-next through the recoverable transition callable', () => {

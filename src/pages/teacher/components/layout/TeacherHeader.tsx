@@ -1,7 +1,6 @@
 import React, { memo } from 'react';
 import type { FC } from 'react';
-import { signOut } from 'firebase/auth';
-import { auth } from '../../../../lib/firebaseConfig';
+import { performAppLogout } from '../../../../lib/auth';
 import { Button } from '@components/ui/button';
 import { cn } from '@components/lib/utils';
 import {
@@ -9,7 +8,6 @@ import {
   LogOut,
   Menu,
 } from 'lucide-react';
-import { useAuthStore } from '../../../../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import TinyStepsBrand from '../../../../components/common/TinyStepsBrand';
 
@@ -28,13 +26,11 @@ const TeacherHeaderComponent: FC<TeacherHeaderProps> = ({
   actionsOnly = false,
   className,
 }) => {
-  const { clearUser } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
-      clearUser();
+      await performAppLogout('user-clicked-logout');
       navigate('/login');
     } catch (err) {
       console.error('Logout failed', err);

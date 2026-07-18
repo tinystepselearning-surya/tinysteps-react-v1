@@ -3,13 +3,14 @@ import { useState } from 'react';
 import type { FormEvent, FC } from 'react';
 import {
   signInWithEmailAndPassword,
-  signOut,
   sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth } from '../lib/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import AuthPageBrandHeader from '../components/common/AuthPageBrandHeader';
+import { performAppLogout } from '../lib/auth';
+import { schedulePostLoginAuthDiagnostics } from '../lib/nativeAuthDiagnostics';
 
 interface LoginProps {
   // Optional override (e.g. for tests or future refactor).
@@ -27,7 +28,7 @@ const Login: FC<LoginProps> = ({ onLogin }) => {
   const navigate = useNavigate();
 
   // Get setter from Zustand store so RoleGate / dashboards can see admin
-  const { setUser, clearUser } = useAuthStore();
+  const { setUser } = useAuthStore();
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
@@ -50,6 +51,7 @@ const Login: FC<LoginProps> = ({ onLogin }) => {
         normalizedEmail,
         password,
       );
+      schedulePostLoginAuthDiagnostics();
 
       const result = await cred.user.getIdTokenResult(true);
       const claims = result.claims as any;
@@ -59,8 +61,7 @@ const Login: FC<LoginProps> = ({ onLogin }) => {
         setError(
           'Access denied: this account does not have admin privileges.',
         );
-        await signOut(auth);
-        clearUser(); // make sure store is clean
+        await performAppLogout('admin-security-rejection');
         return;
       }
 

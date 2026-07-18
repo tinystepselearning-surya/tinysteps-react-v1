@@ -1,9 +1,7 @@
 import type { FC } from 'react';
 import { Button } from '@components/ui/button';
-import { useAuthStore } from '../../../../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
-import { signOut } from 'firebase/auth';
-import { auth } from '../../../../lib/firebaseConfig';
+import { performAppLogout } from '../../../../lib/auth';
 import AppShellHeader from '../../../../components/common/AppShellHeader';
 
 interface ParentHeaderProps {
@@ -13,13 +11,11 @@ interface ParentHeaderProps {
 }
 
 export const ParentHeader: FC<ParentHeaderProps> = ({ name, totalChildren, onOpenKidsView }) => {
-  const { clearUser } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
-      clearUser();
+      await performAppLogout('user-clicked-logout');
       navigate('/login');
     } catch (error) {
       console.error('Logout error: ', error);

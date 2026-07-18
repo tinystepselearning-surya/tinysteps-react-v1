@@ -22,8 +22,11 @@ import {
   doc,
   getDoc,
 } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../../../lib/firebaseConfig';
+import {
+  createEnrollment,
+  getCreateEnrollmentErrorMessage,
+} from '../../../lib/createEnrollmentCallable';
 import { useCourses } from '../../../hooks/useData';
 import { toast } from '@components/hooks/use-toast';
 import { Student } from '../../../types/Student';
@@ -232,6 +235,8 @@ export default function AssignCourseModal({
   }, [selected, courses]);
 
   const handleAssign = async () => {
+    if (saving) return;
+
     if (!selected) {
       toast({
         title: 'Select a course',
@@ -260,9 +265,18 @@ export default function AssignCourseModal({
       return;
     }
 
-    const rawTeacherPay = Number(teacherPayPerSessionInput);
-    const teacherPayPerSession =
-      Number.isFinite(rawTeacherPay) && rawTeacherPay > 0 ? rawTeacherPay : 0;
+    const rawTeacherPay = teacherPayPerSessionInput.trim() === ''
+      ? 0
+      : Number(teacherPayPerSessionInput);
+    if (!Number.isFinite(rawTeacherPay) || rawTeacherPay < 0) {
+      toast({
+        title: 'Invalid teacher pay',
+        description: 'Enter a valid non-negative teacher pay per session.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    const teacherPayPerSession = rawTeacherPay;
 
     try {
       setSaving(true);
@@ -294,7 +308,6 @@ export default function AssignCourseModal({
         sessionsPerMonthForFrequency(sessionFrequency);
       const billingCycle: 'monthly' = 'monthly';
       const creditsTotal = sessionsPerMonth; // 1-month worth of sessions
-      const createEnrollment = httpsCallable(getFunctions(), 'createEnrollment');
       await createEnrollment({
         operationId: `assign-course-${crypto.randomUUID()}`,
         kidId: selectedKidId,
@@ -313,22 +326,13 @@ export default function AssignCourseModal({
       });
       onAssigned?.();
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      if (err?.code === 'permission-denied') {
-        toast({
-          title: 'Permission denied',
-          description:
-            'You do not have permission to create enrollments. Please contact an Admin or be assigned as a Learning Partner for this student.',
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Error',
-          description: err.message || 'Failed to assign course',
-          variant: 'destructive',
-        });
-      }
+      toast({
+        title: 'Course not assigned',
+        description: getCreateEnrollmentErrorMessage(err),
+        variant: 'destructive',
+      });
     } finally {
       setSaving(false);
     }

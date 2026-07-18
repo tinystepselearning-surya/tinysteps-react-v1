@@ -3,6 +3,7 @@ import { initializeApp, deleteApp, type FirebaseApp } from 'firebase/app';
 import {
   connectAuthEmulator,
   getAuth,
+  signOut,
   signInWithEmailAndPassword,
   type Auth,
 } from 'firebase/auth';
@@ -50,12 +51,19 @@ let clientFirestore: Firestore | null = null;
 let clientFunctions: Functions | null = null;
 
 export async function clearEmulatorState(): Promise<void> {
-  const firestoreResponse = await fetch(
-    `http://${FIRESTORE_HOST}/emulator/v1/projects/${EMULATOR_PROJECT_ID}/databases/(default)/documents`,
-    { method: 'DELETE' },
-  );
-  if (!firestoreResponse.ok) {
-    throw new Error(`Failed to clear Firestore Emulator: ${firestoreResponse.status} ${await firestoreResponse.text()}`);
+  let firestoreResponse: Response | null = null;
+  for (let attempt = 1; attempt <= 10; attempt += 1) {
+    firestoreResponse = await fetch(
+      `http://${FIRESTORE_HOST}/emulator/v1/projects/${EMULATOR_PROJECT_ID}/databases/(default)/documents`,
+      { method: 'DELETE' },
+    );
+    if (firestoreResponse.ok) break;
+    if (firestoreResponse.status !== 409 || attempt === 10) {
+      throw new Error(
+        `Failed to clear Firestore Emulator: ${firestoreResponse.status} ${await firestoreResponse.text()}`,
+      );
+    }
+    await new Promise((resolve) => setTimeout(resolve, attempt * 100));
   }
   const authResponse = await fetch(
     `http://${AUTH_HOST}/emulator/v1/projects/${EMULATOR_PROJECT_ID}/accounts`,
@@ -91,6 +99,26 @@ export async function initializeAdminClient(): Promise<void> {
   await credential.user.getIdToken(true);
 }
 
+export async function signInFixtureUser(args: {
+  uid: string;
+  role: string;
+  claims?: Record<string, unknown>;
+}): Promise<void> {
+  if (!clientAuth) throw new Error('Emulator client has not been initialized.');
+  const email = `${args.uid}@example.test`;
+  const password = 'EmulatorOnly!123';
+  await adminAuth.createUser({ uid: args.uid, email, password });
+  if (args.claims) await adminAuth.setCustomUserClaims(args.uid, args.claims);
+  await adminDb.collection('users').doc(args.uid).set({ role: args.role, email });
+  const credential = await signInWithEmailAndPassword(clientAuth, email, password);
+  await credential.user.getIdToken(true);
+}
+
+export async function signOutFixtureUser(): Promise<void> {
+  if (!clientAuth) throw new Error('Emulator client has not been initialized.');
+  await signOut(clientAuth);
+}
+
 export async function disposeHarness(): Promise<void> {
   if (clientApp) await deleteApp(clientApp);
   clientApp = null;
@@ -104,9 +132,7 @@ export async function callFunction<TInput extends Record<string, unknown>, TOutp
   name: string,
   data: TInput,
 ): Promise<TOutput> {
-  if (!clientFunctions || !clientAuth?.currentUser) {
-    throw new Error('Authenticated emulator client has not been initialized.');
-  }
+  if (!clientFunctions) throw new Error('Emulator Functions client has not been initialized.');
   const callable = httpsCallable<TInput, TOutput>(clientFunctions, name);
   const result = await callable(data);
   return result.data;

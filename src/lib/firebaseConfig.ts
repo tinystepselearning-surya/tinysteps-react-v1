@@ -1,9 +1,16 @@
 // src/lib/firebaseConfig.ts
 import { initializeApp, getApps, getApp, type FirebaseOptions } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
-import { getAuth, initializeAuth, inMemoryPersistence, type Auth } from 'firebase/auth';
+import {
+  browserLocalPersistence,
+  getAuth,
+  initializeAuth,
+  setPersistence,
+  type Auth,
+} from 'firebase/auth';
 import { getAnalytics, type Analytics, logEvent as fbLogEvent } from 'firebase/analytics';
 import { getFunctions } from 'firebase/functions';
+import { logFirebaseAuthKeyPresence } from './nativeAuthDiagnostics';
 
 const env = import.meta.env;
 
@@ -67,9 +74,11 @@ const createAuth = (): Auth => {
 
   try {
     const nativeAuth = initializeAuth(app, {
-      persistence: inMemoryPersistence,
+      persistence: browserLocalPersistence,
     });
-    logAuthInit('firebase-auth:init:native');
+    logAuthInit('firebase-auth:init:native-durable', {
+      persistence: 'local-storage',
+    });
     return nativeAuth;
   } catch (err) {
     logAuthInit('firebase-auth:init:fallback-existing', {
@@ -82,6 +91,31 @@ const createAuth = (): Auth => {
 // Core services
 const db = getFirestore(app);
 const auth = createAuth();
+logFirebaseAuthKeyPresence('after-auth-initialization');
+let nativeAuthPersistencePromise: Promise<void> | null = null;
+
+export const ensureNativeAuthPersistence = (): Promise<void> => {
+  if (!isNativeCapacitorRuntime()) return Promise.resolve();
+  if (nativeAuthPersistencePromise) return nativeAuthPersistencePromise;
+
+  console.info('[auth-persistence] configure:start');
+  nativeAuthPersistencePromise = setPersistence(auth, browserLocalPersistence)
+    .then(() => {
+      console.info('[auth-persistence] configure:success');
+    })
+    .catch((error: unknown) => {
+      nativeAuthPersistencePromise = null;
+      const code =
+        error && typeof error === 'object' && 'code' in error &&
+        typeof (error as { code?: unknown }).code === 'string'
+          ? (error as { code: string }).code
+          : undefined;
+      console.warn('[auth-persistence] configure:error', { code });
+      throw error;
+    });
+
+  return nativeAuthPersistencePromise;
+};
 
 // Use env region (fallback to asia-south1) — guard against boolean
 const functionsRegion = asString(env.VITE_FUNCTIONS_REGION) ?? 'asia-south1';

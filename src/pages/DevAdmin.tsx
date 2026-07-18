@@ -3,11 +3,11 @@ import useAuthStore, { AuthUser } from '../store/useAuthStore';
 import { useEnrollments, useInvoices } from '../hooks/useData';
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebaseConfig';
+import { performAppLogout } from '../lib/auth';
 
 export default function DevAdmin() {
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
-  const clearUser = useAuthStore((s) => s.clearUser);
 
   const [parentId, setParentId] = useState('');
   const [lastError, setLastError] = useState<string | null>(null);
@@ -20,14 +20,8 @@ export default function DevAdmin() {
   // Dev-only seeding helpers removed to prevent in-app data writes. Use dedicated
   // scripts/out-of-band tooling for test data provisioning.
 
-  function clearAll() {
-    clearUser();
-    try {
-      localStorage.clear();
-    } catch (e) {
-      // ignore
-    }
-    // reload to ensure persisted stores cleared
+  async function logoutAndReload() {
+    await performAppLogout('test-only');
     window.location.reload();
   }
 
@@ -41,8 +35,8 @@ export default function DevAdmin() {
         <div className="mt-2 flex gap-2">
           {/* Dev-only seed button (hidden unless VITE_ENABLE_DEV_SEED=true) */}
           {/* Dev seeding UI removed */}
-          <button className="px-3 py-1 bg-gray-200 rounded" onClick={() => clearUser()}>Clear Auth</button>
-          <button className="px-3 py-1 bg-red-500 text-white rounded" onClick={clearAll}>Clear Storage & Reload</button>
+          <button className="px-3 py-1 bg-gray-200 rounded" onClick={() => void performAppLogout('test-only')}>Clear Auth</button>
+          <button className="px-3 py-1 bg-red-500 text-white rounded" onClick={() => void logoutAndReload()}>Logout & Reload</button>
         </div>
       </section>
 

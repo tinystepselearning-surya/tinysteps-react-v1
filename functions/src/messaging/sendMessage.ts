@@ -332,7 +332,7 @@ async function sendPushToTokenDocs(
       failureCount += 1;
       logger.warn('sendMessage:apns_send_exception', {
         tokenDocId: tokenDoc.docId,
-        message: error instanceof Error ? error.message : String(error),
+        errorMessage: error instanceof Error ? error.message : String(error),
       });
     }
   }

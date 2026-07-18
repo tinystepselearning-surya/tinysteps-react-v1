@@ -11,6 +11,8 @@ import {
   expectCallableErrorCode,
   initializeAdminClient,
   seedCanonicalFixtures,
+  signInFixtureUser,
+  signOutFixtureUser,
   waitForDocument,
 } from './enrollmentIntegrityHarness';
 
@@ -59,6 +61,18 @@ async function sessionsForEnrollment(enrollmentId: string) {
   return adminDb.collection('classSessions').where('enrollmentId', '==', enrollmentId).get();
 }
 
+function validEnrollmentPayload(overrides: Record<string, unknown> = {}) {
+  return {
+    operationId: `authorization-${fixtureSequence}`,
+    kidId: ids.kidId,
+    courseId: ids.phonicsCourseId,
+    creditsTotal: 4,
+    ratePerSession: 500,
+    teacherPayPerSession: 250,
+    ...overrides,
+  };
+}
+
 beforeEach(async () => {
   await clearEmulatorState();
   await initializeAdminClient();
@@ -69,6 +83,94 @@ beforeEach(async () => {
 afterAll(async () => {
   await clearEmulatorState();
   await disposeHarness();
+});
+
+describe('createEnrollment authorization and validation', () => {
+  it('rejects unauthenticated callers with a structured code', async () => {
+    await signOutFixtureUser();
+    await expect(callFunction('createEnrollment', validEnrollmentPayload()))
+      .rejects.toSatisfy((error: unknown) => {
+        expectCallableErrorCode(error, 'unauthenticated');
+        return true;
+      });
+  });
+
+  it('rejects authenticated users who are neither admins nor Learning Partners', async () => {
+    await signInFixtureUser({ uid: `teacher-${fixtureSequence}`, role: 'teacher' });
+    await expect(callFunction('createEnrollment', validEnrollmentPayload()))
+      .rejects.toSatisfy((error: unknown) => {
+        expectCallableErrorCode(error, 'permission-denied');
+        return true;
+      });
+  });
+
+  it('allows the assigned Learning Partner and records the authenticated actor', async () => {
+    const lpId = `assigned-lp-${fixtureSequence}`;
+    await adminDb.collection('kids').doc(ids.kidId).update({ lpId, assignedLPs: [lpId] });
+    await signInFixtureUser({ uid: lpId, role: 'learningPartner' });
+    const result = await callFunction<Record<string, unknown>, { enrollmentId: string }>(
+      'createEnrollment',
+      validEnrollmentPayload(),
+    );
+    const enrollment = await adminDb.collection('enrollments').doc(result.enrollmentId).get();
+    expect(enrollment.data()).toMatchObject({
+      createdBy: lpId,
+      lpId,
+      kidId: ids.kidId,
+      courseId: ids.phonicsCourseId,
+    });
+  });
+
+  it('rejects an unassigned Learning Partner', async () => {
+    await signInFixtureUser({ uid: `unassigned-lp-${fixtureSequence}`, role: 'learning-partner' });
+    await expect(callFunction('createEnrollment', validEnrollmentPayload()))
+      .rejects.toSatisfy((error: unknown) => {
+        expectCallableErrorCode(error, 'permission-denied');
+        return true;
+      });
+  });
+
+  it.each([
+    [{ ratePerSession: 0 }, 'invalid-argument'],
+    [{ ratePerSession: 'not-a-number' }, 'invalid-argument'],
+    [{ teacherPayPerSession: -1 }, 'invalid-argument'],
+  ])('rejects invalid monetary input %j', async (override, code) => {
+    await expect(callFunction('createEnrollment', validEnrollmentPayload(override)))
+      .rejects.toSatisfy((error: unknown) => {
+        expectCallableErrorCode(error, code);
+        return true;
+      });
+  });
+
+  it('rejects missing canonical students and courses with structured codes', async () => {
+    await expect(callFunction('createEnrollment', validEnrollmentPayload({
+      operationId: `missing-student-${fixtureSequence}`,
+      kidId: 'missing-kid',
+    }))).rejects.toSatisfy((error: unknown) => {
+      expectCallableErrorCode(error, 'not-found');
+      return true;
+    });
+    await expect(callFunction('createEnrollment', validEnrollmentPayload({
+      operationId: `missing-course-${fixtureSequence}`,
+      courseId: 'missing-course',
+    }))).rejects.toSatisfy((error: unknown) => {
+      expectCallableErrorCode(error, 'not-found');
+      return true;
+    });
+  });
+
+  it('rejects an inactive course before creating any enrollment writes', async () => {
+    await adminDb.collection('courses').doc(ids.phonicsCourseId).update({ status: 'inactive' });
+    await expect(callFunction('createEnrollment', validEnrollmentPayload()))
+      .rejects.toSatisfy((error: unknown) => {
+        expectCallableErrorCode(error, 'failed-precondition');
+        return true;
+      });
+    const enrollments = await adminDb.collection('enrollments').get();
+    const operations = await adminDb.collection('enrollmentCreationOperations').get();
+    expect(enrollments.empty).toBe(true);
+    expect(operations.empty).toBe(true);
+  });
 });
 
 describe('Firestore Emulator enrollment uniqueness and simultaneous courses', () => {

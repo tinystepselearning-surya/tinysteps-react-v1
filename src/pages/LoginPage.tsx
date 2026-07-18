@@ -1,9 +1,14 @@
 // src/pages/LoginPage.tsx
 import React, { useState, useEffect } from 'react';
 import { applySeo } from '../lib/seo';
-import { useSearchParams, useLocation } from 'react-router-dom';
-import { handleLogin } from '../lib/auth';
+import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
+import {
+  getRoleRedirectPath,
+  getSafeInternalRedirect,
+  handleLogin,
+} from '../lib/auth';
 import { hapticSuccess, hapticWarning } from '../lib/nativeHaptics';
+import { getPendingPushOpenRoute } from '../lib/pushNavigationState';
 import type { AuthRole } from '../store/useAuthStore';
 import TinyStepsBrand from '../components/common/TinyStepsBrand';
 import { Mail, Lock } from 'lucide-react';
@@ -26,11 +31,8 @@ const ROLE_LABELS: Record<AuthRole, string> = {
 };
 
 const LOGIN_FLOW_TIMEOUT_MS = 45_000;
-const REDIRECT_RECOVERY_DELAY_MS = 1_500;
 const LOGIN_TIMEOUT_MESSAGE =
   'Login is taking longer than expected. Please check your internet connection and try again.';
-const REDIRECT_RECOVERY_MESSAGE =
-  'We signed you in, but could not open your workspace. Please try again or contact Tiny Steps on WhatsApp.';
 const CREDENTIAL_ERROR_MESSAGE =
   "We couldn't sign you in. Please check your login ID and password, then try again.";
 const FALLBACK_LOGIN_ERROR_MESSAGE =
@@ -42,8 +44,6 @@ const CREDENTIAL_ERROR_CODES = new Set([
   'auth/user-not-found',
   'auth/invalid-login-credentials',
 ]);
-
-const delay = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
 const createLoginTimeoutError = () => {
   const error = new Error(LOGIN_TIMEOUT_MESSAGE);
@@ -92,6 +92,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Map URL segment → AuthRole
   const pathToRoleMap: Record<string, AuthRole> = {
@@ -137,10 +138,8 @@ export default function LoginPage() {
 
     try {
       const normalizedLoginId = loginId.trim();
-      const loginPathBeforeSubmit =
-        typeof window !== 'undefined' ? window.location.pathname : location.pathname;
-
-      await Promise.race([
+      const hasPendingPush = Boolean(getPendingPushOpenRoute());
+      const authenticatedUser = await Promise.race([
         handleLogin(normalizedLoginId, password, expectedRole || undefined),
         new Promise<never>((_, reject) => {
           timeoutId = window.setTimeout(() => {
@@ -150,13 +149,14 @@ export default function LoginPage() {
       ]);
       hapticSuccess();
 
-      if (isNativeRuntime) {
-        await delay(REDIRECT_RECOVERY_DELAY_MS);
-        if (window.location.pathname === loginPathBeforeSubmit) {
-          hapticWarning();
-          setError(REDIRECT_RECOVERY_MESSAGE);
-        }
-      }
+      if (hasPendingPush) return;
+
+      const stateFrom = getSafeInternalRedirect(
+        (location.state as { from?: unknown } | null)?.from,
+      );
+      const destination = stateFrom || getRoleRedirectPath(authenticatedUser.role);
+
+      await navigate(destination, { replace: true });
     } catch (err) {
       hapticWarning();
       setError(formatLoginError(err));

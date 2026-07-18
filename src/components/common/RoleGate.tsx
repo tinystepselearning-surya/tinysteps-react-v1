@@ -1,11 +1,11 @@
 // src/components/common/RoleGate.tsx
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
-import useAuth from '../../hooks/useAuth';
 import { isSuperUserEmail } from '../../constants/accessControl';
 import { useQuery } from '@tanstack/react-query';
+import { isNativeCapacitorRuntime } from '../../lib/nativeAuthDiagnostics';
 
 export type Role = 'admin' | 'teacher' | 'parent' | 'learningPartner' | 'kid';
 
@@ -20,8 +20,7 @@ const RoleGate: React.FC<RoleGateProps> = ({
   loginPath = '/login',
   unauthorizedPath = '/unauthorized',
 }) => {
-  useAuth();
-  const { user, isLoading } = useAuthStore();
+  const { user, authStatus } = useAuthStore();
   const location = useLocation();
 
   const superUser = useMemo(
@@ -33,9 +32,10 @@ const RoleGate: React.FC<RoleGateProps> = ({
   const {
     data: latestRole,
     isLoading: roleLoading,
+    isError: roleError,
   } = useQuery<Role | null>({
     queryKey: ['auth-role', user?.uid],
-    enabled: shouldResolveRoleFromDb,
+    enabled: shouldResolveRoleFromDb && authStatus === 'authenticated',
     staleTime: 60_000,
     gcTime: 5 * 60_000,
     retry: 1,
@@ -52,39 +52,47 @@ const RoleGate: React.FC<RoleGateProps> = ({
     },
   });
 
-  // While validating from Firestore, don't trust potentially stale token claims.
-  if (shouldResolveRoleFromDb && latestRole === undefined) {
-    return (
-      <div className="flex h-[60vh] items-center justify-center">
-        <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
-          Verifying your access…
-        </div>
-      </div>
-    );
-  }
-
-  const effectiveRole = latestRole ?? (user?.role as Role | null) ?? null;
+  const claimedRole = (user?.role as Role | null) ?? null;
+  const effectiveRole = latestRole ?? claimedRole;
   const isAllowed = superUser || (!!effectiveRole && allowedRoles.includes(effectiveRole));
+  const claimedRoleIsAllowed =
+    superUser || (!!claimedRole && allowedRoles.includes(claimedRole));
+  const roleQueryStatus: 'idle' | 'loading' | 'success' | 'error' =
+    !shouldResolveRoleFromDb || authStatus !== 'authenticated'
+      ? 'idle'
+      : roleLoading
+        ? 'loading'
+        : roleError
+          ? 'error'
+          : 'success';
+  const decision: 'verify' | 'allow' | 'login' | 'unauthorized' =
+    authStatus === 'initializing'
+      ? 'verify'
+      : authStatus === 'unauthenticated' || !user
+        ? 'login'
+        : !claimedRoleIsAllowed && !isAllowed && roleLoading
+          ? 'verify'
+          : !isAllowed
+            ? 'unauthorized'
+            : 'allow';
+  const lastDecisionRef = useRef<string | null>(null);
 
-  const shouldDebugRoleGate =
-    import.meta.env.DEV &&
-    typeof window !== "undefined" &&
-    (window as any).__TS_DEBUG_ROLE_GATE__ === true;
-
-  if (shouldDebugRoleGate) {
-    console.debug('[RoleGate] Check access:', {
-      allowedRoles,
+  useEffect(() => {
+    if (!isNativeCapacitorRuntime()) return;
+    const diagnostic = {
+      authStatus,
+      hasUser: Boolean(user),
       effectiveRole,
-      latestRole,
-      'user.role': user?.role,
-      superUser,
-      uid: user?.uid,
-    });
-  }
+      roleQueryStatus,
+      decision,
+    };
+    const diagnosticKey = JSON.stringify(diagnostic);
+    if (lastDecisionRef.current === diagnosticKey) return;
+    lastDecisionRef.current = diagnosticKey;
+    console.info('[role-gate] decision', diagnostic);
+  }, [authStatus, decision, effectiveRole, roleQueryStatus, user]);
 
-  // 1) While auth is loading, show soft loader
-  // 2) While role is fetching (only when needed), show soft loader
-  if (!isAllowed && (isLoading || roleLoading)) {
+  if (decision === 'verify') {
     return (
       <div className="flex h-[60vh] items-center justify-center">
         <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
@@ -94,8 +102,7 @@ const RoleGate: React.FC<RoleGateProps> = ({
     );
   }
 
-  // 3) No user → go to login
-  if (!user) {
+  if (decision === 'login') {
     return (
       <Navigate
         to={loginPath}
@@ -105,12 +112,12 @@ const RoleGate: React.FC<RoleGateProps> = ({
     );
   }
 
-  // 4) Wrong role → unauthorized
-  if (!isAllowed) {
+  // Wrong role → unauthorized
+  if (decision === 'unauthorized') {
     return <Navigate to={unauthorizedPath} replace />;
   }
 
-  // 5) OK → render nested routes
+  // OK → render nested routes
   return <Outlet />;
 };
 

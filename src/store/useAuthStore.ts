@@ -1,9 +1,11 @@
 // src/store/useAuthStore.ts
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { isNativeCapacitorRuntime } from '../lib/nativeAuthDiagnostics';
 
 // Central role union – re-use everywhere
 export type AuthRole = 'admin' | 'teacher' | 'parent' | 'kid' | 'learningPartner';
+export type AuthStatus = 'initializing' | 'authenticated' | 'unauthenticated';
 
 export interface AuthUser {
   uid: string;
@@ -14,20 +16,50 @@ export interface AuthUser {
 
 interface AuthState {
   user: AuthUser | null;
+  authStatus: AuthStatus;
   isLoading: boolean;
   setUser: (user: AuthUser | null) => void;
-  clearUser: () => void;
-  setLoading: (loading: boolean) => void;
+  clearUser: (reason?: string) => void;
+  resolveAuth: (
+    status: Exclude<AuthStatus, 'initializing'>,
+    user: AuthUser | null,
+    reason: string,
+  ) => void;
 }
+
+const logAuthTransition = (
+  from: AuthStatus,
+  to: AuthStatus,
+  reason: string,
+) => {
+  if (!isNativeCapacitorRuntime() || from === to) return;
+  console.info('[auth-state] transition', { from, to, reason });
+};
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      isLoading: false,
+      authStatus: 'initializing',
+      isLoading: true,
       setUser: (user: AuthUser | null) => set({ user }),
-      clearUser: () => set({ user: null }),
-      setLoading: (loading: boolean) => set({ isLoading: loading }),
+      clearUser: (reason = 'test-only') => set((state) => {
+        if (isNativeCapacitorRuntime() && state.user) {
+          console.info('[auth-state] user-cleared', { reason });
+        }
+        return { user: null };
+      }),
+      resolveAuth: (authStatus, user, reason) => set((state) => {
+        if (state.authStatus !== 'initializing' && String(authStatus) === 'initializing') {
+          return state;
+        }
+        logAuthTransition(state.authStatus, authStatus, reason);
+        return {
+          authStatus,
+          isLoading: false,
+          user,
+        };
+      }),
     }),
     {
       name: 'auth-store',

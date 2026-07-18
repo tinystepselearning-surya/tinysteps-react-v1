@@ -6,8 +6,11 @@ import {
   doc,
   getDoc,
 } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../../../lib/firebaseConfig';
+import {
+  createEnrollment,
+  getCreateEnrollmentErrorMessage,
+} from '../../../lib/createEnrollmentCallable';
 
 import { Card, CardHeader, CardTitle, CardContent } from '@components/ui/card';
 import { Button } from '@components/ui/button';
@@ -197,7 +200,6 @@ export default function CreateEnrollmentForm({ onCreated }: CreateEnrollmentForm
         return;
       }
       const credits = calculateCredits();
-      const createEnrollment = httpsCallable(getFunctions(), 'createEnrollment');
       await createEnrollment({
         operationId: `admin-create-${crypto.randomUUID()}`,
         kidId: canonicalKidId,
@@ -219,11 +221,11 @@ export default function CreateEnrollmentForm({ onCreated }: CreateEnrollmentForm
       setSelectedStudentId('__none__');
       setSelectedCourseId('__none__');
       setBillingCycle('monthly');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       toast({
-        title: 'Error',
-        description: err?.message || 'Failed to create enrollment',
+        title: 'Enrollment not created',
+        description: getCreateEnrollmentErrorMessage(err),
         variant: 'destructive',
       });
     } finally {
