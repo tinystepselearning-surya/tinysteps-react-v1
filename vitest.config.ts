@@ -41,6 +41,7 @@ export default defineConfig({
       'src/tests/**/*.test.js',
 
       // Firestore emulator / rules tests (need emulator running)
+      'src/tests/emulator/**',
       'tests/security/firestore-rules.test.ts',
       'tests/lpAssignment.test.ts',
 

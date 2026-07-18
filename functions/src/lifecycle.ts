@@ -1,8 +1,13 @@
 import * as admin from 'firebase-admin';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as logger from 'firebase-functions/logger';
 import { ensureAdmin } from './helpers/adminGuard';
-import { normalizeEnrollmentStatus } from './helpers/status';
+import {
+  doesEnrollmentOccupyCourseSlot,
+  normalizeEnrollmentStatus,
+  normalizeManualSessionState,
+} from './helpers/status';
 import { repairEnrollmentFutureSessionsFromScheduleInternal } from './createSessionsFromSchedule';
 
 if (!admin.apps.length) admin.initializeApp();
@@ -52,6 +57,10 @@ const SCHEDULE_EXCEPTION_SOURCE_TOKENS = [
   'replacement',
   'approved_request',
 ] as const;
+
+const OPERATIONAL_ENROLLMENT_KEYS_COLLECTION = 'operationalEnrollmentKeys';
+const ENROLLMENT_CREATION_OPERATIONS_COLLECTION = 'enrollmentCreationOperations';
+const ENROLLMENT_TRANSITIONS_COLLECTION = 'enrollmentCourseTransitions';
 
 type TeacherIdentity = {
   teacherId: string;
@@ -141,6 +150,469 @@ function toOptionalId(value: unknown): string | null {
   }
   return null;
 }
+
+export function buildOperationalEnrollmentKeyId(kidId: string, courseId: string): string {
+  return `${encodeURIComponent(kidId.trim())}__${encodeURIComponent(courseId.trim())}`;
+}
+
+async function findOperationalSameCourseEnrollmentIds(args: {
+  db: FirebaseFirestore.Firestore;
+  kidId: string;
+  courseId: string;
+  excludeEnrollmentId?: string;
+}): Promise<string[]> {
+  const { db, kidId, courseId, excludeEnrollmentId } = args;
+  const snapshots = await Promise.all([
+    db.collection('enrollments').where('kidId', '==', kidId).where('courseId', '==', courseId).get(),
+    db.collection('enrollments').where('studentId', '==', kidId).where('courseId', '==', courseId).get(),
+    db.collection('enrollments').where('kidIds', 'array-contains', kidId).where('courseId', '==', courseId).get(),
+  ]);
+  const matches = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
+  snapshots.forEach((snapshot) => snapshot.docs.forEach((docSnap) => matches.set(docSnap.id, docSnap)));
+  return Array.from(matches.values())
+    .filter((docSnap) => docSnap.id !== excludeEnrollmentId)
+    .filter((docSnap) => doesEnrollmentOccupyCourseSlot((docSnap.data() || {}) as Record<string, unknown>))
+    .map((docSnap) => docSnap.id);
+}
+
+async function createEnrollmentInternal(
+  data: Record<string, unknown>,
+  actor: string,
+  reservedByOperationId?: string,
+) {
+  const operationId = String(data.operationId || '').trim();
+  const requestedKidId = String(data.kidId || data.studentId || '').trim();
+  const requestedCourseId = String(data.courseId || '').trim();
+  if (!operationId || !requestedKidId || !requestedCourseId) {
+    throw new HttpsError('invalid-argument', 'operationId, kidId, and courseId are required');
+  }
+  if (operationId.length > 150) throw new HttpsError('invalid-argument', 'operationId is too long');
+
+  const db = admin.firestore();
+  const operationRef = db.collection(ENROLLMENT_CREATION_OPERATIONS_COLLECTION).doc(operationId);
+  const existingOperation = await operationRef.get();
+  if (existingOperation.exists) {
+    const data = existingOperation.data() || {};
+    if (data.kidId !== requestedKidId || data.courseId !== requestedCourseId) {
+      throw new HttpsError('already-exists', 'operationId was already used for a different enrollment request');
+    }
+    return { ok: true, enrollmentId: String(data.enrollmentId || ''), idempotentReplay: true };
+  }
+
+  const [kidSnap, courseSnap] = await Promise.all([
+    db.collection('kids').doc(requestedKidId).get(),
+    db.collection('courses').doc(requestedCourseId).get(),
+  ]);
+  if (!kidSnap.exists) throw new HttpsError('not-found', 'Canonical child was not found');
+  if (!courseSnap.exists) throw new HttpsError('not-found', 'Canonical course was not found');
+  const kid = (kidSnap.data() || {}) as Record<string, unknown>;
+  const course = (courseSnap.data() || {}) as Record<string, unknown>;
+  const canonicalKidId = kidSnap.id;
+  const canonicalCourseId = courseSnap.id;
+  const existingOperational = await findOperationalSameCourseEnrollmentIds({
+    db,
+    kidId: canonicalKidId,
+    courseId: canonicalCourseId,
+  });
+  if (existingOperational.length > 0) {
+    throw new HttpsError(
+      'already-exists',
+      `An operational enrollment already exists for this child and course: ${existingOperational[0]}`,
+    );
+  }
+
+  const teacherId = toOptionalId(data.teacherId);
+  if (teacherId) {
+    const teacherSnap = await db.collection('users').doc(teacherId).get();
+    if (!teacherSnap.exists) throw new HttpsError('not-found', 'Selected teacher was not found');
+  }
+  const ratePerSession = Number(data.ratePerSession ?? data.feePerClass ?? course.ratePerSession ?? 0);
+  const teacherPayPerSession = Number(data.teacherPayPerSession ?? 0);
+  const creditsTotal = Math.max(0, Math.floor(Number(data.creditsTotal ?? 0)));
+  if (!Number.isFinite(ratePerSession) || ratePerSession < 0) {
+    throw new HttpsError('invalid-argument', 'ratePerSession must be a non-negative number');
+  }
+  if (!Number.isFinite(teacherPayPerSession) || teacherPayPerSession < 0) {
+    throw new HttpsError('invalid-argument', 'teacherPayPerSession must be a non-negative number');
+  }
+  const schedule = data.schedule;
+  if (schedule != null && (typeof schedule !== 'object' || Array.isArray(schedule))) {
+    throw new HttpsError('invalid-argument', 'schedule must be an object');
+  }
+
+  const parentIds = toStringList(kid.parentIds);
+  const parentId = toOptionalId(kid.primaryParentId) || toOptionalId(kid.parentId) || parentIds[0] || null;
+  if (!parentId) throw new HttpsError('failed-precondition', 'Child is not linked to a parent');
+  if (!parentIds.includes(parentId)) parentIds.unshift(parentId);
+  const kidName =
+    toOptionalId(kid.fullName) || toOptionalId(kid.name) || toOptionalId(kid.displayName) || canonicalKidId;
+  const courseName =
+    toOptionalId(course.title) || toOptionalId(course.name) || toOptionalId(course.courseName) || canonicalCourseId;
+  const enrollmentRef = db.collection('enrollments').doc();
+  const keyRef = db.collection(OPERATIONAL_ENROLLMENT_KEYS_COLLECTION)
+    .doc(buildOperationalEnrollmentKeyId(canonicalKidId, canonicalCourseId));
+  const auditRef = db.collection('auditLogs').doc();
+  await db.runTransaction(async (tx) => {
+    const [operationCheck, keySnap] = await Promise.all([tx.get(operationRef), tx.get(keyRef)]);
+    if (operationCheck.exists) return;
+    const keyData = keySnap.data() || {};
+    const ownsReservation = Boolean(
+      reservedByOperationId && keyData.reservationOperationId === reservedByOperationId,
+    );
+    if (keySnap.exists && !ownsReservation) {
+      throw new HttpsError('already-exists', 'Another operational enrollment already reserves this child and course');
+    }
+    const enrollmentPayload = removeUndefinedDeep({
+      enrollmentId: enrollmentRef.id,
+      kidId: canonicalKidId,
+      studentId: canonicalKidId,
+      kidIds: [canonicalKidId],
+      studentName: kidName,
+      kidName,
+      childName: kidName,
+      kidNames: [kidName],
+      parentId,
+      parentIds,
+      courseId: canonicalCourseId,
+      courseName,
+      teacherId,
+      teacherIds: teacherId ? [teacherId] : [],
+      lpId: null,
+      status: 'active',
+      ratePerSession,
+      feePerClass: ratePerSession,
+      teacherPayPerSession,
+      currency: String(data.currency || 'INR'),
+      billingCycle: String(data.billingCycle || 'monthly'),
+      creditsTotal,
+      creditsUsed: 0,
+      creditsRemaining: creditsTotal,
+      topicProgress: {},
+      ...(schedule ? { schedule } : {}),
+      ...(toOptionalId(data.classesStartDate) ? { classesStartDateYmd: toOptionalId(data.classesStartDate) } : {}),
+      enrollmentDate: FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      createdBy: actor,
+      updatedAt: FieldValue.serverTimestamp(),
+      updatedBy: actor,
+      creationOperationId: operationId,
+    });
+    tx.create(enrollmentRef, enrollmentPayload);
+    tx.set(keyRef, {
+      enrollmentId: enrollmentRef.id,
+      kidId: canonicalKidId,
+      courseId: canonicalCourseId,
+      heldAt: FieldValue.serverTimestamp(),
+      heldBy: actor,
+    });
+    tx.create(operationRef, {
+      operationId,
+      enrollmentId: enrollmentRef.id,
+      kidId: canonicalKidId,
+      courseId: canonicalCourseId,
+      state: 'complete',
+      createdAt: FieldValue.serverTimestamp(),
+      createdBy: actor,
+    });
+    tx.create(auditRef, {
+      type: 'enrollment_created',
+      action: 'create',
+      enrollmentId: enrollmentRef.id,
+      kidId: canonicalKidId,
+      courseId: canonicalCourseId,
+      operationId,
+      createdAt: FieldValue.serverTimestamp(),
+      createdBy: actor,
+    });
+  });
+  const committedOperation = await operationRef.get();
+  const committedEnrollmentId = String(committedOperation.data()?.enrollmentId || enrollmentRef.id);
+  return {
+    ok: true,
+    enrollmentId: committedEnrollmentId,
+    idempotentReplay: committedEnrollmentId !== enrollmentRef.id,
+  };
+}
+
+export const createEnrollment = onCall({ region: REGION }, async (request) => {
+  await ensureAdmin(request.auth);
+  return createEnrollmentInternal(
+    (request.data || {}) as Record<string, unknown>,
+    request.auth?.uid || 'admin',
+  );
+});
+
+type CourseTransitionState =
+  | 'validated'
+  | 'old_enrollment_completed'
+  | 'old_sessions_reconciled'
+  | 'new_enrollment_created'
+  | 'new_sessions_generated'
+  | 'complete'
+  | 'failed';
+
+export const transitionEnrollmentCourse = onCall({ region: REGION }, async (request) => {
+  await ensureAdmin(request.auth);
+  const data = (request.data || {}) as Record<string, unknown>;
+  const operationId = String(data.operationId || '').trim();
+  const oldEnrollmentId = String(data.oldEnrollmentId || '').trim();
+  const newCourseId = String(data.newCourseId || '').trim();
+  const newTeacherId = String(data.newTeacherId || '').trim();
+  const reason = String(data.reason || '').trim();
+  if (!operationId || !oldEnrollmentId || !newCourseId || !newTeacherId || !reason) {
+    throw new HttpsError(
+      'invalid-argument',
+      'operationId, oldEnrollmentId, newCourseId, newTeacherId, and reason are required',
+    );
+  }
+  if (!isPlainObject(data.newSchedule)) {
+    throw new HttpsError('invalid-argument', 'newSchedule is required');
+  }
+  const db = admin.firestore();
+  const actor = request.auth?.uid || 'admin';
+  const transitionRef = db.collection(ENROLLMENT_TRANSITIONS_COLLECTION).doc(operationId);
+
+  try {
+    let transitionSnap = await transitionRef.get();
+    if (!transitionSnap.exists) {
+      const oldRef = db.collection('enrollments').doc(oldEnrollmentId);
+      const [oldSnap, courseSnap, teacherSnap] = await Promise.all([
+        oldRef.get(),
+        db.collection('courses').doc(newCourseId).get(),
+        db.collection('users').doc(newTeacherId).get(),
+      ]);
+      if (!oldSnap.exists) throw new HttpsError('not-found', 'Current enrollment was not found');
+      if (!courseSnap.exists) throw new HttpsError('not-found', 'Next course was not found');
+      if (!teacherSnap.exists) throw new HttpsError('not-found', 'Next teacher was not found');
+      const oldEnrollment = (oldSnap.data() || {}) as Record<string, unknown>;
+      if (!doesEnrollmentOccupyCourseSlot(oldEnrollment)) {
+        throw new HttpsError('failed-precondition', 'Current enrollment is already terminal');
+      }
+      const kidId = resolveKidIdFromEnrollment(oldEnrollment);
+      const oldCourseId = toOptionalId(oldEnrollment.courseId);
+      if (!kidId || !oldCourseId) {
+        throw new HttpsError('failed-precondition', 'Current enrollment has incomplete child/course identity');
+      }
+      const conflicts = await findOperationalSameCourseEnrollmentIds({ db, kidId, courseId: newCourseId });
+      if (conflicts.length > 0) {
+        throw new HttpsError('already-exists', `Next course already has an operational enrollment: ${conflicts[0]}`);
+      }
+      const newKeyRef = db.collection(OPERATIONAL_ENROLLMENT_KEYS_COLLECTION)
+        .doc(buildOperationalEnrollmentKeyId(kidId, newCourseId));
+      await db.runTransaction(async (tx) => {
+        const [operationCheck, keySnap] = await Promise.all([tx.get(transitionRef), tx.get(newKeyRef)]);
+        if (operationCheck.exists) return;
+        if (keySnap.exists) throw new HttpsError('already-exists', 'Next course is already reserved');
+        tx.create(newKeyRef, {
+          kidId,
+          courseId: newCourseId,
+          reservationOperationId: operationId,
+          state: 'reserved',
+          heldAt: FieldValue.serverTimestamp(),
+          heldBy: actor,
+        });
+        tx.create(transitionRef, removeUndefinedDeep({
+          operationId,
+          oldEnrollmentId,
+          oldCourseId,
+          kidId,
+          newCourseId,
+          newTeacherId,
+          newSchedule: data.newSchedule,
+          classesStartDate: toOptionalId(data.classesStartDate),
+          ratePerSession: Number(data.ratePerSession ?? courseSnap.data()?.ratePerSession ?? 0),
+          teacherPayPerSession: Number(data.teacherPayPerSession ?? 0),
+          creditsTotal: Math.max(0, Math.floor(Number(data.creditsTotal ?? 0))),
+          currency: String(data.currency || oldEnrollment.currency || 'INR'),
+          billingCycle: String(data.billingCycle || oldEnrollment.billingCycle || 'monthly'),
+          reason,
+          state: 'validated',
+          retryable: true,
+          createdAt: FieldValue.serverTimestamp(),
+          createdBy: actor,
+          updatedAt: FieldValue.serverTimestamp(),
+          updatedBy: actor,
+        }) as Record<string, unknown>);
+      });
+      transitionSnap = await transitionRef.get();
+    }
+
+    let transition = (transitionSnap.data() || {}) as Record<string, unknown>;
+    if (transition.oldEnrollmentId !== oldEnrollmentId || transition.newCourseId !== newCourseId) {
+      throw new HttpsError('already-exists', 'operationId belongs to a different course transition');
+    }
+    if (String(transition.reason || '') !== reason || String(transition.newTeacherId || '') !== newTeacherId) {
+      throw new HttpsError('already-exists', 'Transition retry inputs do not match the stored operation');
+    }
+    let state = String(transition.state || '') as CourseTransitionState;
+    if (state === 'failed') {
+      state = String(transition.resumeState || '') as CourseTransitionState;
+      if (!state || state === 'failed') throw new HttpsError('failed-precondition', 'Transition has no safe resume state');
+      await transitionRef.set({ state, updatedAt: FieldValue.serverTimestamp(), updatedBy: actor }, { merge: true });
+    }
+
+    if (state === 'validated') {
+      const oldRef = db.collection('enrollments').doc(oldEnrollmentId);
+      const oldSnap = await oldRef.get();
+      if (!oldSnap.exists) throw new HttpsError('not-found', 'Current enrollment disappeared during transition');
+      const kidId = String(transition.kidId || '');
+      const oldCourseId = String(transition.oldCourseId || '');
+      const oldKeyRef = db.collection(OPERATIONAL_ENROLLMENT_KEYS_COLLECTION)
+        .doc(buildOperationalEnrollmentKeyId(kidId, oldCourseId));
+      await db.runTransaction(async (tx) => {
+        const keySnap = await tx.get(oldKeyRef);
+        tx.set(oldRef, {
+          status: 'completed',
+          completedAt: FieldValue.serverTimestamp(),
+          completedBy: actor,
+          completionReason: reason,
+          endedAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+          updatedBy: actor,
+          transitionOperationId: operationId,
+        }, { merge: true });
+        if (keySnap.exists && keySnap.data()?.enrollmentId === oldEnrollmentId) tx.delete(oldKeyRef);
+        tx.set(transitionRef, {
+          state: 'old_enrollment_completed',
+          oldEnrollmentCompletedAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+          updatedBy: actor,
+        }, { merge: true });
+      });
+      state = 'old_enrollment_completed';
+    }
+
+    if (state === 'old_enrollment_completed') {
+      const cancelledSessionsCount = await cancelFutureSessionsByEnrollmentId(
+        oldEnrollmentId,
+        'course_transition_completed',
+        actor,
+      );
+      await transitionRef.set({
+        state: 'old_sessions_reconciled',
+        cancelledSessionsCount,
+        oldSessionsReconciledAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+        updatedBy: actor,
+      }, { merge: true });
+      state = 'old_sessions_reconciled';
+    }
+
+    if (state === 'old_sessions_reconciled') {
+      transition = ((await transitionRef.get()).data() || {}) as Record<string, unknown>;
+      const enrollmentResult = await createEnrollmentInternal({
+        operationId: `transition-create-${operationId}`,
+        kidId: transition.kidId,
+        courseId: transition.newCourseId,
+        teacherId: transition.newTeacherId,
+        schedule: transition.newSchedule,
+        classesStartDate: transition.classesStartDate,
+        ratePerSession: transition.ratePerSession,
+        teacherPayPerSession: transition.teacherPayPerSession,
+        creditsTotal: transition.creditsTotal,
+        currency: transition.currency,
+        billingCycle: transition.billingCycle,
+      }, actor, operationId);
+      const newEnrollmentId = enrollmentResult.enrollmentId;
+      await Promise.all([
+        db.collection('enrollments').doc(oldEnrollmentId).set({
+          nextEnrollmentId: newEnrollmentId,
+          updatedAt: FieldValue.serverTimestamp(),
+          updatedBy: actor,
+        }, { merge: true }),
+        db.collection('enrollments').doc(newEnrollmentId).set({
+          previousEnrollmentId: oldEnrollmentId,
+          transitionOperationId: operationId,
+          updatedAt: FieldValue.serverTimestamp(),
+          updatedBy: actor,
+        }, { merge: true }),
+        transitionRef.set({
+          state: 'new_enrollment_created',
+          newEnrollmentId,
+          newEnrollmentCreatedAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+          updatedBy: actor,
+        }, { merge: true }),
+      ]);
+      state = 'new_enrollment_created';
+    }
+
+    if (state === 'new_enrollment_created') {
+      transition = ((await transitionRef.get()).data() || {}) as Record<string, unknown>;
+      const newEnrollmentId = String(transition.newEnrollmentId || '');
+      const reconciliation = await repairEnrollmentFutureSessionsFromScheduleInternal({
+        enrollmentId: newEnrollmentId,
+        dryRun: false,
+        actorUid: actor,
+      });
+      await transitionRef.set({
+        state: 'new_sessions_generated',
+        reconciliation,
+        newSessionsGeneratedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+        updatedBy: actor,
+      }, { merge: true });
+      state = 'new_sessions_generated';
+    }
+
+    if (state === 'new_sessions_generated') {
+      transition = ((await transitionRef.get()).data() || {}) as Record<string, unknown>;
+      const auditRef = db.collection('auditLogs').doc();
+      const batch = db.batch();
+      batch.set(transitionRef, {
+        state: 'complete',
+        retryable: false,
+        completedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+        updatedBy: actor,
+      }, { merge: true });
+      batch.create(auditRef, {
+        type: 'enrollment_course_transition_completed',
+        action: 'transition',
+        operationId,
+        oldEnrollmentId,
+        newEnrollmentId: transition.newEnrollmentId,
+        kidId: transition.kidId,
+        oldCourseId: transition.oldCourseId,
+        newCourseId,
+        reason,
+        createdAt: FieldValue.serverTimestamp(),
+        createdBy: actor,
+      });
+      await batch.commit();
+    }
+
+    const finalData = (await transitionRef.get()).data() || {};
+    return {
+      ok: true,
+      operationId,
+      state: finalData.state,
+      oldEnrollmentId,
+      newEnrollmentId: finalData.newEnrollmentId || null,
+      cancelledSessionsCount: finalData.cancelledSessionsCount || 0,
+      reconciliation: finalData.reconciliation || null,
+    };
+  } catch (error) {
+    const current = await transitionRef.get();
+    if (current.exists) {
+      const currentState = String(current.data()?.state || 'validated');
+      if (currentState !== 'complete') {
+        await transitionRef.set({
+          state: 'failed',
+          resumeState: currentState === 'failed' ? current.data()?.resumeState || 'validated' : currentState,
+          failedStep: currentState,
+          failureCode: error instanceof HttpsError ? error.code : 'internal',
+          failureMessage: error instanceof Error ? error.message : String(error),
+          retryable: true,
+          updatedAt: FieldValue.serverTimestamp(),
+          updatedBy: actor,
+        }, { merge: true });
+      }
+    }
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError('internal', 'Course transition failed and can be retried with the same operationId');
+  }
+});
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   if (!value || typeof value !== 'object') return false;
@@ -586,15 +1058,15 @@ export function buildSessionRepairPatch(args: {
     ...(toOptionalId((existing as any).parentId) ? {} : enrollment.parentId ? { parentId: enrollment.parentId } : {}),
     ...(parentIds.length > 0 ? { parentIds } : {}),
     ...buildTeacherReassignmentJoinLinkPatch(enrollment.joinUrl),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
     updatedBy: actorIdentity,
     reassignedFromTeacherId: previousTeacherId || null,
     teacherReassignedFrom: previousTeacherId || null,
     ...(previousTeacherId ? { previousTeacherId } : {}),
     ...(previousTeacherName ? { previousTeacherName } : {}),
     ...(previousTeacherEmail ? { previousTeacherEmail } : {}),
-    reassignedAt: admin.firestore.FieldValue.serverTimestamp(),
-    teacherReassignedAt: admin.firestore.FieldValue.serverTimestamp(),
+    reassignedAt: FieldValue.serverTimestamp(),
+    teacherReassignedAt: FieldValue.serverTimestamp(),
   }) as Record<string, unknown>;
 }
 
@@ -644,7 +1116,7 @@ async function syncKidTeacherOwnership(args: {
   const patch = removeUndefinedDeep({
     teacherIds: nextTeacherIds,
     ...(nextPrimaryTeacherId ? { teacherId: nextPrimaryTeacherId } : {}),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
     updatedBy: actorIdentity,
   }) as Record<string, unknown>;
   await kidRef.set(patch, { merge: true });
@@ -757,7 +1229,7 @@ export function isEligibleFutureSessionForLifecycleCancellation(
 
 async function hasExternalFinancialLink(
   db: FirebaseFirestore.Firestore,
-  docSnap: FirebaseFirestore.QueryDocumentSnapshot,
+  docSnap: FirebaseFirestore.DocumentSnapshot,
 ): Promise<boolean> {
   try {
     const [chargeSnap, earningSnap] = await Promise.all([
@@ -795,6 +1267,197 @@ async function hasExternalFinancialLink(
   }
 }
 
+const MANUAL_SESSION_SOURCE = 'admin_manual_adhoc';
+const YMD_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+export function buildAdminManualSessionId(enrollmentId: string, date: string, startTime: string): string {
+  return `${enrollmentId}_${date.replace(/-/g, '')}_${startTime.replace(':', '')}`;
+}
+
+export function resolveAdminManualSessionTimes(date: string, startTime: string, durationMins: number): {
+  startAt: Date;
+  endAt: Date;
+  endTime: string;
+  durationMins: number;
+} {
+  if (!YMD_PATTERN.test(date) || !TIME_PATTERN.test(startTime)) {
+    throw new HttpsError('invalid-argument', 'date and startTime must use YYYY-MM-DD and HH:mm');
+  }
+  const duration = Math.max(10, Math.min(180, Math.floor(Number(durationMins))));
+  if (!Number.isFinite(duration)) throw new HttpsError('invalid-argument', 'durationMins must be a number');
+  const startAt = new Date(`${date}T${startTime}:00+05:30`);
+  if (Number.isNaN(startAt.getTime())) throw new HttpsError('invalid-argument', 'Invalid manual session time');
+  const endAt = new Date(startAt.getTime() + duration * 60_000);
+  const istEnd = new Date(endAt.getTime() + 330 * 60_000);
+  const endTime = `${String(istEnd.getUTCHours()).padStart(2, '0')}:${String(istEnd.getUTCMinutes()).padStart(2, '0')}`;
+  return { startAt, endAt, endTime, durationMins: duration };
+}
+
+function isManualSessionDocument(raw: Record<string, unknown>): boolean {
+  if (normalizeManualSessionState(raw.manualSessionState)) return true;
+  if (raw.isAdHoc === true) return true;
+  const adHocType = String(raw.adHocType || '').trim().toLowerCase();
+  const source = String(raw.source || '').trim().toLowerCase();
+  return adHocType.includes('one_off') || adHocType.includes('adhoc') || source === MANUAL_SESSION_SOURCE;
+}
+
+export const createAdminManualSession = onCall({ region: REGION }, async (request) => {
+  await ensureAdmin(request.auth);
+  const enrollmentId = String(request.data?.enrollmentId || '').trim();
+  const date = String(request.data?.date || '').trim();
+  const startTime = String(request.data?.startTime || '').trim();
+  const reason = String(request.data?.reason || '').trim();
+  const durationInput = Number(request.data?.durationMins);
+  if (!enrollmentId || !reason) {
+    throw new HttpsError('invalid-argument', 'enrollmentId and a non-empty reason are required');
+  }
+  const timing = resolveAdminManualSessionTimes(date, startTime, durationInput);
+  const db = admin.firestore();
+  const enrollmentRef = db.collection('enrollments').doc(enrollmentId);
+  const enrollmentSnap = await enrollmentRef.get();
+  if (!enrollmentSnap.exists) throw new HttpsError('not-found', 'Enrollment not found');
+  const enrollment = (enrollmentSnap.data() || {}) as Record<string, unknown>;
+  const enrollmentStatus = normalizeEnrollmentStatus(enrollment.status);
+  if (enrollmentStatus !== 'active' && enrollmentStatus !== 'trial') {
+    throw new HttpsError('failed-precondition', 'Manual sessions require an operational enrollment');
+  }
+  const kidId = resolveKidIdFromEnrollment(enrollment);
+  const courseId = toOptionalId(enrollment.courseId);
+  const teacherIds = toStringList(enrollment.teacherIds);
+  const teacherId = toOptionalId(enrollment.teacherId) || teacherIds[0] || null;
+  if (!kidId || !courseId || !teacherId) {
+    throw new HttpsError('failed-precondition', 'Enrollment is missing canonical child, course, or teacher identity');
+  }
+  const sessionId = buildAdminManualSessionId(enrollmentId, date, startTime);
+  const sessionRef = db.collection('classSessions').doc(sessionId);
+  const actor = request.auth?.uid || 'admin';
+  const auditRef = db.collection('auditLogs').doc();
+  const result = await db.runTransaction(async (tx) => {
+    const existing = await tx.get(sessionRef);
+    if (existing.exists) {
+      const existingData = (existing.data() || {}) as Record<string, unknown>;
+      if (
+        isManualSessionDocument(existingData) &&
+        normalizeManualSessionState(existingData.manualSessionState) === 'approved' &&
+        String(existingData.enrollmentId || '') === enrollmentId
+      ) {
+        return { alreadyExisted: true };
+      }
+      throw new HttpsError('already-exists', 'A different session already exists for this enrollment, date, and time');
+    }
+    const kidIds = Array.from(new Set([kidId, ...toStringList(enrollment.kidIds)]));
+    const canonicalTeacherIds = Array.from(new Set([teacherId, ...teacherIds]));
+    const parentIds = toStringList(enrollment.parentIds);
+    const parentId = toOptionalId(enrollment.parentId) || parentIds[0] || null;
+    const sessionPayload = removeUndefinedDeep({
+      enrollmentId,
+      kidId,
+      kidIds,
+      studentId: toOptionalId(enrollment.studentId) || kidId,
+      studentName: toOptionalId(enrollment.studentName) || toOptionalId(enrollment.kidName),
+      kidName: toOptionalId(enrollment.kidName) || toOptionalId(enrollment.studentName),
+      parentId,
+      parentIds,
+      teacherId,
+      teacherIds: canonicalTeacherIds,
+      assignedTeacherId: teacherId,
+      primaryTeacherId: teacherId,
+      teacherUid: teacherId,
+      teacher_id: teacherId,
+      teacherName: toOptionalId(enrollment.teacherName),
+      courseId,
+      courseName: toOptionalId(enrollment.courseName) || toOptionalId(enrollment.courseLabel),
+      date,
+      startTime,
+      endTime: timing.endTime,
+      durationMinutes: timing.durationMins,
+      durationMins: timing.durationMins,
+      startAt: Timestamp.fromDate(timing.startAt),
+      endAt: Timestamp.fromDate(timing.endAt),
+      status: 'scheduled',
+      attendance: null,
+      isAdHoc: true,
+      adHocType: 'admin_one_off',
+      source: MANUAL_SESSION_SOURCE,
+      manualSessionState: 'approved',
+      manualSessionReason: reason,
+      approvedBy: actor,
+      approvedAt: FieldValue.serverTimestamp(),
+      createdBy: actor,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedBy: actor,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    tx.create(sessionRef, sessionPayload);
+    tx.create(auditRef, {
+      type: 'admin_manual_session_created',
+      action: 'create',
+      sessionId,
+      enrollmentId,
+      kidId,
+      courseId,
+      teacherId,
+      reason,
+      createdBy: actor,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+    return { alreadyExisted: false };
+  });
+  return { ok: true, sessionId, ...result };
+});
+
+export const cancelAdminManualSession = onCall({ region: REGION }, async (request) => {
+  await ensureAdmin(request.auth);
+  const sessionId = String(request.data?.sessionId || '').trim();
+  const reason = String(request.data?.reason || '').trim();
+  if (!sessionId || !reason) throw new HttpsError('invalid-argument', 'sessionId and a non-empty reason are required');
+  const db = admin.firestore();
+  const sessionRef = db.collection('classSessions').doc(sessionId);
+  const sessionSnap = await sessionRef.get();
+  if (!sessionSnap.exists) throw new HttpsError('not-found', 'Session not found');
+  const raw = (sessionSnap.data() || {}) as Record<string, unknown>;
+  if (!isManualSessionDocument(raw)) throw new HttpsError('failed-precondition', 'Only manual sessions can use this operation');
+  const manualState = normalizeManualSessionState(raw.manualSessionState);
+  const status = normalizeStatusValue(raw.status);
+  if (manualState === 'cancelled' || manualState === 'withdrawn' || status === 'cancelled') {
+    return { ok: true, sessionId, alreadyCancelled: true };
+  }
+  if (manualState === 'completed' || status === 'completed' || hasAttendanceMarked(raw) || hasSessionFinanceOrLockMarkers(raw)) {
+    throw new HttpsError('failed-precondition', 'This manual session contains protected historical or financial data');
+  }
+  if (await hasExternalFinancialLink(db, sessionSnap)) {
+    throw new HttpsError('failed-precondition', 'This manual session is linked to protected finance records');
+  }
+  const actor = request.auth?.uid || 'admin';
+  const auditRef = db.collection('auditLogs').doc();
+  const batch = db.batch();
+  batch.set(sessionRef, {
+    status: 'cancelled',
+    manualSessionState: 'cancelled',
+    manualSessionCancellationReason: reason,
+    cancelledReason: 'admin_manual_session_cancelled',
+    cancelledBy: actor,
+    cancelledAt: FieldValue.serverTimestamp(),
+    updatedBy: actor,
+    updatedAt: FieldValue.serverTimestamp(),
+  }, { merge: true });
+  batch.create(auditRef, {
+    type: 'admin_manual_session_cancelled',
+    action: 'cancel',
+    sessionId,
+    enrollmentId: toOptionalId(raw.enrollmentId),
+    kidId: toOptionalId(raw.kidId),
+    courseId: toOptionalId(raw.courseId),
+    teacherId: toOptionalId(raw.teacherId),
+    reason,
+    createdBy: actor,
+    createdAt: FieldValue.serverTimestamp(),
+  });
+  await batch.commit();
+  return { ok: true, sessionId, alreadyCancelled: false };
+});
+
 async function cancelEligibleFutureSessions(args: {
   docs: FirebaseFirestore.QueryDocumentSnapshot[];
   reason: string;
@@ -824,15 +1487,15 @@ async function cancelEligibleFutureSessions(args: {
       batch.set(docSnap.ref, {
         status: 'cancelled',
         cancelledReason: args.reason,
-        cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
+        cancelledAt: FieldValue.serverTimestamp(),
         cancelledBy: args.actorUid || 'system',
         lifecycleReconciliation: {
           scope: args.scope,
           reason: args.reason,
-          reconciledAt: admin.firestore.FieldValue.serverTimestamp(),
+          reconciledAt: FieldValue.serverTimestamp(),
           reconciledBy: args.actorUid || 'system',
         },
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         updatedBy: args.actorUid || 'system',
       }, { merge: true });
     });
@@ -1164,26 +1827,74 @@ export const setEnrollmentStatus = onCall({ region: REGION }, async (request) =>
     const updates: Record<string, any> = {
       ...buildEnrollmentCanonicalPatch(enrollmentId, enrollmentData),
       status: canonicalStatus,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       updatedBy: actor,
     };
 
     if (reason) updates.endReason = reason;
-    if (isTerminal) updates.endedAt = admin.firestore.FieldValue.serverTimestamp();
+    if (isTerminal) updates.endedAt = FieldValue.serverTimestamp();
     if (canonicalStatus === 'archived') {
       updates.archived = true;
       updates.isArchived = true;
-      updates.archivedAt = admin.firestore.FieldValue.serverTimestamp();
+      updates.archivedAt = FieldValue.serverTimestamp();
     } else if (canonicalStatus === 'active' || canonicalStatus === 'trial') {
       updates.archived = false;
       updates.isArchived = false;
-      updates.archivedAt = admin.firestore.FieldValue.delete();
-      updates.endedAt = admin.firestore.FieldValue.delete();
+      updates.archivedAt = FieldValue.delete();
+      updates.endedAt = FieldValue.delete();
     }
 
     const cleanPatch = removeUndefinedDeep(updates) as Record<string, unknown>;
     console.log('[setEnrollmentStatus] writing patch keys', Object.keys(cleanPatch));
-    await enrRef.set(cleanPatch, { merge: true });
+    const canonicalKidId = resolveKidIdFromEnrollment(enrollmentData);
+    const canonicalCourseId = toOptionalId(enrollmentData.courseId);
+    const shouldHoldCourseSlot = doesEnrollmentOccupyCourseSlot({
+      ...enrollmentData,
+      ...cleanPatch,
+      status: canonicalStatus,
+    });
+    if (shouldHoldCourseSlot && (!canonicalKidId || !canonicalCourseId)) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Cannot activate or pause an enrollment without canonical child and course identity',
+      );
+    }
+    if (isReactivation && canonicalKidId && canonicalCourseId) {
+      const conflicts = await findOperationalSameCourseEnrollmentIds({
+        db,
+        kidId: canonicalKidId,
+        courseId: canonicalCourseId,
+        excludeEnrollmentId: enrollmentId,
+      });
+      if (conflicts.length > 0) {
+        throw new HttpsError(
+          'already-exists',
+          `Another operational enrollment already exists for this child and course: ${conflicts[0]}`,
+        );
+      }
+    }
+    const courseSlotRef = canonicalKidId && canonicalCourseId
+      ? db.collection(OPERATIONAL_ENROLLMENT_KEYS_COLLECTION)
+          .doc(buildOperationalEnrollmentKeyId(canonicalKidId, canonicalCourseId))
+      : null;
+    await db.runTransaction(async (tx) => {
+      const keySnap = courseSlotRef ? await tx.get(courseSlotRef) : null;
+      if (shouldHoldCourseSlot && keySnap?.exists && keySnap.data()?.enrollmentId !== enrollmentId) {
+        throw new HttpsError('already-exists', 'Another enrollment already reserves this child and course');
+      }
+      tx.set(enrRef, cleanPatch, { merge: true });
+      if (courseSlotRef && shouldHoldCourseSlot) {
+        tx.set(courseSlotRef, {
+          enrollmentId,
+          kidId: canonicalKidId,
+          courseId: canonicalCourseId,
+          heldAt: FieldValue.serverTimestamp(),
+          heldBy: actor || 'system',
+        }, { merge: true });
+      } else if (courseSlotRef && keySnap?.exists && keySnap.data()?.enrollmentId === enrollmentId) {
+        tx.delete(courseSlotRef);
+      }
+    });
 
     let cancelledSessions = 0;
     if (canonicalStatus === 'paused') {
@@ -1381,11 +2092,11 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
     ...(enrollmentIdentity.courseName ? { courseName: enrollmentIdentity.courseName } : {}),
     ...(enrollmentIdentity.parentId ? { parentId: enrollmentIdentity.parentId } : {}),
     ...(enrollmentIdentity.parentIds.length > 0 ? { parentIds: enrollmentIdentity.parentIds } : {}),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
     updatedBy: actorIdentity,
-    teacherReassignedAt: admin.firestore.FieldValue.serverTimestamp(),
+    teacherReassignedAt: FieldValue.serverTimestamp(),
     teacherReassignedBy: actorIdentity,
-    reassignedAt: admin.firestore.FieldValue.serverTimestamp(),
+    reassignedAt: FieldValue.serverTimestamp(),
     reassignedBy: actorIdentity,
     previousTeacherId: previousTeacherId || null,
     previousTeacherName: previousTeacherName || null,
@@ -1460,7 +2171,7 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
       newTeacherName,
       newTeacherEmail: newTeacherEmail || null,
       changedBy: actorIdentity,
-      changedAt: admin.firestore.FieldValue.serverTimestamp(),
+      changedAt: FieldValue.serverTimestamp(),
       reason: reassignmentReason || null,
       sessionsScanned: sessionUpdateSummary.sessionsScanned,
       sessionsMatchedByEnrollmentId: sessionUpdateSummary.sessionsMatchedByEnrollmentId,
@@ -1474,7 +2185,7 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
       queriesAttempted: sessionUpdateSummary.queriesAttempted,
       kidUpdated: kidSyncSummary.kidUpdated,
       kidTeacherIds: kidSyncSummary.teacherIds,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     },
     { merge: true }
   );
@@ -1669,9 +2380,9 @@ export const archiveKid = onCall({ region: REGION }, async (request) => {
   await kidRef.set(
     {
       status: 'archived',
-      archivedAt: admin.firestore.FieldValue.serverTimestamp(),
+      archivedAt: FieldValue.serverTimestamp(),
       archivedReason: reason || null,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       updatedBy: request.auth?.uid || null,
     },
     { merge: true }

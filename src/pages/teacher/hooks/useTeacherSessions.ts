@@ -555,7 +555,6 @@ export const useTeacherSessions = (
         ? rows
         : rows.filter((session) => sessionBelongsToTeacher(session as any, teacherKey));
 
-      let enrollmentLookupFailed = false;
       let enrollmentMap = new Map<string, Record<string, unknown>>();
       const enrollmentIds = Array.from(
         new Set(
@@ -569,7 +568,6 @@ export const useTeacherSessions = (
         try {
           enrollmentMap = await fetchEnrollmentsByIds(enrollmentIds);
         } catch (err) {
-          enrollmentLookupFailed = true;
           devLogTeacherQuery('useTeacherSessions', 'error', {
             queryName: 'enrollmentLookups',
             collection: 'enrollments',
@@ -583,11 +581,9 @@ export const useTeacherSessions = (
         }
       }
 
-      const baseVisibleRows = filtered.filter((session) => toCleanText((session as any)?.status).toLowerCase() !== 'paused');
-      const canonicalOnly = (enrollmentLookupFailed ? baseVisibleRows : filtered).filter((session) => {
+      const canonicalOnly = filtered.filter((session) => {
         const status = toCleanText((session as any)?.status).toLowerCase();
         if (status === 'paused') return false;
-        if (enrollmentLookupFailed) return true;
         const enrollmentId = toCleanText((session as any)?.enrollmentId);
         if (!enrollmentId) return false;
         const enrollment = enrollmentMap.get(enrollmentId);

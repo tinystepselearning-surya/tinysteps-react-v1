@@ -73,6 +73,7 @@ export interface TeacherSession {
 
 export interface TeacherStudent {
   id: string;
+  enrollmentId?: string;
   fullName: string;
   grade?: string;
   courseNames?: string[];

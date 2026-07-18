@@ -2875,104 +2875,31 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       return;
     }
 
-    const [hhText, mmText] = adHocStartTime.split(':');
-    const hh = Number(hhText);
-    const mm = Number(mmText);
     const duration = clampDurationMinutes(adHocDurationMins, 35);
-
-    const startAt = new Date(dateOnly);
-    startAt.setHours(hh, mm, 0, 0);
-    const endAt = new Date(startAt);
-    endAt.setMinutes(endAt.getMinutes() + duration);
-
-    const dateStr = toISODate(startAt);
-    const startTime = formatTimeHHmm(startAt);
-    const endTime = formatTimeHHmm(endAt);
-    const sessionId = `${enrollment.id}_${formatYMDCompact(startAt)}_${startTime.replace(':', '')}`;
-
-    const student = studentById.get(adHocFor.id) || adHocFor;
-    const parentIds = (student?.parentIds || enrollment.parentIds || []).filter(Boolean);
-    const parentId = student?.primaryParentId || enrollment.parentId || parentIds[0] || null;
-    const feeAmount = safeNumber(enrollment.feePerClass, 0);
-    const currency = enrollment.currency || 'INR';
-    const joinUrl = enrollment.joinUrl || null;
-    const studentName =
-      toOptionalText(student?.fullName) ||
-      toOptionalText((student as any)?.name) ||
-      toOptionalText((student as any)?.displayName) ||
-      toOptionalText((enrollment as any).studentName) ||
-      toOptionalText((enrollment as any).kidName) ||
-      null;
-    const courseName =
-      toOptionalText((enrollment as any).course?.title) ||
-      toOptionalText((enrollment as any).course?.name) ||
-      toOptionalText((enrollment as any).courseName) ||
-      toOptionalText((enrollment as any).courseLabel) ||
-      toOptionalText(enrollment.courseId) ||
-      null;
-    const teacherName =
-      toOptionalText((enrollment as any).teacher?.name) ||
-      toOptionalText((enrollment as any).teacher?.displayName) ||
-      toOptionalText((enrollment as any).teacherName) ||
-      toOptionalText((enrollment as any).teacher?.email) ||
-      toOptionalText(enrollment.teacherId) ||
-      null;
-    const teacherEmail =
-      toOptionalText((enrollment as any).teacher?.email) ||
-      toOptionalText((enrollment as any).teacherEmail) ||
-      null;
+    const reason = adHocNote.trim();
+    if (!reason) {
+      toast({
+        title: 'Reason required',
+        description: 'Explain why this approved one-off session is being created.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setSavingAdHoc(true);
     try {
-      const classSessionRef = doc(getClassSessionsCollection(), sessionId);
-      const existing = await getDoc(classSessionRef);
-      if (existing.exists()) {
-        throw new Error('A session already exists for this enrollment/date/time. Pick a different slot.');
-      }
-
-      await setDoc(classSessionRef, compactRecord({
+      const createManualSession = httpsCallable(getFunctions(), 'createAdminManualSession');
+      await createManualSession({
         enrollmentId: enrollment.id,
-        kidId: adHocFor.id,
-        kidIds: [adHocFor.id],
-        studentId: adHocFor.id,
-        ...(studentName ? { studentName, kidName: studentName, childName: studentName } : {}),
-        parentId,
-        parentIds,
-        teacherId: enrollment.teacherId,
-        ...(enrollment.teacherId ? {
-          teacherIds: [enrollment.teacherId],
-          assignedTeacherId: enrollment.teacherId,
-          primaryTeacherId: enrollment.teacherId,
-          teacherUid: enrollment.teacherId,
-          teacher_id: enrollment.teacherId,
-        } : {}),
-        ...(teacherName ? { teacherName } : {}),
-        ...(teacherEmail ? { teacherEmail } : {}),
-        courseId: enrollment.courseId || null,
-        ...(courseName ? { courseName } : {}),
-        startAt: Timestamp.fromDate(startAt),
-        endAt: Timestamp.fromDate(endAt),
-        date: dateStr,
-        startTime,
-        endTime,
-        status: 'scheduled',
-        attendance: null,
-        feeAmount,
-        currency,
-        joinUrl,
-        notes: adHocNote.trim(),
-        isAdHoc: true,
-        adHocType: 'admin_one_off',
-        source: 'admin_manual_adhoc',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        createdBy: user?.uid || 'admin',
-        updatedBy: user?.uid || 'admin',
-      }));
+        date: adHocDate,
+        startTime: adHocStartTime,
+        durationMins: duration,
+        reason,
+      });
 
       toast({
         title: 'Ad hoc session created',
-        description: `1 session added on ${dateStr} at ${startTime} without changing recurring schedule.`,
+        description: `Approved one-off added on ${adHocDate} at ${adHocStartTime} without changing the recurring schedule.`,
       });
       setAdHocFor(null);
     } catch (err: any) {
@@ -4374,11 +4301,11 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
               </div>
 
               <div>
-                <div className="text-sm font-medium mb-1">Note (optional)</div>
+                <div className="text-sm font-medium mb-1">Reason (required)</div>
                 <Input
                   value={adHocNote}
                   onChange={(e) => setAdHocNote(e.target.value)}
-                  placeholder="Reason for extra class (e.g., Thursday ad hoc revision)"
+                  placeholder="Reason for extra class (e.g., approved revision session)"
                 />
               </div>
             </div>

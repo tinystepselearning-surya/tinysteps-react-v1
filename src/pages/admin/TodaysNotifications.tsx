@@ -42,8 +42,10 @@ import { getDocLogged, getDocsLogged } from '../../lib/firestoreReadLogging';
 import { resolveSessionJoinLink } from '../../lib/sessionJoinLink';
 import {
   isEnrollmentOperationallyActive,
+  isManualSession,
   normalizeEnrollmentStatusForOperations,
 } from '../../lib/sessionScheduleIntegrity';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { collectSessionTeacherRefs, resolvePreferredSessionTeacherRef } from '../../lib/sessionTeacherRefs';
 import { useAuthStore } from '../../store/useAuthStore';
 import {
@@ -1109,6 +1111,7 @@ export default function TodaysNotifications() {
   const [teacherFilter, setTeacherFilter] = useState<string>(ALL_TEACHERS_FILTER);
   const [statusFilter, setStatusFilter] = useState<string>(ALL_STATUSES_FILTER);
   const [reminderRefreshNonce, setReminderRefreshNonce] = useState(0);
+  const [cancellingManualSessionId, setCancellingManualSessionId] = useState('');
   const [admissionsRefreshNonce, setAdmissionsRefreshNonce] = useState(0);
   const handledReminderRefreshNonceRef = useRef(0);
   const isNotificationActionsEnabled = mode !== 'overall-admissions';
@@ -1235,6 +1238,26 @@ export default function TodaysNotifications() {
       active = false;
     };
   }, [mode, reminderRefreshNonce, todayDateKey, tomorrowDateKey, upcomingSpecificDate, toast]);
+
+  const handleCancelManualSession = async (session: ClassSessionDoc) => {
+    const reason = window.prompt('Reason for cancelling or withdrawing this manual session?')?.trim() || '';
+    if (!reason) return;
+    try {
+      setCancellingManualSessionId(session.id);
+      const cancelManualSession = httpsCallable(getFunctions(), 'cancelAdminManualSession');
+      await cancelManualSession({ sessionId: session.id, reason });
+      toast({ title: 'Manual session cancelled', description: 'The historical session document was preserved.' });
+      setReminderRefreshNonce((value) => value + 1);
+    } catch (error) {
+      toast({
+        title: 'Unable to cancel manual session',
+        description: error instanceof Error ? error.message : 'The session may contain protected attendance or finance data.',
+        variant: 'destructive',
+      });
+    } finally {
+      setCancellingManualSessionId('');
+    }
+  };
 
   useEffect(() => {
     if (mode !== 'overall-admissions') return;
@@ -2493,6 +2516,17 @@ export default function TodaysNotifications() {
                                   >
                                     Add/Edit Teacher Phone
                                   </DropdownMenuItem>
+                                  {isManualSession(row as unknown as Record<string, unknown>) ? (
+                                    <>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem
+                                        onSelect={() => void handleCancelManualSession(row)}
+                                        disabled={cancellingManualSessionId === row.id}
+                                      >
+                                        {cancellingManualSessionId === row.id ? 'Cancelling…' : 'Cancel Manual Session'}
+                                      </DropdownMenuItem>
+                                    </>
+                                  ) : null}
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </div>

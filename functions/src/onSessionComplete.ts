@@ -1,5 +1,6 @@
 // functions/src/onSessionComplete.ts
 import * as admin from "firebase-admin";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 
@@ -21,6 +22,7 @@ type AttendanceEntry = {
 };
 
 interface SessionData {
+  enrollmentId?: string;
   courseId?: string;
   teacherId?: string;
   kidIds?: string[];
@@ -37,10 +39,10 @@ interface SessionData {
 
   // Idempotency + lock
   creditsProcessed?: boolean;
-  creditsProcessedAt?: admin.firestore.Timestamp;
+  creditsProcessedAt?: Timestamp;
 
   creditsProcessing?: boolean;
-  creditsProcessingAt?: admin.firestore.Timestamp;
+  creditsProcessingAt?: Timestamp;
   creditsProcessingBy?: string;
   creditsProcessingError?: string;
   revenueAccrued?: boolean;
@@ -82,17 +84,6 @@ const ACTIVE_ENROLLMENT_STATUSES = new Set([
   "pending_payment",
   "paused",
 ]);
-
-const ENROLLMENT_STATUS_PRIORITY: Record<string, number> = {
-  current: 100,
-  active: 95,
-  enrolled: 90,
-  ongoing: 88,
-  trial: 84,
-  pending_teacher: 80,
-  pending_payment: 78,
-  paused: 70,
-};
 
 function nowMs() {
   return Date.now();
@@ -198,26 +189,58 @@ function resolveEnrollmentKidIds(enrollment: any): string[] {
   return Array.from(new Set(out));
 }
 
-function scoreEnrollmentCandidate(
-  enrollmentSnap: admin.firestore.QueryDocumentSnapshot,
-  kidId: string
-): { score: number; recencyMs: number; status: string } {
-  const data = enrollmentSnap.data() as any;
-  const status = normalizeEnrollmentStatus(data?.status);
-  const statusScore = ENROLLMENT_STATUS_PRIORITY[status] ?? (ACTIVE_ENROLLMENT_STATUSES.has(status) ? 40 : 0);
-  const enrollmentKidIds = resolveEnrollmentKidIds(data);
-  const directKidMatch = String(data?.kidId || "").trim() === kidId ? 6 : 0;
-  const studentIdMatch = String(data?.studentId || "").trim() === kidId ? 4 : 0;
-  const kidArrayMatch = enrollmentKidIds.includes(kidId) ? 2 : 0;
-  const recencyMs =
-    getTimestampMillis(data?.updatedAt) ||
-    getTimestampMillis(data?.enrollmentDate) ||
-    getTimestampMillis(data?.createdAt);
+export type EnrollmentIdentityCandidate = {
+  id: string;
+  data: Record<string, unknown>;
+};
 
+export type LegacyEnrollmentSelection =
+  | { ok: true; enrollmentId: string }
+  | { ok: false; reason: "missing" | "ambiguous"; candidateIds: string[] };
+
+export type ExactEnrollmentIdentityValidation =
+  | { ok: true }
+  | { ok: false; reason: "missing" | "course_mismatch" | "kid_mismatch" };
+
+export function validateExactEnrollmentIdentity(
+  exists: boolean,
+  enrollment: Record<string, unknown> | undefined,
+  kidId: string,
+  courseId: string
+): ExactEnrollmentIdentityValidation {
+  if (!exists || !enrollment) return { ok: false, reason: "missing" };
+  if (String(enrollment.courseId || "").trim() !== courseId) {
+    return { ok: false, reason: "course_mismatch" };
+  }
+  if (!resolveEnrollmentKidIds(enrollment).includes(kidId)) {
+    return { ok: false, reason: "kid_mismatch" };
+  }
+  return { ok: true };
+}
+
+/**
+ * Legacy sessions without enrollmentId are accepted only when student + course
+ * identity resolves to exactly one operational enrollment. Never guess by
+ * recency or status priority: that can move Phonics credits onto Grammar or a
+ * replacement enrollment.
+ */
+export function selectUnambiguousLegacyEnrollment(
+  candidates: EnrollmentIdentityCandidate[],
+  kidId: string,
+  courseId: string
+): LegacyEnrollmentSelection {
+  const matching = candidates.filter((candidate) => {
+    const data = candidate.data as any;
+    return String(data?.courseId || "").trim() === courseId &&
+      resolveEnrollmentKidIds(data).includes(kidId) &&
+      ACTIVE_ENROLLMENT_STATUSES.has(normalizeEnrollmentStatus(data?.status));
+  });
+  const distinctIds = Array.from(new Set(matching.map((candidate) => candidate.id)));
+  if (distinctIds.length === 1) return { ok: true, enrollmentId: distinctIds[0] };
   return {
-    score: statusScore + directKidMatch + studentIdMatch + kidArrayMatch,
-    recencyMs,
-    status,
+    ok: false,
+    reason: distinctIds.length === 0 ? "missing" : "ambiguous",
+    candidateIds: distinctIds,
   };
 }
 
@@ -281,8 +304,41 @@ async function resolveEnrollmentForSessionKid(
   db: admin.firestore.Firestore,
   kidId: string,
   courseId: string,
-  sessionId: string
-): Promise<admin.firestore.QueryDocumentSnapshot | null> {
+  sessionId: string,
+  sessionEnrollmentId?: string
+): Promise<admin.firestore.DocumentSnapshot> {
+  const exactEnrollmentId = String(sessionEnrollmentId || "").trim();
+  if (exactEnrollmentId) {
+    const exactSnap = await db.collection("enrollments").doc(exactEnrollmentId).get();
+    const exactData = exactSnap.data() as any;
+    const exactKidIds = resolveEnrollmentKidIds(exactData);
+    const exactCourseId = String(exactData?.courseId || "").trim();
+    const validation = validateExactEnrollmentIdentity(
+      exactSnap.exists,
+      exactData,
+      kidId,
+      courseId
+    );
+    if (!validation.ok) {
+      logger.error("Session enrollment identity mismatch", {
+        integrityEvent: "session_enrollment_identity_mismatch",
+        sessionId,
+        enrollmentId: exactEnrollmentId,
+        kidId,
+        courseId,
+        enrollmentExists: exactSnap.exists,
+        enrollmentCourseId: exactCourseId || null,
+        enrollmentKidIds: exactKidIds,
+        reason: validation.reason,
+      });
+      throw new HttpsError(
+        "failed-precondition",
+        "Session enrollment identity does not match its student and course."
+      );
+    }
+    return exactSnap;
+  }
+
   let candidates: admin.firestore.QueryDocumentSnapshot[] = [];
   let usedFallbackWithoutStatus = false;
 
@@ -301,51 +357,35 @@ async function resolveEnrollmentForSessionKid(
     }
   }
 
-  if (candidates.length === 0) {
-    logger.warn("Enrollment resolution failed: no matching enrollment", {
+  const selection = selectUnambiguousLegacyEnrollment(
+    candidates.map((candidate) => ({ id: candidate.id, data: candidate.data() })),
+    kidId,
+    courseId
+  );
+  if (!selection.ok) {
+    logger.error("Legacy session enrollment identity could not be resolved safely", {
+      integrityEvent: "legacy_session_enrollment_resolution_failed",
       sessionId,
       kidId,
       courseId,
+      reason: selection.reason,
+      candidateIds: selection.candidateIds,
       tried: ["kidId", "studentId", "kidIds"],
       usedFallbackWithoutStatus,
     });
-    return null;
+    throw new HttpsError(
+      "failed-precondition",
+      selection.reason === "ambiguous" ?
+        "Legacy session matches multiple operational enrollments." :
+        "Legacy session has no matching operational enrollment."
+    );
   }
 
-  const ranked = candidates
-    .map((docSnap) => {
-      const rank = scoreEnrollmentCandidate(docSnap, kidId);
-      return {
-        doc: docSnap,
-        score: rank.score,
-        recencyMs: rank.recencyMs,
-        status: rank.status,
-      };
-    })
-    .sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      return b.recencyMs - a.recencyMs;
-    });
-
-  const best = ranked[0];
-  if (ranked.length > 1) {
-    logger.warn("Enrollment resolution ambiguous: selected best-ranked candidate", {
-      sessionId,
-      kidId,
-      courseId,
-      selectedEnrollmentId: best.doc.id,
-      selectedStatus: best.status,
-      selectedScore: best.score,
-      candidates: ranked.slice(0, 5).map((item) => ({
-        enrollmentId: item.doc.id,
-        status: item.status,
-        score: item.score,
-      })),
-      usedFallbackWithoutStatus,
-    });
+  const selected = candidates.find((candidate) => candidate.id === selection.enrollmentId);
+  if (!selected) {
+    throw new HttpsError("failed-precondition", "Legacy enrollment resolution failed.");
   }
-
-  return best.doc;
+  return selected;
 }
 
 function resolveSessionKidIds(session: SessionData): string[] {
@@ -427,10 +467,10 @@ async function acquireProcessingLock(
       sessionRef,
       {
         creditsProcessing: true,
-        creditsProcessingAt: admin.firestore.FieldValue.serverTimestamp(),
+        creditsProcessingAt: FieldValue.serverTimestamp(),
         creditsProcessingBy: actor,
-        creditsProcessingError: admin.firestore.FieldValue.delete(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        creditsProcessingError: FieldValue.delete(),
+        updatedAt: FieldValue.serverTimestamp(),
       },
       { merge: true }
     );
@@ -445,11 +485,11 @@ async function releaseLockWithError(
 ) {
   await sessionRef.set(
     {
-      creditsProcessing: admin.firestore.FieldValue.delete(),
-      creditsProcessingAt: admin.firestore.FieldValue.delete(),
-      creditsProcessingBy: admin.firestore.FieldValue.delete(),
+      creditsProcessing: FieldValue.delete(),
+      creditsProcessingAt: FieldValue.delete(),
+      creditsProcessingBy: FieldValue.delete(),
       creditsProcessingError: errorMessage,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     },
     { merge: true }
   );
@@ -459,11 +499,11 @@ async function markProcessed(sessionRef: admin.firestore.DocumentReference) {
   await sessionRef.set(
     {
       creditsProcessed: true,
-      creditsProcessedAt: admin.firestore.FieldValue.serverTimestamp(),
-      creditsProcessing: admin.firestore.FieldValue.delete(),
-      creditsProcessingAt: admin.firestore.FieldValue.delete(),
-      creditsProcessingBy: admin.firestore.FieldValue.delete(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      creditsProcessedAt: FieldValue.serverTimestamp(),
+      creditsProcessing: FieldValue.delete(),
+      creditsProcessingAt: FieldValue.delete(),
+      creditsProcessingBy: FieldValue.delete(),
+      updatedAt: FieldValue.serverTimestamp(),
     },
     { merge: true }
   );
@@ -490,7 +530,7 @@ async function processSessionCompletion(
       return { success: true, skipped: true, creditsEarnedForTeacher: 0 };
     }
 
-    const { courseId, teacherId } = session;
+    const { courseId, teacherId, enrollmentId } = session;
 
     if (!courseId || !teacherId) {
       logger.warn("processSessionCompletion: missing core fields", { sessionId, courseId, teacherId });
@@ -525,8 +565,6 @@ async function processSessionCompletion(
 
     let creditsEarnedForTeacher = 0;
     const creditChanges: CreditChange[] = [];
-    const unresolvedEnrollmentKidIds: string[] = [];
-
     for (const kidId of kidIds) {
       const att = attendanceMap[kidId];
       const status = (att?.status || "unknown") as AttendanceStatus;
@@ -534,11 +572,13 @@ async function processSessionCompletion(
       // Only decrement credits for present (optionally add "late" here if you want)
       if (status !== "present") continue;
 
-      const enrollmentDoc = await resolveEnrollmentForSessionKid(db, kidId, courseId, sessionId);
-      if (!enrollmentDoc) {
-        unresolvedEnrollmentKidIds.push(kidId);
-        continue;
-      }
+      const enrollmentDoc = await resolveEnrollmentForSessionKid(
+        db,
+        kidId,
+        courseId,
+        sessionId,
+        enrollmentId
+      );
 
       const enrollmentRef = enrollmentDoc.ref;
 
@@ -556,7 +596,7 @@ async function processSessionCompletion(
         tx.update(enrollmentRef, {
           creditsRemaining: newRemaining,
           creditsUsed: newUsed,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
           updatedBy: "onSessionComplete",
         });
 
@@ -568,7 +608,7 @@ async function processSessionCompletion(
             enrollmentId: enrollmentDoc.id,
             kidId,
             creditsRemaining: newRemaining,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            createdAt: FieldValue.serverTimestamp(),
             createdBy: "onSessionComplete",
           });
         }
@@ -597,12 +637,13 @@ async function processSessionCompletion(
       await auditRef.set({
         type: "session_completion",
         sessionId,
+        enrollmentId: enrollmentId || creditChanges[0]?.enrollmentId || null,
         courseId,
         teacherId,
         kidIds,
         creditsEarned: creditsEarnedForTeacher,
         creditChanges,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
         createdBy: "onSessionComplete",
       });
       logger.info("Session audit log written", {
@@ -621,16 +662,6 @@ async function processSessionCompletion(
     await Promise.all(
       kidIds.map((kidId) => recomputeStudentSummary(kidId, courseId))
     );
-
-    if (unresolvedEnrollmentKidIds.length > 0) {
-      logger.warn("Session completion finished with present-attendance kids missing enrollment resolution", {
-        sessionId,
-        courseId,
-        teacherId,
-        unresolvedEnrollmentKidIds,
-        unresolvedCount: unresolvedEnrollmentKidIds.length,
-      });
-    }
 
     logger.info("Session completed and processed", {
       sessionId,
@@ -743,7 +774,7 @@ export const onSessionComplete = onCall(
     const updates: Record<string, unknown> = {
       status: "completed",
       attendance: attendanceForCompletion,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       updatedBy: uid,
     };
     if (sessionNotes) {

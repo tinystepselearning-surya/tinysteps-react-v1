@@ -286,6 +286,27 @@ describe('TodaysNotifications operational session selection', () => {
     ).map((session) => session.id)).toEqual(['makeup', 'rescheduled']);
   });
 
+  it('shows approved manual sessions and hides cancelled or withdrawn manual sessions', () => {
+    const approved = {
+      ...regular,
+      id: 'manual-approved',
+      date: '2026-06-03',
+      startTime: '20:00',
+      durationMinutes: 35,
+      isAdHoc: true,
+      source: 'admin_manual_adhoc',
+      manualSessionState: 'approved',
+      createdAt: '2026-06-01T10:00:00.000Z',
+      createdBy: 'admin-1',
+    };
+    const cancelled = { ...approved, id: 'manual-cancelled', manualSessionState: 'cancelled' };
+    const withdrawn = { ...approved, id: 'manual-withdrawn', manualSessionState: 'withdrawn' };
+    expect(selectOperationalReminderSessions(
+      [approved, cancelled, withdrawn],
+      { 'enrollment-1': enrollment },
+    ).map((session) => session.id)).toEqual(['manual-approved']);
+  });
+
   it('excludes orphan recurring sessions', () => {
     expect(selectOperationalReminderSessions([regular], {})).toEqual([]);
   });

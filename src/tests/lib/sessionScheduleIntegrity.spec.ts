@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   doesSessionMatchEnrollmentSchedule,
+  doesEnrollmentOccupyCourseSlot,
+  getManualSessionState,
   isEnrollmentOperationallyActive,
+  isLegacyManualSession,
+  isOperationalManualSession,
   isSessionCanonicalForEnrollment,
   isSessionStatusOperationallyVisible,
   shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment,
@@ -27,6 +31,61 @@ const baseEnrollment = {
 };
 
 describe('sessionScheduleIntegrity', () => {
+  it('keeps paused enrollment hidden while reserving the same-course slot', () => {
+    expect(isEnrollmentOperationallyActive({ ...baseEnrollment, status: 'paused' })).toBe(false);
+    expect(doesEnrollmentOccupyCourseSlot({ ...baseEnrollment, status: 'paused' })).toBe(true);
+  });
+
+  it.each(['completed', 'cancelled', 'canceled', 'archived', 'inactive', 'discontinued', 'expired'])(
+    'does not let terminal status %s block intentional re-enrollment',
+    (status) => expect(doesEnrollmentOccupyCourseSlot({ ...baseEnrollment, status })).toBe(false),
+  );
+
+  it.each(['active', 'trial', 'pending_teacher', 'pending_payment', 'pending_lp', 'enrolled', 'current', 'ongoing'])(
+    'treats %s as occupying the same-course slot',
+    (status) => expect(doesEnrollmentOccupyCourseSlot({ ...baseEnrollment, status })).toBe(true),
+  );
+
+  const manualSession = {
+    enrollmentId: 'enr_1',
+    courseId: 'phonics',
+    kidId: 'kid_1',
+    teacherId: 'teacher_current',
+    status: 'scheduled',
+    source: 'admin_manual_adhoc',
+    isAdHoc: true,
+    createdAt: '2026-07-11T14:21:29.583Z',
+    createdBy: 'admin_1',
+  };
+
+  it('shows only explicitly approved current manual sessions', () => {
+    expect(getManualSessionState({ ...manualSession, manualSessionState: 'approved' })).toBe('approved');
+    expect(isOperationalManualSession({ ...manualSession, manualSessionState: 'approved' })).toBe(true);
+    expect(isOperationalManualSession({ ...manualSession, manualSessionState: 'cancelled' })).toBe(false);
+    expect(isOperationalManualSession({ ...manualSession, manualSessionState: 'withdrawn' })).toBe(false);
+  });
+
+  it('rejects an unapproved new manual session even when its identity is complete', () => {
+    expect(isOperationalManualSession({
+      ...manualSession,
+      source: 'new_manual_source',
+      manualSessionState: undefined,
+    })).toBe(false);
+  });
+
+  it('treats completed manual sessions as historical', () => {
+    const completed = { ...manualSession, status: 'completed', manualSessionState: 'completed' };
+    expect(getManualSessionState(completed)).toBe('completed');
+    expect(isOperationalManualSession(completed)).toBe(false);
+    expect(isOperationalManualSession({ ...manualSession, status: 'completed' })).toBe(false);
+  });
+
+  it('allows complete legacy manual identity only through the transitional compatibility rule', () => {
+    expect(isLegacyManualSession(manualSession)).toBe(true);
+    expect(isOperationalManualSession(manualSession)).toBe(true);
+    expect(isLegacyManualSession({ ...manualSession, enrollmentId: '' })).toBe(false);
+    expect(isOperationalManualSession({ ...manualSession, enrollmentId: '' })).toBe(false);
+  });
   it.each(['paused', 'cancelled', 'canceled', 'archived', 'inactive', 'completed', 'discontinued', 'expired'])(
     'treats %s enrollments as non-operational',
     (status) => {
@@ -155,7 +214,7 @@ describe('sessionScheduleIntegrity', () => {
     expect(shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment(session, 'teacher_current')).toBe(false);
   });
 
-  it('allows teacher-owned admin_manual_adhoc sessions when enrollment hydration is missing', () => {
+  it('rejects legacy admin_manual_adhoc sessions with incomplete lifecycle metadata when enrollment hydration is missing', () => {
     const session = {
       enrollmentId: 'enr_1',
       courseId: 'phonics',
@@ -171,6 +230,22 @@ describe('sessionScheduleIntegrity', () => {
     };
 
     expect(isSessionCanonicalForEnrollment(session, undefined)).toBe(false);
+    expect(shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment(session, 'teacher_current')).toBe(false);
+  });
+
+  it('allows an approved teacher-owned manual session with complete identity when enrollment hydration is missing', () => {
+    const session = {
+      enrollmentId: 'enr_1',
+      courseId: 'phonics',
+      date: '2026-06-03',
+      startTime: '21:00',
+      endTime: '21:35',
+      kidId: 'kid_1',
+      teacherId: 'teacher_current',
+      status: 'scheduled',
+      source: 'admin_manual_adhoc',
+      manualSessionState: 'approved',
+    };
     expect(shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment(session, 'teacher_current')).toBe(true);
   });
 

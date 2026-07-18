@@ -1,6 +1,7 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { ensureAdmin } from './helpers/adminGuard';
 import { normalizeFinancialStatus, normalizeLowerStatus } from './helpers/status';
@@ -496,10 +497,10 @@ export const onSessionRevenueWrite = onDocumentWritten(
           status: nextChargeStatus || 'open',
           source: 'session_present_completed',
           monthKey,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
         };
         if (!chargeSnap.exists) {
-          chargePayload.createdAt = admin.firestore.FieldValue.serverTimestamp();
+          chargePayload.createdAt = FieldValue.serverTimestamp();
         }
 
         const earningRef = db.collection('teacherEarnings').doc(sessionId);
@@ -527,12 +528,12 @@ export const onSessionRevenueWrite = onDocumentWritten(
           amount: teacherEarningAmount,
           currency,
           status: nextEarningStatus || 'unpaid',
-          earnedAt: admin.firestore.FieldValue.serverTimestamp(),
+          earnedAt: FieldValue.serverTimestamp(),
           monthKey,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
         };
         if (!earningSnap.exists) {
-          earningPayload.createdAt = admin.firestore.FieldValue.serverTimestamp();
+          earningPayload.createdAt = FieldValue.serverTimestamp();
         }
 
         if (!alreadyAccrued) {
@@ -542,8 +543,8 @@ export const onSessionRevenueWrite = onDocumentWritten(
               revenueAccrued: true,
               accruedAmount: ratePerSession,
               accruedMonthKey: monthKey,
-              accruedAt: admin.firestore.FieldValue.serverTimestamp(),
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              accruedAt: FieldValue.serverTimestamp(),
+              updatedAt: FieldValue.serverTimestamp(),
             },
             { merge: true }
           );
@@ -551,9 +552,9 @@ export const onSessionRevenueWrite = onDocumentWritten(
           tx.set(
             rollupRef,
             {
-              expected: admin.firestore.FieldValue.increment(ratePerSession),
-              completedSessions: admin.firestore.FieldValue.increment(1),
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              expected: FieldValue.increment(ratePerSession),
+              completedSessions: FieldValue.increment(1),
+              updatedAt: FieldValue.serverTimestamp(),
             },
             { merge: true }
           );
@@ -561,10 +562,10 @@ export const onSessionRevenueWrite = onDocumentWritten(
           tx.set(
             enrollmentRef,
             {
-              'metrics.completedSessionsCount': admin.firestore.FieldValue.increment(1),
-              'metrics.expectedRevenueAccrued': admin.firestore.FieldValue.increment(ratePerSession),
-              'metrics.lastCompletedAt': admin.firestore.FieldValue.serverTimestamp(),
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              'metrics.completedSessionsCount': FieldValue.increment(1),
+              'metrics.expectedRevenueAccrued': FieldValue.increment(ratePerSession),
+              'metrics.lastCompletedAt': FieldValue.serverTimestamp(),
+              updatedAt: FieldValue.serverTimestamp(),
             },
             { merge: true }
           );
@@ -584,9 +585,9 @@ export const onSessionRevenueWrite = onDocumentWritten(
             sessionRef,
             {
               revenueRepairRequired: true,
-              revenueRepairDetectedAt: admin.firestore.FieldValue.serverTimestamp(),
+              revenueRepairDetectedAt: FieldValue.serverTimestamp(),
               revenueRepairReason: repairReason,
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              updatedAt: FieldValue.serverTimestamp(),
             },
             { merge: true }
           );
@@ -640,9 +641,9 @@ export const onSessionRevenueWrite = onDocumentWritten(
           tx.set(
             rollupRef,
             {
-              expected: admin.firestore.FieldValue.increment(-accruedAmount),
-              completedSessions: admin.firestore.FieldValue.increment(-1),
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              expected: FieldValue.increment(-accruedAmount),
+              completedSessions: FieldValue.increment(-1),
+              updatedAt: FieldValue.serverTimestamp(),
             },
             { merge: true }
           );
@@ -653,9 +654,9 @@ export const onSessionRevenueWrite = onDocumentWritten(
             tx.set(
               enrollmentRef,
               {
-                'metrics.completedSessionsCount': admin.firestore.FieldValue.increment(-1),
-                'metrics.expectedRevenueAccrued': admin.firestore.FieldValue.increment(-accruedAmount),
-                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                'metrics.completedSessionsCount': FieldValue.increment(-1),
+                'metrics.expectedRevenueAccrued': FieldValue.increment(-accruedAmount),
+                updatedAt: FieldValue.serverTimestamp(),
               },
               { merge: true }
             );
@@ -665,10 +666,10 @@ export const onSessionRevenueWrite = onDocumentWritten(
             sessionRef,
             {
               revenueAccrued: false,
-              accruedAmount: admin.firestore.FieldValue.delete(),
-              accruedMonthKey: admin.firestore.FieldValue.delete(),
-              accruedAt: admin.firestore.FieldValue.delete(),
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              accruedAmount: FieldValue.delete(),
+              accruedMonthKey: FieldValue.delete(),
+              accruedAt: FieldValue.delete(),
+              updatedAt: FieldValue.serverTimestamp(),
             },
             { merge: true }
           );
@@ -683,8 +684,8 @@ export const onSessionRevenueWrite = onDocumentWritten(
               chargeRef,
               {
                 status: 'void',
-                voidedAt: admin.firestore.FieldValue.serverTimestamp(),
-                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                voidedAt: FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
               },
               { merge: true }
             );
@@ -704,8 +705,8 @@ export const onSessionRevenueWrite = onDocumentWritten(
               earningRef,
               {
                 status: 'void',
-                voidedAt: admin.firestore.FieldValue.serverTimestamp(),
-                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                voidedAt: FieldValue.serverTimestamp(),
+                updatedAt: FieldValue.serverTimestamp(),
               },
               { merge: true }
             );
@@ -725,9 +726,9 @@ function normalizePaymentMethod(value: any): 'UPI' | 'bank_transfer' | 'online' 
   throw new HttpsError('invalid-argument', 'Invalid payment method');
 }
 
-function toPaidAtTimestamp(value: any): admin.firestore.Timestamp {
+function toPaidAtTimestamp(value: any): Timestamp {
   const parsed = toDate(value);
-  return admin.firestore.Timestamp.fromDate(parsed || new Date());
+  return Timestamp.fromDate(parsed || new Date());
 }
 
 function normalizeIdempotencyKey(value: any): string {
@@ -935,7 +936,7 @@ async function recomputeTeacherMonthlyRollup(
       payments,
       rollupSource: 'teacherEarnings_events_v1',
       rollupVersion: 1,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     },
     { merge: true }
   );
@@ -1061,7 +1062,7 @@ export const recordPayment = onCall(
         status: amount < 0 ? 'refunded' : 'completed',
         note: note || null,
         idempotencyKey,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
         createdBy: request.auth?.uid || null,
       };
 
@@ -1107,8 +1108,8 @@ export const recordPayment = onCall(
 
             const updates: Record<string, any> = {
               paidAmount: nextPaid,
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-              paymentIds: admin.firestore.FieldValue.arrayUnion(paymentRef.id),
+              updatedAt: FieldValue.serverTimestamp(),
+              paymentIds: FieldValue.arrayUnion(paymentRef.id),
             };
 
             if (nextPaid >= amountValue - 0.01) {
@@ -1116,7 +1117,7 @@ export const recordPayment = onCall(
               updates.paidAt = paidAt;
             } else {
               updates.status = 'partial';
-              updates.paidAt = admin.firestore.FieldValue.delete();
+              updates.paidAt = FieldValue.delete();
             }
 
             tx.set(charge.ref, updates, { merge: true });
@@ -1155,16 +1156,16 @@ export const recordPayment = onCall(
 
             const updates: Record<string, any> = {
               paidAmount: nextPaid,
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-              paymentIds: admin.firestore.FieldValue.arrayUnion(paymentRef.id),
+              updatedAt: FieldValue.serverTimestamp(),
+              paymentIds: FieldValue.arrayUnion(paymentRef.id),
             };
 
             if (nextPaid <= 0.01) {
               updates.status = 'open';
-              updates.paidAt = admin.firestore.FieldValue.delete();
+              updates.paidAt = FieldValue.delete();
             } else if (nextPaid < amountValue - 0.01) {
               updates.status = 'partial';
-              updates.paidAt = admin.firestore.FieldValue.delete();
+              updates.paidAt = FieldValue.delete();
             } else {
               updates.status = 'paid';
               updates.paidAt = paidAt;
@@ -1193,8 +1194,8 @@ export const recordPayment = onCall(
       tx.set(
         rollupRef,
         {
-          earned: admin.firestore.FieldValue.increment(amount),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          earned: FieldValue.increment(amount),
+          updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true }
       );
@@ -1358,8 +1359,8 @@ export const recordTeacherPayout = onCall(
 
             const updates: Record<string, any> = {
               paidAmount: nextPaid,
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-              payoutIds: admin.firestore.FieldValue.arrayUnion(payoutRef.id),
+              updatedAt: FieldValue.serverTimestamp(),
+              payoutIds: FieldValue.arrayUnion(payoutRef.id),
             };
 
             if (nextPaid >= amountValue - 0.01) {
@@ -1367,7 +1368,7 @@ export const recordTeacherPayout = onCall(
               updates.paidAt = paidAt;
             } else {
               updates.status = 'partial';
-              updates.paidAt = admin.firestore.FieldValue.delete();
+              updates.paidAt = FieldValue.delete();
             }
 
             tx.set(earning.ref, updates, { merge: true });
@@ -1429,16 +1430,16 @@ export const recordTeacherPayout = onCall(
 
             const updates: Record<string, any> = {
               paidAmount: nextPaid,
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-              payoutIds: admin.firestore.FieldValue.arrayUnion(payoutRef.id),
+              updatedAt: FieldValue.serverTimestamp(),
+              payoutIds: FieldValue.arrayUnion(payoutRef.id),
             };
 
             if (nextPaid <= 0.01) {
               updates.status = 'unpaid';
-              updates.paidAt = admin.firestore.FieldValue.delete();
+              updates.paidAt = FieldValue.delete();
             } else if (nextPaid < amountValue - 0.01) {
               updates.status = 'partial';
-              updates.paidAt = admin.firestore.FieldValue.delete();
+              updates.paidAt = FieldValue.delete();
             } else {
               updates.status = 'paid';
               updates.paidAt = paidAt;
@@ -1466,7 +1467,7 @@ export const recordTeacherPayout = onCall(
           status: amount < 0 ? 'refunded' : 'completed',
           note: note || null,
           idempotencyKey,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: FieldValue.serverTimestamp(),
           createdBy: request.auth?.uid || null,
           appliedEarningIds,
           appliedAllocations,
@@ -1595,11 +1596,11 @@ export const voidTeacherOrphanEarnings = onCall(
           earning.ref,
           {
             status: 'void',
-            voidedAt: admin.firestore.FieldValue.serverTimestamp(),
+            voidedAt: FieldValue.serverTimestamp(),
             voidReason: note || 'Admin correction: orphan/invalid session earning',
             correctedBy: request.auth?.uid || null,
-            correctedAt: admin.firestore.FieldValue.serverTimestamp(),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            correctedAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
           },
           { merge: true }
         );
@@ -1715,11 +1716,11 @@ export const adminVoidSessionCharge = onCall(
           chargeRef,
           {
             status: 'void',
-            voidedAt: admin.firestore.FieldValue.serverTimestamp(),
+            voidedAt: FieldValue.serverTimestamp(),
             voidReason: note,
             correctedBy: request.auth?.uid || null,
-            correctedAt: admin.firestore.FieldValue.serverTimestamp(),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            correctedAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
           },
           { merge: true }
         );
@@ -1732,11 +1733,11 @@ export const adminVoidSessionCharge = onCall(
           earningRef,
           {
             status: 'void',
-            voidedAt: admin.firestore.FieldValue.serverTimestamp(),
+            voidedAt: FieldValue.serverTimestamp(),
             voidReason: note,
             correctedBy: request.auth?.uid || null,
-            correctedAt: admin.firestore.FieldValue.serverTimestamp(),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            correctedAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
           },
           { merge: true }
         );
@@ -1768,9 +1769,9 @@ export const adminVoidSessionCharge = onCall(
         tx.set(
           revenueRollupRef,
           {
-            expected: admin.firestore.FieldValue.increment(-accruedAmount),
-            completedSessions: admin.firestore.FieldValue.increment(-1),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            expected: FieldValue.increment(-accruedAmount),
+            completedSessions: FieldValue.increment(-1),
+            updatedAt: FieldValue.serverTimestamp(),
           },
           { merge: true }
         );
@@ -1783,9 +1784,9 @@ export const adminVoidSessionCharge = onCall(
           tx.set(
             enrollmentRef,
             {
-              'metrics.completedSessionsCount': admin.firestore.FieldValue.increment(-1),
-              'metrics.expectedRevenueAccrued': admin.firestore.FieldValue.increment(-accruedAmount),
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              'metrics.completedSessionsCount': FieldValue.increment(-1),
+              'metrics.expectedRevenueAccrued': FieldValue.increment(-accruedAmount),
+              updatedAt: FieldValue.serverTimestamp(),
             },
             { merge: true }
           );
@@ -1802,14 +1803,14 @@ export const adminVoidSessionCharge = onCall(
           sessionRef,
           {
             revenueAccrued: false,
-            accruedAmount: admin.firestore.FieldValue.delete(),
-            accruedMonthKey: admin.firestore.FieldValue.delete(),
-            accruedAt: admin.firestore.FieldValue.delete(),
+            accruedAmount: FieldValue.delete(),
+            accruedMonthKey: FieldValue.delete(),
+            accruedAt: FieldValue.delete(),
             revenueSuppressed: true,
-            revenueSuppressedAt: admin.firestore.FieldValue.serverTimestamp(),
+            revenueSuppressedAt: FieldValue.serverTimestamp(),
             revenueSuppressedBy: request.auth?.uid || null,
             revenueSuppressedReason: note,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
           },
           { merge: true }
         );
@@ -2156,7 +2157,7 @@ export const archiveFinanceRecordsThroughMonth = onCall(
 
     const db = admin.firestore();
     const actorUid = request.auth?.uid || null;
-    const now = admin.firestore.FieldValue.serverTimestamp();
+    const now = FieldValue.serverTimestamp();
     const collections: FinanceWritableArchiveCollectionName[] = [
       'billingCharges',
       'payments',
@@ -2474,7 +2475,7 @@ export const reconcileSessionRevenueMonthKeys = onCall(
             };
           }
 
-          const now = admin.firestore.FieldValue.serverTimestamp();
+          const now = FieldValue.serverTimestamp();
           const actorUid = request.auth?.uid || null;
 
           if (liveNeedsSessionUpdate) {
@@ -2532,8 +2533,8 @@ export const reconcileSessionRevenueMonthKeys = onCall(
               tx.set(
                 oldRollupRef,
                 {
-                  expected: admin.firestore.FieldValue.increment(-liveAccruedAmount),
-                  completedSessions: admin.firestore.FieldValue.increment(-1),
+                  expected: FieldValue.increment(-liveAccruedAmount),
+                  completedSessions: FieldValue.increment(-1),
                   updatedAt: now,
                 },
                 { merge: true },
@@ -2541,8 +2542,8 @@ export const reconcileSessionRevenueMonthKeys = onCall(
               tx.set(
                 newRollupRef,
                 {
-                  expected: admin.firestore.FieldValue.increment(liveAccruedAmount),
-                  completedSessions: admin.firestore.FieldValue.increment(1),
+                  expected: FieldValue.increment(liveAccruedAmount),
+                  completedSessions: FieldValue.increment(1),
                   updatedAt: now,
                 },
                 { merge: true },

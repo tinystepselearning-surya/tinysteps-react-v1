@@ -10,6 +10,26 @@ const studentEditSource = readFileSync(
   join(process.cwd(), 'src/pages/admin/StudentManagement/EditStudentForm.tsx'),
   'utf8',
 );
+const studentListSource = readFileSync(
+  join(process.cwd(), 'src/pages/admin/StudentManagement/StudentList.tsx'),
+  'utf8',
+);
+const sessionsManagementSource = readFileSync(
+  join(process.cwd(), 'src/pages/admin/TodaysNotifications.tsx'),
+  'utf8',
+);
+const createEnrollmentSource = readFileSync(
+  join(process.cwd(), 'src/pages/admin/EnrollmentManagement/CreateEnrollmentForm.tsx'),
+  'utf8',
+);
+const assignCourseSource = readFileSync(
+  join(process.cwd(), 'src/pages/admin/StudentManagement/AssignCourseModal.tsx'),
+  'utf8',
+);
+const enrollmentDetailSource = readFileSync(
+  join(process.cwd(), 'src/pages/admin/EnrollmentManagement/EnrollmentDetailView.tsx'),
+  'utf8',
+);
 
 describe('admin lifecycle routing', () => {
   it('does not directly write enrollment status transitions from the enrollment list', () => {
@@ -25,5 +45,28 @@ describe('admin lifecycle routing', () => {
   it('routes the student archive transition through archiveKid', () => {
     expect(studentEditSource).toContain("httpsCallable(functions, 'archiveKid')");
     expect(studentEditSource).toContain("...(!isArchiveTransition ? { status } : {})");
+  });
+
+  it('routes admin manual session creation and cancellation through lifecycle callables', () => {
+    const createHandler = studentListSource.slice(
+      studentListSource.indexOf('async function handleCreateAdHocSession'),
+      studentListSource.indexOf('async function handleApproveRequest'),
+    );
+    expect(createHandler).toContain("httpsCallable(getFunctions(), 'createAdminManualSession')");
+    expect(createHandler).not.toContain('setDoc(');
+    expect(sessionsManagementSource).toContain("httpsCallable(getFunctions(), 'cancelAdminManualSession')");
+  });
+
+  it('routes both enrollment creation UIs through the centralized backend invariant', () => {
+    expect(createEnrollmentSource).toContain("httpsCallable(getFunctions(), 'createEnrollment')");
+    expect(assignCourseSource).toContain("httpsCallable(getFunctions(), 'createEnrollment')");
+    expect(createEnrollmentSource).not.toContain("setDoc(enrollmentRef");
+    expect(assignCourseSource).not.toContain("setDoc(enrollmentRef");
+  });
+
+  it('routes complete-and-start-next through the recoverable transition callable', () => {
+    expect(enrollmentDetailSource).toContain("httpsCallable(functions, 'transitionEnrollmentCourse')");
+    expect(enrollmentDetailSource).toContain('Complete Current Course and Start Next Course');
+    expect(enrollmentDetailSource).toContain('Operation ID:');
   });
 });

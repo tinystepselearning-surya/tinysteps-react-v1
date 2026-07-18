@@ -19,13 +19,10 @@ import { Input } from '@components/ui/input';
 import {
   collection,
   getDocs,
-  setDoc,
   doc,
-  serverTimestamp,
   getDoc,
-  query,
-  where,
 } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../../../lib/firebaseConfig';
 import { useCourses } from '../../../hooks/useData';
 import { toast } from '@components/hooks/use-toast';
@@ -290,55 +287,6 @@ export default function AssignCourseModal({
         return;
       }
 
-      const studentData = studentDoc.data() as any;
-      const canonicalStudentName = String(
-        studentData?.fullName ||
-          studentData?.name ||
-          studentData?.displayName ||
-          selectedKidId
-      ).trim();
-
-      // Prevent duplicate enrollment for same student + course across canonical + legacy fields.
-      const [existingByStudentId, existingByKidId, existingByKidIds] = await Promise.all([
-        getDocs(
-          query(
-            collection(db, 'enrollments'),
-            where('studentId', '==', selectedKidId),
-            where('courseId', '==', selected),
-          ),
-        ),
-        getDocs(
-          query(
-            collection(db, 'enrollments'),
-            where('kidId', '==', selectedKidId),
-            where('courseId', '==', selected),
-          ),
-        ),
-        getDocs(
-          query(
-            collection(db, 'enrollments'),
-            where('kidIds', 'array-contains', selectedKidId),
-            where('courseId', '==', selected),
-          ),
-        ),
-      ]);
-      if (!existingByStudentId.empty || !existingByKidId.empty || !existingByKidIds.empty) {
-        toast({
-          title: 'Already assigned',
-          description:
-            'This course is already assigned to the student.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      const primaryParentId =
-        studentData.primaryParentId ||
-        studentData.parentId ||
-        (student as any).primaryParentId ||
-        (student as any).parentId ||
-        null;
-
       const selectedCourse = courses.find((c) => c.id === selected);
       const sessionFrequency =
         selectedCourse?.sessionFrequency || 'weekly';
@@ -346,52 +294,17 @@ export default function AssignCourseModal({
         sessionsPerMonthForFrequency(sessionFrequency);
       const billingCycle: 'monthly' = 'monthly';
       const creditsTotal = sessionsPerMonth; // 1-month worth of sessions
-      const parentIds = Array.isArray(studentData.parentIds)
-        ? studentData.parentIds.map(String).filter(Boolean)
-        : [];
-      if (primaryParentId && !parentIds.includes(primaryParentId)) {
-        parentIds.push(primaryParentId);
-      }
-      if (!primaryParentId) {
-        toast({
-          title: 'Missing parent link',
-          description: 'Selected student is not linked to a parent. Update student profile first.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      const enrollmentRef = doc(collection(db, 'enrollments'));
-
-      await setDoc(enrollmentRef, {
-        enrollmentId: enrollmentRef.id,
-        studentId: selectedKidId,
+      const createEnrollment = httpsCallable(getFunctions(), 'createEnrollment');
+      await createEnrollment({
+        operationId: `assign-course-${crypto.randomUUID()}`,
         kidId: selectedKidId,
-        kidIds: [selectedKidId],
-        studentName: canonicalStudentName,
-        childName: canonicalStudentName,
-        kidName: canonicalStudentName,
-        kidNames: [canonicalStudentName],
         courseId: selected,
-        teacherId: null,
-        teacherIds: [],
-        lpId: null,
-        parentId: primaryParentId,
-        parentIds,
-        status: 'active',
         feePerClass,
         ratePerSession: feePerClass,
         teacherPayPerSession,
         currency: 'INR',
         billingCycle,
         creditsTotal,
-        creditsUsed: 0,
-        creditsRemaining: creditsTotal,
-        topicProgress: {},
-        enrollmentDate: serverTimestamp(),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        createdBy: user?.uid || null,
       });
 
       toast({

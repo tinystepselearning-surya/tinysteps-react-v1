@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
 if (!admin.apps.length) {
@@ -515,7 +516,7 @@ export async function upsertMessageThread(
   payload: MessageThreadSyncPayload,
 ): Promise<void> {
   const threadRef = db.collection('messageThreads').doc(payload.threadId);
-  const now = admin.firestore.FieldValue.serverTimestamp();
+  const now = FieldValue.serverTimestamp();
 
   await db.runTransaction(async (tx) => {
     const existing = await tx.get(threadRef);

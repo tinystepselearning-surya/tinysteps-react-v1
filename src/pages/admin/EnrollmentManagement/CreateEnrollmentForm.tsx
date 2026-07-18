@@ -4,10 +4,9 @@ import {
   collection,
   getDocs,
   doc,
-  setDoc,
-  serverTimestamp,
   getDoc,
 } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../../../lib/firebaseConfig';
 
 import { Card, CardHeader, CardTitle, CardContent } from '@components/ui/card';
@@ -197,82 +196,15 @@ export default function CreateEnrollmentForm({ onCreated }: CreateEnrollmentForm
         });
         return;
       }
-      const canonicalKidData = canonicalKidSnap.data() as any;
-      const canonicalKidName = String(
-        canonicalKidData?.fullName ||
-          canonicalKidData?.name ||
-          canonicalKidData?.displayName ||
-          selectedStudent?.fullName ||
-          selectedStudent?.name ||
-          selectedStudent?.displayName ||
-          canonicalKidId
-      ).trim();
-
-      // Prefer canonical parentId; fall back to parentIds[0] and then a fresh kid read.
-      let parentId: string | null =
-        canonicalKidData?.parentId ??
-        (Array.isArray(canonicalKidData?.parentIds) ? canonicalKidData.parentIds[0] : null) ??
-        (selectedStudent as any)?.parentId ??
-        (Array.isArray((selectedStudent as any)?.parentIds) ? (selectedStudent as any).parentIds[0] : null) ??
-        null;
-      let parentIds: string[] = Array.isArray((selectedStudent as any)?.parentIds)
-        ? (selectedStudent as any).parentIds.map(String).filter(Boolean)
-        : [];
-
-      if (Array.isArray(canonicalKidData?.parentIds)) {
-        parentIds = canonicalKidData.parentIds.map(String).filter(Boolean);
-      }
-      if (parentId && !parentIds.includes(parentId)) {
-        parentIds.push(parentId);
-      }
-      if (!parentId) {
-        toast({
-          title: 'Missing parent link',
-          description: 'Selected student is not linked to a parent. Update student profile first.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      const enrollmentRef = doc(collection(db, 'enrollments'));
       const credits = calculateCredits();
-
-      await setDoc(enrollmentRef, {
-        // IDs
-        enrollmentId: enrollmentRef.id,
-        studentId: canonicalKidId,
+      const createEnrollment = httpsCallable(getFunctions(), 'createEnrollment');
+      await createEnrollment({
+        operationId: `admin-create-${crypto.randomUUID()}`,
         kidId: canonicalKidId,
-        kidIds: [canonicalKidId],
-        studentName: canonicalKidName,
-        childName: canonicalKidName,
-        kidName: canonicalKidName,
         courseId: selectedCourseId,
-        parentId,
-        parentIds,
-        teacherId: null,
-        teacherIds: [],
-        lpId: null,
-
-        // ✅ denormalized labels (THIS FIXES “showing IDs”)
-        kidNames: [canonicalKidName],
-        courseName: courseLabel,
-        parentLabel: parentLabel,
-
-        // billing / credits
-        status: 'active',
         ratePerSession,
         billingCycle,
         creditsTotal: credits,
-        creditsUsed: 0,
-        creditsRemaining: credits,
-
-        // future fields
-        topicProgress: {},
-
-        // timestamps
-        enrollmentDate: serverTimestamp(),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
       });
 
       toast({

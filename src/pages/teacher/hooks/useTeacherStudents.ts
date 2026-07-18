@@ -139,72 +139,34 @@ const fetchTeacherStudents = async (teacherId: string): Promise<TeacherStudent[]
     })
   );
 
-  const statusPriority = new Set(['active', 'enrolled', 'current']);
-  const toMillis = (value: any): number => {
-    if (!value) return 0;
-    if (typeof value === 'number' && Number.isFinite(value)) return value;
-    if (typeof value === 'string') {
-      const parsed = Date.parse(value);
-      return Number.isNaN(parsed) ? 0 : parsed;
-    }
-    if (typeof value.toMillis === 'function') return value.toMillis();
-    if (typeof value.seconds === 'number') return value.seconds * 1000;
-    return 0;
-  };
-  const recencyScore = (e: any) => {
-    return (
-      toMillis(e.updatedAt) ||
-      toMillis(e.updated_at) ||
-      toMillis(e.updatedOn) ||
-      toMillis(e.updated_on) ||
-      toMillis(e.createdAt) ||
-      toMillis(e.created_at) ||
-      toMillis(e.createdOn) ||
-      toMillis(e.created_on) ||
-      0
-    );
-  };
-  const pickMostRecent = (arr: any[]) => {
-    if (arr.length === 0) return undefined;
-    return arr.reduce((best, curr) => (recencyScore(curr) > recencyScore(best) ? curr : best));
-  };
-
-  return kidDocs.map(({ id, data }) => {
+  return kidDocs.flatMap(({ id, data }) => {
     const enrollments = (enrollmentsByKidId.get(id) || []).filter((enrollment) =>
       normalizeTeacherIds(enrollment as Record<string, unknown>).includes(teacherId),
     );
-    const preferredStatus = enrollments.filter((e) =>
-      statusPriority.has(String(e.status || '').toLowerCase())
-    );
-    const preferred =
-      pickMostRecent(preferredStatus) ||
-      pickMostRecent(enrollments) ||
-      enrollments[0];
-
-    const enrollmentStatus = preferred?.status
-      ? String(preferred.status).toLowerCase()
-      : undefined;
-    const courseId = preferred?.courseId;
-    const courseName = preferred?.courseName || preferred?.courseLabel || courseMap.get(courseId) || courseId;
-
     const parentId =
       data.primaryParentId ||
       data.parentId ||
       (Array.isArray(data.parentIds) ? data.parentIds[0] : null);
     const parentInfo = parentId ? parentById.get(String(parentId)) : undefined;
 
-    return {
-      id,
-      fullName: data.fullName || data.name || 'Unnamed',
-      grade: data.grade || data.level,
-      courseNames: courseName ? [courseName] : (data.courseNames || data.courses || []),
-      enrollmentStatus,
-      parentName: parentInfo?.name,
-      parentEmail: parentInfo?.email,
-      progressStatus: data.progressStatus || 'on_track',
-      lastSessionDate: data.lastSessionDate,
-      avatarUrl: data.avatarUrl,
-    } as TeacherStudent;
+    return enrollments.map((enrollment) => {
+      const courseId = String(enrollment.courseId || '').trim();
+      const courseName =
+        enrollment.courseName || enrollment.courseLabel || courseMap.get(courseId) || courseId;
+      return {
+        id,
+        enrollmentId: String(enrollment.id),
+        fullName: data.fullName || data.name || 'Unnamed',
+        grade: data.grade || data.level,
+        courseNames: courseName ? [courseName] : [],
+        enrollmentStatus: enrollment.status ? String(enrollment.status).toLowerCase() : undefined,
+        parentName: parentInfo?.name,
+        parentEmail: parentInfo?.email,
+        progressStatus: data.progressStatus || 'on_track',
+        lastSessionDate: data.lastSessionDate,
+        avatarUrl: data.avatarUrl,
+      } as TeacherStudent;
+    });
   });
 };
 

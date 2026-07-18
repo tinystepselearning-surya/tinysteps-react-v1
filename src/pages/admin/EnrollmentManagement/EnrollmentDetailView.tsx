@@ -398,6 +398,86 @@ export default function EnrollmentDetailView({
     }
   };
 
+  const callTransitionEnrollmentCourse = async () => {
+    const newCourseId = window.prompt('Next canonical course ID?')?.trim() || '';
+    if (!newCourseId) return;
+    const newTeacherId = window.prompt('Next teacher user ID?')?.trim() || '';
+    if (!newTeacherId) return;
+    const classesStartDate = window.prompt('First class date (YYYY-MM-DD)?')?.trim() || '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(classesStartDate)) {
+      toast({ title: 'Invalid start date', variant: 'destructive' });
+      return;
+    }
+    const scheduleText = window.prompt(
+      'Next schedule JSON. Example: {"weeklySlots":[{"weekday":2,"time":"18:00","durationMinutes":35}]}',
+      '{"weeklySlots":[]}',
+    )?.trim() || '';
+    let newSchedule: Record<string, unknown>;
+    try {
+      const parsed: unknown = JSON.parse(scheduleText);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Schedule must be an object');
+      newSchedule = parsed as Record<string, unknown>;
+      if (!Array.isArray(newSchedule.weeklySlots) || newSchedule.weeklySlots.length === 0) {
+        throw new Error('At least one weekly slot is required');
+      }
+    } catch (error) {
+      toast({
+        title: 'Invalid schedule',
+        description: error instanceof Error ? error.message : 'Enter valid schedule JSON.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    const reason = window.prompt('Reason for completing this course and starting the next?')?.trim() || '';
+    if (!reason) return;
+    const operationId =
+      window.prompt(
+        'Transition operation ID (reuse the same ID to resume a failed transition; leave blank for a new one):',
+      )?.trim() || `course-transition-${crypto.randomUUID()}`;
+    const summary = [
+      `Child: ${resolvedStudentName}`,
+      `Current course: ${course?.name || course?.title || enrollment.courseId}`,
+      `Current teacher: ${teacher?.name || teacher?.displayName || enrollment.teacherId || 'Unassigned'}`,
+      `Next course: ${newCourseId}`,
+      `Next teacher: ${newTeacherId}`,
+      `Start date: ${classesStartDate}`,
+      `Schedule: ${scheduleText}`,
+      `Operation ID: ${operationId}`,
+      '',
+      'Eligible future regular sessions for the current course will be cancelled.',
+      'Completed sessions, attendance, billing, earnings and credits remain historical.',
+    ].join('\n');
+    if (!window.confirm(summary)) return;
+    try {
+      setActionBusy('transition');
+      const fn = httpsCallable(functions, 'transitionEnrollmentCourse');
+      await fn({
+        operationId,
+        oldEnrollmentId: enrollment.id,
+        newCourseId,
+        newTeacherId,
+        newSchedule,
+        classesStartDate,
+        ratePerSession: parentRate,
+        teacherPayPerSession: teacherRate,
+        creditsTotal: Number(enrollment.creditsTotal || 0),
+        currency: enrollment.currency || 'INR',
+        billingCycle: enrollment.billingCycle || 'monthly',
+        reason,
+      });
+      toast({ title: 'Course transition completed', description: 'Historical records were preserved.' });
+      await loadEnrollment();
+    } catch (error) {
+      toast({
+        title: 'Course transition needs attention',
+        description: `${extractCallableErrorMessage(error, 'Transition can be resumed.')} Operation ID: ${operationId}`,
+        variant: 'destructive',
+      });
+    } finally {
+      setActionBusy(null);
+    }
+  };
+
   const handleStartEditRates = () => {
     if (!enrollment) return;
     const rawParent =
@@ -621,6 +701,13 @@ export default function EnrollmentDetailView({
             disabled={actionBusy !== null}
           >
             Complete
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => void callTransitionEnrollmentCourse()}
+            disabled={actionBusy !== null}
+          >
+            Complete Current Course and Start Next Course
           </Button>
           <Button
             variant="outline"

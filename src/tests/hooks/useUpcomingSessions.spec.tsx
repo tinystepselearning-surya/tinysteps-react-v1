@@ -390,4 +390,33 @@ describe('useUpcomingSessions', () => {
     await waitFor(() => expect(screen.getByText('count:1')).toBeTruthy());
     expect(screen.getAllByTestId('session')).toHaveLength(1);
   });
+
+  it('fails closed for recurring sessions when enrollment hydration fails', async () => {
+    mockGetDocs.mockImplementation(async (queryRef: unknown) => {
+      const collectionName = getCollectionName(queryRef as any);
+      if (collectionName === 'enrollments') throw new Error('enrollment lookup failed');
+      return { docs: [] };
+    });
+    mockOnSnapshot.mockReset();
+    mockOnSnapshot.mockImplementation((_queryRef, onNext) => {
+      onNext({
+        docs: [makeDoc('session-unverified', {
+          teacherId: 'teacher-1',
+          enrollmentId: 'enr-missing',
+          courseId: 'phonics',
+          kidId: 'kid-1',
+          date: specificDate(),
+          startTime: '19:00',
+          status: 'scheduled',
+          source: 'enrollmentSchedule',
+        })],
+      });
+      return vi.fn();
+    });
+
+    render(<TestComponent teacherId="teacher-1" selectedDate={specificDate()} />);
+
+    await waitFor(() => expect(screen.getByText('count:0')).toBeTruthy());
+    expect(screen.queryByText(/session-unverified/)).toBeNull();
+  });
 });

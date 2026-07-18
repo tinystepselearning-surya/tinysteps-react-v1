@@ -113,6 +113,10 @@ export {
   reassignEnrollmentTeacher,
   repairEnrollmentTeacherSessionConsistency,
   archiveKid,
+  createAdminManualSession,
+  cancelAdminManualSession,
+  createEnrollment,
+  transitionEnrollmentCourse,
 } from "./lifecycle";
 export { auditTeacherTodaySessions } from "./auditTeacherTodaySessions";
 export { auditAllTransferredSessionSnapshotIssues } from "./auditAllTransferredSessionSnapshotIssues";

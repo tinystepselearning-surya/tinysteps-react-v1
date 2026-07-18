@@ -1,5 +1,6 @@
 // functions/src/createSessionsFromSchedule.ts
 import * as admin from "firebase-admin";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {ensureAdmin} from "./helpers/adminGuard";
@@ -101,9 +102,9 @@ interface EnrollmentDoc {
   currency?: string;
   joinUrl?: string;
   schedule?: ScheduleConfig;
-  startDate?: admin.firestore.Timestamp;
+  startDate?: Timestamp;
   startDateYmd?: string;
-  classesStartDate?: admin.firestore.Timestamp;
+  classesStartDate?: Timestamp;
   classesStartDateYmd?: string;
 }
 
@@ -343,7 +344,7 @@ function toIstTodayYmd(): string {
  * Safely parse YYYY-MM-DD to a Firestore Timestamp at IST midnight.
  * Throws HttpsError if invalid to provide clear feedback.
  */
-function parseYmdToIstMidnightTimestamp(ymd: string, fieldName: string): admin.firestore.Timestamp {
+function parseYmdToIstMidnightTimestamp(ymd: string, fieldName: string): Timestamp {
   if (!isValidYmd(ymd)) {
     throw new HttpsError("invalid-argument", `${fieldName} must be YYYY-MM-DD format`);
   }
@@ -361,7 +362,7 @@ function parseYmdToIstMidnightTimestamp(ymd: string, fieldName: string): admin.f
   // Shift backward by IST offset to get IST midnight as UTC time
   const istMidnightUtc = new Date(utcDate.getTime() - IST_OFFSET_MINUTES * 60 * 1000);
   
-  return admin.firestore.Timestamp.fromDate(istMidnightUtc);
+  return Timestamp.fromDate(istMidnightUtc);
 }
 
 function toYmdFromDateLike(value: unknown): string | null {
@@ -1283,8 +1284,8 @@ async function generateSessionsFromScheduleInternal(
         ...buildCanonicalPatch(
           restoreTarget.raw,
           removeUndefinedDeep({
-            startAt: admin.firestore.Timestamp.fromDate(candidate.startAtDate),
-            endAt: admin.firestore.Timestamp.fromDate(candidate.endAtDate),
+            startAt: Timestamp.fromDate(candidate.startAtDate),
+            endAt: Timestamp.fromDate(candidate.endAtDate),
             date: candidateYmd,
             startTime: candidate.startTime,
             endTime: candidate.endTime,
@@ -1355,8 +1356,8 @@ async function generateSessionsFromScheduleInternal(
       courseId,
       ...(courseName ? {courseName} : {}),
       ...(courseName ? {courseTitle: courseName, courseLabel: courseName} : {}),
-      startAt: admin.firestore.Timestamp.fromDate(candidate.startAtDate),
-      endAt: admin.firestore.Timestamp.fromDate(candidate.endAtDate),
+      startAt: Timestamp.fromDate(candidate.startAtDate),
+      endAt: Timestamp.fromDate(candidate.endAtDate),
       date: candidateYmd,
       startTime: candidate.startTime,
       endTime: candidate.endTime,
@@ -1367,8 +1368,8 @@ async function generateSessionsFromScheduleInternal(
       feeAmount,
       currency,
       joinUrl,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       createdBy: "system",
       updatedBy: "system",
       source: replaceFuture ? "enrollmentScheduleReplace" : "enrollmentSchedule",
@@ -1403,9 +1404,9 @@ async function generateSessionsFromScheduleInternal(
         kidBatch.set(
           kidRef,
           {
-            teacherIds: admin.firestore.FieldValue.arrayUnion(teacherId),
+            teacherIds: FieldValue.arrayUnion(teacherId),
             teacherId,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
             updatedBy: "system",
           },
           {merge: true},
@@ -1625,8 +1626,8 @@ function buildCanonicalSessionFields(args: {
       courseLabel: context.courseName,
       subject: context.courseName,
     } : {}),
-    startAt: admin.firestore.Timestamp.fromDate(candidate.startAtDate),
-    endAt: admin.firestore.Timestamp.fromDate(candidate.endAtDate),
+    startAt: Timestamp.fromDate(candidate.startAtDate),
+    endAt: Timestamp.fromDate(candidate.endAtDate),
     date: candidate.date,
     startTime: candidate.startTime,
     endTime: candidate.endTime,
@@ -1809,7 +1810,7 @@ function buildCancelledRestorePatch(args: {
   const canonicalBase = {
     status: "scheduled",
     attendance: null,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
     updatedBy: actorIdentity,
     restoredFromCancelled: true,
     restoreReason: "future_regular_session_regeneration_restore",
@@ -1818,7 +1819,7 @@ function buildCancelledRestorePatch(args: {
 
   const deleteIfPresent = (field: string) => {
     if (field in raw) {
-      canonicalBase[field] = admin.firestore.FieldValue.delete();
+      canonicalBase[field] = FieldValue.delete();
     }
   };
 
@@ -2031,7 +2032,7 @@ function planCancelledFutureRegularRestorations(args: {
     before,
     after,
     repairBatchId,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
     createdBy: actorIdentity,
   });
 
@@ -2270,7 +2271,7 @@ export function buildRepairEnrollmentFutureSessionsPlan(args: {
     before,
     after,
     repairBatchId,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
     createdBy: actorIdentity,
   });
 
@@ -2298,8 +2299,8 @@ export function buildRepairEnrollmentFutureSessionsPlan(args: {
     if (safeMatches.length === 0 && cancelledRestoreMatches.length === 0) {
       const payload = {
         ...buildCanonicalSessionFields({ context, candidate }),
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         createdBy: actorIdentity,
         updatedBy: actorIdentity,
         source: "enrollmentScheduleRepair",
@@ -2337,7 +2338,7 @@ export function buildRepairEnrollmentFutureSessionsPlan(args: {
       if (Object.keys(canonicalPatch).length > 0) {
         const patchPayload = {
           ...canonicalPatch,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
           updatedBy: actorIdentity,
           repairBatchId,
         };
@@ -2373,7 +2374,7 @@ export function buildRepairEnrollmentFutureSessionsPlan(args: {
           status: "cancelled",
           cancelledReason: "schedule_repair_duplicate",
           replacedBySessionId: keepSession.id,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
           updatedBy: actorIdentity,
           repairBatchId,
         },
@@ -2446,7 +2447,7 @@ export function buildRepairEnrollmentFutureSessionsPlan(args: {
       payload: {
         status: "cancelled",
         cancelledReason: action === "cancel_excess" ? "schedule_repair_excess" : "schedule_repair_old_time",
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         updatedBy: actorIdentity,
         repairBatchId,
       },
@@ -2874,8 +2875,8 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
         classesStartDateYmd,
       });
 
-      let enrollmentStartTimestamp: admin.firestore.Timestamp;
-      let classesStartTimestamp: admin.firestore.Timestamp;
+      let enrollmentStartTimestamp: Timestamp;
+      let classesStartTimestamp: Timestamp;
       
       try {
         enrollmentStartTimestamp = parseYmdToIstMidnightTimestamp(enrollmentStartDateYmd, "enrollmentStartDate");
@@ -2924,11 +2925,11 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
           scheduleGeneration: {
             state: "in_progress",
             lastRequestKey: idempotencyKey || null,
-            startedAt: admin.firestore.FieldValue.serverTimestamp(),
+            startedAt: FieldValue.serverTimestamp(),
             startedBy: actorUid,
-            error: admin.firestore.FieldValue.delete(),
+            error: FieldValue.delete(),
           },
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
           updatedBy: actorUid,
         },
         {merge: true},
@@ -2998,10 +2999,10 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
             completionMessage: replayCapReached ?
               "Planned classes completed. Please contact Tiny Steps to continue the schedule." :
               null,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
             updatedBy: actorUid,
           },
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
           updatedBy: actorUid,
         },
         {merge: true},
@@ -3040,10 +3041,10 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
           scheduleGeneration: {
             state: "success",
             lastRequestKey: idempotencyKey || null,
-            completedAt: admin.firestore.FieldValue.serverTimestamp(),
+            completedAt: FieldValue.serverTimestamp(),
             completedBy: actorUid,
             lastResult: result,
-            error: admin.firestore.FieldValue.delete(),
+            error: FieldValue.delete(),
           },
           scheduleProgress: {
             plannedSessionsTarget: result.plannedSessionsTarget ?? null,
@@ -3055,10 +3056,10 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
             completionMessage: result.plannedSessionsCapReached ?
               "Planned classes completed. Please contact Tiny Steps to continue the schedule." :
               null,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
             updatedBy: actorUid,
           },
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
           updatedBy: actorUid,
         },
         {merge: true},
@@ -3085,11 +3086,11 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
           scheduleGeneration: {
             state: "failed",
             lastRequestKey: idempotencyKey || null,
-            failedAt: admin.firestore.FieldValue.serverTimestamp(),
+            failedAt: FieldValue.serverTimestamp(),
             failedBy: actorUid,
             error: message,
           },
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
           updatedBy: actorUid,
         },
         {merge: true},
@@ -3218,8 +3219,8 @@ export const pauseEnrollmentUpcomingSessions = onCall(
             pauseBy: request.auth?.uid || null,
             pauseBatchId,
             pauseReason: "admin_pause",
-            pausedAt: admin.firestore.FieldValue.serverTimestamp(),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            pausedAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
             updatedBy: request.auth?.uid || null,
           },
           {merge: true},
@@ -3241,12 +3242,12 @@ export const pauseEnrollmentUpcomingSessions = onCall(
           batchId: toPause.length > 0 ? pauseBatchId : null,
           requestedCount: pauseCount,
           remainingCount: toPause.length,
-          pausedAt: admin.firestore.FieldValue.serverTimestamp(),
+          pausedAt: FieldValue.serverTimestamp(),
           pausedBy: request.auth?.uid || null,
           resumedAt: null,
           resumedBy: null,
         },
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         updatedBy: request.auth?.uid || null,
       },
       {merge: true},
@@ -3280,7 +3281,7 @@ export const pauseEnrollmentUpcomingSessions = onCall(
           completionMessage: regen.plannedSessionsCapReached ?
             "Planned classes completed. Please contact Tiny Steps to continue the schedule." :
             null,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
           updatedBy: request.auth?.uid || null,
         },
       },
@@ -3355,9 +3356,9 @@ export const resumeEnrollmentSchedule = onCall(
           ref,
           {
             status: "scheduled",
-            resumedAt: admin.firestore.FieldValue.serverTimestamp(),
+            resumedAt: FieldValue.serverTimestamp(),
             resumedBy: request.auth?.uid || null,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
             updatedBy: request.auth?.uid || null,
           },
           {merge: true},
@@ -3377,10 +3378,10 @@ export const resumeEnrollmentSchedule = onCall(
         schedulePause: {
           active: false,
           remainingCount: 0,
-          resumedAt: admin.firestore.FieldValue.serverTimestamp(),
+          resumedAt: FieldValue.serverTimestamp(),
           resumedBy: request.auth?.uid || null,
         },
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         updatedBy: request.auth?.uid || null,
       },
       {merge: true},
@@ -3414,7 +3415,7 @@ export const resumeEnrollmentSchedule = onCall(
           completionMessage: regen.plannedSessionsCapReached ?
             "Planned classes completed. Please contact Tiny Steps to continue the schedule." :
             null,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
           updatedBy: request.auth?.uid || null,
         },
       },

@@ -24,6 +24,7 @@
     "typecheck": "tsc --noEmit",
     "test:unit": "vitest",
     "test": "vitest run",
+    "test:emulator:enrollment-integrity": "npm --prefix functions run build && npx firebase-tools@latest emulators:exec --project tinysteps-react-v1 --only auth,firestore,functions \"FUNCTIONS_EMULATOR_HOST=127.0.0.1:5001 npx vitest run --config vitest.emulator.config.ts\"",
     "serve": "vite preview",
     "cap:open:ios": "npx cap open ios",
     "cap:sync:ios": "npx cap sync ios",

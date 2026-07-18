@@ -12,6 +12,17 @@ export type EnrollmentStatus =
   | 'inactive'
   | 'unknown';
 
+export type ManualSessionState = 'approved' | 'cancelled' | 'withdrawn' | 'completed';
+
+const TERMINAL_ENROLLMENT_STATUSES = new Set<EnrollmentStatus>([
+  'completed',
+  'discontinued',
+  'expired',
+  'cancelled',
+  'archived',
+  'inactive',
+]);
+
 export function normalizeLowerStatus(value: unknown): string {
   return String(value || '').trim().toLowerCase();
 }
@@ -39,6 +50,23 @@ export function normalizeEnrollmentStatus(value: unknown): EnrollmentStatus {
     return raw;
   }
   return 'unknown';
+}
+
+export function doesEnrollmentOccupyCourseSlot(enrollmentLike: Record<string, unknown> | undefined): boolean {
+  if (!enrollmentLike) return false;
+  if (enrollmentLike.archivedAt || enrollmentLike.archived === true || enrollmentLike.isArchived === true) {
+    return false;
+  }
+  return !TERMINAL_ENROLLMENT_STATUSES.has(normalizeEnrollmentStatus(enrollmentLike.status));
+}
+
+export function normalizeManualSessionState(value: unknown): ManualSessionState | null {
+  const raw = normalizeLowerStatus(value);
+  if (raw === 'canceled') return 'cancelled';
+  if (raw === 'approved' || raw === 'cancelled' || raw === 'withdrawn' || raw === 'completed') {
+    return raw;
+  }
+  return null;
 }
 
 export function normalizeSessionStatus(value: unknown): string {

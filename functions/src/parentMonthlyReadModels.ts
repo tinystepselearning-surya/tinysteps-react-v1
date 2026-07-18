@@ -1,5 +1,6 @@
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { normalizeSessionStatus } from './helpers/status';
 import { buildParentMonthlyBillingReadModel } from './parentMonthlyBillingReadModel';
@@ -323,7 +324,7 @@ async function recomputeParentMonthAttendanceReadModel(
       attendance: {
         schemaVersion: 1,
         modelType: 'attendance_v1',
-        refreshedAt: admin.firestore.FieldValue.serverTimestamp(),
+        refreshedAt: FieldValue.serverTimestamp(),
         generatedAtMs: Date.now(),
         totals: {
           ...totals,
@@ -378,8 +379,8 @@ export async function recomputeParentMonthBillingReadModel(
       modelType: billingModel.modelType,
       allocationAware: billingModel.allocationAware,
       computedFrom: billingModel.computedFrom,
-      refreshedAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      refreshedAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       generatedAtMs: billingModel.generatedAtMs,
       billedAmount: billingModel.billedAmount,
       billedClassCount: billingModel.billedClassCount,
@@ -558,7 +559,7 @@ async function recomputeParentMonthProgressReadModelForKid(
       progress: {
         schemaVersion: 1,
         modelType: 'progress_v1',
-        refreshedAt: admin.firestore.FieldValue.serverTimestamp(),
+        refreshedAt: FieldValue.serverTimestamp(),
         generatedAtMs: Date.now(),
         byKid: {
           [projectionKidId]: {

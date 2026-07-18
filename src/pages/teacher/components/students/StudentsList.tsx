@@ -51,7 +51,7 @@ export const StudentsList: React.FC<StudentsListProps> = ({ teacherId }) => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {filtered.map((student) => (
-            <Card key={student.id} className="p-4 space-y-2">
+            <Card key={student.enrollmentId} className="p-4 space-y-2">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold">{student.fullName}</h3>

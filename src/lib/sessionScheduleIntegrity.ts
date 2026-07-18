@@ -17,6 +17,25 @@ const SCHEDULE_EXCEPTION_SOURCES = [
   'replacement',
 ];
 
+const LEGACY_MANUAL_SESSION_SOURCES = [
+  'admin_manual_adhoc',
+  'admin_manual_one_off',
+  'manual_one_off',
+  'manual_adhoc',
+  'manual_ad_hoc',
+];
+
+const TERMINAL_ENROLLMENT_STATUSES = new Set([
+  'completed',
+  'cancelled',
+  'archived',
+  'inactive',
+  'discontinued',
+  'expired',
+]);
+
+export type ManualSessionState = 'approved' | 'cancelled' | 'withdrawn' | 'completed';
+
 export interface EnrollmentWeeklySlot {
   weekday: number;
   time: string;
@@ -115,6 +134,22 @@ export const isEnrollmentOperationallyActive = (enrollmentLike: Record<string, u
   // Unknown statuses are deliberately non-operational. A new production status
   // must be reviewed and added here instead of silently exposing its sessions.
   return OPERATIONAL_ENROLLMENT_STATUSES.has(normalized);
+};
+
+/**
+ * Paused enrollments are hidden operationally but continue to reserve the
+ * child/course pair. Unknown non-terminal states also reserve it so a new
+ * production status cannot silently permit duplicate enrollment creation.
+ */
+export const doesEnrollmentOccupyCourseSlot = (
+  enrollmentLike: Record<string, unknown> | undefined,
+): boolean => {
+  if (!enrollmentLike) return false;
+  if (enrollmentLike.archivedAt || enrollmentLike.archived === true || enrollmentLike.isArchived === true) {
+    return false;
+  }
+  const normalized = normalizeEnrollmentStatusForOperations(enrollmentLike.status);
+  return !TERMINAL_ENROLLMENT_STATUSES.has(normalized);
 };
 
 export const isSessionStatusOperationallyVisible = (value: unknown): boolean => {
@@ -262,6 +297,58 @@ export const isScheduleExceptionSession = (sessionLike: Record<string, unknown>)
   );
 };
 
+export const isManualSession = (sessionLike: Record<string, unknown>): boolean => {
+  if (getManualSessionState(sessionLike)) return true;
+  if (sessionLike.isAdHoc === true) return true;
+  const adHocType = normalizeText(sessionLike.adHocType).toLowerCase();
+  if (adHocType.includes('one_off') || adHocType.includes('adhoc') || adHocType.includes('ad_hoc')) return true;
+  const source = normalizeText(sessionLike.source).toLowerCase();
+  return LEGACY_MANUAL_SESSION_SOURCES.includes(source);
+};
+
+const hasCanonicalManualSessionIdentity = (sessionLike: Record<string, unknown>): boolean => {
+  const hasKidIdentity = collectSessionKidIds(sessionLike).length > 0;
+  const hasTeacherIdentity = collectSessionTeacherIds(sessionLike).length > 0;
+  return Boolean(
+    normalizeLookupId(sessionLike.enrollmentId) &&
+      normalizeLookupId(sessionLike.courseId) &&
+      hasKidIdentity &&
+      hasTeacherIdentity,
+  );
+};
+
+export const getManualSessionState = (
+  sessionLike: Record<string, unknown>,
+): ManualSessionState | null => {
+  const raw = normalizeText(sessionLike.manualSessionState).toLowerCase();
+  if (raw === 'canceled') return 'cancelled';
+  if (raw === 'approved' || raw === 'cancelled' || raw === 'withdrawn' || raw === 'completed') {
+    return raw;
+  }
+  return null;
+};
+
+export const isLegacyManualSession = (sessionLike: Record<string, unknown>): boolean => {
+  if (getManualSessionState(sessionLike)) return false;
+  const source = normalizeText(sessionLike.source).toLowerCase();
+  if (!LEGACY_MANUAL_SESSION_SOURCES.includes(source)) return false;
+  if (!hasCanonicalManualSessionIdentity(sessionLike)) return false;
+  if (!sessionLike.createdAt || !normalizeLookupId(sessionLike.createdBy)) return false;
+  const status = normalizeText(sessionLike.status).toLowerCase();
+  return status !== 'cancelled' && status !== 'canceled' && status !== 'withdrawn' && status !== 'completed';
+};
+
+export const isOperationalManualSession = (sessionLike: Record<string, unknown>): boolean => {
+  if (!isManualSession(sessionLike)) return false;
+  if (!isSessionStatusOperationallyVisible(sessionLike.status)) return false;
+  if (normalizeText(sessionLike.status).toLowerCase() === 'completed') return false;
+  const state = getManualSessionState(sessionLike);
+  if (state) return state === 'approved';
+  // Transitional compatibility for legacy admin one-offs. New sessions must
+  // carry an explicit manualSessionState and approval metadata.
+  return isLegacyManualSession(sessionLike);
+};
+
 export const shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment = (
   sessionLike: Record<string, unknown>,
   teacherId: string,
@@ -269,6 +356,8 @@ export const shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment = (
   const normalizedTeacherId = normalizeLookupId(teacherId);
   if (!normalizedTeacherId) return false;
   if (!isScheduleExceptionSession(sessionLike)) return false;
+  if (!hasCanonicalManualSessionIdentity(sessionLike)) return false;
+  if (isManualSession(sessionLike) && !isOperationalManualSession(sessionLike)) return false;
   const sessionTeacherIds = collectSessionTeacherIds(sessionLike);
   return sessionTeacherIds.includes(normalizedTeacherId);
 };
@@ -314,7 +403,9 @@ export const doesSessionMatchEnrollmentSchedule = (
 ): boolean => {
   if (!enrollmentLike) return false;
   if (!doesSessionMatchEnrollmentIdentity(sessionLike, enrollmentLike)) return false;
-  if (isScheduleExceptionSession(sessionLike)) return true;
+  if (isScheduleExceptionSession(sessionLike)) {
+    return !isManualSession(sessionLike) || isOperationalManualSession(sessionLike);
+  }
 
   const scheduleLike = (enrollmentLike.schedule || {}) as Record<string, unknown>;
   const slots = normalizeEnrollmentScheduleSlots(scheduleLike, 35);

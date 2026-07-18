@@ -419,13 +419,11 @@ export const useUpcomingSessions = (
         ),
       );
 
-      let enrollmentLookupFailed = false;
       let enrollmentMap = new Map<string, Record<string, unknown>>();
       if (enrollmentIds.length > 0) {
         try {
           enrollmentMap = await fetchEnrollmentsByIds(enrollmentIds);
         } catch (err) {
-          enrollmentLookupFailed = true;
           devLogTeacherQuery('useUpcomingSessions', 'error', {
             queryName: 'enrollmentLookups',
             collection: 'enrollments',
@@ -437,13 +435,10 @@ export const useUpcomingSessions = (
         }
       }
 
-      const baseVisibleRows = next.filter((session) => String((session as any)?.status || '').trim().toLowerCase() !== 'paused');
-      const canonicalOnly = (enrollmentLookupFailed ? baseVisibleRows : next).filter((session) => {
+      const canonicalOnly = next.filter((session) => {
         const status = String((session as any)?.status || '').trim().toLowerCase();
 
         if (status === 'paused') return false;
-        if (enrollmentLookupFailed) return true;
-
         const enrollmentId = String((session as any)?.enrollmentId || '').trim();
 
         if (!enrollmentId) return false;
