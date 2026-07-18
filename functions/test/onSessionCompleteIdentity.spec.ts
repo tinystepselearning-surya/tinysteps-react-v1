@@ -108,4 +108,20 @@ describe('session completion enrollment identity', () => {
       expect(earningPayload).toMatch(new RegExp(`${field}\\s*[:,]`));
     });
   });
+
+  it('performs every reversal transaction read before its first write', () => {
+    const revenueSource = readFileSync(join(process.cwd(), 'functions/src/revenue.ts'), 'utf8');
+    const reversalStart = revenueSource.indexOf(
+      'if ((beforeBillable || beforeAccrued || afterAccrued) && !afterBillable)',
+    );
+    const reversalEnd = revenueSource.indexOf('function normalizePaymentMethod', reversalStart);
+    const reversalSource = revenueSource.slice(reversalStart, reversalEnd);
+    const firstWrite = reversalSource.indexOf('tx.set(');
+    const readPositions = Array.from(reversalSource.matchAll(/tx\.get\(/g), (match) => match.index);
+
+    expect(reversalStart).toBeGreaterThanOrEqual(0);
+    expect(firstWrite).toBeGreaterThanOrEqual(0);
+    expect(readPositions.length).toBeGreaterThanOrEqual(3);
+    expect(readPositions.every((position) => position < firstWrite)).toBe(true);
+  });
 });

@@ -13,6 +13,10 @@ import {
 import { useTeacherSessions } from '../../hooks/useTeacherSessions';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 import { AttendanceForm } from '../today-sessions/AttendanceForm';
+import {
+  ATTENDANCE_FINALISED_MESSAGE,
+  getTeacherAttendanceCorrectionCutoffMillis,
+} from '../../../../lib/attendanceCorrectionFreeze';
 import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
@@ -209,12 +213,6 @@ const getAttendanceAllowedAtMillis = (session: Partial<TeacherSession> | null | 
   return startMs + 30 * 60 * 1000;
 };
 
-const getAttendanceWindowCloseMillis = (session: Partial<TeacherSession> | null | undefined): number | null => {
-  const startMs = getSessionStartMillis(session);
-  if (startMs === null) return null;
-  return startMs + 24 * 60 * 60 * 1000;
-};
-
 const completeSessionViaBackend = async (
   sessionId: string,
   payload?: {
@@ -405,22 +403,28 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   const isAttendanceAllowedNow = useCallback((session?: Partial<TeacherSession> | null): boolean => {
     if (canOverrideAttendanceTime) return true;
     const allowedAt = getAttendanceAllowedAtMillis(session);
-    const windowCloseAt = getAttendanceWindowCloseMillis(session);
-    if (allowedAt === null || windowCloseAt === null) return false;
+    const correctionCutoffAt = session ? getTeacherAttendanceCorrectionCutoffMillis(session) : null;
+    if (allowedAt === null || correctionCutoffAt === null) return false;
     const nowMs = Date.now();
-    return nowMs >= allowedAt && nowMs <= windowCloseAt;
+    return nowMs >= allowedAt && nowMs < correctionCutoffAt;
+  }, [canOverrideAttendanceTime]);
+
+  const isAttendanceFinalised = useCallback((session?: Partial<TeacherSession> | null): boolean => {
+    if (canOverrideAttendanceTime || !session) return false;
+    const cutoffAt = getTeacherAttendanceCorrectionCutoffMillis(session);
+    return cutoffAt !== null && Date.now() >= cutoffAt;
   }, [canOverrideAttendanceTime]);
 
   const tryOpenAttendance = useCallback((session: TeacherSession) => {
     if (!isAttendanceAllowedNow(session)) {
       const allowedAt = getAttendanceAllowedAtMillis(session);
-      const windowCloseAt = getAttendanceWindowCloseMillis(session);
+      const correctionCutoffAt = getTeacherAttendanceCorrectionCutoffMillis(session);
       const nowMs = Date.now();
       const message =
-        allowedAt === null || windowCloseAt === null
+        allowedAt === null || correctionCutoffAt === null
           ? 'Attendance time could not be verified. Please contact admin.'
-          : nowMs > windowCloseAt
-            ? 'Attendance window has closed. Please contact admin to update this attendance.'
+          : nowMs >= correctionCutoffAt
+            ? ATTENDANCE_FINALISED_MESSAGE
             : `Attendance opens at ${format(new Date(allowedAt), 'h:mm a')}.`;
       toast({
         title: 'Attendance unavailable',
@@ -635,13 +639,13 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     if (!selectedSession) return;
     if (!isAttendanceAllowedNow(selectedSession)) {
       const allowedAt = getAttendanceAllowedAtMillis(selectedSession);
-      const windowCloseAt = getAttendanceWindowCloseMillis(selectedSession);
+      const correctionCutoffAt = getTeacherAttendanceCorrectionCutoffMillis(selectedSession);
       const nowMs = Date.now();
       const message =
-        allowedAt === null || windowCloseAt === null
+        allowedAt === null || correctionCutoffAt === null
           ? 'Attendance time could not be verified. Please contact admin.'
-          : nowMs > windowCloseAt
-            ? 'Attendance window has closed. Please contact admin to update this attendance.'
+          : nowMs >= correctionCutoffAt
+            ? ATTENDANCE_FINALISED_MESSAGE
             : `Attendance opens at ${format(new Date(allowedAt), 'h:mm a')}.`;
       toast({
         title: 'Attendance unavailable',
@@ -988,18 +992,22 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                       const kidNames = getSessionStudentLabel(session);
                       const courseLabel = getSessionCourseLabel(session);
                       const badgeTone = resolveSessionBadgeTone(session);
+                      const attendanceFinalised = isAttendanceFinalised(session);
                       return (
                         <button
                           key={session.id || `${dateStr}_${idx}`}
                           type="button"
                           className={`w-full rounded-lg border px-2.5 py-2 text-left text-xs transition hover:opacity-95 ${sessionBadgeToneClass[badgeTone]}`}
                           onClick={() => tryOpenAttendance(session)}
+                          disabled={attendanceFinalised}
+                          title={attendanceFinalised ? ATTENDANCE_FINALISED_MESSAGE : undefined}
                         >
                           <div className="font-medium">
                             {sessionBadgeToneLabel[badgeTone]} · {formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE })}
                           </div>
                           <div className="mt-1 truncate text-[11px]">{kidNames}</div>
                           {courseLabel ? <div className="mt-1 truncate text-[11px] opacity-80">{truncateLabel(courseLabel, 20)}</div> : null}
+                          {attendanceFinalised ? <div className="mt-1 text-[10px]">{ATTENDANCE_FINALISED_MESSAGE}</div> : null}
                         </button>
                       );
                     })}
@@ -1021,6 +1029,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
               const kidNames = getSessionStudentLabel(session);
               const courseLabel = getSessionCourseLabel(session);
               const badgeTone = resolveSessionBadgeTone(session);
+              const attendanceFinalised = isAttendanceFinalised(session);
 
               return (
                 <button
@@ -1028,6 +1037,8 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                   type="button"
                   className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
                   onClick={() => tryOpenAttendance(session)}
+                  disabled={attendanceFinalised}
+                  title={attendanceFinalised ? ATTENDANCE_FINALISED_MESSAGE : undefined}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -1041,6 +1052,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                       {sessionBadgeToneLabel[badgeTone]}
                     </Badge>
                   </div>
+                  {attendanceFinalised ? (
+                    <div className="mt-2 text-xs text-amber-700">{ATTENDANCE_FINALISED_MESSAGE}</div>
+                  ) : null}
                 </button>
               );
             })}

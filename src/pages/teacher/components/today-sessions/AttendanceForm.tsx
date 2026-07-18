@@ -13,6 +13,10 @@ import { toast } from '@components/hooks/use-toast';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { INDIA_TIME_ZONE, formatSessionTimeRange, getSessionStartDate } from '../../../../lib/sessionTime';
+import {
+  ATTENDANCE_FINALISED_MESSAGE,
+  getTeacherAttendanceCorrectionCutoffMillis,
+} from '../../../../lib/attendanceCorrectionFreeze';
 
 interface AttendanceFormProps {
   open: boolean;
@@ -390,11 +394,13 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
     return startMs + 30 * 60 * 1000;
   };
 
-  const getAttendanceWindowCloseMillis = (): number | null => {
-    const startMs = getSessionStartMillis();
-    if (startMs === null) return null;
-    return startMs + 24 * 60 * 60 * 1000;
-  };
+  const attendanceCorrectionCutoffMs = session
+    ? getTeacherAttendanceCorrectionCutoffMillis(session)
+    : null;
+  const isAttendanceFinalised =
+    !canOverrideAttendanceTime &&
+    attendanceCorrectionCutoffMs !== null &&
+    Date.now() >= attendanceCorrectionCutoffMs;
 
   useEffect(() => {
     if (session) {
@@ -576,9 +582,9 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
     }
     if (!canOverrideAttendanceTime) {
       const allowedAt = getAttendanceAllowedAtMillis();
-      const windowCloseAt = getAttendanceWindowCloseMillis();
+      const correctionCutoffAt = getTeacherAttendanceCorrectionCutoffMillis(session);
       const nowMs = Date.now();
-      if (allowedAt === null || windowCloseAt === null) {
+      if (allowedAt === null || correctionCutoffAt === null) {
         toast({
           title: 'Attendance unavailable',
           description: 'Attendance time could not be verified. Please contact admin.',
@@ -594,10 +600,10 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
         });
         return;
       }
-      if (nowMs > windowCloseAt) {
+      if (nowMs >= correctionCutoffAt) {
         toast({
           title: 'Attendance unavailable',
-          description: 'Attendance window has closed. Please contact admin to update this attendance.',
+          description: ATTENDANCE_FINALISED_MESSAGE,
           variant: 'destructive',
         });
         return;
@@ -875,6 +881,12 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
                 {formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE })}
               </p>
             </div>
+            {isAttendanceFinalised ? (
+              <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                {ATTENDANCE_FINALISED_MESSAGE}
+              </p>
+            ) : null}
+            <fieldset disabled={isAttendanceFinalised} className="space-y-4 disabled:opacity-60">
             {kidIds.length === 0 ? (
               <p className="text-sm text-muted-foreground">No students assigned to this session.</p>
             ) : (
@@ -977,6 +989,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
                 rows={3}
               />
             </div>
+            </fieldset>
             <div className="flex justify-between">
               <div className="flex gap-2">
                 <Button variant="outline">Clear All</Button>
@@ -985,7 +998,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
                 <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
                   Cancel
                 </Button>
-                <Button onClick={handleSubmit} disabled={isSubmitting || kidIds.length === 0 || hasMissingStatus}>
+                <Button onClick={handleSubmit} disabled={isAttendanceFinalised || isSubmitting || kidIds.length === 0 || hasMissingStatus}>
                   {isSubmitting ? 'Saving...' : 'Save & Close'}
                 </Button>
               </div>

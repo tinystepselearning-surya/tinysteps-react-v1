@@ -3,6 +3,10 @@ import * as admin from "firebase-admin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import {
+  ATTENDANCE_FINALISED_MESSAGE,
+  getTeacherAttendanceCorrectionCutoffMillis,
+} from "./helpers/attendanceCorrectionFreeze";
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -10,7 +14,6 @@ if (!admin.apps.length) {
 
 const REGION = "asia-south1";
 const ATTENDANCE_OPEN_DELAY_MS = 30 * 60 * 1000;
-const ATTENDANCE_CLOSE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 type AttendanceStatus = "present" | "absent" | "late" | "excused" | "unknown";
 
@@ -151,12 +154,6 @@ function getAttendanceAllowedAtMillis(session: SessionData): number | null {
   const startMs = getSessionStartMillis(session);
   if (startMs === null) return null;
   return startMs + ATTENDANCE_OPEN_DELAY_MS;
-}
-
-function getAttendanceWindowCloseMillis(session: SessionData): number | null {
-  const startMs = getSessionStartMillis(session);
-  if (startMs === null) return null;
-  return startMs + ATTENDANCE_CLOSE_WINDOW_MS;
 }
 
 function canCallerOverrideAttendanceTime(role: string): boolean {
@@ -721,11 +718,11 @@ export const onSessionComplete = onCall(
     });
 
     const attendanceAllowedAtMs = getAttendanceAllowedAtMillis(session);
-    const attendanceWindowCloseMs = getAttendanceWindowCloseMillis(session);
+    const attendanceCorrectionCutoffMs = getTeacherAttendanceCorrectionCutoffMillis(session);
     if (
       !canCallerOverrideAttendanceTime(callerRole)
     ) {
-      if (attendanceAllowedAtMs === null || attendanceWindowCloseMs === null) {
+      if (attendanceAllowedAtMs === null || attendanceCorrectionCutoffMs === null) {
         throw new HttpsError(
           "failed-precondition",
           "Attendance time could not be verified. Please contact admin."
@@ -737,10 +734,10 @@ export const onSessionComplete = onCall(
           "Attendance can be marked 30 minutes after class start."
         );
       }
-      if (Date.now() > attendanceWindowCloseMs) {
+      if (Date.now() >= attendanceCorrectionCutoffMs) {
         throw new HttpsError(
           "failed-precondition",
-          "Attendance window has closed. Please contact admin to update this attendance."
+          ATTENDANCE_FINALISED_MESSAGE
         );
       }
     }

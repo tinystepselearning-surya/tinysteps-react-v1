@@ -636,6 +636,13 @@ export const onSessionRevenueWrite = onDocumentWritten(
 
         const rollupRef = revenueMonthlyRef(db, accruedMonthKey);
         const sessionId = change.after.id;
+        const chargeRef = db.collection('billingCharges').doc(sessionId);
+        const earningRef = db.collection('teacherEarnings').doc(sessionId);
+        // Firestore transactions require every read to complete before the first write.
+        const [chargeSnap, earningSnap] = await Promise.all([
+          tx.get(chargeRef),
+          tx.get(earningRef),
+        ]);
 
         if (session.revenueAccrued === true) {
           tx.set(
@@ -675,8 +682,6 @@ export const onSessionRevenueWrite = onDocumentWritten(
           );
         }
 
-        const chargeRef = db.collection('billingCharges').doc(sessionId);
-        const chargeSnap = await tx.get(chargeRef);
         if (chargeSnap.exists) {
           const statusRaw = String(chargeSnap.data()?.status || '').toLowerCase();
           if (statusRaw && statusRaw !== 'paid' && statusRaw !== 'settled') {
@@ -692,8 +697,6 @@ export const onSessionRevenueWrite = onDocumentWritten(
           }
         }
 
-        const earningRef = db.collection('teacherEarnings').doc(sessionId);
-        const earningSnap = await tx.get(earningRef);
         if (earningSnap.exists) {
           const statusRaw = String(earningSnap.data()?.status || '').toLowerCase();
           const paidAmount = normalizeNumber(earningSnap.data()?.paidAmount, 0);
