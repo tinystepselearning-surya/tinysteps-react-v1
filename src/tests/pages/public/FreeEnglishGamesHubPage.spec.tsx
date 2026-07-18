@@ -224,4 +224,44 @@ describe("FreeEnglishGamesHubPage", () => {
     fireEvent.click(article as HTMLElement);
     expect(onTileClick).toHaveBeenCalledWith(stage.stageNumber, tile);
   });
+
+  it("renders card links with correct hrefs for all enabled games in stage 1", () => {
+    renderPage();
+
+    // Stage 1 games that should be playable and linked
+    const expectedStage1Games = [
+      { name: "Play Letter Tracing", href: "/free-letter-tracing-game-for-kids" },
+      { name: "Play Letter Sounds", href: "/free-letter-sounds-game-for-kids" },
+      { name: "Play Balloon Pop", href: "/free-balloon-pop-phonics-game-for-kids" },
+    ];
+
+    for (const game of expectedStage1Games) {
+      const link = screen.queryByRole("link", { name: game.name });
+      expect(link, `Link "${game.name}" should exist`).toBeTruthy();
+      if (link) {
+        expect(link).toHaveAttribute("href", game.href);
+        // Verify the link is absolutely positioned for card overlay
+        expect(link).toHaveClass("absolute", "inset-0", "z-10");
+      }
+    }
+  });
+
+  it("allows clicking card links to navigate to game pages", () => {
+    render(
+      <MemoryRouter initialEntries={["/free-english-games-for-kids"]}>
+        <Routes>
+          <Route path="/free-english-games-for-kids" element={<FreeEnglishGamesHubPage />} />
+          <Route path="/free-letter-tracing-game-for-kids" element={<div data-testid="letter-tracing-page">Letter Tracing Page</div>} />
+          <Route path="/free-letter-sounds-game-for-kids" element={<div data-testid="letter-sounds-page">Letter Sounds Page</div>} />
+          <Route path="/letter-tracing-with-sounds-game" element={<div data-testid="letter-tracing-sounds-page">Letter Tracing With Sounds Page</div>} />
+          <Route path="/free-balloon-pop-phonics-game-for-kids" element={<div data-testid="balloon-pop-page">Balloon Pop Page</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    // Test Letter Tracing navigation
+    const letterTracingLink = screen.getByRole("link", { name: /play letter tracing$/i });
+    fireEvent.click(letterTracingLink);
+    expect(screen.queryByTestId("letter-tracing-page")).toBeInTheDocument();
+  });
 });

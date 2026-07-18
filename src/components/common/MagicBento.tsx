@@ -288,7 +288,7 @@ const MagicBento: React.FC<BentoProps> = ({
           will-change: transform;
           isolation: isolate;
         }
-        .magic-bento .magic-bento-card > * {
+        .magic-bento .magic-bento-card > *:not([class*="absolute"]):not([class*="fixed"]):not([class*="sticky"]) {
           position: relative;
           z-index: 3;
         }
