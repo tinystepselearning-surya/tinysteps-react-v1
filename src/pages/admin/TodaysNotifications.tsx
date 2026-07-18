@@ -40,12 +40,17 @@ import { useToast } from '@components/hooks/use-toast';
 import { db } from '../../lib/firebaseConfig';
 import { getDocLogged, getDocsLogged } from '../../lib/firestoreReadLogging';
 import { resolveSessionJoinLink } from '../../lib/sessionJoinLink';
+import {
+  isEnrollmentOperationallyActive,
+  normalizeEnrollmentStatusForOperations,
+} from '../../lib/sessionScheduleIntegrity';
 import { collectSessionTeacherRefs, resolvePreferredSessionTeacherRef } from '../../lib/sessionTeacherRefs';
 import { useAuthStore } from '../../store/useAuthStore';
 import {
   loadManualReminderDayBuckets,
   loadManualReminderSelectedDate,
   readManualReminderCacheFromStorage,
+  selectOperationalReminderSessions,
   writeManualReminderCacheToStorage,
 } from './todaysNotificationsManualData';
 
@@ -91,6 +96,9 @@ interface ClassSessionDoc {
 interface EnrollmentDoc {
   id: string;
   status?: string;
+  archived?: boolean;
+  isArchived?: boolean;
+  archivedAt?: unknown;
   joinUrl?: string;
   meetingLink?: string;
   courseId?: string;
@@ -355,29 +363,8 @@ const INACTIVE_ENTITY_STATUSES = new Set([
   'completed',
   'discontinued',
 ]);
-const PAST_ENROLLMENT_STATUSES = new Set([
-  'completed',
-  'discontinued',
-  'expired',
-  'cancelled',
-  'archived',
-  'inactive',
-]);
-
 const normalizeStatusLike = (value: unknown): string => {
   return String(value || '').trim().toLowerCase();
-};
-
-const normalizeEnrollmentStatusForOperations = (value: unknown): string => {
-  const raw = normalizeStatusLike(value);
-  if (!raw) return 'active';
-  if (raw === 'pending_teacher') return 'trial';
-  if (raw === 'pending_payment' || raw === 'pending_lp' || raw === 'pending_lp_assignment') {
-    return 'active';
-  }
-  if (raw === 'enrolled' || raw === 'current' || raw === 'ongoing') return 'active';
-  if (raw === 'canceled') return 'cancelled';
-  return raw;
 };
 
 const looksLikeLegacyIdToken = (value: string): boolean => {
@@ -405,15 +392,6 @@ const isTeacherUser = (userLike: Record<string, any> | undefined): boolean => {
     ? userLike.roles.map((item: unknown) => normalizeStatusLike(item))
     : [];
   return role === 'teacher' || roles.includes('teacher');
-};
-
-const isEnrollmentOperationallyActive = (enrollmentLike: Record<string, any> | undefined): boolean => {
-  if (!enrollmentLike) return false;
-  if (enrollmentLike.archivedAt || enrollmentLike.archived === true || enrollmentLike.isArchived === true) {
-    return false;
-  }
-  const normalized = normalizeEnrollmentStatusForOperations(enrollmentLike.status);
-  return !PAST_ENROLLMENT_STATUSES.has(normalized);
 };
 
 const getEnrollmentKidIds = (enrollmentLike: Record<string, any> | undefined): string[] => {
@@ -1200,12 +1178,13 @@ export default function TodaysNotifications() {
                 },
               });
 
-        const nextSessions =
+        const fetchedSessions =
           'todaySessions' in result
             ? selectedDateKey === todayDateKey
               ? result.todaySessions
               : result.tomorrowSessions
             : result.sessions;
+        const nextSessions = selectOperationalReminderSessions(fetchedSessions, result.enrollmentMap);
 
         const parentIds = new Set<string>();
         const teacherIds = new Set<string>();
@@ -1224,7 +1203,7 @@ export default function TodaysNotifications() {
         setSessions(nextSessions);
         setUsersMap(nextUsersMap);
         setKidMap({});
-        setEnrollmentMap({});
+        setEnrollmentMap(result.enrollmentMap);
         setCourseMap({});
         setIsLoading(false);
 
@@ -1455,7 +1434,7 @@ export default function TodaysNotifications() {
   const admissionsRows = useMemo(() => {
     return enrollments
       .map((enrollment) => {
-        if (!isEnrollmentOperationallyActive(enrollment)) return null;
+        if (!isEnrollmentOperationallyActive(enrollment as unknown as Record<string, unknown>)) return null;
 
         const enrollmentKidIds = getEnrollmentKidIds(enrollment);
         if (!enrollmentKidIds.length) return null;

@@ -31,7 +31,7 @@ const NON_REPLACEABLE_SESSION_STATUSES = new Set([
   "locked",
 ]);
 const CONSUMED_SESSION_STATUSES = new Set(["completed", "consumed", "settled", "paid"]);
-const NON_ACTIVE_ENROLLMENT_STATUSES = new Set(["completed", "discontinued", "expired", "cancelled", "archived", "inactive"]);
+const OPERATIONAL_ENROLLMENT_STATUSES = new Set(["active", "trial"]);
 const SCHEDULE_EXCEPTION_SOURCE_TOKENS = [
   "ad_hoc",
   "adhoc",
@@ -455,7 +455,7 @@ function isEnrollmentOperationallyActive(enrollmentLike: Record<string, unknown>
   if (enrollmentLike.archivedAt || enrollmentLike.archived === true || enrollmentLike.isArchived === true) {
     return false;
   }
-  return !NON_ACTIVE_ENROLLMENT_STATUSES.has(normalizeEnrollmentStatus(enrollmentLike.status));
+  return OPERATIONAL_ENROLLMENT_STATUSES.has(normalizeEnrollmentStatus(enrollmentLike.status));
 }
 
 function resolveSessionStartMs(raw: Record<string, unknown>): number | null {
@@ -1730,13 +1730,16 @@ function isCancelledStatus(value: unknown): boolean {
   return status === "cancelled" || status === "canceled";
 }
 
-function isSystemGeneratedCancellation(raw: Record<string, unknown>): boolean {
+export function isSystemGeneratedCancellation(raw: Record<string, unknown>): boolean {
   const cancelledReason =
     toOptionalText(raw.cancelledReason) ||
     toOptionalText((raw as Record<string, unknown>).canceledReason) ||
     "";
   const normalizedReason = cancelledReason.trim().toLowerCase();
   if (normalizedReason.startsWith("schedule_repair_")) {
+    return true;
+  }
+  if (["enrollment_paused", "enrollment_ended", "enrollment_archived", "kid_archived"].includes(normalizedReason)) {
     return true;
   }
   if (normalizedReason) {
@@ -2674,7 +2677,7 @@ async function repairCancelledFutureRegularSessionsForEnrollmentInternal(args: {
   };
 }
 
-async function repairEnrollmentFutureSessionsFromScheduleInternal(args: {
+export async function repairEnrollmentFutureSessionsFromScheduleInternal(args: {
   enrollmentId: string;
   dryRun: boolean;
   actorUid: string | null;

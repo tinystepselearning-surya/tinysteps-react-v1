@@ -1558,11 +1558,12 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
     const prevTeacherId = String(editEnrollment.teacherId || '').trim();
     const nextTeacherId = String(editTeacherId || '').trim();
     const teacherChanged = prevTeacherId !== nextTeacherId;
+    const previousStatus = normalizeEnrollmentStatus(editEnrollment.status);
+    const statusChanged = previousStatus !== editStatus;
 
     try {
       setSaving(true);
       const updates: Record<string, any> = {
-        status: editStatus,
         ratePerSession: parentRate,
         feePerSession: parentRate,
         feePerClass: parentRate,
@@ -1586,6 +1587,15 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
         });
       }
 
+      if (statusChanged) {
+        const setEnrollmentStatus = httpsCallable(functions, 'setEnrollmentStatus');
+        await setEnrollmentStatus({
+          enrollmentId: editEnrollment.id,
+          status: editStatus,
+          reason: 'Admin enrollment edit',
+        });
+      }
+
       toast({ title: 'Enrollment updated' });
       setEditOpen(false);
       await queryClient.invalidateQueries({ queryKey: ['adminEnrollments'], exact: false });
@@ -1603,11 +1613,11 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
   const handleArchive = async (enrollment: Enrollment) => {
     try {
       setSaving(true);
-      await updateDoc(doc(db, 'enrollments', enrollment.id), {
+      const setEnrollmentStatus = httpsCallable(functions, 'setEnrollmentStatus');
+      await setEnrollmentStatus({
+        enrollmentId: enrollment.id,
         status: 'archived',
-        archived: true,
-        archivedAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        reason: 'Archived from enrollment management',
       });
       toast({ title: 'Enrollment archived' });
       await queryClient.invalidateQueries({ queryKey: ['adminEnrollments'], exact: false });
@@ -1622,23 +1632,15 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
     }
   };
 
-  const actorIdOrEmail =
-    String(auth.currentUser?.email || '').trim() ||
-    String(auth.currentUser?.uid || '').trim() ||
-    null;
-
   const archiveEnrollmentWithReason = async (
     enrollment: Enrollment,
     archiveReason: string
   ) => {
-    await updateDoc(doc(db, 'enrollments', enrollment.id), {
-      archived: true,
+    const setEnrollmentStatus = httpsCallable(functions, 'setEnrollmentStatus');
+    await setEnrollmentStatus({
+      enrollmentId: enrollment.id,
       status: 'archived',
-      archivedAt: serverTimestamp(),
-      archivedBy: actorIdOrEmail,
-      archiveReason,
-      updatedAt: serverTimestamp(),
-      updatedBy: actorIdOrEmail,
+      reason: archiveReason,
     });
   };
 
@@ -1767,12 +1769,11 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
 
     try {
       setSaving(true);
-      await updateDoc(doc(db, 'enrollments', issue.enrollment.id), {
+      const setEnrollmentStatus = httpsCallable(functions, 'setEnrollmentStatus');
+      await setEnrollmentStatus({
+        enrollmentId: issue.enrollment.id,
         status: 'active',
-        updatedAt: serverTimestamp(),
-        updatedBy: auth.currentUser?.uid || null,
-        statusMigrationReason:
-          'Converted legacy trial status to active because Tiny Steps no longer uses trial enrollments',
+        reason: 'Converted legacy trial status to active because Tiny Steps no longer uses trial enrollments',
       });
       toast({ title: 'Legacy trial converted to active' });
       await queryClient.invalidateQueries({ queryKey: ['adminEnrollments'], exact: false });
@@ -1812,23 +1813,18 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
 
     try {
       setSaving(true);
-      const batches = chunk(noMatchBrokenIssues, 400);
+      const batches = chunk(noMatchBrokenIssues, 20);
       for (const batchIssues of batches) {
-        const batch = writeBatch(db);
-        batchIssues.forEach((issue) => {
+        await Promise.all(batchIssues.map(async (issue) => {
           const enrollmentId = String(issue.enrollment?.id || issue.enrollmentId || '').trim();
           if (!enrollmentId) return;
-          batch.update(doc(db, 'enrollments', enrollmentId), {
-            archived: true,
+          const setEnrollmentStatus = httpsCallable(functions, 'setEnrollmentStatus');
+          await setEnrollmentStatus({
+            enrollmentId,
             status: 'archived',
-            archivedAt: serverTimestamp(),
-            archivedBy: actorIdOrEmail,
-            archiveReason: 'Archived stale broken enrollment link from reconciliation cleanup',
-            updatedAt: serverTimestamp(),
-            updatedBy: actorIdOrEmail,
+            reason: 'Archived stale broken enrollment link from reconciliation cleanup',
           });
-        });
-        await batch.commit();
+        }));
       }
       toast({
         title: 'Bulk archive complete',

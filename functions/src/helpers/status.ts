@@ -8,6 +8,8 @@ export type EnrollmentStatus =
   | 'discontinued'
   | 'expired'
   | 'cancelled'
+  | 'archived'
+  | 'inactive'
   | 'unknown';
 
 export function normalizeLowerStatus(value: unknown): string {
@@ -30,7 +32,9 @@ export function normalizeEnrollmentStatus(value: unknown): EnrollmentStatus {
     raw === 'completed' ||
     raw === 'discontinued' ||
     raw === 'expired' ||
-    raw === 'cancelled'
+    raw === 'cancelled' ||
+    raw === 'archived' ||
+    raw === 'inactive'
   ) {
     return raw;
   }

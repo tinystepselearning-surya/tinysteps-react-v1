@@ -17,7 +17,9 @@ import {
   SelectValue,
 } from '@components/ui/select';
 import { deleteField } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import { updateKid } from '../../../services/kidsService';
+import { functions } from '../../../lib/firebaseConfig';
 import { toast } from '@components/hooks/use-toast';
 import { Student } from '../../../types/Student';
 import { useAuthStore } from '../../../store/useAuthStore';
@@ -133,11 +135,20 @@ export default function EditStudentForm({ student, open, onClose, onUpdated }: P
 
     setLoading(true);
     try {
+      const isArchiveTransition = status === 'archived' && student.status !== 'archived';
+      if (isArchiveTransition) {
+        const archiveKid = httpsCallable(functions, 'archiveKid');
+        await archiveKid({
+          kidId: student.id,
+          reason: 'Archived from student management',
+        });
+      }
+
       await updateKid(student.id as string, {
         fullName,
         age: ageNum, // ✅ store only "age" going forward
         grade,
-        status,
+        ...(!isArchiveTransition ? { status } : {}),
         countryCode:
           countryCode === COUNTRY_NONE_VALUE
             ? deleteField()

@@ -2,7 +2,28 @@ import { describe, expect, it } from 'vitest';
 import {
   buildRepairEnrollmentFutureSessionsPlan,
   executeRepairEnrollmentFutureSessionsFromSchedule,
+  isSystemGeneratedCancellation,
 } from '../src/createSessionsFromSchedule';
+
+describe('lifecycle cancellation restoration', () => {
+  it.each(['enrollment_paused', 'enrollment_ended', 'enrollment_archived', 'kid_archived'])(
+    'recognizes %s as a system reconciliation reason',
+    (cancelledReason) => {
+      expect(isSystemGeneratedCancellation({
+        status: 'cancelled',
+        cancelledReason,
+        source: 'enrollmentSchedule',
+      })).toBe(true);
+    },
+  );
+
+  it('does not restore a parent-requested manual cancellation', () => {
+    expect(isSystemGeneratedCancellation({
+      status: 'cancelled',
+      cancelledReason: 'parent_requested_manual_cancel',
+    })).toBe(false);
+  });
+});
 
 const makeSession = (
   id: string,

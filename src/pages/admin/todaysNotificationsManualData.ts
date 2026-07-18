@@ -1,3 +1,9 @@
+import {
+  isScheduleExceptionSession,
+  isSessionCanonicalForEnrollment,
+  isSessionStatusOperationallyVisible,
+} from '../../lib/sessionScheduleIntegrity';
+
 export interface ManualReminderSessionDoc {
   id: string;
   enrollmentId?: string;
@@ -24,6 +30,18 @@ export interface ManualReminderSessionDoc {
   courseId?: string;
   courseName?: string;
   subject?: string;
+  durationMinutes?: number;
+  durationMins?: number;
+  source?: string;
+  sessionType?: string;
+  createdByFlow?: string;
+  isAdHoc?: boolean;
+  isMakeup?: boolean;
+  adHocType?: string;
+  makeupCreditId?: string;
+  makeupForSessionId?: string;
+  rescheduledFromSessionId?: string;
+  replacementSessionId?: string;
 }
 
 export interface ManualReminderCachePayload {
@@ -34,7 +52,7 @@ export interface ManualReminderCachePayload {
 }
 
 interface ReminderLoadDeps {
-  fetchEnrollmentsByIds: (ids: string[]) => Promise<Record<string, Record<string, any>>>;
+  fetchEnrollmentsByIds: (ids: string[]) => Promise<Record<string, Record<string, unknown>>>;
   fetchSessionsForDate: (dateKey: string) => Promise<ManualReminderSessionDoc[]>;
   readCache: (dateKey: string) => ManualReminderCachePayload | null;
   writeCache: (dateKey: string, payload: ManualReminderCachePayload) => void;
@@ -43,7 +61,8 @@ interface ReminderLoadDeps {
 interface ReminderLoadMeta {
   elapsedMs: number;
   enrollmentFallbackReads: number;
-  source: 'cache' | 'firestore';
+  source: 'firestore';
+  enrollmentMap: Record<string, Record<string, unknown>>;
 }
 
 export interface ManualReminderDayBucketsResult extends ReminderLoadMeta {
@@ -59,6 +78,7 @@ export interface ManualReminderSelectedDateResult extends ReminderLoadMeta {
 }
 
 export const MANUAL_REMINDER_CACHE_KEY_PREFIX = 'ts_manual_class_reminders_cache_';
+export const MANUAL_REMINDER_CACHE_TTL_MS = 30_000;
 
 const normalizeLookupId = (value: unknown): string => {
   const raw = String(value || '').trim();
@@ -109,7 +129,7 @@ export const sessionHasRequiredReminderDisplayData = (
 
 export const mergeSessionWithEnrollmentFallback = (
   session: ManualReminderSessionDoc,
-  enrollment: Record<string, any> | undefined,
+  enrollment: Record<string, unknown> | undefined,
 ): ManualReminderSessionDoc => {
   if (!enrollment) return session;
 
@@ -172,27 +192,78 @@ export const mergeSessionWithEnrollmentFallback = (
   };
 };
 
-const enrichSessionsWithEnrollmentFallback = async (
+const hydrateSessionsWithEnrollments = async (
   sessions: ManualReminderSessionDoc[],
   fetchEnrollmentsByIds: ReminderLoadDeps['fetchEnrollmentsByIds'],
-): Promise<{ enrollmentFallbackReads: number; sessions: ManualReminderSessionDoc[] }> => {
-  const fallbackEnrollmentIds = uniqueIds(
-    sessions
-      .filter((session) => !sessionHasRequiredReminderDisplayData(session))
-      .map((session) => session.enrollmentId),
-  );
+): Promise<{
+  enrollmentFallbackReads: number;
+  enrollmentMap: Record<string, Record<string, unknown>>;
+  sessions: ManualReminderSessionDoc[];
+}> => {
+  const enrollmentIds = uniqueIds(sessions.map((session) => session.enrollmentId));
 
-  if (!fallbackEnrollmentIds.length) {
-    return { enrollmentFallbackReads: 0, sessions };
+  if (!enrollmentIds.length) {
+    return { enrollmentFallbackReads: 0, enrollmentMap: {}, sessions };
   }
 
-  const enrollmentMap = await fetchEnrollmentsByIds(fallbackEnrollmentIds);
+  const enrollmentMap = await fetchEnrollmentsByIds(enrollmentIds);
   return {
-    enrollmentFallbackReads: fallbackEnrollmentIds.length,
+    enrollmentFallbackReads: enrollmentIds.length,
+    enrollmentMap,
     sessions: sessions.map((session) =>
       mergeSessionWithEnrollmentFallback(session, enrollmentMap[normalizeLookupId(session.enrollmentId)]),
     ),
   };
+};
+
+const operationalIdentity = (session: ManualReminderSessionDoc): string => {
+  const exceptionIdentity = isScheduleExceptionSession(session as unknown as Record<string, unknown>)
+    ? [
+        'exception',
+        session.source,
+        session.sessionType,
+        session.createdByFlow,
+        session.makeupCreditId,
+        session.makeupForSessionId,
+        session.rescheduledFromSessionId,
+        session.replacementSessionId,
+      ].map((value) => String(value || '').trim().toLowerCase()).join('|')
+    : 'regular';
+  const startAtLike = session.startAt as { toMillis?: () => number; toDate?: () => Date } | undefined;
+  const startAtIdentity =
+    typeof startAtLike?.toMillis === 'function'
+      ? String(startAtLike.toMillis())
+      : typeof startAtLike?.toDate === 'function'
+        ? String(startAtLike.toDate().getTime())
+        : String(session.startAt || '').trim();
+  const startIdentity = String(session.startTime || '').trim() || startAtIdentity;
+  return [
+    normalizeLookupId(session.enrollmentId),
+    String(session.date || '').trim(),
+    startIdentity,
+    String(session.durationMinutes ?? session.durationMins ?? ''),
+    exceptionIdentity,
+  ].join('::');
+};
+
+export const selectOperationalReminderSessions = (
+  sessions: ManualReminderSessionDoc[],
+  enrollmentMap: Record<string, Record<string, unknown>>,
+): ManualReminderSessionDoc[] => {
+  const seen = new Set<string>();
+  return sessions.filter((session) => {
+    if (!isSessionStatusOperationallyVisible(session.status)) return false;
+    const enrollmentId = normalizeLookupId(session.enrollmentId);
+    if (!enrollmentId) return false;
+    const enrollment = enrollmentMap[enrollmentId];
+    if (!isSessionCanonicalForEnrollment(session as unknown as Record<string, unknown>, enrollment)) {
+      return false;
+    }
+    const identity = operationalIdentity(session);
+    if (seen.has(identity)) return false;
+    seen.add(identity);
+    return true;
+  });
 };
 
 export const readManualReminderCacheFromStorage = (
@@ -206,6 +277,8 @@ export const readManualReminderCacheFromStorage = (
     if (
       parsed &&
       parsed.fetchedForDate === dateKey &&
+      Number.isFinite(parsed.fetchedAt) &&
+      Date.now() - parsed.fetchedAt <= MANUAL_REMINDER_CACHE_TTL_MS &&
       Array.isArray(parsed.todaySessions) &&
       Array.isArray(parsed.tomorrowSessions)
     ) {
@@ -237,21 +310,15 @@ export const loadManualReminderDayBuckets = async ({
   tomorrowDateKey: string;
 }): Promise<ManualReminderDayBucketsResult> => {
   const startedAt = Date.now();
-  const cached = forceRefresh ? null : deps.readCache(todayDateKey);
-  if (cached) {
-    return {
-      ...cached,
-      elapsedMs: Date.now() - startedAt,
-      enrollmentFallbackReads: 0,
-      source: 'cache',
-    };
-  }
+  // Cache is only a short-lived initial-view hint. It is never authoritative:
+  // every load and date change completes a fresh Firestore validation pass.
+  if (!forceRefresh) deps.readCache(todayDateKey);
 
   const [todaySessions, tomorrowSessions] = await Promise.all([
     deps.fetchSessionsForDate(todayDateKey),
     deps.fetchSessionsForDate(tomorrowDateKey),
   ]);
-  const enriched = await enrichSessionsWithEnrollmentFallback(
+  const enriched = await hydrateSessionsWithEnrollments(
     [...todaySessions, ...tomorrowSessions],
     deps.fetchEnrollmentsByIds,
   );
@@ -268,6 +335,7 @@ export const loadManualReminderDayBuckets = async ({
     ...payload,
     elapsedMs: Date.now() - startedAt,
     enrollmentFallbackReads: enriched.enrollmentFallbackReads,
+    enrollmentMap: enriched.enrollmentMap,
     source: 'firestore',
   };
 };
@@ -281,11 +349,12 @@ export const loadManualReminderSelectedDate = async ({
 }): Promise<ManualReminderSelectedDateResult> => {
   const startedAt = Date.now();
   const sessions = await deps.fetchSessionsForDate(dateKey);
-  const enriched = await enrichSessionsWithEnrollmentFallback(sessions, deps.fetchEnrollmentsByIds);
+  const enriched = await hydrateSessionsWithEnrollments(sessions, deps.fetchEnrollmentsByIds);
   return {
     dateKey,
     elapsedMs: Date.now() - startedAt,
     enrollmentFallbackReads: enriched.enrollmentFallbackReads,
+    enrollmentMap: enriched.enrollmentMap,
     sessions: enriched.sessions,
     source: 'firestore',
   };

@@ -3,6 +3,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as logger from 'firebase-functions/logger';
 import { ensureAdmin } from './helpers/adminGuard';
 import { normalizeEnrollmentStatus } from './helpers/status';
+import { repairEnrollmentFutureSessionsFromScheduleInternal } from './createSessionsFromSchedule';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -20,19 +21,24 @@ const ACTIVE_LIKE = new Set([
   'pending_payment',
 ]);
 
-const TERMINAL = new Set(['completed', 'discontinued', 'expired', 'cancelled', 'canceled']);
+const TERMINAL = new Set(['completed', 'discontinued', 'expired', 'cancelled', 'archived', 'inactive']);
 const NON_REASSIGNABLE_SESSION_STATUSES = new Set([
   'completed',
   'cancelled',
   'canceled',
   'rescheduled',
   'reschedule',
+  'replacement',
+  'approved_request',
   'paid',
   'settled',
   'consumed',
   'locked',
   'no_show',
   'noshow',
+  'attended',
+  'present',
+  'absent',
 ]);
 const SCHEDULE_EXCEPTION_SOURCE_TOKENS = [
   'makeup',
@@ -43,6 +49,8 @@ const SCHEDULE_EXCEPTION_SOURCE_TOKENS = [
   'ad_hoc',
   'rescheduled',
   'reschedule',
+  'replacement',
+  'approved_request',
 ] as const;
 
 type TeacherIdentity = {
@@ -168,6 +176,12 @@ function normalizeStatusValue(value: unknown): string {
 
 function isActiveLikeEnrollmentStatus(value: unknown): boolean {
   return ACTIVE_LIKE.has(normalizeEnrollmentStatus(value));
+}
+
+function enrollmentHasConfiguredSchedule(enrollment: Record<string, unknown>): boolean {
+  const schedule = isPlainObject(enrollment.schedule) ? enrollment.schedule : {};
+  if (Array.isArray(schedule.weeklySlots) && schedule.weeklySlots.length > 0) return true;
+  return Array.isArray(schedule.weekdays) && schedule.weekdays.length > 0 && Boolean(nonEmptyString(schedule.timeHHmm));
 }
 
 function nonEmptyString(value: unknown): string | null {
@@ -676,16 +690,24 @@ function hasSessionFinanceOrLockMarkers(raw: Record<string, unknown>): boolean {
 
 function isScheduleExceptionSession(raw: Record<string, unknown>): boolean {
   if (raw.isAdHoc === true || raw.isMakeup === true) return true;
-  if (raw.makeupCreditId || raw.makeupForSessionId) return true;
+  if (
+    raw.makeupCreditId ||
+    raw.makeupForSessionId ||
+    raw.rescheduledFromSessionId ||
+    raw.replacementSessionId
+  ) return true;
 
   const adHocType = String(raw.adHocType || '').trim().toLowerCase();
   if (adHocType && (adHocType.includes('one_off') || adHocType.includes('adhoc') || adHocType.includes('ad_hoc'))) {
     return true;
   }
 
-  const source = String(raw.source || '').trim().toLowerCase();
-  if (!source) return false;
-  return SCHEDULE_EXCEPTION_SOURCE_TOKENS.some((token) => source.includes(token));
+  const signals = [raw.source, raw.sessionType, raw.createdByFlow]
+    .map((value) => String(value || '').trim().toLowerCase())
+    .filter(Boolean);
+  return signals.some((signal) =>
+    SCHEDULE_EXCEPTION_SOURCE_TOKENS.some((token) => signal.includes(token)),
+  );
 }
 
 function buildEnrollmentCanonicalPatch(enrollmentId: string, enrollment: Record<string, unknown>) {
@@ -719,54 +741,124 @@ function buildEnrollmentCanonicalPatch(enrollmentId: string, enrollment: Record<
   return patch;
 }
 
-async function batchUpdate(docs: FirebaseFirestore.QueryDocumentSnapshot[], updates: Record<string, any>) {
+export function isLifecycleSessionProtected(raw: Record<string, unknown>): boolean {
+  const status = normalizeStatusValue(raw.status);
+  if (NON_REASSIGNABLE_SESSION_STATUSES.has(status) || status === 'paused') return true;
+  if (hasAttendanceMarked(raw) || hasSessionFinanceOrLockMarkers(raw)) return true;
+  return isScheduleExceptionSession(raw);
+}
+
+export function isEligibleFutureSessionForLifecycleCancellation(
+  raw: Record<string, unknown>,
+  nowMs: number,
+): boolean {
+  return resolveSessionIsFuture(raw, nowMs) && !isLifecycleSessionProtected(raw);
+}
+
+async function hasExternalFinancialLink(
+  db: FirebaseFirestore.Firestore,
+  docSnap: FirebaseFirestore.QueryDocumentSnapshot,
+): Promise<boolean> {
+  try {
+    const [chargeSnap, earningSnap] = await Promise.all([
+      db.collection('billingCharges').doc(docSnap.id).get(),
+      db.collection('teacherEarnings').doc(docSnap.id).get(),
+    ]);
+    if (chargeSnap.exists || earningSnap.exists) return true;
+
+    const raw = (docSnap.data() || {}) as Record<string, unknown>;
+    const enrollmentId = toOptionalId(raw.enrollmentId);
+    const dateYmd = nonEmptyString(raw.date);
+    const startTime = nonEmptyString(raw.startTime);
+    if (!enrollmentId || !dateYmd || !startTime) return false;
+    const [chargeFallbackSnap, earningFallbackSnap] = await Promise.all([
+      db.collection('billingCharges')
+        .where('enrollmentId', '==', enrollmentId)
+        .where('date', '==', dateYmd)
+        .where('startTime', '==', startTime)
+        .limit(1)
+        .get(),
+      db.collection('teacherEarnings')
+        .where('enrollmentId', '==', enrollmentId)
+        .where('date', '==', dateYmd)
+        .where('startTime', '==', startTime)
+        .limit(1)
+        .get(),
+    ]);
+    return !chargeFallbackSnap.empty || !earningFallbackSnap.empty;
+  } catch (error) {
+    logger.warn('Lifecycle cancellation skipped because finance links could not be verified', {
+      sessionId: docSnap.id,
+      errorMessage: error instanceof Error ? error.message : String(error),
+    });
+    return true;
+  }
+}
+
+async function cancelEligibleFutureSessions(args: {
+  docs: FirebaseFirestore.QueryDocumentSnapshot[];
+  reason: string;
+  actorUid: string | null;
+  scope: 'enrollment' | 'kid';
+}): Promise<number> {
   const db = admin.firestore();
-  let updated = 0;
-  for (let i = 0; i < docs.length; i += MAX_BATCH) {
+  const nowMs = Date.now();
+  const uniqueDocs = Array.from(new Map(args.docs.map((docSnap) => [docSnap.id, docSnap])).values());
+  const candidates = uniqueDocs.filter((docSnap) =>
+    isEligibleFutureSessionForLifecycleCancellation(
+      (docSnap.data() || {}) as Record<string, unknown>,
+      nowMs,
+    ),
+  );
+  const financeChecks = await Promise.all(
+    candidates.map(async (docSnap) => ({
+      docSnap,
+      protectedByFinance: await hasExternalFinancialLink(db, docSnap),
+    })),
+  );
+  const eligible = financeChecks.filter((entry) => !entry.protectedByFinance).map((entry) => entry.docSnap);
+
+  for (let index = 0; index < eligible.length; index += MAX_BATCH) {
     const batch = db.batch();
-    docs.slice(i, i + MAX_BATCH).forEach((docSnap) => {
-      batch.set(docSnap.ref, updates, { merge: true });
-      updated += 1;
+    eligible.slice(index, index + MAX_BATCH).forEach((docSnap) => {
+      batch.set(docSnap.ref, {
+        status: 'cancelled',
+        cancelledReason: args.reason,
+        cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
+        cancelledBy: args.actorUid || 'system',
+        lifecycleReconciliation: {
+          scope: args.scope,
+          reason: args.reason,
+          reconciledAt: admin.firestore.FieldValue.serverTimestamp(),
+          reconciledBy: args.actorUid || 'system',
+        },
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedBy: args.actorUid || 'system',
+      }, { merge: true });
     });
     await batch.commit();
   }
-  return updated;
+  return eligible.length;
 }
 
-async function cancelFutureSessionsByEnrollmentId(enrollmentId: string, reason: string) {
+async function cancelFutureSessionsByEnrollmentId(enrollmentId: string, reason: string, actorUid: string | null) {
   const db = admin.firestore();
-  const now = admin.firestore.Timestamp.now();
-  const snap = await db
-    .collection('classSessions')
-    .where('enrollmentId', '==', enrollmentId)
-    .where('startAt', '>=', now)
-    .get();
-
-  const updates = {
-    status: 'cancelled',
-    cancelledReason: reason,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-  };
-  const count = await batchUpdate(snap.docs, updates);
-  return count;
+  const snap = await db.collection('classSessions').where('enrollmentId', '==', enrollmentId).get();
+  return cancelEligibleFutureSessions({ docs: snap.docs, reason, actorUid, scope: 'enrollment' });
 }
 
-async function cancelFutureSessionsByKidId(kidId: string, reason: string) {
+async function cancelFutureSessionsByKidId(kidId: string, reason: string, actorUid: string | null) {
   const db = admin.firestore();
-  const now = admin.firestore.Timestamp.now();
-  const snap = await db
-    .collection('classSessions')
-    .where('kidIds', 'array-contains', kidId)
-    .where('startAt', '>=', now)
-    .get();
-
-  const updates = {
-    status: 'cancelled',
-    cancelledReason: reason,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-  };
-  const count = await batchUpdate(snap.docs, updates);
-  return count;
+  const [singleSnap, arraySnap] = await Promise.all([
+    db.collection('classSessions').where('kidId', '==', kidId).get(),
+    db.collection('classSessions').where('kidIds', 'array-contains', kidId).get(),
+  ]);
+  return cancelEligibleFutureSessions({
+    docs: [...singleSnap.docs, ...arraySnap.docs],
+    reason,
+    actorUid,
+    scope: 'kid',
+  });
 }
 
 async function repairFutureSessionsForEnrollment(args: {
@@ -1059,8 +1151,16 @@ export const setEnrollmentStatus = onCall({ region: REGION }, async (request) =>
     }
 
     const canonicalStatus = normalizeEnrollmentStatus(rawStatus);
+    if (canonicalStatus === 'unknown') {
+      throw new HttpsError('invalid-argument', `Unsupported enrollment status: ${rawStatus}`);
+    }
     const isTerminal = TERMINAL.has(canonicalStatus);
     const enrollmentData = (enrSnap.data() || {}) as Record<string, unknown>;
+    const previousStatus = normalizeEnrollmentStatus(enrollmentData.status);
+    const isReactivation =
+      (canonicalStatus === 'active' || canonicalStatus === 'trial') &&
+      previousStatus !== 'active' &&
+      previousStatus !== 'trial';
     const updates: Record<string, any> = {
       ...buildEnrollmentCanonicalPatch(enrollmentId, enrollmentData),
       status: canonicalStatus,
@@ -1070,6 +1170,16 @@ export const setEnrollmentStatus = onCall({ region: REGION }, async (request) =>
 
     if (reason) updates.endReason = reason;
     if (isTerminal) updates.endedAt = admin.firestore.FieldValue.serverTimestamp();
+    if (canonicalStatus === 'archived') {
+      updates.archived = true;
+      updates.isArchived = true;
+      updates.archivedAt = admin.firestore.FieldValue.serverTimestamp();
+    } else if (canonicalStatus === 'active' || canonicalStatus === 'trial') {
+      updates.archived = false;
+      updates.isArchived = false;
+      updates.archivedAt = admin.firestore.FieldValue.delete();
+      updates.endedAt = admin.firestore.FieldValue.delete();
+    }
 
     const cleanPatch = removeUndefinedDeep(updates) as Record<string, unknown>;
     console.log('[setEnrollmentStatus] writing patch keys', Object.keys(cleanPatch));
@@ -1077,15 +1187,26 @@ export const setEnrollmentStatus = onCall({ region: REGION }, async (request) =>
 
     let cancelledSessions = 0;
     if (canonicalStatus === 'paused') {
-      cancelledSessions = await cancelFutureSessionsByEnrollmentId(enrollmentId, 'paused');
+      cancelledSessions = await cancelFutureSessionsByEnrollmentId(enrollmentId, 'enrollment_paused', actor);
     } else if (isTerminal) {
-      cancelledSessions = await cancelFutureSessionsByEnrollmentId(enrollmentId, 'enrollment_ended');
+      const cancellationReason = canonicalStatus === 'archived' ? 'enrollment_archived' : 'enrollment_ended';
+      cancelledSessions = await cancelFutureSessionsByEnrollmentId(enrollmentId, cancellationReason, actor);
     }
+
+    const reconciliation = isReactivation && enrollmentHasConfiguredSchedule(enrollmentData)
+      ? await repairEnrollmentFutureSessionsFromScheduleInternal({
+          enrollmentId,
+          dryRun: false,
+          actorUid: actor,
+        })
+      : null;
 
     return {
       ok: true,
       updatedEnrollmentId: enrollmentId,
       cancelledSessionsCount: cancelledSessions,
+      reactivated: isReactivation,
+      reconciliation,
       message: `Enrollment set to ${canonicalStatus}`,
     };
   } catch (error) {
@@ -1536,7 +1657,7 @@ export const archiveKid = onCall({ region: REGION }, async (request) => {
     if (seen.has(docSnap.id)) continue;
     seen.add(docSnap.id);
     const status = normalizeEnrollmentStatus((docSnap.data() as any)?.status || '');
-    const activeLike = ACTIVE_LIKE.has(status) || status === 'active' || status === 'trial' || status === 'paused';
+    const activeLike = status === 'active' || status === 'trial';
     if (activeLike) {
       throw new HttpsError(
         'failed-precondition',
@@ -1556,7 +1677,11 @@ export const archiveKid = onCall({ region: REGION }, async (request) => {
     { merge: true }
   );
 
-  const cancelledSessions = await cancelFutureSessionsByKidId(kidId, 'kid_archived');
+  const cancelledSessions = await cancelFutureSessionsByKidId(
+    kidId,
+    'kid_archived',
+    request.auth?.uid || null,
+  );
 
   return {
     ok: true,

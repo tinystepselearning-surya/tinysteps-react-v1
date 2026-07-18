@@ -3,7 +3,50 @@ import {
   buildSessionRepairPatch,
   buildSessionRepairQueryCoverage,
   buildTeacherReassignmentJoinLinkPatch,
+  isEligibleFutureSessionForLifecycleCancellation,
+  isLifecycleSessionProtected,
 } from '../src/lifecycle';
+
+describe('enrollment lifecycle future-session reconciliation', () => {
+  const nowMs = Date.parse('2026-06-01T00:00:00+05:30');
+
+  it('reconciles a legacy future session using date and startTime when startAt is absent', () => {
+    expect(isEligibleFutureSessionForLifecycleCancellation({
+      status: 'scheduled',
+      date: '2026-06-02',
+      startTime: '18:00',
+    }, nowMs)).toBe(true);
+  });
+
+  it('does not reconcile a legacy historical session', () => {
+    expect(isEligibleFutureSessionForLifecycleCancellation({
+      status: 'scheduled',
+      date: '2026-05-31',
+      startTime: '18:00',
+    }, nowMs)).toBe(false);
+  });
+
+  it.each([
+    { status: 'completed' },
+    { status: 'scheduled', attendance: { state: 'attended' } },
+    { status: 'scheduled', billedAt: '2026-05-20' },
+    { status: 'scheduled', locked: true },
+    { status: 'scheduled', isMakeup: true, makeupCreditId: 'credit-1' },
+    { status: 'scheduled', source: 'approved_request_reschedule' },
+    { status: 'scheduled', source: 'replacement_session' },
+  ])('protects completed, attended, financial, locked and exception sessions: %#', (session) => {
+    expect(isLifecycleSessionProtected(session)).toBe(true);
+    expect(isEligibleFutureSessionForLifecycleCancellation({
+      ...session,
+      date: '2026-06-02',
+      startTime: '18:00',
+    }, nowMs)).toBe(false);
+  });
+
+  it('keeps cancellation idempotent by protecting already-cancelled rows', () => {
+    expect(isLifecycleSessionProtected({ status: 'cancelled' })).toBe(true);
+  });
+});
 
 describe('buildSessionRepairQueryCoverage', () => {
   it('always includes the primary enrollmentId query', () => {

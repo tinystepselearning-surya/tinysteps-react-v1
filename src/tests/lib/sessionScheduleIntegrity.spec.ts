@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   doesSessionMatchEnrollmentSchedule,
+  isEnrollmentOperationallyActive,
   isSessionCanonicalForEnrollment,
+  isSessionStatusOperationallyVisible,
   shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment,
 } from '../../lib/sessionScheduleIntegrity';
 
@@ -25,6 +27,40 @@ const baseEnrollment = {
 };
 
 describe('sessionScheduleIntegrity', () => {
+  it.each(['paused', 'cancelled', 'canceled', 'archived', 'inactive', 'completed', 'discontinued', 'expired'])(
+    'treats %s enrollments as non-operational',
+    (status) => {
+      expect(isEnrollmentOperationallyActive({ ...baseEnrollment, status })).toBe(false);
+    },
+  );
+
+  it.each(['active', 'enrolled', 'current', 'ongoing', 'pending_payment', 'trial'])(
+    'preserves the supported operational alias %s',
+    (status) => {
+      expect(isEnrollmentOperationallyActive({ ...baseEnrollment, status })).toBe(true);
+    },
+  );
+
+  it('does not silently expose an unknown enrollment status', () => {
+    expect(isEnrollmentOperationallyActive({ ...baseEnrollment, status: 'future_terminal_state' })).toBe(false);
+  });
+
+  it('respects every supported archival marker', () => {
+    expect(isEnrollmentOperationallyActive({ ...baseEnrollment, archived: true })).toBe(false);
+    expect(isEnrollmentOperationallyActive({ ...baseEnrollment, isArchived: true })).toBe(false);
+    expect(isEnrollmentOperationallyActive({ ...baseEnrollment, archivedAt: '2026-06-01' })).toBe(false);
+  });
+
+  it.each(['paused', 'cancelled', 'canceled'])(
+    'hides %s operational session rows',
+    (status) => expect(isSessionStatusOperationallyVisible(status)).toBe(false),
+  );
+
+  it.each(['scheduled', 'completed', 'attended', 'no_show'])(
+    'does not blanket-hide the %s attendance state',
+    (status) => expect(isSessionStatusOperationallyVisible(status)).toBe(true),
+  );
+
   it('accepts canonical sessions when the teacher only appears in alias fields', () => {
     const session = {
       enrollmentId: 'enr_1',
@@ -63,6 +99,19 @@ describe('sessionScheduleIntegrity', () => {
 
     expect(doesSessionMatchEnrollmentSchedule(session, baseEnrollment)).toBe(false);
     expect(isSessionCanonicalForEnrollment(session, baseEnrollment)).toBe(false);
+  });
+
+  it('rejects regular sessions whose duration does not match the current schedule', () => {
+    expect(doesSessionMatchEnrollmentSchedule({
+      enrollmentId: 'enr_1',
+      courseId: 'phonics',
+      date: '2026-06-01',
+      startTime: '17:00',
+      endTime: '18:00',
+      kidId: 'kid_1',
+      teacherId: 'teacher_current',
+      status: 'scheduled',
+    }, baseEnrollment)).toBe(false);
   });
 
   it('keeps one-off makeup sessions canonical when identity matches through teacher aliases', () => {

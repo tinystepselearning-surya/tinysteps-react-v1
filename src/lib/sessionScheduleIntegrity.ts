@@ -2,14 +2,9 @@ const IST_OFFSET_MINUTES = 330;
 const TIME_HHMM_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-const PAST_ENROLLMENT_STATUSES = new Set([
-  'completed',
-  'discontinued',
-  'expired',
-  'cancelled',
-  'archived',
-  'inactive',
-]);
+const OPERATIONAL_ENROLLMENT_STATUSES = new Set(['active', 'trial']);
+
+const NON_OPERATIONAL_SESSION_STATUSES = new Set(['cancelled', 'paused']);
 
 const SCHEDULE_EXCEPTION_SOURCES = [
   'ad_hoc',
@@ -19,6 +14,7 @@ const SCHEDULE_EXCEPTION_SOURCES = [
   'manual_one_off',
   'approved_request',
   'one_off',
+  'replacement',
 ];
 
 export interface EnrollmentWeeklySlot {
@@ -98,7 +94,7 @@ const collectSessionTeacherIds = (sessionLike: Record<string, unknown>): string[
   );
 };
 
-const normalizeEnrollmentStatus = (value: unknown): string => {
+export const normalizeEnrollmentStatusForOperations = (value: unknown): string => {
   const raw = normalizeText(value).toLowerCase();
   if (!raw) return 'active';
   if (raw === 'pending_teacher') return 'trial';
@@ -115,8 +111,16 @@ export const isEnrollmentOperationallyActive = (enrollmentLike: Record<string, u
   if (enrollmentLike.archivedAt || enrollmentLike.archived === true || enrollmentLike.isArchived === true) {
     return false;
   }
-  const normalized = normalizeEnrollmentStatus(enrollmentLike.status);
-  return !PAST_ENROLLMENT_STATUSES.has(normalized);
+  const normalized = normalizeEnrollmentStatusForOperations(enrollmentLike.status);
+  // Unknown statuses are deliberately non-operational. A new production status
+  // must be reviewed and added here instead of silently exposing its sessions.
+  return OPERATIONAL_ENROLLMENT_STATUSES.has(normalized);
+};
+
+export const isSessionStatusOperationallyVisible = (value: unknown): boolean => {
+  const normalized = normalizeText(value).toLowerCase();
+  const canonical = normalized === 'canceled' ? 'cancelled' : normalized;
+  return !NON_OPERATIONAL_SESSION_STATUSES.has(canonical);
 };
 
 const isValidWeekday = (value: unknown): value is number => {
@@ -225,8 +229,15 @@ const resolveSessionTime = (sessionLike: Record<string, unknown>): string => {
 
 const resolveSessionDuration = (sessionLike: Record<string, unknown>): number | null => {
   const raw = Number(sessionLike.durationMinutes ?? sessionLike.durationMins);
-  if (!Number.isFinite(raw) || raw <= 0) return null;
-  return clampDurationMinutes(raw, 35);
+  if (Number.isFinite(raw) && raw > 0) return clampDurationMinutes(raw, 35);
+  const startTime = normalizeTimeHHmm(sessionLike.startTime);
+  const endTime = normalizeTimeHHmm(sessionLike.endTime);
+  if (!startTime || !endTime) return null;
+  const [startHour, startMinute] = startTime.split(':').map(Number);
+  const [endHour, endMinute] = endTime.split(':').map(Number);
+  let durationMinutes = endHour * 60 + endMinute - (startHour * 60 + startMinute);
+  if (durationMinutes <= 0) durationMinutes += 24 * 60;
+  return clampDurationMinutes(durationMinutes, 35);
 };
 
 export const isScheduleExceptionSession = (sessionLike: Record<string, unknown>): boolean => {
@@ -235,10 +246,20 @@ export const isScheduleExceptionSession = (sessionLike: Record<string, unknown>)
   if (adHocType.includes('one_off') || adHocType.includes('adhoc') || adHocType.includes('ad_hoc')) {
     return true;
   }
-  if (sessionLike.makeupCreditId || sessionLike.makeupForSessionId) return true;
-  const source = normalizeText(sessionLike.source).toLowerCase();
-  if (!source) return false;
-  return SCHEDULE_EXCEPTION_SOURCES.some((token) => source.includes(token));
+  if (
+    sessionLike.makeupCreditId ||
+    sessionLike.makeupForSessionId ||
+    sessionLike.rescheduledFromSessionId ||
+    sessionLike.replacementSessionId
+  ) {
+    return true;
+  }
+  const exceptionSignals = [sessionLike.source, sessionLike.sessionType, sessionLike.createdByFlow]
+    .map((value) => normalizeText(value).toLowerCase())
+    .filter(Boolean);
+  return exceptionSignals.some((signal) =>
+    SCHEDULE_EXCEPTION_SOURCES.some((token) => signal.includes(token)),
+  );
 };
 
 export const shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment = (
@@ -307,7 +328,7 @@ export const doesSessionMatchEnrollmentSchedule = (
   return slots.some((slot) => {
     if (slot.weekday !== sessionWeekday) return false;
     if (slot.time !== sessionTime) return false;
-    if (sessionDuration === null) return true;
+    if (sessionDuration === null) return false;
     return slot.durationMinutes === sessionDuration;
   });
 };
