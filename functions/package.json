@@ -7,6 +7,7 @@
     "node": "22"
   },
   "scripts": {
+    "backfill:parent-payment-sort": "node scripts/backfillParentPaymentSortFields.js",
     "set-groq-secret": "node scripts/setGroqSecret.js",
     "set-groq-secret-shell": "sh scripts/set-groq-secret.sh",
     "lint": "eslint \"src/**/*.{ts,js}\" \"scripts/**/*.{ts,js}\"",

@@ -54,6 +54,7 @@ export { saveTeacherSessionProgress, adminAttendanceCorrection } from "./saveTea
 export {
   onBillingChargeReadModelWrite,
   onPaymentReadModelWrite,
+  onParentUserReadModelWrite,
   onClassSessionReadModelWrite,
   onStudentProgressReadModelWrite,
 } from "./parentMonthlyReadModels";

@@ -5,8 +5,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   collectionMock,
   collectionGroupMock,
+  countMock,
   docMock,
   documentIdMock,
+  getAggregateFromServerMock,
   getDocMock,
   getDocsMock,
   limitMock,
@@ -15,6 +17,7 @@ const {
   queryMock,
   startAfterMock,
   startAtMock,
+  sumMock,
   endAtMock,
   whereMock,
   httpsCallableMock,
@@ -22,10 +25,16 @@ const {
 } = vi.hoisted(() => ({
   collectionMock: vi.fn((...args: any[]) => ({ kind: 'collection', args })),
   collectionGroupMock: vi.fn((...args: any[]) => ({ kind: 'collectionGroup', args })),
+  countMock: vi.fn(() => ({ kind: 'count' })),
   docMock: vi.fn((...args: any[]) => ({ kind: 'doc', args })),
   documentIdMock: vi.fn(() => '__name__'),
   getDocMock: vi.fn(),
   getDocsMock: vi.fn(),
+  getAggregateFromServerMock: vi.fn(
+    async (..._args: any[]): Promise<{ data: () => Record<string, number> }> => ({
+      data: () => ({ total: 0 }),
+    })
+  ),
   limitMock: vi.fn((value: number) => ({ kind: 'limit', value })),
   onSnapshotMock: vi.fn((_ref, next) => {
     next({
@@ -41,9 +50,10 @@ const {
     direction: direction || 'asc',
   })),
   queryMock: vi.fn((...args: any[]) => ({ kind: 'query', args })),
-  startAfterMock: vi.fn((value: string) => ({ kind: 'startAfter', value })),
+  startAfterMock: vi.fn((value: unknown) => ({ kind: 'startAfter', value })),
   startAtMock: vi.fn((value: string) => ({ kind: 'startAt', value })),
   endAtMock: vi.fn((value: string) => ({ kind: 'endAt', value })),
+  sumMock: vi.fn((field: string) => ({ kind: 'sum', field })),
   whereMock: vi.fn((field: string, op: string, value: any) => ({
     kind: 'where',
     field,
@@ -57,10 +67,12 @@ const {
 vi.mock('firebase/firestore', () => ({
   collection: collectionMock,
   collectionGroup: collectionGroupMock,
+  count: countMock,
   doc: docMock,
   documentId: documentIdMock,
   getDoc: getDocMock,
   getDocs: getDocsMock,
+  getAggregateFromServer: getAggregateFromServerMock,
   limit: limitMock,
   onSnapshot: onSnapshotMock,
   orderBy: orderByMock,
@@ -69,6 +81,7 @@ vi.mock('firebase/firestore', () => ({
   startAt: startAtMock,
   endAt: endAtMock,
   where: whereMock,
+  sum: sumMock,
 }));
 
 vi.mock('firebase/functions', () => ({
@@ -141,6 +154,9 @@ const buildSequentialDocs = (prefix: 'parent' | 'teacher', start: number, count:
     return makeDoc(`${prefix}-doc-${value}`, {
       [`${prefix}Id`]: `${prefix}-${value}`,
       monthKey,
+      dueAmount: prefix === 'parent' ? 1000 : undefined,
+      lastPaymentAtMs: null,
+      parentNameSort: prefix === 'parent' ? `${prefix} ${value}` : undefined,
     });
   });
 
@@ -173,13 +189,24 @@ const hasStartAt = (input: any, matcher: (value: string) => boolean) =>
   );
 const hasStartAfter = (input: any, matcher: (value: string) => boolean) =>
   getQueryParts(input).some(
-    (part: any) => part?.kind === 'startAfter' && matcher(String(part.value || ''))
+    (part: any) =>
+      part?.kind === 'startAfter' &&
+      matcher(
+        String(
+          typeof part.value?.data === 'function'
+            ? part.value.data()?.parentId || part.value.data()?.teacherId || ''
+            : part.value || ''
+        )
+      )
   );
 const getCollectionName = (input: any) => input?.args?.[0]?.args?.[1] || input?.args?.[1];
 
 describe('Admin payment pages lazy loading', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getAggregateFromServerMock.mockImplementation(async () => ({
+      data: () => ({ total: 0 }),
+    }));
     getDocMock.mockResolvedValue({
       exists: () => false,
       data: () => null,
@@ -192,25 +219,11 @@ describe('Admin payment pages lazy loading', () => {
         input?.kind === 'query' &&
         input.args[0]?.kind === 'collectionGroup' &&
         input.args[0]?.args?.[1] === 'months' &&
-        hasLimit(input, 10)
-      ) {
-        return {
-          docs: [
-            makeDoc('month-parent-1', { parentId: 'parent-1', monthKey: '2026-06' }),
-            makeDoc('month-parent-2', { parentId: 'parent-2', monthKey: '2026-06' }),
-          ],
-        };
-      }
-
-      if (
-        input?.kind === 'query' &&
-        input.args[0]?.kind === 'collectionGroup' &&
-        input.args[0]?.args?.[1] === 'months' &&
-        hasLimit(input, 25) &&
+        hasLimit(input, 11) &&
         !hasStartAfter(input, () => true)
       ) {
         return {
-          docs: buildSequentialDocs('parent', 1, 25),
+          docs: buildSequentialDocs('parent', 1, 11),
         };
       }
 
@@ -218,11 +231,11 @@ describe('Admin payment pages lazy loading', () => {
         input?.kind === 'query' &&
         input.args[0]?.kind === 'collectionGroup' &&
         input.args[0]?.args?.[1] === 'months' &&
-        hasLimit(input, 25) &&
-        hasStartAfter(input, (value) => value === 'parent-25')
+        hasLimit(input, 11) &&
+        hasStartAfter(input, (value) => value === 'parent-10')
       ) {
         return {
-          docs: buildSequentialDocs('parent', 26, 25),
+          docs: buildSequentialDocs('parent', 11, 10),
         };
       }
 
@@ -419,13 +432,8 @@ describe('Admin payment pages lazy loading', () => {
     });
   });
 
-  it('preloads limited month-scoped dropdown options without loading payment details', async () => {
-    render(
-      <div>
-        <ParentPayments />
-        <TeacherPayments />
-      </div>
-    );
+  it('automatically loads the first 10 parents with the stable outstanding ordering', async () => {
+    render(<ParentPayments />);
 
     await waitFor(() =>
       expect(
@@ -434,7 +442,7 @@ describe('Admin payment pages lazy loading', () => {
             input?.kind === 'query' &&
             input.args[0]?.kind === 'collectionGroup' &&
             input.args[0]?.args?.[1] === 'months' &&
-            hasLimit(input, 10)
+            hasLimit(input, 11)
         )
       ).toBe(true)
     );
@@ -442,59 +450,28 @@ describe('Admin payment pages lazy loading', () => {
     expect(
       getDocsMock.mock.calls.some(
         ([input]) =>
-          input?.kind === 'query' &&
-          input.args[0]?.kind === 'collectionGroup' &&
-          input.args[0]?.args?.[1] === 'earnings' &&
-          hasLimit(input, 10)
+          hasOrderBy(input, 'dueAmount') &&
+          hasOrderBy(input, 'lastPaymentAtMs') &&
+          hasOrderBy(input, 'parentNameSort') &&
+          hasOrderBy(input, '__name__')
       )
     ).toBe(true);
-    expect(screen.getAllByText(/No data loaded yet\./).length).toBeGreaterThan(0);
-    expect(screen.getByRole('option', { name: /Parent One/ })).toBeTruthy();
-    expect(screen.getByRole('option', { name: /Teacher One/ })).toBeTruthy();
-    expect(
-      getDocsMock.mock.calls.some(([input]) => getCollectionName(input) === 'billingCharges')
-    ).toBe(false);
-    expect(
-      getDocsMock.mock.calls.some(([input]) => getCollectionName(input) === 'payments')
-    ).toBe(false);
-    expect(
-      getDocsMock.mock.calls.some(([input]) => getCollectionName(input) === 'teacherEarnings')
-    ).toBe(false);
-    expect(
-      getDocsMock.mock.calls.some(([input]) => getCollectionName(input) === 'teacherPayouts')
-    ).toBe(false);
-    expect(onSnapshotMock).not.toHaveBeenCalled();
-  });
-
-  it('loads the first 25 month-scoped parents only after explicit action', async () => {
-    render(<ParentPayments />);
-
-    fireEvent.click(screen.getByText('Load First 25'));
-
-    await waitFor(() =>
-      expect(
-        getDocsMock.mock.calls.some(
-          ([input]) =>
-            input?.kind === 'query' &&
-            input.args[0]?.kind === 'collectionGroup' &&
-            input.args[0]?.args?.[1] === 'months' &&
-            hasLimit(input, 25)
-        )
-      ).toBe(true)
-    );
-
-    expect(screen.getByText('Showing 25 loaded month records.')).toBeTruthy();
+    await waitFor(() => expect(screen.getByText('Showing page 1 (10 parents).')).toBeTruthy());
+    expect(screen.queryByText('Load First 25')).toBeNull();
+    expect(screen.getByText('Page 1')).toBeTruthy();
+    expect(screen.getByText('Previous')).toBeDisabled();
   });
 
   it('loads only the selected parent scope from initial dropdown options', async () => {
     render(<ParentPayments />);
 
-    await waitFor(() => expect(screen.getByRole('option', { name: /Parent One/ })).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getAllByRole('option', { name: /Parent One/ }).length).toBeGreaterThan(0)
+    );
 
     fireEvent.change(screen.getAllByRole('combobox')[0], {
       target: { value: 'parent-1' },
     });
-    fireEvent.click(screen.getByText('Apply / Load Selected'));
 
     await waitFor(() =>
       expect(
@@ -508,6 +485,7 @@ describe('Admin payment pages lazy loading', () => {
     );
 
     expect(screen.getByText('Showing selected parent only.')).toBeTruthy();
+    expect(screen.queryByText('Apply / Load Selected')).toBeNull();
   });
 
   it('loads only the selected teacher scope from initial dropdown options', async () => {
@@ -537,7 +515,9 @@ describe('Admin payment pages lazy loading', () => {
   it('merges parent prefix search results into the limited dropdown options', async () => {
     render(<ParentPayments />);
 
-    await waitFor(() => expect(screen.getByRole('option', { name: /Parent One/ })).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getAllByRole('option', { name: /Parent One/ }).length).toBeGreaterThan(0)
+    );
 
     fireEvent.change(screen.getByPlaceholderText('Search parent by name, email, phone, or ID'), {
       target: { value: 'Par' },
@@ -547,7 +527,7 @@ describe('Admin payment pages lazy loading', () => {
       expect(screen.getByRole('option', { name: /Parent Prefix Match/ })).toBeTruthy()
     , { timeout: 1200 });
 
-    expect(screen.getByRole('option', { name: /Parent One/ })).toBeTruthy();
+    expect(screen.getAllByRole('option', { name: /Parent One/ }).length).toBeGreaterThan(0);
   });
 
   it('finds teachers by prefix email and normalized phone without broad loads', async () => {
@@ -572,21 +552,90 @@ describe('Admin payment pages lazy loading', () => {
     , { timeout: 1200 });
   });
 
-  it('loads more month-scoped parents and merges the next page into dropdown options and table rows', async () => {
+  it('loads the next 10 parents and restores page 1 without duplicates or skips', async () => {
     render(<ParentPayments />);
 
-    await waitFor(() => expect(screen.getByRole('option', { name: /Parent One/ })).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Showing page 1 (10 parents).')).toBeTruthy());
+    fireEvent.click(screen.getByText('Next'));
 
-    fireEvent.click(screen.getByText('Load First 25'));
+    await waitFor(() => expect(screen.getByText('Showing page 2 (10 parents).')).toBeTruthy());
+    expect(screen.getAllByText('Parent 11').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Parent 10')).toBeNull();
+    expect(screen.getByText('Next')).toBeDisabled();
 
-    await waitFor(() => expect(screen.getByText('Showing 25 loaded month records.')).toBeTruthy());
-    expect(screen.getAllByText('Parent 25').length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByText('Previous'));
+    await waitFor(() => expect(screen.getByText('Showing page 1 (10 parents).')).toBeTruthy());
+    expect(screen.getAllByText('Parent 10').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Parent 11')).toBeNull();
+    expect(screen.getByText('Previous')).toBeDisabled();
+  });
 
-    fireEvent.click(screen.getByText('Load More'));
+  it('resets cursor history and returns to page 1 when the month changes', async () => {
+    render(<ParentPayments />);
+    await waitFor(() => expect(screen.getByText('Showing page 1 (10 parents).')).toBeTruthy());
+    fireEvent.click(screen.getByText('Next'));
+    await waitFor(() => expect(screen.getByText('Page 2')).toBeTruthy());
 
-    await waitFor(() => expect(screen.getByText('Showing 50 loaded month records.')).toBeTruthy());
-    expect(screen.getAllByRole('option', { name: /Parent 26/ }).length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Parent 50').length).toBeGreaterThan(0);
+    const callsBeforeMonthChange = getDocsMock.mock.calls.length;
+    const monthInput = document.querySelector('input[type="month"]');
+    expect(monthInput).toBeTruthy();
+    fireEvent.change(monthInput!, { target: { value: '2026-05' } });
+
+    await waitFor(() => expect(screen.getByText('Page 1')).toBeTruthy());
+    const newPageQueries = getDocsMock.mock.calls.slice(callsBeforeMonthChange).map(([input]) => input);
+    expect(
+      newPageQueries.some(
+        (input) =>
+          input?.args?.[0]?.kind === 'collectionGroup' &&
+          input.args[0]?.args?.[1] === 'months' &&
+          hasWhere(input, 'monthKey', '==', (value) => value === '2026-05') &&
+          !hasStartAfter(input, () => true)
+      )
+    ).toBe(true);
+    expect(screen.getByText('Previous')).toBeDisabled();
+  });
+
+  it('uses month-wide aggregate totals instead of deriving cards from the visible page', async () => {
+    let aggregateCall = 0;
+    getAggregateFromServerMock.mockImplementation(async (_input: unknown, fields: any) => {
+      const call = aggregateCall++;
+      if (fields.selectedMonthBilled) {
+        return {
+          data: () => ({
+            selectedMonthBilled: 123456,
+            selectedMonthSettled: 23456,
+            selectedMonthOutstanding: 100000,
+          }),
+        };
+      }
+      const totals = [7, 3, 9, 5000, -2000];
+      return { data: () => ({ total: totals[call - 1] || 0 }) };
+    });
+
+    render(<ParentPayments />);
+
+    await waitFor(() => expect(screen.getByText('₹1,23,456')).toBeTruthy());
+    expect(screen.getByText('₹1,00,000')).toBeTruthy();
+    expect(getAggregateFromServerMock).toHaveBeenCalledTimes(6);
+    expect(screen.getByText('Showing page 1 (10 parents).')).toBeTruthy();
+  });
+
+  it('renders loading and month empty states for an empty ordered page', async () => {
+    let resolvePage: ((value: { docs: unknown[] }) => void) | undefined;
+    getDocsMock.mockImplementationOnce(
+      () =>
+        new Promise<{ docs: unknown[] }>((resolve) => {
+          resolvePage = resolve;
+        })
+    );
+    render(<ParentPayments />);
+
+    await waitFor(() => expect(screen.getByText('Loading parent payments…')).toBeTruthy());
+    resolvePage?.({ docs: [] });
+    await waitFor(() =>
+      expect(screen.getByText('No parent payment records found for the selected month.')).toBeTruthy()
+    );
+    expect(screen.getByText('Next')).toBeDisabled();
   });
 
   it('loads more month-scoped teachers and merges the next page into dropdown options', async () => {

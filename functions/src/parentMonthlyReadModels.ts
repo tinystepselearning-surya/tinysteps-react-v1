@@ -38,6 +38,17 @@ function monthKeyFromDateIST(value: unknown): string | null {
   return `${year}-${month}`;
 }
 
+function parentNameSortFromUser(
+  parentId: string,
+  data: Record<string, unknown> | null
+): string {
+  return (
+    String(data?.displayName || data?.name || data?.email || parentId)
+      .trim()
+      .toLocaleLowerCase('en') || parentId.toLocaleLowerCase('en')
+  );
+}
+
 function monthDateRangeFromKey(monthKey: string): { startYmd: string; endYmd: string } | null {
   const parts = String(monthKey || '').split('-');
   if (parts.length !== 2) return null;
@@ -343,18 +354,21 @@ export async function recomputeParentMonthBillingReadModel(
   parentId: string,
   monthKey: string
 ): Promise<void> {
-  const [chargesSnap, walletSnap] = await Promise.all([
+  const [chargesSnap, walletSnap, parentSnap] = await Promise.all([
     db.collection('billingCharges')
       .where('parentId', '==', parentId)
       .where('monthKey', '==', monthKey)
       .get(),
     db.collection('parentWallets').doc(parentId).get(),
+    db.collection('users').doc(parentId).get(),
   ]);
   const activeChargeDocs = chargesSnap.docs.filter((docSnap) => {
     const data = (docSnap.data() || {}) as Record<string, unknown>;
     return data.archived !== true;
   });
   const walletBalance = normalizeAmount((walletSnap.data() || {}).currentBalance);
+  const parentData = (parentSnap.data() || {}) as Record<string, unknown>;
+  const parentNameSort = parentNameSortFromUser(parentId, parentData);
   const billingModel = buildParentMonthlyBillingReadModel({
     parentId,
     monthKey,
@@ -374,6 +388,7 @@ export async function recomputeParentMonthBillingReadModel(
   await docRef.set(
     {
       parentId,
+      parentNameSort,
       monthKey,
       schemaVersion: billingModel.schemaVersion,
       modelType: billingModel.modelType,
@@ -651,6 +666,51 @@ export const onPaymentReadModelWrite = onDocumentWritten(
     const beforeData = change.before.exists ? (change.before.data() as Record<string, unknown>) : null;
     const afterData = change.after.exists ? (change.after.data() as Record<string, unknown>) : null;
     await handleParentMonthProjectionUpdate(beforeData, afterData, 'payments');
+  }
+);
+
+export const onParentUserReadModelWrite = onDocumentWritten(
+  {
+    document: 'users/{parentId}',
+    region: REGION,
+  },
+  async (event) => {
+    const change = event.data;
+    const parentId = String(event.params.parentId || '').trim();
+    if (!change || !parentId || !change.after.exists) return;
+
+    const beforeData = change.before.exists
+      ? (change.before.data() as Record<string, unknown>)
+      : null;
+    const afterData = change.after.data() as Record<string, unknown>;
+    const roles = Array.isArray(afterData.roles)
+      ? afterData.roles.map((role) => String(role || '').trim().toLowerCase())
+      : [];
+    const isParent =
+      roles.includes('parent') ||
+      String(afterData.role || '').trim().toLowerCase() === 'parent';
+    if (!isParent) return;
+    const beforeName = parentNameSortFromUser(parentId, beforeData);
+    const afterName = parentNameSortFromUser(parentId, afterData);
+    if (change.before.exists && beforeName === afterName) return;
+
+    const db = admin.firestore();
+    const monthsSnap = await db
+      .collection('parentMonthlyReadModels')
+      .doc(parentId)
+      .collection('months')
+      .get();
+    for (let offset = 0; offset < monthsSnap.docs.length; offset += 450) {
+      const batch = db.batch();
+      monthsSnap.docs.slice(offset, offset + 450).forEach((monthDoc) => {
+        batch.set(
+          monthDoc.ref,
+          { parentNameSort: afterName, updatedAt: FieldValue.serverTimestamp() },
+          { merge: true }
+        );
+      });
+      await batch.commit();
+    }
   }
 );
 

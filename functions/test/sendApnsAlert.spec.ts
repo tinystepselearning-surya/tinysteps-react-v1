@@ -7,11 +7,14 @@ const { connectMock } = vi.hoisted(() => ({
   connectMock: vi.fn(),
 }));
 
-vi.mock('node:http2', async () => {
-  const actual = await vi.importActual<typeof import('node:http2')>('node:http2');
-  return {
-    ...actual,
+vi.mock('node:http2', () => {
+  const mockedHttp2 = {
     connect: connectMock,
+    constants: { NGHTTP2_CANCEL: 8 },
+  };
+  return {
+    ...mockedHttp2,
+    default: mockedHttp2,
   };
 });
 

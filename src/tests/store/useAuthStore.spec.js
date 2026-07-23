@@ -9,9 +9,17 @@ beforeEach(() => {
         // ignore if not available
     }
     // Reset in-memory store
-    useAuthStore.setState({ user: null, isLoading: false });
+    useAuthStore.setState({
+        user: null,
+        authStatus: 'initializing',
+        isLoading: true,
+    });
 });
 describe('useAuthStore', () => {
+    it('starts in an unresolved loading state', () => {
+        expect(useAuthStore.getState().authStatus).toBe('initializing');
+        expect(useAuthStore.getState().isLoading).toBe(true);
+    });
     it('sets and returns user via setUser', () => {
         const user = {
             uid: 'u1',
@@ -35,10 +43,16 @@ describe('useAuthStore', () => {
         useAuthStore.getState().clearUser();
         expect(useAuthStore.getState().user).toBeNull();
     });
-    it('sets loading flag via setLoading', () => {
-        useAuthStore.getState().setLoading(true);
-        expect(useAuthStore.getState().isLoading).toBe(true);
-        useAuthStore.getState().setLoading(false);
+    it('resolves auth without returning to initializing', () => {
+        useAuthStore.getState().resolveAuth('authenticated', {
+            uid: 'stable-user',
+            email: 'stable@example.com',
+            displayName: 'Stable',
+            role: 'parent',
+        }, 'test-only');
+        useAuthStore.getState().resolveAuth('initializing', null, 'messages-error');
+        expect(useAuthStore.getState().authStatus).toBe('authenticated');
+        expect(useAuthStore.getState().user?.uid).toBe('stable-user');
         expect(useAuthStore.getState().isLoading).toBe(false);
     });
     it('persists user to localStorage', () => {
