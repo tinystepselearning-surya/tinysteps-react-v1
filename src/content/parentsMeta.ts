@@ -48,10 +48,10 @@ export const parentsMeta: Record<string, ParentMeta> = {
       "@context": "https://schema.org",
       "@type": "HowTo",
       "name": "Getting started with Tiny Steps",
-      "description": "Start with one free assessment class. Book a 35‑minute trial so we can recommend the right level.",
+      "description": "Start with one free 35-minute 1:1 online demo assessment class so we can recommend the right level.",
       "inLanguage": "en-IN",
       "step": [
-        { "@type": "HowToStep", "text": "Book a free assessment via the Courses page." },
+        { "@type": "HowToStep", "text": "Book one free 35-minute 1:1 online demo assessment class via the Courses page." },
         { "@type": "HowToStep", "text": "Attend the 35‑minute assessment with your child." },
         { "@type": "HowToStep", "text": "Receive a recommended course and curriculum link." }
       ]
@@ -68,7 +68,7 @@ export const parentsMeta: Record<string, ParentMeta> = {
       "description": "Pick the course that matches your child's current need: phonics, grammar or speaking.",
       "inLanguage": "en-IN",
       "step": [
-        { "@type": "HowToStep", "text": "Complete a free assessment." },
+        { "@type": "HowToStep", "text": "Complete a free 35-minute 1:1 online demo assessment class." },
         { "@type": "HowToStep", "text": "Choose phonics for foundational reading; grammar for writing; speaking for confidence." },
         { "@type": "HowToStep", "text": "Discuss schedule and teacher preferences." }
       ]

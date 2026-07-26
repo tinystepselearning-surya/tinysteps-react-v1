@@ -65,7 +65,7 @@ const TrackingProgress: React.FC = () => {
 
     <div className="mt-8 flex flex-col gap-3">
       <Link to="/book-demo" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
-        Book Free Assessment →
+        Book Free 35-Minute Demo →
       </Link>
       <div className="flex flex-wrap gap-2">
         <Link to="/courses/phonics-foundation" className="text-primary-600 text-sm font-medium hover:underline">

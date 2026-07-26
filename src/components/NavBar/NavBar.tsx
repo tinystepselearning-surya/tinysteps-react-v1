@@ -237,7 +237,7 @@ Priya <span className="ts-nav-caret">▾</span>
           {showCta && (
             <li className="ts-nav-item">
               <button type="button" className="ts-nav-link" onClick={handleCtaClick}>
-                Book Free Assessment Class
+                Book Free 35-Minute Demo
               </button>
             </li>
           )}

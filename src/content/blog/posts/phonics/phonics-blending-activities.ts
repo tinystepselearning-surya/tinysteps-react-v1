@@ -57,7 +57,7 @@ const post: PhonicsSeoPost = {
     label: 'Reading fluency program for kids',
     to: '/reading-fluency-program'
   }, {
-    label: 'Book free assessment',
+    label: 'Book Free 35-Minute Demo',
     to: '/book-demo'
   }]
 };

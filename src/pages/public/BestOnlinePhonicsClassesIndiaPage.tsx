@@ -22,7 +22,7 @@ const quickAnswerBlocks = [
   {
     title: 'What happens before enrollment?',
     answer:
-      'Parents start with a free assessment, understand the child’s reading stage, and then choose the right class frequency and plan with a clear recommendation.',
+      'Parents start with a free 35-minute 1:1 online demo assessment class, understand the child’s reading stage, and then choose the right class frequency and plan with a clear recommendation.',
   },
 ];
 
@@ -85,12 +85,12 @@ const parentQuestionRows = [
   {
     question: 'What is the current pricing reference?',
     answer:
-      'Current standard reference pricing is ₹400 per class, with the starter 12-class plan at ₹4,800 after the free assessment confirms fit.',
+      'Current standard reference pricing is ₹400 per class, with the starter 12-class plan at ₹4,800 after the free 35-minute 1:1 online demo assessment class confirms fit.',
   },
   {
     question: 'Is there a trial?',
     answer:
-      'Tiny Steps uses a free assessment-first approach instead of asking parents to commit without knowing the child’s starting level.',
+      'Tiny Steps uses a free 35-minute 1:1 online demo assessment class-first approach instead of asking parents to commit without knowing the child’s starting level.',
   },
   {
     question: 'Why do parents shortlist Tiny Steps?',
@@ -147,7 +147,7 @@ const proofCards = [
   },
   {
     title: 'Real trust assets',
-    detail: 'Parents can review class samples, testimonials, pricing, and a free assessment path before deciding.',
+    detail: 'Parents can review class samples, testimonials, pricing, and a free 35-minute 1:1 online demo assessment class path before deciding.',
   },
 ];
 
@@ -157,7 +157,7 @@ const whyTinyStepsPoints = [
   'Founder-led curriculum direction',
   'Zoom-based live classes for India and global families',
   'Progress updates and next-step guidance for parents',
-  'Free assessment before package selection',
+  'One free 35-minute 1:1 demo assessment class before package selection',
 ];
 
 const fitCards = [
@@ -234,7 +234,7 @@ const supportLinks = [
   {
     title: 'Review pricing',
     href: '/pricing',
-    description: 'Compare current packages after the free assessment confirms the right starting point.',
+    description: 'Compare current packages after the free 35-minute 1:1 online demo assessment class confirms the right starting point.',
     accent: 'border-[#CFE6FA] hover:bg-[#F4FAFF]',
   },
   {
@@ -302,7 +302,7 @@ const faqItems = [
   {
     question: 'How much do online phonics classes cost?',
     answer:
-      'Current standard reference pricing is ₹400 per class, with a 12-class starter plan at ₹4,800. Families should confirm the right package after the free assessment.',
+      'Current standard reference pricing is ₹400 per class, with a 12-class starter plan at ₹4,800. Families should confirm the right package after the free 35-minute 1:1 online demo assessment class.',
   },
   {
     question: 'Do parents get progress updates?',
@@ -407,7 +407,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
                   to="/book-demo"
                   className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-gradient-to-r from-[#FF7B66] to-[#FF9E7A] px-6 py-3.5 text-base font-bold text-white shadow-[0_12px_26px_rgba(255,126,99,0.35)] transition hover:from-[#FF715B] hover:to-[#FF9570]"
                 >
-                  Book Free Assessment
+                  Book Free 35-Minute Demo
                 </Link>
                 <Link
                   to="/phonics"
@@ -455,7 +455,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
                   <span className="inline-flex rounded-full border border-[#DDE6F4] bg-white/85 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#345B84]">
                     Best first step
                   </span>
-                  <p className="mt-1">Book the free assessment to confirm the child&apos;s current level, fit, and recommended starting plan.</p>
+                  <p className="mt-1">Book the free 35-minute 1:1 online demo assessment class to confirm the child&apos;s current level, fit, and recommended starting plan.</p>
                 </div>
               </div>
               <p className="mt-3 text-xs leading-6 text-slate-500 sm:text-sm">
@@ -779,7 +779,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
         <div className="mx-auto max-w-6xl rounded-3xl border border-[#DDE8F8] bg-white/95 p-5 shadow-[0_12px_30px_rgba(55,97,143,0.12)] md:p-8">
           <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Pricing and next step</h2>
           <p className="mt-3 max-w-[940px] text-slate-700">
-            Start with the free assessment first. After the assessment, Tiny Steps recommends the right class frequency and package based on the child&apos;s current reading level.
+            Start with the free 35-minute 1:1 online demo assessment class first. After the assessment, Tiny Steps recommends the right class frequency and package based on the child&apos;s current reading level.
           </p>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5">
@@ -811,7 +811,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
               to="/book-demo"
               className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-gradient-to-r from-[#FF7B66] to-[#FF9E7A] px-6 py-3 font-semibold text-white shadow-[0_12px_26px_rgba(255,126,99,0.35)] hover:from-[#FF715B] hover:to-[#FF9570]"
             >
-              Book Free Assessment
+              Book Free 35-Minute Demo
             </Link>
           </div>
         </div>
@@ -828,11 +828,11 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
         highlights={[
           { label: 'Experience', value: '10+ years in early childhood English education' },
           { label: 'Focus', value: 'Phonics, reading confidence, grammar, and communication growth' },
-          { label: 'Why parents use this page', value: 'To compare fit before booking a free assessment' },
+          { label: 'Why parents use this page', value: 'To compare fit before booking a free 35-minute 1:1 online demo assessment class' },
         ]}
         badges={['Founder reviewed', 'Parent comparison page']}
         ctas={[
-          { label: 'Book a free assessment', to: '/book-demo', variant: 'primary' },
+          { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo', variant: 'primary' },
           { label: 'Explore class samples', to: '/class-samples', variant: 'secondary' },
         ]}
       />
@@ -868,14 +868,14 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
         <div className="mx-auto max-w-6xl rounded-3xl bg-gradient-to-r from-slate-900 via-[#1f2a44] to-slate-900 p-6 text-center text-white shadow-[0_20px_50px_rgba(15,23,42,0.18)] sm:p-8 md:p-10">
           <h2 className="text-2xl font-bold md:text-3xl">Ready to choose the right phonics path for your child?</h2>
           <p className="mx-auto mt-3 max-w-3xl text-base leading-7 text-slate-200">
-            Book a free assessment and get a clear starting level, recommended path, current package guidance, and a practical next step for reading growth.
+            Book one free 35-minute 1:1 online demo assessment class and get a clear starting level, recommended path, current package guidance, and a practical next step for reading growth.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <Link
               to="/book-demo"
               className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-gradient-to-r from-[#FFB89E] to-white px-8 py-3 font-semibold text-slate-900 transition hover:from-[#FFAD90] hover:to-[#FFF7F2] sm:w-auto"
             >
-              Book Free Assessment
+              Book Free 35-Minute Demo
             </Link>
           </div>
           <p className="mt-4 text-sm text-slate-300">

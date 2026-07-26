@@ -52,8 +52,8 @@ export default function PublicAssessmentForm({
   onSuccess,
   title = 'Book Assessment',
   description = 'Share a few details and we will confirm available slots on WhatsApp.',
-  submitLabel = 'Get Free Assessment on WhatsApp',
-  submitAriaLabel = 'Get Free Assessment on WhatsApp',
+  submitLabel = 'Book Free 35-Minute Demo on WhatsApp',
+  submitAriaLabel = 'Book Free 35-Minute Demo on WhatsApp',
 }: PublicAssessmentFormProps) {
   const ageOptions: AgeOption[] = ['3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
   const mainConcernOptions = PUBLIC_MAIN_CONCERN_OPTIONS;

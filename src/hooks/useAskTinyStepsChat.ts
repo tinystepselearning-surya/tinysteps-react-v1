@@ -14,6 +14,14 @@ import {
   PER_CLASS_PRICE,
   ULTRA_PREMIUM_PRICING,
 } from "../config/pricing";
+import {
+  FREE_DEMO_DURATION_MINUTES,
+  FREE_DEMO_FULL_DESCRIPTION,
+  FREE_DEMO_OFFER_NAME,
+  FREE_DEMO_PRICE,
+  FREE_DEMO_SESSION_COUNT,
+  STANDARD_PRICING_SUMMARY,
+} from "../config/publicOffer";
 import { callAskTinySteps } from "../services/askTinyStepsService";
 
 type ChatRole = "user" | "assistant";
@@ -32,15 +40,15 @@ const CANONICAL_PRICING_PACKAGES = ONE_TO_ONE_MONTHLY_PACKAGES.map((pkg) => ({
 export const ASK_TINYSTEPS_KB: { id: string; title: string; text: string }[] = [
   {
     id: "assessment",
-    title: "Free Assessment Class (Demo)",
+    title: FREE_DEMO_OFFER_NAME,
     text:
-      "Free Assessment Class / Demo is FREE (₹0). We check the child’s level and recommend the right track + level, then confirm a suitable slot on WhatsApp.",
+      `${FREE_DEMO_FULL_DESCRIPTION} It is FREE (₹${FREE_DEMO_PRICE}), requires no credit card, and there is no obligation to enrol.`,
   },
   {
     id: "pricing",
     title: "Pricing & Packages",
     text:
-      `Tiny Steps Pricing has two options. Standard Program (classes with expert Indian teachers): ${formatINR(PER_CLASS_PRICE)}/class, Starter ${formatINR(CANONICAL_PRICING_PACKAGES[0].price)} for ${CANONICAL_PRICING_PACKAGES[0].classes} classes, Growth ${formatINR(CANONICAL_PRICING_PACKAGES[1].price)} for ${CANONICAL_PRICING_PACKAGES[1].classes} classes, Intensive ${formatINR(CANONICAL_PRICING_PACKAGES[2].price)} for ${CANONICAL_PRICING_PACKAGES[2].classes} classes. Ultra Premium Program (classes with native English-speaking teachers): 1:1 ${formatINR(ULTRA_PREMIUM_PRICING[0].perClass)} per class or ${formatINR(ULTRA_PREMIUM_PRICING[0].package12)} for 12 classes; 1:2 ${formatINR(ULTRA_PREMIUM_PRICING[1].package12)} for 12 classes per child; 1:3 ${formatINR(ULTRA_PREMIUM_PRICING[2].package12)}; 1:4 ${formatINR(ULTRA_PREMIUM_PRICING[3].package12)}; 1:5 ${formatINR(ULTRA_PREMIUM_PRICING[4].package12)}; 1:6 ${formatINR(ULTRA_PREMIUM_PRICING[5].package12)}.`,
+      `${STANDARD_PRICING_SUMMARY}. Standard 1:1 monthly plans: Starter ${formatINR(CANONICAL_PRICING_PACKAGES[0].price)} for ${CANONICAL_PRICING_PACKAGES[0].classes} classes, Growth ${formatINR(CANONICAL_PRICING_PACKAGES[1].price)} for ${CANONICAL_PRICING_PACKAGES[1].classes} classes, Intensive ${formatINR(CANONICAL_PRICING_PACKAGES[2].price)} for ${CANONICAL_PRICING_PACKAGES[2].classes} classes. Ultra Premium Program (classes with native English-speaking teachers): 1:1 ${formatINR(ULTRA_PREMIUM_PRICING[0].perClass)} per class or ${formatINR(ULTRA_PREMIUM_PRICING[0].package12)} for 12 classes; 1:2 ${formatINR(ULTRA_PREMIUM_PRICING[1].package12)} for 12 classes per child; 1:3 ${formatINR(ULTRA_PREMIUM_PRICING[2].package12)}; 1:4 ${formatINR(ULTRA_PREMIUM_PRICING[3].package12)}; 1:5 ${formatINR(ULTRA_PREMIUM_PRICING[4].package12)}; 1:6 ${formatINR(ULTRA_PREMIUM_PRICING[5].package12)}.`,
   },
   {
     id: "timings",
@@ -58,22 +66,24 @@ export const ASK_TINYSTEPS_KB: { id: string; title: string; text: string }[] = [
     id: "how_it_works",
     title: "How it works",
     text:
-      "Parents share the child’s age/level. We do a FREE assessment, recommend the best track + level, confirm slots, then start 1:1 sessions with stage-based progress updates.",
+      `${FREE_DEMO_FULL_DESCRIPTION} We then confirm slots and start classes with stage-based progress updates.`,
   },
   {
     id: "summer_camps",
-    title: "Summer Camp Programs",
+    title: "Summer Camp 2026 — Enrolment Closed",
     text:
-      "Tiny Steps Summer Camp 2026 runs as a structured online summer season from 27 April 2026 to 13 June 2026 for ages 4–12. Each child joins one 4-week small-group batch with 24 live classes from Monday to Saturday, with Sunday kept as a holiday. Available batch start dates are 27 April, 4 May, 11 May and 18 May 2026. Tracks: Phonics Fast Track (4–8), Grammar Fast Track (6–12), Speaking Fast Track (6–12). Fast Track Pack list fee is ₹5,000 per child. Effective price: ₹2,400 per child. Sessions are typically 50–60 minutes with worksheets and class recordings. The final batch is designed to close before schools reopen on 15 June 2026. Details: https://tinystepslearning.com/summer-camps",
+      "Tiny Steps Summer Camp 2026 ended on 13 June 2026. Each child joined one four-week small-group batch with 24 live classes from Monday to Saturday. The historical list fee was ₹5,000 per child and the effective fee was ₹2,400 per child. Enrolment is closed. Current families can book one free 35-minute demo assessment class for the regular Tiny Steps programmes.",
   },
 ];
 
 export const ASK_TINYSTEPS_FACTS = {
   classDurationMins: 35,
   classModes: ["1:1"] as const,
+  freeDemoSessionCount: FREE_DEMO_SESSION_COUNT,
+  freeDemoDurationMins: FREE_DEMO_DURATION_MINUTES,
 
   // ✅ Important: keep these consistent with website CTA.
-  freeAssessmentPrice: 0,
+  freeAssessmentPrice: FREE_DEMO_PRICE,
 
   // Optional paid single class (not the demo)
   paidSingleClassPrice: PER_CLASS_PRICE,
@@ -192,8 +202,9 @@ function formatFactsForIntent(intent: Intent): { text: string; sourcesUsed: stri
   if (intent === "assessment") {
     return {
       text:
-        `✅ Free Assessment Class (Demo): FREE (₹${ASK_TINYSTEPS_FACTS.freeAssessmentPrice}).\n` +
-        `We check your child’s level and recommend the right track + level, then confirm a suitable slot.\n\n` +
+        `✅ ${FREE_DEMO_OFFER_NAME}: FREE (₹${FREE_DEMO_PRICE}).\n` +
+        `${FREE_DEMO_FULL_DESCRIPTION}\n` +
+        `No credit card or enrolment commitment is required.\n\n` +
         `${wa}`,
       sourcesUsed: ["assessment"],
     };
@@ -205,7 +216,8 @@ function formatFactsForIntent(intent: Intent): { text: string; sourcesUsed: stri
     );
 
     lines.unshift(
-      `✅ Free Assessment Class (Demo): FREE (₹${ASK_TINYSTEPS_FACTS.freeAssessmentPrice})`
+      `✅ ${STANDARD_PRICING_SUMMARY}`,
+      `✅ ${FREE_DEMO_OFFER_NAME}: FREE (₹${FREE_DEMO_PRICE})`
     );
     lines.push("• Ultra Premium (native English-speaking teachers):");
     ASK_TINYSTEPS_FACTS.ultraPremiumPricing.forEach((row) => {
@@ -226,7 +238,7 @@ function formatFactsForIntent(intent: Intent): { text: string; sourcesUsed: stri
       text:
         `Standard single paid class (35 minutes, 1:1): ₹${ASK_TINYSTEPS_FACTS.paidSingleClassPrice}.\n` +
         `Ultra Premium 1:1 class (native English-speaking teacher): ₹${ASK_TINYSTEPS_FACTS.ultraPremiumPricing[0].perClass}.\n` +
-        `✅ Free Assessment Class (Demo) is FREE (₹${ASK_TINYSTEPS_FACTS.freeAssessmentPrice}) — recommended first to pick the right level.\n\n` +
+        `✅ ${FREE_DEMO_OFFER_NAME} is FREE (₹${FREE_DEMO_PRICE}) and is recommended before purchasing paid classes.\n\n` +
         `${wa}`,
       sourcesUsed: ["pricing", "assessment"],
     };
@@ -254,11 +266,10 @@ function formatFactsForIntent(intent: Intent): { text: string; sourcesUsed: stri
   if (intent === "summer_camp") {
     return {
       text:
-        "Summer Camp 2026 runs as a structured season from 27 April 2026 to 13 June 2026 for ages 4–12.\n" +
-        "Each child joins one 4-week batch with 24 live classes from Monday to Saturday, with Sunday kept as a holiday.\n" +
-        "Available batch start dates are 27 April, 4 May, 11 May and 18 May 2026, and the final batch closes before schools reopen on 15 June 2026.\n" +
-        "Tracks: Phonics Fast Track (4–8), Grammar Fast Track (6–12), Speaking Fast Track (6–12).\n" +
-        "Fast Track Pack list fee: ₹5,000 per child. Effective price: ₹2,400 per child.\n" +
+        "Summer Camp 2026 ended on 13 June 2026. Enrolment is closed.\n" +
+        "Each child joined one four-week small-group batch with 24 live classes from Monday to Saturday.\n" +
+        "Historical tracks were Phonics Fast Track, Grammar Fast Track, and Speaking Fast Track.\n" +
+        "Historical list fee: ₹5,000 per child. Historical effective fee: ₹2,400 per child.\n" +
         "Details: https://tinystepslearning.com/summer-camps\n\n" +
         `${wa}`,
       sourcesUsed: ["summer_camps"],
@@ -273,7 +284,7 @@ function greetingReply(): { text: string; sourcesUsed: string[] } {
     text:
       "Hi! 👋 I’m Ask TinySteps.\n\n" +
       "You can ask me:\n" +
-      "• Free assessment / demo\n" +
+      "• One Free 35-Minute Demo Assessment Class\n" +
       "• Pricing / packages\n" +
       "• Class duration\n" +
       "• Courses (Phonics / Grammar / Public Speaking)\n\n" +

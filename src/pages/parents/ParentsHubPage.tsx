@@ -314,7 +314,7 @@ const ParentsHubPage: React.FC = () => {
                   to="/book-demo"
                   className="inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
                 >
-                  Book Free Assessment
+                  Book Free 35-Minute Demo
                 </Link>
                 <Link
                   to="/faq"
@@ -437,14 +437,14 @@ const ParentsHubPage: React.FC = () => {
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Still unsure?</p>
               <p className="mt-3 text-sm leading-7 text-slate-600">
                 Start with the playbook that matches the strongest pain point. If you still feel uncertain after
-                a week, book a free assessment for a level-based recommendation.
+                a week, book one free 35-minute 1:1 online demo assessment class for a level-based recommendation.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <Link
                   to="/book-demo"
                   className="inline-flex items-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
                 >
-                  Book Free Assessment
+                  Book Free 35-Minute Demo
                 </Link>
                 <Link
                   to="/courses"
@@ -633,7 +633,7 @@ const ParentsHubPage: React.FC = () => {
                 to="/book-demo"
                 className="inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
               >
-                Book Free Assessment
+                Book Free 35-Minute Demo
               </Link>
               <Link
                 to="/curriculum"

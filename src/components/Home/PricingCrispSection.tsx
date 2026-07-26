@@ -6,6 +6,10 @@ import {
   PER_CLASS_PRICE,
   ULTRA_PREMIUM_PRICING,
 } from '../../config/pricing';
+import {
+  FREE_DEMO_CTA_LABEL,
+  STANDARD_PRICING_SUMMARY,
+} from '../../config/publicOffer';
 
 const PricingCrispSection: React.FC = () => {
   return (
@@ -23,6 +27,9 @@ const PricingCrispSection: React.FC = () => {
           </h2>
           <p className="mt-3 text-center text-sm sm:text-base text-slate-600 max-w-2xl mx-auto">
             <span className="font-semibold text-slate-900">Standard Program</span> • Classes with expert Indian teachers
+          </p>
+          <p className="mt-3 text-center text-sm font-semibold text-slate-800">
+            {STANDARD_PRICING_SUMMARY}
           </p>
         </div>
 
@@ -148,12 +155,18 @@ const PricingCrispSection: React.FC = () => {
             <span>✅ Easy class rescheduling</span>
             <span>✅ Pause anytime between months</span>
           </p>
-          <div className="mt-4">
+          <div className="mt-4 flex flex-wrap justify-center gap-3">
             <Link
               to="/pricing"
               className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
             >
               View pricing details
+            </Link>
+            <Link
+              to="/book-demo"
+              className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              {FREE_DEMO_CTA_LABEL}
             </Link>
           </div>
         </div>

@@ -234,7 +234,7 @@ const post: BlogPost = {
     },
     {
       type: 'h2',
-      content: '9. Ready to book a free assessment or class demo?',
+      content: '9. Ready to book one free 35-minute 1:1 online demo assessment class?',
     },
     {
       type: 'p',
@@ -243,7 +243,7 @@ const post: BlogPost = {
     },
     {
       type: 'li',
-      content: 'Book a free assessment or class demo: /contact',
+      content: 'Book one free 35-minute 1:1 online demo assessment class: /contact',
     },
     {
       type: 'h2',

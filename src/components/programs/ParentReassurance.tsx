@@ -23,7 +23,7 @@ export default function ParentReassurance({ programName = 'this program' }: Pare
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200">
                 <span className="text-2xl">📋</span>
               </div>
-              <h3 className="mt-4 text-base font-semibold text-slate-900">1. Free Assessment</h3>
+              <h3 className="mt-4 text-base font-semibold text-slate-900">1. Free 35-Minute Demo Assessment</h3>
               <p className="mt-2 text-sm leading-relaxed text-slate-600">
                 35-minute session with a trained mentor to understand your child's current level and learning style
               </p>
@@ -82,7 +82,7 @@ export default function ParentReassurance({ programName = 'this program' }: Pare
               to="/book-demo"
               className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
-              Book Your Free Assessment
+              Book Free 35-Minute Demo
             </Link>
             <p className="mt-3 text-xs text-slate-500">Takes 2 minutes • No credit card required</p>
           </div>

@@ -8,7 +8,7 @@ const sections = [
     title: 'Introduction and acceptance',
     paragraphs: [
       'These Terms and Conditions govern the use of the Tiny Steps Learning website and all related Tiny Steps Online School services. Tiny Steps Online School is the service provider for the classes, learning materials, assessments, and support offered through this website.',
-      'By using the website, booking a free assessment, enrolling in classes, or making a payment, you agree to these Terms and Conditions. If the student is under 18 years old, a parent or legal guardian must review and accept these terms on the child’s behalf.',
+      'By using the website, booking a free 35-minute 1:1 online demo assessment class, enrolling in classes, or making a payment, you agree to these Terms and Conditions. If the student is under 18 years old, a parent or legal guardian must review and accept these terms on the child’s behalf.',
     ],
   },
   {

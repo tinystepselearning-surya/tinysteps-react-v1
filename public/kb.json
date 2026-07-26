@@ -2,56 +2,41 @@
   {
     "path": "/",
     "title": "Tiny Steps - Home",
-    "text": "Tiny Steps is a premium 1:1 online English school for young learners. We teach children aged 3–12 with short, focused 35-minute classes. Start with a free assessment class (₹0) and choose a package that suits your child. For quick help, message us on WhatsApp +91 9618398383 or visit https://wa.me/919618398383."
+    "text": "Tiny Steps is a premium online English school for children ages 3–12. Standard 1:1 classes cost ₹400 per class. Standard small-group classes cost ₹180–₹300 per child per class depending on group size. One free 35-minute 1:1 online demo assessment class is provided per child before enrolment. The teacher checks the child’s current level and recommends the right learning path. The demo costs ₹0, requires no credit card, and carries no obligation to enrol. For quick help, message WhatsApp +91 9618398383 or visit https://wa.me/919618398383."
   },
   {
-    "path": "/summer-camps",
-    "title": "Tiny Steps Summer Camps",
-    "text": "Tiny Steps Summer Camp is a 10-week online group program (April 1–June 15, 2026) for ages 4–12. Families can choose Phonics Fast Track (ages 4–8), Grammar Fast Track (ages 6–12), or Speaking Fast Track (ages 6–12). Enrollment is ₹2,400 per child (70% off from ₹8,000). Classes are live small-group sessions, typically 50–60 minutes, with effective worksheets and class recordings. A quick assessment helps us place each child in the right level group. Enroll or ask questions on WhatsApp: https://wa.me/919618398383."
-  },
-  {
-    "path": "/summer-camps/phonics-fast-track",
-    "title": "Phonics Fast Track Summer Program",
-    "text": "Phonics Fast Track is a 10-week summer program for ages 4–8. It focuses on letter sounds, blends, decoding, and reading confidence. The format is live small-group classes with mentor feedback, effective worksheets, and class recordings. Enrollment is ₹2,400 per child in the Summer Camp Fast Track Pack."
-  },
-  {
-    "path": "/summer-camps/grammar-fast-track",
-    "title": "Grammar Fast Track Summer Program",
-    "text": "Grammar Fast Track is a 10-week summer program for ages 6–12. It focuses on sentence structure, punctuation, tense accuracy, and cleaner writing flow. The format is live small-group classes with guided correction, effective worksheets, and class recordings. Enrollment is ₹2,400 per child in the Summer Camp Fast Track Pack."
-  },
-  {
-    "path": "/summer-camps/speaking-fast-track",
-    "title": "Speaking Fast Track Summer Program",
-    "text": "Speaking Fast Track is a 10-week summer program for ages 6–12. It focuses on confidence, speech structure, pronunciation clarity, and presentation flow. The format is live small-group classes with active speaking practice, effective worksheets, and class recordings. Enrollment is ₹2,400 per child in the Summer Camp Fast Track Pack."
+    "path": "/book-demo",
+    "title": "One Free 35-Minute Demo Assessment Class",
+    "text": "Tiny Steps provides one free 35-minute 1:1 online demo assessment class per child before enrolment. The teacher may check phonics, reading, grammar, sentence formation, pronunciation, and speaking confidence depending on the child’s age and current level. Parents receive a recommended learning path. The session costs ₹0, requires no credit card, and there is no obligation to enrol."
   },
   {
     "path": "/pricing",
     "title": "Pricing & Packages",
-    "text": "Tiny Steps Pricing has two options. Standard Program: classes with expert Indian teachers. 1:1 starts at ₹400 per class, with 12/16/24 class monthly plans at ₹4,800/₹6,400/₹9,600. Ultra Premium Program: classes with native English-speaking teachers. 1:1 Personal Class ₹1,899 per class or ₹22,799 for 12 classes. 1:2 Semi-Private ₹1,099 per child (₹13,199 for 12 classes), 1:3 Small Group ₹849 per child (₹10,199), 1:4 Group ₹699 per child (₹8,399), 1:5 Group ₹649 per child (₹7,799), and 1:6 Group ₹599 per child (₹7,199). Batch availability depends on age, level, and suitable peer matching. Contact WhatsApp +91 9618398383 or https://wa.me/919618398383 to book or ask questions."
+    "text": "Standard 1:1: ₹400 per class. Small groups: ₹180–₹300 per child per class. Standard 1:1 monthly plans are ₹4,800 for 12 classes, ₹6,400 for 16 classes, and ₹9,600 for 24 classes. Ultra Premium classes with native English-speaking teachers are priced separately: 1:1 is ₹1,899 per class or ₹22,799 for 12 classes; 1:2 is ₹1,099 per child per class; 1:3 is ₹849; 1:4 is ₹699; 1:5 is ₹649; and 1:6 is ₹599. One free 35-minute demo assessment class is available per child before enrolment."
   },
   {
     "path": "/courses",
     "title": "Courses and Tracks",
-    "text": "Our core tracks are Phonics (ages 3–10), Grammar (ages 5–10) and Public Speaking (ages 5–12). Each track has progressive lessons tailored to your child’s level. Classes are personalised in a 1:1 format so tutors can focus on individual strengths and gaps."
+    "text": "Tiny Steps core tracks are Phonics for ages 3–10, Grammar for ages 5–10, and Public Speaking for ages 5–12. Each track has progressive lessons matched to the child’s current level. Families begin with one free 35-minute 1:1 demo assessment class before choosing a learning path."
   },
   {
     "path": "/faq",
     "title": "Frequently Asked Questions",
-    "text": "Q: What age groups do you teach? A: Ages 3–12. Q: How long is each class? A: 35 minutes. Q: Is there a trial? A: Yes, a free assessment class at ₹0. Q: How do I book? A: Message WhatsApp +91 9618398383 or use https://wa.me/919618398383. Q: Payment options? A: We accept common online payments; contact us for details."
-  },
-  {
-    "path": "/how-it-works",
-    "title": "How Tiny Steps Works",
-    "text": "We begin with a free assessment to find the right level. After assessment, you pick a track and package. Classes run 1:1 online for 35 minutes each, scheduled at convenient times. Tutors provide simple progress notes after sessions and suggest next steps. You can switch tracks or adjust pace as needed."
+    "text": "Tiny Steps teaches children ages 3–12. Standard 1:1 classes cost ₹400 per class, while standard small-group classes cost ₹180–₹300 per child per class. Tiny Steps provides one free 35-minute 1:1 online demo assessment class per child before enrolment. It costs ₹0, requires no credit card, and there is no obligation to enrol. Book through https://tinystepslearning.com/book-demo or message WhatsApp +91 9618398383."
   },
   {
     "path": "/why-tiny-steps",
     "title": "Why Tiny Steps",
-    "text": "Tiny Steps focuses on small, consistent wins. Our 1:1 teaching model ensures personalised attention, faster progress and confident learners. We design lessons for early childhood and primary years using play-based, age-appropriate activities. Parents get clear updates and simple goals after each class."
+    "text": "Tiny Steps provides live 1:1 and level-matched small-group online English classes with structured phonics, reading, grammar, sentence formation, and speaking support. Parents receive clear progress updates and practical next steps. Placement begins with one free 35-minute 1:1 demo assessment class."
   },
   {
     "path": "/curriculum",
     "title": "Curriculum Overview",
-    "text": "The curriculum builds key skills in reading, writing, speaking and listening. Phonics covers letter sounds, blending and early reading (ages 3–10). Grammar teaches sentence structure and writing basics (ages 5–10). Public Speaking develops confidence, storytelling and presentation skills (ages 5–12). Lessons are broken into short, focused activities to match a 35-minute class."
+    "text": "The Tiny Steps curriculum builds reading, writing, speaking, and listening skills. Phonics covers sounds, blending, decoding, and early reading. Grammar covers sentence formation, tense accuracy, punctuation, and writing. Public Speaking develops confidence, storytelling, pronunciation, and presentation skills. One free 35-minute demo assessment class helps determine the correct starting stage."
+  },
+  {
+    "path": "/summer-camps",
+    "title": "Summer Camp 2026 — Enrolment Closed",
+    "text": "Tiny Steps Summer Camp 2026 ended on 13 June 2026. Each child joined one four-week small-group batch with 24 live classes from Monday to Saturday. Available historical tracks were Phonics Fast Track, Grammar Fast Track, and Speaking Fast Track. The historical list fee was ₹5,000 per child and the effective fee was ₹2,400 per child. Enrolment is closed. This archived offer must not be presented as a current programme."
   }
 ]

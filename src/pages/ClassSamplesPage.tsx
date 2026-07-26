@@ -53,7 +53,7 @@ const faqItems = [
   {
     question: 'Should I watch samples before booking?',
     answer:
-      'Samples can help parents understand the teaching approach, but the best next step is a free assessment because every child starts at a different level.',
+      'Samples can help parents understand the teaching approach, but the best next step is a free 35-minute 1:1 online demo assessment class because every child starts at a different level.',
   },
 ];
 const faqSchema = {
@@ -389,7 +389,7 @@ export default function ClassSamplesPage() {
                 to="/book-demo"
                 className="inline-flex h-12 items-center justify-center rounded-full bg-slate-950 px-6 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(15,23,42,0.18)] transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
               >
-                Book Free Assessment
+                Book Free 35-Minute Demo
               </Link>
               <Link
                 to="/courses"
@@ -403,7 +403,7 @@ export default function ClassSamplesPage() {
               <span className="rounded-full border border-white/80 bg-white/80 px-3 py-1.5 shadow-sm">Live teacher-guided learning</span>
               <span className="rounded-full border border-white/80 bg-white/80 px-3 py-1.5 shadow-sm">Child participation, not passive watching</span>
               <span className="rounded-full border border-white/80 bg-white/80 px-3 py-1.5 shadow-sm">Gentle correction and guided practice</span>
-              <span className="rounded-full border border-white/80 bg-white/80 px-3 py-1.5 shadow-sm">Free assessment before course recommendation</span>
+              <span className="rounded-full border border-white/80 bg-white/80 px-3 py-1.5 shadow-sm">One free 35-minute 1:1 demo assessment class before course recommendation</span>
             </div>
           </div>
 
@@ -541,7 +541,7 @@ export default function ClassSamplesPage() {
         ) : filteredVideos.length === 0 ? (
           <div className="mt-8 rounded-[30px] border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-sm leading-6 text-slate-600">
             {activeVideos.length === 0
-              ? 'Our first set of real class sample clips is launching shortly. In the meantime, you can book a free demo or explore the course tracks above.'
+              ? 'Our first set of real class sample clips is launching shortly. In the meantime, you can book one free 35-minute demo assessment class or explore the course tracks above.'
               : 'More clips for this focus area are coming shortly. Try another category to explore the available class moments.'}
           </div>
         ) : (
@@ -690,7 +690,7 @@ export default function ClassSamplesPage() {
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Next Step</p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">Want to see the right class style for your child?</h2>
             <p className="mt-4 text-sm leading-6 text-slate-600 sm:text-base">
-              <AutoLinkedText text="Start with a free assessment. Tiny Steps will understand your child’s current level and recommend whether the right starting point is phonics, reading, grammar, sentence formation, or public speaking." />
+              <AutoLinkedText text="Start with a free 35-minute 1:1 online demo assessment class. Tiny Steps will understand your child’s current level and recommend whether the right starting point is phonics, reading, grammar, sentence formation, or public speaking." />
             </p>
           </div>
 
@@ -699,7 +699,7 @@ export default function ClassSamplesPage() {
               to="/book-demo"
               className="inline-flex h-12 items-center justify-center rounded-full bg-slate-950 px-6 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(15,23,42,0.16)] transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
             >
-              Book Free Assessment
+              Book Free 35-Minute Demo
             </Link>
             <a
               href={WHATSAPP_URL}

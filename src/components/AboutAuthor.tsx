@@ -55,12 +55,12 @@ const RESEARCH_BADGES = ['Tiny Steps Research Desk', 'Reviewed for classroom use
 
 const STANDARD_CTAS: AuthorCta[] = [
   { label: 'Explore the Parents Hub', to: '/parents', variant: 'secondary' },
-  { label: 'Book a free assessment', to: '/?book=1', variant: 'primary' },
+  { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/?book=1', variant: 'primary' },
 ];
 
 const RESEARCH_CTAS: AuthorCta[] = [
   { label: 'Explore the Parents Hub', to: '/parents', variant: 'secondary' },
-  { label: 'Book a free assessment', to: '/?book=1', variant: 'primary' },
+  { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/?book=1', variant: 'primary' },
 ];
 
 function getInitials(name: string) {

@@ -75,7 +75,7 @@ const Header: React.FC = () => {
 						{isDark ? '🌙' : '☀️'}
 					</button>
 					<Button size="sm" className="hidden md:inline-flex">
-						Book Free Trial
+						Book Free 35-Minute Demo
 					</Button>
 					<button
 						type="button"
@@ -132,7 +132,7 @@ const Header: React.FC = () => {
 							</div>
 							<div className="mt-10 space-y-4">
 								<Button size="md" className="w-full">
-									Book Free Trial
+									Book Free 35-Minute Demo
 								</Button>
 								<button
 									type="button"

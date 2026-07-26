@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { applySeo } from '../lib/seo';
 import { SUMMER_CAMP_2026_CONFIG, canShowEnrollment, shouldPublishInStock, getEventStatusType } from '../lib/seasonState';
+import { FREE_DEMO_CTA_LABEL } from '../config/publicOffer';
 
 const SUMMER_CAMP_ENROLLMENT_PRICE = 2400;
 const SUMMER_CAMP_FULL_PRICE = 5000;
@@ -65,7 +66,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
       'Reading fluency routines with guided correction',
     ],
     steps: [
-      'Enroll for ₹2,400 and complete a quick level check',
+      'Children paid ₹2,400 and completed one free 35-minute demo assessment class before placement',
       'Attend 50–60 minute live fast-track classes with guided practice',
       `Follow a clear 4-week learning path with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, worksheets, and class recordings`,
     ],
@@ -91,9 +92,9 @@ const PROGRAMS: Record<string, ProgramConfig> = {
           `Yes. It uses the same Tiny Steps core method, delivered in a premium summer format with a clear 4-week outcome path and batches capped at ${SUMMER_CAMP_BATCH_CAP}.`,
       },
       {
-        question: 'Is there a free assessment before enrollment?',
+        question: 'Was there a free demo assessment before placement?',
         answer:
-          'Yes. All children complete a brief 10-15 minute level check (no cost) to ensure proper placement in the right phonics group.',
+          'Yes. Children completed one free 35-minute demo assessment class before placement.',
       },
       {
         question: 'How is this helpful for summer catch-up?',
@@ -135,7 +136,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
       'Editing frameworks for school-level writing',
     ],
     steps: [
-      'Enroll for ₹2,400 and complete a quick level check',
+      'Children paid ₹2,400 and completed one free 35-minute demo assessment class before placement',
       'Attend 50–60 minute live fast-track classes with guided practice',
       `Follow a clear 4-week learning path with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, worksheets, and class recordings`,
     ],
@@ -200,7 +201,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
       'Confidence routines for stage and class speaking',
     ],
     steps: [
-      'Enroll for ₹2,400 and complete a quick level check',
+      'Children paid ₹2,400 and completed one free 35-minute demo assessment class before placement',
       'Attend 50–60 minute live fast-track classes with guided practice',
       `Follow a clear 4-week learning path with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, worksheets, and class recordings`,
     ],
@@ -279,7 +280,7 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
 
   const programWhatsAppUrl = getWhatsAppUrl(getProgramEnrollText(program.title));
 
-  if (batchSlug) {
+  if (SUMMER_CAMP_2026_CONFIG.status === 'archived' || batchSlug) {
     return (
       <div className="pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-0">
         <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-16">
@@ -302,8 +303,12 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
                   {program.title}
                 </Link>
               </li>
-              <li aria-hidden="true">/</li>
-              <li className="text-emerald-700">{toTitleCase(batchSlug)}</li>
+              {batchSlug ? (
+                <>
+                  <li aria-hidden="true">/</li>
+                  <li className="text-emerald-700">{toTitleCase(batchSlug)}</li>
+                </>
+              ) : null}
             </ol>
           </nav>
           <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700">
@@ -326,12 +331,12 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
             >
               Register Interest for Next Camp
             </a>
-            <a
-              href="/contact"
+            <Link
+              to="/book-demo"
               className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full bg-slate-600 px-5 py-2 text-sm font-semibold text-white sm:w-auto"
             >
-              Book a Regular Assessment
-            </a>
+              {FREE_DEMO_CTA_LABEL}
+            </Link>
           </div>
         </div>
         <div className="fixed inset-x-0 bottom-0 z-40 md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
@@ -678,7 +683,7 @@ export default function SummerCampProgramPage() {
       ? `${baseTitle} ${batchTitle} | Tiny Steps`
       : `${baseTitle} Summer Camp 2026 | 24 Live Classes in 4 Weeks | Tiny Steps`;
     const description = program
-      ? `${program.title} summer camp for ${program.ages}. ${program.focus}. Summer Camp Season: ${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Each child joins one ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, and free level assessment support. Available batch start dates: ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}. Effective price ₹${formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}.`
+      ? `${program.title} archived Summer Camp 2026 programme for ${program.ages}. ${program.focus}. The camp ended on 13 June 2026 and enrolment is closed. Each child joined one ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()} after one free 35-minute demo assessment class before placement. Historical effective fee ₹${formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}.`
       : 'Summer camp program details coming soon.';
     const keywords = program
       ? [

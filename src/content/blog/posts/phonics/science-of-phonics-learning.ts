@@ -58,7 +58,7 @@ const post: PhonicsSeoPost = {
     label: 'Online phonics classes vs school guide',
     to: '/blog/online-phonics-classes-vs-school'
   }, {
-    label: 'Book free assessment',
+    label: 'Book Free 35-Minute Demo',
     to: '/book-demo'
   }]
 };

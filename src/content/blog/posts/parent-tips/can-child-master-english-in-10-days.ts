@@ -301,7 +301,7 @@ const post: BlogPost = {
     },
     {
       type: 'li',
-      content: 'Book a free assessment: /contact',
+      content: 'Book one free 35-minute 1:1 online demo assessment class: /contact',
     },
     {
       type: 'p',
@@ -317,7 +317,7 @@ const post: BlogPost = {
     },
     {
       type: 'p',
-      content: 'Book a free assessment with Tiny Steps and get a clear learning roadmap.',
+      content: 'Book one free 35-minute 1:1 online demo assessment class with Tiny Steps and get a clear learning roadmap.',
     },
     {
       type: 'h2',

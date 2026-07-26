@@ -57,7 +57,7 @@ const post: PhonicsSeoPost = {
     label: 'Reading support for children with fluency gaps',
     to: '/reading-classes-for-kids'
   }, {
-    label: 'Book free assessment',
+    label: 'Book Free 35-Minute Demo',
     to: '/book-demo'
   }]
 };

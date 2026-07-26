@@ -4,6 +4,10 @@ import { applySeo } from '../lib/seo';
 import { createEventSchema } from '../lib/schemas';
 import { buildLeadAttributionPayload, trackGenerateLead, trackLeadFormStart, trackLeadFormSubmit } from '../lib/conversionTracking';
 import { SUMMER_CAMP_2026_CONFIG, canShowEnrollment, shouldPublishInStock, getEnrollmentCTAText, getEventStatusType } from '../lib/seasonState';
+import {
+  FREE_DEMO_CTA_LABEL,
+  FREE_DEMO_FULL_DESCRIPTION,
+} from '../config/publicOffer';
 
 type SummerCampLeadFormState = {
   name: string;
@@ -237,7 +241,7 @@ const FAQS = [
   {
     question: 'What is included in Tiny Steps Summer Camp 2026?',
     answer:
-      `The program runs as a summer camp season from ${SUMMER_CAMP_SEASON_START_LABEL} to ${SUMMER_CAMP_SEASON_END_LABEL}. Each child joins one ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, live teacher-led online classes, worksheets, class recordings, and a quick level check before placement. Families choose one separate track-specific batch: Phonics Fast Track, Grammar Fast Track, or Speaking Fast Track.`,
+      `The programme ran from ${SUMMER_CAMP_SEASON_START_LABEL} to ${SUMMER_CAMP_SEASON_END_LABEL}. Each child joined one ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, live teacher-led online classes, worksheets, and class recordings. ${FREE_DEMO_FULL_DESCRIPTION} Enrolment is closed.`,
   },
   {
     question: 'When does Tiny Steps Summer Camp 2026 start?',
@@ -292,7 +296,7 @@ const FAQS = [
   {
     question: 'Who is this camp best for?',
     answer:
-      'These camps are for ages 4–12, grouped by level after a quick assessment. Families can choose Phonics Fast Track, Grammar Fast Track, or Speaking Fast Track based on immediate need.',
+      'The camps were for ages 4–12, grouped by level after one free 35-minute demo assessment class. Historical tracks were Phonics Fast Track, Grammar Fast Track, and Speaking Fast Track.',
   },
   {
     question: 'What happens if we miss a class due to travel or vacation?',
@@ -317,17 +321,17 @@ const FAQS = [
   {
     question: 'Is this summer camp suitable for beginners?',
     answer:
-      'Yes. Beginners can join. We do a quick level check before placement and group children by readiness so they are not overwhelmed.',
+      'Beginners could join. Children were grouped by readiness after one free 35-minute demo assessment class before placement.',
   },
   {
     question: 'How are phonics, grammar, and speaking levels decided?',
     answer:
-      'Level placement happens through a quick pre-enrollment check. We review your child’s current ability and assign the right fast-track level for better participation and outcomes.',
+      'Level placement was confirmed after one free 35-minute demo assessment class. Enrolment is closed.',
   },
   {
-    question: 'Do you offer a trial class before enrollment?',
+    question: 'Was a demo assessment offered before Summer Camp placement?',
     answer:
-      'We start with a quick level check and counselor guidance. If you want a preview of how classes run, message us on WhatsApp and we will share the current onboarding options.',
+      `${FREE_DEMO_FULL_DESCRIPTION} Summer Camp 2026 enrolment is closed.`,
   },
   {
     question: 'What is the teacher-to-student ratio in this camp?',
@@ -345,9 +349,9 @@ const FAQS = [
       'Parents receive a clear summary of track completion and next-step recommendations at the end of the camp. Ask the team during enrollment for the latest certificate policy.',
   },
   {
-    question: 'What is the free level assessment?',
+    question: 'What was the demo assessment class?',
     answer:
-      'Before enrollment, children complete a brief 10-15 minute assessment to check current phonics, grammar, or speaking ability. This helps place them in the right level group for better participation and learning outcomes. No cost, no obligation.',
+      `${FREE_DEMO_FULL_DESCRIPTION} It cost ₹0, required no credit card, and carried no obligation to enrol.`,
   },
   {
     question: 'How does this summer camp help with school readiness?',
@@ -809,7 +813,7 @@ function SummerCampLeadForm() {
 export default function SummerCampsPage() {
   useEffect(() => {
     const pageDescription =
-      `Join Tiny Steps Summer Camp 2026, an online summer English camp for kids in India. Choose one focused track: phonics, grammar, or speaking. Each child joins one track-specific ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, and limited batch start dates: ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}.`;
+      'Tiny Steps Summer Camp 2026 ended on 13 June 2026 and enrolment is closed. Each child joined one four-week small-group batch with 24 live classes from Monday to Saturday. The historical list fee was ₹5,000 and the effective fee was ₹2,400 per child.';
 
     const faqSchema = {
       '@context': 'https://schema.org',
@@ -834,7 +838,7 @@ export default function SummerCampsPage() {
             '@type': 'Course',
             '@id': `https://tinystepslearning.com/summer-camps/${program.id}`,
             name: program.title,
-            description: `${program.focus}. Summer Camp Season: ${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Each child joins one ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, capped at ${SUMMER_CAMP_BATCH_CAP} students.`,
+            description: `${program.focus}. This archived Summer Camp 2026 programme ended on 13 June 2026. Each child joined one four-week small-group batch with 24 live classes from Monday to Saturday. Enrolment is closed.`,
             inLanguage: 'en-IN',
             courseMode: 'Online',
             educationalLevel: program.ages,
@@ -863,7 +867,7 @@ export default function SummerCampsPage() {
       '@type': 'WebPage',
       '@id': 'https://tinystepslearning.com/summer-camps#webpage',
       url: 'https://tinystepslearning.com/summer-camps',
-      name: 'Online Summer English Camp for Kids in India | Tiny Steps Summer Camp 2026',
+      name: 'Summer Camp 2026 — Enrolment Closed | Tiny Steps',
       description: pageDescription,
       inLanguage: 'en-IN',
       audience: {
@@ -883,9 +887,9 @@ export default function SummerCampsPage() {
       '@context': 'https://schema.org',
       '@type': 'Service',
       '@id': 'https://tinystepslearning.com/summer-camps#service',
-      name: 'Tiny Steps Summer Camp Fast Track Pack',
-      serviceType: 'Online summer camp for kids',
-      description: `Summer Camp Season: ${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Each child joins one track-specific ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, capped at ${SUMMER_CAMP_BATCH_CAP} students. Choose Phonics Fast Track, Grammar Fast Track, or Speaking Fast Track. Limited batch start dates: ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}.`,
+      name: 'Tiny Steps Summer Camp 2026 — Enrolment Closed',
+      serviceType: 'Archived online summer camp for kids',
+      description: 'Tiny Steps Summer Camp 2026 ended on 13 June 2026. Each child joined one four-week small-group batch with 24 live classes from Monday to Saturday. The historical list fee was ₹5,000 and the effective fee was ₹2,400 per child. Enrolment is closed.',
       areaServed: [
         {
           '@type': 'Country',
@@ -979,7 +983,7 @@ export default function SummerCampsPage() {
     });
 
     applySeo({
-      title: 'Online Summer English Camp for Kids in India | Tiny Steps Summer Camp 2026',
+      title: 'Summer Camp 2026 — Enrolment Closed | Tiny Steps',
       description: pageDescription,
       keywords: SUMMER_CAMP_SEO_KEYWORDS,
       canonicalPath: '/summer-camps',
@@ -1001,6 +1005,56 @@ export default function SummerCampsPage() {
       ],
     });
   }, []);
+
+  if (SUMMER_CAMP_2026_CONFIG.status === 'archived') {
+    return (
+      <main className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-sky-50">
+        <section className="mx-auto max-w-5xl px-6 py-16 text-center md:py-24">
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-amber-700">
+            Archived programme
+          </p>
+          <h1 className="mt-4 text-4xl font-black text-slate-900 md:text-6xl">
+            Summer Camp 2026 — Enrolment Closed
+          </h1>
+          <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-700">
+            Tiny Steps Summer Camp 2026 ended on 13 June 2026. Each child joined
+            one four-week small-group batch with 24 live classes from Monday to
+            Saturday.
+          </p>
+          <div className="mx-auto mt-10 grid max-w-3xl gap-4 text-left sm:grid-cols-2">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <p className="text-sm font-semibold text-slate-500">Historical list fee</p>
+              <p className="mt-2 text-3xl font-black text-slate-900">₹5,000</p>
+              <p className="mt-2 text-sm text-slate-600">Per child for one four-week batch</p>
+            </div>
+            <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-6 shadow-sm">
+              <p className="text-sm font-semibold text-emerald-700">Historical effective fee</p>
+              <p className="mt-2 text-3xl font-black text-emerald-900">₹2,400</p>
+              <p className="mt-2 text-sm text-emerald-800">Per child for 24 live classes</p>
+            </div>
+          </div>
+          <p className="mx-auto mt-8 max-w-3xl text-slate-700">
+            Historical tracks were Phonics Fast Track, Grammar Fast Track, and
+            Speaking Fast Track. This archived offer is not currently enrolling.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link
+              to="/book-demo"
+              className="rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white"
+            >
+              {FREE_DEMO_CTA_LABEL}
+            </Link>
+            <Link
+              to="/courses"
+              className="rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800"
+            >
+              Explore Current Courses
+            </Link>
+          </div>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <>
@@ -1034,14 +1088,14 @@ export default function SummerCampsPage() {
 
                 <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-sm">
                   <p className="font-semibold">
-                    Summer Camp 2026 has ended. You can still book a free assessment for phonics, grammar, reading, or public speaking classes.
+                    Summer Camp 2026 has ended. {FREE_DEMO_FULL_DESCRIPTION}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-3">
                     <Link
                       to="/book-demo"
                       className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                     >
-                      Book Free Assessment
+                      {FREE_DEMO_CTA_LABEL}
                     </Link>
                     <Link
                       to="/contact"
@@ -1072,7 +1126,7 @@ export default function SummerCampsPage() {
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-slate-600">
-                  Age ranges are guidelines; final grouping is based on level after a quick assessment.
+                  Age ranges were guidelines; final grouping was based on level after one free 35-minute demo assessment class.
                 </p>
               </div>
               <div
@@ -1102,7 +1156,7 @@ export default function SummerCampsPage() {
                     href="/contact"
                     className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-gradient-to-r from-slate-600 to-slate-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:from-slate-700 hover:to-slate-600 hover:shadow-lg"
                   >
-                    Book a Regular English Assessment
+                    {FREE_DEMO_CTA_LABEL}
                   </a>
                   <a
                     href="/contact"
@@ -1119,7 +1173,7 @@ export default function SummerCampsPage() {
                 href="/contact"
                 className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full bg-gradient-to-r from-slate-600 to-slate-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:from-slate-700 hover:to-slate-600 hover:shadow-lg sm:w-auto"
             >
-                Book a Regular English Assessment
+                {FREE_DEMO_CTA_LABEL}
               </a>
               <a
                 href="/contact"
@@ -1615,7 +1669,7 @@ export default function SummerCampsPage() {
                     rel="noopener noreferrer"
                     className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white"
                   >
-                    Enroll now
+                    Enrolment closed
                   </a>
                   <Link
                     to={`/summer-camps/${program.id}`}
@@ -1728,9 +1782,9 @@ export default function SummerCampsPage() {
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200">
                     <span className="text-2xl">📋</span>
                   </div>
-                  <h3 className="mt-4 text-base font-semibold text-slate-900">2. Quick Level Check</h3>
+                  <h3 className="mt-4 text-base font-semibold text-slate-900">2. Demo Assessment Class</h3>
                   <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                    We conduct a brief 10–15 minute assessment to place your child in the right level group (ensures better participation)
+                    Children completed one free 35-minute demo assessment class before placement.
                   </p>
                 </div>
 

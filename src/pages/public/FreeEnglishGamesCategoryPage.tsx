@@ -162,7 +162,7 @@ export default function FreeEnglishGamesCategoryPage() {
                 to="/book-demo"
                 className="shrink-0 rounded-lg bg-amber-300 px-3 py-2 text-xs font-black text-slate-900"
               >
-                Book Free Demo
+                Book Free 35-Minute Demo
               </Link>
             </nav>
           </header>
@@ -354,7 +354,7 @@ export default function FreeEnglishGamesCategoryPage() {
             <p className="text-sm font-semibold text-slate-200">
               Want saved progress and teacher guidance?{" "}
               <Link to="/book-demo" className="font-black text-cyan-300 underline underline-offset-4">
-                Book a free demo.
+                Book one free 35-minute demo assessment class.
               </Link>
             </p>
           </div>

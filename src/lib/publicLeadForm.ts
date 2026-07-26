@@ -139,7 +139,7 @@ export function buildPublicWhatsappMessage(form: PublicAssessmentFormState) {
   const lines = [
     'Hello Tiny Steps,',
     '',
-    'I would like to book a free assessment class.',
+    'I would like to book one free 35-minute 1:1 online demo assessment class.',
     '',
     `Parent name: ${form.parentName || '-'}`,
     `Child name: ${form.childName || '-'}`,

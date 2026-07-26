@@ -3,22 +3,28 @@ import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
 import { createFAQPageSchema } from '../../lib/schemas';
 import PublicAssessmentForm from '../../components/forms/PublicAssessmentForm';
+import {
+  FREE_DEMO_CTA_LABEL,
+  FREE_DEMO_DURATION_MINUTES,
+  FREE_DEMO_FULL_DESCRIPTION,
+  FREE_DEMO_OFFER_NAME,
+} from '../../config/publicOffer';
 
 const assessmentFaqItems = [
   {
-    question: 'Is the Tiny Steps assessment class free?',
+    question: 'Is the Tiny Steps demo assessment class free?',
     answer:
-      'Yes. The Tiny Steps assessment class is free. It helps parents understand the child\'s current English level and the right learning path before choosing a course.',
+      `${FREE_DEMO_FULL_DESCRIPTION} It costs ₹0, requires no credit card, and there is no pressure to enrol.`,
   },
   {
-    question: 'What will be checked in the assessment?',
+    question: 'How long is the free demo assessment class?',
     answer:
-      'The assessment may check phonics, reading, grammar, sentence formation, and speaking confidence depending on the child\'s age and current level.',
+      `The free demo assessment class is ${FREE_DEMO_DURATION_MINUTES} minutes.`,
   },
   {
-    question: 'How long is the assessment class?',
+    question: 'What will be checked in the demo assessment?',
     answer:
-      'The assessment is usually a short live online session designed to understand the child\'s level and recommend the right next step.',
+      'The teacher may check phonics, reading, grammar, sentence formation, pronunciation, and speaking confidence depending on the child’s age and current level.',
   },
   {
     question: 'Will parents get a course recommendation?',
@@ -26,30 +32,32 @@ const assessmentFaqItems = [
       'Yes. Parents receive a clear recommendation on whether the child should start with phonics, grammar, reading, public speaking, or a combined learning path.',
   },
   {
-    question: 'Is there pressure to enroll after the assessment?',
+    question: 'Is there pressure to enrol after the demo?',
     answer:
-      'No. The assessment is meant to give parents clarity. Families can decide after understanding the child\'s needs and the recommended learning path.',
+      'No. The demo assessment is meant to give parents clarity. Families can decide after understanding the child’s needs and recommended learning path.',
   },
 ];
 
 export default function BookDemoPage() {
   useEffect(() => {
     applySeo({
-      title: 'Book Free English Assessment Class for Kids | Tiny Steps Learning',
+      title: 'Book a Free 35-Minute Demo Assessment Class | Tiny Steps Learning',
       description:
-        'Book a free 1:1 online English assessment for your child. Understand their level in phonics, reading, grammar, sentence formation, and speaking confidence.',
+        'Book one free 35-minute 1:1 online demo assessment class for your child. Understand their level in phonics, reading, grammar, sentence formation, pronunciation, and speaking confidence.',
       canonicalPath: '/book-demo',
       ogType: 'website',
       jsonLd: [
         {
           '@context': 'https://schema.org',
           '@type': 'Service',
-          name: 'Free Assessment Class',
-          description: 'Free 1:1 English assessment for kids ages 3-12',
+          name: FREE_DEMO_OFFER_NAME,
+          description: FREE_DEMO_FULL_DESCRIPTION,
           provider: {
             '@type': 'EducationalOrganization',
             name: 'Tiny Steps Learning',
           },
+          serviceType: 'Online English demo assessment class for children',
+          duration: 'PT35M',
           offers: {
             '@type': 'Offer',
             price: '0',
@@ -65,17 +73,27 @@ export default function BookDemoPage() {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <section className="mx-auto max-w-5xl px-6 py-14 text-center md:py-16">
         <h1 className="font-heading text-4xl font-bold leading-tight md:text-5xl">
-          Book a Free English Assessment Class for Your Child
+          Book One Free 35-Minute Demo Assessment Class
         </h1>
         <p className="mx-auto mt-6 max-w-3xl text-lg text-gray-700">
-          A friendly 1:1 online assessment to understand your child&apos;s current level in phonics, reading, grammar, sentence formation, and speaking confidence.
+          One free 35-minute 1:1 online class to understand your child&apos;s
+          current level in phonics, reading, grammar, sentence formation,
+          pronunciation, and speaking confidence.
         </p>
 
         <ul className="mx-auto mt-6 grid max-w-3xl gap-3 text-left text-sm text-slate-700 sm:grid-cols-2">
-          <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">For children aged 3–12</li>
-          <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">Live online assessment</li>
-          <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">Personalized course recommendation</li>
-          <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">No pressure to enroll</li>
+          <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            One free session per child
+          </li>
+          <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            35-minute live 1:1 class
+          </li>
+          <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            Personalised course recommendation
+          </li>
+          <li className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            No credit card or enrolment pressure
+          </li>
         </ul>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -83,7 +101,7 @@ export default function BookDemoPage() {
             href="#assessment-form"
             className="inline-flex items-center rounded-2xl bg-gradient-to-r from-tiny-blue-600 to-tiny-purple-600 px-6 py-3 text-base font-semibold text-white shadow-lg transition hover:shadow-xl"
           >
-            Book Free Assessment
+            {FREE_DEMO_CTA_LABEL}
           </a>
           <Link
             to="/courses"
@@ -99,7 +117,7 @@ export default function BookDemoPage() {
       </section>
 
       <section className="mx-auto max-w-4xl px-6 py-12">
-        <h2 className="mb-8 text-center text-3xl font-bold">What happens in the assessment?</h2>
+        <h2 className="mb-8 text-center text-3xl font-bold">What happens in the demo assessment?</h2>
         <div className="grid gap-6 md:grid-cols-2">
           <div className="rounded-2xl border border-gray-200 bg-white p-6">
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
@@ -168,13 +186,14 @@ export default function BookDemoPage() {
       <section className="mx-auto max-w-4xl px-6 py-16 text-center">
         <h2 className="mb-4 text-3xl font-bold">Ready to Get Started?</h2>
         <p className="mx-auto mb-8 max-w-2xl text-gray-700">
-          Book your free assessment class today. No commitment required.
+          Book one free 35-minute demo assessment class. No credit card or
+          enrolment commitment is required.
         </p>
         <a
           href="#assessment-form"
           className="inline-block rounded-2xl bg-gradient-to-r from-tiny-blue-600 to-tiny-purple-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition hover:shadow-xl"
         >
-          Book Free Assessment Now
+          {FREE_DEMO_CTA_LABEL}
         </a>
       </section>
     </div>

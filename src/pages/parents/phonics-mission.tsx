@@ -279,13 +279,13 @@ const PhonicsMission: React.FC = () => {
 
   const ctaItems = [
     {
-      label: 'Book Free Assessment',
+      label: 'Book Free 35-Minute Demo',
       to: '/book-demo',
       variant: 'primary' as const,
       onClick: () =>
         trackParentCourseInterest({
           page_path: '/parents/phonics-mission',
-          cta_label: 'Book Free Assessment',
+          cta_label: 'Book Free 35-Minute Demo',
           cta_location: 'hero',
           destination_path: '/book-demo',
           program: 'phonics',
@@ -543,7 +543,7 @@ const PhonicsMission: React.FC = () => {
             title="Need a personalized phonics plan?"
             description={
               <>
-                Book a free assessment to identify your child&apos;s current reading stage and get a practical
+                Book one free 35-minute 1:1 online demo assessment class to identify your child&apos;s current reading stage and get a practical
                 home routine matched to that level. You can also jump to the main{' '}
                 <Link to="/phonics" className="font-semibold text-white underline underline-offset-4">
                   phonics pathway

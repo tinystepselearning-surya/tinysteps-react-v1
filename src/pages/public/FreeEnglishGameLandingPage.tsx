@@ -99,7 +99,7 @@ export default function FreeEnglishGameLandingPage() {
   const handleAssessmentClick = () => {
     trackFreeResourceToTrialClick({
       page_path: config.publicPath,
-      cta_label: "Book Free Assessment",
+      cta_label: "Book Free 35-Minute Demo",
       cta_location: "assessment_bridge",
       destination_path: "/book-demo",
       program: "phonics",
@@ -166,7 +166,7 @@ export default function FreeEnglishGameLandingPage() {
                 to="/book-demo"
                 className="shrink-0 rounded-lg bg-amber-300 px-3 py-2 text-xs font-black text-slate-900"
               >
-                Book Free Demo
+                Book Free 35-Minute Demo
               </Link>
             </nav>
           </header>
@@ -260,7 +260,7 @@ export default function FreeEnglishGameLandingPage() {
                   <p className="text-sm font-semibold text-slate-100">
                     Want saved progress and teacher guidance?{" "}
                     <Link to="/book-demo" className="font-black text-cyan-200 underline underline-offset-4">
-                      Book a free demo.
+                      Book one free 35-minute demo assessment class.
                     </Link>
                   </p>
                 </div>
@@ -401,7 +401,7 @@ export default function FreeEnglishGameLandingPage() {
                     onClick={handleAssessmentClick}
                     className="mt-4 inline-flex rounded-xl bg-amber-400 px-5 py-3 text-sm font-black text-slate-900 hover:bg-amber-300"
                   >
-                    Book Free Assessment
+                    Book Free 35-Minute Demo
                   </Link>
                 </div>
                 <div className="mt-4 grid gap-3">
@@ -439,7 +439,7 @@ export default function FreeEnglishGameLandingPage() {
                     to="/book-demo"
                     className="rounded-2xl border border-cyan-300/20 bg-cyan-400/10 px-4 py-4 text-sm font-bold text-cyan-100"
                   >
-                    Want saved progress and teacher guidance? Book a free demo.
+                    Want saved progress and teacher guidance? Book one free 35-minute demo assessment class.
                   </Link>
                 </div>
               </>

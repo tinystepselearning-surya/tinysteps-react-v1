@@ -6,7 +6,7 @@ const lastUpdated = 'March 6, 2026';
 
 const sections = [
   {
-    title: 'Free assessment and satisfaction guarantee',
+    title: 'One free 35-minute demo assessment class and satisfaction guarantee',
     paragraphs: [
       'Every Tiny Steps family begins with a complimentary assessment class so we can confirm that the program, level, and mentor approach fit the child’s needs before full enrolment. This assessment helps families make an informed decision before paying for regular classes.',
       'After enrolment, a family may request a full refund within the first 7 days of payment or before completing the first two paid classes, whichever comes first, if they feel the program is not the right fit. Requests must be made by the parent or guardian in writing.',

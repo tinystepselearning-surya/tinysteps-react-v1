@@ -624,7 +624,8 @@ describe("FreeEnglishGameLandingPage", () => {
 
       expect(screen.getByRole("heading", { name: /take the next step/i, level: 2 })).toBeInTheDocument();
       expect(screen.getByText(/from free games to guided learning/i)).toBeInTheDocument();
-      expect(screen.getByRole("link", { name: /book free assessment/i })).toHaveAttribute("href", "/book-demo");
+      const demoLinks = screen.getAllByRole("link", { name: /book free 35-minute demo/i });
+      expect(demoLinks.some((link) => link.getAttribute("href") === "/book-demo")).toBe(true);
     });
 
     it("renders helpful tip for Letter Sounds", () => {

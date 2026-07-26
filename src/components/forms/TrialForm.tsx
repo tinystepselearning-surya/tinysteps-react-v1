@@ -87,8 +87,8 @@ export default function TrialForm({ compact = false, context = 'trial_form' }: {
         {errors.phone && <p className="mt-1 text-xs text-red-600">{errors.phone.message as any}</p>}
       </div>
       <div className="flex flex-col gap-2 sm:flex-row">
-        <button aria-label="Book Free Assessment Class" className="w-full rounded-2xl bg-gradient-to-r from-primary-500 to-secondary-500 px-4 py-3 text-sm font-semibold text-white sm:flex-1" disabled={isSubmitting}>
-          {isSubmitting ? 'Booking…' : 'Book Free Assessment Class'}
+        <button aria-label="Book Free 35-Minute Demo" className="w-full rounded-2xl bg-gradient-to-r from-primary-500 to-secondary-500 px-4 py-3 text-sm font-semibold text-white sm:flex-1" disabled={isSubmitting}>
+          {isSubmitting ? 'Booking…' : 'Book Free 35-Minute Demo'}
         </button>
         {!user && (
           <a

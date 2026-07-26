@@ -65,14 +65,14 @@ export default function SlowReaderChildHelpPage() {
           <li>• Parent-friendly reading fluency check</li>
           <li>• Phonics, blending, fluency, and comprehension support</li>
           <li>• Live teacher-guided reading practice</li>
-          <li>• Free assessment before course recommendation</li>
+          <li>• One free 35-minute 1:1 demo assessment class before course recommendation</li>
         </ul>
         <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
           <Link
             to="/book-demo"
             className="inline-block rounded-lg bg-slate-900 px-8 py-3 font-semibold text-white transition hover:bg-slate-800"
           >
-            Book Free Assessment
+            Book Free 35-Minute Demo
           </Link>
           <Link
             to="/reading-classes-for-kids"
@@ -228,16 +228,16 @@ export default function SlowReaderChildHelpPage() {
       </section>
 
       <section className="rounded-xl bg-slate-900 p-8 text-center text-white">
-        <h2 className="text-2xl font-bold">Parent action: book a free assessment first</h2>
+        <h2 className="text-2xl font-bold">Parent action: book one free 35-minute 1:1 online demo assessment class first</h2>
         <p className="mt-3 text-slate-200">
-          Start with a free assessment. Tiny Steps will check whether your child needs phonics, reading fluency, comprehension, or a combined learning path.
+          Start with a free 35-minute 1:1 online demo assessment class. Tiny Steps will check whether your child needs phonics, reading fluency, comprehension, or a combined learning path.
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <Link
             to="/book-demo"
             className="inline-block rounded-lg bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100"
           >
-            Book Free Assessment
+            Book Free 35-Minute Demo
           </Link>
           <Link
             to="/courses"

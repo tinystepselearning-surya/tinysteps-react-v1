@@ -17,7 +17,7 @@ export default function ProgramFacts({
   duration,
   structure,
   outcomes,
-  ctaLabel = 'Book Free Assessment',
+  ctaLabel = 'Book Free 35-Minute Demo',
   ctaHref = '/?book=1',
 }: ProgramFactsProps) {
   return (

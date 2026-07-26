@@ -66,7 +66,7 @@ export default function ShyChildSpeakingConfidencePage() {
             to="/book-demo"
             className="inline-block rounded-lg bg-slate-900 px-8 py-3 font-semibold text-white transition hover:bg-slate-800"
           >
-            Book Free Assessment
+            Book Free 35-Minute Demo
           </Link>
           <Link
             to="/speaking"
@@ -193,21 +193,21 @@ export default function ShyChildSpeakingConfidencePage() {
           <li>
             • For assessment booking:{' '}
             <Link to="/book-demo" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              Book Free Assessment
+              Book Free 35-Minute Demo
             </Link>
           </li>
         </ul>
       </section>
 
       <section className="rounded-xl bg-slate-900 p-8 text-center text-white">
-        <h2 className="text-2xl font-bold">Parent action: book a free assessment first</h2>
+        <h2 className="text-2xl font-bold">Parent action: book one free 35-minute 1:1 online demo assessment class first</h2>
         <p className="mt-2 text-slate-200">Get a calm, structured communication confidence plan for your child.</p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <Link
             to="/book-demo"
             className="inline-block rounded-lg bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100"
           >
-            Book Free Assessment
+            Book Free 35-Minute Demo
           </Link>
           <Link
             to="/courses"

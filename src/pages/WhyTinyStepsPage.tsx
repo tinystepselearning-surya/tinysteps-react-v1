@@ -35,7 +35,7 @@ const whyTinyStepsCanonicalUrl =
     : `${PUBLIC_FACTS.primaryWebsite}${whyTinyStepsCanonicalPath}`;
 
 const valuePills = [
-  "Free assessment before course recommendation",
+  "One free 35-minute 1:1 demo assessment class before course recommendation",
   "Structured paths for Phonics, Reading, Grammar, and Public Speaking",
   "Child participation, not passive watching",
   "Parent-friendly progress communication",
@@ -62,7 +62,7 @@ const quickAnswerFaqItems = [
   {
     question: "Does Tiny Steps check my child’s level before recommending a course?",
     answer:
-      "Yes. Tiny Steps offers a free assessment to understand the child’s current level and recommend the right learning path.",
+      "Yes. Tiny Steps offers a free 35-minute 1:1 online demo assessment class to understand the child’s current level and recommend the right learning path.",
   },
   {
     question: "How do parents know if the child is improving?",
@@ -308,7 +308,7 @@ const WhyTinyStepsPage: FC = () => {
 
             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3">
               <Link to="/book-demo" className="w-full sm:w-auto">
-                <PrimaryButton>Book Free Assessment</PrimaryButton>
+                <PrimaryButton>Book Free 35-Minute Demo</PrimaryButton>
               </Link>
               <Link to="/courses" className="w-full sm:w-auto">
                 <SecondaryButton>Explore Courses</SecondaryButton>
@@ -318,7 +318,7 @@ const WhyTinyStepsPage: FC = () => {
             <div className="mt-4 flex flex-wrap justify-center gap-4 text-sm text-slate-600">
               <Link to="/team" className="hover:text-slate-900">Meet Our Team</Link>
               <Link to="/courses" className="hover:text-slate-900">Explore Courses</Link>
-              <Link to="/book-demo" className="hover:text-slate-900">Book Free Assessment</Link>
+              <Link to="/book-demo" className="hover:text-slate-900">Book Free 35-Minute Demo</Link>
               <a href={WHATSAPP_URL} target="_blank" rel="noreferrer" className="hover:text-slate-900">
                 Chat on WhatsApp - opens new window
               </a>
@@ -542,7 +542,7 @@ const WhyTinyStepsPage: FC = () => {
             </div>
             <div className="mt-4 text-lg font-extrabold">Assessment-first placement</div>
             <div className="mt-2 text-sm text-slate-600 leading-relaxed">
-              <AutoLinkedText text="Free assessment to identify the right starting level—so your child's progress feels steady and motivating, never frustrating." />
+              <AutoLinkedText text="One free 35-minute 1:1 online demo assessment class identifies the right starting level—so your child's progress feels steady and motivating, never frustrating." />
             </div>
           </div>
 
@@ -577,7 +577,7 @@ const WhyTinyStepsPage: FC = () => {
                   <IconCheck />
                 </span>
                 <div className="text-slate-700">
-                  <span className="font-semibold">Free assessment before enrollment</span> — understand your child's level with no obligation to continue
+                  <span className="font-semibold">One free 35-minute 1:1 demo assessment class before enrolment</span> — understand your child's level with no obligation to continue
                 </div>
               </div>
 
@@ -748,7 +748,7 @@ const WhyTinyStepsPage: FC = () => {
           <div className="rounded-2xl border bg-gradient-to-br from-blue-50 to-white p-5 shadow-sm">
             <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-lg font-bold text-white">1</span>
-              <div className="text-lg font-extrabold">Free Assessment</div>
+              <div className="text-lg font-extrabold">Free 35-Minute Demo Assessment</div>
             </div>
             <p className="mt-3 text-sm text-slate-600 leading-relaxed">
               Understand your child's current reading level, letter-sound knowledge, and speaking confidence. No sales pitch—just honest placement guidance.
@@ -820,17 +820,17 @@ const WhyTinyStepsPage: FC = () => {
             <div className="grid gap-8 lg:grid-cols-2 items-center">
               <div>
                 <div className="text-xs font-bold tracking-[0.22em] uppercase text-slate-500">
-                  Free assessment
+                  One free 35-minute 1:1 demo assessment
                 </div>
                 <h3 className="mt-2 text-3xl md:text-4xl font-extrabold tracking-tight">
                   Not sure if Tiny Steps is right for your child?
                 </h3>
                 <p className="mt-4 text-slate-600 leading-relaxed">
-                  Start with a free assessment. Tiny Steps will understand your child’s current level and recommend whether the right starting point is phonics, reading, grammar, sentence formation, or public speaking.
+                  Start with a free 35-minute 1:1 online demo assessment class. Tiny Steps will understand your child’s current level and recommend whether the right starting point is phonics, reading, grammar, sentence formation, or public speaking.
                 </p>
 
                 <ul className="mt-6 space-y-3 text-slate-700">
-                  <CheckItem>Quick level check</CheckItem>
+                  <CheckItem>35-minute live 1:1 demo assessment</CheckItem>
                   <CheckItem>Clear course recommendation</CheckItem>
                   <CheckItem>Simple next steps</CheckItem>
                 </ul>
@@ -843,7 +843,7 @@ const WhyTinyStepsPage: FC = () => {
               <div className="rounded-2xl border bg-gradient-to-br from-slate-50 to-white p-6">
                 <div className="flex flex-col gap-3">
                   <Link to="/book-demo">
-                    <PrimaryButton>Book Free Assessment</PrimaryButton>
+                    <PrimaryButton>Book Free 35-Minute Demo</PrimaryButton>
                   </Link>
 
                   <div className="flex flex-wrap gap-4 text-sm text-slate-600">

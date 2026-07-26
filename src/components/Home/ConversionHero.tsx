@@ -184,7 +184,7 @@ const ConversionHero: React.FC = () => {
             <p
               className="mt-5 max-w-2xl text-[1.04rem] font-semibold leading-8 text-[#182B57] [text-shadow:-0.7px_-0.7px_0_rgba(255,255,255,0.78),0.7px_-0.7px_0_rgba(255,255,255,0.78),-0.7px_0.7px_0_rgba(255,255,255,0.78),0.7px_0.7px_0_rgba(255,255,255,0.78)] md:text-[1.16rem] md:leading-9"
             >
-              Book a free assessment and find whether your child should start with phonics, reading, grammar,
+              Book one free 35-minute 1:1 online demo assessment class and find whether your child should start with phonics, reading, grammar,
               sentence formation, or speaking confidence.
             </p>
 
@@ -193,7 +193,7 @@ const ConversionHero: React.FC = () => {
                 to="/book-demo"
                 className="inline-flex items-center justify-center rounded-full bg-[#182338] px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_34px_rgba(23,32,51,0.20)] transition hover:bg-[#111B2D]"
               >
-                Book Free Assessment
+                Book Free 35-Minute Demo
               </Link>
               <Link
                 to="/pricing"
@@ -245,9 +245,9 @@ const ConversionHero: React.FC = () => {
             <BookAssessmentForm
               source="homepage_hero_assessment"
               title="Share Your Child's Details"
-              description="Book a free assessment and find whether your child should start with phonics, reading, grammar, sentence formation, or speaking confidence."
-              submitLabel="Book Free Assessment on WhatsApp"
-              submitAriaLabel="Book Free Assessment on WhatsApp"
+              description="Book one free 35-minute 1:1 online demo assessment class and find whether your child should start with phonics, reading, grammar, sentence formation, or speaking confidence."
+              submitLabel="Book Free 35-Minute Demo on WhatsApp"
+              submitAriaLabel="Book Free 35-Minute Demo on WhatsApp"
             />
 
             <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/88 px-4 py-4 text-sm text-slate-700 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur sm:px-5">
@@ -270,7 +270,7 @@ const ConversionHero: React.FC = () => {
                 </a>
                 <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 shadow-sm backdrop-blur">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
-                  Free assessment • Transparent pricing
+                  One free 35-minute 1:1 demo assessment • Transparent pricing
                 </span>
               </div>
             </div>

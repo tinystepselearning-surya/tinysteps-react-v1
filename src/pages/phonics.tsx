@@ -260,7 +260,7 @@ const comparisonItems = [
   },
 ];
 const methodSteps = [
-  { title: 'Free assessment', detail: 'We map current reading level and phonics gaps.' },
+  { title: 'One free 35-minute 1:1 demo assessment', detail: 'We map current reading level and phonics gaps.' },
   { title: 'Sound recognition', detail: 'Build accurate sound-letter links first.' },
   { title: 'Blending routine', detail: 'Move from separate sounds to whole words.' },
   { title: 'CVC word reading', detail: 'Read short-vowel words with confidence.' },
@@ -280,7 +280,7 @@ const idealFor = [
 const reassuranceSteps = [
   {
     icon: '📋',
-    title: '1. Free Assessment',
+    title: '1. Free 35-Minute Demo Assessment',
     detail:
       'A live session to understand your child’s current reading stage, decoding gaps, and class readiness.',
   },
@@ -423,7 +423,7 @@ export default function PhonicsPage({
   const description =
     seoOverrides?.description ??
     registry?.description ??
-    "Live 1:1 online phonics classes for kids in India. Build letter sounds, blending, CVC words, digraphs, reading fluency and spelling. Book a free assessment.";
+    "Live 1:1 online phonics classes for kids in India. Build letter sounds, blending, CVC words, digraphs, reading fluency and spelling. Book one free 35-minute 1:1 online demo assessment class.";
   const breadcrumbName = seoOverrides?.breadcrumbName ?? "Phonics";
   const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
   const heroTitle = heroTitleOverride ?? "Online Phonics Classes for Kids in India";
@@ -519,7 +519,7 @@ export default function PhonicsPage({
                 to="/book-demo"
                 className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#FF7B66] to-[#FF9B72] px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(255,126,99,0.3)] transition hover:from-[#FF715B] hover:to-[#FF9267]"
               >
-                Book Free Assessment
+                Book Free 35-Minute Demo
               </Link>
               <Link
                 to="/phonics#learning-path"
@@ -529,7 +529,7 @@ export default function PhonicsPage({
               </Link>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <MetricPill>Free assessment</MetricPill>
+              <MetricPill>Free 35-minute demo assessment</MetricPill>
               <MetricPill>Level-based plan</MetricPill>
               <MetricPill>Parent progress updates</MetricPill>
             </div>
@@ -538,7 +538,7 @@ export default function PhonicsPage({
               <Link to="/best-online-phonics-classes-for-kids-in-india" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
                 best online phonics classes for kids in India
               </Link>{' '}
-              guide before booking a free assessment.
+              guide before booking a free 35-minute 1:1 online demo assessment class.
             </p>
             <p className="mt-3 text-xs font-medium text-slate-600">
               Founder-reviewed academic page · structured synthetic phonics pathway.
@@ -677,7 +677,7 @@ export default function PhonicsPage({
                 </Link>{' '}
                 guide or{' '}
                 <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
-                  book a free assessment
+                  book one free 35-minute 1:1 online demo assessment class
                 </Link>{' '}
                 to choose the right starting level.
               </p>
@@ -724,7 +724,7 @@ export default function PhonicsPage({
               We check your child&apos;s current level first, then recommend the right phonics path.
             </p>
             <Link to="/book-demo" className="inline-flex items-center justify-center rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
-              Book Free Assessment
+              Book Free 35-Minute Demo
             </Link>
           </div>
           <p className="mt-4 text-sm leading-relaxed text-slate-700">
@@ -775,7 +775,7 @@ export default function PhonicsPage({
             subtitle="Live online support without location barriers."
           />
           <p className="mt-4 text-sm leading-relaxed text-slate-700">
-            Tiny Steps supports children across India through live online classes. Parents from cities such as Hyderabad, Bangalore, Chennai, Mumbai, Delhi, Pune, Kolkata, and other locations can book a free assessment and receive a level-based phonics path.
+            Tiny Steps supports children across India through live online classes. Parents from cities such as Hyderabad, Bangalore, Chennai, Mumbai, Delhi, Pune, Kolkata, and other locations can book one free 35-minute 1:1 online demo assessment class and receive a level-based phonics path.
           </p>
           <p className="mt-3 text-sm leading-relaxed text-slate-700">
             Families often combine phonics with{' '}
@@ -892,7 +892,7 @@ export default function PhonicsPage({
             </Link>{' '}
             before booking your{' '}
             <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-sky-700">
-              free assessment
+              free 35-minute 1:1 online demo assessment class
             </Link>
             .
           </p>
@@ -976,7 +976,7 @@ export default function PhonicsPage({
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Link to="/book-demo" className="inline-flex items-center justify-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">
-                Book Free Assessment
+                Book Free 35-Minute Demo
               </Link>
               <Link to="/reading-classes-for-kids" className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50">
                 Explore Reading Support
@@ -1180,7 +1180,7 @@ export default function PhonicsPage({
                   icon: '💰'
                 },
                 {
-                  label: 'Book Free Assessment',
+                  label: 'Book Free 35-Minute Demo',
                   href: '/book-demo',
                   description: 'Find your child’s right starting point',
                   icon: '✅'
@@ -1195,7 +1195,7 @@ export default function PhonicsPage({
         <div className="rounded-[2rem] border border-sky-100 bg-gradient-to-br from-sky-50/70 via-white to-slate-50 p-6 shadow-xl sm:p-8">
           <SectionHeader
             title="Phonics questions parents ask before enrolling"
-            subtitle="Clear answers before you book a free assessment."
+            subtitle="Clear answers before you book one free 35-minute 1:1 online demo assessment class."
           />
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
@@ -1277,7 +1277,7 @@ export default function PhonicsPage({
               to="/book-demo"
               className="inline-flex items-center justify-center rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
-              Book Your Free Assessment
+              Book Free 35-Minute Demo
             </Link>
           </div>
         </div>
@@ -1288,17 +1288,17 @@ export default function PhonicsPage({
           <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-orange-400/30 blur-2xl" />
           <div className="pointer-events-none absolute -left-12 bottom-0 h-36 w-36 rounded-full bg-sky-300/20 blur-2xl" />
           <p className="mb-4 inline-flex rounded-full border border-emerald-300/40 bg-emerald-300/10 px-3 py-1 text-xs font-semibold tracking-[0.14em] text-emerald-100">
-            FREE ASSESSMENT
+            FREE 35-MINUTE DEMO ASSESSMENT
           </p>
           <h2 className="mb-4 text-2xl font-bold text-white sm:text-3xl">Find the right phonics starting point for your child</h2>
           <p className="mx-auto mb-6 max-w-2xl text-lg text-slate-100">
-            Book a free assessment to understand your child&apos;s current reading level, phonics gaps, and recommended learning path.
+            Book one free 35-minute 1:1 online demo assessment class to understand your child&apos;s current reading level, phonics gaps, and recommended learning path.
           </p>
           <Link
             to="/book-demo"
             className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:bg-slate-100"
           >
-            Book Free Assessment
+            Book Free 35-Minute Demo
           </Link>
           <p className="mt-3 text-sm text-slate-200">No commitment required.</p>
         </div>

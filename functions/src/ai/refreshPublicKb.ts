@@ -77,16 +77,20 @@ const STOP_WORDS = new Set([
 // Keep list small + high-signal pages first.
 const DEFAULT_PATHS = [
   "/",
-  "/summer-camps",
-  "/summer-camps/phonics-fast-track",
-  "/summer-camps/grammar-fast-track",
-  "/summer-camps/speaking-fast-track",
+  "/book-demo",
   "/pricing",
   "/courses",
   "/faq",
-  "/how-it-works",
   "/why-tiny-steps",
   "/curriculum",
+  "/summer-camps",
+];
+
+const RETIRED_PATHS = [
+  "/how-it-works",
+  "/summer-camps/phonics-fast-track",
+  "/summer-camps/grammar-fast-track",
+  "/summer-camps/speaking-fast-track",
 ];
 
 // --------------------
@@ -296,6 +300,10 @@ export const refreshPublicKb = onCall(
       throw new HttpsError("internal", "Failed to load kb.json from hosting.");
     }
 
+    for (const retiredPath of RETIRED_PATHS) {
+      await deactivateAllForUrl(pageUrlFromPath(retiredPath));
+    }
+
     const selected = entries.filter((e) => wanted.has(normalizePath(e.path)));
 
     const results: any[] = [];
@@ -365,6 +373,7 @@ export const refreshPublicKb = onCall(
       pagesSelected: selected.length,
       pagesOk,
       totalChunks,
+      retiredPathsDeactivated: RETIRED_PATHS,
       results,
     };
   }

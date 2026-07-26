@@ -22,7 +22,7 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
       { label: 'Read the parent phonics mission', to: '/parents/phonics-mission' },
       { label: 'See all phonics pathways', to: '/phonics' },
       { label: 'What is phonics for kids?', to: '/blog/what-is-phonics-for-kids' },
-      { label: 'Book a free assessment', to: '/book-demo' },
+      { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
     ],
     faq: [
       {
@@ -62,7 +62,7 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     relatedLinks: [
       { label: 'Compare phonics levels', to: '/phonics' },
       { label: 'How kids learn blending', to: '/blog/how-kids-learn-blending' },
-      { label: 'Book a free assessment', to: '/book-demo' },
+      { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
     ],
     faq: [
       {
@@ -97,7 +97,7 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     relatedLinks: [
       { label: 'Reading fluency support', to: '/reading-fluency-program' },
       { label: 'Long vowel sounds for kids', to: '/blog/long-vowel-sounds-for-kids' },
-      { label: 'Book a free assessment', to: '/book-demo' },
+      { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
     ],
     faq: [
       {
@@ -133,7 +133,7 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     relatedLinks: [
       { label: 'Parent course chooser', to: '/parents/choosing-course' },
       { label: 'Grammar roadmap for parents', to: '/blog/week-7-grammar-nouns-to-paragraphs' },
-      { label: 'Book a free assessment', to: '/book-demo' },
+      { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
     ],
     faq: [
       {
@@ -174,7 +174,7 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     relatedLinks: [
       { label: 'Track your child’s progress', to: '/parents/tracking-progress' },
       { label: 'Common grammar mistakes parents notice', to: '/parents/common-mistakes' },
-      { label: 'Book a free assessment', to: '/book-demo' },
+      { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
     ],
     faq: [
       {
@@ -210,7 +210,7 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     relatedLinks: [
       { label: 'Support a shy child’s confidence', to: '/shy-child-speaking-confidence' },
       { label: 'Parents speech confidence guide', to: '/parents/speech-confidence' },
-      { label: 'Book a free assessment', to: '/book-demo' },
+      { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
     ],
     faq: [
       {
@@ -251,7 +251,7 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     relatedLinks: [
       { label: 'Communication confidence pathway', to: '/speaking' },
       { label: 'Speaking confidence help for shy children', to: '/shy-child-speaking-confidence' },
-      { label: 'Book a free assessment', to: '/book-demo' },
+      { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
     ],
     faq: [
       {

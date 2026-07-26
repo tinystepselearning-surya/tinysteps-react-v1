@@ -26,7 +26,7 @@ const FinalCTASection: React.FC = () => {
         </div>
         <div className="mt-8 flex flex-col items-center gap-2">
           <Link to="/book-demo">
-            <Button size="lg" aria-label="Book Free Assessment Class">Book Free Assessment Class</Button>
+            <Button size="lg" aria-label="Book Free 35-Minute Demo">Book Free 35-Minute Demo</Button>
           </Link>
           <p className="text-sm text-gray-600">Takes less than 1 minute to book.</p>
           <div className="mt-4 text-sm text-gray-700">

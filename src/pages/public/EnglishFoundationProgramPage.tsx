@@ -67,7 +67,7 @@ export default function EnglishFoundationProgramPage() {
             to="/book-demo"
             className="inline-block rounded-lg bg-slate-900 px-8 py-3 font-semibold text-white transition hover:bg-slate-800"
           >
-            Book Free Assessment
+            Book Free 35-Minute Demo
           </Link>
           <Link
             to="/courses"
@@ -236,13 +236,13 @@ export default function EnglishFoundationProgramPage() {
       <section className="rounded-xl bg-slate-900 p-8 text-center text-white">
         <h2 className="text-2xl font-bold">Parent action: choose the right starting point</h2>
         <p className="mt-2 text-slate-200">
-          Book a free assessment to check whether your child should start with phonics, reading support, grammar strengthening, or a complete foundation pathway.
+          Book one free 35-minute 1:1 online demo assessment class to check whether your child should start with phonics, reading support, grammar strengthening, or a complete foundation pathway.
         </p>
         <Link
           to="/book-demo"
           className="mt-6 inline-block rounded-lg bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100"
         >
-          Book Free Assessment
+          Book Free 35-Minute Demo
         </Link>
       </section>
     </div>

@@ -2,6 +2,10 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Meta from '../../components/common/Meta';
 import { applySeo } from '../../lib/seo';
+import {
+  DIGITAL_GAMES_TRIAL_CLARIFICATION,
+  DIGITAL_GAMES_TRIAL_LABEL,
+} from '../../config/publicOffer';
 
 const GAMES_WHATSAPP_URL = `https://wa.me/919618398383?text=${encodeURIComponent(
   'Hey TinySteps, I want to know more about the game subscription.'
@@ -52,7 +56,8 @@ const MISSION_PREVIEW_TRACKS = [
 const FAQS = [
   {
     question: 'Is the pricing per child?',
-    answer: 'Yes. Pricing is per child: ₹199 per month or ₹999 lifetime access, with a 3-day free trial before you commit.',
+    answer:
+      `Yes. Pricing is per child: ₹199 per month or ₹999 lifetime access, with a ${DIGITAL_GAMES_TRIAL_LABEL} before you commit. ${DIGITAL_GAMES_TRIAL_CLARIFICATION}`,
   },
   {
     question: 'What age group is this for?',
@@ -95,7 +100,7 @@ export default function LearningGamesMarketingPage() {
     applySeo({
       title: 'Phonics Practice Games for Kids | Tiny Steps Learning',
       description:
-        'Interactive phonics practice games for kids with tracing, sound work, and reading readiness. ₹199/month or ₹999 lifetime per child, with a 3-day free trial.',
+        'Interactive phonics practice games for kids with tracing, sound work, and reading readiness. ₹199/month or ₹999 lifetime per child, with a 3-day digital games trial.',
       canonicalPath: '/phonics-learning-games',
       ogType: 'website',
       jsonLd: [breadcrumbSchema, faqSchema],
@@ -106,7 +111,7 @@ export default function LearningGamesMarketingPage() {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <Meta
         title="Phonics Practice Games for Kids | Tiny Steps Learning"
-        description="Interactive phonics practice games for kids with tracing, sound work, and reading readiness. ₹199/month or ₹999 lifetime per child, with a 3-day free trial."
+        description="Interactive phonics practice games for kids with tracing, sound work, and reading readiness. ₹199/month or ₹999 lifetime per child, with a 3-day digital games trial."
         canonical="https://tinystepslearning.com/phonics-learning-games"
       />
 
@@ -133,7 +138,7 @@ export default function LearningGamesMarketingPage() {
                   rel="noopener noreferrer"
                   className="rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5"
                 >
-                  Start 3-day free trial
+                  Start 3-Day Digital Games Trial
                 </a>
                 <a
                   href={GAMES_WHATSAPP_URL}
@@ -144,6 +149,9 @@ export default function LearningGamesMarketingPage() {
                   Ask about lifetime access
                 </a>
               </div>
+              <p className="mt-2 text-xs font-medium text-slate-500">
+                {DIGITAL_GAMES_TRIAL_CLARIFICATION}
+              </p>
 
               <p className="mt-4 text-sm font-medium text-slate-600">
                 All game subscription enquiries open WhatsApp directly with a ready-to-send message for Tiny Steps.
@@ -174,7 +182,7 @@ export default function LearningGamesMarketingPage() {
                       <div className="mt-1 text-2xl font-bold text-slate-900">One child. One clear plan.</div>
                     </div>
                     <div className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-                      3-day free trial
+                      {DIGITAL_GAMES_TRIAL_LABEL}
                     </div>
                   </div>
 
@@ -184,7 +192,7 @@ export default function LearningGamesMarketingPage() {
                       <div className="mt-2 text-4xl font-bold text-slate-900">₹199</div>
                       <div className="mt-1 text-sm text-slate-600">per month / per child</div>
                       <p className="mt-4 text-sm leading-6 text-slate-600">
-                        Ideal for parents who want a low-risk way to begin daily skill practice after the 3-day free trial.
+                        Ideal for parents who want a low-risk way to begin daily skill practice after the 3-day digital games trial.
                       </p>
                     </div>
 
@@ -387,7 +395,7 @@ export default function LearningGamesMarketingPage() {
                 Start small or unlock it once.
               </h2>
               <p className="mt-4 text-lg leading-8 text-slate-300">
-                Try the 3-day free trial first, then continue with the monthly plan or secure lifetime access.
+                Try the 3-day digital games trial first, then continue with the monthly plan or secure lifetime access.
               </p>
             </div>
 
@@ -447,7 +455,7 @@ export default function LearningGamesMarketingPage() {
               Give your child a fun, focused way to practice every week.
             </h2>
             <p className="mt-4 text-lg leading-8 text-slate-600">
-              Start with a 3-day free trial, then continue at ₹199/month or unlock lifetime access for ₹999 per child.
+              Start with a 3-day digital games trial, then continue at ₹199/month or unlock lifetime access for ₹999 per child.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               <a

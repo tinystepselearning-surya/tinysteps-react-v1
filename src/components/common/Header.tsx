@@ -118,7 +118,7 @@ export default function Header() {
             onClick={handleBookAssessment}
             className="inline-flex h-11 items-center justify-center rounded-full border border-slate-900 bg-slate-900 px-5 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.16)] transition hover:bg-slate-800"
           >
-            Book Free Assessment
+            Book Free 35-Minute Demo
           </button>
         </div>
       </>
@@ -163,7 +163,7 @@ export default function Header() {
             onClick={handleBookAssessment}
             className="rounded-full border border-slate-900 bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white max-[380px]:px-3 max-[380px]:text-[11px]"
           >
-            Book Free Assessment
+            Book Free 35-Minute Demo
           </button>
           <button
             type="button"

@@ -6,6 +6,11 @@ import BookAssessmentForm from '../components/forms/BookAssessmentForm';
 import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../constants/publicContact';
 import { getRouteConfig } from '../lib/seo';
 import { createFAQPageSchema, createWebPageSchema } from '../lib/schemas';
+import {
+  FREE_DEMO_CTA_LABEL,
+  FREE_DEMO_FULL_DESCRIPTION,
+  STANDARD_PRICING_SUMMARY,
+} from '../config/publicOffer';
 
 const WHATSAPP_URL =
   'https://wa.me/919618398383?text=Hi%20Tiny%20Steps!%20I%20want%20help%20choosing%20the%20right%20English%20learning%20path%20for%20my%20child.';
@@ -13,16 +18,16 @@ const PHONE_URL = 'tel:+919618398383';
 
 const contactSeo = getRouteConfig('/contact');
 const contactSeoTitle =
-  contactSeo?.title ?? 'Book a Free Assessment for Your Child | Tiny Steps Learning';
+  contactSeo?.title ?? 'Book a Free 35-Minute Demo Assessment | Tiny Steps Learning';
 const contactSeoDescription =
   contactSeo?.description ??
-  'Book a free assessment for your child with Tiny Steps Learning. Share age, learning concern, and timing preference for phonics, reading, grammar, speaking, and online English support.';
+  `Contact Tiny Steps Learning. ${FREE_DEMO_FULL_DESCRIPTION}`;
 const contactCanonicalPath = contactSeo?.canonicalPath ?? '/contact';
 const contactCanonicalUrl = `https://tinystepslearning.com${contactCanonicalPath}`;
 
 const faqItems = [
   {
-    question: 'What should I share before booking a free assessment?',
+    question: 'What should I share before booking the free demo assessment class?',
     answer:
       'Parents can share the child’s age, the main concern, and any preferred class timing. That is enough for Tiny Steps to recommend the right starting point.',
   },
@@ -39,13 +44,13 @@ const faqItems = [
   {
     question: 'Will I get pricing before joining?',
     answer:
-      'Yes. Parents can review current pricing, class samples, and the recommended starting path after the free assessment.',
+      `Yes. ${STANDARD_PRICING_SUMMARY}. Parents can review class samples and the recommended starting path after the free 35-minute demo assessment class.`,
   },
 ];
 
 const contactJsonLd = [
   createWebPageSchema({
-    name: 'Book a Free Assessment for Your Child',
+    name: 'Book One Free 35-Minute Demo Assessment Class',
     description: contactSeoDescription,
     url: contactCanonicalUrl,
   }),
@@ -87,7 +92,8 @@ const supportCards = [
 const quickGuidance = [
   {
     title: 'Pricing guidance',
-    body: 'Current approved pricing is ₹400 per class and ₹4,800 for 12 classes. You can review full details after the assessment confirms the right starting path.',
+    body:
+      `${STANDARD_PRICING_SUMMARY}. The standard 1:1 package is ₹4,800 for 12 classes. ${FREE_DEMO_FULL_DESCRIPTION}`,
   },
   {
     title: 'Timing guidance',
@@ -119,7 +125,7 @@ const ContactPage: FC = () => {
               Parent admissions support
             </p>
             <h1 className="mt-4 max-w-3xl text-[36px] font-black leading-[1.03] tracking-[-0.035em] text-slate-950 sm:text-[48px]">
-              Book a Free Assessment for Your Child
+              Book One Free 35-Minute Demo Assessment Class
             </h1>
             <p className="mt-4 max-w-3xl text-base leading-8 text-slate-700 sm:text-lg">
               Share your child’s age, current concern, and preferred timing. Tiny Steps will help you choose the right starting point across phonics, reading, grammar, spoken English, and public speaking support.
@@ -150,7 +156,7 @@ const ContactPage: FC = () => {
                 href="#assessment-form"
                 className="inline-flex items-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
               >
-                Book Free Assessment
+                {FREE_DEMO_CTA_LABEL}
               </a>
               <Link
                 to="/pricing"
@@ -234,8 +240,8 @@ const ContactPage: FC = () => {
               source="contact_page_assessment"
               title="Share Your Child’s Details"
               description="Use the regular Tiny Steps assessment flow. Parents can share age, main concern, and timing preference to get the right starting point."
-              submitLabel="Book Free Assessment on WhatsApp"
-              submitAriaLabel="Book Free Assessment on WhatsApp"
+              submitLabel={`${FREE_DEMO_CTA_LABEL} on WhatsApp`}
+              submitAriaLabel={`${FREE_DEMO_CTA_LABEL} on WhatsApp`}
             />
             <p className="mt-4 text-sm leading-6 text-slate-600">
               After you submit, the team usually replies on WhatsApp within 12 hours with the recommended starting path,
