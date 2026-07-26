@@ -32,8 +32,8 @@
     --ts-safe-top: env(safe-area-inset-top, 0px);
     --ts-safe-bottom: env(safe-area-inset-bottom, 0px);
     --ts-keyboard-height: 0px;
-    --ts-mobile-tabbar-height: 5.5rem;
-    --ts-mobile-bottom-reserve: calc(var(--ts-mobile-tabbar-height) + var(--ts-safe-bottom) + 16px);
+    --ts-mobile-tabbar-height: 4.25rem;
+    --ts-mobile-bottom-reserve: calc(var(--ts-mobile-tabbar-height) + var(--ts-safe-bottom) + 0.375rem);
     --ts-mobile-tabbar-reserve: var(--ts-mobile-bottom-reserve);
   }
 
@@ -153,6 +153,10 @@ html.ts-capacitor-native .ts-native-tabbar-reserve {
 /* Native sticky headers need a little breathing room below the status bar. */
 html.ts-capacitor-native .ts-native-header-safe {
   padding-top: calc(var(--ts-safe-top) + 0.5rem);
+}
+
+.ts-parent-mobile-header {
+  padding-top: var(--ts-safe-top);
 }
 
 html.ts-capacitor-native .ts-login-native-shell {

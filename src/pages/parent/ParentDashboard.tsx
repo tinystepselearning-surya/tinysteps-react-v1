@@ -27,8 +27,10 @@ import ParentDashboardHero from "./components/ParentDashboardHero";
 import ParentDashboardKpis from "./components/ParentDashboardKpis";
 import ParentLearningInsights from "./components/ParentLearningInsights";
 import ParentLessonTracker from "./components/ParentLessonTracker";
+import ParentMobileHeader from "./components/ParentMobileHeader";
 import ParentProgressOverview from "./components/ParentProgressOverview";
 import ParentRecommendations from "./components/ParentRecommendations";
+import ParentShellLoading from "./components/ParentShellLoading";
 import ChildSkillRatingCard from "../../components/progress/ChildSkillRatingCard";
 import {
   ArrowRight,
@@ -44,7 +46,6 @@ import {
   Gamepad2,
   Home,
   LogOut,
-  Menu,
   MessageSquare,
   RefreshCw,
   Sparkles,
@@ -61,7 +62,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import TinyStepsBrand from "../../components/common/TinyStepsBrand";
-import MobileTabBar, { type MobileTabBarItem } from "../../components/common/MobileTabBar";
+import MobileTabBar from "../../components/common/MobileTabBar";
 import HolidayCalendar2026 from "../../components/common/HolidayCalendar2026";
 import MessagesPanel from "../messages/MessagesPanel";
 import useMessageThreads from "../../hooks/useMessageThreads";
@@ -100,17 +101,13 @@ import {
   pickDashboardPracticeChips,
   pickDashboardStrengthChips,
 } from "./parentDashboardViewModel";
+import {
+  isNativeParentChatFocus,
+  PARENT_MOBILE_TABS,
+  type ParentTabKey,
+} from "./parentNavigation";
 
-type TabKey =
-  | "dashboard"
-  | "insights"
-  | "games-progress"
-  | "skills"
-  | "classes"
-  | "messages"
-  | "holidays"
-  | "profile"
-  | "payments";
+type TabKey = ParentTabKey;
 
 type ParentNavItem = {
   id: TabKey;
@@ -127,14 +124,6 @@ const parentNavItems: ParentNavItem[] = [
   { id: "messages", label: "Messages", icon: MessageSquare },
   { id: "holidays", label: "Holiday Calendar", icon: CalendarDays },
   { id: "payments", label: "Payments", icon: CreditCard },
-];
-
-const PARENT_MOBILE_TABS: MobileTabBarItem[] = [
-  { id: "dashboard", label: "Home", icon: Home },
-  { id: "classes", label: "Classes", icon: CalendarDays },
-  { id: "messages", label: "Messages", icon: MessageSquare },
-  { id: "payments", label: "Payments", icon: CreditCard },
-  { id: "insights", label: "Insights", icon: TrendingUp },
 ];
 
 const shouldDebugParentDashboard = () =>
@@ -1546,8 +1535,11 @@ export default function ParentDashboard() {
     }
   }, [activeTab]);
 
-  const isNativeMessagesThreadFocus =
-    isNativeIOSApp && activeTab === "messages" && Boolean(messagesActiveThreadId);
+  const isNativeMessagesThreadFocus = isNativeParentChatFocus(
+    isNativeIOSApp,
+    activeTab,
+    messagesActiveThreadId,
+  );
 
   useEffect(() => {
     if (kids.length === 0) return;
@@ -4726,11 +4718,7 @@ export default function ParentDashboard() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[100dvh] items-center justify-center overflow-x-hidden">
-        Loading…
-      </div>
-    );
+    return <ParentShellLoading showNativeTabBar={isNativeIOSApp} />;
   }
   if (!user) return null;
 
@@ -5014,20 +5002,15 @@ export default function ParentDashboard() {
             isNativeIOSApp ? "h-full w-full overflow-hidden" : ""
           }`}>
             {!isNativeMessagesThreadFocus && (
-              <div className={`sticky top-0 z-30 shrink-0 bg-slate-50/90 backdrop-blur dark:bg-slate-950/80 ${
-                isNativeIOSApp ? "ts-native-header-safe pb-2" : "pt-safe"
-              }`}>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="gap-2 lg:hidden"
-                  onClick={openMobileMenu}
-                >
-                  <Menu className="h-4 w-4" />
-                  Menu
-                </Button>
-              </div>
+              <ParentMobileHeader
+                activeTab={activeTab}
+                childName={selectedKid?.fullName || selectedKid?.name}
+                onMenu={openMobileMenu}
+                onProfile={() => {
+                  hapticLight();
+                  setProfileOpen(true);
+                }}
+              />
             )}
 
             <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
