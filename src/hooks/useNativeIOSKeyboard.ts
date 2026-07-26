@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 
 type UseNativeIOSKeyboardOptions = {
@@ -38,8 +39,12 @@ export default function useNativeIOSKeyboard(
     const viewport = window.visualViewport;
     const root = document.documentElement;
     let rafId = 0;
+    let appStateHandle: { remove: () => Promise<void> } | null = null;
+    const delayedTimerIds = new Set<number>();
+    let mounted = true;
 
     const applyKeyboardState = (open: boolean, height: number) => {
+      if (!mounted) return;
       setKeyboardOpen(open);
       setKeyboardHeight(height);
       if (!manageDocumentState) return;
@@ -52,6 +57,7 @@ export default function useNativeIOSKeyboard(
     };
 
     const computeKeyboardState = () => {
+      if (!mounted) return;
       const active = document.activeElement;
       const hasEditableFocus = isEditableElement(active);
 
@@ -70,6 +76,7 @@ export default function useNativeIOSKeyboard(
     };
 
     const queueCompute = () => {
+      if (!mounted) return;
       if (rafId) window.cancelAnimationFrame(rafId);
       rafId = window.requestAnimationFrame(() => {
         rafId = 0;
@@ -77,20 +84,78 @@ export default function useNativeIOSKeyboard(
       });
     };
 
+    const queueDelayedCompute = (delayMs: number) => {
+      const timerId = window.setTimeout(() => {
+        delayedTimerIds.delete(timerId);
+        if (!mounted) return;
+        queueCompute();
+      }, delayMs);
+      delayedTimerIds.add(timerId);
+    };
+
+    const queueFocusOutRecompute = () => {
+      queueCompute();
+      queueDelayedCompute(80);
+      queueDelayedCompute(180);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        applyKeyboardState(false, 0);
+        return;
+      }
+      queueCompute();
+      queueDelayedCompute(80);
+    };
+
+    const handlePageShow = () => {
+      applyKeyboardState(false, 0);
+      queueCompute();
+      queueDelayedCompute(80);
+    };
+
     queueCompute();
     viewport?.addEventListener('resize', queueCompute);
     viewport?.addEventListener('scroll', queueCompute);
+    window.addEventListener('resize', queueCompute);
     window.addEventListener('orientationchange', queueCompute);
+    window.addEventListener('pageshow', handlePageShow);
     document.addEventListener('focusin', queueCompute);
-    document.addEventListener('focusout', queueCompute);
+    document.addEventListener('focusout', queueFocusOutRecompute);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    void CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+      if (!mounted) return;
+      if (!isActive) {
+        applyKeyboardState(false, 0);
+        return;
+      }
+      queueCompute();
+      queueDelayedCompute(80);
+      queueDelayedCompute(180);
+    }).then((handle) => {
+      if (!mounted) {
+        void handle.remove();
+        return;
+      }
+      appStateHandle = handle;
+    }).catch(() => {
+      // Ignore an unavailable native bridge in browser tests and web builds.
+    });
 
     return () => {
+      mounted = false;
       if (rafId) window.cancelAnimationFrame(rafId);
+      delayedTimerIds.forEach((timerId) => window.clearTimeout(timerId));
+      delayedTimerIds.clear();
+      if (appStateHandle) void appStateHandle.remove();
       viewport?.removeEventListener('resize', queueCompute);
       viewport?.removeEventListener('scroll', queueCompute);
+      window.removeEventListener('resize', queueCompute);
       window.removeEventListener('orientationchange', queueCompute);
+      window.removeEventListener('pageshow', handlePageShow);
       document.removeEventListener('focusin', queueCompute);
-      document.removeEventListener('focusout', queueCompute);
+      document.removeEventListener('focusout', queueFocusOutRecompute);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
 
       if (manageDocumentState) {
         root.style.setProperty(KEYBOARD_HEIGHT_VAR, '0px');

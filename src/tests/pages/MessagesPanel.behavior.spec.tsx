@@ -171,6 +171,28 @@ describe('MessagesPanel messaging behavior', () => {
     expect(screen.getByRole('button', { name: /Aarav Kumar conversation/ })).toHaveFocus();
   });
 
+  it('renders one native viewport owner with header, notice, list, and composer in order', () => {
+    const view = renderOpenPanel();
+    const owner = view.container.querySelector('.ts-chat-focus-screen');
+    const header = view.container.querySelector('.ts-chat-focus-header');
+    const viewport = view.container.querySelector('.ts-chat-focus-viewport');
+    const list = view.container.querySelector('.ts-chat-focus-list');
+    const composer = view.container.querySelector('.ts-chat-focus-composer');
+
+    expect(view.container.querySelectorAll('.ts-chat-focus-screen')).toHaveLength(1);
+    expect(view.container.querySelectorAll('.ts-chat-focus-viewport')).toHaveLength(1);
+    expect(owner).toBeTruthy();
+    expect(header).toBeTruthy();
+    expect(viewport).toBeTruthy();
+    expect(header?.parentElement?.parentElement).toBe(owner);
+    expect(header?.nextElementSibling?.nextElementSibling).toBe(viewport);
+    expect(viewport?.firstElementChild).toBe(list);
+    expect(viewport?.lastElementChild).toBe(composer);
+    expect(list?.contains(screen.getByText('First update'))).toBe(true);
+    expect(composer?.contains(screen.getByRole('textbox', { name: 'Message' }))).toBe(true);
+    expect(composer?.className).not.toContain('sticky');
+  });
+
   it('uses the existing callable payload and blocks duplicate sends while pending', () => {
     const pendingSend = new Promise<{ messageId: string }>(() => undefined);
     callFunctionMock.mockImplementation((name: string) => {

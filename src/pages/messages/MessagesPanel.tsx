@@ -11,6 +11,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import useMessageThreads, { type MessageThread } from '../../hooks/useMessageThreads';
 import useThreadMessages, { type ThreadMessage } from '../../hooks/useThreadMessages';
 import useNativeIOSKeyboard from '../../hooks/useNativeIOSKeyboard';
+import { setActiveMessageThread } from '../../lib/foregroundNotificationState';
 import MessageThreadList, {
   type MessageThreadRowViewModel,
 } from './components/MessageThreadList';
@@ -709,7 +710,9 @@ export default function MessagesPanel({
   const showConversationList = !selectedThread;
   const showConversationDetail = Boolean(selectedThread);
   const isEmbeddedNativeChatFocus = embedded && nativeChatFocus && showConversationDetail;
-  const threadPaneHeightClass = embedded
+  const threadPaneHeightClass = isEmbeddedNativeChatFocus
+    ? 'h-full min-h-0'
+    : embedded
     ? 'max-h-[calc(100dvh-var(--ts-mobile-tabbar-reserve)-10rem)] lg:max-h-[52vh]'
     : 'max-h-[72vh]';
   const detailPaneHeightClass = isEmbeddedNativeChatFocus
@@ -731,9 +734,14 @@ export default function MessagesPanel({
     };
   }, [isEmbeddedNativeChatFocus]);
 
+  useEffect(() => {
+    setActiveMessageThread(showConversationDetail ? selectedThread?.id || null : null);
+    return () => setActiveMessageThread(null);
+  }, [selectedThread?.id, showConversationDetail]);
+
   return (
     <div className={embedded
-      ? `ts-native-no-x-scroll min-h-0 min-w-0 overflow-x-hidden ${isEmbeddedNativeChatFocus ? 'flex h-[100dvh] flex-col overflow-hidden' : ''}`
+      ? `ts-native-no-x-scroll min-h-0 min-w-0 overflow-x-hidden ${isEmbeddedNativeChatFocus ? 'flex flex-1 flex-col overflow-hidden' : ''}`
       : 'min-h-screen overflow-x-hidden bg-slate-50 pb-safe'}>
       <div className={embedded
         ? `${isEmbeddedNativeChatFocus ? 'flex min-h-0 w-full min-w-0 flex-1 flex-col' : 'w-full min-w-0'}`
@@ -789,7 +797,11 @@ export default function MessagesPanel({
             </div>
           </Card>
 
-          <Card className={`min-w-0 overflow-hidden ${showConversationList ? 'hidden lg:block' : ''} ${isEmbeddedNativeChatFocus ? 'ts-chat-focus-screen ts-native-no-x-scroll rounded-none border-0 shadow-none' : ''}`}>
+          <div className={`min-w-0 overflow-hidden ${showConversationList ? 'hidden lg:block' : ''} ${
+            isEmbeddedNativeChatFocus
+              ? 'ts-chat-focus-screen ts-native-no-x-scroll'
+              : 'rounded-xl border border-slate-200 bg-white text-slate-950 shadow-sm'
+          }`}>
             {!showConversationDetail ? (
               <div className={`flex items-center justify-center px-6 text-center text-sm text-slate-500 ${detailEmptyStateClass}`}>
                 Select a conversation to view messages.
@@ -803,21 +815,22 @@ export default function MessagesPanel({
                   nativeFocus={isEmbeddedNativeChatFocus}
                 />
 
-                {!isEmbeddedNativeChatFocus ? (
-                  <div className="border-b border-slate-200/80 bg-white px-4 py-2 text-[11px] text-slate-500">
-                    {viewerRole === 'admin'
-                      ? 'Admin oversight is read-only here.'
-                      : 'Tiny Steps may review conversations for safety and support.'}
-                  </div>
-                ) : null}
+                <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 py-2 text-[11px] text-slate-500">
+                  {viewerRole === 'admin'
+                    ? 'Admin oversight is read-only here.'
+                    : 'Tiny Steps may review conversations for safety and support.'}
+                </div>
 
-                <div
-                  ref={threadMessagesListRef}
-                  className={`min-h-0 flex-1 space-y-2 overflow-y-auto overflow-x-hidden bg-slate-50/70 p-3 [-webkit-overflow-scrolling:touch] ${
-                    isEmbeddedNativeChatFocus ? 'ts-chat-focus-list' : ''
-                  } ${embedded ? (isEmbeddedNativeChatFocus ? 'pb-4' : 'pb-24') : 'pb-4'}`}
-                  aria-label={`${resolveThreadTitle(selectedThread!)} messages`}
-                >
+                <div className={`flex min-h-0 flex-1 flex-col overflow-hidden ${
+                  isEmbeddedNativeChatFocus ? 'ts-chat-focus-viewport' : ''
+                }`}>
+                  <div
+                    ref={threadMessagesListRef}
+                    className={`min-h-0 flex-1 space-y-2 overflow-y-auto overflow-x-hidden bg-slate-50/70 p-3 [-webkit-overflow-scrolling:touch] ${
+                      isEmbeddedNativeChatFocus ? 'ts-chat-focus-list' : ''
+                    } ${embedded ? (isEmbeddedNativeChatFocus ? 'pb-4' : 'pb-24') : 'pb-4'}`}
+                    aria-label={`${resolveThreadTitle(selectedThread!)} messages`}
+                  >
                   {isMessagesLoading ? (
                     <MessageConversationSkeleton />
                   ) : messagesError ? (
@@ -889,47 +902,48 @@ export default function MessagesPanel({
                       );
                     })
                   )}
-                  <div ref={listEndRef} />
-                </div>
+                    <div ref={listEndRef} />
+                  </div>
 
-                <div className={`shrink-0 border-t border-slate-200 bg-white px-3 pt-3 ${
-                  isEmbeddedNativeChatFocus ? 'ts-chat-focus-composer' : ''
-                } ${
-                  embedded
-                    ? isEmbeddedNativeChatFocus
-                      ? 'pb-[max(env(safe-area-inset-bottom,0px),0.5rem)]'
-                      : 'sticky bottom-0 z-10 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]'
-                    : 'sticky bottom-0 z-10 pb-safe'
-                }`}>
-                  {viewerRole === 'admin' ? (
-                    <p className="pb-2 text-xs text-slate-500">
-                      Admin oversight is read-only here.
-                    </p>
-                  ) : (
-                    <MessageComposer
-                      value={draft}
-                      onChange={setDraft}
-                      onSend={() => void handleSend()}
-                      onFocus={() => {
-                        window.setTimeout(() => {
-                          scrollMessagesToBottom('smooth');
-                        }, 30);
-                      }}
-                      isSending={isSending}
-                      error={sendError}
-                      helperText={
-                        viewerRole === 'parent'
-                          ? 'Message your Teacher and Learning Partner here.'
-                          : viewerRole === 'teacher'
-                            ? 'Message the Parent and Learning Partner here.'
-                            : 'Message the Parent and Teacher here.'
-                      }
-                    />
-                  )}
+                  <div className={`shrink-0 border-t border-slate-200 bg-white px-3 pt-3 ${
+                    isEmbeddedNativeChatFocus ? 'ts-chat-focus-composer' : ''
+                  } ${
+                    embedded
+                      ? isEmbeddedNativeChatFocus
+                        ? ''
+                        : 'sticky bottom-0 z-10 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]'
+                      : 'sticky bottom-0 z-10 pb-safe'
+                  }`}>
+                    {viewerRole === 'admin' ? (
+                      <p className="pb-2 text-xs text-slate-500">
+                        Admin oversight is read-only here.
+                      </p>
+                    ) : (
+                      <MessageComposer
+                        value={draft}
+                        onChange={setDraft}
+                        onSend={() => void handleSend()}
+                        onFocus={() => {
+                          window.setTimeout(() => {
+                            scrollMessagesToBottom('smooth');
+                          }, 30);
+                        }}
+                        isSending={isSending}
+                        error={sendError}
+                        helperText={
+                          viewerRole === 'parent'
+                            ? 'Message your Teacher and Learning Partner here.'
+                            : viewerRole === 'teacher'
+                              ? 'Message the Parent and Learning Partner here.'
+                              : 'Message the Parent and Teacher here.'
+                        }
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
             )}
-          </Card>
+          </div>
         </div>
       </div>
     </div>

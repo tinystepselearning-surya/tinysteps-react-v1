@@ -11,8 +11,9 @@ type ApnsEnvironment = 'development' | 'production' | 'auto';
 
 export type ApnsAlertPayload = {
   deviceToken: string;
-  title: string;
-  body: string;
+  title?: string;
+  body?: string;
+  badge?: number;
   threadId?: string;
   data: Record<string, string>;
 };
@@ -197,6 +198,33 @@ export const isApnsInvalidTokenReason = (reason: string | undefined): boolean =>
 
 export const hasApnsConfiguration = (): boolean => Boolean(readConfig());
 
+export const buildApnsPayload = (payload: ApnsAlertPayload): Record<string, unknown> => {
+  const aps: Record<string, unknown> = {
+    'thread-id':
+      payload.threadId ||
+      payload.data.threadId ||
+      payload.data.sessionId ||
+      'tinysteps',
+  };
+
+  if (payload.title || payload.body) {
+    aps.alert = {
+      title: payload.title || 'Tiny Steps',
+      body: payload.body || '',
+    };
+    aps.sound = 'default';
+  }
+
+  if (typeof payload.badge === 'number' && Number.isFinite(payload.badge)) {
+    aps.badge = Math.max(0, Math.floor(payload.badge));
+  }
+
+  return {
+    aps,
+    ...payload.data,
+  };
+};
+
 export async function sendApnsAlert(payload: ApnsAlertPayload): Promise<ApnsSendOutcome> {
   const config = readConfig();
   if (!config) {
@@ -204,18 +232,7 @@ export async function sendApnsAlert(payload: ApnsAlertPayload): Promise<ApnsSend
   }
 
   const jwt = createJwt(config);
-  const requestBody = JSON.stringify({
-    aps: {
-      alert: {
-        title: payload.title,
-        body: payload.body,
-      },
-      sound: 'default',
-      badge: 1,
-      'thread-id': payload.threadId || payload.data.threadId || 'tinysteps-messages',
-    },
-    ...payload.data,
-  });
+  const requestBody = JSON.stringify(buildApnsPayload(payload));
 
   const hosts = resolveHosts(config.environment);
   let lastOutcome: ApnsSendOutcome = {

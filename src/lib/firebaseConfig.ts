@@ -3,6 +3,7 @@ import { initializeApp, getApps, getApp, type FirebaseOptions } from 'firebase/a
 import { getFirestore } from 'firebase/firestore';
 import {
   browserLocalPersistence,
+  indexedDBLocalPersistence,
   getAuth,
   initializeAuth,
   setPersistence,
@@ -74,10 +75,13 @@ const createAuth = (): Auth => {
 
   try {
     const nativeAuth = initializeAuth(app, {
-      persistence: browserLocalPersistence,
+      persistence: [
+        indexedDBLocalPersistence,
+        browserLocalPersistence,
+      ],
     });
     logAuthInit('firebase-auth:init:native-durable', {
-      persistence: 'local-storage',
+      persistence: ['indexeddb', 'local-storage'],
     });
     return nativeAuth;
   } catch (err) {
@@ -92,27 +96,42 @@ const createAuth = (): Auth => {
 const db = getFirestore(app);
 const auth = createAuth();
 logFirebaseAuthKeyPresence('after-auth-initialization');
-let nativeAuthPersistencePromise: Promise<void> | null = null;
+export type NativeAuthPersistenceKind =
+  | 'indexeddb'
+  | 'local-storage'
+  | 'web-default';
 
-export const ensureNativeAuthPersistence = (): Promise<void> => {
-  if (!isNativeCapacitorRuntime()) return Promise.resolve();
+let nativeAuthPersistencePromise: Promise<NativeAuthPersistenceKind> | null = null;
+
+export const ensureNativeAuthPersistence = (): Promise<NativeAuthPersistenceKind> => {
+  if (!isNativeCapacitorRuntime()) return Promise.resolve('web-default');
   if (nativeAuthPersistencePromise) return nativeAuthPersistencePromise;
 
   console.info('[auth-persistence] configure:start');
-  nativeAuthPersistencePromise = setPersistence(auth, browserLocalPersistence)
-    .then(() => {
-      console.info('[auth-persistence] configure:success');
-    })
-    .catch((error: unknown) => {
-      nativeAuthPersistencePromise = null;
-      const code =
-        error && typeof error === 'object' && 'code' in error &&
-        typeof (error as { code?: unknown }).code === 'string'
-          ? (error as { code: string }).code
-          : undefined;
-      console.warn('[auth-persistence] configure:error', { code });
-      throw error;
-    });
+  nativeAuthPersistencePromise = (async () => {
+    try {
+      await setPersistence(auth, indexedDBLocalPersistence);
+      console.info('[auth-persistence] configure:success', {
+        persistence: 'indexeddb',
+      });
+      return 'indexeddb' as const;
+    } catch (indexedDbError) {
+      console.warn('[auth-persistence] indexeddb:unavailable', {
+        code:
+          typeof (indexedDbError as { code?: unknown })?.code === 'string'
+            ? (indexedDbError as { code: string }).code
+            : undefined,
+      });
+      await setPersistence(auth, browserLocalPersistence);
+      console.info('[auth-persistence] configure:success', {
+        persistence: 'local-storage',
+      });
+      return 'local-storage' as const;
+    }
+  })().catch((error) => {
+    nativeAuthPersistencePromise = null;
+    throw error;
+  });
 
   return nativeAuthPersistencePromise;
 };

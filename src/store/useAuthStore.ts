@@ -18,7 +18,9 @@ interface AuthState {
   user: AuthUser | null;
   authStatus: AuthStatus;
   isLoading: boolean;
+  authRecoveryError: string | null;
   setUser: (user: AuthUser | null) => void;
+  setAuthRecoveryError: (message: string | null) => void;
   clearUser: (reason?: string) => void;
   resolveAuth: (
     status: Exclude<AuthStatus, 'initializing'>,
@@ -42,7 +44,9 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       authStatus: 'initializing',
       isLoading: true,
+      authRecoveryError: null,
       setUser: (user: AuthUser | null) => set({ user }),
+      setAuthRecoveryError: (authRecoveryError) => set({ authRecoveryError }),
       clearUser: (reason = 'test-only') => set((state) => {
         if (isNativeCapacitorRuntime() && state.user) {
           console.info('[auth-state] user-cleared', { reason });
@@ -58,6 +62,7 @@ export const useAuthStore = create<AuthState>()(
           authStatus,
           isLoading: false,
           user,
+          authRecoveryError: null,
         };
       }),
     }),

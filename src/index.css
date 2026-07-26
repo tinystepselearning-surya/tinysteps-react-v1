@@ -187,10 +187,22 @@ html.ts-capacitor-native .ts-chat-focus-screen {
   inset: 0;
   z-index: 90;
   display: flex;
-  min-height: 100dvh;
+  height: 100dvh;
+  min-height: 0;
+  width: 100%;
+  min-width: 0;
   flex-direction: column;
   overflow: hidden;
   background: #f8fafc;
+  box-sizing: border-box;
+}
+
+html.ts-capacitor-native .ts-chat-focus-viewport {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
   padding-bottom: var(--ts-keyboard-height, 0px);
 }
 
@@ -208,9 +220,15 @@ html.ts-capacitor-native .ts-chat-focus-list {
 }
 
 html.ts-capacitor-native .ts-chat-focus-composer {
-  flex-shrink: 0;
-  padding-bottom: max(var(--ts-safe-bottom), 0.5rem);
+  position: relative;
+  inset: auto;
+  flex: 0 0 auto;
   background: #fff;
+  padding-bottom: max(var(--ts-safe-bottom), 0.5rem);
+}
+
+html.ts-capacitor-native[data-keyboard-open='true'] .ts-chat-focus-composer {
+  padding-bottom: 0.5rem;
 }
 
 body.custom-cursor-enabled {
