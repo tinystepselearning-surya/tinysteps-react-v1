@@ -189,7 +189,7 @@ export default function EnglishClassesFor5YearOldPage() {
           </li>
           <li>
             • For broader national pathway overview:{' '}
-            <Link to="/online-english-classes-for-kids-india" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+            <Link to="/online-english-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-slate-900">
               Online English Classes for Kids in India
             </Link>
           </li>

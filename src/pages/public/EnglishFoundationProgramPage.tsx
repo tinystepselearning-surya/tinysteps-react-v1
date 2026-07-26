@@ -143,7 +143,7 @@ export default function EnglishFoundationProgramPage() {
           This page is a foundation pathway guide for children who need baseline skills strengthened before moving to advanced tracks. For broader India-level
           program discovery, see{' '}
           <Link
-            to="/online-english-classes-for-kids-india"
+            to="/online-english-classes-for-kids"
             className="font-semibold underline underline-offset-2 hover:text-slate-900"
           >
             Online English Classes for Kids in India
@@ -212,7 +212,7 @@ export default function EnglishFoundationProgramPage() {
           <li>
             • National page overview:{' '}
             <Link
-              to="/online-english-classes-for-kids-india"
+              to="/online-english-classes-for-kids"
               className="font-semibold underline underline-offset-2 hover:text-slate-900"
             >
               Online English Classes for Kids in India

@@ -173,7 +173,7 @@ export default function EnglishClassesFor7To10YearOldPage() {
         <ul className="space-y-2 text-slate-700">
           <li>
             • For broader multi-age planning:{' '}
-            <Link to="/online-english-classes-for-kids-india" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+            <Link to="/online-english-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-slate-900">
               Online English Classes for Kids India
             </Link>
           </li>

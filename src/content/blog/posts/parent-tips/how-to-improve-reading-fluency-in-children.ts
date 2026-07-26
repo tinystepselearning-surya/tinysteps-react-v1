@@ -307,7 +307,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'For broader language growth, you can combine fluency work with [online English classes for kids in India](/online-english-classes-for-kids-india), plus [grammar and sentence formation support](/grammar) and [public speaking and communication classes](/speaking). If you want a clear starting point, [book a free assessment](/book-demo).',
+        'For broader language growth, you can combine fluency work with [online English classes for kids in India](/online-english-classes-for-kids), plus [grammar and sentence formation support](/grammar) and [public speaking and communication classes](/speaking). If you want a clear starting point, [book a free assessment](/book-demo).',
     },
     {
       type: 'h2',
