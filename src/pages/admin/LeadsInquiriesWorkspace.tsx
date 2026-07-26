@@ -6,7 +6,6 @@ import {
   getDocs,
   onSnapshot,
   orderBy,
-  type QueryConstraint,
   query,
   serverTimestamp,
   Timestamp,
@@ -81,6 +80,11 @@ import {
   updateDemoConversion,
 } from '../../services/demoSessionsService';
 import DemoSessionsManagement from './DemoSessionsManagement';
+import {
+  buildNewWebsiteLeadToastDescription,
+  deriveLeadLifecycleStage,
+  useRealtimeLeads,
+} from './leadsRealtime';
 
 export type LeadsWorkspaceView = 'leads' | 'demos';
 
@@ -140,6 +144,7 @@ interface LeadRecord {
   programInterest?: string | null;
   source?: LeadSource | null;
   sourceDetail?: string | null;
+  mainConcern?: string | null;
   country?: string | null;
   preferredTimingText?: string | null;
   initialMessageSnippet?: string | null;
@@ -498,7 +503,6 @@ const TODAY_DATE_INPUT = (() => {
 })();
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-const LOST_LEAD_STATUSES = new Set<LeadStatus>(['not_interested', 'wrong_fit', 'no_response', 'lost']);
 const TERMINAL_DEMO_BLOCK_LEAD_STATUSES = new Set<LeadStatus>([
   'not_interested',
   'wrong_fit',
@@ -815,25 +819,11 @@ const resolveDemoWorkflowState = (demo: DemoSession | null): 'open' | 'assigned'
 };
 
 function deriveLifecycleStage(lead: LeadRecord | null, demo: DemoSession | null): LifecycleStage {
-  const leadStatus = normalizeText(lead?.status).toLowerCase() as LeadStatus;
-  const conversionStatus = normalizeText(demo?.conversionStatus).toLowerCase() as DemoConversionStatus;
-  const demoStatus = normalizeDemoStatus(demo?.status || '');
-
-  if (leadStatus === 'admitted_confirmed' || conversionStatus === 'enrolled') return 'admitted';
-  if (
-    LOST_LEAD_STATUSES.has(leadStatus) ||
-    conversionStatus === 'not_interested' ||
-    conversionStatus === 'wrong_fit' ||
-    conversionStatus === 'no_response'
-  ) {
-    return 'lost';
-  }
-  if (leadStatus === 'admission_follow_up' || conversionStatus === 'interested' || conversionStatus === 'follow_up_later') {
-    return 'admission_follow_up';
-  }
-  if (demoStatus === 'open' || demoStatus === 'assigned') return 'demo_active';
-  if (demoStatus === 'completed' || demoStatus === 'cancelled') return 'demo_completed';
-  return 'enquiry';
+  return deriveLeadLifecycleStage(
+    lead?.status,
+    demo ? normalizeDemoStatus(demo.status || '') : '',
+    demo?.conversionStatus,
+  );
 }
 
 function nextFollowUpLabel(lead: LeadRecord | null, demo: DemoSession | null): string {
@@ -1112,9 +1102,8 @@ export default function LeadsInquiriesWorkspace({
 }: LeadsInquiriesWorkspaceProps) {
   const { toast } = useToast();
   const { user } = useAuthStore();
-  const [leads, setLeads] = useState<LeadRecord[]>([]);
   const [leadsPageSize, setLeadsPageSize] = useState<number>(5);
-  const [isLeadsPageLoading, setIsLeadsPageLoading] = useState(false);
+  const [newWebsiteLeadQueue, setNewWebsiteLeadQueue] = useState<LeadRecord[][]>([]);
   const [demos, setDemos] = useState<DemoSession[]>([]);
   const [demoPhoneMap, setDemoPhoneMap] = useState<Record<string, string>>({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -1177,51 +1166,27 @@ export default function LeadsInquiriesWorkspace({
   const canArchiveExistingRecords =
     user?.role === 'admin' || normalizeText(user?.email).toLowerCase() === 'suryaz@tinysteps.com';
 
+  const {
+    leads,
+    isLoading: isLeadsPageLoading,
+    newLeadIds,
+  } = useRealtimeLeads<LeadRecord>({
+    onNewWebsiteLeads: (newLeads) => {
+      setNewWebsiteLeadQueue((current) => [...current, newLeads]);
+    },
+    onError: (error) => {
+      console.error('[LeadsInquiriesWorkspace] leads load failed', error);
+      toast({
+        title: 'Failed to load leads',
+        description: error?.message || 'Please refresh.',
+        variant: 'destructive',
+      });
+    },
+  });
+
   useEffect(() => {
     setFocusFilter(view === 'demos' ? 'all_demos' : 'all');
   }, [view]);
-
-  useEffect(() => {
-    setIsLeadsPageLoading(true);
-    const constraints: QueryConstraint[] = [];
-    const updatedFromMs = parseDateOnlyMs(appliedUpdatedFromDate);
-    const updatedToMs = parseDateOnlyMs(appliedUpdatedToDate);
-    if (updatedFromMs) {
-      constraints.push(where('createdAt', '>=', Timestamp.fromMillis(updatedFromMs)));
-    }
-    if (updatedToMs) {
-      constraints.push(where('createdAt', '<', Timestamp.fromMillis(updatedToMs + DAY_MS)));
-    }
-    constraints.push(orderBy('createdAt', 'desc'));
-    const q = query(collection(db, LEADS_COLLECTION), ...constraints);
-    const unsub = onSnapshot(
-      q,
-      (snap) => {
-        const next = snap.docs.map((docSnap) => ({
-          id: docSnap.id,
-          ...(docSnap.data() as Record<string, unknown>),
-        })) as LeadRecord[];
-        setLeads(next);
-        setIsLeadsPageLoading(false);
-      },
-      (error) => {
-        console.error('[LeadsInquiriesWorkspace] leads load failed', error);
-        toast({
-          title: 'Failed to load leads',
-          description: error?.message || 'Please refresh.',
-          variant: 'destructive',
-        });
-        setLeads([]);
-        setIsLeadsPageLoading(false);
-      },
-    );
-    return () => unsub();
-  }, [
-    appliedLeadStatusFilter,
-    appliedUpdatedFromDate,
-    appliedUpdatedToDate,
-    toast,
-  ]);
 
   useEffect(() => {
     if (!communicationsOpen || !communicationsTarget?.id) {
@@ -1509,6 +1474,23 @@ export default function LeadsInquiriesWorkspace({
   ]);
 
   const visibleRows = useMemo(() => filteredRows.slice(0, leadsPageSize), [filteredRows, leadsPageSize]);
+
+  useEffect(() => {
+    if (newWebsiteLeadQueue.length === 0) return;
+    const newWebsiteLeads = newWebsiteLeadQueue.flat();
+    const visibleLeadIds = new Set(
+      filteredRows.map((row) => row.lead?.id).filter((id): id is string => Boolean(id)),
+    );
+    const hiddenLeadCount = newWebsiteLeads.filter((lead) => !visibleLeadIds.has(lead.id)).length;
+    toast({
+      title:
+        newWebsiteLeads.length === 1
+          ? 'New website assessment received'
+          : `${newWebsiteLeads.length} new website assessments received`,
+      description: buildNewWebsiteLeadToastDescription(newWebsiteLeads, hiddenLeadCount),
+    });
+    setNewWebsiteLeadQueue([]);
+  }, [filteredRows, newWebsiteLeadQueue, toast]);
   const visibleDemoSessions = useMemo(
     () => visibleRows.map((row) => row.demo).filter((session): session is DemoSession => Boolean(session)),
     [visibleRows],
@@ -3072,10 +3054,29 @@ export default function LeadsInquiriesWorkspace({
                   const demoWorkflowState = resolveDemoWorkflowState(row.demo);
                   const isCompletedDemo = demoStatus === 'completed';
                   const isCancelledDemo = demoStatus === 'cancelled';
+                  const isNewWebsiteLead = Boolean(row.lead?.id && newLeadIds.has(row.lead.id));
                   return (
-                    <TableRow key={row.id} className={cn('transition-colors hover:bg-slate-50/70', getRowHighlightClass(row))}>
+                    <TableRow
+                      key={row.id}
+                      className={cn(
+                        'transition-colors hover:bg-slate-50/70',
+                        getRowHighlightClass(row),
+                        isNewWebsiteLead && 'bg-sky-50/80 ring-1 ring-inset ring-sky-200',
+                      )}
+                    >
                       <TableCell>
-                        <div className="font-medium">{row.parentName}</div>
+                        <div className="flex items-center gap-2 font-medium">
+                          <span>{row.parentName}</span>
+                          {isNewWebsiteLead ? (
+                            <Badge
+                              variant="outline"
+                              aria-label="New website assessment"
+                              className="border-sky-300 bg-sky-100 text-sky-800"
+                            >
+                              New
+                            </Badge>
+                          ) : null}
+                        </div>
                         <div className="text-xs text-muted-foreground">{row.parentPhone}</div>
                       </TableCell>
                       <TableCell>{row.childName}</TableCell>
@@ -3136,7 +3137,11 @@ export default function LeadsInquiriesWorkspace({
                           </div>
                         ) : null}
                       </TableCell>
-                      <TableCell>{formatDateInputLabel(row.demo?.requestReceivedDate)}</TableCell>
+                      <TableCell>
+                        {row.demo?.requestReceivedDate
+                          ? formatDateInputLabel(row.demo.requestReceivedDate)
+                          : formatTs(row.lead?.createdAt)}
+                      </TableCell>
                       <TableCell>{formatTs(row.updatedAtMs)}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap justify-end gap-2">
