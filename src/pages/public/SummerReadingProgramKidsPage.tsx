@@ -65,7 +65,7 @@ export default function SummerReadingProgramKidsPage() {
           to="/book-demo"
           className="mt-8 inline-block rounded-lg bg-slate-900 px-8 py-3 font-semibold text-white transition hover:bg-slate-800"
         >
-          Book Free Assessment
+          Book Free 35-Minute Demo
         </Link>
       </section>
 
@@ -198,7 +198,7 @@ export default function SummerReadingProgramKidsPage() {
           <li>
             • Book assessment:{' '}
             <Link to="/book-demo" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-              Book Free Assessment
+              Book Free 35-Minute Demo
             </Link>
           </li>
         </ul>
@@ -218,12 +218,12 @@ export default function SummerReadingProgramKidsPage() {
 
       <section className="rounded-xl bg-slate-900 p-8 text-center text-white">
         <h2 className="text-2xl font-bold">Parent action: choose the right reading path now</h2>
-        <p className="mt-2 text-slate-200">Book a free assessment for a clear next-step recommendation in phonics, reading fluency, and confidence support.</p>
+        <p className="mt-2 text-slate-200">Book one free 35-minute 1:1 online demo assessment class for a clear next-step recommendation in phonics, reading fluency, and confidence support.</p>
         <Link
           to="/book-demo"
           className="mt-6 inline-block rounded-lg bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100"
         >
-          Book Free Assessment
+          Book Free 35-Minute Demo
         </Link>
       </section>
       <ClusterSeoNav cluster="phonics" />

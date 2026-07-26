@@ -13,18 +13,16 @@ const WHATSAPP_CTA = "https://wa.me/919618398383";
 const MAX_SNIPPETS = 2;
 const SNIPPET_TEXT_LIMIT = 420;
 const KEY_PAGES = [
-  "/summer-camps",
-  "/summer-camps/phonics-fast-track",
-  "/summer-camps/grammar-fast-track",
-  "/summer-camps/speaking-fast-track",
   "/pricing",
+  "/book-demo",
   "/courses",
   "/faq",
-  "/how-it-works",
   "/why-tiny-steps",
   "/curriculum",
+  "/summer-camps",
   "/",
 ];
+const ACTIVE_PUBLIC_KB_PATHS = new Set(KEY_PAGES);
 const STOP_WORDS = new Set([
   "a",
   "an",
@@ -205,9 +203,9 @@ function preferredPathForIntent(
   if (intent === "courses") return "/courses";
   if (intent === "curriculum") return "/curriculum";
   if (intent === "faq") return "/faq";
-  if (intent === "how_it_works") return "/how-it-works";
+  if (intent === "how_it_works") return "/curriculum";
   if (intent === "why_tiny_steps") return "/why-tiny-steps";
-  if (intent === "assessment" || intent === "duration") return "/faq";
+  if (intent === "assessment" || intent === "duration") return "/book-demo";
   return null;
 }
 
@@ -256,7 +254,14 @@ async function retrieveSnippets(question: string): Promise<Snippet[]> {
   });
 
   const ranked = candidates
-    .filter((c) => c.active && c.score > 0.9 && c.url && c.text)
+    .filter(
+      (candidate) =>
+        candidate.active &&
+        ACTIVE_PUBLIC_KB_PATHS.has(candidate.path) &&
+        candidate.score > 0.9 &&
+        candidate.url &&
+        candidate.text
+    )
     .sort((a, b) => b.score - a.score);
 
   // For high-value intents, strongly prefer snippets from the intended page.
@@ -285,14 +290,13 @@ async function retrieveSnippets(question: string): Promise<Snippet[]> {
 // ---------- No-snippet fallback ----------
 function summerCampDirectAnswer(includeWhatsapp = true): string {
   const base =
-    "Tiny Steps Summer Camp 2026 runs as a structured online summer season from 27 April 2026 to 13 June 2026 for ages 4–12. " +
-    "Each child joins one 4-week small-group batch with 24 live classes from Monday to Saturday, with Sunday kept as a holiday. " +
-    "Available batch start dates are 27 April, 4 May, 11 May and 18 May 2026, and the final batch is designed to close before schools reopen on 15 June 2026. " +
-    "Tracks: Phonics Fast Track (4–8), Grammar Fast Track (6–12), Speaking Fast Track (6–12). " +
-    "Fast Track Pack list fee is ₹5,000 per child. Effective price is ₹2,400 per child, with 50–60 minute live classes, worksheets, and class recordings. " +
+    "Tiny Steps Summer Camp 2026 ended on 13 June 2026. Enrolment is closed. " +
+    "Each child joined one four-week small-group batch with 24 live classes from Monday to Saturday. " +
+    "Historical tracks were Phonics Fast Track, Grammar Fast Track, and Speaking Fast Track. " +
+    "The historical list fee was ₹5,000 per child and the effective fee was ₹2,400 per child. " +
     `Source: ${SITE_ORIGIN}/summer-camps`;
   if (!includeWhatsapp) return base;
-  return `${base}\n\nFor quick enrollment help, message us on WhatsApp: ${WHATSAPP_CTA}`;
+  return `${base}\n\nFor regular Tiny Steps programme help, message us on WhatsApp: ${WHATSAPP_CTA}`;
 }
 
 function fallbackWithoutSnippets(question: string): string {
@@ -312,7 +316,7 @@ function fallbackWithoutSnippets(question: string): string {
 
   if (/(demo|assessment|trial|free class)/.test(q)) {
     return (
-      "Yes. The Free Assessment Class is ₹0. " +
+      "Tiny Steps provides one free 35-minute 1:1 online demo assessment class per child before enrolment. It costs ₹0 and requires no credit card. " +
       `To book quickly, please message us on WhatsApp: ${WHATSAPP_CTA}`
     );
   }
@@ -432,10 +436,11 @@ STYLE:
 - Do not repeat the same line.
 
 FACTS (do not change):
-- Free Assessment / Demo: FREE (₹0).
+- One Free 35-Minute Demo Assessment Class: exactly one live 1:1 online session per child before enrolment, FREE (₹0), no credit card required.
 - Class duration: 35 minutes (1:1 live online).
 - Tracks: Phonics (3–10), Grammar (5–10), Public Speaking (5–12).
-- Summer Camp: structured online summer season for ages 4–12 running 27 April 2026 to 13 June 2026. Each child joins one 4-week batch with 24 live classes from Monday to Saturday, Sunday holiday, batch start dates 27 April / 4 May / 11 May / 18 May 2026, final batch closes before schools reopen on 15 June 2026, Fast Track Pack ₹2,400 per child.
+- Standard pricing: 1:1 ₹400 per class; small groups ₹180–₹300 per child per class; 12-class standard 1:1 package ₹4,800.
+- Summer Camp 2026 ended on 13 June 2026. Each child joined one four-week batch with 24 live small-group classes from Monday to Saturday. Historical list fee ₹5,000; effective fee ₹2,400. Enrolment is closed.
 - WhatsApp CTA: ${WHATSAPP_CTA}
 
 BEHAVIOR:
@@ -446,6 +451,7 @@ BEHAVIOR:
   "I’m not fully sure about this detail. Our team will confirm this for you on WhatsApp: ${WHATSAPP_CTA}"
 - If pricing numbers are missing in snippets, do not guess. Ask parent to check ${SITE_ORIGIN}/pricing.
 - Never invent offers/discounts/guarantees.
+- Never call the live demo assessment merely a free trial. A separate 3-day digital games trial applies only to the digital games subscription.
 - No medical/psychological advice.
 - Never ask for sensitive data (OTP, card details, Aadhaar).`;
 

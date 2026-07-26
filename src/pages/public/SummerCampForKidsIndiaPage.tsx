@@ -69,7 +69,7 @@ export default function SummerCampForKidsIndiaPage() {
           to="/book-demo"
           className="mt-8 inline-block rounded-lg bg-slate-900 px-8 py-3 font-semibold text-white transition hover:bg-slate-800"
         >
-          Book Free Assessment Class
+          Book Free 35-Minute Demo
         </Link>
         <p className="mt-2 text-sm text-slate-600">Takes 30 seconds • No commitment</p>
       </section>
@@ -137,12 +137,12 @@ export default function SummerCampForKidsIndiaPage() {
       <section className="rounded-xl bg-slate-900 p-8 text-center text-white">
         <p className="mb-3 text-sm text-slate-300">If your child is facing this, the next step is simple:</p>
         <h2 className="text-2xl font-bold">Planning a focused summer for your child?</h2>
-        <p className="mt-2 text-slate-200">Book a free assessment and choose the right summer learning track.</p>
+        <p className="mt-2 text-slate-200">Book one free 35-minute 1:1 online demo assessment class and choose the right summer learning track.</p>
         <Link
           to="/book-demo"
           className="mt-6 inline-block rounded-lg bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100"
         >
-          Book Free Assessment Class
+          Book Free 35-Minute Demo
         </Link>
         <p className="mt-2 text-sm text-slate-300">Takes 30 seconds • No commitment</p>
       </section>
