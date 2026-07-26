@@ -26,6 +26,7 @@ import ParentBillingSummary from "./components/ParentBillingSummary";
 import ParentClassesView from "./components/classes/ParentClassesView";
 import ParentDashboardHero from "./components/ParentDashboardHero";
 import ParentDashboardKpis from "./components/ParentDashboardKpis";
+import ParentInsightsView from "./components/insights/ParentInsightsView";
 import ParentLearningInsights from "./components/ParentLearningInsights";
 import ParentLessonTracker from "./components/ParentLessonTracker";
 import ParentMobileHeader from "./components/ParentMobileHeader";
@@ -114,6 +115,12 @@ import {
   type ParentClassesViewId,
   type ParentClassSessionDisplay,
 } from "./components/classes/parentClassPresentation";
+import {
+  getParentInsightStageKey,
+  resolveParentInsightStageState,
+  type ParentInsightStageDisplay,
+  type ParentInsightTeacherDisplay,
+} from "./components/insights/parentInsightsPresentation";
 
 type TabKey = ParentTabKey;
 
@@ -1100,56 +1107,6 @@ const STAGE_EXPECTATIONS_BY_COURSE: Record<string, Record<number, string[]>> = {
     5: ["Persuasion + debate", "Rebuttal practice"],
     6: ["Polished presentation", "Use notes + visuals"],
   },
-};
-
-const STAGE_COLORS = [
-  {
-    accent: "#2563eb",
-    soft: "#dbeafe",
-    badgeBg: "bg-blue-100",
-    badgeText: "text-blue-700",
-    bar: "bg-blue-500",
-  },
-  {
-    accent: "#0ea5e9",
-    soft: "#cffafe",
-    badgeBg: "bg-cyan-100",
-    badgeText: "text-cyan-700",
-    bar: "bg-cyan-500",
-  },
-  {
-    accent: "#8b5cf6",
-    soft: "#ede9fe",
-    badgeBg: "bg-violet-100",
-    badgeText: "text-violet-700",
-    bar: "bg-violet-500",
-  },
-  {
-    accent: "#f59e0b",
-    soft: "#fef3c7",
-    badgeBg: "bg-amber-100",
-    badgeText: "text-amber-700",
-    bar: "bg-amber-500",
-  },
-  {
-    accent: "#ec4899",
-    soft: "#fce7f3",
-    badgeBg: "bg-pink-100",
-    badgeText: "text-pink-700",
-    bar: "bg-pink-500",
-  },
-  {
-    accent: "#10b981",
-    soft: "#d1fae5",
-    badgeBg: "bg-emerald-100",
-    badgeText: "text-emerald-700",
-    bar: "bg-emerald-500",
-  },
-];
-
-const getStageColors = (order: number) => {
-  if (!Number.isFinite(order) || order < 1) return STAGE_COLORS[0];
-  return STAGE_COLORS[(order - 1) % STAGE_COLORS.length];
 };
 
 const stripStagePrefix = (label: string, order: number): string => {
@@ -3166,6 +3123,7 @@ export default function ParentDashboard() {
     return {
       latestLesson: recentTeacherRatings[0],
       averageRecentRating,
+      ratedLessonCount: averageCount,
       averageRecentLabel: skillRatingLegendLabel(Math.round(averageRecentRating)),
       strongestSkills: Array.from(strongestMap.entries())
         .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
@@ -3266,6 +3224,7 @@ export default function ParentDashboard() {
 
       return {
         id: topic.id,
+        label: topic.displayTitle ?? topic.label,
         stageLabel: label,
         stageOrder: order,
         mastery: matchedDoc?.mastery ?? "",
@@ -3293,6 +3252,7 @@ export default function ParentDashboard() {
         confusionChips: Array.isArray(matchedDoc?.confusions)
           ? matchedDoc.confusions.filter((item: unknown) => typeof item === "string").slice(0, 3)
           : [],
+        remark: String(matchedDoc?.teacherRemark ?? matchedDoc?.remark ?? "").trim(),
         updatedAtMs,
       };
     });
@@ -3319,6 +3279,7 @@ export default function ParentDashboard() {
           label: group.label,
           order: group.order,
           masteryKey,
+          hasMasteryData: group.rows.some((row: any) => String(row.mastery || "").trim().length > 0),
           focusChips: pickStageFocus(group.rows),
           stageHint,
           progressPct,
@@ -3328,7 +3289,39 @@ export default function ParentDashboard() {
         };
       });
 
-    return { courseId: normalizedInsightsCourseId, stageSummaries };
+    const completedCount = rows.filter(
+      (row) => masteryKeyFromValue(row.mastery) === "mastered",
+    ).length;
+    const totalCount = rows.length;
+    const overallPct = totalCount > 0
+      ? clampPercent(Math.round((completedCount / totalCount) * 100))
+      : null;
+    const lastUpdatedAtMs = rows.reduce<number | null>((latest, row) => {
+      if (!row.updatedAtMs) return latest;
+      return latest === null ? row.updatedAtMs : Math.max(latest, row.updatedAtMs);
+    }, null);
+    const completedStages = stageSummaries.filter((stage) => stage.progressPct >= 100).length;
+    const stagesWithProgress = stageSummaries.filter((stage) => stage.progressPct > 0);
+    const activeStage =
+      stagesWithProgress.length > 0
+        ? stagesWithProgress[stagesWithProgress.length - 1]
+        : stageSummaries.find((stage) => stage.progressPct === 0) ?? null;
+    const nextStage = activeStage
+      ? stageSummaries.find((stage) => stage.order > activeStage.order) ?? null
+      : null;
+
+    return {
+      courseId: normalizedInsightsCourseId,
+      rows,
+      stageSummaries,
+      completedCount,
+      totalCount,
+      overallPct,
+      lastUpdatedAtMs,
+      completedStages,
+      activeStage,
+      nextStage,
+    };
   }, [
     normalizedInsightsCourseId,
     curriculumTopicsByCourseId,
@@ -3336,6 +3329,91 @@ export default function ParentDashboard() {
     progressByTopicId,
     topicCourseById,
   ]);
+
+  const selectedInsightsCourseOption = useMemo(
+    () => insightsCourseOptions.find((option) => option.courseId === insightsCourseId) ?? null,
+    [insightsCourseId, insightsCourseOptions],
+  );
+
+  const insightsActiveStageKey = insightsStageData?.activeStage
+    ? getParentInsightStageKey(
+        insightsStageData.activeStage.order,
+        insightsStageData.activeStage.label,
+      )
+    : null;
+  const insightsActiveStageOrder = insightsStageData?.activeStage?.order ?? null;
+
+  const insightStageRows = useMemo<ParentInsightStageDisplay[]>(() => {
+    return (insightsStageData?.stageSummaries ?? []).map((stage) => {
+      const key = getParentInsightStageKey(stage.order, stage.label);
+      return {
+        key,
+        order: stage.order,
+        label: stripStagePrefix(stage.label, stage.order),
+        state: resolveParentInsightStageState({
+          key,
+          order: stage.order,
+          progressPct: stage.progressPct,
+          activeStageKey: insightsActiveStageKey,
+          activeStageOrder: insightsActiveStageOrder,
+        }),
+        progressPct: stage.progressPct,
+        completedCount: stage.completedCount,
+        totalCount: stage.totalCount,
+        masteryLabel: stage.hasMasteryData ? formatMasteryLabel(stage.masteryKey) : "",
+        hint: stage.stageHint,
+        focusItems: stage.focusChips,
+        expectations: stage.expectations,
+      };
+    });
+  }, [insightsActiveStageKey, insightsActiveStageOrder, insightsStageData?.stageSummaries]);
+
+  const activeInsightStage = useMemo(
+    () => insightStageRows.find((stage) => stage.key === insightsActiveStageKey) ?? null,
+    [insightStageRows, insightsActiveStageKey],
+  );
+  const nextInsightStage = useMemo(() => {
+    const next = insightsStageData?.nextStage;
+    if (!next) return null;
+    const key = getParentInsightStageKey(next.order, next.label);
+    return insightStageRows.find((stage) => stage.key === key) ?? null;
+  }, [insightStageRows, insightsStageData?.nextStage]);
+
+  const insightsTeacherDisplay = useMemo<ParentInsightTeacherDisplay | null>(() => {
+    const selectedCourse = normalizeCurriculumCourseId(insightsCourseId);
+    const teacherSummaryCourse = normalizeCurriculumCourseId(displayCourseId);
+    if (!recentTeacherRatingsSummary?.latestLesson || selectedCourse !== teacherSummaryCourse) {
+      return null;
+    }
+    const latest = recentTeacherRatingsSummary.latestLesson;
+    return {
+      lessonLabel: String(latest.label || "Rated lesson"),
+      contextLabel: String(
+        latest.stageLabel
+        || latest.courseLabel
+        || selectedInsightsCourseOption?.label
+        || "Current course",
+      ),
+      updatedLabel: latest.updatedAtMs ? formatTimestamp(latest.updatedAtMs) : "",
+      note: String(latest.remark || "").trim(),
+      ratingValue: recentTeacherRatingsSummary.ratedLessonCount > 0
+        ? recentTeacherRatingsSummary.averageRecentRating
+        : null,
+      ratingLabel: recentTeacherRatingsSummary.ratedLessonCount > 0
+        ? recentTeacherRatingsSummary.averageRecentLabel
+        : "",
+    };
+  }, [
+    displayCourseId,
+    insightsCourseId,
+    recentTeacherRatingsSummary,
+    selectedInsightsCourseOption?.label,
+  ]);
+
+  const changeInsightsCourse = useCallback((courseId: string) => {
+    hapticSelection();
+    setInsightsCourseId(courseId);
+  }, []);
 
   const phonicsLoading =
     enrollmentsQuery.isLoading ||
@@ -4421,130 +4499,6 @@ export default function ParentDashboard() {
     };
   }, [activeEnrollmentById, selectedKid, selectedKidEnrollmentDocs, sortedClassSessions]);
 
-  const renderStageGrid = (
-    stageSummaries: Array<any>,
-    courseId: string | null,
-    emptyLabel?: string,
-  ) => {
-    if (!stageSummaries || stageSummaries.length === 0) {
-      return (
-        <div className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900 sm:p-4">
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            {emptyLabel || "Stage breakdown isn’t available yet."}
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {stageSummaries.map((stage, index) => {
-          const displayOrder =
-            typeof stage.order === "number" && stage.order > 0 ? stage.order : index + 1;
-          const colors = getStageColors(displayOrder);
-          const masteryText = formatMasteryLabel(stage.masteryKey) || "Getting started";
-          const statusText =
-            masteryText.toLowerCase() === "getting started" ? "Not started" : masteryText;
-          const title = stripStagePrefix(stage.label, displayOrder);
-          const stageHint =
-            stage.stageHint ||
-            STAGE_HINTS_BY_COURSE[courseId || ""]?.[displayOrder] ||
-            "";
-          const expectations =
-            stage.expectations ||
-            STAGE_EXPECTATIONS_BY_COURSE[courseId || ""]?.[displayOrder] ||
-            [];
-          const progressPct = typeof stage.progressPct === "number" ? stage.progressPct : 0;
-          const completedCount =
-            typeof stage.completedCount === "number" ? stage.completedCount : null;
-          const totalCount = typeof stage.totalCount === "number" ? stage.totalCount : null;
-
-          return (
-            <div
-              key={`${displayOrder}-${stage.label}`}
-              className="rounded-xl border border-gray-200 p-3 shadow-none dark:border-gray-700 sm:rounded-2xl sm:p-4 sm:shadow-sm"
-              style={{
-                background: `linear-gradient(135deg, ${colors.soft} 0%, #ffffff 60%)`,
-              }}
-            >
-              <div className="flex items-start justify-between gap-2 sm:gap-3">
-                <div>
-                  <div
-                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${colors.badgeBg} ${colors.badgeText}`}
-                  >
-                    Stage {displayOrder}
-                  </div>
-                    <div className="mt-1.5 text-sm font-semibold text-gray-900 dark:text-gray-100 sm:mt-2">
-                    {title}
-                  </div>
-                  {stageHint && (
-                    <div className="mt-1 text-xs text-gray-700 dark:text-gray-300">
-                      {stageHint}
-                    </div>
-                  )}
-                </div>
-                <div
-                    className="h-10 w-10 flex-shrink-0 rounded-full p-[3px] sm:h-12 sm:w-12"
-                  style={{
-                    background: `conic-gradient(${colors.accent} ${progressPct}%, ${colors.soft} ${progressPct}% 100%)`,
-                  }}
-                >
-                    <div className="flex h-full w-full items-center justify-center rounded-full bg-white text-[10px] font-semibold">
-                    <span style={{ color: colors.accent }}>{progressPct}%</span>
-                  </div>
-                </div>
-              </div>
-
-              {expectations.length > 0 && (
-                  <div className="mt-2 sm:mt-3">
-                  <div className="text-[10px] uppercase tracking-wide text-gray-500">
-                    What to expect
-                  </div>
-                  <ul className="mt-1 space-y-1 text-xs text-gray-700 dark:text-gray-300">
-                    {expectations.map((item: string) => (
-                      <li key={item}>• {item}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {stage.focusChips?.length > 0 && (
-                  <div className="mt-2 sm:mt-3">
-                  <div className="text-[10px] uppercase tracking-wide text-gray-500">
-                    Next focus
-                  </div>
-                  <div className="mt-1 text-xs text-gray-700 dark:text-gray-300">
-                    {stage.focusChips.join(", ")}
-                  </div>
-                </div>
-              )}
-
-                <div className="mt-2 sm:mt-3">
-                <div className="flex items-center justify-between text-[11px] text-gray-500">
-                  <span>Progress</span>
-                  <span className="font-semibold text-gray-700">{statusText}</span>
-                </div>
-                {completedCount !== null && totalCount !== null && (
-                  <div className="mt-1 flex items-center justify-between text-[11px] text-gray-500">
-                    <span>
-                      {completedCount}/{totalCount} lessons
-                    </span>
-                  </div>
-                )}
-                  <div className="mt-2 h-2 rounded-full border border-white bg-white/70">
-                  <div
-                    className={`h-2 rounded-full ${colors.bar}`}
-                    style={{ width: `${progressPct}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
   const renderDashboardHome = () => {
     const childName = selectedKid?.fullName || selectedKid?.name || "your child";
     const curriculumData = dashboardCurriculumData;
@@ -5099,91 +5053,52 @@ export default function ParentDashboard() {
         )}
 
         {activeTab === "insights" && (
-          <div className="space-y-4 sm:space-y-6">
-            <Card className="space-y-3 p-4 sm:space-y-4 sm:p-6">
-              <div className="flex items-start justify-between gap-3 sm:gap-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    Insights
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Stage-based learning progress with clear next steps.
-                  </p>
-                </div>
-                <div className="text-2xl">📈</div>
-              </div>
-
-              {insightsCourseOptions.length === 0 && (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Stage insights will appear once a course is assigned.
-                </p>
-              )}
-
-              {insightsCourseOptions.length > 0 && (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Course
-                    </label>
-                    {insightsCourseOptions.length > 1 ? (
-                      <select
-                        value={insightsCourseId}
-                        onChange={(e) => setInsightsCourseId(e.target.value)}
-                          className="mt-1 min-h-11 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 sm:min-h-0"
-                      >
-                        {insightsCourseOptions.map((opt) => (
-                          <option key={opt.courseId} value={opt.courseId}>
-                            {opt.label || opt.courseId}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                        <div className="mt-1 flex min-h-11 items-center text-sm text-gray-700 dark:text-gray-300 sm:min-h-0">
-                        {insightsCourseOptions[0]?.label || insightsCourseOptions[0]?.courseId}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {insightsCourseOptions.length > 0 && (
-                <>
-                  {recentTeacherRatingsSummary?.latestLesson && (
-                      <div className="rounded-xl border border-sky-100 bg-sky-50/70 px-3 py-3 shadow-sm sm:px-4">
-                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                        <div>
-                          <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
-                            Teacher ratings
-                          </div>
-                          <div className="text-sm font-semibold text-slate-900">
-                            {recentTeacherRatingsSummary.latestLesson.label}
-                          </div>
-                          <div className="text-xs text-slate-500">
-                            {recentTeacherRatingsSummary.latestLesson.stageLabel || recentTeacherRatingsSummary.latestLesson.courseLabel}
-                            {recentTeacherRatingsSummary.latestLesson.updatedAtMs
-                              ? ` · ${formatTimestamp(recentTeacherRatingsSummary.latestLesson.updatedAtMs)}`
-                              : ""}
-                          </div>
-                        </div>
-                          <div className="flex flex-wrap items-center gap-2 text-xs md:justify-end">
-                          <span className="rounded-full bg-white px-2.5 py-1 font-semibold text-slate-700">
-                            Recent average {recentTeacherRatingsSummary.averageRecentRating.toFixed(1)}/4
-                          </span>
-                          <span className="rounded-full bg-indigo-600 px-2.5 py-1 font-semibold text-white">
-                            {recentTeacherRatingsSummary.averageRecentLabel}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {renderStageGrid(
-                    insightsStageData?.stageSummaries ?? [],
-                    insightsStageData?.courseId ?? null,
-                  )}
-                </>
-              )}
-            </Card>
-          </div>
+          <ParentInsightsView
+            isNativeIOSApp={isNativeIOSApp}
+            childSelected={Boolean(selectedKidId)}
+            courseOptions={insightsCourseOptions}
+            selectedCourseId={selectedInsightsCourseOption?.courseId || insightsCourseOptions[0]?.courseId || ""}
+            selectedCourseLabel={selectedInsightsCourseOption?.label || insightsCourseOptions[0]?.label || "Current course"}
+            progressState={
+              kidsQuery.isLoading || phonicsLoading || coursesLookupQuery.isLoading
+                ? "loading"
+                : insightsStageData && (insightsStageData.totalCount ?? 0) > 0
+                  ? "available"
+                  : "unavailable"
+            }
+            completedLessons={insightsStageData?.completedCount ?? null}
+            totalLessons={insightsStageData?.totalCount ?? null}
+            completionPct={insightsStageData?.overallPct ?? null}
+            completedStages={insightsStageData?.completedStages ?? null}
+            lastUpdatedLabel={
+              insightsStageData?.lastUpdatedAtMs
+                ? formatTimestamp(insightsStageData.lastUpdatedAtMs)
+                : ""
+            }
+            usesLatestLessonFallback={
+              normalizeCurriculumCourseId(insightsCourseId) === normalizeCurriculumCourseId(displayCourseId)
+              && curriculumCompletionSummary?.source === "fallback_client"
+            }
+            stages={insightStageRows}
+            activeStage={activeInsightStage}
+            nextStage={nextInsightStage}
+            teacherInsight={insightsTeacherDisplay}
+            teacherInsightLoading={phonicsProgressQuery.isLoading}
+            errorMessage={
+              kidsQuery.isError
+                ? "Unable to load the selected child right now."
+                : phonicsError
+                  ? phonicsErrorMessage
+                  : null
+            }
+            contextKey={`${selectedKidId}::${insightsCourseId}`}
+            onCourseChange={changeInsightsCourse}
+            onViewTeacherRatings={() => {
+              hapticSelection();
+              setTab("skills");
+            }}
+            onSelectionFeedback={hapticSelection}
+          />
         )}
 
         {activeTab === "games-progress" && (
