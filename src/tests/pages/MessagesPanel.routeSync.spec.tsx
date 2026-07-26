@@ -189,7 +189,7 @@ describe('MessagesPanel route synchronization', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Back to conversations' }));
 
     expect(onThreadChange).toHaveBeenCalledOnce();
     expect(onThreadChange).toHaveBeenLastCalledWith(null);

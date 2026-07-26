@@ -104,6 +104,7 @@ import {
 import {
   isNativeParentChatFocus,
   PARENT_MOBILE_TABS,
+  shouldShowParentMessagesHeading,
   type ParentTabKey,
 } from "./parentNavigation";
 
@@ -5064,7 +5065,7 @@ export default function ParentDashboard() {
 
         {activeTab === "messages" && (
           <div className={isNativeMessagesThreadFocus ? "flex min-h-0 flex-1 flex-col overflow-hidden" : "space-y-4"}>
-            {!isNativeMessagesThreadFocus && (
+            {shouldShowParentMessagesHeading(isNativeIOSApp, isNativeMessagesThreadFocus) && (
               <Card className="p-4">
                 <h3 className="text-base font-semibold text-slate-900">Messages</h3>
                 <p className="text-xs text-slate-500">

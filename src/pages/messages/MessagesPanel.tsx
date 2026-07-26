@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { collection, documentId, getDocs, query, where } from 'firebase/firestore';
-import { MessageSquare, Send } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
-import { Input } from '@components/ui/input';
 import { db } from '../../lib/firebaseConfig';
 import callFunction from '../../lib/callFunctions';
 import { hapticSuccess, hapticWarning } from '../../lib/nativeHaptics';
@@ -12,6 +11,15 @@ import { useAuthStore } from '../../store/useAuthStore';
 import useMessageThreads, { type MessageThread } from '../../hooks/useMessageThreads';
 import useThreadMessages, { type ThreadMessage } from '../../hooks/useThreadMessages';
 import useNativeIOSKeyboard from '../../hooks/useNativeIOSKeyboard';
+import MessageThreadList, {
+  type MessageThreadRowViewModel,
+} from './components/MessageThreadList';
+import {
+  MessageBubble,
+  MessageComposer,
+  MessageConversationHeader,
+  MessageConversationSkeleton,
+} from './components/MessageConversation';
 
 type UserLabel = {
   displayName: string;
@@ -59,6 +67,12 @@ const toThreadTime = (ms: number | null) => {
     day: '2-digit',
     month: 'short',
   }).format(date);
+};
+
+const toDateTimeAttribute = (ms: number | null): string | undefined => {
+  if (!ms) return undefined;
+  const date = new Date(ms);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
 };
 
 const normalizeCallableError = (error: unknown): string => {
@@ -218,6 +232,17 @@ const getThreadSubtitle = (thread: MessageThread, viewerRole: SupportedRole): st
   return `Parent: ${parentSummary} • Teacher: ${teacherSummary} • Learning Partner: ${lpSummary}`;
 };
 
+const getConciseThreadSubtitle = (thread: MessageThread, viewerRole: SupportedRole): string => {
+  const parentSummary = summarizeRoleNames(thread.parentNames || [], 'Parent');
+  const teacherSummary = summarizeRoleNames(thread.teacherNames || [], 'Teacher');
+  const lpSummary = summarizeRoleNames(thread.learningPartnerNames || [], 'Learning Partner');
+
+  if (viewerRole === 'parent') return `${teacherSummary} · ${lpSummary}`;
+  if (viewerRole === 'teacher') return `${parentSummary} · ${lpSummary}`;
+  if (viewerRole === 'learningPartner') return `${parentSummary} · ${teacherSummary}`;
+  return `${parentSummary} · ${teacherSummary} · ${lpSummary}`;
+};
+
 const getRoleIds = (thread: MessageThread) => {
   const parentIds = dedupeIds(thread.parentIds);
   const teacherIds = dedupeIds([thread.teacherId, ...thread.teacherIds]);
@@ -269,18 +294,20 @@ export default function MessagesPanel({
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [userLabels, setUserLabels] = useState<Record<string, UserLabel>>({});
+  const [returnFocusThreadId, setReturnFocusThreadId] = useState<string | null>(null);
   const listEndRef = useRef<HTMLDivElement | null>(null);
   const markReadInFlightRef = useRef<Set<string>>(new Set());
   const lastSelectedThreadIdRef = useRef<string | null>(null);
   const lastIncomingMessageIdByThreadRef = useRef<Record<string, string>>({});
   const readReceiptDebugKeyRef = useRef<Set<string>>(new Set());
+  const sendInFlightRef = useRef(false);
   const suppressAutoSelectRef = useRef(false);
   const lastReportedThreadIdRef = useRef<string | null>(routeThreadId || null);
   const lastSynchronizedRouteThreadIdRef = useRef<string | null>(routeThreadId || null);
   const routeSelectionPendingRef = useRef(false);
   const shouldUseThreadBackHold = embedded && nativeChatFocus;
   const threadMessagesListRef = useRef<HTMLDivElement | null>(null);
-  const { keyboardOpen } = useNativeIOSKeyboard({
+  const { isNativeIOS, keyboardOpen } = useNativeIOSKeyboard({
     hideAccessoryBar: embedded && nativeChatFocus,
   });
 
@@ -430,6 +457,26 @@ export default function MessagesPanel({
     return threads.filter((thread) => resolveThreadTitle(thread).toLowerCase().includes(queryText));
   }, [threadSearch, threads]);
 
+  const threadRows = useMemo<MessageThreadRowViewModel[]>(
+    () => filteredThreads.map((thread) => {
+      const title = resolveThreadTitle(thread);
+      const preview = sanitizeMessageForDisplay(thread.lastMessagePreview || '') || 'No messages yet';
+      const activityMs = thread.lastMessageAtMs ?? thread.updatedAtMs;
+      return {
+        id: thread.id,
+        title,
+        participantSummary: getConciseThreadSubtitle(thread, viewerRole) || getParticipantHint(viewerRole),
+        fullParticipantSummary: getThreadSubtitle(thread, viewerRole) || getParticipantHint(viewerRole),
+        preview,
+        activityLabel: toThreadTime(activityMs),
+        activityDateTime: toDateTimeAttribute(activityMs),
+        unreadCount: getUnreadCount(thread, user?.uid),
+        isSelected: thread.id === selectedThread?.id,
+      };
+    }),
+    [filteredThreads, selectedThread?.id, user?.uid, viewerRole],
+  );
+
   const selectedRoleIds = useMemo(
     () => (selectedThread ? getRoleIds(selectedThread) : { parentIds: [], teacherIds: [], learningPartnerIds: [] }),
     [selectedThread],
@@ -504,7 +551,7 @@ export default function MessagesPanel({
           });
         }
 
-        if (!isCancelled) {
+        if (!isCancelled && Object.keys(labels).length > 0) {
           setUserLabels((prev) => ({ ...prev, ...labels }));
         }
       } catch {
@@ -587,20 +634,28 @@ export default function MessagesPanel({
     ];
   }, [resolveRoleParticipantName, selectedRoleIds.learningPartnerIds, selectedRoleIds.parentIds, selectedRoleIds.teacherIds, selectedThread, viewerRole]);
 
+  const selectedParticipantSummary = useMemo(
+    () => visibleParticipants.map((item) => `${item.label}: ${item.value}`).join(' · '),
+    [visibleParticipants],
+  );
+
   const handleSelectThread = (threadId: string) => {
     if (shouldUseThreadBackHold) suppressAutoSelectRef.current = false;
+    setReturnFocusThreadId(null);
     setSelectedThreadId(threadId);
   };
 
   const handleBackToConversations = () => {
     if (shouldUseThreadBackHold) suppressAutoSelectRef.current = true;
+    setReturnFocusThreadId(selectedThread?.id || null);
     setSelectedThreadId(null);
   };
 
   const handleSend = async () => {
     const text = draft.trim();
-    if (!selectedThread?.id || !text) return;
+    if (!selectedThread?.id || !text || sendInFlightRef.current) return;
 
+    sendInFlightRef.current = true;
     setIsSending(true);
     setSendError(null);
 
@@ -621,6 +676,7 @@ export default function MessagesPanel({
       hapticWarning();
       setSendError(normalizeCallableError(error));
     } finally {
+      sendInFlightRef.current = false;
       setIsSending(false);
     }
   };
@@ -704,146 +760,70 @@ export default function MessagesPanel({
         )}
 
         <div className={`grid min-w-0 gap-4 lg:grid-cols-[320px,1fr] ${isEmbeddedNativeChatFocus ? 'min-h-0 flex-1 overflow-hidden gap-0' : ''}`}>
-          <Card className={`min-w-0 overflow-hidden ${showConversationDetail ? 'lg:block hidden' : ''}`}>
-            <div className="border-b border-slate-200 px-4 py-3">
-              <h2 className="text-sm font-semibold text-slate-800">Conversations</h2>
-              <Input
-                value={threadSearch}
-                onChange={(event) => setThreadSearch(event.target.value)}
-                placeholder="Search student name"
-                className="mt-2"
+          <Card
+            className={`min-w-0 overflow-hidden ${showConversationDetail ? 'hidden lg:block' : ''} ${
+              embedded && isNativeIOS
+                ? 'rounded-none border-0 shadow-none lg:rounded-xl lg:border lg:shadow-sm'
+                : ''
+            }`}
+          >
+            <div className={`${threadPaneHeightClass} overflow-y-auto [-webkit-overflow-scrolling:touch]`}>
+              <MessageThreadList
+                threads={threadRows}
+                totalThreadCount={threads.length}
+                search={threadSearch}
+                onSearchChange={setThreadSearch}
+                onClearSearch={() => setThreadSearch('')}
+                onSelectThread={handleSelectThread}
+                isLoading={isThreadsLoading}
+                error={threadsError ? 'We couldn’t load conversations. Please try again shortly.' : null}
+                emptyMessage={
+                  isAdmin
+                    ? 'Student conversations appear here after their communication rooms are created.'
+                    : viewerRole === 'parent'
+                      ? 'Your child’s teacher or learning partner can start the first update.'
+                      : 'A participant can start the first update when the communication room is ready.'
+                }
+                focusThreadId={returnFocusThreadId}
               />
-            </div>
-            <div className={`${threadPaneHeightClass} overflow-y-auto p-2 [-webkit-overflow-scrolling:touch]`}>
-              {isThreadsLoading ? (
-                <div className="px-3 py-6 text-sm text-slate-500">Loading conversations…</div>
-              ) : threadsError ? (
-                <div className="px-3 py-6 text-sm text-red-600">{threadsError}</div>
-              ) : threads.length === 0 ? (
-                <div className="space-y-2 px-3 py-6 text-sm text-slate-500">
-                  <p>No conversations yet.</p>
-                  <p className="text-xs text-slate-400">
-                    Your Tiny Steps conversation will appear here once your child&apos;s communication room is created.
-                  </p>
-                  {isAdmin && (
-                    <p className="text-xs text-slate-400">
-                      Create/sync a student thread from Admin Settings if needed.
-                    </p>
-                  )}
-                </div>
-              ) : filteredThreads.length === 0 ? (
-                <div className="px-3 py-6 text-sm text-slate-500">
-                  No conversations match this student name.
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {filteredThreads.map((thread) => {
-                    const isSelected = thread.id === selectedThread?.id;
-                    const unreadCount = getUnreadCount(thread, user?.uid);
-                    const activityMs = thread.lastMessageAtMs ?? thread.updatedAtMs;
-                    const threadTitle = resolveThreadTitle(thread);
-                    const lastPreview = sanitizeMessageForDisplay(thread.lastMessagePreview || '');
-                    const subtitle = getThreadSubtitle(thread, viewerRole) || getParticipantHint(viewerRole);
-
-                    return (
-                      <button
-                        key={thread.id}
-                        type="button"
-                        onClick={() => handleSelectThread(thread.id)}
-                        className={`w-full rounded-xl border px-3 py-3 text-left transition ${
-                          isSelected
-                            ? 'border-slate-900 bg-slate-900 text-white'
-                            : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <p className={`truncate text-sm font-semibold ${isSelected ? 'text-white' : 'text-slate-900'}`}>
-                            {threadTitle}
-                          </p>
-                          <span className={`shrink-0 text-[11px] ${isSelected ? 'text-slate-200' : 'text-slate-500'}`}>
-                            {toThreadTime(activityMs)}
-                          </span>
-                        </div>
-                        <p className={`mt-1 truncate text-[11px] ${isSelected ? 'text-slate-200' : 'text-slate-500'}`}>
-                          {subtitle}
-                        </p>
-                        <p className={`mt-1 truncate text-xs ${isSelected ? 'text-slate-200' : 'text-slate-500'}`}>
-                          {lastPreview || 'No messages yet'}
-                        </p>
-                        {unreadCount > 0 && (
-                          <div className="mt-2">
-                            <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                              isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
-                            }`}>
-                              Unread {unreadCount}
-                            </span>
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
             </div>
           </Card>
 
-          <Card className={`min-w-0 overflow-hidden ${showConversationList ? 'lg:block hidden' : ''} ${isEmbeddedNativeChatFocus ? 'ts-chat-focus-screen ts-native-no-x-scroll rounded-none border-0 shadow-none' : ''}`}>
+          <Card className={`min-w-0 overflow-hidden ${showConversationList ? 'hidden lg:block' : ''} ${isEmbeddedNativeChatFocus ? 'ts-chat-focus-screen ts-native-no-x-scroll rounded-none border-0 shadow-none' : ''}`}>
             {!showConversationDetail ? (
               <div className={`flex items-center justify-center px-6 text-center text-sm text-slate-500 ${detailEmptyStateClass}`}>
                 Select a conversation to view messages.
               </div>
             ) : (
               <div className={`flex min-w-0 flex-col overflow-hidden ${detailPaneHeightClass}`}>
-                <div className={`border-b border-slate-200 px-4 py-3 ${isEmbeddedNativeChatFocus ? 'ts-chat-focus-header' : ''}`}>
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <h2 className="truncate text-sm font-semibold text-slate-900">{resolveThreadTitle(selectedThread!)}</h2>
-                      <p className="text-xs text-slate-500">Tiny Steps conversation</p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="lg:hidden"
-                      onClick={handleBackToConversations}
-                    >
-                      Back
-                    </Button>
+                <MessageConversationHeader
+                  title={resolveThreadTitle(selectedThread!)}
+                  participantSummary={selectedParticipantSummary || getParticipantHint(viewerRole)}
+                  onBack={handleBackToConversations}
+                  nativeFocus={isEmbeddedNativeChatFocus}
+                />
+
+                {!isEmbeddedNativeChatFocus ? (
+                  <div className="border-b border-slate-200/80 bg-white px-4 py-2 text-[11px] text-slate-500">
+                    {viewerRole === 'admin'
+                      ? 'Admin oversight is read-only here.'
+                      : 'Tiny Steps may review conversations for safety and support.'}
                   </div>
+                ) : null}
 
-                  {!isEmbeddedNativeChatFocus && (
-                    <>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {visibleParticipants.map((item) => (
-                          <span key={item.label} className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-700">
-                            {item.label}: {item.value}
-                          </span>
-                        ))}
-                      </div>
-
-                      <p className="mt-2 text-[11px] text-slate-500">
-                        {viewerRole === 'admin'
-                          ? 'Admin oversight view'
-                          : 'Tiny Steps may review conversations for safety and support.'}
-                      </p>
-                      {viewerRole === 'admin' && (
-                        <p className="mt-1 text-[11px] text-slate-500">
-                          Admin oversight is read-only here.
-                        </p>
-                      )}
-                    </>
-                  )}
-                </div>
-
-                <div ref={threadMessagesListRef} className={`min-h-0 flex-1 space-y-3 overflow-y-auto bg-slate-50/70 p-3 [-webkit-overflow-scrolling:touch] ${
-                  isEmbeddedNativeChatFocus ? 'ts-chat-focus-list' : ''
-                } ${
-                  embedded ? (isEmbeddedNativeChatFocus ? 'pb-4' : 'pb-24') : 'pb-4'
-                }`}>
+                <div
+                  ref={threadMessagesListRef}
+                  className={`min-h-0 flex-1 space-y-2 overflow-y-auto overflow-x-hidden bg-slate-50/70 p-3 [-webkit-overflow-scrolling:touch] ${
+                    isEmbeddedNativeChatFocus ? 'ts-chat-focus-list' : ''
+                  } ${embedded ? (isEmbeddedNativeChatFocus ? 'pb-4' : 'pb-24') : 'pb-4'}`}
+                  aria-label={`${resolveThreadTitle(selectedThread!)} messages`}
+                >
                   {isMessagesLoading ? (
-                    <p className="text-sm text-slate-500">Loading messages…</p>
+                    <MessageConversationSkeleton />
                   ) : messagesError ? (
-                    <p className="text-sm text-red-600">{messagesError}</p>
+                    <p role="alert" className="text-sm text-red-700">
+                      We couldn’t load these messages. Please try again shortly.
+                    </p>
                   ) : messages.length === 0 ? (
                     <div className="rounded-xl border border-slate-200 bg-white px-4 py-4">
                       <p className="text-sm font-medium text-slate-700">No messages yet.</p>
@@ -852,7 +832,7 @@ export default function MessagesPanel({
                       </p>
                     </div>
                   ) : (
-                    messages.map((message) => {
+                    messages.map((message, index) => {
                       const isOwn = Boolean(user?.uid && message.senderId === user.uid);
                       const readReceiptState =
                         isOwn && selectedThread
@@ -863,11 +843,12 @@ export default function MessagesPanel({
                               candidateReaderCount: 0,
                               maxOtherReadAtMs: null,
                             };
-                      const isReadByAnyOther = readReceiptState.readByOther;
                       const sender = resolveSenderMeta(message.senderId);
                       const senderMeta = sender.roleLabel && sender.displayName !== sender.roleLabel
                         ? `${sender.displayName} • ${sender.roleLabel}`
                         : sender.displayName;
+                      const safeText = sanitizeMessageForDisplay(message.text);
+                      const previousMessage = index > 0 ? messages[index - 1] : null;
 
                       if (import.meta.env.DEV && isOwn && selectedThread) {
                         const debugKey = [
@@ -894,32 +875,17 @@ export default function MessagesPanel({
                       }
 
                       return (
-                        <div key={message.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                          <div
-                            className={`max-w-[85%] rounded-2xl px-3 py-2 shadow-sm ${
-                              isOwn
-                                ? 'bg-slate-900 text-white'
-                                : 'border border-slate-200 bg-white text-slate-900'
-                            }`}
-                          >
-                            {!isOwn && (
-                              <p className="text-[11px] font-semibold text-slate-500">
-                                {senderMeta}
-                              </p>
-                            )}
-                            <p className="mt-1 whitespace-pre-wrap break-words text-sm">
-                              {sanitizeMessageForDisplay(message.text)}
-                            </p>
-                            <p className={`mt-1 text-[11px] ${isOwn ? 'text-slate-300' : 'text-slate-400'}`}>
-                              {toShortTime(message.createdAtMs)}
-                            </p>
-                            {isOwn && isReadByAnyOther && (
-                              <p className="mt-1 text-[11px] text-slate-300">
-                                Read
-                              </p>
-                            )}
-                          </div>
-                        </div>
+                        <MessageBubble
+                          key={message.id}
+                          isOwn={isOwn}
+                          senderLabel={senderMeta}
+                          showSenderLabel={!isOwn && previousMessage?.senderId !== message.senderId}
+                          text={safeText}
+                          isSafetyFiltered={safeText === HIDDEN_BY_SAFETY_FILTER}
+                          timeLabel={toShortTime(message.createdAtMs)}
+                          dateTime={toDateTimeAttribute(message.createdAtMs)}
+                          isReadByOther={isOwn && readReceiptState.readByOther}
+                        />
                       );
                     })
                   )}
@@ -940,49 +906,25 @@ export default function MessagesPanel({
                       Admin oversight is read-only here.
                     </p>
                   ) : (
-                    <>
-                      <p className="pb-2 text-xs text-slate-500">
-                        {viewerRole === 'parent'
+                    <MessageComposer
+                      value={draft}
+                      onChange={setDraft}
+                      onSend={() => void handleSend()}
+                      onFocus={() => {
+                        window.setTimeout(() => {
+                          scrollMessagesToBottom('smooth');
+                        }, 30);
+                      }}
+                      isSending={isSending}
+                      error={sendError}
+                      helperText={
+                        viewerRole === 'parent'
                           ? 'Message your Teacher and Learning Partner here.'
                           : viewerRole === 'teacher'
                             ? 'Message the Parent and Learning Partner here.'
-                            : viewerRole === 'learningPartner'
-                              ? 'Message the Parent and Teacher here.'
-                              : 'Message participants here.'}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={draft}
-                          onChange={(event) => setDraft(event.target.value)}
-                          placeholder="Type your message"
-                          autoComplete="off"
-                          className="min-h-11 text-base"
-                          onFocus={() => {
-                            window.setTimeout(() => {
-                              scrollMessagesToBottom('smooth');
-                            }, 30);
-                          }}
-                          onKeyDown={(event) => {
-                            if (event.key === 'Enter' && !event.shiftKey) {
-                              event.preventDefault();
-                              if (!isSending) void handleSend();
-                            }
-                          }}
-                        />
-                        <Button
-                          type="button"
-                          onClick={() => void handleSend()}
-                          disabled={!draft.trim() || isSending}
-                          className="min-h-11 shrink-0 gap-1"
-                        >
-                          <Send className="h-4 w-4" />
-                          {isSending ? 'Sending…' : 'Send'}
-                        </Button>
-                      </div>
-                      {sendError && (
-                        <p className="mt-2 text-xs text-red-600">{sendError}</p>
-                      )}
-                    </>
+                            : 'Message the Parent and Teacher here.'
+                      }
+                    />
                   )}
                 </div>
               </div>

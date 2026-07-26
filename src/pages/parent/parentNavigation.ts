@@ -50,3 +50,10 @@ export function isNativeParentChatFocus(
 ): boolean {
   return isNativeIOSApp && activeTab === "messages" && Boolean(activeThreadId);
 }
+
+export function shouldShowParentMessagesHeading(
+  isNativeIOSApp: boolean,
+  isNativeMessagesThreadFocus: boolean,
+): boolean {
+  return !isNativeIOSApp && !isNativeMessagesThreadFocus;
+}
