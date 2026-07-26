@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { isSuperUserEmail } from '../../constants/accessControl';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -19,17 +19,34 @@ export default function MessagesPage() {
     return '/parent';
   }, [user?.email, user?.role]);
 
+  const handleThreadChange = useCallback(
+    (nextThreadId: string | null) => {
+      const currentThreadId = threadId || null;
+
+      // Prevent same-route navigation feedback.
+      if (nextThreadId === currentThreadId) {
+        return;
+      }
+
+      if (nextThreadId) {
+        navigate(`/messages/${encodeURIComponent(nextThreadId)}`);
+        return;
+      }
+
+      navigate('/messages');
+    },
+    [navigate, threadId],
+  );
+
+  const handleBack = useCallback(() => {
+    navigate(backPath);
+  }, [backPath, navigate]);
+
   return (
     <MessagesPanel
       routeThreadId={threadId || null}
-      onThreadChange={(nextThreadId) => {
-        if (nextThreadId) {
-          navigate(`/messages/${nextThreadId}`);
-          return;
-        }
-        navigate('/messages');
-      }}
-      onBack={() => navigate(backPath)}
+      onThreadChange={handleThreadChange}
+      onBack={handleBack}
     />
   );
 }

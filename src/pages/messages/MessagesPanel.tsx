@@ -275,6 +275,9 @@ export default function MessagesPanel({
   const lastIncomingMessageIdByThreadRef = useRef<Record<string, string>>({});
   const readReceiptDebugKeyRef = useRef<Set<string>>(new Set());
   const suppressAutoSelectRef = useRef(false);
+  const lastReportedThreadIdRef = useRef<string | null>(routeThreadId || null);
+  const lastSynchronizedRouteThreadIdRef = useRef<string | null>(routeThreadId || null);
+  const routeSelectionPendingRef = useRef(false);
   const shouldUseThreadBackHold = embedded && nativeChatFocus;
   const threadMessagesListRef = useRef<HTMLDivElement | null>(null);
   const { keyboardOpen } = useNativeIOSKeyboard({
@@ -297,10 +300,20 @@ export default function MessagesPanel({
 
   useEffect(() => {
     if (routeThreadId) {
+      lastReportedThreadIdRef.current = routeThreadId;
+      if (lastSynchronizedRouteThreadIdRef.current !== routeThreadId) {
+        lastSynchronizedRouteThreadIdRef.current = routeThreadId;
+        if (selectedThreadId !== routeThreadId) {
+          routeSelectionPendingRef.current = true;
+          setSelectedThreadId(routeThreadId);
+        }
+      }
       if (shouldUseThreadBackHold) suppressAutoSelectRef.current = false;
-      setSelectedThreadId(routeThreadId);
       return;
     }
+
+    lastSynchronizedRouteThreadIdRef.current = null;
+    routeSelectionPendingRef.current = false;
 
     if (
       !selectedThreadId &&
@@ -324,8 +337,22 @@ export default function MessagesPanel({
     [selectedThreadId, threads],
   );
   useEffect(() => {
-    onThreadChange?.(selectedThreadId || null);
-  }, [onThreadChange, selectedThreadId]);
+    const nextThreadId = selectedThreadId || null;
+
+    if (routeSelectionPendingRef.current) {
+      if (nextThreadId !== routeThreadId) {
+        return;
+      }
+      routeSelectionPendingRef.current = false;
+    }
+
+    if (lastReportedThreadIdRef.current === nextThreadId) {
+      return;
+    }
+
+    lastReportedThreadIdRef.current = nextThreadId;
+    onThreadChange?.(nextThreadId);
+  }, [onThreadChange, routeThreadId, selectedThreadId]);
 
   const selectedThreadUnread = selectedThread
     ? getUnreadCount(selectedThread, user?.uid)
