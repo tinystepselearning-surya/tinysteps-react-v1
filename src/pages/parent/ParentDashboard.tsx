@@ -808,18 +808,6 @@ const titleCaseFromId = (value: string): string =>
     .trim()
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
-const phonicsGradientsByCourseId: Record<string, string> = {
-  "phonics-foundations": "from-indigo-50 to-purple-50",
-  "early-phonics": "from-emerald-50 to-teal-50",
-  "advanced-phonics": "from-amber-50 to-orange-50",
-};
-
-const phonicsIconsByCourseId: Record<string, string> = {
-  "phonics-foundations": "🔤",
-  "early-phonics": "📘",
-  "advanced-phonics": "🧠",
-};
-
 function clampPercent(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.max(0, Math.min(100, Math.round(value)));
@@ -3675,6 +3663,8 @@ export default function ParentDashboard() {
       return {
         total: Number.isFinite(total) ? total : 0,
         count: Number.isFinite(count) ? count : 0,
+        available: true,
+        source: "read_model" as const,
       };
     }
 
@@ -3682,7 +3672,7 @@ export default function ParentDashboard() {
     const filtered = kidId
       ? rows.filter((p) => String(p.kidId || "") === kidId)
       : rows;
-    return filtered.reduce(
+    const summary = filtered.reduce(
       (acc, payment) => {
         const rawAmount = Number(payment?.amount ?? 0);
         const amount = Number.isFinite(rawAmount) ? rawAmount : 0;
@@ -3692,7 +3682,17 @@ export default function ParentDashboard() {
       },
       { total: 0, count: 0 }
     );
-  }, [parentMonthlyBillingReadModelQuery.data, parentPaymentsQuery.data, selectedKidId]);
+    return {
+      ...summary,
+      available: parentPaymentsQuery.isFetched,
+      source: "payment_records" as const,
+    };
+  }, [
+    parentMonthlyBillingReadModelQuery.data,
+    parentPaymentsQuery.data,
+    parentPaymentsQuery.isFetched,
+    selectedKidId,
+  ]);
 
   const curriculumCompletionSummary = useMemo(() => {
     const kidId = selectedKidId ? String(selectedKidId) : '';
@@ -4535,19 +4535,23 @@ export default function ParentDashboard() {
     const programLabel = selectedCourse?.courseLabel
       || profileEnrollments[0]?.courseLabel
       || (displayCourseId ? formatCourseLabel(displayCourseId) : "Program assignment in progress");
-    const completionPct = Math.max(
-      0,
-      Math.min(100, curriculumData?.summaryOverallPct ?? curriculumCompletionSummary?.overallPct ?? 0),
-    );
+    const hasCurriculumCompletionScope =
+      Number(curriculumData?.summaryTotalTopics ?? curriculumCompletionSummary?.totalTopics ?? 0) > 0;
+    const completionValue =
+      hasCurriculumCompletionScope && typeof curriculumData?.summaryOverallPct === "number"
+        ? curriculumData.summaryOverallPct
+        : hasCurriculumCompletionScope && typeof curriculumCompletionSummary?.overallPct === "number"
+          ? curriculumCompletionSummary.overallPct
+          : undefined;
+    const progressState =
+      phonicsLoading
+        ? "loading" as const
+        : typeof completionValue === "number"
+          ? "available" as const
+          : "unavailable" as const;
     const activeStageLabel = curriculumData?.activeStage
       ? stripStagePrefix(curriculumData.activeStage.label, curriculumData.activeStage.order ?? 0)
       : overviewMetrics?.stageMessage || "Getting started";
-    const programIcon = selectedCourse
-      ? phonicsIconsByCourseId[selectedCourse.courseId] || "📘"
-      : "📘";
-    const heroGradientClass = selectedCourse
-      ? phonicsGradientsByCourseId[selectedCourse.courseId] || "from-slate-50 to-emerald-50"
-      : "from-slate-50 to-emerald-50";
     const latestTeacherLesson = recentTeacherRatingsSummary?.latestLesson ?? null;
     const previewRows = [...todayClassSessions, ...upcomingClassSessions]
       .filter((row) => {
@@ -4579,17 +4583,21 @@ export default function ParentDashboard() {
     const selectedCourseLabel = selectedCourse?.courseLabel || "";
     const lessonsSummaryText = curriculumData
       ? `${curriculumData.summaryCompletedCount}/${curriculumData.summaryTotalTopics} lessons`
-      : "Waiting for curriculum data";
+      : phonicsLoading
+        ? "Loading lesson totals"
+        : "Curriculum data unavailable";
     const confidenceLabel =
       overviewMetrics?.confidenceNow !== null && overviewMetrics?.confidenceNow !== undefined
         ? masteryLabel(overviewMetrics.confidenceNow)
-        : "Building";
+        : "Not available";
     const confidenceMetaText =
       overviewMetrics?.lastUpdatedAt
         ? `Updated ${formatTimestamp(overviewMetrics.lastUpdatedAt)}`
-        : "Based on recent sessions";
-    const attendanceLabel = `${classesCounts.completed}/${classesCounts.total || 0}`;
-    const attendanceMetaText = `${todayClassSessions.length} today · ${classesCounts.reschedule_requested} rescheduled`;
+        : kidSummaryQuery.isLoading
+          ? "Loading latest snapshot"
+          : "No confidence snapshot yet";
+    const attendanceLabel = `${classesCounts.completed}/${classesCounts.total}`;
+    const attendanceMetaText = `${classesMonthLabel} · ${classesCounts.reschedule_requested} rescheduled`;
     const billingLabel =
       walletBalance === null
         ? "Wallet unavailable"
@@ -4598,22 +4606,22 @@ export default function ParentDashboard() {
           : walletBalance > 0
             ? `${formatCurrencyINR(walletBalance)} advance`
             : "No pending amount";
-    const billingMetaText = `Class deductions this month · ${formatCurrencyINR(billingSummary.billedThisMonth)}`;
+    const billingMetaText = `Deductions · ${classesMonthLabel}`;
     const billingDetailText =
       `Your wallet is updated automatically after each completed class. Payments add balance to your wallet. Class fees reduce the wallet balance.`;
 
     return (
-      <div className="space-y-4 sm:space-y-6">
+      <div className="space-y-4 sm:space-y-6" data-layout="parent-home" data-horizontal-scroll="false">
         <ParentDashboardHero
           childName={childName}
           heroMessage={dashboardHeroMessage}
-          heroGradientClass={heroGradientClass}
-          programIcon={programIcon}
           programLabel={programLabel}
           activeStageLabel={activeStageLabel}
           classesCompleted={classesCounts.completed}
           classesUpcoming={classesCounts.upcoming}
+          classesScopeLabel={classesMonthLabel}
           alertText={dashboardAlerts.length > 0 ? dashboardAlerts[0] : "No urgent alerts right now"}
+          hasAlert={dashboardAlerts.length > 0}
           onViewInsights={() => setTab("insights")}
           onViewClasses={() => setTab("classes")}
           joinClassUrl={heroJoinClass.url || undefined}
@@ -4621,17 +4629,31 @@ export default function ParentDashboard() {
         />
 
         <ParentDashboardKpis
-          completionPct={completionPct}
+          progressState={progressState}
+          completionPct={completionValue}
           lessonsSummaryText={lessonsSummaryText}
           confidenceLabel={confidenceLabel}
           confidenceMetaText={confidenceMetaText}
+          confidenceLoading={kidSummaryQuery.isLoading}
           attendanceLabel={attendanceLabel}
           attendanceMetaText={attendanceMetaText}
+          attendanceLoading={kidSessionsQuery.isLoading && parentMonthlyBillingReadModelQuery.isLoading}
           billingLabel={billingLabel}
           billingMetaText={billingMetaText}
+          billingLoading={billingLoading}
         />
 
-        <div className="grid gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+        <div className="grid gap-4 sm:gap-6 xl:grid-cols-2">
+          <ParentAttendanceSummary
+            classesCounts={classesCounts}
+            scopeLabel={`Class activity · ${classesMonthLabel}`}
+            upcomingPreviewRows={previewRows}
+            joiningSessionId={joiningSessionId}
+            onOpenClasses={() => setTab("classes")}
+            onJoinSession={(session) => openJoinClass(session)}
+            canJoinFromOverview={canJoinFromOverview}
+          />
+
           <ParentProgressOverview
             childName={childName}
             isRefetching={phonicsProgressQuery.isRefetching}
@@ -4641,11 +4663,14 @@ export default function ParentDashboard() {
             phonicsError={phonicsError}
             phonicsErrorMessage={phonicsErrorMessage}
             curriculumData={curriculumData}
-            completionPct={completionPct}
+            completionPct={completionValue}
             stripStagePrefix={stripStagePrefix}
           />
+        </div>
 
+        <div className="grid gap-4 sm:gap-6 xl:grid-cols-2">
           <ParentLearningInsights
+            isLoading={phonicsLoading}
             latestTeacherLesson={latestTeacherLesson}
             selectedCourseLabel={selectedCourseLabel}
             formatTimestamp={formatTimestamp}
@@ -4653,35 +4678,32 @@ export default function ParentDashboard() {
             dashboardPracticeChips={dashboardPracticeChips}
             onOpenAllRatings={() => setTab("skills")}
           />
-        </div>
 
-        <div className="grid gap-4 sm:gap-6 xl:grid-cols-2">
-          <ParentAttendanceSummary
-            classesCounts={classesCounts}
-            upcomingPreviewRows={previewRows}
-            joiningSessionId={joiningSessionId}
-            onOpenClasses={() => setTab("classes")}
-            onJoinSession={(session) => openJoinClass(session)}
-            canJoinFromOverview={canJoinFromOverview}
-          />
-
-          <ParentBillingSummary
-            billingLoading={billingLoading}
-            dueNowText={walletStatusLabel}
-            billedText={formatCurrencyINR(billingSummary.billedThisMonth)}
-            paidText={formatCurrencyINR(profilePaymentsSummary.total)}
-            billingDetailText={billingDetailText}
-            onOpenPayments={() => setTab("payments")}
+          <ParentRecommendations
+            dashboardRecommendedNext={dashboardRecommendedNext}
+            labelFromGameId={labelFromGameId}
+            onStartPractice={handlePracticeClick}
+            onOpenGamesProgress={() => setTab("games-progress")}
           />
         </div>
 
-        <ParentRecommendations
-          dashboardRecommendedNext={dashboardRecommendedNext}
-          dashboardStrengthChips={dashboardStrengthChips}
-          dashboardPracticeChips={dashboardPracticeChips}
-          labelFromGameId={labelFromGameId}
-          onStartPractice={handlePracticeClick}
-          onOpenGamesProgress={() => setTab("games-progress")}
+        <ParentBillingSummary
+          billingLoading={billingLoading}
+          dueNowText={walletStatusLabel}
+          billedText={formatCurrencyINR(billingSummary.billedThisMonth)}
+          paidText={
+            profilePaymentsSummary.available
+              ? formatCurrencyINR(profilePaymentsSummary.total)
+              : "Not available"
+          }
+          deductionsLabel={`Class deductions · ${classesMonthLabel}`}
+          paymentsLabel={
+            profilePaymentsSummary.source === "read_model"
+              ? `Payments received · ${classesMonthLabel}`
+              : "Payments recorded"
+          }
+          billingDetailText={billingDetailText}
+          onOpenPayments={() => setTab("payments")}
         />
 
         <ParentLessonTracker
