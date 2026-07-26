@@ -4,7 +4,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/': {
     title: 'Online English Classes for Kids That Build Reading, Grammar and Speaking Confidence | Tiny Steps Learning',
     description:
-      'Live 1:1 and small-group online English classes for kids with phonics, reading, grammar, spoken-English support, free assessment, transparent pricing, and parent-visible progress.',
+      'Live 1:1 and small-group online English classes for kids with phonics, reading, grammar, spoken-English support, transparent pricing, and one free 35-minute 1:1 demo assessment class.',
     canonicalPath: '/',
     ogType: 'website',
     ogImage: '/og-default.jpg',
@@ -12,7 +12,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/courses': {
     title: 'English Courses for Kids: Phonics, Grammar and Public Speaking | Tiny Steps Learning',
     description:
-      'Compare Tiny Steps English courses for children aged 3–12 across phonics, reading, grammar, sentence formation, and public speaking. Book a free assessment to choose the right path.',
+      'Compare Tiny Steps English courses for children aged 3–12 across phonics, reading, grammar, sentence formation, and public speaking. Book one free 35-minute 1:1 demo assessment class.',
     canonicalPath: '/courses',
     ogType: 'website',
   },
@@ -26,26 +26,26 @@ export const ROUTE_SEO_REGISTRY = {
   '/phonics': {
     title: 'Online Phonics Classes for Kids in India | Tiny Steps',
     description:
-      'Live 1:1 online phonics classes for kids in India. Build letter sounds, blending, CVC words, digraphs, reading fluency and spelling. Book a free assessment.',
+      'Live 1:1 online phonics classes for kids in India. Build letter sounds, blending, CVC words, digraphs, reading fluency and spelling. Book one free 35-minute 1:1 demo assessment class.',
     canonicalPath: '/phonics',
     ogType: 'website',
   },
   '/grammar': {
     title: 'Grammar Classes for Kids in India | Tiny Steps',
     description:
-      'Live online grammar classes for kids in India. Build sentence formation, tenses, punctuation, writing clarity and school-answer confidence. Book a free assessment.',
+      'Live online grammar classes for kids in India. Build sentence formation, tenses, punctuation, writing clarity and school-answer confidence. Book one free 35-minute 1:1 demo assessment class.',
     canonicalPath: '/grammar',
     ogType: 'website',
   },
   '/speaking': {
     title: 'Public Speaking Classes for Kids in India | Tiny Steps',
     description:
-      'Live online public speaking classes for kids in India. Build sentence formation, storytelling, show-and-tell, clear expression and confidence. Book a free assessment.',
+      'Live online public speaking classes for kids in India. Build sentence formation, storytelling, show-and-tell, clear expression and confidence. Book one free 35-minute 1:1 demo assessment class.',
     canonicalPath: '/speaking',
     ogType: 'website',
   },
   '/book-demo': {
-    title: 'Book Free English Assessment Class for Kids | Tiny Steps Learning',
+    title: 'Book a Free 35-Minute Demo Assessment Class | Tiny Steps Learning',
     description:
       'Book a free 1:1 online English assessment for your child. Understand their level in phonics, reading, grammar, sentence formation, and speaking confidence.',
     canonicalPath: '/book-demo',
@@ -61,7 +61,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/pricing': {
     title: 'Premium 1:1 Online English Class Pricing | Tiny Steps Learning',
     description:
-      'View Tiny Steps pricing for premium 1:1 online English classes for kids. Book a free assessment before choosing phonics, grammar, reading, or public speaking support.',
+      'Standard 1:1 classes cost ₹400 per class and small groups cost ₹180–₹300 per child per class. Book one free 35-minute 1:1 demo assessment class.',
     canonicalPath: '/pricing',
     ogType: 'website',
   },
@@ -74,9 +74,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/contact': {
-    title: 'Book a Free Assessment for Your Child | Tiny Steps Learning',
+    title: 'Book a Free 35-Minute Demo Assessment | Tiny Steps Learning',
     description:
-      'Book a free assessment for your child with Tiny Steps Learning. Share age, learning concern, and timing preference for phonics, reading, grammar, speaking, and online English support.',
+      'Book one free 35-minute 1:1 online demo assessment class per child before enrolment. No credit card is required.',
     canonicalPath: '/contact',
     ogType: 'website',
   },
@@ -349,7 +349,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/phonics-learning-games': {
     title: 'Phonics Practice Games for Kids | Tiny Steps Learning',
     description:
-      'Interactive phonics practice games for kids with tracing, sound work, and reading readiness. Rs 199/month or Rs 999 lifetime per child, with a 3-day free trial.',
+      'Interactive phonics practice games for kids with tracing, sound work, and reading readiness. Rs 199/month or Rs 999 lifetime per child, with a 3-day digital games trial.',
     canonicalPath: '/phonics-learning-games',
     ogType: 'website',
   },
@@ -496,7 +496,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/reading-classes-for-kids': {
     title: 'Reading Classes for Kids in India | Tiny Steps',
     description:
-      'Live online reading classes for kids in India. Build word reading, reading fluency, story comprehension, vocabulary and reading aloud confidence. Book a free assessment.',
+      'Live online reading classes for kids in India. Build word reading, reading fluency, story comprehension, vocabulary and reading aloud confidence. Book one free 35-minute 1:1 demo assessment class.',
     canonicalPath: '/reading-classes-for-kids',
     ogType: 'website',
   },
@@ -531,7 +531,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/online-english-classes-hyderabad': {
     title: 'Online English Classes for Kids in Hyderabad | Tiny Steps Learning',
     description:
-      'Live online English classes for kids in Hyderabad covering phonics, reading, grammar, sentence formation, and communication confidence. Book a free assessment.',
+      'Live online English classes for kids in Hyderabad covering phonics, reading, grammar, sentence formation, and communication confidence. Book one free 35-minute 1:1 demo assessment class.',
     canonicalPath: '/online-english-classes-hyderabad',
     ogType: 'website',
   },
