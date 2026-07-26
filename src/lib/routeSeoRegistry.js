@@ -281,6 +281,14 @@ export const ROUTE_SEO_REGISTRY = {
     robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
     ogType: 'website',
   },
+  '/seasonal/christmas-tree': {
+    title: 'Christmas Tree Decorating Game | Tiny Steps Learning',
+    description:
+      'Decorate a festive Christmas tree in this seasonal Tiny Steps Learning activity for children.',
+    canonicalPath: '/seasonal/christmas-tree',
+    robots: 'noindex, follow',
+    ogType: 'website',
+  },
   '/summer-camp-for-kids-india': {
     title: 'Summer Camp for Kids India (Parent Planning Guide) | Tiny Steps Learning',
     description:

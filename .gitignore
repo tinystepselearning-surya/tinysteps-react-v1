@@ -51,6 +51,7 @@ src/**/*.js
 src/**/*.jsx
 !src/lib/routeSeoRegistry.js
 !src/lib/publicCoursePages.js
+!src/lib/publicRouteManifest.js
 !src/components/components/LiquidEther.jsx
 !src/**/*.config.js
 *.js.backup
