@@ -42,7 +42,7 @@ export default function ParentDashboardHero({
   joinClassDisabledReason = "Class link will appear once assigned.",
 }: ParentDashboardHeroProps) {
   return (
-    <Card className="overflow-hidden rounded-[20px] border-slate-200 bg-gradient-to-br from-white via-slate-50 to-indigo-50/70 p-4 shadow-sm sm:p-6 dark:border-slate-800 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
+    <Card className="relative overflow-hidden rounded-[22px] border-indigo-100 bg-[radial-gradient(circle_at_top_right,rgba(124,58,237,0.14),transparent_38%),radial-gradient(circle_at_bottom_left,rgba(249,115,22,0.10),transparent_36%),linear-gradient(145deg,#ffffff_0%,#f5f7ff_100%)] p-4 shadow-[0_16px_40px_rgba(79,70,229,0.09)] sm:p-5 dark:border-slate-700 dark:bg-[radial-gradient(circle_at_top_right,rgba(124,58,237,0.18),transparent_38%),radial-gradient(circle_at_bottom_left,rgba(249,115,22,0.08),transparent_36%),linear-gradient(145deg,#0f172a_0%,#111827_100%)]">
       <div className="min-w-0">
         <h2 className="break-words text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl dark:text-slate-100">
           {childName} at a glance
@@ -51,9 +51,9 @@ export default function ParentDashboardHero({
           {heroMessage}
         </p>
 
-        <div className="mt-4 grid min-w-0 grid-cols-2 divide-x divide-slate-200 rounded-2xl bg-white/70 px-1 py-3 dark:divide-slate-700 dark:bg-slate-900/60">
-          <div className="min-w-0 px-3">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+        <div className="mt-3 grid min-w-0 grid-cols-2 gap-2">
+          <div className="min-w-0 rounded-2xl border border-indigo-100 bg-indigo-50/75 px-3 py-2.5 dark:border-indigo-900/60 dark:bg-indigo-950/35">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-300">
               <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
               Current programme
             </div>
@@ -61,8 +61,8 @@ export default function ParentDashboardHero({
               {programLabel}
             </div>
           </div>
-          <div className="min-w-0 px-3">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+          <div className="min-w-0 rounded-2xl border border-violet-100 bg-violet-50/75 px-3 py-2.5 dark:border-violet-900/60 dark:bg-violet-950/30">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-violet-700 dark:text-violet-300">
               <Target className="h-4 w-4 shrink-0" aria-hidden="true" />
               Current stage
             </div>
@@ -72,7 +72,7 @@ export default function ParentDashboardHero({
           </div>
         </div>
 
-        <div className="mt-3 flex min-w-0 flex-col gap-2 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between dark:text-slate-300">
+        <div className="mt-3 flex min-w-0 flex-col gap-1.5 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between dark:text-slate-300">
           <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
             <span>{classesCompleted} completed · {classesUpcoming} upcoming · {classesScopeLabel}</span>
@@ -92,11 +92,11 @@ export default function ParentDashboardHero({
           </div>
         </div>
 
-        <div className="mt-4" data-testid="hero-primary-action">
+        <div className="mt-3" data-testid="hero-primary-action">
           {joinClassUrl ? (
             <Button
               asChild
-              className="min-h-11 w-full bg-slate-950 text-white shadow-sm hover:bg-slate-800 sm:w-auto sm:min-w-48 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-white"
+              className="min-h-11 w-full bg-indigo-600 text-white shadow-[0_8px_18px_rgba(79,70,229,0.22)] hover:bg-indigo-700 sm:w-auto sm:min-w-48 dark:bg-indigo-500 dark:hover:bg-indigo-400"
             >
               <a
                 href={joinClassUrl}
@@ -133,7 +133,7 @@ export default function ParentDashboardHero({
             type="button"
             onClick={onViewClasses}
             variant="outline"
-            className="min-h-11 border-slate-300 bg-white/80 text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            className="min-h-11 border-indigo-200 bg-white/85 text-indigo-950 hover:bg-indigo-50 dark:border-indigo-800 dark:bg-slate-900 dark:text-indigo-100 dark:hover:bg-indigo-950/40"
           >
             View Classes
           </Button>
@@ -141,7 +141,7 @@ export default function ParentDashboardHero({
             type="button"
             onClick={onViewInsights}
             variant="ghost"
-            className="min-h-11 text-slate-700 hover:bg-white/70 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="min-h-11 border border-violet-100 bg-violet-50/70 text-violet-900 hover:bg-violet-100 dark:border-violet-900/60 dark:bg-violet-950/25 dark:text-violet-100 dark:hover:bg-violet-950/45"
           >
             View Insights
           </Button>

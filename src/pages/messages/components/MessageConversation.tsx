@@ -19,7 +19,7 @@ export function MessageConversationHeader({
   return (
     <header
       className={cn(
-        'shrink-0 border-b border-slate-200/80 bg-white px-2 py-2',
+        'shrink-0 border-b border-slate-200/80 bg-white px-2 py-2 dark:border-slate-800 dark:bg-slate-900',
         nativeFocus && 'ts-chat-focus-header',
       )}
       data-testid="message-conversation-header"
@@ -76,10 +76,10 @@ export function MessageBubble({
     >
       <div
         className={cn(
-          'max-w-[85%] rounded-2xl px-3 py-2 shadow-sm',
+          'max-w-[85%] rounded-[18px] px-3 py-2 shadow-sm',
           isOwn
-            ? 'rounded-br-md bg-slate-900 text-white'
-            : 'rounded-bl-md border border-slate-200 bg-white text-slate-900',
+            ? 'rounded-br-md bg-[#172554] text-white dark:bg-indigo-700'
+            : 'rounded-bl-md border border-slate-200/80 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100',
         )}
       >
         {!isOwn && showSenderLabel ? (
@@ -158,14 +158,14 @@ export function MessageComposer({
             rows={1}
             placeholder="Type a message"
             autoComplete="off"
-            className="block min-h-11 max-h-32 w-full resize-none overflow-y-auto rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base leading-5 text-slate-950 outline-none [field-sizing:content] focus:border-slate-500 focus:bg-white focus:ring-2 focus:ring-slate-200"
+            className="block min-h-11 max-h-32 w-full resize-none overflow-y-auto rounded-2xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-base leading-5 text-slate-950 outline-none [field-sizing:content] focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-indigo-500 dark:focus:bg-slate-900"
           />
         </label>
         <button
           type="button"
           onClick={onSend}
           disabled={!value.trim() || isSending}
-          className="flex h-11 min-w-11 shrink-0 items-center justify-center rounded-full bg-slate-900 px-3 text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300"
+          className="flex h-11 min-w-11 shrink-0 items-center justify-center rounded-full bg-indigo-600 px-3 text-white transition hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-800 dark:disabled:text-slate-600"
           aria-label={isSending ? 'Sending message' : 'Send message'}
         >
           <Send className="h-4 w-4" aria-hidden="true" />

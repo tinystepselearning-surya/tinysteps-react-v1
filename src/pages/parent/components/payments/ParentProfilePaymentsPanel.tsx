@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 
 import {
   formatParentPaymentCurrency,
@@ -33,10 +32,10 @@ export default function ParentProfilePaymentsPanel({
   onOpenPayments,
 }: ParentProfilePaymentsPanelProps) {
   return (
-    <Card className="rounded-[20px] p-4">
+    <section aria-labelledby="profile-payments-title">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-xs uppercase tracking-wide text-slate-400">Payments</div>
+          <h2 id="profile-payments-title" className="text-xs font-semibold uppercase tracking-wide text-slate-500">Payments</h2>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">A concise account summary.</p>
         </div>
         <Button type="button" variant="outline" onClick={onOpenPayments} className="min-h-11 shrink-0 px-3">
@@ -51,14 +50,14 @@ export default function ParentProfilePaymentsPanel({
           <div className="h-16 rounded-xl bg-slate-100 dark:bg-slate-800" />
         </div>
       ) : (
-        <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-800 dark:bg-slate-900">
+        <dl className="mt-4 grid grid-cols-2 gap-x-4">
+          <div>
             <dt className="text-xs text-slate-500">{walletState.label}</dt>
             <dd className="mt-1 break-words text-lg font-semibold text-slate-950 dark:text-slate-100">
               {walletState.amountText || "Unavailable"}
             </dd>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-800 dark:bg-slate-900">
+          <div>
             <dt className="text-xs text-slate-500">{paymentsScopeLabel}</dt>
             <dd className="mt-1 break-words text-lg font-semibold text-slate-950 dark:text-slate-100">
               {paymentsTotal === null ? "Unavailable" : formatParentPaymentCurrency(paymentsTotal)}
@@ -84,6 +83,6 @@ export default function ParentProfilePaymentsPanel({
           </dl>
         </div>
       ) : null}
-    </Card>
+    </section>
   );
 }

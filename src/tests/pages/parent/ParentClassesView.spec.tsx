@@ -134,6 +134,12 @@ describe("ParentClassesView", () => {
     expect(sessionRows[1]).toHaveAttribute("data-session-id", "second");
   });
 
+  it("contains the horizontal filter row inside a clipped visual frame", () => {
+    render(<ParentClassesView {...commonProps} activeView="today" activeRows={[]} />);
+    expect(screen.getByTestId("parent-class-filter-frame")).toHaveClass("overflow-hidden");
+    expect(screen.getByTestId("parent-class-filter-scroll")).toHaveClass("overflow-x-auto");
+  });
+
   it("does not present loading counts as zero or show a no-class empty state", () => {
     render(
       <ParentClassesView

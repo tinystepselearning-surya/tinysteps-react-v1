@@ -35,7 +35,7 @@ export default function ParentProgressOverview({
     : null;
 
   return (
-    <Card className="rounded-[20px] border-slate-200 bg-white p-4 shadow-sm sm:p-5 dark:border-slate-800 dark:bg-slate-900">
+    <Card className="rounded-[20px] border-indigo-100 bg-gradient-to-br from-white to-indigo-50/35 p-4 shadow-sm sm:p-5 dark:border-indigo-900/60 dark:from-slate-900 dark:to-slate-900">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="text-base font-semibold text-slate-950 dark:text-slate-100">Progress Overview</h3>
@@ -96,7 +96,7 @@ export default function ParentProgressOverview({
               aria-valuemax={100}
               aria-valuenow={completionPct}
             >
-              <div className="h-2.5 rounded-full bg-slate-950 dark:bg-slate-100" style={{ width: `${safeProgressWidth}%` }} />
+              <div className="h-2.5 rounded-full bg-indigo-600 dark:bg-indigo-400" style={{ width: `${safeProgressWidth}%` }} />
             </div>
           </div>
 

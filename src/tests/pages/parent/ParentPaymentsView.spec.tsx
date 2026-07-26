@@ -218,21 +218,32 @@ describe("ParentPaymentsView", () => {
     expect(screen.queryByRole("button", { name: /All 0/ })).not.toBeInTheDocument();
   });
 
-  it("changes month without invoking tab callbacks", () => {
+  it("changes month through the compact period control without invoking tab callbacks", () => {
     const onMonthChange = vi.fn();
     const onActivityModeChange = vi.fn();
-    render(
+    const { rerender } = render(
       <ParentPaymentsView
         {...commonProps}
         onMonthChange={onMonthChange}
         onActivityModeChange={onActivityModeChange}
       />,
     );
-    fireEvent.change(screen.getByLabelText("Payment activity month"), {
-      target: { value: "2026-06" },
-    });
+    const control = screen.getByTestId("parent-payment-month-control");
+    expect(within(control).getAllByText("July 2026")).toHaveLength(1);
+    fireEvent.click(screen.getByRole("button", { name: "Previous month" }));
     expect(onMonthChange).toHaveBeenCalledWith("2026-06");
     expect(onActivityModeChange).not.toHaveBeenCalled();
+
+    rerender(
+      <ParentPaymentsView
+        {...commonProps}
+        selectedMonth="2026-06"
+        onMonthChange={onMonthChange}
+        onActivityModeChange={onActivityModeChange}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Next month" }));
+    expect(onMonthChange).toHaveBeenLastCalledWith("2026-07");
   });
 
   it("keeps activity types distinct and exposes selected tab state", () => {

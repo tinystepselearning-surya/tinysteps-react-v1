@@ -1,4 +1,11 @@
-import { CalendarDays, CircleAlert, Landmark, WalletCards } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  CircleAlert,
+  Landmark,
+  WalletCards,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -136,6 +143,20 @@ function ParentWalletStatusCard({
 
 const summaryValue = (value: number | null, currency = false): string =>
   value === null ? "Unavailable" : currency ? formatParentPaymentCurrency(value) : value.toLocaleString("en-IN");
+
+const FIRST_WALLET_ACTIVITY_MONTH = "2026-05";
+
+const currentMonthKey = (): string => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+};
+
+const shiftMonthKey = (monthKey: string, delta: number): string => {
+  const match = monthKey.match(/^(\d{4})-(\d{2})$/);
+  if (!match) return monthKey;
+  const date = new Date(Number(match[1]), Number(match[2]) - 1 + delta, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+};
 
 function ParentPaymentSummary({
   monthLabel,
@@ -300,6 +321,12 @@ export default function ParentPaymentsView({
       : chargeFilter === "paid_classes"
         ? `No settled class charges in ${monthLabel}.`
         : `No class charges in ${monthLabel}.`;
+  const previousMonth = shiftMonthKey(selectedMonth, -1);
+  const nextMonth = shiftMonthKey(selectedMonth, 1);
+  const previousMonthDisabled =
+    selectedMonth <= FIRST_WALLET_ACTIVITY_MONTH || previousMonth === selectedMonth;
+  const nextMonthDisabled =
+    selectedMonth >= currentMonthKey() || nextMonth === selectedMonth;
 
   return (
     <div className="min-w-0 space-y-4 overflow-x-hidden pb-2" data-testid="parent-payments-view">
@@ -320,19 +347,38 @@ export default function ParentPaymentsView({
 
       <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
         <div className="rounded-[20px] border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <label htmlFor="parent-payment-month" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
             Activity period
-          </label>
-          <input
-            id="parent-payment-month"
-            aria-label="Payment activity month"
-            type="month"
-            value={selectedMonth}
-            onChange={(event) => onMonthChange(event.target.value)}
-            className="mt-2 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-900 outline-none focus-visible:ring-2 focus-visible:ring-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-          />
-          <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{monthLabel}</p>
-          <p className="mt-1 text-xs text-slate-500">Wallet activity is available from May 2026.</p>
+          </p>
+          <div
+            role="group"
+            aria-label="Activity period"
+            className="mt-2 grid grid-cols-[44px_minmax(0,1fr)_44px] items-center rounded-2xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-950"
+            data-testid="parent-payment-month-control"
+          >
+            <button
+              type="button"
+              aria-label="Previous month"
+              disabled={previousMonthDisabled}
+              onClick={() => onMonthChange(previousMonth)}
+              className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-700 outline-none hover:bg-white focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:text-slate-300 dark:text-slate-200 dark:hover:bg-slate-800 dark:disabled:text-slate-700"
+            >
+              <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+            </button>
+            <p className="min-w-0 truncate px-2 text-center text-sm font-semibold text-slate-950 dark:text-slate-100">
+              {monthLabel}
+            </p>
+            <button
+              type="button"
+              aria-label="Next month"
+              disabled={nextMonthDisabled}
+              onClick={() => onMonthChange(nextMonth)}
+              className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-700 outline-none hover:bg-white focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:text-slate-300 dark:text-slate-200 dark:hover:bg-slate-800 dark:disabled:text-slate-700"
+            >
+              <ChevronRight className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
+          <p className="mt-2 text-xs leading-5 text-slate-500">Wallet activity is available from May 2026.</p>
         </div>
         <ParentPaymentSummary monthLabel={monthLabel} summary={summary} loading={summaryLoading} />
       </div>

@@ -25,9 +25,9 @@ export default function ParentRecommendations({
   const hasSpecificRecommendation = Boolean(dashboardRecommendedNext?.gameId);
 
   return (
-    <Card className="rounded-[20px] border-slate-200 bg-white p-4 shadow-sm sm:p-5 dark:border-slate-800 dark:bg-slate-900">
+    <Card className="rounded-[20px] border-orange-100 bg-gradient-to-br from-white to-orange-50/35 p-4 shadow-sm sm:p-5 dark:border-orange-900/50 dark:from-slate-900 dark:to-slate-900">
       <div className="flex items-start gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300">
           <Clock3 className="h-4 w-4" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">

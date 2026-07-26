@@ -64,4 +64,20 @@ describe("ParentMobileHeader", () => {
     expect(label).toHaveAttribute("title", childName);
     expect(label).toHaveClass("truncate");
   });
+
+  it("owns the native top safe area without negative positioning", () => {
+    render(
+      <ParentMobileHeader
+        activeTab="dashboard"
+        childName="Aarav"
+        onMenu={vi.fn()}
+        onProfile={vi.fn()}
+      />,
+    );
+
+    const header = screen.getByRole("banner");
+    expect(header).toHaveAttribute("data-safe-area-owner", "header");
+    expect(header).toHaveClass("top-0");
+    expect(header.className).not.toMatch(/-top-/);
+  });
 });

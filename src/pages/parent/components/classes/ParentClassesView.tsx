@@ -216,23 +216,25 @@ function ParentSessionRow({ row, joining, onJoin }: ParentSessionRowProps) {
     <article
       className={cn(
         "grid min-w-0 gap-3 border-b border-slate-200 px-4 py-3.5 last:border-b-0 md:grid-cols-[150px,130px,minmax(0,1fr),auto] md:items-center",
-        isHistorical ? "bg-slate-50/60" : "bg-white",
+        isHistorical
+          ? "bg-slate-50/60 dark:bg-slate-900/55"
+          : "bg-white dark:bg-slate-900",
       )}
       data-session-id={row.id}
       aria-label={`${row.dateLabel}, ${row.timeLabel}, ${row.courseName}, ${getParentClassStatusLabel(row.status)}`}
     >
       <div className="min-w-0">
-        <time className="text-sm font-semibold text-slate-950" dateTime={row.dateTime}>
+        <time className="text-sm font-semibold text-slate-950 dark:text-slate-100" dateTime={row.dateTime}>
           {row.dateLabel}
         </time>
         {row.indiaTimeLabel ? (
           <p className="mt-1 text-[11px] leading-4 text-slate-500">{row.indiaTimeLabel}</p>
         ) : null}
       </div>
-      <p className="text-base font-semibold text-slate-950">{row.timeLabel}</p>
+      <p className="text-base font-semibold text-slate-950 dark:text-slate-100">{row.timeLabel}</p>
       <div className="min-w-0">
-        <p className="break-words text-sm font-semibold text-slate-900">{row.courseName}</p>
-        <p className="mt-0.5 break-words text-xs text-slate-600">
+        <p className="break-words text-sm font-semibold text-slate-900 dark:text-slate-100">{row.courseName}</p>
+        <p className="mt-0.5 break-words text-xs text-slate-600 dark:text-slate-300">
           {row.teacherName ? `Teacher: ${row.teacherName}` : "Teacher not assigned"}
           {row.childName ? ` · ${row.childName}` : ""}
         </p>
@@ -273,10 +275,10 @@ function ParentSessionList({
   onJoin,
 }: ParentSessionListProps) {
   return (
-    <section aria-labelledby="parent-session-list-title" className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+    <section aria-labelledby="parent-session-list-title" className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
       <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-3">
         <div>
-          <h2 id="parent-session-list-title" className="text-sm font-semibold text-slate-950">
+          <h2 id="parent-session-list-title" className="text-sm font-semibold text-slate-950 dark:text-slate-100">
             {title}
           </h2>
           <p className="mt-0.5 text-xs text-slate-500">{scopeText}</p>
@@ -321,7 +323,7 @@ function ParentClassResources({
       <h2 id="parent-class-resources-title" className="mb-2 text-sm font-semibold text-slate-950">
         Class resources
       </h2>
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
         {resources.map((resource) => {
           const Icon = RESOURCE_ICONS[resource.id];
           const isActive = activeView === resource.id;
@@ -392,11 +394,12 @@ export default function ParentClassesView({
       )}
 
       <nav aria-label="Class session filters">
-        <div
-          role="tablist"
-          className="scrollbar-hide flex max-w-full snap-x snap-mandatory gap-2 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch]"
-          data-testid="parent-class-filter-scroll"
-        >
+        <div className="relative max-w-full overflow-hidden after:pointer-events-none after:absolute after:inset-y-0 after:right-0 after:w-8 after:bg-gradient-to-l after:from-[var(--ts-parent-bg,#f5f7fb)] after:to-transparent" data-testid="parent-class-filter-frame">
+          <div
+            role="tablist"
+            className="scrollbar-hide flex max-w-full snap-x snap-mandatory gap-2 overflow-x-auto pb-1 pr-10 [-webkit-overflow-scrolling:touch]"
+            data-testid="parent-class-filter-scroll"
+          >
           {filters.map((filter) => {
             const Icon = FILTER_ICONS[filter.id];
             const selected = activeView === filter.id;
@@ -413,8 +416,8 @@ export default function ParentClassesView({
                 className={cn(
                   "inline-flex min-h-11 shrink-0 snap-start items-center gap-1.5 rounded-full border px-3 text-sm font-semibold outline-none transition active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-slate-600",
                   selected
-                    ? "border-slate-300 bg-slate-200 text-slate-950"
-                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900",
+                    ? "border-indigo-200 bg-indigo-50 text-indigo-950 dark:border-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-100"
+                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300",
                 )}
               >
                 <Icon className="h-4 w-4" aria-hidden="true" />
@@ -425,6 +428,7 @@ export default function ParentClassesView({
               </button>
             );
           })}
+          </div>
         </div>
       </nav>
 

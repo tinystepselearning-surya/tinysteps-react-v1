@@ -77,7 +77,7 @@ function ParentReadOnlySkillRatings({ entries }: { entries: ParentSkillRatingDis
           aria-label={`${entry.label}: ${
             entry.value === null ? entry.text : `${entry.value} of ${SKILL_RATING_MAX}, ${entry.text}`
           }`}
-          className="min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-700 dark:bg-slate-900"
+          className="min-w-0 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900"
         >
           <p className="break-words text-sm font-semibold leading-5 text-slate-900 dark:text-slate-100">
             {entry.label}
@@ -86,9 +86,9 @@ function ParentReadOnlySkillRatings({ entries }: { entries: ParentSkillRatingDis
             {Array.from({ length: SKILL_RATING_MAX }, (_, index) => (
               <Star
                 key={`${entry.key}-${index + 1}`}
-                className={`h-4 w-4 ${
+                className={`h-3.5 w-3.5 ${
                   entry.value !== null && index + 1 <= entry.value
-                    ? "fill-amber-300 text-amber-400"
+                    ? "fill-amber-200 text-amber-500"
                     : "fill-transparent text-slate-300 dark:text-slate-600"
                 }`}
               />
@@ -207,7 +207,7 @@ export default function ParentSkillsView({
         </p>
       </header>
 
-      <section aria-labelledby="latest-teacher-feedback-title" className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <section aria-labelledby="latest-teacher-feedback-title" className="rounded-[20px] border border-emerald-100 border-t-2 border-t-emerald-500 bg-white p-4 shadow-sm dark:border-emerald-900/60 dark:border-t-emerald-400 dark:bg-slate-900">
         <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{childName}</p>

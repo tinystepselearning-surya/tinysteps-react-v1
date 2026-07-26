@@ -92,9 +92,9 @@ export function MessageThreadRow({
       aria-current={thread.isSelected ? 'true' : undefined}
       aria-label={`${thread.title} conversation. ${thread.fullParticipantSummary}. ${unreadLabel}. ${thread.preview}`}
       className={cn(
-        'group flex min-h-[72px] w-full min-w-0 items-center gap-3 border-b border-slate-200/80 px-3 py-2.5 text-left outline-none transition-colors last:border-b-0 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-600',
-        'hover:bg-slate-50 active:bg-slate-100',
-        thread.isSelected && 'lg:bg-slate-100',
+        'group flex min-h-[70px] w-full min-w-0 items-center gap-3 border-b border-slate-200/70 px-3 py-2 text-left outline-none transition-colors last:border-b-0 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500 dark:border-slate-800',
+        'hover:bg-indigo-50/40 active:bg-slate-100 dark:hover:bg-slate-800/70 dark:active:bg-slate-800',
+        thread.isSelected && 'lg:bg-indigo-50 dark:lg:bg-indigo-950/35',
       )}
       data-unread={thread.unreadCount > 0 ? 'true' : 'false'}
       data-testid={`message-thread-${thread.id}`}
@@ -210,8 +210,8 @@ export default function MessageThreadList({
   focusThreadId = null,
 }: MessageThreadListProps) {
   return (
-    <section aria-labelledby="message-conversations-title" className="min-w-0 bg-white">
-      <div className="border-b border-slate-200/80 px-3 pb-2.5 pt-3">
+    <section aria-labelledby="message-conversations-title" className="min-w-0 bg-white dark:bg-slate-900">
+      <div className="border-b border-slate-200/80 px-3 pb-2 pt-2 dark:border-slate-800">
         <h2 id="message-conversations-title" className="sr-only">
           Conversations
         </h2>
@@ -226,7 +226,7 @@ export default function MessageThreadList({
             value={search}
             onChange={(event) => onSearchChange(event.target.value)}
             placeholder="Search conversations"
-            className="h-11 w-full rounded-xl border border-slate-200 bg-slate-100/80 py-2 pl-9 pr-11 text-base text-slate-900 outline-none transition focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-200 md:text-sm"
+            className="h-11 w-full rounded-xl border border-slate-200 bg-slate-100/80 py-2 pl-9 pr-11 text-base text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-indigo-500 dark:focus:bg-slate-900 dark:focus:ring-indigo-950 md:text-sm"
           />
           {search ? (
             <button

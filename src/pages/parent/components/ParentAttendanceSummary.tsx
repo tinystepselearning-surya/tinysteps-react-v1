@@ -39,7 +39,7 @@ export default function ParentAttendanceSummary({
   canJoinFromOverview,
 }: ParentAttendanceSummaryProps) {
   return (
-    <Card className="rounded-[20px] border-slate-200 bg-white p-4 shadow-sm sm:p-5 dark:border-slate-800 dark:bg-slate-900">
+    <Card className="overflow-hidden rounded-[20px] border-indigo-100 border-t-2 border-t-indigo-500 bg-white p-4 shadow-sm sm:p-5 dark:border-indigo-900/60 dark:border-t-indigo-400 dark:bg-slate-900">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold text-slate-950 dark:text-slate-100">Next Class</h3>
@@ -70,7 +70,9 @@ export default function ParentAttendanceSummary({
                 <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <CalendarClock className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300">
+                        <CalendarClock className="h-4 w-4" aria-hidden="true" />
+                      </span>
                       <p className="text-sm font-semibold text-slate-950 dark:text-slate-100">
                         {formatSessionDate(session)} · {formatSessionTimeRange(session)}
                       </p>

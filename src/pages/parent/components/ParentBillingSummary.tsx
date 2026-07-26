@@ -23,7 +23,7 @@ export default function ParentBillingSummary({
   onOpenPayments,
 }: ParentBillingSummaryProps) {
   return (
-    <Card className="rounded-[20px] border-slate-200 bg-white p-4 shadow-sm sm:p-5 dark:border-slate-800 dark:bg-slate-900">
+    <Card className="rounded-[20px] border-teal-100 bg-white p-4 shadow-sm sm:p-5 dark:border-teal-900/60 dark:bg-slate-900">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold text-slate-950 dark:text-slate-100">Wallet Summary</h3>

@@ -21,7 +21,7 @@ export default function ParentLearningInsights({
   onOpenAllRatings,
 }: ParentLearningInsightsProps) {
   return (
-    <Card className="rounded-[20px] border-slate-200 bg-white p-4 shadow-sm sm:p-5 dark:border-slate-800 dark:bg-slate-900">
+    <Card className="rounded-[20px] border-violet-100 bg-white p-4 shadow-sm sm:p-5 dark:border-violet-900/60 dark:bg-slate-900">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold text-slate-950 dark:text-slate-100">Learning Insights</h3>
@@ -54,7 +54,7 @@ export default function ParentLearningInsights({
             {latestTeacherLesson.updatedAtMs ? ` · ${formatTimestamp(latestTeacherLesson.updatedAtMs)}` : ""}
           </p>
           {latestTeacherLesson.remark ? (
-            <blockquote className="mt-3 border-l-2 border-slate-300 pl-3 text-sm leading-5 text-slate-700 dark:border-slate-600 dark:text-slate-300">
+            <blockquote className="mt-3 border-l-2 border-violet-400 pl-3 text-sm leading-5 text-slate-700 dark:border-violet-500 dark:text-slate-300">
               {latestTeacherLesson.remark}
             </blockquote>
           ) : null}

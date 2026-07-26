@@ -124,7 +124,7 @@ function CourseProgressSummary({
   return (
     <section
       aria-labelledby="parent-course-progress-title"
-      className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+      className="rounded-[20px] border border-indigo-100 bg-white p-4 shadow-sm dark:border-indigo-900/60 dark:bg-slate-900"
     >
       <div className="flex items-end justify-between gap-3">
         <div>
@@ -150,7 +150,7 @@ function CourseProgressSummary({
           aria-valuenow={completionPct}
           className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
         >
-          <div className="h-full rounded-full bg-slate-900 dark:bg-slate-100" style={{ width: `${progressWidth}%` }} />
+          <div className="h-full rounded-full bg-indigo-600 dark:bg-indigo-400" style={{ width: `${progressWidth}%` }} />
         </div>
       ) : (
         <div role="status" className="mt-3 h-2.5 rounded-full bg-slate-100 dark:bg-slate-800">
@@ -175,7 +175,7 @@ function CurrentStageCard({ stage }: { stage: ParentInsightStageDisplay }) {
     <section
       aria-labelledby="parent-current-stage-title"
       aria-current="step"
-      className="rounded-[20px] border border-slate-300 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+      className="rounded-[20px] border border-violet-200 bg-violet-50/35 p-4 shadow-sm dark:border-violet-900/70 dark:bg-violet-950/20"
       data-testid="parent-current-stage"
     >
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Learning now · Stage {stage.order}</p>
@@ -197,7 +197,7 @@ function CurrentStageCard({ stage }: { stage: ParentInsightStageDisplay }) {
             aria-valuenow={stage.progressPct}
             className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
           >
-            <div className="h-full rounded-full bg-slate-900 dark:bg-slate-100" style={{ width: `${progressWidth}%` }} />
+            <div className="h-full rounded-full bg-violet-600 dark:bg-violet-400" style={{ width: `${progressWidth}%` }} />
           </div>
         </div>
       ) : null}
@@ -212,7 +212,7 @@ function CurrentStageCard({ stage }: { stage: ParentInsightStageDisplay }) {
           <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Current focus</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {stage.focusItems.slice(0, 2).map((item) => (
-              <span key={item} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+              <span key={item} className="rounded-full bg-violet-100/80 px-2.5 py-1 text-xs text-violet-900 dark:bg-violet-950/60 dark:text-violet-200">
                 {item}
               </span>
             ))}
@@ -276,7 +276,7 @@ function StageJourney({
                 {stage.state === "completed" ? (
                   <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" aria-hidden="true" />
                 ) : (
-                  <Circle className={cn("h-5 w-5 shrink-0", stage.state === "current" ? "fill-slate-900 text-slate-900 dark:fill-slate-100 dark:text-slate-100" : "text-slate-300 dark:text-slate-600")} aria-hidden="true" />
+                  <Circle className={cn("h-5 w-5 shrink-0", stage.state === "current" ? "fill-violet-600 text-violet-600 dark:fill-violet-400 dark:text-violet-400" : "text-slate-300 dark:text-slate-600")} aria-hidden="true" />
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="block text-xs text-slate-500">Stage {stage.order} · {stateLabel}</span>
@@ -461,7 +461,7 @@ export default function ParentInsightsView(props: ParentInsightsViewProps) {
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Coming next</p>
                       <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-                        {nextStage ? `Stage ${nextStage.order}: ${nextStage.label}` : "No next stage is available in this course."}
+                        {nextStage ? `Stage ${nextStage.order} — ${nextStage.label}` : "No next stage is available in this course."}
                       </p>
                     </div>
                   </div>

@@ -815,7 +815,7 @@ export default function MessagesPanel({
                   nativeFocus={isEmbeddedNativeChatFocus}
                 />
 
-                <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 py-2 text-[11px] text-slate-500">
+                <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 py-2 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
                   {viewerRole === 'admin'
                     ? 'Admin oversight is read-only here.'
                     : 'Tiny Steps may review conversations for safety and support.'}
@@ -826,7 +826,7 @@ export default function MessagesPanel({
                 }`}>
                   <div
                     ref={threadMessagesListRef}
-                    className={`min-h-0 flex-1 space-y-2 overflow-y-auto overflow-x-hidden bg-slate-50/70 p-3 [-webkit-overflow-scrolling:touch] ${
+                    className={`min-h-0 flex-1 space-y-2 overflow-y-auto overflow-x-hidden bg-slate-50/70 p-3 [-webkit-overflow-scrolling:touch] dark:bg-slate-950 ${
                       isEmbeddedNativeChatFocus ? 'ts-chat-focus-list' : ''
                     } ${embedded ? (isEmbeddedNativeChatFocus ? 'pb-4' : 'pb-24') : 'pb-4'}`}
                     aria-label={`${resolveThreadTitle(selectedThread!)} messages`}
@@ -905,7 +905,7 @@ export default function MessagesPanel({
                     <div ref={listEndRef} />
                   </div>
 
-                  <div className={`shrink-0 border-t border-slate-200 bg-white px-3 pt-3 ${
+                  <div className={`shrink-0 border-t border-slate-200 bg-white px-3 pt-3 dark:border-slate-800 dark:bg-slate-900 ${
                     isEmbeddedNativeChatFocus ? 'ts-chat-focus-composer' : ''
                   } ${
                     embedded
