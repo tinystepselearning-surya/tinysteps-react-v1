@@ -57,6 +57,36 @@ describe('SEO infrastructure', () => {
     ).toBe(false);
   });
 
+  it('uses the public route manifest for P0 canonical redirects and static inventories', async () => {
+    const manifestPath = path.join(repoRoot, 'src/lib/publicRouteManifest.js');
+    const { PUBLIC_REDIRECT_MANIFEST, PUBLIC_ROUTE_MANIFEST } = await import(pathToFileURL(manifestPath).href);
+    // @ts-expect-error Node SEO inventory is an intentionally untyped .mjs module.
+    const inventory = await import('../../../scripts/seo-route-inventory.mjs');
+    const { PARENT_HELP_ROUTES, PRERENDER_STATIC_ROUTES, SITEMAP_STATIC_ROUTES } = inventory;
+
+    expect(PUBLIC_REDIRECT_MANIFEST).toEqual(
+      expect.arrayContaining([
+        { source: '/terms', destination: '/terms-and-conditions', status: 301 },
+        { source: '/terms/', destination: '/terms-and-conditions', status: 301 },
+        {
+          source: '/online-english-classes-for-kids-india',
+          destination: '/online-english-classes-for-kids',
+          status: 301,
+        },
+      ]),
+    );
+
+    const indiaRoute = PUBLIC_ROUTE_MANIFEST.find(
+      (entry: { path: string }) => entry.path === '/online-english-classes-for-kids-india',
+    );
+    expect(indiaRoute).toBeUndefined();
+    expect(SITEMAP_STATIC_ROUTES).toContain('/online-english-classes-for-kids');
+    expect(SITEMAP_STATIC_ROUTES).not.toContain('/online-english-classes-for-kids-india');
+    expect(PRERENDER_STATIC_ROUTES).toContain('/terms-and-conditions');
+    expect(SITEMAP_STATIC_ROUTES).not.toContain('/terms-and-conditions');
+    expect(PARENT_HELP_ROUTES).toContain('/parents/choosing-course');
+  });
+
   it('permanently redirects the legacy games hub before the SPA rewrite', () => {
     const redirects = firebaseConfig.hosting.redirects as Array<{ source?: string; destination?: string; type?: number }>;
     const legacyRedirects = redirects.filter((entry) => entry.source === '/free-games-for-kids');
@@ -65,7 +95,10 @@ describe('SEO infrastructure', () => {
       { source: '/free-games-for-kids', destination: '/free-english-games-for-kids', type: 301 },
     ]);
     expect(firebaseConfigRaw.indexOf('"redirects"')).toBeLessThan(firebaseConfigRaw.indexOf('"rewrites"'));
-    expect(firebaseConfig.hosting.rewrites.at(-1)).toEqual({ source: '**', destination: '/index.html' });
+    expect(firebaseConfig.hosting.rewrites.at(-1)).toEqual({
+      source: '**',
+      function: { functionId: 'notFoundRoute', region: 'asia-south1' },
+    });
     expect(firebaseConfig.hosting.trailingSlash).toBe(false);
     expect(redirects.some((entry) => entry.source === '/free-english-games-for-kids')).toBe(false);
   });
@@ -89,7 +122,7 @@ describe('SEO infrastructure', () => {
     expect(sitemapXml).not.toContain('https://tinystepslearning.com/free-games-for-kids');
 
     const prerenderSource = fs.readFileSync(path.join(repoRoot, 'scripts/prerender.mjs'), 'utf8');
-    expect(prerenderSource).toContain('...STATIC_MARKETING_ROUTES');
+    expect(prerenderSource).toContain('...PRERENDER_STATIC_ROUTES');
     expect(prerenderSource).not.toContain("'/free-games-for-kids'");
   });
 
@@ -171,8 +204,11 @@ describe('SEO infrastructure', () => {
     // Verify redirects appear before the SPA rewrite
     expect(firebaseConfigRaw.indexOf('"redirects"')).toBeLessThan(firebaseConfigRaw.indexOf('"rewrites"'));
 
-    // Verify SPA rewrite is still at the end (catchall)
-    expect(firebaseConfig.hosting.rewrites.at(-1)).toEqual({ source: '**', destination: '/index.html' });
+    // Verify the genuine 404 function is the final catch-all.
+    expect(firebaseConfig.hosting.rewrites.at(-1)).toEqual({
+      source: '**',
+      function: { functionId: 'notFoundRoute', region: 'asia-south1' },
+    });
   });
 
   it('keeps game alias URLs out of indexable and prerender inventories', async () => {
@@ -212,7 +248,7 @@ describe('SEO infrastructure', () => {
 
     // Verify prerender script uses canonical routes
     const prerenderSource = fs.readFileSync(path.join(repoRoot, 'scripts/prerender.mjs'), 'utf8');
-    expect(prerenderSource).toContain('...STATIC_MARKETING_ROUTES');
+    expect(prerenderSource).toContain('...PRERENDER_STATIC_ROUTES');
     expect(prerenderSource).not.toContain("'/free-letter-tracing-with-sounds-game-for-kids'");
     expect(prerenderSource).not.toContain("'/free-phonics-balloon-pop-game-for-kids'");
   });

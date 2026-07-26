@@ -34,6 +34,8 @@ const FORBIDDEN_SITEMAP_URLS = [
   'https://tinystepslearning.com/privacy-policy',
   'https://tinystepslearning.com/privacy',
   'https://tinystepslearning.com/terms',
+  'https://tinystepslearning.com/terms/',
+  'https://tinystepslearning.com/online-english-classes-for-kids-india',
   'https://tinystepslearning.com/signup',
   'https://tinystepslearning.com/courses/phonics-foundations',
   'https://tinystepslearning.com/courses/basic-grammar',
@@ -43,6 +45,9 @@ const FORBIDDEN_SITEMAP_URLS = [
 ];
 
 const REQUIRED_REDIRECTS = [
+  ['/terms', '/terms-and-conditions'],
+  ['/terms/', '/terms-and-conditions'],
+  ['/online-english-classes-for-kids-india', '/online-english-classes-for-kids'],
   ['/courses/phonics-foundations', '/courses/phonics-foundation'],
   ['/courses/basic-grammar', '/courses/grammar'],
   ['/courses/advanced-grammar', '/courses/grammar-mastery'],
