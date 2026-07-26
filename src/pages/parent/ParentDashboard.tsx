@@ -33,10 +33,17 @@ import ParentMobileHeader from "./components/ParentMobileHeader";
 import ParentPaymentOptionsDialog from "./components/payments/ParentPaymentOptionsDialog";
 import ParentPaymentsView from "./components/payments/ParentPaymentsView";
 import ParentProfilePaymentsPanel from "./components/payments/ParentProfilePaymentsPanel";
+import ParentSkillsView from "./components/skills/ParentSkillsView";
+import {
+  buildParentSkillRatingDisplay,
+  dedupeParentSkillLabels,
+  formatParentSkillTag,
+  parentSkillUpdateId,
+  type ParentSkillsLesson,
+} from "./components/skills/parentSkillsPresentation";
 import ParentProgressOverview from "./components/ParentProgressOverview";
 import ParentRecommendations from "./components/ParentRecommendations";
 import ParentShellLoading from "./components/ParentShellLoading";
-import ChildSkillRatingCard from "../../components/progress/ChildSkillRatingCard";
 import {
   ArrowRight,
   CalendarDays,
@@ -70,6 +77,7 @@ import useMessageThreads from "../../hooks/useMessageThreads";
 import { masteryKeyFromValue, masteryLabel, masteryPctFromKey, type MasteryKey } from "../../lib/mastery";
 import {
   SKILL_RATING_MAX,
+  hasExplicitProgressRatings,
   normalizeProgressRatings,
   normalizeProgressSkillsMeta,
   skillRatingLegendLabel,
@@ -1437,6 +1445,7 @@ export default function ParentDashboard() {
   >("all");
   const [collapsedStages, setCollapsedStages] = useState<Record<string, boolean>>({});
   const [insightsCourseId, setInsightsCourseId] = useState<string>("");
+  const [skillsCourseId, setSkillsCourseId] = useState<string>("");
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [messagesActiveThreadId, setMessagesActiveThreadId] = useState<string | null>(null);
@@ -2761,14 +2770,16 @@ export default function ParentDashboard() {
   }, [enrolledCourseIds, mostRecentSessionCourseId]);
 
   const phonicsProgressByCourse = useMemo(() => {
-    if (!displayCourseId) return [];
+    const curriculumEnrollmentCourseIds = insightsCourseOptions
+      .map((option) => normalizeCurriculumCourseId(option.courseId))
+      .filter((courseId): courseId is string => Boolean(courseId));
+    const primaryCourseId = displayCourseId ?? curriculumEnrollmentCourseIds[0] ?? null;
+    if (!primaryCourseId) return [];
 
-    const topics = curriculumTopicsByCourseId[displayCourseId] ?? [];
     const progressDocs = (phonicsProgressQuery.data ?? []) as any[];
-
     const resolveDocCourseId = (doc: any): string | null => {
       if (!doc) return null;
-      const direct = normalizePhonicsCourseId(
+      const direct = normalizeCurriculumCourseId(
         doc?.courseId ?? doc?.course?.id ?? doc?.course
       );
       if (direct) return direct;
@@ -2776,9 +2787,22 @@ export default function ParentDashboard() {
       return key ? topicCourseById[key] ?? null : null;
     };
 
-    const labelMap = new Map<string, any>();
-    const labelUpdatedAt = new Map<string, number>();
-    const addLabelEntry = (rawLabel: string | undefined | null, doc: any) => {
+    const courseIds = Array.from(
+      new Set([
+        primaryCourseId,
+        ...enrolledCourseIds,
+        ...curriculumEnrollmentCourseIds,
+        ...progressDocs
+          .map((progressDoc) => resolveDocCourseId(progressDoc))
+          .filter((courseId): courseId is string => Boolean(courseId)),
+      ]),
+    ).filter((courseId) => (curriculumTopicsByCourseId[courseId] ?? []).length > 0);
+
+    return courseIds.map((courseId) => {
+      const topics = curriculumTopicsByCourseId[courseId] ?? [];
+      const labelMap = new Map<string, any>();
+      const labelUpdatedAt = new Map<string, number>();
+      const addLabelEntry = (rawLabel: string | undefined | null, doc: any) => {
       const key = normalizeTopicText(rawLabel || "");
       if (!key) return;
       const nextTime = doc?.updatedAt?.toMillis?.() ?? 0;
@@ -2791,7 +2815,7 @@ export default function ParentDashboard() {
 
     progressDocs.forEach((doc) => {
       const docCourseId = resolveDocCourseId(doc);
-      if (docCourseId && docCourseId !== displayCourseId) return;
+      if (docCourseId && docCourseId !== courseId) return;
       addLabelEntry(doc?.topicName, doc);
     });
 
@@ -2808,7 +2832,7 @@ export default function ParentDashboard() {
       const docById = progressByTopicId[topic.id];
       if (docById) {
         const docCourseId = resolveDocCourseId(docById);
-        if (!docCourseId || docCourseId === displayCourseId) {
+        if (!docCourseId || docCourseId === courseId) {
           matchedDoc = docById;
           matchedBy = "id";
         }
@@ -2851,7 +2875,7 @@ export default function ParentDashboard() {
       }
       const topicMeta = topic as any;
       const progressSkills = getProgressSkillsForLesson({
-        courseId: displayCourseId,
+        courseId,
         topicId: topic.id,
         lessonId: topicMeta.lesson ?? topic.id,
         rubricType: topicMeta.rubricType ?? null,
@@ -2870,6 +2894,19 @@ export default function ParentDashboard() {
         stageOrder: typeof topic.stageOrder === "number" ? topic.stageOrder : null,
         status,
         mastery: mastery ?? "",
+        courseContextVerified:
+          matchedBy === "id" || resolveDocCourseId(matchedDoc) === courseId,
+        ratingSource: hasExplicitProgressRatings(matchedDoc?.progressRatings)
+          ? "explicit"
+          : hasExplicitProgressRatings(matchedDoc?.skillRatings) ||
+              Boolean(matchedDoc?.mastery) ||
+              Boolean(matchedDoc?.checks)
+            ? "legacy"
+            : "none",
+        explicitProgressRatings:
+          matchedDoc?.progressRatings && typeof matchedDoc.progressRatings === "object"
+            ? matchedDoc.progressRatings
+            : null,
         progressSkills,
         progressRatings: normalizeProgressRatings(
           matchedDoc?.progressRatings,
@@ -2904,10 +2941,9 @@ export default function ParentDashboard() {
       totalTopics > 0 ? Math.round((completedCount / totalTopics) * 100) : 0;
     const overallPct = clampPercent(overallPctRaw);
 
-    return [
-      {
-        courseId: displayCourseId,
-        courseLabel: phonicsLabelsByCourseId[displayCourseId] || displayCourseId,
+      return {
+        courseId,
+        courseLabel: phonicsLabelsByCourseId[courseId] || titleCaseFromId(courseId),
         rows,
         totalTopics,
         topicsUpdated,
@@ -2916,18 +2952,43 @@ export default function ParentDashboard() {
         lastUpdatedAtMs,
         idMatchCount,
         labelMatchCount,
-      },
-    ];
+      };
+    });
   }, [
     displayCourseId,
+    enrolledCourseIds,
+    insightsCourseOptions,
     curriculumTopicsByCourseId,
     phonicsProgressQuery.data,
     progressByTopicId,
     topicCourseById,
   ]);
 
+  useEffect(() => {
+    setSkillsCourseId("");
+  }, [selectedKidId]);
+
+  useEffect(() => {
+    const availableIds = phonicsProgressByCourse.map((course) => course.courseId);
+    if (availableIds.length === 0) {
+      if (skillsCourseId) setSkillsCourseId("");
+      return;
+    }
+    if (!skillsCourseId || !availableIds.includes(skillsCourseId)) {
+      setSkillsCourseId(availableIds[0]);
+    }
+  }, [phonicsProgressByCourse, selectedKidId, skillsCourseId]);
+
+  const selectedSkillsCourse = useMemo(
+    () =>
+      phonicsProgressByCourse.find((course) => course.courseId === skillsCourseId) ??
+      phonicsProgressByCourse[0] ??
+      null,
+    [phonicsProgressByCourse, skillsCourseId],
+  );
+
   const skillsInsightData = useMemo(() => {
-    const selectedCourse = phonicsProgressByCourse[0];
+    const selectedCourse = selectedSkillsCourse;
     if (!selectedCourse) return null;
     const rows = selectedCourse.rows ?? [];
 
@@ -3064,10 +3125,10 @@ export default function ParentDashboard() {
       recentUpdates: recent,
       totalSkills: hasExplicitSkills ? strengthSkillMap.size + practiceSkillMap.size : inferredSkills.length,
     };
-  }, [phonicsProgressByCourse]);
+  }, [selectedSkillsCourse]);
 
   const recentTeacherRatings = useMemo(() => {
-    const selectedCourse = phonicsProgressByCourse[0];
+    const selectedCourse = selectedSkillsCourse;
     if (!selectedCourse) return [] as any[];
 
     return (selectedCourse.rows ?? [])
@@ -3086,22 +3147,23 @@ export default function ParentDashboard() {
         );
         const summary = summarizeProgressRatings(progressRatings, progressSkills);
         const hasMeaningfulData =
-          summary.ratedSkillCount > 0 ||
-          Boolean(String(row.remark ?? "").trim()) ||
-          row.updatedAtMs;
+          row.ratingSource !== "none" ||
+          Boolean(String(row.remark ?? "").trim());
         return {
           ...row,
-          courseLabel: selectedCourse.courseLabel,
+          courseLabel: row.courseContextVerified ? selectedCourse.courseLabel : null,
           progressSkills,
           progressRatings,
           ...summary,
+          ratingSource: row.ratingSource,
+          explicitProgressRatings: row.explicitProgressRatings,
           hasMeaningfulData,
         };
       })
       .filter((row: any) => row.hasMeaningfulData && row.progressSkills.length > 0)
       .sort((a: any, b: any) => (b.updatedAtMs ?? 0) - (a.updatedAtMs ?? 0))
       .slice(0, 6);
-  }, [phonicsProgressByCourse]);
+  }, [selectedSkillsCourse]);
 
   const recentTeacherRatingsSummary = useMemo(() => {
     if (recentTeacherRatings.length === 0) return null;
@@ -3152,6 +3214,103 @@ export default function ParentDashboard() {
         .map(([label]) => label),
     };
   }, [recentTeacherRatings]);
+
+  const parentSkillsLessons = useMemo<ParentSkillsLesson[]>(
+    () =>
+      recentTeacherRatings.map((lesson: any) => {
+        const ratingDisplay = buildParentSkillRatingDisplay({
+          skills: lesson.progressSkills,
+          normalizedRatings: lesson.progressRatings,
+          explicitRatings: lesson.explicitProgressRatings,
+          origin:
+            lesson.ratingSource === "explicit" || lesson.ratingSource === "legacy"
+              ? lesson.ratingSource
+              : "none",
+        });
+        return {
+          id: String(lesson.id),
+          label: String(lesson.label || "Lesson"),
+          courseId: lesson.courseContextVerified ? selectedSkillsCourse?.courseId ?? null : null,
+          courseLabel: String(lesson.courseLabel || "").trim() || null,
+          stageLabel: String(lesson.stageLabel || "").trim() || null,
+          updatedAtMs:
+            typeof lesson.updatedAtMs === "number" && Number.isFinite(lesson.updatedAtMs)
+              ? lesson.updatedAtMs
+              : null,
+          ratedSkillCount: lesson.ratedSkillCount,
+          totalSkillCount: lesson.totalSkillCount,
+          averageRating: lesson.averageRating,
+          roundedAverageRating: lesson.roundedAverageRating,
+          ratingState: ratingDisplay.state,
+          ratingStateLabel: ratingDisplay.stateLabel,
+          ratingEntries: ratingDisplay.entries,
+          strengthChips: dedupeParentSkillLabels(
+            Array.isArray(lesson.strengthChips) ? lesson.strengthChips : [],
+          ),
+          practiceChips: dedupeParentSkillLabels(getLessonNeedsPracticeChips(lesson)),
+          remark: String(lesson.remark || ""),
+          source: lesson,
+        };
+      }),
+    [recentTeacherRatings, selectedSkillsCourse?.courseId],
+  );
+
+  const parentSkillsHighlights = useMemo(() => {
+    const strengths =
+      recentTeacherRatingsSummary?.strongestSkills?.length
+        ? recentTeacherRatingsSummary.strongestSkills
+        : skillsInsightData?.strengths?.map((skill: any) => formatSkillChipLabel(skill.tag)) ?? [];
+    const practiceAreas =
+      recentTeacherRatingsSummary?.needsPracticeSkills?.length
+        ? recentTeacherRatingsSummary.needsPracticeSkills
+        : skillsInsightData?.needsPractice?.map((skill: any) => formatSkillChipLabel(skill.tag)) ?? [];
+    return {
+      strengths: dedupeParentSkillLabels(strengths),
+      practiceAreas: dedupeParentSkillLabels(practiceAreas),
+    };
+  }, [recentTeacherRatingsSummary, skillsInsightData]);
+
+  const parentSkillsStages = useMemo(
+    () =>
+      (skillsInsightData?.stageGroups ?? []).map((stage: any) => {
+        const order =
+          stage.order > 0 ? stage.order : parseStageOrderFromLabel(stage.label) ?? 0;
+        return {
+          id: `${order}__${stage.label}`,
+          label: stage.label,
+          order,
+          displayLabel: stripStagePrefix(stage.label, order),
+          skills: stage.topSkills.map((skill: any) => ({
+            tag: skill.tag,
+            label: formatParentSkillTag(skill.tag),
+            count: skill.count,
+          })),
+        };
+      }),
+    [skillsInsightData],
+  );
+
+  const parentSkillUpdates = useMemo(
+    () =>
+      (skillsInsightData?.recentUpdates ?? []).map((update: any) => {
+        const order =
+          update.stageOrder > 0
+            ? update.stageOrder
+            : parseStageOrderFromLabel(update.stageLabel) ?? 0;
+        return {
+          id: parentSkillUpdateId({
+            tag: update.tag,
+            stageLabel: update.stageLabel,
+            stageOrder: order,
+            updatedAtMs: update.updatedAtMs ?? null,
+          }),
+          label: formatParentSkillTag(update.tag),
+          stageLabel: stripStagePrefix(update.stageLabel, order),
+          updatedAtMs: update.updatedAtMs ?? null,
+        };
+      }),
+    [skillsInsightData],
+  );
 
   const normalizedInsightsCourseId = useMemo(() => {
     return normalizeCurriculumCourseId(insightsCourseId) || null;
@@ -5223,430 +5382,38 @@ export default function ParentDashboard() {
         {/* SKILLS TAB - teacher tagged skills */}
         {activeTab === "skills" && (
           <div className="space-y-6">
-            {(() => {
-              const formatSkillTag = (tag: string): string => {
-                if (!tag) return "—";
-                if (tag.startsWith("letter:")) {
-                  const letter = tag.split(":")[1]?.toUpperCase() || "";
-                  return `Letter ${letter}`;
-                }
-                if (tag.startsWith("sound:")) {
-                  const sound = tag.substring(6);
-                  return `Sound ${sound}`;
-                }
-                if (tag.startsWith("subtopic:")) {
-                  const sub = tag.substring(9).replace(/_/g, " ");
-                  return sub
-                    .split(" ")
-                    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                    .join(" ");
-                }
-                return tag.charAt(0).toUpperCase() + tag.slice(1);
-              };
-
-              const skillsData = skillsInsightData;
-              const hasSkillData = Boolean(
-                (skillsData && skillsData.totalSkills > 0) || recentTeacherRatings.length > 0
-              );
-
-              if (!hasSkillData) {
-                return (
-                  <Card className="p-8 bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-slate-900 dark:to-indigo-950 border border-indigo-100 dark:border-indigo-900/30">
-                    <div className="flex flex-col items-center text-center space-y-4 max-w-md mx-auto">
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/40 flex items-center justify-center">
-                        <span className="text-3xl">🎯</span>
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
-                          Teacher ratings are getting ready
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Once teachers rate a few lessons, this page will show
-                          lesson-based stars, teacher notes, and practice signals.
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-                );
+            <ParentSkillsView
+              isNativeIOSApp={isNativeIOSApp}
+              childName={selectedKid?.fullName || null}
+              loading={phonicsLoading}
+              error={phonicsError ? phonicsErrorMessage : null}
+              courses={phonicsProgressByCourse.map((course) => ({
+                id: course.courseId,
+                label: course.courseLabel,
+              }))}
+              selectedCourseId={selectedSkillsCourse?.courseId || ""}
+              lessons={parentSkillsLessons}
+              recentAverage={
+                recentTeacherRatingsSummary && recentTeacherRatingsSummary.ratedLessonCount > 0
+                  ? recentTeacherRatingsSummary.averageRecentRating
+                  : null
               }
-
-	              return (
-	                <div className="space-y-6">
-	                  <Card className="p-6 space-y-5">
-	                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-	                      <div>
-	                        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-	                          Teacher Progress Snapshot
-	                        </h2>
-	                        <p className="text-sm text-gray-600 dark:text-gray-400">
-	                          {selectedKid?.fullName
-	                            ? `Viewing: ${selectedKid.fullName}`
-	                            : "Select a child"}{" "}
-	                          {skillsData?.courseLabel ? `· ${skillsData.courseLabel}` : ""}
-	                        </p>
-	                      </div>
-	                      <div className="text-xs uppercase tracking-wide text-gray-500">
-	                        Lesson-based ratings
-	                      </div>
-	                    </div>
-
-	                    {recentTeacherRatingsSummary?.latestLesson ? (
-	                      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
-	                        <div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-indigo-50 p-4">
-	                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-	                            <div>
-	                              <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
-	                                Latest rated lesson
-	                              </div>
-	                              <div className="mt-1 text-lg font-semibold text-slate-900">
-	                                {recentTeacherRatingsSummary.latestLesson.label}
-	                              </div>
-	                              <div className="mt-1 text-xs text-slate-500">
-	                                {recentTeacherRatingsSummary.latestLesson.stageLabel || recentTeacherRatingsSummary.latestLesson.courseLabel}
-	                                {recentTeacherRatingsSummary.latestLesson.updatedAtMs
-	                                  ? ` · ${formatTimestamp(recentTeacherRatingsSummary.latestLesson.updatedAtMs)}`
-	                                  : ""}
-	                              </div>
-	                            </div>
-	                            <div className="flex flex-wrap items-center gap-2">
-	                              <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 shadow-sm">
-	                                {recentTeacherRatingsSummary.latestLesson.ratedSkillCount}/
-	                                {recentTeacherRatingsSummary.latestLesson.totalSkillCount} skills rated
-	                              </span>
-	                              <span className="rounded-full bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm">
-	                                {recentTeacherRatingsSummary.latestLesson.roundedAverageRating}/4 ·{" "}
-	                                {skillRatingLegendLabel(
-	                                  recentTeacherRatingsSummary.latestLesson.roundedAverageRating,
-	                                )}
-	                              </span>
-	                            </div>
-	                          </div>
-
-	                          <div className="mt-4">
-	                            <ChildSkillRatingCard
-	                              title={null}
-	                              skills={recentTeacherRatingsSummary.latestLesson.progressSkills}
-	                              values={recentTeacherRatingsSummary.latestLesson.progressRatings}
-	                              readOnly
-	                              compact
-	                              showLegend={false}
-	                              className="border-slate-200 bg-white/90"
-	                            />
-	                          </div>
-
-                            {((Array.isArray(recentTeacherRatingsSummary.latestLesson.strengthChips) &&
-                              recentTeacherRatingsSummary.latestLesson.strengthChips.length > 0) ||
-                              getLessonNeedsPracticeChips(recentTeacherRatingsSummary.latestLesson).length > 0) && (
-                              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                                {Array.isArray(recentTeacherRatingsSummary.latestLesson.strengthChips) &&
-                                recentTeacherRatingsSummary.latestLesson.strengthChips.length > 0 ? (
-                                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 px-3 py-2">
-                                    <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                                      Strengths
-                                    </div>
-                                    <div className="mt-2 flex flex-wrap gap-2">
-                                      {recentTeacherRatingsSummary.latestLesson.strengthChips.map((chip: string) => (
-                                        <span
-                                          key={`latest-strength-${chip}`}
-                                          className="rounded-full border border-emerald-200 bg-white px-2 py-0.5 text-xs font-semibold text-emerald-800"
-                                        >
-                                          {chip}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                ) : null}
-                                {getLessonNeedsPracticeChips(recentTeacherRatingsSummary.latestLesson).length > 0 ? (
-                                  <div className="rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-2">
-                                    <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-700">
-                                      Needs practice
-                                    </div>
-                                    <div className="mt-2 flex flex-wrap gap-2">
-                                      {getLessonNeedsPracticeChips(recentTeacherRatingsSummary.latestLesson).map((chip: string) => (
-                                        <span
-                                          key={`latest-practice-${chip}`}
-                                          className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-xs font-semibold text-amber-800"
-                                        >
-                                          {chip}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                ) : null}
-                              </div>
-                            )}
-
-	                          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-	                            <div className="space-y-1">
-	                              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-	                                Teacher note
-	                              </div>
-	                              <div className="text-sm text-slate-700">
-	                                {recentTeacherRatingsSummary.latestLesson.remark || "No note added for this lesson yet."}
-	                              </div>
-	                            </div>
-	                            <Button
-	                              variant="outline"
-	                              size="sm"
-	                              onClick={() => {
-	                                setSelectedCurriculumTopic(recentTeacherRatingsSummary.latestLesson);
-	                                setCurriculumTopicModalOpen(true);
-	                              }}
-	                              className="h-8 rounded-full border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-600"
-	                            >
-	                              Open lesson details
-	                            </Button>
-	                          </div>
-	                        </div>
-
-	                        <div className="space-y-4">
-	                          <div className="rounded-2xl border border-slate-200 bg-white p-4">
-	                            <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
-	                              Recent lesson performance
-	                            </div>
-	                            <div className="mt-2 text-2xl font-semibold text-slate-900">
-	                              {recentTeacherRatingsSummary.averageRecentRating.toFixed(1)}/4
-	                            </div>
-	                            <div className="mt-1 text-sm text-slate-600">
-	                              {recentTeacherRatingsSummary.averageRecentLabel} across recent teacher-rated lessons
-	                            </div>
-	                          </div>
-
-	                          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4">
-	                            <div className="text-[10px] uppercase tracking-[0.18em] text-emerald-700 font-semibold">
-	                              Strongest skills
-	                            </div>
-	                            <div className="mt-3 flex flex-wrap gap-2">
-	                              {recentTeacherRatingsSummary.strongestSkills.map((skill) => (
-	                                <span
-	                                  key={`strength-${skill}`}
-	                                  className="rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-xs font-semibold text-emerald-800"
-	                                >
-	                                  {skill}
-	                                </span>
-	                              ))}
-	                              {recentTeacherRatingsSummary.strongestSkills.length === 0 && (
-	                                <span className="text-xs text-emerald-700">
-	                                  Stronger areas will appear as more lessons are rated.
-	                                </span>
-	                              )}
-	                            </div>
-	                          </div>
-
-	                          <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
-	                            <div className="text-[10px] uppercase tracking-[0.18em] text-amber-700 font-semibold">
-	                              Needs practice
-	                            </div>
-	                            <div className="mt-3 flex flex-wrap gap-2">
-	                              {recentTeacherRatingsSummary.needsPracticeSkills.map((skill) => (
-	                                <span
-	                                  key={`practice-${skill}`}
-	                                  className="rounded-full border border-amber-200 bg-white px-2.5 py-1 text-xs font-semibold text-amber-800"
-	                                >
-	                                  {skill}
-	                                </span>
-	                              ))}
-	                              {recentTeacherRatingsSummary.needsPracticeSkills.length === 0 && (
-	                                <span className="text-xs text-amber-700">
-	                                  Practice areas will show once teachers rate more lessons.
-	                                </span>
-	                              )}
-	                            </div>
-	                          </div>
-	                        </div>
-	                        </div>
-	                    ) : (
-	                      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
-	                        Teacher lesson ratings will appear here once a lesson is reviewed with stars.
-	                      </div>
-	                    )}
-	                  </Card>
-
-	                  <Card className="p-6">
-	                    <div className="flex items-center justify-between mb-4">
-	                      <div>
-	                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-	                          Recent Teacher Ratings
-	                        </h3>
-	                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-	                          Lesson-by-lesson star ratings shared by your child&apos;s teacher.
-	                        </p>
-	                      </div>
-	                      <span className="text-xs text-gray-500">
-	                        {recentTeacherRatings.length} recent lessons
-	                      </span>
-	                    </div>
-	                    <div className="space-y-4">
-	                      {recentTeacherRatings.length > 0 ? (
-	                        recentTeacherRatings.map((lesson: any) => (
-	                          <div
-	                            key={`lesson-rating-${lesson.id}`}
-	                            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-	                          >
-	                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-	                              <div>
-	                                <div className="text-sm font-semibold text-slate-900">{lesson.label}</div>
-	                                <div className="mt-1 text-xs text-slate-500">
-	                                  {lesson.stageLabel || lesson.courseLabel}
-	                                  {lesson.updatedAtMs ? ` · ${formatTimestamp(lesson.updatedAtMs)}` : ""}
-	                                </div>
-	                              </div>
-	                              <div className="flex flex-wrap items-center gap-2 text-xs">
-	                                <span className="rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-700">
-	                                  {lesson.ratedSkillCount}/{lesson.totalSkillCount} skills
-	                                </span>
-	                                <span className="rounded-full bg-indigo-600 px-2.5 py-1 font-semibold text-white">
-	                                  {lesson.roundedAverageRating}/4 · {skillRatingLegendLabel(lesson.roundedAverageRating)}
-	                                </span>
-	                              </div>
-	                            </div>
-	                            <div className="mt-3">
-	                              <ChildSkillRatingCard
-	                                title={null}
-	                                skills={lesson.progressSkills}
-	                                values={lesson.progressRatings}
-	                                readOnly
-	                                compact
-	                                showLegend={false}
-	                                className="border-slate-200 bg-slate-50/70"
-	                              />
-	                            </div>
-                              {((Array.isArray(lesson.strengthChips) && lesson.strengthChips.length > 0) ||
-                                getLessonNeedsPracticeChips(lesson).length > 0) && (
-                                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                                  {Array.isArray(lesson.strengthChips) && lesson.strengthChips.length > 0 ? (
-                                    <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 px-3 py-2">
-                                      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                                        Strengths
-                                      </div>
-                                      <div className="mt-2 flex flex-wrap gap-2">
-                                        {lesson.strengthChips.map((chip: string) => (
-                                          <span
-                                            key={`${lesson.id}-strength-${chip}`}
-                                            className="rounded-full border border-emerald-200 bg-white px-2 py-0.5 text-xs font-semibold text-emerald-800"
-                                          >
-                                            {chip}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  ) : null}
-                                  {getLessonNeedsPracticeChips(lesson).length > 0 ? (
-                                    <div className="rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-2">
-                                      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-700">
-                                        Needs practice
-                                      </div>
-                                      <div className="mt-2 flex flex-wrap gap-2">
-                                        {getLessonNeedsPracticeChips(lesson).map((chip: string) => (
-                                          <span
-                                            key={`${lesson.id}-practice-${chip}`}
-                                            className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-xs font-semibold text-amber-800"
-                                          >
-                                            {chip}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  ) : null}
-                                </div>
-                              )}
-	                            {lesson.remark ? (
-	                              <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-	                                <span className="font-semibold text-slate-800">Teacher note:</span> {lesson.remark}
-	                              </div>
-	                            ) : null}
-	                          </div>
-	                        ))
-	                      ) : (
-	                        <div className="text-sm text-gray-500">
-	                          Recent lesson ratings will appear here once teachers rate lessons.
-	                        </div>
-	                      )}
-	                    </div>
-	                  </Card>
-
-	                  <Card className="p-6">
-	                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-                        Skills by Stage
-                      </h3>
-                      <span className="text-xs text-gray-500">
-                        {skillsData?.stageGroups.length || 0} stages
-                      </span>
-                    </div>
-                    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                      {skillsData?.stageGroups.map((stage, idx) => {
-                        const displayOrder = stage.order > 0 ? stage.order : idx + 1;
-                        return (
-                          <div
-                            key={stage.label}
-                            className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
-                          >
-                            <div className="text-xs uppercase tracking-wide text-gray-500">
-                              Stage {displayOrder}
-                            </div>
-                            <div className="text-sm font-semibold text-gray-900 mt-1">
-                              {stripStagePrefix(stage.label, displayOrder)}
-                            </div>
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              {stage.topSkills.map((skill) => (
-                                <span
-                                  key={`${stage.label}-${skill.tag}`}
-                                  className="px-2 py-1 rounded-full bg-slate-50 text-xs text-slate-700 border border-slate-200"
-                                >
-                                  {formatSkillTag(skill.tag)}
-                                </span>
-                              ))}
-                              {stage.topSkills.length === 0 && (
-                                <span className="text-xs text-gray-500">
-                                  No skills tagged yet.
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </Card>
-
-                  <Card className="p-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-                        Recent Skill Updates
-                      </h3>
-                    </div>
-                    <div className="space-y-2">
-                      {skillsData?.recentUpdates.length ? (
-                        skillsData.recentUpdates.map((update, idx) => {
-                          const displayOrder =
-                            update.stageOrder > 0
-                              ? update.stageOrder
-                              : parseStageOrderFromLabel(update.stageLabel) ?? 0;
-                          return (
-                          <div
-                            key={`${update.tag}-${idx}`}
-                            className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700"
-                          >
-                            <span>
-                              {formatSkillTag(update.tag)} ·{" "}
-                              {stripStagePrefix(update.stageLabel, displayOrder)}
-                            </span>
-                            <span className="text-gray-500">
-                              {update.updatedAtMs ? formatTimestamp(update.updatedAtMs) : "—"}
-                            </span>
-                          </div>
-                        );
-                        })
-                      ) : (
-                        <div className="text-xs text-gray-500">
-                          Recent updates will appear here once teachers tag skills.
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                </div>
-              );
-            })()}
+              recentAverageLabel={
+                recentTeacherRatingsSummary && recentTeacherRatingsSummary.ratedLessonCount > 0
+                  ? recentTeacherRatingsSummary.averageRecentLabel
+                  : null
+              }
+              ratedLessonCount={recentTeacherRatingsSummary?.ratedLessonCount ?? 0}
+              strengths={parentSkillsHighlights.strengths}
+              practiceAreas={parentSkillsHighlights.practiceAreas}
+              stages={parentSkillsStages}
+              recentUpdates={parentSkillUpdates}
+              onCourseChange={setSkillsCourseId}
+              onOpenLesson={(lesson) => {
+                setSelectedCurriculumTopic(lesson.source);
+                setCurriculumTopicModalOpen(true);
+              }}
+            />
           </div>
         )}
 
