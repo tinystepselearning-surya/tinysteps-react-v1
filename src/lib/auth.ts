@@ -491,6 +491,12 @@ export async function handleLoginWithGoogle(expectedRole?: string) {
 export async function performAppLogout(reason: AppLogoutReason): Promise<void> {
   console.info('[auth-diagnostics] logout-called', { reason });
   try {
+    if (isNativeCapacitorRuntime()) {
+      await import('./pushNotifications')
+        .then(({ unregisterNativePushNotifications }) =>
+          unregisterNativePushNotifications())
+        .catch(() => undefined);
+    }
     await signOut(auth);
   } finally {
     useAuthStore.getState().resolveAuth(

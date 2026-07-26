@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#F97316</color>
+    <color name="colorPrimaryDark">#C2410C</color>
+    <color name="colorAccent">#4F46E5</color>
+    <color name="tiny_steps_orange">#F97316</color>
+    <color name="tiny_steps_splash_background">#FFF7ED</color>
+    <color name="tiny_steps_navigation_bar">#FFFFFF</color>
+</resources>

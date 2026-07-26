@@ -8,7 +8,18 @@ const config: CapacitorConfig = {
   ios: {
     scrollEnabled: true,
   },
+  android: {
+    allowMixedContent: false,
+    backgroundColor: '#fff7ed',
+    webContentsDebuggingEnabled: false,
+    loggingBehavior: 'debug',
+  },
   plugins: {
+    SystemBars: {
+      insetsHandling: 'css',
+      style: 'DEFAULT',
+      hidden: false,
+    },
     PushNotifications: {
       presentationOptions: ['badge', 'sound'],
     },

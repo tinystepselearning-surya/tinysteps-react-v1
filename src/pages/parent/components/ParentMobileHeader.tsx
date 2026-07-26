@@ -35,7 +35,7 @@ export default function ParentMobileHeader({
           type="button"
           variant="ghost"
           size="icon"
-          className="h-11 w-11 shrink-0 rounded-full text-slate-700 active:scale-95 active:bg-slate-100 hover:bg-slate-100 hover:text-slate-950"
+          className="ts-native-press h-12 w-12 shrink-0 rounded-full text-slate-700 active:scale-95 active:bg-slate-100 hover:bg-slate-100 hover:text-slate-950"
           onClick={onMenu}
           aria-label="Open parent menu"
         >
@@ -61,7 +61,7 @@ export default function ParentMobileHeader({
           type="button"
           variant="ghost"
           size="icon"
-          className="h-11 w-11 shrink-0 rounded-full text-slate-700 active:scale-95 active:bg-slate-100 hover:bg-slate-100 hover:text-slate-950"
+          className="ts-native-press h-12 w-12 shrink-0 rounded-full text-slate-700 active:scale-95 active:bg-slate-100 hover:bg-slate-100 hover:text-slate-950"
           onClick={onProfile}
           aria-label="Open profile and payments"
         >

@@ -30,7 +30,7 @@ export default function MobileTabBar({
   return (
     <nav
       className={cn(
-        'fixed inset-x-0 bottom-0 z-50 w-full min-w-0 max-w-[100vw] translate-y-0 transform-gpu overflow-hidden border-t border-slate-200/80 bg-white/95 px-2 pt-1.5 shadow-[0_-6px_20px_rgba(15,23,42,0.07)] backdrop-blur-xl [backface-visibility:hidden] [contain:layout_paint] [padding-bottom:env(safe-area-inset-bottom,0px)] lg:hidden',
+        'fixed inset-x-0 bottom-0 z-50 w-full min-w-0 max-w-[100vw] translate-y-0 transform-gpu overflow-hidden border-t border-slate-200/80 bg-white/95 px-2 pt-1.5 shadow-[0_-6px_20px_rgba(15,23,42,0.07)] backdrop-blur-xl [backface-visibility:hidden] [contain:layout_paint] [padding-bottom:var(--ts-safe-bottom)] lg:hidden',
         className,
       )}
       aria-label="Mobile navigation"
@@ -73,7 +73,7 @@ export default function MobileTabBar({
                   data-active={isActive ? 'true' : 'false'}
                   data-selected-style={isActive ? 'icon-capsule' : undefined}
                   className={cn(
-                    'group relative flex min-h-11 flex-col items-center justify-center rounded-xl px-1 text-[11px] font-medium transition duration-150 ease-out active:scale-[0.97]',
+                    'ts-native-press group relative flex min-h-12 flex-col items-center justify-center rounded-xl px-1 text-xs font-medium transition duration-150 ease-out active:scale-[0.97]',
                     useFixedGrid ? 'min-w-0 w-full' : 'min-w-[74px] snap-center',
                     isActive
                       ? 'font-semibold text-slate-950'
@@ -90,7 +90,7 @@ export default function MobileTabBar({
                   >
                     <Icon className="h-[18px] w-[18px]" />
                   </span>
-                  <span className="max-w-full truncate px-0.5 leading-4">{item.label}</span>
+                  <span className="max-w-full break-words px-0.5 text-center leading-[1.05]">{item.label}</span>
                   {hasBadge && (
                     <span className="absolute right-[calc(50%-25px)] top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white ring-2 ring-white">
                       {badgeLabel}

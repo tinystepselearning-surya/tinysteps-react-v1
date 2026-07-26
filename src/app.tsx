@@ -1,4 +1,5 @@
 import React, { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { App as CapacitorApp } from '@capacitor/app';
 import { RouterProvider } from 'react-router-dom';
 import router from './app/routes';
 import { Toaster } from './components/ui/toaster';
@@ -6,6 +7,7 @@ import useRevealAnimations from './hooks/useRevealAnimations';
 import useAuth from './hooks/useAuth';
 import AuthBootstrap from './components/common/AuthBootstrap';
 import ForegroundNotificationHost from './components/notifications/ForegroundNotificationHost';
+import AndroidNotificationPermissionPrompt from './components/notifications/AndroidNotificationPermissionPrompt';
 import {
   isNativeCapacitorRuntime as isNativeAuthDiagnosticRuntime,
   runNativeAuthStartupDiagnostics,
@@ -20,25 +22,19 @@ import {
   needsUnreadMessageReconciliation,
   reconcileUnreadMessageBadge,
 } from './lib/notificationBadgeSync';
+import {
+  clearPendingNativeDeepLink,
+  getPendingNativeDeepLink,
+  parseNativeDeepLink,
+  queuePendingNativeDeepLink,
+} from './lib/nativeDeepLinks';
+import {
+  getTinyStepsNativePlatform,
+  isTinyStepsNativeRuntime,
+} from './lib/nativePlatform';
 
 const NativeLayoutDebug = lazy(() => import('./components/debug/NativeLayoutDebug'));
 const NATIVE_DEBUG_STORAGE_KEY = 'ts_native_layout_debug';
-
-const isNativeCapacitorRuntime = () => {
-  if (typeof window === 'undefined') return false;
-
-  const cap = (window as any).Capacitor;
-  if (cap && typeof cap.isNativePlatform === 'function') {
-    try {
-      return Boolean(cap.isNativePlatform());
-    } catch {
-      // Ignore runtime bridge errors and fall back to protocol checks.
-    }
-  }
-
-  const protocol = window.location.protocol;
-  return protocol === 'capacitor:' || protocol === 'ionic:';
-};
 
 function App() {
   useRevealAnimations();
@@ -47,6 +43,7 @@ function App() {
   const [pushEventVersion, setPushEventVersion] = useState(0);
   const navigatingPushKeyRef = useRef<string | null>(null);
   const handledPushKeyRef = useRef<string | null>(null);
+  const handledNativeDeepLinkRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!isNativeAuthDiagnosticRuntime()) return;
@@ -110,8 +107,11 @@ function App() {
     if (typeof document === 'undefined') return;
 
     const root = document.documentElement;
-    const isNativeRuntime = isNativeCapacitorRuntime();
+    const nativePlatform = getTinyStepsNativePlatform();
+    const isNativeRuntime = nativePlatform !== null;
     root.classList.toggle('ts-capacitor-native', isNativeRuntime);
+    if (nativePlatform) root.dataset.nativePlatform = nativePlatform;
+    else delete root.dataset.nativePlatform;
 
     // Register service worker only in production to avoid caching issues during dev
     if (
@@ -126,11 +126,12 @@ function App() {
 
     return () => {
       root.classList.remove('ts-capacitor-native');
+      delete root.dataset.nativePlatform;
     };
   }, []);
 
   useEffect(() => {
-    if (!isNativeCapacitorRuntime()) {
+    if (!isTinyStepsNativeRuntime()) {
       setShowNativeDebug(false);
       return;
     }
@@ -156,7 +157,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!isNativeCapacitorRuntime()) return;
+    if (!isTinyStepsNativeRuntime()) return;
     if (authStatus !== 'authenticated') return;
     const uid = user?.uid?.trim();
     if (!uid) return;
@@ -200,7 +201,7 @@ function App() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (!isNativeCapacitorRuntime()) return;
+    if (!isTinyStepsNativeRuntime()) return;
 
     const onOpenFromPush = (event: Event) => {
       if (!(event instanceof Event)) return;
@@ -213,11 +214,64 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isTinyStepsNativeRuntime()) return;
+    let mounted = true;
+    let appUrlHandle: { remove: () => Promise<void> } | null = null;
+
+    const applyDeepLink = async (rawUrl: unknown) => {
+      const rawKey = typeof rawUrl === 'string' ? rawUrl.trim() : '';
+      if (!rawKey || handledNativeDeepLinkRef.current === rawKey) return;
+      const route = parseNativeDeepLink(rawUrl);
+      if (!route) return;
+      handledNativeDeepLinkRef.current = rawKey;
+      queuePendingNativeDeepLink(route);
+      if (authStatus !== 'authenticated') {
+        if (router.state.location.pathname !== '/login') {
+          await router.navigate('/login', { replace: true, state: { from: route } });
+        }
+        return;
+      }
+      await router.navigate(route, { replace: true });
+      clearPendingNativeDeepLink();
+    };
+
+    void CapacitorApp.addListener('appUrlOpen', ({ url }) => {
+      void applyDeepLink(url);
+    }).then((handle) => {
+      if (!mounted) {
+        void handle.remove();
+        return;
+      }
+      appUrlHandle = handle;
+    }).catch(() => {
+      // Ignore an unavailable native bridge in browser tests.
+    });
+    void CapacitorApp.getLaunchUrl()
+      .then((launch) => {
+        if (launch?.url) void applyDeepLink(launch.url);
+      })
+      .catch(() => undefined);
+
+    const pendingRoute = getPendingNativeDeepLink();
+    if (pendingRoute && authStatus === 'authenticated') {
+      void router.navigate(pendingRoute, { replace: true }).then(() => {
+        clearPendingNativeDeepLink();
+      });
+    }
+
+    return () => {
+      mounted = false;
+      if (appUrlHandle) void appUrlHandle.remove();
+    };
+  }, [authStatus]);
+
   return (
     <>
       <AuthBootstrap />
       <RouterProvider router={router} />
       <ForegroundNotificationHost />
+      <AndroidNotificationPermissionPrompt userId={user?.uid} />
       <Toaster />
       {showNativeDebug ? (
         <Suspense fallback={null}>

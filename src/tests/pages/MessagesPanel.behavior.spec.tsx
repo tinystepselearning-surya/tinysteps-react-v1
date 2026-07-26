@@ -1,9 +1,10 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MessageThread } from '../../hooks/useMessageThreads';
 import type { ThreadMessage } from '../../hooks/useThreadMessages';
 import MessagesPanel from '../../pages/messages/MessagesPanel';
 import useAuthStore from '../../store/useAuthStore';
+import { NATIVE_ANDROID_BACK_EVENT } from '../../lib/nativePlatform';
 
 const {
   callFunctionMock,
@@ -169,6 +170,18 @@ describe('MessagesPanel messaging behavior', () => {
     expect(screen.getByRole('searchbox')).toBeVisible();
     expect(screen.queryByLabelText('Aarav Kumar messages')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Aarav Kumar conversation/ })).toHaveFocus();
+  });
+
+  it('returns a focused Android conversation to the inbox on native Back', () => {
+    renderOpenPanel();
+    expect(screen.getByLabelText('Aarav Kumar messages')).toBeVisible();
+
+    act(() => {
+      window.dispatchEvent(new Event(NATIVE_ANDROID_BACK_EVENT));
+    });
+
+    expect(screen.getByRole('searchbox')).toBeVisible();
+    expect(screen.queryByLabelText('Aarav Kumar messages')).not.toBeInTheDocument();
   });
 
   it('renders one native viewport owner with header, notice, list, and composer in order', () => {

@@ -44,16 +44,16 @@ export function getParentTabTitle(tab: ParentTabKey): string {
 }
 
 export function isNativeParentChatFocus(
-  isNativeIOSApp: boolean,
+  isNativeParentApp: boolean,
   activeTab: ParentTabKey,
   activeThreadId: string | null,
 ): boolean {
-  return isNativeIOSApp && activeTab === "messages" && Boolean(activeThreadId);
+  return isNativeParentApp && activeTab === "messages" && Boolean(activeThreadId);
 }
 
 export function shouldShowParentMessagesHeading(
-  isNativeIOSApp: boolean,
+  isNativeParentApp: boolean,
   isNativeMessagesThreadFocus: boolean,
 ): boolean {
-  return !isNativeIOSApp && !isNativeMessagesThreadFocus;
+  return !isNativeParentApp && !isNativeMessagesThreadFocus;
 }

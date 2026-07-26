@@ -81,8 +81,8 @@ html.ts-capacitor-native #root {
 }
 
 html.ts-capacitor-native {
-  --ts-safe-top: env(safe-area-inset-top, 0px);
-  --ts-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --ts-safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --ts-safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
   --ts-safe-area-top: var(--ts-safe-top);
   --ts-safe-area-bottom: var(--ts-safe-bottom);
   height: 100%;
@@ -148,6 +148,17 @@ html.ts-capacitor-native .ts-native-safe-bottom {
 
 html.ts-capacitor-native .ts-native-tabbar-reserve {
   padding-bottom: var(--ts-mobile-tabbar-reserve);
+}
+
+html[data-native-platform='android'] .ts-native-press {
+  position: relative;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html[data-native-platform='android'] .ts-native-press:active {
+  background-color: rgba(79, 70, 229, 0.1);
+  transition-duration: 0ms;
 }
 
 /* Native sticky headers own the safe inset exactly once. */
@@ -302,6 +313,17 @@ html.ts-capacitor-native .ts-chat-focus-composer {
 
 html.ts-capacitor-native[data-keyboard-open='true'] .ts-chat-focus-composer {
   padding-bottom: 0.5rem;
+}
+
+/* Capacitor 8 applies Android IME insets to the WebView. Do not add the
+   iOS visual-viewport keyboard reserve a second time. */
+html[data-native-platform='android'] .ts-chat-focus-screen {
+  height: 100%;
+  min-height: 100%;
+}
+
+html[data-native-platform='android'] .ts-chat-focus-viewport {
+  padding-bottom: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

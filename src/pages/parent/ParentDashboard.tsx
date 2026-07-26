@@ -1,5 +1,6 @@
 // src/pages/parent/ParentDashboard.tsx
 import React, { useCallback, useEffect, useMemo, useState, type ComponentType } from "react";
+import { App as CapacitorApp } from "@capacitor/app";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -92,6 +93,12 @@ import {
   type ParentWorksheetItem,
 } from "../../lib/parentWorksheets";
 import { hapticLight, hapticSelection } from "../../lib/nativeHaptics";
+import {
+  getTinyStepsNativePlatform,
+  isEditableElement,
+  NATIVE_ANDROID_BACK_EVENT,
+} from "../../lib/nativePlatform";
+import { openExternalHttpsUrl } from "../../lib/openExternalUrl";
 import {
   formatIndiaTimeRange,
   formatSessionDate as formatSessionViewerDate,
@@ -1322,28 +1329,15 @@ function normalizeStatus(raw?: string): string {
 const IOS_BILLING_ASSISTANCE_TEXT =
   "Billing information is managed by Tiny Steps Learning. Please contact Tiny Steps support for billing assistance.";
 
-function isNativeIOSCapacitorRuntime(): boolean {
-  if (typeof window === "undefined") return false;
-  const cap = (window as any).Capacitor;
-  if (!cap || typeof cap.isNativePlatform !== "function") return false;
-
-  try {
-    if (!cap.isNativePlatform()) return false;
-    if (typeof cap.getPlatform === "function") {
-      return String(cap.getPlatform()).toLowerCase() === "ios";
-    }
-  } catch {
-    return false;
-  }
-  return false;
-}
-
 export default function ParentDashboard() {
   const { user, isLoading } = useAuthStore();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedKidId = searchParams.get("kidId")?.trim() || "";
-  const isNativeIOSApp = useMemo(() => isNativeIOSCapacitorRuntime(), []);
+  const nativePlatform = useMemo(() => getTinyStepsNativePlatform(), []);
+  const isNativeParentApp = nativePlatform !== null;
+  const isNativeIOSApp = nativePlatform === "ios";
+  const isNativeAndroidApp = nativePlatform === "android";
 
   const activeTab = safeTab(searchParams.get("tab"));
   const shouldLoadCurriculumData =
@@ -1381,13 +1375,13 @@ export default function ParentDashboard() {
     [messageUnreadCount]
   );
 
-  const setTab = (tab: TabKey) => {
+  const setTab = useCallback((tab: TabKey) => {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
       next.set("tab", tab);
       return next;
     });
-  };
+  }, [setSearchParams]);
 
   const openMobileMenu = () => {
     hapticLight();
@@ -1461,7 +1455,7 @@ export default function ParentDashboard() {
   }, [activeTab]);
 
   const isNativeMessagesThreadFocus = isNativeParentChatFocus(
-    isNativeIOSApp,
+    isNativeParentApp,
     activeTab,
     messagesActiveThreadId,
   );
@@ -2697,22 +2691,13 @@ export default function ParentDashboard() {
   const openMeetingLink = (url: string) => {
     const trimmed = String(url || "").trim();
     if (!trimmed) return;
-    const isTeamsUrl = /^https?:\/\/([a-z0-9-]+\.)?teams\.microsoft\.com/i.test(trimmed);
-    if (isTeamsUrl) {
-      const teamsDeepLink = `msteams:${trimmed.replace(/^https?:/, "")}`;
-      window.location.assign(teamsDeepLink);
-      window.setTimeout(() => {
-        window.open(trimmed, "_blank", "noopener,noreferrer");
-      }, 900);
-      return;
-    }
-    window.open(trimmed, "_blank", "noopener,noreferrer");
+    void openExternalHttpsUrl(trimmed);
   };
 
   const openWorksheetLink = (url?: string | null) => {
     const safeUrl = getSafeWorksheetUrl(url);
     if (!safeUrl) return;
-    window.open(safeUrl, "_blank", "noopener,noreferrer");
+    void openExternalHttpsUrl(safeUrl);
   };
 
   const openJoinClass = async (session: KidSession) => {
@@ -4365,7 +4350,7 @@ export default function ParentDashboard() {
     hapticSelection();
     if (resource === "recordings") {
       if (parentRecordingFolderUrl) {
-        window.open(parentRecordingFolderUrl, "_blank", "noopener,noreferrer");
+        void openExternalHttpsUrl(parentRecordingFolderUrl);
       }
       return;
     }
@@ -4379,6 +4364,69 @@ export default function ParentDashboard() {
 
   // ---- Payments tab state ----
   const [showQrModal, setShowQrModal] = useState(false);
+
+  useEffect(() => {
+    if (!isNativeAndroidApp) return;
+    let mounted = true;
+    let backHandle: { remove: () => Promise<void> } | null = null;
+
+    void CapacitorApp.addListener("backButton", () => {
+      const activeElement =
+        typeof document !== "undefined" ? document.activeElement : null;
+      if (isEditableElement(activeElement)) {
+        (activeElement as HTMLElement).blur();
+        return;
+      }
+      if (showQrModal) {
+        setShowQrModal(false);
+        return;
+      }
+      if (curriculumTopicModalOpen) {
+        setCurriculumTopicModalOpen(false);
+        setSelectedCurriculumTopic(null);
+        return;
+      }
+      if (profileOpen) {
+        setProfileOpen(false);
+        return;
+      }
+      if (mobileMenuOpen) {
+        setMobileMenuOpen(false);
+        return;
+      }
+      if (isNativeMessagesThreadFocus) {
+        window.dispatchEvent(new Event(NATIVE_ANDROID_BACK_EVENT));
+        return;
+      }
+      if (activeTab !== "dashboard") {
+        setTab("dashboard");
+        return;
+      }
+      void CapacitorApp.minimizeApp();
+    }).then((handle) => {
+      if (!mounted) {
+        void handle.remove();
+        return;
+      }
+      backHandle = handle;
+    }).catch(() => {
+      // Browser tests and unsupported bridges retain normal web history behavior.
+    });
+
+    return () => {
+      mounted = false;
+      if (backHandle) void backHandle.remove();
+    };
+  }, [
+    activeTab,
+    curriculumTopicModalOpen,
+    isNativeAndroidApp,
+    isNativeMessagesThreadFocus,
+    mobileMenuOpen,
+    profileOpen,
+    setTab,
+    showQrModal,
+  ]);
   const [upiPaymentMethod, setUpiPaymentMethod] = useState<"UPI" | "Bank Transfer">("UPI");
   const [upiAmountInput, setUpiAmountInput] = useState("");
   const [upiQrImageLoadFailed, setUpiQrImageLoadFailed] = useState(false);
@@ -4896,18 +4944,18 @@ export default function ParentDashboard() {
   };
 
   if (isLoading) {
-    return <ParentShellLoading showNativeTabBar={isNativeIOSApp} />;
+    return <ParentShellLoading showNativeTabBar={isNativeParentApp} />;
   }
   if (!user) return null;
 
   return (
     <div className={`mobile-app-scroll ts-parent-page ts-native-no-x-scroll w-full min-w-0 max-w-full lg:h-screen lg:overflow-hidden ${
-      isNativeIOSApp
+      isNativeParentApp
         ? "ts-native-app-shell ts-native-no-x-scroll overflow-hidden"
         : "min-h-[100dvh] overflow-x-hidden [overscroll-behavior-x:none]"
     }`}>
       <div className={`mx-auto w-full min-w-0 max-w-7xl overflow-x-hidden px-3 sm:px-6 lg:h-full lg:min-h-0 lg:px-8 lg:py-6 ${
-        isNativeIOSApp
+        isNativeParentApp
           ? "flex min-h-0 flex-1 flex-col pt-0"
           : "min-h-[100dvh] pt-4 sm:pt-6"
       }`}>
@@ -5050,7 +5098,7 @@ export default function ParentDashboard() {
         </Dialog>
 
         <div className={`flex min-h-0 w-full min-w-0 max-w-full flex-col gap-6 overflow-x-hidden lg:h-full lg:flex-row lg:pb-0 ${
-          isNativeIOSApp ? "h-full flex-1 overflow-hidden pb-0" : "pb-[var(--ts-mobile-tabbar-reserve)]"
+          isNativeParentApp ? "h-full flex-1 overflow-hidden pb-0" : "pb-[var(--ts-mobile-tabbar-reserve)]"
         }`}>
           <aside className="hidden w-full shrink-0 lg:sticky lg:top-6 lg:block lg:w-72 lg:self-start">
             <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900 shadow-sm overflow-hidden">
@@ -5186,7 +5234,7 @@ export default function ParentDashboard() {
           </aside>
 
           <main className={`flex min-h-0 min-w-0 max-w-full flex-1 flex-col overflow-x-hidden ${
-            isNativeIOSApp ? "h-full w-full overflow-hidden" : ""
+            isNativeParentApp ? "h-full w-full overflow-hidden" : ""
           }`}>
             {!isNativeMessagesThreadFocus && (
               <ParentMobileHeader
@@ -5218,7 +5266,7 @@ export default function ParentDashboard() {
             } min-h-0 w-full max-w-full overflow-x-hidden [scrollbar-gutter:stable] ${
               isNativeMessagesThreadFocus ? "pr-0" : "pr-1"
             } ${
-              isNativeIOSApp
+              isNativeParentApp
                 ? isNativeMessagesThreadFocus
                   ? "ts-native-no-x-scroll flex-1 overflow-hidden pb-0"
                   : "ts-native-scroll ts-native-no-x-scroll ts-native-tabbar-reserve flex-1"
@@ -5229,7 +5277,7 @@ export default function ParentDashboard() {
 
         {activeTab === "messages" && (
           <div className={isNativeMessagesThreadFocus ? "flex min-h-0 flex-1 flex-col overflow-hidden" : "space-y-4"}>
-            {shouldShowParentMessagesHeading(isNativeIOSApp, isNativeMessagesThreadFocus) && (
+            {shouldShowParentMessagesHeading(isNativeParentApp, isNativeMessagesThreadFocus) && (
               <Card className="p-4">
                 <h3 className="text-base font-semibold text-slate-900">Messages</h3>
                 <p className="text-xs text-slate-500">
@@ -5248,7 +5296,7 @@ export default function ParentDashboard() {
 
         {activeTab === "insights" && (
           <ParentInsightsView
-            isNativeIOSApp={isNativeIOSApp}
+            isNativeIOSApp={isNativeParentApp}
             childSelected={Boolean(selectedKidId)}
             courseOptions={insightsCourseOptions}
             selectedCourseId={selectedInsightsCourseOption?.courseId || insightsCourseOptions[0]?.courseId || ""}
@@ -5391,7 +5439,7 @@ export default function ParentDashboard() {
         {activeTab === "skills" && (
           <div className="space-y-6">
             <ParentSkillsView
-              isNativeIOSApp={isNativeIOSApp}
+              isNativeIOSApp={isNativeParentApp}
               childName={selectedKid?.fullName || null}
               loading={phonicsLoading}
               error={phonicsError ? phonicsErrorMessage : null}
@@ -5972,14 +6020,14 @@ export default function ParentDashboard() {
                 const whatsappUrl = `https://wa.me/${TINYSTEPS_WHATSAPP_NUMBER}?text=${encodeURIComponent(
                   message
                 )}`;
-                window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+                void openExternalHttpsUrl(whatsappUrl);
                 hapticLight();
               };
 
               return (
                 <>
                   <ParentPaymentsView
-                    isNativeIOSApp={isNativeIOSApp}
+                    isNativeIOSApp={isNativeParentApp}
                     childName={selectedKid?.fullName || selectedKid?.name || "the selected child"}
                     walletState={walletDisplayState}
                     walletLastUpdatedLabel={walletLastUpdatedLabel}

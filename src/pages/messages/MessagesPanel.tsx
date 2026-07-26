@@ -11,6 +11,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import useMessageThreads, { type MessageThread } from '../../hooks/useMessageThreads';
 import useThreadMessages, { type ThreadMessage } from '../../hooks/useThreadMessages';
 import useNativeIOSKeyboard from '../../hooks/useNativeIOSKeyboard';
+import { NATIVE_ANDROID_BACK_EVENT } from '../../lib/nativePlatform';
 import { setActiveMessageThread } from '../../lib/foregroundNotificationState';
 import MessageThreadList, {
   type MessageThreadRowViewModel,
@@ -646,11 +647,20 @@ export default function MessagesPanel({
     setSelectedThreadId(threadId);
   };
 
-  const handleBackToConversations = () => {
+  const handleBackToConversations = useCallback(() => {
     if (shouldUseThreadBackHold) suppressAutoSelectRef.current = true;
     setReturnFocusThreadId(selectedThread?.id || null);
     setSelectedThreadId(null);
-  };
+  }, [selectedThread?.id, shouldUseThreadBackHold]);
+
+  useEffect(() => {
+    if (!nativeChatFocus || !selectedThread) return;
+    const handleNativeBack = () => handleBackToConversations();
+    window.addEventListener(NATIVE_ANDROID_BACK_EVENT, handleNativeBack);
+    return () => {
+      window.removeEventListener(NATIVE_ANDROID_BACK_EVENT, handleNativeBack);
+    };
+  }, [handleBackToConversations, nativeChatFocus, selectedThread]);
 
   const handleSend = async () => {
     const text = draft.trim();
