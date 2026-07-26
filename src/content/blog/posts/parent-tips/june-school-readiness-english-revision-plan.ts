@@ -145,11 +145,11 @@ const post: BlogPost = {
     },
     {
       type: 'h2',
-      content: '6. Next Step: Book a Free Assessment or Demo',
+      content: '6. Next Step: Book One Free 35-Minute Demo Assessment Class',
     },
     {
       type: 'li',
-      content: 'Book a free assessment/demo: /?book=1',
+      content: 'Book one free 35-minute 1:1 online demo assessment class: /?book=1',
     },
     {
       type: 'li',

@@ -58,7 +58,7 @@ const post: PhonicsSeoPost = {
     label: 'Parent support: child not reading properly',
     to: '/child-not-reading-properly'
   }, {
-    label: 'Book free assessment',
+    label: 'Book Free 35-Minute Demo',
     to: '/book-demo'
   }]
 };

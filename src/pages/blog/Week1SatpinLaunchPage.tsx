@@ -731,7 +731,7 @@ export default function Week1SatpinLaunchPage() {
                 to="/book-demo"
                 className="inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
               >
-                Book a free assessment
+                Book one free 35-minute 1:1 online demo assessment class
               </Link>
               <Link
                 to="/phonics"

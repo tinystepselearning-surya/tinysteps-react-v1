@@ -31,7 +31,7 @@ const ProgramHero = ({ title, subtitle, badges, highlights, program }: any) => (
           href="/#book-assessment" 
           className="mt-6 inline-block rounded-lg bg-gradient-to-r from-[#ff9f5f] to-[#7dccff] px-8 py-3 font-semibold text-white shadow-lg hover:shadow-xl transition-shadow"
         >
-          Book Free Assessment
+          Book Free 35-Minute Demo
         </a>
       </div>
     </div>

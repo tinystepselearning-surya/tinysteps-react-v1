@@ -139,7 +139,7 @@ export default function SpeakingPage() {
     applySeo({
       title: 'Public Speaking Classes for Kids in India | Tiny Steps',
       description:
-        'Live online public speaking classes for kids in India. Build sentence formation, storytelling, show-and-tell, clear expression and confidence. Book a free assessment.',
+        'Live online public speaking classes for kids in India. Build sentence formation, storytelling, show-and-tell, clear expression and confidence. Book one free 35-minute 1:1 online demo assessment class.',
       canonicalPath,
       robots: 'index,follow',
       ogType: 'website',
@@ -180,7 +180,7 @@ export default function SpeakingPage() {
                 Tiny Steps offers online public speaking and communication classes for kids who give short answers, hesitate to speak, struggle to explain ideas, or need confidence for school presentations. Children start with a free speaking assessment, then move into Basic or Advanced Public Speaking based on age and confidence level.
               </p>
               <p className="mt-3 max-w-full text-base leading-7 text-slate-700 md:mt-4 md:max-w-[660px] md:text-lg md:leading-8">
-                Tiny Steps follows an assessment-first speaking path to understand whether your child needs sentence expansion, speaking comfort, storytelling support, reading aloud confidence, or clear expression coaching. Ready to move forward? <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2 hover:text-sky-700">book a free assessment</Link>.
+                Tiny Steps follows an assessment-first speaking path to understand whether your child needs sentence expansion, speaking comfort, storytelling support, reading aloud confidence, or clear expression coaching. Ready to move forward? <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2 hover:text-sky-700">book one free 35-minute 1:1 online demo assessment class</Link>.
               </p>
 
               <div className="mt-7">
@@ -188,7 +188,7 @@ export default function SpeakingPage() {
                   to="/book-demo"
                   className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-gradient-to-r from-[#FF7B66] to-[#FF9B72] px-6 py-3.5 text-base font-bold text-white shadow-[0_14px_30px_rgba(255,126,99,0.3)] transition hover:from-[#FF715B] hover:to-[#FF9267] sm:w-auto sm:min-w-[230px] md:px-8 md:py-4"
                 >
-                  Book Free Assessment
+                  Book Free 35-Minute Demo
                 </Link>
                 <p className="mt-3 text-sm text-slate-600 md:text-[15px]">Takes 20-30 seconds • No commitment</p>
               </div>
@@ -289,7 +289,7 @@ export default function SpeakingPage() {
             </p>
             <h2 className="mb-3 mt-3 text-2xl font-bold leading-tight text-slate-900 md:text-[30px]">Quick Answer: What do public speaking classes for kids include?</h2>
             <p className="max-w-[920px] text-base leading-7 text-slate-700 md:text-[17px]">
-              Public speaking classes for kids should help children move from short answers and hesitation to complete sentences, structured responses, storytelling, show-and-tell confidence, reading aloud expression, and presentation readiness. Tiny Steps begins with a free assessment to identify whether the child needs sentence expansion, speaking comfort, storytelling flow, or confidence support.
+              Public speaking classes for kids should help children move from short answers and hesitation to complete sentences, structured responses, storytelling, show-and-tell confidence, reading aloud expression, and presentation readiness. Tiny Steps begins with a free 35-minute 1:1 online demo assessment class to identify whether the child needs sentence expansion, speaking comfort, storytelling flow, or confidence support.
             </p>
           </article>
         </div>
@@ -383,7 +383,7 @@ export default function SpeakingPage() {
         <div className="mx-auto max-w-6xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:rounded-3xl md:p-7">
           <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Online public speaking classes for kids across India</h2>
           <p className="mt-3 text-base leading-7 text-slate-700">
-            Tiny Steps supports children across India through live online public speaking and communication confidence classes. Parents from Hyderabad, Bangalore, Chennai, Mumbai, Delhi, Pune, Kolkata, and other locations can <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2">book a free assessment</Link> and receive a level-based speaking confidence path.
+            Tiny Steps supports children across India through live online public speaking and communication confidence classes. Parents from Hyderabad, Bangalore, Chennai, Mumbai, Delhi, Pune, Kolkata, and other locations can <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2">book one free 35-minute 1:1 online demo assessment class</Link> and receive a level-based speaking confidence path.
           </p>
           <p className="mt-3 text-sm leading-6 text-slate-700">
             For younger learners building early reading base, you can also review <Link to="/phonics" className="font-semibold text-slate-900 underline underline-offset-2">online phonics classes for kids</Link>.
@@ -490,7 +490,7 @@ export default function SpeakingPage() {
             ))}
           </ul>
           <p className="mt-4 text-sm leading-6 text-slate-700">
-            Review <Link to="/pricing" className="font-semibold underline underline-offset-2">class pricing</Link> and <Link to="/book-demo" className="font-semibold underline underline-offset-2">book a free assessment</Link> when you are ready.
+            Review <Link to="/pricing" className="font-semibold underline underline-offset-2">class pricing</Link> and <Link to="/book-demo" className="font-semibold underline underline-offset-2">book one free 35-minute 1:1 online demo assessment class</Link> when you are ready.
           </p>
         </div>
       </section>
@@ -572,7 +572,7 @@ export default function SpeakingPage() {
                 Children need stronger presentation skills, organised thinking, discussion confidence, expressive speaking, and the ability to explain ideas clearly.
               </p>
               <Link to="/book-demo" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">
-                Book a free assessment
+                Book one free 35-minute 1:1 online demo assessment class
               </Link>
             </article>
           </div>
@@ -594,7 +594,7 @@ export default function SpeakingPage() {
                 to="/book-demo"
                 className="mt-6 inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-slate-900 px-6 py-3.5 text-base font-semibold text-white shadow-[0_12px_30px_rgba(15,23,42,0.25)] transition hover:bg-slate-800 sm:w-auto sm:px-7 sm:py-3"
               >
-                Book Free Assessment
+                Book Free 35-Minute Demo
               </Link>
             </div>
             <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-5 md:p-6">
@@ -670,7 +670,7 @@ export default function SpeakingPage() {
         <div className="mx-auto max-w-6xl rounded-3xl bg-gradient-to-r from-slate-900 via-[#1f2a44] to-slate-900 p-6 text-center text-white shadow-[0_20px_50px_rgba(15,23,42,0.18)] sm:p-8 md:p-10">
           <h2 className="text-2xl font-bold md:text-3xl">Not sure why your child hesitates while speaking?</h2>
           <p className="mx-auto mt-3 max-w-3xl text-base leading-7 text-slate-200">
-            Book a free assessment and let Tiny Steps identify whether your child needs sentence expansion, structured answers, storytelling, reading aloud confidence, presentation skills, or communication confidence support first.
+            Book one free 35-minute 1:1 online demo assessment class and let Tiny Steps identify whether your child needs sentence expansion, structured answers, storytelling, reading aloud confidence, presentation skills, or communication confidence support first.
           </p>
           <div className="mt-6 text-left">
             <TestimonialSnippets courseTag="speaking" title="What speaking parents noticed first" />
@@ -680,7 +680,7 @@ export default function SpeakingPage() {
               to="/book-demo"
               className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100 sm:w-auto"
             >
-              Book Free Assessment
+              Book Free 35-Minute Demo
             </Link>
           </div>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-200">

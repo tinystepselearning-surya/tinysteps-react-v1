@@ -52,7 +52,7 @@ const post: PhonicsSeoPost = {
     label: 'Slow reader child help guide',
     to: '/slow-reader-child-help'
   }, {
-    label: 'Book free assessment',
+    label: 'Book Free 35-Minute Demo',
     to: '/book-demo'
   }]
 };

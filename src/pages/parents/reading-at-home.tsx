@@ -167,7 +167,7 @@ const ReadingAtHome: React.FC = () => {
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Link to="/?book=1" className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
-            Book Free Assessment
+            Book Free 35-Minute Demo
           </Link>
           <Link to="/curriculum" className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-50">
             View Reading Path
@@ -288,11 +288,11 @@ const ReadingAtHome: React.FC = () => {
     <section className="mt-12 rounded-3xl border border-slate-200 bg-slate-900 px-6 py-8 text-white md:px-8">
       <h2 className="text-2xl font-bold">Need a personalized reading plan?</h2>
       <p className="mt-2 max-w-2xl text-sm text-slate-200 md:text-base">
-        Book a free assessment to identify your childs exact reading stage and get a practical home routine matched to that level.
+        Book one free 35-minute 1:1 online demo assessment class to identify your childs exact reading stage and get a practical home routine matched to that level.
       </p>
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         <Link to="/?book=1" className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100">
-          Book Free Assessment
+          Book Free 35-Minute Demo
         </Link>
         <Link to="/phonics" className="inline-flex items-center justify-center rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
           Explore Phonics Classes

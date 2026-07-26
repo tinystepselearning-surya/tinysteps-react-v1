@@ -5,7 +5,7 @@ const HowToStartSection: React.FC = () => {
     <section id="book-assessment" className="bg-white py-20">
       <div className="mx-auto max-w-6xl px-6">
         <div className="mb-10 text-center">
-          <h2 className="font-heading text-3xl font-bold md:text-4xl">Start With a Free Assessment (No Payment, No Pressure)</h2>
+          <h2 className="font-heading text-3xl font-bold md:text-4xl">Start With One Free 35-Minute Demo Assessment Class</h2>
         </div>
         <div className="mx-auto max-w-3xl space-y-6 text-gray-800">
           <p>Your child's first Tiny Steps class is completely free. This is NOT a sales pitch — it’s a real learning session where we:</p>
@@ -27,4 +27,3 @@ const HowToStartSection: React.FC = () => {
 };
 
 export default HowToStartSection;
-

@@ -11,7 +11,7 @@ const coursesSeo = getRouteConfig('/courses');
 const coursesSeoTitle = coursesSeo?.title ?? 'English Courses for Kids: Phonics, Grammar and Public Speaking | Tiny Steps Learning';
 const coursesSeoDescription =
   coursesSeo?.description ??
-  'Compare Tiny Steps English courses for children aged 3–12 across phonics, reading, grammar, sentence formation, and public speaking. Book a free assessment to choose the right path.';
+  'Compare Tiny Steps English courses for children aged 3–12 across phonics, reading, grammar, sentence formation, and public speaking. Book one free 35-minute 1:1 online demo assessment class to choose the right path.';
 const coursesCanonicalPath = coursesSeo?.canonicalPath ?? '/courses';
 const coursesCanonicalUrl = `https://tinystepslearning.com${coursesCanonicalPath}`;
 const BOOK_ASSESSMENT_HREF = '/book-demo';
@@ -22,7 +22,7 @@ const trustPoints = [
   'Courses for children aged 3–12',
   'Phonics, Grammar, Reading, and Public Speaking paths',
   'Live teacher-guided classes',
-  'Free assessment before course recommendation',
+  'One free 35-minute 1:1 demo assessment class before course recommendation',
 ];
 
 const howItWorksSteps = [
@@ -117,7 +117,7 @@ const quickAnswerFaqItems = [
   {
     question: 'How do I know where to start?',
     answer:
-      'Parents can book a free assessment. The assessment helps identify the child’s current level and recommends the most suitable Tiny Steps course path.',
+      'Parents can book one free 35-minute 1:1 online demo assessment class. The assessment helps identify the child’s current level and recommends the most suitable Tiny Steps course path.',
   },
 ];
 const quickAnswerFaqSchema = {
@@ -203,7 +203,7 @@ function CoursesPage() {
                 to={BOOK_ASSESSMENT_HREF}
                 className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-100"
               >
-                Book Free Assessment
+                Book Free 35-Minute Demo
               </Link>
               <Link
                 to={VIEW_PRICING_HREF}
@@ -331,7 +331,7 @@ function CoursesPage() {
                     href={BOOK_ASSESSMENT_HREF}
                     className="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
                   >
-                    Book Free Assessment
+                    Book Free 35-Minute Demo
                   </a>
                   <Link to={card.href} className="w-full text-center text-[11px] font-medium text-slate-500 underline decoration-slate-300/80 underline-offset-2 transition hover:text-slate-700 sm:w-auto sm:text-left">
                     View course details
@@ -369,7 +369,7 @@ function CoursesPage() {
                     href={BOOK_ASSESSMENT_HREF}
                     className="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
                   >
-                    Book Free Assessment
+                    Book Free 35-Minute Demo
                   </a>
                   <Link to={card.href} className="w-full text-center text-[11px] font-medium text-slate-500 underline decoration-slate-300/80 underline-offset-2 transition hover:text-slate-700 sm:w-auto sm:text-left">
                     View course details
@@ -407,7 +407,7 @@ function CoursesPage() {
                     href={BOOK_ASSESSMENT_HREF}
                     className="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
                   >
-                    Book Free Assessment
+                    Book Free 35-Minute Demo
                   </a>
                   <Link to={card.href} className="w-full text-center text-[11px] font-medium text-slate-500 underline decoration-slate-300/80 underline-offset-2 transition hover:text-slate-700 sm:w-auto sm:text-left">
                     View course details
@@ -462,7 +462,7 @@ function CoursesPage() {
             <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">&ldquo;My child reads but makes many sentence mistakes.&rdquo; → Start with <Link to="/grammar" className="font-semibold underline underline-offset-2">Grammar</Link></p>
             <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">&ldquo;My child gives one-word answers.&rdquo; → Start with <Link to="/speaking" className="font-semibold underline underline-offset-2">Public Speaking and Sentence Formation</Link></p>
             <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">&ldquo;My child reads slowly and avoids books.&rdquo; → Start with <Link to="/reading-classes-for-kids" className="font-semibold underline underline-offset-2">Reading Fluency support</Link></p>
-            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 md:col-span-2">&ldquo;I am not sure where to start.&rdquo; → <Link to={BOOK_ASSESSMENT_HREF} className="font-semibold underline underline-offset-2">Book Free Assessment</Link></p>
+            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 md:col-span-2">&ldquo;I am not sure where to start.&rdquo; → <Link to={BOOK_ASSESSMENT_HREF} className="font-semibold underline underline-offset-2">Book Free 35-Minute Demo</Link></p>
           </div>
         </div>
       </section>
@@ -475,7 +475,7 @@ function CoursesPage() {
             href={BOOK_ASSESSMENT_HREF}
             className="mt-7 inline-flex items-center justify-center rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-slate-900 shadow-[0_10px_26px_rgba(255,255,255,0.2)] transition hover:-translate-y-0.5 hover:bg-slate-100"
           >
-            Book Free Assessment Now
+            Book Free 35-Minute Demo
           </a>
           <p className="mt-5 text-xs font-medium text-white/80">Takes 20–30 seconds • No commitment • Get slots instantly on WhatsApp</p>
         </div>

@@ -365,7 +365,7 @@ const WhyTinyStepsPage: FC = () => {
 
             <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
               <a href="#book-trial" className="w-full sm:w-auto">
-                <PrimaryButton>Book Free Assessment Class</PrimaryButton>
+                <PrimaryButton>Book Free 35-Minute Demo</PrimaryButton>
               </a>
 
               <Link to="/courses" className="w-full sm:w-auto">
@@ -688,7 +688,7 @@ const WhyTinyStepsPage: FC = () => {
             <div className="grid gap-8 lg:grid-cols-2 items-center">
               <div>
                 <div className="text-xs font-bold tracking-[0.22em] uppercase text-slate-500">
-                  Book free assessment class
+                  Book Free 35-Minute Demo
                 </div>
                 <h3 className="mt-2 text-3xl md:text-4xl font-extrabold tracking-tight">
                   Let’s find the right starting point for your child
@@ -699,7 +699,7 @@ const WhyTinyStepsPage: FC = () => {
                 </p>
 
                 <ul className="mt-6 space-y-3 text-slate-700">
-                  <CheckItem>Quick level check</CheckItem>
+                  <CheckItem>35-minute live 1:1 demo assessment</CheckItem>
                   <CheckItem>Clear course recommendation</CheckItem>
                   <CheckItem>Simple next steps for parents</CheckItem>
                 </ul>
@@ -708,7 +708,7 @@ const WhyTinyStepsPage: FC = () => {
               <div className="rounded-2xl border bg-gradient-to-br from-slate-50 to-white p-6">
                 <div className="flex flex-col gap-3">
                   <a href="#book-trial">
-                    <PrimaryButton>Book Free Assessment Class</PrimaryButton>
+                    <PrimaryButton>Book Free 35-Minute Demo</PrimaryButton>
                   </a>
 
                   <Link to="/courses">
@@ -733,7 +733,7 @@ const WhyTinyStepsPage: FC = () => {
                 </div>
 
                 <div className="mt-4 text-xs text-slate-500">
-                  Your nav item “Book Free Assessment Class” can link to <b>#book-trial</b>.
+                  Your nav item “Book Free 35-Minute Demo” can link to <b>#book-trial</b>.
                 </div>
               </div>
             </div>

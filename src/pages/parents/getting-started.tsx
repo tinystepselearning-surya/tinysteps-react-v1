@@ -8,7 +8,7 @@ import AboutAuthor from '../../components/AboutAuthor';
 const stepFlow = [
   {
     step: 'Step 1',
-    title: 'Book free assessment',
+    title: 'Book Free 35-Minute Demo',
     detail: 'Pick a convenient time from Courses. No payment required to start.',
   },
   {
@@ -143,7 +143,7 @@ const GettingStarted: React.FC = () => {
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Link to="/?book=1" className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
-              Book Free Assessment
+              Book Free 35-Minute Demo
             </Link>
             <Link to="/courses" className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-50">
               Compare Courses
@@ -258,12 +258,12 @@ const GettingStarted: React.FC = () => {
       <section className="mt-12 rounded-3xl border border-slate-200 bg-slate-900 px-6 py-8 text-white md:px-8">
         <h2 className="text-2xl font-bold">Ready to begin with clarity?</h2>
         <p className="mt-2 max-w-2xl text-sm text-slate-200 md:text-base">
-          Start with the free assessment and get a clear recommendation before enrolling.
+          Start with the free 35-minute 1:1 online demo assessment class and get a clear recommendation before enrolling.
           This keeps learning focused, reduces stress, and helps your child progress faster.
         </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Link to="/?book=1" className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100">
-            Book Your Free Assessment
+            Book Free 35-Minute Demo
           </Link>
           <Link to="/phonics" className="inline-flex items-center justify-center rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
             Explore Phonics Classes

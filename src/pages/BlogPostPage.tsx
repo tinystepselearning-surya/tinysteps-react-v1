@@ -152,7 +152,7 @@ const CATEGORY_ARTICLE_CONFIG = {
   },
   'Parent Tips': {
     primaryAction: { label: 'Explore the Parents Hub', to: '/parents' },
-    secondaryAction: { label: 'Book a free assessment', to: '/?book=1' },
+    secondaryAction: { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/?book=1' },
     learningPathIntro:
       'When you are deciding the next step, use the course chooser and curriculum roadmap to match support to your child’s current need.',
     learningPathLinks: [
@@ -188,12 +188,12 @@ const CATEGORY_ARTICLE_CONFIG = {
     sidebarLinks: [
       { label: 'Open the Parents Hub', to: '/parents' },
       { label: 'Track progress at home', to: '/parents/tracking-progress' },
-      { label: 'Book a free assessment', to: '/?book=1' },
+      { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/?book=1' },
     ],
   },
   Research: {
     primaryAction: { label: 'Explore the Parents Hub', to: '/parents' },
-    secondaryAction: { label: 'Book a free assessment', to: '/?book=1' },
+    secondaryAction: { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/?book=1' },
     learningPathIntro:
       'Turn research takeaways into action with a clear course-selection route and a connected curriculum pathway.',
     learningPathLinks: [
@@ -229,7 +229,7 @@ const CATEGORY_ARTICLE_CONFIG = {
     sidebarLinks: [
       { label: 'Explore the Parents Hub', to: '/parents' },
       { label: 'Read the phonics guide', to: '/blog/phonics-for-parents-guide' },
-      { label: 'Book a free assessment', to: '/?book=1' },
+      { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/?book=1' },
     ],
   },
 };
@@ -280,7 +280,7 @@ const POST_CTA_OVERRIDES: Record<string, {
       'If your child needs structured support across phonics, grammar, and speaking, use the course chooser to pick one clear starting route.',
     learningPathLinks: [
       { label: 'Course chooser', to: '/courses' },
-      { label: 'Book a free assessment', to: '/?book=1' },
+      { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/?book=1' },
     ],
     suppressCoursesFallback: true,
   },
@@ -936,7 +936,7 @@ function buildMetaDescription(src: any) {
                   Explore Courses
                 </Link>
                 <Link to="/book-demo" className="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-3 text-slate-900 shadow-sm transition hover:bg-slate-50">
-                  Book Free Assessment
+                  Book Free 35-Minute Demo
                 </Link>
               </div>
             </section>

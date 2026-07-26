@@ -31,7 +31,7 @@ const faqItems = [
   {
     question: 'Should I book a class directly or start with assessment?',
     answer:
-      'It is better to start with a free assessment. The assessment helps identify the child’s current level and the most suitable course path.',
+      'It is better to start with a free 35-minute 1:1 online demo assessment class. The assessment helps identify the child’s current level and the most suitable course path.',
   },
 ];
 
@@ -99,7 +99,7 @@ export default function TestimonialsPage() {
           <li>• Parent-friendly progress communication</li>
           <li>• Child-focused live online classes</li>
           <li>• Reading, grammar, and speaking confidence support</li>
-          <li>• Free assessment before course recommendation</li>
+          <li>• One free 35-minute 1:1 demo assessment class before course recommendation</li>
         </ul>
 
         <div className="mt-5 flex flex-wrap gap-3">
@@ -107,7 +107,7 @@ export default function TestimonialsPage() {
             to="/book-demo"
             className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
-            Book Free Assessment
+            Book Free 35-Minute Demo
           </Link>
           <Link
             to="/courses"
@@ -131,7 +131,7 @@ export default function TestimonialsPage() {
         <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
           <h2 className="text-2xl font-bold text-slate-900">How Tiny Steps builds visible progress</h2>
           <ul className="mt-4 space-y-2 text-sm text-slate-700">
-            <li>• Free assessment to understand the child’s starting level.</li>
+            <li>• One free 35-minute 1:1 demo assessment class to understand the child’s starting level.</li>
             <li>• Structured course path instead of random worksheets.</li>
             <li>• Live teacher correction during reading, speaking, and writing practice.</li>
             <li>• Parent updates after classes or learning milestones.</li>
@@ -171,13 +171,13 @@ export default function TestimonialsPage() {
         <section className="mt-10 rounded-2xl bg-slate-900 p-8 text-center text-white">
           <h2 className="text-2xl font-bold">Want to see the right path for your child?</h2>
           <p className="mx-auto mt-3 max-w-3xl text-sm text-slate-200 sm:text-base">
-            Start with a free assessment. Tiny Steps will check your child’s current level and recommend the right starting point for phonics, reading, grammar, sentence formation, or public speaking.
+            Start with a free 35-minute 1:1 online demo assessment class. Tiny Steps will check your child’s current level and recommend the right starting point for phonics, reading, grammar, sentence formation, or public speaking.
           </p>
           <Link
             to="/book-demo"
             className="mt-6 inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
           >
-            Book Free Assessment
+            Book Free 35-Minute Demo
           </Link>
         </section>
       </section>

@@ -84,7 +84,7 @@ const parentSignals = [
 const pathwayCards = [
   {
     title: 'Assessment-first placement',
-    detail: 'We start with a free assessment to see what your child can already decode and where the gap begins.',
+    detail: 'We start with a free 35-minute 1:1 online demo assessment class to see what your child can already decode and where the gap begins.',
   },
   {
     title: 'Live 1:1 correction',
@@ -170,13 +170,13 @@ export default function OnlinePhonicsReadingClassesPage() {
 
   const ctaItems = [
     {
-      label: 'Book Free Assessment',
+      label: 'Book Free 35-Minute Demo',
       to: '/book-demo',
       variant: 'primary' as const,
       onClick: () =>
         trackCoursePageCtaClick({
           page_path: canonicalPath,
-          cta_label: 'Book Free Assessment',
+          cta_label: 'Book Free 35-Minute Demo',
           cta_location: 'hero',
           destination_path: '/book-demo',
           program: 'phonics',
@@ -258,7 +258,7 @@ export default function OnlinePhonicsReadingClassesPage() {
               ))}
             </ul>
             <p className="mt-4 text-sm leading-6 text-slate-700">
-              If that sounds familiar, the next right move is usually a free assessment followed by a level-based
+              If that sounds familiar, the next right move is usually a free 35-minute 1:1 online demo assessment class followed by a level-based
               plan, not more random reading worksheets.
             </p>
           </LeadCard>

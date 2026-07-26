@@ -36,7 +36,7 @@ const teamFaqItems = [
   {
     question: 'How do teachers decide what my child should learn?',
     answer:
-      'The starting point is usually decided after a free assessment that checks the child’s current level in reading, phonics, grammar, sentence formation, or speaking confidence.',
+      'The starting point is usually decided after a free 35-minute 1:1 online demo assessment class that checks the child’s current level in reading, phonics, grammar, sentence formation, or speaking confidence.',
   },
   {
     question: 'Will parents receive updates?',
@@ -132,7 +132,7 @@ export default function TeamPage() {
             to="/book-demo"
             className="inline-block rounded-lg bg-slate-900 px-8 py-3 font-semibold text-white transition hover:bg-slate-800"
           >
-            Book Free Assessment
+            Book Free 35-Minute Demo
           </Link>
           <Link
             to="/courses"
@@ -164,7 +164,7 @@ export default function TeamPage() {
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           <ul className="space-y-3 text-gray-700">
             <li>• Structured curriculum paths for Phonics, Grammar, Reading, and Public Speaking.</li>
-            <li>• Free assessment before recommending a course.</li>
+            <li>• One free 35-minute 1:1 demo assessment class before recommending a course.</li>
             <li>• Stage-wise learning instead of random worksheets.</li>
             <li>• Lesson planning focused on child participation and guided practice.</li>
             <li>• Ongoing review of teaching quality and parent feedback.</li>
@@ -337,14 +337,14 @@ export default function TeamPage() {
       <section className="mx-auto max-w-4xl px-6 py-16 text-center">
         <h2 className="mb-4 text-3xl font-bold">Want to understand which teacher-led path fits your child?</h2>
         <p className="mx-auto mb-8 max-w-2xl text-gray-700">
-          Start with a free assessment. Tiny Steps will check your child’s current level and recommend the right starting point for phonics, reading, grammar, sentence formation, or public speaking.
+          Start with a free 35-minute 1:1 online demo assessment class. Tiny Steps will check your child’s current level and recommend the right starting point for phonics, reading, grammar, sentence formation, or public speaking.
         </p>
         <div className="flex items-center justify-center">
           <Link
             to="/book-demo"
             className="inline-block rounded-2xl bg-gradient-to-r from-tiny-blue-600 to-tiny-purple-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition hover:shadow-xl"
           >
-            Book Free Assessment
+            Book Free 35-Minute Demo
           </Link>
         </div>
       </section>

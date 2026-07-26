@@ -138,11 +138,11 @@ export default function WhatIsJollyPhonicsBestWayPage() {
       <section className="rounded-2xl bg-slate-900 p-7 text-white">
         <h2 className="text-2xl font-bold">Want the right starting point for your child?</h2>
         <p className="mt-3 text-slate-200">
-          Book a free assessment and we will recommend the right phonics stage based on your child’s current reading level.
+          Book one free 35-minute 1:1 online demo assessment class and we will recommend the right phonics stage based on your child’s current reading level.
         </p>
         <div className="mt-5 flex flex-wrap gap-3">
           <Link to="/book-demo" className="inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-slate-900">
-            Book Free Assessment
+            Book Free 35-Minute Demo
           </Link>
           <Link to="/phonics" className="inline-flex rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white">
             Explore Phonics Program

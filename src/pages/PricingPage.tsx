@@ -14,6 +14,11 @@ import {
   ULTRA_PREMIUM_PRICING,
   totalFeeForSessions,
 } from '../config/pricing';
+import {
+  FREE_DEMO_CTA_LABEL,
+  FREE_DEMO_FULL_DESCRIPTION,
+  STANDARD_PRICING_SUMMARY,
+} from '../config/publicOffer';
 
 const DEFAULT_PACK_RATE = PER_CLASS_PRICE; // Use base rate for estimates
 
@@ -92,12 +97,12 @@ const quickAnswerFaqItems = [
   {
     question: 'How much do Tiny Steps online English classes cost?',
     answer:
-      'Tiny Steps standard pricing is ₹400 per class or ₹4,800 for 12 classes. We recommend starting with a free assessment first, so the child is placed in the right path before parents choose a package.',
+      `${STANDARD_PRICING_SUMMARY}. The standard 1:1 package is ₹4,800 for 12 classes. ${FREE_DEMO_FULL_DESCRIPTION}`,
   },
   {
     question: 'Should I choose a course before paying?',
     answer:
-      'It is better to start with a free assessment. The assessment helps identify whether the child needs phonics, reading, grammar, sentence formation, public speaking, or a combined learning path.',
+      `${FREE_DEMO_FULL_DESCRIPTION} It helps identify whether the child needs phonics, reading, grammar, sentence formation, public speaking, or a combined learning path.`,
   },
   {
     question: 'Are Tiny Steps classes 1:1?',
@@ -110,9 +115,8 @@ const quickAnswerFaqItems = [
       'The class fee includes live teacher-guided sessions, structured learning activities, child-level practice, parent communication, and progress visibility over time.',
   },
   {
-    question: 'Is there a trial or assessment before enrollment?',
-    answer:
-      'Yes. Parents can book a free assessment to understand the child’s current English level and receive a suitable course recommendation before enrollment.',
+    question: 'Is there a demo assessment before enrolment?',
+    answer: FREE_DEMO_FULL_DESCRIPTION,
   },
 ];
 
@@ -135,7 +139,7 @@ const pricingSeo = getRouteConfig('/pricing');
 const pricingSeoTitle = pricingSeo?.title ?? 'Premium 1:1 Online English Class Pricing | Tiny Steps Learning';
 const pricingSeoDescription =
   pricingSeo?.description ??
-  'View Tiny Steps pricing for premium 1:1 online English classes for kids. Book a free assessment before choosing phonics, grammar, reading, or public speaking support.';
+  `View Tiny Steps pricing for premium online English classes for kids. ${STANDARD_PRICING_SUMMARY}. ${FREE_DEMO_FULL_DESCRIPTION}`;
 const pricingCanonicalPath = pricingSeo?.canonicalPath ?? '/pricing';
 const pricingCanonicalUrl = `https://tinystepslearning.com${pricingCanonicalPath}`;
 
@@ -246,11 +250,6 @@ const PricingPage: FC = () => {
     GROUP_MONTHLY_FEES.find((row) => row.ratio === '1:1')?.monthlyFee ?? 0;
   const ultraPerClassPrice =
     ULTRA_PREMIUM_PRICING.find((row) => row.ratio === '1:1')?.perClass ?? 1899;
-  const premiumPerClassValues = GROUP_MONTHLY_FEES.map((row) =>
-    Math.round(row.monthlyFee / row.classes)
-  );
-  const premiumMinPerClass = Math.min(...premiumPerClassValues);
-  const premiumMaxPerClass = Math.max(...premiumPerClassValues);
   const ultraPerClassValues = ULTRA_PREMIUM_PRICING.map((row) => row.perClass);
   const ultraMinPerClass = Math.min(...ultraPerClassValues);
   const ultraMaxPerClass = Math.max(...ultraPerClassValues);
@@ -311,13 +310,13 @@ const PricingPage: FC = () => {
         <div className="mx-auto max-w-5xl glass-panel px-8 py-10 text-center">
           <div className="gradient-chip mx-auto w-max">
             {activeProgram === 'premium'
-              ? `Tiny Steps Premium Classes • Starting from ${formatINR(premiumMinPerClass)} to ${formatINR(premiumMaxPerClass)} per class`
+              ? STANDARD_PRICING_SUMMARY
               : `Tiny Steps Ultra Premium • Native English-speaking teachers • Starting from ${formatINR(ultraMinPerClass)} to ${formatINR(ultraMaxPerClass)} per class`}
           </div>
           <h1 className="mt-3 text-3xl font-bold text-gray-900 md:text-4xl">Transparent Pricing for Premium 1:1 English Classes</h1>
           <p className="mt-3 text-gray-700">
-            Tiny Steps standard pricing is ₹400 per class or ₹4,800 for 12 classes. We recommend starting with a free
-            assessment first, so the child is placed in the right path before parents choose a package.
+            {STANDARD_PRICING_SUMMARY}. The standard 1:1 package is ₹4,800 for
+            12 classes. {FREE_DEMO_FULL_DESCRIPTION}
           </p>
           <ul className="mt-5 grid gap-2 text-sm text-gray-700 sm:grid-cols-2 sm:text-left">
             <li>Live online classes with teacher guidance</li>
@@ -330,7 +329,7 @@ const PricingPage: FC = () => {
               to="/book-demo"
               className="rounded-2xl bg-gray-900 px-5 py-3 text-sm font-semibold text-white shadow-2xl"
             >
-              Book Free Assessment
+              {FREE_DEMO_CTA_LABEL}
             </Link>
             <Link
               to="/courses"
@@ -382,7 +381,7 @@ const PricingPage: FC = () => {
           <h2 className="text-2xl font-semibold text-gray-900">Pricing Questions Parents Ask</h2>
           <p className="mt-3 max-w-4xl text-sm text-gray-700 sm:text-base">
             Tiny Steps Learning offers premium online classes across phonics, grammar, sentence formation, communication,
-            and public speaking. Parents can start with the standard price, take a free assessment, and then choose the
+            and public speaking. Parents can start with the standard price, take one free 35-minute demo assessment class, and then choose the
             package that fits the child&apos;s level and schedule.
           </p>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -415,7 +414,7 @@ const PricingPage: FC = () => {
           <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-card-hover">
             <h2 className="text-2xl font-semibold text-gray-900">How to choose the right plan</h2>
             <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-gray-700">
-              <li>Start with a free assessment.</li>
+              <li>Start with one free 35-minute live 1:1 demo assessment class.</li>
               <li>Understand your child&apos;s current level.</li>
               <li>Choose the course path: Phonics, Grammar, Reading, or Public Speaking.</li>
               <li>Select the class package based on consistency and learning goals.</li>
@@ -479,7 +478,7 @@ const PricingPage: FC = () => {
                     }`}
                     onClick={() => navigate('/?book=1')}
                   >
-                    Start with Free Assessment
+                    {FREE_DEMO_CTA_LABEL}
                   </button>
                   <p className="mt-2 text-[11px] text-gray-500">
                     Need EMI or split payments? WhatsApp us and we’ll arrange it.
@@ -544,14 +543,16 @@ const PricingPage: FC = () => {
             </div>
             <div className="mt-4 space-y-1 text-center text-xs text-gray-500">
               <p>Fees shown are per child for 12 classes/month. Session duration increases with group size (35–60 minutes).</p>
-              <p>We do a quick level check before placing your child in a group.</p>
+              <p>
+                Group placement is confirmed after the free 35-minute demo assessment class.
+              </p>
             </div>
             <div className="mt-6 text-center">
               <button
                 className="rounded-2xl bg-gray-900 px-5 py-3 text-sm font-semibold text-white shadow-2xl"
                 onClick={() => navigate('/?book=1')}
               >
-                Book a free assessment for group classes
+                {FREE_DEMO_CTA_LABEL}
               </button>
             </div>
           </section>

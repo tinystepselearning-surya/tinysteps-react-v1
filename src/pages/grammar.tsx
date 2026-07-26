@@ -139,7 +139,7 @@ export default function GrammarPage() {
     applySeo({
       title: 'Grammar Classes for Kids in India | Tiny Steps',
       description:
-        'Live online grammar classes for kids in India. Build sentence formation, tenses, punctuation, writing clarity and school-answer confidence. Book a free assessment.',
+        'Live online grammar classes for kids in India. Build sentence formation, tenses, punctuation, writing clarity and school-answer confidence. Book one free 35-minute 1:1 online demo assessment class.',
       canonicalPath,
       robots: 'index,follow',
       ogType: 'website',
@@ -177,7 +177,7 @@ export default function GrammarPage() {
                 Help your child build grammar clarity, sentence formation, writing clarity, and stronger school answers through structured live online grammar classes for kids in India.
               </p>
               <p className="mt-3 max-w-full text-base leading-7 text-slate-700 md:mt-4 md:max-w-[660px] md:text-lg md:leading-8">
-                Tiny Steps follows an assessment-first grammar path to understand whether your child needs help with sentence formation, tenses, punctuation, writing clarity, or grammar use in school answers. Ready to move forward? <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2 hover:text-sky-700">book a free assessment</Link>.
+                Tiny Steps follows an assessment-first grammar path to understand whether your child needs help with sentence formation, tenses, punctuation, writing clarity, or grammar use in school answers. Ready to move forward? <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2 hover:text-sky-700">book one free 35-minute 1:1 online demo assessment class</Link>.
               </p>
 
               <div className="mt-7">
@@ -185,7 +185,7 @@ export default function GrammarPage() {
                   to="/book-demo"
                   className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-slate-900 px-6 py-3.5 text-base font-bold text-white shadow-[0_10px_24px_rgba(15,23,42,0.2)] transition hover:bg-slate-800 sm:w-auto sm:min-w-[230px] md:px-8 md:py-4"
                 >
-                  Book Free Assessment
+                  Book Free 35-Minute Demo
                 </Link>
                 <p className="mt-3 text-sm text-slate-600 md:text-[15px]">Takes 20-30 seconds • No commitment</p>
               </div>
@@ -363,7 +363,7 @@ export default function GrammarPage() {
           <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Not sure where the grammar gap is?</h2>
           <p className="mt-3 max-w-3xl text-base leading-7 text-slate-700">
             Tell us what your child struggles with: sentence formation, tenses, punctuation, short answers, or grammar
-            while speaking. We&apos;ll recommend the right starting level after a free assessment.
+            while speaking. We&apos;ll recommend the right starting level after a free 35-minute 1:1 online demo assessment class.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Link
@@ -389,7 +389,7 @@ export default function GrammarPage() {
         <div className="mx-auto max-w-6xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:rounded-3xl md:p-7">
           <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Online grammar classes for kids across India</h2>
           <p className="mt-3 text-base leading-7 text-slate-700">
-            Tiny Steps supports children across India through live online grammar classes. Parents from Hyderabad, Bangalore, Chennai, Mumbai, Delhi, Pune, Kolkata, and other locations can <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2">book a free assessment</Link> and receive a level-based grammar and sentence formation path.
+            Tiny Steps supports children across India through live online grammar classes. Parents from Hyderabad, Bangalore, Chennai, Mumbai, Delhi, Pune, Kolkata, and other locations can <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2">book one free 35-minute 1:1 online demo assessment class</Link> and receive a level-based grammar and sentence formation path.
           </p>
         </div>
       </section>
@@ -493,7 +493,7 @@ export default function GrammarPage() {
             ))}
           </ul>
           <p className="mt-4 text-sm leading-6 text-slate-700">
-            Review <Link to="/pricing" className="font-semibold underline underline-offset-2">class pricing</Link> and <Link to="/book-demo" className="font-semibold underline underline-offset-2">book a free assessment</Link> when you are ready.
+            Review <Link to="/pricing" className="font-semibold underline underline-offset-2">class pricing</Link> and <Link to="/book-demo" className="font-semibold underline underline-offset-2">book one free 35-minute 1:1 online demo assessment class</Link> when you are ready.
           </p>
         </div>
       </section>
@@ -575,7 +575,7 @@ export default function GrammarPage() {
                 Children need stronger grammar accuracy, paragraph-quality answers, editing skills, explanation clarity, and confident written and oral expression.
               </p>
               <Link to="/book-demo" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">
-                Book a free assessment
+                Book one free 35-minute 1:1 online demo assessment class
               </Link>
             </article>
           </div>
@@ -597,7 +597,7 @@ export default function GrammarPage() {
                 to="/book-demo"
                 className="mt-6 inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-slate-900 px-6 py-3.5 text-base font-semibold text-white shadow-[0_12px_30px_rgba(15,23,42,0.25)] transition hover:bg-slate-800 sm:w-auto sm:px-7 sm:py-3"
               >
-                Book Free Assessment
+                Book Free 35-Minute Demo
               </Link>
             </div>
             <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-5 md:p-6">
@@ -673,14 +673,14 @@ export default function GrammarPage() {
         <div className="mx-auto max-w-6xl rounded-3xl bg-gradient-to-r from-slate-900 via-[#1f2a44] to-slate-900 p-6 text-center text-white shadow-[0_20px_50px_rgba(15,23,42,0.18)] sm:p-8 md:p-10">
           <h2 className="text-2xl font-bold md:text-3xl">Not sure where your child is stuck in grammar?</h2>
           <p className="mx-auto mt-3 max-w-3xl text-base leading-7 text-slate-200">
-            Book a free assessment and let Tiny Steps identify whether your child needs grammar foundation, sentence formation, tense correction, punctuation, writing clarity, or confident answer-building support first.
+            Book one free 35-minute 1:1 online demo assessment class and let Tiny Steps identify whether your child needs grammar foundation, sentence formation, tense correction, punctuation, writing clarity, or confident answer-building support first.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <Link
               to="/book-demo"
               className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100 sm:w-auto"
             >
-              Book Free Assessment
+              Book Free 35-Minute Demo
             </Link>
           </div>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-200">

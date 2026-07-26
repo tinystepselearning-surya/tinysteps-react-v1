@@ -25,7 +25,7 @@ const PARENT_HELP_POINTS = [
 const CORE_PROGRAMS_TEXT = `${PUBLIC_FACTS.corePrograms[0]}, ${PUBLIC_FACTS.corePrograms[1]}, and ${PUBLIC_FACTS.corePrograms[2]}`;
 const homeSeoTitle = "Online English Classes for Kids in India | Tiny Steps";
 const homeSeoDescription =
-  "Live 1:1 online English classes for kids ages 3–12. Phonics, reading, grammar and speaking with a free assessment and parent updates.";
+  "Live 1:1 online English classes for kids ages 3–12. Phonics, reading, grammar and speaking with a free 35-minute 1:1 online demo assessment class and parent updates.";
 const homeCanonicalPath = "/";
 const homeCanonicalUrl =
   homeCanonicalPath === "/" ? `${PUBLIC_FACTS.primaryWebsite}/` : `${PUBLIC_FACTS.primaryWebsite}${homeCanonicalPath}`;
@@ -215,9 +215,9 @@ export default function HomePage() {
             <div className="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-sky-200/30 blur-3xl" />
             <div className="pointer-events-none absolute -left-8 bottom-0 h-36 w-36 rounded-full bg-indigo-100/35 blur-3xl" />
             <div className="relative inline-flex rounded-full border border-sky-200/80 bg-white/82 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.30em] text-sky-900 shadow-[0_10px_25px_rgba(125,160,210,0.16)] backdrop-blur">
-              Free assessment
+              One free 35-minute 1:1 demo assessment
             </div>
-            <h2 className="mt-5 max-w-xl text-2xl font-semibold tracking-[-0.04em] text-slate-900 sm:text-[2.15rem] sm:leading-[1.05]">What we check in the free assessment</h2>
+            <h2 className="mt-5 max-w-xl text-2xl font-semibold tracking-[-0.04em] text-slate-900 sm:text-[2.15rem] sm:leading-[1.05]">What we check in the free 35-minute 1:1 online demo assessment class</h2>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-700 sm:text-[1.02rem]">
               The assessment helps Tiny Steps understand where your child is currently getting stuck before recommending the best starting point.
             </p>
@@ -245,7 +245,7 @@ export default function HomePage() {
                 to="/book-demo"
                 className="inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,#0f172a_0%,#1e3a8a_100%)] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(37,99,235,0.28)] transition hover:brightness-110"
               >
-                Book Free Assessment
+                Book Free 35-Minute Demo
               </Link>
             </div>
           </div>

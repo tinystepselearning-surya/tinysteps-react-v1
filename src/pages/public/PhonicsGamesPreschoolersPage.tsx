@@ -131,7 +131,7 @@ export default function PhonicsGamesPreschoolersPage() {
           to="/book-demo"
           className="inline-block bg-[#4a7c2c] hover:bg-[#2d5016] text-white font-bold py-3 px-6 rounded-lg transition"
         >
-          Book Free Assessment
+          Book Free 35-Minute Demo
         </Link>
         <p className="mt-4 text-sm text-gray-600">
           Want the complete curriculum view?{' '}
@@ -246,7 +246,7 @@ export default function PhonicsGamesPreschoolersPage() {
             to="/book-demo"
             className="inline-block bg-white border border-[#4a7c2c] text-[#2d5016] font-bold py-3 px-6 rounded-lg transition"
           >
-            Book Free Assessment
+            Book Free 35-Minute Demo
           </Link>
         </div>
       </section>

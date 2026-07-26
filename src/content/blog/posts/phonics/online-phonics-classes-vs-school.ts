@@ -45,7 +45,7 @@ const post: PhonicsSeoPost = {
     label: 'Compare course pathways',
     to: '/courses'
   }, {
-    label: 'Book free assessment',
+    label: 'Book Free 35-Minute Demo',
     to: '/book-demo'
   }, {
     label: 'Parent support guide: child not reading properly',

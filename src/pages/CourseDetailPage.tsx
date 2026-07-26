@@ -211,13 +211,13 @@ const CourseDetailPage: FC = () => {
           <CourseCTAGroup
             items={[
               {
-                label: 'Book Free Assessment',
+                label: 'Book Free 35-Minute Demo',
                 to: '/book-demo',
                 variant: 'primary',
                 onClick: () =>
                   trackCoursePageCtaClick({
                     page_path: canonicalPath,
-                    cta_label: 'Book Free Assessment',
+                    cta_label: 'Book Free 35-Minute Demo',
                     cta_location: 'hero',
                     destination_path: '/book-demo',
                     program: courseTrack,
@@ -262,7 +262,7 @@ const CourseDetailPage: FC = () => {
           <LeadCard className="bg-[linear-gradient(150deg,rgba(255,255,255,0.98),rgba(248,251,255,0.94),rgba(255,250,244,0.92))]">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Parent trust</p>
             <p className="mt-3 text-sm leading-7 text-slate-700">
-              This page includes a curated sample of parent feedback for this learning track. If you are unsure whether this is the right starting point, book the free assessment first and ask for the exact first 12-class plan before enrolling.
+              This page includes a curated sample of parent feedback for this learning track. If you are unsure whether this is the right starting point, book the free 35-minute 1:1 online demo assessment class first and ask for the exact first 12-class plan before enrolling.
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
@@ -359,13 +359,13 @@ const CourseDetailPage: FC = () => {
             <CourseCTAGroup
               items={[
                 {
-                  label: 'Book Free Assessment',
+                  label: 'Book Free 35-Minute Demo',
                   to: '/book-demo',
                   variant: 'primary',
                   onClick: () =>
                     trackCoursePageCtaClick({
                       page_path: canonicalPath,
-                      cta_label: 'Book Free Assessment',
+                      cta_label: 'Book Free 35-Minute Demo',
                       cta_location: 'footer',
                       destination_path: '/book-demo',
                       program: courseTrack,

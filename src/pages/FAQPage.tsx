@@ -6,6 +6,10 @@ import { Link } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import FAQAccordion, { FAQItem } from '../components/FAQ/FAQAccordion';
 import Meta from '../components/common/Meta';
+import {
+  FREE_DEMO_FULL_DESCRIPTION,
+  STANDARD_PRICING_SUMMARY,
+} from '../config/publicOffer';
 // Meta removed — use applySeo as single source of truth
 
 const items: FAQItem[] = [
@@ -31,16 +35,34 @@ const items: FAQItem[] = [
   { id: 'q18', category: 'speaking', question: 'Nervous during presentations—any tips?', answer: 'Practice 5+ times, know content, breathe (3 deep breaths), focus on 1 friendly face. Our capstones start low‑pressure with teacher + parent before larger settings.', relatedBlog: '/blog/week-21-speaking-competition-prep', relatedCourse: '/speaking' },
   { id: 'q19', category: 'online', question: 'Is online learning as good as offline?', answer: 'For English, 1:1 online often outperforms batch offline: personalization, recordings, flexibility, global teachers. Offline offers socialization. For serious skill gains, 1:1 online wins.' },
   { id: 'q20', category: 'online', question: 'How do I ensure my child is actually learning online?', answer: 'Demand transparency: stage-based progress updates, recordings, home tasks, monthly calls, mastery bands. Tiny Steps provides all five so you can verify learning.' },
-  { id: 'q21', category: 'summer', question: 'What is Tiny Steps Summer Camp 2026?', answer: 'Tiny Steps Summer Camp 2026 is a structured online summer season for ages 4–12 running from 27 April 2026 to 13 June 2026. Each child joins one separate 4-week batch with 24 live classes from Monday to Saturday and Sunday kept as a holiday. Parents choose one track-specific batch: Phonics Fast Track, Grammar Fast Track, or Speaking Fast Track.' },
+  { id: 'q21', category: 'summer', question: 'What was Tiny Steps Summer Camp 2026?', answer: 'Summer Camp 2026 enrolment is closed. The camp ended on 13 June 2026. Each child joined one four-week batch with 24 live small-group classes from Monday to Saturday.' },
   { id: 'q22', category: 'summer', question: 'What ages is the camp for?', answer: 'Ages 4–12. We split into cohorts: Foundation (4–5), Core (6–7), Intermediate (8–10), Advanced (10–12). Each learns at their level.' },
-  { id: 'q23', category: 'summer', question: 'What will my child learn in the summer camp?', answer: 'Children build stronger phonics foundations, cleaner grammar usage, better reading confidence, and more natural communication through live guided practice. The program also includes worksheets, class recordings, and a quick level check before placement.' },
+  { id: 'q23', category: 'summer', question: 'What did children learn in Summer Camp 2026?', answer: 'Children built stronger phonics foundations, cleaner grammar usage, better reading confidence, and more natural communication through live guided practice. The programme also included worksheets, class recordings, and one free 35-minute demo assessment class before placement.' },
   { id: 'q24', category: 'summer', question: 'Is summer camp group-based?', answer: 'Yes. Summer camp is group-focused and capped at 8 students per batch for stronger participation and teacher attention. Check the <a href="/summer-camps#programs" class="text-tiny-green-600">summer camps page</a> for the latest track options.' },
-  { id: 'q25', category: 'summer', question: 'When does the camp start and what is the schedule?', answer: 'The Summer Camp season runs from 27 April 2026 to 13 June 2026. Each child joins one 4-week batch with 24 live classes from Monday to Saturday, and Sunday is kept as a holiday. <a href="/summer-camps" class="text-tiny-green-600">Visit the summer camps page</a> for the full snapshot.' },
-  { id: 'q25a', category: 'summer', question: 'Are there multiple batch start dates?', answer: 'Yes. Available batch start dates are 27 April, 4 May, 11 May and 18 May 2026. Parents can choose the best-fit start date based on their child’s holiday plans and readiness.' },
-  { id: 'q25b', category: 'summer', question: 'Will the camp finish before school reopens?', answer: 'Yes. The final batch starts on 18 May 2026 and is designed to close by 13 June 2026, before schools reopen on 15 June 2026.' },
-  { id: 'q26', category: 'summer', question: 'How do I enroll or book an assessment for summer camp?', answer: 'Use the <a href="/summer-camps" class="text-tiny-green-600">summer camps page</a> to choose from the available batch start dates and enquire or enroll. Parents can book a quick level check before joining, or use the <a href="/contact" class="text-tiny-blue-600">contact form</a> for help with placement.' },
-  { id: 'q27', category: 'pricing', question: 'What class packages do you offer?', answer: 'We offer two formats. Tiny Steps Standard (classes with expert Indian teachers): 1:1 starts at ₹400/class, with 12/16/24 class monthly plans. Tiny Steps Ultra Premium (classes with native English-speaking teachers): 1:1 is ₹1,899/class or ₹22,799 for 12 classes, and group options are available from ₹1,099 to ₹599 per child per class based on batch size. See the <a href="/pricing" class="text-tiny-green-600">pricing page</a> for the full comparison.' },
-  { id: 'q28', category: 'pricing', question: 'Do you offer a free trial or assessment?', answer: 'Yes. Every child gets a free 20-minute assessment where our mentor evaluates English level, learning style, and goals. No obligation or credit card needed.' },
+  { id: 'q25', category: 'summer', question: 'What was the Summer Camp 2026 schedule?', answer: 'The camp ended on 13 June 2026. Each child joined one four-week batch with 24 live classes from Monday to Saturday. <a href="/summer-camps" class="text-tiny-green-600">Visit the archived Summer Camp page</a> for the historical snapshot.' },
+  { id: 'q25a', category: 'summer', question: 'Were there multiple batch start dates?', answer: 'Yes. Historical batch start dates were 27 April, 4 May, 11 May and 18 May 2026. Enrolment is now closed.' },
+  { id: 'q25b', category: 'summer', question: 'Did the camp finish before school reopened?', answer: 'Yes. Summer Camp 2026 ended on 13 June 2026, before schools reopened on 15 June 2026.' },
+  {
+    id: 'q26',
+    category: 'summer',
+    question: 'How did placement work for Summer Camp 2026?',
+    answer:
+      'Summer Camp 2026 enrolment is closed. Children were placed after one free 35-minute demo assessment class. Visit the <a href="/summer-camps" class="text-tiny-green-600">archived Summer Camp page</a> for the historical programme details.',
+  },
+  {
+    id: 'q27',
+    category: 'pricing',
+    question: 'What class packages do you offer?',
+    answer:
+      `${STANDARD_PRICING_SUMMARY}. Standard 1:1 monthly plans are ₹4,800 for 12 classes, ₹6,400 for 16 classes, and ₹9,600 for 24 classes. Tiny Steps Ultra Premium pricing is shown separately on the <a href="/pricing" class="text-tiny-green-600">pricing page</a>.`,
+  },
+  {
+    id: 'q28',
+    category: 'pricing',
+    question: 'Do you offer a free demo assessment class?',
+    answer:
+      `${FREE_DEMO_FULL_DESCRIPTION} It costs ₹0, requires no credit card, and there is no obligation to enrol.`,
+  },
   { id: 'q29', category: 'pricing', question: 'What payment methods do you accept?', answer: 'Bank transfer (manual), UPI, and automated subscription (autopay). All payments are secure and receipted. Invoices sent automatically after each transaction.' },
   { id: 'q30', category: 'pricing', question: 'Do you provide invoices and receipts?', answer: 'Yes. Invoices and GST receipts sent via email after every payment. Keep them for records or reimbursement.' },
   { id: 'q31', category: 'pricing', question: 'What if I need to reschedule or cancel?', answer: 'Reschedule anytime with 24-hour notice via WhatsApp or dashboard. Cancellation policy: refund unused classes if cancelled 7+ days before class date. Specific terms vary by package—check your agreement.' },
@@ -98,9 +120,9 @@ const schemaFaqItems: Array<{ question: string; answer: string }> = [
       'Programs are designed for children aged 3 to 12 years, with level-based progression and age-appropriate learning goals.',
   },
   {
-    question: 'How does the free assessment work?',
+    question: 'How does the free 35-minute 1:1 online demo assessment class work?',
     answer:
-      'The free assessment is a short one-on-one session where a mentor checks your child’s current level, learning needs, and next-step goals.',
+      'The free 35-minute 1:1 online demo assessment class is a short one-on-one session where a mentor checks your child’s current level, learning needs, and next-step goals.',
   },
   {
     question: 'How are phonics classes structured?',
@@ -135,7 +157,7 @@ const schemaFaqItems: Array<{ question: string; answer: string }> = [
   {
     question: 'How can parents book a class?',
     answer:
-      'Parents can request a free assessment through the booking flow or contact support, then choose the right class plan after level guidance.',
+      'Parents can request a free 35-minute 1:1 online demo assessment class through the booking flow or contact support, then choose the right class plan after level guidance.',
   },
 ];
 
@@ -346,7 +368,7 @@ const FAQPage: FC = () => {
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">Need a structured plan?</p>
               <h2 className="mt-3 text-3xl font-black tracking-tight">Move from answers to action</h2>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-200">
-                Use the Parents Hub for step-by-step routines, or book a free assessment if you want a level-based recommendation instead of trial and error.
+                Use the Parents Hub for step-by-step routines, or book one free 35-minute 1:1 online demo assessment class if you want a level-based recommendation instead of trial and error.
               </p>
             </div>
             <div className="flex flex-wrap gap-3 lg:justify-end">
@@ -360,7 +382,7 @@ const FAQPage: FC = () => {
                 to="/book-demo"
                 className="inline-flex items-center rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
               >
-                Book Free Assessment
+                Book Free 35-Minute Demo
               </Link>
             </div>
           </div>

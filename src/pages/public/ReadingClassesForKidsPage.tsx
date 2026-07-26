@@ -129,7 +129,7 @@ export default function ReadingClassesForKidsPage() {
     applySeo({
       title: 'Reading Classes for Kids in India | Tiny Steps',
       description:
-        'Live online reading classes for kids in India. Build word reading, reading fluency, story comprehension, vocabulary and reading aloud confidence. Book a free assessment.',
+        'Live online reading classes for kids in India. Build word reading, reading fluency, story comprehension, vocabulary and reading aloud confidence. Book one free 35-minute 1:1 online demo assessment class.',
       canonicalPath,
       robots: 'index,follow',
       ogType: 'website',
@@ -167,7 +167,7 @@ export default function ReadingClassesForKidsPage() {
                 Help your child build reading fluency, story comprehension, and reading aloud confidence through structured live online reading classes for kids in India.
               </p>
               <p className="mt-3 max-w-full text-base leading-7 text-slate-700 md:mt-4 md:max-w-[660px] md:text-lg md:leading-8">
-                Tiny Steps follows an assessment-first reading path to understand whether your child needs phonics support, fluency practice, comprehension help, or reading-aloud confidence building. Ready to move forward? <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2 hover:text-sky-700">book a free assessment</Link>.
+                Tiny Steps follows an assessment-first reading path to understand whether your child needs phonics support, fluency practice, comprehension help, or reading-aloud confidence building. Ready to move forward? <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2 hover:text-sky-700">book one free 35-minute 1:1 online demo assessment class</Link>.
               </p>
 
               <div className="mt-7">
@@ -175,7 +175,7 @@ export default function ReadingClassesForKidsPage() {
                   to="/book-demo"
                   className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-slate-900 px-6 py-3.5 text-base font-bold text-white shadow-[0_10px_24px_rgba(15,23,42,0.2)] transition hover:bg-slate-800 sm:w-auto sm:min-w-[230px] md:px-8 md:py-4"
                 >
-                  Book Free Assessment
+                  Book Free 35-Minute Demo
                 </Link>
                 <p className="mt-3 text-sm text-slate-600 md:text-[15px]">Takes 20-30 seconds • No commitment</p>
               </div>
@@ -255,7 +255,7 @@ export default function ReadingClassesForKidsPage() {
             </p>
             <h2 className="mb-3 mt-3 text-2xl font-bold leading-tight text-slate-900 md:text-[30px]">Quick Answer: What do reading classes for kids include?</h2>
             <p className="max-w-[920px] text-base leading-7 text-slate-700 md:text-[17px]">
-              Reading classes for kids should help children move from word reading to sentence reading, reading fluency, story understanding, vocabulary, comprehension, and reading aloud confidence. Tiny Steps begins with a free assessment to identify whether the child needs phonics support, fluency practice, comprehension help, or confidence while reading aloud.
+              Reading classes for kids should help children move from word reading to sentence reading, reading fluency, story understanding, vocabulary, comprehension, and reading aloud confidence. Tiny Steps begins with a free 35-minute 1:1 online demo assessment class to identify whether the child needs phonics support, fluency practice, comprehension help, or confidence while reading aloud.
             </p>
           </article>
         </div>
@@ -349,7 +349,7 @@ export default function ReadingClassesForKidsPage() {
         <div className="mx-auto max-w-6xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:rounded-3xl md:p-7">
           <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Online reading classes for kids across India</h2>
           <p className="mt-3 text-base leading-7 text-slate-700">
-            Tiny Steps supports children across India through live online reading classes. Parents from Hyderabad, Bangalore, Chennai, Mumbai, Delhi, Pune, Kolkata, and other locations can <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2">book a free assessment</Link> and receive a level-based reading path.
+            Tiny Steps supports children across India through live online reading classes. Parents from Hyderabad, Bangalore, Chennai, Mumbai, Delhi, Pune, Kolkata, and other locations can <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2">book one free 35-minute 1:1 online demo assessment class</Link> and receive a level-based reading path.
           </p>
           <p className="mt-3 text-sm leading-6 text-slate-700">
             If your child needs decoding support first, compare our <Link to="/best-online-phonics-classes-for-kids-in-india" className="font-semibold text-slate-900 underline underline-offset-2">best online phonics classes for kids in India</Link> guide.
@@ -416,7 +416,7 @@ export default function ReadingClassesForKidsPage() {
             ))}
           </ul>
           <p className="mt-4 text-sm leading-6 text-slate-700">
-            Reinforce class learning at home with <Link to="/free-games" className="font-semibold text-slate-900 underline underline-offset-2">free learning games</Link>, review <Link to="/pricing" className="font-semibold text-slate-900 underline underline-offset-2">class pricing</Link>, and <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2">book a free assessment</Link> when ready.
+            Reinforce class learning at home with <Link to="/free-games" className="font-semibold text-slate-900 underline underline-offset-2">free learning games</Link>, review <Link to="/pricing" className="font-semibold text-slate-900 underline underline-offset-2">class pricing</Link>, and <Link to="/book-demo" className="font-semibold text-slate-900 underline underline-offset-2">book one free 35-minute 1:1 online demo assessment class</Link> when ready.
           </p>
         </div>
       </section>
@@ -512,7 +512,7 @@ export default function ReadingClassesForKidsPage() {
                 Paragraph reading, inference, vocabulary, expressive reading, explanation of what they read, and school comprehension confidence.
               </p>
               <Link to="/book-demo" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">
-                Book a free assessment
+                Book one free 35-minute 1:1 online demo assessment class
               </Link>
             </article>
           </div>
@@ -534,7 +534,7 @@ export default function ReadingClassesForKidsPage() {
                 to="/book-demo"
                 className="mt-6 inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-slate-900 px-6 py-3.5 text-base font-semibold text-white shadow-[0_12px_30px_rgba(15,23,42,0.25)] transition hover:bg-slate-800 sm:w-auto sm:px-7 sm:py-3"
               >
-                Book Free Assessment
+                Book Free 35-Minute Demo
               </Link>
             </div>
             <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-5 md:p-6">
@@ -610,14 +610,14 @@ export default function ReadingClassesForKidsPage() {
         <div className="mx-auto max-w-6xl rounded-3xl bg-gradient-to-r from-slate-900 via-[#1f2a44] to-slate-900 p-6 text-center text-white shadow-[0_20px_50px_rgba(15,23,42,0.18)] sm:p-8 md:p-10">
           <h2 className="text-2xl font-bold md:text-3xl">Not sure where your child is stuck in reading?</h2>
           <p className="mx-auto mt-3 max-w-3xl text-base leading-7 text-slate-200">
-            Book a free assessment and let Tiny Steps identify whether your child needs phonics, word reading, sentence reading, fluency, comprehension, or reading confidence support first.
+            Book one free 35-minute 1:1 online demo assessment class and let Tiny Steps identify whether your child needs phonics, word reading, sentence reading, fluency, comprehension, or reading confidence support first.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <Link
               to="/book-demo"
               className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-white px-8 py-3 font-semibold text-slate-900 transition hover:bg-slate-100 sm:w-auto"
             >
-              Book Free Assessment
+              Book Free 35-Minute Demo
             </Link>
           </div>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-200">

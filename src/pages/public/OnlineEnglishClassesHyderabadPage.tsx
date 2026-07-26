@@ -38,9 +38,9 @@ const faqItems = [
       'Yes. Tiny Steps offers online phonics classes for Hyderabad children who need help with letter sounds, blending, decoding, reading fluency, and confidence.',
   },
   {
-    question: 'Is there a free assessment before joining?',
+    question: 'Is there a free 35-minute 1:1 online demo assessment class before joining?',
     answer:
-      'Yes. Parents can book a free assessment to understand the child’s current level and receive a suitable course recommendation before enrollment.',
+      'Yes. Parents can book one free 35-minute 1:1 online demo assessment class to understand the child’s current level and receive a suitable course recommendation before enrollment.',
   },
 ];
 
@@ -110,7 +110,7 @@ export default function OnlineEnglishClassesHyderabadPage() {
     applySeo({
       title: 'Online English Classes for Kids in Hyderabad | Tiny Steps Learning',
       description:
-        'Live online English classes for kids in Hyderabad covering phonics, reading, grammar, sentence formation, and communication confidence. Book a free assessment.',
+        'Live online English classes for kids in Hyderabad covering phonics, reading, grammar, sentence formation, and communication confidence. Book one free 35-minute 1:1 online demo assessment class.',
       canonicalPath,
       ogType: 'website',
       jsonLd: [breadcrumbSchema, hyderabadEducationalOrganizationSchema, serviceSchema, faqSchema],
@@ -136,7 +136,7 @@ export default function OnlineEnglishClassesHyderabadPage() {
           { label: '5000+ students served', tone: 'warm' as const },
           { label: 'Families in 15+ countries', tone: 'cool' as const },
           { label: 'Live online classes from home', tone: 'neutral' as const },
-          { label: 'Free assessment before enrollment', tone: 'mint' as const },
+          { label: 'One free 35-minute 1:1 demo assessment class before enrolment', tone: 'mint' as const },
         ]}
         stats={[
           { label: 'Per class', value: '₹400', helper: 'current approved pricing' },
@@ -147,7 +147,7 @@ export default function OnlineEnglishClassesHyderabadPage() {
         actions={
           <CourseCTAGroup
             items={[
-              { to: '/book-demo', label: 'Book Free Assessment', variant: 'primary' },
+              { to: '/book-demo', label: 'Book Free 35-Minute Demo', variant: 'primary' },
               { to: '/courses', label: 'Explore Courses', variant: 'ghost' },
               { to: '/online-english-classes-for-kids', label: 'See India and Worldwide Page', variant: 'secondary' },
             ]}
@@ -164,7 +164,7 @@ export default function OnlineEnglishClassesHyderabadPage() {
             <div className="mt-4 space-y-3 text-sm leading-7 text-slate-200">
               <p>It avoids travel across city traffic.</p>
               <p>Children learn from home in a familiar environment.</p>
-              <p>Parents can compare weekday and weekend timing options after the free assessment.</p>
+              <p>Parents can compare weekday and weekend timing options after the free 35-minute 1:1 online demo assessment class.</p>
               <p>Live teacher guidance gives correction instead of only recorded exposure.</p>
             </div>
           </LeadCard>
@@ -203,7 +203,7 @@ export default function OnlineEnglishClassesHyderabadPage() {
             <div className="mt-5 space-y-3 text-sm leading-7 text-slate-700">
               <p>Families often want strong English support without adding another city commute.</p>
               <p>Online classes make it easier to fit after-school, evening, and weekend routines around real family schedules.</p>
-              <p>Parents can start with a free assessment, compare pricing, and decide only after they understand the child’s current gap.</p>
+              <p>Parents can start with a free 35-minute 1:1 online demo assessment class, compare pricing, and decide only after they understand the child’s current gap.</p>
             </div>
             <p className="mt-5 text-sm leading-7 text-slate-700">
               Need the broader India and worldwide page instead? Visit{' '}
@@ -234,7 +234,7 @@ export default function OnlineEnglishClassesHyderabadPage() {
               <p>• 5000+ students served</p>
               <p>• Families in 15+ countries</p>
               <p>• Founder and teacher-led learning</p>
-              <p>• Free assessment before course recommendation</p>
+              <p>• One free 35-minute 1:1 demo assessment class before course recommendation</p>
             </div>
           </LeadCard>
         </div>
@@ -244,7 +244,7 @@ export default function OnlineEnglishClassesHyderabadPage() {
         <LeadCard>
           <LeadSectionHeading
             eyebrow="Assessment flow"
-            title="How the free assessment works"
+            title="How the free 35-minute 1:1 online demo assessment class works"
             description="Parents get guidance before enrollment, not after."
           />
           <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -277,12 +277,12 @@ export default function OnlineEnglishClassesHyderabadPage() {
           title="Not sure which English class your child needs?"
           description={
             <>
-              Start with a free assessment. Tiny Steps will check the child’s current level and recommend the right starting point for phonics, reading, grammar, sentence formation, or speaking confidence.
+              Start with a free 35-minute 1:1 online demo assessment class. Tiny Steps will check the child’s current level and recommend the right starting point for phonics, reading, grammar, sentence formation, or speaking confidence.
             </>
           }
           actions={
             <CourseCTAGroup
-              items={[{ to: '/book-demo', label: 'Book Free Assessment', variant: 'primary' }]}
+              items={[{ to: '/book-demo', label: 'Book Free 35-Minute Demo', variant: 'primary' }]}
               renderLink={(item, className) => (
                 <Link key={item.label} to={item.to || '/'} className={className}>
                   {item.label}

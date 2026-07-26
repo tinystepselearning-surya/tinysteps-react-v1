@@ -76,7 +76,7 @@ const faqItems = [
   {
     question: 'How do I know which English class my child needs first?',
     answer:
-      'Tiny Steps starts with a free assessment to check whether the main gap is phonics, reading, grammar, sentence formation, or spoken English confidence.',
+      'Tiny Steps starts with a free 35-minute 1:1 online demo assessment class to check whether the main gap is phonics, reading, grammar, sentence formation, or spoken English confidence.',
   },
   {
     question: 'Do you offer one-on-one English classes for kids?',
@@ -91,7 +91,7 @@ const faqItems = [
   {
     question: 'What is the pricing preview for parents?',
     answer:
-      'The current approved pricing preview is ₹400 per class and ₹4,800 for 12 classes. Parents can review pricing after the free assessment confirms the right starting path.',
+      'The current approved pricing preview is ₹400 per class and ₹4,800 for 12 classes. Parents can review pricing after the free 35-minute 1:1 online demo assessment class confirms the right starting path.',
   },
   {
     question: 'Do you support families outside India?',
@@ -137,7 +137,7 @@ export default function OnlineEnglishClassesForKidsPage() {
     applySeo({
       title: 'Online English Classes for Kids in India and Worldwide | Tiny Steps',
       description:
-        'Live online English classes for kids with phonics, reading, grammar, spoken English, and confidence-building support. Book a free assessment and review transparent pricing.',
+        'Live online English classes for kids with phonics, reading, grammar, spoken English, and confidence-building support. Book one free 35-minute 1:1 online demo assessment class and review transparent pricing.',
       canonicalPath,
       ogType: 'website',
       jsonLd: [breadcrumbSchema, courseSchema, faqSchema],
@@ -155,7 +155,7 @@ export default function OnlineEnglishClassesForKidsPage() {
               Tiny Steps offers live 1:1 and small-group online English classes for kids who need a clear path across phonics, reading, grammar, spoken English, and presentation confidence.
             </p>
             <p className="mt-3">
-              Parents start with a free assessment, see transparent pricing, review class samples, and get visible progress through weekly updates instead of generic tuition promises.
+              Parents start with a free 35-minute 1:1 online demo assessment class, see transparent pricing, review class samples, and get visible progress through weekly updates instead of generic tuition promises.
             </p>
           </>
         }
@@ -173,7 +173,7 @@ export default function OnlineEnglishClassesForKidsPage() {
         actions={
           <CourseCTAGroup
             items={[
-              { to: '/book-demo', label: 'Book Free Assessment', variant: 'primary' },
+              { to: '/book-demo', label: 'Book Free 35-Minute Demo', variant: 'primary' },
               { to: '/pricing', label: 'See Pricing', variant: 'ghost' },
               { to: '/class-samples', label: 'See Class Samples', variant: 'secondary' },
             ]}
@@ -190,7 +190,7 @@ export default function OnlineEnglishClassesForKidsPage() {
             <div className="mt-4 grid gap-3">
               {[
                 'Structured pathways instead of broad tuition coverage',
-                'Free assessment before recommending the first class plan',
+                'One free 35-minute 1:1 demo assessment class before recommending the first class plan',
                 'Founder and teacher-led learning quality',
                 'Class samples, pricing clarity, and parent-visible progress',
               ].map((item) => (
@@ -294,7 +294,7 @@ export default function OnlineEnglishClassesForKidsPage() {
           <LeadCard>
             <LeadSectionHeading
               eyebrow="How it works"
-              title="How the free assessment works"
+              title="How the free 35-minute 1:1 online demo assessment class works"
               description="Parents get a recommendation before they spend time or money."
             />
             <ol className="mt-5 space-y-3 text-sm leading-7 text-slate-700">
@@ -381,13 +381,13 @@ export default function OnlineEnglishClassesForKidsPage() {
           title="Ready to choose the right English starting point for your child?"
           description={
             <>
-              Start with a free assessment, then review pricing, class samples, and the recommended path for phonics, reading, grammar, or speaking confidence.
+              Start with a free 35-minute 1:1 online demo assessment class, then review pricing, class samples, and the recommended path for phonics, reading, grammar, or speaking confidence.
             </>
           }
           actions={
             <CourseCTAGroup
               items={[
-                { to: '/book-demo', label: 'Book Free Assessment', variant: 'primary' },
+                { to: '/book-demo', label: 'Book Free 35-Minute Demo', variant: 'primary' },
                 { to: '/class-samples', label: 'See Class Samples', variant: 'ghost' },
               ]}
               renderLink={(item, className) => (

@@ -470,7 +470,7 @@ const BlogPage: FC = () => {
                   to="/book-demo"
                   className="inline-flex items-center rounded-full border border-white/18 bg-white/8 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/12"
                 >
-                  Book Free Assessment
+                  Book Free 35-Minute Demo
                 </Link>
               </div>
 

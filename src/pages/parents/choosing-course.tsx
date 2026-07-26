@@ -50,7 +50,7 @@ const faqItems = [
   {
     question: 'Is it better to book an assessment before choosing a course?',
     answer:
-      'Yes. A free assessment reduces guesswork, avoids wrong placement, and helps families choose with more confidence.',
+      'Yes. A free 35-minute 1:1 online demo assessment class reduces guesswork, avoids wrong placement, and helps families choose with more confidence.',
   },
 ];
 
@@ -169,13 +169,13 @@ const ChoosingCourse: React.FC = () => {
 
   const ctaItems = [
     {
-      label: 'Book Free Assessment',
+      label: 'Book Free 35-Minute Demo',
       to: '/book-demo',
       variant: 'primary' as const,
       onClick: () =>
         trackParentCourseInterest({
           page_path: '/parents/choosing-course',
-          cta_label: 'Book Free Assessment',
+          cta_label: 'Book Free 35-Minute Demo',
           cta_location: 'hero',
           destination_path: '/book-demo',
         }),
@@ -212,7 +212,7 @@ const ChoosingCourse: React.FC = () => {
           { label: `${formatINR(400)}/class`, tone: 'neutral' },
           { label: `${formatINR(starterPlan.monthlyFee)} for 12 classes`, tone: 'mint' },
         ]}
-        supportingText="Most families book a free assessment first, then choose one clear first focus instead of trying to fix everything at once."
+        supportingText="Most families book one free 35-minute 1:1 online demo assessment class first, then choose one clear first focus instead of trying to fix everything at once."
         stats={[
           { label: 'Students guided', value: '5000+', helper: 'Structured pathways across phonics, grammar, reading, and speaking' },
           { label: 'Countries served', value: '15+', helper: 'Parents use Tiny Steps from India and global school communities' },
@@ -384,7 +384,7 @@ const ChoosingCourse: React.FC = () => {
       <LeadSection className="pb-4">
         <FinalLeadCTA
           title="Need a clear first-step recommendation?"
-          description="Book the free assessment for placement clarity, or message the academic advisor if you want help deciding between phonics, reading, grammar, or speaking support before you book."
+          description="Book the free 35-minute 1:1 online demo assessment class for placement clarity, or message the academic advisor if you want help deciding between phonics, reading, grammar, or speaking support before you book."
           actions={
             <CourseCTAGroup
               items={[
