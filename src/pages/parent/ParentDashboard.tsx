@@ -30,6 +30,9 @@ import ParentInsightsView from "./components/insights/ParentInsightsView";
 import ParentLearningInsights from "./components/ParentLearningInsights";
 import ParentLessonTracker from "./components/ParentLessonTracker";
 import ParentMobileHeader from "./components/ParentMobileHeader";
+import ParentPaymentOptionsDialog from "./components/payments/ParentPaymentOptionsDialog";
+import ParentPaymentsView from "./components/payments/ParentPaymentsView";
+import ParentProfilePaymentsPanel from "./components/payments/ParentProfilePaymentsPanel";
 import ParentProgressOverview from "./components/ParentProgressOverview";
 import ParentRecommendations from "./components/ParentRecommendations";
 import ParentShellLoading from "./components/ParentShellLoading";
@@ -79,7 +82,7 @@ import {
   worksheetMatchesContext,
   type ParentWorksheetItem,
 } from "../../lib/parentWorksheets";
-import { hapticLight, hapticSelection, hapticSuccess } from "../../lib/nativeHaptics";
+import { hapticLight, hapticSelection } from "../../lib/nativeHaptics";
 import {
   formatIndiaTimeRange,
   formatSessionDate as formatSessionViewerDate,
@@ -121,6 +124,15 @@ import {
   type ParentInsightStageDisplay,
   type ParentInsightTeacherDisplay,
 } from "./components/insights/parentInsightsPresentation";
+import {
+  filterParentClassCharges,
+  getParentWalletDisplayState,
+  resolveVerifiedParentRate,
+  type ParentClassChargeDisplay,
+  type ParentClassChargeFilter,
+  type ParentPaymentDisplay,
+  type ParentPaymentPeriodSummary,
+} from "./components/payments/parentPaymentsPresentation";
 
 type TabKey = ParentTabKey;
 
@@ -250,6 +262,8 @@ type ParentPaymentRecord = {
   createdAt?: any;
   kidId?: string;
   enrollmentId?: string;
+  reference?: string;
+  note?: string;
   [key: string]: any;
 };
 
@@ -269,6 +283,9 @@ type ParentWalletTransaction = {
   note?: string;
   reason?: string;
   description?: string;
+  method?: string;
+  reference?: string;
+  status?: string;
   createdAt?: any;
   paidAt?: any;
   [key: string]: any;
@@ -3669,12 +3686,12 @@ export default function ParentDashboard() {
   const walletAdvanceBalance = walletBalance !== null && walletBalance > 0 ? walletBalance : 0;
   const walletStatusLabel =
     walletBalance === null
-      ? "Wallet not available"
+      ? "Wallet unavailable"
       : walletBalance < 0
-        ? `Amount to pay: ₹${Math.abs(walletBalance).toLocaleString("en-IN")}`
+        ? `Amount due: ₹${Math.abs(walletBalance).toLocaleString("en-IN")}`
         : walletBalance > 0
           ? `Advance balance: ₹${walletBalance.toLocaleString("en-IN")}`
-          : "No pending amount";
+          : "No amount due";
   const walletLastUpdatedText = toDateOrNull(parentWalletSummaryQuery.data?.lastUpdatedAt)
     ? toDateOrNull(parentWalletSummaryQuery.data?.lastUpdatedAt)!.toLocaleString("en-IN")
     : "—";
@@ -3796,19 +3813,13 @@ export default function ParentDashboard() {
       ).trim();
       const teacherProfile = teacherId ? teacherLookupQuery.data?.[teacherId] : undefined;
       const teacherName = teacherProfile?.name || "";
-      const rawFee =
-        enr.feePerClass ??
-        enr.feePerSession ??
-        enr.ratePerSession ??
-        (enr as any).rate ??
-        null;
-      const fee = rawFee !== null && Number.isFinite(Number(rawFee)) ? Number(rawFee) : null;
+      const parentRate = resolveVerifiedParentRate(enr as Record<string, unknown>);
       return {
         id: enr.id,
         courseId,
         courseLabel: label,
         status: String(enr.status || "active"),
-        fee,
+        parentRate,
         teacherId,
         teacherName,
       };
@@ -3921,9 +3932,6 @@ export default function ParentDashboard() {
                       Teacher: {enr.teacherName || "Assigned soon"}
                     </div>
                   </div>
-                  <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    Fee per class: {enr.fee !== null ? `₹${enr.fee.toLocaleString("en-IN")}` : "—"}
-                  </div>
                 </div>
               ))}
             </div>
@@ -3934,29 +3942,32 @@ export default function ParentDashboard() {
           )}
         </Card>
 
-        <Card className="p-4">
-          <div className="text-xs uppercase tracking-wide text-slate-400">Payments</div>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
-              <div className="text-xs text-slate-500">Wallet Balance</div>
-              <div className="text-lg font-semibold">
-                {walletBalance === null ? "—" : formatCurrencySignedINR(walletBalance)}
-              </div>
-              <div className="mt-1 text-xs text-slate-500">
-                {walletStatusLabel}
-              </div>
-            </div>
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
-              <div className="text-xs text-slate-500">Payments Received (This Month)</div>
-              <div className="text-lg font-semibold">
-                ₹{profilePaymentsSummary.total.toLocaleString("en-IN")}
-              </div>
-              <div className="mt-1 text-xs text-slate-500">
-                Last updated: {walletLastUpdatedText}
-              </div>
-            </div>
-          </div>
-        </Card>
+        <ParentProfilePaymentsPanel
+          walletState={walletDisplayState}
+          paymentsTotal={profilePaymentsSummary.available ? profilePaymentsSummary.total : null}
+          paymentsScopeLabel={
+            profilePaymentsSummary.source === "read_model"
+              ? "Payments recorded this month"
+              : "All recorded payments"
+          }
+          loading={
+            parentWalletSummaryQuery.isLoading ||
+            (!profilePaymentsSummary.available && parentPaymentsQuery.isLoading)
+          }
+          lastUpdatedLabel={walletLastUpdatedLabel}
+          verifiedParentRates={profileEnrollments
+            .filter((enr) => enr.parentRate !== null)
+            .map((enr) => ({
+              enrollmentId: enr.id,
+              courseLabel: enr.courseLabel,
+              amount: enr.parentRate as number,
+              verified: true as const,
+            }))}
+          onOpenPayments={() => {
+            setProfileOpen(false);
+            setTab("payments");
+          }}
+        />
 
         <Card className="p-4">
           <div className="text-xs uppercase tracking-wide text-slate-400">Class Insights</div>
@@ -3989,6 +4000,22 @@ export default function ParentDashboard() {
     parentMonthlyBillingReadModelQuery.isLoading &&
     !parentMonthlyBillingReadModelQuery.data &&
     (billingChargesQuery.isLoading || kidSessionsQuery.isLoading);
+
+  const walletDisplayState = useMemo(
+    () =>
+      getParentWalletDisplayState({
+        balance: walletBalance,
+        loading: parentWalletSummaryQuery.isLoading,
+        error: parentWalletSummaryQuery.isError,
+      }),
+    [
+      parentWalletSummaryQuery.isError,
+      parentWalletSummaryQuery.isLoading,
+      walletBalance,
+    ],
+  );
+  const walletLastUpdatedLabel =
+    walletLastUpdatedText === "—" ? null : walletLastUpdatedText;
 
   const canJoinSession = useCallback((session: KidSession, status: string) => {
     return (
@@ -5947,28 +5974,6 @@ export default function ParentDashboard() {
                 hasActiveClasses ||
                 hasActiveEnrollment;
 
-              const paymentRows = (parentPaymentsQuery.data ?? []) as ParentPaymentRecord[];
-              const kidPayments = selectedKid?.id
-                ? paymentRows.filter(
-                    (p) => String(p.kidId || "") === String(selectedKid.id)
-                  )
-                : paymentRows;
-              const sortedPayments = [...kidPayments].sort((a, b) => {
-                const aTime =
-                  toDateOrNull(a.paidAt || a.createdAt)?.getTime() || 0;
-                const bTime =
-                  toDateOrNull(b.paidAt || b.createdAt)?.getTime() || 0;
-                return bTime - aTime;
-              });
-              const paymentTotals = sortedPayments.reduce(
-                (acc, payment) => {
-                  const rawAmount = Number(payment?.amount ?? 0);
-                  const amount = Number.isFinite(rawAmount) ? rawAmount : 0;
-                  acc.total += amount;
-                  return acc;
-                },
-                { total: 0 }
-              );
               const walletTransactions = (parentWalletTransactionsQuery.data ?? []) as ParentWalletTransaction[];
               const sortedWalletTransactions = [...walletTransactions].sort((a, b) => {
                 const aTime = toDateOrNull(a.createdAt || a.paidAt)?.getTime() || 0;
@@ -5989,6 +5994,7 @@ export default function ParentDashboard() {
                   const direction = String(tx.direction || "").trim().toLowerCase();
                   const type = String(tx.type || "").trim().toLowerCase();
                   const note = String(tx.note || tx.reason || tx.description || "").trim();
+                  const isReversal = type.includes("reversal") || type === "refund";
                   const amountValue = Number.isFinite(rawSigned)
                     ? rawSigned
                     : Number.isFinite(rawAmount)
@@ -6007,6 +6013,12 @@ export default function ParentDashboard() {
                     (tx as any).kidLabel ||
                     ""
                   ).trim() || "—";
+                  const courseName = String(
+                    (tx as any).courseName ||
+                    (tx as any).courseLabel ||
+                    (tx as any).className ||
+                    ""
+                  ).trim();
 
                   const classDebitByType = type.includes("class_deduction") || type.includes("class deduction");
                   const paymentCreditByType =
@@ -6017,9 +6029,11 @@ export default function ParentDashboard() {
                     type.includes("credit");
 
                   const isClassDebit =
+                    !isReversal &&
                     amountAbs > 0 &&
                     (amountValue < 0 || direction === "debit" || classDebitByType);
                   const isPaymentCredit =
+                    !isReversal &&
                     amountAbs > 0 &&
                     (amountValue > 0 || direction === "credit" || paymentCreditByType);
 
@@ -6030,10 +6044,15 @@ export default function ParentDashboard() {
                     monthKey,
                     type,
                     direction,
+                    isReversal,
                     amountValue,
                     amountAbs,
                     studentName,
+                    courseName,
                     note,
+                    method: String(tx.method || "").trim(),
+                    reference: String(tx.reference || "").trim(),
+                    paymentStatus: String(tx.status || "").trim(),
                     balanceAfter: Number.isFinite(Number(tx.balanceAfter))
                       ? Number(tx.balanceAfter)
                       : null,
@@ -6091,14 +6110,76 @@ export default function ParentDashboard() {
                 (row) => row.isPaymentCredit && row.monthKey === classPaymentMonth
               );
 
-              const statusRowsToRender =
-                classPaymentStatusTab === "pending_payment"
-                  ? pendingClassRows
-                  : classPaymentStatusTab === "paid_classes"
-                    ? paidClassRows
-                    : classRowsForSelectedMonth;
+              const classChargeRows: ParentClassChargeDisplay[] = [
+                ...classRowsForSelectedMonth.map((row) => ({
+                  id: row.id,
+                  date: row.txDate,
+                  childName: row.studentName,
+                  courseName: row.courseName || undefined,
+                  amount: row.classFee,
+                  paidAmount: row.paidAmount,
+                  unsettledAmount: row.pendingAmount,
+                  status: row.status === "Paid" ? "settled" as const : "unsettled" as const,
+                  note: row.note || undefined,
+                })),
+                ...normalizedWalletRows
+                  .filter((row) => row.isReversal && row.monthKey === classPaymentMonth)
+                  .map((row) => ({
+                    id: row.id,
+                    date: row.txDate,
+                    childName: row.studentName,
+                    courseName: row.courseName || undefined,
+                    amount: row.amountAbs,
+                    paidAmount: 0,
+                    unsettledAmount: 0,
+                    status: "reversed" as const,
+                    note: row.note || undefined,
+                  })),
+              ].sort((a, b) => a.date.getTime() - b.date.getTime());
+              const chargeFilter: ParentClassChargeFilter =
+                classPaymentStatusTab === "pending_payment" ||
+                classPaymentStatusTab === "paid_classes"
+                  ? classPaymentStatusTab
+                  : "all_classes";
+              const visibleClassChargeRows = filterParentClassCharges(
+                classChargeRows,
+                chargeFilter,
+              );
+              const paymentDisplayRows: ParentPaymentDisplay[] =
+                paymentsReceivedRowsForSelectedMonth.map((row) => ({
+                  id: row.id,
+                  date: row.txDate,
+                  amount: row.amountAbs,
+                  method: row.method || undefined,
+                  status: row.paymentStatus || undefined,
+                  reference: row.reference || undefined,
+                  note: row.note || undefined,
+                }));
+              const paymentPeriodSummary: ParentPaymentPeriodSummary =
+                parentWalletTransactionsQuery.isLoading ||
+                parentWalletTransactionsQuery.isError
+                  ? {
+                      classDeductions: null,
+                      paymentsRecorded: null,
+                      billedClassCount: null,
+                      settledClassCount: null,
+                      unsettledClassCount: null,
+                    }
+                  : {
+                      classDeductions: classRowsForSelectedMonth.reduce(
+                        (sum, row) => sum + row.classFee,
+                        0,
+                      ),
+                      paymentsRecorded: paymentsReceivedRowsForSelectedMonth.reduce(
+                        (sum, row) => sum + row.amountAbs,
+                        0,
+                      ),
+                      billedClassCount: null,
+                      settledClassCount: null,
+                      unsettledClassCount: null,
+                    };
 
-              const handleConfirmPayment = () => {
+              const handleOpenPaymentVerificationWhatsApp = () => {
                 const parentName =
                   String(user?.displayName || "").trim() ||
                   String(user?.email || "").trim() ||
@@ -6112,549 +6193,78 @@ export default function ParentDashboard() {
                     : "[Please enter amount]";
                 const paymentDate = new Date().toLocaleDateString("en-IN");
 
-                const message = `Hello Tiny Steps Team,\n\nI have completed a payment for my child.\n\nParent name: ${parentName}\nChild name: ${childName}\nAmount paid: ${amountPaidText}\nPayment method: ${upiPaymentMethod}\nPayment date: ${paymentDate}\n\nPlease find the payment screenshot attached for verification and update the wallet balance.\n\nThank you.`;
+                const message = `Hello Tiny Steps Team,\n\nI would like to submit payment details for verification.\n\nParent name: ${parentName}\nChild name: ${childName}\nAmount paid: ${amountPaidText}\nPayment method: ${upiPaymentMethod}\nPayment date: ${paymentDate}\n\nI will attach the payment screenshot for verification. Please update the wallet balance after the payment is verified.\n\nThank you.`;
                 const whatsappUrl = `https://wa.me/${TINYSTEPS_WHATSAPP_NUMBER}?text=${encodeURIComponent(
                   message
                 )}`;
                 window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-                hapticSuccess();
+                hapticLight();
               };
 
               return (
                 <>
-                  <Card className="p-4 sm:p-6">
-                    <h2 className="mb-2 text-xl font-bold text-gray-900 dark:text-gray-100">
-                      Payments
-                    </h2>
-                    <p className="mb-4 text-sm text-gray-600 dark:text-gray-400 sm:mb-6">
-                      {selectedKid?.fullName
-                        ? `Viewing: ${selectedKid.fullName}`
-                        : "Select a child"}
-                    </p>
+                  <ParentPaymentsView
+                    isNativeIOSApp={isNativeIOSApp}
+                    childName={selectedKid?.fullName || selectedKid?.name || "the selected child"}
+                    walletState={walletDisplayState}
+                    walletLastUpdatedLabel={walletLastUpdatedLabel}
+                    paymentOptionsAvailable={!isNativeIOSApp}
+                    paymentAssistanceText={IOS_BILLING_ASSISTANCE_TEXT}
+                    selectedMonth={classPaymentMonth}
+                    summary={paymentPeriodSummary}
+                    summaryLoading={parentWalletTransactionsQuery.isLoading}
+                    activityLoading={parentWalletTransactionsQuery.isLoading}
+                    activityError={parentWalletTransactionsQuery.isError}
+                    activityMode={
+                      classPaymentStatusTab === "payments_received" ? "payments" : "charges"
+                    }
+                    chargeFilter={chargeFilter}
+                    chargeRows={visibleClassChargeRows}
+                    chargeCounts={null}
+                    paymentRows={paymentDisplayRows}
+                    membership={{
+                      active: isActive,
+                      enrollmentDateLabel: enrollmentDate
+                        ? enrollmentDate.toLocaleDateString("en-IN")
+                        : null,
+                      startDateLabel: displayStartDate
+                        ? displayStartDate.toLocaleDateString("en-IN")
+                        : null,
+                      endDateLabel: membershipEndDate
+                        ? membershipEndDate.toLocaleDateString("en-IN")
+                        : null,
+                    }}
+                    onOpenPaymentOptions={() => {
+                      hapticLight();
+                      setUpiQrImageLoadFailed(false);
+                      setUpiPaymentMethod("UPI");
+                      setUpiAmountInput("");
+                      setShowQrModal(true);
+                    }}
+                    onViewClasses={() => setTab("classes")}
+                    onMonthChange={setClassPaymentMonth}
+                    onActivityModeChange={(mode) =>
+                      setClassPaymentStatusTab(
+                        mode === "payments" ? "payments_received" : "all_classes",
+                      )
+                    }
+                    onChargeFilterChange={setClassPaymentStatusTab}
+                  />
 
-                    <div className="flex flex-col">
-                      <div className="order-1 mb-4 sm:mb-6">
-                        <h3 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
-                          Membership
-                        </h3>
-                        <div className="rounded-lg border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-3 dark:border-gray-700 dark:from-slate-800 dark:to-slate-900 sm:p-4">
-                          <div className="mb-3 flex items-center justify-between">
-                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                              Status
-                            </span>
-                            <span
-                              className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                                isActive
-                                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                                  : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
-                              }`}
-                            >
-                              {isActive ? "Active" : "Expired"}
-                            </span>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex justify-between gap-3 text-sm">
-                              <span className="text-gray-600 dark:text-gray-400">
-                                Enrollment Date
-                              </span>
-                              <span className="font-medium text-gray-900 dark:text-gray-100">
-                                {enrollmentDate
-                                  ? enrollmentDate.toLocaleDateString("en-IN")
-                                  : "—"}
-                              </span>
-                            </div>
-                            <div className="flex justify-between gap-3 text-sm">
-                              <span className="text-gray-600 dark:text-gray-400">
-                                Start Date
-                              </span>
-                              <span className="font-medium text-gray-900 dark:text-gray-100">
-                                {displayStartDate
-                                  ? displayStartDate.toLocaleDateString("en-IN")
-                                  : "—"}
-                              </span>
-                            </div>
-                            <div className="flex justify-between gap-3 text-sm">
-                              <span className="text-gray-600 dark:text-gray-400">
-                                End Date
-                              </span>
-                              <span className="font-medium text-gray-900 dark:text-gray-100">
-                                {membershipEndDate
-                                  ? membershipEndDate.toLocaleDateString("en-IN")
-                                  : "—"}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                  <ParentPaymentOptionsDialog
+                    open={showQrModal}
+                    walletState={walletDisplayState}
+                    method={upiPaymentMethod}
+                    amountInput={upiAmountInput}
+                    qrImagePath={TINYSTEPS_UPI_QR_PATH}
+                    qrImageLoadFailed={upiQrImageLoadFailed}
+                    onOpenChange={setShowQrModal}
+                    onMethodChange={setUpiPaymentMethod}
+                    onAmountInputChange={setUpiAmountInput}
+                    onQrImageError={() => setUpiQrImageLoadFailed(true)}
+                    onOpenWhatsAppVerification={handleOpenPaymentVerificationWhatsApp}
+                  />
 
-                      <div className="order-2 mb-4 sm:mb-6">
-                        <h3 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
-                          Wallet Summary
-                        </h3>
-                        <div className="rounded-lg border border-indigo-100 bg-gradient-to-br from-sky-50 to-indigo-50 p-3 dark:border-indigo-900/30 dark:from-slate-900 dark:to-indigo-950 sm:p-4">
-                          {billingLoading ? (
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                              Loading wallet summary…
-                            </div>
-                          ) : (
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                {walletStatusLabel}
-                              </div>
-                              <div className="mt-1 text-xs text-gray-500 dark:text-gray-500">
-                                Wallet balance: {walletBalance === null ? "—" : formatCurrencySignedINR(walletBalance)}
-                              </div>
-                              <div className="mt-3 space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                                <div>
-                                  Completed classes this month: {billingSummary.chargesThisMonth}
-                                </div>
-                                {billingSummary.avgRate > 0 && (
-                                  <div>
-                                    Rate per class: ₹{billingSummary.avgRate.toLocaleString("en-IN")}
-                                  </div>
-                                )}
-                                <div>
-                                  Class deductions this month: ₹{billingSummary.billedThisMonth.toLocaleString("en-IN")}
-                                </div>
-                                <div>
-                                  Payments received this month: ₹{profilePaymentsSummary.total.toLocaleString("en-IN")}
-                                </div>
-                                <div className="text-xs text-gray-500 dark:text-gray-500">
-                                  Last updated: {walletLastUpdatedText}
-                                </div>
-                                <div className="text-xs text-gray-500 dark:text-gray-500">
-                                  Your wallet is updated automatically after each completed class. Payments add balance to your wallet. Class fees reduce the wallet balance.
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                          <div className="mt-3">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setTab("classes")}
-                            >
-                              View classes
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="order-3 mb-4 sm:order-4 sm:mb-0">
-                        {isNativeIOSApp ? (
-                          <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200">
-                            {IOS_BILLING_ASSISTANCE_TEXT}
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            <Button
-                              onClick={() => {
-                                hapticLight();
-                                setUpiQrImageLoadFailed(false);
-                                setUpiPaymentMethod("UPI");
-                                setUpiAmountInput("");
-                                setShowQrModal(true);
-                              }}
-                              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 font-semibold text-white shadow-md hover:from-indigo-700 hover:to-purple-700"
-                            >
-                              Pay via UPI
-                            </Button>
-
-                            <div className="space-y-2">
-                              <Button
-                                onClick={handleConfirmPayment}
-                                variant="outline"
-                                className="w-full border-green-200 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-300 dark:hover:bg-green-950"
-                              >
-                                Confirm on WhatsApp
-                              </Button>
-                              <p className="text-center text-xs text-gray-500 dark:text-gray-400">
-                                Use WhatsApp confirmation after payment so Tiny Steps can verify and update wallet balance.
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="order-4 mb-4 sm:order-3 sm:mb-6">
-                        <h3 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
-                          Class Payment Status
-                        </h3>
-                        <div className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-slate-900 sm:p-4">
-                          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                            <div className="space-y-1">
-                              <label className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                                Month
-                              </label>
-                              <input
-                                type="month"
-                                value={classPaymentMonth}
-                                onChange={(e) => setClassPaymentMonth(e.target.value)}
-                                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-indigo-500 focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                              />
-                            </div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400">
-                              Class payment status is shown from May 2026 onward.
-                            </div>
-                          </div>
-
-                          <div className="mb-3 flex flex-wrap gap-2">
-                            <Button
-                              size="sm"
-                              variant={classPaymentStatusTab === "all_classes" ? "default" : "outline"}
-                              onClick={() => setClassPaymentStatusTab("all_classes")}
-                            >
-                              All Classes
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={classPaymentStatusTab === "pending_payment" ? "default" : "outline"}
-                              onClick={() => setClassPaymentStatusTab("pending_payment")}
-                            >
-                              Pending Payment
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={classPaymentStatusTab === "paid_classes" ? "default" : "outline"}
-                              onClick={() => setClassPaymentStatusTab("paid_classes")}
-                            >
-                              Paid Classes
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={classPaymentStatusTab === "payments_received" ? "default" : "outline"}
-                              onClick={() => setClassPaymentStatusTab("payments_received")}
-                            >
-                              Payments Received
-                            </Button>
-                          </div>
-
-                          {classPaymentStatusTab === "payments_received" ? (
-                            paymentsReceivedRowsForSelectedMonth.length === 0 ? (
-                              <div className="text-sm text-gray-600 dark:text-gray-400">
-                                No payments received for this month.
-                              </div>
-                            ) : (
-                              <div className="overflow-x-auto rounded border">
-                                <div className="min-w-[680px]">
-                                  <div className="grid grid-cols-4 gap-2 border-b px-3 py-2 text-xs uppercase text-muted-foreground">
-                                    <div>Date</div>
-                                    <div>Amount</div>
-                                    <div>Payment Method / Type</div>
-                                    <div>Note / Reason</div>
-                                  </div>
-                                  {paymentsReceivedRowsForSelectedMonth.map((row) => (
-                                    <div
-                                      key={`payments-received-${row.id}`}
-                                      className="grid grid-cols-4 gap-2 border-b px-3 py-2 text-sm last:border-b-0"
-                                    >
-                                      <div>{row.txDate.toLocaleDateString("en-IN")}</div>
-                                      <div>{formatCurrencyINR(row.amountAbs)}</div>
-                                      <div className="capitalize">{row.type.replace(/_/g, " ") || "—"}</div>
-                                      <div>{row.note || "—"}</div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )
-                          ) : statusRowsToRender.length === 0 ? (
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                              {classPaymentStatusTab === "pending_payment"
-                                ? "No pending payment classes for this month."
-                                : classPaymentStatusTab === "paid_classes"
-                                  ? "No paid classes for this month."
-                                  : "No classes found for this month."}
-                            </div>
-                          ) : (
-                            <div className="overflow-x-auto rounded border">
-                              <div className="min-w-[900px]">
-                                <div className="grid grid-cols-7 gap-2 border-b px-3 py-2 text-xs uppercase text-muted-foreground">
-                                  <div>Date</div>
-                                  <div>Child / Student</div>
-                                  <div>Class Fee</div>
-                                  <div>Paid Amount</div>
-                                  <div>Pending Amount</div>
-                                  <div>Status</div>
-                                  <div>Note / Reason</div>
-                                </div>
-                                {statusRowsToRender.map((row) => (
-                                  <div
-                                    key={`class-status-${row.id}`}
-                                    className="grid grid-cols-7 gap-2 border-b px-3 py-2 text-sm last:border-b-0"
-                                  >
-                                    <div>{row.txDate.toLocaleDateString("en-IN")}</div>
-                                    <div>{row.studentName || "—"}</div>
-                                    <div>{formatCurrencyINR(row.classFee)}</div>
-                                    <div>{formatCurrencyINR(row.paidAmount)}</div>
-                                    <div>{formatCurrencyINR(row.pendingAmount)}</div>
-                                    <div>{row.status}</div>
-                                    <div>{row.note || "—"}</div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="order-5 mb-4 sm:order-4 sm:mb-6">
-                        <h3 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
-                          Recent Wallet Activity
-                        </h3>
-                        <div className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-slate-900 sm:p-4">
-                          {parentPaymentsQuery.isLoading || parentWalletTransactionsQuery.isLoading ? (
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                              Loading wallet activity…
-                            </div>
-                          ) : sortedPayments.length === 0 && sortedWalletTransactions.length === 0 ? (
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                              No wallet activity recorded yet.
-                            </div>
-                          ) : (
-                            <div className="space-y-3">
-                              <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-4">
-                                <div className="rounded border p-3">
-                                  <div className="text-xs text-muted-foreground">
-                                    Wallet Balance
-                                  </div>
-                                  <div className="text-lg font-semibold">
-                                    {walletBalance === null ? "—" : formatCurrencySignedINR(walletBalance)}
-                                  </div>
-                                </div>
-                                <div className="rounded border p-3">
-                                  <div className="text-xs text-muted-foreground">
-                                    Payments Received
-                                  </div>
-                                  <div className="text-lg font-semibold">
-                                    ₹{paymentTotals.total.toLocaleString("en-IN")}
-                                  </div>
-                                </div>
-                                <div className="rounded border p-3">
-                                  <div className="text-xs text-muted-foreground">
-                                    Class Deductions This Month
-                                  </div>
-                                  <div className="text-lg font-semibold">
-                                    ₹{billingSummary.billedThisMonth.toLocaleString("en-IN")}
-                                  </div>
-                                </div>
-                                <div className="rounded border p-3">
-                                  <div className="text-xs text-muted-foreground">
-                                    Amount to Pay / Advance
-                                  </div>
-                                  <div className="text-lg font-semibold">
-                                    {walletAmountToPay > 0
-                                      ? `Collect ₹${walletAmountToPay.toLocaleString("en-IN")}`
-                                      : walletAdvanceBalance > 0
-                                        ? `Advance ₹${walletAdvanceBalance.toLocaleString("en-IN")}`
-                                        : "No pending amount"}
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="space-y-2 sm:hidden">
-                                {sortedWalletTransactions.slice(0, 8).map((tx) => {
-                                  const txDate = toDateOrNull(tx.createdAt || tx.paidAt);
-                                  const rawSigned = Number(tx.signedAmount);
-                                  const rawAmount = Number(tx.amount);
-                                  const amountValue = Number.isFinite(rawSigned)
-                                    ? rawSigned
-                                    : Number.isFinite(rawAmount)
-                                      ? (String(tx.direction || "").toLowerCase() === "debit" ? -rawAmount : rawAmount)
-                                      : 0;
-                                  const directionLabel = amountValue < 0 ? "Debit" : amountValue > 0 ? "Credit" : "—";
-                                  return (
-                                    <div
-                                      key={`mobile-wallet-${tx.id}`}
-                                      className="rounded-lg border border-gray-200 px-3 py-3 text-sm dark:border-gray-700"
-                                    >
-                                      <div className="flex items-start justify-between gap-3">
-                                        <div className="font-medium text-gray-900 dark:text-gray-100">
-                                          {formatCurrencySignedINR(amountValue)}
-                                        </div>
-                                        <div className="shrink-0 text-xs text-muted-foreground">
-                                          {txDate
-                                            ? txDate.toLocaleDateString("en-IN")
-                                            : "—"}
-                                        </div>
-                                      </div>
-                                      <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-                                        <div>
-                                          <div className="text-muted-foreground">Type</div>
-                                          <div className="font-medium">
-                                            {String(tx.type || "transaction").replace(/_/g, " ")}
-                                          </div>
-                                        </div>
-                                        <div>
-                                          <div className="text-muted-foreground">Direction</div>
-                                          <div className="font-medium">
-                                            {directionLabel}
-                                          </div>
-                                        </div>
-                                      </div>
-                                      <div className="mt-2 text-xs capitalize text-muted-foreground">
-                                        Balance after: {Number.isFinite(Number(tx.balanceAfter)) ? formatCurrencySignedINR(Number(tx.balanceAfter)) : "—"}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-
-                              <div className="hidden rounded border sm:block sm:overflow-x-auto">
-                                <div className="sm:min-w-[760px]">
-                                  <div className="grid grid-cols-6 gap-2 border-b px-3 py-2 text-xs uppercase text-muted-foreground">
-                                    <div>Date</div>
-                                    <div>Type</div>
-                                    <div>Credit/Debit</div>
-                                    <div>Amount</div>
-                                    <div>Balance After</div>
-                                    <div>Note / Reason</div>
-                                  </div>
-                                  {sortedWalletTransactions.map((tx) => {
-                                    const txDate = toDateOrNull(tx.createdAt || tx.paidAt);
-                                    const rawSigned = Number(tx.signedAmount);
-                                    const rawAmount = Number(tx.amount);
-                                    const amountValue = Number.isFinite(rawSigned)
-                                      ? rawSigned
-                                      : Number.isFinite(rawAmount)
-                                        ? (String(tx.direction || "").toLowerCase() === "debit" ? -rawAmount : rawAmount)
-                                        : 0;
-                                    const directionLabel = amountValue < 0 ? "Debit" : amountValue > 0 ? "Credit" : "—";
-                                    return (
-                                      <div
-                                        key={tx.id}
-                                        className="grid grid-cols-6 gap-2 border-b px-3 py-2 text-sm last:border-b-0"
-                                      >
-                                        <div>
-                                          {txDate
-                                            ? txDate.toLocaleDateString("en-IN")
-                                            : "—"}
-                                        </div>
-                                        <div>
-                                          {String(tx.type || "transaction").replace(/_/g, " ")}
-                                        </div>
-                                        <div>
-                                          {directionLabel}
-                                        </div>
-                                        <div>
-                                          {formatCurrencySignedINR(amountValue)}
-                                        </div>
-                                        <div>
-                                          {Number.isFinite(Number(tx.balanceAfter)) ? formatCurrencySignedINR(Number(tx.balanceAfter)) : "—"}
-                                        </div>
-                                        <div className="truncate">
-                                          {String(tx.note || tx.reason || tx.description || "—")}
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-
-                  <Dialog open={showQrModal} onOpenChange={setShowQrModal}>
-                    <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-md overflow-y-auto [-webkit-overflow-scrolling:touch]">
-                      <DialogHeader>
-                        <DialogTitle>Pay via UPI</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="rounded border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-200">
-                          {walletBalance === null ? (
-                            <div>Wallet balance: —</div>
-                          ) : walletBalance < 0 ? (
-                            <div>Amount to pay: ₹{Math.abs(walletBalance).toLocaleString("en-IN")}</div>
-                          ) : walletBalance > 0 ? (
-                            <div>Advance balance available: ₹{walletBalance.toLocaleString("en-IN")}</div>
-                          ) : (
-                            <div>No pending amount. You may still add an advance payment if required.</div>
-                          )}
-                        </div>
-
-                        {!upiQrImageLoadFailed ? (
-                          <div className="flex flex-col items-center space-y-3">
-                            <img
-                              src={TINYSTEPS_UPI_QR_PATH}
-                              alt="UPI QR Code"
-                              className="h-auto max-h-[55vh] w-full max-w-64 rounded-lg border border-gray-200 object-contain dark:border-gray-700"
-                              onError={() => setUpiQrImageLoadFailed(true)}
-                            />
-                            <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-                              Scan the QR code using any UPI app. After payment, click Confirm on WhatsApp and share your payment screenshot.
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                            <p className="mb-2">QR code not available. Please contact Tiny Steps for payment details.</p>
-                          </div>
-                        )}
-                        <div className="space-y-1">
-                          <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                            Payment method
-                          </label>
-                          <select
-                            value={upiPaymentMethod}
-                            onChange={(e) =>
-                              setUpiPaymentMethod(e.target.value === "Bank Transfer" ? "Bank Transfer" : "UPI")
-                            }
-                            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-indigo-500 focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                          >
-                            <option value="UPI">UPI</option>
-                            <option value="Bank Transfer">Bank Transfer</option>
-                          </select>
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                            Amount paid (optional)
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            step="1"
-                            value={upiAmountInput}
-                            onChange={(e) => setUpiAmountInput(e.target.value)}
-                            placeholder="Enter amount paid"
-                            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-indigo-500 placeholder:text-slate-400 focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                          />
-                        </div>
-
-                        <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm dark:border-slate-700 dark:bg-slate-900/60">
-                          <h4 className="mb-2 font-semibold text-slate-900 dark:text-slate-100">
-                            Bank Transfer Details
-                          </h4>
-                          <div className="grid grid-cols-1 gap-1 text-slate-700 dark:text-slate-200 sm:grid-cols-2">
-                            <div>Account Type: Current</div>
-                            <div>Account Number: 50200108987663</div>
-                            <div>Bank Name: HDFC</div>
-                            <div>IFSC: HDFC0002352</div>
-                            <div>Account Name: TINY STEPS</div>
-                            <div>UPI ID: tinystepslearning@ybl</div>
-                          </div>
-                          <p className="mt-3 text-xs text-slate-600 dark:text-slate-300">
-                            After completing the payment, please send the screenshot on WhatsApp for verification. Your wallet balance will be updated after Tiny Steps confirms the payment.
-                          </p>
-                        </div>
-
-                        <Button
-                          onClick={handleConfirmPayment}
-                          className="w-full border-green-200 bg-green-600 text-white hover:bg-green-700"
-                        >
-                          Confirm on WhatsApp
-                        </Button>
-                        <Button
-                          onClick={() => setShowQrModal(false)}
-                          variant="outline"
-                          className="w-full"
-                        >
-                          Close
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
                 </>
               );
             })()}
