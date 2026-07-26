@@ -10,6 +10,7 @@
     "dev": "vite",
     "build": "npm run gen:sitemaps && vite build && node scripts/prerender.mjs && npm run seo:route-integrity && node scripts/write-indexnow-key.mjs",
     "prebuild": "npm run check:shadowing && node scripts/generate-rss.mjs",
+    "postbuild": "node scripts/write-spa-entrypoints.mjs",
     "generate:rss": "node scripts/generate-rss.mjs",
     "check:shadowing": "node scripts/check-shadowing.mjs",
     "preview": "vite preview",
