@@ -159,7 +159,6 @@ export const organizationSchema = {
     'https://www.instagram.com/tiny_steps_oel/',
     'https://www.youtube.com/@TinyStepsLearning-1157',
     'https://www.linkedin.com/company/tiny-steps-learning/',
-    'https://wa.me/919618398383'
   ]
 };
 
@@ -335,7 +334,7 @@ export function createBlogPostingSchema(params: {
     image: params.image || 'https://tinystepslearning.com/logo-square.webp',
     articleBody: params.articleBody,
     articleSection: params.category || 'Education',
-    wordCount: params.wordCount || 1500,
+    ...(params.wordCount && { wordCount: params.wordCount }),
     mainEntityOfPage: {
       '@type': 'WebPage',
       '@id': params.url
@@ -537,14 +536,23 @@ export function createCourseListSchema(params: {
 }
 
 /**
- * Create Event schema for summer camp batches
+ * Create Event schema for events such as summer camp batches
+ *
  * @param name - Event name (e.g., "Phonics Fast Track Summer Camp 2026")
  * @param description - Event description
  * @param startDate - ISO date string
  * @param endDate - ISO date string
  * @param location - Event location (default: "Online")
- * @param price - Event price in INR (optional)
+ * @param eventStatus - Status of the event (EventScheduled, EventCancelled, etc.). Required for proper schema.
+ * @param availability - Offer availability enum if commercial offer exists (e.g., 'https://schema.org/InStock'). Omit if no offer.
+ * @param validFrom - ISO date string for offer validFrom. Required if offer exists. Must not be current build time.
+ * @param price - Event price in INR (optional). Only include if commercial details are real and current.
  * @param url - Event landing page URL
+ * @param locationType - Whether location is 'online', 'physical', or 'mixed'
+ * @param locationName - Physical location name if applicable
+ * @param virtualUrl - Virtual event URL if applicable
+ * @param eventAttendanceMode - Event attendance mode
+ * @param organizer - Organizer name (defaults to PUBLIC_FACTS.brandName)
  * @returns Event schema object
  */
 export function createEventSchema(params: {
@@ -552,45 +560,67 @@ export function createEventSchema(params: {
   description: string;
   startDate: string;
   endDate: string;
-  location?: string;
+  eventStatus: 'EventScheduled' | 'EventCancelled' | 'EventPostponed' | 'EventRescheduled' | 'EventMovedOnline';
+  availability?: 'https://schema.org/InStock' | 'https://schema.org/OutOfStock' | 'https://schema.org/PreOrder';
+  validFrom?: string; // ISO date. Required if availability is set.
   price?: number;
   url: string;
+  locationType?: 'online' | 'physical' | 'mixed';
+  locationName?: string;
+  virtualUrl?: string;
   eventAttendanceMode?: 'OfflineEventAttendanceMode' | 'OnlineEventAttendanceMode' | 'MixedEventAttendanceMode';
   organizer?: string;
 }) {
-  return {
+  // Build location object based on type
+  let location: any;
+  if (params.locationType === 'physical' && params.locationName) {
+    location = {
+      '@type': 'Place',
+      name: params.locationName
+    };
+  } else if (params.locationType === 'mixed' && params.virtualUrl && params.locationName) {
+    location = {
+      '@type': 'VirtualLocation',
+      url: params.virtualUrl || params.url
+    };
+  } else {
+    // Default to virtual
+    location = {
+      '@type': 'VirtualLocation',
+      url: params.virtualUrl || params.url
+    };
+  }
+
+  const event: any = {
     '@context': 'https://schema.org',
     '@type': 'Event',
     name: params.name,
     description: params.description,
     startDate: params.startDate,
     endDate: params.endDate,
+    eventStatus: `https://schema.org/${params.eventStatus}`,
     eventAttendanceMode: `https://schema.org/${params.eventAttendanceMode || 'OnlineEventAttendanceMode'}`,
-    location: params.location
-      ? {
-          '@type': 'VirtualLocation',
-          url: params.url
-        }
-      : {
-          '@type': 'VirtualLocation',
-          url: 'https://tinystepslearning.com/summer-camps'
-        },
+    location,
     organizer: {
       '@type': 'Organization',
       name: params.organizer || PUBLIC_FACTS.brandName,
       url: 'https://tinystepslearning.com'
     },
-    ...(params.price && {
-      offers: {
-        '@type': 'Offer',
-        price: params.price,
-        priceCurrency: 'INR',
-        availability: 'https://schema.org/InStock',
-        url: params.url,
-        validFrom: new Date().toISOString()
-      }
-    })
   };
+
+  // Only add offer if both availability and validFrom are explicitly provided
+  if (params.availability && params.validFrom && params.price) {
+    event.offers = {
+      '@type': 'Offer',
+      price: params.price,
+      priceCurrency: 'INR',
+      availability: params.availability,
+      url: params.url,
+      validFrom: params.validFrom
+    };
+  }
+
+  return event;
 }
 
 export default {

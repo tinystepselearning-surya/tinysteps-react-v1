@@ -41,7 +41,6 @@ const REQUIRED_CORE_URLS = [
   'https://tinystepslearning.com/courses/grammar',
   'https://tinystepslearning.com/courses/grammar-mastery',
   'https://tinystepslearning.com/courses/public-speaking-foundations',
-  'https://tinystepslearning.com/online-phonics-reading-classes',
   'https://tinystepslearning.com/english-grammar-writing-classes',
   'https://tinystepslearning.com/public-speaking-communication-kids',
   'https://tinystepslearning.com/spoken-english-classes-for-kids-online',
@@ -49,7 +48,6 @@ const REQUIRED_CORE_URLS = [
 ];
 
 const REQUIRED_SELF_CANONICAL_LONG_TAIL_PATHS = [
-  '/online-phonics-reading-classes',
   '/english-grammar-writing-classes',
   '/public-speaking-communication-kids',
   '/spoken-english-classes-for-kids-online',
@@ -66,6 +64,15 @@ const PRIVATE_PATH_TOKENS = [
   '/dashboard',
   '/surya',
   '/main',
+];
+
+// Redirect aliases: These are NOT indexable pages; they are 301 redirects with noindex
+const REDIRECT_ALIASES = [
+  {
+    path: '/online-phonics-reading-classes',
+    destination: '/phonics',
+    reason: 'Permanent redirect to canonical /phonics page',
+  },
 ];
 
 const REQUIRED_SUMMER_PATHS = [
@@ -241,6 +248,72 @@ async function main() {
       continue;
     }
     ok(`Long-tail lead page is self-canonical and indexable in route SEO registry: ${routePath}`);
+  }
+
+  // Verify redirect aliases are NOT in sitemaps and ARE marked with noindex
+  const firebaseJsonPath = path.join(ROOT, 'firebase.json');
+  let firebaseConfig = {};
+  try {
+    firebaseConfig = JSON.parse(await fs.readFile(firebaseJsonPath, 'utf8'));
+  } catch (e) {
+    fail(`Could not read or parse firebase.json: ${e.message}`);
+  }
+
+  for (const alias of REDIRECT_ALIASES) {
+    // Check 1: Alias must NOT appear in any sitemap
+    const aliasUrl = `https://tinystepslearning.com${alias.path}`;
+    if (allLocs.has(aliasUrl)) {
+      fail(`Redirect alias must not be in sitemap XML: ${alias.path}`);
+    } else {
+      ok(`Redirect alias absent from sitemap XML: ${alias.path}`);
+    }
+
+    // Check 2: Firebase must have a 301 redirect from alias to destination
+    const redirects = firebaseConfig.hosting?.redirects || [];
+    const redirect = redirects.find((r) => r.source === alias.path);
+    if (!redirect) {
+      fail(`Missing Firebase 301 redirect for alias: ${alias.path} -> ${alias.destination}`);
+    } else if (redirect.destination !== alias.destination) {
+      fail(`Firebase redirect destination mismatch for ${alias.path}: expected ${alias.destination}, got ${redirect.destination}`);
+    } else if (redirect.type !== 301) {
+      fail(`Firebase redirect type must be 301 for ${alias.path}: got ${redirect.type}`);
+    } else {
+      ok(`Firebase has 301 redirect: ${alias.path} -> ${alias.destination}`);
+    }
+
+    // Check 3: Route registry must have alias with canonical pointing to destination
+    const aliasEntry = extractRouteEntry(registryText, alias.path);
+    if (!aliasEntry) {
+      fail(`Missing route SEO registry entry for redirect alias: ${alias.path}`);
+      continue;
+    }
+    if (!new RegExp(`canonicalPath\\s*:\\s*['"]${escapeRegExp(alias.destination)}['"]`, 'm').test(aliasEntry)) {
+      fail(`Redirect alias ${alias.path} does not have canonicalPath pointing to ${alias.destination}`);
+      continue;
+    }
+    ok(`Redirect alias ${alias.path} has canonicalPath pointing to ${alias.destination}`);
+
+    // Check 4: Route registry must have alias marked with noindex
+    if (!/robots\s*:\s*['"][^'"]*noindex/i.test(aliasEntry)) {
+      fail(`Redirect alias must be marked noindex in route SEO registry: ${alias.path}`);
+      continue;
+    }
+    ok(`Redirect alias marked noindex in route SEO registry: ${alias.path}`);
+  }
+
+  // Verify canonical destination pages are still present in sitemaps
+  for (const alias of REDIRECT_ALIASES) {
+    const destinationUrl = `https://tinystepslearning.com${alias.destination}`;
+    if (!allLocs.has(destinationUrl)) {
+      fail(`Redirect destination missing from sitemap XML: ${alias.destination}`);
+    } else {
+      const count = allLocList.filter((loc) => loc === destinationUrl).length;
+      if (count !== 1) {
+        fail(`Redirect destination must appear exactly once in sitemap XML: ${alias.destination} (found ${count})`);
+      } else {
+        ok(`Redirect destination present exactly once in sitemap XML: ${alias.destination}`);
+      }
+    }
   }
 
   ok('Valid long-tail keywords are allowed in the route SEO registry, including spoken English.');

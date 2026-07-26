@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { applySeo } from '../lib/seo';
 import { createEventSchema } from '../lib/schemas';
 import { buildLeadAttributionPayload, trackGenerateLead, trackLeadFormStart, trackLeadFormSubmit } from '../lib/conversionTracking';
+import { SUMMER_CAMP_2026_CONFIG, canShowEnrollment, shouldPublishInStock, getEnrollmentCTAText, getEventStatusType } from '../lib/seasonState';
 
 type SummerCampLeadFormState = {
   name: string;
@@ -195,15 +196,15 @@ const STRETCH_CARDS = [
     glowClass: 'bg-violet-300/30',
   },
   {
-    id: 'price',
-    title: 'Simple Enrollment',
-    desc: `Fast Track Pack list fee: ₹${formatINR(SUMMER_CAMP_FULL_PRICE)}. Effective price: ₹${formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}.`,
-    cta: 'Enroll now',
-    href: '/summer-camps#programs',
-    surfaceClass: 'from-[#e9fff4] via-[#f6fffb] to-[#e7f7ff]',
-    borderClass: 'border-emerald-200/80',
-    ctaClass: 'text-emerald-700',
-    glowClass: 'bg-emerald-300/30',
+    id: 'next-steps',
+    title: 'Season Ended — 13 June 2026',
+    desc: 'Thank you to all families who participated in Tiny Steps Summer Camp 2026. Register your interest for the next seasonal program.',
+    cta: 'Next Steps',
+    href: '/summer-camps#enrollment',
+    surfaceClass: 'from-[#f5f5f5] via-[#fafafa] to-[#f0f0f0]',
+    borderClass: 'border-slate-200/80',
+    ctaClass: 'text-slate-700',
+    glowClass: 'bg-slate-300/30',
   },
 ];
 
@@ -838,14 +839,16 @@ export default function SummerCampsPage() {
             courseMode: 'Online',
             educationalLevel: program.ages,
           teaches: program.subjects,
-          offers: {
-            '@type': 'Offer',
-            priceCurrency: 'INR',
-            price: SUMMER_CAMP_ENROLLMENT_PRICE,
-            availability: 'https://schema.org/InStock',
-            eligibleRegion: 'IN',
-            url: `https://tinystepslearning.com/summer-camps/${program.id}`,
-          },
+          ...(shouldPublishInStock(SUMMER_CAMP_2026_CONFIG) && {
+            offers: {
+              '@type': 'Offer',
+              priceCurrency: 'INR',
+              price: SUMMER_CAMP_ENROLLMENT_PRICE,
+              availability: 'https://schema.org/InStock',
+              eligibleRegion: 'IN',
+              url: `https://tinystepslearning.com/summer-camps/${program.id}`,
+            },
+          }),
           provider: {
             '@type': 'Organization',
             name: 'Tiny Steps Learning',
@@ -905,15 +908,17 @@ export default function SummerCampsPage() {
           availableLanguage: ['en-IN', 'en'],
         },
       },
-      offers: {
-        '@type': 'Offer',
-        priceCurrency: 'INR',
-        price: SUMMER_CAMP_ENROLLMENT_PRICE,
-        category: 'Summer Camp Fast Track Pack',
-        availability: 'https://schema.org/InStock',
-        eligibleRegion: 'IN',
-        url: 'https://tinystepslearning.com/summer-camps',
-      },
+      ...(shouldPublishInStock(SUMMER_CAMP_2026_CONFIG) && {
+        offers: {
+          '@type': 'Offer',
+          priceCurrency: 'INR',
+          price: SUMMER_CAMP_ENROLLMENT_PRICE,
+          category: 'Summer Camp Fast Track Pack',
+          availability: 'https://schema.org/InStock',
+          eligibleRegion: 'IN',
+          url: 'https://tinystepslearning.com/summer-camps',
+        },
+      }),
       availableChannel: {
         '@type': 'ServiceChannel',
         serviceUrl: 'https://tinystepslearning.com/summer-camps',
@@ -940,15 +945,17 @@ export default function SummerCampsPage() {
       ],
     };
 
-    // Event schemas for summer camp programs
+    // Event schemas for summer camp programs - using new season state helpers
+    // Note: Summer Camp 2026 completed normally on 13 June 2026.
+    // For archived season, no price, availability, or validFrom should be published.
     const phonicsEventSchema = createEventSchema({
       name: 'Phonics Fast Track Summer Camp 2026',
       description: `Focused 4-week phonics program inside the Tiny Steps Summer Camp 2026 season (${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}) with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, and limited batch start dates: ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}.`,
       startDate: '2026-04-27',
       endDate: '2026-06-13',
+      eventStatus: getEventStatusType(SUMMER_CAMP_2026_CONFIG),
+      eventAttendanceMode: 'OnlineEventAttendanceMode',
       url: 'https://tinystepslearning.com/summer-camps/phonics-fast-track',
-      price: SUMMER_CAMP_ENROLLMENT_PRICE,
-      eventAttendanceMode: 'OnlineEventAttendanceMode'
     });
 
     const grammarEventSchema = createEventSchema({
@@ -956,9 +963,9 @@ export default function SummerCampsPage() {
       description: `Focused 4-week grammar program inside the Tiny Steps Summer Camp 2026 season (${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}) with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, and limited batch start dates: ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}.`,
       startDate: '2026-04-27',
       endDate: '2026-06-13',
+      eventStatus: getEventStatusType(SUMMER_CAMP_2026_CONFIG),
+      eventAttendanceMode: 'OnlineEventAttendanceMode',
       url: 'https://tinystepslearning.com/summer-camps/grammar-fast-track',
-      price: SUMMER_CAMP_ENROLLMENT_PRICE,
-      eventAttendanceMode: 'OnlineEventAttendanceMode'
     });
 
     const speakingEventSchema = createEventSchema({
@@ -966,9 +973,9 @@ export default function SummerCampsPage() {
       description: `Focused 4-week communication program inside the Tiny Steps Summer Camp 2026 season (${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}) with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, and limited batch start dates: ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}.`,
       startDate: '2026-04-27',
       endDate: '2026-06-13',
+      eventStatus: getEventStatusType(SUMMER_CAMP_2026_CONFIG),
+      eventAttendanceMode: 'OnlineEventAttendanceMode',
       url: 'https://tinystepslearning.com/summer-camps/speaking-fast-track',
-      price: SUMMER_CAMP_ENROLLMENT_PRICE,
-      eventAttendanceMode: 'OnlineEventAttendanceMode'
     });
 
     applySeo({
@@ -984,9 +991,13 @@ export default function SummerCampsPage() {
         serviceSchema, 
         courseListSchema, 
         faqSchema,
-        phonicsEventSchema,
-        grammarEventSchema,
-        speakingEventSchema
+        ...(SUMMER_CAMP_2026_CONFIG.status !== 'archived'
+          ? [
+              phonicsEventSchema,
+              grammarEventSchema,
+              speakingEventSchema,
+            ]
+          : [])
       ],
     });
   }, []);
@@ -1066,47 +1077,38 @@ export default function SummerCampsPage() {
               </div>
               <div
                 id="enrollment"
-                className="scroll-mt-24 rounded-3xl border border-emerald-200/80 bg-gradient-to-br from-white/95 via-white to-emerald-50/70 p-5 shadow-[0_14px_40px_rgba(16,185,129,0.12)] backdrop-blur-sm sm:p-6 sm:shadow-[0_18px_55px_rgba(16,185,129,0.16)]"
+                className="scroll-mt-24 rounded-3xl border border-slate-200/80 bg-gradient-to-br from-white/95 via-white to-slate-50/70 p-5 shadow-[0_14px_40px_rgba(71,85,105,0.12)] backdrop-blur-sm sm:p-6 sm:shadow-[0_18px_55px_rgba(71,85,105,0.16)]"
               >
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-emerald-700">
-                  Summer Camp Enrollment
+                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-slate-600">
+                  Summer Camp 2026 — Archived
                 </p>
-                <p className="mt-2 text-4xl font-black text-slate-900 sm:text-5xl">₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}</p>
-                <p className="mt-1 text-xs font-semibold text-emerald-700">
-                  <span className="text-slate-500 line-through">₹{formatINR(SUMMER_CAMP_FULL_PRICE)}</span>{' '}
-                  <span>Effective price: ₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}</span>
-                </p>
+                <p className="mt-2 text-4xl font-black text-slate-900 sm:text-5xl">Season Ended</p>
                 <p className="mt-2 text-sm text-slate-700">
-                  Fast Track Pack fee per child. Includes free level assessment and support choosing the right batch start date.
+                  The Tiny Steps Summer Camp 2026 season concluded on 13 June 2026. Thank you to all families and students who participated.
                 </p>
                 <div className="mt-4 space-y-2 text-xs text-slate-600">
-                  <p>Capped at {SUMMER_CAMP_BATCH_CAP} students per batch</p>
-                  <p>Live online group batches across India</p>
-                  <p>Summer Camp Season: {SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}</p>
-                  <p>Batch start dates: {SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}</p>
-                  <p>{SUMMER_CAMP_VALUE_LABEL}</p>
-                  <p>{SUMMER_CAMP_SCHEDULE_LABEL}</p>
-                  <p>{SUMMER_CAMP_HOLIDAY_LABEL}</p>
-                  <p>50–60 minute live classes</p>
-                  <p>Choose one focus track: phonics, grammar, or speaking</p>
-                  <p>Effective worksheets + class recordings</p>
+                  <p>Season ran: {SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}</p>
+                  <p>Programs offered: Phonics Fast Track, Grammar Fast Track, and Speaking Fast Track</p>
+                  <p>Batch format: {SUMMER_CAMP_SCHEDULE_LABEL} with {SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}</p>
                 </div>
-                <div id="whatsapp-enroll" className="mt-5 flex scroll-mt-24 flex-col gap-2 sm:flex-row sm:flex-wrap">
+                <p className="mt-4 text-sm font-semibold text-slate-700">
+                  What's next?
+                </p>
+                <p className="mt-1 text-sm text-slate-600">
+                  We are planning the next seasonal program. Register your interest for future Summer Camp opportunities or explore ongoing English classes.
+                </p>
+                <div id="next-step-cta" className="mt-5 flex scroll-mt-24 flex-col gap-2 sm:flex-row sm:flex-wrap">
                   <a
-                    href={SUMMER_CAMP_WHATSAPP_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:from-emerald-700 hover:to-teal-600 hover:shadow-lg"
-                >
-                    Reserve a Summer Camp Seat
+                    href="/contact"
+                    className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-gradient-to-r from-slate-600 to-slate-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:from-slate-700 hover:to-slate-600 hover:shadow-lg"
+                  >
+                    Book a Regular English Assessment
                   </a>
                   <a
-                    href={SUMMER_CAMP_WHATSAPP_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-emerald-500 bg-white/90 px-4 py-2 text-sm font-semibold text-emerald-700 transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-600 hover:bg-emerald-50"
+                    href="/contact"
+                    className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-slate-500 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-600 hover:bg-slate-50"
                   >
-                    Ask About Batches on WhatsApp
+                    Register Interest for Next Camp
                   </a>
                 </div>
               </div>
@@ -1114,20 +1116,16 @@ export default function SummerCampsPage() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <a
-                href={SUMMER_CAMP_WHATSAPP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:from-emerald-700 hover:to-teal-600 hover:shadow-lg sm:w-auto"
+                href="/contact"
+                className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full bg-gradient-to-r from-slate-600 to-slate-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:from-slate-700 hover:to-slate-600 hover:shadow-lg sm:w-auto"
             >
-                Reserve a Summer Camp Seat
+                Book a Regular English Assessment
               </a>
               <a
-                href={SUMMER_CAMP_WHATSAPP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full border border-emerald-500 bg-white/90 px-5 py-2.5 text-sm font-semibold text-emerald-700 transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-600 hover:bg-emerald-50 sm:w-auto"
+                href="/contact"
+                className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full border border-slate-500 bg-white/90 px-5 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-600 hover:bg-slate-50 sm:w-auto"
               >
-                Ask About Batches on WhatsApp
+                Register Interest for Next Camp
               </a>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { applySeo } from '../lib/seo';
+import { SUMMER_CAMP_2026_CONFIG, canShowEnrollment, shouldPublishInStock, getEventStatusType } from '../lib/seasonState';
 
 const SUMMER_CAMP_ENROLLMENT_PRICE = 2400;
 const SUMMER_CAMP_FULL_PRICE = 5000;
@@ -308,50 +309,45 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
           <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700">
             {program.title}
           </p>
-          <h1 className="mt-3 text-3xl font-bold text-gray-900 sm:text-4xl">Batch details coming soon</h1>
+          <h1 className="mt-3 text-3xl font-bold text-gray-900 sm:text-4xl">Season Ended — 13 June 2026</h1>
           <p className="mt-3 text-gray-700">
-            This batch page is a placeholder so parents never hit a dead end. Full schedule and
-            enrollment details will be published here. Available batch start dates are {SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}.
+            The Tiny Steps Summer Camp 2026 season has concluded. Thank you to all families and students who participated. We are planning the next seasonal program.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Link
-              to={`/summer-camps/${program.slug}`}
-              className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full border border-gray-200 px-5 py-2 text-sm font-semibold text-gray-700 sm:w-auto"
-            >
-              View program details
-            </Link>
-            <a
-              href={programWhatsAppUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full border border-emerald-200 bg-emerald-50 px-5 py-2 text-sm font-semibold text-emerald-800 sm:w-auto"
-            >
-              Enroll for ₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}
-            </a>
-            <Link
               to="/summer-camps"
-              className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white sm:w-auto"
+              className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full border border-gray-200 px-5 py-2 text-sm font-semibold text-gray-700 sm:w-auto"
             >
               Back to Summer Camps
             </Link>
+            <a
+              href="/contact"
+              className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-5 py-2 text-sm font-semibold text-slate-800 sm:w-auto"
+            >
+              Register Interest for Next Camp
+            </a>
+            <a
+              href="/contact"
+              className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full bg-slate-600 px-5 py-2 text-sm font-semibold text-white sm:w-auto"
+            >
+              Book a Regular Assessment
+            </a>
           </div>
         </div>
         <div className="fixed inset-x-0 bottom-0 z-40 md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           <div className="mx-auto max-w-5xl px-3 pb-2">
-            <div className="flex items-center gap-2 rounded-[20px] border border-emerald-100/80 bg-white/95 p-2 shadow-[0_-6px_30px_rgba(15,23,42,0.22)] backdrop-blur-md">
+            <div className="flex items-center gap-2 rounded-[20px] border border-slate-100/80 bg-white/95 p-2 shadow-[0_-6px_30px_rgba(15,23,42,0.22)] backdrop-blur-md">
               <Link
-                to={`/summer-camps/${program.slug}`}
+                to="/summer-camps"
                 className="flex-1 rounded-full border border-slate-300 px-4 py-2.5 text-center text-sm font-semibold text-slate-700"
               >
-                Program page
+                Back
               </Link>
               <a
-                href={programWhatsAppUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 rounded-full bg-emerald-600 px-4 py-2.5 text-center text-sm font-semibold text-white"
+                href="/contact"
+                className="flex-1 rounded-full bg-slate-600 px-4 py-2.5 text-center text-sm font-semibold text-white"
               >
-                WhatsApp us
+                Next Steps
               </a>
             </div>
           </div>

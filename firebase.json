@@ -347,6 +347,7 @@
       }
     ],
     "redirects": [
+      { "source": "/online-phonics-reading-classes", "destination": "/phonics", "type": 301 },
       { "source": "/free-letter-tracing-with-sounds-game-for-kids", "destination": "/letter-tracing-with-sounds-game", "type": 301 },
       { "source": "/free-phonics-balloon-pop-game-for-kids", "destination": "/free-balloon-pop-phonics-game-for-kids", "type": 301 },
       { "source": "/free-games-for-kids", "destination": "/free-english-games-for-kids", "type": 301 },

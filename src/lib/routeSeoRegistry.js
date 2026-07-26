@@ -306,8 +306,9 @@ export const ROUTE_SEO_REGISTRY = {
     title: 'Early Reading & Phonics Support Classes (Ages 3-8) | Tiny Steps Learning',
     description:
       'Early-reader phonics and reading support for ages 3-8 with letter sounds, blending, CVC decoding, and first-sentence reading confidence for families in India and globally.',
-    canonicalPath: '/online-phonics-reading-classes',
+    canonicalPath: '/phonics',
     ogType: 'website',
+    robots: 'noindex,follow',
   },
   '/best-online-phonics-classes-for-kids-in-india': {
     title: 'Best Online Phonics Classes for Kids in India | Tiny Steps Learning',

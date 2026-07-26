@@ -15,7 +15,6 @@ export const STATIC_MARKETING_ROUTES = [
   '/curriculum',
   '/faq',
   '/best-online-phonics-classes-for-kids-in-india',
-  '/online-phonics-reading-classes',
   '/phonics-apps-for-preschoolers-india',
   '/phonics-games-for-preschoolers',
   '/phonics-learning-games',

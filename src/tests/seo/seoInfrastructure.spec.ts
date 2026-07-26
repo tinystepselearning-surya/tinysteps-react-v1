@@ -43,9 +43,12 @@ describe('SEO infrastructure', () => {
       redirects.some((entry) => entry.source === '/main/courses/public-speaking' && entry.destination === '/courses/public-speaking-foundations' && entry.type === 301)
     ).toBe(true);
 
+    // /online-phonics-reading-classes is now a 301 redirect to /phonics (canonical authority page)
     expect(
-      redirects.some((entry) => entry.source === '/online-phonics-reading-classes')
-    ).toBe(false);
+      redirects.some((entry) => entry.source === '/online-phonics-reading-classes' && entry.destination === '/phonics' && entry.type === 301)
+    ).toBe(true);
+
+    // These are self-canonical landing pages (not redirects)
     expect(
       redirects.some((entry) => entry.source === '/english-grammar-writing-classes')
     ).toBe(false);
@@ -109,17 +112,19 @@ describe('SEO infrastructure', () => {
     );
   });
 
-  it('keeps long-tail landing pages self-canonical', async () => {
+  it('keeps long-tail landing pages self-canonical (except /online-phonics-reading-classes which redirects)', async () => {
     const { ROUTE_SEO_REGISTRY } = await import('../../lib/routeSeoRegistry.js');
     const indexHtml = fs.readFileSync(path.join(repoRoot, 'index.html'), 'utf8');
 
-    expect(ROUTE_SEO_REGISTRY['/online-phonics-reading-classes']?.canonicalPath).toBe('/online-phonics-reading-classes');
+    // /online-phonics-reading-classes is now a 301 redirect to /phonics (canonical authority page)
+    expect(ROUTE_SEO_REGISTRY['/online-phonics-reading-classes']?.canonicalPath).toBe('/phonics');
+
+    // These remain self-canonical independent landing pages
     expect(ROUTE_SEO_REGISTRY['/english-grammar-writing-classes']?.canonicalPath).toBe('/english-grammar-writing-classes');
     expect(ROUTE_SEO_REGISTRY['/public-speaking-communication-kids']?.canonicalPath).toBe('/public-speaking-communication-kids');
     expect(ROUTE_SEO_REGISTRY['/spoken-english-classes-for-kids-online']?.canonicalPath).toBe('/spoken-english-classes-for-kids-online');
     expect(ROUTE_SEO_REGISTRY['/online-english-classes-for-kids']?.canonicalPath).toBe('/online-english-classes-for-kids');
 
-    expect(indexHtml).not.toContain("'/online-phonics-reading-classes': '/phonics'");
     expect(indexHtml).not.toContain("'/english-grammar-writing-classes': '/grammar'");
     expect(indexHtml).not.toContain("'/public-speaking-communication-kids': '/speaking'");
     expect(indexHtml).not.toContain("'/spoken-english-classes-for-kids-online': '/speaking'");
