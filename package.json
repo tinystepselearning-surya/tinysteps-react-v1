@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run gen:sitemaps && vite build && node scripts/prerender.mjs && node scripts/write-indexnow-key.mjs",
+    "build": "npm run gen:sitemaps && vite build && node scripts/prerender.mjs && npm run seo:route-integrity && node scripts/write-indexnow-key.mjs",
     "prebuild": "npm run check:shadowing && node scripts/generate-rss.mjs",
     "generate:rss": "node scripts/generate-rss.mjs",
     "check:shadowing": "node scripts/check-shadowing.mjs",
@@ -17,6 +17,7 @@
     "seo:smoke": "node scripts/seo-smoke.mjs",
     "seo:indexation-check": "node scripts/seo-indexation-guard.mjs",
     "seo:rendered-check": "node scripts/seo-rendered-html-check.mjs",
+    "seo:route-integrity": "node scripts/seo-route-integrity.mjs",
     "indexnow:submit": "node scripts/indexnow-submit.mjs",
     "audit:firebase-upgrade": "bash scripts/audit-firebase-upgrade.sh",
     "inventory:firebase-auth": "bash scripts/inventory-firebase-auth.sh",

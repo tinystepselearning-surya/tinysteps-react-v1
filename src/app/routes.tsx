@@ -66,7 +66,6 @@ const SpokenEnglishClassesForKidsPage = lazy(() => import('../pages/public/Spoke
 const WritingClassesForKidsPage = lazy(() => import('../pages/public/WritingClassesForKidsPage'));
 const PhonicsFeesIndiaPage = lazy(() => import('../pages/public/PhonicsFeesIndiaPage'));
 const OnlineEnglishClassesForKidsPage = lazy(() => import('../pages/public/OnlineEnglishClassesForKidsPage'));
-const OnlineEnglishClassesForKidsIndiaPage = lazy(() => import('../pages/public/OnlineEnglishClassesForKidsIndiaPage'));
 const OnlineEnglishClassesHyderabadPage = lazy(() => import('../pages/public/OnlineEnglishClassesHyderabadPage'));
 const EnglishClassesFor4YearOldPage = lazy(() => import('../pages/public/EnglishClassesFor4YearOldPage'));
 const EnglishClassesFor5YearOldPage = lazy(() => import('../pages/public/EnglishClassesFor5YearOldPage'));
@@ -631,7 +630,6 @@ const router = createBrowserRouter(
         { path: 'writing-classes-for-kids', element: <WritingClassesForKidsPage /> },
         { path: 'phonics-fees-india', element: <PhonicsFeesIndiaPage /> },
         { path: 'online-english-classes-for-kids', element: <OnlineEnglishClassesForKidsPage /> },
-        { path: 'online-english-classes-for-kids-india', element: <OnlineEnglishClassesForKidsIndiaPage /> },
         { path: 'online-english-classes-hyderabad', element: <OnlineEnglishClassesHyderabadPage /> },
         { path: 'english-classes-for-4-year-old', element: <EnglishClassesFor4YearOldPage /> },
         { path: 'english-classes-for-5-year-old', element: <EnglishClassesFor5YearOldPage /> },

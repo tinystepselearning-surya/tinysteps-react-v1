@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from 'fs/promises';
 import path from 'path';
+import { PUBLIC_ROUTE_MANIFEST } from '../src/lib/publicRouteManifest.js';
 
 const ROOT = process.cwd();
 const PUBLIC_DIR = path.join(ROOT, 'public');
@@ -82,10 +83,8 @@ const REQUIRED_SUMMER_PATHS = [
 ];
 
 const ALLOWED_CANONICAL_MISSING_FROM_SITEMAP = new Set([
+  ...PUBLIC_ROUTE_MANIFEST.filter((route) => !route.sitemap).map((route) => route.canonicalPath),
   '/sitemap',
-  '/privacy-policy',
-  '/terms-and-conditions',
-  '/refund-guarantee',
   '/login',
   '/teacher/login',
   '/parent/login',

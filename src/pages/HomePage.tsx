@@ -483,7 +483,7 @@ export default function HomePage() {
               </p>
             </div>
             <Link
-              to="/games/english-excellence"
+              to="/phonics-learning-games"
               className="inline-flex items-center justify-center rounded-full border border-sky-600 bg-sky-50 px-5 py-2.5 text-sm font-semibold text-sky-700 transition hover:-translate-y-0.5 hover:bg-sky-100"
             >
               Explore English Excellence

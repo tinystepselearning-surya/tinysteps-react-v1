@@ -341,7 +341,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'For complete language growth, pair reading support with [online English classes for kids in India](/online-english-classes-for-kids-india), [grammar and sentence formation support](/grammar), and [public speaking and communication classes](/speaking). If you want a clear starting level, [book a free assessment](/book-demo).',
+        'For complete language growth, pair reading support with [online English classes for kids in India](/online-english-classes-for-kids), [grammar and sentence formation support](/grammar), and [public speaking and communication classes](/speaking). If you want a clear starting level, [book a free assessment](/book-demo).',
     },
     {
       type: 'h2',

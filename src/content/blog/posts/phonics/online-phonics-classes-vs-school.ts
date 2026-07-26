@@ -58,7 +58,7 @@ const post: PhonicsSeoPost = {
     to: '/reading-classes-for-kids'
   }, {
     label: 'Online English classes in India overview',
-    to: '/online-english-classes-for-kids-india'
+    to: '/online-english-classes-for-kids'
   }]
 };
 

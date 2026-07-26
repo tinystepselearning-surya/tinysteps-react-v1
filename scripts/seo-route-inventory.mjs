@@ -1,93 +1,32 @@
-export const STATIC_MARKETING_ROUTES = [
-  '/',
-  '/blog',
-  '/pricing',
-  '/sitemap',
-  '/contact',
-  '/why-tiny-steps',
-  '/learning-partner',
-  '/privacy-policy',
-  '/team',
-  '/class-samples',
-  '/testimonials',
-  '/careers',
-  '/courses',
-  '/curriculum',
-  '/faq',
-  '/best-online-phonics-classes-for-kids-in-india',
-  '/phonics-apps-for-preschoolers-india',
-  '/phonics-games-for-preschoolers',
-  '/phonics-learning-games',
-  '/free-english-games-for-kids',
-  '/free-phonics-games-for-kids',
-  '/free-letter-sound-games-for-kids',
-  '/free-word-building-games-for-kids',
-  '/free-sentence-building-games-for-kids',
-  '/free-reading-games-for-kids',
-  '/free-grammar-games-for-kids',
-  '/free-speaking-games-for-kids',
-  '/free-letter-sounds-game-for-kids',
-  '/free-sound-listening-game-for-kids',
-  '/free-word-building-game-for-kids',
-  '/free-spelling-game-for-kids',
-  '/free-sentence-making-game-for-kids',
-  '/free-reading-fluency-game-for-kids',
-  '/free-grammar-practice-game-for-kids',
-  '/free-speaking-practice-game-for-kids',
-  '/free-letter-tracing-game-for-kids',
-  '/letter-tracing-with-sounds-game',
-  '/free-balloon-pop-phonics-game-for-kids',
-  '/free-games/word-meaning-flashcards',
-  '/summer-camps',
-  '/phonics',
-  '/grammar',
-  '/speaking',
-  '/for-schools',
-  '/book-demo',
-  // Intent-dominant expansion: money pages
-  '/reading-classes-for-kids',
-  '/writing-classes-for-kids',
-  '/phonics-fees-india',
-  '/english-grammar-writing-classes',
-  '/spoken-english-classes-for-kids-online',
-  '/online-english-classes-for-kids',
-  '/online-english-classes-hyderabad',
-  // Intent-dominant expansion: age pages
-  '/english-classes-for-4-year-old',
-  '/english-classes-for-5-year-old',
-  '/english-classes-for-6-year-old',
-  '/english-classes-for-7-10-year-old',
-  // Intent-dominant expansion: problem pages
-  '/child-not-reading-properly',
-  '/slow-reader-child-help',
-  '/shy-child-speaking-confidence',
-  // Intent-dominant expansion: program pages
-  '/reading-fluency-program',
-  '/confidence-building-program-kids',
-  '/english-foundation-program',
-  '/public-speaking-communication-kids',
-  // Intent-dominant expansion: seasonal pages
-  '/summer-camp-for-kids-india',
-  '/summer-reading-program-kids',
-  '/summer-speaking-camp-kids',
-  '/summer-camps/phonics-fast-track',
-  '/summer-camps/grammar-fast-track',
-  '/summer-camps/speaking-fast-track',
-];
+import { PUBLIC_ROUTE_MANIFEST } from '../src/lib/publicRouteManifest.js';
 
-export const PARENT_HELP_ROUTES = [
-  '/parents',
-  '/parents/getting-started',
-  '/parents/choosing-course',
-  '/parents/scheduling',
-  '/parents/payments',
-  '/parents/tracking-progress',
-  '/parents/helping-with-homework',
-  '/parents/phonics-mission',
-  '/parents/reading-at-home',
-  '/parents/speech-confidence',
-  '/parents/common-mistakes',
-];
+export const STATIC_MARKETING_ROUTES = PUBLIC_ROUTE_MANIFEST
+  .filter((entry) => entry.group !== 'parents' && entry.prerender)
+  .map((entry) => entry.path);
+
+export const PARENT_HELP_ROUTES = PUBLIC_ROUTE_MANIFEST
+  .filter((entry) => entry.group === 'parents')
+  .map((entry) => entry.path);
+
+export const INDEXABLE_STATIC_ROUTES = PUBLIC_ROUTE_MANIFEST
+  .filter((entry) => entry.group !== 'parents' && entry.indexable)
+  .map((entry) => entry.path);
+
+export const SITEMAP_STATIC_ROUTES = PUBLIC_ROUTE_MANIFEST
+  .filter((entry) => entry.group !== 'parents' && entry.sitemap)
+  .map((entry) => entry.path);
+
+export const SITEMAP_PARENT_ROUTES = PUBLIC_ROUTE_MANIFEST
+  .filter((entry) => entry.group === 'parents' && entry.sitemap)
+  .map((entry) => entry.path);
+
+export const PRERENDER_STATIC_ROUTES = PUBLIC_ROUTE_MANIFEST
+  .filter((entry) => entry.group !== 'parents' && entry.prerender)
+  .map((entry) => entry.path);
+
+export const LEGAL_ROUTES = PUBLIC_ROUTE_MANIFEST
+  .filter((entry) => entry.group === 'legal')
+  .map((entry) => entry.path);
 
 export function uniqueRoutes(routes) {
   return [...new Set(routes)];

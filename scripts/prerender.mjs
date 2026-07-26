@@ -8,7 +8,7 @@ import { shouldIncludeBlogSlugInSitemap } from "../src/lib/blogIndexingPolicy.js
 import { ROUTE_SEO_REGISTRY as ROUTE_SEO_CONFIG } from "../src/lib/routeSeoRegistry.js";
 import { extractBlogEntriesFromPostFiles, listMdxEntries } from "./blog-route-utils.mjs";
 import { isClarityAllowedPath } from "./clarity-route-policy.mjs";
-import { PARENT_HELP_ROUTES, STATIC_MARKETING_ROUTES, uniqueRoutes } from "./seo-route-inventory.mjs";
+import { PARENT_HELP_ROUTES, PRERENDER_STATIC_ROUTES, uniqueRoutes } from "./seo-route-inventory.mjs";
 
 const DIST = path.resolve(process.cwd(), "dist");
 const PORT = process.env.PRERENDER_PORT ? Number(process.env.PRERENDER_PORT) : 4173;
@@ -377,7 +377,7 @@ async function prerender() {
       browser = await chromium.launch();
       const page = await browser.newPage();
       const seedRoutes = uniqueRoutes([
-        ...STATIC_MARKETING_ROUTES,
+        ...PRERENDER_STATIC_ROUTES,
         ...PARENT_HELP_ROUTES,
         ...getPublicCourseSitemapPaths(),
       ]);

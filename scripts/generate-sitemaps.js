@@ -2,7 +2,11 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { PARENT_HELP_ROUTES, STATIC_MARKETING_ROUTES, uniqueRoutes } from './seo-route-inventory.mjs';
+import {
+  SITEMAP_PARENT_ROUTES,
+  SITEMAP_STATIC_ROUTES,
+  uniqueRoutes,
+} from './seo-route-inventory.mjs';
 import { extractBlogEntriesFromPostFiles, listMdxEntries } from './blog-route-utils.mjs';
 import { ROUTE_SEO_REGISTRY } from '../src/lib/routeSeoRegistry.js';
 import { shouldIncludeBlogSlugInSitemap } from '../src/lib/blogIndexingPolicy.js';
@@ -86,15 +90,9 @@ const EXCLUDED_BLOG_SLUGS = new Set([
   const blogPostSlugDateMap = new Map(blogPostEntries.filter((entry) => entry.date).map((entry) => [entry.slug, entry.date]));
   const blogPostSlugPathMap = new Map(blogPostEntries.map((entry) => [entry.slug, entry.sourcePath]));
   const mdxSlugPathMap = new Map(mdxEntries.map((entry) => [entry.slug, entry.sourcePath]));
-  const staticRoutes = uniqueRoutes(STATIC_MARKETING_ROUTES);
-  const EXCLUDE_FROM_SITEMAP = new Set([
-    '/sitemap', // utility HTML sitemap (noindex)
-    '/privacy-policy', // legal/trust page should remain accessible but not index-targeted
-  ]);
-  const staticRoutesForSitemap = staticRoutes.filter((route) =>
-    !EXCLUDE_FROM_SITEMAP.has(route) && isCanonicalSelfRoute(route)
-  );
-  const parentRoutes = uniqueRoutes(PARENT_HELP_ROUTES);
+  const staticRoutesForSitemap = uniqueRoutes(SITEMAP_STATIC_ROUTES)
+    .filter((route) => isCanonicalSelfRoute(route));
+  const parentRoutes = uniqueRoutes(SITEMAP_PARENT_ROUTES);
   const today = fmt(new Date());
 
   // sitemap-static.xml (top-level canonical marketing pages)

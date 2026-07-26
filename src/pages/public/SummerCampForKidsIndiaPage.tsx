@@ -116,7 +116,7 @@ export default function SummerCampForKidsIndiaPage() {
             Tiny Steps Summer Camp 2026
           </Link>
           {' • '}
-          <Link to="/online-english-classes-for-kids-india" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+          <Link to="/online-english-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-slate-900">
             online english classes for kids india
           </Link>
         </p>
