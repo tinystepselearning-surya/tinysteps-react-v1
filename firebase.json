@@ -356,9 +356,16 @@
       { "source": "/privacy/", "destination": "/privacy-policy", "type": 301 },
       { "source": "/privacy.html", "destination": "/privacy-policy", "type": 301 },
       { "source": "/privacy-policy/", "destination": "/privacy-policy", "type": 301 },
+      { "source": "/terms", "destination": "/terms-and-conditions", "type": 301 },
+      { "source": "/terms/", "destination": "/terms-and-conditions", "type": 301 },
       { "source": "/terms.html", "destination": "/terms-and-conditions", "type": 301 },
       { "source": "/terms-of-service", "destination": "/terms-and-conditions", "type": 301 },
       { "source": "/terms-and-conditions/", "destination": "/terms-and-conditions", "type": 301 },
+      { "source": "/online-english-classes-for-kids-india", "destination": "/online-english-classes-for-kids", "type": 301 },
+      { "source": "/how-it-works", "destination": "/curriculum", "type": 301 },
+      { "source": "/spoken-english-classes-for-kids", "destination": "/spoken-english-classes-for-kids-online", "type": 301 },
+      { "source": "/games", "destination": "/phonics-learning-games", "type": 301 },
+      { "source": "/games/english-excellence", "destination": "/phonics-learning-games", "type": 301 },
       { "source": "/learningpartner", "destination": "/learning-partner", "type": 301 },
       { "source": "/resources", "destination": "/blog", "type": 301 },
       { "source": "/resources/", "destination": "/blog", "type": 301 },
@@ -440,29 +447,115 @@
         }
       },
       {
-        "source": "/blog/**",
-        "function": {
-          "functionId": "notFoundRoute",
-          "region": "asia-south1"
-        }
+        "source": "/login",
+        "destination": "/index.html"
       },
       {
-        "source": "/courses/**",
-        "function": {
-          "functionId": "notFoundRoute",
-          "region": "asia-south1"
-        }
+        "source": "/*/login",
+        "destination": "/index.html"
       },
       {
-        "source": "/main/**",
-        "function": {
-          "functionId": "notFoundRoute",
-          "region": "asia-south1"
-        }
+        "source": "/unauthorized",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/surya",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/surya/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/Surya",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/Surya/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/admin",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/admin/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/teacher",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/teacher/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/parent",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/parent/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/kids",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/kids/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/kid",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/kid/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/messages",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/messages/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/learning-partner/dashboard",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/learning-partner/dashboard/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/learningpartner/dashboard",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/learningpartner/dashboard/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/dev",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/dev/**",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/debug-lessons",
+        "destination": "/index.html"
       },
       {
         "source": "**",
-        "destination": "/index.html"
+        "function": {
+          "functionId": "notFoundRoute",
+          "region": "asia-south1"
+        }
       }
     ],
     "cleanUrls": true,

@@ -773,7 +773,7 @@ const PricingPage: FC = () => {
               Enhance your child’s learning with curated games. These subscriptions are designed to complement our core 1:1 classes.
             </p>
             <div className="mb-6 text-center">
-              <Link to="/games/english-excellence" className="text-sm font-semibold text-tiny-blue-700 underline">
+              <Link to="/phonics-learning-games" className="text-sm font-semibold text-tiny-blue-700 underline">
                 Explore English Excellence games preview and plans
               </Link>
             </div>
