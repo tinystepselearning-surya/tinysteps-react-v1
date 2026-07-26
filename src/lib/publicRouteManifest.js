@@ -52,7 +52,6 @@ export const PUBLIC_ROUTE_MANIFEST = [
   { path: '/english-grammar-writing-classes', group: 'static', indexable: true, prerender: true },
   { path: '/spoken-english-classes-for-kids-online', group: 'static', indexable: true, prerender: true },
   { path: '/online-english-classes-for-kids', group: 'static', indexable: true, prerender: true },
-  { path: '/online-english-classes-for-kids-india', group: 'static', indexable: true, prerender: true },
   { path: '/online-english-classes-hyderabad', group: 'static', indexable: true, prerender: true },
   { path: '/english-classes-for-4-year-old', group: 'static', indexable: true, prerender: true },
   { path: '/english-classes-for-5-year-old', group: 'static', indexable: true, prerender: true },
@@ -87,6 +86,7 @@ export const PUBLIC_ROUTE_MANIFEST = [
 export const REDIRECT_ROUTE_MANIFEST = [
   { source: '/terms', destination: '/terms-and-conditions', status: 301 },
   { source: '/terms/', destination: '/terms-and-conditions', status: 301 },
+  { source: '/online-english-classes-for-kids-india', destination: '/online-english-classes-for-kids', status: 301 },
   { source: '/online-phonics-reading-classes', destination: '/phonics', status: 301 },
 ];
 
