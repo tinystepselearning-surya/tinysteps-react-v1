@@ -8,10 +8,11 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run gen:sitemaps && vite build && node scripts/prerender.mjs && npm run seo:route-integrity && node scripts/write-indexnow-key.mjs",
+    "build": "npm run gen:sitemaps && vite build && node scripts/prerender.mjs && npm run seo:route-integrity && npm run content:offer-consistency && node scripts/write-indexnow-key.mjs",
     "prebuild": "npm run check:shadowing && node scripts/generate-rss.mjs",
     "generate:rss": "node scripts/generate-rss.mjs",
     "check:shadowing": "node scripts/check-shadowing.mjs",
+    "content:offer-consistency": "node scripts/public-offer-consistency.mjs",
     "preview": "vite preview",
     "gen:sitemaps": "node scripts/generate-sitemaps.js",
     "seo:smoke": "node scripts/seo-smoke.mjs",

@@ -76,7 +76,7 @@ describe('PublicAssessmentForm analytics', () => {
   it('tracks a single form_error event when validation fails', () => {
     render(<PublicAssessmentForm />);
 
-    fireEvent.submit(screen.getByRole('button', { name: /get free assessment on whatsapp/i }));
+    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
 
     expect(trackingMocks.trackLeadFormError).toHaveBeenCalledTimes(1);
     expect(trackingMocks.trackLeadFormSubmit).not.toHaveBeenCalled();
@@ -91,7 +91,7 @@ describe('PublicAssessmentForm analytics', () => {
     fireEvent.change(screen.getByLabelText(/whatsapp number/i), { target: { value: '+919999999999' } });
     fireEvent.change(screen.getByLabelText(/child age/i), { target: { value: '7' } });
 
-    fireEvent.submit(screen.getByRole('button', { name: /get free assessment on whatsapp/i }));
+    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
 
     expect(screen.getByText(/please select the support area/i)).toBeInTheDocument();
     expect(trackingMocks.trackLeadFormSubmit).not.toHaveBeenCalled();
@@ -118,7 +118,7 @@ describe('PublicAssessmentForm analytics', () => {
 
     fillValidForm();
 
-    fireEvent.submit(screen.getByRole('button', { name: /get free assessment on whatsapp/i }));
+    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
 
     await waitFor(() => expect(firestoreMocks.addDoc).toHaveBeenCalledTimes(1));
     expect(firestoreMocks.addDoc).toHaveBeenCalledWith(
@@ -190,7 +190,7 @@ describe('PublicAssessmentForm analytics', () => {
 
     fillValidForm();
 
-    fireEvent.submit(screen.getByRole('button', { name: /get free assessment on whatsapp/i }));
+    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
 
     await waitFor(() => expect(firestoreMocks.addDoc).toHaveBeenCalledTimes(1));
     expect(globalThis.open).toHaveBeenCalledTimes(1);
@@ -208,7 +208,7 @@ describe('PublicAssessmentForm analytics', () => {
 
     fillValidForm();
 
-    fireEvent.submit(screen.getByRole('button', { name: /get free assessment on whatsapp/i }));
+    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
 
     await waitFor(() => expect(firestoreMocks.addDoc).toHaveBeenCalledTimes(1));
     expect(trackingMocks.trackLeadFormSubmit).toHaveBeenCalledTimes(1);
@@ -237,7 +237,7 @@ describe('PublicAssessmentForm analytics', () => {
 
     fillValidForm();
 
-    const submitButton = screen.getByRole('button', { name: /get free assessment on whatsapp/i });
+    const submitButton = screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i });
     fireEvent.click(submitButton);
     fireEvent.click(submitButton);
 
