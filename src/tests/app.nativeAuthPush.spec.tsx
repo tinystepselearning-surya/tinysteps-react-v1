@@ -6,8 +6,10 @@ import { join } from 'node:path';
 import type { AuthUser } from '../store/useAuthStore';
 import {
   getPendingPushOpenRoute,
+  queuePendingPushDestination,
   queuePendingPushOpenRoute,
 } from '../lib/pushNavigationState';
+import type { AuthStatus } from '../store/useAuthStore';
 
 const {
   authState,
@@ -18,7 +20,7 @@ const {
 } = vi.hoisted(() => {
   const state = {
     user: null as AuthUser | null,
-    authStatus: 'authenticated' as const,
+    authStatus: 'authenticated' as AuthStatus,
     isLoading: false,
   };
   const router = {
@@ -61,6 +63,10 @@ vi.mock('../lib/pushNotifications', () => ({
   registerNativePushNotifications: vi.fn(() => Promise.resolve()),
 }));
 
+vi.mock('../lib/callFunctions', () => ({
+  callFunction: vi.fn(() => Promise.resolve({ ok: true, unreadMessages: 0 })),
+}));
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return {
@@ -85,6 +91,7 @@ describe('native persisted authentication push bootstrap', () => {
       role: 'parent',
     };
     authState.isLoading = false;
+    authState.authStatus = 'authenticated';
     Object.defineProperty(window, 'Capacitor', {
       configurable: true,
       writable: true,
@@ -124,6 +131,49 @@ describe('native persisted authentication push bootstrap', () => {
       );
     });
     expect(getPendingPushOpenRoute()?.threadId).toBe('retry-thread');
+  });
+
+  it('holds a message push behind Login and opens it after auth restoration', async () => {
+    authState.authStatus = 'unauthenticated';
+    queuePendingPushOpenRoute('/messages', 'restored-thread');
+    const view = render(<App />);
+    await waitFor(() => expect(navigateMock).toHaveBeenCalledWith(
+      '/login',
+      expect.objectContaining({ replace: true }),
+    ));
+    expect(getPendingPushOpenRoute()?.threadId).toBe('restored-thread');
+
+    navigateMock.mockClear();
+    authState.authStatus = 'authenticated';
+    view.rerender(<App />);
+    await waitFor(() => expect(navigateMock).toHaveBeenCalledWith(
+      '/messages/restored-thread',
+      { replace: true },
+    ));
+    expect(getPendingPushOpenRoute()).toBeNull();
+  });
+
+  it('holds a class reminder behind Login and opens its role-safe route after restoration', async () => {
+    authState.authStatus = 'unauthenticated';
+    queuePendingPushDestination({
+      type: 'class_reminder',
+      route: '/parent?tab=classes',
+      sessionId: 'session-1',
+    });
+    const view = render(<App />);
+    await waitFor(() => expect(navigateMock).toHaveBeenCalledWith(
+      '/login',
+      expect.objectContaining({ replace: true }),
+    ));
+
+    navigateMock.mockClear();
+    authState.authStatus = 'authenticated';
+    view.rerender(<App />);
+    await waitFor(() => expect(navigateMock).toHaveBeenCalledWith(
+      '/parent?tab=classes',
+      { replace: true },
+    ));
+    expect(getPendingPushOpenRoute()).toBeNull();
   });
 
   it('does not queue pending push routes in the root navigation owner', () => {

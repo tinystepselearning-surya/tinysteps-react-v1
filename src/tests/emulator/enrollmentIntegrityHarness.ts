@@ -114,6 +114,16 @@ export async function signInFixtureUser(args: {
   await credential.user.getIdToken(true);
 }
 
+export async function signInExistingFixtureUser(uid: string): Promise<void> {
+  if (!clientAuth) throw new Error('Emulator client has not been initialized.');
+  const credential = await signInWithEmailAndPassword(
+    clientAuth,
+    `${uid}@example.test`,
+    'EmulatorOnly!123',
+  );
+  await credential.user.getIdToken(true);
+}
+
 export async function signOutFixtureUser(): Promise<void> {
   if (!clientAuth) throw new Error('Emulator client has not been initialized.');
   await signOut(clientAuth);

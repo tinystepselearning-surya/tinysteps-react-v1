@@ -23,28 +23,37 @@ import { ParentGamesProgress } from "./components/progress/ParentGamesProgress";
 import { ParentOverviewCards } from "./components/overview/ParentOverviewCards";
 import ParentAttendanceSummary from "./components/ParentAttendanceSummary";
 import ParentBillingSummary from "./components/ParentBillingSummary";
+import ParentClassesView from "./components/classes/ParentClassesView";
 import ParentDashboardHero from "./components/ParentDashboardHero";
 import ParentDashboardKpis from "./components/ParentDashboardKpis";
+import ParentInsightsView from "./components/insights/ParentInsightsView";
 import ParentLearningInsights from "./components/ParentLearningInsights";
 import ParentLessonTracker from "./components/ParentLessonTracker";
+import ParentMobileHeader from "./components/ParentMobileHeader";
+import ParentPaymentOptionsDialog from "./components/payments/ParentPaymentOptionsDialog";
+import ParentPaymentsView from "./components/payments/ParentPaymentsView";
+import ParentProfilePaymentsPanel from "./components/payments/ParentProfilePaymentsPanel";
+import ParentSkillsView from "./components/skills/ParentSkillsView";
+import {
+  buildParentSkillRatingDisplay,
+  dedupeParentSkillLabels,
+  formatParentSkillTag,
+  parentSkillUpdateId,
+  type ParentSkillsLesson,
+} from "./components/skills/parentSkillsPresentation";
 import ParentProgressOverview from "./components/ParentProgressOverview";
 import ParentRecommendations from "./components/ParentRecommendations";
-import ChildSkillRatingCard from "../../components/progress/ChildSkillRatingCard";
+import ParentShellLoading from "./components/ParentShellLoading";
+import { stripParentStagePrefix } from "./parentVisualTokens";
 import {
   ArrowRight,
-  BookOpen,
-  CheckCircle2,
-  CalendarCheck,
-  CalendarClock,
   CalendarDays,
-  Clock3,
   CircleUser,
   CreditCard,
   ExternalLink,
   Gamepad2,
   Home,
   LogOut,
-  Menu,
   MessageSquare,
   RefreshCw,
   Sparkles,
@@ -61,7 +70,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import TinyStepsBrand from "../../components/common/TinyStepsBrand";
-import MobileTabBar, { type MobileTabBarItem } from "../../components/common/MobileTabBar";
+import MobileTabBar from "../../components/common/MobileTabBar";
 import HolidayCalendar2026 from "../../components/common/HolidayCalendar2026";
 import MessagesPanel from "../messages/MessagesPanel";
 import useMessageThreads from "../../hooks/useMessageThreads";
@@ -69,6 +78,7 @@ import useMessageThreads from "../../hooks/useMessageThreads";
 import { masteryKeyFromValue, masteryLabel, masteryPctFromKey, type MasteryKey } from "../../lib/mastery";
 import {
   SKILL_RATING_MAX,
+  hasExplicitProgressRatings,
   normalizeProgressRatings,
   normalizeProgressSkillsMeta,
   skillRatingLegendLabel,
@@ -81,7 +91,7 @@ import {
   worksheetMatchesContext,
   type ParentWorksheetItem,
 } from "../../lib/parentWorksheets";
-import { hapticLight, hapticSelection, hapticSuccess } from "../../lib/nativeHaptics";
+import { hapticLight, hapticSelection } from "../../lib/nativeHaptics";
 import {
   formatIndiaTimeRange,
   formatSessionDate as formatSessionViewerDate,
@@ -100,17 +110,40 @@ import {
   pickDashboardPracticeChips,
   pickDashboardStrengthChips,
 } from "./parentDashboardViewModel";
+import {
+  isNativeParentChatFocus,
+  PARENT_MOBILE_TABS,
+  shouldShowParentMessagesHeading,
+  type ParentTabKey,
+} from "./parentNavigation";
+import {
+  getParentClassStatusDotTone as statusDotClass,
+  getParentClassStatusLabel as statusLabel,
+  getParentClassStatusTone as statusBadgeClass,
+  selectNextParentClass,
+  shouldShowClassJoinAction,
+  type ParentClassesFilterId,
+  type ParentClassesResourceId,
+  type ParentClassesViewId,
+  type ParentClassSessionDisplay,
+} from "./components/classes/parentClassPresentation";
+import {
+  getParentInsightStageKey,
+  resolveParentInsightStageState,
+  type ParentInsightStageDisplay,
+  type ParentInsightTeacherDisplay,
+} from "./components/insights/parentInsightsPresentation";
+import {
+  filterParentClassCharges,
+  getParentWalletDisplayState,
+  resolveVerifiedParentRate,
+  type ParentClassChargeDisplay,
+  type ParentClassChargeFilter,
+  type ParentPaymentDisplay,
+  type ParentPaymentPeriodSummary,
+} from "./components/payments/parentPaymentsPresentation";
 
-type TabKey =
-  | "dashboard"
-  | "insights"
-  | "games-progress"
-  | "skills"
-  | "classes"
-  | "messages"
-  | "holidays"
-  | "profile"
-  | "payments";
+type TabKey = ParentTabKey;
 
 type ParentNavItem = {
   id: TabKey;
@@ -127,14 +160,6 @@ const parentNavItems: ParentNavItem[] = [
   { id: "messages", label: "Messages", icon: MessageSquare },
   { id: "holidays", label: "Holiday Calendar", icon: CalendarDays },
   { id: "payments", label: "Payments", icon: CreditCard },
-];
-
-const PARENT_MOBILE_TABS: MobileTabBarItem[] = [
-  { id: "dashboard", label: "Home", icon: Home },
-  { id: "classes", label: "Classes", icon: CalendarDays },
-  { id: "messages", label: "Messages", icon: MessageSquare },
-  { id: "payments", label: "Payments", icon: CreditCard },
-  { id: "insights", label: "Insights", icon: TrendingUp },
 ];
 
 const shouldDebugParentDashboard = () =>
@@ -246,6 +271,8 @@ type ParentPaymentRecord = {
   createdAt?: any;
   kidId?: string;
   enrollmentId?: string;
+  reference?: string;
+  note?: string;
   [key: string]: any;
 };
 
@@ -265,6 +292,9 @@ type ParentWalletTransaction = {
   note?: string;
   reason?: string;
   description?: string;
+  method?: string;
+  reference?: string;
+  status?: string;
   createdAt?: any;
   paidAt?: any;
   [key: string]: any;
@@ -819,18 +849,6 @@ const titleCaseFromId = (value: string): string =>
     .trim()
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
-const phonicsGradientsByCourseId: Record<string, string> = {
-  "phonics-foundations": "from-indigo-50 to-purple-50",
-  "early-phonics": "from-emerald-50 to-teal-50",
-  "advanced-phonics": "from-amber-50 to-orange-50",
-};
-
-const phonicsIconsByCourseId: Record<string, string> = {
-  "phonics-foundations": "🔤",
-  "early-phonics": "📘",
-  "advanced-phonics": "🧠",
-};
-
 function clampPercent(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.max(0, Math.min(100, Math.round(value)));
@@ -1117,61 +1135,7 @@ const STAGE_EXPECTATIONS_BY_COURSE: Record<string, Record<number, string[]>> = {
   },
 };
 
-const STAGE_COLORS = [
-  {
-    accent: "#2563eb",
-    soft: "#dbeafe",
-    badgeBg: "bg-blue-100",
-    badgeText: "text-blue-700",
-    bar: "bg-blue-500",
-  },
-  {
-    accent: "#0ea5e9",
-    soft: "#cffafe",
-    badgeBg: "bg-cyan-100",
-    badgeText: "text-cyan-700",
-    bar: "bg-cyan-500",
-  },
-  {
-    accent: "#8b5cf6",
-    soft: "#ede9fe",
-    badgeBg: "bg-violet-100",
-    badgeText: "text-violet-700",
-    bar: "bg-violet-500",
-  },
-  {
-    accent: "#f59e0b",
-    soft: "#fef3c7",
-    badgeBg: "bg-amber-100",
-    badgeText: "text-amber-700",
-    bar: "bg-amber-500",
-  },
-  {
-    accent: "#ec4899",
-    soft: "#fce7f3",
-    badgeBg: "bg-pink-100",
-    badgeText: "text-pink-700",
-    bar: "bg-pink-500",
-  },
-  {
-    accent: "#10b981",
-    soft: "#d1fae5",
-    badgeBg: "bg-emerald-100",
-    badgeText: "text-emerald-700",
-    bar: "bg-emerald-500",
-  },
-];
-
-const getStageColors = (order: number) => {
-  if (!Number.isFinite(order) || order < 1) return STAGE_COLORS[0];
-  return STAGE_COLORS[(order - 1) % STAGE_COLORS.length];
-};
-
-const stripStagePrefix = (label: string, order: number): string => {
-  if (!label) return `Stage ${order}`;
-  const cleaned = label.replace(/^Stage\\s*\\d+\\s*[—-]\\s*/i, "").trim();
-  return cleaned || label;
-};
+const stripStagePrefix = stripParentStagePrefix;
 
 const calcStageProgressPct = (rows: Array<any>): number => {
   if (!rows.length) return 0;
@@ -1355,57 +1319,6 @@ function normalizeStatus(raw?: string): string {
   return s ? s : "scheduled";
 }
 
-function statusBadgeClass(status: string) {
-  switch (status) {
-    case "completed":
-      return "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300";
-    case "in_progress":
-      return "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300";
-    case "cancelled":
-      return "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200";
-    case "no_show":
-      return "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300";
-    case "reschedule_requested":
-      return "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300";
-    default:
-      return "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300";
-  }
-}
-
-function statusDotClass(status: string) {
-  switch (status) {
-    case "completed":
-      return "bg-green-500";
-    case "in_progress":
-      return "bg-blue-500";
-    case "cancelled":
-      return "bg-gray-400";
-    case "no_show":
-      return "bg-orange-500";
-    case "reschedule_requested":
-      return "bg-amber-500";
-    default:
-      return "bg-indigo-500";
-  }
-}
-
-function statusLabel(status: string) {
-  switch (status) {
-    case "completed":
-      return "Completed";
-    case "in_progress":
-      return "In progress";
-    case "cancelled":
-      return "Cancelled";
-    case "no_show":
-      return "No-show";
-    case "reschedule_requested":
-      return "Rescheduled";
-    default:
-      return "Scheduled";
-  }
-}
-
 const IOS_BILLING_ASSISTANCE_TEXT =
   "Billing information is managed by Tiny Steps Learning. Please contact Tiny Steps support for billing assistance.";
 
@@ -1529,6 +1442,7 @@ export default function ParentDashboard() {
   >("all");
   const [collapsedStages, setCollapsedStages] = useState<Record<string, boolean>>({});
   const [insightsCourseId, setInsightsCourseId] = useState<string>("");
+  const [skillsCourseId, setSkillsCourseId] = useState<string>("");
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [messagesActiveThreadId, setMessagesActiveThreadId] = useState<string | null>(null);
@@ -1546,8 +1460,11 @@ export default function ParentDashboard() {
     }
   }, [activeTab]);
 
-  const isNativeMessagesThreadFocus =
-    isNativeIOSApp && activeTab === "messages" && Boolean(messagesActiveThreadId);
+  const isNativeMessagesThreadFocus = isNativeParentChatFocus(
+    isNativeIOSApp,
+    activeTab,
+    messagesActiveThreadId,
+  );
 
   useEffect(() => {
     if (kids.length === 0) return;
@@ -2378,10 +2295,8 @@ export default function ParentDashboard() {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
-  const [classesView, setClassesView] = useState<
-    "today" | "upcoming" | "completed" | "rescheduled" | "past_pending" | "calendar" | "worksheets"
-  >("today");
-  const selectClassesView = (view: typeof classesView) => {
+  const [classesView, setClassesView] = useState<ParentClassesViewId>("today");
+  const selectClassesView = (view: ParentClassesViewId) => {
     hapticSelection();
     setClassesView(view);
   };
@@ -2766,7 +2681,7 @@ export default function ParentDashboard() {
     return classesCalendarSessionsByDay[classesCalendarSelectedDayKey] || [];
   }, [classesCalendarSelectedDayKey, classesCalendarSessionsByDay]);
 
-  const resolveSessionChildName = (session: KidSession) => {
+  const resolveSessionChildName = useCallback((session: KidSession) => {
     const directName = String((session as any).kidName || (session as any).childName || "").trim();
     if (directName) return directName;
 
@@ -2777,7 +2692,7 @@ export default function ParentDashboard() {
     }
 
     return String(selectedKid?.fullName || selectedKid?.name || "Child");
-  };
+  }, [selectedKid, selectedKidId]);
 
   const openMeetingLink = (url: string) => {
     const trimmed = String(url || "").trim();
@@ -2852,14 +2767,16 @@ export default function ParentDashboard() {
   }, [enrolledCourseIds, mostRecentSessionCourseId]);
 
   const phonicsProgressByCourse = useMemo(() => {
-    if (!displayCourseId) return [];
+    const curriculumEnrollmentCourseIds = insightsCourseOptions
+      .map((option) => normalizeCurriculumCourseId(option.courseId))
+      .filter((courseId): courseId is string => Boolean(courseId));
+    const primaryCourseId = displayCourseId ?? curriculumEnrollmentCourseIds[0] ?? null;
+    if (!primaryCourseId) return [];
 
-    const topics = curriculumTopicsByCourseId[displayCourseId] ?? [];
     const progressDocs = (phonicsProgressQuery.data ?? []) as any[];
-
     const resolveDocCourseId = (doc: any): string | null => {
       if (!doc) return null;
-      const direct = normalizePhonicsCourseId(
+      const direct = normalizeCurriculumCourseId(
         doc?.courseId ?? doc?.course?.id ?? doc?.course
       );
       if (direct) return direct;
@@ -2867,9 +2784,22 @@ export default function ParentDashboard() {
       return key ? topicCourseById[key] ?? null : null;
     };
 
-    const labelMap = new Map<string, any>();
-    const labelUpdatedAt = new Map<string, number>();
-    const addLabelEntry = (rawLabel: string | undefined | null, doc: any) => {
+    const courseIds = Array.from(
+      new Set([
+        primaryCourseId,
+        ...enrolledCourseIds,
+        ...curriculumEnrollmentCourseIds,
+        ...progressDocs
+          .map((progressDoc) => resolveDocCourseId(progressDoc))
+          .filter((courseId): courseId is string => Boolean(courseId)),
+      ]),
+    ).filter((courseId) => (curriculumTopicsByCourseId[courseId] ?? []).length > 0);
+
+    return courseIds.map((courseId) => {
+      const topics = curriculumTopicsByCourseId[courseId] ?? [];
+      const labelMap = new Map<string, any>();
+      const labelUpdatedAt = new Map<string, number>();
+      const addLabelEntry = (rawLabel: string | undefined | null, doc: any) => {
       const key = normalizeTopicText(rawLabel || "");
       if (!key) return;
       const nextTime = doc?.updatedAt?.toMillis?.() ?? 0;
@@ -2882,7 +2812,7 @@ export default function ParentDashboard() {
 
     progressDocs.forEach((doc) => {
       const docCourseId = resolveDocCourseId(doc);
-      if (docCourseId && docCourseId !== displayCourseId) return;
+      if (docCourseId && docCourseId !== courseId) return;
       addLabelEntry(doc?.topicName, doc);
     });
 
@@ -2899,7 +2829,7 @@ export default function ParentDashboard() {
       const docById = progressByTopicId[topic.id];
       if (docById) {
         const docCourseId = resolveDocCourseId(docById);
-        if (!docCourseId || docCourseId === displayCourseId) {
+        if (!docCourseId || docCourseId === courseId) {
           matchedDoc = docById;
           matchedBy = "id";
         }
@@ -2942,7 +2872,7 @@ export default function ParentDashboard() {
       }
       const topicMeta = topic as any;
       const progressSkills = getProgressSkillsForLesson({
-        courseId: displayCourseId,
+        courseId,
         topicId: topic.id,
         lessonId: topicMeta.lesson ?? topic.id,
         rubricType: topicMeta.rubricType ?? null,
@@ -2961,6 +2891,19 @@ export default function ParentDashboard() {
         stageOrder: typeof topic.stageOrder === "number" ? topic.stageOrder : null,
         status,
         mastery: mastery ?? "",
+        courseContextVerified:
+          matchedBy === "id" || resolveDocCourseId(matchedDoc) === courseId,
+        ratingSource: hasExplicitProgressRatings(matchedDoc?.progressRatings)
+          ? "explicit"
+          : hasExplicitProgressRatings(matchedDoc?.skillRatings) ||
+              Boolean(matchedDoc?.mastery) ||
+              Boolean(matchedDoc?.checks)
+            ? "legacy"
+            : "none",
+        explicitProgressRatings:
+          matchedDoc?.progressRatings && typeof matchedDoc.progressRatings === "object"
+            ? matchedDoc.progressRatings
+            : null,
         progressSkills,
         progressRatings: normalizeProgressRatings(
           matchedDoc?.progressRatings,
@@ -2995,10 +2938,9 @@ export default function ParentDashboard() {
       totalTopics > 0 ? Math.round((completedCount / totalTopics) * 100) : 0;
     const overallPct = clampPercent(overallPctRaw);
 
-    return [
-      {
-        courseId: displayCourseId,
-        courseLabel: phonicsLabelsByCourseId[displayCourseId] || displayCourseId,
+      return {
+        courseId,
+        courseLabel: phonicsLabelsByCourseId[courseId] || titleCaseFromId(courseId),
         rows,
         totalTopics,
         topicsUpdated,
@@ -3007,18 +2949,43 @@ export default function ParentDashboard() {
         lastUpdatedAtMs,
         idMatchCount,
         labelMatchCount,
-      },
-    ];
+      };
+    });
   }, [
     displayCourseId,
+    enrolledCourseIds,
+    insightsCourseOptions,
     curriculumTopicsByCourseId,
     phonicsProgressQuery.data,
     progressByTopicId,
     topicCourseById,
   ]);
 
+  useEffect(() => {
+    setSkillsCourseId("");
+  }, [selectedKidId]);
+
+  useEffect(() => {
+    const availableIds = phonicsProgressByCourse.map((course) => course.courseId);
+    if (availableIds.length === 0) {
+      if (skillsCourseId) setSkillsCourseId("");
+      return;
+    }
+    if (!skillsCourseId || !availableIds.includes(skillsCourseId)) {
+      setSkillsCourseId(availableIds[0]);
+    }
+  }, [phonicsProgressByCourse, selectedKidId, skillsCourseId]);
+
+  const selectedSkillsCourse = useMemo(
+    () =>
+      phonicsProgressByCourse.find((course) => course.courseId === skillsCourseId) ??
+      phonicsProgressByCourse[0] ??
+      null,
+    [phonicsProgressByCourse, skillsCourseId],
+  );
+
   const skillsInsightData = useMemo(() => {
-    const selectedCourse = phonicsProgressByCourse[0];
+    const selectedCourse = selectedSkillsCourse;
     if (!selectedCourse) return null;
     const rows = selectedCourse.rows ?? [];
 
@@ -3155,10 +3122,10 @@ export default function ParentDashboard() {
       recentUpdates: recent,
       totalSkills: hasExplicitSkills ? strengthSkillMap.size + practiceSkillMap.size : inferredSkills.length,
     };
-  }, [phonicsProgressByCourse]);
+  }, [selectedSkillsCourse]);
 
   const recentTeacherRatings = useMemo(() => {
-    const selectedCourse = phonicsProgressByCourse[0];
+    const selectedCourse = selectedSkillsCourse;
     if (!selectedCourse) return [] as any[];
 
     return (selectedCourse.rows ?? [])
@@ -3177,22 +3144,23 @@ export default function ParentDashboard() {
         );
         const summary = summarizeProgressRatings(progressRatings, progressSkills);
         const hasMeaningfulData =
-          summary.ratedSkillCount > 0 ||
-          Boolean(String(row.remark ?? "").trim()) ||
-          row.updatedAtMs;
+          row.ratingSource !== "none" ||
+          Boolean(String(row.remark ?? "").trim());
         return {
           ...row,
-          courseLabel: selectedCourse.courseLabel,
+          courseLabel: row.courseContextVerified ? selectedCourse.courseLabel : null,
           progressSkills,
           progressRatings,
           ...summary,
+          ratingSource: row.ratingSource,
+          explicitProgressRatings: row.explicitProgressRatings,
           hasMeaningfulData,
         };
       })
       .filter((row: any) => row.hasMeaningfulData && row.progressSkills.length > 0)
       .sort((a: any, b: any) => (b.updatedAtMs ?? 0) - (a.updatedAtMs ?? 0))
       .slice(0, 6);
-  }, [phonicsProgressByCourse]);
+  }, [selectedSkillsCourse]);
 
   const recentTeacherRatingsSummary = useMemo(() => {
     if (recentTeacherRatings.length === 0) return null;
@@ -3231,6 +3199,7 @@ export default function ParentDashboard() {
     return {
       latestLesson: recentTeacherRatings[0],
       averageRecentRating,
+      ratedLessonCount: averageCount,
       averageRecentLabel: skillRatingLegendLabel(Math.round(averageRecentRating)),
       strongestSkills: Array.from(strongestMap.entries())
         .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
@@ -3242,6 +3211,103 @@ export default function ParentDashboard() {
         .map(([label]) => label),
     };
   }, [recentTeacherRatings]);
+
+  const parentSkillsLessons = useMemo<ParentSkillsLesson[]>(
+    () =>
+      recentTeacherRatings.map((lesson: any) => {
+        const ratingDisplay = buildParentSkillRatingDisplay({
+          skills: lesson.progressSkills,
+          normalizedRatings: lesson.progressRatings,
+          explicitRatings: lesson.explicitProgressRatings,
+          origin:
+            lesson.ratingSource === "explicit" || lesson.ratingSource === "legacy"
+              ? lesson.ratingSource
+              : "none",
+        });
+        return {
+          id: String(lesson.id),
+          label: String(lesson.label || "Lesson"),
+          courseId: lesson.courseContextVerified ? selectedSkillsCourse?.courseId ?? null : null,
+          courseLabel: String(lesson.courseLabel || "").trim() || null,
+          stageLabel: String(lesson.stageLabel || "").trim() || null,
+          updatedAtMs:
+            typeof lesson.updatedAtMs === "number" && Number.isFinite(lesson.updatedAtMs)
+              ? lesson.updatedAtMs
+              : null,
+          ratedSkillCount: lesson.ratedSkillCount,
+          totalSkillCount: lesson.totalSkillCount,
+          averageRating: lesson.averageRating,
+          roundedAverageRating: lesson.roundedAverageRating,
+          ratingState: ratingDisplay.state,
+          ratingStateLabel: ratingDisplay.stateLabel,
+          ratingEntries: ratingDisplay.entries,
+          strengthChips: dedupeParentSkillLabels(
+            Array.isArray(lesson.strengthChips) ? lesson.strengthChips : [],
+          ),
+          practiceChips: dedupeParentSkillLabels(getLessonNeedsPracticeChips(lesson)),
+          remark: String(lesson.remark || ""),
+          source: lesson,
+        };
+      }),
+    [recentTeacherRatings, selectedSkillsCourse?.courseId],
+  );
+
+  const parentSkillsHighlights = useMemo(() => {
+    const strengths =
+      recentTeacherRatingsSummary?.strongestSkills?.length
+        ? recentTeacherRatingsSummary.strongestSkills
+        : skillsInsightData?.strengths?.map((skill: any) => formatSkillChipLabel(skill.tag)) ?? [];
+    const practiceAreas =
+      recentTeacherRatingsSummary?.needsPracticeSkills?.length
+        ? recentTeacherRatingsSummary.needsPracticeSkills
+        : skillsInsightData?.needsPractice?.map((skill: any) => formatSkillChipLabel(skill.tag)) ?? [];
+    return {
+      strengths: dedupeParentSkillLabels(strengths),
+      practiceAreas: dedupeParentSkillLabels(practiceAreas),
+    };
+  }, [recentTeacherRatingsSummary, skillsInsightData]);
+
+  const parentSkillsStages = useMemo(
+    () =>
+      (skillsInsightData?.stageGroups ?? []).map((stage: any) => {
+        const order =
+          stage.order > 0 ? stage.order : parseStageOrderFromLabel(stage.label) ?? 0;
+        return {
+          id: `${order}__${stage.label}`,
+          label: stage.label,
+          order,
+          displayLabel: stripStagePrefix(stage.label, order),
+          skills: stage.topSkills.map((skill: any) => ({
+            tag: skill.tag,
+            label: formatParentSkillTag(skill.tag),
+            count: skill.count,
+          })),
+        };
+      }),
+    [skillsInsightData],
+  );
+
+  const parentSkillUpdates = useMemo(
+    () =>
+      (skillsInsightData?.recentUpdates ?? []).map((update: any) => {
+        const order =
+          update.stageOrder > 0
+            ? update.stageOrder
+            : parseStageOrderFromLabel(update.stageLabel) ?? 0;
+        return {
+          id: parentSkillUpdateId({
+            tag: update.tag,
+            stageLabel: update.stageLabel,
+            stageOrder: order,
+            updatedAtMs: update.updatedAtMs ?? null,
+          }),
+          label: formatParentSkillTag(update.tag),
+          stageLabel: stripStagePrefix(update.stageLabel, order),
+          updatedAtMs: update.updatedAtMs ?? null,
+        };
+      }),
+    [skillsInsightData],
+  );
 
   const normalizedInsightsCourseId = useMemo(() => {
     return normalizeCurriculumCourseId(insightsCourseId) || null;
@@ -3331,6 +3397,7 @@ export default function ParentDashboard() {
 
       return {
         id: topic.id,
+        label: topic.displayTitle ?? topic.label,
         stageLabel: label,
         stageOrder: order,
         mastery: matchedDoc?.mastery ?? "",
@@ -3358,6 +3425,7 @@ export default function ParentDashboard() {
         confusionChips: Array.isArray(matchedDoc?.confusions)
           ? matchedDoc.confusions.filter((item: unknown) => typeof item === "string").slice(0, 3)
           : [],
+        remark: String(matchedDoc?.teacherRemark ?? matchedDoc?.remark ?? "").trim(),
         updatedAtMs,
       };
     });
@@ -3384,6 +3452,7 @@ export default function ParentDashboard() {
           label: group.label,
           order: group.order,
           masteryKey,
+          hasMasteryData: group.rows.some((row: any) => String(row.mastery || "").trim().length > 0),
           focusChips: pickStageFocus(group.rows),
           stageHint,
           progressPct,
@@ -3393,7 +3462,39 @@ export default function ParentDashboard() {
         };
       });
 
-    return { courseId: normalizedInsightsCourseId, stageSummaries };
+    const completedCount = rows.filter(
+      (row) => masteryKeyFromValue(row.mastery) === "mastered",
+    ).length;
+    const totalCount = rows.length;
+    const overallPct = totalCount > 0
+      ? clampPercent(Math.round((completedCount / totalCount) * 100))
+      : null;
+    const lastUpdatedAtMs = rows.reduce<number | null>((latest, row) => {
+      if (!row.updatedAtMs) return latest;
+      return latest === null ? row.updatedAtMs : Math.max(latest, row.updatedAtMs);
+    }, null);
+    const completedStages = stageSummaries.filter((stage) => stage.progressPct >= 100).length;
+    const stagesWithProgress = stageSummaries.filter((stage) => stage.progressPct > 0);
+    const activeStage =
+      stagesWithProgress.length > 0
+        ? stagesWithProgress[stagesWithProgress.length - 1]
+        : stageSummaries.find((stage) => stage.progressPct === 0) ?? null;
+    const nextStage = activeStage
+      ? stageSummaries.find((stage) => stage.order > activeStage.order) ?? null
+      : null;
+
+    return {
+      courseId: normalizedInsightsCourseId,
+      rows,
+      stageSummaries,
+      completedCount,
+      totalCount,
+      overallPct,
+      lastUpdatedAtMs,
+      completedStages,
+      activeStage,
+      nextStage,
+    };
   }, [
     normalizedInsightsCourseId,
     curriculumTopicsByCourseId,
@@ -3401,6 +3502,91 @@ export default function ParentDashboard() {
     progressByTopicId,
     topicCourseById,
   ]);
+
+  const selectedInsightsCourseOption = useMemo(
+    () => insightsCourseOptions.find((option) => option.courseId === insightsCourseId) ?? null,
+    [insightsCourseId, insightsCourseOptions],
+  );
+
+  const insightsActiveStageKey = insightsStageData?.activeStage
+    ? getParentInsightStageKey(
+        insightsStageData.activeStage.order,
+        insightsStageData.activeStage.label,
+      )
+    : null;
+  const insightsActiveStageOrder = insightsStageData?.activeStage?.order ?? null;
+
+  const insightStageRows = useMemo<ParentInsightStageDisplay[]>(() => {
+    return (insightsStageData?.stageSummaries ?? []).map((stage) => {
+      const key = getParentInsightStageKey(stage.order, stage.label);
+      return {
+        key,
+        order: stage.order,
+        label: stripStagePrefix(stage.label, stage.order),
+        state: resolveParentInsightStageState({
+          key,
+          order: stage.order,
+          progressPct: stage.progressPct,
+          activeStageKey: insightsActiveStageKey,
+          activeStageOrder: insightsActiveStageOrder,
+        }),
+        progressPct: stage.progressPct,
+        completedCount: stage.completedCount,
+        totalCount: stage.totalCount,
+        masteryLabel: stage.hasMasteryData ? formatMasteryLabel(stage.masteryKey) : "",
+        hint: stage.stageHint,
+        focusItems: stage.focusChips,
+        expectations: stage.expectations,
+      };
+    });
+  }, [insightsActiveStageKey, insightsActiveStageOrder, insightsStageData?.stageSummaries]);
+
+  const activeInsightStage = useMemo(
+    () => insightStageRows.find((stage) => stage.key === insightsActiveStageKey) ?? null,
+    [insightStageRows, insightsActiveStageKey],
+  );
+  const nextInsightStage = useMemo(() => {
+    const next = insightsStageData?.nextStage;
+    if (!next) return null;
+    const key = getParentInsightStageKey(next.order, next.label);
+    return insightStageRows.find((stage) => stage.key === key) ?? null;
+  }, [insightStageRows, insightsStageData?.nextStage]);
+
+  const insightsTeacherDisplay = useMemo<ParentInsightTeacherDisplay | null>(() => {
+    const selectedCourse = normalizeCurriculumCourseId(insightsCourseId);
+    const teacherSummaryCourse = normalizeCurriculumCourseId(displayCourseId);
+    if (!recentTeacherRatingsSummary?.latestLesson || selectedCourse !== teacherSummaryCourse) {
+      return null;
+    }
+    const latest = recentTeacherRatingsSummary.latestLesson;
+    return {
+      lessonLabel: String(latest.label || "Rated lesson"),
+      contextLabel: String(
+        latest.stageLabel
+        || latest.courseLabel
+        || selectedInsightsCourseOption?.label
+        || "Current course",
+      ),
+      updatedLabel: latest.updatedAtMs ? formatTimestamp(latest.updatedAtMs) : "",
+      note: String(latest.remark || "").trim(),
+      ratingValue: recentTeacherRatingsSummary.ratedLessonCount > 0
+        ? recentTeacherRatingsSummary.averageRecentRating
+        : null,
+      ratingLabel: recentTeacherRatingsSummary.ratedLessonCount > 0
+        ? recentTeacherRatingsSummary.averageRecentLabel
+        : "",
+    };
+  }, [
+    displayCourseId,
+    insightsCourseId,
+    recentTeacherRatingsSummary,
+    selectedInsightsCourseOption?.label,
+  ]);
+
+  const changeInsightsCourse = useCallback((courseId: string) => {
+    hapticSelection();
+    setInsightsCourseId(courseId);
+  }, []);
 
   const phonicsLoading =
     enrollmentsQuery.isLoading ||
@@ -3656,12 +3842,12 @@ export default function ParentDashboard() {
   const walletAdvanceBalance = walletBalance !== null && walletBalance > 0 ? walletBalance : 0;
   const walletStatusLabel =
     walletBalance === null
-      ? "Wallet not available"
+      ? "Wallet unavailable"
       : walletBalance < 0
-        ? `Amount to pay: ₹${Math.abs(walletBalance).toLocaleString("en-IN")}`
+        ? `Amount due: ₹${Math.abs(walletBalance).toLocaleString("en-IN")}`
         : walletBalance > 0
           ? `Advance balance: ₹${walletBalance.toLocaleString("en-IN")}`
-          : "No pending amount";
+          : "No amount due";
   const walletLastUpdatedText = toDateOrNull(parentWalletSummaryQuery.data?.lastUpdatedAt)
     ? toDateOrNull(parentWalletSummaryQuery.data?.lastUpdatedAt)!.toLocaleString("en-IN")
     : "—";
@@ -3683,6 +3869,8 @@ export default function ParentDashboard() {
       return {
         total: Number.isFinite(total) ? total : 0,
         count: Number.isFinite(count) ? count : 0,
+        available: true,
+        source: "read_model" as const,
       };
     }
 
@@ -3690,7 +3878,7 @@ export default function ParentDashboard() {
     const filtered = kidId
       ? rows.filter((p) => String(p.kidId || "") === kidId)
       : rows;
-    return filtered.reduce(
+    const summary = filtered.reduce(
       (acc, payment) => {
         const rawAmount = Number(payment?.amount ?? 0);
         const amount = Number.isFinite(rawAmount) ? rawAmount : 0;
@@ -3700,7 +3888,17 @@ export default function ParentDashboard() {
       },
       { total: 0, count: 0 }
     );
-  }, [parentMonthlyBillingReadModelQuery.data, parentPaymentsQuery.data, selectedKidId]);
+    return {
+      ...summary,
+      available: parentPaymentsQuery.isFetched,
+      source: "payment_records" as const,
+    };
+  }, [
+    parentMonthlyBillingReadModelQuery.data,
+    parentPaymentsQuery.data,
+    parentPaymentsQuery.isFetched,
+    selectedKidId,
+  ]);
 
   const curriculumCompletionSummary = useMemo(() => {
     const kidId = selectedKidId ? String(selectedKidId) : '';
@@ -3771,19 +3969,13 @@ export default function ParentDashboard() {
       ).trim();
       const teacherProfile = teacherId ? teacherLookupQuery.data?.[teacherId] : undefined;
       const teacherName = teacherProfile?.name || "";
-      const rawFee =
-        enr.feePerClass ??
-        enr.feePerSession ??
-        enr.ratePerSession ??
-        (enr as any).rate ??
-        null;
-      const fee = rawFee !== null && Number.isFinite(Number(rawFee)) ? Number(rawFee) : null;
+      const parentRate = resolveVerifiedParentRate(enr as Record<string, unknown>);
       return {
         id: enr.id,
         courseId,
         courseLabel: label,
         status: String(enr.status || "active"),
-        fee,
+        parentRate,
         teacherId,
         teacherName,
       };
@@ -3843,28 +4035,28 @@ export default function ParentDashboard() {
     const hasEnrollments = profileEnrollments.length > 0;
 
     return (
-      <div className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Card className="p-4">
-            <div className="text-xs uppercase tracking-wide text-slate-400">Parent</div>
+      <div className="divide-y divide-slate-200 dark:divide-slate-800" data-testid="parent-profile-sections">
+        <div className="grid gap-5 pb-5 sm:grid-cols-2">
+          <section aria-labelledby="profile-parent-title">
+            <h2 id="profile-parent-title" className="text-xs font-semibold uppercase tracking-wide text-slate-500">Parent</h2>
             <div className="mt-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
               {user?.displayName || "Parent"}
             </div>
             <div className="text-sm text-slate-600 dark:text-slate-300">
               {user?.email || "Email not available"}
-                </div>
-              </Card>
-          <Card className="p-4">
-            <div className="text-xs uppercase tracking-wide text-slate-400">Children</div>
+            </div>
+          </section>
+          <section aria-labelledby="profile-children-title">
+            <h2 id="profile-children-title" className="text-xs font-semibold uppercase tracking-wide text-slate-500">Children</h2>
             {hasKids ? (
-              <div className="mt-2 space-y-2">
+              <div className="mt-2 divide-y divide-slate-200 dark:divide-slate-800">
                 {kids.map((kid: any) => (
                   <div
                     key={kid.id}
-                    className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${
+                    className={`flex min-h-11 items-center justify-between gap-3 py-2 text-sm ${
                       String(kid.id) === String(selectedKidId)
-                        ? "border-indigo-200 bg-indigo-50 text-indigo-700"
-                        : "border-slate-200 text-slate-700 dark:border-slate-800 dark:text-slate-200"
+                        ? "font-semibold text-indigo-700 dark:text-indigo-300"
+                        : "text-slate-700 dark:text-slate-200"
                     }`}
                   >
                     <span>{kid.fullName || kid.name || "Unnamed"}</span>
@@ -3877,17 +4069,17 @@ export default function ParentDashboard() {
             ) : (
               <div className="mt-2 text-sm text-slate-500">No children linked yet.</div>
             )}
-          </Card>
+          </section>
         </div>
 
-        <Card className="p-4">
-          <div className="text-xs uppercase tracking-wide text-slate-400">Enrollments</div>
+        <section className="py-5" aria-labelledby="profile-enrollments-title">
+          <h2 id="profile-enrollments-title" className="text-xs font-semibold uppercase tracking-wide text-slate-500">Enrolments</h2>
           {hasEnrollments ? (
-            <div className="mt-3 space-y-3">
+            <div className="mt-2 divide-y divide-slate-200 dark:divide-slate-800">
               {profileEnrollments.map((enr) => (
                 <div
                   key={enr.id}
-                  className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex min-h-14 flex-col justify-center gap-1 py-3 text-sm text-slate-700 dark:text-slate-200"
                 >
                   <div>
                     <div className="font-semibold">{enr.courseLabel}</div>
@@ -3895,9 +4087,6 @@ export default function ParentDashboard() {
                     <div className="text-xs text-slate-500">
                       Teacher: {enr.teacherName || "Assigned soon"}
                     </div>
-                  </div>
-                  <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    Fee per class: {enr.fee !== null ? `₹${enr.fee.toLocaleString("en-IN")}` : "—"}
                   </div>
                 </div>
               ))}
@@ -3907,55 +4096,60 @@ export default function ParentDashboard() {
               No enrollments found for {kidName}.
             </div>
           )}
-        </Card>
+        </section>
 
-        <Card className="p-4">
-          <div className="text-xs uppercase tracking-wide text-slate-400">Payments</div>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
-              <div className="text-xs text-slate-500">Wallet Balance</div>
-              <div className="text-lg font-semibold">
-                {walletBalance === null ? "—" : formatCurrencySignedINR(walletBalance)}
-              </div>
-              <div className="mt-1 text-xs text-slate-500">
-                {walletStatusLabel}
-              </div>
-            </div>
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
-              <div className="text-xs text-slate-500">Payments Received (This Month)</div>
-              <div className="text-lg font-semibold">
-                ₹{profilePaymentsSummary.total.toLocaleString("en-IN")}
-              </div>
-              <div className="mt-1 text-xs text-slate-500">
-                Last updated: {walletLastUpdatedText}
-              </div>
-            </div>
-          </div>
-        </Card>
+        <div className="py-5">
+          <ParentProfilePaymentsPanel
+            walletState={walletDisplayState}
+            paymentsTotal={profilePaymentsSummary.available ? profilePaymentsSummary.total : null}
+            paymentsScopeLabel={
+              profilePaymentsSummary.source === "read_model"
+                ? "Payments recorded this month"
+                : "All recorded payments"
+            }
+            loading={
+              parentWalletSummaryQuery.isLoading ||
+              (!profilePaymentsSummary.available && parentPaymentsQuery.isLoading)
+            }
+            lastUpdatedLabel={walletLastUpdatedLabel}
+            verifiedParentRates={profileEnrollments
+              .filter((enr) => enr.parentRate !== null)
+              .map((enr) => ({
+                enrollmentId: enr.id,
+                courseLabel: enr.courseLabel,
+                amount: enr.parentRate as number,
+                verified: true as const,
+              }))}
+            onOpenPayments={() => {
+              setProfileOpen(false);
+              setTab("payments");
+            }}
+          />
+        </div>
 
-        <Card className="p-4">
-          <div className="text-xs uppercase tracking-wide text-slate-400">Class Insights</div>
-          <div className="mt-3 grid gap-3 sm:grid-cols-4">
-            <div className="rounded-lg border border-slate-200 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-200">
+        <section className="pt-5" aria-labelledby="profile-class-insights-title">
+          <h2 id="profile-class-insights-title" className="text-xs font-semibold uppercase tracking-wide text-slate-500">Class insights</h2>
+          <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-4">
+            <div className="text-sm text-slate-700 dark:text-slate-200">
               <div className="text-xs text-slate-500">Completed classes this month</div>
               <div className="text-lg font-semibold">{billingSummary.chargesThisMonth}</div>
             </div>
-            <div className="rounded-lg border border-slate-200 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-200">
+            <div className="text-sm text-slate-700 dark:text-slate-200">
               <div className="text-xs text-slate-500">Upcoming</div>
               <div className="text-lg font-semibold">{classesCounts.upcoming}</div>
             </div>
-            <div className="rounded-lg border border-slate-200 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-200">
+            <div className="text-sm text-slate-700 dark:text-slate-200">
               <div className="text-xs text-slate-500">Rescheduled</div>
               <div className="text-lg font-semibold">{classesCounts.reschedule_requested}</div>
             </div>
-            <div className="rounded-lg border border-slate-200 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-200">
+            <div className="text-sm text-slate-700 dark:text-slate-200">
               <div className="text-xs text-slate-500">Class deductions this month</div>
               <div className="text-lg font-semibold">
                 ₹{billingSummary.billedThisMonth.toLocaleString("en-IN")}
               </div>
             </div>
           </div>
-        </Card>
+        </section>
       </div>
     );
   };
@@ -3965,7 +4159,23 @@ export default function ParentDashboard() {
     !parentMonthlyBillingReadModelQuery.data &&
     (billingChargesQuery.isLoading || kidSessionsQuery.isLoading);
 
-  const canJoinSession = (session: KidSession, status: string) => {
+  const walletDisplayState = useMemo(
+    () =>
+      getParentWalletDisplayState({
+        balance: walletBalance,
+        loading: parentWalletSummaryQuery.isLoading,
+        error: parentWalletSummaryQuery.isError,
+      }),
+    [
+      parentWalletSummaryQuery.isError,
+      parentWalletSummaryQuery.isLoading,
+      walletBalance,
+    ],
+  );
+  const walletLastUpdatedLabel =
+    walletLastUpdatedText === "—" ? null : walletLastUpdatedText;
+
+  const canJoinSession = useCallback((session: KidSession, status: string) => {
     return (
       status !== "completed" &&
       status !== "cancelled" &&
@@ -3973,136 +4183,198 @@ export default function ParentDashboard() {
       status !== "reschedule_requested" &&
       resolveSessionJoinClassUrl(session, activeEnrollmentById).length > 0
     );
-  };
+  }, [activeEnrollmentById]);
 
-  const renderClassSessionsTable = (
-    rows: Array<{ session: KidSession; start: Date; status: string }>,
-    title: string,
-    emptyText: string
-  ) => {
-    const rowCount = rows.length;
-    return (
-      <Card className="overflow-hidden">
-        <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</h3>
-          <span className="text-xs text-slate-500">
-            {rowCount} session{rowCount === 1 ? "" : "s"}
-          </span>
-        </div>
-        {rows.length === 0 ? (
-          <div className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-300">
-            {emptyText}
-          </div>
-        ) : (
-          <div className="md:max-h-[62vh] md:overflow-auto md:[scrollbar-gutter:stable]">
-            <div className="space-y-3 p-3 md:hidden">
-              {rows.map((row) => {
-                const { session, status } = row;
-                const canJoin = canJoinSession(session, status);
-                const joining = joiningSessionId === session.id;
-                return (
-                  <div
-                    key={`mobile-${session.id}`}
-                    className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/60"
-                  >
-                    <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      {formatSessionDateLabel(session)}
-                    </div>
-                    <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-                      {formatSessionTimeRange(session)}
-                    </div>
-                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      {formatSessionIndiaLabel(session)}
-                    </div>
-                    <div className="mt-2 text-sm font-medium text-slate-900 dark:text-slate-100">
-                      {resolveSessionChildName(session)}
-                    </div>
-                    <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-                      {session.courseName || "—"}
-                    </div>
-                    <div className="mt-2">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${statusBadgeClass(status)}`}>
-                        {statusLabel(status)}
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => openJoinClass(session)}
-                      disabled={!canJoin || joining}
-                      className="mt-3 h-8 w-full bg-gradient-to-r from-indigo-600 to-purple-600 px-3 text-white hover:from-indigo-700 hover:to-purple-700"
-                    >
-                      {joining ? "Opening…" : "Join Class"}
-                      <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="hidden md:block">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur dark:bg-slate-950/95">
-                  <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800">
-                    <th className="px-4 py-2 text-left font-semibold">Date</th>
-                    <th className="px-4 py-2 text-left font-semibold">Time</th>
-                    <th className="px-4 py-2 text-left font-semibold">Child</th>
-                    <th className="px-4 py-2 text-left font-semibold">Course</th>
-                    <th className="px-4 py-2 text-left font-semibold">Status</th>
-                    <th className="px-4 py-2 text-right font-semibold">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => {
-                    const { session, status } = row;
-                    const canJoin = canJoinSession(session, status);
-                    const joining = joiningSessionId === session.id;
-                    return (
-                      <tr
-                        key={session.id}
-                        className="border-b border-slate-200 align-middle last:border-b-0 dark:border-slate-800"
-                      >
-                        <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
-                          <div>{formatSessionDateLabel(session)}</div>
-                          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                            {formatSessionIndiaLabel(session)}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                          {formatSessionTimeRange(session)}
-                        </td>
-                        <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                          {resolveSessionChildName(session)}
-                        </td>
-                        <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
-                          {session.courseName || "—"}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${statusBadgeClass(status)}`}>
-                            {statusLabel(status)}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={() => openJoinClass(session)}
-                            disabled={!canJoin || joining}
-                            className="h-8 whitespace-nowrap bg-gradient-to-r from-indigo-600 to-purple-600 px-3 text-white hover:from-indigo-700 hover:to-purple-700"
-                          >
-                            {joining ? "Opening…" : "Join Class"}
-                            <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </Card>
-    );
+  const classSessionDisplayRows = useMemo<ParentClassSessionDisplay[]>(() => {
+    const nowMs = Date.now();
+    return sortedClassSessions.map(({ session, start, status }) => {
+      const enrollmentId = String((session as any).enrollmentId || "").trim()
+        || (session.id.includes("_") ? session.id.split("_")[0].trim() : "");
+      const enrollment = enrollmentId ? activeEnrollmentById.get(enrollmentId) : undefined;
+      const teacherName = String(
+        session.teacherName
+        || (session as any).teacherDisplayName
+        || (session as any).assignedTeacherName
+        || enrollment?.teacherName
+        || enrollment?.teacherDisplayName
+        || "",
+      ).trim();
+      const courseName = String(
+        session.courseName
+        || (session as any).courseLabel
+        || enrollment?.courseName
+        || enrollment?.courseLabel
+        || "Tiny Steps class",
+      ).trim();
+      const hasJoinLink = resolveSessionJoinClassUrl(session, activeEnrollmentById).length > 0;
+      const joinableStatus = shouldShowClassJoinAction(status);
+      const joinDisabledReason = !joinableStatus
+        ? `${statusLabel(status)} classes cannot be joined.`
+        : hasJoinLink
+          ? ""
+          : "The class link will appear once assigned.";
+
+      return {
+        id: session.id,
+        source: session,
+        dateLabel: formatSessionDateLabel(session),
+        dateTime: start.toISOString(),
+        timeLabel: formatSessionTimeRange(session),
+        indiaTimeLabel: formatSessionIndiaLabel(session),
+        legacyTimeWarning: isSessionTimeFallback(session),
+        courseName,
+        teacherName,
+        childName: kids.length > 1 ? resolveSessionChildName(session) : "",
+        status,
+        startMs: start.getTime(),
+        isToday: toYMD(start) === todayDayKey,
+        isFuture: start.getTime() > nowMs,
+        canJoin: canJoinSession(session, status),
+        joinDisabledReason,
+      };
+    });
+  }, [
+    activeEnrollmentById,
+    canJoinSession,
+    kids.length,
+    resolveSessionChildName,
+    sortedClassSessions,
+    todayDayKey,
+  ]);
+
+  const classRowsByFilter = useMemo<Record<ParentClassesFilterId, ParentClassSessionDisplay[]>>(() => {
+    const byId = new Map(classSessionDisplayRows.map((row) => [row.id, row]));
+    const mapRows = (rows: Array<{ session: KidSession }>) =>
+      rows.map((row) => byId.get(row.session.id)).filter((row): row is ParentClassSessionDisplay => Boolean(row));
+    return {
+      today: mapRows(todayClassSessions),
+      upcoming: mapRows(upcomingClassSessions),
+      completed: mapRows(completedClassSessions),
+      past_pending: mapRows(pastPendingClassSessions),
+      rescheduled: mapRows(rescheduledClassSessions),
+    };
+  }, [
+    classSessionDisplayRows,
+    completedClassSessions,
+    pastPendingClassSessions,
+    rescheduledClassSessions,
+    todayClassSessions,
+    upcomingClassSessions,
+  ]);
+
+  const classesFilters = useMemo(() => {
+    return [
+      {
+        id: "today" as const,
+        label: "Today",
+        count: kidSessionsQuery.isLoading ? null : todayClassSessions.length,
+        scopeText: "Classes scheduled for today.",
+        emptyText: "No classes are scheduled for today.",
+      },
+      {
+        id: "upcoming" as const,
+        label: "Upcoming",
+        count: kidSessionsQuery.isLoading ? null : upcomingClassSessions.length,
+        scopeText: "All future scheduled classes.",
+        emptyText: "No upcoming classes are scheduled.",
+      },
+      {
+        id: "completed" as const,
+        label: "Completed",
+        count: kidSessionsQuery.isLoading ? null : completedClassSessions.length,
+        scopeText: "All completed classes in the available history.",
+        emptyText: "No completed classes are available yet.",
+      },
+      {
+        id: "past_pending" as const,
+        label: "Review",
+        count: kidSessionsQuery.isLoading ? null : pastPendingClassSessions.length,
+        scopeText: "Past scheduled classes awaiting a status update. No parent action is required here.",
+        emptyText: "No past classes need review.",
+      },
+      {
+        id: "rescheduled" as const,
+        label: "Rescheduled",
+        count: kidSessionsQuery.isLoading ? null : rescheduledClassSessions.length,
+        scopeText: "All classes marked as rescheduled in the available history.",
+        emptyText: "No rescheduled classes are available.",
+      },
+    ];
+  }, [
+    completedClassSessions.length,
+    kidSessionsQuery.isLoading,
+    pastPendingClassSessions.length,
+    rescheduledClassSessions.length,
+    todayClassSessions.length,
+    upcomingClassSessions.length,
+  ]);
+
+  const nextParentClass = useMemo(
+    () => selectNextParentClass(classSessionDisplayRows),
+    [classSessionDisplayRows],
+  );
+
+  const activeClassRows =
+    classesView === "calendar" || classesView === "worksheets"
+      ? []
+      : classRowsByFilter[classesView];
+
+  const parentRecordingDescription = useMemo(() => {
+    if (!parentRecordingFolder) return "Open your recording folder.";
+    const updatedAtMs = toDateOrNull(
+      parentRecordingFolder.updatedAt || parentRecordingFolder.createdAt,
+    )?.getTime();
+    return [
+      String(parentRecordingFolder.folderName || "").trim(),
+      updatedAtMs ? `Updated ${formatTimestamp(updatedAtMs)}` : "",
+    ].filter(Boolean).join(" · ") || "Open your recording folder.";
+  }, [parentRecordingFolder]);
+
+  const classResources = useMemo(() => [
+    {
+      id: "calendar" as const,
+      label: "Class calendar",
+      description: "Browse classes by day.",
+    },
+    {
+      id: "worksheets" as const,
+      label: "Worksheets",
+      description: "Practice resources shared by Tiny Steps.",
+      count: parentWorksheetsQuery.isLoading ? null : visibleParentWorksheets.length,
+    },
+    {
+      id: "recordings" as const,
+      label: "Class recordings",
+      description: parentRecordingDescription,
+      disabled: classRecordingsQuery.isLoading || !parentRecordingFolderUrl,
+      disabledReason: classRecordingsQuery.isLoading
+        ? "Loading recordings…"
+        : parentRecordingFolderUrl
+          ? undefined
+          : "No recording folder is available yet.",
+    },
+  ], [
+    classRecordingsQuery.isLoading,
+    parentRecordingDescription,
+    parentRecordingFolderUrl,
+    parentWorksheetsQuery.isLoading,
+    visibleParentWorksheets.length,
+  ]);
+
+  const selectClassResource = (resource: ParentClassesResourceId) => {
+    hapticSelection();
+    if (resource === "recordings") {
+      if (parentRecordingFolderUrl) {
+        window.open(parentRecordingFolderUrl, "_blank", "noopener,noreferrer");
+      }
+      return;
+    }
+    if (resource === "calendar") {
+      const now = new Date();
+      setClassesCalendarMonth(new Date(now.getFullYear(), now.getMonth(), 1));
+      setClassesCalendarSelectedDayKey(toYMD(now));
+    }
+    setClassesView(resource);
   };
 
   // ---- Payments tab state ----
@@ -4412,130 +4684,6 @@ export default function ParentDashboard() {
     };
   }, [activeEnrollmentById, selectedKid, selectedKidEnrollmentDocs, sortedClassSessions]);
 
-  const renderStageGrid = (
-    stageSummaries: Array<any>,
-    courseId: string | null,
-    emptyLabel?: string,
-  ) => {
-    if (!stageSummaries || stageSummaries.length === 0) {
-      return (
-        <div className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900 sm:p-4">
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            {emptyLabel || "Stage breakdown isn’t available yet."}
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {stageSummaries.map((stage, index) => {
-          const displayOrder =
-            typeof stage.order === "number" && stage.order > 0 ? stage.order : index + 1;
-          const colors = getStageColors(displayOrder);
-          const masteryText = formatMasteryLabel(stage.masteryKey) || "Getting started";
-          const statusText =
-            masteryText.toLowerCase() === "getting started" ? "Not started" : masteryText;
-          const title = stripStagePrefix(stage.label, displayOrder);
-          const stageHint =
-            stage.stageHint ||
-            STAGE_HINTS_BY_COURSE[courseId || ""]?.[displayOrder] ||
-            "";
-          const expectations =
-            stage.expectations ||
-            STAGE_EXPECTATIONS_BY_COURSE[courseId || ""]?.[displayOrder] ||
-            [];
-          const progressPct = typeof stage.progressPct === "number" ? stage.progressPct : 0;
-          const completedCount =
-            typeof stage.completedCount === "number" ? stage.completedCount : null;
-          const totalCount = typeof stage.totalCount === "number" ? stage.totalCount : null;
-
-          return (
-            <div
-              key={`${displayOrder}-${stage.label}`}
-              className="rounded-xl border border-gray-200 p-3 shadow-none dark:border-gray-700 sm:rounded-2xl sm:p-4 sm:shadow-sm"
-              style={{
-                background: `linear-gradient(135deg, ${colors.soft} 0%, #ffffff 60%)`,
-              }}
-            >
-              <div className="flex items-start justify-between gap-2 sm:gap-3">
-                <div>
-                  <div
-                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${colors.badgeBg} ${colors.badgeText}`}
-                  >
-                    Stage {displayOrder}
-                  </div>
-                    <div className="mt-1.5 text-sm font-semibold text-gray-900 dark:text-gray-100 sm:mt-2">
-                    {title}
-                  </div>
-                  {stageHint && (
-                    <div className="mt-1 text-xs text-gray-700 dark:text-gray-300">
-                      {stageHint}
-                    </div>
-                  )}
-                </div>
-                <div
-                    className="h-10 w-10 flex-shrink-0 rounded-full p-[3px] sm:h-12 sm:w-12"
-                  style={{
-                    background: `conic-gradient(${colors.accent} ${progressPct}%, ${colors.soft} ${progressPct}% 100%)`,
-                  }}
-                >
-                    <div className="flex h-full w-full items-center justify-center rounded-full bg-white text-[10px] font-semibold">
-                    <span style={{ color: colors.accent }}>{progressPct}%</span>
-                  </div>
-                </div>
-              </div>
-
-              {expectations.length > 0 && (
-                  <div className="mt-2 sm:mt-3">
-                  <div className="text-[10px] uppercase tracking-wide text-gray-500">
-                    What to expect
-                  </div>
-                  <ul className="mt-1 space-y-1 text-xs text-gray-700 dark:text-gray-300">
-                    {expectations.map((item: string) => (
-                      <li key={item}>• {item}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {stage.focusChips?.length > 0 && (
-                  <div className="mt-2 sm:mt-3">
-                  <div className="text-[10px] uppercase tracking-wide text-gray-500">
-                    Next focus
-                  </div>
-                  <div className="mt-1 text-xs text-gray-700 dark:text-gray-300">
-                    {stage.focusChips.join(", ")}
-                  </div>
-                </div>
-              )}
-
-                <div className="mt-2 sm:mt-3">
-                <div className="flex items-center justify-between text-[11px] text-gray-500">
-                  <span>Progress</span>
-                  <span className="font-semibold text-gray-700">{statusText}</span>
-                </div>
-                {completedCount !== null && totalCount !== null && (
-                  <div className="mt-1 flex items-center justify-between text-[11px] text-gray-500">
-                    <span>
-                      {completedCount}/{totalCount} lessons
-                    </span>
-                  </div>
-                )}
-                  <div className="mt-2 h-2 rounded-full border border-white bg-white/70">
-                  <div
-                    className={`h-2 rounded-full ${colors.bar}`}
-                    style={{ width: `${progressPct}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
   const renderDashboardHome = () => {
     const childName = selectedKid?.fullName || selectedKid?.name || "your child";
     const curriculumData = dashboardCurriculumData;
@@ -4543,19 +4691,23 @@ export default function ParentDashboard() {
     const programLabel = selectedCourse?.courseLabel
       || profileEnrollments[0]?.courseLabel
       || (displayCourseId ? formatCourseLabel(displayCourseId) : "Program assignment in progress");
-    const completionPct = Math.max(
-      0,
-      Math.min(100, curriculumData?.summaryOverallPct ?? curriculumCompletionSummary?.overallPct ?? 0),
-    );
+    const hasCurriculumCompletionScope =
+      Number(curriculumData?.summaryTotalTopics ?? curriculumCompletionSummary?.totalTopics ?? 0) > 0;
+    const completionValue =
+      hasCurriculumCompletionScope && typeof curriculumData?.summaryOverallPct === "number"
+        ? curriculumData.summaryOverallPct
+        : hasCurriculumCompletionScope && typeof curriculumCompletionSummary?.overallPct === "number"
+          ? curriculumCompletionSummary.overallPct
+          : undefined;
+    const progressState =
+      phonicsLoading
+        ? "loading" as const
+        : typeof completionValue === "number"
+          ? "available" as const
+          : "unavailable" as const;
     const activeStageLabel = curriculumData?.activeStage
       ? stripStagePrefix(curriculumData.activeStage.label, curriculumData.activeStage.order ?? 0)
       : overviewMetrics?.stageMessage || "Getting started";
-    const programIcon = selectedCourse
-      ? phonicsIconsByCourseId[selectedCourse.courseId] || "📘"
-      : "📘";
-    const heroGradientClass = selectedCourse
-      ? phonicsGradientsByCourseId[selectedCourse.courseId] || "from-slate-50 to-emerald-50"
-      : "from-slate-50 to-emerald-50";
     const latestTeacherLesson = recentTeacherRatingsSummary?.latestLesson ?? null;
     const previewRows = [...todayClassSessions, ...upcomingClassSessions]
       .filter((row) => {
@@ -4587,17 +4739,21 @@ export default function ParentDashboard() {
     const selectedCourseLabel = selectedCourse?.courseLabel || "";
     const lessonsSummaryText = curriculumData
       ? `${curriculumData.summaryCompletedCount}/${curriculumData.summaryTotalTopics} lessons`
-      : "Waiting for curriculum data";
+      : phonicsLoading
+        ? "Loading lesson totals"
+        : "Curriculum data unavailable";
     const confidenceLabel =
       overviewMetrics?.confidenceNow !== null && overviewMetrics?.confidenceNow !== undefined
         ? masteryLabel(overviewMetrics.confidenceNow)
-        : "Building";
+        : "Not available";
     const confidenceMetaText =
       overviewMetrics?.lastUpdatedAt
         ? `Updated ${formatTimestamp(overviewMetrics.lastUpdatedAt)}`
-        : "Based on recent sessions";
-    const attendanceLabel = `${classesCounts.completed}/${classesCounts.total || 0}`;
-    const attendanceMetaText = `${todayClassSessions.length} today · ${classesCounts.reschedule_requested} rescheduled`;
+        : kidSummaryQuery.isLoading
+          ? "Loading latest snapshot"
+          : "No confidence snapshot yet";
+    const attendanceLabel = `${classesCounts.completed}/${classesCounts.total}`;
+    const attendanceMetaText = `${classesMonthLabel} · ${classesCounts.reschedule_requested} rescheduled`;
     const billingLabel =
       walletBalance === null
         ? "Wallet unavailable"
@@ -4606,22 +4762,22 @@ export default function ParentDashboard() {
           : walletBalance > 0
             ? `${formatCurrencyINR(walletBalance)} advance`
             : "No pending amount";
-    const billingMetaText = `Class deductions this month · ${formatCurrencyINR(billingSummary.billedThisMonth)}`;
+    const billingMetaText = `Deductions · ${classesMonthLabel}`;
     const billingDetailText =
       `Your wallet is updated automatically after each completed class. Payments add balance to your wallet. Class fees reduce the wallet balance.`;
 
     return (
-      <div className="space-y-4 sm:space-y-6">
+      <div className="space-y-4 sm:space-y-6" data-layout="parent-home" data-horizontal-scroll="false">
         <ParentDashboardHero
           childName={childName}
           heroMessage={dashboardHeroMessage}
-          heroGradientClass={heroGradientClass}
-          programIcon={programIcon}
           programLabel={programLabel}
           activeStageLabel={activeStageLabel}
           classesCompleted={classesCounts.completed}
           classesUpcoming={classesCounts.upcoming}
+          classesScopeLabel={classesMonthLabel}
           alertText={dashboardAlerts.length > 0 ? dashboardAlerts[0] : "No urgent alerts right now"}
+          hasAlert={dashboardAlerts.length > 0}
           onViewInsights={() => setTab("insights")}
           onViewClasses={() => setTab("classes")}
           joinClassUrl={heroJoinClass.url || undefined}
@@ -4629,17 +4785,31 @@ export default function ParentDashboard() {
         />
 
         <ParentDashboardKpis
-          completionPct={completionPct}
+          progressState={progressState}
+          completionPct={completionValue}
           lessonsSummaryText={lessonsSummaryText}
           confidenceLabel={confidenceLabel}
           confidenceMetaText={confidenceMetaText}
+          confidenceLoading={kidSummaryQuery.isLoading}
           attendanceLabel={attendanceLabel}
           attendanceMetaText={attendanceMetaText}
+          attendanceLoading={kidSessionsQuery.isLoading && parentMonthlyBillingReadModelQuery.isLoading}
           billingLabel={billingLabel}
           billingMetaText={billingMetaText}
+          billingLoading={billingLoading}
         />
 
-        <div className="grid gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+        <div className="grid gap-4 sm:gap-6 xl:grid-cols-2">
+          <ParentAttendanceSummary
+            classesCounts={classesCounts}
+            scopeLabel={`Class activity · ${classesMonthLabel}`}
+            upcomingPreviewRows={previewRows}
+            joiningSessionId={joiningSessionId}
+            onOpenClasses={() => setTab("classes")}
+            onJoinSession={(session) => openJoinClass(session)}
+            canJoinFromOverview={canJoinFromOverview}
+          />
+
           <ParentProgressOverview
             childName={childName}
             isRefetching={phonicsProgressQuery.isRefetching}
@@ -4649,11 +4819,14 @@ export default function ParentDashboard() {
             phonicsError={phonicsError}
             phonicsErrorMessage={phonicsErrorMessage}
             curriculumData={curriculumData}
-            completionPct={completionPct}
+            completionPct={completionValue}
             stripStagePrefix={stripStagePrefix}
           />
+        </div>
 
+        <div className="grid gap-4 sm:gap-6 xl:grid-cols-2">
           <ParentLearningInsights
+            isLoading={phonicsLoading}
             latestTeacherLesson={latestTeacherLesson}
             selectedCourseLabel={selectedCourseLabel}
             formatTimestamp={formatTimestamp}
@@ -4661,35 +4834,32 @@ export default function ParentDashboard() {
             dashboardPracticeChips={dashboardPracticeChips}
             onOpenAllRatings={() => setTab("skills")}
           />
-        </div>
 
-        <div className="grid gap-4 sm:gap-6 xl:grid-cols-2">
-          <ParentAttendanceSummary
-            classesCounts={classesCounts}
-            upcomingPreviewRows={previewRows}
-            joiningSessionId={joiningSessionId}
-            onOpenClasses={() => setTab("classes")}
-            onJoinSession={(session) => openJoinClass(session)}
-            canJoinFromOverview={canJoinFromOverview}
-          />
-
-          <ParentBillingSummary
-            billingLoading={billingLoading}
-            dueNowText={walletStatusLabel}
-            billedText={formatCurrencyINR(billingSummary.billedThisMonth)}
-            paidText={formatCurrencyINR(profilePaymentsSummary.total)}
-            billingDetailText={billingDetailText}
-            onOpenPayments={() => setTab("payments")}
+          <ParentRecommendations
+            dashboardRecommendedNext={dashboardRecommendedNext}
+            labelFromGameId={labelFromGameId}
+            onStartPractice={handlePracticeClick}
+            onOpenGamesProgress={() => setTab("games-progress")}
           />
         </div>
 
-        <ParentRecommendations
-          dashboardRecommendedNext={dashboardRecommendedNext}
-          dashboardStrengthChips={dashboardStrengthChips}
-          dashboardPracticeChips={dashboardPracticeChips}
-          labelFromGameId={labelFromGameId}
-          onStartPractice={handlePracticeClick}
-          onOpenGamesProgress={() => setTab("games-progress")}
+        <ParentBillingSummary
+          billingLoading={billingLoading}
+          dueNowText={walletStatusLabel}
+          billedText={formatCurrencyINR(billingSummary.billedThisMonth)}
+          paidText={
+            profilePaymentsSummary.available
+              ? formatCurrencyINR(profilePaymentsSummary.total)
+              : "Not available"
+          }
+          deductionsLabel={`Class deductions · ${classesMonthLabel}`}
+          paymentsLabel={
+            profilePaymentsSummary.source === "read_model"
+              ? `Payments received · ${classesMonthLabel}`
+              : "Payments recorded"
+          }
+          billingDetailText={billingDetailText}
+          onOpenPayments={() => setTab("payments")}
         />
 
         <ParentLessonTracker
@@ -4726,16 +4896,12 @@ export default function ParentDashboard() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[100dvh] items-center justify-center overflow-x-hidden">
-        Loading…
-      </div>
-    );
+    return <ParentShellLoading showNativeTabBar={isNativeIOSApp} />;
   }
   if (!user) return null;
 
   return (
-    <div className={`mobile-app-scroll ts-native-no-x-scroll w-full min-w-0 max-w-full bg-gradient-to-b from-slate-100 to-slate-50 dark:bg-slate-950 lg:h-screen lg:overflow-hidden lg:bg-slate-50 ${
+    <div className={`mobile-app-scroll ts-parent-page ts-native-no-x-scroll w-full min-w-0 max-w-full lg:h-screen lg:overflow-hidden ${
       isNativeIOSApp
         ? "ts-native-app-shell ts-native-no-x-scroll overflow-hidden"
         : "min-h-[100dvh] overflow-x-hidden [overscroll-behavior-x:none]"
@@ -4746,13 +4912,13 @@ export default function ParentDashboard() {
           : "min-h-[100dvh] pt-4 sm:pt-6"
       }`}>
         <Dialog open={mobileMenuOpen} onOpenChange={handleMobileMenuOpenChange}>
-          <DialogContent className="ts-native-no-x left-0 top-0 h-[100dvh] max-h-[100dvh] w-[min(88vw,360px)] min-w-0 max-w-[calc(100vw-1rem)] translate-x-0 translate-y-0 overflow-hidden rounded-r-3xl rounded-l-none border-r border-slate-200 bg-white p-0 shadow-2xl [overscroll-behavior:none] data-[state=closed]:slide-out-to-left-full data-[state=open]:slide-in-from-left-full sm:rounded-l-none sm:rounded-r-3xl [&>button]:right-3 [&>button]:top-[calc(env(safe-area-inset-top)+0.75rem)]">
-            <div className="ts-native-scroll ts-native-no-x h-full w-full px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] pt-[calc(env(safe-area-inset-top)+1.25rem)]">
+          <DialogContent className="ts-native-no-x left-0 top-0 h-[100dvh] max-h-[100dvh] w-[min(88vw,360px)] min-w-0 max-w-[calc(100vw-1rem)] translate-x-0 translate-y-0 overflow-hidden rounded-r-3xl rounded-l-none border-r border-slate-200 bg-white p-0 shadow-2xl [overscroll-behavior:none] data-[state=closed]:slide-out-to-left-full data-[state=open]:slide-in-from-left-full dark:border-slate-700 dark:bg-slate-950 sm:rounded-l-none sm:rounded-r-3xl [&>button]:right-3 [&>button]:top-[calc(var(--ts-safe-top)+0.75rem)]">
+            <div className="ts-native-scroll ts-native-no-x h-full w-full px-4 pb-[calc(var(--ts-safe-bottom)+1rem)] pt-[calc(var(--ts-safe-top)+1rem)]">
               <DialogHeader className="pl-1 pr-14 text-left">
                 <DialogTitle>Parent Menu</DialogTitle>
               </DialogHeader>
-              <div className="mt-4 space-y-4">
-              <div className="min-h-[92px] rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm">
+              <div className="mt-3 space-y-3">
+              <div className="min-h-[82px] rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <div className="flex items-start justify-between gap-2">
                   <TinyStepsBrand
                     subtitle={null}
@@ -4786,12 +4952,12 @@ export default function ParentDashboard() {
                     </Button>
                   </div>
                 </div>
-                <div className="mt-1 truncate bg-gradient-to-r from-violet-500 via-fuchsia-500 to-cyan-500 bg-clip-text text-base font-semibold text-transparent">
+                <div className="mt-1 truncate text-base font-semibold text-slate-900 dark:text-slate-100">
                   Hi, {user?.displayName || "Parent"}
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+              <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   Active Child
                 </label>
@@ -4802,6 +4968,7 @@ export default function ParentDashboard() {
                 ) : (
                   <>
                     <select
+                      aria-label="Active Child"
                       value={selectedKidId}
                       onChange={(e) => {
                         const nextKidId = e.target.value;
@@ -4813,7 +4980,7 @@ export default function ParentDashboard() {
                           return next;
                         });
                       }}
-                      className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900"
+                      className="mt-2 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                     >
                       {kids.map((k: any) => (
                         <option key={k.id} value={k.id}>
@@ -4827,7 +4994,7 @@ export default function ParentDashboard() {
                         setMobileMenuOpen(false);
                       }}
                       disabled={!selectedKidId}
-                      className="mt-3 w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold"
+                      className="mt-2 min-h-11 w-full bg-indigo-600 font-semibold text-white hover:bg-indigo-700"
                     >
                       Open Games Portal
                     </Button>
@@ -4835,7 +5002,7 @@ export default function ParentDashboard() {
                 )}
               </div>
 
-              <nav className="space-y-2">
+              <nav aria-label="Parent Menu destinations" className="space-y-1.5">
                 {parentNavItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = activeTab === item.id;
@@ -4849,22 +5016,30 @@ export default function ParentDashboard() {
                         setMobileMenuOpen(false);
                       }}
                       aria-current={isActive ? "page" : undefined}
-                      className={`group flex min-h-12 w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium transition active:scale-[0.99] ${
+                      className={`group flex min-h-11 w-full items-center gap-3 rounded-xl px-2.5 py-1.5 text-left text-sm font-medium transition active:scale-[0.99] ${
                         isActive
-                          ? "bg-slate-900 text-white shadow-[0_8px_18px_rgba(15,23,42,0.14)]"
-                          : "text-slate-600 active:bg-slate-100 hover:bg-slate-100 hover:text-slate-900"
+                          ? "bg-indigo-50 text-indigo-950 ring-1 ring-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-100 dark:ring-indigo-800"
+                          : "text-slate-600 active:bg-slate-100 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white"
                       }`}
                     >
                       <span
-                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition ${
+                        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition ${
                           isActive
-                            ? "bg-white/15 text-white"
-                            : "bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-slate-900"
+                            ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200"
+                            : "bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300"
                         }`}
                       >
                         <Icon className="h-5 w-5" />
                       </span>
                       <span className="flex-1">{item.label}</span>
+                      {item.id === "messages" && messageUnreadCount > 0 && (
+                        <span
+                          className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-slate-900 px-1.5 py-0.5 text-[11px] font-semibold text-white dark:bg-slate-100 dark:text-slate-900"
+                          aria-label={`${messageUnreadCount > 99 ? "99+" : messageUnreadCount} unread messages`}
+                        >
+                          {messageUnreadCount > 99 ? "99+" : messageUnreadCount}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -5014,24 +5189,19 @@ export default function ParentDashboard() {
             isNativeIOSApp ? "h-full w-full overflow-hidden" : ""
           }`}>
             {!isNativeMessagesThreadFocus && (
-              <div className={`sticky top-0 z-30 shrink-0 bg-slate-50/90 backdrop-blur dark:bg-slate-950/80 ${
-                isNativeIOSApp ? "ts-native-header-safe pb-2" : "pt-safe"
-              }`}>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="gap-2 lg:hidden"
-                  onClick={openMobileMenu}
-                >
-                  <Menu className="h-4 w-4" />
-                  Menu
-                </Button>
-              </div>
+              <ParentMobileHeader
+                activeTab={activeTab}
+                childName={selectedKid?.fullName || selectedKid?.name}
+                onMenu={openMobileMenu}
+                onProfile={() => {
+                  hapticLight();
+                  setProfileOpen(true);
+                }}
+              />
             )}
 
             <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
-              <DialogContent className="max-w-3xl">
+              <DialogContent className="max-h-[calc(100dvh-var(--ts-safe-top)-var(--ts-safe-bottom)-1rem)] max-w-3xl overflow-y-auto rounded-[22px] border-slate-200 bg-white px-5 pb-[calc(var(--ts-safe-bottom)+1rem)] pt-5 shadow-2xl dark:border-slate-700 dark:bg-slate-950 sm:p-6">
                 <DialogHeader>
                   <DialogTitle>Profile & Payments</DialogTitle>
                 </DialogHeader>
@@ -5059,7 +5229,7 @@ export default function ParentDashboard() {
 
         {activeTab === "messages" && (
           <div className={isNativeMessagesThreadFocus ? "flex min-h-0 flex-1 flex-col overflow-hidden" : "space-y-4"}>
-            {!isNativeMessagesThreadFocus && (
+            {shouldShowParentMessagesHeading(isNativeIOSApp, isNativeMessagesThreadFocus) && (
               <Card className="p-4">
                 <h3 className="text-base font-semibold text-slate-900">Messages</h3>
                 <p className="text-xs text-slate-500">
@@ -5077,91 +5247,52 @@ export default function ParentDashboard() {
         )}
 
         {activeTab === "insights" && (
-          <div className="space-y-4 sm:space-y-6">
-            <Card className="space-y-3 p-4 sm:space-y-4 sm:p-6">
-              <div className="flex items-start justify-between gap-3 sm:gap-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    Insights
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Stage-based learning progress with clear next steps.
-                  </p>
-                </div>
-                <div className="text-2xl">📈</div>
-              </div>
-
-              {insightsCourseOptions.length === 0 && (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Stage insights will appear once a course is assigned.
-                </p>
-              )}
-
-              {insightsCourseOptions.length > 0 && (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Course
-                    </label>
-                    {insightsCourseOptions.length > 1 ? (
-                      <select
-                        value={insightsCourseId}
-                        onChange={(e) => setInsightsCourseId(e.target.value)}
-                          className="mt-1 min-h-11 w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 sm:min-h-0"
-                      >
-                        {insightsCourseOptions.map((opt) => (
-                          <option key={opt.courseId} value={opt.courseId}>
-                            {opt.label || opt.courseId}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                        <div className="mt-1 flex min-h-11 items-center text-sm text-gray-700 dark:text-gray-300 sm:min-h-0">
-                        {insightsCourseOptions[0]?.label || insightsCourseOptions[0]?.courseId}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {insightsCourseOptions.length > 0 && (
-                <>
-                  {recentTeacherRatingsSummary?.latestLesson && (
-                      <div className="rounded-xl border border-sky-100 bg-sky-50/70 px-3 py-3 shadow-sm sm:px-4">
-                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                        <div>
-                          <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
-                            Teacher ratings
-                          </div>
-                          <div className="text-sm font-semibold text-slate-900">
-                            {recentTeacherRatingsSummary.latestLesson.label}
-                          </div>
-                          <div className="text-xs text-slate-500">
-                            {recentTeacherRatingsSummary.latestLesson.stageLabel || recentTeacherRatingsSummary.latestLesson.courseLabel}
-                            {recentTeacherRatingsSummary.latestLesson.updatedAtMs
-                              ? ` · ${formatTimestamp(recentTeacherRatingsSummary.latestLesson.updatedAtMs)}`
-                              : ""}
-                          </div>
-                        </div>
-                          <div className="flex flex-wrap items-center gap-2 text-xs md:justify-end">
-                          <span className="rounded-full bg-white px-2.5 py-1 font-semibold text-slate-700">
-                            Recent average {recentTeacherRatingsSummary.averageRecentRating.toFixed(1)}/4
-                          </span>
-                          <span className="rounded-full bg-indigo-600 px-2.5 py-1 font-semibold text-white">
-                            {recentTeacherRatingsSummary.averageRecentLabel}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {renderStageGrid(
-                    insightsStageData?.stageSummaries ?? [],
-                    insightsStageData?.courseId ?? null,
-                  )}
-                </>
-              )}
-            </Card>
-          </div>
+          <ParentInsightsView
+            isNativeIOSApp={isNativeIOSApp}
+            childSelected={Boolean(selectedKidId)}
+            courseOptions={insightsCourseOptions}
+            selectedCourseId={selectedInsightsCourseOption?.courseId || insightsCourseOptions[0]?.courseId || ""}
+            selectedCourseLabel={selectedInsightsCourseOption?.label || insightsCourseOptions[0]?.label || "Current course"}
+            progressState={
+              kidsQuery.isLoading || phonicsLoading || coursesLookupQuery.isLoading
+                ? "loading"
+                : insightsStageData && (insightsStageData.totalCount ?? 0) > 0
+                  ? "available"
+                  : "unavailable"
+            }
+            completedLessons={insightsStageData?.completedCount ?? null}
+            totalLessons={insightsStageData?.totalCount ?? null}
+            completionPct={insightsStageData?.overallPct ?? null}
+            completedStages={insightsStageData?.completedStages ?? null}
+            lastUpdatedLabel={
+              insightsStageData?.lastUpdatedAtMs
+                ? formatTimestamp(insightsStageData.lastUpdatedAtMs)
+                : ""
+            }
+            usesLatestLessonFallback={
+              normalizeCurriculumCourseId(insightsCourseId) === normalizeCurriculumCourseId(displayCourseId)
+              && curriculumCompletionSummary?.source === "fallback_client"
+            }
+            stages={insightStageRows}
+            activeStage={activeInsightStage}
+            nextStage={nextInsightStage}
+            teacherInsight={insightsTeacherDisplay}
+            teacherInsightLoading={phonicsProgressQuery.isLoading}
+            errorMessage={
+              kidsQuery.isError
+                ? "Unable to load the selected child right now."
+                : phonicsError
+                  ? phonicsErrorMessage
+                  : null
+            }
+            contextKey={`${selectedKidId}::${insightsCourseId}`}
+            onCourseChange={changeInsightsCourse}
+            onViewTeacherRatings={() => {
+              hapticSelection();
+              setTab("skills");
+            }}
+            onSelectionFeedback={hapticSelection}
+          />
         )}
 
         {activeTab === "games-progress" && (
@@ -5259,572 +5390,57 @@ export default function ParentDashboard() {
         {/* SKILLS TAB - teacher tagged skills */}
         {activeTab === "skills" && (
           <div className="space-y-6">
-            {(() => {
-              const formatSkillTag = (tag: string): string => {
-                if (!tag) return "—";
-                if (tag.startsWith("letter:")) {
-                  const letter = tag.split(":")[1]?.toUpperCase() || "";
-                  return `Letter ${letter}`;
-                }
-                if (tag.startsWith("sound:")) {
-                  const sound = tag.substring(6);
-                  return `Sound ${sound}`;
-                }
-                if (tag.startsWith("subtopic:")) {
-                  const sub = tag.substring(9).replace(/_/g, " ");
-                  return sub
-                    .split(" ")
-                    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                    .join(" ");
-                }
-                return tag.charAt(0).toUpperCase() + tag.slice(1);
-              };
-
-              const skillsData = skillsInsightData;
-              const hasSkillData = Boolean(
-                (skillsData && skillsData.totalSkills > 0) || recentTeacherRatings.length > 0
-              );
-
-              if (!hasSkillData) {
-                return (
-                  <Card className="p-8 bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-slate-900 dark:to-indigo-950 border border-indigo-100 dark:border-indigo-900/30">
-                    <div className="flex flex-col items-center text-center space-y-4 max-w-md mx-auto">
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/40 flex items-center justify-center">
-                        <span className="text-3xl">🎯</span>
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
-                          Teacher ratings are getting ready
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Once teachers rate a few lessons, this page will show
-                          lesson-based stars, teacher notes, and practice signals.
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-                );
+            <ParentSkillsView
+              isNativeIOSApp={isNativeIOSApp}
+              childName={selectedKid?.fullName || null}
+              loading={phonicsLoading}
+              error={phonicsError ? phonicsErrorMessage : null}
+              courses={phonicsProgressByCourse.map((course) => ({
+                id: course.courseId,
+                label: course.courseLabel,
+              }))}
+              selectedCourseId={selectedSkillsCourse?.courseId || ""}
+              lessons={parentSkillsLessons}
+              recentAverage={
+                recentTeacherRatingsSummary && recentTeacherRatingsSummary.ratedLessonCount > 0
+                  ? recentTeacherRatingsSummary.averageRecentRating
+                  : null
               }
-
-	              return (
-	                <div className="space-y-6">
-	                  <Card className="p-6 space-y-5">
-	                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-	                      <div>
-	                        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-	                          Teacher Progress Snapshot
-	                        </h2>
-	                        <p className="text-sm text-gray-600 dark:text-gray-400">
-	                          {selectedKid?.fullName
-	                            ? `Viewing: ${selectedKid.fullName}`
-	                            : "Select a child"}{" "}
-	                          {skillsData?.courseLabel ? `· ${skillsData.courseLabel}` : ""}
-	                        </p>
-	                      </div>
-	                      <div className="text-xs uppercase tracking-wide text-gray-500">
-	                        Lesson-based ratings
-	                      </div>
-	                    </div>
-
-	                    {recentTeacherRatingsSummary?.latestLesson ? (
-	                      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
-	                        <div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-indigo-50 p-4">
-	                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-	                            <div>
-	                              <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
-	                                Latest rated lesson
-	                              </div>
-	                              <div className="mt-1 text-lg font-semibold text-slate-900">
-	                                {recentTeacherRatingsSummary.latestLesson.label}
-	                              </div>
-	                              <div className="mt-1 text-xs text-slate-500">
-	                                {recentTeacherRatingsSummary.latestLesson.stageLabel || recentTeacherRatingsSummary.latestLesson.courseLabel}
-	                                {recentTeacherRatingsSummary.latestLesson.updatedAtMs
-	                                  ? ` · ${formatTimestamp(recentTeacherRatingsSummary.latestLesson.updatedAtMs)}`
-	                                  : ""}
-	                              </div>
-	                            </div>
-	                            <div className="flex flex-wrap items-center gap-2">
-	                              <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 shadow-sm">
-	                                {recentTeacherRatingsSummary.latestLesson.ratedSkillCount}/
-	                                {recentTeacherRatingsSummary.latestLesson.totalSkillCount} skills rated
-	                              </span>
-	                              <span className="rounded-full bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm">
-	                                {recentTeacherRatingsSummary.latestLesson.roundedAverageRating}/4 ·{" "}
-	                                {skillRatingLegendLabel(
-	                                  recentTeacherRatingsSummary.latestLesson.roundedAverageRating,
-	                                )}
-	                              </span>
-	                            </div>
-	                          </div>
-
-	                          <div className="mt-4">
-	                            <ChildSkillRatingCard
-	                              title={null}
-	                              skills={recentTeacherRatingsSummary.latestLesson.progressSkills}
-	                              values={recentTeacherRatingsSummary.latestLesson.progressRatings}
-	                              readOnly
-	                              compact
-	                              showLegend={false}
-	                              className="border-slate-200 bg-white/90"
-	                            />
-	                          </div>
-
-                            {((Array.isArray(recentTeacherRatingsSummary.latestLesson.strengthChips) &&
-                              recentTeacherRatingsSummary.latestLesson.strengthChips.length > 0) ||
-                              getLessonNeedsPracticeChips(recentTeacherRatingsSummary.latestLesson).length > 0) && (
-                              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                                {Array.isArray(recentTeacherRatingsSummary.latestLesson.strengthChips) &&
-                                recentTeacherRatingsSummary.latestLesson.strengthChips.length > 0 ? (
-                                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 px-3 py-2">
-                                    <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                                      Strengths
-                                    </div>
-                                    <div className="mt-2 flex flex-wrap gap-2">
-                                      {recentTeacherRatingsSummary.latestLesson.strengthChips.map((chip: string) => (
-                                        <span
-                                          key={`latest-strength-${chip}`}
-                                          className="rounded-full border border-emerald-200 bg-white px-2 py-0.5 text-xs font-semibold text-emerald-800"
-                                        >
-                                          {chip}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                ) : null}
-                                {getLessonNeedsPracticeChips(recentTeacherRatingsSummary.latestLesson).length > 0 ? (
-                                  <div className="rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-2">
-                                    <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-700">
-                                      Needs practice
-                                    </div>
-                                    <div className="mt-2 flex flex-wrap gap-2">
-                                      {getLessonNeedsPracticeChips(recentTeacherRatingsSummary.latestLesson).map((chip: string) => (
-                                        <span
-                                          key={`latest-practice-${chip}`}
-                                          className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-xs font-semibold text-amber-800"
-                                        >
-                                          {chip}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                ) : null}
-                              </div>
-                            )}
-
-	                          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-	                            <div className="space-y-1">
-	                              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-	                                Teacher note
-	                              </div>
-	                              <div className="text-sm text-slate-700">
-	                                {recentTeacherRatingsSummary.latestLesson.remark || "No note added for this lesson yet."}
-	                              </div>
-	                            </div>
-	                            <Button
-	                              variant="outline"
-	                              size="sm"
-	                              onClick={() => {
-	                                setSelectedCurriculumTopic(recentTeacherRatingsSummary.latestLesson);
-	                                setCurriculumTopicModalOpen(true);
-	                              }}
-	                              className="h-8 rounded-full border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-600"
-	                            >
-	                              Open lesson details
-	                            </Button>
-	                          </div>
-	                        </div>
-
-	                        <div className="space-y-4">
-	                          <div className="rounded-2xl border border-slate-200 bg-white p-4">
-	                            <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
-	                              Recent lesson performance
-	                            </div>
-	                            <div className="mt-2 text-2xl font-semibold text-slate-900">
-	                              {recentTeacherRatingsSummary.averageRecentRating.toFixed(1)}/4
-	                            </div>
-	                            <div className="mt-1 text-sm text-slate-600">
-	                              {recentTeacherRatingsSummary.averageRecentLabel} across recent teacher-rated lessons
-	                            </div>
-	                          </div>
-
-	                          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4">
-	                            <div className="text-[10px] uppercase tracking-[0.18em] text-emerald-700 font-semibold">
-	                              Strongest skills
-	                            </div>
-	                            <div className="mt-3 flex flex-wrap gap-2">
-	                              {recentTeacherRatingsSummary.strongestSkills.map((skill) => (
-	                                <span
-	                                  key={`strength-${skill}`}
-	                                  className="rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-xs font-semibold text-emerald-800"
-	                                >
-	                                  {skill}
-	                                </span>
-	                              ))}
-	                              {recentTeacherRatingsSummary.strongestSkills.length === 0 && (
-	                                <span className="text-xs text-emerald-700">
-	                                  Stronger areas will appear as more lessons are rated.
-	                                </span>
-	                              )}
-	                            </div>
-	                          </div>
-
-	                          <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
-	                            <div className="text-[10px] uppercase tracking-[0.18em] text-amber-700 font-semibold">
-	                              Needs practice
-	                            </div>
-	                            <div className="mt-3 flex flex-wrap gap-2">
-	                              {recentTeacherRatingsSummary.needsPracticeSkills.map((skill) => (
-	                                <span
-	                                  key={`practice-${skill}`}
-	                                  className="rounded-full border border-amber-200 bg-white px-2.5 py-1 text-xs font-semibold text-amber-800"
-	                                >
-	                                  {skill}
-	                                </span>
-	                              ))}
-	                              {recentTeacherRatingsSummary.needsPracticeSkills.length === 0 && (
-	                                <span className="text-xs text-amber-700">
-	                                  Practice areas will show once teachers rate more lessons.
-	                                </span>
-	                              )}
-	                            </div>
-	                          </div>
-	                        </div>
-	                        </div>
-	                    ) : (
-	                      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
-	                        Teacher lesson ratings will appear here once a lesson is reviewed with stars.
-	                      </div>
-	                    )}
-	                  </Card>
-
-	                  <Card className="p-6">
-	                    <div className="flex items-center justify-between mb-4">
-	                      <div>
-	                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-	                          Recent Teacher Ratings
-	                        </h3>
-	                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-	                          Lesson-by-lesson star ratings shared by your child&apos;s teacher.
-	                        </p>
-	                      </div>
-	                      <span className="text-xs text-gray-500">
-	                        {recentTeacherRatings.length} recent lessons
-	                      </span>
-	                    </div>
-	                    <div className="space-y-4">
-	                      {recentTeacherRatings.length > 0 ? (
-	                        recentTeacherRatings.map((lesson: any) => (
-	                          <div
-	                            key={`lesson-rating-${lesson.id}`}
-	                            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-	                          >
-	                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-	                              <div>
-	                                <div className="text-sm font-semibold text-slate-900">{lesson.label}</div>
-	                                <div className="mt-1 text-xs text-slate-500">
-	                                  {lesson.stageLabel || lesson.courseLabel}
-	                                  {lesson.updatedAtMs ? ` · ${formatTimestamp(lesson.updatedAtMs)}` : ""}
-	                                </div>
-	                              </div>
-	                              <div className="flex flex-wrap items-center gap-2 text-xs">
-	                                <span className="rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-700">
-	                                  {lesson.ratedSkillCount}/{lesson.totalSkillCount} skills
-	                                </span>
-	                                <span className="rounded-full bg-indigo-600 px-2.5 py-1 font-semibold text-white">
-	                                  {lesson.roundedAverageRating}/4 · {skillRatingLegendLabel(lesson.roundedAverageRating)}
-	                                </span>
-	                              </div>
-	                            </div>
-	                            <div className="mt-3">
-	                              <ChildSkillRatingCard
-	                                title={null}
-	                                skills={lesson.progressSkills}
-	                                values={lesson.progressRatings}
-	                                readOnly
-	                                compact
-	                                showLegend={false}
-	                                className="border-slate-200 bg-slate-50/70"
-	                              />
-	                            </div>
-                              {((Array.isArray(lesson.strengthChips) && lesson.strengthChips.length > 0) ||
-                                getLessonNeedsPracticeChips(lesson).length > 0) && (
-                                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                                  {Array.isArray(lesson.strengthChips) && lesson.strengthChips.length > 0 ? (
-                                    <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 px-3 py-2">
-                                      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                                        Strengths
-                                      </div>
-                                      <div className="mt-2 flex flex-wrap gap-2">
-                                        {lesson.strengthChips.map((chip: string) => (
-                                          <span
-                                            key={`${lesson.id}-strength-${chip}`}
-                                            className="rounded-full border border-emerald-200 bg-white px-2 py-0.5 text-xs font-semibold text-emerald-800"
-                                          >
-                                            {chip}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  ) : null}
-                                  {getLessonNeedsPracticeChips(lesson).length > 0 ? (
-                                    <div className="rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-2">
-                                      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-700">
-                                        Needs practice
-                                      </div>
-                                      <div className="mt-2 flex flex-wrap gap-2">
-                                        {getLessonNeedsPracticeChips(lesson).map((chip: string) => (
-                                          <span
-                                            key={`${lesson.id}-practice-${chip}`}
-                                            className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-xs font-semibold text-amber-800"
-                                          >
-                                            {chip}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  ) : null}
-                                </div>
-                              )}
-	                            {lesson.remark ? (
-	                              <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-	                                <span className="font-semibold text-slate-800">Teacher note:</span> {lesson.remark}
-	                              </div>
-	                            ) : null}
-	                          </div>
-	                        ))
-	                      ) : (
-	                        <div className="text-sm text-gray-500">
-	                          Recent lesson ratings will appear here once teachers rate lessons.
-	                        </div>
-	                      )}
-	                    </div>
-	                  </Card>
-
-	                  <Card className="p-6">
-	                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-                        Skills by Stage
-                      </h3>
-                      <span className="text-xs text-gray-500">
-                        {skillsData?.stageGroups.length || 0} stages
-                      </span>
-                    </div>
-                    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                      {skillsData?.stageGroups.map((stage, idx) => {
-                        const displayOrder = stage.order > 0 ? stage.order : idx + 1;
-                        return (
-                          <div
-                            key={stage.label}
-                            className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
-                          >
-                            <div className="text-xs uppercase tracking-wide text-gray-500">
-                              Stage {displayOrder}
-                            </div>
-                            <div className="text-sm font-semibold text-gray-900 mt-1">
-                              {stripStagePrefix(stage.label, displayOrder)}
-                            </div>
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              {stage.topSkills.map((skill) => (
-                                <span
-                                  key={`${stage.label}-${skill.tag}`}
-                                  className="px-2 py-1 rounded-full bg-slate-50 text-xs text-slate-700 border border-slate-200"
-                                >
-                                  {formatSkillTag(skill.tag)}
-                                </span>
-                              ))}
-                              {stage.topSkills.length === 0 && (
-                                <span className="text-xs text-gray-500">
-                                  No skills tagged yet.
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </Card>
-
-                  <Card className="p-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-                        Recent Skill Updates
-                      </h3>
-                    </div>
-                    <div className="space-y-2">
-                      {skillsData?.recentUpdates.length ? (
-                        skillsData.recentUpdates.map((update, idx) => {
-                          const displayOrder =
-                            update.stageOrder > 0
-                              ? update.stageOrder
-                              : parseStageOrderFromLabel(update.stageLabel) ?? 0;
-                          return (
-                          <div
-                            key={`${update.tag}-${idx}`}
-                            className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700"
-                          >
-                            <span>
-                              {formatSkillTag(update.tag)} ·{" "}
-                              {stripStagePrefix(update.stageLabel, displayOrder)}
-                            </span>
-                            <span className="text-gray-500">
-                              {update.updatedAtMs ? formatTimestamp(update.updatedAtMs) : "—"}
-                            </span>
-                          </div>
-                        );
-                        })
-                      ) : (
-                        <div className="text-xs text-gray-500">
-                          Recent updates will appear here once teachers tag skills.
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                </div>
-              );
-            })()}
+              recentAverageLabel={
+                recentTeacherRatingsSummary && recentTeacherRatingsSummary.ratedLessonCount > 0
+                  ? recentTeacherRatingsSummary.averageRecentLabel
+                  : null
+              }
+              ratedLessonCount={recentTeacherRatingsSummary?.ratedLessonCount ?? 0}
+              strengths={parentSkillsHighlights.strengths}
+              practiceAreas={parentSkillsHighlights.practiceAreas}
+              stages={parentSkillsStages}
+              recentUpdates={parentSkillUpdates}
+              onCourseChange={setSkillsCourseId}
+              onOpenLesson={(lesson) => {
+                setSelectedCurriculumTopic(lesson.source);
+                setCurriculumTopicModalOpen(true);
+              }}
+            />
           </div>
         )}
 
         {/* Classes tab: canonical sessions bucketed for parent review */}
         {activeTab === "classes" && (
           <div className="space-y-3 sm:space-y-4">
-            <Card className={`sticky z-20 p-3 sm:p-5 ${isNativeIOSApp ? "top-0" : "top-[calc(env(safe-area-inset-top)+3.25rem)] sm:top-0"}`}>
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex w-full flex-wrap gap-1 rounded-2xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800 sm:inline-flex sm:w-auto sm:rounded-full">
-                    <button
-                      type="button"
-                      onClick={() => selectClassesView("today")}
-                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
-                        classesView === "today"
-                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
-                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
-                      }`}
-                    >
-                      <CalendarCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span>Today</span> ({todayClassSessions.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => selectClassesView("upcoming")}
-                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
-                        classesView === "upcoming"
-                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
-                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
-                      }`}
-                    >
-                      <CalendarClock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="sm:hidden">Next</span>
-                      <span className="hidden sm:inline">Upcoming</span> ({upcomingClassSessions.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => selectClassesView("completed")}
-                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
-                        classesView === "completed"
-                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
-                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
-                      }`}
-                    >
-                      <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span>Done</span> ({completedClassSessions.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => selectClassesView("rescheduled")}
-                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
-                        classesView === "rescheduled"
-                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
-                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
-                      }`}
-                    >
-                      <CalendarClock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="sm:hidden">Resched</span>
-                      <span className="hidden sm:inline">Rescheduled</span> ({rescheduledClassSessions.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => selectClassesView("past_pending")}
-                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
-                        classesView === "past_pending"
-                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
-                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
-                      }`}
-                    >
-                      <Clock3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="sm:hidden">Review</span>
-                      <span className="hidden sm:inline">Needs Review</span> ({pastPendingClassSessions.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => selectClassesView("worksheets")}
-                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
-                        classesView === "worksheets"
-                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
-                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
-                      }`}
-                    >
-                      <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="sm:hidden">Sheets</span>
-                      <span className="hidden sm:inline">Worksheets</span> ({visibleParentWorksheets.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const now = new Date();
-                        setClassesCalendarMonth(new Date(now.getFullYear(), now.getMonth(), 1));
-                        setClassesCalendarSelectedDayKey(toYMD(now));
-                        selectClassesView("calendar");
-                      }}
-                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
-                        classesView === "calendar"
-                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
-                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
-                      }`}
-                    >
-                      <CalendarDays className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      Calendar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!parentRecordingFolderUrl) return;
-                        window.open(parentRecordingFolderUrl, "_blank", "noopener,noreferrer");
-                      }}
-                      disabled={!parentRecordingFolderUrl}
-                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
-                        parentRecordingFolderUrl
-                          ? "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
-                          : "cursor-not-allowed text-slate-400 dark:text-slate-500"
-                      }`}
-                    >
-                      <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="sm:hidden">Recordings</span>
-                      <span className="hidden sm:inline">Class Recordings</span>
-                    </button>
-                </div>
-              </div>
-            </Card>
-
-            {kidSessionsQuery.isLoading && classesView !== "worksheets" ? (
-              <Card className="p-6 text-sm text-slate-600 dark:text-slate-300">
-                Loading sessions…
-              </Card>
-            ) : classesView === "today" ? (
-              renderClassSessionsTable(todayClassSessions, "Today's Sessions", "No sessions scheduled for today.")
-            ) : classesView === "upcoming" ? (
-              renderClassSessionsTable(upcomingClassSessions, "Upcoming Sessions", "No upcoming sessions scheduled.")
-            ) : classesView === "completed" ? (
-              renderClassSessionsTable(completedClassSessions, "Completed Sessions", "No completed sessions yet.")
-            ) : classesView === "rescheduled" ? (
-              renderClassSessionsTable(rescheduledClassSessions, "Rescheduled Sessions", "No rescheduled sessions.")
-            ) : classesView === "past_pending" ? (
-              renderClassSessionsTable(
-                pastPendingClassSessions,
-                "Needs Review",
-                "No past pending sessions need review.",
-              )
-            ) : classesView === "worksheets" ? (
+            <ParentClassesView
+              activeView={classesView}
+              filters={classesFilters}
+              activeRows={activeClassRows}
+              nextClass={nextParentClass}
+              resources={classResources}
+              joiningSessionId={joiningSessionId}
+              isSessionsLoading={kidSessionsQuery.isLoading}
+              sessionsError={kidSessionsQuery.isError ? "We couldn’t load classes. Please try again." : null}
+              onSelectFilter={selectClassesView}
+              onSelectResource={selectClassResource}
+              onJoinSession={(row) => openJoinClass(row.source as KidSession)}
+              resourceContent={classesView === "worksheets" ? (
               <Card className="p-6">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                   <div>
@@ -5913,7 +5529,7 @@ export default function ParentDashboard() {
                   </div>
                 )}
               </Card>
-            ) : (
+            ) : classesView === "calendar" ? (
               <Card className="p-3 sm:p-6">
                 <div className="space-y-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -6023,7 +5639,7 @@ export default function ParentDashboard() {
                             {dominantStatus ? (
                               <>
                                 <span className={`inline-block h-2 w-2 rounded-full sm:hidden ${statusDotClass(dominantStatus)}`} />
-                                <span className={`hidden rounded-full px-1.5 py-0.5 text-[10px] font-semibold sm:inline-flex ${statusBadgeClass(dominantStatus)}`}>
+                                <span className={`hidden rounded-full border px-1.5 py-0.5 text-[10px] font-semibold sm:inline-flex ${statusBadgeClass(dominantStatus)}`}>
                                   {statusLabel(dominantStatus)}
                                 </span>
                               </>
@@ -6037,9 +5653,9 @@ export default function ParentDashboard() {
                   </div>
                   {classesCalendarSelectedRows.length > 0 ? (
                     <div className="space-y-2">
-                      {classesCalendarSelectedRows.map(({ session, status }, index) => (
+                      {classesCalendarSelectedRows.map(({ session, status }) => (
                         <div
-                          key={`calendar-selected-${session.id}-${index}`}
+                          key={`calendar-selected-${session.id}`}
                           className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
                         >
                           <div className="flex items-start justify-between gap-2">
@@ -6054,7 +5670,7 @@ export default function ParentDashboard() {
                                 {resolveSessionChildName(session)} · {session.courseName || "—"}
                               </div>
                             </div>
-                            <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusBadgeClass(status)}`}>
+                            <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${statusBadgeClass(status)}`}>
                               {statusLabel(status)}
                             </span>
                           </div>
@@ -6064,7 +5680,8 @@ export default function ParentDashboard() {
                   ) : null}
                 </div>
               </Card>
-            )}
+            ) : null}
+            />
           </div>
         )}
 
@@ -6132,28 +5749,6 @@ export default function ParentDashboard() {
                 hasActiveClasses ||
                 hasActiveEnrollment;
 
-              const paymentRows = (parentPaymentsQuery.data ?? []) as ParentPaymentRecord[];
-              const kidPayments = selectedKid?.id
-                ? paymentRows.filter(
-                    (p) => String(p.kidId || "") === String(selectedKid.id)
-                  )
-                : paymentRows;
-              const sortedPayments = [...kidPayments].sort((a, b) => {
-                const aTime =
-                  toDateOrNull(a.paidAt || a.createdAt)?.getTime() || 0;
-                const bTime =
-                  toDateOrNull(b.paidAt || b.createdAt)?.getTime() || 0;
-                return bTime - aTime;
-              });
-              const paymentTotals = sortedPayments.reduce(
-                (acc, payment) => {
-                  const rawAmount = Number(payment?.amount ?? 0);
-                  const amount = Number.isFinite(rawAmount) ? rawAmount : 0;
-                  acc.total += amount;
-                  return acc;
-                },
-                { total: 0 }
-              );
               const walletTransactions = (parentWalletTransactionsQuery.data ?? []) as ParentWalletTransaction[];
               const sortedWalletTransactions = [...walletTransactions].sort((a, b) => {
                 const aTime = toDateOrNull(a.createdAt || a.paidAt)?.getTime() || 0;
@@ -6174,6 +5769,7 @@ export default function ParentDashboard() {
                   const direction = String(tx.direction || "").trim().toLowerCase();
                   const type = String(tx.type || "").trim().toLowerCase();
                   const note = String(tx.note || tx.reason || tx.description || "").trim();
+                  const isReversal = type.includes("reversal") || type === "refund";
                   const amountValue = Number.isFinite(rawSigned)
                     ? rawSigned
                     : Number.isFinite(rawAmount)
@@ -6192,6 +5788,12 @@ export default function ParentDashboard() {
                     (tx as any).kidLabel ||
                     ""
                   ).trim() || "—";
+                  const courseName = String(
+                    (tx as any).courseName ||
+                    (tx as any).courseLabel ||
+                    (tx as any).className ||
+                    ""
+                  ).trim();
 
                   const classDebitByType = type.includes("class_deduction") || type.includes("class deduction");
                   const paymentCreditByType =
@@ -6202,9 +5804,11 @@ export default function ParentDashboard() {
                     type.includes("credit");
 
                   const isClassDebit =
+                    !isReversal &&
                     amountAbs > 0 &&
                     (amountValue < 0 || direction === "debit" || classDebitByType);
                   const isPaymentCredit =
+                    !isReversal &&
                     amountAbs > 0 &&
                     (amountValue > 0 || direction === "credit" || paymentCreditByType);
 
@@ -6215,10 +5819,15 @@ export default function ParentDashboard() {
                     monthKey,
                     type,
                     direction,
+                    isReversal,
                     amountValue,
                     amountAbs,
                     studentName,
+                    courseName,
                     note,
+                    method: String(tx.method || "").trim(),
+                    reference: String(tx.reference || "").trim(),
+                    paymentStatus: String(tx.status || "").trim(),
                     balanceAfter: Number.isFinite(Number(tx.balanceAfter))
                       ? Number(tx.balanceAfter)
                       : null,
@@ -6276,14 +5885,76 @@ export default function ParentDashboard() {
                 (row) => row.isPaymentCredit && row.monthKey === classPaymentMonth
               );
 
-              const statusRowsToRender =
-                classPaymentStatusTab === "pending_payment"
-                  ? pendingClassRows
-                  : classPaymentStatusTab === "paid_classes"
-                    ? paidClassRows
-                    : classRowsForSelectedMonth;
+              const classChargeRows: ParentClassChargeDisplay[] = [
+                ...classRowsForSelectedMonth.map((row) => ({
+                  id: row.id,
+                  date: row.txDate,
+                  childName: row.studentName,
+                  courseName: row.courseName || undefined,
+                  amount: row.classFee,
+                  paidAmount: row.paidAmount,
+                  unsettledAmount: row.pendingAmount,
+                  status: row.status === "Paid" ? "settled" as const : "unsettled" as const,
+                  note: row.note || undefined,
+                })),
+                ...normalizedWalletRows
+                  .filter((row) => row.isReversal && row.monthKey === classPaymentMonth)
+                  .map((row) => ({
+                    id: row.id,
+                    date: row.txDate,
+                    childName: row.studentName,
+                    courseName: row.courseName || undefined,
+                    amount: row.amountAbs,
+                    paidAmount: 0,
+                    unsettledAmount: 0,
+                    status: "reversed" as const,
+                    note: row.note || undefined,
+                  })),
+              ].sort((a, b) => a.date.getTime() - b.date.getTime());
+              const chargeFilter: ParentClassChargeFilter =
+                classPaymentStatusTab === "pending_payment" ||
+                classPaymentStatusTab === "paid_classes"
+                  ? classPaymentStatusTab
+                  : "all_classes";
+              const visibleClassChargeRows = filterParentClassCharges(
+                classChargeRows,
+                chargeFilter,
+              );
+              const paymentDisplayRows: ParentPaymentDisplay[] =
+                paymentsReceivedRowsForSelectedMonth.map((row) => ({
+                  id: row.id,
+                  date: row.txDate,
+                  amount: row.amountAbs,
+                  method: row.method || undefined,
+                  status: row.paymentStatus || undefined,
+                  reference: row.reference || undefined,
+                  note: row.note || undefined,
+                }));
+              const paymentPeriodSummary: ParentPaymentPeriodSummary =
+                parentWalletTransactionsQuery.isLoading ||
+                parentWalletTransactionsQuery.isError
+                  ? {
+                      classDeductions: null,
+                      paymentsRecorded: null,
+                      billedClassCount: null,
+                      settledClassCount: null,
+                      unsettledClassCount: null,
+                    }
+                  : {
+                      classDeductions: classRowsForSelectedMonth.reduce(
+                        (sum, row) => sum + row.classFee,
+                        0,
+                      ),
+                      paymentsRecorded: paymentsReceivedRowsForSelectedMonth.reduce(
+                        (sum, row) => sum + row.amountAbs,
+                        0,
+                      ),
+                      billedClassCount: null,
+                      settledClassCount: null,
+                      unsettledClassCount: null,
+                    };
 
-              const handleConfirmPayment = () => {
+              const handleOpenPaymentVerificationWhatsApp = () => {
                 const parentName =
                   String(user?.displayName || "").trim() ||
                   String(user?.email || "").trim() ||
@@ -6297,549 +5968,78 @@ export default function ParentDashboard() {
                     : "[Please enter amount]";
                 const paymentDate = new Date().toLocaleDateString("en-IN");
 
-                const message = `Hello Tiny Steps Team,\n\nI have completed a payment for my child.\n\nParent name: ${parentName}\nChild name: ${childName}\nAmount paid: ${amountPaidText}\nPayment method: ${upiPaymentMethod}\nPayment date: ${paymentDate}\n\nPlease find the payment screenshot attached for verification and update the wallet balance.\n\nThank you.`;
+                const message = `Hello Tiny Steps Team,\n\nI would like to submit payment details for verification.\n\nParent name: ${parentName}\nChild name: ${childName}\nAmount paid: ${amountPaidText}\nPayment method: ${upiPaymentMethod}\nPayment date: ${paymentDate}\n\nI will attach the payment screenshot for verification. Please update the wallet balance after the payment is verified.\n\nThank you.`;
                 const whatsappUrl = `https://wa.me/${TINYSTEPS_WHATSAPP_NUMBER}?text=${encodeURIComponent(
                   message
                 )}`;
                 window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-                hapticSuccess();
+                hapticLight();
               };
 
               return (
                 <>
-                  <Card className="p-4 sm:p-6">
-                    <h2 className="mb-2 text-xl font-bold text-gray-900 dark:text-gray-100">
-                      Payments
-                    </h2>
-                    <p className="mb-4 text-sm text-gray-600 dark:text-gray-400 sm:mb-6">
-                      {selectedKid?.fullName
-                        ? `Viewing: ${selectedKid.fullName}`
-                        : "Select a child"}
-                    </p>
+                  <ParentPaymentsView
+                    isNativeIOSApp={isNativeIOSApp}
+                    childName={selectedKid?.fullName || selectedKid?.name || "the selected child"}
+                    walletState={walletDisplayState}
+                    walletLastUpdatedLabel={walletLastUpdatedLabel}
+                    paymentOptionsAvailable={!isNativeIOSApp}
+                    paymentAssistanceText={IOS_BILLING_ASSISTANCE_TEXT}
+                    selectedMonth={classPaymentMonth}
+                    summary={paymentPeriodSummary}
+                    summaryLoading={parentWalletTransactionsQuery.isLoading}
+                    activityLoading={parentWalletTransactionsQuery.isLoading}
+                    activityError={parentWalletTransactionsQuery.isError}
+                    activityMode={
+                      classPaymentStatusTab === "payments_received" ? "payments" : "charges"
+                    }
+                    chargeFilter={chargeFilter}
+                    chargeRows={visibleClassChargeRows}
+                    chargeCounts={null}
+                    paymentRows={paymentDisplayRows}
+                    membership={{
+                      active: isActive,
+                      enrollmentDateLabel: enrollmentDate
+                        ? enrollmentDate.toLocaleDateString("en-IN")
+                        : null,
+                      startDateLabel: displayStartDate
+                        ? displayStartDate.toLocaleDateString("en-IN")
+                        : null,
+                      endDateLabel: membershipEndDate
+                        ? membershipEndDate.toLocaleDateString("en-IN")
+                        : null,
+                    }}
+                    onOpenPaymentOptions={() => {
+                      hapticLight();
+                      setUpiQrImageLoadFailed(false);
+                      setUpiPaymentMethod("UPI");
+                      setUpiAmountInput("");
+                      setShowQrModal(true);
+                    }}
+                    onViewClasses={() => setTab("classes")}
+                    onMonthChange={setClassPaymentMonth}
+                    onActivityModeChange={(mode) =>
+                      setClassPaymentStatusTab(
+                        mode === "payments" ? "payments_received" : "all_classes",
+                      )
+                    }
+                    onChargeFilterChange={setClassPaymentStatusTab}
+                  />
 
-                    <div className="flex flex-col">
-                      <div className="order-1 mb-4 sm:mb-6">
-                        <h3 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
-                          Membership
-                        </h3>
-                        <div className="rounded-lg border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-3 dark:border-gray-700 dark:from-slate-800 dark:to-slate-900 sm:p-4">
-                          <div className="mb-3 flex items-center justify-between">
-                            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                              Status
-                            </span>
-                            <span
-                              className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                                isActive
-                                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                                  : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
-                              }`}
-                            >
-                              {isActive ? "Active" : "Expired"}
-                            </span>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex justify-between gap-3 text-sm">
-                              <span className="text-gray-600 dark:text-gray-400">
-                                Enrollment Date
-                              </span>
-                              <span className="font-medium text-gray-900 dark:text-gray-100">
-                                {enrollmentDate
-                                  ? enrollmentDate.toLocaleDateString("en-IN")
-                                  : "—"}
-                              </span>
-                            </div>
-                            <div className="flex justify-between gap-3 text-sm">
-                              <span className="text-gray-600 dark:text-gray-400">
-                                Start Date
-                              </span>
-                              <span className="font-medium text-gray-900 dark:text-gray-100">
-                                {displayStartDate
-                                  ? displayStartDate.toLocaleDateString("en-IN")
-                                  : "—"}
-                              </span>
-                            </div>
-                            <div className="flex justify-between gap-3 text-sm">
-                              <span className="text-gray-600 dark:text-gray-400">
-                                End Date
-                              </span>
-                              <span className="font-medium text-gray-900 dark:text-gray-100">
-                                {membershipEndDate
-                                  ? membershipEndDate.toLocaleDateString("en-IN")
-                                  : "—"}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                  <ParentPaymentOptionsDialog
+                    open={showQrModal}
+                    walletState={walletDisplayState}
+                    method={upiPaymentMethod}
+                    amountInput={upiAmountInput}
+                    qrImagePath={TINYSTEPS_UPI_QR_PATH}
+                    qrImageLoadFailed={upiQrImageLoadFailed}
+                    onOpenChange={setShowQrModal}
+                    onMethodChange={setUpiPaymentMethod}
+                    onAmountInputChange={setUpiAmountInput}
+                    onQrImageError={() => setUpiQrImageLoadFailed(true)}
+                    onOpenWhatsAppVerification={handleOpenPaymentVerificationWhatsApp}
+                  />
 
-                      <div className="order-2 mb-4 sm:mb-6">
-                        <h3 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
-                          Wallet Summary
-                        </h3>
-                        <div className="rounded-lg border border-indigo-100 bg-gradient-to-br from-sky-50 to-indigo-50 p-3 dark:border-indigo-900/30 dark:from-slate-900 dark:to-indigo-950 sm:p-4">
-                          {billingLoading ? (
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                              Loading wallet summary…
-                            </div>
-                          ) : (
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                {walletStatusLabel}
-                              </div>
-                              <div className="mt-1 text-xs text-gray-500 dark:text-gray-500">
-                                Wallet balance: {walletBalance === null ? "—" : formatCurrencySignedINR(walletBalance)}
-                              </div>
-                              <div className="mt-3 space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                                <div>
-                                  Completed classes this month: {billingSummary.chargesThisMonth}
-                                </div>
-                                {billingSummary.avgRate > 0 && (
-                                  <div>
-                                    Rate per class: ₹{billingSummary.avgRate.toLocaleString("en-IN")}
-                                  </div>
-                                )}
-                                <div>
-                                  Class deductions this month: ₹{billingSummary.billedThisMonth.toLocaleString("en-IN")}
-                                </div>
-                                <div>
-                                  Payments received this month: ₹{profilePaymentsSummary.total.toLocaleString("en-IN")}
-                                </div>
-                                <div className="text-xs text-gray-500 dark:text-gray-500">
-                                  Last updated: {walletLastUpdatedText}
-                                </div>
-                                <div className="text-xs text-gray-500 dark:text-gray-500">
-                                  Your wallet is updated automatically after each completed class. Payments add balance to your wallet. Class fees reduce the wallet balance.
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                          <div className="mt-3">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setTab("classes")}
-                            >
-                              View classes
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="order-3 mb-4 sm:order-4 sm:mb-0">
-                        {isNativeIOSApp ? (
-                          <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200">
-                            {IOS_BILLING_ASSISTANCE_TEXT}
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            <Button
-                              onClick={() => {
-                                hapticLight();
-                                setUpiQrImageLoadFailed(false);
-                                setUpiPaymentMethod("UPI");
-                                setUpiAmountInput("");
-                                setShowQrModal(true);
-                              }}
-                              className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 font-semibold text-white shadow-md hover:from-indigo-700 hover:to-purple-700"
-                            >
-                              Pay via UPI
-                            </Button>
-
-                            <div className="space-y-2">
-                              <Button
-                                onClick={handleConfirmPayment}
-                                variant="outline"
-                                className="w-full border-green-200 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-300 dark:hover:bg-green-950"
-                              >
-                                Confirm on WhatsApp
-                              </Button>
-                              <p className="text-center text-xs text-gray-500 dark:text-gray-400">
-                                Use WhatsApp confirmation after payment so Tiny Steps can verify and update wallet balance.
-                              </p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="order-4 mb-4 sm:order-3 sm:mb-6">
-                        <h3 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
-                          Class Payment Status
-                        </h3>
-                        <div className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-slate-900 sm:p-4">
-                          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                            <div className="space-y-1">
-                              <label className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                                Month
-                              </label>
-                              <input
-                                type="month"
-                                value={classPaymentMonth}
-                                onChange={(e) => setClassPaymentMonth(e.target.value)}
-                                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-indigo-500 focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                              />
-                            </div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400">
-                              Class payment status is shown from May 2026 onward.
-                            </div>
-                          </div>
-
-                          <div className="mb-3 flex flex-wrap gap-2">
-                            <Button
-                              size="sm"
-                              variant={classPaymentStatusTab === "all_classes" ? "default" : "outline"}
-                              onClick={() => setClassPaymentStatusTab("all_classes")}
-                            >
-                              All Classes
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={classPaymentStatusTab === "pending_payment" ? "default" : "outline"}
-                              onClick={() => setClassPaymentStatusTab("pending_payment")}
-                            >
-                              Pending Payment
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={classPaymentStatusTab === "paid_classes" ? "default" : "outline"}
-                              onClick={() => setClassPaymentStatusTab("paid_classes")}
-                            >
-                              Paid Classes
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={classPaymentStatusTab === "payments_received" ? "default" : "outline"}
-                              onClick={() => setClassPaymentStatusTab("payments_received")}
-                            >
-                              Payments Received
-                            </Button>
-                          </div>
-
-                          {classPaymentStatusTab === "payments_received" ? (
-                            paymentsReceivedRowsForSelectedMonth.length === 0 ? (
-                              <div className="text-sm text-gray-600 dark:text-gray-400">
-                                No payments received for this month.
-                              </div>
-                            ) : (
-                              <div className="overflow-x-auto rounded border">
-                                <div className="min-w-[680px]">
-                                  <div className="grid grid-cols-4 gap-2 border-b px-3 py-2 text-xs uppercase text-muted-foreground">
-                                    <div>Date</div>
-                                    <div>Amount</div>
-                                    <div>Payment Method / Type</div>
-                                    <div>Note / Reason</div>
-                                  </div>
-                                  {paymentsReceivedRowsForSelectedMonth.map((row) => (
-                                    <div
-                                      key={`payments-received-${row.id}`}
-                                      className="grid grid-cols-4 gap-2 border-b px-3 py-2 text-sm last:border-b-0"
-                                    >
-                                      <div>{row.txDate.toLocaleDateString("en-IN")}</div>
-                                      <div>{formatCurrencyINR(row.amountAbs)}</div>
-                                      <div className="capitalize">{row.type.replace(/_/g, " ") || "—"}</div>
-                                      <div>{row.note || "—"}</div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )
-                          ) : statusRowsToRender.length === 0 ? (
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                              {classPaymentStatusTab === "pending_payment"
-                                ? "No pending payment classes for this month."
-                                : classPaymentStatusTab === "paid_classes"
-                                  ? "No paid classes for this month."
-                                  : "No classes found for this month."}
-                            </div>
-                          ) : (
-                            <div className="overflow-x-auto rounded border">
-                              <div className="min-w-[900px]">
-                                <div className="grid grid-cols-7 gap-2 border-b px-3 py-2 text-xs uppercase text-muted-foreground">
-                                  <div>Date</div>
-                                  <div>Child / Student</div>
-                                  <div>Class Fee</div>
-                                  <div>Paid Amount</div>
-                                  <div>Pending Amount</div>
-                                  <div>Status</div>
-                                  <div>Note / Reason</div>
-                                </div>
-                                {statusRowsToRender.map((row) => (
-                                  <div
-                                    key={`class-status-${row.id}`}
-                                    className="grid grid-cols-7 gap-2 border-b px-3 py-2 text-sm last:border-b-0"
-                                  >
-                                    <div>{row.txDate.toLocaleDateString("en-IN")}</div>
-                                    <div>{row.studentName || "—"}</div>
-                                    <div>{formatCurrencyINR(row.classFee)}</div>
-                                    <div>{formatCurrencyINR(row.paidAmount)}</div>
-                                    <div>{formatCurrencyINR(row.pendingAmount)}</div>
-                                    <div>{row.status}</div>
-                                    <div>{row.note || "—"}</div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="order-5 mb-4 sm:order-4 sm:mb-6">
-                        <h3 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
-                          Recent Wallet Activity
-                        </h3>
-                        <div className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-slate-900 sm:p-4">
-                          {parentPaymentsQuery.isLoading || parentWalletTransactionsQuery.isLoading ? (
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                              Loading wallet activity…
-                            </div>
-                          ) : sortedPayments.length === 0 && sortedWalletTransactions.length === 0 ? (
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                              No wallet activity recorded yet.
-                            </div>
-                          ) : (
-                            <div className="space-y-3">
-                              <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-4">
-                                <div className="rounded border p-3">
-                                  <div className="text-xs text-muted-foreground">
-                                    Wallet Balance
-                                  </div>
-                                  <div className="text-lg font-semibold">
-                                    {walletBalance === null ? "—" : formatCurrencySignedINR(walletBalance)}
-                                  </div>
-                                </div>
-                                <div className="rounded border p-3">
-                                  <div className="text-xs text-muted-foreground">
-                                    Payments Received
-                                  </div>
-                                  <div className="text-lg font-semibold">
-                                    ₹{paymentTotals.total.toLocaleString("en-IN")}
-                                  </div>
-                                </div>
-                                <div className="rounded border p-3">
-                                  <div className="text-xs text-muted-foreground">
-                                    Class Deductions This Month
-                                  </div>
-                                  <div className="text-lg font-semibold">
-                                    ₹{billingSummary.billedThisMonth.toLocaleString("en-IN")}
-                                  </div>
-                                </div>
-                                <div className="rounded border p-3">
-                                  <div className="text-xs text-muted-foreground">
-                                    Amount to Pay / Advance
-                                  </div>
-                                  <div className="text-lg font-semibold">
-                                    {walletAmountToPay > 0
-                                      ? `Collect ₹${walletAmountToPay.toLocaleString("en-IN")}`
-                                      : walletAdvanceBalance > 0
-                                        ? `Advance ₹${walletAdvanceBalance.toLocaleString("en-IN")}`
-                                        : "No pending amount"}
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="space-y-2 sm:hidden">
-                                {sortedWalletTransactions.slice(0, 8).map((tx) => {
-                                  const txDate = toDateOrNull(tx.createdAt || tx.paidAt);
-                                  const rawSigned = Number(tx.signedAmount);
-                                  const rawAmount = Number(tx.amount);
-                                  const amountValue = Number.isFinite(rawSigned)
-                                    ? rawSigned
-                                    : Number.isFinite(rawAmount)
-                                      ? (String(tx.direction || "").toLowerCase() === "debit" ? -rawAmount : rawAmount)
-                                      : 0;
-                                  const directionLabel = amountValue < 0 ? "Debit" : amountValue > 0 ? "Credit" : "—";
-                                  return (
-                                    <div
-                                      key={`mobile-wallet-${tx.id}`}
-                                      className="rounded-lg border border-gray-200 px-3 py-3 text-sm dark:border-gray-700"
-                                    >
-                                      <div className="flex items-start justify-between gap-3">
-                                        <div className="font-medium text-gray-900 dark:text-gray-100">
-                                          {formatCurrencySignedINR(amountValue)}
-                                        </div>
-                                        <div className="shrink-0 text-xs text-muted-foreground">
-                                          {txDate
-                                            ? txDate.toLocaleDateString("en-IN")
-                                            : "—"}
-                                        </div>
-                                      </div>
-                                      <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-                                        <div>
-                                          <div className="text-muted-foreground">Type</div>
-                                          <div className="font-medium">
-                                            {String(tx.type || "transaction").replace(/_/g, " ")}
-                                          </div>
-                                        </div>
-                                        <div>
-                                          <div className="text-muted-foreground">Direction</div>
-                                          <div className="font-medium">
-                                            {directionLabel}
-                                          </div>
-                                        </div>
-                                      </div>
-                                      <div className="mt-2 text-xs capitalize text-muted-foreground">
-                                        Balance after: {Number.isFinite(Number(tx.balanceAfter)) ? formatCurrencySignedINR(Number(tx.balanceAfter)) : "—"}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-
-                              <div className="hidden rounded border sm:block sm:overflow-x-auto">
-                                <div className="sm:min-w-[760px]">
-                                  <div className="grid grid-cols-6 gap-2 border-b px-3 py-2 text-xs uppercase text-muted-foreground">
-                                    <div>Date</div>
-                                    <div>Type</div>
-                                    <div>Credit/Debit</div>
-                                    <div>Amount</div>
-                                    <div>Balance After</div>
-                                    <div>Note / Reason</div>
-                                  </div>
-                                  {sortedWalletTransactions.map((tx) => {
-                                    const txDate = toDateOrNull(tx.createdAt || tx.paidAt);
-                                    const rawSigned = Number(tx.signedAmount);
-                                    const rawAmount = Number(tx.amount);
-                                    const amountValue = Number.isFinite(rawSigned)
-                                      ? rawSigned
-                                      : Number.isFinite(rawAmount)
-                                        ? (String(tx.direction || "").toLowerCase() === "debit" ? -rawAmount : rawAmount)
-                                        : 0;
-                                    const directionLabel = amountValue < 0 ? "Debit" : amountValue > 0 ? "Credit" : "—";
-                                    return (
-                                      <div
-                                        key={tx.id}
-                                        className="grid grid-cols-6 gap-2 border-b px-3 py-2 text-sm last:border-b-0"
-                                      >
-                                        <div>
-                                          {txDate
-                                            ? txDate.toLocaleDateString("en-IN")
-                                            : "—"}
-                                        </div>
-                                        <div>
-                                          {String(tx.type || "transaction").replace(/_/g, " ")}
-                                        </div>
-                                        <div>
-                                          {directionLabel}
-                                        </div>
-                                        <div>
-                                          {formatCurrencySignedINR(amountValue)}
-                                        </div>
-                                        <div>
-                                          {Number.isFinite(Number(tx.balanceAfter)) ? formatCurrencySignedINR(Number(tx.balanceAfter)) : "—"}
-                                        </div>
-                                        <div className="truncate">
-                                          {String(tx.note || tx.reason || tx.description || "—")}
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-
-                  <Dialog open={showQrModal} onOpenChange={setShowQrModal}>
-                    <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-md overflow-y-auto [-webkit-overflow-scrolling:touch]">
-                      <DialogHeader>
-                        <DialogTitle>Pay via UPI</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="rounded border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-200">
-                          {walletBalance === null ? (
-                            <div>Wallet balance: —</div>
-                          ) : walletBalance < 0 ? (
-                            <div>Amount to pay: ₹{Math.abs(walletBalance).toLocaleString("en-IN")}</div>
-                          ) : walletBalance > 0 ? (
-                            <div>Advance balance available: ₹{walletBalance.toLocaleString("en-IN")}</div>
-                          ) : (
-                            <div>No pending amount. You may still add an advance payment if required.</div>
-                          )}
-                        </div>
-
-                        {!upiQrImageLoadFailed ? (
-                          <div className="flex flex-col items-center space-y-3">
-                            <img
-                              src={TINYSTEPS_UPI_QR_PATH}
-                              alt="UPI QR Code"
-                              className="h-auto max-h-[55vh] w-full max-w-64 rounded-lg border border-gray-200 object-contain dark:border-gray-700"
-                              onError={() => setUpiQrImageLoadFailed(true)}
-                            />
-                            <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-                              Scan the QR code using any UPI app. After payment, click Confirm on WhatsApp and share your payment screenshot.
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                            <p className="mb-2">QR code not available. Please contact Tiny Steps for payment details.</p>
-                          </div>
-                        )}
-                        <div className="space-y-1">
-                          <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                            Payment method
-                          </label>
-                          <select
-                            value={upiPaymentMethod}
-                            onChange={(e) =>
-                              setUpiPaymentMethod(e.target.value === "Bank Transfer" ? "Bank Transfer" : "UPI")
-                            }
-                            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-indigo-500 focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                          >
-                            <option value="UPI">UPI</option>
-                            <option value="Bank Transfer">Bank Transfer</option>
-                          </select>
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                            Amount paid (optional)
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            step="1"
-                            value={upiAmountInput}
-                            onChange={(e) => setUpiAmountInput(e.target.value)}
-                            placeholder="Enter amount paid"
-                            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-indigo-500 placeholder:text-slate-400 focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                          />
-                        </div>
-
-                        <div className="rounded-lg border border-slate-200 bg-white p-3 text-sm dark:border-slate-700 dark:bg-slate-900/60">
-                          <h4 className="mb-2 font-semibold text-slate-900 dark:text-slate-100">
-                            Bank Transfer Details
-                          </h4>
-                          <div className="grid grid-cols-1 gap-1 text-slate-700 dark:text-slate-200 sm:grid-cols-2">
-                            <div>Account Type: Current</div>
-                            <div>Account Number: 50200108987663</div>
-                            <div>Bank Name: HDFC</div>
-                            <div>IFSC: HDFC0002352</div>
-                            <div>Account Name: TINY STEPS</div>
-                            <div>UPI ID: tinystepslearning@ybl</div>
-                          </div>
-                          <p className="mt-3 text-xs text-slate-600 dark:text-slate-300">
-                            After completing the payment, please send the screenshot on WhatsApp for verification. Your wallet balance will be updated after Tiny Steps confirms the payment.
-                          </p>
-                        </div>
-
-                        <Button
-                          onClick={handleConfirmPayment}
-                          className="w-full border-green-200 bg-green-600 text-white hover:bg-green-700"
-                        >
-                          Confirm on WhatsApp
-                        </Button>
-                        <Button
-                          onClick={() => setShowQrModal(false)}
-                          variant="outline"
-                          className="w-full"
-                        >
-                          Close
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
                 </>
               );
             })()}

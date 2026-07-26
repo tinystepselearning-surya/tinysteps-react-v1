@@ -159,7 +159,11 @@ export { whatsappWebhookV2 } from './whatsappWebhook';
 
 // Internal messaging
 export { createOrSyncMessageThread } from './messaging/createOrSyncMessageThread';
-export { sendMessage, markMessageThreadRead } from './messaging/sendMessage';
+export {
+  sendMessage,
+  markMessageThreadRead,
+  reconcileMyUnreadMessageCount,
+} from './messaging/sendMessage';
 export { syncMessageThreadsForActiveStudents } from './messaging/syncMessageThreadsForActiveStudents';
 export {
   onEnrollmentMessageThreadAutoSync,
@@ -171,4 +175,5 @@ export {
 export {
   registerNotificationToken,
   sendTestPushNotification,
+  sendClassReminders15Min,
 } from './notifications/classReminders';

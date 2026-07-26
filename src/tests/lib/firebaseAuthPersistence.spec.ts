@@ -8,19 +8,27 @@ const firebaseConfigSource = readFileSync(
 );
 
 describe('native Firebase authentication persistence contract', () => {
-  it('uses browser local persistence as the only native initialization mechanism', () => {
+  it('uses IndexedDB durability with browser local-storage fallback during native initialization', () => {
     expect(firebaseConfigSource).toContain('browserLocalPersistence');
+    expect(firebaseConfigSource).toContain('indexedDBLocalPersistence');
     expect(firebaseConfigSource).toContain(
-      'persistence: browserLocalPersistence',
+      'indexedDBLocalPersistence,\n        browserLocalPersistence',
     );
-    expect(firebaseConfigSource).not.toContain('indexedDBLocalPersistence');
     expect(firebaseConfigSource).not.toContain('inMemoryPersistence');
   });
 
-  it('provides an idempotent native setPersistence gate', () => {
+  it('provides an idempotent native setPersistence gate in fallback order', () => {
     expect(firebaseConfigSource).toContain('ensureNativeAuthPersistence');
-    expect(firebaseConfigSource).toContain(
+    const indexedDbAttempt = firebaseConfigSource.indexOf(
+      'setPersistence(auth, indexedDBLocalPersistence)',
+    );
+    const localStorageAttempt = firebaseConfigSource.indexOf(
       'setPersistence(auth, browserLocalPersistence)',
+    );
+    expect(indexedDbAttempt).toBeGreaterThan(-1);
+    expect(localStorageAttempt).toBeGreaterThan(indexedDbAttempt);
+    expect(firebaseConfigSource).toContain(
+      "return 'local-storage' as const",
     );
     expect(firebaseConfigSource).toContain('nativeAuthPersistencePromise');
   });

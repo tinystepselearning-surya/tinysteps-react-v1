@@ -30,12 +30,12 @@ export default function MobileTabBar({
   return (
     <nav
       className={cn(
-        'fixed left-0 right-0 z-50 min-h-[var(--ts-mobile-tabbar-height)] w-full min-w-0 max-w-[100vw] translate-y-0 transform-gpu overflow-hidden px-2 pb-0 pt-0 [bottom:calc(env(safe-area-inset-bottom,0px)+8px)] [backface-visibility:hidden] [contain:layout_paint] lg:hidden',
+        'fixed inset-x-0 bottom-0 z-50 w-full min-w-0 max-w-[100vw] translate-y-0 transform-gpu overflow-hidden border-t border-slate-200/80 bg-white/95 px-2 pt-1.5 shadow-[0_-6px_20px_rgba(15,23,42,0.07)] backdrop-blur-xl [backface-visibility:hidden] [contain:layout_paint] [padding-bottom:env(safe-area-inset-bottom,0px)] lg:hidden',
         className,
       )}
       aria-label="Mobile navigation"
     >
-      <div className="mx-auto w-full min-w-0 max-w-6xl overflow-hidden rounded-[1.625rem] border border-slate-200/80 bg-white/95 p-1 shadow-[0_10px_30px_rgba(15,23,42,0.14)] backdrop-blur-xl">
+      <div className="mx-auto h-[var(--ts-mobile-tabbar-height)] w-full min-w-0 max-w-6xl overflow-hidden">
         <div
           className={cn(
             useFixedGrid
@@ -45,7 +45,7 @@ export default function MobileTabBar({
         >
           <div
             className={cn(
-              useFixedGrid ? 'grid gap-1 px-0.5' : 'flex w-max min-w-full gap-1 px-0.5',
+              useFixedGrid ? 'grid h-full gap-1 px-0.5' : 'flex h-full w-max min-w-full gap-1 px-0.5',
               usesFiveColumnGrid && 'grid-cols-5',
             )}
             style={
@@ -70,23 +70,29 @@ export default function MobileTabBar({
                     onSelect(item.id);
                   }}
                   aria-current={isActive ? 'page' : undefined}
+                  data-active={isActive ? 'true' : 'false'}
+                  data-selected-style={isActive ? 'icon-capsule' : undefined}
                   className={cn(
-                    'relative flex min-h-[58px] flex-col items-center justify-center rounded-2xl px-2 text-[11px] font-semibold transition-all duration-150 ease-out active:scale-[0.97]',
+                    'group relative flex min-h-11 flex-col items-center justify-center rounded-xl px-1 text-[11px] font-medium transition duration-150 ease-out active:scale-[0.97]',
                     useFixedGrid ? 'min-w-0 w-full' : 'min-w-[74px] snap-center',
                     isActive
-                      ? 'bg-slate-900 text-white shadow-[0_8px_18px_rgba(15,23,42,0.18)]'
-                      : 'text-slate-500 active:bg-slate-100 hover:bg-slate-100 hover:text-slate-900',
+                      ? 'font-semibold text-slate-950'
+                      : 'text-slate-600 active:bg-slate-100 hover:text-slate-950',
                   )}
                 >
-                  <Icon className="mb-1 h-[18px] w-[18px]" />
-                  <span className="max-w-full truncate px-0.5 leading-none">{item.label}</span>
+                  <span
+                    className={cn(
+                      'mb-0.5 flex h-7 w-9 items-center justify-center rounded-full transition-colors',
+                      isActive
+                        ? 'bg-slate-200 text-slate-950'
+                        : 'text-slate-600 group-hover:bg-slate-100 group-hover:text-slate-950',
+                    )}
+                  >
+                    <Icon className="h-[18px] w-[18px]" />
+                  </span>
+                  <span className="max-w-full truncate px-0.5 leading-4">{item.label}</span>
                   {hasBadge && (
-                    <span
-                      className={cn(
-                        'absolute right-1.5 top-1.5 inline-flex min-w-[18px] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none',
-                        isActive ? 'bg-white/20 text-white' : 'bg-red-500 text-white',
-                      )}
-                    >
+                    <span className="absolute right-[calc(50%-25px)] top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white ring-2 ring-white">
                       {badgeLabel}
                     </span>
                   )}

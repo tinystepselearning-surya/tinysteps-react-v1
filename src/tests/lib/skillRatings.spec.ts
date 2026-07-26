@@ -106,4 +106,25 @@ describe('progress rating helpers', () => {
       'Use adjective',
     ]);
   });
+
+  it('keeps the maximum at four and excludes zero entries from the positive-rating average', () => {
+    const skills = getProgressSkillsForLesson({
+      area: 'phonics',
+      subskillChips: ['recognition', 'blending', 'writing'],
+    });
+
+    const summary = summarizeProgressRatings(
+      {
+        recognition: 4,
+        blending: 2,
+        writing: 0,
+      },
+      skills,
+    );
+
+    expect(summary.averageRating).toBe(3);
+    expect(summary.roundedAverageRating).toBe(3);
+    expect(summary.ratedSkillCount).toBe(2);
+    expect(Math.max(...Object.values({ recognition: 4, blending: 2, writing: 0 }))).toBe(4);
+  });
 });

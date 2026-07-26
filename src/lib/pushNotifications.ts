@@ -1,13 +1,16 @@
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
-import { toast } from '../components/hooks/use-toast';
 import { callFunction } from './callFunctions';
 import {
+  presentForegroundNotification,
+  sanitizeForegroundNotificationText,
+} from './foregroundNotificationState';
+import {
   asOptionalString,
-  normalizePushRoute,
   OPEN_MESSAGES_FROM_PUSH_EVENT,
-  queuePendingPushOpenRoute,
+  parsePushDestination,
+  queuePendingPushDestination,
 } from './pushNavigationState';
 
 const TOKEN_TIMEOUT_MS = 15_000;
@@ -115,9 +118,6 @@ const asRecord = (value: unknown): Record<string, unknown> => {
   return value as Record<string, unknown>;
 };
 
-const isMessagePush = (value: unknown): boolean =>
-  String(value || '').trim().toLowerCase() === 'message';
-
 const dispatchOpenMessagesEvent = (
   route: string,
   threadId: string | undefined,
@@ -125,10 +125,9 @@ const dispatchOpenMessagesEvent = (
 ) => {
   if (typeof window === 'undefined') return;
 
-  const normalizedRoute = normalizePushRoute(route);
   const normalizedThreadId = asOptionalString(threadId) || null;
   const detail = {
-    route: normalizedRoute,
+    route,
     threadId: normalizedThreadId,
     actionId,
   };
@@ -169,18 +168,47 @@ export const handlePushNotificationReceived = (notification: unknown) => {
           ? document.visibilityState === 'visible'
           : undefined,
     });
-    if (!isMessagePush(data.type)) return;
-
     if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
       return;
     }
 
-    const title = asOptionalString(notificationRecord.title) || 'New message';
-    const body =
-      asOptionalString(notificationRecord.body) ||
-      'Open Messages to view the latest update.';
+    const destination = parsePushDestination(
+      data.type,
+      data.route,
+      data.threadId,
+      data.sessionId,
+    );
+    if (!destination) return;
 
-    toast({ title, description: body });
+    const fallbackTitle =
+      destination.type === 'message' ? 'New message' : 'Class starts soon';
+    const fallbackBody =
+      destination.type === 'message'
+        ? 'Open Messages to view the latest update.'
+        : 'Tap to view your class.';
+    const title = sanitizeForegroundNotificationText(
+      asOptionalString(notificationRecord.title) || '',
+      fallbackTitle,
+    );
+    const body = sanitizeForegroundNotificationText(
+      asOptionalString(notificationRecord.body) || '',
+      fallbackBody,
+    );
+    const id =
+      asOptionalString(data.messageId) ||
+      asOptionalString(data.notificationId) ||
+      asOptionalString(data.sessionId) ||
+      asOptionalString(notificationRecord.id) ||
+      `${destination.type}:${destination.route}`;
+
+    presentForegroundNotification({
+      id,
+      kind: destination.type,
+      title,
+      body,
+      receivedAtMs: Date.now(),
+      destination,
+    });
   } catch (error) {
     console.warn('[push] pushNotificationReceived handler failed', error);
   }
@@ -191,23 +219,32 @@ export const handlePushNotificationActionPerformed = (event: unknown) => {
     const eventRecord = asRecord(event);
     const notification = asRecord(eventRecord.notification);
     const data = asRecord(notification.data);
-    const route = normalizePushRoute(data.route);
-    const threadId = asOptionalString(data.threadId) || undefined;
+    const destination = parsePushDestination(
+      data.type,
+      data.route,
+      data.threadId,
+      data.sessionId,
+    );
+    if (!destination) return;
+    const threadId =
+      destination.type === 'message'
+        ? destination.threadId || undefined
+        : undefined;
     const actionId =
       asOptionalString(data.messageId) ||
       asOptionalString(data.notificationId) ||
       asOptionalString(notification.id) ||
-      `${route}:${threadId || 'inbox'}`;
+      `${destination.route}:${threadId || destination.type}`;
 
     logPush('action', {
       type: asOptionalString(data.type) || 'unknown',
-      route,
+      route: destination.route,
       hasThreadId: Boolean(threadId),
     });
-    if (!isMessagePush(data.type) || !rememberPushAction(actionId)) return;
+    if (!rememberPushAction(actionId)) return;
 
-    queuePendingPushOpenRoute(route, threadId);
-    dispatchOpenMessagesEvent(route, threadId, actionId);
+    queuePendingPushDestination(destination);
+    dispatchOpenMessagesEvent(destination.route, threadId, actionId);
   } catch (error) {
     console.warn('[push] pushNotificationActionPerformed handler failed', error);
   }

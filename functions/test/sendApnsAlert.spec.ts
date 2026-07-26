@@ -18,7 +18,7 @@ vi.mock('node:http2', () => {
   };
 });
 
-import { sendApnsAlert } from '../src/lib/sendApnsAlert';
+import { buildApnsPayload, sendApnsAlert } from '../src/lib/sendApnsAlert';
 
 type ResponseFixture = {
   status: number;
@@ -82,6 +82,47 @@ afterAll(() => {
 });
 
 describe('sendApnsAlert HTTP/2 transport', () => {
+  it.each([0, 1, 23])('builds an exact APNs badge value of %s', (badge) => {
+    expect(buildApnsPayload({
+      deviceToken: 'token',
+      badge,
+      data: { type: 'badge_sync' },
+    })).toEqual({
+      aps: {
+        badge,
+        'thread-id': 'tinysteps',
+      },
+      type: 'badge_sync',
+    });
+  });
+
+  it('omits badge and conditionally includes visible alert content', () => {
+    expect(buildApnsPayload({
+      deviceToken: 'token',
+      title: 'New message',
+      body: 'Hello',
+      data: { threadId: 'thread-23' },
+    })).toEqual({
+      aps: {
+        alert: { title: 'New message', body: 'Hello' },
+        sound: 'default',
+        'thread-id': 'thread-23',
+      },
+      threadId: 'thread-23',
+    });
+    expect(buildApnsPayload({
+      deviceToken: 'token',
+      badge: 3,
+      data: { sessionId: 'session-3' },
+    })).toEqual({
+      aps: {
+        badge: 3,
+        'thread-id': 'session-3',
+      },
+      sessionId: 'session-3',
+    });
+  });
+
   it('sends the APNs alert over HTTP/2 and returns a successful response', async () => {
     const session = new FakeSession({ status: 200 });
     connectMock.mockReturnValue(session);

@@ -11,108 +11,58 @@ type RecommendedNext = {
 
 type ParentRecommendationsProps = {
   dashboardRecommendedNext: RecommendedNext | null;
-  dashboardStrengthChips: string[];
-  dashboardPracticeChips: string[];
   labelFromGameId: (gameId?: string | null) => string;
   onStartPractice: (gameId?: string) => void;
   onOpenGamesProgress: () => void;
 };
 
-export default function ParentRecommendations(props: ParentRecommendationsProps) {
-  const {
-    dashboardRecommendedNext,
-    dashboardStrengthChips,
-    dashboardPracticeChips,
-    labelFromGameId,
-    onStartPractice,
-    onOpenGamesProgress,
-  } = props;
+export default function ParentRecommendations({
+  dashboardRecommendedNext,
+  labelFromGameId,
+  onStartPractice,
+  onOpenGamesProgress,
+}: ParentRecommendationsProps) {
+  const hasSpecificRecommendation = Boolean(dashboardRecommendedNext?.gameId);
 
   return (
-    <Card className="rounded-2xl border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Recommendations & Next Steps</h3>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            Practical guidance to help at home this week.
-          </p>
+    <Card className="rounded-[20px] border-orange-100 bg-gradient-to-br from-white to-orange-50/35 p-4 shadow-sm sm:p-5 dark:border-orange-900/50 dark:from-slate-900 dark:to-slate-900">
+      <div className="flex items-start gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300">
+          <Clock3 className="h-4 w-4" aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-base font-semibold text-slate-950 dark:text-slate-100">Recommended Practice</h3>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">One focused next step for practice at home.</p>
         </div>
-        <Clock3 className="h-5 w-5 text-slate-400" />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 dark:border-slate-700 dark:bg-slate-900/40">
-          <div className="text-[11px] uppercase tracking-wide text-slate-500">Practice Today</div>
-          <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
-            {dashboardRecommendedNext?.gameId
-              ? labelFromGameId(dashboardRecommendedNext.gameId)
-              : "Open the games portal for guided practice"}
-          </div>
-          {dashboardRecommendedNext?.reason ? (
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{dashboardRecommendedNext.reason}</p>
-          ) : null}
-          {dashboardRecommendedNext?.estMinutes ? (
-            <p className="mt-1 text-xs text-slate-500">Estimated time: {dashboardRecommendedNext.estMinutes} minutes</p>
-          ) : null}
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button
-              type="button"
-              size="sm"
-              onClick={() => onStartPractice(dashboardRecommendedNext?.gameId)}
-              className="bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
-            >
-              Start Practice
-            </Button>
-            <Button type="button" size="sm" variant="outline" onClick={onOpenGamesProgress}>
-              Open Games Progress
-            </Button>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 dark:border-emerald-900 dark:bg-emerald-950/30">
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
-              Feel Good About
-            </div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {dashboardStrengthChips.length > 0 ? (
-                dashboardStrengthChips.map((chip: string) => (
-                  <span
-                    key={`recommendation-strength-${chip}`}
-                    className="rounded-full border border-emerald-200 bg-white px-2.5 py-0.5 text-xs font-semibold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100"
-                  >
-                    {chip}
-                  </span>
-                ))
-              ) : (
-                <span className="text-xs text-emerald-700 dark:text-emerald-300">
-                  New strengths will appear as classes progress.
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 dark:border-amber-900 dark:bg-amber-950/30">
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
-              Practice Next
-            </div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {dashboardPracticeChips.length > 0 ? (
-                dashboardPracticeChips.map((chip: string) => (
-                  <span
-                    key={`recommendation-practice-${chip}`}
-                    className="rounded-full border border-amber-200 bg-white px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-900/40 dark:text-amber-100"
-                  >
-                    {chip}
-                  </span>
-                ))
-              ) : (
-                <span className="text-xs text-amber-700 dark:text-amber-300">
-                  Practice areas will update after teacher ratings.
-                </span>
-              )}
-            </div>
-          </div>
+      <div className="mt-4 border-t border-slate-200 pt-4 dark:border-slate-700">
+        <p className="text-sm font-semibold text-slate-950 dark:text-slate-100">
+          {hasSpecificRecommendation
+            ? labelFromGameId(dashboardRecommendedNext?.gameId)
+            : "Explore the games portal"}
+        </p>
+        {dashboardRecommendedNext?.reason ? (
+          <p className="mt-1 text-sm leading-5 text-slate-600 dark:text-slate-300">{dashboardRecommendedNext.reason}</p>
+        ) : (
+          <p className="mt-1 text-sm leading-5 text-slate-600 dark:text-slate-300">
+            Choose an available activity when you are ready to practise.
+          </p>
+        )}
+        {dashboardRecommendedNext?.estMinutes ? (
+          <p className="mt-1 text-xs text-slate-500">About {dashboardRecommendedNext.estMinutes} minutes</p>
+        ) : null}
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Button
+            type="button"
+            onClick={() => onStartPractice(dashboardRecommendedNext?.gameId)}
+            className="min-h-11 bg-slate-950 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-white"
+          >
+            {hasSpecificRecommendation ? "Start Practice" : "Open Games Portal"}
+          </Button>
+          <Button type="button" variant="outline" onClick={onOpenGamesProgress} className="min-h-11">
+            Games Progress
+          </Button>
         </div>
       </div>
     </Card>

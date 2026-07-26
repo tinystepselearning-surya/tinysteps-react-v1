@@ -1,12 +1,16 @@
+import { createHash } from 'crypto';
 import * as admin from 'firebase-admin';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { containsPhoneNumber } from './moderation';
 import {
-  hasApnsConfiguration,
-  isApnsInvalidTokenReason,
-  sendApnsAlert,
-} from '../lib/sendApnsAlert';
+  clearThreadUnreadFromAggregate,
+  incrementUnreadCount,
+  sumUnreadForUser,
+} from './unreadState';
+import { hasApnsConfiguration } from '../lib/sendApnsAlert';
+import { deliverPushToUser } from '../notifications/pushDelivery';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -15,15 +19,21 @@ if (!admin.apps.length) {
 const REGION = 'asia-south1';
 const MAX_MESSAGE_LENGTH = 2000;
 const MAX_PUSH_BODY_LENGTH = 80;
-const ACTIVE_TOKEN_QUERY_CHUNK = 10;
-const FCM_BATCH_SIZE = 500;
-const TOKEN_DOC_BATCH_SIZE = 400;
 const PHONE_BLOCK_MESSAGE =
   'Phone numbers cannot be shared in Tiny Steps messages. Please continue inside the app.';
 
 type AuthLike = {
   uid: string;
   token?: Record<string, unknown>;
+};
+
+export const requireAuthenticatedUserId = (
+  auth: { uid?: string } | null | undefined,
+): string => {
+  if (!auth?.uid) {
+    throw new HttpsError('unauthenticated', 'Authentication required');
+  }
+  return auth.uid;
 };
 
 interface SendMessageInput {
@@ -35,23 +45,6 @@ interface SendMessageInput {
 interface MarkMessageThreadReadInput {
   threadId?: unknown;
 }
-
-interface NotificationTokenDoc {
-  docId: string;
-  token: string;
-  platform: NotificationPlatform;
-  provider: NotificationProvider;
-  providerWasUnknown: boolean;
-}
-
-interface PushSendSummary {
-  successCount: number;
-  failureCount: number;
-  invalidTokenDocIds: string[];
-}
-
-type NotificationPlatform = 'ios' | 'android' | 'web';
-type NotificationProvider = 'apns' | 'fcm';
 
 function asOptionalString(value: unknown): string | null {
   if (typeof value !== 'string') return null;
@@ -75,32 +68,6 @@ function asStringList(value: unknown): string[] {
 function asRecord(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object') return {};
   return value as Record<string, unknown>;
-}
-
-function normalizePlatform(value: unknown): NotificationPlatform {
-  const normalized = String(value || '').trim().toLowerCase();
-  if (normalized === 'ios' || normalized === 'android' || normalized === 'web') {
-    return normalized;
-  }
-  return 'ios';
-}
-
-function normalizeProvider(
-  value: unknown,
-  platform: NotificationPlatform,
-): NotificationProvider {
-  const normalized = String(value || '').trim().toLowerCase();
-  if (normalized === 'apns') return 'apns';
-  if (normalized === 'fcm') return 'fcm';
-  return platform === 'ios' ? 'apns' : 'fcm';
-}
-
-function chunk<T>(items: T[], size: number): T[][] {
-  const output: T[][] = [];
-  for (let index = 0; index < items.length; index += size) {
-    output.push(items.slice(index, index + size));
-  }
-  return output;
 }
 
 function toEmailPrefix(value: unknown): string | null {
@@ -140,6 +107,13 @@ function buildPushMessagePreview(text: string): string {
   if (normalized.length <= MAX_PUSH_BODY_LENGTH) return normalized;
   return `${normalized.slice(0, MAX_PUSH_BODY_LENGTH - 3)}...`;
 }
+
+export const buildMessageNotificationId = (
+  messageId: string,
+  recipientId: string,
+): string => createHash('sha256')
+  .update(`message:${messageId}:${recipientId}`)
+  .digest('hex');
 
 function resolveSenderNameFromData(data: Record<string, unknown>): string | null {
   const fromDisplayName = asOptionalString(data.displayName);
@@ -181,194 +155,6 @@ async function resolveSenderName(
   return 'Team Member';
 }
 
-async function fetchActiveTokensForUsers(
-  db: admin.firestore.Firestore,
-  userIds: string[],
-): Promise<NotificationTokenDoc[]> {
-  if (userIds.length === 0) return [];
-
-  const chunks = chunk(userIds, ACTIVE_TOKEN_QUERY_CHUNK);
-  const docs: NotificationTokenDoc[] = [];
-  const seenDocIds = new Set<string>();
-
-  for (const userChunk of chunks) {
-    const snap = await db
-      .collection('notificationTokens')
-      .where('userId', 'in', userChunk)
-      .where('active', '==', true)
-      .get();
-
-    snap.docs.forEach((docSnap) => {
-      if (seenDocIds.has(docSnap.id)) return;
-      const data = asRecord(docSnap.data());
-      const token = asOptionalString(data.token);
-      if (!token) return;
-      const platform = normalizePlatform(data.platform);
-      const providerRaw = String(data.provider || '').trim().toLowerCase();
-      const providerWasUnknown =
-        Boolean(providerRaw) && providerRaw !== 'apns' && providerRaw !== 'fcm';
-      const provider = normalizeProvider(data.provider, platform);
-      seenDocIds.add(docSnap.id);
-      docs.push({
-        docId: docSnap.id,
-        token,
-        platform,
-        provider,
-        providerWasUnknown,
-      });
-    });
-  }
-
-  return docs;
-}
-
-async function sendPushToTokenDocs(
-  tokenDocs: NotificationTokenDoc[],
-  title: string,
-  body: string,
-  dataPayload: Record<string, string>,
-): Promise<PushSendSummary> {
-  if (tokenDocs.length === 0) {
-    return { successCount: 0, failureCount: 0, invalidTokenDocIds: [] };
-  }
-
-  let successCount = 0;
-  let failureCount = 0;
-  const invalidTokenDocIds = new Set<string>();
-  const fcmTokenDocs = tokenDocs.filter((item) => item.provider === 'fcm');
-  const apnsTokenDocs = tokenDocs.filter((item) => item.provider === 'apns');
-  const fcmFailureCodes: Record<string, number> = {};
-
-  for (const tokenChunk of chunk(fcmTokenDocs, FCM_BATCH_SIZE)) {
-    const response = await admin.messaging().sendEachForMulticast({
-      tokens: tokenChunk.map((item) => item.token),
-      notification: { title, body },
-      data: dataPayload,
-      android: {
-        priority: 'high',
-        notification: {
-          channelId: 'messages',
-          sound: 'default',
-          visibility: 'public',
-        },
-      },
-      apns: {
-        payload: {
-          aps: {
-            sound: 'default',
-          },
-        },
-      },
-    });
-
-    response.responses.forEach((sendResponse, index) => {
-      if (sendResponse.success) {
-        successCount += 1;
-        return;
-      }
-
-      failureCount += 1;
-      const code = String(sendResponse.error?.code || '').trim();
-      const normalizedCode = code || 'unknown';
-      fcmFailureCodes[normalizedCode] = (fcmFailureCodes[normalizedCode] || 0) + 1;
-      if (
-        code === 'messaging/registration-token-not-registered' ||
-        code === 'messaging/invalid-registration-token'
-      ) {
-        invalidTokenDocIds.add(tokenChunk[index].docId);
-      }
-    });
-  }
-
-  if (Object.keys(fcmFailureCodes).length > 0) {
-    logger.info('sendMessage:fcm_failure_codes', {
-      codes: fcmFailureCodes,
-    });
-  }
-
-  if (apnsTokenDocs.length > 0 && !hasApnsConfiguration()) {
-    logger.warn('sendMessage:apns_config_missing', {
-      apnsTokenCount: apnsTokenDocs.length,
-    });
-    failureCount += apnsTokenDocs.length;
-  }
-
-  for (const tokenDoc of apnsTokenDocs) {
-    if (!hasApnsConfiguration()) break;
-    try {
-      const outcome = await sendApnsAlert({
-        deviceToken: tokenDoc.token,
-        title,
-        body,
-        threadId: dataPayload.threadId,
-        data: dataPayload,
-      });
-
-      logger.info('sendMessage:apns_send_result', {
-        tokenDocId: tokenDoc.docId,
-        ok: outcome.ok,
-        status: outcome.status,
-        reason: outcome.reason || 'none',
-        host: outcome.host || 'unknown',
-        environment: outcome.environment || 'unknown',
-      });
-
-      if (outcome.ok) {
-        successCount += 1;
-        continue;
-      }
-
-      failureCount += 1;
-      if (isApnsInvalidTokenReason(outcome.reason)) {
-        invalidTokenDocIds.add(tokenDoc.docId);
-      }
-
-      logger.warn('sendMessage:apns_send_failed', {
-        tokenDocId: tokenDoc.docId,
-        status: outcome.status,
-        reason: outcome.reason || 'unknown',
-      });
-    } catch (error) {
-      failureCount += 1;
-      logger.warn('sendMessage:apns_send_exception', {
-        tokenDocId: tokenDoc.docId,
-        errorMessage: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
-  return {
-    successCount,
-    failureCount,
-    invalidTokenDocIds: Array.from(invalidTokenDocIds),
-  };
-}
-
-async function deactivateInvalidTokens(
-  db: admin.firestore.Firestore,
-  tokenDocIds: string[],
-): Promise<void> {
-  if (tokenDocIds.length === 0) return;
-
-  const now = admin.firestore.FieldValue.serverTimestamp();
-  for (const idChunk of chunk(tokenDocIds, TOKEN_DOC_BATCH_SIZE)) {
-    const batch = db.batch();
-    idChunk.forEach((docId) => {
-      const ref = db.collection('notificationTokens').doc(docId);
-      batch.set(
-        ref,
-        {
-          active: false,
-          updatedAt: now,
-          invalidatedAt: now,
-        },
-        { merge: true },
-      );
-    });
-    await batch.commit();
-  }
-}
-
 export const sendMessage = onCall(
   {
     region: REGION,
@@ -376,9 +162,7 @@ export const sendMessage = onCall(
     memory: '256MiB',
   },
   async (request) => {
-    if (!request.auth?.uid) {
-      throw new HttpsError('unauthenticated', 'Authentication required');
-    }
+    requireAuthenticatedUserId(request.auth);
 
     const auth = request.auth as AuthLike;
     const input = (request.data || {}) as SendMessageInput;
@@ -404,81 +188,85 @@ export const sendMessage = onCall(
 
     const db = admin.firestore();
     const threadRef = db.collection('messageThreads').doc(threadId);
-    const threadSnap = await threadRef.get();
-    if (!threadSnap.exists) {
-      throw new HttpsError('not-found', 'Message thread not found');
-    }
-
-    const threadData = (threadSnap.data() || {}) as Record<string, unknown>;
-    const participantIds = asStringList(threadData.participantIds);
     const senderId = auth.uid;
-
     const adminAllowed = await isAdminUser(db, auth);
-    if (!adminAllowed && !participantIds.includes(senderId)) {
-      throw new HttpsError(
-        'permission-denied',
-        'You are not allowed to send messages in this thread.',
-      );
-    }
-
-    const recipientIds = participantIds.filter((uid) => uid !== senderId);
-    const unreadCounts =
-      typeof threadData.unreadCounts === 'object' && threadData.unreadCounts !== null
-        ? { ...(threadData.unreadCounts as Record<string, unknown>) }
-        : {};
-
-    recipientIds.forEach((uid) => {
-      const current = Number(unreadCounts[uid] || 0);
-      unreadCounts[uid] = Number.isFinite(current) ? current + 1 : 1;
-    });
-    unreadCounts[senderId] = 0;
-
     const messageRef = threadRef.collection('messages').doc();
-    const now = admin.firestore.FieldValue.serverTimestamp();
+    const now = FieldValue.serverTimestamp();
     const preview = buildLastMessagePreview(textRaw);
+    let threadData: Record<string, unknown> = {};
+    let recipientIds: string[] = [];
+    const recipientUnreadMessages: Record<string, number> = {};
 
-    const batch = db.batch();
-    batch.set(messageRef, {
-      threadId,
-      senderId,
-      text: textRaw,
-      clientMessageId: clientMessageId || null,
-      createdAt: now,
-    });
+    await db.runTransaction(async (tx) => {
+      const threadSnap = await tx.get(threadRef);
+      if (!threadSnap.exists) {
+        throw new HttpsError('not-found', 'Message thread not found');
+      }
 
-    batch.set(
-      threadRef,
-      {
+      threadData = (threadSnap.data() || {}) as Record<string, unknown>;
+      const participantIds = asStringList(threadData.participantIds);
+      if (!adminAllowed && !participantIds.includes(senderId)) {
+        throw new HttpsError(
+          'permission-denied',
+          'You are not allowed to send messages in this thread.',
+        );
+      }
+
+      recipientIds = participantIds.filter((uid) => uid !== senderId);
+      const stateRefs = recipientIds.map((userId) =>
+        db.collection('userNotificationState').doc(userId));
+      const stateSnapshots = await Promise.all(stateRefs.map((ref) => tx.get(ref)));
+
+      const threadUpdate: Record<string, unknown> = {
         lastMessageAt: now,
         lastMessageBy: senderId,
         lastMessagePreview: preview,
-        unreadCounts,
         updatedAt: now,
-      },
-      { merge: true },
-    );
+        [`unreadCounts.${senderId}`]: 0,
+      };
 
-    recipientIds.forEach((userId) => {
-      const notificationRef = db.collection('notifications').doc();
-      batch.set(notificationRef, {
-        userId,
-        type: 'message',
+      recipientIds.forEach((userId, index) => {
+        const unreadCounts = asRecord(threadData.unreadCounts);
+        const currentThreadUnread = Number(unreadCounts[userId] || 0);
+        threadUpdate[`unreadCounts.${userId}`] = incrementUnreadCount(currentThreadUnread);
+
+        const aggregate = asRecord(stateSnapshots[index].data());
+        const currentAggregate = Number(aggregate.unreadMessages || 0);
+        const nextAggregate = incrementUnreadCount(currentAggregate);
+        recipientUnreadMessages[userId] = nextAggregate;
+        tx.set(stateRefs[index], {
+          unreadMessages: nextAggregate,
+          updatedAt: now,
+          lastMessageAt: now,
+        }, { merge: true });
+      });
+
+      tx.set(messageRef, {
         threadId,
-        messageId: messageRef.id,
-        title: 'New message',
-        body: preview,
-        read: false,
+        senderId,
+        text: textRaw,
+        clientMessageId: clientMessageId || null,
         createdAt: now,
-        updatedAt: now,
+      });
+      tx.update(threadRef, threadUpdate);
+      recipientIds.forEach((userId) => {
+        const notificationRef = db.collection('notifications')
+          .doc(buildMessageNotificationId(messageRef.id, userId));
+        tx.set(notificationRef, {
+          userId,
+          type: 'message',
+          threadId,
+          messageId: messageRef.id,
+          title: 'New message',
+          body: preview,
+          read: false,
+          createdAt: now,
+          updatedAt: now,
+        });
       });
     });
-
-    await batch.commit();
     const recipientCount = recipientIds.length;
     let tokenCount = 0;
-    let apnsTokenCount = 0;
-    let fcmTokenCount = 0;
-    let unknownProviderCount = 0;
     let successCount = 0;
     let failureCount = 0;
 
@@ -486,39 +274,32 @@ export const sendMessage = onCall(
       const senderName = await resolveSenderName(db, threadData, senderId, auth);
       const title = `New message from ${senderName}`;
       const body = buildPushMessagePreview(textRaw);
-      const tokenDocs = await fetchActiveTokensForUsers(db, recipientIds);
-      tokenCount = tokenDocs.length;
-      apnsTokenCount = tokenDocs.filter((item) => item.provider === 'apns').length;
-      fcmTokenCount = tokenDocs.filter((item) => item.provider === 'fcm').length;
-      unknownProviderCount = tokenDocs.filter((item) => item.providerWasUnknown).length;
-
       logger.info('sendMessage:fanout_plan', {
         threadId,
         messageId: messageRef.id,
         senderId,
         recipientIds,
-        activeTokenCount: tokenCount,
-        apnsTokenCount,
-        fcmTokenCount,
-        unknownProviderCount,
+        recipientBadgeCounts: recipientUnreadMessages,
         apnsConfigured: hasApnsConfiguration(),
       });
 
-      if (tokenDocs.length > 0) {
-        const summary = await sendPushToTokenDocs(tokenDocs, title, body, {
-          type: 'message',
+      for (const recipientId of recipientIds) {
+        const summary = await deliverPushToUser(db, recipientId, {
+          title,
+          body,
+          badge: recipientUnreadMessages[recipientId],
           threadId,
-          messageId: messageRef.id,
-          senderId,
-          route: '/messages',
+          data: {
+            type: 'message',
+            threadId,
+            messageId: messageRef.id,
+            senderId,
+            route: '/messages',
+          },
         });
-
-        successCount = summary.successCount;
-        failureCount = summary.failureCount;
-
-        if (summary.invalidTokenDocIds.length > 0) {
-          await deactivateInvalidTokens(db, summary.invalidTokenDocIds);
-        }
+        tokenCount += summary.tokenCount;
+        successCount += summary.successCount;
+        failureCount += summary.failureCount;
       }
     } catch (error) {
       logger.warn('sendMessage:push_fanout_failed', {
@@ -533,9 +314,6 @@ export const sendMessage = onCall(
       messageId: messageRef.id,
       recipients: recipientCount,
       tokens: tokenCount,
-      apnsTokens: apnsTokenCount,
-      fcmTokens: fcmTokenCount,
-      unknownProviderCount,
       successCount,
       failureCount,
     });
@@ -547,9 +325,7 @@ export const sendMessage = onCall(
 export const markMessageThreadRead = onCall(
   { region: REGION, timeoutSeconds: 60, memory: '256MiB' },
   async (request) => {
-    if (!request.auth?.uid) {
-      throw new HttpsError('unauthenticated', 'Authentication required');
-    }
+    const userId = requireAuthenticatedUserId(request.auth);
 
     const input = (request.data || {}) as MarkMessageThreadReadInput;
     const threadId = asOptionalString(input.threadId);
@@ -559,35 +335,110 @@ export const markMessageThreadRead = onCall(
 
     const db = admin.firestore();
     const threadRef = db.collection('messageThreads').doc(threadId);
-    const threadSnap = await threadRef.get();
-    if (!threadSnap.exists) {
-      throw new HttpsError('not-found', 'Message thread not found');
-    }
+    const stateRef = db.collection('userNotificationState').doc(userId);
+    const result = await db.runTransaction(async (tx) => {
+      const [threadSnap, stateSnap] = await Promise.all([
+        tx.get(threadRef),
+        tx.get(stateRef),
+      ]);
+      if (!threadSnap.exists) {
+        throw new HttpsError('not-found', 'Message thread not found');
+      }
 
-    const threadData = (threadSnap.data() || {}) as Record<string, unknown>;
-    const participantIds = asStringList(threadData.participantIds);
-    const userId = request.auth.uid;
-    if (!participantIds.includes(userId)) {
-      throw new HttpsError(
-        'permission-denied',
-        'You are not allowed to update this thread.',
+      const threadData = (threadSnap.data() || {}) as Record<string, unknown>;
+      if (!asStringList(threadData.participantIds).includes(userId)) {
+        throw new HttpsError(
+          'permission-denied',
+          'You are not allowed to update this thread.',
+        );
+      }
+
+      const { unreadCleared, unreadMessages } = clearThreadUnreadFromAggregate(
+        asRecord(stateSnap.data()).unreadMessages,
+        asRecord(threadData.unreadCounts)[userId],
       );
+      const timestamp = FieldValue.serverTimestamp();
+
+      tx.update(threadRef, {
+        [`unreadCounts.${userId}`]: 0,
+        [`lastReadAtByUser.${userId}`]: timestamp,
+        updatedAt: timestamp,
+      });
+      tx.set(stateRef, {
+        unreadMessages,
+        updatedAt: timestamp,
+        lastMessageAt: asRecord(stateSnap.data()).lastMessageAt || null,
+      }, { merge: true });
+
+      return {
+        ok: true as const,
+        updated: unreadCleared > 0,
+        unreadCleared,
+        unreadMessages,
+      };
+    });
+
+    try {
+      await deliverPushToUser(db, userId, {
+        badge: result.unreadMessages,
+        data: {
+          type: 'badge_sync',
+          route: '/messages',
+        },
+      });
+    } catch (error) {
+      logger.warn('markMessageThreadRead:badge_sync_failed', {
+        userId,
+        errorName: error instanceof Error ? error.name : 'unknown',
+      });
     }
 
-    const unreadCounts = asRecord(threadData.unreadCounts);
-    const unreadForUser = Number(unreadCounts[userId] || 0);
-    const shouldClearUnread = Number.isFinite(unreadForUser) && unreadForUser > 0;
-    const now = admin.firestore.FieldValue.serverTimestamp();
-    const updatePayload: Record<string, unknown> = {
-      [`lastReadAtByUser.${userId}`]: now,
-      updatedAt: now,
-    };
-    if (shouldClearUnread) {
-      updatePayload[`unreadCounts.${userId}`] = 0;
+    return result;
+  },
+);
+
+export const reconcileMyUnreadMessageCount = onCall(
+  { region: REGION, timeoutSeconds: 60, memory: '256MiB' },
+  async (request) => {
+    const userId = requireAuthenticatedUserId(request.auth);
+    const db = admin.firestore();
+    const snapshot = await db.collection('messageThreads')
+      .where('participantIds', 'array-contains', userId)
+      .get();
+    let lastMessageAt: Timestamp | null = null;
+    const unreadMessages = sumUnreadForUser(
+      snapshot.docs.map((documentSnapshot) => documentSnapshot.data()),
+      userId,
+    );
+    snapshot.docs.forEach((documentSnapshot) => {
+      const threadData = documentSnapshot.data();
+      const candidate = threadData.lastMessageAt;
+      if (
+        candidate instanceof Timestamp &&
+        (!lastMessageAt || candidate.toMillis() > lastMessageAt.toMillis())
+      ) {
+        lastMessageAt = candidate;
+      }
+    });
+    await db.collection('userNotificationState').doc(userId).set({
+      unreadMessages,
+      updatedAt: FieldValue.serverTimestamp(),
+      lastMessageAt,
+    }, { merge: true });
+    try {
+      await deliverPushToUser(db, userId, {
+        badge: unreadMessages,
+        data: {
+          type: 'badge_sync',
+          route: '/messages',
+        },
+      });
+    } catch (error) {
+      logger.warn('reconcileMyUnreadMessageCount:badge_sync_failed', {
+        userId,
+        errorName: error instanceof Error ? error.name : 'unknown',
+      });
     }
-
-    await threadRef.update(updatePayload);
-
-    return { ok: true, updated: true, unreadCleared: shouldClearUnread };
+    return { ok: true, unreadMessages };
   },
 );

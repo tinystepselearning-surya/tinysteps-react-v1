@@ -5,6 +5,7 @@ import { Toaster } from './components/ui/toaster';
 import useRevealAnimations from './hooks/useRevealAnimations';
 import useAuth from './hooks/useAuth';
 import AuthBootstrap from './components/common/AuthBootstrap';
+import ForegroundNotificationHost from './components/notifications/ForegroundNotificationHost';
 import {
   isNativeCapacitorRuntime as isNativeAuthDiagnosticRuntime,
   runNativeAuthStartupDiagnostics,
@@ -15,6 +16,10 @@ import {
   getPendingPushOpenRoute,
   OPEN_MESSAGES_FROM_PUSH_EVENT,
 } from './lib/pushNavigationState';
+import {
+  needsUnreadMessageReconciliation,
+  reconcileUnreadMessageBadge,
+} from './lib/notificationBadgeSync';
 
 const NativeLayoutDebug = lazy(() => import('./components/debug/NativeLayoutDebug'));
 const NATIVE_DEBUG_STORAGE_KEY = 'ts_native_layout_debug';
@@ -164,6 +169,16 @@ function App() {
   }, [authStatus, user?.uid]);
 
   useEffect(() => {
+    if (authStatus !== 'authenticated' || !user?.uid) return;
+    if (!needsUnreadMessageReconciliation(user.uid)) return;
+    void reconcileUnreadMessageBadge(user.uid).catch((error) => {
+      console.warn('[push] unread reconciliation failed', {
+        errorName: error instanceof Error ? error.name : 'unknown',
+      });
+    });
+  }, [authStatus, user?.uid]);
+
+  useEffect(() => {
     const pendingPush = getPendingPushOpenRoute();
     if (!pendingPush) return;
 
@@ -202,6 +217,7 @@ function App() {
     <>
       <AuthBootstrap />
       <RouterProvider router={router} />
+      <ForegroundNotificationHost />
       <Toaster />
       {showNativeDebug ? (
         <Suspense fallback={null}>
