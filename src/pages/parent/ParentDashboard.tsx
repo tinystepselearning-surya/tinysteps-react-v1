@@ -23,6 +23,7 @@ import { ParentGamesProgress } from "./components/progress/ParentGamesProgress";
 import { ParentOverviewCards } from "./components/overview/ParentOverviewCards";
 import ParentAttendanceSummary from "./components/ParentAttendanceSummary";
 import ParentBillingSummary from "./components/ParentBillingSummary";
+import ParentClassesView from "./components/classes/ParentClassesView";
 import ParentDashboardHero from "./components/ParentDashboardHero";
 import ParentDashboardKpis from "./components/ParentDashboardKpis";
 import ParentLearningInsights from "./components/ParentLearningInsights";
@@ -34,12 +35,7 @@ import ParentShellLoading from "./components/ParentShellLoading";
 import ChildSkillRatingCard from "../../components/progress/ChildSkillRatingCard";
 import {
   ArrowRight,
-  BookOpen,
-  CheckCircle2,
-  CalendarCheck,
-  CalendarClock,
   CalendarDays,
-  Clock3,
   CircleUser,
   CreditCard,
   ExternalLink,
@@ -107,6 +103,17 @@ import {
   shouldShowParentMessagesHeading,
   type ParentTabKey,
 } from "./parentNavigation";
+import {
+  getParentClassStatusDotTone as statusDotClass,
+  getParentClassStatusLabel as statusLabel,
+  getParentClassStatusTone as statusBadgeClass,
+  selectNextParentClass,
+  shouldShowClassJoinAction,
+  type ParentClassesFilterId,
+  type ParentClassesResourceId,
+  type ParentClassesViewId,
+  type ParentClassSessionDisplay,
+} from "./components/classes/parentClassPresentation";
 
 type TabKey = ParentTabKey;
 
@@ -1333,57 +1340,6 @@ function normalizeStatus(raw?: string): string {
   return s ? s : "scheduled";
 }
 
-function statusBadgeClass(status: string) {
-  switch (status) {
-    case "completed":
-      return "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300";
-    case "in_progress":
-      return "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300";
-    case "cancelled":
-      return "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200";
-    case "no_show":
-      return "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300";
-    case "reschedule_requested":
-      return "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300";
-    default:
-      return "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300";
-  }
-}
-
-function statusDotClass(status: string) {
-  switch (status) {
-    case "completed":
-      return "bg-green-500";
-    case "in_progress":
-      return "bg-blue-500";
-    case "cancelled":
-      return "bg-gray-400";
-    case "no_show":
-      return "bg-orange-500";
-    case "reschedule_requested":
-      return "bg-amber-500";
-    default:
-      return "bg-indigo-500";
-  }
-}
-
-function statusLabel(status: string) {
-  switch (status) {
-    case "completed":
-      return "Completed";
-    case "in_progress":
-      return "In progress";
-    case "cancelled":
-      return "Cancelled";
-    case "no_show":
-      return "No-show";
-    case "reschedule_requested":
-      return "Rescheduled";
-    default:
-      return "Scheduled";
-  }
-}
-
 const IOS_BILLING_ASSISTANCE_TEXT =
   "Billing information is managed by Tiny Steps Learning. Please contact Tiny Steps support for billing assistance.";
 
@@ -2359,10 +2315,8 @@ export default function ParentDashboard() {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
-  const [classesView, setClassesView] = useState<
-    "today" | "upcoming" | "completed" | "rescheduled" | "past_pending" | "calendar" | "worksheets"
-  >("today");
-  const selectClassesView = (view: typeof classesView) => {
+  const [classesView, setClassesView] = useState<ParentClassesViewId>("today");
+  const selectClassesView = (view: ParentClassesViewId) => {
     hapticSelection();
     setClassesView(view);
   };
@@ -2747,7 +2701,7 @@ export default function ParentDashboard() {
     return classesCalendarSessionsByDay[classesCalendarSelectedDayKey] || [];
   }, [classesCalendarSelectedDayKey, classesCalendarSessionsByDay]);
 
-  const resolveSessionChildName = (session: KidSession) => {
+  const resolveSessionChildName = useCallback((session: KidSession) => {
     const directName = String((session as any).kidName || (session as any).childName || "").trim();
     if (directName) return directName;
 
@@ -2758,7 +2712,7 @@ export default function ParentDashboard() {
     }
 
     return String(selectedKid?.fullName || selectedKid?.name || "Child");
-  };
+  }, [selectedKid, selectedKidId]);
 
   const openMeetingLink = (url: string) => {
     const trimmed = String(url || "").trim();
@@ -3958,7 +3912,7 @@ export default function ParentDashboard() {
     !parentMonthlyBillingReadModelQuery.data &&
     (billingChargesQuery.isLoading || kidSessionsQuery.isLoading);
 
-  const canJoinSession = (session: KidSession, status: string) => {
+  const canJoinSession = useCallback((session: KidSession, status: string) => {
     return (
       status !== "completed" &&
       status !== "cancelled" &&
@@ -3966,136 +3920,198 @@ export default function ParentDashboard() {
       status !== "reschedule_requested" &&
       resolveSessionJoinClassUrl(session, activeEnrollmentById).length > 0
     );
-  };
+  }, [activeEnrollmentById]);
 
-  const renderClassSessionsTable = (
-    rows: Array<{ session: KidSession; start: Date; status: string }>,
-    title: string,
-    emptyText: string
-  ) => {
-    const rowCount = rows.length;
-    return (
-      <Card className="overflow-hidden">
-        <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</h3>
-          <span className="text-xs text-slate-500">
-            {rowCount} session{rowCount === 1 ? "" : "s"}
-          </span>
-        </div>
-        {rows.length === 0 ? (
-          <div className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-300">
-            {emptyText}
-          </div>
-        ) : (
-          <div className="md:max-h-[62vh] md:overflow-auto md:[scrollbar-gutter:stable]">
-            <div className="space-y-3 p-3 md:hidden">
-              {rows.map((row) => {
-                const { session, status } = row;
-                const canJoin = canJoinSession(session, status);
-                const joining = joiningSessionId === session.id;
-                return (
-                  <div
-                    key={`mobile-${session.id}`}
-                    className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/60"
-                  >
-                    <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      {formatSessionDateLabel(session)}
-                    </div>
-                    <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-                      {formatSessionTimeRange(session)}
-                    </div>
-                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      {formatSessionIndiaLabel(session)}
-                    </div>
-                    <div className="mt-2 text-sm font-medium text-slate-900 dark:text-slate-100">
-                      {resolveSessionChildName(session)}
-                    </div>
-                    <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-                      {session.courseName || "—"}
-                    </div>
-                    <div className="mt-2">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${statusBadgeClass(status)}`}>
-                        {statusLabel(status)}
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => openJoinClass(session)}
-                      disabled={!canJoin || joining}
-                      className="mt-3 h-8 w-full bg-gradient-to-r from-indigo-600 to-purple-600 px-3 text-white hover:from-indigo-700 hover:to-purple-700"
-                    >
-                      {joining ? "Opening…" : "Join Class"}
-                      <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="hidden md:block">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur dark:bg-slate-950/95">
-                  <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800">
-                    <th className="px-4 py-2 text-left font-semibold">Date</th>
-                    <th className="px-4 py-2 text-left font-semibold">Time</th>
-                    <th className="px-4 py-2 text-left font-semibold">Child</th>
-                    <th className="px-4 py-2 text-left font-semibold">Course</th>
-                    <th className="px-4 py-2 text-left font-semibold">Status</th>
-                    <th className="px-4 py-2 text-right font-semibold">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => {
-                    const { session, status } = row;
-                    const canJoin = canJoinSession(session, status);
-                    const joining = joiningSessionId === session.id;
-                    return (
-                      <tr
-                        key={session.id}
-                        className="border-b border-slate-200 align-middle last:border-b-0 dark:border-slate-800"
-                      >
-                        <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
-                          <div>{formatSessionDateLabel(session)}</div>
-                          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                            {formatSessionIndiaLabel(session)}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                          {formatSessionTimeRange(session)}
-                        </td>
-                        <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">
-                          {resolveSessionChildName(session)}
-                        </td>
-                        <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
-                          {session.courseName || "—"}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${statusBadgeClass(status)}`}>
-                            {statusLabel(status)}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={() => openJoinClass(session)}
-                            disabled={!canJoin || joining}
-                            className="h-8 whitespace-nowrap bg-gradient-to-r from-indigo-600 to-purple-600 px-3 text-white hover:from-indigo-700 hover:to-purple-700"
-                          >
-                            {joining ? "Opening…" : "Join Class"}
-                            <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </Card>
-    );
+  const classSessionDisplayRows = useMemo<ParentClassSessionDisplay[]>(() => {
+    const nowMs = Date.now();
+    return sortedClassSessions.map(({ session, start, status }) => {
+      const enrollmentId = String((session as any).enrollmentId || "").trim()
+        || (session.id.includes("_") ? session.id.split("_")[0].trim() : "");
+      const enrollment = enrollmentId ? activeEnrollmentById.get(enrollmentId) : undefined;
+      const teacherName = String(
+        session.teacherName
+        || (session as any).teacherDisplayName
+        || (session as any).assignedTeacherName
+        || enrollment?.teacherName
+        || enrollment?.teacherDisplayName
+        || "",
+      ).trim();
+      const courseName = String(
+        session.courseName
+        || (session as any).courseLabel
+        || enrollment?.courseName
+        || enrollment?.courseLabel
+        || "Tiny Steps class",
+      ).trim();
+      const hasJoinLink = resolveSessionJoinClassUrl(session, activeEnrollmentById).length > 0;
+      const joinableStatus = shouldShowClassJoinAction(status);
+      const joinDisabledReason = !joinableStatus
+        ? `${statusLabel(status)} classes cannot be joined.`
+        : hasJoinLink
+          ? ""
+          : "The class link will appear once assigned.";
+
+      return {
+        id: session.id,
+        source: session,
+        dateLabel: formatSessionDateLabel(session),
+        dateTime: start.toISOString(),
+        timeLabel: formatSessionTimeRange(session),
+        indiaTimeLabel: formatSessionIndiaLabel(session),
+        legacyTimeWarning: isSessionTimeFallback(session),
+        courseName,
+        teacherName,
+        childName: kids.length > 1 ? resolveSessionChildName(session) : "",
+        status,
+        startMs: start.getTime(),
+        isToday: toYMD(start) === todayDayKey,
+        isFuture: start.getTime() > nowMs,
+        canJoin: canJoinSession(session, status),
+        joinDisabledReason,
+      };
+    });
+  }, [
+    activeEnrollmentById,
+    canJoinSession,
+    kids.length,
+    resolveSessionChildName,
+    sortedClassSessions,
+    todayDayKey,
+  ]);
+
+  const classRowsByFilter = useMemo<Record<ParentClassesFilterId, ParentClassSessionDisplay[]>>(() => {
+    const byId = new Map(classSessionDisplayRows.map((row) => [row.id, row]));
+    const mapRows = (rows: Array<{ session: KidSession }>) =>
+      rows.map((row) => byId.get(row.session.id)).filter((row): row is ParentClassSessionDisplay => Boolean(row));
+    return {
+      today: mapRows(todayClassSessions),
+      upcoming: mapRows(upcomingClassSessions),
+      completed: mapRows(completedClassSessions),
+      past_pending: mapRows(pastPendingClassSessions),
+      rescheduled: mapRows(rescheduledClassSessions),
+    };
+  }, [
+    classSessionDisplayRows,
+    completedClassSessions,
+    pastPendingClassSessions,
+    rescheduledClassSessions,
+    todayClassSessions,
+    upcomingClassSessions,
+  ]);
+
+  const classesFilters = useMemo(() => {
+    return [
+      {
+        id: "today" as const,
+        label: "Today",
+        count: kidSessionsQuery.isLoading ? null : todayClassSessions.length,
+        scopeText: "Classes scheduled for today.",
+        emptyText: "No classes are scheduled for today.",
+      },
+      {
+        id: "upcoming" as const,
+        label: "Upcoming",
+        count: kidSessionsQuery.isLoading ? null : upcomingClassSessions.length,
+        scopeText: "All future scheduled classes.",
+        emptyText: "No upcoming classes are scheduled.",
+      },
+      {
+        id: "completed" as const,
+        label: "Completed",
+        count: kidSessionsQuery.isLoading ? null : completedClassSessions.length,
+        scopeText: "All completed classes in the available history.",
+        emptyText: "No completed classes are available yet.",
+      },
+      {
+        id: "past_pending" as const,
+        label: "Review",
+        count: kidSessionsQuery.isLoading ? null : pastPendingClassSessions.length,
+        scopeText: "Past scheduled classes awaiting a status update. No parent action is required here.",
+        emptyText: "No past classes need review.",
+      },
+      {
+        id: "rescheduled" as const,
+        label: "Rescheduled",
+        count: kidSessionsQuery.isLoading ? null : rescheduledClassSessions.length,
+        scopeText: "All classes marked as rescheduled in the available history.",
+        emptyText: "No rescheduled classes are available.",
+      },
+    ];
+  }, [
+    completedClassSessions.length,
+    kidSessionsQuery.isLoading,
+    pastPendingClassSessions.length,
+    rescheduledClassSessions.length,
+    todayClassSessions.length,
+    upcomingClassSessions.length,
+  ]);
+
+  const nextParentClass = useMemo(
+    () => selectNextParentClass(classSessionDisplayRows),
+    [classSessionDisplayRows],
+  );
+
+  const activeClassRows =
+    classesView === "calendar" || classesView === "worksheets"
+      ? []
+      : classRowsByFilter[classesView];
+
+  const parentRecordingDescription = useMemo(() => {
+    if (!parentRecordingFolder) return "Open your recording folder.";
+    const updatedAtMs = toDateOrNull(
+      parentRecordingFolder.updatedAt || parentRecordingFolder.createdAt,
+    )?.getTime();
+    return [
+      String(parentRecordingFolder.folderName || "").trim(),
+      updatedAtMs ? `Updated ${formatTimestamp(updatedAtMs)}` : "",
+    ].filter(Boolean).join(" · ") || "Open your recording folder.";
+  }, [parentRecordingFolder]);
+
+  const classResources = useMemo(() => [
+    {
+      id: "calendar" as const,
+      label: "Class calendar",
+      description: "Browse classes by day.",
+    },
+    {
+      id: "worksheets" as const,
+      label: "Worksheets",
+      description: "Practice resources shared by Tiny Steps.",
+      count: parentWorksheetsQuery.isLoading ? null : visibleParentWorksheets.length,
+    },
+    {
+      id: "recordings" as const,
+      label: "Class recordings",
+      description: parentRecordingDescription,
+      disabled: classRecordingsQuery.isLoading || !parentRecordingFolderUrl,
+      disabledReason: classRecordingsQuery.isLoading
+        ? "Loading recordings…"
+        : parentRecordingFolderUrl
+          ? undefined
+          : "No recording folder is available yet.",
+    },
+  ], [
+    classRecordingsQuery.isLoading,
+    parentRecordingDescription,
+    parentRecordingFolderUrl,
+    parentWorksheetsQuery.isLoading,
+    visibleParentWorksheets.length,
+  ]);
+
+  const selectClassResource = (resource: ParentClassesResourceId) => {
+    hapticSelection();
+    if (resource === "recordings") {
+      if (parentRecordingFolderUrl) {
+        window.open(parentRecordingFolderUrl, "_blank", "noopener,noreferrer");
+      }
+      return;
+    }
+    if (resource === "calendar") {
+      const now = new Date();
+      setClassesCalendarMonth(new Date(now.getFullYear(), now.getMonth(), 1));
+      setClassesCalendarSelectedDayKey(toYMD(now));
+    }
+    setClassesView(resource);
   };
 
   // ---- Payments tab state ----
@@ -5695,142 +5711,19 @@ export default function ParentDashboard() {
         {/* Classes tab: canonical sessions bucketed for parent review */}
         {activeTab === "classes" && (
           <div className="space-y-3 sm:space-y-4">
-            <Card className={`sticky z-20 p-3 sm:p-5 ${isNativeIOSApp ? "top-0" : "top-[calc(env(safe-area-inset-top)+3.25rem)] sm:top-0"}`}>
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex w-full flex-wrap gap-1 rounded-2xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800 sm:inline-flex sm:w-auto sm:rounded-full">
-                    <button
-                      type="button"
-                      onClick={() => selectClassesView("today")}
-                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
-                        classesView === "today"
-                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
-                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
-                      }`}
-                    >
-                      <CalendarCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span>Today</span> ({todayClassSessions.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => selectClassesView("upcoming")}
-                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
-                        classesView === "upcoming"
-                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
-                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
-                      }`}
-                    >
-                      <CalendarClock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="sm:hidden">Next</span>
-                      <span className="hidden sm:inline">Upcoming</span> ({upcomingClassSessions.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => selectClassesView("completed")}
-                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
-                        classesView === "completed"
-                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
-                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
-                      }`}
-                    >
-                      <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span>Done</span> ({completedClassSessions.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => selectClassesView("rescheduled")}
-                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
-                        classesView === "rescheduled"
-                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
-                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
-                      }`}
-                    >
-                      <CalendarClock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="sm:hidden">Resched</span>
-                      <span className="hidden sm:inline">Rescheduled</span> ({rescheduledClassSessions.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => selectClassesView("past_pending")}
-                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
-                        classesView === "past_pending"
-                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
-                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
-                      }`}
-                    >
-                      <Clock3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="sm:hidden">Review</span>
-                      <span className="hidden sm:inline">Needs Review</span> ({pastPendingClassSessions.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => selectClassesView("worksheets")}
-                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
-                        classesView === "worksheets"
-                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
-                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
-                      }`}
-                    >
-                      <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="sm:hidden">Sheets</span>
-                      <span className="hidden sm:inline">Worksheets</span> ({visibleParentWorksheets.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const now = new Date();
-                        setClassesCalendarMonth(new Date(now.getFullYear(), now.getMonth(), 1));
-                        setClassesCalendarSelectedDayKey(toYMD(now));
-                        selectClassesView("calendar");
-                      }}
-                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
-                        classesView === "calendar"
-                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
-                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
-                      }`}
-                    >
-                      <CalendarDays className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      Calendar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!parentRecordingFolderUrl) return;
-                        window.open(parentRecordingFolderUrl, "_blank", "noopener,noreferrer");
-                      }}
-                      disabled={!parentRecordingFolderUrl}
-                      className={`inline-flex min-h-11 min-w-[calc(50%-0.125rem)] flex-1 items-center justify-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98] sm:min-h-0 sm:min-w-0 sm:flex-none sm:px-3 sm:text-sm ${
-                        parentRecordingFolderUrl
-                          ? "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
-                          : "cursor-not-allowed text-slate-400 dark:text-slate-500"
-                      }`}
-                    >
-                      <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                      <span className="sm:hidden">Recordings</span>
-                      <span className="hidden sm:inline">Class Recordings</span>
-                    </button>
-                </div>
-              </div>
-            </Card>
-
-            {kidSessionsQuery.isLoading && classesView !== "worksheets" ? (
-              <Card className="p-6 text-sm text-slate-600 dark:text-slate-300">
-                Loading sessions…
-              </Card>
-            ) : classesView === "today" ? (
-              renderClassSessionsTable(todayClassSessions, "Today's Sessions", "No sessions scheduled for today.")
-            ) : classesView === "upcoming" ? (
-              renderClassSessionsTable(upcomingClassSessions, "Upcoming Sessions", "No upcoming sessions scheduled.")
-            ) : classesView === "completed" ? (
-              renderClassSessionsTable(completedClassSessions, "Completed Sessions", "No completed sessions yet.")
-            ) : classesView === "rescheduled" ? (
-              renderClassSessionsTable(rescheduledClassSessions, "Rescheduled Sessions", "No rescheduled sessions.")
-            ) : classesView === "past_pending" ? (
-              renderClassSessionsTable(
-                pastPendingClassSessions,
-                "Needs Review",
-                "No past pending sessions need review.",
-              )
-            ) : classesView === "worksheets" ? (
+            <ParentClassesView
+              activeView={classesView}
+              filters={classesFilters}
+              activeRows={activeClassRows}
+              nextClass={nextParentClass}
+              resources={classResources}
+              joiningSessionId={joiningSessionId}
+              isSessionsLoading={kidSessionsQuery.isLoading}
+              sessionsError={kidSessionsQuery.isError ? "We couldn’t load classes. Please try again." : null}
+              onSelectFilter={selectClassesView}
+              onSelectResource={selectClassResource}
+              onJoinSession={(row) => openJoinClass(row.source as KidSession)}
+              resourceContent={classesView === "worksheets" ? (
               <Card className="p-6">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                   <div>
@@ -5919,7 +5812,7 @@ export default function ParentDashboard() {
                   </div>
                 )}
               </Card>
-            ) : (
+            ) : classesView === "calendar" ? (
               <Card className="p-3 sm:p-6">
                 <div className="space-y-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -6029,7 +5922,7 @@ export default function ParentDashboard() {
                             {dominantStatus ? (
                               <>
                                 <span className={`inline-block h-2 w-2 rounded-full sm:hidden ${statusDotClass(dominantStatus)}`} />
-                                <span className={`hidden rounded-full px-1.5 py-0.5 text-[10px] font-semibold sm:inline-flex ${statusBadgeClass(dominantStatus)}`}>
+                                <span className={`hidden rounded-full border px-1.5 py-0.5 text-[10px] font-semibold sm:inline-flex ${statusBadgeClass(dominantStatus)}`}>
                                   {statusLabel(dominantStatus)}
                                 </span>
                               </>
@@ -6043,9 +5936,9 @@ export default function ParentDashboard() {
                   </div>
                   {classesCalendarSelectedRows.length > 0 ? (
                     <div className="space-y-2">
-                      {classesCalendarSelectedRows.map(({ session, status }, index) => (
+                      {classesCalendarSelectedRows.map(({ session, status }) => (
                         <div
-                          key={`calendar-selected-${session.id}-${index}`}
+                          key={`calendar-selected-${session.id}`}
                           className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900"
                         >
                           <div className="flex items-start justify-between gap-2">
@@ -6060,7 +5953,7 @@ export default function ParentDashboard() {
                                 {resolveSessionChildName(session)} · {session.courseName || "—"}
                               </div>
                             </div>
-                            <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusBadgeClass(status)}`}>
+                            <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${statusBadgeClass(status)}`}>
                               {statusLabel(status)}
                             </span>
                           </div>
@@ -6070,7 +5963,8 @@ export default function ParentDashboard() {
                   ) : null}
                 </div>
               </Card>
-            )}
+            ) : null}
+            />
           </div>
         )}
 
