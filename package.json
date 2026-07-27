@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run gen:sitemaps && vite build && node scripts/prerender.mjs && npm run seo:route-integrity && npm run content:offer-consistency && node scripts/write-indexnow-key.mjs",
+    "build": "npm run gen:sitemaps && vite build && node scripts/write-build-info.mjs && node scripts/prerender.mjs && npm run seo:route-integrity && npm run seo:indexability-report && npm run bundle:public-check && npm run content:offer-consistency && node scripts/write-indexnow-key.mjs",
     "prebuild": "npm run check:shadowing && node scripts/generate-rss.mjs",
     "generate:rss": "node scripts/generate-rss.mjs",
     "check:shadowing": "node scripts/check-shadowing.mjs",
@@ -19,6 +19,9 @@
     "seo:indexation-check": "node scripts/seo-indexation-guard.mjs",
     "seo:rendered-check": "node scripts/seo-rendered-html-check.mjs",
     "seo:route-integrity": "node scripts/seo-route-integrity.mjs",
+    "seo:indexability-report": "node scripts/generate-route-indexability-report.mjs",
+    "bundle:public-check": "node scripts/verify-public-bundle.mjs --max-gzip 150 --report artifacts/public-bundle-report.json",
+    "verify:live-deployment": "node scripts/verify-live-deployment.mjs",
     "indexnow:submit": "node scripts/indexnow-submit.mjs",
     "audit:firebase-upgrade": "bash scripts/audit-firebase-upgrade.sh",
     "inventory:firebase-auth": "bash scripts/inventory-firebase-auth.sh",

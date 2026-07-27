@@ -91,11 +91,11 @@ export default defineConfig({
 
   build: {
     sourcemap: true,
-    modulePreload: false,
+    modulePreload: true,
     // Improve build chunking to keep large bundles split and easier to cache.
     // We add specific vendor groups for React, animation, charting libraries and Firebase.
     // Adjust `chunkSizeWarningLimit` if you prefer fewer noisy warnings (measured in KB).
-    chunkSizeWarningLimit: 1200,
+    chunkSizeWarningLimit: 500,
     rollupOptions: {
       output: {
         manualChunks(id) {

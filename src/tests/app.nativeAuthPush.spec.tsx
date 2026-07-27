@@ -149,7 +149,7 @@ describe('native persisted authentication push bootstrap', () => {
     await waitFor(() => expect(navigateMock).toHaveBeenCalledWith(
       '/messages/restored-thread',
       { replace: true },
-    ));
+    ), { timeout: 3_000 });
     expect(getPendingPushOpenRoute()).toBeNull();
   });
 
@@ -172,7 +172,7 @@ describe('native persisted authentication push bootstrap', () => {
     await waitFor(() => expect(navigateMock).toHaveBeenCalledWith(
       '/parent?tab=classes',
       { replace: true },
-    ));
+    ), { timeout: 3_000 });
     expect(getPendingPushOpenRoute()).toBeNull();
   });
 

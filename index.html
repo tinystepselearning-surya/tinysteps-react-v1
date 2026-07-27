@@ -18,34 +18,6 @@
     />
     <meta name="author" content="Tiny Steps Online School" />
     <link rel="canonical" href="https://tinystepslearning.com/" />
-    <script>
-      (function () {
-        try {
-          var origin = 'https://tinystepslearning.com';
-          var canonicalMap = {
-            '/phonics-classes-for-kids': '/phonics',
-            '/summer-english-camp-2026': '/summer-camps'
-          };
-          var pathname = window.location.pathname || '/';
-          if (pathname.length > 1) pathname = pathname.replace(/\/+$/, '');
-          var canonicalPath = canonicalMap[pathname] || pathname || '/';
-          var canonicalUrl = origin + (canonicalPath === '/' ? '/' : canonicalPath);
-
-          var canonicalEl = document.querySelector('link[rel="canonical"]');
-          if (!canonicalEl) {
-            canonicalEl = document.createElement('link');
-            canonicalEl.setAttribute('rel', 'canonical');
-            document.head.appendChild(canonicalEl);
-          }
-          canonicalEl.setAttribute('href', canonicalUrl);
-
-          var ogUrlEl = document.querySelector('meta[property="og:url"]');
-          if (ogUrlEl) ogUrlEl.setAttribute('content', canonicalUrl);
-        } catch (error) {
-          // Keep static SEO defaults if path normalization fails.
-        }
-      })();
-    </script>
     <link
       rel="alternate"
       type="application/rss+xml"
@@ -113,48 +85,6 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
 
-    <!-- Microsoft Clarity: public routes only -->
-    <script type="text/javascript">
-      (function () {
-        var pathname = (window.location.pathname || '/').toLowerCase();
-        var blockedPrefixes = [
-          '/admin', '/surya', '/teacher', '/parent', '/student', '/kids', '/kid',
-          '/login', '/signup', '/auth', '/account', '/profile', '/payment',
-          '/payments', '/checkout', '/messages', '/learning-partner/dashboard',
-          '/learningpartner/dashboard', '/unauthorized', '/dev'
-        ];
-        var allowedExactPaths = [
-          '/', '/pricing', '/sitemap', '/contact', '/why-tiny-steps',
-          '/learning-partner', '/privacy-policy', '/terms-and-conditions',
-          '/refund-guarantee', '/team', '/class-samples', '/testimonials',
-          '/careers', '/curriculum', '/faq', '/for-schools', '/book-demo',
-          '/grammar', '/speaking', '/games/english-excellence'
-        ];
-        var allowedPrefixes = [
-          '/blog', '/courses', '/free-', '/free-games', '/summer-', '/phonics',
-          '/online-', '/best-online-', '/english-', '/public-speaking-',
-          '/reading-', '/writing-', '/spoken-', '/child-', '/slow-', '/shy-',
-          '/confidence-', '/letter-', '/seasonal/'
-        ];
-
-        if (blockedPrefixes.some(function (prefix) { return pathname.indexOf(prefix) === 0; })) {
-          return;
-        }
-        if (
-          allowedExactPaths.indexOf(pathname) === -1 &&
-          !allowedPrefixes.some(function (prefix) { return pathname.indexOf(prefix) === 0; })
-        ) {
-          return;
-        }
-
-        (function(c,l,a,r,i,t,y){
-            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-        })(window, document, "clarity", "script", "xl3yemvlms");
-      })();
-    </script>
-    <!-- End Microsoft Clarity -->
   </head>
 
   <body>

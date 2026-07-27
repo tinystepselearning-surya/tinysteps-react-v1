@@ -6,10 +6,15 @@ const route = (path, group, {
 } = {}) => ({
   path,
   group,
+  intent: indexable ? 'index' : 'noindex',
   indexable,
   prerender,
   sitemap,
   canonicalPath,
+  robots: indexable
+    ? 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1'
+    : 'noindex, follow',
+  seoRegistry: true,
 });
 
 export const PUBLIC_ROUTE_MANIFEST = [
@@ -143,3 +148,79 @@ export const PUBLIC_REDIRECT_MANIFEST = [
     status: 301,
   },
 ];
+
+export const APPLICATION_ROUTE_INTENT_MANIFEST = [
+  { path: '/login', intent: 'noindex', robots: 'noindex, nofollow, noarchive' },
+  { path: '/surya/login', intent: 'noindex', robots: 'noindex, nofollow, noarchive' },
+  { path: '/teacher/login', intent: 'noindex', robots: 'noindex, nofollow, noarchive' },
+  { path: '/parent/login', intent: 'noindex', robots: 'noindex, nofollow, noarchive' },
+  { path: '/learning-partner/login', intent: 'noindex', robots: 'noindex, nofollow, noarchive' },
+  { path: '/unauthorized', intent: 'noindex', robots: 'noindex, nofollow, noarchive' },
+  { path: '/surya/**', intent: 'private-spa', robots: 'noindex, nofollow, noarchive' },
+  { path: '/teacher/**', intent: 'private-spa', robots: 'noindex, nofollow, noarchive' },
+  { path: '/parent/**', intent: 'private-spa', robots: 'noindex, nofollow, noarchive' },
+  { path: '/kids/**', intent: 'private-spa', robots: 'noindex, nofollow, noarchive' },
+  { path: '/messages/**', intent: 'private-spa', robots: 'noindex, nofollow, noarchive' },
+  {
+    path: '/learning-partner/dashboard/**',
+    intent: 'private-spa',
+    robots: 'noindex, nofollow, noarchive',
+  },
+  { path: '/rss.xml', intent: 'noindex', robots: 'noindex' },
+  { path: '/feed.xml', intent: 'noindex', robots: 'noindex' },
+  { path: '/sitemap*.xml', intent: 'noindex', robots: 'noindex' },
+  { path: '/**', intent: 'genuine-404', robots: 'noindex, nofollow' },
+];
+
+export const DYNAMIC_PUBLIC_ROUTE_INTENT_MANIFEST = [
+  {
+    path: '/blog/**',
+    intent: 'index',
+    canonicalPath: 'self',
+    sitemap: true,
+    prerender: true,
+    robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
+    seoRegistry: 'resolved',
+  },
+  {
+    path: '/courses/**',
+    intent: 'index',
+    canonicalPath: 'self',
+    sitemap: true,
+    prerender: true,
+    robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
+    seoRegistry: 'resolved',
+  },
+];
+
+export const ROUTE_INTENT_MANIFEST = [
+  ...PUBLIC_ROUTE_MANIFEST,
+  ...DYNAMIC_PUBLIC_ROUTE_INTENT_MANIFEST,
+  ...PUBLIC_REDIRECT_MANIFEST.map((entry) => ({
+    ...entry,
+    path: entry.source,
+    intent: 'redirect',
+    permanent: entry.status === 301 || entry.status === 308,
+    sitemap: false,
+    prerender: false,
+  })),
+  ...APPLICATION_ROUTE_INTENT_MANIFEST,
+];
+
+const DYNAMIC_PUBLIC_PREFIXES = DYNAMIC_PUBLIC_ROUTE_INTENT_MANIFEST.map(
+  (entry) => entry.path.replace(/\*\*$/, ''),
+);
+const PUBLIC_ANALYTICS_EXCLUSIONS = new Set(['/parents/payments']);
+const PUBLIC_ANALYTICS_ALIASES = new Set([
+  '/games/english-excellence',
+  '/online-phonics-reading-classes',
+]);
+
+export function isPublicAnalyticsPath(pathname) {
+  const normalized = String(pathname || '/').toLowerCase().replace(/\/+$/, '') || '/';
+  if (PUBLIC_ANALYTICS_EXCLUSIONS.has(normalized)) return false;
+  if (PUBLIC_ANALYTICS_ALIASES.has(normalized)) return true;
+  const entry = PUBLIC_ROUTE_MANIFEST.find((candidate) => candidate.path === normalized);
+  if (entry) return true;
+  return DYNAMIC_PUBLIC_PREFIXES.some((prefix) => normalized.startsWith(prefix));
+}
