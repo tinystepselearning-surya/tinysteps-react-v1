@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { app } from "../../lib/firebaseConfig";
 
 type RollupCountry = {
   countryCode: string;
@@ -103,7 +102,10 @@ export default function GlobalLearnersMapSection() {
   const isDev = import.meta.env.DEV;
   const [payload, setPayload] = useState<RollupPayload | null>(null);
   const [loadState, setLoadState] = useState<LoadState>("loading");
-  const jsonUrl = useMemo(() => getGlobalLearnersJsonUrl(app.options.storageBucket), []);
+  // This public rollup is intentionally fetched through the Storage REST URL.
+  // Do not initialize the Firebase SDK on a marketing page just to read a
+  // non-sensitive, cacheable JSON object.
+  const jsonUrl = useMemo(() => getGlobalLearnersJsonUrl(DEFAULT_STORAGE_BUCKET), []);
 
   useEffect(() => {
     if (isDev) {

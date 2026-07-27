@@ -1,4 +1,6 @@
 // @ts-nocheck
+import { isPublicAnalyticsPath } from './publicRouteManifest.js';
+
 let initialized = false;
 let interactionArmed = false;
 let scriptQueued = false;
@@ -6,15 +8,11 @@ let fallbackTimerId: number | undefined;
 let idleLoadTimerId: number | undefined;
 
 const PRODUCTION_GA_MEASUREMENT_ID = 'G-J3TTBH8CN9';
+const PRODUCTION_CLARITY_ID = 'xl3yemvlms';
 
-const DISABLED_PREFIXES = ['/admin', '/teacher', '/parent', '/kid', '/lp', '/dev'];
 const DESKTOP_FALLBACK_DELAY_MS = 18000;
 const MOBILE_FALLBACK_DELAY_MS = 12000;
 const IDLE_LOAD_TIMEOUT_MS = 9000;
-
-function isAllowedPath(path: string) {
-  return !DISABLED_PREFIXES.some((p) => path.startsWith(p));
-}
 
 function shouldRunAnalytics() {
   // Skip prerender/headless automation contexts.
@@ -27,7 +25,7 @@ function shouldRunAnalytics() {
   if (location.hostname !== 'tinystepslearning.com') return false;
 
   // Never run on portal routes
-  if (!isAllowedPath(location.pathname)) return false;
+  if (!isPublicAnalyticsPath(location.pathname)) return false;
 
   return true;
 }
@@ -39,6 +37,19 @@ const loadScript = (id: string) => {
   script.async = true;
   script.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
   script.id = 'ga4-script';
+  document.head.appendChild(script);
+};
+
+const loadClarity = (id: string) => {
+  if (!id || document.getElementById('clarity-script') || !shouldRunAnalytics()) return;
+  const clarity = ((...args: unknown[]) => {
+    (clarity.q = clarity.q || []).push(args);
+  }) as ((...args: unknown[]) => void) & { q?: unknown[][] };
+  window.clarity = window.clarity || clarity;
+  const script = document.createElement('script');
+  script.async = true;
+  script.id = 'clarity-script';
+  script.src = `https://www.clarity.ms/tag/${id}`;
   document.head.appendChild(script);
 };
 
@@ -60,11 +71,15 @@ const queueScriptLoad = (id: string) => {
   };
 
   if (typeof win.requestIdleCallback === 'function') {
-    win.requestIdleCallback(() => loadScript(id), { timeout: IDLE_LOAD_TIMEOUT_MS });
+    win.requestIdleCallback(() => {
+      loadScript(id);
+      loadClarity(PRODUCTION_CLARITY_ID);
+    }, { timeout: IDLE_LOAD_TIMEOUT_MS });
   } else {
     idleLoadTimerId = window.setTimeout(() => {
       idleLoadTimerId = undefined;
       loadScript(id);
+      loadClarity(PRODUCTION_CLARITY_ID);
     }, 2200);
   }
 };

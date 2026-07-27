@@ -241,7 +241,7 @@ describe('PublicAssessmentForm analytics', () => {
     fireEvent.click(submitButton);
     fireEvent.click(submitButton);
 
-    expect(firestoreMocks.addDoc).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(firestoreMocks.addDoc).toHaveBeenCalledTimes(1));
     expect(globalThis.open).toHaveBeenCalledTimes(1);
 
     resolveSave?.({ id: 'lead-123' });

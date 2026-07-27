@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import {
   trackDemoBookingComplete,
   trackLeadFormView,
@@ -9,7 +8,6 @@ import {
   trackLeadFormSubmit,
   trackWhatsappClick,
 } from '../../lib/conversionTracking';
-import { db } from '../../lib/firebaseConfig';
 import {
   PUBLIC_MAIN_CONCERN_OPTIONS,
   buildPublicLeadPayload,
@@ -269,6 +267,13 @@ export default function PublicAssessmentForm({
 
     setIsSubmitting(true);
     try {
+      const [
+        { addDoc, collection, serverTimestamp },
+        { db },
+      ] = await Promise.all([
+        import('firebase/firestore'),
+        import('../../lib/firebaseConfig'),
+      ]);
       const payload = buildPublicLeadPayload(submittedForm, {
         source,
         attribution,

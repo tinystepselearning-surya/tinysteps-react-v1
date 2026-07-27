@@ -79,3 +79,6 @@ dist/assets/
 .auth/
 playwright-report/
 test-results/
+
+# Local Lighthouse raw audit outputs
+artifacts/lighthouse-*.json

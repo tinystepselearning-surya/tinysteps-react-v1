@@ -1,0 +1,20 @@
+{
+  "generatedAt": "2026-07-27T18:19:30.521Z",
+  "maxGzipBytes": 153600,
+  "assets": [
+    {
+      "url": "/assets/index-Cp4WZo8Y.js",
+      "rawBytes": 397102,
+      "gzipBytes": 125685,
+      "brotliBytes": 107077,
+      "bannedSources": []
+    }
+  ],
+  "totals": {
+    "rawBytes": 397102,
+    "gzipBytes": 125685,
+    "brotliBytes": 107077
+  },
+  "bannedSources": [],
+  "passed": true
+}

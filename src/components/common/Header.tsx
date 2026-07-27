@@ -2,7 +2,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
-import { performAppLogout } from '../../lib/auth';
 
 type LinkItem = { label: string; href: string };
 
@@ -61,6 +60,7 @@ export default function Header() {
 
   const handleLogout = useCallback(async () => {
     try {
+      const { performAppLogout } = await import('../../lib/auth');
       await performAppLogout('user-clicked-logout');
     } catch (error) {
       console.error('Error signing out of Firebase', error);

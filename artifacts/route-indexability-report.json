@@ -1,0 +1,3161 @@
+{
+  "generatedAt": "2026-07-27T18:19:29.978Z",
+  "totals": {
+    "routes": 169,
+    "passed": 169,
+    "failed": 0
+  },
+  "routes": [
+    {
+      "route": "/",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/",
+        "robots": "index, follow",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/blog",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/pricing",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/pricing",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/pricing",
+        "robots": "index, follow",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/sitemap",
+      "intendedState": "noindex",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/sitemap",
+      "sitemapExpectation": false,
+      "prerenderExpectation": true,
+      "robotsExpectation": "noindex, follow",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/sitemap",
+        "robots": "noindex, follow",
+        "sitemap": false
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/contact",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/contact",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/contact",
+        "robots": "index, follow",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/why-tiny-steps",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/why-tiny-steps",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/why-tiny-steps",
+        "robots": "index, follow",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/learning-partner",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/learning-partner",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/learning-partner",
+        "robots": "index, follow",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/team",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/team",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/team",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/class-samples",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/class-samples",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/class-samples",
+        "robots": "index, follow",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/testimonials",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/testimonials",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/testimonials",
+        "robots": "index, follow",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/careers",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/careers",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/careers",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/courses",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/courses",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/courses",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/curriculum",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/curriculum",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/curriculum",
+        "robots": "index, follow",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/faq",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/faq",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/faq",
+        "robots": "index, follow",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/best-online-phonics-classes-for-kids-in-india",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/phonics-apps-for-preschoolers-india",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/phonics-apps-for-preschoolers-india",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/phonics-apps-for-preschoolers-india",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/phonics-games-for-preschoolers",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/phonics-games-for-preschoolers",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/phonics-games-for-preschoolers",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/phonics-learning-games",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/phonics-learning-games",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/phonics-learning-games",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/free-english-games-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/free-english-games-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/free-english-games-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/free-phonics-games-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/free-phonics-games-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/free-phonics-games-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/free-letter-sound-games-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/free-letter-sound-games-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/free-letter-sound-games-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/free-word-building-games-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/free-word-building-games-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/free-word-building-games-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/free-sentence-building-games-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/free-sentence-building-games-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/free-sentence-building-games-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/free-reading-games-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/free-reading-games-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/free-reading-games-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/free-grammar-games-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/free-grammar-games-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/free-grammar-games-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/free-speaking-games-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/free-speaking-games-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/free-speaking-games-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/free-letter-sounds-game-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/free-letter-sounds-game-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/free-letter-sounds-game-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/free-sound-listening-game-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/free-sound-listening-game-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/free-sound-listening-game-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/free-word-building-game-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/free-word-building-game-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/free-word-building-game-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/free-spelling-game-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/free-spelling-game-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/free-spelling-game-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/free-sentence-making-game-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/free-sentence-making-game-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/free-sentence-making-game-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/free-reading-fluency-game-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/free-reading-fluency-game-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/free-reading-fluency-game-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/free-grammar-practice-game-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/free-grammar-practice-game-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/free-grammar-practice-game-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/free-speaking-practice-game-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/free-speaking-practice-game-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/free-speaking-practice-game-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/free-letter-tracing-game-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/free-letter-tracing-game-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/free-letter-tracing-game-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/letter-tracing-with-sounds-game",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/letter-tracing-with-sounds-game",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/letter-tracing-with-sounds-game",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/free-balloon-pop-phonics-game-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/free-balloon-pop-phonics-game-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/free-balloon-pop-phonics-game-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/free-games/word-meaning-flashcards",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/free-games/word-meaning-flashcards",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/free-games/word-meaning-flashcards",
+        "robots": "index, follow",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/phonics",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/phonics",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/phonics",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/grammar",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/grammar",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/grammar",
+        "robots": "index,follow",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/speaking",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/speaking",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/speaking",
+        "robots": "index,follow",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/for-schools",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/for-schools",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/for-schools",
+        "robots": "index, follow",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/book-demo",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/book-demo",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/book-demo",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/reading-classes-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/reading-classes-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/reading-classes-for-kids",
+        "robots": "index,follow",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/writing-classes-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/writing-classes-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/writing-classes-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/phonics-fees-india",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/phonics-fees-india",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/phonics-fees-india",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/english-grammar-writing-classes",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/english-grammar-writing-classes",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/english-grammar-writing-classes",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/spoken-english-classes-for-kids-online",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/spoken-english-classes-for-kids-online",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/spoken-english-classes-for-kids-online",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/online-english-classes-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/online-english-classes-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/online-english-classes-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/online-english-classes-hyderabad",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/online-english-classes-hyderabad",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/online-english-classes-hyderabad",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/english-classes-for-4-year-old",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/english-classes-for-4-year-old",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/english-classes-for-4-year-old",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/english-classes-for-5-year-old",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/english-classes-for-5-year-old",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/english-classes-for-5-year-old",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/english-classes-for-6-year-old",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/english-classes-for-6-year-old",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/english-classes-for-6-year-old",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/english-classes-for-7-10-year-old",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/english-classes-for-7-10-year-old",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/english-classes-for-7-10-year-old",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/child-not-reading-properly",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/child-not-reading-properly",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/child-not-reading-properly",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/slow-reader-child-help",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/slow-reader-child-help",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/slow-reader-child-help",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/shy-child-speaking-confidence",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/shy-child-speaking-confidence",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/shy-child-speaking-confidence",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/reading-fluency-program",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/reading-fluency-program",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/reading-fluency-program",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/confidence-building-program-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/confidence-building-program-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/confidence-building-program-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/english-foundation-program",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/english-foundation-program",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/english-foundation-program",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/public-speaking-communication-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/public-speaking-communication-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/public-speaking-communication-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/summer-camps",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/summer-camps",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/summer-camps",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/summer-camp-for-kids-india",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/summer-camp-for-kids-india",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/summer-camp-for-kids-india",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/summer-reading-program-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/summer-reading-program-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/summer-reading-program-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/summer-speaking-camp-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/summer-speaking-camp-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/summer-speaking-camp-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/summer-camps/phonics-fast-track",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/summer-camps/phonics-fast-track",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/summer-camps/phonics-fast-track",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/summer-camps/grammar-fast-track",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/summer-camps/grammar-fast-track",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/summer-camps/grammar-fast-track",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/summer-camps/speaking-fast-track",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/summer-camps/speaking-fast-track",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/summer-camps/speaking-fast-track",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/seasonal/christmas-tree",
+      "intendedState": "noindex",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/seasonal/christmas-tree",
+      "sitemapExpectation": false,
+      "prerenderExpectation": true,
+      "robotsExpectation": "noindex, follow",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/seasonal/christmas-tree",
+        "robots": "noindex, follow",
+        "sitemap": false
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/parents",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/parents",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/parents",
+        "robots": "index, follow",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/parents/getting-started",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/parents/getting-started",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/parents/getting-started",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/parents/choosing-course",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/parents/choosing-course",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/parents/choosing-course",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/parents/scheduling",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/parents/scheduling",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/parents/scheduling",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/parents/payments",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/parents/payments",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/parents/payments",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/parents/tracking-progress",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/parents/tracking-progress",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/parents/tracking-progress",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/parents/helping-with-homework",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/parents/helping-with-homework",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/parents/helping-with-homework",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/parents/phonics-mission",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/parents/phonics-mission",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/parents/phonics-mission",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/parents/reading-at-home",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/parents/reading-at-home",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/parents/reading-at-home",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/parents/speech-confidence",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/parents/speech-confidence",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/parents/speech-confidence",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/parents/common-mistakes",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/parents/common-mistakes",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/parents/common-mistakes",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/privacy-policy",
+      "intendedState": "noindex",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/privacy-policy",
+      "sitemapExpectation": false,
+      "prerenderExpectation": true,
+      "robotsExpectation": "noindex, follow",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/privacy-policy",
+        "robots": "noindex, follow",
+        "sitemap": false
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/terms-and-conditions",
+      "intendedState": "noindex",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/terms-and-conditions",
+      "sitemapExpectation": false,
+      "prerenderExpectation": true,
+      "robotsExpectation": "noindex, follow",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/terms-and-conditions",
+        "robots": "noindex, follow",
+        "sitemap": false
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/refund-guarantee",
+      "intendedState": "noindex",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/refund-guarantee",
+      "sitemapExpectation": false,
+      "prerenderExpectation": true,
+      "robotsExpectation": "noindex, follow",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/refund-guarantee",
+        "robots": "noindex, follow",
+        "sitemap": false
+      },
+      "pass": true,
+      "reason": "matches manifest"
+    },
+    {
+      "route": "/terms",
+      "intendedState": "redirect",
+      "httpExpectation": 301,
+      "canonicalExpectation": "https://tinystepslearning.com/terms-and-conditions",
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "redirect source excluded",
+      "actualLocalBuild": {
+        "firebaseRedirect": {
+          "source": "/terms",
+          "destination": "/terms-and-conditions",
+          "type": 301
+        },
+        "sitemap": false
+      },
+      "pass": true,
+      "reason": "Firebase redirect matches manifest"
+    },
+    {
+      "route": "/terms/",
+      "intendedState": "redirect",
+      "httpExpectation": 301,
+      "canonicalExpectation": "https://tinystepslearning.com/terms-and-conditions",
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "redirect source excluded",
+      "actualLocalBuild": {
+        "firebaseRedirect": {
+          "source": "/terms/",
+          "destination": "/terms-and-conditions",
+          "type": 301
+        },
+        "sitemap": false
+      },
+      "pass": true,
+      "reason": "Firebase redirect matches manifest"
+    },
+    {
+      "route": "/online-english-classes-for-kids-india",
+      "intendedState": "redirect",
+      "httpExpectation": 301,
+      "canonicalExpectation": "https://tinystepslearning.com/online-english-classes-for-kids",
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "redirect source excluded",
+      "actualLocalBuild": {
+        "firebaseRedirect": {
+          "source": "/online-english-classes-for-kids-india",
+          "destination": "/online-english-classes-for-kids",
+          "type": 301
+        },
+        "sitemap": false
+      },
+      "pass": true,
+      "reason": "Firebase redirect matches manifest"
+    },
+    {
+      "route": "/online-phonics-reading-classes",
+      "intendedState": "redirect",
+      "httpExpectation": 301,
+      "canonicalExpectation": "https://tinystepslearning.com/phonics",
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "redirect source excluded",
+      "actualLocalBuild": {
+        "firebaseRedirect": {
+          "source": "/online-phonics-reading-classes",
+          "destination": "/phonics",
+          "type": 301
+        },
+        "sitemap": false
+      },
+      "pass": true,
+      "reason": "Firebase redirect matches manifest"
+    },
+    {
+      "route": "/how-it-works",
+      "intendedState": "redirect",
+      "httpExpectation": 301,
+      "canonicalExpectation": "https://tinystepslearning.com/curriculum",
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "redirect source excluded",
+      "actualLocalBuild": {
+        "firebaseRedirect": {
+          "source": "/how-it-works",
+          "destination": "/curriculum",
+          "type": 301
+        },
+        "sitemap": false
+      },
+      "pass": true,
+      "reason": "Firebase redirect matches manifest"
+    },
+    {
+      "route": "/spoken-english-classes-for-kids",
+      "intendedState": "redirect",
+      "httpExpectation": 301,
+      "canonicalExpectation": "https://tinystepslearning.com/spoken-english-classes-for-kids-online",
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "redirect source excluded",
+      "actualLocalBuild": {
+        "firebaseRedirect": {
+          "source": "/spoken-english-classes-for-kids",
+          "destination": "/spoken-english-classes-for-kids-online",
+          "type": 301
+        },
+        "sitemap": false
+      },
+      "pass": true,
+      "reason": "Firebase redirect matches manifest"
+    },
+    {
+      "route": "/games",
+      "intendedState": "redirect",
+      "httpExpectation": 301,
+      "canonicalExpectation": "https://tinystepslearning.com/phonics-learning-games",
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "redirect source excluded",
+      "actualLocalBuild": {
+        "firebaseRedirect": {
+          "source": "/games",
+          "destination": "/phonics-learning-games",
+          "type": 301
+        },
+        "sitemap": false
+      },
+      "pass": true,
+      "reason": "Firebase redirect matches manifest"
+    },
+    {
+      "route": "/games/english-excellence",
+      "intendedState": "redirect",
+      "httpExpectation": 301,
+      "canonicalExpectation": "https://tinystepslearning.com/phonics-learning-games",
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "redirect source excluded",
+      "actualLocalBuild": {
+        "firebaseRedirect": {
+          "source": "/games/english-excellence",
+          "destination": "/phonics-learning-games",
+          "type": 301
+        },
+        "sitemap": false
+      },
+      "pass": true,
+      "reason": "Firebase redirect matches manifest"
+    },
+    {
+      "route": "/blog/are-phonics-apps-enough-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/are-phonics-apps-enough-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/are-phonics-apps-enough-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Are Phonics Apps Enough, or Does a Child Still Need a Teacher? | Tiny Steps Blog",
+        "h1": "Are Phonics Apps Enough, or Does a Child Still Need a Teacher?",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/benefits-of-phonics-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/benefits-of-phonics-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/benefits-of-phonics-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Benefits of Phonics for Kids: What Parents Usually Notice First | Tiny Steps Blog",
+        "h1": "Benefits of Phonics for Kids: What Parents Usually Notice First",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/best-age-to-start-phonics-classes-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/best-age-to-start-phonics-classes-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/best-age-to-start-phonics-classes-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Best Age to Start Phonics Classes for Kids | Tiny Steps Blog",
+        "h1": "Best Age to Start Phonics Classes for Kids",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/best-online-phonics-classes-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/best-online-phonics-classes-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/best-online-phonics-classes-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Best Online Phonics Classes for Kids: Parent Comparison Checklist | Tiny Steps Blog",
+        "h1": "Best Online Phonics Classes for Kids: Parent Comparison Checklist",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/best-phonics-classes-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/best-phonics-classes-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/best-phonics-classes-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Best Phonics Classes for Kids: A Parent Comparison Framework That Works | Tiny Steps Blog",
+        "h1": "Best Phonics Classes for Kids: A Parent Comparison Framework That Works",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/can-child-improve-english-in-10-days",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/can-child-improve-english-in-10-days",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/can-child-improve-english-in-10-days",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Can a Child Really Improve English in 10 Days? What Parents Should Expect | Tiny Steps Blog",
+        "h1": "Can a Child Really Improve English in 10 Days? What Parents Should Expect",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/can-child-master-english-in-10-days",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/can-child-master-english-in-10-days",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/can-child-master-english-in-10-days",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Can Kids Learn English in 10 Days? What Most Parents Miss | Tiny Steps Blog",
+        "h1": "Can Kids Learn English in 10 Days? What Most Parents Miss",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/child-gives-one-word-answers",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/child-gives-one-word-answers",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/child-gives-one-word-answers",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "My Child Gives Only One-Word Answers — How Can I Help Them Speak in Full Sentences? | Tiny Steps Blog",
+        "h1": "My Child Gives Only One-Word Answers — How Can I Help Them Speak in Full Sentences?",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/child-knows-abc-but-cannot-read",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/child-knows-abc-but-cannot-read",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/child-knows-abc-but-cannot-read",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Child Knows ABC but Cannot Read: What Parents Should Check First | Tiny Steps Blog",
+        "h1": "Child Knows ABC but Cannot Read: What Parents Should Check First",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/child-knows-grammar-but-makes-mistakes",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/child-knows-grammar-but-makes-mistakes",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/child-knows-grammar-but-makes-mistakes",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "My Child Knows Grammar Rules but Still Makes Mistakes — Why? | Tiny Steps Blog",
+        "h1": "My Child Knows Grammar Rules but Still Makes Mistakes — Why?",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/child-knows-letter-sounds-but-cannot-read",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/child-knows-letter-sounds-but-cannot-read",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/child-knows-letter-sounds-but-cannot-read",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Why Does My Child Know Letter Sounds But Cannot Read Words? | Tiny Steps Blog",
+        "h1": "Why Does My Child Know Letter Sounds But Cannot Read Words?",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/child-reads-in-class-but-forgets-at-home",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/child-reads-in-class-but-forgets-at-home",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/child-reads-in-class-but-forgets-at-home",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "My Child Reads Words in Class but Forgets Them at Home — Is This Normal? | Tiny Steps Blog",
+        "h1": "My Child Reads Words in Class but Forgets Them at Home — Is This Normal?",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/child-reads-words-but-does-not-understand-story",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/child-reads-words-but-does-not-understand-story",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/child-reads-words-but-does-not-understand-story",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "My Child Can Read Words but Does Not Understand the Story — What Should Parents Do? | Tiny Steps Blog",
+        "h1": "My Child Can Read Words but Does Not Understand the Story — What Should Parents Do?",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/child-understands-english-but-does-not-speak",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/child-understands-english-but-does-not-speak",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/child-understands-english-but-does-not-speak",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "My Child Understands English but Does Not Speak in Class — Is It Confidence or Language? | Tiny Steps Blog",
+        "h1": "My Child Understands English but Does Not Speak in Class — Is It Confidence or Language?",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/cvc-words-explained-for-parents",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/cvc-words-explained-for-parents",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/cvc-words-explained-for-parents",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "CVC Words Explained for Parents: The First Real Decoding Milestone | Tiny Steps Blog",
+        "h1": "CVC Words Explained for Parents: The First Real Decoding Milestone",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/digraphs-and-tricky-words",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/digraphs-and-tricky-words",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/digraphs-and-tricky-words",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Digraphs and Tricky Words: What to Decode and What to Memorize | Tiny Steps Blog",
+        "h1": "Digraphs and Tricky Words: What to Decode and What to Memorize",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/engage-children-phonics-grammar-speaking-at-home",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/engage-children-phonics-grammar-speaking-at-home",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/engage-children-phonics-grammar-speaking-at-home",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "How to Keep Children Engaged in Phonics, Grammar and Speaking Activities at Home | Tiny Steps Blog",
+        "h1": "How to Keep Children Engaged in Phonics, Grammar and Speaking Activities at Home",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/how-kids-learn-blending",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/how-kids-learn-blending",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/how-kids-learn-blending",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "How Kids Learn Blending: The Stage-by-Stage Path Parents Can Track | Tiny Steps Blog",
+        "h1": "How Kids Learn Blending: The Stage-by-Stage Path Parents Can Track",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/how-long-does-it-take-child-to-learn-phonics",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/how-long-does-it-take-child-to-learn-phonics",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/how-long-does-it-take-child-to-learn-phonics",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "How Long Does It Take for a Child to Learn Phonics? | Tiny Steps Blog",
+        "h1": "How Long Does It Take for a Child to Learn Phonics?",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/how-long-does-phonics-take",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/how-long-does-phonics-take",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/how-long-does-phonics-take",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "How Long Does Phonics Take? A Realistic Parent Timeline | Tiny Steps Blog",
+        "h1": "How Long Does Phonics Take? A Realistic Parent Timeline",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/how-phonics-builds-reading-confidence",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/how-phonics-builds-reading-confidence",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/how-phonics-builds-reading-confidence",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "How Phonics Builds Reading Confidence: What Changes First at Home | Tiny Steps Blog",
+        "h1": "How Phonics Builds Reading Confidence: What Changes First at Home",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/how-phonics-classes-help-kids-read",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/how-phonics-classes-help-kids-read",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/how-phonics-classes-help-kids-read",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "How Phonics Classes Actually Help Kids Read: A Parent Evidence Guide | Tiny Steps Blog",
+        "h1": "How Phonics Classes Actually Help Kids Read: A Parent Evidence Guide",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/how-phonics-grammar-and-communication-work-together",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/how-phonics-grammar-and-communication-work-together",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/how-phonics-grammar-and-communication-work-together",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "How Phonics, Grammar and Communication Work Together in a Child’s English Learning | Tiny Steps Blog",
+        "h1": "How Phonics, Grammar and Communication Work Together in a Child’s English Learning",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/how-phonics-improves-spelling",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/how-phonics-improves-spelling",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/how-phonics-improves-spelling",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "How Phonics Improves Spelling: A Parent Encoding Roadmap | Tiny Steps Blog",
+        "h1": "How Phonics Improves Spelling: A Parent Encoding Roadmap",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/how-tiny-steps-builds-reading-confidence",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/how-tiny-steps-builds-reading-confidence",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/how-tiny-steps-builds-reading-confidence",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "How Tiny Steps Builds Reading Confidence: The Parent-Visible Method | Tiny Steps Blog",
+        "h1": "How Tiny Steps Builds Reading Confidence: The Parent-Visible Method",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/how-to-choose-phonics-classes",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/how-to-choose-phonics-classes",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/how-to-choose-phonics-classes",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "How to Choose a Phonics Class: A Parent Decision Framework | Tiny Steps Blog",
+        "h1": "How to Choose a Phonics Class: A Parent Decision Framework",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/how-to-engage-kids-in-english-learning-at-home",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/how-to-engage-kids-in-english-learning-at-home",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/how-to-engage-kids-in-english-learning-at-home",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "How to Engage Kids in Phonics, Grammar and Communication Practice at Home | Tiny Steps Blog",
+        "h1": "How to Engage Kids in Phonics, Grammar and Communication Practice at Home",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/how-to-improve-reading-fluency-in-children",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/how-to-improve-reading-fluency-in-children",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/how-to-improve-reading-fluency-in-children",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "How to Improve Reading Fluency in Children | Tiny Steps Blog",
+        "h1": "How to Improve Reading Fluency in Children",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/how-to-improve-sentence-formation-in-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/how-to-improve-sentence-formation-in-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/how-to-improve-sentence-formation-in-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "How to Improve Sentence Formation in Kids | Tiny Steps Blog",
+        "h1": "How to Improve Sentence Formation in Kids",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/june-school-readiness-english-revision-plan",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/june-school-readiness-english-revision-plan",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/june-school-readiness-english-revision-plan",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "June School Readiness: English Revision Plan for Kids Before School Reopens | Tiny Steps Blog",
+        "h1": "June School Readiness: English Revision Plan for Kids Before School Reopens",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/june-school-reopening-english-readiness-plan",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/june-school-reopening-english-readiness-plan",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/june-school-reopening-english-readiness-plan",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "June School Reopening English Readiness Plan for Kids | Tiny Steps Blog",
+        "h1": "June School Reopening English Readiness Plan for Kids",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/long-vowel-sounds-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/long-vowel-sounds-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/long-vowel-sounds-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Long Vowel Sounds for Kids: Pattern Order, Practice, and Common Mix-Ups | Tiny Steps Blog",
+        "h1": "Long Vowel Sounds for Kids: Pattern Order, Practice, and Common Mix-Ups",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/online-english-classes-for-kids-india",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/online-english-classes-for-kids-india",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/online-english-classes-for-kids-india",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Online English classes for kids in India: how to choose the right program (ages 3–12) | Tiny Steps Blog",
+        "h1": "Online English classes for kids in India: how to choose the right program (ages 3–12)",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/online-phonics-classes-vs-school",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/online-phonics-classes-vs-school",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/online-phonics-classes-vs-school",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Online Phonics Classes vs School: What Works for Which Child | Tiny Steps Blog",
+        "h1": "Online Phonics Classes vs School: What Works for Which Child",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/online-phonics-games",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/online-phonics-games",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/online-phonics-games",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Online Phonics Games for Kids: What Actually Builds Reading | Tiny Steps Blog",
+        "h1": "Online Phonics Games for Kids: What Actually Builds Reading",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/phonics-activities-for-kids-at-home",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/phonics-activities-for-kids-at-home",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/phonics-activities-for-kids-at-home",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Phonics Activities at Home: A Parent Routine That Actually Sticks | Tiny Steps Blog",
+        "h1": "Phonics Activities at Home: A Parent Routine That Actually Sticks",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/phonics-blending-activities",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/phonics-blending-activities",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/phonics-blending-activities",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Phonics Blending Activities That Help Children Read Words Confidently | Tiny Steps Blog",
+        "h1": "Phonics Blending Activities That Help Children Read Words Confidently",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/phonics-for-parents-guide",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/phonics-for-parents-guide",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/phonics-for-parents-guide",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Phonics for Parents: What It Is, Why It Matters, and How to Teach It at Home | Tiny Steps Blog",
+        "h1": "Phonics for Parents: What It Is, Why It Matters, and How to Teach It at Home",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/phonics-games-for-letter-sounds",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/phonics-games-for-letter-sounds",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/phonics-games-for-letter-sounds",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Phonics Games for Letter Sounds: Parent Routine for Daily Practice | Tiny Steps Blog",
+        "h1": "Phonics Games for Letter Sounds: Parent Routine for Daily Practice",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/phonics-grammar-speaking-connected-english-communication",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/phonics-grammar-speaking-connected-english-communication",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/phonics-grammar-speaking-connected-english-communication",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Why Phonics, Grammar and Speaking Should Be Learned Together for Strong English Communication | Tiny Steps Blog",
+        "h1": "Why Phonics, Grammar and Speaking Should Be Learned Together for Strong English Communication",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/phonics-rules-for-beginners",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/phonics-rules-for-beginners",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/phonics-rules-for-beginners",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Phonics Rules for Beginners: The Right Sequence and When to Move Ahead | Tiny Steps Blog",
+        "h1": "Phonics Rules for Beginners: The Right Sequence and When to Move Ahead",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/r-controlled-vowels-explained",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/r-controlled-vowels-explained",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/r-controlled-vowels-explained",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "R-Controlled Vowels Explained: Pattern Groups, Confusions, and Practice Order | Tiny Steps Blog",
+        "h1": "R-Controlled Vowels Explained: Pattern Groups, Confusions, and Practice Order",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/satpin-phonics-guide",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/satpin-phonics-guide",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/satpin-phonics-guide",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "SATPIN Phonics Guide for Parents: How to Start and What to Expect | Tiny Steps Blog",
+        "h1": "SATPIN Phonics Guide for Parents: How to Start and What to Expect",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/science-of-phonics-learning",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/science-of-phonics-learning",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/science-of-phonics-learning",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Phonics vs Sight Words: What Helps Children Read Better | Tiny Steps Blog",
+        "h1": "Phonics vs Sight Words: What Helps Children Read Better",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/sight-words-or-phonics-first",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/sight-words-or-phonics-first",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/sight-words-or-phonics-first",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Should Children Memorize Sight Words or Learn Phonics First? | Tiny Steps Blog",
+        "h1": "Should Children Memorize Sight Words or Learn Phonics First?",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/synthetic-phonics-vs-traditional-reading",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/synthetic-phonics-vs-traditional-reading",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/synthetic-phonics-vs-traditional-reading",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Synthetic Phonics vs Traditional Reading: How Parents Decide What to Use | Tiny Steps Blog",
+        "h1": "Synthetic Phonics vs Traditional Reading: How Parents Decide What to Use",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/week-1-phonics-satpin-launch",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/week-1-phonics-satpin-launch",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/week-1-phonics-satpin-launch",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "SATPIN for Parents: A Research-Backed Week 1 Launch Plan for Confident Readers | Tiny Steps Blog",
+        "h1": "SATPIN for Parents: A Research-Backed Week 1 Launch Plan for Confident Readers",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/week-12-speaking-confidence-seeds",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/week-12-speaking-confidence-seeds",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/week-12-speaking-confidence-seeds",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Speaking Confidence Roadmap: A 7-Day Calm Plan for Kids (Ages 3-10) | Tiny Steps Blog",
+        "h1": "Speaking Confidence Roadmap: A 7-Day Calm Plan for Kids (Ages 3-10)",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/week-7-grammar-nouns-to-paragraphs",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/week-7-grammar-nouns-to-paragraphs",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/week-7-grammar-nouns-to-paragraphs",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Grammar Basics Roadmap: Nouns to Paragraphs in 7 Days (Ages 3-10) | Tiny Steps Blog",
+        "h1": "Grammar Basics Roadmap: Nouns to Paragraphs in 7 Days (Ages 3-10)",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/what-age-to-start-phonics",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/what-age-to-start-phonics",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/what-age-to-start-phonics",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "What Is the Right Age to Start Phonics? A Parent Readiness Guide | Tiny Steps Blog",
+        "h1": "What Is the Right Age to Start Phonics? A Parent Readiness Guide",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/what-is-phonics-for-kids",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/what-is-phonics-for-kids",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/what-is-phonics-for-kids",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "What Is Phonics for Kids? A Parent Start-Here Guide | Tiny Steps Blog",
+        "h1": "What Is Phonics for Kids? A Parent Start-Here Guide",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/why-child-answers-only-in-one-word",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/why-child-answers-only-in-one-word",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/why-child-answers-only-in-one-word",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Why Does My Child Answer Only in One Word? | Tiny Steps Blog",
+        "h1": "Why Does My Child Answer Only in One Word?",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/why-child-knows-letter-sounds-but-cannot-read-words",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/why-child-knows-letter-sounds-but-cannot-read-words",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/why-child-knows-letter-sounds-but-cannot-read-words",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Why Does My Child Know Letter Sounds But Cannot Read Words? | Tiny Steps Blog",
+        "h1": "Why Does My Child Know Letter Sounds But Cannot Read Words?",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/why-child-reads-words-but-does-not-understand-story",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/why-child-reads-words-but-does-not-understand-story",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/why-child-reads-words-but-does-not-understand-story",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Why Does My Child Read Words But Not Understand Stories? | Tiny Steps Blog",
+        "h1": "Why Does My Child Read Words But Not Understand Stories?",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/blog/why-parents-choose-online-phonics",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/blog/why-parents-choose-online-phonics",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/blog/why-parents-choose-online-phonics",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+        "sitemap": true,
+        "title": "Why Parents Choose Online Phonics Classes for Kids | Tiny Steps Blog",
+        "h1": "Why Parents Choose Online Phonics Classes for Kids",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /blog/**"
+    },
+    {
+      "route": "/courses/phonics-foundation",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/courses/phonics-foundation",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/courses/phonics-foundation",
+        "robots": "index, follow",
+        "sitemap": true,
+        "title": "Phonics Foundation Classes for Kids | Tiny Steps",
+        "h1": "Phonics Foundation Classes for Kids",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /courses/**"
+    },
+    {
+      "route": "/courses/phonics-brush-up",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/courses/phonics-brush-up",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/courses/phonics-brush-up",
+        "robots": "index, follow",
+        "sitemap": true,
+        "title": "Early Phonics Classes for Developing Readers | Tiny Steps",
+        "h1": "Early Phonics Classes for Developing Readers",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /courses/**"
+    },
+    {
+      "route": "/courses/phonics-advanced",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/courses/phonics-advanced",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/courses/phonics-advanced",
+        "robots": "index, follow",
+        "sitemap": true,
+        "title": "Advanced Phonics Classes for Reading Fluency | Tiny Steps",
+        "h1": "Advanced Phonics Classes for Stronger Reading Fluency",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /courses/**"
+    },
+    {
+      "route": "/courses/grammar",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/courses/grammar",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/courses/grammar",
+        "robots": "index, follow",
+        "sitemap": true,
+        "title": "Beginner Grammar Classes for Kids | Tiny Steps",
+        "h1": "Beginner Grammar Classes for Kids",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /courses/**"
+    },
+    {
+      "route": "/courses/grammar-mastery",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/courses/grammar-mastery",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/courses/grammar-mastery",
+        "robots": "index, follow",
+        "sitemap": true,
+        "title": "Grammar Mastery Classes for Kids | Tiny Steps",
+        "h1": "Grammar Mastery Classes for Stronger Writing",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /courses/**"
+    },
+    {
+      "route": "/courses/public-speaking-foundations",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/courses/public-speaking-foundations",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/courses/public-speaking-foundations",
+        "robots": "index, follow",
+        "sitemap": true,
+        "title": "Public Speaking Foundations for Kids | Tiny Steps",
+        "h1": "Public Speaking Foundations for Kids",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /courses/**"
+    },
+    {
+      "route": "/courses/public-speaking-excellence",
+      "intendedState": "index",
+      "httpExpectation": 200,
+      "canonicalExpectation": "https://tinystepslearning.com/courses/public-speaking-excellence",
+      "sitemapExpectation": true,
+      "prerenderExpectation": true,
+      "robotsExpectation": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "actualLocalBuild": {
+        "html": true,
+        "canonical": "https://tinystepslearning.com/courses/public-speaking-excellence",
+        "robots": "index, follow",
+        "sitemap": true,
+        "title": "Public Speaking Excellence for Kids | Tiny Steps",
+        "h1": "Public Speaking Excellence for Kids",
+        "loadingShell": false,
+        "soft404": false,
+        "redirectChain": false
+      },
+      "pass": true,
+      "reason": "matches dynamic manifest intent /courses/**"
+    },
+    {
+      "route": "/login",
+      "intendedState": "noindex",
+      "httpExpectation": 200,
+      "canonicalExpectation": null,
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "noindex, nofollow, noarchive",
+      "actualLocalBuild": {
+        "validatedBy": "firebase headers/rewrites and route-integrity guard"
+      },
+      "pass": true,
+      "reason": "classified; deployment behavior is verified by verify-live-deployment.mjs"
+    },
+    {
+      "route": "/surya/login",
+      "intendedState": "noindex",
+      "httpExpectation": 200,
+      "canonicalExpectation": null,
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "noindex, nofollow, noarchive",
+      "actualLocalBuild": {
+        "validatedBy": "firebase headers/rewrites and route-integrity guard"
+      },
+      "pass": true,
+      "reason": "classified; deployment behavior is verified by verify-live-deployment.mjs"
+    },
+    {
+      "route": "/teacher/login",
+      "intendedState": "noindex",
+      "httpExpectation": 200,
+      "canonicalExpectation": null,
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "noindex, nofollow, noarchive",
+      "actualLocalBuild": {
+        "validatedBy": "firebase headers/rewrites and route-integrity guard"
+      },
+      "pass": true,
+      "reason": "classified; deployment behavior is verified by verify-live-deployment.mjs"
+    },
+    {
+      "route": "/parent/login",
+      "intendedState": "noindex",
+      "httpExpectation": 200,
+      "canonicalExpectation": null,
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "noindex, nofollow, noarchive",
+      "actualLocalBuild": {
+        "validatedBy": "firebase headers/rewrites and route-integrity guard"
+      },
+      "pass": true,
+      "reason": "classified; deployment behavior is verified by verify-live-deployment.mjs"
+    },
+    {
+      "route": "/learning-partner/login",
+      "intendedState": "noindex",
+      "httpExpectation": 200,
+      "canonicalExpectation": null,
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "noindex, nofollow, noarchive",
+      "actualLocalBuild": {
+        "validatedBy": "firebase headers/rewrites and route-integrity guard"
+      },
+      "pass": true,
+      "reason": "classified; deployment behavior is verified by verify-live-deployment.mjs"
+    },
+    {
+      "route": "/unauthorized",
+      "intendedState": "noindex",
+      "httpExpectation": 200,
+      "canonicalExpectation": null,
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "noindex, nofollow, noarchive",
+      "actualLocalBuild": {
+        "validatedBy": "firebase headers/rewrites and route-integrity guard"
+      },
+      "pass": true,
+      "reason": "classified; deployment behavior is verified by verify-live-deployment.mjs"
+    },
+    {
+      "route": "/surya/**",
+      "intendedState": "private-spa",
+      "httpExpectation": 200,
+      "canonicalExpectation": null,
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "noindex, nofollow, noarchive",
+      "actualLocalBuild": {
+        "validatedBy": "firebase headers/rewrites and route-integrity guard"
+      },
+      "pass": true,
+      "reason": "classified; deployment behavior is verified by verify-live-deployment.mjs"
+    },
+    {
+      "route": "/teacher/**",
+      "intendedState": "private-spa",
+      "httpExpectation": 200,
+      "canonicalExpectation": null,
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "noindex, nofollow, noarchive",
+      "actualLocalBuild": {
+        "validatedBy": "firebase headers/rewrites and route-integrity guard"
+      },
+      "pass": true,
+      "reason": "classified; deployment behavior is verified by verify-live-deployment.mjs"
+    },
+    {
+      "route": "/parent/**",
+      "intendedState": "private-spa",
+      "httpExpectation": 200,
+      "canonicalExpectation": null,
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "noindex, nofollow, noarchive",
+      "actualLocalBuild": {
+        "validatedBy": "firebase headers/rewrites and route-integrity guard"
+      },
+      "pass": true,
+      "reason": "classified; deployment behavior is verified by verify-live-deployment.mjs"
+    },
+    {
+      "route": "/kids/**",
+      "intendedState": "private-spa",
+      "httpExpectation": 200,
+      "canonicalExpectation": null,
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "noindex, nofollow, noarchive",
+      "actualLocalBuild": {
+        "validatedBy": "firebase headers/rewrites and route-integrity guard"
+      },
+      "pass": true,
+      "reason": "classified; deployment behavior is verified by verify-live-deployment.mjs"
+    },
+    {
+      "route": "/messages/**",
+      "intendedState": "private-spa",
+      "httpExpectation": 200,
+      "canonicalExpectation": null,
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "noindex, nofollow, noarchive",
+      "actualLocalBuild": {
+        "validatedBy": "firebase headers/rewrites and route-integrity guard"
+      },
+      "pass": true,
+      "reason": "classified; deployment behavior is verified by verify-live-deployment.mjs"
+    },
+    {
+      "route": "/learning-partner/dashboard/**",
+      "intendedState": "private-spa",
+      "httpExpectation": 200,
+      "canonicalExpectation": null,
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "noindex, nofollow, noarchive",
+      "actualLocalBuild": {
+        "validatedBy": "firebase headers/rewrites and route-integrity guard"
+      },
+      "pass": true,
+      "reason": "classified; deployment behavior is verified by verify-live-deployment.mjs"
+    },
+    {
+      "route": "/rss.xml",
+      "intendedState": "noindex",
+      "httpExpectation": 200,
+      "canonicalExpectation": null,
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "noindex",
+      "actualLocalBuild": {
+        "validatedBy": "firebase headers/rewrites and route-integrity guard"
+      },
+      "pass": true,
+      "reason": "classified; deployment behavior is verified by verify-live-deployment.mjs"
+    },
+    {
+      "route": "/feed.xml",
+      "intendedState": "noindex",
+      "httpExpectation": 200,
+      "canonicalExpectation": null,
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "noindex",
+      "actualLocalBuild": {
+        "validatedBy": "firebase headers/rewrites and route-integrity guard"
+      },
+      "pass": true,
+      "reason": "classified; deployment behavior is verified by verify-live-deployment.mjs"
+    },
+    {
+      "route": "/sitemap*.xml",
+      "intendedState": "noindex",
+      "httpExpectation": 200,
+      "canonicalExpectation": null,
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "noindex",
+      "actualLocalBuild": {
+        "validatedBy": "firebase headers/rewrites and route-integrity guard"
+      },
+      "pass": true,
+      "reason": "classified; deployment behavior is verified by verify-live-deployment.mjs"
+    },
+    {
+      "route": "/**",
+      "intendedState": "genuine-404",
+      "httpExpectation": 404,
+      "canonicalExpectation": null,
+      "sitemapExpectation": false,
+      "prerenderExpectation": false,
+      "robotsExpectation": "noindex, nofollow",
+      "actualLocalBuild": {
+        "validatedBy": "firebase headers/rewrites and route-integrity guard"
+      },
+      "pass": true,
+      "reason": "classified; deployment behavior is verified by verify-live-deployment.mjs"
+    }
+  ]
+}

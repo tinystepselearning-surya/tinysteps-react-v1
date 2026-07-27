@@ -214,31 +214,23 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
 
-      # Google and Bing deprecated anonymous sitemap ping endpoints.
-      # We verify the live sitemap directly and use IndexNow for real-time URL notifications.
-      - name: Check live sitemap availability
-        continue-on-error: true
-        run: |
-          echo "🔎 Checking live sitemap at https://tinystepslearning.com/sitemap.xml"
-          if curl --fail --silent --show-error https://tinystepslearning.com/sitemap.xml > /dev/null; then
-            echo "✅ Live sitemap is reachable"
-          else
-            echo "::warning::Live sitemap check failed after deploy"
-          fi
+      - name: Verify live deployment integrity and build identity
+        run: >-
+          node scripts/verify-live-deployment.mjs
+          --origin https://tinystepslearning.com
+          --expected-sha "${{ github.sha }}"
+          --report artifacts/live-deployment-verification.md
+
+      - name: Upload live deployment verification report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-deployment-verification-${{ github.sha }}
+          path: artifacts/live-deployment-verification.md
+          if-no-files-found: error
 
       - name: Submit newly published blog URLs to IndexNow
         if: ${{ env.INDEXNOW_KEY != '' }}
         env:
           INDEXNOW_SITEMAP: dist/sitemap-blog.xml
         run: npm run indexnow:submit
-
-      - name: Verify Deployment
-        run: |
-          echo "🔍 Verifying deployment at https://tinystepslearning.com/"
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://tinystepslearning.com/)
-          if [ "$HTTP_CODE" -eq 200 ]; then
-            echo "✅ Deployment verified successfully (HTTP $HTTP_CODE)"
-          else
-            echo "❌ Deployment verification failed (HTTP $HTTP_CODE)"
-            exit 1
-          fi
