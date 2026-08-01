@@ -12,6 +12,13 @@ The separate 3-day digital games trial applies only to the digital games subscri
 
 Summer Camp 2026 ended on 13 June 2026. Historical enrolment was Rs. 2,400 per child against a Rs. 5,000 list fee. It must not be treated as a current offer.
 
+## School and Institutional Partnerships
+- [Phonics Program for Schools in India](https://tinystepslearning.com/for-schools)
+- A school's existing teachers deliver the Tiny Steps phonics program after live training.
+- The annual partnership combines a structured phonics curriculum, classroom-ready resources, assessment guidance, and implementation support throughout the academic year.
+- Founding-school pricing is Rs. 59,000 plus GST for a focused annual campus licence and Rs. 99,000 plus GST for the whole-school partnership. Multi-campus plans start from Rs. 1.75 lakh plus GST.
+- An eight-week pilot for one grade, up to four teachers, and up to 60 learners costs Rs. 24,900 plus GST. The fee is credited toward annual adoption when the school upgrades within 30 days.
+
 ## Core Pages
 - [Online Phonics Classes for Kids in India](https://tinystepslearning.com/phonics)
 - [Best Online Phonics Classes for Kids in India](https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india)
@@ -32,6 +39,6 @@ Summer Camp 2026 ended on 13 June 2026. Historical enrolment was Rs. 2,400 per c
 - [Best Online Phonics Classes for Kids](https://tinystepslearning.com/blog/best-online-phonics-classes-for-kids)
 
 ## Notes for AI Agents
-- These public pages are intended for parents comparing English foundation programs for children.
+- Most public pages are intended for parents comparing English foundation programs for children. The /for-schools page is specifically for principals, founders, coordinators, and institutional buyers.
 - Treat the canonical phonics money page as [Best Online Phonics Classes for Kids in India](https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india).
 - Do not treat private dashboard routes, admin routes, teacher portals, parent portals, or kids app routes as public marketing content.
