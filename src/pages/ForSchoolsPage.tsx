@@ -87,6 +87,11 @@ const faqItems = [
       'Schools receive baseline, checkpoint, and end-of-cycle assessment guidance across sound knowledge, blending, segmenting, decoding, spelling, and fluency. Leadership reviews focus on cohort patterns and practical next steps rather than marks alone.',
   },
   {
+    question: 'How can a school improve student retention and increase admissions?',
+    answer:
+      'Schools can improve retention by giving parents visible evidence of their child’s learning. In the early years, confident reading, blending, spelling and writing are among the clearest signs of progress. A structured phonics programme, supported by teacher training and regular monitoring, can strengthen parent confidence, improve the school’s reputation and encourage both re-enrolments and referrals.',
+  },
+  {
     question: 'How much does the school phonics partnership cost?',
     answer:
       'Annual school partnership pricing starts at ₹59,000 plus GST per campus for a focused launch licence. The complete whole-school partnership is ₹1.49 lakh plus GST per campus. The multi-campus partnership is ₹2.99 lakh plus GST for the base scope of up to three campuses.',
@@ -365,6 +370,14 @@ const comparisonRows = [
   { feature: 'Ready lesson and practice resources', downloads: 'Mixed', workshop: 'Usually separate', partnership: 'Included' },
   { feature: 'Assessment and reteaching guidance', downloads: 'Limited', workshop: 'Limited', partnership: 'Included' },
   { feature: 'Dedicated support across the academic year', downloads: 'No', workshop: 'No', partnership: 'Named learning partner' },
+];
+
+const enrollmentBusinessOutcomes = [
+  'Retain existing admissions by giving parents visible evidence of learning.',
+  'Build parent confidence through measurable reading, blending, spelling and writing progress.',
+  'Strengthen the school’s reputation when children demonstrate their skills at home and in the community.',
+  'Attract new admissions through parent recommendations and positive word of mouth.',
+  'Differentiate the school with a structured foundational-literacy programme rather than content alone.',
 ];
 
 const leadershipStats = [
@@ -991,6 +1004,63 @@ const ForSchoolsPage: React.FC = () => {
             </div>
           </div>
         </LeadCard>
+      </LeadSection>
+
+      <LeadSection>
+        <LeadCard className="relative overflow-hidden border-orange-200/80 bg-gradient-to-br from-white via-orange-50/70 to-violet-50/60 p-0">
+          <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-violet-300/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -left-20 h-64 w-64 rounded-full bg-orange-300/25 blur-3xl" />
+          <div className="relative grid gap-8 p-6 md:p-8 lg:grid-cols-[0.92fr_1.08fr] lg:gap-10 lg:p-10">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-700">
+                The enrolment business case
+              </p>
+              <h2 className="mt-3 text-3xl font-black leading-tight tracking-tight text-slate-950 md:text-4xl">
+                Visible Reading Progress Protects School Admissions
+              </h2>
+              <div className="school-answer mt-5 space-y-4 text-sm leading-7 text-slate-700 md:text-base">
+                <p>
+                  Parents may accept a good progress card, but they judge real learning by what their child can
+                  confidently read, write and spell at home.
+                </p>
+                <p>
+                  When children in Nursery, Pre-K, LKG, UKG and Grades 1–2 do not show visible literacy progress,
+                  families may lose confidence and consider changing schools during the next admission cycle.
+                </p>
+              </div>
+              <blockquote className="mt-6 rounded-3xl border border-orange-200 bg-white/85 p-5 text-lg font-bold leading-8 text-slate-950 shadow-[0_16px_36px_rgba(249,115,22,0.12)]">
+                “When parents can see progress, they trust the school, continue their child’s admission and
+                recommend the school to others.”
+              </blockquote>
+            </div>
+
+            <div className="rounded-[1.75rem] border border-white/90 bg-slate-950 p-5 text-white shadow-[0_24px_54px_rgba(15,23,42,0.2)] md:p-6">
+              <h3 className="text-xl font-black tracking-tight text-white">What visible progress helps a school achieve</h3>
+              <ul className="mt-5 space-y-3">
+                {enrollmentBusinessOutcomes.map((outcome, index) => (
+                  <li
+                    key={outcome}
+                    className="flex gap-3 rounded-2xl border border-white/10 bg-white/5 p-3.5 text-sm leading-6 text-slate-100 transition hover:border-orange-300/40 hover:bg-white/10"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-300 to-rose-300 text-xs font-black text-slate-950"
+                    >
+                      {index + 1}
+                    </span>
+                    <span>{outcome}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </LeadCard>
+        <p className="school-answer mx-auto mt-5 max-w-5xl text-center text-sm leading-7 text-slate-700 md:text-base">
+          For schools in India looking to improve student retention, protect annual re-enrolments and increase new
+          admissions, visible progress in early reading is a powerful business advantage. Tiny Steps helps schools
+          build consistent phonics outcomes across Nursery, Pre-K, LKG, UKG and primary grades through structured
+          content, teacher training, implementation support and continuous progress monitoring.
+        </p>
       </LeadSection>
 
       <LeadSection id="pricing">
