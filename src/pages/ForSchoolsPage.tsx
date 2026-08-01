@@ -20,18 +20,18 @@ const schoolsWhatsAppUrl =
 
 const pageTitle = 'Phonics Program for Schools in India | Tiny Steps';
 const pageDescription =
-  'Research-aligned phonics curriculum, digital classroom content, teacher training, and year-long implementation support for schools in India.';
+  'Research-aligned phonics curriculum, digital classroom content, teacher training, a dedicated learning partner, and year-long implementation support for schools in India.';
 
 const faqItems = [
   {
     question: 'What is the Tiny Steps phonics program for schools?',
     answer:
-      'It is an annual, campus-based partnership that gives a school a structured phonics scope and sequence, classroom-ready teaching content, printable practice, assessment tools, live teacher training, and implementation support throughout the academic year.',
+      'It is an annual, campus-based partnership that gives a school a structured phonics scope and sequence, classroom-ready teaching content, printable practice, assessment tools, live teacher training, and a dedicated learning partner who supports implementation throughout the academic year.',
   },
   {
     question: 'Who teaches the children: Tiny Steps or our school teachers?',
     answer:
-      'Your existing teachers teach the children. Tiny Steps trains them, provides the teaching system and resources, observes implementation at agreed checkpoints, and supports the team for the year.',
+      'Your existing teachers teach the children. Tiny Steps trains and equips them, while a dedicated learning partner coordinates implementation check-ins, classroom guidance, progress reviews, and leadership updates across the academic year.',
   },
   {
     question: 'Which ages and grades does the program support?',
@@ -74,6 +74,11 @@ const faqItems = [
       'Training covers phonemic awareness, sound-to-symbol teaching, blending and segmenting, correction routines, lesson delivery, assessment, and classroom practice. The number of live training labs and coaching sessions depends on the partnership plan.',
   },
   {
+    question: 'What does the dedicated learning partner do?',
+    answer:
+      'The learning partner coordinates onboarding, teacher preparation, delivery check-ins, content clarifications, observation feedback, school-recorded progress reviews, and leadership updates. Their role is to help the agreed rollout stay on track throughout the academic year—not to replace the school’s teachers.',
+  },
+  {
     question: 'How is student progress measured?',
     answer:
       'Schools receive baseline, checkpoint, and end-of-cycle assessment guidance across sound knowledge, blending, segmenting, decoding, spelling, and fluency. Leadership reviews focus on cohort patterns and practical next steps rather than marks alone.',
@@ -81,7 +86,7 @@ const faqItems = [
   {
     question: 'How much does the school phonics partnership cost?',
     answer:
-      'Annual school partnership pricing starts at ₹59,000 plus GST per campus for a focused launch licence. The complete whole-school partnership is ₹99,000 plus GST per campus. Multi-campus partnerships start from ₹1.75 lakh plus GST for an agreed school-network scope.',
+      'Annual school partnership pricing starts at ₹59,000 plus GST per campus for a focused launch licence. The complete whole-school partnership is ₹1.49 lakh plus GST per campus. The multi-campus partnership is ₹2.99 lakh plus GST for the base scope of up to three campuses.',
   },
   {
     question: 'Can we test the approach before an annual partnership?',
@@ -127,7 +132,7 @@ const serviceSchema = {
   '@type': 'Service',
   '@id': `${canonicalUrl}#service`,
   name: 'Tiny Steps Phonics Program for Schools',
-  serviceType: 'Research-aligned school phonics curriculum, digital classroom content, teacher training, and implementation support',
+  serviceType: 'Research-aligned school phonics curriculum, digital classroom content, teacher training, dedicated learning partner, and implementation support',
   description: pageDescription,
   provider: {
     '@type': 'EducationalOrganization',
@@ -158,9 +163,17 @@ const serviceSchema = {
       {
         '@type': 'Offer',
         name: 'Whole-School Phonics Partnership',
-        price: '99000',
+        price: '149000',
         priceCurrency: 'INR',
-        description: 'Annual single-campus complete phonics pathway for up to 12 teachers and 400 learners. GST extra.',
+        description: 'Annual single-campus complete phonics pathway for up to 12 teachers and 400 learners, including a dedicated learning partner. GST extra.',
+        url: `${canonicalUrl}#pricing`,
+      },
+      {
+        '@type': 'Offer',
+        name: 'Multi-Campus Partnership',
+        price: '299000',
+        priceCurrency: 'INR',
+        description: 'Annual partnership for up to 3 campuses, 25 teachers and 900 learners, including a dedicated learning partner. GST extra.',
         url: `${canonicalUrl}#pricing`,
       },
       {
@@ -209,8 +222,8 @@ const partnershipDeliverables = [
   },
   {
     number: '05',
-    title: 'Year-long implementation support',
-    detail: 'Scheduled coaching, office hours, observation feedback, term reviews, content clarifications, and an academic partnership contact.',
+    title: 'A dedicated learning partner',
+    detail: 'One Tiny Steps partner coordinates teacher preparation, delivery check-ins, content clarifications, observation feedback, school-recorded progress reviews, and leadership updates throughout the academic year.',
   },
   {
     number: '06',
@@ -287,7 +300,7 @@ const implementationTimeline = [
   {
     label: 'Months 4–12',
     title: 'Coach and strengthen',
-    detail: 'Monthly support, term reviews, teacher refreshers, and leadership checkpoints help the approach stay consistent.',
+    detail: 'The dedicated learning partner coordinates monthly support, term reviews, teacher refreshers, and leadership checkpoints so delivery stays consistent.',
   },
 ];
 
@@ -302,13 +315,13 @@ const pricingPlans = [
       'Up to 5 teachers and 150 learners',
       'Two live teacher-training labs',
       'Classroom content and print licence',
-      'Monthly implementation office hour',
+      'Dedicated learning partner and monthly office hour',
       'Two progress-review cycles',
     ],
   },
   {
     name: 'Whole-School Partnership',
-    price: '₹99,000',
+    price: '₹1.49 lakh',
     qualifier: '+ GST • one campus • one academic year',
     description: 'Build one consistent phonics approach across early years and primary grades.',
     featured: true,
@@ -317,13 +330,13 @@ const pricingPlans = [
       'Up to 12 teachers and 400 learners',
       'Four live training and rehearsal labs',
       'All teaching, practice, and assessment resources',
-      'Monthly coaching and priority support',
+      'Dedicated learning partner and monthly coaching',
       'Three observation and leadership reviews',
     ],
   },
   {
     name: 'Multi-Campus Partnership',
-    price: 'From ₹1.75 lakh',
+    price: '₹2.99 lakh',
     qualifier: '+ GST • up to 3 campuses • one academic year',
     description: 'Coordinate training and implementation across an agreed school network.',
     items: [
@@ -331,7 +344,7 @@ const pricingPlans = [
       'Up to 25 teachers and 900 learners',
       'Central coordinator enablement',
       'Shared rollout and reporting framework',
-      'Campus implementation reviews',
+      'Dedicated learning partner and campus reviews',
       'Custom expansion and renewal plan',
     ],
   },
@@ -342,7 +355,7 @@ const comparisonRows = [
   { feature: 'Live teacher training and rehearsal', downloads: 'No', workshop: 'One time', partnership: 'Included' },
   { feature: 'Ready lesson and practice resources', downloads: 'Mixed', workshop: 'Usually separate', partnership: 'Included' },
   { feature: 'Assessment and reteaching guidance', downloads: 'Limited', workshop: 'Limited', partnership: 'Included' },
-  { feature: 'Support across the academic year', downloads: 'No', workshop: 'No', partnership: 'Included' },
+  { feature: 'Dedicated support across the academic year', downloads: 'No', workshop: 'No', partnership: 'Named learning partner' },
 ];
 
 const leadershipStats = [
@@ -398,15 +411,16 @@ const ForSchoolsPage: React.FC = () => {
         }
         description={
           <p className="school-answer">
-            Bring a research-aligned curriculum, joyful digital practice, specialist teacher training, and
-            year-long support into your existing timetable. Your teachers deliver it; Tiny Steps helps them teach
-            it confidently and consistently.
+            Bring a research-aligned curriculum, joyful digital practice, specialist teacher training, and a
+            dedicated learning partner into your existing timetable. Your teachers deliver it; Tiny Steps stays
+            alongside them throughout the academic year.
           </p>
         }
         trustChips={[
           { label: 'Teacher-led in your school', tone: 'warm' },
           { label: 'Systematic learning pathway', tone: 'cool' },
           { label: 'Ages 3–10', tone: 'mint' },
+          { label: 'Dedicated learning partner', tone: 'neutral' },
           { label: 'India-first • globally available', tone: 'neutral' },
         ]}
         supportingText={
@@ -570,7 +584,8 @@ const ForSchoolsPage: React.FC = () => {
                 <p className="mt-3 text-sm leading-7 text-slate-200">
                   Effective delivery requires knowledge of phonemes, graphemes, blending, segmenting, decoding,
                   encoding, error diagnosis, and cumulative lesson design. Tiny Steps builds this capability
-                  through training, rehearsal, observation, feedback, and year-long coaching.
+                  through training and rehearsal, then a dedicated learning partner reinforces it through
+                  observation, feedback, and year-long coaching.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-4 text-sm">
                   <a
@@ -914,9 +929,9 @@ const ForSchoolsPage: React.FC = () => {
       <LeadSection>
         <LeadCard className="overflow-hidden">
           <LeadSectionHeading
-            eyebrow="Why a partnership"
-            title="Close the gap between having resources and teaching consistently"
-            description="Schools often have plenty of activities but no single progression, shared teaching routine, or ongoing coaching layer."
+            eyebrow="The implementation gap"
+            title="Buying phonics content is not the same as implementing it well"
+            description="Many school purchases stop at curriculum access or an initial workshop. The missing layer is ongoing guidance that turns good content into consistent classroom practice."
           />
           <div className="mt-7 overflow-x-auto rounded-2xl border border-slate-200">
             <table className="min-w-[720px] w-full border-collapse text-left text-sm">
@@ -940,6 +955,32 @@ const ForSchoolsPage: React.FC = () => {
               </tbody>
             </table>
           </div>
+          <div className="mt-6 overflow-hidden rounded-3xl border border-violet-200 bg-gradient-to-r from-violet-50 via-sky-50 to-orange-50 p-5 md:p-6">
+            <div className="grid gap-5 lg:grid-cols-[0.72fr_1.28fr] lg:items-center">
+              <div>
+                <span className="inline-flex rounded-full bg-violet-100 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-violet-800">
+                  Included with every annual partnership
+                </span>
+                <h3 className="mt-3 text-2xl font-black tracking-tight text-slate-950">
+                  Your dedicated Tiny Steps learning partner
+                </h3>
+              </div>
+              <div>
+                <p className="text-sm leading-7 text-slate-700">
+                  Content access alone cannot ensure classroom delivery. Your learning partner stays connected
+                  throughout the academic year to coordinate teacher preparation, answer content questions, review
+                  agreed delivery checkpoints, discuss school-recorded learner progress, and keep leadership informed.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-slate-700">
+                  {['Teacher readiness', 'Delivery check-ins', 'Progress reviews', 'Leadership updates'].map((item) => (
+                    <span key={item} className="rounded-full border border-white bg-white/85 px-3 py-1.5 shadow-sm">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </LeadCard>
       </LeadSection>
 
@@ -948,7 +989,7 @@ const ForSchoolsPage: React.FC = () => {
           <LeadSectionHeading
             eyebrow="School partnership pricing"
             title="Clear annual options for every stage of rollout"
-            description="Choose a focused launch, a complete whole-school pathway, or a coordinated multi-campus rollout. Every option includes an agreed annual licence and implementation support."
+            description="Choose a focused launch, a complete whole-school pathway, or a coordinated multi-campus rollout. Every annual option includes the agreed licence, teacher enablement, implementation reviews, and a dedicated learning partner."
             tone="dark"
           />
           <div className="mt-5 flex flex-wrap gap-2 text-xs font-bold">
@@ -960,6 +1001,9 @@ const ForSchoolsPage: React.FC = () => {
             </span>
             <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1.5 text-emerald-200">
               No per-child fee within the listed limits
+            </span>
+            <span className="rounded-full border border-violet-300/30 bg-violet-300/10 px-3 py-1.5 text-violet-200">
+              Dedicated learning partner
             </span>
           </div>
 
