@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import Meta from '../components/common/Meta';
 import {
   CourseCTAGroup,
-  FAQSection,
   FinalLeadCTA,
   LeadCard,
   LeadHero,
@@ -82,7 +81,7 @@ const faqItems = [
   {
     question: 'How much does the school phonics partnership cost?',
     answer:
-      'Founding-school pricing starts at ₹59,000 plus GST per campus for an annual focused-stage licence. The complete whole-school partnership is ₹99,000 plus GST per campus. Multi-campus partnerships start from ₹1.75 lakh plus GST and are scoped to the school network.',
+      'Annual school partnership pricing starts at ₹59,000 plus GST per campus for a focused launch licence. The complete whole-school partnership is ₹99,000 plus GST per campus. Multi-campus partnerships start from ₹1.75 lakh plus GST for an agreed school-network scope.',
   },
   {
     question: 'Can we test the approach before an annual partnership?',
@@ -294,12 +293,12 @@ const implementationTimeline = [
 
 const pricingPlans = [
   {
-    name: 'Focused Stage Licence',
+    name: 'Focused Launch Licence',
     price: '₹59,000',
-    qualifier: '+ GST / campus / academic year',
-    description: 'For a school beginning with one age band or phonics pathway.',
+    qualifier: '+ GST • one campus • one academic year',
+    description: 'Start with one age band or one selected phonics pathway.',
     items: [
-      'One phonics pathway',
+      'One selected phonics pathway',
       'Up to 5 teachers and 150 learners',
       'Two live teacher-training labs',
       'Classroom content and print licence',
@@ -310,8 +309,8 @@ const pricingPlans = [
   {
     name: 'Whole-School Partnership',
     price: '₹99,000',
-    qualifier: '+ GST / campus / academic year',
-    description: 'For consistent phonics teaching across early years and primary grades.',
+    qualifier: '+ GST • one campus • one academic year',
+    description: 'Build one consistent phonics approach across early years and primary grades.',
     featured: true,
     items: [
       'Complete foundation-to-advanced pathway',
@@ -325,8 +324,8 @@ const pricingPlans = [
   {
     name: 'Multi-Campus Partnership',
     price: 'From ₹1.75 lakh',
-    qualifier: '+ GST / academic year',
-    description: 'For school groups that need central training and campus-level implementation.',
+    qualifier: '+ GST • up to 3 campuses • one academic year',
+    description: 'Coordinate training and implementation across an agreed school network.',
     items: [
       'Scope for up to 3 campuses',
       'Up to 25 teachers and 900 learners',
@@ -347,8 +346,8 @@ const comparisonRows = [
 ];
 
 const leadershipStats = [
-  { label: 'Children reached', value: '5000+', helper: 'Across structured English learning pathways' },
-  { label: 'Global experience', value: '15+ countries', helper: 'Built through diverse learner and family contexts' },
+  { label: 'Wider Tiny Steps reach', value: '5000+', helper: 'Children across our broader English-learning programs' },
+  { label: 'Wider global experience', value: '15+ countries', helper: 'Diverse learner and family contexts' },
   { label: 'Delivery model', value: 'Your teachers', helper: 'Tiny Steps trains, equips, and supports them' },
   { label: 'Implementation', value: 'Full year', helper: 'Not a one-time workshop or content handover' },
 ];
@@ -389,24 +388,31 @@ const ForSchoolsPage: React.FC = () => {
 
       <LeadHero
         eyebrow="For Indian & International Schools • Ages 3–10"
-        title="A Research-Aligned Phonics Program for Schools in India"
+        title={
+          <>
+            Build confident readers with a{' '}
+            <span className="bg-gradient-to-r from-orange-600 via-rose-500 to-violet-600 bg-clip-text text-transparent">
+              complete phonics system
+            </span>
+          </>
+        }
         description={
           <p className="school-answer">
-            Tiny Steps brings a systematic phonics curriculum, teacher-led digital classroom content, playful
-            practice, assessment, and specialist training into your school—then supports your teachers throughout
-            the academic year so children learn to decode, spell, read, and write with growing independence.
+            Bring a research-aligned curriculum, joyful digital practice, specialist teacher training, and
+            year-long support into your existing timetable. Your teachers deliver it; Tiny Steps helps them teach
+            it confidently and consistently.
           </p>
         }
         trustChips={[
-          { label: 'Your teachers deliver', tone: 'warm' },
-          { label: 'Research-aligned sequence', tone: 'cool' },
-          { label: 'Year-long academic support', tone: 'mint' },
-          { label: 'India-first, globally available', tone: 'neutral' },
+          { label: 'Teacher-led in your school', tone: 'warm' },
+          { label: 'Systematic learning pathway', tone: 'cool' },
+          { label: 'Ages 3–10', tone: 'mint' },
+          { label: 'India-first • globally available', tone: 'neutral' },
         ]}
         supportingText={
           <>
-            Built for principals, founders, English heads, early-years coordinators, and school networks looking
-            for a sustainable teaching system—not an outsourced class or a one-day workshop.
+            For principals, founders, English heads, early-years coordinators, and school networks—not outsourced
+            classes and not a one-day content handover.
           </>
         }
         stats={leadershipStats}
@@ -428,47 +434,88 @@ const ForSchoolsPage: React.FC = () => {
           />
         }
         aside={
-          <LeadCard className="overflow-hidden border-orange-200/70 bg-white">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-700">The partnership model</p>
-            <div className="mt-5 space-y-3">
-              {[
-                ['Tiny Steps', 'Curriculum • training • coaching • assessment'],
-                ['Your teachers', 'Teach the program inside the normal school timetable'],
-                ['Your children', 'Practise reading, spelling, writing, and fluency consistently'],
-              ].map(([title, detail], index) => (
-                <div key={title}>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5">
-                    <p className="font-semibold text-slate-950">{title}</p>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">{detail}</p>
-                  </div>
-                  {index < 2 ? <div className="mx-auto h-5 w-px bg-orange-300" aria-hidden="true" /> : null}
+          <LeadCard className="relative overflow-hidden border-white/80 bg-gradient-to-br from-white via-orange-50/75 to-sky-50/80 p-6 shadow-[0_28px_70px_rgba(15,23,42,0.14)]">
+            <div className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-violet-200/35 blur-2xl" />
+            <div className="pointer-events-none absolute -bottom-12 -left-8 h-32 w-32 rounded-full bg-orange-200/45 blur-2xl" />
+            <div className="relative">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-700">The partnership model</p>
+                  <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
+                    One school. One shared teaching system.
+                  </h2>
                 </div>
-              ))}
-            </div>
-            <div className="mt-5 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white">
-              One system. One teaching language. A full year of support.
+                <div className="flex -space-x-2" aria-hidden="true">
+                  {['a', 'sh', 'ai'].map((sound, index) => (
+                    <span
+                      key={sound}
+                      className={`flex h-11 w-11 items-center justify-center rounded-2xl border-2 border-white text-sm font-black shadow-md ${
+                        index === 0
+                          ? 'rotate-[-8deg] bg-orange-400 text-slate-950'
+                          : index === 1
+                            ? 'rotate-[5deg] bg-sky-400 text-slate-950'
+                            : 'rotate-[-2deg] bg-violet-400 text-white'
+                      }`}
+                    >
+                      {sound}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-6 space-y-3">
+                {[
+                  ['01', 'Tiny Steps equips', 'Curriculum • training • coaching • assessment'],
+                  ['02', 'Your teachers deliver', 'Inside the school’s normal English timetable'],
+                  ['03', 'Children practise and progress', 'Reading • spelling • writing • fluency'],
+                ].map(([number, title, detail], index) => (
+                  <div
+                    key={title}
+                    className={`group flex items-center gap-4 rounded-2xl border p-4 transition duration-300 hover:translate-x-1 hover:shadow-md ${
+                      index === 0
+                        ? 'border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50'
+                        : index === 1
+                          ? 'border-sky-200 bg-gradient-to-r from-sky-50 to-cyan-50'
+                          : 'border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50'
+                    }`}
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-sm font-black text-slate-900 shadow-sm">
+                      {number}
+                    </span>
+                    <div>
+                      <p className="font-bold text-slate-950">{title}</p>
+                      <p className="mt-0.5 text-sm leading-6 text-slate-600">{detail}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-violet-950 px-4 py-3 text-center text-sm font-bold text-white shadow-lg">
+                Curriculum + capable teachers + continuous support
+              </div>
             </div>
           </LeadCard>
         }
       />
 
       <LeadSection id="why-now">
-        <LeadCard className="border-slate-950 bg-slate-950 text-white">
-          <div className="grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
+        <LeadCard className="overflow-hidden border-slate-950 bg-gradient-to-br from-slate-950 via-slate-950 to-indigo-950 text-white">
+          <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-300">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-300">
                 The foundational reading gap
               </p>
               <h2 className="mt-3 text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl">
                 Children are not failing. Essential reading skills are being left to chance.
               </h2>
+              <div className="mt-5 inline-flex rounded-full border border-emerald-300/25 bg-emerald-300/10 px-4 py-2 text-sm font-bold text-emerald-200">
+                This is a system gap—not a child failure.
+              </div>
               <p className="school-answer mt-5 text-base leading-8 text-slate-200">
-                Most schools have an English curriculum. What many do not have is a protected, systematic, and
-                cumulative phonics strand taught consistently across classrooms. A textbook chapter, alphabet
-                activity, weekly spelling list, or one-day workshop cannot replace a shared teaching sequence,
-                accurate correction routines, and ongoing progress checks.
+                Most schools already have an English curriculum. What may be missing is a protected, systematic
+                phonics strand taught consistently across classrooms. Alphabet activities, weekly spelling lists,
+                mixed worksheets, or a one-day workshop cannot replace an agreed sequence, accurate correction,
+                and regular progress checks.
               </p>
-              <div className="mt-6 rounded-3xl border border-orange-300/30 bg-orange-400/10 p-5">
+              <div className="mt-6 rounded-3xl border border-orange-300/30 bg-gradient-to-br from-orange-400/15 to-rose-400/10 p-5">
                 <p className="text-sm font-bold text-orange-200">Why this matters in India</p>
                 <p className="mt-2 text-sm leading-7 text-slate-200">
                   ASER 2024 found that 23.4% of rural government-school Standard III children could read a
@@ -490,9 +537,22 @@ const ForSchoolsPage: React.FC = () => {
             <div>
               <div className="grid gap-4">
                 {phonicsGapCards.map((item, index) => (
-                  <article key={item.title} className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                  <article
+                    key={item.title}
+                    className={`group rounded-3xl border p-5 transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_45px_rgba(0,0,0,0.22)] ${
+                      index === 0
+                        ? 'border-orange-300/25 bg-orange-300/10'
+                        : index === 1
+                          ? 'border-sky-300/25 bg-sky-300/10'
+                          : 'border-violet-300/25 bg-violet-300/10'
+                    }`}
+                  >
                     <div className="flex gap-4">
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-400 text-sm font-black text-slate-950">
+                      <span
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-sm font-black text-slate-950 shadow-md ${
+                          index === 0 ? 'bg-orange-400' : index === 1 ? 'bg-sky-400' : 'bg-violet-300'
+                        }`}
+                      >
                         0{index + 1}
                       </span>
                       <div>
@@ -503,15 +563,14 @@ const ForSchoolsPage: React.FC = () => {
                   </article>
                 ))}
               </div>
-              <div className="school-answer mt-5 rounded-3xl border border-sky-300/25 bg-sky-300/10 p-5">
+              <div className="school-answer mt-5 rounded-3xl border border-sky-300/30 bg-gradient-to-br from-sky-300/15 to-violet-300/10 p-5">
                 <p className="text-xl font-black text-white">
                   Phonics proficiency is specialist teaching knowledge—not simply “knowing the alphabet.”
                 </p>
                 <p className="mt-3 text-sm leading-7 text-slate-200">
-                  Research describes phonological-awareness and phonics teaching as requiring specialised content
-                  and pedagogical knowledge. A review of teacher-training studies found the strongest knowledge
-                  growth when teachers applied new learning under expert guidance. That is why Tiny Steps combines
-                  training with rehearsal, observation, feedback, and year-long coaching.
+                  Effective delivery requires knowledge of phonemes, graphemes, blending, segmenting, decoding,
+                  encoding, error diagnosis, and cumulative lesson design. Tiny Steps builds this capability
+                  through training, rehearsal, observation, feedback, and year-long coaching.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-4 text-sm">
                   <a
@@ -538,29 +597,50 @@ const ForSchoolsPage: React.FC = () => {
       </LeadSection>
 
       <LeadSection id="pedagogy">
-        <LeadCard className="overflow-hidden bg-gradient-to-br from-white via-sky-50/45 to-orange-50/60">
+        <LeadCard className="overflow-hidden bg-gradient-to-br from-white via-sky-50/55 to-orange-50/70">
           <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-start">
             <div>
               <LeadSectionHeading
                 eyebrow="The Tiny Steps pedagogy"
                 title="Research-aligned instruction. Joyful practice. Real application."
-                description="Children need explicit teaching and many successful opportunities to respond. Our lessons move deliberately from teacher modelling to playful practice, then into independent reading, spelling, and writing."
+                description="Children need explicit teaching and many successful opportunities to respond. Every lesson moves deliberately from teacher modelling to purposeful play, then into independent reading, spelling, and writing."
               />
               <div className="mt-7 grid gap-4 sm:grid-cols-2">
-                {pedagogyCycle.map((item) => (
-                  <article key={item.label} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <span className="text-xs font-black uppercase tracking-[0.18em] text-orange-600">
+                {pedagogyCycle.map((item, index) => (
+                  <article
+                    key={item.label}
+                    className={`group rounded-3xl border p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_38px_rgba(15,23,42,0.12)] ${
+                      index === 0
+                        ? 'border-orange-200 bg-gradient-to-br from-white to-orange-50'
+                        : index === 1
+                          ? 'border-sky-200 bg-gradient-to-br from-white to-sky-50'
+                          : index === 2
+                            ? 'border-emerald-200 bg-gradient-to-br from-white to-emerald-50'
+                            : 'border-violet-200 bg-gradient-to-br from-white to-violet-50'
+                    }`}
+                  >
+                    <span
+                      className={`inline-flex rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.18em] ${
+                        index === 0
+                          ? 'bg-orange-100 text-orange-700'
+                          : index === 1
+                            ? 'bg-sky-100 text-sky-700'
+                            : index === 2
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : 'bg-violet-100 text-violet-700'
+                      }`}
+                    >
                       {item.label}
                     </span>
-                    <h3 className="mt-2 text-lg font-bold text-slate-950">{item.title}</h3>
+                    <h3 className="mt-3 text-lg font-bold text-slate-950">{item.title}</h3>
                     <p className="mt-2 text-sm leading-7 text-slate-700">{item.detail}</p>
                   </article>
                 ))}
               </div>
               <p className="school-answer mt-5 text-sm leading-7 text-slate-700">
-                The evidence base supports developing sound awareness linked to letters, teaching children to
-                decode and write words, and giving daily opportunities to read connected text. Games make practice
-                active and memorable; they reinforce the teaching rather than replacing it.
+                The evidence base supports sound awareness linked to letters, explicit decoding and encoding, and
+                daily opportunities to read connected text. Games make practice active and memorable; they
+                reinforce teaching rather than replacing it.
               </p>
               <div className="mt-3 flex flex-wrap gap-4 text-sm">
                 <a
@@ -582,15 +662,15 @@ const ForSchoolsPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-slate-800 bg-slate-950 p-5 text-white shadow-[0_24px_60px_rgba(15,23,42,0.22)]">
-              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+            <div className="rounded-[2rem] border border-slate-800 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 p-5 text-white shadow-[0_28px_70px_rgba(15,23,42,0.24)]">
+              <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-300">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-300">
                     Digital classroom content
                   </p>
                   <h3 className="mt-1 text-2xl font-black text-white">Every lesson gives children something to do</h3>
                 </div>
-                <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-bold text-emerald-200">
+                <span className="shrink-0 rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-bold text-emerald-200">
                   Teacher led
                 </span>
               </div>
@@ -605,12 +685,12 @@ const ForSchoolsPage: React.FC = () => {
                 ].map(([title, detail], index) => (
                   <div
                     key={title}
-                    className={`rounded-2xl border p-4 ${
+                    className={`rounded-2xl border p-4 transition duration-300 hover:-translate-y-1 hover:bg-white/10 ${
                       index % 3 === 0
-                        ? 'border-orange-300/30 bg-orange-300/10'
+                        ? 'border-orange-300/35 bg-orange-300/10'
                         : index % 3 === 1
-                          ? 'border-sky-300/30 bg-sky-300/10'
-                          : 'border-emerald-300/30 bg-emerald-300/10'
+                          ? 'border-sky-300/35 bg-sky-300/10'
+                          : 'border-emerald-300/35 bg-emerald-300/10'
                     }`}
                   >
                     <p className="font-bold text-white">{title}</p>
@@ -621,35 +701,76 @@ const ForSchoolsPage: React.FC = () => {
               <div className="mt-5 rounded-2xl bg-white p-4 text-slate-900">
                 <p className="text-sm font-bold">Digital engagement + printable reinforcement</p>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Interactive lesson decks, phonics games, movement, oral response, handwriting, worksheets, and
-                  quick checks work together inside one sequenced lesson.
+                  Lesson decks, games, movement, oral response, handwriting, worksheets, and quick checks work
+                  together inside one sequenced lesson.
                 </p>
               </div>
-              <Link
-                to="/free-phonics-games-for-kids"
-                onClick={() => trackSchoolCta('Preview phonics games', 'pedagogy', '/free-phonics-games-for-kids')}
-                className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-orange-400 px-5 text-sm font-bold text-slate-950 transition hover:bg-orange-300"
-              >
-                Preview Tiny Steps phonics games
-              </Link>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link
+                  to="/class-samples"
+                  onClick={() => trackSchoolCta('View class samples', 'pedagogy', '/class-samples')}
+                  className="inline-flex h-11 items-center justify-center rounded-full bg-orange-400 px-5 text-sm font-bold text-slate-950 transition hover:-translate-y-0.5 hover:bg-orange-300"
+                >
+                  See Tiny Steps in action
+                </Link>
+                <Link
+                  to="/free-phonics-games-for-kids"
+                  onClick={() => trackSchoolCta('Preview phonics games', 'pedagogy', '/free-phonics-games-for-kids')}
+                  className="inline-flex h-11 items-center justify-center rounded-full border border-white/25 bg-white/10 px-5 text-sm font-bold text-white transition hover:bg-white/15"
+                >
+                  Preview phonics games
+                </Link>
+              </div>
             </div>
           </div>
         </LeadCard>
       </LeadSection>
 
       <LeadSection>
-        <LeadCard className="bg-gradient-to-br from-white via-orange-50/35 to-sky-50/50">
+        <LeadCard className="overflow-hidden bg-gradient-to-br from-white via-orange-50/45 to-sky-50/60">
           <LeadSectionHeading
             eyebrow="What your school receives"
             title="More than content: a complete implementation system"
-            description="The value is not a folder of worksheets. It is the curriculum, teacher capability, classroom routines, assessment, and ongoing help required to deliver phonics consistently."
+            description="Curriculum, teacher capability, classroom routines, assessment, and ongoing help—six connected parts that make consistent phonics teaching possible."
           />
           <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {partnershipDeliverables.map((item) => (
-              <article key={item.number} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                <span className="text-sm font-black text-orange-600">{item.number}</span>
-                <h3 className="mt-3 text-lg font-bold text-slate-950">{item.title}</h3>
-                <p className="mt-2 text-sm leading-7 text-slate-700">{item.detail}</p>
+            {partnershipDeliverables.map((item, index) => (
+              <article
+                key={item.number}
+                className={`group relative overflow-hidden rounded-3xl border p-5 transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_22px_48px_rgba(15,23,42,0.13)] ${
+                  index === 0
+                    ? 'border-orange-200 bg-gradient-to-br from-white to-orange-50'
+                    : index === 1
+                      ? 'border-sky-200 bg-gradient-to-br from-white to-sky-50'
+                      : index === 2
+                        ? 'border-violet-200 bg-gradient-to-br from-white to-violet-50'
+                        : index === 3
+                          ? 'border-emerald-200 bg-gradient-to-br from-white to-emerald-50'
+                          : index === 4
+                            ? 'border-rose-200 bg-gradient-to-br from-white to-rose-50'
+                            : 'border-amber-200 bg-gradient-to-br from-white to-amber-50'
+                }`}
+              >
+                <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/65 transition duration-300 group-hover:scale-125" />
+                <span
+                  className={`relative flex h-11 w-11 items-center justify-center rounded-2xl text-sm font-black shadow-sm ${
+                    index === 0
+                      ? 'bg-orange-200 text-orange-900'
+                      : index === 1
+                        ? 'bg-sky-200 text-sky-900'
+                        : index === 2
+                          ? 'bg-violet-200 text-violet-900'
+                          : index === 3
+                            ? 'bg-emerald-200 text-emerald-900'
+                            : index === 4
+                              ? 'bg-rose-200 text-rose-900'
+                              : 'bg-amber-200 text-amber-900'
+                  }`}
+                >
+                  {item.number}
+                </span>
+                <h3 className="relative mt-4 text-lg font-bold text-slate-950">{item.title}</h3>
+                <p className="relative mt-2 text-sm leading-7 text-slate-700">{item.detail}</p>
               </article>
             ))}
           </div>
@@ -658,21 +779,55 @@ const ForSchoolsPage: React.FC = () => {
 
       <LeadSection>
         <div className="grid gap-5 lg:grid-cols-[1.08fr_0.92fr]">
-          <LeadCard>
+          <LeadCard className="overflow-hidden bg-gradient-to-br from-white to-orange-50/45">
             <LeadSectionHeading
-              eyebrow="Student learning pathway"
+              eyebrow="Student learning journey"
               title="From hearing sounds to reading and writing with confidence"
-              description="A cumulative sequence helps teachers revisit prior learning while introducing the next skill in manageable steps."
+              description="Each stage builds on the previous one, so children move forward without losing the foundations they still need."
             />
-            <ol className="mt-6 space-y-3">
+            <ol className="mt-8">
               {learningSequence.map((item, index) => (
-                <li key={item.title} className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:grid-cols-[72px_1fr]">
-                  <div className="flex items-center gap-2 sm:block">
-                    <span className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">{item.stage}</span>
-                    <span className="ml-2 text-xs font-bold text-slate-400 sm:ml-0 sm:mt-1 sm:block">0{index + 1}</span>
+                <li key={item.title} className="group grid grid-cols-[60px_1fr] gap-4">
+                  <div className="flex flex-col items-center">
+                    <span
+                      className={`flex h-12 w-12 items-center justify-center rounded-full border-4 border-white text-sm font-black shadow-md transition duration-300 group-hover:scale-110 ${
+                        index === 0
+                          ? 'bg-orange-400 text-slate-950'
+                          : index === 1
+                            ? 'bg-sky-400 text-slate-950'
+                            : index === 2
+                              ? 'bg-violet-400 text-white'
+                              : index === 3
+                                ? 'bg-emerald-400 text-slate-950'
+                                : 'bg-rose-400 text-white'
+                      }`}
+                    >
+                      0{index + 1}
+                    </span>
+                    {index < learningSequence.length - 1 ? (
+                      <span
+                        className="my-1 min-h-8 w-1 flex-1 rounded-full bg-gradient-to-b from-orange-300 via-violet-300 to-emerald-300"
+                        aria-hidden="true"
+                      />
+                    ) : null}
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-slate-950">{item.title}</h3>
+                  <div className={index < learningSequence.length - 1 ? 'pb-6' : 'pb-1'}>
+                    <span
+                      className={`inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] ${
+                        index === 0
+                          ? 'bg-orange-100 text-orange-800'
+                          : index === 1
+                            ? 'bg-sky-100 text-sky-800'
+                            : index === 2
+                              ? 'bg-violet-100 text-violet-800'
+                              : index === 3
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-rose-100 text-rose-800'
+                      }`}
+                    >
+                      {item.stage}
+                    </span>
+                    <h3 className="mt-2 text-lg font-bold text-slate-950">{item.title}</h3>
                     <p className="mt-1 text-sm leading-6 text-slate-700">{item.detail}</p>
                   </div>
                 </li>
@@ -680,47 +835,75 @@ const ForSchoolsPage: React.FC = () => {
             </ol>
           </LeadCard>
 
-          <LeadCard className="bg-slate-950 text-white">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-300">India-relevant foundations</p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight">Phonics inside a broader literacy journey</h2>
-            <p className="school-answer mt-4 text-sm leading-7 text-slate-200">
-              India’s National Curriculum Framework for the Foundational Stage identifies phonological awareness,
-              sound-symbol association, decoding, comprehension, and writing as connected foundational literacy
-              skills. Tiny Steps turns those skill areas into a practical English phonics teaching sequence for
-              school classrooms.
-            </p>
-            <a
-              href="https://ncert.nic.in/pdf/NCF_for_Foundational_Stage_20_October_2022.pdf"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-5 inline-flex text-sm font-semibold text-orange-300 underline decoration-orange-300/50 underline-offset-4"
-            >
-              Read the official NCERT framework
-            </a>
-            <div className="mt-7 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm leading-7 text-slate-200">
-              <strong className="text-white">Important:</strong> Tiny Steps is an independent education provider.
-              Curriculum compatibility does not mean government, school-board, IB, Cambridge, or publisher
-              endorsement.
+          <LeadCard className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 text-white">
+            <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-violet-400/15 blur-2xl" />
+            <div className="relative">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-300">India-relevant foundations</p>
+              <h2 className="mt-3 text-3xl font-black tracking-tight text-white">Phonics inside a broader literacy journey</h2>
+              <p className="school-answer mt-4 text-sm leading-7 text-slate-200">
+                India’s National Curriculum Framework for the Foundational Stage connects phonological awareness,
+                sound-symbol association, decoding, comprehension, and writing. Tiny Steps turns these linked
+                skills into a practical classroom sequence.
+              </p>
+              <a
+                href="https://ncert.nic.in/pdf/NCF_for_Foundational_Stage_20_October_2022.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-5 inline-flex text-sm font-semibold text-orange-300 underline decoration-orange-300/50 underline-offset-4"
+              >
+                Read the official NCERT framework
+              </a>
+              <div className="mt-7 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm leading-7 text-slate-200">
+                <strong className="text-white">Important:</strong> Tiny Steps is an independent education provider.
+                Curriculum compatibility does not mean government, school-board, IB, Cambridge, or publisher
+                endorsement.
+              </div>
             </div>
           </LeadCard>
         </div>
       </LeadSection>
 
       <LeadSection>
-        <LeadCard>
+        <LeadCard className="overflow-hidden bg-gradient-to-br from-white via-violet-50/35 to-sky-50/55">
           <LeadSectionHeading
             eyebrow="Implementation roadmap"
             title="Training is the beginning—not the handover"
-            description="The partnership is designed to help a school move from decision to consistent classroom practice, then keep improving across the academic year."
+            description="A clear four-stage rollout moves the school from planning to confident classroom delivery, then keeps improving practice across the academic year."
           />
-          <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="relative mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            <div className="pointer-events-none absolute left-[10%] right-[10%] top-6 hidden h-1 rounded-full bg-gradient-to-r from-orange-300 via-sky-300 via-violet-300 to-emerald-300 xl:block" />
             {implementationTimeline.map((item, index) => (
-              <article key={item.label} className="relative rounded-3xl border border-slate-200 bg-white p-5">
+              <article
+                key={item.label}
+                className={`group relative rounded-3xl border p-5 transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_22px_48px_rgba(15,23,42,0.13)] ${
+                  index === 0
+                    ? 'border-orange-200 bg-gradient-to-br from-white to-orange-50'
+                    : index === 1
+                      ? 'border-sky-200 bg-gradient-to-br from-white to-sky-50'
+                      : index === 2
+                        ? 'border-violet-200 bg-gradient-to-br from-white to-violet-50'
+                        : 'border-emerald-200 bg-gradient-to-br from-white to-emerald-50'
+                }`}
+              >
                 <div className="flex items-center justify-between">
-                  <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-800">{item.label}</span>
-                  <span className="text-sm font-black text-slate-300">0{index + 1}</span>
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-bold ${
+                      index === 0
+                        ? 'bg-orange-100 text-orange-800'
+                        : index === 1
+                          ? 'bg-sky-100 text-sky-800'
+                          : index === 2
+                            ? 'bg-violet-100 text-violet-800'
+                            : 'bg-emerald-100 text-emerald-800'
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm font-black text-slate-700 shadow-sm">
+                    0{index + 1}
+                  </span>
                 </div>
-                <h3 className="mt-4 text-lg font-bold text-slate-950">{item.title}</h3>
+                <h3 className="mt-5 text-lg font-bold text-slate-950">{item.title}</h3>
                 <p className="mt-2 text-sm leading-7 text-slate-700">{item.detail}</p>
               </article>
             ))}
@@ -761,62 +944,99 @@ const ForSchoolsPage: React.FC = () => {
       </LeadSection>
 
       <LeadSection id="pricing">
-        <LeadCard className="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white">
+        <LeadCard className="bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 text-white">
           <LeadSectionHeading
-            eyebrow="Founding-school pricing"
-            title="Transparent annual partnership options"
-            description="Select a focused launch, a whole-school pathway, or a network rollout. Final scope is confirmed in the written proposal."
+            eyebrow="School partnership pricing"
+            title="Clear annual options for every stage of rollout"
+            description="Choose a focused launch, a complete whole-school pathway, or a coordinated multi-campus rollout. Every option includes an agreed annual licence and implementation support."
             tone="dark"
           />
+          <div className="mt-5 flex flex-wrap gap-2 text-xs font-bold">
+            <span className="rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1.5 text-orange-200">
+              Annual licence
+            </span>
+            <span className="rounded-full border border-sky-300/30 bg-sky-300/10 px-3 py-1.5 text-sky-200">
+              GST shown separately
+            </span>
+            <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1.5 text-emerald-200">
+              No per-child fee within the listed limits
+            </span>
+          </div>
 
           <div className="mt-7 grid gap-5 xl:grid-cols-3">
             {pricingPlans.map((plan) => (
               <article
                 key={plan.name}
-                className={`rounded-3xl border p-5 ${
+                className={`flex rounded-3xl border p-5 transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_54px_rgba(0,0,0,0.24)] ${
                   plan.featured
-                    ? 'border-orange-300 bg-white text-slate-950 shadow-[0_20px_50px_rgba(251,146,60,0.2)]'
+                    ? 'border-orange-300 bg-gradient-to-br from-white to-orange-50 text-slate-950 shadow-[0_20px_50px_rgba(251,146,60,0.2)]'
                     : 'border-white/15 bg-white/5 text-white'
                 }`}
               >
-                {plan.featured ? (
-                  <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-orange-800">Best for full rollout</span>
-                ) : null}
-                <h3 className="mt-4 text-xl font-bold">{plan.name}</h3>
-                <p className={`mt-2 text-sm leading-6 ${plan.featured ? 'text-slate-600' : 'text-slate-300'}`}>{plan.description}</p>
-                <p className="mt-5 text-3xl font-black tracking-tight">{plan.price}</p>
-                <p className={`mt-1 text-xs ${plan.featured ? 'text-slate-500' : 'text-slate-400'}`}>{plan.qualifier}</p>
-                <ul className={`mt-5 space-y-2.5 text-sm ${plan.featured ? 'text-slate-700' : 'text-slate-200'}`}>
-                  {plan.items.map((item) => (
-                    <li key={item} className="flex gap-2">
-                      <span className={plan.featured ? 'text-orange-600' : 'text-orange-300'} aria-hidden="true">✓</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="flex w-full flex-col">
+                  {plan.featured ? (
+                    <span className="self-start rounded-full bg-orange-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-orange-800">
+                      Best for full rollout
+                    </span>
+                  ) : null}
+                  <h3 className="mt-4 text-xl font-bold">{plan.name}</h3>
+                  <p className={`mt-2 text-sm leading-6 ${plan.featured ? 'text-slate-600' : 'text-slate-300'}`}>
+                    {plan.description}
+                  </p>
+                  <p className="mt-5 text-3xl font-black tracking-tight">{plan.price}</p>
+                  <p className={`mt-1 text-xs font-semibold ${plan.featured ? 'text-slate-500' : 'text-slate-400'}`}>
+                    {plan.qualifier}
+                  </p>
+                  <div className={`my-5 h-px ${plan.featured ? 'bg-orange-200' : 'bg-white/10'}`} />
+                  <p className={`text-xs font-bold uppercase tracking-[0.16em] ${plan.featured ? 'text-orange-700' : 'text-orange-300'}`}>
+                    What is included
+                  </p>
+                  <ul className={`mt-3 space-y-2.5 text-sm ${plan.featured ? 'text-slate-700' : 'text-slate-200'}`}>
+                    {plan.items.map((item) => (
+                      <li key={item} className="flex gap-2">
+                        <span className={plan.featured ? 'text-orange-600' : 'text-orange-300'} aria-hidden="true">
+                          ✓
+                        </span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <a
+                    href={proposalMailto}
+                    onClick={() => trackSchoolCta(`Request ${plan.name}`, 'pricing', '/contact')}
+                    className={`mt-6 inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-bold transition ${
+                      plan.featured
+                        ? 'bg-slate-950 text-white hover:bg-slate-800'
+                        : 'border border-white/20 bg-white/10 text-white hover:bg-white/15'
+                    }`}
+                  >
+                    Request this plan
+                  </a>
+                </div>
               </article>
             ))}
           </div>
 
-          <div className="mt-6 grid gap-4 rounded-3xl border border-orange-300/30 bg-orange-400/10 p-5 md:grid-cols-[1fr_auto] md:items-center">
+          <div className="mt-6 grid gap-4 rounded-3xl border border-orange-300/30 bg-gradient-to-r from-orange-400/15 to-rose-400/10 p-5 md:grid-cols-[1fr_auto] md:items-center">
             <div>
               <p className="text-sm font-bold text-orange-200">Prefer to validate the model first?</p>
               <p className="mt-1 text-sm leading-6 text-slate-200">
-                Run an eight-week pilot for one grade, up to four teachers, and up to 60 learners for ₹24,900 + GST.
-                Upgrade within 30 days of the review and we credit the pilot fee toward the annual plan.
+                Eight-week pilot • one selected grade • up to four teachers • up to 60 learners • ₹24,900 + GST.
+                Confirm an annual partnership within 30 days of the review and the pilot fee is credited in full.
               </p>
             </div>
             <a
               href={proposalMailto}
               onClick={() => trackSchoolCta('Request pilot proposal', 'pricing', '/contact')}
-              className="inline-flex h-11 items-center justify-center rounded-full bg-orange-400 px-5 text-sm font-bold text-slate-950 transition hover:bg-orange-300"
+              className="inline-flex h-11 items-center justify-center rounded-full bg-orange-400 px-5 text-sm font-bold text-slate-950 transition hover:-translate-y-0.5 hover:bg-orange-300"
             >
               Request pilot proposal
             </a>
           </div>
           <p className="mt-4 text-xs leading-5 text-slate-400">
-            Pricing covers an annual, non-transferable licence for the agreed campus, teacher count, learner count,
-            and content scope. It does not transfer ownership or permit resale, public sharing, or use by unlicensed campuses.
+            Final scope is confirmed in the written proposal. Pricing covers a non-transferable licence for the
+            agreed campus, teacher count, learner count, academic year, and content scope. It does not transfer
+            ownership or permit resale, public sharing, or use by unlicensed campuses.
           </p>
         </LeadCard>
       </LeadSection>
@@ -868,14 +1088,37 @@ const ForSchoolsPage: React.FC = () => {
       </LeadSection>
 
       <LeadSection id="faq">
-        <LeadCard>
+        <LeadCard className="bg-gradient-to-br from-white via-sky-50/35 to-violet-50/35">
           <LeadSectionHeading
             eyebrow="School partnership FAQs"
             title="Direct answers for principals and academic teams"
-            description="Share this section internally when your leadership or procurement team is evaluating the program."
+            description="Open only the questions your leadership or procurement team needs. The complete answers remain available for internal sharing."
           />
-          <div className="school-answer mt-6">
-            <FAQSection items={faqItems} />
+          <div className="school-answer mt-6 grid gap-3 lg:grid-cols-2">
+            {faqItems.map((item, index) => (
+              <details
+                key={item.question}
+                className={`group rounded-2xl border bg-white/90 p-4 transition duration-300 open:shadow-[0_16px_36px_rgba(15,23,42,0.1)] ${
+                  index % 4 === 0
+                    ? 'border-orange-200'
+                    : index % 4 === 1
+                      ? 'border-sky-200'
+                      : index % 4 === 2
+                        ? 'border-emerald-200'
+                        : 'border-violet-200'
+                }`}
+              >
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-4 font-bold text-slate-950 marker:content-none">
+                  <span>{item.question}</span>
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-lg text-slate-600 transition group-open:rotate-45">
+                    +
+                  </span>
+                </summary>
+                <div className="mt-3 border-t border-slate-100 pt-3 text-sm leading-7 text-slate-700">
+                  {item.answer}
+                </div>
+              </details>
+            ))}
           </div>
         </LeadCard>
       </LeadSection>
@@ -910,7 +1153,7 @@ const ForSchoolsPage: React.FC = () => {
                     key={item.label}
                     to={item.to}
                     onClick={item.onClick}
-                    className={`${className} border-white/30 bg-transparent text-white hover:bg-white/10`}
+                    className={`${className} !border-white/30 !bg-transparent !text-white hover:!bg-white/10`}
                   >
                     {item.label}
                   </Link>
@@ -921,7 +1164,13 @@ const ForSchoolsPage: React.FC = () => {
                     target={item.href?.startsWith('http') ? '_blank' : undefined}
                     rel={item.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
                     onClick={item.onClick}
-                    className={className}
+                    className={`${className} ${
+                      item.variant === 'primary'
+                        ? '!bg-orange-400 !text-slate-950 hover:!bg-orange-300'
+                        : item.variant === 'secondary'
+                          ? '!border-emerald-300 !bg-emerald-50 !text-emerald-900 hover:!bg-emerald-100'
+                          : ''
+                    }`}
                   >
                     {item.label}
                   </a>
