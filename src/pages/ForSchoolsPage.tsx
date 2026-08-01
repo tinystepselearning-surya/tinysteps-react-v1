@@ -10,13 +10,16 @@ import {
   LeadSection,
   LeadSectionHeading,
 } from '../components/marketing/LeadPageSections';
-import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../constants/publicContact';
+import { buildPublicWhatsAppUrl, PUBLIC_CONTACT_EMAIL } from '../constants/publicContact';
 import { trackCoursePageCtaClick } from '../lib/conversionTracking';
 
 const canonicalUrl = 'https://tinystepslearning.com/for-schools';
-const proposalMailto = `${PUBLIC_CONTACT_MAILTO}?subject=School%20Phonics%20Partnership%20Proposal`;
-const schoolsWhatsAppUrl =
-  'https://wa.me/919618398383?text=Hi%20Tiny%20Steps!%20I%20would%20like%20a%20proposal%20for%20the%20school%20phonics%20partnership.';
+const generalSchoolProposalUrl = buildPublicWhatsAppUrl(
+  'Hello Tiny Steps, I would like to request a school phonics partnership proposal.',
+);
+const pilotProposalUrl = buildPublicWhatsAppUrl(
+  'Hello Tiny Steps, I would like to request a phonics pilot proposal for our school.',
+);
 
 const pageTitle = 'Phonics Program for Schools in India | Tiny Steps';
 const pageDescription =
@@ -310,6 +313,8 @@ const pricingPlans = [
     price: '₹59,000',
     qualifier: '+ GST • one campus • one academic year',
     description: 'Start with one age band or one selected phonics pathway.',
+    whatsAppMessage:
+      'Hello Tiny Steps, I am interested in the Focused Launch Licence for our school. Please share the proposal and next steps.',
     items: [
       'One selected phonics pathway',
       'Up to 5 teachers and 150 learners',
@@ -324,6 +329,8 @@ const pricingPlans = [
     price: '₹1.49 lakh',
     qualifier: '+ GST • one campus • one academic year',
     description: 'Build one consistent phonics approach across early years and primary grades.',
+    whatsAppMessage:
+      'Hello Tiny Steps, I am interested in the Whole-School Partnership for our school. Please share the proposal and next steps.',
     featured: true,
     items: [
       'Complete foundation-to-advanced pathway',
@@ -339,6 +346,8 @@ const pricingPlans = [
     price: '₹2.99 lakh',
     qualifier: '+ GST • up to 3 campuses • one academic year',
     description: 'Coordinate training and implementation across an agreed school network.',
+    whatsAppMessage:
+      'Hello Tiny Steps, I am interested in the Multi-Campus Partnership. Please share the proposal and next steps.',
     items: [
       'Scope for up to 3 campuses',
       'Up to 25 teachers and 900 learners',
@@ -377,15 +386,15 @@ const ForSchoolsPage: React.FC = () => {
   const primaryCtas = [
     {
       label: 'Request a School Proposal',
-      href: proposalMailto,
+      href: generalSchoolProposalUrl,
       variant: 'primary' as const,
-      onClick: () => trackSchoolCta('Request a School Proposal', 'hero', '/contact'),
+      onClick: () => trackSchoolCta('Request a School Proposal', 'hero', generalSchoolProposalUrl),
     },
     {
       label: 'WhatsApp Partnership Team',
-      href: schoolsWhatsAppUrl,
+      href: generalSchoolProposalUrl,
       variant: 'secondary' as const,
-      onClick: () => trackSchoolCta('WhatsApp Partnership Team', 'hero', '/contact'),
+      onClick: () => trackSchoolCta('WhatsApp Partnership Team', 'hero', generalSchoolProposalUrl),
     },
   ];
 
@@ -1046,8 +1055,16 @@ const ForSchoolsPage: React.FC = () => {
                     ))}
                   </ul>
                   <a
-                    href={proposalMailto}
-                    onClick={() => trackSchoolCta(`Request ${plan.name}`, 'pricing', '/contact')}
+                    href={buildPublicWhatsAppUrl(plan.whatsAppMessage)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() =>
+                      trackSchoolCta(
+                        `Request ${plan.name}`,
+                        'pricing',
+                        buildPublicWhatsAppUrl(plan.whatsAppMessage),
+                      )
+                    }
                     className={`mt-6 inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-bold transition ${
                       plan.featured
                         ? 'bg-slate-950 text-white hover:bg-slate-800'
@@ -1070,8 +1087,10 @@ const ForSchoolsPage: React.FC = () => {
               </p>
             </div>
             <a
-              href={proposalMailto}
-              onClick={() => trackSchoolCta('Request pilot proposal', 'pricing', '/contact')}
+              href={pilotProposalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackSchoolCta('Request pilot proposal', 'pricing', pilotProposalUrl)}
               className="inline-flex h-11 items-center justify-center rounded-full bg-orange-400 px-5 text-sm font-bold text-slate-950 transition hover:-translate-y-0.5 hover:bg-orange-300"
             >
               Request pilot proposal

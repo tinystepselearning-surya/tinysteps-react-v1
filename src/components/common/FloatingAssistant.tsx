@@ -3,6 +3,7 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import { buildPublicWhatsAppUrl } from '../../constants/publicContact';
 import { trackEvent } from '../../lib/analytics';
 import { inferProgramFromPath, trackCtaClick, trackWhatsappClick } from '../../lib/conversionTracking';
 import { normalizePathname, shouldShowPublicSupportWidgets } from '../../utils/publicRouteGuards';
@@ -10,8 +11,9 @@ const AskTinyStepsModal = lazy(() =>
   import('./AskTinyStepsModal').then((module) => ({ default: module.AskTinyStepsModal })),
 );
 
-const WHATSAPP_URL =
-  'https://wa.me/919618398383?text=Hi%20Tiny%20Steps!%20I%20have%20a%20question%20about%20your%20programs.';
+const WHATSAPP_URL = buildPublicWhatsAppUrl(
+  'Hi Tiny Steps! I have a question about your programs.',
+);
 const EXPAND_COLLAPSE_INTERVAL_MS = 10000;
 
 export default function FloatingAssistant() {
