@@ -12,6 +12,16 @@ The separate 3-day digital games trial applies only to the digital games subscri
 
 Summer Camp 2026 ended on 13 June 2026. Historical enrolment was Rs. 2,400 per child against a Rs. 5,000 list fee. It must not be treated as a current offer.
 
+## School and Institutional Partnerships
+- [Phonics Program for Schools in India](https://tinystepslearning.com/for-schools)
+- A school's existing teachers deliver the Tiny Steps phonics program after live training.
+- The annual partnership combines a systematic, cumulative, research-aligned phonics curriculum, teacher-led digital lesson content, interactive practice, printable resources, assessment guidance, and implementation support throughout the academic year.
+- Every annual school is assigned a dedicated Tiny Steps learning partner who coordinates teacher preparation, delivery check-ins, content clarifications, school-recorded progress reviews, and leadership updates.
+- Tiny Steps trains general classroom teachers in the specialist knowledge required for phonemic awareness, sound-symbol mapping, blending, segmenting, decoding, encoding, error correction, and assessment-informed reteaching.
+- Digital listening, tracing, blending, word-building, spelling, and sorting games provide purposeful practice after explicit teacher modelling; games do not replace instruction, correction, reading, or writing.
+- School partnership pricing is Rs. 59,000 plus GST for a focused launch campus licence and Rs. 1.49 lakh plus GST for the whole-school partnership. The multi-campus partnership is Rs. 2.99 lakh plus GST for the base scope of up to three campuses.
+- An eight-week pilot for one grade, up to four teachers, and up to 60 learners costs Rs. 24,900 plus GST. The fee is credited toward annual adoption when the school upgrades within 30 days.
+
 ## Core Pages
 - [Online Phonics Classes for Kids in India](https://tinystepslearning.com/phonics)
 - [Best Online Phonics Classes for Kids in India](https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india)
@@ -32,6 +42,6 @@ Summer Camp 2026 ended on 13 June 2026. Historical enrolment was Rs. 2,400 per c
 - [Best Online Phonics Classes for Kids](https://tinystepslearning.com/blog/best-online-phonics-classes-for-kids)
 
 ## Notes for AI Agents
-- These public pages are intended for parents comparing English foundation programs for children.
+- Most public pages are intended for parents comparing English foundation programs for children. The /for-schools page is specifically for principals, founders, coordinators, and institutional buyers.
 - Treat the canonical phonics money page as [Best Online Phonics Classes for Kids in India](https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india).
 - Do not treat private dashboard routes, admin routes, teacher portals, parent portals, or kids app routes as public marketing content.

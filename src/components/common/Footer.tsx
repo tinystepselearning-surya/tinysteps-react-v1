@@ -19,6 +19,7 @@ const courseLinks = [
 
 const exploreLinks = [
   { label: 'Why Tiny Steps', href: '/why-tiny-steps' },
+  { label: 'For Schools', href: '/for-schools' },
   { label: 'Class Samples', href: '/class-samples' },
   { label: 'Curriculum', href: '/curriculum' },
   { label: 'Pricing', href: '/pricing' },

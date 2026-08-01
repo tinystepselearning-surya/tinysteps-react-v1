@@ -33,6 +33,7 @@ export default function Header() {
   const [isSticky, setIsSticky] = useState(false);
 
   const isHomePage = location.pathname === '/';
+  const isSchoolsPage = location.pathname === '/for-schools';
 
   useEffect(() => {
     setIsOpen(false);
@@ -80,6 +81,20 @@ export default function Header() {
     );
   }, [location.pathname, location.search, navigate]);
 
+  const handlePrimaryAction = useCallback(() => {
+    if (isSchoolsPage) {
+      const pricingSection = document.getElementById('pricing');
+      if (pricingSection) {
+        const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        pricingSection.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
+        return;
+      }
+      navigate('/for-schools#pricing');
+      return;
+    }
+    handleBookAssessment();
+  }, [handleBookAssessment, isSchoolsPage, navigate]);
+
   const desktopHeaderContent = useMemo(
     () => (
       <>
@@ -115,15 +130,19 @@ export default function Header() {
         <div className="hidden items-center gap-4 md:flex">
           <button
             type="button"
-            onClick={handleBookAssessment}
-            className="inline-flex h-11 items-center justify-center rounded-full border border-slate-900 bg-slate-900 px-5 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.16)] transition hover:bg-slate-800"
+            onClick={handlePrimaryAction}
+            className={`inline-flex h-11 items-center justify-center rounded-full border px-5 text-sm font-semibold shadow-[0_10px_24px_rgba(15,23,42,0.16)] transition ${
+              isSchoolsPage
+                ? 'border-orange-400 bg-gradient-to-r from-orange-400 to-amber-300 text-slate-950 hover:from-orange-300 hover:to-amber-200'
+                : 'border-slate-900 bg-slate-900 text-white hover:bg-slate-800'
+            }`}
           >
-            Book Free 35-Minute Demo
+            {isSchoolsPage ? 'School Partnership Options' : 'Book Free 35-Minute Demo'}
           </button>
         </div>
       </>
     ),
-    [handleBookAssessment, handleLogout, user]
+    [handleLogout, handlePrimaryAction, isSchoolsPage, user]
   );
 
   return (
@@ -160,10 +179,14 @@ export default function Header() {
         <div className="flex items-center gap-2 lg:hidden">
           <button
             type="button"
-            onClick={handleBookAssessment}
-            className="rounded-full border border-slate-900 bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white max-[380px]:px-3 max-[380px]:text-[11px]"
+            onClick={handlePrimaryAction}
+            className={`rounded-full border px-3.5 py-2 text-xs font-semibold max-[380px]:px-3 max-[380px]:text-[11px] ${
+              isSchoolsPage
+                ? 'border-orange-400 bg-orange-400 text-slate-950'
+                : 'border-slate-900 bg-slate-900 text-white'
+            }`}
           >
-            Book Free 35-Minute Demo
+            {isSchoolsPage ? 'School Options' : 'Book Free 35-Minute Demo'}
           </button>
           <button
             type="button"
