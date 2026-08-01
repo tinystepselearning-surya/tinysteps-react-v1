@@ -127,6 +127,17 @@ Use WebPage, Service, OfferCatalog/Offer, BreadcrumbList, and FAQPage JSON-LD. I
 
 The NCERT National Curriculum Framework for the Foundational Stage describes phonological awareness, sound-symbol association, decoding, comprehension, and writing as connected foundational literacy skills. Tiny Steps can accurately say its pathway teaches these skills. It should not imply official approval or accreditation.
 
+## Evidence and claim guardrails added after page audit
+
+- ASER 2024 reports that 23.4% of rural government-school Standard III children could read a Standard II-level text. For rural private-school Standard V children, the figure was 59.3%. This supports the urgency of foundational literacy, but ASER is not an English-phonics assessment and does not establish phonics instruction as the sole cause or solution.
+- The U.S. Institute of Education Sciences foundational-reading practice guide rates evidence as strong for developing awareness of speech sounds and their links to letters, and for teaching decoding, word analysis, writing, and word recognition.
+- The National Reading Panel found systematic phonics more effective than little or no phonics, while cautioning that phonics must be integrated with phonemic awareness, fluency, vocabulary, comprehension, and meaningful reading and writing.
+- Piasta and Hudson (2022) describe phonological-awareness and phonics teaching as requiring specialised content, pedagogical, and pedagogical-content knowledge.
+- Hudson et al. (2021) reviewed 20 teacher-training studies and found that training involving application under expert guidance produced the largest growth in teacher knowledge.
+- Public copy should therefore use **research-aligned** or **evidence-informed**, not **scientifically proven**, until the proprietary Tiny Steps school program has its own independent outcome evaluation.
+- Public copy should describe a **system and training gap**, not accuse every school curriculum or every teacher of failure. The defensible contrast is that general teaching experience does not automatically provide specialist phonics knowledge.
+- Digital games should be positioned as purposeful practice after explicit modelling. Do not claim that games alone teach reading, spelling, or writing.
+
 ## Sources
 
 - NCERT, National Curriculum Framework for the Foundational Stage: https://ncert.nic.in/pdf/NCF_for_Foundational_Stage_20_October_2022.pdf
@@ -138,5 +149,10 @@ The NCERT National Curriculum Framework for the Foundational Stage describes pho
 - Twinkl school subscriptions: https://www.twinkl.co.in/premium/school
 - Stones2Milestones: https://stones2milestones.com/
 - Square Panda India: https://www.squarepanda.in/
+- ASER 2024 national findings: https://asercentre.org/wp-content/uploads/2022/12/ASER-2024-National-findings.pdf
+- IES/What Works Clearinghouse foundational reading practice guide: https://ies.ed.gov/ncee/wwc/practiceguide/21
+- National Reading Panel findings: https://www.nichd.nih.gov/publications/pubs/nrp/findings
+- Piasta and Hudson (2022), specialist phonics knowledge: https://eric.ed.gov/?id=EJ1349379
+- Hudson et al. (2021), teacher knowledge and professional learning review: https://eric.ed.gov/?id=EJ1298044
 
 Prices and programme details should be rechecked before future public pricing changes because competitors can update them without notice.
