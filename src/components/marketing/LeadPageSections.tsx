@@ -48,9 +48,11 @@ function buttonClass(variant: CtaItem['variant']) {
 
 export function LeadPageShell({ children }: { children: ReactNode }) {
   return (
-    <div className="relative overflow-x-clip bg-gradient-to-b from-orange-50/40 via-white to-sky-50/45 pb-20">
-      <div className="pointer-events-none absolute -left-20 top-20 h-64 w-64 rounded-full bg-orange-200/30 blur-3xl" />
-      <div className="pointer-events-none absolute -right-20 top-12 h-72 w-72 rounded-full bg-sky-200/30 blur-3xl" />
+    <div className="relative overflow-x-clip bg-gradient-to-b from-orange-50/65 via-white to-sky-50/70 pb-20">
+      <div className="pointer-events-none absolute -left-20 top-20 h-72 w-72 rounded-full bg-orange-200/35 blur-3xl" />
+      <div className="pointer-events-none absolute -right-20 top-12 h-80 w-80 rounded-full bg-sky-200/35 blur-3xl" />
+      <div className="pointer-events-none absolute left-1/3 top-[42rem] h-72 w-72 rounded-full bg-fuchsia-100/35 blur-3xl" />
+      <div className="pointer-events-none absolute right-1/4 top-[78rem] h-64 w-64 rounded-full bg-emerald-100/35 blur-3xl" />
       {children}
     </div>
   );
@@ -71,19 +73,21 @@ export function LeadHero({
   eyebrow: string;
   stats?: StatItem[];
   supportingText?: ReactNode;
-  title: string;
+  title: ReactNode;
   trustChips?: TrustChip[];
   description: ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden px-6 py-10 md:py-12 lg:px-8 lg:py-14">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_10%,_rgba(251,146,60,0.18),_transparent_30%),radial-gradient(circle_at_85%_0%,_rgba(125,211,252,0.2),_transparent_36%),linear-gradient(180deg,_rgba(255,248,239,0.96),_rgba(248,250,252,0.94))]" />
-      <div className="relative mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
+    <section className="relative overflow-hidden px-6 py-12 md:py-14 lg:px-8 lg:py-16">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_12%,_rgba(251,146,60,0.28),_transparent_28%),radial-gradient(circle_at_88%_4%,_rgba(56,189,248,0.24),_transparent_32%),radial-gradient(circle_at_72%_88%,_rgba(167,139,250,0.18),_transparent_30%),linear-gradient(135deg,_rgba(255,247,237,0.98),_rgba(255,255,255,0.97)_48%,_rgba(240,249,255,0.98))]" />
+      <div className="pointer-events-none absolute left-[4%] top-12 h-24 w-24 rounded-full border border-orange-200/70 bg-white/25" />
+      <div className="pointer-events-none absolute right-[7%] top-24 h-16 w-16 rotate-12 rounded-2xl border border-sky-200/70 bg-white/30" />
+      <div className="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.04fr_0.96fr] lg:items-center">
         <div>
-          <p className="inline-flex rounded-full border border-orange-200/80 bg-white/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-orange-700 shadow-sm">
+          <p className="inline-flex rounded-full border border-orange-200/80 bg-gradient-to-r from-white via-orange-50 to-amber-50 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.22em] text-orange-700 shadow-[0_8px_24px_rgba(249,115,22,0.12)]">
             {eyebrow}
           </p>
-          <h1 className="mt-4 max-w-[720px] text-[38px] font-black leading-[1.03] tracking-[-0.035em] text-slate-950 md:text-[48px] lg:text-[56px]">
+          <h1 className="mt-5 max-w-[760px] text-[40px] font-black leading-[1.02] tracking-[-0.042em] text-slate-950 md:text-[52px] lg:text-[62px]">
             {title}
           </h1>
           <div className="mt-5 max-w-[680px] text-base leading-7 text-slate-700 md:text-lg md:leading-8">
@@ -109,10 +113,18 @@ export function LeadHero({
           {aside}
           {stats?.length ? (
             <div className="grid gap-3 sm:grid-cols-2">
-              {stats.map((item) => (
+              {stats.map((item, index) => (
                 <div
                   key={item.label}
-                  className="rounded-3xl border border-white/80 bg-white/92 p-4 shadow-[0_18px_40px_rgba(15,23,42,0.08)]"
+                  className={`rounded-3xl border p-4 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(15,23,42,0.12)] ${
+                    index % 4 === 0
+                      ? 'border-orange-200/80 bg-gradient-to-br from-white to-orange-50'
+                      : index % 4 === 1
+                        ? 'border-sky-200/80 bg-gradient-to-br from-white to-sky-50'
+                        : index % 4 === 2
+                          ? 'border-emerald-200/80 bg-gradient-to-br from-white to-emerald-50'
+                          : 'border-violet-200/80 bg-gradient-to-br from-white to-violet-50'
+                  }`}
                 >
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
                   <p className="mt-1 text-2xl font-bold text-slate-950">{item.value}</p>
@@ -216,7 +228,7 @@ export function LeadCard({
   return (
     <div
       className={twMerge(
-        'rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-[0_18px_44px_rgba(15,23,42,0.08)]',
+        'rounded-[2rem] border border-slate-200/90 bg-white/95 p-6 shadow-[0_20px_54px_rgba(15,23,42,0.09)]',
         className,
       )}
     >
