@@ -149,7 +149,7 @@ const serviceSchema = {
     itemListElement: [
       {
         '@type': 'Offer',
-        name: 'Focused Stage Licence',
+        name: 'Focused Launch Licence',
         price: '59000',
         priceCurrency: 'INR',
         description: 'Annual single-campus phonics licence for one pathway, up to 5 teachers and 150 learners. GST extra.',
@@ -871,7 +871,7 @@ const ForSchoolsPage: React.FC = () => {
             description="A clear four-stage rollout moves the school from planning to confident classroom delivery, then keeps improving practice across the academic year."
           />
           <div className="relative mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            <div className="pointer-events-none absolute left-[10%] right-[10%] top-6 hidden h-1 rounded-full bg-gradient-to-r from-orange-300 via-sky-300 via-violet-300 to-emerald-300 xl:block" />
+            <div className="pointer-events-none absolute left-[10%] right-[10%] top-6 hidden h-1 rounded-full bg-gradient-to-r from-orange-300 via-violet-300 to-emerald-300 xl:block" />
             {implementationTimeline.map((item, index) => (
               <article
                 key={item.label}
