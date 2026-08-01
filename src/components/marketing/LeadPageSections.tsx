@@ -67,6 +67,7 @@ export function LeadHero({
   title,
   trustChips,
   description,
+  showLeftDecoration = true,
 }: {
   actions?: ReactNode;
   aside?: ReactNode;
@@ -76,11 +77,14 @@ export function LeadHero({
   title: ReactNode;
   trustChips?: TrustChip[];
   description: ReactNode;
+  showLeftDecoration?: boolean;
 }) {
   return (
     <section className="relative overflow-hidden px-6 py-12 md:py-14 lg:px-8 lg:py-16">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_12%,_rgba(251,146,60,0.28),_transparent_28%),radial-gradient(circle_at_88%_4%,_rgba(56,189,248,0.24),_transparent_32%),radial-gradient(circle_at_72%_88%,_rgba(167,139,250,0.18),_transparent_30%),linear-gradient(135deg,_rgba(255,247,237,0.98),_rgba(255,255,255,0.97)_48%,_rgba(240,249,255,0.98))]" />
-      <div className="pointer-events-none absolute left-[4%] top-12 h-24 w-24 rounded-full border border-orange-200/70 bg-white/25" />
+      {showLeftDecoration ? (
+        <div className="pointer-events-none absolute left-[4%] top-12 h-24 w-24 rounded-full border border-orange-200/70 bg-white/25" />
+      ) : null}
       <div className="pointer-events-none absolute right-[7%] top-24 h-16 w-16 rotate-12 rounded-2xl border border-sky-200/70 bg-white/30" />
       <div className="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.04fr_0.96fr] lg:items-center">
         <div>
@@ -257,17 +261,28 @@ export function FAQSection({
 export function FinalLeadCTA({
   actions,
   description,
+  statement,
   title,
 }: {
   actions?: ReactNode;
   description: ReactNode;
+  statement?: ReactNode;
   title: string;
 }) {
   return (
     <LeadCard className="overflow-hidden border-slate-900 bg-slate-900 px-6 py-8 text-white md:px-8">
-      <h2 className="text-2xl font-bold sm:text-3xl">{title}</h2>
-      <div className="mt-3 max-w-3xl text-sm leading-7 text-slate-200 sm:text-base">{description}</div>
-      {actions ? <div className="mt-6 flex flex-wrap gap-3">{actions}</div> : null}
+      <div className={statement ? 'grid gap-7 lg:grid-cols-[1.08fr_0.92fr] lg:items-center' : ''}>
+        <div>
+          <h2 className="text-2xl font-bold sm:text-3xl">{title}</h2>
+          <div className="mt-3 max-w-3xl text-sm leading-7 text-slate-200 sm:text-base">{description}</div>
+          {actions ? <div className="mt-6 flex flex-wrap gap-3">{actions}</div> : null}
+        </div>
+        {statement ? (
+          <div className="rounded-3xl border border-white/15 bg-white/[0.07] p-5 shadow-inner md:p-6">
+            {statement}
+          </div>
+        ) : null}
+      </div>
     </LeadCard>
   );
 }

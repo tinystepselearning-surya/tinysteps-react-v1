@@ -53,11 +53,17 @@ describe('ForSchoolsPage proposal CTAs', () => {
       'Hello Tiny Steps, I would like to request a phonics pilot proposal for our school.',
     );
 
-    for (const link of screen.getAllByRole('link', { name: 'Request a School Proposal' })) {
+    for (const price of ['₹59,000', '₹1.49 lakh', '₹2.99 lakh', '₹24,900 + GST']) {
+      expect(screen.getAllByText((content) => content.includes(price)).length).toBeGreaterThan(0);
+    }
+    expect(screen.getAllByText('Progressive teacher training and rehearsal labs led by Tiny Steps trainers')).toHaveLength(3);
+    expect(document.body).not.toHaveTextContent(/Two live teacher-training labs|Four live training|progress-review cycles|observation and leadership reviews/i);
+
+    for (const link of screen.getAllByRole('link', { name: 'Request a School Partnership Proposal' })) {
       expectWhatsAppLink(link, GENERAL_PROPOSAL_MESSAGE);
     }
 
-    for (const link of screen.getAllByRole('link', { name: 'WhatsApp Partnership Team' })) {
+    for (const link of screen.getAllByRole('link', { name: 'Discuss Your School’s Reading Goals' })) {
       expectWhatsAppLink(link, GENERAL_PROPOSAL_MESSAGE);
     }
   });
@@ -70,29 +76,19 @@ describe('ForSchoolsPage proposal CTAs', () => {
     );
 
     expect(
-      screen.getByRole('heading', { name: 'Visible Reading Progress Protects School Admissions' }),
+      screen.getByRole('heading', { name: 'Visible reading progress strengthens parent confidence' }),
     ).toBeInTheDocument();
     expect(screen.getByText('The enrolment business case')).toBeInTheDocument();
 
-    const outcomes = [
-      'Retain existing admissions by giving parents visible evidence of learning.',
-      'Build parent confidence through measurable reading, blending, spelling and writing progress.',
-      'Strengthen the school’s reputation when children demonstrate their skills at home and in the community.',
-      'Attract new admissions through parent recommendations and positive word of mouth.',
-      'Differentiate the school with a structured foundational-literacy programme rather than content alone.',
-    ];
+    const outcomes = ['Parent confidence', 'Continued enrolment', 'Reputation and referrals', 'Leadership visibility'];
     for (const outcome of outcomes) {
       expect(screen.getByText(outcome)).toBeInTheDocument();
     }
 
-    expect(
-      screen.getByText(
-        /For schools in India looking to improve student retention, protect annual re-enrolments and increase new admissions/,
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Strong early literacy is not only an academic priority/)).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent('The majority of schools will lose admissions.');
 
-    const faqQuestion = 'How can a school improve student retention and increase admissions?';
+    const faqQuestion = 'How can visible reading progress support enrolment and reputation?';
     expect(screen.getByText(faqQuestion)).toBeInTheDocument();
 
     await waitFor(() => {
@@ -105,7 +101,7 @@ describe('ForSchoolsPage proposal CTAs', () => {
       const faqSchema = schemas.find((schema) => schema['@type'] === 'FAQPage');
       const structuredQuestion = faqSchema?.mainEntity?.find((item) => item.name === faqQuestion);
       expect(structuredQuestion?.acceptedAnswer?.text).toContain(
-        'A structured phonics programme, supported by teacher training and regular monitoring',
+        'A structured phonics programme, supported by teacher training and regular academic review',
       );
     });
   });

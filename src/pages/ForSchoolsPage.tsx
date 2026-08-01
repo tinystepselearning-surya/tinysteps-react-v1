@@ -27,7 +27,7 @@ const pageDescription =
 
 const faqItems = [
   {
-    question: 'What is the Tiny Steps phonics program for schools?',
+    question: 'What is the Tiny Steps phonics programme for schools?',
     answer:
       'It is an annual, campus-based partnership that gives a school a structured phonics scope and sequence, classroom-ready teaching content, printable practice, assessment tools, live teacher training, and a dedicated learning partner who supports implementation throughout the academic year.',
   },
@@ -37,17 +37,17 @@ const faqItems = [
       'Your existing teachers teach the children. Tiny Steps trains and equips them, while a dedicated learning partner coordinates implementation check-ins, classroom guidance, progress reviews, and leadership updates across the academic year.',
   },
   {
-    question: 'Which ages and grades does the program support?',
+    question: 'Which ages and stages does the programme support?',
     answer:
-      'The pathway is designed mainly for ages 3–10, from early sound awareness and letter-sound knowledge through blending, spelling patterns, reading fluency, and early writing. The exact starting stage is selected after a school discovery and baseline review.',
+      'The pathway is designed for Early Years, Pre-Primary and Lower Primary learners aged 3–10, from early sound awareness and letter-sound knowledge through blending, spelling patterns, reading fluency, and early writing. The exact starting stage is selected after a school discovery and baseline review.',
   },
   {
-    question: 'Does the program replace our English curriculum?',
+    question: 'Does the programme replace our English curriculum?',
     answer:
       'No. It can sit inside the existing English timetable as the school’s structured phonics and foundational reading strand. We map the implementation to the school calendar, grade expectations, and available teaching periods.',
   },
   {
-    question: 'Is the program suitable for CBSE, ICSE, Cambridge, or IB schools?',
+    question: 'Is the programme suitable for State Board, CBSE, ICSE, Cambridge, or IB schools?',
     answer:
       'Yes. The phonics progression is board-agnostic and can complement CBSE, ICSE, Cambridge, IB, and other international curricula. Tiny Steps does not claim affiliation with or endorsement by these boards.',
   },
@@ -64,7 +64,7 @@ const faqItems = [
   {
     question: 'What makes the Tiny Steps pedagogy research-aligned?',
     answer:
-      'The pathway uses systematic and cumulative instruction, explicit modelling, phonemic awareness linked to print, regular decoding and encoding practice, connected reading and writing, progress checks, and assessment-informed reteaching. Tiny Steps describes the curriculum as research-aligned; it does not claim that the proprietary program has independently proven outcomes.',
+      'The pathway uses systematic and cumulative instruction, explicit modelling, phonemic awareness linked to print, regular decoding and encoding practice, connected reading and writing, progress checks, and assessment-informed reteaching. Tiny Steps describes the curriculum as research-aligned; it does not claim that the proprietary programme has independently proven outcomes.',
   },
   {
     question: 'How are digital games and activities used?',
@@ -74,7 +74,7 @@ const faqItems = [
   {
     question: 'What teacher training is included?',
     answer:
-      'Training covers phonemic awareness, sound-to-symbol teaching, blending and segmenting, correction routines, lesson delivery, assessment, and classroom practice. The number of live training labs and coaching sessions depends on the partnership plan.',
+      'Progressive teacher training and rehearsal labs cover phonemic awareness, sound-to-symbol teaching, blending and segmenting, correction routines, lesson delivery, assessment, and classroom practice. The scope and cadence are confirmed in the school’s written proposal.',
   },
   {
     question: 'What does the dedicated learning partner do?',
@@ -87,9 +87,9 @@ const faqItems = [
       'Schools receive baseline, checkpoint, and end-of-cycle assessment guidance across sound knowledge, blending, segmenting, decoding, spelling, and fluency. Leadership reviews focus on cohort patterns and practical next steps rather than marks alone.',
   },
   {
-    question: 'How can a school improve student retention and increase admissions?',
+    question: 'How can visible reading progress support enrolment and reputation?',
     answer:
-      'Schools can improve retention by giving parents visible evidence of their child’s learning. In the early years, confident reading, blending, spelling and writing are among the clearest signs of progress. A structured phonics programme, supported by teacher training and regular monitoring, can strengthen parent confidence, improve the school’s reputation and encourage both re-enrolments and referrals.',
+      'Schools can strengthen parent confidence by making learner progress easier to understand. In Early Years, Pre-Primary and Lower Primary, observable development in reading, blending, spelling and writing gives families clearer evidence of classroom learning. A structured phonics programme, supported by teacher training and regular academic review, can support continued enrolment and contribute to a strong school reputation and credible parent recommendations.',
   },
   {
     question: 'How much does the school phonics partnership cost?',
@@ -282,11 +282,12 @@ const pedagogyCycle = [
 ];
 
 const learningSequence = [
-  { stage: 'Start', title: 'Hear and notice sounds', detail: 'Rhymes, syllables, phonemic awareness, and beginning, middle, and ending sounds.' },
-  { stage: 'Build', title: 'Connect sounds to print', detail: 'Letter-sound knowledge, formation, recall, and precise sound production.' },
-  { stage: 'Read', title: 'Blend and decode', detail: 'Oral blending, CVC words, digraphs, vowel teams, and increasingly complex words.' },
-  { stage: 'Spell', title: 'Segment and encode', detail: 'Sound counting, spelling choices, dictation, common patterns, and rule application.' },
-  { stage: 'Apply', title: 'Read and write with confidence', detail: 'Fluency, sentence reading, comprehension, spelling in context, and early writing.' },
+  { title: 'Hear and distinguish sounds', detail: 'Build phonemic awareness through rhyme, syllables, and sounds within spoken words.' },
+  { title: 'Connect sounds with letters', detail: 'Develop accurate letter–sound knowledge, recall, formation, and sound production.' },
+  { title: 'Blend and decode words', detail: 'Move from oral blending into CVC words, digraphs, vowel teams, and more complex words.' },
+  { title: 'Read with growing fluency', detail: 'Build accuracy, phrasing, pace, and confidence through cumulative reading practice.' },
+  { title: 'Spell and write with confidence', detail: 'Apply segmenting, spelling choices, dictation, patterns, and rules in meaningful writing.' },
+  { title: 'Build comprehension and independent reading', detail: 'Use secure decoding and fluency to understand connected text and read more independently.' },
 ];
 
 const implementationTimeline = [
@@ -317,33 +318,33 @@ const pricingPlans = [
     name: 'Focused Launch Licence',
     price: '₹59,000',
     qualifier: '+ GST • one campus • one academic year',
-    description: 'Start with one age band or one selected phonics pathway.',
+    description: 'Start with one school stage or one selected phonics pathway.',
     whatsAppMessage:
       'Hello Tiny Steps, I am interested in the Focused Launch Licence for our school. Please share the proposal and next steps.',
     items: [
       'One selected phonics pathway',
       'Up to 5 teachers and 150 learners',
-      'Two live teacher-training labs',
+      'Progressive teacher training and rehearsal labs led by Tiny Steps trainers',
       'Classroom content and print licence',
       'Dedicated learning partner and monthly office hour',
-      'Two progress-review cycles',
+      'Year-long quarterly progress reviews with school leadership',
     ],
   },
   {
     name: 'Whole-School Partnership',
     price: '₹1.49 lakh',
     qualifier: '+ GST • one campus • one academic year',
-    description: 'Build one consistent phonics approach across early years and primary grades.',
+    description: 'Build one consistent phonics approach across Early Years, Pre-Primary and Lower Primary.',
     whatsAppMessage:
       'Hello Tiny Steps, I am interested in the Whole-School Partnership for our school. Please share the proposal and next steps.',
     featured: true,
     items: [
       'Complete foundation-to-advanced pathway',
       'Up to 12 teachers and 400 learners',
-      'Four live training and rehearsal labs',
+      'Progressive teacher training and rehearsal labs led by Tiny Steps trainers',
       'All teaching, practice, and assessment resources',
       'Dedicated learning partner and monthly coaching',
-      'Three observation and leadership reviews',
+      'Year-long quarterly progress reviews with school leadership',
     ],
   },
   {
@@ -356,10 +357,10 @@ const pricingPlans = [
     items: [
       'Scope for up to 3 campuses',
       'Up to 25 teachers and 900 learners',
-      'Central coordinator enablement',
-      'Shared rollout and reporting framework',
+      'Progressive teacher training and rehearsal labs led by Tiny Steps trainers',
+      'Central coordinator enablement with a shared rollout and reporting framework',
       'Dedicated learning partner and campus reviews',
-      'Custom expansion and renewal plan',
+      'Year-long quarterly progress reviews with school leadership',
     ],
   },
 ];
@@ -373,15 +374,26 @@ const comparisonRows = [
 ];
 
 const enrollmentBusinessOutcomes = [
-  'Retain existing admissions by giving parents visible evidence of learning.',
-  'Build parent confidence through measurable reading, blending, spelling and writing progress.',
-  'Strengthen the school’s reputation when children demonstrate their skills at home and in the community.',
-  'Attract new admissions through parent recommendations and positive word of mouth.',
-  'Differentiate the school with a structured foundational-literacy programme rather than content alone.',
+  {
+    title: 'Parent confidence',
+    detail: 'Clear, observable progress helps families understand the value being created in the classroom.',
+  },
+  {
+    title: 'Continued enrolment',
+    detail: 'When parents can see their child becoming a more confident reader, they have stronger reasons to continue their relationship with the school.',
+  },
+  {
+    title: 'Reputation and referrals',
+    detail: 'Consistent literacy development contributes to a stronger academic reputation and more credible parent-to-parent advocacy.',
+  },
+  {
+    title: 'Leadership visibility',
+    detail: 'A structured review process gives school leaders clearer insight into programme delivery, teacher readiness and learner progression.',
+  },
 ];
 
 const leadershipStats = [
-  { label: 'Wider Tiny Steps reach', value: '5000+', helper: 'Children across our broader English-learning programs' },
+  { label: 'Wider Tiny Steps reach', value: '5000+', helper: 'Children across our broader English-learning programmes' },
   { label: 'Wider global experience', value: '15+ countries', helper: 'Diverse learner and family contexts' },
   { label: 'Delivery model', value: 'Your teachers', helper: 'Tiny Steps trains, equips, and supports them' },
   { label: 'Implementation', value: 'Full year', helper: 'Not a one-time workshop or content handover' },
@@ -398,16 +410,16 @@ const ForSchoolsPage: React.FC = () => {
 
   const primaryCtas = [
     {
-      label: 'Request a School Proposal',
+      label: 'Request a School Partnership Proposal',
       href: generalSchoolProposalUrl,
       variant: 'primary' as const,
-      onClick: () => trackSchoolCta('Request a School Proposal', 'hero', generalSchoolProposalUrl),
+      onClick: () => trackSchoolCta('Request a School Partnership Proposal', 'hero', generalSchoolProposalUrl),
     },
     {
-      label: 'WhatsApp Partnership Team',
+      label: 'Discuss Your School’s Reading Goals',
       href: generalSchoolProposalUrl,
       variant: 'secondary' as const,
-      onClick: () => trackSchoolCta('WhatsApp Partnership Team', 'hero', generalSchoolProposalUrl),
+      onClick: () => trackSchoolCta('Discuss Your School’s Reading Goals', 'hero', generalSchoolProposalUrl),
     },
   ];
 
@@ -422,7 +434,8 @@ const ForSchoolsPage: React.FC = () => {
       />
 
       <LeadHero
-        eyebrow="For Indian & International Schools • Ages 3–10"
+        eyebrow="For Indian & International Schools • Early Years to Lower Primary"
+        showLeftDecoration={false}
         title={
           <>
             Build confident readers with a{' '}
@@ -462,7 +475,7 @@ const ForSchoolsPage: React.FC = () => {
                 target={item.href?.startsWith('http') ? '_blank' : undefined}
                 rel={item.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
                 onClick={item.onClick}
-                className={className}
+                className={`${className} active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900`}
               >
                 {item.label}
               </a>
@@ -542,7 +555,7 @@ const ForSchoolsPage: React.FC = () => {
               <h2 className="mt-3 text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl">
                 Children are not failing. Essential reading skills are being left to chance.
               </h2>
-              <div className="mt-5 inline-flex rounded-full border border-emerald-300/25 bg-emerald-300/10 px-4 py-2 text-sm font-bold text-emerald-200">
+              <div className="mt-6 inline-flex rounded-2xl border border-emerald-300/30 bg-emerald-300/10 px-5 py-3 text-xl font-black leading-tight text-emerald-100 shadow-[0_14px_30px_rgba(16,185,129,0.08)] md:text-2xl">
                 This is a system gap—not a child failure.
               </div>
               <p className="school-answer mt-5 text-base leading-8 text-slate-200">
@@ -563,7 +576,7 @@ const ForSchoolsPage: React.FC = () => {
                   href="https://asercentre.org/wp-content/uploads/2022/12/ASER-2024-National-findings.pdf"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-3 inline-flex text-sm font-semibold text-orange-300 underline decoration-orange-300/50 underline-offset-4"
+                  className="mt-3 inline-flex rounded-sm text-sm font-semibold text-orange-300 underline decoration-orange-300/50 underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-300"
                 >
                   Read the ASER 2024 national findings
                 </a>
@@ -614,7 +627,7 @@ const ForSchoolsPage: React.FC = () => {
                     href="https://eric.ed.gov/?id=EJ1349379"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-semibold text-sky-200 underline decoration-sky-200/50 underline-offset-4"
+                    className="rounded-sm font-semibold text-sky-200 underline decoration-sky-200/50 underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-200"
                   >
                     Specialist phonics knowledge
                   </a>
@@ -622,7 +635,7 @@ const ForSchoolsPage: React.FC = () => {
                     href="https://eric.ed.gov/?id=EJ1298044"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-semibold text-sky-200 underline decoration-sky-200/50 underline-offset-4"
+                    className="rounded-sm font-semibold text-sky-200 underline decoration-sky-200/50 underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-200"
                   >
                     Teacher training evidence review
                   </a>
@@ -746,14 +759,14 @@ const ForSchoolsPage: React.FC = () => {
                 <Link
                   to="/class-samples"
                   onClick={() => trackSchoolCta('View class samples', 'pedagogy', '/class-samples')}
-                  className="inline-flex h-11 items-center justify-center rounded-full bg-orange-400 px-5 text-sm font-bold text-slate-950 transition hover:-translate-y-0.5 hover:bg-orange-300"
+                  className="inline-flex h-11 items-center justify-center rounded-full bg-orange-400 px-5 text-sm font-bold text-slate-950 transition hover:-translate-y-0.5 hover:bg-orange-300 active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-300 motion-reduce:transform-none"
                 >
                   See Tiny Steps in action
                 </Link>
                 <Link
                   to="/free-phonics-games-for-kids"
                   onClick={() => trackSchoolCta('Preview phonics games', 'pedagogy', '/free-phonics-games-for-kids')}
-                  className="inline-flex h-11 items-center justify-center rounded-full border border-white/25 bg-white/10 px-5 text-sm font-bold text-white transition hover:bg-white/15"
+                  className="inline-flex h-11 items-center justify-center rounded-full border border-white/25 bg-white/10 px-5 text-sm font-bold text-white transition hover:bg-white/15 active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white motion-reduce:transform-none"
                 >
                   Preview phonics games
                 </Link>
@@ -815,19 +828,19 @@ const ForSchoolsPage: React.FC = () => {
       </LeadSection>
 
       <LeadSection>
-        <div className="grid gap-5 lg:grid-cols-[1.08fr_0.92fr]">
+        <div className="grid gap-5">
           <LeadCard className="overflow-hidden bg-gradient-to-br from-white to-orange-50/45">
             <LeadSectionHeading
               eyebrow="Student learning journey"
               title="From hearing sounds to reading and writing with confidence"
               description="Each stage builds on the previous one, so children move forward without losing the foundations they still need."
             />
-            <ol className="mt-8">
+            <ol className="relative mt-8 grid gap-5 before:pointer-events-none before:absolute before:left-[8%] before:right-[8%] before:top-6 before:hidden before:h-1 before:rounded-full before:bg-gradient-to-r before:from-orange-300 before:via-violet-300 before:to-emerald-300 before:content-[''] lg:grid-cols-6 lg:gap-3 lg:before:block">
               {learningSequence.map((item, index) => (
-                <li key={item.title} className="group grid grid-cols-[60px_1fr] gap-4">
-                  <div className="flex flex-col items-center">
+                <li key={item.title} className="group relative grid grid-cols-[52px_1fr] gap-3 lg:block lg:text-center">
+                  <div className="flex h-full flex-col items-center lg:h-auto">
                     <span
-                      className={`flex h-12 w-12 items-center justify-center rounded-full border-4 border-white text-sm font-black shadow-md transition duration-300 group-hover:scale-110 ${
+                      className={`relative z-10 flex h-12 w-12 items-center justify-center rounded-full border-4 border-white text-sm font-black shadow-md transition duration-300 group-hover:scale-105 motion-reduce:transform-none ${
                         index === 0
                           ? 'bg-orange-400 text-slate-950'
                           : index === 1
@@ -836,36 +849,23 @@ const ForSchoolsPage: React.FC = () => {
                               ? 'bg-violet-400 text-white'
                               : index === 3
                                 ? 'bg-emerald-400 text-slate-950'
-                                : 'bg-rose-400 text-white'
+                                : index === 4
+                                  ? 'bg-rose-400 text-white'
+                                  : 'bg-amber-300 text-slate-950'
                       }`}
                     >
                       0{index + 1}
                     </span>
                     {index < learningSequence.length - 1 ? (
                       <span
-                        className="my-1 min-h-8 w-1 flex-1 rounded-full bg-gradient-to-b from-orange-300 via-violet-300 to-emerald-300"
+                        className="my-1 min-h-8 w-1 flex-1 rounded-full bg-gradient-to-b from-orange-300 via-violet-300 to-emerald-300 lg:hidden"
                         aria-hidden="true"
                       />
                     ) : null}
                   </div>
-                  <div className={index < learningSequence.length - 1 ? 'pb-6' : 'pb-1'}>
-                    <span
-                      className={`inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] ${
-                        index === 0
-                          ? 'bg-orange-100 text-orange-800'
-                          : index === 1
-                            ? 'bg-sky-100 text-sky-800'
-                            : index === 2
-                              ? 'bg-violet-100 text-violet-800'
-                              : index === 3
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-rose-100 text-rose-800'
-                      }`}
-                    >
-                      {item.stage}
-                    </span>
-                    <h3 className="mt-2 text-lg font-bold text-slate-950">{item.title}</h3>
-                    <p className="mt-1 text-sm leading-6 text-slate-700">{item.detail}</p>
+                  <div className={`${index < learningSequence.length - 1 ? 'pb-6' : 'pb-1'} lg:pb-0 lg:pt-4`}>
+                    <h3 className="text-base font-bold leading-6 text-slate-950">{item.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">{item.detail}</p>
                   </div>
                 </li>
               ))}
@@ -874,26 +874,29 @@ const ForSchoolsPage: React.FC = () => {
 
           <LeadCard className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 text-white">
             <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-violet-400/15 blur-2xl" />
-            <div className="relative">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-300">India-relevant foundations</p>
-              <h2 className="mt-3 text-3xl font-black tracking-tight text-white">Phonics inside a broader literacy journey</h2>
-              <p className="school-answer mt-4 text-sm leading-7 text-slate-200">
-                India’s National Curriculum Framework for the Foundational Stage connects phonological awareness,
-                sound-symbol association, decoding, comprehension, and writing. Tiny Steps turns these linked
-                skills into a practical classroom sequence.
-              </p>
-              <a
-                href="https://ncert.nic.in/pdf/NCF_for_Foundational_Stage_20_October_2022.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-5 inline-flex text-sm font-semibold text-orange-300 underline decoration-orange-300/50 underline-offset-4"
-              >
-                Read the official NCERT framework
-              </a>
-              <div className="mt-7 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm leading-7 text-slate-200">
-                <strong className="text-white">Important:</strong> Tiny Steps is an independent education provider.
-                Curriculum compatibility does not mean government, school-board, IB, Cambridge, or publisher
-                endorsement.
+            <div className="relative grid gap-7 lg:grid-cols-[0.74fr_1.26fr] lg:items-center">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-300">India-relevant foundations</p>
+                <h2 className="mt-3 text-3xl font-black tracking-tight text-white">Board-aligned. Methodology-led.</h2>
+                <p className="mt-4 text-lg font-bold leading-7 text-orange-200">
+                  One structured reading pathway. Adaptable across curricula.
+                </p>
+              </div>
+              <div className="school-answer rounded-3xl border border-white/10 bg-white/[0.06] p-5 md:p-6">
+                <p className="text-sm leading-7 text-slate-200 md:text-base">
+                  State Boards, CBSE, ICSE, Cambridge and IB may differ in curriculum structure, but schools share
+                  one essential responsibility: ensuring that children learn how to decode, spell and read with
+                  confidence. The challenge is often not the syllabus itself, but the absence of a consistent,
+                  explicit and cumulative classroom methodology.
+                </p>
+                <p className="mt-4 text-sm leading-7 text-slate-200 md:text-base">
+                  Tiny Steps provides a board-agnostic phonics framework that strengthens existing literacy
+                  instruction and fits within the school timetable.
+                </p>
+                <div className="mt-5 border-t border-white/10 pt-4 text-xs leading-6 text-slate-300">
+                  Tiny Steps is an independent education provider. Curriculum compatibility does not mean
+                  government, school-board, IB, Cambridge, or publisher endorsement.
+                </div>
               </div>
             </div>
           </LeadCard>
@@ -955,14 +958,23 @@ const ForSchoolsPage: React.FC = () => {
             title="Buying phonics content is not the same as implementing it well"
             description="Many school purchases stop at curriculum access or an initial workshop. The missing layer is ongoing guidance that turns good content into consistent classroom practice."
           />
-          <div className="mt-7 overflow-x-auto rounded-2xl border border-slate-200">
+          <p className="mt-6 text-xs font-semibold text-slate-500 sm:hidden">Swipe horizontally to compare all approaches →</p>
+          <div
+            className="mt-2 overflow-x-auto rounded-2xl border border-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-500 sm:mt-7"
+            role="region"
+            aria-label="Implementation approach comparison"
+            tabIndex={0}
+          >
             <table className="min-w-[720px] w-full border-collapse text-left text-sm">
               <thead className="bg-slate-950 text-white">
                 <tr>
                   <th className="px-4 py-4 font-semibold">What the school needs</th>
                   <th className="px-4 py-4 font-semibold">Resource downloads</th>
                   <th className="px-4 py-4 font-semibold">One-time workshop</th>
-                  <th className="bg-orange-600 px-4 py-4 font-semibold">Tiny Steps partnership</th>
+                  <th className="border-x border-orange-300 bg-orange-600 px-4 py-4 font-bold">
+                    <span className="block text-[10px] uppercase tracking-[0.16em] text-orange-100">Complete Partnership</span>
+                    Tiny Steps partnership
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -971,7 +983,10 @@ const ForSchoolsPage: React.FC = () => {
                     <th className="px-4 py-4 font-semibold text-slate-950">{row.feature}</th>
                     <td className="px-4 py-4 text-slate-600">{row.downloads}</td>
                     <td className="px-4 py-4 text-slate-600">{row.workshop}</td>
-                    <td className="bg-orange-50/70 px-4 py-4 font-semibold text-orange-900">{row.partnership}</td>
+                    <td className="border-x border-orange-200 bg-orange-50 px-4 py-4 font-semibold text-orange-950">
+                      <span aria-hidden="true" className="mr-2 text-orange-600">✓</span>
+                      {row.partnership}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -1016,30 +1031,32 @@ const ForSchoolsPage: React.FC = () => {
                 The enrolment business case
               </p>
               <h2 className="mt-3 text-3xl font-black leading-tight tracking-tight text-slate-950 md:text-4xl">
-                Visible Reading Progress Protects School Admissions
+                Visible reading progress strengthens parent confidence
               </h2>
               <div className="school-answer mt-5 space-y-4 text-sm leading-7 text-slate-700 md:text-base">
                 <p>
-                  Parents may accept a good progress card, but they judge real learning by what their child can
-                  confidently read, write and spell at home.
+                  In the Early Years, Pre-Primary and Lower Primary stages, families often evaluate the quality of
+                  schooling through the progress they can observe in their child’s reading, blending, spelling and
+                  writing. Report-card scores are important, but visible literacy development gives parents clearer
+                  evidence that classroom learning is translating into lasting capability.
                 </p>
                 <p>
-                  When children in Nursery, Pre-K, LKG, UKG and Grades 1–2 do not show visible literacy progress,
-                  families may lose confidence and consider changing schools during the next admission cycle.
+                  Demonstrable reading progress can strengthen parent trust, support continued enrolment and
+                  encourage positive recommendations within the school community.
                 </p>
               </div>
-              <blockquote className="mt-6 rounded-3xl border border-orange-200 bg-white/85 p-5 text-lg font-bold leading-8 text-slate-950 shadow-[0_16px_36px_rgba(249,115,22,0.12)]">
-                “When parents can see progress, they trust the school, continue their child’s admission and
-                recommend the school to others.”
-              </blockquote>
+              <div className="mt-6 rounded-3xl border border-orange-200 bg-white/85 p-5 text-lg font-bold leading-8 text-slate-950 shadow-[0_16px_36px_rgba(249,115,22,0.12)]">
+                Strong early literacy is not only an academic priority. It is part of the trust a school builds with
+                every family.
+              </div>
             </div>
 
             <div className="rounded-[1.75rem] border border-white/90 bg-slate-950 p-5 text-white shadow-[0_24px_54px_rgba(15,23,42,0.2)] md:p-6">
-              <h3 className="text-xl font-black tracking-tight text-white">What visible progress helps a school achieve</h3>
+              <h3 className="text-xl font-black tracking-tight text-white">How visible progress supports school leadership</h3>
               <ul className="mt-5 space-y-3">
                 {enrollmentBusinessOutcomes.map((outcome, index) => (
                   <li
-                    key={outcome}
+                    key={outcome.title}
                     className="flex gap-3 rounded-2xl border border-white/10 bg-white/5 p-3.5 text-sm leading-6 text-slate-100 transition hover:border-orange-300/40 hover:bg-white/10"
                   >
                     <span
@@ -1048,19 +1065,16 @@ const ForSchoolsPage: React.FC = () => {
                     >
                       {index + 1}
                     </span>
-                    <span>{outcome}</span>
+                    <span>
+                      <strong className="block text-white">{outcome.title}</strong>
+                      <span className="mt-0.5 block text-slate-300">{outcome.detail}</span>
+                    </span>
                   </li>
                 ))}
               </ul>
             </div>
           </div>
         </LeadCard>
-        <p className="school-answer mx-auto mt-5 max-w-5xl text-center text-sm leading-7 text-slate-700 md:text-base">
-          For schools in India looking to improve student retention, protect annual re-enrolments and increase new
-          admissions, visible progress in early reading is a powerful business advantage. Tiny Steps helps schools
-          build consistent phonics outcomes across Nursery, Pre-K, LKG, UKG and primary grades through structured
-          content, teacher training, implementation support and continuous progress monitoring.
-        </p>
       </LeadSection>
 
       <LeadSection id="pricing">
@@ -1135,10 +1149,10 @@ const ForSchoolsPage: React.FC = () => {
                         buildPublicWhatsAppUrl(plan.whatsAppMessage),
                       )
                     }
-                    className={`mt-6 inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-bold transition ${
+                    className={`mt-6 inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-bold transition active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transform-none ${
                       plan.featured
-                        ? 'bg-slate-950 text-white hover:bg-slate-800'
-                        : 'border border-white/20 bg-white/10 text-white hover:bg-white/15'
+                        ? 'bg-slate-950 text-white hover:bg-slate-800 focus-visible:outline-slate-950'
+                        : 'border border-white/20 bg-white/10 text-white hover:bg-white/15 focus-visible:outline-white'
                     }`}
                   >
                     Request this plan
@@ -1161,7 +1175,7 @@ const ForSchoolsPage: React.FC = () => {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackSchoolCta('Request pilot proposal', 'pricing', pilotProposalUrl)}
-              className="inline-flex h-11 items-center justify-center rounded-full bg-orange-400 px-5 text-sm font-bold text-slate-950 transition hover:-translate-y-0.5 hover:bg-orange-300"
+              className="inline-flex h-11 items-center justify-center rounded-full bg-orange-400 px-5 text-sm font-bold text-slate-950 transition hover:-translate-y-0.5 hover:bg-orange-300 active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-300 motion-reduce:transform-none"
             >
               Request pilot proposal
             </a>
@@ -1241,7 +1255,7 @@ const ForSchoolsPage: React.FC = () => {
                         : 'border-violet-200'
                 }`}
               >
-                <summary className="flex cursor-pointer list-none items-start justify-between gap-4 font-bold text-slate-950 marker:content-none">
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-4 rounded-lg font-bold text-slate-950 marker:content-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-500">
                   <span>{item.question}</span>
                   <span
                     aria-hidden="true"
@@ -1269,12 +1283,26 @@ const ForSchoolsPage: React.FC = () => {
               <span className="font-semibold text-white">{PUBLIC_CONTACT_EMAIL}</span> or speak with the partnership team.
             </>
           }
+          statement={
+            <>
+              <p className="text-base font-bold leading-7 text-white">
+                A successful phonics programme is more than a collection of resources.
+              </p>
+              <p className="mt-3 text-sm leading-7 text-slate-200">
+                It requires a clear sequence, prepared teachers, consistent classroom routines and ongoing academic
+                review. Tiny Steps helps schools bring these elements together across the academic year.
+              </p>
+              <p className="mt-4 border-t border-white/10 pt-4 text-sm font-semibold text-orange-200">
+                Your teachers lead the classroom. Tiny Steps strengthens the system behind them.
+              </p>
+            </>
+          }
           actions={
             <CourseCTAGroup
               items={[
                 ...primaryCtas.map((item) => ({
                   ...item,
-                  onClick: () => trackSchoolCta(item.label, 'final cta', '/contact'),
+                  onClick: () => trackSchoolCta(item.label, 'final cta', generalSchoolProposalUrl),
                 })),
                 {
                   label: 'Explore Our Phonics Expertise',
@@ -1289,7 +1317,7 @@ const ForSchoolsPage: React.FC = () => {
                     key={item.label}
                     to={item.to}
                     onClick={item.onClick}
-                    className={`${className} !border-white/30 !bg-transparent !text-white hover:!bg-white/10`}
+                    className={`${className} !border-white/30 !bg-transparent !text-white hover:!bg-white/10 active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white motion-reduce:transform-none`}
                   >
                     {item.label}
                   </Link>
@@ -1300,7 +1328,7 @@ const ForSchoolsPage: React.FC = () => {
                     target={item.href?.startsWith('http') ? '_blank' : undefined}
                     rel={item.href?.startsWith('http') ? 'noopener noreferrer' : undefined}
                     onClick={item.onClick}
-                    className={`${className} ${
+                    className={`${className} active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white motion-reduce:transform-none ${
                       item.variant === 'primary'
                         ? '!bg-orange-400 !text-slate-950 hover:!bg-orange-300'
                         : item.variant === 'secondary'
