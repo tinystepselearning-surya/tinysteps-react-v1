@@ -12,12 +12,15 @@ The school-market opportunity is not another phonics teacher certificate or a li
 2. classroom-ready teaching and practice content;
 3. live training for the school's existing teachers;
 4. assessment and reteaching guidance;
-5. coaching and implementation reviews across the academic year; and
-6. clear campus-level usage rights.
+5. a dedicated Tiny Steps learning partner who coordinates implementation throughout the academic year;
+6. coaching, delivery check-ins, and progress-review discussions; and
+7. clear campus-level usage rights.
 
 Public international benchmarks range from roughly £400 to £899 per year for school phonics memberships and bundles. More comprehensive or international implementations frequently use bespoke quotes. Indian providers often publish individual teacher-training fees or sell materials, while institutional programmes generally use enquiry-led pricing.
 
 That creates room for transparent, premium-but-accessible India pricing with a low-risk pilot and a more valuable whole-school plan.
+
+The central whitespace is the **implementation gap**. A school can buy curriculum access or complete a launch workshop and still be left to manage teacher readiness, delivery consistency, classroom questions, and progress reviews alone. Tiny Steps closes that gap by assigning every annual school a dedicated learning partner who stays connected across the academic year.
 
 ## Competitor and adjacent-market findings
 
@@ -57,31 +60,34 @@ Why: reduces procurement risk and creates the evidence needed for a larger adopt
 
 Why: sits above low-cost content and certificate products while remaining accessible to a school testing one age band.
 
-### 3. Whole-School Phonics Partnership — ₹99,000 + GST per campus per academic year
+### 3. Whole-School Phonics Partnership — ₹1.49 lakh + GST per campus per academic year
 
 - Full foundation-to-advanced pathway
 - Up to 12 teachers and 400 learners
 - Four live training and rehearsal labs
 - Teaching, practice, and assessment resources
+- Dedicated Tiny Steps learning partner
 - Monthly coaching and priority support
 - Three observation and leadership reviews
 
-Why: this is the recommended plan. It is comparable to international membership benchmarks but adds India-context implementation and high-touch live support.
+Why: this is the recommended plan. The revised price reflects the complete pathway, higher teacher and learner limits, four live labs, and a named learning partner responsible for implementation continuity—not content access alone.
 
-### 4. Multi-Campus Partnership — from ₹1.75 lakh + GST per academic year
+### 4. Multi-Campus Partnership — ₹2.99 lakh + GST per academic year
 
 - Up to 3 campuses in the base scope
 - Up to 25 teachers and 900 learners
 - Central coordinator enablement
+- Dedicated Tiny Steps learning partner
 - Shared rollout and reporting framework
 - Campus-level reviews
 - Custom expansion and renewal plan
 
-Why: school networks need a governance and training layer, not simply multiplied logins.
+Why: school networks need a governance and training layer, not simply multiplied logins. The base price reflects coordination across up to three campuses, teacher enablement, and campus-level implementation reviews.
 
 ## Positioning and messaging decisions
 
 - Lead with “your teachers deliver; Tiny Steps trains, equips, and supports them.”
+- Make the dedicated learning partner the clearest difference from content-only purchases and one-time workshops.
 - Use “phonics program for schools in India” as the primary search phrase.
 - Describe the offer as an annual campus partnership and content licence, not outsourced classes.
 - State transparent starting prices and show the teacher/learner limits.
