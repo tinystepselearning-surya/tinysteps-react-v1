@@ -1,7 +1,9 @@
 # Tiny Steps school phonics partnership: market and pricing research
 
-Research date: 1 August 2026  
-Primary market: private, offline, international, CBSE, ICSE, Cambridge, and IB schools in India  
+Research date: 1 August 2026
+
+Primary market: private, offline, international, CBSE, ICSE, Cambridge, and IB schools in India
+
 Secondary market: international schools outside India that can use remote teacher training and support
 
 ## Executive conclusion

@@ -1154,7 +1154,10 @@ const ForSchoolsPage: React.FC = () => {
               >
                 <summary className="flex cursor-pointer list-none items-start justify-between gap-4 font-bold text-slate-950 marker:content-none">
                   <span>{item.question}</span>
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-lg text-slate-600 transition group-open:rotate-45">
+                  <span
+                    aria-hidden="true"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-lg text-slate-600 transition group-open:rotate-45"
+                  >
                     +
                   </span>
                 </summary>

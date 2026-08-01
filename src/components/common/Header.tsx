@@ -85,7 +85,8 @@ export default function Header() {
     if (isSchoolsPage) {
       const pricingSection = document.getElementById('pricing');
       if (pricingSection) {
-        pricingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        pricingSection.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
         return;
       }
       navigate('/for-schools#pricing');

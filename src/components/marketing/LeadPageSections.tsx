@@ -48,7 +48,7 @@ function buttonClass(variant: CtaItem['variant']) {
 
 export function LeadPageShell({ children }: { children: ReactNode }) {
   return (
-    <div className="relative overflow-x-clip bg-gradient-to-b from-orange-50/65 via-white to-sky-50/70 pb-20">
+    <div className="lead-page-shell relative overflow-x-clip bg-gradient-to-b from-orange-50/65 via-white to-sky-50/70 pb-20">
       <div className="pointer-events-none absolute -left-20 top-20 h-72 w-72 rounded-full bg-orange-200/35 blur-3xl" />
       <div className="pointer-events-none absolute -right-20 top-12 h-80 w-80 rounded-full bg-sky-200/35 blur-3xl" />
       <div className="pointer-events-none absolute left-1/3 top-[42rem] h-72 w-72 rounded-full bg-fuchsia-100/35 blur-3xl" />

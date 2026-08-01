@@ -1911,6 +1911,16 @@ body.ts-game-fullscreen nav[aria-label="Primary"] {
     scroll-behavior: auto;
   }
 
+  .lead-page-shell *,
+  .lead-page-shell *::before,
+  .lead-page-shell *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
   [data-animate],
   [data-animate].is-visible,
   [data-animate="fade-left"],
