@@ -60,8 +60,11 @@ export function LeadPageShell({ children }: { children: ReactNode }) {
 
 export function LeadHero({
   actions,
+  alignDesktopTop = false,
   aside,
+  compactTopSpacing = false,
   eyebrow,
+  eyebrowClassName,
   stats,
   supportingText,
   title,
@@ -70,8 +73,11 @@ export function LeadHero({
   showLeftDecoration = true,
 }: {
   actions?: ReactNode;
+  alignDesktopTop?: boolean;
   aside?: ReactNode;
+  compactTopSpacing?: boolean;
   eyebrow: string;
+  eyebrowClassName?: string;
   stats?: StatItem[];
   supportingText?: ReactNode;
   title: ReactNode;
@@ -80,15 +86,30 @@ export function LeadHero({
   showLeftDecoration?: boolean;
 }) {
   return (
-    <section className="relative overflow-hidden px-6 py-12 md:py-14 lg:px-8 lg:py-16">
+    <section
+      className={
+        compactTopSpacing
+          ? 'relative overflow-hidden px-6 pb-12 pt-16 md:pb-14 md:pt-10 lg:px-8 lg:pb-16 lg:pt-6'
+          : 'relative overflow-hidden px-6 py-12 md:py-14 lg:px-8 lg:py-16'
+      }
+    >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_12%,_rgba(251,146,60,0.28),_transparent_28%),radial-gradient(circle_at_88%_4%,_rgba(56,189,248,0.24),_transparent_32%),radial-gradient(circle_at_72%_88%,_rgba(167,139,250,0.18),_transparent_30%),linear-gradient(135deg,_rgba(255,247,237,0.98),_rgba(255,255,255,0.97)_48%,_rgba(240,249,255,0.98))]" />
       {showLeftDecoration ? (
         <div className="pointer-events-none absolute left-[4%] top-12 h-24 w-24 rounded-full border border-orange-200/70 bg-white/25" />
       ) : null}
       <div className="pointer-events-none absolute right-[7%] top-24 h-16 w-16 rotate-12 rounded-2xl border border-sky-200/70 bg-white/30" />
-      <div className="relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.04fr_0.96fr] lg:items-center">
+      <div
+        className={`relative mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.04fr_0.96fr] ${
+          alignDesktopTop ? 'lg:items-start' : 'lg:items-center'
+        }`}
+      >
         <div>
-          <p className="inline-flex rounded-full border border-orange-200/80 bg-gradient-to-r from-white via-orange-50 to-amber-50 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.22em] text-orange-700 shadow-[0_8px_24px_rgba(249,115,22,0.12)]">
+          <p
+            className={twMerge(
+              'inline-flex rounded-full border border-orange-200/80 bg-gradient-to-r from-white via-orange-50 to-amber-50 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.22em] text-orange-700 shadow-[0_8px_24px_rgba(249,115,22,0.12)]',
+              eyebrowClassName,
+            )}
+          >
             {eyebrow}
           </p>
           <h1 className="mt-5 max-w-[760px] text-[40px] font-black leading-[1.02] tracking-[-0.042em] text-slate-950 md:text-[52px] lg:text-[62px]">
@@ -185,7 +206,7 @@ export function LeadSectionHeading({
   tone = 'light',
 }: {
   eyebrow?: string;
-  title: string;
+  title: ReactNode;
   description?: ReactNode;
   tone?: 'light' | 'dark';
 }) {

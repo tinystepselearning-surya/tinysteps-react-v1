@@ -434,7 +434,10 @@ const ForSchoolsPage: React.FC = () => {
       />
 
       <LeadHero
+        alignDesktopTop
+        compactTopSpacing
         eyebrow="For Indian & International Schools • Early Years to Lower Primary"
+        eyebrowClassName="border-orange-300 bg-gradient-to-r from-orange-50 via-rose-50 to-fuchsia-50 text-orange-800 shadow-[0_8px_24px_rgba(225,29,72,0.12)]"
         showLeftDecoration={false}
         title={
           <>
@@ -652,7 +655,13 @@ const ForSchoolsPage: React.FC = () => {
             <div>
               <LeadSectionHeading
                 eyebrow="The Tiny Steps pedagogy"
-                title="Research-aligned instruction. Joyful practice. Real application."
+                title={
+                  <>
+                    Research-aligned instruction. Joyful
+                    <br aria-hidden="true" className="hidden lg:block" />{' '}
+                    practice. Real application.
+                  </>
+                }
                 description="Children need explicit teaching and many successful opportunities to respond. Every lesson moves deliberately from teacher modelling to purposeful play, then into independent reading, spelling, and writing."
               />
               <div className="mt-7 grid gap-4 sm:grid-cols-2">

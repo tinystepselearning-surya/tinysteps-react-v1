@@ -3,7 +3,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 
-type LinkItem = { label: string; href: string };
+type LinkItem = {
+  label: string;
+  href: string;
+  desktop?: boolean;
+  mobile?: boolean;
+};
 
 const dashboardPaths: Record<string, string> = {
   admin: '/surya',
@@ -15,10 +20,11 @@ const dashboardPaths: Record<string, string> = {
 };
 
 const PRIMARY_LINKS: LinkItem[] = [
-  { label: 'Courses', href: '/courses' },
+  { label: 'Courses', href: '/courses', desktop: false },
   { label: 'Curriculum', href: '/curriculum' },
   { label: 'Blog', href: '/blog' },
-  { label: 'Pricing', href: '/pricing' },
+  { label: 'Pricing', href: '/pricing', desktop: false },
+  { label: 'For Schools', href: '/for-schools' },
   { label: 'Class Samples', href: '/class-samples' },
   { label: 'Contact', href: '/contact' },
 ];
@@ -98,9 +104,16 @@ export default function Header() {
   const desktopHeaderContent = useMemo(
     () => (
       <>
-        <div className="hidden items-center gap-6 text-sm font-semibold text-gray-700 lg:flex">
-          {PRIMARY_LINKS.map((link) => (
-            <Link key={link.href} to={link.href} className="transition-colors hover:text-tiny-blue-600">
+        <div data-testid="desktop-primary-navigation" className="hidden items-center gap-6 text-sm font-semibold text-gray-700 lg:flex">
+          {PRIMARY_LINKS.filter((link) => link.desktop !== false).map((link) => (
+            <Link
+              key={link.href}
+              to={link.href}
+              aria-current={location.pathname === link.href ? 'page' : undefined}
+              className={`rounded-sm transition-colors hover:text-tiny-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-500 ${
+                location.pathname === link.href ? 'text-orange-700 underline decoration-orange-400 decoration-2 underline-offset-8' : ''
+              }`}
+            >
               {link.label}
             </Link>
           ))}
@@ -142,7 +155,7 @@ export default function Header() {
         </div>
       </>
     ),
-    [handleLogout, handlePrimaryAction, isSchoolsPage, user]
+    [handleLogout, handlePrimaryAction, isSchoolsPage, location.pathname, user]
   );
 
   return (
@@ -222,8 +235,16 @@ export default function Header() {
       >
         <div className="space-y-5 px-5 py-6 text-sm font-semibold text-slate-700">
           <div className="space-y-3">
-            {PRIMARY_LINKS.map((link) => (
-              <Link key={link.href} to={link.href} onClick={() => setIsOpen(false)} className="block">
+            {PRIMARY_LINKS.filter((link) => link.mobile !== false).map((link) => (
+              <Link
+                key={link.href}
+                to={link.href}
+                aria-current={location.pathname === link.href ? 'page' : undefined}
+                onClick={() => setIsOpen(false)}
+                className={`block rounded-sm py-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-500 ${
+                  location.pathname === link.href ? 'text-orange-700' : ''
+                }`}
+              >
                 {link.label}
               </Link>
             ))}
