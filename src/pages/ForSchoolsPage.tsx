@@ -21,7 +21,7 @@ const schoolsWhatsAppUrl =
 
 const pageTitle = 'Phonics Program for Schools in India | Tiny Steps';
 const pageDescription =
-  'License a classroom-ready phonics program, train your existing teachers, and receive year-long implementation support. India-first school partnerships from Tiny Steps.';
+  'License a classroom-ready phonics program, train your teachers and get year-long implementation support. India-first school partnerships from Tiny Steps.';
 
 const faqItems = [
   {
