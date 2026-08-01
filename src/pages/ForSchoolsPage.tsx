@@ -21,7 +21,7 @@ const schoolsWhatsAppUrl =
 
 const pageTitle = 'Phonics Program for Schools in India | Tiny Steps';
 const pageDescription =
-  'License a classroom-ready phonics program, train your teachers and get year-long implementation support. India-first school partnerships from Tiny Steps.';
+  'Research-aligned phonics curriculum, digital classroom content, teacher training, and year-long implementation support for schools in India.';
 
 const faqItems = [
   {
@@ -48,6 +48,26 @@ const faqItems = [
     question: 'Is the program suitable for CBSE, ICSE, Cambridge, or IB schools?',
     answer:
       'Yes. The phonics progression is board-agnostic and can complement CBSE, ICSE, Cambridge, IB, and other international curricula. Tiny Steps does not claim affiliation with or endorsement by these boards.',
+  },
+  {
+    question: 'Why do some children struggle to read and spell even after years of English classes?',
+    answer:
+      'Knowing letter names, memorising weekly spellings, or completing mixed worksheets is not the same as learning how the English alphabetic code works. Children need an explicit sequence, accurate sound teaching, regular blending and segmenting, cumulative review, guided reading and spelling practice, and prompt correction when misconceptions appear.',
+  },
+  {
+    question: 'Do classroom teachers need specialist phonics training?',
+    answer:
+      'Yes. Fluent English and general teaching experience are valuable, but effective phonics delivery also requires specialised knowledge of phonemes, graphemes, blending, segmenting, decoding, encoding, spelling patterns, error diagnosis, and cumulative lesson design. Tiny Steps develops this capability through training, rehearsal, observation, and coaching.',
+  },
+  {
+    question: 'What makes the Tiny Steps pedagogy research-aligned?',
+    answer:
+      'The pathway uses systematic and cumulative instruction, explicit modelling, phonemic awareness linked to print, regular decoding and encoding practice, connected reading and writing, progress checks, and assessment-informed reteaching. Tiny Steps describes the curriculum as research-aligned; it does not claim that the proprietary program has independently proven outcomes.',
+  },
+  {
+    question: 'How are digital games and activities used?',
+    answer:
+      'Teacher-led digital lesson content introduces and models each skill. Listening games, letter-sound matching, tracing, blending, word building, spelling challenges, picture sorts, and quick-response activities then provide purposeful practice. Games reinforce explicit teaching; they do not replace teacher explanation, correction, reading, or writing.',
   },
   {
     question: 'What teacher training is included?',
@@ -108,7 +128,7 @@ const serviceSchema = {
   '@type': 'Service',
   '@id': `${canonicalUrl}#service`,
   name: 'Tiny Steps Phonics Program for Schools',
-  serviceType: 'School phonics curriculum licensing, teacher training, and implementation support',
+  serviceType: 'Research-aligned school phonics curriculum, digital classroom content, teacher training, and implementation support',
   description: pageDescription,
   provider: {
     '@type': 'EducationalOrganization',
@@ -171,12 +191,12 @@ const partnershipDeliverables = [
   {
     number: '01',
     title: 'A sequenced phonics curriculum',
-    detail: 'A foundation-to-advanced pathway covering sound awareness, sound-symbol links, blending, segmenting, decoding, spelling patterns, fluency, and early writing.',
+    detail: 'A systematic, cumulative foundation-to-advanced pathway covering phonemic awareness, sound-symbol links, blending, segmenting, decoding, spelling patterns, fluency, and early writing.',
   },
   {
     number: '02',
     title: 'Classroom-ready teaching content',
-    detail: 'Teacher-led lesson decks, routines, word lists, printable worksheets, practice tasks, revision cycles, and clear lesson outcomes.',
+    detail: 'Teacher-led digital lesson decks, interactive games, routines, word lists, printable worksheets, practice tasks, revision cycles, and clear lesson outcomes.',
   },
   {
     number: '03',
@@ -197,6 +217,47 @@ const partnershipDeliverables = [
     number: '06',
     title: 'Leadership and parent communication',
     detail: 'A clear rollout plan, progress-review templates, parent orientation guidance, and language schools can use to explain the phonics journey.',
+  },
+];
+
+const phonicsGapCards = [
+  {
+    title: 'A curriculum without a protected sequence',
+    detail:
+      'Phonics appears as isolated alphabet work, textbook pages, or downloaded activities instead of one agreed sound-to-spelling progression that builds across grades.',
+  },
+  {
+    title: 'Teaching without specialist phonics knowledge',
+    detail:
+      'Fluent English and general classroom experience do not automatically prepare a teacher to model pure sounds, diagnose blending errors, explain spelling choices, or decide what to reteach.',
+  },
+  {
+    title: 'Practice without diagnosis and correction',
+    detail:
+      'Children can repeatedly copy words, memorise spellings, or guess from pictures while gaps in phonemic awareness, decoding, and encoding remain hidden.',
+  },
+];
+
+const pedagogyCycle = [
+  {
+    label: 'Teach',
+    title: 'Explicitly model the skill',
+    detail: 'The teacher demonstrates the sound, spelling pattern, blending routine, or spelling decision in a clear, planned sequence.',
+  },
+  {
+    label: 'Play',
+    title: 'Practise with purpose',
+    detail: 'Listening, matching, tracing, sorting, blending, and word-building games give children active, high-response practice.',
+  },
+  {
+    label: 'Apply',
+    title: 'Move into reading and writing',
+    detail: 'Children use the same pattern in words, sentences, dictation, connected text, comprehension, and early writing.',
+  },
+  {
+    label: 'Check',
+    title: 'Notice, correct, and reteach',
+    detail: 'Quick checks reveal whether a child can recall, blend, segment, spell, and transfer the skill independently.',
   },
 ];
 
@@ -321,24 +382,24 @@ const ForSchoolsPage: React.FC = () => {
       <Meta
         title={pageTitle}
         description={pageDescription}
-        keywords="phonics program for schools, school phonics curriculum India, phonics teacher training for schools, synthetic phonics program India, phonics partnership for international schools"
+        keywords="phonics program for schools, research aligned phonics curriculum India, phonics teacher training for schools, digital phonics content for schools, synthetic phonics program India"
         canonical={canonicalUrl}
         jsonLd={[breadcrumbSchema, pageSchema, serviceSchema, faqSchema]}
       />
 
       <LeadHero
         eyebrow="For Indian & International Schools • Ages 3–10"
-        title="A Classroom-Ready Phonics Program for Schools in India"
+        title="A Research-Aligned Phonics Program for Schools in India"
         description={
           <p className="school-answer">
-            Tiny Steps licenses its structured phonics content to your school, trains your existing teachers to
-            deliver it confidently, and supports implementation throughout the academic year—so children build
-            stronger foundations in reading, spelling, writing, and word confidence.
+            Tiny Steps brings a systematic phonics curriculum, teacher-led digital classroom content, playful
+            practice, assessment, and specialist training into your school—then supports your teachers throughout
+            the academic year so children learn to decode, spell, read, and write with growing independence.
           </p>
         }
         trustChips={[
           { label: 'Your teachers deliver', tone: 'warm' },
-          { label: 'Curriculum + resources included', tone: 'cool' },
+          { label: 'Research-aligned sequence', tone: 'cool' },
           { label: 'Year-long academic support', tone: 'mint' },
           { label: 'India-first, globally available', tone: 'neutral' },
         ]}
@@ -391,6 +452,191 @@ const ForSchoolsPage: React.FC = () => {
         }
       />
 
+      <LeadSection id="why-now">
+        <LeadCard className="border-slate-950 bg-slate-950 text-white">
+          <div className="grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-300">
+                The foundational reading gap
+              </p>
+              <h2 className="mt-3 text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl">
+                Children are not failing. Essential reading skills are being left to chance.
+              </h2>
+              <p className="school-answer mt-5 text-base leading-8 text-slate-200">
+                Most schools have an English curriculum. What many do not have is a protected, systematic, and
+                cumulative phonics strand taught consistently across classrooms. A textbook chapter, alphabet
+                activity, weekly spelling list, or one-day workshop cannot replace a shared teaching sequence,
+                accurate correction routines, and ongoing progress checks.
+              </p>
+              <div className="mt-6 rounded-3xl border border-orange-300/30 bg-orange-400/10 p-5">
+                <p className="text-sm font-bold text-orange-200">Why this matters in India</p>
+                <p className="mt-2 text-sm leading-7 text-slate-200">
+                  ASER 2024 found that 23.4% of rural government-school Standard III children could read a
+                  Standard II-level text. Among rural private-school Standard V children, the figure was 59.3%.
+                  ASER is not an English-phonics assessment and does not identify a single cause, but it shows why
+                  foundational reading cannot be assumed.
+                </p>
+                <a
+                  href="https://asercentre.org/wp-content/uploads/2022/12/ASER-2024-National-findings.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-flex text-sm font-semibold text-orange-300 underline decoration-orange-300/50 underline-offset-4"
+                >
+                  Read the ASER 2024 national findings
+                </a>
+              </div>
+            </div>
+
+            <div>
+              <div className="grid gap-4">
+                {phonicsGapCards.map((item, index) => (
+                  <article key={item.title} className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                    <div className="flex gap-4">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-400 text-sm font-black text-slate-950">
+                        0{index + 1}
+                      </span>
+                      <div>
+                        <h3 className="text-lg font-bold text-white">{item.title}</h3>
+                        <p className="mt-2 text-sm leading-7 text-slate-300">{item.detail}</p>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+              <div className="school-answer mt-5 rounded-3xl border border-sky-300/25 bg-sky-300/10 p-5">
+                <p className="text-xl font-black text-white">
+                  Phonics proficiency is specialist teaching knowledge—not simply “knowing the alphabet.”
+                </p>
+                <p className="mt-3 text-sm leading-7 text-slate-200">
+                  Research describes phonological-awareness and phonics teaching as requiring specialised content
+                  and pedagogical knowledge. A review of teacher-training studies found the strongest knowledge
+                  growth when teachers applied new learning under expert guidance. That is why Tiny Steps combines
+                  training with rehearsal, observation, feedback, and year-long coaching.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-4 text-sm">
+                  <a
+                    href="https://eric.ed.gov/?id=EJ1349379"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-sky-200 underline decoration-sky-200/50 underline-offset-4"
+                  >
+                    Specialist phonics knowledge
+                  </a>
+                  <a
+                    href="https://eric.ed.gov/?id=EJ1298044"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-sky-200 underline decoration-sky-200/50 underline-offset-4"
+                  >
+                    Teacher training evidence review
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </LeadCard>
+      </LeadSection>
+
+      <LeadSection id="pedagogy">
+        <LeadCard className="overflow-hidden bg-gradient-to-br from-white via-sky-50/45 to-orange-50/60">
+          <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-start">
+            <div>
+              <LeadSectionHeading
+                eyebrow="The Tiny Steps pedagogy"
+                title="Research-aligned instruction. Joyful practice. Real application."
+                description="Children need explicit teaching and many successful opportunities to respond. Our lessons move deliberately from teacher modelling to playful practice, then into independent reading, spelling, and writing."
+              />
+              <div className="mt-7 grid gap-4 sm:grid-cols-2">
+                {pedagogyCycle.map((item) => (
+                  <article key={item.label} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <span className="text-xs font-black uppercase tracking-[0.18em] text-orange-600">
+                      {item.label}
+                    </span>
+                    <h3 className="mt-2 text-lg font-bold text-slate-950">{item.title}</h3>
+                    <p className="mt-2 text-sm leading-7 text-slate-700">{item.detail}</p>
+                  </article>
+                ))}
+              </div>
+              <p className="school-answer mt-5 text-sm leading-7 text-slate-700">
+                The evidence base supports developing sound awareness linked to letters, teaching children to
+                decode and write words, and giving daily opportunities to read connected text. Games make practice
+                active and memorable; they reinforce the teaching rather than replacing it.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-4 text-sm">
+                <a
+                  href="https://ies.ed.gov/ncee/wwc/practiceguide/21"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-slate-900 underline decoration-orange-400 underline-offset-4"
+                >
+                  IES foundational reading guidance
+                </a>
+                <a
+                  href="https://www.nichd.nih.gov/publications/pubs/nrp/findings"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-slate-900 underline decoration-orange-400 underline-offset-4"
+                >
+                  National Reading Panel findings
+                </a>
+              </div>
+            </div>
+
+            <div className="rounded-[2rem] border border-slate-800 bg-slate-950 p-5 text-white shadow-[0_24px_60px_rgba(15,23,42,0.22)]">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-300">
+                    Digital classroom content
+                  </p>
+                  <h3 className="mt-1 text-2xl font-black text-white">Every lesson gives children something to do</h3>
+                </div>
+                <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-bold text-emerald-200">
+                  Teacher led
+                </span>
+              </div>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                {[
+                  ['Hear it', 'Sound listening and discrimination'],
+                  ['Trace it', 'Letter formation with sound'],
+                  ['Build it', 'Blending and word construction'],
+                  ['Spell it', 'Segmenting and pattern challenges'],
+                  ['Sort it', 'Pictures, sounds, and spelling choices'],
+                  ['Read it', 'Words, sentences, and fluency rounds'],
+                ].map(([title, detail], index) => (
+                  <div
+                    key={title}
+                    className={`rounded-2xl border p-4 ${
+                      index % 3 === 0
+                        ? 'border-orange-300/30 bg-orange-300/10'
+                        : index % 3 === 1
+                          ? 'border-sky-300/30 bg-sky-300/10'
+                          : 'border-emerald-300/30 bg-emerald-300/10'
+                    }`}
+                  >
+                    <p className="font-bold text-white">{title}</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-300">{detail}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 rounded-2xl bg-white p-4 text-slate-900">
+                <p className="text-sm font-bold">Digital engagement + printable reinforcement</p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Interactive lesson decks, phonics games, movement, oral response, handwriting, worksheets, and
+                  quick checks work together inside one sequenced lesson.
+                </p>
+              </div>
+              <Link
+                to="/free-phonics-games-for-kids"
+                onClick={() => trackSchoolCta('Preview phonics games', 'pedagogy', '/free-phonics-games-for-kids')}
+                className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-orange-400 px-5 text-sm font-bold text-slate-950 transition hover:bg-orange-300"
+              >
+                Preview Tiny Steps phonics games
+              </Link>
+            </div>
+          </div>
+        </LeadCard>
+      </LeadSection>
+
       <LeadSection>
         <LeadCard className="bg-gradient-to-br from-white via-orange-50/35 to-sky-50/50">
           <LeadSectionHeading
@@ -402,7 +648,7 @@ const ForSchoolsPage: React.FC = () => {
             {partnershipDeliverables.map((item) => (
               <article key={item.number} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <span className="text-sm font-black text-orange-600">{item.number}</span>
-                <h2 className="mt-3 text-lg font-bold text-slate-950">{item.title}</h2>
+                <h3 className="mt-3 text-lg font-bold text-slate-950">{item.title}</h3>
                 <p className="mt-2 text-sm leading-7 text-slate-700">{item.detail}</p>
               </article>
             ))}
@@ -519,7 +765,8 @@ const ForSchoolsPage: React.FC = () => {
           <LeadSectionHeading
             eyebrow="Founding-school pricing"
             title="Transparent annual partnership options"
-            description={<span className="text-slate-300">Select a focused launch, a whole-school pathway, or a network rollout. Final scope is confirmed in the written proposal.</span>}
+            description="Select a focused launch, a whole-school pathway, or a network rollout. Final scope is confirmed in the written proposal."
+            tone="dark"
           />
 
           <div className="mt-7 grid gap-5 xl:grid-cols-3">
