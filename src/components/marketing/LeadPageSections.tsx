@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { twMerge } from 'tailwind-merge';
 
 type TrustChip = {
   label: string;
@@ -165,16 +166,42 @@ export function LeadSectionHeading({
   eyebrow,
   title,
   description,
+  tone = 'light',
 }: {
   eyebrow?: string;
   title: string;
   description?: ReactNode;
+  tone?: 'light' | 'dark';
 }) {
+  const isDark = tone === 'dark';
+
   return (
     <div>
-      {eyebrow ? <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{eyebrow}</p> : null}
-      <h2 className="mt-2 text-2xl font-bold leading-tight text-slate-900 sm:text-3xl">{title}</h2>
-      {description ? <div className="mt-3 max-w-4xl text-sm leading-7 text-slate-700 sm:text-base">{description}</div> : null}
+      {eyebrow ? (
+        <p
+          className={`text-xs font-semibold uppercase tracking-[0.18em] ${
+            isDark ? 'text-orange-300' : 'text-slate-500'
+          }`}
+        >
+          {eyebrow}
+        </p>
+      ) : null}
+      <h2
+        className={`mt-2 text-2xl font-bold leading-tight sm:text-3xl ${
+          isDark ? 'text-white' : 'text-slate-900'
+        }`}
+      >
+        {title}
+      </h2>
+      {description ? (
+        <div
+          className={`mt-3 max-w-4xl text-sm leading-7 sm:text-base ${
+            isDark ? 'text-slate-200' : 'text-slate-700'
+          }`}
+        >
+          {description}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -187,7 +214,12 @@ export function LeadCard({
   className?: string;
 }) {
   return (
-    <div className={`rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-[0_18px_44px_rgba(15,23,42,0.08)] ${className}`}>
+    <div
+      className={twMerge(
+        'rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-[0_18px_44px_rgba(15,23,42,0.08)]',
+        className,
+      )}
+    >
       {children}
     </div>
   );
