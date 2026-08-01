@@ -118,11 +118,13 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/for-schools': {
-    title: 'English Program for Schools | Tiny Steps Learning',
+    title: 'Phonics Program for Schools in India | Tiny Steps',
     description:
-      'Tiny Steps Learning partners with schools to deliver high-quality, personalized English instruction for groups or individuals.',
+      'License a classroom-ready phonics program, train your existing teachers, and receive year-long implementation support. India-first school partnerships from Tiny Steps.',
     canonicalPath: '/for-schools',
     ogType: 'website',
+    keywords:
+      'phonics program for schools,school phonics curriculum India,phonics teacher training for schools,synthetic phonics program India,phonics partnership for international schools',
   },
   '/careers': {
     title: 'Careers | Join the Tiny Steps Team',
