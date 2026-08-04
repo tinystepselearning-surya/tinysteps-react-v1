@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-27T18:19:29.978Z",
+  "generatedAt": "2026-08-04T07:21:31.949Z",
   "totals": {
     "routes": 169,
     "passed": 169,
@@ -714,7 +714,7 @@
       "actualLocalBuild": {
         "html": true,
         "canonical": "https://tinystepslearning.com/for-schools",
-        "robots": "index, follow",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
         "sitemap": true
       },
       "pass": true,

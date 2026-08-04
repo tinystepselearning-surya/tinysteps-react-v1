@@ -430,6 +430,7 @@ const ForSchoolsPage: React.FC = () => {
         description={pageDescription}
         keywords="phonics program for schools, research aligned phonics curriculum India, phonics teacher training for schools, digital phonics content for schools, synthetic phonics program India"
         canonical={canonicalUrl}
+        robots="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"
         jsonLd={[breadcrumbSchema, pageSchema, serviceSchema, faqSchema]}
       />
 

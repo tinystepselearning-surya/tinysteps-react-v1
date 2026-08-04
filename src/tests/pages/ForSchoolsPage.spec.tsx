@@ -20,6 +20,26 @@ function expectWhatsAppLink(link: HTMLElement, message: string) {
 }
 
 describe('ForSchoolsPage proposal CTAs', () => {
+  it('publishes an indexable canonical page for search engines', async () => {
+    render(
+      <MemoryRouter initialEntries={['/for-schools']}>
+        <ForSchoolsPage />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute(
+        'href',
+        'https://tinystepslearning.com/for-schools',
+      );
+      for (const crawler of ['robots', 'googlebot', 'bingbot']) {
+        const content = document.querySelector(`meta[name="${crawler}"]`)?.getAttribute('content');
+        expect(content).toContain('index');
+        expect(content).not.toContain('noindex');
+      }
+    });
+  });
+
   it('opens every proposal and pricing CTA in WhatsApp with relevant prefilled text', () => {
     render(
       <MemoryRouter initialEntries={['/for-schools']}>

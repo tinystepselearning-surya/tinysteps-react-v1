@@ -122,6 +122,7 @@ export const ROUTE_SEO_REGISTRY = {
     description:
       'Research-aligned phonics curriculum, digital classroom content, teacher training, and year-long support for schools in India.',
     canonicalPath: '/for-schools',
+    robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
     ogType: 'website',
     keywords:
       'phonics program for schools,school phonics curriculum India,phonics teacher training for schools,synthetic phonics program India,phonics partnership for international schools',

@@ -1,6 +1,6 @@
 # Route indexability report
 
-Generated: 2026-07-27T18:19:29.978Z
+Generated: 2026-08-04T07:21:31.949Z
 
 Result: PASS — 169/169 classifications match.
 
