@@ -3,6 +3,7 @@ import { collectSessionTeacherRefs, resolvePreferredSessionTeacherRef } from '..
 import {
   loadManualReminderDayBuckets,
   loadManualReminderSelectedDate,
+  createCompactManualReminderCache,
   selectOperationalReminderSessions,
   sessionHasRequiredReminderDisplayData,
 } from '../../pages/admin/todaysNotificationsManualData';
@@ -61,12 +62,7 @@ describe('TodaysNotifications manual reminder loading', () => {
   });
 
   it('never treats same-day cache as the final result', async () => {
-    const cached = {
-      fetchedAt: 123,
-      fetchedForDate: '2026-06-30',
-      todaySessions: [{ id: 'today-1', date: '2026-06-30', status: 'scheduled' }],
-      tomorrowSessions: [{ id: 'tomorrow-1', date: '2026-07-01', status: 'scheduled' }],
-    };
+    const cached = { 'old-session': { notifiedAt: 123 } };
     const fetchSessionsForDate = vi.fn(async (dateKey: string) => [
       { id: `fresh-${dateKey}`, date: dateKey, status: 'scheduled' },
     ]);
@@ -97,12 +93,7 @@ describe('TodaysNotifications manual reminder loading', () => {
       deps: {
         fetchEnrollmentsByIds: vi.fn(async () => ({})),
         fetchSessionsForDate,
-        readCache: () => ({
-          fetchedAt: 1,
-          fetchedForDate: '2026-06-30',
-          todaySessions: [],
-          tomorrowSessions: [],
-        }),
+        readCache: () => ({}),
         writeCache: vi.fn(),
       },
       forceRefresh: true,
@@ -111,6 +102,70 @@ describe('TodaysNotifications manual reminder loading', () => {
     });
 
     expect(fetchSessionsForDate).toHaveBeenCalledTimes(2);
+  });
+
+  it('returns successful backend sessions when cache writing throws a quota error', async () => {
+    const quotaError = new DOMException('Quota exceeded', 'QuotaExceededError');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const result = await loadManualReminderDayBuckets({
+      deps: {
+        fetchEnrollmentsByIds: vi.fn(async () => ({})),
+        fetchSessionsForDate: vi.fn(async (dateKey: string) => [
+          { id: `session-${dateKey}`, date: dateKey, status: 'scheduled' },
+        ]),
+        readCache: () => null,
+        writeCache: () => {
+          throw quotaError;
+        },
+      },
+      todayDateKey: '2026-06-30',
+      tomorrowDateKey: '2026-07-01',
+    });
+
+    expect(result.todaySessions).toHaveLength(1);
+    expect(result.tomorrowSessions).toHaveLength(1);
+    expect(warn).toHaveBeenCalledWith(
+      '[TodaysNotifications] reminder cache write failed; continuing',
+      quotaError,
+    );
+  });
+
+  it('does not convert backend failures into an empty successful result', async () => {
+    await expect(loadManualReminderDayBuckets({
+      deps: {
+        fetchEnrollmentsByIds: vi.fn(async () => ({})),
+        fetchSessionsForDate: vi.fn(async () => {
+          throw new Error('Firestore unavailable');
+        }),
+        readCache: () => null,
+        writeCache: vi.fn(),
+      },
+      todayDateKey: '2026-06-30',
+      tomorrowDateKey: '2026-07-01',
+    })).rejects.toThrow('Firestore unavailable');
+  });
+
+  it('returns an empty result only after successful backend requests return no sessions', async () => {
+    const result = await loadManualReminderDayBuckets({
+      deps: {
+        fetchEnrollmentsByIds: vi.fn(async () => ({})),
+        fetchSessionsForDate: vi.fn(async () => []),
+        readCache: () => null,
+        writeCache: vi.fn(),
+      },
+      todayDateKey: '2026-06-30',
+      tomorrowDateKey: '2026-07-01',
+    });
+
+    expect(result.todaySessions).toEqual([]);
+    expect(result.tomorrowSessions).toEqual([]);
+  });
+
+  it('builds a compact cache containing only manually notified sessions', () => {
+    expect(createCompactManualReminderCache([
+      { id: 'notified', parentNotified: true, parentNotifiedAt: { toMillis: () => 456 } },
+      { id: 'not-notified', parentNotified: false, teacherNotified: false },
+    ], 999)).toEqual({ notified: { notifiedAt: 456 } });
   });
 
   it('selected date fetch loads only that selected date', async () => {

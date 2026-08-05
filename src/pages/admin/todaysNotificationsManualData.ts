@@ -3,6 +3,11 @@ import {
   isSessionCanonicalForEnrollment,
   isSessionStatusOperationallyVisible,
 } from '../../lib/sessionScheduleIntegrity';
+import {
+  type ManualReminderCache,
+  readManualReminderCache,
+  writeManualReminderCache,
+} from './manualReminderCache';
 
 export interface ManualReminderSessionDoc {
   id: string;
@@ -42,20 +47,17 @@ export interface ManualReminderSessionDoc {
   makeupForSessionId?: string;
   rescheduledFromSessionId?: string;
   replacementSessionId?: string;
-}
-
-export interface ManualReminderCachePayload {
-  fetchedForDate: string;
-  fetchedAt: number;
-  todaySessions: ManualReminderSessionDoc[];
-  tomorrowSessions: ManualReminderSessionDoc[];
+  parentNotified?: boolean;
+  parentNotifiedAt?: unknown;
+  teacherNotified?: boolean;
+  teacherNotifiedAt?: unknown;
 }
 
 interface ReminderLoadDeps {
   fetchEnrollmentsByIds: (ids: string[]) => Promise<Record<string, Record<string, unknown>>>;
   fetchSessionsForDate: (dateKey: string) => Promise<ManualReminderSessionDoc[]>;
-  readCache: (dateKey: string) => ManualReminderCachePayload | null;
-  writeCache: (dateKey: string, payload: ManualReminderCachePayload) => void;
+  readCache: (dateKey: string) => ManualReminderCache | null;
+  writeCache: (dateKey: string, payload: ManualReminderCache) => boolean | void;
 }
 
 interface ReminderLoadMeta {
@@ -77,9 +79,6 @@ export interface ManualReminderSelectedDateResult extends ReminderLoadMeta {
   sessions: ManualReminderSessionDoc[];
 }
 
-export const MANUAL_REMINDER_CACHE_KEY_PREFIX = 'ts_manual_class_reminders_cache_';
-export const MANUAL_REMINDER_CACHE_TTL_MS = 30_000;
-
 const normalizeLookupId = (value: unknown): string => {
   const raw = String(value || '').trim();
   if (!raw) return '';
@@ -90,9 +89,6 @@ const normalizeLookupId = (value: unknown): string => {
 
 const uniqueIds = (values: unknown[]): string[] =>
   Array.from(new Set(values.map((value) => normalizeLookupId(value)).filter(Boolean)));
-
-export const buildManualReminderCacheKey = (dateKey: string): string =>
-  `${MANUAL_REMINDER_CACHE_KEY_PREFIX}${dateKey}`;
 
 export const sessionHasRequiredReminderDisplayData = (
   session: ManualReminderSessionDoc,
@@ -266,36 +262,34 @@ export const selectOperationalReminderSessions = (
   });
 };
 
-export const readManualReminderCacheFromStorage = (
-  dateKey: string,
-): ManualReminderCachePayload | null => {
-  if (typeof window === 'undefined') return null;
-  const raw = window.localStorage.getItem(buildManualReminderCacheKey(dateKey));
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw) as ManualReminderCachePayload;
-    if (
-      parsed &&
-      parsed.fetchedForDate === dateKey &&
-      Number.isFinite(parsed.fetchedAt) &&
-      Date.now() - parsed.fetchedAt <= MANUAL_REMINDER_CACHE_TTL_MS &&
-      Array.isArray(parsed.todaySessions) &&
-      Array.isArray(parsed.tomorrowSessions)
-    ) {
-      return parsed;
-    }
-  } catch {
-    return null;
+export const readManualReminderCacheFromStorage = readManualReminderCache;
+export const writeManualReminderCacheToStorage = writeManualReminderCache;
+
+const timestampToMillis = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (value instanceof Date) return value.getTime();
+  if (value && typeof value === 'object') {
+    const timestamp = value as { toDate?: () => Date; toMillis?: () => number };
+    if (typeof timestamp.toMillis === 'function') return timestamp.toMillis();
+    if (typeof timestamp.toDate === 'function') return timestamp.toDate().getTime();
   }
   return null;
 };
 
-export const writeManualReminderCacheToStorage = (
-  dateKey: string,
-  payload: ManualReminderCachePayload,
-): void => {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(buildManualReminderCacheKey(dateKey), JSON.stringify(payload));
+export const createCompactManualReminderCache = (
+  sessions: ManualReminderSessionDoc[],
+  fallbackTimestamp: number,
+): ManualReminderCache => {
+  const cache: ManualReminderCache = {};
+  sessions.forEach((session) => {
+    if (!session.parentNotified && !session.teacherNotified) return;
+    const timestamps = [
+      timestampToMillis(session.parentNotifiedAt),
+      timestampToMillis(session.teacherNotifiedAt),
+    ].filter((value): value is number => value !== null);
+    cache[session.id] = { notifiedAt: timestamps.length ? Math.max(...timestamps) : fallbackTimestamp };
+  });
+  return cache;
 };
 
 export const loadManualReminderDayBuckets = async ({
@@ -312,7 +306,13 @@ export const loadManualReminderDayBuckets = async ({
   const startedAt = Date.now();
   // Cache is only a short-lived initial-view hint. It is never authoritative:
   // every load and date change completes a fresh Firestore validation pass.
-  if (!forceRefresh) deps.readCache(todayDateKey);
+  if (!forceRefresh) {
+    try {
+      deps.readCache(todayDateKey);
+    } catch (cacheError) {
+      console.warn('[TodaysNotifications] reminder cache read failed; continuing', cacheError);
+    }
+  }
 
   const [todaySessions, tomorrowSessions] = await Promise.all([
     deps.fetchSessionsForDate(todayDateKey),
@@ -323,16 +323,24 @@ export const loadManualReminderDayBuckets = async ({
     deps.fetchEnrollmentsByIds,
   );
   const byId = new Map(enriched.sessions.map((session) => [session.id, session]));
-  const payload: ManualReminderCachePayload = {
-    fetchedAt: Date.now(),
-    fetchedForDate: todayDateKey,
-    todaySessions: todaySessions.map((session) => byId.get(session.id) || session),
-    tomorrowSessions: tomorrowSessions.map((session) => byId.get(session.id) || session),
-  };
-  deps.writeCache(todayDateKey, payload);
+  const fetchedAt = Date.now();
+  const hydratedTodaySessions = todaySessions.map((session) => byId.get(session.id) || session);
+  const hydratedTomorrowSessions = tomorrowSessions.map((session) => byId.get(session.id) || session);
+  try {
+    deps.writeCache(
+      todayDateKey,
+      createCompactManualReminderCache([...hydratedTodaySessions, ...hydratedTomorrowSessions], fetchedAt),
+    );
+  } catch (cacheError) {
+    // Injected/test cache implementations are also non-fatal to the Firestore result.
+    console.warn('[TodaysNotifications] reminder cache write failed; continuing', cacheError);
+  }
 
   return {
-    ...payload,
+    fetchedAt,
+    fetchedForDate: todayDateKey,
+    todaySessions: hydratedTodaySessions,
+    tomorrowSessions: hydratedTomorrowSessions,
     elapsedMs: Date.now() - startedAt,
     enrollmentFallbackReads: enriched.enrollmentFallbackReads,
     enrollmentMap: enriched.enrollmentMap,

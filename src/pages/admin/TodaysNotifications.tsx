@@ -55,6 +55,7 @@ import {
   selectOperationalReminderSessions,
   writeManualReminderCacheToStorage,
 } from './todaysNotificationsManualData';
+import { removeExpiredManualReminderCaches } from './manualReminderCache';
 
 interface ClassSessionDoc {
   id: string;
@@ -1098,6 +1099,7 @@ export default function TodaysNotifications() {
     value: string;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [sessionLoadError, setSessionLoadError] = useState<string | null>(null);
   const [savingFlags, setSavingFlags] = useState<Record<string, boolean>>({});
   const [editingPhone, setEditingPhone] = useState<{
     key: string;
@@ -1130,6 +1132,10 @@ export default function TodaysNotifications() {
   );
 
   useEffect(() => {
+    removeExpiredManualReminderCaches();
+  }, []);
+
+  useEffect(() => {
     if (mode !== 'upcoming') return;
     if (upcomingSpecificDate) return;
     setUpcomingSpecificDate(tomorrowDateKey);
@@ -1151,6 +1157,8 @@ export default function TodaysNotifications() {
     }
 
     setIsLoading(true);
+    setSessionLoadError(null);
+    setSessions([]);
     const selectedDateKey =
       mode === 'today'
         ? todayDateKey
@@ -1191,6 +1199,11 @@ export default function TodaysNotifications() {
             : result.sessions;
         const nextSessions = selectOperationalReminderSessions(fetchedSessions, result.enrollmentMap);
 
+        if (!active) return;
+        // Session data is usable as soon as the core Firestore request succeeds.
+        setSessions(nextSessions);
+        setEnrollmentMap(result.enrollmentMap);
+
         const parentIds = new Set<string>();
         const teacherIds = new Set<string>();
 
@@ -1205,7 +1218,6 @@ export default function TodaysNotifications() {
         const nextUsersMap = await fetchUsersByRefs(Array.from(new Set([...parentIds, ...teacherIds])));
 
         if (!active) return;
-        setSessions(nextSessions);
         setUsersMap(nextUsersMap);
         setKidMap({});
         setEnrollmentMap(result.enrollmentMap);
@@ -1226,6 +1238,7 @@ export default function TodaysNotifications() {
         console.error('[TodaysNotifications] Failed to load sessions', error);
         if (!active) return;
         setIsLoading(false);
+        setSessionLoadError(error instanceof Error ? error.message : 'Please try again.');
         toast({
           title: 'Unable to load sessions',
           description: error?.message || 'Please try again.',
@@ -2064,6 +2077,20 @@ export default function TodaysNotifications() {
               ? 'Loading sessions for selected date...'
               : 'Loading active admissions...'}
         </Card>
+      ) : mode !== 'overall-admissions' && sessionLoadError ? (
+        <Card className="p-8 text-center">
+          <p className="text-sm font-medium text-destructive">Unable to load sessions.</p>
+          <p className="mt-1 text-sm text-muted-foreground">{sessionLoadError}</p>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="mt-4"
+            onClick={() => setReminderRefreshNonce((value) => value + 1)}
+          >
+            Retry
+          </Button>
+        </Card>
       ) : visibleRowsCount === 0 ? (
         <Card className="p-8 text-center">
           <p className="text-sm text-muted-foreground">
@@ -2076,11 +2103,11 @@ export default function TodaysNotifications() {
               if (mode === 'today') {
                 return hasOperationalFilters
                   ? 'No sessions for selected filters.'
-                  : 'No sessions today.';
+                  : 'No sessions scheduled for this date.';
               }
               return hasOperationalFilters
                 ? 'No sessions for selected filters.'
-                : 'No sessions on selected date.';
+                : 'No sessions scheduled for this date.';
             })()}
           </p>
         </Card>
