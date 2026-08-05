@@ -95,11 +95,12 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/team': {
-    title: 'Meet the Founder-Led Academic Team | Tiny Steps Learning',
+    title: 'Meet the Tiny Steps Learning Team | Founder-Led English Learning',
     description:
-      'Get to know the founder-led academic team behind Tiny Steps Learning and how teaching quality is shaped across core programs.',
+      'Meet the founder-led academic team behind Tiny Steps Learning and discover how structured curriculum, trained teachers and continuous academic support help children build confident English skills.',
     canonicalPath: '/team',
     ogType: 'website',
+    ogImage: '/priya-founder-tiny-steps-learning.webp',
   },
   '/class-samples': {
     title: 'Real Class Sample Videos for Parents | Tiny Steps Learning',
