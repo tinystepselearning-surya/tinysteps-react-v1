@@ -1,6 +1,6 @@
 # Sitemap Indexability Audit
 
-Generated: 2026-05-19T15:09:59.362Z
+Generated: 2026-08-07T17:55:13.746Z
 
 ## Files Inspected
 - public/sitemap.xml
@@ -14,8 +14,8 @@ Generated: 2026-05-19T15:09:59.362Z
 
 ## Summary
 - Total sitemap resources: 4
-- Total page URLs audited: 128
-- OK page URLs: 128
+- Total page URLs audited: 140
+- OK page URLs: 140
 - Non-OK page URLs: 0
 
 ## Findings (Page URLs)
@@ -23,7 +23,7 @@ Generated: 2026-05-19T15:09:59.362Z
 | path | url | sitemap source | duplicate presence | route exists | matched route pattern | canonical mapping | private/noindex | suspected issue category | notes |
 |---|---|---|---|---|---|---|---|---|---|
 | / | https://tinystepslearning.com/ | public/sitemap-static.xml | no | yes | - | self:/ | no | OK | - |
-| /best-online-phonics-classes-india | https://tinystepslearning.com/best-online-phonics-classes-india | public/sitemap-static.xml | no | yes | /best-online-phonics-classes-india | self:/best-online-phonics-classes-india | no | OK | - |
+| /best-online-phonics-classes-for-kids-in-india | https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india | public/sitemap-static.xml | no | yes | /best-online-phonics-classes-for-kids-in-india | self:/best-online-phonics-classes-for-kids-in-india | no | OK | - |
 | /blog | https://tinystepslearning.com/blog | public/sitemap-static.xml | no | yes | /blog | self:/blog | no | OK | - |
 | /blog/are-phonics-apps-enough-for-kids | https://tinystepslearning.com/blog/are-phonics-apps-enough-for-kids | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/benefits-of-phonics-for-kids | https://tinystepslearning.com/blog/benefits-of-phonics-for-kids | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
@@ -52,6 +52,7 @@ Generated: 2026-05-19T15:09:59.362Z
 | /blog/how-tiny-steps-builds-reading-confidence | https://tinystepslearning.com/blog/how-tiny-steps-builds-reading-confidence | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/how-to-choose-phonics-classes | https://tinystepslearning.com/blog/how-to-choose-phonics-classes | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/how-to-engage-kids-in-english-learning-at-home | https://tinystepslearning.com/blog/how-to-engage-kids-in-english-learning-at-home | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
+| /blog/how-to-improve-reading-fluency-in-children | https://tinystepslearning.com/blog/how-to-improve-reading-fluency-in-children | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/how-to-improve-sentence-formation-in-kids | https://tinystepslearning.com/blog/how-to-improve-sentence-formation-in-kids | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/june-school-readiness-english-revision-plan | https://tinystepslearning.com/blog/june-school-readiness-english-revision-plan | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/june-school-reopening-english-readiness-plan | https://tinystepslearning.com/blog/june-school-reopening-english-readiness-plan | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
@@ -71,24 +72,13 @@ Generated: 2026-05-19T15:09:59.362Z
 | /blog/sight-words-or-phonics-first | https://tinystepslearning.com/blog/sight-words-or-phonics-first | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/synthetic-phonics-vs-traditional-reading | https://tinystepslearning.com/blog/synthetic-phonics-vs-traditional-reading | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/week-1-phonics-satpin-launch | https://tinystepslearning.com/blog/week-1-phonics-satpin-launch | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-10-grammar-subject-verb | https://tinystepslearning.com/blog/week-10-grammar-subject-verb | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-13-speaking-structure | https://tinystepslearning.com/blog/week-13-speaking-structure | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-18-speaking-video-feedback | https://tinystepslearning.com/blog/week-18-speaking-video-feedback | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-2-phonics-blending-club | https://tinystepslearning.com/blog/week-2-phonics-blending-club | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-20-grammar-editing-camp | https://tinystepslearning.com/blog/week-20-grammar-editing-camp | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-21-speaking-competition-prep | https://tinystepslearning.com/blog/week-21-speaking-competition-prep | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-24-speaking-family-showcase | https://tinystepslearning.com/blog/week-24-speaking-family-showcase | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-25-back-to-school-plan | https://tinystepslearning.com/blog/week-25-back-to-school-plan | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-27-prevent-summer-slide-reading | https://tinystepslearning.com/blog/week-27-prevent-summer-slide-reading | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-4-phonics-long-vowels | https://tinystepslearning.com/blog/week-4-phonics-long-vowels | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-5-phonics-r-controlled | https://tinystepslearning.com/blog/week-5-phonics-r-controlled | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-6-phonics-comprehension | https://tinystepslearning.com/blog/week-6-phonics-comprehension | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
+| /blog/week-12-speaking-confidence-seeds | https://tinystepslearning.com/blog/week-12-speaking-confidence-seeds | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/week-7-grammar-nouns-to-paragraphs | https://tinystepslearning.com/blog/week-7-grammar-nouns-to-paragraphs | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
-| /blog/week-8-grammar-tenses | https://tinystepslearning.com/blog/week-8-grammar-tenses | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/what-age-to-start-phonics | https://tinystepslearning.com/blog/what-age-to-start-phonics | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/what-is-phonics-for-kids | https://tinystepslearning.com/blog/what-is-phonics-for-kids | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/why-child-answers-only-in-one-word | https://tinystepslearning.com/blog/why-child-answers-only-in-one-word | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/why-child-knows-letter-sounds-but-cannot-read-words | https://tinystepslearning.com/blog/why-child-knows-letter-sounds-but-cannot-read-words | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
+| /blog/why-child-reads-words-but-does-not-understand-story | https://tinystepslearning.com/blog/why-child-reads-words-but-does-not-understand-story | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /blog/why-parents-choose-online-phonics | https://tinystepslearning.com/blog/why-parents-choose-online-phonics | public/sitemap-blog.xml | no | yes | /blog/:slug | not_detected | no | OK | - |
 | /book-demo | https://tinystepslearning.com/book-demo | public/sitemap-static.xml | no | yes | /book-demo | self:/book-demo | no | OK | - |
 | /careers | https://tinystepslearning.com/careers | public/sitemap-static.xml | no | yes | /careers | self:/careers | no | OK | - |
@@ -97,24 +87,45 @@ Generated: 2026-05-19T15:09:59.362Z
 | /confidence-building-program-kids | https://tinystepslearning.com/confidence-building-program-kids | public/sitemap-static.xml | no | yes | /confidence-building-program-kids | self:/confidence-building-program-kids | no | OK | - |
 | /contact | https://tinystepslearning.com/contact | public/sitemap-static.xml | no | yes | /contact | self:/contact | no | OK | - |
 | /courses | https://tinystepslearning.com/courses | public/sitemap-static.xml | no | yes | /courses | self:/courses | no | OK | - |
-| /courses/advanced-grammar | https://tinystepslearning.com/courses/advanced-grammar | public/sitemap-courses.xml | no | yes | /courses/:slug | not_detected | no | OK | - |
-| /courses/advanced-public-speaking | https://tinystepslearning.com/courses/advanced-public-speaking | public/sitemap-courses.xml | no | yes | /courses/:slug | not_detected | no | OK | - |
-| /courses/basic-grammar | https://tinystepslearning.com/courses/basic-grammar | public/sitemap-courses.xml | no | yes | /courses/:slug | not_detected | no | OK | - |
-| /courses/basic-public-speaking | https://tinystepslearning.com/courses/basic-public-speaking | public/sitemap-courses.xml | no | yes | /courses/:slug | not_detected | no | OK | - |
-| /courses/phonics-advanced | https://tinystepslearning.com/courses/phonics-advanced | public/sitemap-courses.xml | no | yes | /courses/:slug | not_detected | no | OK | - |
-| /courses/phonics-brush-up | https://tinystepslearning.com/courses/phonics-brush-up | public/sitemap-courses.xml | no | yes | /courses/:slug | not_detected | no | OK | - |
-| /courses/phonics-foundation | https://tinystepslearning.com/courses/phonics-foundation | public/sitemap-courses.xml | no | yes | /courses/:slug | not_detected | no | OK | - |
+| /courses/grammar | https://tinystepslearning.com/courses/grammar | public/sitemap-courses.xml | no | yes | /courses/:slug | self:/courses/grammar | no | OK | - |
+| /courses/grammar-mastery | https://tinystepslearning.com/courses/grammar-mastery | public/sitemap-courses.xml | no | yes | /courses/:slug | self:/courses/grammar-mastery | no | OK | - |
+| /courses/phonics-advanced | https://tinystepslearning.com/courses/phonics-advanced | public/sitemap-courses.xml | no | yes | /courses/:slug | self:/courses/phonics-advanced | no | OK | - |
+| /courses/phonics-brush-up | https://tinystepslearning.com/courses/phonics-brush-up | public/sitemap-courses.xml | no | yes | /courses/:slug | self:/courses/phonics-brush-up | no | OK | - |
+| /courses/phonics-foundation | https://tinystepslearning.com/courses/phonics-foundation | public/sitemap-courses.xml | no | yes | /courses/:slug | self:/courses/phonics-foundation | no | OK | - |
+| /courses/public-speaking-excellence | https://tinystepslearning.com/courses/public-speaking-excellence | public/sitemap-courses.xml | no | yes | /courses/:slug | self:/courses/public-speaking-excellence | no | OK | - |
+| /courses/public-speaking-foundations | https://tinystepslearning.com/courses/public-speaking-foundations | public/sitemap-courses.xml | no | yes | /courses/:slug | self:/courses/public-speaking-foundations | no | OK | - |
 | /curriculum | https://tinystepslearning.com/curriculum | public/sitemap-static.xml | no | yes | /curriculum | self:/curriculum | no | OK | - |
 | /english-classes-for-4-year-old | https://tinystepslearning.com/english-classes-for-4-year-old | public/sitemap-static.xml | no | yes | /english-classes-for-4-year-old | self:/english-classes-for-4-year-old | no | OK | - |
 | /english-classes-for-5-year-old | https://tinystepslearning.com/english-classes-for-5-year-old | public/sitemap-static.xml | no | yes | /english-classes-for-5-year-old | self:/english-classes-for-5-year-old | no | OK | - |
 | /english-classes-for-6-year-old | https://tinystepslearning.com/english-classes-for-6-year-old | public/sitemap-static.xml | no | yes | /english-classes-for-6-year-old | self:/english-classes-for-6-year-old | no | OK | - |
 | /english-classes-for-7-10-year-old | https://tinystepslearning.com/english-classes-for-7-10-year-old | public/sitemap-static.xml | no | yes | /english-classes-for-7-10-year-old | self:/english-classes-for-7-10-year-old | no | OK | - |
 | /english-foundation-program | https://tinystepslearning.com/english-foundation-program | public/sitemap-static.xml | no | yes | /english-foundation-program | self:/english-foundation-program | no | OK | - |
+| /english-grammar-writing-classes | https://tinystepslearning.com/english-grammar-writing-classes | public/sitemap-static.xml | no | yes | /english-grammar-writing-classes | self:/english-grammar-writing-classes | no | OK | - |
 | /faq | https://tinystepslearning.com/faq | public/sitemap-static.xml | no | yes | /faq | self:/faq | no | OK | - |
 | /for-schools | https://tinystepslearning.com/for-schools | public/sitemap-static.xml | no | yes | /for-schools | self:/for-schools | no | OK | - |
+| /free-balloon-pop-phonics-game-for-kids | https://tinystepslearning.com/free-balloon-pop-phonics-game-for-kids | public/sitemap-static.xml | no | yes | /free-balloon-pop-phonics-game-for-kids | self:/free-balloon-pop-phonics-game-for-kids | no | OK | - |
+| /free-english-games-for-kids | https://tinystepslearning.com/free-english-games-for-kids | public/sitemap-static.xml | no | yes | /free-english-games-for-kids | self:/free-english-games-for-kids | no | OK | - |
+| /free-games/word-meaning-flashcards | https://tinystepslearning.com/free-games/word-meaning-flashcards | public/sitemap-static.xml | no | yes | /free-games/word-meaning-flashcards | self:/free-games/word-meaning-flashcards | no | OK | - |
+| /free-grammar-games-for-kids | https://tinystepslearning.com/free-grammar-games-for-kids | public/sitemap-static.xml | no | yes | /free-grammar-games-for-kids | self:/free-grammar-games-for-kids | no | OK | - |
+| /free-grammar-practice-game-for-kids | https://tinystepslearning.com/free-grammar-practice-game-for-kids | public/sitemap-static.xml | no | yes | /free-grammar-practice-game-for-kids | self:/free-grammar-practice-game-for-kids | no | OK | - |
+| /free-letter-sound-games-for-kids | https://tinystepslearning.com/free-letter-sound-games-for-kids | public/sitemap-static.xml | no | yes | /free-letter-sound-games-for-kids | self:/free-letter-sound-games-for-kids | no | OK | - |
+| /free-letter-sounds-game-for-kids | https://tinystepslearning.com/free-letter-sounds-game-for-kids | public/sitemap-static.xml | no | yes | /free-letter-sounds-game-for-kids | self:/free-letter-sounds-game-for-kids | no | OK | - |
+| /free-letter-tracing-game-for-kids | https://tinystepslearning.com/free-letter-tracing-game-for-kids | public/sitemap-static.xml | no | yes | /free-letter-tracing-game-for-kids | self:/free-letter-tracing-game-for-kids | no | OK | - |
+| /free-phonics-games-for-kids | https://tinystepslearning.com/free-phonics-games-for-kids | public/sitemap-static.xml | no | yes | /free-phonics-games-for-kids | self:/free-phonics-games-for-kids | no | OK | - |
+| /free-reading-fluency-game-for-kids | https://tinystepslearning.com/free-reading-fluency-game-for-kids | public/sitemap-static.xml | no | yes | /free-reading-fluency-game-for-kids | self:/free-reading-fluency-game-for-kids | no | OK | - |
+| /free-reading-games-for-kids | https://tinystepslearning.com/free-reading-games-for-kids | public/sitemap-static.xml | no | yes | /free-reading-games-for-kids | self:/free-reading-games-for-kids | no | OK | - |
+| /free-sentence-building-games-for-kids | https://tinystepslearning.com/free-sentence-building-games-for-kids | public/sitemap-static.xml | no | yes | /free-sentence-building-games-for-kids | self:/free-sentence-building-games-for-kids | no | OK | - |
+| /free-sentence-making-game-for-kids | https://tinystepslearning.com/free-sentence-making-game-for-kids | public/sitemap-static.xml | no | yes | /free-sentence-making-game-for-kids | self:/free-sentence-making-game-for-kids | no | OK | - |
+| /free-sound-listening-game-for-kids | https://tinystepslearning.com/free-sound-listening-game-for-kids | public/sitemap-static.xml | no | yes | /free-sound-listening-game-for-kids | self:/free-sound-listening-game-for-kids | no | OK | - |
+| /free-speaking-games-for-kids | https://tinystepslearning.com/free-speaking-games-for-kids | public/sitemap-static.xml | no | yes | /free-speaking-games-for-kids | self:/free-speaking-games-for-kids | no | OK | - |
+| /free-speaking-practice-game-for-kids | https://tinystepslearning.com/free-speaking-practice-game-for-kids | public/sitemap-static.xml | no | yes | /free-speaking-practice-game-for-kids | self:/free-speaking-practice-game-for-kids | no | OK | - |
+| /free-spelling-game-for-kids | https://tinystepslearning.com/free-spelling-game-for-kids | public/sitemap-static.xml | no | yes | /free-spelling-game-for-kids | self:/free-spelling-game-for-kids | no | OK | - |
+| /free-word-building-game-for-kids | https://tinystepslearning.com/free-word-building-game-for-kids | public/sitemap-static.xml | no | yes | /free-word-building-game-for-kids | self:/free-word-building-game-for-kids | no | OK | - |
+| /free-word-building-games-for-kids | https://tinystepslearning.com/free-word-building-games-for-kids | public/sitemap-static.xml | no | yes | /free-word-building-games-for-kids | self:/free-word-building-games-for-kids | no | OK | - |
 | /grammar | https://tinystepslearning.com/grammar | public/sitemap-static.xml | no | yes | /grammar | self:/grammar | no | OK | - |
 | /learning-partner | https://tinystepslearning.com/learning-partner | public/sitemap-static.xml | no | yes | /learning-partner | self:/learning-partner | no | OK | - |
-| /online-english-classes-for-kids-india | https://tinystepslearning.com/online-english-classes-for-kids-india | public/sitemap-static.xml | no | yes | /online-english-classes-for-kids-india | self:/online-english-classes-for-kids-india | no | OK | - |
+| /letter-tracing-with-sounds-game | https://tinystepslearning.com/letter-tracing-with-sounds-game | public/sitemap-static.xml | no | yes | /letter-tracing-with-sounds-game | self:/letter-tracing-with-sounds-game | no | OK | - |
+| /online-english-classes-for-kids | https://tinystepslearning.com/online-english-classes-for-kids | public/sitemap-static.xml | no | yes | /online-english-classes-for-kids | self:/online-english-classes-for-kids | no | OK | - |
 | /online-english-classes-hyderabad | https://tinystepslearning.com/online-english-classes-hyderabad | public/sitemap-static.xml | no | yes | /online-english-classes-hyderabad | self:/online-english-classes-hyderabad | no | OK | - |
 | /parents | https://tinystepslearning.com/parents | public/sitemap-parents.xml | no | yes | /parents | self:/parents | no | OK | - |
 | /parents/choosing-course | https://tinystepslearning.com/parents/choosing-course | public/sitemap-parents.xml | no | yes | /parents/choosing-course | self:/parents/choosing-course | no | OK | - |
@@ -133,12 +144,13 @@ Generated: 2026-05-19T15:09:59.362Z
 | /phonics-games-for-preschoolers | https://tinystepslearning.com/phonics-games-for-preschoolers | public/sitemap-static.xml | no | yes | /phonics-games-for-preschoolers | self:/phonics-games-for-preschoolers | no | OK | - |
 | /phonics-learning-games | https://tinystepslearning.com/phonics-learning-games | public/sitemap-static.xml | no | yes | /phonics-learning-games | self:/phonics-learning-games | no | OK | - |
 | /pricing | https://tinystepslearning.com/pricing | public/sitemap-static.xml | no | yes | /pricing | self:/pricing | no | OK | - |
-| /privacy-policy | https://tinystepslearning.com/privacy-policy | public/sitemap-static.xml | no | yes | /privacy-policy | self:/privacy-policy | no | OK | - |
+| /public-speaking-communication-kids | https://tinystepslearning.com/public-speaking-communication-kids | public/sitemap-static.xml | no | yes | /public-speaking-communication-kids | self:/public-speaking-communication-kids | no | OK | - |
 | /reading-classes-for-kids | https://tinystepslearning.com/reading-classes-for-kids | public/sitemap-static.xml | no | yes | /reading-classes-for-kids | self:/reading-classes-for-kids | no | OK | - |
 | /reading-fluency-program | https://tinystepslearning.com/reading-fluency-program | public/sitemap-static.xml | no | yes | /reading-fluency-program | self:/reading-fluency-program | no | OK | - |
 | /shy-child-speaking-confidence | https://tinystepslearning.com/shy-child-speaking-confidence | public/sitemap-static.xml | no | yes | /shy-child-speaking-confidence | self:/shy-child-speaking-confidence | no | OK | - |
 | /slow-reader-child-help | https://tinystepslearning.com/slow-reader-child-help | public/sitemap-static.xml | no | yes | /slow-reader-child-help | self:/slow-reader-child-help | no | OK | - |
 | /speaking | https://tinystepslearning.com/speaking | public/sitemap-static.xml | no | yes | /speaking | self:/speaking | no | OK | - |
+| /spoken-english-classes-for-kids-online | https://tinystepslearning.com/spoken-english-classes-for-kids-online | public/sitemap-static.xml | no | yes | /spoken-english-classes-for-kids-online | self:/spoken-english-classes-for-kids-online | no | OK | - |
 | /summer-camp-for-kids-india | https://tinystepslearning.com/summer-camp-for-kids-india | public/sitemap-static.xml | no | yes | /summer-camp-for-kids-india | self:/summer-camp-for-kids-india | no | OK | - |
 | /summer-camps | https://tinystepslearning.com/summer-camps | public/sitemap-static.xml | no | yes | /summer-camps | self:/summer-camps | no | OK | - |
 | /summer-camps/grammar-fast-track | https://tinystepslearning.com/summer-camps/grammar-fast-track | public/sitemap-static.xml | no | yes | /summer-camps/:programSlug | self:/summer-camps/grammar-fast-track | no | OK | - |
@@ -155,7 +167,7 @@ Generated: 2026-05-19T15:09:59.362Z
 
 | path | url | sitemap source | duplicate presence | route exists | matched route pattern | canonical mapping | private/noindex | suspected issue category | notes |
 |---|---|---|---|---|---|---|---|---|---|
-| /sitemap-blog.xml | https://tinystepslearning.com/sitemap-blog.xml | public/sitemap.xml | no | no | - | not_detected | yes | SITEMAP_RESOURCE | firebaseHeader:noindex |
-| /sitemap-courses.xml | https://tinystepslearning.com/sitemap-courses.xml | public/sitemap.xml | no | no | - | not_detected | yes | SITEMAP_RESOURCE | firebaseHeader:noindex |
-| /sitemap-parents.xml | https://tinystepslearning.com/sitemap-parents.xml | public/sitemap.xml | no | no | - | not_detected | yes | SITEMAP_RESOURCE | firebaseHeader:noindex |
-| /sitemap-static.xml | https://tinystepslearning.com/sitemap-static.xml | public/sitemap.xml | no | no | - | not_detected | yes | SITEMAP_RESOURCE | firebaseHeader:noindex |
+| /sitemap-blog.xml | https://tinystepslearning.com/sitemap-blog.xml | public/sitemap.xml | no | no | - | not_detected | no | SITEMAP_RESOURCE | - |
+| /sitemap-courses.xml | https://tinystepslearning.com/sitemap-courses.xml | public/sitemap.xml | no | no | - | not_detected | no | SITEMAP_RESOURCE | - |
+| /sitemap-parents.xml | https://tinystepslearning.com/sitemap-parents.xml | public/sitemap.xml | no | no | - | not_detected | no | SITEMAP_RESOURCE | - |
+| /sitemap-static.xml | https://tinystepslearning.com/sitemap-static.xml | public/sitemap.xml | no | no | - | not_detected | no | SITEMAP_RESOURCE | - |

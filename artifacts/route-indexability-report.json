@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-04T07:21:31.949Z",
+  "generatedAt": "2026-08-07T18:02:22.449Z",
   "totals": {
     "routes": 169,
     "passed": 169,
@@ -17,7 +17,7 @@
       "actualLocalBuild": {
         "html": true,
         "canonical": "https://tinystepslearning.com/",
-        "robots": "index, follow",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
         "sitemap": true
       },
       "pass": true,
@@ -51,7 +51,7 @@
       "actualLocalBuild": {
         "html": true,
         "canonical": "https://tinystepslearning.com/pricing",
-        "robots": "index, follow",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
         "sitemap": true
       },
       "pass": true,
@@ -85,7 +85,7 @@
       "actualLocalBuild": {
         "html": true,
         "canonical": "https://tinystepslearning.com/contact",
-        "robots": "index, follow",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
         "sitemap": true
       },
       "pass": true,
@@ -102,7 +102,7 @@
       "actualLocalBuild": {
         "html": true,
         "canonical": "https://tinystepslearning.com/why-tiny-steps",
-        "robots": "index, follow",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
         "sitemap": true
       },
       "pass": true,
@@ -119,7 +119,7 @@
       "actualLocalBuild": {
         "html": true,
         "canonical": "https://tinystepslearning.com/learning-partner",
-        "robots": "index, follow",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
         "sitemap": true
       },
       "pass": true,
@@ -153,7 +153,7 @@
       "actualLocalBuild": {
         "html": true,
         "canonical": "https://tinystepslearning.com/class-samples",
-        "robots": "index, follow",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
         "sitemap": true
       },
       "pass": true,
@@ -170,7 +170,7 @@
       "actualLocalBuild": {
         "html": true,
         "canonical": "https://tinystepslearning.com/testimonials",
-        "robots": "index, follow",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
         "sitemap": true
       },
       "pass": true,
@@ -221,7 +221,7 @@
       "actualLocalBuild": {
         "html": true,
         "canonical": "https://tinystepslearning.com/curriculum",
-        "robots": "index, follow",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
         "sitemap": true
       },
       "pass": true,
@@ -238,7 +238,7 @@
       "actualLocalBuild": {
         "html": true,
         "canonical": "https://tinystepslearning.com/faq",
-        "robots": "index, follow",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
         "sitemap": true
       },
       "pass": true,
@@ -646,7 +646,7 @@
       "actualLocalBuild": {
         "html": true,
         "canonical": "https://tinystepslearning.com/free-games/word-meaning-flashcards",
-        "robots": "index, follow",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
         "sitemap": true
       },
       "pass": true,
@@ -680,7 +680,7 @@
       "actualLocalBuild": {
         "html": true,
         "canonical": "https://tinystepslearning.com/grammar",
-        "robots": "index,follow",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
         "sitemap": true
       },
       "pass": true,
@@ -697,7 +697,7 @@
       "actualLocalBuild": {
         "html": true,
         "canonical": "https://tinystepslearning.com/speaking",
-        "robots": "index,follow",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
         "sitemap": true
       },
       "pass": true,
@@ -748,7 +748,7 @@
       "actualLocalBuild": {
         "html": true,
         "canonical": "https://tinystepslearning.com/reading-classes-for-kids",
-        "robots": "index,follow",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
         "sitemap": true
       },
       "pass": true,
@@ -1190,7 +1190,7 @@
       "actualLocalBuild": {
         "html": true,
         "canonical": "https://tinystepslearning.com/parents",
-        "robots": "index, follow",
+        "robots": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
         "sitemap": true
       },
       "pass": true,

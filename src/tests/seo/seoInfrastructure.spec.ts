@@ -12,6 +12,81 @@ function readXml(name: string) {
 }
 
 describe('SEO infrastructure', () => {
+  const publicGameIndexabilityPaths = [
+    '/free-letter-tracing-game-for-kids',
+    '/free-sentence-building-games-for-kids',
+    '/free-sentence-making-game-for-kids',
+  ];
+
+  it('keeps the tracing page, sentence category, and sentence game independently indexable', async () => {
+    const manifestPath = path.join(repoRoot, 'src/lib/publicRouteManifest.js');
+    const { PUBLIC_ROUTE_MANIFEST } = await import(pathToFileURL(manifestPath).href);
+    const { ROUTE_SEO_REGISTRY } = await import('../../lib/routeSeoRegistry.js');
+    // @ts-expect-error Node SEO inventory is an intentionally untyped .mjs module.
+    const { PRERENDER_STATIC_ROUTES } = await import('../../../scripts/seo-route-inventory.mjs');
+    const sitemapXml = [
+      readXml('sitemap-static.xml'),
+      readXml('sitemap-blog.xml'),
+      readXml('sitemap-courses.xml'),
+      readXml('sitemap-parents.xml'),
+    ].join('\n');
+    const redirects = firebaseConfig.hosting.redirects as Array<{ source?: string }>;
+
+    for (const routePath of publicGameIndexabilityPaths) {
+      const manifestEntry = PUBLIC_ROUTE_MANIFEST.find((entry: { path: string }) => entry.path === routePath);
+      const registryEntry = ROUTE_SEO_REGISTRY[routePath];
+      const canonicalUrl = `https://tinystepslearning.com${routePath}`;
+
+      expect(manifestEntry).toMatchObject({
+        intent: 'index',
+        indexable: true,
+        prerender: true,
+        sitemap: true,
+        canonicalPath: routePath,
+      });
+      expect(manifestEntry.robots).toMatch(/^index, follow/);
+      expect(registryEntry).toMatchObject({ canonicalPath: routePath });
+      expect(registryEntry.title).toBeTruthy();
+      expect(registryEntry.description).toBeTruthy();
+      expect(registryEntry.robots).toMatch(/^index, follow/);
+      expect(registryEntry.robots).not.toMatch(/noindex|nofollow|noarchive/i);
+      expect(PRERENDER_STATIC_ROUTES).toContain(routePath);
+      expect(sitemapXml.match(new RegExp(`<loc>${canonicalUrl}</loc>`, 'g'))).toHaveLength(1);
+      expect(redirects.some((entry) => entry.source === routePath)).toBe(false);
+    }
+
+    expect(ROUTE_SEO_REGISTRY['/free-sentence-building-games-for-kids'].title)
+      .not.toBe(ROUTE_SEO_REGISTRY['/free-sentence-making-game-for-kids'].title);
+  });
+
+  it('forces manifest robots and removes conflicting prerender metadata for public games', async () => {
+    // @ts-expect-error Build tooling is intentionally authored as an executable ESM module.
+    const { injectSeoMetadata } = await import('../../../scripts/prerender.mjs');
+    const poisonedHtml = '<!doctype html><html><head>'
+      + '<title>Wrong</title><meta name="description" content="Wrong">'
+      + '<meta name="robots" content="noindex, nofollow">'
+      + '<meta name="robots" content="index, follow">'
+      + '<meta name="googlebot" content="noindex">'
+      + '<link rel="canonical" href="https://tinystepslearning.com/kids/private">'
+      + '<link rel="canonical" href="https://tinystepslearning.com/duplicate">'
+      + '</head><body><h1>Public game</h1></body></html>';
+
+    for (const routePath of publicGameIndexabilityPaths) {
+      const rendered = injectSeoMetadata(poisonedHtml, routePath);
+      const robotsTags = rendered.match(/<meta\b(?=[^>]*\bname=["']robots["'])[^>]*>/gi) || [];
+      const googlebotTags = rendered.match(/<meta\b(?=[^>]*\bname=["']googlebot["'])[^>]*>/gi) || [];
+      const canonicalTags = rendered.match(/<link\b(?=[^>]*\brel=["']canonical["'])[^>]*>/gi) || [];
+
+      expect(robotsTags).toHaveLength(1);
+      expect(googlebotTags).toHaveLength(1);
+      expect(canonicalTags).toHaveLength(1);
+      expect(robotsTags[0]).toContain('content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1"');
+      expect(googlebotTags[0]).not.toMatch(/noindex/i);
+      expect(canonicalTags[0]).toContain(`href="https://tinystepslearning.com${routePath}"`);
+      expect(rendered).not.toMatch(/noindex|nofollow|noarchive/i);
+    }
+  });
+
   it('keeps legacy /main routes out of sitemap files and includes priority canonicals', () => {
     const sitemapXml = [
       readXml('sitemap-static.xml'),

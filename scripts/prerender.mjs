@@ -2,9 +2,11 @@
 import { spawn } from "child_process";
 import fs from "fs/promises";
 import path from "path";
+import { fileURLToPath } from "url";
 import { chromium } from "playwright";
 import { getPublicCourseSitemapPaths } from "../src/lib/publicCoursePages.js";
 import { shouldIncludeBlogSlugInSitemap } from "../src/lib/blogIndexingPolicy.js";
+import { PUBLIC_ROUTE_MANIFEST } from "../src/lib/publicRouteManifest.js";
 import { ROUTE_SEO_REGISTRY as ROUTE_SEO_CONFIG } from "../src/lib/routeSeoRegistry.js";
 import { extractBlogEntriesFromPostFiles, listMdxEntries } from "./blog-route-utils.mjs";
 import { isClarityAllowedPath } from "./clarity-route-policy.mjs";
@@ -129,8 +131,9 @@ async function discoverBlogRoutes(page) {
  * @param route The pathname (e.g. "/pricing")
  * @returns Modified HTML with correct SEO metadata
  */
-function injectSeoMetadata(html, route) {
+export function injectSeoMetadata(html, route) {
   const config = ROUTE_SEO_CONFIG[route];
+  const manifestEntry = PUBLIC_ROUTE_MANIFEST.find((entry) => entry.path === route);
   const canonicalPath = config?.canonicalPath || route;
   const canonicalUrl = canonicalPath === '/'
     ? 'https://tinystepslearning.com/'
@@ -168,16 +171,21 @@ function injectSeoMetadata(html, route) {
 
   // Inject/replace <link rel="canonical">
   const canonicalLink = `<link rel="canonical" href="${canonicalUrl}">`;
-  result = result.replace(/<link rel="canonical"[^>]*>/i, canonicalLink) || result.replace('</head>', `${canonicalLink}</head>`);
+  result = result.replace(/\s*<link\b(?=[^>]*\brel=["']canonical["'])[^>]*>/gi, '');
+  result = result.replace('</head>', `${canonicalLink}</head>`);
 
-  // Inject/replace <meta name="robots">
-  const robotsContent = config?.robots || renderedRobotsMatch?.[1] || DEFAULT_INDEXABLE_ROBOTS;
+  // Public route intent is authoritative. Never preserve a rendered noindex on a route
+  // the manifest classifies as indexable, and always emit exactly one bot directive.
+  const robotsContent = manifestEntry?.robots || config?.robots || renderedRobotsMatch?.[1] || DEFAULT_INDEXABLE_ROBOTS;
   const robotsMeta = `<meta name="robots" content="${robotsContent}">`;
-  result = result.replace(/<meta name="robots"[^>]*>/i, robotsMeta) || result.replace('</head>', `${robotsMeta}</head>`);
-  const googlebotMeta = `<meta name="googlebot" content="${config?.robots || renderedGooglebotMatch?.[1] || robotsContent}">`;
-  const bingbotMeta = `<meta name="bingbot" content="${config?.robots || renderedBingbotMatch?.[1] || robotsContent}">`;
-  result = result.replace(/<meta name="googlebot"[^>]*>/i, googlebotMeta) || result.replace('</head>', `${googlebotMeta}</head>`);
-  result = result.replace(/<meta name="bingbot"[^>]*>/i, bingbotMeta) || result.replace('</head>', `${bingbotMeta}</head>`);
+  const googlebotContent = manifestEntry?.robots || config?.robots || renderedGooglebotMatch?.[1] || robotsContent;
+  const bingbotContent = manifestEntry?.robots || config?.robots || renderedBingbotMatch?.[1] || robotsContent;
+  const googlebotMeta = `<meta name="googlebot" content="${googlebotContent}">`;
+  const bingbotMeta = `<meta name="bingbot" content="${bingbotContent}">`;
+  result = result.replace(/\s*<meta\b(?=[^>]*\bname=["']robots["'])[^>]*>/gi, '');
+  result = result.replace(/\s*<meta\b(?=[^>]*\bname=["']googlebot["'])[^>]*>/gi, '');
+  result = result.replace(/\s*<meta\b(?=[^>]*\bname=["']bingbot["'])[^>]*>/gi, '');
+  result = result.replace('</head>', `${robotsMeta}${googlebotMeta}${bingbotMeta}</head>`);
   const authorMeta = `<meta name="author" content="Tiny Steps Learning">`;
   result = result.replace(/<meta name="author"[^>]*>/i, authorMeta) || result.replace('</head>', `${authorMeta}</head>`);
 
@@ -469,7 +477,10 @@ async function prerender() {
   }
 }
 
-prerender().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+const isEntry = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isEntry) {
+  prerender().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
