@@ -390,6 +390,7 @@ export const ROUTE_SEO_REGISTRY = {
     description:
       'Help children build simple English sentences with free online sentence games from Tiny Steps. Practise grammar, word order and clear expression.',
     canonicalPath: '/free-sentence-building-games-for-kids',
+    robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
     ogType: 'website',
   },
   '/free-reading-games-for-kids': {
@@ -446,6 +447,7 @@ export const ROUTE_SEO_REGISTRY = {
     description:
       'Help children build simple English sentences with a free sentence making game from Tiny Steps. Practise word order, grammar and expression online.',
     canonicalPath: '/free-sentence-making-game-for-kids',
+    robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
     ogType: 'website',
   },
   '/free-reading-fluency-game-for-kids': {
@@ -481,6 +483,7 @@ export const ROUTE_SEO_REGISTRY = {
     description:
       'Play a free online ABC tracing game for kids. Practise pre-writing strokes, uppercase letters, lowercase letters, and English alphabet formation for preschool and kindergarten learners.',
     canonicalPath: '/free-letter-tracing-game-for-kids',
+    robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
     ogType: 'website',
   },
   '/letter-tracing-with-sounds-game': {

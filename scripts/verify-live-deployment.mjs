@@ -6,6 +6,13 @@ import { PUBLIC_REDIRECT_MANIFEST } from '../src/lib/publicRouteManifest.js';
 
 const STALE_CONTENT = ['3500+ learners', '9+ countries', '₹3,360', '₹6,440', '₹9,240'];
 const PRIVATE_ROUTES = ['/parent', '/teacher', '/kids/games/english-excellence'];
+const PUBLIC_GAME_INDEXABILITY_ROUTES = [
+  '/free-letter-tracing-game-for-kids',
+  '/free-sentence-building-games-for-kids',
+  '/free-sentence-making-game-for-kids',
+];
+const GOOGLEBOT_SMARTPHONE_USER_AGENT =
+  'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
 
 export function parseArgs(argv) {
   const parsed = {};
@@ -34,6 +41,10 @@ const robotsFrom = (html) => extract(html, /<meta[^>]+name=["']robots["'][^>]+co
 const titleFrom = (html) => extract(html, /<title[^>]*>([\s\S]*?)<\/title>/i).replace(/<[^>]+>/g, '');
 const h1From = (html) => extract(html, /<h1[^>]*>([\s\S]*?)<\/h1>/i).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 const xmlLocations = (xml) => [...xml.matchAll(/<loc>\s*([^<]+)\s*<\/loc>/gi)].map((match) => match[1].trim());
+const metaValues = (html, name) => [...html.matchAll(new RegExp(`<meta\\b(?=[^>]*\\bname=["']${name}["'])[^>]*>`, 'gi'))]
+  .map((match) => extract(match[0], /\bcontent=["']([^"']*)["']/i));
+const canonicalValues = (html) => [...html.matchAll(/<link\b(?=[^>]*\brel=["']canonical["'])[^>]*>/gi)]
+  .map((match) => extract(match[0], /\bhref=["']([^"']*)["']/i));
 
 export async function verifyLiveDeployment({ origin, expectedSha, fetchImpl = fetch }) {
   const assertions = [];
@@ -105,6 +116,36 @@ export async function verifyLiveDeployment({ origin, expectedSha, fetchImpl = fe
         && Boolean(titleFrom(html))
         && Boolean(h1From(html)),
       `HTTP ${response.status}; canonical ${canonical || '(missing)'}; title ${titleFrom(html)}; H1 ${h1From(html)}`,
+    );
+  }
+
+  for (const pathname of PUBLIC_GAME_INDEXABILITY_ROUTES) {
+    const canonicalUrl = `${origin}${pathname}`;
+    const verifyPublicGameResponse = async (label, response) => {
+      const html = await response.text();
+      const robotsValues = metaValues(html, 'robots');
+      const googlebotValues = metaValues(html, 'googlebot');
+      const canonicals = canonicalValues(html);
+      const xRobotsTag = response.headers.get('x-robots-tag') || '';
+      record(
+        `${label} ${pathname}`,
+        response.status === 200
+          && robotsValues.length === 1
+          && googlebotValues.length === 1
+          && canonicals.length === 1
+          && canonicals[0] === canonicalUrl
+          && !/noindex|nofollow|noarchive/i.test(`${robotsValues.join(',')},${googlebotValues.join(',')},${xRobotsTag}`)
+          && Boolean(titleFrom(html))
+          && Boolean(extract(html, /<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i))
+          && Boolean(h1From(html)),
+        `HTTP ${response.status}; robots ${robotsValues.join(' | ') || '(missing)'}; googlebot ${googlebotValues.join(' | ') || '(missing)'}; canonical ${canonicals.join(' | ') || '(missing)'}; X-Robots-Tag ${xRobotsTag || '(absent)'}`,
+      );
+    };
+
+    await verifyPublicGameResponse('public game raw HTML', await request(pathname));
+    await verifyPublicGameResponse(
+      'public game Googlebot smartphone',
+      await request(pathname, { headers: { 'user-agent': GOOGLEBOT_SMARTPHONE_USER_AGENT } }),
     );
   }
 

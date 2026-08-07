@@ -1,19 +1,19 @@
 {
-  "generatedAt": "2026-08-04T07:21:32.478Z",
+  "generatedAt": "2026-08-07T18:02:23.010Z",
   "maxGzipBytes": 153600,
   "assets": [
     {
-      "url": "/assets/index-BjF-VWom.js",
-      "rawBytes": 398309,
-      "gzipBytes": 125645,
-      "brotliBytes": 107366,
+      "url": "/assets/index-Re4lOpzR.js",
+      "rawBytes": 398436,
+      "gzipBytes": 126111,
+      "brotliBytes": 107375,
       "bannedSources": []
     }
   ],
   "totals": {
-    "rawBytes": 398309,
-    "gzipBytes": 125645,
-    "brotliBytes": 107366
+    "rawBytes": 398436,
+    "gzipBytes": 126111,
+    "brotliBytes": 107375
   },
   "bannedSources": [],
   "passed": true

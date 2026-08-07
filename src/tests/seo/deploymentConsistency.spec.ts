@@ -56,6 +56,11 @@ describe('deployment consistency guardrails', () => {
     const sha = 'c'.repeat(40);
     const legalHtml = '<title>Terms and Conditions | Tiny Steps Learning</title><link rel="canonical" href="https://tinystepslearning.com/terms-and-conditions"><meta name="robots" content="noindex, follow"><h1>Terms and Conditions</h1>';
     const homepageHtml = '<title>Tiny Steps</title><link rel="canonical" href="https://tinystepslearning.com/"><meta name="robots" content="index, follow"><h1>Online English Classes for Kids</h1>';
+    const publicGamePaths = new Set([
+      '/free-letter-tracing-game-for-kids',
+      '/free-sentence-building-games-for-kids',
+      '/free-sentence-making-game-for-kids',
+    ]);
     const fetchMock = vi.fn(async (input: string | URL) => {
       const url = new URL(String(input));
       const redirect = PUBLIC_REDIRECT_MANIFEST.find(
@@ -68,6 +73,14 @@ describe('deployment consistency guardrails', () => {
         });
       }
       if (url.pathname === '/terms-and-conditions') return new Response(legalHtml, { status: 200 });
+      if (publicGamePaths.has(url.pathname)) {
+        return new Response(
+          `<title>Public Game</title><meta name="description" content="Useful public game description">`
+          + '<meta name="robots" content="index, follow"><meta name="googlebot" content="index, follow">'
+          + `<link rel="canonical" href="${origin}${url.pathname}"><h1>Public Game</h1>`,
+          { status: 200 },
+        );
+      }
       if (url.pathname === '/sitemap.xml') {
         return new Response('<sitemapindex><sitemap><loc>https://tinystepslearning.com/sitemap-static.xml</loc></sitemap></sitemapindex>');
       }
