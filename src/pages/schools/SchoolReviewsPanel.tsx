@@ -169,7 +169,7 @@ export default function SchoolReviewsPanel({
                   {review.blending && <span>• Blending: {review.blending}</span>}
                   {review.segmenting && <span>• Segmenting: {review.segmenting}</span>}
                   {review.decoding && <span>• Decoding: {review.decoding}</span>}
-                  {review.nextReviewAt && <span>• Next review: {dateText(review.nextReviewAt)}</span>}
+                  {Boolean(review.nextReviewAt) && <span>• Next review: {dateText(review.nextReviewAt)}</span>}
                 </div>
               </article>
             ))}
