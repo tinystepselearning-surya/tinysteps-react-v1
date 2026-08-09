@@ -73,6 +73,7 @@ export function toSchoolRecord(
     learningPartnerName: asNullableString(data.learningPartnerName),
     learningPartnerEmail: asNullableString(data.learningPartnerEmail),
     learningPartnerAssignedAt: data.learningPartnerAssignedAt,
+    currentAcademicYearId: asNullableString(data.currentAcademicYearId),
     createdAt: data.createdAt,
     createdBy: asNullableString(data.createdBy) || undefined,
     updatedAt: data.updatedAt,
