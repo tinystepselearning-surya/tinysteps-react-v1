@@ -50,6 +50,10 @@ vi.mock('../components/common/AuthBootstrap', () => ({
   default: () => null,
 }));
 
+vi.mock('../components/notifications/ForegroundNotificationHost', () => ({
+  default: () => null,
+}));
+
 vi.mock('../lib/nativeAuthDiagnostics', () => ({
   isNativeCapacitorRuntime: () => true,
   runNativeAuthStartupDiagnostics: startupDiagnosticsMock,
@@ -76,6 +80,7 @@ vi.mock('react-router-dom', async () => {
 });
 
 import App from '../app';
+import ProtectedRuntimeBootstrap from '../components/runtime/ProtectedRuntimeBootstrap';
 
 describe('native persisted authentication push bootstrap', () => {
   beforeEach(() => {
@@ -136,7 +141,7 @@ describe('native persisted authentication push bootstrap', () => {
   it('holds a message push behind Login and opens it after auth restoration', async () => {
     authState.authStatus = 'unauthenticated';
     queuePendingPushOpenRoute('/messages', 'restored-thread');
-    const view = render(<App />);
+    const view = render(<ProtectedRuntimeBootstrap />);
     await waitFor(() => expect(navigateMock).toHaveBeenCalledWith(
       '/login',
       expect.objectContaining({ replace: true }),
@@ -145,11 +150,11 @@ describe('native persisted authentication push bootstrap', () => {
 
     navigateMock.mockClear();
     authState.authStatus = 'authenticated';
-    view.rerender(<App />);
+    view.rerender(<ProtectedRuntimeBootstrap />);
     await waitFor(() => expect(navigateMock).toHaveBeenCalledWith(
       '/messages/restored-thread',
       { replace: true },
-    ), { timeout: 3_000 });
+    ));
     expect(getPendingPushOpenRoute()).toBeNull();
   });
 
@@ -160,7 +165,7 @@ describe('native persisted authentication push bootstrap', () => {
       route: '/parent?tab=classes',
       sessionId: 'session-1',
     });
-    const view = render(<App />);
+    const view = render(<ProtectedRuntimeBootstrap />);
     await waitFor(() => expect(navigateMock).toHaveBeenCalledWith(
       '/login',
       expect.objectContaining({ replace: true }),
@@ -168,11 +173,11 @@ describe('native persisted authentication push bootstrap', () => {
 
     navigateMock.mockClear();
     authState.authStatus = 'authenticated';
-    view.rerender(<App />);
+    view.rerender(<ProtectedRuntimeBootstrap />);
     await waitFor(() => expect(navigateMock).toHaveBeenCalledWith(
       '/parent?tab=classes',
       { replace: true },
-    ), { timeout: 3_000 });
+    ));
     expect(getPendingPushOpenRoute()).toBeNull();
   });
 
