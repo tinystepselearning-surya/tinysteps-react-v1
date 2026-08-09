@@ -22,6 +22,63 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type FirestoreData = admin.firestore.DocumentData;
 
+/**
+ * School-domain mutations are intentionally stricter than the shared legacy
+ * admin guard. The shared guard keeps compatibility with existing admin
+ * callables, but school writes are server-only and must honor the caller's
+ * CURRENT Firestore role/status so a stale admin token cannot preserve access.
+ */
+async function ensureCurrentActiveAdmin(auth: any): Promise<void> {
+  await ensureAdmin(auth);
+
+  const uid = auth?.uid;
+  if (!uid || typeof uid !== 'string') {
+    throw new HttpsError('unauthenticated', 'Authentication required');
+  }
+
+  try {
+    const snap = await admin.firestore().collection('users').doc(uid).get();
+    if (!snap.exists) {
+      logger.warn('school admin guard: no user document', { uid });
+      throw new HttpsError('permission-denied', 'Admin access required');
+    }
+
+    const data = snap.data() || {};
+    const primaryRole = normalizeRole(data.role);
+    const roles = Array.isArray(data.roles)
+      ? data.roles
+          .map((role: unknown) => normalizeRole(role))
+          .filter(Boolean)
+      : [];
+
+    const hasCurrentAdminRole =
+      primaryRole === 'admin' || roles.includes('admin');
+
+    const hasActiveOrLegacyStatus =
+      data.status === undefined ||
+      data.status === null ||
+      (typeof data.status === 'string' &&
+        data.status.trim().toLowerCase() === 'active');
+
+    if (!hasCurrentAdminRole || !hasActiveOrLegacyStatus) {
+      logger.warn('school admin guard: current admin access denied', {
+        uid,
+        role: data.role,
+        status: data.status,
+      });
+      throw new HttpsError('permission-denied', 'Admin access required');
+    }
+  } catch (error: any) {
+    if (error instanceof HttpsError) throw error;
+
+    logger.error('school admin guard failed', {
+      uid,
+      error: String(error),
+    });
+    throw new HttpsError('internal', 'Failed to verify admin status');
+  }
+}
+
 function requireString(
   value: unknown,
   field: string,
@@ -176,7 +233,7 @@ export const adminCreateSchool = onCall(
     timeoutSeconds: 60,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCurrentActiveAdmin(request.auth);
 
     const payload = (request.data || {}) as CreateSchoolRequest;
     const name = requireString(payload.name, 'School name', 160);
@@ -200,6 +257,16 @@ export const adminCreateSchool = onCall(
     const schoolAdminUserIds = normalizeInitialSchoolAdminIds(
       payload.schoolAdminUserIds,
     );
+
+    if (
+      status === 'archived' &&
+      (learningPartnerId || schoolAdminUserIds.length > 0)
+    ) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Archived schools cannot receive Learning Partner or School Admin assignments during creation',
+      );
+    }
 
     const db = admin.firestore();
     const schoolRef = db.collection('schools').doc();
@@ -339,7 +406,7 @@ export const adminUpdateSchool = onCall(
     timeoutSeconds: 60,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCurrentActiveAdmin(request.auth);
 
     const payload = (request.data || {}) as UpdateSchoolRequest;
     const schoolId = requireSchoolId(payload.schoolId);
@@ -423,7 +490,7 @@ export const adminAssignSchoolLearningPartner = onCall(
     timeoutSeconds: 60,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCurrentActiveAdmin(request.auth);
 
     const payload = (request.data || {}) as AssignSchoolLpRequest;
     const schoolId = requireSchoolId(payload.schoolId);
@@ -530,7 +597,7 @@ export const adminLinkSchoolUser = onCall(
     timeoutSeconds: 60,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCurrentActiveAdmin(request.auth);
 
     const payload = (request.data || {}) as LinkSchoolUserRequest;
     const schoolId = requireSchoolId(payload.schoolId);
@@ -604,7 +671,7 @@ export const adminUnlinkSchoolUser = onCall(
     timeoutSeconds: 60,
   },
   async (request) => {
-    await ensureAdmin(request.auth);
+    await ensureCurrentActiveAdmin(request.auth);
 
     const payload = (request.data || {}) as UnlinkSchoolUserRequest;
     const schoolId = requireSchoolId(payload.schoolId);
