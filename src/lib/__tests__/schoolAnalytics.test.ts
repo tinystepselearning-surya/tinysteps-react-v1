@@ -132,14 +132,14 @@ describe('school analytics', () => {
     });
   });
 
-  it('weights section growth by matched assessed cohort size', () => {
+  it('weights section growth by eligible matched assessed cohort size', () => {
     const result = buildSchoolAnalytics({
       structure,
       assessments: [
         assessment('a-base', 'a', 'baseline', 2, 40, 20),
         assessment('a-mid', 'a', 'mid', 3, 60, 20),
-        assessment('b-base', 'b', 'baseline', 2, 40, 10),
-        assessment('b-mid', 'b', 'mid', 4, 80, 10),
+        assessment('b-base', 'b', 'baseline', 2, 40, 15),
+        assessment('b-mid', 'b', 'mid', 4, 80, 15),
       ],
       healthBySection: new Map([
         ['a', health('a')],
@@ -148,6 +148,29 @@ describe('school analytics', () => {
     });
 
     expect(result.matchedGrowthSections).toBe(2);
-    expect(result.readingLevelGrowth).toBe(1.33);
+    expect(result.readingLevelGrowth).toBe(1.43);
+    expect(result.baselineEvidenceSections).toBe(2);
+    expect(result.currentEvidenceSections).toBe(2);
+  });
+
+  it('excludes low-coverage section evidence from aggregate growth', () => {
+    const result = buildSchoolAnalytics({
+      structure,
+      assessments: [
+        assessment('a-base', 'a', 'baseline', 2, 40, 20),
+        assessment('a-mid', 'a', 'mid', 3, 60, 20),
+        assessment('b-base', 'b', 'baseline', 2, 40, 10),
+        assessment('b-mid', 'b', 'mid', 7, 95, 10),
+      ],
+      healthBySection: new Map([
+        ['a', health('a')],
+        ['b', health('b')],
+      ]),
+    });
+
+    expect(result.matchedGrowthSections).toBe(1);
+    expect(result.readingLevelGrowth).toBe(1);
+    expect(result.baselineEvidenceSections).toBe(1);
+    expect(result.currentEvidenceSections).toBe(1);
   });
 });
