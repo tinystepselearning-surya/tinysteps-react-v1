@@ -10,6 +10,8 @@ import {
 } from '@firebase/rules-unit-testing';
 import {
   collection,
+  deleteDoc,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -151,6 +153,32 @@ suite('school-domain RBAC rules', () => {
     await assertFails(getDoc(doc(db, 'schools', 'school-archived')));
   });
 
+  it('rejects a stale School Admin token after the user role changes', async () => {
+    await seedSchoolDomain();
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), 'users', 'school-admin-1'), {
+        role: 'parent',
+      });
+    });
+    const db = authDb('school-admin-1', 'schoolAdmin');
+
+    await assertFails(getDoc(doc(db, 'schools', 'school-a')));
+    await assertFails(getDoc(doc(db, 'schoolUsers', 'school-admin-1')));
+  });
+
+  it('rejects an archived School Admin account despite a stale token', async () => {
+    await seedSchoolDomain();
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), 'users', 'school-admin-1'), {
+        status: 'archived',
+      });
+    });
+    const db = authDb('school-admin-1', 'schoolAdmin');
+
+    await assertFails(getDoc(doc(db, 'schools', 'school-a')));
+    await assertFails(getDoc(doc(db, 'schoolUsers', 'school-admin-1')));
+  });
+
   it('prevents School Admin writes to schools and their own membership', async () => {
     await seedSchoolDomain();
     const db = authDb('school-admin-1', 'schoolAdmin');
@@ -173,6 +201,62 @@ suite('school-domain RBAC rules', () => {
     await assertSucceeds(getDoc(doc(lp1Db, 'schools', 'school-a')));
     await assertFails(getDoc(doc(lp1Db, 'schools', 'school-b')));
     await assertSucceeds(getDoc(doc(lp2Db, 'schools', 'school-b')));
+  });
+
+  it('rejects a stale Learning Partner token after the user role changes', async () => {
+    await seedSchoolDomain();
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), 'users', 'lp-1'), {
+        role: 'parent',
+      });
+    });
+    const db = authDb('lp-1', 'learningPartner');
+
+    await assertFails(getDoc(doc(db, 'schools', 'school-a')));
+  });
+
+  it('rejects an archived Learning Partner account', async () => {
+    await seedSchoolDomain();
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), 'users', 'lp-1'), {
+        status: 'archived',
+      });
+    });
+    const db = authDb('lp-1', 'learningPartner');
+
+    await assertFails(getDoc(doc(db, 'schools', 'school-a')));
+  });
+
+  it('keeps legacy no-status Learning Partner access working', async () => {
+    await seedSchoolDomain();
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, 'users', 'legacy-lp'), {
+        uid: 'legacy-lp',
+        role: 'learningPartner',
+      });
+      await setDoc(doc(db, 'schools', 'legacy-school'), {
+        name: 'Legacy School',
+        status: 'active',
+        learningPartnerId: 'legacy-lp',
+      });
+    });
+    const db = authDb('legacy-lp', 'learningPartner');
+
+    await assertSucceeds(getDoc(doc(db, 'schools', 'legacy-school')));
+  });
+
+  it('keeps legacy no-status School Admin access working', async () => {
+    await seedSchoolDomain();
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), 'users', 'school-admin-1'), {
+        status: deleteField(),
+      });
+    });
+    const db = authDb('school-admin-1', 'schoolAdmin');
+
+    await assertSucceeds(getDoc(doc(db, 'schools', 'school-a')));
+    await assertSucceeds(getDoc(doc(db, 'schoolUsers', 'school-admin-1')));
   });
 
   it('denies school records to Parent and Teacher users', async () => {
@@ -199,6 +283,45 @@ suite('school-domain RBAC rules', () => {
 
     await assertFails(getDoc(doc(schoolDb, ...path)));
     await assertSucceeds(getDoc(doc(adminDb, ...path)));
+    await assertFails(
+      updateDoc(doc(adminDb, ...path), { changeType: 'reassigned' }),
+    );
+    await assertFails(deleteDoc(doc(adminDb, ...path)));
+    await assertFails(
+      setDoc(
+        doc(
+          adminDb,
+          'schools',
+          'school-a',
+          'learningPartnerAssignments',
+          'assignment-2',
+        ),
+        {
+          schoolId: 'school-a',
+          changeType: 'assigned',
+        },
+      ),
+    );
+  });
+
+  it('blocks direct tenant mutations from browser Admin clients', async () => {
+    await seedSchoolDomain();
+    const db = authDb('admin-1', 'admin');
+
+    await assertFails(
+      setDoc(doc(db, 'schools', 'direct-school'), {
+        name: 'Direct School',
+        status: 'active',
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(db, 'schools', 'school-a'), { name: 'Bypass' }),
+    );
+    await assertFails(
+      updateDoc(doc(db, 'schoolUsers', 'school-admin-1'), {
+        schoolIds: ['school-a', 'school-b'],
+      }),
+    );
   });
 
   it('supports an assigned Learning Partner schools query', async () => {

@@ -90,6 +90,66 @@ service cloud.firestore {
       );
     }
 
+    function userIsActiveOrLegacy(uid) {
+      return
+        userDocExists(uid)
+        && (
+          !(
+            'status'
+            in get(
+              userDocPath(uid)
+            ).data
+          )
+          || (
+            get(
+              userDocPath(uid)
+            ).data.status is string
+            && get(
+              userDocPath(uid)
+            ).data.status.lower()
+              == 'active'
+          )
+        );
+    }
+
+    function isCurrentActiveSchoolAdmin() {
+      return
+        isSignedIn()
+        && userDocExists(
+          request.auth.uid
+        )
+        && userIsActiveOrLegacy(
+          request.auth.uid
+        )
+        && (
+          userRole(
+            request.auth.uid
+          ) == 'schooladmin'
+          || userRole(
+            request.auth.uid
+          ) == 'school-admin'
+        );
+    }
+
+    function isCurrentActiveLP() {
+      return
+        isSignedIn()
+        && userDocExists(
+          request.auth.uid
+        )
+        && userIsActiveOrLegacy(
+          request.auth.uid
+        )
+        && (
+          userRole(
+            request.auth.uid
+          ) == 'learningpartner'
+          || userRole(
+            request.auth.uid
+          ) == 'learning-partner'
+        );
+    }
+
     function schoolUserDocPath(uid) {
       return /databases/$(database)/documents/schoolUsers/$(uid);
     }
@@ -102,7 +162,7 @@ service cloud.firestore {
 
     function schoolUserHasAccess(schoolId) {
       return
-        isSchoolAdmin()
+        isCurrentActiveSchoolAdmin()
         && schoolUserDocExists(request.auth.uid)
         && (
           'role' in
@@ -440,30 +500,30 @@ function teacherOwnsDocViaAliases(data) {
       allow read:
         if isAdmin()
         || (
-          isSchoolAdmin()
+          isCurrentActiveSchoolAdmin()
           && request.auth.uid == userId
         );
 
       allow create, update, delete:
-        if isAdmin();
+        if false;
     }
 
     match /schools/{schoolId} {
       allow read:
         if isAdmin()
         || (
-          isLP()
+          isCurrentActiveLP()
           && ('learningPartnerId' in resource.data)
           && resource.data.learningPartnerId == request.auth.uid
         )
         || (
-          isSchoolAdmin()
+          isCurrentActiveSchoolAdmin()
           && resource.data.status != 'archived'
           && schoolUserHasAccess(schoolId)
         );
 
       allow create, update, delete:
-        if isAdmin();
+        if false;
     }
 
     match /schools/{schoolId}/learningPartnerAssignments/{assignmentId} {
@@ -471,7 +531,7 @@ function teacherOwnsDocViaAliases(data) {
         if isAdmin();
 
       allow create, update, delete:
-        if isAdmin();
+        if false;
     }
 
     match /users/{userId}/progress/{document=**} {
