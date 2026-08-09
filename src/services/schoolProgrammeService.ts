@@ -1,7 +1,5 @@
 import {
   collection,
-  doc,
-  getDoc,
   getDocs,
   query,
   where,
@@ -10,11 +8,14 @@ import {
 import { db } from '../lib/firebaseConfig';
 import callFunction from '../lib/callFunctions';
 import { toSchoolRecord } from './schoolService';
+import { toAssessmentSummary, toSchoolReview } from './schoolEvidenceService';
 import type { SchoolRecord } from '../types/School';
 import type {
   CurriculumProgressStatus,
   SchoolAcademicYear,
+  SchoolActivityRecord,
   SchoolGrade,
+  SchoolProgrammeBundle,
   SchoolProgressSnapshot,
   SchoolSection,
   SchoolStructureSnapshot,
@@ -35,6 +36,14 @@ const stringArray = (value: unknown): string[] =>
 
 const entityStatus = (value: unknown): 'active' | 'inactive' =>
   String(value || '').toLowerCase() === 'inactive' ? 'inactive' : 'active';
+
+const rowObject = (value: unknown): Record<string, any> =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, any>
+    : {};
+
+const rawRows = (value: unknown): Record<string, any>[] =>
+  Array.isArray(value) ? value.map(rowObject) : [];
 
 export const toAcademicYear = (id: string, data: Record<string, any>): SchoolAcademicYear => ({
   id,
@@ -165,6 +174,39 @@ export const toTeacherTrainingProgress = (
   updatedBy: nullableString(data.updatedBy) || undefined,
 });
 
+const toActivity = (id: string, data: Record<string, any>): SchoolActivityRecord => ({
+  id,
+  schoolId: String(data.schoolId || ''),
+  type: String(data.type || 'unknown'),
+  summary: String(data.summary || ''),
+  academicYearId: nullableString(data.academicYearId),
+  entityType: nullableString(data.entityType),
+  entityId: nullableString(data.entityId),
+  actorUid: nullableString(data.actorUid),
+  actorKind: nullableString(data.actorKind),
+  occurredAt: data.occurredAt,
+  metadata:
+    data.metadata && typeof data.metadata === 'object' && !Array.isArray(data.metadata)
+      ? data.metadata as Record<string, unknown>
+      : {},
+});
+
+interface RawProgrammeSnapshot {
+  ok: true;
+  schoolId: string;
+  readerKind: 'admin' | 'learningPartner' | 'schoolAdmin';
+  currentAcademicYearId: string | null;
+  academicYears: Record<string, any>[];
+  grades: Record<string, any>[];
+  sections: Record<string, any>[];
+  teachers: Record<string, any>[];
+  curriculum: Record<string, any>[];
+  training: Record<string, any>[];
+  reviews: Record<string, any>[];
+  assessments: Record<string, any>[];
+  activity: Record<string, any>[];
+}
+
 export async function listAssignedSchoolsForLearningPartner(
   learningPartnerId: string,
 ): Promise<SchoolRecord[]> {
@@ -179,79 +221,41 @@ export async function listAssignedSchoolsForLearningPartner(
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export async function getSchoolStructure(
+export async function getSchoolProgrammeBundle(
   schoolId: string,
   preferredAcademicYearId?: string | null,
-): Promise<SchoolStructureSnapshot> {
-  const schoolSnap = await getDoc(doc(db, 'schools', schoolId));
-  if (!schoolSnap.exists()) throw new Error('School not found');
-  const school = schoolSnap.data();
-  const academicYearSnap = await getDocs(
-    collection(db, 'schools', schoolId, 'academicYears'),
-  );
-  const academicYears = academicYearSnap.docs
-    .map((item) => toAcademicYear(item.id, item.data()))
+): Promise<SchoolProgrammeBundle> {
+  const raw = await callFunction<RawProgrammeSnapshot>('schoolGetProgrammeSnapshot', {
+    schoolId,
+    academicYearId: preferredAcademicYearId || null,
+  });
+
+  const academicYears = rawRows(raw.academicYears)
+    .map((item) => toAcademicYear(String(item.id || ''), item))
     .sort((a, b) => b.startYear - a.startYear);
-
-  const requestedId = preferredAcademicYearId ||
-    (typeof school.currentAcademicYearId === 'string'
-      ? school.currentAcademicYearId
-      : null);
   const currentAcademicYear =
-    academicYears.find((item) => item.id === requestedId) ||
-    academicYears.find((item) => item.status === 'current') ||
-    academicYears[0] ||
-    null;
-
-  const teacherSnap = await getDocs(collection(db, 'schools', schoolId, 'teachers'));
-  const teachers = teacherSnap.docs
-    .map((item) => toSchoolTeacher(item.id, item.data()))
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-  if (!currentAcademicYear) {
-    return {
-      academicYears,
-      currentAcademicYear: null,
-      grades: [],
-      sections: [],
-      teachers,
-      totals: { grades: 0, sections: 0, students: 0, teachers: teachers.length },
-    };
-  }
-
-  const [gradeSnap, sectionSnap] = await Promise.all([
-    getDocs(
-      collection(
-        db,
-        'schools',
-        schoolId,
-        'academicYears',
-        currentAcademicYear.id,
-        'grades',
-      ),
-    ),
-    getDocs(
-      collection(
-        db,
-        'schools',
-        schoolId,
-        'academicYears',
-        currentAcademicYear.id,
-        'sections',
-      ),
-    ),
-  ]);
-
-  const grades = gradeSnap.docs
-    .map((item) => toSchoolGrade(item.id, item.data()))
+    academicYears.find((item) => item.id === raw.currentAcademicYearId) || null;
+  const grades = rawRows(raw.grades)
+    .map((item) => toSchoolGrade(String(item.id || ''), item))
     .sort((a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
-  const sections = sectionSnap.docs
-    .map((item) => toSchoolSection(item.id, item.data()))
-    .sort((a, b) =>
-      a.gradeLabel.localeCompare(b.gradeLabel) || a.sectionName.localeCompare(b.sectionName),
-    );
+  const sections = rawRows(raw.sections)
+    .map((item) => toSchoolSection(String(item.id || ''), item))
+    .sort((a, b) => a.gradeLabel.localeCompare(b.gradeLabel) || a.sectionName.localeCompare(b.sectionName));
+  const teachers = rawRows(raw.teachers)
+    .map((item) => toSchoolTeacher(String(item.id || ''), item))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const curriculum = rawRows(raw.curriculum)
+    .map((item) => toCurriculumProgress(String(item.id || ''), item));
+  const training = rawRows(raw.training)
+    .map((item) => toTeacherTrainingProgress(String(item.id || ''), item));
+  const reviews = rawRows(raw.reviews)
+    .map((item) => toSchoolReview(String(item.id || ''), item));
+  const assessments = rawRows(raw.assessments)
+    .map((item) => toAssessmentSummary(String(item.id || ''), item));
+  const activity = rawRows(raw.activity)
+    .map((item) => toActivity(String(item.id || ''), item));
 
-  return {
+  const structure: SchoolStructureSnapshot = {
     academicYears,
     currentAcademicYear,
     grades,
@@ -266,39 +270,28 @@ export async function getSchoolStructure(
       teachers: teachers.filter((item) => item.status === 'active').length,
     },
   };
+
+  return {
+    readerKind: raw.readerKind,
+    structure,
+    progress: { curriculum, training },
+    evidence: { reviews, assessments },
+    activity,
+  };
+}
+
+export async function getSchoolStructure(
+  schoolId: string,
+  preferredAcademicYearId?: string | null,
+): Promise<SchoolStructureSnapshot> {
+  return (await getSchoolProgrammeBundle(schoolId, preferredAcademicYearId)).structure;
 }
 
 export async function getSchoolProgress(
   schoolId: string,
   academicYearId: string,
 ): Promise<SchoolProgressSnapshot> {
-  const [curriculumSnap, trainingSnap] = await Promise.all([
-    getDocs(
-      collection(
-        db,
-        'schools',
-        schoolId,
-        'academicYears',
-        academicYearId,
-        'curriculumProgress',
-      ),
-    ),
-    getDocs(
-      collection(
-        db,
-        'schools',
-        schoolId,
-        'academicYears',
-        academicYearId,
-        'teacherTraining',
-      ),
-    ),
-  ]);
-
-  return {
-    curriculum: curriculumSnap.docs.map((item) => toCurriculumProgress(item.id, item.data())),
-    training: trainingSnap.docs.map((item) => toTeacherTrainingProgress(item.id, item.data())),
-  };
+  return (await getSchoolProgrammeBundle(schoolId, academicYearId)).progress;
 }
 
 export const createAcademicYear = (input: {
