@@ -81,7 +81,7 @@ export interface SectionCurriculumProgress {
   stageOrder: number;
   totalStages: number;
   stageLabel: string;
-  expectedReadingLevel: number;
+  programmeReferenceReadingLevel: number;
   progressPercent: number;
   status: CurriculumProgressStatus;
   notes: string | null;
