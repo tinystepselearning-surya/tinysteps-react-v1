@@ -5,6 +5,7 @@ import { getDocsLogged } from '../../lib/firestoreReadLogging';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
 import { Button } from '@components/ui/button';
+import LeadSourceAnalysis from './LeadSourceAnalysis';
 
 const monthKeyFromDate = (date: Date) => {
   const year = date.getFullYear();
@@ -600,7 +601,7 @@ export default function AnalyticsDashboard(): JSX.Element {
         <div>
           <h2 className="text-xl font-semibold">Admin Analytics</h2>
           <p className="text-sm text-muted-foreground">
-            Focused view of revenue and enrollment health for the selected month.
+            Revenue, enrollment health, and website lead acquisition performance.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -646,6 +647,8 @@ export default function AnalyticsDashboard(): JSX.Element {
           {fsError}
         </div>
       )}
+
+      <LeadSourceAnalysis />
 
       {!coreAnalyticsEnabled && (
         <Card className="p-4 text-sm text-muted-foreground">
