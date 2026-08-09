@@ -13,7 +13,7 @@ export type ProgrammeHealthStatus =
 
 export interface SectionProgrammeHealth {
   sectionId: string;
-  expectedReadingLevel: number | null;
+  programmeReferenceReadingLevel: number | null;
   demonstratedReadingLevel: number | null;
   benchmarkGap: number | null;
   curriculumPercent: number;
@@ -75,7 +75,8 @@ export function deriveSectionProgrammeHealth(input: {
   if (section.teacherIds.length === 0) {
     return {
       sectionId: section.id,
-      expectedReadingLevel: curriculum?.expectedReadingLevel ?? null,
+      programmeReferenceReadingLevel:
+        curriculum?.programmeReferenceReadingLevel ?? null,
       demonstratedReadingLevel: latestAssessment?.averageReadingLevel ?? null,
       benchmarkGap: null,
       curriculumPercent: curriculum?.progressPercent ?? 0,
@@ -89,7 +90,7 @@ export function deriveSectionProgrammeHealth(input: {
   if (!curriculum || curriculum.stageOrder <= 0) {
     return {
       sectionId: section.id,
-      expectedReadingLevel: null,
+      programmeReferenceReadingLevel: null,
       demonstratedReadingLevel: latestAssessment?.averageReadingLevel ?? null,
       benchmarkGap: null,
       curriculumPercent: curriculum?.progressPercent ?? 0,
@@ -103,7 +104,8 @@ export function deriveSectionProgrammeHealth(input: {
   if (!latestAssessment) {
     return {
       sectionId: section.id,
-      expectedReadingLevel: curriculum.expectedReadingLevel,
+      programmeReferenceReadingLevel:
+        curriculum.programmeReferenceReadingLevel,
       demonstratedReadingLevel: null,
       benchmarkGap: null,
       curriculumPercent: curriculum.progressPercent,
@@ -124,7 +126,8 @@ export function deriveSectionProgrammeHealth(input: {
   ) {
     return {
       sectionId: section.id,
-      expectedReadingLevel: curriculum.expectedReadingLevel,
+      programmeReferenceReadingLevel:
+        curriculum.programmeReferenceReadingLevel,
       demonstratedReadingLevel: latestAssessment.averageReadingLevel,
       benchmarkGap: null,
       curriculumPercent: curriculum.progressPercent,
@@ -136,13 +139,17 @@ export function deriveSectionProgrammeHealth(input: {
   }
 
   const gap = Math.round(
-    (latestAssessment.averageReadingLevel - curriculum.expectedReadingLevel) * 100,
+    (
+      latestAssessment.averageReadingLevel -
+      curriculum.programmeReferenceReadingLevel
+    ) * 100,
   ) / 100;
 
   if (gap < -1.75) {
     return {
       sectionId: section.id,
-      expectedReadingLevel: curriculum.expectedReadingLevel,
+      programmeReferenceReadingLevel:
+        curriculum.programmeReferenceReadingLevel,
       demonstratedReadingLevel: latestAssessment.averageReadingLevel,
       benchmarkGap: gap,
       curriculumPercent: curriculum.progressPercent,
@@ -157,7 +164,8 @@ export function deriveSectionProgrammeHealth(input: {
   if (missingTrainingRecords || teacherTrainingPercent === null) {
     return {
       sectionId: section.id,
-      expectedReadingLevel: curriculum.expectedReadingLevel,
+      programmeReferenceReadingLevel:
+        curriculum.programmeReferenceReadingLevel,
       demonstratedReadingLevel: latestAssessment.averageReadingLevel,
       benchmarkGap: gap,
       curriculumPercent: curriculum.progressPercent,
@@ -171,7 +179,8 @@ export function deriveSectionProgrammeHealth(input: {
   if (gap < -0.75 || teacherTrainingPercent < 60) {
     return {
       sectionId: section.id,
-      expectedReadingLevel: curriculum.expectedReadingLevel,
+      programmeReferenceReadingLevel:
+        curriculum.programmeReferenceReadingLevel,
       demonstratedReadingLevel: latestAssessment.averageReadingLevel,
       benchmarkGap: gap,
       curriculumPercent: curriculum.progressPercent,
@@ -187,7 +196,8 @@ export function deriveSectionProgrammeHealth(input: {
 
   return {
     sectionId: section.id,
-    expectedReadingLevel: curriculum.expectedReadingLevel,
+    programmeReferenceReadingLevel:
+      curriculum.programmeReferenceReadingLevel,
     demonstratedReadingLevel: latestAssessment.averageReadingLevel,
     benchmarkGap: gap,
     curriculumPercent: curriculum.progressPercent,
