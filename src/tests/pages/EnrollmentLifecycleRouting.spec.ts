@@ -52,7 +52,8 @@ describe('admin lifecycle routing', () => {
       studentListSource.indexOf('async function handleCreateAdHocSession'),
       studentListSource.indexOf('async function handleApproveRequest'),
     );
-    expect(createHandler).toContain("httpsCallable(getFunctions(), 'createAdminManualSession')");
+    expect(createHandler).toContain("httpsCallable(functions, 'createAdminManualSession')");
+    expect(createHandler).not.toContain("httpsCallable(getFunctions(), 'createAdminManualSession')");
     expect(createHandler).not.toContain('setDoc(');
     expect(sessionsManagementSource).toContain("httpsCallable(getFunctions(), 'cancelAdminManualSession')");
   });
