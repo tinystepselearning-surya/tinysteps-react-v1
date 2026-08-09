@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { deriveSectionProgrammeHealth } from '../schoolIntelligence';
+import {
+  PROGRAMME_HEALTH_MINIMUM_ASSESSMENT_COVERAGE_PERCENT,
+  deriveSectionProgrammeHealth,
+} from '../schoolIntelligence';
 import type {
   AssessmentSummary,
   SchoolSection,
@@ -126,6 +129,39 @@ describe('school programme health', () => {
     expect(result.status).toBe('insufficient_data');
   });
 
+  it('does not interpret baseline evidence as implementation health', () => {
+    const result = deriveSectionProgrammeHealth({
+      section: section(),
+      curriculum: curriculum(),
+      trainingByTeacher: trainingMap(training()),
+      assessments: [assessment({ checkpoint: 'baseline' })],
+    });
+
+    expect(result.status).toBe('insufficient_data');
+    expect(result.reason).toContain('Only baseline');
+  });
+
+  it('does not infer section health from a low-coverage checkpoint', () => {
+    const result = deriveSectionProgrammeHealth({
+      section: section(),
+      curriculum: curriculum({ programmeReferenceReadingLevel: 4 }),
+      trainingByTeacher: trainingMap(training({ progressPercent: 100 })),
+      assessments: [
+        assessment({
+          studentsAssessed: 10,
+          sectionStudentCountSnapshot: 30,
+          averageReadingLevel: 4,
+        }),
+      ],
+    });
+
+    expect(result.status).toBe('insufficient_data');
+    expect(result.assessmentCoveragePercent).toBeCloseTo(33.33, 2);
+    expect(result.reason).toContain(
+      `${PROGRAMME_HEALTH_MINIMUM_ASSESSMENT_COVERAGE_PERCENT}%`,
+    );
+  });
+
   it('requires a fresh benchmark after curriculum advances materially later', () => {
     const result = deriveSectionProgrammeHealth({
       section: section(),
@@ -161,7 +197,7 @@ describe('school programme health', () => {
     expect(result.reason).toContain('training progress is missing');
   });
 
-  it('marks a section on track only when reading and training evidence are both established', () => {
+  it('marks a section on track only when reading, coverage and training evidence are established', () => {
     const result = deriveSectionProgrammeHealth({
       section: section(),
       curriculum: curriculum({ programmeReferenceReadingLevel: 4 }),
@@ -172,5 +208,6 @@ describe('school programme health', () => {
     expect(result.status).toBe('on_track');
     expect(result.benchmarkGap).toBe(-0.5);
     expect(result.programmeReferenceReadingLevel).toBe(4);
+    expect(result.assessmentCoveragePercent).toBe(100);
   });
 });
