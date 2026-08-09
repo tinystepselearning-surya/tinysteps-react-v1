@@ -12,6 +12,7 @@ import type {
 } from '../../types/SchoolProgramme';
 import { buildSectionHealthMap } from '../../lib/schoolIntelligence';
 import { buildSchoolAnalytics, buildSchoolSummaryCsv } from '../../lib/schoolAnalytics';
+import './schoolReportPrint.css';
 
 interface Props {
   school: SchoolRecord;
@@ -51,11 +52,11 @@ export default function SchoolReportPanel({ school, structure, progress, evidenc
   };
 
   return (
-    <div className="space-y-5 print:bg-white" data-school-management-report>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between print:hidden">
+    <div className="space-y-5 bg-white" data-school-management-report>
+      <div className="school-report-no-print flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-lg font-semibold text-slate-900">Management report</h3>
-          <p className="text-sm text-slate-500">Executive view of implementation and early-reading progress.</p>
+          <p className="text-sm text-slate-500">Executive view of implementation, evidence coverage and early-reading progress.</p>
         </div>
         <div className="flex gap-2">
           <Button type="button" variant="outline" className="gap-2" onClick={download}>
@@ -97,39 +98,46 @@ export default function SchoolReportPanel({ school, structure, progress, evidenc
       <div className="grid gap-3 md:grid-cols-3">
         <MetricCard label="Baseline reading level" value={analytics.baselineReadingLevel === null ? '—' : `TS-${analytics.baselineReadingLevel.toFixed(2)}`} />
         <MetricCard label="Current reading level" value={analytics.currentReadingLevel === null ? '—' : `TS-${analytics.currentReadingLevel.toFixed(2)}`} />
-        <MetricCard label="Growth" value={analytics.readingLevelGrowth === null ? '—' : `${analytics.readingLevelGrowth >= 0 ? '+' : ''}${analytics.readingLevelGrowth.toFixed(2)} TS levels`} />
+        <MetricCard
+          label={`Matched growth${analytics.matchedGrowthSections ? ` · ${analytics.matchedGrowthSections} section${analytics.matchedGrowthSections === 1 ? '' : 's'}` : ''}`}
+          value={analytics.readingLevelGrowth === null ? '—' : `${analytics.readingLevelGrowth >= 0 ? '+' : ''}${analytics.readingLevelGrowth.toFixed(2)} TS levels`}
+        />
       </div>
 
       <Card className="p-5">
         <h3 className="font-semibold text-slate-900">Section implementation health</h3>
         <p className="mt-1 text-xs text-slate-500">
-          Internal programme-health signal based on verified curriculum stage, latest aggregate benchmark and available teacher-training progress. It is not an external standardized rating.
+          Internal programme-health signal based on verified curriculum stage, latest aggregate benchmark and assigned-teacher training evidence. It is not an external standardized rating.
         </p>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[900px] text-sm">
+          <table className="w-full min-w-[1080px] text-sm">
             <thead>
               <tr className="border-b text-left text-xs uppercase tracking-wide text-slate-500">
                 <th className="py-2">Section</th>
                 <th className="py-2">Students</th>
                 <th className="py-2">Curriculum</th>
-                <th className="py-2">Expected TS</th>
-                <th className="py-2">Demonstrated TS</th>
+                <th className="py-2">Programme reference</th>
+                <th className="py-2">Demonstrated</th>
                 <th className="py-2">Gap</th>
+                <th className="py-2">Training</th>
                 <th className="py-2">Status</th>
+                <th className="py-2">Reason</th>
               </tr>
             </thead>
             <tbody>
               {structure.sections.filter((item) => item.status === 'active').map((section) => {
                 const health = healthBySection.get(section.id);
                 return (
-                  <tr key={section.id} className="border-b border-slate-100">
+                  <tr key={section.id} className="border-b border-slate-100 align-top">
                     <td className="py-3 font-medium">{section.gradeLabel} — {section.sectionName}</td>
                     <td className="py-3">{section.studentCount}</td>
                     <td className="py-3">{health?.curriculumPercent ?? 0}%</td>
                     <td className="py-3">{health?.expectedReadingLevel === null || health?.expectedReadingLevel === undefined ? '—' : `TS-${health.expectedReadingLevel}`}</td>
-                    <td className="py-3">{health?.demonstratedReadingLevel === null || health?.demonstratedReadingLevel === undefined ? '—' : `TS-${health.demonstratedReadingLevel.toFixed(1)}`}</td>
+                    <td className="py-3">{health?.demonstratedReadingLevel === null || health?.demonstratedReadingLevel === undefined ? '—' : `TS-${health.demonstratedReadingLevel.toFixed(2)}`}</td>
                     <td className="py-3">{health?.benchmarkGap === null || health?.benchmarkGap === undefined ? '—' : health.benchmarkGap.toFixed(2)}</td>
+                    <td className="py-3">{health?.teacherTrainingPercent === null || health?.teacherTrainingPercent === undefined ? '—' : `${health.teacherTrainingPercent}%`}</td>
                     <td className="py-3"><HealthBadge status={health?.status || 'insufficient_data'} /></td>
+                    <td className="max-w-[280px] py-3 text-xs leading-5 text-slate-500">{health?.reason || 'No programme-health evidence available.'}</td>
                   </tr>
                 );
               })}
@@ -140,7 +148,7 @@ export default function SchoolReportPanel({ school, structure, progress, evidenc
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="p-5">
-          <h3 className="font-semibold text-slate-900">Reading level by class</h3>
+          <h3 className="font-semibold text-slate-900">Current reading level by class</h3>
           <div className="mt-4 space-y-3">
             {analytics.gradesSummary.map((grade) => (
               <div key={grade.gradeId} className="flex items-center justify-between gap-4 border-b border-slate-100 pb-2">
@@ -155,7 +163,8 @@ export default function SchoolReportPanel({ school, structure, progress, evidenc
         </Card>
 
         <Card className="p-5">
-          <h3 className="font-semibold text-slate-900">Reading-domain progress</h3>
+          <h3 className="font-semibold text-slate-900">Reading-domain growth</h3>
+          <p className="mt-1 text-xs text-slate-500">Baseline-to-current changes use only sections with both baseline and a later checkpoint for that domain.</p>
           <div className="mt-4 space-y-3">
             {analytics.domainProgress.map((domain) => (
               <div key={domain.key} className="grid grid-cols-[1fr_70px_70px_70px] gap-2 border-b border-slate-100 pb-2 text-sm">
@@ -168,6 +177,10 @@ export default function SchoolReportPanel({ school, structure, progress, evidenc
           </div>
         </Card>
       </div>
+
+      <Card className="p-4 text-xs leading-5 text-slate-500">
+        Reading levels and programme-reference levels in this report are Tiny Steps internal instructional descriptors. Management should interpret growth together with assessment coverage, classroom review evidence and teacher-training progress.
+      </Card>
     </div>
   );
 }
