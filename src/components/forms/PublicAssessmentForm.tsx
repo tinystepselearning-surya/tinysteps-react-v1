@@ -10,6 +10,7 @@ import {
 } from '../../lib/conversionTracking';
 import {
   PUBLIC_MAIN_CONCERN_OPTIONS,
+  buildLeadAttributionEnrichment,
   buildPublicLeadPayload,
   buildPublicWhatsappMessage,
   getPublicLeadAttribution,
@@ -279,9 +280,11 @@ export default function PublicAssessmentForm({
     try {
       const [
         { collection, doc, serverTimestamp, setDoc },
-        { db },
+        { httpsCallable },
+        { db, functions },
       ] = await Promise.all([
         import('firebase/firestore'),
+        import('firebase/functions'),
         import('../../lib/firebaseConfig'),
       ]);
       const payload = buildPublicLeadPayload(submittedForm, {
@@ -304,6 +307,22 @@ export default function PublicAssessmentForm({
         requestedAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
+
+      // Attribution enrichment is server-side so anonymous Firestore create rules remain strict.
+      // A failure here must never lose the lead or prevent the parent from reaching WhatsApp.
+      try {
+        const enrichPublicLeadAttribution = httpsCallable<
+          { leadId: string; attribution: ReturnType<typeof buildLeadAttributionEnrichment> },
+          { ok: boolean; alreadyEnriched?: boolean; acquisitionChannel?: string }
+        >(functions, 'enrichPublicLeadAttribution');
+        await enrichPublicLeadAttribution({
+          leadId: leadRef.id,
+          attribution: buildLeadAttributionEnrichment(attribution),
+        });
+      } catch (attributionError) {
+        console.warn('[PublicAssessmentForm] attribution enrichment failed', attributionError);
+      }
+
       pendingLeadIdRef.current = null;
       try {
         window.sessionStorage.removeItem(PENDING_LEAD_ID_STORAGE_KEY);
