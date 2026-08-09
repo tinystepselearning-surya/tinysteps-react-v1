@@ -1,11 +1,25 @@
 import * as admin from 'firebase-admin';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
-import { ensureSchoolReader } from './helpers/schoolAuthorization';
+import {
+  ensureSchoolReader,
+  type SchoolReaderKind,
+} from './helpers/schoolAuthorization';
 
 if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
+
+type RowKind =
+  | 'academicYear'
+  | 'grade'
+  | 'section'
+  | 'teacher'
+  | 'curriculum'
+  | 'training'
+  | 'review'
+  | 'assessment'
+  | 'activity';
 
 function requiredString(value: unknown, field: string, max = 128): string {
   if (typeof value !== 'string' || !value.trim()) {
@@ -46,11 +60,70 @@ function serialize(value: unknown): unknown {
   return value;
 }
 
-function rows(snapshot: admin.firestore.QuerySnapshot): Array<Record<string, unknown>> {
-  return snapshot.docs.map((item) => ({
+function baseRow(item: admin.firestore.QueryDocumentSnapshot): Record<string, unknown> {
+  return {
     id: item.id,
     ...(serialize(item.data()) as Record<string, unknown>),
-  }));
+  };
+}
+
+function removeFields(
+  row: Record<string, unknown>,
+  fields: string[],
+): Record<string, unknown> {
+  const next = { ...row };
+  for (const field of fields) delete next[field];
+  return next;
+}
+
+function principalSafeRow(
+  row: Record<string, unknown>,
+  kind: RowKind,
+): Record<string, unknown> {
+  const commonInternal = ['createdBy', 'updatedBy'];
+  if (kind === 'academicYear' || kind === 'grade' || kind === 'section' || kind === 'teacher') {
+    return removeFields(row, commonInternal);
+  }
+  if (kind === 'curriculum') {
+    return removeFields(row, [
+      ...commonInternal,
+      'notes',
+      'latestVerifiedBy',
+    ]);
+  }
+  if (kind === 'training') {
+    return removeFields(row, [
+      ...commonInternal,
+      'notes',
+      'latestTrainingBy',
+    ]);
+  }
+  if (kind === 'review') {
+    return removeFields(row, [
+      ...commonInternal,
+      'reviewedBy',
+    ]);
+  }
+  if (kind === 'assessment') {
+    return removeFields(row, [
+      ...commonInternal,
+      'notes',
+      'assessedBy',
+    ]);
+  }
+  if (kind === 'activity') return {};
+  return row;
+}
+
+function rows(
+  snapshot: admin.firestore.QuerySnapshot,
+  readerKind: SchoolReaderKind,
+  kind: RowKind,
+): Array<Record<string, unknown>> {
+  return snapshot.docs.map((item) => {
+    const row = baseRow(item);
+    return readerKind === 'schoolAdmin' ? principalSafeRow(row, kind) : row;
+  });
 }
 
 export const schoolGetProgrammeSnapshot = onCall(
@@ -65,7 +138,7 @@ export const schoolGetProgrammeSnapshot = onCall(
 
     const yearCollection = reader.schoolRef.collection('academicYears');
     const yearSnap = await yearCollection.get();
-    const academicYears = rows(yearSnap);
+    const academicYears = rows(yearSnap, reader.kind, 'academicYear');
 
     const currentAcademicYearId =
       preferredAcademicYearId ||
@@ -91,7 +164,7 @@ export const schoolGetProgrammeSnapshot = onCall(
         academicYears,
         grades: [],
         sections: [],
-        teachers: rows(teacherSnap),
+        teachers: rows(teacherSnap, reader.kind, 'teacher'),
         curriculum: [],
         training: [],
         reviews: [],
@@ -138,14 +211,16 @@ export const schoolGetProgrammeSnapshot = onCall(
       readerKind: reader.kind,
       currentAcademicYearId,
       academicYears,
-      grades: rows(gradeSnap),
-      sections: rows(sectionSnap),
-      teachers: rows(teacherSnap),
-      curriculum: rows(curriculumSnap),
-      training: rows(trainingSnap),
-      reviews: rows(reviewSnap),
-      assessments: rows(assessmentSnap),
-      activity: activitySnap ? rows(activitySnap) : [],
+      grades: rows(gradeSnap, reader.kind, 'grade'),
+      sections: rows(sectionSnap, reader.kind, 'section'),
+      teachers: rows(teacherSnap, reader.kind, 'teacher'),
+      curriculum: rows(curriculumSnap, reader.kind, 'curriculum'),
+      training: rows(trainingSnap, reader.kind, 'training'),
+      reviews: rows(reviewSnap, reader.kind, 'review'),
+      assessments: rows(assessmentSnap, reader.kind, 'assessment'),
+      activity: activitySnap
+        ? rows(activitySnap, reader.kind, 'activity')
+        : [],
     };
   },
 );
