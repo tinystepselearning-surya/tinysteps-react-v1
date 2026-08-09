@@ -21,14 +21,16 @@ const mastery = (value: unknown): ReviewMastery | null => {
 
 const reviewStatus = (value: unknown): ReviewOverallStatus => {
   const next = String(value || '');
-  if (next === 'needs_attention' || next === 'intervention') return next;
-  return 'on_track';
+  if (next === 'on_track' || next === 'needs_attention' || next === 'intervention') return next;
+  // Unknown/legacy review data must not silently become a positive judgement.
+  return 'needs_attention';
 };
 
 const implementation = (value: unknown): ReviewImplementationRating => {
   const next = String(value || '');
-  if (next === 'developing' || next === 'needs_support') return next;
-  return 'strong';
+  if (next === 'strong' || next === 'developing' || next === 'needs_support') return next;
+  // Conservative fallback for incomplete legacy rows; never infer “strong”.
+  return 'developing';
 };
 
 export const toSchoolReview = (id: string, data: Record<string, any>): SchoolReview => ({
