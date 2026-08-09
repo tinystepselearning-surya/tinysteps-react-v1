@@ -18,10 +18,17 @@ describe('leadAcquisition', () => {
 
   it('classifies social and referral sources', () => {
     expect(classifyLeadAcquisition({ utmSource: 'instagram', utmMedium: 'social' }).channel).toBe('instagram');
+    expect(classifyLeadAcquisition({ utmSource: 'ig', utmMedium: 'social' }).channel).toBe('instagram');
+    expect(classifyLeadAcquisition({ utmSource: 'fb', utmMedium: 'social' }).channel).toBe('facebook');
     expect(classifyLeadAcquisition({ referrerDomain: 'example-parent-blog.com' })).toMatchObject({
       channel: 'referral',
       source: 'example-parent-blog.com',
     });
+  });
+
+  it('does not treat short social aliases as arbitrary substrings', () => {
+    expect(classifyLeadAcquisition({ utmSource: 'bigpartner' }).channel).toBe('other');
+    expect(classifyLeadAcquisition({ referrerDomain: 'offers-fbtest.example' }).channel).toBe('referral');
   });
 
   it('keeps no-signal traffic as direct rather than pretending it is organic', () => {
