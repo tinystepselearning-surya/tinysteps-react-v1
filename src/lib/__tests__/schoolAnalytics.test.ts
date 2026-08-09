@@ -98,7 +98,7 @@ const assessment = (
 
 const health = (sectionId: string): SectionProgrammeHealth => ({
   sectionId,
-  expectedReadingLevel: 3,
+  programmeReferenceReadingLevel: 3,
   demonstratedReadingLevel: 3,
   benchmarkGap: 0,
   curriculumPercent: 50,
