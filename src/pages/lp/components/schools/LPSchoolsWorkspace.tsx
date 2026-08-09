@@ -7,7 +7,7 @@ import { Card } from '@components/ui/card';
 
 import type { SchoolRecord } from '../../../../types/School';
 import { listAssignedSchoolsForLearningPartner } from '../../../../services/schoolProgrammeService';
-import SchoolStructureWorkspace from '../../../schools/SchoolStructureWorkspace';
+import SchoolProgrammeWorkspace from '../../../schools/SchoolProgrammeWorkspace';
 
 interface Props {
   learningPartnerId: string;
@@ -55,7 +55,7 @@ export default function LPSchoolsWorkspace({ learningPartnerId }: Props) {
             <Badge variant={selected.status === 'active' ? 'default' : 'outline'}>{selected.status}</Badge>
           </div>
         </Card>
-        <SchoolStructureWorkspace school={selected} canEdit={selected.status !== 'archived'} />
+        <SchoolProgrammeWorkspace school={selected} canEdit={selected.status !== 'archived'} />
       </div>
     );
   }
