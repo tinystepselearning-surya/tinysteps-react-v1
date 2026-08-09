@@ -11,6 +11,7 @@ import { SCHOOL_PHONICS_COURSES, type SchoolPhonicsCourseId } from '../../consta
 import type { SchoolRecord } from '../../types/School';
 import type {
   CurriculumProgressStatus,
+  SchoolEvidenceSnapshot,
   SchoolProgressSnapshot,
   SchoolSection,
   SchoolStructureSnapshot,
@@ -25,7 +26,12 @@ import {
   updateSectionCurriculumProgress,
   updateTeacherTraining,
 } from '../../services/schoolProgrammeService';
+import { getSchoolEvidence } from '../../services/schoolEvidenceService';
+import { buildSectionHealthMap } from '../../lib/schoolIntelligence';
 import SchoolStructureWorkspace from './SchoolStructureWorkspace';
+import SchoolReviewsPanel from './SchoolReviewsPanel';
+import SchoolAssessmentsPanel from './SchoolAssessmentsPanel';
+import SchoolReportPanel from './SchoolReportPanel';
 
 const errorText = (error: unknown) =>
   error instanceof Error ? error.message : 'Please try again.';
@@ -36,11 +42,14 @@ interface Props {
   defaultTab?: string;
 }
 
+const EMPTY_EVIDENCE: SchoolEvidenceSnapshot = { reviews: [], assessments: [] };
+
 export default function SchoolProgrammeWorkspace({ school, canEdit, defaultTab = 'overview' }: Props) {
   const { toast } = useToast();
   const [tab, setTab] = useState(defaultTab);
   const [structure, setStructure] = useState<SchoolStructureSnapshot | null>(null);
   const [progress, setProgress] = useState<SchoolProgressSnapshot>({ curriculum: [], training: [] });
+  const [evidence, setEvidence] = useState<SchoolEvidenceSnapshot>(EMPTY_EVIDENCE);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -49,11 +58,15 @@ export default function SchoolProgrammeWorkspace({ school, canEdit, defaultTab =
       const nextStructure = await getSchoolStructure(school.id);
       setStructure(nextStructure);
       if (nextStructure.currentAcademicYear) {
-        setProgress(
-          await getSchoolProgress(school.id, nextStructure.currentAcademicYear.id),
-        );
+        const [nextProgress, nextEvidence] = await Promise.all([
+          getSchoolProgress(school.id, nextStructure.currentAcademicYear.id),
+          getSchoolEvidence(school.id, nextStructure.currentAcademicYear.id),
+        ]);
+        setProgress(nextProgress);
+        setEvidence(nextEvidence);
       } else {
         setProgress({ curriculum: [], training: [] });
+        setEvidence(EMPTY_EVIDENCE);
       }
     } catch (error) {
       toast({
@@ -78,6 +91,16 @@ export default function SchoolProgrammeWorkspace({ school, canEdit, defaultTab =
     () => new Map(progress.training.map((item) => [item.teacherId, item])),
     [progress.training],
   );
+  const healthBySection = useMemo(
+    () =>
+      buildSectionHealthMap({
+        sections: structure?.sections || [],
+        curriculum: progress.curriculum,
+        training: progress.training,
+        assessments: evidence.assessments,
+      }),
+    [structure?.sections, progress.curriculum, progress.training, evidence.assessments],
+  );
 
   if (loading && !structure) {
     return <Card className="p-8 text-center text-sm text-slate-500">Loading school programme…</Card>;
@@ -90,10 +113,18 @@ export default function SchoolProgrammeWorkspace({ school, canEdit, defaultTab =
         <TabsTrigger value="structure">Structure</TabsTrigger>
         <TabsTrigger value="curriculum">Curriculum</TabsTrigger>
         <TabsTrigger value="training">Training</TabsTrigger>
+        <TabsTrigger value="reviews">Reviews</TabsTrigger>
+        <TabsTrigger value="assessments">Assessments</TabsTrigger>
+        <TabsTrigger value="report">Report</TabsTrigger>
       </TabsList>
 
       <TabsContent value="overview" className="mt-0">
-        <ProgrammeOverview school={school} structure={structure} progress={progress} />
+        <ProgrammeOverview
+          school={school}
+          structure={structure}
+          progress={progress}
+          healthBySection={healthBySection}
+        />
       </TabsContent>
 
       <TabsContent value="structure" className="mt-0">
@@ -165,6 +196,42 @@ export default function SchoolProgrammeWorkspace({ school, canEdit, defaultTab =
           </Card>
         )}
       </TabsContent>
+
+      <TabsContent value="reviews" className="mt-0">
+        {!structure?.currentAcademicYear ? (
+          <Card className="p-6 text-sm text-slate-500">Configure a current academic year first.</Card>
+        ) : (
+          <SchoolReviewsPanel
+            schoolId={school.id}
+            academicYearId={structure.currentAcademicYear.id}
+            sections={structure.sections}
+            reviews={evidence.reviews}
+            canEdit={canEdit}
+            onRefresh={load}
+          />
+        )}
+      </TabsContent>
+
+      <TabsContent value="assessments" className="mt-0">
+        {!structure?.currentAcademicYear ? (
+          <Card className="p-6 text-sm text-slate-500">Configure a current academic year first.</Card>
+        ) : (
+          <SchoolAssessmentsPanel
+            schoolId={school.id}
+            academicYearId={structure.currentAcademicYear.id}
+            sections={structure.sections}
+            assessments={evidence.assessments}
+            canEdit={canEdit}
+            onRefresh={load}
+          />
+        )}
+      </TabsContent>
+
+      <TabsContent value="report" className="mt-0">
+        {!structure ? null : (
+          <SchoolReportPanel school={school} structure={structure} progress={progress} evidence={evidence} />
+        )}
+      </TabsContent>
     </Tabs>
   );
 }
@@ -173,14 +240,17 @@ function ProgrammeOverview({
   school,
   structure,
   progress,
+  healthBySection,
 }: {
   school: SchoolRecord;
   structure: SchoolStructureSnapshot | null;
   progress: SchoolProgressSnapshot;
+  healthBySection: ReturnType<typeof buildSectionHealthMap>;
 }) {
-  const sectionsOnTrack = progress.curriculum.filter(
-    (item) => item.status === 'on_track' || item.status === 'completed',
-  ).length;
+  const health = Array.from(healthBySection.values());
+  const onTrack = health.filter((item) => item.status === 'on_track').length;
+  const needsSupport = health.filter((item) => item.status === 'needs_support').length;
+  const intervention = health.filter((item) => item.status === 'intervention').length;
   const trainingComplete = progress.training.filter((item) => item.status === 'completed').length;
   return (
     <div className="space-y-4">
@@ -191,13 +261,15 @@ function ProgrammeOverview({
           {structure?.currentAcademicYear?.label || 'Academic year not configured'} · {school.learningPartnerName || 'Learning Partner not assigned'}
         </p>
       </Card>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[
           ['Classes', structure?.totals.grades ?? 0],
           ['Sections', structure?.totals.sections ?? 0],
           ['Students', structure?.totals.students ?? 0],
           ['Teachers', structure?.totals.teachers ?? 0],
-          ['Sections on track', sectionsOnTrack],
+          ['On track', onTrack],
+          ['Needs support', needsSupport],
+          ['Intervention', intervention],
           ['Training completed', trainingComplete],
         ].map(([label, value]) => (
           <Card key={label} className="p-4">
@@ -206,6 +278,9 @@ function ProgrammeOverview({
           </Card>
         ))}
       </div>
+      <Card className="p-4 text-xs leading-5 text-slate-500">
+        Programme-health statuses are internal operational signals based on verified curriculum stage, the latest aggregate Tiny Steps reading benchmark, and available teacher-training progress. They are not external standardized ratings.
+      </Card>
     </div>
   );
 }
