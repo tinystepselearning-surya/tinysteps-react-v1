@@ -3,11 +3,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
-import { Input } from '@components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { useToast } from '@components/hooks/use-toast';
 
 import { SCHOOL_PHONICS_COURSES, type SchoolPhonicsCourseId } from '../../constants/schoolCurriculum';
+import {
+  SCHOOL_PHONICS_TRAINING_TOTAL,
+  SCHOOL_PHONICS_TRAINING_TRACK,
+  trainingStageLabel,
+} from '../../constants/schoolTraining';
 import type { SchoolRecord } from '../../types/School';
 import type {
   CurriculumProgressStatus,
@@ -181,8 +185,16 @@ export default function SchoolProgrammeWorkspace({ school, canEdit, defaultTab =
           <Card className="p-5">
             <h3 className="text-lg font-semibold text-slate-900">Teacher training progress</h3>
             <p className="mt-1 text-sm text-slate-500">
-              Tiny Steps records training checkpoints; school teachers do not maintain this dashboard.
+              Tiny Steps records a six-stage training pathway; school teachers do not maintain this dashboard.
             </p>
+            <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+              <p className="text-sm font-semibold text-blue-950">Training pathway</p>
+              <ol className="mt-2 grid gap-2 text-xs text-blue-900 md:grid-cols-2 xl:grid-cols-3">
+                {SCHOOL_PHONICS_TRAINING_TRACK.modules.map((module) => (
+                  <li key={module.order}>{module.order}. {module.label}</li>
+                ))}
+              </ol>
+            </div>
             <div className="mt-4 space-y-3">
               {structure.teachers.filter((teacher) => teacher.status === 'active').map((teacher) => (
                 <TrainingRow
@@ -195,6 +207,8 @@ export default function SchoolProgrammeWorkspace({ school, canEdit, defaultTab =
                       schoolId: school.id,
                       academicYearId: structure.currentAcademicYear!.id,
                       teacherId: teacher.id,
+                      trainingTrackId: SCHOOL_PHONICS_TRAINING_TRACK.id,
+                      trainingTrackLabel: SCHOOL_PHONICS_TRAINING_TRACK.label,
                       ...value,
                     });
                     await load();
@@ -324,7 +338,7 @@ function SchoolActivityPanel({ activity }: { activity: SchoolActivityRecord[] })
                 <span className="text-xs text-slate-500">{dateTimeText(item.occurredAt)}</span>
               </div>
               <p className="mt-1 text-xs text-slate-500">
-                {item.type.replaceAll('_', ' ')}{item.actorKind ? ` · ${item.actorKind}` : ''}
+                {item.type.split('_').join(' ')}{item.actorKind ? ` · ${item.actorKind}` : ''}
               </p>
             </div>
           ))}
@@ -382,14 +396,14 @@ function CurriculumRow({
         </div>
         {canEdit ? (
           <>
-            <select className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={courseId} onChange={(e) => { setCourseId(e.target.value as SchoolPhonicsCourseId); setStageOrder(0); setStatus('not_started'); }}>
+            <select className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={courseId} onChange={(event) => { setCourseId(event.target.value as SchoolPhonicsCourseId); setStageOrder(0); setStatus('not_started'); }}>
               {SCHOOL_PHONICS_COURSES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
             </select>
-            <select className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={stageOrder} onChange={(e) => { const next = Number(e.target.value); setStageOrder(next); setStatus(next === 0 ? 'not_started' : next === course.stages.length ? 'completed' : 'on_track'); }}>
+            <select className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={stageOrder} onChange={(event) => { const next = Number(event.target.value); setStageOrder(next); setStatus(next === 0 ? 'not_started' : next === course.stages.length ? 'completed' : 'on_track'); }}>
               <option value={0}>Not started</option>
               {course.stages.map((stage) => <option key={stage.stageOrder} value={stage.stageOrder}>{stage.label}</option>)}
             </select>
-            <select className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={status} onChange={(e) => setStatus(e.target.value as CurriculumProgressStatus)}>
+            <select className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={status} onChange={(event) => setStatus(event.target.value as CurriculumProgressStatus)}>
               <option value="not_started">Not started</option>
               <option value="on_track">On track</option>
               <option value="needs_attention">Needs attention</option>
@@ -427,27 +441,32 @@ function TrainingRow({
     status: TeacherTrainingStatus;
   }) => Promise<void>;
 }) {
-  const [completed, setCompleted] = useState(current?.completedUnits || 0);
-  const [total, setTotal] = useState(current?.totalUnits || 10);
+  const [stage, setStage] = useState(current?.currentStage || 0);
   const [status, setStatus] = useState<TeacherTrainingStatus>(current?.status || 'not_started');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setCompleted(current?.completedUnits || 0);
-    setTotal(current?.totalUnits || 10);
+    setStage(current?.currentStage || 0);
     setStatus(current?.status || 'not_started');
   }, [current]);
+
+  const resolvedStatus: TeacherTrainingStatus =
+    stage === 0
+      ? 'not_started'
+      : stage === SCHOOL_PHONICS_TRAINING_TOTAL
+        ? 'completed'
+        : status === 'training_due'
+          ? 'training_due'
+          : 'on_track';
 
   const save = async () => {
     setSaving(true);
     try {
-      const safeTotal = Math.max(1, total);
-      const safeCompleted = Math.max(0, Math.min(completed, safeTotal));
       await onSave({
-        completedUnits: safeCompleted,
-        totalUnits: safeTotal,
-        currentStage: safeCompleted,
-        status: safeCompleted === 0 ? 'not_started' : safeCompleted === safeTotal ? 'completed' : status === 'training_due' ? 'training_due' : 'on_track',
+        completedUnits: stage,
+        totalUnits: SCHOOL_PHONICS_TRAINING_TOTAL,
+        currentStage: stage,
+        status: resolvedStatus,
       });
     } finally {
       setSaving(false);
@@ -456,28 +475,54 @@ function TrainingRow({
 
   return (
     <div className="rounded-xl border border-slate-200 p-4">
-      <div className="grid gap-3 lg:grid-cols-[220px_120px_120px_1fr_auto] lg:items-center">
+      <div className="grid gap-3 lg:grid-cols-[220px_1fr_170px_120px_auto] lg:items-center">
         <div>
           <p className="font-semibold text-slate-900">{teacher.name}</p>
           <p className="text-xs text-slate-500">{teacher.designation || 'Teacher'}</p>
         </div>
         {canEdit ? (
           <>
-            <label className="text-xs text-slate-500">Completed<Input className="mt-1" type="number" min={0} value={completed} onChange={(e) => setCompleted(Number(e.target.value))} /></label>
-            <label className="text-xs text-slate-500">Total<Input className="mt-1" type="number" min={1} value={total} onChange={(e) => setTotal(Number(e.target.value))} /></label>
-            <select className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={status} onChange={(e) => setStatus(e.target.value as TeacherTrainingStatus)}>
+            <select
+              className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+              value={stage}
+              onChange={(event) => {
+                const next = Number(event.target.value);
+                setStage(next);
+                setStatus(
+                  next === 0
+                    ? 'not_started'
+                    : next === SCHOOL_PHONICS_TRAINING_TOTAL
+                      ? 'completed'
+                      : 'on_track',
+                );
+              }}
+            >
+              <option value={0}>Not started</option>
+              {SCHOOL_PHONICS_TRAINING_TRACK.modules.map((module) => (
+                <option key={module.order} value={module.order}>
+                  Stage {module.order} — {module.label}
+                </option>
+              ))}
+            </select>
+            <select
+              className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+              value={resolvedStatus}
+              disabled={stage === 0 || stage === SCHOOL_PHONICS_TRAINING_TOTAL}
+              onChange={(event) => setStatus(event.target.value as TeacherTrainingStatus)}
+            >
               <option value="not_started">Not started</option>
               <option value="on_track">On track</option>
               <option value="training_due">Training due</option>
               <option value="completed">Completed</option>
             </select>
+            <p className="text-sm font-semibold text-slate-800">{Math.round((stage / SCHOOL_PHONICS_TRAINING_TOTAL) * 100)}%</p>
             <Button type="button" size="sm" disabled={saving} onClick={() => void save()}>{saving ? 'Saving…' : 'Save'}</Button>
           </>
         ) : (
           <>
-            <p className="text-sm">{current ? `${current.completedUnits}/${current.totalUnits}` : 'Not started'}</p>
-            <p className="text-sm">{current?.progressPercent || 0}%</p>
+            <p className="text-sm text-slate-700">{trainingStageLabel(current?.currentStage || 0)}</p>
             <Badge variant="outline">{current?.status || 'not_started'}</Badge>
+            <p className="text-sm font-semibold text-slate-800">{current?.progressPercent || 0}%</p>
             <span />
           </>
         )}
