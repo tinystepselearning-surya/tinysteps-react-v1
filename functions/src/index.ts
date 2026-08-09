@@ -165,6 +165,7 @@ export {
   teacherCancelAssignedDemo,
   onDemoPayoutIntegrityWrite,
 } from "./leadLifecycle";
+export { adminBackfillLeadLifecycle } from './leadLifecycleBackfill';
 
 // AI: Ask TinySteps chatbot and knowledge base
 export { askTinySteps } from "./ai/askTinySteps";
