@@ -150,6 +150,27 @@ service cloud.firestore {
         );
     }
 
+    function isCurrentActiveAdmin() {
+      return
+        isSignedIn()
+        && userDocExists(
+          request.auth.uid
+        )
+        && userIsActiveOrLegacy(
+          request.auth.uid
+        )
+        && (
+          userRole(
+            request.auth.uid
+          ) == 'admin'
+          || (
+            ('roles' in get(userDocPath(request.auth.uid)).data)
+            && get(userDocPath(request.auth.uid)).data.roles is list
+            && ('admin' in get(userDocPath(request.auth.uid)).data.roles)
+          )
+        );
+    }
+
     function schoolUserDocPath(uid) {
       return /databases/$(database)/documents/schoolUsers/$(uid);
     }
@@ -498,7 +519,7 @@ function teacherOwnsDocViaAliases(data) {
 
     match /schoolUsers/{userId} {
       allow read:
-        if isAdmin()
+        if isCurrentActiveAdmin()
         || (
           isCurrentActiveSchoolAdmin()
           && request.auth.uid == userId
@@ -510,7 +531,7 @@ function teacherOwnsDocViaAliases(data) {
 
     match /schools/{schoolId} {
       allow read:
-        if isAdmin()
+        if isCurrentActiveAdmin()
         || (
           isCurrentActiveLP()
           && ('learningPartnerId' in resource.data)
@@ -528,7 +549,7 @@ function teacherOwnsDocViaAliases(data) {
 
     match /schools/{schoolId}/learningPartnerAssignments/{assignmentId} {
       allow read:
-        if isAdmin();
+        if isCurrentActiveAdmin();
 
       allow create, update, delete:
         if false;

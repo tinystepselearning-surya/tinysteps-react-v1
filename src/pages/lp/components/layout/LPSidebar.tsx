@@ -10,6 +10,7 @@ interface LPSidebarProps {
 
 const MENU_ITEMS = [
   { id: 'overview', label: 'Overview', icon: '📊' },
+  { id: 'schools', label: 'My Schools', icon: '🏫' },
   { id: 'parents', label: 'Parents', icon: '👨‍👩‍👧‍👦' },
   { id: 'teachers', label: 'Teachers', icon: '👩‍🏫' },
   { id: 'messages', label: 'Messages', icon: '💬' },

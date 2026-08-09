@@ -136,6 +136,44 @@ suite('school-domain RBAC rules', () => {
     expect(memberships.size).toBe(2);
   });
 
+  it('rejects a stale Admin token after the current database role is removed', async () => {
+    await seedSchoolDomain();
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), 'users', 'admin-1'), {
+        role: 'parent',
+        roles: ['parent'],
+      });
+    });
+    const db = authDb('admin-1', 'admin');
+
+    await assertFails(getDoc(doc(db, 'schools', 'school-a')));
+    await assertFails(getDoc(doc(db, 'schoolUsers', 'school-admin-1')));
+    await assertFails(
+      getDoc(
+        doc(
+          db,
+          'schools',
+          'school-a',
+          'learningPartnerAssignments',
+          'assignment-1',
+        ),
+      ),
+    );
+  });
+
+  it('rejects an inactive Admin account despite a stale token', async () => {
+    await seedSchoolDomain();
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), 'users', 'admin-1'), {
+        status: 'archived',
+      });
+    });
+    const db = authDb('admin-1', 'admin');
+
+    await assertFails(getDoc(doc(db, 'schools', 'school-a')));
+    await assertFails(getDoc(doc(db, 'schoolUsers', 'school-admin-1')));
+  });
+
   it('isolates School Admin membership documents', async () => {
     await seedSchoolDomain();
     const db = authDb('school-admin-1', 'schoolAdmin');

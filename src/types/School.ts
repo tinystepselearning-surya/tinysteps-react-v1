@@ -29,6 +29,7 @@ export interface SchoolRecord {
   learningPartnerName: string | null;
   learningPartnerEmail: string | null;
   learningPartnerAssignedAt?: unknown;
+  currentAcademicYearId: string | null;
   createdAt?: unknown;
   createdBy?: string;
   updatedAt?: unknown;

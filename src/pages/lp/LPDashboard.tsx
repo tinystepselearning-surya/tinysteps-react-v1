@@ -6,10 +6,11 @@ import { LPHeader } from './components/layout/LPHeader';
 import { LPSidebar } from './components/layout/LPSidebar';
 import HolidayCalendar2026 from '../../components/common/HolidayCalendar2026';
 import MobileTabBar, { type MobileTabBarItem } from '../../components/common/MobileTabBar';
-import { BarChart2, Users, GraduationCap, HeadphonesIcon, MessageSquare, TrendingUp } from 'lucide-react';
+import { BarChart2, Building2, Users, GraduationCap, HeadphonesIcon, MessageSquare, TrendingUp } from 'lucide-react';
 import MessagesPanel from '../messages/MessagesPanel';
 import useMessageThreads from '../../hooks/useMessageThreads';
 const LPStats = React.lazy(() => import('./components/overview/LPStats'));
+const LPSchoolsWorkspace = React.lazy(() => import('./components/schools/LPSchoolsWorkspace'));
 const ParentsList = React.lazy(() => import('./components/parents/ParentsList'));
 const TeachersList = React.lazy(() => import('./components/teachers/TeachersList'));
 const TicketsList = React.lazy(() => import('./components/tickets/TicketsList'));
@@ -19,6 +20,7 @@ import { useLPFilteredTeachers, useLPFilteredParents } from '@/hooks/useLPFilter
 
 const LP_MOBILE_TABS: MobileTabBarItem[] = [
   { id: 'overview', label: 'Overview', icon: BarChart2 },
+  { id: 'schools', label: 'Schools', icon: Building2 },
   { id: 'parents', label: 'Parents', icon: Users },
   { id: 'teachers', label: 'Teachers', icon: GraduationCap },
   { id: 'messages', label: 'Messages', icon: MessageSquare },
@@ -34,6 +36,7 @@ const AccessNotice = ({ children }: { children: React.ReactNode }) => (
 
 const TAB_ITEMS = [
   { id: 'overview', label: 'Overview' },
+  { id: 'schools', label: 'My Schools' },
   { id: 'parents', label: 'Parents' },
   { id: 'teachers', label: 'Teachers' },
   { id: 'messages', label: 'Messages' },
@@ -100,6 +103,11 @@ export default function LPDashboard() {
                 <LPStats lpId={lpId} />
               </Suspense>
             </TabsContent>
+            <TabsContent value="schools">
+              <Suspense fallback={<div className="text-sm text-gray-600">Loading schools…</div>}>
+                {lpId ? <LPSchoolsWorkspace learningPartnerId={lpId} /> : null}
+              </Suspense>
+            </TabsContent>
             <TabsContent value="parents">
               <Suspense fallback={<div className="text-sm text-gray-600">Loading parents…</div>}>
                 <ParentsList lpId={lpId} />
@@ -144,7 +152,6 @@ export default function LPDashboard() {
           <div className="space-y-6">
             <h1>Learning Partner Dashboard</h1>
 
-            {/* My Teachers Section */}
             <section>
               <h2 className="text-xl font-bold mb-4">My Assigned Teachers ({teachers.length})</h2>
               {teachersLoading ? (
@@ -162,7 +169,6 @@ export default function LPDashboard() {
               )}
             </section>
 
-            {/* My Parents Section */}
             <section>
               <h2 className="text-xl font-bold mb-4">My Assigned Parents ({parents.length})</h2>
               {parentsLoading ? (
