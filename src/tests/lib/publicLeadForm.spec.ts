@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { buildPublicLeadPayload, buildPublicWhatsappMessage, PUBLIC_MAIN_CONCERN_OPTIONS } from '../../lib/publicLeadForm';
+import {
+  buildLeadAttributionEnrichment,
+  buildPublicLeadPayload,
+  buildPublicWhatsappMessage,
+  PUBLIC_MAIN_CONCERN_OPTIONS,
+} from '../../lib/publicLeadForm';
 
 describe('publicLeadForm helpers', () => {
-  it('includes mainConcern and urgency in the saved lead payload', () => {
+  it('keeps the anonymous Firestore payload within the strict existing schema', () => {
     const payload = buildPublicLeadPayload(
       {
         parentName: 'Priya',
@@ -15,9 +20,15 @@ describe('publicLeadForm helpers', () => {
       {
         source: 'homepage_hero_assessment',
         attribution: {
-          sourcePath: '/',
+          sourcePath: '/book-demo',
+          landingPage: '/phonics',
+          submittedFromPath: '/book-demo',
+          referrerDomain: 'google.com',
           utm_source: 'google',
           utm_medium: 'cpc',
+          gclid: 'test-gclid',
+          acquisitionChannel: 'google_ads',
+          acquisitionSource: 'google',
         },
         timezone: 'Asia/Kolkata',
       },
@@ -33,13 +44,43 @@ describe('publicLeadForm helpers', () => {
       mainConcern: 'Reading speed and word accuracy',
       urgency: 'This week',
       initialMessageSnippet: null,
-      sourcePath: '/',
+      sourcePath: '/book-demo',
     });
     expect(payload).not.toHaveProperty('status');
     expect(payload).not.toHaveProperty('priority');
-    expect(payload.attribution).toMatchObject({
+    expect(payload).not.toHaveProperty('acquisitionChannel');
+    expect(payload).not.toHaveProperty('landingPage');
+    expect(payload.attribution).toEqual({
       utm_source: 'google',
       utm_medium: 'cpc',
+      utm_campaign: null,
+      utm_content: null,
+      utm_term: null,
+    });
+  });
+
+  it('builds the complete server-side enrichment payload separately', () => {
+    expect(
+      buildLeadAttributionEnrichment({
+        sourcePath: '/book-demo',
+        landingPage: '/phonics',
+        submittedFromPath: '/book-demo',
+        submittedFromUrl: '/book-demo?book=1',
+        firstSeenAt: '2026-08-10T00:00:00.000Z',
+        referrer: 'https://www.google.com/search?q=phonics',
+        referrerDomain: 'google.com',
+        utm_source: 'google',
+        utm_medium: 'organic',
+        utm_campaign: 'phonics',
+        gclid: undefined,
+      }),
+    ).toMatchObject({
+      landingPage: '/phonics',
+      conversionPage: '/book-demo',
+      submittedFromUrl: '/book-demo?book=1',
+      referrerDomain: 'google.com',
+      utm_source: 'google',
+      utm_medium: 'organic',
     });
   });
 
