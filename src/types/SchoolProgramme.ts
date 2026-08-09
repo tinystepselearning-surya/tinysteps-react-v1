@@ -117,6 +117,67 @@ export interface TeacherTrainingProgress {
   updatedBy?: string;
 }
 
+export type ReviewMastery = 'emerging' | 'developing' | 'proficient' | 'mastered';
+export type ReviewImplementationRating = 'strong' | 'developing' | 'needs_support';
+export type ReviewOverallStatus = 'on_track' | 'needs_attention' | 'intervention';
+
+export interface SchoolReview {
+  id: string;
+  schoolId: string;
+  academicYearId: string;
+  sectionId: string | null;
+  gradeId: string | null;
+  gradeLabel: string | null;
+  sectionName: string | null;
+  reviewedAt?: unknown;
+  reviewedBy: string;
+  reviewedByName: string;
+  implementationRating: ReviewImplementationRating;
+  blending: ReviewMastery | null;
+  segmenting: ReviewMastery | null;
+  decoding: ReviewMastery | null;
+  overallStatus: ReviewOverallStatus;
+  summary: string;
+  recommendation: string;
+  nextReviewAt?: unknown;
+}
+
+export type AssessmentCheckpoint = 'baseline' | 'checkpoint_1' | 'mid' | 'final' | 'custom';
+export type ReadingLevelKey = 'TS0' | 'TS1' | 'TS2' | 'TS3' | 'TS4' | 'TS5' | 'TS6' | 'TS7' | 'TS8' | 'TS9';
+
+export interface ReadingDomainScores {
+  phonologicalAwareness: number | null;
+  soundKnowledge: number | null;
+  blendingDecoding: number | null;
+  segmentingEncoding: number | null;
+  connectedText: number | null;
+  comprehension: number | null;
+}
+
+export type ReadingLevelDistribution = Record<ReadingLevelKey, number>;
+
+export interface AssessmentSummary {
+  id: string;
+  schoolId: string;
+  academicYearId: string;
+  sectionId: string;
+  gradeId: string;
+  gradeKey: string;
+  gradeLabel: string;
+  sectionName: string;
+  checkpoint: AssessmentCheckpoint;
+  studentsAssessed: number;
+  sectionStudentCountSnapshot: number;
+  averageReadingLevel: number;
+  levelDistribution: ReadingLevelDistribution;
+  domainScores: ReadingDomainScores;
+  assessmentVersion: string;
+  notes: string | null;
+  assessedAt?: unknown;
+  assessedBy: string;
+  assessedByName: string;
+}
+
 export interface SchoolStructureSnapshot {
   academicYears: SchoolAcademicYear[];
   currentAcademicYear: SchoolAcademicYear | null;
@@ -135,6 +196,15 @@ export interface SchoolProgressSnapshot {
   curriculum: SectionCurriculumProgress[];
   training: TeacherTrainingProgress[];
 }
+
+export interface SchoolEvidenceSnapshot {
+  reviews: SchoolReview[];
+  assessments: AssessmentSummary[];
+}
+
+export const READING_LEVEL_KEYS: ReadingLevelKey[] = [
+  'TS0', 'TS1', 'TS2', 'TS3', 'TS4', 'TS5', 'TS6', 'TS7', 'TS8', 'TS9',
+];
 
 export const DEFAULT_SCHOOL_GRADES: Array<{
   gradeKey: string;
