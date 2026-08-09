@@ -32,7 +32,7 @@ import type {
   SchoolRecord,
   SchoolUserAccess,
 } from '../../../types/School';
-import SchoolStructureWorkspace from '../../schools/SchoolStructureWorkspace';
+import SchoolProgrammeWorkspace from '../../schools/SchoolProgrammeWorkspace';
 import SchoolAccessDialog from './SchoolAccessDialog';
 import SchoolFormDialog, {
   type SchoolFormSubmitPayload,
@@ -56,7 +56,7 @@ export default function SchoolManagement() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editingSchool, setEditingSchool] = useState<SchoolRecord | null>(null);
   const [accessSchool, setAccessSchool] = useState<SchoolRecord | null>(null);
-  const [structureSchool, setStructureSchool] = useState<SchoolRecord | null>(null);
+  const [programmeSchool, setProgrammeSchool] = useState<SchoolRecord | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -76,7 +76,7 @@ export default function SchoolManagement() {
           ? nextSchools.find((school) => school.id === current.id) || null
           : null,
       );
-      setStructureSchool((current) =>
+      setProgrammeSchool((current) =>
         current
           ? nextSchools.find((school) => school.id === current.id) || null
           : null,
@@ -168,7 +168,7 @@ export default function SchoolManagement() {
             <h1 className="text-2xl font-bold text-slate-900">School Partnerships</h1>
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            Manage partner schools, tenant access, Learning Partner ownership, and academic structure.
+            Manage partner schools, access, academic delivery, teacher training, reviews and outcomes.
           </p>
         </div>
         <Button
@@ -254,8 +254,8 @@ export default function SchoolManagement() {
                           <Button type="button" size="sm" variant="outline" onClick={() => setEditingSchool(school)}>
                             Edit
                           </Button>
-                          <Button type="button" size="sm" variant="outline" onClick={() => setStructureSchool(school)}>
-                            Structure
+                          <Button type="button" size="sm" variant="outline" onClick={() => setProgrammeSchool(school)}>
+                            Programme
                           </Button>
                           <Button type="button" size="sm" onClick={() => setAccessSchool(school)}>
                             Manage Access
@@ -302,12 +302,14 @@ export default function SchoolManagement() {
         onChanged={refresh}
       />
 
-      <Dialog open={Boolean(structureSchool)} onOpenChange={(open) => !open && setStructureSchool(null)}>
-        <DialogContent className="max-h-[92vh] max-w-6xl overflow-y-auto">
+      <Dialog open={Boolean(programmeSchool)} onOpenChange={(open) => !open && setProgrammeSchool(null)}>
+        <DialogContent className="max-h-[94vh] max-w-[96vw] overflow-y-auto xl:max-w-7xl">
           <DialogHeader>
-            <DialogTitle>School academic structure</DialogTitle>
+            <DialogTitle>School programme management</DialogTitle>
           </DialogHeader>
-          {structureSchool && <SchoolStructureWorkspace school={structureSchool} canEdit />}
+          {programmeSchool && (
+            <SchoolProgrammeWorkspace school={programmeSchool} canEdit={programmeSchool.status !== 'archived'} />
+          )}
         </DialogContent>
       </Dialog>
     </div>
