@@ -78,6 +78,37 @@ export {
   adminUnlinkSchoolUser,
 } from './schools';
 
+// School Partnership programme
+export {
+  schoolCreateAcademicYear,
+  schoolSetCurrentAcademicYear,
+  schoolUpsertGrade,
+  schoolSetGradeStatus,
+  schoolUpsertSection,
+  schoolSetSectionStatus,
+  schoolUpsertTeacher,
+  schoolSetTeacherStatus,
+} from './schoolAcademic';
+export {
+  schoolUpdateCurriculumProgress,
+  schoolUpdateTeacherTraining,
+} from './schoolProgress';
+export {
+  schoolCreateReview,
+  schoolRecordAssessmentSummary,
+} from './schoolEvidence';
+export { schoolGetProgrammeSnapshot } from './schoolRead';
+export {
+  onSchoolAcademicYearActivity,
+  onSchoolGradeActivity,
+  onSchoolSectionActivity,
+  onSchoolTeacherActivity,
+  onSchoolCurriculumActivity,
+  onSchoolTrainingActivity,
+  onSchoolReviewActivity,
+  onSchoolAssessmentActivity,
+} from './schoolActivityTriggers';
+
 // Learning Partner assignment
 export { 
   assignLPToParent, 
