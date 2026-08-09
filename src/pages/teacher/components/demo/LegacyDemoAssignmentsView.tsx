@@ -39,6 +39,7 @@ import { db } from '../../../../lib/firebaseConfig';
 
 interface DemoAssignmentsViewProps {
   teacherId?: string;
+  prefetchedMyDemos?: DemoSession[];
 }
 
 type TeacherDemoTab = 'available' | 'upcoming' | 'completed' | 'today';
@@ -198,7 +199,7 @@ const demoMatchesQuery = (demo: DemoSession, query: string): boolean => {
   return haystack.includes(query);
 };
 
-export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teacherId }) => {
+export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teacherId, prefetchedMyDemos }) => {
   const { toast } = useToast();
 
   const [activeTab, setActiveTab] = useState<TeacherDemoTab>('available');
@@ -234,6 +235,11 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
   const [parentExpectation, setParentExpectation] = useState<DemoParentExpectation | ''>('');
   const [recommendedNextStep, setRecommendedNextStep] = useState<DemoRecommendedNextStep | ''>('');
   const [completing, setCompleting] = useState(false);
+  const shouldListenForMyDemos = prefetchedMyDemos === undefined;
+
+  useEffect(() => {
+    if (prefetchedMyDemos !== undefined) setMyDemos(prefetchedMyDemos);
+  }, [prefetchedMyDemos]);
 
   useEffect(() => {
     if (!teacherId) return;
@@ -249,23 +255,25 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
       },
     );
 
-    const unsubMine = listenTeacherDemoSessions(
-      teacherId,
-      (next) => setMyDemos(next),
-      (error) => {
-        toast({
-          title: 'Failed to load your demos',
-          description: error.message,
-          variant: 'destructive',
-        });
-      },
-    );
+    const unsubMine = shouldListenForMyDemos
+      ? listenTeacherDemoSessions(
+          teacherId,
+          (next) => setMyDemos(next),
+          (error) => {
+            toast({
+              title: 'Failed to load your demos',
+              description: error.message,
+              variant: 'destructive',
+            });
+          },
+        )
+      : null;
 
     return () => {
       unsubOpen();
-      unsubMine();
+      unsubMine?.();
     };
-  }, [teacherId, toast]);
+  }, [shouldListenForMyDemos, teacherId, toast]);
 
   useEffect(() => {
     if (!teacherId) return;

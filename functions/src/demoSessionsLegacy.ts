@@ -138,6 +138,9 @@ const formatDateInput = (date: Date): string => {
 
 const todayDateInput = (): string => formatDateInput(new Date());
 
+const requestDateTimestamp = (value: string): FirebaseFirestore.Timestamp =>
+  admin.firestore.Timestamp.fromDate(new Date(`${value}T12:00:00+05:30`));
+
 const cleanOptionalDateInput = (value: unknown, fieldName: string): string | null => {
   if (value == null) return null;
   if (typeof value !== 'string') {
@@ -895,13 +898,56 @@ export const adminCreateDemoSession = onCall<AdminUpsertDemoSessionRequest>(
     const demoRef = db.collection('demoSessions').doc();
     const privateRef = db.collection('demoSessionsPrivate').doc(demoRef.id);
     const dedupeRef = uniqueKeyRef(db, dedupeKey);
+    const canonicalLeadId = leadId || `demo_${demoRef.id}`;
+    const leadRef = db.collection('leads').doc(canonicalLeadId);
 
     await db.runTransaction(async (tx) => {
-      const dedupeSnap = await tx.get(dedupeRef);
+      const [dedupeSnap, leadSnap] = await Promise.all([tx.get(dedupeRef), tx.get(leadRef)]);
       if (!forceCreate) {
         assertDemoUniqueAvailability(dedupeSnap, dedupeKey);
       }
       const mappedDemoId = pickOptionalText(dedupeSnap.data()?.demoId, 120);
+      const existingLead = leadSnap.exists ? (leadSnap.data() || {}) : {};
+      const existingLeadStatus = normalizeStatusValue(existingLead.status);
+      const terminalLeadStatus = new Set([
+        'admitted_confirmed',
+        'not_interested',
+        'wrong_fit',
+        'no_response',
+        'lost',
+      ]).has(existingLeadStatus);
+
+      const leadPayload: Record<string, unknown> = {
+        parentName,
+        primaryPhone: existingLead.primaryPhone || parentPhone,
+        phoneNormalized: normalizePhoneForKey(parentPhone),
+        childName,
+        childGrade,
+        childAge,
+        interestTrack: mapCourseInterestedToLeadTrack(courseInterested),
+        programInterest: courseInterested,
+        source: existingLead.source || mapDemoSourceToLeadSource(source),
+        status: terminalLeadStatus ? existingLeadStatus : 'demo_pending_schedule',
+        demoSessionId: demoRef.id,
+        demoIds: admin.firestore.FieldValue.arrayUnion(demoRef.id),
+        demoStatus: 'open',
+        lifecycleVersion: 2,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedBy: caller.uid,
+      };
+      if (!existingLead.receivedAt) {
+        leadPayload.receivedAt =
+          existingLead.requestedAt ||
+          existingLead.createdAt ||
+          requestDateTimestamp(requestReceivedDate);
+      }
+      if (!leadSnap.exists) {
+        leadPayload.sourceDetail = 'manual_demo_request';
+        leadPayload.priority = 'normal';
+        leadPayload.createdAt = requestDateTimestamp(requestReceivedDate);
+        leadPayload.createdBy = caller.uid;
+      }
+      tx.set(leadRef, leadPayload, { merge: true });
 
       tx.set(demoRef, {
         parentName,
@@ -916,7 +962,7 @@ export const adminCreateDemoSession = onCall<AdminUpsertDemoSessionRequest>(
         requestReceivedDate,
         timezone,
         adminNotes,
-        leadId: leadId || null,
+        leadId: canonicalLeadId,
         dedupeKey,
         status: 'open',
         assignedTeacherId: null,
@@ -944,7 +990,7 @@ export const adminCreateDemoSession = onCall<AdminUpsertDemoSessionRequest>(
           makeHistoryEntry(
             'created',
             caller,
-            leadId ? `Demo request created by admin (lead ${leadId})` : 'Demo request created by admin',
+            `Demo request created by admin (lead ${canonicalLeadId})`,
           ),
         ],
         conversionStatus: null,
@@ -1402,6 +1448,7 @@ export const completeDemoSession = onCall<CompleteDemoSessionRequest>(
       const demo = snap.data() as {
         status?: string;
         assignedTeacherId?: string | null;
+        assignedTeacherName?: string | null;
         history?: unknown;
         parentName?: string | null;
         childName?: string | null;
@@ -1414,6 +1461,9 @@ export const completeDemoSession = onCall<CompleteDemoSessionRequest>(
         preferredDateTimeText?: string | null;
         timezone?: string | null;
         adminNotes?: string | null;
+        leadId?: string | null;
+        requestReceivedDate?: string | null;
+        createdAt?: unknown;
         rescheduledFromDemoId?: string | null;
       };
 
@@ -1443,6 +1493,8 @@ export const completeDemoSession = onCall<CompleteDemoSessionRequest>(
         attentionSpan,
         parentExpectation,
         recommendedNextStep,
+        completedByTeacherId: pickOptionalText(demo.assignedTeacherId, 120),
+        completedByTeacherName: pickOptionalText(demo.assignedTeacherName, 120),
         history: baseHistory,
         completedAt: admin.firestore.FieldValue.serverTimestamp(),
         lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -1455,6 +1507,10 @@ export const completeDemoSession = onCall<CompleteDemoSessionRequest>(
         const privateSnap = await tx.get(privateRef);
         const privateData = privateSnap.data() as { parentPhone?: string } | undefined;
         const parentPhone = pickOptionalText(privateData?.parentPhone, 60);
+        const canonicalLeadId = pickOptionalText(demo.leadId, 120) || `demo_${demoId}`;
+        const leadRef = db.collection('leads').doc(canonicalLeadId);
+        const leadSnap = await tx.get(leadRef);
+        const existingLead = leadSnap.exists ? (leadSnap.data() || {}) : {};
         const childNameForKey = pickOptionalText(demo.childName, 120) || 'child';
         let followUpDedupeKey = pickOptionalText(demo.dedupeKey, 128);
         if (!followUpDedupeKey && parentPhone) {
@@ -1476,6 +1532,42 @@ export const completeDemoSession = onCall<CompleteDemoSessionRequest>(
           ? `${carryAdminNotes}\n${followUpNote}`
           : followUpNote;
 
+        const originalReceivedAt =
+          existingLead.receivedAt ||
+          existingLead.requestedAt ||
+          existingLead.createdAt ||
+          (demo.requestReceivedDate && DATE_INPUT_REGEX.test(demo.requestReceivedDate)
+            ? requestDateTimestamp(demo.requestReceivedDate)
+            : demo.createdAt || admin.firestore.FieldValue.serverTimestamp());
+        tx.set(
+          leadRef,
+          {
+            parentName: existingLead.parentName || pickOptionalText(demo.parentName, 120) || 'Parent',
+            primaryPhone: existingLead.primaryPhone || parentPhone || null,
+            phoneNormalized: existingLead.phoneNormalized || (parentPhone ? normalizePhoneForKey(parentPhone) : null),
+            childName: existingLead.childName || pickOptionalText(demo.childName, 120) || 'Child',
+            childGrade: existingLead.childGrade || pickOptionalText(demo.childGrade, 60) || null,
+            childAge: existingLead.childAge ?? (typeof demo.childAge === 'number' ? demo.childAge : null),
+            interestTrack: existingLead.interestTrack || mapCourseInterestedToLeadTrack(
+              pickOptionalText(demo.courseInterested, 120) || 'Phonics',
+            ),
+            programInterest: existingLead.programInterest || pickOptionalText(demo.courseInterested, 120) || null,
+            source: existingLead.source || mapDemoSourceToLeadSource(pickOptionalText(demo.source, 120)),
+            sourceDetail: existingLead.sourceDetail || 'legacy_demo_reschedule_repair',
+            status: 'demo_pending_schedule',
+            receivedAt: originalReceivedAt,
+            demoSessionId: followUpDemoRef.id,
+            demoIds: admin.firestore.FieldValue.arrayUnion(demoId, followUpDemoRef.id),
+            demoStatus: 'open',
+            lifecycleVersion: 2,
+            createdAt: existingLead.createdAt || originalReceivedAt,
+            createdBy: existingLead.createdBy || caller.uid,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedBy: caller.uid,
+          },
+          { merge: true },
+        );
+
         tx.set(followUpDemoRef, {
           parentName: pickOptionalText(demo.parentName, 120) || 'Parent',
           childName: pickOptionalText(demo.childName, 120) || 'Child',
@@ -1488,6 +1580,7 @@ export const completeDemoSession = onCall<CompleteDemoSessionRequest>(
           requestReceivedDate: todayDateInput(),
           timezone: pickOptionalText(demo.timezone, 120),
           adminNotes: combinedAdminNotes,
+          leadId: canonicalLeadId,
           dedupeKey: followUpDedupeKey || null,
           status: 'open',
           assignedTeacherId: null,
@@ -1558,6 +1651,7 @@ export const completeDemoSession = onCall<CompleteDemoSessionRequest>(
         }
 
         updatePayload.rescheduledToDemoId = followUpDemoRef.id;
+        updatePayload.leadId = canonicalLeadId;
         updatePayload.history = appendHistoryEntry(
           baseHistory,
           makeHistoryEntry(
@@ -1805,6 +1899,19 @@ export const deleteDemoSession = onCall<DeleteDemoSessionRequest>(
       const dedupeSnap = dedupeRef ? await tx.get(dedupeRef) : null;
 
       const earningsSnap = await tx.get(earningsQuery);
+      const paidEarning = earningsSnap.docs.find((earningDoc) => {
+        const earning = (earningDoc.data() || {}) as Record<string, unknown>;
+        const status = normalizeFinancialStatus(earning.status);
+        if (status === 'paid' || status === 'settled') return true;
+        const amount = Math.max(toFiniteNumber(earning.amount), 0);
+        return resolveEarningPaidAmount(earning, amount) > 0;
+      });
+      if (paidEarning) {
+        throw new HttpsError(
+          'failed-precondition',
+          'Demo has a paid teacher earning and cannot be deleted. Preserve the payout audit trail.',
+        );
+      }
       for (const earningDoc of earningsSnap.docs) {
         tx.delete(earningDoc.ref);
         deletedCount += 1;
@@ -1879,7 +1986,7 @@ export const reopenDemoSession = onCall<ReopenDemoSessionRequest>(
 
         const amount = Math.max(toFiniteNumber(earning.amount), 0);
         const paidAmount = resolveEarningPaidAmount(earning, amount);
-        if (paidAmount > 0 || status === 'paid') {
+        if (paidAmount > 0 || status === 'paid' || status === 'settled') {
           throw new HttpsError(
             'failed-precondition',
             'Demo payout already paid. Reverse teacher payout allocation before reopening.'
@@ -1920,6 +2027,8 @@ export const reopenDemoSession = onCall<ReopenDemoSessionRequest>(
         attentionSpan: null,
         parentExpectation: null,
         recommendedNextStep: null,
+        completedByTeacherId: null,
+        completedByTeacherName: null,
         conversionStatus: null,
         recommendedCourse: null,
         recommendedClassType: null,

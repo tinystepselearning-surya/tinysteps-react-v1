@@ -4,6 +4,7 @@ import { HttpsError, onCall } from 'firebase-functions/v2/https';
 if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
+const DELIVERED_DEMO_OUTCOMES = new Set(['', 'completed', 'not_interested', 'follow_up_needed']);
 
 const text = (value: unknown, max = 500): string =>
   typeof value === 'string' ? value.trim().slice(0, max) : '';
@@ -52,7 +53,7 @@ const leadStatus = (demo: Record<string, unknown>): string => {
   return 'new';
 };
 
-export const adminBackfillLeadLifecycle = onCall<{ limit?: number }>(
+export const adminBackfillLeadLifecycle = onCall<{ limit?: number; dryRun?: boolean }>(
   { region: REGION, timeoutSeconds: 540, memory: '512MiB' },
   async (request) => {
     const uid = request.auth?.uid;
@@ -63,17 +64,29 @@ export const adminBackfillLeadLifecycle = onCall<{ limit?: number }>(
       throw new HttpsError('permission-denied', 'Only admin can run lead lifecycle backfill');
     }
 
-    const requestedLimit = Number(request.data?.limit || 1000);
-    const limit = Math.max(1, Math.min(Number.isFinite(requestedLimit) ? requestedLimit : 1000, 2000));
-    const [demoSnap, privateSnap] = await Promise.all([
-      db.collection('demoSessions').limit(limit).get(),
-      db.collection('demoSessionsPrivate').limit(limit).get(),
-    ]);
+    const requestedLimit = Number(request.data?.limit || 2000);
+    const limit = Math.max(1, Math.min(Number.isFinite(requestedLimit) ? requestedLimit : 2000, 5000));
+    const dryRun = request.data?.dryRun !== false;
+    const demoSnap = await db
+      .collection('demoSessions')
+      .orderBy(admin.firestore.FieldPath.documentId())
+      .limit(limit + 1)
+      .get();
+    const hasMore = demoSnap.size > limit;
+    if (!dryRun && hasMore) {
+      throw new HttpsError(
+        'failed-precondition',
+        `Migration would be incomplete: more than ${limit} demos exist. Rerun dry-run with a sufficient limit.`,
+      );
+    }
+    const selectedDemoDocs = demoSnap.docs.slice(0, limit);
+    const privateRefs = selectedDemoDocs.map((docSnap) => db.collection('demoSessionsPrivate').doc(docSnap.id));
+    const privateDocs = privateRefs.length > 0 ? await db.getAll(...privateRefs) : [];
 
     const demos = new Map<string, Record<string, unknown>>();
-    demoSnap.docs.forEach((docSnap) => demos.set(docSnap.id, docSnap.data() || {}));
+    selectedDemoDocs.forEach((docSnap) => demos.set(docSnap.id, docSnap.data() || {}));
     const phones = new Map<string, string>();
-    privateSnap.docs.forEach((docSnap) => {
+    privateDocs.forEach((docSnap) => {
       const phone = text(docSnap.data()?.parentPhone, 80);
       if (phone) phones.set(docSnap.id, phone);
     });
@@ -86,9 +99,12 @@ export const adminBackfillLeadLifecycle = onCall<{ limit?: number }>(
       if (resolving.has(demoId)) return `demo_${demoId}`;
       resolving.add(demoId);
       const demo = demos.get(demoId) || {};
-      let leadId = text(demo.leadId, 120);
       const priorId = text(demo.rescheduledFromDemoId, 120);
-      if (!leadId && priorId && demos.has(priorId)) leadId = resolveLeadId(priorId);
+      // The reschedule edge is authoritative even when an old async reconciler
+      // previously attached the follow-up attempt to a separate generated lead.
+      let leadId = priorId && demos.has(priorId)
+        ? resolveLeadId(priorId)
+        : text(demo.leadId, 120);
       if (!leadId) leadId = `demo_${demoId}`;
       resolving.delete(demoId);
       resolvedLeadIds.set(demoId, leadId);
@@ -96,17 +112,13 @@ export const adminBackfillLeadLifecycle = onCall<{ limit?: number }>(
     };
 
     const groups = new Map<string, Array<{ id: string; data: Record<string, unknown> }>>();
-    demoSnap.docs.forEach((docSnap) => {
+    selectedDemoDocs.forEach((docSnap) => {
       const leadId = resolveLeadId(docSnap.id);
       const list = groups.get(leadId) || [];
       list.push({ id: docSnap.id, data: docSnap.data() || {} });
       groups.set(leadId, list);
     });
 
-    const leadRefs = Array.from(groups.keys()).map((leadId) => db.collection('leads').doc(leadId));
-    const leadSnaps = leadRefs.length > 0 ? await db.getAll(...leadRefs) : [];
-    const existingLeadById = new Map(leadSnaps.map((snap) => [snap.id, snap]));
-    const writer = db.bulkWriter();
     let demosLinked = 0;
     let leadsCreated = 0;
     let leadsUpdated = 0;
@@ -115,8 +127,9 @@ export const adminBackfillLeadLifecycle = onCall<{ limit?: number }>(
       group.sort((a, b) => timestampMillis(a.data.createdAt) - timestampMillis(b.data.createdAt));
       const first = group[0];
       const latest = group[group.length - 1];
-      const existingLeadSnap = existingLeadById.get(leadId);
-      const existing = existingLeadSnap?.exists ? (existingLeadSnap.data() || {}) : {};
+      const leadRef = db.collection('leads').doc(leadId);
+      const existingLeadSnap = await leadRef.get();
+      const existing = existingLeadSnap.exists ? (existingLeadSnap.data() || {}) : {};
       const receivedAt =
         existing.receivedAt ||
         existing.requestedAt ||
@@ -124,29 +137,49 @@ export const adminBackfillLeadLifecycle = onCall<{ limit?: number }>(
         requestDateTimestamp(first.data.requestReceivedDate) ||
         first.data.createdAt ||
         admin.firestore.FieldValue.serverTimestamp();
-      const phone = phones.get(first.id) || phones.get(latest.id) || '';
-      const leadRef = db.collection('leads').doc(leadId);
+      const phone = group.map((item) => phones.get(item.id) || '').find(Boolean) || '';
+      const firstAssigned = group.find((item) => item.data.assignedAt)?.data.assignedAt || null;
+      const firstCompleted = group.find((item) => item.data.completedAt)?.data.completedAt || null;
+      const enrolledAttempt = group.find(
+        (item) => text(item.data.conversionStatus, 80).toLowerCase() === 'enrolled',
+      );
+      const completedAttempt = [...group]
+        .reverse()
+        .find((item) => (
+          text(item.data.status, 80).toLowerCase() === 'completed' &&
+          DELIVERED_DEMO_OUTCOMES.has(text(item.data.outcome, 80).toLowerCase())
+        ));
+      const cancelledAttempt = [...group]
+        .reverse()
+        .find((item) => text(item.data.status, 80).toLowerCase() === 'cancelled');
+      const lifecycleAttempt = enrolledAttempt || completedAttempt || latest;
 
       const leadPayload: Record<string, unknown> = {
         receivedAt,
         demoSessionId: latest.id,
         demoIds: admin.firestore.FieldValue.arrayUnion(...group.map((item) => item.id)),
-        status: leadStatus(latest.data),
+        status: leadStatus(lifecycleAttempt.data),
         demoStatus: text(latest.data.status, 80) || null,
-        conversionStatus: text(latest.data.conversionStatus, 80) || null,
+        conversionStatus: text(lifecycleAttempt.data.conversionStatus, 80) || null,
         demoCreatedAt: first.data.createdAt || receivedAt,
-        demoAssignedAt: latest.data.assignedAt || null,
-        demoCompletedAt: latest.data.completedAt || null,
+        demoAssignedAt: firstAssigned,
+        demoCompletedAt: firstCompleted,
         enrolledAt:
-          text(latest.data.conversionStatus, 80).toLowerCase() === 'enrolled'
-            ? latest.data.enrolledAt || latest.data.lastUpdatedAt || latest.data.completedAt || null
+          enrolledAttempt
+            ? enrolledAttempt.data.enrolledAt || enrolledAttempt.data.lastUpdatedAt || enrolledAttempt.data.completedAt || null
             : existing.enrolledAt || null,
+        demoCancelledAt: cancelledAttempt?.data.cancelledAt || null,
+        demoCancellationReason: cancelledAttempt ? text(cancelledAttempt.data.cancellationReason, 120) || null : null,
+        demoCompletedByTeacherId:
+          completedAttempt?.data.completedByTeacherId || completedAttempt?.data.assignedTeacherId || null,
+        demoCompletedByTeacherName:
+          completedAttempt?.data.completedByTeacherName || completedAttempt?.data.assignedTeacherName || null,
         lifecycleVersion: 2,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedBy: uid,
       };
 
-      if (!existingLeadSnap?.exists) {
+      if (!existingLeadSnap.exists) {
         Object.assign(leadPayload, {
           parentName: text(first.data.parentName, 120) || null,
           childName: text(first.data.childName, 120) || null,
@@ -166,24 +199,30 @@ export const adminBackfillLeadLifecycle = onCall<{ limit?: number }>(
       } else {
         leadsUpdated += 1;
       }
-      writer.set(leadRef, leadPayload, { merge: true });
-
-      for (const item of group) {
-        if (text(item.data.leadId, 120) !== leadId) {
-          writer.set(
-            db.collection('demoSessions').doc(item.id),
-            { leadId },
-            { merge: true },
-          );
-          demosLinked += 1;
+      const missingLinks = group.filter((item) => text(item.data.leadId, 120) !== leadId);
+      demosLinked += missingLinks.length;
+      if (!dryRun) {
+        if (missingLinks.length > 450) {
+          throw new HttpsError('resource-exhausted', `Lead ${leadId} has too many demo attempts for one transaction.`);
         }
+        await db.runTransaction(async (tx) => {
+          const freshLead = await tx.get(leadRef);
+          const fresh = freshLead.exists ? (freshLead.data() || {}) : {};
+          const transactionalPayload = { ...leadPayload };
+          if (fresh.receivedAt) transactionalPayload.receivedAt = fresh.receivedAt;
+          tx.set(leadRef, transactionalPayload, { merge: true });
+          for (const item of missingLinks) {
+            tx.set(db.collection('demoSessions').doc(item.id), { leadId }, { merge: true });
+          }
+        });
       }
     }
 
-    await writer.close();
     return {
       ok: true,
-      demosScanned: demoSnap.size,
+      dryRun,
+      hasMore,
+      demosScanned: selectedDemoDocs.length,
       leadGroups: groups.size,
       demosLinked,
       leadsCreated,

@@ -156,10 +156,15 @@ const normalizeSource = (value: unknown): string => {
 const rate = (numerator: number, denominator: number): number =>
   denominator > 0 ? Math.round((numerator / denominator) * 1000) / 10 : 0;
 
-const isEnrolledDemo = (demo: DemoSession): boolean =>
-  String(demo.conversionStatus || '').trim().toLowerCase() === 'enrolled';
+const NON_DELIVERED_OUTCOMES = new Set(['parent_no_show', 'teacher_no_show', 'reschedule_requested']);
 
-const isCompletedDemo = (demo: DemoSession): boolean => demo.status === 'completed' || Boolean(demo.completedAt);
+const isCompletedDemo = (demo: DemoSession): boolean => {
+  if (!(demo.status === 'completed' || Boolean(demo.completedAt))) return false;
+  return !NON_DELIVERED_OUTCOMES.has(String(demo.outcome || '').trim().toLowerCase());
+};
+
+const isEnrolledDemo = (demo: DemoSession): boolean =>
+  isCompletedDemo(demo) && String(demo.conversionStatus || '').trim().toLowerCase() === 'enrolled';
 
 const demosForLead = (
   lead: LeadFunnelLead,
@@ -205,7 +210,7 @@ export const buildLeadFunnelAnalytics = (
   demos.forEach((demo) => {
     increment(toIstDateKey(demo.createdAt), 'demoCreated');
     increment(toIstDateKey(demo.assignedAt), 'assigned');
-    increment(toIstDateKey(demo.completedAt), 'completed');
+    if (isCompletedDemo(demo)) increment(toIstDateKey(demo.completedAt), 'completed');
     increment(toIstDateKey((demo as DemoSession & { cancelledAt?: unknown }).cancelledAt), 'cancelled');
     if (isEnrolledDemo(demo)) {
       increment(

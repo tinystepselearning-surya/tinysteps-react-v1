@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { onDocumentCreated, onDocumentWritten } from 'firebase-functions/v2/firestore';
+import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import * as logger from 'firebase-functions/logger';
 
 if (!admin.apps.length) admin.initializeApp();
@@ -75,15 +75,31 @@ const historyEntry = (action: string, actorId: string, actorName: string, note: 
   note,
 });
 
-export const onLeadCreatedCanonicalize = onDocumentCreated(
+const timestampMillis = (value: unknown): number => {
+  if (!value || typeof value !== 'object') return 0;
+  const timestamp = value as { toMillis?: () => number; seconds?: number; nanoseconds?: number };
+  if (typeof timestamp.toMillis === 'function') return timestamp.toMillis();
+  if (typeof timestamp.seconds === 'number') {
+    return timestamp.seconds * 1000 + Math.floor((timestamp.nanoseconds || 0) / 1_000_000);
+  }
+  return 0;
+};
+
+export const onLeadCreatedCanonicalize = onDocumentWritten(
   { document: 'leads/{leadId}', region: REGION },
   async (event) => {
-    const snap = event.data;
-    if (!snap) return;
+    const change = event.data;
+    if (!change || !change.after.exists) return;
+    const snap = change.after;
     const data = snap.data() || {};
+    const before = change.before.exists ? (change.before.data() || {}) : {};
     const updates: Record<string, unknown> = {};
 
-    if (!data.receivedAt) {
+    // receivedAt is the immutable cohort anchor. Once established, neither admin
+    // edits nor lifecycle synchronization may move the lead into another cohort.
+    if (before.receivedAt && timestampMillis(data.receivedAt) !== timestampMillis(before.receivedAt)) {
+      updates.receivedAt = before.receivedAt;
+    } else if (!data.receivedAt) {
       updates.receivedAt = data.requestedAt || data.createdAt || admin.firestore.FieldValue.serverTimestamp();
     }
     if (!cleanText(data.status, 80)) updates.status = 'new';
@@ -134,6 +150,12 @@ export const onDemoLeadLifecycleWrite = onDocumentWritten(
       const phone = normalizePhone(privateData.parentPhone);
       const nextLeadStatus = leadStatusForDemo(after);
       const systemActor = 'system:demo-lifecycle';
+      const currentDemoId = cleanText(lead.demoSessionId, 120);
+      const rescheduledToDemoId = cleanText(after.rescheduledToDemoId, 120);
+      const isSupersededAttempt = Boolean(
+        currentDemoId && currentDemoId !== demoId && currentDemoId !== rescheduledToDemoId,
+      );
+      const isEnrollment = cleanText(after.conversionStatus, 80).toLowerCase() === 'enrolled';
 
       const leadPayload: Record<string, unknown> = {
         parentName: cleanText(after.parentName, 120) || cleanText(lead.parentName, 120) || 'Parent',
@@ -143,15 +165,22 @@ export const onDemoLeadLifecycleWrite = onDocumentWritten(
         interestTrack: mapCourseToLeadTrack(after.courseInterested),
         programInterest: cleanText(after.courseInterested, 120) || lead.programInterest || null,
         source: lead.source || mapDemoSourceToLeadSource(after.source),
-        status: nextLeadStatus,
-        demoSessionId: demoId,
         demoIds: admin.firestore.FieldValue.arrayUnion(demoId),
-        demoStatus: cleanText(after.status, 80) || null,
-        conversionStatus: cleanText(after.conversionStatus, 80) || null,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedBy: systemActor,
         lifecycleVersion: 2,
       };
+      if (!isSupersededAttempt || isEnrollment || rescheduledToDemoId) {
+        leadPayload.status = rescheduledToDemoId
+          ? 'demo_pending_schedule'
+          : nextLeadStatus;
+        leadPayload.demoSessionId = rescheduledToDemoId || demoId;
+        leadPayload.demoStatus = rescheduledToDemoId ? 'open' : cleanText(after.status, 80) || null;
+        leadPayload.conversionStatus = cleanText(after.conversionStatus, 80) || null;
+        if (rescheduledToDemoId) {
+          leadPayload.demoIds = admin.firestore.FieldValue.arrayUnion(demoId, rescheduledToDemoId);
+        }
+      }
 
       if (phone) {
         leadPayload.primaryPhone = lead.primaryPhone || cleanText(privateData.parentPhone, 80) || phone;
@@ -167,8 +196,8 @@ export const onDemoLeadLifecycleWrite = onDocumentWritten(
       }
 
       if (!lead.demoCreatedAt) leadPayload.demoCreatedAt = after.createdAt || admin.firestore.FieldValue.serverTimestamp();
-      if (after.assignedAt) leadPayload.demoAssignedAt = after.assignedAt;
-      if (after.completedAt) leadPayload.demoCompletedAt = after.completedAt;
+      if (after.assignedAt && !lead.demoAssignedAt) leadPayload.demoAssignedAt = after.assignedAt;
+      if (after.completedAt && !lead.demoCompletedAt) leadPayload.demoCompletedAt = after.completedAt;
 
       const statusChangedToCancelled = cleanText(before.status, 80) !== 'cancelled' && cleanText(after.status, 80) === 'cancelled';
       if (statusChangedToCancelled || after.cancelledAt) {
@@ -176,11 +205,16 @@ export const onDemoLeadLifecycleWrite = onDocumentWritten(
         leadPayload.demoCancellationReason = cleanText(after.cancellationReason, 120) || null;
       }
 
-      if (cleanText(after.conversionStatus, 80).toLowerCase() === 'enrolled') {
+      if (isEnrollment) {
         leadPayload.enrolledAt = after.enrolledAt || lead.enrolledAt || admin.firestore.FieldValue.serverTimestamp();
       }
 
-      if (after.completedByTeacherId || after.assignedTeacherId) {
+      const completionOutcome = cleanText(after.outcome, 80).toLowerCase();
+      if (
+        PAYABLE_DEMO_OUTCOMES.has(completionOutcome) &&
+        (!isSupersededAttempt || !lead.demoCompletedByTeacherId) &&
+        (after.completedByTeacherId || after.assignedTeacherId)
+      ) {
         leadPayload.demoCompletedByTeacherId = after.completedByTeacherId || after.assignedTeacherId;
         leadPayload.demoCompletedByTeacherName = after.completedByTeacherName || after.assignedTeacherName || null;
       }
@@ -298,8 +332,16 @@ export const onDemoPayoutIntegrityWrite = onDocumentWritten(
         voidReason = `Demo was not delivered; outcome=${outcome || 'unknown'}`;
       }
     }
-    if (source === 'demo_enrolled_bonus' && cleanText(demo.conversionStatus, 80).toLowerCase() !== 'enrolled') {
-      voidReason = 'Enrollment bonus requires an enrolled demo conversion';
+    if (
+      source === 'demo_enrolled_bonus' &&
+      (
+        cleanText(demo.conversionStatus, 80).toLowerCase() !== 'enrolled' ||
+        cleanText(demo.status, 80).toLowerCase() !== 'completed' ||
+        !PAYABLE_DEMO_OUTCOMES.has(cleanText(demo.outcome, 80).toLowerCase()) ||
+        !cleanText(demo.completedByTeacherId, 120)
+      )
+    ) {
+      voidReason = 'Enrollment bonus requires an enrolled, completed demo with completion attribution';
     }
 
     if (!voidReason) return;

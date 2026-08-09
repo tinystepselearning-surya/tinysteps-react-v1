@@ -1,6 +1,10 @@
 import * as admin from 'firebase-admin';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import * as logger from 'firebase-functions/logger';
+import {
+  isPayableDemoCompletionOutcome,
+  shouldCreditDemoEnrollmentBonus,
+} from './helpers/demoEarningPolicy';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -8,7 +12,6 @@ const REGION = 'asia-south1';
 const IST_OFFSET_MINUTES = 330;
 const DEMO_COMPLETION_PAYOUT_AMOUNT = 100;
 const DEMO_ENROLLMENT_BONUS_AMOUNT = 100;
-const PAYABLE_COMPLETION_OUTCOMES = new Set(['completed', 'not_interested', 'follow_up_needed']);
 
 const text = (value: unknown, max = 500): string =>
   typeof value === 'string' ? value.trim().slice(0, max) : '';
@@ -66,9 +69,17 @@ async function ensureEarning(input: EarningInput): Promise<boolean> {
     const snap = await tx.get(ref);
     const existing = snap.exists ? ((snap.data() || {}) as Record<string, unknown>) : null;
     if (existing) {
+      const existingStatus = normalized(existing.status);
+      if (existingStatus === 'paid' || existingStatus === 'settled') return false;
       const amount = Math.max(numberValue(existing.amount), 0);
       const paid = paidAmountFor(existing, amount);
-      if (normalized(existing.status) !== 'void' || paid > 0) return false;
+      if (paid > 0) return false;
+      const isAlreadyCanonical =
+        normalized(existing.status) !== 'void' &&
+        amount === input.amount &&
+        text(existing.teacherId, 120) === input.teacherId &&
+        normalized(existing.source) === input.source;
+      if (isAlreadyCanonical) return false;
     }
 
     const payload: Record<string, unknown> = {
@@ -95,6 +106,11 @@ async function ensureEarning(input: EarningInput): Promise<boolean> {
       correctedBy: admin.firestore.FieldValue.delete(),
       correctedAt: admin.firestore.FieldValue.delete(),
     };
+    if (existing) {
+      payload.correctedBy = 'system:demo-earnings-v2';
+      payload.correctedAt = admin.firestore.FieldValue.serverTimestamp();
+      payload.correctionReason = 'Canonicalized unpaid demo earning';
+    }
     if (!snap.exists) payload.createdAt = admin.firestore.FieldValue.serverTimestamp();
     tx.set(ref, payload, { merge: true });
     return true;
@@ -119,8 +135,14 @@ export const onDemoSessionEarningsWrite = onDocumentWritten(
     const outcome = normalized(after.outcome);
 
     const completionTransition = beforeStatus !== 'completed' && afterStatus === 'completed';
-    const shouldCreditCompletion = completionTransition && PAYABLE_COMPLETION_OUTCOMES.has(outcome);
-    const shouldCreditEnrollment = beforeConversion !== 'enrolled' && afterConversion === 'enrolled';
+    const shouldCreditCompletion = completionTransition && isPayableDemoCompletionOutcome(outcome);
+    const shouldCreditEnrollment = shouldCreditDemoEnrollmentBonus({
+      beforeStatus,
+      afterStatus,
+      beforeConversion,
+      afterConversion,
+      outcome,
+    });
 
     if (completionTransition && !shouldCreditCompletion) {
       logger.info('Demo completion payout skipped because demo was not delivered', {

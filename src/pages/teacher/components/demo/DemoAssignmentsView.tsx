@@ -68,7 +68,7 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
         </Card>
       ) : null}
 
-      <LegacyDemoAssignmentsView teacherId={teacherId} />
+      <LegacyDemoAssignmentsView teacherId={teacherId} prefetchedMyDemos={myDemos} />
 
       <TeacherCancelAssignedDemoDialog
         demo={cancelTarget}

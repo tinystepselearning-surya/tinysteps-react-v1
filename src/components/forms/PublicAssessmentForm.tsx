@@ -20,9 +20,18 @@ import {
 const WHATSAPP_NUMBER = '919618398383';
 const SUN_ORANGE = '#ff6a00';
 const PREFILL_STORAGE_KEY = 'ts_public_assessment_prefill_v1';
+const PENDING_LEAD_ID_STORAGE_KEY = 'ts_public_assessment_pending_lead_id_v1';
 const NAVY_TEXT_OUTLINE = '[text-shadow:-0.7px_-0.7px_0_rgba(255,255,255,0.78),0.7px_-0.7px_0_rgba(255,255,255,0.78),-0.7px_0.7px_0_rgba(255,255,255,0.78),0.7px_0.7px_0_rgba(255,255,255,0.78)]';
 const NAVY_TEXT = `text-[#182B57] ${NAVY_TEXT_OUTLINE}`;
 const NAVY_TEXT_STRONG = `text-[#142449] ${NAVY_TEXT_OUTLINE}`;
+
+const readPendingLeadId = (): string | null => {
+  try {
+    return typeof window === 'undefined' ? null : window.sessionStorage.getItem(PENDING_LEAD_ID_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+};
 
 type AgeOption = '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12';
 
@@ -73,6 +82,7 @@ export default function PublicAssessmentForm({
   const firstFieldRef = useRef<HTMLInputElement | null>(null);
   const hasTrackedFormStartRef = useRef(false);
   const submitLockRef = useRef(false);
+  const pendingLeadIdRef = useRef<string | null>(readPendingLeadId());
 
   useEffect(() => {
     try {
@@ -268,7 +278,7 @@ export default function PublicAssessmentForm({
     setIsSubmitting(true);
     try {
       const [
-        { addDoc, collection, serverTimestamp },
+        { collection, doc, serverTimestamp, setDoc },
         { db },
       ] = await Promise.all([
         import('firebase/firestore'),
@@ -279,12 +289,27 @@ export default function PublicAssessmentForm({
         attribution,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
-      const leadRef = await addDoc(collection(db, 'leads'), {
+      const leadRef = pendingLeadIdRef.current
+        ? doc(db, 'leads', pendingLeadIdRef.current)
+        : doc(collection(db, 'leads'));
+      pendingLeadIdRef.current = leadRef.id;
+      try {
+        window.sessionStorage.setItem(PENDING_LEAD_ID_STORAGE_KEY, leadRef.id);
+      } catch {
+        // The in-memory id still makes same-page retries idempotent.
+      }
+      await setDoc(leadRef, {
         ...payload,
         createdAt: serverTimestamp(),
         requestedAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
+      pendingLeadIdRef.current = null;
+      try {
+        window.sessionStorage.removeItem(PENDING_LEAD_ID_STORAGE_KEY);
+      } catch {
+        // Storage may be disabled; the in-memory id has already been cleared.
+      }
 
       // Keep conversion events tied to a successfully saved public lead.
       trackGenerateLead({

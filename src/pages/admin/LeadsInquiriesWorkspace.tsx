@@ -2195,7 +2195,7 @@ export default function LeadsInquiriesWorkspace({
 
     setCreatingDemoRequest(true);
     try {
-      const demoId = await createDemoSession(
+      await createDemoSession(
         {
           parentName: demoRequestForm.parentName.trim(),
           parentPhone,
@@ -2214,20 +2214,6 @@ export default function LeadsInquiriesWorkspace({
         },
         user.uid,
       );
-
-      if (demoRequestLeadId) {
-        const linkedLead = leads.find((lead) => lead.id === demoRequestLeadId);
-        const linkedLeadStatus = normalizeText(linkedLead?.status).toLowerCase() as LeadStatus;
-        const nextLeadStatus: LeadStatus = TERMINAL_DEMO_BLOCK_LEAD_STATUSES.has(linkedLeadStatus)
-          ? linkedLeadStatus
-          : 'demo_booked';
-        await updateDoc(doc(db, LEADS_COLLECTION, demoRequestLeadId), {
-          demoSessionId: demoId,
-          status: nextLeadStatus,
-          updatedAt: serverTimestamp(),
-          updatedBy: user.uid,
-        });
-      }
 
       setDemoRequestDialogOpen(false);
       setDemoRequestLeadId(null);
@@ -4271,7 +4257,7 @@ export default function LeadsInquiriesWorkspace({
         </DialogContent>
       </Dialog>
 
-      <DemoSessionsManagement mode="trend_only" />
+      <DemoSessionsManagement mode="trend_only" leads={leads} demos={demos} />
     </div>
   );
 }

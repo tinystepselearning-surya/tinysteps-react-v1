@@ -11,6 +11,8 @@ import type { LeadFunnelLead } from './leadFunnelAnalytics';
 interface DemoSessionsManagementProps {
   openCreateRequestSignal?: number;
   mode?: 'full' | 'trend_only';
+  leads?: LeadFunnelLead[];
+  demos?: DemoSession[];
 }
 
 type LeadSnapshotRecord = LeadFunnelLead & {
@@ -19,12 +21,19 @@ type LeadSnapshotRecord = LeadFunnelLead & {
 
 const isArchived = (value: { archived?: boolean } | null | undefined): boolean => value?.archived === true;
 
-function LeadFunnelTrendContainer() {
+function LeadFunnelTrendContainer({
+  prefetchedLeads,
+  prefetchedDemos,
+}: {
+  prefetchedLeads?: LeadFunnelLead[];
+  prefetchedDemos?: DemoSession[];
+}) {
   const { toast } = useToast();
   const [leads, setLeads] = useState<LeadSnapshotRecord[]>([]);
   const [demos, setDemos] = useState<DemoSession[]>([]);
 
   useEffect(() => {
+    if (prefetchedLeads) return;
     const unsubscribe = onSnapshot(
       collection(db, 'leads'),
       (snapshot) => {
@@ -46,9 +55,10 @@ function LeadFunnelTrendContainer() {
       },
     );
     return unsubscribe;
-  }, [toast]);
+  }, [prefetchedLeads, toast]);
 
   useEffect(() => {
+    if (prefetchedDemos) return;
     return listenAllDemoSessions(
       (next) => setDemos(next.filter((demo) => !isArchived(demo as DemoSession & { archived?: boolean }))),
       (error) => {
@@ -60,17 +70,24 @@ function LeadFunnelTrendContainer() {
         });
       },
     );
-  }, [toast]);
+  }, [prefetchedDemos, toast]);
 
-  return <LeadFunnelTrendAnalysis leads={leads} demos={demos} />;
+  return (
+    <LeadFunnelTrendAnalysis
+      leads={prefetchedLeads || leads}
+      demos={prefetchedDemos || demos}
+    />
+  );
 }
 
 export default function DemoSessionsManagement({
   openCreateRequestSignal = 0,
   mode = 'full',
+  leads,
+  demos,
 }: DemoSessionsManagementProps) {
   if (mode === 'trend_only') {
-    return <LeadFunnelTrendContainer />;
+    return <LeadFunnelTrendContainer prefetchedLeads={leads} prefetchedDemos={demos} />;
   }
 
   return (

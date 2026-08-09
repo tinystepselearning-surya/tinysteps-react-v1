@@ -1,4 +1,5 @@
 import * as admin from 'firebase-admin';
+import { createHash } from 'crypto';
 import { HttpsError, onCall, onRequest } from 'firebase-functions/v2/https';
 import * as logger from 'firebase-functions/logger';
 import { ensureAdmin } from './helpers/adminGuard';
@@ -12,6 +13,9 @@ const PROVIDER = 'meta_whatsapp_cloud';
 const LEADS_COLLECTION = 'leads';
 const COMMUNICATIONS_SUBCOLLECTION = 'communications';
 const UNMATCHED_INBOUND_COLLECTION = 'whatsappInboundUnmatched';
+
+const inboundMessageKey = (externalMessageId: string): string =>
+  createHash('sha256').update(externalMessageId).digest('hex');
 
 type CommunicationType = 'message' | 'call' | 'follow_up' | 'note';
 type CommunicationDirection = 'inbound' | 'outbound' | 'internal';
@@ -442,16 +446,21 @@ const processInboundMessage = async (
 
   const matchedLead = await findLeadByPhone(db, rawFrom);
   if (!matchedLead) {
-    await db.collection(UNMATCHED_INBOUND_COLLECTION).add({
-      phoneNormalized,
-      rawFrom,
-      messageSummary,
-      externalMessageId,
-      provider: PROVIDER,
-      status: 'unmatched',
-      receivedAt: admin.firestore.FieldValue.serverTimestamp(),
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    const unmatchedRef = db.collection(UNMATCHED_INBOUND_COLLECTION).doc(inboundMessageKey(externalMessageId));
+    await db.runTransaction(async (tx) => {
+      const existing = await tx.get(unmatchedRef);
+      if (existing.exists) return;
+      tx.create(unmatchedRef, {
+        phoneNormalized,
+        rawFrom,
+        messageSummary,
+        externalMessageId,
+        provider: PROVIDER,
+        status: 'unmatched',
+        receivedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
     });
     return 'unmatched';
   }
@@ -466,29 +475,36 @@ const processInboundMessage = async (
   );
 
   if (!existingCommunication) {
-    await leadRef.collection(COMMUNICATIONS_SUBCOLLECTION).add({
-      type: 'message' as CommunicationType,
-      direction: 'inbound' as CommunicationDirection,
-      channel: 'whatsapp' as CommunicationChannel,
-      summary: messageSummary,
-      followUpNeeded: false,
-      followUpDate: null,
-      templateTag: null,
-      status: 'logged' as CommunicationStatus,
-      provider: PROVIDER,
-      externalMessageId,
-      deliveryStatus: 'sent' as DeliveryStatus,
-      templateLanguage: null,
-      templateName: null,
-      errorCode: null,
-      errorMessage: null,
-      providerPayloadSummary: {
-        messageType: trimText(message?.type) || 'unknown',
-      },
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      createdBy: null,
-      updatedBy: null,
+    const communicationRef = leadRef
+      .collection(COMMUNICATIONS_SUBCOLLECTION)
+      .doc(`inbound_${inboundMessageKey(externalMessageId)}`);
+    await db.runTransaction(async (tx) => {
+      const existing = await tx.get(communicationRef);
+      if (existing.exists) return;
+      tx.create(communicationRef, {
+        type: 'message' as CommunicationType,
+        direction: 'inbound' as CommunicationDirection,
+        channel: 'whatsapp' as CommunicationChannel,
+        summary: messageSummary,
+        followUpNeeded: false,
+        followUpDate: null,
+        templateTag: null,
+        status: 'logged' as CommunicationStatus,
+        provider: PROVIDER,
+        externalMessageId,
+        deliveryStatus: 'sent' as DeliveryStatus,
+        templateLanguage: null,
+        templateName: null,
+        errorCode: null,
+        errorMessage: null,
+        providerPayloadSummary: {
+          messageType: trimText(message?.type) || 'unknown',
+        },
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdBy: null,
+        updatedBy: null,
+      });
     });
   }
 
