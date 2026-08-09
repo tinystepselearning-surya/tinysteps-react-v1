@@ -78,6 +78,18 @@ export {
   adminUnlinkSchoolUser,
 } from './schools';
 
+// School academic structure
+export {
+  schoolCreateAcademicYear,
+  schoolSetCurrentAcademicYear,
+  schoolUpsertGrade,
+  schoolSetGradeStatus,
+  schoolUpsertSection,
+  schoolSetSectionStatus,
+  schoolUpsertTeacher,
+  schoolSetTeacherStatus,
+} from './schoolAcademic';
+
 // Learning Partner assignment
 export { 
   assignLPToParent, 
