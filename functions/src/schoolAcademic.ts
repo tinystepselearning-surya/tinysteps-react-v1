@@ -426,10 +426,14 @@ export const schoolUpsertSection = onCall(
       MAX_STUDENTS_PER_SECTION,
     );
     const status = normalizeEntityStatus(request.data?.status);
-    const rawTeacherIds = Array.isArray(request.data?.teacherIds) ? request.data.teacherIds : [];
-    const teacherIds = Array.from(
-      new Set(
-        rawTeacherIds.map((value: unknown) => trimString(value, 'teacherId', 128)),
+    const rawTeacherIds: unknown[] = Array.isArray(request.data?.teacherIds)
+      ? request.data.teacherIds
+      : [];
+    const teacherIds: string[] = Array.from(
+      new Set<string>(
+        rawTeacherIds.map(
+          (value: unknown): string => trimString(value, 'teacherId', 128),
+        ),
       ),
     );
     if (teacherIds.length > 10) {
@@ -438,7 +442,9 @@ export const schoolUpsertSection = onCall(
 
     if (teacherIds.length) {
       const teacherSnaps = await Promise.all(
-        teacherIds.map((teacherId) => manager.schoolRef.collection('teachers').doc(teacherId).get()),
+        teacherIds.map((teacherId: string) =>
+          manager.schoolRef.collection('teachers').doc(teacherId).get(),
+        ),
       );
       for (const teacherSnap of teacherSnaps) {
         if (!teacherSnap.exists) {
