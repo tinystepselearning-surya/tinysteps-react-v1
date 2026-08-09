@@ -54,8 +54,8 @@ export function classifyLeadAcquisition(input: AcquisitionInput): AcquisitionCla
   const sourceText = `${utmSource} ${referrerDomain}`.trim();
   const hasGoogle = includesAny(sourceText, ['google']);
   const hasBing = includesAny(sourceText, ['bing', 'microsoft']);
-  const hasInstagram = includesAny(sourceText, ['instagram', 'ig']);
-  const hasFacebook = includesAny(sourceText, ['facebook', 'fb', 'meta']);
+  const hasInstagram = includesAny(sourceText, ['instagram']) || utmSource === 'ig';
+  const hasFacebook = includesAny(sourceText, ['facebook', 'meta']) || utmSource === 'fb';
   const hasLinkedIn = includesAny(sourceText, ['linkedin']);
   const hasYouTube = includesAny(sourceText, ['youtube', 'youtu.be']);
 
