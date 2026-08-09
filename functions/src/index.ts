@@ -189,6 +189,15 @@ export {
   reopenDemoSession,
 } from "./demoSessions";
 
+// Canonical lead -> demo -> enrollment lifecycle synchronization
+export {
+  onLeadCreatedCanonicalize,
+  onDemoLeadLifecycleWrite,
+  teacherCancelAssignedDemo,
+  onDemoPayoutIntegrityWrite,
+} from "./leadLifecycle";
+export { adminBackfillLeadLifecycle } from './leadLifecycleBackfill';
+
 // AI: Ask TinySteps chatbot and knowledge base
 export { askTinySteps } from "./ai/askTinySteps";
 export { refreshPublicKb } from "./ai/refreshPublicKb";
@@ -196,6 +205,7 @@ export { refreshPublicKb } from "./ai/refreshPublicKb";
 // WhatsApp backend foundation (admin send + webhook callbacks)
 export { sendWhatsAppTemplateMessage, whatsAppWebhook } from './whatsapp';
 export { whatsappWebhookV2 } from './whatsappWebhook';
+export { onUnmatchedWhatsAppInboundCreateLead } from './whatsappLeadLifecycle';
 
 // Internal messaging
 export { createOrSyncMessageThread } from './messaging/createOrSyncMessageThread';

@@ -15,8 +15,9 @@ const trackingMocks = vi.hoisted(() => ({
 
 vi.mock('../../lib/conversionTracking', () => trackingMocks);
 const firestoreMocks = vi.hoisted(() => ({
-  addDoc: vi.fn(),
   collection: vi.fn(() => 'leads-collection'),
+  doc: vi.fn(() => ({ id: 'lead-123' })),
+  setDoc: vi.fn(),
   serverTimestamp: vi.fn(() => 'server-timestamp'),
 }));
 
@@ -57,6 +58,7 @@ describe('PublicAssessmentForm analytics', () => {
     Object.values(trackingMocks).forEach((mock) => mock.mockReset());
     Object.values(firestoreMocks).forEach((mock) => mock.mockReset());
     popupLocationReplace.mockReset();
+    window.sessionStorage.clear();
     locationAssignMock.mockReset();
     anchorClick.mockClear();
     Object.defineProperty(window, 'location', {
@@ -113,16 +115,16 @@ describe('PublicAssessmentForm analytics', () => {
   });
 
   it('fires generate_lead only after a successful save and before WhatsApp opens', async () => {
-    firestoreMocks.addDoc.mockResolvedValue({ id: 'lead-123' });
+    firestoreMocks.setDoc.mockResolvedValue(undefined);
     render(<PublicAssessmentForm />);
 
     fillValidForm();
 
     fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
 
-    await waitFor(() => expect(firestoreMocks.addDoc).toHaveBeenCalledTimes(1));
-    expect(firestoreMocks.addDoc).toHaveBeenCalledWith(
-      'leads-collection',
+    await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
+    expect(firestoreMocks.setDoc).toHaveBeenCalledWith(
+      { id: 'lead-123' },
       expect.objectContaining({
         parentName: 'Priya',
         childName: 'Aarav',
@@ -137,8 +139,8 @@ describe('PublicAssessmentForm analytics', () => {
         updatedAt: 'server-timestamp',
       }),
     );
-    expect(firestoreMocks.addDoc.mock.calls[0]?.[1]).not.toHaveProperty('status');
-    expect(firestoreMocks.addDoc.mock.calls[0]?.[1]).not.toHaveProperty('priority');
+    expect(firestoreMocks.setDoc.mock.calls[0]?.[1]).not.toHaveProperty('status');
+    expect(firestoreMocks.setDoc.mock.calls[0]?.[1]).not.toHaveProperty('priority');
     expect(trackingMocks.trackLeadFormSubmit).toHaveBeenCalledTimes(1);
     expect(trackingMocks.trackGenerateLead).toHaveBeenCalledTimes(1);
     expect(trackingMocks.trackGenerateLead).toHaveBeenCalledWith(expect.objectContaining({
@@ -172,7 +174,7 @@ describe('PublicAssessmentForm analytics', () => {
     expect(decodeURIComponent(whatsappUrl)).toContain('Support area: Blending sounds to read words');
 
     const openOrder = (globalThis.open as any).mock.invocationCallOrder[0];
-    const saveOrder = firestoreMocks.addDoc.mock.invocationCallOrder[0];
+    const saveOrder = firestoreMocks.setDoc.mock.invocationCallOrder[0];
     const generateLeadOrder = trackingMocks.trackGenerateLead.mock.invocationCallOrder[0];
     const navigateOrder = popupLocationReplace.mock.invocationCallOrder[0];
     const whatsappOrder = trackingMocks.trackWhatsappClick.mock.invocationCallOrder[0];
@@ -185,14 +187,14 @@ describe('PublicAssessmentForm analytics', () => {
 
   it('uses same-tab fallback once when the popup is blocked', async () => {
     vi.stubGlobal('open', vi.fn(() => null));
-    firestoreMocks.addDoc.mockResolvedValue({ id: 'lead-123' });
+    firestoreMocks.setDoc.mockResolvedValue(undefined);
     render(<PublicAssessmentForm />);
 
     fillValidForm();
 
     fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
 
-    await waitFor(() => expect(firestoreMocks.addDoc).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
     expect(globalThis.open).toHaveBeenCalledTimes(1);
     expect(locationAssignMock).toHaveBeenCalledTimes(1);
     expect(locationAssignMock.mock.calls[0]?.[0]).toContain('https://wa.me/919618398383?text=');
@@ -203,14 +205,14 @@ describe('PublicAssessmentForm analytics', () => {
   });
 
   it('still opens WhatsApp and shows a warning when lead save fails', async () => {
-    firestoreMocks.addDoc.mockRejectedValue(new Error('save failed'));
+    firestoreMocks.setDoc.mockRejectedValue(new Error('save failed'));
     render(<PublicAssessmentForm />);
 
     fillValidForm();
 
     fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
 
-    await waitFor(() => expect(firestoreMocks.addDoc).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
     expect(trackingMocks.trackLeadFormSubmit).toHaveBeenCalledTimes(1);
     expect(trackingMocks.trackGenerateLead).not.toHaveBeenCalled();
     expect(trackingMocks.trackDemoBookingComplete).not.toHaveBeenCalled();
@@ -226,11 +228,11 @@ describe('PublicAssessmentForm analytics', () => {
   });
 
   it('prevents duplicate lead creation on double submit', async () => {
-    let resolveSave: ((value: { id: string }) => void) | undefined;
-    firestoreMocks.addDoc.mockImplementation(
+    let resolveSave: (() => void) | undefined;
+    firestoreMocks.setDoc.mockImplementation(
       () =>
-        new Promise((resolve) => {
-          resolveSave = resolve;
+        new Promise<void>((resolve) => {
+          resolveSave = () => resolve();
         }),
     );
     render(<PublicAssessmentForm />);
@@ -241,15 +243,34 @@ describe('PublicAssessmentForm analytics', () => {
     fireEvent.click(submitButton);
     fireEvent.click(submitButton);
 
-    await waitFor(() => expect(firestoreMocks.addDoc).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
     expect(globalThis.open).toHaveBeenCalledTimes(1);
 
-    resolveSave?.({ id: 'lead-123' });
+    resolveSave?.();
 
     await waitFor(() => expect(trackingMocks.trackGenerateLead).toHaveBeenCalledTimes(1));
     expect(popupLocationReplace).toHaveBeenCalledTimes(1);
     expect(locationAssignMock).not.toHaveBeenCalled();
     expect(anchorClick).not.toHaveBeenCalled();
+  });
+
+  it('reuses the same lead id when a save is retried after an ambiguous failure', async () => {
+    firestoreMocks.setDoc
+      .mockRejectedValueOnce(new Error('network response lost'))
+      .mockResolvedValueOnce(undefined);
+    render(<PublicAssessmentForm />);
+    fillValidForm();
+
+    const submitButton = screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i });
+    fireEvent.click(submitButton);
+    await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
+    expect(window.sessionStorage.getItem('ts_public_assessment_pending_lead_id_v1')).toBe('lead-123');
+
+    fireEvent.click(submitButton);
+    await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(2));
+    expect(firestoreMocks.doc).toHaveBeenLastCalledWith({}, 'leads', 'lead-123');
+    expect(firestoreMocks.setDoc.mock.calls[1]?.[0]).toEqual({ id: 'lead-123' });
+    expect(window.sessionStorage.getItem('ts_public_assessment_pending_lead_id_v1')).toBeNull();
   });
 
   it('does not render the urgency field in the public form', () => {
