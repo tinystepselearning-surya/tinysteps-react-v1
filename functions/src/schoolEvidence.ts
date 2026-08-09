@@ -181,7 +181,7 @@ function validateDomainScores(input: unknown): Record<string, number | null> {
 }
 
 export const schoolCreateReview = onCall(
-  { region: REGION, memory: '256MiB', timeoutSeconds: 60 },
+  { region: REGION, memory: '256MiB', timeoutSeconds: 60, invoker: 'public', labels: { 'school-public-invoker': 'true' } },
   async (request) => {
     const schoolId = required(request.data?.schoolId, 'schoolId', 128);
     const academicYearId = required(request.data?.academicYearId, 'academicYearId', 128);
@@ -240,7 +240,7 @@ export const schoolCreateReview = onCall(
 );
 
 export const schoolRecordAssessmentSummary = onCall(
-  { region: REGION, memory: '256MiB', timeoutSeconds: 60 },
+  { region: REGION, memory: '256MiB', timeoutSeconds: 60, invoker: 'public', labels: { 'school-public-invoker': 'true' } },
   async (request) => {
     const schoolId = required(request.data?.schoolId, 'schoolId', 128);
     const academicYearId = required(request.data?.academicYearId, 'academicYearId', 128);

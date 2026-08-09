@@ -141,7 +141,7 @@ async function ensureTeacherNotAssignedToCurrentSections(
 }
 
 export const schoolCreateAcademicYear = onCall(
-  { region: REGION, memory: '256MiB', timeoutSeconds: 60 },
+  { region: REGION, memory: '256MiB', timeoutSeconds: 60, invoker: 'public', labels: { 'school-public-invoker': 'true' } },
   async (request) => {
     const schoolId = schoolIdFrom(request.data?.schoolId);
     const manager = await ensureSchoolManager(request.auth, schoolId);
@@ -209,7 +209,7 @@ export const schoolCreateAcademicYear = onCall(
 );
 
 export const schoolSetCurrentAcademicYear = onCall(
-  { region: REGION, memory: '256MiB', timeoutSeconds: 60 },
+  { region: REGION, memory: '256MiB', timeoutSeconds: 60, invoker: 'public', labels: { 'school-public-invoker': 'true' } },
   async (request) => {
     const schoolId = schoolIdFrom(request.data?.schoolId);
     const academicYearId = yearIdFrom(request.data?.academicYearId);
@@ -257,7 +257,7 @@ export const schoolSetCurrentAcademicYear = onCall(
 );
 
 export const schoolUpsertGrade = onCall(
-  { region: REGION, memory: '256MiB', timeoutSeconds: 60 },
+  { region: REGION, memory: '256MiB', timeoutSeconds: 60, invoker: 'public', labels: { 'school-public-invoker': 'true' } },
   async (request) => {
     const schoolId = schoolIdFrom(request.data?.schoolId);
     const academicYearId = yearIdFrom(request.data?.academicYearId);
@@ -299,7 +299,7 @@ export const schoolUpsertGrade = onCall(
 );
 
 export const schoolSetGradeStatus = onCall(
-  { region: REGION, memory: '256MiB', timeoutSeconds: 60 },
+  { region: REGION, memory: '256MiB', timeoutSeconds: 60, invoker: 'public', labels: { 'school-public-invoker': 'true' } },
   async (request) => {
     const schoolId = schoolIdFrom(request.data?.schoolId);
     const academicYearId = yearIdFrom(request.data?.academicYearId);
@@ -335,7 +335,7 @@ export const schoolSetGradeStatus = onCall(
 );
 
 export const schoolUpsertTeacher = onCall(
-  { region: REGION, memory: '256MiB', timeoutSeconds: 60 },
+  { region: REGION, memory: '256MiB', timeoutSeconds: 60, invoker: 'public', labels: { 'school-public-invoker': 'true' } },
   async (request) => {
     const schoolId = schoolIdFrom(request.data?.schoolId);
     const manager = await ensureSchoolManager(request.auth, schoolId);
@@ -376,7 +376,7 @@ export const schoolUpsertTeacher = onCall(
 );
 
 export const schoolSetTeacherStatus = onCall(
-  { region: REGION, memory: '256MiB', timeoutSeconds: 60 },
+  { region: REGION, memory: '256MiB', timeoutSeconds: 60, invoker: 'public', labels: { 'school-public-invoker': 'true' } },
   async (request) => {
     const schoolId = schoolIdFrom(request.data?.schoolId);
     const manager = await ensureSchoolManager(request.auth, schoolId);
@@ -403,7 +403,7 @@ export const schoolSetTeacherStatus = onCall(
 );
 
 export const schoolUpsertSection = onCall(
-  { region: REGION, memory: '256MiB', timeoutSeconds: 60 },
+  { region: REGION, memory: '256MiB', timeoutSeconds: 60, invoker: 'public', labels: { 'school-public-invoker': 'true' } },
   async (request) => {
     const schoolId = schoolIdFrom(request.data?.schoolId);
     const academicYearId = yearIdFrom(request.data?.academicYearId);
@@ -495,7 +495,7 @@ export const schoolUpsertSection = onCall(
 );
 
 export const schoolSetSectionStatus = onCall(
-  { region: REGION, memory: '256MiB', timeoutSeconds: 60 },
+  { region: REGION, memory: '256MiB', timeoutSeconds: 60, invoker: 'public', labels: { 'school-public-invoker': 'true' } },
   async (request) => {
     const schoolId = schoolIdFrom(request.data?.schoolId);
     const academicYearId = yearIdFrom(request.data?.academicYearId);
