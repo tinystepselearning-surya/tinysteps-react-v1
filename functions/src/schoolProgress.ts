@@ -30,6 +30,14 @@ const optional = (value: unknown, max = 1000): string | null => {
   return next;
 };
 
+const integer = (value: unknown, field: string, min: number, max: number): number => {
+  const next = Number(value);
+  if (!Number.isInteger(next) || next < min || next > max) {
+    throw new HttpsError('invalid-argument', `${field} must be an integer between ${min} and ${max}`);
+  }
+  return next;
+};
+
 const progressStatus = (
   value: unknown,
   stageOrder: number,
@@ -45,6 +53,18 @@ const progressStatus = (
     return next;
   }
   throw new HttpsError('invalid-argument', 'Invalid curriculum progress status');
+};
+
+const trainingStatus = (
+  value: unknown,
+  completedUnits: number,
+  totalUnits: number,
+): 'not_started' | 'on_track' | 'training_due' | 'completed' => {
+  if (completedUnits === 0) return 'not_started';
+  if (completedUnits === totalUnits) return 'completed';
+  const next = String(value || 'on_track').trim().toLowerCase();
+  if (next === 'on_track' || next === 'training_due') return next;
+  throw new HttpsError('invalid-argument', 'Invalid teacher training status');
 };
 
 async function requireSection(
@@ -63,6 +83,20 @@ async function requireSection(
     .get();
   if (!snap.exists) throw new HttpsError('not-found', 'Section not found');
   return snap;
+}
+
+async function requireAcademicYear(
+  schoolId: string,
+  academicYearId: string,
+): Promise<admin.firestore.DocumentReference> {
+  const ref = admin
+    .firestore()
+    .collection('schools')
+    .doc(schoolId)
+    .collection('academicYears')
+    .doc(academicYearId);
+  if (!(await ref.get()).exists) throw new HttpsError('not-found', 'Academic year not found');
+  return ref;
 }
 
 export const schoolUpdateCurriculumProgress = onCall(
@@ -153,6 +187,115 @@ export const schoolUpdateCurriculumProgress = onCall(
       sectionId,
       courseId: course.id,
       stageOrder: requestedStageOrder,
+      status,
+    };
+  },
+);
+
+export const schoolUpdateTeacherTraining = onCall(
+  { region: REGION, memory: '256MiB', timeoutSeconds: 60 },
+  async (request) => {
+    const schoolId = required(request.data?.schoolId, 'schoolId');
+    const academicYearId = required(request.data?.academicYearId, 'academicYearId');
+    const teacherId = required(request.data?.teacherId, 'teacherId');
+    const manager = await ensureSchoolManager(request.auth, schoolId);
+    const yearRef = await requireAcademicYear(schoolId, academicYearId);
+
+    const teacherRef = manager.schoolRef.collection('teachers').doc(teacherId);
+    const teacherSnap = await teacherRef.get();
+    if (!teacherSnap.exists) throw new HttpsError('not-found', 'School teacher not found');
+    const teacher = teacherSnap.data() || {};
+    if (String(teacher.status || 'active').toLowerCase() !== 'active') {
+      throw new HttpsError('failed-precondition', 'Training can only be updated for active teachers');
+    }
+
+    const trainingTrackId = required(
+      request.data?.trainingTrackId || 'tiny-steps-school-phonics',
+      'trainingTrackId',
+      100,
+    );
+    const trainingTrackLabel =
+      optional(request.data?.trainingTrackLabel, 160) || 'Tiny Steps School Phonics Training';
+    const totalUnits = integer(request.data?.totalUnits, 'totalUnits', 1, 100);
+    const completedUnits = integer(request.data?.completedUnits, 'completedUnits', 0, totalUnits);
+    const currentStage = integer(
+      request.data?.currentStage ?? completedUnits,
+      'currentStage',
+      0,
+      totalUnits,
+    );
+    const status = trainingStatus(request.data?.status, completedUnits, totalUnits);
+    const notes = optional(request.data?.notes, 1200);
+    const progressPercent = Math.round((completedUnits / totalUnits) * 100);
+
+    const db = admin.firestore();
+    const currentRef = yearRef.collection('teacherTraining').doc(teacherId);
+    const historyRef = yearRef.collection('teacherTrainingHistory').doc();
+
+    await db.runTransaction(async (tx) => {
+      const previousSnap = await tx.get(currentRef);
+      const previous = previousSnap.exists ? previousSnap.data() || {} : {};
+      const now = admin.firestore.FieldValue.serverTimestamp();
+
+      tx.set(
+        currentRef,
+        {
+          schemaVersion: 1,
+          schoolId,
+          academicYearId,
+          teacherId,
+          teacherName: String(teacher.name || teacherId),
+          trainingTrackId,
+          trainingTrackLabel,
+          completedUnits,
+          totalUnits,
+          currentStage,
+          progressPercent,
+          status,
+          notes,
+          latestTrainingAt: now,
+          latestTrainingBy: manager.uid,
+          updatedAt: now,
+          updatedBy: manager.uid,
+        },
+        { merge: true },
+      );
+
+      tx.set(historyRef, {
+        schemaVersion: 1,
+        schoolId,
+        academicYearId,
+        teacherId,
+        teacherName: String(teacher.name || teacherId),
+        changedAt: now,
+        changedBy: manager.uid,
+        previous: previousSnap.exists
+          ? {
+              completedUnits: previous.completedUnits ?? null,
+              totalUnits: previous.totalUnits ?? null,
+              currentStage: previous.currentStage ?? null,
+              status: previous.status || null,
+            }
+          : null,
+        next: {
+          completedUnits,
+          totalUnits,
+          currentStage,
+          status,
+          progressPercent,
+        },
+        notes,
+      });
+    });
+
+    return {
+      ok: true,
+      schoolId,
+      academicYearId,
+      teacherId,
+      completedUnits,
+      totalUnits,
+      progressPercent,
       status,
     };
   },
