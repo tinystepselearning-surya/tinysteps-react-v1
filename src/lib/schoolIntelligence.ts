@@ -11,6 +11,13 @@ export type ProgrammeHealthStatus =
   | 'intervention'
   | 'insufficient_data';
 
+/**
+ * Internal programme-management guardrail, not a standardized or psychometric
+ * cut score. A section-level health label should not be inferred from a very
+ * small assessed sample. Raw coverage remains visible in assessment reporting.
+ */
+export const PROGRAMME_HEALTH_MINIMUM_ASSESSMENT_COVERAGE_PERCENT = 75;
+
 export interface SectionProgrammeHealth {
   sectionId: string;
   programmeReferenceReadingLevel: number | null;
@@ -18,6 +25,7 @@ export interface SectionProgrammeHealth {
   benchmarkGap: number | null;
   curriculumPercent: number;
   teacherTrainingPercent: number | null;
+  assessmentCoveragePercent?: number | null;
   latestAssessment: AssessmentSummary | null;
   status: ProgrammeHealthStatus;
   reason: string;
@@ -75,6 +83,25 @@ export function latestPostBaselineAssessmentForSection(
   );
 }
 
+export function assessmentCoveragePercent(
+  assessment: AssessmentSummary | null,
+  fallbackSectionCount = 0,
+): number | null {
+  if (!assessment) return null;
+  const denominator =
+    assessment.sectionStudentCountSnapshot > 0
+      ? assessment.sectionStudentCountSnapshot
+      : fallbackSectionCount;
+  if (!Number.isFinite(denominator) || denominator <= 0) return null;
+  return Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round((assessment.studentsAssessed / denominator) * 10000) / 100,
+    ),
+  );
+}
+
 export function deriveSectionProgrammeHealth(input: {
   section: SchoolSection;
   curriculum: SectionCurriculumProgress | null;
@@ -84,6 +111,8 @@ export function deriveSectionProgrammeHealth(input: {
   const { section, curriculum, trainingByTeacher, assessments } = input;
   const baselineAssessment = latestBaselineAssessmentForSection(assessments, section.id);
   const latestAssessment = latestPostBaselineAssessmentForSection(assessments, section.id);
+  const latestEvidence = latestAssessment || baselineAssessment;
+  const latestCoverage = assessmentCoveragePercent(latestEvidence, section.studentCount);
   const assignedTraining = section.teacherIds
     .map((teacherId) => trainingByTeacher.get(teacherId) || null);
   const trainingValues = assignedTraining
@@ -103,7 +132,8 @@ export function deriveSectionProgrammeHealth(input: {
       benchmarkGap: null,
       curriculumPercent: curriculum?.progressPercent ?? 0,
       teacherTrainingPercent: null,
-      latestAssessment: latestAssessment || baselineAssessment,
+      assessmentCoveragePercent: latestCoverage,
+      latestAssessment: latestEvidence,
       status: 'insufficient_data',
       reason: 'No school teacher is assigned to this section yet.',
     };
@@ -118,7 +148,8 @@ export function deriveSectionProgrammeHealth(input: {
       benchmarkGap: null,
       curriculumPercent: curriculum?.progressPercent ?? 0,
       teacherTrainingPercent,
-      latestAssessment: latestAssessment || baselineAssessment,
+      assessmentCoveragePercent: latestCoverage,
+      latestAssessment: latestEvidence,
       status: 'insufficient_data',
       reason: 'Curriculum stage has not yet been verified.',
     };
@@ -133,11 +164,38 @@ export function deriveSectionProgrammeHealth(input: {
       benchmarkGap: null,
       curriculumPercent: curriculum.progressPercent,
       teacherTrainingPercent,
+      assessmentCoveragePercent: latestCoverage,
       latestAssessment: baselineAssessment,
       status: 'insufficient_data',
       reason: baselineAssessment
         ? 'Only baseline reading evidence is available. Record a later checkpoint before interpreting implementation health.'
         : 'No reading benchmark has been recorded for this section yet.',
+    };
+  }
+
+  const postBaselineCoverage = assessmentCoveragePercent(
+    latestAssessment,
+    section.studentCount,
+  );
+  if (
+    postBaselineCoverage === null ||
+    postBaselineCoverage < PROGRAMME_HEALTH_MINIMUM_ASSESSMENT_COVERAGE_PERCENT
+  ) {
+    return {
+      sectionId: section.id,
+      programmeReferenceReadingLevel:
+        curriculum.programmeReferenceReadingLevel,
+      demonstratedReadingLevel: latestAssessment.averageReadingLevel,
+      benchmarkGap: null,
+      curriculumPercent: curriculum.progressPercent,
+      teacherTrainingPercent,
+      assessmentCoveragePercent: postBaselineCoverage,
+      latestAssessment,
+      status: 'insufficient_data',
+      reason:
+        postBaselineCoverage === null
+          ? 'Assessment coverage cannot be established for the latest checkpoint.'
+          : `The latest checkpoint covers ${postBaselineCoverage.toFixed(0)}% of the section. At least ${PROGRAMME_HEALTH_MINIMUM_ASSESSMENT_COVERAGE_PERCENT}% coverage is required for the internal section-health signal.`,
     };
   }
 
@@ -157,6 +215,7 @@ export function deriveSectionProgrammeHealth(input: {
       benchmarkGap: null,
       curriculumPercent: curriculum.progressPercent,
       teacherTrainingPercent,
+      assessmentCoveragePercent: postBaselineCoverage,
       latestAssessment,
       status: 'insufficient_data',
       reason: 'The latest post-baseline reading checkpoint predates the current verified curriculum stage. A fresh checkpoint is needed.',
@@ -179,6 +238,7 @@ export function deriveSectionProgrammeHealth(input: {
       benchmarkGap: gap,
       curriculumPercent: curriculum.progressPercent,
       teacherTrainingPercent,
+      assessmentCoveragePercent: postBaselineCoverage,
       latestAssessment,
       status: 'intervention',
       reason: 'The demonstrated reading level shows a material gap from the current internal programme reference and needs targeted intervention.',
@@ -195,6 +255,7 @@ export function deriveSectionProgrammeHealth(input: {
       benchmarkGap: gap,
       curriculumPercent: curriculum.progressPercent,
       teacherTrainingPercent,
+      assessmentCoveragePercent: postBaselineCoverage,
       latestAssessment,
       status: 'needs_support',
       reason: 'Post-baseline reading evidence is available, but training progress is missing for one or more assigned teachers.',
@@ -210,6 +271,7 @@ export function deriveSectionProgrammeHealth(input: {
       benchmarkGap: gap,
       curriculumPercent: curriculum.progressPercent,
       teacherTrainingPercent,
+      assessmentCoveragePercent: postBaselineCoverage,
       latestAssessment,
       status: 'needs_support',
       reason:
@@ -227,6 +289,7 @@ export function deriveSectionProgrammeHealth(input: {
     benchmarkGap: gap,
     curriculumPercent: curriculum.progressPercent,
     teacherTrainingPercent,
+    assessmentCoveragePercent: postBaselineCoverage,
     latestAssessment,
     status: 'on_track',
     reason: 'Post-baseline reading evidence is close to the current internal programme reference and teacher training progress is sufficiently established.',
