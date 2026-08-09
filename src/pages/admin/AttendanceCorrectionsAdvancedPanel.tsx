@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Timestamp, collection, documentId, getDocs, query, where } from 'firebase/firestore';
 import { type FunctionsError, httpsCallable } from 'firebase/functions';
 import { Button } from '@components/ui/button';
@@ -8,6 +8,15 @@ import { Textarea } from '@components/ui/textarea';
 import { useToast } from '@components/hooks/use-toast';
 import { db, functions } from '../../lib/firebaseConfig';
 import { useAuthStore } from '../../store/useAuthStore';
+import {
+  AttendanceCorrectionAfterCreateError,
+  collectKidIds,
+  createMissingSessionAndSaveAttendance,
+  normalizeEnrollmentStatus,
+  normalizeTimeForLabel,
+  toIstDateLabel,
+  toIstTimeLabel,
+} from './attendanceCorrectionWorkflow';
 
 type AttendanceCorrectionMode = 'existing' | 'create';
 
@@ -43,6 +52,12 @@ type PendingSessionSelection = {
   kidId: string;
 } | null;
 
+type TeacherOption = {
+  id: string;
+  label: string;
+  identityIds: string[];
+};
+
 const ATTENDANCE_CORRECTION_STATUS_OPTIONS: AttendanceCorrectionStatus[] = [
   'present',
   'absent',
@@ -54,22 +69,6 @@ const ATTENDANCE_CORRECTION_STATUS_OPTIONS: AttendanceCorrectionStatus[] = [
 ];
 
 const TIME_HHMM_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
-const IST_OFFSET_MS = 330 * 60 * 1000;
-
-function toIsoDate(value: Date): string {
-  const year = value.getFullYear();
-  const month = String(value.getMonth() + 1).padStart(2, '0');
-  const day = String(value.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-function normalizeTimeForLabel(value: unknown): string {
-  const raw = typeof value === 'string' ? value.trim() : '';
-  if (!raw) return '';
-  const match = /^([01]?\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/.exec(raw);
-  if (!match) return '';
-  return `${String(Number(match[1])).padStart(2, '0')}:${match[2]}`;
-}
 
 function toDateMaybe(value: unknown): Date | null {
   if (!value) return null;
@@ -85,48 +84,12 @@ function toDateMaybe(value: unknown): Date | null {
   return null;
 }
 
-function toIstDateLabel(value: Date): string {
-  const shifted = new Date(value.getTime() + IST_OFFSET_MS);
-  return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, '0')}-${String(
-    shifted.getUTCDate(),
-  ).padStart(2, '0')}`;
-}
-
-function toIstTimeLabel(value: Date): string {
-  const shifted = new Date(value.getTime() + IST_OFFSET_MS);
-  return `${String(shifted.getUTCHours()).padStart(2, '0')}:${String(shifted.getUTCMinutes()).padStart(2, '0')}`;
-}
-
 function resolveAttendanceStatus(entry: unknown): string {
   if (typeof entry === 'string') return entry.trim().toLowerCase();
   if (entry && typeof entry === 'object' && typeof (entry as { status?: unknown }).status === 'string') {
     return String((entry as { status: string }).status).trim().toLowerCase();
   }
   return '';
-}
-
-function collectKidIds(data: Record<string, unknown>): string[] {
-  const ids = new Set<string>();
-  const add = (value: unknown) => {
-    const id = String(value || '').trim();
-    if (id) ids.add(id);
-  };
-
-  if (Array.isArray(data.kidIds)) data.kidIds.forEach(add);
-  add(data.kidId);
-  add(data.studentId);
-  add(data.childId);
-  return Array.from(ids);
-}
-
-function normalizeEnrollmentStatus(value: unknown): string {
-  const raw = String(value || '').trim().toLowerCase();
-  if (!raw) return 'active';
-  if (raw === 'pending_teacher') return 'trial';
-  if (raw === 'pending_payment') return 'active';
-  if (raw === 'enrolled' || raw === 'current' || raw === 'ongoing') return 'active';
-  if (raw === 'canceled') return 'cancelled';
-  return raw;
 }
 
 function clampDuration(value: unknown): number {
@@ -208,10 +171,11 @@ function formatFunctionsError(err: unknown): { code: string; message: string; de
 export default function AttendanceCorrectionsAdvancedPanel() {
   const { user } = useAuthStore();
   const { toast } = useToast();
+  const saveInFlightRef = useRef(false);
   const [mode, setMode] = useState<AttendanceCorrectionMode>('existing');
-  const [teacherOptions, setTeacherOptions] = useState<Array<{ id: string; label: string }>>([]);
+  const [teacherOptions, setTeacherOptions] = useState<TeacherOption[]>([]);
   const [selectedTeacherId, setSelectedTeacherId] = useState('');
-  const [selectedDate, setSelectedDate] = useState(toIsoDate(new Date()));
+  const [selectedDate, setSelectedDate] = useState(toIstDateLabel(new Date()));
 
   const [sessionRows, setSessionRows] = useState<AttendanceCorrectionSession[]>([]);
   const [existingKidNameById, setExistingKidNameById] = useState<Record<string, string>>({});
@@ -241,7 +205,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
       try {
         const snap = await getDocs(query(collection(db, 'users'), where('role', '==', 'teacher')));
         if (cancelled) return;
-        const optionMap = new Map<string, { id: string; label: string }>();
+        const optionMap = new Map<string, TeacherOption>();
         snap.docs.forEach((docSnap) => {
           const data = docSnap.data() as Record<string, unknown>;
           const fullName =
@@ -252,7 +216,11 @@ export default function AttendanceCorrectionsAdvancedPanel() {
                 : '';
           const email = typeof data.email === 'string' ? data.email.trim() : '';
           const uid = typeof data.uid === 'string' && data.uid.trim() ? data.uid.trim() : docSnap.id;
-          optionMap.set(uid, { id: uid, label: fullName || email || uid });
+          optionMap.set(uid, {
+            id: uid,
+            label: fullName || email || uid,
+            identityIds: Array.from(new Set([uid, docSnap.id].filter(Boolean))),
+          });
         });
         const options = Array.from(optionMap.values()).sort((a, b) => a.label.localeCompare(b.label));
         setTeacherOptions(options);
@@ -277,11 +245,16 @@ export default function AttendanceCorrectionsAdvancedPanel() {
     };
   }, [toast]);
 
+  const selectedTeacherIdentityIds = useMemo(
+    () => teacherOptions.find((option) => option.id === selectedTeacherId)?.identityIds ?? [],
+    [selectedTeacherId, teacherOptions],
+  );
+
   useEffect(() => {
     let cancelled = false;
 
     const loadSessions = async () => {
-      if (!selectedTeacherId || !selectedDate) {
+      if (!selectedTeacherId || selectedTeacherIdentityIds.length === 0 || !selectedDate) {
         setSessionRows([]);
         setExistingKidNameById({});
         return;
@@ -296,18 +269,18 @@ export default function AttendanceCorrectionsAdvancedPanel() {
           });
         };
 
-        const primaryQueries = [
+        const primaryQueries = selectedTeacherIdentityIds.flatMap((teacherIdentityId) => [
           query(
             collection(db, 'classSessions'),
-            where('teacherId', '==', selectedTeacherId),
+            where('teacherId', '==', teacherIdentityId),
             where('date', '==', selectedDate),
           ),
           query(
             collection(db, 'classSessions'),
-            where('teacherIds', 'array-contains', selectedTeacherId),
+            where('teacherIds', 'array-contains', teacherIdentityId),
             where('date', '==', selectedDate),
           ),
-        ];
+        ]);
 
         for (const plannedQuery of primaryQueries) {
           try {
@@ -321,20 +294,20 @@ export default function AttendanceCorrectionsAdvancedPanel() {
         if (sessionMap.size === 0) {
           const dayStart = new Date(`${selectedDate}T00:00:00+05:30`);
           const nextDayStart = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
-          const boundedQueries = [
+          const boundedQueries = selectedTeacherIdentityIds.flatMap((teacherIdentityId) => [
             query(
               collection(db, 'classSessions'),
-              where('teacherId', '==', selectedTeacherId),
+              where('teacherId', '==', teacherIdentityId),
               where('startAt', '>=', Timestamp.fromDate(dayStart)),
               where('startAt', '<', Timestamp.fromDate(nextDayStart)),
             ),
             query(
               collection(db, 'classSessions'),
-              where('teacherIds', 'array-contains', selectedTeacherId),
+              where('teacherIds', 'array-contains', teacherIdentityId),
               where('startAt', '>=', Timestamp.fromDate(dayStart)),
               where('startAt', '<', Timestamp.fromDate(nextDayStart)),
             ),
-          ];
+          ]);
           for (const plannedQuery of boundedQueries) {
             try {
               const snap = await getDocs(plannedQuery);
@@ -346,10 +319,10 @@ export default function AttendanceCorrectionsAdvancedPanel() {
         }
 
         if (sessionMap.size === 0) {
-          const fallbackQueries = [
-            query(collection(db, 'classSessions'), where('teacherId', '==', selectedTeacherId)),
-            query(collection(db, 'classSessions'), where('teacherIds', 'array-contains', selectedTeacherId)),
-          ];
+          const fallbackQueries = selectedTeacherIdentityIds.flatMap((teacherIdentityId) => [
+            query(collection(db, 'classSessions'), where('teacherId', '==', teacherIdentityId)),
+            query(collection(db, 'classSessions'), where('teacherIds', 'array-contains', teacherIdentityId)),
+          ]);
           for (const plannedQuery of fallbackQueries) {
             try {
               const snap = await getDocs(plannedQuery);
@@ -412,13 +385,13 @@ export default function AttendanceCorrectionsAdvancedPanel() {
     return () => {
       cancelled = true;
     };
-  }, [selectedTeacherId, selectedDate, reloadKey, toast]);
+  }, [selectedTeacherId, selectedTeacherIdentityIds, selectedDate, reloadKey, toast]);
 
   useEffect(() => {
     let cancelled = false;
 
     const loadEnrollments = async () => {
-      if (!selectedTeacherId) {
+      if (!selectedTeacherId || selectedTeacherIdentityIds.length === 0) {
         setEnrollmentRows([]);
         setCreateKidNameById({});
         return;
@@ -427,10 +400,10 @@ export default function AttendanceCorrectionsAdvancedPanel() {
       setLoadingEnrollments(true);
       try {
         const enrollmentMap = new Map<string, Record<string, unknown>>();
-        const queries = [
-          query(collection(db, 'enrollments'), where('teacherId', '==', selectedTeacherId)),
-          query(collection(db, 'enrollments'), where('teacherIds', 'array-contains', selectedTeacherId)),
-        ];
+        const queries = selectedTeacherIdentityIds.flatMap((teacherIdentityId) => [
+          query(collection(db, 'enrollments'), where('teacherId', '==', teacherIdentityId)),
+          query(collection(db, 'enrollments'), where('teacherIds', 'array-contains', teacherIdentityId)),
+        ]);
         for (const plannedQuery of queries) {
           try {
             const snap = await getDocs(plannedQuery);
@@ -488,7 +461,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
     return () => {
       cancelled = true;
     };
-  }, [selectedTeacherId, reloadKey, toast]);
+  }, [selectedTeacherId, selectedTeacherIdentityIds, reloadKey, toast]);
 
   const kidOptions = useMemo(() => {
     const ids = Array.from(new Set(sessionRows.flatMap((row) => row.kidIds)));
@@ -509,7 +482,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
   }, [selectedKidId, sessionRows]);
 
   const createKidOptions = useMemo(() => {
-    const ids = Array.from(new Set(enrollmentRows.map((row) => row.kidId)));
+    const ids = Array.from(new Set(enrollmentRows.flatMap((row) => row.kidIds)));
     return ids
       .map((id) => ({ id, label: createKidNameById[id] || id }))
       .sort((a, b) => a.label.localeCompare(b.label));
@@ -599,6 +572,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
   };
 
   const handleSaveExisting = async () => {
+    if (saveInFlightRef.current) return;
     if (!selectedTeacherId || !selectedKidId || !selectedSessionId) {
       toast({
         title: 'Incomplete selection',
@@ -617,6 +591,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
       return;
     }
 
+    saveInFlightRef.current = true;
     setSaving(true);
     try {
       await saveCorrection(selectedSessionId, selectedKidId, trimmedReason);
@@ -635,11 +610,13 @@ export default function AttendanceCorrectionsAdvancedPanel() {
         variant: 'destructive',
       });
     } finally {
+      saveInFlightRef.current = false;
       setSaving(false);
     }
   };
 
   const handleCreateAndSave = async () => {
+    if (saveInFlightRef.current) return;
     const selectedEnrollment = enrollmentRows.find((row) => row.id === selectedCreateEnrollmentId);
     if (!selectedTeacherId || !selectedDate || !selectedCreateKidId || !selectedEnrollment) {
       toast({
@@ -673,6 +650,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
     }
 
     let createdSessionId = '';
+    saveInFlightRef.current = true;
     setSaving(true);
     try {
       const createFn = httpsCallable<
@@ -680,19 +658,20 @@ export default function AttendanceCorrectionsAdvancedPanel() {
         { ok: boolean; sessionId: string; alreadyExisted?: boolean }
       >(functions, 'createAdminManualSession');
 
-      const created = await createFn({
-        enrollmentId: selectedEnrollment.id,
-        date: selectedDate,
-        startTime: createStartTime,
-        durationMins,
-        reason: trimmedReason,
+      const created = await createMissingSessionAndSaveAttendance({
+        createSession: async () => {
+          const result = await createFn({
+            enrollmentId: selectedEnrollment.id,
+            date: selectedDate,
+            startTime: createStartTime,
+            durationMins,
+            reason: trimmedReason,
+          });
+          return result.data;
+        },
+        saveAttendance: (sessionId) => saveCorrection(sessionId, selectedCreateKidId, trimmedReason),
       });
-      createdSessionId = String(created.data?.sessionId || '').trim();
-      if (!createdSessionId) {
-        throw new Error('The manual session was created without returning a session ID.');
-      }
-
-      await saveCorrection(createdSessionId, selectedCreateKidId, trimmedReason);
+      createdSessionId = created.sessionId;
 
       setPendingSessionSelection({ sessionId: createdSessionId, kidId: selectedCreateKidId });
       setMode('existing');
@@ -703,7 +682,12 @@ export default function AttendanceCorrectionsAdvancedPanel() {
         description: `Created an approved ad hoc session for ${selectedDate} at ${createStartTime} and saved ${newStatus} attendance with an audit trail.`,
       });
     } catch (err) {
-      const error = formatFunctionsError(err);
+      if (err instanceof AttendanceCorrectionAfterCreateError) {
+        createdSessionId = err.sessionId;
+      }
+      const error = formatFunctionsError(
+        err instanceof AttendanceCorrectionAfterCreateError ? err.originalError : err,
+      );
       console.error('Failed to create missing session and save attendance', {
         ...error,
         createdSessionId: createdSessionId || null,
@@ -726,6 +710,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
         });
       }
     } finally {
+      saveInFlightRef.current = false;
       setSaving(false);
     }
   };

@@ -16,7 +16,7 @@ import {
   where,
 } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { db } from '../../../lib/firebaseConfig';
+import { db, functions } from '../../../lib/firebaseConfig';
 import { doesSessionMatchEnrollmentSchedule } from '../../../lib/sessionScheduleIntegrity';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
@@ -2888,7 +2888,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
 
     setSavingAdHoc(true);
     try {
-      const createManualSession = httpsCallable(getFunctions(), 'createAdminManualSession');
+      const createManualSession = httpsCallable(functions, 'createAdminManualSession');
       await createManualSession({
         enrollmentId: enrollment.id,
         date: adHocDate,
