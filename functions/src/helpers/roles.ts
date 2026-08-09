@@ -12,6 +12,11 @@ export const CANONICAL_ROLES = [
 export type CanonicalRole =
   (typeof CANONICAL_ROLES)[number];
 
+const CANONICAL_ROLE_SET =
+  new Set<string>(
+    CANONICAL_ROLES,
+  );
+
 const NORMALIZED_ROLE_MAP:
   Record<string, CanonicalRole> = {
     admin: 'admin',
@@ -54,7 +59,10 @@ export function normalizeRole(
 export function isCanonicalRole(
   value: unknown,
 ): value is CanonicalRole {
-  return normalizeRole(value) !== null;
+  return (
+    typeof value === 'string' &&
+    CANONICAL_ROLE_SET.has(value)
+  );
 }
 
 export function getRoleMirrorCollection(

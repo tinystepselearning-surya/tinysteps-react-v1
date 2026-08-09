@@ -7,6 +7,7 @@ import {
 import {
   buildRoleClaims,
   getRoleMirrorCollection,
+  isCanonicalRole,
   normalizeRole,
 } from '../src/helpers/roles';
 
@@ -15,6 +16,20 @@ describe('backend role contract', () => {
     expect(
       normalizeRole('learningPartner'),
     ).toBe('learningPartner');
+
+    expect(
+      normalizeRole('learning-partner'),
+    ).toBe('learningPartner');
+  });
+
+  it('distinguishes canonical roles from compatibility aliases', () => {
+    expect(
+      isCanonicalRole('learningPartner'),
+    ).toBe(true);
+
+    expect(
+      isCanonicalRole('learning-partner'),
+    ).toBe(false);
 
     expect(
       normalizeRole('learning-partner'),

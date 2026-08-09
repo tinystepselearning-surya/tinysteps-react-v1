@@ -77,6 +77,26 @@ type UserSortField = 'email' | 'name' | 'role' | 'status' | 'phone' | 'createdAt
 type SortDirection = 'asc' | 'desc';
 type UserPageSize = 'all' | 25 | 50 | 100;
 
+export const normalizeStoredUserRole = (
+  role: unknown,
+): User['role'] => {
+  const raw = String(role || '')
+    .trim()
+    .toLowerCase();
+
+  if (
+    raw === 'student' ||
+    raw === 'students'
+  ) {
+    return 'kid';
+  }
+
+  return (
+    normalizeAuthRole(role) ??
+    'parent'
+  );
+};
+
 const isHardDeleteProtectedRole = (
   role?: string,
 ) => {
@@ -411,7 +431,10 @@ export function UserList() {
           mobile: typeof data.mobile === 'string' ? data.mobile : '',
           contactNumber: typeof data.contactNumber === 'string' ? data.contactNumber : '',
           countryCode: typeof data.countryCode === 'string' ? data.countryCode : '',
-          role: normalizeAuthRole(data.role) ?? 'parent',
+          role:
+            normalizeStoredUserRole(
+              data.role,
+            ),
           status: (data.status as 'active' | 'suspended' | 'archived') || 'active',
           createdAt: data.createdAt || Timestamp.fromDate(new Date()),
           updatedAt: data.updatedAt || Timestamp.fromDate(new Date()),

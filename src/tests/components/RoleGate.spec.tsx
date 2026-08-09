@@ -103,6 +103,150 @@ describe('RoleGate authentication bootstrap', () => {
     expect(screen.queryByText('Verifying your access…')).not.toBeInTheDocument();
   });
 
+  it('does not render a School Admin route while database role verification is pending', async () => {
+    useAuthStore.setState({
+      user: {
+        uid: 'school-admin-1',
+        email: 'principal@example.com',
+        displayName: 'Principal',
+        role: 'schoolAdmin',
+      },
+      authStatus: 'authenticated',
+      isLoading: false,
+    });
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={['/school']}>
+          <Routes>
+            <Route element={<RoleGate allowedRoles={['schoolAdmin']} />}>
+              <Route path="/school" element={<div>School portal</div>} />
+            </Route>
+            <Route path="/unauthorized" element={<div>Unauthorized</div>} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(screen.getByText('Verifying your access…')).toBeInTheDocument();
+    expect(screen.queryByText('School portal')).not.toBeInTheDocument();
+    await vi.waitFor(() => {
+      expect(getDocMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('rejects a School Admin claim when the database role is parent', async () => {
+    getDocMock.mockResolvedValue({
+      exists: () => true,
+      data: () => ({ role: 'parent' }),
+    });
+    useAuthStore.setState({
+      user: {
+        uid: 'school-admin-1',
+        email: 'principal@example.com',
+        displayName: 'Principal',
+        role: 'schoolAdmin',
+      },
+      authStatus: 'authenticated',
+      isLoading: false,
+    });
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={['/school']}>
+          <Routes>
+            <Route element={<RoleGate allowedRoles={['schoolAdmin']} />}>
+              <Route path="/school" element={<div>School portal</div>} />
+            </Route>
+            <Route path="/unauthorized" element={<div>Unauthorized</div>} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText('Unauthorized')).toBeInTheDocument();
+    expect(screen.queryByText('School portal')).not.toBeInTheDocument();
+  });
+
+  it('allows a School Admin route after database role verification', async () => {
+    getDocMock.mockResolvedValue({
+      exists: () => true,
+      data: () => ({ role: 'schoolAdmin' }),
+    });
+    useAuthStore.setState({
+      user: {
+        uid: 'school-admin-1',
+        email: 'principal@example.com',
+        displayName: 'Principal',
+        role: 'schoolAdmin',
+      },
+      authStatus: 'authenticated',
+      isLoading: false,
+    });
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={['/school']}>
+          <Routes>
+            <Route element={<RoleGate allowedRoles={['schoolAdmin']} />}>
+              <Route path="/school" element={<div>School portal</div>} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText('School portal')).toBeInTheDocument();
+  });
+
+  it('fails closed when the School Admin database role lookup fails', async () => {
+    getDocMock.mockRejectedValue(new Error('school role lookup failed'));
+    useAuthStore.setState({
+      user: {
+        uid: 'school-admin-1',
+        email: 'principal@example.com',
+        displayName: 'Principal',
+        role: 'schoolAdmin',
+      },
+      authStatus: 'authenticated',
+      isLoading: false,
+    });
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={['/school']}>
+          <Routes>
+            <Route element={<RoleGate allowedRoles={['schoolAdmin']} />}>
+              <Route path="/school" element={<div>School portal</div>} />
+            </Route>
+            <Route path="/unauthorized" element={<div>Unauthorized</div>} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(
+      await screen.findByText(
+        'Unauthorized',
+        {},
+        { timeout: 4_000 },
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('School portal')).not.toBeInTheDocument();
+  });
+
   it('logs only changed decisions and a role query failure cannot clear auth', async () => {
     const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
     getDocMock.mockRejectedValue(new Error('messages role lookup failed'));

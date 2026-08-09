@@ -7,6 +7,7 @@ import {
 import {
   AUTH_ROLES,
   getRoleRedirectPath,
+  isAuthRole,
   normalizeAuthRole,
 } from '../../constants/roles';
 
@@ -39,6 +40,20 @@ describe('Tiny Steps role contract', () => {
       normalizeAuthRole(
         'LEARNINGPARTNER',
       ),
+    ).toBe('learningPartner');
+  });
+
+  it('distinguishes canonical roles from compatibility aliases', () => {
+    expect(
+      isAuthRole('learningPartner'),
+    ).toBe(true);
+
+    expect(
+      isAuthRole('learning-partner'),
+    ).toBe(false);
+
+    expect(
+      normalizeAuthRole('learning-partner'),
     ).toBe('learningPartner');
   });
 

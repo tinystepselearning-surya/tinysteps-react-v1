@@ -19,6 +19,9 @@ export const AUTH_ROLES = [
 
 export type AuthRole = (typeof AUTH_ROLES)[number];
 
+const AUTH_ROLE_SET =
+  new Set<string>(AUTH_ROLES);
+
 export const ROLE_LABELS: Record<AuthRole, string> = {
   admin: 'Administrator',
   teacher: 'Teacher',
@@ -66,7 +69,10 @@ export function normalizeAuthRole(value: unknown): AuthRole | null {
 }
 
 export function isAuthRole(value: unknown): value is AuthRole {
-  return normalizeAuthRole(value) !== null;
+  return (
+    typeof value === 'string' &&
+    AUTH_ROLE_SET.has(value)
+  );
 }
 
 export function getRoleLabel(value: unknown): string {
