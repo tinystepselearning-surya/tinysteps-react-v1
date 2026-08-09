@@ -2,103 +2,105 @@
 
 Date: 2026-08-10  
 Branch: `seo/crawled-not-indexed-audit-2026-08-09`  
-Source snapshot: the 52 URLs reported in Google Search Console as **Crawled — currently not indexed**.
+Source snapshot: 52 URLs shown in Google Search Console as **Crawled — currently not indexed**.
 
-## Scope and indexing rule
+## Remediation boundary
 
-This document covers only the 23 URLs from the 52-URL remediation set that Tiny Steps intentionally wants Google to index.
+This branch intentionally separates the 52 URLs into four groups:
 
-- **23 index targets:** eligible for this remediation submission list.
-- **11 redirects:** aliases/legacy URLs; never submit as independent index targets.
-- **12 weekly archives:** accessible only as support/archive content; `noindex` and excluded from canonical sitemaps.
-- **6 XML/RSS resources:** discovery/feed resources; never submit as landing pages.
+- **23 index targets** — genuine canonical pages we want Google to evaluate for indexing.
+- **11 redirects** — legacy/duplicate aliases; preserve the 301 where useful, exclude the alias from canonical sitemaps and never submit the alias for indexing.
+- **12 noindex weekly archives** — accessible as archive/support content but excluded from canonical sitemaps and not submitted.
+- **6 XML/RSS resources** — discovery/feed infrastructure, not search-result landing pages; not submitted.
 
-Important: the normal site sitemaps can and should still contain other healthy canonical Tiny Steps pages that were not part of this 52-URL GSC issue set. The 23-item list is the remediation submission list, not the complete site index.
+The 23-item list is only the remediation submission list for this GSC issue. It is **not** the complete Tiny Steps site index. Other healthy canonical pages remain in the normal site sitemaps.
 
-## What “SEO / AEO / GEO” means in this branch
-
-We are not adding special “AI ranking” markup or keyword stuffing. The implementation standard is:
+## SEO / AEO / GEO implementation standard
 
 ### SEO
 - one preferred canonical URL;
-- indexable route, no accidental `noindex`;
-- present in the correct canonical sitemap;
+- no accidental `noindex` on target pages;
+- correct canonical sitemap inclusion;
 - unique search intent, title, meta description and H1;
-- useful internal links to relevant canonical pages;
-- semantic page structure and structured data only where it matches visible content.
+- semantic headings and useful internal links;
+- structured data only when it matches visible page content;
+- no duplicate/legacy URL competing with the canonical page.
 
 ### AEO
-- answer-first summary for the main question when appropriate;
-- scannable questions, checklists, comparisons, examples and troubleshooting;
-- visible FAQs where they genuinely help the user;
-- concise language that can be extracted without losing the page’s context.
+- answer-first summary where the intent is a question or decision;
+- scannable comparisons, examples, checklists, troubleshooting and FAQs;
+- direct language that still preserves context;
+- questions answered on-page rather than hidden only in metadata or schema.
 
 ### GEO / AI discoverability
-- clear entity/context: Tiny Steps, parent/child audience, programme or skill being discussed;
-- useful, original explanations rather than thin paraphrases;
-- author/provider context where supported by the existing site framework;
-- specific examples and observable progress signals;
-- conservative claims: remove or soften universal lesson-count promises, outcome percentages and pseudo-clinical statements that are not supported on-page;
-- strong internal topic relationships so search and AI systems can understand which page is the canonical answer for each intent.
+- clear entity and audience context;
+- original, practical explanations rather than thin paraphrases;
+- author/provider context where the site already supports it;
+- observable progress signals and concrete examples;
+- conservative claims: no fabricated evidence, guaranteed outcomes, unsupported percentages, universal lesson counts or pseudo-clinical statements;
+- strong internal topic relationships so each search intent has one clear canonical answer.
 
-## One-by-one audit
+No special “AI ranking” markup is being invented. The work is built on strong crawl/index controls, useful content, clear answers, structured data that reflects visible content, and coherent internal linking.
 
-| # | URL | Primary intent | Audit decision / work in this branch | Readiness |
+## One-by-one audit of the 23 genuine pages
+
+| # | Canonical target | Primary user intent | Work / decision | Content status |
 |---|---|---|---|---|
-| 1 | `/blog/june-school-reopening-english-readiness-plan` | Parent school-reopening readiness plan | **KEEP.** Already substantial: answer-first framing, 14-day plan, skill checklist, parent actions and internal paths. Retain as the durable readiness URL rather than creating another overlapping seasonal page. | Ready for rendered validation |
-| 2 | `/faq` | Broad parent pre-enrolment questions | **KEEP.** Strong question-led intent and internal navigation. Final Codex audit must remove/soften any unsupported hard outcome numbers and replace any links that point to noindex weekly archives with evergreen canonical pages before merge. | Requires final claim/link sweep |
-| 3 | `/parents/choosing-course` | Which English course should my child start? | **KEEP.** Strong decision ladder, course comparisons, FAQs, breadcrumbs, HowTo/FAQ schema, author context and assessment-first guidance. | Ready for rendered validation |
-| 4 | `/parents/speech-confidence` | Help a shy/hesitant child speak | **STRENGTHENED.** Rewritten as a low-pressure parent guide with observable confidence markers, daily routine, scripts, confidence ladder, troubleshooting, safety boundary, FAQ + HowTo + Breadcrumb data and internal pathways. | Ready for rendered validation |
-| 5 | `/blog/online-phonics-classes-vs-school` | School phonics vs additional online support | **STRENGTHENED.** Reframed around use cases rather than “which is better”; added decision criteria, observable progress, assessment guidance, FAQs and canonical related links; removed fixed lesson-count framing. | Ready for rendered validation |
-| 6 | `/parents/common-mistakes` | Parent mistakes that slow English learning | **STRENGTHENED.** Expanded from a thin list into 7 mistakes + replacements, reset plan, parent scripts, escalation signals, FAQ schema, breadcrumbs and clear internal next steps. | Ready for rendered validation |
-| 7 | `/blog/long-vowel-sounds-for-kids` | Teach/practise long-vowel patterns | **STRENGTHENED.** Clear teaching order, contrast examples, reading + spelling transfer, FAQs and related links; replaced unsupported fixed progress windows with observable skill markers. | Ready for rendered validation |
-| 8 | `/careers` | Tiny Steps remote roles/applications | **KEEP.** Distinct hiring intent with roles, responsibilities, qualifications, process, FAQs and application routes. Do **not** add JobPosting markup to this role-list page unless separate leaf job pages are created. | Ready; verify live role claims |
-| 9 | `/blog/r-controlled-vowels-explained` | Explain/practise r-controlled vowel patterns | **STRENGTHENED.** Pattern grouping, listening/reading/spelling sequence, clear er/ir/ur explanation, troubleshooting, FAQs and evergreen internal links; fixed-time outcome claims removed. | Ready for rendered validation |
-| 10 | `/blog/cvc-words-explained-for-parents` | Explain CVC decoding to parents | **STRENGTHENED.** Focused on the decoding milestone, transfer to unfamiliar words, short-vowel contrasts, support diagnostics and FAQs; removed arbitrary “number of words/weeks” milestones. | Ready for rendered validation |
-| 11 | `/blog/online-english-classes-for-kids-india` | How Indian parents choose online English classes | **MAJOR REWRITE.** Expanded from a thin article into a parent decision guide covering skill-gap diagnosis, 1:1 vs group trade-offs, phonics/reading/grammar/writing/speaking quality, trial-class evaluation, progress evidence, enrolment questions, red flags, FAQs and Tiny Steps next steps. | Ready for rendered validation |
-| 12 | `/book-demo` | Book/understand the free assessment | **KEEP.** Strong service intent: exact offer, duration, what is assessed, outcomes, form, FAQs and matching Service schema. Final audit should confirm schema and visible claims remain identical. | Ready for rendered validation |
-| 13 | `/parents/reading-at-home` | Home reading routine | **KEEP + METADATA ALIGNED.** Strong routine, stage plan, troubleshooting, parent scripts, progress checklist and HowTo/Breadcrumb data. Metadata now describes the actual 10-minute routine instead of over-claiming research authority. | Ready for rendered validation |
-| 14 | `/blog/how-phonics-classes-help-kids-read` | How phonics instruction supports reading | **STRENGTHENED.** Rebuilt around diagnosing the missing reading step, class-to-home transfer, unfamiliar-word evidence, class-quality checklist, FAQs and realistic progress signals instead of fixed timelines. | Ready for rendered validation |
-| 15 | `/writing-classes-for-kids` | Live writing support for children | **MAJOR REWRITE (earlier in this branch).** Distinct from the grammar hub: writing stages, bottleneck diagnosis, lesson loop, parent sample checklist, before/after evidence, editing, school-task transfer, FAQs, breadcrumbs and useful internal links. | Ready for rendered validation |
-| 16 | `/phonics-games-for-preschoolers` | No-print phonics games ages 3–6 | **KEEP.** Seven concrete games, answer-first summary, daily routine, common mistakes, FAQs, Breadcrumb + HowTo + FAQ data and links to the phonics path. Final audit should soften any universal “best age / best duration” wording if it reads as a guarantee. | Ready; minor wording sweep |
-| 17 | `/blog/child-reads-in-class-but-forgets-at-home` | Parent sees class/home transfer gap | **KEEP.** Specific pain-point intent with diagnostic value, home routine, troubleshooting and FAQ structure. Final audit should ensure claims stay observational rather than neurological/clinical unless a source is shown. | Ready; claim sweep |
-| 18 | `/blog/digraphs-and-tricky-words` | Digraphs vs tricky/high-frequency words | **STRENGTHENED.** Clarifies what should be decoded versus what needs extra memory, includes pattern sequencing, read-spell-transfer loop, FAQs, troubleshooting and canonical related reads; fixed progress windows removed. | Ready for rendered validation |
-| 19 | `/blog/week-12-speaking-confidence-seeds` | Durable speaking-confidence roadmap | **MAJOR REWRITE.** This is intentionally the one weekly speaking guide kept indexable because its intent is evergreen. Added answer-first guidance, observable progress markers, 7-day plan, games, scripts, confidence ladder, troubleshooting, professional-support boundary, FAQs and canonical next steps; removed pseudo-clinical/generalised claims. | Ready for rendered validation |
-| 20 | `/parents/getting-started` | Tiny Steps onboarding and assessment process | **KEEP + METADATA FIXED.** Strong step flow, assessment checks, preparation list, first-week plan and author context. Metadata/HowTo now match the actual Tiny Steps onboarding page rather than incorrectly framing it as only “phonics at home.” | Ready; verify current operational promises |
-| 21 | `/courses/phonics-advanced` | Advanced phonics course | **KEEP.** Canonical course framework provides unique title/description/H1, Course + FAQ + Breadcrumb structured data, curriculum detail, outcomes, reviews and course-specific internal links. | Ready for rendered validation |
-| 22 | `/parents/tracking-progress` | How parents measure real English progress | **MAJOR REWRITE (earlier in this branch) + METADATA ALIGNED.** Baseline framework, skill evidence table, parent tracker, teacher questions, transfer checks, troubleshooting, FAQ + HowTo + Breadcrumb data and measurable next-step logic. | Ready for rendered validation |
-| 23 | `/courses/grammar-mastery` | Advanced grammar/writing course | **KEEP.** Canonical course framework provides unique intent, Course + FAQ + Breadcrumb data, curriculum, outcomes, reviews, writing/editing focus and relevant internal links. | Ready for rendered validation |
+| 1 | `/blog/june-school-reopening-english-readiness-plan` | Prepare a child’s English for school reopening | **KEEP.** Substantial answer-first parent guide with a 14-day plan, readiness checklist, practical actions, FAQs and internal next steps. Preserve as the durable school-readiness answer rather than creating another overlapping page. | Content-ready; render/claim validation required |
+| 2 | `/faq` | Get direct answers before choosing English support | **MAJOR REBUILD.** Replaced dated/noisy FAQ inventory with 24 durable parent questions across phonics, reading, grammar/writing, speaking, online learning, progress, pricing/demo and timings. Removed unsupported hard outcome claims and old Summer Camp clutter. Replaced links to noindex weekly posts with stronger canonical guides. Added answer-first routing and visible FAQ-aligned structured data. | Content-ready; rendered schema/link validation required |
+| 3 | `/parents/choosing-course` | Decide whether phonics, reading, grammar/writing or speaking should come first | **KEEP.** Strong decision ladder, comparisons, assessment-first logic, FAQs, HowTo/Breadcrumb data, author context and internal paths. | Content-ready |
+| 4 | `/parents/speech-confidence` | Help a shy/hesitant child speak with less pressure | **MAJOR REWRITE earlier in branch.** Observable confidence markers, low-pressure routine, parent scripts, confidence ladder, troubleshooting, safety boundary, FAQ + HowTo + Breadcrumb data and next-step links. | Content-ready |
+| 5 | `/blog/online-phonics-classes-vs-school` | Decide whether school literacy teaching is enough or extra phonics is useful | **STRENGTHENED.** Reframed from “which is better” to use cases; added decision criteria, class-quality checks, transfer evidence, FAQs and evergreen links; removed fixed lesson-count framing. | Content-ready |
+| 6 | `/parents/common-mistakes` | Avoid home-learning habits that hide or slow progress | **MAJOR REWRITE.** Seven mistakes with practical replacements, reset plan, parent scripts, escalation signals, FAQs, Breadcrumb/FAQ data and relevant next steps. | Content-ready |
+| 7 | `/blog/long-vowel-sounds-for-kids` | Teach and practise long-vowel spelling patterns | **STRENGTHENED.** Clear teaching order, short/long contrasts, reading + spelling transfer, troubleshooting, FAQs and evergreen related reads. Unsupported fixed progress windows removed. | Content-ready |
+| 8 | `/careers` | Understand Tiny Steps roles and how to apply | **KEEP.** Distinct hiring intent with role details, responsibilities, requirements, process, FAQs and application routes. Do not add `JobPosting` structured data to the role-list page unless separate current job-detail pages exist. | Content-ready; live role/application claims must be verified before merge |
+| 9 | `/blog/r-controlled-vowels-explained` | Understand and practise ar/or/er/ir/ur | **STRENGTHENED.** Pattern grouping, listening/reading/spelling sequence, er/ir/ur explanation, troubleshooting, FAQs and evergreen links. Fixed-time outcome claims removed. | Content-ready |
+| 10 | `/blog/cvc-words-explained-for-parents` | Understand the first real decoding milestone | **STRENGTHENED.** Focused on sound-to-print decoding, unfamiliar-word transfer, short-vowel contrasts, troubleshooting and FAQs. Arbitrary word/week milestones removed. | Content-ready |
+| 11 | `/blog/online-english-classes-for-kids-india` | Compare online English class options in India | **MAJOR REWRITE.** Added learning-gap diagnosis, 1:1 vs group trade-offs, phonics/reading/grammar/writing/speaking quality criteria, trial-class checks, progress evidence, enrolment questions, red flags, FAQs and Tiny Steps next steps. | Content-ready |
+| 12 | `/book-demo` | Understand and book the free 35-minute 1:1 assessment | **KEEP.** Lead-critical page with a clear offer, assessment purpose, form, FAQs and Service data. | Content-ready; verify visible offer and schema use the same current business facts |
+| 13 | `/parents/reading-at-home` | Build a useful home-reading routine | **MAJOR REWRITE.** Removed unsupported “science-backed/research consistently shows” framing, replaced hard age/time claims with flexible guidance, added answer-first summary, reading-level framework, 10-minute routine, transfer evidence, troubleshooting, parent scripts, progress checklist, FAQs, HowTo/FAQ/Breadcrumb data, and canonical demo link. | Content-ready |
+| 14 | `/blog/how-phonics-classes-help-kids-read` | Understand how phonics instruction supports reading | **STRENGTHENED.** Rebuilt around diagnosing the missing reading step, class-to-home transfer, unfamiliar-word evidence, class-quality checks, FAQs and observable progress rather than fixed timelines. | Content-ready |
+| 15 | `/writing-classes-for-kids` | Decide whether guided writing support fits a child | **MAJOR REWRITE earlier in branch.** Distinct from the grammar hub: writing bottlenecks, stages, lesson loop, parent sample checklist, before/after evidence, editing, school-task transfer, FAQs and Breadcrumb data. | Content-ready |
+| 16 | `/phonics-games-for-preschoolers` | Find useful no-print phonics games for young children | **MAJOR IMPROVEMENT.** Seven concrete games, answer-first summary, readiness-based wording, flexible practice duration, daily routine, progress signals, mistakes, FAQs, Breadcrumb + HowTo + FAQ data and canonical phonics links. | Content-ready |
+| 17 | `/blog/child-reads-in-class-but-forgets-at-home` | Understand why reading looks stronger in class than at home | **MAJOR REWRITE.** Reframed from “forgetting is normal” to class-to-home transfer diagnosis. Added prompt comparison, level matching, fresh-example checks, decoding/fluency/comprehension breakpoints, home routine, teacher questions, professional-support boundary, FAQs and canonical next steps. Removed brain-path/pseudo-neurological wording. | Content-ready |
+| 18 | `/blog/digraphs-and-tricky-words` | Understand what should be decoded vs remembered | **STRENGTHENED.** Clear digraph/tricky-word distinction, teaching sequence, read-spell-transfer loop, troubleshooting, FAQs and evergreen related reads. Fixed progress windows removed. | Content-ready |
+| 19 | `/blog/week-12-speaking-confidence-seeds` | Follow a durable speaking-confidence roadmap | **MAJOR REWRITE.** Kept indexable because the intent is evergreen despite the weekly slug. Added answer-first guidance, progress markers, 7-day plan, games, scripts, confidence ladder, troubleshooting, professional-support boundary, FAQs and canonical next steps. | Content-ready |
+| 20 | `/parents/getting-started` | Understand Tiny Steps assessment and onboarding | **MAJOR IMPROVEMENT.** Metadata/HowTo now match the actual onboarding intent. Replaced legacy `/?book=1` CTAs with `/book-demo`, removed “within 12 hours” promise, broadened assessment wording to match the child’s actual concern, clarified what parents should receive, and removed outcome-speed claims. | Content-ready; verify current 35-minute/1:1/free offer operationally |
+| 21 | `/courses/phonics-advanced` | Evaluate the advanced phonics course | **KEEP.** Canonical course framework already provides unique metadata/H1, Course + FAQ + Breadcrumb data, curriculum, outcomes, reviews and course-specific links. | Content-ready; verify business claims/pricing/reviews against current configuration |
+| 22 | `/parents/tracking-progress` | Measure whether English skills are really improving | **MAJOR REWRITE earlier in branch.** Baseline framework, independent evidence, transfer checks, skill tracker, teacher questions, troubleshooting, FAQs, HowTo/Breadcrumb data and measurable next-step logic. | Content-ready |
+| 23 | `/courses/grammar-mastery` | Evaluate advanced grammar/writing support | **KEEP.** Canonical course framework already provides unique intent, Course + FAQ + Breadcrumb data, curriculum, writing/editing outcomes, reviews and internal links. | Content-ready; verify business claims/pricing/reviews against current configuration |
 
-## Non-index carve-out requirements
+## Non-index carve-out rules
 
-The 29 non-target URLs from this GSC set must never be included in the remediation submission artifact:
+The other **29 URLs from this GSC set must never enter the remediation submission artifact**:
 
-1. Redirect/legacy URLs must remain outside canonical sitemaps and resolve permanently to their preferred target. Keep the redirect if external links or old crawl history may still point to it; deleting the redirect would discard consolidation value.
-2. Weekly archive URLs classified `noindex-archive` must remain outside canonical sitemaps and must receive the blog noindex policy.
-3. Sitemap XML files remain crawl/discovery infrastructure, not landing-page index targets.
-4. RSS XML files remain available to readers/crawlers but must retain `X-Robots-Tag: noindex` and stay out of the landing-page sitemap set.
-5. `scripts/audit-gsc-crawled-not-indexed.mjs` now fails if a non-index target leaks into canonical sitemaps or if the 23-target manifest changes unexpectedly.
-6. `scripts/write-gsc-index-submission-targets.mjs` generates `artifacts/gsc-index-submission-targets.txt` containing exactly the 23 full canonical URLs for this remediation set.
+1. **11 redirects/legacy aliases** — keep a 301 where old crawl history or inbound links can benefit from consolidation; exclude the alias from canonical sitemaps and internal canonical linking.
+2. **12 noindex weekly archives** — remain accessible only if useful as archive/support content; `noindex`, excluded from canonical sitemaps, and never manually submitted.
+3. **6 XML/RSS resources** — keep them functional as discovery/feed infrastructure; do not treat them as landing pages. RSS retains `X-Robots-Tag: noindex`.
+4. `scripts/audit-gsc-crawled-not-indexed.mjs` must fail if a non-index target leaks into canonical sitemaps, an index target becomes noindex, the 52-row classification changes unexpectedly, or the target count is no longer exactly 23.
+5. `scripts/write-gsc-index-submission-targets.mjs` generates `artifacts/gsc-index-submission-targets.txt` from the manifest and must contain exactly the 23 canonical remediation URLs.
 
-## Final merge gates
+## Final engineering gates
 
-Do not merge this branch until Codex verifies all of the following against the built/prerendered output:
+Do **not** merge this branch until the built/prerendered output passes all of these checks:
 
 - `npm ci`
 - `npm run typecheck`
 - `npm run lint`
-- `npm test -- --run` (or the repository's stable non-watch equivalent)
+- `npm test`
 - `npm run gen:sitemaps`
+- `npm run seo:route-integrity`
+- `npm run seo:indexability-report`
 - `npm run seo:gsc-crawled-audit`
 - `npm run seo:gsc-index-targets`
 - `npm run build`
-- all 23 targets return/render as normal 200 pages with a self-canonical, index-eligible robots directive, unique title/meta/H1, useful body content and valid JSON-LD where present;
-- every redirect/noindex/resource decision from the 52-URL manifest behaves as intended;
-- no unsupported performance percentage, guaranteed outcome, guaranteed lesson count, or fabricated evidence/citation was introduced;
-- no indexable page links prominently to an obsolete/noindex weekly URL when a stronger evergreen canonical page serves the same intent;
-- no console errors or broken internal links on the 23 target pages;
-- generated submission artifact contains exactly 23 unique URLs.
+- all 23 target URLs render normally with a self-canonical, index-eligible robots directive, unique title/meta/H1, meaningful body content, working internal links and valid JSON-LD where used;
+- all 29 excluded URLs behave according to their redirect/noindex/resource policy;
+- no target page contains an unsupported performance percentage, guaranteed outcome, fabricated citation, guaranteed lesson count, pseudo-clinical claim or stale business promise;
+- no indexable target prominently links to a noindex archive when a stronger evergreen canonical page serves the same intent;
+- no console errors, soft-404 behaviour, broken links or malformed structured data on the 23 pages;
+- `artifacts/gsc-index-submission-targets.txt` contains exactly 23 unique full canonical URLs and none of the 29 excluded URLs.
 
-## Post-deploy GSC action
+## Post-deploy action
 
-After the branch is merged, deployed, and production HTML is verified, use URL Inspection / Request Indexing only for the 23 canonical URLs in the generated remediation list. Do not request indexing for the 11 redirects, 12 noindex archives, or 6 XML/RSS resources from this issue set.
+After merge, deployment and production verification, use Google Search Console URL Inspection / Request Indexing only for the 23 URLs in the generated remediation list. Do not request indexing for the redirects, noindex archives or XML/RSS resources from this issue set.
