@@ -1,0 +1,37 @@
+name: Apply lead funnel branch refactor
+
+on:
+  push:
+    branches:
+      - feat/leads-funnel-architecture
+
+permissions:
+  contents: write
+
+jobs:
+  apply-refactor:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/leads-funnel-architecture
+          fetch-depth: 0
+
+      - name: Apply deterministic refactor
+        run: python3 scripts/apply-lead-funnel-refactor.py
+
+      - name: Remove one-off refactor scaffolding
+        run: |
+          rm scripts/apply-lead-funnel-refactor.py
+          rm .github/workflows/apply-lead-funnel-refactor.yml
+
+      - name: Commit refactor
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --stat
+          git commit -m "feat(leads): wire canonical funnel lifecycle and analytics"
+          git push origin HEAD:feat/leads-funnel-architecture
