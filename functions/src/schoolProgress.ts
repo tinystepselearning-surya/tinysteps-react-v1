@@ -149,7 +149,7 @@ export const schoolUpdateCurriculumProgress = onCall(
       const previous = previousSnap.exists ? previousSnap.data() || {} : {};
       const now = admin.firestore.FieldValue.serverTimestamp();
       const current = {
-        schemaVersion: 1,
+        schemaVersion: 2,
         schoolId,
         academicYearId,
         sectionId,
@@ -162,7 +162,8 @@ export const schoolUpdateCurriculumProgress = onCall(
         stageOrder: requestedStageOrder,
         totalStages: course.stages.length,
         stageLabel: stage?.label || 'Not started',
-        expectedReadingLevel: stage?.expectedReadingLevel ?? 0,
+        programmeReferenceReadingLevel:
+          stage?.programmeReferenceReadingLevel ?? 0,
         progressPercent: curriculumPercent(requestedStageOrder, course.stages.length),
         status,
         notes,
@@ -174,7 +175,7 @@ export const schoolUpdateCurriculumProgress = onCall(
 
       tx.set(currentRef, current, { merge: true });
       tx.set(historyRef, {
-        schemaVersion: 1,
+        schemaVersion: 2,
         schoolId,
         academicYearId,
         sectionId,
@@ -186,6 +187,10 @@ export const schoolUpdateCurriculumProgress = onCall(
               stageOrder: previous.stageOrder ?? null,
               status: previous.status || null,
               progressPercent: previous.progressPercent ?? null,
+              programmeReferenceReadingLevel:
+                previous.programmeReferenceReadingLevel ??
+                previous.expectedReadingLevel ??
+                null,
             }
           : null,
         next: {
@@ -193,6 +198,8 @@ export const schoolUpdateCurriculumProgress = onCall(
           stageOrder: requestedStageOrder,
           status,
           progressPercent: current.progressPercent,
+          programmeReferenceReadingLevel:
+            current.programmeReferenceReadingLevel,
         },
         notes,
       });
