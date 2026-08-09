@@ -16,6 +16,14 @@ import type {
 } from '../../types/SchoolProgramme';
 
 const dateText = (value: unknown): string => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return new Date(value).toLocaleDateString();
+  }
+  if (value instanceof Date) return value.toLocaleDateString();
+  if (typeof value === 'string') {
+    const millis = new Date(value).getTime();
+    if (Number.isFinite(millis)) return new Date(millis).toLocaleDateString();
+  }
   if (value && typeof value === 'object' && 'toDate' in value) {
     const fn = (value as { toDate?: () => Date }).toDate;
     if (typeof fn === 'function') return fn.call(value).toLocaleDateString();
@@ -95,7 +103,7 @@ export default function SchoolReviewsPanel({
           </p>
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <label className="text-xs text-slate-500">Scope
-              <select className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={sectionId} onChange={(e) => setSectionId(e.target.value)}>
+              <select className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={sectionId} onChange={(event) => setSectionId(event.target.value)}>
                 <option value="">Whole school / general</option>
                 {sections.filter((item) => item.status === 'active').map((section) => (
                   <option key={section.id} value={section.id}>{section.gradeLabel} — {section.sectionName}</option>
@@ -103,21 +111,21 @@ export default function SchoolReviewsPanel({
               </select>
             </label>
             <label className="text-xs text-slate-500">Implementation
-              <select className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={implementationRating} onChange={(e) => setImplementationRating(e.target.value as ReviewImplementationRating)}>
+              <select className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={implementationRating} onChange={(event) => setImplementationRating(event.target.value as ReviewImplementationRating)}>
                 <option value="strong">Strong</option>
                 <option value="developing">Developing</option>
                 <option value="needs_support">Needs support</option>
               </select>
             </label>
             <label className="text-xs text-slate-500">Overall status
-              <select className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={overallStatus} onChange={(e) => setOverallStatus(e.target.value as ReviewOverallStatus)}>
+              <select className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={overallStatus} onChange={(event) => setOverallStatus(event.target.value as ReviewOverallStatus)}>
                 <option value="on_track">On track</option>
                 <option value="needs_attention">Needs attention</option>
                 <option value="intervention">Intervention</option>
               </select>
             </label>
             <label className="text-xs text-slate-500">Next review
-              <Input className="mt-1" type="date" value={nextReviewAt} onChange={(e) => setNextReviewAt(e.target.value)} />
+              <Input className="mt-1" type="date" value={nextReviewAt} onChange={(event) => setNextReviewAt(event.target.value)} />
             </label>
           </div>
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
@@ -126,8 +134,8 @@ export default function SchoolReviewsPanel({
             <MasterySelect label="Decoding" value={decoding} onChange={setDecoding} />
           </div>
           <div className="mt-3 grid gap-3 md:grid-cols-2">
-            <textarea className="min-h-24 rounded-md border border-slate-300 p-3 text-sm" placeholder="Review summary" value={summary} onChange={(e) => setSummary(e.target.value)} />
-            <textarea className="min-h-24 rounded-md border border-slate-300 p-3 text-sm" placeholder="Recommendation / next action" value={recommendation} onChange={(e) => setRecommendation(e.target.value)} />
+            <textarea className="min-h-24 rounded-md border border-slate-300 p-3 text-sm" placeholder="Review summary" value={summary} onChange={(event) => setSummary(event.target.value)} />
+            <textarea className="min-h-24 rounded-md border border-slate-300 p-3 text-sm" placeholder="Recommendation / next action" value={recommendation} onChange={(event) => setRecommendation(event.target.value)} />
           </div>
           <Button className="mt-3" type="button" disabled={saving || !summary.trim() || !recommendation.trim()} onClick={() => void submit()}>
             {saving ? 'Recording…' : 'Record review'}
@@ -150,17 +158,18 @@ export default function SchoolReviewsPanel({
                     </p>
                     <p className="text-xs text-slate-500">{dateText(review.reviewedAt)} · {review.reviewedByName}</p>
                   </div>
-                  <Badge variant="outline">{review.overallStatus.replaceAll('_', ' ')}</Badge>
+                  <Badge variant="outline">{review.overallStatus.split('_').join(' ')}</Badge>
                 </div>
                 <p className="mt-3 text-sm text-slate-700">{review.summary}</p>
                 <div className="mt-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
                   <span className="font-semibold">Recommendation:</span> {review.recommendation}
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
-                  <span>Implementation: {review.implementationRating.replaceAll('_', ' ')}</span>
+                  <span>Implementation: {review.implementationRating.split('_').join(' ')}</span>
                   {review.blending && <span>• Blending: {review.blending}</span>}
                   {review.segmenting && <span>• Segmenting: {review.segmenting}</span>}
                   {review.decoding && <span>• Decoding: {review.decoding}</span>}
+                  {review.nextReviewAt && <span>• Next review: {dateText(review.nextReviewAt)}</span>}
                 </div>
               </article>
             ))}
@@ -182,7 +191,7 @@ function MasterySelect({
 }) {
   return (
     <label className="text-xs text-slate-500">{label}
-      <select className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={value} onChange={(e) => onChange(e.target.value as ReviewMastery | '')}>
+      <select className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={value} onChange={(event) => onChange(event.target.value as ReviewMastery | '')}>
         <option value="">Not rated</option>
         <option value="emerging">Emerging</option>
         <option value="developing">Developing</option>
