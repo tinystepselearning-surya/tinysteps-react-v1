@@ -107,7 +107,7 @@ async function requireSection(
 }
 
 export const schoolUpdateCurriculumProgress = onCall(
-  { region: REGION, memory: '256MiB', timeoutSeconds: 60 },
+  { region: REGION, memory: '256MiB', timeoutSeconds: 60, invoker: 'public', labels: { 'school-public-invoker': 'true' } },
   async (request) => {
     const schoolId = required(request.data?.schoolId, 'schoolId');
     const academicYearId = required(request.data?.academicYearId, 'academicYearId');
@@ -218,7 +218,7 @@ export const schoolUpdateCurriculumProgress = onCall(
 );
 
 export const schoolUpdateTeacherTraining = onCall(
-  { region: REGION, memory: '256MiB', timeoutSeconds: 60 },
+  { region: REGION, memory: '256MiB', timeoutSeconds: 60, invoker: 'public', labels: { 'school-public-invoker': 'true' } },
   async (request) => {
     const schoolId = required(request.data?.schoolId, 'schoolId');
     const academicYearId = required(request.data?.academicYearId, 'academicYearId');

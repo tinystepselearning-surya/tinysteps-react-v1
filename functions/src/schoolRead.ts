@@ -127,7 +127,7 @@ function rows(
 }
 
 export const schoolGetProgrammeSnapshot = onCall(
-  { region: REGION, memory: '512MiB', timeoutSeconds: 60 },
+  { region: REGION, memory: '512MiB', timeoutSeconds: 60, invoker: 'public', labels: { 'school-public-invoker': 'true' } },
   async (request) => {
     const schoolId = requiredString(request.data?.schoolId, 'schoolId');
     const preferredAcademicYearId = optionalString(

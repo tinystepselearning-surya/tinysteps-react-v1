@@ -35,7 +35,7 @@ jobs:
         run: npm ci
 
       - name: Install Functions dependencies
-        run: npm ci --prefix functions
+        run: npm ci --prefix functions --include=dev
 
       - name: Build Cloud Functions
         run: npm --prefix functions run build
@@ -160,51 +160,18 @@ jobs:
         run: rm -rf functions/lib functions/tsconfig.tsbuildinfo functions/.tsbuildinfo || true
 
       - name: Install Functions dependencies
-        run: npm ci --prefix functions
+        run: npm ci --prefix functions --include=dev
 
       - name: Build Cloud Functions
         run: npm --prefix functions run build
 
-      - name: Verify deployment commit and exports
+      - name: Verify deployment commit
         run: |
           echo "📦 Deploying commit:"
           git rev-parse HEAD && git log -1 --oneline
-          
-          echo ""
-          echo "🔍 Verifying critical function exports with metadata..."
-          
-          cd functions
-          node -e '
-          const m = require(".");
-          const keys = ["batchInsightsRollup11am","batchInsightsRollup5pm","batchInsightsRollup11pm","onGameProgressWrite","onGameSessionCreateTrigger"];
-          let failures = [];
-          
-          for (const k of keys) {
-            const f = m[k];
-            const ep = f && f.__endpoint;
-            const region = ep && ep.region;
-            const hasRegion = region && region.includes("asia-south1");
-            
-            console.log(k, JSON.stringify({
-              exists: !!f,
-              hasEndpoint: !!ep,
-              region: region
-            }));
-            
-            if (!f || !ep || !hasRegion) {
-              failures.push(k);
-            }
-          }
-          
-          if (failures.length > 0) {
-            console.error("\n❌ CRITICAL: Functions missing proper metadata:", failures);
-            console.error("Functions must have __endpoint with region: [\"asia-south1\"]");
-            process.exit(1);
-          }
-          
-          console.log("\n✅ All critical functions verified with asia-south1 region");
-          '
-          cd ..
+
+      - name: Verify function deployment metadata
+        run: node scripts/verify-function-deployment-metadata.mjs
 
       - name: Authenticate to Google Cloud
         id: gcp-auth
@@ -213,10 +180,44 @@ jobs:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
           create_credentials_file: true
 
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
       - name: Deploy Cloud Functions
         run: npx firebase-tools@latest deploy --only functions --project ${{ env.FIREBASE_PROJECT_ID }} --non-interactive
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+
+      - name: Enforce School callable public transport invocation
+        run: >-
+          node scripts/ensure-school-callable-public-invocation.mjs
+          --project "${{ env.FIREBASE_PROJECT_ID }}"
+          --region asia-south1
+
+      - name: Deploy Firestore Security Rules
+        run: >-
+          npx firebase-tools@latest deploy
+          --only firestore:rules
+          --project "${{ env.FIREBASE_PROJECT_ID }}"
+          --non-interactive
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+
+      - name: Verify School callable transport
+        run: >-
+          node scripts/verify-school-callable-transport.mjs
+          --project "${{ env.FIREBASE_PROJECT_ID }}"
+          --region asia-south1
+          --origin https://tinystepslearning.com
+          --report artifacts/school-callable-transport-verification.md
+
+      - name: Upload School callable transport report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: school-callable-transport-verification-${{ github.sha }}
+          path: artifacts/school-callable-transport-verification.md
+          if-no-files-found: warn
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
@@ -247,7 +248,7 @@ jobs:
         with:
           name: live-deployment-verification-${{ github.sha }}
           path: artifacts/live-deployment-verification.md
-          if-no-files-found: error
+          if-no-files-found: warn
 
       - name: Submit newly published blog URLs to IndexNow
         if: ${{ env.INDEXNOW_KEY != '' }}

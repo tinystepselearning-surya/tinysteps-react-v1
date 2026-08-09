@@ -231,6 +231,8 @@ export const adminCreateSchool = onCall(
     region: REGION,
     memory: '256MiB',
     timeoutSeconds: 60,
+    invoker: 'public',
+    labels: { 'school-public-invoker': 'true' },
   },
   async (request) => {
     await ensureCurrentActiveAdmin(request.auth);
@@ -404,6 +406,8 @@ export const adminUpdateSchool = onCall(
     region: REGION,
     memory: '256MiB',
     timeoutSeconds: 60,
+    invoker: 'public',
+    labels: { 'school-public-invoker': 'true' },
   },
   async (request) => {
     await ensureCurrentActiveAdmin(request.auth);
@@ -488,6 +492,8 @@ export const adminAssignSchoolLearningPartner = onCall(
     region: REGION,
     memory: '256MiB',
     timeoutSeconds: 60,
+    invoker: 'public',
+    labels: { 'school-public-invoker': 'true' },
   },
   async (request) => {
     await ensureCurrentActiveAdmin(request.auth);
@@ -595,6 +601,8 @@ export const adminLinkSchoolUser = onCall(
     region: REGION,
     memory: '256MiB',
     timeoutSeconds: 60,
+    invoker: 'public',
+    labels: { 'school-public-invoker': 'true' },
   },
   async (request) => {
     await ensureCurrentActiveAdmin(request.auth);
@@ -669,6 +677,8 @@ export const adminUnlinkSchoolUser = onCall(
     region: REGION,
     memory: '256MiB',
     timeoutSeconds: 60,
+    invoker: 'public',
+    labels: { 'school-public-invoker': 'true' },
   },
   async (request) => {
     await ensureCurrentActiveAdmin(request.auth);
