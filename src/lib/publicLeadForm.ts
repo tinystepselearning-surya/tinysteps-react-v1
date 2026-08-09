@@ -57,6 +57,23 @@ export type PublicLeadAttribution = {
   acquisitionLabel?: string;
 };
 
+export type PublicLeadAttributionEnrichment = {
+  landingPage: string;
+  conversionPage: string;
+  submittedFromUrl?: string;
+  firstSeenAt?: string;
+  referrer?: string;
+  referrerDomain?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_content?: string;
+  utm_term?: string;
+  gclid?: string;
+  fbclid?: string;
+  msclkid?: string;
+};
+
 const INTEREST_TRACK_BY_OPTION: Partial<Record<InterestOption, 'phonics' | 'grammar' | 'public_speaking'>> = {
   Phonics: 'phonics',
   Grammar: 'grammar',
@@ -119,6 +136,27 @@ export function getPublicLeadAttribution(): PublicLeadAttribution {
   };
 }
 
+export function buildLeadAttributionEnrichment(
+  attribution: PublicLeadAttribution,
+): PublicLeadAttributionEnrichment {
+  return {
+    landingPage: attribution.landingPage || attribution.sourcePath || '/',
+    conversionPage: attribution.submittedFromPath || attribution.sourcePath || '/',
+    submittedFromUrl: attribution.submittedFromUrl,
+    firstSeenAt: attribution.firstSeenAt,
+    referrer: attribution.referrer,
+    referrerDomain: attribution.referrerDomain,
+    utm_source: attribution.utm_source,
+    utm_medium: attribution.utm_medium,
+    utm_campaign: attribution.utm_campaign,
+    utm_content: attribution.utm_content,
+    utm_term: attribution.utm_term,
+    gclid: attribution.gclid,
+    fbclid: attribution.fbclid,
+    msclkid: attribution.msclkid,
+  };
+}
+
 export function buildPublicLeadPayload(
   form: PublicAssessmentFormState,
   opts: {
@@ -132,26 +170,6 @@ export function buildPublicLeadPayload(
   const normalizedWhatsapp = form.whatsapp.trim();
   const derivedInterest = deriveInterestFromConcern(form.mainConcern);
 
-  const acquisition = attribution.acquisitionChannel
-    ? {
-        channel: attribution.acquisitionChannel,
-        source: attribution.acquisitionSource || attribution.acquisitionChannel,
-        label: attribution.acquisitionLabel || attribution.acquisitionChannel,
-      }
-    : classifyLeadAcquisition({
-        referrer: attribution.referrer,
-        referrerDomain: attribution.referrerDomain,
-        utmSource: attribution.utm_source,
-        utmMedium: attribution.utm_medium,
-        utmCampaign: attribution.utm_campaign,
-        gclid: attribution.gclid,
-        fbclid: attribution.fbclid,
-        msclkid: attribution.msclkid,
-      });
-
-  const landingPage = attribution.landingPage || attribution.sourcePath || '/';
-  const conversionPage = attribution.submittedFromPath || attribution.sourcePath || '/';
-
   return {
     parentName: form.parentName.trim(),
     whatsappNumber: normalizedWhatsapp,
@@ -163,32 +181,19 @@ export function buildPublicLeadPayload(
     programInterest: derivedInterest,
     source: 'website',
     sourceDetail: opts.source || 'public_assessment_form',
-    acquisitionChannel: acquisition.channel,
-    acquisitionSource: acquisition.source,
-    landingPage,
-    conversionPage,
     urgency: form.urgency || null,
     initialMessageSnippet: null,
     mainConcern: form.mainConcern,
     timezone: opts.timezone || null,
     sourcePath: attribution.sourcePath,
+    // Keep the anonymous Firestore create schema intentionally narrow.
+    // Full first-touch attribution is written server-side after the lead is created.
     attribution: {
-      landingPage,
-      conversionPage,
-      submittedFromUrl: attribution.submittedFromUrl || null,
-      firstSeenAt: attribution.firstSeenAt || null,
-      referrer: attribution.referrer || null,
-      referrerDomain: attribution.referrerDomain || null,
       utm_source: attribution.utm_source || null,
       utm_medium: attribution.utm_medium || null,
       utm_campaign: attribution.utm_campaign || null,
       utm_content: attribution.utm_content || null,
       utm_term: attribution.utm_term || null,
-      gclid: attribution.gclid || null,
-      fbclid: attribution.fbclid || null,
-      msclkid: attribution.msclkid || null,
-      acquisitionChannel: acquisition.channel,
-      acquisitionSource: acquisition.source,
     },
   };
 }
