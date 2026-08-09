@@ -5,6 +5,12 @@ import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@components/ui/dialog';
+import {
   Table,
   TableBody,
   TableCell,
@@ -26,6 +32,7 @@ import type {
   SchoolRecord,
   SchoolUserAccess,
 } from '../../../types/School';
+import SchoolStructureWorkspace from '../../schools/SchoolStructureWorkspace';
 import SchoolAccessDialog from './SchoolAccessDialog';
 import SchoolFormDialog, {
   type SchoolFormSubmitPayload,
@@ -49,6 +56,7 @@ export default function SchoolManagement() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editingSchool, setEditingSchool] = useState<SchoolRecord | null>(null);
   const [accessSchool, setAccessSchool] = useState<SchoolRecord | null>(null);
+  const [structureSchool, setStructureSchool] = useState<SchoolRecord | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -64,6 +72,11 @@ export default function SchoolManagement() {
       setMemberships(nextMemberships);
       setDirectoryUsers(nextDirectoryUsers);
       setAccessSchool((current) =>
+        current
+          ? nextSchools.find((school) => school.id === current.id) || null
+          : null,
+      );
+      setStructureSchool((current) =>
         current
           ? nextSchools.find((school) => school.id === current.id) || null
           : null,
@@ -155,7 +168,7 @@ export default function SchoolManagement() {
             <h1 className="text-2xl font-bold text-slate-900">School Partnerships</h1>
           </div>
           <p className="mt-1 text-sm text-slate-500">
-            Manage partner school identity, access, and Learning Partner ownership.
+            Manage partner schools, tenant access, Learning Partner ownership, and academic structure.
           </p>
         </div>
         <Button
@@ -191,7 +204,7 @@ export default function SchoolManagement() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <Table className="min-w-[1100px]">
+            <Table className="min-w-[1180px]">
               <TableHeader>
                 <TableRow>
                   <TableHead>School</TableHead>
@@ -231,30 +244,20 @@ export default function SchoolManagement() {
                         <p className="text-slate-800">{location || 'Not provided'}</p>
                         <p className="text-xs text-slate-500">{school.location.country}</p>
                       </TableCell>
-                      <TableCell>
-                        {school.learningPartnerName || 'Not assigned'}
-                      </TableCell>
+                      <TableCell>{school.learningPartnerName || 'Not assigned'}</TableCell>
                       <TableCell>{adminCount}</TableCell>
                       <TableCell>
-                        <Badge variant={statusVariant(school.status)}>
-                          {school.status}
-                        </Badge>
+                        <Badge variant={statusVariant(school.status)}>{school.status}</Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex justify-end gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setEditingSchool(school)}
-                          >
+                          <Button type="button" size="sm" variant="outline" onClick={() => setEditingSchool(school)}>
                             Edit
                           </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={() => setAccessSchool(school)}
-                          >
+                          <Button type="button" size="sm" variant="outline" onClick={() => setStructureSchool(school)}>
+                            Structure
+                          </Button>
+                          <Button type="button" size="sm" onClick={() => setAccessSchool(school)}>
                             Manage Access
                           </Button>
                         </div>
@@ -298,6 +301,15 @@ export default function SchoolManagement() {
         memberships={memberships}
         onChanged={refresh}
       />
+
+      <Dialog open={Boolean(structureSchool)} onOpenChange={(open) => !open && setStructureSchool(null)}>
+        <DialogContent className="max-h-[92vh] max-w-6xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>School academic structure</DialogTitle>
+          </DialogHeader>
+          {structureSchool && <SchoolStructureWorkspace school={structureSchool} canEdit />}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
