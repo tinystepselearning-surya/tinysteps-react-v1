@@ -112,26 +112,42 @@ async function resolveSection(
 
 function validateDistribution(
   input: unknown,
-  studentsAssessed: number,
-): Record<(typeof LEVEL_KEYS)[number], number> {
+  sectionStudentCount: number,
+): {
+  distribution: Record<(typeof LEVEL_KEYS)[number], number>;
+  studentsAssessed: number;
+  averageReadingLevel: number;
+} {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     throw new HttpsError('invalid-argument', 'levelDistribution is required');
   }
   const raw = input as Record<string, unknown>;
-  const output = {} as Record<(typeof LEVEL_KEYS)[number], number>;
-  let total = 0;
-  for (const key of LEVEL_KEYS) {
-    const count = integer(raw[key] ?? 0, `levelDistribution.${key}`, 0, studentsAssessed);
-    output[key] = count;
-    total += count;
+  const distribution = {} as Record<(typeof LEVEL_KEYS)[number], number>;
+  let studentsAssessed = 0;
+  let weightedLevelTotal = 0;
+
+  LEVEL_KEYS.forEach((key, level) => {
+    const count = integer(raw[key] ?? 0, `levelDistribution.${key}`, 0, sectionStudentCount);
+    distribution[key] = count;
+    studentsAssessed += count;
+    weightedLevelTotal += count * level;
+  });
+
+  if (studentsAssessed < 1) {
+    throw new HttpsError('invalid-argument', 'At least one child must be included in the benchmark');
   }
-  if (total !== studentsAssessed) {
+  if (studentsAssessed > sectionStudentCount) {
     throw new HttpsError(
       'invalid-argument',
-      `Reading-level distribution must total studentsAssessed (${studentsAssessed})`,
+      `Reading-level distribution cannot exceed the section count (${sectionStudentCount})`,
     );
   }
-  return output;
+
+  return {
+    distribution,
+    studentsAssessed,
+    averageReadingLevel: Math.round((weightedLevelTotal / studentsAssessed) * 100) / 100,
+  };
 }
 
 function validateDomainScores(input: unknown): Record<string, number | null> {
@@ -222,27 +238,34 @@ export const schoolRecordAssessmentSummary = onCall(
     if (sectionStudentCount < 1) {
       throw new HttpsError('failed-precondition', 'Section student count must be greater than zero before assessment');
     }
-    const studentsAssessed = integer(
-      request.data?.studentsAssessed,
-      'studentsAssessed',
-      1,
-      sectionStudentCount,
-    );
     const checkpoint = enumValue(
       request.data?.checkpoint,
       'checkpoint',
       ['baseline', 'checkpoint_1', 'mid', 'final', 'custom'] as const,
     );
-    const averageReadingLevel = boundedNumber(
-      request.data?.averageReadingLevel,
-      'averageReadingLevel',
-      0,
-      9,
-    );
-    const levelDistribution = validateDistribution(
+    const distributionResult = validateDistribution(
       request.data?.levelDistribution,
-      studentsAssessed,
+      sectionStudentCount,
     );
+    if (
+      request.data?.studentsAssessed !== undefined &&
+      Number(request.data.studentsAssessed) !== distributionResult.studentsAssessed
+    ) {
+      throw new HttpsError(
+        'invalid-argument',
+        'studentsAssessed must match the reading-level distribution total',
+      );
+    }
+    if (
+      request.data?.averageReadingLevel !== undefined &&
+      Math.abs(Number(request.data.averageReadingLevel) - distributionResult.averageReadingLevel) > 0.05
+    ) {
+      throw new HttpsError(
+        'invalid-argument',
+        'averageReadingLevel must match the reading-level distribution',
+      );
+    }
+
     const domainScores = validateDomainScores(request.data?.domainScores);
     const assessmentVersion =
       optional(request.data?.assessmentVersion, 80) || 'TSERB-1.0';
@@ -250,11 +273,14 @@ export const schoolRecordAssessmentSummary = onCall(
     const assessorName = String(
       manager.user.displayName || manager.user.name || manager.user.email || 'Tiny Steps',
     ).trim();
+    const coveragePercent = Math.round(
+      (distributionResult.studentsAssessed / sectionStudentCount) * 10000,
+    ) / 100;
 
     const now = admin.firestore.FieldValue.serverTimestamp();
     const ref = yearRef.collection('assessmentSummaries').doc();
     await ref.set({
-      schemaVersion: 1,
+      schemaVersion: 2,
       schoolId,
       academicYearId,
       sectionId,
@@ -263,10 +289,11 @@ export const schoolRecordAssessmentSummary = onCall(
       gradeLabel: String(section.gradeLabel || ''),
       sectionName: String(section.sectionName || sectionId),
       checkpoint,
-      studentsAssessed,
+      studentsAssessed: distributionResult.studentsAssessed,
       sectionStudentCountSnapshot: sectionStudentCount,
-      averageReadingLevel,
-      levelDistribution,
+      coveragePercent,
+      averageReadingLevel: distributionResult.averageReadingLevel,
+      levelDistribution: distributionResult.distribution,
       domainScores,
       assessmentVersion,
       notes,
@@ -284,7 +311,9 @@ export const schoolRecordAssessmentSummary = onCall(
       sectionId,
       assessmentId: ref.id,
       checkpoint,
-      studentsAssessed,
+      studentsAssessed: distributionResult.studentsAssessed,
+      averageReadingLevel: distributionResult.averageReadingLevel,
+      coveragePercent,
     };
   },
 );
