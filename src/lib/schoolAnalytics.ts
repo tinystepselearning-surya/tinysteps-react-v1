@@ -7,6 +7,8 @@ import type {
 } from '../types/SchoolProgramme';
 import type { SectionProgrammeHealth } from './schoolIntelligence';
 import {
+  PROGRAMME_HEALTH_MINIMUM_ASSESSMENT_COVERAGE_PERCENT,
+  assessmentCoveragePercent,
   latestAssessmentForSection,
   latestPostBaselineAssessmentForSection,
   timestampMillis,
@@ -41,6 +43,8 @@ export interface SchoolAnalyticsSummary {
   currentReadingLevel: number | null;
   readingLevelGrowth: number | null;
   matchedGrowthSections: number;
+  baselineEvidenceSections: number;
+  currentEvidenceSections: number;
   gradesSummary: GradeAnalytics[];
   domainProgress: DomainProgressMetric[];
 }
@@ -57,6 +61,15 @@ const weightedAverage = (
   return Math.round(
     (valid.reduce((sum, row) => sum + row.value * row.weight, 0) / totalWeight) * 100,
   ) / 100;
+};
+
+const hasMinimumCoverage = (assessment: AssessmentSummary | null | undefined): assessment is AssessmentSummary => {
+  if (!assessment) return false;
+  const coverage = assessmentCoveragePercent(assessment);
+  return (
+    coverage !== null &&
+    coverage >= PROGRAMME_HEALTH_MINIMUM_ASSESSMENT_COVERAGE_PERCENT
+  );
 };
 
 const baselineForSection = (
@@ -107,37 +120,47 @@ export function buildSchoolAnalytics(input: {
     ]),
   );
 
+  const eligibleBaselines = activeSections
+    .map((section) => baselineBySection.get(section.id))
+    .filter(hasMinimumCoverage);
+  const eligibleLatest = activeSections
+    .map((section) => latestBySection.get(section.id))
+    .filter(hasMinimumCoverage);
+
   const baselineReadingLevel = weightedAverage(
-    activeSections
-      .map((section) => baselineBySection.get(section.id))
-      .filter((item): item is AssessmentSummary => Boolean(item))
-      .map((item) => ({ value: item.averageReadingLevel, weight: item.studentsAssessed })),
+    eligibleBaselines.map((item) => ({
+      value: item.averageReadingLevel,
+      weight: item.studentsAssessed,
+    })),
   );
 
   const currentReadingLevel = weightedAverage(
-    activeSections
-      .map((section) => latestBySection.get(section.id))
-      .filter((item): item is AssessmentSummary => Boolean(item))
-      .map((item) => ({ value: item.averageReadingLevel, weight: item.studentsAssessed })),
+    eligibleLatest.map((item) => ({
+      value: item.averageReadingLevel,
+      weight: item.studentsAssessed,
+    })),
   );
 
-  const matchedGrowthRows = activeSections
-    .map((section) => {
-      const baseline = baselineBySection.get(section.id);
-      const current = postBaselineBySection.get(section.id);
-      if (!baseline || !current) return null;
-      return {
-        value: current.averageReadingLevel - baseline.averageReadingLevel,
-        weight: Math.min(baseline.studentsAssessed, current.studentsAssessed),
-      };
-    })
-    .filter((item): item is { value: number; weight: number } => Boolean(item));
+  const matchedAssessmentPairs = activeSections
+    .map((section) => ({
+      baseline: baselineBySection.get(section.id),
+      current: postBaselineBySection.get(section.id),
+    }))
+    .filter(
+      (pair): pair is { baseline: AssessmentSummary; current: AssessmentSummary } =>
+        hasMinimumCoverage(pair.baseline) && hasMinimumCoverage(pair.current),
+    );
+
+  const matchedGrowthRows = matchedAssessmentPairs.map((pair) => ({
+    value: pair.current.averageReadingLevel - pair.baseline.averageReadingLevel,
+    weight: Math.min(pair.baseline.studentsAssessed, pair.current.studentsAssessed),
+  }));
 
   const gradesSummary = activeGrades.map((grade: SchoolGrade) => {
     const sections = activeSections.filter((section: SchoolSection) => section.gradeId === grade.id);
     const assessments = sections
       .map((section) => latestBySection.get(section.id))
-      .filter((item): item is AssessmentSummary => Boolean(item));
+      .filter(hasMinimumCoverage);
     return {
       gradeId: grade.id,
       gradeLabel: grade.label,
@@ -148,16 +171,6 @@ export function buildSchoolAnalytics(input: {
       ),
     };
   });
-
-  const matchedAssessmentPairs = activeSections
-    .map((section) => ({
-      baseline: baselineBySection.get(section.id),
-      current: postBaselineBySection.get(section.id),
-    }))
-    .filter(
-      (pair): pair is { baseline: AssessmentSummary; current: AssessmentSummary } =>
-        Boolean(pair.baseline && pair.current),
-    );
 
   const domainKeys = Object.keys(DOMAIN_LABELS) as Array<keyof ReadingDomainScores>;
   const domainProgress = domainKeys.map((key) => {
@@ -201,6 +214,8 @@ export function buildSchoolAnalytics(input: {
     currentReadingLevel,
     readingLevelGrowth: weightedAverage(matchedGrowthRows),
     matchedGrowthSections: matchedGrowthRows.length,
+    baselineEvidenceSections: eligibleBaselines.length,
+    currentEvidenceSections: eligibleLatest.length,
     gradesSummary,
     domainProgress,
   };
@@ -224,6 +239,9 @@ export function buildSchoolSummaryCsv(input: {
     ['Sections On Track', String(input.analytics.onTrack)],
     ['Needs Support', String(input.analytics.needsSupport)],
     ['Intervention', String(input.analytics.intervention)],
+    ['Insufficient Data', String(input.analytics.insufficientData)],
+    ['Baseline Evidence Sections', String(input.analytics.baselineEvidenceSections)],
+    ['Current Evidence Sections', String(input.analytics.currentEvidenceSections)],
     ['Baseline TS Level', input.analytics.baselineReadingLevel?.toFixed(2) || ''],
     ['Current TS Level', input.analytics.currentReadingLevel?.toFixed(2) || ''],
     ['Matched Growth', input.analytics.readingLevelGrowth?.toFixed(2) || ''],
