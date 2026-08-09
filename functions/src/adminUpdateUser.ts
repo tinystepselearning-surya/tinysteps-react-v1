@@ -2,6 +2,11 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { ensureAdmin } from './helpers/adminGuard';
+import {
+  applyRoleMirrorTransition,
+  buildRoleClaims,
+  normalizeRole,
+} from './helpers/roles';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -17,19 +22,8 @@ const USER_ID_UNAVAILABLE_MESSAGE =
 const PHONE_ALREADY_IN_USE_MESSAGE =
   'This phone number is already in use. Please use a different phone number.';
 
-const VALID_ROLES = [
-  'admin',
-  'teacher',
-  'parent',
-  'kid',
-  'learningPartner',
-  'learning-partner',
-] as const;
-
 const VALID_STATUS = ['active', 'suspended', 'archived'] as const;
 
-type RawRole = (typeof VALID_ROLES)[number];
-type CanonicalRole = 'admin' | 'teacher' | 'parent' | 'kid' | 'learning-partner';
 type UserStatus = (typeof VALID_STATUS)[number];
 
 interface AdminUpdateUserRequest {
@@ -37,13 +31,8 @@ interface AdminUpdateUserRequest {
   displayName: string;
   email: string;
   phone?: string | null;
-  role: RawRole;
+  role: string;
   status: UserStatus;
-}
-
-function normalizeRole(role: RawRole): CanonicalRole {
-  if (role === 'learningPartner') return 'learning-partner';
-  return role;
 }
 
 function normalizeEmail(email: string): string {
@@ -79,10 +68,13 @@ function validateRequest(data: AdminUpdateUserRequest) {
     throw new HttpsError('invalid-argument', 'Valid email is required');
   }
 
-  if (!data.role || !VALID_ROLES.includes(data.role)) {
+  const normalizedRole =
+    normalizeRole(data.role);
+
+  if (!normalizedRole) {
     throw new HttpsError(
       'invalid-argument',
-      `role must be one of: ${VALID_ROLES.join(', ')}`
+      'Invalid user role'
     );
   }
 
@@ -159,14 +151,6 @@ function validateClaimsSize(claims: Record<string, unknown>) {
   }
 }
 
-function toRoleCollection(role: CanonicalRole): string | null {
-  if (role === 'admin') return 'admins';
-  if (role === 'teacher') return 'teachers';
-  if (role === 'parent') return 'parents';
-  if (role === 'learning-partner') return 'learningPartners';
-  return null;
-}
-
 export const adminUpdateUser = onCall(
   { region: REGION, memory: '256MiB', timeoutSeconds: 60 },
   async (request) => {
@@ -178,8 +162,8 @@ export const adminUpdateUser = onCall(
     const uid = payload.uid.trim();
     const displayName = payload.displayName.trim();
     const email = normalizeEmail(payload.email);
-    const role = normalizeRole(payload.role);
-    const rawRole = payload.role;
+    const role = normalizeRole(payload.role)!;
+    const rawRole = role;
     const status = payload.status;
     const phone = typeof payload.phone === 'string' ? payload.phone.trim() : '';
     const phoneKey = normalizePhone(phone);
@@ -200,18 +184,18 @@ export const adminUpdateUser = onCall(
     await assertAuthEmailAvailable(uid, email);
 
     const beforeData = beforeSnap.data() || {};
-    const beforeRoleRaw = typeof beforeData.rawRole === 'string'
-      ? beforeData.rawRole
-      : (typeof beforeData.role === 'string' ? beforeData.role : null);
-    const beforeRole = beforeRoleRaw === 'learningPartner'
-      ? 'learning-partner'
-      : (beforeRoleRaw as CanonicalRole | null);
+    const beforeRole =
+      normalizeRole(
+        beforeData.role ??
+        beforeData.rawRole,
+      );
 
     // Keep Auth profile in sync so login identity and display name update immediately.
     try {
       await admin.auth().updateUser(uid, {
         email,
         displayName,
+        disabled: status !== 'active',
       });
     } catch (err: any) {
       if (err?.code === 'auth/email-already-exists') {
@@ -235,55 +219,46 @@ export const adminUpdateUser = onCall(
       email,
       phone: phone || null,
       role,
-      rawRole,
+      rawRole: role,
       roles: [role],
       status,
       updatedAt: ts,
       updatedBy: request.auth?.uid || null,
     }, { merge: true });
 
-    const nextRoleCollection = toRoleCollection(role);
-    if (nextRoleCollection) {
-      batch.set(db.collection(nextRoleCollection).doc(uid), {
-        userId: uid,
+    applyRoleMirrorTransition({
+      db,
+      batch,
+      uid,
+      previousRole: beforeRole,
+      nextRole: role,
+      profile: {
         email,
         displayName,
         phone: phone || null,
         status,
         updatedAt: ts,
         updatedBy: request.auth?.uid || null,
-      }, { merge: true });
-    }
-
-    const prevRoleCollection =
-      beforeRole === 'admin' ||
-      beforeRole === 'teacher' ||
-      beforeRole === 'parent' ||
-      beforeRole === 'learning-partner'
-        ? toRoleCollection(beforeRole)
-        : null;
-
-    if (prevRoleCollection && nextRoleCollection && prevRoleCollection !== nextRoleCollection) {
-      batch.delete(db.collection(prevRoleCollection).doc(uid));
-    }
+      },
+    });
 
     await batch.commit();
 
     try {
-      const authUser = await admin.auth().getUser(uid);
-      const existingClaims = authUser.customClaims || {};
-      const claims: Record<string, unknown> = { ...existingClaims };
+      const authUser =
+        await admin.auth().getUser(uid);
 
-      const roleFlags = ['admin', 'teacher', 'parent', 'kid', 'learning-partner', 'learningPartner'];
-      for (const roleFlag of roleFlags) {
-        delete claims[roleFlag];
-      }
-      claims.role = role;
-      claims.rawRole = rawRole;
-      claims[role] = true;
-      if (rawRole !== role) claims[rawRole] = true;
+      const claims = buildRoleClaims(
+        authUser.customClaims || {},
+        role,
+      );
+
       validateClaimsSize(claims);
-      await admin.auth().setCustomUserClaims(uid, claims);
+
+      await admin.auth().setCustomUserClaims(
+        uid,
+        claims,
+      );
     } catch (err) {
       logger.warn('adminUpdateUser: failed to refresh claims', { uid, error: String(err) });
     }

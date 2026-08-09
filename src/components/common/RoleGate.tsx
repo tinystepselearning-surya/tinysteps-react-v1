@@ -6,8 +6,12 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { isSuperUserEmail } from '../../constants/accessControl';
 import { useQuery } from '@tanstack/react-query';
 import { isNativeCapacitorRuntime } from '../../lib/nativeAuthDiagnostics';
+import {
+  normalizeAuthRole,
+  type AuthRole,
+} from '../../constants/roles';
 
-export type Role = 'admin' | 'teacher' | 'parent' | 'learningPartner' | 'kid';
+export type Role = AuthRole;
 
 interface RoleGateProps {
   allowedRoles: Role[];
@@ -47,12 +51,11 @@ const RoleGate: React.FC<RoleGateProps> = ({
       const snap = await getDoc(userRef);
       if (!snap.exists()) return null;
       const data = snap.data() as { role?: string };
-      const resolved = typeof data.role === 'string' ? data.role : null;
-      return resolved as Role | null;
+      return normalizeAuthRole(data.role);
     },
   });
 
-  const claimedRole = (user?.role as Role | null) ?? null;
+  const claimedRole = normalizeAuthRole(user?.role);
   const effectiveRole = latestRole ?? claimedRole;
   const isAllowed = superUser || (!!effectiveRole && allowedRoles.includes(effectiveRole));
   const claimedRoleIsAllowed =

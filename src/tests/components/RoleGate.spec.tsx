@@ -164,4 +164,75 @@ describe('RoleGate authentication bootstrap', () => {
       expect.objectContaining({ decision: 'allow', roleQueryStatus: 'error' }),
     ]);
   });
+
+  it(
+    'normalizes the legacy Learning Partner Firestore role',
+    async () => {
+      getDocMock.mockResolvedValue({
+        exists: () => true,
+        data: () => ({
+          role: 'learning-partner',
+        }),
+      });
+
+      useAuthStore.setState({
+        user: {
+          uid: 'lp-1',
+          email: 'lp@example.com',
+          displayName: 'LP',
+          role: 'parent',
+        },
+        authStatus: 'authenticated',
+        isLoading: false,
+      });
+
+      const queryClient =
+        new QueryClient({
+          defaultOptions: {
+            queries: {
+              retry: false,
+            },
+          },
+        });
+
+      render(
+        <QueryClientProvider
+          client={queryClient}
+        >
+          <MemoryRouter
+            initialEntries={[
+              '/protected',
+            ]}
+          >
+            <Routes>
+              <Route
+                element={
+                  <RoleGate
+                    allowedRoles={[
+                      'learningPartner',
+                    ]}
+                  />
+                }
+              >
+                <Route
+                  path="/protected"
+                  element={
+                    <div>
+                      LP protected area
+                    </div>
+                  }
+                />
+              </Route>
+            </Routes>
+          </MemoryRouter>
+        </QueryClientProvider>,
+      );
+
+      expect(
+        await screen.findByText(
+          'LP protected area',
+        ),
+      ).toBeInTheDocument();
+    },
+  );
 });

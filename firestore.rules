@@ -17,9 +17,12 @@ service cloud.firestore {
       return exists(userDocPath(uid));
     }
 
-    // ✅ Safe role getter (only call after exists)
     function userRole(uid) {
-      return get(userDocPath(uid)).data.role.lower();
+      return
+        userDocExists(uid)
+        && get(userDocPath(uid)).data.role is string
+          ? get(userDocPath(uid)).data.role.lower()
+          : '';
     }
 
     function isAdmin() {
@@ -61,7 +64,30 @@ service cloud.firestore {
     }
 
     function isLPToken() {
-      return tokenRole() == 'learningpartner' || tokenRole() == 'learning-partner';
+      return
+        tokenRole() == 'learningpartner'
+        || tokenRole() == 'learning-partner';
+    }
+
+    function isSchoolAdminToken() {
+      return
+        tokenRole() == 'schooladmin'
+        || tokenRole() == 'school-admin';
+    }
+
+    function isSchoolAdmin() {
+      return isSignedIn() && (
+        isSchoolAdminToken()
+        || (
+          userDocExists(request.auth.uid)
+          && (
+            userRole(request.auth.uid)
+              == 'schooladmin'
+            || userRole(request.auth.uid)
+              == 'school-admin'
+          )
+        )
+      );
     }
 
     function isKidToken() {
@@ -105,15 +131,24 @@ service cloud.firestore {
       );
     }
 
-    function touchesAssignmentFields() {
-      return
-        ('assignedLPs' in request.resource.data) ||
-        ('assignedParents' in request.resource.data) ||
-        ('assignedTeachers' in request.resource.data);
-    }
+    function touchesProtectedUserFields() {
+      return request.resource.data
+        .diff(resource.data)
+        .affectedKeys()
+        .hasAny([
+          'role',
+          'rawRole',
+          'roles',
+          'permissions',
+          'superUser',
+          'status',
 
-    function touchesRoleField() {
-      return ('role' in request.resource.data) && (request.resource.data.role != resource.data.role);
+          'assignedLPs',
+          'assignedParents',
+          'assignedTeachers',
+          'assignedKids',
+          'childIds'
+        ]);
     }
 
     function messageThreadDocPath(threadId) {
@@ -330,15 +365,25 @@ function teacherOwnsDocViaAliases(data) {
     // USERS COLLECTION
     // ----------------------------
     match /users/{uid} {
-      allow read: if isSignedIn();
+      // Preserve the existing broad internal-user lookup behaviour
+      // temporarily, but external School Admin users can only read
+      // their own user document.
+      //
+      // Brick 1 introduces the dedicated school tenant collections.
+      allow read: if isSignedIn()
+        && (
+          !isSchoolAdmin()
+          || request.auth.uid == uid
+        );
 
-      allow create, delete: if isAdmin();
+      allow create, delete:
+        if isAdmin();
 
-      allow update: if isAdmin()
+      allow update:
+        if isAdmin()
         || (
           request.auth.uid == uid
-          && !touchesAssignmentFields()
-          && !touchesRoleField()
+          && !touchesProtectedUserFields()
         );
     }
 

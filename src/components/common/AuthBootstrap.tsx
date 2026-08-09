@@ -7,14 +7,7 @@ import useAuthStore, {
   type AuthUser,
 } from '../../store/useAuthStore';
 import { logFirebaseAuthKeyPresence } from '../../lib/nativeAuthDiagnostics';
-
-const validRoles = new Set<AuthRole>([
-  'admin',
-  'teacher',
-  'parent',
-  'kid',
-  'learningPartner',
-]);
+import { normalizeAuthRole } from '../../constants/roles';
 
 const logBootstrap = (event: string) => {
   console.info(`[auth-bootstrap] ${event}`);
@@ -91,9 +84,10 @@ export default function AuthBootstrap() {
         let role: AuthRole = 'kid';
         try {
           const tokenResult = await firebaseUser.getIdTokenResult();
-          const claimedRole = tokenResult.claims.role;
-          if (typeof claimedRole === 'string' && validRoles.has(claimedRole as AuthRole)) {
-            role = claimedRole as AuthRole;
+          const normalizedRole = normalizeAuthRole(tokenResult.claims.role);
+
+          if (normalizedRole) {
+            role = normalizedRole;
           }
         } catch (error) {
           const code =

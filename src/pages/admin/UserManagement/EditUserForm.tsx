@@ -11,12 +11,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@components/ui/form';
 import { toast } from '@components/hooks/use-toast';
 import { User } from '../../../types/User';
+import {
+  AUTH_ROLES,
+  normalizeAuthRole,
+} from '../../../constants/roles';
 
 const editUserSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   phone: z.string().optional(),
-  role: z.enum(['admin', 'teacher', 'parent', 'learningPartner', 'kid']),
+  role: z.enum(AUTH_ROLES),
   status: z.enum(['active', 'suspended', 'archived']),
 });
 
@@ -28,13 +32,10 @@ interface EditUserFormProps {
   onCancel: () => void;
 }
 
-const normalizeRoleForForm = (role: string): EditUserFormData['role'] => {
-  if (role === 'learning-partner') return 'learningPartner';
-  if (role === 'admin' || role === 'teacher' || role === 'parent' || role === 'learningPartner' || role === 'kid') {
-    return role;
-  }
-  return 'parent';
-};
+const normalizeRoleForForm = (
+  role: string,
+): EditUserFormData['role'] =>
+  normalizeAuthRole(role) ?? 'parent';
 
 export function EditUserForm({ user, onUserUpdated, onCancel }: EditUserFormProps) {
   const form = useForm<EditUserFormData>({
@@ -173,6 +174,7 @@ export function EditUserForm({ user, onUserUpdated, onCancel }: EditUserFormProp
                         <SelectItem value="teacher">Teacher</SelectItem>
                         <SelectItem value="parent">Parent</SelectItem>
                         <SelectItem value="learningPartner">Learning Partner</SelectItem>
+                        <SelectItem value="schoolAdmin">School Admin</SelectItem>
                         <SelectItem value="kid">Kid</SelectItem>
                       </SelectContent>
                     </Select>

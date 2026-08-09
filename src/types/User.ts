@@ -1,4 +1,5 @@
 import { Timestamp } from 'firebase/firestore';
+import type { AuthRole } from '../constants/roles';
 
 // TypeScript interface for the `users` collection
 export interface User {
@@ -13,7 +14,7 @@ export interface User {
   mobile?: string; // Legacy optional mobile field
   contactNumber?: string; // Legacy optional contact number field
   countryCode?: string; // Legacy optional country code field
-  role: 'admin' | 'teacher' | 'parent' | 'learningPartner' | 'kid'; // User role
+  role: AuthRole; // User role
   status: 'active' | 'suspended' | 'archived'; // User status
   childIds?: string[]; // Array of kid IDs (for parents)
   assignedKids?: string[]; // Array of kid IDs (for teachers/LPs)

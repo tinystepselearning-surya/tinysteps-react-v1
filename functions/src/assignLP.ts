@@ -2,15 +2,15 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { ensureAdmin } from './helpers/adminGuard';
+import {
+  applyRoleMirrorTransition,
+  buildRoleClaims,
+  normalizeRole,
+} from './helpers/roles';
 
 if (!admin.apps.length) {
   admin.initializeApp();
 }
-
-/**
- * Canonical roles used across Tiny Steps
- */
-type CanonicalRole = 'parent' | 'teacher' | 'learning-partner';
 
 /**
  * Fetch and validate a user document
@@ -27,18 +27,6 @@ async function getUser(uid: string) {
     logger.error('getUser failed', { uid, error: String(err) });
     throw new HttpsError('internal', 'Failed to fetch user');
   }
-}
-
-/**
- * Normalize role values (legacy → canonical)
- */
-function normalizeRole(role?: string): CanonicalRole | null {
-  if (!role) return null;
-  if (role === 'learningPartner') return 'learning-partner';
-  if (role === 'learning-partner' || role === 'parent' || role === 'teacher') {
-    return role;
-  }
-  return null;
 }
 
 /**
@@ -105,7 +93,7 @@ export const assignLPToParent = onCall(
       throw new HttpsError('invalid-argument', 'parentId must be a parent');
     }
 
-    if (normalizeRole(lp.role) !== 'learning-partner') {
+    if (normalizeRole(lp.role) !== 'learningPartner') {
       throw new HttpsError(
         'invalid-argument',
         'lpId must be a learning partner'
@@ -179,7 +167,7 @@ export const assignLPToTeacher = onCall(
       throw new HttpsError('invalid-argument', 'teacherId must be a teacher');
     }
 
-    if (normalizeRole(lp.role) !== 'learning-partner') {
+    if (normalizeRole(lp.role) !== 'learningPartner') {
       throw new HttpsError(
         'invalid-argument',
         'lpId must be a learning partner'
@@ -228,38 +216,146 @@ export const unassignLPFromTeacher = onCall(
 /* -------------------- ADMIN SET USER ROLE -------------------------- */
 /* ------------------------------------------------------------------ */
 
-export const adminSetUserRole = onCall({ region: 'asia-south1' }, async (request) => {
-  const { uid, role } = request.data;
-  const callerUid = request.auth?.uid;
+export const adminSetUserRole = onCall(
+  { region: 'asia-south1' },
+  async (request) => {
+    await ensureAdmin(request.auth);
 
-  if (!callerUid) {
-    throw new HttpsError('unauthenticated', 'You must be signed in.');
-  }
+    const uid =
+      typeof request.data?.uid === 'string'
+        ? request.data.uid.trim()
+        : '';
 
-  // Ensure caller is an admin
-  const callerSnap = await admin.firestore().collection('users').doc(callerUid).get();
-  const callerData = callerSnap.data();
-  const isAdmin = callerData?.role === 'admin' || callerData?.superUser === true;
+    const role =
+      normalizeRole(request.data?.role);
 
-  if (!isAdmin) {
-    throw new HttpsError('permission-denied', 'Only admins can set user roles.');
-  }
+    if (!uid) {
+      throw new HttpsError(
+        'invalid-argument',
+        'uid is required',
+      );
+    }
 
-  // Validate role
-  const validRoles = ['parent', 'kid', 'teacher', 'rm', 'admin'];
-  if (!validRoles.includes(role)) {
-    throw new HttpsError('invalid-argument', `Invalid role: ${role}`);
-  }
+    if (!role) {
+      throw new HttpsError(
+        'invalid-argument',
+        'Invalid role',
+      );
+    }
 
-  // Update user role
-  await admin.firestore().collection('users').doc(uid).set(
-    {
+    const db = admin.firestore();
+    const userRef =
+      db.collection('users').doc(uid);
+
+    const userSnap =
+      await userRef.get();
+
+    if (!userSnap.exists) {
+      throw new HttpsError(
+        'not-found',
+        'User not found',
+      );
+    }
+
+    const before =
+      userSnap.data() || {};
+
+    const previousRole =
+      normalizeRole(
+        before.role ??
+        before.rawRole,
+      );
+
+    const displayName =
+      String(
+        before.displayName ||
+        before.name ||
+        '',
+      ).trim() || 'User';
+
+    const email =
+      String(before.email || '')
+        .trim()
+        .toLowerCase();
+
+    const phone =
+      typeof before.phone === 'string'
+        ? before.phone
+        : null;
+
+    const status =
+      typeof before.status === 'string'
+        ? before.status
+        : 'active';
+
+    const ts =
+      admin.firestore.FieldValue
+        .serverTimestamp();
+
+    const batch = db.batch();
+
+    batch.set(
+      userRef,
+      {
+        role,
+        rawRole: role,
+        roles: [role],
+        updatedAt: ts,
+        updatedBy:
+          request.auth?.uid || null,
+      },
+      { merge: true },
+    );
+
+    applyRoleMirrorTransition({
+      db,
+      batch,
+      uid,
+      previousRole,
+      nextRole: role,
+      profile: {
+        email,
+        displayName,
+        phone,
+        status,
+        updatedAt: ts,
+        updatedBy:
+          request.auth?.uid || null,
+      },
+    });
+
+    await batch.commit();
+
+    const authUser =
+      await admin.auth().getUser(uid);
+
+    const claims =
+      buildRoleClaims(
+        authUser.customClaims || {},
+        role,
+      );
+
+    await admin.auth()
+      .setCustomUserClaims(
+        uid,
+        claims,
+      );
+
+    logger.info(
+      'Admin changed user role',
+      {
+        adminUid:
+          request.auth?.uid,
+        uid,
+        previousRole,
+        nextRole: role,
+      },
+    );
+
+    return {
+      ok: true,
+      uid,
       role,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedBy: callerUid,
-    },
-    { merge: true }
-  );
-
-  return { ok: true };
-});
+    };
+  },
+);

@@ -9,26 +9,15 @@ import {
 } from '../lib/auth';
 import { hapticSuccess, hapticWarning } from '../lib/nativeHaptics';
 import { getPendingPushOpenRoute } from '../lib/pushNavigationState';
-import type { AuthRole } from '../store/useAuthStore';
+import {
+  AUTH_ROLES,
+  ROLE_LABELS,
+  normalizeAuthRole,
+  type AuthRole,
+} from '../constants/roles';
 import TinyStepsBrand from '../components/common/TinyStepsBrand';
 import { Mail, Lock } from 'lucide-react';
 import useNativeIOSKeyboard from '../hooks/useNativeIOSKeyboard';
-
-const VALID_ROLES: AuthRole[] = [
-  'admin',
-  'teacher',
-  'parent',
-  'kid',
-  'learningPartner',
-];
-
-const ROLE_LABELS: Record<AuthRole, string> = {
-  admin: 'Administrator',
-  teacher: 'Teacher',
-  parent: 'Parent',
-  kid: 'Kid',
-  learningPartner: 'Learning Partner',
-};
 
 const LOGIN_FLOW_TIMEOUT_MS = 45_000;
 const LOGIN_TIMEOUT_MESSAGE =
@@ -102,6 +91,7 @@ export default function LoginPage() {
     parent: 'parent',
     'learning-partner': 'learningPartner',
     learningpartner: 'learningPartner',
+    school: 'schoolAdmin',
     kid: 'kid',
   };
 
@@ -115,8 +105,8 @@ export default function LoginPage() {
     }
 
     // 2) Fallback to ?role= query param if valid
-    const qpRole = searchParams.get('role') as AuthRole | null;
-    if (qpRole && VALID_ROLES.includes(qpRole)) {
+    const qpRole = normalizeAuthRole(searchParams.get('role'));
+    if (qpRole && AUTH_ROLES.includes(qpRole)) {
       return qpRole;
     }
 

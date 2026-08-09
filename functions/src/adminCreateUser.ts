@@ -1,23 +1,19 @@
 /**
- * adminCreateUser.ts (Single-file, self-contained)
- *
- * Creates Auth user + role docs in Firestore + custom claims.
- * Only ADMIN can call.
- *
- * Roles:
- * - admin
- * - teacher
- * - parent
- * - learningPartner (alias)
- * - learning-partner (canonical)
- *
- * Canonical role stored in Firestore + claims: "learning-partner"
- * Raw role stored as provided: "learningPartner" | "learning-partner"
+ * Creates an Auth user, canonical user document, applicable role mirror,
+ * and canonical custom claims. Only Admin can call.
  */
 
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
+import { ensureAdmin } from "./helpers/adminGuard";
+import {
+  CANONICAL_ROLES,
+  buildRoleClaims,
+  getRoleMirrorCollection,
+  normalizeRole,
+  type CanonicalRole,
+} from "./helpers/roles";
 
 // Initialize Firebase Admin SDK once
 if (!admin.apps.length) admin.initializeApp();
@@ -25,17 +21,6 @@ if (!admin.apps.length) admin.initializeApp();
 // ---------- Constants ----------
 
 const REGION = "asia-south1";
-
-const VALID_ROLES = [
-  "admin",
-  "teacher",
-  "parent",
-  "learningPartner",
-  "learning-partner",
-] as const;
-
-type RawRole = (typeof VALID_ROLES)[number];
-type CanonicalRole = "admin" | "teacher" | "parent" | "learning-partner";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_REGEX = /^[\d\s\-\+\(\)]+$/;
@@ -57,7 +42,7 @@ interface AdminCreateUserRequest {
   phone?: string;
   phoneCountryCode?: string;
   phoneLocal?: string;
-  role: RawRole;
+  role: string;
 
   // Teacher fields
   qualification?: string;
@@ -90,7 +75,7 @@ interface AdminCreateUserResponse {
   email: string;
   displayName: string;
   role: CanonicalRole;
-  rawRole: RawRole;
+  rawRole: CanonicalRole;
   resetLinkSent: boolean;
   resetLink?: string | null;
   emailVerificationLink?: string | null;
@@ -106,14 +91,6 @@ interface AdminCreateUserErrorResponse {
 }
 
 // ---------- Helpers ----------
-
-function normalizeRole(role: RawRole): CanonicalRole {
-  if (role === "admin" || role === "teacher" || role === "parent") return role;
-  // Both map to canonical "learning-partner"
-  if (role === "learningPartner" || role === "learning-partner")
-    return "learning-partner";
-  throw new HttpsError("invalid-argument", `Unsupported role: ${role}`);
-}
 
 function normalizeEmailForUniqueness(email: string): string {
   return email.trim().toLowerCase();
@@ -206,10 +183,13 @@ function validateInput(data: AdminCreateUserRequest) {
     throw new HttpsError("invalid-argument", "displayName must be 2–100 chars");
   }
 
-  if (!data.role || !VALID_ROLES.includes(data.role)) {
+  const normalizedRole =
+    normalizeRole(data.role);
+
+  if (!normalizedRole) {
     throw new HttpsError(
       "invalid-argument",
-      `role must be one of: ${VALID_ROLES.join(", ")}`
+      `role must be one of: ${CANONICAL_ROLES.join(", ")}`
     );
   }
 
@@ -278,28 +258,6 @@ function validateInput(data: AdminCreateUserRequest) {
   }
 }
 
-/**
- * Admin-only guard:
- * - checks callable auth token claims first
- * - fallback to /users/{uid}.role === 'admin' or roles includes 'admin'
- */
-async function ensureAdmin(auth: any) {
-  if (!auth?.uid) throw new HttpsError("unauthenticated", "Authentication required");
-
-  const tokenIsAdmin = auth.token?.role === "admin" || auth.token?.admin === true;
-  if (tokenIsAdmin) return;
-
-  const callerUid = auth.uid;
-  const doc = await admin.firestore().collection("users").doc(callerUid).get();
-  if (!doc.exists) throw new HttpsError("permission-denied", "Admin access required");
-
-  const data = doc.data() || {};
-  const docIsAdmin =
-    data.role === "admin" || (Array.isArray(data.roles) && data.roles.includes("admin"));
-
-  if (!docIsAdmin) throw new HttpsError("permission-denied", "Admin access required");
-}
-
 // ---------- Core ----------
 
 export const adminCreateUser = onCall(
@@ -326,8 +284,8 @@ export const adminCreateUser = onCall(
       const phoneLocal = normalizePhoneLocal(data.phoneLocal || null) || "";
       const phoneFromParts = phoneCountryCode && phoneLocal ? `${phoneCountryCode}${phoneLocal}` : "";
       const phone = phoneFromParts || (typeof data.phone === "string" ? data.phone.trim() : "");
-      const rawRole = data.role;
-      const role = normalizeRole(rawRole);
+      const role = normalizeRole(data.role)!;
+      const rawRole = role;
       const status: UserStatus = data.status || DEFAULT_STATUS;
       const db = admin.firestore();
 
@@ -367,7 +325,7 @@ export const adminCreateUser = onCall(
         email,
         displayName,
         emailVerified: false,
-        disabled: false,
+        disabled: status !== "active",
       };
       if (data.password) createReq.password = data.password;
 
@@ -380,15 +338,16 @@ export const adminCreateUser = onCall(
 
       const baseUserDoc: any = {
         userId: user.uid,
+        uid: user.uid,
         email,
         displayName,
         name: displayName,
         phone: phone || null,
         phoneCountryCode: phoneCountryCode || null,
         phoneLocal: phoneLocal || null,
-        role,              // canonical
-        rawRole,           // requested
-        roles: [role],     // for easy rules / checks
+        role,
+        rawRole: role,
+        roles: [role],
         status,
         provider: "admin:create",
         permissions: [],
@@ -402,7 +361,9 @@ export const adminCreateUser = onCall(
       batch.set(db.collection("users").doc(user.uid), baseUserDoc, { merge: true });
 
       // role collections
-      if (role === "teacher") {
+      const roleMirrorCollection = getRoleMirrorCollection(role);
+
+      if (roleMirrorCollection === "teachers") {
         batch.set(db.collection("teachers").doc(user.uid), {
           userId: user.uid,
           email,
@@ -423,7 +384,7 @@ export const adminCreateUser = onCall(
         }, { merge: true });
       }
 
-      if (role === "parent") {
+      if (roleMirrorCollection === "parents") {
         batch.set(db.collection("parents").doc(user.uid), {
           userId: user.uid,
           email,
@@ -448,22 +409,11 @@ export const adminCreateUser = onCall(
           updatedBy: request.auth!.uid,
         }, { merge: true });
 
-        // Upsert RBAC doc in users/{uid}
-        batch.set(db.collection("users").doc(user.uid), {
-          role: "parent",
-          email,
-          displayName,
-          status: "active",
-          createdAt: ts,
-          updatedAt: ts,
-          updatedBy: request.auth!.uid,
-        }, { merge: true });
-
         // NOTE: students are NOT Auth users.
         // They will be created later under: /parents/{parentId}/students/{studentId}
       }
 
-      if (role === "learning-partner") {
+      if (roleMirrorCollection === "learningPartners") {
         batch.set(db.collection("learningPartners").doc(user.uid), {
           userId: user.uid,
           email,
@@ -491,7 +441,7 @@ export const adminCreateUser = onCall(
         }, { merge: true });
       }
 
-      if (role === "admin") {
+      if (roleMirrorCollection === "admins") {
         batch.set(db.collection("admins").doc(user.uid), {
           userId: user.uid,
           email,
@@ -527,17 +477,10 @@ export const adminCreateUser = onCall(
 
       // 4) Custom claims (merge, don’t overwrite)
       try {
-        const authUser = await admin.auth().getUser(user.uid);
-        const existingClaims = authUser.customClaims || {};
-
-        const claims: Record<string, any> = {
-          ...existingClaims,
-          role,          // canonical
-          rawRole,
-          [role]: true,  // flag
-        };
-
-        if (rawRole !== role) claims[rawRole] = true;
+        const claims = buildRoleClaims(
+          {},
+          role,
+        );
 
         validateClaimsSize(claims);
         await admin.auth().setCustomUserClaims(user.uid, claims);

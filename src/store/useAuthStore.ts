@@ -2,9 +2,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { isNativeCapacitorRuntime } from '../lib/nativeAuthDiagnostics';
+import type { AuthRole } from '../constants/roles';
 
-// Central role union – re-use everywhere
-export type AuthRole = 'admin' | 'teacher' | 'parent' | 'kid' | 'learningPartner';
+export type { AuthRole } from '../constants/roles';
 export type AuthStatus = 'initializing' | 'authenticated' | 'unauthenticated';
 
 export interface AuthUser {

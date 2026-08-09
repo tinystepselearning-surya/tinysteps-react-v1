@@ -24,6 +24,10 @@ import {
   normalizeCountryCode,
   normalizePhoneLocal,
 } from '../../../lib/phone';
+import {
+  AUTH_ROLES,
+  type AuthRole,
+} from '../../../constants/roles';
 
 const createUserSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -32,7 +36,7 @@ const createUserSchema = z.object({
   phone: z.string().optional(),
   phoneCountryCode: z.string().optional(),
   phoneLocal: z.string().optional(),
-  role: z.enum(['admin', 'teacher', 'parent', 'learningPartner', 'kid']),
+  role: z.enum(AUTH_ROLES),
   status: z.enum(['active', 'suspended', 'archived']),
   // Role-specific fields
   qualification: z.string().optional(),
@@ -61,7 +65,7 @@ interface CreateUserFormProps {
 
 export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [activeRole, setActiveRole] = useState<'admin' | 'teacher' | 'parent' | 'learningPartner' | 'kid'>('parent');
+  const [activeRole, setActiveRole] = useState<AuthRole>('parent');
   const [createdUserData, setCreatedUserData] = useState<any>(null);
   const [kids, setKids] = useState<any[]>([]);
   const [isAdminLocal, setIsAdminLocal] = useState<boolean | null>(null);
@@ -285,11 +289,12 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
         </div>
       )}
       <Tabs value={activeRole} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-6">
           <TabsTrigger value="admin">Admin</TabsTrigger>
           <TabsTrigger value="teacher">Teacher</TabsTrigger>
           <TabsTrigger value="parent">Parent</TabsTrigger>
           <TabsTrigger value="learningPartner">LP</TabsTrigger>
+          <TabsTrigger value="schoolAdmin">School Admin</TabsTrigger>
           <TabsTrigger value="kid">Kid</TabsTrigger>
         </TabsList>
 
@@ -660,6 +665,18 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
                       </FormItem>
                     )}
                   />
+                </div>
+              </TabsContent>
+            )}
+
+            {activeRole === 'schoolAdmin' && (
+              <TabsContent value="schoolAdmin" className="space-y-4">
+                <div className="rounded-lg border border-blue-100 bg-blue-50 p-4">
+                  <p className="text-sm text-blue-900">
+                    This account will use the School Partnership workspace.
+                    School assignment and programme configuration are managed
+                    separately in School Management.
+                  </p>
                 </div>
               </TabsContent>
             )}

@@ -278,4 +278,79 @@ describe('AuthBootstrap', () => {
 
     expect(useAuthStore.getState()).toBe(resolvedState);
   });
+
+  it(
+    'normalizes a legacy learning-partner claim during session restoration',
+    async () => {
+      render(<AuthBootstrap />);
+
+      await waitFor(() =>
+        expect(authCallback)
+          .toBeTypeOf('function'),
+      );
+
+      await act(async () => {
+        authCallback?.({
+          uid: 'legacy-lp',
+          email: 'lp@example.com',
+          displayName: 'LP',
+          getIdTokenResult: vi.fn(
+            async () => ({
+              claims: {
+                role: 'learning-partner',
+              },
+            }),
+          ),
+        });
+
+        await Promise.resolve();
+      });
+
+      await waitFor(() => {
+        expect(
+          useAuthStore
+            .getState()
+            .user?.role,
+        ).toBe('learningPartner');
+      });
+    },
+  );
+
+  it(
+    'restores a School Admin claim',
+    async () => {
+      render(<AuthBootstrap />);
+
+      await waitFor(() =>
+        expect(authCallback)
+          .toBeTypeOf('function'),
+      );
+
+      await act(async () => {
+        authCallback?.({
+          uid: 'school-admin-1',
+          email:
+            'principal@example.com',
+          displayName: 'Principal',
+          getIdTokenResult: vi.fn(
+            async () => ({
+              claims: {
+                role: 'schoolAdmin',
+              },
+            }),
+          ),
+        });
+
+        await Promise.resolve();
+      });
+
+      await waitFor(() => {
+        expect(
+          useAuthStore
+            .getState()
+            .user?.role,
+        ).toBe('schoolAdmin');
+      });
+    },
+  );
 });

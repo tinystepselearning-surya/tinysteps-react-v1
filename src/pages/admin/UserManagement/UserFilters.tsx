@@ -47,6 +47,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
           <SelectItem value="parent">Parent</SelectItem>
           <SelectItem value="students">Student</SelectItem>
           <SelectItem value="learningPartner">Learning Partner</SelectItem>
+          <SelectItem value="schoolAdmin">School Admin</SelectItem>
         </SelectContent>
       </Select>
       <Select value={statusFilter} onValueChange={(v: string) => setStatusFilter(v)}>

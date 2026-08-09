@@ -2,6 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { ensureAdmin } from './helpers/adminGuard';
+import { normalizeRole } from './helpers/roles';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -29,7 +30,8 @@ export const adminArchiveUser = onCall(
     }
 
     const userData = snap.data();
-    const role = userData?.role;
+    const role =
+      normalizeRole(userData?.role);
 
     // Prevent archiving last admin
     if (role === 'admin') {

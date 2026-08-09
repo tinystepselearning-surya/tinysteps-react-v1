@@ -108,6 +108,9 @@ const ParentProfile = lazy(() => import('../pages/parent/Profile'));
 const ParentPayments = lazy(() => import('../pages/parent/Payments'));
 const KidsPortal = lazy(() => import('../pages/KidsPortal'));
 const LPDashboard = lazy(() => import('../pages/lp/LPDashboard'));
+const SchoolPortalFoundationPage = lazy(
+  () => import('../pages/school/SchoolPortalFoundationPage'),
+);
 const MessagesPage = lazy(() => import('../pages/messages/MessagesPage'));
 const KidsGamesHub = lazy(() => import('../pages/KidsGamesHub'));
 const KidsEnglishExcellence = lazy(() => import('../pages/KidsEnglishExcellence'));
@@ -668,6 +671,7 @@ const router = createBrowserRouter(
         { path: 'parent/login', element: <LoginPage /> },
         { path: 'learning-partner/login', element: <LoginPage /> },
         { path: 'learningpartner/login', element: <LoginPage /> }, // alias
+        { path: 'school/login', element: <LoginPage /> },
 
         { path: 'kid/login', element: <Navigate to="/login" replace /> },
         { path: 'unauthorized', element: <UnauthorizedPage /> },
@@ -790,6 +794,18 @@ const router = createBrowserRouter(
         },
         { path: 'learningpartner', element: <Navigate to="/learning-partner" replace /> },
         { path: 'learningpartner/dashboard', element: <Navigate to="/learning-partner/dashboard" replace /> },
+
+        // ---------- School Partnership foundation ----------
+        {
+          path: 'school',
+          element: withRoleGate(['schoolAdmin'], '/school/login'),
+          children: [
+            {
+              index: true,
+              element: <SchoolPortalFoundationPage />,
+            },
+          ],
+        },
 
         // ---------- Misc aliases ----------
         { path: 'kid', element: <Navigate to="/kids/games/english-excellence" replace /> },

@@ -2,6 +2,10 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { ensureAdmin } from './helpers/adminGuard';
+import {
+  getRoleMirrorCollection,
+  normalizeRole,
+} from './helpers/roles';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -50,20 +54,20 @@ export const adminDeleteUser = onCall(
     }
 
     const userData = userSnap.data() || {};
-    const role = userData.role as string | undefined;
-    const roleCandidates = new Set<string>();
-    const normalizedPrimaryRole = String(role || '').trim().toLowerCase();
-    if (normalizedPrimaryRole) roleCandidates.add(normalizedPrimaryRole);
-    if (Array.isArray(userData.roles)) {
-      for (const item of userData.roles) {
-        const normalized = String(item || '').trim().toLowerCase();
-        if (normalized) roleCandidates.add(normalized);
-      }
-    }
+    const canonicalRole =
+      normalizeRole(userData.role);
 
-    const isProtectedHardDeleteRole = ['parent', 'student', 'kid'].some((r) =>
-      roleCandidates.has(r)
-    );
+    const rawRole =
+      String(userData.role || '')
+        .trim()
+        .toLowerCase();
+
+    const isProtectedHardDeleteRole =
+      canonicalRole === 'parent' ||
+      canonicalRole === 'kid' ||
+      canonicalRole === 'schoolAdmin' ||
+      rawRole === 'student' ||
+      rawRole === 'students';
     if (isProtectedHardDeleteRole) {
       throw new HttpsError(
         'failed-precondition',
@@ -74,8 +78,7 @@ export const adminDeleteUser = onCall(
     logger.info('Admin deleting user', {
       adminUid: auth.uid,
       targetUid,
-      role: normalizedPrimaryRole || null,
-      roleCandidates: Array.from(roleCandidates),
+      role: canonicalRole,
     });
 
     // ---------- Delete Firebase Auth user ----------
@@ -100,18 +103,16 @@ export const adminDeleteUser = onCall(
     batch.delete(userRef);
 
     // Role mirror collections (if used)
-    const roleCollections: Record<string, string> = {
-      admin: 'admins',
-      teacher: 'teachers',
-      parent: 'parents',
-      learningPartner: 'learningPartners',
-    };
+    const roleCollection =
+      getRoleMirrorCollection(
+        canonicalRole,
+      );
 
-    if (role && roleCollections[role]) {
-      const roleDocRef = db
-        .collection(roleCollections[role])
-        .doc(targetUid);
-      batch.delete(roleDocRef);
+    if (roleCollection) {
+      batch.delete(
+        db.collection(roleCollection)
+          .doc(targetUid),
+      );
     }
 
     // OPTIONAL future cleanup (safe even if empty):

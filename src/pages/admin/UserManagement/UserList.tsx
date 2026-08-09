@@ -7,8 +7,6 @@ import {
   deleteDoc,
   doc,
   Timestamp,
-  updateDoc,
-  serverTimestamp,
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 
@@ -48,6 +46,10 @@ import { EditUserForm } from './EditUserForm';
 import { toast } from '@components/hooks/use-toast';
 import { User } from '../../../types/User';
 import { UserFilters } from './UserFilters';
+import {
+  getRoleLabel,
+  normalizeAuthRole,
+} from '../../../constants/roles';
 
 // ---------- Table Component ----------
 interface UserTableProps {
@@ -67,15 +69,29 @@ interface UserRoleCounts {
   teacher: number;
   parent: number;
   students: number;
+  learningPartner: number;
+  schoolAdmin: number;
 }
 
 type UserSortField = 'email' | 'name' | 'role' | 'status' | 'phone' | 'createdAt';
 type SortDirection = 'asc' | 'desc';
 type UserPageSize = 'all' | 25 | 50 | 100;
 
-const isHardDeleteProtectedRole = (role?: string) => {
-  const normalized = String(role || '').trim().toLowerCase();
-  return normalized === 'parent' || normalized === 'student' || normalized === 'kid';
+const isHardDeleteProtectedRole = (
+  role?: string,
+) => {
+  const canonical = normalizeAuthRole(role);
+  const raw = String(role || '')
+    .trim()
+    .toLowerCase();
+
+  return (
+    canonical === 'parent' ||
+    canonical === 'kid' ||
+    canonical === 'schoolAdmin' ||
+    raw === 'student' ||
+    raw === 'students'
+  );
 };
 
 function UserTable({
@@ -146,19 +162,24 @@ function UserTable({
     return 'border-slate-200 bg-slate-50 text-slate-600';
   };
 
-  const getRoleBadgeVariant = (role?: string) => {
-    switch (role) {
+  const getRoleBadgeVariant = (
+    role?: string,
+  ) => {
+    switch (normalizeAuthRole(role)) {
       case 'admin':
         return 'destructive';
+
       case 'teacher':
         return 'default';
+
       case 'parent':
-        return 'secondary';
-      case 'student':
-      case 'learningPartner':
-        return 'outline';
       case 'kid':
         return 'secondary';
+
+      case 'learningPartner':
+      case 'schoolAdmin':
+        return 'outline';
+
       default:
         return 'default';
     }
@@ -223,7 +244,7 @@ function UserTable({
 
             <TableCell className="px-3 py-2 whitespace-nowrap">
               <Badge variant={getRoleBadgeVariant(user.role)}>
-                {user.role || 'unknown'}
+                {getRoleLabel(user.role)}
               </Badge>
             </TableCell>
 
@@ -336,6 +357,8 @@ export function UserList() {
     teacher: 0,
     parent: 0,
     students: 0,
+    learningPartner: 0,
+    schoolAdmin: 0,
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -388,13 +411,7 @@ export function UserList() {
           mobile: typeof data.mobile === 'string' ? data.mobile : '',
           contactNumber: typeof data.contactNumber === 'string' ? data.contactNumber : '',
           countryCode: typeof data.countryCode === 'string' ? data.countryCode : '',
-          role:
-            (data.role as
-              | 'parent'
-              | 'admin'
-              | 'teacher'
-              | 'learningPartner'
-              | 'kid') || 'parent',
+          role: normalizeAuthRole(data.role) ?? 'parent',
           status: (data.status as 'active' | 'suspended' | 'archived') || 'active',
           createdAt: data.createdAt || Timestamp.fromDate(new Date()),
           updatedAt: data.updatedAt || Timestamp.fromDate(new Date()),
@@ -447,13 +464,18 @@ export function UserList() {
     let teacher = 0;
     let parent = 0;
     let students = 0;
+    let learningPartner = 0;
+    let schoolAdmin = 0;
 
     for (const user of baseFilteredForCounts) {
-      const role = normalizeRole(user.role);
+      const role = normalizeAuthRole(user.role);
+
       if (role === 'admin') admin += 1;
       if (role === 'teacher') teacher += 1;
       if (role === 'parent') parent += 1;
-      if (isStudentRole(role)) students += 1;
+      if (role === 'kid') students += 1;
+      if (role === 'learningPartner') learningPartner += 1;
+      if (role === 'schoolAdmin') schoolAdmin += 1;
     }
 
     setRoleCounts({
@@ -462,8 +484,10 @@ export function UserList() {
       teacher,
       parent,
       students,
+      learningPartner,
+      schoolAdmin,
     });
-  }, [baseFilteredForCounts, isStudentRole]);
+  }, [baseFilteredForCounts]);
 
   const filteredUsers = useMemo(() => {
     const normalizedRoleFilter = normalizeRoleFilter(appliedRoleFilter);
@@ -546,8 +570,28 @@ export function UserList() {
         count: roleCounts.students,
         activeClass: 'from-emerald-500 to-teal-500',
       },
+      {
+        key: 'learningPartner',
+        label: 'Learning Partner',
+        count: roleCounts.learningPartner,
+        activeClass: 'from-violet-600 to-indigo-500',
+      },
+      {
+        key: 'schoolAdmin',
+        label: 'School Admin',
+        count: roleCounts.schoolAdmin,
+        activeClass: 'from-amber-500 to-orange-500',
+      },
     ] as const;
-  }, [roleCounts.all, roleCounts.admin, roleCounts.teacher, roleCounts.parent, roleCounts.students]);
+  }, [
+    roleCounts.all,
+    roleCounts.admin,
+    roleCounts.teacher,
+    roleCounts.parent,
+    roleCounts.students,
+    roleCounts.learningPartner,
+    roleCounts.schoolAdmin,
+  ]);
 
   // Initial fetch
   useEffect(() => {
@@ -622,25 +666,41 @@ export function UserList() {
   };
 
   // ---------------- Archive User (soft delete) ----------------
-  const handleArchiveUser = async (user: User) => {
+  const handleArchiveUser = async (
+    user: User,
+  ) => {
     const ok = window.confirm(
-      `Archive ${user.name || user.email || user.id}?\n\nThey will not be deleted, but status becomes "archived".`
+      `Archive ${user.name || user.email || user.id}?\n\n` +
+      'The account will be disabled but historical records will be preserved.',
     );
+
     if (!ok) return;
 
     try {
-      await updateDoc(doc(db, 'users', user.id), {
-        status: 'archived',
-        updatedAt: serverTimestamp(),
+      const archiveUserFn = httpsCallable(
+        functions,
+        'adminArchiveUser',
+      );
+
+      await archiveUserFn({
+        uid: user.uid || user.id,
       });
 
-      toast({ title: 'Archived', description: 'User archived successfully.' });
+      toast({
+        title: 'Archived',
+        description:
+          'User archived and login disabled successfully.',
+      });
+
       await fetchUsers();
     } catch (error: any) {
       console.error('Archive failed:', error);
+
       toast({
         title: 'Error',
-        description: error.message || 'Failed to archive user.',
+        description:
+          error?.message ||
+          'Failed to archive user.',
         variant: 'destructive',
       });
     }
@@ -654,7 +714,7 @@ export function UserList() {
     if (isHardDeleteProtectedRole(user.role)) {
       toast({
         title: 'Delete blocked',
-        description: 'Parent/student accounts are archive-only to protect financial history.',
+        description: 'This account is archive-only to protect historical relationships.',
         variant: 'destructive',
       });
       return;

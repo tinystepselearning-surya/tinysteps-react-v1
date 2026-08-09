@@ -1,6 +1,7 @@
 import { HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
+import { normalizeRole } from './roles';
 
 /**
  * Single Source of Truth for Admin Authorization
@@ -14,8 +15,12 @@ export async function ensureAdmin(auth: any): Promise<void> {
   const uid = auth.uid;
 
   // 1. Fast path: custom claims
+  const tokenRole = normalizeRole(
+    auth.token?.role,
+  );
+
   const isAdmin =
-    auth.token?.role === 'admin' ||
+    tokenRole === 'admin' ||
     auth.token?.admin === true;
 
   if (isAdmin) return;
@@ -28,13 +33,30 @@ export async function ensureAdmin(auth: any): Promise<void> {
       throw new HttpsError('permission-denied', 'Admin access required');
     }
 
-    const data = snap.data();
+    const data = snap.data() || {};
+
+    const primaryRole =
+      normalizeRole(data.role);
+
+    const roles = Array.isArray(data.roles)
+      ? data.roles
+          .map((role: unknown) => normalizeRole(role))
+          .filter(Boolean)
+      : [];
+
     const roleValid =
-      data?.role === 'admin' ||
-      (Array.isArray(data?.roles) && data.roles.includes('admin'));
+      primaryRole === 'admin' ||
+      roles.includes('admin');
 
     if (!roleValid) {
-      logger.warn('ensureAdmin: caller not admin', { uid, role: data?.role });
+      logger.warn(
+        'ensureAdmin: caller not admin',
+        {
+          uid,
+          role: data.role,
+        },
+      );
+
       throw new HttpsError('permission-denied', 'Admin access required');
     }
   } catch (err: any) {

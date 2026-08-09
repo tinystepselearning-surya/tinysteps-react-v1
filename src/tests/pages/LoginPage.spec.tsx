@@ -18,6 +18,7 @@ vi.mock('../../lib/auth', () => ({
     parent: '/parent',
     kid: '/parent/kids',
     learningPartner: '/learning-partner/dashboard',
+    schoolAdmin: '/school',
   })[role],
   getSafeInternalRedirect: (value: unknown) =>
     typeof value === 'string' && value.startsWith('/') && !value.startsWith('//')
@@ -186,4 +187,91 @@ describe('LoginPage', () => {
       expect(screen.getByText(/bad credentials/i)).toBeInTheDocument();
     });
   });
+
+  it(
+    'recognizes the school login route as School Admin',
+    async () => {
+      (handleLogin as any)
+        .mockResolvedValue({
+          uid: 'school-admin-1',
+          email:
+            'principal@example.com',
+          displayName:
+            'School Principal',
+          role: 'schoolAdmin',
+        });
+
+      render(
+        <MemoryRouter
+          initialEntries={[
+            '/school/login',
+          ]}
+        >
+          <Routes>
+            <Route
+              path="/school/login"
+              element={<LoginPage />}
+            />
+
+            <Route
+              path="/school"
+              element={
+                <div>
+                  School dashboard
+                </div>
+              }
+            />
+          </Routes>
+        </MemoryRouter>,
+      );
+
+      fireEvent.change(
+        screen.getByLabelText(
+          'Email, username, or phone number',
+        ),
+        {
+          target: {
+            value:
+              'principal@example.com',
+          },
+        },
+      );
+
+      fireEvent.change(
+        screen.getByLabelText(
+          'Password',
+        ),
+        {
+          target: {
+            value: 'secret123',
+          },
+        },
+      );
+
+      fireEvent.click(
+        screen.getByRole(
+          'button',
+          {
+            name: /sign in/i,
+          },
+        ),
+      );
+
+      await waitFor(() => {
+        expect(
+          handleLogin,
+        ).toHaveBeenCalledWith(
+          'principal@example.com',
+          'secret123',
+          'schoolAdmin',
+        );
+      });
+
+      expect(
+        await screen.findByText(
+          'School dashboard',
+        ),
+      ).toBeInTheDocument();
+    },
+  );
 });

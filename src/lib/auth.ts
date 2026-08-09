@@ -11,6 +11,10 @@ import { useAuthStore } from '../store/useAuthStore';
 import type { AuthUser, AuthRole } from '../store/useAuthStore';
 import { clearPendingPushOpenRoute } from './pushNavigationState';
 import { schedulePostLoginAuthDiagnostics } from './nativeAuthDiagnostics';
+import {
+  normalizeAuthRole,
+  ROLE_REDIRECT_PATHS,
+} from '../constants/roles';
 
 export type AppLogoutReason =
   | 'user-clicked-logout'
@@ -19,24 +23,8 @@ export type AppLogoutReason =
   | 'account-disabled'
   | 'test-only';
 
-const VALID_ROLES: AuthRole[] = [
-  'admin',
-  'teacher',
-  'parent',
-  'kid',
-  'learningPartner',
-];
-
-const roleRedirectMap: Record<AuthRole, string> = {
-  admin: '/surya',
-  teacher: '/teacher',
-  parent: '/parent',
-  kid: '/parent/kids',
-  learningPartner: '/learning-partner/dashboard',
-};
-
 export const getRoleRedirectPath = (role: AuthRole): string =>
-  roleRedirectMap[role] ?? '/';
+  ROLE_REDIRECT_PATHS[role] ?? '/';
 
 export const getSafeInternalRedirect = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
@@ -313,13 +301,11 @@ function normalizeNonAdminRole(
   fromClaims?: string | null,
   fromExpected?: string | null,
 ): AuthRole {
-  if (fromClaims && VALID_ROLES.includes(fromClaims as AuthRole)) {
-    return fromClaims as AuthRole;
-  }
+  const claimRole = normalizeAuthRole(fromClaims);
+  if (claimRole) return claimRole;
 
-  if (fromExpected && VALID_ROLES.includes(fromExpected as AuthRole)) {
-    return fromExpected as AuthRole;
-  }
+  const expectedRole = normalizeAuthRole(fromExpected);
+  if (expectedRole) return expectedRole;
 
   return 'kid';
 }
@@ -393,19 +379,26 @@ async function handleNonAdminLogin(
     throw err;
   }
   const claims = tokenResult.claims as any;
-  const roleFromClaims = claims.role as string | undefined;
+  const roleFromClaims =
+    typeof claims.role === 'string' ? claims.role : undefined;
 
-  const role = normalizeNonAdminRole(roleFromClaims, expectedRole ?? null);
+  const normalizedClaimRole = normalizeAuthRole(roleFromClaims);
+  const normalizedExpectedRole = normalizeAuthRole(expectedRole);
+
+  const role = normalizeNonAdminRole(
+    roleFromClaims,
+    normalizedExpectedRole,
+  );
 
   // Only hard-fail if claims explicitly say a DIFFERENT role
   if (
-    expectedRole &&
+    normalizedExpectedRole &&
     roleFromClaims &&
-    roleFromClaims !== expectedRole
+    normalizedClaimRole !== normalizedExpectedRole
   ) {
     await performAppLogout('role-mismatch');
     throw new Error(
-      `This account is not a ${expectedRole} account. Please use the correct login page.`,
+      `This account is not a ${normalizedExpectedRole} account. Please use the correct login page.`,
     );
   }
 
@@ -458,22 +451,26 @@ export async function handleLoginWithGoogle(expectedRole?: string) {
 
   const tokenResult = await firebaseUser.getIdTokenResult();
   const claims = tokenResult.claims as any;
-  const roleFromClaims = claims.role as string | undefined;
+  const roleFromClaims =
+    typeof claims.role === 'string' ? claims.role : undefined;
+
+  const normalizedClaimRole = normalizeAuthRole(roleFromClaims);
+  const normalizedExpectedRole = normalizeAuthRole(expectedRole);
 
   const role = normalizeNonAdminRole(
     roleFromClaims,
-    expectedRole ?? 'parent',
+    normalizedExpectedRole ?? 'parent',
   );
 
   // Only hard-fail if claims explicitly contradict the expected role
   if (
-    expectedRole &&
+    normalizedExpectedRole &&
     roleFromClaims &&
-    roleFromClaims !== expectedRole
+    normalizedClaimRole !== normalizedExpectedRole
   ) {
     await performAppLogout('role-mismatch');
     throw new Error(
-      `This Google account is not a ${expectedRole} account.`,
+      `This Google account is not a ${normalizedExpectedRole} account.`,
     );
   }
 

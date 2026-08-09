@@ -229,6 +229,24 @@
         ]
       },
       {
+        "source": "/school",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex, nofollow, noarchive"
+          }
+        ]
+      },
+      {
+        "source": "/school/**",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex, nofollow, noarchive"
+          }
+        ]
+      },
+      {
         "source": "/dev/**",
         "headers": [
           {
@@ -548,6 +566,14 @@
       },
       {
         "source": "/debug-lessons",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/school",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/school/**",
         "destination": "/index.html"
       },
       {

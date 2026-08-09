@@ -17,6 +17,10 @@ const dashboardPaths: Record<string, string> = {
   kid: '/kids/games/english-excellence',
   learningPartner: '/learning-partner/dashboard',
   learningpartner: '/learning-partner/dashboard',
+  'learning-partner': '/learning-partner/dashboard',
+  schoolAdmin: '/school',
+  schooladmin: '/school',
+  'school-admin': '/school',
 };
 
 const PRIMARY_LINKS: LinkItem[] = [
