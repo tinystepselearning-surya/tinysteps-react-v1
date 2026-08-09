@@ -1,10 +1,15 @@
+import { deriveReferrerDomain } from './leadAcquisition';
+
 const LANDING_PAGE_SESSION_KEY = 'ts_landing_page_v1';
+const ATTRIBUTION_SESSION_KEY = 'ts_public_lead_attribution_v2';
 
 export type LeadAttributionCapture = {
   landingPage?: string;
   submittedFromPath?: string;
   submittedFromUrl?: string;
+  firstSeenAt?: string;
   referrer?: string;
+  referrerDomain?: string;
   utmSource?: string;
   utmMedium?: string;
   utmCampaign?: string;
@@ -12,6 +17,7 @@ export type LeadAttributionCapture = {
   utmContent?: string;
   gclid?: string;
   fbclid?: string;
+  msclkid?: string;
 };
 
 function sanitizeValue(value: string | null | undefined, maxLength = 300): string | undefined {
@@ -30,18 +36,59 @@ function resolveSubmittedFromPath(): string {
   return sanitizeValue(window.location.pathname, 200) || '/';
 }
 
-function resolveLandingPage(currentPath: string): string {
+function readStoredAttribution(): LeadAttributionCapture | null {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const raw = window.sessionStorage.getItem(ATTRIBUTION_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as LeadAttributionCapture;
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredAttribution(value: LeadAttributionCapture) {
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.sessionStorage.setItem(ATTRIBUTION_SESSION_KEY, JSON.stringify(value));
+    if (value.landingPage) {
+      window.sessionStorage.setItem(LANDING_PAGE_SESSION_KEY, value.landingPage);
+    }
+  } catch {
+    // Browsers can disable storage. Attribution must never block lead submission.
+  }
+}
+
+function resolveLegacyLandingPage(currentPath: string): string {
   if (typeof window === 'undefined') return currentPath;
 
   try {
-    const existing = sanitizeValue(window.sessionStorage.getItem(LANDING_PAGE_SESSION_KEY), 200);
-    if (existing) return existing;
-    window.sessionStorage.setItem(LANDING_PAGE_SESSION_KEY, currentPath);
+    return sanitizeValue(window.sessionStorage.getItem(LANDING_PAGE_SESSION_KEY), 200) || currentPath;
   } catch {
     return currentPath;
   }
+}
 
-  return currentPath;
+function resolveExternalReferrer(): { referrer?: string; referrerDomain?: string } {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return {};
+
+  const referrer = sanitizeValue(document.referrer, 300);
+  if (!referrer) return {};
+
+  try {
+    const parsed = new URL(referrer);
+    if (parsed.origin === window.location.origin) return {};
+  } catch {
+    return {};
+  }
+
+  return {
+    referrer,
+    referrerDomain: sanitizeValue(deriveReferrerDomain(referrer), 160),
+  };
 }
 
 export function captureLeadAttribution(): LeadAttributionCapture {
@@ -50,19 +97,26 @@ export function captureLeadAttribution(): LeadAttributionCapture {
   const submittedFromPath = resolveSubmittedFromPath();
   const search = sanitizeValue(window.location.search, 400) || '';
   const params = new URLSearchParams(window.location.search);
+  const existing = readStoredAttribution();
+  const externalReferrer = resolveExternalReferrer();
 
-  return compactObject({
-    landingPage: resolveLandingPage(submittedFromPath),
+  const next: LeadAttributionCapture = compactObject({
+    landingPage: existing?.landingPage || resolveLegacyLandingPage(submittedFromPath),
     submittedFromPath,
     submittedFromUrl: sanitizeValue(`${submittedFromPath}${search}`, 400),
-    referrer: sanitizeValue(typeof document !== 'undefined' ? document.referrer : '', 300),
-    utmSource: sanitizeValue(params.get('utm_source'), 120),
-    utmMedium: sanitizeValue(params.get('utm_medium'), 120),
-    utmCampaign: sanitizeValue(params.get('utm_campaign'), 160),
-    utmTerm: sanitizeValue(params.get('utm_term'), 160),
-    utmContent: sanitizeValue(params.get('utm_content'), 160),
-    gclid: sanitizeValue(params.get('gclid'), 160),
-    fbclid: sanitizeValue(params.get('fbclid'), 160),
-  });
-}
+    firstSeenAt: existing?.firstSeenAt || new Date().toISOString(),
+    referrer: existing?.referrer || externalReferrer.referrer,
+    referrerDomain: existing?.referrerDomain || externalReferrer.referrerDomain,
+    utmSource: existing?.utmSource || sanitizeValue(params.get('utm_source'), 120),
+    utmMedium: existing?.utmMedium || sanitizeValue(params.get('utm_medium'), 120),
+    utmCampaign: existing?.utmCampaign || sanitizeValue(params.get('utm_campaign'), 160),
+    utmTerm: existing?.utmTerm || sanitizeValue(params.get('utm_term'), 160),
+    utmContent: existing?.utmContent || sanitizeValue(params.get('utm_content'), 160),
+    gclid: existing?.gclid || sanitizeValue(params.get('gclid'), 160),
+    fbclid: existing?.fbclid || sanitizeValue(params.get('fbclid'), 160),
+    msclkid: existing?.msclkid || sanitizeValue(params.get('msclkid'), 160),
+  }) as LeadAttributionCapture;
 
+  writeStoredAttribution(next);
+  return next;
+}
