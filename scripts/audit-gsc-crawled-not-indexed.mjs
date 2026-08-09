@@ -5,6 +5,7 @@ import {
   GSC_CRAWLED_NOT_INDEXED_AUDIT_DATE,
   GSC_CRAWLED_NOT_INDEXED_COUNTS,
   GSC_CRAWLED_NOT_INDEXED_URLS,
+  GSC_INDEX_TARGETS,
 } from './gsc-crawled-not-indexed-manifest.mjs';
 import {
   shouldIncludeBlogSlugInSitemap,
@@ -72,8 +73,13 @@ for (const row of GSC_CRAWLED_NOT_INDEXED_URLS) {
   if (seen.has(row.path)) fail(row.path, 'duplicate path in manifest');
   seen.add(row.path);
 
+  if (row.indexTarget !== (row.action === 'index')) {
+    fail(row.path, 'indexTarget must be true only for action=index');
+  }
+
   if (row.action === 'resource') {
     if (!resourceExists(row.path)) fail(row.path, 'resource file is missing from public/');
+    if (isInSitemap(row.path)) fail(row.path, 'resource appears as a landing-page URL in a canonical sitemap');
     if (row.path.endsWith('rss.xml') && !hasNoindexHeader(row.path)) {
       fail(row.path, 'RSS resource must retain an X-Robots-Tag noindex header');
     }
@@ -81,6 +87,7 @@ for (const row of GSC_CRAWLED_NOT_INDEXED_URLS) {
   }
 
   if (row.action === 'redirect') {
+    if (isInSitemap(row.path)) fail(row.path, 'redirect/alias must not appear in canonical sitemaps');
     if (row.normalization === 'trailingSlash') {
       if (hosting.trailingSlash !== false) {
         fail(row.path, 'expected Firebase trailingSlash:false canonical normalization');
@@ -105,9 +112,11 @@ for (const row of GSC_CRAWLED_NOT_INDEXED_URLS) {
 
   if (row.action === 'index') {
     if (!isInSitemap(row.path)) fail(row.path, 'index target is missing from canonical sitemaps');
+    if (hasNoindexHeader(row.path)) fail(row.path, 'index target is blocked by an exact X-Robots-Tag noindex header');
     if (row.path.startsWith('/blog/')) {
       const slug = row.path.slice('/blog/'.length);
       if (shouldNoindexBlogSlug(slug)) fail(row.path, 'index target is blocked by blog noindex policy');
+      if (!shouldIncludeBlogSlugInSitemap(slug)) fail(row.path, 'index-target blog slug is excluded by blog sitemap policy');
     }
     continue;
   }
@@ -119,8 +128,25 @@ if (GSC_CRAWLED_NOT_INDEXED_URLS.length !== 52) {
   problems.push(`manifest: expected 52 Search Console examples, found ${GSC_CRAWLED_NOT_INDEXED_URLS.length}`);
 }
 
+if (GSC_INDEX_TARGETS.length !== 23) {
+  problems.push(`manifest: expected 23 index targets, found ${GSC_INDEX_TARGETS.length}`);
+}
+
+for (const target of GSC_INDEX_TARGETS) {
+  const row = GSC_CRAWLED_NOT_INDEXED_URLS.find((item) => item.path === target);
+  if (!row || row.action !== 'index' || row.indexTarget !== true) {
+    fail(target, 'submission target is not backed by an action=index manifest row');
+  }
+}
+
+const nonIndexRows = GSC_CRAWLED_NOT_INDEXED_URLS.filter((row) => row.action !== 'index');
+for (const row of nonIndexRows) {
+  if (isInSitemap(row.path)) fail(row.path, 'non-index target leaked into canonical sitemap set');
+}
+
 console.log(`[gsc-crawled-audit] snapshot=${GSC_CRAWLED_NOT_INDEXED_AUDIT_DATE}`);
 console.log(`[gsc-crawled-audit] urls=${GSC_CRAWLED_NOT_INDEXED_URLS.length}`);
+console.log(`[gsc-crawled-audit] indexTargets=${GSC_INDEX_TARGETS.length}`);
 console.log(`[gsc-crawled-audit] decisions=${JSON.stringify(GSC_CRAWLED_NOT_INDEXED_COUNTS)}`);
 
 if (problems.length) {
@@ -129,4 +155,4 @@ if (problems.length) {
   process.exit(1);
 }
 
-console.log('[gsc-crawled-audit] PASS: all 52 URLs match the intended index/redirect/archive/resource policy.');
+console.log('[gsc-crawled-audit] PASS: all 52 URLs match the intended index/redirect/archive/resource policy and only the 23 remediation targets remain eligible for submission from this GSC set.');
