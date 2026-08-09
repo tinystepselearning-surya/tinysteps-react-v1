@@ -36,6 +36,7 @@ const school = (overrides: Partial<SchoolRecord> = {}): SchoolRecord => ({
   learningPartnerId: 'lp-1',
   learningPartnerName: 'LP One',
   learningPartnerEmail: 'lp@example.com',
+  currentAcademicYearId: null,
   ...overrides,
 });
 
