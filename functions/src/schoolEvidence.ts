@@ -96,18 +96,34 @@ async function requireAcademicYear(
     .doc(schoolId)
     .collection('academicYears')
     .doc(academicYearId);
-  if (!(await ref.get()).exists) throw new HttpsError('not-found', 'Academic year not found');
+  const snap = await ref.get();
+  if (!snap.exists) throw new HttpsError('not-found', 'Academic year not found');
+  const data = snap.data() || {};
+  if (String(data.status || '').toLowerCase() === 'closed') {
+    throw new HttpsError(
+      'failed-precondition',
+      'Closed academic years are preserved as read-only evidence. Make the year current before recording new reviews or assessments.',
+    );
+  }
   return ref;
 }
 
 async function resolveSection(
   yearRef: admin.firestore.DocumentReference,
   sectionId: string | null,
+  options: { requireActive?: boolean } = {},
 ): Promise<admin.firestore.DocumentData | null> {
   if (!sectionId) return null;
   const snap = await yearRef.collection('sections').doc(sectionId).get();
   if (!snap.exists) throw new HttpsError('not-found', 'Section not found');
-  return snap.data() || {};
+  const data = snap.data() || {};
+  if (options.requireActive && String(data.status || 'active').toLowerCase() !== 'active') {
+    throw new HttpsError(
+      'failed-precondition',
+      'New evidence can only be recorded for an active section.',
+    );
+  }
+  return data;
 }
 
 function validateDistribution(
@@ -172,7 +188,7 @@ export const schoolCreateReview = onCall(
     const manager = await ensureSchoolManager(request.auth, schoolId);
     const yearRef = await requireAcademicYear(schoolId, academicYearId);
     const sectionId = optional(request.data?.sectionId, 128);
-    const section = await resolveSection(yearRef, sectionId);
+    const section = await resolveSection(yearRef, sectionId, { requireActive: Boolean(sectionId) });
 
     const implementationRating = enumValue(
       request.data?.implementationRating,
@@ -231,7 +247,7 @@ export const schoolRecordAssessmentSummary = onCall(
     const sectionId = required(request.data?.sectionId, 'sectionId', 128);
     const manager = await ensureSchoolManager(request.auth, schoolId);
     const yearRef = await requireAcademicYear(schoolId, academicYearId);
-    const section = await resolveSection(yearRef, sectionId);
+    const section = await resolveSection(yearRef, sectionId, { requireActive: true });
     if (!section) throw new HttpsError('not-found', 'Section not found');
 
     const sectionStudentCount = integer(section.studentCount ?? 0, 'section.studentCount', 0, 500);
