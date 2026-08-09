@@ -10,7 +10,10 @@ import type {
   SchoolProgressSnapshot,
   SchoolStructureSnapshot,
 } from '../../types/SchoolProgramme';
-import { buildSectionHealthMap } from '../../lib/schoolIntelligence';
+import {
+  PROGRAMME_HEALTH_MINIMUM_ASSESSMENT_COVERAGE_PERCENT,
+  buildSectionHealthMap,
+} from '../../lib/schoolIntelligence';
 import { buildSchoolAnalytics, buildSchoolSummaryCsv } from '../../lib/schoolAnalytics';
 import './schoolReportPrint.css';
 
@@ -22,8 +25,9 @@ interface Props {
 }
 
 export default function SchoolReportPanel({ school, structure, progress, evidence }: Props) {
+  const activeSections = structure.sections.filter((item) => item.status === 'active');
   const healthBySection = buildSectionHealthMap({
-    sections: structure.sections.filter((item) => item.status === 'active'),
+    sections: activeSections,
     curriculum: progress.curriculum,
     training: progress.training,
     assessments: evidence.assessments,
@@ -33,6 +37,14 @@ export default function SchoolReportPanel({ school, structure, progress, evidenc
     assessments: evidence.assessments,
     healthBySection,
   });
+  const healthValues = Array.from(healthBySection.values());
+  const coverageReadyPostBaselineSections = healthValues.filter(
+    (health) =>
+      health.latestAssessment?.checkpoint !== 'baseline' &&
+      health.latestAssessment !== null &&
+      typeof health.assessmentCoveragePercent === 'number' &&
+      health.assessmentCoveragePercent >= PROGRAMME_HEALTH_MINIMUM_ASSESSMENT_COVERAGE_PERCENT,
+  ).length;
 
   const download = () => {
     const csv = buildSchoolSummaryCsv({
@@ -97,20 +109,33 @@ export default function SchoolReportPanel({ school, structure, progress, evidenc
 
       <div className="grid gap-3 md:grid-cols-3">
         <MetricCard label="Baseline reading level" value={analytics.baselineReadingLevel === null ? '—' : `TS-${analytics.baselineReadingLevel.toFixed(2)}`} />
-        <MetricCard label="Current reading level" value={analytics.currentReadingLevel === null ? '—' : `TS-${analytics.currentReadingLevel.toFixed(2)}`} />
+        <MetricCard label="Latest reading level" value={analytics.currentReadingLevel === null ? '—' : `TS-${analytics.currentReadingLevel.toFixed(2)}`} />
         <MetricCard
-          label={`Matched growth${analytics.matchedGrowthSections ? ` · ${analytics.matchedGrowthSections} section${analytics.matchedGrowthSections === 1 ? '' : 's'}` : ''}`}
+          label={`Matched section growth${analytics.matchedGrowthSections ? ` · ${analytics.matchedGrowthSections} section${analytics.matchedGrowthSections === 1 ? '' : 's'}` : ''}`}
           value={analytics.readingLevelGrowth === null ? '—' : `${analytics.readingLevelGrowth >= 0 ? '+' : ''}${analytics.readingLevelGrowth.toFixed(2)} TS levels`}
         />
       </div>
 
       <Card className="p-5">
+        <h3 className="font-semibold text-slate-900">Evidence quality</h3>
+        <p className="mt-1 text-xs text-slate-500">
+          Leadership metrics exclude low-coverage assessment evidence from aggregate growth/reading-level calculations. The coverage threshold is an internal programme-management guardrail, not a standardized cut score.
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricCard label="Baseline evidence" value={`${analytics.baselineEvidenceSections}/${analytics.sections} sections`} />
+          <MetricCard label="Latest evidence" value={`${analytics.currentEvidenceSections}/${analytics.sections} sections`} />
+          <MetricCard label={`Post-baseline coverage ≥${PROGRAMME_HEALTH_MINIMUM_ASSESSMENT_COVERAGE_PERCENT}%`} value={`${coverageReadyPostBaselineSections}/${analytics.sections} sections`} />
+          <MetricCard label="Matched growth evidence" value={`${analytics.matchedGrowthSections}/${analytics.sections} sections`} />
+        </div>
+      </Card>
+
+      <Card className="p-5">
         <h3 className="font-semibold text-slate-900">Section implementation health</h3>
         <p className="mt-1 text-xs text-slate-500">
-          Internal programme-health signal based on verified curriculum stage, latest aggregate benchmark and assigned-teacher training evidence. It is not an external standardized rating.
+          Internal programme-health signal based on verified curriculum stage, sufficiently covered post-baseline aggregate benchmark evidence and assigned-teacher training evidence. It is not an external standardized rating.
         </p>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[1080px] text-sm">
+          <table className="w-full min-w-[1180px] text-sm">
             <thead>
               <tr className="border-b text-left text-xs uppercase tracking-wide text-slate-500">
                 <th className="py-2">Section</th>
@@ -118,6 +143,7 @@ export default function SchoolReportPanel({ school, structure, progress, evidenc
                 <th className="py-2">Curriculum</th>
                 <th className="py-2">Programme reference</th>
                 <th className="py-2">Demonstrated</th>
+                <th className="py-2">Coverage</th>
                 <th className="py-2">Gap</th>
                 <th className="py-2">Training</th>
                 <th className="py-2">Status</th>
@@ -125,7 +151,7 @@ export default function SchoolReportPanel({ school, structure, progress, evidenc
               </tr>
             </thead>
             <tbody>
-              {structure.sections.filter((item) => item.status === 'active').map((section) => {
+              {activeSections.map((section) => {
                 const health = healthBySection.get(section.id);
                 const referenceLevel = health?.programmeReferenceReadingLevel;
                 return (
@@ -135,10 +161,11 @@ export default function SchoolReportPanel({ school, structure, progress, evidenc
                     <td className="py-3">{health?.curriculumPercent ?? 0}%</td>
                     <td className="py-3">{referenceLevel === null || referenceLevel === undefined ? '—' : `TS-${referenceLevel}`}</td>
                     <td className="py-3">{health?.demonstratedReadingLevel === null || health?.demonstratedReadingLevel === undefined ? '—' : `TS-${health.demonstratedReadingLevel.toFixed(2)}`}</td>
+                    <td className="py-3">{health?.assessmentCoveragePercent === null || health?.assessmentCoveragePercent === undefined ? '—' : `${health.assessmentCoveragePercent.toFixed(0)}%`}</td>
                     <td className="py-3">{health?.benchmarkGap === null || health?.benchmarkGap === undefined ? '—' : health.benchmarkGap.toFixed(2)}</td>
                     <td className="py-3">{health?.teacherTrainingPercent === null || health?.teacherTrainingPercent === undefined ? '—' : `${health.teacherTrainingPercent}%`}</td>
                     <td className="py-3"><HealthBadge status={health?.status || 'insufficient_data'} /></td>
-                    <td className="max-w-[280px] py-3 text-xs leading-5 text-slate-500">{health?.reason || 'No programme-health evidence available.'}</td>
+                    <td className="max-w-[300px] py-3 text-xs leading-5 text-slate-500">{health?.reason || 'No programme-health evidence available.'}</td>
                   </tr>
                 );
               })}
@@ -149,7 +176,8 @@ export default function SchoolReportPanel({ school, structure, progress, evidenc
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="p-5">
-          <h3 className="font-semibold text-slate-900">Current reading level by class</h3>
+          <h3 className="font-semibold text-slate-900">Latest reading level by class</h3>
+          <p className="mt-1 text-xs text-slate-500">Uses only the latest section evidence meeting the internal coverage guardrail.</p>
           <div className="mt-4 space-y-3">
             {analytics.gradesSummary.map((grade) => (
               <div key={grade.gradeId} className="flex items-center justify-between gap-4 border-b border-slate-100 pb-2">
@@ -165,7 +193,7 @@ export default function SchoolReportPanel({ school, structure, progress, evidenc
 
         <Card className="p-5">
           <h3 className="font-semibold text-slate-900">Reading-domain growth</h3>
-          <p className="mt-1 text-xs text-slate-500">Baseline-to-current changes use only sections with both baseline and a later checkpoint for that domain.</p>
+          <p className="mt-1 text-xs text-slate-500">Baseline-to-later changes use only sections with sufficiently covered baseline and later checkpoint evidence for that domain.</p>
           <div className="mt-4 space-y-3">
             {analytics.domainProgress.map((domain) => (
               <div key={domain.key} className="grid grid-cols-[1fr_70px_70px_70px] gap-2 border-b border-slate-100 pb-2 text-sm">
@@ -180,7 +208,7 @@ export default function SchoolReportPanel({ school, structure, progress, evidenc
       </div>
 
       <Card className="p-4 text-xs leading-5 text-slate-500">
-        Reading levels and programme-reference levels in this report are Tiny Steps internal instructional descriptors. Management should interpret growth together with assessment coverage, classroom review evidence and teacher-training progress.
+        Reading levels and programme-reference levels in this report are Tiny Steps internal instructional descriptors. Management should interpret attainment and section-level growth together with assessment coverage, administration context, classroom review evidence and teacher-training progress. Section-level growth does not imply that exactly the same individual children were assessed at both checkpoints unless separately verified by the school.
       </Card>
     </div>
   );
