@@ -75,24 +75,6 @@ const trainingStatus = (
   throw new HttpsError('invalid-argument', 'Invalid teacher training status');
 };
 
-async function requireSection(
-  schoolId: string,
-  academicYearId: string,
-  sectionId: string,
-): Promise<admin.firestore.DocumentSnapshot> {
-  const snap = await admin
-    .firestore()
-    .collection('schools')
-    .doc(schoolId)
-    .collection('academicYears')
-    .doc(academicYearId)
-    .collection('sections')
-    .doc(sectionId)
-    .get();
-  if (!snap.exists) throw new HttpsError('not-found', 'Section not found');
-  return snap;
-}
-
 async function requireAcademicYear(
   schoolId: string,
   academicYearId: string,
@@ -103,8 +85,25 @@ async function requireAcademicYear(
     .doc(schoolId)
     .collection('academicYears')
     .doc(academicYearId);
-  if (!(await ref.get()).exists) throw new HttpsError('not-found', 'Academic year not found');
+  const snap = await ref.get();
+  if (!snap.exists) throw new HttpsError('not-found', 'Academic year not found');
+  const data = snap.data() || {};
+  if (String(data.status || '').toLowerCase() === 'closed') {
+    throw new HttpsError(
+      'failed-precondition',
+      'Closed academic years are read-only. Make the year current before updating programme progress.',
+    );
+  }
   return ref;
+}
+
+async function requireSection(
+  yearRef: admin.firestore.DocumentReference,
+  sectionId: string,
+): Promise<admin.firestore.DocumentSnapshot> {
+  const snap = await yearRef.collection('sections').doc(sectionId).get();
+  if (!snap.exists) throw new HttpsError('not-found', 'Section not found');
+  return snap;
 }
 
 export const schoolUpdateCurriculumProgress = onCall(
@@ -114,7 +113,8 @@ export const schoolUpdateCurriculumProgress = onCall(
     const academicYearId = required(request.data?.academicYearId, 'academicYearId');
     const sectionId = required(request.data?.sectionId, 'sectionId');
     const manager = await ensureSchoolManager(request.auth, schoolId);
-    const sectionSnap = await requireSection(schoolId, academicYearId, sectionId);
+    const yearRef = await requireAcademicYear(schoolId, academicYearId);
+    const sectionSnap = await requireSection(yearRef, sectionId);
     const section = sectionSnap.data() || {};
     if (String(section.status || 'active').toLowerCase() !== 'active') {
       throw new HttpsError('failed-precondition', 'Curriculum progress can only be updated for active sections');
@@ -141,7 +141,6 @@ export const schoolUpdateCurriculumProgress = onCall(
     const notes = optional(request.data?.notes, 1200);
 
     const db = admin.firestore();
-    const yearRef = manager.schoolRef.collection('academicYears').doc(academicYearId);
     const currentRef = yearRef.collection('curriculumProgress').doc(sectionId);
     const historyRef = yearRef.collection('curriculumProgressHistory').doc();
 
