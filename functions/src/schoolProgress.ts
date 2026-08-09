@@ -11,6 +11,9 @@ import {
 if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
+const CORE_TRAINING_TRACK_ID = 'tiny-steps-school-phonics-v1';
+const CORE_TRAINING_TRACK_LABEL = 'Tiny Steps School Phonics Training';
+const CORE_TRAINING_TOTAL = 6;
 
 const required = (value: unknown, field: string, max = 128): string => {
   if (typeof value !== 'string' || !value.trim()) {
@@ -41,15 +44,21 @@ const integer = (value: unknown, field: string, min: number, max: number): numbe
 const progressStatus = (
   value: unknown,
   stageOrder: number,
+  totalStages: number,
 ): 'not_started' | 'on_track' | 'needs_attention' | 'completed' => {
   if (stageOrder === 0) return 'not_started';
-  const next = String(value || (stageOrder === 6 ? 'completed' : 'on_track')).trim().toLowerCase();
+  const next = String(
+    value || (stageOrder === totalStages ? 'completed' : 'on_track'),
+  ).trim().toLowerCase();
   if (
     next === 'not_started' ||
     next === 'on_track' ||
     next === 'needs_attention' ||
     next === 'completed'
   ) {
+    if (next === 'not_started' && stageOrder > 0) {
+      throw new HttpsError('invalid-argument', 'A started curriculum stage cannot be marked not started');
+    }
     return next;
   }
   throw new HttpsError('invalid-argument', 'Invalid curriculum progress status');
@@ -58,10 +67,9 @@ const progressStatus = (
 const trainingStatus = (
   value: unknown,
   completedUnits: number,
-  totalUnits: number,
 ): 'not_started' | 'on_track' | 'training_due' | 'completed' => {
   if (completedUnits === 0) return 'not_started';
-  if (completedUnits === totalUnits) return 'completed';
+  if (completedUnits === CORE_TRAINING_TOTAL) return 'completed';
   const next = String(value || 'on_track').trim().toLowerCase();
   if (next === 'on_track' || next === 'training_due') return next;
   throw new HttpsError('invalid-argument', 'Invalid teacher training status');
@@ -114,11 +122,22 @@ export const schoolUpdateCurriculumProgress = onCall(
 
     const course = requireSchoolCourse(request.data?.courseId);
     const requestedStageOrder = Number(request.data?.stageOrder);
-    if (!Number.isInteger(requestedStageOrder) || requestedStageOrder < 0 || requestedStageOrder > 6) {
-      throw new HttpsError('invalid-argument', 'stageOrder must be an integer from 0 to 6');
+    if (
+      !Number.isInteger(requestedStageOrder) ||
+      requestedStageOrder < 0 ||
+      requestedStageOrder > course.stages.length
+    ) {
+      throw new HttpsError(
+        'invalid-argument',
+        `stageOrder must be an integer from 0 to ${course.stages.length}`,
+      );
     }
     const stage = requireSchoolStage(course, requestedStageOrder);
-    const status = progressStatus(request.data?.status, requestedStageOrder);
+    const status = progressStatus(
+      request.data?.status,
+      requestedStageOrder,
+      course.stages.length,
+    );
     const notes = optional(request.data?.notes, 1200);
 
     const db = admin.firestore();
@@ -209,24 +228,41 @@ export const schoolUpdateTeacherTraining = onCall(
       throw new HttpsError('failed-precondition', 'Training can only be updated for active teachers');
     }
 
-    const trainingTrackId = required(
-      request.data?.trainingTrackId || 'tiny-steps-school-phonics',
-      'trainingTrackId',
-      100,
+    const trainingTrackId = optional(request.data?.trainingTrackId, 100) || CORE_TRAINING_TRACK_ID;
+    if (trainingTrackId !== CORE_TRAINING_TRACK_ID) {
+      throw new HttpsError('invalid-argument', 'Unsupported school teacher-training track');
+    }
+    const completedUnits = integer(
+      request.data?.completedUnits ?? request.data?.currentStage ?? 0,
+      'completedUnits',
+      0,
+      CORE_TRAINING_TOTAL,
     );
-    const trainingTrackLabel =
-      optional(request.data?.trainingTrackLabel, 160) || 'Tiny Steps School Phonics Training';
-    const totalUnits = integer(request.data?.totalUnits, 'totalUnits', 1, 100);
-    const completedUnits = integer(request.data?.completedUnits, 'completedUnits', 0, totalUnits);
     const currentStage = integer(
       request.data?.currentStage ?? completedUnits,
       'currentStage',
       0,
-      totalUnits,
+      CORE_TRAINING_TOTAL,
     );
-    const status = trainingStatus(request.data?.status, completedUnits, totalUnits);
+    if (currentStage !== completedUnits) {
+      throw new HttpsError(
+        'invalid-argument',
+        'currentStage and completedUnits must match for the sequential training pathway',
+      );
+    }
+    if (
+      request.data?.totalUnits !== undefined &&
+      Number(request.data.totalUnits) !== CORE_TRAINING_TOTAL
+    ) {
+      throw new HttpsError(
+        'invalid-argument',
+        `totalUnits must be ${CORE_TRAINING_TOTAL} for the current training pathway`,
+      );
+    }
+
+    const status = trainingStatus(request.data?.status, completedUnits);
     const notes = optional(request.data?.notes, 1200);
-    const progressPercent = Math.round((completedUnits / totalUnits) * 100);
+    const progressPercent = Math.round((completedUnits / CORE_TRAINING_TOTAL) * 100);
 
     const db = admin.firestore();
     const currentRef = yearRef.collection('teacherTraining').doc(teacherId);
@@ -240,15 +276,15 @@ export const schoolUpdateTeacherTraining = onCall(
       tx.set(
         currentRef,
         {
-          schemaVersion: 1,
+          schemaVersion: 2,
           schoolId,
           academicYearId,
           teacherId,
           teacherName: String(teacher.name || teacherId),
-          trainingTrackId,
-          trainingTrackLabel,
+          trainingTrackId: CORE_TRAINING_TRACK_ID,
+          trainingTrackLabel: CORE_TRAINING_TRACK_LABEL,
           completedUnits,
-          totalUnits,
+          totalUnits: CORE_TRAINING_TOTAL,
           currentStage,
           progressPercent,
           status,
@@ -262,7 +298,7 @@ export const schoolUpdateTeacherTraining = onCall(
       );
 
       tx.set(historyRef, {
-        schemaVersion: 1,
+        schemaVersion: 2,
         schoolId,
         academicYearId,
         teacherId,
@@ -279,7 +315,7 @@ export const schoolUpdateTeacherTraining = onCall(
           : null,
         next: {
           completedUnits,
-          totalUnits,
+          totalUnits: CORE_TRAINING_TOTAL,
           currentStage,
           status,
           progressPercent,
@@ -294,7 +330,7 @@ export const schoolUpdateTeacherTraining = onCall(
       academicYearId,
       teacherId,
       completedUnits,
-      totalUnits,
+      totalUnits: CORE_TRAINING_TOTAL,
       progressPercent,
       status,
     };
