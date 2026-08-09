@@ -147,7 +147,11 @@ describe('SchoolPortalFoundationPage', () => {
 
     renderPage();
 
-    expect(await screen.findByText('Linked campuses/schools: 2')).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        'This login has access to 2 linked schools/campuses. Use the selector above to switch views.',
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText('School B')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
