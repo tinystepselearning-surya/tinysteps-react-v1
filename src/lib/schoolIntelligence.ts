@@ -37,22 +37,42 @@ export const timestampMillis = (value: unknown): number => {
   return 0;
 };
 
+const latestByTime = (assessments: AssessmentSummary[]): AssessmentSummary | null =>
+  assessments
+    .slice()
+    .sort((a, b) => timestampMillis(b.assessedAt) - timestampMillis(a.assessedAt))[0] || null;
+
 export function latestAssessmentForSection(
   assessments: AssessmentSummary[],
   sectionId: string,
 ): AssessmentSummary | null {
-  return assessments
-    .filter((item) => item.sectionId === sectionId)
-    .sort((a, b) => timestampMillis(b.assessedAt) - timestampMillis(a.assessedAt))[0] || null;
+  return latestByTime(assessments.filter((item) => item.sectionId === sectionId));
+}
+
+export function latestBaselineAssessmentForSection(
+  assessments: AssessmentSummary[],
+  sectionId: string,
+): AssessmentSummary | null {
+  return latestByTime(
+    assessments.filter(
+      (item) => item.sectionId === sectionId && item.checkpoint === 'baseline',
+    ),
+  );
 }
 
 export function latestPostBaselineAssessmentForSection(
   assessments: AssessmentSummary[],
   sectionId: string,
 ): AssessmentSummary | null {
-  return assessments
-    .filter((item) => item.sectionId === sectionId && item.checkpoint !== 'baseline')
-    .sort((a, b) => timestampMillis(b.assessedAt) - timestampMillis(a.assessedAt))[0] || null;
+  const baseline = latestBaselineAssessmentForSection(assessments, sectionId);
+  const baselineAt = baseline ? timestampMillis(baseline.assessedAt) : 0;
+  return latestByTime(
+    assessments.filter((item) => {
+      if (item.sectionId !== sectionId || item.checkpoint === 'baseline') return false;
+      const assessedAt = timestampMillis(item.assessedAt);
+      return baselineAt <= 0 || assessedAt <= 0 || assessedAt > baselineAt;
+    }),
+  );
 }
 
 export function deriveSectionProgrammeHealth(input: {
@@ -62,7 +82,8 @@ export function deriveSectionProgrammeHealth(input: {
   assessments: AssessmentSummary[];
 }): SectionProgrammeHealth {
   const { section, curriculum, trainingByTeacher, assessments } = input;
-  const latestAssessment = latestAssessmentForSection(assessments, section.id);
+  const baselineAssessment = latestBaselineAssessmentForSection(assessments, section.id);
+  const latestAssessment = latestPostBaselineAssessmentForSection(assessments, section.id);
   const assignedTraining = section.teacherIds
     .map((teacherId) => trainingByTeacher.get(teacherId) || null);
   const trainingValues = assignedTraining
@@ -77,11 +98,12 @@ export function deriveSectionProgrammeHealth(input: {
       sectionId: section.id,
       programmeReferenceReadingLevel:
         curriculum?.programmeReferenceReadingLevel ?? null,
-      demonstratedReadingLevel: latestAssessment?.averageReadingLevel ?? null,
+      demonstratedReadingLevel:
+        latestAssessment?.averageReadingLevel ?? baselineAssessment?.averageReadingLevel ?? null,
       benchmarkGap: null,
       curriculumPercent: curriculum?.progressPercent ?? 0,
       teacherTrainingPercent: null,
-      latestAssessment,
+      latestAssessment: latestAssessment || baselineAssessment,
       status: 'insufficient_data',
       reason: 'No school teacher is assigned to this section yet.',
     };
@@ -91,11 +113,12 @@ export function deriveSectionProgrammeHealth(input: {
     return {
       sectionId: section.id,
       programmeReferenceReadingLevel: null,
-      demonstratedReadingLevel: latestAssessment?.averageReadingLevel ?? null,
+      demonstratedReadingLevel:
+        latestAssessment?.averageReadingLevel ?? baselineAssessment?.averageReadingLevel ?? null,
       benchmarkGap: null,
       curriculumPercent: curriculum?.progressPercent ?? 0,
       teacherTrainingPercent,
-      latestAssessment,
+      latestAssessment: latestAssessment || baselineAssessment,
       status: 'insufficient_data',
       reason: 'Curriculum stage has not yet been verified.',
     };
@@ -106,13 +129,15 @@ export function deriveSectionProgrammeHealth(input: {
       sectionId: section.id,
       programmeReferenceReadingLevel:
         curriculum.programmeReferenceReadingLevel,
-      demonstratedReadingLevel: null,
+      demonstratedReadingLevel: baselineAssessment?.averageReadingLevel ?? null,
       benchmarkGap: null,
       curriculumPercent: curriculum.progressPercent,
       teacherTrainingPercent,
-      latestAssessment: null,
+      latestAssessment: baselineAssessment,
       status: 'insufficient_data',
-      reason: 'No reading benchmark has been recorded for this section yet.',
+      reason: baselineAssessment
+        ? 'Only baseline reading evidence is available. Record a later checkpoint before interpreting implementation health.'
+        : 'No reading benchmark has been recorded for this section yet.',
     };
   }
 
@@ -134,7 +159,7 @@ export function deriveSectionProgrammeHealth(input: {
       teacherTrainingPercent,
       latestAssessment,
       status: 'insufficient_data',
-      reason: 'The latest reading benchmark predates the current verified curriculum stage. A fresh checkpoint is needed.',
+      reason: 'The latest post-baseline reading checkpoint predates the current verified curriculum stage. A fresh checkpoint is needed.',
     };
   }
 
@@ -172,7 +197,7 @@ export function deriveSectionProgrammeHealth(input: {
       teacherTrainingPercent,
       latestAssessment,
       status: 'needs_support',
-      reason: 'Reading evidence is available, but training progress is missing for one or more assigned teachers.',
+      reason: 'Post-baseline reading evidence is available, but training progress is missing for one or more assigned teachers.',
     };
   }
 
@@ -189,7 +214,7 @@ export function deriveSectionProgrammeHealth(input: {
       status: 'needs_support',
       reason:
         gap < -0.75
-          ? 'Reading performance is below the current internal programme reference and should be reviewed.'
+          ? 'Post-baseline reading performance is below the current internal programme reference and should be reviewed.'
           : 'Reading is close to the programme reference, but teacher training progress needs support.',
     };
   }
@@ -204,7 +229,7 @@ export function deriveSectionProgrammeHealth(input: {
     teacherTrainingPercent,
     latestAssessment,
     status: 'on_track',
-    reason: 'Reading evidence is close to the current internal programme reference and teacher training progress is sufficiently established.',
+    reason: 'Post-baseline reading evidence is close to the current internal programme reference and teacher training progress is sufficiently established.',
   };
 }
 
