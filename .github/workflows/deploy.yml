@@ -194,6 +194,29 @@ jobs:
           --project "${{ env.FIREBASE_PROJECT_ID }}"
           --region asia-south1
 
+      - name: Enforce lead attribution callable public transport invocation
+        shell: bash
+        run: |
+          set -euo pipefail
+          service_resource="$(gcloud functions describe enrichPublicLeadAttribution \
+            --gen2 \
+            --project="${{ env.FIREBASE_PROJECT_ID }}" \
+            --region=asia-south1 \
+            --format='value(serviceConfig.service)')"
+          service_name="${service_resource##*/}"
+          if [[ -z "${service_name}" ]]; then
+            echo "Cloud Run service was not found for enrichPublicLeadAttribution" >&2
+            exit 1
+          fi
+          gcloud run services add-iam-policy-binding "${service_name}" \
+            --project="${{ env.FIREBASE_PROJECT_ID }}" \
+            --region=asia-south1 \
+            --member=allUsers \
+            --role=roles/run.invoker \
+            --condition=None \
+            --quiet
+          echo "Verified public transport IAM for enrichPublicLeadAttribution (${service_name})"
+
       - name: Deploy Firestore Security Rules
         run: >-
           npx firebase-tools@latest deploy
