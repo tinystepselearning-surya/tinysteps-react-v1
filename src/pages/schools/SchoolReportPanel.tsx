@@ -127,12 +127,13 @@ export default function SchoolReportPanel({ school, structure, progress, evidenc
             <tbody>
               {structure.sections.filter((item) => item.status === 'active').map((section) => {
                 const health = healthBySection.get(section.id);
+                const referenceLevel = health?.programmeReferenceReadingLevel;
                 return (
                   <tr key={section.id} className="border-b border-slate-100 align-top">
                     <td className="py-3 font-medium">{section.gradeLabel} — {section.sectionName}</td>
                     <td className="py-3">{section.studentCount}</td>
                     <td className="py-3">{health?.curriculumPercent ?? 0}%</td>
-                    <td className="py-3">{health?.expectedReadingLevel === null || health?.expectedReadingLevel === undefined ? '—' : `TS-${health.expectedReadingLevel}`}</td>
+                    <td className="py-3">{referenceLevel === null || referenceLevel === undefined ? '—' : `TS-${referenceLevel}`}</td>
                     <td className="py-3">{health?.demonstratedReadingLevel === null || health?.demonstratedReadingLevel === undefined ? '—' : `TS-${health.demonstratedReadingLevel.toFixed(2)}`}</td>
                     <td className="py-3">{health?.benchmarkGap === null || health?.benchmarkGap === undefined ? '—' : health.benchmarkGap.toFixed(2)}</td>
                     <td className="py-3">{health?.teacherTrainingPercent === null || health?.teacherTrainingPercent === undefined ? '—' : `${health.teacherTrainingPercent}%`}</td>
