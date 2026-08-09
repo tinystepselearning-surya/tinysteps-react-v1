@@ -90,6 +90,115 @@ service cloud.firestore {
       );
     }
 
+    function userIsActiveOrLegacy(uid) {
+      return
+        userDocExists(uid)
+        && (
+          !(
+            'status'
+            in get(
+              userDocPath(uid)
+            ).data
+          )
+          || (
+            get(
+              userDocPath(uid)
+            ).data.status is string
+            && get(
+              userDocPath(uid)
+            ).data.status.lower()
+              == 'active'
+          )
+        );
+    }
+
+    function isCurrentActiveSchoolAdmin() {
+      return
+        isSignedIn()
+        && userDocExists(
+          request.auth.uid
+        )
+        && userIsActiveOrLegacy(
+          request.auth.uid
+        )
+        && (
+          userRole(
+            request.auth.uid
+          ) == 'schooladmin'
+          || userRole(
+            request.auth.uid
+          ) == 'school-admin'
+        );
+    }
+
+    function isCurrentActiveLP() {
+      return
+        isSignedIn()
+        && userDocExists(
+          request.auth.uid
+        )
+        && userIsActiveOrLegacy(
+          request.auth.uid
+        )
+        && (
+          userRole(
+            request.auth.uid
+          ) == 'learningpartner'
+          || userRole(
+            request.auth.uid
+          ) == 'learning-partner'
+        );
+    }
+
+    function schoolUserDocPath(uid) {
+      return /databases/$(database)/documents/schoolUsers/$(uid);
+    }
+
+    function schoolUserDocExists(uid) {
+      return exists(
+        schoolUserDocPath(uid)
+      );
+    }
+
+    function schoolUserHasAccess(schoolId) {
+      return
+        isCurrentActiveSchoolAdmin()
+        && schoolUserDocExists(request.auth.uid)
+        && (
+          'role' in
+            get(
+              schoolUserDocPath(request.auth.uid)
+            ).data
+        )
+        && get(
+          schoolUserDocPath(request.auth.uid)
+        ).data.role == 'schoolAdmin'
+        && (
+          'status' in
+            get(
+              schoolUserDocPath(request.auth.uid)
+            ).data
+        )
+        && get(
+          schoolUserDocPath(request.auth.uid)
+        ).data.status == 'active'
+        && (
+          'schoolIds' in
+            get(
+              schoolUserDocPath(request.auth.uid)
+            ).data
+        )
+        && get(
+          schoolUserDocPath(request.auth.uid)
+        ).data.schoolIds is list
+        && (
+          schoolId in
+            get(
+              schoolUserDocPath(request.auth.uid)
+            ).data.schoolIds
+        );
+    }
+
     function isKidToken() {
       return tokenRole() == 'kid';
     }
@@ -385,6 +494,44 @@ function teacherOwnsDocViaAliases(data) {
           request.auth.uid == uid
           && !touchesProtectedUserFields()
         );
+    }
+
+    match /schoolUsers/{userId} {
+      allow read:
+        if isAdmin()
+        || (
+          isCurrentActiveSchoolAdmin()
+          && request.auth.uid == userId
+        );
+
+      allow create, update, delete:
+        if false;
+    }
+
+    match /schools/{schoolId} {
+      allow read:
+        if isAdmin()
+        || (
+          isCurrentActiveLP()
+          && ('learningPartnerId' in resource.data)
+          && resource.data.learningPartnerId == request.auth.uid
+        )
+        || (
+          isCurrentActiveSchoolAdmin()
+          && resource.data.status != 'archived'
+          && schoolUserHasAccess(schoolId)
+        );
+
+      allow create, update, delete:
+        if false;
+    }
+
+    match /schools/{schoolId}/learningPartnerAssignments/{assignmentId} {
+      allow read:
+        if isAdmin();
+
+      allow create, update, delete:
+        if false;
     }
 
     match /users/{userId}/progress/{document=**} {

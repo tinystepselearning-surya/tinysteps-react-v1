@@ -5,6 +5,7 @@ import {
   BellDot,
   BookCopy,
   BookOpen,
+  Building2,
   CalendarClock,
   ClipboardList,
   ContactRound,
@@ -32,6 +33,7 @@ export default function Sidebar({ selectedTab, onTabChange, className, onNavigat
   const navigate = useNavigate();
   const tabs = [
     { id: 'users', label: 'User Management', icon: UserCog },
+    { id: 'schools', label: 'School Partnerships', icon: Building2 },
     { id: 'students', label: 'Student Management', icon: GraduationCap },
     { id: 'leads', label: 'Leads & Enquiries', icon: ContactRound },
     { id: 'enrollments', label: 'Enrollment Management', icon: ClipboardList },
