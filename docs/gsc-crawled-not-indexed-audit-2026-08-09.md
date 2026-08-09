@@ -9,8 +9,8 @@
 The 52 URLs should **not** all be forced into Google's index. They represent four different URL types:
 
 - **23 canonical index targets** — real pages we want Google to index and rank.
-- **12 permanent/normalization redirects** — legacy or duplicate URLs whose signals must consolidate into canonical pages.
-- **11 noindex archive posts** — older weekly campaign/support articles intentionally kept accessible without competing with stronger evergreen pages.
+- **11 permanent/normalization redirects** — legacy or duplicate URLs whose signals must consolidate into canonical pages.
+- **12 noindex archive posts** — older weekly campaign/support articles intentionally kept accessible without competing with stronger evergreen pages.
 - **6 machine-readable resources** — sitemap/RSS XML files that should remain crawlable resources, not search-result landing pages.
 
 The repository now has a machine-readable manifest plus `scripts/audit-gsc-crawled-not-indexed.mjs` so these 52 decisions can be regression-tested instead of handled manually.
@@ -154,7 +154,7 @@ After this branch is reviewed, merged and deployed:
 The goal is **not “52/52 indexed.”** The goal is:
 
 - 23/23 canonical targets technically indexable, substantial, internally linked, and sitemap-visible;
-- 12/12 duplicate/legacy URLs consolidating correctly;
-- 11/11 weak weekly archives prevented from competing with canonicals;
+- 11/11 duplicate/legacy URLs consolidating correctly;
+- 12/12 weak weekly archives prevented from competing with canonicals;
 - 6/6 XML resources functioning as machine-readable resources;
 - Search Console increasingly reporting the canonical pages in Indexed while legacy/resource URLs resolve under the correct non-index reasons.
