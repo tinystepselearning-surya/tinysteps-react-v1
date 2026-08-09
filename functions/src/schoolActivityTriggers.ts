@@ -3,10 +3,6 @@ import * as logger from 'firebase-functions/logger';
 import {
   onDocumentCreated,
   onDocumentWritten,
-  type FirestoreEvent,
-  type Change,
-  type QueryDocumentSnapshot,
-  type DocumentSnapshot,
 } from 'firebase-functions/v2/firestore';
 
 import { normalizeRole } from './helpers/roles';
@@ -14,16 +10,6 @@ import { normalizeRole } from './helpers/roles';
 if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
-
-type DocChangeEvent = FirestoreEvent<
-  Change<QueryDocumentSnapshot | undefined>,
-  Record<string, string>
->;
-
-type DocCreateEvent = FirestoreEvent<
-  QueryDocumentSnapshot | undefined,
-  Record<string, string>
->;
 
 const stringValue = (value: unknown): string | null =>
   typeof value === 'string' && value.trim() ? value.trim() : null;
@@ -73,11 +59,11 @@ async function writeActivity(input: {
     });
 }
 
-function afterData(event: DocChangeEvent): admin.firestore.DocumentData | null {
+function afterData(event: any): admin.firestore.DocumentData | null {
   return event.data?.after?.exists ? event.data.after.data() || {} : null;
 }
 
-function beforeData(event: DocChangeEvent): admin.firestore.DocumentData | null {
+function beforeData(event: any): admin.firestore.DocumentData | null {
   return event.data?.before?.exists ? event.data.before.data() || {} : null;
 }
 
@@ -92,15 +78,20 @@ function actorFrom(data: admin.firestore.DocumentData | null): string | null {
   );
 }
 
-function actionType(before: admin.firestore.DocumentData | null, after: admin.firestore.DocumentData | null): 'created' | 'updated' | 'archived' {
+function actionType(
+  before: admin.firestore.DocumentData | null,
+  after: admin.firestore.DocumentData | null,
+): 'created' | 'updated' | 'archived' {
   if (!before && after) return 'created';
-  if (before && after && before.status !== 'inactive' && after.status === 'inactive') return 'archived';
+  if (before && after && before.status !== 'inactive' && after.status === 'inactive') {
+    return 'archived';
+  }
   return 'updated';
 }
 
 export const onSchoolAcademicYearActivity = onDocumentWritten(
   { document: 'schools/{schoolId}/academicYears/{academicYearId}', region: REGION },
-  async (event: DocChangeEvent) => {
+  async (event) => {
     const after = afterData(event);
     const before = beforeData(event);
     if (!after) return;
@@ -120,7 +111,7 @@ export const onSchoolAcademicYearActivity = onDocumentWritten(
 
 export const onSchoolGradeActivity = onDocumentWritten(
   { document: 'schools/{schoolId}/academicYears/{academicYearId}/grades/{gradeId}', region: REGION },
-  async (event: DocChangeEvent) => {
+  async (event) => {
     const after = afterData(event);
     const before = beforeData(event);
     if (!after) return;
@@ -140,18 +131,19 @@ export const onSchoolGradeActivity = onDocumentWritten(
 
 export const onSchoolSectionActivity = onDocumentWritten(
   { document: 'schools/{schoolId}/academicYears/{academicYearId}/sections/{sectionId}', region: REGION },
-  async (event: DocChangeEvent) => {
+  async (event) => {
     const after = afterData(event);
     const before = beforeData(event);
     if (!after) return;
     const action = actionType(before, after);
+    const sectionLabel = `${String(after.gradeLabel || '')} ${String(after.sectionName || event.params.sectionId)}`.trim();
     await writeActivity({
       schoolId: event.params.schoolId,
       academicYearId: event.params.academicYearId,
       entityType: 'section',
       entityId: event.params.sectionId,
       type: `section_${action}`,
-      summary: `${String(after.gradeLabel || '')} ${String(after.sectionName || event.params.sectionId)}`.trim() + ` ${action}.`,
+      summary: `${sectionLabel} ${action}.`,
       actorUid: actorFrom(after),
       metadata: {
         status: after.status || null,
@@ -164,7 +156,7 @@ export const onSchoolSectionActivity = onDocumentWritten(
 
 export const onSchoolTeacherActivity = onDocumentWritten(
   { document: 'schools/{schoolId}/teachers/{teacherId}', region: REGION },
-  async (event: DocChangeEvent) => {
+  async (event) => {
     const after = afterData(event);
     const before = beforeData(event);
     if (!after) return;
@@ -183,16 +175,17 @@ export const onSchoolTeacherActivity = onDocumentWritten(
 
 export const onSchoolCurriculumActivity = onDocumentWritten(
   { document: 'schools/{schoolId}/academicYears/{academicYearId}/curriculumProgress/{sectionId}', region: REGION },
-  async (event: DocChangeEvent) => {
+  async (event) => {
     const after = afterData(event);
     if (!after) return;
+    const sectionLabel = `${String(after.gradeLabel || '')} ${String(after.sectionName || event.params.sectionId)}`.trim();
     await writeActivity({
       schoolId: event.params.schoolId,
       academicYearId: event.params.academicYearId,
       entityType: 'curriculumProgress',
       entityId: event.params.sectionId,
       type: 'curriculum_progress_updated',
-      summary: `${String(after.gradeLabel || '')} ${String(after.sectionName || event.params.sectionId)}`.trim() + ` curriculum verified at ${String(after.stageLabel || 'Not started')}.`,
+      summary: `${sectionLabel} curriculum verified at ${String(after.stageLabel || 'Not started')}.`,
       actorUid: actorFrom(after),
       metadata: {
         courseId: after.courseId || null,
@@ -206,7 +199,7 @@ export const onSchoolCurriculumActivity = onDocumentWritten(
 
 export const onSchoolTrainingActivity = onDocumentWritten(
   { document: 'schools/{schoolId}/academicYears/{academicYearId}/teacherTraining/{teacherId}', region: REGION },
-  async (event: DocChangeEvent) => {
+  async (event) => {
     const after = afterData(event);
     if (!after) return;
     await writeActivity({
@@ -227,15 +220,18 @@ export const onSchoolTrainingActivity = onDocumentWritten(
 
 export const onSchoolReviewActivity = onDocumentCreated(
   { document: 'schools/{schoolId}/academicYears/{academicYearId}/reviews/{reviewId}', region: REGION },
-  async (event: DocCreateEvent) => {
+  async (event) => {
     const data = event.data?.data() || {};
+    const scopeLabel = data.sectionId
+      ? `${String(data.gradeLabel || '')} ${String(data.sectionName || '')}`.trim()
+      : 'Whole-school';
     await writeActivity({
       schoolId: event.params.schoolId,
       academicYearId: event.params.academicYearId,
       entityType: 'review',
       entityId: event.params.reviewId,
       type: 'review_recorded',
-      summary: `${data.sectionId ? `${String(data.gradeLabel || '')} ${String(data.sectionName || '')}`.trim() : 'Whole-school'} implementation review recorded.`,
+      summary: `${scopeLabel} implementation review recorded.`,
       actorUid: stringValue(data.reviewedBy) || stringValue(data.createdBy),
       metadata: {
         implementationRating: data.implementationRating || null,
@@ -247,15 +243,16 @@ export const onSchoolReviewActivity = onDocumentCreated(
 
 export const onSchoolAssessmentActivity = onDocumentCreated(
   { document: 'schools/{schoolId}/academicYears/{academicYearId}/assessmentSummaries/{assessmentId}', region: REGION },
-  async (event: DocCreateEvent) => {
+  async (event) => {
     const data = event.data?.data() || {};
+    const sectionLabel = `${String(data.gradeLabel || '')} ${String(data.sectionName || '')}`.trim();
     await writeActivity({
       schoolId: event.params.schoolId,
       academicYearId: event.params.academicYearId,
       entityType: 'assessment',
       entityId: event.params.assessmentId,
       type: 'assessment_recorded',
-      summary: `${String(data.gradeLabel || '')} ${String(data.sectionName || '')}`.trim() + ` ${String(data.checkpoint || 'reading')} benchmark recorded.`,
+      summary: `${sectionLabel} ${String(data.checkpoint || 'reading')} benchmark recorded.`,
       actorUid: stringValue(data.assessedBy) || stringValue(data.createdBy),
       metadata: {
         checkpoint: data.checkpoint || null,
