@@ -158,6 +158,14 @@ export {
   reopenDemoSession,
 } from "./demoSessions";
 
+// Canonical lead -> demo -> enrollment lifecycle synchronization
+export {
+  onLeadCreatedCanonicalize,
+  onDemoLeadLifecycleWrite,
+  teacherCancelAssignedDemo,
+  onDemoPayoutIntegrityWrite,
+} from "./leadLifecycle";
+
 // AI: Ask TinySteps chatbot and knowledge base
 export { askTinySteps } from "./ai/askTinySteps";
 export { refreshPublicKb } from "./ai/refreshPublicKb";
