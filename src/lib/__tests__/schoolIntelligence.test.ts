@@ -38,7 +38,7 @@ const curriculum = (
   stageOrder: 3,
   totalStages: 6,
   stageLabel: 'Stage 3',
-  expectedReadingLevel: 4,
+  programmeReferenceReadingLevel: 4,
   progressPercent: 50,
   status: 'on_track',
   notes: null,
@@ -141,7 +141,7 @@ describe('school programme health', () => {
   it('flags a material reading gap for intervention even with training evidence', () => {
     const result = deriveSectionProgrammeHealth({
       section: section(),
-      curriculum: curriculum({ expectedReadingLevel: 5 }),
+      curriculum: curriculum({ programmeReferenceReadingLevel: 5 }),
       trainingByTeacher: trainingMap(training({ progressPercent: 100 })),
       assessments: [assessment({ averageReadingLevel: 3 })],
     });
@@ -152,7 +152,7 @@ describe('school programme health', () => {
   it('flags missing assigned-teacher training as needs support', () => {
     const result = deriveSectionProgrammeHealth({
       section: section({ teacherIds: ['teacher-1', 'teacher-2'] }),
-      curriculum: curriculum({ expectedReadingLevel: 4 }),
+      curriculum: curriculum({ programmeReferenceReadingLevel: 4 }),
       trainingByTeacher: trainingMap(training()),
       assessments: [assessment({ averageReadingLevel: 4 })],
     });
@@ -164,12 +164,13 @@ describe('school programme health', () => {
   it('marks a section on track only when reading and training evidence are both established', () => {
     const result = deriveSectionProgrammeHealth({
       section: section(),
-      curriculum: curriculum({ expectedReadingLevel: 4 }),
+      curriculum: curriculum({ programmeReferenceReadingLevel: 4 }),
       trainingByTeacher: trainingMap(training({ progressPercent: 67 })),
       assessments: [assessment({ averageReadingLevel: 3.5 })],
     });
 
     expect(result.status).toBe('on_track');
     expect(result.benchmarkGap).toBe(-0.5);
+    expect(result.programmeReferenceReadingLevel).toBe(4);
   });
 });
