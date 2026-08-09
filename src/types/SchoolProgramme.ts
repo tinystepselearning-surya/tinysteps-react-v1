@@ -1,3 +1,5 @@
+import type { SchoolPhonicsCourseId } from '../constants/schoolCurriculum';
+
 export type AcademicYearStatus = 'planned' | 'current' | 'closed';
 export type SchoolEntityStatus = 'active' | 'inactive';
 
@@ -59,6 +61,62 @@ export interface SchoolTeacherRecord {
   updatedBy?: string;
 }
 
+export type CurriculumProgressStatus =
+  | 'not_started'
+  | 'on_track'
+  | 'needs_attention'
+  | 'completed';
+
+export interface SectionCurriculumProgress {
+  id: string;
+  schoolId: string;
+  academicYearId: string;
+  sectionId: string;
+  gradeId: string;
+  gradeKey: string;
+  gradeLabel: string;
+  sectionName: string;
+  courseId: SchoolPhonicsCourseId;
+  courseLabel: string;
+  stageOrder: number;
+  totalStages: number;
+  stageLabel: string;
+  expectedReadingLevel: number;
+  progressPercent: number;
+  status: CurriculumProgressStatus;
+  notes: string | null;
+  latestVerifiedAt?: unknown;
+  latestVerifiedBy?: string;
+  updatedAt?: unknown;
+  updatedBy?: string;
+}
+
+export type TeacherTrainingStatus =
+  | 'not_started'
+  | 'on_track'
+  | 'training_due'
+  | 'completed';
+
+export interface TeacherTrainingProgress {
+  id: string;
+  schoolId: string;
+  academicYearId: string;
+  teacherId: string;
+  teacherName: string;
+  trainingTrackId: string;
+  trainingTrackLabel: string;
+  completedUnits: number;
+  totalUnits: number;
+  currentStage: number;
+  progressPercent: number;
+  status: TeacherTrainingStatus;
+  notes: string | null;
+  latestTrainingAt?: unknown;
+  latestTrainingBy?: string;
+  updatedAt?: unknown;
+  updatedBy?: string;
+}
+
 export interface SchoolStructureSnapshot {
   academicYears: SchoolAcademicYear[];
   currentAcademicYear: SchoolAcademicYear | null;
@@ -71,6 +129,11 @@ export interface SchoolStructureSnapshot {
     students: number;
     teachers: number;
   };
+}
+
+export interface SchoolProgressSnapshot {
+  curriculum: SectionCurriculumProgress[];
+  training: TeacherTrainingProgress[];
 }
 
 export const DEFAULT_SCHOOL_GRADES: Array<{
