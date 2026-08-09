@@ -11,22 +11,19 @@ import { SCHOOL_PHONICS_COURSES, type SchoolPhonicsCourseId } from '../../consta
 import type { SchoolRecord } from '../../types/School';
 import type {
   CurriculumProgressStatus,
-  SchoolEvidenceSnapshot,
-  SchoolProgressSnapshot,
+  SchoolActivityRecord,
+  SchoolProgrammeBundle,
   SchoolSection,
-  SchoolStructureSnapshot,
   SchoolTeacherRecord,
   SectionCurriculumProgress,
   TeacherTrainingProgress,
   TeacherTrainingStatus,
 } from '../../types/SchoolProgramme';
 import {
-  getSchoolProgress,
-  getSchoolStructure,
+  getSchoolProgrammeBundle,
   updateSectionCurriculumProgress,
   updateTeacherTraining,
 } from '../../services/schoolProgrammeService';
-import { getSchoolEvidence } from '../../services/schoolEvidenceService';
 import { buildSectionHealthMap } from '../../lib/schoolIntelligence';
 import SchoolStructureWorkspace from './SchoolStructureWorkspace';
 import SchoolReviewsPanel from './SchoolReviewsPanel';
@@ -36,38 +33,33 @@ import SchoolReportPanel from './SchoolReportPanel';
 const errorText = (error: unknown) =>
   error instanceof Error ? error.message : 'Please try again.';
 
+const dateTimeText = (value: unknown): string => {
+  const millis = typeof value === 'number'
+    ? value
+    : value instanceof Date
+      ? value.getTime()
+      : typeof value === 'string'
+        ? new Date(value).getTime()
+        : NaN;
+  return Number.isFinite(millis) ? new Date(millis).toLocaleString() : '—';
+};
+
 interface Props {
   school: SchoolRecord;
   canEdit: boolean;
   defaultTab?: string;
 }
 
-const EMPTY_EVIDENCE: SchoolEvidenceSnapshot = { reviews: [], assessments: [] };
-
 export default function SchoolProgrammeWorkspace({ school, canEdit, defaultTab = 'overview' }: Props) {
   const { toast } = useToast();
   const [tab, setTab] = useState(defaultTab);
-  const [structure, setStructure] = useState<SchoolStructureSnapshot | null>(null);
-  const [progress, setProgress] = useState<SchoolProgressSnapshot>({ curriculum: [], training: [] });
-  const [evidence, setEvidence] = useState<SchoolEvidenceSnapshot>(EMPTY_EVIDENCE);
+  const [bundle, setBundle] = useState<SchoolProgrammeBundle | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const nextStructure = await getSchoolStructure(school.id);
-      setStructure(nextStructure);
-      if (nextStructure.currentAcademicYear) {
-        const [nextProgress, nextEvidence] = await Promise.all([
-          getSchoolProgress(school.id, nextStructure.currentAcademicYear.id),
-          getSchoolEvidence(school.id, nextStructure.currentAcademicYear.id),
-        ]);
-        setProgress(nextProgress);
-        setEvidence(nextEvidence);
-      } else {
-        setProgress({ curriculum: [], training: [] });
-        setEvidence(EMPTY_EVIDENCE);
-      }
+      setBundle(await getSchoolProgrammeBundle(school.id));
     } catch (error) {
       toast({
         title: 'Unable to load school programme',
@@ -80,8 +72,13 @@ export default function SchoolProgrammeWorkspace({ school, canEdit, defaultTab =
   }, [school.id, toast]);
 
   useEffect(() => {
+    setBundle(null);
     void load();
   }, [load]);
+
+  const structure = bundle?.structure || null;
+  const progress = bundle?.progress || { curriculum: [], training: [] };
+  const evidence = bundle?.evidence || { reviews: [], assessments: [] };
 
   const curriculumBySection = useMemo(
     () => new Map(progress.curriculum.map((item) => [item.sectionId, item])),
@@ -102,8 +99,16 @@ export default function SchoolProgrammeWorkspace({ school, canEdit, defaultTab =
     [structure?.sections, progress.curriculum, progress.training, evidence.assessments],
   );
 
-  if (loading && !structure) {
+  if (loading && !bundle) {
     return <Card className="p-8 text-center text-sm text-slate-500">Loading school programme…</Card>;
+  }
+
+  if (!bundle || !structure) {
+    return (
+      <Card className="p-6 text-sm text-slate-600">
+        School programme data is unavailable. Refresh the page or contact Tiny Steps support.
+      </Card>
+    );
   }
 
   return (
@@ -116,13 +121,18 @@ export default function SchoolProgrammeWorkspace({ school, canEdit, defaultTab =
         <TabsTrigger value="reviews">Reviews</TabsTrigger>
         <TabsTrigger value="assessments">Assessments</TabsTrigger>
         <TabsTrigger value="report">Report</TabsTrigger>
+        {bundle.readerKind !== 'schoolAdmin' && <TabsTrigger value="activity">Activity</TabsTrigger>}
       </TabsList>
 
       <TabsContent value="overview" className="mt-0">
         <ProgrammeOverview
           school={school}
-          structure={structure}
-          progress={progress}
+          classes={structure.totals.grades}
+          sections={structure.totals.sections}
+          students={structure.totals.students}
+          teachers={structure.totals.teachers}
+          academicYearLabel={structure.currentAcademicYear?.label || 'Academic year not configured'}
+          trainingComplete={progress.training.filter((item) => item.status === 'completed').length}
           healthBySection={healthBySection}
         />
       </TabsContent>
@@ -132,7 +142,7 @@ export default function SchoolProgrammeWorkspace({ school, canEdit, defaultTab =
       </TabsContent>
 
       <TabsContent value="curriculum" className="mt-0">
-        {!structure?.currentAcademicYear ? (
+        {!structure.currentAcademicYear ? (
           <Card className="p-6 text-sm text-slate-500">Configure a current academic year first.</Card>
         ) : (
           <Card className="p-5">
@@ -165,7 +175,7 @@ export default function SchoolProgrammeWorkspace({ school, canEdit, defaultTab =
       </TabsContent>
 
       <TabsContent value="training" className="mt-0">
-        {!structure?.currentAcademicYear ? (
+        {!structure.currentAcademicYear ? (
           <Card className="p-6 text-sm text-slate-500">Configure a current academic year first.</Card>
         ) : (
           <Card className="p-5">
@@ -198,7 +208,7 @@ export default function SchoolProgrammeWorkspace({ school, canEdit, defaultTab =
       </TabsContent>
 
       <TabsContent value="reviews" className="mt-0">
-        {!structure?.currentAcademicYear ? (
+        {!structure.currentAcademicYear ? (
           <Card className="p-6 text-sm text-slate-500">Configure a current academic year first.</Card>
         ) : (
           <SchoolReviewsPanel
@@ -213,7 +223,7 @@ export default function SchoolProgrammeWorkspace({ school, canEdit, defaultTab =
       </TabsContent>
 
       <TabsContent value="assessments" className="mt-0">
-        {!structure?.currentAcademicYear ? (
+        {!structure.currentAcademicYear ? (
           <Card className="p-6 text-sm text-slate-500">Configure a current academic year first.</Card>
         ) : (
           <SchoolAssessmentsPanel
@@ -228,45 +238,56 @@ export default function SchoolProgrammeWorkspace({ school, canEdit, defaultTab =
       </TabsContent>
 
       <TabsContent value="report" className="mt-0">
-        {!structure ? null : (
-          <SchoolReportPanel school={school} structure={structure} progress={progress} evidence={evidence} />
-        )}
+        <SchoolReportPanel school={school} structure={structure} progress={progress} evidence={evidence} />
       </TabsContent>
+
+      {bundle.readerKind !== 'schoolAdmin' && (
+        <TabsContent value="activity" className="mt-0">
+          <SchoolActivityPanel activity={bundle.activity} />
+        </TabsContent>
+      )}
     </Tabs>
   );
 }
 
 function ProgrammeOverview({
   school,
-  structure,
-  progress,
+  classes,
+  sections,
+  students,
+  teachers,
+  academicYearLabel,
+  trainingComplete,
   healthBySection,
 }: {
   school: SchoolRecord;
-  structure: SchoolStructureSnapshot | null;
-  progress: SchoolProgressSnapshot;
+  classes: number;
+  sections: number;
+  students: number;
+  teachers: number;
+  academicYearLabel: string;
+  trainingComplete: number;
   healthBySection: ReturnType<typeof buildSectionHealthMap>;
 }) {
   const health = Array.from(healthBySection.values());
   const onTrack = health.filter((item) => item.status === 'on_track').length;
   const needsSupport = health.filter((item) => item.status === 'needs_support').length;
   const intervention = health.filter((item) => item.status === 'intervention').length;
-  const trainingComplete = progress.training.filter((item) => item.status === 'completed').length;
   return (
     <div className="space-y-4">
       <Card className="p-5">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">Tiny Steps School Partnership</p>
         <h2 className="mt-1 text-2xl font-bold text-slate-900">{school.name}</h2>
         <p className="text-sm text-slate-500">
-          {structure?.currentAcademicYear?.label || 'Academic year not configured'} · {school.learningPartnerName || 'Learning Partner not assigned'}
+          {academicYearLabel} · {school.learningPartnerName || 'Learning Partner not assigned'}
         </p>
       </Card>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          ['Classes', structure?.totals.grades ?? 0],
-          ['Sections', structure?.totals.sections ?? 0],
-          ['Students', structure?.totals.students ?? 0],
-          ['Teachers', structure?.totals.teachers ?? 0],
+          ['Classes', classes],
+          ['Sections', sections],
+          ['Students', students],
+          ['Teachers', teachers],
           ['On track', onTrack],
           ['Needs support', needsSupport],
           ['Intervention', intervention],
@@ -282,6 +303,34 @@ function ProgrammeOverview({
         Programme-health statuses are internal operational signals based on verified curriculum stage, the latest aggregate Tiny Steps reading benchmark, and available teacher-training progress. They are not external standardized ratings.
       </Card>
     </div>
+  );
+}
+
+function SchoolActivityPanel({ activity }: { activity: SchoolActivityRecord[] }) {
+  return (
+    <Card className="p-5">
+      <h3 className="text-lg font-semibold text-slate-900">Operational activity</h3>
+      <p className="mt-1 text-sm text-slate-500">
+        Recent server-recorded changes for audit and implementation follow-up.
+      </p>
+      {activity.length === 0 ? (
+        <p className="mt-4 text-sm text-slate-500">No programme activity has been recorded yet.</p>
+      ) : (
+        <div className="mt-4 space-y-2">
+          {activity.map((item) => (
+            <div key={item.id} className="rounded-xl border border-slate-200 p-3">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                <p className="text-sm font-medium text-slate-900">{item.summary}</p>
+                <span className="text-xs text-slate-500">{dateTimeText(item.occurredAt)}</span>
+              </div>
+              <p className="mt-1 text-xs text-slate-500">
+                {item.type.replaceAll('_', ' ')}{item.actorKind ? ` · ${item.actorKind}` : ''}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
   );
 }
 
@@ -309,6 +358,12 @@ function CurriculumRow({
   const [saving, setSaving] = useState(false);
   const course = SCHOOL_PHONICS_COURSES.find((item) => item.id === courseId)!;
 
+  useEffect(() => {
+    setCourseId(current?.courseId || 'phonics-foundations');
+    setStageOrder(current?.stageOrder || 0);
+    setStatus(current?.status || 'not_started');
+  }, [current]);
+
   const save = async () => {
     setSaving(true);
     try {
@@ -330,7 +385,7 @@ function CurriculumRow({
             <select className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={courseId} onChange={(e) => { setCourseId(e.target.value as SchoolPhonicsCourseId); setStageOrder(0); setStatus('not_started'); }}>
               {SCHOOL_PHONICS_COURSES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
             </select>
-            <select className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={stageOrder} onChange={(e) => { const next = Number(e.target.value); setStageOrder(next); setStatus(next === 0 ? 'not_started' : next === 6 ? 'completed' : 'on_track'); }}>
+            <select className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm" value={stageOrder} onChange={(e) => { const next = Number(e.target.value); setStageOrder(next); setStatus(next === 0 ? 'not_started' : next === course.stages.length ? 'completed' : 'on_track'); }}>
               <option value={0}>Not started</option>
               {course.stages.map((stage) => <option key={stage.stageOrder} value={stage.stageOrder}>{stage.label}</option>)}
             </select>
@@ -376,6 +431,12 @@ function TrainingRow({
   const [total, setTotal] = useState(current?.totalUnits || 10);
   const [status, setStatus] = useState<TeacherTrainingStatus>(current?.status || 'not_started');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setCompleted(current?.completedUnits || 0);
+    setTotal(current?.totalUnits || 10);
+    setStatus(current?.status || 'not_started');
+  }, [current]);
 
   const save = async () => {
     setSaving(true);
