@@ -12,12 +12,18 @@ import callFunction from '../lib/callFunctions';
 import { toSchoolRecord } from './schoolService';
 import type { SchoolRecord } from '../types/School';
 import type {
+  CurriculumProgressStatus,
   SchoolAcademicYear,
   SchoolGrade,
+  SchoolProgressSnapshot,
   SchoolSection,
   SchoolStructureSnapshot,
   SchoolTeacherRecord,
+  SectionCurriculumProgress,
+  TeacherTrainingProgress,
+  TeacherTrainingStatus,
 } from '../types/SchoolProgramme';
+import type { SchoolPhonicsCourseId } from '../constants/schoolCurriculum';
 
 const nullableString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim() ? value.trim() : null;
@@ -93,6 +99,68 @@ export const toSchoolTeacher = (
   status: entityStatus(data.status),
   createdAt: data.createdAt,
   createdBy: nullableString(data.createdBy) || undefined,
+  updatedAt: data.updatedAt,
+  updatedBy: nullableString(data.updatedBy) || undefined,
+});
+
+const curriculumStatus = (value: unknown): CurriculumProgressStatus => {
+  const next = String(value || 'not_started');
+  if (next === 'on_track' || next === 'needs_attention' || next === 'completed') return next;
+  return 'not_started';
+};
+
+export const toCurriculumProgress = (
+  id: string,
+  data: Record<string, any>,
+): SectionCurriculumProgress => ({
+  id,
+  schoolId: String(data.schoolId || ''),
+  academicYearId: String(data.academicYearId || ''),
+  sectionId: String(data.sectionId || id),
+  gradeId: String(data.gradeId || ''),
+  gradeKey: String(data.gradeKey || ''),
+  gradeLabel: String(data.gradeLabel || ''),
+  sectionName: String(data.sectionName || id),
+  courseId: String(data.courseId || 'phonics-foundations') as SchoolPhonicsCourseId,
+  courseLabel: String(data.courseLabel || ''),
+  stageOrder: Number(data.stageOrder || 0),
+  totalStages: Number(data.totalStages || 6),
+  stageLabel: String(data.stageLabel || 'Not started'),
+  expectedReadingLevel: Number(data.expectedReadingLevel || 0),
+  progressPercent: Number(data.progressPercent || 0),
+  status: curriculumStatus(data.status),
+  notes: nullableString(data.notes),
+  latestVerifiedAt: data.latestVerifiedAt,
+  latestVerifiedBy: nullableString(data.latestVerifiedBy) || undefined,
+  updatedAt: data.updatedAt,
+  updatedBy: nullableString(data.updatedBy) || undefined,
+});
+
+const trainingStatus = (value: unknown): TeacherTrainingStatus => {
+  const next = String(value || 'not_started');
+  if (next === 'on_track' || next === 'training_due' || next === 'completed') return next;
+  return 'not_started';
+};
+
+export const toTeacherTrainingProgress = (
+  id: string,
+  data: Record<string, any>,
+): TeacherTrainingProgress => ({
+  id,
+  schoolId: String(data.schoolId || ''),
+  academicYearId: String(data.academicYearId || ''),
+  teacherId: String(data.teacherId || id),
+  teacherName: String(data.teacherName || id),
+  trainingTrackId: String(data.trainingTrackId || 'tiny-steps-school-phonics'),
+  trainingTrackLabel: String(data.trainingTrackLabel || 'Tiny Steps School Phonics Training'),
+  completedUnits: Number(data.completedUnits || 0),
+  totalUnits: Number(data.totalUnits || 0),
+  currentStage: Number(data.currentStage || 0),
+  progressPercent: Number(data.progressPercent || 0),
+  status: trainingStatus(data.status),
+  notes: nullableString(data.notes),
+  latestTrainingAt: data.latestTrainingAt,
+  latestTrainingBy: nullableString(data.latestTrainingBy) || undefined,
   updatedAt: data.updatedAt,
   updatedBy: nullableString(data.updatedBy) || undefined,
 });
@@ -200,6 +268,39 @@ export async function getSchoolStructure(
   };
 }
 
+export async function getSchoolProgress(
+  schoolId: string,
+  academicYearId: string,
+): Promise<SchoolProgressSnapshot> {
+  const [curriculumSnap, trainingSnap] = await Promise.all([
+    getDocs(
+      collection(
+        db,
+        'schools',
+        schoolId,
+        'academicYears',
+        academicYearId,
+        'curriculumProgress',
+      ),
+    ),
+    getDocs(
+      collection(
+        db,
+        'schools',
+        schoolId,
+        'academicYears',
+        academicYearId,
+        'teacherTraining',
+      ),
+    ),
+  ]);
+
+  return {
+    curriculum: curriculumSnap.docs.map((item) => toCurriculumProgress(item.id, item.data())),
+    training: trainingSnap.docs.map((item) => toTeacherTrainingProgress(item.id, item.data())),
+  };
+}
+
 export const createAcademicYear = (input: {
   schoolId: string;
   startYear: number;
@@ -269,3 +370,32 @@ export const setSchoolSectionStatus = (input: {
   sectionId: string;
   status: 'active' | 'inactive';
 }) => callFunction<{ ok: true; sectionId: string }>('schoolSetSectionStatus', input);
+
+export const updateSectionCurriculumProgress = (input: {
+  schoolId: string;
+  academicYearId: string;
+  sectionId: string;
+  courseId: SchoolPhonicsCourseId;
+  stageOrder: number;
+  status?: CurriculumProgressStatus;
+  notes?: string;
+}) => callFunction<{ ok: true; sectionId: string; stageOrder: number }>(
+  'schoolUpdateCurriculumProgress',
+  input,
+);
+
+export const updateTeacherTraining = (input: {
+  schoolId: string;
+  academicYearId: string;
+  teacherId: string;
+  trainingTrackId?: string;
+  trainingTrackLabel?: string;
+  completedUnits: number;
+  totalUnits: number;
+  currentStage?: number;
+  status?: TeacherTrainingStatus;
+  notes?: string;
+}) => callFunction<{ ok: true; teacherId: string; progressPercent: number }>(
+  'schoolUpdateTeacherTraining',
+  input,
+);
