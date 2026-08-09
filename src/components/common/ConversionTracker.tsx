@@ -26,6 +26,7 @@ import {
   trackProgramCtaClick,
   trackWhatsappClick,
 } from '../../lib/conversionTracking';
+import { captureLeadAttribution as capturePublicLeadAttribution } from '../../lib/leadAttribution';
 
 function getCtaLabelFromElement(element: HTMLElement): string {
   const explicit = element.getAttribute('data-cta-label') || element.getAttribute('aria-label') || element.getAttribute('title');
@@ -57,7 +58,11 @@ export default function ConversionTracker() {
   useEffect(() => {
     const pagePath = location.pathname;
     if (!isMarketingPath(pagePath)) return;
+
+    // Keep GA4's existing attribution contract and the Firestore lead attribution
+    // contract in sync from the visitor's first marketing-page arrival.
     captureLeadAttribution(pagePath);
+    capturePublicLeadAttribution();
 
     if (isFunnelLandingPath(pagePath) && lastTrackedLandingPathRef.current !== pagePath) {
       trackLandingPageView({
