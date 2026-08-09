@@ -178,6 +178,20 @@ export interface AssessmentSummary {
   assessedByName: string;
 }
 
+export interface SchoolActivityRecord {
+  id: string;
+  schoolId: string;
+  type: string;
+  summary: string;
+  academicYearId: string | null;
+  entityType: string | null;
+  entityId: string | null;
+  actorUid: string | null;
+  actorKind: string | null;
+  occurredAt?: unknown;
+  metadata: Record<string, unknown>;
+}
+
 export interface SchoolStructureSnapshot {
   academicYears: SchoolAcademicYear[];
   currentAcademicYear: SchoolAcademicYear | null;
@@ -200,6 +214,14 @@ export interface SchoolProgressSnapshot {
 export interface SchoolEvidenceSnapshot {
   reviews: SchoolReview[];
   assessments: AssessmentSummary[];
+}
+
+export interface SchoolProgrammeBundle {
+  readerKind: 'admin' | 'learningPartner' | 'schoolAdmin';
+  structure: SchoolStructureSnapshot;
+  progress: SchoolProgressSnapshot;
+  evidence: SchoolEvidenceSnapshot;
+  activity: SchoolActivityRecord[];
 }
 
 export const READING_LEVEL_KEYS: ReadingLevelKey[] = [
