@@ -207,6 +207,13 @@ export interface DemoSession {
   followUpCallCompletedAt?: string | null;
   admissionNotConfirmedReason?: string | null;
   completedAt?: Timestamp | null;
+  completedByTeacherId?: string | null;
+  completedByTeacherName?: string | null;
+  cancelledAt?: Timestamp | null;
+  cancelledBy?: string | null;
+  cancellationReason?: string | null;
+  cancellationNote?: string | null;
+  enrolledAt?: Timestamp | null;
   createdAt?: Timestamp | null;
   createdBy: string;
   lastUpdatedAt?: Timestamp | null;
