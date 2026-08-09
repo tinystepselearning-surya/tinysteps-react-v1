@@ -119,10 +119,15 @@ export default function SchoolFormDialog({
       };
 
       if (mode === 'create') {
+        const canAssignInitialAccess = fields.status !== 'archived';
         payload.learningPartnerId =
-          learningPartnerId === NONE ? null : learningPartnerId;
+          canAssignInitialAccess && learningPartnerId !== NONE
+            ? learningPartnerId
+            : null;
         payload.schoolAdminUserId =
-          schoolAdminUserId === NONE ? null : schoolAdminUserId;
+          canAssignInitialAccess && schoolAdminUserId !== NONE
+            ? schoolAdminUserId
+            : null;
       }
 
       await onSubmit(payload);
@@ -140,6 +145,7 @@ export default function SchoolFormDialog({
   const activeSchoolAdmins = schoolAdmins.filter(
     (user) => user.status.trim().toLowerCase() === 'active',
   );
+  const archivedCreate = mode === 'create' && fields.status === 'archived';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -227,7 +233,8 @@ export default function SchoolFormDialog({
                 <select
                   value={learningPartnerId}
                   onChange={(event) => setLearningPartnerId(event.target.value)}
-                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  disabled={archivedCreate}
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <option value={NONE}>Not assigned</option>
                   {learningPartners.map((user) => (
@@ -241,7 +248,8 @@ export default function SchoolFormDialog({
                 <select
                   value={schoolAdminUserId}
                   onChange={(event) => setSchoolAdminUserId(event.target.value)}
-                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  disabled={archivedCreate}
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <option value={NONE}>Not linked</option>
                   {activeSchoolAdmins.map((user) => (
@@ -251,6 +259,11 @@ export default function SchoolFormDialog({
                   ))}
                 </select>
               </Field>
+              {archivedCreate && (
+                <p className="text-sm text-amber-700 sm:col-span-2">
+                  Archived schools are created without active access assignments. Restore the school before assigning a Learning Partner or School Admin login.
+                </p>
+              )}
             </div>
           )}
 
