@@ -90,6 +90,55 @@ service cloud.firestore {
       );
     }
 
+    function schoolUserDocPath(uid) {
+      return /databases/$(database)/documents/schoolUsers/$(uid);
+    }
+
+    function schoolUserDocExists(uid) {
+      return exists(
+        schoolUserDocPath(uid)
+      );
+    }
+
+    function schoolUserHasAccess(schoolId) {
+      return
+        isSchoolAdmin()
+        && schoolUserDocExists(request.auth.uid)
+        && (
+          'role' in
+            get(
+              schoolUserDocPath(request.auth.uid)
+            ).data
+        )
+        && get(
+          schoolUserDocPath(request.auth.uid)
+        ).data.role == 'schoolAdmin'
+        && (
+          'status' in
+            get(
+              schoolUserDocPath(request.auth.uid)
+            ).data
+        )
+        && get(
+          schoolUserDocPath(request.auth.uid)
+        ).data.status == 'active'
+        && (
+          'schoolIds' in
+            get(
+              schoolUserDocPath(request.auth.uid)
+            ).data
+        )
+        && get(
+          schoolUserDocPath(request.auth.uid)
+        ).data.schoolIds is list
+        && (
+          schoolId in
+            get(
+              schoolUserDocPath(request.auth.uid)
+            ).data.schoolIds
+        );
+    }
+
     function isKidToken() {
       return tokenRole() == 'kid';
     }
@@ -385,6 +434,44 @@ function teacherOwnsDocViaAliases(data) {
           request.auth.uid == uid
           && !touchesProtectedUserFields()
         );
+    }
+
+    match /schoolUsers/{userId} {
+      allow read:
+        if isAdmin()
+        || (
+          isSchoolAdmin()
+          && request.auth.uid == userId
+        );
+
+      allow create, update, delete:
+        if isAdmin();
+    }
+
+    match /schools/{schoolId} {
+      allow read:
+        if isAdmin()
+        || (
+          isLP()
+          && ('learningPartnerId' in resource.data)
+          && resource.data.learningPartnerId == request.auth.uid
+        )
+        || (
+          isSchoolAdmin()
+          && resource.data.status != 'archived'
+          && schoolUserHasAccess(schoolId)
+        );
+
+      allow create, update, delete:
+        if isAdmin();
+    }
+
+    match /schools/{schoolId}/learningPartnerAssignments/{assignmentId} {
+      allow read:
+        if isAdmin();
+
+      allow create, update, delete:
+        if isAdmin();
     }
 
     match /users/{userId}/progress/{document=**} {

@@ -69,6 +69,15 @@ export { adminGenerateResetLink } from "./adminGenerateResetLink";
 export { adminResetPassword } from "./adminResetPassword";
 export { resolveLoginIdentifier } from "./resolveLoginIdentifier";
 
+// Admin / school management
+export {
+  adminCreateSchool,
+  adminUpdateSchool,
+  adminAssignSchoolLearningPartner,
+  adminLinkSchoolUser,
+  adminUnlinkSchoolUser,
+} from './schools';
+
 // Learning Partner assignment
 export { 
   assignLPToParent, 

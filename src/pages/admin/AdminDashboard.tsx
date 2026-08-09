@@ -10,6 +10,7 @@ import {
   BellDot,
   BookCopy,
   BookOpen,
+  Building2,
   CalendarClock,
   CalendarDays,
   ClipboardList,
@@ -38,6 +39,7 @@ import callFunction from '../../lib/callFunctions';
 // 🔁 CHANGE START
 import UserManagement from './UserManagement/UserManagement';
 // 🔁 CHANGE END
+import SchoolManagement from './SchoolManagement/SchoolManagement';
 
 import RefreshPublicKbTool from './RefreshPublicKbTool';
 
@@ -83,6 +85,7 @@ const ROLE_SHORTCUTS = [
 
 const ADMIN_MOBILE_TABS: MobileTabBarItem[] = [
   { id: 'users', label: 'Users', icon: UserCog },
+  { id: 'schools', label: 'Schools', icon: Building2 },
   { id: 'students', label: 'Students', icon: GraduationCap },
   { id: 'leads', label: 'Leads', icon: ContactRound },
   { id: 'enrollments', label: 'Enroll', icon: ClipboardList },
@@ -1018,6 +1021,7 @@ export default function AdminDashboard() {
     const tabFromUrl = params.get('tab');
     const validTabs = new Set([
       'users',
+      'schools',
       'students',
       'leads',
       'enrollments',
@@ -1138,6 +1142,10 @@ export default function AdminDashboard() {
           <Tabs value={selectedTab} onValueChange={handleTabChange}>
             <TabsContent value="users" className="mt-0">
               <UserManagement />
+            </TabsContent>
+
+            <TabsContent value="schools" className="mt-0">
+              <SchoolManagement />
             </TabsContent>
 
             <TabsContent value="students" className="mt-0">
