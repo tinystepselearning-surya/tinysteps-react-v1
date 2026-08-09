@@ -146,6 +146,7 @@ export { createLessonAccessSession, resolveLessonAccessViewer } from "./createLe
 
 // Public website contact form
 export { contactForm } from "./contactForm";
+export { enrichPublicLeadAttribution } from "./enrichPublicLeadAttribution";
 export { notFoundRoute } from "./notFoundRoute";
 
 // Enrollment lifecycle (createEnrollment also permits the assigned Learning Partner)
