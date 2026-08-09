@@ -1,6 +1,3 @@
-import { collection, getDocs } from 'firebase/firestore';
-
-import { db } from '../lib/firebaseConfig';
 import callFunction from '../lib/callFunctions';
 import type {
   AssessmentCheckpoint,
@@ -10,7 +7,6 @@ import type {
   ReviewImplementationRating,
   ReviewMastery,
   ReviewOverallStatus,
-  SchoolEvidenceSnapshot,
   SchoolReview,
 } from '../types/SchoolProgramme';
 
@@ -118,39 +114,6 @@ export const toAssessmentSummary = (
   assessedBy: String(data.assessedBy || ''),
   assessedByName: String(data.assessedByName || 'Tiny Steps'),
 });
-
-export async function getSchoolEvidence(
-  schoolId: string,
-  academicYearId: string,
-): Promise<SchoolEvidenceSnapshot> {
-  const [reviewSnap, assessmentSnap] = await Promise.all([
-    getDocs(
-      collection(
-        db,
-        'schools',
-        schoolId,
-        'academicYears',
-        academicYearId,
-        'reviews',
-      ),
-    ),
-    getDocs(
-      collection(
-        db,
-        'schools',
-        schoolId,
-        'academicYears',
-        academicYearId,
-        'assessmentSummaries',
-      ),
-    ),
-  ]);
-
-  return {
-    reviews: reviewSnap.docs.map((item) => toSchoolReview(item.id, item.data())),
-    assessments: assessmentSnap.docs.map((item) => toAssessmentSummary(item.id, item.data())),
-  };
-}
 
 export const createSchoolReview = (input: {
   schoolId: string;
