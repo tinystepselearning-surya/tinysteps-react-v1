@@ -2,189 +2,277 @@ import type { BlogPost } from '../../types';
 
 const post: BlogPost = {
   slug: 'week-12-speaking-confidence-seeds',
-  title: 'Speaking Confidence Roadmap: A 7-Day Calm Plan for Kids (Ages 3-10)',
+  title: 'Speaking Confidence Roadmap: A 7-Day Calm Plan for Kids (Ages 3–10)',
   category: 'Public Speaking',
-  author: 'Tiny Steps Research Desk',
+  author: 'Tiny Steps Academic Team',
   date: '2026-04-04',
   readTime: '12 min read',
   hero: '/blog/hero-research.jpg',
-  metaDescription: 'A research-backed speaking confidence roadmap for ages 3-10: 10-minute routines, bravery-ladder practice, multilingual support, and when to seek extra help.',
-  excerpt: 'A premium week 12 speaking guide for parents who want calm, structured speaking practice for shy or hesitant children without forcing performance.',
-  body: [{
-    type: 'h2',
-    content: 'Parent question: "How do I help my child speak with more confidence?"'
-  }, {
-    type: 'p',
-    content: 'Direct answer: confidence grows through short, guided speaking practice that feels safe and repeatable. Children usually improve when tasks are small, predictable, and not correction-heavy.'
-  }, {
-    type: 'h2',
-    content: 'What this usually means for parents'
-  }, {
-    type: 'p',
-    content: 'If your child freezes, it often means the speaking task feels too risky or too long for their current comfort level. Start with very short wins, then increase speaking load gradually.'
-  }, {
-    type: 'h2',
-    content: 'Why some kids freeze while speaking (temperament + fear of mistakes)'
-  }, {
-    type: 'p',
-    content: 'Many children are not shy because they do not want to speak — they are wired to be cautious. Temperament, past experiences, and fear of making mistakes all combine to cause freezing. For some children, the worry is about being judged; for others it is about not knowing what to say. Recognise this as normal: the goal is to make speaking low-risk, predictable and rewarding so the child can practise without fear.'
-  }, {
-    type: 'h2',
-    content: 'The golden rule: connection before correction'
-  }, {
-    type: 'p',
-    content: 'Before offering any correction, build a connection. Mirror their interest, repeat one thing you liked, and only then gently guide. When a parent shows they are on the same team, a child’s nervous system relaxes and learning becomes possible. Start with praise for effort — not performance — and keep corrections tiny and specific.'
-  }, {
-    type: 'h2',
-    content: 'The 15-second spotlight routine (daily, low pressure)'
-  }, {
-    type: 'p',
-    content: 'A short, consistent routine removes performance pressure. Every day, give your child a 15-second “spotlight” — at dinner, before bed, or during a walk. Use a timer, keep the task simple (one sentence about their day or a tiny story), and celebrate attempts. Fifteen seconds is short enough to feel safe and long enough to practise pacing and expression.'
-  }, {
-    type: 'h2',
-    content: 'Week 12 plan (7 days, 8–10 minutes/day)'
-  }, {
-    type: 'p',
-    content: 'This plan uses very small steps to build muscle memory. Each day is 8–10 minutes: warm-up, practice, and quick praise.'
-  }, {
-    type: 'h3',
-    content: 'Day-by-day (exact)'
-  }, {
-    type: 'li',
-    content: 'Day 1 — Warm-up (8 min): Play a 2-minute “sound search” (name 5 sounds). Give a 15-second spotlight; praise the try.'
-  }, {
-    type: 'li',
-    content: 'Day 2 — Short story (9 min): Read a 1-paragraph story together; ask your child to retell one sentence in the spotlight.'
-  }, {
-    type: 'li',
-    content: 'Day 3 — Picture talk (10 min): Show a picture and ask for three details; child describes one for 15 seconds.'
-  }, {
-    type: 'li',
-    content: 'Day 4 — Bravery ladder step (8–10 min): Pick ladder level 1 or 2 (see below); practise twice.'
-  }, {
-    type: 'li',
-    content: 'Day 5 — Voice tools (9 min): Quick volume and pace game (whisper to shout scale); spotlight with a chosen volume.'
-  }, {
-    type: 'li',
-    content: 'Day 6 — Game day (10 min): Play a confidence-building game from the list below.'
-  }, {
-    type: 'li',
-    content: 'Day 7 — Share & celebrate (10 min): Choose one favourite attempt from the week and celebrate with specific praise.'
-  }, {
-    type: 'h2',
-    content: '10 confidence-building games (easy at home)'
-  }, {
-    type: 'li',
-    content: '1) Spotlight Spoon — a spoon passes; holder speaks for 15 seconds.'
-  }, {
-    type: 'li',
-    content: '2) Echo Story — parent says one line, child repeats with expression.'
-  }, {
-    type: 'li',
-    content: '3) Voice Scale — say a line whisper → normal → loud (fun, not scary).'
-  }, {
-    type: 'li',
-    content: '4) Picture Interview — child answers two simple questions about a picture.'
-  }, {
-    type: 'li',
-    content: '5) One-Word Story — family builds a story one word at a time.'
-  }, {
-    type: 'li',
-    content: '6) Puppet Reporter — child interviews a puppet or toy.'
-  }, {
-    type: 'li',
-    content: '7) Question Ball — toss a soft ball; catcher answers one fun question.'
-  }, {
-    type: 'li',
-    content: '8) Record & Replay — short voice note and replay, celebrate small wins.'
-  }, {
-    type: 'li',
-    content: '9) Postcard Pitch — describe a picture on a postcard in two sentences.'
-  }, {
-    type: 'li',
-    content: '10) Family Fan Mail — child reads one sentence of praise written by a family member.'
-  }, {
-    type: 'h2',
-    content: 'Voice tools: volume, pace, eye contact (kid-friendly)'
-  }, {
-    type: 'p',
-    content: 'Teach three friendly tools: 1) Volume — practise “party voice” and “library voice” so they learn range. 2) Pace — encourage short pauses between ideas (count 1–2). 3) Eye contact — aim for 3 friendly looks at a person, then glance away. Turn each into a playful exercise: silly loud, calm slow, three smiles.'
-  }, {
-    type: 'h2',
-    content: 'What parents should say (and not say) — scripts'
-  }, {
-    type: 'p',
-    content: 'Words matter. Say encouraging, specific phrases and avoid comparing or fixing mid-sentence. Good scripts: “I loved how you tried that line — your voice sounded clear.” “Thank you for sharing — can you say the last part again slowly?” Avoid: “Speak louder!” or “Why are you so shy?” (these increase pressure).'
-  }, {
-    type: 'h3',
-    content: 'Short ready scripts'
-  }, {
-    type: 'li',
-    content: 'Before: “Tell me for 15 seconds — just one thing you liked today.”'
-  }, {
-    type: 'li',
-    content: 'After: “I loved how you tried that — your words were clear.”'
-  }, {
-    type: 'li',
-    content: 'If stuck: “Try it like telling a short movie — what do we see first?”'
-  }, {
-    type: 'h2',
-    content: 'Troubleshooting (whispers, avoids camera, speaks only 1 word, compares with siblings)'
-  }, {
-    type: 'p',
-    content: 'If a child whispers, encourage volume with playful scale games and accept whisper attempts as progress. If they avoid the camera, start with audio-only notes and slowly add a still picture. If they answer in one word, ask a follow-up that has two choices (“Was it funny or surprising?”) to extend the response. If comparisons with siblings arise, redirect to the child’s own small wins and the bravery ladder below.'
-  }, {
-    type: 'h2',
-    content: 'A simple bravery ladder (easy steps from 1 → 5)'
-  }, {
-    type: 'li',
-    content: '1 — One word in the spotlight (safest).'
-  }, {
-    type: 'li',
-    content: '2 — One short sentence (15 seconds).'
-  }, {
-    type: 'li',
-    content: '3 — Two-sentence mini-story.'
-  }, {
-    type: 'li',
-    content: '4 — Read a short paragraph to a family member.'
-  }, {
-    type: 'li',
-    content: '5 — Record a 30-second message or speak to a small group.'
-  }, {
-    type: 'h2',
-    content: 'Praise examples (“I loved how you tried…”)'
-  }, {
-    type: 'p',
-    content: 'Specific praise builds courage. Try: “I loved how you tried that line — your voice was clear.” “I noticed you waited and didn’t rush — that made your story easy to follow.” Avoid praising only results; praise the attempt and the choice to try.'
-  }, {
-    type: 'h2',
-    content: 'Done checklist + Week 13 structure teaser'
-  }, {
-    type: 'li',
-    content: 'I gave myself a 15-second spotlight.'
-  }, {
-    type: 'li',
-    content: 'I tried one voice tool (volume/pace/eye contact).'
-  }, {
-    type: 'li',
-    content: 'I played one short confidence game.'
-  }, {
-    type: 'p',
-    content: 'Finish on a positive note. Tell the child one thing you liked about their attempt and stop while it’s happy — that keeps motivation high.'
-  }, {
-    type: 'h2',
-    content: 'Practical next step for parents'
-  }, {
-    type: 'p',
-    content: 'If confidence still stays low after 2-3 weeks of calm daily practice, move to a structured speaking pathway with guided progression and regular feedback.'
-  }, {
-    type: 'li',
-    content: 'Explore the speaking confidence program: /speaking'
-  }, {
-    type: 'p',
-    content: 'Week 13 teaser: next week we practise short talk structure (Hook — Body — Close) so children can share ideas with a tidy plan.'
-  }]
+  metaDescription:
+    'A 7-day speaking confidence plan for kids ages 3–10 with short routines, a confidence ladder, parent scripts, games, troubleshooting, and clear progress markers.',
+  excerpt:
+    'A practical speaking confidence guide for parents who want short, low-pressure practice for shy or hesitant children without forcing long performances.',
+  body: [
+    {
+      type: 'h2',
+      content: 'Quick answer: how do I help my child speak with more confidence?',
+    },
+    {
+      type: 'p',
+      content:
+        'Build confidence through small speaking tasks that feel predictable and achievable. Start with familiar topics and short answers, allow thinking time, praise the attempt, and increase the speaking load gradually. The goal is not instant stage confidence; it is growing independence in everyday communication.',
+    },
+    {
+      type: 'h2',
+      content: 'What progress actually looks like',
+    },
+    {
+      type: 'li',
+      content: 'The child starts an answer with less adult prompting.',
+    },
+    {
+      type: 'li',
+      content: 'One-word replies become complete sentences and then connected ideas.',
+    },
+    {
+      type: 'li',
+      content: 'Voice becomes easier to hear in familiar settings.',
+    },
+    {
+      type: 'li',
+      content: 'A forgotten word or small mistake no longer ends the whole attempt.',
+    },
+    {
+      type: 'li',
+      content: 'Skills begin to transfer from home practice into class, relatives, groups, or presentations.',
+    },
+    {
+      type: 'h2',
+      content: 'Why some children freeze while speaking',
+    },
+    {
+      type: 'p',
+      content:
+        'Children can hesitate for different reasons: they may be naturally cautious, worry about mistakes, need more time to organise language, feel unsure about the topic, or be uncomfortable speaking in front of others. Do not assume every quiet child has the same problem. Observe when speaking is easy and when it becomes difficult.',
+    },
+    {
+      type: 'h2',
+      content: 'The parent rule: let the idea finish before correcting it',
+    },
+    {
+      type: 'p',
+      content:
+        'When a child is trying to express an idea, constant interruption can make the speaking task feel harder. Let the child finish first. Then choose one useful improvement, model it briefly, and ask for one calm retry. This keeps communication and correction in balance.',
+    },
+    {
+      type: 'h2',
+      content: 'The 15-second spotlight routine',
+    },
+    {
+      type: 'p',
+      content:
+        'Use a tiny daily speaking turn at dinner, before bed, or during a walk. Ask for one idea about the day, a picture, a toy, or a favourite topic. Fifteen seconds is only a starting structure; shorten it if the child is uncomfortable and lengthen it gradually when the child is ready.',
+    },
+    {
+      type: 'h2',
+      content: '7-day speaking confidence plan (8–10 minutes a day)',
+    },
+    {
+      type: 'li',
+      content: 'Day 1 — Familiar answer: choose one easy question and give one complete sentence. Praise starting independently.',
+    },
+    {
+      type: 'li',
+      content: 'Day 2 — Picture talk: name three things in a picture, then connect two details into one sentence.',
+    },
+    {
+      type: 'li',
+      content: 'Day 3 — Add one reason: answer a familiar question using “because”.',
+    },
+    {
+      type: 'li',
+      content: 'Day 4 — Mini retell: explain what happened first and next in a short story or daily event.',
+    },
+    {
+      type: 'li',
+      content: 'Day 5 — Voice practice: say the same sentence once softly, once in a clear conversation voice, and once as if speaking to someone farther away.',
+    },
+    {
+      type: 'li',
+      content: 'Day 6 — Question game: answer one unexpected but child-friendly question without memorising a script.',
+    },
+    {
+      type: 'li',
+      content: 'Day 7 — Transfer: repeat a favourite task for another trusted person or in a short recorded voice note if the child is comfortable.',
+    },
+    {
+      type: 'h2',
+      content: '10 speaking confidence games to use at home',
+    },
+    {
+      type: 'li',
+      content: 'Spotlight Spoon — whoever holds the spoon shares one short idea.',
+    },
+    {
+      type: 'li',
+      content: 'Echo Story — parent says one expressive line and the child repeats it in their own voice.',
+    },
+    {
+      type: 'li',
+      content: 'Voice Scale — say one line in a whisper, normal conversation voice, and clear across-the-room voice.',
+    },
+    {
+      type: 'li',
+      content: 'Picture Interview — answer two simple questions about a picture.',
+    },
+    {
+      type: 'li',
+      content: 'One-Word Story — build a family story one word at a time, then let the child retell one sentence.',
+    },
+    {
+      type: 'li',
+      content: 'Puppet Reporter — interview a toy using who, what, where, and why questions.',
+    },
+    {
+      type: 'li',
+      content: 'Question Ball — toss a soft ball; the catcher answers one friendly question.',
+    },
+    {
+      type: 'li',
+      content: 'Record and Replay — make a short voice note only when the child is comfortable, then notice one thing that sounded clear.',
+    },
+    {
+      type: 'li',
+      content: 'Postcard Pitch — describe a picture in two connected sentences.',
+    },
+    {
+      type: 'li',
+      content: 'Tell Me More — parent responds to each answer with one gentle follow-up question.',
+    },
+    {
+      type: 'h2',
+      content: 'Parent scripts: what to say when a child hesitates',
+    },
+    {
+      type: 'li',
+      content: 'Before speaking: “Take your time. Start with just the first idea.”',
+    },
+    {
+      type: 'li',
+      content: 'For a short answer: “Good start. Tell me one more thing.”',
+    },
+    {
+      type: 'li',
+      content: 'After a mistake: “I understood you. Try that sentence once more smoothly.”',
+    },
+    {
+      type: 'li',
+      content: 'When stuck: “Choose one: was it fun, difficult, surprising, or something else?”',
+    },
+    {
+      type: 'li',
+      content: 'After practice: “I liked how you kept going even when you needed time to think.”',
+    },
+    {
+      type: 'h2',
+      content: 'A simple confidence ladder',
+    },
+    {
+      type: 'li',
+      content: 'Level 1 — Answer a familiar question in one complete sentence.',
+    },
+    {
+      type: 'li',
+      content: 'Level 2 — Add one reason or detail without word-by-word prompting.',
+    },
+    {
+      type: 'li',
+      content: 'Level 3 — Describe a picture or event in three connected sentences.',
+    },
+    {
+      type: 'li',
+      content: 'Level 4 — Speak briefly on a familiar topic and answer one follow-up question.',
+    },
+    {
+      type: 'li',
+      content: 'Level 5 — Use the same skills with another person, in class, or during a presentation.',
+    },
+    {
+      type: 'h2',
+      content: 'Troubleshooting common speaking situations',
+    },
+    {
+      type: 'p',
+      content:
+        'If the child whispers, first accept the attempt and then practise the same short line in a clearer conversation voice. If the child gives one-word answers, use a sentence starter plus one follow-up question. If the child memorises speeches but struggles with questions, add flexible picture talk and “why” questions. If the child talks freely at home but stays silent elsewhere, practise the same school-style task at home first and increase the audience gradually.',
+    },
+    {
+      type: 'h2',
+      content: 'When speaking difficulty needs more than practice',
+    },
+    {
+      type: 'p',
+      content:
+        'A speaking class is not a substitute for medical, developmental, speech-language, or mental-health assessment. If silence, communication difficulty, or distress is persistent, severe, or affecting daily participation, discuss it with the child’s school and an appropriately qualified professional rather than treating it only as a confidence issue.',
+    },
+    {
+      type: 'h2',
+      content: 'Practical next step for parents',
+    },
+    {
+      type: 'p',
+      content:
+        'If you are unsure whether the main gap is confidence, sentence formation, vocabulary, pronunciation, or response structure, use an assessment to identify one clear first target before adding more practice.',
+    },
+    {
+      type: 'li',
+      content: 'Explore the speaking confidence program: /speaking',
+    },
+    {
+      type: 'li',
+      content: 'Read the parent speaking-confidence guide: /parents/speech-confidence',
+    },
+    {
+      type: 'li',
+      content: 'Choose the right course: /parents/choosing-course',
+    },
+    {
+      type: 'li',
+      content: 'Book a free assessment: /book-demo',
+    },
+  ],
+  faq: [
+    {
+      question: 'How can I help my child speak more confidently at home?',
+      answer:
+        'Use short familiar prompts, allow thinking time, model only when needed, ask one follow-up question, and praise the attempt before correcting one small detail.',
+    },
+    {
+      question: 'Should I correct every grammar mistake while my child is speaking?',
+      answer:
+        'No. Let the child finish the idea first. Then choose one useful correction and ask for a calm retry so communication is not repeatedly interrupted.',
+    },
+    {
+      question: 'What if my child gives only one-word answers?',
+      answer:
+        'Start with a sentence frame such as “I like ___ because ___” and ask one gentle follow-up. Reduce the support gradually as the child begins to form complete answers independently.',
+    },
+    {
+      question: 'Are public speaking classes only for speeches and competitions?',
+      answer:
+        'No. Early goals can include everyday communication, complete answers, picture talk, storytelling, question responses, clarity, and confidence speaking with another person.',
+    },
+    {
+      question: 'How do I know speaking confidence is improving?',
+      answer:
+        'Look for longer answers, easier starts, clearer voice, less avoidance, better recovery after mistakes, and transfer into new people or settings rather than a fixed number of completed lessons.',
+    },
+    {
+      question: 'When should parents seek professional help instead of only speaking practice?',
+      answer:
+        'If communication difficulty, persistent silence, or distress is significant and affects everyday participation, involve the child’s school and an appropriately qualified professional for individual guidance.',
+    },
+  ],
 };
 
 export default post;
