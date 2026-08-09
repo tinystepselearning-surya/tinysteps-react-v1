@@ -173,6 +173,7 @@ export { refreshPublicKb } from "./ai/refreshPublicKb";
 // WhatsApp backend foundation (admin send + webhook callbacks)
 export { sendWhatsAppTemplateMessage, whatsAppWebhook } from './whatsapp';
 export { whatsappWebhookV2 } from './whatsappWebhook';
+export { onUnmatchedWhatsAppInboundCreateLead } from './whatsappLeadLifecycle';
 
 // Internal messaging
 export { createOrSyncMessageThread } from './messaging/createOrSyncMessageThread';
