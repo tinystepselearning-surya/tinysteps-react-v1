@@ -19,6 +19,7 @@ const db = admin.firestore();
 const cleanText = (value) => (typeof value === 'string' ? value.trim() : '');
 const normalizePhone = (value) => {
   const digits = cleanText(value).replace(/[^\d]/g, '');
+  if (digits.length === 14 && digits.startsWith('0091')) return digits.slice(4);
   if (digits.length === 12 && digits.startsWith('91')) return digits.slice(2);
   return digits;
 };
@@ -55,21 +56,75 @@ const lifecycleScore = (lead) => {
   if (lead.enrolledAt) score += 100;
   return score;
 };
-const hasUnsafeDemoConflict = (records) => {
-  const nonEmpty = records.map((record) => demoIds(record.data)).filter((ids) => ids.length > 0);
-  if (nonEmpty.length <= 1) return false;
-  const reference = new Set(nonEmpty[0]);
-  return nonEmpty.slice(1).some((ids) => ids.some((id) => !reference.has(id)) || [...reference].some((id) => !ids.includes(id)));
-};
-const chooseCanonical = (records) => {
-  return [...records].sort((a, b) => {
+const chooseLifecycleSafeCanonical = (records) =>
+  [...records].sort((a, b) => {
     const scoreDiff = lifecycleScore(b.data) - lifecycleScore(a.data);
     if (scoreDiff !== 0) return scoreDiff;
     const timeDiff = eventMillis(a.data) - eventMillis(b.data);
     if (timeDiff !== 0) return timeDiff;
     return a.id.localeCompare(b.id);
   })[0];
+
+const isUnsafeForCanonical = (canonical, duplicate) => {
+  const canonicalIds = new Set(demoIds(canonical.data));
+  const duplicateIds = demoIds(duplicate.data);
+  if (duplicateIds.length === 0) return false;
+  if (canonicalIds.size === 0) return true;
+  return duplicateIds.some((id) => !canonicalIds.has(id));
 };
+
+const summarizeLead = (record) => ({
+  id: record.id,
+  parentName: cleanText(record.data.parentName),
+  childName: cleanText(record.data.childName),
+  phone: normalizePhone(record.data.phoneNormalized || record.data.primaryPhone || record.data.whatsappNumber),
+  status: cleanText(record.data.status),
+  programInterest: cleanText(record.data.programInterest),
+  interestTrack: cleanText(record.data.interestTrack),
+  demoIds: demoIds(record.data),
+  receivedAtMs: eventMillis(record.data),
+});
+
+async function buildGroupReport(key, records) {
+  const identityRef = db.collection('leadIdentityIndex').doc(key);
+  const identitySnap = await identityRef.get();
+  const indexedCanonicalId = identitySnap.exists
+    ? cleanText(identitySnap.data()?.canonicalLeadId)
+    : '';
+  const recordById = new Map(records.map((record) => [record.id, record]));
+  const conflictReasons = [];
+
+  let canonical = null;
+  if (indexedCanonicalId) {
+    canonical = recordById.get(indexedCanonicalId) || null;
+    if (!canonical) {
+      conflictReasons.push('identity_index_points_outside_duplicate_group');
+    }
+  } else {
+    canonical = chooseLifecycleSafeCanonical(records);
+  }
+
+  if (canonical) {
+    records.forEach((record) => {
+      if (record.id === canonical.id) return;
+      if (isUnsafeForCanonical(canonical, record)) {
+        conflictReasons.push(`unsafe_demo_lifecycle:${record.id}`);
+      }
+    });
+  }
+
+  return {
+    identityKey: key,
+    indexedCanonicalLeadId: indexedCanonicalId || null,
+    canonicalLeadId: canonical?.id || null,
+    canonicalSelection: indexedCanonicalId ? 'existing_identity_index' : 'lifecycle_then_earliest',
+    conflict: conflictReasons.length > 0,
+    conflictReasons,
+    leads: [...records]
+      .sort((a, b) => eventMillis(a.data) - eventMillis(b.data))
+      .map(summarizeLead),
+  };
+}
 
 async function main() {
   const snapshot = await db.collection('leads').where('source', '==', 'website').get();
@@ -85,28 +140,9 @@ async function main() {
   });
 
   const duplicateGroups = [...groups.entries()].filter(([, records]) => records.length > 1);
-  const report = duplicateGroups.map(([key, records]) => {
-    const conflict = hasUnsafeDemoConflict(records);
-    const canonical = conflict ? null : chooseCanonical(records);
-    return {
-      identityKey: key,
-      conflict,
-      canonicalLeadId: canonical?.id || null,
-      leads: records
-        .sort((a, b) => eventMillis(a.data) - eventMillis(b.data))
-        .map((record) => ({
-          id: record.id,
-          parentName: cleanText(record.data.parentName),
-          childName: cleanText(record.data.childName),
-          phone: normalizePhone(record.data.phoneNormalized || record.data.primaryPhone || record.data.whatsappNumber),
-          status: cleanText(record.data.status),
-          programInterest: cleanText(record.data.programInterest),
-          interestTrack: cleanText(record.data.interestTrack),
-          demoIds: demoIds(record.data),
-          receivedAtMs: eventMillis(record.data),
-        })),
-    };
-  });
+  const report = await Promise.all(
+    duplicateGroups.map(([key, records]) => buildGroupReport(key, records)),
+  );
 
   console.log(JSON.stringify({
     mode: APPLY ? 'APPLY' : 'DRY_RUN',
@@ -119,20 +155,39 @@ async function main() {
   }, null, 2));
 
   if (!APPLY) {
-    console.log('\nDry run only. Re-run with --apply after reviewing every group and after the dedupe trigger is deployed.');
+    console.log('\nDry run only. Re-run with --apply only after the dedupe trigger is deployed and every group has been reviewed.');
     return;
   }
 
   const safeGroups = report.filter((group) => !group.conflict && group.canonicalLeadId);
+  let appliedGroups = 0;
+  let skippedForDrift = 0;
+
   for (const group of safeGroups) {
     const identityRef = db.collection('leadIdentityIndex').doc(group.identityKey);
-    await identityRef.set({
-      canonicalLeadId: group.canonicalLeadId,
-      identityKey: group.identityKey,
-      version: VERSION,
-      backfillSeededAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    }, { merge: true });
+    const liveIdentitySnap = await identityRef.get();
+    const liveCanonicalId = liveIdentitySnap.exists
+      ? cleanText(liveIdentitySnap.data()?.canonicalLeadId)
+      : '';
+
+    // Never overwrite a canonical mapping that changed after the dry-run snapshot/report.
+    if (liveCanonicalId && liveCanonicalId !== group.canonicalLeadId) {
+      skippedForDrift += 1;
+      console.warn(
+        `[backfillWebsiteLeadDeduplication] skipped ${group.identityKey}: identity index drifted from ${group.canonicalLeadId} to ${liveCanonicalId}`,
+      );
+      continue;
+    }
+
+    if (!liveCanonicalId) {
+      await identityRef.set({
+        canonicalLeadId: group.canonicalLeadId,
+        identityKey: group.identityKey,
+        version: VERSION,
+        backfillSeededAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
 
     const batch = db.batch();
     group.leads.forEach((lead) => {
@@ -141,9 +196,12 @@ async function main() {
       }, { merge: true });
     });
     await batch.commit();
+    appliedGroups += 1;
   }
 
-  console.log(`\nSeeded ${safeGroups.length} safe identity groups and touched their leads. Firestore triggers now perform the canonical merges.`);
+  console.log(
+    `\nApplied ${appliedGroups} safe groups. Skipped ${skippedForDrift} groups because the identity index changed during execution. Firestore triggers perform the canonical merges.`,
+  );
   if (report.some((group) => group.conflict)) {
     console.log('Conflict groups were intentionally skipped and require manual review.');
   }
