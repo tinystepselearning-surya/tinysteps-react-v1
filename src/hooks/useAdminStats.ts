@@ -1,39 +1,62 @@
 import { useQuery } from '@tanstack/react-query';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getCountFromServer, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebaseConfig';
 
 export interface AdminStats {
   totalUsers: number;
   totalStudents: number;
   totalCourses: number;
-  activeSessionsToday: number;
+  sessionsToday: number;
 }
 
-const EMPTY_ADMIN_STATS: AdminStats = {
-  totalUsers: 0,
-  totalStudents: 0,
-  totalCourses: 0,
-  activeSessionsToday: 0,
+const NON_ACTIVE_TODAY_SESSION_STATUSES = new Set([
+  'cancelled',
+  'canceled',
+  'rescheduled',
+  'reschedule_requested',
+  'reschedule-requested',
+  'void',
+  'archived',
+]);
+
+const ymdInTimeZone = (date: Date, timeZone: string): string => {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const year = parts.find((part) => part.type === 'year')?.value || '';
+  const month = parts.find((part) => part.type === 'month')?.value || '';
+  const day = parts.find((part) => part.type === 'day')?.value || '';
+  return year && month && day ? `${year}-${month}-${day}` : date.toISOString().slice(0, 10);
 };
 
 export async function fetchAdminStats(): Promise<AdminStats> {
-  try {
-    const [usersSnap, studentsSnap, coursesSnap] = await Promise.all([
-      getDocs(collection(db, 'users')),
-      getDocs(collection(db, 'kids')),
-      getDocs(collection(db, 'courses')),
-    ]);
+  const todayIst = ymdInTimeZone(new Date(), 'Asia/Kolkata');
 
-    return {
-      totalUsers: usersSnap.size,
-      totalStudents: studentsSnap.size,
-      totalCourses: coursesSnap.size,
-      activeSessionsToday: 0,
-    };
-  } catch (err) {
-    console.warn('Failed to fetch admin stats:', err);
-    return EMPTY_ADMIN_STATS;
-  }
+  // Keep these reads independent from the filter-heavy analytics dashboard. If any read
+  // fails, surface the error instead of returning a believable all-zero dashboard.
+  const [usersCount, studentsCount, coursesCount, todaySessionsSnap] = await Promise.all([
+    getCountFromServer(collection(db, 'users')),
+    getCountFromServer(collection(db, 'kids')),
+    getCountFromServer(collection(db, 'courses')),
+    getDocs(query(collection(db, 'classSessions'), where('date', '==', todayIst))),
+  ]);
+
+  const sessionsToday = todaySessionsSnap.docs.filter((docSnap) => {
+    const data = docSnap.data() as Record<string, unknown>;
+    if (data.archived === true) return false;
+    const status = String(data.status || '').trim().toLowerCase();
+    return !NON_ACTIVE_TODAY_SESSION_STATUSES.has(status);
+  }).length;
+
+  return {
+    totalUsers: usersCount.data().count,
+    totalStudents: studentsCount.data().count,
+    totalCourses: coursesCount.data().count,
+    sessionsToday,
+  };
 }
 
 export function useAdminStats(enabled = true) {

@@ -88,12 +88,16 @@ export const buildParentPaymentSelectOptions = <TUser extends PaymentUserOption>
   searchResults,
   tableRows,
   selectedParentId,
+  preservedOptions = [],
 }: {
   loadedParents: TUser[];
   searchResults: TUser[];
   tableRows: ParentPaymentOptionRow[];
   selectedParentId?: string;
+  preservedOptions?: Array<PaymentSelectOption<TUser>>;
 }): Array<PaymentSelectOption<TUser>> => {
+  const normalizedSelectedParentId = String(selectedParentId || '').trim();
+
   const rowById = new Map(tableRows.map((row) => [row.parentId, row]));
   const userById = new Map(
     [...loadedParents, ...searchResults].filter((user) => user.id).map((user) => [user.id, user]),
@@ -123,14 +127,15 @@ export const buildParentPaymentSelectOptions = <TUser extends PaymentUserOption>
     ...searchResults.map((user) => user.id),
     ...loadedParents.map((user) => user.id),
     ...tableRows.map((row) => row.parentId),
-    selectedParentId || '',
+    normalizedSelectedParentId,
   ];
 
-  return mergeOptions(
+  const currentOptions = mergeOptions(
     candidateIds
       .map((parentId) => buildParentOption(parentId))
       .filter((option): option is PaymentSelectOption<TUser> => Boolean(option)),
   );
+  return mergeOptions([...preservedOptions, ...currentOptions]);
 };
 
 export const buildTeacherPaymentSelectOptions = <TUser extends PaymentUserOption>({

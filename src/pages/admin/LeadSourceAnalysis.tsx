@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { collection, query, Timestamp, where } from 'firebase/firestore';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
@@ -129,10 +129,15 @@ export default function LeadSourceAnalysis(): JSX.Element {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const requestSequenceRef = useRef(0);
 
   const load = useCallback(async () => {
+    const requestSequence = ++requestSequenceRef.current;
     setLoading(true);
     setError(null);
+    // Never show the previous range's totals under the newly selected range label.
+    setRows([]);
+
     const start = new Date();
     start.setDate(start.getDate() - rangeDays);
     start.setHours(0, 0, 0, 0);
@@ -143,22 +148,30 @@ export default function LeadSourceAnalysis(): JSX.Element {
         query(collection(db, 'leads'), where('createdAt', '>=', Timestamp.fromDate(start))),
         { source: 'src/pages/admin/LeadSourceAnalysis.tsx' },
       );
+      if (requestSequenceRef.current !== requestSequence) return;
       setRows(
         snap.docs
           .map((d) => ({ id: d.id, ...(d.data() as Omit<LeadRow, 'id'>) }))
           .filter((lead) => !(lead as LeadRow & { archived?: boolean }).archived),
       );
     } catch (err: any) {
+      if (requestSequenceRef.current !== requestSequence) return;
       console.error('[LeadSourceAnalysis] load failed', err);
       setError(err?.message || 'Could not load lead attribution analytics.');
       setRows([]);
     } finally {
-      setLoading(false);
+      if (requestSequenceRef.current === requestSequence) {
+        setLoading(false);
+      }
     }
   }, [rangeDays]);
 
   useEffect(() => {
     void load();
+    return () => {
+      // Invalidate any in-flight request when the range/refresh changes or the component unmounts.
+      requestSequenceRef.current += 1;
+    };
   }, [load, refreshKey]);
 
   const analysis = useMemo(() => {
