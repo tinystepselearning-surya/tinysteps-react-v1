@@ -48,9 +48,11 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)('getParentWorksheetResourc
     expect(resources).toHaveLength(1);
     expect(resources[0]).toMatchObject({ title: 'Allowed' });
     expect(resources[0]).not.toHaveProperty('teacherScript');
+    expect(resources[0]).not.toHaveProperty('targetCourseIds');
+    expect(resources[0]).not.toHaveProperty('targetKidIds');
+    expect(resources[0]).not.toHaveProperty('targetEnrollmentIds');
+    expect(resources[0]).not.toHaveProperty('targetParentIds');
     expect(resources[0]?.id).not.toContain(`allowed-${suffix}`);
-    expect(resources[0]?.targetKidIds).toEqual([]);
-    expect(resources[0]?.targetEnrollmentIds).toEqual([]);
     await expect(loadParentWorksheetResources(db, parentB, kidA)).rejects.toMatchObject({ code: 'permission-denied' });
   });
 });

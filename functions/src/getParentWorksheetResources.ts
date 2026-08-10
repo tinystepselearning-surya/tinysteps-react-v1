@@ -103,17 +103,7 @@ function parentFacingResource(id: string, data: ResourceRecord, courseTitleById:
     lessonFolderTitle: String(data.lessonFolderTitle || '').trim(),
     courseId: rawCourseId ? opaqueKey('course', rawCourseId) : 'legacy',
     courseTitle: String(data.courseTitle || data.courseName || courseTitleById.get(rawCourseId) || 'Course resources').trim(),
-    targetLessonIds: [],
-    targetCourseIds: [],
-    targetKidIds: [],
-    targetEnrollmentIds: [],
-    targetParentIds: [],
-    targetStageTags: [...strings(data.targetStageTags), ...strings(data.stageTags)],
-    isActive: true,
-    isArchived: false,
     sortOrder: Number.isFinite(Number(data.sortOrder)) ? Number(data.sortOrder) : 0,
-    createdAt: null,
-    updatedAt: null,
   };
 }
 
