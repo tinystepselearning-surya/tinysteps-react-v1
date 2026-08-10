@@ -40,18 +40,28 @@ jobs:
       - name: Build Cloud Functions
         run: npm --prefix functions run build
 
+      - name: Run Cloud Functions unit tests
+        run: npm --prefix functions test
+
       - name: Setup Java for Firestore emulator
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
 
-      - name: Run school-domain Firestore rules tests
+      - name: Run public-lead and school-domain Firestore rules tests
         run: >-
           npx firebase-tools@latest emulators:exec
           --project ${{ env.FIREBASE_PROJECT_ID }}
           --only firestore
-          "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run src/tests/firestore/schoolDomain.rules.spec.ts src/tests/firestore/schoolProgramme.rules.spec.ts"
+          "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run src/tests/firestore/publicLeads.rules.spec.ts src/tests/firestore/schoolDomain.rules.spec.ts src/tests/firestore/schoolProgramme.rules.spec.ts"
+
+      - name: Run website lead deduplication transaction tests
+        run: >-
+          npx firebase-tools@latest emulators:exec
+          --project ${{ env.FIREBASE_PROJECT_ID }}
+          --only firestore
+          "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run --config functions/vitest.config.ts functions/test/websiteLeadDeduplication.emulator.spec.ts"
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4

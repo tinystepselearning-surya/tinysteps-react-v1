@@ -182,6 +182,15 @@ function sanitizeAttribution(raw: AttributionPayload | undefined) {
   return { attribution, acquisition };
 }
 
+function assertRecent(timestamp: unknown, unavailableMessage: string): void {
+  if (!(timestamp instanceof admin.firestore.Timestamp)) {
+    throw new HttpsError('failed-precondition', unavailableMessage);
+  }
+  if (Date.now() - timestamp.toMillis() > MAX_LEAD_AGE_MS) {
+    throw new HttpsError('failed-precondition', 'Lead attribution enrichment window expired');
+  }
+}
+
 export const enrichPublicLeadAttribution = onCall<EnrichmentRequest>(
   { region: REGION, memory: '256MiB', timeoutSeconds: 30 },
   async (request) => {
@@ -191,46 +200,124 @@ export const enrichPublicLeadAttribution = onCall<EnrichmentRequest>(
     }
 
     const db = admin.firestore();
-    const leadRef = db.collection('leads').doc(leadId);
+    const originalLeadRef = db.collection('leads').doc(leadId);
+    const redirectRef = db.collection('leadMergeRedirects').doc(leadId);
+    const { attribution, acquisition } = sanitizeAttribution(request.data?.attribution);
+
     const result = await db.runTransaction(async (tx) => {
-      const snap = await tx.get(leadRef);
-      if (!snap.exists) {
-        throw new HttpsError('not-found', 'Lead not found');
+      let targetRef = originalLeadRef;
+      let targetSnap = await tx.get(originalLeadRef);
+      let redirected = false;
+      let promoteFirstTouch = false;
+      let canonicalLeadId = leadId;
+
+      if (!targetSnap.exists) {
+        const redirectSnap = await tx.get(redirectRef);
+        if (!redirectSnap.exists) {
+          throw new HttpsError('not-found', 'Lead not found');
+        }
+
+        const redirect = redirectSnap.data() || {};
+        canonicalLeadId = sanitize(redirect.canonicalLeadId, 40) || '';
+        if (!AUTO_ID_PATTERN.test(canonicalLeadId)) {
+          throw new HttpsError('failed-precondition', 'Lead merge redirect is invalid');
+        }
+        assertRecent(redirect.mergedAt, 'Lead merge timestamp is unavailable');
+        promoteFirstTouch = redirect.promoteFirstTouch === true;
+        targetRef = db.collection('leads').doc(canonicalLeadId);
+        targetSnap = await tx.get(targetRef);
+        if (!targetSnap.exists) {
+          throw new HttpsError('failed-precondition', 'Canonical lead not found');
+        }
+        redirected = true;
       }
 
-      const lead = snap.data() || {};
+      const lead = targetSnap.data() || {};
       if (lead.source !== 'website') {
         throw new HttpsError('permission-denied', 'Only website leads can be enriched');
       }
 
-      if (lead.attributionEnrichedAt) {
-        return { alreadyEnriched: true };
-      }
+      if (!redirected) {
+        if (lead.attributionEnrichedAt) {
+          return { alreadyEnriched: true, canonicalLeadId };
+        }
+        assertRecent(lead.createdAt, 'Lead creation timestamp is unavailable');
 
-      const createdAt = lead.createdAt;
-      if (!(createdAt instanceof admin.firestore.Timestamp)) {
-        throw new HttpsError('failed-precondition', 'Lead creation timestamp is unavailable');
-      }
-      if (Date.now() - createdAt.toMillis() > MAX_LEAD_AGE_MS) {
-        throw new HttpsError('failed-precondition', 'Lead attribution enrichment window expired');
-      }
+        tx.set(
+          targetRef,
+          {
+            acquisitionChannel: acquisition.channel,
+            acquisitionSource: acquisition.source,
+            landingPage: attribution.landingPage,
+            conversionPage: attribution.conversionPage,
+            attribution,
+            attributionEnrichedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true },
+        );
+        tx.set(
+          targetRef.collection('inquiries').doc(leadId),
+          {
+            sourceLeadId: leadId,
+            landingPage: attribution.landingPage,
+            conversionPage: attribution.conversionPage,
+            acquisitionChannel: acquisition.channel,
+            acquisitionSource: acquisition.source,
+            attribution,
+            attributionEnrichedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true },
+        );
 
-      const { attribution, acquisition } = sanitizeAttribution(request.data?.attribution);
-      tx.set(
-        leadRef,
-        {
+        return {
+          alreadyEnriched: false,
           acquisitionChannel: acquisition.channel,
-          acquisitionSource: acquisition.source,
+          canonicalLeadId,
+        };
+      }
+
+      const interactionRef = targetRef.collection('inquiries').doc(leadId);
+      tx.set(
+        interactionRef,
+        {
           landingPage: attribution.landingPage,
           conversionPage: attribution.conversionPage,
+          acquisitionChannel: acquisition.channel,
+          acquisitionSource: acquisition.source,
           attribution,
           attributionEnrichedAt: admin.firestore.FieldValue.serverTimestamp(),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          attributionRedirectedFromLeadId: leadId,
         },
         { merge: true },
       );
 
-      return { alreadyEnriched: false, acquisitionChannel: acquisition.channel };
+      const canonicalPatch: Record<string, unknown> = {
+        lastInquiryLandingPage: attribution.landingPage,
+        lastInquiryConversionPage: attribution.conversionPage,
+        lastInquiryAcquisitionChannel: acquisition.channel,
+        lastInquiryAcquisitionSource: acquisition.source,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      if (promoteFirstTouch) {
+        canonicalPatch.acquisitionChannel = acquisition.channel;
+        canonicalPatch.acquisitionSource = acquisition.source;
+        canonicalPatch.landingPage = attribution.landingPage;
+        canonicalPatch.conversionPage = attribution.conversionPage;
+        canonicalPatch.attribution = attribution;
+        canonicalPatch.attributionEnrichedAt = admin.firestore.FieldValue.serverTimestamp();
+      }
+
+      tx.set(targetRef, canonicalPatch, { merge: true });
+
+      return {
+        alreadyEnriched: false,
+        redirected: true,
+        promoteFirstTouch,
+        acquisitionChannel: acquisition.channel,
+        canonicalLeadId,
+      };
     });
 
     logger.info('[enrichPublicLeadAttribution] attribution persisted', {
