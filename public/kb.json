@@ -6,8 +6,48 @@
   },
   {
     "path": "/for-schools",
-    "title": "Phonics Program for Schools in India",
-    "text": "Tiny Steps offers a research-aligned phonics partnership for schools in India and internationally. Many schools have an English curriculum but not one protected, systematic, cumulative phonics sequence across classrooms. General teaching experience and fluent English do not automatically provide specialist knowledge of phonemic awareness, sound-symbol mapping, blending, segmenting, decoding, encoding, spelling patterns, error diagnosis, and reteaching. The school's existing teachers deliver the program after live Tiny Steps training, rehearsal, and coaching. The partnership includes a sequenced curriculum, teacher-led digital lesson decks, interactive listening, tracing, blending, word-building and spelling games, printable practice, assessment guidance, and support throughout the academic year. Every annual school is assigned a dedicated Tiny Steps learning partner to coordinate teacher preparation, delivery check-ins, content clarifications, school-recorded progress reviews, and leadership updates. Games reinforce explicit teaching rather than replace it. School partnership pricing is ₹59,000 plus GST per campus for a focused launch licence and ₹1.49 lakh plus GST per campus for the whole-school partnership. The multi-campus partnership is ₹2.99 lakh plus GST for the base scope of up to three campuses. An eight-week pilot for one grade, up to four teachers, and up to 60 learners costs ₹24,900 plus GST and can be credited toward annual adoption when upgraded within 30 days."
+    "title": "Systematic Phonics Program for CBSE & Schools in India",
+    "text": "CBSE/NCF does include foundational phonics-related literacy expectations. NCERT NCF-FS 2022 includes phonological awareness, blending, segmenting, decoding, letter–sound relationships, reading fluency, and attention to specific English letter combinations. Tiny Steps does not claim phonics is absent from CBSE. Tiny Steps addresses the implementation gap by turning those broad expectations into a protected Foundation-to-Advanced scope and sequence, explicit classroom methodology, cumulative reading and spelling practice, teacher training, assessment, reteaching guidance, and year-long implementation support. The school’s existing teachers deliver the programme. The Tiny Steps pathway moves from phonological awareness and sound-symbol knowledge through blending, segmenting, CVC structures, major phonics and spelling patterns, long-vowel and vowel-team patterns, advanced word structures, syllables, fluency, and independent reading and writing. A key transfer question is whether the child can decode an appropriate word they have never practised before. Tiny Steps uses recognised international systematic-phonics principles as an external quality benchmark but does not claim UK DfE validation or certification. Tiny Steps is independent and does not claim CBSE, NCERT, government, Cambridge, or IB endorsement. Annual pricing starts at ₹59,000 plus GST for a focused launch; the whole-school partnership is ₹1.49 lakh plus GST; multi-campus is ₹2.99 lakh plus GST for up to three campuses. An eight-week pilot is ₹24,900 plus GST for one grade, up to four teachers and 60 learners, creditable toward annual adoption when upgraded within 30 days."
+  },
+  {
+    "path": "/blog/does-cbse-include-phonics-ncf-foundational-literacy",
+    "title": "Does CBSE Include Phonics? What NCF Actually Says",
+    "text": "Yes. NCERT NCF-FS includes phonological awareness, blending phonemes or syllables into words, segmenting words, letter–sound relationships and decoding. It describes decoding as connecting sounds with individual letters and letter combinations and blending those sounds to read the whole word. For English, it says phonics includes attention to specific letter combinations representing sounds rather than only sequential alphabet introduction. The implementation gap is the detailed sequence, routines, practice, assessment and teacher support schools need to operationalise these expectations."
+  },
+  {
+    "path": "/blog/cbse-phonics-curriculum-vs-systematic-phonics-programme",
+    "title": "CBSE Phonics Curriculum vs a Systematic Phonics Programme",
+    "text": "A curriculum framework and a systematic phonics programme serve different functions. NCF defines foundational-literacy competencies and pedagogical direction. A complete implementation programme decides the scope and sequence, modelling routines, blending and segmenting practice, cumulative review, correction, assessment, reteaching and teacher development. Curriculum defines the destination; methodology builds the route."
+  },
+  {
+    "path": "/blog/phonics-scope-and-sequence-for-cbse-schools",
+    "title": "Phonics Scope and Sequence for CBSE Schools",
+    "text": "A school phonics scope and sequence should move progressively from phonological awareness and sound–symbol relationships into blending and segmenting, early word structures, common letter combinations, major vowel patterns, spelling conventions, advanced patterns, syllables and multisyllabic words, connected reading, spelling transfer, fluency and independent application. The exact pacing should respond to learner baseline and school context."
+  },
+  {
+    "path": "/blog/international-phonics-benchmarks-for-indian-schools",
+    "title": "International Phonics Benchmarks for Indian Schools",
+    "text": "International systematic-phonics criteria provide a useful quality benchmark for Indian schools: a clearly defined incremental progression, simple-to-complex cumulative teaching, blending, segmenting for spelling, practice matched to taught knowledge, assessment that informs support, and strong teacher training. Tiny Steps uses such principles as an external benchmark and does not claim UK Department for Education validation, certification or endorsement."
+  },
+  {
+    "path": "/blog/why-letter-sounds-are-not-enough-to-read",
+    "title": "Why Knowing Letter Sounds Is Not Enough to Learn to Read",
+    "text": "Knowing individual letter sounds is a foundation, not the full reading process. Children also need to retrieve sounds inside words, blend sounds into whole words, understand increasingly complex letter combinations, segment spoken words for spelling, practise knowledge cumulatively and transfer decoding into connected text. Unfamiliar-word reading is a useful way to distinguish transferable decoding from memorised word familiarity."
+  },
+  {
+    "path": "/blog/how-schools-can-assess-decoding-not-memorisation",
+    "title": "How Schools Can Assess Decoding Instead of Word Memorisation",
+    "text": "To check genuine decoding, schools can use unfamiliar words constructed from previously taught sound–spelling patterns, then check the reverse process through segmenting and spelling. Assessment should also mix old and new learning and move into appropriately matched connected text. The aim is to identify transferable knowledge and determine whether teaching should continue, consolidate or reteach."
+  },
+  {
+    "path": "/blog/systematic-cumulative-phonics-explained-for-schools",
+    "title": "What Is Systematic and Cumulative Phonics?",
+    "text": "Systematic phonics teaches sound–spelling relationships in a planned progression from simpler to more complex knowledge. Cumulative phonics keeps previously taught knowledge active while new patterns are introduced. A strong school programme needs both: a documented sequence and repeated retrieval/application across reading, spelling, sentences and connected text."
+  },
+  {
+    "path": "/blog/phonics-teacher-training-for-schools-implementation",
+    "title": "Phonics Teacher Training for Schools: Why a Workshop Alone Is Not Implementation",
+    "text": "A one-day workshop can introduce phonics but does not by itself ensure consistent classroom implementation. Teachers need sequence knowledge, accurate modelling, rehearsal, blending and segmenting routines, error diagnosis, assessment interpretation, observation feedback and continued support. In the Tiny Steps school model, existing teachers deliver the programme while Tiny Steps provides progressive training, resources, assessment guidance and a dedicated learning partner."
   },
   {
     "path": "/book-demo",
@@ -37,7 +77,7 @@
   {
     "path": "/curriculum",
     "title": "Curriculum Overview",
-    "text": "The Tiny Steps curriculum builds reading, writing, speaking, and listening skills. Phonics covers sounds, blending, decoding, and early reading. Grammar covers sentence formation, tense accuracy, punctuation, and writing. Public Speaking develops confidence, storytelling, pronunciation, and presentation skills. One free 35-minute demo assessment class helps determine the correct starting stage."
+    "text": "The Tiny Steps curriculum builds reading, writing, speaking, and listening skills. Phonics covers phonological awareness, sounds, blending, segmenting, decoding, major phonics and spelling patterns, longer-word analysis and reading fluency through a progressive Foundation-to-Advanced pathway. Grammar covers sentence formation, tense accuracy, punctuation, and writing. Public Speaking develops confidence, storytelling, pronunciation, and presentation skills. One free 35-minute demo assessment class helps determine the correct starting stage."
   },
   {
     "path": "/summer-camps",
