@@ -35,6 +35,12 @@ export const buildWebsiteLeadIdentityKey = (phone: unknown, childName: unknown):
     .digest('hex');
 };
 
+const identityKeyForLead = (lead: Record<string, unknown>): string | null =>
+  buildWebsiteLeadIdentityKey(
+    lead.phoneNormalized || lead.primaryPhone || lead.whatsappNumber,
+    lead.childName,
+  );
+
 const toMillis = (value: unknown): number => {
   if (value instanceof admin.firestore.Timestamp) return value.toMillis();
   if (!value || typeof value !== 'object') return 0;
@@ -151,11 +157,14 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
     const initial = change.after.data() || {};
     if (cleanText(initial.source, 80).toLowerCase() !== WEBSITE_SOURCE) return;
 
-    const identityKey = buildWebsiteLeadIdentityKey(
-      initial.phoneNormalized || initial.primaryPhone || initial.whatsappNumber,
-      initial.childName,
-    );
+    const identityKey = identityKeyForLead(initial);
     if (!identityKey) return;
+
+    const before = change.before.exists ? (change.before.data() || {}) : {};
+    const previousIdentityKey =
+      cleanText(before.source, 80).toLowerCase() === WEBSITE_SOURCE
+        ? identityKeyForLead(before)
+        : null;
 
     const db = admin.firestore();
     const leadRef = db.collection('leads').doc(leadId);
@@ -169,10 +178,7 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
         return { action: 'ignored' as const };
       }
 
-      const currentIdentityKey = buildWebsiteLeadIdentityKey(
-        current.phoneNormalized || current.primaryPhone || current.whatsappNumber,
-        current.childName,
-      );
+      const currentIdentityKey = identityKeyForLead(current);
       if (currentIdentityKey !== identityKey) return { action: 'identity_changed' as const };
 
       const identitySnap = await tx.get(identityRef);
@@ -202,6 +208,43 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
           { merge: true },
         );
       };
+
+      // Admin edits can legitimately correct phone/child identity. If this lead owned the
+      // prior identity mapping, move that mapping atomically. Never leave a stale key that
+      // could later route an unrelated enquiry into this corrected lead.
+      if (previousIdentityKey && previousIdentityKey !== identityKey) {
+        const previousIdentityRef = db.collection('leadIdentityIndex').doc(previousIdentityKey);
+        const previousIdentitySnap = await tx.get(previousIdentityRef);
+        const previousCanonicalId = previousIdentitySnap.exists
+          ? cleanText(previousIdentitySnap.data()?.canonicalLeadId, 120)
+          : '';
+
+        if (previousCanonicalId === leadId) {
+          if (indexedCanonicalId && indexedCanonicalId !== leadId) {
+            tx.set(leadRef, {
+              dedupeVersion: DEDUPE_VERSION,
+              dedupeConflict: 'identity_edit_collides_with_existing_lead',
+              dedupeConflictCanonicalLeadId: indexedCanonicalId,
+              dedupeConflictAt: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+            return {
+              action: 'identity_conflict' as const,
+              canonicalLeadId: indexedCanonicalId,
+            };
+          }
+
+          tx.delete(previousIdentityRef);
+          tx.set(identityRef, {
+            canonicalLeadId: leadId,
+            identityKey,
+            version: DEDUPE_VERSION,
+            remappedFromIdentityKey: previousIdentityKey,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          }, { merge: true });
+          ensureCanonical();
+          return { action: 'identity_remapped' as const, canonicalLeadId: leadId };
+        }
+      }
 
       if (!indexedCanonicalId) {
         tx.set(identityRef, {
@@ -341,6 +384,13 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
       logger.warn('[websiteLeadDeduplication] duplicate not merged because demo lifecycle is unsafe to migrate automatically', {
         leadId,
         identityKey,
+        ...outcome,
+      });
+    } else if (outcome.action === 'identity_conflict') {
+      logger.warn('[websiteLeadDeduplication] corrected lead identity collides with another canonical lead', {
+        leadId,
+        identityKey,
+        previousIdentityKey,
         ...outcome,
       });
     }
