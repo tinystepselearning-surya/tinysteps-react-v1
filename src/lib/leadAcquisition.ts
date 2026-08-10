@@ -33,7 +33,13 @@ const normalize = (value: string | null | undefined): string => String(value || 
 const isPaidMedium = (medium: string): boolean =>
   /(^|[_\-])(cpc|ppc|paid|paidsearch|paid_search|display|retargeting|remarketing)([_\-]|$)/.test(medium);
 
-const includesAny = (value: string, needles: string[]): boolean => needles.some((needle) => value.includes(needle));
+const matchesSource = (value: string, aliases: string[]): boolean => aliases.includes(value);
+
+const matchesDomain = (domain: string, roots: string[]): boolean =>
+  roots.some((root) => domain === root || domain.endsWith(`.${root}`));
+
+const isGoogleDomain = (domain: string): boolean =>
+  /(^|\.)google\.[a-z]{2,3}(\.[a-z]{2})?$/.test(domain);
 
 export function deriveReferrerDomain(referrer?: string): string | undefined {
   const raw = String(referrer || '').trim();
@@ -51,13 +57,24 @@ export function classifyLeadAcquisition(input: AcquisitionInput): AcquisitionCla
   const utmMedium = normalize(input.utmMedium);
   const referrerDomain = normalize(input.referrerDomain || deriveReferrerDomain(input.referrer));
 
-  const sourceText = `${utmSource} ${referrerDomain}`.trim();
-  const hasGoogle = includesAny(sourceText, ['google']);
-  const hasBing = includesAny(sourceText, ['bing', 'microsoft']);
-  const hasInstagram = includesAny(sourceText, ['instagram']) || utmSource === 'ig';
-  const hasFacebook = includesAny(sourceText, ['facebook', 'meta']) || utmSource === 'fb';
-  const hasLinkedIn = includesAny(sourceText, ['linkedin']);
-  const hasYouTube = includesAny(sourceText, ['youtube', 'youtu.be']);
+  const hasGoogle =
+    matchesSource(utmSource, ['google', 'google_ads', 'google-ads', 'googleads', 'adwords']) ||
+    isGoogleDomain(referrerDomain);
+  const hasBing =
+    matchesSource(utmSource, ['bing', 'microsoft', 'microsoft_ads', 'microsoft-ads']) ||
+    matchesDomain(referrerDomain, ['bing.com', 'microsoft.com']);
+  const hasInstagram =
+    matchesSource(utmSource, ['instagram', 'instagram_ads', 'instagram-ads', 'ig']) ||
+    matchesDomain(referrerDomain, ['instagram.com']);
+  const hasFacebook =
+    matchesSource(utmSource, ['facebook', 'facebook_ads', 'facebook-ads', 'fb', 'meta', 'meta_ads', 'meta-ads']) ||
+    matchesDomain(referrerDomain, ['facebook.com', 'fb.com', 'meta.com']);
+  const hasLinkedIn =
+    matchesSource(utmSource, ['linkedin', 'linkedin_ads', 'linkedin-ads']) ||
+    matchesDomain(referrerDomain, ['linkedin.com']);
+  const hasYouTube =
+    matchesSource(utmSource, ['youtube', 'youtube_ads', 'youtube-ads']) ||
+    matchesDomain(referrerDomain, ['youtube.com', 'youtu.be']);
 
   if (input.gclid || (hasGoogle && isPaidMedium(utmMedium))) {
     return { channel: 'google_ads', source: utmSource || 'google', label: 'Google Ads' };

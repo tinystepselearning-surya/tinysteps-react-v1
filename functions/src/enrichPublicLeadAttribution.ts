@@ -72,6 +72,18 @@ function isPaidMedium(medium: string): boolean {
   return /(^|[_\-])(cpc|ppc|paid|paidsearch|paid_search|display|retargeting|remarketing)([_\-]|$)/.test(medium);
 }
 
+function matchesSource(value: string, aliases: string[]): boolean {
+  return aliases.includes(value);
+}
+
+function matchesDomain(domain: string, roots: string[]): boolean {
+  return roots.some((root) => domain === root || domain.endsWith(`.${root}`));
+}
+
+function isGoogleDomain(domain: string): boolean {
+  return /(^|\.)google\.[a-z]{2,3}(\.[a-z]{2})?$/.test(domain);
+}
+
 function classify(input: {
   referrerDomain?: string;
   utmSource?: string;
@@ -83,31 +95,47 @@ function classify(input: {
   const source = normalize(input.utmSource);
   const medium = normalize(input.utmMedium);
   const referrerDomain = normalize(input.referrerDomain);
-  const combined = `${source} ${referrerDomain}`;
-  const has = (needle: string) => combined.includes(needle);
+  const hasGoogle =
+    matchesSource(source, ['google', 'google_ads', 'google-ads', 'googleads', 'adwords']) ||
+    isGoogleDomain(referrerDomain);
+  const hasBing =
+    matchesSource(source, ['bing', 'microsoft', 'microsoft_ads', 'microsoft-ads']) ||
+    matchesDomain(referrerDomain, ['bing.com', 'microsoft.com']);
+  const hasInstagram =
+    matchesSource(source, ['instagram', 'instagram_ads', 'instagram-ads', 'ig']) ||
+    matchesDomain(referrerDomain, ['instagram.com']);
+  const hasFacebook =
+    matchesSource(source, ['facebook', 'facebook_ads', 'facebook-ads', 'fb', 'meta', 'meta_ads', 'meta-ads']) ||
+    matchesDomain(referrerDomain, ['facebook.com', 'fb.com', 'meta.com']);
+  const hasLinkedIn =
+    matchesSource(source, ['linkedin', 'linkedin_ads', 'linkedin-ads']) ||
+    matchesDomain(referrerDomain, ['linkedin.com']);
+  const hasYouTube =
+    matchesSource(source, ['youtube', 'youtube_ads', 'youtube-ads']) ||
+    matchesDomain(referrerDomain, ['youtube.com', 'youtu.be']);
 
-  if (input.gclid || (has('google') && isPaidMedium(medium))) {
+  if (input.gclid || (hasGoogle && isPaidMedium(medium))) {
     return { channel: 'google_ads', source: source || 'google' };
   }
-  if (input.msclkid || ((has('bing') || has('microsoft')) && isPaidMedium(medium))) {
+  if (input.msclkid || (hasBing && isPaidMedium(medium))) {
     return { channel: 'microsoft_ads', source: source || 'microsoft' };
   }
-  if (has('instagram') || source === 'ig') {
+  if (hasInstagram) {
     return { channel: 'instagram', source: source || referrerDomain || 'instagram' };
   }
-  if (has('facebook') || has('meta') || source === 'fb' || input.fbclid) {
+  if (hasFacebook || input.fbclid) {
     return { channel: 'facebook', source: source || referrerDomain || 'facebook' };
   }
-  if (has('linkedin')) {
+  if (hasLinkedIn) {
     return { channel: 'linkedin', source: source || referrerDomain || 'linkedin' };
   }
-  if (has('youtube') || has('youtu.be')) {
+  if (hasYouTube) {
     return { channel: 'youtube', source: source || referrerDomain || 'youtube' };
   }
-  if (has('google')) {
+  if (hasGoogle) {
     return { channel: 'google_organic', source: referrerDomain || source || 'google' };
   }
-  if (has('bing') || has('microsoft')) {
+  if (hasBing) {
     return { channel: 'bing_organic', source: referrerDomain || source || 'bing' };
   }
   if (source) {
