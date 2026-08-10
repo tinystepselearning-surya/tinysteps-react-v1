@@ -48,6 +48,7 @@ const FUNCTION_REGION_OVERRIDES: Record<string, string> = {
   registerNotificationToken: 'asia-south1',
   sendTestPushNotification: 'asia-south1',
   createLessonAccessSession: 'asia-south1',
+  getParentWorksheetResources: 'asia-south1',
   resolveLessonAccessViewer: 'asia-south1',
   claimDemoSession: 'asia-south1',
   updateDemoSessionSchedule: 'asia-south1',

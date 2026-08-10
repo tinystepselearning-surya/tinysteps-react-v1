@@ -143,6 +143,7 @@ export { ensureGamesCatalogNow } from "./games/ensureGamesCatalogNow";
 export { cleanupGamesCatalogNow } from "./games/cleanupGamesCatalogNow";
 export { recordLevelResult } from "./games/recordLevelResult";
 export { createLessonAccessSession, resolveLessonAccessViewer } from "./createLessonAccessSession";
+export { getParentWorksheetResources } from "./getParentWorksheetResources";
 
 // Public website contact form
 export { contactForm } from "./contactForm";

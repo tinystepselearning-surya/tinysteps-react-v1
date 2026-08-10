@@ -15,6 +15,7 @@ import {
   cleanStudentDisplayName,
   resolveTeacherSessionCourseLabel,
 } from '../../utils/resolveTeacherSessionStudentName';
+import { SessionResourcesDialog } from './SessionResourcesDialog';
 
 interface SessionCardProps {
   session: TeacherSession;
@@ -36,6 +37,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
   const ATTENDANCE_OPEN_DELAY_MS = 30 * 60 * 1000;
   const { user } = useAuthStore();
   const [isStartingClass, setIsStartingClass] = useState(false);
+  const [resourcesOpen, setResourcesOpen] = useState(false);
   const sessionStart = getSessionStartDate(session) || new Date();
   const sessionEnd =
     getSessionEndDate(session) ||
@@ -203,7 +205,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
 
   return (
     <div className="border-b border-slate-100 px-4 py-3 last:border-b-0 hover:bg-slate-50/40">
-      <div className="grid grid-cols-[1.15fr_1fr_0.9fr_1.1fr_240px] items-center gap-3">
+      <div className="grid grid-cols-[1.15fr_1fr_0.9fr_1.1fr_330px] items-center gap-3">
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold text-slate-900">{childName}</div>
         </div>
@@ -235,6 +237,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
         </div>
 
         <div className="flex items-center justify-end gap-2">
+          <Button size="sm" variant="outline" onClick={() => setResourcesOpen(true)}>Resources</Button>
           <Button
             size="sm"
             variant={isLiveNow ? 'default' : 'outline'}
@@ -264,6 +267,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
               : 'Attendance opens 30 minutes after class start'}
         </div>
       ) : null}
+      <SessionResourcesDialog session={session} open={resourcesOpen} onOpenChange={setResourcesOpen} />
     </div>
   );
 };

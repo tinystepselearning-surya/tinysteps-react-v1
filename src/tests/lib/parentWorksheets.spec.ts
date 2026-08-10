@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   getSafeWorksheetUrl,
+  getGoogleDriveFileId,
+  getWorksheetDownloadUrl,
+  groupParentWorksheets,
   toParentWorksheetItem,
   worksheetMatchesContext,
 } from "../../lib/parentWorksheets";
@@ -82,5 +85,33 @@ describe("parent worksheet helpers", () => {
     );
     expect(getSafeWorksheetUrl("javascript:alert(1)")).toBeNull();
     expect(getSafeWorksheetUrl("not a url")).toBeNull();
+  });
+
+  it("derives downloads only from recognized Drive file URLs", () => {
+    const drive = "https://drive.google.com/file/d/1AbCdEfGhIjKlMnOp/view?usp=sharing";
+    expect(getGoogleDriveFileId(drive)).toBe("1AbCdEfGhIjKlMnOp");
+    expect(getWorksheetDownloadUrl(drive)).toBe("https://drive.google.com/uc?export=download&id=1AbCdEfGhIjKlMnOp");
+    expect(getWorksheetDownloadUrl("https://example.com/file.pdf")).toBeNull();
+    expect(getGoogleDriveFileId("javascript:alert(1)")).toBeNull();
+  });
+
+  it("never merges duplicate lesson titles from distinct lesson/course identities", () => {
+    const make = (id: string, lessonId: string, courseId: string) => toParentWorksheetItem(id, {
+      title: id, url: "https://example.com/file.pdf", lessonId, lessonTitle: "Lesson-1",
+      targetCourseIds: [courseId], courseId,
+    });
+    const groups = groupParentWorksheets([
+      make("a", "foundation-lesson-1", "foundations"),
+      make("b", "phonics-lesson-1", "early-phonics"),
+    ]);
+    expect(groups).toHaveLength(2);
+    expect(groups.map((group) => group.key)).toEqual(expect.arrayContaining([
+      "foundations::foundation-lesson-1", "early-phonics::phonics-lesson-1",
+    ]));
+  });
+
+  it("keeps lessonless records in an explicit legacy group", () => {
+    const legacy = toParentWorksheetItem("legacy", { title: "Old sheet", url: "https://example.com/old.pdf", targetCourseIds: ["course-1"] });
+    expect(groupParentWorksheets([legacy])[0]).toMatchObject({ legacy: true, lessonTitle: "Legacy / General Resources" });
   });
 });

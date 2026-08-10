@@ -32,13 +32,17 @@ A worksheet should not depend on a manually typed lesson name alone.
 
 ### 2. Course enrolment controls parent visibility
 
-`parentWorksheetLibrary` remains the parent distribution collection because the existing parent dashboard and Firestore rules already protect it by parent/course context.
+`parentWorksheetLibrary` remains the admin-owned distribution collection, but parents have no direct Firestore read permission. `getParentWorksheetResources` verifies the authenticated parent, selected child ownership, and active enrolments server-side before returning a parent-safe projection.
 
 New worksheet records include:
 
 ```text
 lessonId
 lessonTitle
+lessonFolderId
+lessonFolderTitle
+courseId
+courseTitle
 targetLessonIds[]
 targetCourseIds[]
 targetKidIds[]          optional narrowing
@@ -69,9 +73,10 @@ resourceType
 sortOrder
 active
 archived
+targetCourseIds
 ```
 
-The projection is updated transactionally when a worksheet is created, edited, moved to another lesson, hidden, archived, or restored.
+The projection is updated transactionally when a worksheet is created, edited, moved to another lesson, hidden, archived, or restored. Worksheet saves never write `teacherScript`; only the explicit class-script action can change or clear it.
 
 This avoids broadening teacher access to the parent distribution collection.
 
@@ -93,9 +98,9 @@ Audit metadata is retained using `teacherScriptUpdatedAt`, `teacherScriptUpdated
 
 Existing legacy worksheet records still normalize and display.
 
-New lesson-linked records use `lessonTitle` as their parent grouping label. This means the current Classes → Worksheets screen automatically becomes lesson-centred without a risky rewrite of the large Parent Dashboard component.
+New lesson-linked records group by immutable `courseId + lessonId`; titles are display labels only. A focused responsive component renders course → lesson → resource. Legacy records without `lessonId` are isolated under **Legacy / General Resources**.
 
-Legacy records without lesson metadata continue to group by their existing category.
+Recognized Google Drive file URLs receive a safe download action; other HTTPS links receive Open only.
 
 ## Admin experience
 
@@ -108,7 +113,7 @@ The primary form is intentionally ordered by instructional context:
 5. Activity type
 6. Sort order
 7. Parent guidance
-8. Teacher class script
+8. Teacher class script (saved independently)
 9. Optional child/enrolment/stage overrides
 
 Admin can also:
@@ -131,6 +136,8 @@ Each lesson tile now has three actions:
 
 Search includes lesson title/tags and worksheet title/type.
 
+Today’s Sessions also has a Resources action. It uses `lessonId`/`plannedLessonId` when a canonical association exists. Legacy sessions are never matched by title or lesson-number parsing; instead, the dialog offers a course-scoped lesson chooser based on explicit projected course IDs.
+
 The worksheet and script controls are preparation resources; they do not weaken the existing 50-minute lesson-slide access restriction.
 
 ## Parent experience
@@ -141,17 +148,16 @@ Parents continue to access resources under:
 Parent Dashboard → Classes → Worksheets
 ```
 
-Visibility is determined by the selected child and active enrolment context. New resources are grouped by lesson title, with the worksheet title and guidance beneath it. The Open action uses a validated HTTP(S) URL, including Google Drive links.
+Visibility is determined entirely by the callable's server-resolved selected child and active enrolment context. New resources are grouped by immutable course and lesson IDs, with display titles, worksheet type, and guidance beneath them. Only validated HTTPS URLs are returned and opened.
 
 Google Drive permissions still determine whether the parent can view/download the underlying file. Admin should therefore use an appropriate view-only share permission for parent worksheets.
 
 ## Security model
 
-No Firestore rules change is required for this iteration.
-
-- `parentWorksheetLibrary`: parent-facing distribution + admin writes.
+- `parentWorksheetLibrary`: admin reads/writes only; parents and teachers cannot read documents or dump the collection.
+- `getParentWorksheetResources`: parent-only callable; verifies canonical/legacy child ownership, resolves active course/enrolment IDs, applies all targeting, sanitizes URLs, and returns no script/audit metadata.
 - `lessonCatalog`: teacher/admin-facing lesson metadata, resource projection, and class script.
-- Parent never needs permission to read `lessonCatalog`.
+- Parent never has permission to read `lessonCatalog`.
 - Teacher never needs permission to read `parentWorksheetLibrary`.
 
 This keeps role boundaries explicit.
@@ -170,13 +176,19 @@ Recommended migration procedure:
 
 Saving converts the record into the lesson-linked schema and creates its teacher projection.
 
-Until migrated, the legacy item remains visible to parents under its previous category but does not appear as a worksheet button on a lesson tile.
+Until migrated, intentionally parent-targeted legacy items remain visible under Legacy / General Resources, but do not appear as a worksheet button on a lesson tile.
+
+Re-save worksheet records created by an earlier PR build so their teacher projection gains `targetCourseIds`; this enables the safe course-scoped chooser for legacy sessions without a canonical lesson field.
+
+## Storage decision
+
+The current catalogue is small enough that keeping one script and a compact worksheet projection array on each `lessonCatalog` document remains comfortably below Firestore's document limit. This avoids an unnecessary migration and keeps teacher reads straightforward. The parent callable never returns catalogue data. If projected resource counts or scripts grow materially, the documented next step is a teacher-only subcollection with `worksheetCount`/`hasTeacherScript` summary fields and lazy loading.
 
 ## Acceptance criteria
 
 ### Admin
 
-- Cannot create a new worksheet without a lesson, course, title, and valid HTTP(S) URL.
+- Cannot create a new worksheet without a lesson, course, title, and valid HTTPS URL.
 - Can save class script independently of a worksheet.
 - Editing a worksheet can move it from one lesson to another without leaving a stale teacher resource behind.
 - Hide/archive/restore states propagate to the teacher resource projection.
@@ -191,9 +203,9 @@ Until migrated, the legacy item remains visible to parents under its previous ca
 ### Parent
 
 - Only resources matching the selected child's active course/enrolment context are displayed.
-- New resources group by lesson.
+- New resources group by immutable course + lesson identity.
 - Legacy resources remain readable.
-- Invalid/non-HTTP(S) links cannot be opened from the UI.
+- Invalid/non-HTTPS links cannot be returned or opened from the UI.
 
 ### Quality
 

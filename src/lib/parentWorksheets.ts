@@ -8,6 +8,10 @@ export type ParentWorksheetItem = {
   thumbnailUrl: string;
   lessonId: string;
   lessonTitle: string;
+  lessonFolderId: string;
+  lessonFolderTitle: string;
+  courseId: string;
+  courseTitle: string;
   targetLessonIds: string[];
   targetParentIds: string[];
   targetKidIds: string[];
@@ -38,13 +42,37 @@ export const normalizeWorksheetUrl = (value?: string | null): string => {
   if (!raw) return "";
   try {
     const parsed = new URL(raw);
-    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+    if (parsed.protocol === "https:") {
       return parsed.toString();
     }
     return "";
   } catch {
     return "";
   }
+};
+
+const DRIVE_HOSTS = new Set(["drive.google.com", "docs.google.com"]);
+
+export const getGoogleDriveFileId = (value?: string | null): string | null => {
+  const normalized = normalizeWorksheetUrl(value);
+  if (!normalized) return null;
+  try {
+    const parsed = new URL(normalized);
+    if (!DRIVE_HOSTS.has(parsed.hostname.toLowerCase())) return null;
+    const pathMatch = parsed.pathname.match(/\/file\/d\/([a-zA-Z0-9_-]{10,})/);
+    const queryId = parsed.searchParams.get("id");
+    const id = String(pathMatch?.[1] || queryId || "").trim();
+    return /^[a-zA-Z0-9_-]{10,}$/.test(id) ? id : null;
+  } catch {
+    return null;
+  }
+};
+
+export const getWorksheetDownloadUrl = (value?: string | null): string | null => {
+  const fileId = getGoogleDriveFileId(value);
+  return fileId
+    ? `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`
+    : null;
 };
 
 export const getSafeWorksheetUrl = (value?: string | null): string | null => {
@@ -82,6 +110,10 @@ export const toParentWorksheetItem = (id: string, data: any): ParentWorksheetIte
     thumbnailUrl: String(data?.thumbnailUrl || "").trim(),
     lessonId,
     lessonTitle,
+    lessonFolderId: String(data?.lessonFolderId || "").trim(),
+    lessonFolderTitle: String(data?.lessonFolderTitle || "").trim(),
+    courseId: String(data?.courseId || data?.targetCourseIds?.[0] || "").trim(),
+    courseTitle: String(data?.courseTitle || data?.courseName || "").trim(),
     targetLessonIds,
     targetParentIds: normalizeStringArray(data?.targetParentIds),
     targetKidIds: Array.from(new Set([...targetKidIds, ...targetChildIds])),
@@ -96,6 +128,48 @@ export const toParentWorksheetItem = (id: string, data: any): ParentWorksheetIte
     createdBy: String(data?.createdBy || "").trim() || undefined,
     updatedBy: String(data?.updatedBy || "").trim() || undefined,
   };
+};
+
+export type ParentWorksheetGroup = {
+  key: string;
+  courseId: string;
+  courseTitle: string;
+  lessonId: string;
+  lessonTitle: string;
+  lessonFolderTitle: string;
+  legacy: boolean;
+  items: ParentWorksheetItem[];
+};
+
+export const groupParentWorksheets = (items: ParentWorksheetItem[]): ParentWorksheetGroup[] => {
+  const groups = new Map<string, ParentWorksheetGroup>();
+  items.forEach((item) => {
+    const courseId = item.courseId || item.targetCourseIds[0] || "legacy";
+    const lessonId = item.lessonId;
+    const legacy = !lessonId;
+    const key = legacy ? `${courseId}::legacy` : `${courseId}::${lessonId}`;
+    const current = groups.get(key);
+    if (current) {
+      current.items.push(item);
+      return;
+    }
+    groups.set(key, {
+      key,
+      courseId,
+      courseTitle: item.courseTitle || (courseId === "legacy" ? "General Resources" : "Course resources"),
+      lessonId,
+      lessonTitle: legacy ? "Legacy / General Resources" : item.lessonTitle || "Lesson",
+      lessonFolderTitle: item.lessonFolderTitle,
+      legacy,
+      items: [item],
+    });
+  });
+  return Array.from(groups.values()).sort((a, b) => {
+    const courseDiff = a.courseTitle.localeCompare(b.courseTitle);
+    if (courseDiff !== 0) return courseDiff;
+    if (a.legacy !== b.legacy) return a.legacy ? 1 : -1;
+    return a.lessonTitle.localeCompare(b.lessonTitle);
+  });
 };
 
 export const worksheetMatchesContext = (

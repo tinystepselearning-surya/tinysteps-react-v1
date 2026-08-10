@@ -44,6 +44,15 @@ import {
   type ParentWorksheetItem,
 } from '../../lib/parentWorksheets';
 import { useAuthStore } from '../../store/useAuthStore';
+import {
+  existingArchivedState,
+  explicitTeacherScriptPatch,
+  normalizeLessonWorksheetResources as normalizeResources,
+  removeLessonWorksheetResource as removeResource,
+  upsertLessonWorksheetResource as upsertResource,
+  worksheetResourceProjectionPatch,
+  type LessonWorksheetResource,
+} from '../../lib/adminWorksheetResources';
 
 type FolderRow = {
   id: string;
@@ -51,17 +60,6 @@ type FolderRow = {
   title: string;
   sortOrder?: number;
   active?: boolean;
-};
-
-type LessonWorksheetResource = {
-  id: string;
-  title: string;
-  url: string;
-  description?: string;
-  resourceType?: string;
-  sortOrder?: number;
-  active?: boolean;
-  archived?: boolean;
 };
 
 type LessonRow = {
@@ -113,39 +111,6 @@ const toMillis = (value: any): number => {
   const parsed = new Date(value).getTime();
   return Number.isFinite(parsed) ? parsed : 0;
 };
-
-const normalizeResources = (value: unknown): LessonWorksheetResource[] => {
-  if (!Array.isArray(value)) return [];
-  return value
-    .map((resource: any) => ({
-      id: String(resource?.id || '').trim(),
-      title: String(resource?.title || '').trim(),
-      url: String(resource?.url || resource?.worksheetUrl || '').trim(),
-      description: String(resource?.description || '').trim(),
-      resourceType: String(resource?.resourceType || resource?.category || '').trim(),
-      sortOrder: Number.isFinite(Number(resource?.sortOrder)) ? Number(resource.sortOrder) : 0,
-      active: resource?.active !== false,
-      archived: resource?.archived === true,
-    }))
-    .filter((resource) => resource.id && resource.title && resource.url);
-};
-
-const upsertResource = (
-  resources: LessonWorksheetResource[],
-  nextResource: LessonWorksheetResource,
-): LessonWorksheetResource[] => {
-  const withoutCurrent = resources.filter((resource) => resource.id !== nextResource.id);
-  return [...withoutCurrent, nextResource].sort((a, b) => {
-    const orderDiff = Number(a.sortOrder || 0) - Number(b.sortOrder || 0);
-    if (orderDiff !== 0) return orderDiff;
-    return a.title.localeCompare(b.title);
-  });
-};
-
-const removeResource = (
-  resources: LessonWorksheetResource[],
-  worksheetId: string,
-): LessonWorksheetResource[] => resources.filter((resource) => resource.id !== worksheetId);
 
 export default function ParentWorksheetLibraryManagement(): JSX.Element {
   const { user } = useAuthStore();
@@ -223,12 +188,16 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
     staleTime: 0,
     refetchOnWindowFocus: false,
     queryFn: async (): Promise<any[]> => {
-      const [byKidId, byKidIds] = await Promise.all([
+      const [byKidId, byStudentId, byChildId, byKidIds] = await Promise.all([
         getDocs(query(collection(db, 'enrollments'), where('kidId', '==', form.kidId), limit(200))),
+        getDocs(query(collection(db, 'enrollments'), where('studentId', '==', form.kidId), limit(200))),
+        getDocs(query(collection(db, 'enrollments'), where('childId', '==', form.kidId), limit(200))),
         getDocs(query(collection(db, 'enrollments'), where('kidIds', 'array-contains', form.kidId), limit(200))),
       ]);
       const map = new Map<string, any>();
       byKidId.docs.forEach((entry) => map.set(entry.id, { id: entry.id, ...(entry.data() as any) }));
+      byStudentId.docs.forEach((entry) => map.set(entry.id, { id: entry.id, ...(entry.data() as any) }));
+      byChildId.docs.forEach((entry) => map.set(entry.id, { id: entry.id, ...(entry.data() as any) }));
       byKidIds.docs.forEach((entry) => map.set(entry.id, { id: entry.id, ...(entry.data() as any) }));
       return Array.from(map.values());
     },
@@ -246,6 +215,10 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
   const selectedEnrollment = useMemo(
     () => enrollments.find((enrollment) => String(enrollment.id) === String(form.enrollmentId)) ?? null,
     [enrollments, form.enrollmentId],
+  );
+  const selectedCourse = useMemo(
+    () => courses.find((course) => String(course.id) === String(form.courseId)) ?? null,
+    [courses, form.courseId],
   );
   const folderById = useMemo(() => new Map(folders.map((folder) => [folder.id, folder])), [folders]);
   const lessonById = useMemo(() => new Map(lessons.map((lesson) => [lesson.id, lesson])), [lessons]);
@@ -295,7 +268,7 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
       await setDoc(
         doc(db, 'lessonCatalog', selectedLesson.id),
         {
-          teacherScript: String(form.teacherScript || '').trim(),
+          ...explicitTeacherScriptPatch(form.teacherScript),
           teacherScriptUpdatedAt: serverTimestamp(),
           teacherScriptUpdatedBy: user?.uid || null,
           teacherScriptUpdatedByEmail: user?.email || null,
@@ -337,6 +310,25 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
       toast({ title: 'Valid URL required', description: 'Paste a valid Google Drive or HTTPS worksheet link.', variant: 'destructive' });
       return;
     }
+    if (selectedEnrollment && inferredCourseId !== resolvedCourseId) {
+      toast({ title: 'Enrollment mismatch', description: 'The enrollment override must belong to the selected course.', variant: 'destructive' });
+      return;
+    }
+    if (form.enrollmentId && !selectedEnrollment) {
+      toast({ title: 'Enrollment required', description: 'Select a valid enrollment for this child.', variant: 'destructive' });
+      return;
+    }
+    if (form.kidId) {
+      const childHasCourse = enrollments.some((enrollment) =>
+        String(enrollment.courseId || '').trim() === resolvedCourseId
+        && !['inactive', 'cancelled', 'canceled', 'withdrawn', 'closed', 'completed', 'archived']
+          .includes(String(enrollment.status || 'active').trim().toLowerCase()),
+      );
+      if (!childHasCourse) {
+        toast({ title: 'Child/course mismatch', description: 'The selected child needs a valid enrollment in the selected course.', variant: 'destructive' });
+        return;
+      }
+    }
 
     const worksheetRef = editingId
       ? doc(db, 'parentWorksheetLibrary', editingId)
@@ -344,7 +336,6 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
     const sortOrder = Number(form.sortOrder);
     const normalizedSortOrder = Number.isFinite(sortOrder) ? sortOrder : 0;
     const resourceType = String(form.resourceType || '').trim() || 'Practice worksheet';
-    const script = String(form.teacherScript || '').trim();
 
     setIsSaving(true);
     try {
@@ -353,6 +344,8 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
         const previousLessonId = existingWorksheetSnap?.exists()
           ? String(existingWorksheetSnap.data()?.lessonId || '').trim()
           : '';
+        const existingData = existingWorksheetSnap?.data() || {};
+        const existingArchived = existingArchivedState(existingData);
 
         const nextLessonRef = doc(db, 'lessonCatalog', lesson.id);
         const previousLessonRef = previousLessonId && previousLessonId !== lesson.id
@@ -372,6 +365,10 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
           category: resourceType,
           lessonId: lesson.id,
           lessonTitle: lesson.title,
+          lessonFolderId: lesson.folderId,
+          lessonFolderTitle: folderById.get(lesson.folderId)?.title || '',
+          courseId: resolvedCourseId,
+          courseTitle: String(selectedCourse?.name || selectedCourse?.title || selectedCourse?.label || '').trim(),
           targetLessonIds: [lesson.id],
           targetCourseIds: [resolvedCourseId],
           targetKidIds: form.kidId ? [form.kidId] : [],
@@ -381,8 +378,8 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
           stageTags: form.stageTag ? [String(form.stageTag).trim()] : [],
           isActive: form.isActive,
           active: form.isActive,
-          isArchived: false,
-          archived: false,
+          isArchived: editingId ? existingArchived : false,
+          archived: editingId ? existingArchived : false,
           sortOrder: normalizedSortOrder,
           updatedAt: serverTimestamp(),
           updatedBy: user?.uid || null,
@@ -407,7 +404,9 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
           sortOrder: normalizedSortOrder,
           active: form.isActive,
           archived: false,
+          targetCourseIds: [resolvedCourseId],
         };
+        mirroredResource.archived = editingId ? existingArchived : false;
 
         if (previousLessonRef && previousLessonSnap?.exists()) {
           const previousResources = normalizeResources(previousLessonSnap.data()?.worksheetResources);
@@ -426,11 +425,7 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
         transaction.set(
           nextLessonRef,
           {
-            worksheetResources: upsertResource(currentResources, mirroredResource),
-            teacherScript: script,
-            teacherScriptUpdatedAt: serverTimestamp(),
-            teacherScriptUpdatedBy: user?.uid || null,
-            teacherScriptUpdatedByEmail: user?.email || null,
+            ...worksheetResourceProjectionPatch(currentResources, mirroredResource),
             resourcesUpdatedAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
           },
@@ -570,7 +565,14 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
 
           <div className="space-y-2">
             <Label>Course visibility *</Label>
-            <Select value={form.courseId || '__none__'} onValueChange={(value) => updateForm('courseId', value === '__none__' ? '' : value)}>
+            <Select value={form.courseId || '__none__'} onValueChange={(value) => {
+              const courseId = value === '__none__' ? '' : value;
+              setForm((previous) => ({
+                ...previous,
+                courseId,
+                enrollmentId: selectedEnrollment && String(selectedEnrollment.courseId) !== courseId ? '' : previous.enrollmentId,
+              }));
+            }}>
               <SelectTrigger><SelectValue placeholder="Select enrolled course" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="__none__">Select course</SelectItem>
@@ -655,7 +657,7 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
                 <SelectTrigger><SelectValue placeholder="No enrollment override" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">No enrollment override</SelectItem>
-                  {enrollments.map((enrollment) => (
+                  {enrollments.filter((enrollment) => !form.courseId || String(enrollment.courseId) === form.courseId).map((enrollment) => (
                     <SelectItem key={enrollment.id} value={enrollment.id}>
                       {enrollment.courseName || enrollment.courseLabel || enrollment.courseId || enrollment.id}
                     </SelectItem>
