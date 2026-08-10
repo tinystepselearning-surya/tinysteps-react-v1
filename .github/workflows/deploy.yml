@@ -94,15 +94,25 @@ jobs:
         with:
           files: ./coverage/coverage-final.json
 
-  deploy-to-staging:
-    # Only run on push to main, after build-and-test succeeds
+  deploy-to-firebase:
+    # Only run on push to main, after build-and-test succeeds. Keeping staging and
+    # production mutations in one job makes the project-level concurrency lock atomic.
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build-and-test
     runs-on: ubuntu-latest
+    concurrency:
+      group: firebase-deployment-tinysteps-react-v1
+      # Let an active Firebase CLI operation finish; never cancel it mid-deploy.
+      cancel-in-progress: false
+    env:
+      INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -134,37 +144,26 @@ jobs:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
           create_credentials_file: true
 
+      - name: Refuse stale staging deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git fetch origin main --depth=1
+          current_main_sha="$(git rev-parse origin/main)"
+
+          echo "Workflow SHA: ${GITHUB_SHA}"
+          echo "Current main SHA: ${current_main_sha}"
+
+          if [[ "${GITHUB_SHA}" != "${current_main_sha}" ]]; then
+            echo "::error::Refusing to deploy stale commit ${GITHUB_SHA}. Current main is ${current_main_sha}."
+            exit 1
+          fi
+
       - name: Deploy to Firebase Staging Preview Channel
         run: bash .github/scripts/firebase-hosting-deploy.sh channel staging
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.staging-gcp-auth.outputs.credentials_file_path }}
-
-  deploy-to-production:
-    # Only run on push to main, after staging deploy
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: deploy-to-staging
-    runs-on: ubuntu-latest
-    env:
-      INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.sha }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22.x
-          cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            functions/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
 
       - name: Clean stale functions build artifacts
         run: rm -rf functions/lib functions/tsconfig.tsbuildinfo functions/.tsbuildinfo || true
@@ -192,6 +191,22 @@ jobs:
 
       - name: Setup Google Cloud CLI
         uses: google-github-actions/setup-gcloud@v2
+
+      - name: Refuse stale production deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git fetch origin main --depth=1
+          current_main_sha="$(git rev-parse origin/main)"
+
+          echo "Workflow SHA: ${GITHUB_SHA}"
+          echo "Current main SHA: ${current_main_sha}"
+
+          if [[ "${GITHUB_SHA}" != "${current_main_sha}" ]]; then
+            echo "::error::Refusing to deploy stale commit ${GITHUB_SHA}. Current main is ${current_main_sha}."
+            exit 1
+          fi
 
       - name: Deploy Cloud Functions
         run: npx firebase-tools@latest deploy --only functions --project ${{ env.FIREBASE_PROJECT_ID }} --non-interactive

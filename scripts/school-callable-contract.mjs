@@ -27,6 +27,8 @@ export const EXISTING_CRITICAL_FUNCTIONS = Object.freeze([
   'batchInsightsRollup11pm',
   'onGameProgressWrite',
   'onGameSessionCreateTrigger',
+  'getParentWorksheetResources',
+  'onWebsiteLeadIdentityWrite',
 ]);
 
 export const SCHOOL_BACKEND_TRIGGERS = Object.freeze([
