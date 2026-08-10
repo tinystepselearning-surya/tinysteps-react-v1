@@ -20,10 +20,18 @@ const firestoreMocks = vi.hoisted(() => ({
   setDoc: vi.fn(),
   serverTimestamp: vi.fn(() => 'server-timestamp'),
 }));
+const functionsMocks = vi.hoisted(() => ({
+  enrichPublicLeadAttribution: vi.fn(),
+  httpsCallable: vi.fn(),
+}));
 
 vi.mock('firebase/firestore', () => firestoreMocks);
+vi.mock('firebase/functions', () => ({
+  httpsCallable: functionsMocks.httpsCallable,
+}));
 vi.mock('../../lib/firebaseConfig', () => ({
   db: {},
+  functions: {},
 }));
 
 function fillValidForm() {
@@ -57,6 +65,7 @@ describe('PublicAssessmentForm analytics', () => {
   beforeEach(() => {
     Object.values(trackingMocks).forEach((mock) => mock.mockReset());
     Object.values(firestoreMocks).forEach((mock) => mock.mockReset());
+    Object.values(functionsMocks).forEach((mock) => mock.mockReset());
     popupLocationReplace.mockReset();
     window.sessionStorage.clear();
     locationAssignMock.mockReset();
@@ -71,6 +80,8 @@ describe('PublicAssessmentForm analytics', () => {
     vi.stubGlobal('open', vi.fn(() => popupWindow));
     firestoreMocks.collection.mockReturnValue('leads-collection');
     firestoreMocks.serverTimestamp.mockReturnValue('server-timestamp');
+    functionsMocks.enrichPublicLeadAttribution.mockResolvedValue({ data: { ok: true } });
+    functionsMocks.httpsCallable.mockReturnValue(functionsMocks.enrichPublicLeadAttribution);
     popupWindow.closed = false;
     popupWindow.opener = window;
   });
@@ -141,6 +152,15 @@ describe('PublicAssessmentForm analytics', () => {
     );
     expect(firestoreMocks.setDoc.mock.calls[0]?.[1]).not.toHaveProperty('status');
     expect(firestoreMocks.setDoc.mock.calls[0]?.[1]).not.toHaveProperty('priority');
+    await waitFor(() => expect(functionsMocks.enrichPublicLeadAttribution).toHaveBeenCalledTimes(1));
+    expect(functionsMocks.httpsCallable).toHaveBeenCalledWith({}, 'enrichPublicLeadAttribution');
+    expect(functionsMocks.enrichPublicLeadAttribution).toHaveBeenCalledWith(expect.objectContaining({
+      leadId: 'lead-123',
+      attribution: expect.objectContaining({
+        landingPage: '/',
+        conversionPage: '/',
+      }),
+    }));
     expect(trackingMocks.trackLeadFormSubmit).toHaveBeenCalledTimes(1);
     expect(trackingMocks.trackGenerateLead).toHaveBeenCalledTimes(1);
     expect(trackingMocks.trackGenerateLead).toHaveBeenCalledWith(expect.objectContaining({
@@ -202,6 +222,27 @@ describe('PublicAssessmentForm analytics', () => {
     expect(anchorClick).not.toHaveBeenCalled();
     expect(trackingMocks.trackGenerateLead).toHaveBeenCalledTimes(1);
     expect(trackingMocks.trackWhatsappClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a saved lead and WhatsApp handoff successful when attribution enrichment fails', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    firestoreMocks.setDoc.mockResolvedValue(undefined);
+    functionsMocks.enrichPublicLeadAttribution.mockRejectedValue(new Error('enrichment unavailable'));
+    render(<PublicAssessmentForm />);
+
+    fillValidForm();
+    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
+
+    await waitFor(() => expect(functionsMocks.enrichPublicLeadAttribution).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(warnSpy).toHaveBeenCalledTimes(1));
+    expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1);
+    expect(trackingMocks.trackGenerateLead).toHaveBeenCalledTimes(1);
+    expect(trackingMocks.trackLeadFormError).not.toHaveBeenCalled();
+    expect(popupLocationReplace).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).toBeNull();
+
+    warnSpy.mockRestore();
   });
 
   it('still opens WhatsApp and shows a warning when lead save fails', async () => {

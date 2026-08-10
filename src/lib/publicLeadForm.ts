@@ -1,3 +1,4 @@
+import { classifyLeadAcquisition, type AcquisitionChannel } from './leadAcquisition';
 import { captureLeadAttribution } from './leadAttribution';
 
 export type InterestOption = 'Phonics' | 'Reading' | 'Grammar' | 'Speaking';
@@ -40,7 +41,9 @@ export type PublicLeadAttribution = {
   landingPage?: string;
   submittedFromPath?: string;
   submittedFromUrl?: string;
+  firstSeenAt?: string;
   referrer?: string;
+  referrerDomain?: string;
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;
@@ -48,6 +51,27 @@ export type PublicLeadAttribution = {
   utm_term?: string;
   gclid?: string;
   fbclid?: string;
+  msclkid?: string;
+  acquisitionChannel?: AcquisitionChannel;
+  acquisitionSource?: string;
+  acquisitionLabel?: string;
+};
+
+export type PublicLeadAttributionEnrichment = {
+  landingPage: string;
+  conversionPage: string;
+  submittedFromUrl?: string;
+  firstSeenAt?: string;
+  referrer?: string;
+  referrerDomain?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_content?: string;
+  utm_term?: string;
+  gclid?: string;
+  fbclid?: string;
+  msclkid?: string;
 };
 
 const INTEREST_TRACK_BY_OPTION: Partial<Record<InterestOption, 'phonics' | 'grammar' | 'public_speaking'>> = {
@@ -79,12 +103,25 @@ function deriveInterestFromConcern(mainConcern: MainConcernOption | ''): Interes
 
 export function getPublicLeadAttribution(): PublicLeadAttribution {
   const attribution = captureLeadAttribution();
+  const acquisition = classifyLeadAcquisition({
+    referrer: attribution.referrer,
+    referrerDomain: attribution.referrerDomain,
+    utmSource: attribution.utmSource,
+    utmMedium: attribution.utmMedium,
+    utmCampaign: attribution.utmCampaign,
+    gclid: attribution.gclid,
+    fbclid: attribution.fbclid,
+    msclkid: attribution.msclkid,
+  });
+
   return {
     sourcePath: attribution.submittedFromPath || '/',
     landingPage: attribution.landingPage,
     submittedFromPath: attribution.submittedFromPath,
     submittedFromUrl: attribution.submittedFromUrl,
+    firstSeenAt: attribution.firstSeenAt,
     referrer: attribution.referrer,
+    referrerDomain: attribution.referrerDomain,
     utm_source: attribution.utmSource,
     utm_medium: attribution.utmMedium,
     utm_campaign: attribution.utmCampaign,
@@ -92,6 +129,31 @@ export function getPublicLeadAttribution(): PublicLeadAttribution {
     utm_term: attribution.utmTerm,
     gclid: attribution.gclid,
     fbclid: attribution.fbclid,
+    msclkid: attribution.msclkid,
+    acquisitionChannel: acquisition.channel,
+    acquisitionSource: acquisition.source,
+    acquisitionLabel: acquisition.label,
+  };
+}
+
+export function buildLeadAttributionEnrichment(
+  attribution: PublicLeadAttribution,
+): PublicLeadAttributionEnrichment {
+  return {
+    landingPage: attribution.landingPage || attribution.sourcePath || '/',
+    conversionPage: attribution.submittedFromPath || attribution.sourcePath || '/',
+    submittedFromUrl: attribution.submittedFromUrl,
+    firstSeenAt: attribution.firstSeenAt,
+    referrer: attribution.referrer,
+    referrerDomain: attribution.referrerDomain,
+    utm_source: attribution.utm_source,
+    utm_medium: attribution.utm_medium,
+    utm_campaign: attribution.utm_campaign,
+    utm_content: attribution.utm_content,
+    utm_term: attribution.utm_term,
+    gclid: attribution.gclid,
+    fbclid: attribution.fbclid,
+    msclkid: attribution.msclkid,
   };
 }
 
@@ -124,7 +186,8 @@ export function buildPublicLeadPayload(
     mainConcern: form.mainConcern,
     timezone: opts.timezone || null,
     sourcePath: attribution.sourcePath,
-    // Firestore rules currently allow only the UTM subset inside `attribution`.
+    // Keep the anonymous Firestore create schema intentionally narrow.
+    // Full first-touch attribution is written server-side after the lead is created.
     attribution: {
       utm_source: attribution.utm_source || null,
       utm_medium: attribution.utm_medium || null,
