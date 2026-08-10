@@ -87,7 +87,21 @@ Unsafe records are marked with:
 - `dedupeConflictCanonicalLeadId`
 - `dedupeConflictAt`
 
-This is intentional. Conflicting lifecycle records require manual review rather than automatic destructive cleanup.
+Conflict writes are idempotent. The trigger recognizes its existing marker and does not keep rewriting timestamps or fall through into a later destructive merge. If the underlying demo conflict is manually resolved, normal reconciliation can continue.
+
+## Admin identity corrections
+
+An admin may correct a website lead's phone or child name. That changes the canonical identity key.
+
+When the edited lead owns its previous `leadIdentityIndex` entry and the corrected identity is free, the trigger atomically removes the stale identity entry and remaps the lead to the corrected identity.
+
+If the corrected identity already belongs to another canonical lead, the trigger does **not** merge automatically. It records:
+
+- `dedupeConflict="identity_edit_collides_with_existing_lead"`
+- `dedupeConflictCanonicalLeadId`
+- `dedupeConflictAt`
+
+That conflict is sticky and idempotent until the identity is genuinely changed/resolved, preventing the marker's own write from causing a second-pass destructive merge.
 
 ## Existing duplicate backfill
 
@@ -97,9 +111,9 @@ Use:
 node functions/scripts/backfillWebsiteLeadDeduplication.js
 ```
 
-The default mode is **dry run only**. It prints duplicate groups, proposed canonical IDs, programme data, and demo links.
+The default mode is **dry run only**. It prints duplicate groups, existing identity-index ownership, proposed canonical IDs, programme data, demo links, and conflict reasons.
 
-The backfill deliberately prefers a lifecycle-rich record as canonical before falling back to the earliest record. This avoids deleting a record that already owns demo/enrollment lifecycle data. Earlier enquiry time is still retained in `firstInquiryAt`.
+The backfill respects any canonical identity already established by the live runtime trigger. It never silently replaces an existing index just because a batch heuristic would choose another record. When no index exists, it prefers a lifecycle-rich record as canonical before falling back to the earliest record. This avoids deleting a record that already owns demo/enrollment lifecycle data. Earlier enquiry time is still retained in `firstInquiryAt`.
 
 After the production trigger is deployed and every group has been reviewed:
 
@@ -109,10 +123,11 @@ node functions/scripts/backfillWebsiteLeadDeduplication.js --apply
 
 Apply mode:
 
-1. skips groups with conflicting demo links,
-2. seeds the canonical identity index before touching leads,
-3. touches only safe candidate leads,
-4. lets the same production Firestore trigger perform the merge.
+1. skips groups with unsafe lifecycle/index conflicts,
+2. seeds a canonical identity index only when one does not already exist,
+3. re-checks the live index before every group and skips the group if it drifted after the report,
+4. touches only safe candidate leads,
+5. lets the same production Firestore trigger perform the merge.
 
 Application Default Credentials are required. Never run `--apply` against production before reviewing the dry-run output.
 
@@ -134,8 +149,10 @@ Before merge:
 - Firestore public-lead rule tests remain green with no rule changes.
 - A two-submission emulator/production QA verifies one canonical lead, `inquiryCount=2`, two inquiry events, merged programme interests, and preserved first-touch attribution.
 - A same-phone/different-child QA verifies two distinct leads.
-- A duplicate-owning-demo QA verifies no automatic destructive merge.
+- A duplicate-owning-demo QA verifies no automatic destructive merge and no conflict-trigger loop.
 - An existing-canonical-demo + fresh-repeat-enquiry QA verifies the fresh duplicate can still merge safely.
+- An admin identity-edit QA verifies stale index removal, collision protection, and idempotent conflict behavior.
+- Historical dry-run/apply QA verifies an existing live identity index is never silently overwritten and index drift causes a skip.
 
 ## Expected Suresh/Rithanyaa result
 
