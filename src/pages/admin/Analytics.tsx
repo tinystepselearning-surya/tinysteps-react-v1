@@ -5,7 +5,7 @@ export interface AdminStats {
   totalUsers: number;
   totalStudents: number;
   totalCourses: number;
-  activeSessionsToday: number;
+  sessionsToday: number;
 }
 
 interface AnalyticsProps {
@@ -23,7 +23,7 @@ const metricConfig: Array<{
   { key: 'totalUsers', label: 'Total Users', accent: 'text-blue-600' },
   { key: 'totalStudents', label: 'Students', accent: 'text-green-600' },
   { key: 'totalCourses', label: 'Courses', accent: 'text-purple-600' },
-  { key: 'activeSessionsToday', label: 'Active Sessions (Today)', accent: 'text-orange-600', helper: 'Live sessions in the last 24h' },
+  { key: 'sessionsToday', label: 'Sessions Today', accent: 'text-orange-600', helper: 'Scheduled and completed sessions on today’s IST calendar date' },
 ];
 
 export default function Analytics({ stats, isLoading, error }: AnalyticsProps) {

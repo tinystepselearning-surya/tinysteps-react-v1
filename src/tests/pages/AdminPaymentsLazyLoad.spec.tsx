@@ -21,6 +21,7 @@ const {
   endAtMock,
   whereMock,
   httpsCallableMock,
+  pdfSaveSpy,
   toastSpy,
 } = vi.hoisted(() => ({
   collectionMock: vi.fn((...args: any[]) => ({ kind: 'collection', args })),
@@ -61,7 +62,32 @@ const {
     value,
   })),
   httpsCallableMock: vi.fn(() => vi.fn(async () => ({ data: {} }))),
+  pdfSaveSpy: vi.fn(),
   toastSpy: vi.fn(),
+}));
+
+vi.mock('jspdf', () => ({
+  default: class MockJsPdf {
+    internal = {
+      pageSize: {
+        getWidth: () => 595,
+        getHeight: () => 842,
+      },
+    };
+    addImage = vi.fn();
+    addPage = vi.fn();
+    getTextWidth = (value: string) => value.length * 5;
+    line = vi.fn();
+    rect = vi.fn();
+    save = pdfSaveSpy;
+    setDrawColor = vi.fn();
+    setFillColor = vi.fn();
+    setFont = vi.fn();
+    setFontSize = vi.fn();
+    setTextColor = vi.fn();
+    splitTextToSize = (value: string) => [value];
+    text = vi.fn();
+  },
 }));
 
 vi.mock('firebase/firestore', () => ({
@@ -222,8 +248,9 @@ describe('Admin payment pages lazy loading', () => {
         hasLimit(input, 11) &&
         !hasStartAfter(input, () => true)
       ) {
+        const isMay = hasWhere(input, 'monthKey', '==', (value) => value === '2026-05');
         return {
-          docs: buildSequentialDocs('parent', 1, 11),
+          docs: buildSequentialDocs('parent', isMay ? 21 : 1, 11, isMay ? '2026-05' : '2026-06'),
         };
       }
 
@@ -488,6 +515,102 @@ describe('Admin payment pages lazy loading', () => {
     expect(screen.queryByText('Apply / Load Selected')).toBeNull();
   });
 
+  it('keeps month options through invoice download and switches Parent A to Parent B without remounting', async () => {
+    render(<ParentPayments />);
+
+    const parentSelect = screen.getAllByRole('combobox')[0];
+    await waitFor(() => {
+      expect(screen.getAllByRole('option', { name: /Parent One/ }).length).toBeGreaterThan(0);
+      expect(screen.getAllByRole('option', { name: /Parent Two/ }).length).toBeGreaterThan(0);
+    });
+
+    fireEvent.change(parentSelect, { target: { value: 'parent-1' } });
+    await waitFor(() => expect(screen.getByText('Parent One', { selector: 'td' })).toBeTruthy());
+    expect(screen.getAllByRole('option', { name: /Parent Two/ }).length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole('button', { name: 'View Invoice' }));
+    await waitFor(() => expect(screen.getByText('Parent: Parent One')).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: 'Download PDF' }));
+    await waitFor(() => expect(pdfSaveSpy).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+    fireEvent.change(parentSelect, { target: { value: 'parent-2' } });
+    await waitFor(() =>
+      expect(
+        getDocsMock.mock.calls.some(
+          ([input]) =>
+            getCollectionName(input) === 'billingCharges' &&
+            (hasWhere(
+              input,
+              'parentId',
+              'in',
+              (value) => Array.isArray(value) && value.length === 1 && value[0] === 'parent-2',
+            ) || hasWhere(input, 'parentId', '==', (value) => value === 'parent-2')),
+        ),
+      ).toBe(true),
+    );
+    expect(screen.getByText('Parent Two', { selector: 'td' })).toBeTruthy();
+    expect(screen.queryByText('Parent One', { selector: 'td' })).toBeNull();
+    expect(screen.getAllByRole('option', { name: /Parent One/ }).length).toBeGreaterThan(0);
+  });
+
+  it('does not let a slower Parent A finance response overwrite Parent B', async () => {
+    const defaultGetDocs = getDocsMock.getMockImplementation();
+    let resolveParentOne!: (value: { docs: ReturnType<typeof makeDoc>[] }) => void;
+    const parentOneCharges = new Promise<{ docs: ReturnType<typeof makeDoc>[] }>((resolve) => {
+      resolveParentOne = resolve;
+    });
+    getDocsMock.mockImplementation((input: any) => {
+      if (
+        getCollectionName(input) === 'billingCharges' &&
+        hasWhere(
+          input,
+          'parentId',
+          'in',
+          (value) => Array.isArray(value) && value.length === 1 && value[0] === 'parent-1',
+        )
+      ) {
+        return parentOneCharges;
+      }
+      return defaultGetDocs?.(input);
+    });
+
+    render(<ParentPayments />);
+    const parentSelect = screen.getAllByRole('combobox')[0];
+    await waitFor(() =>
+      expect(screen.getAllByRole('option', { name: /Parent One/ }).length).toBeGreaterThan(0),
+    );
+
+    fireEvent.change(parentSelect, { target: { value: 'parent-1' } });
+    await waitFor(() =>
+      expect(
+        getDocsMock.mock.calls.some(
+          ([input]) =>
+            getCollectionName(input) === 'billingCharges' &&
+            hasWhere(input, 'parentId', 'in', (value) => value?.[0] === 'parent-1'),
+        ),
+      ).toBe(true),
+    );
+
+    fireEvent.change(parentSelect, { target: { value: 'parent-2' } });
+    await waitFor(() => expect(screen.getByText('Parent Two', { selector: 'td' })).toBeTruthy());
+
+    resolveParentOne({
+      docs: [
+        makeDoc('late-parent-one-charge', {
+          parentId: 'parent-1',
+          monthKey: '2026-06',
+          amount: 9000,
+          status: 'pending',
+        }),
+      ],
+    });
+
+    await waitFor(() => expect(screen.getByText('Parent Two', { selector: 'td' })).toBeTruthy());
+    expect(screen.queryByText('Parent One', { selector: 'td' })).toBeNull();
+    expect(screen.queryByText('₹9,000')).toBeNull();
+  });
+
   it('loads only the selected teacher scope from initial dropdown options', async () => {
     render(<TeacherPayments />);
 
@@ -593,6 +716,10 @@ describe('Admin payment pages lazy loading', () => {
       )
     ).toBe(true);
     expect(screen.getByText('Previous')).toBeDisabled();
+    await waitFor(() =>
+      expect(screen.getAllByRole('option', { name: /Parent 21/ }).length).toBeGreaterThan(0),
+    );
+    expect(screen.queryByRole('option', { name: /Parent One/ })).toBeNull();
   });
 
   it('uses month-wide aggregate totals instead of deriving cards from the visible page', async () => {

@@ -90,6 +90,89 @@ describe('payment select options', () => {
     });
   });
 
+  it('merges component-owned month options while the loaded scope narrows to one parent', () => {
+    const monthParents = [
+      { id: 'parent-1', displayName: 'Parent One' },
+      { id: 'parent-2', displayName: 'Parent Two' },
+      { id: 'parent-3', displayName: 'Parent Three' },
+    ];
+    const monthRows = monthParents.map((parent) => ({
+      parentId: parent.id,
+      parentName: parent.displayName,
+    }));
+
+    const initialOptions = buildParentPaymentSelectOptions({
+      loadedParents: monthParents,
+      searchResults: [],
+      tableRows: monthRows,
+      selectedParentId: '',
+    });
+    expect(initialOptions.map((option) => option.id)).toEqual([
+      'parent-1',
+      'parent-2',
+      'parent-3',
+    ]);
+
+    const parentOneScope = buildParentPaymentSelectOptions({
+      loadedParents: [monthParents[0]],
+      searchResults: [],
+      tableRows: [monthRows[0]],
+      selectedParentId: 'parent-1',
+      preservedOptions: initialOptions,
+    });
+    expect(parentOneScope.map((option) => option.id)).toEqual([
+      'parent-1',
+      'parent-2',
+      'parent-3',
+    ]);
+
+    const parentTwoScope = buildParentPaymentSelectOptions({
+      loadedParents: [monthParents[1]],
+      searchResults: [],
+      tableRows: [monthRows[1]],
+      selectedParentId: 'parent-2',
+      preservedOptions: initialOptions,
+    });
+    expect(parentTwoScope.map((option) => option.id)).toEqual([
+      'parent-1',
+      'parent-2',
+      'parent-3',
+    ]);
+  });
+
+  it('does not retain parent options after the component omits its preserved month scope', () => {
+    const julyOptions = buildParentPaymentSelectOptions({
+      loadedParents: [
+        { id: 'july-parent-1', displayName: 'July Parent One' },
+        { id: 'july-parent-2', displayName: 'July Parent Two' },
+      ],
+      searchResults: [],
+      tableRows: [
+        { parentId: 'july-parent-1', parentName: 'July Parent One' },
+        { parentId: 'july-parent-2', parentName: 'July Parent Two' },
+      ],
+      selectedParentId: '',
+    });
+
+    expect(julyOptions).toHaveLength(2);
+
+    const resetOptions = buildParentPaymentSelectOptions({
+      loadedParents: [],
+      searchResults: [],
+      tableRows: [],
+      selectedParentId: '',
+    });
+    expect(resetOptions).toEqual([]);
+
+    const augustOptions = buildParentPaymentSelectOptions({
+      loadedParents: [{ id: 'aug-parent-1', displayName: 'August Parent One' }],
+      searchResults: [],
+      tableRows: [{ parentId: 'aug-parent-1', parentName: 'August Parent One' }],
+      selectedParentId: '',
+    });
+    expect(augustOptions.map((option) => option.id)).toEqual(['aug-parent-1']);
+  });
+
   it('shows loaded top10 teachers when search is empty and dedupes search matches', () => {
     const options = buildTeacherPaymentSelectOptions({
       loadedTeachers: [

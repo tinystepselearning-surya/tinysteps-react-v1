@@ -35,7 +35,10 @@ import {
   type ParentPaymentsReportingRow,
   resolveParentPaymentSettlementSummary,
 } from './parentPaymentsReporting';
-import { buildParentPaymentSelectOptions } from './paymentSelectOptions';
+import {
+  buildParentPaymentSelectOptions,
+  type PaymentSelectOption,
+} from './paymentSelectOptions';
 import {
   PAYMENT_USER_SEARCH_DEBOUNCE_MS,
   PAYMENT_USER_SEARCH_MIN_CHARS,
@@ -1026,7 +1029,11 @@ export default function ParentPayments(): JSX.Element {
   const [monthPageParentIds, setMonthPageParentIds] = useState<string[]>([]);
   const [monthParentNotice, setMonthParentNotice] = useState('');
   const paginationRequestInFlightRef = useRef(false);
+  const paginationRequestSequenceRef = useRef(0);
   const [selectedParentOptionId, setSelectedParentOptionId] = useState<string>('');
+  const [monthParentOptions, setMonthParentOptions] = useState<
+    Array<PaymentSelectOption<ParentUser>>
+  >([]);
   const [parents, setParents] = useState<ParentUser[]>([]);
   const [charges, setCharges] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
@@ -1125,7 +1132,10 @@ export default function ParentPayments(): JSX.Element {
 
   useEffect(() => {
     const searchTerm = debouncedParentSearchTerm.trim();
-    if (searchTerm.length < PAYMENT_USER_SEARCH_MIN_CHARS) {
+    if (
+      searchTerm.length < PAYMENT_USER_SEARCH_MIN_CHARS ||
+      parentSearchTerm.trim() !== searchTerm
+    ) {
       setParentSearchResults([]);
       setParentSearchLoading(false);
       return;
@@ -1154,7 +1164,7 @@ export default function ParentPayments(): JSX.Element {
     return () => {
       active = false;
     };
-  }, [debouncedParentSearchTerm]);
+  }, [debouncedParentSearchTerm, parentSearchTerm, selectedMonth]);
 
   useEffect(() => {
     if (!selectedMonth) return;
@@ -1276,14 +1286,17 @@ export default function ParentPayments(): JSX.Element {
   }, [selectedMonth, financeRefreshKey]);
 
   const resetLoadedParentScope = () => {
+    paginationRequestSequenceRef.current += 1;
     paginationRequestInFlightRef.current = false;
     setLoadMode('month');
     setScopeError('');
+    setMonthParentNotice('');
     setMonthParentHasMore(false);
     setMonthParentCursor(null);
     setMonthPageStartCursors([null]);
     setMonthPageNumber(1);
     setMonthPageParentIds([]);
+    setMonthParentOptions([]);
     setLoadedParentIds([]);
     setParents([]);
     setCharges([]);
@@ -1297,9 +1310,19 @@ export default function ParentPayments(): JSX.Element {
     setWalletTransactions([]);
     setInvoiceData(null);
     setInvoiceError('');
+    setInvoiceLoading(false);
+    setInvoiceOpen(false);
+    setWalletTopupOpen(false);
+    setWalletAdjustmentOpen(false);
+    setWalletReconcileOpen(false);
+    setReceivePaymentOpen(false);
+    setReceivePaymentError('');
+    setReceivePaymentResult(null);
+    setReceivePaymentPreviewInput(null);
   };
 
   useEffect(() => {
+    let active = true;
     const loadRefs = async () => {
       try {
         const kidIds = new Set<string>();
@@ -1326,7 +1349,7 @@ export default function ParentPayments(): JSX.Element {
         });
 
         if (kidIds.size === 0) {
-          setKidMap({});
+          if (active) setKidMap({});
         } else {
           const nextKidMap: Record<string, string> = {};
           for (const chunk of chunkIds(Array.from(kidIds))) {
@@ -1346,11 +1369,11 @@ export default function ParentPayments(): JSX.Element {
               if (data?.studentId) nextKidMap[data.studentId] = name || docSnap.id;
             });
           }
-          setKidMap(nextKidMap);
+          if (active) setKidMap(nextKidMap);
         }
 
         if (courseIds.size === 0) {
-          setCourseMap({});
+          if (active) setCourseMap({});
         } else {
           const nextCourseMap: Record<string, string> = {};
           for (const chunk of chunkIds(Array.from(courseIds))) {
@@ -1364,11 +1387,11 @@ export default function ParentPayments(): JSX.Element {
               if (data?.slug) nextCourseMap[data.slug] = nextCourseMap[docSnap.id];
             });
           }
-          setCourseMap(nextCourseMap);
+          if (active) setCourseMap(nextCourseMap);
         }
 
         if (teacherIds.size === 0) {
-          setTeacherMap({});
+          if (active) setTeacherMap({});
         } else {
           const nextTeacherMap: Record<string, string> = {};
           for (const chunk of chunkIds(Array.from(teacherIds))) {
@@ -1381,11 +1404,11 @@ export default function ParentPayments(): JSX.Element {
                 String(data?.displayName || data?.name || data?.email || '').trim() || docSnap.id;
             });
           }
-          setTeacherMap(nextTeacherMap);
+          if (active) setTeacherMap(nextTeacherMap);
         }
 
         if (sessionIds.size === 0) {
-          setSessionMap({});
+          if (active) setSessionMap({});
         } else {
           const nextSessionMap: Record<string, any> = {};
           for (const chunk of chunkIds(Array.from(sessionIds))) {
@@ -1396,13 +1419,16 @@ export default function ParentPayments(): JSX.Element {
               nextSessionMap[docSnap.id] = docSnap.data() as any;
             });
           }
-          setSessionMap(nextSessionMap);
+          if (active) setSessionMap(nextSessionMap);
         }
       } catch (err) {
         console.warn('[ParentPayments] Failed to load referenced data', err);
       }
     };
     void loadRefs();
+    return () => {
+      active = false;
+    };
   }, [charges, payments]);
 
   useEffect(() => {
@@ -1488,7 +1514,18 @@ export default function ParentPayments(): JSX.Element {
         loadedParentIds.forEach((parentId) => {
           if (!(parentId in nextWalletSummaries)) nextWalletSummaries[parentId] = null;
         });
-        setParents(parentDocs.filter(isParentUser));
+        const validParentDocs = parentDocs.filter(isParentUser);
+        setParents(validParentDocs);
+        if (loadMode === 'month') {
+          setMonthParentOptions(
+            buildParentPaymentSelectOptions({
+              loadedParents: validParentDocs,
+              searchResults: [],
+              tableRows: [],
+              selectedParentId: '',
+            })
+          );
+        }
         setCharges(chargeRows);
         setPayments(paymentRows);
         setWalletSummariesByParent(nextWalletSummaries);
@@ -1889,8 +1926,9 @@ export default function ParentPayments(): JSX.Element {
         searchResults: parentSearchResults,
         tableRows,
         selectedParentId: selectedParentOptionId,
+        preservedOptions: monthParentOptions,
       }),
-    [parentSearchResults, parents, selectedParentOptionId, tableRows]
+    [monthParentOptions, parentSearchResults, parents, selectedParentOptionId, tableRows]
   );
   const parentHasSearchTerm =
     debouncedParentSearchTerm.trim().length >= PAYMENT_USER_SEARCH_MIN_CHARS;
@@ -1904,7 +1942,14 @@ export default function ParentPayments(): JSX.Element {
   const handleMonthChange = (value: string) => {
     setSelectedMonth(value);
     setSelectedParentOptionId('');
+    setParentSearchTerm('');
+    setParentSearchResults([]);
+    setParentSearchLoading(false);
     setScopeError('');
+    setScopeLoading(true);
+    setMonthSummaryCards(buildParentPaymentsSummaryCards([]));
+    setMonthSummaryError('');
+    setMonthSummaryLoading(true);
     resetLoadedParentScope();
   };
 
@@ -1915,7 +1960,9 @@ export default function ParentPayments(): JSX.Element {
       !monthParentHasMore ||
       !monthParentCursor
     ) return;
+    const requestSequence = ++paginationRequestSequenceRef.current;
     paginationRequestInFlightRef.current = true;
+    setMonthParentOptions([]);
     setScopeLoading(true);
     setScopeError('');
     setMonthParentNotice('');
@@ -1928,6 +1975,7 @@ export default function ParentPayments(): JSX.Element {
         },
         'ParentPayments:month-next-read-model-months'
       );
+      if (paginationRequestSequenceRef.current !== requestSequence) return;
       setLoadMode('month');
       setLoadedParentIds(page.ids);
       setMonthPageParentIds(page.ids);
@@ -1936,17 +1984,22 @@ export default function ParentPayments(): JSX.Element {
       setMonthParentCursor(page.endCursor);
       setMonthParentHasMore(page.hasMore);
     } catch (err) {
+      if (paginationRequestSequenceRef.current !== requestSequence) return;
       console.error('[ParentPayments] Failed to load next month page', err);
       setScopeError('Payment data could not be loaded. Check Firestore rules/indexes.');
     } finally {
-      paginationRequestInFlightRef.current = false;
-      setScopeLoading(false);
+      if (paginationRequestSequenceRef.current === requestSequence) {
+        paginationRequestInFlightRef.current = false;
+        setScopeLoading(false);
+      }
     }
   };
 
   const handlePreviousPage = async () => {
     if (paginationRequestInFlightRef.current || !selectedMonth || monthPageNumber <= 1) return;
+    const requestSequence = ++paginationRequestSequenceRef.current;
     paginationRequestInFlightRef.current = true;
+    setMonthParentOptions([]);
     const previousPageNumber = monthPageNumber - 1;
     const previousStartCursor = monthPageStartCursors[previousPageNumber - 1] || null;
     setScopeLoading(true);
@@ -1957,6 +2010,7 @@ export default function ParentPayments(): JSX.Element {
         { pageSize: MONTH_PARENT_PAGE_SIZE, cursor: previousStartCursor },
         'ParentPayments:month-previous-read-model-months'
       );
+      if (paginationRequestSequenceRef.current !== requestSequence) return;
       setLoadMode('month');
       setLoadedParentIds(page.ids);
       setMonthPageParentIds(page.ids);
@@ -1964,15 +2018,20 @@ export default function ParentPayments(): JSX.Element {
       setMonthParentCursor(page.endCursor);
       setMonthParentHasMore(page.hasMore);
     } catch (err) {
+      if (paginationRequestSequenceRef.current !== requestSequence) return;
       console.error('[ParentPayments] Failed to load previous month page', err);
       setScopeError('Payment data could not be loaded. Check Firestore rules/indexes.');
     } finally {
-      paginationRequestInFlightRef.current = false;
-      setScopeLoading(false);
+      if (paginationRequestSequenceRef.current === requestSequence) {
+        paginationRequestInFlightRef.current = false;
+        setScopeLoading(false);
+      }
     }
   };
 
   const handleSelectedParentChange = (parentId: string) => {
+    paginationRequestSequenceRef.current += 1;
+    paginationRequestInFlightRef.current = false;
     setSelectedParentOptionId(parentId);
     if (!parentId || parentId === '__no_parent_results') return;
     const selectedOption = parentSelectOptions.find((option) => option.id === parentId);
@@ -1980,9 +2039,20 @@ export default function ParentPayments(): JSX.Element {
     if (selectedUser) setParents([selectedUser]);
     setSelectedWalletParentName(selectedOption?.primaryLabel || parentId);
     setExpandedParents(new Set());
+    setInvoiceOpen(false);
+    setInvoiceData(null);
+    setInvoiceError('');
     setSelectedWalletParentId(parentId);
     setLoadMode('selected');
     setLoadedParentIds([parentId]);
+  };
+
+  const handleInvoiceOpenChange = (open: boolean) => {
+    setInvoiceOpen(open);
+    if (open) return;
+    setInvoiceData(null);
+    setInvoiceError('');
+    setInvoiceLoading(false);
   };
 
   const handleParentSearchChange = (value: string) => {
@@ -3588,7 +3658,7 @@ export default function ParentPayments(): JSX.Element {
         ) : null}
       </Card>
 
-      <Dialog open={invoiceOpen} onOpenChange={setInvoiceOpen}>
+      <Dialog open={invoiceOpen} onOpenChange={handleInvoiceOpenChange}>
         <DialogContent className="sm:max-w-[980px] max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Parent Invoice</DialogTitle>
@@ -3723,7 +3793,7 @@ export default function ParentPayments(): JSX.Element {
           )}
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setInvoiceOpen(false)}>
+            <Button variant="outline" onClick={() => handleInvoiceOpenChange(false)}>
               Close
             </Button>
             <Button
