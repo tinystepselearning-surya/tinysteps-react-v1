@@ -1,11 +1,12 @@
 'use strict';
 
-const crypto = require('node:crypto');
+const nodeCrypto = require('node:crypto');
 const admin = require('firebase-admin');
 
 const APPLY = process.argv.includes('--apply');
 const PROJECT_ID = process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || 'tinysteps-react-v1';
 const VERSION = 1;
+const MAX_HISTORY_DOCS_TO_MIGRATE = 400;
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -33,7 +34,7 @@ const identityKey = (lead) => {
   const phone = normalizePhone(lead.phoneNormalized || lead.primaryPhone || lead.whatsappNumber);
   const child = normalizeChildName(lead.childName);
   if (phone.length < 7 || child.length < 2) return null;
-  return crypto.createHash('sha256').update(`${phone}|${child}`).digest('hex');
+  return nodeCrypto.createHash('sha256').update(`${phone}|${child}`).digest('hex');
 };
 const toMillis = (value) => {
   if (!value) return 0;
@@ -54,6 +55,7 @@ const lifecycleScore = (lead) => {
   const status = cleanText(lead.status).toLowerCase();
   if (['demo_booked', 'demo_completed', 'admission_follow_up', 'admitted_confirmed'].includes(status)) score += 50;
   if (lead.enrolledAt) score += 100;
+  if (cleanText(lead.enrollmentId)) score += 100;
   return score;
 };
 const chooseLifecycleSafeCanonical = (records) =>
@@ -73,6 +75,24 @@ const isUnsafeForCanonical = (canonical, duplicate) => {
   return duplicateIds.some((id) => !canonicalIds.has(id));
 };
 
+const isUnsafeLifecycleForCanonical = (canonical, duplicate) => {
+  const canonicalEnrollmentId = cleanText(canonical.data.enrollmentId);
+  const duplicateEnrollmentId = cleanText(duplicate.data.enrollmentId);
+  if (duplicateEnrollmentId && canonicalEnrollmentId !== duplicateEnrollmentId) return true;
+  const status = cleanText(duplicate.data.status).toLowerCase();
+  const conversion = cleanText(duplicate.data.conversionStatus).toLowerCase();
+  const lifecycleRich = Boolean(
+    duplicate.data.enrolledAt ||
+    duplicate.data.demoCreatedAt ||
+    duplicate.data.demoAssignedAt ||
+    duplicate.data.demoCompletedAt ||
+    duplicate.data.demoCancelledAt ||
+    ['demo_booked', 'demo_completed', 'admission_follow_up', 'admitted_confirmed'].includes(status) ||
+    conversion === 'enrolled'
+  );
+  return lifecycleRich && demoIds(duplicate.data).length === 0 && !duplicateEnrollmentId;
+};
+
 const summarizeLead = (record) => ({
   id: record.id,
   parentName: cleanText(record.data.parentName),
@@ -83,6 +103,8 @@ const summarizeLead = (record) => ({
   interestTrack: cleanText(record.data.interestTrack),
   demoIds: demoIds(record.data),
   receivedAtMs: eventMillis(record.data),
+  inquiryHistoryCount: record.inquiryHistoryCount || 0,
+  communicationHistoryCount: record.communicationHistoryCount || 0,
 });
 
 async function buildGroupReport(key, records) {
@@ -105,12 +127,35 @@ async function buildGroupReport(key, records) {
   }
 
   if (canonical) {
-    records.forEach((record) => {
-      if (record.id === canonical.id) return;
+    for (const record of records) {
+      if (record.id === canonical.id) continue;
       if (isUnsafeForCanonical(canonical, record)) {
         conflictReasons.push(`unsafe_demo_lifecycle:${record.id}`);
       }
-    });
+      if (isUnsafeLifecycleForCanonical(canonical, record)) {
+        conflictReasons.push(`unsafe_non_demo_lifecycle:${record.id}`);
+      }
+
+      const [inquiriesSnap, communicationsSnap] = await Promise.all([
+        db.collection('leads').doc(record.id).collection('inquiries')
+          .limit(MAX_HISTORY_DOCS_TO_MIGRATE + 1).get(),
+        db.collection('leads').doc(record.id).collection('communications')
+          .limit(MAX_HISTORY_DOCS_TO_MIGRATE + 1).get(),
+      ]);
+      record.inquiryHistoryCount = inquiriesSnap.size;
+      record.communicationHistoryCount = communicationsSnap.size;
+      if (inquiriesSnap.size + communicationsSnap.size > MAX_HISTORY_DOCS_TO_MIGRATE) {
+        conflictReasons.push(`history_migration_limit_exceeded:${record.id}`);
+      }
+
+      for (const demoId of demoIds(record.data)) {
+        const demoSnap = await db.collection('demoSessions').doc(demoId).get();
+        const linkedLeadId = demoSnap.exists ? cleanText(demoSnap.data()?.leadId) : '';
+        if (!demoSnap.exists || (linkedLeadId !== record.id && linkedLeadId !== canonical.id)) {
+          conflictReasons.push(`inconsistent_demo_link:${record.id}:${demoId}`);
+        }
+      }
+    }
   }
 
   return {
@@ -165,28 +210,35 @@ async function main() {
 
   for (const group of safeGroups) {
     const identityRef = db.collection('leadIdentityIndex').doc(group.identityKey);
-    const liveIdentitySnap = await identityRef.get();
-    const liveCanonicalId = liveIdentitySnap.exists
-      ? cleanText(liveIdentitySnap.data()?.canonicalLeadId)
-      : '';
+    const expectedLiveCanonicalId = group.indexedCanonicalLeadId || '';
+    const seedResult = await db.runTransaction(async (tx) => {
+      const liveIdentitySnap = await tx.get(identityRef);
+      const liveCanonicalId = liveIdentitySnap.exists
+        ? cleanText(liveIdentitySnap.data()?.canonicalLeadId)
+        : '';
+      if (liveCanonicalId !== expectedLiveCanonicalId) {
+        return { drifted: true, liveCanonicalId };
+      }
+      if (!liveCanonicalId) {
+        tx.create(identityRef, {
+          canonicalLeadId: group.canonicalLeadId,
+          identityKey: group.identityKey,
+          version: VERSION,
+          backfillSeededAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      }
+      return { drifted: false, liveCanonicalId: liveCanonicalId || group.canonicalLeadId };
+    });
 
-    // Never overwrite a canonical mapping that changed after the dry-run snapshot/report.
-    if (liveCanonicalId && liveCanonicalId !== group.canonicalLeadId) {
+    // Never overwrite a canonical mapping that changed after report generation,
+    // including an index that appeared or disappeared during the run.
+    if (seedResult.drifted) {
       skippedForDrift += 1;
       console.warn(
-        `[backfillWebsiteLeadDeduplication] skipped ${group.identityKey}: identity index drifted from ${group.canonicalLeadId} to ${liveCanonicalId}`,
+        `[backfillWebsiteLeadDeduplication] skipped ${group.identityKey}: identity index drifted from ${expectedLiveCanonicalId || '<missing>'} to ${seedResult.liveCanonicalId || '<missing>'}`,
       );
       continue;
-    }
-
-    if (!liveCanonicalId) {
-      await identityRef.set({
-        canonicalLeadId: group.canonicalLeadId,
-        identityKey: group.identityKey,
-        version: VERSION,
-        backfillSeededAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      }, { merge: true });
     }
 
     const batch = db.batch();

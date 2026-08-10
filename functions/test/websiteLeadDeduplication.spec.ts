@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildWebsiteLeadIdentityKey,
   hasUnsafeWebsiteLeadDemoConflict,
+  hasUnsafeWebsiteLeadLifecycleConflict,
   normalizeWebsiteLeadChildName,
   normalizeWebsiteLeadPhone,
 } from '../src/websiteLeadDeduplication';
@@ -29,6 +30,11 @@ describe('website lead deduplication identity', () => {
     const second = buildWebsiteLeadIdentityKey('9876543210', 'Anaya');
 
     expect(first).not.toBe(second);
+    expect(
+      buildWebsiteLeadIdentityKey('9876543210', 'Rithanyaa'),
+    ).not.toBe(
+      buildWebsiteLeadIdentityKey('9876543210', 'Rithanya'),
+    );
   });
 
   it('refuses to create an identity from incomplete data', () => {
@@ -77,6 +83,24 @@ describe('website lead demo lifecycle safety', () => {
         { demoIds: ['demo_1'] },
         { demoSessionId: 'demo_2' },
       ),
+    ).toBe(true);
+  });
+
+  it('blocks unmatched enrollment or lifecycle-rich duplicate data', () => {
+    expect(
+      hasUnsafeWebsiteLeadLifecycleConflict(
+        { enrollmentId: 'enrollment-1' },
+        { enrollmentId: 'enrollment-2' },
+      ),
+    ).toBe(true);
+    expect(
+      hasUnsafeWebsiteLeadLifecycleConflict(
+        { enrollmentId: 'enrollment-1' },
+        { enrollmentId: 'enrollment-1' },
+      ),
+    ).toBe(false);
+    expect(
+      hasUnsafeWebsiteLeadLifecycleConflict({}, { status: 'admitted_confirmed', enrolledAt: {} }),
     ).toBe(true);
   });
 });

@@ -9,7 +9,11 @@ const REGION = 'asia-south1';
 const DEDUPE_VERSION = 1;
 const WEBSITE_SOURCE = 'website';
 const DEMO_CONFLICT = 'duplicate_has_unmigrated_demo_links';
+const LIFECYCLE_CONFLICT = 'duplicate_has_unmigrated_lifecycle_links';
+const HISTORY_CONFLICT = 'duplicate_history_requires_manual_migration';
 const IDENTITY_EDIT_CONFLICT = 'identity_edit_collides_with_existing_lead';
+const INDEX_CONFLICT = 'identity_index_canonical_mismatch';
+const MAX_HISTORY_DOCS_TO_MIGRATE = 400;
 
 const cleanText = (value: unknown, maxLength = 500): string =>
   typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
@@ -84,6 +88,9 @@ const inquiryCount = (lead: Record<string, unknown>): number => {
 const demoIds = (lead: Record<string, unknown>): string[] =>
   stringArray(lead.demoIds, lead.demoSessionId);
 
+const enrollmentIds = (lead: Record<string, unknown>): string[] =>
+  stringArray(lead.enrollmentIds, lead.enrollmentId);
+
 export const hasUnsafeWebsiteLeadDemoConflict = (
   canonical: Record<string, unknown>,
   duplicate: Record<string, unknown>,
@@ -97,6 +104,34 @@ export const hasUnsafeWebsiteLeadDemoConflict = (
   if (duplicateIds.length === 0) return false;
   if (canonicalIds.size === 0) return true;
   return duplicateIds.some((id) => !canonicalIds.has(id));
+};
+
+export const hasUnsafeWebsiteLeadLifecycleConflict = (
+  canonical: Record<string, unknown>,
+  duplicate: Record<string, unknown>,
+): boolean => {
+  const canonicalEnrollmentIds = new Set(enrollmentIds(canonical));
+  const duplicateEnrollmentIds = enrollmentIds(duplicate);
+  if (duplicateEnrollmentIds.some((id) => !canonicalEnrollmentIds.has(id))) return true;
+
+  const duplicateStatus = cleanText(duplicate.status, 80).toLowerCase();
+  const duplicateConversion = cleanText(duplicate.conversionStatus, 80).toLowerCase();
+  const lifecycleRich = Boolean(
+    duplicate.enrolledAt ||
+    duplicate.demoCreatedAt ||
+    duplicate.demoAssignedAt ||
+    duplicate.demoCompletedAt ||
+    duplicate.demoCancelledAt ||
+    duplicateStatus === 'demo_booked' ||
+    duplicateStatus === 'demo_completed' ||
+    duplicateStatus === 'admission_follow_up' ||
+    duplicateStatus === 'admitted_confirmed' ||
+    duplicateConversion === 'enrolled',
+  );
+
+  // Demo linkage is checked separately. Lifecycle-rich records without a concrete,
+  // matching relationship are intentionally left for manual review.
+  return lifecycleRich && demoIds(duplicate).length === 0 && duplicateEnrollmentIds.length === 0;
 };
 
 const interactionSnapshot = (
@@ -314,6 +349,32 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
       }
 
       const canonical = canonicalSnap.data() || {};
+      if (
+        cleanText(canonical.source, 80).toLowerCase() !== WEBSITE_SOURCE ||
+        identityKeyForLead(canonical) !== identityKey
+      ) {
+        if (
+          currentConflict === INDEX_CONFLICT &&
+          currentConflictCanonicalId === indexedCanonicalId
+        ) {
+          return {
+            action: 'conflict_existing' as const,
+            canonicalLeadId: indexedCanonicalId,
+          };
+        }
+        tx.set(leadRef, {
+          dedupeIdentityKey: identityKey,
+          dedupeVersion: DEDUPE_VERSION,
+          dedupeConflict: INDEX_CONFLICT,
+          dedupeConflictCanonicalLeadId: indexedCanonicalId,
+          dedupeConflictAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        return {
+          action: 'conflict' as const,
+          conflictReason: INDEX_CONFLICT,
+          canonicalLeadId: indexedCanonicalId,
+        };
+      }
       if (hasUnsafeWebsiteLeadDemoConflict(canonical, current)) {
         if (
           currentConflict === DEMO_CONFLICT &&
@@ -333,6 +394,98 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
         }, { merge: true });
         return {
           action: 'conflict' as const,
+          conflictReason: DEMO_CONFLICT,
+          canonicalLeadId: indexedCanonicalId,
+        };
+      }
+
+      if (hasUnsafeWebsiteLeadLifecycleConflict(canonical, current)) {
+        if (
+          currentConflict === LIFECYCLE_CONFLICT &&
+          currentConflictCanonicalId === indexedCanonicalId
+        ) {
+          return {
+            action: 'conflict_existing' as const,
+            canonicalLeadId: indexedCanonicalId,
+          };
+        }
+        tx.set(leadRef, {
+          dedupeIdentityKey: identityKey,
+          dedupeVersion: DEDUPE_VERSION,
+          dedupeConflict: LIFECYCLE_CONFLICT,
+          dedupeConflictCanonicalLeadId: indexedCanonicalId,
+          dedupeConflictAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        return {
+          action: 'conflict' as const,
+          conflictReason: LIFECYCLE_CONFLICT,
+          canonicalLeadId: indexedCanonicalId,
+        };
+      }
+
+      // Parent deletes do not cascade in Firestore. Read and migrate every known
+      // meaningful lead subcollection before deleting a historical duplicate.
+      const [inquiriesSnap, communicationsSnap] = await Promise.all([
+        tx.get(leadRef.collection('inquiries').limit(MAX_HISTORY_DOCS_TO_MIGRATE + 1)),
+        tx.get(leadRef.collection('communications').limit(MAX_HISTORY_DOCS_TO_MIGRATE + 1)),
+      ]);
+      if (
+        inquiriesSnap.size + communicationsSnap.size > MAX_HISTORY_DOCS_TO_MIGRATE ||
+        inquiriesSnap.size > MAX_HISTORY_DOCS_TO_MIGRATE ||
+        communicationsSnap.size > MAX_HISTORY_DOCS_TO_MIGRATE
+      ) {
+        if (
+          currentConflict === HISTORY_CONFLICT &&
+          currentConflictCanonicalId === indexedCanonicalId
+        ) {
+          return {
+            action: 'conflict_existing' as const,
+            canonicalLeadId: indexedCanonicalId,
+          };
+        }
+        tx.set(leadRef, {
+          dedupeIdentityKey: identityKey,
+          dedupeVersion: DEDUPE_VERSION,
+          dedupeConflict: HISTORY_CONFLICT,
+          dedupeConflictCanonicalLeadId: indexedCanonicalId,
+          dedupeConflictAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        return {
+          action: 'conflict' as const,
+          conflictReason: HISTORY_CONFLICT,
+          canonicalLeadId: indexedCanonicalId,
+        };
+      }
+
+      const duplicateDemoIds = demoIds(current);
+      const duplicateDemoSnaps = await Promise.all(
+        duplicateDemoIds.map((demoId) => tx.get(db.collection('demoSessions').doc(demoId))),
+      );
+      const inconsistentDemoLink = duplicateDemoSnaps.some((demoSnap) => {
+        if (!demoSnap.exists) return true;
+        const linkedLeadId = cleanText(demoSnap.data()?.leadId, 120);
+        return linkedLeadId !== leadId && linkedLeadId !== indexedCanonicalId;
+      });
+      if (inconsistentDemoLink) {
+        if (
+          currentConflict === DEMO_CONFLICT &&
+          currentConflictCanonicalId === indexedCanonicalId
+        ) {
+          return {
+            action: 'conflict_existing' as const,
+            canonicalLeadId: indexedCanonicalId,
+          };
+        }
+        tx.set(leadRef, {
+          dedupeIdentityKey: identityKey,
+          dedupeVersion: DEDUPE_VERSION,
+          dedupeConflict: DEMO_CONFLICT,
+          dedupeConflictCanonicalLeadId: indexedCanonicalId,
+          dedupeConflictAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        return {
+          action: 'conflict' as const,
+          conflictReason: DEMO_CONFLICT,
           canonicalLeadId: indexedCanonicalId,
         };
       }
@@ -388,6 +541,10 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
           }
         });
         mergedPatch.lastInquirySourcePath = cleanText(current.sourcePath, 220) || null;
+        mergedPatch.lastInquiryLandingPage = cleanText(current.landingPage, 220) || null;
+        mergedPatch.lastInquiryConversionPage = cleanText(current.conversionPage, 220) || null;
+        mergedPatch.lastInquiryAcquisitionChannel = cleanText(current.acquisitionChannel, 120) || null;
+        mergedPatch.lastInquiryAcquisitionSource = cleanText(current.acquisitionSource, 160) || null;
       }
 
       Object.assign(mergedPatch, firstTouchPatch(earliest, later));
@@ -398,6 +555,37 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
         interactionSnapshot(leadId, current),
         { merge: true },
       );
+      inquiriesSnap.docs.forEach((inquirySnap) => {
+        tx.set(
+          canonicalRef.collection('inquiries').doc(inquirySnap.id),
+          {
+            ...inquirySnap.data(),
+            migratedFromLeadId: leadId,
+            migratedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true },
+        );
+      });
+      communicationsSnap.docs.forEach((communicationSnap) => {
+        tx.set(
+          canonicalRef.collection('communications').doc(`${leadId}__${communicationSnap.id}`),
+          {
+            ...communicationSnap.data(),
+            migratedFromLeadId: leadId,
+            originalCommunicationId: communicationSnap.id,
+            migratedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true },
+        );
+      });
+      duplicateDemoSnaps.forEach((demoSnap) => {
+        if (cleanText(demoSnap.data()?.leadId, 120) === leadId) {
+          tx.set(demoSnap.ref, {
+            leadId: indexedCanonicalId,
+            leadDeduplicatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          }, { merge: true });
+        }
+      });
       tx.set(
         db.collection('leadMergeRedirects').doc(leadId),
         {
@@ -428,7 +616,7 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
     if (outcome.action === 'merged') {
       logger.info('[websiteLeadDeduplication] merged duplicate website lead', outcome);
     } else if (outcome.action === 'conflict') {
-      logger.warn('[websiteLeadDeduplication] duplicate not merged because demo lifecycle is unsafe to migrate automatically', {
+      logger.warn('[websiteLeadDeduplication] duplicate not merged because integrity checks require manual review', {
         leadId,
         identityKey,
         ...outcome,

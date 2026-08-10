@@ -256,6 +256,19 @@ export const enrichPublicLeadAttribution = onCall<EnrichmentRequest>(
           },
           { merge: true },
         );
+        tx.set(
+          targetRef.collection('inquiries').doc(leadId),
+          {
+            sourceLeadId: leadId,
+            landingPage: attribution.landingPage,
+            conversionPage: attribution.conversionPage,
+            acquisitionChannel: acquisition.channel,
+            acquisitionSource: acquisition.source,
+            attribution,
+            attributionEnrichedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true },
+        );
 
         return {
           alreadyEnriched: false,

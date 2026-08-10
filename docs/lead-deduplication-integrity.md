@@ -60,6 +60,8 @@ The interaction stores the submitted programme/concern, path, timestamps, and at
 
 Therefore deduplication removes duplicate *lead rows*, not business history.
 
+Firestore parent deletion does not cascade. Before deleting a historical duplicate, the transaction copies any existing `inquiries` and `communications` documents into the canonical lead. A group with more history than the bounded transaction can safely migrate is marked `duplicate_history_requires_manual_migration` and is not deleted automatically.
+
 ## Attribution race safety
 
 PR #16 enriches first-touch attribution after lead persistence. Deduplication can race that detached enrichment.
@@ -78,8 +80,10 @@ The runtime merge therefore follows an asymmetric rule:
 
 - canonical has demo(s), fresh duplicate has none: safe to merge the duplicate;
 - duplicate has demo(s), canonical has none: do **not** delete the duplicate automatically;
-- both reference the same demo(s): safe;
+- both reference the same demo(s): safe only when the live demo relationship is consistent; any `demoSessions/{id}.leadId` owned by the duplicate is atomically repointed to the canonical lead before deletion;
 - both reference different demo(s): do **not** merge automatically.
+
+Unmatched enrollment identifiers and lifecycle-rich records without a concrete matching demo/enrollment relationship are also left for manual review. An identity index that points to a non-website lead or a different normalized identity is treated as drift and never used for an automatic merge.
 
 Unsafe records are marked with:
 
@@ -125,7 +129,7 @@ Apply mode:
 
 1. skips groups with unsafe lifecycle/index conflicts,
 2. seeds a canonical identity index only when one does not already exist,
-3. re-checks the live index before every group and skips the group if it drifted after the report,
+3. transactionally re-checks the live index before every group (including appeared/disappeared indexes) and skips the group if it drifted after the report,
 4. touches only safe candidate leads,
 5. lets the same production Firestore trigger perform the merge.
 
@@ -153,6 +157,14 @@ Before merge:
 - An existing-canonical-demo + fresh-repeat-enquiry QA verifies the fresh duplicate can still merge safely.
 - An admin identity-edit QA verifies stale index removal, collision protection, and idempotent conflict behavior.
 - Historical dry-run/apply QA verifies an existing live identity index is never silently overwritten and index drift causes a skip.
+
+The Functions emulator suite additionally covers simultaneous transactions, conflict-marker second invocations, canonical initialization idempotence, identity corrections/collisions, both attribution race orders, chronologically earlier first-touch promotion, demo-link repointing, and historical subcollection migration.
+
+## Returning leads and cross-channel boundary
+
+A repeat website enquiry updates `updatedAt`, `lastInquiryAt`, and `inquiryCount`, so the current Admin Leads workspace surfaces the canonical row as recently updated. It does not automatically reset `lost`, `no_response`, `not_interested`, or `wrong_fit`, and it never downgrades `admitted_confirmed`; any reactivation policy remains a separate product decision.
+
+This reconciliation is intentionally website-only. It does not merge unmatched WhatsApp leads by phone because a reliable child identity may not be available on that channel.
 
 ## Expected Suresh/Rithanyaa result
 
