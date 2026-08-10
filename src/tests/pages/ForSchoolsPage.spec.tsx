@@ -125,4 +125,59 @@ describe('ForSchoolsPage proposal CTAs', () => {
       );
     });
   });
+
+  it('makes the CBSE/NCF implementation gap and Tiny Steps pathway explicit', async () => {
+    render(
+      <MemoryRouter initialEntries={['/for-schools']}>
+        <ForSchoolsPage />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole('heading', { name: /Does CBSE include phonics\?/i })).toBeInTheDocument();
+    expect(screen.getByText('The Tiny Steps implementation pathway')).toBeInTheDocument();
+
+    const pathwayTitles = [
+      'Hear the sound system',
+      'Connect sounds to print',
+      'Blend into real words',
+      'Segment for spelling',
+      'Master core phonics patterns',
+      'Build spelling-rule knowledge',
+      'Tackle advanced word structures',
+      'Read cumulatively',
+      'Check transfer, not memory',
+      'Build fluent, independent readers',
+    ];
+    for (const title of pathwayTitles) {
+      expect(screen.getByRole('heading', { name: title })).toBeInTheDocument();
+    }
+
+    expect(
+      screen.getByText('The problem we solve is the implementation gap—not the existence of the curriculum.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Read official NCF-FS 2022' }),
+    ).toHaveAttribute('href', 'https://ncert.nic.in/pdf/NCF_for_Foundational_Stage_20_October_2022.pdf');
+    expect(screen.getByRole('link', { name: 'CBSE Foundational Stage resources' })).toHaveAttribute(
+      'href',
+      'https://cbseacademic.nic.in/hpc-resources.html',
+    );
+
+    const cbseFaqQuestion = 'Does CBSE include phonics in the foundational curriculum?';
+    expect(screen.getByText(cbseFaqQuestion)).toBeInTheDocument();
+
+    await waitFor(() => {
+      const jsonLd = document.getElementById('ts-jsonld');
+      expect(jsonLd).not.toBeNull();
+      const schemas = JSON.parse(jsonLd!.textContent || '[]') as Array<{
+        '@type'?: string;
+        name?: string;
+        mainEntity?: Array<{ name?: string; acceptedAnswer?: { text?: string } }>;
+      }>;
+      expect(schemas.some((schema) => schema['@type'] === 'DefinedTermSet')).toBe(true);
+      const faqSchema = schemas.find((schema) => schema['@type'] === 'FAQPage');
+      const structuredQuestion = faqSchema?.mainEntity?.find((item) => item.name === cbseFaqQuestion);
+      expect(structuredQuestion?.acceptedAnswer?.text).toContain('NCERT’s National Curriculum Framework');
+    });
+  });
 });
