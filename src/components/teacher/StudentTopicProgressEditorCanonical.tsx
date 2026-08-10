@@ -429,6 +429,9 @@ export default function StudentTopicProgressEditorCanonical({
   }, [courseTopics]);
 
   const chipLabels = progressSkills.map((skill) => skill.label);
+  const lastCourseTopicId = courseTopics.length > 0
+    ? courseTopics[courseTopics.length - 1].id
+    : null;
 
   return (
     <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-3 text-sm">
@@ -589,7 +592,7 @@ export default function StudentTopicProgressEditorCanonical({
           <button
             type="button"
             className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 disabled:opacity-50"
-            disabled={disabled || saving || !isDirty || courseTopics.at(-1)?.id === selectedTopicId}
+            disabled={disabled || saving || !isDirty || lastCourseTopicId === selectedTopicId}
             onClick={() => void handleSaveAndNext()}
           >
             Save & Next
