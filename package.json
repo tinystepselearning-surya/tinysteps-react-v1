@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run gen:sitemaps && vite build && node scripts/write-build-info.mjs && node scripts/prerender.mjs && npm run seo:route-integrity && npm run seo:indexability-report && npm run seo:gsc-crawled-audit && npm run seo:gsc-index-targets && npm run bundle:public-check && npm run content:offer-consistency && node scripts/write-indexnow-key.mjs",
+    "build": "npm run gen:sitemaps && vite build && node scripts/write-build-info.mjs && node scripts/prerender.mjs && npm run seo:route-integrity && npm run seo:indexability-report && npm run seo:gsc-crawled-audit && npm run seo:gsc-archive-rendering && npm run seo:gsc-index-targets && npm run bundle:public-check && npm run content:offer-consistency && node scripts/write-indexnow-key.mjs",
     "prebuild": "npm run check:shadowing && node scripts/generate-rss.mjs",
     "generate:rss": "node scripts/generate-rss.mjs",
     "check:shadowing": "node scripts/check-shadowing.mjs",
@@ -22,6 +22,7 @@
     "seo:route-integrity": "node scripts/seo-route-integrity.mjs",
     "seo:indexability-report": "node scripts/generate-route-indexability-report.mjs",
     "seo:gsc-crawled-audit": "node scripts/audit-gsc-crawled-not-indexed.mjs",
+    "seo:gsc-archive-rendering": "node scripts/audit-gsc-archive-rendering.mjs",
     "seo:gsc-index-targets": "node scripts/write-gsc-index-submission-targets.mjs",
     "bundle:public-check": "node scripts/verify-public-bundle.mjs --max-gzip 150 --report artifacts/public-bundle-report.json",
     "verify:live-deployment": "node scripts/verify-live-deployment.mjs",

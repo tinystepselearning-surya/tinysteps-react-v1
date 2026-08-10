@@ -403,10 +403,15 @@ async function prerender() {
       const sourceBlogRoutes = uniqueRoutes([
         ...blogSourceSlugs.map((slug) => `/blog/${slug}`),
         ...mdxSourceSlugs.map((slug) => `/blog/${slug}`),
-      ]).filter((route) => shouldIncludeBlogSlugInSitemap(route.replace(/^\/blog\//, "")));
+      ]);
 
+      // Source-backed noindex archives must still be real, accessible pages. Sitemap
+      // eligibility controls discovery/indexing, not whether Hosting emits the page.
+      // Keep discovered routes conservative, but always prerender a source-backed post.
+      const sourceBlogRouteSet = new Set(sourceBlogRoutes);
       let blogRoutes = uniqueRoutes([...sourceBlogRoutes, ...discoveredBlogRoutes]).filter((route) =>
-        shouldIncludeBlogSlugInSitemap(route.replace(/^\/blog\//, ""))
+        sourceBlogRouteSet.has(route)
+        || shouldIncludeBlogSlugInSitemap(route.replace(/^\/blog\//, ""))
       );
 
       if (blogRoutes.length === 0) {
