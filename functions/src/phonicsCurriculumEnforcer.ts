@@ -65,9 +65,11 @@ async function assertAdmin(uid: string, tokenRole?: unknown): Promise<void> {
   const userData = userSnap.exists ? userSnap.data() || {} : {};
   const databaseRole = String(userData.role || '').trim().toLowerCase();
   const tokenRoleNormalized = String(tokenRole || '').trim().toLowerCase();
-  const isActive = userData.active !== false && userData.status !== 'inactive';
+  const databaseStatus = String(userData.status || '').trim().toLowerCase();
+  const isActive = userData.active !== false && databaseStatus !== 'inactive';
+  const effectiveRole = userSnap.exists ? databaseRole : tokenRoleNormalized;
 
-  if (!isActive || (databaseRole !== 'admin' && tokenRoleNormalized !== 'admin')) {
+  if (!isActive || effectiveRole !== 'admin') {
     throw new HttpsError('permission-denied', 'Admin access required.');
   }
 }
