@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import StudentList from './StudentList';
 import CreateStudentForm from './CreateStudentForm';
 import EditStudentForm from './EditStudentForm';
 import AssignCourseModal from './AssignCourseModal';
-import { db } from '../../../lib/firebaseConfig';
 import { deleteKid } from '../../../services/kidsService';
 import type { Student } from '../../../types/Student';
 
@@ -14,6 +14,26 @@ export default function StudentManagementTab() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    // One admin-authenticated read/write check on entry repairs any pre-existing
+    // stale phonics config. Subsequent stale config writes are guarded server-side
+    // by onCurriculumTopicsCanonicalize.
+    const syncCanonicalPhonics = async () => {
+      try {
+        const functions = getFunctions(undefined, 'asia-south1');
+        const sync = httpsCallable(functions, 'adminSyncCanonicalPhonicsCurriculum');
+        await sync({});
+      } catch (err) {
+        // Do not block Student Management if the sync endpoint is temporarily unavailable.
+        // The server Firestore guard still canonicalizes future curriculum writes.
+        if (import.meta.env.DEV) {
+          console.warn('[StudentManagement] canonical phonics sync failed', err);
+        }
+      }
+    };
+    void syncCanonicalPhonics();
+  }, []);
 
   const handleStudentCreated = () => {
     setRefreshKey(k => k + 1);
