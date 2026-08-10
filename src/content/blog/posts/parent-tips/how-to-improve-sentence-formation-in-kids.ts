@@ -160,7 +160,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'Book a free grammar and sentence formation assessment class to understand your child\'s current level and get a clear improvement plan: /?book=1',
+        'Book a free grammar and sentence formation assessment class to understand your child\'s current level and get a clear improvement plan: /book-demo',
     },
     {
       type: 'h2',

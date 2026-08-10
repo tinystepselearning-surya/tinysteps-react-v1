@@ -1,7 +1,7 @@
 # Google Search Console — Crawled, Currently Not Indexed Audit
 
-**Audit snapshot:** 2026-08-09  
-**Branch:** `seo/crawled-not-indexed-audit-2026-08-09`  
+**Audit snapshot:** 2026-08-09
+**Branch:** `seo/crawled-not-indexed-audit-2026-08-09`
 **Scope:** all 52 example URLs shown in Search Console under **Crawled – currently not indexed**.
 
 ## Executive decision

@@ -174,7 +174,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'Book a free phonics assessment class to identify the exact reading gap and get the right starting plan for your child: /?book=1',
+        'Book a free phonics assessment class to identify the exact reading gap and get the right starting plan for your child: /book-demo',
     },
     {
       type: 'h2',

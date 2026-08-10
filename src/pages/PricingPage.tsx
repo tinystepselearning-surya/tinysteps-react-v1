@@ -476,7 +476,7 @@ const PricingPage: FC = () => {
                         ? 'bg-gray-900 text-white shadow-2xl'
                         : 'bg-white text-gray-900 shadow'
                     }`}
-                    onClick={() => navigate('/?book=1')}
+                    onClick={() => navigate('/book-demo')}
                   >
                     {FREE_DEMO_CTA_LABEL}
                   </button>
@@ -550,7 +550,7 @@ const PricingPage: FC = () => {
             <div className="mt-6 text-center">
               <button
                 className="rounded-2xl bg-gray-900 px-5 py-3 text-sm font-semibold text-white shadow-2xl"
-                onClick={() => navigate('/?book=1')}
+                onClick={() => navigate('/book-demo')}
               >
                 {FREE_DEMO_CTA_LABEL}
               </button>
@@ -629,7 +629,7 @@ const PricingPage: FC = () => {
             <div className="mt-6 text-center">
               <button
                 className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-2xl"
-                onClick={() => navigate('/?book=1')}
+                onClick={() => navigate('/book-demo')}
               >
                 Book an Ultra Premium assessment
               </button>

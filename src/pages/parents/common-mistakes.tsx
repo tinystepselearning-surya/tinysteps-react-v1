@@ -198,7 +198,7 @@ const CommonMistakes: React.FC = () => {
             Choose the Right Course
           </Link>
           <Link to="/book-demo" className="rounded-full border border-white/20 px-5 py-2.5 text-sm font-semibold text-white">
-            Book Free Demo Assessment
+            Book Free 35-Minute Demo
           </Link>
         </div>
       </section>

@@ -273,7 +273,7 @@ export default function WritingClassesForKidsPage() {
         </p>
         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
           <Link to="/book-demo" className="rounded-full bg-white px-7 py-3 font-semibold text-slate-900 transition hover:bg-slate-100">
-            Book Free Demo
+            Book Free 35-Minute Demo
           </Link>
           <Link to="/parents/tracking-progress" className="rounded-full border border-white/20 px-7 py-3 font-semibold text-white">
             How to Track Progress

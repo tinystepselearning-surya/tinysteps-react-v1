@@ -183,6 +183,20 @@ export default function BookDemoPage() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-4xl px-6 py-12" aria-labelledby="demo-faq-heading">
+        <h2 id="demo-faq-heading" className="mb-8 text-center text-3xl font-bold">
+          Free demo assessment FAQs
+        </h2>
+        <div className="space-y-4">
+          {assessmentFaqItems.map((item) => (
+            <article key={item.question} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h3 className="text-lg font-semibold text-slate-900">{item.question}</h3>
+              <p className="mt-2 leading-7 text-slate-700">{item.answer}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <section className="mx-auto max-w-4xl px-6 py-16 text-center">
         <h2 className="mb-4 text-3xl font-bold">Ready to Get Started?</h2>
         <p className="mx-auto mb-8 max-w-2xl text-gray-700">

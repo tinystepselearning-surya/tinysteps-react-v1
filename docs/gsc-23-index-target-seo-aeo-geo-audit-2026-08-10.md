@@ -1,7 +1,7 @@
 # Tiny Steps — 23 GSC Index Targets: SEO / AEO / GEO Audit
 
-Date: 2026-08-10  
-Branch: `seo/crawled-not-indexed-audit-2026-08-09`  
+Date: 2026-08-10
+Branch: `seo/crawled-not-indexed-audit-2026-08-09`
 Source snapshot: 52 URLs shown in Google Search Console as **Crawled — currently not indexed**.
 
 ## Remediation boundary

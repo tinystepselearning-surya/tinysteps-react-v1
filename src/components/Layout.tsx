@@ -43,7 +43,7 @@ export const Header: FC = () => {
             <Link to="/phonics" className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/phonics') ? 'text-blue-600 bg-gray-50' : 'text-gray-700 hover:bg-gray-50'}`}>Phonics</Link>
             <Link to="/grammar" className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/grammar') ? 'text-blue-600 bg-gray-50' : 'text-gray-700 hover:bg-gray-50'}`}>Grammar</Link>
             <Link to="/speaking" className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/speaking') ? 'text-blue-600 bg-gray-50' : 'text-gray-700 hover:bg-gray-50'}`}>Public Speaking</Link>
-            <Link to="/?book=1" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Book Trial</Link>
+            <Link to="/book-demo" className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-50">Book Trial</Link>
           </div>
         </div>
       </div>

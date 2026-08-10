@@ -271,7 +271,7 @@ const SpeechConfidence: React.FC = () => {
         </p>
         <div className="mt-5 flex flex-wrap gap-3">
           <Link to="/book-demo" className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-slate-900">
-            Book Free Demo Assessment
+            Book Free 35-Minute Demo
           </Link>
           <Link to="/parents/choosing-course" className="rounded-full border border-white/20 px-5 py-2.5 text-sm font-semibold text-white">
             Choose the Right Course

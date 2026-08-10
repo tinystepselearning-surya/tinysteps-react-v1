@@ -289,7 +289,7 @@ const TrackingProgress: React.FC = () => {
         </p>
         <div className="mt-5 flex flex-wrap gap-3">
           <Link to="/book-demo" className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-emerald-950">
-            Book Free Demo Assessment
+            Book Free 35-Minute Demo
           </Link>
           <Link to="/curriculum" className="rounded-full border border-white/20 px-5 py-2.5 text-sm font-semibold text-white">
             View Curriculum Path

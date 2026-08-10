@@ -514,7 +514,7 @@ export default function Week7GrammarNounsToParagraphsPage() {
         readTimeLabel={ARTICLE_READ_TIME}
         actions={[
           { label: 'Explore Tiny Steps grammar classes', to: '/grammar' },
-          { label: 'Book a free writing assessment', to: '/?book=1', variant: 'secondary' },
+          { label: 'Book a free writing assessment', to: '/book-demo', variant: 'secondary' },
         ]}
         searchPainPoints={SEARCH_PAIN_POINTS}
         heroPoints={HERO_POINTS}
