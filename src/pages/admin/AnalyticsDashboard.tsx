@@ -189,22 +189,29 @@ export default function AnalyticsDashboard(): JSX.Element {
   const [payments, setPayments] = useState<any[]>([]);
   const [classSessions, setClassSessions] = useState<any[]>([]);
   const [teacherEarningsEntries, setTeacherEarningsEntries] = useState<any[]>([]);
-  const [fsError, setFsError] = useState<string | null>(null);
+  const [coreError, setCoreError] = useState<string | null>(null);
+  const [monthError, setMonthError] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => monthKeyFromDate(new Date()));
   const [teacherEarningsTab, setTeacherEarningsTab] = useState<'live' | 'archived'>('live');
   const [monthRefreshKey, setMonthRefreshKey] = useState(0);
+  const [monthLoading, setMonthLoading] = useState(false);
   const [coreAnalyticsEnabled, setCoreAnalyticsEnabled] = useState(false);
   const [coreRefreshKey, setCoreRefreshKey] = useState(0);
+  const [coreLoading, setCoreLoading] = useState(false);
 
   useEffect(() => {
     if (!coreAnalyticsEnabled) {
       setUsers([]);
       setEnrollments([]);
       setCourses([]);
+      setCoreError(null);
+      setCoreLoading(false);
       return;
     }
     let active = true;
     const loadCore = async () => {
+      setCoreLoading(true);
+      setCoreError(null);
       try {
         const [usersSnap, enrollSnap, coursesSnap] = await Promise.all([
           getDocsLogged('AnalyticsDashboard:all-users', query(collection(db, 'users')), {
@@ -218,14 +225,19 @@ export default function AnalyticsDashboard(): JSX.Element {
           }),
         ]);
         if (!active) return;
-        setFsError(null);
+        setCoreError(null);
         setUsers(usersSnap.docs.map(d => ({ id: d.id, ...d.data() })));
         setEnrollments(enrollSnap.docs.map(d => ({ id: d.id, ...d.data() })));
         setCourses(coursesSnap.docs.map(d => ({ id: d.id, ...d.data() })));
       } catch (err: any) {
         if (active) {
-          setFsError(err?.message || 'Some analytics data could not be loaded.');
+          setUsers([]);
+          setEnrollments([]);
+          setCourses([]);
+          setCoreError(err?.message || 'Core analytics data could not be loaded.');
         }
+      } finally {
+        if (active) setCoreLoading(false);
       }
     };
     void loadCore();
@@ -240,13 +252,34 @@ export default function AnalyticsDashboard(): JSX.Element {
       setPayments([]);
       setClassSessions([]);
       setTeacherEarningsEntries([]);
+      setMonthError(null);
+      setMonthLoading(false);
       return;
     }
+
     const monthRange = monthRangeFromKey(selectedMonth);
     if (!monthRange) {
+      setCharges([]);
+      setPayments([]);
       setClassSessions([]);
+      setTeacherEarningsEntries([]);
+      setMonthError('Select a valid analytics month.');
+      setMonthLoading(false);
+      return;
     }
+
     let active = true;
+
+    // Clear the previous month's values before starting a new request. Without this,
+    // July values can remain visible under an August label while August is loading or
+    // indefinitely if the August query fails.
+    setCharges([]);
+    setPayments([]);
+    setClassSessions([]);
+    setTeacherEarningsEntries([]);
+    setMonthError(null);
+    setMonthLoading(true);
+
     const loadMonthData = async () => {
       try {
         const [chargesSnap, paymentsSnap, teacherEarningsSnap, classSessionsSnap] =
@@ -266,20 +299,18 @@ export default function AnalyticsDashboard(): JSX.Element {
               query(collection(db, 'teacherEarnings'), where('monthKey', '==', selectedMonth)),
               { source: 'src/pages/admin/AnalyticsDashboard.tsx' },
             ),
-            monthRange
-              ? getDocsLogged(
-                  'AnalyticsDashboard:month-class-sessions',
-                  query(
-                    collection(db, 'classSessions'),
-                    where('date', '>=', monthRange.startYmd),
-                    where('date', '<=', monthRange.endYmd)
-                  ),
-                  { source: 'src/pages/admin/AnalyticsDashboard.tsx' },
-                )
-              : Promise.resolve(null),
+            getDocsLogged(
+              'AnalyticsDashboard:month-class-sessions',
+              query(
+                collection(db, 'classSessions'),
+                where('date', '>=', monthRange.startYmd),
+                where('date', '<=', monthRange.endYmd)
+              ),
+              { source: 'src/pages/admin/AnalyticsDashboard.tsx' },
+            ),
           ]);
         if (!active) return;
-        setFsError(null);
+        setMonthError(null);
         setCharges(
           chargesSnap.docs
             .map((d) => ({ id: d.id, ...(d.data() as any) }))
@@ -296,11 +327,17 @@ export default function AnalyticsDashboard(): JSX.Element {
             .filter((entry) => entry.archived !== true)
         );
         setClassSessions(
-          classSessionsSnap?.docs.map((d) => ({ id: d.id, ...d.data() })) ?? []
+          classSessionsSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
         );
       } catch (err: any) {
         if (!active) return;
-        setFsError(err?.message || 'Some analytics data could not be loaded.');
+        setCharges([]);
+        setPayments([]);
+        setClassSessions([]);
+        setTeacherEarningsEntries([]);
+        setMonthError(err?.message || 'Selected-month analytics data could not be loaded.');
+      } finally {
+        if (active) setMonthLoading(false);
       }
     };
     void loadMonthData();
@@ -483,13 +520,13 @@ export default function AnalyticsDashboard(): JSX.Element {
   const teacherEarnings = useMemo(() => {
     const byTeacher = new Map<
       string,
-      { 
-        teacherId: string; 
+      {
+        teacherId: string;
         demoCount: number;
         demoEarned: number;
         sessionCount: number;
         sessionEarned: number;
-        totalEarned: number; 
+        totalEarned: number;
         pending: number;
       }
     >();
@@ -519,7 +556,7 @@ export default function AnalyticsDashboard(): JSX.Element {
       const bucket = byTeacher.get(teacherId)!;
       bucket.totalEarned += amount;
       bucket.pending += pending;
-      
+
       if (isDemoEarning(entry)) {
         bucket.demoCount += 1;
         bucket.demoEarned += amount;
@@ -540,6 +577,7 @@ export default function AnalyticsDashboard(): JSX.Element {
         totalEarned: row.totalEarned,
         pending: row.pending,
         profileTag: (() => {
+          if (!coreAnalyticsEnabled || coreLoading) return 'Profile not loaded';
           const profile = teacherProfileById[row.teacherId];
           if (!profile) return 'Deleted / Missing';
           if (profile.role !== 'teacher') return 'Role changed';
@@ -551,15 +589,24 @@ export default function AnalyticsDashboard(): JSX.Element {
       }))
       .sort((a, b) => b.pending - a.pending || b.totalEarned - a.totalEarned)
       .slice(0, 40);
-  }, [teacherEarningsEntries, nameById, teacherProfileById]);
+  }, [
+    teacherEarningsEntries,
+    nameById,
+    teacherProfileById,
+    coreAnalyticsEnabled,
+    coreLoading,
+  ]);
 
   const liveTeacherEarnings = useMemo(
-    () => teacherEarnings.filter((row) => row.profileTag === 'Live'),
+    () =>
+      teacherEarnings.filter(
+        (row) => row.profileTag === 'Live' || row.profileTag === 'Profile not loaded'
+      ),
     [teacherEarnings],
   );
 
   const archivedTeacherEarnings = useMemo(
-    () => teacherEarnings.filter((row) => row.profileTag !== 'Live'),
+    () => teacherEarnings.filter((row) => row.profileTag !== 'Live' && row.profileTag !== 'Profile not loaded'),
     [teacherEarnings],
   );
 
@@ -594,6 +641,7 @@ export default function AnalyticsDashboard(): JSX.Element {
   const projectedTeacherPayout = plannedProjection.plannedSessions * avgSessionPayout;
   const sessionNetEarningsMonth =
     revenueTotals.sessionChargesTotal - teacherEarningsSummary.totalSessionEarned;
+  const coreAnalyticsReady = coreAnalyticsEnabled && !coreLoading && !coreError;
 
   return (
     <div className="space-y-4">
@@ -609,6 +657,7 @@ export default function AnalyticsDashboard(): JSX.Element {
             type="button"
             size="sm"
             variant={coreAnalyticsEnabled ? 'outline' : 'default'}
+            disabled={coreLoading}
             onClick={() => {
               if (coreAnalyticsEnabled) {
                 setCoreRefreshKey((prev) => prev + 1);
@@ -617,7 +666,11 @@ export default function AnalyticsDashboard(): JSX.Element {
               setCoreAnalyticsEnabled(true);
             }}
           >
-            {coreAnalyticsEnabled ? 'Refresh core analytics' : 'Load core analytics'}
+            {coreLoading
+              ? 'Loading core analytics…'
+              : coreAnalyticsEnabled
+                ? 'Refresh core analytics'
+                : 'Load core analytics'}
           </Button>
           <label className="text-sm font-medium">Month</label>
           <Input
@@ -630,21 +683,36 @@ export default function AnalyticsDashboard(): JSX.Element {
             type="button"
             size="sm"
             variant="outline"
+            disabled={monthLoading}
             onClick={() => setMonthRefreshKey((prev) => prev + 1)}
           >
-            Refresh
+            {monthLoading ? 'Loading…' : 'Refresh'}
           </Button>
           <span className="text-xs text-muted-foreground px-2 py-1 rounded-full border">
             {coreAnalyticsEnabled
-              ? 'Core analytics loaded on demand'
+              ? coreLoading
+                ? 'Core analytics loading'
+                : 'Core analytics loaded on demand'
               : 'Heavy core analytics are paused until loaded manually'}
           </span>
         </div>
       </div>
 
-      {fsError && (
+      {monthLoading && (
+        <div className="text-xs text-muted-foreground border rounded px-3 py-2">
+          Loading analytics for {selectedMonth}. Previous month values have been cleared to avoid stale reporting.
+        </div>
+      )}
+
+      {monthError && (
         <div className="text-xs text-amber-700 border border-amber-200 bg-amber-50 rounded px-3 py-2">
-          {fsError}
+          Month analytics: {monthError}
+        </div>
+      )}
+
+      {coreError && (
+        <div className="text-xs text-amber-700 border border-amber-200 bg-amber-50 rounded px-3 py-2">
+          Core analytics: {coreError}
         </div>
       )}
 
@@ -653,76 +721,103 @@ export default function AnalyticsDashboard(): JSX.Element {
       {!coreAnalyticsEnabled && (
         <Card className="p-4 text-sm text-muted-foreground">
           Users, enrollments, and courses stay unloaded until you click `Load core analytics`.
+          Projection and enrollment-health cards show — until that data is loaded.
         </Card>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <MetricCard
           label="Billed Revenue (Month)"
-          value={formatMoney(expectedRevenue)}
+          value={monthLoading ? '…' : formatMoney(expectedRevenue)}
           sub="Current billed charges for the selected month (non-void only)"
         />
         <MetricCard
           label="Collected Payments (Month)"
-          value={formatMoney(earnedRevenue)}
+          value={monthLoading ? '…' : formatMoney(earnedRevenue)}
           sub="Payments applied/recorded for the selected month"
         />
         <MetricCard
           label="Balance Due"
-          value={formatMoney(balanceDueRevenue)}
+          value={monthLoading ? '…' : formatMoney(balanceDueRevenue)}
           sub="Billed revenue minus collected payments"
         />
-        <MetricCard label="Completed sessions (billed)" value={completedSessionsMonth} />
+        <MetricCard
+          label="Completed sessions (billed)"
+          value={monthLoading ? '…' : completedSessionsMonth}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <MetricCard
           label="Scheduled Sessions in Month"
-          value={plannedProjection.plannedSessions}
-          sub="Completed + upcoming scheduled sessions for the selected month"
+          value={monthLoading || !coreAnalyticsReady ? '—' : plannedProjection.plannedSessions}
+          sub={
+            !coreAnalyticsReady
+              ? 'Load core analytics to calculate enrollment-linked scheduled sessions'
+              : 'Completed + upcoming scheduled sessions for the selected month'
+          }
         />
         <MetricCard
           label="Remaining Scheduled Sessions"
-          value={plannedProjection.remainingScheduledSessions}
-          sub="Upcoming sessions yet to be completed"
+          value={monthLoading || !coreAnalyticsReady ? '—' : plannedProjection.remainingScheduledSessions}
+          sub={
+            !coreAnalyticsReady
+              ? 'Load core analytics to calculate remaining enrollment-linked sessions'
+              : 'Upcoming sessions yet to be completed'
+          }
         />
         <MetricCard
           label="Full-Month Scheduled Revenue"
-          value={formatMoney(plannedProjection.projectedRevenue)}
+          value={monthLoading || !coreAnalyticsReady ? '—' : formatMoney(plannedProjection.projectedRevenue)}
           valueClassName="whitespace-nowrap text-lg md:text-xl"
           sub={
-            plannedProjection.missingFeeSessions > 0
-              ? `Revenue estimate from all scheduled sessions in the selected month. Avg/session ${formatMoney(plannedProjection.avgProjectedRevenuePerSession)} • ${plannedProjection.missingFeeSessions} sessions missing fee config`
-              : `Revenue estimate from all scheduled sessions in the selected month. Avg/session ${formatMoney(plannedProjection.avgProjectedRevenuePerSession)}`
+            !coreAnalyticsReady
+              ? 'Load core analytics to calculate course/enrollment fee projections'
+              : plannedProjection.missingFeeSessions > 0
+                ? `Revenue estimate from all scheduled sessions in the selected month. Avg/session ${formatMoney(plannedProjection.avgProjectedRevenuePerSession)} • ${plannedProjection.missingFeeSessions} sessions missing fee config`
+                : `Revenue estimate from all scheduled sessions in the selected month. Avg/session ${formatMoney(plannedProjection.avgProjectedRevenuePerSession)}`
           }
         />
         <MetricCard
           label="Projected teacher payout (planned)"
-          value={formatMoney(projectedTeacherPayout)}
-          sub={`Avg payout/session ${formatMoney(avgSessionPayout)}`}
+          value={monthLoading || !coreAnalyticsReady ? '—' : formatMoney(projectedTeacherPayout)}
+          sub={
+            !coreAnalyticsReady
+              ? 'Load core analytics to calculate the planned payout projection'
+              : `Avg payout/session ${formatMoney(avgSessionPayout)}`
+          }
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <MetricCard label="Active-like enrollments" value={enrollmentBuckets.activeLike} />
-        <MetricCard label="Past enrollments" value={enrollmentBuckets.past} />
-        <MetricCard label="Other / unknown" value={enrollmentBuckets.other} />
+        <MetricCard
+          label="Active-like enrollments"
+          value={!coreAnalyticsReady ? '—' : enrollmentBuckets.activeLike}
+        />
+        <MetricCard
+          label="Past enrollments"
+          value={!coreAnalyticsReady ? '—' : enrollmentBuckets.past}
+        />
+        <MetricCard
+          label="Other / unknown"
+          value={!coreAnalyticsReady ? '—' : enrollmentBuckets.other}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <MetricCard 
-          label="Demo earnings (month)" 
-          value={formatMoney(teacherEarningsSummary.totalDemoEarned)}
+        <MetricCard
+          label="Demo earnings (month)"
+          value={monthLoading ? '…' : formatMoney(teacherEarningsSummary.totalDemoEarned)}
           sub={`${teacherEarningsSummary.totalDemoCount} demos completed/enrolled`}
         />
-        <MetricCard 
-          label="Session Net Revenue (Month)" 
-          value={formatMoney(sessionNetEarningsMonth)}
+        <MetricCard
+          label="Session Net Revenue (Month)"
+          value={monthLoading ? '…' : formatMoney(sessionNetEarningsMonth)}
           sub="Session charges minus teacher payout"
         />
-        <MetricCard 
-          label="Total teacher payout" 
-          value={formatMoney(teacherEarningsSummary.totalCombinedEarned)}
+        <MetricCard
+          label="Total teacher payout"
+          value={monthLoading ? '…' : formatMoney(teacherEarningsSummary.totalCombinedEarned)}
           sub="Combined exposure"
         />
       </div>
@@ -732,7 +827,10 @@ export default function AnalyticsDashboard(): JSX.Element {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-semibold">Teacher earnings (month)</h3>
-              <p className="text-xs text-muted-foreground">Based on attendance rollups.</p>
+              <p className="text-xs text-muted-foreground">
+                Based on attendance rollups.
+                {!coreAnalyticsReady ? ' Teacher profile classification loads with core analytics.' : ''}
+              </p>
             </div>
             <span className="text-xs text-muted-foreground">{visibleTeacherEarnings.length} teachers</span>
           </div>
@@ -750,8 +848,9 @@ export default function AnalyticsDashboard(): JSX.Element {
               size="sm"
               variant={teacherEarningsTab === 'archived' ? 'default' : 'outline'}
               onClick={() => setTeacherEarningsTab('archived')}
+              disabled={!coreAnalyticsReady}
             >
-              Archived / Deleted ({archivedTeacherEarnings.length})
+              Archived / Deleted ({coreAnalyticsReady ? archivedTeacherEarnings.length : '—'})
             </Button>
           </div>
           <div className="mt-3 overflow-x-auto">
@@ -772,9 +871,11 @@ export default function AnalyticsDashboard(): JSX.Element {
                 {visibleTeacherEarnings.length === 0 ? (
                   <tr>
                     <td className="p-3 text-muted-foreground" colSpan={8}>
-                      {teacherEarningsTab === 'live'
-                        ? 'No live teacher earnings for this month.'
-                        : 'No archived/deleted teacher earnings for this month.'}
+                      {monthLoading
+                        ? 'Loading selected-month teacher earnings…'
+                        : teacherEarningsTab === 'live'
+                          ? 'No live teacher earnings for this month.'
+                          : 'No archived/deleted teacher earnings for this month.'}
                     </td>
                   </tr>
                 ) : (
