@@ -1,16 +1,17 @@
 // src/lib/firebaseConfig.ts
 import { initializeApp, getApps, getApp, type FirebaseOptions } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
 import {
   browserLocalPersistence,
   indexedDBLocalPersistence,
   getAuth,
+  connectAuthEmulator,
   initializeAuth,
   setPersistence,
   type Auth,
 } from 'firebase/auth';
 import { getAnalytics, type Analytics, logEvent as fbLogEvent } from 'firebase/analytics';
-import { getFunctions } from 'firebase/functions';
+import { connectFunctionsEmulator, getFunctions, type Functions } from 'firebase/functions';
 import { logFirebaseAuthKeyPresence } from './nativeAuthDiagnostics';
 
 const env = import.meta.env;
@@ -139,6 +140,39 @@ export const ensureNativeAuthPersistence = (): Promise<NativeAuthPersistenceKind
 // Use env region (fallback to asia-south1) — guard against boolean
 const functionsRegion = asString(env.VITE_FUNCTIONS_REGION) ?? 'asia-south1';
 const functions = getFunctions(app, functionsRegion);
+
+const envFlag = (value: unknown): boolean => String(value ?? '').trim().toLowerCase() === 'true';
+const emulatorState = globalThis as typeof globalThis & {
+  __tinyStepsFirebaseEmulators?: { auth: boolean; firestore: boolean; functionRegions: Set<string> };
+};
+const connectedEmulators = emulatorState.__tinyStepsFirebaseEmulators ?? {
+  auth: false,
+  firestore: false,
+  functionRegions: new Set<string>(),
+};
+emulatorState.__tinyStepsFirebaseEmulators = connectedEmulators;
+
+if (envFlag(env.VITE_USE_AUTH_EMULATOR) && !connectedEmulators.auth) {
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+  connectedEmulators.auth = true;
+}
+if (envFlag(env.VITE_USE_FIRESTORE_EMULATOR) && !connectedEmulators.firestore) {
+  connectFirestoreEmulator(db, '127.0.0.1', 8085);
+  connectedEmulators.firestore = true;
+}
+if (envFlag(env.VITE_USE_FUNCTIONS_EMULATOR) && !connectedEmulators.functionRegions.has(functionsRegion)) {
+  connectFunctionsEmulator(functions, '127.0.0.1', 5001);
+  connectedEmulators.functionRegions.add(functionsRegion);
+}
+
+export const getRegionalFunctions = (region: string): Functions => {
+  const client = getFunctions(app, region);
+  if (envFlag(env.VITE_USE_FUNCTIONS_EMULATOR) && !connectedEmulators.functionRegions.has(region)) {
+    connectFunctionsEmulator(client, '127.0.0.1', 5001);
+    connectedEmulators.functionRegions.add(region);
+  }
+  return client;
+};
 
 // Analytics (browser only)
 let analytics: Analytics | null = null;

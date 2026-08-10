@@ -24,6 +24,7 @@ import { ParentOverviewCards } from "./components/overview/ParentOverviewCards";
 import ParentAttendanceSummary from "./components/ParentAttendanceSummary";
 import ParentBillingSummary from "./components/ParentBillingSummary";
 import ParentClassesView from "./components/classes/ParentClassesView";
+import { ParentWorksheetLibrary } from "./components/classes/ParentWorksheetLibrary";
 import ParentDashboardHero from "./components/ParentDashboardHero";
 import ParentDashboardKpis from "./components/ParentDashboardKpis";
 import ParentInsightsView from "./components/insights/ParentInsightsView";
@@ -86,9 +87,7 @@ import {
 } from "../../lib/skillRatings";
 import { getProgressSkillsForLesson } from "../../lib/progressSkills";
 import {
-  getSafeWorksheetUrl,
   toParentWorksheetItem,
-  worksheetMatchesContext,
   type ParentWorksheetItem,
 } from "../../lib/parentWorksheets";
 import { hapticLight, hapticSelection } from "../../lib/nativeHaptics";
@@ -434,12 +433,6 @@ type ParentClassRecording = {
   createdAt?: any;
   updatedAt?: any;
   [key: string]: any;
-};
-
-type ParentWorksheetGroup = {
-  key: string;
-  label: string;
-  items: ParentWorksheetItem[];
 };
 
 const HERO_JOIN_DISABLED_REASON = "Class link will appear once assigned.";
@@ -2453,74 +2446,19 @@ export default function ParentDashboard() {
     },
   });
 
-  const worksheetEnrollmentContext = useMemo(() => {
-    const enrollments = (enrollmentsQuery.data ?? []) as Enrollment[];
-    const activeEnrollmentIds: string[] = [];
-    const activeCourseIds = new Set<string>();
-
-    enrollments.forEach((enrollment) => {
-      const status = String((enrollment as any)?.status || "active").trim().toLowerCase();
-      const isInactive =
-        status === "inactive"
-        || status === "cancelled"
-        || status === "canceled"
-        || status === "withdrawn"
-        || status === "closed"
-        || status === "completed"
-        || status === "archived";
-      if (isInactive) return;
-
-      const enrollmentId = String((enrollment as any)?.id || "").trim();
-      if (enrollmentId) activeEnrollmentIds.push(enrollmentId);
-
-      const courseId = String((enrollment as any)?.courseId || "").trim();
-      if (courseId) activeCourseIds.add(courseId);
-    });
-
-    return {
-      activeEnrollmentIds: Array.from(new Set(activeEnrollmentIds)).sort(),
-      activeCourseIds: Array.from(activeCourseIds).sort(),
-    };
-  }, [enrollmentsQuery.data]);
-
   const parentWorksheetsQuery = useQuery({
-    queryKey: ["parentWorksheets", user?.uid, worksheetEnrollmentContext.activeCourseIds.join("|")],
-    enabled: !!user?.uid && activeTab === "classes",
+    queryKey: ["parentWorksheets", user?.uid, selectedKidId],
+    enabled: !!user?.uid && !!selectedKidId && activeTab === "classes",
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     queryFn: async (): Promise<ParentWorksheetItem[]> => {
-      if (!user?.uid) return [];
-      const worksheetCollection = collection(db, "parentWorksheetLibrary");
-      const worksheetMap = new Map<string, ParentWorksheetItem>();
-
-      const courseIdChunks = chunkIds(worksheetEnrollmentContext.activeCourseIds, 10);
-      for (const chunk of courseIdChunks) {
-        if (!chunk.length) continue;
-        const byCourseSnap = await getDocs(
-          query(
-            worksheetCollection,
-            where("targetCourseIds", "array-contains-any", chunk),
-            limit(200),
-          ),
-        );
-        byCourseSnap.docs.forEach((entry) => {
-          worksheetMap.set(entry.id, toParentWorksheetItem(entry.id, entry.data()));
-        });
-      }
-
-      const legacySnap = await getDocs(
-        query(
-          worksheetCollection,
-          where("targetParentIds", "array-contains-any", [user.uid, "all_parents"]),
-          limit(200),
-        ),
+      if (!user?.uid || !selectedKidId) return [];
+      const response = await callFunction<{ resources?: Array<Record<string, unknown>> }, { kidId: string }>(
+        "getParentWorksheetResources",
+        { kidId: selectedKidId },
       );
-      legacySnap.docs.forEach((entry) => {
-        worksheetMap.set(entry.id, toParentWorksheetItem(entry.id, entry.data()));
-      });
-
-      return Array.from(worksheetMap.values());
+      return (response.resources || []).map((resource) => toParentWorksheetItem(String(resource.id || ''), resource));
     },
   });
 
@@ -2707,12 +2645,6 @@ export default function ParentDashboard() {
       return;
     }
     window.open(trimmed, "_blank", "noopener,noreferrer");
-  };
-
-  const openWorksheetLink = (url?: string | null) => {
-    const safeUrl = getSafeWorksheetUrl(url);
-    if (!safeUrl) return;
-    window.open(safeUrl, "_blank", "noopener,noreferrer");
   };
 
   const openJoinClass = async (session: KidSession) => {
@@ -3998,36 +3930,13 @@ export default function ParentDashboard() {
     const worksheets = parentWorksheetsQuery.data ?? [];
     return worksheets
       .filter((worksheet) => worksheet.isActive && !worksheet.isArchived)
-      .filter((worksheet) =>
-        worksheetMatchesContext(worksheet, {
-          parentUid: user?.uid || null,
-          kidId: selectedKidId || null,
-          courseIds: worksheetEnrollmentContext.activeCourseIds,
-          enrollmentIds: worksheetEnrollmentContext.activeEnrollmentIds,
-        }),
-      )
       .sort((a, b) => {
         if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
         const aUpdated = toDateOrNull(a.updatedAt)?.getTime() ?? 0;
         const bUpdated = toDateOrNull(b.updatedAt)?.getTime() ?? 0;
         return bUpdated - aUpdated;
       });
-  }, [parentWorksheetsQuery.data, selectedKidId, user?.uid, worksheetEnrollmentContext]);
-
-  const groupedParentWorksheets = useMemo(() => {
-    const groups = new Map<string, ParentWorksheetGroup>();
-    visibleParentWorksheets.forEach((worksheet) => {
-      const category = String(worksheet.category || "").trim() || "Worksheets";
-      const key = category.toLowerCase();
-      const existing = groups.get(key);
-      if (existing) {
-        existing.items.push(worksheet);
-      } else {
-        groups.set(key, { key, label: category, items: [worksheet] });
-      }
-    });
-    return Array.from(groups.values()).sort((a, b) => a.label.localeCompare(b.label));
-  }, [visibleParentWorksheets]);
+  }, [parentWorksheetsQuery.data]);
 
   const renderProfileContent = () => {
     const kidName = selectedKid?.fullName || "Child";
@@ -5441,94 +5350,12 @@ export default function ParentDashboard() {
               onSelectResource={selectClassResource}
               onJoinSession={(row) => openJoinClass(row.source as KidSession)}
               resourceContent={classesView === "worksheets" ? (
-              <Card className="p-6">
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                      Worksheet Library
-                    </h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-300">
-                      Practice resources shared by Tiny Steps.
-                    </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => parentWorksheetsQuery.refetch()}
-                    disabled={parentWorksheetsQuery.isFetching}
-                  >
-                    {parentWorksheetsQuery.isFetching ? "Refreshing..." : "Refresh"}
-                  </Button>
-                </div>
-
-                {parentWorksheetsQuery.isLoading ? (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
-                    Loading worksheets...
-                  </div>
-                ) : groupedParentWorksheets.length === 0 ? (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
-                    No worksheets have been shared yet.
-                  </div>
-                ) : (
-                  <div className="space-y-5">
-                    {groupedParentWorksheets.map((group) => (
-                      <div key={group.key} className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                            {group.label}
-                          </h4>
-                          <span className="text-xs text-slate-500">
-                            {group.items.length} worksheet{group.items.length === 1 ? "" : "s"}
-                          </span>
-                        </div>
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          {group.items.map((worksheet) => {
-                            const safeUrl = getSafeWorksheetUrl(worksheet.url);
-                            return (
-                              <div
-                                key={worksheet.id}
-                                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/60"
-                              >
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="min-w-0">
-                                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                      {worksheet.title || "Worksheet"}
-                                    </p>
-                                    {worksheet.description ? (
-                                      <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-                                        {worksheet.description}
-                                      </p>
-                                    ) : null}
-                                  </div>
-                                  {worksheet.category ? (
-                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                                      {worksheet.category}
-                                    </span>
-                                  ) : null}
-                                </div>
-                                <div className="mt-3 flex items-center justify-between">
-                                  <div className="text-[11px] text-slate-500">
-                                    {worksheet.targetStageTags[0] || "Worksheet resource"}
-                                  </div>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => openWorksheetLink(worksheet.url)}
-                                    disabled={!safeUrl}
-                                  >
-                                    Open Worksheet
-                                    <ExternalLink className="ml-1 h-3.5 w-3.5" />
-                                  </Button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </Card>
+              <ParentWorksheetLibrary
+                items={visibleParentWorksheets}
+                loading={parentWorksheetsQuery.isLoading}
+                refreshing={parentWorksheetsQuery.isFetching}
+                onRefresh={() => void parentWorksheetsQuery.refetch()}
+              />
             ) : classesView === "calendar" ? (
               <Card className="p-3 sm:p-6">
                 <div className="space-y-4">

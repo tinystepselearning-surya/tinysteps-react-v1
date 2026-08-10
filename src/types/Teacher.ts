@@ -20,6 +20,8 @@ export interface TeacherSession {
 
   courseId: string;
   courseName?: string;
+  lessonId?: string;
+  plannedLessonId?: string;
 
   studentName?: string;
   kidName?: string;
