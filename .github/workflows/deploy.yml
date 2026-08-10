@@ -40,6 +40,9 @@ jobs:
       - name: Build Cloud Functions
         run: npm --prefix functions run build
 
+      - name: Run Cloud Functions unit tests
+        run: npm --prefix functions test
+
       - name: Setup Java for Firestore emulator
         uses: actions/setup-java@v4
         with:
