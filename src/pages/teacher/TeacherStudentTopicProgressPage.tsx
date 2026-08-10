@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
-import StudentTopicProgressEditor from '../../components/teacher/StudentTopicProgressEditor';
+import StudentTopicProgressEditor from '../../components/teacher/StudentTopicProgressEditorCanonical';
 import { db } from '../../lib/firebaseConfig';
 import TinyStepsBrand from '../../components/common/TinyStepsBrand';
 
