@@ -71,13 +71,13 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'Tiny Steps treats letter sounds as the beginning of a larger Foundation-to-Advanced pathway: phonological awareness, sound–symbol knowledge, blending, segmenting, major phonics and spelling patterns, longer-word analysis, cumulative reading and fluent application. The implementation model is at https://tinystepslearning.com/for-schools.',
+        'Tiny Steps treats letter sounds as the beginning of a larger Foundation-to-Advanced pathway: phonological awareness, sound–symbol knowledge, blending, segmenting, major phonics and spelling patterns, longer-word analysis, cumulative reading and fluent application. Review the [Tiny Steps school implementation model](/for-schools).',
     },
     { type: 'h2', content: 'Curriculum reference' },
     {
       type: 'p',
       content:
-        'NCERT NCF-FS 2022 describes phonological awareness, decoding, blending, segmenting and attention to specific English letter combinations: https://ncert.nic.in/pdf/NCF_for_Foundational_Stage_20_October_2022.pdf',
+        'The [NCERT National Curriculum Framework for Foundational Stage 2022](https://ncert.nic.in/pdf/NCF_for_Foundational_Stage_20_October_2022.pdf) describes phonological awareness, decoding, blending, segmenting and attention to specific English letter combinations.',
     },
   ],
   faq: [

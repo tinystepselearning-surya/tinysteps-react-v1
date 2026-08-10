@@ -72,7 +72,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'In the Tiny Steps school partnership, the school’s own teachers remain the classroom teachers. Tiny Steps provides progressive training and rehearsal, classroom resources, implementation check-ins, content clarification, assessment guidance and a dedicated learning partner across the academic year. See https://tinystepslearning.com/for-schools.',
+        'In the Tiny Steps school partnership, the school’s own teachers remain the classroom teachers. Tiny Steps provides progressive training and rehearsal, classroom resources, implementation check-ins, content clarification, assessment guidance and a dedicated learning partner across the academic year. Review the [Tiny Steps school partnership](/for-schools).',
     },
     { type: 'h2', content: 'Why this matters for CBSE/NCF implementation' },
     {

@@ -75,7 +75,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'Tiny Steps school partnerships use baseline, checkpoint and end-of-cycle guidance across sound knowledge, blending, segmenting, decoding, spelling and fluency. The emphasis is on what children can independently transfer and what teachers should teach next. See https://tinystepslearning.com/for-schools.',
+        'Tiny Steps school partnerships use baseline, checkpoint and end-of-cycle guidance across sound knowledge, blending, segmenting, decoding, spelling and fluency. The emphasis is on what children can independently transfer and what teachers should teach next. Review the [Tiny Steps school partnership model](/for-schools).',
     },
   ],
   faq: [

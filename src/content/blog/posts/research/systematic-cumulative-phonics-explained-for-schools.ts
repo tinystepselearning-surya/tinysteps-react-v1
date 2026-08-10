@@ -63,7 +63,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'Tiny Steps provides a Foundation-to-Advanced progression, classroom routines, digital and print practice, assessment guidance and teacher training. Previously taught knowledge returns through word reading, spelling, sentences and connected text so phonics develops as one integrated system. Learn more at https://tinystepslearning.com/for-schools.',
+        'Tiny Steps provides a Foundation-to-Advanced progression, classroom routines, digital and print practice, assessment guidance and teacher training. Previously taught knowledge returns through word reading, spelling, sentences and connected text so phonics develops as one integrated system. Learn more about the [Tiny Steps school phonics pathway](/for-schools).',
     },
   ],
   faq: [

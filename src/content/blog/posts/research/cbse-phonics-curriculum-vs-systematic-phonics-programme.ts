@@ -68,13 +68,13 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'In one sentence: curriculum defines the destination; methodology builds the route. See the complete school model at https://tinystepslearning.com/for-schools.',
+        'In one sentence: curriculum defines the destination; methodology builds the route. See the [complete Tiny Steps school model](/for-schools).',
     },
     { type: 'h2', content: 'Primary source' },
     {
       type: 'p',
       content:
-        'NCERT — National Curriculum Framework for Foundational Stage 2022: https://ncert.nic.in/pdf/NCF_for_Foundational_Stage_20_October_2022.pdf',
+        '[NCERT — National Curriculum Framework for Foundational Stage 2022](https://ncert.nic.in/pdf/NCF_for_Foundational_Stage_20_October_2022.pdf)',
     },
   ],
   faq: [

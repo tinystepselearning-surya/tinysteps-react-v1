@@ -94,13 +94,13 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'Tiny Steps organises its school programme as a Foundation-to-Advanced progression and maps the rollout to the school’s current stage, baseline findings and timetable. The school’s teachers deliver the programme after training, with classroom resources, assessment guidance and continued support. See https://tinystepslearning.com/for-schools.',
+        'Tiny Steps organises its school programme as a Foundation-to-Advanced progression and maps the rollout to the school’s current stage, baseline findings and timetable. The school’s teachers deliver the programme after training, with classroom resources, assessment guidance and continued support. Explore the [Tiny Steps school implementation pathway](/for-schools).',
     },
     { type: 'h2', content: 'Official curriculum basis' },
     {
       type: 'p',
       content:
-        'NCERT NCF-FS 2022 provides the foundational-literacy basis for phonological awareness, blending, segmenting, decoding and attention to English letter combinations: https://ncert.nic.in/pdf/NCF_for_Foundational_Stage_20_October_2022.pdf',
+        'The [NCERT National Curriculum Framework for Foundational Stage 2022](https://ncert.nic.in/pdf/NCF_for_Foundational_Stage_20_October_2022.pdf) provides the foundational-literacy basis for phonological awareness, blending, segmenting, decoding and attention to English letter combinations.',
     },
   ],
   faq: [

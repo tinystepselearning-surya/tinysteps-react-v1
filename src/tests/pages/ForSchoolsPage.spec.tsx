@@ -133,7 +133,9 @@ describe('ForSchoolsPage proposal CTAs', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole('heading', { name: /Does CBSE include phonics\?/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 2, name: /Does CBSE include phonics\?/i }),
+    ).toBeInTheDocument();
     expect(screen.getByText('The Tiny Steps implementation pathway')).toBeInTheDocument();
 
     const pathwayTitles = [

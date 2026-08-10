@@ -97,7 +97,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'The core position is simple: CBSE/NCF defines foundational-literacy outcomes. Tiny Steps builds the implementation pathway. School leaders can review the full partnership model at https://tinystepslearning.com/for-schools.',
+        'The core position is simple: CBSE/NCF defines foundational-literacy outcomes. Tiny Steps builds the implementation pathway. School leaders can review the [full school partnership model](/for-schools).',
     },
     {
       type: 'h2',
@@ -105,11 +105,11 @@ const post: BlogPost = {
     },
     {
       type: 'li',
-      content: 'NCERT — National Curriculum Framework for Foundational Stage 2022: https://ncert.nic.in/pdf/NCF_for_Foundational_Stage_20_October_2022.pdf',
+      content: '[NCERT — National Curriculum Framework for Foundational Stage 2022](https://ncert.nic.in/pdf/NCF_for_Foundational_Stage_20_October_2022.pdf)',
     },
     {
       type: 'li',
-      content: 'CBSE Academic — Foundational Stage / Holistic Progress Card resources: https://cbseacademic.nic.in/hpc-resources.html',
+      content: '[CBSE Academic — Foundational Stage / Holistic Progress Card resources](https://cbseacademic.nic.in/hpc-resources.html)',
     },
   ],
   faq: [

@@ -76,16 +76,16 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'Tiny Steps uses the same broad quality principles—explicit progression, cumulative teaching, blending, segmenting, decoding, spelling, assessment and teacher capability building—inside a school partnership designed for Indian and international school contexts. Learn about the implementation model at https://tinystepslearning.com/for-schools.',
+        'Tiny Steps uses the same broad quality principles—explicit progression, cumulative teaching, blending, segmenting, decoding, spelling, assessment and teacher capability building—inside a school partnership designed for Indian and international school contexts. Learn about the [Tiny Steps school implementation model](/for-schools).',
     },
     { type: 'h2', content: 'Sources reviewed' },
     {
       type: 'li',
-      content: 'UK Department for Education — validation criteria for systematic synthetic phonics programmes: https://www.gov.uk/government/publications/phonics-teaching-materials-core-criteria-and-self-assessment/validation-of-systematic-synthetic-phonics-programmes-supporting-documentation',
+      content: '[UK Department for Education — validation criteria for systematic synthetic phonics programmes](https://www.gov.uk/government/publications/phonics-teaching-materials-core-criteria-and-self-assessment/validation-of-systematic-synthetic-phonics-programmes-supporting-documentation)',
     },
     {
       type: 'li',
-      content: 'NCERT — National Curriculum Framework for Foundational Stage 2022: https://ncert.nic.in/pdf/NCF_for_Foundational_Stage_20_October_2022.pdf',
+      content: '[NCERT — National Curriculum Framework for Foundational Stage 2022](https://ncert.nic.in/pdf/NCF_for_Foundational_Stage_20_October_2022.pdf)',
     },
   ],
   faq: [
