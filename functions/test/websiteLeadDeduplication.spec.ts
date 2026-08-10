@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildWebsiteLeadIdentityKey,
+  hasUnsafeWebsiteLeadDemoConflict,
   normalizeWebsiteLeadChildName,
   normalizeWebsiteLeadPhone,
 } from '../src/websiteLeadDeduplication';
 
 describe('website lead deduplication identity', () => {
-  it('normalizes Indian +91 and local mobile formats to the same phone identity', () => {
+  it('normalizes Indian +91, 0091, and local mobile formats to the same phone identity', () => {
     expect(normalizeWebsiteLeadPhone('+91 87221 06429')).toBe('8722106429');
+    expect(normalizeWebsiteLeadPhone('0091 87221 06429')).toBe('8722106429');
     expect(normalizeWebsiteLeadPhone('8722106429')).toBe('8722106429');
 
     expect(
@@ -40,5 +42,41 @@ describe('website lead deduplication identity', () => {
     expect(key).toMatch(/^[a-f0-9]{64}$/);
     expect(key).not.toContain('9876543210');
     expect(key).not.toContain('rithanyaa');
+  });
+});
+
+describe('website lead demo lifecycle safety', () => {
+  it('allows a fresh duplicate to merge into a canonical lead that already owns a demo', () => {
+    expect(
+      hasUnsafeWebsiteLeadDemoConflict(
+        { demoSessionId: 'demo_1', demoIds: ['demo_1'] },
+        {},
+      ),
+    ).toBe(false);
+  });
+
+  it('blocks deleting a duplicate that owns a demo when the canonical has none', () => {
+    expect(
+      hasUnsafeWebsiteLeadDemoConflict(
+        {},
+        { demoSessionId: 'demo_2', demoIds: ['demo_2'] },
+      ),
+    ).toBe(true);
+  });
+
+  it('allows matching demo linkage and blocks different demo linkage', () => {
+    expect(
+      hasUnsafeWebsiteLeadDemoConflict(
+        { demoIds: ['demo_1'] },
+        { demoSessionId: 'demo_1' },
+      ),
+    ).toBe(false);
+
+    expect(
+      hasUnsafeWebsiteLeadDemoConflict(
+        { demoIds: ['demo_1'] },
+        { demoSessionId: 'demo_2' },
+      ),
+    ).toBe(true);
   });
 });
