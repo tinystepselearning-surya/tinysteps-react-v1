@@ -561,7 +561,7 @@ export default function Week12SpeakingConfidenceSeedsPage() {
         readTimeLabel={ARTICLE_READ_TIME}
         actions={[
           { label: 'Explore Tiny Steps speaking classes', to: '/speaking' },
-          { label: 'Book a free speaking assessment', to: '/?book=1', variant: 'secondary' },
+          { label: 'Book a free speaking assessment', to: '/book-demo', variant: 'secondary' },
         ]}
         searchPainPoints={SEARCH_PAIN_POINTS}
         heroPoints={HERO_POINTS}

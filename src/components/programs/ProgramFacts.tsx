@@ -18,7 +18,7 @@ export default function ProgramFacts({
   structure,
   outcomes,
   ctaLabel = 'Book Free 35-Minute Demo',
-  ctaHref = '/?book=1',
+  ctaHref = '/book-demo',
 }: ProgramFactsProps) {
   return (
     <section className="mx-auto max-w-4xl px-6 py-8">

@@ -26,7 +26,7 @@ const getArticleAuthorLabel = (author: unknown): string =>
 const CATEGORY_ARTICLE_CONFIG = {
   Phonics: {
     primaryAction: { label: 'Explore Tiny Steps phonics classes', to: '/phonics' },
-    secondaryAction: { label: 'Book a free phonics assessment', to: '/?book=1' },
+    secondaryAction: { label: 'Book a free phonics assessment', to: '/book-demo' },
     learningPathIntro:
       'Continue with a structured phonics pathway, or review the full learning roadmap before choosing the next program.',
     learningPathLinks: [
@@ -68,7 +68,7 @@ const CATEGORY_ARTICLE_CONFIG = {
   },
   Grammar: {
     primaryAction: { label: 'Explore Tiny Steps grammar classes', to: '/grammar' },
-    secondaryAction: { label: 'Book a free grammar assessment', to: '/?book=1' },
+    secondaryAction: { label: 'Book a free grammar assessment', to: '/book-demo' },
     learningPathIntro:
       'Move from grammar confusion to clearer sentence-building with the right grammar path and a stage-wise curriculum view.',
     learningPathLinks: [
@@ -110,7 +110,7 @@ const CATEGORY_ARTICLE_CONFIG = {
   },
   'Public Speaking': {
     primaryAction: { label: 'Explore Tiny Steps speaking classes', to: '/speaking' },
-    secondaryAction: { label: 'Book a free speaking assessment', to: '/?book=1' },
+    secondaryAction: { label: 'Book a free speaking assessment', to: '/book-demo' },
     learningPathIntro:
       'Support communication confidence with a speaking-focused route, then map the next stage in the wider curriculum.',
     learningPathLinks: [
@@ -152,7 +152,7 @@ const CATEGORY_ARTICLE_CONFIG = {
   },
   'Parent Tips': {
     primaryAction: { label: 'Explore the Parents Hub', to: '/parents' },
-    secondaryAction: { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/?book=1' },
+    secondaryAction: { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
     learningPathIntro:
       'When you are deciding the next step, use the course chooser and curriculum roadmap to match support to your child’s current need.',
     learningPathLinks: [
@@ -188,12 +188,12 @@ const CATEGORY_ARTICLE_CONFIG = {
     sidebarLinks: [
       { label: 'Open the Parents Hub', to: '/parents' },
       { label: 'Track progress at home', to: '/parents/tracking-progress' },
-      { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/?book=1' },
+      { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
     ],
   },
   Research: {
     primaryAction: { label: 'Explore the Parents Hub', to: '/parents' },
-    secondaryAction: { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/?book=1' },
+    secondaryAction: { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
     learningPathIntro:
       'Turn research takeaways into action with a clear course-selection route and a connected curriculum pathway.',
     learningPathLinks: [
@@ -229,7 +229,7 @@ const CATEGORY_ARTICLE_CONFIG = {
     sidebarLinks: [
       { label: 'Explore the Parents Hub', to: '/parents' },
       { label: 'Read the phonics guide', to: '/blog/phonics-for-parents-guide' },
-      { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/?book=1' },
+      { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
     ],
   },
 };
@@ -280,12 +280,12 @@ const POST_CTA_OVERRIDES: Record<string, {
       'If your child needs structured support across phonics, grammar, and speaking, use the course chooser to pick one clear starting route.',
     learningPathLinks: [
       { label: 'Course chooser', to: '/courses' },
-      { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/?book=1' },
+      { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
     ],
     suppressCoursesFallback: true,
   },
   'june-school-reopening-english-readiness-plan': {
-    primaryAction: { label: 'Book a June readiness assessment', to: '/?book=1' },
+    primaryAction: { label: 'Book a June readiness assessment', to: '/book-demo' },
     learningPathIntro:
       'Before school reopens, use a short structured pathway to refresh phonics, grammar, reading, and speaking with clear weekly goals.',
     learningPathLinks: [
@@ -954,7 +954,13 @@ function buildMetaDescription(src: any) {
                   </Link>
                 )}
                 {blogPosts
-                  .filter(p => p.category === metaSource.category && p.slug !== slug && !p.hideFromList)
+                  .filter(
+                    p =>
+                      p.category === metaSource.category
+                      && p.slug !== slug
+                      && !p.hideFromList
+                      && !shouldNoindexBlogSlug(p.slug),
+                  )
                   .slice(0, 3)
                   .map(related => (
                     <Link key={related.slug} to={`/blog/${related.slug}`} className="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-3 text-slate-900 shadow-sm transition hover:bg-slate-50">

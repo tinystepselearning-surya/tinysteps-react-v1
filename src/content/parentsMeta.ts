@@ -11,204 +11,207 @@ export type ParentMeta = {
 
 export const parentsMeta: Record<string, ParentMeta> = {
   '/parents': {
-    title: 'Parents Hub: Course Choice, Reading Support, and Progress Guides | Tiny Steps',
-    description: 'Practical parent guides for choosing the right Tiny Steps course, scheduling classes, tracking progress, and helping children read with more confidence.',
+    title: 'Parents Hub: Course Choice, Reading Support and Progress Guides | Tiny Steps',
+    description:
+      'Practical parent guides for choosing the right English learning path, supporting reading at home, building speaking confidence, and tracking real progress.',
     canonicalPath: '/parents',
     ogTitle: 'Parents Help Hub — Tiny Steps',
-    ogDescription: 'Practical guides for parents on courses, scheduling and reading at home.',
+    ogDescription: 'Practical guides for course choice, home routines, speaking confidence, and visible learning progress.',
     jsonLd: {
-      "@context": "https://schema.org",
-      "@type": "CollectionPage",
-      "name": "Parents Help Hub — Tiny Steps",
-      "description": "Practical guides for parents: choosing courses, scheduling, payments, and helping kids learn to read.",
-      "inLanguage": "en-IN",
-      "hasPart": [
-        { "@type": "WebPage", "name": "Getting started with Phonics at Home", "url": "https://tinystepslearning.com/parents/getting-started" },
-        { "@type": "WebPage", "name": "How to choose a course", "url": "https://tinystepslearning.com/parents/choosing-course" },
-        { "@type": "WebPage", "name": "Scheduling & Attendance", "url": "https://tinystepslearning.com/parents/scheduling" },
-        { "@type": "WebPage", "name": "Payments & invoices", "url": "https://tinystepslearning.com/parents/payments" },
-        { "@type": "WebPage", "name": "Track your child's progress", "url": "https://tinystepslearning.com/parents/tracking-progress" },
-        { "@type": "WebPage", "name": "Helping with homework", "url": "https://tinystepslearning.com/parents/helping-with-homework" },
-        { "@type": "WebPage", "name": "Phonics mission — quick daily practice", "url": "https://tinystepslearning.com/parents/phonics-mission" },
-        { "@type": "WebPage", "name": "Reading at home — simple routines", "url": "https://tinystepslearning.com/parents/reading-at-home" },
-        { "@type": "WebPage", "name": "Phonics for Parents — deep research guide", "url": "https://tinystepslearning.com/blog/phonics-for-parents-guide" },
-        { "@type": "WebPage", "name": "Building speaking confidence", "url": "https://tinystepslearning.com/parents/speech-confidence" },
-        { "@type": "WebPage", "name": "Common mistakes parents make", "url": "https://tinystepslearning.com/parents/common-mistakes" }
-      ]
-    }
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: 'Parents Help Hub — Tiny Steps',
+      description: 'Practical guides for parents choosing and supporting phonics, reading, grammar, writing, and speaking pathways.',
+      inLanguage: 'en-IN',
+      hasPart: [
+        { '@type': 'WebPage', name: 'Getting started with Tiny Steps', url: 'https://tinystepslearning.com/parents/getting-started' },
+        { '@type': 'WebPage', name: 'How to choose the right course', url: 'https://tinystepslearning.com/parents/choosing-course' },
+        { '@type': 'WebPage', name: 'Scheduling and attendance', url: 'https://tinystepslearning.com/parents/scheduling' },
+        { '@type': 'WebPage', name: 'Payments and invoices', url: 'https://tinystepslearning.com/parents/payments' },
+        { '@type': 'WebPage', name: 'Track your child’s progress', url: 'https://tinystepslearning.com/parents/tracking-progress' },
+        { '@type': 'WebPage', name: 'Helping with homework', url: 'https://tinystepslearning.com/parents/helping-with-homework' },
+        { '@type': 'WebPage', name: 'Phonics mission — daily practice plan', url: 'https://tinystepslearning.com/parents/phonics-mission' },
+        { '@type': 'WebPage', name: 'Reading at home — daily routine', url: 'https://tinystepslearning.com/parents/reading-at-home' },
+        { '@type': 'WebPage', name: 'Phonics for Parents — deep guide', url: 'https://tinystepslearning.com/blog/phonics-for-parents-guide' },
+        { '@type': 'WebPage', name: 'Building speaking confidence', url: 'https://tinystepslearning.com/parents/speech-confidence' },
+        { '@type': 'WebPage', name: 'Common learning mistakes parents make', url: 'https://tinystepslearning.com/parents/common-mistakes' },
+      ],
+    },
   },
   '/parents/getting-started': {
-    title: 'Getting Started with Phonics at Home | Tiny Steps Parents',
+    title: 'Getting Started with Tiny Steps: Free Assessment and First Steps | Parents',
     description:
-      "Start phonics the right way: letter sounds, blending, daily routines, and what to avoid—built for busy parents of ages 3–7.",
+      'See exactly how Tiny Steps starts: a free 35-minute 1:1 assessment, level recommendation, course match, preparation checklist, and first-week parent plan.',
     canonicalPath: '/parents/getting-started',
-    ogTitle: 'Getting Started with Phonics at Home',
-    ogDescription: 'Start phonics the right way: letter sounds, blending and simple daily routines for ages 3–7.',
+    ogTitle: 'Getting Started with Tiny Steps Learning',
+    ogDescription: 'A parent guide to the free assessment, placement recommendation, preparation checklist, and first week.',
     jsonLd: {
-      "@context": "https://schema.org",
-      "@type": "HowTo",
-      "name": "Getting started with Tiny Steps",
-      "description": "Start with one free 35-minute 1:1 online demo assessment class so we can recommend the right level.",
-      "inLanguage": "en-IN",
-      "step": [
-        { "@type": "HowToStep", "text": "Book one free 35-minute 1:1 online demo assessment class via the Courses page." },
-        { "@type": "HowToStep", "text": "Attend the 35‑minute assessment with your child." },
-        { "@type": "HowToStep", "text": "Receive a recommended course and curriculum link." }
-      ]
-    }
+      '@context': 'https://schema.org',
+      '@type': 'HowTo',
+      name: 'How to get started with Tiny Steps Learning',
+      description: 'Start with one free 35-minute 1:1 online demo assessment class, review the recommended level, and begin with one clear learning priority.',
+      inLanguage: 'en-IN',
+      step: [
+        { '@type': 'HowToStep', text: 'Book one free 35-minute 1:1 online demo assessment class.' },
+        { '@type': 'HowToStep', text: 'Attend the live assessment so the teacher can check the skills relevant to your child’s age and current level.' },
+        { '@type': 'HowToStep', text: 'Review the recommended course, current learning priority, and home-practice guidance.' },
+        { '@type': 'HowToStep', text: 'Begin the selected pathway and keep the first home target simple and consistent.' },
+      ],
+    },
   },
   '/parents/choosing-course': {
-    title: 'How to Choose the Right Tiny Steps Course for Your Child',
-    description: 'Parent decision guide to choose phonics, grammar, reading, or speaking support based on your child’s real learning gap, not guesswork.',
+    title: 'How to Choose the Right English Course for Your Child | Tiny Steps',
+    description:
+      'Parent decision guide to choose phonics, reading, grammar, writing, or speaking support based on your child’s real learning gap rather than age alone.',
     canonicalPath: '/parents/choosing-course',
     jsonLd: {
-      "@context": "https://schema.org",
-      "@type": "HowTo",
-      "name": "How to choose a course",
-      "description": "Pick the course that matches your child's current need: phonics, grammar or speaking.",
-      "inLanguage": "en-IN",
-      "step": [
-        { "@type": "HowToStep", "text": "Complete a free 35-minute 1:1 online demo assessment class." },
-        { "@type": "HowToStep", "text": "Choose phonics for foundational reading; grammar for writing; speaking for confidence." },
-        { "@type": "HowToStep", "text": "Discuss schedule and teacher preferences." }
-      ]
-    }
+      '@context': 'https://schema.org',
+      '@type': 'HowTo',
+      name: 'How to choose the right English learning path for your child',
+      description: 'Identify the strongest current learning gap, compare the matching pathway, and use an assessment when placement is unclear.',
+      inLanguage: 'en-IN',
+      step: [
+        { '@type': 'HowToStep', text: 'Identify whether the main gap is decoding, reading fluency, grammar and writing, or speaking confidence.' },
+        { '@type': 'HowToStep', text: 'Compare the pathway that directly targets that first gap.' },
+        { '@type': 'HowToStep', text: 'Use a live assessment before enrolling when the starting level is uncertain.' },
+      ],
+    },
   },
   '/parents/scheduling': {
     title: 'Scheduling Online Classes for Kids: Parent Planning Guide | Tiny Steps',
     description: 'Simple parent guidance for choosing class timings, keeping attendance steady, and building routines that protect progress between lessons.',
     canonicalPath: '/parents/scheduling',
     jsonLd: {
-      "@context": "https://schema.org",
-      "@type": "HowTo",
-      "name": "Scheduling & attendance",
-      "description": "Consistent attendance matters—aim for at least one class per week and short daily practice.",
-      "inLanguage": "en-IN",
-      "step": [
-        { "@type": "HowToStep", "text": "Choose a consistent class slot during booking." },
-        { "@type": "HowToStep", "text": "Set a short pre-class routine: 2–3 minutes to warm up." },
-        { "@type": "HowToStep", "text": "Inform support early for rescheduling." }
-      ]
-    }
+      '@context': 'https://schema.org',
+      '@type': 'HowTo',
+      name: 'How to schedule online English classes consistently',
+      description: 'Choose a realistic recurring class slot, prepare before the lesson, and communicate early when a schedule change is needed.',
+      inLanguage: 'en-IN',
+      step: [
+        { '@type': 'HowToStep', text: 'Choose a recurring class slot that fits the child’s normal energy and family routine.' },
+        { '@type': 'HowToStep', text: 'Use a short pre-class routine and keep the device ready before class begins.' },
+        { '@type': 'HowToStep', text: 'Inform support early when rescheduling is needed so learning continuity can be protected.' },
+      ],
+    },
   },
   '/parents/payments': {
-    title: 'Payments & Plans — Tiny Steps Parents',
-    description: 'Overview of payment plans, trials, refunds and FAQs about Tiny Steps billing.',
+    title: 'Payments and Invoices | Tiny Steps Parents',
+    description: 'Parent guide to Tiny Steps payment plans, invoices, receipts, pauses, and billing support.',
     canonicalPath: '/parents/payments',
     jsonLd: {
-      "@context": "https://schema.org",
-      "@type": "HowTo",
-      "name": "Payments & invoices",
-      "description": "Secure payments and clear invoices—check your parent dashboard for receipts.",
-      "inLanguage": "en-IN",
-      "step": [
-        { "@type": "HowToStep", "text": "Go to your Parent payments dashboard." },
-        { "@type": "HowToStep", "text": "Download invoices or set up scheduled payments." },
-        { "@type": "HowToStep", "text": "Contact support for payment plans." }
-      ]
-    }
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      name: 'Tiny Steps payments and invoices guide',
+      description: 'Parent information about payments, receipts, billing support, and plan administration.',
+      inLanguage: 'en-IN',
+    },
   },
   '/parents/tracking-progress': {
-    title: 'How Parents Can Track English Learning Progress | Tiny Steps',
-    description: 'Learn what progress in phonics, grammar, reading, and speaking should look like, and how parents can track improvement without pressure.',
+    title: 'How to Track Your Child’s English Learning Progress | Tiny Steps',
+    description:
+      'Track phonics, reading, grammar, writing, and speaking progress with baselines, independent evidence, transfer checks, and useful questions for teachers.',
     canonicalPath: '/parents/tracking-progress',
     jsonLd: {
-      "@context": "https://schema.org",
-      "@type": "HowTo",
-      "name": "Track your child's progress",
-      "description": "We send stage-based updates and milestone reports. Use the parent dashboard for details.",
-      "inLanguage": "en-IN",
-      "step": [
-        { "@type": "HowToStep", "text": "Open the parent dashboard to view session notes and goals." },
-        { "@type": "HowToStep", "text": "Ask for a short milestone summary after 8–12 lessons." },
-        { "@type": "HowToStep", "text": "Use small lesson targets at home to reinforce learning." }
-      ]
-    }
+      '@context': 'https://schema.org',
+      '@type': 'HowTo',
+      name: 'How to track your child’s English learning progress',
+      description: 'Use a baseline, one clear target, observable evidence, transfer checks, and a next-step review instead of relying only on attendance or marks.',
+      inLanguage: 'en-IN',
+      step: [
+        { '@type': 'HowToStep', text: 'Record what the child can do independently at the starting point.' },
+        { '@type': 'HowToStep', text: 'Track one or two current learning targets rather than a broad goal such as improve English.' },
+        { '@type': 'HowToStep', text: 'Collect comparable reading, writing, speaking, or teacher-feedback evidence.' },
+        { '@type': 'HowToStep', text: 'Review what is secure, where prompting is still needed, and what should be taught next.' },
+      ],
+    },
   },
   '/parents/helping-with-homework': {
-    title: 'Helping with Homework: 10 Practical Tips | Tiny Steps Parents',
-    description: 'Short, effective ways parents can support phonics practice and reading at home.',
+    title: 'Helping with English Homework: Practical Parent Tips | Tiny Steps',
+    description: 'Short, practical ways parents can support English homework and practice without giving the answers or turning learning into conflict.',
     canonicalPath: '/parents/helping-with-homework',
     jsonLd: {
-      "@context": "https://schema.org",
-      "@type": "HowTo",
-      "name": "Helping with homework",
-      "description": "Keep practice short and playful: 5–10 minutes of focused work after class is most effective.",
-      "inLanguage": "en-IN",
-      "step": [
-        { "@type": "HowToStep", "text": "Review the teacher's short goal for the lesson." },
-        { "@type": "HowToStep", "text": "Do a 5‑minute practice together using prompts from the lesson." },
-        { "@type": "HowToStep", "text": "Praise effort and note one target for next time." }
-      ]
-    }
+      '@context': 'https://schema.org',
+      '@type': 'HowTo',
+      name: 'How to help with English homework without taking over',
+      description: 'Use the teacher’s target, keep practice short, prompt instead of answering, and close with one clear next step.',
+      inLanguage: 'en-IN',
+      step: [
+        { '@type': 'HowToStep', text: 'Review the teacher’s current learning target.' },
+        { '@type': 'HowToStep', text: 'Use a short practice task and prompt the child to attempt it independently.' },
+        { '@type': 'HowToStep', text: 'Praise the strategy used and note one target for the next practice.' },
+      ],
+    },
   },
   '/parents/phonics-mission': {
     title: 'Phonics Mission for Parents: 7-Day Daily Practice Plan | Tiny Steps',
-    description: 'Research-backed phonics routine for ages 3-10: a 7-day starter plan, 10-minute daily decoding practice, blending examples, and parent scripts for multilingual homes.',
+    description: 'A practical 7-day phonics starter plan with short daily sound-letter, blending, decoding, and reading activities for children learning at home.',
     canonicalPath: '/parents/phonics-mission',
     jsonLd: {
-      "@context": "https://schema.org",
-      "@type": "HowTo",
-      "name": "Phonics mission for parents",
-      "description": "A research-backed 7-day phonics starter plan with a 5-10 minute daily routine for sound-letter links, blending, and short reading.",
-      "inLanguage": "en-IN",
-      "step": [
-        { "@type": "HowToStep", "text": "Choose one target sound or short word pattern and review it briefly." },
-        { "@type": "HowToStep", "text": "Match the sound to the written letter and practise blending." },
-        { "@type": "HowToStep", "text": "Read one short decodable word or sentence and close with praise." }
-      ]
-    }
+      '@context': 'https://schema.org',
+      '@type': 'HowTo',
+      name: 'Phonics mission for parents',
+      description: 'A 7-day phonics starter plan with short daily practice for sound-letter links, blending, and early reading.',
+      inLanguage: 'en-IN',
+      step: [
+        { '@type': 'HowToStep', text: 'Choose one taught sound or short word pattern and review it briefly.' },
+        { '@type': 'HowToStep', text: 'Match the sound to the written letter and practise blending.' },
+        { '@type': 'HowToStep', text: 'Read one short decodable word or sentence and finish with specific praise.' },
+      ],
+    },
   },
   '/parents/reading-at-home': {
-    title: 'Reading at Home: Science-Backed Daily Routines | Tiny Steps Parents',
-    description: 'Science-backed 10-minute reading routines, stage-based text selection, and parent scripts to improve decoding, fluency, and comprehension.',
+    title: 'Reading at Home: 10-Minute Daily Routine for Kids | Tiny Steps Parents',
+    description: 'A practical 10-minute home reading routine with decodable text, repeated reading, comprehension questions, troubleshooting, and parent scripts.',
     canonicalPath: '/parents/reading-at-home',
     jsonLd: {
-      "@context": "https://schema.org",
-      "@type": "HowTo",
-      "name": "Reading at home — simple routines",
-      "description": "Use a 10-minute routine with decodable text, repeated reading, and quick comprehension checks.",
-      "inLanguage": "en-IN",
-      "step": [
-        { "@type": "HowToStep", "text": "Choose a short decodable book or paragraph." },
-        { "@type": "HowToStep", "text": "Read aloud together; pause to discuss two quick questions." },
-        { "@type": "HowToStep", "text": "Celebrate one thing they did well." }
-      ]
-    }
+      '@context': 'https://schema.org',
+      '@type': 'HowTo',
+      name: 'How to build a 10-minute reading routine at home',
+      description: 'Use a short warm-up, guided reading, a quick meaning check, and one fluency re-read at a level your child can handle.',
+      inLanguage: 'en-IN',
+      step: [
+        { '@type': 'HowToStep', text: 'Warm up with a few familiar words or sound patterns.' },
+        { '@type': 'HowToStep', text: 'Read a short level-appropriate or decodable passage with limited prompting.' },
+        { '@type': 'HowToStep', text: 'Ask one or two quick questions to check meaning.' },
+        { '@type': 'HowToStep', text: 'Re-read a short section for smoother, more confident reading.' },
+      ],
+    },
   },
   '/parents/speech-confidence': {
-    title: 'Building Speech Confidence in Young Readers | Tiny Steps Parents',
-    description: 'Ways to encourage clear speaking, listening activities and small practice exercises.',
+    title: 'How to Build Speaking Confidence in Children Without Pressure | Tiny Steps',
+    description: 'Practical parent routines, sentence starters, confidence markers, troubleshooting, and low-pressure speaking practice for shy or hesitant children.',
     canonicalPath: '/parents/speech-confidence',
     jsonLd: {
-      "@context": "https://schema.org",
-      "@type": "HowTo",
-      "name": "Building speaking confidence",
-      "description": "Short, regular speaking tasks build confidence: 1–2 minute daily prompts work best.",
-      "inLanguage": "en-IN",
-      "step": [
-        { "@type": "HowToStep", "text": "Give a 60‑second prompt (favourite animal, weekend plan)." },
-        { "@type": "HowToStep", "text": "Model a short answer, then have your child repeat." },
-        { "@type": "HowToStep", "text": "Offer gentle praise and one tip for next time." }
-      ]
-    }
+      '@context': 'https://schema.org',
+      '@type': 'HowTo',
+      name: 'How to build speaking confidence at home',
+      description: 'Use familiar prompts, thinking time, light modelling, one follow-up question, and specific praise to build independent speaking gradually.',
+      inLanguage: 'en-IN',
+      step: [
+        { '@type': 'HowToStep', text: 'Choose one familiar, low-pressure speaking prompt.' },
+        { '@type': 'HowToStep', text: 'Give the child thinking time before supplying words.' },
+        { '@type': 'HowToStep', text: 'Model only the sentence starter or first idea when help is needed.' },
+        { '@type': 'HowToStep', text: 'Ask one follow-up question to extend the response.' },
+        { '@type': 'HowToStep', text: 'Close with specific praise for the speaking behaviour you want repeated.' },
+      ],
+    },
   },
   '/parents/common-mistakes': {
-    title: 'Common Parent Mistakes That Slow Reading Progress | Tiny Steps',
-    description: 'Learn the common parent mistakes that slow phonics, reading, grammar, and speaking progress, plus practical replacements that keep learning calm and steady.',
+    title: 'Common Parent Mistakes That Slow English Learning Progress | Tiny Steps',
+    description: 'Avoid common mistakes that can slow phonics, reading, grammar, writing, and speaking progress, with practical replacements for calmer home support.',
     canonicalPath: '/parents/common-mistakes',
     jsonLd: {
-      "@context": "https://schema.org",
-      "@type": "HowTo",
-      "name": "Common mistakes parents make",
-      "description": "Parents often push too fast or compare progress—focus on steady, small wins.",
-      "inLanguage": "en-IN",
-      "step": [
-        { "@type": "HowToStep", "text": "Set one small lesson target with the teacher." },
-        { "@type": "HowToStep", "text": "Create a 5‑minute daily routine to support that target." },
-        { "@type": "HowToStep", "text": "Review progress every two weeks and adjust goals." }
-      ]
-    }
+      '@context': 'https://schema.org',
+      '@type': 'HowTo',
+      name: 'How to replace common learning mistakes with useful parent support',
+      description: 'Focus on one target, use short consistent practice, avoid comparison, and review the same child’s progress over time.',
+      inLanguage: 'en-IN',
+      step: [
+        { '@type': 'HowToStep', text: 'Set one small current learning target with the teacher.' },
+        { '@type': 'HowToStep', text: 'Use a short daily routine that supports that target without adding random new content.' },
+        { '@type': 'HowToStep', text: 'Review the child’s own evidence over time and adjust the target when it becomes secure.' },
+      ],
+    },
   },
 };
 

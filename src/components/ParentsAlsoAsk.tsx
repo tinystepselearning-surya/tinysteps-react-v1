@@ -36,6 +36,9 @@ export const ParentsAlsoAsk: React.FC<ParentsAlsoAskProps> = ({
             className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-slate-50/70 transition hover:border-slate-300"
           >
             <button
+              type="button"
+              aria-expanded={openIndex === index}
+              aria-controls={`parent-faq-answer-${index}`}
               onClick={() => setOpenIndex(openIndex === index ? null : index)}
               className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left hover:bg-white/70"
             >
@@ -48,13 +51,15 @@ export const ParentsAlsoAsk: React.FC<ParentsAlsoAskProps> = ({
               />
             </button>
             
-            {openIndex === index && (
-              <div className="border-t border-slate-200 bg-white/80 px-5 py-4">
+            <div
+              id={`parent-faq-answer-${index}`}
+              hidden={openIndex !== index}
+              className="border-t border-slate-200 bg-white/80 px-5 py-4"
+            >
                 <p className="text-sm leading-7 text-slate-700">
                   {item.answer}
                 </p>
-              </div>
-            )}
+            </div>
           </div>
         ))}
       </div>

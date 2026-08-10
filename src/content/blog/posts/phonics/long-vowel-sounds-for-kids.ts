@@ -4,37 +4,37 @@ const post: PhonicsSeoPost = {
   slug: 'long-vowel-sounds-for-kids',
   title: 'Long Vowel Sounds for Kids: Pattern Order, Practice, and Common Mix-Ups',
   focus: 'long vowel sounds for kids',
-  quickAnswer: 'Long vowels are easiest after short-vowel CVC decoding is stable. Children progress faster when families teach one spelling pattern at a time (like a_e, ai, ay), use short-vs-long contrasts, and require reading plus spelling transfer before introducing the next pattern.',
+  quickAnswer: 'Long vowels are easier to learn after short-vowel CVC decoding is reasonably stable. Teach one spelling pattern at a time (for example a_e before mixing ai and ay), compare short and long vowel words, and check both reading and spelling before adding more patterns.',
   homePlan: [
-    'Start with one long-vowel pattern family for 3-4 days before adding another (for example a_e first).',
-    'Use contrast pairs daily (cap/cape, bit/bite, hop/hope) so children hear and see what changed.',
-    'Run a fixed routine: read 5-8 target words, sort by pattern, then encode 2-3 words by dictation.',
-    'Add one short sentence transfer line containing the day’s long-vowel pattern.',
-    'Track one confusion signal: short-vowel substitution, random guessing, or pattern overgeneralization.',
-    'Advance only when current pattern words are read and spelled with low prompting across multiple sessions.'
+    'Start with one long-vowel pattern family for several practice sessions before adding another (for example a_e first).',
+    'Use contrast pairs such as cap/cape, bit/bite, and hop/hope so children can hear and see what changed.',
+    'Run a fixed routine: read a small target set, sort by pattern, then spell two or three words from dictation.',
+    'Add one short sentence containing the day’s long-vowel pattern so the child transfers the pattern into connected reading.',
+    'Track the type of confusion you see: short-vowel substitution, random guessing, or using the right sound with the wrong spelling pattern.',
+    'Add a new pattern only when the current one can be read and spelled with low prompting across more than one practice session.'
   ],
-  classChecklistFocus: 'Choose classes that teach long-vowel spellings in a clear order, compare similar patterns explicitly, and provide transfer checks in both reading and spelling.',
-  avoidFocus: 'Avoid teaching multiple long-vowel spellings at once without contrast practice. Avoid moving ahead when short-vowel confusion is still frequent.',
-  progress: 'Typical pattern: first pattern recognition in 1-2 weeks, more accurate word decoding in 2-4 weeks, and stronger sentence/spelling transfer in 4-8 weeks with cumulative review.',
-  support: 'If short-long confusion persists after 6-8 weeks, pause new long-vowel patterns and rebuild with short-vowel contrasts plus guided corrective review.',
+  classChecklistFocus: 'Choose classes that teach long-vowel spellings in a clear sequence, compare similar patterns explicitly, and check transfer in both reading and spelling.',
+  avoidFocus: 'Avoid introducing several long-vowel spellings at once before the child can distinguish the patterns. If short-vowel confusion is still frequent, strengthen that foundation before increasing difficulty.',
+  progress: 'Look for observable progress rather than a fixed timetable: the child recognises the target pattern faster, decodes unfamiliar words with less prompting, spells taught patterns more accurately, and uses them in short sentences. The pace varies by starting level and practice consistency.',
+  support: 'If confusion remains persistent despite consistent, correctly levelled practice, reduce the number of active patterns, return to short-versus-long contrasts, and ask the teacher to identify the exact decoding or spelling error pattern before adding new content.',
   faq: [{
     question: 'When should long vowels be introduced?',
-    answer: 'Usually after children can decode short-vowel CVC words confidently with low prompting and consistent blending accuracy.'
+    answer: 'Usually after children can decode a useful range of short-vowel CVC words with reasonable accuracy and can blend without needing every word supplied by an adult.'
   }, {
     question: 'Which long-vowel pattern should come first?',
-    answer: 'Many programs start with silent-e patterns because they map clearly against CVC contrasts (cap/cape, kit/kite).'
+    answer: 'A clear contrast such as silent-e can be a practical starting point because pairs like cap/cape and kit/kite make the spelling change visible. The exact sequence can vary by programme.'
   }, {
     question: 'Should I teach silent-e and vowel teams together?',
-    answer: 'Usually no for beginners. Teach one pattern family first, then add the next once transfer is stable.'
+    answer: 'For a beginner, it is usually clearer to establish one pattern family first and then compare it with the next rather than presenting several alternatives at once.'
   }, {
-    question: 'Why does my child read "cake" but spell it as "cak"?',
-    answer: 'Reading recognition can appear before spelling stability. Add short dictation and pattern-focused spelling checks after reading practice.'
+    question: 'Why does my child read “cake” but spell it as “cak”?',
+    answer: 'Reading recognition can develop before spelling is stable. Add short dictation, sound mapping, and a quick check of the target spelling pattern after reading practice.'
   }, {
-    question: 'How many long-vowel words should we practice daily?',
-    answer: 'For most beginners, 5-8 focused words plus one sentence is enough when repeated across several days.'
+    question: 'How many long-vowel words should we practise at once?',
+    answer: 'Keep the set small enough for accurate attention to the pattern. A short focused list plus one sentence is often more useful than a large mixed worksheet.'
   }, {
     question: 'When do we move from long vowels to r-controlled vowels?',
-    answer: 'Move when core long-vowel patterns are stable in reading and spelling with low prompting across multiple review sessions.'
+    answer: 'Move on when the core long-vowel patterns being taught are reasonably stable in both reading and spelling and the child can apply them to unfamiliar examples with low prompting.'
   }],
   relatedReads: [{
     label: 'Phonics rules for beginners',

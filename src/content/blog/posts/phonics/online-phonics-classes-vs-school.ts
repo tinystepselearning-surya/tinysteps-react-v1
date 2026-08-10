@@ -4,39 +4,37 @@ const post: PhonicsSeoPost = {
   slug: 'online-phonics-classes-vs-school',
   title: 'Online Phonics Classes vs School: What Works for Which Child',
   focus: 'online phonics classes vs school parent decision guide',
-  quickAnswer: 'School reading support and online phonics are not the same tool. School may be enough when reading basics are stable, but online phonics helps when decoding, blending, and reading confidence are still weak. Use this guide to decide what fits your child now.',
+  quickAnswer: 'School literacy teaching and extra online phonics support are not interchangeable. School may be enough when decoding is stable and the child is progressing with classroom instruction. Extra phonics support is more relevant when sound recall, blending, unfamiliar-word decoding, or reading confidence remain weak and need targeted correction.',
   homePlan: [
-    'What school reading support usually provides: regular reading exposure, classroom practice, and curriculum-aligned tasks that work well when decoding is already stable.',
-    'What online phonics classes can add: tighter correction, slower step-by-step blending support, stage-based reteaching, and child-specific guidance when gaps are persistent.',
-    'When school support may be enough: your child reads age-appropriate words, needs regular reading exposure only, and shows no major blending or fluency gap.',
-    'When online phonics support may help: your child knows letters but cannot read words, guesses while reading, struggles with blending, reads slowly, avoids reading practice, or needs gentle 1:1 correction.',
-    'Difference parents should know: school reading builds broad literacy habits, online phonics targets decoding and blending gaps, reading fluency support builds pace/accuracy/comprehension, and grammar-communication support builds sentence formation and expression.',
-    'Parent decision checklist - Does my child need extra phonics support? Track unfamiliar-word decoding, blending accuracy, guessing frequency, reading pace, and confidence while reading aloud.',
-    'What Tiny Steps checks before suggesting a course: sound clarity, blending readiness, decoding transfer, fluency signals, sentence formation context, and communication confidence before final pathway recommendation.',
-    'Final action: choose a clear next step and review after 4-6 weeks with evidence, not guesswork. If phonics gaps are clear, begin with targeted support and consistent home follow-through.'
+    'Start by identifying the exact gap: sound recall, blending, unfamiliar-word decoding, reading fluency, spelling, or comprehension.',
+    'Use school work as evidence. Group repeated mistakes by pattern instead of treating every wrong word as a separate problem.',
+    'When extra phonics is needed, ask the teacher to target the same weak pattern and then check it on fresh words rather than simply repeating the school worksheet.',
+    'Keep home practice short and connected to the current target: review the taught pattern, decode a few words, then read one sentence.',
+    'Check transfer periodically with unfamiliar examples at the same level. A skill is becoming secure when the child needs less prompting outside the exact class material.',
+    'Review whether the support still matches the child’s need. If decoding becomes stable but reading remains slow, the next priority may be fluency rather than more beginner phonics.'
   ],
-  classChecklistFocus: 'Use-case segmentation rule: keep school-only when decoding is stable; add online phonics when blending and decoding break; add reading fluency support when decoding is okay but pace and passage flow remain weak; add grammar/communication support for sentence and expression gaps.',
-  avoidFocus: 'Avoid choosing based only on class format. A child can attend school reading and still need explicit phonics intervention. Also avoid forcing harder reading passages before sound and blending basics are secure.',
-  progress: 'In a good-fit pathway, many children first show less guessing and cleaner blending, then stronger word reading pace and confidence. Review progress with weekly decoding evidence rather than completion counts alone.',
-  support: 'If your child continues to struggle, use targeted pathways instead of random extra practice: phonics for decoding gaps, reading fluency support for slow readers, and grammar/communication support for sentence and expression needs.',
+  classChecklistFocus: 'Use-case rule: keep school-only support when decoding is stable and progress is steady; add targeted phonics when blending and unfamiliar-word decoding remain weak; shift toward reading fluency when decoding is accurate but pace and passage flow are the bottleneck.',
+  avoidFocus: 'Avoid choosing based only on format or brand. A child can attend school reading lessons and still need explicit phonics help, while another child may need no extra phonics at all. Also avoid pushing harder passages before basic decoding is secure.',
+  progress: 'Look for fewer guesses, cleaner blending, more accurate unfamiliar-word reading, reduced prompting, and better transfer into school reading or spelling tasks. Use those observable changes rather than a fixed lesson count to decide whether support is working.',
+  support: 'If the same errors persist, ask the school or extra teacher to identify the specific pattern and show how instruction is being adjusted. If the child can decode but still struggles with pace, comprehension, or written expression, change the target rather than continuing phonics indefinitely.',
   faq: [{
     question: 'Are school reading lessons enough for phonics?',
-    answer: 'They can be enough when a child already decodes words accurately and improves steadily. If blending and decoding errors persist, extra phonics support is often needed.'
+    answer: 'They can be enough when the child decodes words accurately, responds to classroom instruction, and continues to make visible progress. Extra support is more relevant when a specific decoding gap persists.'
   }, {
-    question: 'When should parents choose online phonics classes?',
-    answer: 'Parents should consider online phonics when a child knows letters but cannot read words, guesses frequently, struggles to blend sounds, or reads with low confidence.'
+    question: 'When should parents consider online phonics classes?',
+    answer: 'Consider targeted support when the child knows letters but cannot blend reliably, guesses unfamiliar words, confuses core sound patterns, or needs more individual correction than the current setting provides.'
   }, {
     question: 'Can online phonics help if my child knows letters but cannot read words?',
-    answer: 'Yes. This is one of the most common phonics-gap patterns. Structured sound and blending correction helps children move from letter knowledge to decoding.'
+    answer: 'It can help when teaching focuses on the missing bridge between letter-sound knowledge and blending. The child should practise applying sounds left to right and then use the same strategy on unfamiliar words.'
   }, {
     question: 'What is the difference between phonics and reading fluency support?',
-    answer: 'Phonics focuses on sound-to-word decoding and blending. Reading fluency support focuses on pace, accuracy, expression, and comprehension once basic decoding is present.'
+    answer: 'Phonics focuses on how written words are decoded from sound-spelling patterns. Reading fluency focuses on accurate, smoother, more expressive reading once basic decoding is reasonably stable.'
   }, {
     question: 'Should my child start with phonics or reading practice?',
-    answer: 'If decoding and blending are weak, start with phonics. If decoding is stable but reading remains slow or hesitant, add reading fluency support.'
+    answer: 'If unfamiliar-word decoding and blending are weak, phonics is the more direct starting point. If decoding is accurate but reading is slow or effortful, fluency and connected-text practice may be more appropriate.'
   }, {
     question: 'What happens in a Tiny Steps phonics assessment?',
-    answer: 'Tiny Steps checks decoding, blending, reading behavior, fluency signals, and confidence, then recommends whether the child should start with phonics, reading fluency support, or a combined path.'
+    answer: 'Tiny Steps checks the skills relevant to the child’s current concern, such as sound recall, blending, decoding, reading behaviour, fluency signals, and confidence, then recommends the most appropriate first pathway.'
   }],
   relatedReads: [{
     label: 'Explore Tiny Steps phonics program',

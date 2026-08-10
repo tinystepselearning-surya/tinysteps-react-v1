@@ -151,7 +151,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'Book a free communication assessment class to understand your child\'s current speaking level and get a practical improvement plan: /?book=1',
+        'Book a free communication assessment class to understand your child\'s current speaking level and get a practical improvement plan: /book-demo',
     },
     {
       type: 'h2',

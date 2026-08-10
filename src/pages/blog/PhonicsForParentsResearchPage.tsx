@@ -496,7 +496,7 @@ export default function PhonicsForParentsResearchPage() {
         dateLabel={formatBlogDate(ARTICLE_DATE)}
         readTimeLabel={ARTICLE_READ_TIME}
         actions={[
-          { label: 'Book a free reading assessment', to: '/?book=1' },
+          { label: 'Book a free reading assessment', to: '/book-demo' },
           { label: 'Explore the Parents Hub', to: '/parents', variant: 'secondary' },
         ]}
         searchPainPoints={SEARCH_PAIN_POINTS}

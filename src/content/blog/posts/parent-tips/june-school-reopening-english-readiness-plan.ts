@@ -245,7 +245,7 @@ const post: BlogPost = {
     },
     {
       type: 'li',
-      content: 'Book a June readiness assessment: /?book=1',
+      content: 'Book a June readiness assessment: /book-demo',
     },
     {
       type: 'li',

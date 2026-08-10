@@ -212,7 +212,7 @@ const ChoosingCourse: React.FC = () => {
           { label: `${formatINR(400)}/class`, tone: 'neutral' },
           { label: `${formatINR(starterPlan.monthlyFee)} for 12 classes`, tone: 'mint' },
         ]}
-        supportingText="Most families book one free 35-minute 1:1 online demo assessment class first, then choose one clear first focus instead of trying to fix everything at once."
+        supportingText="Use a live assessment before enrolling when the starting level is uncertain. Most families book one free 35-minute 1:1 online demo assessment class first, then choose one clear first focus instead of trying to fix everything at once."
         stats={[
           { label: 'Students guided', value: '5000+', helper: 'Structured pathways across phonics, grammar, reading, and speaking' },
           { label: 'Countries served', value: '15+', helper: 'Parents use Tiny Steps from India and global school communities' },

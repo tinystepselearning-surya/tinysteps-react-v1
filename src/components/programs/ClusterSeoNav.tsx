@@ -15,7 +15,7 @@ const CLUSTERS = {
     hubTitle: 'Explore Grammar',
     hubHref: '/grammar',
     links: [
-      { label: 'Tenses for Kids', href: '/blog/week-8-grammar-tenses' },
+      { label: 'Grammar Learning Path', href: '/grammar' },
       { label: 'Writing Classes for Kids', href: '/writing-classes-for-kids' },
       { label: 'English Grammar & Writing', href: '/grammar' }
     ]

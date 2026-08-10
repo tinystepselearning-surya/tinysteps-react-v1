@@ -150,7 +150,7 @@ const post: BlogPost = {
     },
     {
       type: 'li',
-      content: 'Book one free 35-minute 1:1 online demo assessment class: /?book=1',
+      content: 'Book one free 35-minute 1:1 online demo assessment class: /book-demo',
     },
     {
       type: 'li',

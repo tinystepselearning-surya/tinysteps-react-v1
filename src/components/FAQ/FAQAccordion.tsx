@@ -49,6 +49,8 @@ export default function FAQAccordion({ items }: FAQAccordionProps) {
             >
               <button
                 type="button"
+                aria-expanded={isOpen}
+                aria-controls={`faq-answer-${item.id}`}
                 onClick={() =>
                   setExpandedIds((current) =>
                     current.includes(item.id)
@@ -74,8 +76,11 @@ export default function FAQAccordion({ items }: FAQAccordionProps) {
                 </span>
               </button>
 
-              {isOpen && (
-                <div className="border-t border-slate-100 px-5 pb-5 pt-4 sm:px-6">
+              <div
+                id={`faq-answer-${item.id}`}
+                hidden={!isOpen}
+                className="border-t border-slate-100 px-5 pb-5 pt-4 sm:px-6"
+              >
                   {renderAnswer(item.answer)}
 
                   {(item.relatedBlog || item.relatedCourse) && (
@@ -98,8 +103,7 @@ export default function FAQAccordion({ items }: FAQAccordionProps) {
                       )}
                     </div>
                   )}
-                </div>
-              )}
+              </div>
             </article>
           );
         })}

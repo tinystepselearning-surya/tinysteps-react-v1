@@ -10,168 +10,265 @@ import {
   FREE_DEMO_FULL_DESCRIPTION,
   STANDARD_PRICING_SUMMARY,
 } from '../config/publicOffer';
-// Meta removed — use applySeo as single source of truth
 
 const items: FAQItem[] = [
-  { id: 'q1', category: 'phonics', question: 'How to teach phonics to my child at home?', answer: 'Start with sound recognition (not letter names). Use a structured synthetic phonics sequence first, then blend into words like sat/pin/tap. Keep sessions short (10–15 minutes) and playful with games rather than worksheets. Best age: 3–4. Common mistake: teaching letter names first.' , relatedBlog: '/blog/phonics-for-parents-guide', relatedCourse: '/courses' },
-  { id: 'q2', category: 'phonics', question: "Why can't my child blend sounds even though he knows phonics?", answer: 'Blending is a separate skill from recognizing sounds. Teach slow blending (c—a—t) then fast blending (cat). Expect 4–6 lessons to master. Practice with CVC Builder and minimal pairs. We target this around Lesson 4 explicitly.', relatedBlog: '/blog/phonics-for-parents-guide', relatedCourse: '/courses' },
-  { id: 'q3', category: 'phonics', question: 'What is the difference between phonics and sight words?', answer: 'Phonics decodes using rules (c‑a‑t); sight words are memorized exceptions (the, was). Start with phonics since ~70% of words are decodable, then add sight words. Our curriculum teaches tricky words in the later lessons.', relatedBlog: '/blog/phonics-for-parents-guide', relatedCourse: '/courses' },
-  { id: 'q4', category: 'phonics', question: 'My 7-year-old struggles with reading. Is it too late for phonics?', answer: 'Not too late. With intensive phonics and gap analysis, 20–30 lessons usually close core gaps. We identify specific needs (sounds, blending, long vowels) and focus there. Consistency drives success.', relatedBlog: '/blog/phonics-for-parents-guide' },
-  { id: 'q5', category: 'phonics', question: "How do I teach tricky words like 'said', 'come', 'there'?", answer: 'Use spaced repetition and context. Pair with rhyming (said/paid), use in sentences, daily for 2 weeks then periodic refresh. We teach 40+ tricky words across levels with games and applied reading.', relatedBlog: '/blog/week-3-phonics-tricky-words' },
-  { id: 'q6', category: 'phonics', question: 'Should my child learn phonics before starting school?', answer: 'Optional but helpful. A 30‑lesson foundation course 6 months prior to school builds confidence. Start with SATPIN sounds and 10‑minute daily practice.', relatedBlog: '/blog/phonics-for-parents-guide' },
-  { id: 'q7', category: 'phonics', question: 'My child can read but has no comprehension. Why?', answer: 'Decoding ≠ comprehension. If most effort goes into sounding out, little is left for understanding. Build fluency and add comprehension questions. Our Advanced Phonics ends with 150–300‑word passages + Q&A.', relatedBlog: '/blog/phonics-for-parents-guide' },
-  { id: 'q7a', category: 'phonics', question: 'What are the best online phonics classes for kids in India?', answer: 'The best program depends on your child\'s age, current reading level, and learning style. Look for structured synthetic phonics, 1:1 personalized feedback, decodable reading practice, and transparent progress tracking. Tiny Steps follows a structured synthetic phonics approach inspired by methods such as Jolly Phonics, with flexible scheduling and stage-based parent updates. <a href="/best-online-phonics-classes-for-kids-in-india" class="text-tiny-blue-600 hover:underline">Read our buyer guide</a> for a 10-point checklist to evaluate programs and make an informed choice.' },
-  { id: 'q7b', category: 'phonics', question: 'Does Tiny Steps use Jolly Phonics?', answer: 'Tiny Steps uses a structured synthetic phonics approach inspired by methods such as Jolly Phonics. We include sound-to-letter mapping, blending sounds into words, and phonics-based reading routines in a level-based pathway.', relatedBlog: '/blog/phonics-for-parents-guide', relatedCourse: '/phonics' },
-  { id: 'q8', category: 'grammar', question: 'How to teach grammar to kids without boring them?', answer: 'Use games (Sentence Dice, Grammar Bingo, Picture prompts) and "mistakes games" instead of lectures. We keep sessions ~70% active practice, 30% instruction.', relatedBlog: '/blog/week-7-grammar-nouns-to-paragraphs', relatedCourse: '/grammar' },
-  { id: 'q9', category: 'grammar', question: "My child mixes up 'is' and 'are'. How do I explain?", answer: 'One person = is; multiple = are. Use visuals: 1 stick figure → is; 3 figures → are. We target this in Basic Grammar around Lesson 10 with concrete‑to‑abstract scaffolding.', relatedBlog: '/blog/week-7-grammar-nouns-to-paragraphs', relatedCourse: '/grammar' },
-  { id: 'q10', category: 'grammar', question: 'When should children learn tenses? Is my 5-year-old too young?', answer: 'Ages 5–6: simple tenses (played/plays/will play). Ages 8+: complex tenses. We cover simple tenses in Basic Grammar Stage 6 (Lessons 31–36) and deepen them in Advanced Grammar Stage 1–2 (Lessons 1–12).', relatedBlog: '/blog/week-8-grammar-tenses', relatedCourse: '/grammar' },
-  { id: 'q11', category: 'grammar', question: 'How to stop grammar mistakes in writing?', answer: 'Internalize via output. Have child rewrite own sentences correctly, do peer editing games, and daily short writing. Our levels progress from sentences → paragraphs → stories with mastery checks.', relatedBlog: '/blog/week-20-grammar-editing-camp', relatedCourse: '/grammar' },
-  { id: 'q12', category: 'grammar', question: "My 8-year-old speaks well but can't write sentences. Why?", answer: 'Speaking and writing are different skills. Bridge with “speak first, write second”: record, then transcribe. Our Grammar path uses Speak → Write progression to reduce friction.', relatedBlog: '/blog/week-7-grammar-nouns-to-paragraphs', relatedCourse: '/grammar' },
-  { id: 'q13', category: 'speaking', question: 'My child is too shy to speak in public. How can I help?', answer: 'Start small with 15‑second safe talks at home, then expand. Celebrate effort, not perfection. Our first 4–6 lessons focus on confidence only. 90% of shy kids become confident within 16–20 lessons.', relatedBlog: '/blog/week-12-speaking-confidence-seeds', relatedCourse: '/speaking' },
-  { id: 'q14', category: 'speaking', question: 'How do I encourage class participation?', answer: 'At home, ask open‑ended questions and let them ramble. Praise participation over correctness. We teach S.P.E.A.K. habits that generalize to classrooms within 8–12 lessons.', relatedBlog: '/blog/week-12-speaking-confidence-seeds', relatedCourse: '/speaking' },
-  { id: 'q15', category: 'speaking', question: "How long should a child's speech be?", answer: 'Ages 4–7: 15–45s. Ages 7–10: 60–120s. Ages 10+: 3–5 minutes. We never force length; we scaffold duration across levels.', relatedBlog: '/blog/week-13-speaking-structure', relatedCourse: '/speaking' },
-  { id: 'q16', category: 'speaking', question: 'My child mumbles and speaks too fast. How to slow down?', answer: 'Treat clarity and pace separately. Mirror pronunciation for mumbling; teach pause gestures to slow pace. Our Advanced Lesson 10 focuses on vocal variety + pacing.', relatedBlog: '/blog/week-18-speaking-video-feedback', relatedCourse: '/speaking' },
-  { id: 'q17', category: 'speaking', question: 'How to lose the Indian accent?', answer: 'Accent isn’t a problem—clarity is. Target unclear sounds (R/L/TH/W‑V). We train clarity + rhythm; accent shifts naturally with exposure.', relatedBlog: '/blog/week-12-speaking-confidence-seeds', relatedCourse: '/speaking' },
-  { id: 'q18', category: 'speaking', question: 'Nervous during presentations—any tips?', answer: 'Practice 5+ times, know content, breathe (3 deep breaths), focus on 1 friendly face. Our capstones start low‑pressure with teacher + parent before larger settings.', relatedBlog: '/blog/week-21-speaking-competition-prep', relatedCourse: '/speaking' },
-  { id: 'q19', category: 'online', question: 'Is online learning as good as offline?', answer: 'For English, 1:1 online often outperforms batch offline: personalization, recordings, flexibility, global teachers. Offline offers socialization. For serious skill gains, 1:1 online wins.' },
-  { id: 'q20', category: 'online', question: 'How do I ensure my child is actually learning online?', answer: 'Demand transparency: stage-based progress updates, recordings, home tasks, monthly calls, mastery bands. Tiny Steps provides all five so you can verify learning.' },
-  { id: 'q21', category: 'summer', question: 'What was Tiny Steps Summer Camp 2026?', answer: 'Summer Camp 2026 enrolment is closed. The camp ended on 13 June 2026. Each child joined one four-week batch with 24 live small-group classes from Monday to Saturday.' },
-  { id: 'q22', category: 'summer', question: 'What ages is the camp for?', answer: 'Ages 4–12. We split into cohorts: Foundation (4–5), Core (6–7), Intermediate (8–10), Advanced (10–12). Each learns at their level.' },
-  { id: 'q23', category: 'summer', question: 'What did children learn in Summer Camp 2026?', answer: 'Children built stronger phonics foundations, cleaner grammar usage, better reading confidence, and more natural communication through live guided practice. The programme also included worksheets, class recordings, and one free 35-minute demo assessment class before placement.' },
-  { id: 'q24', category: 'summer', question: 'Is summer camp group-based?', answer: 'Yes. Summer camp is group-focused and capped at 8 students per batch for stronger participation and teacher attention. Check the <a href="/summer-camps#programs" class="text-tiny-green-600">summer camps page</a> for the latest track options.' },
-  { id: 'q25', category: 'summer', question: 'What was the Summer Camp 2026 schedule?', answer: 'The camp ended on 13 June 2026. Each child joined one four-week batch with 24 live classes from Monday to Saturday. <a href="/summer-camps" class="text-tiny-green-600">Visit the archived Summer Camp page</a> for the historical snapshot.' },
-  { id: 'q25a', category: 'summer', question: 'Were there multiple batch start dates?', answer: 'Yes. Historical batch start dates were 27 April, 4 May, 11 May and 18 May 2026. Enrolment is now closed.' },
-  { id: 'q25b', category: 'summer', question: 'Did the camp finish before school reopened?', answer: 'Yes. Summer Camp 2026 ended on 13 June 2026, before schools reopened on 15 June 2026.' },
   {
-    id: 'q26',
-    category: 'summer',
-    question: 'How did placement work for Summer Camp 2026?',
+    id: 'q1',
+    category: 'phonics',
+    question: 'How should I start phonics at home?',
     answer:
-      'Summer Camp 2026 enrolment is closed. Children were placed after one free 35-minute demo assessment class. Visit the <a href="/summer-camps" class="text-tiny-green-600">archived Summer Camp page</a> for the historical programme details.',
+      'Start with a small set of letter sounds, then practise oral blending, printed-word blending, and one short decodable line. Keep the routine short and repeat the same taught pattern before adding more content.',
+    relatedBlog: '/blog/phonics-for-parents-guide',
+    relatedCourse: '/phonics',
   },
   {
-    id: 'q27',
+    id: 'q2',
+    category: 'phonics',
+    question: 'Why can my child say letter sounds but still not blend words?',
+    answer:
+      'Sound recall and blending are different skills. Practise joining a short sound sequence such as /c/ /a/ /t/ into one word, then use printed CVC words. If the child still guesses, slow the task down and check oral blending before adding harder patterns.',
+    relatedBlog: '/blog/cvc-words-explained-for-parents',
+    relatedCourse: '/courses/phonics-foundation',
+  },
+  {
+    id: 'q3',
+    category: 'phonics',
+    question: 'What is the difference between phonics and sight-word learning?',
+    answer:
+      'Phonics teaches children to use sound-spelling relationships to decode words. Some high-frequency words contain parts that are not yet decodable with the child’s current knowledge, so those unusual parts need extra attention. The goal is to decode what can be decoded rather than memorising every word as a visual shape.',
+    relatedBlog: '/blog/digraphs-and-tricky-words',
+    relatedCourse: '/phonics',
+  },
+  {
+    id: 'q4',
+    category: 'phonics',
+    question: 'Is a 7-year-old too old to start or restart phonics?',
+    answer:
+      'No. Older children can still benefit from explicit phonics when a decoding gap remains. The starting point should be based on the child’s current sound, blending, word-reading, spelling, and fluency skills rather than age alone.',
+    relatedBlog: '/blog/how-phonics-classes-help-kids-read',
+    relatedCourse: '/courses/phonics-foundation',
+  },
+  {
+    id: 'q5',
+    category: 'phonics',
+    question: 'How should I teach tricky words such as said, come, and there?',
+    answer:
+      'Show the parts the child can already decode, then draw attention to the genuinely unexpected or not-yet-taught part. Revisit a small set cumulatively in reading and spelling instead of treating the whole word as a picture to memorise.',
+    relatedBlog: '/blog/digraphs-and-tricky-words',
+    relatedCourse: '/phonics',
+  },
+  {
+    id: 'q6',
+    category: 'phonics',
+    question: 'My child can read words but does not understand the story. Is that still a phonics problem?',
+    answer:
+      'Not always. If decoding is accurate enough, the next need may be fluency, vocabulary, oral language, background knowledge, or comprehension. Check whether the child can explain what happened, answer simple questions, and retell the text without relying on the exact wording.',
+    relatedBlog: '/blog/how-phonics-classes-help-kids-read',
+    relatedCourse: '/reading-fluency-program',
+  },
+  {
+    id: 'q7',
+    category: 'phonics',
+    question: 'What should I look for in an online phonics class?',
+    answer:
+      'Look for clear placement, a systematic sequence, active child participation, explicit blending and decoding, immediate correction, level-appropriate reading, spelling transfer, and progress evidence using unfamiliar examples.',
+    relatedBlog: '/blog/online-phonics-classes-vs-school',
+    relatedCourse: '/phonics',
+  },
+  {
+    id: 'q8',
+    category: 'grammar',
+    question: 'How can grammar be taught without turning it into rule memorisation?',
+    answer:
+      'Teach one concept briefly, then use it in speaking, sentence building, editing, and fresh writing. A child understands grammar more deeply when they can produce and correct their own sentences rather than only identify answers on a worksheet.',
+    relatedBlog: '/blog/week-7-grammar-nouns-to-paragraphs',
+    relatedCourse: '/grammar',
+  },
+  {
+    id: 'q9',
+    category: 'grammar',
+    question: 'Why does my child know grammar rules but still make mistakes while writing?',
+    answer:
+      'Knowing a rule and applying it while generating ideas are different demands. Use short write-edit-rewrite cycles and focus on one repeated error pattern at a time so the rule transfers into independent writing.',
+    relatedBlog: '/blog/child-knows-grammar-but-makes-mistakes',
+    relatedCourse: '/writing-classes-for-kids',
+  },
+  {
+    id: 'q10',
+    category: 'grammar',
+    question: 'When should children start learning tenses?',
+    answer:
+      'Introduce tense language when the child can understand and produce simple sentences about now, before, and later. The exact age matters less than language readiness. Start with clear everyday contrasts before moving into more complex tense forms.',
+    relatedBlog: '/blog/child-knows-grammar-but-makes-mistakes',
+    relatedCourse: '/courses/grammar',
+  },
+  {
+    id: 'q11',
+    category: 'grammar',
+    question: 'My child speaks well but cannot write complete sentences. What should we practise?',
+    answer:
+      'Use a speak-first, write-second routine. Let the child say one complete idea, write it independently, then check capitals, punctuation, word order, tense, and clarity. Gradually move from one sentence to connected sentences and paragraphs.',
+    relatedBlog: '/blog/how-to-improve-sentence-formation-in-kids',
+    relatedCourse: '/writing-classes-for-kids',
+  },
+  {
+    id: 'q12',
+    category: 'speaking',
+    question: 'How can I help a shy child speak more confidently?',
+    answer:
+      'Use familiar, low-pressure prompts, allow thinking time, model only when needed, and praise the attempt before correcting one small detail. Build from one complete sentence to connected ideas and new settings gradually.',
+    relatedBlog: '/blog/week-12-speaking-confidence-seeds',
+    relatedCourse: '/speaking',
+  },
+  {
+    id: 'q13',
+    category: 'speaking',
+    question: 'Should I correct every grammar mistake while my child is speaking?',
+    answer:
+      'No. Let the child finish the idea first. Then choose one useful correction and ask for a smooth retry. Constant interruption can make it harder to organise and express the message.',
+    relatedBlog: '/parents/speech-confidence',
+    relatedCourse: '/speaking',
+  },
+  {
+    id: 'q14',
+    category: 'speaking',
+    question: 'My child gives only one-word answers. How do I extend them?',
+    answer:
+      'Use a sentence starter and one follow-up question. Build from “dog” to “I like dogs” to “I like dogs because they are playful.” Reduce the prompt as the child becomes more independent.',
+    relatedBlog: '/blog/child-gives-one-word-answers',
+    relatedCourse: '/speaking',
+  },
+  {
+    id: 'q15',
+    category: 'speaking',
+    question: 'My child mumbles or speaks too quickly. What should I work on first?',
+    answer:
+      'Separate clarity, volume, and pace instead of correcting everything at once. Practise one short sentence in a comfortable conversation voice, then add a deliberate pause between ideas. If speech clarity is persistently difficult, seek individual guidance from an appropriately qualified professional.',
+    relatedBlog: '/parents/speech-confidence',
+    relatedCourse: '/speaking',
+  },
+  {
+    id: 'q16',
+    category: 'online',
+    question: 'Are one-to-one online English classes better than group classes?',
+    answer:
+      'They serve different needs. One-to-one classes are useful for close observation, personalised pacing, and frequent individual responses. Groups can add peer interaction and turn-taking. Choose the format based on the child’s learning goal rather than assuming one format is always superior.',
+    relatedBlog: '/blog/online-english-classes-for-kids-india',
+    relatedCourse: '/courses',
+  },
+  {
+    id: 'q17',
+    category: 'online',
+    question: 'How do I know whether my child is actually progressing online?',
+    answer:
+      'Ask for observable evidence: what the child can now read, write, explain, or say with less help. Compare similar fresh tasks over time instead of relying only on attendance, worksheets, or chapters completed.',
+    relatedBlog: '/parents/tracking-progress',
+    relatedCourse: '/courses',
+  },
+  {
+    id: 'q18',
+    category: 'online',
+    question: 'How do I choose between phonics, grammar, writing, reading, and speaking?',
+    answer:
+      'Start with the strongest current gap. Weak unfamiliar-word decoding points toward phonics; accurate but effortful reading may need fluency; repeated sentence errors may need grammar and writing; short hesitant answers may need sentence formation and speaking confidence.',
+    relatedBlog: '/parents/choosing-course',
+    relatedCourse: '/book-demo',
+  },
+  {
+    id: 'q19',
     category: 'pricing',
     question: 'What class packages do you offer?',
-    answer:
-      `${STANDARD_PRICING_SUMMARY}. Standard 1:1 monthly plans are ₹4,800 for 12 classes, ₹6,400 for 16 classes, and ₹9,600 for 24 classes. Tiny Steps Ultra Premium pricing is shown separately on the <a href="/pricing" class="text-tiny-green-600">pricing page</a>.`,
+    answer: `${STANDARD_PRICING_SUMMARY}. Check the pricing page for the current package options and any premium plans before enrolling.`,
+    relatedCourse: '/pricing',
   },
   {
-    id: 'q28',
+    id: 'q20',
     category: 'pricing',
     question: 'Do you offer a free demo assessment class?',
-    answer:
-      `${FREE_DEMO_FULL_DESCRIPTION} It costs ₹0, requires no credit card, and there is no obligation to enrol.`,
+    answer: `${FREE_DEMO_FULL_DESCRIPTION} It costs ₹0, requires no credit card, and there is no obligation to enrol.`,
+    relatedCourse: '/book-demo',
   },
-  { id: 'q29', category: 'pricing', question: 'What payment methods do you accept?', answer: 'Bank transfer (manual), UPI, and automated subscription (autopay). All payments are secure and receipted. Invoices sent automatically after each transaction.' },
-  { id: 'q30', category: 'pricing', question: 'Do you provide invoices and receipts?', answer: 'Yes. Invoices and GST receipts sent via email after every payment. Keep them for records or reimbursement.' },
-  { id: 'q31', category: 'pricing', question: 'What if I need to reschedule or cancel?', answer: 'Reschedule anytime with 24-hour notice via WhatsApp or dashboard. Cancellation policy: refund unused classes if cancelled 7+ days before class date. Specific terms vary by package—check your agreement.' },
-  { id: 'q32', category: 'pricing', question: 'Can I pause my package during travel or exams?', answer: 'Yes, you can pause for up to 30 days per calendar year. Classes don\'t expire during pause. Email Priya@tinystepslearning.com to request.' },
-  { id: 'q33', category: 'timings', question: 'Are classes available in Hyderabad?', answer: 'Yes! Our classes are fully online, so they\'re available in Hyderabad and anywhere else in India or globally. You just need internet and a device.' },
-  { id: 'q34', category: 'timings', question: 'Do you have weekend batches?', answer: 'Yes. Weekend slots fill up fast. Book early for Saturday/Sunday preferences. <a href="/contact" class="text-tiny-blue-600">Contact us</a> to check current availability.' },
-  { id: 'q35', category: 'timings', question: 'Do you offer evening or early-morning slots for international parents?', answer: 'We offer slots across time zones from 6 AM to 9 PM IST. For UK/US parents, we have early morning or late evening IST options. <a href="/contact" class="text-tiny-blue-600">Contact us</a> for the latest schedule.' },
-  { id: 'q36', category: 'timings', question: 'What platform do you use for online classes?', answer: 'We use Zoom for live sessions. No app download needed; join via browser link. Meetings are secure and recorded (optional) for reference.' },
-  { id: 'q37', category: 'timings', question: 'Do parents need to sit with the child during class?', answer: 'Ages 3–5: Yes, recommend initial presence for technical support. Ages 6+: Not required, but optional. Some parents observe to reinforce at home; others step away. Your choice. We\'ll advise during the assessment.' },
+  {
+    id: 'q21',
+    category: 'pricing',
+    question: 'How should parents compare the value of different English programmes?',
+    answer:
+      'Compare the starting assessment, teaching format, curriculum sequence, teacher feedback, home-practice expectation, progress evidence, class frequency, and total price. A cheaper package is not automatically better if it does not match the child’s actual learning need.',
+    relatedBlog: '/blog/online-english-classes-for-kids-india',
+    relatedCourse: '/pricing',
+  },
+  {
+    id: 'q22',
+    category: 'timings',
+    question: 'Are Tiny Steps classes available in Hyderabad and outside India?',
+    answer:
+      'Yes. Tiny Steps classes are online, so families can join from Hyderabad, other parts of India, and international locations when a suitable teacher slot is available.',
+    relatedCourse: '/contact',
+  },
+  {
+    id: 'q23',
+    category: 'timings',
+    question: 'Do you offer weekend or different time-zone slots?',
+    answer:
+      'Availability changes, so parents should check current teacher slots before planning around a specific day or time. Use the contact or demo-booking flow to request the preferred schedule.',
+    relatedCourse: '/contact',
+  },
+  {
+    id: 'q24',
+    category: 'timings',
+    question: 'Do parents need to sit with the child during an online class?',
+    answer:
+      'Younger children may need initial help with the device, materials, or settling into the routine. Older children can often participate more independently. The teacher can advise based on age, attention, and the child’s comfort during the assessment.',
+    relatedCourse: '/book-demo',
+  },
 ];
 
 const categories = [
   { id: 'all', label: 'All' },
   { id: 'phonics', label: 'Phonics' },
-  { id: 'grammar', label: 'Grammar' },
-  { id: 'speaking', label: 'Public Speaking' },
+  { id: 'grammar', label: 'Grammar & Writing' },
+  { id: 'speaking', label: 'Speaking Confidence' },
   { id: 'online', label: 'Online Learning' },
-  { id: 'summer', label: 'Summer Camp 2026' },
-  { id: 'pricing', label: 'Pricing & Payments' },
-  { id: 'timings', label: 'Hyderabad & Timings' }
+  { id: 'pricing', label: 'Pricing & Demo' },
+  { id: 'timings', label: 'Locations & Timings' },
 ];
 
 const quickRoutes = [
   {
+    title: 'Choose the right course',
+    detail: 'Identify whether phonics, reading, grammar and writing, or speaking should come first.',
+    to: '/parents/choosing-course',
+  },
+  {
     title: 'Phonics for parents',
-    detail: 'What phonics is, why it matters, and how to teach it at home.',
+    detail: 'Understand decoding, blending, practice order, and what useful progress looks like.',
     to: '/blog/phonics-for-parents-guide',
   },
   {
-    title: 'SATPIN week 1 plan',
-    detail: 'For children who know letters but still cannot blend simple words.',
-    to: '/blog/week-1-phonics-satpin-launch',
+    title: 'Track real progress',
+    detail: 'Use baselines, independent evidence, and transfer checks rather than vague labels.',
+    to: '/parents/tracking-progress',
   },
   {
-    title: 'Grammar basics roadmap',
-    detail: 'For children who can talk but struggle to write clear sentences.',
-    to: '/blog/week-7-grammar-nouns-to-paragraphs',
-  },
-  {
-    title: 'Speaking confidence roadmap',
-    detail: 'For shy, hesitant, or low-volume speakers who need calm practice.',
-    to: '/blog/week-12-speaking-confidence-seeds',
+    title: 'Build speaking confidence',
+    detail: 'Use low-pressure routines, parent scripts, and observable confidence markers.',
+    to: '/parents/speech-confidence',
   },
 ];
 
-const schemaFaqItems: Array<{ question: string; answer: string }> = [
-  {
-    question: 'What does Tiny Steps Learning teach?',
-    answer:
-      'Tiny Steps teaches phonics, reading, grammar, sentence formation, communication confidence, and public speaking through structured live online classes for children.',
-  },
-  {
-    question: 'Which age group is Tiny Steps Learning for?',
-    answer:
-      'Programs are designed for children aged 3 to 12 years, with level-based progression and age-appropriate learning goals.',
-  },
-  {
-    question: 'How does the free 35-minute 1:1 online demo assessment class work?',
-    answer:
-      'The free 35-minute 1:1 online demo assessment class is a short one-on-one session where a mentor checks your child’s current level, learning needs, and next-step goals.',
-  },
-  {
-    question: 'How are phonics classes structured?',
-    answer:
-      'Phonics classes follow a structured sequence of sounds, blending, decodable reading, and review practice so children build reading confidence step by step.',
-  },
-  {
-    question: 'Do children also learn grammar and sentence formation?',
-    answer:
-      'Yes. Tiny Steps includes grammar and sentence formation pathways to help children use correct structures in speaking and writing.',
-  },
-  {
-    question: 'How do parents track progress?',
-    answer:
-      'Parents receive stage-based updates, topic-level observations, and practical next steps to support learning at home.',
-  },
-  {
-    question: 'Are classes live and interactive?',
-    answer:
-      'Yes. Classes are live online sessions with teacher guidance, interaction, and real-time correction based on the child’s level.',
-  },
-  {
-    question: 'Can shy children improve communication confidence?',
-    answer:
-      'Yes. Shy children can improve with low-pressure guided practice, sentence support, and consistent confidence-building routines.',
-  },
-  {
-    question: 'How are class timings handled?',
-    answer:
-      'Tiny Steps offers flexible online timings, including weekday and weekend options, based on teacher availability and family schedules.',
-  },
-  {
-    question: 'How can parents book a class?',
-    answer:
-      'Parents can request a free 35-minute 1:1 online demo assessment class through the booking flow or contact support, then choose the right class plan after level guidance.',
-  },
-];
+const stripHtml = (value: string) => String(value || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
 
 const faqSchema = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
-  mainEntity: schemaFaqItems.map((item) => ({
+  mainEntity: items.map((item) => ({
     '@type': 'Question',
     name: item.question,
     acceptedAnswer: {
       '@type': 'Answer',
-      text: item.answer
-    }
-  }))
+      text: stripHtml(item.answer),
+    },
+  })),
 };
 
 const breadcrumbSchema = {
@@ -190,19 +287,9 @@ const FAQPage: FC = () => {
 
   useEffect(() => {
     applySeo({
-      title: 'Tiny Steps FAQ | Phonics, Grammar, Speaking & English Class Questions for Parents',
-      description: 'Parent FAQs on phonics, grammar, speaking confidence, online English classes, trial lessons, pricing, scheduling, and progress. Find direct answers plus the right Tiny Steps blog guides.',
-      keywords: [
-        'phonics questions parents ask',
-        'synthetic phonics',
-        'structured phonics',
-        'Jolly Phonics',
-        'grammar questions for kids',
-        'public speaking questions for children',
-        'online english classes for kids faq',
-        'how to teach phonics at home',
-        'why child cannot blend sounds',
-      ],
+      title: 'Parent FAQ: Phonics, Reading, Grammar, Writing & Speaking | Tiny Steps',
+      description:
+        'Direct parent answers about phonics, reading, grammar, writing, speaking confidence, online class formats, progress, free demo assessment, pricing, and timings.',
       canonicalPath: '/faq',
       robots: 'index, follow',
       jsonLd: [breadcrumbSchema, faqSchema],
@@ -213,7 +300,7 @@ const FAQPage: FC = () => {
     return items.filter((item) => {
       const matchCategory = selected === 'all' || item.category === selected;
       const term = deferredSearch;
-      const matchSearch = !term || item.question.toLowerCase().includes(term) || item.answer.toLowerCase().includes(term);
+      const matchSearch = !term || item.question.toLowerCase().includes(term) || stripHtml(item.answer).toLowerCase().includes(term);
       return matchCategory && matchSearch;
     });
   }, [deferredSearch, selected]);
@@ -221,16 +308,17 @@ const FAQPage: FC = () => {
   const selectedLabel = categories.find((category) => category.id === selected)?.label || 'All';
 
   const relevantRoutes = useMemo(() => {
-    if (selected === 'phonics') return quickRoutes.slice(0, 2);
-    if (selected === 'grammar') return [quickRoutes[2]];
-    if (selected === 'speaking') return [quickRoutes[3]];
+    if (selected === 'phonics') return [quickRoutes[1], quickRoutes[0]];
+    if (selected === 'grammar') return [quickRoutes[0], quickRoutes[2]];
+    if (selected === 'speaking') return [quickRoutes[3], quickRoutes[0]];
+    if (selected === 'online' || selected === 'pricing') return [quickRoutes[0], quickRoutes[2]];
     return quickRoutes;
   }, [selected]);
 
   const { user } = useAuthStore();
-  const metaTitle = 'Tiny Steps FAQ | Phonics, Grammar, Speaking & English Class Questions for Parents';
+  const metaTitle = 'Parent FAQ: Phonics, Reading, Grammar, Writing & Speaking | Tiny Steps';
   const metaDescription =
-    'Parent FAQs on phonics, grammar, speaking confidence, online English classes, trial lessons, pricing, scheduling, and progress. Find direct answers plus the right Tiny Steps blog guides.';
+    'Direct parent answers about phonics, reading, grammar, writing, speaking confidence, online class formats, progress, free demo assessment, pricing, and timings.';
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f6eee3_0%,#fbfaf7_18%,#ffffff_42%,#f4f8fc_100%)]">
@@ -242,26 +330,24 @@ const FAQPage: FC = () => {
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_390px] lg:items-end">
             <div className="max-w-4xl">
               <div className="inline-flex items-center rounded-full border border-white/14 bg-white/8 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-100 backdrop-blur">
-                Tiny Steps Help Centre
+                Tiny Steps Parent Help Centre
               </div>
               <h1 className="mt-5 max-w-4xl text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-[3.75rem] lg:leading-[1.04]">
-                Parent questions, clear answers, and the right next article
+                Parent questions about English learning, answered clearly
               </h1>
               <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-200">
-                Use this page when you are searching how to teach phonics at home, why reading is stuck,
-                how to improve grammar and writing, or how to build speaking confidence. Each answer is
-                designed to route you toward the most useful Tiny Steps guide, not leave you guessing.
+                Start here when you are unsure about phonics, reading, grammar, writing, speaking confidence, class format, progress, pricing, or the free assessment. The answers are designed to help you decide the next useful step rather than push every child into the same course.
               </p>
               <div className="mt-6 flex flex-wrap gap-3 text-sm text-slate-200">
-                <span className="rounded-full border border-white/12 bg-white/8 px-4 py-2 backdrop-blur">Direct answers across phonics, grammar, speaking, and classes</span>
-                <span className="rounded-full border border-white/12 bg-white/8 px-4 py-2 backdrop-blur">Built for busy families and multilingual homes</span>
+                <span className="rounded-full border border-white/12 bg-white/8 px-4 py-2 backdrop-blur">24 durable parent questions</span>
+                <span className="rounded-full border border-white/12 bg-white/8 px-4 py-2 backdrop-blur">Linked to canonical guides and course paths</span>
               </div>
               <div className="mt-7 max-w-xl">
                 <label htmlFor="faq-search" className="sr-only">Search parent questions</label>
                 <input
                   id="faq-search"
                   className="w-full rounded-full border border-white/16 bg-white/10 px-5 py-3 text-sm text-white outline-none transition placeholder:text-slate-300 focus:border-white/30 focus:bg-white/14"
-                  placeholder="Search phonics, grammar, speaking, classes, pricing..."
+                  placeholder="Search phonics, reading, grammar, speaking, pricing..."
                   value={search}
                   onChange={(event) => {
                     const value = event.target.value;
@@ -275,11 +361,7 @@ const FAQPage: FC = () => {
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">Best next reads</p>
               <div className="mt-5 divide-y divide-white/10">
                 {quickRoutes.map((route) => (
-                  <Link
-                    key={route.title}
-                    to={route.to}
-                    className="group block py-4 first:pt-0 last:pb-0"
-                  >
+                  <Link key={route.title} to={route.to} className="group block py-4 first:pt-0 last:pb-0">
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <p className="text-base font-semibold text-white transition group-hover:text-[#ffd8a8]">{route.title}</p>
@@ -296,6 +378,13 @@ const FAQPage: FC = () => {
       </section>
 
       <section className="mx-auto max-w-7xl px-6 py-8">
+        <section className="mb-8 rounded-[1.8rem] border border-emerald-100 bg-emerald-50 p-5 md:p-6">
+          <h2 className="text-xl font-bold text-slate-950">Quick answer: where should a parent start?</h2>
+          <p className="mt-2 max-w-4xl text-sm leading-7 text-slate-700 md:text-base">
+            Identify the skill the child cannot yet do independently. If the gap is unfamiliar-word decoding, start with phonics. If decoding is accurate but reading remains effortful, look at fluency and comprehension. Repeated sentence errors point toward grammar and writing. Short hesitant responses point toward sentence formation and speaking confidence. If you are unsure, use the free assessment before choosing a course.
+          </p>
+        </section>
+
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="rounded-[1.8rem] border border-slate-200/80 bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.05)]">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Browse by topic</p>
@@ -331,7 +420,7 @@ const FAQPage: FC = () => {
 
           <aside className="space-y-5 xl:sticky xl:top-24 xl:self-start">
             <div className="rounded-[1.8rem] border border-slate-200 bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.05)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Route to the right blog</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Continue with the right guide</p>
               <div className="mt-4 space-y-3">
                 {relevantRoutes.map((route) => (
                   <Link
@@ -350,11 +439,11 @@ const FAQPage: FC = () => {
               <p className="mt-3 text-sm leading-7 text-slate-600">
                 {!user ? (
                   <>
-                    Message us on <a href="https://wa.me/919618398383" target="_blank" rel="noopener noreferrer" className="text-primary-700">WhatsApp</a> or use the <Link to="/contact" className="text-primary-700">contact form</Link>. We usually reply with a practical next step within 12 hours.
+                    Message us on <a href="https://wa.me/919618398383" target="_blank" rel="noopener noreferrer" className="text-primary-700">WhatsApp</a> or use the <Link to="/contact" className="text-primary-700">contact form</Link> and share the child&apos;s age plus the main learning concern.
                   </>
                 ) : (
                   <>
-                    Use the <Link to="/contact" className="text-primary-700">contact form</Link> and we&apos;ll respond with the best route for your child&apos;s current stage.
+                    Use the <Link to="/contact" className="text-primary-700">contact form</Link> and share the child&apos;s current target so the team can route you correctly.
                   </>
                 )}
               </p>
@@ -366,22 +455,16 @@ const FAQPage: FC = () => {
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">Need a structured plan?</p>
-              <h2 className="mt-3 text-3xl font-black tracking-tight">Move from answers to action</h2>
+              <h2 className="mt-3 text-3xl font-black tracking-tight">Move from questions to one clear first target</h2>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-200">
-                Use the Parents Hub for step-by-step routines, or book one free 35-minute 1:1 online demo assessment class if you want a level-based recommendation instead of trial and error.
+                Use the Parents Hub for step-by-step routines, or book one free 35-minute 1:1 online demo assessment class if the starting level is unclear.
               </p>
             </div>
             <div className="flex flex-wrap gap-3 lg:justify-end">
-              <Link
-                to="/parents"
-                className="inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
-              >
+              <Link to="/parents" className="inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100">
                 Explore Parents Hub
               </Link>
-              <Link
-                to="/book-demo"
-                className="inline-flex items-center rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-              >
+              <Link to="/book-demo" className="inline-flex items-center rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
                 Book Free 35-Minute Demo
               </Link>
             </div>
