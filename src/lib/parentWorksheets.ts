@@ -4,7 +4,11 @@ export type ParentWorksheetItem = {
   url: string;
   description: string;
   category: string;
+  resourceType: string;
   thumbnailUrl: string;
+  lessonId: string;
+  lessonTitle: string;
+  targetLessonIds: string[];
   targetParentIds: string[];
   targetKidIds: string[];
   targetCourseIds: string[];
@@ -53,6 +57,11 @@ export const toParentWorksheetItem = (id: string, data: any): ParentWorksheetIte
   const targetChildIds = normalizeStringArray(data?.targetChildIds);
   const targetStageTags = normalizeStringArray(data?.targetStageTags);
   const stageTags = normalizeStringArray(data?.stageTags);
+  const explicitLessonIds = normalizeStringArray(data?.targetLessonIds);
+  const lessonId = String(data?.lessonId || explicitLessonIds[0] || "").trim();
+  const targetLessonIds = Array.from(new Set([lessonId, ...explicitLessonIds].filter(Boolean)));
+  const lessonTitle = String(data?.lessonTitle || data?.lessonName || "").trim();
+  const resourceType = String(data?.resourceType || data?.activityType || data?.category || "").trim();
   const worksheetUrl = String(data?.worksheetUrl || "").trim();
   const legacyUrl = String(data?.url || "").trim();
 
@@ -66,8 +75,14 @@ export const toParentWorksheetItem = (id: string, data: any): ParentWorksheetIte
     title: String(data?.title || "").trim(),
     url: worksheetUrl || legacyUrl,
     description: String(data?.description || "").trim(),
-    category: String(data?.category || "").trim(),
+    // ParentDashboard already groups by category. Prefer the linked lesson so
+    // parents naturally see resources arranged by lesson without a breaking UI rewrite.
+    category: lessonTitle || String(data?.category || "").trim() || resourceType,
+    resourceType,
     thumbnailUrl: String(data?.thumbnailUrl || "").trim(),
+    lessonId,
+    lessonTitle,
+    targetLessonIds,
     targetParentIds: normalizeStringArray(data?.targetParentIds),
     targetKidIds: Array.from(new Set([...targetKidIds, ...targetChildIds])),
     targetCourseIds: normalizeStringArray(data?.targetCourseIds),
