@@ -1,10 +1,15 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import {
   buildParentPaymentSelectOptions,
   buildTeacherPaymentSelectOptions,
+  resetParentPaymentSelectOptionMemory,
 } from '../../pages/admin/paymentSelectOptions';
 
 describe('payment select options', () => {
+  beforeEach(() => {
+    resetParentPaymentSelectOptionMemory();
+  });
+
   it('shows initial limited parent options when search is empty', () => {
     const options = buildParentPaymentSelectOptions({
       loadedParents: [
@@ -88,6 +93,85 @@ describe('payment select options', () => {
       primaryLabel: 'Chosen Parent',
       label: 'Chosen Parent • chosen@example.com',
     });
+  });
+
+  it('keeps the month parent options available while the loaded scope narrows to one parent', () => {
+    const monthParents = [
+      { id: 'parent-1', displayName: 'Parent One' },
+      { id: 'parent-2', displayName: 'Parent Two' },
+      { id: 'parent-3', displayName: 'Parent Three' },
+    ];
+    const monthRows = monthParents.map((parent) => ({
+      parentId: parent.id,
+      parentName: parent.displayName,
+    }));
+
+    const initialOptions = buildParentPaymentSelectOptions({
+      loadedParents: monthParents,
+      searchResults: [],
+      tableRows: monthRows,
+      selectedParentId: '',
+    });
+    expect(initialOptions.map((option) => option.id)).toEqual([
+      'parent-1',
+      'parent-2',
+      'parent-3',
+    ]);
+
+    const parentOneScope = buildParentPaymentSelectOptions({
+      loadedParents: [monthParents[0]],
+      searchResults: [],
+      tableRows: [monthRows[0]],
+      selectedParentId: 'parent-1',
+    });
+    expect(parentOneScope.map((option) => option.id)).toEqual([
+      'parent-1',
+      'parent-2',
+      'parent-3',
+    ]);
+
+    const parentTwoScope = buildParentPaymentSelectOptions({
+      loadedParents: [monthParents[1]],
+      searchResults: [],
+      tableRows: [monthRows[1]],
+      selectedParentId: 'parent-2',
+    });
+    expect(parentTwoScope.map((option) => option.id)).toEqual([
+      'parent-1',
+      'parent-2',
+      'parent-3',
+    ]);
+  });
+
+  it('clears remembered parent options when the month/page scope resets', () => {
+    buildParentPaymentSelectOptions({
+      loadedParents: [
+        { id: 'july-parent-1', displayName: 'July Parent One' },
+        { id: 'july-parent-2', displayName: 'July Parent Two' },
+      ],
+      searchResults: [],
+      tableRows: [
+        { parentId: 'july-parent-1', parentName: 'July Parent One' },
+        { parentId: 'july-parent-2', parentName: 'July Parent Two' },
+      ],
+      selectedParentId: '',
+    });
+
+    const resetOptions = buildParentPaymentSelectOptions({
+      loadedParents: [],
+      searchResults: [],
+      tableRows: [],
+      selectedParentId: '',
+    });
+    expect(resetOptions).toEqual([]);
+
+    const augustOptions = buildParentPaymentSelectOptions({
+      loadedParents: [{ id: 'aug-parent-1', displayName: 'August Parent One' }],
+      searchResults: [],
+      tableRows: [{ parentId: 'aug-parent-1', parentName: 'August Parent One' }],
+      selectedParentId: '',
+    });
+    expect(augustOptions.map((option) => option.id)).toEqual(['aug-parent-1']);
   });
 
   it('shows loaded top10 teachers when search is empty and dedupes search matches', () => {
