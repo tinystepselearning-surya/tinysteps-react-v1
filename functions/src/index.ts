@@ -52,6 +52,10 @@ export { resumeEnrollmentSchedule } from "./createSessionsFromSchedule";
 export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";
 export { saveTeacherSessionProgress, adminAttendanceCorrection } from "./saveTeacherSessionProgress";
 export {
+  adminSyncCanonicalPhonicsCurriculum,
+  onCurriculumTopicsCanonicalize,
+} from "./phonicsCurriculumEnforcer";
+export {
   onBillingChargeReadModelWrite,
   onPaymentReadModelWrite,
   onParentUserReadModelWrite,
