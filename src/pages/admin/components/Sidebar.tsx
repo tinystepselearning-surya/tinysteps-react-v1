@@ -45,7 +45,7 @@ export default function Sidebar({ selectedTab, onTabChange, className, onNavigat
     { id: 'class-recordings', label: 'Class Recordings', icon: Users },
     { id: 'class-samples', label: 'Class Samples', icon: Users },
     { id: 'testimonials', label: 'Testimonials', icon: MessageSquareQuote },
-    { id: 'parent-worksheets', label: 'Parent Worksheets', icon: FileText },
+    { id: 'parent-worksheets', label: 'Worksheets & Resources', icon: FileText },
     { id: 'analytics', label: 'Analytics', icon: LineChart },
     { id: 'teacher-schedule', label: 'Teacher Schedule', icon: CalendarClock },
     { id: 'settings', label: 'Settings', icon: Settings },
