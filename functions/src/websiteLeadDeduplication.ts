@@ -14,6 +14,7 @@ const cleanText = (value: unknown, maxLength = 500): string =>
 
 export const normalizeWebsiteLeadPhone = (value: unknown): string => {
   const digits = cleanText(value, 80).replace(/[^\d]/g, '');
+  if (digits.length === 14 && digits.startsWith('0091')) return digits.slice(4);
   if (digits.length === 12 && digits.startsWith('91')) return digits.slice(2);
   return digits;
 };
@@ -75,14 +76,19 @@ const inquiryCount = (lead: Record<string, unknown>): number => {
 const demoIds = (lead: Record<string, unknown>): string[] =>
   stringArray(lead.demoIds, lead.demoSessionId);
 
-const hasConflictingDemoLinks = (
+export const hasUnsafeWebsiteLeadDemoConflict = (
   canonical: Record<string, unknown>,
   duplicate: Record<string, unknown>,
 ): boolean => {
-  const left = new Set(demoIds(canonical));
-  const right = demoIds(duplicate);
-  if (left.size === 0 || right.length === 0) return false;
-  return right.some((id) => !left.has(id));
+  const canonicalIds = new Set(demoIds(canonical));
+  const duplicateIds = demoIds(duplicate);
+
+  // A fresh duplicate without demo lifecycle can safely fold into an older canonical,
+  // even when the canonical already has a demo. The reverse is unsafe because deleting
+  // a duplicate that owns a demo could leave demoSessions pointing at a deleted lead.
+  if (duplicateIds.length === 0) return false;
+  if (canonicalIds.size === 0) return true;
+  return duplicateIds.some((id) => !canonicalIds.has(id));
 };
 
 const interactionSnapshot = (
@@ -229,11 +235,11 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
       }
 
       const canonical = canonicalSnap.data() || {};
-      if (hasConflictingDemoLinks(canonical, current)) {
+      if (hasUnsafeWebsiteLeadDemoConflict(canonical, current)) {
         tx.set(leadRef, {
           dedupeIdentityKey: identityKey,
           dedupeVersion: DEDUPE_VERSION,
-          dedupeConflict: 'different_demo_links',
+          dedupeConflict: 'duplicate_has_unmigrated_demo_links',
           dedupeConflictCanonicalLeadId: indexedCanonicalId,
           dedupeConflictAt: admin.firestore.FieldValue.serverTimestamp(),
         }, { merge: true });
@@ -260,7 +266,6 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
         inquiryCount: inquiryCount(canonical) + inquiryCount(current),
         firstInquiryAt: earliestAt,
         lastInquiryAt: latestAt || admin.firestore.FieldValue.serverTimestamp(),
-        receivedAt: earliestAt,
         programInterests: stringArray(
           canonical.programInterests,
           canonical.programInterest,
@@ -279,6 +284,10 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
         ),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       };
+      // receivedAt is immutable in leadLifecycle. Runtime canonicalization naturally keeps
+      // the first website enquiry as canonical; historical backfill uses firstInquiryAt to
+      // retain an earlier enquiry if a lifecycle-rich later record must remain canonical.
+      if (!canonical.receivedAt) mergedPatch.receivedAt = earliestAt;
 
       const currentIsLatest = duplicateMs >= canonicalMs;
       if (currentIsLatest) {
@@ -329,7 +338,7 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
     if (outcome.action === 'merged') {
       logger.info('[websiteLeadDeduplication] merged duplicate website lead', outcome);
     } else if (outcome.action === 'conflict') {
-      logger.warn('[websiteLeadDeduplication] duplicate not merged because demo links conflict', {
+      logger.warn('[websiteLeadDeduplication] duplicate not merged because demo lifecycle is unsafe to migrate automatically', {
         leadId,
         identityKey,
         ...outcome,
