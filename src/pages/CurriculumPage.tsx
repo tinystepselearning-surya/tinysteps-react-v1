@@ -182,7 +182,6 @@ function safeCourse(value: string | null): string | null {
     url: curriculumCanonicalUrl,
   });
 
-
   const getWeeks = (courseSlug: string): WeekItem[] => {
     const pickWeeks = (slug: string): WeekItem[] => {
       const overrideWeeks = (curriculumData?.courses?.[slug]?.weeks ?? []) as WeekItem[];
@@ -401,7 +400,7 @@ function safeCourse(value: string | null): string | null {
         <div className="grid gap-4 md:grid-cols-3">
         <SmartCard title="Phonics learning journey" description="Early, Advanced, and Foundations" badge="Ages 3–12">
           <ul className="list-disc pl-5 text-sm text-gray-600">
-            <li>SATPIN → vowel teams → multisyllabic strategies</li>
+            <li>Letter sounds → core rules → vowel families → advanced patterns</li>
             <li>Progression from sound recognition to fluent decoding routines</li>
           </ul>
         </SmartCard>
@@ -476,26 +475,26 @@ function safeCourse(value: string | null): string | null {
             <CollapsibleCard icon={<span>📚</span>} title="Phonics: From Sounds to Fluent Reading" subtext="Cambridge-aligned | Ages 3–12 | Lesson-based tracks" className="glass-panel">
               <div className="grid gap-4 md:grid-cols-3">
                 <div>
-                  <div className="font-semibold">PHONICS FOUNDATIONS (30 lessons)</div>
+                  <div className="font-semibold">PHONICS FOUNDATIONS (31 lessons)</div>
                   <ul className="list-disc pl-5 text-sm text-gray-700">
-                    <li>Letter sounds + short vowels</li>
-                    <li>Build sound confidence and early blending</li>
+                    <li>Letter sounds → short vowels → structured revision</li>
+                    <li>31 lessons ending in a Grand Revision</li>
                     <li>Perfect for ages 3–7 with no reading base</li>
                   </ul>
                 </div>
                 <div>
-                  <div className="font-semibold">EARLY PHONICS (41 lessons)</div>
+                  <div className="font-semibold">EARLY PHONICS (40 lessons)</div>
                   <ul className="list-disc pl-5 text-sm text-gray-700">
-                    <li>Sound sets → digraphs → vowel teams</li>
-                    <li>Magic E + longer word rules</li>
+                    <li>Sound sets + CK/Floss → digraphs → vowel teams</li>
+                    <li>Magic E → controlling R → diphthongs → SHUN/Lazy Sound</li>
                     <li>Great for ages 4–8 building reading fluency</li>
                   </ul>
                 </div>
                 <div>
-                  <div className="font-semibold">ADVANCED PHONICS (20 lessons)</div>
+                  <div className="font-semibold">ADVANCED PHONICS (30 lessons)</div>
                   <ul className="list-disc pl-5 text-sm text-gray-700">
-                    <li>Diphthongs → Bossy R → alternate vowels</li>
-                    <li>Endings + fluency practice</li>
+                    <li>A–Z review + core rules → Magic E + vowel teams</li>
+                    <li>Diphthongs + SHUN → controlling R → long vowel families → lazy-vowel patterns</li>
                     <li>Perfect for ages 6–12 with reading base</li>
                   </ul>
                 </div>
@@ -503,17 +502,17 @@ function safeCourse(value: string | null): string | null {
             </CollapsibleCard>
 
             <div id="course-phonics-foundation" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'phonics-foundation' ? 'ring-2 ring-primary-300' : ''}`}>
-              <h3 className="mb-3 font-heading text-2xl font-bold">Phonics Foundations (30 lessons)</h3>
+              <h3 className="mb-3 font-heading text-2xl font-bold">Phonics Foundations (31 lessons)</h3>
               <WeekAccordion key="phonics-foundation" items={getWeeks('phonics-foundation')} />
             </div>
 
             <div id="course-phonics-advanced" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'phonics-advanced' ? 'ring-2 ring-primary-300' : ''}`}>
-              <h3 className="mb-3 font-heading text-2xl font-bold">Advanced Phonics (20 lessons)</h3>
+              <h3 className="mb-3 font-heading text-2xl font-bold">Advanced Phonics (30 lessons)</h3>
               <WeekAccordion key="phonics-advanced" items={getWeeks('phonics-advanced')} />
             </div>
 
             <div id="course-phonics-brush-up" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'phonics-brush-up' ? 'ring-2 ring-primary-300' : ''}`}>
-              <h3 className="mb-3 font-heading text-2xl font-bold">Early Phonics (41 lessons)</h3>
+              <h3 className="mb-3 font-heading text-2xl font-bold">Early Phonics (40 lessons)</h3>
               <WeekAccordion key="phonics-brush-up" items={getWeeks('phonics-brush-up')} />
             </div>
           </div>
