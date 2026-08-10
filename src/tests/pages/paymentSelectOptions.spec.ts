@@ -1,15 +1,10 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   buildParentPaymentSelectOptions,
   buildTeacherPaymentSelectOptions,
-  resetParentPaymentSelectOptionMemory,
 } from '../../pages/admin/paymentSelectOptions';
 
 describe('payment select options', () => {
-  beforeEach(() => {
-    resetParentPaymentSelectOptionMemory();
-  });
-
   it('shows initial limited parent options when search is empty', () => {
     const options = buildParentPaymentSelectOptions({
       loadedParents: [
@@ -95,7 +90,7 @@ describe('payment select options', () => {
     });
   });
 
-  it('keeps the month parent options available while the loaded scope narrows to one parent', () => {
+  it('merges component-owned month options while the loaded scope narrows to one parent', () => {
     const monthParents = [
       { id: 'parent-1', displayName: 'Parent One' },
       { id: 'parent-2', displayName: 'Parent Two' },
@@ -123,6 +118,7 @@ describe('payment select options', () => {
       searchResults: [],
       tableRows: [monthRows[0]],
       selectedParentId: 'parent-1',
+      preservedOptions: initialOptions,
     });
     expect(parentOneScope.map((option) => option.id)).toEqual([
       'parent-1',
@@ -135,6 +131,7 @@ describe('payment select options', () => {
       searchResults: [],
       tableRows: [monthRows[1]],
       selectedParentId: 'parent-2',
+      preservedOptions: initialOptions,
     });
     expect(parentTwoScope.map((option) => option.id)).toEqual([
       'parent-1',
@@ -143,8 +140,8 @@ describe('payment select options', () => {
     ]);
   });
 
-  it('clears remembered parent options when the month/page scope resets', () => {
-    buildParentPaymentSelectOptions({
+  it('does not retain parent options after the component omits its preserved month scope', () => {
+    const julyOptions = buildParentPaymentSelectOptions({
       loadedParents: [
         { id: 'july-parent-1', displayName: 'July Parent One' },
         { id: 'july-parent-2', displayName: 'July Parent Two' },
@@ -156,6 +153,8 @@ describe('payment select options', () => {
       ],
       selectedParentId: '',
     });
+
+    expect(julyOptions).toHaveLength(2);
 
     const resetOptions = buildParentPaymentSelectOptions({
       loadedParents: [],

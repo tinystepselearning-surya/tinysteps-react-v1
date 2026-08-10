@@ -120,4 +120,38 @@ describe('LeadSourceAnalysis request ordering', () => {
     expect(screen.getByText('Instagram (legacy)')).toBeTruthy();
     expect(screen.queryByText('Referral (legacy)')).toBeNull();
   });
+
+  it('ignores an older rejected range without replacing the newest loading or error state', async () => {
+    const thirtyDayRequest = deferred<ReturnType<typeof leadSnapshot>>();
+    const sevenDayRequest = deferred<ReturnType<typeof leadSnapshot>>();
+
+    getDocsLoggedMock.mockImplementation((label: string) => {
+      if (label === 'LeadSourceAnalysis:30d') return thirtyDayRequest.promise;
+      if (label === 'LeadSourceAnalysis:7d') return sevenDayRequest.promise;
+      return Promise.resolve({ docs: [] });
+    });
+
+    render(<LeadSourceAnalysis />);
+    await waitFor(() => expect(getDocsLoggedMock).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole('button', { name: '7d' }));
+
+    await act(async () => {
+      sevenDayRequest.resolve(leadSnapshot('lead-7', 'instagram'));
+      await sevenDayRequest.promise;
+    });
+    await waitFor(() => expect(screen.getByText('Instagram (legacy)')).toBeTruthy());
+
+    await act(async () => {
+      thirtyDayRequest.reject(new Error('stale 30d failure'));
+      try {
+        await thirtyDayRequest.promise;
+      } catch {
+        // expected stale rejection
+      }
+    });
+
+    expect(screen.getByText('Instagram (legacy)')).toBeTruthy();
+    expect(screen.queryByText(/stale 30d failure/)).toBeNull();
+    expect(screen.queryByText('Loading lead attribution…')).toBeNull();
+  });
 });

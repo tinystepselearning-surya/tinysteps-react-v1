@@ -83,34 +83,20 @@ const mergeOptions = <TUser extends PaymentUserOption>(
   return Array.from(byId.values());
 };
 
-// ParentPayments temporarily replaces its loaded month scope with the selected parent
-// while fetching details. Preserve the durable month-scoped options so the admin can
-// immediately move Parent A -> Parent B without needing a remount/login. The memory is
-// cleared whenever the parent payment scope is reset (initial mount/month change).
-const parentOptionMemory = new Map<string, PaymentSelectOption<PaymentUserOption>>();
-
-export const resetParentPaymentSelectOptionMemory = (): void => {
-  parentOptionMemory.clear();
-};
-
 export const buildParentPaymentSelectOptions = <TUser extends PaymentUserOption>({
   loadedParents,
   searchResults,
   tableRows,
   selectedParentId,
+  preservedOptions = [],
 }: {
   loadedParents: TUser[];
   searchResults: TUser[];
   tableRows: ParentPaymentOptionRow[];
   selectedParentId?: string;
+  preservedOptions?: Array<PaymentSelectOption<TUser>>;
 }): Array<PaymentSelectOption<TUser>> => {
   const normalizedSelectedParentId = String(selectedParentId || '').trim();
-
-  // ParentPayments clears both loaded parents and table rows when the page/month scope
-  // is reset. Treat that transition as the lifecycle boundary for remembered options.
-  if (!normalizedSelectedParentId && loadedParents.length === 0 && tableRows.length === 0) {
-    parentOptionMemory.clear();
-  }
 
   const rowById = new Map(tableRows.map((row) => [row.parentId, row]));
   const userById = new Map(
@@ -149,35 +135,7 @@ export const buildParentPaymentSelectOptions = <TUser extends PaymentUserOption>
       .map((parentId) => buildParentOption(parentId))
       .filter((option): option is PaymentSelectOption<TUser> => Boolean(option)),
   );
-
-  // Search results are intentionally ephemeral. Persist only options that belong to the
-  // loaded/table scope or the currently selected parent. This prevents a historical search
-  // from polluting future month scopes while keeping the original page options available
-  // after ParentPayments narrows its Firestore reads to one selected parent.
-  const durableParentIds = new Set(
-    [
-      ...loadedParents.map((user) => user.id),
-      ...tableRows.map((row) => row.parentId),
-      normalizedSelectedParentId,
-    ]
-      .map((value) => String(value || '').trim())
-      .filter(Boolean),
-  );
-
-  currentOptions.forEach((option) => {
-    if (!durableParentIds.has(option.id)) return;
-    const previous = parentOptionMemory.get(option.id);
-    const merged = previous
-      ? mergeOptions<PaymentUserOption>([previous, option])[0]
-      : (option as PaymentSelectOption<PaymentUserOption>);
-    parentOptionMemory.set(option.id, merged);
-  });
-
-  const rememberedOptions = Array.from(parentOptionMemory.values()) as Array<
-    PaymentSelectOption<TUser>
-  >;
-
-  return mergeOptions([...rememberedOptions, ...currentOptions]);
+  return mergeOptions([...preservedOptions, ...currentOptions]);
 };
 
 export const buildTeacherPaymentSelectOptions = <TUser extends PaymentUserOption>({

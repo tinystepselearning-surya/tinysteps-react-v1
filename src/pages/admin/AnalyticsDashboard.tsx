@@ -194,7 +194,7 @@ export default function AnalyticsDashboard(): JSX.Element {
   const [selectedMonth, setSelectedMonth] = useState<string>(() => monthKeyFromDate(new Date()));
   const [teacherEarningsTab, setTeacherEarningsTab] = useState<'live' | 'archived'>('live');
   const [monthRefreshKey, setMonthRefreshKey] = useState(0);
-  const [monthLoading, setMonthLoading] = useState(false);
+  const [monthLoading, setMonthLoading] = useState(true);
   const [coreAnalyticsEnabled, setCoreAnalyticsEnabled] = useState(false);
   const [coreRefreshKey, setCoreRefreshKey] = useState(0);
   const [coreLoading, setCoreLoading] = useState(false);
@@ -577,7 +577,7 @@ export default function AnalyticsDashboard(): JSX.Element {
         totalEarned: row.totalEarned,
         pending: row.pending,
         profileTag: (() => {
-          if (!coreAnalyticsEnabled || coreLoading) return 'Profile not loaded';
+          if (!coreAnalyticsEnabled || coreLoading || coreError) return 'Profile not loaded';
           const profile = teacherProfileById[row.teacherId];
           if (!profile) return 'Deleted / Missing';
           if (profile.role !== 'teacher') return 'Role changed';
@@ -595,6 +595,7 @@ export default function AnalyticsDashboard(): JSX.Element {
     teacherProfileById,
     coreAnalyticsEnabled,
     coreLoading,
+    coreError,
   ]);
 
   const liveTeacherEarnings = useMemo(
@@ -642,6 +643,11 @@ export default function AnalyticsDashboard(): JSX.Element {
   const sessionNetEarningsMonth =
     revenueTotals.sessionChargesTotal - teacherEarningsSummary.totalSessionEarned;
   const coreAnalyticsReady = coreAnalyticsEnabled && !coreLoading && !coreError;
+  const monthAnalyticsReady = !monthLoading && !monthError;
+  const selectedMonthMetric = (value: string | number): string | number =>
+    monthLoading ? '…' : monthError ? '—' : value;
+  const selectedMonthSub = (availableCopy: string): string =>
+    monthError ? 'Unavailable' : availableCopy;
 
   return (
     <div className="space-y-4">
@@ -728,50 +734,57 @@ export default function AnalyticsDashboard(): JSX.Element {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <MetricCard
           label="Billed Revenue (Month)"
-          value={monthLoading ? '…' : formatMoney(expectedRevenue)}
-          sub="Current billed charges for the selected month (non-void only)"
+          value={selectedMonthMetric(formatMoney(expectedRevenue))}
+          sub={selectedMonthSub('Current billed charges for the selected month (non-void only)')}
         />
         <MetricCard
           label="Collected Payments (Month)"
-          value={monthLoading ? '…' : formatMoney(earnedRevenue)}
-          sub="Payments applied/recorded for the selected month"
+          value={selectedMonthMetric(formatMoney(earnedRevenue))}
+          sub={selectedMonthSub('Payments applied/recorded for the selected month')}
         />
         <MetricCard
           label="Balance Due"
-          value={monthLoading ? '…' : formatMoney(balanceDueRevenue)}
-          sub="Billed revenue minus collected payments"
+          value={selectedMonthMetric(formatMoney(balanceDueRevenue))}
+          sub={selectedMonthSub('Billed revenue minus collected payments')}
         />
         <MetricCard
           label="Completed sessions (billed)"
-          value={monthLoading ? '…' : completedSessionsMonth}
+          value={selectedMonthMetric(completedSessionsMonth)}
+          sub={monthError ? 'Unavailable' : undefined}
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <MetricCard
           label="Scheduled Sessions in Month"
-          value={monthLoading || !coreAnalyticsReady ? '—' : plannedProjection.plannedSessions}
+          value={!monthAnalyticsReady || !coreAnalyticsReady ? '—' : plannedProjection.plannedSessions}
           sub={
-            !coreAnalyticsReady
+            monthError
+              ? 'Unavailable'
+              : !coreAnalyticsReady
               ? 'Load core analytics to calculate enrollment-linked scheduled sessions'
               : 'Completed + upcoming scheduled sessions for the selected month'
           }
         />
         <MetricCard
           label="Remaining Scheduled Sessions"
-          value={monthLoading || !coreAnalyticsReady ? '—' : plannedProjection.remainingScheduledSessions}
+          value={!monthAnalyticsReady || !coreAnalyticsReady ? '—' : plannedProjection.remainingScheduledSessions}
           sub={
-            !coreAnalyticsReady
+            monthError
+              ? 'Unavailable'
+              : !coreAnalyticsReady
               ? 'Load core analytics to calculate remaining enrollment-linked sessions'
               : 'Upcoming sessions yet to be completed'
           }
         />
         <MetricCard
           label="Full-Month Scheduled Revenue"
-          value={monthLoading || !coreAnalyticsReady ? '—' : formatMoney(plannedProjection.projectedRevenue)}
+          value={!monthAnalyticsReady || !coreAnalyticsReady ? '—' : formatMoney(plannedProjection.projectedRevenue)}
           valueClassName="whitespace-nowrap text-lg md:text-xl"
           sub={
-            !coreAnalyticsReady
+            monthError
+              ? 'Unavailable'
+              : !coreAnalyticsReady
               ? 'Load core analytics to calculate course/enrollment fee projections'
               : plannedProjection.missingFeeSessions > 0
                 ? `Revenue estimate from all scheduled sessions in the selected month. Avg/session ${formatMoney(plannedProjection.avgProjectedRevenuePerSession)} • ${plannedProjection.missingFeeSessions} sessions missing fee config`
@@ -780,9 +793,11 @@ export default function AnalyticsDashboard(): JSX.Element {
         />
         <MetricCard
           label="Projected teacher payout (planned)"
-          value={monthLoading || !coreAnalyticsReady ? '—' : formatMoney(projectedTeacherPayout)}
+          value={!monthAnalyticsReady || !coreAnalyticsReady ? '—' : formatMoney(projectedTeacherPayout)}
           sub={
-            !coreAnalyticsReady
+            monthError
+              ? 'Unavailable'
+              : !coreAnalyticsReady
               ? 'Load core analytics to calculate the planned payout projection'
               : `Avg payout/session ${formatMoney(avgSessionPayout)}`
           }
@@ -807,18 +822,18 @@ export default function AnalyticsDashboard(): JSX.Element {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <MetricCard
           label="Demo earnings (month)"
-          value={monthLoading ? '…' : formatMoney(teacherEarningsSummary.totalDemoEarned)}
-          sub={`${teacherEarningsSummary.totalDemoCount} demos completed/enrolled`}
+          value={selectedMonthMetric(formatMoney(teacherEarningsSummary.totalDemoEarned))}
+          sub={selectedMonthSub(`${teacherEarningsSummary.totalDemoCount} demos completed/enrolled`)}
         />
         <MetricCard
           label="Session Net Revenue (Month)"
-          value={monthLoading ? '…' : formatMoney(sessionNetEarningsMonth)}
-          sub="Session charges minus teacher payout"
+          value={selectedMonthMetric(formatMoney(sessionNetEarningsMonth))}
+          sub={selectedMonthSub('Session charges minus teacher payout')}
         />
         <MetricCard
           label="Total teacher payout"
-          value={monthLoading ? '…' : formatMoney(teacherEarningsSummary.totalCombinedEarned)}
-          sub="Combined exposure"
+          value={selectedMonthMetric(formatMoney(teacherEarningsSummary.totalCombinedEarned))}
+          sub={selectedMonthSub('Combined exposure')}
         />
       </div>
 
@@ -832,7 +847,9 @@ export default function AnalyticsDashboard(): JSX.Element {
                 {!coreAnalyticsReady ? ' Teacher profile classification loads with core analytics.' : ''}
               </p>
             </div>
-            <span className="text-xs text-muted-foreground">{visibleTeacherEarnings.length} teachers</span>
+            <span className="text-xs text-muted-foreground">
+              {monthError ? 'Unavailable' : `${visibleTeacherEarnings.length} teachers`}
+            </span>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <Button
@@ -873,6 +890,8 @@ export default function AnalyticsDashboard(): JSX.Element {
                     <td className="p-3 text-muted-foreground" colSpan={8}>
                       {monthLoading
                         ? 'Loading selected-month teacher earnings…'
+                        : monthError
+                          ? 'Selected-month teacher earnings are unavailable.'
                         : teacherEarningsTab === 'live'
                           ? 'No live teacher earnings for this month.'
                           : 'No archived/deleted teacher earnings for this month.'}

@@ -128,7 +128,58 @@ describe('AnalyticsDashboard selected-month state', () => {
     await waitFor(() => {
       expect(screen.getByText(/Month analytics: month query failed/)).toBeTruthy();
     });
-    expect(cardText('Billed Revenue (Month)')).toContain('₹0');
+    expect(cardText('Billed Revenue (Month)')).toContain('—');
+    expect(cardText('Billed Revenue (Month)')).toContain('Unavailable');
+    expect(cardText('Billed Revenue (Month)')).not.toContain('₹0');
     expect(cardText('Billed Revenue (Month)')).not.toContain('₹1,000');
+  });
+
+  it('keeps the newest month when an older month resolves last', async () => {
+    let phase: 'initial' | 'older' | 'newest' = 'initial';
+    const olderGate = deferred<void>();
+    const newestGate = deferred<void>();
+
+    getDocsLoggedMock.mockImplementation((label: string) => {
+      const response = (amount: number) =>
+        label === 'AnalyticsDashboard:month-billing-charges'
+          ? snapshot([{ id: `charge-${amount}`, amount, status: 'open' }])
+          : snapshot([]);
+      if (phase === 'older') return olderGate.promise.then(() => response(9000));
+      if (phase === 'newest') return newestGate.promise.then(() => response(2000));
+      return Promise.resolve(response(1000));
+    });
+
+    render(<AnalyticsDashboard />);
+    await waitFor(() => expect(cardText('Billed Revenue (Month)')).toContain('₹1,000'));
+
+    const monthInput = document.querySelector('input[type="month"]')!;
+    const callsBeforeOlder = getDocsLoggedMock.mock.calls.length;
+    phase = 'older';
+    fireEvent.change(monthInput, { target: { value: '2026-07' } });
+    await waitFor(() => expect(getDocsLoggedMock.mock.calls.length).toBe(callsBeforeOlder + 4));
+
+    phase = 'newest';
+    fireEvent.change(monthInput, { target: { value: '2026-06' } });
+    await act(async () => {
+      newestGate.resolve();
+      await newestGate.promise;
+    });
+    await waitFor(() => expect(cardText('Billed Revenue (Month)')).toContain('₹2,000'));
+
+    await act(async () => {
+      olderGate.resolve();
+      await olderGate.promise;
+    });
+    expect(cardText('Billed Revenue (Month)')).toContain('₹2,000');
+    expect(cardText('Billed Revenue (Month)')).not.toContain('₹9,000');
+  });
+
+  it('shows a genuine zero after a successful empty selected-month query', async () => {
+    getDocsLoggedMock.mockResolvedValue(snapshot([]));
+    render(<AnalyticsDashboard />);
+
+    await waitFor(() => expect(cardText('Billed Revenue (Month)')).toContain('₹0'));
+    expect(cardText('Billed Revenue (Month)')).not.toContain('Unavailable');
+    expect(screen.queryByText(/Month analytics:/)).toBeNull();
   });
 });

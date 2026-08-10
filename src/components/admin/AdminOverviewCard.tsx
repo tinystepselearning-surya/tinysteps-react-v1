@@ -25,7 +25,7 @@ const AdminOverviewCard: React.FC = () => {
             Loading overview…
           </p>
         ) : errorMessage ? (
-          <p className="text-sm text-red-500">{errorMessage}</p>
+          <p className="text-sm text-red-500">Admin overview unavailable: {errorMessage}</p>
         ) : stats ? (
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
@@ -52,10 +52,10 @@ const AdminOverviewCard: React.FC = () => {
             </div>
             <div>
               <p className="text-xs uppercase text-muted-foreground">
-                Active Sessions Today
+                Sessions Today
               </p>
               <p className="text-xl font-semibold">
-                {stats.activeSessionsToday}
+                {stats.sessionsToday}
               </p>
             </div>
           </div>
