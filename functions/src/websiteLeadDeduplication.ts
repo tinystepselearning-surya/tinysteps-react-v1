@@ -8,6 +8,8 @@ if (!admin.apps.length) admin.initializeApp();
 const REGION = 'asia-south1';
 const DEDUPE_VERSION = 1;
 const WEBSITE_SOURCE = 'website';
+const DEMO_CONFLICT = 'duplicate_has_unmigrated_demo_links';
+const IDENTITY_EDIT_CONFLICT = 'identity_edit_collides_with_existing_lead';
 
 const cleanText = (value: unknown, maxLength = 500): string =>
   typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
@@ -145,6 +147,12 @@ const firstTouchPatch = (
   return patch;
 };
 
+const clearConflictPatch = (): Record<string, unknown> => ({
+  dedupeConflict: admin.firestore.FieldValue.delete(),
+  dedupeConflictCanonicalLeadId: admin.firestore.FieldValue.delete(),
+  dedupeConflictAt: admin.firestore.FieldValue.delete(),
+});
+
 export const onWebsiteLeadIdentityWrite = onDocumentWritten(
   { document: 'leads/{leadId}', region: REGION },
   async (event) => {
@@ -185,6 +193,8 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
       const indexedCanonicalId = identitySnap.exists
         ? cleanText(identitySnap.data()?.canonicalLeadId, 120)
         : '';
+      const currentConflict = cleanText(current.dedupeConflict, 160);
+      const currentConflictCanonicalId = cleanText(current.dedupeConflictCanonicalLeadId, 120);
 
       const ensureCanonical = () => {
         const timestamp = eventTimestamp(current) || admin.firestore.FieldValue.serverTimestamp();
@@ -201,6 +211,7 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
         if (!Array.isArray(current.interestTracks)) {
           patch.interestTracks = stringArray(current.interestTrack);
         }
+        if (currentConflict) Object.assign(patch, clearConflictPatch());
         if (Object.keys(patch).length > 0) tx.set(leadRef, patch, { merge: true });
         tx.set(
           leadRef.collection('inquiries').doc(leadId),
@@ -208,6 +219,22 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
           { merge: true },
         );
       };
+
+      // A conflict-marker write retriggers this function. Keep identity collisions sticky
+      // until an admin actually changes the identity again; otherwise the second trigger
+      // could fall through and delete the conflicting lead.
+      if (
+        currentConflict === IDENTITY_EDIT_CONFLICT &&
+        indexedCanonicalId &&
+        indexedCanonicalId !== leadId &&
+        currentConflictCanonicalId === indexedCanonicalId &&
+        previousIdentityKey === identityKey
+      ) {
+        return {
+          action: 'identity_conflict_existing' as const,
+          canonicalLeadId: indexedCanonicalId,
+        };
+      }
 
       // Admin edits can legitimately correct phone/child identity. If this lead owned the
       // prior identity mapping, move that mapping atomically. Never leave a stale key that
@@ -221,9 +248,18 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
 
         if (previousCanonicalId === leadId) {
           if (indexedCanonicalId && indexedCanonicalId !== leadId) {
+            if (
+              currentConflict === IDENTITY_EDIT_CONFLICT &&
+              currentConflictCanonicalId === indexedCanonicalId
+            ) {
+              return {
+                action: 'identity_conflict_existing' as const,
+                canonicalLeadId: indexedCanonicalId,
+              };
+            }
             tx.set(leadRef, {
               dedupeVersion: DEDUPE_VERSION,
-              dedupeConflict: 'identity_edit_collides_with_existing_lead',
+              dedupeConflict: IDENTITY_EDIT_CONFLICT,
               dedupeConflictCanonicalLeadId: indexedCanonicalId,
               dedupeConflictAt: admin.firestore.FieldValue.serverTimestamp(),
             }, { merge: true });
@@ -279,10 +315,19 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
 
       const canonical = canonicalSnap.data() || {};
       if (hasUnsafeWebsiteLeadDemoConflict(canonical, current)) {
+        if (
+          currentConflict === DEMO_CONFLICT &&
+          currentConflictCanonicalId === indexedCanonicalId
+        ) {
+          return {
+            action: 'conflict_existing' as const,
+            canonicalLeadId: indexedCanonicalId,
+          };
+        }
         tx.set(leadRef, {
           dedupeIdentityKey: identityKey,
           dedupeVersion: DEDUPE_VERSION,
-          dedupeConflict: 'duplicate_has_unmigrated_demo_links',
+          dedupeConflict: DEMO_CONFLICT,
           dedupeConflictCanonicalLeadId: indexedCanonicalId,
           dedupeConflictAt: admin.firestore.FieldValue.serverTimestamp(),
         }, { merge: true });
@@ -327,6 +372,8 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
         ),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       };
+      if (currentConflict) Object.assign(mergedPatch, clearConflictPatch());
+
       // receivedAt is immutable in leadLifecycle. Runtime canonicalization naturally keeps
       // the first website enquiry as canonical; historical backfill uses firstInquiryAt to
       // retain an earlier enquiry if a lifecycle-rich later record must remain canonical.
