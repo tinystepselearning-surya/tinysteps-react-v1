@@ -1103,6 +1103,7 @@ export default function LeadsInquiriesWorkspace({
   const { toast } = useToast();
   const { user } = useAuthStore();
   const [leadsPageSize, setLeadsPageSize] = useState<number>(5);
+  const [leadsPage, setLeadsPage] = useState(1);
   const [newWebsiteLeadQueue, setNewWebsiteLeadQueue] = useState<LeadRecord[][]>([]);
   const [demos, setDemos] = useState<DemoSession[]>([]);
   const [demoPhoneMap, setDemoPhoneMap] = useState<Record<string, string>>({});
@@ -1473,7 +1474,32 @@ export default function LeadsInquiriesWorkspace({
     teacherFilter,
   ]);
 
-  const visibleRows = useMemo(() => filteredRows.slice(0, leadsPageSize), [filteredRows, leadsPageSize]);
+  const leadsPageCount = Math.max(1, Math.ceil(filteredRows.length / leadsPageSize));
+  const activeLeadsPage = Math.min(leadsPage, leadsPageCount);
+  const visibleRows = useMemo(() => {
+    const start = (activeLeadsPage - 1) * leadsPageSize;
+    return filteredRows.slice(start, start + leadsPageSize);
+  }, [activeLeadsPage, filteredRows, leadsPageSize]);
+
+  useEffect(() => {
+    setLeadsPage(1);
+  }, [
+    appliedLeadStatusFilter,
+    appliedUpdatedFromDate,
+    appliedUpdatedToDate,
+    courseFilter,
+    focusFilter,
+    searchQuery,
+    sourceFilter,
+    stageFilter,
+    summaryCardFilter,
+    teacherFilter,
+    view,
+  ]);
+
+  useEffect(() => {
+    if (leadsPage > leadsPageCount) setLeadsPage(leadsPageCount);
+  }, [leadsPage, leadsPageCount]);
 
   useEffect(() => {
     if (newWebsiteLeadQueue.length === 0) return;
@@ -1589,8 +1615,9 @@ export default function LeadsInquiriesWorkspace({
 
   const handleLeadsPageSizeChange = (value: string) => {
     const parsed = Number(value);
-    if (!Number.isFinite(parsed)) return;
+    if (!LEADS_PAGE_SIZE_OPTIONS.includes(parsed as (typeof LEADS_PAGE_SIZE_OPTIONS)[number])) return;
     setLeadsPageSize(parsed);
+    setLeadsPage(1);
   };
 
   const handleCreateDemoRequest = () => {
@@ -2979,8 +3006,9 @@ export default function LeadsInquiriesWorkspace({
             <div>
               <div className="text-sm font-semibold text-slate-900">Live workflow records</div>
               <div className="text-xs text-muted-foreground">
-                {visibleRows.length} of {filteredRows.length} records visible with current filters.
-                {` Top ${leadsPageSize} shown`}
+                {filteredRows.length === 0
+                  ? '0 records visible with current filters.'
+                  : `${(activeLeadsPage - 1) * leadsPageSize + 1}–${Math.min(activeLeadsPage * leadsPageSize, filteredRows.length)} of ${filteredRows.length} records visible with current filters.`}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -2992,8 +3020,31 @@ export default function LeadsInquiriesWorkspace({
                 </>
               ) : null}
               <div className="ml-2 flex items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={activeLeadsPage <= 1}
+                  onClick={() => setLeadsPage((current) => Math.max(1, current - 1))}
+                  aria-label="Previous workflow page"
+                >
+                  Previous
+                </Button>
+                <span aria-live="polite" className="min-w-[72px] text-center">
+                  Page {activeLeadsPage} of {leadsPageCount}
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={activeLeadsPage >= leadsPageCount}
+                  onClick={() => setLeadsPage((current) => Math.min(leadsPageCount, current + 1))}
+                  aria-label="Next workflow page"
+                >
+                  Next
+                </Button>
                 <Select value={String(leadsPageSize)} onValueChange={handleLeadsPageSizeChange}>
-                  <SelectTrigger className="h-8 w-[92px]">
+                  <SelectTrigger className="h-8 w-[110px]" aria-label="Workflow records per page">
                     <SelectValue placeholder={`${leadsPageSize} / page`} />
                   </SelectTrigger>
                   <SelectContent>

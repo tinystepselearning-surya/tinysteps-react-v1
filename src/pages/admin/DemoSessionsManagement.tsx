@@ -13,6 +13,7 @@ interface DemoSessionsManagementProps {
   mode?: 'full' | 'trend_only';
   leads?: LeadFunnelLead[];
   demos?: DemoSession[];
+  showTrendAnalytics?: boolean;
 }
 
 type LeadSnapshotRecord = LeadFunnelLead & {
@@ -85,8 +86,10 @@ export default function DemoSessionsManagement({
   mode = 'full',
   leads,
   demos,
+  showTrendAnalytics = false,
 }: DemoSessionsManagementProps) {
   if (mode === 'trend_only') {
+    if (!showTrendAnalytics) return null;
     return <LeadFunnelTrendContainer prefetchedLeads={leads} prefetchedDemos={demos} />;
   }
 

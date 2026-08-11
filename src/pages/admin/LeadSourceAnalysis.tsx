@@ -9,6 +9,7 @@ import {
   classifyLeadAcquisition,
   type AcquisitionChannel,
 } from '../../lib/leadAcquisition';
+import DemoSessionsManagement from './DemoSessionsManagement';
 
 type LeadAttributionMap = {
   landingPage?: string | null;
@@ -244,116 +245,128 @@ export default function LeadSourceAnalysis(): JSX.Element {
   }, [rows]);
 
   return (
-    <Card className="p-4 md:p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <div className="space-y-4">
+      <section aria-labelledby="growth-admissions-heading" className="space-y-3">
         <div>
-          <h3 className="text-base font-semibold">Lead Source Analysis</h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            First-touch acquisition, landing pages, demo progression and admissions from website enquiries.
+          <h2 id="growth-admissions-heading" className="text-lg font-semibold text-slate-950">Growth &amp; Admissions</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Lead conversion performance and current demo workload. Funnel and marketing ranges are controlled independently.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {RANGE_OPTIONS.map((days) => (
-            <Button
-              key={days}
-              type="button"
-              size="sm"
-              variant={rangeDays === days ? 'default' : 'outline'}
-              onClick={() => setRangeDays(days)}
-            >
-              {days}d
-            </Button>
-          ))}
-          <Button type="button" size="sm" variant="outline" onClick={() => setRefreshKey((v) => v + 1)}>
-            Refresh
-          </Button>
-        </div>
-      </div>
+        <DemoSessionsManagement mode="trend_only" showTrendAnalytics />
+      </section>
 
-      {error ? (
-        <div className="mt-4 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-          {error}
-        </div>
-      ) : null}
-
-      <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
-        {[
-          ['Leads', analysis.total],
-          ['Attributed', `${analysis.attributedCount} (${pct(analysis.attributedCount, analysis.total)})`],
-          ['Organic', `${analysis.organicCount} (${pct(analysis.organicCount, analysis.total)})`],
-          ['Paid', `${analysis.paidCount} (${pct(analysis.paidCount, analysis.total)})`],
-          ['Social', `${analysis.socialCount} (${pct(analysis.socialCount, analysis.total)})`],
-          ['Reached demo', `${analysis.demoCount} (${pct(analysis.demoCount, analysis.total)})`],
-          ['Admitted', `${analysis.admittedCount} (${pct(analysis.admittedCount, analysis.total)})`],
-        ].map(([label, value]) => (
-          <div key={String(label)} className="rounded-lg border bg-muted/20 p-3">
-            <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
-            <div className="mt-1 text-lg font-semibold">{loading ? '…' : value}</div>
+      <Card className="p-4 md:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-base font-semibold">Marketing Attribution</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              First-touch acquisition, landing pages, demo progression and admissions from website enquiries.
+            </p>
           </div>
-        ))}
-      </div>
-
-      <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <div className="overflow-x-auto rounded-lg border">
-          <div className="border-b px-3 py-2 text-sm font-semibold">Acquisition channels</div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-xs text-muted-foreground">
-                <th className="p-2">Channel</th>
-                <th className="p-2 text-right">Leads</th>
-                <th className="p-2 text-right">Demo</th>
-                <th className="p-2 text-right">Admitted</th>
-              </tr>
-            </thead>
-            <tbody>
-              {analysis.channelRows.length === 0 ? (
-                <tr><td className="p-3 text-muted-foreground" colSpan={4}>{loading ? 'Loading…' : 'No leads in this period.'}</td></tr>
-              ) : (
-                analysis.channelRows.map((row) => (
-                  <tr key={row.channel} className="border-b last:border-b-0">
-                    <td className="p-2 font-medium">{row.label}</td>
-                    <td className="p-2 text-right">{row.count}</td>
-                    <td className="p-2 text-right">{row.demoCount}</td>
-                    <td className="p-2 text-right">{row.admittedCount}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <div className="flex flex-wrap items-center gap-2" aria-label="Marketing attribution date range">
+            {RANGE_OPTIONS.map((days) => (
+              <Button
+                key={days}
+                type="button"
+                size="sm"
+                variant={rangeDays === days ? 'default' : 'outline'}
+                onClick={() => setRangeDays(days)}
+              >
+                {days}d
+              </Button>
+            ))}
+            <Button type="button" size="sm" variant="outline" onClick={() => setRefreshKey((v) => v + 1)}>
+              Refresh
+            </Button>
+          </div>
         </div>
 
-        <div className="overflow-x-auto rounded-lg border">
-          <div className="border-b px-3 py-2 text-sm font-semibold">Top first landing pages</div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b text-left text-xs text-muted-foreground">
-                <th className="p-2">Landing page</th>
-                <th className="p-2 text-right">Leads</th>
-                <th className="p-2 text-right">Demo</th>
-                <th className="p-2 text-right">Admitted</th>
-              </tr>
-            </thead>
-            <tbody>
-              {analysis.landingRows.length === 0 ? (
-                <tr><td className="p-3 text-muted-foreground" colSpan={4}>{loading ? 'Loading…' : 'No landing-page data yet.'}</td></tr>
-              ) : (
-                analysis.landingRows.map((row) => (
-                  <tr key={row.page} className="border-b last:border-b-0">
-                    <td className="max-w-[300px] truncate p-2 font-mono text-xs" title={row.page}>{row.page}</td>
-                    <td className="p-2 text-right">{row.count}</td>
-                    <td className="p-2 text-right">{row.demoCount}</td>
-                    <td className="p-2 text-right">{row.admittedCount}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+        {error ? (
+          <div role="status" className="mt-4 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            {error}
+          </div>
+        ) : null}
 
-      <p className="mt-3 text-[11px] text-muted-foreground">
-        Attribution coverage will rise after this release. Older leads without stored first-touch data remain labelled as legacy/unattributed rather than being guessed as direct traffic.
-      </p>
-    </Card>
+        <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
+          {[
+            ['Leads', analysis.total],
+            ['Attributed', `${analysis.attributedCount} (${pct(analysis.attributedCount, analysis.total)})`],
+            ['Organic', `${analysis.organicCount} (${pct(analysis.organicCount, analysis.total)})`],
+            ['Paid', `${analysis.paidCount} (${pct(analysis.paidCount, analysis.total)})`],
+            ['Social', `${analysis.socialCount} (${pct(analysis.socialCount, analysis.total)})`],
+            ['Reached demo', `${analysis.demoCount} (${pct(analysis.demoCount, analysis.total)})`],
+            ['Admitted', `${analysis.admittedCount} (${pct(analysis.admittedCount, analysis.total)})`],
+          ].map(([label, value]) => (
+            <div key={String(label)} className="rounded-lg border bg-muted/20 p-3">
+              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
+              <div className="mt-1 text-lg font-semibold">{loading ? '…' : value}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <div className="overflow-x-auto rounded-lg border">
+            <div className="border-b px-3 py-2 text-sm font-semibold">Acquisition channels</div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-xs text-muted-foreground">
+                  <th className="p-2">Channel</th>
+                  <th className="p-2 text-right">Leads</th>
+                  <th className="p-2 text-right">Demo</th>
+                  <th className="p-2 text-right">Admitted</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analysis.channelRows.length === 0 ? (
+                  <tr><td className="p-3 text-muted-foreground" colSpan={4}>{loading ? 'Loading…' : 'No leads in this period.'}</td></tr>
+                ) : (
+                  analysis.channelRows.map((row) => (
+                    <tr key={row.channel} className="border-b last:border-b-0">
+                      <td className="p-2 font-medium">{row.label}</td>
+                      <td className="p-2 text-right">{row.count}</td>
+                      <td className="p-2 text-right">{row.demoCount}</td>
+                      <td className="p-2 text-right">{row.admittedCount}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="overflow-x-auto rounded-lg border">
+            <div className="border-b px-3 py-2 text-sm font-semibold">Top first landing pages</div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-xs text-muted-foreground">
+                  <th className="p-2">Landing page</th>
+                  <th className="p-2 text-right">Leads</th>
+                  <th className="p-2 text-right">Demo</th>
+                  <th className="p-2 text-right">Admitted</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analysis.landingRows.length === 0 ? (
+                  <tr><td className="p-3 text-muted-foreground" colSpan={4}>{loading ? 'Loading…' : 'No landing-page data yet.'}</td></tr>
+                ) : (
+                  analysis.landingRows.map((row) => (
+                    <tr key={row.page} className="border-b last:border-b-0">
+                      <td className="max-w-[300px] truncate p-2 font-mono text-xs" title={row.page}>{row.page}</td>
+                      <td className="p-2 text-right">{row.count}</td>
+                      <td className="p-2 text-right">{row.demoCount}</td>
+                      <td className="p-2 text-right">{row.admittedCount}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <p className="mt-3 text-[11px] text-muted-foreground">
+          Attribution coverage will rise after this release. Older leads without stored first-touch data remain labelled as legacy/unattributed rather than being guessed as direct traffic.
+        </p>
+      </Card>
+    </div>
   );
 }
