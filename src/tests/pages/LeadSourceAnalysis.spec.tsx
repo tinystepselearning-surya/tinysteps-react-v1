@@ -40,6 +40,10 @@ vi.mock('../../lib/leadAcquisition', () => ({
   classifyLeadAcquisition: () => ({ channel: 'direct', label: 'Direct' }),
 }));
 
+vi.mock('../../pages/admin/DemoSessionsManagement', () => ({
+  default: () => <div>Lead admission analytics</div>,
+}));
+
 import LeadSourceAnalysis from '../../pages/admin/LeadSourceAnalysis';
 
 type Deferred<T> = {

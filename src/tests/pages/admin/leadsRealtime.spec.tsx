@@ -339,6 +339,50 @@ describe('useRealtimeLeads', () => {
 });
 
 describe('LeadsInquiriesWorkspace integration', () => {
+  it('keeps filters, search, pagination, and the demo workflow responsive in one session', () => {
+    render(<LeadsInquiriesWorkspace />);
+    const createdAt = { toMillis: () => new Date('2026-07-26T06:30:00.000Z').getTime() };
+    const leads = Array.from({ length: 6 }, (_, index) =>
+      makeDoc(`lead-${index + 1}`, {
+        source: 'manual',
+        parentName: `Parent ${index + 1}`,
+        childName: `Child ${index + 1}`,
+        createdAt,
+        updatedAt: createdAt,
+        status: 'new',
+      }),
+    );
+    emit(0, makeSnapshot(leads));
+
+    expect(screen.getByText('Parent 1')).toBeInTheDocument();
+    expect(screen.queryByText('Parent 6')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Next workflow page' }));
+    expect(screen.getByText('Parent 6')).toBeInTheDocument();
+    expect(screen.getByText('Page 2 of 2')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'Parent 2' } });
+    expect(screen.getByText('Parent 2')).toBeInTheDocument();
+    expect(screen.queryByText('Parent 6')).not.toBeInTheDocument();
+    expect(screen.getByText('Page 1 of 1')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+    fireEvent.change(screen.getByLabelText('Updated From'), {
+      target: { value: '2030-01-01' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply filters' }));
+    expect(screen.getByText('No workflow records found for current filters.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+    expect(screen.getByText('Parent 1')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Create Demo Request' }));
+    expect(screen.getByRole('heading', { name: 'Create Demo Request' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('heading', { name: 'Create Demo Request' })).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'Parent 4' } });
+    expect(screen.getByText('Parent 4')).toBeInTheDocument();
+  });
+
   it('renders a lead-only assessment as Enquiry, Not Created, with its created date', () => {
     render(<LeadsInquiriesWorkspace />);
     emit(0, makeSnapshot([]));

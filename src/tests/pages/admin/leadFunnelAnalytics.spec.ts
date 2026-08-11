@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { DemoSession } from '../../../types/models';
 import {
   buildLeadFunnelAnalytics,
+  funnelRate,
   leadReceivedDateKey,
   type LeadFunnelLead,
 } from '../../../pages/admin/leadFunnelAnalytics';
@@ -99,6 +100,16 @@ describe('lead funnel analytics', () => {
       enrolled: 1,
       leadToEnrollmentRate: 100,
     });
+    expect(result.operational).toMatchObject({
+      completedAwaitingAdmin: 1,
+    });
+    expect(result.activity[0].demoCreated).toBe(2);
+  });
+
+  it('returns a safe zero conversion rate for an empty denominator', () => {
+    expect(funnelRate(0, 0)).toBe(0);
+    expect(funnelRate(1, 0)).toBe(0);
+    expect(Number.isFinite(funnelRate(1, 0))).toBe(true);
   });
 
   it('keeps manual demo leads and website leads in the same canonical funnel', () => {

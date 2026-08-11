@@ -153,10 +153,16 @@ export default function LeadFunnelTrendAnalysis({ leads, demos }: LeadFunnelTren
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div>
               <div className="text-sm font-semibold text-slate-900">Daily funnel activity</div>
-              <div className="text-xs text-muted-foreground">Event-date trend; cohort cards above follow leads first received in the selected period.</div>
+              <div className="text-xs text-muted-foreground">
+                Event-date trend: Received counts leads; demo series count demo records. Cohort cards above count lead-level milestones for leads first received in the selected period.
+              </div>
             </div>
           </div>
-          <div className="h-[320px] w-full">
+          <div
+            className="h-[320px] w-full"
+            role="img"
+            aria-label="Daily lead and demo event activity for the selected date range"
+          >
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={analytics.activity} margin={{ top: 12, right: 20, left: -12, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" />
