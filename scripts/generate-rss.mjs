@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ROUTE_SEO_REGISTRY } from '../src/lib/routeSeoRegistry.js';
+import { isRedirectedBlogSlug } from '../src/lib/blogIndexingPolicy.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -135,7 +136,7 @@ function parseBlogItemsFromSource() {
     const title = extractSingleQuotedField(content, 'title');
 
     if (!slug || !title) continue;
-    if (EXCLUDED_BLOG_SLUGS.has(slug)) continue;
+    if (EXCLUDED_BLOG_SLUGS.has(slug) || isRedirectedBlogSlug(slug)) continue;
 
     const dateFromPost = extractSingleQuotedField(content, 'date');
     const date = dateFromPost || publicationDates.get(slug) || '';
