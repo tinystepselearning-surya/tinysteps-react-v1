@@ -246,17 +246,25 @@ export default function LeadSourceAnalysis(): JSX.Element {
 
   return (
     <div className="space-y-4">
-      <DemoSessionsManagement mode="trend_only" />
+      <section aria-labelledby="growth-admissions-heading" className="space-y-3">
+        <div>
+          <h2 id="growth-admissions-heading" className="text-lg font-semibold text-slate-950">Growth &amp; Admissions</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Lead conversion performance and current demo workload. Funnel and marketing ranges are controlled independently.
+          </p>
+        </div>
+        <DemoSessionsManagement mode="trend_only" showTrendAnalytics />
+      </section>
 
       <Card className="p-4 md:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="text-base font-semibold">Lead Source Analysis</h3>
+            <h3 className="text-base font-semibold">Marketing Attribution</h3>
             <p className="mt-1 text-xs text-muted-foreground">
               First-touch acquisition, landing pages, demo progression and admissions from website enquiries.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2" aria-label="Marketing attribution date range">
             {RANGE_OPTIONS.map((days) => (
               <Button
                 key={days}
@@ -275,7 +283,7 @@ export default function LeadSourceAnalysis(): JSX.Element {
         </div>
 
         {error ? (
-          <div className="mt-4 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <div role="status" className="mt-4 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
             {error}
           </div>
         ) : null}
