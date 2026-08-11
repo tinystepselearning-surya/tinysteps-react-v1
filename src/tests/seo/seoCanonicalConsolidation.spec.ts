@@ -56,7 +56,6 @@ describe('SEO canonical consolidation', () => {
 
   it('excludes redirect sources from source-backed sitemap/prerender discovery', async () => {
     const utilsPath = path.join(repoRoot, 'scripts/blog-route-utils.mjs');
-    // @ts-expect-error Node SEO tooling is intentionally authored as an ESM .mjs module.
     const { extractBlogEntriesFromPostFiles } = await import(pathToFileURL(utilsPath).href);
     const entries = extractBlogEntriesFromPostFiles(path.join(repoRoot, 'src/content/blog/posts'));
     const slugs = new Set(entries.map((entry: { slug: string }) => entry.slug));
