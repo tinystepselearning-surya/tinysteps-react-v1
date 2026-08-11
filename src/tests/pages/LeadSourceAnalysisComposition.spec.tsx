@@ -36,7 +36,9 @@ vi.mock('@components/ui/card', () => ({
 }));
 
 vi.mock('../../pages/admin/DemoSessionsManagement', () => ({
-  default: ({ mode }: { mode?: string }) => <div>Lead funnel mode: {mode}</div>,
+  default: ({ mode, showTrendAnalytics }: { mode?: string; showTrendAnalytics?: boolean }) => (
+    <div>Lead funnel mode: {mode} · analytics: {String(showTrendAnalytics)}</div>
+  ),
 }));
 
 import LeadSourceAnalysis from '../../pages/admin/LeadSourceAnalysis';
@@ -51,11 +53,12 @@ describe('LeadSourceAnalysis management dashboard composition', () => {
     getDocsLoggedMock.mockResolvedValue(emptySnapshot);
   });
 
-  it('keeps the live lead/demo funnel and acquisition analytics together', async () => {
+  it('keeps the live lead/admission funnel and marketing attribution together', async () => {
     render(<LeadSourceAnalysis />);
 
-    expect(screen.getByText('Lead funnel mode: trend_only')).toBeTruthy();
-    expect(screen.getByText('Lead Source Analysis')).toBeTruthy();
+    expect(screen.getByText('Growth & Admissions')).toBeTruthy();
+    expect(screen.getByText('Lead funnel mode: trend_only · analytics: true')).toBeTruthy();
+    expect(screen.getByText('Marketing Attribution')).toBeTruthy();
 
     await waitFor(() => {
       expect(getDocsLoggedMock).toHaveBeenCalled();
