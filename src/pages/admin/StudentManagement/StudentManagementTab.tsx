@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { collection, getDocs } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { GraduationCap, Layers3, ShieldCheck } from 'lucide-react';
 import { Button } from '@components/ui/button';
+import { db } from '../../../lib/firebaseConfig';
+import { normalizeEnrollmentStatus } from '../../../lib/statuses';
 import StudentList from './StudentList';
 import CreateStudentForm from './CreateStudentForm';
 import EditStudentForm from './EditStudentForm';
@@ -12,9 +15,72 @@ import type { Student } from '../../../types/Student';
 
 type ManagementView = 'students' | 'enrollments';
 
+type ReconciliationSummary = {
+  totalStudents: number;
+  activeStudents: number;
+  inactiveStudents: number;
+  activeEnrollments: number;
+  activeEnrolledStudents: number;
+  activeStudentsWithoutEnrollment: number;
+};
+
+const EMPTY_SUMMARY: ReconciliationSummary = {
+  totalStudents: 0,
+  activeStudents: 0,
+  inactiveStudents: 0,
+  activeEnrollments: 0,
+  activeEnrolledStudents: 0,
+  activeStudentsWithoutEnrollment: 0,
+};
+
+const PAST_ENROLLMENT_STATUSES = new Set([
+  'completed',
+  'discontinued',
+  'expired',
+  'cancelled',
+  'ended',
+  'past',
+]);
+
 const resolveManagementView = (search: string): ManagementView => {
   const params = new URLSearchParams(search);
   return params.get('view') === 'enrollments' ? 'enrollments' : 'students';
+};
+
+const normalizeLookupId = (value: unknown): string => {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  const parts = raw.split('/').map((part) => part.trim()).filter(Boolean);
+  return parts[parts.length - 1] || raw;
+};
+
+const collectEnrollmentStudentIds = (enrollment: Record<string, unknown>): string[] => {
+  const list = Array.isArray(enrollment.kidIds) ? enrollment.kidIds : [];
+  const singles = [enrollment.kidId, enrollment.studentId, enrollment.childId];
+  return Array.from(
+    new Set(
+      [...list, ...singles]
+        .map((value) => normalizeLookupId(value))
+        .filter(Boolean),
+    ),
+  );
+};
+
+const isActiveCanonicalStudent = (student: Record<string, unknown>): boolean => {
+  const status = String(student.status || '').trim().toLowerCase();
+  return status === '' || status === 'active';
+};
+
+const isActiveLikeEnrollment = (enrollment: Record<string, unknown>): boolean => {
+  const status = normalizeEnrollmentStatus(enrollment.status);
+  if (
+    enrollment.archived === true ||
+    Boolean(enrollment.archivedAt) ||
+    status === 'archived'
+  ) {
+    return false;
+  }
+  return !PAST_ENROLLMENT_STATUSES.has(status);
 };
 
 export default function StudentManagementTab() {
@@ -27,6 +93,9 @@ export default function StudentManagementTab() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [summary, setSummary] = useState<ReconciliationSummary>(EMPTY_SUMMARY);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+  const [summaryError, setSummaryError] = useState(false);
 
   useEffect(() => {
     // One admin-authenticated read/write check on entry repairs any pre-existing
@@ -47,6 +116,70 @@ export default function StudentManagementTab() {
     };
     void syncCanonicalPhonics();
   }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadReconciliationSummary = async () => {
+      setSummaryLoading(true);
+      setSummaryError(false);
+      try {
+        const [studentsSnap, enrollmentsSnap] = await Promise.all([
+          getDocs(collection(db, 'kids')),
+          getDocs(collection(db, 'enrollments')),
+        ]);
+
+        if (!active) return;
+
+        const students = studentsSnap.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...(docSnap.data() as Record<string, unknown>),
+        }));
+        const enrollments = enrollmentsSnap.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...(docSnap.data() as Record<string, unknown>),
+        }));
+
+        const activeStudentIds = new Set(
+          students
+            .filter((student) => isActiveCanonicalStudent(student))
+            .map((student) => String(student.id || '').trim())
+            .filter(Boolean),
+        );
+        const activeEnrollments = enrollments.filter((enrollment) => isActiveLikeEnrollment(enrollment));
+        const activeEnrolledStudentIds = new Set<string>();
+
+        activeEnrollments.forEach((enrollment) => {
+          collectEnrollmentStudentIds(enrollment).forEach((studentId) => {
+            if (activeStudentIds.has(studentId)) activeEnrolledStudentIds.add(studentId);
+          });
+        });
+
+        setSummary({
+          totalStudents: students.length,
+          activeStudents: activeStudentIds.size,
+          inactiveStudents: Math.max(0, students.length - activeStudentIds.size),
+          activeEnrollments: activeEnrollments.length,
+          activeEnrolledStudents: activeEnrolledStudentIds.size,
+          activeStudentsWithoutEnrollment: Math.max(
+            0,
+            activeStudentIds.size - activeEnrolledStudentIds.size,
+          ),
+        });
+      } catch (err) {
+        console.error('[StudentEnrollmentManagement] reconciliation summary failed', err);
+        if (!active) return;
+        setSummaryError(true);
+      } finally {
+        if (active) setSummaryLoading(false);
+      }
+    };
+
+    void loadReconciliationSummary();
+    return () => {
+      active = false;
+    };
+  }, [refreshKey]);
 
   const switchView = (nextView: ManagementView) => {
     const params = new URLSearchParams(location.search);
@@ -95,6 +228,15 @@ export default function StudentManagementTab() {
     }
   };
 
+  const summaryCards = [
+    { label: 'Total Students', value: summary.totalStudents },
+    { label: 'Active Students', value: summary.activeStudents },
+    { label: 'Active Enrolled', value: summary.activeEnrolledStudents },
+    { label: 'Active Enrollments', value: summary.activeEnrollments },
+    { label: 'Without Enrollment', value: summary.activeStudentsWithoutEnrollment },
+    { label: 'Inactive / Archived', value: summary.inactiveStudents },
+  ];
+
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
@@ -128,6 +270,19 @@ export default function StudentManagementTab() {
               Enrollments
             </Button>
           </div>
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          {summaryCards.map((card) => (
+            <div key={card.label} className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                {card.label}
+              </div>
+              <div className="mt-0.5 text-lg font-semibold tabular-nums text-slate-900">
+                {summaryLoading ? '…' : summaryError ? '—' : card.value}
+              </div>
+            </div>
+          ))}
         </div>
 
         <div className="mt-3 flex items-start gap-2 rounded-lg border border-emerald-100 bg-emerald-50/70 px-3 py-2 text-xs text-emerald-900">
