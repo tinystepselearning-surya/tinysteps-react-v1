@@ -14,6 +14,9 @@ interface DemoSessionsManagementProps {
   leads?: LeadFunnelLead[];
   demos?: DemoSession[];
   showTrendAnalytics?: boolean;
+  analyticsStartKey?: string;
+  analyticsEndKey?: string;
+  analyticsVariant?: 'full' | 'summary';
 }
 
 type LeadSnapshotRecord = LeadFunnelLead & {
@@ -25,9 +28,15 @@ const isArchived = (value: { archived?: boolean } | null | undefined): boolean =
 function LeadFunnelTrendContainer({
   prefetchedLeads,
   prefetchedDemos,
+  startKey,
+  endKey,
+  variant = 'full',
 }: {
   prefetchedLeads?: LeadFunnelLead[];
   prefetchedDemos?: DemoSession[];
+  startKey?: string;
+  endKey?: string;
+  variant?: 'full' | 'summary';
 }) {
   const { toast } = useToast();
   const [leads, setLeads] = useState<LeadSnapshotRecord[]>([]);
@@ -77,6 +86,9 @@ function LeadFunnelTrendContainer({
     <LeadFunnelTrendAnalysis
       leads={prefetchedLeads || leads}
       demos={prefetchedDemos || demos}
+      startKey={startKey}
+      endKey={endKey}
+      variant={variant}
     />
   );
 }
@@ -87,10 +99,21 @@ export default function DemoSessionsManagement({
   leads,
   demos,
   showTrendAnalytics = false,
+  analyticsStartKey,
+  analyticsEndKey,
+  analyticsVariant = 'full',
 }: DemoSessionsManagementProps) {
   if (mode === 'trend_only') {
     if (!showTrendAnalytics) return null;
-    return <LeadFunnelTrendContainer prefetchedLeads={leads} prefetchedDemos={demos} />;
+    return (
+      <LeadFunnelTrendContainer
+        prefetchedLeads={leads}
+        prefetchedDemos={demos}
+        startKey={analyticsStartKey}
+        endKey={analyticsEndKey}
+        variant={analyticsVariant}
+      />
+    );
   }
 
   return (
