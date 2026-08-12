@@ -190,6 +190,7 @@ describe('ParentPaymentsV2', () => {
     expect(screen.getAllByText('₹4,800').length).toBeGreaterThan(0);
     expect(screen.getAllByText('₹1,000').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Page 1').length).toBeGreaterThan(0);
+    expect(screen.getByText('Parents with due')).toBeTruthy();
 
     expect(
       getDocsMock.mock.calls.some(([input]) =>
@@ -204,21 +205,52 @@ describe('ParentPaymentsV2', () => {
 
     expect(screen.queryByText('Parent Wallet')).toBeNull();
     expect(screen.queryByText('Manual advance wallet credit')).toBeNull();
-    expect(screen.getByPlaceholderText('Type parent name, email, phone, or ID')).toBeTruthy();
+    expect(screen.getByPlaceholderText('Search name, email, phone, or ID')).toBeTruthy();
+  });
+
+  it('shows collection status wording instead of the internal current-period status', async () => {
+    getDocMock.mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        billedAmount: 5800,
+        billedClassCount: 1,
+        settledAmount: 0,
+        dueAmount: 5800,
+        status: 'current',
+        lastPaymentAtMs: null,
+      }),
+      id: '2026-08',
+    });
+
+    render(<ParentPaymentsV2 />);
+
+    await waitFor(() => expect(screen.getByText('Parent One')).toBeTruthy());
+    expect(screen.getByText('Unpaid')).toBeTruthy();
+    expect(screen.queryByText('Current')).toBeNull();
+    expect(screen.getByText('Payment status')).toBeTruthy();
+  });
+
+  it('exposes financial tools as a secondary header action when provided', async () => {
+    const openMaintenance = vi.fn();
+    render(<ParentPaymentsV2 onOpenMaintenance={openMaintenance} />);
+
+    await waitFor(() => expect(screen.getByText('Parent One')).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: 'Financial tools' }));
+    expect(openMaintenance).toHaveBeenCalledTimes(1);
   });
 
   it('uses one direct search picker and narrows the page to the selected parent', async () => {
     render(<ParentPaymentsV2 />);
     await waitFor(() => expect(screen.getByText('Parent One')).toBeTruthy());
 
-    fireEvent.change(screen.getByPlaceholderText('Type parent name, email, phone, or ID'), {
+    fireEvent.change(screen.getByPlaceholderText('Search name, email, phone, or ID'), {
       target: { value: 'Parent One' },
     });
 
     const resultButton = await screen.findByRole('button', { name: /Parent One.*Select/i }, { timeout: 1500 });
     fireEvent.click(resultButton);
 
-    await waitFor(() => expect(screen.getByText('Viewing:')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Viewing')).toBeTruthy());
     expect(screen.getByText('Selected parent')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Clear' })).toBeTruthy();
     expect(screen.queryByText('No matching parent found.')).toBeNull();

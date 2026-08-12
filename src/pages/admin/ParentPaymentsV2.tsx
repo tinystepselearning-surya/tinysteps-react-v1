@@ -61,6 +61,11 @@ import {
 import { Textarea } from '@components/ui/textarea';
 
 const PAGE_SIZE = 10;
+const EPSILON = 0.01;
+
+type ParentPaymentsV2Props = {
+  onOpenMaintenance?: () => void;
+};
 
 type ParentUser = {
   id: string;
@@ -107,6 +112,8 @@ type Summary = ReturnType<typeof buildParentPaymentsSummaryCards> & {
   collectionRate: number;
 };
 
+type PaymentStatusLabel = 'Paid' | 'Partial' | 'Unpaid' | 'In Grace' | 'Overdue' | 'Advance' | 'No charges';
+
 const formatMoney = (value: unknown) => {
   const amount = Number(value);
   return `₹${(Number.isFinite(amount) ? Math.round(amount) : 0).toLocaleString('en-IN')}`;
@@ -122,10 +129,28 @@ const formatDate = (ms: number | null | undefined) => {
   }).format(new Date(ms));
 };
 
+const indiaDateParts = (date: Date) => {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  return {
+    year: parts.find((part) => part.type === 'year')?.value || '',
+    month: parts.find((part) => part.type === 'month')?.value || '',
+    day: parts.find((part) => part.type === 'day')?.value || '',
+  };
+};
+
 const monthKeyFromDate = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  return `${year}-${month}`;
+  const { year, month } = indiaDateParts(date);
+  return year && month ? `${year}-${month}` : '';
+};
+
+const dateInputValueInIndia = (date = new Date()) => {
+  const { year, month, day } = indiaDateParts(date);
+  return year && month && day ? `${year}-${month}-${day}` : date.toISOString().slice(0, 10);
 };
 
 const monthLabel = (monthKey: string) => {
@@ -196,7 +221,16 @@ const createRequestKey = (parentId: string) => {
   return `parent-payment-v2_${parentId}_${Date.now()}_${random}`.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 120);
 };
 
-const statusClass = (status: ParentPaymentsReportingRow['statusLabel']) => {
+const paymentStatusLabel = (row: ParentPaymentsReportingRow): PaymentStatusLabel => {
+  if (row.selectedMonthCharges <= EPSILON) return row.advanceAmount > EPSILON ? 'Advance' : 'No charges';
+  if (row.selectedMonthDue <= EPSILON) return 'Paid';
+  if (row.selectedMonthSettled > EPSILON) return 'Partial';
+  if (row.statusLabel === 'Overdue') return 'Overdue';
+  if (row.statusLabel === 'In Grace') return 'In Grace';
+  return 'Unpaid';
+};
+
+const statusClass = (status: PaymentStatusLabel) => {
   if (status === 'Paid' || status === 'Advance') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
   if (status === 'Partial' || status === 'In Grace') return 'bg-amber-50 text-amber-700 border-amber-200';
   if (status === 'Overdue') return 'bg-rose-50 text-rose-700 border-rose-200';
@@ -223,7 +257,7 @@ async function fetchMonthPage(selectedMonth: string, cursor: MonthCursor): Promi
   };
 }
 
-export default function ParentPaymentsV2(): JSX.Element {
+export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2Props): JSX.Element {
   const [selectedMonth, setSelectedMonth] = useState(() => monthKeyFromDate(new Date()));
   const [pageNumber, setPageNumber] = useState(1);
   const [pageIds, setPageIds] = useState<string[]>([]);
@@ -256,7 +290,7 @@ export default function ParentPaymentsV2(): JSX.Element {
   const [receiveOpen, setReceiveOpen] = useState(false);
   const [receiveRow, setReceiveRow] = useState<ParentPaymentsReportingRow | null>(null);
   const [receiveAmount, setReceiveAmount] = useState('');
-  const [receivePaidAt, setReceivePaidAt] = useState(() => new Date().toISOString().slice(0, 10));
+  const [receivePaidAt, setReceivePaidAt] = useState(() => dateInputValueInIndia());
   const [receiveMethod, setReceiveMethod] = useState('UPI');
   const [receiveReference, setReceiveReference] = useState('');
   const [receiveNote, setReceiveNote] = useState('');
@@ -538,7 +572,7 @@ export default function ParentPaymentsV2(): JSX.Element {
   const openReceive = (row: ParentPaymentsReportingRow) => {
     setReceiveRow(row);
     setReceiveAmount('');
-    setReceivePaidAt(new Date().toISOString().slice(0, 10));
+    setReceivePaidAt(dateInputValueInIndia());
     setReceiveMethod('UPI');
     setReceiveReference('');
     setReceiveNote('');
@@ -753,113 +787,116 @@ export default function ParentPaymentsV2(): JSX.Element {
     !selectedSearchParent && searchTerm.trim().length >= PAYMENT_USER_SEARCH_MIN_CHARS;
 
   return (
-    <div className="space-y-5 pb-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+    <div className="space-y-4 pb-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-semibold tracking-tight">Parent Payments</h2>
-            <span className="rounded-full border bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">V2</span>
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Record collections, review monthly dues, and generate invoices from one clean workspace.
+          <h2 className="text-2xl font-semibold tracking-tight">Parent Payments</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            Track monthly dues, record payments, and generate invoices.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium">Month</label>
-          <Input
-            type="month"
-            value={selectedMonth}
-            onChange={(event) => setSelectedMonth(event.target.value)}
-            className="w-[170px] bg-white"
-          />
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium">Month</label>
+            <Input
+              type="month"
+              value={selectedMonth}
+              onChange={(event) => setSelectedMonth(event.target.value)}
+              className="h-9 w-[170px] bg-white"
+            />
+          </div>
+          {onOpenMaintenance ? (
+            <Button variant="outline" size="sm" onClick={onOpenMaintenance}>
+              Financial tools
+            </Button>
+          ) : null}
         </div>
       </div>
 
-      <Card className="p-4">
-        <div ref={searchContainerRef} className="relative max-w-2xl">
-          <label className="text-sm font-medium">Find a parent</label>
-          <div className="mt-1 flex gap-2">
-            <Input
-              value={searchTerm}
-              onChange={(event) => {
-                if (selectedSearchParent) setSelectedSearchParent(null);
-                setSearchTerm(event.target.value);
-              }}
-              placeholder="Type parent name, email, phone, or ID"
-              autoComplete="off"
-            />
-            {selectedSearchParent ? (
-              <Button variant="outline" onClick={clearSelectedParent}>Clear</Button>
+      <Card className="p-3">
+        <div ref={searchContainerRef} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <label className="shrink-0 text-sm font-medium">Find parent</label>
+          <div className="relative min-w-0 flex-1 sm:max-w-2xl">
+            <div className="flex gap-2">
+              <Input
+                value={searchTerm}
+                onChange={(event) => {
+                  if (selectedSearchParent) setSelectedSearchParent(null);
+                  setSearchTerm(event.target.value);
+                }}
+                placeholder="Search name, email, phone, or ID"
+                autoComplete="off"
+                className="h-9"
+              />
+              {selectedSearchParent ? (
+                <Button variant="outline" size="sm" onClick={clearSelectedParent}>Clear</Button>
+              ) : null}
+            </div>
+
+            {searchVisible ? (
+              <div className="absolute left-0 right-0 z-40 mt-2 overflow-hidden rounded-xl border bg-white shadow-lg">
+                {searchLoading ? (
+                  <div className="p-3 text-sm text-muted-foreground">Searching…</div>
+                ) : searchResults.length === 0 ? (
+                  <div className="p-3 text-sm text-muted-foreground">No matching parent found.</div>
+                ) : (
+                  searchResults.map((user) => (
+                    <button
+                      key={user.id}
+                      type="button"
+                      onClick={() => selectSearchResult(user)}
+                      className="flex w-full items-center justify-between gap-4 border-b px-4 py-3 text-left last:border-b-0 hover:bg-slate-50"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-semibold text-slate-900">{parentName(user)}</span>
+                        <span className="block truncate text-xs text-muted-foreground">{parentContact(user) || user.id}</span>
+                      </span>
+                      <span className="text-xs font-medium text-blue-600">Select</span>
+                    </button>
+                  ))
+                )}
+              </div>
             ) : null}
           </div>
-          <p className="mt-1.5 text-xs text-muted-foreground">
-            Type at least 2 characters. Matching parents appear immediately; no second dropdown is required.
-          </p>
 
-          {searchVisible ? (
-            <div className="absolute z-40 mt-2 w-full overflow-hidden rounded-xl border bg-white shadow-lg">
-              {searchLoading ? (
-                <div className="p-3 text-sm text-muted-foreground">Searching…</div>
-              ) : searchResults.length === 0 ? (
-                <div className="p-3 text-sm text-muted-foreground">No matching parent found.</div>
-              ) : (
-                searchResults.map((user) => (
-                  <button
-                    key={user.id}
-                    type="button"
-                    onClick={() => selectSearchResult(user)}
-                    className="flex w-full items-center justify-between gap-4 border-b px-4 py-3 text-left last:border-b-0 hover:bg-slate-50"
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold text-slate-900">{parentName(user)}</span>
-                      <span className="block truncate text-xs text-muted-foreground">{parentContact(user) || user.id}</span>
-                    </span>
-                    <span className="text-xs font-medium text-blue-600">Select</span>
-                  </button>
-                ))
-              )}
+          {selectedSearchParent ? (
+            <div className="inline-flex min-w-0 items-center gap-1.5 rounded-lg border bg-blue-50 px-2.5 py-1.5 text-xs text-blue-900">
+              <span className="font-medium">Viewing</span>
+              <span className="max-w-[260px] truncate">{parentName(selectedSearchParent)}</span>
             </div>
           ) : null}
         </div>
-
-        {selectedSearchParent ? (
-          <div className="mt-3 inline-flex items-center gap-2 rounded-lg border bg-blue-50 px-3 py-2 text-sm text-blue-900">
-            <span className="font-medium">Viewing:</span>
-            <span>{parentName(selectedSearchParent)}</span>
-            {parentContact(selectedSearchParent) ? <span className="text-blue-700">· {parentContact(selectedSearchParent)}</span> : null}
-          </div>
-        ) : null}
       </Card>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <Card className="p-4">
+        <Card className="p-3">
           <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Billed</div>
           <div className="mt-1 text-2xl font-semibold">{summaryLoading ? '—' : formatMoney(summary.selectedMonthBilled)}</div>
           <div className="mt-1 text-xs text-muted-foreground">{monthLabel(selectedMonth)}</div>
         </Card>
-        <Card className="p-4">
+        <Card className="p-3">
           <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Collected / applied</div>
           <div className="mt-1 text-2xl font-semibold">{summaryLoading ? '—' : formatMoney(summary.selectedMonthSettled)}</div>
           <div className="mt-1 text-xs text-muted-foreground">{summaryLoading ? '—' : `${summary.collectionRate.toFixed(1)}% collection rate`}</div>
         </Card>
-        <Card className="p-4">
+        <Card className="p-3">
           <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Outstanding</div>
           <div className="mt-1 text-2xl font-semibold">{summaryLoading ? '—' : formatMoney(summary.selectedMonthOutstanding)}</div>
           <div className="mt-1 text-xs text-muted-foreground">Service-month dues only</div>
         </Card>
-        <Card className="p-4">
-          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Needs follow-up</div>
+        <Card className="p-3">
+          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Parents with due</div>
           <div className="mt-1 text-2xl font-semibold">{summaryLoading ? '—' : summary.followUpParents}</div>
           <div className="mt-1 text-xs text-muted-foreground">{summaryLoading ? '—' : `${summary.paidParents} paid · ${summary.partialParents} partial`}</div>
         </Card>
       </div>
 
       <Card className="overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-2.5">
           <div>
             <h3 className="font-semibold">{selectedSearchParent ? 'Selected parent' : 'Monthly payment status'}</h3>
             <p className="text-xs text-muted-foreground">
-              Billed, paid and due values come from the service-month allocation model; payment receipt month does not override settlement.
+              Billed, paid and due amounts are shown for the selected service month.
             </p>
           </div>
           {!selectedSearchParent ? <div className="text-xs text-muted-foreground">Page {pageNumber}</div> : null}
@@ -871,14 +908,14 @@ export default function ParentPaymentsV2(): JSX.Element {
           <table className="w-full min-w-[980px] text-sm">
             <thead className="bg-slate-50/80 text-left text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                <th className="px-4 py-3 font-semibold">Parent / student</th>
-                <th className="px-3 py-3 font-semibold">Classes</th>
-                <th className="px-3 py-3 font-semibold">Billed</th>
-                <th className="px-3 py-3 font-semibold">Paid</th>
-                <th className="px-3 py-3 font-semibold">Due</th>
-                <th className="px-3 py-3 font-semibold">Status</th>
-                <th className="px-3 py-3 font-semibold">Last payment</th>
-                <th className="px-4 py-3 text-right font-semibold">Actions</th>
+                <th className="px-4 py-2.5 font-semibold">Parent / student</th>
+                <th className="px-3 py-2.5 font-semibold">Classes</th>
+                <th className="px-3 py-2.5 font-semibold">Billed</th>
+                <th className="px-3 py-2.5 font-semibold">Paid</th>
+                <th className="px-3 py-2.5 font-semibold">Due</th>
+                <th className="px-3 py-2.5 font-semibold">Payment status</th>
+                <th className="px-3 py-2.5 font-semibold">Last payment</th>
+                <th className="px-4 py-2.5 text-right font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -887,39 +924,42 @@ export default function ParentPaymentsV2(): JSX.Element {
               ) : rows.length === 0 ? (
                 <tr><td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">No billing records found for this scope.</td></tr>
               ) : (
-                rows.map((row) => (
-                  <tr key={row.parentId} className="border-t align-middle hover:bg-slate-50/50">
-                    <td className="px-4 py-3">
-                      <div className="font-semibold text-slate-900">{row.parentName}</div>
-                      <div className="mt-0.5 max-w-[300px] truncate text-xs text-muted-foreground">
-                        {row.studentNames.length ? row.studentNames.join(', ') : parentContact(usersById[row.parentId]) || 'No student name on charge record'}
-                      </div>
-                    </td>
-                    <td className="px-3 py-3 tabular-nums">{row.billedClasses}</td>
-                    <td className="px-3 py-3 font-medium tabular-nums">{formatMoney(row.selectedMonthCharges)}</td>
-                    <td className="px-3 py-3 tabular-nums text-emerald-700">{formatMoney(row.selectedMonthSettled)}</td>
-                    <td className="px-3 py-3 font-semibold tabular-nums">{formatMoney(row.selectedMonthDue)}</td>
-                    <td className="px-3 py-3">
-                      <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusClass(row.statusLabel)}`}>
-                        {row.statusLabel}
-                      </span>
-                    </td>
-                    <td className="px-3 py-3 text-muted-foreground">{formatDate(row.lastPaymentAtMs)}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex justify-end gap-2">
-                        <Button size="sm" onClick={() => openReceive(row)}>Receive payment</Button>
-                        <Button size="sm" variant="outline" onClick={() => openInvoice(row)}>Invoice</Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                rows.map((row) => {
+                  const displayStatus = paymentStatusLabel(row);
+                  return (
+                    <tr key={row.parentId} className="border-t align-middle hover:bg-slate-50/50">
+                      <td className="px-4 py-2.5">
+                        <div className="font-semibold text-slate-900">{row.parentName}</div>
+                        <div className="mt-0.5 max-w-[300px] truncate text-xs text-muted-foreground">
+                          {row.studentNames.length ? row.studentNames.join(', ') : parentContact(usersById[row.parentId]) || 'No student name on charge record'}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2.5 tabular-nums">{row.billedClasses}</td>
+                      <td className="px-3 py-2.5 font-medium tabular-nums">{formatMoney(row.selectedMonthCharges)}</td>
+                      <td className="px-3 py-2.5 tabular-nums text-emerald-700">{formatMoney(row.selectedMonthSettled)}</td>
+                      <td className="px-3 py-2.5 font-semibold tabular-nums">{formatMoney(row.selectedMonthDue)}</td>
+                      <td className="px-3 py-2.5">
+                        <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusClass(displayStatus)}`}>
+                          {displayStatus}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5 text-muted-foreground">{formatDate(row.lastPaymentAtMs)}</td>
+                      <td className="px-4 py-2.5">
+                        <div className="flex justify-end gap-2">
+                          <Button size="sm" onClick={() => openReceive(row)}>Receive payment</Button>
+                          <Button size="sm" variant="outline" onClick={() => openInvoice(row)}>Invoice</Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
 
         {!selectedSearchParent ? (
-          <div className="flex items-center justify-center gap-3 border-t px-4 py-3">
+          <div className="flex items-center justify-center gap-3 border-t px-4 py-2.5">
             <Button variant="outline" size="sm" disabled={pageNumber <= 1 || loading} onClick={goPrevious}>Previous</Button>
             <span className="text-sm text-muted-foreground">Page {pageNumber}</span>
             <Button variant="outline" size="sm" disabled={!hasMore || loading} onClick={goNext}>Next</Button>
@@ -937,7 +977,7 @@ export default function ParentPaymentsV2(): JSX.Element {
             <div className="text-sm font-semibold">{receiveRow?.parentName}</div>
             <div className="mt-1 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
               <span>{monthLabel(selectedMonth)} due: <strong className="text-slate-700">{formatMoney(receiveRow?.selectedMonthDue || 0)}</strong></span>
-              <span>Current status: <strong className="text-slate-700">{receiveRow?.statusLabel || '—'}</strong></span>
+              <span>Payment status: <strong className="text-slate-700">{receiveRow ? paymentStatusLabel(receiveRow) : '—'}</strong></span>
             </div>
           </div>
 

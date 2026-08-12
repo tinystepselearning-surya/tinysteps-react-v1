@@ -22,7 +22,7 @@ export default function ParentPayments(): JSX.Element {
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={() => setWorkspace('v2')}>
-            Back to Parent Payments V2
+            Back to Parent Payments
           </Button>
         </div>
         <Suspense
@@ -38,19 +38,5 @@ export default function ParentPayments(): JSX.Element {
     );
   }
 
-  return (
-    <div className="space-y-3">
-      <div className="flex justify-end">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs text-muted-foreground"
-          onClick={() => setWorkspace('maintenance')}
-        >
-          Financial maintenance tools
-        </Button>
-      </div>
-      <ParentPaymentsV2 />
-    </div>
-  );
+  return <ParentPaymentsV2 onOpenMaintenance={() => setWorkspace('maintenance')} />;
 }
