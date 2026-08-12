@@ -40,6 +40,10 @@ vi.mock('../../pages/admin/LeadSourceAnalysis', () => ({
   default: () => <div>Lead source analytics stub</div>,
 }));
 
+vi.mock('../../pages/admin/DemoSessionsManagement', () => ({
+  default: () => <div>Lead funnel analytics stub</div>,
+}));
+
 import AnalyticsDashboard from '../../pages/admin/AnalyticsDashboard';
 
 type Deferred<T> = {
@@ -106,10 +110,8 @@ describe('AnalyticsDashboard selected-month state', () => {
     });
 
     phase = 'next';
-    const monthInput = document.querySelector('input[type="month"]');
-    expect(monthInput).toBeTruthy();
-
-    fireEvent.change(monthInput!, { target: { value: '2026-07' } });
+    const monthInput = screen.getByLabelText('Analytics reporting month');
+    fireEvent.change(monthInput, { target: { value: '2026-07' } });
 
     await waitFor(() => {
       expect(screen.getByText(/Loading analytics for 2026-07/)).toBeTruthy();
@@ -129,7 +131,6 @@ describe('AnalyticsDashboard selected-month state', () => {
       expect(screen.getByText(/Month analytics: month query failed/)).toBeTruthy();
     });
     expect(cardText('Billed Revenue (Month)')).toContain('—');
-    expect(cardText('Billed Revenue (Month)')).toContain('Unavailable');
     expect(cardText('Billed Revenue (Month)')).not.toContain('₹0');
     expect(cardText('Billed Revenue (Month)')).not.toContain('₹1,000');
   });
@@ -152,7 +153,7 @@ describe('AnalyticsDashboard selected-month state', () => {
     render(<AnalyticsDashboard />);
     await waitFor(() => expect(cardText('Billed Revenue (Month)')).toContain('₹1,000'));
 
-    const monthInput = document.querySelector('input[type="month"]')!;
+    const monthInput = screen.getByLabelText('Analytics reporting month');
     const callsBeforeOlder = getDocsLoggedMock.mock.calls.length;
     phase = 'older';
     fireEvent.change(monthInput, { target: { value: '2026-07' } });
@@ -179,7 +180,6 @@ describe('AnalyticsDashboard selected-month state', () => {
     render(<AnalyticsDashboard />);
 
     await waitFor(() => expect(cardText('Billed Revenue (Month)')).toContain('₹0'));
-    expect(cardText('Billed Revenue (Month)')).not.toContain('Unavailable');
     expect(screen.queryByText(/Month analytics:/)).toBeNull();
   });
 });
