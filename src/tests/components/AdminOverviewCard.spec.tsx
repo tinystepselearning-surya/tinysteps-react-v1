@@ -12,9 +12,6 @@ vi.mock('../../hooks/useAdminStats', () => ({
 
 vi.mock('@components/ui/card', () => ({
   Card: ({ children }: React.PropsWithChildren) => <div>{children}</div>,
-  CardHeader: ({ children }: React.PropsWithChildren) => <div>{children}</div>,
-  CardTitle: ({ children }: React.PropsWithChildren) => <div>{children}</div>,
-  CardContent: ({ children }: React.PropsWithChildren) => <div>{children}</div>,
 }));
 
 import AdminOverviewCard from '../../components/admin/AdminOverviewCard';
@@ -33,21 +30,28 @@ describe('AdminOverviewCard', () => {
 
     render(<AdminOverviewCard />);
 
-    expect(screen.getByText('Admin overview unavailable: permission denied')).toBeTruthy();
-    expect(screen.queryByText('Total Users')).toBeNull();
+    expect(screen.getByText('Live operations unavailable: permission denied')).toBeTruthy();
+    expect(screen.queryByText('Sessions today')).toBeNull();
     expect(screen.queryByText('0')).toBeNull();
   });
 
-  it('renders successful zero counts as genuine metrics with Sessions Today semantics', () => {
+  it('keeps only the useful live pulse and removes inventory-style dashboard KPIs', () => {
     useAdminStatsMock.mockReturnValue({
-      data: { totalUsers: 0, totalStudents: 0, totalCourses: 0, sessionsToday: 0 },
+      data: { totalUsers: 160, totalStudents: 143, totalCourses: 9, sessionsToday: 49 },
       isLoading: false,
       error: null,
     });
 
     render(<AdminOverviewCard />);
 
-    expect(screen.getByText('Sessions Today')).toBeTruthy();
-    expect(screen.getAllByText('0')).toHaveLength(4);
+    expect(screen.getByText('Live operations')).toBeTruthy();
+    expect(screen.getByText('Sessions today')).toBeTruthy();
+    expect(screen.getByText('Students')).toBeTruthy();
+    expect(screen.getByText('49')).toBeTruthy();
+    expect(screen.getByText('143')).toBeTruthy();
+    expect(screen.queryByText('Total Users')).toBeNull();
+    expect(screen.queryByText('Total Courses')).toBeNull();
+    expect(screen.queryByText('160')).toBeNull();
+    expect(screen.queryByText('9')).toBeNull();
   });
 });
