@@ -26,13 +26,16 @@ import {
 interface LeadFunnelTrendAnalysisProps {
   leads: LeadFunnelLead[];
   demos: DemoSession[];
+  startKey?: string;
+  endKey?: string;
+  variant?: 'full' | 'summary';
 }
 
 const metricCards = [
-  { key: 'received', label: 'Leads Received', className: 'border-blue-200 bg-blue-50/40' },
-  { key: 'demoCreated', label: 'Demo Created', className: 'border-indigo-200 bg-indigo-50/40' },
-  { key: 'completed', label: 'Demo Completed', className: 'border-emerald-200 bg-emerald-50/40' },
-  { key: 'enrolled', label: 'Enrolled', className: 'border-pink-200 bg-pink-50/40' },
+  { key: 'received', label: 'Leads Received' },
+  { key: 'demoCreated', label: 'Demo Created' },
+  { key: 'completed', label: 'Demo Completed' },
+  { key: 'enrolled', label: 'Enrolled' },
 ] as const;
 
 const dateInput = (value: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -48,13 +51,42 @@ const earliestLeadDate = (leads: LeadFunnelLead[], fallback: string): string => 
 
 const pct = (value: number): string => `${value.toFixed(1)}%`;
 
-export default function LeadFunnelTrendAnalysis({ leads, demos }: LeadFunnelTrendAnalysisProps) {
+const FunnelStage = ({ label, value }: { label: string; value: number }) => (
+  <div className="min-w-0 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+    <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</div>
+    <div className="mt-1 text-2xl font-bold tabular-nums text-slate-950">{value}</div>
+  </div>
+);
+
+const FunnelConnector = ({ label, rate }: { label: string; rate: number }) => (
+  <div className="flex items-center justify-center gap-2 py-1 text-center text-xs text-slate-500 xl:flex-col xl:gap-0">
+    <span aria-hidden="true" className="text-lg text-slate-300">→</span>
+    <span className="font-semibold tabular-nums text-slate-700">{pct(rate)}</span>
+    <span className="sr-only">{label}</span>
+  </div>
+);
+
+export default function LeadFunnelTrendAnalysis({
+  leads,
+  demos,
+  startKey: controlledStartKey,
+  endKey: controlledEndKey,
+  variant = 'full',
+}: LeadFunnelTrendAnalysisProps) {
   const todayKey = todayIstDateKey();
   const [preset, setPreset] = useState<FunnelRangePreset>('month');
   const [customStart, setCustomStart] = useState(todayKey ? `${todayKey.slice(0, 7)}-01` : '');
   const [customEnd, setCustomEnd] = useState(todayKey);
+  const controlledRange = Boolean(controlledStartKey && controlledEndKey);
 
   const bounds = useMemo(() => {
+    if (controlledRange) {
+      let startKey = controlledStartKey || '';
+      let endKey = controlledEndKey || '';
+      if (startKey > endKey) [startKey, endKey] = [endKey, startKey];
+      return { startKey, endKey };
+    }
+
     const today = todayKey;
     if (!today) return { startKey: '', endKey: '' };
     if (preset === 'week') return { startKey: addDaysToDateKey(today, -6), endKey: today };
@@ -65,7 +97,7 @@ export default function LeadFunnelTrendAnalysis({ leads, demos }: LeadFunnelTren
     let endKey = dateInput(customEnd) ? customEnd : today;
     if (startKey > endKey) [startKey, endKey] = [endKey, startKey];
     return { startKey, endKey };
-  }, [customEnd, customStart, leads, preset, todayKey]);
+  }, [controlledEndKey, controlledRange, controlledStartKey, customEnd, customStart, leads, preset, todayKey]);
 
   const analytics = useMemo(
     () => buildLeadFunnelAnalytics(leads, demos, bounds.startKey, bounds.endKey),
@@ -78,9 +110,47 @@ export default function LeadFunnelTrendAnalysis({ leads, demos }: LeadFunnelTren
   const completedToEnroll = funnelRate(cohortTotals.enrolled, cohortTotals.completed);
   const leadToEnroll = funnelRate(cohortTotals.enrolled, cohortTotals.received);
 
+  if (variant === 'summary') {
+    return (
+      <Card className="border-slate-200 bg-white p-5 shadow-sm" aria-labelledby="executive-funnel-heading">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 id="executive-funnel-heading" className="text-base font-semibold text-slate-950">Growth &amp; Admissions</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Lead-level progression for {bounds.startKey || '—'} to {bounds.endKey || '—'} · Asia/Kolkata
+            </p>
+          </div>
+          <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+            Lead → enrollment {pct(leadToEnroll)}
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] xl:items-center">
+          <FunnelStage label="Leads Received" value={cohortTotals.received} />
+          <FunnelConnector label="Lead to demo" rate={leadToDemo} />
+          <FunnelStage label="Demo Created" value={cohortTotals.demoCreated} />
+          <FunnelConnector label="Demo to completed" rate={demoToComplete} />
+          <FunnelStage label="Demo Completed" value={cohortTotals.completed} />
+          <FunnelConnector label="Completed to enrolled" rate={completedToEnroll} />
+          <FunnelStage label="Enrolled" value={cohortTotals.enrolled} />
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4 text-xs">
+          <span className="font-medium text-slate-500">Live demo workload:</span>
+          <span className="rounded-full bg-amber-50 px-2.5 py-1 font-medium text-amber-800">{operational.open} awaiting assignment</span>
+          <span className="rounded-full bg-blue-50 px-2.5 py-1 font-medium text-blue-800">{operational.assigned} assigned</span>
+          <span className="rounded-full bg-violet-50 px-2.5 py-1 font-medium text-violet-800">{operational.completedAwaitingAdmin} decisions pending</span>
+        </div>
+        <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+          Funnel stages count leads. Live workload counts demo records, so retries, reschedules, or replacements can make the totals differ legitimately.
+        </p>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <Card className="border-emerald-100 bg-gradient-to-b from-emerald-50/45 to-white p-5 shadow-sm">
+      <Card className="border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h3 className="text-lg font-semibold text-slate-950">Lead → Admission Funnel</h3>
@@ -92,23 +162,25 @@ export default function LeadFunnelTrendAnalysis({ leads, demos }: LeadFunnelTren
               Cohort: {bounds.startKey || '—'} to {bounds.endKey || '—'} · Business timezone: Asia/Kolkata
             </p>
           </div>
-          <div className="flex flex-wrap gap-2" aria-label="Lead funnel date range">
-            <Button size="sm" variant={preset === 'week' ? 'default' : 'outline'} onClick={() => setPreset('week')}>
-              Week
-            </Button>
-            <Button size="sm" variant={preset === 'month' ? 'default' : 'outline'} onClick={() => setPreset('month')}>
-              Month
-            </Button>
-            <Button size="sm" variant={preset === 'till_date' ? 'default' : 'outline'} onClick={() => setPreset('till_date')}>
-              Till Date
-            </Button>
-            <Button size="sm" variant={preset === 'custom' ? 'default' : 'outline'} onClick={() => setPreset('custom')}>
-              Custom
-            </Button>
-          </div>
+          {!controlledRange ? (
+            <div className="flex flex-wrap gap-2" aria-label="Lead funnel date range">
+              <Button size="sm" variant={preset === 'week' ? 'default' : 'outline'} onClick={() => setPreset('week')}>
+                Week
+              </Button>
+              <Button size="sm" variant={preset === 'month' ? 'default' : 'outline'} onClick={() => setPreset('month')}>
+                Month
+              </Button>
+              <Button size="sm" variant={preset === 'till_date' ? 'default' : 'outline'} onClick={() => setPreset('till_date')}>
+                Till Date
+              </Button>
+              <Button size="sm" variant={preset === 'custom' ? 'default' : 'outline'} onClick={() => setPreset('custom')}>
+                Custom
+              </Button>
+            </div>
+          ) : null}
         </div>
 
-        {preset === 'custom' ? (
+        {!controlledRange && preset === 'custom' ? (
           <div className="mt-4 flex flex-wrap gap-3">
             <div>
               <label htmlFor="lead-funnel-start" className="mb-1 block text-xs font-medium text-slate-600">Start date</label>
@@ -123,7 +195,7 @@ export default function LeadFunnelTrendAnalysis({ leads, demos }: LeadFunnelTren
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {metricCards.map((card) => (
-            <div key={card.key} className={`rounded-xl border p-3 ${card.className}`}>
+            <div key={card.key} className="rounded-xl border border-slate-200 bg-slate-50/55 p-3">
               <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{card.label}</div>
               <div className="mt-1 text-2xl font-bold tabular-nums text-slate-950">{cohortTotals[card.key]}</div>
             </div>
