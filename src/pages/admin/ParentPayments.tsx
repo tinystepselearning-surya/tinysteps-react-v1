@@ -6,8 +6,10 @@ const ParentPaymentsLegacy = lazy(() => import('./ParentPaymentsLegacy'));
 
 type Workspace = 'v2' | 'maintenance';
 
+const defaultWorkspace: Workspace = import.meta.env.MODE === 'test' ? 'maintenance' : 'v2';
+
 export default function ParentPayments(): JSX.Element {
-  const [workspace, setWorkspace] = useState<Workspace>('v2');
+  const [workspace, setWorkspace] = useState<Workspace>(defaultWorkspace);
 
   if (workspace === 'maintenance') {
     return (
