@@ -2,15 +2,19 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { getDocsLoggedMock } = vi.hoisted(() => ({
+const { getDocsLoggedMock, getAggregateFromServerMock } = vi.hoisted(() => ({
   getDocsLoggedMock: vi.fn(),
+  getAggregateFromServerMock: vi.fn(),
 }));
 
 vi.mock('../../lib/firebaseConfig', () => ({ db: {} }));
 vi.mock('../../lib/firestoreReadLogging', () => ({ getDocsLogged: getDocsLoggedMock }));
 vi.mock('firebase/firestore', () => ({
   collection: (...args: unknown[]) => ({ kind: 'collection', args }),
+  collectionGroup: (...args: unknown[]) => ({ kind: 'collectionGroup', args }),
+  getAggregateFromServer: getAggregateFromServerMock,
   query: (...args: unknown[]) => ({ kind: 'query', args }),
+  sum: (field: string) => ({ kind: 'sum', field }),
   where: (...args: unknown[]) => ({ kind: 'where', args }),
 }));
 vi.mock('@components/ui/button', () => ({
@@ -57,6 +61,8 @@ describe('AnalyticsDashboardV2 information architecture', () => {
   beforeEach(() => {
     getDocsLoggedMock.mockReset();
     getDocsLoggedMock.mockResolvedValue(snapshot());
+    getAggregateFromServerMock.mockReset();
+    getAggregateFromServerMock.mockResolvedValue({ data: () => ({}) });
   });
 
   it('starts with a compact management overview and keeps detail tables out of the default view', async () => {
@@ -91,9 +97,14 @@ describe('AnalyticsDashboardV2 information architecture', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Finance' }));
 
     await waitFor(() => {
-      expect(getDocsLoggedMock.mock.calls.some(([label]) => label === 'AnalyticsDashboard:all-users')).toBe(true);
+      expect(getDocsLoggedMock.mock.calls.some(([label]) => label === 'AnalyticsDashboard:all-users')).toBe(false);
       expect(getDocsLoggedMock.mock.calls.some(([label]) => label === 'AnalyticsDashboard:all-enrollments')).toBe(true);
       expect(getDocsLoggedMock.mock.calls.some(([label]) => label === 'AnalyticsDashboard:all-courses')).toBe(true);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Teachers' }));
+    await waitFor(() => {
+      expect(getDocsLoggedMock.mock.calls.some(([label]) => label === 'AnalyticsDashboard:all-users')).toBe(true);
     });
   });
 

@@ -31,6 +31,7 @@ import { normalizeFinanceStatus } from '../../lib/statuses';
 import {
   buildParentPaymentsReportingRow,
   buildParentPaymentsSummaryCards,
+  normalizeCanonicalMonthFinanceTotals,
   type ParentMonthlyBillingReadModel,
   type ParentPaymentsReportingRow,
   resolveParentPaymentSettlementSummary,
@@ -1260,11 +1261,11 @@ export default function ParentPayments(): JSX.Element {
           ),
         ]);
         if (!active) return;
-        const totals = financialTotals.data();
+        const totals = normalizeCanonicalMonthFinanceTotals(financialTotals.data());
         setMonthSummaryCards({
-          selectedMonthBilled: Number(totals.selectedMonthBilled || 0),
-          selectedMonthSettled: Number(totals.selectedMonthSettled || 0),
-          selectedMonthOutstanding: Number(totals.selectedMonthOutstanding || 0),
+          selectedMonthBilled: totals.selectedMonthBilled,
+          selectedMonthSettled: totals.selectedMonthSettled,
+          selectedMonthOutstanding: totals.selectedMonthOutstanding,
           paidParents: Number(paidCount.data().total || 0),
           partialParents: Number(partialCount.data().total || 0),
           followUpParents: Number(followUpCount.data().total || 0),

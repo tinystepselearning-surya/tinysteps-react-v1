@@ -42,7 +42,7 @@ Analytics is divided into six management views.
 The default view should fit the most important business state into a compact management surface:
 
 - billed revenue
-- collected payments
+- selected service-month settled revenue
 - collection rate
 - balance due
 - completed billed sessions
@@ -76,9 +76,9 @@ The selected reporting month is inherited from the Analytics header so managers 
 Separate actual performance from forecast:
 
 **Actual**
-- billed
-- collected
-- balance due
+- billed from the canonical parent monthly billing read model
+- settled from allocations recorded against that selected service month
+- outstanding from the selected service-month read model
 - collection rate
 - completed billed sessions
 
@@ -149,6 +149,7 @@ For a selected month:
 - For the current month, funnel/acquisition end at the current IST date so future zero days are not charted.
 - For a past month, funnel/acquisition use the full calendar month.
 - Marketing attribution uses the same start and end boundaries as the management funnel.
+- Lead acquisition cohort time resolves `receivedAt`, then `requestedAt`, then `createdAt`, in that order.
 - Business timezone is `Asia/Kolkata`.
 
 Live operational demo workload is intentionally independent of the historical cohort and is explicitly labelled live / demo-record grain.
@@ -161,7 +162,7 @@ Every metric must have an explicit grain.
 |---|---|
 | Lead received / demo milestone / completed milestone / enrolled milestone | Lead |
 | Demo awaiting assignment / assigned / completed decision pending / cancelled | Demo record |
-| Billing / collections | Financial transaction / charge |
+| Billing / collections | Parent monthly billing read model for the selected service month |
 | Session delivery | Session |
 | Teacher earnings | Teacher earning entry rolled up to teacher |
 | Enrollment health | Enrollment |
@@ -191,7 +192,7 @@ Use colour semantically and sparingly. Most surfaces should remain neutral; colo
 
 ## Data-health contract
 
-The header exposes one clear status:
+The header exposes one clear status for its explicitly labelled month finance/delivery bundle:
 
 - Loading
 - Healthy
@@ -202,9 +203,11 @@ Errors must not silently fall back to believable zeroes. Previous-period values 
 ## Performance contract
 
 - Month-scoped finance reads remain scoped by `monthKey` / selected dates.
+- Finance KPIs use the same monthly read-model aggregate as Parent Payments; receipt-month payments and wallet advances are not service-month settlement.
 - Heavy user/enrollment/course reads remain lazy and are loaded only when a view actually requires them.
 - Lead/demo live subscriptions are mounted only in Overview or Growth, not permanently across every Analytics view.
 - Detailed teacher tables are rendered only in the Teachers view.
+- Teacher KPI totals use the complete selected-month earning set; pagination limits presentation rows only.
 
 ### Future scale path
 

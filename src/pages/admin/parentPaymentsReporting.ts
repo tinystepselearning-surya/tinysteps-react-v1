@@ -121,6 +121,13 @@ export type ParentPaymentsSummaryCards = {
   totalAdvanceWalletBalance: number;
 };
 
+export type CanonicalMonthFinanceTotals = {
+  selectedMonthBilled: number;
+  selectedMonthSettled: number;
+  selectedMonthOutstanding: number;
+  collectionRate: number;
+};
+
 export type ParentPaymentSettlementSummaryInput = {
   chargesCount: number;
   classCharges: number;
@@ -145,6 +152,37 @@ const EPSILON = 0.01;
 const normalizeAmount = (value: unknown): number => {
   const amount = Number(value);
   return Number.isFinite(amount) ? Math.max(amount, 0) : 0;
+};
+
+/**
+ * Normalizes the canonical service-month aggregate shared by Parent Payments and
+ * management analytics. Receipt-month payment totals deliberately are not an
+ * input: settlement belongs to the month whose read model was allocated.
+ */
+export const normalizeCanonicalMonthFinanceTotals = (input: {
+  selectedMonthBilled?: unknown;
+  selectedMonthSettled?: unknown;
+  selectedMonthOutstanding?: unknown;
+}): CanonicalMonthFinanceTotals => {
+  const selectedMonthBilled = normalizeAmount(input.selectedMonthBilled);
+  const selectedMonthSettled = Math.min(
+    normalizeAmount(input.selectedMonthSettled),
+    selectedMonthBilled,
+  );
+  const selectedMonthOutstanding = Math.min(
+    normalizeAmount(input.selectedMonthOutstanding),
+    selectedMonthBilled,
+  );
+  const collectionRate = selectedMonthBilled > EPSILON
+    ? Math.min(100, (selectedMonthSettled / selectedMonthBilled) * 100)
+    : 0;
+
+  return {
+    selectedMonthBilled,
+    selectedMonthSettled,
+    selectedMonthOutstanding,
+    collectionRate,
+  };
 };
 
 const isMonthKeyLike = (value: string): boolean => /^\d{4}-\d{2}$/.test(value.trim());

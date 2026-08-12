@@ -69,6 +69,7 @@ const leadSnapshot = (id: string, source: string) => ({
       data: () => ({
         source,
         status: 'new',
+        receivedAt: new Date(),
       }),
     },
   ],
@@ -157,5 +158,46 @@ describe('LeadSourceAnalysis request ordering', () => {
     expect(screen.getByText('Instagram (legacy)')).toBeTruthy();
     expect(screen.queryByText(/stale 30d failure/)).toBeNull();
     expect(screen.queryByText('Loading lead attribution…')).toBeNull();
+  });
+
+  it('uses receivedAt, then requestedAt, then createdAt in IST and deduplicates the range queries', async () => {
+    const doc = (id: string, data: Record<string, unknown>) => ({ id, data: () => data });
+    getDocsLoggedMock.mockImplementation((label: string) => {
+      if (label.endsWith(':requestedAt')) {
+        return Promise.resolve({ docs: [
+          doc('requested', { requestedAt: new Date('2026-08-10T03:00:00.000Z'), source: 'referral' }),
+        ] });
+      }
+      if (label.endsWith(':createdAt')) {
+        return Promise.resolve({ docs: [
+          doc('created', { createdAt: new Date('2026-08-10T04:00:00.000Z'), source: 'manual' }),
+          doc('outside-by-priority', {
+            receivedAt: new Date('2026-08-09T03:00:00.000Z'),
+            createdAt: new Date('2026-08-10T04:00:00.000Z'),
+            source: 'instagram',
+          }),
+        ] });
+      }
+      return Promise.resolve({ docs: [
+        doc('received', { receivedAt: new Date('2026-08-10T02:00:00.000Z'), source: 'whatsapp' }),
+        // Duplicate proves the three bounded queries are unioned by lead id.
+        doc('requested', { requestedAt: new Date('2026-08-10T03:00:00.000Z'), source: 'referral' }),
+      ] });
+    });
+
+    render(
+      <LeadSourceAnalysis
+        startDateKey="2026-08-10"
+        endDateKey="2026-08-10"
+        showFunnel={false}
+      />,
+    );
+
+    await waitFor(() => {
+      const leadsLabel = screen.getAllByText('Leads').find((node) => node.tagName === 'DIV');
+      expect(leadsLabel).toBeTruthy();
+      expect(leadsLabel?.parentElement?.textContent).toContain('3');
+    });
+    expect(screen.queryByText('Instagram (legacy)')).toBeNull();
   });
 });

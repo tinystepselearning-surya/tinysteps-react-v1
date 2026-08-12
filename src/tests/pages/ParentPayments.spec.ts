@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildParentPaymentsReportingRow,
   buildParentPaymentsSummaryCards,
+  normalizeCanonicalMonthFinanceTotals,
   resolveParentPaymentSettlementSummary,
   type ParentPaymentsReportingRowInput,
 } from '../../pages/admin/parentPaymentsReporting';
@@ -26,6 +27,46 @@ const createRow = (overrides: Partial<ParentPaymentsReportingRowInput> = {}) =>
   });
 
 describe('ParentPayments reporting helpers', () => {
+  it('keeps a late receipt allocated to its service month instead of the receipt month', () => {
+    const may = normalizeCanonicalMonthFinanceTotals({
+      selectedMonthBilled: 12000,
+      selectedMonthSettled: 12000,
+      selectedMonthOutstanding: 0,
+      // Receipt-month payment totals intentionally are not accepted by this API.
+    });
+    const june = normalizeCanonicalMonthFinanceTotals({
+      selectedMonthBilled: 6000,
+      selectedMonthSettled: 0,
+      selectedMonthOutstanding: 6000,
+    });
+
+    expect(may).toMatchObject({ selectedMonthSettled: 12000, selectedMonthOutstanding: 0 });
+    expect(june).toMatchObject({ selectedMonthSettled: 0, selectedMonthOutstanding: 6000 });
+  });
+
+  it('does not count advance wallet balance as selected-month settled revenue', () => {
+    const totals = normalizeCanonicalMonthFinanceTotals({
+      selectedMonthBilled: 0,
+      selectedMonthSettled: 5000,
+      selectedMonthOutstanding: 0,
+    });
+
+    expect(totals.selectedMonthSettled).toBe(0);
+    expect(totals.collectionRate).toBe(0);
+  });
+
+  it('preserves the canonical billed equals settled plus outstanding invariant', () => {
+    const totals = normalizeCanonicalMonthFinanceTotals({
+      selectedMonthBilled: 18000,
+      selectedMonthSettled: 10000,
+      selectedMonthOutstanding: 8000,
+    });
+
+    expect(totals.selectedMonthBilled).toBe(
+      totals.selectedMonthSettled + totals.selectedMonthOutstanding,
+    );
+    expect(totals.collectionRate).toBeCloseTo(55.56, 1);
+  });
   it('keeps wallet balances visible for each parent row', () => {
     const paidRow = createRow({
       parentId: 'parent-a',

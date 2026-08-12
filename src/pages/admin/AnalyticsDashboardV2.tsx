@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, collectionGroup, getAggregateFromServer, query, sum, where } from 'firebase/firestore';
 import { db } from '../../lib/firebaseConfig';
 import { getDocsLogged } from '../../lib/firestoreReadLogging';
 import { Card } from '@components/ui/card';
@@ -7,6 +7,14 @@ import { Input } from '@components/ui/input';
 import { Button } from '@components/ui/button';
 import LeadSourceAnalysis from './LeadSourceAnalysis';
 import DemoSessionsManagement from './DemoSessionsManagement';
+import { normalizeCanonicalMonthFinanceTotals } from './parentPaymentsReporting';
+import {
+  ANALYTICS_TIME_ZONE,
+  aggregateTeacherEarnings,
+  analyticsMonthKeyFromDate,
+  summarizeSessionCharges,
+  summarizeTeacherEarnings,
+} from './analyticsV2Metrics';
 
 type AnalyticsView = 'overview' | 'growth' | 'acquisition' | 'finance' | 'delivery' | 'teachers';
 
@@ -18,12 +26,6 @@ const ANALYTICS_VIEWS: Array<{ id: AnalyticsView; label: string }> = [
   { id: 'delivery', label: 'Delivery' },
   { id: 'teachers', label: 'Teachers' },
 ];
-
-const monthKeyFromDate = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  return `${year}-${month}`;
-};
 
 const monthRangeFromKey = (monthKey: string): { startYmd: string; endYmd: string } | null => {
   const parts = String(monthKey || '').split('-');
@@ -60,33 +62,6 @@ const formatPercent = (value: number) => `${Number.isFinite(value) ? value.toFix
 
 const normalizeStatus = (value: any) => String(value || '').trim().toLowerCase();
 
-const isSettledStatus = (status: string) => status === 'paid' || status === 'settled';
-
-const resolvePaidAmount = (entry: any, amount: number) => {
-  const paidRaw = Number(entry?.paidAmount);
-  if (Number.isFinite(paidRaw) && paidRaw > 0) {
-    return Math.min(Math.max(paidRaw, 0), Math.max(amount, 0));
-  }
-  return isSettledStatus(normalizeStatus(entry?.status)) ? Math.max(amount, 0) : 0;
-};
-
-const isSessionEarning = (entry: any) => {
-  const source = normalizeStatus(entry?.source);
-  if (source === 'session_present_completed') return true;
-  return Boolean(String(entry?.sessionId || '').trim());
-};
-
-const isDemoEarning = (entry: any) => {
-  const source = normalizeStatus(entry?.source);
-  return source === 'demo_completed' || source === 'demo_enrolled_bonus';
-};
-
-const isSessionCharge = (entry: any) => {
-  const source = normalizeStatus(entry?.source);
-  if (source === 'session_present_completed') return true;
-  return Boolean(String(entry?.sessionId || '').trim());
-};
-
 const CANCELLED_SESSION_STATUSES = new Set(['cancelled', 'canceled']);
 const NON_PLANNED_SESSION_STATUSES = new Set([
   'reschedule_requested',
@@ -108,7 +83,7 @@ const normalizeEnrollmentStatus = (enrollment: any): string => {
       Boolean(enrollment?.archivedAt) ||
       enrollment?.isArchived === true ||
       enrollment?.archived === true;
-    return archivedLike ? 'archived' : 'active';
+    return archivedLike ? 'archived' : 'unknown';
   }
   if (raw === 'pending_teacher') return 'trial';
   if (raw === 'pending_payment' || raw === 'pending_lp' || raw === 'pending_lp_assignment') return 'active';
@@ -192,9 +167,9 @@ const MetricCard = ({
   </Card>
 );
 
-const SectionHeading = ({ title, description }: { title: string; description: string }) => (
+const SectionHeading = ({ id, title, description }: { id?: string; title: string; description: string }) => (
   <div>
-    <h3 className="text-lg font-semibold text-slate-950">{title}</h3>
+    <h3 id={id} className="text-lg font-semibold text-slate-950">{title}</h3>
     <p className="mt-1 text-sm text-muted-foreground">{description}</p>
   </div>
 );
@@ -227,12 +202,14 @@ export default function AnalyticsDashboardV2(): JSX.Element {
   const [enrollments, setEnrollments] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [charges, setCharges] = useState<any[]>([]);
-  const [payments, setPayments] = useState<any[]>([]);
+  const [canonicalFinanceTotals, setCanonicalFinanceTotals] = useState(() =>
+    normalizeCanonicalMonthFinanceTotals({}),
+  );
   const [classSessions, setClassSessions] = useState<any[]>([]);
   const [teacherEarningsEntries, setTeacherEarningsEntries] = useState<any[]>([]);
   const [coreError, setCoreError] = useState<string | null>(null);
   const [monthError, setMonthError] = useState<string | null>(null);
-  const [selectedMonth, setSelectedMonth] = useState<string>(() => monthKeyFromDate(new Date()));
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => analyticsMonthKeyFromDate(new Date()));
   const [teacherEarningsTab, setTeacherEarningsTab] = useState<'live' | 'archived'>('live');
   const [monthRefreshKey, setMonthRefreshKey] = useState(0);
   const [monthLoading, setMonthLoading] = useState(true);
@@ -240,9 +217,10 @@ export default function AnalyticsDashboardV2(): JSX.Element {
   const [coreRefreshKey, setCoreRefreshKey] = useState(0);
   const [coreLoading, setCoreLoading] = useState(false);
   const [lastMonthLoadedAt, setLastMonthLoadedAt] = useState<Date | null>(null);
+  const [teacherPage, setTeacherPage] = useState(1);
 
   const selectedRange = useMemo(() => monthRangeFromKey(selectedMonth), [selectedMonth]);
-  const todayIst = ymdInTimeZone(new Date(), 'Asia/Kolkata');
+  const todayIst = ymdInTimeZone(new Date(), ANALYTICS_TIME_ZONE);
   const currentMonthKey = todayIst.slice(0, 7);
   const analyticsStartKey = selectedRange?.startYmd || '';
   const analyticsEndKey = selectedRange
@@ -258,7 +236,7 @@ export default function AnalyticsDashboardV2(): JSX.Element {
   }, [coreAnalyticsEnabled, viewNeedsCoreAnalytics]);
 
   useEffect(() => {
-    if (!coreAnalyticsEnabled) {
+    if (!coreAnalyticsEnabled || !viewNeedsCoreAnalytics) {
       setUsers([]);
       setEnrollments([]);
       setCourses([]);
@@ -271,16 +249,25 @@ export default function AnalyticsDashboardV2(): JSX.Element {
       setCoreLoading(true);
       setCoreError(null);
       try {
+        const emptySnapshot = { docs: [] };
+        const needsTeacherProfiles = activeView === 'teachers';
+        const needsEnrollmentDetail = activeView === 'finance' || activeView === 'delivery';
         const [usersSnap, enrollSnap, coursesSnap] = await Promise.all([
-          getDocsLogged('AnalyticsDashboard:all-users', query(collection(db, 'users')), {
-            source: 'src/pages/admin/AnalyticsDashboardV2.tsx',
-          }),
-          getDocsLogged('AnalyticsDashboard:all-enrollments', query(collection(db, 'enrollments')), {
-            source: 'src/pages/admin/AnalyticsDashboardV2.tsx',
-          }),
-          getDocsLogged('AnalyticsDashboard:all-courses', query(collection(db, 'courses')), {
-            source: 'src/pages/admin/AnalyticsDashboardV2.tsx',
-          }),
+          needsTeacherProfiles
+            ? getDocsLogged('AnalyticsDashboard:all-users', query(collection(db, 'users')), {
+                source: 'src/pages/admin/AnalyticsDashboardV2.tsx',
+              })
+            : Promise.resolve(emptySnapshot),
+          needsEnrollmentDetail
+            ? getDocsLogged('AnalyticsDashboard:all-enrollments', query(collection(db, 'enrollments')), {
+                source: 'src/pages/admin/AnalyticsDashboardV2.tsx',
+              })
+            : Promise.resolve(emptySnapshot),
+          needsEnrollmentDetail
+            ? getDocsLogged('AnalyticsDashboard:all-courses', query(collection(db, 'courses')), {
+                source: 'src/pages/admin/AnalyticsDashboardV2.tsx',
+              })
+            : Promise.resolve(emptySnapshot),
         ]);
         if (!active) return;
         setCoreError(null);
@@ -302,12 +289,12 @@ export default function AnalyticsDashboardV2(): JSX.Element {
     return () => {
       active = false;
     };
-  }, [coreAnalyticsEnabled, coreRefreshKey]);
+  }, [activeView, coreAnalyticsEnabled, coreRefreshKey, viewNeedsCoreAnalytics]);
 
   useEffect(() => {
     if (!selectedMonth) {
       setCharges([]);
-      setPayments([]);
+      setCanonicalFinanceTotals(normalizeCanonicalMonthFinanceTotals({}));
       setClassSessions([]);
       setTeacherEarningsEntries([]);
       setMonthError(null);
@@ -319,7 +306,7 @@ export default function AnalyticsDashboardV2(): JSX.Element {
     const monthRange = monthRangeFromKey(selectedMonth);
     if (!monthRange) {
       setCharges([]);
-      setPayments([]);
+      setCanonicalFinanceTotals(normalizeCanonicalMonthFinanceTotals({}));
       setClassSessions([]);
       setTeacherEarningsEntries([]);
       setMonthError('Select a valid analytics month.');
@@ -330,7 +317,7 @@ export default function AnalyticsDashboardV2(): JSX.Element {
 
     let active = true;
     setCharges([]);
-    setPayments([]);
+    setCanonicalFinanceTotals(normalizeCanonicalMonthFinanceTotals({}));
     setClassSessions([]);
     setTeacherEarningsEntries([]);
     setMonthError(null);
@@ -339,16 +326,19 @@ export default function AnalyticsDashboardV2(): JSX.Element {
 
     const loadMonthData = async () => {
       try {
-        const [chargesSnap, paymentsSnap, teacherEarningsSnap, classSessionsSnap] = await Promise.all([
+        const [chargesSnap, financialTotals, teacherEarningsSnap, classSessionsSnap] = await Promise.all([
           getDocsLogged(
             'AnalyticsDashboard:month-billing-charges',
             query(collection(db, 'billingCharges'), where('monthKey', '==', selectedMonth)),
             { source: 'src/pages/admin/AnalyticsDashboardV2.tsx' },
           ),
-          getDocsLogged(
-            'AnalyticsDashboard:month-payments',
-            query(collection(db, 'payments'), where('monthKey', '==', selectedMonth)),
-            { source: 'src/pages/admin/AnalyticsDashboardV2.tsx' },
+          getAggregateFromServer(
+            query(collectionGroup(db, 'months'), where('monthKey', '==', selectedMonth)),
+            {
+              selectedMonthBilled: sum('billedAmount'),
+              selectedMonthSettled: sum('settledAmount'),
+              selectedMonthOutstanding: sum('dueAmount'),
+            },
           ),
           getDocsLogged(
             'AnalyticsDashboard:month-teacher-earnings',
@@ -372,11 +362,7 @@ export default function AnalyticsDashboardV2(): JSX.Element {
             .map((d) => ({ id: d.id, ...(d.data() as any) }))
             .filter((charge) => charge.archived !== true),
         );
-        setPayments(
-          paymentsSnap.docs
-            .map((d) => ({ id: d.id, ...(d.data() as any) }))
-            .filter((payment) => payment.archived !== true),
-        );
+        setCanonicalFinanceTotals(normalizeCanonicalMonthFinanceTotals(financialTotals.data()));
         setTeacherEarningsEntries(
           teacherEarningsSnap.docs
             .map((d) => ({ id: d.id, ...(d.data() as any) }))
@@ -387,7 +373,7 @@ export default function AnalyticsDashboardV2(): JSX.Element {
       } catch (err: any) {
         if (!active) return;
         setCharges([]);
-        setPayments([]);
+        setCanonicalFinanceTotals(normalizeCanonicalMonthFinanceTotals({}));
         setClassSessions([]);
         setTeacherEarningsEntries([]);
         setMonthError(err?.message || 'Selected-month analytics data could not be loaded.');
@@ -402,70 +388,12 @@ export default function AnalyticsDashboardV2(): JSX.Element {
     };
   }, [selectedMonth, monthRefreshKey]);
 
-  const revenueTotals = useMemo(() => {
-    let chargesTotal = 0;
-    let sessionChargesTotal = 0;
-    let dueTotal = 0;
-    let appliedTotal = 0;
-    let unappliedTotal = 0;
-    let chargesCount = 0;
-    let sessionChargesCount = 0;
-
-    charges.forEach((charge) => {
-      const status = String(charge.status || '').toLowerCase();
-      if (status === 'void') return;
-      const amountRaw = Number(charge.amount ?? 0);
-      const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
-      if (amount <= 0) return;
-      chargesTotal += amount;
-      chargesCount += 1;
-      if (isSessionCharge(charge)) {
-        sessionChargesTotal += amount;
-        sessionChargesCount += 1;
-      }
-
-      const paidRaw = Number(charge.paidAmount ?? NaN);
-      const paidAmount = Number.isFinite(paidRaw) ? paidRaw : status === 'paid' ? amount : 0;
-      dueTotal += Math.max(amount - paidAmount, 0);
-    });
-
-    payments.forEach((payment) => {
-      const amountRaw = Number(payment.amount ?? 0);
-      const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
-      if (!amount) return;
-      const appliedRaw = Number(payment.appliedAmount ?? NaN);
-      const unappliedRaw = Number(payment.unappliedAmount ?? NaN);
-      const applied = Number.isFinite(appliedRaw)
-        ? appliedRaw
-        : Number.isFinite(unappliedRaw)
-          ? amount - unappliedRaw
-          : amount;
-      const unapplied = Number.isFinite(unappliedRaw)
-        ? unappliedRaw
-        : Number.isFinite(appliedRaw)
-          ? amount - appliedRaw
-          : 0;
-
-      appliedTotal += applied;
-      unappliedTotal += unapplied;
-    });
-
-    return {
-      chargesTotal,
-      dueTotal,
-      appliedTotal,
-      unappliedTotal,
-      chargesCount,
-      sessionChargesTotal,
-      sessionChargesCount,
-    };
-  }, [charges, payments]);
-
-  const expectedRevenue = revenueTotals.chargesTotal;
-  const earnedRevenue = revenueTotals.appliedTotal;
-  const balanceDueRevenue = Math.max(0, expectedRevenue - earnedRevenue);
-  const completedSessionsMonth = revenueTotals.sessionChargesCount;
-  const collectionRate = expectedRevenue > 0 ? (earnedRevenue / expectedRevenue) * 100 : 0;
+  const sessionChargeTotals = useMemo(() => summarizeSessionCharges(charges), [charges]);
+  const expectedRevenue = canonicalFinanceTotals.selectedMonthBilled;
+  const earnedRevenue = canonicalFinanceTotals.selectedMonthSettled;
+  const balanceDueRevenue = canonicalFinanceTotals.selectedMonthOutstanding;
+  const completedSessionsMonth = sessionChargeTotals.sessionChargesCount;
+  const collectionRate = canonicalFinanceTotals.collectionRate;
 
   const plannedProjection = useMemo(() => {
     let plannedSessions = 0;
@@ -557,55 +485,7 @@ export default function AnalyticsDashboardV2(): JSX.Element {
   }, [users]);
 
   const teacherEarnings = useMemo(() => {
-    const byTeacher = new Map<
-      string,
-      {
-        teacherId: string;
-        demoCount: number;
-        demoEarned: number;
-        sessionCount: number;
-        sessionEarned: number;
-        totalEarned: number;
-        pending: number;
-      }
-    >();
-
-    teacherEarningsEntries.forEach((entry) => {
-      const teacherId = String(entry.teacherId || '').trim();
-      if (!teacherId) return;
-      const status = normalizeStatus(entry.status);
-      if (status === 'void') return;
-
-      const amountRaw = Number(entry.amount ?? 0);
-      const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
-      const paidAmount = resolvePaidAmount(entry, amount);
-      const pending = Math.max(amount - paidAmount, 0);
-
-      if (!byTeacher.has(teacherId)) {
-        byTeacher.set(teacherId, {
-          teacherId,
-          demoCount: 0,
-          demoEarned: 0,
-          sessionCount: 0,
-          sessionEarned: 0,
-          totalEarned: 0,
-          pending: 0,
-        });
-      }
-      const bucket = byTeacher.get(teacherId)!;
-      bucket.totalEarned += amount;
-      bucket.pending += pending;
-
-      if (isDemoEarning(entry)) {
-        bucket.demoCount += 1;
-        bucket.demoEarned += amount;
-      } else if (isSessionEarning(entry)) {
-        bucket.sessionCount += 1;
-        bucket.sessionEarned += amount;
-      }
-    });
-
-    return Array.from(byTeacher.values())
+    return aggregateTeacherEarnings(teacherEarningsEntries)
       .map((row) => ({
         teacher: nameById[row.teacherId] || row.teacherId,
         teacherId: row.teacherId,
@@ -626,8 +506,7 @@ export default function AnalyticsDashboardV2(): JSX.Element {
           return 'Live';
         })(),
       }))
-      .sort((a, b) => b.pending - a.pending || b.totalEarned - a.totalEarned)
-      .slice(0, 40);
+      .sort((a, b) => b.pending - a.pending || b.totalEarned - a.totalEarned);
   }, [teacherEarningsEntries, nameById, teacherProfileById, coreAnalyticsEnabled, coreLoading, coreError]);
 
   const liveTeacherEarnings = useMemo(
@@ -638,33 +517,32 @@ export default function AnalyticsDashboardV2(): JSX.Element {
     () => teacherEarnings.filter((row) => row.profileTag !== 'Live' && row.profileTag !== 'Profile not loaded'),
     [teacherEarnings],
   );
-  const visibleTeacherEarnings = teacherEarningsTab === 'live' ? liveTeacherEarnings : archivedTeacherEarnings;
+  const filteredTeacherEarnings = teacherEarningsTab === 'live' ? liveTeacherEarnings : archivedTeacherEarnings;
+  const TEACHER_PAGE_SIZE = 20;
+  const teacherPageCount = Math.max(1, Math.ceil(filteredTeacherEarnings.length / TEACHER_PAGE_SIZE));
+  const visibleTeacherEarnings = filteredTeacherEarnings.slice(
+    (teacherPage - 1) * TEACHER_PAGE_SIZE,
+    teacherPage * TEACHER_PAGE_SIZE,
+  );
 
-  const teacherEarningsSummary = useMemo(() => {
-    let totalDemoEarned = 0;
-    let totalSessionEarned = 0;
-    let totalDemoCount = 0;
-    let totalSessionCount = 0;
-    teacherEarnings.forEach((teacher) => {
-      totalDemoEarned += teacher.demoEarned;
-      totalSessionEarned += teacher.sessionEarned;
-      totalDemoCount += teacher.demoCount;
-      totalSessionCount += teacher.sessionCount;
-    });
-    return {
-      totalDemoEarned,
-      totalSessionEarned,
-      totalDemoCount,
-      totalSessionCount,
-      totalCombinedEarned: totalDemoEarned + totalSessionEarned,
-    };
-  }, [teacherEarnings]);
+  useEffect(() => {
+    setTeacherPage(1);
+  }, [selectedMonth, teacherEarningsTab]);
+
+  useEffect(() => {
+    if (teacherPage > teacherPageCount) setTeacherPage(teacherPageCount);
+  }, [teacherPage, teacherPageCount]);
+
+  const teacherEarningsSummary = useMemo(
+    () => summarizeTeacherEarnings(teacherEarnings),
+    [teacherEarnings],
+  );
 
   const avgSessionPayout = teacherEarningsSummary.totalSessionCount > 0
     ? teacherEarningsSummary.totalSessionEarned / teacherEarningsSummary.totalSessionCount
     : 0;
   const projectedTeacherPayout = plannedProjection.plannedSessions * avgSessionPayout;
-  const sessionNetEarningsMonth = revenueTotals.sessionChargesTotal - teacherEarningsSummary.totalSessionEarned;
+  const sessionNetEarningsMonth = sessionChargeTotals.sessionChargesTotal - teacherEarningsSummary.totalSessionEarned;
   const coreAnalyticsReady = coreAnalyticsEnabled && !coreLoading && !coreError;
   const monthAnalyticsReady = !monthLoading && !monthError;
   const selectedMonthMetric = (value: string | number): string | number => monthLoading ? '…' : monthError ? '—' : value;
@@ -733,10 +611,10 @@ export default function AnalyticsDashboardV2(): JSX.Element {
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 pt-3 text-xs text-slate-500">
           <span>Period: {analyticsStartKey || '—'} to {analyticsEndKey || '—'}</span>
-          <span>Timezone: Asia/Kolkata</span>
-          <span>Last refresh: {lastRefreshLabel}</span>
+          <span>Timezone: {ANALYTICS_TIME_ZONE}</span>
+          <span>Last month-data refresh: {lastRefreshLabel}</span>
           <span className={`rounded-full px-2.5 py-1 font-semibold ${healthState === 'Healthy' ? 'bg-emerald-50 text-emerald-700' : healthState === 'Loading' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-800'}`}>
-            Data health: {healthState}
+            Month finance/delivery data: {healthState}
           </span>
         </div>
       </header>
@@ -763,12 +641,13 @@ export default function AnalyticsDashboardV2(): JSX.Element {
         <div className="space-y-4">
           <section aria-labelledby="executive-scorecard-heading" className="space-y-3">
             <SectionHeading
+              id="executive-scorecard-heading"
               title="Executive scorecard"
               description="The few measures required to understand this month before drilling into detail."
             />
-            <div id="executive-scorecard-heading" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
               <MetricCard label="Billed Revenue (Month)" value={selectedMonthMetric(formatMoney(expectedRevenue))} />
-              <MetricCard label="Collected Payments (Month)" value={selectedMonthMetric(formatMoney(earnedRevenue))} />
+              <MetricCard label="Settled Revenue (Month)" value={selectedMonthMetric(formatMoney(earnedRevenue))} />
               <MetricCard label="Collection Rate" value={selectedMonthMetric(formatPercent(collectionRate))} />
               <MetricCard label="Balance Due" value={selectedMonthMetric(formatMoney(balanceDueRevenue))} />
               <MetricCard label="Completed Sessions (Billed)" value={selectedMonthMetric(completedSessionsMonth)} />
@@ -799,7 +678,7 @@ export default function AnalyticsDashboardV2(): JSX.Element {
                 {!monthError && balanceDueRevenue > 0 ? (
                   <button type="button" onClick={() => setActiveView('finance')} className="w-full rounded-lg border border-amber-200 bg-amber-50 p-3 text-left hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-700">
                     <div className="text-sm font-semibold text-amber-900">{formatMoney(balanceDueRevenue)} balance due</div>
-                    <div className="mt-1 text-xs text-amber-800">Review collections and payment recording →</div>
+                    <div className="mt-1 text-xs text-amber-800">Review service-month settlement and allocations →</div>
                   </button>
                 ) : null}
                 {!monthError && balanceDueRevenue === 0 ? (
@@ -817,7 +696,7 @@ export default function AnalyticsDashboardV2(): JSX.Element {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h3 className="text-base font-semibold text-slate-950">Collections snapshot</h3>
-                  <p className="mt-1 text-xs text-muted-foreground">Actual billed and collected values only. Forecast is kept in Finance.</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Selected service-month billed and settled values. Forecast is kept in Finance.</p>
                 </div>
                 <Button type="button" size="sm" variant="outline" onClick={() => setActiveView('finance')}>Open Finance</Button>
               </div>
@@ -825,7 +704,7 @@ export default function AnalyticsDashboardV2(): JSX.Element {
                 <div className="h-full rounded-full bg-slate-900" style={{ width: `${Math.max(0, Math.min(100, collectionRate))}%` }} />
               </div>
               <div className="mt-3 flex flex-wrap justify-between gap-2 text-sm">
-                <span className="text-slate-600">Collected <strong className="text-slate-950">{selectedMonthMetric(formatMoney(earnedRevenue))}</strong></span>
+                <span className="text-slate-600">Settled <strong className="text-slate-950">{selectedMonthMetric(formatMoney(earnedRevenue))}</strong></span>
                 <span className="text-slate-600">Billed <strong className="text-slate-950">{selectedMonthMetric(formatMoney(expectedRevenue))}</strong></span>
               </div>
             </Card>
@@ -895,7 +774,7 @@ export default function AnalyticsDashboardV2(): JSX.Element {
             <div className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Actual · selected month</div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
               <MetricCard label="Billed Revenue (Month)" value={selectedMonthMetric(formatMoney(expectedRevenue))} />
-              <MetricCard label="Collected Payments (Month)" value={selectedMonthMetric(formatMoney(earnedRevenue))} />
+              <MetricCard label="Settled Revenue (Month)" value={selectedMonthMetric(formatMoney(earnedRevenue))} />
               <MetricCard label="Collection Rate" value={selectedMonthMetric(formatPercent(collectionRate))} emphasis />
               <MetricCard label="Balance Due" value={selectedMonthMetric(formatMoney(balanceDueRevenue))} />
               <MetricCard label="Completed Sessions (Billed)" value={selectedMonthMetric(completedSessionsMonth)} />
@@ -925,7 +804,13 @@ export default function AnalyticsDashboardV2(): JSX.Element {
                     ? `${plannedProjection.missingFeeSessions} sessions missing fee configuration`
                     : `Average ${formatMoney(plannedProjection.avgProjectedRevenuePerSession)} per scheduled session`}
                 />
-                <MetricCard label="Projected Teacher Payout (Planned)" value={formatMoney(projectedTeacherPayout)} sub={`Average payout/session ${formatMoney(avgSessionPayout)}`} />
+                <MetricCard
+                  label="Estimated Teacher Payout (Planned)"
+                  value={teacherEarningsSummary.totalSessionCount > 0 ? formatMoney(projectedTeacherPayout) : 'Unavailable'}
+                  sub={teacherEarningsSummary.totalSessionCount > 0
+                    ? `Estimate using realized average payout/session ${formatMoney(avgSessionPayout)}`
+                    : 'No realized session-payout baseline exists for this month'}
+                />
               </div>
             )}
           </Card>
@@ -983,10 +868,10 @@ export default function AnalyticsDashboardV2(): JSX.Element {
                 <h3 className="text-base font-semibold text-slate-950">Teacher earnings · selected month</h3>
                 <p className="mt-1 text-xs text-muted-foreground">Based on attendance/demo earning rollups. Detailed data is intentionally kept out of Overview.</p>
               </div>
-              <span className="text-xs text-muted-foreground">{monthError ? 'Unavailable' : `${visibleTeacherEarnings.length} teachers`}</span>
+              <span className="text-xs text-muted-foreground">{monthError ? 'Unavailable' : `${filteredTeacherEarnings.length} teachers`}</span>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <Button type="button" size="sm" variant={teacherEarningsTab === 'live' ? 'default' : 'outline'} onClick={() => setTeacherEarningsTab('live')}>
+              <Button type="button" size="sm" variant={teacherEarningsTab === 'live' ? 'default' : 'outline'} onClick={() => setTeacherEarningsTab('live')} aria-pressed={teacherEarningsTab === 'live'}>
                 Live ({liveTeacherEarnings.length})
               </Button>
               <Button
@@ -995,6 +880,7 @@ export default function AnalyticsDashboardV2(): JSX.Element {
                 variant={teacherEarningsTab === 'archived' ? 'default' : 'outline'}
                 onClick={() => setTeacherEarningsTab('archived')}
                 disabled={!coreAnalyticsReady}
+                aria-pressed={teacherEarningsTab === 'archived'}
               >
                 Archived / Deleted ({coreAnalyticsReady ? archivedTeacherEarnings.length : '—'})
               </Button>
@@ -1041,6 +927,15 @@ export default function AnalyticsDashboardV2(): JSX.Element {
                 </tbody>
               </table>
             </div>
+            {filteredTeacherEarnings.length > TEACHER_PAGE_SIZE ? (
+              <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-3" aria-label="Teacher earnings pagination">
+                <span className="text-xs text-muted-foreground">Page {teacherPage} of {teacherPageCount}</span>
+                <div className="flex gap-2">
+                  <Button type="button" size="sm" variant="outline" disabled={teacherPage <= 1} onClick={() => setTeacherPage((page) => Math.max(1, page - 1))}>Previous</Button>
+                  <Button type="button" size="sm" variant="outline" disabled={teacherPage >= teacherPageCount} onClick={() => setTeacherPage((page) => Math.min(teacherPageCount, page + 1))}>Next</Button>
+                </div>
+              </div>
+            ) : null}
           </Card>
         </section>
       ) : null}

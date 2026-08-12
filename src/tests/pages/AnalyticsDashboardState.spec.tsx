@@ -2,8 +2,9 @@ import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { getDocsLoggedMock } = vi.hoisted(() => ({
+const { getDocsLoggedMock, getAggregateFromServerMock } = vi.hoisted(() => ({
   getDocsLoggedMock: vi.fn(),
+  getAggregateFromServerMock: vi.fn(),
 }));
 
 vi.mock('../../lib/firebaseConfig', () => ({
@@ -16,7 +17,10 @@ vi.mock('../../lib/firestoreReadLogging', () => ({
 
 vi.mock('firebase/firestore', () => ({
   collection: (...args: unknown[]) => ({ kind: 'collection', args }),
+  collectionGroup: (...args: unknown[]) => ({ kind: 'collectionGroup', args }),
+  getAggregateFromServer: getAggregateFromServerMock,
   query: (...args: unknown[]) => ({ kind: 'query', args }),
+  sum: (field: string) => ({ kind: 'sum', field }),
   where: (...args: unknown[]) => ({ kind: 'where', args }),
 }));
 
@@ -69,6 +73,14 @@ const snapshot = (rows: Array<Record<string, unknown>>) => ({
   })),
 });
 
+const aggregateSnapshot = (billed = 0, settled = 0, outstanding = billed - settled) => ({
+  data: () => ({
+    selectedMonthBilled: billed,
+    selectedMonthSettled: settled,
+    selectedMonthOutstanding: outstanding,
+  }),
+});
+
 const cardText = (label: string): string => {
   const labelNode = screen.getByText(label);
   return labelNode.parentElement?.textContent || '';
@@ -77,23 +89,24 @@ const cardText = (label: string): string => {
 describe('AnalyticsDashboard selected-month state', () => {
   beforeEach(() => {
     getDocsLoggedMock.mockReset();
+    getAggregateFromServerMock.mockReset();
   });
 
   it('clears the previous month before loading a new month and does not restore stale values on failure', async () => {
     let phase: 'initial' | 'next' = 'initial';
     const nextMonthRequest = deferred<ReturnType<typeof snapshot>>();
+    const nextAggregateRequest = deferred<ReturnType<typeof aggregateSnapshot>>();
+
+    getAggregateFromServerMock.mockImplementation(() =>
+      phase === 'next' ? nextAggregateRequest.promise : Promise.resolve(aggregateSnapshot(1000)),
+    );
 
     getDocsLoggedMock.mockImplementation((label: string) => {
       if (phase === 'next' && label.startsWith('AnalyticsDashboard:month-')) {
         return nextMonthRequest.promise;
       }
 
-      if (label === 'AnalyticsDashboard:month-billing-charges') {
-        return Promise.resolve(snapshot([{ id: 'charge-1', amount: 1000, status: 'open' }]));
-      }
-      if (label === 'AnalyticsDashboard:month-payments') {
-        return Promise.resolve(snapshot([]));
-      }
+      if (label === 'AnalyticsDashboard:month-billing-charges') return Promise.resolve(snapshot([]));
       if (label === 'AnalyticsDashboard:month-teacher-earnings') {
         return Promise.resolve(snapshot([]));
       }
@@ -120,8 +133,9 @@ describe('AnalyticsDashboard selected-month state', () => {
 
     await act(async () => {
       nextMonthRequest.reject(new Error('month query failed'));
+      nextAggregateRequest.reject(new Error('month query failed'));
       try {
-        await nextMonthRequest.promise;
+        await Promise.all([nextMonthRequest.promise, nextAggregateRequest.promise]);
       } catch {
         // expected rejection
       }
@@ -140,14 +154,18 @@ describe('AnalyticsDashboard selected-month state', () => {
     const olderGate = deferred<void>();
     const newestGate = deferred<void>();
 
-    getDocsLoggedMock.mockImplementation((label: string) => {
-      const response = (amount: number) =>
-        label === 'AnalyticsDashboard:month-billing-charges'
-          ? snapshot([{ id: `charge-${amount}`, amount, status: 'open' }])
-          : snapshot([]);
+    getAggregateFromServerMock.mockImplementation(() => {
+      const response = (amount: number) => aggregateSnapshot(amount);
       if (phase === 'older') return olderGate.promise.then(() => response(9000));
       if (phase === 'newest') return newestGate.promise.then(() => response(2000));
       return Promise.resolve(response(1000));
+    });
+
+    getDocsLoggedMock.mockImplementation((label: string) => {
+      const response = () => snapshot([]);
+      if (phase === 'older') return olderGate.promise.then(response);
+      if (phase === 'newest') return newestGate.promise.then(response);
+      return Promise.resolve(response());
     });
 
     render(<AnalyticsDashboard />);
@@ -157,7 +175,7 @@ describe('AnalyticsDashboard selected-month state', () => {
     const callsBeforeOlder = getDocsLoggedMock.mock.calls.length;
     phase = 'older';
     fireEvent.change(monthInput, { target: { value: '2026-07' } });
-    await waitFor(() => expect(getDocsLoggedMock.mock.calls.length).toBe(callsBeforeOlder + 4));
+    await waitFor(() => expect(getDocsLoggedMock.mock.calls.length).toBe(callsBeforeOlder + 3));
 
     phase = 'newest';
     fireEvent.change(monthInput, { target: { value: '2026-06' } });
@@ -177,6 +195,7 @@ describe('AnalyticsDashboard selected-month state', () => {
 
   it('shows a genuine zero after a successful empty selected-month query', async () => {
     getDocsLoggedMock.mockResolvedValue(snapshot([]));
+    getAggregateFromServerMock.mockResolvedValue(aggregateSnapshot());
     render(<AnalyticsDashboard />);
 
     await waitFor(() => expect(cardText('Billed Revenue (Month)')).toContain('₹0'));

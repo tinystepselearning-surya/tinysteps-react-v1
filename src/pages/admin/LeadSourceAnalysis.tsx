@@ -10,6 +10,12 @@ import {
   type AcquisitionChannel,
 } from '../../lib/leadAcquisition';
 import DemoSessionsManagement from './DemoSessionsManagement';
+import {
+  addDaysToDateKey,
+  dateKeyInRange,
+  leadReceivedDateKey,
+  todayIstDateKey,
+} from './leadFunnelAnalytics';
 
 type LeadAttributionMap = {
   landingPage?: string | null;
@@ -28,6 +34,8 @@ type LeadAttributionMap = {
 
 type LeadRow = {
   id: string;
+  receivedAt?: Timestamp | null;
+  requestedAt?: Timestamp | null;
   createdAt?: Timestamp | null;
   status?: string | null;
   source?: string | null;
@@ -157,36 +165,38 @@ export default function LeadSourceAnalysis({
     // Never show the previous range's totals under the newly selected range label.
     setRows([]);
 
-    let queryRef;
-    let label: string;
-
-    if (controlledRange && startDateKey && endDateKey) {
-      const start = istBoundaryDate(startDateKey);
-      const end = istBoundaryDate(endDateKey, true);
-      queryRef = query(
-        collection(db, 'leads'),
-        where('createdAt', '>=', Timestamp.fromDate(start)),
-        where('createdAt', '<=', Timestamp.fromDate(end)),
-      );
-      label = `LeadSourceAnalysis:${startDateKey}:${endDateKey}`;
-    } else {
-      const start = new Date();
-      start.setDate(start.getDate() - rangeDays);
-      start.setHours(0, 0, 0, 0);
-      queryRef = query(collection(db, 'leads'), where('createdAt', '>=', Timestamp.fromDate(start)));
-      label = `LeadSourceAnalysis:${rangeDays}d`;
-    }
+    const resolvedEndKey = controlledRange && endDateKey ? endDateKey : todayIstDateKey();
+    const resolvedStartKey = controlledRange && startDateKey
+      ? startDateKey
+      : addDaysToDateKey(resolvedEndKey, -(rangeDays - 1));
+    const start = istBoundaryDate(resolvedStartKey);
+    const end = istBoundaryDate(resolvedEndKey, true);
+    const label = controlledRange
+      ? `LeadSourceAnalysis:${resolvedStartKey}:${resolvedEndKey}`
+      : `LeadSourceAnalysis:${rangeDays}d`;
+    const timestampFields = ['receivedAt', 'requestedAt', 'createdAt'] as const;
 
     try {
-      const snap = await getDocsLogged(label, queryRef, {
-        source: 'src/pages/admin/LeadSourceAnalysis.tsx',
-      });
+      const snapshots = await Promise.all(timestampFields.map((field, index) =>
+        getDocsLogged(
+          index === 0 ? label : `${label}:${field}`,
+          query(
+            collection(db, 'leads'),
+            where(field, '>=', Timestamp.fromDate(start)),
+            where(field, '<=', Timestamp.fromDate(end)),
+          ),
+          { source: 'src/pages/admin/LeadSourceAnalysis.tsx' },
+        )
+      ));
       if (requestSequenceRef.current !== requestSequence) return;
-      setRows(
-        snap.docs
-          .map((d) => ({ id: d.id, ...(d.data() as Omit<LeadRow, 'id'>) }))
-          .filter((lead) => !(lead as LeadRow & { archived?: boolean }).archived),
-      );
+      const deduped = new Map<string, LeadRow>();
+      snapshots.forEach((snap) => snap.docs.forEach((d) => {
+        deduped.set(d.id, { id: d.id, ...(d.data() as Omit<LeadRow, 'id'>) });
+      }));
+      setRows(Array.from(deduped.values()).filter((lead) => {
+        if ((lead as LeadRow & { archived?: boolean }).archived) return false;
+        return dateKeyInRange(leadReceivedDateKey(lead), resolvedStartKey, resolvedEndKey);
+      }));
     } catch (err: any) {
       if (requestSequenceRef.current !== requestSequence) return;
       console.error('[LeadSourceAnalysis] load failed', err);
