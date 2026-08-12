@@ -109,6 +109,35 @@ Inventory statistics such as total users and total courses are not executive KPI
 
 The detailed table belongs here at full width rather than occupying half of the executive dashboard.
 
+## Edtech analytics maturity model
+
+A complete education-platform analytics architecture is broader than sales and finance. V2 deliberately implements only metrics that already have a canonical, auditable Tiny Steps data source. The long-term model is:
+
+| Domain | Management question | V2 status |
+|---|---|---|
+| Acquisition | Where are families coming from? | Implemented |
+| Admissions | Are enquiries converting into enrolled learners? | Implemented |
+| Collections | Are billed amounts being collected? | Implemented |
+| Unit economics | What is session revenue after teacher cost? | Implemented |
+| Delivery capacity | Can the current timetable/enrollment load be delivered? | Implemented |
+| Teacher economics | What is teacher payout and workload exposure? | Implemented |
+| Attendance / reliability | Are learners and teachers consistently attending scheduled sessions? | Add only after one canonical attendance denominator/status contract is agreed |
+| Retention | Are enrolled learners continuing, pausing, completing, or discontinuing? | Add after lifecycle dates/reasons are normalized |
+| Learning progress | Are learners moving through lessons/skills and demonstrating mastery? | Add after curriculum progress has a canonical learner-level event/assessment model |
+| Learning outcomes | Are reading/grammar/speaking outcomes improving from baseline to checkpoint? | Add after assessment scores/rubrics are normalized across programmes |
+| Parent experience | Are families satisfied and receiving timely support? | Add when feedback/NPS/support-response data has a canonical source |
+| Product engagement | Are games/worksheets/resources contributing to learning engagement? | Add only when the business question and learner-safe denominator are defined |
+
+The design rule is **no vanity metric without a decision attached to it**. A metric is promoted to the executive dashboard only when:
+
+1. its business/learning question is explicit;
+2. its numerator and denominator are canonical;
+3. its date basis and grain are documented;
+4. the resulting number can lead to a management action;
+5. historical/legacy records can be interpreted without guessing.
+
+This prevents a common edtech failure mode: combining marketing, attendance, content clicks, payments, and learning events into one visually impressive dashboard even when those measures use incompatible populations or time bases.
+
 ## Reporting-period contract
 
 The management header owns the selected month.
