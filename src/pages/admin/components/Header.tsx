@@ -74,7 +74,7 @@ export default function Header({ onOpenMenu }: HeaderProps) {
             className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 lg:hidden"
             aria-label="Open admin navigation"
           >
-            <Menu className="h-4.5 w-4.5" aria-hidden="true" />
+            <Menu className="h-4 w-4" aria-hidden="true" />
           </button>
 
           <Link
