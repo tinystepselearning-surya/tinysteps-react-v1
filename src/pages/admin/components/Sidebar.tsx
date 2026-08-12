@@ -34,9 +34,8 @@ export default function Sidebar({ selectedTab, onTabChange, className, onNavigat
   const tabs = [
     { id: 'users', label: 'User Management', icon: UserCog },
     { id: 'schools', label: 'School Partnerships', icon: Building2 },
-    { id: 'students', label: 'Student Management', icon: GraduationCap },
+    { id: 'students', label: 'Students & Enrollments', icon: GraduationCap },
     { id: 'leads', label: 'Leads & Enquiries', icon: ContactRound },
-    { id: 'enrollments', label: 'Enrollment Management', icon: ClipboardList },
     { id: 'attendance-corrections', label: 'Attendance Corrections', icon: ClipboardList },
     { id: 'relationships', label: 'Relationship Management', icon: Handshake },
     { id: 'courses', label: 'Course Management', icon: BookCopy },
@@ -65,7 +64,7 @@ export default function Sidebar({ selectedTab, onTabChange, className, onNavigat
             type="button"
             className={cn(
               'flex h-10 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium transition',
-              selectedTab === tab.id
+              selectedTab === tab.id || (tab.id === 'students' && selectedTab === 'enrollments')
                 ? 'bg-blue-600/90 text-white shadow-sm hover:bg-blue-500'
                 : 'text-slate-300 hover:bg-slate-800 hover:text-white'
             )}
@@ -80,7 +79,9 @@ export default function Sidebar({ selectedTab, onTabChange, className, onNavigat
             <tab.icon
               className={cn(
                 'h-4 w-4',
-                selectedTab === tab.id ? 'text-white' : 'text-slate-400'
+                selectedTab === tab.id || (tab.id === 'students' && selectedTab === 'enrollments')
+                  ? 'text-white'
+                  : 'text-slate-400'
               )}
               aria-hidden="true"
             />
