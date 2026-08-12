@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { Button } from '@components/ui/button';
 import ParentPaymentsV2 from './ParentPaymentsV2';
-import ParentPaymentsLegacy from './ParentPaymentsLegacy';
+
+const ParentPaymentsLegacy = lazy(() => import('./ParentPaymentsLegacy'));
 
 type Workspace = 'v2' | 'maintenance';
 
@@ -22,7 +23,15 @@ export default function ParentPayments(): JSX.Element {
             Back to Parent Payments V2
           </Button>
         </div>
-        <ParentPaymentsLegacy />
+        <Suspense
+          fallback={
+            <div className="rounded-xl border bg-white p-6 text-sm text-muted-foreground">
+              Loading financial maintenance tools…
+            </div>
+          }
+        >
+          <ParentPaymentsLegacy />
+        </Suspense>
       </div>
     );
   }
@@ -30,7 +39,12 @@ export default function ParentPayments(): JSX.Element {
   return (
     <div className="space-y-3">
       <div className="flex justify-end">
-        <Button variant="ghost" size="sm" className="text-xs text-muted-foreground" onClick={() => setWorkspace('maintenance')}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs text-muted-foreground"
+          onClick={() => setWorkspace('maintenance')}
+        >
           Financial maintenance tools
         </Button>
       </div>
