@@ -5,7 +5,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import Header from '../../pages/admin/components/Header';
 import { useAuthStore } from '../../store/useAuthStore';
 
-const performAppLogoutMock = vi.fn(async () => undefined);
+const { performAppLogoutMock } = vi.hoisted(() => ({
+  performAppLogoutMock: vi.fn(async () => undefined),
+}));
 
 vi.mock('../../lib/auth', () => ({
   performAppLogout: performAppLogoutMock,
