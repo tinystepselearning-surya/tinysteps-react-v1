@@ -79,7 +79,10 @@ export default function StudentManagementTab() {
     try {
       const functions = getFunctions(undefined, 'asia-south1');
       const archiveKid = httpsCallable(functions, 'archiveKid');
-      await archiveKid({ kidId: studentId });
+      await archiveKid({
+        kidId: studentId,
+        reason: 'Archived from unified Students & Enrollments management',
+      });
       setRefreshKey(k => k + 1);
     } catch (err) {
       if (err instanceof Error) {
