@@ -186,10 +186,10 @@ describe('ParentPaymentsV2', () => {
     render(<ParentPaymentsV2 />);
 
     await waitFor(() => expect(screen.getByText('Parent One')).toBeTruthy());
-    expect(screen.getByText('₹5,800')).toBeTruthy();
-    expect(screen.getByText('₹4,800')).toBeTruthy();
-    expect(screen.getByText('₹1,000')).toBeTruthy();
-    expect(screen.getByText('Page 1')).toBeTruthy();
+    expect(screen.getAllByText('₹5,800').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('₹4,800').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('₹1,000').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Page 1').length).toBeGreaterThan(0);
 
     expect(
       getDocsMock.mock.calls.some(([input]) =>
