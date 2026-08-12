@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { GraduationCap, Layers3, ShieldCheck } from 'lucide-react';
@@ -118,68 +118,77 @@ export default function StudentManagementTab() {
   }, []);
 
   useEffect(() => {
-    let active = true;
+    let latestStudents: Array<Record<string, unknown>> | null = null;
+    let latestEnrollments: Array<Record<string, unknown>> | null = null;
 
-    const loadReconciliationSummary = async () => {
-      setSummaryLoading(true);
+    const recompute = () => {
+      if (!latestStudents || !latestEnrollments) return;
+
+      const activeStudentIds = new Set(
+        latestStudents
+          .filter((student) => isActiveCanonicalStudent(student))
+          .map((student) => String(student.id || '').trim())
+          .filter(Boolean),
+      );
+      const activeEnrollments = latestEnrollments.filter((enrollment) => isActiveLikeEnrollment(enrollment));
+      const activeEnrolledStudentIds = new Set<string>();
+
+      activeEnrollments.forEach((enrollment) => {
+        collectEnrollmentStudentIds(enrollment).forEach((studentId) => {
+          if (activeStudentIds.has(studentId)) activeEnrolledStudentIds.add(studentId);
+        });
+      });
+
+      setSummary({
+        totalStudents: latestStudents.length,
+        activeStudents: activeStudentIds.size,
+        inactiveStudents: Math.max(0, latestStudents.length - activeStudentIds.size),
+        activeEnrollments: activeEnrollments.length,
+        activeEnrolledStudents: activeEnrolledStudentIds.size,
+        activeStudentsWithoutEnrollment: Math.max(
+          0,
+          activeStudentIds.size - activeEnrolledStudentIds.size,
+        ),
+      });
+      setSummaryLoading(false);
       setSummaryError(false);
-      try {
-        const [studentsSnap, enrollmentsSnap] = await Promise.all([
-          getDocs(collection(db, 'kids')),
-          getDocs(collection(db, 'enrollments')),
-        ]);
-
-        if (!active) return;
-
-        const students = studentsSnap.docs.map((docSnap) => ({
-          id: docSnap.id,
-          ...(docSnap.data() as Record<string, unknown>),
-        }));
-        const enrollments = enrollmentsSnap.docs.map((docSnap) => ({
-          id: docSnap.id,
-          ...(docSnap.data() as Record<string, unknown>),
-        }));
-
-        const activeStudentIds = new Set(
-          students
-            .filter((student) => isActiveCanonicalStudent(student))
-            .map((student) => String(student.id || '').trim())
-            .filter(Boolean),
-        );
-        const activeEnrollments = enrollments.filter((enrollment) => isActiveLikeEnrollment(enrollment));
-        const activeEnrolledStudentIds = new Set<string>();
-
-        activeEnrollments.forEach((enrollment) => {
-          collectEnrollmentStudentIds(enrollment).forEach((studentId) => {
-            if (activeStudentIds.has(studentId)) activeEnrolledStudentIds.add(studentId);
-          });
-        });
-
-        setSummary({
-          totalStudents: students.length,
-          activeStudents: activeStudentIds.size,
-          inactiveStudents: Math.max(0, students.length - activeStudentIds.size),
-          activeEnrollments: activeEnrollments.length,
-          activeEnrolledStudents: activeEnrolledStudentIds.size,
-          activeStudentsWithoutEnrollment: Math.max(
-            0,
-            activeStudentIds.size - activeEnrolledStudentIds.size,
-          ),
-        });
-      } catch (err) {
-        console.error('[StudentEnrollmentManagement] reconciliation summary failed', err);
-        if (!active) return;
-        setSummaryError(true);
-      } finally {
-        if (active) setSummaryLoading(false);
-      }
     };
 
-    void loadReconciliationSummary();
+    const handleSummaryError = (source: 'students' | 'enrollments', err: unknown) => {
+      console.error(`[StudentEnrollmentManagement] ${source} reconciliation stream failed`, err);
+      setSummaryLoading(false);
+      setSummaryError(true);
+    };
+
+    const unsubscribeStudents = onSnapshot(
+      collection(db, 'kids'),
+      (snapshot) => {
+        latestStudents = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...(docSnap.data() as Record<string, unknown>),
+        }));
+        recompute();
+      },
+      (err) => handleSummaryError('students', err),
+    );
+
+    const unsubscribeEnrollments = onSnapshot(
+      collection(db, 'enrollments'),
+      (snapshot) => {
+        latestEnrollments = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...(docSnap.data() as Record<string, unknown>),
+        }));
+        recompute();
+      },
+      (err) => handleSummaryError('enrollments', err),
+    );
+
     return () => {
-      active = false;
+      unsubscribeStudents();
+      unsubscribeEnrollments();
     };
-  }, [refreshKey]);
+  }, []);
 
   const switchView = (nextView: ManagementView) => {
     const params = new URLSearchParams(location.search);
@@ -295,7 +304,10 @@ export default function StudentManagementTab() {
 
       {activeView === 'students' ? (
         <>
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-slate-500">
+              Directory counters below are filter-scoped; the reconciliation totals above are canonical and remain live across lifecycle changes.
+            </p>
             <CreateStudentForm onStudentCreated={handleStudentCreated} />
           </div>
 
