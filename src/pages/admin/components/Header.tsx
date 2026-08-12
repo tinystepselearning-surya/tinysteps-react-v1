@@ -11,9 +11,11 @@ interface HeaderProps {
 const ADMIN_SECTION_LABELS: Record<string, string> = {
   users: 'User Management',
   schools: 'School Partnerships',
-  students: 'Student Management',
+  students: 'Students & Enrollments',
   leads: 'Leads & Enquiries',
-  enrollments: 'Enrollment Management',
+  // Keep the old query-param title aligned for existing bookmarks while
+  // navigation now enters the unified Students & Enrollments workspace.
+  enrollments: 'Students & Enrollments',
   'attendance-corrections': 'Attendance Corrections',
   relationships: 'Relationship Management',
   courses: 'Course Management',
