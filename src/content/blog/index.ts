@@ -2,6 +2,7 @@ import type { BlogPost, PhonicsSeoPost } from './types';
 import { BLOG_PUBLICATION_DATES, BLOG_CATEGORY_OVERRIDES, DEFAULT_HERO_BY_CATEGORY } from './shared/defaults';
 import { makePhonicsPost } from './shared/phonicsShared';
 import { enrichWeekPost } from './shared/weeklyShared';
+import { isRedirectedBlogSlug } from '../../lib/blogIndexingPolicy.js';
 
 type PostModule = {
   default?: BlogPost | PhonicsSeoPost;
@@ -28,6 +29,11 @@ const postsBySlug = new Map<string, BlogPost>();
 for (const [path, module] of Object.entries(postModules).sort(([a], [b]) => a.localeCompare(b))) {
   const post = normalizePost(module.default);
   if (!post) continue;
+
+  // Redirect sources remain in source control for historical content preservation,
+  // but they must not be advertised as competing canonical articles by /blog or
+  // its CollectionPage/Blog structured data.
+  if (isRedirectedBlogSlug(post.slug)) continue;
 
   if (postsBySlug.has(post.slug) && import.meta.env.DEV) {
     console.warn(`[blog] Duplicate slug "${post.slug}" detected while loading ${path}. Keeping the first post.`);
