@@ -1,9 +1,14 @@
+import { PUBLIC_FACTS as SCHEMA_PUBLIC_FACTS } from '../lib/schemas';
+
+// Canonical public business facts used by newly built public experiences.
+// Existing schema identity facts remain the upstream source for brand, programme,
+// delivery and session-duration values; commercial/seasonal facts live here.
 export const PUBLIC_SITE_FACTS = {
-  brandName: 'Tiny Steps Learning',
+  brandName: SCHEMA_PUBLIC_FACTS.brandName,
   audience: {
     ageMin: 3,
     ageMax: 12,
-    label: 'children ages 3–12',
+    label: 'children aged 3–12',
   },
   learnerReach: {
     minimumLearners: 5000,
@@ -14,11 +19,11 @@ export const PUBLIC_SITE_FACTS = {
   liveSessions: {
     minimumMinutes: 35,
     maximumMinutes: 40,
-    label: '35–40 minutes per session',
+    label: SCHEMA_PUBLIC_FACTS.sessionDuration,
   },
-  deliveryModel: 'live online classes',
-  corePrograms: ['Phonics', 'Grammar', 'Public Speaking'] as const,
-  geography: 'India and families worldwide online',
+  deliveryModel: SCHEMA_PUBLIC_FACTS.deliveryModel,
+  corePrograms: SCHEMA_PUBLIC_FACTS.corePrograms,
+  geography: SCHEMA_PUBLIC_FACTS.geography,
   schoolPartnership: {
     focusedLaunchInr: 59000,
     wholeSchoolInr: 149000,
@@ -45,10 +50,8 @@ export const PUBLIC_SITE_FACTS = {
 
 export const PUBLIC_LEARNER_REACH_LABEL =
   `${PUBLIC_SITE_FACTS.learnerReach.learnersLabel} across ${PUBLIC_SITE_FACTS.learnerReach.countriesLabel}`;
-
 export const PUBLIC_AGE_RANGE_LABEL = PUBLIC_SITE_FACTS.audience.label;
 export const PUBLIC_SESSION_DURATION_LABEL = PUBLIC_SITE_FACTS.liveSessions.label;
-
 export const SUMMER_CAMP_2026_ARCHIVE_LABEL =
   `Summer Camp 2026 concluded on ${PUBLIC_SITE_FACTS.summerCamp2026.endDateLabel}.`;
 

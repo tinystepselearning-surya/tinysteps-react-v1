@@ -30,7 +30,7 @@ function filterTruthy(x: any) { return x || null; }
 
 function canonicalInternalBlogLinks() {
   return {
-    name: 'canonical-internal-blog-links',
+    name: 'canonical-internal-blog-links-and-public-proof',
     enforce: 'pre' as const,
     transform(code: string, id: string) {
       if (!id.includes('/src/')) return null;
@@ -38,6 +38,19 @@ function canonicalInternalBlogLinks() {
       for (const [source, destination] of Object.entries(RETIRED_BLOG_PATH_REDIRECTS)) {
         transformed = transformed.split(source).join(destination);
       }
+
+      // Legacy source once generated hundreds of synthetic fallback reviews. Keep
+      // only the explicitly curated base fallback set in public/dev builds; real
+      // approved Firestore testimonials remain unaffected.
+      if (id.includes('/src/lib/testimonials.ts')) {
+        transformed = transformed
+          .replace(
+            'const FALLBACK_TESTIMONIAL_TARGET = 250;',
+            'const FALLBACK_TESTIMONIAL_TARGET = BASE_FALLBACK_TESTIMONIALS.length;',
+          )
+          .replace('const EXTRA_PHONICS_FALLBACK_COUNT = 50;', 'const EXTRA_PHONICS_FALLBACK_COUNT = 0;');
+      }
+
       return transformed === code ? null : { code: transformed, map: null };
     },
   };

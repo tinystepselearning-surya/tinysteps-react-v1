@@ -5,20 +5,21 @@ import process from 'node:process';
 
 const ROOT = process.cwd();
 const FACTS_FILE = path.join(ROOT, 'src/config/publicFacts.ts');
+const VITE_CONFIG = path.join(ROOT, 'vite.config.ts');
 const REQUIRED_FACTS = [
-  "minimumLearners: 5000",
-  "minimumCountries: 15",
-  "ageMin: 3",
-  "ageMax: 12",
-  "minimumMinutes: 35",
-  "maximumMinutes: 40",
-  "focusedLaunchInr: 59000",
-  "wholeSchoolInr: 149000",
-  "multiCampusInr: 299000",
-  "pilotInr: 24900",
+  'SCHEMA_PUBLIC_FACTS',
+  'ageMin: 3',
+  'ageMax: 12',
+  'minimumLearners: 5000',
+  'minimumCountries: 15',
+  'minimumMinutes: 35',
+  'maximumMinutes: 40',
+  'focusedLaunchInr: 59000',
+  'wholeSchoolInr: 149000',
+  'multiCampusInr: 299000',
+  'pilotInr: 24900',
   "endDateLabel: '13 June 2026'",
 ];
-
 const REQUIRED_PARITY = [
   ['public/llms.txt', '5000+'],
   ['public/llms.txt', '15+ countries'],
@@ -27,6 +28,7 @@ const REQUIRED_PARITY = [
   ['public/llms.txt', 'Rs. 1.49 lakh plus GST'],
   ['public/llms.txt', 'Rs. 2.99 lakh plus GST'],
   ['public/llms.txt', 'Rs. 24,900 plus GST'],
+  ['public/kb.json', 'ended on 13 June 2026'],
   ['src/lib/schemas.ts', 'children aged 3–12'],
   ['src/lib/schemas.ts', '35–40 minutes per session'],
   ['src/pages/ForSchoolsPage.tsx', '₹59,000'],
@@ -34,14 +36,12 @@ const REQUIRED_PARITY = [
   ['src/pages/ForSchoolsPage.tsx', '₹2.99 lakh'],
   ['src/pages/ForSchoolsPage.tsx', '₹24,900'],
 ];
-
 const FORBIDDEN_PUBLIC_CLAIMS = [
   [/Trusted by 250\+ families/gi, 'unsupported 250+ families claim'],
   [/4\.9\s*\/\s*5\s*parent satisfaction/gi, 'unsupported 4.9/5 parent satisfaction claim'],
   [/Current official offer:\s*Summer Camp/gi, 'expired Summer Camp current-offer claim'],
   [/Summer Camp 2026[^\n]{0,120}(?:enrol(?:l)? now|enroll now|reserve your child.?s seat)/gi, 'expired Summer Camp enrollment CTA'],
 ];
-
 const SCAN_ROOTS = ['src/pages', 'src/components', 'src/content', 'public/llms.txt', 'public/kb.json', 'functions/src/ai'];
 const failures = [];
 
@@ -49,8 +49,7 @@ function collect(target, files) {
   if (!fs.existsSync(target)) return;
   const stat = fs.statSync(target);
   if (stat.isFile()) {
-    if (!/\.(?:ts|tsx|js|jsx|json|txt)$/i.test(target)) return;
-    files.push(target);
+    if (/\.(?:ts|tsx|js|jsx|json|txt)$/i.test(target)) files.push(target);
     return;
   }
   for (const entry of fs.readdirSync(target, { withFileTypes: true })) {
@@ -66,15 +65,18 @@ else {
     if (!text.includes(required)) failures.push(`publicFacts.ts missing ${JSON.stringify(required)}`);
   }
 }
-
 for (const [relativePath, required] of REQUIRED_PARITY) {
   const filePath = path.join(ROOT, relativePath);
-  if (!fs.existsSync(filePath)) {
-    failures.push(`${relativePath} is missing`);
-    continue;
-  }
+  if (!fs.existsSync(filePath)) { failures.push(`${relativePath} is missing`); continue; }
   const text = fs.readFileSync(filePath, 'utf8');
   if (!text.includes(required)) failures.push(`${relativePath} is out of parity: missing ${JSON.stringify(required)}`);
+}
+const viteText = fs.existsSync(VITE_CONFIG) ? fs.readFileSync(VITE_CONFIG, 'utf8') : '';
+if (!viteText.includes('FALLBACK_TESTIMONIAL_TARGET = BASE_FALLBACK_TESTIMONIALS.length')) {
+  failures.push('public build does not disable generated testimonial-count inflation');
+}
+if (!viteText.includes('EXTRA_PHONICS_FALLBACK_COUNT = 0')) {
+  failures.push('public build does not disable generated extra phonics testimonials');
 }
 
 const files = [];
@@ -86,11 +88,9 @@ for (const filePath of files) {
     if (regex.test(text)) failures.push(`${path.relative(ROOT, filePath)}: ${label}`);
   }
 }
-
 if (failures.length) {
   console.error(`FAIL: public facts consistency (${failures.length} issue${failures.length === 1 ? '' : 's'})`);
   failures.forEach((failure) => console.error(`- ${failure}`));
   process.exit(1);
 }
-
-console.log(`PASS: public facts consistency (${files.length} public files scanned)`);
+console.log(`PASS: public facts consistency (${files.length} public files scanned; generated testimonial inflation disabled in public build)`);
