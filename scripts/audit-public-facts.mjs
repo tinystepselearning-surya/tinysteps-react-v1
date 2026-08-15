@@ -6,6 +6,8 @@ import process from 'node:process';
 const ROOT = process.cwd();
 const FACTS_FILE = path.join(ROOT, 'src/config/publicFacts.ts');
 const VITE_CONFIG = path.join(ROOT, 'vite.config.ts');
+const DIST = path.join(ROOT, 'dist');
+const CHECK_DIST = process.argv.includes('--dist');
 const REQUIRED_FACTS = [
   'SCHEMA_PUBLIC_FACTS',
   'STANDARD_ONE_TO_ONE_PER_CLASS_PRICE',
@@ -55,6 +57,17 @@ const FORBIDDEN_PUBLIC_CLAIMS = [
   [/Current official offer:\s*Summer Camp/gi, 'expired Summer Camp current-offer claim'],
   [/Summer Camp 2026[^\n]{0,120}(?:enrol(?:l)? now|enroll now|reserve your child.?s seat)/gi, 'expired Summer Camp enrollment CTA'],
 ];
+const FORBIDDEN_RENDERED_CLAIMS = [
+  [/4[–-]6 guided lessons/gi, 'fixed 4–6 lesson blending claim'],
+  [/Lessons to begin first blending/gi, 'fixed first-blending lesson metric'],
+  [/30[–-]40[^<\n]{0,120}core phonics foundations/gi, 'fixed core-phonics lesson metric'],
+  [/36\+ lessons with stage-based progression/gi, 'obsolete 36+ phonics lesson count'],
+  [/35[–-]40 minutes,\s*2[–-]3x per week/gi, 'fixed weekly phonics cadence'],
+  [/Trusted by 250\+ families/gi, 'unsupported 250+ families claim'],
+  [/4\.9\s*\/\s*5\s*parent satisfaction/gi, 'unsupported 4.9/5 parent satisfaction claim'],
+  [/27 April 2026/gi, 'obsolete Summer Camp start date'],
+  [/₹\s*2,400|Rs\.\s*2,400/gi, 'obsolete Summer Camp historical fee'],
+];
 const SCAN_ROOTS = ['src/pages', 'src/components', 'src/content', 'public/llms.txt', 'public/kb.json', 'functions/src/ai'];
 const SEASONAL_PUBLIC_FILES = [
   'src/pages/SummerCampsPage.tsx',
@@ -76,16 +89,16 @@ const FORBIDDEN_SEASONAL_COPY = [
 ];
 const failures = [];
 
-function collect(target, files) {
+function collect(target, files, predicate = (value) => /\.(?:ts|tsx|js|jsx|json|txt)$/i.test(value)) {
   if (!fs.existsSync(target)) return;
   const stat = fs.statSync(target);
   if (stat.isFile()) {
-    if (/\.(?:ts|tsx|js|jsx|json|txt)$/i.test(target)) files.push(target);
+    if (predicate(target)) files.push(target);
     return;
   }
   for (const entry of fs.readdirSync(target, { withFileTypes: true })) {
-    if (['node_modules', 'dist', 'output', '.git'].includes(entry.name)) continue;
-    collect(path.join(target, entry.name), files);
+    if (['node_modules', 'output', '.git'].includes(entry.name)) continue;
+    collect(path.join(target, entry.name), files, predicate);
   }
 }
 
@@ -124,6 +137,16 @@ if (!viteText.includes('LEGACY_PHONICS_PROGRESS_COPY') || !viteText.includes('LE
 if (!viteText.includes("replaceAll('content: post.progress'") || !viteText.includes("replaceAll('content: post.support'")) {
   failures.push('legacy templated phonics timeline/support fields can still render directly');
 }
+for (const required of [
+  'PHONICS_PAGE_PROGRESS_FAQ_COPY',
+  'Primary pathway: ages 3–10',
+  'Fresh-word transfer',
+  'Individual pace',
+  '35–40 minutes per session',
+  '3 levels with stage-based progression',
+]) {
+  if (!viteText.includes(required)) failures.push(`phonics landing normalization missing ${JSON.stringify(required)}`);
+}
 
 const files = [];
 for (const root of SCAN_ROOTS) collect(path.join(ROOT, root), files);
@@ -152,9 +175,25 @@ for (const relativePath of SEASONAL_PUBLIC_FILES) {
   }
 }
 
+if (CHECK_DIST) {
+  if (!fs.existsSync(DIST)) {
+    failures.push('dist/ missing for rendered public claims check');
+  } else {
+    const htmlFiles = [];
+    collect(DIST, htmlFiles, (value) => value.endsWith('.html'));
+    for (const filePath of htmlFiles) {
+      const text = fs.readFileSync(filePath, 'utf8');
+      for (const [regex, label] of FORBIDDEN_RENDERED_CLAIMS) {
+        regex.lastIndex = 0;
+        if (regex.test(text)) failures.push(`${path.relative(ROOT, filePath)}: ${label}`);
+      }
+    }
+  }
+}
+
 if (failures.length) {
   console.error(`FAIL: public facts consistency (${failures.length} issue${failures.length === 1 ? '' : 's'})`);
   failures.forEach((failure) => console.error(`- ${failure}`));
   process.exit(1);
 }
-console.log(`PASS: public facts consistency (${files.length} public files scanned; offer/proof/outcome parity checked; seasonal archives stripped of obsolete offer details; legacy template timelines normalized in rendered output)`);
+console.log(`PASS: public facts consistency (${files.length} public files scanned; offer/proof/outcome parity checked; seasonal archives stripped of obsolete offer details; phonics landing claims normalized${CHECK_DIST ? '; rendered public HTML clean' : ''})`);
