@@ -6,9 +6,9 @@ import { createFAQPageSchema } from '../../lib/schemas';
 import { SUMMER_CAMP_2026_ARCHIVE_LABEL } from '../../config/publicFacts';
 
 const faqItems = [
-  { question: 'Is the Summer Speaking Camp 2026 still open?', answer: `No. ${SUMMER_CAMP_2026_ARCHIVE_LABEL} This page is retained as an evergreen communication-practice guide.` },
+  { question: 'What is the status of the Summer Speaking Camp 2026?', answer: `${SUMMER_CAMP_2026_ARCHIVE_LABEL} This URL is retained as an evergreen communication-practice guide.` },
   { question: 'How can a school break help a shy or hesitant speaker?', answer: 'A lower-pressure period can create more opportunities for short structured answers, storytelling, description, and presentation practice without rushing the child.' },
-  { question: 'What if my child gives only one-word answers?', answer: 'Start with sentence frames, wait time, and one extra-detail prompts. The aim is to build idea organisation and comfort, not force long speeches immediately.' },
+  { question: 'What if my child gives only one-word answers?', answer: 'Start with sentence frames, wait time, and one extra-detail prompt. The aim is to build idea organisation and comfort, not force long speeches immediately.' },
   { question: 'What can families use now?', answer: 'Tiny Steps year-round speaking and grammar pathways remain available, with a regular free 35-minute 1:1 assessment before placement.' },
 ];
 
@@ -26,7 +26,7 @@ export default function SummerSpeakingCampKidsPage() {
   return (
     <main className="container mx-auto max-w-5xl px-6 py-12">
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
-        {SUMMER_CAMP_2026_ARCHIVE_LABEL} This page is a communication-practice resource, not an active summer enrollment page.
+        {SUMMER_CAMP_2026_ARCHIVE_LABEL} This page is retained as a school-break communication-practice resource.
       </div>
       <section className="py-10">
         <h1 className="text-4xl font-bold text-slate-900 md:text-5xl">School-Break Speaking Practice: From Short Answers to Clear Expression</h1>
@@ -57,7 +57,7 @@ export default function SummerSpeakingCampKidsPage() {
 
       <section className="mt-10 rounded-3xl bg-slate-900 p-7 text-white">
         <h2 className="text-2xl font-bold">Need communication support now?</h2>
-        <p className="mt-3 text-slate-200">The 2026 seasonal programme is closed. Use the year-round speaking or grammar pathway based on the child’s current need.</p>
+        <p className="mt-3 text-slate-200">Use the year-round speaking or grammar pathway based on the child’s current communication need and present level.</p>
         <div className="mt-5 flex flex-wrap gap-3">
           <Link to="/speaking" className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-900">Speaking programme</Link>
           <Link to="/grammar" className="rounded-full border border-slate-600 px-5 py-3 text-sm font-semibold text-white">Grammar pathway</Link>
