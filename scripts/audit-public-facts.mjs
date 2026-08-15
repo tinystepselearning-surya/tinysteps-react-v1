@@ -8,6 +8,11 @@ const FACTS_FILE = path.join(ROOT, 'src/config/publicFacts.ts');
 const VITE_CONFIG = path.join(ROOT, 'vite.config.ts');
 const REQUIRED_FACTS = [
   'SCHEMA_PUBLIC_FACTS',
+  'STANDARD_ONE_TO_ONE_PER_CLASS_PRICE',
+  'STANDARD_SMALL_GROUP_MIN_PER_CLASS',
+  'STANDARD_SMALL_GROUP_MAX_PER_CLASS',
+  'FREE_DEMO_DURATION_MINUTES',
+  'FREE_DEMO_PRICE',
   'ageMin: 3',
   'ageMax: 12',
   'minimumLearners: 5000',
@@ -18,17 +23,24 @@ const REQUIRED_FACTS = [
   'wholeSchoolInr: 149000',
   'multiCampusInr: 299000',
   'pilotInr: 24900',
+  'aggregateRatingsRequireApprovedTestimonials: true',
+  'generatedFallbackTestimonialsAllowed: false',
+  'universalGuaranteedTimelineAllowed: false',
   "endDateLabel: '13 June 2026'",
 ];
 const REQUIRED_PARITY = [
   ['public/llms.txt', '5000+'],
   ['public/llms.txt', '15+ countries'],
+  ['public/llms.txt', 'Rs. 400 per class'],
+  ['public/llms.txt', 'free 35-minute 1:1 online demo assessment class'],
   ['public/llms.txt', 'ended on 13 June 2026'],
   ['public/llms.txt', 'Rs. 59,000 plus GST'],
   ['public/llms.txt', 'Rs. 1.49 lakh plus GST'],
   ['public/llms.txt', 'Rs. 2.99 lakh plus GST'],
   ['public/llms.txt', 'Rs. 24,900 plus GST'],
   ['public/kb.json', 'ended on 13 June 2026'],
+  ['public/kb.json', '₹400 per class'],
+  ['public/kb.json', 'free 35-minute 1:1 online demo assessment class'],
   ['src/lib/schemas.ts', 'children aged 3–12'],
   ['src/lib/schemas.ts', '35–40 minutes per session'],
   ['src/pages/ForSchoolsPage.tsx', '₹59,000'],
@@ -93,4 +105,4 @@ if (failures.length) {
   failures.forEach((failure) => console.error(`- ${failure}`));
   process.exit(1);
 }
-console.log(`PASS: public facts consistency (${files.length} public files scanned; generated testimonial inflation disabled in public build)`);
+console.log(`PASS: public facts consistency (${files.length} public files scanned; public offer parity checked; generated testimonial inflation disabled)`);
