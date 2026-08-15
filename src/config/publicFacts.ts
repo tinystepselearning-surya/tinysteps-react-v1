@@ -64,15 +64,8 @@ export const PUBLIC_SITE_FACTS = {
   },
   summerCamp2026: {
     status: 'concluded' as const,
-    startDateIso: '2026-04-27',
     endDateIso: '2026-06-13',
-    startDateLabel: '27 April 2026',
     endDateLabel: '13 June 2026',
-    classCount: 24,
-    batchDurationWeeks: 4,
-    historicalEnrollmentPriceInr: 2400,
-    historicalListPriceInr: 5000,
-    batchCap: 8,
   },
 } as const;
 
