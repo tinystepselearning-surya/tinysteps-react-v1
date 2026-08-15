@@ -2,11 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../lib/seo';
 import { createFAQPageSchema } from '../lib/schemas';
-import {
-  PUBLIC_SITE_FACTS,
-  SUMMER_CAMP_2026_ARCHIVE_LABEL,
-  formatPublicInr,
-} from '../config/publicFacts';
+import { PUBLIC_SITE_FACTS, SUMMER_CAMP_2026_ARCHIVE_LABEL } from '../config/publicFacts';
 
 const summer = PUBLIC_SITE_FACTS.summerCamp2026;
 
@@ -33,24 +29,20 @@ const historicalTracks = [
 
 const faqItems = [
   {
-    question: 'Is Tiny Steps Summer Camp 2026 still open?',
-    answer: `No. Tiny Steps Summer Camp 2026 concluded on ${summer.endDateLabel}. This page is retained as an archive and an evergreen guide for families planning future school-break learning.`,
+    question: 'What is the status of Tiny Steps Summer Camp 2026?',
+    answer: `Tiny Steps Summer Camp 2026 concluded on ${summer.endDateLabel}. This URL is retained as an archive and an evergreen guide for families planning future school-break learning.`,
   },
   {
-    question: 'When did Summer Camp 2026 run?',
-    answer: `The 2026 season ran from ${summer.startDateLabel} to ${summer.endDateLabel}. Each historical batch followed a focused four-week learning plan.`,
-  },
-  {
-    question: 'What were the Summer Camp 2026 tracks?',
-    answer: 'The 2026 tracks were Phonics Fast Track, Grammar Fast Track, and Speaking Fast Track. Each route is retained as a historical programme summary rather than an active enrollment page.',
+    question: 'What did the Summer Camp 2026 tracks focus on?',
+    answer: 'The 2026 tracks focused on phonics, grammar, and speaking. The archived track pages explain the learning design without carrying forward old schedules, prices, or promotional terms.',
   },
   {
     question: 'What can parents use now?',
-    answer: 'Tiny Steps year-round phonics, grammar, reading, and speaking programmes remain available. Parents can start with the course pages or a regular free 35-minute 1:1 demo assessment class.',
+    answer: 'Tiny Steps year-round phonics, grammar, reading, and speaking programmes remain available. Parents can begin with the course pages or a regular free 35-minute 1:1 demo assessment class.',
   },
   {
-    question: 'Will Tiny Steps run another summer programme?',
-    answer: 'Future seasonal programmes will be published only when dates, format, capacity, and enrollment terms are confirmed. The 2026 archive should not be treated as a current offer.',
+    question: 'How should families evaluate a future seasonal programme?',
+    answer: 'Look for a clear starting-level check, a focused skill goal, cumulative teaching, active practice, useful feedback, and transfer to fresh examples rather than memorised tasks.',
   },
 ];
 
@@ -58,7 +50,7 @@ export default function SummerCampsPage() {
   useEffect(() => {
     applySeo({
       title: 'Tiny Steps Summer Camp 2026 Archive & Summer Learning Guide',
-      description: `Tiny Steps Summer Camp 2026 concluded on ${summer.endDateLabel}. Review the historical tracks and use this evergreen guide to plan reading, grammar, and speaking support during school breaks.`,
+      description: `Tiny Steps Summer Camp 2026 concluded on ${summer.endDateLabel}. Review the historical learning tracks and use this evergreen guide to plan reading, grammar, and speaking support during school breaks.`,
       canonicalPath: '/summer-camps',
       ogType: 'website',
       jsonLd: [createFAQPageSchema(faqItems)],
@@ -69,7 +61,7 @@ export default function SummerCampsPage() {
     <main className="bg-slate-50">
       <section className="border-b border-amber-200 bg-amber-50">
         <div className="mx-auto max-w-6xl px-4 py-3 text-center text-sm font-semibold text-amber-900 sm:px-6">
-          {SUMMER_CAMP_2026_ARCHIVE_LABEL} Enrollment is closed; this page is an archive and planning resource.
+          {SUMMER_CAMP_2026_ARCHIVE_LABEL} This page is retained as a historical and planning resource.
         </div>
       </section>
 
@@ -77,10 +69,10 @@ export default function SummerCampsPage() {
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">Seasonal archive</p>
           <h1 className="mt-3 max-w-4xl text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">
-            Summer Camp 2026: what ran, what families learned, and what to use now
+            Summer Camp 2026: learning design, parent guidance, and year-round next steps
           </h1>
           <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-700">
-            Tiny Steps Summer Camp 2026 ran from {summer.startDateLabel} to {summer.endDateLabel}. The season is complete. We keep this page online because the learning structure, parent decision criteria, and school-break planning ideas remain useful even after enrollment closes.
+            Tiny Steps Summer Camp 2026 concluded on {summer.endDateLabel}. We keep this URL online because the learning structure, parent decision criteria, and school-break planning ideas remain useful. Outdated schedules, fees, capacity details, and promotional language are intentionally omitted.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link to="/courses" className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white">
@@ -94,32 +86,10 @@ export default function SummerCampsPage() {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5">
-            <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Season</div>
-            <div className="mt-2 font-bold text-slate-900">{summer.startDateLabel} – {summer.endDateLabel}</div>
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5">
-            <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Historical format</div>
-            <div className="mt-2 font-bold text-slate-900">{summer.classCount} live classes / {summer.batchDurationWeeks} weeks</div>
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5">
-            <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Historical batch cap</div>
-            <div className="mt-2 font-bold text-slate-900">Up to {summer.batchCap} learners</div>
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5">
-            <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">Historical fee</div>
-            <div className="mt-2 font-bold text-slate-900">₹{formatPublicInr(summer.historicalEnrollmentPriceInr)}</div>
-            <div className="mt-1 text-xs text-slate-500">Archive only — not a current price</div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8">
-          <h2 className="text-2xl font-bold text-slate-900">Historical 2026 tracks</h2>
+          <h2 className="text-2xl font-bold text-slate-900">Historical 2026 learning tracks</h2>
           <p className="mt-2 max-w-3xl text-slate-700">
-            These links explain what each 2026 track focused on. They are programme archives, not active seat-booking pages.
+            These pages explain what each track was designed to teach and how parents can judge real skill transfer. They are archives, not active seasonal programme pages.
           </p>
           <div className="mt-6 grid gap-4 md:grid-cols-3">
             {historicalTracks.map((track) => (
