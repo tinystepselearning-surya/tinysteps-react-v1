@@ -26,6 +26,7 @@ const REQUIRED_FACTS = [
   'aggregateRatingsRequireApprovedTestimonials: true',
   'generatedFallbackTestimonialsAllowed: false',
   'universalGuaranteedTimelineAllowed: false',
+  "status: 'concluded'",
   "endDateLabel: '13 June 2026'",
 ];
 const REQUIRED_PARITY = [
@@ -33,12 +34,12 @@ const REQUIRED_PARITY = [
   ['public/llms.txt', '15+ countries'],
   ['public/llms.txt', 'Rs. 400 per class'],
   ['public/llms.txt', 'free 35-minute 1:1 online demo assessment class'],
-  ['public/llms.txt', 'ended on 13 June 2026'],
+  ['public/llms.txt', 'concluded on 13 June 2026'],
   ['public/llms.txt', 'Rs. 59,000 plus GST'],
   ['public/llms.txt', 'Rs. 1.49 lakh plus GST'],
   ['public/llms.txt', 'Rs. 2.99 lakh plus GST'],
   ['public/llms.txt', 'Rs. 24,900 plus GST'],
-  ['public/kb.json', 'ended on 13 June 2026'],
+  ['public/kb.json', 'concluded on 13 June 2026'],
   ['public/kb.json', '₹400 per class'],
   ['public/kb.json', 'free 35-minute 1:1 online demo assessment class'],
   ['src/lib/schemas.ts', 'children aged 3–12'],
@@ -55,6 +56,24 @@ const FORBIDDEN_PUBLIC_CLAIMS = [
   [/Summer Camp 2026[^\n]{0,120}(?:enrol(?:l)? now|enroll now|reserve your child.?s seat)/gi, 'expired Summer Camp enrollment CTA'],
 ];
 const SCAN_ROOTS = ['src/pages', 'src/components', 'src/content', 'public/llms.txt', 'public/kb.json', 'functions/src/ai'];
+const SEASONAL_PUBLIC_FILES = [
+  'src/pages/SummerCampsPage.tsx',
+  'src/pages/SummerCampProgramPage.tsx',
+  'src/pages/public/SummerCampForKidsIndiaPage.tsx',
+  'src/pages/public/SummerReadingProgramKidsPage.tsx',
+  'src/pages/public/SummerSpeakingCampKidsPage.tsx',
+  'public/llms.txt',
+  'public/kb.json',
+];
+const FORBIDDEN_SEASONAL_COPY = [
+  [/27 April 2026/gi, 'obsolete Summer Camp start date'],
+  [/₹\s*2,400|Rs\.\s*2,400/gi, 'obsolete Summer Camp historical fee'],
+  [/₹\s*5,000|Rs\.\s*5,000/gi, 'obsolete Summer Camp historical list fee'],
+  [/\b(?:enrolment|enrollment)\b/gi, 'seasonal enrollment language'],
+  [/\bcurrent offer\b/gi, 'seasonal current-offer language'],
+  [/\b(?:camp|programme|program) is closed\b/gi, 'seasonal closed-offer language'],
+  [/\b(?:historical )?(?:batch|capacity)\b[^\n]{0,80}\b(?:cap|learners|seats)\b/gi, 'obsolete seasonal capacity detail'],
+];
 const failures = [];
 
 function collect(target, files) {
@@ -75,6 +94,9 @@ else {
   const text = fs.readFileSync(FACTS_FILE, 'utf8');
   for (const required of REQUIRED_FACTS) {
     if (!text.includes(required)) failures.push(`publicFacts.ts missing ${JSON.stringify(required)}`);
+  }
+  for (const forbidden of ['startDateIso', 'startDateLabel', 'historicalEnrollmentPriceInr', 'historicalListPriceInr', 'batchCap']) {
+    if (text.includes(forbidden)) failures.push(`publicFacts.ts still exposes obsolete seasonal fact ${forbidden}`);
   }
 }
 for (const [relativePath, required] of REQUIRED_PARITY) {
@@ -106,9 +128,26 @@ for (const filePath of files) {
     if (regex.test(text)) failures.push(`${path.relative(ROOT, filePath)}: ${label}`);
   }
 }
+
+for (const relativePath of SEASONAL_PUBLIC_FILES) {
+  const filePath = path.join(ROOT, relativePath);
+  if (!fs.existsSync(filePath)) {
+    failures.push(`${relativePath} is missing from seasonal audit`);
+    continue;
+  }
+  const text = fs.readFileSync(filePath, 'utf8');
+  for (const [regex, label] of FORBIDDEN_SEASONAL_COPY) {
+    regex.lastIndex = 0;
+    if (regex.test(text)) failures.push(`${relativePath}: ${label}`);
+  }
+  if (!/Summer Camp 2026[^\n]{0,120}concluded on 13 June 2026/i.test(text) && !text.includes('SUMMER_CAMP_2026_ARCHIVE_LABEL')) {
+    failures.push(`${relativePath}: missing clear Summer Camp 2026 conclusion status`);
+  }
+}
+
 if (failures.length) {
   console.error(`FAIL: public facts consistency (${failures.length} issue${failures.length === 1 ? '' : 's'})`);
   failures.forEach((failure) => console.error(`- ${failure}`));
   process.exit(1);
 }
-console.log(`PASS: public facts consistency (${files.length} public files scanned; offer/proof/outcome parity checked; legacy template timelines normalized in rendered output)`);
+console.log(`PASS: public facts consistency (${files.length} public files scanned; offer/proof/outcome parity checked; seasonal archives stripped of obsolete offer details; legacy template timelines normalized in rendered output)`);
