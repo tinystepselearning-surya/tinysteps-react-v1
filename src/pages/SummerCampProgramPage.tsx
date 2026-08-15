@@ -65,7 +65,7 @@ export default function SummerCampProgramPage() {
       : `Tiny Steps Summer Camp 2026 concluded on ${summer.endDateLabel}.`;
     const faq = program
       ? [
-          { question: `Is ${program.title} still open?`, answer: `No. ${SUMMER_CAMP_2026_ARCHIVE_LABEL} This page is retained as a historical programme summary.` },
+          { question: `What is the status of ${program.title}?`, answer: `${SUMMER_CAMP_2026_ARCHIVE_LABEL} This page is retained as a historical programme summary.` },
           { question: `What did ${program.title} focus on?`, answer: `The 2026 track focused on ${program.focus}.` },
           { question: 'What should parents use now?', answer: `Use the year-round Tiny Steps pathway at ${program.yearRoundHref} or book a regular assessment to identify the child's current starting point.` },
         ]
@@ -86,7 +86,7 @@ export default function SummerCampProgramPage() {
     return (
       <main className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
         <h1 className="text-3xl font-bold text-slate-900">Summer Camp programme archive</h1>
-        <p className="mt-3 text-slate-700">This programme record is not available. The 2026 season has concluded.</p>
+        <p className="mt-3 text-slate-700">This programme record is not available. Summer Camp 2026 concluded on {summer.endDateLabel}.</p>
         <Link to="/summer-camps" className="mt-6 inline-block rounded-full bg-slate-900 px-5 py-3 font-semibold text-white">View Summer Camp archive</Link>
       </main>
     );
@@ -95,7 +95,7 @@ export default function SummerCampProgramPage() {
   return (
     <main className="bg-slate-50">
       <div className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-900">
-        {SUMMER_CAMP_2026_ARCHIVE_LABEL} This is not an active enrollment page.
+        {SUMMER_CAMP_2026_ARCHIVE_LABEL} This page is retained for historical learning context.
       </div>
 
       <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
@@ -108,7 +108,7 @@ export default function SummerCampProgramPage() {
         <h1 className="mt-3 text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">{program.title}</h1>
         <p className="mt-4 text-lg text-slate-700">{program.ages} · Historical focus: {program.focus}.</p>
         <p className="mt-4 max-w-3xl leading-7 text-slate-700">
-          This track was part of Tiny Steps Summer Camp 2026, which ran from {summer.startDateLabel} to {summer.endDateLabel}. The season is complete. We retain this page so parents can understand the learning design and choose an appropriate year-round pathway today.
+          This track was part of Tiny Steps Summer Camp 2026, which concluded on {summer.endDateLabel}. Outdated schedules, fees, and promotional details are intentionally omitted. The page is retained so parents can understand the learning design and choose an appropriate year-round pathway today.
         </p>
       </section>
 
@@ -131,7 +131,7 @@ export default function SummerCampProgramPage() {
         <div className="rounded-3xl bg-slate-900 p-7 text-white sm:p-9">
           <h2 className="text-2xl font-bold">What families can do now</h2>
           <p className="mt-3 max-w-2xl text-slate-200">
-            The 2026 camp is closed. If this learning need is still relevant, use the year-round programme or a regular Tiny Steps assessment rather than the expired summer offer.
+            If this learning need is still relevant, use the year-round programme or a regular Tiny Steps assessment to identify the child’s current level and next step.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link to={program.yearRoundHref} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-900">{program.yearRoundLabel}</Link>
