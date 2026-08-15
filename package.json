@@ -111,6 +111,8 @@
     "@firebase/rules-unit-testing": "^5.0.0",
     "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4.1.17",
+    "@testing-library/jest-dom": "^6.0.0",
+    "@testing-library/react": "^14.0.0",
     "@types/firebase": "^2.4.32",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.10.0",
