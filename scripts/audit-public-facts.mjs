@@ -90,6 +90,12 @@ if (!viteText.includes('FALLBACK_TESTIMONIAL_TARGET = BASE_FALLBACK_TESTIMONIALS
 if (!viteText.includes('EXTRA_PHONICS_FALLBACK_COUNT = 0')) {
   failures.push('public build does not disable generated extra phonics testimonials');
 }
+if (!viteText.includes('LEGACY_PHONICS_PROGRESS_COPY') || !viteText.includes('LEGACY_PHONICS_SUPPORT_COPY')) {
+  failures.push('legacy templated phonics posts are not normalized to child-specific progress/support language');
+}
+if (!viteText.includes("replaceAll('content: post.progress'") || !viteText.includes("replaceAll('content: post.support'")) {
+  failures.push('legacy templated phonics timeline/support fields can still render directly');
+}
 
 const files = [];
 for (const root of SCAN_ROOTS) collect(path.join(ROOT, root), files);
@@ -105,4 +111,4 @@ if (failures.length) {
   failures.forEach((failure) => console.error(`- ${failure}`));
   process.exit(1);
 }
-console.log(`PASS: public facts consistency (${files.length} public files scanned; public offer parity checked; generated testimonial inflation disabled)`);
+console.log(`PASS: public facts consistency (${files.length} public files scanned; offer/proof/outcome parity checked; legacy template timelines normalized in rendered output)`);

@@ -28,6 +28,11 @@ function tryMdxPlugin() {
 function safeRequire(name: any) { try { return require(name); } catch { return null; } }
 function filterTruthy(x: any) { return x || null; }
 
+const LEGACY_PHONICS_PROGRESS_COPY =
+  'Progress is child-specific. Look for stronger accuracy, less prompting, better retry behaviour, retention of earlier patterns, and independent transfer to fresh words or text rather than expecting the same week-by-week timeline for every learner.';
+const LEGACY_PHONICS_SUPPORT_COPY =
+  'If progress is not becoming more independent despite consistent, stage-matched instruction and practice, review placement, teaching sequence, correction quality and text difficulty. Involve the child’s school and an appropriate qualified professional when broader speech, language, hearing or learning concerns are also present.';
+
 function canonicalInternalBlogLinks() {
   return {
     name: 'canonical-internal-blog-links-and-public-proof',
@@ -49,6 +54,25 @@ function canonicalInternalBlogLinks() {
             'const FALLBACK_TESTIMONIAL_TARGET = BASE_FALLBACK_TESTIMONIALS.length;',
           )
           .replace('const EXTRA_PHONICS_FALLBACK_COUNT = 50;', 'const EXTRA_PHONICS_FALLBACK_COUNT = 0;');
+      }
+
+      // Legacy PhonicsSeoPost templates carried one-size-fits-all week ranges in
+      // progress/support copy. Keep the distinct articles, but render them using
+      // the site-wide assessment/transfer policy until each legacy article is
+      // upgraded to a full authority BlogPost.
+      if (id.includes('/src/content/blog/shared/phonicsShared.ts')) {
+        transformed = transformed
+          .replace(
+            'If your child has regular practice for 6-8 weeks but still cannot match basic sounds or blend simple CVC words, get an assessment from a phonics specialist.',
+            'If your child has consistent, stage-matched practice but is not becoming more independent with basic sounds or blending, review the starting level and seek appropriate structured support.',
+          )
+          .replace(
+            'run this simple routine for 2-3 weeks before judging progress.',
+            'run this simple routine consistently and judge progress by accuracy, independence and transfer to fresh examples.',
+          )
+          .replace('Progress timeline parents can expect', 'How parents should interpret progress')
+          .replaceAll('content: post.progress', `content: ${JSON.stringify(LEGACY_PHONICS_PROGRESS_COPY)}`)
+          .replaceAll('content: post.support', `content: ${JSON.stringify(LEGACY_PHONICS_SUPPORT_COPY)}`);
       }
 
       return transformed === code ? null : { code: transformed, map: null };
