@@ -2,17 +2,16 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
+import { RETIRED_BLOG_PATH_REDIRECTS } from './scripts/blog-consolidation-map.mjs';
 
 function tryMdxPlugin() {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const mdx = require('@mdx-js/rollup');
     const remarkFrontmatter = safeRequire('remark-frontmatter');
     const remarkGfm = safeRequire('remark-gfm');
     const rehypeSlug = safeRequire('rehype-slug');
     const rehypeAutolink = safeRequire('rehype-autolink-headings');
     const rehypePrism = safeRequire('rehype-prism-plus');
-
     return mdx({
       include: /\.mdx?$/,
       remarkPlugins: [filterTruthy(remarkFrontmatter), filterTruthy(remarkGfm)].filter(Boolean),
@@ -22,86 +21,56 @@ function tryMdxPlugin() {
         filterTruthy(rehypePrism),
       ].filter(Boolean),
     });
-  } catch (e) {
-    // MDX not installed; skip
-    return null;
-  }
-}
-
-function safeRequire(name: any) {
-  try {
-    return require(name);
   } catch {
     return null;
   }
 }
+function safeRequire(name: any) { try { return require(name); } catch { return null; } }
+function filterTruthy(x: any) { return x || null; }
 
-function filterTruthy(x: any) {
-  return x || null;
+function canonicalInternalBlogLinks() {
+  return {
+    name: 'canonical-internal-blog-links',
+    enforce: 'pre' as const,
+    transform(code: string, id: string) {
+      if (!id.includes('/src/')) return null;
+      let transformed = code;
+      for (const [source, destination] of Object.entries(RETIRED_BLOG_PATH_REDIRECTS)) {
+        transformed = transformed.split(source).join(destination);
+      }
+      return transformed === code ? null : { code: transformed, map: null };
+    },
+  };
 }
 
 const mdxPlugin = tryMdxPlugin();
 const buildTime = new Date().toISOString();
+const basePlugins = [canonicalInternalBlogLinks(), react()];
+if (mdxPlugin) basePlugins.unshift(mdxPlugin);
+if (process.env.ANALYZE === 'true') {
+  basePlugins.push(visualizer({ open: false, gzipSize: true, brotliSize: true, filename: 'dist/stats.html' }));
+}
 
 export default defineConfig({
-  define: {
-    'import.meta.env.VITE_BUILD_TIME': JSON.stringify(buildTime),
-  },
-  plugins: mdxPlugin
-    ? [
-        mdxPlugin,
-        react(),
-        ...(process.env.ANALYZE === 'true'
-          ? [
-              visualizer({
-                open: false,
-                gzipSize: true,
-                brotliSize: true,
-                filename: 'dist/stats.html',
-              }),
-            ]
-          : []),
-      ]
-    : [
-        react(),
-        ...(process.env.ANALYZE === 'true'
-          ? [
-              visualizer({
-                open: false,
-                gzipSize: true,
-                brotliSize: true,
-                filename: 'dist/stats.html',
-              }),
-            ]
-          : []),
-      ],
-
+  define: { 'import.meta.env.VITE_BUILD_TIME': JSON.stringify(buildTime) },
+  plugins: basePlugins,
   resolve: {
-    // Prefer TypeScript extensions over JavaScript to prevent shadowing issues
     extensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json'],
-    // Ensure only one copy of React/ReactDOM is resolved to avoid hook errors
     dedupe: ['react', 'react-dom'],
     alias: {
       '@components': path.resolve(__dirname, './src/components'),
-      // Explicitly alias React to the root node_modules to prevent duplicate instances
       'react': path.resolve(__dirname, './node_modules/react'),
       'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
     },
   },
-
   build: {
     sourcemap: true,
     modulePreload: true,
-    // Improve build chunking to keep large bundles split and easier to cache.
-    // We add specific vendor groups for React, animation, charting libraries and Firebase.
-    // Adjust `chunkSizeWarningLimit` if you prefer fewer noisy warnings (measured in KB).
     chunkSizeWarningLimit: 500,
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (!id) return undefined;
-
-          // node_modules -> vendor buckets
           if (id.includes('node_modules')) {
             if (id.includes('react-router')) return 'vendor-router';
             if (id.includes('@tanstack/react-query')) return 'vendor-query';
@@ -114,7 +83,6 @@ export default defineConfig({
             if (id.includes('@mdx-js') || id.includes('rehype') || id.includes('remark')) return 'vendor-mdx';
             return 'vendor';
           }
-
           if (id.includes('/src/components/common/FloatingAssistant')) return 'marketing-assistant';
           if (id.includes('/src/components/common/Footer')) return 'marketing-footer';
           if (id.includes('/src/components/programs/ParentReassurance')) return 'home-parent-reassurance';
@@ -126,8 +94,6 @@ export default defineConfig({
           if (id.includes('/src/components/Home/StatsProofSection')) return 'home-demo-showcase';
           if (id.includes('/src/components/Home/LearningJourneyRoadmapPPT')) return 'home-journey-roadmap';
           if (id.includes('/src/pages/KidsEnglishExcellence')) return 'kids-english';
-
-          // Public marketing routes -> explicit async chunks to avoid a single heavy public bundle
           if (id.includes('/src/pages/HomePage')) return 'public-home';
           if (id.includes('/src/pages/CoursesPage') || id.includes('/src/pages/CourseDetailPage')) return 'public-courses';
           if (id.includes('/src/pages/CurriculumPage')) return 'public-curriculum';
@@ -138,34 +104,15 @@ export default defineConfig({
           if (id.includes('/src/pages/WhyTinyStepsPage')) return 'public-why';
           if (id.includes('/src/pages/public/')) return 'public-marketing-longtail';
           if (id.includes('/src/pages/parents/')) return 'public-parents-hub';
-
-          // Large app areas -> separate per-portal bundles
           if (id.includes('/src/pages/admin/')) return 'admin';
           if (id.includes('/src/pages/teacher/')) return 'teacher';
           if (id.includes('/src/pages/parent/')) return 'parent';
           if (id.includes('/src/pages/lp/')) return 'lp';
           if (id.includes('/src/pages/kid/')) return 'kid';
-
           return undefined;
         },
       },
     },
   },
-
-  // Ensure HMR works reliably on localhost and across environments where the dev server
-  // may be bound to the loopback address. This resolves common "failed to connect to websocket" issues.
-  server: {
-    host: true,
-    // Do not hardcode the dev server port or HMR port here. When the
-    // configured port is in use Vite will pick a free port; forcing an
-    // HMR port (5173) causes the client to try to connect to the wrong
-    // port and log "failed to connect to websocket" errors. Let Vite
-    // auto-configure HMR so it uses the actual server port.
-    //
-    // If you need to explicitly set HMR host in special environments,
-    // set `server.hmr.host` only and avoid hardcoding `port`.
-    hmr: {
-      protocol: 'ws',
-    },
-  },
+  server: { host: true, hmr: { protocol: 'ws' } },
 });
