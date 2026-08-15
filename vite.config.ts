@@ -32,6 +32,8 @@ const LEGACY_PHONICS_PROGRESS_COPY =
   'Progress is child-specific. Look for stronger accuracy, less prompting, better retry behaviour, retention of earlier patterns, and independent transfer to fresh words or text rather than expecting the same week-by-week timeline for every learner.';
 const LEGACY_PHONICS_SUPPORT_COPY =
   'If progress is not becoming more independent despite consistent, stage-matched instruction and practice, review placement, teaching sequence, correction quality and text difficulty. Involve the child’s school and an appropriate qualified professional when broader speech, language, hearing or learning concerns are also present.';
+const PHONICS_PAGE_PROGRESS_FAQ_COPY =
+  'Progress in blending depends on the child’s starting point and should be judged by increasing accuracy, less prompting, retention, and successful blending of fresh appropriately matched words rather than a fixed number of lessons.';
 
 function canonicalInternalBlogLinks() {
   return {
@@ -73,6 +75,34 @@ function canonicalInternalBlogLinks() {
           .replace('Progress timeline parents can expect', 'How parents should interpret progress')
           .replaceAll('content: post.progress', `content: ${JSON.stringify(LEGACY_PHONICS_PROGRESS_COPY)}`)
           .replaceAll('content: post.support', `content: ${JSON.stringify(LEGACY_PHONICS_SUPPORT_COPY)}`);
+      }
+
+      // The legacy main phonics landing page carried fixed lesson-count and
+      // cadence claims that conflict with the site-wide assessment-first policy.
+      // Render the page with programme-specific age wording and transfer-based
+      // progress evidence until that large page is next refactored at source.
+      if (id.includes('/src/pages/phonics.tsx')) {
+        transformed = transformed
+          .replaceAll("label: 'Ages 3–12'", "label: 'Primary pathway: ages 3–10'")
+          .replaceAll('ageRange="Ages 3–12"', 'ageRange="Primary pathway: ages 3–10"')
+          .replace(
+            'Many children show early blending progress in about 4–6 guided lessons. Timelines vary by starting level, attendance consistency, and home reinforcement. Progress is usually step-by-step rather than instant.',
+            PHONICS_PAGE_PROGRESS_FAQ_COPY,
+          )
+          .replace(
+            'Many children show early blending progress in 4–6 guided lessons, though timing depends on starting level, lesson consistency, and home reinforcement.',
+            PHONICS_PAGE_PROGRESS_FAQ_COPY,
+          )
+          .replace(
+            "{ value: '4–6', label: 'Lessons to begin first blending, depending on readiness' },",
+            "{ value: 'Fresh-word transfer', label: 'Blending checked on unfamiliar words at the child’s current stage' },",
+          )
+          .replace(
+            "{ value: '30–40', label: 'Lessons to cover core phonics foundations' },",
+            "{ value: 'Individual pace', label: 'Foundation coverage depends on starting level, retention, and transfer' },",
+          )
+          .replace('duration="35–40 minutes, 2–3x per week"', 'duration="35–40 minutes per session"')
+          .replace('structure="3 levels, 36+ lessons with stage-based progression"', 'structure="3 levels with stage-based progression"');
       }
 
       return transformed === code ? null : { code: transformed, map: null };
