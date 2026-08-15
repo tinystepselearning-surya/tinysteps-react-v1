@@ -1,675 +1,57 @@
 import { useEffect, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { applySeo } from '../lib/seo';
-import { SUMMER_CAMP_2026_CONFIG, canShowEnrollment, shouldPublishInStock, getEventStatusType } from '../lib/seasonState';
-import { FREE_DEMO_CTA_LABEL } from '../config/publicOffer';
+import { createFAQPageSchema } from '../lib/schemas';
+import { PUBLIC_SITE_FACTS, SUMMER_CAMP_2026_ARCHIVE_LABEL } from '../config/publicFacts';
 
-const SUMMER_CAMP_ENROLLMENT_PRICE = 2400;
-const SUMMER_CAMP_FULL_PRICE = 5000;
-const SUMMER_CAMP_BATCH_CAP = 8;
-const SUMMER_CAMP_PLANNED_CLASS_COUNT = 24;
-const SUMMER_CAMP_SEASON_START_LABEL = '27 April 2026';
-const SUMMER_CAMP_SEASON_END_LABEL = '13 June 2026';
-const SUMMER_CAMP_SEASON_DATE_RANGE_LABEL = `${SUMMER_CAMP_SEASON_START_LABEL} to ${SUMMER_CAMP_SEASON_END_LABEL}`;
-const SUMMER_CAMP_BATCH_DURATION_LABEL = '4 weeks';
-const SUMMER_CAMP_VALUE_LABEL = `${SUMMER_CAMP_PLANNED_CLASS_COUNT} live classes in ${SUMMER_CAMP_BATCH_DURATION_LABEL}`;
-const SUMMER_CAMP_SCHEDULE_LABEL = 'Monday to Saturday batches';
-const SUMMER_CAMP_HOLIDAY_LABEL = 'Sunday holiday';
-const SUMMER_CAMP_BATCH_START_OPTIONS_LABEL = '27 April, 4 May, 11 May and 18 May 2026';
-const SUMMER_CAMP_FINAL_BATCH_START_LABEL = '18 May 2026';
-const SUMMER_CAMP_FINAL_BATCH_CLOSE_LABEL = '13 June 2026';
-
-function getWhatsAppUrl(message: string) {
-  return `https://wa.me/919618398383?text=${encodeURIComponent(message)}`;
-}
-
-function getProgramEnrollText(programTitle: string) {
-  return `Hi, I'm looking to enroll for Summer Camp ${programTitle}.`;
-}
-
-function formatINR(value: number) {
-  return new Intl.NumberFormat('en-IN', {
-    minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-}
+const summer = PUBLIC_SITE_FACTS.summerCamp2026;
 
 type ProgramConfig = {
   slug: string;
   title: string;
   ages: string;
-  outcome: string;
   focus: string;
-  format: string;
-  outcomes: string[];
-  learn: string[];
-  steps: string[];
-  faq: Array<{ question: string; answer: string }>;
+  learned: string[];
+  transferChecks: string[];
+  yearRoundHref: string;
+  yearRoundLabel: string;
 };
 
 const PROGRAMS: Record<string, ProgramConfig> = {
   'phonics-fast-track': {
     slug: 'phonics-fast-track',
     title: 'Phonics Fast Track',
-    ages: 'Ages 4-8',
-    outcome: 'Phonics Fast Track Summer Camp 2026',
-    focus: 'A focused 4-week phonics program to refresh sounds, blends, and decoding for smoother early reading',
-    format: `Live premium small-group classes, ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, with ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()} and batches capped at ${SUMMER_CAMP_BATCH_CAP} students`,
-    outcomes: [
-      'Stronger sound recognition and recall',
-      'Faster blending with better word accuracy',
-      'Confident reading of short passages',
-    ],
-    learn: [
-      'Core sounds, digraphs, and blend drills',
-      'Decoding strategies for unfamiliar words',
-      'Reading fluency routines with guided correction',
-    ],
-    steps: [
-      'Children paid ₹2,400 and completed one free 35-minute demo assessment class before placement',
-      'Attend 50–60 minute live fast-track classes with guided practice',
-      `Follow a clear 4-week learning path with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, worksheets, and class recordings`,
-    ],
-    faq: [
-      {
-        question: 'What is Phonics Fast Track?',
-        answer:
-          `A focused 4-week course with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} for children who need a phonics refresh before the new school term. It strengthens sound knowledge, blending, decoding, and reading flow.`,
-      },
-      {
-        question: 'Who is it for?',
-        answer:
-          'Best for ages 4-8 who need stronger reading foundations, smoother blending, or more confidence with unfamiliar words.',
-      },
-      {
-        question: 'What will my child achieve?',
-        answer:
-          'Children finish with cleaner sound recall, better blending speed, and improved confidence while reading aloud.',
-      },
-      {
-        question: 'Is this the same curriculum as regular classes?',
-        answer:
-          `Yes. It uses the same Tiny Steps core method, delivered in a premium summer format with a clear 4-week outcome path and batches capped at ${SUMMER_CAMP_BATCH_CAP}.`,
-      },
-      {
-        question: 'Was there a free demo assessment before placement?',
-        answer:
-          'Yes. Children completed one free 35-minute demo assessment class before placement.',
-      },
-      {
-        question: 'How is this helpful for summer catch-up?',
-        answer:
-          'Perfect for summer bridge support. Strengthens letter sounds, blending, and reading fluency before the new school year—ideal for children who need a phonics refresh.',
-      },
-      {
-        question: 'What materials do children receive?',
-        answer:
-          'Each child receives phonics-focused worksheets for practice and access to class recordings for review at home.',
-      },
-      {
-        question: 'Can we join after the start date or do we need to begin from day 1?',
-        answer:
-          `Available batch start dates are ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}. We recommend joining from day 1 of your selected batch for the full 4-week progression, but message us if you are joining late and we will guide you based on seat availability.`,
-      },
-      {
-        question: 'Are there multiple batch start dates for this program?',
-        answer:
-          `Yes. The Summer Camp season runs from ${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Available batch start dates are ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}. Each child joins one 4-week batch, and the final batch is designed to close by ${SUMMER_CAMP_FINAL_BATCH_CLOSE_LABEL} before schools reopen on 15 June 2026.`,
-      },
-    ],
+    ages: 'Ages 4–8',
+    focus: 'sound review, blending, decoding, word reading, and early reading confidence',
+    learned: ['sound-symbol review', 'oral and printed blending', 'decoding unfamiliar words', 'guided sentence reading'],
+    transferChecks: ['Read a new word rather than a memorised list.', 'Blend sounds without relying on picture guessing.', 'Carry a taught pattern into a fresh sentence.'],
+    yearRoundHref: '/phonics',
+    yearRoundLabel: 'Explore year-round phonics',
   },
   'grammar-fast-track': {
     slug: 'grammar-fast-track',
     title: 'Grammar Fast Track',
-    ages: 'Ages 6-12',
-    outcome: 'Grammar Fast Track Summer Camp 2026',
-    focus: 'A focused 4-week grammar program to strengthen sentence structure, punctuation, tense, and writing accuracy',
-    format: `Live premium small-group classes, ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, with ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()} and batches capped at ${SUMMER_CAMP_BATCH_CAP} students`,
-    outcomes: [
-      'Fewer common grammar mistakes in school writing',
-      'Better sentence structure and punctuation control',
-      'Cleaner paragraph flow and clarity',
-    ],
-    learn: [
-      'Parts of speech in practical sentence use',
-      'Tense and agreement correction routines',
-      'Editing frameworks for school-level writing',
-    ],
-    steps: [
-      'Children paid ₹2,400 and completed one free 35-minute demo assessment class before placement',
-      'Attend 50–60 minute live fast-track classes with guided practice',
-      `Follow a clear 4-week learning path with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, worksheets, and class recordings`,
-    ],
-    faq: [
-      {
-        question: 'What is Grammar Fast Track?',
-        answer:
-          `A focused 4-week grammar refresher with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, designed to improve writing quality quickly through practical drills and teacher-led correction.`,
-      },
-      {
-        question: 'Who is it for?',
-        answer:
-          'Best for ages 6-12 who need to improve grammar accuracy, sentence flow, or confidence in school writing tasks.',
-      },
-      {
-        question: 'What will my child achieve?',
-        answer:
-          'Children write with improved grammar control, clearer sentence flow, and stronger editing habits.',
-      },
-      {
-        question: 'Is this the same curriculum as regular classes?',
-        answer:
-          `Yes. It uses the same Tiny Steps core method, delivered in a premium summer format with a clear 4-week outcome path and batches capped at ${SUMMER_CAMP_BATCH_CAP}.`,
-      },
-      {
-        question: 'How does the summer camp format differ from regular classes?',
-        answer:
-          `The summer camp format is more focused, with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, and smaller batch sizes for stronger learning support.`,
-      },
-      {
-        question: 'What materials are provided during the camp?',
-        answer:
-          'Students receive worksheets, class recordings, and practice drills tailored to the summer curriculum.',
-      },
-      {
-        question: 'Can my child catch up if they miss a class?',
-        answer:
-          'Yes, class recordings and worksheets are provided to help students catch up on missed lessons.',
-      },
-      {
-        question: 'Are there multiple batch start dates for this program?',
-        answer:
-          `Yes. The Summer Camp season runs from ${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Available batch start dates are ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}. Each child joins one 4-week batch, and the final batch is designed to close by ${SUMMER_CAMP_FINAL_BATCH_CLOSE_LABEL} before schools reopen on 15 June 2026.`,
-      },
-    ],
+    ages: 'Ages 6–12',
+    focus: 'sentence structure, grammar application, punctuation, editing, and writing clarity',
+    learned: ['sentence construction', 'tense and agreement practice', 'punctuation in context', 'guided editing and rewriting'],
+    transferChecks: ['Apply a rule in a new sentence.', 'Spot and correct an error independently.', 'Use grammar while writing rather than only naming the rule.'],
+    yearRoundHref: '/grammar',
+    yearRoundLabel: 'Explore year-round grammar',
   },
   'speaking-fast-track': {
     slug: 'speaking-fast-track',
     title: 'Speaking Fast Track',
-    ages: 'Ages 6-12',
-    outcome: 'Speaking Fast Track Summer Camp 2026',
-    focus: 'A focused 4-week communication program to strengthen speech structure, clarity, pronunciation, and delivery confidence',
-    format: `Live premium small-group classes, ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, with ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()} and batches capped at ${SUMMER_CAMP_BATCH_CAP} students`,
-    outcomes: [
-      'More confidence in short structured talks',
-      'Clearer voice, pace, and articulation',
-      'Better presentation flow in school speaking tasks',
-    ],
-    learn: [
-      'Intro-body-close speaking frameworks',
-      'Voice and pronunciation polishing drills',
-      'Confidence routines for stage and class speaking',
-    ],
-    steps: [
-      'Children paid ₹2,400 and completed one free 35-minute demo assessment class before placement',
-      'Attend 50–60 minute live fast-track classes with guided practice',
-      `Follow a clear 4-week learning path with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, worksheets, and class recordings`,
-    ],
-    faq: [
-      {
-        question: 'What is Speaking Fast Track?',
-        answer:
-          `A focused 4-week speaking course with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} that helps children speak more confidently, clearly, and structurally in school and activity settings.`,
-      },
-      {
-        question: 'Who is it for?',
-        answer:
-          'Best for ages 6-12 who need stronger speaking confidence, clearer expression, or better structure in oral responses.',
-      },
-      {
-        question: 'What will my child achieve?',
-        answer:
-          'Children finish with better speech clarity, stronger delivery confidence, and improved presentation structure.',
-      },
-      {
-        question: 'Is this the same curriculum as regular classes?',
-        answer:
-          `Yes. It uses the same Tiny Steps core method, delivered in a premium summer format with a clear 4-week outcome path and batches capped at ${SUMMER_CAMP_BATCH_CAP}.`,
-      },
-      {
-        question: 'How does the summer camp format differ from regular classes?',
-        answer:
-          `The summer camp format is more focused, with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, and smaller batch sizes for stronger learning support.`,
-      },
-      {
-        question: 'What materials are provided during the camp?',
-        answer:
-          'Students receive worksheets, class recordings, and practice drills tailored to the summer curriculum.',
-      },
-      {
-        question: 'Can my child catch up if they miss a class?',
-        answer:
-          'Yes, class recordings and worksheets are provided to help students catch up on missed lessons.',
-      },
-      {
-        question: 'Are there multiple batch start dates for this program?',
-        answer:
-          `Yes. The Summer Camp season runs from ${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Available batch start dates are ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}. Each child joins one 4-week batch, and the final batch is designed to close by ${SUMMER_CAMP_FINAL_BATCH_CLOSE_LABEL} before schools reopen on 15 June 2026.`,
-      },
-    ],
+    ages: 'Ages 6–12',
+    focus: 'structured answers, storytelling, presentation flow, clarity, and speaking confidence',
+    learned: ['answer expansion', 'idea organisation', 'storytelling structure', 'presentation delivery and expression'],
+    transferChecks: ['Answer an unfamiliar question in complete thoughts.', 'Organise a short response without memorising a script.', 'Speak with useful pace, clarity, and expression.'],
+    yearRoundHref: '/speaking',
+    yearRoundLabel: 'Explore year-round speaking',
   },
 };
 
-function toTitleCase(value: string) {
-  return value
-    .split(/[-_]/g)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
-
-function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; batchSlug?: string }) {
-  if (!program) {
-    return (
-      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-16">
-        <h1 className="text-3xl font-bold text-gray-900">Program coming soon</h1>
-        <p className="mt-3 text-gray-700">
-          This summer camp program page is being prepared. Please check the summer camps hub for
-          current options.
-        </p>
-        <div className="mt-6">
-          <Link
-            to="/summer-camps"
-            className="inline-flex min-h-[46px] items-center rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white"
-          >
-            Back to Summer Camps
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const programWhatsAppUrl = getWhatsAppUrl(getProgramEnrollText(program.title));
-
-  if (SUMMER_CAMP_2026_CONFIG.status === 'archived' || batchSlug) {
-    return (
-      <div className="pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-0">
-        <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-16">
-          <nav aria-label="Breadcrumb" className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-            <ol className="flex flex-wrap items-center gap-2">
-              <li>
-                <Link to="/" className="hover:text-emerald-700">
-                  Home
-                </Link>
-              </li>
-              <li aria-hidden="true">/</li>
-              <li>
-                <Link to="/summer-camps" className="hover:text-emerald-700">
-                  Summer Camps
-                </Link>
-              </li>
-              <li aria-hidden="true">/</li>
-              <li>
-                <Link to={`/summer-camps/${program.slug}`} className="hover:text-emerald-700">
-                  {program.title}
-                </Link>
-              </li>
-              {batchSlug ? (
-                <>
-                  <li aria-hidden="true">/</li>
-                  <li className="text-emerald-700">{toTitleCase(batchSlug)}</li>
-                </>
-              ) : null}
-            </ol>
-          </nav>
-          <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700">
-            {program.title}
-          </p>
-          <h1 className="mt-3 text-3xl font-bold text-gray-900 sm:text-4xl">Season Ended — 13 June 2026</h1>
-          <p className="mt-3 text-gray-700">
-            The Tiny Steps Summer Camp 2026 season has concluded. Thank you to all families and students who participated. We are planning the next seasonal program.
-          </p>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <Link
-              to="/summer-camps"
-              className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full border border-gray-200 px-5 py-2 text-sm font-semibold text-gray-700 sm:w-auto"
-            >
-              Back to Summer Camps
-            </Link>
-            <a
-              href="/contact"
-              className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-5 py-2 text-sm font-semibold text-slate-800 sm:w-auto"
-            >
-              Register Interest for Next Camp
-            </a>
-            <Link
-              to="/book-demo"
-              className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full bg-slate-600 px-5 py-2 text-sm font-semibold text-white sm:w-auto"
-            >
-              {FREE_DEMO_CTA_LABEL}
-            </Link>
-          </div>
-        </div>
-        <div className="fixed inset-x-0 bottom-0 z-40 md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-          <div className="mx-auto max-w-5xl px-3 pb-2">
-            <div className="flex items-center gap-2 rounded-[20px] border border-slate-100/80 bg-white/95 p-2 shadow-[0_-6px_30px_rgba(15,23,42,0.22)] backdrop-blur-md">
-              <Link
-                to="/summer-camps"
-                className="flex-1 rounded-full border border-slate-300 px-4 py-2.5 text-center text-sm font-semibold text-slate-700"
-              >
-                Back
-              </Link>
-              <a
-                href="/contact"
-                className="flex-1 rounded-full bg-slate-600 px-4 py-2.5 text-center text-sm font-semibold text-white"
-              >
-                Next Steps
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-white pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-0">
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#fff4da] via-[#fffdf5] to-[#def6ff]">
-        <div className="pointer-events-none absolute -left-20 top-10 hidden h-64 w-64 rounded-full bg-[#ffb13d]/25 blur-3xl sm:block" />
-        <div className="pointer-events-none absolute right-0 top-0 hidden h-72 w-72 rounded-full bg-[#00b5d8]/20 blur-3xl sm:block" />
-        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
-          <nav aria-label="Breadcrumb" className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-            <ol className="flex flex-wrap items-center gap-2">
-              <li>
-                <Link to="/" className="hover:text-emerald-700">
-                  Home
-                </Link>
-              </li>
-              <li aria-hidden="true">/</li>
-              <li>
-                <Link to="/summer-camps" className="hover:text-emerald-700">
-                  Summer Camps
-                </Link>
-              </li>
-              <li aria-hidden="true">/</li>
-              <li className="text-emerald-700">{program.title}</li>
-            </ol>
-          </nav>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">
-            {program.title}
-          </p>
-          <h1 className="mt-3 text-3xl font-bold leading-tight text-gray-900 sm:text-4xl md:text-5xl">
-            {program.outcome}
-          </h1>
-          <p className="mt-4 max-w-3xl text-base text-gray-700 sm:text-lg">
-            {program.focus}. {program.format}. {program.ages}. Summer camp list fee: ₹{formatINR(SUMMER_CAMP_FULL_PRICE)}. Effective price: ₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}.
-          </p>
-          <p className="mt-2 text-sm font-semibold text-emerald-700">
-            <span className="text-slate-500 line-through">₹{formatINR(SUMMER_CAMP_FULL_PRICE)}</span>{' '}
-            <span>Effective price: ₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}</span>
-          </p>
-          
-          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm">
-            <span className="text-lg">⏰</span>
-            <span className="font-semibold text-amber-900">Season: {SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}</span>
-            <span className="text-amber-700">• Last batch starts {SUMMER_CAMP_FINAL_BATCH_START_LABEL}</span>
-          </div>
-          <p className="mt-3 max-w-3xl text-sm text-slate-600">
-            Limited batch start dates available: {SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}. Each child joins one 4-week batch, and the final batch is designed to close by {SUMMER_CAMP_FINAL_BATCH_CLOSE_LABEL} before schools reopen on 15 June 2026.
-          </p>
-
-          <div className="mt-6 flex flex-wrap gap-3 text-sm">
-            <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">{program.ages}</span>
-            <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">{SUMMER_CAMP_VALUE_LABEL}</span>
-            <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">{SUMMER_CAMP_SCHEDULE_LABEL}</span>
-            <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">{SUMMER_CAMP_HOLIDAY_LABEL}</span>
-            <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">Batch starts: 27 Apr • 4 May • 11 May • 18 May</span>
-            <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">50–60 min classes</span>
-            <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">Capped at {SUMMER_CAMP_BATCH_CAP}</span>
-            <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">Online</span>
-            <span className="rounded-full bg-emerald-100 px-4 py-1 font-semibold text-emerald-800">₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)} Enrollment</span>
-          </div>
-
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <Link
-              to="/summer-camps#batches"
-              className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white sm:w-auto"
-            >
-              View Group Batches
-            </Link>
-            <a
-              href={programWhatsAppUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full border border-emerald-200 bg-white px-5 py-2 text-sm font-semibold text-emerald-800 sm:w-auto"
-            >
-              Enroll for ₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}
-            </a>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
-        <div className="grid gap-6 md:grid-cols-2">
-            <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-              <h2 className="text-lg font-semibold text-gray-900">What is this camp?</h2>
-              <p className="mt-2 text-sm text-gray-700">
-              {program.title} is a 4-week online summer camp that follows our core curriculum
-              with extra focus on this track. The Summer Camp season runs from {SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}, and each child joins one batch with {SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, {SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, {SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, focused group sessions capped at {SUMMER_CAMP_BATCH_CAP} students, worksheets, and class recordings.
-              </p>
-            </div>
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-            <h2 className="text-lg font-semibold text-gray-900">Who is it for?</h2>
-            <p className="mt-2 text-sm text-gray-700">
-              This program is best for {program.ages}. If your child needs a boost in this skill,
-              this camp provides structure, feedback, and daily practice that is easy to follow.
-            </p>
-          </div>
-            <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-              <h2 className="text-lg font-semibold text-gray-900">What will my child achieve?</h2>
-              <p className="mt-2 text-sm text-gray-700">
-                Children make measurable progress through a clear 4-week learning path and teacher feedback.
-              Expect stronger skills, more confidence, and a clear next-step plan by the end of the selected batch.
-              </p>
-            </div>
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-            <h2 className="text-lg font-semibold text-gray-900">Camp format</h2>
-            <p className="mt-2 text-sm text-gray-700">
-              This is a group-focused premium summer camp, capped at {SUMMER_CAMP_BATCH_CAP} students per batch for active participation, live correction, and clear teacher guidance in every class.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-4 pb-10 sm:px-6 sm:pb-12">
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-            <h3 className="text-lg font-semibold text-gray-900">What kids will learn</h3>
-            <ul className="mt-3 space-y-2 text-sm text-gray-700">
-              {program.learn.map((item) => (
-                <li key={item} className="flex gap-2">
-                  <span className="mt-2 h-1.5 w-1.5 flex-none rounded-full bg-emerald-400" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-            <h3 className="text-lg font-semibold text-gray-900">How it works</h3>
-            <ol className="mt-3 space-y-2 text-sm text-gray-700">
-              {program.steps.map((item, idx) => (
-                <li key={item} className="flex gap-3">
-                  <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-semibold text-emerald-700">
-                    {idx + 1}
-                  </span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-4 pb-10 sm:px-6 sm:pb-12">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900">Enrollment snapshot</h3>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4 sm:p-5">
-              <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700">
-                Summer Camp Fee
-              </p>
-              <p className="mt-2 text-3xl font-black text-gray-900">₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}</p>
-              <p className="mt-1 text-xs font-semibold text-emerald-700">
-                <span className="text-slate-500 line-through">₹{formatINR(SUMMER_CAMP_FULL_PRICE)}</span>{' '}
-                <span>Effective price: ₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}</span>
-              </p>
-              <p className="mt-2 text-sm text-gray-700">
-                Straightforward enrollment for the summer group camp.
-              </p>
-            </div>
-            <div className="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
-              <p className="text-xs font-semibold uppercase tracking-widest text-gray-600">
-                Next Step
-              </p>
-              <p className="mt-2 text-sm text-gray-700">
-                Pick from the limited batch start dates on {SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}, enroll, and we place your child into the right level group.
-              </p>
-              <div className="mt-4">
-                <Link
-                  to="/summer-camps#batches"
-                  className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white sm:w-auto"
-                >
-                  Choose Batch Start Date
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Next Steps Internal Linking */}
-      <section className="mx-auto max-w-6xl px-4 pb-10 sm:px-6 sm:pb-12">
-        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-violet-50 via-white to-sky-50 shadow-sm">
-          <div className="px-6 py-5 sm:px-8">
-            <div className="text-center">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-700">Explore More Options</p>
-              <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Next Steps & Related Programs</h2>
-            </div>
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {program.slug !== 'phonics-fast-track' && (
-                <Link
-                  to="/summer-camps/phonics-fast-track"
-                  className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-lg">📚</div>
-                    <div className="flex-1">
-                      <h3 className="text-sm font-semibold text-slate-900">Phonics Fast Track</h3>
-                      <p className="mt-1 text-xs text-slate-600">Ages 4–8 • Reading foundation</p>
-                    </div>
-                  </div>
-                </Link>
-              )}
-
-              {program.slug !== 'grammar-fast-track' && (
-                <Link
-                  to="/summer-camps/grammar-fast-track"
-                  className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-100 text-lg">✏️</div>
-                    <div className="flex-1">
-                      <h3 className="text-sm font-semibold text-slate-900">Grammar Fast Track</h3>
-                      <p className="mt-1 text-xs text-slate-600">Ages 6–12 • Writing quality</p>
-                    </div>
-                  </div>
-                </Link>
-              )}
-
-              {program.slug !== 'speaking-fast-track' && (
-                <Link
-                  to="/summer-camps/speaking-fast-track"
-                  className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-lg">🗣️</div>
-                    <div className="flex-1">
-                      <h3 className="text-sm font-semibold text-slate-900">Speaking Fast Track</h3>
-                      <p className="mt-1 text-xs text-slate-600">Ages 6–12 • Confident communication</p>
-                    </div>
-                  </div>
-                </Link>
-              )}
-
-              <Link
-                to="/summer-camps"
-                className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 text-lg">🏕️</div>
-                  <div className="flex-1">
-                    <h3 className="text-sm font-semibold text-slate-900">All Summer Camps</h3>
-                    <p className="mt-1 text-xs text-slate-600">Compare all tracks</p>
-                  </div>
-                </div>
-              </Link>
-
-              <Link
-                to="/why-tiny-steps"
-                className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-lg">💚</div>
-                  <div className="flex-1">
-                    <h3 className="text-sm font-semibold text-slate-900">Why Tiny Steps</h3>
-                    <p className="mt-1 text-xs text-slate-600">Our teaching approach</p>
-                  </div>
-                </div>
-              </Link>
-
-              <Link
-                to="/pricing"
-                className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-100 text-lg">💰</div>
-                  <div className="flex-1">
-                    <h3 className="text-sm font-semibold text-slate-900">Pricing Options</h3>
-                    <p className="mt-1 text-xs text-slate-600">All program fees</p>
-                  </div>
-                </div>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-4 pb-10 sm:px-6 sm:pb-16">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-          <h3 className="text-lg font-semibold text-gray-900">FAQs</h3>
-          <div className="mt-4 space-y-4">
-            {program.faq.map((item) => (
-              <div key={item.question}>
-                <div className="text-sm font-semibold text-gray-900">{item.question}</div>
-                <div className="mt-1 text-sm text-gray-700">{item.answer}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <div className="fixed inset-x-0 bottom-0 z-40 md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <div className="mx-auto max-w-6xl px-3 pb-2">
-          <div className="flex items-center gap-2 rounded-[20px] border border-emerald-100/80 bg-white/95 p-2 shadow-[0_-6px_30px_rgba(15,23,42,0.22)] backdrop-blur-md">
-            <Link
-              to="/summer-camps#batches"
-              className="flex-1 rounded-full border border-slate-300 px-4 py-2.5 text-center text-sm font-semibold text-slate-700"
-            >
-              View batches
-            </Link>
-            <a
-              href={programWhatsAppUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 rounded-full bg-emerald-600 px-4 py-2.5 text-center text-sm font-semibold text-white"
-            >
-              Enroll ₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+function titleCase(value: string) {
+  return value.split(/[-_]/g).map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 }
 
 export default function SummerCampProgramPage() {
@@ -677,109 +59,86 @@ export default function SummerCampProgramPage() {
   const program = useMemo(() => (programSlug ? PROGRAMS[programSlug] ?? null : null), [programSlug]);
 
   useEffect(() => {
-    const baseTitle = program?.title || 'Summer Camp Program';
-    const batchTitle = batchSlug ? `Batch ${toTitleCase(batchSlug)}` : '';
-    const title = batchSlug
-      ? `${baseTitle} ${batchTitle} | Tiny Steps`
-      : `${baseTitle} Summer Camp 2026 | 24 Live Classes in 4 Weeks | Tiny Steps`;
+    const title = program ? `${program.title} Summer Camp 2026 Archive | Tiny Steps` : 'Summer Camp 2026 Archive | Tiny Steps';
     const description = program
-      ? `${program.title} archived Summer Camp 2026 programme for ${program.ages}. ${program.focus}. The camp ended on 13 June 2026 and enrolment is closed. Each child joined one ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()} after one free 35-minute demo assessment class before placement. Historical effective fee ₹${formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}.`
-      : 'Summer camp program details coming soon.';
-    const keywords = program
+      ? `${program.title} was part of Tiny Steps Summer Camp 2026, which concluded on ${summer.endDateLabel}. Review the historical learning focus and year-round next steps.`
+      : `Tiny Steps Summer Camp 2026 concluded on ${summer.endDateLabel}.`;
+    const faq = program
       ? [
-          `${program.title.toLowerCase()} online`,
-          `${program.title.toLowerCase()} for kids india`,
-          'premium summer camp for kids',
-          'small group summer camp for kids',
-          'online summer camp for kids india',
-          'phonics grammar speaking fast track',
-          'summer camp with limited batch size',
+          { question: `Is ${program.title} still open?`, answer: `No. ${SUMMER_CAMP_2026_ARCHIVE_LABEL} This page is retained as a historical programme summary.` },
+          { question: `What did ${program.title} focus on?`, answer: `The 2026 track focused on ${program.focus}.` },
+          { question: 'What should parents use now?', answer: `Use the year-round Tiny Steps pathway at ${program.yearRoundHref} or book a regular assessment to identify the child's current starting point.` },
         ]
-      : ['online summer camp for kids india'];
-
-    const breadcrumbSchema = {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        {
-          '@type': 'ListItem',
-          position: 1,
-          name: 'Home',
-          item: 'https://tinystepslearning.com/',
-        },
-        {
-          '@type': 'ListItem',
-          position: 2,
-          name: 'Summer Camps',
-          item: 'https://tinystepslearning.com/summer-camps',
-        },
-        ...(program
-          ? [
-              {
-                '@type': 'ListItem',
-                position: 3,
-                name: program.title,
-                item: `https://tinystepslearning.com/summer-camps/${program.slug}`,
-              },
-            ]
-          : []),
-        ...(batchSlug
-          ? [
-              {
-                '@type': 'ListItem',
-                position: program ? 4 : 3,
-                name: toTitleCase(batchSlug),
-                item: `https://tinystepslearning.com/summer-camps/${programSlug}/${batchSlug}`,
-              },
-            ]
-          : []),
-      ],
-    };
-
-    const courseSchema = program
-      ? {
-          '@context': 'https://schema.org',
-          '@type': 'Course',
-          name: program.title,
-          description: `${program.focus}. ${SUMMER_CAMP_VALUE_LABEL}, ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, capped at ${SUMMER_CAMP_BATCH_CAP} students.`,
-          courseMode: 'Online',
-          educationalLevel: program.ages,
-          provider: {
-            '@type': 'Organization',
-            name: 'Tiny Steps Learning',
-          },
-        }
-      : null;
-
-    const faqSchema =
-      program && program.faq.length > 0
-        ? {
-            '@context': 'https://schema.org',
-            '@type': 'FAQPage',
-            mainEntity: program.faq.map((item) => ({
-              '@type': 'Question',
-              name: item.question,
-              acceptedAnswer: { '@type': 'Answer', text: item.answer },
-            })),
-          }
-        : null;
+      : [];
 
     applySeo({
-      title,
+      title: batchSlug ? `${titleCase(batchSlug)} | ${title}` : title,
       description,
-      keywords,
-      canonicalPath: batchSlug
-        ? `/summer-camps/${programSlug}/${batchSlug}`
-        : `/summer-camps/${programSlug}`,
-      robots:
-        batchSlug || !program
-          ? 'noindex, follow'
-          : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
-      ogType: 'website',
+      canonicalPath: batchSlug ? `/summer-camps/${programSlug}/${batchSlug}` : `/summer-camps/${programSlug}`,
+      robots: batchSlug || !program ? 'noindex, follow' : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
       noIndex: Boolean(batchSlug) || !program,
-      jsonLd: [breadcrumbSchema, courseSchema, faqSchema].filter(Boolean) as object[],
+      ogType: 'website',
+      jsonLd: faq.length ? [createFAQPageSchema(faq)] : [],
     });
   }, [program, programSlug, batchSlug]);
 
-  return <ProgramPage program={program} batchSlug={batchSlug} />;
+  if (!program) {
+    return (
+      <main className="mx-auto max-w-4xl px-4 py-16 sm:px-6">
+        <h1 className="text-3xl font-bold text-slate-900">Summer Camp programme archive</h1>
+        <p className="mt-3 text-slate-700">This programme record is not available. The 2026 season has concluded.</p>
+        <Link to="/summer-camps" className="mt-6 inline-block rounded-full bg-slate-900 px-5 py-3 font-semibold text-white">View Summer Camp archive</Link>
+      </main>
+    );
+  }
+
+  return (
+    <main className="bg-slate-50">
+      <div className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-900">
+        {SUMMER_CAMP_2026_ARCHIVE_LABEL} This is not an active enrollment page.
+      </div>
+
+      <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
+        <nav className="text-sm text-slate-500" aria-label="Breadcrumb">
+          <Link to="/summer-camps" className="font-semibold hover:text-slate-900">Summer Camp archive</Link>
+          <span className="px-2">/</span>
+          <span>{program.title}</span>
+        </nav>
+        <p className="mt-8 text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">Historical 2026 programme</p>
+        <h1 className="mt-3 text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl">{program.title}</h1>
+        <p className="mt-4 text-lg text-slate-700">{program.ages} · Historical focus: {program.focus}.</p>
+        <p className="mt-4 max-w-3xl leading-7 text-slate-700">
+          This track was part of Tiny Steps Summer Camp 2026, which ran from {summer.startDateLabel} to {summer.endDateLabel}. The season is complete. We retain this page so parents can understand the learning design and choose an appropriate year-round pathway today.
+        </p>
+      </section>
+
+      <section className="mx-auto grid max-w-5xl gap-6 px-4 pb-12 sm:px-6 md:grid-cols-2">
+        <article className="rounded-3xl border border-slate-200 bg-white p-6">
+          <h2 className="text-2xl font-bold text-slate-900">What the track taught</h2>
+          <ul className="mt-4 space-y-3 text-slate-700">
+            {program.learned.map((item) => <li key={item}>• {item}</li>)}
+          </ul>
+        </article>
+        <article className="rounded-3xl border border-slate-200 bg-white p-6">
+          <h2 className="text-2xl font-bold text-slate-900">What counts as real transfer</h2>
+          <ul className="mt-4 space-y-3 text-slate-700">
+            {program.transferChecks.map((item) => <li key={item}>• {item}</li>)}
+          </ul>
+        </article>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-4 pb-16 sm:px-6">
+        <div className="rounded-3xl bg-slate-900 p-7 text-white sm:p-9">
+          <h2 className="text-2xl font-bold">What families can do now</h2>
+          <p className="mt-3 max-w-2xl text-slate-200">
+            The 2026 camp is closed. If this learning need is still relevant, use the year-round programme or a regular Tiny Steps assessment rather than the expired summer offer.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link to={program.yearRoundHref} className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-900">{program.yearRoundLabel}</Link>
+            <Link to="/book-demo" className="rounded-full border border-slate-600 px-5 py-3 text-sm font-semibold text-white">Book regular 35-minute assessment</Link>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
 }
