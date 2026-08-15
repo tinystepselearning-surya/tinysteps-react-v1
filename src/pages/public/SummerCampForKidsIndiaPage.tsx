@@ -8,8 +8,8 @@ const summer = PUBLIC_SITE_FACTS.summerCamp2026;
 
 const faqItems = [
   {
-    question: 'Is Tiny Steps Summer Camp 2026 currently open?',
-    answer: `No. The 2026 season concluded on ${summer.endDateLabel}. This page is retained as an India-focused summer-learning planning guide and historical archive.`,
+    question: 'What is the status of Tiny Steps Summer Camp 2026?',
+    answer: `Tiny Steps Summer Camp 2026 concluded on ${summer.endDateLabel}. This URL is retained as an India-focused summer-learning planning guide and historical archive.`,
   },
   {
     question: 'What should parents look for in an online summer learning programme?',
@@ -20,7 +20,7 @@ const faqItems = [
     answer: 'No. A short programme can create focused practice and momentum, but durable reading, grammar, and communication skills need continued application after the seasonal programme ends.',
   },
   {
-    question: 'What can Tiny Steps parents use now?',
+    question: 'What can Tiny Steps families use now?',
     answer: 'Year-round phonics, reading, grammar, and speaking programmes are available. Families can book a regular free 35-minute 1:1 demo assessment class before choosing a pathway.',
   },
 ];
@@ -39,7 +39,7 @@ export default function SummerCampForKidsIndiaPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900">
-        {SUMMER_CAMP_2026_ARCHIVE_LABEL} Enrollment is closed. The material below is retained for parent planning, not as a current offer.
+        {SUMMER_CAMP_2026_ARCHIVE_LABEL} This page is retained as an evergreen planning resource for future school-break learning.
       </div>
 
       <section className="py-12 text-center">
@@ -57,7 +57,7 @@ export default function SummerCampForKidsIndiaPage() {
           ['3. Check active practice', 'Children need to read, write, answer, explain, or speak during the session. Passive watching is not a substitute for guided performance.'],
           ['4. Check transfer', 'Ask how the teacher verifies learning on a fresh word, sentence, story, or speaking prompt that was not rehearsed in advance.'],
           ['5. Check correction quality', 'Useful feedback identifies the error, models the right strategy, lets the child retry, and revisits the same skill later.'],
-          ['6. Check the post-programme plan', 'A short seasonal programme should end with a clear next step so progress continues after the holiday period.'],
+          ['6. Check the post-programme plan', 'A short seasonal programme should end with a clear next step so progress continues after the school break.'],
         ].map(([title, text]) => (
           <article key={title} className="rounded-2xl border border-slate-200 bg-white p-6">
             <h2 className="text-lg font-bold text-slate-900">{title}</h2>
@@ -69,14 +69,14 @@ export default function SummerCampForKidsIndiaPage() {
       <section className="mt-10 rounded-3xl border border-slate-200 bg-slate-50 p-7 sm:p-9">
         <h2 className="text-2xl font-bold text-slate-900">Tiny Steps Summer Camp 2026 — historical context</h2>
         <p className="mt-3 leading-7 text-slate-700">
-          The 2026 season ran from {summer.startDateLabel} to {summer.endDateLabel}. Historical tracks covered phonics, grammar, and speaking in focused four-week batches. Those dates, batch details, and historical fees are no longer enrollment terms.
+          The 2026 season concluded on {summer.endDateLabel}. Its phonics, grammar, and speaking tracks are retained only as examples of focused school-break learning design; outdated schedules, fees, and promotional details are intentionally omitted.
         </p>
-        <Link to="/summer-camps" className="mt-5 inline-block font-semibold text-slate-900 underline underline-offset-4">Review the full 2026 archive</Link>
+        <Link to="/summer-camps" className="mt-5 inline-block font-semibold text-slate-900 underline underline-offset-4">Review the 2026 archive</Link>
       </section>
 
       <section className="mt-10 rounded-3xl bg-slate-900 p-7 text-white sm:p-9">
         <h2 className="text-2xl font-bold">Need English support now?</h2>
-        <p className="mt-3 max-w-2xl text-slate-200">Use Tiny Steps year-round programmes rather than an expired seasonal offer. A regular assessment can identify the child’s current starting point.</p>
+        <p className="mt-3 max-w-2xl text-slate-200">Use Tiny Steps year-round programmes. A regular assessment can identify the child’s current starting point and the most appropriate pathway.</p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link to="/courses" className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-900">Explore courses</Link>
           <Link to="/book-demo" className="rounded-full border border-slate-600 px-5 py-3 text-sm font-semibold text-white">Book regular 35-minute assessment</Link>
