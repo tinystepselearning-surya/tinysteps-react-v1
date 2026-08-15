@@ -19,6 +19,18 @@ const DIST = path.join(ROOT, 'dist');
 const CHECK_DIST = process.argv.includes('--dist');
 const failures = [];
 
+const AUTHORITY_CANONICAL_SLUGS = [
+  'why-child-knows-letter-sounds-but-cannot-read-words',
+  'can-child-improve-english-in-10-days',
+  'child-gives-one-word-answers',
+  'how-long-does-phonics-take',
+  'how-to-choose-phonics-classes',
+  'how-phonics-grammar-and-communication-work-together',
+  'how-to-engage-kids-in-english-learning-at-home',
+  'what-age-to-start-phonics',
+];
+const MIN_AUTHORITY_BODY_BLOCKS = 18;
+
 function walk(dir, predicate = () => true) {
   if (!fs.existsSync(dir)) return [];
   const files = [];
@@ -30,11 +42,18 @@ function walk(dir, predicate = () => true) {
   return files;
 }
 
-function hasSlug(slug) {
-  return walk(POSTS_DIR, (file) => file.endsWith('.ts')).some((file) => {
+function findPostBySlug(slug) {
+  for (const file of walk(POSTS_DIR, (candidate) => candidate.endsWith('.ts'))) {
     const text = fs.readFileSync(file, 'utf8');
-    return text.includes(`slug: '${slug}'`) || text.includes(`slug: \"${slug}\"`);
-  });
+    if (text.includes(`slug: '${slug}'`) || text.includes(`slug: \"${slug}\"`)) {
+      return { file, text };
+    }
+  }
+  return null;
+}
+
+function hasSlug(slug) {
+  return Boolean(findPostBySlug(slug));
 }
 
 const redirectText = fs.existsSync(NOT_FOUND) ? fs.readFileSync(NOT_FOUND, 'utf8') : '';
@@ -72,6 +91,29 @@ for (const [sourcePath, destinationPath] of Object.entries(RETIRED_BLOG_PATH_RED
   }
 }
 
+// Protect the new editorial standard: these canonical intent owners must remain
+// full authority BlogPost articles rather than falling back to the old compact
+// PhonicsSeoPost template. This prevents a later "SEO refresh" from shrinking
+// the strongest consolidated pages back into repetitive shells.
+for (const slug of AUTHORITY_CANONICAL_SLUGS) {
+  const found = findPostBySlug(slug);
+  if (!found) {
+    failures.push(`authority canonical post missing: ${slug}`);
+    continue;
+  }
+  const { file, text } = found;
+  if (!text.includes('const post: BlogPost')) {
+    failures.push(`${path.relative(ROOT, file)} must remain a full BlogPost authority article`);
+  }
+  if (!text.includes('readTime:') || !text.includes('body: [') || !text.includes('faq: [')) {
+    failures.push(`${path.relative(ROOT, file)} is missing authority article structure (readTime/body/faq)`);
+  }
+  const bodyBlockCount = (text.match(/\{\s*type:\s*'[^']+'/g) || []).length;
+  if (bodyBlockCount < MIN_AUTHORITY_BODY_BLOCKS) {
+    failures.push(`${path.relative(ROOT, file)} is too thin after consolidation (${bodyBlockCount} content blocks; minimum ${MIN_AUTHORITY_BODY_BLOCKS})`);
+  }
+}
+
 if (CHECK_DIST) {
   if (!fs.existsSync(DIST)) {
     failures.push('dist/ missing for rendered consolidation check');
@@ -95,5 +137,5 @@ if (failures.length) {
 }
 
 console.log(
-  `PASS: blog consolidation (${Object.keys(RETIRED_BLOG_PATH_REDIRECTS).length} retired intents, canonical sitemap/RSS ownership${CHECK_DIST ? ', rendered output clean' : ''})`,
+  `PASS: blog consolidation (${Object.keys(RETIRED_BLOG_PATH_REDIRECTS).length} retired intents, ${AUTHORITY_CANONICAL_SLUGS.length} protected authority articles, canonical sitemap/RSS ownership${CHECK_DIST ? ', rendered output clean' : ''})`,
 );
