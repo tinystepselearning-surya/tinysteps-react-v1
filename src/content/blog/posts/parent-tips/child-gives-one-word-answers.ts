@@ -6,232 +6,85 @@ const post: BlogPost = {
   category: 'Parent Tips',
   author: 'Tiny Steps Learning',
   date: '2026-05-02',
-  readTime: '7 min read',
-  metaDescription:
-    'Child gives one word answers? A practical guide to sentence formation for kids, confidence building, and daily speaking routines at home.',
-  excerpt:
-    'One-word answers are common in children. With gentle sentence frames, grammar and speaking practice, and wait time, kids can build fuller expression confidently.',
+  readTime: '12 min read',
+  metaDescription: 'Child gives one-word answers? Learn how wait time, open questions, sentence frames, vocabulary, grammar and low-pressure speaking routines build fuller responses.',
+  excerpt: 'One-word answers can come from habit, language structure, vocabulary, processing time or confidence. Use this guide to identify the pattern and build longer, clearer responses without turning conversation into a test.',
   body: [
-    {
-      type: 'h2',
-      content: '1. Quick Answer for Parents',
-    },
-    {
-      type: 'p',
-      content:
-        'One-word answers are very common and do not always mean your child lacks knowledge. Many children know what they want to say but need support to build full sentences.',
-    },
-    {
-      type: 'p',
-      content:
-        'The goal is not to force long replies immediately. The goal is steady sentence formation for kids through practice, confidence, and clear speaking structure.',
-    },
-    {
-      type: 'h2',
-      content: '2. Why Children Give One-Word Answers',
-    },
-    {
-      type: 'li',
-      content: 'Lack of sentence structure even when ideas are clear.',
-    },
-    {
-      type: 'li',
-      content: 'Low confidence or fear of making mistakes.',
-    },
-    {
-      type: 'li',
-      content: 'Limited vocabulary for longer expression.',
-    },
-    {
-      type: 'li',
-      content: 'Habit of short answers from everyday Q&A patterns.',
-    },
-    {
-      type: 'li',
-      content: 'Not enough wait time from adults before the next prompt.',
-    },
-    {
-      type: 'h2',
-      content: '3. The Difference Between Knowing Words and Using Sentences',
-    },
-    {
-      type: 'p',
-      content:
-        'Knowing words is different from combining words in real time. A child may know "park," "good," or "yes," but still pause when asked to explain in full.',
-    },
-    {
-      type: 'p',
-      content:
-        'This is why communication classes for children and home conversation routines focus on sentence building, not word recall alone.',
-    },
-    {
-      type: 'h2',
-      content: '4. Why Full Sentences Need Practice',
-    },
-    {
-      type: 'p',
-      content:
-        'Full-sentence speaking needs planning, grammar, and confidence together. Children improve when they repeat short structured patterns daily, not when they are tested under pressure.',
-    },
-    {
-      type: 'p',
-      content:
-        'In practice, confidence building for kids happens through many small successful attempts.',
-    },
-    {
-      type: 'h2',
-      content: '5. How Grammar Supports Better Speaking',
-    },
-    {
-      type: 'p',
-      content:
-        'Grammar and speaking practice helps children move from labels to meaning. Simple connectors, tense cues, and sentence order make answers clearer and longer.',
-    },
-    {
-      type: 'p',
-      content:
-        'When grammar is used inside real conversation, children gain stronger communication confidence and better expression in class and at home.',
-    },
-    {
-      type: 'h2',
-      content: '6. How to Expand a Child’s Short Answer',
-    },
-    {
-      type: 'li',
-      content: '"Good" -> "I am feeling good today because..."',
-    },
-    {
-      type: 'li',
-      content: '"Park" -> "I went to the park and played..."',
-    },
-    {
-      type: 'li',
-      content: '"Yes" -> "Yes, I like it because..."',
-    },
-    {
-      type: 'p',
-      content:
-        'Model expanded answers first, then invite your child to repeat or adapt. This works better than constant correction.',
-    },
-    {
-      type: 'h2',
-      content: '7. Simple Sentence Frames Parents Can Use',
-    },
-    {
-      type: 'li',
-      content: 'I think...',
-    },
-    {
-      type: 'li',
-      content: 'I like... because...',
-    },
-    {
-      type: 'li',
-      content: 'My answer is...',
-    },
-    {
-      type: 'li',
-      content: 'First..., then...',
-    },
-    {
-      type: 'li',
-      content: 'I feel... when...',
-    },
-    {
-      type: 'p',
-      content:
-        'Use one or two frames per week and keep examples tied to daily life. Repetition builds comfort quickly.',
-    },
-    {
-      type: 'h2',
-      content: '8. A 10-Minute Home Speaking Routine',
-    },
-    {
-      type: 'li',
-      content: 'Minute 1-2: Warm-up question with wait time (5-7 seconds).',
-    },
-    {
-      type: 'li',
-      content: 'Minute 3-5: Use one sentence frame for three answers.',
-    },
-    {
-      type: 'li',
-      content: 'Minute 6-8: Tell a short two-step story using "First..., then...".',
-    },
-    {
-      type: 'li',
-      content: 'Minute 9-10: Praise effort and repeat one strong sentence.',
-    },
-    {
-      type: 'h2',
-      content: '9. When Structured Communication Support Helps',
-    },
-    {
-      type: 'p',
-      content:
-        'If one-word responses persist for weeks across home and school contexts, structured support can help with vocabulary growth, sentence planning, and confident expression.',
-    },
-    {
-      type: 'p',
-      content:
-        'Many children improve when speaking tasks are staged clearly, similar to public speaking for kids programs that build from short responses to full answers.',
-    },
-    {
-      type: 'h2',
-      content: '10. Tiny Steps View',
-    },
-    {
-      type: 'p',
-      content:
-        'At Tiny Steps, we build speaking through guided sentence frames, grammar-linked expression, and confidence-first routines. The aim is practical communication growth, one clear sentence at a time.',
-    },
-    {
-      type: 'li',
-      content: 'Explore speaking pathway: /speaking',
-    },
-    {
-      type: 'li',
-      content: 'Explore grammar pathway: /grammar',
-    },
-    {
-      type: 'li',
-      content: 'Compare starting routes: /courses',
-    },
-    {
-      type: 'li',
-      content: 'See full learning roadmap: /curriculum',
-    },
-    {
-      type: 'h2',
-      content: '11. FAQ section with 5 parent questions',
-    },
+    { type: 'h2', content: 'Quick answer: expand communication without forcing a speech' },
+    { type: 'p', content: 'A child who answers “yes,” “fine,” “school,” or “good” may understand much more than the reply shows. The missing step can be idea organisation, vocabulary, sentence structure, confidence, processing time, or simply a habit created by yes/no questioning. The goal is not to demand long answers immediately. Help the child add one meaningful unit at a time: a complete sentence, then a reason, example, sequence or feeling.' },
+
+    { type: 'h2', content: 'First identify when the one-word pattern happens' },
+    { type: 'li', content: 'At home but not at school: the child may be tired, rushed or used to adults finishing answers.' },
+    { type: 'li', content: 'At school but not at home: performance pressure or confidence may be a stronger factor.' },
+    { type: 'li', content: 'Only for unfamiliar topics: vocabulary or background knowledge may be limiting the response.' },
+    { type: 'li', content: 'Across almost every situation: sentence formulation, language processing or broader communication needs may deserve a closer look.' },
+    { type: 'p', content: 'The context matters. A child who gives short answers after a long school day is not necessarily showing the same need as a child who cannot expand an idea even during relaxed play.' },
+
+    { type: 'h2', content: 'Seven common reasons children answer briefly' },
+    { type: 'li', content: 'The question can be answered with one word, so the child does exactly that.' },
+    { type: 'li', content: 'The child needs more time to plan a sentence than adults are allowing.' },
+    { type: 'li', content: 'Vocabulary is sufficient for recognition but not yet easy to retrieve during speaking.' },
+    { type: 'li', content: 'Sentence grammar is not automatic, so longer answers feel effortful.' },
+    { type: 'li', content: 'The child is worried about correction or being wrong.' },
+    { type: 'li', content: 'The child has learned that an adult will quickly supply the fuller answer.' },
+    { type: 'li', content: 'The topic is too abstract, unfamiliar or developmentally demanding.' },
+
+    { type: 'h2', content: 'Change the question before correcting the answer' },
+    { type: 'p', content: 'Instead of “Did you like school?” try “What was one thing you liked at school today?” Instead of “Was the story good?” try “Which part of the story was most interesting?” Open questions create room for language, but they should still be concrete enough that the child knows what kind of information is being requested.' },
+
+    { type: 'h2', content: 'Use wait time deliberately' },
+    { type: 'p', content: 'After asking, pause. Do not immediately repeat the question, offer choices, correct grammar and begin another question. A few quiet seconds can be the difference between a one-word reply and a self-generated sentence. If the child still needs help, give a small scaffold rather than the complete answer.' },
+
+    { type: 'h2', content: 'Five sentence frames that support—not replace—thinking' },
+    { type: 'li', content: 'I think ___ because ___.' },
+    { type: 'li', content: 'My favourite part was ___ because ___.' },
+    { type: 'li', content: 'First ___, then ___.' },
+    { type: 'li', content: 'I felt ___ when ___.' },
+    { type: 'li', content: 'I agree / disagree because ___.' },
+    { type: 'p', content: 'Use one or two frames repeatedly until the structure becomes familiar, then reduce the prompt. A frame is successful when the child eventually produces the structure without seeing it.' },
+
+    { type: 'h2', content: 'The “one more detail” technique' },
+    { type: 'p', content: 'If the child says “football,” first model a complete sentence: “I played football.” Then ask for one extra detail: where, with whom, when, why, or what happened next. This keeps the task manageable while teaching that a strong answer contains connected information.' },
+
+    { type: 'h2', content: 'Because-answer practice' },
+    { type: 'p', content: 'Questions that naturally invite a reason are useful: “Which game would you choose and why?” A simple because-frame helps the child move from naming a preference to explaining a thought. Do not insist on “because” in every conversation; the point is learning expansion patterns, not making speech mechanical.' },
+
+    { type: 'h2', content: 'Picture talk: a low-pressure way to organise ideas' },
+    { type: 'li', content: 'Who or what can you see?' },
+    { type: 'li', content: 'What is happening?' },
+    { type: 'li', content: 'Where is it happening?' },
+    { type: 'li', content: 'Why might that be happening?' },
+    { type: 'li', content: 'What could happen next?' },
+    { type: 'p', content: 'Pictures reduce the memory demand because the child can see the topic while speaking. They are especially useful for moving from labels to complete descriptions and then to short narratives.' },
+
+    { type: 'h2', content: 'A 10-minute daily speaking routine' },
+    { type: 'li', content: '2 minutes: one easy warm-up question with generous wait time.' },
+    { type: 'li', content: '3 minutes: practise one sentence frame across two or three topics.' },
+    { type: 'li', content: '3 minutes: picture talk, short retell or “first/then” story.' },
+    { type: 'li', content: '2 minutes: repeat one strong answer naturally and end without drilling every error.' },
+
+    { type: 'h2', content: 'How grammar supports fuller answers' },
+    { type: 'p', content: 'Children need enough sentence control to organise who did what, when, where and why. Grammar practice is most useful when it feeds real expression: expand a noun phrase, choose a tense, connect two ideas, or revise a sentence the child actually wants to say.' },
+
+    { type: 'h2', content: 'What not to do' },
+    { type: 'li', content: 'Do not correct every grammar error before responding to the child’s meaning.' },
+    { type: 'li', content: 'Do not ask ten rapid questions in a row; conversation is not an oral worksheet.' },
+    { type: 'li', content: 'Do not compare the child’s answer length with a sibling or classmate.' },
+    { type: 'li', content: 'Do not give a long model and demand exact repetition as the only form of success.' },
+    { type: 'li', content: 'Do not assume quietness automatically means lack of knowledge.' },
+
+    { type: 'h2', content: 'What progress looks like' },
+    { type: 'p', content: 'Look for more independent complete sentences, longer answers when the topic is familiar, greater willingness to add a reason or example, improved recovery after a mistake, and less dependence on adult sentence starters. The aim is flexible communication, not simply producing more words.' },
+
+    { type: 'h2', content: 'When structured support can help' },
+    { type: 'p', content: 'If brief responses persist across settings despite patient practice, or if the child also struggles to understand questions, retrieve common words, build age-appropriate sentences or participate in everyday conversation, discuss the pattern with the child’s teacher and an appropriate qualified professional. For a learning-path question, Tiny Steps offers year-round /speaking and /grammar programmes and the regular /book-demo assessment route.' },
   ],
   faq: [
-    {
-      question: 'Why does my child give one word answers even when they understand?',
-      answer:
-        'This is common. Children may understand the question but need more sentence structure, confidence, and wait time to express full responses.',
-    },
-    {
-      question: 'Should I correct every short answer immediately?',
-      answer:
-        'Not usually. It is better to model an expanded version and invite your child to try it. Too much correction can reduce confidence.',
-    },
-    {
-      question: 'How can I build sentence formation for kids at home quickly?',
-      answer:
-        'Use one frame at a time, such as "I like... because...," and practice in short daily rounds. Consistency matters more than long sessions.',
-    },
-    {
-      question: 'Can grammar and speaking practice happen together?',
-      answer:
-        'Yes. When children use grammar inside real spoken answers, both sentence quality and communication confidence improve together.',
-    },
-    {
-      question: 'When should I seek communication classes for children?',
-      answer:
-        'If one-word replies continue for several weeks despite regular home routines, structured support can help with vocabulary, sentence flow, and confidence.',
-    },
+    { question: 'Is it normal for children to give one-word answers?', answer: 'It can be common, especially with yes/no questions, unfamiliar topics, low confidence or limited wait time. Look at the pattern across settings rather than judging one conversation.' },
+    { question: 'Should I tell my child “speak in a full sentence” every time?', answer: 'Not every time. Model a useful structure, give a small prompt and keep the conversation meaningful. Constant correction can make a hesitant child speak less.' },
+    { question: 'How do I get more than “fine” after school?', answer: 'Ask a narrower open question such as “What made you laugh today?” or “What was one difficult thing?” Specific prompts are easier to expand than “How was school?”' },
+    { question: 'Can grammar classes help one-word answers?', answer: 'Grammar can help when sentence structure is part of the bottleneck, but the child also needs real speaking opportunities, vocabulary retrieval, wait time and confidence-building practice.' },
+    { question: 'What is the best first target?', answer: 'Aim for one independent complete sentence, then one extra detail. Small repeatable expansions are more useful than demanding a long speech.' },
   ],
 };
 
