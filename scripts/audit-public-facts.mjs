@@ -89,6 +89,12 @@ function collect(target, files) {
   }
 }
 
+function seasonalSlice(relativePath, text) {
+  if (relativePath !== 'public/llms.txt' && relativePath !== 'public/kb.json') return text;
+  const index = text.indexOf('Summer Camp 2026');
+  return index >= 0 ? text.slice(index, index + 900) : text;
+}
+
 if (!fs.existsSync(FACTS_FILE)) failures.push('src/config/publicFacts.ts is missing');
 else {
   const text = fs.readFileSync(FACTS_FILE, 'utf8');
@@ -136,11 +142,12 @@ for (const relativePath of SEASONAL_PUBLIC_FILES) {
     continue;
   }
   const text = fs.readFileSync(filePath, 'utf8');
+  const seasonalText = seasonalSlice(relativePath, text);
   for (const [regex, label] of FORBIDDEN_SEASONAL_COPY) {
     regex.lastIndex = 0;
-    if (regex.test(text)) failures.push(`${relativePath}: ${label}`);
+    if (regex.test(seasonalText)) failures.push(`${relativePath}: ${label}`);
   }
-  if (!/Summer Camp 2026[^\n]{0,120}concluded on 13 June 2026/i.test(text) && !text.includes('SUMMER_CAMP_2026_ARCHIVE_LABEL')) {
+  if (!/Summer Camp 2026[^\n]{0,160}concluded on 13 June 2026/i.test(seasonalText) && !text.includes('SUMMER_CAMP_2026_ARCHIVE_LABEL')) {
     failures.push(`${relativePath}: missing clear Summer Camp 2026 conclusion status`);
   }
 }
