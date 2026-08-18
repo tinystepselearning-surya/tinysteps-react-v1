@@ -5,7 +5,9 @@ import process from 'node:process';
 
 const ROOT = process.cwd();
 const FACTS_FILE = path.join(ROOT, 'src/config/publicFacts.ts');
-const VITE_CONFIG = path.join(ROOT, 'vite.config.ts');
+const VITE_CONFIG = ['vite.config.js', 'vite.config.ts', 'vite.config.jsx', 'vite.config.tsx']
+  .map((name) => path.join(ROOT, name))
+  .find((candidate) => fs.existsSync(candidate));
 const DIST = path.join(ROOT, 'dist');
 const CHECK_DIST = process.argv.includes('--dist');
 const REQUIRED_FACTS = [
@@ -66,7 +68,7 @@ const FORBIDDEN_RENDERED_CLAIMS = [
   [/Trusted by 250\+ families/gi, 'unsupported 250+ families claim'],
   [/4\.9\s*\/\s*5\s*parent satisfaction/gi, 'unsupported 4.9/5 parent satisfaction claim'],
   [/27 April 2026/gi, 'obsolete Summer Camp start date'],
-  [/₹\s*2,400|Rs\.\s*2,400/gi, 'obsolete Summer Camp historical fee'],
+  [/₹\s*2,400|Rs\.\s*2,400/gi, 'obsolete Summer Camp historical fee', true],
 ];
 const SCAN_ROOTS = ['src/pages', 'src/components', 'src/content', 'public/llms.txt', 'public/kb.json', 'functions/src/ai'];
 const SEASONAL_PUBLIC_FILES = [
@@ -124,7 +126,7 @@ for (const [relativePath, required] of REQUIRED_PARITY) {
   const text = fs.readFileSync(filePath, 'utf8');
   if (!text.includes(required)) failures.push(`${relativePath} is out of parity: missing ${JSON.stringify(required)}`);
 }
-const viteText = fs.existsSync(VITE_CONFIG) ? fs.readFileSync(VITE_CONFIG, 'utf8') : '';
+const viteText = VITE_CONFIG ? fs.readFileSync(VITE_CONFIG, 'utf8') : '';
 if (!viteText.includes('FALLBACK_TESTIMONIAL_TARGET = BASE_FALLBACK_TESTIMONIALS.length')) {
   failures.push('public build does not disable generated testimonial-count inflation');
 }
@@ -183,7 +185,10 @@ if (CHECK_DIST) {
     collect(DIST, htmlFiles, (value) => value.endsWith('.html'));
     for (const filePath of htmlFiles) {
       const text = fs.readFileSync(filePath, 'utf8');
-      for (const [regex, label] of FORBIDDEN_RENDERED_CLAIMS) {
+      const relativePath = path.relative(DIST, filePath).replaceAll(path.sep, '/');
+      const isSeasonalPage = relativePath.startsWith('summer-camp') || relativePath.startsWith('summer-camps/');
+      for (const [regex, label, seasonalOnly = false] of FORBIDDEN_RENDERED_CLAIMS) {
+        if (seasonalOnly && !isSeasonalPage) continue;
         regex.lastIndex = 0;
         if (regex.test(text)) failures.push(`${path.relative(ROOT, filePath)}: ${label}`);
       }

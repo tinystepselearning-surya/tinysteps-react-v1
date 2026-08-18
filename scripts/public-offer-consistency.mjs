@@ -58,7 +58,7 @@ const REQUIRED_STRINGS = [
   },
   {
     path: 'public/kb.json',
-    value: 'Summer Camp 2026 — Enrolment Closed',
+    value: 'Summer Camp 2026 concluded on 13 June 2026',
   },
 ];
 
@@ -160,8 +160,8 @@ for (const entry of kbEntries) {
 }
 
 const summerCampEntry = kbEntries.find((entry) => entry?.path === '/summer-camps');
-if (!summerCampEntry || !/enrolment is closed/i.test(summerCampEntry.text ?? '')) {
-  failures.push('public/kb.json: /summer-camps must say enrolment is closed');
+if (!summerCampEntry || !/Summer Camp 2026 concluded on 13 June 2026/i.test(summerCampEntry.text ?? '')) {
+  failures.push('public/kb.json: /summer-camps must state the conclusion date');
 }
 
 const bookDemoEntry = kbEntries.find((entry) => entry?.path === '/book-demo');

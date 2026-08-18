@@ -13,116 +13,48 @@ import path from 'path';
  */
 describe('SEO: Archived Summer Camp 2026 Structured Data', () => {
   let pageContent: string;
+  let publicFactsContent: string;
 
-  beforeAll(async () => {
+  beforeAll(() => {
     const filePath = path.resolve(
       __dirname,
       '../../pages/SummerCampsPage.tsx'
     );
     pageContent = fs.readFileSync(filePath, 'utf-8');
+
+    const publicFactsPath = path.resolve(
+      __dirname,
+      '../../config/publicFacts.ts'
+    );
+    publicFactsContent = fs.readFileSync(publicFactsPath, 'utf-8');
   });
 
-  it('does not publish Event schema for archived 2026 season', () => {
-    // After the ternary fix, Event schemas are only included when NOT archived
-    // The page should have:
-    // ...(SUMMER_CAMP_2026_CONFIG.status !== 'archived'
-    //   ? [phonicsEventSchema, grammarEventSchema, speakingEventSchema]
-    //   : [])
-    
-    const eventSchemaPattern = /createEventSchema\s*\(\s*\{[\s\S]*?eventStatus:/g;
-    const matches = Array.from(pageContent.matchAll(eventSchemaPattern));
-    
-    // Should have exactly 3 Event schema definitions
-    expect(matches.length).toBe(3);
-    
-    // All 3 should have eventStatus from getEventStatusType (which returns appropriate status for archived)
-    // But they should NOT be conditionally included with Offer properties
-    const phoneticEventBlock = pageContent.match(
-      /const phonicsEventSchema[\s\S]*?}\);/
-    )?.[0] || '';
-    
-    // Should NOT contain price/availability/validFrom in Event schema
-    expect(phoneticEventBlock).not.toContain('price: SUMMER_CAMP_ENROLLMENT_PRICE');
-    expect(phoneticEventBlock).not.toContain('availability: ');
-    expect(phoneticEventBlock).not.toContain('validFrom:');
+  it('publishes FAQ guidance instead of Event or Service schema', () => {
+    expect(pageContent).toContain('jsonLd: [createFAQPageSchema(faqItems)]');
+    expect(pageContent).not.toMatch(/createEventSchema|['"]@type['"]:\s*['"]Event['"]/);
+    expect(pageContent).not.toMatch(/['"]@type['"]:\s*['"]Service['"]/);
   });
 
-  it('does not publish InStock or OutOfStock in archived season', () => {
-    // For archived season, the Offer properties should be completely absent
-    // not substituted with OutOfStock
-    
-    const courseListBlock = pageContent.match(
-      /const courseListSchema[\s\S]*?\n    \};/
-    )?.[0] || '';
-    
-    // Should conditionally include offers only when NOT archived
-    expect(courseListBlock).toContain('shouldPublishInStock(SUMMER_CAMP_2026_CONFIG)');
-    expect(courseListBlock).toContain('offers:');
-    
-    // Should NOT always include OutOfStock
-    expect(courseListBlock).not.toMatch(
-      /availability:.*OutOfStock/
-    );
+  it('does not publish Offer, stock, price, or validFrom markup', () => {
+    expect(pageContent).not.toMatch(/['"]@type['"]:\s*['"]Offer['"]/);
+    expect(pageContent).not.toMatch(/InStock|OutOfStock|validFrom/);
+    expect(pageContent).not.toMatch(/price(?:Currency)?\s*:/);
   });
 
-  it('does not publish Offer schema in Service for archived season', () => {
-    const serviceBlock = pageContent.match(
-      /const serviceSchema[\s\S]*?\n    \};/
-    )?.[0] || '';
-    
-    // Should conditionally include offers only when NOT archived
-    expect(serviceBlock).toContain('shouldPublishInStock(SUMMER_CAMP_2026_CONFIG)');
-    
-    // Should NOT always publish Offer with OutOfStock
-    expect(serviceBlock).not.toMatch(
-      /offers:\s*\{\s*'@type':\s*'Offer'[\s\S]*?availability:.*OutOfStock/
-    );
+  it('uses the canonical archive route and labels the season concluded', () => {
+    expect(pageContent).toContain("canonicalPath: '/summer-camps'");
+    expect(pageContent).toContain('SUMMER_CAMP_2026_ARCHIVE_LABEL');
+    expect(pageContent).toContain('Seasonal archive');
+    expect(publicFactsContent).toContain("status: 'concluded' as const");
+    expect(publicFactsContent).toContain("endDateIso: '2026-06-13'");
+    expect(publicFactsContent).toContain("endDateLabel: '13 June 2026'");
   });
 
-  it('does not publish active price for archived season', () => {
-    const pageBlock = pageContent;
-    
-    // Check that offers block is wrapped in conditional guard for courseListSchema
-    const courseListBlock = pageBlock.match(
-      /const courseListSchema[\s\S]*?\n    \};/
-    )?.[0] || '';
-    
-    // Should have conditional guard
-    expect(courseListBlock).toContain('shouldPublishInStock(SUMMER_CAMP_2026_CONFIG)');
-    expect(courseListBlock).toContain('offers:');
-    
-    // Check that serviceSchema also has conditional guard
-    const serviceBlock = pageBlock.match(
-      /const serviceSchema[\s\S]*?\n    \};/
-    )?.[0] || '';
-    
-    expect(serviceBlock).toContain('shouldPublishInStock(SUMMER_CAMP_2026_CONFIG)');
-    
-    // The key point: offers should be inside the conditional spread operator
-    // not unconditionally in the object
-    expect(courseListBlock).toMatch(
-      /\.\.\.\(shouldPublishInStock\(SUMMER_CAMP_2026_CONFIG\)\s*&&\s*\{[\s\S]*?offers:/
-    );
-    expect(serviceBlock).toMatch(
-      /\.\.\.\(shouldPublishInStock\(SUMMER_CAMP_2026_CONFIG\)\s*&&\s*\{[\s\S]*?offers:/
-    );
-  });
-
-  it('conditionally includes offers only when season is active', () => {
-    // All Offer properties should be wrapped in:
-    // ...(shouldPublishInStock(SUMMER_CAMP_2026_CONFIG) && { offers: {...} })
-    
-    expect(pageContent).toContain('shouldPublishInStock(SUMMER_CAMP_2026_CONFIG)');
-    
-    // Count how many times shouldPublishInStock is used to guard offers
-    const offerGuardMatches = Array.from(
-      pageContent.matchAll(
-        /\.\.\.\(shouldPublishInStock\(SUMMER_CAMP_2026_CONFIG\)\s*&&\s*\{[\s\S]*?offers:/g
-      )
-    );
-    
-    // Should have at least 2 (courseListSchema and serviceSchema)
-    expect(offerGuardMatches.length).toBeGreaterThanOrEqual(2);
+  it('routes current commercial intent to the regular year-round offer', () => {
+    expect(pageContent).toContain('Explore year-round courses');
+    expect(pageContent).toContain("to=\"/book-demo\"");
+    expect(pageContent).toContain('Book regular 35-minute assessment');
+    expect(pageContent).not.toMatch(/enrol now|limited seats|batch starts/i);
   });
 });
 

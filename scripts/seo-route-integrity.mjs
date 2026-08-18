@@ -371,7 +371,12 @@ async function validateNotFoundFunction() {
   if (!/X-Robots-Tag[\s\S]*noindex/i.test(source)) fail('notFoundRoute lacks an X-Robots-Tag noindex directive');
   if (!/<meta\s+name=["']robots["'][^>]*noindex/i.test(source)) fail('notFoundRoute lacks a noindex robots meta tag');
   if (!/Cache-Control[\s\S]*no-store/i.test(source)) fail('notFoundRoute lacks a no-store cache policy');
-  if (!/escapeHtml\(\s*request\.(?:path|originalUrl)/.test(source)) fail('notFoundRoute does not escape the displayed request path');
+  const escapesRequestPathDirectly = /escapeHtml\(\s*request\.(?:path|originalUrl)/.test(source);
+  const escapesNormalizedRequestPath = /const\s+rawPath\s*=\s*normalizePath\([^;]{0,160}request\.(?:path|originalUrl)/.test(source)
+    && /escapeHtml\(\s*rawPath\s*\)/.test(source);
+  if (!escapesRequestPathDirectly && !escapesNormalizedRequestPath) {
+    fail('notFoundRoute does not escape the displayed request path');
+  }
   if (!/export\s+\{\s*notFoundRoute\s*\}\s+from\s+["']\.\/notFoundRoute["']/.test(indexSource)) {
     fail('functions/src/index.ts does not export notFoundRoute');
   }

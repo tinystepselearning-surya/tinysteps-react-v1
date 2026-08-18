@@ -14,7 +14,9 @@ const RSS_FILES = [
   path.join(ROOT, 'public/blog/feed.xml'),
 ];
 const NOT_FOUND = path.join(ROOT, 'functions/src/notFoundRoute.ts');
-const VITE_CONFIG = path.join(ROOT, 'vite.config.ts');
+const VITE_CONFIG = ['vite.config.js', 'vite.config.ts', 'vite.config.jsx', 'vite.config.tsx']
+  .map((name) => path.join(ROOT, name))
+  .find((candidate) => fs.existsSync(candidate));
 const DIST = path.join(ROOT, 'dist');
 const CHECK_DIST = process.argv.includes('--dist');
 const failures = [];
@@ -57,9 +59,9 @@ function hasSlug(slug) {
 }
 
 const redirectText = fs.existsSync(NOT_FOUND) ? fs.readFileSync(NOT_FOUND, 'utf8') : '';
-const viteText = fs.existsSync(VITE_CONFIG) ? fs.readFileSync(VITE_CONFIG, 'utf8') : '';
+const viteText = VITE_CONFIG ? fs.readFileSync(VITE_CONFIG, 'utf8') : '';
 if (!viteText.includes('canonicalInternalBlogLinks')) {
-  failures.push('vite.config.ts is missing the canonical internal-blog-link rewrite plugin');
+  failures.push('canonical Vite config is missing the internal-blog-link rewrite plugin');
 }
 
 for (const [sourcePath, destinationPath] of Object.entries(RETIRED_BLOG_PATH_REDIRECTS)) {
