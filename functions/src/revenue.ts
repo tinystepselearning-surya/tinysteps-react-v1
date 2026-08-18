@@ -5,6 +5,11 @@ import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { ensureAdmin } from './helpers/adminGuard';
 import { normalizeFinancialStatus, normalizeLowerStatus } from './helpers/status';
+import { resolveCanonicalServiceDate } from './helpers/serviceDate';
+import {
+  resolveRevenueAccrualLedgerRepairReason,
+  shouldPersistRevenueRepairMarker,
+} from './helpers/revenueAccrualSafety';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -453,9 +458,8 @@ export const onSessionRevenueWrite = onDocumentWritten(
         const beforeSessionTeacherId = normalizeTeacherId(beforeData?.teacherId);
         const resolvedTeacherId = sessionTeacherId || beforeSessionTeacherId || null;
 
-        const monthKey = monthKeyFromTimestampIST(
-          session.date || session.startAt || session.endAt
-        );
+        const canonicalService = resolveCanonicalServiceDate(session, null);
+        const monthKey = canonicalService.serviceMonthKey;
 
         if (!monthKey) {
           logger.error('Revenue accrual skipped: session missing valid date fields', {
@@ -463,6 +467,32 @@ export const onSessionRevenueWrite = onDocumentWritten(
             startAt: session.startAt,
             date: session.date,
             endAt: session.endAt,
+          });
+          return;
+        }
+
+        if (!(ratePerSession > 0)) {
+          const repairReason = 'zero_or_unresolved_session_fee';
+          if (shouldPersistRevenueRepairMarker({
+            existingRepairRequired: session.revenueRepairRequired,
+            existingRepairReason: session.revenueRepairReason,
+            nextRepairReason: repairReason,
+          })) {
+            tx.set(
+              sessionRef,
+              {
+                revenueRepairRequired: true,
+                revenueRepairDetectedAt: FieldValue.serverTimestamp(),
+                revenueRepairReason: repairReason,
+                updatedAt: FieldValue.serverTimestamp(),
+              },
+              { merge: true }
+            );
+          }
+          logger.warn('Revenue accrual failed closed: session fee is zero or unresolved', {
+            sessionId: change.after.id,
+            enrollmentId,
+            ratePerSession,
           });
           return;
         }
@@ -476,14 +506,14 @@ export const onSessionRevenueWrite = onDocumentWritten(
         const chargeStatusRaw = chargeSnap.exists ? String(chargeSnap.data()?.status || '') : '';
         const chargeStatus = chargeStatusRaw.toLowerCase();
         const nextChargeStatus =
-          !chargeSnap.exists || chargeStatus === 'void' ? 'open' : chargeStatus;
+          !chargeSnap.exists ? 'open' : chargeStatus;
         const existingChargeData = (chargeSnap.data() || {}) as any;
         const existingChargeAmount = normalizeNumber(existingChargeData.amount, 0);
-        const existingChargePaidAmount = resolveChargePaidAmount(existingChargeData, existingChargeAmount);
-        const shouldPreserveChargeAmount =
-          chargeSnap.exists &&
-          (isSettledCharge(nextChargeStatus) || existingChargePaidAmount > 0);
-        const chargeAmount = shouldPreserveChargeAmount ? existingChargeAmount : ratePerSession;
+        const chargeAmount = chargeSnap.exists ? existingChargeAmount : ratePerSession;
+        const preservedChargeMonthKey = String(existingChargeData.monthKey || '').trim();
+        const chargeMonthKey = chargeSnap.exists && /^\d{4}-\d{2}$/.test(preservedChargeMonthKey)
+          ? preservedChargeMonthKey
+          : monthKey;
 
         const chargePayload: Record<string, any> = {
           sessionId,
@@ -496,7 +526,10 @@ export const onSessionRevenueWrite = onDocumentWritten(
           currency,
           status: nextChargeStatus || 'open',
           source: 'session_present_completed',
-          monthKey,
+          monthKey: chargeMonthKey,
+          serviceDate: existingChargeData.serviceDate || canonicalService.serviceDate,
+          serviceMonthKey: existingChargeData.serviceMonthKey || monthKey,
+          ...(existingChargeData.sessionStartAt || !session.startAt ? {} : { sessionStartAt: session.startAt }),
           updatedAt: FieldValue.serverTimestamp(),
         };
         if (!chargeSnap.exists) {
@@ -508,16 +541,49 @@ export const onSessionRevenueWrite = onDocumentWritten(
         const earningStatusRaw = earningSnap.exists ? String(earningSnap.data()?.status || '') : '';
         const earningStatus = earningStatusRaw.toLowerCase();
         const nextEarningStatus =
-          !earningSnap.exists || earningStatus === 'void' ? 'unpaid' : earningStatus;
+          !earningSnap.exists ? 'unpaid' : earningStatus;
         const existingEarningData = (earningSnap.data() || {}) as any;
         const existingEarningAmount = normalizeNumber(existingEarningData.amount, 0);
-        const existingEarningPaidAmount = resolveTeacherEarningPaidAmount(existingEarningData, existingEarningAmount);
-        const shouldPreserveEarningAmount =
-          earningSnap.exists &&
-          (isSettledCharge(nextEarningStatus) || existingEarningPaidAmount > 0);
-        const teacherEarningAmount = shouldPreserveEarningAmount
-          ? existingEarningAmount
-          : teacherPayPerSession;
+        const teacherEarningAmount = earningSnap.exists ? existingEarningAmount : teacherPayPerSession;
+        const preservedEarningMonthKey = String(existingEarningData.monthKey || '').trim();
+        const earningMonthKey = earningSnap.exists && /^\d{4}-\d{2}$/.test(preservedEarningMonthKey)
+          ? preservedEarningMonthKey
+          : monthKey;
+
+        const repairReason = resolveRevenueAccrualLedgerRepairReason({
+          alreadyAccrued,
+          chargeExists: chargeSnap.exists,
+          chargeStatus,
+          earningExists: earningSnap.exists,
+          earningStatus,
+        });
+        if (repairReason) {
+          if (shouldPersistRevenueRepairMarker({
+            existingRepairRequired: session.revenueRepairRequired,
+            existingRepairReason: session.revenueRepairReason,
+            nextRepairReason: repairReason,
+          })) {
+            tx.set(
+              sessionRef,
+              {
+                revenueRepairRequired: true,
+                revenueRepairDetectedAt: FieldValue.serverTimestamp(),
+                revenueRepairReason: repairReason,
+                updatedAt: FieldValue.serverTimestamp(),
+              },
+              { merge: true }
+            );
+          }
+          logger.warn('Revenue accrual failed closed for ambiguous pre-existing ledger state', {
+            sessionId,
+            chargeExists: chargeSnap.exists,
+            chargeStatus,
+            earningExists: earningSnap.exists,
+            earningStatus,
+            repairReason,
+          });
+          return;
+        }
         const earningPayload: Record<string, any> = {
           sessionId,
           enrollmentId,
@@ -529,7 +595,7 @@ export const onSessionRevenueWrite = onDocumentWritten(
           currency,
           status: nextEarningStatus || 'unpaid',
           earnedAt: FieldValue.serverTimestamp(),
-          monthKey,
+          monthKey: earningMonthKey,
           updatedAt: FieldValue.serverTimestamp(),
         };
         if (!earningSnap.exists) {
@@ -581,16 +647,22 @@ export const onSessionRevenueWrite = onDocumentWritten(
               : !chargeSnap.exists
                 ? 'missing_billing_charge_doc'
                 : 'missing_teacher_earning_doc';
-          tx.set(
-            sessionRef,
-            {
-              revenueRepairRequired: true,
-              revenueRepairDetectedAt: FieldValue.serverTimestamp(),
-              revenueRepairReason: repairReason,
-              updatedAt: FieldValue.serverTimestamp(),
-            },
-            { merge: true }
-          );
+          if (shouldPersistRevenueRepairMarker({
+            existingRepairRequired: session.revenueRepairRequired,
+            existingRepairReason: session.revenueRepairReason,
+            nextRepairReason: repairReason,
+          })) {
+            tx.set(
+              sessionRef,
+              {
+                revenueRepairRequired: true,
+                revenueRepairDetectedAt: FieldValue.serverTimestamp(),
+                revenueRepairReason: repairReason,
+                updatedAt: FieldValue.serverTimestamp(),
+              },
+              { merge: true }
+            );
+          }
           logger.warn('Revenue ledger immutable after accrual; missing ledger docs were not auto-recreated', {
             sessionId,
             chargeExists: chargeSnap.exists,
