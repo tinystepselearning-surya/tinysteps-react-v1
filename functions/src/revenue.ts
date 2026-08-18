@@ -5,6 +5,7 @@ import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { ensureAdmin } from './helpers/adminGuard';
 import { normalizeFinancialStatus, normalizeLowerStatus } from './helpers/status';
+import { resolveCanonicalServiceDate } from './helpers/serviceDate';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -453,9 +454,8 @@ export const onSessionRevenueWrite = onDocumentWritten(
         const beforeSessionTeacherId = normalizeTeacherId(beforeData?.teacherId);
         const resolvedTeacherId = sessionTeacherId || beforeSessionTeacherId || null;
 
-        const monthKey = monthKeyFromTimestampIST(
-          session.date || session.startAt || session.endAt
-        );
+        const canonicalService = resolveCanonicalServiceDate(session, null);
+        const monthKey = canonicalService.serviceMonthKey;
 
         if (!monthKey) {
           logger.error('Revenue accrual skipped: session missing valid date fields', {
@@ -484,6 +484,10 @@ export const onSessionRevenueWrite = onDocumentWritten(
           chargeSnap.exists &&
           (isSettledCharge(nextChargeStatus) || existingChargePaidAmount > 0);
         const chargeAmount = shouldPreserveChargeAmount ? existingChargeAmount : ratePerSession;
+        const preservedChargeMonthKey = String(existingChargeData.monthKey || '').trim();
+        const chargeMonthKey = shouldPreserveChargeAmount && /^\d{4}-\d{2}$/.test(preservedChargeMonthKey)
+          ? preservedChargeMonthKey
+          : monthKey;
 
         const chargePayload: Record<string, any> = {
           sessionId,
@@ -496,7 +500,10 @@ export const onSessionRevenueWrite = onDocumentWritten(
           currency,
           status: nextChargeStatus || 'open',
           source: 'session_present_completed',
-          monthKey,
+          monthKey: chargeMonthKey,
+          serviceDate: existingChargeData.serviceDate || canonicalService.serviceDate,
+          serviceMonthKey: existingChargeData.serviceMonthKey || monthKey,
+          ...(existingChargeData.sessionStartAt || !session.startAt ? {} : { sessionStartAt: session.startAt }),
           updatedAt: FieldValue.serverTimestamp(),
         };
         if (!chargeSnap.exists) {

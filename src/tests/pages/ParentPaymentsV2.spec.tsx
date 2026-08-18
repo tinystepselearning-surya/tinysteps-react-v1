@@ -162,7 +162,47 @@ describe('ParentPaymentsV2', () => {
 
       if (collectionName(input) === 'billingCharges' && hasWhere(input, 'parentId', 'in')) {
         return {
-          docs: [makeDoc('charge-1', { parentId: 'parent-1', amount: 5800, paidAmount: 1000, status: 'partial' })],
+          docs: [makeDoc('charge-1', {
+            parentId: 'parent-1',
+            sessionId: 'session-1',
+            monthKey: '2026-08',
+            amount: 5800,
+            paidAmount: 1000,
+            status: 'partial',
+            createdAt: '2026-09-10T10:00:00.000Z',
+          })],
+        };
+      }
+
+      if (collectionName(input) === 'billingCharges' && hasWhere(input, 'parentId', '==')) {
+        return {
+          docs: [makeDoc('charge-1', {
+            parentId: 'parent-1',
+            sessionId: 'session-1',
+            monthKey: '2026-08',
+            amount: 5800,
+            paidAmount: 1000,
+            status: 'partial',
+            createdAt: '2026-09-10T10:00:00.000Z',
+          })],
+        };
+      }
+
+      if (collectionName(input) === 'classSessions' && hasWhere(input, '__name__', 'in')) {
+        return { docs: [makeDoc('session-1', { date: '2026-08-17' })] };
+      }
+
+      if (collectionName(input) === 'billingCharges' && hasWhere(input, 'sessionId', 'in')) {
+        return {
+          docs: [makeDoc('charge-1', {
+            parentId: 'parent-1',
+            sessionId: 'session-1',
+            monthKey: '2026-08',
+            amount: 5800,
+            paidAmount: 1000,
+            status: 'partial',
+            createdAt: '2026-09-10T10:00:00.000Z',
+          })],
         };
       }
 
@@ -237,6 +277,16 @@ describe('ParentPaymentsV2', () => {
     await waitFor(() => expect(screen.getByText('Parent One')).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: 'Financial tools' }));
     expect(openMaintenance).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the linked service date in the invoice instead of the charge creation date', async () => {
+    render(<ParentPaymentsV2 />);
+    await waitFor(() => expect(screen.getByText('Parent One')).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: 'Invoice' }));
+
+    expect(await screen.findByText('17 Aug')).toBeTruthy();
+    expect(screen.queryByText('10 Sep')).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('uses one direct search picker and narrows the page to the selected parent', async () => {

@@ -5,6 +5,8 @@ import {
   ATTENDANCE_FINALISED_MESSAGE,
   getTeacherAttendanceCorrectionCutoffMillis,
 } from './helpers/attendanceCorrectionFreeze';
+import { resolveCanonicalServiceDate } from './helpers/serviceDate';
+import { resolvePresentFinanceReplayPlan } from './helpers/attendanceFinanceIdempotency';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -331,19 +333,6 @@ function normalizeMoney(value: unknown): number {
 
 function isSettledFinancialStatus(status: string): boolean {
   return status === 'paid' || status === 'settled';
-}
-
-function resolveMonthKeyFromSession(session: Record<string, unknown>): string | null {
-  const base =
-    toDateMaybe(session.startAt) ||
-    toDateMaybe(session.endAt) ||
-    toDateMaybe(session.date);
-  if (!base) return null;
-  const istMs = base.getTime() + 330 * 60 * 1000;
-  const istDate = new Date(istMs);
-  const year = istDate.getUTCFullYear();
-  const month = String(istDate.getUTCMonth() + 1).padStart(2, '0');
-  return `${year}-${month}`;
 }
 
 function resolveSessionKidId(session: Record<string, unknown>, preferredKidId?: string): string | null {
@@ -689,7 +678,8 @@ async function reconcileAttendanceCorrectionFinance(args: {
     }
     const enrollment = (enrollmentSnap.data() || {}) as Record<string, unknown>;
 
-    const monthKey = resolveMonthKeyFromSession(session);
+    const canonicalService = resolveCanonicalServiceDate(session, null);
+    const monthKey = canonicalService.serviceMonthKey;
     if (!monthKey) {
       throw new HttpsError('failed-precondition', 'Unable to determine session month for finance reconciliation.');
     }
@@ -701,6 +691,9 @@ async function reconcileAttendanceCorrectionFinance(args: {
     const currency = String(session.currency || enrollment.currency || 'INR');
     const billableKidId = resolveSessionKidId(session, kidId);
     const amount = resolveFeeAmount(session, enrollment);
+    if (amount <= 0) {
+      throw new HttpsError('failed-precondition', 'Session fee is zero or unresolved; finance reconciliation requires review.');
+    }
     const enrollmentTeacherAmount = resolveTeacherPayFromEnrollmentOnly(enrollment);
     const teacherAmount =
       enrollmentTeacherAmount > 0
@@ -716,6 +709,12 @@ async function reconcileAttendanceCorrectionFinance(args: {
       chargeSnap.exists && (isSettledFinancialStatus(nextChargeStatus) || existingChargePaidAmount > 0)
         ? existingChargeAmount
         : amount;
+    const preserveSettledCharge =
+      chargeSnap.exists && (isSettledFinancialStatus(nextChargeStatus) || existingChargePaidAmount > 0);
+    const existingChargeMonthKey = String(existingChargeData.monthKey || '').trim();
+    const chargeMonthKey = preserveSettledCharge && /^\d{4}-\d{2}$/.test(existingChargeMonthKey)
+      ? existingChargeMonthKey
+      : monthKey;
 
     const existingEarningData = (earningSnap.data() || {}) as Record<string, unknown>;
     const earningStatus = normalizeFinancialStatus(existingEarningData.status);
@@ -726,6 +725,25 @@ async function reconcileAttendanceCorrectionFinance(args: {
       earningSnap.exists && (isSettledFinancialStatus(nextEarningStatus) || existingEarningPaidAmount > 0)
         ? existingEarningAmount
         : teacherAmount;
+
+    const replayPlan = resolvePresentFinanceReplayPlan({
+      wasBillable,
+      chargeExists: chargeSnap.exists,
+      chargeStatus,
+      earningExists: earningSnap.exists,
+      earningStatus,
+    });
+    if (replayPlan.conflict === 'charge_void') {
+      throw new HttpsError('failed-precondition', 'Existing charge is void; present attendance replay requires financial review.');
+    }
+    if (replayPlan.conflict === 'earning_void') {
+      throw new HttpsError('failed-precondition', 'Existing teacher earning is void; present attendance replay requires financial review.');
+    }
+    const { shouldWriteCharge, shouldWriteEarning } = replayPlan;
+
+    if (!shouldWriteCharge && !shouldWriteEarning) {
+      return { action: 'no_finance_change', chargeChanged: false, earningChanged: false };
+    }
 
     const chargePayload: Record<string, unknown> = {
       sessionId,
@@ -738,7 +756,10 @@ async function reconcileAttendanceCorrectionFinance(args: {
       currency,
       status: nextChargeStatus,
       source: 'session_present_completed',
-      monthKey,
+      monthKey: chargeMonthKey,
+      serviceDate: existingChargeData.serviceDate || canonicalService.serviceDate,
+      serviceMonthKey: existingChargeData.serviceMonthKey || monthKey,
+      ...(existingChargeData.sessionStartAt || !session.startAt ? {} : { sessionStartAt: session.startAt }),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       ...metadata,
       voidedAt: admin.firestore.FieldValue.delete(),
@@ -774,9 +795,13 @@ async function reconcileAttendanceCorrectionFinance(args: {
       earningPayload.createdAt = admin.firestore.FieldValue.serverTimestamp();
     }
 
-    batch.set(chargeRef, chargePayload, { merge: true });
-    batch.set(earningRef, earningPayload, { merge: true });
-    return { action: 'mark_billable', chargeChanged: true, earningChanged: true };
+    if (shouldWriteCharge) batch.set(chargeRef, chargePayload, { merge: true });
+    if (shouldWriteEarning) batch.set(earningRef, earningPayload, { merge: true });
+    return {
+      action: 'mark_billable',
+      chargeChanged: shouldWriteCharge,
+      earningChanged: shouldWriteEarning,
+    };
   }
 
   const chargeData = (chargeSnap.data() || {}) as Record<string, unknown>;

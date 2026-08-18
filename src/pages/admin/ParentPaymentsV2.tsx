@@ -59,6 +59,11 @@ import {
   SelectValue,
 } from '@components/ui/select';
 import { Textarea } from '@components/ui/textarea';
+import {
+  classifyInvoiceCharges,
+  isActiveBillingCharge,
+  type InvoiceChargeRow,
+} from '../../../functions/src/helpers/serviceDate';
 
 const PAGE_SIZE = 10;
 const EPSILON = 0.01;
@@ -191,20 +196,16 @@ const resolveChargePaidAmount = (charge: Record<string, unknown>, amount: number
   return status === 'paid' || status === 'settled' ? amount : 0;
 };
 
-const resolveChargeDate = (charge: Record<string, unknown>) => {
-  const values = [charge.chargeDate, charge.date, charge.sessionDate, charge.startAt, charge.createdAt];
-  for (const value of values) {
-    if (!value) continue;
-    if (typeof (value as { toDate?: unknown }).toDate === 'function') {
-      const date = (value as { toDate: () => Date }).toDate();
-      if (!Number.isNaN(date.getTime())) return date;
-    }
-    if (typeof value === 'string' || typeof value === 'number') {
-      const date = new Date(value);
-      if (!Number.isNaN(date.getTime())) return date;
-    }
-  }
-  return null;
+const formatServiceDate = (serviceDate: string | null, includeYear = false) => {
+  if (!serviceDate) return '—';
+  const date = new Date(`${serviceDate}T00:00:00+05:30`);
+  if (!Number.isFinite(date.getTime())) return '—';
+  return new Intl.DateTimeFormat('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    ...(includeYear ? { year: 'numeric' as const } : {}),
+    timeZone: 'Asia/Kolkata',
+  }).format(date);
 };
 
 const chargeStudentName = (charge: Record<string, unknown>, kidNames: Record<string, string>) => {
@@ -271,6 +272,8 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
 
   const [usersById, setUsersById] = useState<Record<string, ParentUser>>({});
   const [charges, setCharges] = useState<Array<Record<string, unknown> & { id: string }>>([]);
+  const [invoiceIntegrityCharges, setInvoiceIntegrityCharges] = useState<Array<Record<string, unknown> & { id: string }>>([]);
+  const [sessionsById, setSessionsById] = useState<Record<string, Record<string, unknown> | null>>({});
   const [readModels, setReadModels] = useState<Record<string, ParentMonthlyBillingReadModel | null>>({});
   const [wallets, setWallets] = useState<Record<string, WalletSummary | null>>({});
   const [kidNames, setKidNames] = useState<Record<string, string>>({});
@@ -306,6 +309,8 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
   const [invoiceOpen, setInvoiceOpen] = useState(false);
   const [invoiceRow, setInvoiceRow] = useState<ParentPaymentsReportingRow | null>(null);
   const [invoiceSaving, setInvoiceSaving] = useState(false);
+  const [invoiceIntegrityLoading, setInvoiceIntegrityLoading] = useState(false);
+  const invoiceLoadRequestRef = useRef(0);
 
   const activeIds = useMemo(
     () => (selectedSearchParent ? [selectedSearchParent.id] : pageIds),
@@ -388,6 +393,8 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
     if (!activeIds.length) {
       setUsersById({});
       setCharges([]);
+      setInvoiceIntegrityCharges([]);
+      setSessionsById({});
       setReadModels({});
       setWallets({});
       setKidNames({});
@@ -632,25 +639,72 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
     }
   };
 
-  const openInvoice = (row: ParentPaymentsReportingRow) => {
+  const openInvoice = async (row: ParentPaymentsReportingRow) => {
+    const requestId = invoiceLoadRequestRef.current + 1;
+    invoiceLoadRequestRef.current = requestId;
     setInvoiceRow(row);
     setInvoiceOpen(true);
+    setInvoiceIntegrityLoading(true);
+    setInvoiceIntegrityCharges([]);
+    setSessionsById({});
+    try {
+      const chargeSnapshot = await getDocs(query(collection(db, 'billingCharges'), where('parentId', '==', row.parentId)));
+      const parentCharges: Array<Record<string, unknown> & { id: string }> = chargeSnapshot.docs
+        .map((item) => ({ id: item.id, ...(item.data() as Record<string, unknown>) } as Record<string, unknown> & { id: string }))
+        .filter((charge) => charge.archived !== true);
+      const sessionIds = Array.from(new Set(parentCharges.map((charge) => String(charge.sessionId || '').trim()).filter(Boolean)));
+      const nextSessionsById: Record<string, Record<string, unknown> | null> = {};
+      for (const ids of chunkIds(sessionIds)) {
+        const snapshot = await getDocs(query(collection(db, 'classSessions'), where(documentId(), 'in', ids)));
+        snapshot.docs.forEach((item) => {
+          nextSessionsById[item.id] = item.data() as Record<string, unknown>;
+        });
+      }
+      sessionIds.forEach((sessionId) => {
+        if (!(sessionId in nextSessionsById)) nextSessionsById[sessionId] = null;
+      });
+      if (invoiceLoadRequestRef.current !== requestId) return;
+      setInvoiceIntegrityCharges(parentCharges);
+      setSessionsById(nextSessionsById);
+    } catch (err) {
+      if (invoiceLoadRequestRef.current !== requestId) return;
+      console.error('[ParentPaymentsV2] Failed to load invoice integrity scope', err);
+      setError('Invoice integrity checks could not be completed. No invoice rows were loaded.');
+    } finally {
+      if (invoiceLoadRequestRef.current === requestId) setInvoiceIntegrityLoading(false);
+    }
   };
 
-  const invoiceCharges = useMemo(() => {
+  const invoiceIntegrityRows = useMemo(() => {
     if (!invoiceRow) return [];
-    return charges
-      .filter((charge) => String(charge.parentId || '') === invoiceRow.parentId)
-      .filter((charge) => {
-        const status = String(charge.status || '').trim().toLowerCase();
-        return !['void', 'cancelled', 'canceled', 'reversed', 'refunded'].includes(status) && Number(charge.amount) > 0;
-      })
-      .sort((left, right) => {
-        const leftDate = resolveChargeDate(left)?.getTime() || 0;
-        const rightDate = resolveChargeDate(right)?.getTime() || 0;
-        return leftDate - rightDate;
-      });
-  }, [charges, invoiceRow]);
+    return classifyInvoiceCharges({
+      charges: invoiceIntegrityCharges.filter(
+        (charge) => String(charge.parentId || '') === invoiceRow.parentId && isActiveBillingCharge(charge) && Number(charge.amount) > 0,
+      ),
+      sessionsById,
+      selectedMonth,
+    });
+  }, [invoiceIntegrityCharges, invoiceRow, selectedMonth, sessionsById]);
+
+  const invoiceCharges = useMemo<Array<InvoiceChargeRow<Record<string, unknown> & { id: string }>>>(() =>
+    invoiceIntegrityRows
+      .filter((row) => row.integrity === 'VALID' && row.serviceMonthKey === selectedMonth)
+      .sort((left, right) => String(left.serviceDate).localeCompare(String(right.serviceDate)) || left.charge.id.localeCompare(right.charge.id)),
+  [invoiceIntegrityRows, selectedMonth]);
+
+  const invoiceAnomalies = invoiceIntegrityRows.filter((row) =>
+    (String(row.charge.monthKey || '').trim() === selectedMonth || row.serviceMonthKey === selectedMonth) && row.integrity !== 'VALID',
+  );
+  const invoiceTotals = invoiceCharges.reduce((totals, row) => {
+    const amount = Math.max(Number(row.charge.amount) || 0, 0);
+    const paid = resolveChargePaidAmount(row.charge, amount);
+    return {
+      classes: totals.classes + 1,
+      billed: totals.billed + amount,
+      settled: totals.settled + paid,
+      due: totals.due + Math.max(amount - paid, 0),
+    };
+  }, { classes: 0, billed: 0, settled: 0, due: 0 });
 
   const downloadInvoice = async () => {
     if (!invoiceRow) return;
@@ -682,10 +736,10 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
       }
 
       const summaryRows = [
-        ['Classes', String(invoiceRow.billedClasses)],
-        ['Billed', `Rs. ${Math.round(invoiceRow.selectedMonthCharges).toLocaleString('en-IN')}`],
-        ['Paid / applied', `Rs. ${Math.round(invoiceRow.selectedMonthSettled).toLocaleString('en-IN')}`],
-        ['Amount due', `Rs. ${Math.round(invoiceRow.selectedMonthDue).toLocaleString('en-IN')}`],
+        ['Classes', String(invoiceTotals.classes)],
+        ['Billed', `Rs. ${Math.round(invoiceTotals.billed).toLocaleString('en-IN')}`],
+        ['Paid / applied', `Rs. ${Math.round(invoiceTotals.settled).toLocaleString('en-IN')}`],
+        ['Amount due', `Rs. ${Math.round(invoiceTotals.due).toLocaleString('en-IN')}`],
       ];
       summaryRows.forEach(([label, value]) => {
         pdf.setFont('helvetica', 'bold');
@@ -705,18 +759,14 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
       y += 16;
 
       pdf.setFont('helvetica', 'normal');
-      invoiceCharges.forEach((charge) => {
+      invoiceCharges.forEach((row) => {
         if (y > 760) {
           pdf.addPage();
           y = 50;
         }
-        const date = resolveChargeDate(charge);
-        const dateText = date
-          ? new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }).format(date)
-          : '—';
-        pdf.text(dateText, margin, y);
-        pdf.text(chargeStudentName(charge, kidNames).slice(0, 42), margin + 90, y);
-        pdf.text(`Rs. ${Math.round(Number(charge.amount) || 0).toLocaleString('en-IN')}`, pageWidth - margin, y, { align: 'right' });
+        pdf.text(formatServiceDate(row.serviceDate, true), margin, y);
+        pdf.text(chargeStudentName(row.charge, kidNames).slice(0, 42), margin + 90, y);
+        pdf.text(`Rs. ${Math.round(Number(row.charge.amount) || 0).toLocaleString('en-IN')}`, pageWidth - margin, y, { align: 'right' });
         y += 18;
       });
 
@@ -724,7 +774,7 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
       pdf.line(margin, y, pageWidth - margin, y);
       y += 22;
       pdf.setFont('helvetica', 'bold');
-      pdf.text(`Amount due: Rs. ${Math.round(invoiceRow.selectedMonthDue).toLocaleString('en-IN')}`, pageWidth - margin, y, { align: 'right' });
+      pdf.text(`Amount due: Rs. ${Math.round(invoiceTotals.due).toLocaleString('en-IN')}`, pageWidth - margin, y, { align: 'right' });
 
       const safeName = invoiceRow.parentName.replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
       pdf.save(`tiny-steps-invoice-${safeName || invoiceRow.parentId}-${selectedMonth}.pdf`);
@@ -1095,26 +1145,37 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
           {invoiceRow ? (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                <Card className="p-3"><div className="text-xs text-muted-foreground">Classes</div><div className="font-semibold">{invoiceRow.billedClasses}</div></Card>
-                <Card className="p-3"><div className="text-xs text-muted-foreground">Billed</div><div className="font-semibold">{formatMoney(invoiceRow.selectedMonthCharges)}</div></Card>
-                <Card className="p-3"><div className="text-xs text-muted-foreground">Paid / applied</div><div className="font-semibold">{formatMoney(invoiceRow.selectedMonthSettled)}</div></Card>
-                <Card className="p-3"><div className="text-xs text-muted-foreground">Amount due</div><div className="font-semibold">{formatMoney(invoiceRow.selectedMonthDue)}</div></Card>
+                <Card className="p-3"><div className="text-xs text-muted-foreground">Classes</div><div className="font-semibold">{invoiceTotals.classes}</div></Card>
+                <Card className="p-3"><div className="text-xs text-muted-foreground">Billed</div><div className="font-semibold">{formatMoney(invoiceTotals.billed)}</div></Card>
+                <Card className="p-3"><div className="text-xs text-muted-foreground">Paid / applied</div><div className="font-semibold">{formatMoney(invoiceTotals.settled)}</div></Card>
+                <Card className="p-3"><div className="text-xs text-muted-foreground">Amount due</div><div className="font-semibold">{formatMoney(invoiceTotals.due)}</div></Card>
               </div>
+
+              {invoiceAnomalies.length > 0 ? (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900" role="alert">
+                  {invoiceAnomalies.length} financial integrity {invoiceAnomalies.length === 1 ? 'record requires' : 'records require'} review and {invoiceAnomalies.length === 1 ? 'was' : 'were'} excluded from this invoice.
+                </div>
+              ) : null}
+
+              {invoiceIntegrityLoading ? (
+                <div className="rounded-lg border bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                  Verifying linked sessions and service dates…
+                </div>
+              ) : null}
 
               <div className="overflow-hidden rounded-lg border">
                 <div className="grid grid-cols-[120px_1fr_110px] bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                   <span>Date</span><span>Student</span><span className="text-right">Charge</span>
                 </div>
-                {invoiceCharges.length ? invoiceCharges.map((charge) => {
-                  const date = resolveChargeDate(charge);
+                {invoiceCharges.length ? invoiceCharges.map((row) => {
                   return (
-                    <div key={charge.id} className="grid grid-cols-[120px_1fr_110px] border-t px-3 py-2 text-sm">
-                      <span>{date ? new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', timeZone: 'Asia/Kolkata' }).format(date) : '—'}</span>
-                      <span className="truncate">{chargeStudentName(charge, kidNames)}</span>
-                      <span className="text-right font-medium">{formatMoney(charge.amount)}</span>
+                    <div key={row.charge.id} className="grid grid-cols-[120px_1fr_110px] border-t px-3 py-2 text-sm">
+                      <span>{formatServiceDate(row.serviceDate)}</span>
+                      <span className="truncate">{chargeStudentName(row.charge, kidNames)}</span>
+                      <span className="text-right font-medium">{formatMoney(row.charge.amount)}</span>
                     </div>
                   );
-                }) : <div className="border-t px-3 py-6 text-center text-sm text-muted-foreground">No charge rows available.</div>}
+                }) : <div className="border-t px-3 py-6 text-center text-sm text-muted-foreground">{invoiceIntegrityLoading ? 'Loading verified charge rows…' : 'No verified charge rows available.'}</div>}
               </div>
 
               <p className="text-xs text-muted-foreground">
@@ -1125,7 +1186,7 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setInvoiceOpen(false)}>Close</Button>
-            <Button onClick={downloadInvoice} disabled={!invoiceRow || invoiceSaving}>{invoiceSaving ? 'Preparing…' : 'Download PDF'}</Button>
+            <Button onClick={downloadInvoice} disabled={!invoiceRow || invoiceSaving || invoiceIntegrityLoading}>{invoiceSaving ? 'Preparing…' : 'Download PDF'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
