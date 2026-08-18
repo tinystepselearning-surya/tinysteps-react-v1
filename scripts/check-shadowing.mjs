@@ -20,6 +20,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const rootDir = join(__dirname, '..');
 const srcDir = join(rootDir, 'src');
+const rootShadowPairs = [
+  ['vite.config.js', 'vite.config.ts'],
+  ['vite.config.jsx', 'vite.config.tsx'],
+];
 
 // Ignore patterns
 const ignoreDirs = new Set(['tests', '__tests__', 'node_modules', '.git']);
@@ -92,10 +96,20 @@ async function hasTsEquivalent(jsPath) {
  * Main execution
  */
 async function main() {
-  console.log('🔍 Checking for JS/JSX files shadowing TS/TSX sources in src/...\n');
+  console.log('🔍 Checking for JS/JSX files shadowing TS/TSX sources and root config...\n');
   
   const jsFiles = await findJsFiles(srcDir);
   const shadowingFiles = [];
+
+  for (const [jsName, tsName] of rootShadowPairs) {
+    try {
+      await stat(join(rootDir, jsName));
+      await stat(join(rootDir, tsName));
+      shadowingFiles.push({ js: jsName, ts: tsName });
+    } catch {
+      // A pair only shadows when both variants exist.
+    }
+  }
   
   for (const jsPath of jsFiles) {
     const { exists, path: tsPath } = await hasTsEquivalent(jsPath);
@@ -111,11 +125,11 @@ async function main() {
     shadowingFiles.forEach(({ js, ts }) => {
       console.error(`  ${js} shadows ${ts}`);
     });
-    console.error(`\n💡 Fix: Delete the .js/.jsx files or move them outside src/\n`);
+    console.error(`\n💡 Fix: Delete the stale .js/.jsx file or keep only one canonical config variant.\n`);
     process.exit(1);
   }
   
-  console.log('✅ OK: No shadowing JS/JSX files found in src/\n');
+  console.log('✅ OK: No shadowing JS/JSX files or root config duplicates found\n');
   process.exit(0);
 }
 

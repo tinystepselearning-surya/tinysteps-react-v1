@@ -12,11 +12,9 @@ const BLOG_PUBLICATION_DATES: Record<string, string> = {
   'cvc-words-explained-for-parents': '2025-11-20',
   'phonics-games-for-letter-sounds': '2025-11-22',
   'phonics-activities-for-kids-at-home': '2025-11-24',
-  'best-phonics-classes-for-kids': '2025-11-26',
   'how-phonics-classes-help-kids-read': '2025-11-28',
   'child-knows-abc-but-cannot-read': '2025-11-29',
   'benefits-of-phonics-for-kids': '2025-11-30',
-  'best-online-phonics-classes-for-kids': '2025-12-02',
   'how-to-choose-phonics-classes': '2025-12-04',
   'online-phonics-classes-vs-school': '2025-12-06',
   'synthetic-phonics-vs-traditional-reading': '2025-12-08',
@@ -56,9 +54,7 @@ const BLOG_PUBLICATION_DATES: Record<string, string> = {
   'week-25-back-to-school-plan': '2026-03-16',
   'week-26-screen-smart-summer-routine': '2026-03-23',
   'week-27-prevent-summer-slide-reading': '2026-03-30',
-  'engage-children-phonics-grammar-speaking-at-home': '2026-05-14',
   'june-school-reopening-english-readiness-plan': '2026-05-14',
-  'phonics-grammar-speaking-connected-english-communication': '2026-05-14',
 };
 
 const DEFAULT_HERO_BY_CATEGORY: Record<BlogPost['category'], string> = {
