@@ -261,6 +261,94 @@ function normalizeAmount(value: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+type ParentMonthlyExpectedTotals = {
+  billedAmount: number;
+  settledAmount: number;
+  dueAmount: number;
+  billedClassCount: number;
+};
+
+const ZERO_PARENT_MONTHLY_EXPECTED_TOTALS: ParentMonthlyExpectedTotals = {
+  billedAmount: 0,
+  settledAmount: 0,
+  dueAmount: 0,
+  billedClassCount: 0,
+};
+
+export function findParentMonthlyReadModelMismatches(input: {
+  monthKey: string;
+  charges: Array<Record<string, unknown>>;
+  sessionsById: Record<string, Record<string, unknown> | null | undefined>;
+  readModels: Array<Record<string, unknown>>;
+}): Array<Record<string, unknown>> {
+  const expectedByParent = new Map<string, ParentMonthlyExpectedTotals>();
+  const activeChargeCountBySession = new Map<string, number>();
+
+  input.charges.forEach((charge) => {
+    if (!isActiveBillingCharge(charge)) return;
+    const sessionId = String(charge.sessionId || '').trim();
+    if (!sessionId) return;
+    activeChargeCountBySession.set(sessionId, (activeChargeCountBySession.get(sessionId) || 0) + 1);
+  });
+
+  input.charges.forEach((charge) => {
+    if (!isActiveBillingCharge(charge)) return;
+    const sessionId = String(charge.sessionId || '').trim();
+    const session = sessionId ? input.sessionsById[sessionId] : null;
+    if (!session) return;
+    const service = resolveCanonicalServiceDate(session, null);
+    if (service.serviceMonthKey !== input.monthKey || String(charge.monthKey || '').trim() !== input.monthKey) return;
+    if ((activeChargeCountBySession.get(sessionId) || 0) > 1) return;
+    const parentId = String(charge.parentId || '').trim();
+    if (!parentId) return;
+    const amount = Math.max(normalizeAmount(charge.amount), 0);
+    const paid = resolveBillingChargePaidAmount(charge, amount);
+    const expected = expectedByParent.get(parentId) || { ...ZERO_PARENT_MONTHLY_EXPECTED_TOTALS };
+    expected.billedAmount += amount;
+    expected.settledAmount += paid;
+    expected.dueAmount += Math.max(amount - paid, 0);
+    expected.billedClassCount += 1;
+    expectedByParent.set(parentId, expected);
+  });
+
+  const readModelByParent = new Map<string, Record<string, unknown>>();
+  input.readModels.forEach((readModel) => {
+    if (String(readModel.monthKey || '').trim() !== input.monthKey) return;
+    const parentId = String(readModel.parentId || '').trim();
+    if (parentId) readModelByParent.set(parentId, readModel);
+  });
+
+  const parentIds = new Set([...expectedByParent.keys(), ...readModelByParent.keys()]);
+  const mismatches: Array<Record<string, unknown>> = [];
+  parentIds.forEach((parentId) => {
+    const expected = expectedByParent.get(parentId) || { ...ZERO_PARENT_MONTHLY_EXPECTED_TOTALS };
+    const actualModel = readModelByParent.get(parentId);
+    const actual = actualModel || {};
+    const deltas = {
+      billedAmount: normalizeAmount(actual.billedAmount) - expected.billedAmount,
+      settledAmount: normalizeAmount(actual.settledAmount) - expected.settledAmount,
+      dueAmount: normalizeAmount(actual.dueAmount) - expected.dueAmount,
+      billedClassCount: normalizeAmount(actual.billedClassCount) - expected.billedClassCount,
+    };
+    if (!actualModel || Object.values(deltas).some((delta) => Math.abs(delta) > 0.01)) {
+      mismatches.push({
+        parentId,
+        monthKey: input.monthKey,
+        readModelExists: !!actualModel,
+        expected,
+        actual: {
+          billedAmount: normalizeAmount(actual.billedAmount),
+          settledAmount: normalizeAmount(actual.settledAmount),
+          dueAmount: normalizeAmount(actual.dueAmount),
+          billedClassCount: normalizeAmount(actual.billedClassCount),
+        },
+        deltas,
+      });
+    }
+  });
+  return mismatches;
+}
+
 function pickFirstPositiveNumber(...values: unknown[]): number {
   for (const value of values) {
     const parsed = Number(value);
@@ -400,7 +488,7 @@ async function buildFinanceReconciliationReport(
   const db = admin.firestore();
   const warnings: string[] = [];
 
-  const [repairSnap, completedSnap, chargesSnap, earningsSnap, paymentsSnap, payoutsSnap] =
+  const [repairSnap, completedSnap, chargesSnap, earningsSnap, paymentsSnap, payoutsSnap, parentReadModelsSnap] =
     await Promise.all([
       fetchLimitedDocs(db.collection('classSessions').where('revenueRepairRequired', '==', true), maxDocsPerCollection),
       fetchLimitedDocs(db.collection('classSessions').where('status', '==', 'completed'), maxDocsPerCollection),
@@ -426,6 +514,12 @@ async function buildFinanceReconciliationReport(
           : db.collection('teacherPayouts'),
         maxDocsPerCollection,
       ),
+      monthKey
+        ? fetchLimitedDocs(
+            db.collectionGroup('months').where('monthKey', '==', monthKey),
+            maxDocsPerCollection,
+          )
+        : Promise.resolve({ docs: [], truncated: false }),
     ]);
 
   if (repairSnap.truncated) warnings.push('classSessions(revenueRepairRequired) scan truncated');
@@ -434,6 +528,7 @@ async function buildFinanceReconciliationReport(
   if (earningsSnap.truncated) warnings.push('teacherEarnings scan truncated');
   if (paymentsSnap.truncated) warnings.push('payments scan truncated');
   if (payoutsSnap.truncated) warnings.push('teacherPayouts scan truncated');
+  if (parentReadModelsSnap.truncated) warnings.push('parentMonthlyReadModels scan truncated');
 
   const repairSessions: SessionReportRow[] = repairSnap.docs
     .map((docSnap) => mapDocToRow<SessionReportRow>(docSnap))
@@ -977,54 +1072,14 @@ async function buildFinanceReconciliationReport(
     }
   }
 
-  const parentMonthlyReadModelMismatchAgainstCharges: Array<Record<string, unknown>> = [];
-  if (monthKey) {
-    const expectedByParent = new Map<string, { billedAmount: number; settledAmount: number; dueAmount: number; billedClassCount: number }>();
-    charges.forEach((charge) => {
-      if (!isActiveBillingCharge(charge)) return;
-      const sessionId = String(charge.sessionId || '').trim();
-      const session = sessionId ? linkedSessionMap.get(sessionId) : null;
-      const service = resolveCanonicalServiceDate(session, charge);
-      if (service.serviceMonthKey !== monthKey || String(charge.monthKey || '').trim() !== monthKey) return;
-      if ((activeChargeIdsBySession.get(sessionId) || []).length > 1) return;
-      const parentId = String(charge.parentId || '').trim();
-      if (!parentId) return;
-      const amount = Math.max(normalizeAmount(charge.amount), 0);
-      const paid = resolveBillingChargePaidAmount(charge, amount);
-      const expected = expectedByParent.get(parentId) || { billedAmount: 0, settledAmount: 0, dueAmount: 0, billedClassCount: 0 };
-      expected.billedAmount += amount;
-      expected.settledAmount += paid;
-      expected.dueAmount += Math.max(amount - paid, 0);
-      expected.billedClassCount += 1;
-      expectedByParent.set(parentId, expected);
-    });
-
-    for (const [parentId, expected] of expectedByParent) {
-      const modelSnap = await db.collection('parentMonthlyReadModels').doc(parentId).collection('months').doc(monthKey).get();
-      const actual = modelSnap.exists ? ((modelSnap.data() || {}) as Record<string, unknown>) : {};
-      const deltas = {
-        billedAmount: normalizeAmount(actual.billedAmount) - expected.billedAmount,
-        settledAmount: normalizeAmount(actual.settledAmount) - expected.settledAmount,
-        dueAmount: normalizeAmount(actual.dueAmount) - expected.dueAmount,
-        billedClassCount: normalizeAmount(actual.billedClassCount) - expected.billedClassCount,
-      };
-      if (!modelSnap.exists || Object.values(deltas).some((delta) => Math.abs(delta) > 0.01)) {
-        parentMonthlyReadModelMismatchAgainstCharges.push({
-          parentId,
-          monthKey,
-          readModelExists: modelSnap.exists,
-          expected,
-          actual: {
-            billedAmount: normalizeAmount(actual.billedAmount),
-            settledAmount: normalizeAmount(actual.settledAmount),
-            dueAmount: normalizeAmount(actual.dueAmount),
-            billedClassCount: normalizeAmount(actual.billedClassCount),
-          },
-          deltas,
-        });
-      }
-    }
-  }
+  const parentMonthlyReadModelMismatchAgainstCharges = monthKey
+    ? findParentMonthlyReadModelMismatches({
+        monthKey,
+        charges,
+        sessionsById: Object.fromEntries(linkedSessionMap.entries()),
+        readModels: parentReadModelsSnap.docs.map((docSnap) => docSnap.data() || {}),
+      })
+    : [];
 
   return {
     ok: true,

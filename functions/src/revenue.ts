@@ -6,7 +6,10 @@ import * as logger from 'firebase-functions/logger';
 import { ensureAdmin } from './helpers/adminGuard';
 import { normalizeFinancialStatus, normalizeLowerStatus } from './helpers/status';
 import { resolveCanonicalServiceDate } from './helpers/serviceDate';
-import { resolveRevenueAccrualLedgerRepairReason } from './helpers/revenueAccrualSafety';
+import {
+  resolveRevenueAccrualLedgerRepairReason,
+  shouldPersistRevenueRepairMarker,
+} from './helpers/revenueAccrualSafety';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -469,16 +472,23 @@ export const onSessionRevenueWrite = onDocumentWritten(
         }
 
         if (!(ratePerSession > 0)) {
-          tx.set(
-            sessionRef,
-            {
-              revenueRepairRequired: true,
-              revenueRepairDetectedAt: FieldValue.serverTimestamp(),
-              revenueRepairReason: 'zero_or_unresolved_session_fee',
-              updatedAt: FieldValue.serverTimestamp(),
-            },
-            { merge: true }
-          );
+          const repairReason = 'zero_or_unresolved_session_fee';
+          if (shouldPersistRevenueRepairMarker({
+            existingRepairRequired: session.revenueRepairRequired,
+            existingRepairReason: session.revenueRepairReason,
+            nextRepairReason: repairReason,
+          })) {
+            tx.set(
+              sessionRef,
+              {
+                revenueRepairRequired: true,
+                revenueRepairDetectedAt: FieldValue.serverTimestamp(),
+                revenueRepairReason: repairReason,
+                updatedAt: FieldValue.serverTimestamp(),
+              },
+              { merge: true }
+            );
+          }
           logger.warn('Revenue accrual failed closed: session fee is zero or unresolved', {
             sessionId: change.after.id,
             enrollmentId,
@@ -548,16 +558,22 @@ export const onSessionRevenueWrite = onDocumentWritten(
           earningStatus,
         });
         if (repairReason) {
-          tx.set(
-            sessionRef,
-            {
-              revenueRepairRequired: true,
-              revenueRepairDetectedAt: FieldValue.serverTimestamp(),
-              revenueRepairReason: repairReason,
-              updatedAt: FieldValue.serverTimestamp(),
-            },
-            { merge: true }
-          );
+          if (shouldPersistRevenueRepairMarker({
+            existingRepairRequired: session.revenueRepairRequired,
+            existingRepairReason: session.revenueRepairReason,
+            nextRepairReason: repairReason,
+          })) {
+            tx.set(
+              sessionRef,
+              {
+                revenueRepairRequired: true,
+                revenueRepairDetectedAt: FieldValue.serverTimestamp(),
+                revenueRepairReason: repairReason,
+                updatedAt: FieldValue.serverTimestamp(),
+              },
+              { merge: true }
+            );
+          }
           logger.warn('Revenue accrual failed closed for ambiguous pre-existing ledger state', {
             sessionId,
             chargeExists: chargeSnap.exists,
@@ -631,16 +647,22 @@ export const onSessionRevenueWrite = onDocumentWritten(
               : !chargeSnap.exists
                 ? 'missing_billing_charge_doc'
                 : 'missing_teacher_earning_doc';
-          tx.set(
-            sessionRef,
-            {
-              revenueRepairRequired: true,
-              revenueRepairDetectedAt: FieldValue.serverTimestamp(),
-              revenueRepairReason: repairReason,
-              updatedAt: FieldValue.serverTimestamp(),
-            },
-            { merge: true }
-          );
+          if (shouldPersistRevenueRepairMarker({
+            existingRepairRequired: session.revenueRepairRequired,
+            existingRepairReason: session.revenueRepairReason,
+            nextRepairReason: repairReason,
+          })) {
+            tx.set(
+              sessionRef,
+              {
+                revenueRepairRequired: true,
+                revenueRepairDetectedAt: FieldValue.serverTimestamp(),
+                revenueRepairReason: repairReason,
+                updatedAt: FieldValue.serverTimestamp(),
+              },
+              { merge: true }
+            );
+          }
           logger.warn('Revenue ledger immutable after accrual; missing ledger docs were not auto-recreated', {
             sessionId,
             chargeExists: chargeSnap.exists,

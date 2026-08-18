@@ -4,6 +4,17 @@ export type RevenueAccrualLedgerRepairReason =
   | 'preexisting_charge_missing_earning_before_accrual'
   | 'preexisting_earning_missing_charge_before_accrual';
 
+export function shouldPersistRevenueRepairMarker(input: {
+  existingRepairRequired: unknown;
+  existingRepairReason: unknown;
+  nextRepairReason: string;
+}): boolean {
+  const existingReason = String(input.existingRepairReason || '');
+  const nextReason = String(input.nextRepairReason || '');
+  if (!nextReason) return false;
+  return input.existingRepairRequired !== true || existingReason !== nextReason;
+}
+
 export function resolveRevenueAccrualLedgerRepairReason(input: {
   alreadyAccrued: boolean;
   chargeExists: boolean;

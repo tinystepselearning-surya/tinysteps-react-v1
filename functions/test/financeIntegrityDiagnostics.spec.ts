@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { diagnosePresentSessionBilling } from '../src/financeReconciliationReport';
+import {
+  diagnosePresentSessionBilling,
+  findParentMonthlyReadModelMismatches,
+} from '../src/financeReconciliationReport';
 
 describe('present session billing diagnostics', () => {
   it('reports a completed present session with valid linkage and fee but no charge as billable', () => {
@@ -59,5 +62,46 @@ describe('present session billing diagnostics', () => {
       enrollmentExists: true,
       activeChargeExists: false,
     })).toBeNull();
+  });
+});
+
+describe('parent monthly read-model integrity diagnostics', () => {
+  it('reports a non-zero July read model when zero valid July service-month charges remain', () => {
+    const mismatches = findParentMonthlyReadModelMismatches({
+      monthKey: '2026-07',
+      charges: [
+        { id: 'charge-a', parentId: 'parent-1', sessionId: 'session-a', monthKey: '2026-07', amount: 400, status: 'open' },
+        { id: 'charge-b', parentId: 'parent-1', sessionId: 'session-b', monthKey: '2026-07', amount: 400, status: 'open' },
+      ],
+      sessionsById: {
+        'session-a': { date: '2026-08-02' },
+        'session-b': { date: '2026-08-09' },
+      },
+      readModels: [{
+        parentId: 'parent-1',
+        monthKey: '2026-07',
+        billedAmount: 800,
+        settledAmount: 0,
+        dueAmount: 800,
+        billedClassCount: 2,
+      }],
+    });
+
+    expect(mismatches).toEqual([expect.objectContaining({
+      parentId: 'parent-1',
+      readModelExists: true,
+      expected: {
+        billedAmount: 0,
+        settledAmount: 0,
+        dueAmount: 0,
+        billedClassCount: 0,
+      },
+      actual: {
+        billedAmount: 800,
+        settledAmount: 0,
+        dueAmount: 800,
+        billedClassCount: 2,
+      },
+    })]);
   });
 });
