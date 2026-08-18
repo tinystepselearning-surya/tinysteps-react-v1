@@ -705,6 +705,12 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
       due: totals.due + Math.max(amount - paid, 0),
     };
   }, { classes: 0, billed: 0, settled: 0, due: 0 });
+  const invoiceTotalsDifferFromLedger = !invoiceIntegrityLoading && !!invoiceRow && (
+    invoiceTotals.classes !== invoiceRow.billedClasses ||
+    Math.abs(invoiceTotals.billed - invoiceRow.selectedMonthCharges) > EPSILON ||
+    Math.abs(invoiceTotals.settled - invoiceRow.selectedMonthSettled) > EPSILON ||
+    Math.abs(invoiceTotals.due - invoiceRow.selectedMonthDue) > EPSILON
+  );
 
   const downloadInvoice = async () => {
     if (!invoiceRow) return;
@@ -1151,9 +1157,14 @@ export default function ParentPaymentsV2({ onOpenMaintenance }: ParentPaymentsV2
                 <Card className="p-3"><div className="text-xs text-muted-foreground">Amount due</div><div className="font-semibold">{formatMoney(invoiceTotals.due)}</div></Card>
               </div>
 
-              {invoiceAnomalies.length > 0 ? (
+              {invoiceAnomalies.length > 0 || invoiceTotalsDifferFromLedger ? (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900" role="alert">
-                  {invoiceAnomalies.length} financial integrity {invoiceAnomalies.length === 1 ? 'record requires' : 'records require'} review and {invoiceAnomalies.length === 1 ? 'was' : 'were'} excluded from this invoice.
+                  {invoiceAnomalies.length > 0
+                    ? `${invoiceAnomalies.length} financial integrity ${invoiceAnomalies.length === 1 ? 'record requires' : 'records require'} review and ${invoiceAnomalies.length === 1 ? 'was' : 'were'} excluded from this invoice. `
+                    : ''}
+                  {invoiceTotalsDifferFromLedger
+                    ? 'Verified invoice totals differ from the canonical monthly ledger. No ledger or read-model values were changed.'
+                    : ''}
                 </div>
               ) : null}
 

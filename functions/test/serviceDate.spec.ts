@@ -78,10 +78,18 @@ describe('canonical service date and invoice integrity', () => {
 
   it('never treats createdAt as a service date', () => {
     const [row] = classify(
-      [{ id: 'charge-1', monthKey: '2026-07', createdAt: '2026-07-17T10:00:00Z', status: 'open' }],
-      {},
+      [{ id: 'charge-1', sessionId: 'session-1', monthKey: '2026-07', createdAt: '2026-07-17T10:00:00Z', status: 'open' }],
+      { 'session-1': { date: 'invalid', startAt: null } },
     );
     expect(row).toMatchObject({ integrity: 'SERVICE_DATE_UNRESOLVED', serviceDate: null, dateSource: null });
+  });
+
+  it('never admits a charge without canonical session identity even when it has a legacy service date', () => {
+    const [row] = classify(
+      [{ id: 'charge-1', monthKey: '2026-07', serviceDate: '2026-07-17', status: 'open' }],
+      {},
+    );
+    expect(row).toMatchObject({ integrity: 'SESSION_MISSING', serviceDate: null, dateSource: null });
   });
 
   it('uses Asia/Kolkata at UTC month boundaries', () => {

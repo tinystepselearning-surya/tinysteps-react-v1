@@ -169,10 +169,13 @@ export function classifyInvoiceCharges<TCharge extends Record<string, unknown> &
     const sessionId = String(charge.sessionId || '').trim();
     const hasSessionLookup = !!sessionId && Object.prototype.hasOwnProperty.call(sessionsById, sessionId);
     const session = hasSessionLookup ? sessionsById[sessionId] : null;
-    const resolved = resolveCanonicalServiceDate(session, charge);
+    // Invoice rows are stricter than diagnostics: only the linked class session
+    // may establish the service date. Charge-side legacy dates remain useful for
+    // anomaly reporting, but never make an invoice row valid.
+    const resolved = resolveCanonicalServiceDate(session, null);
     let integrity: InvoiceChargeIntegrity;
 
-    if (sessionId && !session) integrity = 'SESSION_MISSING';
+    if (!sessionId || !session) integrity = 'SESSION_MISSING';
     else if (!resolved.serviceDate || !resolved.serviceMonthKey) integrity = 'SERVICE_DATE_UNRESOLVED';
     else if (String(charge.monthKey || '').trim() !== resolved.serviceMonthKey) integrity = 'MONTH_MISMATCH';
     else if ((activeBySession.get(sessionId) || 0) > 1) integrity = 'DUPLICATE_SESSION_CHARGE';

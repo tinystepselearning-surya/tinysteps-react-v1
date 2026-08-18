@@ -6,6 +6,7 @@ import * as logger from 'firebase-functions/logger';
 import { ensureAdmin } from './helpers/adminGuard';
 import { normalizeFinancialStatus, normalizeLowerStatus } from './helpers/status';
 import { resolveCanonicalServiceDate } from './helpers/serviceDate';
+import { resolveRevenueAccrualLedgerRepairReason } from './helpers/revenueAccrualSafety';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -467,6 +468,25 @@ export const onSessionRevenueWrite = onDocumentWritten(
           return;
         }
 
+        if (!(ratePerSession > 0)) {
+          tx.set(
+            sessionRef,
+            {
+              revenueRepairRequired: true,
+              revenueRepairDetectedAt: FieldValue.serverTimestamp(),
+              revenueRepairReason: 'zero_or_unresolved_session_fee',
+              updatedAt: FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+          logger.warn('Revenue accrual failed closed: session fee is zero or unresolved', {
+            sessionId: change.after.id,
+            enrollmentId,
+            ratePerSession,
+          });
+          return;
+        }
+
         const rollupRef = revenueMonthlyRef(db, monthKey);
         const alreadyAccrued = session.revenueAccrued === true;
         const sessionId = change.after.id;
@@ -476,16 +496,12 @@ export const onSessionRevenueWrite = onDocumentWritten(
         const chargeStatusRaw = chargeSnap.exists ? String(chargeSnap.data()?.status || '') : '';
         const chargeStatus = chargeStatusRaw.toLowerCase();
         const nextChargeStatus =
-          !chargeSnap.exists || chargeStatus === 'void' ? 'open' : chargeStatus;
+          !chargeSnap.exists ? 'open' : chargeStatus;
         const existingChargeData = (chargeSnap.data() || {}) as any;
         const existingChargeAmount = normalizeNumber(existingChargeData.amount, 0);
-        const existingChargePaidAmount = resolveChargePaidAmount(existingChargeData, existingChargeAmount);
-        const shouldPreserveChargeAmount =
-          chargeSnap.exists &&
-          (isSettledCharge(nextChargeStatus) || existingChargePaidAmount > 0);
-        const chargeAmount = shouldPreserveChargeAmount ? existingChargeAmount : ratePerSession;
+        const chargeAmount = chargeSnap.exists ? existingChargeAmount : ratePerSession;
         const preservedChargeMonthKey = String(existingChargeData.monthKey || '').trim();
-        const chargeMonthKey = shouldPreserveChargeAmount && /^\d{4}-\d{2}$/.test(preservedChargeMonthKey)
+        const chargeMonthKey = chargeSnap.exists && /^\d{4}-\d{2}$/.test(preservedChargeMonthKey)
           ? preservedChargeMonthKey
           : monthKey;
 
@@ -515,16 +531,43 @@ export const onSessionRevenueWrite = onDocumentWritten(
         const earningStatusRaw = earningSnap.exists ? String(earningSnap.data()?.status || '') : '';
         const earningStatus = earningStatusRaw.toLowerCase();
         const nextEarningStatus =
-          !earningSnap.exists || earningStatus === 'void' ? 'unpaid' : earningStatus;
+          !earningSnap.exists ? 'unpaid' : earningStatus;
         const existingEarningData = (earningSnap.data() || {}) as any;
         const existingEarningAmount = normalizeNumber(existingEarningData.amount, 0);
-        const existingEarningPaidAmount = resolveTeacherEarningPaidAmount(existingEarningData, existingEarningAmount);
-        const shouldPreserveEarningAmount =
-          earningSnap.exists &&
-          (isSettledCharge(nextEarningStatus) || existingEarningPaidAmount > 0);
-        const teacherEarningAmount = shouldPreserveEarningAmount
-          ? existingEarningAmount
-          : teacherPayPerSession;
+        const teacherEarningAmount = earningSnap.exists ? existingEarningAmount : teacherPayPerSession;
+        const preservedEarningMonthKey = String(existingEarningData.monthKey || '').trim();
+        const earningMonthKey = earningSnap.exists && /^\d{4}-\d{2}$/.test(preservedEarningMonthKey)
+          ? preservedEarningMonthKey
+          : monthKey;
+
+        const repairReason = resolveRevenueAccrualLedgerRepairReason({
+          alreadyAccrued,
+          chargeExists: chargeSnap.exists,
+          chargeStatus,
+          earningExists: earningSnap.exists,
+          earningStatus,
+        });
+        if (repairReason) {
+          tx.set(
+            sessionRef,
+            {
+              revenueRepairRequired: true,
+              revenueRepairDetectedAt: FieldValue.serverTimestamp(),
+              revenueRepairReason: repairReason,
+              updatedAt: FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+          logger.warn('Revenue accrual failed closed for ambiguous pre-existing ledger state', {
+            sessionId,
+            chargeExists: chargeSnap.exists,
+            chargeStatus,
+            earningExists: earningSnap.exists,
+            earningStatus,
+            repairReason,
+          });
+          return;
+        }
         const earningPayload: Record<string, any> = {
           sessionId,
           enrollmentId,
@@ -536,7 +579,7 @@ export const onSessionRevenueWrite = onDocumentWritten(
           currency,
           status: nextEarningStatus || 'unpaid',
           earnedAt: FieldValue.serverTimestamp(),
-          monthKey,
+          monthKey: earningMonthKey,
           updatedAt: FieldValue.serverTimestamp(),
         };
         if (!earningSnap.exists) {

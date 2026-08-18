@@ -3,7 +3,6 @@ import * as admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { normalizeSessionStatus } from './helpers/status';
-import { classifyInvoiceCharges } from './helpers/serviceDate';
 import { buildParentMonthlyBillingReadModel } from './parentMonthlyBillingReadModel';
 
 if (!admin.apps.length) admin.initializeApp();
@@ -363,23 +362,10 @@ export async function recomputeParentMonthBillingReadModel(
     db.collection('parentWallets').doc(parentId).get(),
     db.collection('users').doc(parentId).get(),
   ]);
-  const chargeRows: Array<Record<string, unknown> & { id: string }> = chargesSnap.docs.filter((docSnap) => {
+  const activeChargeDocs = chargesSnap.docs.filter((docSnap) => {
     const data = (docSnap.data() || {}) as Record<string, unknown>;
     return data.archived !== true;
-  }).map((docSnap) => ({ id: docSnap.id, ...((docSnap.data() || {}) as Record<string, unknown>) }));
-  const sessionIds = Array.from(new Set(chargeRows.map((charge) => String(charge.sessionId || '').trim()).filter(Boolean)));
-  const sessionsById: Record<string, Record<string, unknown> | null> = {};
-  if (sessionIds.length > 0) {
-    const sessionSnaps = await db.getAll(...sessionIds.map((sessionId) => db.collection('classSessions').doc(sessionId)));
-    sessionSnaps.forEach((sessionSnap) => {
-      sessionsById[sessionSnap.id] = sessionSnap.exists
-        ? ((sessionSnap.data() || {}) as Record<string, unknown>)
-        : null;
-    });
-  }
-  const integritySafeCharges = classifyInvoiceCharges({ charges: chargeRows, sessionsById, selectedMonth: monthKey })
-    .filter((row) => row.integrity === 'VALID' && row.serviceMonthKey === monthKey)
-    .map((row) => row.charge);
+  });
   const walletBalance = normalizeAmount((walletSnap.data() || {}).currentBalance);
   const parentData = (parentSnap.data() || {}) as Record<string, unknown>;
   const parentNameSort = parentNameSortFromUser(parentId, parentData);
@@ -387,7 +373,10 @@ export async function recomputeParentMonthBillingReadModel(
     parentId,
     monthKey,
     walletBalance,
-    charges: integritySafeCharges,
+    charges: activeChargeDocs.map((docSnap) => ({
+      id: docSnap.id,
+      ...((docSnap.data() || {}) as Record<string, unknown>),
+    })),
   });
 
   const docRef = db

@@ -5,7 +5,6 @@ import {
   ATTENDANCE_FINALISED_MESSAGE,
   getTeacherAttendanceCorrectionCutoffMillis,
 } from './helpers/attendanceCorrectionFreeze';
-import { resolveCanonicalServiceDate } from './helpers/serviceDate';
 import { resolvePresentFinanceReplayPlan } from './helpers/attendanceFinanceIdempotency';
 
 if (!admin.apps.length) admin.initializeApp();
@@ -307,17 +306,6 @@ function assertCanSaveSession(
   throw new HttpsError('permission-denied', 'Not allowed to update this session.');
 }
 
-const ACTIVE_ENROLLMENT_STATUSES = [
-  'trial',
-  'active',
-  'paused',
-  'pending_teacher',
-  'pending_payment',
-  'enrolled',
-  'current',
-  'ongoing',
-] as const;
-
 function normalizeFinancialStatus(value: unknown): string {
   const raw = String(value || '').trim().toLowerCase();
   if (!raw) return '';
@@ -333,261 +321,6 @@ function normalizeMoney(value: unknown): number {
 
 function isSettledFinancialStatus(status: string): boolean {
   return status === 'paid' || status === 'settled';
-}
-
-function resolveSessionKidId(session: Record<string, unknown>, preferredKidId?: string): string | null {
-  const direct = String(preferredKidId || '').trim();
-  if (direct) return direct;
-  const fromKidId = String(session.kidId || session.studentId || '').trim();
-  if (fromKidId) return fromKidId;
-  if (Array.isArray(session.kidIds)) {
-    const first = session.kidIds.map((id) => String(id || '').trim()).find(Boolean);
-    if (first) return first;
-  }
-  return null;
-}
-
-function pickFirstPositiveNumber(...values: unknown[]): number {
-  for (const value of values) {
-    const parsed = Number(value);
-    if (Number.isFinite(parsed) && parsed > 0) return parsed;
-  }
-  return 0;
-}
-
-function resolveFeeAmount(session: Record<string, unknown>, enrollment: Record<string, unknown>): number {
-  return pickFirstPositiveNumber(
-    enrollment.ratePerSession,
-    enrollment.feePerSession,
-    enrollment.feePerClass,
-    enrollment.parentRate,
-    enrollment.parentClassRate,
-    enrollment.classFee,
-    enrollment.feeAmount,
-    session.feeAmount,
-    session.feePerClass,
-    session.feePerSession,
-    session.ratePerSession,
-    session.parentRate,
-    session.classFee,
-  );
-}
-
-function resolveTeacherPay(session: Record<string, unknown>, enrollment: Record<string, unknown>): number {
-  return pickFirstPositiveNumber(
-    enrollment.teacherPayPerSession,
-    enrollment.teacherRatePerSession,
-    enrollment.teacherPay,
-    enrollment.teacherRate,
-    enrollment.teacherFee,
-    enrollment.teacherClassRate,
-    enrollment.rateTeacher,
-    enrollment.payoutRate,
-    session.teacherPayPerSession,
-    session.teacherRatePerSession,
-    session.teacherPay,
-    session.teacherRate,
-    session.teacherFee,
-    session.teacherClassRate,
-  );
-}
-
-function resolveTeacherPayFromEnrollmentOnly(enrollment: Record<string, unknown>): number {
-  return pickFirstPositiveNumber(
-    enrollment.teacherPayPerSession,
-    enrollment.teacherRatePerSession,
-    enrollment.teacherPay,
-    enrollment.teacherRate,
-    enrollment.teacherFee,
-    enrollment.teacherClassRate,
-    enrollment.rateTeacher,
-    enrollment.payoutRate,
-  );
-}
-
-function normalizeEnrollmentLifecycleStatus(value: unknown): string {
-  const raw = String(value || '').trim().toLowerCase();
-  if (!raw) return 'active';
-  if (raw === 'canceled') return 'cancelled';
-  return raw;
-}
-
-function resolveEnrollmentKidIds(enrollment: Record<string, unknown>): string[] {
-  const out: string[] = [];
-  const push = (value: unknown) => {
-    const id = String(value || '').trim();
-    if (id) out.push(id);
-  };
-
-  push(enrollment.kidId);
-  push(enrollment.studentId);
-  if (Array.isArray(enrollment.kidIds)) {
-    enrollment.kidIds.forEach((kidId) => push(kidId));
-  }
-  return Array.from(new Set(out));
-}
-
-const ENROLLMENT_STATUS_PRIORITY: Record<string, number> = {
-  current: 100,
-  active: 95,
-  enrolled: 90,
-  ongoing: 88,
-  trial: 84,
-  pending_teacher: 80,
-  pending_payment: 78,
-  paused: 70,
-};
-const ACTIVE_ENROLLMENT_STATUS_SET = new Set<string>(ACTIVE_ENROLLMENT_STATUSES as readonly string[]);
-
-function scoreEnrollmentCandidate(
-  enrollmentData: Record<string, unknown>,
-  kidId: string,
-  teacherId: string,
-  courseId: string,
-): { score: number; recencyMs: number } {
-  const status = normalizeEnrollmentLifecycleStatus(enrollmentData.status);
-  const statusScore = ENROLLMENT_STATUS_PRIORITY[status] ?? (ACTIVE_ENROLLMENT_STATUS_SET.has(status) ? 40 : 0);
-  const enrollmentKidIds = resolveEnrollmentKidIds(enrollmentData);
-  const directKidMatch = String(enrollmentData.kidId || '').trim() === kidId ? 6 : 0;
-  const studentIdMatch = String(enrollmentData.studentId || '').trim() === kidId ? 4 : 0;
-  const kidArrayMatch = enrollmentKidIds.includes(kidId) ? 2 : 0;
-  const teacherMatch =
-    teacherId && String(enrollmentData.teacherId || '').trim() === teacherId ? 6 : 0;
-  const courseMatch =
-    courseId && String(enrollmentData.courseId || '').trim() === courseId ? 4 : 0;
-  const recencyMs =
-    toDateMaybe(enrollmentData.updatedAt)?.getTime() ||
-    toDateMaybe(enrollmentData.enrollmentDate)?.getTime() ||
-    toDateMaybe(enrollmentData.createdAt)?.getTime() ||
-    0;
-
-  return {
-    score: statusScore + directKidMatch + studentIdMatch + kidArrayMatch + teacherMatch + courseMatch,
-    recencyMs,
-  };
-}
-
-async function resolveEnrollmentIdForSession(
-  db: admin.firestore.Firestore,
-  session: Record<string, unknown>,
-  preferredKidId?: string | null
-): Promise<string | null> {
-  const existingEnrollmentId = String(session.enrollmentId || '').trim();
-
-  const kidId = resolveSessionKidId(session, String(preferredKidId || '').trim() || undefined);
-  const courseId = String(session.courseId || '').trim();
-  const teacherId = String(session.teacherId || '').trim();
-  if (!kidId) return existingEnrollmentId || null;
-
-  const candidates = new Map<string, admin.firestore.DocumentSnapshot>();
-  if (existingEnrollmentId) {
-    try {
-      const existingSnap = await db.collection('enrollments').doc(existingEnrollmentId).get();
-      if (existingSnap.exists) {
-        candidates.set(existingSnap.id, existingSnap);
-      }
-    } catch (error) {
-      logger.warn('resolveEnrollmentIdForSession: existing enrollment lookup failed', {
-        existingEnrollmentId,
-        kidId,
-        courseId,
-        teacherId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
-  const runCandidateQueries = async (withStatusFilter: boolean): Promise<boolean> => {
-    let queryFailed = false;
-    const runQuery = async (
-      source: 'kidId' | 'studentId' | 'kidIds' | 'kidId_teacher' | 'studentId_teacher' | 'kidIds_teacher',
-      baseQuery: admin.firestore.Query,
-    ) => {
-      try {
-        const queryRef = withStatusFilter
-          ? baseQuery.where('status', 'in', Array.from(ACTIVE_ENROLLMENT_STATUSES))
-          : baseQuery;
-        const snap = await queryRef.limit(10).get();
-        snap.docs.forEach((docSnap) => {
-          candidates.set(docSnap.id, docSnap);
-        });
-      } catch (error) {
-        queryFailed = true;
-        logger.warn('resolveEnrollmentIdForSession: candidate query failed', {
-          kidId,
-          courseId,
-          teacherId,
-          source,
-          withStatusFilter,
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
-    };
-
-    const kidIdBaseQuery = courseId
-      ? db.collection('enrollments').where('kidId', '==', kidId).where('courseId', '==', courseId)
-      : db.collection('enrollments').where('kidId', '==', kidId);
-    const studentIdBaseQuery = courseId
-      ? db.collection('enrollments').where('studentId', '==', kidId).where('courseId', '==', courseId)
-      : db.collection('enrollments').where('studentId', '==', kidId);
-    const kidIdsBaseQuery = courseId
-      ? db.collection('enrollments').where('kidIds', 'array-contains', kidId).where('courseId', '==', courseId)
-      : db.collection('enrollments').where('kidIds', 'array-contains', kidId);
-
-    await runQuery(
-      'kidId',
-      kidIdBaseQuery,
-    );
-    await runQuery(
-      'studentId',
-      studentIdBaseQuery,
-    );
-    await runQuery(
-      'kidIds',
-      kidIdsBaseQuery,
-    );
-
-    if (teacherId) {
-      await runQuery(
-        'kidId_teacher',
-        kidIdBaseQuery.where('teacherId', '==', teacherId),
-      );
-      await runQuery(
-        'studentId_teacher',
-        studentIdBaseQuery.where('teacherId', '==', teacherId),
-      );
-      await runQuery(
-        'kidIds_teacher',
-        kidIdsBaseQuery.where('teacherId', '==', teacherId),
-      );
-    }
-
-    return queryFailed;
-  };
-
-  const statusQueriesFailed = await runCandidateQueries(true);
-  if (candidates.size === 0 || statusQueriesFailed) {
-    await runCandidateQueries(false);
-  }
-
-  if (candidates.size === 0) return null;
-
-  const ranked = Array.from(candidates.values())
-    .map((docSnap) => {
-      const rank = scoreEnrollmentCandidate(
-        (docSnap.data() || {}) as Record<string, unknown>,
-        kidId,
-        teacherId,
-        courseId,
-      );
-      return { docSnap, score: rank.score, recencyMs: rank.recencyMs };
-    })
-    .sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      return b.recencyMs - a.recencyMs;
-    });
-
-  return ranked[0]?.docSnap.id || null;
 }
 
 function resolveChargePaidAmount(data: Record<string, unknown>, amount: number): number {
@@ -638,7 +371,6 @@ async function reconcileAttendanceCorrectionFinance(args: {
     batch,
     sessionId,
     session,
-    kidId,
     previousStatus,
     newStatus,
     correctedByUid,
@@ -667,67 +399,13 @@ async function reconcileAttendanceCorrectionFinance(args: {
   }
 
   if (isBillableNow) {
-    const enrollmentId = await resolveEnrollmentIdForSession(db, session, kidId);
-    if (!enrollmentId) {
-      throw new HttpsError('failed-precondition', 'Unable to resolve enrollment for finance reconciliation.');
-    }
-
-    const enrollmentSnap = await db.collection('enrollments').doc(enrollmentId).get();
-    if (!enrollmentSnap.exists) {
-      throw new HttpsError('failed-precondition', 'Enrollment not found for finance reconciliation.');
-    }
-    const enrollment = (enrollmentSnap.data() || {}) as Record<string, unknown>;
-
-    const canonicalService = resolveCanonicalServiceDate(session, null);
-    const monthKey = canonicalService.serviceMonthKey;
-    if (!monthKey) {
-      throw new HttpsError('failed-precondition', 'Unable to determine session month for finance reconciliation.');
-    }
-
-    const sessionTeacherId = String(session.teacherId || '').trim();
-    const teacherId = sessionTeacherId || String(enrollment.teacherId || '').trim() || null;
-    const parentId = String(session.parentId || '').trim() || String(enrollment.parentId || '').trim() || null;
-    const courseId = String(session.courseId || '').trim() || String(enrollment.courseId || '').trim() || null;
-    const currency = String(session.currency || enrollment.currency || 'INR');
-    const billableKidId = resolveSessionKidId(session, kidId);
-    const amount = resolveFeeAmount(session, enrollment);
-    if (amount <= 0) {
-      throw new HttpsError('failed-precondition', 'Session fee is zero or unresolved; finance reconciliation requires review.');
-    }
-    const enrollmentTeacherAmount = resolveTeacherPayFromEnrollmentOnly(enrollment);
-    const teacherAmount =
-      enrollmentTeacherAmount > 0
-        ? enrollmentTeacherAmount
-        : resolveTeacherPay(session, enrollment);
-
     const existingChargeData = (chargeSnap.data() || {}) as Record<string, unknown>;
     const chargeStatus = normalizeFinancialStatus(existingChargeData.status);
-    const nextChargeStatus = !chargeSnap.exists || chargeStatus === 'void' ? 'open' : chargeStatus || 'open';
-    const existingChargeAmount = normalizeMoney(existingChargeData.amount);
-    const existingChargePaidAmount = resolveChargePaidAmount(existingChargeData, existingChargeAmount);
-    const appliedChargeAmount =
-      chargeSnap.exists && (isSettledFinancialStatus(nextChargeStatus) || existingChargePaidAmount > 0)
-        ? existingChargeAmount
-        : amount;
-    const preserveSettledCharge =
-      chargeSnap.exists && (isSettledFinancialStatus(nextChargeStatus) || existingChargePaidAmount > 0);
-    const existingChargeMonthKey = String(existingChargeData.monthKey || '').trim();
-    const chargeMonthKey = preserveSettledCharge && /^\d{4}-\d{2}$/.test(existingChargeMonthKey)
-      ? existingChargeMonthKey
-      : monthKey;
-
     const existingEarningData = (earningSnap.data() || {}) as Record<string, unknown>;
     const earningStatus = normalizeFinancialStatus(existingEarningData.status);
-    const nextEarningStatus = !earningSnap.exists || earningStatus === 'void' ? 'unpaid' : earningStatus || 'unpaid';
-    const existingEarningAmount = normalizeMoney(existingEarningData.amount);
-    const existingEarningPaidAmount = resolveTeacherEarningPaidAmount(existingEarningData, existingEarningAmount);
-    const appliedTeacherAmount =
-      earningSnap.exists && (isSettledFinancialStatus(nextEarningStatus) || existingEarningPaidAmount > 0)
-        ? existingEarningAmount
-        : teacherAmount;
-
     const replayPlan = resolvePresentFinanceReplayPlan({
       wasBillable,
+      alreadyAccrued: session.revenueAccrued === true,
       chargeExists: chargeSnap.exists,
       chargeStatus,
       earningExists: earningSnap.exists,
@@ -739,68 +417,25 @@ async function reconcileAttendanceCorrectionFinance(args: {
     if (replayPlan.conflict === 'earning_void') {
       throw new HttpsError('failed-precondition', 'Existing teacher earning is void; present attendance replay requires financial review.');
     }
-    const { shouldWriteCharge, shouldWriteEarning } = replayPlan;
-
-    if (!shouldWriteCharge && !shouldWriteEarning) {
-      return { action: 'no_finance_change', chargeChanged: false, earningChanged: false };
+    if (replayPlan.conflict === 'missing_charge') {
+      throw new HttpsError('failed-precondition', 'Billing charge is missing while a teacher earning exists; use explicit financial reconciliation.');
     }
-
-    const chargePayload: Record<string, unknown> = {
-      sessionId,
-      enrollmentId,
-      kidId: billableKidId,
-      parentId,
-      teacherId,
-      courseId,
-      amount: appliedChargeAmount,
-      currency,
-      status: nextChargeStatus,
-      source: 'session_present_completed',
-      monthKey: chargeMonthKey,
-      serviceDate: existingChargeData.serviceDate || canonicalService.serviceDate,
-      serviceMonthKey: existingChargeData.serviceMonthKey || monthKey,
-      ...(existingChargeData.sessionStartAt || !session.startAt ? {} : { sessionStartAt: session.startAt }),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      ...metadata,
-      voidedAt: admin.firestore.FieldValue.delete(),
-      voidReason: admin.firestore.FieldValue.delete(),
-      correctedBy: admin.firestore.FieldValue.delete(),
-      correctedAt: admin.firestore.FieldValue.delete(),
-    };
-    if (!chargeSnap.exists) {
-      chargePayload.createdAt = admin.firestore.FieldValue.serverTimestamp();
+    if (replayPlan.conflict === 'missing_earning') {
+      throw new HttpsError('failed-precondition', 'Teacher earning is missing while a billing charge exists; use explicit financial reconciliation.');
     }
-
-    const earningPayload: Record<string, unknown> = {
-      sessionId,
-      enrollmentId,
-      kidId: billableKidId,
-      teacherId,
-      parentId,
-      courseId,
-      amount: appliedTeacherAmount,
-      currency,
-      status: nextEarningStatus,
-      source: 'session_present_completed',
-      monthKey,
-      earnedAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      ...metadata,
-      voidedAt: admin.firestore.FieldValue.delete(),
-      voidReason: admin.firestore.FieldValue.delete(),
-      correctedBy: admin.firestore.FieldValue.delete(),
-      correctedAt: admin.firestore.FieldValue.delete(),
-    };
-    if (!earningSnap.exists) {
-      earningPayload.createdAt = admin.firestore.FieldValue.serverTimestamp();
+    if (replayPlan.conflict === 'missing_charge_and_earning') {
+      throw new HttpsError('failed-precondition', 'Financial ledger is missing for already-present attendance; use explicit financial reconciliation.');
     }
-
-    if (shouldWriteCharge) batch.set(chargeRef, chargePayload, { merge: true });
-    if (shouldWriteEarning) batch.set(earningRef, earningPayload, { merge: true });
+    if (replayPlan.conflict === 'already_accrued_without_ledger') {
+      throw new HttpsError('failed-precondition', 'Session is already accrued but its financial ledger is missing; use explicit financial reconciliation.');
+    }
+    if (replayPlan.conflict === 'preexisting_ledger_for_non_billable_attendance') {
+      throw new HttpsError('failed-precondition', 'Financial ledger already exists for non-billable attendance; use explicit financial reconciliation.');
+    }
     return {
-      action: 'mark_billable',
-      chargeChanged: shouldWriteCharge,
-      earningChanged: shouldWriteEarning,
+      action: replayPlan.deferToRevenueAccrual ? 'mark_billable' : 'no_finance_change',
+      chargeChanged: false,
+      earningChanged: false,
     };
   }
 

@@ -104,6 +104,8 @@ const makeDoc = (id: string, data: Record<string, unknown>) => ({
   exists: () => true,
 });
 
+let invoiceServiceDate = '2026-08-17';
+
 const queryParts = (input: any) => (input?.kind === 'query' ? input.args.slice(1) : []);
 const hasWhere = (input: any, field: string, op?: string, matcher?: (value: any) => boolean) =>
   queryParts(input).some((part: any) =>
@@ -118,6 +120,7 @@ const collectionName = (input: any) => input?.args?.[0]?.args?.[1] || input?.arg
 describe('ParentPaymentsV2', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    invoiceServiceDate = '2026-08-17';
 
     getAggregateFromServerMock.mockImplementation(async (_input: unknown, fields: any) => {
       if (fields.selectedMonthBilled) {
@@ -189,7 +192,7 @@ describe('ParentPaymentsV2', () => {
       }
 
       if (collectionName(input) === 'classSessions' && hasWhere(input, '__name__', 'in')) {
-        return { docs: [makeDoc('session-1', { date: '2026-08-17' })] };
+        return { docs: [makeDoc('session-1', { date: invoiceServiceDate })] };
       }
 
       if (collectionName(input) === 'billingCharges' && hasWhere(input, 'sessionId', 'in')) {
@@ -287,6 +290,19 @@ describe('ParentPaymentsV2', () => {
     expect(await screen.findByText('17 Aug')).toBeTruthy();
     expect(screen.queryByText('10 Sep')).toBeNull();
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('excludes a service-month mismatch and warns when verified totals differ from the ledger', async () => {
+    invoiceServiceDate = '2026-09-10';
+    render(<ParentPaymentsV2 />);
+    await waitFor(() => expect(screen.getByText('Parent One')).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: 'Invoice' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toContain('1 financial integrity record requires review');
+    expect(alert.textContent).toContain('Verified invoice totals differ from the canonical monthly ledger');
+    expect(screen.queryByText('10 Sep')).toBeNull();
+    expect(screen.getByText('No verified charge rows available.')).toBeTruthy();
   });
 
   it('uses one direct search picker and narrows the page to the selected parent', async () => {
