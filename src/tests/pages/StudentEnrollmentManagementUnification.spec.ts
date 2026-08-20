@@ -68,9 +68,9 @@ describe('unified student and enrollment management', () => {
   });
 
   it('keeps routine enrollment filters simple and shows integrity filters only when relevant', () => {
-    expect(enrollmentsListSource).toContain('>\n            Active\n          </button>');
-    expect(enrollmentsListSource).toContain('>\n            Past\n          </button>');
-    expect(enrollmentsListSource).toContain('>\n            Archived\n          </button>');
+    expect(enrollmentsListSource).toContain("setStatusTab('active')");
+    expect(enrollmentsListSource).toContain("setStatusTab('past')");
+    expect(enrollmentsListSource).toContain("setStatusTab('archived')");
     expect(enrollmentsListSource).toContain('reconciliation.brokenLinks > 0');
     expect(enrollmentsListSource).toContain('reconciliation.possibleDuplicates > 0');
   });
