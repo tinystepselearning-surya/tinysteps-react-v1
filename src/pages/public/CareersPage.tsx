@@ -5,36 +5,44 @@ import {
   BadgeCheck,
   BookOpenCheck,
   CheckCircle2,
+  ChevronDown,
   Clock3,
+  Globe2,
   GraduationCap,
   IndianRupee,
   Laptop,
+  MapPin,
   MessageCircle,
-  Search,
+  Send,
   ShieldCheck,
   Sparkles,
   Users,
 } from 'lucide-react';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
-import { PUBLIC_CONTACT_EMAIL } from '../../constants/publicContact';
 import { trackEvent } from '../../lib/analytics';
-import { buildLeadAttributionPayload } from '../../lib/conversionTracking';
 import { applySeo } from '../../lib/seo';
 
 const CAREERS_PATH = '/careers';
+const CAREERS_URL = 'https://tinystepslearning.com/careers';
 const ROLE_TITLE = 'Online English Teacher - Phonics, Grammar & Public Speaking';
 const WHATSAPP_NUMBER = '919618398383';
+const CAREERS_TITLE = 'Online English Teacher Jobs Worldwide | Tiny Steps Learning';
+const CAREERS_DESCRIPTION =
+  'Apply for remote online English teacher jobs with Tiny Steps Learning. Teach phonics, grammar, spoken English and public speaking to children in live 1:1 classes.';
 
-const buildWhatsAppLink = () => {
+const buildGeneralWhatsAppLink = () => {
   const message = [
-    'Hi Tiny Steps Learning! I would like to apply for the Online English Teacher role.',
+    'Hello Tiny Steps Learning! I would like to apply for the Online English Teacher role.',
+    '',
     'Name: _____',
-    'City: _____',
+    'City / Country: _____',
     'Teaching experience: _____',
-    'Primary area: Phonics / Grammar / Public Speaking',
-    'Daily availability: _____',
-    'Resume / LinkedIn link: _____',
+    'Primary teaching strength: Phonics / Grammar / Public Speaking / Spoken English',
+    'Current / recent teaching context: _____',
+    'Daily availability + time zone: _____',
+    '',
+    'I can attach my resume or supporting documents here if required.',
   ].join('\n');
 
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
@@ -43,116 +51,137 @@ const buildWhatsAppLink = () => {
 const AT_A_GLANCE = [
   ['Role', 'Online English Teacher'],
   ['Work mode', 'Fully remote / work from home'],
+  ['Applications', 'Qualified teachers worldwide'],
   ['Learners', 'Children aged 3–12'],
-  ['Subjects', 'Phonics, Grammar & Public Speaking'],
+  ['Subjects', 'Phonics, Grammar, Speaking'],
   ['Class format', 'Live 1:1 online classes'],
   ['Class duration', '35 minutes'],
-  ['Compensation', '₹175 per completed class'],
-  ['Preferred availability', '3–4 hours per day; evenings/weekends helpful'],
+  ['Current rate', '₹175 per completed class'],
 ];
 
 const BENEFITS = [
   {
     icon: Clock3,
     title: 'Focused 35-minute classes',
-    description: 'Teach short, structured sessions designed for young learners rather than long lecture-style classes.',
+    description: 'Teach concise, structured sessions built for young learners instead of long lecture-style classes.',
+    cardClass: 'border-blue-100 bg-gradient-to-br from-blue-50 via-white to-white hover:border-blue-200',
+    iconClass: 'bg-blue-100 text-blue-700',
   },
   {
     icon: BookOpenCheck,
-    title: 'Curriculum and lesson materials provided',
-    description: 'Use Tiny Steps lesson content, activities and teaching guidance instead of building every class from scratch.',
+    title: 'Curriculum and materials provided',
+    description: 'Use Tiny Steps lesson content, activities and teaching guidance rather than building every class from scratch.',
+    cardClass: 'border-violet-100 bg-gradient-to-br from-violet-50 via-white to-white hover:border-violet-200',
+    iconClass: 'bg-violet-100 text-violet-700',
   },
   {
-    icon: Laptop,
-    title: 'Teach fully online',
-    description: 'Work from home with a laptop, stable internet connection and a quiet, professional teaching setup.',
+    icon: Globe2,
+    title: 'A genuinely remote role',
+    description: 'Apply from anywhere, subject to role fit, time-zone overlap, local requirements and reliable online delivery.',
+    cardClass: 'border-cyan-100 bg-gradient-to-br from-cyan-50 via-white to-white hover:border-cyan-200',
+    iconClass: 'bg-cyan-100 text-cyan-700',
   },
   {
     icon: IndianRupee,
     title: 'Clear per-class compensation',
-    description: 'The current teaching rate is ₹175 for each completed 35-minute class.',
+    description: 'The current standard teaching rate is ₹175 for each completed 35-minute class.',
+    cardClass: 'border-amber-100 bg-gradient-to-br from-amber-50 via-white to-white hover:border-amber-200',
+    iconClass: 'bg-amber-100 text-amber-700',
   },
   {
     icon: GraduationCap,
     title: 'Training and academic support',
-    description: 'Receive onboarding guidance on Tiny Steps programs, class standards, lesson flow and child engagement.',
+    description: 'Receive onboarding guidance on programs, class standards, lesson flow, presentation and child engagement.',
+    cardClass: 'border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-white hover:border-emerald-200',
+    iconClass: 'bg-emerald-100 text-emerald-700',
   },
   {
     icon: Users,
     title: '1:1 child-focused teaching',
     description: 'Work closely with individual learners and adapt delivery to the child’s pace within a structured curriculum.',
+    cardClass: 'border-orange-100 bg-gradient-to-br from-orange-50 via-white to-white hover:border-orange-200',
+    iconClass: 'bg-orange-100 text-orange-700',
   },
 ];
 
 const RESPONSIBILITIES = [
   'Conduct engaging live 1:1 English classes for children aged 3–12.',
   'Teach assigned lessons in Phonics, Grammar, Public Speaking or Spoken English using Tiny Steps materials.',
-  'Maintain clear pronunciation, age-appropriate language and a child-friendly teaching style.',
-  'Use the required Tiny Steps virtual teaching background and follow classroom presentation standards.',
-  'Share screens correctly, including lesson audio when required, and use full-screen presentation mode where appropriate.',
+  'Maintain clear pronunciation, age-appropriate language and a warm, child-friendly teaching style.',
+  'Follow Tiny Steps classroom presentation standards, including the approved virtual teaching background.',
+  'Share screens correctly, including lesson audio when required, and present digital lesson materials professionally.',
   'Record concise class progress and follow scheduling, attendance and quality processes consistently.',
-  'Maintain full attention throughout each 35-minute class and create a professional online learning environment.',
+  'Maintain full attention throughout every 35-minute class and create a professional online learning environment.',
 ];
 
 const REQUIREMENTS = [
   'Strong spoken and written English with clear pronunciation and confident communication.',
   'Graduation is preferred; relevant structured teaching experience is valued.',
-  'Prior experience teaching children, English, phonics, grammar, communication or public speaking is an advantage.',
+  'Experience teaching children, English, phonics, grammar, communication or public speaking is an advantage.',
   'A laptop or desktop with camera and microphone, reliable broadband and a quiet teaching space.',
   'Comfort using Zoom / Teams-style online classrooms, screen sharing and digital lesson materials.',
-  'Consistent availability; candidates who can offer 3–4 teaching hours per day are especially useful to our scheduling team.',
+  'Consistent availability; around 3–4 teaching hours per day is especially useful for scheduling.',
   'Professional reliability, punctuality and willingness to follow Tiny Steps teaching and child-safety standards.',
 ];
 
 const PROCESS_STEPS = [
   {
-    title: 'Apply online',
-    description: 'Share your contact details, teaching background, preferred subject area, availability and resume or LinkedIn link.',
+    title: 'Apply on this page',
+    description: 'Enter your teaching profile and availability. Submit opens WhatsApp with your details already prepared.',
+    tone: 'border-blue-200 bg-blue-50/70',
   },
   {
     title: 'HR screening',
-    description: 'A short screening conversation checks English communication, teaching background, availability and role fit.',
+    description: 'A short conversation checks English communication, teaching background, availability and role fit.',
+    tone: 'border-violet-200 bg-violet-50/70',
   },
   {
     title: 'Training + teaching demo',
-    description: 'Review the assigned Tiny Steps program and conduct a short demo using our classroom expectations and lesson format.',
+    description: 'Review the assigned Tiny Steps program and conduct a demo using our classroom standards and lesson format.',
+    tone: 'border-emerald-200 bg-emerald-50/70',
   },
   {
-    title: 'Onboarding + slots',
-    description: 'Selected teachers complete onboarding, confirm consistent availability and become eligible for class allocation.',
+    title: 'Onboarding + class matching',
+    description: 'Selected teachers complete onboarding, confirm reliable slots and become eligible for class allocation.',
+    tone: 'border-orange-200 bg-orange-50/70',
   },
 ];
 
 const FAQS = [
   {
-    question: 'Is Tiny Steps hiring online English teachers for work from home roles?',
+    question: 'Is Tiny Steps hiring remote online English teachers?',
     answer:
-      'Yes. Tiny Steps Learning accepts applications for remote online English teaching. The primary role covers Phonics, Grammar and Public Speaking / Spoken English for children aged 3–12.',
+      'Yes. Tiny Steps Learning accepts applications for remote online English teaching roles covering Phonics, Grammar, Public Speaking and Spoken English for children aged 3–12. Applications may be submitted internationally, subject to role fit, time-zone compatibility and local engagement requirements.',
+  },
+  {
+    question: 'Can teachers outside India apply?',
+    answer:
+      'Yes. Qualified teachers from different countries may apply. Because classes are live, reliable internet, professional English communication and schedule overlap with available learners are essential. Final engagement may also depend on payment and contracting feasibility in the applicant’s location.',
   },
   {
     question: 'Can PlanetSpark, Vedantu, Learn2Read or Instrucko teachers apply to Tiny Steps?',
     answer:
-      'Yes. Teachers who currently work with, previously worked with, or are considering opportunities at Vedantu, PlanetSpark, Learn2Read, Instrucko or other EdTech platforms may apply. Candidates must respect any existing employment, confidentiality or conflict-of-interest obligations.',
+      'Yes. Teachers who currently work with, previously worked with, or are considering opportunities at Vedantu, PlanetSpark, Learn2Read, Instrucko or other education platforms may apply. Candidates must respect any existing employment, confidentiality or conflict-of-interest obligations.',
   },
   {
     question: 'Is Tiny Steps affiliated with Vedantu, PlanetSpark, Learn2Read or Instrucko?',
     answer:
-      'No. Tiny Steps Learning is an independent education company and is not affiliated with, endorsed by, or part of Vedantu, PlanetSpark, Learn2Read or Instrucko. Those names are mentioned only because teachers often compare online teaching opportunities across EdTech platforms.',
+      'No. Tiny Steps Learning is an independent education company and is not affiliated with, endorsed by, or part of Vedantu, PlanetSpark, Learn2Read or Instrucko. Those names are mentioned only because teachers often compare remote teaching opportunities across education platforms.',
   },
   {
     question: 'How much does Tiny Steps pay online teachers?',
     answer:
-      'The current teaching compensation is ₹175 per completed 35-minute class. Class allocation depends on student admissions, teacher availability, scheduling fit and ongoing teaching quality.',
+      'The current standard teaching compensation is ₹175 per completed 35-minute class. Class allocation depends on student admissions, teacher availability, scheduling fit and ongoing teaching quality.',
   },
   {
     question: 'What subjects can I teach at Tiny Steps?',
     answer:
-      'Tiny Steps currently recruits teachers for Phonics, Grammar and Public Speaking / Spoken English. Candidates may indicate one primary strength and any additional subjects they can confidently teach.',
+      'Tiny Steps recruits online teachers for Phonics, Grammar, Public Speaking and Spoken English. Candidates can indicate one primary strength and additional areas they are confident teaching.',
   },
   {
     question: 'Do I need phonics experience to apply?',
     answer:
-      'Phonics experience is valuable but not the only route. Strong English teachers with child-teaching experience may also be considered for Grammar or Public Speaking roles and can be trained on Tiny Steps lesson standards where appropriate.',
+      'Phonics experience is valuable but is not the only route. Strong English teachers with child-teaching experience may also be considered for Grammar, Spoken English or Public Speaking roles and can be trained on Tiny Steps lesson standards where appropriate.',
   },
   {
     question: 'What equipment do I need for online teaching?',
@@ -162,48 +191,66 @@ const FAQS = [
   {
     question: 'What teaching hours are preferred?',
     answer:
-      'We value consistent availability and currently prefer teachers who can offer around 3–4 hours per day. Evening and weekend availability can be particularly useful because many children attend classes outside school hours.',
+      'We value consistent availability and currently prefer teachers who can offer around 3–4 hours per day. Evening and weekend availability can be especially useful, while international applicants should clearly state their time zone and available teaching window.',
   },
   {
-    question: 'How do I apply for Tiny Steps teacher jobs?',
+    question: 'How do I send my resume or supporting documents?',
     answer:
-      'Complete the application form on this page or send the pre-filled teacher application message on WhatsApp. Include your city, teaching experience, preferred subject area, daily availability and a resume or LinkedIn link.',
+      'The application form does not ask for a resume upload or resume link. When you submit the form, WhatsApp opens with your application details. You can then attach your resume, certificates or other supporting documents directly in WhatsApp if you wish.',
   },
 ];
 
 const COMPARISON_POINTS = [
-  'How long is each class and is it 1:1 or group-based?',
-  'How much daily availability is expected?',
+  'Is the class 1:1 or group-based?',
+  'How long is each live class?',
   'Are curriculum and teaching materials provided?',
   'How is compensation calculated and communicated?',
   'What training and academic support are available?',
-  'Which age groups and English skills will you teach?',
+  'Which ages, skills and time zones will you teach?',
 ];
 
 const applicationInitialValues = {
   name: '',
   email: '',
   phone: '',
-  city: '',
+  location: '',
   experience: '',
   specialization: 'Phonics',
   currentContext: '',
   availability: '',
-  resumeLink: '',
   note: '',
 };
 
 type ApplicationValues = typeof applicationInitialValues;
 
+function buildApplicationWhatsAppLink(values: ApplicationValues) {
+  const message = [
+    'Hello Tiny Steps Learning! I would like to apply for the Online English Teacher role.',
+    '',
+    `Name: ${values.name}`,
+    `Email: ${values.email || 'Not provided'}`,
+    `Phone / WhatsApp: ${values.phone}`,
+    `City / Country: ${values.location}`,
+    `Teaching experience: ${values.experience}`,
+    `Primary teaching strength: ${values.specialization}`,
+    `Current / recent teaching context: ${values.currentContext || 'Not provided'}`,
+    `Daily availability + time zone: ${values.availability}`,
+    `Additional note: ${values.note || 'Not provided'}`,
+    '',
+    'I can attach my resume, certificates or supporting documents here if required.',
+  ].join('\n');
+
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+}
+
 function CareerApplicationForm() {
   const [values, setValues] = useState<ApplicationValues>(applicationInitialValues);
   const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const hasTrackedStart = useRef(false);
 
   const update = (field: keyof ApplicationValues, value: string) => {
     setValues((current) => ({ ...current, [field]: value }));
+    setSubmitted(false);
   };
 
   const trackStart = () => {
@@ -212,131 +259,95 @@ function CareerApplicationForm() {
     trackEvent('career_application_start', {
       page_path: CAREERS_PATH,
       role: 'online_english_teacher',
+      application_channel: 'whatsapp',
     });
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError('');
-    setIsSubmitting(true);
 
-    const message = [
-      `Role: ${ROLE_TITLE}`,
-      `City: ${values.city}`,
-      `Teaching experience: ${values.experience}`,
-      `Primary specialization: ${values.specialization}`,
-      `Current / recent teaching context: ${values.currentContext || 'Not provided'}`,
-      `Daily availability: ${values.availability}`,
-      `Resume / LinkedIn: ${values.resumeLink || 'Not provided'}`,
-      `Additional note: ${values.note || 'Not provided'}`,
-    ].join('\n');
+    trackEvent('career_application_whatsapp_submit', {
+      page_path: CAREERS_PATH,
+      role: 'online_english_teacher',
+      specialization: values.specialization.toLowerCase().replace(/\s+/g, '_'),
+      application_channel: 'whatsapp',
+    });
 
-    try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: values.name,
-          email: values.email,
-          phone: values.phone,
-          message,
-          topic: 'Teacher application',
-          pagePath: CAREERS_PATH,
-          submittedAt: new Date().toISOString(),
-          ...buildLeadAttributionPayload(CAREERS_PATH),
-        }),
-      });
-
-      if (!response.ok) throw new Error('career_application_submit_failed');
-
-      trackEvent('career_application_submit', {
-        page_path: CAREERS_PATH,
-        role: 'online_english_teacher',
-        specialization: values.specialization.toLowerCase().replace(/\s+/g, '_'),
-      });
-
-      setSubmitted(true);
-      setValues(applicationInitialValues);
-    } catch {
-      trackEvent('career_application_error', {
-        page_path: CAREERS_PATH,
-        role: 'online_english_teacher',
-      });
-      setError(`We could not submit your application right now. Please email ${PUBLIC_CONTACT_EMAIL} or use WhatsApp.`);
-    } finally {
-      setIsSubmitting(false);
-    }
+    setSubmitted(true);
+    window.open(buildApplicationWhatsAppLink(values), '_blank', 'noopener,noreferrer');
   };
 
+  const inputClass =
+    'mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 shadow-sm outline-none transition duration-200 placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-100';
+
   return (
-    <form onSubmit={handleSubmit} onFocusCapture={trackStart} className="mt-8 grid gap-5 md:grid-cols-2">
-      <label className="text-sm font-medium text-slate-800">
+    <form onSubmit={handleSubmit} onFocusCapture={trackStart} className="mt-7 grid gap-5 md:grid-cols-2">
+      <label className="text-sm font-semibold text-slate-800">
         Full name
         <input
           value={values.name}
           onChange={(event) => update('name', event.target.value)}
-          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-slate-500"
+          className={inputClass}
           placeholder="Your full name"
           autoComplete="name"
           required
         />
       </label>
 
-      <label className="text-sm font-medium text-slate-800">
-        Email address
-        <input
-          type="email"
-          value={values.email}
-          onChange={(event) => update('email', event.target.value)}
-          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-slate-500"
-          placeholder="you@example.com"
-          autoComplete="email"
-          required
-        />
-      </label>
-
-      <label className="text-sm font-medium text-slate-800">
+      <label className="text-sm font-semibold text-slate-800">
         Phone / WhatsApp number
         <input
           type="tel"
           value={values.phone}
           onChange={(event) => update('phone', event.target.value)}
-          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-slate-500"
-          placeholder="+91 ..."
+          className={inputClass}
+          placeholder="+country code ..."
           autoComplete="tel"
           required
         />
       </label>
 
-      <label className="text-sm font-medium text-slate-800">
-        City
+      <label className="text-sm font-semibold text-slate-800">
+        Email address <span className="font-normal text-slate-400">(optional)</span>
         <input
-          value={values.city}
-          onChange={(event) => update('city', event.target.value)}
-          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-slate-500"
-          placeholder="Hyderabad, Bengaluru, Pune..."
+          type="email"
+          value={values.email}
+          onChange={(event) => update('email', event.target.value)}
+          className={inputClass}
+          placeholder="you@example.com"
+          autoComplete="email"
+        />
+      </label>
+
+      <label className="text-sm font-semibold text-slate-800">
+        City / Country
+        <input
+          value={values.location}
+          onChange={(event) => update('location', event.target.value)}
+          className={inputClass}
+          placeholder="Example: Dubai, UAE"
           autoComplete="address-level2"
           required
         />
       </label>
 
-      <label className="text-sm font-medium text-slate-800">
+      <label className="text-sm font-semibold text-slate-800">
         Teaching experience
         <input
           value={values.experience}
           onChange={(event) => update('experience', event.target.value)}
-          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-slate-500"
+          className={inputClass}
           placeholder="Example: 3 years online English teaching"
           required
         />
       </label>
 
-      <label className="text-sm font-medium text-slate-800">
+      <label className="text-sm font-semibold text-slate-800">
         Primary teaching strength
         <select
           value={values.specialization}
           onChange={(event) => update('specialization', event.target.value)}
-          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-slate-500"
+          className={inputClass}
           required
         >
           <option>Phonics</option>
@@ -347,46 +358,34 @@ function CareerApplicationForm() {
         </select>
       </label>
 
-      <label className="text-sm font-medium text-slate-800">
-        Current / recent teaching context
+      <label className="text-sm font-semibold text-slate-800">
+        Current / recent teaching context <span className="font-normal text-slate-400">(optional)</span>
         <input
           value={values.currentContext}
           onChange={(event) => update('currentContext', event.target.value)}
-          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-slate-500"
-          placeholder="School, EdTech platform, online tutoring, career break..."
+          className={inputClass}
+          placeholder="School, EdTech platform, tutoring, career break..."
         />
       </label>
 
-      <label className="text-sm font-medium text-slate-800">
-        Daily availability
+      <label className="text-sm font-semibold text-slate-800">
+        Daily availability + time zone
         <input
           value={values.availability}
           onChange={(event) => update('availability', event.target.value)}
-          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-slate-500"
-          placeholder="Example: 5 PM–9 PM IST, Mon–Sat"
+          className={inputClass}
+          placeholder="Example: 5–9 PM GST, Mon–Sat"
           required
         />
       </label>
 
-      <label className="text-sm font-medium text-slate-800 md:col-span-2">
-        Resume or LinkedIn link <span className="font-normal text-slate-500">(recommended)</span>
-        <input
-          type="url"
-          value={values.resumeLink}
-          onChange={(event) => update('resumeLink', event.target.value)}
-          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-slate-500"
-          placeholder="https://..."
-        />
-      </label>
-
-      <label className="text-sm font-medium text-slate-800 md:col-span-2">
-        Anything else we should know? <span className="font-normal text-slate-500">(optional)</span>
+      <label className="text-sm font-semibold text-slate-800 md:col-span-2">
+        Anything else we should know? <span className="font-normal text-slate-400">(optional)</span>
         <textarea
           value={values.note}
           onChange={(event) => update('note', event.target.value)}
-          rows={4}
-          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-slate-500"
-          placeholder="Certifications, age groups taught, phonics methodology, preferred schedule, etc."
+          className={`${inputClass} min-h-28 resize-y`}
+          placeholder="Age groups taught, certifications, phonics methodology, preferred schedule, etc."
         />
       </label>
 
@@ -394,46 +393,48 @@ function CareerApplicationForm() {
         <Button
           type="submit"
           size="lg"
-          disabled={isSubmitting}
-          className="w-full rounded-full bg-slate-950 px-8 text-white hover:bg-slate-800 md:w-auto"
+          className="group w-full rounded-2xl bg-gradient-to-r from-slate-950 via-blue-950 to-slate-950 px-7 text-white shadow-lg shadow-blue-950/10 transition duration-300 hover:-translate-y-0.5 hover:shadow-xl sm:w-auto"
         >
-          {isSubmitting ? 'Submitting application...' : 'Submit teacher application'}
-          {!isSubmitting ? <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" /> : null}
+          Continue application on WhatsApp
+          <Send className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
         </Button>
-        <p className="mt-3 text-xs leading-5 text-slate-500">
-          By applying, you confirm that the information you provide is accurate and that you will respect any contractual or confidentiality obligations you may have with a current or former employer.
+        <p className="mt-3 max-w-3xl text-xs leading-5 text-slate-500">
+          Your details are not uploaded by this form. Submitting simply opens WhatsApp with your information pre-filled. You can review the message and attach your resume, certificates or supporting files there before sending.
         </p>
+
+        {submitted ? (
+          <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900">
+            WhatsApp opened with your application details. Review the message, attach any supporting documents you want to share, and send it to Tiny Steps Learning.
+          </div>
+        ) : null}
       </div>
-
-      {submitted ? (
-        <div className="md:col-span-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status" aria-live="polite">
-          Application received. Our team will review your profile and contact shortlisted candidates.
-        </div>
-      ) : null}
-
-      {error ? (
-        <div className="md:col-span-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700" role="alert">
-          {error}
-        </div>
-      ) : null}
     </form>
   );
 }
 
 export default function CareersPage() {
   useEffect(() => {
+    const jobDescription = [
+      'Tiny Steps Learning is recruiting remote Online English Teachers to teach children aged 3–12 in live 1:1 classes.',
+      'Teachers may be assigned Phonics, Grammar, Public Speaking or Spoken English lessons using structured Tiny Steps curriculum and teaching materials.',
+      `Responsibilities include ${RESPONSIBILITIES.join(' ')}`,
+      `Qualifications and requirements include ${REQUIREMENTS.join(' ')}`,
+      'Applications are welcome from qualified teachers worldwide, subject to time-zone compatibility, role fit, payment feasibility and local engagement requirements.',
+      'Consistent availability of around 3–4 teaching hours per day is preferred; evening and weekend availability may be especially useful depending on learner demand.',
+      'The current standard teaching rate is ₹175 per completed 35-minute class. Class allocation is not guaranteed and depends on student admissions, scheduling fit, teacher availability and ongoing teaching quality.',
+    ].join(' ');
+
     const jobPostingSchema = {
       '@context': 'https://schema.org',
       '@type': 'JobPosting',
-      '@id': 'https://tinystepslearning.com/careers#online-english-teacher',
+      '@id': `${CAREERS_URL}#online-english-teacher`,
       identifier: {
         '@type': 'PropertyValue',
         name: 'Tiny Steps Learning',
         value: 'TS-ONLINE-ENGLISH-TEACHER-2026',
       },
       title: ROLE_TITLE,
-      description:
-        'Remote part-time online English teaching opportunity with Tiny Steps Learning. Teach live 1:1 classes for children aged 3–12 across phonics, grammar and public speaking / spoken English. Tiny Steps provides structured curriculum and lesson materials. Current compensation is ₹175 per completed 35-minute class. Candidates should have strong English communication, reliable internet, a laptop or desktop and consistent availability.',
+      description: jobDescription,
       datePosted: '2026-08-20',
       employmentType: 'PART_TIME',
       directApply: true,
@@ -441,26 +442,25 @@ export default function CareersPage() {
       hiringOrganization: {
         '@type': 'Organization',
         name: 'Tiny Steps Learning',
-        sameAs: 'https://tinystepslearning.com/',
+        sameAs: 'https://tinystepslearning.com',
+        url: 'https://tinystepslearning.com',
       },
       jobLocationType: 'TELECOMMUTE',
-      applicantLocationRequirements: {
-        '@type': 'Country',
-        name: 'India',
-      },
-      responsibilities:
-        'Teach live 1:1 English classes for children aged 3–12, follow Tiny Steps lesson materials and classroom standards, maintain professional online delivery and complete progress and scheduling processes consistently.',
+      responsibilities: RESPONSIBILITIES.join(' '),
+      qualifications: REQUIREMENTS.join(' '),
+      educationRequirements: 'Graduation preferred; relevant structured teaching experience is valued.',
+      experienceRequirements:
+        'Prior experience teaching children, English, phonics, grammar, communication or public speaking is an advantage. Strong English teachers with relevant child-teaching experience may also be considered.',
       skills:
-        'English communication, online teaching, child engagement, phonics, grammar, public speaking, spoken English, screen sharing and digital classroom skills.',
-      qualifications:
-        'Strong spoken and written English. Graduation preferred. Relevant structured teaching experience is valued. Laptop or desktop, reliable broadband, camera, microphone and a quiet teaching environment are required.',
-      url: 'https://tinystepslearning.com/careers',
+        'Online English teaching; phonics; grammar; spoken English; public speaking; child engagement; clear pronunciation; screen sharing; digital classroom delivery.',
+      workHours:
+        'Consistent availability is required. Around 3–4 teaching hours per day is preferred; evening and weekend availability can be useful depending on learner demand and time-zone overlap.',
+      url: CAREERS_URL,
     };
 
     const faqSchema = {
       '@context': 'https://schema.org',
       '@type': 'FAQPage',
-      '@id': 'https://tinystepslearning.com/careers#faq',
       mainEntity: FAQS.map((faq) => ({
         '@type': 'Question',
         name: faq.question,
@@ -474,7 +474,6 @@ export default function CareersPage() {
     const breadcrumbSchema = {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
-      '@id': 'https://tinystepslearning.com/careers#breadcrumb',
       itemListElement: [
         {
           '@type': 'ListItem',
@@ -486,27 +485,32 @@ export default function CareersPage() {
           '@type': 'ListItem',
           position: 2,
           name: 'Online Teaching Jobs',
-          item: 'https://tinystepslearning.com/careers',
+          item: CAREERS_URL,
         },
       ],
     };
 
     applySeo({
-      title: 'Online English Teacher Jobs (WFH) | Tiny Steps Learning',
-      description:
-        'Apply for remote online English teacher jobs at Tiny Steps Learning. Teach phonics, grammar and public speaking to kids. ₹175 per 35-minute class.',
+      title: CAREERS_TITLE,
+      description: CAREERS_DESCRIPTION,
       keywords: [
         'online English teacher jobs',
-        'work from home teacher jobs',
-        'remote English teacher jobs India',
+        'remote English teacher jobs',
+        'online English teacher jobs worldwide',
+        'work from home English teacher jobs',
         'online phonics teacher jobs',
+        'phonics teacher jobs remote',
+        'online grammar teacher jobs',
         'public speaking teacher jobs online',
-        'spoken English teacher jobs work from home',
-        'PlanetSpark teacher jobs alternative',
+        'spoken English teacher jobs',
+        'online English tutor jobs',
+        'remote tutoring jobs for English teachers',
+        'English teaching jobs from home',
+        'international online teaching jobs',
         'Vedantu teacher jobs alternative',
+        'PlanetSpark teacher jobs alternative',
         'Learn2Read phonics teacher jobs',
         'Instrucko teacher jobs',
-        'online teaching jobs for English teachers',
         'Tiny Steps Learning careers',
       ],
       canonicalPath: CAREERS_PATH,
@@ -515,71 +519,75 @@ export default function CareersPage() {
     });
   }, []);
 
-  const whatsappLink = buildWhatsAppLink();
+  const whatsappLink = buildGeneralWhatsAppLink();
 
   return (
-    <main className="min-h-screen bg-[#f8fafc] text-slate-950">
-      <section className="relative overflow-hidden border-b border-slate-200 bg-white px-6 pb-16 pt-20 md:pb-24 md:pt-28">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.12),transparent_40%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_38%)]" />
-        <div className="relative mx-auto grid max-w-6xl gap-12 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+    <main className="min-h-screen bg-slate-50 text-slate-950">
+      <section className="relative overflow-hidden border-b border-slate-200 bg-gradient-to-br from-orange-50 via-white to-blue-50 px-5 py-12 md:px-6 md:py-16">
+        <div className="pointer-events-none absolute -left-24 top-8 h-64 w-64 rounded-full bg-orange-200/30 blur-3xl" />
+        <div className="pointer-events-none absolute -right-16 top-4 h-72 w-72 rounded-full bg-blue-200/35 blur-3xl" />
+
+        <div className="relative mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-800">
+            <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white/90 px-4 py-2 text-sm font-bold text-orange-800 shadow-sm backdrop-blur">
               <Sparkles className="h-4 w-4" aria-hidden="true" />
-              Remote online teaching opportunities
+              Remote English teaching opportunities worldwide
             </div>
 
-            <h1 className="mt-6 max-w-4xl text-4xl font-black tracking-tight text-slate-950 md:text-6xl md:leading-[1.02]">
-              Online English Teacher Jobs — Teach Phonics, Grammar & Public Speaking From Home
+            <h1 className="mt-5 max-w-4xl text-4xl font-black tracking-tight text-slate-950 sm:text-5xl md:text-6xl md:leading-[1.02]">
+              Online English Teacher Jobs for Phonics, Grammar & Speaking
             </h1>
 
-            <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600 md:text-xl">
-              Join Tiny Steps Learning as an online English teacher and work with children aged 3–12 through live 1:1 classes. We provide structured curriculum, teaching materials and onboarding support so you can focus on clear, engaging instruction.
+            <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600 md:text-xl">
+              Teach children through live 1:1 online classes with structured curriculum, ready-to-use lesson materials and academic support. We welcome qualified English teachers from different countries and teaching backgrounds.
             </p>
 
-            <div className="mt-7 flex flex-wrap gap-3 text-sm font-semibold text-slate-700">
-              {['₹175 / 35-min class', 'Fully remote', 'Live 1:1 classes', 'Curriculum provided'].map((item) => (
-                <span key={item} className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2">
+            <div className="mt-6 flex flex-wrap gap-2.5 text-sm font-bold text-slate-700">
+              {['₹175 / 35-min class', 'Fully remote', 'Live 1:1 classes', 'Curriculum provided', 'Global applications'].map((item) => (
+                <span key={item} className="rounded-full border border-white bg-white/90 px-4 py-2 shadow-sm">
                   {item}
                 </span>
               ))}
             </div>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button asChild size="lg" className="rounded-full bg-slate-950 px-7 text-white hover:bg-slate-800">
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              <Button asChild size="lg" className="group rounded-full bg-slate-950 px-7 text-white shadow-lg transition duration-300 hover:-translate-y-0.5 hover:bg-slate-800">
                 <a href="#apply">
-                  Apply for teacher role
-                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                  Apply to teach
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
                 </a>
               </Button>
-              <Button asChild size="lg" variant="outline" className="rounded-full bg-white px-7">
+              <Button asChild size="lg" variant="outline" className="rounded-full border-blue-200 bg-white/90 px-7 text-blue-950 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:bg-blue-50">
                 <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
                   <MessageCircle className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Apply on WhatsApp
+                  Start on WhatsApp
                 </a>
               </Button>
             </div>
 
-            <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-500">
-              Current and former teachers from other schools or EdTech platforms are welcome to apply, subject to their existing contractual obligations.
+            <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-500">
+              Current and former teachers from schools, tutoring companies and EdTech platforms are welcome to apply, subject to their existing contractual, confidentiality and conflict-of-interest obligations.
             </p>
           </div>
 
-          <Card className="border border-slate-200 bg-slate-950 p-7 text-white shadow-2xl shadow-slate-200/70 md:p-8">
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl bg-white/10 p-3">
-                <Search className="h-6 w-6" aria-hidden="true" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">At a glance</p>
-                <h2 className="mt-1 text-2xl font-bold">Tiny Steps teacher role</h2>
+          <Card className="overflow-hidden border-0 bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 p-0 text-white shadow-2xl shadow-blue-950/20">
+            <div className="border-b border-white/10 bg-white/5 p-6 md:p-7">
+              <div className="flex items-center gap-3">
+                <div className="rounded-2xl bg-gradient-to-br from-blue-400 to-cyan-300 p-3 text-slate-950 shadow-lg">
+                  <Globe2 className="h-6 w-6" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-200">At a glance</p>
+                  <h2 className="mt-1 text-2xl font-black">Tiny Steps teacher role</h2>
+                </div>
               </div>
             </div>
 
-            <dl className="mt-6 divide-y divide-white/10">
+            <dl className="px-6 py-3 md:px-7">
               {AT_A_GLANCE.map(([label, value]) => (
-                <div key={label} className="grid grid-cols-[0.8fr_1.2fr] gap-4 py-3 text-sm">
-                  <dt className="text-slate-400">{label}</dt>
-                  <dd className="font-semibold text-white">{value}</dd>
+                <div key={label} className="grid grid-cols-[0.82fr_1.18fr] gap-4 border-b border-white/10 py-3 text-sm last:border-b-0">
+                  <dt className="text-slate-300">{label}</dt>
+                  <dd className="font-bold text-white">{value}</dd>
                 </div>
               ))}
             </dl>
@@ -587,23 +595,26 @@ export default function CareersPage() {
         </div>
       </section>
 
-      <section className="px-6 py-16 md:py-20">
+      <section className="px-5 py-12 md:px-6 md:py-14">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-700">Why teachers consider Tiny Steps</p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">A focused online teaching role with clear expectations</h2>
-            <p className="mt-4 text-lg leading-8 text-slate-600">
-              The role is designed for teachers who want structured content, short 1:1 classes, remote delivery and a clear per-class rate.
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-700">Why teachers consider Tiny Steps</p>
+            <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">A polished remote teaching role with clear expectations</h2>
+            <p className="mt-3 text-lg leading-8 text-slate-600">
+              Focus on teaching while the lesson structure, materials and academic framework are already in place.
             </p>
           </div>
 
-          <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {BENEFITS.map(({ icon: Icon, title, description }) => (
-              <Card key={title} className="border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-800">
+          <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {BENEFITS.map(({ icon: Icon, title, description, cardClass, iconClass }) => (
+              <Card
+                key={title}
+                className={`group border p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/70 ${cardClass}`}
+              >
+                <div className={`flex h-11 w-11 items-center justify-center rounded-2xl transition duration-300 group-hover:scale-110 ${iconClass}`}>
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </div>
-                <h3 className="mt-5 text-lg font-bold text-slate-950">{title}</h3>
+                <h3 className="mt-4 text-lg font-black text-slate-950">{title}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
               </Card>
             ))}
@@ -611,47 +622,47 @@ export default function CareersPage() {
         </div>
       </section>
 
-      <section className="border-y border-slate-200 bg-white px-6 py-16 md:py-20">
-        <div className="mx-auto max-w-6xl">
-          <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-800">
-                <BadgeCheck className="h-4 w-4" aria-hidden="true" />
-                Comparing online teaching opportunities?
-              </div>
-              <h2 className="mt-5 text-3xl font-black tracking-tight md:text-4xl">
-                Already teaching with—or considering—Vedantu, PlanetSpark, Learn2Read or Instrucko?
-              </h2>
-              <p className="mt-5 text-lg leading-8 text-slate-600">
-                You can still apply to Tiny Steps Learning. We welcome experienced online educators as well as teachers comparing their next EdTech opportunity. Previous employment with any specific platform is not required.
-              </p>
-              <p className="mt-4 text-sm leading-6 text-slate-500">
-                Tiny Steps Learning is independent and is not affiliated with, endorsed by, or part of Vedantu, PlanetSpark, Learn2Read or Instrucko. These company names are included only to help teachers evaluating multiple online teaching opportunities understand whether this role may be relevant to them.
-              </p>
+      <section className="border-y border-slate-200 bg-white px-5 py-12 md:px-6 md:py-14">
+        <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1.04fr_0.96fr] lg:items-center">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-800">
+              <BadgeCheck className="h-4 w-4" aria-hidden="true" />
+              Comparing remote teaching opportunities?
             </div>
-
-            <Card className="border border-slate-200 bg-slate-50 p-6 md:p-7">
-              <h3 className="text-xl font-bold text-slate-950">When comparing teacher jobs, check these six things</h3>
-              <ul className="mt-5 space-y-3">
-                {COMPARISON_POINTS.map((item) => (
-                  <li key={item} className="flex gap-3 text-sm leading-6 text-slate-700">
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" aria-hidden="true" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
+            <h2 className="mt-4 text-3xl font-black tracking-tight md:text-4xl">
+              Teaching with—or considering—Vedantu, PlanetSpark, Learn2Read or Instrucko?
+            </h2>
+            <p className="mt-4 text-lg leading-8 text-slate-600">
+              You can apply to Tiny Steps Learning. Previous employment with any specific platform is not required; we assess communication, teaching quality, reliability and role fit.
+            </p>
+            <p className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-500">
+              Tiny Steps Learning is independent and is not affiliated with, endorsed by, or part of Vedantu, PlanetSpark, Learn2Read or Instrucko. These company names are referenced only because teachers commonly compare online teaching opportunities.
+            </p>
           </div>
+
+          <Card className="border border-slate-200 bg-gradient-to-br from-slate-50 to-blue-50/60 p-6 shadow-sm md:p-7">
+            <h3 className="text-xl font-black text-slate-950">Compare the role on the details that matter</h3>
+            <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+              {COMPARISON_POINTS.map((item) => (
+                <li key={item} className="group flex items-start gap-3 rounded-2xl border border-transparent bg-white/80 px-4 py-3 text-sm leading-6 text-slate-700 transition duration-200 hover:border-blue-100 hover:bg-white hover:shadow-sm">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 transition group-hover:scale-110" aria-hidden="true" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
         </div>
       </section>
 
-      <section id="role" className="scroll-mt-24 px-6 py-16 md:py-20">
+      <section id="role" className="scroll-mt-24 px-5 py-12 md:px-6 md:py-14">
         <div className="mx-auto max-w-6xl">
-          <div className="grid gap-8 lg:grid-cols-2">
-            <Card className="border border-slate-200 bg-white p-7 shadow-sm md:p-8">
-              <p className="text-sm font-bold uppercase tracking-[0.2em] text-orange-700">What you will do</p>
-              <h2 className="mt-3 text-3xl font-black tracking-tight">Online English Teacher responsibilities</h2>
-              <ul className="mt-7 space-y-4">
+          <div className="grid gap-5 lg:grid-cols-2">
+            <Card className="overflow-hidden border border-orange-100 bg-white p-0 shadow-sm transition duration-300 hover:shadow-lg">
+              <div className="border-b border-orange-100 bg-gradient-to-r from-orange-50 to-amber-50 px-7 py-5 md:px-8">
+                <p className="text-sm font-black uppercase tracking-[0.2em] text-orange-700">What you will do</p>
+                <h2 className="mt-2 text-3xl font-black tracking-tight">Online English Teacher responsibilities</h2>
+              </div>
+              <ul className="space-y-3 p-7 md:p-8">
                 {RESPONSIBILITIES.map((item) => (
                   <li key={item} className="flex gap-3 text-sm leading-6 text-slate-700">
                     <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" aria-hidden="true" />
@@ -661,10 +672,12 @@ export default function CareersPage() {
               </ul>
             </Card>
 
-            <Card className="border border-slate-200 bg-white p-7 shadow-sm md:p-8">
-              <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-700">What we look for</p>
-              <h2 className="mt-3 text-3xl font-black tracking-tight">Teacher requirements</h2>
-              <ul className="mt-7 space-y-4">
+            <Card className="overflow-hidden border border-blue-100 bg-white p-0 shadow-sm transition duration-300 hover:shadow-lg">
+              <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-cyan-50 px-7 py-5 md:px-8">
+                <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-700">What we look for</p>
+                <h2 className="mt-2 text-3xl font-black tracking-tight">Teacher requirements</h2>
+              </div>
+              <ul className="space-y-3 p-7 md:p-8">
                 {REQUIREMENTS.map((item) => (
                   <li key={item} className="flex gap-3 text-sm leading-6 text-slate-700">
                     <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" aria-hidden="true" />
@@ -675,137 +688,164 @@ export default function CareersPage() {
             </Card>
           </div>
 
-          <div className="mt-8 rounded-3xl border border-amber-200 bg-amber-50 p-6 md:p-7">
-            <div className="flex gap-4">
-              <ShieldCheck className="mt-1 h-6 w-6 shrink-0 text-amber-800" aria-hidden="true" />
-              <div>
-                <h3 className="text-lg font-bold text-amber-950">Transparent class allocation</h3>
-                <p className="mt-2 text-sm leading-6 text-amber-900/80">
-                  Applying or being selected does not guarantee a fixed number of classes. Class allocation depends on student admissions, matching, schedule overlap, teacher availability and ongoing teaching quality. We prefer to state this clearly before you apply.
-                </p>
-              </div>
+          <div className="mt-5 grid gap-4 rounded-3xl border border-amber-200 bg-gradient-to-r from-amber-50 via-orange-50/70 to-white p-6 md:grid-cols-[auto_1fr] md:items-start md:p-7">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-800">
+              <ShieldCheck className="h-6 w-6" aria-hidden="true" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-amber-950">Transparent class allocation</h3>
+              <p className="mt-1 text-sm leading-6 text-amber-950/75">
+                Applying or being selected does not guarantee a fixed number of classes. Allocation depends on student admissions, learner-teacher matching, schedule overlap, teacher availability and ongoing teaching quality.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="bg-slate-950 px-6 py-16 text-white md:py-20">
+      <section className="bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 px-5 py-12 text-white md:px-6 md:py-14">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-300">Selection process</p>
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-cyan-300">Selection process</p>
             <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">From application to onboarding</h2>
-            <p className="mt-4 text-lg leading-8 text-slate-300">A simple process designed to assess communication, teaching quality and reliable availability.</p>
+            <p className="mt-3 text-lg leading-8 text-slate-300">A straightforward process focused on communication, teaching quality and reliable availability.</p>
           </div>
 
-          <ol className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+          <ol className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {PROCESS_STEPS.map((step, index) => (
-              <li key={step.title} className="rounded-3xl border border-white/10 bg-white/5 p-6">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sm font-black text-slate-950">
+              <li
+                key={step.title}
+                className={`group rounded-3xl border p-5 text-slate-950 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl ${step.tone}`}
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sm font-black text-slate-950 shadow-sm transition group-hover:scale-110">
                   {index + 1}
                 </div>
-                <h3 className="mt-5 text-lg font-bold">{step.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-300">{step.description}</p>
+                <h3 className="mt-4 text-lg font-black">{step.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-700">{step.description}</p>
               </li>
             ))}
           </ol>
         </div>
       </section>
 
-      <section id="apply" className="scroll-mt-20 px-6 py-16 md:py-20">
-        <div className="mx-auto max-w-5xl rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/50 md:p-10">
-          <div className="max-w-3xl">
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-orange-700">Teacher application</p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">Apply to teach with Tiny Steps Learning</h2>
-            <p className="mt-4 text-base leading-7 text-slate-600">
-              Complete the form below. A resume or LinkedIn link is recommended because it helps our hiring team review your teaching background faster.
-            </p>
-          </div>
+      <section id="apply" className="scroll-mt-20 bg-gradient-to-br from-blue-50 via-white to-orange-50 px-5 py-12 md:px-6 md:py-14">
+        <div className="mx-auto max-w-5xl overflow-hidden rounded-[2rem] border border-white bg-white/95 shadow-2xl shadow-slate-200/70">
+          <div className="grid gap-0 lg:grid-cols-[0.34fr_0.66fr]">
+            <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-slate-950 p-7 text-white md:p-8">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
+                <MessageCircle className="h-6 w-6" aria-hidden="true" />
+              </div>
+              <p className="mt-6 text-sm font-black uppercase tracking-[0.2em] text-blue-200">Teacher application</p>
+              <h2 className="mt-3 text-3xl font-black tracking-tight">Apply in one simple WhatsApp flow</h2>
+              <p className="mt-4 text-sm leading-7 text-blue-100">
+                Fill in your basic details here. When you submit, WhatsApp opens with the information already prepared. No resume upload is required on this page.
+              </p>
+              <div className="mt-6 space-y-3 text-sm text-blue-50">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" aria-hidden="true" />
+                  <span>Review your message before sending.</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" aria-hidden="true" />
+                  <span>Attach your resume or certificates directly in WhatsApp if you want to share them.</span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" aria-hidden="true" />
+                  <span>No failed website submission or duplicate application step.</span>
+                </div>
+              </div>
+            </div>
 
-          <CareerApplicationForm />
+            <div className="p-6 md:p-8 lg:p-9">
+              <div className="max-w-3xl">
+                <p className="text-sm font-black uppercase tracking-[0.2em] text-orange-700">Tell us about your teaching profile</p>
+                <h3 className="mt-2 text-3xl font-black tracking-tight">Continue your application on WhatsApp</h3>
+                <p className="mt-3 text-base leading-7 text-slate-600">
+                  Keep your details concise. International applicants should include their country and time zone so scheduling can be reviewed accurately.
+                </p>
+              </div>
 
-          <div className="mt-8 border-t border-slate-200 pt-7">
-            <p className="text-sm font-semibold text-slate-800">Prefer WhatsApp?</p>
-            <p className="mt-1 text-sm text-slate-600">Use the pre-filled teacher application message and add your details.</p>
-            <Button asChild variant="outline" className="mt-4 rounded-full">
-              <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                <MessageCircle className="mr-2 h-4 w-4" aria-hidden="true" />
-                Open teacher application on WhatsApp
-              </a>
-            </Button>
+              <CareerApplicationForm />
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="border-y border-slate-200 bg-white px-6 py-16 md:py-20">
+      <section className="border-y border-slate-200 bg-white px-5 py-12 md:px-6 md:py-14">
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-700">Teacher job FAQ</p>
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-700">Teacher job FAQ</p>
             <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">Questions online English teachers ask before applying</h2>
-            <p className="mt-4 text-lg leading-8 text-slate-600">
-              Direct answers for teachers searching Google, ChatGPT or other search and answer engines for remote teaching opportunities.
+            <p className="mt-3 text-lg leading-8 text-slate-600">
+              Clear answers about remote teaching, international applications, subjects, equipment, schedules and the application process.
             </p>
           </div>
 
-          <div className="mt-10 space-y-4">
+          <div className="mt-8 space-y-3">
             {FAQS.map((faq) => (
-              <details key={faq.question} className="group rounded-3xl border border-slate-200 bg-slate-50 p-6 open:bg-white">
-                <summary className="cursor-pointer list-none pr-8 text-lg font-bold text-slate-950 marker:content-none">
-                  {faq.question}
+              <details
+                key={faq.question}
+                className="group rounded-2xl border border-slate-200 bg-slate-50/70 transition duration-200 open:border-blue-200 open:bg-white open:shadow-md"
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left text-base font-black text-slate-950 marker:content-none md:px-6">
+                  <span>{faq.question}</span>
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-blue-700 shadow-sm transition group-open:rotate-180">
+                    <ChevronDown className="h-4 w-4" aria-hidden="true" />
+                  </span>
                 </summary>
-                <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-600">{faq.answer}</p>
+                <p className="max-w-4xl px-5 pb-5 text-sm leading-7 text-slate-600 md:px-6 md:pb-6">{faq.answer}</p>
               </details>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="px-6 py-16 md:py-20">
+      <section className="px-5 py-12 md:px-6 md:py-14">
         <div className="mx-auto max-w-6xl">
-          <div className="grid gap-8 rounded-[2rem] border border-slate-200 bg-slate-950 p-7 text-white md:p-10 lg:grid-cols-[1fr_1fr] lg:items-center">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-[0.2em] text-orange-300">Understand what you will teach</p>
-              <h2 className="mt-3 text-3xl font-black tracking-tight">Explore the Tiny Steps academic approach before you apply</h2>
-              <p className="mt-4 text-base leading-7 text-slate-300">
-                Candidates can review our public program pages to understand the skills, learner age range and teaching style behind Tiny Steps classes.
+          <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="rounded-[2rem] bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 p-7 text-white shadow-xl md:p-9">
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-orange-300">Understand what you will teach</p>
+              <h2 className="mt-3 text-3xl font-black tracking-tight">Explore the Tiny Steps academic approach</h2>
+              <p className="mt-3 max-w-2xl text-base leading-7 text-slate-300">
+                Review our public program pages to understand the skills, learner ages and teaching style behind Tiny Steps classes.
               </p>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                {[
+                  ['/phonics', 'Online Phonics Program'],
+                  ['/grammar', 'Grammar Program'],
+                  ['/speaking', 'Public Speaking Program'],
+                  ['/curriculum', 'Curriculum Roadmap'],
+                  ['/class-samples', 'Class Samples'],
+                  ['/team', 'Meet the Tiny Steps Team'],
+                ].map(([href, label]) => (
+                  <Link
+                    key={href}
+                    to={href}
+                    className="group flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-bold text-white transition duration-300 hover:-translate-y-0.5 hover:border-blue-300/40 hover:bg-white/10"
+                  >
+                    <span>{label}</span>
+                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
+                  </Link>
+                ))}
+              </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              {[
-                ['/phonics', 'Online Phonics Program'],
-                ['/grammar', 'Grammar Program'],
-                ['/speaking', 'Public Speaking Program'],
-                ['/curriculum', 'Curriculum Roadmap'],
-                ['/class-samples', 'Class Samples'],
-                ['/team', 'Meet the Tiny Steps Team'],
-              ].map(([href, label]) => (
-                <Link
-                  key={href}
-                  to={href}
-                  className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-                >
-                  <span>{label}</span>
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            <div className="rounded-[2rem] border border-cyan-100 bg-gradient-to-br from-cyan-50 via-white to-blue-50 p-7 shadow-sm md:p-9">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-800">
+                <MapPin className="h-5 w-5" aria-hidden="true" />
+              </div>
+              <p className="mt-5 text-sm font-black uppercase tracking-[0.2em] text-cyan-800">Looking for English classes instead?</p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight">Parents and learners can explore our programs here</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                This page is for teachers. If you are searching for phonics, grammar, spoken English or public speaking classes for a child, use our learner pathways instead.
+              </p>
+              <Button asChild variant="outline" className="mt-5 rounded-full border-cyan-200 bg-white text-slate-950 hover:bg-cyan-50">
+                <Link to="/courses">
+                  Explore English courses
+                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                 </Link>
-              ))}
+              </Button>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="px-6 pb-24">
-        <div className="mx-auto max-w-4xl text-center">
-          <h2 className="text-3xl font-black tracking-tight md:text-4xl">Ready to apply for an online teaching role?</h2>
-          <p className="mx-auto mt-4 max-w-2xl text-lg leading-8 text-slate-600">
-            Share your teaching experience, preferred subject area and consistent availability. We will review your profile for current teacher requirements.
-          </p>
-          <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
-            <Button asChild size="lg" className="rounded-full bg-slate-950 px-7 text-white hover:bg-slate-800">
-              <a href="#apply">Apply now</a>
-            </Button>
-            <Button asChild size="lg" variant="outline" className="rounded-full bg-white px-7">
-              <a href={whatsappLink} target="_blank" rel="noopener noreferrer">Apply on WhatsApp</a>
-            </Button>
           </div>
         </div>
       </section>
