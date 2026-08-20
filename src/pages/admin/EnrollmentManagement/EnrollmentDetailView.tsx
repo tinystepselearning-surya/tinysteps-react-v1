@@ -1,10 +1,12 @@
 // src/pages/admin/EnrollmentManagement/EnrollmentDetailView.tsx
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   type DocumentData,
   type DocumentSnapshot,
+  collection,
   doc,
   getDoc,
+  getDocs,
   updateDoc,
   serverTimestamp,
 } from 'firebase/firestore';
@@ -19,6 +21,13 @@ import { Button } from '@components/ui/button';
 import { Badge } from '@components/ui/badge';
 import { Input } from '@components/ui/input';
 import { Textarea } from '@components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@components/ui/select';
 import { useToast } from '@components/hooks/use-toast';
 import { httpsCallable } from 'firebase/functions';
 import AssignTeacherModal from './AssignTeacherModal';
@@ -27,6 +36,22 @@ interface EnrollmentDetailViewProps {
   enrollmentId: string;
   onClose: () => void;
 }
+
+type CourseOption = {
+  id: string;
+  name?: string;
+  title?: string;
+  courseName?: string;
+  status?: string;
+};
+
+type WeeklySlot = {
+  weekday?: number;
+  time?: string;
+  timeHHmm?: string;
+  durationMinutes?: number;
+  durationMins?: number;
+};
 
 const extractCallableErrorMessage = (error: unknown, fallback: string): string => {
   const err = error as Record<string, unknown> | null;
@@ -77,6 +102,65 @@ const pickFirstReadableName = (...values: unknown[]): string | null => {
   return null;
 };
 
+const getCourseLabel = (course: CourseOption | null | undefined): string =>
+  course?.name || course?.title || course?.courseName || course?.id || 'Untitled course';
+
+const normalizeTransitionSlots = (schedule: unknown): WeeklySlot[] => {
+  if (!schedule || typeof schedule !== 'object' || Array.isArray(schedule)) return [];
+  const record = schedule as Record<string, unknown>;
+  if (Array.isArray(record.weeklySlots)) {
+    return record.weeklySlots.filter((slot): slot is WeeklySlot => Boolean(slot && typeof slot === 'object'));
+  }
+
+  const weekdays = Array.isArray(record.weekdays)
+    ? record.weekdays.filter((day): day is number => Number.isInteger(day) && Number(day) >= 0 && Number(day) <= 6)
+    : [];
+  const timeHHmm = typeof record.timeHHmm === 'string' ? record.timeHHmm.trim() : '';
+  if (!weekdays.length || !/^\d{2}:\d{2}$/.test(timeHHmm)) return [];
+  return weekdays.map((weekday) => ({ weekday, time: timeHHmm }));
+};
+
+const deriveNextClassDateYmd = (schedule: unknown): string | null => {
+  const slots = normalizeTransitionSlots(schedule)
+    .map((slot) => {
+      const weekday = Number(slot.weekday);
+      const time = String(slot.time || slot.timeHHmm || '').trim();
+      if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6 || !/^\d{2}:\d{2}$/.test(time)) return null;
+      const [hour, minute] = time.split(':').map(Number);
+      if (!Number.isInteger(hour) || !Number.isInteger(minute) || hour > 23 || minute > 59) return null;
+      return { weekday, hour, minute };
+    })
+    .filter((slot): slot is { weekday: number; hour: number; minute: number } => Boolean(slot));
+
+  if (!slots.length) return null;
+
+  const nowIst = new Date(Date.now() + 330 * 60 * 1000);
+  const todayWeekday = nowIst.getUTCDay();
+  const nowMinutes = nowIst.getUTCHours() * 60 + nowIst.getUTCMinutes();
+
+  let best: { dayOffset: number; minutes: number } | null = null;
+  slots.forEach((slot) => {
+    const slotMinutes = slot.hour * 60 + slot.minute;
+    let dayOffset = (slot.weekday - todayWeekday + 7) % 7;
+    if (dayOffset === 0 && slotMinutes <= nowMinutes) dayOffset = 7;
+    if (
+      !best ||
+      dayOffset < best.dayOffset ||
+      (dayOffset === best.dayOffset && slotMinutes < best.minutes)
+    ) {
+      best = { dayOffset, minutes: slotMinutes };
+    }
+  });
+
+  if (!best) return null;
+  const target = new Date(Date.UTC(
+    nowIst.getUTCFullYear(),
+    nowIst.getUTCMonth(),
+    nowIst.getUTCDate() + best.dayOffset,
+  ));
+  return `${target.getUTCFullYear()}-${String(target.getUTCMonth() + 1).padStart(2, '0')}-${String(target.getUTCDate()).padStart(2, '0')}`;
+};
+
 export default function EnrollmentDetailView({
   enrollmentId,
   onClose,
@@ -94,6 +178,10 @@ export default function EnrollmentDetailView({
   const [parentRateInput, setParentRateInput] = useState('');
   const [teacherRateInput, setTeacherRateInput] = useState('');
   const [rateSaving, setRateSaving] = useState(false);
+  const [courseTransitionOpen, setCourseTransitionOpen] = useState(false);
+  const [courseOptions, setCourseOptions] = useState<CourseOption[]>([]);
+  const [courseOptionsLoading, setCourseOptionsLoading] = useState(false);
+  const [selectedNextCourseId, setSelectedNextCourseId] = useState('__none__');
 
   const { toast } = useToast();
 
@@ -358,6 +446,16 @@ export default function EnrollmentDetailView({
     enrollment.childId ||
     (Array.isArray(enrollment.kidIds) ? enrollment.kidIds[0] : null);
 
+  const selectableCourseOptions = useMemo(
+    () => courseOptions.filter((option) => option.id !== String(enrollment.courseId || '')),
+    [courseOptions, enrollment.courseId],
+  );
+
+  const selectedNextCourse = useMemo(
+    () => selectableCourseOptions.find((option) => option.id === selectedNextCourseId) || null,
+    [selectableCourseOptions, selectedNextCourseId],
+  );
+
   const callSetEnrollmentStatus = async (status: string, reason?: string) => {
     try {
       setActionBusy(status);
@@ -398,60 +496,98 @@ export default function EnrollmentDetailView({
     }
   };
 
-  const callTransitionEnrollmentCourse = async () => {
-    const newCourseId = window.prompt('Next canonical course ID?')?.trim() || '';
-    if (!newCourseId) return;
-    const newTeacherId = window.prompt('Next teacher user ID?')?.trim() || '';
-    if (!newTeacherId) return;
-    const classesStartDate = window.prompt('First class date (YYYY-MM-DD)?')?.trim() || '';
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(classesStartDate)) {
-      toast({ title: 'Invalid start date', variant: 'destructive' });
-      return;
-    }
-    const scheduleText = window.prompt(
-      'Next schedule JSON. Example: {"weeklySlots":[{"weekday":2,"time":"18:00","durationMinutes":35}]}',
-      '{"weeklySlots":[]}',
-    )?.trim() || '';
-    let newSchedule: Record<string, unknown>;
+  const loadCourseOptions = async () => {
+    if (courseOptions.length > 0 || courseOptionsLoading) return;
     try {
-      const parsed: unknown = JSON.parse(scheduleText);
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Schedule must be an object');
-      newSchedule = parsed as Record<string, unknown>;
-      if (!Array.isArray(newSchedule.weeklySlots) || newSchedule.weeklySlots.length === 0) {
-        throw new Error('At least one weekly slot is required');
-      }
+      setCourseOptionsLoading(true);
+      const snap = await getDocs(collection(db, 'courses'));
+      const options = snap.docs
+        .map((row) => ({ id: row.id, ...(row.data() as Record<string, unknown>) }) as CourseOption)
+        .filter((row) => String(row.status || '').trim().toLowerCase() === 'active')
+        .sort((a, b) => getCourseLabel(a).localeCompare(getCourseLabel(b)));
+      setCourseOptions(options);
     } catch (error) {
       toast({
-        title: 'Invalid schedule',
-        description: error instanceof Error ? error.message : 'Enter valid schedule JSON.',
+        title: 'Courses could not be loaded',
+        description: error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setCourseOptionsLoading(false);
+    }
+  };
+
+  const handleOpenCourseTransition = async () => {
+    const nextOpen = !courseTransitionOpen;
+    setCourseTransitionOpen(nextOpen);
+    if (!nextOpen) return;
+    setSelectedNextCourseId('__none__');
+    await loadCourseOptions();
+  };
+
+  const callTransitionEnrollmentCourse = async () => {
+    const newCourseId = selectedNextCourseId === '__none__' ? '' : selectedNextCourseId.trim();
+    if (!newCourseId || !selectedNextCourse) {
+      toast({
+        title: 'Select the next course',
+        description: 'Choose the course the child is moving to.',
         variant: 'destructive',
       });
       return;
     }
-    const reason = window.prompt('Reason for completing this course and starting the next?')?.trim() || '';
-    if (!reason) return;
-    const operationId =
-      window.prompt(
-        'Transition operation ID (reuse the same ID to resume a failed transition; leave blank for a new one):',
-      )?.trim() || `course-transition-${crypto.randomUUID()}`;
-    const summary = [
-      `Child: ${resolvedStudentName}`,
-      `Current course: ${course?.name || course?.title || enrollment.courseId}`,
-      `Current teacher: ${teacher?.name || teacher?.displayName || enrollment.teacherId || 'Unassigned'}`,
-      `Next course: ${newCourseId}`,
-      `Next teacher: ${newTeacherId}`,
-      `Start date: ${classesStartDate}`,
-      `Schedule: ${scheduleText}`,
-      `Operation ID: ${operationId}`,
+
+    const newTeacherId = String(enrollment.teacherId || teacher?.id || '').trim();
+    if (!newTeacherId) {
+      toast({
+        title: 'Teacher is not assigned',
+        description: 'Assign a teacher first, then move the child to the next course.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const newSchedule = enrollment.schedule;
+    if (!newSchedule || typeof newSchedule !== 'object' || Array.isArray(newSchedule)) {
+      toast({
+        title: 'Class schedule is missing',
+        description: 'Please save the current class schedule before moving to the next course.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const classesStartDate = deriveNextClassDateYmd(newSchedule);
+    if (!classesStartDate) {
+      toast({
+        title: 'Class schedule is incomplete',
+        description: 'The existing schedule needs at least one valid weekly class slot.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const nextCourseLabel = getCourseLabel(selectedNextCourse);
+    const currentCourseLabel = course?.name || course?.title || enrollment.courseName || enrollment.courseId || 'Current course';
+    const confirmation = [
+      `Move ${resolvedStudentName} from ${currentCourseLabel} to ${nextCourseLabel}?`,
       '',
-      'Eligible future regular sessions for the current course will be cancelled.',
-      'Completed sessions, attendance, billing, earnings and credits remain historical.',
+      'The same teacher, class schedule and class link will continue automatically.',
+      'Previous attendance, completed classes, payments and billing history will remain unchanged.',
     ].join('\n');
-    if (!window.confirm(summary)) return;
+    if (!window.confirm(confirmation)) return;
+
+    const operationId = `course-transition-${crypto.randomUUID()}`;
+    const reason = `Completed ${currentCourseLabel} and moved to ${nextCourseLabel}`;
+    const preservedJoinUrl = [
+      enrollment.joinUrl,
+      enrollment.meetingLink,
+      enrollment.classLink,
+    ].find((value) => typeof value === 'string' && value.trim()) as string | undefined;
+
     try {
       setActionBusy('transition');
       const fn = httpsCallable(functions, 'transitionEnrollmentCourse');
-      await fn({
+      const response = await fn({
         operationId,
         oldEnrollmentId: enrollment.id,
         newCourseId,
@@ -465,12 +601,60 @@ export default function EnrollmentDetailView({
         billingCycle: enrollment.billingCycle || 'monthly',
         reason,
       });
-      toast({ title: 'Course transition completed', description: 'Historical records were preserved.' });
+
+      const result = (response.data || {}) as Record<string, unknown>;
+      const newEnrollmentId = String(result.newEnrollmentId || '').trim();
+      if (newEnrollmentId) {
+        const inheritedFields: Record<string, unknown> = {
+          teacherId: newTeacherId,
+          teacherIds: [newTeacherId],
+          schedule: newSchedule,
+          updatedAt: serverTimestamp(),
+        };
+        const inheritedTeacherName = pickFirstReadableName(
+          teacher?.displayName,
+          teacher?.name,
+          enrollment.teacherName,
+          enrollment.teacherDisplayName,
+        );
+        const inheritedTeacherEmail = String(teacher?.email || enrollment.teacherEmail || '').trim();
+        if (inheritedTeacherName) inheritedFields.teacherName = inheritedTeacherName;
+        if (inheritedTeacherEmail) inheritedFields.teacherEmail = inheritedTeacherEmail;
+        if (preservedJoinUrl) inheritedFields.joinUrl = preservedJoinUrl.trim();
+        if (typeof enrollment.meetingLink === 'string' && enrollment.meetingLink.trim()) {
+          inheritedFields.meetingLink = enrollment.meetingLink.trim();
+        }
+        if (typeof enrollment.classLink === 'string' && enrollment.classLink.trim()) {
+          inheritedFields.classLink = enrollment.classLink.trim();
+        }
+
+        try {
+          await updateDoc(doc(db, 'enrollments', newEnrollmentId), inheritedFields);
+          const repairFn = httpsCallable(functions, 'repairEnrollmentFutureSessionsFromSchedule');
+          await repairFn({ enrollmentId: newEnrollmentId, dryRun: false });
+        } catch (syncError) {
+          toast({
+            title: 'Course moved; link sync needs attention',
+            description: extractCallableErrorMessage(
+              syncError,
+              'The new course is active, but the inherited class-link details could not be fully refreshed.',
+            ),
+            variant: 'destructive',
+          });
+        }
+      }
+
+      toast({
+        title: 'Moved to next course',
+        description: `${nextCourseLabel} is now active. Previous attendance and payment history were preserved.`,
+      });
+      setCourseTransitionOpen(false);
+      setSelectedNextCourseId('__none__');
       await loadEnrollment();
     } catch (error) {
       toast({
-        title: 'Course transition needs attention',
-        description: `${extractCallableErrorMessage(error, 'Transition can be resumed.')} Operation ID: ${operationId}`,
+        title: 'Course move could not be completed',
+        description: extractCallableErrorMessage(error, 'Please try again. No manual IDs are required.'),
         variant: 'destructive',
       });
     } finally {
@@ -670,72 +854,134 @@ export default function EnrollmentDetailView({
         <CardHeader>
           <CardTitle>Lifecycle Actions</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            onClick={() => callSetEnrollmentStatus('active')}
-            disabled={actionBusy !== null}
-          >
-            Mark Active
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => callSetEnrollmentStatus('paused')}
-            disabled={actionBusy !== null}
-          >
-            Pause
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => callSetEnrollmentStatus('active')}
-            disabled={actionBusy !== null}
-          >
-            Resume
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (!window.confirm('Mark this enrollment as completed?')) return;
-              callSetEnrollmentStatus('completed');
-            }}
-            disabled={actionBusy !== null}
-          >
-            Complete
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => void callTransitionEnrollmentCourse()}
-            disabled={actionBusy !== null}
-          >
-            Complete Current Course and Start Next Course
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (!window.confirm('Discontinue this enrollment?')) return;
-              callSetEnrollmentStatus('discontinued');
-            }}
-            disabled={actionBusy !== null}
-          >
-            Discontinue
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setShowAssignTeacher(true)}
-            disabled={actionBusy !== null}
-          >
-            Reassign Teacher
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={() => {
-              if (!window.confirm('Archive this kid? This cannot be undone.')) return;
-              callArchiveKid();
-            }}
-            disabled={actionBusy !== null || !kidId}
-          >
-            Archive Kid
-          </Button>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={() => callSetEnrollmentStatus('active')}
+              disabled={actionBusy !== null}
+            >
+              Mark Active
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => callSetEnrollmentStatus('paused')}
+              disabled={actionBusy !== null}
+            >
+              Pause
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => callSetEnrollmentStatus('active')}
+              disabled={actionBusy !== null}
+            >
+              Resume
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!window.confirm('Mark this enrollment as completed?')) return;
+                callSetEnrollmentStatus('completed');
+              }}
+              disabled={actionBusy !== null}
+            >
+              Complete
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => void handleOpenCourseTransition()}
+              disabled={actionBusy !== null}
+            >
+              Move to Next Course
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!window.confirm('Discontinue this enrollment?')) return;
+                callSetEnrollmentStatus('discontinued');
+              }}
+              disabled={actionBusy !== null}
+            >
+              Discontinue
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowAssignTeacher(true)}
+              disabled={actionBusy !== null}
+            >
+              Reassign Teacher
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (!window.confirm('Archive this kid? This cannot be undone.')) return;
+                callArchiveKid();
+              }}
+              disabled={actionBusy !== null || !kidId}
+            >
+              Archive Kid
+            </Button>
+          </div>
+
+          {courseTransitionOpen ? (
+            <div className="rounded-xl border bg-slate-50 p-4 space-y-3">
+              <div>
+                <div className="text-sm font-semibold text-slate-900">Move to the next course</div>
+                <div className="mt-1 text-xs text-slate-600">
+                  Select only the next course. The current teacher, class schedule, rates and class link are carried forward automatically.
+                  Previous attendance and payment history stay attached to the completed course.
+                </div>
+              </div>
+
+              <div className="max-w-xl space-y-1">
+                <label className="text-sm font-medium">Next course</label>
+                <Select
+                  value={selectedNextCourseId}
+                  onValueChange={setSelectedNextCourseId}
+                  disabled={courseOptionsLoading || actionBusy !== null}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={courseOptionsLoading ? 'Loading courses…' : 'Choose next course'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Choose next course</SelectItem>
+                    {selectableCourseOptions.map((option) => (
+                      <SelectItem key={option.id} value={option.id}>
+                        {getCourseLabel(option)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {!courseOptionsLoading && selectableCourseOptions.length === 0 ? (
+                <div className="text-xs text-amber-700">No other active courses are available.</div>
+              ) : null}
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={() => void callTransitionEnrollmentCourse()}
+                  disabled={
+                    actionBusy !== null ||
+                    courseOptionsLoading ||
+                    selectedNextCourseId === '__none__'
+                  }
+                >
+                  {actionBusy === 'transition' ? 'Moving…' : 'Confirm Course Move'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setCourseTransitionOpen(false);
+                    setSelectedNextCourseId('__none__');
+                  }}
+                  disabled={actionBusy !== null}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
