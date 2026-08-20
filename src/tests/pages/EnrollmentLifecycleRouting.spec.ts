@@ -83,6 +83,8 @@ describe('admin lifecycle routing', () => {
     expect(enrollmentDetailSource).toContain('Change teacher for next course');
     expect(enrollmentDetailSource).toContain('Use a different class link');
     expect(enrollmentDetailSource).toContain('const newSchedule = enrollment.schedule;');
+    expect(enrollmentDetailSource).toContain('const operationId = `course-transition-${String(enrollment.id || enrollmentId).trim()}`;');
+    expect(enrollmentDetailSource).not.toContain('crypto.randomUUID()');
     expect(enrollmentDetailSource).toContain("httpsCallable(functions, 'repairEnrollmentFutureSessionsFromSchedule')");
     expect(enrollmentDetailSource).toContain('inheritedFields.joinUrl = nextClassLink.trim()');
     expect(enrollmentDetailSource).toContain('inheritedFields.meetingLink = nextClassLink.trim()');
