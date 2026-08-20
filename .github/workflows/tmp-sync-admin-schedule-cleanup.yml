@@ -1,0 +1,35 @@
+name: Temporary sync admin schedule cleanup
+
+on:
+  push:
+    branches:
+      - cleanup/remove-admin-teacher-schedule
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout cleanup branch
+        uses: actions/checkout@v4
+        with:
+          ref: cleanup/remove-admin-teacher-schedule
+          fetch-depth: 0
+
+      - name: Merge latest main and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git merge --no-ff --no-commit origin/main
+          git rm .github/workflows/tmp-sync-admin-schedule-cleanup.yml
+          git diff --check
+          test ! -e src/pages/admin/TeacherScheduleManagement.tsx
+          ! grep -R --line-number --fixed-strings "teacher-schedule" src/pages/admin
+          ! grep -R --line-number --fixed-strings "TeacherScheduleManagement" src/pages/admin
+          git commit -m "chore: sync admin schedule cleanup with latest main"
+          git push origin HEAD:cleanup/remove-admin-teacher-schedule
