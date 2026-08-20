@@ -622,24 +622,6 @@ export default function AdminDashboard() {
 
         <main className="flex min-h-0 flex-1 min-w-0 overflow-x-hidden overflow-y-auto p-3 sm:p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1280px] min-w-0">
-          <Card className="mb-4 p-3">
-            <div className="flex items-center justify-between gap-3">
-              <div className="text-sm text-slate-600">
-                Attendance Corrections
-              </div>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="gap-2"
-                onClick={() => navigate('/messages')}
-              >
-                <MessageSquareQuote className="h-4 w-4" />
-                Messages
-              </Button>
-            </div>
-          </Card>
-
           {isSuperUser && (
             <Card className="mb-4 p-3">
               <div className="flex gap-2 flex-wrap">
