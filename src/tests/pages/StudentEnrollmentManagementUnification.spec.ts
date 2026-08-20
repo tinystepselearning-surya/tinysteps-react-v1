@@ -33,6 +33,25 @@ describe('unified student and enrollment management', () => {
     expect(studentManagementSource).toContain('<EnrollmentsList reloadKey={refreshKey} />');
   });
 
+  it('turns the reconciliation summary into actionable, plain-language controls', () => {
+    expect(studentManagementSource).toContain('type SummaryFocus =');
+    expect(studentManagementSource).toContain("label: 'Enrolled Students'");
+    expect(studentManagementSource).toContain("label: 'Active Enrollments'");
+    expect(studentManagementSource).toContain("label: 'Without Enrollment'");
+    expect(studentManagementSource).toContain('student counts are unique profiles; enrollment counts are course-registration records');
+    expect(studentManagementSource).toContain('aria-pressed={selected}');
+    expect(studentManagementSource).toContain("focus: 'without-enrollment'");
+  });
+
+  it('provides direct lifecycle-safe actions for students who need enrollment review', () => {
+    expect(studentManagementSource).toContain('Students Needing Enrollment Review');
+    expect(studentManagementSource).toContain("'Create enrollment'");
+    expect(studentManagementSource).toContain("'Add enrollment'");
+    expect(studentManagementSource).toContain('Manage enrollment');
+    expect(studentManagementSource).toContain('EnrollmentDetailView');
+    expect(studentManagementSource).toContain('Historical records are preserved.');
+  });
+
   it('removes the duplicate desktop Enrollment Management navigation entry', () => {
     expect(sidebarSource).toContain("{ id: 'students', label: 'Students & Enrollments'");
     expect(sidebarSource).not.toContain("{ id: 'enrollments', label: 'Enrollment Management'");
