@@ -74,9 +74,24 @@ describe('admin lifecycle routing', () => {
     expect(assignCourseSource).toContain('getCreateEnrollmentErrorMessage(err)');
   });
 
-  it('routes complete-and-start-next through the recoverable transition callable', () => {
+  it('keeps course progression recoverable while presenting simple defaults with optional overrides', () => {
     expect(enrollmentDetailSource).toContain("httpsCallable(functions, 'transitionEnrollmentCourse')");
-    expect(enrollmentDetailSource).toContain('Complete Current Course and Start Next Course');
-    expect(enrollmentDetailSource).toContain('Operation ID:');
+    expect(enrollmentDetailSource).toContain('Move to Next Course');
+    expect(enrollmentDetailSource).toContain('By default, the current teacher, class schedule, rates and class link continue automatically.');
+    expect(enrollmentDetailSource).toContain("getDocs(collection(db, 'courses'))");
+    expect(enrollmentDetailSource).toContain("where('role', '==', 'teacher')");
+    expect(enrollmentDetailSource).toContain('Change teacher for next course');
+    expect(enrollmentDetailSource).toContain('Use a different class link');
+    expect(enrollmentDetailSource).toContain('const newSchedule = enrollment.schedule;');
+    expect(enrollmentDetailSource).toContain('const operationId = `course-transition-${String(enrollment.id || enrollmentId).trim()}`;');
+    expect(enrollmentDetailSource).not.toContain('crypto.randomUUID()');
+    expect(enrollmentDetailSource).toContain("httpsCallable(functions, 'repairEnrollmentFutureSessionsFromSchedule')");
+    expect(enrollmentDetailSource).toContain('inheritedFields.joinUrl = nextClassLink.trim()');
+    expect(enrollmentDetailSource).toContain('inheritedFields.meetingLink = nextClassLink.trim()');
+    expect(enrollmentDetailSource).toContain('inheritedFields.classLink = nextClassLink.trim()');
+    expect(enrollmentDetailSource).not.toContain("window.prompt('Next canonical course ID?')");
+    expect(enrollmentDetailSource).not.toContain("window.prompt('Next teacher user ID?')");
+    expect(enrollmentDetailSource).not.toContain('Next schedule JSON');
+    expect(enrollmentDetailSource).not.toContain('Transition operation ID');
   });
 });
