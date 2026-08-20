@@ -674,7 +674,7 @@ export default function EnrollmentDetailView({
     ].join('\n');
     if (!window.confirm(confirmation)) return;
 
-    const operationId = `course-transition-${crypto.randomUUID()}`;
+    const operationId = `course-transition-${String(enrollment.id || enrollmentId).trim()}`;
     const reason = `Completed ${currentCourseLabel} and moved to ${nextCourseLabel}`;
 
     try {
