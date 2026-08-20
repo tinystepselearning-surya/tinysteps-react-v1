@@ -20,6 +20,12 @@ describe('simple leads workflow buckets', () => {
     expect(resolveSimpleStatusLabel({ demoStatus: 'open', hasDemo: true })).toBe('Ready to assign');
   });
 
+  it('does not let a stale pre-demo follow-up override a newly created open demo', () => {
+    expect(resolveSimpleLeadBucket({ demoStatus: 'open', hasDemo: true, hasFollowUp: true })).toBe('open');
+    expect(resolveSimpleLeadAction({ demoStatus: 'open', hasDemo: true, hasFollowUp: true })).toBe('assign_teacher');
+    expect(resolveSimpleStatusLabel({ demoStatus: 'open', hasDemo: true, hasFollowUp: true })).toBe('Ready to assign');
+  });
+
   it('moves assigned and teacher-completed demos to in progress', () => {
     expect(resolveSimpleLeadBucket({ demoStatus: 'assigned', hasDemo: true })).toBe('in_progress');
     expect(resolveSimpleLeadBucket({ demoStatus: 'completed', hasDemo: true })).toBe('in_progress');
@@ -49,7 +55,7 @@ describe('simple leads workflow buckets', () => {
 
   it('keeps terminal decisions closed even when stale follow-up data remains', () => {
     expect(resolveSimpleLeadBucket({ leadStatus: 'not_interested', hasFollowUp: true })).toBe('closed');
-    expect(resolveSimpleLeadBucket({ conversionStatus: 'enrolled', demoStatus: 'completed', hasFollowUp: true })).toBe('closed');
+    expect(resolveSimpleLeadBucket({ conversionStatus: 'enrolled', demoStatus: 'completed', hasDemo: true, hasFollowUp: true })).toBe('closed');
     expect(resolveSimpleLeadAction({ leadStatus: 'not_interested', hasDemo: false, hasFollowUp: true })).toBe('view_outcome');
   });
 
