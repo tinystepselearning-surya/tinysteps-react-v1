@@ -10,7 +10,6 @@ import {
   Globe2,
   GraduationCap,
   IndianRupee,
-  Laptop,
   MessageCircle,
   Send,
   ShieldCheck,
@@ -28,20 +27,20 @@ const CAREERS_PATH = '/careers';
 const CAREERS_URL = 'https://tinystepslearning.com/careers';
 const ROLE_TITLE = 'Online English Teacher - Phonics, Grammar & Public Speaking';
 const WHATSAPP_NUMBER = '919618398383';
-const CAREERS_TITLE = 'Online English Teacher Jobs Worldwide | Tiny Steps Learning';
+const CAREERS_TITLE = 'Online English Teacher Jobs in India | Tiny Steps Learning';
 const CAREERS_DESCRIPTION =
-  'Apply for remote online English teacher jobs with Tiny Steps Learning. Teach phonics, grammar, spoken English and public speaking to children in live 1:1 classes.';
+  'Apply for remote online English teacher jobs in India with Tiny Steps Learning. Teach phonics, grammar, spoken English and public speaking to children in live 1:1 classes.';
 
 const buildGeneralWhatsAppLink = () => {
   const message = [
     'Hello Tiny Steps Learning! I would like to apply for the Online English Teacher role.',
     '',
     'Name: _____',
-    'City / Country: _____',
+    'City / State: _____',
     'Teaching experience: _____',
     'Primary teaching strength: Phonics / Grammar / Public Speaking / Spoken English',
     'Current / recent teaching context: _____',
-    'Daily availability + time zone: _____',
+    'Daily availability in IST: _____',
     '',
     'I can attach supporting documents here if required.',
   ].join('\n');
@@ -52,7 +51,7 @@ const buildGeneralWhatsAppLink = () => {
 const AT_A_GLANCE = [
   ['Role', 'Online English Teacher'],
   ['Work mode', 'Fully remote / work from home'],
-  ['Applications', 'Qualified teachers worldwide'],
+  ['Applications', 'Teachers based in India'],
   ['Learners', 'Children aged 3–12'],
   ['Subjects', 'Phonics, Grammar, Speaking'],
   ['Class format', 'Live 1:1 online classes'],
@@ -78,8 +77,8 @@ const BENEFITS = [
   },
   {
     icon: Globe2,
-    title: 'Remote teaching opportunities',
-    description: 'Qualified teachers from different countries may apply, with scheduling reviewed against learner demand and time-zone overlap.',
+    title: 'Remote teaching across India',
+    description: 'Teach from home from anywhere in India, with scheduling matched to learner demand and your confirmed availability.',
     cardClass: 'border-cyan-100 bg-gradient-to-br from-cyan-50 via-white to-white hover:border-cyan-200',
     iconClass: 'bg-cyan-100 text-cyan-700',
   },
@@ -187,14 +186,14 @@ const PROCESS_STEPS = [
 
 const FAQS = [
   {
-    question: 'Is Tiny Steps hiring remote online English teachers?',
+    question: 'Is Tiny Steps hiring remote online English teachers in India?',
     answer:
-      'Yes. Tiny Steps Learning accepts applications for remote online English teaching roles covering Phonics, Grammar, Public Speaking and Spoken English for children aged 3–12. Qualified teachers from different countries may apply.',
+      'Yes. Tiny Steps Learning currently accepts applications from teachers based in India for remote online English teaching roles covering Phonics, Grammar, Public Speaking and Spoken English for children aged 3–12.',
   },
   {
-    question: 'Can teachers outside India apply?',
+    question: 'Who can apply for Tiny Steps online teaching roles?',
     answer:
-      'Yes. International applications are welcome. Because classes are live, candidates should clearly share their country, time zone and available teaching window so scheduling can be reviewed accurately.',
+      'For the current hiring cycle, applications are open to teachers based in India. Candidates should share their city or state, teaching background and reliable availability in Indian Standard Time (IST).',
   },
   {
     question: 'Can teachers working with other online English teaching platforms apply?',
@@ -207,9 +206,9 @@ const FAQS = [
       'Regular classes scheduled from 9:00 AM to 9:00 PM IST are paid at ₹175 per completed 35-minute class. Classes scheduled before 9:00 AM IST or after 9:00 PM IST are paid at ₹200 per completed 35-minute class. Demo classes are paid separately, and successful demo conversions are eligible for additional incentives.',
   },
   {
-    question: 'What can I potentially earn with six regular classes a day?',
+    question: 'Can I earn ₹25,000+ per month with a regular schedule?',
     answer:
-      'As an illustration, six 35-minute regular classes a day equals 3.5 hours of live teaching. Across six teaching days per week, that works out to about 156 regular classes in an average month. At ₹175 per class, that is approximately ₹27,300 per month from regular classes alone. Paid demos, conversion incentives and any extended-hours classes are additional.',
+      'Yes, as an illustrative example. Six 35-minute regular classes per day equals 3.5 hours of live teaching. Across six teaching days per week, a four-week month gives about 144 regular classes. At ₹175 per completed class, that is ₹25,200 from regular classes alone. Paid demos, conversion incentives and any extended-hours classes are additional. Actual monthly earnings depend on completed classes and schedule.',
   },
   {
     question: 'Are demo classes paid?',
@@ -239,7 +238,7 @@ const FAQS = [
   {
     question: 'What teaching hours are preferred?',
     answer:
-      'We value consistent availability and currently prefer teachers who can offer around 3–4 teaching hours per day. International applicants should include their time zone and exact available teaching window when applying.',
+      'We value consistent availability and currently prefer teachers who can offer around 3–4 teaching hours per day. Please share your exact available teaching window in Indian Standard Time (IST) when applying.',
   },
   {
     question: 'How do I share supporting documents?',
@@ -269,11 +268,11 @@ function buildApplicationWhatsAppLink(values: ApplicationValues) {
     `Name: ${values.name}`,
     `Email: ${values.email || 'Not provided'}`,
     `Phone / WhatsApp: ${values.phone}`,
-    `City / Country: ${values.location}`,
+    `City / State: ${values.location}`,
     `Teaching experience: ${values.experience}`,
     `Primary teaching strength: ${values.specialization}`,
     `Current / recent teaching context: ${values.currentContext || 'Not provided'}`,
-    `Daily availability + time zone: ${values.availability}`,
+    `Daily availability in IST: ${values.availability}`,
     `Additional note: ${values.note || 'Not provided'}`,
     '',
     'I can attach supporting documents here if required.',
@@ -340,7 +339,7 @@ function CareerApplicationForm() {
           value={values.phone}
           onChange={(event) => update('phone', event.target.value)}
           className={inputClass}
-          placeholder="+country code ..."
+          placeholder="+91 ..."
           autoComplete="tel"
           required
         />
@@ -359,12 +358,12 @@ function CareerApplicationForm() {
       </label>
 
       <label className="text-sm font-semibold text-slate-800">
-        City / Country
+        City / State
         <input
           value={values.location}
           onChange={(event) => update('location', event.target.value)}
           className={inputClass}
-          placeholder="Example: Dubai, UAE"
+          placeholder="Example: Hyderabad, Telangana"
           autoComplete="address-level2"
           required
         />
@@ -408,12 +407,12 @@ function CareerApplicationForm() {
       </label>
 
       <label className="text-sm font-semibold text-slate-800">
-        Daily availability + time zone
+        Daily availability in IST
         <input
           value={values.availability}
           onChange={(event) => update('availability', event.target.value)}
           className={inputClass}
-          placeholder="Example: 5–9 PM GST, Mon–Sat"
+          placeholder="Example: 5–9 PM IST, Mon–Sat"
           required
         />
       </label>
@@ -454,14 +453,14 @@ function CareerApplicationForm() {
 export default function CareersPage() {
   useEffect(() => {
     const jobDescription = [
-      'Tiny Steps Learning is recruiting remote Online English Teachers to teach children aged 3–12 in live 1:1 classes.',
+      'Tiny Steps Learning is recruiting India-based remote Online English Teachers to teach children aged 3–12 in live 1:1 classes.',
       'Teachers may be assigned Phonics, Grammar, Public Speaking or Spoken English lessons using structured Tiny Steps curriculum and teaching materials.',
       `Responsibilities include ${RESPONSIBILITIES.join(' ')}`,
       `Qualifications and requirements include ${REQUIREMENTS.join(' ')}`,
-      'Applications are welcome from qualified teachers worldwide. Candidates should provide their country, time zone and available teaching window for scheduling review.',
+      'Applications are currently open to teachers based in India. Candidates should provide their city or state and available teaching window in Indian Standard Time (IST).',
       'Consistent availability of around 3–4 teaching hours per day is preferred.',
       'Regular classes scheduled from 9:00 AM to 9:00 PM IST are paid at ₹175 per completed 35-minute class. Classes scheduled before 9:00 AM IST or after 9:00 PM IST are paid at ₹200 per completed 35-minute class. Assigned demo classes are paid separately, and successful demo conversions may qualify for additional incentives. Selected teachers receive structured training, demo preparation and active scheduling support, with confirmed teaching slots typically built within 1–2 weeks of onboarding.',
-      'An illustrative schedule of six regular classes per day across six teaching days per week equals 3.5 hours of live teaching per day and about 156 regular classes in an average month, which is approximately ₹27,300 per month in regular-class earnings before paid demos, conversion incentives or extended-hours classes.',
+      'An illustrative four-week schedule of six completed regular classes per day across six teaching days can exceed ₹25,000 per month in regular-class earnings before paid demos, conversion incentives or extended-hours classes.',
     ].join(' ');
 
     const jobPostingSchema = {
@@ -486,15 +485,16 @@ export default function CareersPage() {
         url: 'https://tinystepslearning.com',
       },
       jobLocationType: 'TELECOMMUTE',
+      applicantLocationRequirements: {
+        '@type': 'Country',
+        name: 'India',
+      },
       responsibilities: RESPONSIBILITIES.join(' '),
       qualifications: REQUIREMENTS.join(' '),
-      educationRequirements: 'Graduation preferred; relevant structured teaching experience is valued.',
-      experienceRequirements:
-        'Prior experience teaching children, English, phonics, grammar, communication or public speaking is an advantage. Strong English teachers with relevant child-teaching experience may also be considered.',
       skills:
         'Online English teaching; phonics; grammar; spoken English; public speaking; child engagement; clear pronunciation; screen sharing; digital classroom delivery.',
       workHours:
-        'Consistent availability is required. Around 3–4 teaching hours per day is preferred. Applicants should state their local time zone and available teaching window.',
+        'Consistent availability is required. Around 3–4 teaching hours per day is preferred. Applicants should state their available teaching window in Indian Standard Time (IST).',
       url: CAREERS_URL,
     };
 
@@ -534,19 +534,17 @@ export default function CareersPage() {
       title: CAREERS_TITLE,
       description: CAREERS_DESCRIPTION,
       keywords: [
-        'online English teacher jobs',
-        'remote English teacher jobs',
-        'online English teacher jobs worldwide',
-        'work from home English teacher jobs',
-        'online phonics teacher jobs',
-        'phonics teacher jobs remote',
-        'online grammar teacher jobs',
-        'public speaking teacher jobs online',
-        'spoken English teacher jobs',
-        'online English tutor jobs',
-        'remote tutoring jobs for English teachers',
-        'English teaching jobs from home',
-        'international online teaching jobs',
+        'online English teacher jobs India',
+        'remote English teacher jobs India',
+        'work from home English teacher jobs India',
+        'online phonics teacher jobs India',
+        'phonics teacher jobs remote India',
+        'online grammar teacher jobs India',
+        'public speaking teacher jobs online India',
+        'spoken English teacher jobs India',
+        'online English tutor jobs India',
+        'remote tutoring jobs for English teachers India',
+        'English teaching jobs from home India',
         'remote teaching jobs for English teachers',
         'Tiny Steps Learning careers',
       ],
@@ -568,7 +566,7 @@ export default function CareersPage() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white/90 px-4 py-2 text-sm font-bold text-orange-800 shadow-sm backdrop-blur">
               <Sparkles className="h-4 w-4" aria-hidden="true" />
-              Remote English teaching opportunities worldwide
+              Remote English teaching opportunities across India
             </div>
 
             <h1 className="mt-5 max-w-4xl text-4xl font-black tracking-tight text-slate-950 sm:text-5xl md:text-6xl md:leading-[1.02]">
@@ -576,11 +574,11 @@ export default function CareersPage() {
             </h1>
 
             <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600 md:text-xl">
-              Teach children through live 1:1 online classes with structured curriculum, ready-to-use lesson materials and academic support. Qualified English teachers from different countries and teaching backgrounds are welcome to apply.
+              Teach children through live 1:1 online classes with structured curriculum, ready-to-use lesson materials and academic support. English teachers based in India with strong communication and child-teaching skills are welcome to apply.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-2.5 text-sm font-bold text-slate-700">
-              {['₹175 regular classes', '₹200 extended hours', 'Paid demos', 'Conversion incentives', 'Fully remote'].map((item) => (
+              {['₹175 regular classes', '₹200 extended hours', '₹25,000+ monthly potential', 'Paid demos', 'Conversion incentives', 'Fully remote'].map((item) => (
                 <span key={item} className="rounded-full border border-white bg-white/90 px-4 py-2 shadow-sm">
                   {item}
                 </span>
@@ -714,12 +712,12 @@ export default function CareersPage() {
             <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
               <div className="border-b border-white/10 p-6 md:p-7 lg:border-b-0 lg:border-r">
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-300">Illustrative monthly earnings</p>
-                <h3 className="mt-3 text-3xl font-black tracking-tight">About ₹27,300/month from regular classes</h3>
+                <h3 className="mt-3 text-3xl font-black tracking-tight">₹25,000+ monthly earning potential</h3>
                 <p className="mt-3 text-sm leading-7 text-blue-100">
                   Example: 6 regular classes per day × 6 teaching days per week. Sunday remains a weekly holiday.
                 </p>
                 <p className="mt-3 text-xs leading-5 text-blue-200">
-                  This is an illustration based on completed regular classes at ₹175 each. Paid demos, conversion incentives and any ₹200 extended-hours classes are additional.
+                  In a four-week month, 144 completed regular classes at ₹175 each equals ₹25,200. Paid demos, conversion incentives and any ₹200 extended-hours classes are additional.
                 </p>
               </div>
 
@@ -728,7 +726,7 @@ export default function CareersPage() {
                   ['6', 'classes / day'],
                   ['3.5 hrs', 'live teaching / day'],
                   ['6 days', 'Monday–Saturday'],
-                  ['≈156', 'regular classes / month'],
+                  ['≈144', 'regular classes / 4 weeks'],
                 ].map(([value, label]) => (
                   <div key={label} className="bg-white/5 p-5 transition hover:bg-white/10 md:p-6">
                     <div className="text-2xl font-black text-white">{value}</div>
@@ -740,7 +738,7 @@ export default function CareersPage() {
           </div>
 
           <p className="mt-5 text-center text-xs leading-5 text-slate-500">
-            Rates are stated in INR. Demo and incentive details are explained during hiring and onboarding. The monthly figure above is an illustrative example based on six completed regular classes per day across six teaching days per week.
+            Rates are stated in INR. The ₹25,000+ figure is an illustrative earning example based on six completed regular classes per day across six teaching days per week for four weeks. Actual earnings depend on completed classes; paid demos, incentives and extended-hours classes can add more.
           </p>
         </div>
       </section>
@@ -856,7 +854,7 @@ export default function CareersPage() {
                 </div>
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" aria-hidden="true" />
-                  <span>International applicants can include country and time-zone details in the same application.</span>
+                  <span>Share your city/state and reliable availability in IST so scheduling can be reviewed quickly.</span>
                 </div>
               </div>
             </div>
@@ -866,7 +864,7 @@ export default function CareersPage() {
                 <p className="text-sm font-black uppercase tracking-[0.2em] text-orange-700">Tell us about your teaching profile</p>
                 <h3 className="mt-2 text-3xl font-black tracking-tight">Continue your application on WhatsApp</h3>
                 <p className="mt-3 text-base leading-7 text-slate-600">
-                  Keep your details concise. International applicants should include their country and time zone so scheduling can be reviewed accurately.
+                  Keep your details concise. Include your city/state and reliable teaching availability in IST so our team can review your scheduling fit accurately.
                 </p>
               </div>
 
@@ -882,7 +880,7 @@ export default function CareersPage() {
             <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-700">Teacher job FAQ</p>
             <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">Questions online English teachers ask before applying</h2>
             <p className="mt-3 text-lg leading-8 text-slate-600">
-              Clear answers about remote teaching, international applications, compensation, demos, earning examples, subjects, equipment, schedules and the WhatsApp application process.
+              Clear answers about remote teaching in India, compensation, demos, earning examples, subjects, equipment, schedules and the WhatsApp application process.
             </p>
           </div>
 
