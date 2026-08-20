@@ -1,5 +1,5 @@
 // src/pages/admin/EnrollmentManagement/EnrollmentDetailView.tsx
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   type DocumentData,
   type DocumentSnapshot,
@@ -446,15 +446,11 @@ export default function EnrollmentDetailView({
     enrollment.childId ||
     (Array.isArray(enrollment.kidIds) ? enrollment.kidIds[0] : null);
 
-  const selectableCourseOptions = useMemo(
-    () => courseOptions.filter((option) => option.id !== String(enrollment.courseId || '')),
-    [courseOptions, enrollment.courseId],
+  const selectableCourseOptions = courseOptions.filter(
+    (option) => option.id !== String(enrollment.courseId || ''),
   );
-
-  const selectedNextCourse = useMemo(
-    () => selectableCourseOptions.find((option) => option.id === selectedNextCourseId) || null,
-    [selectableCourseOptions, selectedNextCourseId],
-  );
+  const selectedNextCourse =
+    selectableCourseOptions.find((option) => option.id === selectedNextCourseId) || null;
 
   const callSetEnrollmentStatus = async (status: string, reason?: string) => {
     try {
