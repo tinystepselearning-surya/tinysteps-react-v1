@@ -129,11 +129,13 @@ export const ROUTE_SEO_REGISTRY = {
       'phonics program for schools,school phonics curriculum India,phonics teacher training for schools,synthetic phonics program India,phonics partnership for international schools',
   },
   '/careers': {
-    title: 'Careers | Join the Tiny Steps Team',
+    title: 'Online English Teacher Jobs (WFH) | Tiny Steps Learning',
     description:
-      "We're hiring remote part-time Online Teachers, Learning Partners, and Curriculum Administrators. Work with children aged 3-12. Apply on WhatsApp.",
+      'Apply for remote online English teacher jobs at Tiny Steps Learning. Teach phonics, grammar and public speaking to kids. ₹175 per 35-minute class.',
     canonicalPath: '/careers',
     ogType: 'website',
+    keywords:
+      'online English teacher jobs,work from home teacher jobs,remote English teacher jobs India,online phonics teacher jobs,public speaking teacher jobs online,spoken English teacher jobs work from home,PlanetSpark teacher jobs alternative,Vedantu teacher jobs alternative,Learn2Read phonics teacher jobs,Instrucko teacher jobs,online teaching jobs for English teachers,Tiny Steps Learning careers',
   },
   '/learning-partner': {
     title: 'Learning Partner Support | Tiny Steps Learning',
