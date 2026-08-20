@@ -1,0 +1,82 @@
+name: Temporary remove admin teacher schedule
+
+on:
+  push:
+    branches:
+      - cleanup/remove-admin-teacher-schedule
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout cleanup branch
+        uses: actions/checkout@v4
+        with:
+          ref: cleanup/remove-admin-teacher-schedule
+          fetch-depth: 0
+
+      - name: Remove admin-only teacher scheduling console
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str = '') -> None:
+              file_path = Path(path)
+              text = file_path.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected exactly one match, found {count}: {old!r}')
+              file_path.write_text(text.replace(old, new, 1))
+
+          admin = 'src/pages/admin/AdminDashboard.tsx'
+          replace_once(admin, "  CalendarClock,\n")
+          replace_once(admin, "import TeacherScheduleManagement from './TeacherScheduleManagement';\n")
+          replace_once(admin, "  { id: 'teacher-schedule', label: 'Schedules', icon: CalendarClock },\n")
+          replace_once(admin, "      'teacher-schedule',\n")
+          replace_once(
+              admin,
+              '''            <TabsContent value="teacher-schedule" className="mt-0">\n              <TeacherScheduleManagement />\n            </TabsContent>\n\n''',
+          )
+
+          sidebar = 'src/pages/admin/components/Sidebar.tsx'
+          replace_once(sidebar, "  CalendarClock,\n")
+          replace_once(sidebar, "    { id: 'teacher-schedule', label: 'Teacher Schedule', icon: CalendarClock },\n")
+
+          header = 'src/pages/admin/components/Header.tsx'
+          replace_once(header, "  'teacher-schedule': 'Teacher Schedule',\n")
+
+          schedule_console = Path('src/pages/admin/TeacherScheduleManagement.tsx')
+          if not schedule_console.exists():
+              raise SystemExit('TeacherScheduleManagement.tsx was expected to exist')
+          schedule_console.unlink()
+
+          workflow = Path('.github/workflows/tmp-remove-admin-teacher-schedule.yml')
+          if workflow.exists():
+              workflow.unlink()
+
+          admin_text = Path(admin).read_text()
+          sidebar_text = Path(sidebar).read_text()
+          header_text = Path(header).read_text()
+          combined = admin_text + sidebar_text + header_text
+          if 'teacher-schedule' in combined or 'TeacherScheduleManagement' in combined:
+              raise SystemExit('Admin teacher-schedule references remain after cleanup')
+          PY
+
+          git diff --check
+          test ! -e src/pages/admin/TeacherScheduleManagement.tsx
+          ! grep -R --line-number --fixed-strings "teacher-schedule" src/pages/admin
+          ! grep -R --line-number --fixed-strings "TeacherScheduleManagement" src/pages/admin
+
+      - name: Commit cleanup
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "refactor(admin): remove unused teacher schedule console"
+          git push origin HEAD:cleanup/remove-admin-teacher-schedule
