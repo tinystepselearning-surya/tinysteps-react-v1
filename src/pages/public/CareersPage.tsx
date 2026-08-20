@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
-  BadgeCheck,
   BookOpenCheck,
   CheckCircle2,
   ChevronDown,
@@ -42,7 +41,7 @@ const buildGeneralWhatsAppLink = () => {
     'Current / recent teaching context: _____',
     'Daily availability + time zone: _____',
     '',
-    'I can attach my resume or supporting documents here if required.',
+    'I can attach supporting documents here if required.',
   ].join('\n');
 
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
@@ -56,35 +55,35 @@ const AT_A_GLANCE = [
   ['Subjects', 'Phonics, Grammar, Speaking'],
   ['Class format', 'Live 1:1 online classes'],
   ['Class duration', '35 minutes'],
-  ['Current rate', '₹175 per completed class'],
+  ['Teaching rate', '₹135–₹200 per completed class'],
 ];
 
 const BENEFITS = [
   {
     icon: Clock3,
     title: 'Focused 35-minute classes',
-    description: 'Teach concise, structured sessions built for young learners instead of long lecture-style classes.',
+    description: 'Teach concise, structured sessions designed for young learners instead of long lecture-style classes.',
     cardClass: 'border-blue-100 bg-gradient-to-br from-blue-50 via-white to-white hover:border-blue-200',
     iconClass: 'bg-blue-100 text-blue-700',
   },
   {
     icon: BookOpenCheck,
     title: 'Curriculum and materials provided',
-    description: 'Use Tiny Steps lesson content, activities and teaching guidance rather than building every class from scratch.',
+    description: 'Use Tiny Steps lesson content, activities and teaching guidance rather than preparing every class from scratch.',
     cardClass: 'border-violet-100 bg-gradient-to-br from-violet-50 via-white to-white hover:border-violet-200',
     iconClass: 'bg-violet-100 text-violet-700',
   },
   {
     icon: Globe2,
-    title: 'A genuinely remote role',
-    description: 'Apply from anywhere, subject to role fit, time-zone overlap, local requirements and reliable online delivery.',
+    title: 'Remote teaching opportunities',
+    description: 'Qualified teachers from different countries may apply, with scheduling reviewed against learner demand and time-zone overlap.',
     cardClass: 'border-cyan-100 bg-gradient-to-br from-cyan-50 via-white to-white hover:border-cyan-200',
     iconClass: 'bg-cyan-100 text-cyan-700',
   },
   {
     icon: IndianRupee,
-    title: 'Clear per-class compensation',
-    description: 'The current standard teaching rate is ₹175 for each completed 35-minute class.',
+    title: 'Transparent per-class rates',
+    description: '₹135 per 35-minute class from 9 AM–9 PM IST, and ₹200 before 9 AM or after 9 PM IST.',
     cardClass: 'border-amber-100 bg-gradient-to-br from-amber-50 via-white to-white hover:border-amber-200',
     iconClass: 'bg-amber-100 text-amber-700',
   },
@@ -98,9 +97,28 @@ const BENEFITS = [
   {
     icon: Users,
     title: '1:1 child-focused teaching',
-    description: 'Work closely with individual learners and adapt delivery to the child’s pace within a structured curriculum.',
+    description: 'Work closely with individual learners and adapt delivery to each child’s pace within a structured curriculum.',
     cardClass: 'border-orange-100 bg-gradient-to-br from-orange-50 via-white to-white hover:border-orange-200',
     iconClass: 'bg-orange-100 text-orange-700',
+  },
+];
+
+const PAY_RATES = [
+  {
+    label: 'Core teaching hours',
+    hours: '9:00 AM–9:00 PM IST',
+    rate: '₹135',
+    note: 'per completed 35-minute class',
+    cardClass: 'border-blue-200 bg-gradient-to-br from-blue-50 via-white to-cyan-50',
+    badgeClass: 'bg-blue-100 text-blue-800',
+  },
+  {
+    label: 'Extended teaching hours',
+    hours: 'Before 9:00 AM or after 9:00 PM IST',
+    rate: '₹200',
+    note: 'per completed 35-minute class',
+    cardClass: 'border-orange-200 bg-gradient-to-br from-orange-50 via-white to-amber-50',
+    badgeClass: 'bg-orange-100 text-orange-800',
   },
 ];
 
@@ -128,22 +146,22 @@ const PROCESS_STEPS = [
   {
     title: 'Apply on this page',
     description: 'Enter your teaching profile and availability. Submit opens WhatsApp with your details already prepared.',
-    tone: 'border-blue-200 bg-blue-50/70',
+    tone: 'border-blue-200 bg-blue-50/80',
   },
   {
     title: 'HR screening',
-    description: 'A short conversation checks English communication, teaching background, availability and role fit.',
-    tone: 'border-violet-200 bg-violet-50/70',
+    description: 'A short conversation reviews English communication, teaching background, availability and role fit.',
+    tone: 'border-violet-200 bg-violet-50/80',
   },
   {
     title: 'Training + teaching demo',
     description: 'Review the assigned Tiny Steps program and conduct a demo using our classroom standards and lesson format.',
-    tone: 'border-emerald-200 bg-emerald-50/70',
+    tone: 'border-emerald-200 bg-emerald-50/80',
   },
   {
     title: 'Onboarding + class matching',
     description: 'Selected teachers complete onboarding, confirm reliable slots and become eligible for class allocation.',
-    tone: 'border-orange-200 bg-orange-50/70',
+    tone: 'border-orange-200 bg-orange-50/80',
   },
 ];
 
@@ -151,32 +169,27 @@ const FAQS = [
   {
     question: 'Is Tiny Steps hiring remote online English teachers?',
     answer:
-      'Yes. Tiny Steps Learning accepts applications for remote online English teaching roles covering Phonics, Grammar, Public Speaking and Spoken English for children aged 3–12. Applications may be submitted internationally, subject to role fit, time-zone compatibility and local engagement requirements.',
+      'Yes. Tiny Steps Learning accepts applications for remote online English teaching roles covering Phonics, Grammar, Public Speaking and Spoken English for children aged 3–12. Qualified teachers from different countries may apply.',
   },
   {
     question: 'Can teachers outside India apply?',
     answer:
-      'Yes. Qualified teachers from different countries may apply. Because classes are live, reliable internet, professional English communication and schedule overlap with available learners are essential. Final engagement may also depend on payment and contracting feasibility in the applicant’s location.',
+      'Yes. International applications are welcome. Because classes are live, candidates should clearly share their country, time zone and available teaching window so scheduling can be reviewed accurately.',
   },
   {
-    question: 'Can PlanetSpark, Vedantu, Learn2Read or Instrucko teachers apply to Tiny Steps?',
+    question: 'Can teachers working with other online English teaching platforms apply?',
     answer:
-      'Yes. Teachers who currently work with, previously worked with, or are considering opportunities at Vedantu, PlanetSpark, Learn2Read, Instrucko or other education platforms may apply. Candidates must respect any existing employment, confidentiality or conflict-of-interest obligations.',
-  },
-  {
-    question: 'Is Tiny Steps affiliated with Vedantu, PlanetSpark, Learn2Read or Instrucko?',
-    answer:
-      'No. Tiny Steps Learning is an independent education company and is not affiliated with, endorsed by, or part of Vedantu, PlanetSpark, Learn2Read or Instrucko. Those names are mentioned only because teachers often compare remote teaching opportunities across education platforms.',
+      'Yes. Teachers working with other online English teaching platforms such as Vedantu, PlanetSpark, Learn2Read, Instrucko and similar organisations are welcome to apply. Selection is based on English communication, teaching quality, learner engagement, reliability and available teaching slots.',
   },
   {
     question: 'How much does Tiny Steps pay online teachers?',
     answer:
-      'The current standard teaching compensation is ₹175 per completed 35-minute class. Class allocation depends on student admissions, teacher availability, scheduling fit and ongoing teaching quality.',
+      'The teaching rate is ₹135 per completed 35-minute class for classes scheduled from 9:00 AM to 9:00 PM IST. Classes scheduled before 9:00 AM IST or after 9:00 PM IST are paid at ₹200 per completed 35-minute class. Class allocation depends on student admissions, teacher availability, scheduling fit and ongoing teaching quality.',
   },
   {
     question: 'What subjects can I teach at Tiny Steps?',
     answer:
-      'Tiny Steps recruits online teachers for Phonics, Grammar, Public Speaking and Spoken English. Candidates can indicate one primary strength and additional areas they are confident teaching.',
+      'Tiny Steps recruits online teachers for Phonics, Grammar, Public Speaking and Spoken English. Candidates can indicate one primary strength and any additional areas they are confident teaching.',
   },
   {
     question: 'Do I need phonics experience to apply?',
@@ -191,22 +204,13 @@ const FAQS = [
   {
     question: 'What teaching hours are preferred?',
     answer:
-      'We value consistent availability and currently prefer teachers who can offer around 3–4 hours per day. Evening and weekend availability can be especially useful, while international applicants should clearly state their time zone and available teaching window.',
+      'We value consistent availability and currently prefer teachers who can offer around 3–4 teaching hours per day. International applicants should include their time zone and exact available teaching window when applying.',
   },
   {
-    question: 'How do I send my resume or supporting documents?',
+    question: 'How do I share supporting documents?',
     answer:
-      'The application form does not ask for a resume upload or resume link. When you submit the form, WhatsApp opens with your application details. You can then attach your resume, certificates or other supporting documents directly in WhatsApp if you wish.',
+      'The website form collects only your basic application details. After you submit, WhatsApp opens with those details pre-filled. You can then attach your CV, certificates or other supporting documents directly in WhatsApp before sending the message.',
   },
-];
-
-const COMPARISON_POINTS = [
-  'Is the class 1:1 or group-based?',
-  'How long is each live class?',
-  'Are curriculum and teaching materials provided?',
-  'How is compensation calculated and communicated?',
-  'What training and academic support are available?',
-  'Which ages, skills and time zones will you teach?',
 ];
 
 const applicationInitialValues = {
@@ -237,7 +241,7 @@ function buildApplicationWhatsAppLink(values: ApplicationValues) {
     `Daily availability + time zone: ${values.availability}`,
     `Additional note: ${values.note || 'Not provided'}`,
     '',
-    'I can attach my resume, certificates or supporting documents here if required.',
+    'I can attach supporting documents here if required.',
   ].join('\n');
 
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
@@ -385,7 +389,7 @@ function CareerApplicationForm() {
           value={values.note}
           onChange={(event) => update('note', event.target.value)}
           className={`${inputClass} min-h-28 resize-y`}
-          placeholder="Age groups taught, certifications, phonics methodology, preferred schedule, etc."
+          placeholder="Age groups taught, certifications, teaching methods, preferred schedule, etc."
         />
       </label>
 
@@ -399,12 +403,12 @@ function CareerApplicationForm() {
           <Send className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
         </Button>
         <p className="mt-3 max-w-3xl text-xs leading-5 text-slate-500">
-          Your details are not uploaded by this form. Submitting simply opens WhatsApp with your information pre-filled. You can review the message and attach your resume, certificates or supporting files there before sending.
+          Submitting does not upload your details to a separate careers database. It opens WhatsApp with your information pre-filled so you can review the message and attach any supporting documents before sending.
         </p>
 
         {submitted ? (
           <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900">
-            WhatsApp opened with your application details. Review the message, attach any supporting documents you want to share, and send it to Tiny Steps Learning.
+            WhatsApp opened with your application details. Review the message, attach any documents you want to share, and send it to Tiny Steps Learning.
           </div>
         ) : null}
       </div>
@@ -419,9 +423,9 @@ export default function CareersPage() {
       'Teachers may be assigned Phonics, Grammar, Public Speaking or Spoken English lessons using structured Tiny Steps curriculum and teaching materials.',
       `Responsibilities include ${RESPONSIBILITIES.join(' ')}`,
       `Qualifications and requirements include ${REQUIREMENTS.join(' ')}`,
-      'Applications are welcome from qualified teachers worldwide, subject to time-zone compatibility, role fit, payment feasibility and local engagement requirements.',
-      'Consistent availability of around 3–4 teaching hours per day is preferred; evening and weekend availability may be especially useful depending on learner demand.',
-      'The current standard teaching rate is ₹175 per completed 35-minute class. Class allocation is not guaranteed and depends on student admissions, scheduling fit, teacher availability and ongoing teaching quality.',
+      'Applications are welcome from qualified teachers worldwide. Candidates should provide their country, time zone and available teaching window for scheduling review.',
+      'Consistent availability of around 3–4 teaching hours per day is preferred.',
+      'The teaching rate is ₹135 per completed 35-minute class for classes scheduled from 9:00 AM to 9:00 PM IST, and ₹200 per completed 35-minute class for classes scheduled before 9:00 AM IST or after 9:00 PM IST. Class allocation is not guaranteed and depends on student admissions, scheduling fit, teacher availability and ongoing teaching quality.',
     ].join(' ');
 
     const jobPostingSchema = {
@@ -454,7 +458,7 @@ export default function CareersPage() {
       skills:
         'Online English teaching; phonics; grammar; spoken English; public speaking; child engagement; clear pronunciation; screen sharing; digital classroom delivery.',
       workHours:
-        'Consistent availability is required. Around 3–4 teaching hours per day is preferred; evening and weekend availability can be useful depending on learner demand and time-zone overlap.',
+        'Consistent availability is required. Around 3–4 teaching hours per day is preferred. Applicants should state their local time zone and available teaching window.',
       url: CAREERS_URL,
     };
 
@@ -507,10 +511,7 @@ export default function CareersPage() {
         'remote tutoring jobs for English teachers',
         'English teaching jobs from home',
         'international online teaching jobs',
-        'Vedantu teacher jobs alternative',
-        'PlanetSpark teacher jobs alternative',
-        'Learn2Read phonics teacher jobs',
-        'Instrucko teacher jobs',
+        'remote teaching jobs for English teachers',
         'Tiny Steps Learning careers',
       ],
       canonicalPath: CAREERS_PATH,
@@ -523,11 +524,11 @@ export default function CareersPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
-      <section className="relative overflow-hidden border-b border-slate-200 bg-gradient-to-br from-orange-50 via-white to-blue-50 px-5 py-12 md:px-6 md:py-16">
+      <section className="relative overflow-hidden border-b border-slate-200 bg-gradient-to-br from-orange-50 via-white to-blue-50 px-5 py-11 md:px-6 md:py-14">
         <div className="pointer-events-none absolute -left-24 top-8 h-64 w-64 rounded-full bg-orange-200/30 blur-3xl" />
         <div className="pointer-events-none absolute -right-16 top-4 h-72 w-72 rounded-full bg-blue-200/35 blur-3xl" />
 
-        <div className="relative mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
+        <div className="relative mx-auto grid max-w-6xl gap-7 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white/90 px-4 py-2 text-sm font-bold text-orange-800 shadow-sm backdrop-blur">
               <Sparkles className="h-4 w-4" aria-hidden="true" />
@@ -539,11 +540,11 @@ export default function CareersPage() {
             </h1>
 
             <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600 md:text-xl">
-              Teach children through live 1:1 online classes with structured curriculum, ready-to-use lesson materials and academic support. We welcome qualified English teachers from different countries and teaching backgrounds.
+              Teach children through live 1:1 online classes with structured curriculum, ready-to-use lesson materials and academic support. Qualified English teachers from different countries and teaching backgrounds are welcome to apply.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-2.5 text-sm font-bold text-slate-700">
-              {['₹175 / 35-min class', 'Fully remote', 'Live 1:1 classes', 'Curriculum provided', 'Global applications'].map((item) => (
+              {['₹135–₹200 / 35-min class', 'Fully remote', 'Live 1:1 classes', 'Curriculum provided', 'Global applications'].map((item) => (
                 <span key={item} className="rounded-full border border-white bg-white/90 px-4 py-2 shadow-sm">
                   {item}
                 </span>
@@ -566,7 +567,7 @@ export default function CareersPage() {
             </div>
 
             <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-500">
-              Current and former teachers from schools, tutoring companies and EdTech platforms are welcome to apply, subject to their existing contractual, confidentiality and conflict-of-interest obligations.
+              Teachers from schools, tutoring organisations and online education platforms are welcome. Selection focuses on communication, teaching quality, reliability, learner engagement and scheduling fit.
             </p>
           </div>
 
@@ -595,13 +596,13 @@ export default function CareersPage() {
         </div>
       </section>
 
-      <section className="px-5 py-12 md:px-6 md:py-14">
+      <section className="px-5 py-10 md:px-6 md:py-12">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-700">Why teachers consider Tiny Steps</p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">A polished remote teaching role with clear expectations</h2>
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-700">Why teach with Tiny Steps</p>
+            <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">A structured remote role built around good teaching</h2>
             <p className="mt-3 text-lg leading-8 text-slate-600">
-              Focus on teaching while the lesson structure, materials and academic framework are already in place.
+              Focus on your learner while the curriculum, lesson materials and academic framework are already in place.
             </p>
           </div>
 
@@ -622,42 +623,51 @@ export default function CareersPage() {
         </div>
       </section>
 
-      <section className="border-y border-slate-200 bg-white px-5 py-12 md:px-6 md:py-14">
-        <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1.04fr_0.96fr] lg:items-center">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-bold text-blue-800">
-              <BadgeCheck className="h-4 w-4" aria-hidden="true" />
-              Comparing remote teaching opportunities?
-            </div>
-            <h2 className="mt-4 text-3xl font-black tracking-tight md:text-4xl">
-              Teaching with—or considering—Vedantu, PlanetSpark, Learn2Read or Instrucko?
-            </h2>
-            <p className="mt-4 text-lg leading-8 text-slate-600">
-              You can apply to Tiny Steps Learning. Previous employment with any specific platform is not required; we assess communication, teaching quality, reliability and role fit.
-            </p>
-            <p className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-500">
-              Tiny Steps Learning is independent and is not affiliated with, endorsed by, or part of Vedantu, PlanetSpark, Learn2Read or Instrucko. These company names are referenced only because teachers commonly compare online teaching opportunities.
+      <section className="border-y border-slate-200 bg-white px-5 py-10 md:px-6 md:py-12">
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-orange-700">Teaching compensation</p>
+            <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">Two clear rates based on class timing</h2>
+            <p className="mt-3 text-lg leading-8 text-slate-600">
+              Every class is 35 minutes. The applicable rate is determined by the scheduled teaching time in Indian Standard Time (IST).
             </p>
           </div>
 
-          <Card className="border border-slate-200 bg-gradient-to-br from-slate-50 to-blue-50/60 p-6 shadow-sm md:p-7">
-            <h3 className="text-xl font-black text-slate-950">Compare the role on the details that matter</h3>
-            <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-              {COMPARISON_POINTS.map((item) => (
-                <li key={item} className="group flex items-start gap-3 rounded-2xl border border-transparent bg-white/80 px-4 py-3 text-sm leading-6 text-slate-700 transition duration-200 hover:border-blue-100 hover:bg-white hover:shadow-sm">
-                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 transition group-hover:scale-110" aria-hidden="true" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </Card>
+          <div className="mx-auto mt-8 grid max-w-4xl gap-4 md:grid-cols-2">
+            {PAY_RATES.map((rate) => (
+              <Card
+                key={rate.label}
+                className={`group border p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl md:p-7 ${rate.cardClass}`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.12em] ${rate.badgeClass}`}>
+                      {rate.label}
+                    </span>
+                    <p className="mt-4 text-base font-bold text-slate-700">{rate.hours}</p>
+                  </div>
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-slate-800 shadow-sm transition group-hover:scale-110">
+                    <Clock3 className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                </div>
+                <div className="mt-5 flex items-end gap-2">
+                  <span className="text-4xl font-black tracking-tight text-slate-950">{rate.rate}</span>
+                  <span className="pb-1 text-sm font-semibold text-slate-500">{rate.note}</span>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          <p className="mx-auto mt-4 max-w-3xl text-center text-xs leading-5 text-slate-500">
+            Rates are stated in INR. Class allocation varies with student admissions, schedule matching, teacher availability and ongoing teaching quality.
+          </p>
         </div>
       </section>
 
-      <section id="role" className="scroll-mt-24 px-5 py-12 md:px-6 md:py-14">
+      <section id="role" className="scroll-mt-24 px-5 py-10 md:px-6 md:py-12">
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-5 lg:grid-cols-2">
-            <Card className="overflow-hidden border border-orange-100 bg-white p-0 shadow-sm transition duration-300 hover:shadow-lg">
+            <Card className="overflow-hidden border border-orange-100 bg-white p-0 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-lg">
               <div className="border-b border-orange-100 bg-gradient-to-r from-orange-50 to-amber-50 px-7 py-5 md:px-8">
                 <p className="text-sm font-black uppercase tracking-[0.2em] text-orange-700">What you will do</p>
                 <h2 className="mt-2 text-3xl font-black tracking-tight">Online English Teacher responsibilities</h2>
@@ -672,7 +682,7 @@ export default function CareersPage() {
               </ul>
             </Card>
 
-            <Card className="overflow-hidden border border-blue-100 bg-white p-0 shadow-sm transition duration-300 hover:shadow-lg">
+            <Card className="overflow-hidden border border-blue-100 bg-white p-0 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-lg">
               <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-cyan-50 px-7 py-5 md:px-8">
                 <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-700">What we look for</p>
                 <h2 className="mt-2 text-3xl font-black tracking-tight">Teacher requirements</h2>
@@ -702,7 +712,7 @@ export default function CareersPage() {
         </div>
       </section>
 
-      <section className="bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 px-5 py-12 text-white md:px-6 md:py-14">
+      <section className="bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 px-5 py-10 text-white md:px-6 md:py-12">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-sm font-black uppercase tracking-[0.2em] text-cyan-300">Selection process</p>
@@ -727,7 +737,7 @@ export default function CareersPage() {
         </div>
       </section>
 
-      <section id="apply" className="scroll-mt-20 bg-gradient-to-br from-blue-50 via-white to-orange-50 px-5 py-12 md:px-6 md:py-14">
+      <section id="apply" className="scroll-mt-20 bg-gradient-to-br from-blue-50 via-white to-orange-50 px-5 py-10 md:px-6 md:py-12">
         <div className="mx-auto max-w-5xl overflow-hidden rounded-[2rem] border border-white bg-white/95 shadow-2xl shadow-slate-200/70">
           <div className="grid gap-0 lg:grid-cols-[0.34fr_0.66fr]">
             <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-slate-950 p-7 text-white md:p-8">
@@ -737,20 +747,20 @@ export default function CareersPage() {
               <p className="mt-6 text-sm font-black uppercase tracking-[0.2em] text-blue-200">Teacher application</p>
               <h2 className="mt-3 text-3xl font-black tracking-tight">Apply in one simple WhatsApp flow</h2>
               <p className="mt-4 text-sm leading-7 text-blue-100">
-                Fill in your basic details here. When you submit, WhatsApp opens with the information already prepared. No resume upload is required on this page.
+                Fill in your basic details here. When you submit, WhatsApp opens with the information already prepared. No document upload is required on this page.
               </p>
               <div className="mt-6 space-y-3 text-sm text-blue-50">
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" aria-hidden="true" />
-                  <span>Review your message before sending.</span>
+                  <span>Review the pre-filled application message before sending.</span>
                 </div>
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" aria-hidden="true" />
-                  <span>Attach your resume or certificates directly in WhatsApp if you want to share them.</span>
+                  <span>Attach your CV, certificates or supporting documents directly in WhatsApp if you choose.</span>
                 </div>
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" aria-hidden="true" />
-                  <span>No failed website submission or duplicate application step.</span>
+                  <span>International applicants can include country and time-zone details in the same application.</span>
                 </div>
               </div>
             </div>
@@ -770,13 +780,13 @@ export default function CareersPage() {
         </div>
       </section>
 
-      <section className="border-y border-slate-200 bg-white px-5 py-12 md:px-6 md:py-14">
+      <section className="border-y border-slate-200 bg-white px-5 py-10 md:px-6 md:py-12">
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-700">Teacher job FAQ</p>
             <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">Questions online English teachers ask before applying</h2>
             <p className="mt-3 text-lg leading-8 text-slate-600">
-              Clear answers about remote teaching, international applications, subjects, equipment, schedules and the application process.
+              Clear answers about remote teaching, international applications, compensation, subjects, equipment, schedules and the WhatsApp application process.
             </p>
           </div>
 
@@ -784,7 +794,7 @@ export default function CareersPage() {
             {FAQS.map((faq) => (
               <details
                 key={faq.question}
-                className="group rounded-2xl border border-slate-200 bg-slate-50/70 transition duration-200 open:border-blue-200 open:bg-white open:shadow-md"
+                className="group rounded-2xl border border-slate-200 bg-slate-50/70 transition duration-200 hover:border-blue-100 hover:bg-white open:border-blue-200 open:bg-white open:shadow-md"
               >
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left text-base font-black text-slate-950 marker:content-none md:px-6">
                   <span>{faq.question}</span>
@@ -799,7 +809,7 @@ export default function CareersPage() {
         </div>
       </section>
 
-      <section className="px-5 py-12 md:px-6 md:py-14">
+      <section className="px-5 py-10 md:px-6 md:py-12">
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="rounded-[2rem] bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 p-7 text-white shadow-xl md:p-9">
@@ -830,7 +840,7 @@ export default function CareersPage() {
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-cyan-100 bg-gradient-to-br from-cyan-50 via-white to-blue-50 p-7 shadow-sm md:p-9">
+            <div className="rounded-[2rem] border border-cyan-100 bg-gradient-to-br from-cyan-50 via-white to-blue-50 p-7 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-lg md:p-9">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-800">
                 <MapPin className="h-5 w-5" aria-hidden="true" />
               </div>
