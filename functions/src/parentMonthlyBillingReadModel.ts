@@ -162,18 +162,47 @@ function normalizeMonthKey(value: unknown): string | null {
   return /^\d{4}-\d{2}$/.test(raw) ? raw : null;
 }
 
-function resolveChargePaidAmount(charge: ParentMonthlyBillingChargeInput, amount: number): number {
-  const paidRaw = normalizeNumber(charge.paidAmount);
-  if (paidRaw > 0) return Math.min(Math.max(paidRaw, 0), Math.max(amount, 0));
+function hasOwnNumber(value: unknown): boolean {
+  return value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value));
+}
 
-  const outstandingRaw = normalizeNumber(charge.outstandingAmount);
-  if (outstandingRaw > 0 || charge.outstandingAmount === 0) {
-    const boundedOutstanding = Math.min(Math.max(outstandingRaw, 0), Math.max(amount, 0));
-    return roundCurrency(Math.max(amount - boundedOutstanding, 0));
+function hasSettlementEvidence(charge: ParentMonthlyBillingChargeInput): boolean {
+  const paymentIds = Array.isArray(charge.paymentIds)
+    ? charge.paymentIds.map((value) => String(value || '').trim()).filter(Boolean)
+    : [];
+  return Boolean(
+    paymentIds.length > 0 ||
+      String(charge.lastPaymentId || '').trim() ||
+      String(charge.lastAllocationRef || '').trim() ||
+      toDate(charge.lastAllocatedAt || charge.paidAt || null)
+  );
+}
+
+export function resolveParentMonthlyChargePaidAmount(
+  charge: ParentMonthlyBillingChargeInput,
+  amount: number
+): number {
+  const boundedAmount = Math.max(amount, 0);
+  const status = normalizeStatus(charge.status);
+
+  if (status === 'paid') return boundedAmount;
+
+  if (hasOwnNumber(charge.paidAmount)) {
+    const paidRaw = Number(charge.paidAmount);
+    return roundCurrency(Math.min(Math.max(paidRaw, 0), boundedAmount));
   }
 
-  const status = normalizeStatus(charge.status);
-  if (status === 'paid') return Math.max(amount, 0);
+  if (hasOwnNumber(charge.outstandingAmount)) {
+    const outstandingRaw = Number(charge.outstandingAmount);
+    const boundedOutstanding = Math.min(Math.max(outstandingRaw, 0), boundedAmount);
+
+    // A legacy/default outstandingAmount=0 is not proof of payment by itself.
+    // Only accept it as fully settled when there is independent settlement evidence.
+    if (boundedOutstanding <= EPSILON && !hasSettlementEvidence(charge)) return 0;
+
+    return roundCurrency(Math.max(boundedAmount - boundedOutstanding, 0));
+  }
+
   return 0;
 }
 
@@ -281,7 +310,7 @@ export function buildParentMonthlyBillingReadModel(
     const amount = Math.max(normalizeNumber(charge.amount), 0);
     if (amount <= 0) return;
 
-    const paidAmount = roundCurrency(resolveChargePaidAmount(charge, amount));
+    const paidAmount = roundCurrency(resolveParentMonthlyChargePaidAmount(charge, amount));
     const outstanding = roundCurrency(Math.max(amount - paidAmount, 0));
     const kidId = sanitizeKidId(charge.kidId ?? charge.studentId);
     const bucket = getKidBucket(kidId);

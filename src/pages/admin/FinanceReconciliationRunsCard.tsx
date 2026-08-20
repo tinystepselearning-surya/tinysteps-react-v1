@@ -21,6 +21,29 @@ type ReconciliationRun = {
   reportPath?: string | null;
 };
 
+type ParentPaymentsMonthRepairResult = {
+  ok?: boolean;
+  dryRun?: boolean;
+  monthKey?: string;
+  mismatchCount?: number;
+  rebuiltParents?: number;
+  summary?: {
+    billedAmount?: number;
+    settledAmount?: number;
+    dueAmount?: number;
+    collectionRate?: number;
+    parentsBilled?: number;
+    paidParents?: number;
+    partialParents?: number;
+    unpaidParents?: number;
+    parentsWithDue?: number;
+    existingReadModels?: number;
+    missingReadModels?: number;
+    mismatchedReadModels?: number;
+    staleReadModels?: number;
+  };
+};
+
 const IST_OFFSET_MINUTES = 330;
 
 function monthKeyNowIST(): string {
@@ -72,11 +95,19 @@ function toCount(value: unknown): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function formatMoney(value: unknown): string {
+  const parsed = Number(value);
+  const amount = Number.isFinite(parsed) ? Math.round(parsed) : 0;
+  return `₹${amount.toLocaleString('en-IN')}`;
+}
+
 export default function FinanceReconciliationRunsCard() {
   const { toast } = useToast();
   const [runs, setRuns] = useState<ReconciliationRun[]>([]);
   const [loading, setLoading] = useState(true);
   const [runningNow, setRunningNow] = useState(false);
+  const [repairingMonth, setRepairingMonth] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(monthKeyNowIST);
 
   const loadRuns = useCallback(async () => {
     try {
@@ -113,13 +144,12 @@ export default function FinanceReconciliationRunsCard() {
     try {
       setRunningNow(true);
       const fn = httpsCallable(functions, 'runFinanceReconciliationAudit');
-      const monthKey = monthKeyNowIST();
-      const result = await fn({ monthKey });
+      const result = await fn({ monthKey: selectedMonth });
       const data = (result.data || {}) as Record<string, unknown>;
       const warningCount = Array.isArray(data.warnings) ? data.warnings.length : 0;
       toast({
-        title: 'Reconciliation run completed',
-        description: `Month ${monthKey}, warnings: ${warningCount}.`,
+        title: 'Reconciliation audit completed',
+        description: `Month ${selectedMonth}, warnings: ${warningCount}.`,
       });
       await loadRuns();
     } catch (error: any) {
@@ -132,7 +162,39 @@ export default function FinanceReconciliationRunsCard() {
     } finally {
       setRunningNow(false);
     }
-  }, [loadRuns, toast]);
+  }, [loadRuns, selectedMonth, toast]);
+
+  const handleRepairSelectedMonth = useCallback(async () => {
+    try {
+      setRepairingMonth(true);
+      const repairFn = httpsCallable(functions, 'reconcileParentPaymentsMonthReadModels');
+      const repairResult = await repairFn({
+        monthKey: selectedMonth,
+        dryRun: false,
+        maxParents: 1500,
+      });
+      const repair = (repairResult.data || {}) as ParentPaymentsMonthRepairResult;
+      const summary = repair.summary || {};
+
+      const auditFn = httpsCallable(functions, 'runFinanceReconciliationAudit');
+      await auditFn({ monthKey: selectedMonth });
+
+      toast({
+        title: 'Parent payment month rebuilt',
+        description: `${selectedMonth}: billed ${formatMoney(summary.billedAmount)}, collected ${formatMoney(summary.settledAmount)}, due ${formatMoney(summary.dueAmount)}. Rebuilt ${toCount(repair.rebuiltParents)} parent records.`,
+      });
+      await loadRuns();
+    } catch (error: any) {
+      console.error('[FinanceReconciliationRunsCard] month rebuild failed', error);
+      toast({
+        title: 'Month rebuild failed',
+        description: error?.message || 'No payment, charge, or wallet data was changed. Try again after checking the function logs.',
+        variant: 'destructive',
+      });
+    } finally {
+      setRepairingMonth(false);
+    }
+  }, [loadRuns, selectedMonth, toast]);
 
   const rows = useMemo(
     () =>
@@ -156,16 +218,34 @@ export default function FinanceReconciliationRunsCard() {
   return (
     <Card className="p-6">
       <div className="space-y-4">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h3 className="text-lg font-semibold">Finance Reconciliation Runs</h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Daily scheduled audits plus on-demand admin runs.
+              Audit any service month and safely rebuild only its derived parent-payment totals.
             </p>
           </div>
-          <Button size="sm" onClick={handleRunNow} disabled={runningNow || loading}>
-            {runningNow ? 'Running…' : 'Run Now'}
-          </Button>
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+              Service month
+              <input
+                type="month"
+                value={selectedMonth}
+                onChange={(event) => setSelectedMonth(event.target.value)}
+                className="mt-1 block rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+              />
+            </label>
+            <Button size="sm" variant="outline" onClick={handleRunNow} disabled={runningNow || repairingMonth || loading || !selectedMonth}>
+              {runningNow ? 'Auditing…' : 'Audit month'}
+            </Button>
+            <Button size="sm" onClick={handleRepairSelectedMonth} disabled={repairingMonth || runningNow || loading || !selectedMonth}>
+              {repairingMonth ? 'Rebuilding…' : 'Rebuild month totals'}
+            </Button>
+          </div>
+        </div>
+
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          Rebuild month totals only refreshes <strong>parentMonthlyReadModels</strong>. It does not change payments, billing charges, wallet balances, attendance, or invoices.
         </div>
 
         <div className="overflow-x-auto rounded-md border">

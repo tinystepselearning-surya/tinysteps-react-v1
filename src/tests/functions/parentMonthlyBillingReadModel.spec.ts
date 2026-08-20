@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildParentMonthlyBillingReadModel,
+  resolveParentMonthlyChargePaidAmount,
   resolveServiceMonthStatus,
 } from '../../../functions/src/parentMonthlyBillingReadModel';
 import { collectParentMonthlyBillingTargets } from '../../../functions/src/parentMonthlyReadModels';
@@ -62,6 +63,52 @@ describe('buildParentMonthlyBillingReadModel', () => {
     expect(model.settledAmount).toBe(10000);
     expect(model.dueAmount).toBe(2000);
     expect(model.status).toBe('partial');
+  });
+
+  it('does not treat a default outstandingAmount=0 as payment evidence', () => {
+    const model = buildParentMonthlyBillingReadModel({
+      parentId: 'parent-unpaid',
+      monthKey: '2026-05',
+      now: NOW,
+      walletBalance: 0,
+      charges: [
+        charge({
+          status: 'open',
+          outstandingAmount: 0,
+        }),
+      ],
+    });
+
+    expect(model.billedAmount).toBe(12000);
+    expect(model.settledAmount).toBe(0);
+    expect(model.dueAmount).toBe(12000);
+    expect(model.status).toBe('in_grace');
+  });
+
+  it('preserves a legacy fully settled charge when zero outstanding has payment evidence', () => {
+    expect(
+      resolveParentMonthlyChargePaidAmount(
+        charge({
+          status: 'open',
+          outstandingAmount: 0,
+          lastPaymentId: 'legacy-payment',
+        }),
+        12000,
+      ),
+    ).toBe(12000);
+  });
+
+  it('respects an explicit paidAmount=0 even when outstandingAmount was defaulted to zero', () => {
+    expect(
+      resolveParentMonthlyChargePaidAmount(
+        charge({
+          status: 'open',
+          paidAmount: 0,
+          outstandingAmount: 0,
+        }),
+        12000,
+      ),
+    ).toBe(0);
   });
 
   it('marks current month unpaid charges as current', () => {
