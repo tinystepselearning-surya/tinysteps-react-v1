@@ -1,13 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  collection,
-  collectionGroup,
-  getDoc,
-  getDocs,
-  query,
-  where,
-  type DocumentReference,
-} from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { type FunctionsError, httpsCallable } from 'firebase/functions';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
@@ -16,10 +8,7 @@ import { useToast } from '@components/hooks/use-toast';
 import { db, functions } from '../../lib/firebaseConfig';
 import {
   AttendanceCorrectionAfterCreateError,
-  collectKidIds,
   createMissingSessionAndSaveAttendance,
-  normalizeEnrollmentStatus,
-  normalizeTimeForLabel,
   toIstDateLabel,
 } from './attendanceCorrectionWorkflow';
 
@@ -35,7 +24,6 @@ type AttendanceStatus =
 type TeacherOption = {
   id: string;
   label: string;
-  identityIds: string[];
 };
 
 type HistoricalEnrollmentOption = {
@@ -49,6 +37,13 @@ type HistoricalEnrollmentOption = {
   defaultDurationMins: number;
 };
 
+type HistoricalCandidatesResponse = {
+  ok: boolean;
+  teacherId: string;
+  candidates: HistoricalEnrollmentOption[];
+  kidNames: Record<string, string>;
+};
+
 const STATUS_OPTIONS: AttendanceStatus[] = [
   'present',
   'absent',
@@ -59,7 +54,6 @@ const STATUS_OPTIONS: AttendanceStatus[] = [
   'late',
 ];
 
-const TERMINAL = new Set(['completed', 'discontinued', 'expired', 'cancelled', 'archived', 'inactive']);
 const TIME_HHMM_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 function clean(value: unknown): string {
@@ -70,33 +64,6 @@ function clampDuration(value: unknown): number {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return 35;
   return Math.max(10, Math.min(180, Math.floor(parsed)));
-}
-
-function courseLabel(data: Record<string, unknown>): string {
-  return clean(data.courseName) || clean(data.courseLabel) || clean(data.courseTitle) || clean(data.courseId) || 'Course';
-}
-
-function enrollmentDefaults(data: Record<string, unknown>) {
-  const schedule = data.schedule && typeof data.schedule === 'object' && !Array.isArray(data.schedule)
-    ? (data.schedule as Record<string, unknown>)
-    : {};
-  const weeklySlots = Array.isArray(schedule.weeklySlots) ? schedule.weeklySlots : [];
-  const firstSlot = weeklySlots.find((entry) => entry && typeof entry === 'object') as Record<string, unknown> | undefined;
-  return {
-    startTime:
-      normalizeTimeForLabel(firstSlot?.time) ||
-      normalizeTimeForLabel(schedule.timeHHmm) ||
-      normalizeTimeForLabel(data.startTime) ||
-      '18:00',
-    durationMins: clampDuration(
-      firstSlot?.durationMinutes ??
-      firstSlot?.durationMins ??
-      schedule.durationMins ??
-      data.durationMinutes ??
-      data.durationMins ??
-      35,
-    ),
-  };
 }
 
 function formatError(err: unknown): { code: string; message: string } {
@@ -110,22 +77,6 @@ function formatError(err: unknown): { code: string; message: string } {
           ? err.message
           : 'Please try again.',
   };
-}
-
-async function loadKidNames(kidIds: string[]): Promise<Record<string, string>> {
-  const uniqueIds = Array.from(new Set(kidIds.map((id) => clean(id)).filter(Boolean)));
-  const out: Record<string, string> = {};
-  for (const kidId of uniqueIds) {
-    try {
-      const snap = await getDoc((await import('firebase/firestore')).doc(db, 'kids', kidId));
-      if (!snap.exists()) continue;
-      const data = snap.data() as Record<string, unknown>;
-      out[kidId] = clean(data.fullName) || clean(data.studentName) || clean(data.name) || kidId;
-    } catch {
-      out[kidId] = kidId;
-    }
-  }
-  return out;
 }
 
 export default function HistoricalAttendanceMissingSessionPanel() {
@@ -160,7 +111,6 @@ export default function HistoricalAttendanceMissingSessionPanel() {
             return {
               id: uid,
               label: clean(data.fullName) || clean(data.displayName) || clean(data.name) || clean(data.email) || uid,
-              identityIds: Array.from(new Set([uid, docSnap.id].filter(Boolean))),
             };
           })
           .sort((a, b) => a.label.localeCompare(b.label));
@@ -182,98 +132,33 @@ export default function HistoricalAttendanceMissingSessionPanel() {
     return () => { cancelled = true; };
   }, [toast]);
 
-  const selectedTeacherIdentities = useMemo(
-    () => teachers.find((option) => option.id === teacherId)?.identityIds ?? [],
-    [teacherId, teachers],
-  );
-
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      if (!teacherId || selectedTeacherIdentities.length === 0) {
+      if (!teacherId) {
         setEnrollments([]);
         setKidNames({});
         return;
       }
+
       setLoadingEnrollments(true);
       try {
-        const enrollmentMap = new Map<string, Record<string, unknown>>();
-        const previousTeacherEnrollmentIds = new Set<string>();
-
-        const currentQueries = selectedTeacherIdentities.flatMap((identity) => [
-          query(collection(db, 'enrollments'), where('teacherId', '==', identity)),
-          query(collection(db, 'enrollments'), where('teacherIds', 'array-contains', identity)),
-        ]);
-        for (const planned of currentQueries) {
-          try {
-            const snap = await getDocs(planned);
-            snap.docs.forEach((docSnap) => enrollmentMap.set(docSnap.id, docSnap.data() as Record<string, unknown>));
-          } catch (error) {
-            console.warn('Historical attendance current-teacher enrollment query failed', error);
-          }
-        }
-
-        for (const identity of selectedTeacherIdentities) {
-          try {
-            const historySnap = await getDocs(
-              query(collectionGroup(db, 'teacherReassignments'), where('oldTeacherId', '==', identity)),
-            );
-            const refs = new Map<string, DocumentReference>();
-            historySnap.docs.forEach((historyDoc) => {
-              const enrollmentRef = historyDoc.ref.parent.parent;
-              if (enrollmentRef) refs.set(enrollmentRef.id, enrollmentRef);
-            });
-            for (const enrollmentRef of refs.values()) {
-              previousTeacherEnrollmentIds.add(enrollmentRef.id);
-              if (enrollmentMap.has(enrollmentRef.id)) continue;
-              const enrollmentSnap = await getDoc(enrollmentRef);
-              if (enrollmentSnap.exists()) {
-                enrollmentMap.set(enrollmentSnap.id, enrollmentSnap.data() as Record<string, unknown>);
-              }
-            }
-          } catch (error) {
-            console.warn('Historical attendance reassignment history query failed', error);
-          }
-        }
-
+        const fn = httpsCallable<
+          { teacherId: string },
+          HistoricalCandidatesResponse
+        >(functions, 'getAdminHistoricalAttendanceCandidates');
+        const response = await fn({ teacherId });
         if (cancelled) return;
-        const rows = Array.from(enrollmentMap.entries())
-          .map(([id, data]): HistoricalEnrollmentOption | null => {
-            const normalizedStatus = normalizeEnrollmentStatus(data.status);
-            const isTerminal = TERMINAL.has(normalizedStatus);
-            const isPreviousTeacher = previousTeacherEnrollmentIds.has(id);
-            const isPaused = normalizedStatus === 'paused';
-            if (!isTerminal && !isPreviousTeacher && !isPaused) return null;
-            const kidIds = collectKidIds(data);
-            const canonicalKidId = kidIds[0] || '';
-            if (!canonicalKidId) return null;
-            const defaults = enrollmentDefaults(data);
-            return {
-              id,
-              kidId: canonicalKidId,
-              kidIds,
-              courseLabel: courseLabel(data),
-              status: normalizedStatus,
-              relation: isPreviousTeacher ? 'previous_teacher' : isTerminal ? 'previous_course' : 'paused',
-              defaultStartTime: defaults.startTime,
-              defaultDurationMins: defaults.durationMins,
-            };
-          })
-          .filter((row): row is HistoricalEnrollmentOption => Boolean(row))
-          .sort((a, b) => `${a.courseLabel}-${a.status}`.localeCompare(`${b.courseLabel}-${b.status}`));
-
-        const names = await loadKidNames(rows.flatMap((row) => row.kidIds));
-        if (!cancelled) {
-          setEnrollments(rows);
-          setKidNames(names);
-        }
+        setEnrollments(Array.isArray(response.data?.candidates) ? response.data.candidates : []);
+        setKidNames(response.data?.kidNames || {});
       } catch (error) {
         if (!cancelled) {
           setEnrollments([]);
           setKidNames({});
+          const formatted = formatError(error);
           toast({
-            title: 'Unable to load previous enrollments',
-            description: error instanceof Error ? error.message : 'Please try again.',
+            title: 'Unable to load previous course records',
+            description: `${formatted.code}: ${formatted.message}`,
             variant: 'destructive',
           });
         }
@@ -283,11 +168,13 @@ export default function HistoricalAttendanceMissingSessionPanel() {
     };
     void load();
     return () => { cancelled = true; };
-  }, [selectedTeacherIdentities, teacherId, toast]);
+  }, [teacherId, toast]);
 
   const kidOptions = useMemo(() => {
     const ids = Array.from(new Set(enrollments.flatMap((row) => row.kidIds)));
-    return ids.map((id) => ({ id, label: kidNames[id] || id })).sort((a, b) => a.label.localeCompare(b.label));
+    return ids
+      .map((id) => ({ id, label: kidNames[id] || id }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }, [enrollments, kidNames]);
 
   const enrollmentOptions = useMemo(
@@ -300,7 +187,9 @@ export default function HistoricalAttendanceMissingSessionPanel() {
       setKidId('');
       return;
     }
-    if (!kidId || !kidOptions.some((option) => option.id === kidId)) setKidId(kidOptions[0].id);
+    if (!kidId || !kidOptions.some((option) => option.id === kidId)) {
+      setKidId(kidOptions[0].id);
+    }
   }, [kidId, kidOptions]);
 
   useEffect(() => {
@@ -333,12 +222,20 @@ export default function HistoricalAttendanceMissingSessionPanel() {
       return;
     }
     if (!selectedEnrollment.kidIds.includes(kidId)) {
-      toast({ title: 'Enrollment mismatch', description: 'Selected student is not part of this course record.', variant: 'destructive' });
+      toast({
+        title: 'Enrollment mismatch',
+        description: 'Selected student is not part of this course record.',
+        variant: 'destructive',
+      });
       return;
     }
     const trimmedReason = reason.trim();
     if (!trimmedReason) {
-      toast({ title: 'Reason required', description: 'Explain why this historical attendance record is being created.', variant: 'destructive' });
+      toast({
+        title: 'Reason required',
+        description: 'Explain why this historical attendance record is being created.',
+        variant: 'destructive',
+      });
       return;
     }
 
