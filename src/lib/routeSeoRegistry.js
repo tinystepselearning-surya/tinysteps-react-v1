@@ -129,13 +129,13 @@ export const ROUTE_SEO_REGISTRY = {
       'phonics program for schools,school phonics curriculum India,phonics teacher training for schools,synthetic phonics program India,phonics partnership for international schools',
   },
   '/careers': {
-    title: 'Online English Teacher Jobs Worldwide | Tiny Steps Learning',
+    title: 'Online English Teacher Jobs in India | Tiny Steps Learning',
     description:
-      'Apply for remote online English teacher jobs with Tiny Steps Learning. Teach phonics, grammar, spoken English and public speaking to children in live 1:1 classes.',
+      'Apply for remote online English teacher jobs in India with Tiny Steps Learning. Teach phonics, grammar, spoken English and public speaking to children in live 1:1 classes.',
     canonicalPath: '/careers',
     ogType: 'website',
     keywords:
-      'online English teacher jobs,remote English teacher jobs,online English teacher jobs worldwide,work from home English teacher jobs,online phonics teacher jobs,phonics teacher jobs remote,online grammar teacher jobs,public speaking teacher jobs online,spoken English teacher jobs,online English tutor jobs,remote tutoring jobs for English teachers,English teaching jobs from home,international online teaching jobs,remote teaching jobs for English teachers,Tiny Steps Learning careers',
+      'online English teacher jobs India,remote English teacher jobs India,work from home English teacher jobs India,online phonics teacher jobs India,phonics teacher jobs remote India,online grammar teacher jobs India,public speaking teacher jobs online India,spoken English teacher jobs India,online English tutor jobs India,remote tutoring jobs for English teachers India,English teaching jobs from home India,remote teaching jobs for English teachers,Tiny Steps Learning careers',
   },
   '/learning-partner': {
     title: 'Learning Partner Support | Tiny Steps Learning',
