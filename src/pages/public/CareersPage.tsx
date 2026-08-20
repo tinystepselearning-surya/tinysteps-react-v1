@@ -175,12 +175,12 @@ const PROCESS_STEPS = [
   },
   {
     title: 'Training + teaching demo',
-    description: 'Review the assigned Tiny Steps program and conduct a demo using our classroom standards and lesson format.',
+    description: 'Review the assigned Tiny Steps program, receive preparation support and begin with paid demo opportunities.',
     tone: 'border-emerald-200 bg-emerald-50/80',
   },
   {
-    title: 'Onboarding + class matching',
-    description: 'Selected teachers complete onboarding, confirm reliable slots and become eligible for class allocation.',
+    title: 'Onboarding + schedule building',
+    description: 'Confirm your reliable slots and our team actively works on learner matching and building your regular teaching schedule.',
     tone: 'border-orange-200 bg-orange-50/80',
   },
 ];
@@ -207,9 +207,19 @@ const FAQS = [
       'Regular classes scheduled from 9:00 AM to 9:00 PM IST are paid at ₹175 per completed 35-minute class. Classes scheduled before 9:00 AM IST or after 9:00 PM IST are paid at ₹200 per completed 35-minute class. Demo classes are paid separately, and successful demo conversions are eligible for additional incentives.',
   },
   {
+    question: 'What can I potentially earn with six regular classes a day?',
+    answer:
+      'As an illustration, six 35-minute regular classes a day equals 3.5 hours of live teaching. Across six teaching days per week, that works out to about 156 regular classes in an average month. At ₹175 per class, that is approximately ₹27,300 per month from regular classes alone. Paid demos, conversion incentives and any extended-hours classes are additional.',
+  },
+  {
     question: 'Are demo classes paid?',
     answer:
       'Yes. Assigned demo classes are paid separately from regular teaching classes. In addition, successful demo conversions may qualify for attractive conversion incentives under the current incentive plan.',
+  },
+  {
+    question: 'How quickly can I build a regular teaching schedule?',
+    answer:
+      'After selection, Tiny Steps supports you with structured training, demo preparation and paid demo opportunities. Once your reliable availability is confirmed, our scheduling team actively works to build and fill your regular teaching slots, typically within 1–2 weeks of onboarding.',
   },
   {
     question: 'What subjects can I teach at Tiny Steps?',
@@ -450,7 +460,8 @@ export default function CareersPage() {
       `Qualifications and requirements include ${REQUIREMENTS.join(' ')}`,
       'Applications are welcome from qualified teachers worldwide. Candidates should provide their country, time zone and available teaching window for scheduling review.',
       'Consistent availability of around 3–4 teaching hours per day is preferred.',
-      'Regular classes scheduled from 9:00 AM to 9:00 PM IST are paid at ₹175 per completed 35-minute class. Classes scheduled before 9:00 AM IST or after 9:00 PM IST are paid at ₹200 per completed 35-minute class. Assigned demo classes are paid separately, and successful demo conversions may qualify for additional incentives. Class allocation is not guaranteed and depends on student admissions, scheduling fit, teacher availability and ongoing teaching quality.',
+      'Regular classes scheduled from 9:00 AM to 9:00 PM IST are paid at ₹175 per completed 35-minute class. Classes scheduled before 9:00 AM IST or after 9:00 PM IST are paid at ₹200 per completed 35-minute class. Assigned demo classes are paid separately, and successful demo conversions may qualify for additional incentives. Selected teachers receive structured training, demo preparation and active scheduling support, with confirmed teaching slots typically built within 1–2 weeks of onboarding.',
+      'An illustrative schedule of six regular classes per day across six teaching days per week equals 3.5 hours of live teaching per day and about 156 regular classes in an average month, which is approximately ₹27,300 per month in regular-class earnings before paid demos, conversion incentives or extended-hours classes.',
     ].join(' ');
 
     const jobPostingSchema = {
@@ -699,8 +710,37 @@ export default function CareersPage() {
             ))}
           </div>
 
+          <div className="mt-6 overflow-hidden rounded-[2rem] border border-blue-200 bg-gradient-to-br from-blue-950 via-blue-900 to-slate-950 text-white shadow-xl shadow-blue-950/10">
+            <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
+              <div className="border-b border-white/10 p-6 md:p-7 lg:border-b-0 lg:border-r">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-300">Illustrative monthly earnings</p>
+                <h3 className="mt-3 text-3xl font-black tracking-tight">About ₹27,300/month from regular classes</h3>
+                <p className="mt-3 text-sm leading-7 text-blue-100">
+                  Example: 6 regular classes per day × 6 teaching days per week. Sunday remains a weekly holiday.
+                </p>
+                <p className="mt-3 text-xs leading-5 text-blue-200">
+                  This is an illustration based on completed regular classes at ₹175 each. Paid demos, conversion incentives and any ₹200 extended-hours classes are additional.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-px bg-white/10 sm:grid-cols-4 lg:grid-cols-2">
+                {[
+                  ['6', 'classes / day'],
+                  ['3.5 hrs', 'live teaching / day'],
+                  ['6 days', 'Monday–Saturday'],
+                  ['≈156', 'regular classes / month'],
+                ].map(([value, label]) => (
+                  <div key={label} className="bg-white/5 p-5 transition hover:bg-white/10 md:p-6">
+                    <div className="text-2xl font-black text-white">{value}</div>
+                    <div className="mt-1 text-xs font-semibold uppercase tracking-wide text-blue-200">{label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <p className="mt-5 text-center text-xs leading-5 text-slate-500">
-            Rates are stated in INR. Demo and incentive details are explained during the hiring/onboarding process. Class allocation varies with student admissions, schedule matching, teacher availability and ongoing teaching quality.
+            Rates are stated in INR. Demo and incentive details are explained during hiring and onboarding. The monthly figure above is an illustrative example based on six completed regular classes per day across six teaching days per week.
           </p>
         </div>
       </section>
@@ -739,15 +779,30 @@ export default function CareersPage() {
             </Card>
           </div>
 
-          <div className="mt-5 grid gap-4 rounded-3xl border border-amber-200 bg-gradient-to-r from-amber-50 via-orange-50/70 to-white p-6 md:grid-cols-[auto_1fr] md:items-start md:p-7">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-800">
-              <ShieldCheck className="h-6 w-6" aria-hidden="true" />
-            </div>
-            <div>
-              <h3 className="text-lg font-black text-amber-950">Transparent class allocation</h3>
-              <p className="mt-1 text-sm leading-6 text-amber-950/75">
-                Applying or being selected does not guarantee a fixed number of classes. Allocation depends on student admissions, learner-teacher matching, schedule overlap, teacher availability and ongoing teaching quality.
-              </p>
+          <div className="mt-5 overflow-hidden rounded-3xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-cyan-50/60 to-white p-6 shadow-sm md:p-7">
+            <div className="flex flex-col gap-5 md:flex-row md:items-start">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-800">
+                <ShieldCheck className="h-6 w-6" aria-hidden="true" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-700">Support after selection</p>
+                <h3 className="mt-2 text-2xl font-black text-slate-950">We help you build your teaching schedule</h3>
+                <p className="mt-2 max-w-4xl text-sm leading-7 text-slate-600">
+                  Once selected, you receive structured training, demo preparation and paid demo opportunities so you can begin confidently. After you confirm reliable teaching availability, our scheduling team actively works on learner matching and aims to build and fill your regular teaching slots within 1–2 weeks of onboarding.
+                </p>
+                <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                  {[
+                    ['Training', 'Structured preparation'],
+                    ['Paid demos', 'Opportunities to get started'],
+                    ['1–2 weeks', 'Active schedule building'],
+                  ].map(([title, detail]) => (
+                    <div key={title} className="rounded-2xl border border-emerald-100 bg-white/80 p-4 shadow-sm">
+                      <div className="font-black text-slate-950">{title}</div>
+                      <div className="mt-1 text-xs leading-5 text-slate-500">{detail}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -827,7 +882,7 @@ export default function CareersPage() {
             <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-700">Teacher job FAQ</p>
             <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">Questions online English teachers ask before applying</h2>
             <p className="mt-3 text-lg leading-8 text-slate-600">
-              Clear answers about remote teaching, international applications, compensation, demos, subjects, equipment, schedules and the WhatsApp application process.
+              Clear answers about remote teaching, international applications, compensation, demos, earning examples, subjects, equipment, schedules and the WhatsApp application process.
             </p>
           </div>
 
