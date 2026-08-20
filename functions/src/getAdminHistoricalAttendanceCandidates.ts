@@ -94,11 +94,18 @@ export const getAdminHistoricalAttendanceCandidates = onCall({ region: REGION },
   const previousTeacherEnrollmentIds = new Set<string>();
 
   for (const identity of teacherIdentityIds) {
-    const [byTeacher, byTeachers] = await Promise.all([
+    const [byTeacher, byTeachers, byPreviousTeacher, byTeacherReassignedFrom, byReassignedFromTeacher] = await Promise.all([
       db.collection('enrollments').where('teacherId', '==', identity).get(),
       db.collection('enrollments').where('teacherIds', 'array-contains', identity).get(),
+      db.collection('enrollments').where('previousTeacherId', '==', identity).get(),
+      db.collection('enrollments').where('teacherReassignedFrom', '==', identity).get(),
+      db.collection('enrollments').where('reassignedFromTeacherId', '==', identity).get(),
     ]);
     [...byTeacher.docs, ...byTeachers.docs].forEach((docSnap) => {
+      enrollmentMap.set(docSnap.id, (docSnap.data() || {}) as Record<string, unknown>);
+    });
+    [...byPreviousTeacher.docs, ...byTeacherReassignedFrom.docs, ...byReassignedFromTeacher.docs].forEach((docSnap) => {
+      previousTeacherEnrollmentIds.add(docSnap.id);
       enrollmentMap.set(docSnap.id, (docSnap.data() || {}) as Record<string, unknown>);
     });
 
