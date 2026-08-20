@@ -6,16 +6,18 @@ import {
   CheckCircle2,
   ChevronDown,
   Clock3,
+  Gift,
   Globe2,
   GraduationCap,
   IndianRupee,
   Laptop,
-  MapPin,
   MessageCircle,
   Send,
   ShieldCheck,
   Sparkles,
+  Trophy,
   Users,
+  Video,
 } from 'lucide-react';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
@@ -55,7 +57,8 @@ const AT_A_GLANCE = [
   ['Subjects', 'Phonics, Grammar, Speaking'],
   ['Class format', 'Live 1:1 online classes'],
   ['Class duration', '35 minutes'],
-  ['Teaching rate', '₹135–₹200 per completed class'],
+  ['Regular class rate', '₹175 per completed class'],
+  ['Extended-hours rate', '₹200 per completed class'],
 ];
 
 const BENEFITS = [
@@ -82,8 +85,8 @@ const BENEFITS = [
   },
   {
     icon: IndianRupee,
-    title: 'Transparent per-class rates',
-    description: '₹135 per 35-minute class from 9 AM–9 PM IST, and ₹200 before 9 AM or after 9 PM IST.',
+    title: 'Clear per-class compensation',
+    description: '₹175 for regular-timing classes and ₹200 for classes before 9 AM or after 9 PM IST.',
     cardClass: 'border-amber-100 bg-gradient-to-br from-amber-50 via-white to-white hover:border-amber-200',
     iconClass: 'bg-amber-100 text-amber-700',
   },
@@ -105,9 +108,9 @@ const BENEFITS = [
 
 const PAY_RATES = [
   {
-    label: 'Core teaching hours',
+    label: 'Regular teaching hours',
     hours: '9:00 AM–9:00 PM IST',
-    rate: '₹135',
+    rate: '₹175',
     note: 'per completed 35-minute class',
     cardClass: 'border-blue-200 bg-gradient-to-br from-blue-50 via-white to-cyan-50',
     badgeClass: 'bg-blue-100 text-blue-800',
@@ -119,6 +122,23 @@ const PAY_RATES = [
     note: 'per completed 35-minute class',
     cardClass: 'border-orange-200 bg-gradient-to-br from-orange-50 via-white to-amber-50',
     badgeClass: 'bg-orange-100 text-orange-800',
+  },
+];
+
+const EXTRA_EARNINGS = [
+  {
+    icon: Video,
+    title: 'Demo classes are paid separately',
+    description: 'Every assigned demo class has separate compensation. Demo payment is in addition to regular teaching-class earnings.',
+    tone: 'border-violet-200 bg-violet-50/80 text-violet-950',
+    iconTone: 'bg-violet-100 text-violet-700',
+  },
+  {
+    icon: Trophy,
+    title: 'Conversion incentives',
+    description: 'Successful demo conversions are eligible for additional attractive incentives under the current incentive plan.',
+    tone: 'border-emerald-200 bg-emerald-50/80 text-emerald-950',
+    iconTone: 'bg-emerald-100 text-emerald-700',
   },
 ];
 
@@ -184,7 +204,12 @@ const FAQS = [
   {
     question: 'How much does Tiny Steps pay online teachers?',
     answer:
-      'The teaching rate is ₹135 per completed 35-minute class for classes scheduled from 9:00 AM to 9:00 PM IST. Classes scheduled before 9:00 AM IST or after 9:00 PM IST are paid at ₹200 per completed 35-minute class. Class allocation depends on student admissions, teacher availability, scheduling fit and ongoing teaching quality.',
+      'Regular classes scheduled from 9:00 AM to 9:00 PM IST are paid at ₹175 per completed 35-minute class. Classes scheduled before 9:00 AM IST or after 9:00 PM IST are paid at ₹200 per completed 35-minute class. Demo classes are paid separately, and successful demo conversions are eligible for additional incentives.',
+  },
+  {
+    question: 'Are demo classes paid?',
+    answer:
+      'Yes. Assigned demo classes are paid separately from regular teaching classes. In addition, successful demo conversions may qualify for attractive conversion incentives under the current incentive plan.',
   },
   {
     question: 'What subjects can I teach at Tiny Steps?',
@@ -403,7 +428,7 @@ function CareerApplicationForm() {
           <Send className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />
         </Button>
         <p className="mt-3 max-w-3xl text-xs leading-5 text-slate-500">
-          Submitting does not upload your details to a separate careers database. It opens WhatsApp with your information pre-filled so you can review the message and attach any supporting documents before sending.
+          This form simply prepares your application in WhatsApp. Review the pre-filled message, attach any supporting documents you want to share, and send it to Tiny Steps Learning.
         </p>
 
         {submitted ? (
@@ -425,7 +450,7 @@ export default function CareersPage() {
       `Qualifications and requirements include ${REQUIREMENTS.join(' ')}`,
       'Applications are welcome from qualified teachers worldwide. Candidates should provide their country, time zone and available teaching window for scheduling review.',
       'Consistent availability of around 3–4 teaching hours per day is preferred.',
-      'The teaching rate is ₹135 per completed 35-minute class for classes scheduled from 9:00 AM to 9:00 PM IST, and ₹200 per completed 35-minute class for classes scheduled before 9:00 AM IST or after 9:00 PM IST. Class allocation is not guaranteed and depends on student admissions, scheduling fit, teacher availability and ongoing teaching quality.',
+      'Regular classes scheduled from 9:00 AM to 9:00 PM IST are paid at ₹175 per completed 35-minute class. Classes scheduled before 9:00 AM IST or after 9:00 PM IST are paid at ₹200 per completed 35-minute class. Assigned demo classes are paid separately, and successful demo conversions may qualify for additional incentives. Class allocation is not guaranteed and depends on student admissions, scheduling fit, teacher availability and ongoing teaching quality.',
     ].join(' ');
 
     const jobPostingSchema = {
@@ -524,7 +549,7 @@ export default function CareersPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
-      <section className="relative overflow-hidden border-b border-slate-200 bg-gradient-to-br from-orange-50 via-white to-blue-50 px-5 py-11 md:px-6 md:py-14">
+      <section className="relative overflow-hidden border-b border-slate-200 bg-gradient-to-br from-orange-50 via-white to-blue-50 px-5 py-10 md:px-6 md:py-14">
         <div className="pointer-events-none absolute -left-24 top-8 h-64 w-64 rounded-full bg-orange-200/30 blur-3xl" />
         <div className="pointer-events-none absolute -right-16 top-4 h-72 w-72 rounded-full bg-blue-200/35 blur-3xl" />
 
@@ -544,7 +569,7 @@ export default function CareersPage() {
             </p>
 
             <div className="mt-6 flex flex-wrap gap-2.5 text-sm font-bold text-slate-700">
-              {['₹135–₹200 / 35-min class', 'Fully remote', 'Live 1:1 classes', 'Curriculum provided', 'Global applications'].map((item) => (
+              {['₹175 regular classes', '₹200 extended hours', 'Paid demos', 'Conversion incentives', 'Fully remote'].map((item) => (
                 <span key={item} className="rounded-full border border-white bg-white/90 px-4 py-2 shadow-sm">
                   {item}
                 </span>
@@ -586,7 +611,7 @@ export default function CareersPage() {
 
             <dl className="px-6 py-3 md:px-7">
               {AT_A_GLANCE.map(([label, value]) => (
-                <div key={label} className="grid grid-cols-[0.82fr_1.18fr] gap-4 border-b border-white/10 py-3 text-sm last:border-b-0">
+                <div key={label} className="grid grid-cols-[0.9fr_1.1fr] gap-4 border-b border-white/10 py-3 text-sm last:border-b-0">
                   <dt className="text-slate-300">{label}</dt>
                   <dd className="font-bold text-white">{value}</dd>
                 </div>
@@ -624,42 +649,58 @@ export default function CareersPage() {
       </section>
 
       <section className="border-y border-slate-200 bg-white px-5 py-10 md:px-6 md:py-12">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-sm font-black uppercase tracking-[0.2em] text-orange-700">Teaching compensation</p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">Two clear rates based on class timing</h2>
+            <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">Simple, transparent earning structure</h2>
             <p className="mt-3 text-lg leading-8 text-slate-600">
-              Every class is 35 minutes. The applicable rate is determined by the scheduled teaching time in Indian Standard Time (IST).
+              Every regular class is 35 minutes. The rate depends only on the scheduled teaching time in Indian Standard Time (IST).
             </p>
           </div>
 
-          <div className="mx-auto mt-8 grid max-w-4xl gap-4 md:grid-cols-2">
-            {PAY_RATES.map((rate) => (
+          <div className="mt-7 grid gap-4 md:grid-cols-2">
+            {PAY_RATES.map((item) => (
               <Card
-                key={rate.label}
-                className={`group border p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl md:p-7 ${rate.cardClass}`}
+                key={item.label}
+                className={`group border p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl ${item.cardClass}`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.12em] ${rate.badgeClass}`}>
-                      {rate.label}
+                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-black uppercase tracking-[0.14em] ${item.badgeClass}`}>
+                      {item.label}
                     </span>
-                    <p className="mt-4 text-base font-bold text-slate-700">{rate.hours}</p>
+                    <p className="mt-4 text-base font-bold text-slate-700">{item.hours}</p>
                   </div>
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-slate-800 shadow-sm transition group-hover:scale-110">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-800 shadow-sm transition group-hover:scale-110">
                     <Clock3 className="h-5 w-5" aria-hidden="true" />
                   </div>
                 </div>
-                <div className="mt-5 flex items-end gap-2">
-                  <span className="text-4xl font-black tracking-tight text-slate-950">{rate.rate}</span>
-                  <span className="pb-1 text-sm font-semibold text-slate-500">{rate.note}</span>
+                <div className="mt-5 flex flex-wrap items-end gap-x-3 gap-y-1">
+                  <span className="text-4xl font-black tracking-tight text-slate-950">{item.rate}</span>
+                  <span className="pb-1 text-sm font-semibold text-slate-500">{item.note}</span>
                 </div>
               </Card>
             ))}
           </div>
 
-          <p className="mx-auto mt-4 max-w-3xl text-center text-xs leading-5 text-slate-500">
-            Rates are stated in INR. Class allocation varies with student admissions, schedule matching, teacher availability and ongoing teaching quality.
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            {EXTRA_EARNINGS.map(({ icon: Icon, title, description, tone, iconTone }) => (
+              <div key={title} className={`group rounded-3xl border p-5 transition duration-300 hover:-translate-y-0.5 hover:shadow-lg ${tone}`}>
+                <div className="flex items-start gap-4">
+                  <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition group-hover:scale-110 ${iconTone}`}>
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black">{title}</h3>
+                    <p className="mt-1 text-sm leading-6 opacity-80">{description}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-5 text-center text-xs leading-5 text-slate-500">
+            Rates are stated in INR. Demo and incentive details are explained during the hiring/onboarding process. Class allocation varies with student admissions, schedule matching, teacher availability and ongoing teaching quality.
           </p>
         </div>
       </section>
@@ -667,7 +708,7 @@ export default function CareersPage() {
       <section id="role" className="scroll-mt-24 px-5 py-10 md:px-6 md:py-12">
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-5 lg:grid-cols-2">
-            <Card className="overflow-hidden border border-orange-100 bg-white p-0 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-lg">
+            <Card className="overflow-hidden border border-orange-100 bg-white p-0 shadow-sm transition duration-300 hover:shadow-lg">
               <div className="border-b border-orange-100 bg-gradient-to-r from-orange-50 to-amber-50 px-7 py-5 md:px-8">
                 <p className="text-sm font-black uppercase tracking-[0.2em] text-orange-700">What you will do</p>
                 <h2 className="mt-2 text-3xl font-black tracking-tight">Online English Teacher responsibilities</h2>
@@ -682,7 +723,7 @@ export default function CareersPage() {
               </ul>
             </Card>
 
-            <Card className="overflow-hidden border border-blue-100 bg-white p-0 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-lg">
+            <Card className="overflow-hidden border border-blue-100 bg-white p-0 shadow-sm transition duration-300 hover:shadow-lg">
               <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-cyan-50 px-7 py-5 md:px-8">
                 <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-700">What we look for</p>
                 <h2 className="mt-2 text-3xl font-black tracking-tight">Teacher requirements</h2>
@@ -786,7 +827,7 @@ export default function CareersPage() {
             <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-700">Teacher job FAQ</p>
             <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">Questions online English teachers ask before applying</h2>
             <p className="mt-3 text-lg leading-8 text-slate-600">
-              Clear answers about remote teaching, international applications, compensation, subjects, equipment, schedules and the WhatsApp application process.
+              Clear answers about remote teaching, international applications, compensation, demos, subjects, equipment, schedules and the WhatsApp application process.
             </p>
           </div>
 
@@ -794,7 +835,7 @@ export default function CareersPage() {
             {FAQS.map((faq) => (
               <details
                 key={faq.question}
-                className="group rounded-2xl border border-slate-200 bg-slate-50/70 transition duration-200 hover:border-blue-100 hover:bg-white open:border-blue-200 open:bg-white open:shadow-md"
+                className="group rounded-2xl border border-slate-200 bg-slate-50/70 transition duration-200 open:border-blue-200 open:bg-white open:shadow-md"
               >
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left text-base font-black text-slate-950 marker:content-none md:px-6">
                   <span>{faq.question}</span>
@@ -840,9 +881,9 @@ export default function CareersPage() {
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-cyan-100 bg-gradient-to-br from-cyan-50 via-white to-blue-50 p-7 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-lg md:p-9">
+            <div className="rounded-[2rem] border border-cyan-100 bg-gradient-to-br from-cyan-50 via-white to-blue-50 p-7 shadow-sm md:p-9">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-800">
-                <MapPin className="h-5 w-5" aria-hidden="true" />
+                <Gift className="h-5 w-5" aria-hidden="true" />
               </div>
               <p className="mt-5 text-sm font-black uppercase tracking-[0.2em] text-cyan-800">Looking for English classes instead?</p>
               <h2 className="mt-2 text-2xl font-black tracking-tight">Parents and learners can explore our programs here</h2>
