@@ -26,7 +26,6 @@ const ADMIN_SECTION_LABELS: Record<string, string> = {
   testimonials: 'Testimonials',
   'parent-worksheets': 'Worksheets & Resources',
   analytics: 'Analytics',
-  'teacher-schedule': 'Teacher Schedule',
   settings: 'Settings',
   holidays: 'Holiday Calendar',
   'teacher-payments': 'Teacher Payments',
