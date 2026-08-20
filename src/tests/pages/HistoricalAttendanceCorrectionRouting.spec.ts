@@ -32,8 +32,9 @@ describe('historical attendance correction routing', () => {
   it('resolves previous-course and previous-teacher candidates server-side before creating an audited session', () => {
     expect(panelSource).toContain("(functions, 'getAdminHistoricalAttendanceCandidates')");
     expect(panelSource).not.toContain('collectionGroup(');
-    expect(candidatesSource).toContain("db.collectionGroup('teacherReassignments')");
-    expect(candidatesSource).toContain(".where('oldTeacherId', '==', identity)");
+    expect(candidatesSource).not.toContain("collectionGroup('teacherReassignments')");
+    expect(candidatesSource).toContain("db.collection('classSessions').where('teacherId', '==', identity)");
+    expect(candidatesSource).toContain("enrollmentRef.collection('teacherReassignments').get()");
     expect(candidatesSource).toContain("where('previousTeacherId', '==', identity)");
     expect(panelSource).toContain("(functions, 'createAdminHistoricalAttendanceSession')");
     expect(panelSource).toContain("(functions, 'adminAttendanceCorrection')");
