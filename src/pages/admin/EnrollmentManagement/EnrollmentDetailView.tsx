@@ -139,7 +139,7 @@ const deriveNextClassDateYmd = (schedule: unknown): string | null => {
   const nowMinutes = nowIst.getUTCHours() * 60 + nowIst.getUTCMinutes();
 
   let best: { dayOffset: number; minutes: number } | null = null;
-  slots.forEach((slot) => {
+  for (const slot of slots) {
     const slotMinutes = slot.hour * 60 + slot.minute;
     let dayOffset = (slot.weekday - todayWeekday + 7) % 7;
     if (dayOffset === 0 && slotMinutes <= nowMinutes) dayOffset = 7;
@@ -150,7 +150,7 @@ const deriveNextClassDateYmd = (schedule: unknown): string | null => {
     ) {
       best = { dayOffset, minutes: slotMinutes };
     }
-  });
+  }
 
   if (!best) return null;
   const target = new Date(Date.UTC(
@@ -600,6 +600,7 @@ export default function EnrollmentDetailView({
 
       const result = (response.data || {}) as Record<string, unknown>;
       const newEnrollmentId = String(result.newEnrollmentId || '').trim();
+      let continuitySyncWarning: string | null = null;
       if (newEnrollmentId) {
         const inheritedFields: Record<string, unknown> = {
           teacherId: newTeacherId,
@@ -629,21 +630,27 @@ export default function EnrollmentDetailView({
           const repairFn = httpsCallable(functions, 'repairEnrollmentFutureSessionsFromSchedule');
           await repairFn({ enrollmentId: newEnrollmentId, dryRun: false });
         } catch (syncError) {
-          toast({
-            title: 'Course moved; link sync needs attention',
-            description: extractCallableErrorMessage(
-              syncError,
-              'The new course is active, but the inherited class-link details could not be fully refreshed.',
-            ),
-            variant: 'destructive',
-          });
+          continuitySyncWarning = extractCallableErrorMessage(
+            syncError,
+            'The new course is active, but the inherited class-link details could not be fully refreshed.',
+          );
         }
+      } else {
+        continuitySyncWarning = 'The course transition completed, but the new enrollment could not be confirmed for continuity checks.';
       }
 
-      toast({
-        title: 'Moved to next course',
-        description: `${nextCourseLabel} is now active. Previous attendance and payment history were preserved.`,
-      });
+      if (continuitySyncWarning) {
+        toast({
+          title: 'Course moved; continuity check needs attention',
+          description: continuitySyncWarning,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Moved to next course',
+          description: `${nextCourseLabel} is now active. Teacher, schedule and class link were carried forward; previous attendance and payment history were preserved.`,
+        });
+      }
       setCourseTransitionOpen(false);
       setSelectedNextCourseId('__none__');
       await loadEnrollment();
