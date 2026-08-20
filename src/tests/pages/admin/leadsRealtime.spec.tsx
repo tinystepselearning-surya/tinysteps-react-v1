@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const firestoreMocks = vi.hoisted(() => ({
@@ -19,9 +19,11 @@ const firestoreMocks = vi.hoisted(() => ({
 
 const workspaceMocks = vi.hoisted(() => ({
   toast: vi.fn(),
-  listenAllDemoSessions: vi.fn(() => vi.fn()),
+  listenAllDemoSessions: vi.fn((_onNext?: (demos: Array<Record<string, unknown>>) => void) => vi.fn()),
   listenDemoSessionPrivatePhones: vi.fn(() => vi.fn()),
 }));
+
+let emitDemos: (demos: Array<Record<string, unknown>>) => void = () => undefined;
 
 vi.mock('firebase/firestore', () => ({
   ...firestoreMocks,
@@ -71,6 +73,8 @@ import LeadsInquiriesWorkspace from '../../../pages/admin/LeadsInquiriesWorkspac
 type TestLead = RealtimeLeadRecord & {
   source?: string;
   status?: string;
+  name?: string;
+  isDeleted?: boolean;
   createdAt?: unknown;
   updatedAt?: unknown;
 };
@@ -146,7 +150,10 @@ beforeEach(() => {
   subscriptions.length = 0;
   Object.values(firestoreMocks).forEach((mock) => mock.mockClear());
   Object.values(workspaceMocks).forEach((mock) => mock.mockClear());
-  workspaceMocks.listenAllDemoSessions.mockImplementation(() => vi.fn());
+  workspaceMocks.listenAllDemoSessions.mockImplementation((onNext?: (demos: Array<Record<string, unknown>>) => void) => {
+    emitDemos = onNext ? (demos) => act(() => onNext(demos)) : () => undefined;
+    return vi.fn();
+  });
   workspaceMocks.listenDemoSessionPrivatePhones.mockImplementation(() => vi.fn());
   firestoreMocks.onSnapshot.mockImplementation(
     (
@@ -339,78 +346,141 @@ describe('useRealtimeLeads', () => {
 });
 
 describe('LeadsInquiriesWorkspace integration', () => {
-  it('keeps filters, search, pagination, and the demo workflow responsive in one session', () => {
-    render(<LeadsInquiriesWorkspace />);
-    const createdAt = { toMillis: () => new Date('2026-07-26T06:30:00.000Z').getTime() };
-    const leads = Array.from({ length: 6 }, (_, index) =>
-      makeDoc(`lead-${index + 1}`, {
-        source: 'manual',
-        parentName: `Parent ${index + 1}`,
-        childName: `Child ${index + 1}`,
-        createdAt,
-        updatedAt: createdAt,
-        status: 'new',
-      }),
-    );
+  const loadWorkspace = (
+    leads: Array<ReturnType<typeof makeDoc>>,
+    demos: Array<Record<string, unknown>> = [],
+  ) => {
     emit(0, makeSnapshot(leads));
+    emitDemos(demos);
+  };
 
-    expect(screen.getByText('Parent 1')).toBeInTheDocument();
-    expect(screen.queryByText('Parent 6')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Next workflow page' }));
-    expect(screen.getByText('Parent 6')).toBeInTheDocument();
-    expect(screen.getByText('Page 2 of 2')).toBeInTheDocument();
+  const bucketCard = (name: 'Open' | 'In Progress' | 'Closed') =>
+    screen.getByRole('button', { name: new RegExp(`^${name}\\b`) });
 
-    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'Parent 2' } });
-    expect(screen.getByText('Parent 2')).toBeInTheDocument();
-    expect(screen.queryByText('Parent 6')).not.toBeInTheDocument();
-    expect(screen.getByText('Page 1 of 1')).toBeInTheDocument();
+  const selectOption = (combobox: HTMLElement, optionName: string) => {
+    fireEvent.click(combobox);
+    fireEvent.click(screen.getByRole('option', { name: optionName }));
+  };
 
-    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
-    fireEvent.change(screen.getByLabelText('Updated From'), {
-      target: { value: '2030-01-01' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Apply filters' }));
-    expect(screen.getByText('No workflow records found for current filters.')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
-    expect(screen.getByText('Parent 1')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Create Demo Request' }));
-    expect(screen.getByRole('heading', { name: 'Create Demo Request' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    expect(screen.queryByRole('heading', { name: 'Create Demo Request' })).not.toBeInTheDocument();
-
-    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'Parent 4' } });
-    expect(screen.getByText('Parent 4')).toBeInTheDocument();
-  });
-
-  it('renders a lead-only assessment as Enquiry, Not Created, with its created date', () => {
+  it('waits for realtime demo ownership before classifying or rendering leads', () => {
     render(<LeadsInquiriesWorkspace />);
-    emit(0, makeSnapshot([]));
     const createdAt = { toMillis: () => new Date('2026-07-26T06:30:00.000Z').getTime() };
-    const websiteLead = makeDoc('website-1', {
-      source: 'website',
-      parentName: 'Parent One',
-      childName: 'Child One',
+    const lead = makeDoc('lead-1', {
+      source: 'manual',
+      parentName: 'Realtime Parent',
+      childName: 'Realtime Child',
       createdAt,
       updatedAt: createdAt,
       status: 'new',
     });
 
-    emit(0, makeSnapshot([websiteLead], [{ type: 'added', doc: websiteLead }]));
+    emit(0, makeSnapshot([lead]));
+    expect(screen.getByText('Loading leads and demo ownership…')).toBeInTheDocument();
+    expect(screen.queryByText('Realtime Parent')).not.toBeInTheDocument();
+    expect(within(bucketCard('Open')).getByText('—')).toBeInTheDocument();
 
-    expect(screen.getByText('Parent One')).toBeInTheDocument();
-    expect(screen.getByText('Enquiry')).toBeInTheDocument();
-    expect(screen.getByText('Not Created')).toBeInTheDocument();
-    expect(screen.getAllByText(/26 Jul/).length).toBeGreaterThanOrEqual(2);
+    emitDemos([{ id: 'demo-1', leadId: 'lead-1', status: 'assigned', createdAt }]);
+    expect(screen.queryByText('Loading leads and demo ownership…')).not.toBeInTheDocument();
+    expect(within(bucketCard('Open')).getByText('0')).toBeInTheDocument();
+    expect(within(bucketCard('In Progress')).getByText('1')).toBeInTheDocument();
+    fireEvent.click(bucketCard('In Progress'));
+    expect(screen.getByText('Realtime Parent')).toBeInTheDocument();
+    expect(screen.getByText('Waiting for teacher')).toBeInTheDocument();
   });
 
-  it('detects and describes a new website lead hidden by the applied Updated filter', () => {
+  it('defaults to All months and applies month, search, course, teacher, and bucket filters consistently', () => {
     render(<LeadsInquiriesWorkspace />);
-    emit(0, makeSnapshot([]));
-    fireEvent.change(screen.getByLabelText('Updated From'), {
-      target: { value: '2030-01-01' },
+    const august = { toMillis: () => new Date('2026-08-12T06:30:00.000Z').getTime() };
+    const july = { toMillis: () => new Date('2026-07-12T06:30:00.000Z').getTime() };
+    loadWorkspace([
+      makeDoc('aug-open', { source: 'website', parentName: 'August Open', childName: 'Ada', programInterest: 'Phonics', createdAt: august, updatedAt: august, status: 'new' }),
+      makeDoc('jul-open', { source: 'website', parentName: 'July Open', childName: 'Jay', programInterest: 'Phonics', createdAt: july, updatedAt: july, status: 'new' }),
+      makeDoc('aug-progress', { source: 'manual', parentName: 'August Progress', childName: 'Mia', programInterest: 'Math', createdAt: august, updatedAt: august, status: 'demo_booked' }),
+      makeDoc('aug-closed', { source: 'referral', parentName: 'August Closed', childName: 'Cal', programInterest: 'Reading', createdAt: august, updatedAt: august, status: 'not_interested' }),
+    ], [
+      { id: 'demo-progress', leadId: 'aug-progress', status: 'assigned', assignedTeacherId: 'teacher-1', assignedTeacherName: 'Active Teacher', courseInterested: 'Math', createdAt: august, lastUpdatedAt: august },
+    ]);
+
+    const monthSelect = screen.getByRole('combobox', { name: 'Filter by enquiry month' });
+    expect(monthSelect).toHaveTextContent('All months');
+    expect(within(bucketCard('Open')).getByText('2')).toBeInTheDocument();
+    expect(within(bucketCard('In Progress')).getByText('1')).toBeInTheDocument();
+    expect(within(bucketCard('Closed')).getByText('1')).toBeInTheDocument();
+
+    selectOption(monthSelect, 'Aug 2026');
+    expect(within(bucketCard('Open')).getByText('1')).toBeInTheDocument();
+    expect(within(bucketCard('In Progress')).getByText('1')).toBeInTheDocument();
+    expect(within(bucketCard('Closed')).getByText('1')).toBeInTheDocument();
+    expect(screen.getByText('August Open')).toBeInTheDocument();
+    expect(screen.queryByText('July Open')).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText('Search parent, child or phone'), { target: { value: 'August Progress' } });
+    expect(within(bucketCard('Open')).getByText('0')).toBeInTheDocument();
+    expect(within(bucketCard('In Progress')).getByText('1')).toBeInTheDocument();
+    fireEvent.click(bucketCard('In Progress'));
+    expect(screen.getByText('August Progress')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+    fireEvent.click(screen.getByRole('button', { name: /Filters/ }));
+    let comboboxes = screen.getAllByRole('combobox');
+    selectOption(comboboxes[1], 'Math');
+    expect(within(bucketCard('In Progress')).getByText('1')).toBeInTheDocument();
+    expect(within(bucketCard('Open')).getByText('0')).toBeInTheDocument();
+
+    comboboxes = screen.getAllByRole('combobox');
+    selectOption(comboboxes[2], 'Active Teacher');
+    expect(screen.getByText('August Progress')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+    fireEvent.click(bucketCard('Closed'));
+    expect(screen.getByText('August Closed')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'View outcome' }));
+    expect(screen.getByText('Closed records are read-only here. Use Advanced tools only for an exceptional correction.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save decision' })).not.toBeInTheDocument();
+  });
+
+  it('keeps the simplified demo workflow responsive in one session', () => {
+    render(<LeadsInquiriesWorkspace />);
+    loadWorkspace([]);
+    fireEvent.click(screen.getByRole('button', { name: /New demo request/ }));
+    expect(screen.getByRole('heading', { name: 'New demo request' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByRole('heading', { name: 'New demo request' })).not.toBeInTheDocument();
+  });
+
+  it('offers only eligible teachers when assigning an open demo', () => {
+    render(<LeadsInquiriesWorkspace />);
+    const createdAt = { toMillis: () => new Date('2026-08-12T06:30:00.000Z').getTime() };
+    loadWorkspace([
+      makeDoc('lead-open-demo', {
+        source: 'manual',
+        parentName: 'Assignment Parent',
+        childName: 'Assignment Child',
+        createdAt,
+        updatedAt: createdAt,
+        status: 'demo_booked',
+      }),
+    ], [{ id: 'demo-open', leadId: 'lead-open-demo', status: 'open', createdAt }]);
+    emit(1, makeSnapshot([
+      makeDoc('teacher-active', { name: 'Active Teacher', status: 'active' }),
+      makeDoc('teacher-suspended', { name: 'Suspended Teacher', status: 'suspended' }),
+      makeDoc('teacher-archived', { name: 'Archived Teacher', status: 'active', isDeleted: true }),
+    ]));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Assign teacher' }));
+    const assignmentDialog = screen.getByRole('dialog');
+    fireEvent.click(within(assignmentDialog).getByRole('combobox'));
+    expect(screen.getByRole('option', { name: 'Active Teacher' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Suspended Teacher' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Archived Teacher' })).not.toBeInTheDocument();
+  });
+
+  it('detects and describes a new website lead without resubscribing for client filters', () => {
+    render(<LeadsInquiriesWorkspace />);
+    loadWorkspace([]);
+    fireEvent.change(screen.getByPlaceholderText('Search parent, child or phone'), {
+      target: { value: 'someone else' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Apply filters' }));
     const listenerCountBeforeLead = firestoreMocks.onSnapshot.mock.calls.length;
     const createdAt = { toMillis: () => new Date('2026-07-26T06:30:00.000Z').getTime() };
     const hiddenLead = makeDoc('hidden-website', {
@@ -427,8 +497,8 @@ describe('LeadsInquiriesWorkspace integration', () => {
     expect(firestoreMocks.onSnapshot).toHaveBeenCalledTimes(listenerCountBeforeLead);
     expect(screen.queryByText('Hidden Parent')).not.toBeInTheDocument();
     expect(workspaceMocks.toast).toHaveBeenCalledWith(expect.objectContaining({
-      title: 'New website assessment received',
-      description: expect.stringContaining('It may be hidden by the current filters.'),
+      title: 'New enquiry received',
+      description: expect.stringContaining('Parent: Hidden Parent'),
     }));
   });
 });
