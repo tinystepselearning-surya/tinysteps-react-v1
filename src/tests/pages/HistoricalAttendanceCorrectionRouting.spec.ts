@@ -15,6 +15,10 @@ const callableSource = readFileSync(
   join(process.cwd(), 'functions/src/createAdminHistoricalAttendanceSession.ts'),
   'utf8',
 );
+const candidatesSource = readFileSync(
+  join(process.cwd(), 'functions/src/getAdminHistoricalAttendanceCandidates.ts'),
+  'utf8',
+);
 
 describe('historical attendance correction routing', () => {
   it('keeps the normal correction workflow intact and exposes historical repair as an optional section', () => {
@@ -25,13 +29,18 @@ describe('historical attendance correction routing', () => {
     expect(panelSource).toContain('Historical / Previous Course — Missing Session');
   });
 
-  it('routes previous-course and previous-teacher missing sessions through a dedicated audited callable', () => {
-    expect(panelSource).toContain("collectionGroup(db, 'teacherReassignments')");
-    expect(panelSource).toContain("where('oldTeacherId', '==', identity)");
+  it('resolves previous-course and previous-teacher candidates server-side before creating an audited session', () => {
+    expect(panelSource).toContain("(functions, 'getAdminHistoricalAttendanceCandidates')");
+    expect(panelSource).not.toContain('collectionGroup(');
+    expect(candidatesSource).toContain("db.collectionGroup('teacherReassignments')");
+    expect(candidatesSource).toContain(".where('oldTeacherId', '==', identity)");
     expect(panelSource).toContain("(functions, 'createAdminHistoricalAttendanceSession')");
     expect(panelSource).toContain("(functions, 'adminAttendanceCorrection')");
     expect(functionsIndexSource).toContain(
       'export { createAdminHistoricalAttendanceSession } from "./createAdminHistoricalAttendanceSession";',
+    );
+    expect(functionsIndexSource).toContain(
+      'export { getAdminHistoricalAttendanceCandidates } from "./getAdminHistoricalAttendanceCandidates";',
     );
   });
 
