@@ -50,7 +50,7 @@ import EnrollmentDetailView from './EnrollmentDetailView';
 
 type Enrollment = {
   id: string;
-  courseId?: string; // might be slug / code / docId depending on your data
+  courseId?: string;
   kidId?: string;
   studentId?: string;
   childId?: string;
@@ -64,7 +64,7 @@ type Enrollment = {
   childrenIds?: string[];
   students?: unknown;
   kids?: unknown;
-  kidNames?: string[]; // if you later store names directly (optional)
+  kidNames?: string[];
   studentNames?: string[];
   childrenNames?: string[];
   childNames?: string[];
@@ -91,15 +91,12 @@ type Enrollment = {
 
 type KidDoc = {
   id: string;
-  // try many possible name fields
   name?: string;
   fullName?: string;
   displayName?: string;
   studentName?: string;
   firstName?: string;
   lastName?: string;
-
-  // possible id link fields
   studentId?: string;
   uid?: string;
   parentId?: string;
@@ -111,12 +108,9 @@ type KidDoc = {
 
 type CourseDoc = {
   id: string;
-  // try many possible title fields
   name?: string;
   title?: string;
   courseName?: string;
-
-  // possible id link fields
   courseId?: string;
   slug?: string;
   code?: string;
@@ -163,7 +157,6 @@ function chunk<T>(arr: T[], size = 10) {
   return out;
 }
 
-// Normalize various ID shapes into a plain doc id string or undefined
 function normalizeId(x: any): string | undefined {
   if (!x) return undefined;
   if (typeof x === 'string') {
@@ -173,14 +166,11 @@ function normalizeId(x: any): string | undefined {
     return parts.length ? parts[parts.length - 1] : undefined;
   }
   if (typeof x === 'object') {
-    // DocumentReference-ish
     if (typeof x.id === 'string' && x.id) return x.id;
-    // some libs expose a path string
     if (typeof x.path === 'string' && x.path) {
       const parts = x.path.split('/').filter(Boolean);
       return parts.length ? parts[parts.length - 1] : undefined;
     }
-    // fallback: maybe _path or similar internal structure
     if (x._path && Array.isArray(x._path.segments)) {
       const segs = x._path.segments;
       return segs.length ? segs[segs.length - 1] : undefined;
@@ -228,14 +218,7 @@ async function fetchUsersByIds(ids: string[]): Promise<Record<string, ParentUser
   return byId;
 }
 
-/**
- * Kids:
- * 1) docId IN kidIds
- * 2) studentId IN kidIds (if your kid doc id is different)
- * 3) uid IN kidIds (if you store auth uid inside kid doc)
- */
 async function fetchKidsByIds(ids: string[]): Promise<Record<string, KidDoc>> {
-  // defensively normalize incoming ids (support paths, refs, objects)
   const normalized = (ids ?? []).map(normalizeId).filter(Boolean) as string[];
   if (!normalized.length) return {};
   const batches = chunk(normalized, 10);
@@ -258,7 +241,6 @@ async function fetchKidsByIds(ids: string[]): Promise<Record<string, KidDoc>> {
     });
   };
 
-  // 1) try docId
   for (const batch of batches) {
     try {
       const q1 = query(collection(db, 'kids'), where(documentId(), 'in', batch));
@@ -271,11 +253,9 @@ async function fetchKidsByIds(ids: string[]): Promise<Record<string, KidDoc>> {
     }
   }
 
-  // find missing (against normalized list)
   const missing = normalized.filter((id) => !byAnyKey[id]);
   if (!missing.length) return byAnyKey;
 
-  // 2) try studentId
   for (const batch of chunk(missing, 10)) {
     try {
       const q2 = query(collection(db, 'kids'), where('studentId', 'in', batch));
@@ -290,7 +270,6 @@ async function fetchKidsByIds(ids: string[]): Promise<Record<string, KidDoc>> {
   const stillMissing = normalized.filter((id) => !byAnyKey[id]);
   if (!stillMissing.length) return byAnyKey;
 
-  // 3) try uid
   for (const batch of chunk(stillMissing, 10)) {
     try {
       const q3 = query(collection(db, 'kids'), where('uid', 'in', batch));
@@ -302,7 +281,6 @@ async function fetchKidsByIds(ids: string[]): Promise<Record<string, KidDoc>> {
       }
     }
   }
-  // final unresolved kid ids
   const unresolved = normalized.filter((id) => !byAnyKey[id]);
   if (import.meta.env?.DEV && unresolved.length) {
     console.debug('Unresolved kidIds:', unresolved.slice(0, 20));
@@ -310,15 +288,8 @@ async function fetchKidsByIds(ids: string[]): Promise<Record<string, KidDoc>> {
 
   return byAnyKey;
 }
-/**
- * Courses:
- * 1) docId IN courseIds
- * 2) courseId IN courseIds
- * 3) slug IN courseIds
- * 4) id IN courseIds
- */
+
 async function fetchCoursesByIds(ids: string[]): Promise<Record<string, CourseDoc>> {
-  // defensively normalize incoming ids (support paths, refs, objects)
   const normalized = (ids ?? []).map(normalizeId).filter(Boolean) as string[];
   if (!normalized.length) return {};
   const batches = chunk(normalized, 10);
@@ -332,7 +303,6 @@ async function fetchCoursesByIds(ids: string[]): Promise<Record<string, CourseDo
     if (course.code) byAnyKey[course.code] = course;
   };
 
-  // 1) docId
   for (const batch of batches) {
     const q1 = query(collection(db, 'courses'), where(documentId(), 'in', batch));
     const snap = await getDocs(q1);
@@ -342,7 +312,6 @@ async function fetchCoursesByIds(ids: string[]): Promise<Record<string, CourseDo
   let missing = normalized.filter((id) => !byAnyKey[id]);
   if (!missing.length) return byAnyKey;
 
-  // 2) courseId
   for (const batch of chunk(missing, 10)) {
     const q2 = query(collection(db, 'courses'), where('courseId', 'in', batch));
     const snap = await getDocs(q2);
@@ -352,7 +321,6 @@ async function fetchCoursesByIds(ids: string[]): Promise<Record<string, CourseDo
   missing = normalized.filter((id) => !byAnyKey[id]);
   if (!missing.length) return byAnyKey;
 
-  // 2b) try code field (some courses use `code`)
   for (const batch of chunk(missing, 10)) {
     const q2b = query(collection(db, 'courses'), where('code', 'in', batch));
     const snap = await getDocs(q2b);
@@ -362,7 +330,6 @@ async function fetchCoursesByIds(ids: string[]): Promise<Record<string, CourseDo
   missing = normalized.filter((id) => !byAnyKey[id]);
   if (!missing.length) return byAnyKey;
 
-  // 3) slug
   for (const batch of chunk(missing, 10)) {
     const q3 = query(collection(db, 'courses'), where('slug', 'in', batch));
     const snap = await getDocs(q3);
@@ -372,19 +339,15 @@ async function fetchCoursesByIds(ids: string[]): Promise<Record<string, CourseDo
   missing = normalized.filter((id) => !byAnyKey[id]);
   if (!missing.length) return byAnyKey;
 
-  // 3b) slug normalization fallback: handle common variations like phonics-foundation → phonics-foundations
   const slugVariations = missing.flatMap((id) => {
     const variations = [id];
-    // Add plural form if missing 's'
     if (!id.endsWith('s') && !id.endsWith('ies')) variations.push(id + 's');
-    // Remove plural 's' if present
     if (id.endsWith('s')) variations.push(id.slice(0, -1));
-    // Handle foundation/foundations specifically
     if (id.includes('-foundation') && !id.includes('-foundations')) {
       variations.push(id.replace('-foundation', '-foundations'));
     }
     return variations;
-  }).filter((v, i, arr) => arr.indexOf(v) === i); // dedupe
+  }).filter((v, i, arr) => arr.indexOf(v) === i);
 
   for (const batch of chunk(slugVariations, 10)) {
     const q3b = query(collection(db, 'courses'), where('slug', 'in', batch));
@@ -395,14 +358,12 @@ async function fetchCoursesByIds(ids: string[]): Promise<Record<string, CourseDo
   missing = normalized.filter((id) => !byAnyKey[id]);
   if (!missing.length) return byAnyKey;
 
-  // 4) id field
   for (const batch of chunk(missing, 10)) {
     const q4 = query(collection(db, 'courses'), where('id', 'in', batch));
     const snap = await getDocs(q4);
     snap.docs.forEach(addCourse);
   }
 
-  // final unresolved ids
   const unresolved = normalized.filter((id) => !byAnyKey[id]);
   if (import.meta.env?.DEV && unresolved.length) {
     console.debug('Unresolved courseIds:', unresolved.slice(0, 20));
@@ -667,6 +628,7 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
     };
     void loadTeachers();
   }, []);
+
   const enrollmentsQuery = useQuery({
     queryKey: ['adminEnrollments', reloadKey],
     queryFn: fetchEnrollments,
@@ -725,7 +687,6 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
     queryFn: () => fetchUsersByIds(allParentIds),
     enabled: allParentIds.length > 0,
   });
-
   const coursesQuery = useQuery({
     queryKey: ['coursesByIds', allCourseIds.join('|')],
     queryFn: () => fetchCoursesByIds(allCourseIds),
@@ -736,6 +697,7 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
   const directKidsMap = directKidsQuery.data ?? {};
   const coursesMap = coursesQuery.data ?? {};
   const parentUsersMap = parentUsersQuery.data ?? {};
+
   const parentIdsForFallback = useMemo(() => {
     const set = new Set<string>();
     enrollments.forEach((enrollment) => {
@@ -1220,7 +1182,6 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
         if (linkedKid && !isActiveKidStatus(linkedKid.status)) {
           inactiveStudentLinkIds.add(row.enrollmentId);
         }
-
         validByParentCourseTeacher.add(buildParentCourseTeacherKey(row));
       }
     });
@@ -1302,8 +1263,7 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
             teacher: row.teacherDisplay,
             enrollmentId: row.enrollmentId,
             currentId,
-            suggestedAction:
-              'Restore canonical child profile using current kid/student ID',
+            suggestedAction: 'Restore canonical child profile using current kid/student ID',
             actionType: 'restore_child_profile',
             enrollment: row.enrollment,
             parentLabel,
@@ -1432,7 +1392,7 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
     if (statusTab === 'past') {
       return enrollmentRows.filter((row) => isPastEnrollmentStatus(row.status));
     }
-  if (statusTab === 'broken') {
+    if (statusTab === 'broken') {
       return enrollmentRows.filter((row) => reconciliation.brokenLinkIds.has(row.enrollmentId));
     }
     if (statusTab === 'duplicates') {
@@ -1482,8 +1442,12 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
     return searchedEnrollmentRows.slice(start, start + rowsPerPage);
   }, [searchedEnrollmentRows, page, rowsPerPage]);
 
+  const technicalIssues = useMemo(
+    () => reconciliation.issues.filter((issue) => issue.actionType !== 'review_student'),
+    [reconciliation.issues],
+  );
   const issuesRowsPerPage = 10;
-  const totalIssueRows = reconciliation.issues.length;
+  const totalIssueRows = technicalIssues.length;
   const issuesTotalPages = Math.max(1, Math.ceil(totalIssueRows / issuesRowsPerPage));
 
   useEffect(() => {
@@ -1498,18 +1462,18 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
 
   const pagedIssueRows = useMemo(() => {
     const start = (issuesPage - 1) * issuesRowsPerPage;
-    return reconciliation.issues.slice(start, start + issuesRowsPerPage);
-  }, [issuesPage, reconciliation.issues]);
+    return technicalIssues.slice(start, start + issuesRowsPerPage);
+  }, [issuesPage, technicalIssues]);
 
   const noMatchBrokenIssues = useMemo(() => {
-    return reconciliation.issues.filter(
+    return technicalIssues.filter(
       (issue) =>
         issue.actionType === 'archive_stale' &&
         issue.enrollmentId !== '—' &&
         !issue.repairCandidateKidId &&
         Boolean(issue.enrollment)
     );
-  }, [reconciliation.issues]);
+  }, [technicalIssues]);
 
   if (enrollmentsQuery.isLoading) {
     return <div className="py-6 text-center">Loading enrollments…</div>;
@@ -1529,8 +1493,7 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
       enrollment.feePerSession ??
       enrollment.feePerClass ??
       0;
-    const rawTeacher =
-      enrollment.teacherPayPerSession ?? 0;
+    const rawTeacher = enrollment.teacherPayPerSession ?? 0;
     const parentValue = Number(rawParent);
     const teacherValue = Number(rawTeacher);
 
@@ -1571,8 +1534,6 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
         updatedAt: serverTimestamp(),
       };
 
-      // When teacher changes to a concrete teacher, use backend reassignment flow
-      // so future sessions + kid mapping stay consistent with enrollment teacherId.
       if (!teacherChanged || !nextTeacherId) {
         updates.teacherId = nextTeacherId || null;
       }
@@ -1956,7 +1917,7 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
         kidIds: [currentKidId],
         studentId: currentKidId,
         studentName: childName,
-        childName: childName,
+        childName,
         kidName: childName,
         updatedAt: serverTimestamp(),
         updatedBy: actorIdOrEmail,
@@ -2053,55 +2014,35 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
     <div className="space-y-3">
       {(kidsQuery.isLoading || directKidsQuery.isLoading || coursesQuery.isLoading || parentKidsQuery.isLoading || canonicalKidsQuery.isLoading || parentUsersQuery.isLoading) && (
         <div className="text-xs text-muted-foreground">
-          Resolving enrollments and reconciliation data…
+          Resolving enrollment details…
         </div>
       )}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
-        <div className="rounded border p-2"><div className="text-muted-foreground">Total</div><div className="font-semibold">{reconciliation.totalEnrollments}</div></div>
-        <div className="rounded border p-2"><div className="text-muted-foreground">Active</div><div className="font-semibold">{reconciliation.activeEnrollments}</div></div>
-        <div className="rounded border p-2"><div className="text-muted-foreground">Past</div><div className="font-semibold">{reconciliation.pastEnrollments}</div></div>
-        <div className="rounded border p-2"><div className="text-muted-foreground">Archived</div><div className="font-semibold">{reconciliation.archivedEnrollments}</div></div>
-        <div className="rounded border p-2"><div className="text-muted-foreground">Broken links</div><div className="font-semibold">{reconciliation.brokenLinks}</div></div>
-        <div className="rounded border p-2"><div className="text-muted-foreground">Possible duplicates</div><div className="font-semibold">{reconciliation.possibleDuplicates}</div></div>
-      </div>
 
-      <div className="rounded border p-3 space-y-2">
-        <div className="text-sm font-semibold">Student–Enrollment Reconciliation</div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
-          <div><span className="text-muted-foreground">Total students:</span> <span className="font-medium">{reconciliation.totalStudents}</span></div>
-          <div><span className="text-muted-foreground">Active students:</span> <span className="font-medium">{reconciliation.activeStudents}</span></div>
-          <div><span className="text-muted-foreground">Archived/inactive students:</span> <span className="font-medium">{reconciliation.archivedOrInactiveStudents}</span></div>
-          <div><span className="text-muted-foreground">Healthy active students:</span> <span className="font-medium">{reconciliation.healthyActiveStudents}</span></div>
-          <div><span className="text-muted-foreground">Active students without enrollment:</span> <span className="font-medium">{reconciliation.activeStudentsWithoutEnrollment}</span></div>
-          <div><span className="text-muted-foreground">Broken enrollment links:</span> <span className="font-medium">{reconciliation.brokenLinks}</span></div>
-          <div><span className="text-muted-foreground">Missing canonical child profile:</span> <span className="font-medium">{reconciliation.missingCanonicalChildProfiles}</span></div>
-          <div><span className="text-muted-foreground">Possible stale duplicates:</span> <span className="font-medium">{reconciliation.staleDuplicateIds.size}</span></div>
-          <div><span className="text-muted-foreground">Duplicate active enrollments:</span> <span className="font-medium">{reconciliation.duplicateActiveEnrollments}</span></div>
-          <div><span className="text-muted-foreground">Active enrollment linked to inactive/archived student:</span> <span className="font-medium">{reconciliation.inactiveStudentLinkedEnrollments}</span></div>
-          <div><span className="text-muted-foreground">Legacy trial-status enrollments:</span> <span className="font-medium">{reconciliation.legacyTrialEnrollments}</span></div>
-        </div>
-        <div className="rounded border p-3 space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-sm font-semibold">Enrollment Cleanup Actions</div>
+      {technicalIssues.length > 0 ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="text-sm font-semibold text-amber-950">
+                Enrollment data issue{technicalIssues.length === 1 ? '' : 's'} need attention
+              </div>
+              <div className="mt-0.5 text-xs leading-5 text-amber-900">
+                {technicalIssues.length} technical integrity issue{technicalIssues.length === 1 ? '' : 's'} found. Routine students without enrollment are handled from the main Without Enrollment card above.
+              </div>
+            </div>
             <Button
               size="sm"
               variant="outline"
-              className="h-7 px-2 text-xs"
+              className="h-8 shrink-0 border-amber-300 bg-white text-xs"
               onClick={() => setShowCleanupActions((prev) => !prev)}
             >
-              {showCleanupActions ? 'Hide cleanup actions' : 'Show cleanup actions'}
+              {showCleanupActions ? 'Hide data issues' : 'Review data issues'}
             </Button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-            <div><span className="text-muted-foreground">Broken enrollment links:</span> <span className="font-medium">{reconciliation.brokenLinks}</span></div>
-            <div><span className="text-muted-foreground">Active linked to inactive/archived child:</span> <span className="font-medium">{reconciliation.inactiveStudentLinkedEnrollments}</span></div>
-            <div><span className="text-muted-foreground">Active students without active enrollment:</span> <span className="font-medium">{reconciliation.activeStudentsWithoutEnrollment}</span></div>
-            <div><span className="text-muted-foreground">Possible duplicate active enrollments:</span> <span className="font-medium">{reconciliation.duplicateActiveEnrollments}</span></div>
-          </div>
+
           {showCleanupActions ? (
-            <>
-              <div className="text-xs text-muted-foreground">
-                Cleanup actions archive or repair enrollment records only. They do not change schedules, attendance, payments, or teacher earnings.
+            <div className="mt-3 space-y-3 border-t border-amber-200 pt-3">
+              <div className="text-xs text-amber-900">
+                These controls repair or archive enrollment records only. They do not change schedules, attendance, payments, or teacher earnings.
               </div>
               {noMatchBrokenIssues.length > 0 ? (
                 <div>
@@ -2116,109 +2057,94 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
                   </Button>
                 </div>
               ) : null}
-              {reconciliation.issues.length > 0 ? (
-                <div className="overflow-x-auto border rounded">
-                  <Table className="w-full table-fixed text-xs">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[170px]">Issue</TableHead>
-                        <TableHead className="w-[240px]">Student / Parent</TableHead>
-                        <TableHead className="w-[180px]">Course</TableHead>
-                        <TableHead className="w-[160px]">Teacher</TableHead>
-                        <TableHead className="w-[170px]">Enrollment ID</TableHead>
-                        <TableHead className="w-[170px]">Current Kid/Student ID</TableHead>
-                        <TableHead className="w-[220px]">Suggested action</TableHead>
-                        <TableHead className="w-[210px]">Actions</TableHead>
+              <div className="overflow-x-auto rounded border border-amber-200 bg-white">
+                <Table className="w-full table-fixed text-xs">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[170px]">Issue</TableHead>
+                      <TableHead className="w-[240px]">Student / Parent</TableHead>
+                      <TableHead className="w-[180px]">Course</TableHead>
+                      <TableHead className="w-[160px]">Teacher</TableHead>
+                      <TableHead className="w-[170px]">Enrollment ID</TableHead>
+                      <TableHead className="w-[170px]">Current Kid/Student ID</TableHead>
+                      <TableHead className="w-[220px]">Suggested action</TableHead>
+                      <TableHead className="w-[210px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pagedIssueRows.map((issue, index) => (
+                      <TableRow key={`${issue.issue}_${issue.enrollmentId}_${index}`}>
+                        <TableCell>{issue.issue}</TableCell>
+                        <TableCell className="truncate" title={issue.studentParent}>{issue.studentParent}</TableCell>
+                        <TableCell className="truncate" title={issue.course}>{issue.course}</TableCell>
+                        <TableCell className="truncate" title={issue.teacher}>{issue.teacher}</TableCell>
+                        <TableCell className="truncate" title={issue.enrollmentId}>{issue.enrollmentId}</TableCell>
+                        <TableCell className="truncate" title={issue.currentId}>{issue.currentId}</TableCell>
+                        <TableCell className="truncate" title={issue.suggestedAction}>{issue.suggestedAction}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {issue.actionType === 'repair_link' && issue.repairCandidateKidId && issue.repairCandidateName ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-2 text-[11px]"
+                                onClick={() => void handleRepairBrokenLink(issue)}
+                                disabled={saving}
+                              >
+                                Repair Link
+                              </Button>
+                            ) : null}
+                            {issue.actionType === 'restore_child_profile' ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-2 text-[11px]"
+                                onClick={() => openRestoreChildProfile(issue)}
+                                disabled={saving || restoreSubmitting}
+                              >
+                                Restore Child Profile
+                              </Button>
+                            ) : null}
+                            {issue.actionType === 'repair_link' || issue.actionType === 'archive_stale' ? (
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="h-7 px-2 text-[11px]"
+                                onClick={() => void handleArchiveStaleEnrollment(issue)}
+                                disabled={saving || issue.enrollmentId === '—'}
+                              >
+                                Archive Stale Enrollment
+                              </Button>
+                            ) : null}
+                            {issue.actionType === 'convert_trial' ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-2 text-[11px]"
+                                onClick={() => void handleConvertLegacyTrialToActive(issue)}
+                                disabled={saving}
+                              >
+                                Convert to Active
+                              </Button>
+                            ) : null}
+                            {issue.actionType === 'archive_inactive_link' ? (
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="h-7 px-2 text-[11px]"
+                                onClick={() => void handleArchiveInactiveLinkedEnrollment(issue)}
+                                disabled={saving || issue.enrollmentId === '—'}
+                              >
+                                Archive Enrollment
+                              </Button>
+                            ) : null}
+                          </div>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {pagedIssueRows.map((issue, index) => (
-                        <TableRow key={`${issue.issue}_${issue.enrollmentId}_${index}`}>
-                          <TableCell>{issue.issue}</TableCell>
-                          <TableCell className="truncate" title={issue.studentParent}>{issue.studentParent}</TableCell>
-                          <TableCell className="truncate" title={issue.course}>{issue.course}</TableCell>
-                          <TableCell className="truncate" title={issue.teacher}>{issue.teacher}</TableCell>
-                          <TableCell className="truncate" title={issue.enrollmentId}>{issue.enrollmentId}</TableCell>
-                          <TableCell className="truncate" title={issue.currentId}>{issue.currentId}</TableCell>
-                          <TableCell className="truncate" title={issue.suggestedAction}>{issue.suggestedAction}</TableCell>
-                          <TableCell>
-                            <div className="flex flex-wrap gap-1">
-                              {issue.actionType === 'repair_link' && issue.repairCandidateKidId && issue.repairCandidateName ? (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 px-2 text-[11px]"
-                                  onClick={() => void handleRepairBrokenLink(issue)}
-                                  disabled={saving}
-                                >
-                                  Repair Link
-                                </Button>
-                              ) : null}
-                              {issue.actionType === 'restore_child_profile' ? (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 px-2 text-[11px]"
-                                  onClick={() => openRestoreChildProfile(issue)}
-                                  disabled={saving || restoreSubmitting}
-                                >
-                                  Restore Child Profile
-                                </Button>
-                              ) : null}
-                              {issue.actionType === 'repair_link' || issue.actionType === 'archive_stale' ? (
-                                <Button
-                                  size="sm"
-                                  variant="secondary"
-                                  className="h-7 px-2 text-[11px]"
-                                  onClick={() => void handleArchiveStaleEnrollment(issue)}
-                                  disabled={saving || issue.enrollmentId === '—'}
-                                >
-                                  Archive Stale Enrollment
-                                </Button>
-                              ) : null}
-                              {issue.actionType === 'convert_trial' ? (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 px-2 text-[11px]"
-                                  onClick={() => void handleConvertLegacyTrialToActive(issue)}
-                                  disabled={saving}
-                                >
-                                  Convert to Active
-                                </Button>
-                              ) : null}
-                              {issue.actionType === 'archive_inactive_link' ? (
-                                <Button
-                                  size="sm"
-                                  variant="secondary"
-                                  className="h-7 px-2 text-[11px]"
-                                  onClick={() => void handleArchiveInactiveLinkedEnrollment(issue)}
-                                  disabled={saving || issue.enrollmentId === '—'}
-                                >
-                                  Archive Enrollment
-                                </Button>
-                              ) : null}
-                              {issue.actionType === 'review_student' ? (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 px-2 text-[11px]"
-                                  onClick={() => {
-                                    toast({
-                                      title: 'Review in Student Management',
-                                      description: `Search kidId: ${issue.kidId || issue.currentId || '—'} (${issue.parentLabel || 'Parent not available'})`,
-                                    });
-                                  }}
-                                >
-                                  Review in Student Management
-                                </Button>
-                              ) : null}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                    ))}
+                  </TableBody>
+                </Table>
+                {totalIssueRows > issuesRowsPerPage ? (
                   <div className="flex items-center justify-between border-t px-3 py-2 text-xs text-muted-foreground">
                     <div>
                       Showing {(issuesPage - 1) * issuesRowsPerPage + 1}–{Math.min(issuesPage * issuesRowsPerPage, totalIssueRows)} of {totalIssueRows}
@@ -2245,14 +2171,12 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
                       </Button>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="text-xs text-muted-foreground">No reconciliation issues found.</div>
-              )}
-            </>
+                ) : null}
+              </div>
+            </div>
           ) : null}
         </div>
-      </div>
+      ) : null}
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
@@ -2277,20 +2201,24 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
           >
             Archived
           </button>
-          <button
-            type="button"
-            onClick={() => setStatusTab('broken')}
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${statusTab === 'broken' ? 'bg-blue-600 text-white' : 'border border-gray-200 bg-white text-gray-700'}`}
-          >
-            Broken Links
-          </button>
-          <button
-            type="button"
-            onClick={() => setStatusTab('duplicates')}
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${statusTab === 'duplicates' ? 'bg-blue-600 text-white' : 'border border-gray-200 bg-white text-gray-700'}`}
-          >
-            Possible Duplicates
-          </button>
+          {reconciliation.brokenLinks > 0 ? (
+            <button
+              type="button"
+              onClick={() => setStatusTab('broken')}
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${statusTab === 'broken' ? 'bg-blue-600 text-white' : 'border border-gray-200 bg-white text-gray-700'}`}
+            >
+              Broken Links
+            </button>
+          ) : null}
+          {reconciliation.possibleDuplicates > 0 ? (
+            <button
+              type="button"
+              onClick={() => setStatusTab('duplicates')}
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${statusTab === 'duplicates' ? 'bg-blue-600 text-white' : 'border border-gray-200 bg-white text-gray-700'}`}
+            >
+              Possible Duplicates
+            </button>
+          ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <Input
@@ -2313,6 +2241,7 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
           </Select>
         </div>
       </div>
+
       <div className="text-xs text-muted-foreground">
         Use Archive instead of Delete to preserve schedule, payment, and audit history.
       </div>
@@ -2323,78 +2252,78 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
         </div>
       ) : (
         <Table className="w-full table-fixed text-sm">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="px-3 py-2 text-xs font-semibold w-[200px]">Course</TableHead>
-            <TableHead className="px-3 py-2 text-xs font-semibold w-[200px]">Student(s)</TableHead>
-            <TableHead className="px-3 py-2 text-xs font-semibold w-[110px]">Status</TableHead>
-            <TableHead className="px-3 py-2 text-xs font-semibold w-[100px]">Billing</TableHead>
-            <TableHead className="px-3 py-2 text-xs font-semibold w-[140px]">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="px-3 py-2 text-xs font-semibold w-[200px]">Course</TableHead>
+              <TableHead className="px-3 py-2 text-xs font-semibold w-[200px]">Student(s)</TableHead>
+              <TableHead className="px-3 py-2 text-xs font-semibold w-[110px]">Status</TableHead>
+              <TableHead className="px-3 py-2 text-xs font-semibold w-[100px]">Billing</TableHead>
+              <TableHead className="px-3 py-2 text-xs font-semibold w-[140px]">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
 
-        <TableBody>
-          {pagedEnrollmentRows.map((row) => {
-            const rawStatus = row.enrollment.status ?? 'unknown';
-            const status = row.status;
-            const badgeVariant =
-              status === 'active' || status === 'paused'
-                ? 'default'
-                : status === 'cancelled'
-                  ? 'destructive'
-                  : status === 'completed' || status === 'discontinued' || status === 'expired'
-                    ? 'outline'
-                    : 'secondary';
-            const statusLabel = status === 'trial' ? 'legacy trial' : status;
+          <TableBody>
+            {pagedEnrollmentRows.map((row) => {
+              const rawStatus = row.enrollment.status ?? 'unknown';
+              const status = row.status;
+              const badgeVariant =
+                status === 'active' || status === 'paused'
+                  ? 'default'
+                  : status === 'cancelled'
+                    ? 'destructive'
+                    : status === 'completed' || status === 'discontinued' || status === 'expired'
+                      ? 'outline'
+                      : 'secondary';
+              const statusLabel = status === 'trial' ? 'legacy trial' : status;
 
-            return (
-              <TableRow key={row.enrollment.id}>
-                <TableCell className="px-3 py-2 font-medium">
-                  <div className="max-w-[200px] truncate" title={row.courseDisplay}>
-                    {row.courseDisplay}
-                  </div>
-                </TableCell>
-
-                <TableCell className="px-3 py-2">
-                  <div className="max-w-[200px] truncate" title={row.studentName}>
-                    {row.studentName}
-                  </div>
-                  {row.studentIdHint ? (
-                    <div className="mt-0.5 max-w-[200px] truncate text-[11px] text-muted-foreground" title={row.studentIdHint}>
-                      Student ID: {row.studentIdHint}
+              return (
+                <TableRow key={row.enrollment.id}>
+                  <TableCell className="px-3 py-2 font-medium">
+                    <div className="max-w-[200px] truncate" title={row.courseDisplay}>
+                      {row.courseDisplay}
                     </div>
-                  ) : null}
-                </TableCell>
+                  </TableCell>
 
-                <TableCell className="px-3 py-2">
-                  <Badge variant={badgeVariant} title={rawStatus !== status ? `raw: ${rawStatus}` : undefined}>
-                    {statusLabel}
-                  </Badge>
-                </TableCell>
+                  <TableCell className="px-3 py-2">
+                    <div className="max-w-[200px] truncate" title={row.studentName}>
+                      {row.studentName}
+                    </div>
+                    {row.studentIdHint ? (
+                      <div className="mt-0.5 max-w-[200px] truncate text-[11px] text-muted-foreground" title={row.studentIdHint}>
+                        Student ID: {row.studentIdHint}
+                      </div>
+                    ) : null}
+                  </TableCell>
 
-                <TableCell className="px-3 py-2">{row.enrollment.billingCycle ?? '—'}</TableCell>
+                  <TableCell className="px-3 py-2">
+                    <Badge variant={badgeVariant} title={rawStatus !== status ? `raw: ${rawStatus}` : undefined}>
+                      {statusLabel}
+                    </Badge>
+                  </TableCell>
 
-                <TableCell className="px-3 py-2">
-                  <div className="flex flex-col gap-1">
-                    <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => {
-                      setSelectedEnrollmentId(row.enrollment.id);
-                      setDetailOpen(true);
-                    }}>
-                      View Details
-                    </Button>
-                    <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => openEdit(row.enrollment)}>
-                      Edit
-                    </Button>
-                    <Button size="sm" variant="secondary" className="h-7 px-2 text-xs" onClick={() => handleArchive(row.enrollment)} disabled={saving}>
-                      Archive
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+                  <TableCell className="px-3 py-2">{row.enrollment.billingCycle ?? '—'}</TableCell>
+
+                  <TableCell className="px-3 py-2">
+                    <div className="flex flex-col gap-1">
+                      <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => {
+                        setSelectedEnrollmentId(row.enrollment.id);
+                        setDetailOpen(true);
+                      }}>
+                        View Details
+                      </Button>
+                      <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => openEdit(row.enrollment)}>
+                        Edit
+                      </Button>
+                      <Button size="sm" variant="secondary" className="h-7 px-2 text-xs" onClick={() => handleArchive(row.enrollment)} disabled={saving}>
+                        Archive
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
       )}
 
       {totalFilteredRows > 0 ? (
