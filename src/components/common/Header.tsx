@@ -44,6 +44,7 @@ export default function Header() {
 
   const isHomePage = location.pathname === '/';
   const isSchoolsPage = location.pathname === '/for-schools';
+  const isCareersPage = location.pathname === '/careers';
 
   useEffect(() => {
     setIsOpen(false);
@@ -92,6 +93,17 @@ export default function Header() {
   }, [location.pathname, location.search, navigate]);
 
   const handlePrimaryAction = useCallback(() => {
+    if (isCareersPage) {
+      const applicationSection = document.getElementById('apply');
+      if (applicationSection) {
+        const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        applicationSection.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
+        return;
+      }
+      navigate('/careers#apply');
+      return;
+    }
+
     if (isSchoolsPage) {
       const pricingSection = document.getElementById('pricing');
       if (pricingSection) {
@@ -103,7 +115,7 @@ export default function Header() {
       return;
     }
     handleBookAssessment();
-  }, [handleBookAssessment, isSchoolsPage, navigate]);
+  }, [handleBookAssessment, isCareersPage, isSchoolsPage, navigate]);
 
   const desktopHeaderContent = useMemo(
     () => (
@@ -149,17 +161,19 @@ export default function Header() {
             type="button"
             onClick={handlePrimaryAction}
             className={`inline-flex h-11 items-center justify-center rounded-full border px-5 text-sm font-semibold shadow-[0_10px_24px_rgba(15,23,42,0.16)] transition ${
-              isSchoolsPage
+              isCareersPage
+                ? 'border-blue-700 bg-gradient-to-r from-blue-700 to-cyan-600 text-white hover:from-blue-600 hover:to-cyan-500'
+                : isSchoolsPage
                 ? 'border-orange-400 bg-gradient-to-r from-orange-400 to-amber-300 text-slate-950 hover:from-orange-300 hover:to-amber-200'
                 : 'border-slate-900 bg-slate-900 text-white hover:bg-slate-800'
             }`}
           >
-            {isSchoolsPage ? 'School Partnership Options' : 'Book Free 35-Minute Demo'}
+            {isCareersPage ? 'Apply to Teach' : isSchoolsPage ? 'School Partnership Options' : 'Book Free 35-Minute Demo'}
           </button>
         </div>
       </>
     ),
-    [handleLogout, handlePrimaryAction, isSchoolsPage, location.pathname, user]
+    [handleLogout, handlePrimaryAction, isCareersPage, isSchoolsPage, location.pathname, user]
   );
 
   return (
@@ -198,12 +212,14 @@ export default function Header() {
             type="button"
             onClick={handlePrimaryAction}
             className={`rounded-full border px-3.5 py-2 text-xs font-semibold max-[380px]:px-3 max-[380px]:text-[11px] ${
-              isSchoolsPage
+              isCareersPage
+                ? 'border-blue-700 bg-gradient-to-r from-blue-700 to-cyan-600 text-white'
+                : isSchoolsPage
                 ? 'border-orange-400 bg-orange-400 text-slate-950'
                 : 'border-slate-900 bg-slate-900 text-white'
             }`}
           >
-            {isSchoolsPage ? 'School Options' : 'Book Free 35-Minute Demo'}
+            {isCareersPage ? 'Apply to Teach' : isSchoolsPage ? 'School Options' : 'Book Free 35-Minute Demo'}
           </button>
           <button
             type="button"
