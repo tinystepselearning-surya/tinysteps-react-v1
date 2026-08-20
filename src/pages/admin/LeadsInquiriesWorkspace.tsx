@@ -129,6 +129,7 @@ interface SimpleRow {
   course: string;
   source: string;
   teacherName: string;
+  createdAtMs: number;
   updatedAtMs: number;
   followUpAtMs: number;
   hasFollowUp: boolean;
@@ -242,6 +243,28 @@ const toMs = (value: unknown): number => {
   if (typeof value === 'number') return value;
   const parsed = new Date(String(value)).getTime();
   return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const monthKeyFromMs = (ms: number): string => {
+  if (!ms) return '';
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+  }).formatToParts(new Date(ms));
+  const year = parts.find((part) => part.type === 'year')?.value || '';
+  const month = parts.find((part) => part.type === 'month')?.value || '';
+  return year && month ? `${year}-${month}` : '';
+};
+
+const formatMonthKey = (value: string): string => {
+  const [year, month] = value.split('-').map(Number);
+  if (!year || !month) return value;
+  return new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(year, month - 1, 15, 12, 0, 0, 0));
 };
 
 const formatUpdated = (ms: number): string => {
@@ -411,6 +434,7 @@ export default function LeadsInquiriesWorkspace({
   const { user } = useAuthStore();
   const [bucket, setBucket] = useState<SimpleLeadBucket>('open');
   const [search, setSearch] = useState('');
+  const [monthFilter, setMonthFilter] = useState('all');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [courseFilter, setCourseFilter] = useState('all');
   const [teacherFilter, setTeacherFilter] = useState('all');
@@ -531,7 +555,7 @@ export default function LeadsInquiriesWorkspace({
       const demoStatus = demo ? normalizeDemoStatus(demo.status) : '';
       const demoFollowUpMs = demo ? parseDateInputMs(demo.followUpDate) : 0;
       const leadFollowUpMs = toMs(lead?.nextFollowUpAt);
-      const followUpAtMs = demoFollowUpMs || leadFollowUpMs;
+      const followUpAtMs = demo ? demoFollowUpMs : leadFollowUpMs;
       const input = {
         leadStatus: lead?.status,
         demoStatus,
@@ -559,6 +583,7 @@ export default function LeadsInquiriesWorkspace({
         teacherName:
           normalizeText(demo?.assignedTeacherName) ||
           (normalizeText(demo?.assignedTeacherId) ? 'Assigned teacher' : '—'),
+        createdAtMs: toMs(lead?.createdAt) || toMs(demo?.createdAt),
         updatedAtMs: Math.max(
           toMs(lead?.updatedAt || lead?.createdAt),
           toMs(demo?.lastUpdatedAt || demo?.createdAt),
@@ -587,13 +612,45 @@ export default function LeadsInquiriesWorkspace({
     return next;
   }, [demos, demoPhones, leads]);
 
+  const monthOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(rows.map((row) => monthKeyFromMs(row.createdAtMs)).filter(Boolean)),
+      )
+        .sort((a, b) => b.localeCompare(a))
+        .map((value) => ({ value, label: formatMonthKey(value) })),
+    [rows],
+  );
+
+  const filteredRows = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    return rows.filter((row) => {
+      if (monthFilter !== 'all' && monthKeyFromMs(row.createdAtMs) !== monthFilter) return false;
+      if (courseFilter !== 'all' && row.course !== courseFilter) return false;
+      if (teacherFilter !== 'all' && row.teacherName !== teacherFilter) return false;
+      if (!needle) return true;
+      return [
+        row.parentName,
+        row.childName,
+        row.parentPhone,
+        row.course,
+        row.source,
+        row.teacherName,
+        row.statusLabel,
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(needle);
+    });
+  }, [courseFilter, monthFilter, rows, search, teacherFilter]);
+
   const counts = useMemo(
     () =>
-      rows.reduce(
+      filteredRows.reduce(
         (acc, row) => ({ ...acc, [row.bucket]: acc[row.bucket] + 1 }),
         { open: 0, in_progress: 0, closed: 0 },
       ),
-    [rows],
+    [filteredRows],
   );
 
   const courseOptions = useMemo(
@@ -623,25 +680,7 @@ export default function LeadsInquiriesWorkspace({
     });
 
   const visibleRows = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    const filtered = rows.filter((row) => {
-      if (row.bucket !== bucket) return false;
-      if (courseFilter !== 'all' && row.course !== courseFilter) return false;
-      if (teacherFilter !== 'all' && row.teacherName !== teacherFilter) return false;
-      if (!needle) return true;
-      return [
-        row.parentName,
-        row.childName,
-        row.parentPhone,
-        row.course,
-        row.source,
-        row.teacherName,
-        row.statusLabel,
-      ]
-        .join(' ')
-        .toLowerCase()
-        .includes(needle);
-    });
+    const filtered = filteredRows.filter((row) => row.bucket === bucket);
 
     return filtered.sort((a, b) => {
       if (bucket === 'closed') return b.updatedAtMs - a.updatedAtMs;
@@ -663,14 +702,14 @@ export default function LeadsInquiriesWorkspace({
       if (b.followUpAtMs) return 1;
       return a.updatedAtMs - b.updatedAtMs;
     });
-  }, [bucket, courseFilter, rows, search, teacherFilter]);
+  }, [bucket, filteredRows]);
 
   const displayedRows = visibleRows.slice(0, visibleLimit);
   const workspaceLoading = leadsLoading || !demosLoaded;
 
   useEffect(() => {
     setVisibleLimit(INITIAL_VISIBLE_LIMIT);
-  }, [bucket, courseFilter, search, teacherFilter]);
+  }, [bucket, courseFilter, monthFilter, search, teacherFilter]);
 
   if (view === 'demos') {
     return (
@@ -1036,9 +1075,15 @@ export default function LeadsInquiriesWorkspace({
     );
   };
 
-  const filtersActive = Boolean(search.trim() || courseFilter !== 'all' || teacherFilter !== 'all');
+  const filtersActive = Boolean(
+    search.trim() ||
+      monthFilter !== 'all' ||
+      courseFilter !== 'all' ||
+      teacherFilter !== 'all',
+  );
   const clearFilters = () => {
     setSearch('');
+    setMonthFilter('all');
     setCourseFilter('all');
     setTeacherFilter('all');
   };
@@ -1107,6 +1152,21 @@ export default function LeadsInquiriesWorkspace({
               placeholder="Search parent, child or phone"
               className="pl-9"
             />
+          </div>
+          <div className="w-full sm:w-[170px]">
+            <Select value={monthFilter} onValueChange={setMonthFilter}>
+              <SelectTrigger aria-label="Filter by enquiry month">
+                <SelectValue placeholder="All months" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All months</SelectItem>
+                {monthOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <Button
             variant="outline"
