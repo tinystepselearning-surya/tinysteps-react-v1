@@ -115,7 +115,7 @@ const getCourseLabel = (course: CourseOption | null | undefined): string =>
   course?.name || course?.title || course?.courseName || course?.id || 'Untitled course';
 
 const getTeacherLabel = (teacher: TeacherOption | null | undefined): string =>
-  teacher?.displayName || teacher?.name || teacher?.email || teacher?.id || 'Unnamed teacher';
+  teacher?.displayName || teacher?.name || teacher?.email || teacher?.id || 'Choose teacher';
 
 const isValidClassLink = (value: string): boolean => {
   try {
@@ -474,13 +474,14 @@ export default function EnrollmentDetailView({
     (Array.isArray(enrollment.kidIds) ? enrollment.kidIds[0] : null);
 
   const currentTeacherId = String(enrollment.teacherId || teacher?.id || '').trim();
-  const currentTeacherLabel =
-    pickFirstReadableName(
-      teacher?.displayName,
-      teacher?.name,
-      enrollment.teacherDisplayName,
-      enrollment.teacherName,
-    ) || 'Current teacher';
+  const currentTeacherLabel = currentTeacherId
+    ? pickFirstReadableName(
+        teacher?.displayName,
+        teacher?.name,
+        enrollment.teacherDisplayName,
+        enrollment.teacherName,
+      ) || 'Current teacher'
+    : 'No teacher assigned';
   const currentClassLink = [
     enrollment.joinUrl,
     enrollment.meetingLink,
@@ -498,6 +499,7 @@ export default function EnrollmentDetailView({
   const nextClassLinkValid = !changeClassLinkForNextCourse || isValidClassLink(trimmedNextClassLink);
   const transitionSelectionsValid =
     selectedNextCourseId !== '__none__' &&
+    Boolean(currentTeacherId || (changeTeacherForNextCourse && selectedNextTeacher)) &&
     (!changeTeacherForNextCourse || Boolean(selectedNextTeacher)) &&
     nextClassLinkValid;
 
@@ -587,14 +589,16 @@ export default function EnrollmentDetailView({
     setCourseTransitionOpen(nextOpen);
     if (!nextOpen) return;
     setSelectedNextCourseId('__none__');
-    setChangeTeacherForNextCourse(false);
+    setChangeTeacherForNextCourse(!currentTeacherId);
     setSelectedNextTeacherId('__none__');
     setChangeClassLinkForNextCourse(false);
     setNextClassLinkInput('');
     await loadCourseOptions();
+    if (!currentTeacherId) await loadTeacherOptions();
   };
 
   const handleTeacherChangeToggle = async (checked: boolean) => {
+    if (!checked && !currentTeacherId) return;
     setChangeTeacherForNextCourse(checked);
     setSelectedNextTeacherId('__none__');
     if (checked) await loadTeacherOptions();
@@ -619,7 +623,7 @@ export default function EnrollmentDetailView({
         title: 'Select a teacher',
         description: changeTeacherForNextCourse
           ? 'Choose the teacher for the next course.'
-          : 'This enrollment has no current teacher. Turn on “Change teacher for next course” and select one.',
+          : 'This enrollment has no current teacher. Select one for the next course.',
         variant: 'destructive',
       });
       return;
@@ -1078,12 +1082,14 @@ export default function EnrollmentDetailView({
                     className="mt-1 h-4 w-4"
                     checked={changeTeacherForNextCourse}
                     onChange={(event) => void handleTeacherChangeToggle(event.target.checked)}
-                    disabled={actionBusy !== null}
+                    disabled={actionBusy !== null || !currentTeacherId && changeTeacherForNextCourse}
                   />
                   <span>
                     <span className="font-medium">Change teacher for next course</span>
                     <span className="block text-xs text-slate-500">
-                      Leave this off to continue with {currentTeacherId ? currentTeacherLabel : 'the current teacher'}.
+                      {currentTeacherId
+                        ? `Leave this off to continue with ${currentTeacherLabel}.`
+                        : 'A teacher is required for the next course.'}
                     </span>
                   </span>
                 </label>
