@@ -74,9 +74,18 @@ describe('admin lifecycle routing', () => {
     expect(assignCourseSource).toContain('getCreateEnrollmentErrorMessage(err)');
   });
 
-  it('routes complete-and-start-next through the recoverable transition callable', () => {
+  it('keeps course progression recoverable while presenting a simple admin dropdown', () => {
     expect(enrollmentDetailSource).toContain("httpsCallable(functions, 'transitionEnrollmentCourse')");
-    expect(enrollmentDetailSource).toContain('Complete Current Course and Start Next Course');
-    expect(enrollmentDetailSource).toContain('Operation ID:');
+    expect(enrollmentDetailSource).toContain('Move to Next Course');
+    expect(enrollmentDetailSource).toContain('Select only the next course.');
+    expect(enrollmentDetailSource).toContain("getDocs(collection(db, 'courses'))");
+    expect(enrollmentDetailSource).toContain("const newTeacherId = String(enrollment.teacherId || teacher?.id || '').trim();");
+    expect(enrollmentDetailSource).toContain('const newSchedule = enrollment.schedule;');
+    expect(enrollmentDetailSource).toContain("httpsCallable(functions, 'repairEnrollmentFutureSessionsFromSchedule')");
+    expect(enrollmentDetailSource).toContain('inheritedFields.joinUrl = preservedJoinUrl.trim()');
+    expect(enrollmentDetailSource).not.toContain("window.prompt('Next canonical course ID?')");
+    expect(enrollmentDetailSource).not.toContain("window.prompt('Next teacher user ID?')");
+    expect(enrollmentDetailSource).not.toContain('Next schedule JSON');
+    expect(enrollmentDetailSource).not.toContain('Transition operation ID');
   });
 });
