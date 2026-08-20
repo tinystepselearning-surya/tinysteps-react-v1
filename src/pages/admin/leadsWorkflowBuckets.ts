@@ -53,16 +53,19 @@ export function resolveSimpleLeadBucket(input: SimpleLeadWorkflowInput): SimpleL
     return 'closed';
   }
 
-  // A parent follow-up is active work even when no demo has been created yet.
-  if (FOLLOW_UP_CONVERSION_STATUSES.has(conversionStatus) || input.hasFollowUp) {
-    return 'in_progress';
+  // Once a demo exists, its operational ownership is the source of truth. This
+  // prevents a pre-demo follow-up date from leaving a newly created open demo in
+  // the wrong bucket.
+  if (input.hasDemo) {
+    if (FOLLOW_UP_CONVERSION_STATUSES.has(conversionStatus)) return 'in_progress';
+    if (demoStatus === 'assigned' || demoStatus === 'completed' || demoStatus === 'cancelled') {
+      return 'in_progress';
+    }
+    return 'open';
   }
 
-  // Once a teacher owns the demo, or the teacher has returned it for admin review,
-  // the record is no longer part of the unworked/open pool.
-  if (demoStatus === 'assigned' || demoStatus === 'completed' || demoStatus === 'cancelled') {
-    return 'in_progress';
-  }
+  // A parent follow-up is active work even when no demo has been created yet.
+  if (input.hasFollowUp) return 'in_progress';
 
   return 'open';
 }
@@ -97,10 +100,13 @@ export function resolveSimpleStatusLabel(input: SimpleLeadWorkflowInput): string
   if (conversionStatus === 'interested') return 'Interested — follow up';
   if (conversionStatus === 'follow_up_later') return 'Follow up later';
 
-  if (!input.hasDemo) return input.hasFollowUp ? 'Parent follow-up' : 'New enquiry';
-  if (demoStatus === 'open') return 'Ready to assign';
-  if (demoStatus === 'assigned') return 'With teacher';
-  if (demoStatus === 'completed') return 'Teacher response ready';
-  if (demoStatus === 'cancelled') return 'Needs admin decision';
-  return 'In progress';
+  if (input.hasDemo) {
+    if (demoStatus === 'open') return 'Ready to assign';
+    if (demoStatus === 'assigned') return 'With teacher';
+    if (demoStatus === 'completed') return 'Teacher response ready';
+    if (demoStatus === 'cancelled') return 'Needs admin decision';
+    return 'In progress';
+  }
+
+  return input.hasFollowUp ? 'Parent follow-up' : 'New enquiry';
 }
