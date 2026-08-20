@@ -62,6 +62,32 @@ export function resolveHistoricalEnrollmentCutoffMs(enrollment: Record<string, u
   return candidates.length ? Math.min(...candidates) : null;
 }
 
+function toEnrollmentStartMillis(value: unknown): number | null {
+  if (typeof value === 'string') {
+    const cleaned = value.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) {
+      const ms = Date.parse(`${cleaned}T00:00:00+05:30`);
+      return Number.isFinite(ms) ? ms : null;
+    }
+  }
+  return toMillisMaybe(value);
+}
+
+export function resolveHistoricalEnrollmentStartMs(enrollment: Record<string, unknown>): number | null {
+  const candidates = [
+    enrollment.classesStartDate,
+    enrollment.enrollmentStartDate,
+    enrollment.startDate,
+    enrollment.activatedAt,
+    enrollment.createdAt,
+  ];
+  for (const candidate of candidates) {
+    const resolved = toEnrollmentStartMillis(candidate);
+    if (resolved !== null && Number.isFinite(resolved)) return resolved;
+  }
+  return null;
+}
+
 function normalizeIdentitySet(values: string[]): Set<string> {
   return new Set(values.map((value) => String(value || '').trim()).filter(Boolean));
 }
@@ -126,5 +152,10 @@ export function isTeacherValidForHistoricalSession(args: {
     return false;
   }
 
-  return currentMatches || previousMatches;
+  // A previous-teacher marker without a dated reassignment cannot establish
+  // which teacher owned an arbitrary historical date. Fail closed instead of
+  // guessing for either side of an undated transfer.
+  if (previous.size > 0) return false;
+
+  return currentMatches;
 }

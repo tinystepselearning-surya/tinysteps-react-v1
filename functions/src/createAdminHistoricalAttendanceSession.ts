@@ -7,6 +7,7 @@ import {
   isHistoricalTerminalEnrollmentStatus,
   isTeacherValidForHistoricalSession,
   resolveHistoricalEnrollmentCutoffMs,
+  resolveHistoricalEnrollmentStartMs,
   toMillisMaybe,
   type HistoricalTeacherReassignmentEvent,
 } from './helpers/historicalAttendanceCorrection';
@@ -70,6 +71,12 @@ function parseSessionTimes(date: string, startTime: string, durationMins: number
   }
   const startAt = new Date(`${date}T${startTime}:00+05:30`);
   if (Number.isNaN(startAt.getTime())) throw new HttpsError('invalid-argument', 'Invalid session date or time');
+  const roundTripIst = new Date(startAt.getTime() + 330 * 60_000);
+  const roundTripDate = `${roundTripIst.getUTCFullYear()}-${String(roundTripIst.getUTCMonth() + 1).padStart(2, '0')}-${String(roundTripIst.getUTCDate()).padStart(2, '0')}`;
+  const roundTripTime = `${String(roundTripIst.getUTCHours()).padStart(2, '0')}:${String(roundTripIst.getUTCMinutes()).padStart(2, '0')}`;
+  if (roundTripDate !== date || roundTripTime !== startTime) {
+    throw new HttpsError('invalid-argument', 'Invalid session date or time');
+  }
   const endAt = new Date(startAt.getTime() + duration * 60_000);
   const endIst = new Date(endAt.getTime() + 330 * 60_000);
   const endTime = `${String(endIst.getUTCHours()).padStart(2, '0')}:${String(endIst.getUTCMinutes()).padStart(2, '0')}`;
@@ -191,6 +198,13 @@ export const createAdminHistoricalAttendanceSession = onCall({ region: REGION },
   }
 
   if (terminalEnrollment) {
+    const enrollmentStartMs = resolveHistoricalEnrollmentStartMs(enrollment);
+    if (enrollmentStartMs && sessionStartMs < enrollmentStartMs) {
+      throw new HttpsError(
+        'failed-precondition',
+        'The selected date is before this enrollment started. Choose a date from the previous course period.',
+      );
+    }
     const cutoffMs = resolveHistoricalEnrollmentCutoffMs(enrollment);
     if (!cutoffMs) {
       throw new HttpsError(

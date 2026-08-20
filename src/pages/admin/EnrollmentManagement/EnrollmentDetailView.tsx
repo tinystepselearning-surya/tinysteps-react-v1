@@ -756,7 +756,7 @@ export default function EnrollmentDetailView({
       } else {
         toast({
           title: 'Moved to next course',
-          description: `${nextCourseLabel} is now active. Selected teacher/link choices were applied; previous attendance and payment history were preserved.`,
+          description: `${nextCourseLabel} is now active. Selected teacher/link choices were applied. Historical records were preserved.`,
         });
       }
       setCourseTransitionOpen(false);
