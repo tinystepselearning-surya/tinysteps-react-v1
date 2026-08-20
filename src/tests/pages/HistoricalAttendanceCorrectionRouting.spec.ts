@@ -34,6 +34,7 @@ describe('historical attendance correction routing', () => {
     expect(panelSource).not.toContain('collectionGroup(');
     expect(candidatesSource).toContain("db.collectionGroup('teacherReassignments')");
     expect(candidatesSource).toContain(".where('oldTeacherId', '==', identity)");
+    expect(candidatesSource).toContain("where('previousTeacherId', '==', identity)");
     expect(panelSource).toContain("(functions, 'createAdminHistoricalAttendanceSession')");
     expect(panelSource).toContain("(functions, 'adminAttendanceCorrection')");
     expect(functionsIndexSource).toContain(
@@ -52,5 +53,12 @@ describe('historical attendance correction routing', () => {
     expect(callableSource).toContain("type: 'admin_historical_attendance_session_created'");
     expect(callableSource).toContain('resolveHistoricalEnrollmentCutoffMs');
     expect(callableSource).toContain('isTeacherValidForHistoricalSession');
+  });
+
+  it('creates historical sessions in completed state so attendance correction can replay normal revenue/earning triggers', () => {
+    expect(callableSource).toContain("status: 'completed'");
+    expect(callableSource).toContain("manualSessionState: 'completed'");
+    expect(callableSource).toContain('feePerClass,');
+    expect(callableSource).toContain('teacherPayPerSession,');
   });
 });
