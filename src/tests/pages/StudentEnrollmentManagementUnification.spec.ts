@@ -6,6 +6,10 @@ const studentManagementSource = readFileSync(
   join(process.cwd(), 'src/pages/admin/StudentManagement/StudentManagementTab.tsx'),
   'utf8',
 );
+const enrollmentsListSource = readFileSync(
+  join(process.cwd(), 'src/pages/admin/EnrollmentManagement/EnrollmentsList.tsx'),
+  'utf8',
+);
 const sidebarSource = readFileSync(
   join(process.cwd(), 'src/pages/admin/components/Sidebar.tsx'),
   'utf8',
@@ -31,6 +35,44 @@ describe('unified student and enrollment management', () => {
     expect(studentManagementSource).toContain("switchView('students')");
     expect(studentManagementSource).toContain("switchView('enrollments')");
     expect(studentManagementSource).toContain('<EnrollmentsList reloadKey={refreshKey} />');
+  });
+
+  it('turns the reconciliation summary into actionable, plain-language controls', () => {
+    expect(studentManagementSource).toContain('type SummaryFocus =');
+    expect(studentManagementSource).toContain("label: 'Enrolled Students'");
+    expect(studentManagementSource).toContain("label: 'Active Enrollments'");
+    expect(studentManagementSource).toContain("label: 'Without Enrollment'");
+    expect(studentManagementSource).toContain('student counts are unique profiles; enrollment counts are course-registration records');
+    expect(studentManagementSource).toContain('aria-pressed={selected}');
+    expect(studentManagementSource).toContain("focus: 'without-enrollment'");
+  });
+
+  it('provides direct lifecycle-safe actions for students who need enrollment review', () => {
+    expect(studentManagementSource).toContain('Students Needing Enrollment Review');
+    expect(studentManagementSource).toContain("'Create enrollment'");
+    expect(studentManagementSource).toContain("'Add enrollment'");
+    expect(studentManagementSource).toContain('Manage enrollment');
+    expect(studentManagementSource).toContain('EnrollmentDetailView');
+    expect(studentManagementSource).toContain('Historical records are preserved.');
+  });
+
+  it('removes duplicate enrollment summaries while keeping repair tools only when needed', () => {
+    expect(enrollmentsListSource).not.toContain('Student–Enrollment Reconciliation');
+    expect(enrollmentsListSource).not.toContain('Enrollment Cleanup Actions');
+    expect(enrollmentsListSource).not.toContain('reconciliation.totalEnrollments}</div></div>');
+    expect(enrollmentsListSource).toContain("issue.actionType !== 'review_student'");
+    expect(enrollmentsListSource).toContain('Routine students without enrollment are handled from the main Without Enrollment card above.');
+    expect(enrollmentsListSource).toContain('Review data issues');
+    expect(enrollmentsListSource).toContain('Repair Link');
+    expect(enrollmentsListSource).toContain('Restore Child Profile');
+  });
+
+  it('keeps routine enrollment filters simple and shows integrity filters only when relevant', () => {
+    expect(enrollmentsListSource).toContain("setStatusTab('active')");
+    expect(enrollmentsListSource).toContain("setStatusTab('past')");
+    expect(enrollmentsListSource).toContain("setStatusTab('archived')");
+    expect(enrollmentsListSource).toContain('reconciliation.brokenLinks > 0');
+    expect(enrollmentsListSource).toContain('reconciliation.possibleDuplicates > 0');
   });
 
   it('removes the duplicate desktop Enrollment Management navigation entry', () => {
