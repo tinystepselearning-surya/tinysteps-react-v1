@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import {
-  BookOpen,
   CalendarCheck,
   CalendarClock,
   CalendarDays,
@@ -63,7 +62,6 @@ const FILTER_ICONS = {
 
 const RESOURCE_ICONS = {
   calendar: CalendarDays,
-  worksheets: BookOpen,
   recordings: Video,
 } satisfies Record<ParentClassesResourceId, typeof CalendarDays>;
 
@@ -379,7 +377,7 @@ export default function ParentClassesView({
   resourceContent,
 }: ParentClassesViewProps) {
   const activeFilter = filters.find((filter) => filter.id === activeView) || null;
-  const isResourceView = activeView === "calendar" || activeView === "worksheets";
+  const isResourceView = activeView === "calendar";
 
   return (
     <div className="min-w-0 space-y-4 overflow-x-hidden" data-testid="parent-classes-view">
