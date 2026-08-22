@@ -128,7 +128,11 @@ export const shouldEnsureDemoForLead = (
 const timestampToDateInputIST = (value: unknown): string => {
   let date: Date | null = null;
   if (value instanceof admin.firestore.Timestamp) date = value.toDate();
-  else if (value && typeof value === 'object' && typeof (value as { toDate?: () => Date }).toDate === 'function') {
+  else if (
+    value &&
+    typeof value === 'object' &&
+    typeof (value as { toDate?: () => Date }).toDate === 'function'
+  ) {
     date = (value as { toDate: () => Date }).toDate();
   }
   if (!date || Number.isNaN(date.getTime())) date = new Date();
@@ -178,6 +182,16 @@ const safeSyntheticLead = (
   return true;
 };
 
+const canRelinkDemoToLead = (
+  demoId: string,
+  demo: Record<string, unknown>,
+  leadId: string,
+): boolean => {
+  const owner = cleanText(demo.leadId, 120);
+  if (!owner || owner === leadId) return true;
+  return isSyntheticDemoLeadId(owner, demoId);
+};
+
 export const onLeadEnsureDemoRequest = onDocumentWritten(
   { document: 'leads/{leadId}', region: REGION },
   async (event) => {
@@ -203,11 +217,17 @@ export const onLeadEnsureDemoRequest = onDocumentWritten(
       const childName = cleanText(lead.childName, 120);
       const variants = phoneVariants(lead.primaryPhone, lead.whatsappNumber, lead.phoneNormalized);
       const dedupeKeys = Array.from(
-        new Set(variants.map((variant) => demoDedupeKey(childName, variant)).filter(Boolean) as string[]),
+        new Set(
+          variants
+            .map((variant) => demoDedupeKey(childName, variant))
+            .filter(Boolean) as string[],
+        ),
       );
       if (dedupeKeys.length === 0) return { action: 'identity_missing' as const };
 
-      const keyRefs = dedupeKeys.map((key) => db.collection(DEMO_UNIQUE_KEYS_COLLECTION).doc(key));
+      const keyRefs = dedupeKeys.map((key) =>
+        db.collection(DEMO_UNIQUE_KEYS_COLLECTION).doc(key),
+      );
       const keySnaps: FirebaseFirestore.DocumentSnapshot[] = [];
       for (const ref of keyRefs) keySnaps.push(await tx.get(ref));
 
@@ -234,24 +254,37 @@ export const onLeadEnsureDemoRequest = onDocumentWritten(
         candidates.push({
           id: demoId,
           demo: demoSnap.data() || {},
-          privateData: privateSnap.exists ? (privateSnap.data() || {}) : {},
+          privateData: privateSnap.exists ? privateSnap.data() || {} : {},
         });
       }
 
       const expectedIdentity = identityKey(phone, childName);
-      const existing = candidates.find((candidate) =>
-        identityKey(candidate.privateData.parentPhone, candidate.demo.childName) === expectedIdentity,
+      const existing = candidates.find(
+        (candidate) =>
+          identityKey(candidate.privateData.parentPhone, candidate.demo.childName) ===
+          expectedIdentity,
       );
 
       if (existing) {
+        if (!canRelinkDemoToLead(existing.id, existing.demo, leadId)) {
+          return {
+            action: 'owned_demo_conflict' as const,
+            demoId: existing.id,
+            ownerLeadId: cleanText(existing.demo.leadId, 120),
+          };
+        }
         const existingDemoRef = db.collection('demoSessions').doc(existing.id);
-        tx.set(existingDemoRef, {
-          leadId,
-          identityLinkedAt: admin.firestore.FieldValue.serverTimestamp(),
-          identityLinkedBy: SYSTEM_ACTOR,
-          lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          lastUpdatedBy: SYSTEM_ACTOR,
-        }, { merge: true });
+        tx.set(
+          existingDemoRef,
+          {
+            leadId,
+            identityLinkedAt: admin.firestore.FieldValue.serverTimestamp(),
+            identityLinkedBy: SYSTEM_ACTOR,
+            lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            lastUpdatedBy: SYSTEM_ACTOR,
+          },
+          { merge: true },
+        );
         tx.set(leadRef, buildLeadDemoPatch(existing.id, existing.demo), { merge: true });
         return { action: 'linked_existing' as const, demoId: existing.id };
       }
@@ -264,22 +297,41 @@ export const onLeadEnsureDemoRequest = onDocumentWritten(
       const privateSnap = await tx.get(deterministicPrivateRef);
       if (demoSnap.exists) {
         const demo = demoSnap.data() || {};
-        const privateData = privateSnap.exists ? (privateSnap.data() || {}) : {};
+        const privateData = privateSnap.exists ? privateSnap.data() || {} : {};
         if (identityKey(privateData.parentPhone, demo.childName) !== expectedIdentity) {
           return { action: 'deterministic_conflict' as const };
         }
+        if (!canRelinkDemoToLead(deterministicDemoRef.id, demo, leadId)) {
+          return {
+            action: 'deterministic_owner_conflict' as const,
+            ownerLeadId: cleanText(demo.leadId, 120),
+          };
+        }
         tx.set(deterministicDemoRef, { leadId }, { merge: true });
         tx.set(leadRef, buildLeadDemoPatch(deterministicDemoRef.id, demo), { merge: true });
-        return { action: 'linked_deterministic' as const, demoId: deterministicDemoRef.id };
+        return {
+          action: 'linked_deterministic' as const,
+          demoId: deterministicDemoRef.id,
+        };
       }
 
       const now = admin.firestore.FieldValue.serverTimestamp();
-      const childAge = typeof lead.childAge === 'number' && Number.isFinite(lead.childAge) ? lead.childAge : null;
-      const childGrade = cleanText(lead.childGrade, 80) || (childAge !== null ? `Age ${childAge}` : 'Not specified');
-      const preferredTiming = cleanText(lead.preferredTimingText, 500) ||
-        (cleanText(lead.urgency, 80) ? `Parent preference: ${cleanText(lead.urgency, 80)}` : 'To be scheduled with parent');
+      const childAge =
+        typeof lead.childAge === 'number' && Number.isFinite(lead.childAge)
+          ? lead.childAge
+          : null;
+      const childGrade =
+        cleanText(lead.childGrade, 80) ||
+        (childAge !== null ? `Age ${childAge}` : 'Not specified');
+      const preferredTiming =
+        cleanText(lead.preferredTimingText, 500) ||
+        (cleanText(lead.urgency, 80)
+          ? `Parent preference: ${cleanText(lead.urgency, 80)}`
+          : 'To be scheduled with parent');
       const createdAt = lead.createdAt || lead.requestedAt || lead.receivedAt || now;
-      const requestReceivedDate = timestampToDateInputIST(lead.receivedAt || lead.requestedAt || lead.createdAt);
+      const requestReceivedDate = timestampToDateInputIST(
+        lead.receivedAt || lead.requestedAt || lead.createdAt,
+      );
       const primaryDedupeKey = demoDedupeKey(childName, phone) || dedupeKeys[0];
 
       tx.set(deterministicDemoRef, {
@@ -338,16 +390,22 @@ export const onLeadEnsureDemoRequest = onDocumentWritten(
         lastUpdatedBy: SYSTEM_ACTOR,
       });
 
-      tx.set(deterministicPrivateRef, {
-        parentPhone: phone,
-        parentPhoneKey: digitPhone(phone),
-        createdAt,
-        createdBy: SYSTEM_ACTOR,
-        lastUpdatedAt: now,
-        lastUpdatedBy: SYSTEM_ACTOR,
-      }, { merge: true });
+      tx.set(
+        deterministicPrivateRef,
+        {
+          parentPhone: phone,
+          parentPhoneKey: digitPhone(phone),
+          createdAt,
+          createdBy: SYSTEM_ACTOR,
+          lastUpdatedAt: now,
+          lastUpdatedBy: SYSTEM_ACTOR,
+        },
+        { merge: true },
+      );
 
-      const primaryKeyRef = db.collection(DEMO_UNIQUE_KEYS_COLLECTION).doc(primaryDedupeKey);
+      const primaryKeyRef = db
+        .collection(DEMO_UNIQUE_KEYS_COLLECTION)
+        .doc(primaryDedupeKey);
       const primaryKeyIndex = dedupeKeys.indexOf(primaryDedupeKey);
       const knownKeySnap = primaryKeyIndex >= 0 ? keySnaps[primaryKeyIndex] : null;
       if (!knownKeySnap?.exists) {
@@ -363,16 +421,20 @@ export const onLeadEnsureDemoRequest = onDocumentWritten(
         });
       }
 
-      tx.set(leadRef, {
-        status: 'demo_pending_schedule',
-        demoSessionId: deterministicDemoRef.id,
-        demoIds: admin.firestore.FieldValue.arrayUnion(deterministicDemoRef.id),
-        demoStatus: 'open',
-        demoCreatedAt: createdAt,
-        lifecycleVersion: 2,
-        updatedAt: now,
-        updatedBy: SYSTEM_ACTOR,
-      }, { merge: true });
+      tx.set(
+        leadRef,
+        {
+          status: 'demo_pending_schedule',
+          demoSessionId: deterministicDemoRef.id,
+          demoIds: admin.firestore.FieldValue.arrayUnion(deterministicDemoRef.id),
+          demoStatus: 'open',
+          demoCreatedAt: createdAt,
+          lifecycleVersion: 2,
+          updatedAt: now,
+          updatedBy: SYSTEM_ACTOR,
+        },
+        { merge: true },
+      );
 
       return { action: 'created' as const, demoId: deterministicDemoRef.id };
     });
@@ -403,11 +465,13 @@ const chooseCanonicalCandidate = (
     return identityKey(leadPhone(lead), lead.childName) === expected;
   });
   if (matches.length === 1) return matches[0];
-  const canonical = matches.filter((docSnap) =>
-    cleanText(docSnap.data()?.dedupeCanonicalLeadId, 120) === docSnap.id,
+  const canonical = matches.filter(
+    (docSnap) => cleanText(docSnap.data()?.dedupeCanonicalLeadId, 120) === docSnap.id,
   );
   if (canonical.length === 1) return canonical[0];
-  const alreadyLinked = matches.filter((docSnap) => cleanText(docSnap.data()?.demoSessionId, 120) === demoId);
+  const alreadyLinked = matches.filter(
+    (docSnap) => cleanText(docSnap.data()?.demoSessionId, 120) === demoId,
+  );
   return alreadyLinked.length === 1 ? alreadyLinked[0] : null;
 };
 
@@ -446,14 +510,18 @@ export const onOrphanDemoIdentityRepair = onDocumentWritten(
     }
 
     const privateSnap = await db.collection('demoSessionsPrivate').doc(demoId).get();
-    const privateData = privateSnap.exists ? (privateSnap.data() || {}) : {};
+    const privateData = privateSnap.exists ? privateSnap.data() || {} : {};
     const variants = phoneVariants(privateData.parentPhone, privateData.parentPhoneKey);
     if (variants.length === 0 || !normalizeWebsiteLeadChildName(after.childName)) return;
 
     const candidateDocs = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();
     for (let start = 0; start < variants.length; start += 10) {
       const slice = variants.slice(start, start + 10);
-      const snapshot = await db.collection('leads').where('phoneNormalized', 'in', slice).limit(25).get();
+      const snapshot = await db
+        .collection('leads')
+        .where('phoneNormalized', 'in', slice)
+        .limit(25)
+        .get();
       snapshot.docs.forEach((docSnap) => candidateDocs.set(docSnap.id, docSnap));
     }
 
@@ -479,15 +547,25 @@ export const onOrphanDemoIdentityRepair = onDocumentWritten(
       if (!freshDemoSnap.exists || !realLeadSnap.exists) return;
       const freshDemo = freshDemoSnap.data() || {};
       const freshLeadId = cleanText(freshDemo.leadId, 120);
-      if (freshLeadId && !isSyntheticDemoLeadId(freshLeadId, demoId) && freshLeadId !== realLeadId) return;
+      if (
+        freshLeadId &&
+        !isSyntheticDemoLeadId(freshLeadId, demoId) &&
+        freshLeadId !== realLeadId
+      ) {
+        return;
+      }
 
-      tx.set(demoRef, {
-        leadId: realLeadId,
-        identityLinkedAt: admin.firestore.FieldValue.serverTimestamp(),
-        identityLinkedBy: SYSTEM_ACTOR,
-        lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        lastUpdatedBy: SYSTEM_ACTOR,
-      }, { merge: true });
+      tx.set(
+        demoRef,
+        {
+          leadId: realLeadId,
+          identityLinkedAt: admin.firestore.FieldValue.serverTimestamp(),
+          identityLinkedBy: SYSTEM_ACTOR,
+          lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          lastUpdatedBy: SYSTEM_ACTOR,
+        },
+        { merge: true },
+      );
       tx.set(realLeadRef, buildLeadDemoPatch(demoId, freshDemo), { merge: true });
 
       if (syntheticSnap.exists && safeSyntheticLead(syntheticSnap.data() || {}, demoId)) {
