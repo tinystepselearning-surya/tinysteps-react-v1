@@ -1,4 +1,4 @@
-export type SimpleLeadBucket = 'open' | 'in_progress' | 'closed';
+export type SimpleLeadBucket = 'open' | 'in_progress' | 'admin_review' | 'closed';
 export type SimpleLeadAction =
   | 'awaiting_demo'
   | 'follow_up_lead'
@@ -52,18 +52,19 @@ export function resolveSimpleLeadBucket(input: SimpleLeadWorkflowInput): SimpleL
     return 'closed';
   }
 
-  // The demo is the operational source of truth once it exists.
-  // Open means unassigned; assignment/completion moves the lead to In Progress automatically.
+  // Four clear ownership stages:
+  // Open -> With Teacher -> Admin Review -> Closed.
+  // Once a demo exists, the demo lifecycle is the operational source of truth.
   if (input.hasDemo) {
-    if (FOLLOW_UP_CONVERSION_STATUSES.has(conversionStatus)) return 'in_progress';
-    if (demoStatus === 'assigned' || demoStatus === 'completed' || demoStatus === 'cancelled') {
-      return 'in_progress';
-    }
+    if (FOLLOW_UP_CONVERSION_STATUSES.has(conversionStatus)) return 'admin_review';
+    if (demoStatus === 'completed' || demoStatus === 'cancelled') return 'admin_review';
+    if (demoStatus === 'assigned') return 'in_progress';
     return 'open';
   }
 
-  // This is now only a short-lived synchronization state. New leads receive a demo automatically.
-  if (input.hasFollowUp) return 'in_progress';
+  // This is only a short-lived synchronization/legacy state. New enquiries receive a demo automatically.
+  // Any surviving follow-up without a demo is admin-owned work, never teacher-owned work.
+  if (input.hasFollowUp) return 'admin_review';
   return 'open';
 }
 
@@ -72,7 +73,8 @@ export function resolveSimpleLeadAction(input: SimpleLeadWorkflowInput): SimpleL
   const demoStatus = normalize(input.demoStatus);
 
   if (bucket === 'closed') return 'view_outcome';
-  if (!input.hasDemo) return input.hasFollowUp ? 'follow_up_lead' : 'awaiting_demo';
+  if (bucket === 'admin_review') return input.hasDemo ? 'review_outcome' : 'follow_up_lead';
+  if (!input.hasDemo) return 'awaiting_demo';
   if (demoStatus === 'open') return 'assign_teacher';
   if (demoStatus === 'assigned') return 'wait_teacher';
   return 'review_outcome';
@@ -98,10 +100,10 @@ export function resolveSimpleStatusLabel(input: SimpleLeadWorkflowInput): string
   if (input.hasDemo) {
     if (demoStatus === 'open') return 'Ready to assign';
     if (demoStatus === 'assigned') return 'With teacher';
-    if (demoStatus === 'completed') return 'Teacher response ready';
-    if (demoStatus === 'cancelled') return 'Needs admin decision';
-    return 'In progress';
+    if (demoStatus === 'completed') return 'Ready for admin review';
+    if (demoStatus === 'cancelled') return 'Needs admin action';
+    return bucket === 'admin_review' ? 'Admin action needed' : 'In progress';
   }
 
-  return input.hasFollowUp ? 'Parent follow-up' : 'Preparing demo request';
+  return input.hasFollowUp ? 'Admin follow-up' : 'Preparing demo request';
 }
