@@ -52,6 +52,7 @@ import {
   CircleUser,
   CreditCard,
   ExternalLink,
+  FileText,
   Gamepad2,
   Home,
   LogOut,
@@ -155,6 +156,7 @@ const parentNavItems: ParentNavItem[] = [
   { id: "insights", label: "Insights", icon: TrendingUp },
   { id: "games-progress", label: "Games Progress", icon: Gamepad2 },
   { id: "skills", label: "Skills", icon: Sparkles },
+  { id: "worksheets", label: "Worksheets", icon: FileText },
   { id: "classes", label: "Classes", icon: CalendarDays },
   { id: "messages", label: "Messages", icon: MessageSquare },
   { id: "holidays", label: "Holiday Calendar", icon: CalendarDays },
@@ -207,6 +209,7 @@ function safeTab(value: string | null): TabKey {
     "insights",
     "games-progress",
     "skills",
+    "worksheets",
     "classes",
     "messages",
     "holidays",
@@ -2448,7 +2451,7 @@ export default function ParentDashboard() {
 
   const parentWorksheetsQuery = useQuery({
     queryKey: ["parentWorksheets", user?.uid, selectedKidId],
-    enabled: !!user?.uid && !!selectedKidId && activeTab === "classes",
+    enabled: !!user?.uid && !!selectedKidId && activeTab === "worksheets",
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
@@ -4224,7 +4227,7 @@ export default function ParentDashboard() {
   );
 
   const activeClassRows =
-    classesView === "calendar" || classesView === "worksheets"
+    classesView === "calendar"
       ? []
       : classRowsByFilter[classesView];
 
@@ -4246,12 +4249,6 @@ export default function ParentDashboard() {
       description: "Browse classes by day.",
     },
     {
-      id: "worksheets" as const,
-      label: "Worksheets",
-      description: "Practice resources shared by Tiny Steps.",
-      count: parentWorksheetsQuery.isLoading ? null : visibleParentWorksheets.length,
-    },
-    {
       id: "recordings" as const,
       label: "Class recordings",
       description: parentRecordingDescription,
@@ -4266,8 +4263,6 @@ export default function ParentDashboard() {
     classRecordingsQuery.isLoading,
     parentRecordingDescription,
     parentRecordingFolderUrl,
-    parentWorksheetsQuery.isLoading,
-    visibleParentWorksheets.length,
   ]);
 
   const selectClassResource = (resource: ParentClassesResourceId) => {
@@ -5334,6 +5329,18 @@ export default function ParentDashboard() {
           </div>
         )}
 
+        {/* Dedicated Worksheets tab: lesson-aligned parent practice library */}
+        {activeTab === "worksheets" && (
+          <div className="space-y-3 sm:space-y-4">
+            <ParentWorksheetLibrary
+              items={visibleParentWorksheets}
+              loading={parentWorksheetsQuery.isLoading}
+              refreshing={parentWorksheetsQuery.isFetching}
+              onRefresh={() => void parentWorksheetsQuery.refetch()}
+            />
+          </div>
+        )}
+
         {/* Classes tab: canonical sessions bucketed for parent review */}
         {activeTab === "classes" && (
           <div className="space-y-3 sm:space-y-4">
@@ -5349,14 +5356,7 @@ export default function ParentDashboard() {
               onSelectFilter={selectClassesView}
               onSelectResource={selectClassResource}
               onJoinSession={(row) => openJoinClass(row.source as KidSession)}
-              resourceContent={classesView === "worksheets" ? (
-              <ParentWorksheetLibrary
-                items={visibleParentWorksheets}
-                loading={parentWorksheetsQuery.isLoading}
-                refreshing={parentWorksheetsQuery.isFetching}
-                onRefresh={() => void parentWorksheetsQuery.refetch()}
-              />
-            ) : classesView === "calendar" ? (
+              resourceContent={classesView === "calendar" ? (
               <Card className="p-3 sm:p-6">
                 <div className="space-y-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">

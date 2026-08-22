@@ -103,8 +103,6 @@ export const toParentWorksheetItem = (id: string, data: any): ParentWorksheetIte
     title: String(data?.title || "").trim(),
     url: worksheetUrl || legacyUrl,
     description: String(data?.description || "").trim(),
-    // ParentDashboard already groups by category. Prefer the linked lesson so
-    // parents naturally see resources arranged by lesson without a breaking UI rewrite.
     category: lessonTitle || String(data?.category || "").trim() || resourceType,
     resourceType,
     thumbnailUrl: String(data?.thumbnailUrl || "").trim(),
@@ -141,6 +139,14 @@ export type ParentWorksheetGroup = {
   items: ParentWorksheetItem[];
 };
 
+const naturalWorksheetCollator = new Intl.Collator(undefined, {
+  numeric: true,
+  sensitivity: "base",
+});
+
+const lessonSortLabel = (group: ParentWorksheetGroup): string =>
+  [group.lessonFolderTitle, group.lessonTitle, group.lessonId].filter(Boolean).join(" ");
+
 export const groupParentWorksheets = (items: ParentWorksheetItem[]): ParentWorksheetGroup[] => {
   const groups = new Map<string, ParentWorksheetGroup>();
   items.forEach((item) => {
@@ -164,11 +170,20 @@ export const groupParentWorksheets = (items: ParentWorksheetItem[]): ParentWorks
       items: [item],
     });
   });
-  return Array.from(groups.values()).sort((a, b) => {
-    const courseDiff = a.courseTitle.localeCompare(b.courseTitle);
+
+  const grouped = Array.from(groups.values());
+  grouped.forEach((group) => {
+    group.items.sort((a, b) => {
+      if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+      return naturalWorksheetCollator.compare(a.title, b.title);
+    });
+  });
+
+  return grouped.sort((a, b) => {
+    const courseDiff = naturalWorksheetCollator.compare(a.courseTitle, b.courseTitle);
     if (courseDiff !== 0) return courseDiff;
     if (a.legacy !== b.legacy) return a.legacy ? 1 : -1;
-    return a.lessonTitle.localeCompare(b.lessonTitle);
+    return naturalWorksheetCollator.compare(lessonSortLabel(a), lessonSortLabel(b));
   });
 };
 

@@ -13,6 +13,7 @@ export type ParentTabKey =
   | "insights"
   | "games-progress"
   | "skills"
+  | "worksheets"
   | "classes"
   | "messages"
   | "holidays"
@@ -22,6 +23,7 @@ export type ParentTabKey =
 export const PARENT_TAB_TITLES: Record<ParentTabKey, string> = {
   dashboard: "Home",
   classes: "Classes",
+  worksheets: "Worksheets",
   messages: "Messages",
   payments: "Payments",
   insights: "Insights",
