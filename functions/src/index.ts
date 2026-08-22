@@ -206,6 +206,10 @@ export {
   teacherCancelAssignedDemo,
   onDemoPayoutIntegrityWrite,
 } from "./leadLifecycle";
+export {
+  onLeadEnsureDemoRequest,
+  onOrphanDemoIdentityRepair,
+} from './leadDemoAutoWorkflow';
 export { adminBackfillLeadLifecycle } from './leadLifecycleBackfill';
 
 // AI: Ask TinySteps chatbot and knowledge base
