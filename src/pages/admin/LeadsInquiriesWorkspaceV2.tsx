@@ -3,6 +3,7 @@ import { collection, onSnapshot, query, Timestamp, where } from 'firebase/firest
 import {
   CheckCircle2,
   CircleDot,
+  ClipboardCheck,
   Clock3,
   MessageCircle,
   Search,
@@ -124,8 +125,8 @@ interface LeadsInquiriesWorkspaceProps {
 }
 
 const OUTCOME_OPTIONS: Array<{ value: DemoConversionStatus; label: string; help: string }> = [
-  { value: 'interested', label: 'Interested — follow up', help: 'Keep in In Progress and set the next follow-up date.' },
-  { value: 'follow_up_later', label: 'Follow up later', help: 'Keep in In Progress and set the next follow-up date.' },
+  { value: 'interested', label: 'Interested — follow up', help: 'Keep in Admin Review and set the next follow-up date.' },
+  { value: 'follow_up_later', label: 'Follow up later', help: 'Keep in Admin Review and set the next follow-up date.' },
   { value: 'enrolled', label: 'Enrolled', help: 'Move to Closed.' },
   { value: 'not_interested', label: 'Not interested', help: 'Move to Closed. Add a short reason.' },
   { value: 'wrong_fit', label: 'Wrong fit', help: 'Move to Closed. Add a short reason.' },
@@ -224,10 +225,16 @@ const bucketMeta: Record<SimpleLeadBucket, { title: string; subtitle: string; ic
     accent: 'border-blue-200 bg-blue-50/70 text-blue-950',
   },
   in_progress: {
-    title: 'In Progress',
-    subtitle: 'Assigned, completed or following up',
+    title: 'With Teacher',
+    subtitle: 'Assigned to teacher for the demo',
     icon: Clock3,
     accent: 'border-amber-200 bg-amber-50/70 text-amber-950',
+  },
+  admin_review: {
+    title: 'Admin Review',
+    subtitle: 'Teacher finished — admin action needed',
+    icon: ClipboardCheck,
+    accent: 'border-violet-200 bg-violet-50/70 text-violet-950',
   },
   closed: {
     title: 'Closed',
@@ -235,6 +242,13 @@ const bucketMeta: Record<SimpleLeadBucket, { title: string; subtitle: string; ic
     icon: CheckCircle2,
     accent: 'border-emerald-200 bg-emerald-50/70 text-emerald-950',
   },
+};
+
+const bucketGuidance: Record<SimpleLeadBucket, string> = {
+  open: 'Open contains unassigned demo requests.',
+  in_progress: 'Teacher owns this bucket until the demo is completed.',
+  admin_review: 'Teacher work is finished. Admin should review, follow up or close the lead.',
+  closed: 'Final records are read-only in the simple workflow.',
 };
 
 export default function LeadsInquiriesWorkspaceV2({
@@ -442,7 +456,7 @@ export default function LeadsInquiriesWorkspaceV2({
   const counts = useMemo(
     () => filteredRows.reduce(
       (acc, row) => ({ ...acc, [row.bucket]: acc[row.bucket] + 1 }),
-      { open: 0, in_progress: 0, closed: 0 },
+      { open: 0, in_progress: 0, admin_review: 0, closed: 0 },
     ),
     [filteredRows],
   );
@@ -494,7 +508,7 @@ export default function LeadsInquiriesWorkspaceV2({
         assignedTeacherName: teacher.name,
       });
       setAssignRow(null);
-      toast({ title: 'Teacher assigned', description: 'The lead moved to In Progress automatically.' });
+      toast({ title: 'Teacher assigned', description: 'The lead moved to With Teacher automatically.' });
     } catch (error: any) {
       toast({ title: 'Could not assign teacher', description: error?.message || 'Please try again.', variant: 'destructive' });
     } finally {
@@ -542,10 +556,13 @@ export default function LeadsInquiriesWorkspaceV2({
         followUpDate: needsFollowUp ? outcomeForm.followUpDate : null,
         admissionNotConfirmedReason: outcomeForm.reason.trim() || null,
       });
+      const closesLead = ['enrolled', 'not_interested', 'wrong_fit', 'no_response'].includes(conversionStatus);
       setOutcomeRow(null);
       toast({
-        title: ['enrolled', 'not_interested', 'wrong_fit', 'no_response'].includes(conversionStatus) ? 'Lead closed' : 'Follow-up saved',
-        description: 'The lead status will update automatically from the demo record.',
+        title: closesLead ? 'Lead closed' : 'Admin follow-up saved',
+        description: closesLead
+          ? 'The final decision moves this lead to Closed automatically.'
+          : 'This lead remains in Admin Review until a final decision is saved.',
       });
     } catch (error: any) {
       toast({ title: 'Could not save decision', description: error?.message || 'Please try again.', variant: 'destructive' });
@@ -566,7 +583,7 @@ export default function LeadsInquiriesWorkspaceV2({
       return <Badge variant="outline" className="px-3 py-2">With teacher</Badge>;
     }
     if (action === 'follow_up_lead') {
-      return <Badge variant="outline" className="px-3 py-2">Legacy follow-up</Badge>;
+      return <Button size="sm" variant="outline" onClick={() => onViewChange?.('demos')}>Open advanced</Button>;
     }
     if (action === 'review_outcome') {
       return <Button size="sm" onClick={() => openOutcome(row)}>{isSimpleFollowUpDecision(row.demo?.conversionStatus) ? 'Update follow-up' : 'Review & update'}</Button>;
@@ -598,7 +615,7 @@ export default function LeadsInquiriesWorkspaceV2({
           <div>
             <h1 className="text-xl font-bold text-slate-950">Leads & Enquiries</h1>
             <p className="mt-1 text-sm text-slate-600">
-              New enquiry → demo created automatically → teacher assignment → admin decision.
+              Open → With Teacher → Admin Review → Closed.
             </p>
           </div>
           <Button variant="outline" className="gap-2" onClick={() => onViewChange?.('demos')}>
@@ -606,8 +623,8 @@ export default function LeadsInquiriesWorkspaceV2({
           </Button>
         </div>
 
-        <div className="mt-5 grid gap-3 md:grid-cols-3">
-          {(['open', 'in_progress', 'closed'] as SimpleLeadBucket[]).map((item) => {
+        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {(['open', 'in_progress', 'admin_review', 'closed'] as SimpleLeadBucket[]).map((item) => {
             const meta = bucketMeta[item];
             const Icon = meta.icon;
             return (
@@ -646,8 +663,8 @@ export default function LeadsInquiriesWorkspaceV2({
             <h2 className="font-semibold text-slate-950">{bucketMeta[bucket].title}</h2>
             <p className="text-sm text-slate-500">{loading ? 'Checking workflow…' : `${visibleRows.length} lead${visibleRows.length === 1 ? '' : 's'} in this list`}</p>
           </div>
-          {!loading && bucket === 'open' && (
-            <p className="text-xs font-medium text-slate-500">Open contains only unassigned demos.</p>
+          {!loading && (
+            <p className="text-xs font-medium text-slate-500">{bucketGuidance[bucket]}</p>
           )}
         </div>
 
@@ -698,7 +715,7 @@ export default function LeadsInquiriesWorkspaceV2({
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Assign teacher</DialogTitle>
-            <DialogDescription>Assignment immediately moves this lead from Open to In Progress.</DialogDescription>
+            <DialogDescription>Assignment immediately moves this lead from Open to With Teacher.</DialogDescription>
           </DialogHeader>
           <form onSubmit={submitAssign} className="space-y-4">
             <div className="rounded-lg bg-slate-50 p-3 text-sm"><span className="font-semibold">{assignRow?.childName}</span> · {assignRow?.course}</div>
@@ -724,7 +741,9 @@ export default function LeadsInquiriesWorkspaceV2({
           <DialogHeader>
             <DialogTitle>{outcomeRow?.bucket === 'closed' ? 'Outcome' : 'Review teacher response & update'}</DialogTitle>
             <DialogDescription>
-              {outcomeRow?.bucket === 'closed' ? 'Closed records are read-only in the simple workflow.' : 'Teacher completion stays In Progress until an admin saves the final decision.'}
+              {outcomeRow?.bucket === 'closed'
+                ? 'Closed records are read-only in the simple workflow.'
+                : 'Teacher completion is now in Admin Review. Save a final decision to close, or a follow-up decision to keep it here.'}
             </DialogDescription>
           </DialogHeader>
 
