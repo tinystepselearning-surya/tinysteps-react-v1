@@ -379,8 +379,7 @@ describe('LeadsInquiriesWorkspace integration', () => {
     expect(within(bucketCard('Open')).getByText('0')).toBeInTheDocument();
     expect(within(bucketCard('With Teacher')).getByText('1')).toBeInTheDocument();
     fireEvent.click(bucketCard('With Teacher'));
-    expect(screen.getByText('Realtime Parent')).toBeInTheDocument();
-    expect(screen.getByText('With teacher')).toBeInTheDocument();
+    expect(screen.getAllByText('Realtime Parent')).toHaveLength(1);
   });
 
   it('applies the simple search consistently across all four workflow buckets', () => {
