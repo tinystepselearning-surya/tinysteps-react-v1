@@ -5,9 +5,9 @@ export type ParentClassesFilterId =
   | "past_pending"
   | "rescheduled";
 
-export type ParentClassesResourceId = "calendar" | "worksheets" | "recordings";
+export type ParentClassesResourceId = "calendar" | "recordings";
 
-export type ParentClassesViewId = ParentClassesFilterId | Exclude<ParentClassesResourceId, "recordings">;
+export type ParentClassesViewId = ParentClassesFilterId | "calendar";
 
 export type ParentClassSessionDisplay = {
   id: string;
