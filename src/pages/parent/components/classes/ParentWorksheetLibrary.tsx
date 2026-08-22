@@ -290,9 +290,6 @@ export function ParentWorksheetLibrary({ items, loading, refreshing = false, onR
                           <p className={`mt-0.5 truncate text-xl font-extrabold leading-tight tracking-tight ${theme.focusText}`} title={focusLabel}>
                             {focusLabel}
                           </p>
-                          <p className="mt-1 text-[10px] font-semibold text-slate-500">
-                            {lesson.items.length} worksheet{lesson.items.length === 1 ? '' : 's'}
-                          </p>
                         </div>
                       </div>
 
@@ -302,22 +299,7 @@ export function ParentWorksheetLibrary({ items, loading, refreshing = false, onR
                           const downloadUrl = getWorksheetDownloadUrl(item.url);
                           return (
                             <div key={item.id} className="rounded-xl border border-slate-100 bg-slate-50/80 px-2.5 py-2.5">
-                              <div className="min-w-0">
-                                <div className="flex flex-wrap items-center gap-1.5">
-                                  <p className="min-w-0 flex-1 truncate text-[12px] font-bold text-slate-900">
-                                    {lesson.items.length === 1 && item.title === focusLabel ? 'Ready to practise' : item.title || 'Worksheet'}
-                                  </p>
-                                  {item.resourceType ? (
-                                    <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${theme.badge}`}>
-                                      {item.resourceType}
-                                    </span>
-                                  ) : null}
-                                </div>
-                                {item.description ? (
-                                  <p className="mt-0.5 line-clamp-1 text-[10px] font-medium text-slate-500">{item.description}</p>
-                                ) : null}
-                              </div>
-                              <div className="mt-2 grid grid-cols-2 gap-1.5">
+                              <div className="grid grid-cols-2 gap-1.5">
                                 <Button
                                   type="button"
                                   size="sm"
