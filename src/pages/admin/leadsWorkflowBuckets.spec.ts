@@ -7,43 +7,52 @@ import {
   simpleOutcomeNeedsReason,
 } from './leadsWorkflowBuckets';
 
-describe('simple leads workflow buckets', () => {
-  it('keeps a new enquiry in the open pool with one work action', () => {
+describe('four-stage leads workflow buckets', () => {
+  it('treats a new enquiry without a linked demo as a short-lived open sync state', () => {
     expect(resolveSimpleLeadBucket({ leadStatus: 'new', hasDemo: false })).toBe('open');
-    expect(resolveSimpleLeadAction({ leadStatus: 'new', hasDemo: false })).toBe('work_lead');
-    expect(resolveSimpleStatusLabel({ leadStatus: 'new', hasDemo: false })).toBe('New enquiry');
+    expect(resolveSimpleLeadAction({ leadStatus: 'new', hasDemo: false })).toBe('awaiting_demo');
+    expect(resolveSimpleStatusLabel({ leadStatus: 'new', hasDemo: false })).toBe('Preparing demo request');
   });
 
-  it('keeps an unassigned open demo in the open pool', () => {
+  it('keeps an unassigned demo in Open', () => {
     expect(resolveSimpleLeadBucket({ demoStatus: 'open', hasDemo: true })).toBe('open');
     expect(resolveSimpleLeadAction({ demoStatus: 'open', hasDemo: true })).toBe('assign_teacher');
     expect(resolveSimpleStatusLabel({ demoStatus: 'open', hasDemo: true })).toBe('Ready to assign');
   });
 
-  it('does not let a stale pre-demo follow-up override a newly created open demo', () => {
+  it('does not let stale pre-demo follow-up data override a newly linked open demo', () => {
     expect(resolveSimpleLeadBucket({ demoStatus: 'open', hasDemo: true, hasFollowUp: true })).toBe('open');
     expect(resolveSimpleLeadAction({ demoStatus: 'open', hasDemo: true, hasFollowUp: true })).toBe('assign_teacher');
-    expect(resolveSimpleStatusLabel({ demoStatus: 'open', hasDemo: true, hasFollowUp: true })).toBe('Ready to assign');
   });
 
-  it('moves assigned and teacher-completed demos to in progress', () => {
+  it('moves only assigned demos into the teacher-owned bucket', () => {
     expect(resolveSimpleLeadBucket({ demoStatus: 'assigned', hasDemo: true })).toBe('in_progress');
-    expect(resolveSimpleLeadBucket({ demoStatus: 'completed', hasDemo: true })).toBe('in_progress');
     expect(resolveSimpleLeadAction({ demoStatus: 'assigned', hasDemo: true })).toBe('wait_teacher');
-    expect(resolveSimpleStatusLabel({ demoStatus: 'completed', hasDemo: true })).toBe('Teacher response ready');
+    expect(resolveSimpleStatusLabel({ demoStatus: 'assigned', hasDemo: true })).toBe('With teacher');
   });
 
-  it('moves a pre-demo parent follow-up out of the open pool', () => {
-    expect(resolveSimpleLeadBucket({ leadStatus: 'attempted_contact', hasDemo: false, hasFollowUp: true })).toBe('in_progress');
-    expect(resolveSimpleLeadAction({ leadStatus: 'attempted_contact', hasDemo: false, hasFollowUp: true })).toBe('follow_up_lead');
-    expect(resolveSimpleStatusLabel({ leadStatus: 'attempted_contact', hasDemo: false, hasFollowUp: true })).toBe('Parent follow-up');
+  it('moves teacher-completed demos into the dedicated admin review bucket', () => {
+    expect(resolveSimpleLeadBucket({ demoStatus: 'completed', hasDemo: true })).toBe('admin_review');
+    expect(resolveSimpleLeadAction({ demoStatus: 'completed', hasDemo: true })).toBe('review_outcome');
+    expect(resolveSimpleStatusLabel({ demoStatus: 'completed', hasDemo: true })).toBe('Ready for admin review');
   });
 
-  it('keeps positive post-demo decisions in progress and shows the admin decision', () => {
-    expect(resolveSimpleLeadBucket({ demoStatus: 'completed', conversionStatus: 'interested', hasDemo: true })).toBe('in_progress');
-    expect(resolveSimpleLeadBucket({ demoStatus: 'completed', conversionStatus: 'follow_up_later', hasDemo: true })).toBe('in_progress');
+  it('routes cancelled demos to admin review instead of leaving them with the teacher', () => {
+    expect(resolveSimpleLeadBucket({ demoStatus: 'cancelled', hasDemo: true })).toBe('admin_review');
+    expect(resolveSimpleLeadAction({ demoStatus: 'cancelled', hasDemo: true })).toBe('review_outcome');
+    expect(resolveSimpleStatusLabel({ demoStatus: 'cancelled', hasDemo: true })).toBe('Needs admin action');
+  });
+
+  it('keeps positive admin follow-up decisions in Admin Review', () => {
+    expect(resolveSimpleLeadBucket({ demoStatus: 'completed', conversionStatus: 'interested', hasDemo: true })).toBe('admin_review');
+    expect(resolveSimpleLeadBucket({ demoStatus: 'completed', conversionStatus: 'follow_up_later', hasDemo: true })).toBe('admin_review');
     expect(resolveSimpleStatusLabel({ demoStatus: 'completed', conversionStatus: 'interested', hasDemo: true })).toBe('Interested — follow up');
-    expect(resolveSimpleStatusLabel({ demoStatus: 'completed', conversionStatus: 'follow_up_later', hasDemo: true })).toBe('Follow up later');
+  });
+
+  it('routes legacy pre-demo follow-up work to Admin Review', () => {
+    expect(resolveSimpleLeadBucket({ leadStatus: 'attempted_contact', hasDemo: false, hasFollowUp: true })).toBe('admin_review');
+    expect(resolveSimpleLeadAction({ leadStatus: 'attempted_contact', hasDemo: false, hasFollowUp: true })).toBe('follow_up_lead');
+    expect(resolveSimpleStatusLabel({ leadStatus: 'attempted_contact', hasDemo: false, hasFollowUp: true })).toBe('Admin follow-up');
   });
 
   it('closes only terminal admin decisions', () => {
@@ -57,12 +66,6 @@ describe('simple leads workflow buckets', () => {
     expect(resolveSimpleLeadBucket({ leadStatus: 'not_interested', hasFollowUp: true })).toBe('closed');
     expect(resolveSimpleLeadBucket({ conversionStatus: 'enrolled', demoStatus: 'completed', hasDemo: true, hasFollowUp: true })).toBe('closed');
     expect(resolveSimpleLeadAction({ leadStatus: 'not_interested', hasDemo: false, hasFollowUp: true })).toBe('view_outcome');
-  });
-
-  it('keeps a cancelled demo visible until admin decides the outcome', () => {
-    expect(resolveSimpleLeadBucket({ demoStatus: 'cancelled', hasDemo: true })).toBe('in_progress');
-    expect(resolveSimpleLeadAction({ demoStatus: 'cancelled', hasDemo: true })).toBe('review_outcome');
-    expect(resolveSimpleStatusLabel({ demoStatus: 'cancelled', hasDemo: true })).toBe('Needs admin decision');
   });
 
   it('defines follow-up and closure validation rules', () => {
