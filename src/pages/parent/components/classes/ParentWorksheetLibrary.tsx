@@ -285,7 +285,7 @@ export function ParentWorksheetLibrary({ items, loading, refreshing = false, onR
                           )}
                         </div>
 
-                        <div className="absolute bottom-2.5 left-2.5 right-2.5 rounded-xl border border-white/70 bg-white/90 px-3 py-2 shadow-sm backdrop-blur-[2px]">
+                        <div className="absolute bottom-2.5 left-2.5 right-2.5 rounded-xl bg-transparent px-3 py-2">
                           <p className={`text-lg font-extrabold leading-tight tracking-tight ${theme.lessonText}`}>{displayLesson}</p>
                           <p className={`mt-0.5 truncate text-xl font-extrabold leading-tight tracking-tight ${theme.focusText}`} title={focusLabel}>
                             {focusLabel}
