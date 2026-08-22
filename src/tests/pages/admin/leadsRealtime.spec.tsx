@@ -354,13 +354,8 @@ describe('LeadsInquiriesWorkspace integration', () => {
     emitDemos(demos);
   };
 
-  const bucketCard = (name: 'Open' | 'In Progress' | 'Closed') =>
+  const bucketCard = (name: 'Open' | 'With Teacher' | 'Admin Review' | 'Closed') =>
     screen.getByRole('button', { name: new RegExp(`^${name}\\b`) });
-
-  const selectOption = (combobox: HTMLElement, optionName: string) => {
-    fireEvent.click(combobox);
-    fireEvent.click(screen.getByRole('option', { name: optionName }));
-  };
 
   it('waits for realtime demo ownership before classifying or rendering leads', () => {
     render(<LeadsInquiriesWorkspace />);
@@ -382,70 +377,58 @@ describe('LeadsInquiriesWorkspace integration', () => {
     emitDemos([{ id: 'demo-1', leadId: 'lead-1', status: 'assigned', createdAt }]);
     expect(screen.queryByText('Loading leads and demo ownership…')).not.toBeInTheDocument();
     expect(within(bucketCard('Open')).getByText('0')).toBeInTheDocument();
-    expect(within(bucketCard('In Progress')).getByText('1')).toBeInTheDocument();
-    fireEvent.click(bucketCard('In Progress'));
+    expect(within(bucketCard('With Teacher')).getByText('1')).toBeInTheDocument();
+    fireEvent.click(bucketCard('With Teacher'));
     expect(screen.getByText('Realtime Parent')).toBeInTheDocument();
-    expect(screen.getByText('Waiting for teacher')).toBeInTheDocument();
+    expect(screen.getByText('With teacher')).toBeInTheDocument();
   });
 
-  it('defaults to All months and applies month, search, course, teacher, and bucket filters consistently', () => {
+  it('applies the simple search consistently across all four workflow buckets', () => {
     render(<LeadsInquiriesWorkspace />);
-    const august = { toMillis: () => new Date('2026-08-12T06:30:00.000Z').getTime() };
-    const july = { toMillis: () => new Date('2026-07-12T06:30:00.000Z').getTime() };
+    const createdAt = { toMillis: () => new Date('2026-08-12T06:30:00.000Z').getTime() };
     loadWorkspace([
-      makeDoc('aug-open', { source: 'website', parentName: 'August Open', childName: 'Ada', programInterest: 'Phonics', createdAt: august, updatedAt: august, status: 'new' }),
-      makeDoc('jul-open', { source: 'website', parentName: 'July Open', childName: 'Jay', programInterest: 'Phonics', createdAt: july, updatedAt: july, status: 'new' }),
-      makeDoc('aug-progress', { source: 'manual', parentName: 'August Progress', childName: 'Mia', programInterest: 'Math', createdAt: august, updatedAt: august, status: 'demo_booked' }),
-      makeDoc('aug-closed', { source: 'referral', parentName: 'August Closed', childName: 'Cal', programInterest: 'Reading', createdAt: august, updatedAt: august, status: 'not_interested' }),
+      makeDoc('open', { source: 'website', parentName: 'Open Parent', childName: 'Ada', programInterest: 'Phonics', createdAt, updatedAt: createdAt, status: 'new' }),
+      makeDoc('teacher', { source: 'manual', parentName: 'Teacher Parent', childName: 'Mia', programInterest: 'Math', createdAt, updatedAt: createdAt, status: 'demo_booked' }),
+      makeDoc('review', { source: 'manual', parentName: 'Review Parent', childName: 'Ria', programInterest: 'Speaking', createdAt, updatedAt: createdAt, status: 'demo_completed' }),
+      makeDoc('closed', { source: 'referral', parentName: 'Closed Parent', childName: 'Cal', programInterest: 'Reading', createdAt, updatedAt: createdAt, status: 'not_interested' }),
     ], [
-      { id: 'demo-progress', leadId: 'aug-progress', status: 'assigned', assignedTeacherId: 'teacher-1', assignedTeacherName: 'Active Teacher', courseInterested: 'Math', createdAt: august, lastUpdatedAt: august },
+      { id: 'demo-teacher', leadId: 'teacher', status: 'assigned', assignedTeacherId: 'teacher-1', assignedTeacherName: 'Active Teacher', courseInterested: 'Math', createdAt, lastUpdatedAt: createdAt },
+      { id: 'demo-review', leadId: 'review', status: 'completed', assignedTeacherId: 'teacher-2', assignedTeacherName: 'Review Teacher', courseInterested: 'Speaking', createdAt, lastUpdatedAt: createdAt },
+      { id: 'demo-closed', leadId: 'closed', status: 'completed', conversionStatus: 'not_interested', assignedTeacherId: 'teacher-3', assignedTeacherName: 'Closed Teacher', courseInterested: 'Reading', createdAt, lastUpdatedAt: createdAt },
     ]);
 
-    const monthSelect = screen.getByRole('combobox', { name: 'Filter by enquiry month' });
-    expect(monthSelect).toHaveTextContent('All months');
-    expect(within(bucketCard('Open')).getByText('2')).toBeInTheDocument();
-    expect(within(bucketCard('In Progress')).getByText('1')).toBeInTheDocument();
-    expect(within(bucketCard('Closed')).getByText('1')).toBeInTheDocument();
-
-    selectOption(monthSelect, 'Aug 2026');
     expect(within(bucketCard('Open')).getByText('1')).toBeInTheDocument();
-    expect(within(bucketCard('In Progress')).getByText('1')).toBeInTheDocument();
+    expect(within(bucketCard('With Teacher')).getByText('1')).toBeInTheDocument();
+    expect(within(bucketCard('Admin Review')).getByText('1')).toBeInTheDocument();
     expect(within(bucketCard('Closed')).getByText('1')).toBeInTheDocument();
-    expect(screen.getByText('August Open')).toBeInTheDocument();
-    expect(screen.queryByText('July Open')).not.toBeInTheDocument();
 
-    fireEvent.change(screen.getByPlaceholderText('Search parent, child or phone'), { target: { value: 'August Progress' } });
+    const searchInput = screen.getByPlaceholderText('Search parent, child, phone, course or teacher');
+    fireEvent.change(searchInput, { target: { value: 'Active Teacher' } });
     expect(within(bucketCard('Open')).getByText('0')).toBeInTheDocument();
-    expect(within(bucketCard('In Progress')).getByText('1')).toBeInTheDocument();
-    fireEvent.click(bucketCard('In Progress'));
-    expect(screen.getByText('August Progress')).toBeInTheDocument();
+    expect(within(bucketCard('With Teacher')).getByText('1')).toBeInTheDocument();
+    expect(within(bucketCard('Admin Review')).getByText('0')).toBeInTheDocument();
+    expect(within(bucketCard('Closed')).getByText('0')).toBeInTheDocument();
+    fireEvent.click(bucketCard('With Teacher'));
+    expect(screen.getByText('Teacher Parent')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
-    fireEvent.click(screen.getByRole('button', { name: /Filters/ }));
-    let comboboxes = screen.getAllByRole('combobox');
-    selectOption(comboboxes[1], 'Math');
-    expect(within(bucketCard('In Progress')).getByText('1')).toBeInTheDocument();
-    expect(within(bucketCard('Open')).getByText('0')).toBeInTheDocument();
-
-    comboboxes = screen.getAllByRole('combobox');
-    selectOption(comboboxes[2], 'Active Teacher');
-    expect(screen.getByText('August Progress')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+    fireEvent.change(searchInput, { target: { value: 'Closed Parent' } });
+    expect(within(bucketCard('With Teacher')).getByText('0')).toBeInTheDocument();
+    expect(within(bucketCard('Closed')).getByText('1')).toBeInTheDocument();
     fireEvent.click(bucketCard('Closed'));
-    expect(screen.getByText('August Closed')).toBeInTheDocument();
+    expect(screen.getByText('Closed Parent')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'View outcome' }));
-    expect(screen.getByText('Closed records are read-only here. Use Advanced tools only for an exceptional correction.')).toBeInTheDocument();
+    expect(screen.getByText('Closed records are read-only in the simple workflow.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Save decision' })).not.toBeInTheDocument();
   });
 
-  it('keeps the simplified demo workflow responsive in one session', () => {
-    render(<LeadsInquiriesWorkspace />);
+  it('keeps manual demo creation out of the simple workflow and routes advanced work explicitly', () => {
+    const onViewChange = vi.fn();
+    render(<LeadsInquiriesWorkspace onViewChange={onViewChange} />);
     loadWorkspace([]);
-    fireEvent.click(screen.getByRole('button', { name: /New demo request/ }));
-    expect(screen.getByRole('heading', { name: 'New demo request' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    expect(screen.queryByRole('heading', { name: 'New demo request' })).not.toBeInTheDocument();
+
+    expect(screen.queryByRole('button', { name: /New demo request/ })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Advanced tools/ }));
+    expect(onViewChange).toHaveBeenCalledWith('demos');
   });
 
   it('offers only eligible teachers when assigning an open demo', () => {
@@ -478,7 +461,7 @@ describe('LeadsInquiriesWorkspace integration', () => {
   it('detects and describes a new website lead without resubscribing for client filters', () => {
     render(<LeadsInquiriesWorkspace />);
     loadWorkspace([]);
-    fireEvent.change(screen.getByPlaceholderText('Search parent, child or phone'), {
+    fireEvent.change(screen.getByPlaceholderText('Search parent, child, phone, course or teacher'), {
       target: { value: 'someone else' },
     });
     const listenerCountBeforeLead = firestoreMocks.onSnapshot.mock.calls.length;
@@ -497,7 +480,7 @@ describe('LeadsInquiriesWorkspace integration', () => {
     expect(firestoreMocks.onSnapshot).toHaveBeenCalledTimes(listenerCountBeforeLead);
     expect(screen.queryByText('Hidden Parent')).not.toBeInTheDocument();
     expect(workspaceMocks.toast).toHaveBeenCalledWith(expect.objectContaining({
-      title: 'New enquiry received',
+      title: 'New demo enquiry received',
       description: expect.stringContaining('Parent: Hidden Parent'),
     }));
   });
