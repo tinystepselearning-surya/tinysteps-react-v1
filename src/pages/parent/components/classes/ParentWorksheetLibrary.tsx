@@ -1,13 +1,20 @@
 import { useMemo, useState } from 'react';
 import {
+  Backpack,
+  Blocks,
   BookOpen,
   Download,
   ExternalLink,
   FileText,
+  GraduationCap,
+  NotebookPen,
+  Pencil,
   RefreshCw,
   Search,
+  SpellCheck,
   Sparkles,
   Star,
+  Stars,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -18,6 +25,11 @@ import {
   groupParentWorksheets,
   type ParentWorksheetItem,
 } from '../../../../lib/parentWorksheets';
+import {
+  getWorksheetDecorativeLetter,
+  getWorksheetDisplayLesson,
+  getWorksheetFocusLabel,
+} from './worksheetPresentation';
 
 type Props = {
   items: ParentWorksheetItem[];
@@ -31,67 +43,85 @@ const WORKSHEET_TILE_THEMES = [
     gradient: 'from-amber-100 via-orange-50 to-rose-100',
     border: 'border-amber-200/90',
     badge: 'bg-amber-100 text-amber-800',
-    icon: 'bg-amber-500 text-white',
     button: 'bg-amber-500 text-white hover:bg-amber-600',
+    accent: 'text-amber-700/75',
+    lessonText: 'text-amber-800',
+    focusText: 'text-orange-700',
     glow: 'bg-amber-300/40',
   },
   {
     gradient: 'from-sky-100 via-indigo-50 to-violet-100',
     border: 'border-sky-200/90',
     badge: 'bg-sky-100 text-sky-800',
-    icon: 'bg-sky-500 text-white',
     button: 'bg-sky-500 text-white hover:bg-sky-600',
+    accent: 'text-sky-700/75',
+    lessonText: 'text-sky-800',
+    focusText: 'text-blue-700',
     glow: 'bg-sky-300/40',
   },
   {
     gradient: 'from-emerald-100 via-teal-50 to-cyan-100',
     border: 'border-emerald-200/90',
     badge: 'bg-emerald-100 text-emerald-800',
-    icon: 'bg-emerald-500 text-white',
     button: 'bg-emerald-500 text-white hover:bg-emerald-600',
+    accent: 'text-emerald-700/75',
+    lessonText: 'text-emerald-800',
+    focusText: 'text-teal-700',
     glow: 'bg-emerald-300/40',
   },
   {
     gradient: 'from-pink-100 via-fuchsia-50 to-rose-100',
     border: 'border-pink-200/90',
     badge: 'bg-pink-100 text-pink-800',
-    icon: 'bg-pink-500 text-white',
     button: 'bg-pink-500 text-white hover:bg-pink-600',
+    accent: 'text-pink-700/75',
+    lessonText: 'text-pink-800',
+    focusText: 'text-rose-700',
     glow: 'bg-pink-300/40',
   },
   {
     gradient: 'from-violet-100 via-purple-50 to-fuchsia-100',
     border: 'border-violet-200/90',
     badge: 'bg-violet-100 text-violet-800',
-    icon: 'bg-violet-500 text-white',
     button: 'bg-violet-500 text-white hover:bg-violet-600',
+    accent: 'text-violet-700/75',
+    lessonText: 'text-violet-800',
+    focusText: 'text-purple-700',
     glow: 'bg-violet-300/40',
   },
   {
     gradient: 'from-cyan-100 via-sky-50 to-blue-100',
     border: 'border-cyan-200/90',
     badge: 'bg-cyan-100 text-cyan-800',
-    icon: 'bg-cyan-500 text-white',
     button: 'bg-cyan-500 text-white hover:bg-cyan-600',
+    accent: 'text-cyan-700/75',
+    lessonText: 'text-cyan-800',
+    focusText: 'text-sky-700',
     glow: 'bg-cyan-300/40',
   },
   {
     gradient: 'from-lime-100 via-emerald-50 to-teal-100',
     border: 'border-lime-200/90',
     badge: 'bg-lime-100 text-lime-800',
-    icon: 'bg-lime-500 text-white',
     button: 'bg-lime-500 text-white hover:bg-lime-600',
+    accent: 'text-lime-700/75',
+    lessonText: 'text-lime-800',
+    focusText: 'text-emerald-700',
     glow: 'bg-lime-300/40',
   },
   {
     gradient: 'from-orange-100 via-amber-50 to-yellow-100',
     border: 'border-orange-200/90',
     badge: 'bg-orange-100 text-orange-800',
-    icon: 'bg-orange-500 text-white',
     button: 'bg-orange-500 text-white hover:bg-orange-600',
+    accent: 'text-orange-700/75',
+    lessonText: 'text-orange-800',
+    focusText: 'text-amber-700',
     glow: 'bg-orange-300/40',
   },
 ];
+
+const LEARNING_MOTIFS = [Pencil, Blocks, BookOpen, NotebookPen, Stars, Backpack, GraduationCap, SpellCheck];
 
 const openSafely = (url: string) => window.open(url, '_blank', 'noopener,noreferrer');
 
@@ -106,6 +136,8 @@ export function ParentWorksheetLibrary({ items, loading, refreshing = false, onR
       item.description,
       item.resourceType,
       item.lessonTitle,
+      getWorksheetDisplayLesson(item.lessonTitle),
+      getWorksheetFocusLabel(item.lessonTitle, item.title),
       item.lessonFolderTitle,
       item.courseTitle,
     ].join(' ').toLowerCase().includes(needle));
@@ -224,34 +256,41 @@ export function ParentWorksheetLibrary({ items, loading, refreshing = false, onR
               <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" data-testid="worksheet-tile-grid">
                 {lessons.map((lesson, index) => {
                   const theme = WORKSHEET_TILE_THEMES[(index + courseIndex) % WORKSHEET_TILE_THEMES.length];
+                  const displayLesson = getWorksheetDisplayLesson(lesson.lessonTitle);
+                  const focusLabel = getWorksheetFocusLabel(lesson.lessonTitle, lesson.items[0]?.title || '');
+                  const decorativeLetter = getWorksheetDecorativeLetter(focusLabel);
+                  const LearningMotif = LEARNING_MOTIFS[(index + courseIndex) % LEARNING_MOTIFS.length];
                   return (
                     <article
                       key={lesson.key}
-                      className={`group overflow-hidden rounded-2xl border bg-white p-1.5 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg ${theme.border}`}
+                      className={`group overflow-hidden rounded-2xl border bg-white p-1.5 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg motion-reduce:transform-none motion-reduce:transition-none ${theme.border}`}
                       data-testid="worksheet-lesson-tile"
                     >
-                      <div className={`relative h-28 overflow-hidden rounded-[14px] bg-gradient-to-br ${theme.gradient}`}>
-                        <div className={`pointer-events-none absolute -right-5 -top-5 h-16 w-16 rounded-full ${theme.glow}`} />
+                      <div className={`relative h-32 overflow-hidden rounded-[14px] bg-gradient-to-br ${theme.gradient}`}>
+                        <div className={`pointer-events-none absolute -right-5 -top-5 h-20 w-20 rounded-full ${theme.glow}`} />
                         <div className="pointer-events-none absolute -bottom-8 -left-5 h-20 w-20 rounded-full bg-white/45" />
-                        <Star className="pointer-events-none absolute right-4 top-10 h-4 w-4 rotate-12 text-white/90 drop-shadow-sm" aria-hidden="true" />
 
-                        <div className="absolute inset-x-2 top-2 flex items-center justify-between gap-2 text-[9px] font-bold text-slate-700">
+                        <div className="absolute left-2 top-2 text-[9px] font-bold text-slate-700">
                           <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 shadow-sm">
                             <Sparkles className="h-2.5 w-2.5" aria-hidden="true" />
                             Practice
                           </span>
-                          <span className="max-w-[62%] truncate rounded-full bg-white/80 px-2 py-1 shadow-sm">
-                            {lesson.lessonFolderTitle || lesson.courseTitle}
-                          </span>
                         </div>
 
-                        <span className={`absolute bottom-3 left-3 flex h-9 w-9 items-center justify-center rounded-xl shadow-sm ${theme.icon}`}>
-                          <BookOpen className="h-4 w-4" aria-hidden="true" />
-                        </span>
+                        <div className={`pointer-events-none absolute right-3 top-2 flex h-14 w-14 items-center justify-center ${theme.accent}`} aria-hidden="true">
+                          {decorativeLetter ? (
+                            <span className="font-heading text-[48px] font-black leading-none opacity-70">{decorativeLetter}</span>
+                          ) : (
+                            <LearningMotif className="h-10 w-10 rotate-6 opacity-55" strokeWidth={1.8} />
+                          )}
+                        </div>
 
-                        <div className="absolute bottom-2.5 left-14 right-2.5 rounded-xl bg-white/90 px-2.5 py-2 shadow-sm backdrop-blur-[2px]">
-                          <p className="truncate text-sm font-extrabold text-slate-950">{lesson.lessonTitle}</p>
-                          <p className="mt-0.5 text-[10px] font-medium text-slate-500">
+                        <div className="absolute bottom-2.5 left-2.5 right-2.5 rounded-xl border border-white/70 bg-white/90 px-3 py-2 shadow-sm backdrop-blur-[2px]">
+                          <p className={`text-lg font-extrabold leading-tight tracking-tight ${theme.lessonText}`}>{displayLesson}</p>
+                          <p className={`mt-0.5 truncate text-xl font-extrabold leading-tight tracking-tight ${theme.focusText}`} title={focusLabel}>
+                            {focusLabel}
+                          </p>
+                          <p className="mt-1 text-[10px] font-semibold text-slate-500">
                             {lesson.items.length} worksheet{lesson.items.length === 1 ? '' : 's'}
                           </p>
                         </div>
@@ -265,7 +304,9 @@ export function ParentWorksheetLibrary({ items, loading, refreshing = false, onR
                             <div key={item.id} className="rounded-xl border border-slate-100 bg-slate-50/80 px-2.5 py-2.5">
                               <div className="min-w-0">
                                 <div className="flex flex-wrap items-center gap-1.5">
-                                  <p className="min-w-0 flex-1 truncate text-[12px] font-bold text-slate-900">{item.title || 'Worksheet'}</p>
+                                  <p className="min-w-0 flex-1 truncate text-[12px] font-bold text-slate-900">
+                                    {lesson.items.length === 1 && item.title === focusLabel ? 'Ready to practise' : item.title || 'Worksheet'}
+                                  </p>
                                   {item.resourceType ? (
                                     <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${theme.badge}`}>
                                       {item.resourceType}
