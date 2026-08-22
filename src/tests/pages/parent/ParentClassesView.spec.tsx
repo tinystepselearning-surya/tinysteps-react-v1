@@ -73,7 +73,6 @@ const filters = [
 
 const resources = [
   { id: "calendar" as const, label: "Class calendar", description: "Browse classes by day." },
-  { id: "worksheets" as const, label: "Worksheets", description: "Practice resources.", count: 6 },
   {
     id: "recordings" as const,
     label: "Class recordings",
@@ -205,7 +204,7 @@ describe("ParentClassesView", () => {
     expect(screen.queryByLabelText("Loading classes")).not.toBeInTheDocument();
   });
 
-  it("preserves local filter and resource callbacks", () => {
+  it("preserves local filter and remaining class-resource callbacks", () => {
     function Harness() {
       const [activeView, setActiveView] = useState<ParentClassesFilterId>("today");
       return (
@@ -232,12 +231,11 @@ describe("ParentClassesView", () => {
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: /Class calendar/i }));
-    fireEvent.click(screen.getByRole("button", { name: /Worksheets/i }));
+    expect(screen.queryByRole("button", { name: /Worksheets/i })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Class recordings/i }));
     expect(screen.getByText("July Phonics folder · updated 25 Jul")).toBeInTheDocument();
     expect(onSelectResource.mock.calls.map(([id]) => id)).toEqual([
       "calendar",
-      "worksheets",
       "recordings",
     ]);
   });
