@@ -211,6 +211,10 @@ export {
   onOrphanDemoIdentityRepair,
 } from './leadDemoAutoWorkflow';
 export { adminBackfillLeadLifecycle } from './leadLifecycleBackfill';
+export {
+  adminUpdateLeadWorkflowRecord,
+  adminDeleteLeadWorkflowRecord,
+} from './adminLeadWorkflow';
 
 // AI: Ask TinySteps chatbot and knowledge base
 export { askTinySteps } from "./ai/askTinySteps";

@@ -416,7 +416,7 @@ describe('LeadsInquiriesWorkspace integration', () => {
     fireEvent.click(bucketCard('Closed'));
     expect(screen.getByText('Closed Parent')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'View outcome' }));
-    expect(screen.getByText('Closed records are read-only in the simple workflow.')).toBeInTheDocument();
+    expect(screen.getByText('The final workflow decision is read-only here. Lead details can still be edited from the row menu.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Save decision' })).not.toBeInTheDocument();
   });
 

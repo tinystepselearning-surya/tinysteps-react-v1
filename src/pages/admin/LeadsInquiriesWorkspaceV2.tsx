@@ -6,8 +6,11 @@ import {
   ClipboardCheck,
   Clock3,
   MessageCircle,
+  MoreHorizontal,
+  Pencil,
   Search,
   Settings2,
+  Trash2,
 } from 'lucide-react';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
@@ -19,6 +22,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@components/ui/dropdown-menu';
 import { Input } from '@components/ui/input';
 import { Label } from '@components/ui/label';
 import {
@@ -39,6 +49,10 @@ import {
   reassignDemoSession,
   updateDemoConversion,
 } from '../../services/demoSessionsService';
+import {
+  adminDeleteLeadWorkflowRecord,
+  adminUpdateLeadWorkflowRecord,
+} from '../../services/leadsAdminService';
 import { buildNewWebsiteLeadToastDescription, useRealtimeLeads } from './leadsRealtime';
 import LegacyLeadsInquiriesWorkspace from './LeadsInquiriesWorkspaceLegacy';
 import {
@@ -75,12 +89,16 @@ interface LeadRecord {
   primaryPhone?: string;
   phoneNormalized?: string;
   whatsappNumber?: string;
+  parentEmail?: string | null;
   childName?: string;
   childAge?: number | null;
   childGrade?: string | null;
   interestTrack?: string | null;
   programInterest?: string | null;
   source?: string | null;
+  preferredTimingText?: string | null;
+  timezone?: string | null;
+  notes?: string | null;
   status?: LeadStatus | null;
   nextFollowUpAt?: Timestamp | null;
   demoSessionId?: string | null;
@@ -105,6 +123,7 @@ interface SimpleRow {
   course: string;
   source: string;
   teacherName: string;
+  createdAtMs: number;
   updatedAtMs: number;
   followUpAtMs: number;
   statusLabel: string;
@@ -117,6 +136,20 @@ interface OutcomeFormState {
   recommendedFrequency: string;
   feeDiscussed: string;
   reason: string;
+}
+
+interface LeadEditFormState {
+  parentName: string;
+  parentPhone: string;
+  parentEmail: string;
+  childName: string;
+  childAge: string;
+  childGrade: string;
+  course: string;
+  source: string;
+  preferredTimingText: string;
+  timezone: string;
+  notes: string;
 }
 
 interface LeadsInquiriesWorkspaceProps {
@@ -140,6 +173,20 @@ const EMPTY_OUTCOME: OutcomeFormState = {
   recommendedFrequency: '',
   feeDiscussed: '',
   reason: '',
+};
+
+const EMPTY_EDIT_FORM: LeadEditFormState = {
+  parentName: '',
+  parentPhone: '',
+  parentEmail: '',
+  childName: '',
+  childAge: '',
+  childGrade: '',
+  course: '',
+  source: '',
+  preferredTimingText: '',
+  timezone: '',
+  notes: '',
 };
 
 const normalizeText = (value: unknown): string => String(value || '').trim();
@@ -185,6 +232,35 @@ const parseDateInputMs = (value: unknown): number => {
   const [year, month, day] = raw.split('-').map(Number);
   const date = new Date(year, month - 1, day, 12, 0, 0, 0);
   return Number.isFinite(date.getTime()) ? date.getTime() : 0;
+};
+
+const dateBoundaryMs = (value: string, endOfDay = false): number => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return 0;
+  const suffix = endOfDay ? 'T23:59:59.999+05:30' : 'T00:00:00.000+05:30';
+  const parsed = Date.parse(`${value}${suffix}`);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const monthKeyFromMs = (ms: number): string => {
+  if (!ms) return '';
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+  }).formatToParts(new Date(ms));
+  const year = parts.find((part) => part.type === 'year')?.value || '';
+  const month = parts.find((part) => part.type === 'month')?.value || '';
+  return year && month ? `${year}-${month}` : '';
+};
+
+const formatMonthKey = (value: string): string => {
+  const [year, month] = value.split('-').map(Number);
+  if (!year || !month) return value;
+  return new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(year, month - 1, 15, 12, 0, 0, 0));
 };
 
 const formatTrack = (value: unknown): string =>
@@ -248,7 +324,7 @@ const bucketGuidance: Record<SimpleLeadBucket, string> = {
   open: 'Open contains unassigned demo requests.',
   in_progress: 'Teacher owns this bucket until the demo is completed.',
   admin_review: 'Teacher work is finished. Admin should review, follow up or close the lead.',
-  closed: 'Final records are read-only in the simple workflow.',
+  closed: 'Final decision is saved. Admin can still edit details or delete the record.',
 };
 
 export default function LeadsInquiriesWorkspaceV2({
@@ -258,6 +334,9 @@ export default function LeadsInquiriesWorkspaceV2({
   const { toast } = useToast();
   const [bucket, setBucket] = useState<SimpleLeadBucket>('open');
   const [search, setSearch] = useState('');
+  const [monthFilter, setMonthFilter] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [demos, setDemos] = useState<DemoSession[]>([]);
   const [demosLoaded, setDemosLoaded] = useState(false);
   const [demoPhones, setDemoPhones] = useState<Record<string, string>>({});
@@ -269,6 +348,10 @@ export default function LeadsInquiriesWorkspaceV2({
   const [outcomeRow, setOutcomeRow] = useState<SimpleRow | null>(null);
   const [outcomeForm, setOutcomeForm] = useState<OutcomeFormState>(EMPTY_OUTCOME);
   const [outcomeSaving, setOutcomeSaving] = useState(false);
+  const [editRow, setEditRow] = useState<SimpleRow | null>(null);
+  const [editForm, setEditForm] = useState<LeadEditFormState>(EMPTY_EDIT_FORM);
+  const [editSaving, setEditSaving] = useState(false);
+  const [deletingRowId, setDeletingRowId] = useState<string | null>(null);
 
   const { leads, isLoading: leadsLoading } = useRealtimeLeads<LeadRecord>({
     onNewWebsiteLeads: (newLeads) => {
@@ -395,6 +478,7 @@ export default function LeadsInquiriesWorkspaceV2({
       const demoFollowUpAt = demo ? parseDateInputMs(demo.followUpDate) : 0;
       const leadFollowUpAt = toMs(lead?.nextFollowUpAt);
       const followUpAtMs = demoFollowUpAt || leadFollowUpAt;
+      const createdAtMs = toMs(lead?.createdAt) || toMs(demo?.createdAt) || toMs(lead?.updatedAt) || toMs(demo?.lastUpdatedAt);
       const workflow = {
         leadStatus: lead?.status,
         demoStatus,
@@ -413,6 +497,7 @@ export default function LeadsInquiriesWorkspaceV2({
         course: normalizeText(demo?.courseInterested || lead?.programInterest) || formatTrack(lead?.interestTrack) || '—',
         source: normalizeText(demo?.source || lead?.source) || '—',
         teacherName: normalizeText(demo?.assignedTeacherName) || (demo?.assignedTeacherId ? 'Assigned teacher' : '—'),
+        createdAtMs,
         updatedAtMs: Math.max(
           toMs(lead?.updatedAt || lead?.createdAt),
           toMs(demo?.lastUpdatedAt || demo?.createdAt),
@@ -442,16 +527,29 @@ export default function LeadsInquiriesWorkspaceV2({
     return next;
   }, [demoPhones, demos, leads]);
 
+  const monthOptions = useMemo(
+    () =>
+      Array.from(new Set(rows.map((row) => monthKeyFromMs(row.createdAtMs)).filter(Boolean)))
+        .sort((a, b) => b.localeCompare(a))
+        .map((value) => ({ value, label: formatMonthKey(value) })),
+    [rows],
+  );
+
   const filteredRows = useMemo(() => {
     const needle = search.trim().toLowerCase();
+    const fromMs = dateBoundaryMs(dateFrom);
+    const toMsInclusive = dateBoundaryMs(dateTo, true);
     return rows.filter((row) => {
+      if (monthFilter !== 'all' && monthKeyFromMs(row.createdAtMs) !== monthFilter) return false;
+      if (fromMs && row.createdAtMs < fromMs) return false;
+      if (toMsInclusive && row.createdAtMs > toMsInclusive) return false;
       if (!needle) return true;
       return [row.parentName, row.childName, row.parentPhone, row.course, row.source, row.teacherName, row.statusLabel]
         .join(' ')
         .toLowerCase()
         .includes(needle);
     });
-  }, [rows, search]);
+  }, [dateFrom, dateTo, monthFilter, rows, search]);
 
   const counts = useMemo(
     () => filteredRows.reduce(
@@ -488,6 +586,17 @@ export default function LeadsInquiriesWorkspaceV2({
       return a.updatedAtMs - b.updatedAtMs;
     });
   }, [bucket, filteredRows]);
+
+  const filtersActive = Boolean(
+    search.trim() || monthFilter !== 'all' || dateFrom || dateTo,
+  );
+
+  const clearFilters = () => {
+    setSearch('');
+    setMonthFilter('all');
+    setDateFrom('');
+    setDateTo('');
+  };
 
   const openAssign = (row: SimpleRow) => {
     if (!row.demo) return;
@@ -571,6 +680,107 @@ export default function LeadsInquiriesWorkspaceV2({
     }
   };
 
+  const openEdit = (row: SimpleRow) => {
+    setEditRow(row);
+    setEditForm({
+      parentName: row.parentName === '—' ? '' : row.parentName,
+      parentPhone: row.parentPhone === '—' ? '' : row.parentPhone,
+      parentEmail: row.lead?.parentEmail || '',
+      childName: row.childName === '—' ? '' : row.childName,
+      childAge:
+        typeof row.demo?.childAge === 'number'
+          ? String(row.demo.childAge)
+          : typeof row.lead?.childAge === 'number'
+            ? String(row.lead.childAge)
+            : '',
+      childGrade: normalizeText(row.demo?.childGrade || row.lead?.childGrade),
+      course: row.course === '—' ? '' : row.course,
+      source: row.source === '—' ? 'Manual' : row.source,
+      preferredTimingText: normalizeText(row.demo?.preferredDateTimeText || row.lead?.preferredTimingText),
+      timezone: normalizeText(row.demo?.timezone || row.lead?.timezone) || 'IST',
+      notes: normalizeText(row.demo?.adminNotes || row.lead?.notes),
+    });
+  };
+
+  const submitEdit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!editRow) return;
+    if (
+      !editForm.parentName.trim() ||
+      !editForm.parentPhone.trim() ||
+      !editForm.childName.trim() ||
+      !editForm.course.trim()
+    ) {
+      toast({
+        title: 'Required details missing',
+        description: 'Parent name, phone, child name and course are required.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const ageText = editForm.childAge.trim();
+    const childAge = ageText ? Number(ageText) : null;
+    if (ageText && (!Number.isFinite(childAge) || Number(childAge) < 0)) {
+      toast({ title: 'Enter a valid child age', variant: 'destructive' });
+      return;
+    }
+
+    setEditSaving(true);
+    try {
+      await adminUpdateLeadWorkflowRecord({
+        leadId: editRow.lead?.id || null,
+        demoId: editRow.demo?.id || null,
+        parentName: editForm.parentName.trim(),
+        parentPhone: editForm.parentPhone.trim(),
+        parentEmail: editForm.parentEmail.trim() || null,
+        childName: editForm.childName.trim(),
+        childAge,
+        childGrade: editForm.childGrade.trim() || null,
+        course: editForm.course.trim(),
+        source: editForm.source.trim() || null,
+        preferredTimingText: editForm.preferredTimingText.trim() || null,
+        timezone: editForm.timezone.trim() || null,
+        notes: editForm.notes.trim() || null,
+      });
+      setEditRow(null);
+      toast({ title: 'Lead updated', description: 'The lead and linked demo details are now in sync.' });
+    } catch (error: any) {
+      toast({
+        title: 'Could not update lead',
+        description: error?.message || 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const deleteRow = async (row: SimpleRow) => {
+    if (deletingRowId) return;
+    const confirmed = window.confirm(
+      `Delete ${row.parentName} / ${row.childName} from Leads & Enquiries?\n\nThis removes the lead from all four buckets. Demo audit and financial history are preserved.`,
+    );
+    if (!confirmed) return;
+
+    setDeletingRowId(row.id);
+    try {
+      await adminDeleteLeadWorkflowRecord({
+        leadId: row.lead?.id || null,
+        demoId: row.demo?.id || null,
+      });
+      toast({ title: 'Lead deleted', description: 'The record was removed from the active leads workflow.' });
+    } catch (error: any) {
+      toast({
+        title: 'Could not delete lead',
+        description: error?.message || 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeletingRowId(null);
+    }
+  };
+
   const renderAction = (row: SimpleRow) => {
     const action = actionForRow(row);
     if (action === 'awaiting_demo') {
@@ -646,14 +856,41 @@ export default function LeadsInquiriesWorkspaceV2({
       </Card>
 
       <Card className="p-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search parent, child, phone, course or teacher"
-            className="pl-9"
-          />
+        <div className="grid gap-3 lg:grid-cols-[minmax(260px,1fr)_180px_160px_160px_auto] lg:items-end">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search parent, child, phone, course or teacher"
+              className="pl-9"
+            />
+          </div>
+          <div>
+            <Label className="mb-1 block text-xs text-slate-500">Enquiry month</Label>
+            <Select value={monthFilter} onValueChange={setMonthFilter}>
+              <SelectTrigger aria-label="Filter by enquiry month">
+                <SelectValue placeholder="All months" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All months</SelectItem>
+                {monthOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="lead-date-from" className="mb-1 block text-xs text-slate-500">From date</Label>
+            <Input id="lead-date-from" type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} />
+          </div>
+          <div>
+            <Label htmlFor="lead-date-to" className="mb-1 block text-xs text-slate-500">To date</Label>
+            <Input id="lead-date-to" type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
+          </div>
+          <Button type="button" variant="outline" onClick={clearFilters} disabled={!filtersActive}>
+            Clear
+          </Button>
         </div>
       </Card>
 
@@ -704,6 +941,31 @@ export default function LeadsInquiriesWorkspaceV2({
                     </Button>
                   )}
                   {renderAction(row)}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        aria-label={`More actions for ${row.parentName}`}
+                        disabled={deletingRowId === row.id}
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => openEdit(row)}>
+                        <Pencil className="mr-2 h-4 w-4" /> Edit lead
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-red-600 focus:text-red-600"
+                        onClick={() => void deleteRow(row)}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete lead
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             ))}
@@ -742,7 +1004,7 @@ export default function LeadsInquiriesWorkspaceV2({
             <DialogTitle>{outcomeRow?.bucket === 'closed' ? 'Outcome' : 'Review teacher response & update'}</DialogTitle>
             <DialogDescription>
               {outcomeRow?.bucket === 'closed'
-                ? 'Closed records are read-only in the simple workflow.'
+                ? 'The final workflow decision is read-only here. Lead details can still be edited from the row menu.'
                 : 'Teacher completion is now in Admin Review. Save a final decision to close, or a follow-up decision to keep it here.'}
             </DialogDescription>
           </DialogHeader>
@@ -802,6 +1064,77 @@ export default function LeadsInquiriesWorkspaceV2({
               </div>
             </form>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(editRow)} onOpenChange={(open) => !open && setEditRow(null)}>
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit lead information</DialogTitle>
+            <DialogDescription>
+              Update the parent, child and enquiry details. Workflow status and teacher outcome are not changed here.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={submitEdit} className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <Label>Parent name *</Label>
+                <Input className="mt-1" value={editForm.parentName} onChange={(event) => setEditForm((current) => ({ ...current, parentName: event.target.value }))} />
+              </div>
+              <div>
+                <Label>Parent phone *</Label>
+                <Input className="mt-1" value={editForm.parentPhone} onChange={(event) => setEditForm((current) => ({ ...current, parentPhone: event.target.value }))} />
+              </div>
+              <div className="sm:col-span-2">
+                <Label>Parent email</Label>
+                <Input type="email" className="mt-1" value={editForm.parentEmail} onChange={(event) => setEditForm((current) => ({ ...current, parentEmail: event.target.value }))} />
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <Label>Child name *</Label>
+                <Input className="mt-1" value={editForm.childName} onChange={(event) => setEditForm((current) => ({ ...current, childName: event.target.value }))} />
+              </div>
+              <div>
+                <Label>Child age</Label>
+                <Input inputMode="numeric" className="mt-1" value={editForm.childAge} onChange={(event) => setEditForm((current) => ({ ...current, childAge: event.target.value }))} />
+              </div>
+              <div>
+                <Label>Child grade</Label>
+                <Input className="mt-1" value={editForm.childGrade} onChange={(event) => setEditForm((current) => ({ ...current, childGrade: event.target.value }))} />
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <Label>Course *</Label>
+                <Input className="mt-1" value={editForm.course} onChange={(event) => setEditForm((current) => ({ ...current, course: event.target.value }))} />
+              </div>
+              <div>
+                <Label>Source</Label>
+                <Input className="mt-1" value={editForm.source} onChange={(event) => setEditForm((current) => ({ ...current, source: event.target.value }))} />
+              </div>
+              <div className="sm:col-span-2">
+                <Label>Preferred timing</Label>
+                <Input className="mt-1" value={editForm.preferredTimingText} onChange={(event) => setEditForm((current) => ({ ...current, preferredTimingText: event.target.value }))} />
+              </div>
+              <div>
+                <Label>Timezone</Label>
+                <Input className="mt-1" value={editForm.timezone} onChange={(event) => setEditForm((current) => ({ ...current, timezone: event.target.value }))} />
+              </div>
+            </div>
+
+            <div>
+              <Label>Admin notes</Label>
+              <Textarea className="mt-1" rows={4} value={editForm.notes} onChange={(event) => setEditForm((current) => ({ ...current, notes: event.target.value }))} />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setEditRow(null)}>Cancel</Button>
+              <Button type="submit" disabled={editSaving}>{editSaving ? 'Saving…' : 'Save changes'}</Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
