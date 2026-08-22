@@ -1,6 +1,6 @@
 export type SimpleLeadBucket = 'open' | 'in_progress' | 'closed';
 export type SimpleLeadAction =
-  | 'work_lead'
+  | 'awaiting_demo'
   | 'follow_up_lead'
   | 'assign_teacher'
   | 'wait_teacher'
@@ -47,15 +47,13 @@ export function resolveSimpleLeadBucket(input: SimpleLeadWorkflowInput): SimpleL
   const demoStatus = normalize(input.demoStatus);
   const conversionStatus = normalize(input.conversionStatus);
 
-  // Final admin decisions always win. A stale follow-up date or old demo status
-  // must never pull a closed lead back into an active queue.
+  // Final admin decisions always win. Stale demo/follow-up data must never reopen a closed lead.
   if (CLOSED_LEAD_STATUSES.has(leadStatus) || CLOSED_CONVERSION_STATUSES.has(conversionStatus)) {
     return 'closed';
   }
 
-  // Once a demo exists, its operational ownership is the source of truth. This
-  // prevents a pre-demo follow-up date from leaving a newly created open demo in
-  // the wrong bucket.
+  // The demo is the operational source of truth once it exists.
+  // Open means unassigned; assignment/completion moves the lead to In Progress automatically.
   if (input.hasDemo) {
     if (FOLLOW_UP_CONVERSION_STATUSES.has(conversionStatus)) return 'in_progress';
     if (demoStatus === 'assigned' || demoStatus === 'completed' || demoStatus === 'cancelled') {
@@ -64,9 +62,8 @@ export function resolveSimpleLeadBucket(input: SimpleLeadWorkflowInput): SimpleL
     return 'open';
   }
 
-  // A parent follow-up is active work even when no demo has been created yet.
+  // This is now only a short-lived synchronization state. New leads receive a demo automatically.
   if (input.hasFollowUp) return 'in_progress';
-
   return 'open';
 }
 
@@ -75,7 +72,7 @@ export function resolveSimpleLeadAction(input: SimpleLeadWorkflowInput): SimpleL
   const demoStatus = normalize(input.demoStatus);
 
   if (bucket === 'closed') return 'view_outcome';
-  if (!input.hasDemo) return input.hasFollowUp ? 'follow_up_lead' : 'work_lead';
+  if (!input.hasDemo) return input.hasFollowUp ? 'follow_up_lead' : 'awaiting_demo';
   if (demoStatus === 'open') return 'assign_teacher';
   if (demoStatus === 'assigned') return 'wait_teacher';
   return 'review_outcome';
@@ -95,8 +92,6 @@ export function resolveSimpleStatusLabel(input: SimpleLeadWorkflowInput): string
     return 'Closed';
   }
 
-  // Admin follow-up decisions are more meaningful than the underlying completed
-  // demo status, so show them first instead of reverting to "Teacher response ready".
   if (conversionStatus === 'interested') return 'Interested — follow up';
   if (conversionStatus === 'follow_up_later') return 'Follow up later';
 
@@ -108,5 +103,5 @@ export function resolveSimpleStatusLabel(input: SimpleLeadWorkflowInput): string
     return 'In progress';
   }
 
-  return input.hasFollowUp ? 'Parent follow-up' : 'New enquiry';
+  return input.hasFollowUp ? 'Parent follow-up' : 'Preparing demo request';
 }
