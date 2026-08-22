@@ -126,6 +126,9 @@ export const onDemoLeadLifecycleWrite = onDocumentWritten(
 
     const before = change.before.exists ? (change.before.data() || {}) : {};
     const after = change.after.data() || {};
+    // Archived demos are intentionally removed from the active lead workflow. Do not
+    // recreate a deleted lead when an admin archives its linked demo for audit history.
+    if (after.archived === true) return;
     const db = admin.firestore();
     const demoRef = db.collection('demoSessions').doc(demoId);
     const privateRef = db.collection('demoSessionsPrivate').doc(demoId);
