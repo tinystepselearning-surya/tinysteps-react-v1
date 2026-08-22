@@ -2,8 +2,9 @@ name: Temporary parent worksheets branch patch
 
 on:
   push:
-    branches:
-      - feature/parent-worksheets-library
+    branches: [feature/parent-worksheets-library]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: write
@@ -19,48 +20,49 @@ jobs:
           ref: feature/parent-worksheets-library
           fetch-depth: 0
 
-      - name: Wire Worksheets into ParentDashboard
+      - name: Wire standalone Worksheets tab
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
-
           path = Path('src/pages/parent/ParentDashboard.tsx')
           text = path.read_text()
 
-          def replace_once(old: str, new: str, label: str):
+          def replace_once(old, new, label):
               global text
               if old not in text:
-                  raise SystemExit(f'Could not find expected ParentDashboard fragment: {label}')
+                  raise SystemExit(f'Missing expected fragment: {label}')
               text = text.replace(old, new, 1)
 
-          replace_once(
-              '  ExternalLink,\n  Gamepad2,',
-              '  ExternalLink,\n  FileSpreadsheet,\n  Gamepad2,',
-              'FileSpreadsheet icon import',
-          )
-
+          replace_once('  ExternalLink,\n  Gamepad2,', '  ExternalLink,\n  FileSpreadsheet,\n  Gamepad2,', 'icon import')
           replace_once(
               '  { id: "skills", label: "Skills", icon: Sparkles },\n  { id: "classes", label: "Classes", icon: CalendarDays },',
               '  { id: "skills", label: "Skills", icon: Sparkles },\n  { id: "worksheets", label: "Worksheets", icon: FileSpreadsheet },\n  { id: "classes", label: "Classes", icon: CalendarDays },',
-              'desktop parent navigation',
+              'parent navigation',
           )
-
+          replace_once('    "skills",\n    "classes",', '    "skills",\n    "worksheets",\n    "classes",', 'safe tabs')
           replace_once(
-              '    "skills",\n    "classes",',
-              '    "skills",\n    "worksheets",\n    "classes",',
-              'safe tab list',
+              '    activeTab === "skills" ||\n    activeTab === "classes" ||',
+              '    activeTab === "skills" ||\n    activeTab === "worksheets" ||\n    activeTab === "classes" ||',
+              'enrollment loading gate',
+          )
+          replace_once(
+              '    enabled: !!user?.uid && !!selectedKidId && activeTab === "classes",\n    staleTime: 5 * 60 * 1000,',
+              '    enabled: !!user?.uid && !!selectedKidId && activeTab === "worksheets",\n    staleTime: 5 * 60 * 1000,',
+              'worksheet query gate',
           )
 
-          worksheet_resource = '''    {
+          old_resource = '''    {
               id: "worksheets" as const,
               label: "Worksheets",
               description: "Practice resources shared by Tiny Steps.",
               count: parentWorksheetsQuery.isLoading ? null : visibleParentWorksheets.length,
             },
 '''
-          if worksheet_resource in text:
-              text = text.replace(worksheet_resource, '', 1)
+          if old_resource not in text:
+              raise SystemExit('Missing old Classes worksheet resource')
+          text = text.replace(old_resource, '', 1)
+          text = text.replace('    parentWorksheetsQuery.isLoading,\n    visibleParentWorksheets.length,\n', '', 1)
 
           marker = '        {/* Classes tab: canonical sessions bucketed for parent review */}'
           worksheet_tab = '''        {/* Worksheets tab: parent-friendly lesson practice library */}
@@ -77,34 +79,37 @@ jobs:
 
 '''
           if marker not in text:
-              raise SystemExit('Could not find Classes tab marker')
+              raise SystemExit('Missing Classes tab marker')
           text = text.replace(marker, worksheet_tab + marker, 1)
+
+          old_resource_content = '''              resourceContent={classesView === "worksheets" ? (
+              <ParentWorksheetLibrary
+                items={visibleParentWorksheets}
+                loading={parentWorksheetsQuery.isLoading}
+                refreshing={parentWorksheetsQuery.isFetching}
+                onRefresh={() => void parentWorksheetsQuery.refetch()}
+              />
+            ) : classesView === "calendar" ? (
+'''
+          if old_resource_content not in text:
+              raise SystemExit('Missing old Classes worksheet content')
+          text = text.replace(old_resource_content, '              resourceContent={classesView === "calendar" ? (\n', 1)
 
           path.write_text(text)
           PY
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22.x
           cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Type check
-        run: npm run typecheck
-
-      - name: Run parent worksheet tests
-        run: npx vitest run src/tests/lib/parentWorksheets.spec.ts src/tests/pages/parent/ParentDashboardVisualContracts.spec.ts
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npx vitest run src/tests/lib/parentWorksheets.spec.ts src/tests/pages/parent/ParentDashboardVisualContracts.spec.ts
 
       - name: Commit ParentDashboard wiring
         shell: bash
         run: |
-          if git diff --quiet -- src/pages/parent/ParentDashboard.tsx; then
-            echo "No ParentDashboard changes to commit."
-            exit 0
-          fi
+          if git diff --quiet -- src/pages/parent/ParentDashboard.tsx; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/pages/parent/ParentDashboard.tsx
