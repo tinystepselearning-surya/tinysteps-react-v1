@@ -110,6 +110,29 @@ describe("parent worksheet helpers", () => {
     ]));
   });
 
+  it("sorts lesson groups in natural numeric order", () => {
+    const make = (lessonNumber: number) => toParentWorksheetItem(`sheet-${lessonNumber}`, {
+      title: `Practice ${lessonNumber}`,
+      url: "https://example.com/file.pdf",
+      lessonId: `lesson-${lessonNumber}`,
+      lessonTitle: `Lesson-${lessonNumber}`,
+      lessonFolderTitle: `Lesson-${lessonNumber}`,
+      courseId: "phonics-foundations",
+      courseTitle: "Phonics Foundations",
+      targetCourseIds: ["phonics-foundations"],
+    });
+
+    const groups = groupParentWorksheets([make(12), make(2), make(11), make(1), make(10), make(3)]);
+    expect(groups.map((group) => group.lessonTitle)).toEqual([
+      "Lesson-1",
+      "Lesson-2",
+      "Lesson-3",
+      "Lesson-10",
+      "Lesson-11",
+      "Lesson-12",
+    ]);
+  });
+
   it("keeps lessonless records in an explicit legacy group", () => {
     const legacy = toParentWorksheetItem("legacy", { title: "Old sheet", url: "https://example.com/old.pdf", targetCourseIds: ["course-1"] });
     expect(groupParentWorksheets([legacy])[0]).toMatchObject({ legacy: true, lessonTitle: "Legacy / General Resources" });
