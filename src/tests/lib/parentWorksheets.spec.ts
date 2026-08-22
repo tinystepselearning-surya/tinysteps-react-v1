@@ -114,4 +114,28 @@ describe("parent worksheet helpers", () => {
     const legacy = toParentWorksheetItem("legacy", { title: "Old sheet", url: "https://example.com/old.pdf", targetCourseIds: ["course-1"] });
     expect(groupParentWorksheets([legacy])[0]).toMatchObject({ legacy: true, lessonTitle: "Legacy / General Resources" });
   });
+
+  it("sorts lesson groups in natural numeric order instead of lexicographic order", () => {
+    const make = (lessonNumber: number) => toParentWorksheetItem(`worksheet-${lessonNumber}`, {
+      title: `Worksheet ${lessonNumber}`,
+      url: "https://example.com/file.pdf",
+      lessonId: `lesson-${lessonNumber}`,
+      lessonTitle: `Lesson-${lessonNumber}`,
+      lessonFolderTitle: "Foundation Phonics",
+      targetCourseIds: ["phonics-foundations"],
+      courseId: "phonics-foundations",
+      courseTitle: "Phonics Foundations",
+    });
+
+    const groups = groupParentWorksheets([make(11), make(2), make(12), make(1), make(10), make(3)]);
+
+    expect(groups.map((group) => group.lessonTitle)).toEqual([
+      "Lesson-1",
+      "Lesson-2",
+      "Lesson-3",
+      "Lesson-10",
+      "Lesson-11",
+      "Lesson-12",
+    ]);
+  });
 });
