@@ -16,9 +16,15 @@ describe('ParentWorksheetLibrary', () => {
     render(<ParentWorksheetLibrary items={[item]} loading={false} onRefresh={vi.fn()} />);
     expect(screen.getByText('Lesson 6')).toBeInTheDocument();
     expect(screen.getByText('Digraphs — sh and th')).toBeInTheDocument();
-    expect(screen.getByText('Digraph practice')).toBeInTheDocument();
-    expect(screen.getByText('Homework')).toBeInTheDocument();
+    expect(screen.queryByText('Digraph practice')).not.toBeInTheDocument();
+    expect(screen.queryByText('Homework')).not.toBeInTheDocument();
+    expect(screen.queryByText('Read each word aloud.')).not.toBeInTheDocument();
+    expect(screen.queryByText('1 worksheet')).not.toBeInTheDocument();
     expect(screen.queryByText('internal-firestore-id')).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Find a worksheet'), { target: { value: 'Digraph practice' } });
+    expect(screen.getByText('Lesson 6')).toBeInTheDocument();
+
     fireEvent.click(screen.getByRole('button', { name: /open/i }));
     fireEvent.click(screen.getByRole('button', { name: /download/i }));
     expect(open).toHaveBeenCalledTimes(2);
