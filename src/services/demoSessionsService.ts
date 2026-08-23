@@ -1,5 +1,6 @@
 import {
   collection,
+  documentId,
   onSnapshot,
   query,
   where,
@@ -27,6 +28,7 @@ import type {
 
 const DEMO_SESSIONS_COLLECTION = 'demoSessions';
 const DEMO_SESSIONS_PRIVATE_COLLECTION = 'demoSessionsPrivate';
+const FIRESTORE_IN_QUERY_CHUNK_SIZE = 30;
 
 const timestampToMillis = (value: any): number => {
   if (!value) return 0;
@@ -42,6 +44,15 @@ const toDemoSession = (id: string, data: Record<string, unknown>): DemoSession =
   id,
   ...(data as Omit<DemoSession, 'id'>),
 });
+
+const chunkUniqueIds = (values: string[], size = FIRESTORE_IN_QUERY_CHUNK_SIZE): string[][] => {
+  const unique = Array.from(new Set(values.map((value) => String(value || '').trim()).filter(Boolean)));
+  const chunks: string[][] = [];
+  for (let index = 0; index < unique.length; index += size) {
+    chunks.push(unique.slice(index, index + size));
+  }
+  return chunks;
+};
 
 export interface DemoPhoneConflictCheckResult {
   ok: boolean;
@@ -134,6 +145,57 @@ export function listenAllDemoSessions(
   );
 }
 
+/**
+ * Realtime listener for only the demo documents currently needed by an operational UI.
+ * The simple Leads & Enquiries workspace uses this instead of listening to the complete
+ * historical demoSessions collection.
+ */
+export function listenDemoSessionsByIds(
+  demoIds: string[],
+  onData: (sessions: DemoSession[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  const chunks = chunkUniqueIds(demoIds);
+  if (chunks.length === 0) {
+    onData([]);
+    return () => {};
+  }
+
+  const rowsByChunk = new Map<number, DemoSession[]>();
+  const readyChunks = new Set<number>();
+  const publish = () => {
+    if (readyChunks.size < chunks.length) return;
+    const merged = new Map<string, DemoSession>();
+    rowsByChunk.forEach((rows) => rows.forEach((row) => merged.set(row.id, row)));
+    onData(Array.from(merged.values()).sort(sortByCreatedAtDesc));
+  };
+
+  const stops = chunks.map((ids, chunkIndex) =>
+    onSnapshot(
+      query(
+        collection(db, DEMO_SESSIONS_COLLECTION),
+        where(documentId(), 'in', ids),
+      ),
+      (snapshot) => {
+        rowsByChunk.set(
+          chunkIndex,
+          snapshot.docs.map((snap) => toDemoSession(snap.id, snap.data())),
+        );
+        readyChunks.add(chunkIndex);
+        publish();
+      },
+      (error) => {
+        rowsByChunk.set(chunkIndex, []);
+        readyChunks.add(chunkIndex);
+        onError?.(error as Error);
+        publish();
+      },
+    ),
+  );
+
+  return () => stops.forEach((stop) => stop());
+}
+
 export function listenOpenDemoSessions(
   onData: (sessions: DemoSession[]) => void,
   onError?: (error: Error) => void,
@@ -185,6 +247,59 @@ export function listenDemoSessionPrivatePhones(
     },
     (error) => onError?.(error as Error),
   );
+}
+
+/**
+ * Private demo details are intentionally scoped to visible/current demo IDs. This keeps
+ * phone identity recovery available for legacy edge cases without subscribing admins to
+ * every historical private demo document.
+ */
+export function listenDemoSessionPrivatePhonesByIds(
+  demoIds: string[],
+  onData: (phoneMap: Record<string, string>) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  const chunks = chunkUniqueIds(demoIds);
+  if (chunks.length === 0) {
+    onData({});
+    return () => {};
+  }
+
+  const phoneMapsByChunk = new Map<number, Record<string, string>>();
+  const readyChunks = new Set<number>();
+  const publish = () => {
+    if (readyChunks.size < chunks.length) return;
+    const merged: Record<string, string> = {};
+    phoneMapsByChunk.forEach((phoneMap) => Object.assign(merged, phoneMap));
+    onData(merged);
+  };
+
+  const stops = chunks.map((ids, chunkIndex) =>
+    onSnapshot(
+      query(
+        collection(db, DEMO_SESSIONS_PRIVATE_COLLECTION),
+        where(documentId(), 'in', ids),
+      ),
+      (snapshot) => {
+        const phoneMap: Record<string, string> = {};
+        snapshot.docs.forEach((snap) => {
+          const data = snap.data() as { parentPhone?: string };
+          if (typeof data.parentPhone === 'string') phoneMap[snap.id] = data.parentPhone;
+        });
+        phoneMapsByChunk.set(chunkIndex, phoneMap);
+        readyChunks.add(chunkIndex);
+        publish();
+      },
+      (error) => {
+        phoneMapsByChunk.set(chunkIndex, {});
+        readyChunks.add(chunkIndex);
+        onError?.(error as Error);
+        publish();
+      },
+    ),
+  );
+
+  return () => stops.forEach((stop) => stop());
 }
 
 interface ClaimDemoSessionPayload {
