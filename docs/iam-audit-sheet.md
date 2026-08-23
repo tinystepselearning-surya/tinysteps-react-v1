@@ -10,6 +10,7 @@ Target principal audited:
 |---|---|---|---|---|---|
 | github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/cloudfunctions.developer` | project `tinysteps-react-v1` | deploy/update gen2 functions | keep | yes (manual deploy + smoke checks) |
 | github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/cloudscheduler.admin` | project `tinysteps-react-v1` | manage scheduled function jobs during deploy | keep (review later for narrower custom role) | yes (scheduled functions deploy verified) |
+| github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/datastore.indexAdmin` | project `tinysteps-react-v1` | list/create and monitor required Firestore composite indexes; no document access | keep | yes (two dedicated workflow runs; create/READY then READY no-mutation) |
 | github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/datastore.viewer` | project `tinysteps-react-v1` | Firebase deploy analysis for Firestore metadata | keep (review later if removable) | yes (deploy + trigger checks) |
 | github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/firebaseauth.admin` | project `tinysteps-react-v1` | currently granted; functional need for deploy not yet proven | narrow/remove candidate | yes (deploy succeeded with role still present) |
 | github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/firebasehosting.admin` | project `tinysteps-react-v1` | Firebase Hosting deploy action | keep | yes (no regressions in function deploy workflow) |
@@ -28,5 +29,5 @@ Target principal audited:
 
 ## Notes
 
-- No additional project-level role bindings were found for this principal beyond the roles listed above.
+- No additional current project-level role bindings were found beyond the roles in the Project-level roles table.
 - A follow-up hardening pass should test removing `roles/firebaseauth.admin` and possibly `roles/datastore.viewer` one at a time through CI deploy verification.
