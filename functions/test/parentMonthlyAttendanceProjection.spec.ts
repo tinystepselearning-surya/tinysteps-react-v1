@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  MAX_PARENT_HISTORY_COMPATIBILITY_SESSIONS,
   MAX_PARENT_MONTH_ATTENDANCE_SESSIONS,
   buildParentMonthAttendanceProjection,
   collectParentMonthAttendanceTargets,
+  isMissingAttendanceIndexError,
   resolveSessionAttendanceTarget,
   resolveSessionMonthKey,
   shouldRefreshParentMonthAttendance,
@@ -184,8 +186,20 @@ describe('parent monthly attendance projection', () => {
     expect(projection.totals.completed).toBe(1);
   });
 
-  it('keeps an explicit hard cap on one parent-month source query', () => {
+  it('uses compatibility reads only for a missing composite-index failure', () => {
+    expect(isMissingAttendanceIndexError({ code: 9, message: 'FAILED_PRECONDITION' })).toBe(true);
+    expect(isMissingAttendanceIndexError({ code: 'failed-precondition' })).toBe(true);
+    expect(isMissingAttendanceIndexError({ message: 'The query requires an index.' })).toBe(true);
+    expect(isMissingAttendanceIndexError({ code: 'permission-denied' })).toBe(false);
+    expect(isMissingAttendanceIndexError(new Error('network timeout'))).toBe(false);
+  });
+
+  it('keeps explicit hard caps on parent-month and compatibility source queries', () => {
     expect(MAX_PARENT_MONTH_ATTENDANCE_SESSIONS).toBeGreaterThanOrEqual(100);
     expect(MAX_PARENT_MONTH_ATTENDANCE_SESSIONS).toBeLessThanOrEqual(500);
+    expect(MAX_PARENT_HISTORY_COMPATIBILITY_SESSIONS).toBeGreaterThanOrEqual(
+      MAX_PARENT_MONTH_ATTENDANCE_SESSIONS,
+    );
+    expect(MAX_PARENT_HISTORY_COMPATIBILITY_SESSIONS).toBeLessThanOrEqual(500);
   });
 });
