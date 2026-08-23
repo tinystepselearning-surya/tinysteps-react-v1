@@ -7,6 +7,8 @@ import { onDemoLeadLifecycleWrite, onLeadCreatedCanonicalize } from '../src/lead
 
 const describeEmulator = process.env.FIRESTORE_EMULATOR_HOST ? describe : describe.skip;
 const db = admin.firestore();
+const timestampForTest = (iso: string) =>
+  admin.firestore.Timestamp.fromDate(new Date(iso));
 
 const clearCollection = async (path: string) => {
   const snapshot = await db.collection(path).get();
@@ -203,6 +205,52 @@ describeEmulator('canonical lead funnel emulator integrity', () => {
       data: { before, after },
     } as never);
     expect((await leadRef.get()).data()?.receivedAt.toMillis()).toBe(original.toMillis());
+  });
+
+  it('does not rewrite a linked lead when the same demo lifecycle event is delivered twice', async () => {
+    const leadRef = db.collection('leads').doc('idempotent-demo-lead');
+    const demoRef = db.collection('demoSessions').doc('idempotent-demo');
+    await Promise.all([
+      leadRef.set({
+        receivedAt: timestampForTest('2026-08-01T06:30:00.000Z'),
+        parentName: 'Parent',
+        childName: 'Child',
+        source: 'website',
+        lifecycleVersion: 2,
+        status: 'demo_pending_schedule',
+      }),
+      db.collection('demoSessionsPrivate').doc(demoRef.id).set({ parentPhone: '9999900000' }),
+      demoRef.set({
+        leadId: leadRef.id,
+        parentName: 'Parent',
+        childName: 'Child',
+        childGrade: '1',
+        courseInterested: 'Phonics',
+        source: 'Website',
+        status: 'open',
+        createdAt: timestampForTest('2026-08-01T06:30:00.000Z'),
+      }),
+    ]);
+    const before = await demoRef.get();
+    await demoRef.update({
+      status: 'assigned',
+      assignedAt: timestampForTest('2026-08-23T07:00:00.000Z'),
+      assignedTeacherId: 'teacher-1',
+      assignedTeacherName: 'Teacher One',
+    });
+    const after = await demoRef.get();
+    const repeatedEvent = { params: { demoId: demoRef.id }, data: { before, after } } as never;
+    await onDemoLeadLifecycleWrite.run(repeatedEvent);
+    const firstWrite = await leadRef.get();
+    await onDemoLeadLifecycleWrite.run(repeatedEvent);
+    const secondWrite = await leadRef.get();
+
+    expect(secondWrite.updateTime?.toMillis()).toBe(firstWrite.updateTime?.toMillis());
+    expect(secondWrite.data()).toMatchObject({
+      status: 'demo_booked',
+      demoSessionId: demoRef.id,
+      demoStatus: 'assigned',
+    });
   });
 
   it.each(['parent_no_show', 'teacher_no_show', 'reschedule_requested'])(

@@ -6,10 +6,6 @@ import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
-// Emergency containment for the 2026-08-23 Firestore event storm. Keep the
-// exported trigger deployed so queued Eventarc deliveries are acknowledged,
-// but do not let them perform reads or writes while the incident is contained.
-const LEAD_DEMO_AUTOMATION_INCIDENT_GUARD = true;
 const DEDUPE_VERSION = 1;
 const WEBSITE_SOURCE = 'website';
 const DEMO_CONFLICT = 'duplicate_has_unmigrated_demo_links';
@@ -192,10 +188,25 @@ const clearConflictPatch = (): Record<string, unknown> => ({
   dedupeConflictAt: admin.firestore.FieldValue.delete(),
 });
 
+export const hasCompleteWebsiteCanonicalMetadata = (
+  leadId: string,
+  identityKey: string,
+  lead: Record<string, unknown>,
+): boolean => (
+  cleanText(lead.dedupeCanonicalLeadId, 120) === leadId &&
+  cleanText(lead.dedupeIdentityKey, 160) === identityKey &&
+  lead.dedupeVersion === DEDUPE_VERSION &&
+  typeof lead.inquiryCount === 'number' &&
+  Boolean(lead.firstInquiryAt) &&
+  Boolean(lead.lastInquiryAt) &&
+  Array.isArray(lead.programInterests) &&
+  Array.isArray(lead.interestTracks) &&
+  !cleanText(lead.dedupeConflict, 160)
+);
+
 export const onWebsiteLeadIdentityWrite = onDocumentWritten(
   { document: 'leads/{leadId}', region: REGION },
   async (event) => {
-    if (LEAD_DEMO_AUTOMATION_INCIDENT_GUARD) return;
     const change = event.data;
     if (!change || !change.after.exists) return;
 
@@ -228,6 +239,17 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
 
       const currentIdentityKey = identityKeyForLead(current);
       if (currentIdentityKey !== identityKey) return { action: 'identity_changed' as const };
+
+      // An update to an already-canonical lead is not a new enquiry. This fresh-state
+      // check also makes delayed/duplicate Eventarc deliveries a read-only no-op and,
+      // critically, avoids rewriting capturedAt on every unrelated lead event.
+      if (
+        change.before.exists &&
+        previousIdentityKey === identityKey &&
+        hasCompleteWebsiteCanonicalMetadata(leadId, identityKey, current)
+      ) {
+        return { action: 'canonical_noop' as const, canonicalLeadId: leadId };
+      }
 
       const identitySnap = await tx.get(identityRef);
       const indexedCanonicalId = identitySnap.exists

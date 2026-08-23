@@ -297,13 +297,17 @@ describeEmulator('website lead deduplication transaction integrity', () => {
     await db.collection('leads').doc(leadId).set(lead('9876543224', 'Child', at('2026-08-10T10:12:00Z')));
     await runDedupe(leadId);
     const initialized = await db.collection('leads').doc(leadId).get();
+    const inquiryRef = initialized.ref.collection('inquiries').doc(leadId);
+    const initializedInquiry = await inquiryRef.get();
     const updateTime = initialized.updateTime?.toMillis();
+    const inquiryUpdateTime = initializedInquiry.updateTime?.toMillis();
     await onWebsiteLeadIdentityWrite.run({
       params: { leadId }, data: { before: initialized, after: initialized },
     } as never);
     const repeated = await initialized.ref.get();
     expect(repeated.updateTime?.toMillis()).toBe(updateTime);
     expect(repeated.data()?.inquiryCount).toBe(1);
+    expect((await inquiryRef.get()).updateTime?.toMillis()).toBe(inquiryUpdateTime);
   });
 
   it('does not merge through an identity index that points at a mismatched canonical', async () => {
