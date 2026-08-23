@@ -77,8 +77,9 @@ dist/assets/
 /dataconnect/.dataconnect/
 **/.dataconnect/
 
-# Playwright auth + reports
+# Playwright auth + generated reports/snapshots
 .auth/
+.playwright-cli/
 playwright-report/
 test-results/
 
