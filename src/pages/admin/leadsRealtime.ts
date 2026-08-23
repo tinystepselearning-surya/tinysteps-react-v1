@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   collection,
-  documentId,
   getCountFromServer,
   getDocs,
   limit,
@@ -68,6 +67,9 @@ export interface UseRealtimeLeadsOptions<T extends RealtimeLeadRecord> {
 }
 
 const normalizeText = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
+const closedStatusSet = new Set<string>(CLOSED_LEAD_STATUSES);
+const isClosedLeadDoc = (docSnapshot: QueryDocumentSnapshot<DocumentData>): boolean =>
+  closedStatusSet.has(normalizeText(docSnapshot.data().status).toLowerCase());
 
 const toLeadRecord = <T extends RealtimeLeadRecord>(docSnapshot: QueryDocumentSnapshot<DocumentData>): T => ({
   id: docSnapshot.id,
@@ -175,7 +177,6 @@ export function useRealtimeLeads<T extends RealtimeLeadRecord>({
   const pendingNotificationsRef = useRef(new Map<string, T>());
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closedCursorRef = useRef<QueryDocumentSnapshot<DocumentData> | null>(null);
-  const hasLoadedOlderClosedRef = useRef(false);
 
   onErrorRef.current = onError;
   onNewWebsiteLeadsRef.current = onNewWebsiteLeads;
@@ -310,7 +311,6 @@ export function useRealtimeLeads<T extends RealtimeLeadRecord>({
     setClosedHistoryHasMore(false);
     setIsLoadingMoreClosed(false);
     closedCursorRef.current = null;
-    hasLoadedOlderClosedRef.current = false;
 
     if (!includeClosed) {
       setClosedLiveLeads([]);
@@ -319,23 +319,23 @@ export function useRealtimeLeads<T extends RealtimeLeadRecord>({
     }
 
     setClosedLoading(true);
-    const closedQuery = query(
+    // Deliberately order a bounded recent slice by updatedAt and filter terminal states
+    // locally. This avoids introducing a new composite index just to render history, while
+    // the authoritative closed total is still computed by an indexed aggregate query.
+    const recentHistoryQuery = query(
       collection(db, LEADS_COLLECTION),
-      where('status', 'in', [...CLOSED_LEAD_STATUSES]),
       orderBy('updatedAt', 'desc'),
-      orderBy(documentId(), 'desc'),
       limit(CLOSED_LEAD_PAGE_SIZE + 1),
     );
 
     const unsubscribe = onSnapshot(
-      closedQuery,
+      recentHistoryQuery,
       (snapshot) => {
-        const visibleDocs = snapshot.docs.slice(0, CLOSED_LEAD_PAGE_SIZE);
-        setClosedLiveLeads(visibleDocs.map((docSnapshot) => toLeadRecord<T>(docSnapshot)));
+        const pageDocs = snapshot.docs.slice(0, CLOSED_LEAD_PAGE_SIZE);
+        const closedDocs = pageDocs.filter(isClosedLeadDoc);
+        setClosedLiveLeads(closedDocs.map((docSnapshot) => toLeadRecord<T>(docSnapshot)));
         setClosedHistoryHasMore(snapshot.docs.length > CLOSED_LEAD_PAGE_SIZE);
-        if (!hasLoadedOlderClosedRef.current) {
-          closedCursorRef.current = visibleDocs.length > 0 ? visibleDocs[visibleDocs.length - 1] : null;
-        }
+        closedCursorRef.current = pageDocs.length > 0 ? pageDocs[pageDocs.length - 1] : null;
         setClosedLoading(false);
         void refreshClosedCount();
       },
@@ -355,19 +355,18 @@ export function useRealtimeLeads<T extends RealtimeLeadRecord>({
     try {
       const pageQuery = query(
         collection(db, LEADS_COLLECTION),
-        where('status', 'in', [...CLOSED_LEAD_STATUSES]),
         orderBy('updatedAt', 'desc'),
-        orderBy(documentId(), 'desc'),
         startAfter(closedCursorRef.current),
         limit(CLOSED_LEAD_PAGE_SIZE + 1),
       );
       const snapshot = await getDocs(pageQuery);
-      const visibleDocs = snapshot.docs.slice(0, CLOSED_LEAD_PAGE_SIZE);
-      const nextRows = visibleDocs.map((docSnapshot) => toLeadRecord<T>(docSnapshot));
+      const pageDocs = snapshot.docs.slice(0, CLOSED_LEAD_PAGE_SIZE);
+      const nextRows = pageDocs
+        .filter(isClosedLeadDoc)
+        .map((docSnapshot) => toLeadRecord<T>(docSnapshot));
       setClosedOlderLeads((current) => mergeLeadCollections(current, nextRows));
-      hasLoadedOlderClosedRef.current = hasLoadedOlderClosedRef.current || visibleDocs.length > 0;
-      if (visibleDocs.length > 0) {
-        closedCursorRef.current = visibleDocs[visibleDocs.length - 1];
+      if (pageDocs.length > 0) {
+        closedCursorRef.current = pageDocs[pageDocs.length - 1];
       }
       setClosedHistoryHasMore(snapshot.docs.length > CLOSED_LEAD_PAGE_SIZE);
     } catch (error) {
