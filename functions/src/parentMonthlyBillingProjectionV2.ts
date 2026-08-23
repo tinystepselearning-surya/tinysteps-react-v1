@@ -193,6 +193,10 @@ export function applyBillingProjectionMutation(
     tombstones.push({ id: mutation.chargeId, versionMs: incomingVersion });
   }
 
+  if (charges.length > MAX_PROJECTION_CHARGES) {
+    throw new ProjectionTooLargeError(charges.length);
+  }
+
   charges.sort((left, right) => left.id.localeCompare(right.id));
   tombstones = tombstones
     .sort((left, right) => right.versionMs - left.versionMs || left.id.localeCompare(right.id))
@@ -211,6 +215,9 @@ export function buildBillingProjectionState(
   rows: Array<{ id: string; versionMs: number; data: Record<string, unknown> }>,
   nowMs = Date.now(),
 ): BillingProjectionState {
+  if (rows.length > MAX_PROJECTION_CHARGES) {
+    throw new ProjectionTooLargeError(rows.length);
+  }
   return {
     schemaVersion: PROJECTION_SCHEMA_VERSION,
     charges: rows
@@ -231,6 +238,7 @@ function parseProjectionState(raw: unknown): BillingProjectionState | null {
   const data = raw as Record<string, unknown>;
   if (Number(data.schemaVersion) !== PROJECTION_SCHEMA_VERSION) return null;
   if (!Array.isArray(data.charges) || !Array.isArray(data.tombstones)) return null;
+  if (data.charges.length > MAX_PROJECTION_CHARGES) return null;
 
   const charges: StoredProjectionCharge[] = data.charges
     .filter((entry): entry is Record<string, unknown> => Boolean(entry && typeof entry === 'object'))
@@ -296,10 +304,6 @@ function snapshotVersionMs(snapshot: admin.firestore.DocumentSnapshot | undefine
   if (updateTime && typeof updateTime.toMillis === 'function') return updateTime.toMillis();
   const fallbackMs = Date.parse(String(fallbackTime || ''));
   return Number.isFinite(fallbackMs) ? fallbackMs : Date.now();
-}
-
-function projectionDocumentId(target: ParentMonthTarget): string {
-  return `${target.parentId}__${target.monthKey}`.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 500);
 }
 
 async function bootstrapProjection(
@@ -380,7 +384,9 @@ async function refreshProjectionTarget(
     .doc(target.monthKey);
   const projectionRef = db
     .collection('internalBillingProjections')
-    .doc(projectionDocumentId(target));
+    .doc(target.parentId)
+    .collection('months')
+    .doc(target.monthKey);
 
   try {
     await db.runTransaction(async (tx) => {
