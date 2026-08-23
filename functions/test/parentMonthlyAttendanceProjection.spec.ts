@@ -1,48 +1,31 @@
 import { describe, expect, it } from 'vitest';
 import {
-  applyAttendanceContribution,
-  rememberProcessedEvent,
+  MAX_PARENT_MONTH_ATTENDANCE_SESSIONS,
+  buildParentMonthAttendanceProjection,
+  collectParentMonthAttendanceTargets,
   resolveSessionAttendanceTarget,
   resolveSessionMonthKey,
   shouldRefreshParentMonthAttendance,
 } from '../src/parentMonthlyAttendanceProjection';
 
-const emptyState = () => ({
-  totals: {
-    total: 0,
-    completed: 0,
-    in_progress: 0,
-    scheduled: 0,
-    cancelled: 0,
-    no_show: 0,
-    reschedule_requested: 0,
-    other: 0,
-    upcoming: 0,
-    present: 0,
-    late: 0,
-    absent: 0,
-    attendanceMarked: 0,
-    attendancePct: 0,
-  },
-  byKid: {},
-});
-
 describe('parent monthly attendance projection', () => {
-  it('derives the session month from canonical date/startAt and never from updatedAt', () => {
+  it('derives class month from canonical date/startAt and never from generic updatedAt', () => {
     expect(resolveSessionMonthKey({ date: '2026-08-23' })).toBe('2026-08');
     expect(resolveSessionMonthKey({ startAt: '2026-09-01T00:00:00+05:30' })).toBe('2026-09');
+    expect(resolveSessionMonthKey({ monthKey: '2026-10' })).toBe('2026-10');
     expect(resolveSessionMonthKey({ updatedAt: '2027-01-01T00:00:00+05:30' })).toBeNull();
   });
 
-  it('builds a parent-month target only when both canonical parent and month are present', () => {
+  it('builds a parent-month target only when parent and scheduled month are resolvable', () => {
     expect(resolveSessionAttendanceTarget({ parentId: 'parent-1', date: '2026-08-20' })).toEqual({
       parentId: 'parent-1',
       monthKey: '2026-08',
     });
     expect(resolveSessionAttendanceTarget({ date: '2026-08-20' })).toBeNull();
+    expect(resolveSessionAttendanceTarget({ parentId: 'parent-1', updatedAt: '2026-08-20' })).toBeNull();
   });
 
-  it('skips metadata-only classSession writes', () => {
+  it('skips metadata-only classSession writes before any projection query is needed', () => {
     const before = {
       parentId: 'parent-1',
       date: '2026-08-20',
@@ -62,7 +45,7 @@ describe('parent monthly attendance projection', () => {
     expect(shouldRefreshParentMonthAttendance(before, after)).toBe(false);
   });
 
-  it('refreshes when attendance, lifecycle, time, kid or parent/month inputs change', () => {
+  it('refreshes when attendance, lifecycle, time, kid or parent/month ownership changes', () => {
     const base = {
       parentId: 'parent-1',
       date: '2026-08-20',
@@ -80,76 +63,129 @@ describe('parent monthly attendance projection', () => {
       }),
     ).toBe(true);
     expect(shouldRefreshParentMonthAttendance(base, { ...base, kidIds: ['kid-2'] })).toBe(true);
+    expect(
+      shouldRefreshParentMonthAttendance(base, {
+        ...base,
+        startAt: '2026-08-20T18:00:00+05:30',
+      }),
+    ).toBe(true);
     expect(shouldRefreshParentMonthAttendance(base, { ...base, date: '2026-09-01' })).toBe(true);
     expect(shouldRefreshParentMonthAttendance(base, { ...base, parentId: 'parent-2' })).toBe(true);
   });
 
-  it('applies a before-to-after delta without inflating the total session count', () => {
-    const state = emptyState();
-    const scheduled = {
-      status: 'scheduled',
-      kidIds: ['kid-1'],
-      startMs: Date.now() + 60_000,
-      upcoming: true,
-      attendanceByKid: { 'kid-1': '' },
-    };
-    const completedPresent = {
-      status: 'completed',
-      kidIds: ['kid-1'],
-      startMs: Date.now() - 60_000,
-      upcoming: false,
-      attendanceByKid: { 'kid-1': 'present' },
-    };
+  it('recomputes both old and new parent-months when a session moves', () => {
+    expect(
+      collectParentMonthAttendanceTargets(
+        { parentId: 'parent-1', date: '2026-08-31' },
+        { parentId: 'parent-2', date: '2026-09-01' },
+      ),
+    ).toEqual([
+      { parentId: 'parent-1', monthKey: '2026-08' },
+      { parentId: 'parent-2', monthKey: '2026-09' },
+    ]);
+  });
 
-    applyAttendanceContribution(state, scheduled, 1);
-    applyAttendanceContribution(state, scheduled, -1);
-    applyAttendanceContribution(state, completedPresent, 1);
+  it('deduplicates the target when a relevant change remains in the same parent-month', () => {
+    expect(
+      collectParentMonthAttendanceTargets(
+        { parentId: 'parent-1', date: '2026-08-20', status: 'scheduled' },
+        { parentId: 'parent-1', date: '2026-08-20', status: 'completed' },
+      ),
+    ).toEqual([{ parentId: 'parent-1', monthKey: '2026-08' }]);
+  });
 
-    expect(state.totals).toMatchObject({
+  it('preserves completed attendance and group-session counting semantics', () => {
+    const nowMs = Date.parse('2026-08-20T12:00:00Z');
+    const projection = buildParentMonthAttendanceProjection(
+      [
+        {
+          date: '2026-08-19',
+          startAt: '2026-08-19T17:00:00+05:30',
+          status: 'completed',
+          kidIds: ['kid-1', 'kid-2'],
+          attendance: {
+            'kid-1': { status: 'present' },
+            'kid-2': { status: 'absent' },
+          },
+        },
+      ],
+      '2026-08',
+      nowMs,
+    );
+
+    expect(projection.totals).toMatchObject({
+      total: 2,
+      completed: 2,
+      present: 1,
+      absent: 1,
+      attendanceMarked: 2,
+      attendancePct: 50,
+    });
+    expect(projection.byKid['kid-1']).toMatchObject({
       total: 1,
-      scheduled: 0,
-      upcoming: 0,
       completed: 1,
       present: 1,
-      attendanceMarked: 1,
       attendancePct: 100,
     });
-    expect(state.byKid['kid-1']).toMatchObject({
+    expect(projection.byKid['kid-2']).toMatchObject({
       total: 1,
       completed: 1,
-      present: 1,
-      attendancePct: 100,
+      absent: 1,
+      attendancePct: 0,
     });
   });
 
-  it('preserves group-session counting semantics and removes zeroed kid buckets', () => {
-    const state = emptyState();
-    const contribution = {
-      status: 'completed',
-      kidIds: ['kid-1', 'kid-2'],
-      startMs: Date.now() - 60_000,
-      upcoming: false,
-      attendanceByKid: {
-        'kid-1': 'present',
-        'kid-2': 'absent',
-      },
-    };
+  it('counts only future scheduled/in-progress sessions as upcoming', () => {
+    const nowMs = Date.parse('2026-08-20T12:00:00Z');
+    const projection = buildParentMonthAttendanceProjection(
+      [
+        {
+          date: '2026-08-20',
+          startAt: '2026-08-20T19:00:00+05:30',
+          status: 'scheduled',
+          kidId: 'kid-1',
+        },
+        {
+          date: '2026-08-20',
+          startAt: '2026-08-20T10:00:00+05:30',
+          status: 'scheduled',
+          kidId: 'kid-1',
+        },
+        {
+          date: '2026-08-21',
+          startAt: '2026-08-21T18:00:00+05:30',
+          status: 'in_progress',
+          kidId: 'kid-1',
+        },
+      ],
+      '2026-08',
+      nowMs,
+    );
 
-    applyAttendanceContribution(state, contribution, 1);
-    expect(state.totals).toMatchObject({ total: 2, completed: 2, present: 1, absent: 1 });
-
-    applyAttendanceContribution(state, contribution, -1);
-    expect(state.totals).toMatchObject({ total: 0, completed: 0, present: 0, absent: 0 });
-    expect(state.byKid).toEqual({});
+    expect(projection.totals).toMatchObject({
+      total: 3,
+      scheduled: 2,
+      in_progress: 1,
+      upcoming: 2,
+    });
   });
 
-  it('keeps a bounded replay-id window for idempotent Eventarc retries', () => {
-    let ids: string[] = [];
-    for (let i = 0; i < 140; i += 1) ids = rememberProcessedEvent(ids, `event-${i}`);
+  it('ignores records from a different month even if supplied to the pure aggregator', () => {
+    const projection = buildParentMonthAttendanceProjection(
+      [
+        { date: '2026-08-31', status: 'completed', kidId: 'kid-1' },
+        { date: '2026-09-01', status: 'completed', kidId: 'kid-1' },
+      ],
+      '2026-08',
+      Date.now(),
+    );
 
-    expect(ids).toHaveLength(128);
-    expect(ids[0]).toBe('event-12');
-    expect(ids.at(-1)).toBe('event-139');
-    expect(rememberProcessedEvent(ids, 'event-139')).toEqual(ids);
+    expect(projection.totals.total).toBe(1);
+    expect(projection.totals.completed).toBe(1);
+  });
+
+  it('keeps an explicit hard cap on one parent-month source query', () => {
+    expect(MAX_PARENT_MONTH_ATTENDANCE_SESSIONS).toBeGreaterThanOrEqual(100);
+    expect(MAX_PARENT_MONTH_ATTENDANCE_SESSIONS).toBeLessThanOrEqual(500);
   });
 });
