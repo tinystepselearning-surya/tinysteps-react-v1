@@ -51,11 +51,12 @@ const PAYMENT_PROJECTION_FIELDS = [
 ] as const;
 
 type ParentMonthTarget = { parentId: string; monthKey: string };
+type ProjectedChargeData = Omit<ParentMonthlyBillingChargeInput, 'id'>;
 
 type StoredProjectionCharge = {
   id: string;
   versionMs: number;
-  data: ParentMonthlyBillingChargeInput;
+  data: ProjectedChargeData;
 };
 
 type ProjectionTombstone = {
@@ -149,12 +150,12 @@ export function shouldRefreshPaymentProjection(
   return paymentProjectionSignature(beforeData) !== paymentProjectionSignature(afterData);
 }
 
-function pickChargeProjectionData(data: Record<string, unknown>): ParentMonthlyBillingChargeInput {
+function pickChargeProjectionData(data: Record<string, unknown>): ProjectedChargeData {
   const selected: Record<string, unknown> = {};
   CHARGE_PROJECTION_FIELDS.forEach((field) => {
     if (Object.prototype.hasOwnProperty.call(data, field)) selected[field] = data[field];
   });
-  return selected as ParentMonthlyBillingChargeInput;
+  return selected as ProjectedChargeData;
 }
 
 function belongsToTarget(
@@ -186,10 +187,7 @@ export function applyBillingProjectionMutation(
     charges.push({
       id: mutation.chargeId,
       versionMs: incomingVersion,
-      data: {
-        id: mutation.chargeId,
-        ...pickChargeProjectionData(mutation.afterData || {}),
-      },
+      data: pickChargeProjectionData(mutation.afterData || {}),
     });
   } else {
     tombstones.push({ id: mutation.chargeId, versionMs: incomingVersion });
@@ -219,10 +217,7 @@ export function buildBillingProjectionState(
       .map((row) => ({
         id: row.id,
         versionMs: Number.isFinite(row.versionMs) ? row.versionMs : 0,
-        data: {
-          id: row.id,
-          ...pickChargeProjectionData(row.data),
-        },
+        data: pickChargeProjectionData(row.data),
       }))
       .sort((left, right) => left.id.localeCompare(right.id)),
     tombstones: [],
@@ -242,7 +237,7 @@ function parseProjectionState(raw: unknown): BillingProjectionState | null {
     .map((entry) => ({
       id: normalizeText(entry.id),
       versionMs: normalizeAmount(entry.versionMs),
-      data: ((entry.data && typeof entry.data === 'object' ? entry.data : {}) as ParentMonthlyBillingChargeInput),
+      data: ((entry.data && typeof entry.data === 'object' ? entry.data : {}) as ProjectedChargeData),
     }))
     .filter((entry) => Boolean(entry.id));
   const tombstones: ProjectionTombstone[] = data.tombstones
