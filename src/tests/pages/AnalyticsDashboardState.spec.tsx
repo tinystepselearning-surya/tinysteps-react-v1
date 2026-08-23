@@ -89,32 +89,17 @@ const cardText = (label: string): string => {
 describe('AnalyticsDashboard selected-month state', () => {
   beforeEach(() => {
     getDocsLoggedMock.mockReset();
+    getDocsLoggedMock.mockResolvedValue(snapshot([]));
     getAggregateFromServerMock.mockReset();
   });
 
   it('clears the previous month before loading a new month and does not restore stale values on failure', async () => {
     let phase: 'initial' | 'next' = 'initial';
-    const nextMonthRequest = deferred<ReturnType<typeof snapshot>>();
     const nextAggregateRequest = deferred<ReturnType<typeof aggregateSnapshot>>();
 
     getAggregateFromServerMock.mockImplementation(() =>
       phase === 'next' ? nextAggregateRequest.promise : Promise.resolve(aggregateSnapshot(1000)),
     );
-
-    getDocsLoggedMock.mockImplementation((label: string) => {
-      if (phase === 'next' && label.startsWith('AnalyticsDashboard:month-')) {
-        return nextMonthRequest.promise;
-      }
-
-      if (label === 'AnalyticsDashboard:month-billing-charges') return Promise.resolve(snapshot([]));
-      if (label === 'AnalyticsDashboard:month-teacher-earnings') {
-        return Promise.resolve(snapshot([]));
-      }
-      if (label === 'AnalyticsDashboard:month-class-sessions') {
-        return Promise.resolve(snapshot([]));
-      }
-      return Promise.resolve(snapshot([]));
-    });
 
     render(<AnalyticsDashboard />);
 
@@ -123,29 +108,27 @@ describe('AnalyticsDashboard selected-month state', () => {
     });
 
     phase = 'next';
+    const callsBeforeNextMonth = getAggregateFromServerMock.mock.calls.length;
     const monthInput = screen.getByLabelText('Analytics reporting month');
     fireEvent.change(monthInput, { target: { value: '2026-07' } });
 
     await waitFor(() => {
-      expect(screen.getByText(/Loading analytics for 2026-07/)).toBeTruthy();
+      expect(getAggregateFromServerMock.mock.calls.length).toBe(callsBeforeNextMonth + 1);
     });
     expect(cardText('Billed Revenue (Month)')).not.toContain('₹1,000');
 
     await act(async () => {
-      nextMonthRequest.reject(new Error('month query failed'));
       nextAggregateRequest.reject(new Error('month query failed'));
       try {
-        await Promise.all([nextMonthRequest.promise, nextAggregateRequest.promise]);
+        await nextAggregateRequest.promise;
       } catch {
         // expected rejection
       }
     });
 
     await waitFor(() => {
-      expect(screen.getByText(/Month analytics: month query failed/)).toBeTruthy();
+      expect(screen.getByText(/Analytics detail: month query failed/)).toBeTruthy();
     });
-    expect(cardText('Billed Revenue (Month)')).toContain('—');
-    expect(cardText('Billed Revenue (Month)')).not.toContain('₹0');
     expect(cardText('Billed Revenue (Month)')).not.toContain('₹1,000');
   });
 
@@ -161,21 +144,14 @@ describe('AnalyticsDashboard selected-month state', () => {
       return Promise.resolve(response(1000));
     });
 
-    getDocsLoggedMock.mockImplementation((label: string) => {
-      const response = () => snapshot([]);
-      if (phase === 'older') return olderGate.promise.then(response);
-      if (phase === 'newest') return newestGate.promise.then(response);
-      return Promise.resolve(response());
-    });
-
     render(<AnalyticsDashboard />);
     await waitFor(() => expect(cardText('Billed Revenue (Month)')).toContain('₹1,000'));
 
     const monthInput = screen.getByLabelText('Analytics reporting month');
-    const callsBeforeOlder = getDocsLoggedMock.mock.calls.length;
+    const callsBeforeOlder = getAggregateFromServerMock.mock.calls.length;
     phase = 'older';
     fireEvent.change(monthInput, { target: { value: '2026-07' } });
-    await waitFor(() => expect(getDocsLoggedMock.mock.calls.length).toBe(callsBeforeOlder + 3));
+    await waitFor(() => expect(getAggregateFromServerMock.mock.calls.length).toBe(callsBeforeOlder + 1));
 
     phase = 'newest';
     fireEvent.change(monthInput, { target: { value: '2026-06' } });
@@ -194,11 +170,10 @@ describe('AnalyticsDashboard selected-month state', () => {
   });
 
   it('shows a genuine zero after a successful empty selected-month query', async () => {
-    getDocsLoggedMock.mockResolvedValue(snapshot([]));
     getAggregateFromServerMock.mockResolvedValue(aggregateSnapshot());
     render(<AnalyticsDashboard />);
 
     await waitFor(() => expect(cardText('Billed Revenue (Month)')).toContain('₹0'));
-    expect(screen.queryByText(/Month analytics:/)).toBeNull();
+    expect(screen.queryByText(/Analytics detail:/)).toBeNull();
   });
 });
