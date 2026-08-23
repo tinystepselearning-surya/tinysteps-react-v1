@@ -96,6 +96,25 @@ describe('parent monthly attendance projection', () => {
     ).toEqual([{ parentId: 'parent-1', monthKey: '2026-08' }]);
   });
 
+  it('marks legacy no-date session targets for the capped compatibility path', () => {
+    expect(
+      collectParentMonthAttendanceTargets(
+        null,
+        {
+          parentId: 'parent-1',
+          startAt: '2026-08-20T17:00:00+05:30',
+          status: 'completed',
+        },
+      ),
+    ).toEqual([
+      {
+        parentId: 'parent-1',
+        monthKey: '2026-08',
+        requiresCompatibility: true,
+      },
+    ]);
+  });
+
   it('preserves completed attendance and group-session counting semantics', () => {
     const nowMs = Date.parse('2026-08-20T12:00:00Z');
     const projection = buildParentMonthAttendanceProjection(
@@ -186,10 +205,21 @@ describe('parent monthly attendance projection', () => {
     expect(projection.totals.completed).toBe(1);
   });
 
-  it('uses compatibility reads only for a missing composite-index failure', () => {
-    expect(isMissingAttendanceIndexError({ code: 9, message: 'FAILED_PRECONDITION' })).toBe(true);
-    expect(isMissingAttendanceIndexError({ code: 'failed-precondition' })).toBe(true);
+  it('uses compatibility reads only for a real missing-index failure', () => {
+    expect(
+      isMissingAttendanceIndexError({
+        code: 9,
+        message: 'FAILED_PRECONDITION: The query requires an index.',
+      }),
+    ).toBe(true);
+    expect(
+      isMissingAttendanceIndexError({
+        code: 'failed-precondition',
+        message: 'The query requires a composite index.',
+      }),
+    ).toBe(true);
     expect(isMissingAttendanceIndexError({ message: 'The query requires an index.' })).toBe(true);
+    expect(isMissingAttendanceIndexError({ code: 9, message: 'some other precondition' })).toBe(false);
     expect(isMissingAttendanceIndexError({ code: 'permission-denied' })).toBe(false);
     expect(isMissingAttendanceIndexError(new Error('network timeout'))).toBe(false);
   });
