@@ -16,10 +16,23 @@ import { logFirebaseAuthKeyPresence } from './nativeAuthDiagnostics';
 
 const env = import.meta.env;
 
-// Small helper to fail fast if env is missing
+// Firebase's browser client identifiers are public by design: they are shipped in
+// every web/mobile bundle. Environment variables remain optional overrides for
+// local development, emulators, or a future alternate Firebase project.
+const PUBLIC_FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyBZ5h2M3hataZjWM7480e76QAiFmEVK37Y',
+  authDomain: 'tinysteps-react-v1.firebaseapp.com',
+  projectId: 'tinysteps-react-v1',
+  storageBucket: 'tinysteps-react-v1.firebasestorage.app',
+  messagingSenderId: '31484691215',
+  appId: '1:31484691215:web:2e8854696bc7e27b63347a',
+  measurementId: 'G-5RMQVF1HGD',
+} as const;
+
+// Small helper to fail fast if config is missing
 const must = (key: string, value: unknown): string => {
   if (typeof value !== 'string' || !value.trim()) {
-    throw new Error(`Missing/invalid env var: ${key}`);
+    throw new Error(`Missing/invalid config value: ${key}`);
   }
   return value;
 };
@@ -28,14 +41,33 @@ const must = (key: string, value: unknown): string => {
 const asString = (value: unknown): string | undefined =>
   typeof value === 'string' && value.trim() ? value : undefined;
 
+const envOrDefault = (key: string, value: unknown, fallback: string): string =>
+  must(key, asString(value) ?? fallback);
+
 const firebaseConfig: FirebaseOptions = {
-  apiKey: must('VITE_FIREBASE_API_KEY', env.VITE_FIREBASE_API_KEY),
-  authDomain: must('VITE_FIREBASE_AUTH_DOMAIN', env.VITE_FIREBASE_AUTH_DOMAIN),
-  projectId: must('VITE_FIREBASE_PROJECT_ID', env.VITE_FIREBASE_PROJECT_ID),
-  storageBucket: must('VITE_FIREBASE_STORAGE_BUCKET', env.VITE_FIREBASE_STORAGE_BUCKET),
-  messagingSenderId: must('VITE_FIREBASE_MESSAGING_SENDER_ID', env.VITE_FIREBASE_MESSAGING_SENDER_ID),
-  appId: must('VITE_FIREBASE_APP_ID', env.VITE_FIREBASE_APP_ID),
-  measurementId: asString(env.VITE_FIREBASE_MEASUREMENT_ID), // ✅ string | undefined only
+  apiKey: envOrDefault('VITE_FIREBASE_API_KEY', env.VITE_FIREBASE_API_KEY, PUBLIC_FIREBASE_CONFIG.apiKey),
+  authDomain: envOrDefault(
+    'VITE_FIREBASE_AUTH_DOMAIN',
+    env.VITE_FIREBASE_AUTH_DOMAIN,
+    PUBLIC_FIREBASE_CONFIG.authDomain,
+  ),
+  projectId: envOrDefault(
+    'VITE_FIREBASE_PROJECT_ID',
+    env.VITE_FIREBASE_PROJECT_ID,
+    PUBLIC_FIREBASE_CONFIG.projectId,
+  ),
+  storageBucket: envOrDefault(
+    'VITE_FIREBASE_STORAGE_BUCKET',
+    env.VITE_FIREBASE_STORAGE_BUCKET,
+    PUBLIC_FIREBASE_CONFIG.storageBucket,
+  ),
+  messagingSenderId: envOrDefault(
+    'VITE_FIREBASE_MESSAGING_SENDER_ID',
+    env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    PUBLIC_FIREBASE_CONFIG.messagingSenderId,
+  ),
+  appId: envOrDefault('VITE_FIREBASE_APP_ID', env.VITE_FIREBASE_APP_ID, PUBLIC_FIREBASE_CONFIG.appId),
+  measurementId: asString(env.VITE_FIREBASE_MEASUREMENT_ID) ?? PUBLIC_FIREBASE_CONFIG.measurementId,
 };
 
 // Avoid duplicate initialization
