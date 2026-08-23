@@ -298,6 +298,10 @@ function snapshotVersionMs(snapshot: admin.firestore.DocumentSnapshot | undefine
   return Number.isFinite(fallbackMs) ? fallbackMs : Date.now();
 }
 
+function projectionDocumentId(target: ParentMonthTarget): string {
+  return `${target.parentId}__${target.monthKey}`.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 500);
+}
+
 async function bootstrapProjection(
   tx: admin.firestore.Transaction,
   db: admin.firestore.Firestore,
@@ -360,7 +364,6 @@ function buildProjectionPatch(
     chargeIds: billingModel.chargeIds,
     totals: billingModel.totals,
     byKid: billingModel.byKid,
-    _billingProjection: state,
   };
 }
 
@@ -375,12 +378,16 @@ async function refreshProjectionTarget(
     .doc(target.parentId)
     .collection('months')
     .doc(target.monthKey);
+  const projectionRef = db
+    .collection('internalBillingProjections')
+    .doc(projectionDocumentId(target));
 
   try {
     await db.runTransaction(async (tx) => {
       const modelSnap = await tx.get(modelRef);
+      const projectionSnap = await tx.get(projectionRef);
       const persisted = (modelSnap.data() || {}) as Record<string, unknown>;
-      let state = parseProjectionState(persisted._billingProjection);
+      let state = parseProjectionState(projectionSnap.data());
 
       if (!state || !projectionMatchesPersistedModel(state, target.parentId, target.monthKey, persisted)) {
         state = await bootstrapProjection(tx, db, target);
@@ -415,6 +422,16 @@ async function refreshProjectionTarget(
         modelRef,
         buildProjectionPatch(target, parentNameSort, state, walletBalance),
         { merge: true },
+      );
+      tx.set(
+        projectionRef,
+        {
+          ...state,
+          parentId: target.parentId,
+          monthKey: target.monthKey,
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: false },
       );
     });
 
