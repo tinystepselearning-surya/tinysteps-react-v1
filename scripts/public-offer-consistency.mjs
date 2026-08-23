@@ -20,7 +20,6 @@ const EXCLUDED_PARTS = new Set([
   'teacher',
   'parent-dashboard',
   'kids-dashboard',
-  '.playwright-cli',
   'output',
 ]);
 
