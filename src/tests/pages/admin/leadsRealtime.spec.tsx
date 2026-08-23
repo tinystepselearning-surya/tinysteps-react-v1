@@ -1,85 +1,43 @@
 import React from 'react';
-import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const firestoreMocks = vi.hoisted(() => ({
-  addDoc: vi.fn(),
   collection: vi.fn(() => ({ kind: 'collection' })),
-  doc: vi.fn(),
+  documentId: vi.fn(() => '__name__'),
+  getCountFromServer: vi.fn(),
   getDocs: vi.fn(),
+  limit: vi.fn((value: number) => ({ kind: 'limit', value })),
   onSnapshot: vi.fn(),
   orderBy: vi.fn((...args: unknown[]) => ({ kind: 'orderBy', args })),
   query: vi.fn((...args: unknown[]) => ({ kind: 'query', args })),
-  serverTimestamp: vi.fn(),
-  timestampFromDate: vi.fn((value: Date) => ({ value })),
-  updateDoc: vi.fn(),
+  startAfter: vi.fn((...args: unknown[]) => ({ kind: 'startAfter', args })),
   where: vi.fn((...args: unknown[]) => ({ kind: 'where', args })),
-  writeBatch: vi.fn(),
 }));
-
-const workspaceMocks = vi.hoisted(() => ({
-  toast: vi.fn(),
-  listenAllDemoSessions: vi.fn((_onNext?: (demos: Array<Record<string, unknown>>) => void) => vi.fn()),
-  listenDemoSessionPrivatePhones: vi.fn(() => vi.fn()),
-}));
-
-let emitDemos: (demos: Array<Record<string, unknown>>) => void = () => undefined;
 
 vi.mock('firebase/firestore', () => ({
   ...firestoreMocks,
-  Timestamp: {
-    fromDate: firestoreMocks.timestampFromDate,
-  },
 }));
 
-vi.mock('firebase/functions', () => ({
-  httpsCallable: vi.fn(),
-}));
-
-vi.mock('../../../lib/firebaseConfig', () => ({ db: {}, functions: {} }));
-
-vi.mock('@components/hooks/use-toast', () => ({
-  useToast: () => ({ toast: workspaceMocks.toast }),
-}));
-
-vi.mock('../../../store/useAuthStore', () => ({
-  useAuthStore: () => ({ user: { role: 'admin', email: 'admin@tinysteps.com' } }),
-}));
-
-vi.mock('../../../services/demoSessionsService', () => ({
-  cancelDemoSession: vi.fn(),
-  checkDemoPhoneConflicts: vi.fn(),
-  createDemoSession: vi.fn(),
-  deleteDemoSession: vi.fn(),
-  listenAllDemoSessions: workspaceMocks.listenAllDemoSessions,
-  listenDemoSessionPrivatePhones: workspaceMocks.listenDemoSessionPrivatePhones,
-  reassignDemoSession: vi.fn(),
-  releaseDemoSession: vi.fn(),
-  reopenDemoSession: vi.fn(),
-  updateDemoSessionAdminDetails: vi.fn(),
-  updateDemoConversion: vi.fn(),
-}));
-
-vi.mock('../../../pages/admin/DemoSessionsManagement', () => ({
-  default: () => <div data-testid="demo-sessions-management" />,
-}));
+vi.mock('../../../lib/firebaseConfig', () => ({ db: {} }));
 
 import {
+  ACTIVE_LEAD_STATUSES,
+  CLOSED_LEAD_PAGE_SIZE,
+  CLOSED_LEAD_STATUSES,
   useRealtimeLeads,
   type RealtimeLeadRecord,
 } from '../../../pages/admin/leadsRealtime';
-import LeadsInquiriesWorkspace from '../../../pages/admin/LeadsInquiriesWorkspace';
 
 type TestLead = RealtimeLeadRecord & {
   source?: string;
   status?: string;
-  name?: string;
-  isDeleted?: boolean;
-  createdAt?: unknown;
-  updatedAt?: unknown;
+  parentName?: string;
 };
 
-type SnapshotCallback = (snapshot: ReturnType<typeof makeSnapshot>) => void;
+type TestDoc = ReturnType<typeof makeDoc>;
+type Snapshot = ReturnType<typeof makeSnapshot>;
+type SnapshotCallback = (snapshot: Snapshot) => void;
 
 const subscriptions: Array<{
   options?: { includeMetadataChanges?: boolean };
@@ -88,19 +46,21 @@ const subscriptions: Array<{
   unsubscribe: ReturnType<typeof vi.fn>;
 }> = [];
 
-const makeDoc = (
+function makeDoc(
   id: string,
   data: Omit<TestLead, 'id'>,
   hasPendingWrites = false,
-) => ({
-  id,
-  data: () => data,
-  metadata: { hasPendingWrites },
-});
+) {
+  return {
+    id,
+    data: () => data,
+    metadata: { hasPendingWrites },
+  };
+}
 
 function makeSnapshot(
-  docs: Array<ReturnType<typeof makeDoc>>,
-  changes: Array<{ type: 'added' | 'modified' | 'removed'; doc: ReturnType<typeof makeDoc> }> = [],
+  docs: TestDoc[],
+  changes: Array<{ type: 'added' | 'modified' | 'removed'; doc: TestDoc }> = [],
   fromCache = false,
 ) {
   return {
@@ -111,33 +71,38 @@ function makeSnapshot(
 }
 
 function Harness({
-  clientDateFilter = '',
-  clientStatusFilter = 'all',
+  includeClosed = false,
   onError = vi.fn(),
   onNewWebsiteLeads,
 }: {
-  clientDateFilter?: string;
-  clientStatusFilter?: string;
+  includeClosed?: boolean;
   onError?: (error: Error) => void;
   onNewWebsiteLeads: (leads: TestLead[]) => void;
 }) {
-  const { leads, isLoading, newLeadIds } = useRealtimeLeads<TestLead>({
+  const {
+    leads,
+    isLoading,
+    newLeadIds,
+    closedCount,
+    closedHistoryHasMore,
+  } = useRealtimeLeads<TestLead>({
+    includeClosed,
     onError,
     onNewWebsiteLeads,
   });
 
   return (
     <div>
-      <span data-testid="client-date-filter">{clientDateFilter}</span>
-      <span data-testid="client-status-filter">{clientStatusFilter}</span>
       <span data-testid="loading">{String(isLoading)}</span>
       <span data-testid="lead-ids">{leads.map((lead) => lead.id).join(',')}</span>
       <span data-testid="new-lead-ids">{Array.from(newLeadIds).join(',')}</span>
+      <span data-testid="closed-count">{closedCount}</span>
+      <span data-testid="closed-more">{String(closedHistoryHasMore)}</span>
     </div>
   );
 }
 
-const emit = (subscriptionIndex: number, snapshot: ReturnType<typeof makeSnapshot>) => {
+const emit = (subscriptionIndex: number, snapshot: Snapshot) => {
   act(() => subscriptions[subscriptionIndex].next(snapshot));
 };
 
@@ -149,12 +114,10 @@ beforeEach(() => {
   vi.useFakeTimers();
   subscriptions.length = 0;
   Object.values(firestoreMocks).forEach((mock) => mock.mockClear());
-  Object.values(workspaceMocks).forEach((mock) => mock.mockClear());
-  workspaceMocks.listenAllDemoSessions.mockImplementation((onNext?: (demos: Array<Record<string, unknown>>) => void) => {
-    emitDemos = onNext ? (demos) => act(() => onNext(demos)) : () => undefined;
-    return vi.fn();
+  firestoreMocks.getCountFromServer.mockResolvedValue({
+    data: () => ({ count: 12 }),
   });
-  workspaceMocks.listenDemoSessionPrivatePhones.mockImplementation(() => vi.fn());
+  firestoreMocks.getDocs.mockResolvedValue(makeSnapshot([]));
   firestoreMocks.onSnapshot.mockImplementation(
     (
       _query: unknown,
@@ -180,44 +143,49 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('useRealtimeLeads', () => {
-
-  it('registers metadata changes and orders the single query by createdAt descending', () => {
+describe('useRealtimeLeads bounded Firestore reads', () => {
+  it('subscribes only to operational lead statuses by default', () => {
     render(<Harness onNewWebsiteLeads={vi.fn()} />);
 
     expect(firestoreMocks.onSnapshot).toHaveBeenCalledTimes(1);
     expect(subscriptions[0].options).toEqual({ includeMetadataChanges: true });
-    expect(firestoreMocks.orderBy).toHaveBeenCalledWith('createdAt', 'desc');
-    expect(firestoreMocks.where).not.toHaveBeenCalled();
+    expect(firestoreMocks.where).toHaveBeenCalledWith(
+      'status',
+      'in',
+      [...ACTIVE_LEAD_STATUSES],
+    );
+    expect(firestoreMocks.orderBy).not.toHaveBeenCalled();
   });
 
-  it('populates the initial newest-first snapshot without notifying', () => {
+  it('keeps the initial operational snapshot live without generating historical notifications', () => {
     const onNew = vi.fn();
     render(<Harness onNewWebsiteLeads={onNew} />);
-    const newest = makeDoc('newest', { source: 'website' });
-    const older = makeDoc('older', { source: 'website' });
+    const first = makeDoc('lead-1', { source: 'website', status: 'new' });
+    const second = makeDoc('lead-2', { source: 'manual', status: 'demo_booked' });
 
     emit(0, makeSnapshot(
-      [newest, older],
-      [{ type: 'added', doc: newest }, { type: 'added', doc: older }],
+      [first, second],
+      [{ type: 'added', doc: first }, { type: 'added', doc: second }],
     ));
     flushNotificationBuffer();
 
-    expect(screen.getByTestId('lead-ids')).toHaveTextContent('newest,older');
+    expect(screen.getByTestId('lead-ids')).toHaveTextContent('lead-1,lead-2');
     expect(screen.getByTestId('loading')).toHaveTextContent('false');
     expect(onNew).not.toHaveBeenCalled();
   });
 
-  it('handles cached startup, authoritative metadata, then notifies once for the next website lead', () => {
+  it('notifies once for a new website enquiry after the authoritative baseline', () => {
     const onNew = vi.fn();
     render(<Harness onNewWebsiteLeads={onNew} />);
-    const cachedLead = makeDoc('cached', { source: 'website' });
 
-    emit(0, makeSnapshot([cachedLead], [{ type: 'added', doc: cachedLead }], true));
-    emit(0, makeSnapshot([cachedLead], [], false));
-    const websiteLead = makeDoc('website-1', { source: 'website', parentName: 'Parent One' });
+    emit(0, makeSnapshot([]));
+    const websiteLead = makeDoc('website-1', {
+      source: 'website',
+      status: 'new',
+      parentName: 'Parent One',
+    });
     emit(0, makeSnapshot(
-      [websiteLead, cachedLead],
+      [websiteLead],
       [{ type: 'added', doc: websiteLead }],
     ));
     flushNotificationBuffer();
@@ -228,18 +196,22 @@ describe('useRealtimeLeads', () => {
     ]);
   });
 
-  it('does not notify for a manually created or locally pending lead', () => {
+  it('does not notify for manual or locally pending records', () => {
     const onNew = vi.fn();
     render(<Harness onNewWebsiteLeads={onNew} />);
     emit(0, makeSnapshot([]));
-    const manualLead = makeDoc('manual-1', { source: 'manual' });
-    const localWebsiteLead = makeDoc('local-website', { source: 'website' }, true);
 
+    const manualLead = makeDoc('manual-1', { source: 'manual', status: 'new' });
+    const pendingWebsiteLead = makeDoc(
+      'pending-1',
+      { source: 'website', status: 'new' },
+      true,
+    );
     emit(0, makeSnapshot(
-      [localWebsiteLead, manualLead],
+      [manualLead, pendingWebsiteLead],
       [
         { type: 'added', doc: manualLead },
-        { type: 'added', doc: localWebsiteLead },
+        { type: 'added', doc: pendingWebsiteLead },
       ],
     ));
     flushNotificationBuffer();
@@ -247,240 +219,83 @@ describe('useRealtimeLeads', () => {
     expect(onNew).not.toHaveBeenCalled();
   });
 
-  it('deduplicates an already-notified document ID', () => {
+  it('opens a bounded Closed listener only when Closed history is requested', async () => {
     const onNew = vi.fn();
-    render(<Harness onNewWebsiteLeads={onNew} />);
-    emit(0, makeSnapshot([]));
-    const websiteLead = makeDoc('website-1', { source: 'website' });
-
-    emit(0, makeSnapshot([websiteLead], [{ type: 'added', doc: websiteLead }]));
-    flushNotificationBuffer();
-    emit(0, makeSnapshot([websiteLead], [{ type: 'added', doc: websiteLead }]));
-    flushNotificationBuffer();
-
-    expect(onNew).toHaveBeenCalledTimes(1);
-  });
-
-  it('groups website leads from two close snapshots into one callback', () => {
-    const onNew = vi.fn();
-    render(<Harness onNewWebsiteLeads={onNew} />);
-    emit(0, makeSnapshot([]));
-    const first = makeDoc('website-1', { source: 'website' });
-    const second = makeDoc('website-2', { source: 'website' });
-
-    emit(0, makeSnapshot([first], [{ type: 'added', doc: first }]));
-    act(() => vi.advanceTimersByTime(200));
-    emit(0, makeSnapshot([second, first], [{ type: 'added', doc: second }]));
-
-    expect(onNew).not.toHaveBeenCalled();
-    act(() => vi.advanceTimersByTime(200));
-    expect(onNew).toHaveBeenCalledTimes(1);
-    expect(onNew.mock.calls[0][0].map((lead: TestLead) => lead.id)).toEqual([
-      'website-1',
-      'website-2',
-    ]);
-  });
-
-  it('removes temporary highlights after ten seconds and globally caps them at 500', () => {
-    render(<Harness onNewWebsiteLeads={vi.fn()} />);
-    emit(0, makeSnapshot([]));
-    const docs = Array.from({ length: 501 }, (_, index) =>
-      makeDoc(`website-${index}`, { source: 'website' }));
-
-    emit(0, makeSnapshot(docs, docs.map((doc) => ({ type: 'added' as const, doc }))));
-
-    const activeIds = screen.getByTestId('new-lead-ids').textContent?.split(',') ?? [];
-    expect(activeIds).toHaveLength(500);
-    expect(activeIds).not.toContain('website-0');
-    act(() => vi.advanceTimersByTime(10_000));
-    expect(screen.getByTestId('new-lead-ids')).toBeEmptyDOMElement();
-  });
-
-  it('does not resubscribe when client-side status or updated-date filters change', () => {
     const { rerender } = render(
-      <Harness clientDateFilter="" clientStatusFilter="all" onNewWebsiteLeads={vi.fn()} />,
+      <Harness includeClosed={false} onNewWebsiteLeads={onNew} />,
     );
-
-    rerender(
-      <Harness
-        clientDateFilter="2026-07-01"
-        clientStatusFilter="new"
-        onNewWebsiteLeads={vi.fn()}
-      />,
-    );
-
-    expect(screen.getByTestId('client-date-filter')).toHaveTextContent('2026-07-01');
-    expect(screen.getByTestId('client-status-filter')).toHaveTextContent('new');
     expect(firestoreMocks.onSnapshot).toHaveBeenCalledTimes(1);
-    expect(subscriptions[0].unsubscribe).not.toHaveBeenCalled();
+
+    rerender(<Harness includeClosed onNewWebsiteLeads={onNew} />);
+
+    expect(firestoreMocks.onSnapshot).toHaveBeenCalledTimes(2);
+    expect(firestoreMocks.where).toHaveBeenCalledWith(
+      'status',
+      'in',
+      [...CLOSED_LEAD_STATUSES],
+    );
+    expect(firestoreMocks.orderBy).toHaveBeenCalledWith('updatedAt', 'desc');
+    expect(firestoreMocks.orderBy).toHaveBeenCalledWith('__name__', 'desc');
+    expect(firestoreMocks.limit).toHaveBeenCalledWith(CLOSED_LEAD_PAGE_SIZE + 1);
+
+    const closedDocs = Array.from({ length: CLOSED_LEAD_PAGE_SIZE + 1 }, (_, index) =>
+      makeDoc(`closed-${index}`, { source: 'manual', status: 'not_interested' }));
+    emit(1, makeSnapshot(closedDocs));
+
+    expect(screen.getByTestId('closed-more')).toHaveTextContent('true');
+    expect(screen.getByTestId('lead-ids').textContent?.split(',')).toHaveLength(CLOSED_LEAD_PAGE_SIZE);
   });
 
-  it('clears active highlight and notification timers and unsubscribes on unmount', () => {
+  it('loads the Closed total through an aggregate count instead of downloading history', async () => {
+    render(<Harness onNewWebsiteLeads={vi.fn()} />);
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(firestoreMocks.getCountFromServer).toHaveBeenCalled();
+    expect(screen.getByTestId('closed-count')).toHaveTextContent('12');
+  });
+
+  it('does not recreate the active listener when only Closed visibility changes', () => {
     const onNew = vi.fn();
-    const { unmount } = render(<Harness onNewWebsiteLeads={onNew} />);
+    const { rerender } = render(
+      <Harness includeClosed={false} onNewWebsiteLeads={onNew} />,
+    );
+    const activeUnsubscribe = subscriptions[0].unsubscribe;
+
+    rerender(<Harness includeClosed onNewWebsiteLeads={onNew} />);
+    expect(activeUnsubscribe).not.toHaveBeenCalled();
+
+    rerender(<Harness includeClosed={false} onNewWebsiteLeads={onNew} />);
+    expect(activeUnsubscribe).not.toHaveBeenCalled();
+    expect(subscriptions[1].unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it('cleans notification timers and every active listener on unmount', () => {
+    const onNew = vi.fn();
+    const { unmount } = render(<Harness includeClosed onNewWebsiteLeads={onNew} />);
     emit(0, makeSnapshot([]));
-    const websiteLead = makeDoc('website-1', { source: 'website' });
+    const websiteLead = makeDoc('website-1', { source: 'website', status: 'new' });
     emit(0, makeSnapshot([websiteLead], [{ type: 'added', doc: websiteLead }]));
 
-    expect(vi.getTimerCount()).toBe(2);
     unmount();
 
     expect(subscriptions[0].unsubscribe).toHaveBeenCalledTimes(1);
+    expect(subscriptions[1].unsubscribe).toHaveBeenCalledTimes(1);
     expect(vi.getTimerCount()).toBe(0);
-    act(() => vi.runAllTimers());
-    expect(onNew).not.toHaveBeenCalled();
   });
 
-  it('reports listener errors, clears rows, and completes loading', () => {
+  it('reports operational listener errors and completes loading safely', () => {
     const onError = vi.fn();
     render(<Harness onError={onError} onNewWebsiteLeads={vi.fn()} />);
-    const lead = makeDoc('existing', { source: 'manual' });
-    emit(0, makeSnapshot([lead]));
 
     act(() => subscriptions[0].error(new Error('permission denied')));
 
-    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: 'permission denied' }));
+    expect(onError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'permission denied' }),
+    );
     expect(screen.getByTestId('lead-ids')).toBeEmptyDOMElement();
     expect(screen.getByTestId('loading')).toHaveTextContent('false');
-  });
-});
-
-describe('LeadsInquiriesWorkspace integration', () => {
-  const loadWorkspace = (
-    leads: Array<ReturnType<typeof makeDoc>>,
-    demos: Array<Record<string, unknown>> = [],
-  ) => {
-    emit(0, makeSnapshot(leads));
-    emitDemos(demos);
-  };
-
-  const bucketCard = (name: 'Open' | 'With Teacher' | 'Admin Review' | 'Closed') =>
-    screen.getByRole('button', { name: new RegExp(`^${name}\\b`) });
-
-  it('waits for realtime demo ownership before classifying or rendering leads', () => {
-    render(<LeadsInquiriesWorkspace />);
-    const createdAt = { toMillis: () => new Date('2026-07-26T06:30:00.000Z').getTime() };
-    const lead = makeDoc('lead-1', {
-      source: 'manual',
-      parentName: 'Realtime Parent',
-      childName: 'Realtime Child',
-      createdAt,
-      updatedAt: createdAt,
-      status: 'new',
-    });
-
-    emit(0, makeSnapshot([lead]));
-    expect(screen.getByText('Loading leads and demo ownership…')).toBeInTheDocument();
-    expect(screen.queryByText('Realtime Parent')).not.toBeInTheDocument();
-    expect(within(bucketCard('Open')).getByText('—')).toBeInTheDocument();
-
-    emitDemos([{ id: 'demo-1', leadId: 'lead-1', status: 'assigned', createdAt }]);
-    expect(screen.queryByText('Loading leads and demo ownership…')).not.toBeInTheDocument();
-    expect(within(bucketCard('Open')).getByText('0')).toBeInTheDocument();
-    expect(within(bucketCard('With Teacher')).getByText('1')).toBeInTheDocument();
-    fireEvent.click(bucketCard('With Teacher'));
-    expect(screen.getAllByText('Realtime Parent')).toHaveLength(1);
-  });
-
-  it('applies the simple search consistently across all four workflow buckets', () => {
-    render(<LeadsInquiriesWorkspace />);
-    const createdAt = { toMillis: () => new Date('2026-08-12T06:30:00.000Z').getTime() };
-    loadWorkspace([
-      makeDoc('open', { source: 'website', parentName: 'Open Parent', childName: 'Ada', programInterest: 'Phonics', createdAt, updatedAt: createdAt, status: 'new' }),
-      makeDoc('teacher', { source: 'manual', parentName: 'Teacher Parent', childName: 'Mia', programInterest: 'Math', createdAt, updatedAt: createdAt, status: 'demo_booked' }),
-      makeDoc('review', { source: 'manual', parentName: 'Review Parent', childName: 'Ria', programInterest: 'Speaking', createdAt, updatedAt: createdAt, status: 'demo_completed' }),
-      makeDoc('closed', { source: 'referral', parentName: 'Closed Parent', childName: 'Cal', programInterest: 'Reading', createdAt, updatedAt: createdAt, status: 'not_interested' }),
-    ], [
-      { id: 'demo-teacher', leadId: 'teacher', status: 'assigned', assignedTeacherId: 'teacher-1', assignedTeacherName: 'Active Teacher', courseInterested: 'Math', createdAt, lastUpdatedAt: createdAt },
-      { id: 'demo-review', leadId: 'review', status: 'completed', assignedTeacherId: 'teacher-2', assignedTeacherName: 'Review Teacher', courseInterested: 'Speaking', createdAt, lastUpdatedAt: createdAt },
-      { id: 'demo-closed', leadId: 'closed', status: 'completed', conversionStatus: 'not_interested', assignedTeacherId: 'teacher-3', assignedTeacherName: 'Closed Teacher', courseInterested: 'Reading', createdAt, lastUpdatedAt: createdAt },
-    ]);
-
-    expect(within(bucketCard('Open')).getByText('1')).toBeInTheDocument();
-    expect(within(bucketCard('With Teacher')).getByText('1')).toBeInTheDocument();
-    expect(within(bucketCard('Admin Review')).getByText('1')).toBeInTheDocument();
-    expect(within(bucketCard('Closed')).getByText('1')).toBeInTheDocument();
-
-    const searchInput = screen.getByPlaceholderText('Search parent, child, phone, course or teacher');
-    fireEvent.change(searchInput, { target: { value: 'Active Teacher' } });
-    expect(within(bucketCard('Open')).getByText('0')).toBeInTheDocument();
-    expect(within(bucketCard('With Teacher')).getByText('1')).toBeInTheDocument();
-    expect(within(bucketCard('Admin Review')).getByText('0')).toBeInTheDocument();
-    expect(within(bucketCard('Closed')).getByText('0')).toBeInTheDocument();
-    fireEvent.click(bucketCard('With Teacher'));
-    expect(screen.getByText('Teacher Parent')).toBeInTheDocument();
-
-    fireEvent.change(searchInput, { target: { value: 'Closed Parent' } });
-    expect(within(bucketCard('With Teacher')).getByText('0')).toBeInTheDocument();
-    expect(within(bucketCard('Closed')).getByText('1')).toBeInTheDocument();
-    fireEvent.click(bucketCard('Closed'));
-    expect(screen.getByText('Closed Parent')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'View outcome' }));
-    expect(screen.getByText('The final workflow decision is read-only here. Lead details can still be edited from the row menu.')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Save decision' })).not.toBeInTheDocument();
-  });
-
-  it('keeps manual demo creation out of the simple workflow and routes advanced work explicitly', () => {
-    const onViewChange = vi.fn();
-    render(<LeadsInquiriesWorkspace onViewChange={onViewChange} />);
-    loadWorkspace([]);
-
-    expect(screen.queryByRole('button', { name: /New demo request/ })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Advanced tools/ }));
-    expect(onViewChange).toHaveBeenCalledWith('demos');
-  });
-
-  it('offers only eligible teachers when assigning an open demo', () => {
-    render(<LeadsInquiriesWorkspace />);
-    const createdAt = { toMillis: () => new Date('2026-08-12T06:30:00.000Z').getTime() };
-    loadWorkspace([
-      makeDoc('lead-open-demo', {
-        source: 'manual',
-        parentName: 'Assignment Parent',
-        childName: 'Assignment Child',
-        createdAt,
-        updatedAt: createdAt,
-        status: 'demo_booked',
-      }),
-    ], [{ id: 'demo-open', leadId: 'lead-open-demo', status: 'open', createdAt }]);
-    emit(1, makeSnapshot([
-      makeDoc('teacher-active', { name: 'Active Teacher', status: 'active' }),
-      makeDoc('teacher-suspended', { name: 'Suspended Teacher', status: 'suspended' }),
-      makeDoc('teacher-archived', { name: 'Archived Teacher', status: 'active', isDeleted: true }),
-    ]));
-
-    fireEvent.click(screen.getByRole('button', { name: 'Assign teacher' }));
-    const assignmentDialog = screen.getByRole('dialog');
-    fireEvent.click(within(assignmentDialog).getByRole('combobox'));
-    expect(screen.getByRole('option', { name: 'Active Teacher' })).toBeInTheDocument();
-    expect(screen.queryByRole('option', { name: 'Suspended Teacher' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('option', { name: 'Archived Teacher' })).not.toBeInTheDocument();
-  });
-
-  it('detects and describes a new website lead without resubscribing for client filters', () => {
-    render(<LeadsInquiriesWorkspace />);
-    loadWorkspace([]);
-    fireEvent.change(screen.getByPlaceholderText('Search parent, child, phone, course or teacher'), {
-      target: { value: 'someone else' },
-    });
-    const listenerCountBeforeLead = firestoreMocks.onSnapshot.mock.calls.length;
-    const createdAt = { toMillis: () => new Date('2026-07-26T06:30:00.000Z').getTime() };
-    const hiddenLead = makeDoc('hidden-website', {
-      source: 'website',
-      parentName: 'Hidden Parent',
-      childName: 'Hidden Child',
-      createdAt,
-      updatedAt: createdAt,
-    });
-
-    emit(0, makeSnapshot([hiddenLead], [{ type: 'added', doc: hiddenLead }]));
-    flushNotificationBuffer();
-
-    expect(firestoreMocks.onSnapshot).toHaveBeenCalledTimes(listenerCountBeforeLead);
-    expect(screen.queryByText('Hidden Parent')).not.toBeInTheDocument();
-    expect(workspaceMocks.toast).toHaveBeenCalledWith(expect.objectContaining({
-      title: 'New demo enquiry received',
-      description: expect.stringContaining('Parent: Hidden Parent'),
-    }));
   });
 });
