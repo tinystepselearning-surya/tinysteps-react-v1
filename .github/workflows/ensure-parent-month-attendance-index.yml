@@ -1,0 +1,62 @@
+name: Ensure parent-month attendance Firestore index
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/ensure-parent-month-attendance-index.mjs"
+      - ".github/workflows/ensure-parent-month-attendance-index.yml"
+  workflow_dispatch:
+
+# This is a control-plane verification only. It does not query Firestore documents.
+# It creates the required composite index if absent and waits until the index is READY.
+
+jobs:
+  ensure-index:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: firebase-deployment-tinysteps-react-v1
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Authenticate to Google Cloud
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
+          create_credentials_file: true
+
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Refuse stale main verification
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          current_main_sha="$(git rev-parse origin/main)"
+          echo "Workflow SHA: ${GITHUB_SHA}"
+          echo "Current main SHA: ${current_main_sha}"
+          if [[ "${GITHUB_SHA}" != "${current_main_sha}" ]]; then
+            echo "::error::Refusing stale Firestore index verification for ${GITHUB_SHA}. Current main is ${current_main_sha}."
+            exit 1
+          fi
+
+      - name: Ensure parent-month attendance index is READY
+        run: >-
+          node scripts/ensure-parent-month-attendance-index.mjs
+          --project tinysteps-react-v1
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
