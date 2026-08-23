@@ -62,9 +62,9 @@ export {
   onBillingChargeReadModelWrite,
   onPaymentReadModelWrite,
   onParentUserReadModelWrite,
-  onClassSessionReadModelWrite,
   onStudentProgressReadModelWrite,
 } from "./parentMonthlyReadModels";
+export { onClassSessionReadModelWrite } from "./parentMonthlyAttendanceProjection";
 
 // Admin user management
 export { adminCreateUser } from "./adminCreateUser";
