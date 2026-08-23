@@ -23,9 +23,11 @@ current [Firestore role catalog](https://cloud.google.com/iam/docs/roles-permiss
 surfaces the same control-plane role with `datastore.schemas.*` terminology.
 The failed Firestore API call itself reported `datastore.indexes.create`. This
 repository therefore uses Google's narrow predefined index-management role and
-requires a real workflow verification after the binding is applied.
+was verified through the real GitHub Actions workflow after the binding was
+applied.
 
-An authorized operator must run this once:
+The binding was applied on 2026-08-24. The one-time administrative helper is
+retained for reproducible setup or recovery; it is not part of deployment:
 
 ```bash
 bash scripts/grant-parent-month-attendance-index-iam.sh
@@ -34,10 +36,10 @@ bash scripts/grant-parent-month-attendance-index-iam.sh
 The ensure script intentionally fails on `PERMISSION_DENIED`; it does not hide or
 skip a missing binding.
 
-The 2026-08-24 read-only audit found that this role was not yet bound and that
-the exact `classSessions(parentId ASC, date ASC)` index did not yet exist. A
-similar index beginning with `kidIds CONTAINS` is not a substitute and is left
-untouched.
+The 2026-08-24 verification confirmed this role is bound. The first dedicated
+workflow run created the exact `classSessions(parentId ASC, date ASC)` index and
+waited until it was `READY`. The similar index beginning with `kidIds CONTAINS`
+remained `READY` and untouched.
 
 The workflows still use a long-lived service-account JSON credential. Migrating
 to Workload Identity Federation is a separate security improvement and should be
@@ -45,10 +47,17 @@ handled in a dedicated change, not coupled to this index-only permission fix.
 
 ## Verification
 
-After the binding is present, manually dispatch **Ensure parent-month attendance
-Firestore index**. It lists composite indexes, creates only the missing
-`classSessions(parentId ASC, date ASC)` collection-scope index, and waits until
-the index is `READY`.
+Live verification completed with two manual dispatches of **Ensure parent-month
+attendance Firestore index**:
+
+1. [Run 32661404292](https://github.com/tinystepselearning-surya/tinysteps-react-v1/actions/runs/32661404292)
+   authenticated the intended service account, created index `CICAgJil_p8K`, and
+   observed it reach `READY`.
+2. [Run 32661799058](https://github.com/tinystepselearning-surya/tinysteps-react-v1/actions/runs/32661799058)
+   found the exact index already `READY` and exited without issuing a create.
+
+Both runs passed all 12 focused tests. No application documents were read or
+written, and no unrelated indexes were mutated or deleted.
 
 ## Rollback
 

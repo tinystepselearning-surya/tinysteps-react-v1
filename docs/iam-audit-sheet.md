@@ -10,6 +10,7 @@ Target principal audited:
 |---|---|---|---|---|---|
 | github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/cloudfunctions.developer` | project `tinysteps-react-v1` | deploy/update gen2 functions | keep | yes (manual deploy + smoke checks) |
 | github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/cloudscheduler.admin` | project `tinysteps-react-v1` | manage scheduled function jobs during deploy | keep (review later for narrower custom role) | yes (scheduled functions deploy verified) |
+| github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/datastore.indexAdmin` | project `tinysteps-react-v1` | list/create and monitor required Firestore composite indexes; no document access | keep | yes (two dedicated workflow runs; create/READY then READY no-mutation) |
 | github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/datastore.viewer` | project `tinysteps-react-v1` | Firebase deploy analysis for Firestore metadata | keep (review later if removable) | yes (deploy + trigger checks) |
 | github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/firebaseauth.admin` | project `tinysteps-react-v1` | currently granted; functional need for deploy not yet proven | narrow/remove candidate | yes (deploy succeeded with role still present) |
 | github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/firebasehosting.admin` | project `tinysteps-react-v1` | Firebase Hosting deploy action | keep | yes (no regressions in function deploy workflow) |
@@ -25,12 +26,6 @@ Target principal audited:
 | github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/secretmanager.secretAccessor` | secret `groq-api-key` | runtime secret resolution for Groq function | keep (secret-level) | yes (policy update verified) |
 | github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/secretmanager.viewer` | secret `groq-api-key` | not required for runtime secret access | removed | yes (policy update verified) |
 | github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/secretmanager.secretAccessor` + `roles/secretmanager.viewer` | secret `GROQ_API_KEY` | duplicate legacy secret; not used by code | removed | yes (policy update verified) |
-
-## Pending index-workflow binding
-
-| principal | role | scope | reason | status |
-|---|---|---|---|---|
-| github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/datastore.indexAdmin` | project `tinysteps-react-v1` | list/create and monitor required Firestore composite indexes; no document access | not currently bound; requires the one-time helper in `scripts/grant-parent-month-attendance-index-iam.sh` |
 
 ## Notes
 
