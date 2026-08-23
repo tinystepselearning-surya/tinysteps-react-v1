@@ -188,6 +188,22 @@ const clearConflictPatch = (): Record<string, unknown> => ({
   dedupeConflictAt: admin.firestore.FieldValue.delete(),
 });
 
+export const hasCompleteWebsiteCanonicalMetadata = (
+  leadId: string,
+  identityKey: string,
+  lead: Record<string, unknown>,
+): boolean => (
+  cleanText(lead.dedupeCanonicalLeadId, 120) === leadId &&
+  cleanText(lead.dedupeIdentityKey, 160) === identityKey &&
+  lead.dedupeVersion === DEDUPE_VERSION &&
+  typeof lead.inquiryCount === 'number' &&
+  Boolean(lead.firstInquiryAt) &&
+  Boolean(lead.lastInquiryAt) &&
+  Array.isArray(lead.programInterests) &&
+  Array.isArray(lead.interestTracks) &&
+  !cleanText(lead.dedupeConflict, 160)
+);
+
 export const onWebsiteLeadIdentityWrite = onDocumentWritten(
   { document: 'leads/{leadId}', region: REGION },
   async (event) => {
@@ -223,6 +239,17 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
 
       const currentIdentityKey = identityKeyForLead(current);
       if (currentIdentityKey !== identityKey) return { action: 'identity_changed' as const };
+
+      // An update to an already-canonical lead is not a new enquiry. This fresh-state
+      // check also makes delayed/duplicate Eventarc deliveries a read-only no-op and,
+      // critically, avoids rewriting capturedAt on every unrelated lead event.
+      if (
+        change.before.exists &&
+        previousIdentityKey === identityKey &&
+        hasCompleteWebsiteCanonicalMetadata(leadId, identityKey, current)
+      ) {
+        return { action: 'canonical_noop' as const, canonicalLeadId: leadId };
+      }
 
       const identitySnap = await tx.get(identityRef);
       const indexedCanonicalId = identitySnap.exists

@@ -192,6 +192,59 @@ const canRelinkDemoToLead = (
   return isSyntheticDemoLeadId(owner, demoId);
 };
 
+const LEAD_DEMO_RELEVANT_FIELDS = [
+  'source',
+  'childName',
+  'primaryPhone',
+  'whatsappNumber',
+  'phoneNormalized',
+  'status',
+  'conversionStatus',
+  'archived',
+  'demoSessionId',
+  'dedupeCanonicalLeadId',
+  'dedupeIdentityKey',
+  'dedupeConflict',
+  'demoRepairVersion',
+  'demoRepairRequestedAt',
+  'demoRepairRequestedBy',
+] as const;
+
+const comparableValue = (value: unknown): string => {
+  if (
+    value &&
+    typeof value === 'object' &&
+    typeof (value as { toMillis?: () => number }).toMillis === 'function'
+  ) {
+    return `timestamp:${(value as { toMillis: () => number }).toMillis()}`;
+  }
+  return JSON.stringify(value ?? null);
+};
+
+export const hasMeaningfulLeadDemoChange = (
+  before: Record<string, unknown>,
+  after: Record<string, unknown>,
+  created: boolean,
+): boolean => created || LEAD_DEMO_RELEVANT_FIELDS.some(
+  (field) => comparableValue(before[field]) !== comparableValue(after[field]),
+);
+
+export const shouldRunOrphanDemoRepair = (
+  demoId: string,
+  before: Record<string, unknown>,
+  after: Record<string, unknown>,
+  created: boolean,
+): boolean => {
+  const currentLeadId = cleanText(after.leadId, 120);
+  const priorLeadId = cleanText(before.leadId, 120);
+  if (currentLeadId && !isSyntheticDemoLeadId(currentLeadId, demoId)) {
+    return isSyntheticDemoLeadId(priorLeadId, demoId);
+  }
+  // A missing/synthetic owner is itself the explicit repair condition. The
+  // fresh transaction below makes repeated delivery safe once linkage succeeds.
+  return created || !currentLeadId || isSyntheticDemoLeadId(currentLeadId, demoId);
+};
+
 export const onLeadEnsureDemoRequest = onDocumentWritten(
   { document: 'leads/{leadId}', region: REGION },
   async (event) => {
@@ -199,7 +252,9 @@ export const onLeadEnsureDemoRequest = onDocumentWritten(
     if (!change || !change.after.exists) return;
 
     const leadId = cleanText(event.params.leadId, 120);
+    const beforeLead = change.before.exists ? (change.before.data() || {}) : {};
     const initialLead = change.after.data() || {};
+    if (!hasMeaningfulLeadDemoChange(beforeLead, initialLead, !change.before.exists)) return;
     if (!shouldEnsureDemoForLead(leadId, initialLead)) return;
 
     const db = admin.firestore();
@@ -502,9 +557,16 @@ export const onOrphanDemoIdentityRepair = onDocumentWritten(
     const demoId = cleanText(event.params.demoId, 120);
     const after = change.after.data() || {};
     const currentLeadId = cleanText(after.leadId, 120);
+    const before = change.before.exists ? (change.before.data() || {}) : {};
+    const priorLeadId = cleanText(before.leadId, 120);
     const db = admin.firestore();
 
+    if (!shouldRunOrphanDemoRepair(demoId, before, after, !change.before.exists)) return;
+
     if (currentLeadId && !isSyntheticDemoLeadId(currentLeadId, demoId)) {
+      // Normally linked demos require no reconciliation. Only a transition from a
+      // synthetic owner needs the bounded cleanup transaction.
+      if (!isSyntheticDemoLeadId(priorLeadId, demoId)) return;
       await cleanupSyntheticLead(db, demoId, currentLeadId);
       return;
     }
@@ -547,6 +609,7 @@ export const onOrphanDemoIdentityRepair = onDocumentWritten(
       if (!freshDemoSnap.exists || !realLeadSnap.exists) return;
       const freshDemo = freshDemoSnap.data() || {};
       const freshLeadId = cleanText(freshDemo.leadId, 120);
+      if (freshLeadId === realLeadId) return;
       if (
         freshLeadId &&
         !isSyntheticDemoLeadId(freshLeadId, demoId) &&

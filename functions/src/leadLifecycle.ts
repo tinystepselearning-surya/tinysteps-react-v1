@@ -85,6 +85,59 @@ const timestampMillis = (value: unknown): number => {
   return 0;
 };
 
+const earliestTimestamp = (...values: unknown[]): unknown => {
+  let earliest: unknown = null;
+  let earliestMs = Number.POSITIVE_INFINITY;
+  values.forEach((value) => {
+    const millis = timestampMillis(value);
+    if (millis > 0 && millis < earliestMs) {
+      earliest = value;
+      earliestMs = millis;
+    }
+  });
+  return earliest;
+};
+
+const sameValue = (left: unknown, right: unknown): boolean => {
+  const leftMillis = timestampMillis(left);
+  const rightMillis = timestampMillis(right);
+  if (leftMillis || rightMillis) return leftMillis === rightMillis;
+  if (Array.isArray(left) || Array.isArray(right)) {
+    return JSON.stringify(left || []) === JSON.stringify(right || []);
+  }
+  return left === right;
+};
+
+export const buildLeadCanonicalizationPatch = (
+  current: Record<string, unknown>,
+  eventBefore: Record<string, unknown> = {},
+): Record<string, unknown> => {
+  const updates: Record<string, unknown> = {};
+  // Never restore the immediately previous value: X -> Y -> X forms a permanent
+  // Firestore feedback loop. The cohort anchor is deterministic across deliveries.
+  const existingAnchor = earliestTimestamp(
+    current.receivedAt,
+    eventBefore.receivedAt,
+    current.firstInquiryAt,
+    eventBefore.firstInquiryAt,
+  );
+  const receivedAt = existingAnchor || earliestTimestamp(current.requestedAt, current.createdAt);
+  if (receivedAt && timestampMillis(current.receivedAt) !== timestampMillis(receivedAt)) {
+    updates.receivedAt = receivedAt;
+  } else if (!current.receivedAt) {
+    updates.receivedAt =
+      current.requestedAt || current.createdAt || admin.firestore.FieldValue.serverTimestamp();
+  }
+  if (!cleanText(current.status, 80)) updates.status = 'new';
+  if (!current.lifecycleVersion) updates.lifecycleVersion = 2;
+
+  const phone = normalizePhone(
+    current.primaryPhone || current.phoneNormalized || current.whatsappNumber,
+  );
+  if (phone && current.phoneNormalized !== phone) updates.phoneNormalized = phone;
+  return updates;
+};
+
 export const onLeadCreatedCanonicalize = onDocumentWritten(
   { document: 'leads/{leadId}', region: REGION },
   async (event) => {
@@ -93,27 +146,51 @@ export const onLeadCreatedCanonicalize = onDocumentWritten(
     const snap = change.after;
     const data = snap.data() || {};
     const before = change.before.exists ? (change.before.data() || {}) : {};
-    const updates: Record<string, unknown> = {};
+    if (Object.keys(buildLeadCanonicalizationPatch(data, before)).length === 0) return;
 
-    // receivedAt is the immutable cohort anchor. Once established, neither admin
-    // edits nor lifecycle synchronization may move the lead into another cohort.
-    if (before.receivedAt && timestampMillis(data.receivedAt) !== timestampMillis(before.receivedAt)) {
-      updates.receivedAt = before.receivedAt;
-    } else if (!data.receivedAt) {
-      updates.receivedAt = data.requestedAt || data.createdAt || admin.firestore.FieldValue.serverTimestamp();
-    }
-    if (!cleanText(data.status, 80)) updates.status = 'new';
-    if (!data.lifecycleVersion) updates.lifecycleVersion = 2;
-
-    const phone = normalizePhone(data.primaryPhone || data.phoneNormalized || data.whatsappNumber);
-    if (phone && data.phoneNormalized !== phone) updates.phoneNormalized = phone;
-
-    if (Object.keys(updates).length > 0) {
+    // Re-read inside a transaction so a delayed/duplicate event cannot apply a patch
+    // computed from stale event data. Only a real semantic correction emits a write.
+    await admin.firestore().runTransaction(async (tx) => {
+      const currentSnap = await tx.get(snap.ref);
+      if (!currentSnap.exists) return;
+      const updates = buildLeadCanonicalizationPatch(currentSnap.data() || {}, before);
+      if (Object.keys(updates).length === 0) return;
       updates.updatedAt = admin.firestore.FieldValue.serverTimestamp();
-      await snap.ref.set(updates, { merge: true });
-    }
+      tx.set(snap.ref, updates, { merge: true });
+    });
   },
 );
+
+const DEMO_LIFECYCLE_FIELDS = [
+  'leadId',
+  'parentName',
+  'childName',
+  'childAge',
+  'childGrade',
+  'courseInterested',
+  'source',
+  'status',
+  'conversionStatus',
+  'assignedAt',
+  'completedAt',
+  'cancelledAt',
+  'cancellationReason',
+  'enrolledAt',
+  'outcome',
+  'assignedTeacherId',
+  'assignedTeacherName',
+  'completedByTeacherId',
+  'completedByTeacherName',
+  'rescheduledFromDemoId',
+  'rescheduledToDemoId',
+  'archived',
+] as const;
+
+export const hasMeaningfulDemoLifecycleChange = (
+  before: Record<string, unknown>,
+  after: Record<string, unknown>,
+  created: boolean,
+): boolean => created || DEMO_LIFECYCLE_FIELDS.some((field) => !sameValue(before[field], after[field]));
 
 export const onDemoLeadLifecycleWrite = onDocumentWritten(
   { document: 'demoSessions/{demoId}', region: REGION },
@@ -126,6 +203,7 @@ export const onDemoLeadLifecycleWrite = onDocumentWritten(
 
     const before = change.before.exists ? (change.before.data() || {}) : {};
     const after = change.after.data() || {};
+    if (!hasMeaningfulDemoLifecycleChange(before, after, !change.before.exists)) return;
     // Archived demos are intentionally removed from the active lead workflow. Do not
     // recreate a deleted lead when an admin archives its linked demo for audit history.
     if (after.archived === true) return;
@@ -160,56 +238,60 @@ export const onDemoLeadLifecycleWrite = onDocumentWritten(
       );
       const isEnrollment = cleanText(after.conversionStatus, 80).toLowerCase() === 'enrolled';
 
-      const leadPayload: Record<string, unknown> = {
-        parentName: cleanText(after.parentName, 120) || cleanText(lead.parentName, 120) || 'Parent',
-        childName: cleanText(after.childName, 120) || cleanText(lead.childName, 120) || 'Child',
-        childAge: typeof after.childAge === 'number' ? after.childAge : lead.childAge ?? null,
-        childGrade: cleanText(after.childGrade, 80) || lead.childGrade || null,
-        interestTrack: mapCourseToLeadTrack(after.courseInterested),
-        programInterest: cleanText(after.courseInterested, 120) || lead.programInterest || null,
-        source: lead.source || mapDemoSourceToLeadSource(after.source),
-        demoIds: admin.firestore.FieldValue.arrayUnion(demoId),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedBy: systemActor,
-        lifecycleVersion: 2,
+      const leadPayload: Record<string, unknown> = {};
+      const assign = (field: string, value: unknown) => {
+        if (!sameValue(lead[field], value)) leadPayload[field] = value;
       };
+      assign('parentName', cleanText(after.parentName, 120) || cleanText(lead.parentName, 120) || 'Parent');
+      assign('childName', cleanText(after.childName, 120) || cleanText(lead.childName, 120) || 'Child');
+      assign('childAge', typeof after.childAge === 'number' ? after.childAge : lead.childAge ?? null);
+      assign('childGrade', cleanText(after.childGrade, 80) || lead.childGrade || null);
+      assign('interestTrack', mapCourseToLeadTrack(after.courseInterested));
+      assign('programInterest', cleanText(after.courseInterested, 120) || lead.programInterest || null);
+      assign('source', lead.source || mapDemoSourceToLeadSource(after.source));
+      assign('lifecycleVersion', 2);
+      const nextDemoIds = Array.from(new Set([
+        ...(Array.isArray(lead.demoIds) ? lead.demoIds.map((id) => cleanText(id, 120)).filter(Boolean) : []),
+        demoId,
+      ]));
+      assign('demoIds', nextDemoIds);
       if (!isSupersededAttempt || isEnrollment || rescheduledToDemoId) {
-        leadPayload.status = rescheduledToDemoId
+        assign('status', rescheduledToDemoId
           ? 'demo_pending_schedule'
-          : nextLeadStatus;
-        leadPayload.demoSessionId = rescheduledToDemoId || demoId;
-        leadPayload.demoStatus = rescheduledToDemoId ? 'open' : cleanText(after.status, 80) || null;
-        leadPayload.conversionStatus = cleanText(after.conversionStatus, 80) || null;
+          : nextLeadStatus);
+        assign('demoSessionId', rescheduledToDemoId || demoId);
+        assign('demoStatus', rescheduledToDemoId ? 'open' : cleanText(after.status, 80) || null);
+        assign('conversionStatus', cleanText(after.conversionStatus, 80) || null);
         if (rescheduledToDemoId) {
-          leadPayload.demoIds = admin.firestore.FieldValue.arrayUnion(demoId, rescheduledToDemoId);
+          assign('demoIds', Array.from(new Set([...nextDemoIds, rescheduledToDemoId])));
         }
       }
 
       if (phone) {
-        leadPayload.primaryPhone = lead.primaryPhone || cleanText(privateData.parentPhone, 80) || phone;
-        leadPayload.phoneNormalized = phone;
+        assign('primaryPhone', lead.primaryPhone || cleanText(privateData.parentPhone, 80) || phone);
+        assign('phoneNormalized', phone);
       }
       if (!leadSnap.exists) {
-        leadPayload.sourceDetail = 'manual_demo_request';
-        leadPayload.receivedAt = after.createdAt || admin.firestore.FieldValue.serverTimestamp();
-        leadPayload.createdAt = after.createdAt || admin.firestore.FieldValue.serverTimestamp();
-        leadPayload.createdBy = cleanText(after.createdBy, 120) || systemActor;
+        assign('sourceDetail', 'manual_demo_request');
+        assign('receivedAt', after.createdAt || admin.firestore.FieldValue.serverTimestamp());
+        assign('createdAt', after.createdAt || admin.firestore.FieldValue.serverTimestamp());
+        assign('createdBy', cleanText(after.createdBy, 120) || systemActor);
       } else if (!lead.receivedAt) {
-        leadPayload.receivedAt = lead.requestedAt || lead.createdAt || after.createdAt || admin.firestore.FieldValue.serverTimestamp();
+        assign('receivedAt', lead.requestedAt || lead.createdAt || after.createdAt || admin.firestore.FieldValue.serverTimestamp());
       }
 
-      if (!lead.demoCreatedAt) leadPayload.demoCreatedAt = after.createdAt || admin.firestore.FieldValue.serverTimestamp();
-      if (after.assignedAt && !lead.demoAssignedAt) leadPayload.demoAssignedAt = after.assignedAt;
-      if (after.completedAt && !lead.demoCompletedAt) leadPayload.demoCompletedAt = after.completedAt;
+      if (!lead.demoCreatedAt) assign('demoCreatedAt', after.createdAt || admin.firestore.FieldValue.serverTimestamp());
+      if (after.assignedAt && !lead.demoAssignedAt) assign('demoAssignedAt', after.assignedAt);
+      if (after.completedAt && !lead.demoCompletedAt) assign('demoCompletedAt', after.completedAt);
 
       const statusChangedToCancelled = cleanText(before.status, 80) !== 'cancelled' && cleanText(after.status, 80) === 'cancelled';
       if (statusChangedToCancelled || after.cancelledAt) {
-        leadPayload.demoCancelledAt = after.cancelledAt || admin.firestore.FieldValue.serverTimestamp();
-        leadPayload.demoCancellationReason = cleanText(after.cancellationReason, 120) || null;
+        assign('demoCancelledAt', after.cancelledAt || admin.firestore.FieldValue.serverTimestamp());
+        assign('demoCancellationReason', cleanText(after.cancellationReason, 120) || null);
       }
 
       if (isEnrollment) {
-        leadPayload.enrolledAt = after.enrolledAt || lead.enrolledAt || admin.firestore.FieldValue.serverTimestamp();
+        assign('enrolledAt', after.enrolledAt || lead.enrolledAt || admin.firestore.FieldValue.serverTimestamp());
       }
 
       const completionOutcome = cleanText(after.outcome, 80).toLowerCase();
@@ -218,11 +300,15 @@ export const onDemoLeadLifecycleWrite = onDocumentWritten(
         (!isSupersededAttempt || !lead.demoCompletedByTeacherId) &&
         (after.completedByTeacherId || after.assignedTeacherId)
       ) {
-        leadPayload.demoCompletedByTeacherId = after.completedByTeacherId || after.assignedTeacherId;
-        leadPayload.demoCompletedByTeacherName = after.completedByTeacherName || after.assignedTeacherName || null;
+        assign('demoCompletedByTeacherId', after.completedByTeacherId || after.assignedTeacherId);
+        assign('demoCompletedByTeacherName', after.completedByTeacherName || after.assignedTeacherName || null);
       }
 
-      tx.set(leadRef, leadPayload, { merge: true });
+      if (Object.keys(leadPayload).length > 0) {
+        leadPayload.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+        leadPayload.updatedBy = systemActor;
+        tx.set(leadRef, leadPayload, { merge: true });
+      }
 
       const demoPatch: Record<string, unknown> = {};
       if (cleanText(after.leadId, 120) !== leadId) demoPatch.leadId = leadId;
