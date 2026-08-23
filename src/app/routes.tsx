@@ -139,10 +139,6 @@ const StoryReadingGame = lazy(() => import('../pages/kids/games/reading/StoryRea
 const ComprehensionGame = lazy(() => import('../pages/kids/games/reading/ComprehensionGame/ComprehensionGame'));
 const NewWordsFromReading = lazy(() => import('../pages/kids/games/reading/NewWordsFromReading/NewWordsFromReading'));
 const WordMeaningFlashcards = lazy(() => import('../pages/kids/games/reading/WordMeaningFlashcards'));
-// BetaAnalytics component removed - file does not exist
-// const BetaAnalytics = lazy(
-//   () => import('../pages/admin/beta-analytics.jsx') as any,
-// );
 
 // Payment Components (all used in /parent routes - made eager to eliminate #426)
 const PaymentCallback = lazy(() => import('../pages/parent/Payments/PaymentCallback'));
@@ -810,20 +806,6 @@ const router = createBrowserRouter(
         // ---------- Misc aliases ----------
         { path: 'kid', element: <Navigate to="/kids/games/english-excellence" replace /> },
         { path: 'kids/:childId/dashboard', loader: legacyKidDashboardRedirectLoader },
-
-        // Beta analytics route removed - component file does not exist
-        // {
-        //   path: 'admin/beta-analytics',
-        //   element: (
-        //     <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
-        //       <RoleGate
-        //         allowedRoles={['admin']}
-        //         loginPath="/surya/login"
-        //       />
-        //     </Suspense>
-        //   ),
-        //   children: [{ index: true, element: <BetaAnalytics /> }],
-        // },
 
         // Topics seeding page removed from admin routes
       ],

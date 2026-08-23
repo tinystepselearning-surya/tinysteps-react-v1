@@ -22,6 +22,8 @@ coverage/
 .turbo/
 *.tsbuildinfo
 /types/
+/output/
+/artifacts/
 
 # Firebase / emulators / debug
 .firebase/
@@ -82,6 +84,3 @@ dist/assets/
 .playwright-cli/
 playwright-report/
 test-results/
-
-# Local Lighthouse raw audit outputs
-artifacts/lighthouse-*.json
