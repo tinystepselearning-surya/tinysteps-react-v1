@@ -26,7 +26,13 @@ Target principal audited:
 | github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/secretmanager.viewer` | secret `groq-api-key` | not required for runtime secret access | removed | yes (policy update verified) |
 | github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/secretmanager.secretAccessor` + `roles/secretmanager.viewer` | secret `GROQ_API_KEY` | duplicate legacy secret; not used by code | removed | yes (policy update verified) |
 
+## Pending index-workflow binding
+
+| principal | role | scope | reason | status |
+|---|---|---|---|---|
+| github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/datastore.indexAdmin` | project `tinysteps-react-v1` | list/create and monitor required Firestore composite indexes; no document access | not currently bound; requires the one-time helper in `scripts/grant-parent-month-attendance-index-iam.sh` |
+
 ## Notes
 
-- No additional project-level role bindings were found for this principal beyond the roles listed above.
+- No additional current project-level role bindings were found beyond the roles in the Project-level roles table.
 - A follow-up hardening pass should test removing `roles/firebaseauth.admin` and possibly `roles/datastore.viewer` one at a time through CI deploy verification.

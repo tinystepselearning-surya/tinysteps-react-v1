@@ -5,8 +5,13 @@ on:
     branches: [main]
     paths:
       - "scripts/ensure-parent-month-attendance-index.mjs"
+      - "scripts/ensure-parent-month-attendance-index.test.mjs"
+      - "firestore.indexes.json"
       - ".github/workflows/ensure-parent-month-attendance-index.yml"
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 # This is a control-plane verification only. It does not query Firestore documents.
 # It creates the required composite index if absent and waits until the index is READY.
@@ -14,6 +19,7 @@ on:
 jobs:
   ensure-index:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     concurrency:
       group: firebase-deployment-tinysteps-react-v1
       cancel-in-progress: false
@@ -30,6 +36,9 @@ jobs:
         with:
           node-version: 22.x
 
+      - name: Test index ensure logic
+        run: node --test scripts/ensure-parent-month-attendance-index.test.mjs
+
       - name: Authenticate to Google Cloud
         id: gcp-auth
         uses: google-github-actions/auth@v2
@@ -39,6 +48,18 @@ jobs:
 
       - name: Setup Google Cloud CLI
         uses: google-github-actions/setup-gcloud@v2
+
+      - name: Verify authenticated service account
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_account="github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com"
+          authenticated_account="$(gcloud auth list --filter=status:ACTIVE --format='value(account)')"
+          if [[ "${authenticated_account}" != "${expected_account}" ]]; then
+            echo "::error::Expected Google Cloud account ${expected_account}, got ${authenticated_account:-<none>}."
+            exit 1
+          fi
+          echo "Authenticated as ${authenticated_account}."
 
       - name: Refuse stale main verification
         if: github.event_name == 'push'
