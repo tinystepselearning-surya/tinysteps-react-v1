@@ -59,11 +59,13 @@ export {
   onCurriculumTopicsCanonicalize,
 } from "./phonicsCurriculumEnforcer";
 export {
-  onBillingChargeReadModelWrite,
-  onPaymentReadModelWrite,
   onParentUserReadModelWrite,
   onStudentProgressReadModelWrite,
 } from "./parentMonthlyReadModels";
+export {
+  onBillingChargeReadModelWrite,
+  onPaymentReadModelWrite,
+} from "./parentMonthlyBillingProjectionV2";
 export { onClassSessionReadModelWrite } from "./parentMonthlyAttendanceProjection";
 
 // Admin user management
