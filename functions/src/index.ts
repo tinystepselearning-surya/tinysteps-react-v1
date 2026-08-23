@@ -119,12 +119,12 @@ export {
 } from './schoolActivityTriggers';
 
 // Learning Partner assignment
-export { 
-  assignLPToParent, 
-  unassignLPFromParent, 
-  assignLPToTeacher, 
+export {
+  assignLPToParent,
+  unassignLPFromParent,
+  assignLPToTeacher,
   unassignLPFromTeacher,
-  adminSetUserRole 
+  adminSetUserRole
 } from "./assignLP";
 
 // Game progress tracking
@@ -222,10 +222,8 @@ export {
 export { askTinySteps } from "./ai/askTinySteps";
 export { refreshPublicKb } from "./ai/refreshPublicKb";
 
-// WhatsApp backend foundation (admin send + webhook callbacks)
-export { sendWhatsAppTemplateMessage, whatsAppWebhook } from './whatsapp';
-export { whatsappWebhookV2 } from './whatsappWebhook';
-export { onUnmatchedWhatsAppInboundCreateLead } from './whatsappLeadLifecycle';
+// Meta WhatsApp Cloud API integration intentionally retired until explicitly reintroduced.
+// Normal website lead forms and website WhatsApp contact links are independent and remain active.
 
 // Internal messaging
 export { createOrSyncMessageThread } from './messaging/createOrSyncMessageThread';
@@ -241,9 +239,9 @@ export {
   onStudentMessageThreadAutoSync,
 } from './messaging/autoSyncMessageThreads';
 
-// Push notifications
+// Push notification token support stays available for app testing.
+// The scheduled 15-minute class reminder is intentionally not exported until the parent app goes live.
 export {
   registerNotificationToken,
   sendTestPushNotification,
-  sendClassReminders15Min,
 } from './notifications/classReminders';
