@@ -210,7 +210,6 @@ export {
   onLeadEnsureDemoRequest,
   onOrphanDemoIdentityRepair,
 } from './leadDemoAutoWorkflow';
-export { repairLegacyPreparingDemoRequests } from './leadDemoPreparationRepair';
 export { adminBackfillLeadLifecycle } from './leadLifecycleBackfill';
 export {
   adminUpdateLeadWorkflowRecord,
