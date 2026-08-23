@@ -8,31 +8,17 @@ if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
 const IST_OFFSET_MINUTES = 330;
-const PROCESSED_EVENT_WINDOW = 128;
 const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
 const MONTH_RE = /^\d{4}-\d{2}$/;
 
-const STATUS_FIELDS = [
-  'completed',
-  'in_progress',
-  'scheduled',
-  'cancelled',
-  'no_show',
-  'reschedule_requested',
-] as const;
+// A parent should never have anywhere close to this many class records in one month.
+// The guard converts an unexpected data-shape problem into a visible failure instead of
+// silently turning one session write into an unbounded historical scan.
+export const MAX_PARENT_MONTH_ATTENDANCE_SESSIONS = 250;
 
-type AttendanceStatusField = (typeof STATUS_FIELDS)[number];
 type ParentMonthTarget = { parentId: string; monthKey: string };
 
-type AttendanceContribution = {
-  status: string;
-  kidIds: string[];
-  startMs: number;
-  upcoming: boolean;
-  attendanceByKid: Record<string, string>;
-};
-
-type AttendanceTotals = {
+export type AttendanceProjectionTotals = {
   total: number;
   completed: number;
   in_progress: number;
@@ -49,20 +35,31 @@ type AttendanceTotals = {
   attendancePct: number;
 };
 
-type AttendanceKidBucket = AttendanceTotals & { kidId: string };
+export type AttendanceProjectionKidBucket = AttendanceProjectionTotals & {
+  kidId: string;
+};
 
-type AttendanceProjectionState = {
-  totals: AttendanceTotals;
-  byKid: Record<string, AttendanceKidBucket>;
+export type AttendanceProjection = {
+  totals: AttendanceProjectionTotals;
+  byKid: Record<string, AttendanceProjectionKidBucket>;
 };
 
 function toDate(value: unknown): Date | null {
   if (!value) return null;
   if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
-  if (typeof (value as { toDate?: () => Date })?.toDate === 'function') {
-    const parsed = (value as { toDate: () => Date }).toDate();
-    return parsed instanceof Date && !Number.isNaN(parsed.getTime()) ? parsed : null;
+
+  if (typeof value === 'object' && value !== null) {
+    const candidate = value as { toDate?: () => Date; seconds?: number };
+    if (typeof candidate.toDate === 'function') {
+      const parsed = candidate.toDate();
+      return parsed instanceof Date && !Number.isNaN(parsed.getTime()) ? parsed : null;
+    }
+    if (typeof candidate.seconds === 'number') {
+      const parsed = new Date(candidate.seconds * 1000);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
   }
+
   if (typeof value === 'number' || typeof value === 'string') {
     const parsed = new Date(value);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
@@ -84,7 +81,9 @@ function monthDateRangeFromKey(monthKey: string): { startYmd: string; endYmd: st
   const [yearRaw, monthRaw] = monthKey.split('-');
   const year = Number(yearRaw);
   const month = Number(monthRaw);
-  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) return null;
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+    return null;
+  }
   const lastDay = new Date(year, month, 0).getDate();
   return {
     startYmd: `${yearRaw}-${monthRaw}-01`,
@@ -105,18 +104,26 @@ function sanitizeKidId(value: unknown): string {
   return id || '_unassigned';
 }
 
+/**
+ * Class-session month ownership must come from the scheduled class date/time, never from
+ * generic updatedAt/createdAt timestamps. Using updatedAt can move an old class into the
+ * month in which somebody edited it and can force unrelated month projections to refresh.
+ */
 export function resolveSessionMonthKey(
   data: Record<string, unknown> | null | undefined,
 ): string | null {
   if (!data) return null;
 
-  const explicitMonth = String(data.monthKey || '').trim();
-  if (MONTH_RE.test(explicitMonth)) return explicitMonth;
-
   const date = String(data.date || '').trim();
   if (YMD_RE.test(date)) return date.slice(0, 7);
 
-  return monthKeyFromDateIST(data.startAt || data.scheduledAt || data.createdAt || null);
+  const fromStartAt = monthKeyFromDateIST(data.startAt || data.scheduledAt || null);
+  if (fromStartAt) return fromStartAt;
+
+  // Keep a narrow compatibility fallback for historical records that explicitly persisted
+  // a class month but lack canonical date/startAt. Do not infer from updatedAt/createdAt.
+  const explicitMonth = String(data.monthKey || '').trim();
+  return MONTH_RE.test(explicitMonth) ? explicitMonth : null;
 }
 
 export function resolveSessionAttendanceTarget(
@@ -154,7 +161,9 @@ function resolveKidAttendanceStatus(session: Record<string, unknown>, kidId: str
   return '';
 }
 
-function projectionInputs(session: Record<string, unknown> | null): Record<string, unknown> | null {
+function projectionFingerprint(
+  session: Record<string, unknown> | null,
+): Record<string, unknown> | null {
   if (!session) return null;
   const target = resolveSessionAttendanceTarget(session);
   const kidIds = resolveSessionKidIds(session);
@@ -166,49 +175,41 @@ function projectionInputs(session: Record<string, unknown> | null): Record<strin
     parentId: target?.parentId || '',
     monthKey: target?.monthKey || '',
     status: normalizeSessionStatus(session.status),
-    startMs: toDate(session.startAt || session.date || session.createdAt || null)?.getTime() || 0,
+    startMs:
+      toDate(session.startAt || session.scheduledAt || null)?.getTime() || 0,
     kidIds,
     attendanceByKid,
   };
 }
 
+/**
+ * Most class-session writes are not attendance projection changes (notes, audit metadata,
+ * links, timestamps, recordings, etc.). Those writes should terminate before any Firestore
+ * read. Only fields that can change the parent-month attendance projection are compared.
+ */
 export function shouldRefreshParentMonthAttendance(
   beforeData: Record<string, unknown> | null,
   afterData: Record<string, unknown> | null,
 ): boolean {
-  const before = projectionInputs(beforeData);
-  const after = projectionInputs(afterData);
-  if (!before && !after) return false;
-  return JSON.stringify(before) !== JSON.stringify(after);
+  return (
+    JSON.stringify(projectionFingerprint(beforeData)) !==
+    JSON.stringify(projectionFingerprint(afterData))
+  );
 }
 
-function buildContribution(
-  session: Record<string, unknown> | null,
-  nowMs: number,
-): AttendanceContribution | null {
-  if (!session) return null;
-  const target = resolveSessionAttendanceTarget(session);
-  if (!target) return null;
-  const status = normalizeSessionStatus(session.status);
-  const startMs = toDate(session.startAt || session.date || session.createdAt || null)?.getTime() || 0;
-  const kidIds = resolveSessionKidIds(session);
-  const attendanceByKid: Record<string, string> = {};
-  kidIds.forEach((kidId) => {
-    attendanceByKid[kidId] = resolveKidAttendanceStatus(session, kidId);
+export function collectParentMonthAttendanceTargets(
+  beforeData: Record<string, unknown> | null,
+  afterData: Record<string, unknown> | null,
+): ParentMonthTarget[] {
+  const targets = new Map<string, ParentMonthTarget>();
+  [beforeData, afterData].forEach((data) => {
+    const target = resolveSessionAttendanceTarget(data);
+    if (target) targets.set(`${target.parentId}__${target.monthKey}`, target);
   });
-  return {
-    status,
-    kidIds,
-    startMs,
-    upcoming:
-      (status === 'scheduled' || status === 'in_progress') &&
-      startMs > 0 &&
-      startMs >= nowMs,
-    attendanceByKid,
-  };
+  return Array.from(targets.values());
 }
 
-function emptyTotals(): AttendanceTotals {
+function emptyTotals(): AttendanceProjectionTotals {
   return {
     total: 0,
     completed: 0,
@@ -227,297 +228,171 @@ function emptyTotals(): AttendanceTotals {
   };
 }
 
-function numeric(value: unknown): number {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
+function emptyKidBucket(kidId: string): AttendanceProjectionKidBucket {
+  return { kidId, ...emptyTotals() };
 }
 
-function normalizeTotals(raw: unknown): AttendanceTotals {
-  const source = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
-  const totals = emptyTotals();
-  (Object.keys(totals) as Array<keyof AttendanceTotals>).forEach((key) => {
-    totals[key] = Math.max(0, numeric(source[key]));
-  });
-  return totals;
-}
-
-function normalizeKidBucket(kidId: string, raw: unknown): AttendanceKidBucket {
-  const source = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
-  return {
-    kidId,
-    ...normalizeTotals(source),
-  };
-}
-
-function normalizeProjectionState(attendance: Record<string, unknown> | null): AttendanceProjectionState {
-  const byKidRaw =
-    attendance?.byKid && typeof attendance.byKid === 'object'
-      ? (attendance.byKid as Record<string, unknown>)
-      : {};
-  const byKid: Record<string, AttendanceKidBucket> = {};
-  Object.entries(byKidRaw).forEach(([kidId, raw]) => {
-    byKid[kidId] = normalizeKidBucket(kidId, raw);
-  });
-  return {
-    totals: normalizeTotals(attendance?.totals),
-    byKid,
-  };
-}
-
-function statusField(status: string): AttendanceStatusField | 'other' {
-  return (STATUS_FIELDS as readonly string[]).includes(status)
-    ? (status as AttendanceStatusField)
+function incrementStatus(
+  totals: AttendanceProjectionTotals,
+  bucket: AttendanceProjectionKidBucket,
+  status: string,
+): void {
+  const knownStatus = [
+    'completed',
+    'in_progress',
+    'scheduled',
+    'cancelled',
+    'no_show',
+    'reschedule_requested',
+  ].includes(status);
+  const key = knownStatus
+    ? (status as
+        | 'completed'
+        | 'in_progress'
+        | 'scheduled'
+        | 'cancelled'
+        | 'no_show'
+        | 'reschedule_requested')
     : 'other';
+  totals[key] += 1;
+  bucket[key] += 1;
 }
 
-function mutateCounter(target: Record<string, unknown>, key: string, delta: number): void {
-  target[key] = Math.max(0, numeric(target[key]) + delta);
-}
+/** Pure aggregation used by the function and unit tests. */
+export function buildParentMonthAttendanceProjection(
+  sessions: Array<Record<string, unknown>>,
+  monthKey: string,
+  nowMs = Date.now(),
+): AttendanceProjection {
+  const totals = emptyTotals();
+  const byKid = new Map<string, AttendanceProjectionKidBucket>();
 
-function finalizeProjectionState(state: AttendanceProjectionState): AttendanceProjectionState {
-  Object.entries(state.byKid).forEach(([kidId, bucket]) => {
-    const attendanceMarked = bucket.present + bucket.late + bucket.absent;
-    bucket.attendanceMarked = attendanceMarked;
+  const getKidBucket = (kidId: string): AttendanceProjectionKidBucket => {
+    const key = sanitizeKidId(kidId);
+    const existing = byKid.get(key);
+    if (existing) return existing;
+    const next = emptyKidBucket(key);
+    byKid.set(key, next);
+    return next;
+  };
+
+  sessions.forEach((session) => {
+    if (resolveSessionMonthKey(session) !== monthKey) return;
+
+    const status = normalizeSessionStatus(session.status);
+    const startMs =
+      toDate(session.startAt || session.scheduledAt || null)?.getTime() || 0;
+    const kidIds = resolveSessionKidIds(session);
+
+    kidIds.forEach((kidId) => {
+      const bucket = getKidBucket(kidId);
+      totals.total += 1;
+      bucket.total += 1;
+      incrementStatus(totals, bucket, status);
+
+      if (
+        (status === 'scheduled' || status === 'in_progress') &&
+        startMs > 0 &&
+        startMs >= nowMs
+      ) {
+        totals.upcoming += 1;
+        bucket.upcoming += 1;
+      }
+
+      if (status !== 'completed') return;
+      const attendanceStatus = resolveKidAttendanceStatus(session, kidId);
+      if (attendanceStatus === 'present') {
+        totals.present += 1;
+        bucket.present += 1;
+      } else if (attendanceStatus === 'late') {
+        totals.late += 1;
+        bucket.late += 1;
+      } else if (attendanceStatus === 'absent' || attendanceStatus === 'no_show') {
+        totals.absent += 1;
+        bucket.absent += 1;
+      }
+    });
+  });
+
+  const byKidObject: Record<string, AttendanceProjectionKidBucket> = {};
+  for (const [kidId, bucket] of byKid.entries()) {
+    bucket.attendanceMarked = bucket.present + bucket.late + bucket.absent;
     bucket.attendancePct =
-      attendanceMarked > 0
-        ? Math.round(((bucket.present + bucket.late) / attendanceMarked) * 100)
+      bucket.attendanceMarked > 0
+        ? Math.round(((bucket.present + bucket.late) / bucket.attendanceMarked) * 100)
         : 0;
-    if (
-      bucket.total === 0 &&
-      bucket.completed === 0 &&
-      bucket.in_progress === 0 &&
-      bucket.scheduled === 0 &&
-      bucket.cancelled === 0 &&
-      bucket.no_show === 0 &&
-      bucket.reschedule_requested === 0 &&
-      bucket.other === 0
-    ) {
-      delete state.byKid[kidId];
-    }
-  });
-
-  state.totals.attendanceMarked =
-    state.totals.present + state.totals.late + state.totals.absent;
-  state.totals.attendancePct =
-    state.totals.attendanceMarked > 0
-      ? Math.round(
-          ((state.totals.present + state.totals.late) /
-            state.totals.attendanceMarked) *
-            100,
-        )
-      : 0;
-  return state;
-}
-
-export function applyAttendanceContribution(
-  state: AttendanceProjectionState,
-  contribution: AttendanceContribution | null,
-  direction: 1 | -1,
-): AttendanceProjectionState {
-  if (!contribution) return state;
-  const statusKey = statusField(contribution.status);
-
-  contribution.kidIds.forEach((rawKidId) => {
-    const kidId = sanitizeKidId(rawKidId);
-    const bucket = state.byKid[kidId] || normalizeKidBucket(kidId, null);
-    state.byKid[kidId] = bucket;
-
-    mutateCounter(state.totals as unknown as Record<string, unknown>, 'total', direction);
-    mutateCounter(bucket as unknown as Record<string, unknown>, 'total', direction);
-    mutateCounter(state.totals as unknown as Record<string, unknown>, statusKey, direction);
-    mutateCounter(bucket as unknown as Record<string, unknown>, statusKey, direction);
-
-    if (contribution.upcoming) {
-      mutateCounter(state.totals as unknown as Record<string, unknown>, 'upcoming', direction);
-      mutateCounter(bucket as unknown as Record<string, unknown>, 'upcoming', direction);
-    }
-
-    if (contribution.status !== 'completed') return;
-    const attendanceStatus = contribution.attendanceByKid[kidId] || '';
-    if (attendanceStatus === 'present') {
-      mutateCounter(state.totals as unknown as Record<string, unknown>, 'present', direction);
-      mutateCounter(bucket as unknown as Record<string, unknown>, 'present', direction);
-    } else if (attendanceStatus === 'late') {
-      mutateCounter(state.totals as unknown as Record<string, unknown>, 'late', direction);
-      mutateCounter(bucket as unknown as Record<string, unknown>, 'late', direction);
-    } else if (attendanceStatus === 'absent' || attendanceStatus === 'no_show') {
-      mutateCounter(state.totals as unknown as Record<string, unknown>, 'absent', direction);
-      mutateCounter(bucket as unknown as Record<string, unknown>, 'absent', direction);
-    }
-  });
-
-  return finalizeProjectionState(state);
-}
-
-function eventWindow(raw: unknown): string[] {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .map((value) => String(value || '').trim())
-    .filter(Boolean)
-    .slice(-PROCESSED_EVENT_WINDOW);
-}
-
-export function rememberProcessedEvent(existing: unknown, eventId: string): string[] {
-  const current = eventWindow(existing);
-  if (!eventId || current.includes(eventId)) return current;
-  return [...current, eventId].slice(-PROCESSED_EVENT_WINDOW);
-}
-
-function contributionForTarget(
-  data: Record<string, unknown> | null,
-  target: ParentMonthTarget,
-  nowMs: number,
-): AttendanceContribution | null {
-  const candidateTarget = resolveSessionAttendanceTarget(data);
-  if (
-    !candidateTarget ||
-    candidateTarget.parentId !== target.parentId ||
-    candidateTarget.monthKey !== target.monthKey
-  ) {
-    return null;
+    byKidObject[kidId] = bucket;
   }
-  return buildContribution(data, nowMs);
+
+  totals.attendanceMarked = totals.present + totals.late + totals.absent;
+  totals.attendancePct =
+    totals.attendanceMarked > 0
+      ? Math.round(((totals.present + totals.late) / totals.attendanceMarked) * 100)
+      : 0;
+
+  return { totals, byKid: byKidObject };
 }
 
-function collectTargets(
-  beforeData: Record<string, unknown> | null,
-  afterData: Record<string, unknown> | null,
-): ParentMonthTarget[] {
-  const targets = new Map<string, ParentMonthTarget>();
-  [beforeData, afterData].forEach((data) => {
-    const target = resolveSessionAttendanceTarget(data);
-    if (target) targets.set(`${target.parentId}__${target.monthKey}`, target);
-  });
-  return Array.from(targets.values());
-}
-
-async function bootstrapParentMonthAttendance(
+async function recomputeParentMonthAttendanceReadModel(
   db: admin.firestore.Firestore,
   target: ParentMonthTarget,
-  eventId: string,
-  nowMs: number,
-): Promise<void> {
+): Promise<number> {
   const monthRange = monthDateRangeFromKey(target.monthKey);
-  if (!monthRange) return;
+  if (!monthRange) return 0;
 
-  // This is intentionally month-bounded. Never fall back to scanning a parent's full
-  // class-session history. A missing compound index should fail visibly rather than
-  // silently turning one session write into an unbounded historical read.
+  // Strictly server-bounded by parent + canonical class date. There is intentionally NO
+  // fallback to `where(parentId == ...).get()`: a missing index or bad schema must surface
+  // as an error rather than create a hidden all-history read amplifier.
   const sessionsSnap = await db
     .collection('classSessions')
     .where('parentId', '==', target.parentId)
     .where('date', '>=', monthRange.startYmd)
     .where('date', '<=', monthRange.endYmd)
+    .limit(MAX_PARENT_MONTH_ATTENDANCE_SESSIONS + 1)
     .get();
 
-  let state: AttendanceProjectionState = {
-    totals: emptyTotals(),
-    byKid: {},
-  };
-  sessionsSnap.docs.forEach((docSnap) => {
-    const session = (docSnap.data() || {}) as Record<string, unknown>;
-    const sessionTarget = resolveSessionAttendanceTarget(session);
-    if (
-      !sessionTarget ||
-      sessionTarget.parentId !== target.parentId ||
-      sessionTarget.monthKey !== target.monthKey
-    ) {
-      return;
-    }
-    state = applyAttendanceContribution(state, buildContribution(session, nowMs), 1);
-  });
+  if (sessionsSnap.size > MAX_PARENT_MONTH_ATTENDANCE_SESSIONS) {
+    throw new Error(
+      `Parent-month attendance projection exceeded safe cap (${target.parentId}/${target.monthKey}, >${MAX_PARENT_MONTH_ATTENDANCE_SESSIONS} sessions)`,
+    );
+  }
 
-  const ref = db
+  const sessions = sessionsSnap.docs.map(
+    (docSnap) => (docSnap.data() || {}) as Record<string, unknown>,
+  );
+  const generatedAtMs = Date.now();
+  const projection = buildParentMonthAttendanceProjection(
+    sessions,
+    target.monthKey,
+    generatedAtMs,
+  );
+
+  const docRef = db
     .collection('parentMonthlyReadModels')
     .doc(target.parentId)
     .collection('months')
     .doc(target.monthKey);
-  await ref.set(
+
+  await docRef.set(
     {
       parentId: target.parentId,
       monthKey: target.monthKey,
       attendance: {
         schemaVersion: 2,
-        modelType: 'attendance_v2_incremental',
+        modelType: 'attendance_v2_month_bounded',
+        queryMode: 'parentId_date_month_bounded',
+        sourceSessionCount: sessionsSnap.size,
+        maxSourceSessionCount: MAX_PARENT_MONTH_ATTENDANCE_SESSIONS,
         refreshedAt: FieldValue.serverTimestamp(),
-        generatedAtMs: nowMs,
-        processedEventIds: rememberProcessedEvent([], eventId),
-        totals: state.totals,
-        byKid: state.byKid,
+        generatedAtMs,
+        totals: projection.totals,
+        byKid: projection.byKid,
       },
     },
     { merge: true },
   );
-}
 
-async function applyIncrementalAttendanceEvent(
-  db: admin.firestore.Firestore,
-  target: ParentMonthTarget,
-  beforeData: Record<string, unknown> | null,
-  afterData: Record<string, unknown> | null,
-  eventId: string,
-  nowMs: number,
-): Promise<'updated' | 'duplicate' | 'bootstrap'> {
-  const ref = db
-    .collection('parentMonthlyReadModels')
-    .doc(target.parentId)
-    .collection('months')
-    .doc(target.monthKey);
-
-  let needsBootstrap = false;
-  const result = await db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    const docData = snap.exists ? ((snap.data() || {}) as Record<string, unknown>) : {};
-    const attendance =
-      docData.attendance && typeof docData.attendance === 'object'
-        ? (docData.attendance as Record<string, unknown>)
-        : null;
-
-    if (!attendance) {
-      needsBootstrap = true;
-      return 'bootstrap' as const;
-    }
-
-    const processed = eventWindow(attendance.processedEventIds);
-    if (eventId && processed.includes(eventId)) return 'duplicate' as const;
-
-    let state = normalizeProjectionState(attendance);
-    state = applyAttendanceContribution(
-      state,
-      contributionForTarget(beforeData, target, nowMs),
-      -1,
-    );
-    state = applyAttendanceContribution(
-      state,
-      contributionForTarget(afterData, target, nowMs),
-      1,
-    );
-
-    tx.set(
-      ref,
-      {
-        parentId: target.parentId,
-        monthKey: target.monthKey,
-        attendance: {
-          schemaVersion: 2,
-          modelType: 'attendance_v2_incremental',
-          refreshedAt: FieldValue.serverTimestamp(),
-          generatedAtMs: nowMs,
-          processedEventIds: rememberProcessedEvent(processed, eventId),
-          totals: state.totals,
-          byKid: state.byKid,
-        },
-      },
-      { merge: true },
-    );
-    return 'updated' as const;
-  });
-
-  if (needsBootstrap || result === 'bootstrap') {
-    await bootstrapParentMonthAttendance(db, target, eventId, nowMs);
-    return 'bootstrap';
-  }
-  return result;
+  return sessionsSnap.size;
 }
 
 export const onClassSessionReadModelWrite = onDocumentWritten(
@@ -543,35 +418,24 @@ export const onClassSessionReadModelWrite = onDocumentWritten(
       return;
     }
 
-    const targets = collectTargets(beforeData, afterData);
+    const targets = collectParentMonthAttendanceTargets(beforeData, afterData);
     if (targets.length === 0) return;
 
     const db = admin.firestore();
-    const eventId = String(event.id || '').trim();
-    const nowMs = Date.now();
-
     for (const target of targets) {
       try {
-        const mode = await applyIncrementalAttendanceEvent(
-          db,
-          target,
-          beforeData,
-          afterData,
-          eventId,
-          nowMs,
-        );
-        logger.debug('Refreshed parent monthly attendance read model', {
+        const sourceSessionCount = await recomputeParentMonthAttendanceReadModel(db, target);
+        logger.debug('Refreshed bounded parent monthly attendance read model', {
           sessionId: event.params.sessionId,
           parentId: target.parentId,
           monthKey: target.monthKey,
-          mode,
+          sourceSessionCount,
         });
       } catch (error) {
-        logger.error('Parent monthly attendance projection refresh failed', {
+        logger.error('Bounded parent monthly attendance refresh failed', {
           sessionId: event.params.sessionId,
           parentId: target.parentId,
           monthKey: target.monthKey,
-          eventId,
           error: error instanceof Error ? error.message : String(error || ''),
         });
         throw error;
