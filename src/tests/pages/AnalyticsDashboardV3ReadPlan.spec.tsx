@@ -101,12 +101,13 @@ describe('AnalyticsDashboard V3 Firestore read plan', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Finance' }));
     await waitFor(() => expect(countLabel('AnalyticsDashboardV3:month-teacher-earnings')).toBe(1));
+    expect(countLabel('AnalyticsDashboardV3:month-class-sessions')).toBe(1);
 
     fireEvent.click(screen.getByRole('button', { name: 'Teachers' }));
     await waitFor(() => expect(countLabel('AnalyticsDashboardV3:all-users')).toBe(1));
 
     expect(countLabel('AnalyticsDashboardV3:month-teacher-earnings')).toBe(1);
-    expect(labels()).not.toContain('AnalyticsDashboardV3:month-class-sessions');
+    expect(countLabel('AnalyticsDashboardV3:month-class-sessions')).toBe(1);
   });
 
   it('loads Delivery without teacher earnings or user profiles', async () => {
