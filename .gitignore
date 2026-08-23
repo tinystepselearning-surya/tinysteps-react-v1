@@ -33,6 +33,7 @@ emu*.log
 .env
 .env.*
 *.local
+!.env.local.example
 
 # Archives / bundles
 *.tgz
