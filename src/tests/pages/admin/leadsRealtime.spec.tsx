@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const firestoreMocks = vi.hoisted(() => ({
   collection: vi.fn(() => ({ kind: 'collection' })),
-  documentId: vi.fn(() => '__name__'),
   getCountFromServer: vi.fn(),
   getDocs: vi.fn(),
   limit: vi.fn((value: number) => ({ kind: 'limit', value })),
@@ -219,7 +218,7 @@ describe('useRealtimeLeads bounded Firestore reads', () => {
     expect(onNew).not.toHaveBeenCalled();
   });
 
-  it('opens a bounded Closed listener only when Closed history is requested', async () => {
+  it('opens a bounded recent-history listener only when Closed history is requested', async () => {
     const onNew = vi.fn();
     const { rerender } = render(
       <Harness includeClosed={false} onNewWebsiteLeads={onNew} />,
@@ -229,13 +228,15 @@ describe('useRealtimeLeads bounded Firestore reads', () => {
     rerender(<Harness includeClosed onNewWebsiteLeads={onNew} />);
 
     expect(firestoreMocks.onSnapshot).toHaveBeenCalledTimes(2);
+    // Terminal status filtering is performed on the bounded history page itself; the
+    // authoritative Closed total still uses the status-filtered aggregate query.
     expect(firestoreMocks.where).toHaveBeenCalledWith(
       'status',
       'in',
       [...CLOSED_LEAD_STATUSES],
     );
+    expect(firestoreMocks.orderBy).toHaveBeenCalledTimes(1);
     expect(firestoreMocks.orderBy).toHaveBeenCalledWith('updatedAt', 'desc');
-    expect(firestoreMocks.orderBy).toHaveBeenCalledWith('__name__', 'desc');
     expect(firestoreMocks.limit).toHaveBeenCalledWith(CLOSED_LEAD_PAGE_SIZE + 1);
 
     const closedDocs = Array.from({ length: CLOSED_LEAD_PAGE_SIZE + 1 }, (_, index) =>
