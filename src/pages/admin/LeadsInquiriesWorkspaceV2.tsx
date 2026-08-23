@@ -362,7 +362,7 @@ export default function LeadsInquiriesWorkspaceV2({
     loadMoreClosed,
     refreshClosedCount,
   } = useRealtimeLeads<LeadRecord>({
-    includeClosed: true,
+    includeClosed: bucket === 'closed',
     onNewWebsiteLeads: (newLeads) => {
       toast({
         title: newLeads.length === 1 ? 'New demo enquiry received' : `${newLeads.length} new demo enquiries received`,
@@ -374,15 +374,16 @@ export default function LeadsInquiriesWorkspaceV2({
     },
   });
 
-  const scopedDemoIds = useMemo(
-    () => Array.from(new Set(leads.map((lead) => normalizeText(lead.demoSessionId)).filter(Boolean))).sort(),
+  const scopedDemoIdsKey = useMemo(
+    () => Array.from(new Set(leads.map((lead) => normalizeText(lead.demoSessionId)).filter(Boolean))).sort().join('|'),
     [leads],
   );
 
   useEffect(() => {
     setDemosLoaded(false);
+    const demoIds = scopedDemoIdsKey ? scopedDemoIdsKey.split('|') : [];
     return listenDemoSessionsByIds(
-      scopedDemoIds,
+      demoIds,
       (next) => {
         setDemos(next);
         setDemosLoaded(true);
@@ -392,20 +393,21 @@ export default function LeadsInquiriesWorkspaceV2({
         toast({ title: 'Could not load demos', description: error.message, variant: 'destructive' });
       },
     );
-  }, [scopedDemoIds, toast]);
+  }, [scopedDemoIdsKey, toast]);
 
-  const scopedPrivateDemoIds = useMemo(
-    () => Array.from(new Set(demos.map((demo) => normalizeText(demo.id)).filter(Boolean))).sort(),
+  const scopedPrivateDemoIdsKey = useMemo(
+    () => Array.from(new Set(demos.map((demo) => normalizeText(demo.id)).filter(Boolean))).sort().join('|'),
     [demos],
   );
 
-  useEffect(() =>
-    listenDemoSessionPrivatePhonesByIds(
-      scopedPrivateDemoIds,
+  useEffect(() => {
+    const demoIds = scopedPrivateDemoIdsKey ? scopedPrivateDemoIdsKey.split('|') : [];
+    return listenDemoSessionPrivatePhonesByIds(
+      demoIds,
       setDemoPhones,
       (error) => console.error('[LeadsInquiriesWorkspaceV2] demo phone load failed', error),
-    ),
-  [scopedPrivateDemoIds]);
+    );
+  }, [scopedPrivateDemoIdsKey]);
 
   useEffect(() => {
     setTeachersLoaded(false);
@@ -843,6 +845,7 @@ export default function LeadsInquiriesWorkspaceV2({
   }
 
   const loading = leadsLoading || !demosLoaded;
+  const showLoadMoreClosed = bucket === 'closed' && closedHistoryHasMore;
 
   return (
     <div className="space-y-4">
@@ -943,6 +946,18 @@ export default function LeadsInquiriesWorkspaceV2({
           <div className="p-8 text-center">
             <CheckCircle2 className="mx-auto h-8 w-8 text-slate-300" />
             <p className="mt-2 font-medium text-slate-700">Nothing here right now.</p>
+            {showLoadMoreClosed && (
+              <div className="mt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => void loadMoreClosed()}
+                  disabled={isLoadingMoreClosed}
+                >
+                  {isLoadingMoreClosed ? 'Loading older leads…' : 'Check older closed leads'}
+                </Button>
+              </div>
+            )}
           </div>
         ) : (
           <div>
@@ -1003,7 +1018,7 @@ export default function LeadsInquiriesWorkspaceV2({
                 </div>
               ))}
             </div>
-            {bucket === 'closed' && closedHistoryHasMore && (
+            {showLoadMoreClosed && (
               <div className="border-t px-4 py-4 text-center">
                 <Button
                   type="button"
