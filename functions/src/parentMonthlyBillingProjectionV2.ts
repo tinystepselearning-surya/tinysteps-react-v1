@@ -6,7 +6,10 @@ import {
   buildParentMonthlyBillingReadModel,
   type ParentMonthlyBillingChargeInput,
 } from './parentMonthlyBillingReadModel';
-import { collectParentMonthlyBillingTargets } from './parentMonthlyReadModels';
+import {
+  collectParentMonthlyBillingTargets,
+  recomputeParentMonthBillingReadModel,
+} from './parentMonthlyReadModels';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -428,13 +431,15 @@ async function refreshProjectionTarget(
     });
   } catch (error) {
     if (error instanceof ProjectionTooLargeError) {
-      logger.error('Billing projection exceeded safe charge cap; refusing partial projection', {
+      logger.warn('Billing projection exceeded safe charge cap; using legacy authoritative recompute', {
         source,
         parentId: target.parentId,
         monthKey: target.monthKey,
         sourceCount: error.sourceCount,
         cap: MAX_PROJECTION_CHARGES,
       });
+      await recomputeParentMonthBillingReadModel(db, target.parentId, target.monthKey);
+      return;
     }
     throw error;
   }
