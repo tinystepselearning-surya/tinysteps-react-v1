@@ -12,11 +12,15 @@ const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
 const MONTH_RE = /^\d{4}-\d{2}$/;
 
 // A parent should never have anywhere close to this many class records in one month.
-// The guard converts an unexpected data-shape problem into a visible failure instead of
-// silently turning one session write into an unbounded historical scan.
+// These caps convert unexpected data/index problems into visible bounded failures instead
+// of silently turning one session write into an unbounded historical scan.
 export const MAX_PARENT_MONTH_ATTENDANCE_SESSIONS = 250;
+export const MAX_PARENT_HISTORY_COMPATIBILITY_SESSIONS = 500;
 
 type ParentMonthTarget = { parentId: string; monthKey: string };
+type AttendanceQueryMode =
+  | 'parentId_date_month_bounded'
+  | 'parentId_capped_compatibility';
 
 export type AttendanceProjectionTotals = {
   total: number;
@@ -120,8 +124,8 @@ export function resolveSessionMonthKey(
   const fromStartAt = monthKeyFromDateIST(data.startAt || data.scheduledAt || null);
   if (fromStartAt) return fromStartAt;
 
-  // Keep a narrow compatibility fallback for historical records that explicitly persisted
-  // a class month but lack canonical date/startAt. Do not infer from updatedAt/createdAt.
+  // Narrow compatibility fallback for historical records that explicitly persisted a
+  // class month but lack canonical date/startAt. Never infer class month from updatedAt.
   const explicitMonth = String(data.monthKey || '').trim();
   return MONTH_RE.test(explicitMonth) ? explicitMonth : null;
 }
@@ -175,8 +179,7 @@ function projectionFingerprint(
     parentId: target?.parentId || '',
     monthKey: target?.monthKey || '',
     status: normalizeSessionStatus(session.status),
-    startMs:
-      toDate(session.startAt || session.scheduledAt || null)?.getTime() || 0,
+    startMs: toDate(session.startAt || session.scheduledAt || null)?.getTime() || 0,
     kidIds,
     attendanceByKid,
   };
@@ -184,8 +187,7 @@ function projectionFingerprint(
 
 /**
  * Most class-session writes are not attendance projection changes (notes, audit metadata,
- * links, timestamps, recordings, etc.). Those writes should terminate before any Firestore
- * read. Only fields that can change the parent-month attendance projection are compared.
+ * links, timestamps, recordings, etc.). Those writes terminate before any Firestore read.
  */
 export function shouldRefreshParentMonthAttendance(
   beforeData: Record<string, unknown> | null,
@@ -207,6 +209,19 @@ export function collectParentMonthAttendanceTargets(
     if (target) targets.set(`${target.parentId}__${target.monthKey}`, target);
   });
   return Array.from(targets.values());
+}
+
+export function isMissingAttendanceIndexError(error: unknown): boolean {
+  if (!error) return false;
+  const candidate = error as { code?: unknown; message?: unknown; details?: unknown };
+  const code = String(candidate.code || '').toLowerCase();
+  const text = `${String(candidate.message || '')} ${String(candidate.details || '')}`.toLowerCase();
+  return (
+    code === '9' ||
+    code === 'failed-precondition' ||
+    text.includes('requires an index') ||
+    text.includes('failed_precondition')
+  );
 }
 
 function emptyTotals(): AttendanceProjectionTotals {
@@ -280,8 +295,7 @@ export function buildParentMonthAttendanceProjection(
     if (resolveSessionMonthKey(session) !== monthKey) return;
 
     const status = normalizeSessionStatus(session.status);
-    const startMs =
-      toDate(session.startAt || session.scheduledAt || null)?.getTime() || 0;
+    const startMs = toDate(session.startAt || session.scheduledAt || null)?.getTime() || 0;
     const kidIds = resolveSessionKidIds(session);
 
     kidIds.forEach((kidId) => {
@@ -333,36 +347,100 @@ export function buildParentMonthAttendanceProjection(
   return { totals, byKid: byKidObject };
 }
 
+async function loadBoundedParentMonthSessions(
+  db: admin.firestore.Firestore,
+  target: ParentMonthTarget,
+): Promise<{
+  sessions: Array<Record<string, unknown>>;
+  sourceDocumentsRead: number;
+  queryMode: AttendanceQueryMode;
+}> {
+  const monthRange = monthDateRangeFromKey(target.monthKey);
+  if (!monthRange) {
+    return {
+      sessions: [],
+      sourceDocumentsRead: 0,
+      queryMode: 'parentId_date_month_bounded',
+    };
+  }
+
+  try {
+    const boundedSnap = await db
+      .collection('classSessions')
+      .where('parentId', '==', target.parentId)
+      .where('date', '>=', monthRange.startYmd)
+      .where('date', '<=', monthRange.endYmd)
+      .limit(MAX_PARENT_MONTH_ATTENDANCE_SESSIONS + 1)
+      .get();
+
+    if (boundedSnap.size > MAX_PARENT_MONTH_ATTENDANCE_SESSIONS) {
+      throw new Error(
+        `Parent-month attendance projection exceeded safe cap (${target.parentId}/${target.monthKey}, >${MAX_PARENT_MONTH_ATTENDANCE_SESSIONS} sessions)`,
+      );
+    }
+
+    return {
+      sessions: boundedSnap.docs.map(
+        (docSnap) => (docSnap.data() || {}) as Record<string, unknown>,
+      ),
+      sourceDocumentsRead: boundedSnap.size,
+      queryMode: 'parentId_date_month_bounded',
+    };
+  } catch (error) {
+    if (!isMissingAttendanceIndexError(error)) throw error;
+
+    // Temporary compatibility safety net only for a missing composite index. It is hard
+    // capped and never runs merely because a valid monthly query returned zero rows.
+    logger.warn('Parent-month attendance composite index missing; using capped compatibility query', {
+      parentId: target.parentId,
+      monthKey: target.monthKey,
+      maxDocuments: MAX_PARENT_HISTORY_COMPATIBILITY_SESSIONS + 1,
+    });
+
+    const compatibilitySnap = await db
+      .collection('classSessions')
+      .where('parentId', '==', target.parentId)
+      .limit(MAX_PARENT_HISTORY_COMPATIBILITY_SESSIONS + 1)
+      .get();
+
+    if (compatibilitySnap.size > MAX_PARENT_HISTORY_COMPATIBILITY_SESSIONS) {
+      throw new Error(
+        `Parent attendance compatibility query exceeded safe cap (${target.parentId}, >${MAX_PARENT_HISTORY_COMPATIBILITY_SESSIONS} sessions). Create the parentId+date composite index before retrying.`,
+      );
+    }
+
+    const sessions = compatibilitySnap.docs
+      .map((docSnap) => (docSnap.data() || {}) as Record<string, unknown>)
+      .filter((session) => {
+        const sessionTarget = resolveSessionAttendanceTarget(session);
+        return (
+          sessionTarget?.parentId === target.parentId &&
+          sessionTarget.monthKey === target.monthKey
+        );
+      });
+
+    if (sessions.length > MAX_PARENT_MONTH_ATTENDANCE_SESSIONS) {
+      throw new Error(
+        `Parent-month attendance projection exceeded safe cap (${target.parentId}/${target.monthKey}, >${MAX_PARENT_MONTH_ATTENDANCE_SESSIONS} sessions)`,
+      );
+    }
+
+    return {
+      sessions,
+      sourceDocumentsRead: compatibilitySnap.size,
+      queryMode: 'parentId_capped_compatibility',
+    };
+  }
+}
+
 async function recomputeParentMonthAttendanceReadModel(
   db: admin.firestore.Firestore,
   target: ParentMonthTarget,
-): Promise<number> {
-  const monthRange = monthDateRangeFromKey(target.monthKey);
-  if (!monthRange) return 0;
-
-  // Strictly server-bounded by parent + canonical class date. There is intentionally NO
-  // fallback to `where(parentId == ...).get()`: a missing index or bad schema must surface
-  // as an error rather than create a hidden all-history read amplifier.
-  const sessionsSnap = await db
-    .collection('classSessions')
-    .where('parentId', '==', target.parentId)
-    .where('date', '>=', monthRange.startYmd)
-    .where('date', '<=', monthRange.endYmd)
-    .limit(MAX_PARENT_MONTH_ATTENDANCE_SESSIONS + 1)
-    .get();
-
-  if (sessionsSnap.size > MAX_PARENT_MONTH_ATTENDANCE_SESSIONS) {
-    throw new Error(
-      `Parent-month attendance projection exceeded safe cap (${target.parentId}/${target.monthKey}, >${MAX_PARENT_MONTH_ATTENDANCE_SESSIONS} sessions)`,
-    );
-  }
-
-  const sessions = sessionsSnap.docs.map(
-    (docSnap) => (docSnap.data() || {}) as Record<string, unknown>,
-  );
+): Promise<{ sourceSessionCount: number; sourceDocumentsRead: number; queryMode: AttendanceQueryMode }> {
+  const source = await loadBoundedParentMonthSessions(db, target);
   const generatedAtMs = Date.now();
   const projection = buildParentMonthAttendanceProjection(
-    sessions,
+    source.sessions,
     target.monthKey,
     generatedAtMs,
   );
@@ -379,9 +457,10 @@ async function recomputeParentMonthAttendanceReadModel(
       monthKey: target.monthKey,
       attendance: {
         schemaVersion: 2,
-        modelType: 'attendance_v2_month_bounded',
-        queryMode: 'parentId_date_month_bounded',
-        sourceSessionCount: sessionsSnap.size,
+        modelType: 'attendance_v2_bounded',
+        queryMode: source.queryMode,
+        sourceSessionCount: source.sessions.length,
+        sourceDocumentsRead: source.sourceDocumentsRead,
         maxSourceSessionCount: MAX_PARENT_MONTH_ATTENDANCE_SESSIONS,
         refreshedAt: FieldValue.serverTimestamp(),
         generatedAtMs,
@@ -392,7 +471,11 @@ async function recomputeParentMonthAttendanceReadModel(
     { merge: true },
   );
 
-  return sessionsSnap.size;
+  return {
+    sourceSessionCount: source.sessions.length,
+    sourceDocumentsRead: source.sourceDocumentsRead,
+    queryMode: source.queryMode,
+  };
 }
 
 export const onClassSessionReadModelWrite = onDocumentWritten(
@@ -424,12 +507,12 @@ export const onClassSessionReadModelWrite = onDocumentWritten(
     const db = admin.firestore();
     for (const target of targets) {
       try {
-        const sourceSessionCount = await recomputeParentMonthAttendanceReadModel(db, target);
+        const result = await recomputeParentMonthAttendanceReadModel(db, target);
         logger.debug('Refreshed bounded parent monthly attendance read model', {
           sessionId: event.params.sessionId,
           parentId: target.parentId,
           monthKey: target.monthKey,
-          sourceSessionCount,
+          ...result,
         });
       } catch (error) {
         logger.error('Bounded parent monthly attendance refresh failed', {
