@@ -17,7 +17,11 @@ const MONTH_RE = /^\d{4}-\d{2}$/;
 export const MAX_PARENT_MONTH_ATTENDANCE_SESSIONS = 250;
 export const MAX_PARENT_HISTORY_COMPATIBILITY_SESSIONS = 500;
 
-type ParentMonthTarget = { parentId: string; monthKey: string };
+type ParentMonthTarget = {
+  parentId: string;
+  monthKey: string;
+  requiresCompatibility?: boolean;
+};
 type AttendanceQueryMode =
   | 'parentId_date_month_bounded'
   | 'parentId_capped_compatibility';
@@ -108,6 +112,10 @@ function sanitizeKidId(value: unknown): string {
   return id || '_unassigned';
 }
 
+function hasCanonicalSessionDate(data: Record<string, unknown> | null | undefined): boolean {
+  return YMD_RE.test(String(data?.date || '').trim());
+}
+
 /**
  * Class-session month ownership must come from the scheduled class date/time, never from
  * generic updatedAt/createdAt timestamps. Using updatedAt can move an old class into the
@@ -179,7 +187,7 @@ function projectionFingerprint(
     parentId: target?.parentId || '',
     monthKey: target?.monthKey || '',
     status: normalizeSessionStatus(session.status),
-    startMs: toDate(session.startAt || session.scheduledAt || null)?.getTime() || 0,
+    startMs: toDate(session.startAt || session.date || session.scheduledAt || null)?.getTime() || 0,
     kidIds,
     attendanceByKid,
   };
@@ -206,7 +214,18 @@ export function collectParentMonthAttendanceTargets(
   const targets = new Map<string, ParentMonthTarget>();
   [beforeData, afterData].forEach((data) => {
     const target = resolveSessionAttendanceTarget(data);
-    if (target) targets.set(`${target.parentId}__${target.monthKey}`, target);
+    if (!target) return;
+    const key = `${target.parentId}__${target.monthKey}`;
+    const existing = targets.get(key);
+    const requiresCompatibility = !hasCanonicalSessionDate(data);
+    if (existing) {
+      if (requiresCompatibility) existing.requiresCompatibility = true;
+      return;
+    }
+    targets.set(
+      key,
+      requiresCompatibility ? { ...target, requiresCompatibility: true } : target,
+    );
   });
   return Array.from(targets.values());
 }
@@ -216,11 +235,10 @@ export function isMissingAttendanceIndexError(error: unknown): boolean {
   const candidate = error as { code?: unknown; message?: unknown; details?: unknown };
   const code = String(candidate.code || '').toLowerCase();
   const text = `${String(candidate.message || '')} ${String(candidate.details || '')}`.toLowerCase();
+  const mentionsIndex = text.includes('index');
   return (
-    code === '9' ||
-    code === 'failed-precondition' ||
     text.includes('requires an index') ||
-    text.includes('failed_precondition')
+    (mentionsIndex && (code === '9' || code === 'failed-precondition'))
   );
 }
 
@@ -295,7 +313,7 @@ export function buildParentMonthAttendanceProjection(
     if (resolveSessionMonthKey(session) !== monthKey) return;
 
     const status = normalizeSessionStatus(session.status);
-    const startMs = toDate(session.startAt || session.scheduledAt || null)?.getTime() || 0;
+    const startMs = toDate(session.startAt || session.date || session.scheduledAt || null)?.getTime() || 0;
     const kidIds = resolveSessionKidIds(session);
 
     kidIds.forEach((kidId) => {
@@ -347,6 +365,57 @@ export function buildParentMonthAttendanceProjection(
   return { totals, byKid: byKidObject };
 }
 
+async function loadCappedCompatibilitySessions(
+  db: admin.firestore.Firestore,
+  target: ParentMonthTarget,
+  reason: 'missing_index' | 'legacy_session_without_date',
+): Promise<{
+  sessions: Array<Record<string, unknown>>;
+  sourceDocumentsRead: number;
+  queryMode: AttendanceQueryMode;
+}> {
+  logger.warn('Using capped parent attendance compatibility query', {
+    parentId: target.parentId,
+    monthKey: target.monthKey,
+    reason,
+    maxDocuments: MAX_PARENT_HISTORY_COMPATIBILITY_SESSIONS + 1,
+  });
+
+  const compatibilitySnap = await db
+    .collection('classSessions')
+    .where('parentId', '==', target.parentId)
+    .limit(MAX_PARENT_HISTORY_COMPATIBILITY_SESSIONS + 1)
+    .get();
+
+  if (compatibilitySnap.size > MAX_PARENT_HISTORY_COMPATIBILITY_SESSIONS) {
+    throw new Error(
+      `Parent attendance compatibility query exceeded safe cap (${target.parentId}, >${MAX_PARENT_HISTORY_COMPATIBILITY_SESSIONS} sessions). Create/verify the parentId+date composite index and canonical session dates before retrying.`,
+    );
+  }
+
+  const sessions = compatibilitySnap.docs
+    .map((docSnap) => (docSnap.data() || {}) as Record<string, unknown>)
+    .filter((session) => {
+      const sessionTarget = resolveSessionAttendanceTarget(session);
+      return (
+        sessionTarget?.parentId === target.parentId &&
+        sessionTarget.monthKey === target.monthKey
+      );
+    });
+
+  if (sessions.length > MAX_PARENT_MONTH_ATTENDANCE_SESSIONS) {
+    throw new Error(
+      `Parent-month attendance projection exceeded safe cap (${target.parentId}/${target.monthKey}, >${MAX_PARENT_MONTH_ATTENDANCE_SESSIONS} sessions)`,
+    );
+  }
+
+  return {
+    sessions,
+    sourceDocumentsRead: compatibilitySnap.size,
+    queryMode: 'parentId_capped_compatibility',
+  };
+}
+
 async function loadBoundedParentMonthSessions(
   db: admin.firestore.Firestore,
   target: ParentMonthTarget,
@@ -362,6 +431,14 @@ async function loadBoundedParentMonthSessions(
       sourceDocumentsRead: 0,
       queryMode: 'parentId_date_month_bounded',
     };
+  }
+
+  if (target.requiresCompatibility) {
+    return loadCappedCompatibilitySessions(
+      db,
+      target,
+      'legacy_session_without_date',
+    );
   }
 
   try {
@@ -388,48 +465,7 @@ async function loadBoundedParentMonthSessions(
     };
   } catch (error) {
     if (!isMissingAttendanceIndexError(error)) throw error;
-
-    // Temporary compatibility safety net only for a missing composite index. It is hard
-    // capped and never runs merely because a valid monthly query returned zero rows.
-    logger.warn('Parent-month attendance composite index missing; using capped compatibility query', {
-      parentId: target.parentId,
-      monthKey: target.monthKey,
-      maxDocuments: MAX_PARENT_HISTORY_COMPATIBILITY_SESSIONS + 1,
-    });
-
-    const compatibilitySnap = await db
-      .collection('classSessions')
-      .where('parentId', '==', target.parentId)
-      .limit(MAX_PARENT_HISTORY_COMPATIBILITY_SESSIONS + 1)
-      .get();
-
-    if (compatibilitySnap.size > MAX_PARENT_HISTORY_COMPATIBILITY_SESSIONS) {
-      throw new Error(
-        `Parent attendance compatibility query exceeded safe cap (${target.parentId}, >${MAX_PARENT_HISTORY_COMPATIBILITY_SESSIONS} sessions). Create the parentId+date composite index before retrying.`,
-      );
-    }
-
-    const sessions = compatibilitySnap.docs
-      .map((docSnap) => (docSnap.data() || {}) as Record<string, unknown>)
-      .filter((session) => {
-        const sessionTarget = resolveSessionAttendanceTarget(session);
-        return (
-          sessionTarget?.parentId === target.parentId &&
-          sessionTarget.monthKey === target.monthKey
-        );
-      });
-
-    if (sessions.length > MAX_PARENT_MONTH_ATTENDANCE_SESSIONS) {
-      throw new Error(
-        `Parent-month attendance projection exceeded safe cap (${target.parentId}/${target.monthKey}, >${MAX_PARENT_MONTH_ATTENDANCE_SESSIONS} sessions)`,
-      );
-    }
-
-    return {
-      sessions,
-      sourceDocumentsRead: compatibilitySnap.size,
-      queryMode: 'parentId_capped_compatibility',
-    };
+    return loadCappedCompatibilitySessions(db, target, 'missing_index');
   }
 }
 
