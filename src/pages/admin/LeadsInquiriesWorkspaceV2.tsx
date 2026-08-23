@@ -44,8 +44,8 @@ import { db } from '../../lib/firebaseConfig';
 import { normalizeDemoStatus } from '../../lib/statuses';
 import type { DemoConversionStatus, DemoSession } from '../../types/models';
 import {
-  listenAllDemoSessions,
-  listenDemoSessionPrivatePhones,
+  listenDemoSessionsByIds,
+  listenDemoSessionPrivatePhonesByIds,
   reassignDemoSession,
   updateDemoConversion,
 } from '../../services/demoSessionsService';
@@ -353,7 +353,16 @@ export default function LeadsInquiriesWorkspaceV2({
   const [editSaving, setEditSaving] = useState(false);
   const [deletingRowId, setDeletingRowId] = useState<string | null>(null);
 
-  const { leads, isLoading: leadsLoading } = useRealtimeLeads<LeadRecord>({
+  const {
+    leads,
+    isLoading: leadsLoading,
+    closedCount,
+    closedHistoryHasMore,
+    isLoadingMoreClosed,
+    loadMoreClosed,
+    refreshClosedCount,
+  } = useRealtimeLeads<LeadRecord>({
+    includeClosed: true,
     onNewWebsiteLeads: (newLeads) => {
       toast({
         title: newLeads.length === 1 ? 'New demo enquiry received' : `${newLeads.length} new demo enquiries received`,
@@ -365,9 +374,15 @@ export default function LeadsInquiriesWorkspaceV2({
     },
   });
 
+  const scopedDemoIds = useMemo(
+    () => Array.from(new Set(leads.map((lead) => normalizeText(lead.demoSessionId)).filter(Boolean))).sort(),
+    [leads],
+  );
+
   useEffect(() => {
     setDemosLoaded(false);
-    const stopDemos = listenAllDemoSessions(
+    return listenDemoSessionsByIds(
+      scopedDemoIds,
       (next) => {
         setDemos(next);
         setDemosLoaded(true);
@@ -377,15 +392,20 @@ export default function LeadsInquiriesWorkspaceV2({
         toast({ title: 'Could not load demos', description: error.message, variant: 'destructive' });
       },
     );
-    const stopPhones = listenDemoSessionPrivatePhones(
+  }, [scopedDemoIds, toast]);
+
+  const scopedPrivateDemoIds = useMemo(
+    () => Array.from(new Set(demos.map((demo) => normalizeText(demo.id)).filter(Boolean))).sort(),
+    [demos],
+  );
+
+  useEffect(() =>
+    listenDemoSessionPrivatePhonesByIds(
+      scopedPrivateDemoIds,
       setDemoPhones,
       (error) => console.error('[LeadsInquiriesWorkspaceV2] demo phone load failed', error),
-    );
-    return () => {
-      stopDemos();
-      stopPhones();
-    };
-  }, [toast]);
+    ),
+  [scopedPrivateDemoIds]);
 
   useEffect(() => {
     setTeachersLoaded(false);
@@ -493,7 +513,7 @@ export default function LeadsInquiriesWorkspaceV2({
         bucket: resolveSimpleLeadBucket(workflow),
         parentName: normalizeText(demo?.parentName || lead?.parentName) || '—',
         childName: normalizeText(demo?.childName || lead?.childName) || '—',
-        parentPhone: normalizeText((demo ? demoPhones[demo.id] : '') || lead?.primaryPhone || lead?.phoneNormalized) || '—',
+        parentPhone: normalizeText(lead?.primaryPhone || lead?.phoneNormalized || (demo ? demoPhones[demo.id] : '')) || '—',
         course: normalizeText(demo?.courseInterested || lead?.programInterest) || formatTrack(lead?.interestTrack) || '—',
         source: normalizeText(demo?.source || lead?.source) || '—',
         teacherName: normalizeText(demo?.assignedTeacherName) || (demo?.assignedTeacherId ? 'Assigned teacher' : '—'),
@@ -551,12 +571,20 @@ export default function LeadsInquiriesWorkspaceV2({
     });
   }, [dateFrom, dateTo, monthFilter, rows, search]);
 
+  const filtersActive = Boolean(
+    search.trim() || monthFilter !== 'all' || dateFrom || dateTo,
+  );
+
   const counts = useMemo(
-    () => filteredRows.reduce(
-      (acc, row) => ({ ...acc, [row.bucket]: acc[row.bucket] + 1 }),
-      { open: 0, in_progress: 0, admin_review: 0, closed: 0 },
-    ),
-    [filteredRows],
+    () => {
+      const nextCounts = filteredRows.reduce(
+        (acc, row) => ({ ...acc, [row.bucket]: acc[row.bucket] + 1 }),
+        { open: 0, in_progress: 0, admin_review: 0, closed: 0 },
+      );
+      if (!filtersActive) nextCounts.closed = Math.max(nextCounts.closed, closedCount);
+      return nextCounts;
+    },
+    [closedCount, filteredRows, filtersActive],
   );
 
   const actionForRow = (row: SimpleRow): SimpleLeadAction =>
@@ -586,10 +614,6 @@ export default function LeadsInquiriesWorkspaceV2({
       return a.updatedAtMs - b.updatedAtMs;
     });
   }, [bucket, filteredRows]);
-
-  const filtersActive = Boolean(
-    search.trim() || monthFilter !== 'all' || dateFrom || dateTo,
-  );
 
   const clearFilters = () => {
     setSearch('');
@@ -666,6 +690,7 @@ export default function LeadsInquiriesWorkspaceV2({
         admissionNotConfirmedReason: outcomeForm.reason.trim() || null,
       });
       const closesLead = ['enrolled', 'not_interested', 'wrong_fit', 'no_response'].includes(conversionStatus);
+      if (closesLead) void refreshClosedCount();
       setOutcomeRow(null);
       toast({
         title: closesLead ? 'Lead closed' : 'Admin follow-up saved',
@@ -769,6 +794,7 @@ export default function LeadsInquiriesWorkspaceV2({
         leadId: row.lead?.id || null,
         demoId: row.demo?.id || null,
       });
+      if (row.bucket === 'closed') void refreshClosedCount();
       toast({ title: 'Lead deleted', description: 'The record was removed from the active leads workflow.' });
     } catch (error: any) {
       toast({
@@ -898,7 +924,13 @@ export default function LeadsInquiriesWorkspaceV2({
         <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
           <div>
             <h2 className="font-semibold text-slate-950">{bucketMeta[bucket].title}</h2>
-            <p className="text-sm text-slate-500">{loading ? 'Checking workflow…' : `${visibleRows.length} lead${visibleRows.length === 1 ? '' : 's'} in this list`}</p>
+            <p className="text-sm text-slate-500">
+              {loading
+                ? 'Checking workflow…'
+                : bucket === 'closed' && !filtersActive && closedCount > visibleRows.length
+                  ? `${visibleRows.length} of ${closedCount} closed leads loaded`
+                  : `${visibleRows.length} lead${visibleRows.length === 1 ? '' : 's'} in this list`}
+            </p>
           </div>
           {!loading && (
             <p className="text-xs font-medium text-slate-500">{bucketGuidance[bucket]}</p>
@@ -913,62 +945,77 @@ export default function LeadsInquiriesWorkspaceV2({
             <p className="mt-2 font-medium text-slate-700">Nothing here right now.</p>
           </div>
         ) : (
-          <div className="divide-y">
-            {visibleRows.map((row) => (
-              <div key={row.id} className="grid gap-3 px-4 py-4 lg:grid-cols-[1.35fr_1fr_1fr_1fr_auto] lg:items-center">
-                <div>
-                  <div className="font-semibold text-slate-950">{row.parentName}</div>
-                  <div className="text-sm text-slate-600">{row.childName} · {row.parentPhone}</div>
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-slate-800">{row.course}</div>
-                  <div className="text-xs text-slate-500">{row.source}</div>
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-slate-800">{row.teacherName}</div>
-                  <div className="text-xs text-slate-500">Teacher</div>
-                </div>
-                <div>
-                  <Badge variant="outline">{row.statusLabel}</Badge>
-                  <div className="mt-1 text-xs text-slate-500">
-                    {row.followUpAtMs ? `Follow-up ${formatFollowUp(row.followUpAtMs)}` : `Updated ${formatUpdated(row.updatedAtMs)}`}
+          <div>
+            <div className="divide-y">
+              {visibleRows.map((row) => (
+                <div key={row.id} className="grid gap-3 px-4 py-4 lg:grid-cols-[1.35fr_1fr_1fr_1fr_auto] lg:items-center">
+                  <div>
+                    <div className="font-semibold text-slate-950">{row.parentName}</div>
+                    <div className="text-sm text-slate-600">{row.childName} · {row.parentPhone}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-slate-800">{row.course}</div>
+                    <div className="text-xs text-slate-500">{row.source}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-slate-800">{row.teacherName}</div>
+                    <div className="text-xs text-slate-500">Teacher</div>
+                  </div>
+                  <div>
+                    <Badge variant="outline">{row.statusLabel}</Badge>
+                    <div className="mt-1 text-xs text-slate-500">
+                      {row.followUpAtMs ? `Follow-up ${formatFollowUp(row.followUpAtMs)}` : `Updated ${formatUpdated(row.updatedAtMs)}`}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                    {row.parentPhone !== '—' && (
+                      <Button size="sm" variant="ghost" className="gap-1" onClick={() => window.open(buildWhatsAppUrl(row.parentPhone), '_blank', 'noopener,noreferrer')}>
+                        <MessageCircle className="h-4 w-4" /> WhatsApp
+                      </Button>
+                    )}
+                    {renderAction(row)}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          aria-label={`More actions for ${row.parentName}`}
+                          disabled={deletingRowId === row.id}
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openEdit(row)}>
+                          <Pencil className="mr-2 h-4 w-4" /> Edit lead
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-red-600 focus:text-red-600"
+                          onClick={() => void deleteRow(row)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete lead
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                  {row.parentPhone !== '—' && (
-                    <Button size="sm" variant="ghost" className="gap-1" onClick={() => window.open(buildWhatsAppUrl(row.parentPhone), '_blank', 'noopener,noreferrer')}>
-                      <MessageCircle className="h-4 w-4" /> WhatsApp
-                    </Button>
-                  )}
-                  {renderAction(row)}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="ghost"
-                        aria-label={`More actions for ${row.parentName}`}
-                        disabled={deletingRowId === row.id}
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => openEdit(row)}>
-                        <Pencil className="mr-2 h-4 w-4" /> Edit lead
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-red-600 focus:text-red-600"
-                        onClick={() => void deleteRow(row)}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete lead
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+              ))}
+            </div>
+            {bucket === 'closed' && closedHistoryHasMore && (
+              <div className="border-t px-4 py-4 text-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => void loadMoreClosed()}
+                  disabled={isLoadingMoreClosed}
+                >
+                  {isLoadingMoreClosed ? 'Loading older leads…' : 'Load older closed leads'}
+                </Button>
+                <p className="mt-2 text-xs text-slate-500">Older closed history loads only when requested.</p>
               </div>
-            ))}
+            )}
           </div>
         )}
       </Card>
