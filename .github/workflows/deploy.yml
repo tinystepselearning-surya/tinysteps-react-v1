@@ -208,6 +208,37 @@ jobs:
             exit 1
           fi
 
+      - name: Ensure retired Meta WhatsApp and app reminder functions are absent
+        shell: bash
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+        run: |
+          set -euo pipefail
+
+          retired_functions=(
+            sendClassReminders15Min
+            sendWhatsAppTemplateMessage
+            whatsAppWebhook
+            whatsappWebhookV2
+            onUnmatchedWhatsAppInboundCreateLead
+          )
+
+          for function_name in "${retired_functions[@]}"; do
+            if gcloud functions describe "${function_name}" \
+              --gen2 \
+              --project="${FIREBASE_PROJECT_ID}" \
+              --region=asia-south1 \
+              >/dev/null 2>&1; then
+              echo "Deleting retired Cloud Function: ${function_name}"
+              npx firebase-tools@latest functions:delete "${function_name}" \
+                --region asia-south1 \
+                --project "${FIREBASE_PROJECT_ID}" \
+                --force
+            else
+              echo "Retired Cloud Function already absent: ${function_name}"
+            fi
+          done
+
       - name: Deploy Cloud Functions
         run: npx firebase-tools@latest deploy --only functions --project ${{ env.FIREBASE_PROJECT_ID }} --non-interactive
         env:
