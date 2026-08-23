@@ -208,6 +208,23 @@ jobs:
             exit 1
           fi
 
+      - name: Delete retired lead demo repair scheduler
+        shell: bash
+        run: |
+          set -euo pipefail
+          retired_path="functions/src/leadDemoPreparationRepair.ts"
+          if git diff --name-status "${{ github.event.before }}" "${GITHUB_SHA}" -- "${retired_path}" | grep -Fxq $'D\tfunctions/src/leadDemoPreparationRepair.ts'; then
+            echo "Deleting retired scheduled function repairLegacyPreparingDemoRequests"
+            npx firebase-tools@latest functions:delete repairLegacyPreparingDemoRequests \
+              --region asia-south1 \
+              --project "${{ env.FIREBASE_PROJECT_ID }}" \
+              --force
+          else
+            echo "Retired scheduler was not deleted in this push; no cleanup required."
+          fi
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+
       - name: Deploy Cloud Functions
         run: npx firebase-tools@latest deploy --only functions --project ${{ env.FIREBASE_PROJECT_ID }} --non-interactive
         env:
