@@ -208,19 +208,34 @@ jobs:
             exit 1
           fi
 
-      - name: Delete retired lead demo repair scheduler
+      - name: Ensure retired lead demo repair scheduler is deleted
         shell: bash
         run: |
           set -euo pipefail
+
           retired_path="functions/src/leadDemoPreparationRepair.ts"
-          if git diff --name-status "${{ github.event.before }}" "${GITHUB_SHA}" -- "${retired_path}" | grep -Fxq $'D\tfunctions/src/leadDemoPreparationRepair.ts'; then
-            echo "Deleting retired scheduled function repairLegacyPreparingDemoRequests"
-            npx firebase-tools@latest functions:delete repairLegacyPreparingDemoRequests \
-              --region asia-south1 \
-              --project "${{ env.FIREBASE_PROJECT_ID }}" \
-              --force
+          function_name="repairLegacyPreparingDemoRequests"
+          region="asia-south1"
+
+          if [[ -f "${retired_path}" ]]; then
+            echo "::error::${function_name} is marked retired, but ${retired_path} still exists in source."
+            exit 1
+          fi
+
+          echo "Ensuring retired Firebase function ${function_name} is absent before the normal functions deploy."
+          delete_log="$(mktemp)"
+          trap 'rm -f "${delete_log}"' EXIT
+
+          if npx firebase-tools@latest functions:delete "${function_name}" \
+            --region "${region}" \
+            --project "${{ env.FIREBASE_PROJECT_ID }}" \
+            --force 2>&1 | tee "${delete_log}"; then
+            echo "Retired function ${function_name} deleted successfully."
+          elif grep -Eqi 'not found|does not exist|no function|no functions|could not find' "${delete_log}"; then
+            echo "Retired function ${function_name} is already absent; continuing."
           else
-            echo "Retired scheduler was not deleted in this push; no cleanup required."
+            echo "::error::Could not verify/delete retired function ${function_name}."
+            exit 1
           fi
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
