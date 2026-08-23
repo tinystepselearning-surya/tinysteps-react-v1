@@ -135,4 +135,32 @@ describe('parentMonthlyBillingProjectionV2', () => {
     expect(movedOut.charges).toHaveLength(0);
     expect(movedOut.tombstones[0]).toEqual({ id: 'charge-1', versionMs: 200 });
   });
+
+  it('refuses to grow the compact projection beyond the hard monthly cap', () => {
+    const rows = Array.from({ length: 250 }, (_, index) => ({
+      id: `charge-${index + 1}`,
+      versionMs: 100,
+      data: chargeData({ kidId: `kid-${index + 1}` }),
+    }));
+    const initial = buildBillingProjectionState(rows, 100);
+
+    expect(() =>
+      applyBillingProjectionMutation(initial, {
+        chargeId: 'charge-251',
+        versionMs: 200,
+        ...target,
+        afterData: chargeData({ kidId: 'kid-251' }),
+      }),
+    ).toThrow(/exceeds safe cap 250/);
+  });
+
+  it('rejects an oversized bootstrap state instead of creating a large projection document', () => {
+    const rows = Array.from({ length: 251 }, (_, index) => ({
+      id: `charge-${index + 1}`,
+      versionMs: 100,
+      data: chargeData({ kidId: `kid-${index + 1}` }),
+    }));
+
+    expect(() => buildBillingProjectionState(rows, 100)).toThrow(/exceeds safe cap 250/);
+  });
 });
