@@ -29,7 +29,6 @@
     "vitest.setup.ts"
   ],
   "exclude": [
-    "node_modules",
-    "src/pages/admin/beta-analytics.jsx"
+    "node_modules"
   ]
 }
