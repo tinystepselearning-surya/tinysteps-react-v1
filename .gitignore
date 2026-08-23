@@ -21,6 +21,7 @@ coverage/
 .serverless/
 .turbo/
 *.tsbuildinfo
+/types/
 
 # Firebase / emulators / debug
 .firebase/
