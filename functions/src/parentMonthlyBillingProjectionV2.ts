@@ -385,7 +385,7 @@ async function refreshProjectionTarget(
   const projectionRef = db
     .collection('internalBillingProjections')
     .doc(target.parentId)
-    .collection('months')
+    .collection('billingMonths')
     .doc(target.monthKey);
 
   try {
