@@ -1,9 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   collection,
+  getCountFromServer,
+  getDocs,
+  limit,
   onSnapshot,
   orderBy,
   query,
+  startAfter,
+  where,
+  type DocumentData,
+  type QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { db } from '../../lib/firebaseConfig';
 
@@ -13,9 +20,31 @@ const NEW_LEAD_NOTIFICATION_BUFFER_MS = 400;
 const NOTIFIED_ID_TTL_MS = 6 * 60 * 60 * 1000;
 const MAX_NOTIFIED_IDS = 500;
 
+export const ACTIVE_LEAD_STATUSES = [
+  'new',
+  'attempted_contact',
+  'contacted',
+  'qualified',
+  'demo_pending_schedule',
+  'demo_booked',
+  'demo_completed',
+  'admission_follow_up',
+] as const;
+
+export const CLOSED_LEAD_STATUSES = [
+  'admitted_confirmed',
+  'not_interested',
+  'wrong_fit',
+  'no_response',
+  'lost',
+] as const;
+
+export const CLOSED_LEAD_PAGE_SIZE = 100;
+
 export interface RealtimeLeadRecord {
   id: string;
   source?: unknown;
+  status?: unknown;
   parentName?: unknown;
   childName?: unknown;
   programInterest?: unknown;
@@ -34,9 +63,27 @@ export type LeadLifecycleStage =
 export interface UseRealtimeLeadsOptions<T extends RealtimeLeadRecord> {
   onError: (error: Error) => void;
   onNewWebsiteLeads: (leads: T[]) => void;
+  includeClosed?: boolean;
 }
 
 const normalizeText = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
+const closedStatusSet = new Set<string>(CLOSED_LEAD_STATUSES);
+const isClosedLeadDoc = (docSnapshot: QueryDocumentSnapshot<DocumentData>): boolean =>
+  closedStatusSet.has(normalizeText(docSnapshot.data().status).toLowerCase());
+
+const toLeadRecord = <T extends RealtimeLeadRecord>(docSnapshot: QueryDocumentSnapshot<DocumentData>): T => ({
+  id: docSnapshot.id,
+  ...(docSnapshot.data() as Record<string, unknown>),
+}) as T;
+
+export function mergeLeadCollections<T extends RealtimeLeadRecord>(active: T[], closed: T[]): T[] {
+  const merged = new Map<string, T>();
+  active.forEach((lead) => merged.set(lead.id, lead));
+  // During a status transition Firestore can briefly deliver the same document through
+  // both query streams. Closed/history state wins so a finalized lead never reopens in UI.
+  closed.forEach((lead) => merged.set(lead.id, lead));
+  return Array.from(merged.values());
+}
 
 const pruneNotifiedIds = (notifiedIds: Map<string, number>, now: number) => {
   for (const [id, notifiedAt] of notifiedIds) {
@@ -112,9 +159,16 @@ export function buildNewWebsiteLeadToastDescription(
 export function useRealtimeLeads<T extends RealtimeLeadRecord>({
   onError,
   onNewWebsiteLeads,
+  includeClosed = false,
 }: UseRealtimeLeadsOptions<T>) {
-  const [leads, setLeads] = useState<T[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [activeLeads, setActiveLeads] = useState<T[]>([]);
+  const [closedLiveLeads, setClosedLiveLeads] = useState<T[]>([]);
+  const [closedOlderLeads, setClosedOlderLeads] = useState<T[]>([]);
+  const [activeLoading, setActiveLoading] = useState(true);
+  const [closedLoading, setClosedLoading] = useState(false);
+  const [closedCount, setClosedCount] = useState(0);
+  const [closedHistoryHasMore, setClosedHistoryHasMore] = useState(false);
+  const [isLoadingMoreClosed, setIsLoadingMoreClosed] = useState(false);
   const [newLeadIds, setNewLeadIds] = useState<Set<string>>(() => new Set());
   const onErrorRef = useRef(onError);
   const onNewWebsiteLeadsRef = useRef(onNewWebsiteLeads);
@@ -122,23 +176,43 @@ export function useRealtimeLeads<T extends RealtimeLeadRecord>({
   const highlightTimersRef = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const pendingNotificationsRef = useRef(new Map<string, T>());
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closedCursorRef = useRef<QueryDocumentSnapshot<DocumentData> | null>(null);
 
   onErrorRef.current = onError;
   onNewWebsiteLeadsRef.current = onNewWebsiteLeads;
 
+  const refreshClosedCount = useCallback(async () => {
+    try {
+      const countSnapshot = await getCountFromServer(
+        query(
+          collection(db, LEADS_COLLECTION),
+          where('status', 'in', [...CLOSED_LEAD_STATUSES]),
+        ),
+      );
+      setClosedCount(Number(countSnapshot.data().count || 0));
+    } catch (error) {
+      // Count is a convenience metric only. Never break the operational workspace if an
+      // aggregate query is temporarily unavailable while an index/rule deployment settles.
+      console.error('[useRealtimeLeads] closed lead count failed', error);
+    }
+  }, []);
+
   useEffect(() => {
-    setIsLoading(true);
+    void refreshClosedCount();
+  }, [refreshClosedCount]);
+
+  useEffect(() => {
+    setActiveLoading(true);
     let hasBootstrappedFromServer = false;
     const unsubscribe = onSnapshot(
-      query(collection(db, LEADS_COLLECTION), orderBy('createdAt', 'desc')),
+      query(
+        collection(db, LEADS_COLLECTION),
+        where('status', 'in', [...ACTIVE_LEAD_STATUSES]),
+      ),
       { includeMetadataChanges: true },
       (snapshot) => {
-        const nextLeads = snapshot.docs.map((docSnapshot) => ({
-          id: docSnapshot.id,
-          ...(docSnapshot.data() as Record<string, unknown>),
-        })) as T[];
-        setLeads(nextLeads);
-        setIsLoading(false);
+        setActiveLeads(snapshot.docs.map((docSnapshot) => toLeadRecord<T>(docSnapshot)));
+        setActiveLoading(false);
 
         // The first authoritative snapshot establishes the baseline. Cached snapshots
         // and query reinitialisation must never generate historical "new lead" alerts.
@@ -223,14 +297,84 @@ export function useRealtimeLeads<T extends RealtimeLeadRecord>({
         if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
         notificationTimerRef.current = null;
         pendingNotificationsRef.current.clear();
-        setLeads([]);
-        setIsLoading(false);
+        setActiveLeads([]);
+        setActiveLoading(false);
         onErrorRef.current(error as Error);
       },
     );
 
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    setClosedOlderLeads([]);
+    setClosedHistoryHasMore(false);
+    setIsLoadingMoreClosed(false);
+    closedCursorRef.current = null;
+
+    if (!includeClosed) {
+      setClosedLiveLeads([]);
+      setClosedLoading(false);
+      return undefined;
+    }
+
+    setClosedLoading(true);
+    // Deliberately order a bounded recent slice by updatedAt and filter terminal states
+    // locally. This avoids introducing a new composite index just to render history, while
+    // the authoritative closed total is still computed by an indexed aggregate query.
+    const recentHistoryQuery = query(
+      collection(db, LEADS_COLLECTION),
+      orderBy('updatedAt', 'desc'),
+      limit(CLOSED_LEAD_PAGE_SIZE + 1),
+    );
+
+    const unsubscribe = onSnapshot(
+      recentHistoryQuery,
+      (snapshot) => {
+        const pageDocs = snapshot.docs.slice(0, CLOSED_LEAD_PAGE_SIZE);
+        const closedDocs = pageDocs.filter(isClosedLeadDoc);
+        setClosedLiveLeads(closedDocs.map((docSnapshot) => toLeadRecord<T>(docSnapshot)));
+        setClosedHistoryHasMore(snapshot.docs.length > CLOSED_LEAD_PAGE_SIZE);
+        closedCursorRef.current = pageDocs.length > 0 ? pageDocs[pageDocs.length - 1] : null;
+        setClosedLoading(false);
+        void refreshClosedCount();
+      },
+      (error) => {
+        setClosedLiveLeads([]);
+        setClosedLoading(false);
+        onErrorRef.current(error as Error);
+      },
+    );
+
+    return unsubscribe;
+  }, [includeClosed, refreshClosedCount]);
+
+  const loadMoreClosed = useCallback(async () => {
+    if (!includeClosed || isLoadingMoreClosed || !closedHistoryHasMore || !closedCursorRef.current) return;
+    setIsLoadingMoreClosed(true);
+    try {
+      const pageQuery = query(
+        collection(db, LEADS_COLLECTION),
+        orderBy('updatedAt', 'desc'),
+        startAfter(closedCursorRef.current),
+        limit(CLOSED_LEAD_PAGE_SIZE + 1),
+      );
+      const snapshot = await getDocs(pageQuery);
+      const pageDocs = snapshot.docs.slice(0, CLOSED_LEAD_PAGE_SIZE);
+      const nextRows = pageDocs
+        .filter(isClosedLeadDoc)
+        .map((docSnapshot) => toLeadRecord<T>(docSnapshot));
+      setClosedOlderLeads((current) => mergeLeadCollections(current, nextRows));
+      if (pageDocs.length > 0) {
+        closedCursorRef.current = pageDocs[pageDocs.length - 1];
+      }
+      setClosedHistoryHasMore(snapshot.docs.length > CLOSED_LEAD_PAGE_SIZE);
+    } catch (error) {
+      onErrorRef.current(error as Error);
+    } finally {
+      setIsLoadingMoreClosed(false);
+    }
+  }, [closedHistoryHasMore, includeClosed, isLoadingMoreClosed]);
 
   useEffect(
     () => () => {
@@ -244,5 +388,25 @@ export function useRealtimeLeads<T extends RealtimeLeadRecord>({
     [],
   );
 
-  return { leads, isLoading, newLeadIds };
+  const closedLeads = useMemo(
+    () => mergeLeadCollections(closedLiveLeads, closedOlderLeads),
+    [closedLiveLeads, closedOlderLeads],
+  );
+  const leads = useMemo(
+    () => mergeLeadCollections(activeLeads, includeClosed ? closedLeads : []),
+    [activeLeads, closedLeads, includeClosed],
+  );
+  const isLoading = activeLoading || (includeClosed && closedLoading);
+
+  return {
+    leads,
+    isLoading,
+    newLeadIds,
+    closedCount,
+    closedHistoryLoaded: includeClosed && !closedLoading,
+    closedHistoryHasMore,
+    isLoadingMoreClosed,
+    loadMoreClosed,
+    refreshClosedCount,
+  };
 }
