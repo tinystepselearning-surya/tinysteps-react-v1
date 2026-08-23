@@ -1,1 +1,1 @@
-export { default } from './AnalyticsDashboardV2';
+export { default } from './AnalyticsDashboardV3';
