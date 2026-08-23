@@ -6,6 +6,10 @@ import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
+// Emergency containment for the 2026-08-23 Firestore event storm. Keep the
+// exported trigger deployed so queued Eventarc deliveries are acknowledged,
+// but do not let them perform reads or writes while the incident is contained.
+const LEAD_DEMO_AUTOMATION_INCIDENT_GUARD = true;
 const DEDUPE_VERSION = 1;
 const WEBSITE_SOURCE = 'website';
 const DEMO_CONFLICT = 'duplicate_has_unmigrated_demo_links';
@@ -191,6 +195,7 @@ const clearConflictPatch = (): Record<string, unknown> => ({
 export const onWebsiteLeadIdentityWrite = onDocumentWritten(
   { document: 'leads/{leadId}', region: REGION },
   async (event) => {
+    if (LEAD_DEMO_AUTOMATION_INCIDENT_GUARD) return;
     const change = event.data;
     if (!change || !change.after.exists) return;
 

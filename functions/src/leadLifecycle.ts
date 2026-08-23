@@ -6,6 +6,9 @@ import * as logger from 'firebase-functions/logger';
 if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
+// Emergency containment for the 2026-08-23 Firestore event storm. Preserve
+// lead intake while preventing reciprocal demo/lead synchronization writes.
+const LEAD_DEMO_AUTOMATION_INCIDENT_GUARD = true;
 const PAYABLE_DEMO_OUTCOMES = new Set(['completed', 'not_interested', 'follow_up_needed']);
 const TEACHER_CANCEL_REASONS = new Set([
   'parent_unavailable',
@@ -88,6 +91,7 @@ const timestampMillis = (value: unknown): number => {
 export const onLeadCreatedCanonicalize = onDocumentWritten(
   { document: 'leads/{leadId}', region: REGION },
   async (event) => {
+    if (LEAD_DEMO_AUTOMATION_INCIDENT_GUARD) return;
     const change = event.data;
     if (!change || !change.after.exists) return;
     const snap = change.after;
@@ -118,6 +122,7 @@ export const onLeadCreatedCanonicalize = onDocumentWritten(
 export const onDemoLeadLifecycleWrite = onDocumentWritten(
   { document: 'demoSessions/{demoId}', region: REGION },
   async (event) => {
+    if (LEAD_DEMO_AUTOMATION_INCIDENT_GUARD) return;
     const change = event.data;
     if (!change || !change.after.exists) return;
 

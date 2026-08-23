@@ -10,6 +10,9 @@ import {
 if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
+// Emergency containment for the 2026-08-23 Firestore event storm. Queued
+// Eventarc deliveries must become cheap acknowledgements with no database I/O.
+const LEAD_DEMO_AUTOMATION_INCIDENT_GUARD = true;
 const SYSTEM_ACTOR = 'system:lead-demo-workflow';
 const DEMO_UNIQUE_KEYS_COLLECTION = 'demoSessionUniqueKeys';
 const TERMINAL_LEAD_STATUSES = new Set([
@@ -195,6 +198,7 @@ const canRelinkDemoToLead = (
 export const onLeadEnsureDemoRequest = onDocumentWritten(
   { document: 'leads/{leadId}', region: REGION },
   async (event) => {
+    if (LEAD_DEMO_AUTOMATION_INCIDENT_GUARD) return;
     const change = event.data;
     if (!change || !change.after.exists) return;
 
@@ -496,6 +500,7 @@ const cleanupSyntheticLead = async (
 export const onOrphanDemoIdentityRepair = onDocumentWritten(
   { document: 'demoSessions/{demoId}', region: REGION },
   async (event) => {
+    if (LEAD_DEMO_AUTOMATION_INCIDENT_GUARD) return;
     const change = event.data;
     if (!change || !change.after.exists) return;
 
