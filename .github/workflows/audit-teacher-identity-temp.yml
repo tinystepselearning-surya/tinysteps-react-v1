@@ -1,0 +1,45 @@
+name: Temporary teacher identity audit
+
+on:
+  push:
+    branches:
+      - refactor/canonical-teacher-identity
+    paths:
+      - .github/workflows/audit-teacher-identity-temp.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Authenticate to Google Cloud
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
+          create_credentials_file: true
+
+      - name: Run read-only canonical teacher identity audit
+        run: >-
+          node scripts/audit-teacher-identity.mjs
+          --project tinysteps-react-v1
+          --limit 250
+          --summary-only
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
