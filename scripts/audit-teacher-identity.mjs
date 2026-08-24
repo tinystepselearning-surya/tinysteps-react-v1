@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { applicationDefault, getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 
 const ACTIVE_ENROLLMENT_STATUSES = [
   'active',
@@ -112,8 +112,10 @@ const main = async () => {
     initializeApp({ credential: applicationDefault(), projectId: project });
   }
   const db = getFirestore();
+  const sessionQueryLimit = Math.max(1, Math.floor(limit / 2));
+  const startAtBoundary = Timestamp.fromDate(new Date(`${startDate}T00:00:00+05:30`));
 
-  const [enrollmentSnap, sessionSnap] = await Promise.all([
+  const [enrollmentSnap, sessionsByDateSnap, sessionsByStartAtSnap] = await Promise.all([
     db.collection('enrollments')
       .where('status', 'in', ACTIVE_ENROLLMENT_STATUSES)
       .limit(limit)
@@ -121,12 +123,22 @@ const main = async () => {
     db.collection('classSessions')
       .where('date', '>=', startDate)
       .orderBy('date', 'asc')
-      .limit(limit)
+      .limit(sessionQueryLimit)
+      .get(),
+    db.collection('classSessions')
+      .where('startAt', '>=', startAtBoundary)
+      .orderBy('startAt', 'asc')
+      .limit(sessionQueryLimit)
       .get(),
   ]);
 
   const enrollments = enrollmentSnap.docs.map((doc) => auditRow(doc.id, doc.data() || {}));
-  const classSessions = sessionSnap.docs.map((doc) => auditRow(doc.id, doc.data() || {}));
+  const sessionDocs = new Map();
+  sessionsByDateSnap.docs.forEach((doc) => sessionDocs.set(doc.id, doc));
+  sessionsByStartAtSnap.docs.forEach((doc) => sessionDocs.set(doc.id, doc));
+  const classSessions = Array.from(sessionDocs.values())
+    .slice(0, limit)
+    .map((doc) => auditRow(doc.id, doc.data() || {}));
 
   const result = {
     mode: 'READ_ONLY',
