@@ -1,9 +1,8 @@
 name: Temporary teacher identity audit
 
 on:
-  push:
-    branches:
-      - refactor/canonical-teacher-identity
+  pull_request:
+    branches: [main]
     paths:
       - .github/workflows/audit-teacher-identity-temp.yml
 
