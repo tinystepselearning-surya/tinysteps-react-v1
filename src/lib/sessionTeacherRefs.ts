@@ -1,8 +1,4 @@
-const normalizeText = (value: unknown): string => {
-  if (typeof value === 'string') return value.trim();
-  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
-  return '';
-};
+import { normalizeTeacherIdentityValue } from './teacherIdentity';
 
 export const collectSessionTeacherRefs = (sessionLike: Record<string, unknown> | undefined): string[] => {
   if (!sessionLike) return [];
@@ -16,7 +12,7 @@ export const collectSessionTeacherRefs = (sessionLike: Record<string, unknown> |
         sessionLike.teacherUid,
         sessionLike.teacher_id,
       ]
-        .map((value) => normalizeText(value))
+        .map((value) => normalizeTeacherIdentityValue(value))
         .filter(Boolean),
     ),
   );
@@ -28,7 +24,9 @@ export const resolvePreferredSessionTeacherRef = (
 ): string => {
   const sessionRefs = collectSessionTeacherRefs(sessionLike);
   if (!sessionRefs.length) return '';
-  const preferred = new Set(preferredRefs.map((value) => normalizeText(value)).filter(Boolean));
+  const preferred = new Set(
+    preferredRefs.map((value) => normalizeTeacherIdentityValue(value)).filter(Boolean),
+  );
   if (preferred.size === 0) return sessionRefs[0] || '';
   return sessionRefs.find((value) => preferred.has(value)) || sessionRefs[0] || '';
 };
