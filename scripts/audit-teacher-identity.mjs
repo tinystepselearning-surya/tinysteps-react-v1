@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { applicationDefault, getApps, initializeApp } from 'firebase-admin/app';
-import { FieldPath, getFirestore } from 'firebase-admin/firestore';
+import { getFirestore } from 'firebase-admin/firestore';
 
 const ACTIVE_ENROLLMENT_STATUSES = [
   'active',
@@ -12,14 +12,6 @@ const ACTIVE_ENROLLMENT_STATUSES = [
   'ongoing',
   'pending_teacher',
   'pending_payment',
-];
-
-const LEGACY_FIELDS = [
-  'teacherIds',
-  'assignedTeacherId',
-  'primaryTeacherId',
-  'teacherUid',
-  'teacher_id',
 ];
 
 const normalize = (value) => {
@@ -124,7 +116,6 @@ const main = async () => {
   const [enrollmentSnap, sessionSnap] = await Promise.all([
     db.collection('enrollments')
       .where('status', 'in', ACTIVE_ENROLLMENT_STATUSES)
-      .orderBy(FieldPath.documentId())
       .limit(limit)
       .get(),
     db.collection('classSessions')
