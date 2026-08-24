@@ -47,6 +47,11 @@ import ParentRecommendations from "./components/ParentRecommendations";
 import ParentShellLoading from "./components/ParentShellLoading";
 import { stripParentStagePrefix } from "./parentVisualTokens";
 import {
+  resolveParentClassSessionDateBounds,
+  resolveParentClassSessionReadMode,
+  shouldRunParentLegacySessionFallback,
+} from "./parentClassSessionReadPolicy";
+import {
   ArrowRight,
   CalendarDays,
   CircleUser,
@@ -1357,7 +1362,6 @@ export default function ParentDashboard() {
   const shouldLoadPaymentHistory = activeTab === "payments" || activeTab === "profile";
   const shouldLoadClassSessions =
     activeTab === "classes" || activeTab === "payments" || activeTab === "dashboard";
-  const shouldLoadFullClassHistory = activeTab === "classes";
   const { threads: messageThreads } = useMessageThreads({
     userId: user?.uid,
     isAdmin: false,
@@ -2303,9 +2307,29 @@ export default function ParentDashboard() {
   });
   const [classesCalendarSelectedDayKey, setClassesCalendarSelectedDayKey] = useState<string | null>(null);
 
-  // Fetch sessions for this kid (manual refresh model: loads when tab opens)
+  const parentClassSessionReadMode = resolveParentClassSessionReadMode({
+    activeTab,
+    classesView,
+  });
+  const parentClassSessionDateBounds = resolveParentClassSessionDateBounds({
+    activeTab,
+    classesView,
+    calendarMonth: classesCalendarMonth,
+  });
+
+  // Parent operational reads are intentionally bounded. Historical class data remains
+  // available on demand when a history filter is opened, and calendar reads are scoped
+  // to the selected month. A zero-result compatibility pass protects legacy sessions
+  // that predate the canonical date field.
   const kidSessionsQuery = useQuery({
-    queryKey: ["kidSessions", selectedKidId, shouldLoadFullClassHistory ? "full" : "recent"],
+    queryKey: [
+      "kidSessions",
+      user?.uid,
+      selectedKidId,
+      parentClassSessionReadMode,
+      parentClassSessionDateBounds?.startKey ?? "unbounded",
+      parentClassSessionDateBounds?.endKey ?? "unbounded",
+    ],
     enabled: !!selectedKidId && shouldLoadClassSessions,
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -2316,15 +2340,11 @@ export default function ParentDashboard() {
         selectedKidId,
         parentUid: user.uid,
         parentEmail: user.email,
+        readMode: parentClassSessionReadMode,
+        dateBounds: parentClassSessionDateBounds,
       });
 
       const classSessionsCol = collection(db, "classSessions");
-      const recentRangeStart = new Date();
-      recentRangeStart.setMonth(recentRangeStart.getMonth() - 6);
-      const recentRangeEnd = new Date();
-      recentRangeEnd.setMonth(recentRangeEnd.getMonth() + 3);
-      const recentStartKey = toYMD(recentRangeStart);
-      const recentEndKey = toYMD(recentRangeEnd);
 
       const logQueryError = (queryName: string, error: any) => {
         console.warn(`⚠️ [ParentDashboard] ${queryName} query failed`, {
@@ -2350,56 +2370,45 @@ export default function ParentDashboard() {
         }
       };
 
-      const qA = shouldLoadFullClassHistory
-        ? query(
-            classSessionsCol,
-            where("kidIds", "array-contains", selectedKidId),
-            where("parentId", "==", user.uid),
-          )
-        : query(
-            classSessionsCol,
-            where("kidIds", "array-contains", selectedKidId),
-            where("parentId", "==", user.uid),
-            where("date", ">=", recentStartKey),
-            where("date", "<=", recentEndKey),
-          );
-      const snapA = await readQueryDocs(
-        "Query A",
-        () => qA,
-      );
+      const buildCanonicalQuery = () =>
+        parentClassSessionDateBounds
+          ? query(
+              classSessionsCol,
+              where("kidIds", "array-contains", selectedKidId),
+              where("parentId", "==", user.uid),
+              where("date", ">=", parentClassSessionDateBounds.startKey),
+              where("date", "<=", parentClassSessionDateBounds.endKey),
+            )
+          : query(
+              classSessionsCol,
+              where("kidIds", "array-contains", selectedKidId),
+              where("parentId", "==", user.uid),
+            );
 
-      debugParentDashboard("✅ [Query A] classSessions kidIds array-contains + parentId:", {
-        count: snapA?.size ?? 0,
-        docs: (snapA?.docs ?? []).map((d) => {
-          const data = d.data() as any;
-          return { id: d.id, parentId: data?.parentId, kidIds: data?.kidIds };
-        })
-      });
+      const buildLegacyQuery = () =>
+        parentClassSessionDateBounds
+          ? query(
+              classSessionsCol,
+              where("kidId", "==", selectedKidId),
+              where("parentId", "==", user.uid),
+              where("date", ">=", parentClassSessionDateBounds.startKey),
+              where("date", "<=", parentClassSessionDateBounds.endKey),
+            )
+          : query(
+              classSessionsCol,
+              where("kidId", "==", selectedKidId),
+              where("parentId", "==", user.uid),
+            );
 
-      const qB = shouldLoadFullClassHistory
-        ? query(
-            classSessionsCol,
-            where("kidId", "==", selectedKidId),
-            where("parentId", "==", user.uid),
-          )
-        : query(
-            classSessionsCol,
-            where("kidId", "==", selectedKidId),
-            where("parentId", "==", user.uid),
-            where("date", ">=", recentStartKey),
-            where("date", "<=", recentEndKey),
-          );
-      const snapB = await readQueryDocs(
-        "Query B",
-        () => qB,
-      );
-      debugParentDashboard("✅ [Query B] classSessions kidId equality + parentId:", {
-        count: snapB?.size ?? 0,
-        docs: (snapB?.docs ?? []).map((d) => {
-          const data = d.data() as any;
-          return { id: d.id, parentId: data?.parentId, kidId: data?.kidId };
-        })
-      });
+      const [snapA, snapB] = await Promise.all([
+        readQueryDocs("Query A", buildCanonicalQuery),
+        readQueryDocs("Query B", buildLegacyQuery),
+      ]);
+
+      const map = new Map<string, KidSession>();
+      (snapA?.docs ?? []).forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
+      (snapB?.docs ?? []).forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
+
       if ((snapB?.size ?? 0) > 0) {
         emitParentLegacyFallbackTelemetry("classSessions_kidId", {
           kidId: selectedKidId,
@@ -2408,14 +2417,72 @@ export default function ParentDashboard() {
         });
       }
 
-      const map = new Map<string, KidSession>();
-      (snapA?.docs ?? []).forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
-      (snapB?.docs ?? []).forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
+      // Compatibility only: if a bounded read sees nothing at all, retry the old
+      // ownership lookups once. This protects legacy sessions that have startAt but
+      // no canonical date field. Canonical parents never pay this extra read cost.
+      if (
+        parentClassSessionDateBounds
+        && (
+          shouldRunParentLegacySessionFallback(snapA?.size ?? 0)
+          || snapB === null
+        )
+      ) {
+        const [legacyCanonicalSnap, legacyKidIdSnap] = await Promise.all([
+          readQueryDocs(
+            "Query A legacy compatibility",
+            () => query(
+              classSessionsCol,
+              where("kidIds", "array-contains", selectedKidId),
+              where("parentId", "==", user.uid),
+            ),
+          ),
+          readQueryDocs(
+            "Query B legacy compatibility",
+            () => query(
+              classSessionsCol,
+              where("kidId", "==", selectedKidId),
+              where("parentId", "==", user.uid),
+            ),
+          ),
+        ]);
+
+        (legacyCanonicalSnap?.docs ?? []).forEach((d) => {
+          const row = { id: d.id, ...(d.data() as any) } as KidSession;
+          const start = sessionStartDate(row);
+          if (!start) return;
+          const dayKey = toYMD(start);
+          if (
+            dayKey >= parentClassSessionDateBounds.startKey
+            && dayKey <= parentClassSessionDateBounds.endKey
+          ) {
+            map.set(d.id, row);
+          }
+        });
+        (legacyKidIdSnap?.docs ?? []).forEach((d) => {
+          const row = { id: d.id, ...(d.data() as any) } as KidSession;
+          const start = sessionStartDate(row);
+          if (!start) return;
+          const dayKey = toYMD(start);
+          if (
+            dayKey >= parentClassSessionDateBounds.startKey
+            && dayKey <= parentClassSessionDateBounds.endKey
+          ) {
+            map.set(d.id, row);
+          }
+        });
+
+        if (map.size > 0) {
+          emitParentLegacyFallbackTelemetry("classSessions_missing_date", {
+            kidId: selectedKidId,
+            count: map.size,
+            canonicalHit: false,
+          });
+        }
+      }
 
       const all = Array.from(map.values());
       debugParentDashboard("📊 [Final Result] Total unique sessions:", all.length);
 
-      // Sort by start date (best effort)
       all.sort((a, b) => {
         const da = sessionStartDate(a)?.getTime() ?? 0;
         const db = sessionStartDate(b)?.getTime() ?? 0;
@@ -4187,27 +4254,27 @@ export default function ParentDashboard() {
         id: "upcoming" as const,
         label: "Upcoming",
         count: kidSessionsQuery.isLoading ? null : upcomingClassSessions.length,
-        scopeText: "All future scheduled classes.",
+        scopeText: "Scheduled classes in the next 14 days.",
         emptyText: "No upcoming classes are scheduled.",
       },
       {
         id: "completed" as const,
         label: "Completed",
-        count: kidSessionsQuery.isLoading ? null : completedClassSessions.length,
+        count: kidSessionsQuery.isLoading || parentClassSessionReadMode !== "history" ? null : completedClassSessions.length,
         scopeText: "All completed classes in the available history.",
         emptyText: "No completed classes are available yet.",
       },
       {
         id: "past_pending" as const,
         label: "Review",
-        count: kidSessionsQuery.isLoading ? null : pastPendingClassSessions.length,
+        count: kidSessionsQuery.isLoading || parentClassSessionReadMode !== "history" ? null : pastPendingClassSessions.length,
         scopeText: "Past scheduled classes awaiting a status update. No parent action is required here.",
         emptyText: "No past classes need review.",
       },
       {
         id: "rescheduled" as const,
         label: "Rescheduled",
-        count: kidSessionsQuery.isLoading ? null : rescheduledClassSessions.length,
+        count: kidSessionsQuery.isLoading || parentClassSessionReadMode !== "history" ? null : rescheduledClassSessions.length,
         scopeText: "All classes marked as rescheduled in the available history.",
         emptyText: "No rescheduled classes are available.",
       },
@@ -4215,6 +4282,7 @@ export default function ParentDashboard() {
   }, [
     completedClassSessions.length,
     kidSessionsQuery.isLoading,
+    parentClassSessionReadMode,
     pastPendingClassSessions.length,
     rescheduledClassSessions.length,
     todayClassSessions.length,
