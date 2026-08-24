@@ -20,7 +20,8 @@ describe("ParentDashboard class-session read plan", () => {
   it("keeps legacy ownership and missing-date compatibility available", () => {
     expect(dashboardSource).toContain('where("kidIds", "array-contains", selectedKidId)');
     expect(dashboardSource).toContain('where("kidId", "==", selectedKidId)');
-    expect(dashboardSource).toContain("shouldRunParentLegacySessionFallback(map.size)");
+    expect(dashboardSource).toContain("shouldRunParentLegacySessionFallback(snapA?.size ?? 0)");
+    expect(dashboardSource).toContain("|| snapB === null");
     expect(dashboardSource).toContain('"classSessions_missing_date"');
   });
 
