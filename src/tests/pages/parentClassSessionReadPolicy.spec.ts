@@ -56,7 +56,7 @@ describe("parent class session read policy", () => {
     });
   });
 
-  it("runs the legacy kidId query only when the canonical query misses", () => {
+  it("runs the unbounded legacy compatibility pass only when bounded reads miss", () => {
     expect(shouldRunParentLegacySessionFallback(3)).toBe(false);
     expect(shouldRunParentLegacySessionFallback(1)).toBe(false);
     expect(shouldRunParentLegacySessionFallback(0)).toBe(true);
