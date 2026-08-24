@@ -4279,6 +4279,7 @@ export default function ParentDashboard() {
   }, [
     completedClassSessions.length,
     kidSessionsQuery.isLoading,
+    parentClassSessionReadMode,
     pastPendingClassSessions.length,
     rescheduledClassSessions.length,
     todayClassSessions.length,
