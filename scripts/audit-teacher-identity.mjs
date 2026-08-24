@@ -84,7 +84,8 @@ const parseArgs = (args) => {
     month: '2-digit',
     day: '2-digit',
   }).format(new Date());
-  return { project, limit, startDate };
+  const summaryOnly = args.includes('--summary-only');
+  return { project, limit, startDate, summaryOnly };
 };
 
 const summarize = (rows) => ({
@@ -98,9 +99,9 @@ const summarize = (rows) => ({
 });
 
 const main = async () => {
-  const { project, limit, startDate } = parseArgs(process.argv.slice(2));
+  const { project, limit, startDate, summaryOnly } = parseArgs(process.argv.slice(2));
   if (!project) {
-    console.error('Usage: node scripts/audit-teacher-identity.mjs --project <project-id> [--limit 250] [--start-date YYYY-MM-DD]');
+    console.error('Usage: node scripts/audit-teacher-identity.mjs --project <project-id> [--limit 250] [--start-date YYYY-MM-DD] [--summary-only]');
     process.exitCode = 64;
     return;
   }
@@ -140,6 +141,8 @@ const main = async () => {
     .slice(0, limit)
     .map((doc) => auditRow(doc.id, doc.data() || {}));
 
+  const enrollmentSummary = summarize(enrollments);
+  const sessionSummary = summarize(classSessions);
   const result = {
     mode: 'READ_ONLY',
     project,
@@ -147,12 +150,16 @@ const main = async () => {
     limitPerCollection: limit,
     collections: {
       enrollments: {
-        summary: summarize(enrollments),
-        problems: enrollments.filter((row) => row.missingCanonicalTeacherId || row.mismatchedFields.length > 0),
+        summary: enrollmentSummary,
+        ...(!summaryOnly ? {
+          problems: enrollments.filter((row) => row.missingCanonicalTeacherId || row.mismatchedFields.length > 0),
+        } : {}),
       },
       classSessions: {
-        summary: summarize(classSessions),
-        problems: classSessions.filter((row) => row.missingCanonicalTeacherId || row.mismatchedFields.length > 0),
+        summary: sessionSummary,
+        ...(!summaryOnly ? {
+          problems: classSessions.filter((row) => row.missingCanonicalTeacherId || row.mismatchedFields.length > 0),
+        } : {}),
       },
     },
   };
