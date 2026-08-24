@@ -2422,7 +2422,10 @@ export default function ParentDashboard() {
       // no canonical date field. Canonical parents never pay this extra read cost.
       if (
         parentClassSessionDateBounds
-        && shouldRunParentLegacySessionFallback(map.size)
+        && (
+          shouldRunParentLegacySessionFallback(snapA?.size ?? 0)
+          || snapB === null
+        )
       ) {
         const [legacyCanonicalSnap, legacyKidIdSnap] = await Promise.all([
           readQueryDocs(
