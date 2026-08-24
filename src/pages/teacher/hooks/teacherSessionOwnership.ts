@@ -1,32 +1,29 @@
 import { type Query } from 'firebase/firestore';
 import { getDocsLogged } from '../../../lib/firestoreReadLogging';
+import {
+  CANONICAL_TEACHER_ID_FIELD,
+  LEGACY_TEACHER_ID_ALIAS_FIELDS,
+  type LegacyTeacherIdAliasField,
+  type OperationalTeacherIdentityField,
+} from '../../../lib/teacherIdentity';
 
-export type TeacherSessionAliasField =
-  | 'teacherId'
-  | 'teacherIds'
-  | 'assignedTeacherId'
-  | 'primaryTeacherId'
-  | 'teacherUid'
-  | 'teacher_id';
-
-export type TeacherSessionFallbackAliasField = Exclude<TeacherSessionAliasField, 'teacherId'>;
+export type TeacherSessionAliasField = OperationalTeacherIdentityField;
+export type TeacherSessionFallbackAliasField = LegacyTeacherIdAliasField;
 
 type TeacherSessionAliasConfig = {
   field: TeacherSessionFallbackAliasField;
   operator: '==' | 'array-contains';
 };
 
-export const TEACHER_SESSION_FALLBACK_ALIASES: TeacherSessionAliasConfig[] = [
-  { field: 'teacherIds', operator: 'array-contains' },
-  { field: 'assignedTeacherId', operator: '==' },
-  { field: 'primaryTeacherId', operator: '==' },
-  { field: 'teacherUid', operator: '==' },
-  { field: 'teacher_id', operator: '==' },
-];
+export const TEACHER_SESSION_FALLBACK_ALIASES: TeacherSessionAliasConfig[] =
+  LEGACY_TEACHER_ID_ALIAS_FIELDS.map((field) => ({
+    field,
+    operator: field === 'teacherIds' ? 'array-contains' : '==',
+  }));
 
 export const buildCanonicalTeacherSessionQuery = (
   buildScopedQuery: (field: 'teacherId', operator: '==') => Query,
-): Query => buildScopedQuery('teacherId', '==');
+): Query => buildScopedQuery(CANONICAL_TEACHER_ID_FIELD, '==');
 
 export const makeTeacherFallbackCacheKey = (
   teacherId: string,
