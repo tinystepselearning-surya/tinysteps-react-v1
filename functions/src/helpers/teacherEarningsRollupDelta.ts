@@ -265,3 +265,28 @@ export const planTeacherEarningsRollupChange = (input: {
 
   return { mode: 'delta', target, delta };
 };
+
+/**
+ * Returns true only when the live trigger may safely skip its authoritative month scan.
+ *
+ * This deliberately supports update events only. Both snapshots must carry the same explicit
+ * canonical teacherId/monthKey target, and the planner must prove the rollup contribution and
+ * payout state are unchanged. Legacy rows whose month is only derivable from timestamps therefore
+ * continue through the existing recompute path.
+ */
+export const canSkipTeacherEarningsRollupRecompute = (input: {
+  earningId: string;
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+}): boolean => {
+  if (!input.before || !input.after) return false;
+
+  const beforeTarget = teacherMonthRollupTargetFor(input.before);
+  const afterTarget = teacherMonthRollupTargetFor(input.after);
+  if (!sameTarget(beforeTarget, afterTarget)) return false;
+
+  const plan = planTeacherEarningsRollupChange(input);
+  if (plan.mode !== 'noop' || plan.targets.length !== 1) return false;
+
+  return sameTarget(plan.targets[0] || null, beforeTarget);
+};
