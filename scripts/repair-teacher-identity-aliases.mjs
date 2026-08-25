@@ -1,8 +1,23 @@
 #!/usr/bin/env node
 
-import { applicationDefault, getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { randomUUID } from 'node:crypto';
+import {
+  applicationDefault,
+  deleteApp as deleteAdminApp,
+  getApps as getAdminApps,
+  initializeApp as initializeAdminApp,
+} from 'firebase-admin/app';
+import { getAuth as getAdminAuth } from 'firebase-admin/auth';
+import { getFirestore as getAdminFirestore, Timestamp as AdminTimestamp } from 'firebase-admin/firestore';
+import { deleteApp as deleteClientApp, initializeApp as initializeClientApp } from 'firebase/app';
+import { deleteUser, getAuth as getClientAuth, signInWithCustomToken } from 'firebase/auth';
+import {
+  doc as clientDoc,
+  getFirestore as getClientFirestore,
+  runTransaction as runClientTransaction,
+} from 'firebase/firestore';
 
+const PUBLIC_FIREBASE_API_KEY = 'AIzaSyBZ5h2M3hataZjWM7480e76QAiFmEVK37Y';
 const ACTIVE_ENROLLMENT_STATUSES = [
   'active',
   'trial',
@@ -15,13 +30,6 @@ const ACTIVE_ENROLLMENT_STATUSES = [
 ];
 
 const SAFE_SESSION_STATUS = 'scheduled';
-const LEGACY_ALIAS_FIELDS = [
-  'teacherIds',
-  'assignedTeacherId',
-  'primaryTeacherId',
-  'teacherUid',
-  'teacher_id',
-];
 
 const normalize = (value) => {
   if (typeof value === 'string') return value.trim();
@@ -89,7 +97,7 @@ const parseArgs = (args) => {
 
 const loadOperationalScope = async (db, startDate, limit) => {
   const sessionQueryLimit = Math.max(1, Math.floor(limit / 2));
-  const startAtBoundary = Timestamp.fromDate(new Date(`${startDate}T00:00:00+05:30`));
+  const startAtBoundary = AdminTimestamp.fromDate(new Date(`${startDate}T00:00:00+05:30`));
   const [enrollmentSnap, sessionsByDateSnap, sessionsByStartAtSnap] = await Promise.all([
     db.collection('enrollments')
       .where('status', 'in', ACTIVE_ENROLLMENT_STATUSES)
@@ -168,48 +176,88 @@ const ensureExpectedTargets = (targets, expectedEnrollments, expectedSessions) =
   }
 };
 
-const runRepairTransaction = async (db, targets, startDate) => {
-  const refs = [
-    ...targets.enrollmentTargets.map((doc) => ({ kind: 'enrollment', ref: doc.ref })),
-    ...targets.sessionTargets.map((doc) => ({ kind: 'session', ref: doc.ref })),
-  ];
+const toRepairDescriptors = (targets) => [
+  ...targets.enrollmentTargets.map((doc) => ({ kind: 'enrollment', collection: 'enrollments', id: doc.id })),
+  ...targets.sessionTargets.map((doc) => ({ kind: 'session', collection: 'classSessions', id: doc.id })),
+];
 
-  await db.runTransaction(async (tx) => {
-    const snaps = [];
-    for (const target of refs) snaps.push(await tx.get(target.ref));
+const assertTransactionRowStillSafe = (target, row, startDate) => {
+  const canonical = normalize(row.teacherId);
+  if (!canonical) throw new Error('Repair target lost canonical teacherId before transaction commit');
+  if (aliasesMatchCanonical(row, canonical)) {
+    throw new Error('Repair target changed before transaction commit; refusing stale write');
+  }
 
-    snaps.forEach((snap, index) => {
-      if (!snap.exists) throw new Error('Repair target disappeared before transaction commit');
-      const target = refs[index];
-      const row = snap.data() || {};
-      const canonical = normalize(row.teacherId);
-      if (!canonical) throw new Error('Repair target lost canonical teacherId before transaction commit');
-      if (aliasesMatchCanonical(row, canonical)) {
-        throw new Error('Repair target changed before transaction commit; refusing stale write');
-      }
-      if (target.kind === 'enrollment') {
-        if (!ACTIVE_ENROLLMENT_STATUSES.includes(normalizeStatus(row.status))) {
-          throw new Error('Enrollment left operational status before transaction commit');
-        }
-      } else {
-        if (normalizeStatus(row.status) !== SAFE_SESSION_STATUS) {
-          throw new Error('Session left scheduled status before transaction commit');
-        }
-        const date = normalize(row.date);
-        const startAt = row.startAt?.toDate?.();
-        const futureByDate = /^\d{4}-\d{2}-\d{2}$/.test(date) && date >= startDate;
-        const futureByStartAt = startAt instanceof Date && startAt >= new Date(`${startDate}T00:00:00+05:30`);
-        if (!futureByDate && !futureByStartAt) {
-          throw new Error('Session left current/future operational window before transaction commit');
-        }
-      }
-    });
+  if (target.kind === 'enrollment') {
+    if (!ACTIVE_ENROLLMENT_STATUSES.includes(normalizeStatus(row.status))) {
+      throw new Error('Enrollment left operational status before transaction commit');
+    }
+    return canonical;
+  }
 
-    snaps.forEach((snap, index) => {
-      const canonical = normalize((snap.data() || {}).teacherId);
-      tx.update(refs[index].ref, canonicalAliasPatch(canonical));
-    });
+  if (normalizeStatus(row.status) !== SAFE_SESSION_STATUS) {
+    throw new Error('Session left scheduled status before transaction commit');
+  }
+  const date = normalize(row.date);
+  const startAt = row.startAt?.toDate?.();
+  const futureByDate = /^\d{4}-\d{2}-\d{2}$/.test(date) && date >= startDate;
+  const futureByStartAt = startAt instanceof Date && startAt >= new Date(`${startDate}T00:00:00+05:30`);
+  if (!futureByDate && !futureByStartAt) {
+    throw new Error('Session left current/future operational window before transaction commit');
+  }
+  return canonical;
+};
+
+const runRulesAuthenticatedRepairTransaction = async (project, targets, startDate) => {
+  const adminAuth = getAdminAuth();
+  const maintenanceUid = `b3-alias-repair-${Date.now()}-${randomUUID().replace(/-/g, '').slice(0, 10)}`;
+  const customToken = await adminAuth.createCustomToken(maintenanceUid, {
+    role: 'admin',
+    tinyStepsMaintenance: 'teacher-identity-b3',
   });
+
+  const clientApp = initializeClientApp({
+    apiKey: PUBLIC_FIREBASE_API_KEY,
+    authDomain: `${project}.firebaseapp.com`,
+    projectId: project,
+  }, `teacher-identity-b3-${Date.now()}`);
+  const clientAuth = getClientAuth(clientApp);
+  let clientUser = null;
+
+  try {
+    const credential = await signInWithCustomToken(clientAuth, customToken);
+    clientUser = credential.user;
+    const clientDb = getClientFirestore(clientApp);
+    const descriptors = toRepairDescriptors(targets);
+
+    await runClientTransaction(clientDb, async (tx) => {
+      const refs = descriptors.map((target) => clientDoc(clientDb, target.collection, target.id));
+      const snapshots = await Promise.all(refs.map((ref) => tx.get(ref)));
+      const canonicals = snapshots.map((snap, index) => {
+        if (!snap.exists()) throw new Error('Repair target disappeared before transaction commit');
+        return assertTransactionRowStillSafe(descriptors[index], snap.data() || {}, startDate);
+      });
+
+      refs.forEach((ref, index) => {
+        tx.update(ref, canonicalAliasPatch(canonicals[index]));
+      });
+    });
+  } finally {
+    if (clientUser) {
+      try {
+        await deleteUser(clientUser);
+      } catch (clientDeleteError) {
+        try {
+          await adminAuth.deleteUser(maintenanceUid);
+        } catch (adminDeleteError) {
+          throw new Error(
+            `Repair authentication cleanup failed: client=${clientDeleteError instanceof Error ? clientDeleteError.message : String(clientDeleteError)}; admin=${adminDeleteError instanceof Error ? adminDeleteError.message : String(adminDeleteError)}`,
+          );
+        }
+      }
+    }
+    await deleteClientApp(clientApp);
+  }
 };
 
 const verifyPostRepair = async (db, originalTargets, startDate, limit) => {
@@ -246,17 +294,15 @@ const main = async () => {
     apply,
   } = parseArgs(process.argv.slice(2));
 
-  if (!project) {
-    throw new Error('--project is required');
-  }
+  if (!project) throw new Error('--project is required');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
     throw new Error('--start-date must use YYYY-MM-DD');
   }
 
-  if (!getApps().length) {
-    initializeApp({ credential: applicationDefault(), projectId: project });
+  if (!getAdminApps().length) {
+    initializeAdminApp({ credential: applicationDefault(), projectId: project });
   }
-  const db = getFirestore();
+  const db = getAdminFirestore();
   const scope = await loadOperationalScope(db, startDate, limit);
   const targets = findTargets(scope);
   ensureExpectedTargets(targets, expectedEnrollments, expectedSessions);
@@ -282,12 +328,14 @@ const main = async () => {
       nonScheduledSessionMismatches: targets.unsafeSessionMismatches.length,
       canonicalTeacherIdWillNotChange: true,
       noAttendanceBillingSchedulingFieldsWillChange: true,
+      writeAuthorization: 'firebase-security-rules-admin-token',
+      permanentIamExpansionRequired: false,
     },
   }, null, 2));
 
   if (!apply) return;
 
-  await runRepairTransaction(db, targets, startDate);
+  await runRulesAuthenticatedRepairTransaction(project, targets, startDate);
   await verifyPostRepair(db, targets, startDate, limit);
 
   console.log(JSON.stringify({
@@ -297,7 +345,12 @@ const main = async () => {
       scheduledSessions: targets.sessionTargets.length,
     },
     postRepairOperationalAliasMismatches: 0,
+    temporaryAuthUserDeleted: true,
   }, null, 2));
+
+  for (const app of getAdminApps()) {
+    await deleteAdminApp(app);
+  }
 };
 
 main().catch((error) => {
