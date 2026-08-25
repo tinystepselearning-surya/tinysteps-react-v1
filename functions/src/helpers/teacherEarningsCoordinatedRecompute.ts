@@ -147,6 +147,7 @@ async function recomputeOneTarget(input: {
       rollupRef,
       {
         ...decision.patch,
+        monthKey: target.monthKey,
         analyticsProjectionVersion: 0,
         analyticsProjectionInvalidReason: 'authoritative_recompute_in_progress',
         incrementalRecomputeClaimedAt: admin.firestore.FieldValue.serverTimestamp(),
