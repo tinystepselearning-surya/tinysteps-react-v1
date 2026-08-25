@@ -106,6 +106,12 @@ describe('Brick P5 parent overview projection', () => {
         'phonics-foundations',
       ),
     ).toBeNull();
+    expect(
+      selectCanonicalParentOverviewCourse(
+        { ...canonicalCourse, inProgressTopics: 1, notStartedTopics: 2 },
+        'phonics-foundations',
+      ),
+    ).toBeNull();
   });
 
   it('rejects a mismatched course rather than silently presenting another course', () => {
@@ -139,6 +145,38 @@ describe('Brick P5 parent overview projection', () => {
     const course = selectCanonicalParentOverviewCourse(canonicalCourse, 'phonics-foundations');
     expect(course?.activeStage?.key).toBe('stage-1');
     expect(course?.nextStage?.key).toBe('stage-2');
+  });
+
+  it('uses the furthest partially saved stage rather than a mastery/in-progress flag', () => {
+    const nonContiguousSavedLessons: ChildCourseProgressProjection = {
+      ...canonicalCourse,
+      totalTopics: 6,
+      completedTopics: 2,
+      notStartedTopics: 4,
+      overallPct: 33,
+      totalStages: 3,
+      stageSummaries: [
+        {
+          key: 'stage-1', label: 'Stage 1', order: 1, totalTopics: 2,
+          completedTopics: 0, inProgressTopics: 0, notStartedTopics: 2, completionPct: 0,
+        },
+        {
+          key: 'stage-2', label: 'Stage 2', order: 2, totalTopics: 2,
+          completedTopics: 1, inProgressTopics: 0, notStartedTopics: 1, completionPct: 50,
+        },
+        {
+          key: 'stage-3', label: 'Stage 3', order: 3, totalTopics: 2,
+          completedTopics: 1, inProgressTopics: 0, notStartedTopics: 1, completionPct: 50,
+        },
+      ],
+    };
+
+    const course = selectCanonicalParentOverviewCourse(
+      nonContiguousSavedLessons,
+      'phonics-foundations',
+    );
+    expect(course?.activeStage?.key).toBe('stage-3');
+    expect(course?.nextStage).toBeNull();
   });
 
   it('uses only the selected child P4 row and never family totals', () => {
