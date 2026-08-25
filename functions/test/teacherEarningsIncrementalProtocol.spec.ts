@@ -26,11 +26,13 @@ const coordinatedRollup = {
   incrementalTransactionFence: TEACHER_EARNINGS_TRANSACTION_FENCE,
   incrementalRecomputeState: 'idle',
   incrementalRevision: 12,
+  incrementalAuthoritativeCommittedAt: { toMillis: () => 2000 },
 };
 
 const demoCreate = {
   eventId: 'evt-demo-1',
   earningId: 'demo_demo-1_completion',
+  eventUpdateTime: { toMillis: () => 3000 },
   before: null,
   after: {
     teacherId: 'teacher-1',
@@ -41,7 +43,7 @@ const demoCreate = {
   },
 };
 
-describe('B6 Brick 7A teacher earnings incremental transaction protocol', () => {
+describe('B6 Brick 7A/7C1 teacher earnings incremental transaction protocol', () => {
   it('derives deterministic path-safe marker ids and change signatures', () => {
     const markerA = teacherEarningsIncrementalMarkerId('projects/demo/events/abc?retry=1');
     const markerB = teacherEarningsIncrementalMarkerId('projects/demo/events/abc?retry=1');
@@ -80,7 +82,7 @@ describe('B6 Brick 7A teacher earnings incremental transaction protocol', () => 
     });
   });
 
-  it('builds an exact delta candidate only for a transaction-coordinated rollup', () => {
+  it('builds an exact delta candidate only when the event is newer than the authoritative commit watermark', () => {
     const decision = planTeacherEarningsIncrementalTransaction({
       ...demoCreate,
       rollup: coordinatedRollup,
@@ -109,10 +111,38 @@ describe('B6 Brick 7A teacher earnings incremental transaction protocol', () => 
     });
   });
 
+  it('treats a delayed event older than the authoritative commit as already covered', () => {
+    expect(
+      planTeacherEarningsIncrementalTransaction({
+        ...demoCreate,
+        eventUpdateTime: { toMillis: () => 1000 },
+        rollup: coordinatedRollup,
+      }),
+    ).toEqual({ mode: 'covered', reason: 'event_already_in_authoritative_baseline' });
+  });
+
+  it('fails closed when the authoritative/event watermark is missing or exactly equal', () => {
+    expect(
+      planTeacherEarningsIncrementalTransaction({
+        ...demoCreate,
+        rollup: { ...coordinatedRollup, incrementalAuthoritativeCommittedAt: undefined },
+      }),
+    ).toEqual({ mode: 'fallback', reason: 'authoritative_watermark_missing' });
+
+    expect(
+      planTeacherEarningsIncrementalTransaction({
+        ...demoCreate,
+        eventUpdateTime: { toMillis: () => 2000 },
+        rollup: coordinatedRollup,
+      }),
+    ).toEqual({ mode: 'fallback', reason: 'authoritative_watermark_ambiguous' });
+  });
+
   it('still refuses a new session earning until duplicate/canonical session-create coverage is separately proven', () => {
     const decision = planTeacherEarningsIncrementalTransaction({
       eventId: 'evt-session-1',
       earningId: 'session-1',
+      eventUpdateTime: { toMillis: () => 3000 },
       before: null,
       after: {
         teacherId: 'teacher-1',
@@ -143,6 +173,7 @@ describe('B6 Brick 7A teacher earnings incremental transaction protocol', () => 
     const decision = planTeacherEarningsIncrementalTransaction({
       eventId: 'evt-payout-1',
       earningId: 'session-1',
+      eventUpdateTime: { toMillis: () => 3000 },
       before,
       after: {
         ...before,
@@ -159,10 +190,11 @@ describe('B6 Brick 7A teacher earnings incremental transaction protocol', () => 
     });
   });
 
-  it('rejects a delta that would make authoritative totals invalid', () => {
+  it('keeps deletes on authoritative recompute because there is no post-delete snapshot updateTime', () => {
     const decision = planTeacherEarningsIncrementalTransaction({
       eventId: 'evt-delete-demo',
       earningId: 'demo-1',
+      eventUpdateTime: { toMillis: () => 3000 },
       before: {
         teacherId: 'teacher-1',
         monthKey: '2026-08',
@@ -171,6 +203,29 @@ describe('B6 Brick 7A teacher earnings incremental transaction protocol', () => 
         source: 'demo_completed',
       },
       after: null,
+      rollup: coordinatedRollup,
+    });
+
+    expect(decision).toEqual({
+      mode: 'fallback',
+      reason: 'incremental_delete_requires_recompute',
+    });
+  });
+
+  it('rejects an update delta that would make authoritative totals invalid', () => {
+    const before = {
+      teacherId: 'teacher-1',
+      monthKey: '2026-08',
+      amount: 100,
+      status: 'unpaid',
+      source: 'demo_completed',
+    };
+    const decision = planTeacherEarningsIncrementalTransaction({
+      eventId: 'evt-reduce-demo',
+      earningId: 'demo-1',
+      eventUpdateTime: { toMillis: () => 3000 },
+      before,
+      after: { ...before, amount: 0 },
       rollup: {
         ...coordinatedRollup,
         totalEarnings: 50,
@@ -228,7 +283,7 @@ describe('B6 Brick 7A teacher earnings incremental transaction protocol', () => 
     ).toEqual({ mode: 'fallback', reason: 'missing_event_identity' });
   });
 
-  it('keeps Brick 7A incremental execution disabled after the 7B2 recompute cutover', () => {
+  it('keeps Brick 7C incremental execution disabled during the 7C1 atomic-baseline checkpoint', () => {
     const liveTriggerSource = fs.readFileSync(
       path.resolve(process.cwd(), 'functions/src/teacherEarningsRollupTrigger.ts'),
       'utf8',
