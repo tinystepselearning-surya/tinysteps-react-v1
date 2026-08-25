@@ -63,6 +63,9 @@ const samplePush = <T>(target: T[], value: T, limit: number): void => {
  * This helper never mutates data. It is intentionally focused on the evidence needed before
  * expanding B6 beyond no-op suppression: duplicate sessionId rows, canonical earning IDs,
  * missing session links, and missing canonical teacher ownership.
+ *
+ * Archived rows are counted for visibility but excluded from coverage calculations because the
+ * authoritative monthly rollup also excludes archived teacherEarnings documents before dedupe.
  */
 export function analyzeTeacherEarningsCanonicalCoverage(
   rows: TeacherEarningAuditRow[],
@@ -95,7 +98,11 @@ export function analyzeTeacherEarningsCanonicalCoverage(
     const source = normalizeStatus(row.source);
     const status = normalizeStatus(row.status);
 
-    if (row.archived === true) archivedRows += 1;
+    if (row.archived === true) {
+      archivedRows += 1;
+      continue;
+    }
+
     if (status === 'void') voidRows += 1;
 
     if (teacherId) {
