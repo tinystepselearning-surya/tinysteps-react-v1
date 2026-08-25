@@ -41,6 +41,11 @@ import { db } from '../../lib/firebaseConfig';
 import { getDocLogged, getDocsLogged } from '../../lib/firestoreReadLogging';
 import { resolveSessionJoinLink } from '../../lib/sessionJoinLink';
 import {
+  buildWhatsAppUrl,
+  sanitizeWhatsAppMessage,
+  sanitizeWhatsAppPhone,
+} from '../../lib/whatsAppUrl';
+import {
   isEnrollmentOperationallyActive,
   isManualSession,
   normalizeEnrollmentStatusForOperations,
@@ -442,10 +447,6 @@ const getEnrollmentTeacherRefs = (enrollmentLike: Record<string, any> | undefine
   );
 };
 
-const sanitizePhoneForWhatsApp = (phone: string): string => {
-  return String(phone || '').replace(/\D/g, '');
-};
-
 const getDisplayName = (userLike: Record<string, any> | undefined, fallback: string): string => {
   const value =
     userLike?.name ||
@@ -537,15 +538,6 @@ const applyTemplatePlaceholders = (
     (message, [token, value]) => replaceToken(message, token, value),
     safeTemplate,
   );
-};
-
-const sanitizeReminderMessage = (message: string): string => {
-  return String(message || '')
-    .replace(/\uFFFD/g, '')
-    .replace(/[^\x20-\x7E\n]/g, '')
-    .replace(/\r\n/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
 };
 
 const resolvePhoneInfo = (userLike: UserDoc | undefined): ResolvedPhoneInfo => {
@@ -1686,7 +1678,7 @@ export default function TodaysNotifications() {
   }, [statusFilter, statusOptions]);
 
   const openWhatsApp = (phone: string, message: string) => {
-    const sanitizedPhone = sanitizePhoneForWhatsApp(phone);
+    const sanitizedPhone = sanitizeWhatsAppPhone(phone);
     if (!sanitizedPhone) {
       toast({
         title: 'No phone number',
@@ -1695,12 +1687,21 @@ export default function TodaysNotifications() {
       });
       return;
     }
-    const sanitizedMessage = sanitizeReminderMessage(message);
-    const url = `https://web.whatsapp.com/send?phone=${sanitizedPhone}&text=${encodeURIComponent(sanitizedMessage)}`;
+    const sanitizedMessage = sanitizeWhatsAppMessage(message);
+    if (!sanitizedMessage) {
+      toast({
+        title: 'No reminder message',
+        description: 'Add reminder text before opening WhatsApp.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    const url = buildWhatsAppUrl(sanitizedPhone, sanitizedMessage);
     if (import.meta.env.DEV) {
       console.info('[TodaysNotifications] openWhatsApp', {
         sanitizedPhone,
         message: sanitizedMessage,
+        encodedMessage: encodeURIComponent(sanitizedMessage),
         url,
       });
     }
@@ -1840,7 +1841,7 @@ export default function TodaysNotifications() {
           : 'Tiny Steps class',
     };
     const resolvedMessage = applyTemplatePlaceholders(template, context);
-    return sanitizeReminderMessage(resolvedMessage);
+    return sanitizeWhatsAppMessage(resolvedMessage);
   };
 
   const openMessageEditor = (sessionId: string, recipient: MessageRecipient) => {
