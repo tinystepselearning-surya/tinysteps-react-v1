@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import {
   PARENT_UPCOMING_CLASS_DAYS,
@@ -6,6 +6,13 @@ import {
   resolveParentClassSessionReadMode,
   shouldRunParentLegacySessionFallback,
 } from "../../pages/parent/parentClassSessionReadPolicy";
+
+const originalUrl = window.location.href;
+
+afterEach(() => {
+  window.sessionStorage.clear();
+  window.history.replaceState({}, "", originalUrl);
+});
 
 describe("parent class session read policy", () => {
   it("keeps operational reads to the current month plus the next 14 days", () => {
@@ -56,9 +63,25 @@ describe("parent class session read policy", () => {
     });
   });
 
-  it("runs the unbounded legacy compatibility pass only when bounded reads miss", () => {
+  it("always runs compatibility when bounded reads miss", () => {
+    expect(shouldRunParentLegacySessionFallback(0)).toBe(true);
+    expect(shouldRunParentLegacySessionFallback(Number.NaN)).toBe(true);
+  });
+
+  it("does not add a compatibility read when no selected kid is in the route", () => {
+    window.history.replaceState({}, "", "/parent?tab=classes");
     expect(shouldRunParentLegacySessionFallback(3)).toBe(false);
     expect(shouldRunParentLegacySessionFallback(1)).toBe(false);
-    expect(shouldRunParentLegacySessionFallback(0)).toBe(true);
+  });
+
+  it("probes mixed canonical and legacy sessions only once per selected child per browser session", () => {
+    window.history.replaceState({}, "", "/parent?tab=classes&kidId=kid-legacy-a");
+
+    expect(shouldRunParentLegacySessionFallback(18)).toBe(true);
+    expect(shouldRunParentLegacySessionFallback(18)).toBe(false);
+
+    window.history.replaceState({}, "", "/parent?tab=classes&kidId=kid-legacy-b");
+    expect(shouldRunParentLegacySessionFallback(17)).toBe(true);
+    expect(shouldRunParentLegacySessionFallback(17)).toBe(false);
   });
 });
