@@ -66,19 +66,22 @@ export function planTeacherLessonStatusWrite(
 }
 
 /**
- * Returns only the status-related scalar fields that can safely be used in a
- * local optimistic update. Timestamp sentinel fields are intentionally added
- * by the Firestore writer, not by this pure helper.
+ * Returns only status-related scalar fields safe for the Firestore/current-state
+ * document. Timestamp sentinels are intentionally added by the writer.
+ *
+ * Audit ownership is omitted when status is unchanged so an ordinary rating or
+ * note edit cannot erase the teacher who last changed lesson status.
  */
 export function buildTeacherLessonStatusScalars(
   plan: TeacherLessonStatusPlan,
   actorUid: string | null | undefined,
 ): Record<string, string | number | null> {
   const uid = String(actorUid ?? '').trim() || null;
-  return {
+  const base: Record<string, string | number | null> = {
     learningContractVersion: TEACHER_LEARNING_CONTRACT_VERSION,
     lessonStatus: plan.nextStatus,
     lessonStatusSource: 'teacher',
-    lessonStatusUpdatedBy: plan.statusChanged ? uid : null,
   };
+  if (plan.statusChanged) base.lessonStatusUpdatedBy = uid;
+  return base;
 }
