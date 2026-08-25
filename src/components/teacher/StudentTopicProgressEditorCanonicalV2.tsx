@@ -175,7 +175,7 @@ function toggleLimited(value: string, current: string[], limit = 3): string[] {
 }
 
 function lessonStatusLabel(status: TeacherEditableLessonStatus): string {
-  return status === 'completed' ? 'Lesson completed' : 'Still learning';
+  return status === 'completed' ? 'Ready to move on' : 'Still learning';
 }
 
 export default function StudentTopicProgressEditorCanonicalV2({
@@ -474,13 +474,7 @@ export default function StudentTopicProgressEditorCanonicalV2({
       });
       setBaseline(currentSnapshot);
       setLastSavedAt(savedAt.getTime());
-      setSaveMessage(
-        statusPlan.transition === 'completed'
-          ? 'Lesson completed and progress saved.'
-          : statusPlan.transition === 'reopened'
-            ? 'Lesson reopened and progress saved.'
-            : 'Progress saved.',
-      );
+      setSaveMessage('Lesson progress saved. This lesson counts once in curriculum progress.');
       return true;
     } catch (error: any) {
       setSaveMessage(error?.message ?? 'Could not save progress. Please try again.');
@@ -521,7 +515,7 @@ export default function StudentTopicProgressEditorCanonicalV2({
         <div>
           <div className="text-sm font-semibold text-slate-900">{kidName || 'Student'} • Lesson Progress</div>
           <div className="text-xs text-slate-500">
-            Select the lesson taught today, set its curriculum status, then update the child&apos;s skills.
+            Select the lesson taught today, update the child&apos;s learning status and skills, then save.
           </div>
         </div>
         {saveMessage ? (
@@ -583,9 +577,9 @@ export default function StudentTopicProgressEditorCanonicalV2({
       <div className="rounded-xl border border-violet-200 bg-violet-50/60 p-3">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wide text-violet-800">Lesson status</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-violet-800">Learning status</div>
             <p className="mt-1 text-xs text-violet-900/80">
-              This controls curriculum completion only. Skill stars below describe mastery and do not complete a lesson.
+              Saving records this lesson once in curriculum progress. Use this status and the skill stars to show how the child is progressing; both can be updated later.
             </p>
           </div>
           <span className="rounded-full border border-violet-200 bg-white px-2.5 py-1 text-xs font-semibold text-violet-800">
@@ -604,7 +598,7 @@ export default function StudentTopicProgressEditorCanonicalV2({
             }`}
           >
             <div className="text-xs font-semibold">Still learning</div>
-            <div className="mt-0.5 text-[11px] opacity-80">Lesson was taught but needs more teaching or practice.</div>
+            <div className="mt-0.5 text-[11px] opacity-80">The lesson was taught; the child still needs more teaching or practice.</div>
           </button>
           <button
             type="button"
@@ -616,8 +610,8 @@ export default function StudentTopicProgressEditorCanonicalV2({
                 : 'border-slate-300 bg-white text-slate-700'
             }`}
           >
-            <div className="text-xs font-semibold">Lesson completed</div>
-            <div className="mt-0.5 text-[11px] opacity-80">Curriculum lesson is complete for this child&apos;s pace.</div>
+            <div className="text-xs font-semibold">Ready to move on</div>
+            <div className="mt-0.5 text-[11px] opacity-80">The lesson was taught and the child is ready to continue to the next learning step.</div>
           </button>
         </div>
       </div>
