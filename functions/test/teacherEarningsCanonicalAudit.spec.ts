@@ -129,12 +129,12 @@ describe('teacher earnings canonical coverage audit', () => {
     expect(result.samples.missingTeacherIdRows[0]?.id).toBe('earning-1');
   });
 
-  it('counts archived rows separately and respects the sample cap', () => {
+  it('counts archived rows but excludes them from canonical coverage and samples', () => {
     const result = analyzeTeacherEarningsCanonicalCoverage(
       [
         {
           id: 'legacy-1',
-          teacherId: 'teacher-1',
+          teacherId: '',
           sessionId: 'session-1',
           source: 'session_present_completed',
           archived: true,
@@ -151,7 +151,9 @@ describe('teacher earnings canonical coverage audit', () => {
 
     expect(result.archivedRows).toBe(1);
     expect(result.activeRows).toBe(1);
-    expect(result.nonCanonicalSessionRows).toBe(2);
+    expect(result.nonCanonicalSessionRows).toBe(1);
+    expect(result.missingTeacherIdRows).toBe(0);
     expect(result.samples.nonCanonicalSessionRows).toHaveLength(1);
+    expect(result.samples.nonCanonicalSessionRows[0]?.id).toBe('legacy-2');
   });
 });
