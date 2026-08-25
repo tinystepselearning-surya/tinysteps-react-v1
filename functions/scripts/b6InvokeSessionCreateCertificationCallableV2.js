@@ -29,6 +29,32 @@ async function parseJsonResponse(response, label) {
   return parsed;
 }
 
+function loadScopedServiceAccount(projectId) {
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  if (!raw) throw new Error('Missing scoped FIREBASE_SERVICE_ACCOUNT_JSON secret');
+
+  let serviceAccount;
+  try {
+    serviceAccount = JSON.parse(raw);
+  } catch {
+    throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON is not valid JSON');
+  }
+
+  if (!serviceAccount || serviceAccount.project_id !== projectId) {
+    throw new Error('Refusing service account for unexpected Firebase project');
+  }
+  if (
+    typeof serviceAccount.client_email !== 'string' ||
+    !serviceAccount.client_email.trim() ||
+    typeof serviceAccount.private_key !== 'string' ||
+    !serviceAccount.private_key.includes('BEGIN PRIVATE KEY')
+  ) {
+    throw new Error('Service account secret is missing required signing material');
+  }
+
+  return serviceAccount;
+}
+
 async function main() {
   const projectId = readArg('project');
   const monthKey = readArg('month');
@@ -36,7 +62,16 @@ async function main() {
 
   if (projectId !== 'tinysteps-react-v1') throw new Error(`Refusing unexpected project: ${projectId}`);
   if (!/^\d{4}-\d{2}$/.test(monthKey)) throw new Error('Missing/invalid --month=YYYY-MM');
-  if (!admin.apps.length) admin.initializeApp({ projectId });
+
+  // Initialize from the already-stored service-account JSON so Firebase Admin signs the short-lived
+  // custom token locally with the private key. This deliberately avoids IAM signBlob permission.
+  const serviceAccount = loadScopedServiceAccount(projectId);
+  if (!admin.apps.length) {
+    admin.initializeApp({
+      projectId,
+      credential: admin.credential.cert(serviceAccount),
+    });
+  }
 
   const customToken = await admin.auth().createCustomToken(AUTOMATION_UID, {
     role: 'admin',
@@ -90,7 +125,8 @@ async function main() {
     throw new Error(`Certification callable safety checks failed: ${JSON.stringify(callableChecks)}`);
   }
 
-  // Read-only verification using the CI service account after the callable runtime performs the write.
+  // Read-only verification using the same least-privilege service account after the callable
+  // runtime performs the sole production write.
   const db = admin.firestore();
   const certificationRef = db
     .collection('adminStats')
@@ -124,6 +160,7 @@ async function main() {
     monthKey,
     callableUrl,
     directFirestoreWritesByCi: 0,
+    tokenSigningMode: 'local_service_account_private_key',
     callableChecks,
     persistedChecks,
     persistedSummary: {
