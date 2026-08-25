@@ -1,10 +1,12 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const getDocsMock = vi.fn();
-const collectionMock = vi.fn((...parts: unknown[]) => ({ kind: 'collection', parts }));
-const whereMock = vi.fn((...parts: unknown[]) => ({ kind: 'where', parts }));
-const queryMock = vi.fn((...parts: unknown[]) => ({ kind: 'query', parts }));
+const { getDocsMock, collectionMock, whereMock, queryMock } = vi.hoisted(() => ({
+  getDocsMock: vi.fn(),
+  collectionMock: vi.fn((...parts: unknown[]) => ({ kind: 'collection', parts })),
+  whereMock: vi.fn((...parts: unknown[]) => ({ kind: 'where', parts })),
+  queryMock: vi.fn((...parts: unknown[]) => ({ kind: 'query', parts })),
+}));
 
 vi.mock('firebase/firestore', () => ({
   collection: collectionMock,
