@@ -72,7 +72,7 @@ describe('teacher earnings rollup delta planner', () => {
     });
   });
 
-  it('plans an exact pending-earnings delta for a partial payout on an existing canonical session earning', () => {
+  it('keeps a partial payout on authoritative recompute so payout history stays in sync', () => {
     const plan = planTeacherEarningsRollupChange({
       earningId: 'session-1',
       before: {
@@ -92,21 +92,70 @@ describe('teacher earnings rollup delta planner', () => {
         status: 'partial',
         source: 'session_present_completed',
         sessionId: 'session-1',
+        payoutIds: ['payout-1'],
       },
     });
 
     expect(plan).toEqual({
-      mode: 'delta',
-      target: { teacherId: 'teacher-1', monthKey: '2026-08' },
-      delta: {
-        totalEarnings: 0,
-        pendingEarnings: -75,
-        totalSessions: 0,
-        sessionsCompleted: 0,
-        demoEarnings: 0,
-        demoCompletedCount: 0,
-        demoEnrollmentBonusCount: 0,
+      mode: 'recompute',
+      targets: [{ teacherId: 'teacher-1', monthKey: '2026-08' }],
+      reason: 'payout_state_changed',
+    });
+  });
+
+  it('keeps paidAt and payoutIds mutations on authoritative recompute even when totals are unchanged', () => {
+    const base = {
+      teacherId: 'teacher-1',
+      monthKey: '2026-08',
+      amount: 175,
+      paidAmount: 175,
+      status: 'paid',
+      source: 'session_present_completed',
+      sessionId: 'session-1',
+      payoutIds: ['payout-1'],
+      paidAt: { seconds: 100, nanoseconds: 0 },
+    };
+
+    const plan = planTeacherEarningsRollupChange({
+      earningId: 'session-1',
+      before: base,
+      after: {
+        ...base,
+        payoutIds: ['payout-1', 'payout-2'],
+        paidAt: { seconds: 200, nanoseconds: 0 },
       },
+    });
+
+    expect(plan).toEqual({
+      mode: 'recompute',
+      targets: [{ teacherId: 'teacher-1', monthKey: '2026-08' }],
+      reason: 'payout_state_changed',
+    });
+  });
+
+  it('still returns noop for metadata-only changes on an already-paid earning', () => {
+    const before = {
+      teacherId: 'teacher-1',
+      monthKey: '2026-08',
+      amount: 175,
+      paidAmount: 175,
+      status: 'paid',
+      source: 'session_present_completed',
+      sessionId: 'session-1',
+      payoutIds: ['payout-1'],
+      paidAt: { seconds: 100, nanoseconds: 0 },
+      note: 'old',
+    };
+
+    const plan = planTeacherEarningsRollupChange({
+      earningId: 'session-1',
+      before,
+      after: { ...before, note: 'new' },
+    });
+
+    expect(plan).toEqual({
+      mode: 'noop',
+      targets: [{ teacherId: 'teacher-1', monthKey: '2026-08' }],
     });
   });
 
@@ -173,9 +222,9 @@ describe('teacher earnings rollup delta planner', () => {
         teacherId: 'teacher-1',
         monthKey: '2026-08',
         amount: 175,
-        paidAmount: 175,
-        status: 'paid',
+        status: 'unpaid',
         sessionId: 'session-1',
+        note: 'changed',
       },
     });
 
