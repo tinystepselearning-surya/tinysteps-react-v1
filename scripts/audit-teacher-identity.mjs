@@ -20,6 +20,8 @@ const normalize = (value) => {
   return '';
 };
 
+const normalizeStatus = (value) => normalize(value).toLowerCase() || 'unknown';
+
 const normalizeList = (value) => {
   if (!Array.isArray(value)) return [];
   return Array.from(new Set(value.map(normalize).filter(Boolean)));
@@ -61,10 +63,12 @@ const auditRow = (id, row) => {
 
   return {
     id,
+    status: normalizeStatus(row.status),
     canonicalTeacherId: canonical || null,
     resolvedTeacherId: resolveTeacherId(row) || null,
     legacyRefs: aliases,
     missingCanonicalTeacherId: !canonical,
+    missingCanonicalWithoutLegacyRefs: !canonical && aliases.length === 0,
     legacyOnly: !canonical && aliases.length > 0,
     mismatchedFields,
   };
@@ -88,15 +92,32 @@ const parseArgs = (args) => {
   return { project, limit, startDate, summaryOnly };
 };
 
-const summarize = (rows) => ({
-  scanned: rows.length,
-  missingCanonicalTeacherId: rows.filter((row) => row.missingCanonicalTeacherId).length,
-  legacyOnly: rows.filter((row) => row.legacyOnly).length,
-  mismatchedAliases: rows.filter((row) => row.mismatchedFields.length > 0).length,
-  cleanCanonical: rows.filter((row) => (
-    !row.missingCanonicalTeacherId && row.mismatchedFields.length === 0
-  )).length,
-});
+const countByStatus = (rows) => rows.reduce((acc, row) => {
+  acc[row.status] = (acc[row.status] || 0) + 1;
+  return acc;
+}, {});
+
+const summarize = (rows) => {
+  const missingCanonicalRows = rows.filter((row) => row.missingCanonicalTeacherId);
+  const missingWithoutLegacyRows = rows.filter((row) => row.missingCanonicalWithoutLegacyRefs);
+  const legacyOnlyRows = rows.filter((row) => row.legacyOnly);
+  const mismatchedRows = rows.filter((row) => row.mismatchedFields.length > 0);
+  return {
+    scanned: rows.length,
+    missingCanonicalTeacherId: missingCanonicalRows.length,
+    missingCanonicalWithoutLegacyRefs: missingWithoutLegacyRows.length,
+    legacyOnly: legacyOnlyRows.length,
+    mismatchedAliases: mismatchedRows.length,
+    cleanCanonical: rows.filter((row) => (
+      !row.missingCanonicalTeacherId && row.mismatchedFields.length === 0
+    )).length,
+    statusCounts: countByStatus(rows),
+    missingCanonicalByStatus: countByStatus(missingCanonicalRows),
+    missingWithoutLegacyRefsByStatus: countByStatus(missingWithoutLegacyRows),
+    legacyOnlyByStatus: countByStatus(legacyOnlyRows),
+    mismatchedAliasesByStatus: countByStatus(mismatchedRows),
+  };
+};
 
 const main = async () => {
   const { project, limit, startDate, summaryOnly } = parseArgs(process.argv.slice(2));
