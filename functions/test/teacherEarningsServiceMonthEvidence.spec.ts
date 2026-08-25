@@ -100,7 +100,7 @@ describe('B6 7D canonical session service-month evidence', () => {
     }
   });
 
-  it('keeps session-create finance deltas disabled while only the evidence gate is corrected', () => {
+  it('keeps the base planner fail-closed unless the executor supplies certified opt-in', () => {
     const source = fs.readFileSync(
       path.resolve(process.cwd(), 'functions/src/helpers/teacherEarningsRollupDelta.ts'),
       'utf8',

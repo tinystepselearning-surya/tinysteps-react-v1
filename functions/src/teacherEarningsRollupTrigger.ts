@@ -4,12 +4,15 @@ import { canSkipTeacherEarningsRollupRecompute } from './helpers/teacherEarnings
 import { checkTeacherFinanceAnalyticsReadinessRow } from './helpers/teacherFinanceAnalyticsReadiness';
 import { recomputeTeacherEarningsEventCoordinated } from './helpers/teacherEarningsCoordinatedRecompute';
 import { tryApplyTeacherEarningsIncrementalEvent } from './helpers/teacherEarningsIncrementalExecutor';
+import {
+  TEACHER_EARNINGS_SESSION_CREATE_CERTIFICATION_VERSION,
+  TEACHER_EARNINGS_SESSION_CREATE_SOURCE_CODE_CONTRACT,
+} from './helpers/teacherEarningsSessionCreateCertification';
 
 if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
 const ANALYTICS_PROJECTION_VERSION = 1;
-const SESSION_CREATE_CERTIFICATION_VERSION = 1;
 
 type EarningImages = {
   earningId: string;
@@ -71,7 +74,7 @@ async function invalidateUnsafeAnalyticsProjection(input: EarningImages): Promis
 
       // Brick 7D2A certification must fail closed after deployment. If any later earning image is
       // unsafe for the canonical finance model, disable the month-level session-create evidence too.
-      // The future 7D2B fast path will require this document to be explicitly ready=true.
+      // The 7D2B fast path requires this document to be explicitly ready=true.
       batch.set(
         db
           .collection('adminStats')
@@ -81,7 +84,9 @@ async function invalidateUnsafeAnalyticsProjection(input: EarningImages): Promis
         {
           monthKey: check.monthKey,
           ready: false,
-          certificationVersion: SESSION_CREATE_CERTIFICATION_VERSION,
+          certificationVersion: TEACHER_EARNINGS_SESSION_CREATE_CERTIFICATION_VERSION,
+          blockers: ['runtime_unsafe_teacher_earning_event'],
+          sourceCodeContract: TEACHER_EARNINGS_SESSION_CREATE_SOURCE_CODE_CONTRACT,
           invalidReason: `unsafe_teacher_earning_event:${invalidReasons.join(',')}`,
           invalidatedAt: admin.firestore.FieldValue.serverTimestamp(),
           source: 'b6_brick_7d2a_runtime_invalidation_guard',
@@ -159,8 +164,9 @@ async function refreshCertifiedAnalyticsRollups(input: EarningImages): Promise<v
  *    is authoritative, transaction-fenced, idle, and newer than its last full-scan watermark.
  * 3) Every other event falls back to the Brick 7C1 atomic full-ledger recompute transaction.
  *
- * Session creates/deletes, payout-state changes, teacher/month moves, archive toggles, legacy or
- * ambiguous session rows, missing/equal watermarks, invalid totals, and marker conflicts therefore
+ * A strictly canonical session create may proceed only when the executor reads valid v2 evidence
+ * inside that transaction. Session deletes, uncertified/noncanonical creates, payout-state changes,
+ * teacher/month moves, archive toggles, missing/equal watermarks, invalid totals, and marker conflicts
  * retain authoritative full-recompute semantics.
  */
 export const onTeacherEarningsRollupWrite = onDocumentWritten(

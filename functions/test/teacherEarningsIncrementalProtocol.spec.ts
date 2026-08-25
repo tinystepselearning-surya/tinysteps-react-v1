@@ -161,6 +161,36 @@ describe('B6 Brick 7A/7C1 teacher earnings incremental transaction protocol', ()
     });
   });
 
+  it('builds a canonical session-create candidate when the executor has validated v2 certification', () => {
+    const decision = planTeacherEarningsIncrementalTransaction({
+      eventId: 'evt-session-1',
+      earningId: 'session-1',
+      eventUpdateTime: { toMillis: () => 3000 },
+      before: null,
+      after: {
+        teacherId: 'teacher-1',
+        monthKey: '2026-08',
+        amount: 175,
+        status: 'unpaid',
+        source: 'session_present_completed',
+        sessionId: 'session-1',
+      },
+      rollup: coordinatedRollup,
+      allowCertifiedSessionCreate: true,
+    });
+
+    expect(decision.mode).toBe('candidate');
+    if (decision.mode !== 'candidate') return;
+    expect(decision.delta).toMatchObject({
+      totalEarnings: 175,
+      pendingEarnings: 175,
+      totalSessions: 1,
+      sessionsCompleted: 1,
+    });
+    expect(decision.revisionBefore).toBe(12);
+    expect(decision.revisionAfter).toBe(13);
+  });
+
   it('keeps payout mutations on authoritative recompute', () => {
     const before = {
       teacherId: 'teacher-1',

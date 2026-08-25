@@ -40,10 +40,14 @@ describe('B6 Brick 7D2A session-create runtime certification', () => {
     expect(source).toContain(".doc('teacherEarningsSessionCreateFastPath')");
     expect(source).toContain("source: 'b6_brick_7d2a_runtime_invalidation_guard'");
     expect(source).toContain('ready: false');
+    expect(source).toContain('TEACHER_EARNINGS_SESSION_CREATE_CERTIFICATION_VERSION');
+    expect(source).not.toContain('SESSION_CREATE_CERTIFICATION_VERSION = 1');
+    expect(source).toContain("blockers: ['runtime_unsafe_teacher_earning_event']");
+    expect(source).toContain('TEACHER_EARNINGS_SESSION_CREATE_SOURCE_CODE_CONTRACT');
     expect(source).toContain('unsafe_teacher_earning_event:');
   });
 
-  it('still refuses a new canonical session earning until the separate 7D2B cutover', () => {
+  it('keeps the base planner closed unless the 7D2B executor supplies certified opt-in', () => {
     const plan = planTeacherEarningsRollupChange({
       earningId: 'session-1',
       before: null,

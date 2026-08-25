@@ -214,6 +214,38 @@ const isCanonicalSessionRecord = (
 };
 
 /**
+ * Narrow Brick 7D2B event-shape gate. This does not authorize an incremental write by itself;
+ * the executor must additionally validate the month-level v2 certification inside the rollup
+ * transaction before passing allowCertifiedSessionCreate=true to the planner.
+ */
+export const isCanonicalSessionCreateFastPathCandidate = (input: {
+  earningId: string;
+  before: Record<string, unknown> | null;
+  after: Record<string, unknown> | null;
+}): boolean => {
+  if (input.before !== null || !input.after) return false;
+
+  const earningId = normalizeText(input.earningId);
+  const after = input.after;
+  const sessionId = normalizeText(after.sessionId);
+  const teacherId = normalizeText(after.teacherId);
+  const monthKey = normalizeText(after.monthKey);
+
+  return Boolean(
+    earningId &&
+      sessionId &&
+      earningId === sessionId &&
+      after.source === 'session_present_completed' &&
+      teacherId &&
+      /^\d{4}-\d{2}$/.test(monthKey) &&
+      after.archived !== true &&
+      normalizeStatus(after.status) !== 'void' &&
+      typeof after.amount === 'number' &&
+      Number.isFinite(after.amount),
+  );
+};
+
+/**
  * Plans whether one teacherEarnings document change can update the monthly read model
  * by an exact delta or must fall back to the existing authoritative full recompute.
  *
@@ -223,7 +255,9 @@ const isCanonicalSessionRecord = (
  *   membership is unchanged;
  * - payout-state changes on an existing earning always require recompute because the monthly
  *   read model also contains the top-five teacherPayouts payment history;
- * - session archive/unarchive, session earning creates/deletes and non-canonical duplicate rows
+ * - only a strictly canonical session create may be opted in after the executor proves a valid
+ *   month certification inside its transaction;
+ * - session deletes, uncertified/non-canonical session creates, archive changes and duplicate rows
  *   require recompute because legacy candidate selection can change;
  * - teacher/month moves require both affected months to recompute.
  */
@@ -231,6 +265,7 @@ export const planTeacherEarningsRollupChange = (input: {
   earningId: string;
   before: Record<string, unknown> | null;
   after: Record<string, unknown> | null;
+  allowCertifiedSessionCreate?: boolean;
 }): TeacherEarningsRollupPlan => {
   const earningId = normalizeText(input.earningId);
   const beforeTarget = teacherMonthRollupTargetFor(input.before);
@@ -253,9 +288,13 @@ export const planTeacherEarningsRollupChange = (input: {
     return { mode: 'recompute', targets, reason: 'session_archived_state_changed' };
   }
 
+  const certifiedSessionCreate = Boolean(
+    input.allowCertifiedSessionCreate && isCanonicalSessionCreateFastPathCandidate(input),
+  );
+
   if (!beforeTarget || !afterTarget) {
     const existing = input.before || input.after;
-    if (!isStandalone(existing)) {
+    if (!isStandalone(existing) && !certifiedSessionCreate) {
       return { mode: 'recompute', targets, reason: 'session_create_or_delete' };
     }
   }
@@ -269,7 +308,12 @@ export const planTeacherEarningsRollupChange = (input: {
     isCanonicalSessionRecord(earningId, input.before) &&
     isCanonicalSessionRecord(earningId, input.after);
 
-  if (!bothStandalone && !standaloneCreateOrDelete && !canonicalSessionUpdate) {
+  if (
+    !bothStandalone &&
+    !standaloneCreateOrDelete &&
+    !canonicalSessionUpdate &&
+    !certifiedSessionCreate
+  ) {
     return { mode: 'recompute', targets, reason: 'ambiguous_or_legacy_session_row' };
   }
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   canSkipTeacherEarningsRollupRecompute,
+  isCanonicalSessionCreateFastPathCandidate,
   planTeacherEarningsRollupChange,
   teacherEarningContributionFor,
 } from '../src/helpers/teacherEarningsRollupDelta';
@@ -207,6 +208,72 @@ describe('teacher earnings rollup delta planner', () => {
       targets: [{ teacherId: 'teacher-1', monthKey: '2026-08' }],
       reason: 'session_create_or_delete',
     });
+  });
+
+  it('plans an exact canonical session-create delta only after certified opt-in', () => {
+    const input = {
+      earningId: 'session-1',
+      before: null,
+      after: {
+        teacherId: 'teacher-1',
+        monthKey: '2026-08',
+        amount: 175,
+        status: 'unpaid',
+        source: 'session_present_completed',
+        sessionId: 'session-1',
+      },
+    };
+
+    expect(isCanonicalSessionCreateFastPathCandidate(input)).toBe(true);
+    expect(planTeacherEarningsRollupChange({ ...input, allowCertifiedSessionCreate: true })).toEqual({
+      mode: 'delta',
+      target: { teacherId: 'teacher-1', monthKey: '2026-08' },
+      delta: {
+        totalEarnings: 175,
+        pendingEarnings: 175,
+        totalSessions: 1,
+        sessionsCompleted: 1,
+        demoEarnings: 0,
+        demoCompletedCount: 0,
+        demoEnrollmentBonusCount: 0,
+      },
+    });
+  });
+
+  it.each([
+    ['noncanonical id', { earningId: 'legacy-1' }],
+    ['wrong source', { after: { source: 'manual_adjustment' } }],
+    ['non-exact source', { after: { source: ' session_present_completed ' } }],
+    ['missing teacher', { after: { teacherId: '' } }],
+    ['invalid month', { after: { monthKey: '2026-8' } }],
+    ['archived', { after: { archived: true } }],
+    ['void', { after: { status: 'void' } }],
+    ['numeric string amount', { after: { amount: '175' } }],
+    ['non-finite amount', { after: { amount: Number.NaN } }],
+  ])('rejects a certified session-create candidate with %s', (_label, override) => {
+    const base = {
+      earningId: 'session-1',
+      before: null,
+      after: {
+        teacherId: 'teacher-1',
+        monthKey: '2026-08',
+        amount: 175,
+        status: 'unpaid',
+        source: 'session_present_completed',
+        sessionId: 'session-1',
+      },
+    };
+    const afterOverride = 'after' in override ? override.after : {};
+    const input = {
+      ...base,
+      ...override,
+      after: { ...base.after, ...afterOverride },
+    };
+
+    expect(isCanonicalSessionCreateFastPathCandidate(input)).toBe(false);
+    expect(
+      planTeacherEarningsRollupChange({ ...input, allowCertifiedSessionCreate: true }).mode,
+    ).not.toBe('delta');
   });
 
   it('forces full recompute for non-canonical legacy session rows', () => {

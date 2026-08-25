@@ -7,6 +7,12 @@ import {
 } from './helpers/teacherEarningsCanonicalAudit';
 import { analyzeTeacherEarningsCanonicalServiceMonthCoverage } from './helpers/teacherEarningsServiceMonthEvidence';
 import { evaluateTeacherEarningsSessionCreateFastPathReadiness } from './helpers/teacherEarningsSessionCreateFastPath';
+import {
+  TEACHER_EARNINGS_SESSION_CREATE_CERTIFICATION_VERSION,
+  TEACHER_EARNINGS_SESSION_CREATE_SOURCE_CODE_CONTRACT,
+} from './helpers/teacherEarningsSessionCreateCertification';
+
+export { TEACHER_EARNINGS_SESSION_CREATE_CERTIFICATION_VERSION } from './helpers/teacherEarningsSessionCreateCertification';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -15,7 +21,6 @@ const IST_OFFSET_MINUTES = 330;
 const DEFAULT_MAX_DOCS = 5000;
 const MAX_ALLOWED_DOCS = 10000;
 const DEFAULT_SAMPLE_LIMIT = 20;
-export const TEACHER_EARNINGS_SESSION_CREATE_CERTIFICATION_VERSION = 2;
 
 function currentMonthKeyIST(): string {
   const now = new Date(Date.now() + IST_OFFSET_MINUTES * 60 * 1000);
@@ -105,7 +110,7 @@ export const certifyTeacherEarningsSessionCreateFastPath = onCall(
       legacyMonthCoverageClean: legacyMonthCoverage.legacyMonthCoverageClean,
       sessionEvidence: legacyMonthCoverage.sessionEvidence,
       blockers: readiness.blockers,
-      sourceCodeContract: 'canonical_session_earning_id_and_service_month_v2',
+      sourceCodeContract: TEACHER_EARNINGS_SESSION_CREATE_SOURCE_CODE_CONTRACT,
       source: 'b6_brick_7d2a_full_ledger_certification',
       evaluatedAt: admin.firestore.FieldValue.serverTimestamp(),
       ...(readiness.ready
