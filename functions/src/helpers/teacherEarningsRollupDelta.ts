@@ -101,9 +101,8 @@ const paidLikeStatusToken = (value: unknown): string => {
     : '';
 };
 
-const payoutStateSignature = (data: Record<string, unknown> | null): string => {
-  if (!data) return 'absent';
-  return JSON.stringify({
+const payoutStateSignature = (data: Record<string, unknown>): string =>
+  JSON.stringify({
     paidAmount: nonNegativeNumber(data.paidAmount),
     paidAt: timestampToken(data.paidAt),
     payoutIds: normalizedStringList(data.payoutIds),
@@ -111,12 +110,11 @@ const payoutStateSignature = (data: Record<string, unknown> | null): string => {
     reversedPayoutIds: normalizedStringList(data.reversedPayoutIds),
     paidLikeStatus: paidLikeStatusToken(data.status),
   });
-};
 
 const payoutStateChanged = (
   before: Record<string, unknown> | null,
   after: Record<string, unknown> | null,
-): boolean => payoutStateSignature(before) !== payoutStateSignature(after);
+): boolean => Boolean(before && after) && payoutStateSignature(before!) !== payoutStateSignature(after!);
 
 export const teacherMonthRollupTargetFor = (
   data: Record<string, unknown> | null | undefined,
@@ -206,8 +204,8 @@ const isCanonicalSessionRecord = (
  * Conservative by design:
  * - standalone demo/adjustment rows can be created, updated, or deleted incrementally;
  * - an existing canonical session earning can be updated incrementally;
- * - payout-state changes always require recompute because the monthly read model also
- *   contains the top-five teacherPayouts payment history;
+ * - payout-state changes on an existing earning always require recompute because the monthly
+ *   read model also contains the top-five teacherPayouts payment history;
  * - session earning creates/deletes and non-canonical duplicate rows require recompute,
  *   because a legacy row for the same session may become selected by dedupe rules;
  * - teacher/month moves require both affected months to recompute.
