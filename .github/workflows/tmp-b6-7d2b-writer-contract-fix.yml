@@ -1,0 +1,101 @@
+name: Temporary B6 7D2B writer contract fix
+
+on:
+  push:
+    branches:
+      - refactor/b6-7d2b-session-create-fast-path
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    if: ${{ !contains(github.event.head_commit.message, '[writer-fix-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch head
+        uses: actions/checkout@v4
+        with:
+          ref: refactor/b6-7d2b-session-create-fast-path
+          fetch-depth: 0
+
+      - name: Refuse unexpected branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/refactor/b6-7d2b-session-create-fast-path"
+
+      - name: Patch canonical earning writer and contract tests
+        shell: python
+        run: |
+          from pathlib import Path
+
+          revenue_path = Path('functions/src/revenue.ts')
+          revenue = revenue_path.read_text()
+          old = """          status: nextEarningStatus || 'unpaid',\n          earnedAt: FieldValue.serverTimestamp(),\n"""
+          new = """          status: nextEarningStatus || 'unpaid',\n          source: 'session_present_completed',\n          earnedAt: FieldValue.serverTimestamp(),\n"""
+          if revenue.count(old) != 1:
+              raise SystemExit(f'Expected exactly one earning status/earnedAt block, found {revenue.count(old)}')
+          revenue = revenue.replace(old, new, 1)
+          revenue_path.write_text(revenue)
+
+          test_path = Path('functions/test/teacherEarningsSessionCreateFastPath.spec.ts')
+          test = test_path.read_text()
+
+          old_import = "import { planTeacherEarningsRollupChange } from '../src/helpers/teacherEarningsRollupDelta';"
+          new_import = """import {\n  isCanonicalSessionCreateFastPathCandidate,\n  planTeacherEarningsRollupChange,\n} from '../src/helpers/teacherEarningsRollupDelta';"""
+          if test.count(old_import) != 1:
+              raise SystemExit(f'Expected writer-plan import once, found {test.count(old_import)}')
+          test = test.replace(old_import, new_import, 1)
+
+          old_guard = """    expect(source).toContain(\"const earningRef = db.collection('teacherEarnings').doc(sessionId)\");\n    expect(source).toContain(\"source: 'session_present_completed'\");\n    expect(source).toContain('const earningPayload: Record<string, any> = {\\n          sessionId,');\n    expect(source).not.toContain(\"collection('teacherEarnings').add(\");\n"""
+          new_guard = """    expect(source).toContain(\"const earningRef = db.collection('teacherEarnings').doc(sessionId)\");\n    const earningPayloadStart = source.indexOf(\n      'const earningPayload: Record<string, any> = {\\n          sessionId,',\n    );\n    expect(earningPayloadStart).toBeGreaterThan(-1);\n    const earningPayloadEnd = source.indexOf('\\n        };', earningPayloadStart);\n    expect(earningPayloadEnd).toBeGreaterThan(earningPayloadStart);\n    const earningPayloadSource = source.slice(earningPayloadStart, earningPayloadEnd);\n    expect(earningPayloadSource).toContain(\"source: 'session_present_completed'\");\n    expect(source).not.toContain(\"collection('teacherEarnings').add(\");\n"""
+          if test.count(old_guard) != 1:
+              raise SystemExit(f'Expected old writer source guard once, found {test.count(old_guard)}')
+          test = test.replace(old_guard, new_guard, 1)
+
+          anchor = """  it('keeps session creation on authoritative recompute until a separate 7D2 cutover', () => {\n"""
+          regression = """  it('accepts the canonical revenue-writer shape as a certified session-create candidate', () => {\n    expect(\n      isCanonicalSessionCreateFastPathCandidate({\n        earningId: 'session-writer-shape',\n        before: null,\n        after: {\n          sessionId: 'session-writer-shape',\n          enrollmentId: 'enrollment-1',\n          kidId: 'kid-1',\n          teacherId: 'teacher-1',\n          parentId: 'parent-1',\n          courseId: 'course-1',\n          amount: 175,\n          currency: 'INR',\n          status: 'unpaid',\n          source: 'session_present_completed',\n          monthKey: '2026-08',\n        },\n      }),\n    ).toBe(true);\n  });\n\n"""
+          if test.count(anchor) != 1:
+              raise SystemExit(f'Expected 7D2 cutover test anchor once, found {test.count(anchor)}')
+          test = test.replace(anchor, regression + anchor, 1)
+          test_path.write_text(test)
+
+      - name: Show scoped diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git diff -- functions/src/revenue.ts functions/test/teacherEarningsSessionCreateFastPath.spec.ts
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install Functions dependencies
+        run: npm ci --prefix functions --include=dev --ignore-scripts
+
+      - name: Functions TypeScript build
+        run: npm --prefix functions run build
+
+      - name: Targeted 7D tests
+        run: >-
+          npm --prefix functions test --
+          test/teacherEarningsSessionCreateFastPath.spec.ts
+          test/teacherEarningsRollupDelta.spec.ts
+          test/teacherEarningsIncrementalProtocol.spec.ts
+          test/teacherEarningsIncrementalExecutor.spec.ts
+
+      - name: Commit verified patch to PR branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add functions/src/revenue.ts functions/test/teacherEarningsSessionCreateFastPath.spec.ts
+          git diff --cached --check
+          git commit -m 'fix(finance): align canonical earning writer with 7D2B [writer-fix-applied]'
+          git push origin HEAD:refactor/b6-7d2b-session-create-fast-path
