@@ -11,7 +11,7 @@ describe('B6 Brick 6B1/6B2 analytics rollup preparation source guards', () => {
 
     expect(source).toContain("const apply = request.data?.apply === true");
     expect(source).toContain("db.collection('teacherEarnings').limit(maxDocs + 1).get()");
-    expect(source).toContain('analyzeTeacherEarningsLegacyMonthCoverage');
+    expect(source).toContain('analyzeTeacherEarningsCanonicalServiceMonthCoverage');
     expect(source).toContain('evaluateTeacherFinanceRollupParity');
     expect(source).toContain(".collection('teachers')");
     expect(source).toContain(".doc('teacherFinanceAnalyticsProjection')");
