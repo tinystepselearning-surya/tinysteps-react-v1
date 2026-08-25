@@ -191,7 +191,10 @@ describe("ParentInsightsView", () => {
 
   it("ignores mastery-derived legacy completion props and renders V3 saved-lesson counts", () => {
     render(<ParentInsightsView {...commonProps} />);
-    expect(screen.getByText("50%")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "Current-course progress" })).toHaveAttribute(
+      "aria-valuenow",
+      "50",
+    );
     expect(screen.getByText("6/12 lessons completed")).toBeInTheDocument();
     expect(screen.queryByText("100%")).not.toBeInTheDocument();
     expect(screen.queryByText("12/12 lessons completed")).not.toBeInTheDocument();
