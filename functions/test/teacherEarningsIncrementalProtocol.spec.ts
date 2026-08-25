@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 import {
   evaluateTeacherEarningsIncrementalReplay,
   planTeacherEarningsIncrementalTransaction,
@@ -223,5 +225,16 @@ describe('B6 Brick 7A teacher earnings incremental transaction protocol', () => 
         rollup: coordinatedRollup,
       }),
     ).toEqual({ mode: 'fallback', reason: 'missing_event_identity' });
+  });
+
+  it('does not wire Brick 7A into the live trigger before the recompute fence exists', () => {
+    const liveTriggerSource = fs.readFileSync(
+      path.resolve(process.cwd(), 'src/teacherEarningsRollupTrigger.ts'),
+      'utf8',
+    );
+
+    expect(liveTriggerSource).not.toContain('teacherEarningsIncrementalProtocol');
+    expect(liveTriggerSource).not.toContain('planTeacherEarningsIncrementalTransaction');
+    expect(liveTriggerSource).toContain('authoritativeTeacherEarningsRollupWrite.run(event)');
   });
 });
