@@ -73,7 +73,12 @@ jobs:
         with:
           node-version: 22.x
           cache: npm
-          cache-dependency-path: functions/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+
+      - name: Install root test dependencies
+        run: npm ci --ignore-scripts
 
       - name: Install Functions dependencies
         run: npm ci --prefix functions --include=dev --ignore-scripts
@@ -83,11 +88,11 @@ jobs:
 
       - name: Targeted 7D tests
         run: >-
-          npm --prefix functions test --
-          test/teacherEarningsSessionCreateFastPath.spec.ts
-          test/teacherEarningsRollupDelta.spec.ts
-          test/teacherEarningsIncrementalProtocol.spec.ts
-          test/teacherEarningsIncrementalExecutor.spec.ts
+          npx vitest run --config functions/vitest.config.ts
+          functions/test/teacherEarningsSessionCreateFastPath.spec.ts
+          functions/test/teacherEarningsRollupDelta.spec.ts
+          functions/test/teacherEarningsIncrementalProtocol.spec.ts
+          functions/test/teacherEarningsIncrementalExecutor.spec.ts
 
       - name: Commit verified patch to PR branch
         shell: bash
