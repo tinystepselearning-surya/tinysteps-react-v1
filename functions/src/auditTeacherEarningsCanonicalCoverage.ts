@@ -6,6 +6,7 @@ import {
   analyzeTeacherEarningsLegacyMonthCoverage,
   type TeacherEarningAuditRow,
 } from './helpers/teacherEarningsCanonicalAudit';
+import { evaluateTeacherEarningsSessionCreateFastPathReadiness } from './helpers/teacherEarningsSessionCreateFastPath';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -94,6 +95,12 @@ export const auditTeacherEarningsCanonicalCoverage = onCall(
         legacyMonthCoverage?.legacyMonthCoverageClean,
     );
     const readyForFurtherDeltaDesign = readyForMonthBoundReads;
+    const sessionCreateFastPath = evaluateTeacherEarningsSessionCreateFastPathReadiness({
+      fullLedgerEvidenceComplete,
+      coverage,
+      legacyMonthCoverage,
+    });
+    const readyForSessionCreateFastPath = sessionCreateFastPath.ready;
 
     return {
       ok: true,
@@ -110,10 +117,12 @@ export const auditTeacherEarningsCanonicalCoverage = onCall(
       legacyMonthCoverage,
       readyForMonthBoundReads,
       readyForFurtherDeltaDesign,
+      sessionCreateFastPath,
+      readyForSessionCreateFastPath,
       note: truncated
         ? 'Audit evidence is incomplete because the bounded scan truncated. Do not use clean-looking partial results to enable read cutovers or incremental finance writes.'
         : includeLegacyMonthCoverage
-          ? 'Read-only evidence only. A clean result supports the next design review but does not itself enable incremental finance writes.'
+          ? 'Read-only evidence only. A clean sessionCreateFastPath result supports Brick 7D review but does not itself enable session-create incremental finance writes.'
           : 'Explicit-month coverage only. Run again with includeLegacyMonthCoverage=true before month-bounding reads or expanding incremental finance behavior.',
     };
   },
