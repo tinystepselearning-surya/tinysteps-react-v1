@@ -270,66 +270,54 @@ export default function AttendanceCorrectionsAdvancedPanel() {
           });
         };
 
-        const primaryQueries = selectedTeacherIdentityIds.flatMap((teacherIdentityId) => [
+        const primaryQueries = selectedTeacherIdentityIds.map((teacherIdentityId) =>
           query(
             collection(db, 'classSessions'),
             where('teacherId', '==', teacherIdentityId),
             where('date', '==', selectedDate),
           ),
-          query(
-            collection(db, 'classSessions'),
-            where('teacherIds', 'array-contains', teacherIdentityId),
-            where('date', '==', selectedDate),
-          ),
-        ]);
+        );
 
         for (const plannedQuery of primaryQueries) {
           try {
             const snap = await getDocs(plannedQuery);
             mergeDocs(snap.docs);
           } catch (queryErr) {
-            console.warn('Attendance correction date query failed, continuing fallback', queryErr);
+            console.warn('Attendance correction canonical date query failed, continuing bounded fallback', queryErr);
           }
         }
 
         if (sessionMap.size === 0) {
           const dayStart = new Date(`${selectedDate}T00:00:00+05:30`);
           const nextDayStart = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
-          const boundedQueries = selectedTeacherIdentityIds.flatMap((teacherIdentityId) => [
+          const boundedQueries = selectedTeacherIdentityIds.map((teacherIdentityId) =>
             query(
               collection(db, 'classSessions'),
               where('teacherId', '==', teacherIdentityId),
               where('startAt', '>=', Timestamp.fromDate(dayStart)),
               where('startAt', '<', Timestamp.fromDate(nextDayStart)),
             ),
-            query(
-              collection(db, 'classSessions'),
-              where('teacherIds', 'array-contains', teacherIdentityId),
-              where('startAt', '>=', Timestamp.fromDate(dayStart)),
-              where('startAt', '<', Timestamp.fromDate(nextDayStart)),
-            ),
-          ]);
+          );
           for (const plannedQuery of boundedQueries) {
             try {
               const snap = await getDocs(plannedQuery);
               mergeDocs(snap.docs);
             } catch (queryErr) {
-              console.warn('Attendance correction bounded query failed, continuing fallback', queryErr);
+              console.warn('Attendance correction canonical bounded query failed, continuing fallback', queryErr);
             }
           }
         }
 
         if (sessionMap.size === 0) {
-          const fallbackQueries = selectedTeacherIdentityIds.flatMap((teacherIdentityId) => [
+          const fallbackQueries = selectedTeacherIdentityIds.map((teacherIdentityId) =>
             query(collection(db, 'classSessions'), where('teacherId', '==', teacherIdentityId)),
-            query(collection(db, 'classSessions'), where('teacherIds', 'array-contains', teacherIdentityId)),
-          ]);
+          );
           for (const plannedQuery of fallbackQueries) {
             try {
               const snap = await getDocs(plannedQuery);
               mergeDocs(snap.docs);
             } catch (queryErr) {
-              console.warn('Attendance correction teacher fallback query failed', queryErr);
+              console.warn('Attendance correction canonical teacher fallback query failed', queryErr);
             }
           }
         }
@@ -401,10 +389,9 @@ export default function AttendanceCorrectionsAdvancedPanel() {
       setLoadingEnrollments(true);
       try {
         const enrollmentMap = new Map<string, Record<string, unknown>>();
-        const queries = selectedTeacherIdentityIds.flatMap((teacherIdentityId) => [
+        const queries = selectedTeacherIdentityIds.map((teacherIdentityId) =>
           query(collection(db, 'enrollments'), where('teacherId', '==', teacherIdentityId)),
-          query(collection(db, 'enrollments'), where('teacherIds', 'array-contains', teacherIdentityId)),
-        ]);
+        );
         for (const plannedQuery of queries) {
           try {
             const snap = await getDocs(plannedQuery);
@@ -412,7 +399,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
               enrollmentMap.set(docSnap.id, (docSnap.data() || {}) as Record<string, unknown>);
             });
           } catch (queryErr) {
-            console.warn('Attendance correction enrollment query failed', queryErr);
+            console.warn('Attendance correction canonical enrollment query failed', queryErr);
           }
         }
         if (cancelled) return;
