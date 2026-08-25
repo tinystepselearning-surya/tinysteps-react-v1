@@ -258,17 +258,6 @@ function toOptionalText(value: unknown): string | null {
   return null;
 }
 
-function toStringList(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return Array.from(
-    new Set(
-      value
-        .map((entry) => toOptionalText(entry))
-        .filter((entry): entry is string => Boolean(entry)),
-    ),
-  );
-}
-
 function resolveEnrollmentTeacherIdentity(enrollment: EnrollmentDoc): { teacherId: string | null; teacherIds: string[] } {
   const resolution = resolveCanonicalTeacherIdForWrite(enrollment as Record<string, unknown>);
   if (resolution.source === "ambiguous_legacy") {
@@ -950,7 +939,7 @@ async function generateSessionsFromScheduleInternal(
   const childId = enrollment.childId || kidId || null;
   const parentId = enrollment.parentId || (enrollment.parentIds && enrollment.parentIds[0]) || null;
   const parentIds = enrollment.parentIds || (parentId ? [parentId] : []);
-  const {teacherId, teacherIds} = resolveEnrollmentTeacherIdentity(enrollment);
+  const {teacherId} = resolveEnrollmentTeacherIdentity(enrollment);
   const courseId = enrollment.courseId || null;
   const feeAmount = Number(enrollment.feePerClass || 0);
   const currency = enrollment.currency || "INR";

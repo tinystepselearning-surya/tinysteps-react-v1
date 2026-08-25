@@ -2056,8 +2056,6 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
   if (previousTeacherId && previousTeacherId === newTeacherId) {
     throw new HttpsError('failed-precondition', 'Selected teacher is already assigned to this enrollment.');
   }
-  const teacherIds = [newTeacherId];
-
   const teacherSnap = await db.collection('users').doc(newTeacherId).get();
   if (!teacherSnap.exists) {
     throw new HttpsError('failed-precondition', 'Selected teacher profile does not exist.');
