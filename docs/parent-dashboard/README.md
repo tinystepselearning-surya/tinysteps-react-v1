@@ -12,7 +12,7 @@ Parent-facing screens present facts owned by canonical operational systems. A me
 - **P2 — Teacher → Learning Contract:** explicit teacher-controlled lesson status and canonical lesson review writes.
 - **P3 — Course Progress Projection:** one canonical course/stage completion projection.
 - **P4 — Classes & Attendance Projection:** child-scoped monthly class/attendance semantics.
-- **P5 — Parent Overview:** rebuild the overview from canonical projections only.
+- **P5 — Parent Overview:** canonical P3/P4 consumer with explicit unavailable states and no synthetic learning claims.
 - **P6 — Detailed Lesson Progress:** reconciled course/stage/lesson tracker.
 - **P7 — Skills & Teacher Feedback:** teacher evidence without duplicate learning calculations.
 - **P8 — Classes Experience:** operational class history, attendance, cancellations and reschedules.
@@ -25,3 +25,4 @@ Parent-facing screens present facts owned by canonical operational systems. A me
 - `brick-p2-teacher-learning-contract.md` — teacher-owned lesson completion and learning evidence writes.
 - `brick-p3-course-progress-projection.md` — canonical child/course/stage completion read model driven only by teacher lesson status.
 - `brick-p4-classes-attendance-projection.md` — canonical child/month class lifecycle and attendance read model with strict selected-child scope.
+- `brick-p5-parent-overview.md` — clean Overview consumer contract: P3 course progress, P4 selected-child/month classes, actual teacher evidence, and explicit unavailable states.
