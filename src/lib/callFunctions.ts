@@ -62,6 +62,7 @@ const FUNCTION_REGION_OVERRIDES: Record<string, string> = {
   deleteDemoSession: 'asia-south1',
   reopenDemoSession: 'asia-south1',
   recordLegacyFallbackUsage: 'asia-south1',
+  bootstrapParentClassAttendance: 'asia-south1',
   getUidByEmail: 'asia-south1',
   subscribeNewsletter: 'asia-south1',
 };
