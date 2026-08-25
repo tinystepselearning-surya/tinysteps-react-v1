@@ -218,6 +218,7 @@ export const planTeacherEarningsIncrementalTransaction = (input: {
   before: Record<string, unknown> | null;
   after: Record<string, unknown> | null;
   rollup: Record<string, unknown> | null;
+  allowCertifiedSessionCreate?: boolean;
 }): TeacherEarningsIncrementalDecision => {
   const markerId = teacherEarningsIncrementalMarkerId(input.eventId);
   const changeSignature = teacherEarningsIncrementalChangeSignature(input);
@@ -227,6 +228,7 @@ export const planTeacherEarningsIncrementalTransaction = (input: {
     earningId: normalizeText(input.earningId),
     before: input.before,
     after: input.after,
+    allowCertifiedSessionCreate: input.allowCertifiedSessionCreate,
   });
   if (plan.mode !== 'delta') {
     return {

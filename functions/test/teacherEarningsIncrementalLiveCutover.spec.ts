@@ -29,7 +29,7 @@ describe('B6 Brick 7C2 live incremental cutover source guard', () => {
       'utf8',
     );
 
-    expect(source).toContain('Session creates/deletes');
+    expect(source).toContain('Session deletes, uncertified/noncanonical creates');
     expect(source).toContain('payout-state changes');
     expect(source).toContain('archive toggles');
     expect(source).toContain('teacher/month moves');

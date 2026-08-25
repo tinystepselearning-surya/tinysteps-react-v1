@@ -1,5 +1,8 @@
 import * as admin from 'firebase-admin';
-import { planTeacherEarningsRollupChange } from './teacherEarningsRollupDelta';
+import {
+  isCanonicalSessionCreateFastPathCandidate,
+  planTeacherEarningsRollupChange,
+} from './teacherEarningsRollupDelta';
 import {
   evaluateTeacherEarningsIncrementalReplay,
   planTeacherEarningsIncrementalTransaction,
@@ -7,6 +10,11 @@ import {
   teacherEarningsIncrementalChangeSignature,
   teacherEarningsIncrementalMarkerId,
 } from './teacherEarningsIncrementalProtocol';
+import {
+  evaluateTeacherEarningsSessionCreateCertification,
+  TEACHER_EARNINGS_SESSION_CREATE_CERTIFICATION_VERSION,
+  TEACHER_EARNINGS_SESSION_CREATE_SOURCE_CODE_CONTRACT,
+} from './teacherEarningsSessionCreateCertification';
 
 export type TeacherEarningsIncrementalExecutionResult =
   | {
@@ -47,8 +55,9 @@ const normalizeMarkerOutcome = (value: unknown): 'applied' | 'covered' | 'unknow
  *
  * This helper never reads teacherEarnings or teacherPayouts. Eligibility is decided by the pure
  * delta planner first. Only an eligible teacher-month then enters a Firestore transaction that
- * reads the derived rollup and one event-idempotency marker. The exact rollup totals/revision and
- * marker are committed atomically.
+ * reads the derived rollup and one event-idempotency marker. A strictly canonical session-create
+ * candidate additionally reads its month-level v2 certification in the same transaction. The
+ * exact rollup totals/revision and marker are committed atomically.
  *
  * The authoritative full-recompute commit watermark is intentionally NOT advanced by a delta.
  * Only a transaction that scans the complete teacher-month ledgers may advance that watermark.
@@ -65,10 +74,17 @@ export const tryApplyTeacherEarningsIncrementalEvent = async (input: {
   const earningId = normalizeText(input.earningId);
   if (!eventId || !earningId) return { mode: 'fallback', reason: 'missing_event_identity' };
 
+  const sessionCreateCandidate = isCanonicalSessionCreateFastPathCandidate({
+    earningId,
+    before: input.before,
+    after: input.after,
+  });
+
   const initialPlan = planTeacherEarningsRollupChange({
     earningId,
     before: input.before,
     after: input.after,
+    allowCertifiedSessionCreate: sessionCreateCandidate,
   });
   if (initialPlan.mode !== 'delta') {
     return {
@@ -96,10 +112,33 @@ export const tryApplyTeacherEarningsIncrementalEvent = async (input: {
     .collection('earnings')
     .doc(target.monthKey);
   const markerRef = rollupRef.collection('incrementalEvents').doc(markerId);
+  const certificationRef = sessionCreateCandidate
+    ? input.db
+        .collection('adminStats')
+        .doc('teacherEarningsSessionCreateFastPath')
+        .collection('months')
+        .doc(target.monthKey)
+    : null;
 
   return input.db.runTransaction(async (tx) => {
     const rollupSnap = await tx.get(rollupRef);
     const markerSnap = await tx.get(markerRef);
+    const certificationSnap = certificationRef ? await tx.get(certificationRef) : null;
+
+    if (sessionCreateCandidate) {
+      const certification =
+        certificationSnap?.exists === true
+          ? ((certificationSnap.data() || {}) as Record<string, unknown>)
+          : null;
+      const certificationDecision = evaluateTeacherEarningsSessionCreateCertification({
+        targetMonthKey: target.monthKey,
+        certification,
+      });
+      if (!certificationDecision.valid) {
+        return { mode: 'fallback' as const, reason: certificationDecision.reason };
+      }
+    }
+
     const existingMarker = markerSnap.exists
       ? ((markerSnap.data() || {}) as Record<string, unknown>)
       : null;
@@ -132,6 +171,7 @@ export const tryApplyTeacherEarningsIncrementalEvent = async (input: {
       before: input.before,
       after: input.after,
       rollup,
+      allowCertifiedSessionCreate: sessionCreateCandidate,
     });
 
     if (decision.mode === 'fallback') {
@@ -160,6 +200,14 @@ export const tryApplyTeacherEarningsIncrementalEvent = async (input: {
           monthKey: target.monthKey,
           changeSignature,
           protocolVersion: TEACHER_EARNINGS_INCREMENTAL_PROTOCOL_VERSION,
+          ...(sessionCreateCandidate
+            ? {
+                sessionCreateCertificationVersion:
+                  TEACHER_EARNINGS_SESSION_CREATE_CERTIFICATION_VERSION,
+                sessionCreateSourceCodeContract:
+                  TEACHER_EARNINGS_SESSION_CREATE_SOURCE_CODE_CONTRACT,
+              }
+            : {}),
           outcome: 'covered',
           eventUpdateTime: input.eventUpdateTime,
           recordedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -196,6 +244,14 @@ export const tryApplyTeacherEarningsIncrementalEvent = async (input: {
         monthKey: target.monthKey,
         changeSignature,
         protocolVersion: decision.protocolVersion,
+        ...(sessionCreateCandidate
+          ? {
+              sessionCreateCertificationVersion:
+                TEACHER_EARNINGS_SESSION_CREATE_CERTIFICATION_VERSION,
+              sessionCreateSourceCodeContract:
+                TEACHER_EARNINGS_SESSION_CREATE_SOURCE_CODE_CONTRACT,
+            }
+          : {}),
         outcome: 'applied',
         eventUpdateTime: input.eventUpdateTime,
         revisionBefore: decision.revisionBefore,
