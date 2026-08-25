@@ -20,20 +20,19 @@ jobs:
           ref: security/least-privilege-user-rbac
           fetch-depth: 0
 
-      - name: Recover and apply audited patch
+      - name: Verify and apply exact security patch
         shell: bash
         run: |
           set -euo pipefail
-          python3 -c "import subprocess,pathlib; t=subprocess.check_output(['git','show','60f2137de77db3215b7db7a2e7574e20aa8e4236:.github/workflows/security-hardening-once.yml'], text=True); b=t.split(\"python3 - <<'PY'\\n\",1)[1].rsplit('\\n          PY',1)[0]; lines=[x[10:] if x.startswith('          ') else x for x in b.splitlines()]; pathlib.Path('/tmp/security_patch.py').write_text('\\n'.join(lines)+'\\n')"
-          python3 /tmp/security_patch.py
+          git apply --check scripts/security-least-privilege.patch
+          git apply scripts/security-least-privilege.patch
 
-      - name: Commit audited patch and remove one-time workflow
+      - name: Commit hardened application code
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm .github/workflows/security-hardening-once.yml
-          git add firestore.rules .github/workflows/deploy.yml src/pages/messages/MessagesPanel.tsx src/pages/teacher/hooks/useTeacherStudents.ts src/hooks/useData.ts src/pages/parent/ParentDashboard.tsx src/tests/firestore/userRbac.rules.spec.ts src/tests/firestore/kidGameRbac.rules.spec.ts
+          git add firestore.rules .github/workflows/deploy.yml src/pages/messages/MessagesPanel.tsx src/pages/teacher/hooks/useTeacherStudents.ts src/hooks/useData.ts src/pages/parent/ParentDashboard.tsx
           git commit -m "security: enforce least-privilege user access"
           git push origin HEAD:security/least-privilege-user-rbac
