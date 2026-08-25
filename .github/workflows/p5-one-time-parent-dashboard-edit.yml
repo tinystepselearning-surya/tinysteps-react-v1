@@ -1,0 +1,317 @@
+name: P5 one-time parent overview integration
+
+on:
+  push:
+    branches:
+      - feat/parent-dashboard-brick-p5-parent-overview
+
+permissions:
+  contents: write
+
+jobs:
+  patch-parent-dashboard:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/parent-dashboard-brick-p5-parent-overview
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply P5 integration patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('src/pages/parent/ParentDashboard.tsx')
+          text = path.read_text()
+
+          def replace_once(old: str, new: str, label: str):
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 match, found {count}')
+              text = text.replace(old, new, 1)
+
+          replace_once(
+              'import { useChildCourseProgressProjection } from "../../hooks/useChildCourseProgressProjection";\n',
+              'import { useChildCourseProgressProjection } from "../../hooks/useChildCourseProgressProjection";\nimport { buildCanonicalParentOverview } from "./parentOverviewProjection";\n',
+              'canonical overview import',
+          )
+
+          replace_once(
+              'import ParentLearningInsights from "./components/ParentLearningInsights";\nimport ParentLessonTracker from "./components/ParentLessonTracker";\n',
+              'import ParentLearningInsights from "./components/ParentLearningInsights";\n',
+              'lesson tracker import',
+          )
+
+          replace_once(
+              '  SKILL_RATING_MAX,\n  hasExplicitProgressRatings,\n',
+              '  hasExplicitProgressRatings,\n',
+              'unused star constant import',
+          )
+
+          old_state = '''  const [selectedKidId, setSelectedKidId] = useState<string>("");
+  const [curriculumTopicModalOpen, setCurriculumTopicModalOpen] =
+    useState(false);
+  const [selectedCurriculumTopic, setSelectedCurriculumTopic] =
+    useState<any>(null);
+  const [curriculumFilter, setCurriculumFilter] = useState<
+    "all" | "in_progress" | "completed"
+  >("all");
+  const [collapsedStages, setCollapsedStages] = useState<Record<string, boolean>>({});
+'''
+          replace_once(old_state, '  const [selectedKidId, setSelectedKidId] = useState<string>("");\n', 'legacy lesson tracker state')
+
+          star_pattern = re.compile(r'''const TEACHER_STAR_GUIDE = \[.*?\] as const;\n\nfunction starString\(level: number\): string \{.*?\n\}\n\n''', re.S)
+          text, n = star_pattern.subn('', text, count=1)
+          if n != 1:
+              raise SystemExit(f'legacy star guide: expected 1 match, found {n}')
+
+          anchor = '''  }, [monthSessions, parentMonthlyBillingReadModelQuery.data, selectedKidId]);
+
+  const billingSummary = useMemo(() => {'''
+          insertion = '''  }, [monthSessions, parentMonthlyBillingReadModelQuery.data, selectedKidId]);
+
+  // Brick P5: Overview consumes only P3 + P4 canonical projections. This selection is
+  // intentionally separate from legacy class/progress calculations still used by later
+  // bricks so the Overview cannot silently fall back to family totals or mastery-derived
+  // curriculum completion.
+  const canonicalParentOverview = buildCanonicalParentOverview({
+    courseProjection: childCourseProgressProjection.data,
+    expectedCourseId: displayCourseId,
+    classAttendanceModel: parentMonthlyBillingReadModelQuery.data?.attendance as any,
+    kidId: selectedKidId,
+    nowMs: Date.now(),
+  });
+  const overviewClassCounts = canonicalParentOverview.classCounts;
+  const overviewClassesState = parentMonthlyBillingReadModelQuery.isLoading
+    ? "loading" as const
+    : overviewClassCounts
+      ? "available" as const
+      : "unavailable" as const;
+
+  const billingSummary = useMemo(() => {'''
+          replace_once(anchor, insertion, 'canonical overview selection insertion')
+
+          dashboard_pattern = re.compile(
+              r'''  const dashboardCurriculumData = useMemo\(\(\) => \{.*?  \}, \[phonicsProgressByCourse, curriculumCompletionSummary, curriculumFilter\]\);''',
+              re.S,
+          )
+          dashboard_replacement = '''  const dashboardCurriculumData = canonicalParentOverview.course
+    ? {
+        selectedCourse: {
+          courseId: canonicalParentOverview.course.courseId,
+          courseLabel:
+            canonicalParentOverview.course.courseLabel
+            || formatCourseLabel(canonicalParentOverview.course.courseId),
+        },
+        stageSummaries: canonicalParentOverview.course.stageSummaries.map((stage) => ({
+          label: stage.label,
+          order: stage.order,
+          progressPct: stage.completionPct,
+          completedCount: stage.completedTopics,
+          totalCount: stage.totalTopics,
+        })),
+        completedStages: canonicalParentOverview.course.completedStages,
+        activeStage: canonicalParentOverview.course.activeStage
+          ? {
+              label: canonicalParentOverview.course.activeStage.label,
+              order: canonicalParentOverview.course.activeStage.order,
+              progressPct: canonicalParentOverview.course.activeStage.completionPct,
+              completedCount: canonicalParentOverview.course.activeStage.completedTopics,
+              totalCount: canonicalParentOverview.course.activeStage.totalTopics,
+            }
+          : null,
+        nextStage: canonicalParentOverview.course.nextStage
+          ? {
+              label: canonicalParentOverview.course.nextStage.label,
+              order: canonicalParentOverview.course.nextStage.order,
+              progressPct: canonicalParentOverview.course.nextStage.completionPct,
+              completedCount: canonicalParentOverview.course.nextStage.completedTopics,
+              totalCount: canonicalParentOverview.course.nextStage.totalTopics,
+            }
+          : null,
+        summaryTotalTopics: canonicalParentOverview.course.totalTopics,
+        summaryCompletedCount: canonicalParentOverview.course.completedTopics,
+        summaryInProgressCount: canonicalParentOverview.course.inProgressTopics,
+        summaryOverallPct: canonicalParentOverview.course.overallPct,
+        summaryLastUpdatedAtMs: canonicalParentOverview.course.lastUpdatedAtMs,
+      }
+    : null;'''
+          text, n = dashboard_pattern.subn(dashboard_replacement, text, count=1)
+          if n != 1:
+              raise SystemExit(f'dashboard curriculum replacement: expected 1 match, found {n}')
+
+          old_hero_message = '''  const dashboardHeroMessage = useMemo(() => {
+    return buildDashboardHeroMessage({
+      childName: String(selectedKid?.fullName || selectedKid?.name || "Your child"),
+      phonicsLoading,
+      completion: dashboardCurriculumData?.summaryOverallPct ?? null,
+      dueNow: billingSummary.dueNow,
+      rescheduled: classesCounts.reschedule_requested,
+      upcoming: classesCounts.upcoming,
+    });
+  }, [
+    billingSummary.dueNow,
+    classesCounts.reschedule_requested,
+    classesCounts.upcoming,
+    dashboardCurriculumData,
+    phonicsLoading,
+    selectedKid,
+  ]);'''
+          new_hero_message = '''  const dashboardHeroMessage = useMemo(() => {
+    return buildDashboardHeroMessage({
+      childName: String(selectedKid?.fullName || selectedKid?.name || "Your child"),
+      phonicsLoading: childCourseProgressProjection.isLoading,
+      completion: canonicalParentOverview.course?.overallPct ?? null,
+      dueNow: billingSummary.dueNow,
+      rescheduled: overviewClassCounts?.reschedule_requested ?? null,
+      upcoming: overviewClassCounts?.upcoming ?? null,
+    });
+  }, [
+    billingSummary.dueNow,
+    childCourseProgressProjection.isLoading,
+    canonicalParentOverview.course?.overallPct,
+    overviewClassCounts?.reschedule_requested,
+    overviewClassCounts?.upcoming,
+    selectedKid,
+  ]);'''
+          replace_once(old_hero_message, new_hero_message, 'canonical hero message')
+
+          old_render_head = '''    const hasCurriculumCompletionScope =
+      Number(curriculumData?.summaryTotalTopics ?? curriculumCompletionSummary?.totalTopics ?? 0) > 0;
+    const completionValue =
+      hasCurriculumCompletionScope && typeof curriculumData?.summaryOverallPct === "number"
+        ? curriculumData.summaryOverallPct
+        : hasCurriculumCompletionScope && typeof curriculumCompletionSummary?.overallPct === "number"
+          ? curriculumCompletionSummary.overallPct
+          : undefined;
+    const progressState =
+      phonicsLoading
+        ? "loading" as const
+        : typeof completionValue === "number"
+          ? "available" as const
+          : "unavailable" as const;
+    const activeStageLabel = curriculumData?.activeStage
+      ? stripStagePrefix(curriculumData.activeStage.label, curriculumData.activeStage.order ?? 0)
+      : overviewMetrics?.stageMessage || "Getting started";'''
+          new_render_head = '''    const hasCurriculumCompletionScope = Number(curriculumData?.summaryTotalTopics ?? 0) > 0;
+    const completionValue =
+      hasCurriculumCompletionScope && typeof curriculumData?.summaryOverallPct === "number"
+        ? curriculumData.summaryOverallPct
+        : undefined;
+    const progressState =
+      childCourseProgressProjection.isLoading
+        ? "loading" as const
+        : typeof completionValue === "number"
+          ? "available" as const
+          : "unavailable" as const;
+    const activeStageLabel = curriculumData?.activeStage
+      ? stripStagePrefix(curriculumData.activeStage.label, curriculumData.activeStage.order ?? 0)
+      : childCourseProgressProjection.isLoading
+        ? "Loading progress"
+        : "Progress unavailable";'''
+          replace_once(old_render_head, new_render_head, 'canonical render progress state')
+
+          replace_once(
+              '''    if (classesCounts.reschedule_requested > 0) {
+      dashboardAlerts.push(`${classesCounts.reschedule_requested} class update needs attention`);
+    }''',
+              '''    if ((overviewClassCounts?.reschedule_requested ?? 0) > 0) {
+      dashboardAlerts.push(`${overviewClassCounts?.reschedule_requested} class update needs attention`);
+    }''',
+              'canonical class alert',
+          )
+
+          replace_once(
+              '''    const attendanceLabel = `${classesCounts.completed}/${classesCounts.total}`;
+    const attendanceMetaText = `${classesMonthLabel} · ${classesCounts.reschedule_requested} rescheduled`;''',
+              '''    const attendanceLabel = overviewClassCounts
+      ? `${overviewClassCounts.completed}/${overviewClassCounts.total}`
+      : "Not available";
+    const attendanceMetaText = overviewClassCounts
+      ? `${classesMonthLabel} · ${overviewClassCounts.reschedule_requested} reschedule requests`
+      : `${classesMonthLabel} · selected-child totals unavailable`;''',
+              'canonical attendance KPI labels',
+          )
+
+          replace_once(
+              '          classesCompleted={classesCounts.completed}\n          classesUpcoming={classesCounts.upcoming}\n',
+              '          classesCompleted={overviewClassCounts?.completed ?? null}\n          classesUpcoming={overviewClassCounts?.upcoming ?? null}\n',
+              'canonical hero class props',
+          )
+
+          replace_once(
+              '''          attendanceLabel={attendanceLabel}
+          attendanceMetaText={attendanceMetaText}
+          attendanceLoading={kidSessionsQuery.isLoading && parentMonthlyBillingReadModelQuery.isLoading}''',
+              '''          attendanceState={overviewClassesState}
+          attendanceLabel={attendanceLabel}
+          attendanceMetaText={attendanceMetaText}''',
+              'canonical KPI class state',
+          )
+
+          replace_once(
+              '''          <ParentAttendanceSummary
+            classesCounts={classesCounts}
+            scopeLabel={`Class activity · ${classesMonthLabel}`}''',
+              '''          <ParentAttendanceSummary
+            classesState={overviewClassesState}
+            classesCounts={overviewClassCounts}
+            scopeLabel={`Class activity · ${classesMonthLabel}`}''',
+              'canonical attendance summary props',
+          )
+
+          old_progress_component = '''          <ParentProgressOverview
+            childName={childName}
+            isRefetching={phonicsProgressQuery.isRefetching}
+            onRefresh={() => phonicsProgressQuery.refetch()}
+            showsFallbackBanner={curriculumCompletionSummary?.source === "fallback_client"}
+            phonicsLoading={phonicsLoading}
+            phonicsError={phonicsError}
+            phonicsErrorMessage={phonicsErrorMessage}
+            curriculumData={curriculumData}
+            completionPct={completionValue}
+            stripStagePrefix={stripStagePrefix}
+          />'''
+          new_progress_component = '''          <ParentProgressOverview
+            childName={childName}
+            loading={childCourseProgressProjection.isLoading}
+            errorMessage={
+              childCourseProgressProjection.isError
+                ? "Unable to load canonical course progress right now."
+                : null
+            }
+            course={canonicalParentOverview.course}
+            stripStagePrefix={stripStagePrefix}
+          />'''
+          replace_once(old_progress_component, new_progress_component, 'canonical progress overview props')
+
+          tracker_pattern = re.compile(
+              r'''\n        <ParentLessonTracker\n.*?\n        />''',
+              re.S,
+          )
+          text, n = tracker_pattern.subn('', text, count=1)
+          if n != 1:
+              raise SystemExit(f'legacy overview lesson tracker removal: expected 1 match, found {n}')
+
+          path.write_text(text)
+          PY
+
+      - name: Commit P5 integration
+        shell: bash
+        run: |
+          if git diff --quiet -- src/pages/parent/ParentDashboard.tsx; then
+            echo "No ParentDashboard changes produced" >&2
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pages/parent/ParentDashboard.tsx
+          git commit -m "feat(parent): wire overview to P3 and P4 canonical projections"
+          git push origin HEAD:feat/parent-dashboard-brick-p5-parent-overview
