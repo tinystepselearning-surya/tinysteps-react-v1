@@ -16,6 +16,8 @@ export type TeacherFinanceSummaryDataset = {
   fallbackReason: string | null;
 };
 
+type RawTeacherEarningEntry = Record<string, unknown> & { id: string };
+
 const SOURCE = 'src/pages/admin/teacherFinanceSummaryLoader.ts';
 
 const loadRawTeacherFinanceSummary = async (
@@ -27,8 +29,11 @@ const loadRawTeacherFinanceSummary = async (
     query(collection(db, 'teacherEarnings'), where('monthKey', '==', monthKey)),
     { source: SOURCE },
   );
-  const entries = snap.docs
-    .map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() as Record<string, unknown>) }))
+  const entries: RawTeacherEarningEntry[] = snap.docs
+    .map((docSnap): RawTeacherEarningEntry => ({
+      id: docSnap.id,
+      ...(docSnap.data() as Record<string, unknown>),
+    }))
     .filter((entry) => entry.archived !== true);
   const rows = aggregateTeacherEarnings(entries);
   return {
