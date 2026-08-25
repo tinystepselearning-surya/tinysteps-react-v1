@@ -28,18 +28,13 @@ The repeated rollup recomputation is the first optimization target. The daily re
 - No historical finance records are mass-deleted or rewritten as part of read optimization.
 - The daily reconciliation job remains available as an independent parity/safety check.
 
-## Phase 1 — arithmetic and fallback contract
+## Brick 1 — arithmetic contract and live safe no-op suppression
 `functions/src/helpers/teacherEarningsRollupDelta.ts` introduces a pure planner that classifies one earning change as:
 
 - `delta`: arithmetic contribution changes are known for one monthly rollup;
 - `noop`: the derived rollup contribution and payout state did not change;
 - `recompute`: ambiguity exists, so the existing authoritative full scan must remain the fallback.
 
-The planner is intentionally conservative. In particular, a new or deleted session-linked earning still requests a full recompute until production/current-month duplicate coverage proves that incremental creation/deletion cannot conflict with legacy session-earning rows.
-
-Payout-state mutations also stay on authoritative recompute. The monthly read model includes recent `teacherPayouts` history as well as numeric totals, so changing `paidAmount`, payout IDs, payout timestamps, reversal fields, or paid-like status must not bypass the payout query.
-
-## Phase 2 — live safe no-op suppression
 `functions/src/teacherEarningsRollupTrigger.ts` is the exported production entry point for `onTeacherEarningsRollupWrite`.
 
 It suppresses the expensive teacher-month recomputation only when all of the following are true:
@@ -54,6 +49,20 @@ Every other event delegates to the original `revenue.ts` rollup handler unchange
 
 This first live optimization is intentionally idempotent: skipped events perform no derived write and therefore cannot double-apply on Cloud Functions event retry.
 
+## Brick 2 — read-only current-month canonical coverage audit
+`auditTeacherEarningsCanonicalCoverage` is an admin-only callable used to gather production evidence before any incremental finance writes are enabled.
+
+The callable:
+
+- defaults to the current IST month, or accepts an explicit `YYYY-MM` month;
+- queries only `teacherEarnings` rows with that explicit `monthKey`;
+- is bounded (`maxDocs`, default 5,000, hard maximum 10,000) and uses one extra document only to report truncation;
+- performs no Firestore writes or repairs;
+- reports session-linked row count, canonical `earningId === sessionId` coverage, non-canonical session rows, missing session IDs, missing canonical `teacherId`, duplicate `sessionId` groups, archived/void rows, and small ID-only samples;
+- returns `coverageCleanForFurtherDeltaDesign` as evidence only. That flag does not enable incremental finance writes by itself.
+
+This audit is on-demand rather than scheduled, so it creates no recurring read load when unused.
+
 ## Delta execution remains gated
 The planner's `delta` result is **not** currently executed as `FieldValue.increment` in production.
 
@@ -61,16 +70,17 @@ A naive increment path is unsafe because Firestore/Eventarc delivery may retry a
 
 Before enabling delta writes, B6 still requires:
 
-1. Audit current-month session-linked `teacherEarnings` for duplicate `sessionId` rows and canonical `earningId === sessionId` coverage.
+1. Deploy and run the Brick 2 current-month canonical coverage audit and review its evidence.
 2. Add parity coverage for representative unpaid, partial, paid, void, demo, correction, and legacy-dedup transitions.
 3. Add a retry/concurrency protocol for incremental events, such as stable event receipts plus recompute/delta sequencing or another transactionally equivalent design.
 4. Keep authoritative full recompute as the fallback for every event that cannot be proven incremental-safe.
 5. Compare Query Insights after deployment before expanding the fast path.
 
-## Separate later optimizations
-These are real read opportunities but are not mixed into the first trigger change:
+## Separate later read-optimization bricks
+These are independent read opportunities and should remain brick-sized:
 
-- month-bound the teacher Earnings screen instead of loading the teacher's entire earning history for the default monthly view;
+- month-bound the teacher Earnings screen for its default monthly view instead of loading the teacher's entire earning history;
 - month-bound `voidTeacherOrphanEarnings` at the Firestore query itself;
 - replace raw teacher-earnings analytics totals with monthly rollups where detail rows are not required;
-- month-bound the daily reconciliation `classSessions(status == completed)` scan before downloading records.
+- month-bound the daily reconciliation `classSessions(status == completed)` scan before downloading records;
+- defer finer Teacher Payments detail-loading optimization until the higher-volume readers above are complete.
