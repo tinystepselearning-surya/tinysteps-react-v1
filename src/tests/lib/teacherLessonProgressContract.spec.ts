@@ -16,13 +16,15 @@ describe('teacher lesson progress contract — Brick P2', () => {
     expect(resolveTeacherEditableLessonStatus({ lessonStatus: 'completed' })).toBe('completed');
   });
 
-  it('does not infer teacher completion from mastery', () => {
+  it('does not infer teacher completion from mastery and explicitly adopts legacy rows', () => {
     expect(resolveTeacherEditableLessonStatus({ mastery: 'mastered' })).toBe('in_progress');
     const plan = planTeacherLessonStatusWrite({ mastery: 'mastered' }, 'in_progress');
     expect(plan).toMatchObject({
       previousStatus: 'in_progress',
       nextStatus: 'in_progress',
-      transition: 'unchanged',
+      transition: 'adopted',
+      hadExplicitStatus: false,
+      statusChanged: true,
       setCompletedMetadata: false,
       clearCompletedMetadata: false,
     });
@@ -34,6 +36,7 @@ describe('teacher lesson progress contract — Brick P2', () => {
       previousStatus: 'not_started',
       nextStatus: 'in_progress',
       transition: 'started',
+      hadExplicitStatus: false,
       statusChanged: true,
       setCompletedMetadata: false,
       clearCompletedMetadata: false,
@@ -46,6 +49,7 @@ describe('teacher lesson progress contract — Brick P2', () => {
       'completed',
     );
     expect(plan.transition).toBe('completed');
+    expect(plan.hadExplicitStatus).toBe(true);
     expect(plan.setCompletedMetadata).toBe(true);
     expect(plan.clearCompletedMetadata).toBe(false);
   });
@@ -70,13 +74,23 @@ describe('teacher lesson progress contract — Brick P2', () => {
     expect(plan.clearCompletedMetadata).toBe(true);
   });
 
-  it('emits only scalar status fields for optimistic local state', () => {
-    const plan = planTeacherLessonStatusWrite(null, 'completed');
-    expect(buildTeacherLessonStatusScalars(plan, 'teacher-1')).toEqual({
+  it('emits status audit ownership only when status is established or changed', () => {
+    const completedPlan = planTeacherLessonStatusWrite(null, 'completed');
+    expect(buildTeacherLessonStatusScalars(completedPlan, 'teacher-1')).toEqual({
       learningContractVersion: 2,
       lessonStatus: 'completed',
       lessonStatusSource: 'teacher',
       lessonStatusUpdatedBy: 'teacher-1',
+    });
+
+    const unchangedPlan = planTeacherLessonStatusWrite(
+      { lessonStatus: 'completed' },
+      'completed',
+    );
+    expect(buildTeacherLessonStatusScalars(unchangedPlan, 'teacher-2')).toEqual({
+      learningContractVersion: 2,
+      lessonStatus: 'completed',
+      lessonStatusSource: 'teacher',
     });
   });
 });
