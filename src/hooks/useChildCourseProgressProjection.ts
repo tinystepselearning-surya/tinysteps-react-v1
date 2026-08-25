@@ -20,8 +20,8 @@ export type ChildCourseProgressStageProjection = {
 
 export type ChildCourseProgressProjection = {
   schemaVersion?: number;
-  modelType?: 'child_course_progress_v1' | 'child_course_progress_v2' | string;
-  completionAuthority?: 'teacher_lesson_status' | string;
+  modelType?: 'child_course_progress_v1' | 'child_course_progress_v2' | 'child_course_progress_v3' | string;
+  completionAuthority?: 'teacher_lesson_status' | 'teacher_progress_save' | string;
   definitionStatus?: 'configured' | 'missing' | string;
   courseId?: string;
   courseLabel?: string | null;
@@ -61,10 +61,19 @@ const EMPTY_STATE: ProjectionState = {
   error: null,
 };
 
-// Brick P5 compatibility bridge: ParentDashboard already owns the single live P3 listener.
-// Overview child components can subscribe to this in-memory snapshot without opening a
-// second Firestore listener. P10 can remove this bridge once the container itself is fully
-// cut over to the canonical overview view model.
+export function isCurrentChildCourseProgressProjection(
+  projection: ChildCourseProgressProjection | null | undefined,
+): boolean {
+  return Boolean(
+    projection &&
+      projection.schemaVersion === 3 &&
+      projection.modelType === 'child_course_progress_v3' &&
+      projection.completionAuthority === 'teacher_progress_save',
+  );
+}
+
+// ParentDashboard owns the single live P3 listener. Overview child components can subscribe
+// to this in-memory snapshot without opening a second Firestore listener.
 const latestProjectionByKid = new Map<string, ProjectionState>();
 const latestProjectionSubscribers = new Set<() => void>();
 
@@ -154,15 +163,17 @@ export function useChildCourseProgressProjection(
     return onSnapshot(
       doc(db, 'students', normalizedKidId, 'courseProgress', normalizedCourseId),
       (snapshot) => {
-        if (!snapshot.exists()) {
-          // Existing students can predate the P3 projection writer. Create one deterministic,
-          // parent-owned bootstrap request; the backend performs the bounded rebuild once.
-          void requestCourseProgressBootstrap(normalizedKidId, normalizedCourseId).catch(() => undefined);
-        }
-
         const raw = snapshot.exists()
           ? (snapshot.data() as ChildCourseProgressProjection)
           : null;
+
+        // Existing parents can hold a P3 V2 projection created under the superseded
+        // lessonStatus completion rule. Request one bounded V2 bootstrap whenever the row is
+        // missing or stale; the backend rebuilds from the child's already-saved lesson docs.
+        if (!isCurrentChildCourseProgressProjection(raw)) {
+          void requestCourseProgressBootstrap(normalizedKidId, normalizedCourseId).catch(() => undefined);
+        }
+
         const data = raw
           ? { ...raw, courseId: raw.courseId || normalizedCourseId }
           : null;
