@@ -450,6 +450,29 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "kidId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "parentId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "classSessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "assignedTeacherId",
           "order": "ASCENDING"
         },

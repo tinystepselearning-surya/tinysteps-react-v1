@@ -6,6 +6,10 @@ const dashboardSource = fs.readFileSync(
   path.resolve(process.cwd(), "src/pages/parent/ParentDashboard.tsx"),
   "utf8",
 );
+const firestoreIndexes = JSON.parse(fs.readFileSync(
+  path.resolve(process.cwd(), "firestore.indexes.json"),
+  "utf8",
+));
 
 describe("ParentDashboard class-session read plan", () => {
   it("uses the bounded read policy instead of the old 6-month/3-month range", () => {
@@ -23,6 +27,15 @@ describe("ParentDashboard class-session read plan", () => {
     expect(dashboardSource).toContain("shouldRunParentLegacySessionFallback(snapA?.size ?? 0)");
     expect(dashboardSource).toContain("|| snapB === null");
     expect(dashboardSource).toContain('"classSessions_missing_date"');
+  });
+
+  it("declares the bounded Query B composite index used by legacy kidId rows", () => {
+    const queryBIndex = firestoreIndexes.indexes.find((index: any) =>
+      index.collectionGroup === "classSessions" &&
+      index.queryScope === "COLLECTION" &&
+      index.fields.map((field: any) => field.fieldPath).join("|") === "kidId|parentId|date|__name__"
+    );
+    expect(queryBIndex).toBeTruthy();
   });
 
   it("loads history lazily and does not display partial history counts", () => {

@@ -110,21 +110,22 @@ so deployment replaces the prior writer rather than installing a competing write
 
 Parents may already have a V2 projection created under the superseded `teacher_lesson_status` rule. Those rows can show `0/40` even while the teacher Skills view clearly contains many previously saved lesson records.
 
-The parent projection hook treats any non-V3 row as stale and creates one deterministic bounded repair request:
+The parent projection hook treats any non-V3 row as stale and calls the authenticated bounded ensure operation:
 
 ```text
-v2-course-{courseId}
+bootstrapParentCourseProgress({ kidId, courseId })
 ```
 
 The backend:
 
-1. verifies the authenticated parent owns the selected child;
-2. reads the canonical curriculum definition;
-3. scans at most 250 existing child progress documents;
-4. keeps only canonical topics for the selected course;
-5. rebuilds V3 by counting each saved canonical lesson once.
+1. verifies the authenticated caller is a parent and owns the selected child;
+2. verifies an operational enrollment assigns the course to that child;
+3. returns immediately if the existing projection already matches V3 and the curriculum;
+4. otherwise scans at most 250 existing child progress documents;
+5. keeps only canonical topics for the selected course;
+6. rebuilds V3 by counting each saved canonical lesson once.
 
-The old `v1-course-*` request id remains accepted temporarily for rollout compatibility, while the new `v2-course-*` id bypasses already-completed requests created under the old contract.
+The old `v1-course-*` / `v2-course-*` request documents remain accepted temporarily for rollout compatibility. New clients do not read them before ensuring progress, so any old failed, stale, or partially processed request cannot permanently block recovery. Concurrent browser calls are deduplicated; after a failure, a later parent navigation can retry.
 
 There is deliberately **no global mass backfill**. Existing students repair lazily when their parent view requests that child/course, while all future teacher saves update V3 automatically.
 

@@ -68,7 +68,10 @@ export {
   onPaymentReadModelWrite,
 } from "./parentMonthlyBillingProjectionV2";
 export { onClassSessionReadModelWrite } from "./parentMonthlyAttendanceProjection";
-export { onParentProjectionBootstrapRequest } from "./parentCanonicalProjectionBootstrap";
+export {
+  bootstrapParentCourseProgress,
+  onParentProjectionBootstrapRequest,
+} from "./parentCanonicalProjectionBootstrap";
 export { bootstrapParentClassAttendance } from "./bootstrapParentClassAttendanceV2";
 
 // Admin user management
