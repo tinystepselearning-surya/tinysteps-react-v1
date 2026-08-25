@@ -2,9 +2,7 @@ import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import * as admin from 'firebase-admin';
 import { canSkipTeacherEarningsRollupRecompute } from './helpers/teacherEarningsRollupDelta';
 import { checkTeacherFinanceAnalyticsReadinessRow } from './helpers/teacherFinanceAnalyticsReadiness';
-import {
-  onTeacherEarningsRollupWrite as authoritativeTeacherEarningsRollupWrite,
-} from './revenue';
+import { recomputeTeacherEarningsEventCoordinated } from './helpers/teacherEarningsCoordinatedRecompute';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -131,16 +129,16 @@ async function refreshCertifiedAnalyticsRollups(input: EarningImages): Promise<v
 }
 
 /**
- * Read-optimized entry point for the teacherEarnings monthly rollup.
+ * Read-optimized and transaction-coordinated entry point for the teacherEarnings monthly rollup.
  *
- * Only proven metadata-only updates are suppressed here. Every create/delete, finance-changing,
- * payout-related, legacy, moved, or ambiguous event delegates to the existing authoritative
- * revenue handler unchanged.
+ * Brick 1 still suppresses only proven metadata-only updates. Brick 7B2 replaces the legacy
+ * uncoordinated full-recompute runtime path with claim -> ledger scan -> finalize sequencing.
+ * A later finance event can supersede an older scan, and only the latest claim epoch may publish
+ * authoritative totals. Incremental money deltas remain disabled until Brick 7C.
  *
- * B6 Brick 6B1/6B2 invalidates certified analytics when an earning becomes unsafe. After a real
- * authoritative recompute, canonical session/demo events refresh certification metadata only for
- * months that an admin has already certified. This costs at most one readiness-document read per
- * affected month and never auto-certifies an unprepared month.
+ * Brick 6B1/6B2 invalidates certified analytics when an earning becomes unsafe. During every real
+ * recompute the coordinated claim also marks that rollup projection unready, so Finance falls back
+ * to raw monthly earnings until the latest authoritative scan finalizes and certification refreshes.
  */
 export const onTeacherEarningsRollupWrite = onDocumentWritten(
   {
@@ -149,7 +147,7 @@ export const onTeacherEarningsRollupWrite = onDocumentWritten(
   },
   async (event) => {
     const change = event.data;
-    if (!change) return authoritativeTeacherEarningsRollupWrite.run(event);
+    if (!change) return;
 
     const beforeData = change.before.exists
       ? ((change.before.data() || {}) as Record<string, unknown>)
@@ -176,7 +174,15 @@ export const onTeacherEarningsRollupWrite = onDocumentWritten(
       return;
     }
 
-    await authoritativeTeacherEarningsRollupWrite.run(event);
-    await refreshCertifiedAnalyticsRollups(images);
+    const recompute = await recomputeTeacherEarningsEventCoordinated({
+      db: admin.firestore(),
+      eventId: event.id,
+      before: beforeData,
+      after: afterData,
+    });
+
+    if (recompute.allFinalized) {
+      await refreshCertifiedAnalyticsRollups(images);
+    }
   },
 );
