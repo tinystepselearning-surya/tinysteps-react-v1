@@ -104,6 +104,14 @@ Because B3 performs no production writes, none of these triggers is invoked by t
 - When active/future operational documents consistently contain canonical `teacherId`, stop issuing alias queries on normal teacher screens.
 - Keep an explicit, bounded legacy-history compatibility path where required.
 
+### B4 execution outcome — 2026-08-25
+
+- Today/Schedule, Upcoming Sessions, My Students, the Schedule student selector, and the teacher-student enrollment loader now use canonical operational teacher reads.
+- The active teacher paths no longer issue collection queries on `teacherIds`, `assignedTeacherId`, `primaryTeacherId`, `teacherUid`, or `teacher_id`.
+- Canonical `teacherId` wins when stored legacy aliases disagree.
+- `kids.teacherIds` remains because it represents a legitimate child-level relationship rather than operational session/enrollment ownership.
+- B4 passed exact-head CI and was merged before B5 began.
+
 ## Phase B5 — retirement
 
 Only after fallback usage is effectively zero:
@@ -113,6 +121,48 @@ Only after fallback usage is effectively zero:
 - simplify Firestore rules;
 - remove compatibility code;
 - optionally clean redundant alias fields from documents in a separately reviewed migration.
+
+### B5 implementation boundary — 2026-08-25
+
+B5 separates **runtime retirement** from **physical historical cleanup** so the migration remains zero-downtime and does not rewrite production data merely to make documents look uniform.
+
+The B5 branch changes the active operational contract as follows:
+
+- client enrollment/session ownership builders now emit only canonical `teacherId`;
+- Cloud Functions enrollment/session ownership builders now emit only canonical `teacherId`;
+- teacher reassignment and session-generation paths that use those shared builders therefore stop creating or refreshing redundant teacher aliases;
+- the dead teacher-session alias collection fallback helper left behind by B4 is removed;
+- Attendance Corrections operational `classSessions` and `enrollments` reads are cut over to canonical `teacherId` queries;
+- source guards prevent those active readers from reintroducing operational alias queries;
+- legacy parsing remains available for bounded audit, repair, transfer-history, and direct-document compatibility where an old record has no canonical `teacherId`;
+- `kids.teacherIds` remains explicitly supported.
+
+### What B5 does not do automatically
+
+B5 does **not** mass-delete alias fields from existing Firestore documents. A normal update that writes canonical `teacherId` only may leave pre-existing alias fields physically present on the document. Those fields are ignored for canonical operational ownership and cannot override `teacherId` authorization.
+
+A physical alias-removal migration remains separately reviewed because it would generate production writes and could activate document triggers. It must not be coupled to normal reassignment, attendance, billing, earnings, or schedule operations.
+
+### Firestore rules safety boundary
+
+The B3 rule shape already provides the desired runtime model:
+
+- teacher collection queries for operational `enrollments` and `classSessions` are canonical-only;
+- when `teacherId` exists, only that canonical UID authorizes teacher access;
+- the remaining alias rule path is limited to a **direct document read of a legacy record that has no `teacherId`**.
+
+B5 intentionally does not remove that last direct-history fallback until historical/completed records are separately audited for canonical coverage. Removing it based only on the current/future B3 sample could hide an old completed session or historical attendance record.
+
+### Index retirement safety boundary
+
+Composite indexes are removed only when their query shape has no live operational consumer. Indexes belonging to other domains are not teacher-identity aliases merely because they use similarly named fields. In particular, `demoSessions.assignedTeacherId` is a real demo-assignment field and remains outside this migration.
+
+Dead-code/index cleanup must therefore distinguish:
+
+- operational `classSessions` / `enrollments` compatibility aliases — B5 retirement target;
+- `kids.teacherIds` — keep;
+- demo-assignment fields — keep;
+- historical audit/repair readers — keep until their historical purpose is retired.
 
 ## Non-negotiable behavior
 
