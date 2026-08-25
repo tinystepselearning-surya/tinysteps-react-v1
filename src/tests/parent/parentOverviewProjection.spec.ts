@@ -141,6 +141,73 @@ describe('Brick P5 parent overview projection', () => {
     expect(course?.nextStage?.key).toBe('stage-2');
   });
 
+  it('uses the furthest teacher-evidenced stage for migrated students without inventing completion', () => {
+    const migratedCourse: ChildCourseProgressProjection = {
+      schemaVersion: 2,
+      modelType: 'child_course_progress_v2',
+      completionAuthority: 'teacher_lesson_status',
+      definitionStatus: 'configured',
+      courseId: 'early-phonics',
+      courseLabel: 'Early Phonics',
+      totalTopics: 8,
+      completedTopics: 0,
+      inProgressTopics: 3,
+      notStartedTopics: 5,
+      overallPct: 0,
+      totalStages: 4,
+      completedStages: 0,
+      stageSummaries: [
+        {
+          key: 'stage-1',
+          label: 'Stage 1 — Core letter sets',
+          order: 1,
+          totalTopics: 2,
+          completedTopics: 0,
+          inProgressTopics: 1,
+          notStartedTopics: 1,
+          completionPct: 0,
+        },
+        {
+          key: 'stage-2',
+          label: 'Stage 2 — Digraphs',
+          order: 2,
+          totalTopics: 2,
+          completedTopics: 0,
+          inProgressTopics: 1,
+          notStartedTopics: 1,
+          completionPct: 0,
+        },
+        {
+          key: 'stage-3',
+          label: 'Stage 3 — Magic E',
+          order: 3,
+          totalTopics: 2,
+          completedTopics: 0,
+          inProgressTopics: 1,
+          notStartedTopics: 1,
+          completionPct: 0,
+        },
+        {
+          key: 'stage-4',
+          label: 'Stage 4 — Diphthongs',
+          order: 4,
+          totalTopics: 2,
+          completedTopics: 0,
+          inProgressTopics: 0,
+          notStartedTopics: 2,
+          completionPct: 0,
+        },
+      ],
+    };
+
+    const course = selectCanonicalParentOverviewCourse(migratedCourse, 'early-phonics');
+
+    expect(course?.overallPct).toBe(0);
+    expect(course?.completedTopics).toBe(0);
+    expect(course?.activeStage?.key).toBe('stage-3');
+    expect(course?.nextStage?.key).toBe('stage-4');
+  });
+
   it('uses only the selected child P4 row and never family totals', () => {
     const overview = buildCanonicalParentOverview({
       courseProjection: canonicalCourse,
