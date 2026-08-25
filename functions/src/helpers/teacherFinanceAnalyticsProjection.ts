@@ -251,8 +251,11 @@ export function evaluateTeacherFinanceRollupParity(
     ),
   };
 
+  const rollupVersion = Number(existing.rollupVersion);
   if (!rollup) reasons.push('rollup_missing');
-  if (Number(existing.rollupVersion) < 1) reasons.push('rollup_version_missing_or_legacy');
+  if (!Number.isFinite(rollupVersion) || rollupVersion < 1) {
+    reasons.push('rollup_version_missing_or_legacy');
+  }
   if (!projection.safeForAnalyticsProjection) reasons.push('projection_contains_unclassified_or_conflicting_earnings');
 
   const moneyFields: Array<keyof typeof deltas> = [
