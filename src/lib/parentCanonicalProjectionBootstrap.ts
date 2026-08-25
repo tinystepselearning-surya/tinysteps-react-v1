@@ -1,14 +1,10 @@
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
-
 import callFunction from './callFunctions';
-import { auth, db } from './firebaseConfig';
+import { auth } from './firebaseConfig';
 
 export type ParentProjectionBootstrapKind = 'course_progress' | 'class_attendance';
 export type ParentProjectionBootstrapRequestResult =
-  | 'created'
-  | 'already_requested'
-  | 'no_authenticated_parent'
-  | 'invalid_input';
+  | { mode: string; sourceDocumentsRead?: number; totalTopics?: number; completedTopics?: number }
+  | { mode: 'in_flight' | 'no_authenticated_parent' | 'invalid_input' };
 
 export type ParentClassAttendanceRepairResult = {
   mode: string;
@@ -54,11 +50,8 @@ export function currentIndiaMonthKey(nowMs = Date.now()): string {
   return `${year}-${month}`;
 }
 
-/**
- * V2 intentionally uses a new deterministic document id. Parents may already have a completed
- * v1 bootstrap request from the old lessonStatus completion contract; reusing that id would
- * permanently block the one-time saved-lesson repair.
- */
+// Retained for old request-document compatibility and rules tests. New clients use the
+// authenticated retry-safe callable below, so this id is no longer a recovery lock.
 export function courseBootstrapRequestId(courseId: string): string | null {
   const normalized = normalizeBootstrapCourseId(courseId);
   return normalized ? `v2-course-${normalized}` : null;
@@ -79,40 +72,22 @@ async function createRequest(args: {
 }): Promise<ParentProjectionBootstrapRequestResult> {
   const parentId = String(auth.currentUser?.uid || '').trim();
   const kidId = String(args.kidId || '').trim();
-  if (!parentId) return 'no_authenticated_parent';
-  if (!kidId || kidId.length > 200) return 'invalid_input';
+  if (!parentId) return { mode: 'no_authenticated_parent' };
+  if (!kidId || kidId.length > 200) return { mode: 'invalid_input' };
 
   const normalizedCourseId = normalizeBootstrapCourseId(String(args.courseId || ''));
   const requestId = courseBootstrapRequestId(String(args.courseId || ''));
-  if (!requestId || !normalizedCourseId) return 'invalid_input';
+  if (!requestId || !normalizedCourseId) return { mode: 'invalid_input' };
 
   const requestKey = `${parentId}:${kidId}:${requestId}`;
-  if (inFlightRequests.has(requestKey)) return 'already_requested';
+  if (inFlightRequests.has(requestKey)) return { mode: 'in_flight' };
   inFlightRequests.add(requestKey);
 
   try {
-    const requestRef = doc(
-      db,
-      'parentProjectionBootstrapRequests',
-      parentId,
-      'kids',
-      kidId,
-      'requests',
-      requestId,
-    );
-    const existing = await getDoc(requestRef);
-    if (existing.exists()) return 'already_requested';
-
-    await setDoc(requestRef, {
-      schemaVersion: 1,
-      parentId,
-      kidId,
-      kind: 'course_progress',
-      courseId: normalizedCourseId,
-      repairVersion: 2,
-      createdAt: serverTimestamp(),
-    });
-    return 'created';
+    return await callFunction<
+      { mode: string; sourceDocumentsRead?: number; totalTopics?: number; completedTopics?: number },
+      { kidId: string; courseId: string }
+    >('bootstrapParentCourseProgress', { kidId, courseId: normalizedCourseId });
   } finally {
     inFlightRequests.delete(requestKey);
   }

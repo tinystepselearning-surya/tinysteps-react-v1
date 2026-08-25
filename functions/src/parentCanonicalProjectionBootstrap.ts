@@ -1,6 +1,7 @@
 import * as admin from 'firebase-admin';
 import { logger } from 'firebase-functions';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
+import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
 import {
   buildSummaryFromDocs,
@@ -18,6 +19,7 @@ import {
   isMissingAttendanceIndexError,
   resolveSessionMonthKey,
 } from './parentMonthlyAttendanceProjection';
+import { doesEnrollmentOccupyCourseSlot } from './helpers/status';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -25,6 +27,7 @@ const REGION = 'asia-south1';
 const IST_OFFSET_MINUTES = 330;
 const MONTH_RE = /^\d{4}-\d{2}$/;
 export const MAX_CHILD_PROGRESS_BOOTSTRAP_DOCS = 250;
+export const MAX_PARENT_COURSE_ASSIGNMENTS = 20;
 
 export type ParentProjectionBootstrapKind = 'course_progress' | 'class_attendance';
 
@@ -36,6 +39,11 @@ type BootstrapRequestData = {
   courseId?: unknown;
   monthKey?: unknown;
   createdAt?: unknown;
+};
+
+type ParentKidContext = {
+  owned: boolean;
+  aliases: string[];
 };
 
 function text(value: unknown): string {
@@ -101,27 +109,86 @@ function monthDateRangeFromKey(monthKey: string): { startYmd: string; endYmd: st
   };
 }
 
-async function parentOwnsKid(
+function addKidAliases(aliases: Set<string>, data: Record<string, unknown> | undefined, docId: string): void {
+  aliases.add(docId);
+  if (!data) return;
+  [data.kidId, data.studentId, data.studentUid, data.childId, data.linkedStudentId].forEach((value) => {
+    const candidate = text(value);
+    if (candidate) aliases.add(candidate);
+  });
+}
+
+async function parentKidContext(
   db: admin.firestore.Firestore,
   parentId: string,
   kidId: string,
-): Promise<boolean> {
+): Promise<ParentKidContext> {
   const [kidSnap, studentSnap, nestedSnap] = await Promise.all([
     db.collection('kids').doc(kidId).get(),
     db.collection('students').doc(kidId).get(),
     db.collection('parents').doc(parentId).collection('students').doc(kidId).get(),
   ]);
 
+  const aliases = new Set<string>([kidId]);
+  addKidAliases(aliases, kidSnap.exists ? (kidSnap.data() as Record<string, unknown>) : undefined, kidSnap.id);
+  addKidAliases(aliases, studentSnap.exists ? (studentSnap.data() as Record<string, unknown>) : undefined, studentSnap.id);
+  addKidAliases(aliases, nestedSnap.exists ? (nestedSnap.data() as Record<string, unknown>) : undefined, nestedSnap.id);
+
   if (kidSnap.exists && parentMatches((kidSnap.data() || {}) as Record<string, unknown>, parentId)) {
-    return true;
+    return { owned: true, aliases: Array.from(aliases).slice(0, 8) };
   }
   if (studentSnap.exists && parentMatches((studentSnap.data() || {}) as Record<string, unknown>, parentId)) {
-    return true;
+    return { owned: true, aliases: Array.from(aliases).slice(0, 8) };
   }
-  return nestedSnap.exists;
+  return { owned: nestedSnap.exists, aliases: Array.from(aliases).slice(0, 8) };
 }
 
-async function bootstrapCourseProgress(args: {
+export function enrollmentMatchesCourseAssignment(
+  data: Record<string, unknown>,
+  parentId: string,
+  courseId: string,
+  childAliases?: Set<string>,
+): boolean {
+  const enrollmentKidIds = strings([
+    data.kidId,
+    data.studentId,
+    data.childId,
+    ...(Array.isArray(data.kidIds) ? data.kidIds : []),
+  ]);
+  return (
+    parentMatches(data, parentId) &&
+    normalizeCourseId(data.courseId) === normalizeCourseId(courseId) &&
+    (!childAliases || enrollmentKidIds.some((candidate) => childAliases.has(candidate))) &&
+    doesEnrollmentOccupyCourseSlot(data)
+  );
+}
+
+async function childHasAssignedCourse(
+  db: admin.firestore.Firestore,
+  parentId: string,
+  aliases: string[],
+  courseId: string,
+): Promise<boolean> {
+  const childAliases = new Set(aliases.map(text).filter(Boolean));
+  const snapshot = await db
+    .collection('enrollments')
+    .where('parentId', '==', parentId)
+    .where('courseId', '==', courseId)
+    .limit(MAX_PARENT_COURSE_ASSIGNMENTS + 1)
+    .get();
+  if (snapshot.size > MAX_PARENT_COURSE_ASSIGNMENTS) {
+    throw new Error(`course_assignment_lookup_cap_exceeded:${snapshot.size}`);
+  }
+  return snapshot.docs.some((docSnap) =>
+    enrollmentMatchesCourseAssignment(
+      (docSnap.data() || {}) as Record<string, unknown>,
+      parentId,
+      courseId,
+      childAliases,
+    ));
+}
+
+export async function bootstrapCourseProgress(args: {
   db: admin.firestore.Firestore;
   kidId: string;
   courseId: string;
@@ -190,6 +257,40 @@ async function bootstrapCourseProgress(args: {
     inProgressTopics: summary.inProgressTopics,
   };
 }
+
+/**
+ * Retry-safe P3 repair entry point for existing parents.
+ *
+ * Unlike the legacy create-only request document, this callable can be invoked again after a
+ * failed or abandoned attempt. The projection builder is idempotent and returns before reading
+ * progress history when the canonical row is already current.
+ */
+export const bootstrapParentCourseProgress = onCall({ region: REGION }, async (request) => {
+  const parentId = text(request.auth?.uid);
+  if (!parentId) throw new HttpsError('unauthenticated', 'Sign in as a parent to repair course progress.');
+
+  const tokenRole = text(request.auth?.token?.role).toLowerCase();
+  const db = admin.firestore();
+  const userRole = tokenRole || text((await db.collection('users').doc(parentId).get()).data()?.role).toLowerCase();
+  if (userRole !== 'parent') throw new HttpsError('permission-denied', 'Parent access is required.');
+
+  const payload = (request.data || {}) as { kidId?: unknown; courseId?: unknown };
+  const kidId = text(payload.kidId);
+  const courseId = normalizeCourseId(payload.courseId);
+  if (!kidId || kidId.length > 200 || !courseId || courseId.length > 100) {
+    throw new HttpsError('invalid-argument', 'A valid kidId and courseId are required.');
+  }
+
+  const context = await parentKidContext(db, parentId, kidId);
+  if (!context.owned) {
+    throw new HttpsError('permission-denied', 'This child is not linked to the authenticated parent.');
+  }
+  if (!(await childHasAssignedCourse(db, parentId, context.aliases, courseId))) {
+    throw new HttpsError('failed-precondition', 'This course is not assigned to the selected child.');
+  }
+
+  return bootstrapCourseProgress({ db, kidId, courseId });
+});
 
 async function loadParentMonthSessions(
   db: admin.firestore.Firestore,
@@ -371,7 +472,8 @@ export const onParentProjectionBootstrapRequest = onDocumentCreated(
       return;
     }
 
-    if (!(await parentOwnsKid(db, parentId, kidId))) {
+    const context = await parentKidContext(db, parentId, kidId);
+    if (!context.owned) {
       await fail('parent_kid_mismatch');
       return;
     }
@@ -382,6 +484,10 @@ export const onParentProjectionBootstrapRequest = onDocumentCreated(
         const courseId = normalizeCourseId(data.courseId);
         if (!courseId || !isSupportedCourseBootstrapRequestId(requestId, courseId)) {
           await fail('invalid_course_request');
+          return;
+        }
+        if (!(await childHasAssignedCourse(db, parentId, context.aliases, courseId))) {
+          await fail('course_not_assigned');
           return;
         }
         result = await bootstrapCourseProgress({ db, kidId, courseId });
