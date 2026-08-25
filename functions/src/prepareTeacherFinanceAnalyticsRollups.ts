@@ -180,6 +180,7 @@ export const prepareTeacherFinanceAnalyticsRollups = onCall(
             batch.set(
               rollupRef,
               {
+                monthKey,
                 analyticsProjectionVersion: ANALYTICS_PROJECTION_VERSION,
                 unclassifiedEarnings: 0,
                 analyticsProjectionPreparedSessionEarnings: result.projection.sessionEarnings,
