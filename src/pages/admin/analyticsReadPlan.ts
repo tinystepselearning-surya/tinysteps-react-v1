@@ -9,6 +9,7 @@ export type AnalyticsView =
 export type AnalyticsDataset =
   | 'financeTotals'
   | 'charges'
+  | 'teacherFinanceSummary'
   | 'teacherEarnings'
   | 'classSessions'
   | 'users'
@@ -37,23 +38,26 @@ const PLAN: Record<AnalyticsView, AnalyticsReadPlan> = {
     datasets: [],
     rawDatasets: [],
   },
-  // Finance needs raw detail today to preserve the existing forecast and payout semantics.
-  // Brick 3 keeps these reads explicit and on-demand rather than changing the calculations.
+  // B6 Brick 6B2 replaces Finance's raw teacherEarnings dependency with a certified rollup
+  // summary dataset. That dataset fails closed to the old month-bounded raw ledger query if the
+  // selected month is not certified or any returned rollup is unsafe.
   finance: {
     datasets: [
       'financeTotals',
       'charges',
-      'teacherEarnings',
+      'teacherFinanceSummary',
       'classSessions',
       'enrollments',
       'courses',
     ],
-    rawDatasets: ['charges', 'teacherEarnings', 'classSessions', 'enrollments', 'courses'],
+    rawDatasets: ['charges', 'classSessions', 'enrollments', 'courses'],
   },
   delivery: {
     datasets: ['charges', 'classSessions', 'enrollments', 'courses'],
     rawDatasets: ['charges', 'classSessions', 'enrollments', 'courses'],
   },
+  // The dedicated Teachers view intentionally keeps raw teacherEarnings because it shows
+  // per-teacher/deleted-profile detail rather than summary-only finance metrics.
   teachers: {
     datasets: ['teacherEarnings', 'users'],
     rawDatasets: ['teacherEarnings', 'users'],

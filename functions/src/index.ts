@@ -16,15 +16,15 @@ export { onSessionComplete } from "./onSessionComplete";
 // Revenue rollups (expected + earned)
 export {
   onSessionRevenueWrite,
-  onTeacherEarningsRollupWrite,
   recordPayment,
   recordTeacherPayout,
   previewFinanceCutoverArchive,
   archiveFinanceRecordsThroughMonth,
   reconcileSessionRevenueMonthKeys,
-  voidTeacherOrphanEarnings,
   adminVoidSessionCharge,
 } from "./revenue";
+export { voidTeacherOrphanEarnings } from "./voidTeacherOrphanEarnings";
+export { onTeacherEarningsRollupWrite } from "./teacherEarningsRollupTrigger";
 export {
   getWalletAutomationConfig,
   setWalletAutomationConfig,
@@ -40,6 +40,9 @@ export {
 export { auditParentPaymentBackfillDryRun } from "./parentPaymentBackfillDryRun";
 export { applyParentPaymentBackfillForSafeParents } from "./parentPaymentBackfillWriteMode";
 export { runFinanceReconciliationAudit, runFinanceReconciliationAuditDaily } from "./financeReconciliationReport";
+export { auditTeacherEarningsCanonicalCoverage } from "./auditTeacherEarningsCanonicalCoverage";
+export { certifyTeacherEarningsSessionCreateFastPath } from "./certifyTeacherEarningsSessionCreateFastPath";
+export { prepareTeacherFinanceAnalyticsRollups } from "./prepareTeacherFinanceAnalyticsRollups";
 export { reconcileParentPaymentsMonthReadModels } from "./reconcileParentPaymentsMonthReadModels";
 export { recordLegacyFallbackUsage } from "./legacyFallbackMetrics";
 

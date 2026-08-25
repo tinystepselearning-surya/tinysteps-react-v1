@@ -2,6 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as admin from 'firebase-admin';
 import { ensureAdmin } from './helpers/adminGuard';
+import { fetchCompletedSessionsForFinanceReconciliation } from './helpers/financeReconciliationCompletedSessions';
 import {
   isActiveBillingCharge,
   resolveCanonicalServiceDate,
@@ -491,7 +492,11 @@ async function buildFinanceReconciliationReport(
   const [repairSnap, completedSnap, chargesSnap, earningsSnap, paymentsSnap, payoutsSnap, parentReadModelsSnap] =
     await Promise.all([
       fetchLimitedDocs(db.collection('classSessions').where('revenueRepairRequired', '==', true), maxDocsPerCollection),
-      fetchLimitedDocs(db.collection('classSessions').where('status', '==', 'completed'), maxDocsPerCollection),
+      fetchCompletedSessionsForFinanceReconciliation({
+        db,
+        monthKey,
+        maxDocs: maxDocsPerCollection,
+      }),
       fetchLimitedDocs(
         monthKey
           ? db.collection('billingCharges').where('monthKey', '==', monthKey)
@@ -1054,7 +1059,6 @@ async function buildFinanceReconciliationReport(
         });
       }
 
-      // Read model freshness invariant: rollup should not lag latest earning events materially.
       if (
         rollupSnap.exists &&
         expected.latestEventAtMs &&
@@ -1274,7 +1278,7 @@ export const runFinanceReconciliationAudit = onCall(
 
 export const runFinanceReconciliationAuditDaily = onSchedule(
   {
-    schedule: '15 2 * * *', // Daily 02:15 IST
+    schedule: '15 2 * * *',
     timeZone: 'Asia/Kolkata',
     region: REGION,
     timeoutSeconds: 300,
