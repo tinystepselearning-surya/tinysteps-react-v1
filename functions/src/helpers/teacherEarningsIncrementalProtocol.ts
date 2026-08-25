@@ -32,6 +32,7 @@ export type TeacherEarningsIncrementalCandidate = {
 
 export type TeacherEarningsIncrementalDecision =
   | TeacherEarningsIncrementalCandidate
+  | { mode: 'covered'; reason: string }
   | { mode: 'fallback'; reason: string }
   | { mode: 'replay'; markerId: string }
   | { mode: 'conflict'; reason: string };
@@ -65,6 +66,33 @@ const nonNegativeInteger = (value: unknown): number | null => {
   const parsed = finiteNumber(value);
   if (parsed == null || parsed < 0 || !Number.isInteger(parsed)) return null;
   return parsed;
+};
+
+const timestampMillis = (value: unknown): number | null => {
+  if (!value) return null;
+  if (value instanceof Date) return Number.isFinite(value.getTime()) ? value.getTime() : null;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value === 'string') {
+    const parsed = new Date(value).getTime();
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  if (typeof value === 'object') {
+    const row = value as {
+      toMillis?: () => number;
+      seconds?: number;
+      nanoseconds?: number;
+      _seconds?: number;
+      _nanoseconds?: number;
+    };
+    if (typeof row.toMillis === 'function') {
+      const millis = row.toMillis();
+      return Number.isFinite(millis) ? millis : null;
+    }
+    const seconds = finiteNumber(row.seconds ?? row._seconds);
+    const nanoseconds = finiteNumber(row.nanoseconds ?? row._nanoseconds ?? 0);
+    if (seconds != null) return seconds * 1000 + (nanoseconds ?? 0) / 1_000_000;
+  }
+  return null;
 };
 
 const stableValue = (value: unknown): unknown => {
@@ -171,16 +199,22 @@ const addDelta = (
 };
 
 /**
- * Pure Brick 7A/7B gate for a future incremental transaction.
+ * Pure Brick 7C gate for a future incremental transaction.
  *
- * This does NOT enable incremental writes. It requires both the transaction-coordination fence
- * and an idle authoritative recompute state. Brick 7B must first move the full-recompute writer
- * onto the same claim/finalize protocol. Until that cutover is complete, live rollups continue to
- * fall back to the authoritative full scan.
+ * The rollup must be transaction-coordinated, idle, and carry an authoritative Firestore commit
+ * watermark from the atomic full-recompute transaction. The source teacherEarnings document
+ * updateTime is compared with that watermark:
+ * - older event => already covered by the authoritative transaction, so no delta is needed;
+ * - newer event => not covered and may proceed as an exact delta candidate;
+ * - equal/missing timestamps => fail closed to a full recompute.
+ *
+ * Deletes remain on authoritative recompute at this stage because a deleted document has no
+ * post-delete DocumentSnapshot updateTime to use as the source commit watermark.
  */
 export const planTeacherEarningsIncrementalTransaction = (input: {
   eventId: unknown;
   earningId: unknown;
+  eventUpdateTime: unknown;
   before: Record<string, unknown> | null;
   after: Record<string, unknown> | null;
   rollup: Record<string, unknown> | null;
@@ -199,6 +233,10 @@ export const planTeacherEarningsIncrementalTransaction = (input: {
       mode: 'fallback',
       reason: plan.mode === 'recompute' ? `planner_${plan.reason}` : 'planner_noop',
     };
+  }
+
+  if (!input.after) {
+    return { mode: 'fallback', reason: 'incremental_delete_requires_recompute' };
   }
 
   if (!input.rollup) return { mode: 'fallback', reason: 'rollup_missing' };
@@ -226,6 +264,18 @@ export const planTeacherEarningsIncrementalTransaction = (input: {
   }
   if (recomputeState !== 'idle') {
     return { mode: 'fallback', reason: 'recompute_in_progress' };
+  }
+
+  const authoritativeCommittedAt = timestampMillis(rollup.incrementalAuthoritativeCommittedAt);
+  const eventUpdateAt = timestampMillis(input.eventUpdateTime);
+  if (authoritativeCommittedAt == null || eventUpdateAt == null) {
+    return { mode: 'fallback', reason: 'authoritative_watermark_missing' };
+  }
+  if (eventUpdateAt < authoritativeCommittedAt) {
+    return { mode: 'covered', reason: 'event_already_in_authoritative_baseline' };
+  }
+  if (eventUpdateAt === authoritativeCommittedAt) {
+    return { mode: 'fallback', reason: 'authoritative_watermark_ambiguous' };
   }
 
   const currentTotals = readRollupTotals(rollup);
