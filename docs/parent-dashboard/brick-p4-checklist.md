@@ -1,0 +1,22 @@
+# Brick P4 — Classes & Attendance Projection Checklist
+
+- [x] Stack P4 directly on the exact P3 head.
+- [x] Preserve deployed `onClassSessionReadModelWrite` export name.
+- [x] Keep bounded parentId + date month queries and hard read caps.
+- [x] Exit metadata-only classSession writes before Firestore projection reads.
+- [x] Make `attendance.byKid[kidId]` the authoritative selected-child scope.
+- [x] Never fabricate `_unassigned` child rows.
+- [x] Never promote legacy `studentId`/`childId` aliases into competing child rows.
+- [x] Add canonical class lifecycle buckets including rescheduled and unresolved states.
+- [x] Enforce lifecycle-state reconciliation to `totalSessions`.
+- [x] Partition scheduled/in-progress sessions into upcoming, unresolved past, or time unknown.
+- [x] Store pending start times so time buckets can be refreshed client-side without extra reads.
+- [x] Keep attendance independent from class lifecycle and tied to completed attendance.
+- [x] Enforce marked/unmarked completed-attendance reconciliation.
+- [x] Retain V2 aliases as derived compatibility fields only.
+- [x] Add strict client selector that returns unavailable when selected child row is missing.
+- [x] Add server tests for status normalization, child identity, lifecycle/attendance invariants, group classes, and unassigned legacy rows.
+- [x] Add client tests proving no family-total fallback and zero-read time reclassification.
+- [ ] Full repository CI green on the exact P4 head.
+- [ ] Final P4-only diff reviewed against P3.
+- [ ] Keep PR draft; do not merge without explicit approval.
