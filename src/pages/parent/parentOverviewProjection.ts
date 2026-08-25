@@ -90,20 +90,21 @@ function stageIsValid(stage: ParentOverviewCourseStage): boolean {
 }
 
 /**
- * Brick P5 course selector.
+ * Canonical parent course selector.
  *
- * Parent Overview accepts only the P3 V2 projection whose completion owner is explicit
- * teacher lesson status. Legacy progress_v1, mastery-derived rows, and locally recomputed
- * curriculum summaries are intentionally not accepted as fallbacks.
+ * A curriculum lesson is completed when the teacher successfully saves that lesson's
+ * canonical progress document. Re-saving the same lesson only updates the existing document,
+ * so completion stays one-per-lesson. Mastery, skill stars, attendance, and class completion
+ * are not alternate curriculum counters.
  */
 export function selectCanonicalParentOverviewCourse(
   projection: ChildCourseProgressProjection | null | undefined,
   expectedCourseId: string | null | undefined,
 ): ParentOverviewCourseSummary | null {
   if (!projection) return null;
-  if (projection.schemaVersion !== 2) return null;
-  if (projection.modelType !== 'child_course_progress_v2') return null;
-  if (projection.completionAuthority !== 'teacher_lesson_status') return null;
+  if (projection.schemaVersion !== 3) return null;
+  if (projection.modelType !== 'child_course_progress_v3') return null;
+  if (projection.completionAuthority !== 'teacher_progress_save') return null;
   if (projection.definitionStatus !== 'configured') return null;
 
   const expected = String(expectedCourseId || '').trim();
