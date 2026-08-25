@@ -122,7 +122,7 @@ export function selectCanonicalParentInsightsProgress(
   const partialStages = materialized.filter(
     (stage) => (stage.completedCount ?? 0) > 0 && (stage.completedCount ?? 0) < (stage.totalCount ?? 0),
   );
-  let activeStage = partialStages[partialStages.length - 1] || null;
+  let activeStage: ParentInsightStageDisplay | null = partialStages[partialStages.length - 1] || null;
   if (!activeStage) {
     const furthestCompletedIndex = materialized.reduce(
       (latest, stage, index) =>
