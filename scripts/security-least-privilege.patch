@@ -1,0 +1,327 @@
+diff --git a/firestore.rules b/firestore.rules
+--- a/firestore.rules
++++ b/firestore.rules
+@@ -278,6 +278,13 @@ service cloud.firestore {
+         ]);
+     }
+ 
++    function learningPartnerCanReadUser(data) {
++      return isLP()
++        && ('assignedLPs' in data)
++        && data.assignedLPs is list
++        && (request.auth.uid in data.assignedLPs);
++    }
++
+     function messageThreadDocPath(threadId) {
+       return /databases/$(database)/documents/messageThreads/$(threadId);
+     }
+@@ -334,7 +341,19 @@ service cloud.firestore {
+     // Who can read kid + kid subcollections
+     function canAccessKid(kidId) {
+       return isAdmin()
+-        || isTeacher()
++        || (
++          isTeacher()
++          && kidExists(kidId)
++          && (
++            (('teacherId' in kidDoc(kidId)) && kidDoc(kidId).teacherId == request.auth.uid)
++            || (('teacherIds' in kidDoc(kidId)) && kidDoc(kidId).teacherIds is list && (request.auth.uid in kidDoc(kidId).teacherIds))
++            || (('assignedTeacherId' in kidDoc(kidId)) && kidDoc(kidId).assignedTeacherId == request.auth.uid)
++            || (('primaryTeacherId' in kidDoc(kidId)) && kidDoc(kidId).primaryTeacherId == request.auth.uid)
++            || (('teacherUid' in kidDoc(kidId)) && kidDoc(kidId).teacherUid == request.auth.uid)
++            || (('teacher_id' in kidDoc(kidId)) && kidDoc(kidId).teacher_id == request.auth.uid)
++          )
++        )
+         || (
+           isParent()
+           && kidExists(kidId)
+@@ -486,16 +505,15 @@ service cloud.firestore {
+     // USERS COLLECTION
+     // ----------------------------
+     match /users/{uid} {
+-      // Preserve the existing broad internal-user lookup behaviour
+-      // temporarily, but external School Admin users can only read
+-      // their own user document.
+-      //
+-      // Brick 1 introduces the dedicated school tenant collections.
+-      allow read: if isSignedIn()
+-        && (
+-          !isSchoolAdmin()
+-          || request.auth.uid == uid
+-        );
++      // Least privilege: full directory access is admin-only. Other roles can
++      // read their own profile, while LPs can get only explicitly assigned users.
++      allow get: if (isSignedIn() && request.auth.uid == uid)
++        || isAdmin()
++        || learningPartnerCanReadUser(resource.data);
++
++      // Collection/list queries expose the directory and are admin-only.
++      allow list: if isAdmin();
+ 
+       allow create, delete:
+         if isAdmin();
+diff --git a/src/pages/messages/MessagesPanel.tsx b/src/pages/messages/MessagesPanel.tsx
+--- a/src/pages/messages/MessagesPanel.tsx
++++ b/src/pages/messages/MessagesPanel.tsx
+@@ -516,7 +516,7 @@ export default function MessagesPanel({
+   }, [keyboardOpen, scrollMessagesToBottom, selectedThread?.id]);
+ 
+   useEffect(() => {
+-    if (!selectedThread) return;
++    if (!selectedThread || !isAdmin) return;
+ 
+     const senderIds = messages.map((message) => message.senderId);
+     const lookupIds = dedupeIds([
+@@ -567,6 +567,7 @@ export default function MessagesPanel({
+       isCancelled = true;
+     };
+   }, [
++    isAdmin,
+     messages,
+     selectedRoleIds.learningPartnerIds,
+     selectedRoleIds.parentIds,
+diff --git a/src/pages/teacher/hooks/useTeacherStudents.ts b/src/pages/teacher/hooks/useTeacherStudents.ts
+--- a/src/pages/teacher/hooks/useTeacherStudents.ts
++++ b/src/pages/teacher/hooks/useTeacherStudents.ts
+@@ -91,15 +91,7 @@ const fetchTeacherStudents = async (teacherId: string): Promise<TeacherStudent[]>
+     });
+   });
+ 
+-  const parentIds = new Set<string>();
+   const courseIds = new Set<string>();
+-  kidDocs.forEach(({ data }) => {
+-    const parentId =
+-      data.primaryParentId ||
+-      data.parentId ||
+-      (Array.isArray(data.parentIds) ? data.parentIds[0] : null);
+-    if (parentId) parentIds.add(String(parentId));
+-  });
+   enrollmentDocsById.forEach((enrollment) => {
+     const courseId = String(enrollment.courseId || '').trim();
+     if (courseId) courseIds.add(courseId);
+@@ -121,33 +113,6 @@ const fetchTeacherStudents = async (teacherId: string): Promise<TeacherStudent[]>
+     });
+   }
+ 
+-  const parentById = new Map<string, { name?: string; email?: string }>();
+-  await Promise.all(
+-    Array.from(parentIds).map(async (pid) => {
+-      const userSnap = await getDocLogged(
+-        'useTeacherStudents:parent-user-by-id',
+-        doc(db, 'users', pid),
+-        { source: 'src/pages/teacher/hooks/useTeacherStudents.ts' },
+-      );
+-      if (userSnap.exists()) {
+-        const u = userSnap.data() as any;
+-        parentById.set(pid, { name: u.displayName || u.name, email: u.email });
+-        return;
+-      }
+-      const parentSnap = await getDocLogged(
+-        'useTeacherStudents:parent-doc-by-id',
+-        doc(db, 'parents', pid),
+-        { source: 'src/pages/teacher/hooks/useTeacherStudents.ts' },
+-      );
+-      if (parentSnap.exists()) {
+-        const p = parentSnap.data() as any;
+-        parentById.set(pid, { name: p.displayName || p.name, email: p.email });
+-      }
+-    })
+-  );
+-
+   return kidDocs.flatMap(({ id, data }) => {
+     const enrollments = (enrollmentsByKidId.get(id) || []).filter((enrollment) =>
+       normalizeTeacherIds(enrollment as Record<string, unknown>).includes(teacherId),
+@@ -155,10 +120,6 @@ const fetchTeacherStudents = async (teacherId: string): Promise<TeacherStudent[]>
+-    const parentId =
+-      data.primaryParentId ||
+-      data.parentId ||
+-      (Array.isArray(data.parentIds) ? data.parentIds[0] : null);
+-    const parentInfo = parentId ? parentById.get(String(parentId)) : undefined;
+-
+     return enrollments.map((enrollment) => {
+       const courseId = String(enrollment.courseId || '').trim();
+       const courseName =
+         enrollment.courseName || enrollment.courseLabel || courseMap.get(courseId) || courseId;
++      const parentName = String(
++        enrollment.parentDisplayName ||
++          enrollment.parentName ||
++          enrollment.guardianName ||
++          data.parentDisplayName ||
++          data.parentName ||
++          data.guardianName ||
++          '',
++      ).trim() || undefined;
++      const parentEmail = String(
++        enrollment.parentEmail ||
++          enrollment.guardianEmail ||
++          data.parentEmail ||
++          data.guardianEmail ||
++          '',
++      ).trim() || undefined;
+       return {
+         id,
+         enrollmentId: String(enrollment.id),
+@@ -168,8 +139,8 @@ const fetchTeacherStudents = async (teacherId: string): Promise<TeacherStudent[]>
+         courseNames: courseName ? [courseName] : [],
+         enrollmentStatus: enrollment.status ? String(enrollment.status).toLowerCase() : undefined,
+-        parentName: parentInfo?.name,
+-        parentEmail: parentInfo?.email,
++        parentName,
++        parentEmail,
+         progressStatus: data.progressStatus || 'on_track',
+         lastSessionDate: data.lastSessionDate,
+         avatarUrl: data.avatarUrl,
+diff --git a/src/hooks/useData.ts b/src/hooks/useData.ts
+--- a/src/hooks/useData.ts
++++ b/src/hooks/useData.ts
+@@ -265,7 +265,6 @@ export function useEnrollments(parentId: string) {
+       // gather ids to prefetch
+       const allKidIds = new Set<string>();
+       const courseIds = new Set<string>();
+-      const teacherIds = new Set<string>();
+ 
+       snap.docs.forEach((d: any) => {
+         const enrollment = d.data() as Enrollment;
+@@ -280,13 +279,11 @@ export function useEnrollments(parentId: string) {
+           if (fallbackKidId) allKidIds.add(fallbackKidId);
+         }
+         if ((enrollment as any).courseId) courseIds.add((enrollment as any).courseId);
+-        if ((enrollment as any).teacherId) teacherIds.add((enrollment as any).teacherId);
+       });
+ 
+-      const [kidsMap, coursesMap, teachersMap] = await Promise.all([
++      const [kidsMap, coursesMap] = await Promise.all([
+         batchFetch('kids', Array.from(allKidIds)),
+         batchFetch('courses', Array.from(courseIds)),
+-        batchFetch('users', Array.from(teacherIds)),
+       ]);
+ 
+       const results: any[] = [];
+@@ -302,7 +299,21 @@ export function useEnrollments(parentId: string) {
+         }));
+ 
+         const course = enrAny.courseId ? coursesMap.get(enrAny.courseId) || null : null;
+-        const teacher = enrAny.teacherId ? teachersMap.get(enrAny.teacherId) || null : null;
++        const teacherId = String(
++          enrAny.teacherId || enrAny.teacherUid || enrAny.teacherUserId || '',
++        ).trim();
++        const teacherName = String(
++          enrAny.teacherDisplayName || enrAny.teacherName || enrAny.assignedTeacherName || '',
++        ).trim();
++        const teacherEmail = String(enrAny.teacherEmail || '').trim();
++        const teacher = teacherId
++          ? {
++              uid: teacherId,
++              id: teacherId,
++              displayName: teacherName || 'Teacher',
++              name: teacherName || 'Teacher',
++              ...(teacherEmail ? { email: teacherEmail } : {}),
++            }
++          : null;
+ 
+         results.push({ id: docSnap.id, ...enrollment, kids, course, teacher });
+       }
+diff --git a/src/pages/parent/ParentDashboard.tsx b/src/pages/parent/ParentDashboard.tsx
+--- a/src/pages/parent/ParentDashboard.tsx
++++ b/src/pages/parent/ParentDashboard.tsx
+@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
+ import {
+   collection,
+   doc,
+-  documentId,
+   getDoc,
+   getDocs,
+   limit,
+@@ -1792,55 +1791,6 @@ export default function ParentDashboard() {
+       return map;
+     },
+   });
+-
+-  const teacherIdsForProfile = useMemo(() => {
+-    const enrollments = (enrollmentsQuery.data ?? []) as Enrollment[];
+-    const ids = new Set<string>();
+-    enrollments.forEach((enr) => {
+-      const candidate = String(
+-        enr.teacherId ||
+-          enr.teacherUid ||
+-          enr.teacherUserId ||
+-          (enr as any).teacher ||
+-          ""
+-      ).trim();
+-      if (candidate) ids.add(candidate);
+-    });
+-    return Array.from(ids);
+-  }, [enrollmentsQuery.data]);
+-
+-  const teacherLookupQuery = useQuery({
+-    queryKey: ["teacherLookup", teacherIdsForProfile],
+-    enabled: profileOpen && teacherIdsForProfile.length > 0,
+-    staleTime: 10 * 60 * 1000,
+-    refetchOnWindowFocus: false,
+-    refetchOnMount: false,
+-    queryFn: async () => {
+-      const map: Record<string, { name: string; email?: string }> = {};
+-      if (!teacherIdsForProfile.length) return map;
+-      const usersCol = collection(db, "users");
+-      const chunks = chunkIds(teacherIdsForProfile, 10);
+-      for (const chunk of chunks) {
+-        const snap = await getDocs(
+-          query(usersCol, where(documentId(), "in", chunk))
+-        );
+-        snap.forEach((docSnap) => {
+-          const data = docSnap.data() as any;
+-          const name = String(
+-            data?.displayName ||
+-              data?.name ||
+-              data?.fullName ||
+-              data?.email ||
+-              docSnap.id
+-          ).trim();
+-          map[docSnap.id] = {
+-            name: name || "Teacher",
+-            email: data?.email ? String(data.email).trim() : undefined,
+-          };
+-        });
+-      }
+-      return map;
+-    },
+-  });
+ 
+   const formatCourseLabel = useCallback((courseId: string, fallback?: string) => {
+     const trimmed = String(fallback || "").trim();
+@@ -3967,8 +3917,13 @@ export default function ParentDashboard() {
+           (enr as any).teacher ||
+           ""
+       ).trim();
+-      const teacherProfile = teacherId ? teacherLookupQuery.data?.[teacherId] : undefined;
+-      const teacherName = teacherProfile?.name || "";
++      const teacherName = String(
++        (enr as any).teacherDisplayName ||
++          (enr as any).teacherName ||
++          (enr as any).assignedTeacherName ||
++          ""
++      ).trim();
+       const parentRate = resolveVerifiedParentRate(enr as Record<string, unknown>);
+       return {
+         id: enr.id,
+@@ -3982,7 +3937,7 @@ export default function ParentDashboard() {
+         teacherName,
+       };
+     });
+-  }, [enrollmentsQuery.data, selectedKidId, teacherLookupQuery.data, formatCourseLabel]);
++  }, [enrollmentsQuery.data, selectedKidId, formatCourseLabel]);
+ 
+   const selectedKidEnrollmentDocs = useMemo(() => {
+     const enrollments = (enrollmentsQuery.data ?? []) as Enrollment[];
+diff --git a/.github/workflows/deploy.yml b/.github/workflows/deploy.yml
+--- a/.github/workflows/deploy.yml
++++ b/.github/workflows/deploy.yml
+@@ -53,7 +53,7 @@ jobs:
+           npx firebase-tools@latest emulators:exec
+           --project ${{ env.FIREBASE_PROJECT_ID }}
+           --only firestore
+-          "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run src/tests/firestore/publicLeads.rules.spec.ts src/tests/firestore/schoolDomain.rules.spec.ts src/tests/firestore/schoolProgramme.rules.spec.ts"
++          "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run src/tests/firestore/publicLeads.rules.spec.ts src/tests/firestore/schoolDomain.rules.spec.ts src/tests/firestore/schoolProgramme.rules.spec.ts src/tests/firestore/userRbac.rules.spec.ts src/tests/firestore/kidGameRbac.rules.spec.ts"
+ 
+       - name: Run website lead deduplication transaction tests
+         run: >-
