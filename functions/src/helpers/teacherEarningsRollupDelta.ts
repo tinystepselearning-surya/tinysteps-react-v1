@@ -42,12 +42,20 @@ const nonNegativeNumber = (value: unknown): number => {
   return Number.isFinite(parsed) ? Math.max(parsed, 0) : 0;
 };
 
+// Mirrors the authoritative monthly rollup exactly: earning amount contributes only when stored
+// as a finite number. Numeric strings are intentionally treated as zero rather than coerced.
+const authoritativeAmount = (value: unknown): number =>
+  typeof value === 'number' && Number.isFinite(value) ? Math.max(value, 0) : 0;
+
 const resolvePaidAmount = (data: Record<string, unknown>, amount: number): number => {
-  const explicit = nonNegativeNumber(data.paidAmount);
-  if (explicit > 0) return Math.min(explicit, amount);
+  const explicitRaw = Number(data.paidAmount);
+  if (Number.isFinite(explicitRaw) && explicitRaw > 0) {
+    return Math.min(Math.max(explicitRaw, 0), amount);
+  }
 
   const status = normalizeStatus(data.status);
-  if (status === 'paid' || status === 'settled' || status === 'processed') {
+  // Authoritative normalizeFinancialStatus maps `settled` -> `paid`, but does not map `processed`.
+  if (status === 'paid' || status === 'settled') {
     return amount;
   }
   return 0;
@@ -116,6 +124,14 @@ const payoutStateChanged = (
   after: Record<string, unknown> | null,
 ): boolean => Boolean(before && after) && payoutStateSignature(before!) !== payoutStateSignature(after!);
 
+const sessionArchivedStateChanged = (
+  before: Record<string, unknown> | null,
+  after: Record<string, unknown> | null,
+): boolean =>
+  Boolean(before && after) &&
+  (before!.archived === true) !== (after!.archived === true) &&
+  (isSessionLinked(before!) || isSessionLinked(after!));
+
 export const teacherMonthRollupTargetFor = (
   data: Record<string, unknown> | null | undefined,
 ): TeacherMonthRollupTarget | null => {
@@ -133,7 +149,7 @@ export const teacherEarningContributionFor = (
     return { ...ZERO_CONTRIBUTION };
   }
 
-  const amount = nonNegativeNumber(data.amount);
+  const amount = authoritativeAmount(data.amount);
   const paidAmount = resolvePaidAmount(data, amount);
   const pending = Math.max(amount - paidAmount, 0);
   const sessionLinked = isSessionLinked(data);
@@ -203,11 +219,12 @@ const isCanonicalSessionRecord = (
  *
  * Conservative by design:
  * - standalone demo/adjustment rows can be created, updated, or deleted incrementally;
- * - an existing canonical session earning can be updated incrementally;
+ * - an existing canonical session earning can be updated incrementally only while its archived
+ *   membership is unchanged;
  * - payout-state changes on an existing earning always require recompute because the monthly
  *   read model also contains the top-five teacherPayouts payment history;
- * - session earning creates/deletes and non-canonical duplicate rows require recompute,
- *   because a legacy row for the same session may become selected by dedupe rules;
+ * - session archive/unarchive, session earning creates/deletes and non-canonical duplicate rows
+ *   require recompute because legacy candidate selection can change;
  * - teacher/month moves require both affected months to recompute.
  */
 export const planTeacherEarningsRollupChange = (input: {
@@ -230,6 +247,10 @@ export const planTeacherEarningsRollupChange = (input: {
 
   if (payoutStateChanged(input.before, input.after)) {
     return { mode: 'recompute', targets, reason: 'payout_state_changed' };
+  }
+
+  if (sessionArchivedStateChanged(input.before, input.after)) {
+    return { mode: 'recompute', targets, reason: 'session_archived_state_changed' };
   }
 
   if (!beforeTarget || !afterTarget) {
