@@ -15,8 +15,8 @@ type ParentDashboardHeroProps = {
   heroMessage: string;
   programLabel: string;
   activeStageLabel: string;
-  classesCompleted: number;
-  classesUpcoming: number;
+  classesCompleted: number | null;
+  classesUpcoming: number | null;
   classesScopeLabel: string;
   alertText: string;
   hasAlert: boolean;
@@ -41,6 +41,8 @@ export default function ParentDashboardHero({
   joinClassUrl,
   joinClassDisabledReason = "Class link will appear once assigned.",
 }: ParentDashboardHeroProps) {
+  const classesAvailable = classesCompleted !== null && classesUpcoming !== null;
+
   return (
     <Card className="relative overflow-hidden rounded-[22px] border-indigo-100 bg-[radial-gradient(circle_at_top_right,rgba(124,58,237,0.14),transparent_38%),radial-gradient(circle_at_bottom_left,rgba(249,115,22,0.10),transparent_36%),linear-gradient(145deg,#ffffff_0%,#f5f7ff_100%)] p-4 shadow-[0_16px_40px_rgba(79,70,229,0.09)] sm:p-5 dark:border-slate-700 dark:bg-[radial-gradient(circle_at_top_right,rgba(124,58,237,0.18),transparent_38%),radial-gradient(circle_at_bottom_left,rgba(249,115,22,0.08),transparent_36%),linear-gradient(145deg,#0f172a_0%,#111827_100%)]">
       <div className="min-w-0">
@@ -75,7 +77,11 @@ export default function ParentDashboardHero({
         <div className="mt-3 flex min-w-0 flex-col gap-1.5 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between dark:text-slate-300">
           <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
-            <span>{classesCompleted} completed · {classesUpcoming} upcoming · {classesScopeLabel}</span>
+            <span>
+              {classesAvailable
+                ? `${classesCompleted} completed · ${classesUpcoming} upcoming · ${classesScopeLabel}`
+                : `Class totals unavailable · ${classesScopeLabel}`}
+            </span>
           </div>
           <div
             className={hasAlert

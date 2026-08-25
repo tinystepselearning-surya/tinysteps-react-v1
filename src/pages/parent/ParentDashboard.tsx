@@ -29,7 +29,6 @@ import ParentDashboardHero from "./components/ParentDashboardHero";
 import ParentDashboardKpis from "./components/ParentDashboardKpis";
 import ParentInsightsView from "./components/insights/ParentInsightsView";
 import ParentLearningInsights from "./components/ParentLearningInsights";
-import ParentLessonTracker from "./components/ParentLessonTracker";
 import ParentMobileHeader from "./components/ParentMobileHeader";
 import ParentPaymentOptionsDialog from "./components/payments/ParentPaymentOptionsDialog";
 import ParentPaymentsView from "./components/payments/ParentPaymentsView";
@@ -43,7 +42,6 @@ import {
   type ParentSkillsLesson,
 } from "./components/skills/parentSkillsPresentation";
 import ParentProgressOverview from "./components/ParentProgressOverview";
-import ParentRecommendations from "./components/ParentRecommendations";
 import ParentShellLoading from "./components/ParentShellLoading";
 import { stripParentStagePrefix } from "./parentVisualTokens";
 import {
@@ -82,10 +80,10 @@ import HolidayCalendar2026 from "../../components/common/HolidayCalendar2026";
 import MessagesPanel from "../messages/MessagesPanel";
 import useMessageThreads from "../../hooks/useMessageThreads";
 import { useChildCourseProgressProjection } from "../../hooks/useChildCourseProgressProjection";
+import { buildCanonicalParentOverview } from "./parentOverviewProjection";
  
 import { masteryKeyFromValue, masteryLabel, masteryPctFromKey, type MasteryKey } from "../../lib/mastery";
 import {
-  SKILL_RATING_MAX,
   hasExplicitProgressRatings,
   normalizeProgressRatings,
   normalizeProgressSkillsMeta,
@@ -108,11 +106,8 @@ import {
 import { getJoinLinkCandidate, resolveSessionJoinLink } from "../../lib/sessionJoinLink";
 import { isSessionCanonicalForEnrollment } from "../../lib/sessionScheduleIntegrity";
 import {
-  buildDashboardHeroMessage,
-  buildDashboardRecommendedNext,
   formatCurrencyINR,
   formatSkillChipLabel,
-  labelFromGameId,
   pickDashboardPracticeChips,
   pickDashboardStrengthChips,
 } from "./parentDashboardViewModel";
@@ -890,19 +885,6 @@ const STAGE_MASTERY_ORDER: MasteryKey[] = [
   "mastered",
 ];
 
-const TEACHER_STAR_GUIDE = [
-  { stars: "☆☆☆☆", label: "Not started" },
-  { stars: "⭐☆☆☆", label: "Emerging" },
-  { stars: "⭐⭐☆☆", label: "Developing" },
-  { stars: "⭐⭐⭐☆", label: "Proficient" },
-  { stars: "⭐⭐⭐⭐", label: "Mastered" },
-] as const;
-
-function starString(level: number): string {
-  const safeLevel = Math.max(0, Math.min(SKILL_RATING_MAX, Math.round(level)));
-  return `${"⭐".repeat(safeLevel)}${"☆".repeat(SKILL_RATING_MAX - safeLevel)}`;
-}
-
 function getLessonNeedsPracticeChips(row: any): string[] {
   if (Array.isArray(row?.practiceChips) && row.practiceChips.length > 0) {
     return row.practiceChips;
@@ -1434,14 +1416,8 @@ export default function ParentDashboard() {
 
   const kids = useMemo(() => kidsQuery.data ?? [], [kidsQuery.data]);
   const [selectedKidId, setSelectedKidId] = useState<string>("");
-  const [curriculumTopicModalOpen, setCurriculumTopicModalOpen] =
-    useState(false);
-  const [selectedCurriculumTopic, setSelectedCurriculumTopic] =
-    useState<any>(null);
-  const [curriculumFilter, setCurriculumFilter] = useState<
-    "all" | "in_progress" | "completed"
-  >("all");
-  const [collapsedStages, setCollapsedStages] = useState<Record<string, boolean>>({});
+  const [curriculumTopicModalOpen, setCurriculumTopicModalOpen] = useState(false);
+  const [selectedCurriculumTopic, setSelectedCurriculumTopic] = useState<any>(null);
   const [insightsCourseId, setInsightsCourseId] = useState<string>("");
   const [skillsCourseId, setSkillsCourseId] = useState<string>("");
   const [profileOpen, setProfileOpen] = useState(false);
@@ -3744,6 +3720,24 @@ export default function ParentDashboard() {
     return totals;
   }, [monthSessions, parentMonthlyBillingReadModelQuery.data, selectedKidId]);
 
+  // Brick P5 canonical overview wiring
+  // The Overview consumes only P3 course progress and P4 selected-child/month class totals.
+  // Legacy client calculations remain available to later bricks, but are not allowed to
+  // substitute values on this screen.
+  const canonicalParentOverview = buildCanonicalParentOverview({
+    courseProjection: childCourseProgressProjection.data,
+    expectedCourseId: displayCourseId,
+    classAttendanceModel: parentMonthlyBillingReadModelQuery.data?.attendance as any,
+    kidId: selectedKidId,
+    nowMs: Date.now(),
+  });
+  const overviewClassCounts = canonicalParentOverview.classCounts;
+  const overviewClassesState = parentMonthlyBillingReadModelQuery.isLoading
+    ? "loading" as const
+    : overviewClassCounts
+      ? "available" as const
+      : "unavailable" as const;
+
   const billingSummary = useMemo(() => {
     const kidId = selectedKidId ? String(selectedKidId) : null;
     const billingProjection = parentMonthlyBillingReadModelQuery.data;
@@ -4486,130 +4480,48 @@ export default function ParentDashboard() {
     canonicalJourneyStageProgressPct,
   ]);
 
-  const dashboardCurriculumData = useMemo(() => {
-    const selectedCourse = phonicsProgressByCourse[0];
-    if (!selectedCourse || selectedCourse.totalTopics === 0) return null;
-
-    const stageGroups = new Map<string, { label: string; order: number; rows: any[] }>();
-    const stageOrderMap = buildStageOrderMap(
-      selectedCourse.rows.map((row: any) => ({
-        stageLabel: row.stageLabel,
-        stageOrder: row.stageOrder,
-        order: null,
-      })),
-    );
-
-    selectedCourse.rows.forEach((row: any) => {
-      const label = row.stageLabel || "Lessons";
-      const order =
-        typeof row.stageOrder === "number" && row.stageOrder > 0
-          ? row.stageOrder
-          : parseStageOrderFromLabel(label) ?? stageOrderMap.get(label) ?? 0;
-      const key = `${order}__${label}`;
-      const existing = stageGroups.get(key);
-      if (existing) {
-        existing.rows.push(row);
-      } else {
-        stageGroups.set(key, { label, order, rows: [row] });
+  const dashboardCurriculumData = canonicalParentOverview.course
+    ? {
+        selectedCourse: {
+          courseId: canonicalParentOverview.course.courseId,
+          courseLabel:
+            canonicalParentOverview.course.courseLabel
+            || formatCourseLabel(canonicalParentOverview.course.courseId),
+        },
+        stageSummaries: canonicalParentOverview.course.stageSummaries.map((stage) => ({
+          label: stage.label,
+          order: stage.order,
+          progressPct: stage.completionPct,
+          completedCount: stage.completedTopics,
+          totalCount: stage.totalTopics,
+        })),
+        completedStages: canonicalParentOverview.course.completedStages,
+        activeStage: canonicalParentOverview.course.activeStage
+          ? {
+              label: canonicalParentOverview.course.activeStage.label,
+              order: canonicalParentOverview.course.activeStage.order,
+              progressPct: canonicalParentOverview.course.activeStage.completionPct,
+              completedCount: canonicalParentOverview.course.activeStage.completedTopics,
+              totalCount: canonicalParentOverview.course.activeStage.totalTopics,
+            }
+          : null,
+        nextStage: canonicalParentOverview.course.nextStage
+          ? {
+              label: canonicalParentOverview.course.nextStage.label,
+              order: canonicalParentOverview.course.nextStage.order,
+              progressPct: canonicalParentOverview.course.nextStage.completionPct,
+              completedCount: canonicalParentOverview.course.nextStage.completedTopics,
+              totalCount: canonicalParentOverview.course.nextStage.totalTopics,
+            }
+          : null,
+        summaryTotalTopics: canonicalParentOverview.course.totalTopics,
+        summaryCompletedCount: canonicalParentOverview.course.completedTopics,
+        summaryInProgressCount: canonicalParentOverview.course.inProgressTopics,
+        summaryOverallPct: canonicalParentOverview.course.overallPct,
+        summaryLastUpdatedAtMs: canonicalParentOverview.course.lastUpdatedAtMs,
       }
-    });
+    : null;
 
-    const stageSummaries = Array.from(stageGroups.values())
-      .sort((a, b) => (a.order !== b.order ? a.order - b.order : a.label.localeCompare(b.label)))
-      .map((group) => {
-        const masteryKey = aggregateStageMastery(group.rows.map((row) => row.mastery));
-        const progressPct = calcStageProgressPct(group.rows);
-        const completedCount = group.rows.filter(
-          (row: any) => row.status === "completed" || masteryKeyFromValue(row.mastery) === "mastered",
-        ).length;
-        const totalCount = group.rows.length;
-        const expectations =
-          STAGE_EXPECTATIONS_BY_COURSE[selectedCourse.courseId]?.[group.order] ?? [];
-        return {
-          label: group.label,
-          order: group.order,
-          masteryKey,
-          focusChips: pickStageFocus(group.rows),
-          progressPct,
-          completedCount,
-          totalCount,
-          expectations,
-        };
-      });
-
-    const completedStages = stageSummaries.filter((stage) => (stage.progressPct ?? 0) >= 100).length;
-    const stagesWithProgress = stageSummaries.filter((stage) => (stage.progressPct ?? 0) > 0);
-    const activeStage =
-      stagesWithProgress.length > 0
-        ? stagesWithProgress[stagesWithProgress.length - 1]
-        : stageSummaries.find((stage) => (stage.progressPct ?? 0) === 0) ?? null;
-    const nextStage = activeStage
-      ? stageSummaries.find((stage) => stage.order > (activeStage.order ?? 0)) ?? null
-      : null;
-
-    const inProgressCount = selectedCourse.rows.filter((row: any) => row.status === "in_progress").length;
-    const summaryTotalTopics = curriculumCompletionSummary?.totalTopics ?? selectedCourse.totalTopics;
-    const summaryCompletedCount = curriculumCompletionSummary?.completedTopics ?? selectedCourse.completedCount;
-    const summaryInProgressCount = curriculumCompletionSummary?.inProgressTopics ?? inProgressCount;
-    const summaryOverallPct = curriculumCompletionSummary?.overallPct ?? selectedCourse.overallPct;
-    const summaryLastUpdatedAtMs =
-      curriculumCompletionSummary?.lastUpdatedAtMs ?? selectedCourse.lastUpdatedAtMs;
-
-    const filteredRows =
-      curriculumFilter === "completed"
-        ? selectedCourse.rows.filter((row: any) => row.status === "completed")
-        : curriculumFilter === "in_progress"
-          ? selectedCourse.rows.filter((row: any) => row.status === "in_progress")
-          : selectedCourse.rows;
-
-    const lessonStageGroups = new Map<string, { key: string; label: string; order: number; rows: any[] }>();
-    filteredRows.forEach((row: any) => {
-      const label = row.stageLabel || "Lessons";
-      const order =
-        typeof row.stageOrder === "number" && row.stageOrder > 0
-          ? row.stageOrder
-          : parseStageOrderFromLabel(label) ?? stageOrderMap.get(label) ?? 0;
-      const key = `${order}__${label}`;
-      const existing = lessonStageGroups.get(key);
-      if (existing) {
-        existing.rows.push(row);
-      } else {
-        lessonStageGroups.set(key, { key, label, order, rows: [row] });
-      }
-    });
-
-    const stageSummaryByKey = new Map(
-      stageSummaries.map((stage) => [`${stage.order ?? 0}__${stage.label}`, stage]),
-    );
-
-    const groupedLessons = Array.from(lessonStageGroups.values())
-      .sort((a, b) => (a.order !== b.order ? a.order - b.order : a.label.localeCompare(b.label)))
-      .map((group) => ({
-        ...group,
-        summary: stageSummaryByKey.get(group.key) ?? null,
-      }));
-
-    return {
-      selectedCourse,
-      stageSummaries,
-      completedStages,
-      activeStage,
-      nextStage,
-      summaryTotalTopics,
-      summaryCompletedCount,
-      summaryInProgressCount,
-      summaryOverallPct,
-      summaryLastUpdatedAtMs,
-      filteredRows,
-      groupedLessons,
-    };
-  }, [phonicsProgressByCourse, curriculumCompletionSummary, curriculumFilter]);
-
-  const dashboardRecommendedNext = useMemo(() => {
-    return buildDashboardRecommendedNext(
-      canonicalRecommendedNext || kidSummaryQuery.data?.summary?.recommendedNext,
-    );
-  }, [canonicalRecommendedNext, kidSummaryQuery.data]);
 
   const dashboardStrengthChips = useMemo(() => {
     return pickDashboardStrengthChips({
@@ -4626,23 +4538,8 @@ export default function ParentDashboard() {
     });
   }, [recentTeacherRatingsSummary, skillsInsightData]);
 
-  const dashboardHeroMessage = useMemo(() => {
-    return buildDashboardHeroMessage({
-      childName: String(selectedKid?.fullName || selectedKid?.name || "Your child"),
-      phonicsLoading,
-      completion: dashboardCurriculumData?.summaryOverallPct ?? null,
-      dueNow: billingSummary.dueNow,
-      rescheduled: classesCounts.reschedule_requested,
-      upcoming: classesCounts.upcoming,
-    });
-  }, [
-    billingSummary.dueNow,
-    classesCounts.reschedule_requested,
-    classesCounts.upcoming,
-    dashboardCurriculumData,
-    phonicsLoading,
-    selectedKid,
-  ]);
+  const dashboardHeroMessage =
+    "Current programme, course progress, class activity, teacher feedback, and wallet status.";
 
   const heroJoinClass = useMemo<JoinClassResolution>(() => {
     const preferredStatuses = new Set(["active", "scheduled", "confirmed", "trial", "ongoing"]);
@@ -4696,23 +4593,22 @@ export default function ParentDashboard() {
     const programLabel = selectedCourse?.courseLabel
       || profileEnrollments[0]?.courseLabel
       || (displayCourseId ? formatCourseLabel(displayCourseId) : "Program assignment in progress");
-    const hasCurriculumCompletionScope =
-      Number(curriculumData?.summaryTotalTopics ?? curriculumCompletionSummary?.totalTopics ?? 0) > 0;
+    const hasCurriculumCompletionScope = Number(curriculumData?.summaryTotalTopics ?? 0) > 0;
     const completionValue =
       hasCurriculumCompletionScope && typeof curriculumData?.summaryOverallPct === "number"
         ? curriculumData.summaryOverallPct
-        : hasCurriculumCompletionScope && typeof curriculumCompletionSummary?.overallPct === "number"
-          ? curriculumCompletionSummary.overallPct
-          : undefined;
+        : undefined;
     const progressState =
-      phonicsLoading
+      childCourseProgressProjection.isLoading
         ? "loading" as const
         : typeof completionValue === "number"
           ? "available" as const
           : "unavailable" as const;
     const activeStageLabel = curriculumData?.activeStage
       ? stripStagePrefix(curriculumData.activeStage.label, curriculumData.activeStage.order ?? 0)
-      : overviewMetrics?.stageMessage || "Getting started";
+      : childCourseProgressProjection.isLoading
+        ? "Loading progress"
+        : "Progress unavailable";
     const latestTeacherLesson = recentTeacherRatingsSummary?.latestLesson ?? null;
     const previewRows = [...todayClassSessions, ...upcomingClassSessions]
       .filter((row) => {
@@ -4724,8 +4620,8 @@ export default function ParentDashboard() {
     if (walletBalance !== null && walletBalance < 0) {
       dashboardAlerts.push(`${formatCurrencyINR(Math.abs(walletBalance))} amount to pay`);
     }
-    if (classesCounts.reschedule_requested > 0) {
-      dashboardAlerts.push(`${classesCounts.reschedule_requested} class update needs attention`);
+    if ((overviewClassCounts?.reschedule_requested ?? 0) > 0) {
+      dashboardAlerts.push(`${overviewClassCounts?.reschedule_requested} class update needs attention`);
     }
 
     const canJoinFromOverview = (row: { session: KidSession; status: string }) => {
@@ -4743,10 +4639,10 @@ export default function ParentDashboard() {
 
     const selectedCourseLabel = selectedCourse?.courseLabel || "";
     const lessonsSummaryText = curriculumData
-      ? `${curriculumData.summaryCompletedCount}/${curriculumData.summaryTotalTopics} lessons`
-      : phonicsLoading
-        ? "Loading lesson totals"
-        : "Curriculum data unavailable";
+      ? `${curriculumData.summaryCompletedCount} of ${curriculumData.summaryTotalTopics} lessons completed`
+      : childCourseProgressProjection.isLoading
+        ? "Loading canonical lesson totals"
+        : "Canonical course progress unavailable";
     const confidenceLabel =
       overviewMetrics?.confidenceNow !== null && overviewMetrics?.confidenceNow !== undefined
         ? masteryLabel(overviewMetrics.confidenceNow)
@@ -4757,8 +4653,12 @@ export default function ParentDashboard() {
         : kidSummaryQuery.isLoading
           ? "Loading latest snapshot"
           : "No confidence snapshot yet";
-    const attendanceLabel = `${classesCounts.completed}/${classesCounts.total}`;
-    const attendanceMetaText = `${classesMonthLabel} · ${classesCounts.reschedule_requested} rescheduled`;
+    const attendanceLabel = overviewClassCounts
+      ? `${overviewClassCounts.completed} completed · ${overviewClassCounts.total} sessions`
+      : "Not available";
+    const attendanceMetaText = overviewClassCounts
+      ? `${classesMonthLabel} · selected child`
+      : `${classesMonthLabel} · selected-child totals unavailable`;
     const billingLabel =
       walletBalance === null
         ? "Wallet unavailable"
@@ -4778,8 +4678,8 @@ export default function ParentDashboard() {
           heroMessage={dashboardHeroMessage}
           programLabel={programLabel}
           activeStageLabel={activeStageLabel}
-          classesCompleted={classesCounts.completed}
-          classesUpcoming={classesCounts.upcoming}
+          classesCompleted={overviewClassCounts?.completed ?? null}
+          classesUpcoming={overviewClassCounts?.upcoming ?? null}
           classesScopeLabel={classesMonthLabel}
           alertText={dashboardAlerts.length > 0 ? dashboardAlerts[0] : "No urgent alerts right now"}
           hasAlert={dashboardAlerts.length > 0}
@@ -4796,9 +4696,9 @@ export default function ParentDashboard() {
           confidenceLabel={confidenceLabel}
           confidenceMetaText={confidenceMetaText}
           confidenceLoading={kidSummaryQuery.isLoading}
+          attendanceState={overviewClassesState}
           attendanceLabel={attendanceLabel}
           attendanceMetaText={attendanceMetaText}
-          attendanceLoading={kidSessionsQuery.isLoading && parentMonthlyBillingReadModelQuery.isLoading}
           billingLabel={billingLabel}
           billingMetaText={billingMetaText}
           billingLoading={billingLoading}
@@ -4806,7 +4706,8 @@ export default function ParentDashboard() {
 
         <div className="grid gap-4 sm:gap-6 xl:grid-cols-2">
           <ParentAttendanceSummary
-            classesCounts={classesCounts}
+            classesState={overviewClassesState}
+            classesCounts={overviewClassCounts}
             scopeLabel={`Class activity · ${classesMonthLabel}`}
             upcomingPreviewRows={previewRows}
             joiningSessionId={joiningSessionId}
@@ -4817,14 +4718,13 @@ export default function ParentDashboard() {
 
           <ParentProgressOverview
             childName={childName}
-            isRefetching={phonicsProgressQuery.isRefetching}
-            onRefresh={() => phonicsProgressQuery.refetch()}
-            showsFallbackBanner={curriculumCompletionSummary?.source === "fallback_client"}
-            phonicsLoading={phonicsLoading}
-            phonicsError={phonicsError}
-            phonicsErrorMessage={phonicsErrorMessage}
-            curriculumData={curriculumData}
-            completionPct={completionValue}
+            loading={childCourseProgressProjection.isLoading}
+            errorMessage={
+              childCourseProgressProjection.isError
+                ? "Unable to load canonical course progress right now."
+                : null
+            }
+            course={canonicalParentOverview.course}
             stripStagePrefix={stripStagePrefix}
           />
         </div>
@@ -4840,12 +4740,6 @@ export default function ParentDashboard() {
             onOpenAllRatings={() => setTab("skills")}
           />
 
-          <ParentRecommendations
-            dashboardRecommendedNext={dashboardRecommendedNext}
-            labelFromGameId={labelFromGameId}
-            onStartPractice={handlePracticeClick}
-            onOpenGamesProgress={() => setTab("games-progress")}
-          />
         </div>
 
         <ParentBillingSummary
@@ -4867,35 +4761,6 @@ export default function ParentDashboard() {
           onOpenPayments={() => setTab("payments")}
         />
 
-        <ParentLessonTracker
-          phonicsLoading={phonicsLoading}
-          phonicsError={phonicsError}
-          phonicsErrorMessage={phonicsErrorMessage}
-          displayCourseId={displayCourseId}
-          curriculumData={curriculumData}
-          curriculumFilter={curriculumFilter}
-          setCurriculumFilter={setCurriculumFilter}
-          collapsedStages={collapsedStages}
-          setCollapsedStages={setCollapsedStages}
-          onRefresh={() => phonicsProgressQuery.refetch()}
-          isRefetching={phonicsProgressQuery.isRefetching}
-          formatTimestamp={formatTimestamp}
-          stripStagePrefix={stripStagePrefix}
-          teacherStarGuide={TEACHER_STAR_GUIDE}
-          starString={starString}
-          selectedCourseLabel={selectedCourseLabel}
-          onSelectTopic={(topic) => {
-            setSelectedCurriculumTopic(topic);
-            setCurriculumTopicModalOpen(true);
-          }}
-          curriculumTopicModalOpen={curriculumTopicModalOpen}
-          selectedCurriculumTopic={selectedCurriculumTopic}
-          onModalOpenChange={(open) => {
-            setCurriculumTopicModalOpen(open);
-            if (!open) setSelectedCurriculumTopic(null);
-          }}
-          getLessonNeedsPracticeChips={getLessonNeedsPracticeChips}
-        />
       </div>
     );
   };

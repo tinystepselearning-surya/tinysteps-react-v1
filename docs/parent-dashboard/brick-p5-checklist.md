@@ -1,0 +1,22 @@
+# Brick P5 — Parent Overview Checklist
+
+- [x] P5 is stacked directly on the exact P4 branch.
+- [x] Overview course progress accepts only P3 V2 with `teacher_lesson_status` authority.
+- [x] P3 course and stage reconciliation is validated before rendering.
+- [x] Overview class totals use only P4 selected-child/month data.
+- [x] Family totals are never substituted for a missing selected-child row.
+- [x] Genuine zero and unavailable states are distinct.
+- [x] Guessed confidence is removed from the P5 Overview UI.
+- [x] Invented/synthetic recommendations are removed from the P5 Overview UI.
+- [x] Detailed lesson tracker is removed from Overview and deferred to P6.
+- [x] Latest teacher-provided learning evidence remains available as the skills snapshot.
+- [x] Existing wallet surface is retained without changing finance authority; P9 owns finance cutover.
+- [x] Raw class rows are used only for Next Class preview/join pending P8.
+- [x] P5 selector unit tests cover wrong authority, reconciliation and child-scope failures.
+- [x] Existing Parent Home component tests cover unavailable vs zero and P5 exclusions.
+- [ ] Type check green on final cleaned head.
+- [ ] Lint green on final cleaned head.
+- [ ] Full CI green on exact final head.
+- [ ] Final P4→P5 diff reviewed for scope.
+- [ ] Draft stacked PR opened with P4 as base.
+- [ ] No merge performed without explicit approval.
