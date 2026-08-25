@@ -281,6 +281,13 @@ service cloud.firestore {
         ]);
     }
 
+    function learningPartnerCanReadUser(data) {
+      return isLP()
+        && ('assignedLPs' in data)
+        && data.assignedLPs is list
+        && (request.auth.uid in data.assignedLPs);
+    }
+
     function messageThreadDocPath(threadId) {
       return /databases/$(database)/documents/messageThreads/$(threadId);
     }
@@ -327,7 +334,18 @@ service cloud.firestore {
     // Who can read kid + kid subcollections
     function canAccessKid(kidId) {
       return isAdmin()
-        || isTeacher()
+        || (
+          isTeacher()
+          && kidExists(kidId)
+          && (
+            (('teacherId' in kidDoc(kidId)) && kidDoc(kidId).teacherId == request.auth.uid)
+            || (('teacherIds' in kidDoc(kidId)) && kidDoc(kidId).teacherIds is list && (request.auth.uid in kidDoc(kidId).teacherIds))
+            || (('assignedTeacherId' in kidDoc(kidId)) && kidDoc(kidId).assignedTeacherId == request.auth.uid)
+            || (('primaryTeacherId' in kidDoc(kidId)) && kidDoc(kidId).primaryTeacherId == request.auth.uid)
+            || (('teacherUid' in kidDoc(kidId)) && kidDoc(kidId).teacherUid == request.auth.uid)
+            || (('teacher_id' in kidDoc(kidId)) && kidDoc(kidId).teacher_id == request.auth.uid)
+          )
+        )
         || (
           isParent()
           && kidExists(kidId)
@@ -495,16 +513,14 @@ function teacherOwnsDocViaAliases(data) {
     // USERS COLLECTION
     // ----------------------------
     match /users/{uid} {
-      // Preserve the existing broad internal-user lookup behaviour
-      // temporarily, but external School Admin users can only read
-      // their own user document.
-      //
-      // Brick 1 introduces the dedicated school tenant collections.
-      allow read: if isSignedIn()
-        && (
-          !isSchoolAdmin()
-          || request.auth.uid == uid
-        );
+      // Least privilege: full directory access is admin-only. Other roles can
+      // read their own profile, while LPs can get only explicitly assigned users.
+      allow get: if (isSignedIn() && request.auth.uid == uid)
+        || isAdmin()
+        || learningPartnerCanReadUser(resource.data);
+
+      // Collection/list queries expose the directory and are admin-only.
+      allow list: if isAdmin();
 
       allow create, delete:
         if isAdmin();

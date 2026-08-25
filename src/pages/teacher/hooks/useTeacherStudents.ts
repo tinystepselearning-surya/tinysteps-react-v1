@@ -83,15 +83,7 @@ const fetchTeacherStudents = async (teacherId: string): Promise<TeacherStudent[]
     });
   });
 
-  const parentIds = new Set<string>();
   const courseIds = new Set<string>();
-  kidDocs.forEach(({ data }) => {
-    const parentId =
-      data.primaryParentId ||
-      data.parentId ||
-      (Array.isArray(data.parentIds) ? data.parentIds[0] : null);
-    if (parentId) parentIds.add(String(parentId));
-  });
   enrollmentDocsById.forEach((enrollment) => {
     const courseId = String(enrollment.courseId || '').trim();
     if (courseId) courseIds.add(courseId);
@@ -114,45 +106,30 @@ const fetchTeacherStudents = async (teacherId: string): Promise<TeacherStudent[]
     });
   }
 
-  const parentById = new Map<string, { name?: string; email?: string }>();
-  await Promise.all(
-    Array.from(parentIds).map(async (pid) => {
-      const userSnap = await getDocLogged(
-        'useTeacherStudents:parent-user-by-id',
-        doc(db, 'users', pid),
-        { source: 'src/pages/teacher/hooks/useTeacherStudents.ts' },
-      );
-      if (userSnap.exists()) {
-        const u = userSnap.data() as any;
-        parentById.set(pid, { name: u.displayName || u.name, email: u.email });
-        return;
-      }
-      const parentSnap = await getDocLogged(
-        'useTeacherStudents:parent-doc-by-id',
-        doc(db, 'parents', pid),
-        { source: 'src/pages/teacher/hooks/useTeacherStudents.ts' },
-      );
-      if (parentSnap.exists()) {
-        const p = parentSnap.data() as any;
-        parentById.set(pid, { name: p.displayName || p.name, email: p.email });
-      }
-    })
-  );
-
   return kidDocs.flatMap(({ id, data }) => {
     const enrollments = (enrollmentsByKidId.get(id) || []).filter((enrollment) =>
       normalizeTeacherIds(enrollment as Record<string, unknown>).includes(teacherId),
     );
-    const parentId =
-      data.primaryParentId ||
-      data.parentId ||
-      (Array.isArray(data.parentIds) ? data.parentIds[0] : null);
-    const parentInfo = parentId ? parentById.get(String(parentId)) : undefined;
-
     return enrollments.map((enrollment) => {
       const courseId = String(enrollment.courseId || '').trim();
       const courseName =
         enrollment.courseName || enrollment.courseLabel || courseMap.get(courseId) || courseId;
+      const parentName = String(
+        enrollment.parentDisplayName ||
+          enrollment.parentName ||
+          enrollment.guardianName ||
+          data.parentDisplayName ||
+          data.parentName ||
+          data.guardianName ||
+          '',
+      ).trim() || undefined;
+      const parentEmail = String(
+        enrollment.parentEmail ||
+          enrollment.guardianEmail ||
+          data.parentEmail ||
+          data.guardianEmail ||
+          '',
+      ).trim() || undefined;
       return {
         id,
         enrollmentId: String(enrollment.id),
@@ -160,8 +137,8 @@ const fetchTeacherStudents = async (teacherId: string): Promise<TeacherStudent[]
         grade: data.grade || data.level,
         courseNames: courseName ? [courseName] : [],
         enrollmentStatus: enrollment.status ? String(enrollment.status).toLowerCase() : undefined,
-        parentName: parentInfo?.name,
-        parentEmail: parentInfo?.email,
+        parentName,
+        parentEmail,
         progressStatus: data.progressStatus || 'on_track',
         lastSessionDate: data.lastSessionDate,
         avatarUrl: data.avatarUrl,

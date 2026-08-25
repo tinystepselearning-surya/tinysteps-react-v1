@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   collection,
   doc,
-  documentId,
   getDoc,
   getDocs,
   limit,
@@ -1788,56 +1787,6 @@ export default function ParentDashboard() {
           }
         }
       });
-      return map;
-    },
-  });
-
-  const teacherIdsForProfile = useMemo(() => {
-    const enrollments = (enrollmentsQuery.data ?? []) as Enrollment[];
-    const ids = new Set<string>();
-    enrollments.forEach((enr) => {
-      const candidate = String(
-        enr.teacherId ||
-          enr.teacherUid ||
-          enr.teacherUserId ||
-          (enr as any).teacher ||
-          ""
-      ).trim();
-      if (candidate) ids.add(candidate);
-    });
-    return Array.from(ids);
-  }, [enrollmentsQuery.data]);
-
-  const teacherLookupQuery = useQuery({
-    queryKey: ["teacherLookup", teacherIdsForProfile],
-    enabled: profileOpen && teacherIdsForProfile.length > 0,
-    staleTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    queryFn: async () => {
-      const map: Record<string, { name: string; email?: string }> = {};
-      if (!teacherIdsForProfile.length) return map;
-      const usersCol = collection(db, "users");
-      const chunks = chunkIds(teacherIdsForProfile, 10);
-      for (const chunk of chunks) {
-        const snap = await getDocs(
-          query(usersCol, where(documentId(), "in", chunk))
-        );
-        snap.forEach((docSnap) => {
-          const data = docSnap.data() as any;
-          const name = String(
-            data?.displayName ||
-              data?.name ||
-              data?.fullName ||
-              data?.email ||
-              docSnap.id
-          ).trim();
-          map[docSnap.id] = {
-            name: name || "Teacher",
-            email: data?.email ? String(data.email).trim() : undefined,
-          };
-        });
-      }
       return map;
     },
   });
@@ -3969,8 +3918,12 @@ export default function ParentDashboard() {
           (enr as any).teacher ||
           ""
       ).trim();
-      const teacherProfile = teacherId ? teacherLookupQuery.data?.[teacherId] : undefined;
-      const teacherName = teacherProfile?.name || "";
+      const teacherName = String(
+        (enr as any).teacherDisplayName ||
+          (enr as any).teacherName ||
+          (enr as any).assignedTeacherName ||
+          ""
+      ).trim();
       const parentRate = resolveVerifiedParentRate(enr as Record<string, unknown>);
       return {
         id: enr.id,
@@ -3982,7 +3935,7 @@ export default function ParentDashboard() {
         teacherName,
       };
     });
-  }, [enrollmentsQuery.data, selectedKidId, teacherLookupQuery.data, formatCourseLabel]);
+  }, [enrollmentsQuery.data, selectedKidId, formatCourseLabel]);
 
   const selectedKidEnrollmentDocs = useMemo(() => {
     const enrollments = (enrollmentsQuery.data ?? []) as Enrollment[];

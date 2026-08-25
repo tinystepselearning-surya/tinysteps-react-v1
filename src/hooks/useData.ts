@@ -259,7 +259,6 @@ export function useEnrollments(parentId: string) {
       // gather ids to prefetch
       const allKidIds = new Set<string>();
       const courseIds = new Set<string>();
-      const teacherIds = new Set<string>();
 
       snap.docs.forEach((d: any) => {
         const enrollment = d.data() as Enrollment;
@@ -273,13 +272,11 @@ export function useEnrollments(parentId: string) {
           if (fallbackKidId) allKidIds.add(fallbackKidId);
         }
         if ((enrollment as any).courseId) courseIds.add((enrollment as any).courseId);
-        if ((enrollment as any).teacherId) teacherIds.add((enrollment as any).teacherId);
       });
 
-      const [kidsMap, coursesMap, teachersMap] = await Promise.all([
+      const [kidsMap, coursesMap] = await Promise.all([
         batchFetch('kids', Array.from(allKidIds)),
         batchFetch('courses', Array.from(courseIds)),
-        batchFetch('users', Array.from(teacherIds)),
       ]);
 
       const results: any[] = [];
@@ -296,7 +293,22 @@ export function useEnrollments(parentId: string) {
         }));
 
         const course = enrAny.courseId ? coursesMap.get(enrAny.courseId) || null : null;
-        const teacher = enrAny.teacherId ? teachersMap.get(enrAny.teacherId) || null : null;
+        const teacherId = String(
+          enrAny.teacherId || enrAny.teacherUid || enrAny.teacherUserId || '',
+        ).trim();
+        const teacherName = String(
+          enrAny.teacherDisplayName || enrAny.teacherName || enrAny.assignedTeacherName || '',
+        ).trim();
+        const teacherEmail = String(enrAny.teacherEmail || '').trim();
+        const teacher = teacherId
+          ? {
+              uid: teacherId,
+              id: teacherId,
+              displayName: teacherName || 'Teacher',
+              name: teacherName || 'Teacher',
+              ...(teacherEmail ? { email: teacherEmail } : {}),
+            }
+          : null;
 
         results.push({ id: docSnap.id, ...enrollment, kids, course, teacher });
       }

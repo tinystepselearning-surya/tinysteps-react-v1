@@ -514,7 +514,7 @@ export default function MessagesPanel({
   }, [keyboardOpen, scrollMessagesToBottom, selectedThread?.id]);
 
   useEffect(() => {
-    if (!selectedThread) return;
+    if (!selectedThread || !isAdmin) return;
 
     const senderIds = messages.map((message) => message.senderId);
     const lookupIds = dedupeIds([
@@ -565,6 +565,7 @@ export default function MessagesPanel({
       isCancelled = true;
     };
   }, [
+    isAdmin,
     messages,
     selectedRoleIds.learningPartnerIds,
     selectedRoleIds.parentIds,
