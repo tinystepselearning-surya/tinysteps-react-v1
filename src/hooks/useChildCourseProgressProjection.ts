@@ -2,6 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 
 import { db } from '../lib/firebaseConfig';
+import {
+  normalizeBootstrapCourseId,
+  requestCourseProgressBootstrap,
+} from '../lib/parentCanonicalProjectionBootstrap';
 
 export type ChildCourseProgressStageProjection = {
   key: string;
@@ -124,7 +128,7 @@ export function useChildCourseProgressProjection(
   enabled = true,
 ) {
   const normalizedKidId = String(kidId || '').trim();
-  const normalizedCourseId = String(courseId || '').trim();
+  const normalizedCourseId = normalizeBootstrapCourseId(String(courseId || '')) || '';
   const projectionKey = enabled && normalizedKidId && normalizedCourseId
     ? `${normalizedKidId}::${normalizedCourseId}`
     : '';
@@ -150,6 +154,12 @@ export function useChildCourseProgressProjection(
     return onSnapshot(
       doc(db, 'students', normalizedKidId, 'courseProgress', normalizedCourseId),
       (snapshot) => {
+        if (!snapshot.exists()) {
+          // Existing students can predate the P3 projection writer. Create one deterministic,
+          // parent-owned bootstrap request; the backend performs the bounded rebuild once.
+          void requestCourseProgressBootstrap(normalizedKidId, normalizedCourseId).catch(() => undefined);
+        }
+
         const raw = snapshot.exists()
           ? (snapshot.data() as ChildCourseProgressProjection)
           : null;
