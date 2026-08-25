@@ -6,8 +6,10 @@ on:
       - audit/b6-production-session-create-evidence
     paths:
       - functions/scripts/b6ProductionSessionCreateEvidence.js
+      - functions/scripts/b6VerifyFlaggedEarningServiceDates.js
       - functions/src/helpers/teacherEarningsCanonicalAudit.ts
       - functions/src/helpers/teacherEarningsSessionCreateFastPath.ts
+      - functions/src/helpers/serviceDate.ts
       - .github/workflows/b6-production-session-create-evidence-audit.yml
 
 permissions:
@@ -59,21 +61,21 @@ jobs:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
           create_credentials_file: true
 
-      - name: Run bounded read-only production ledger evidence audit
+      - name: Run read-only flagged-row canonical service-date verification
         run: >-
-          node functions/scripts/b6ProductionSessionCreateEvidence.js
+          node functions/scripts/b6VerifyFlaggedEarningServiceDates.js
           --project=${{ env.FIREBASE_PROJECT_ID }}
           --month=${{ env.AUDIT_MONTH_KEY }}
           --max-docs=10000
-          --sample-limit=100
-          --output=artifacts/b6-production-session-create-evidence.json
+          --expected-flagged=83
+          --output=artifacts/b6-flagged-earning-service-date-verification.json
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
 
       - name: Upload audit evidence
         uses: actions/upload-artifact@v4
         with:
-          name: b6-production-session-create-evidence-${{ github.sha }}
-          path: artifacts/b6-production-session-create-evidence.json
+          name: b6-flagged-earning-service-date-verification-${{ github.sha }}
+          path: artifacts/b6-flagged-earning-service-date-verification.json
           if-no-files-found: error
           retention-days: 7
