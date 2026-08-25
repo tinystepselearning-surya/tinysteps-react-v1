@@ -9,8 +9,16 @@ export type ParentInsightStageState =
   | "completed"
   | "current"
   | "in_progress"
+  | "not_started"
   | "upcoming"
   | "unavailable";
+
+export type ParentInsightLessonDisplay = {
+  id: string;
+  label: string;
+  lessonStatus: "not_started" | "in_progress" | "completed";
+  updatedLabel: string;
+};
 
 export type ParentInsightStageDisplay = {
   key: string;
@@ -19,11 +27,13 @@ export type ParentInsightStageDisplay = {
   state: ParentInsightStageState;
   progressPct: number | null;
   completedCount: number | null;
+  inProgressCount: number | null;
+  notStartedCount: number | null;
   totalCount: number | null;
-  masteryLabel: string;
   hint: string;
   focusItems: string[];
   expectations: string[];
+  lessons: ParentInsightLessonDisplay[];
 };
 
 export type ParentInsightTeacherDisplay = {
@@ -49,7 +59,9 @@ export const getParentInsightStageStateLabel = (
     case "current":
       return "Current stage";
     case "in_progress":
-      return "Progress recorded";
+      return "In progress";
+    case "not_started":
+      return "Not started";
     case "upcoming":
       return "Upcoming";
     default:
@@ -57,23 +69,40 @@ export const getParentInsightStageStateLabel = (
   }
 };
 
+export const getParentInsightLessonStatusLabel = (
+  status: ParentInsightLessonDisplay["lessonStatus"],
+): string => {
+  switch (status) {
+    case "completed":
+      return "Completed";
+    case "in_progress":
+      return "In progress";
+    default:
+      return "Not started";
+  }
+};
+
 export const resolveParentInsightStageState = ({
   key,
   order,
-  progressPct,
+  completedCount,
+  inProgressCount,
+  totalCount,
   activeStageKey,
   activeStageOrder,
 }: {
   key: string;
   order: number;
-  progressPct: number | null;
+  completedCount: number | null;
+  inProgressCount: number | null;
+  totalCount: number | null;
   activeStageKey: string | null;
   activeStageOrder: number | null;
 }): ParentInsightStageState => {
-  if (progressPct === null) return "unavailable";
-  if (progressPct >= 100) return "completed";
+  if (completedCount === null || inProgressCount === null || totalCount === null) return "unavailable";
+  if (totalCount > 0 && completedCount === totalCount) return "completed";
   if (key === activeStageKey) return "current";
-  if (progressPct > 0) return "in_progress";
+  if (completedCount > 0 || inProgressCount > 0) return "in_progress";
   if (activeStageOrder === null || order > activeStageOrder) return "upcoming";
-  return "unavailable";
+  return "not_started";
 };
