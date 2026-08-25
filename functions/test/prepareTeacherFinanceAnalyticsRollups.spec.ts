@@ -5,7 +5,7 @@ import path from 'node:path';
 describe('B6 Brick 6B1 analytics rollup preparation source guards', () => {
   it('keeps preparation explicit, bounded, and away from teacherEarnings writes', () => {
     const source = fs.readFileSync(
-      path.resolve(process.cwd(), 'src/prepareTeacherFinanceAnalyticsRollups.ts'),
+      path.resolve(process.cwd(), 'functions/src/prepareTeacherFinanceAnalyticsRollups.ts'),
       'utf8',
     );
 
@@ -26,7 +26,7 @@ describe('B6 Brick 6B1 analytics rollup preparation source guards', () => {
 
   it('marks the month not-ready before any apply and ready only after rollup batches finish', () => {
     const source = fs.readFileSync(
-      path.resolve(process.cwd(), 'src/prepareTeacherFinanceAnalyticsRollups.ts'),
+      path.resolve(process.cwd(), 'functions/src/prepareTeacherFinanceAnalyticsRollups.ts'),
       'utf8',
     );
 
@@ -40,7 +40,7 @@ describe('B6 Brick 6B1 analytics rollup preparation source guards', () => {
   });
 
   it('exports the admin-only preparation callable from the Functions barrel', () => {
-    const source = fs.readFileSync(path.resolve(process.cwd(), 'src/index.ts'), 'utf8');
+    const source = fs.readFileSync(path.resolve(process.cwd(), 'functions/src/index.ts'), 'utf8');
     expect(source).toContain(
       'export { prepareTeacherFinanceAnalyticsRollups } from "./prepareTeacherFinanceAnalyticsRollups";',
     );
@@ -48,7 +48,7 @@ describe('B6 Brick 6B1 analytics rollup preparation source guards', () => {
 
   it('invalidates prepared analytics only for unsafe earning event images', () => {
     const source = fs.readFileSync(
-      path.resolve(process.cwd(), 'src/teacherEarningsRollupTrigger.ts'),
+      path.resolve(process.cwd(), 'functions/src/teacherEarningsRollupTrigger.ts'),
       'utf8',
     );
 
