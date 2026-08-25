@@ -4,6 +4,7 @@ import {
   MAX_CHILD_PROGRESS_BOOTSTRAP_DOCS,
   currentIndiaMonthKey,
   isCurrentIndiaMonthKey,
+  isSupportedCourseBootstrapRequestId,
   normalizeBootstrapKind,
 } from '../src/parentCanonicalProjectionBootstrap';
 
@@ -13,6 +14,13 @@ describe('parent canonical projection bootstrap guardrails', () => {
     expect(normalizeBootstrapKind('class_attendance')).toBe('class_attendance');
     expect(normalizeBootstrapKind('finance')).toBeNull();
     expect(normalizeBootstrapKind(undefined)).toBeNull();
+  });
+
+  it('accepts the saved-lesson v2 repair id while preserving v1 rollout compatibility', () => {
+    expect(isSupportedCourseBootstrapRequestId('v1-course-early-phonics', 'early-phonics')).toBe(true);
+    expect(isSupportedCourseBootstrapRequestId('v2-course-early-phonics', 'early-phonics')).toBe(true);
+    expect(isSupportedCourseBootstrapRequestId('v2-course-early-phonics', 'phonics-foundations')).toBe(false);
+    expect(isSupportedCourseBootstrapRequestId('v3-course-early-phonics', 'early-phonics')).toBe(false);
   });
 
   it('keeps the child progress bootstrap scan hard-capped', () => {
