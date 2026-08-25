@@ -3,9 +3,9 @@ import * as admin from 'firebase-admin';
 import { ensureAdmin } from './helpers/adminGuard';
 import {
   analyzeTeacherEarningsCanonicalCoverage,
-  analyzeTeacherEarningsLegacyMonthCoverage,
   type TeacherEarningAuditRow,
 } from './helpers/teacherEarningsCanonicalAudit';
+import { analyzeTeacherEarningsCanonicalServiceMonthCoverage } from './helpers/teacherEarningsServiceMonthEvidence';
 import { evaluateTeacherEarningsSessionCreateFastPathReadiness } from './helpers/teacherEarningsSessionCreateFastPath';
 
 if (!admin.apps.length) admin.initializeApp();
@@ -51,8 +51,9 @@ function toAuditRows(
  * Admin-only, read-only B6 integrity audit.
  *
  * Default mode performs one bounded query for the explicit target month.
- * Optional includeLegacyMonthCoverage mode performs one bounded full-ledger scan instead so it
- * can detect active rows whose target month exists only in timestamps or conflicts with monthKey.
+ * Optional includeLegacyMonthCoverage mode performs one bounded full-ledger scan and validates
+ * session-linked month ownership against the linked class session's canonical service date.
+ * Ledger processing timestamps are never used as service dates for session-linked earnings.
  * Neither mode performs Firestore writes or repairs.
  */
 export const auditTeacherEarningsCanonicalCoverage = onCall(
@@ -69,7 +70,8 @@ export const auditTeacherEarningsCanonicalCoverage = onCall(
     const sampleLimit = clampInt(request.data?.sampleLimit, DEFAULT_SAMPLE_LIMIT, 0, 100);
     const includeLegacyMonthCoverage = request.data?.includeLegacyMonthCoverage === true;
 
-    const collectionRef = admin.firestore().collection('teacherEarnings');
+    const db = admin.firestore();
+    const collectionRef = db.collection('teacherEarnings');
     const baseQuery = includeLegacyMonthCoverage
       ? collectionRef.limit(maxDocs + 1)
       : collectionRef.where('monthKey', '==', monthKey).limit(maxDocs + 1);
@@ -85,7 +87,12 @@ export const auditTeacherEarningsCanonicalCoverage = onCall(
 
     const coverage = analyzeTeacherEarningsCanonicalCoverage(targetMonthRows, sampleLimit);
     const legacyMonthCoverage = includeLegacyMonthCoverage
-      ? analyzeTeacherEarningsLegacyMonthCoverage(scannedRows, monthKey, sampleLimit)
+      ? await analyzeTeacherEarningsCanonicalServiceMonthCoverage(
+          db,
+          scannedRows,
+          monthKey,
+          sampleLimit,
+        )
       : null;
 
     const fullLedgerEvidenceComplete = includeLegacyMonthCoverage && !truncated;
@@ -122,7 +129,7 @@ export const auditTeacherEarningsCanonicalCoverage = onCall(
       note: truncated
         ? 'Audit evidence is incomplete because the bounded scan truncated. Do not use clean-looking partial results to enable read cutovers or incremental finance writes.'
         : includeLegacyMonthCoverage
-          ? 'Read-only evidence only. A clean sessionCreateFastPath result supports Brick 7D review but does not itself enable session-create incremental finance writes.'
+          ? 'Read-only evidence only. Session-linked month ownership is validated against canonical class service dates. A clean sessionCreateFastPath result supports Brick 7D review but does not itself enable session-create incremental finance writes.'
           : 'Explicit-month coverage only. Run again with includeLegacyMonthCoverage=true before month-bounding reads or expanding incremental finance behavior.',
     };
   },
