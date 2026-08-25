@@ -30,7 +30,7 @@ describe('B6 Brick 6B2 Finance analytics teacher summary cutover', () => {
     expect(rollupIndex).toBeGreaterThan(readinessIndex);
     expect(rawFallbackIndex).toBeGreaterThan(-1);
     expect(source).toContain("where('monthKey', '==', monthKey)");
-    expect(source).toContain("fallbackReason: 'rollup_projection_not_safe'");
+    expect(source).toContain("loadRawTeacherFinanceSummary(monthKey, 'rollup_projection_not_safe')");
     expect(source).toContain("loadRawTeacherFinanceSummary(monthKey, 'month_not_certified')");
     expect(source).toContain("loadRawTeacherFinanceSummary(monthKey, 'rollup_read_failed')");
   });
