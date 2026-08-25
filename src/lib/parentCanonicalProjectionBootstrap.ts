@@ -54,9 +54,14 @@ export function currentIndiaMonthKey(nowMs = Date.now()): string {
   return `${year}-${month}`;
 }
 
+/**
+ * V2 intentionally uses a new deterministic document id. Parents may already have a completed
+ * v1 bootstrap request from the old lessonStatus completion contract; reusing that id would
+ * permanently block the one-time saved-lesson repair.
+ */
 export function courseBootstrapRequestId(courseId: string): string | null {
   const normalized = normalizeBootstrapCourseId(courseId);
-  return normalized ? `v1-course-${normalized}` : null;
+  return normalized ? `v2-course-${normalized}` : null;
 }
 
 // Retained for compatibility/tests documenting the original deterministic request path.
@@ -104,6 +109,7 @@ async function createRequest(args: {
       kidId,
       kind: 'course_progress',
       courseId: normalizedCourseId,
+      repairVersion: 2,
       createdAt: serverTimestamp(),
     });
     return 'created';
