@@ -229,7 +229,7 @@ describe('B6 Brick 7A teacher earnings incremental transaction protocol', () => 
 
   it('does not wire Brick 7A into the live trigger before the recompute fence exists', () => {
     const liveTriggerSource = fs.readFileSync(
-      path.resolve(process.cwd(), 'src/teacherEarningsRollupTrigger.ts'),
+      path.resolve(process.cwd(), 'functions/src/teacherEarningsRollupTrigger.ts'),
       'utf8',
     );
 
