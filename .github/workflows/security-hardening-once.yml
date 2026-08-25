@@ -24,8 +24,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git apply --check scripts/security-least-privilege.patch
-          git apply scripts/security-least-privilege.patch
+          git apply --recount --check scripts/security-least-privilege.patch
+          git apply --recount scripts/security-least-privilege.patch
 
       - name: Commit hardened application code
         shell: bash
