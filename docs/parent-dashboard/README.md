@@ -23,3 +23,4 @@ Parent-facing screens present facts owned by canonical operational systems. A me
 
 - `brick-p1-data-contract.md` — semantic foundation and invariants.
 - `brick-p2-teacher-learning-contract.md` — teacher-owned lesson completion and learning evidence writes.
+- `brick-p3-course-progress-projection.md` — canonical child/course/stage completion read model driven only by teacher lesson status.

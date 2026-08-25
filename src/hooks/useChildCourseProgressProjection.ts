@@ -3,12 +3,40 @@ import { doc, onSnapshot } from 'firebase/firestore';
 
 import { db } from '../lib/firebaseConfig';
 
+export type ChildCourseProgressStageProjection = {
+  key: string;
+  label: string;
+  order: number;
+  totalTopics: number;
+  completedTopics: number;
+  inProgressTopics: number;
+  notStartedTopics: number;
+  completionPct: number;
+};
+
 export type ChildCourseProgressProjection = {
+  schemaVersion?: number;
+  modelType?: 'child_course_progress_v1' | 'child_course_progress_v2' | string;
+  completionAuthority?: 'teacher_lesson_status' | string;
+  definitionStatus?: 'configured' | 'missing' | string;
   courseId?: string;
+  courseLabel?: string | null;
   totalTopics?: number;
   completedTopics?: number;
   inProgressTopics?: number;
+  notStartedTopics?: number;
   overallPct?: number;
+  totalStages?: number;
+  completedStages?: number;
+  stageSummaries?: ChildCourseProgressStageProjection[];
+  latestTopicId?: string | null;
+  latestTopicName?: string | null;
+  latestLessonNumber?: number | null;
+  latestMastery?: string | number | null;
+  strengthHighlights?: string[];
+  practiceHighlights?: string[];
+  latestTeacherRemark?: string | null;
+  recentUpdates?: Array<Record<string, unknown>>;
   lastUpdatedAtMs?: number | null;
   updatedAt?: unknown;
 };
