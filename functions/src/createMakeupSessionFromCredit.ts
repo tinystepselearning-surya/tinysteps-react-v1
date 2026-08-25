@@ -1,6 +1,7 @@
 import * as admin from 'firebase-admin';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as logger from 'firebase-functions/logger';
+import { buildCanonicalTeacherWriteFields } from './helpers/teacherIdentity';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -413,14 +414,9 @@ export const createMakeupSessionFromCredit = onCall(
         ...(childName ? {childName} : {}),
         parentId,
         parentIds,
-        teacherId,
-        teacherIds: [teacherId],
+        ...buildCanonicalTeacherWriteFields(teacherId),
         ...(teacherName ? {teacherName} : {}),
         ...(teacherEmail ? {teacherEmail} : {}),
-        assignedTeacherId: teacherId,
-        primaryTeacherId: teacherId,
-        teacherUid: teacherId,
-        teacher_id: teacherId,
         courseId,
         ...(courseName ? {courseName} : {}),
         startAt: admin.firestore.Timestamp.fromDate(startAt),

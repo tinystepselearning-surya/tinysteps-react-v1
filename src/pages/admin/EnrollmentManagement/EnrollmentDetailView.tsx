@@ -13,6 +13,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db, functions } from '../../../lib/firebaseConfig';
+import { buildCanonicalEnrollmentTeacherWriteFields } from '../../../lib/teacherIdentity';
 import {
   Card,
   CardHeader,
@@ -711,8 +712,7 @@ export default function EnrollmentDetailView({
           ? String(selectedNextTeacher?.email || '').trim()
           : String(teacher?.email || enrollment.teacherEmail || '').trim();
         const inheritedFields: Record<string, unknown> = {
-          teacherId: newTeacherId,
-          teacherIds: [newTeacherId],
+          ...buildCanonicalEnrollmentTeacherWriteFields(newTeacherId),
           schedule: newSchedule,
           updatedAt: serverTimestamp(),
         };
