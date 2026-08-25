@@ -95,6 +95,19 @@ describe('parent dashboard data contract — Brick P1', () => {
     ]);
   });
 
+  it('fails loudly when progress contains more active lessons than the canonical curriculum', () => {
+    const summary = summarizeCurriculumCompletion(2, [
+      { topicId: 'lesson-1', lessonStatus: 'completed' },
+      { topicId: 'lesson-2', lessonStatus: 'completed' },
+      { topicId: 'lesson-3', lessonStatus: 'in_progress' },
+    ]);
+
+    expect(summary.totalLessons).toBe(2);
+    expect(curriculumSummaryInvariantErrors(summary)).toContain(
+      'curriculum states must sum to totalLessons',
+    );
+  });
+
   it('keeps class-session counts separate from curriculum lessons', () => {
     const nowMs = Date.parse('2026-08-25T12:00:00.000Z');
     const summary = summarizeParentClassMonth(
@@ -104,17 +117,19 @@ describe('parent dashboard data contract — Brick P1', () => {
         { id: 'c3', status: 'scheduled', startAtMs: Date.parse('2026-08-26T12:00:00.000Z') },
         { id: 'c4', status: 'cancelled', startAtMs: Date.parse('2026-08-24T12:00:00.000Z') },
         { id: 'c5', status: 'scheduled', startAtMs: Date.parse('2026-08-23T12:00:00.000Z') },
+        { id: 'c6', status: 'rescheduled', startAtMs: Date.parse('2026-08-22T12:00:00.000Z') },
       ],
       nowMs,
     );
 
     expect(summary).toEqual({
-      totalSessions: 5,
+      totalSessions: 6,
       completedSessions: 2,
       upcomingSessions: 1,
       cancelledSessions: 1,
       noShowSessions: 0,
       rescheduleRequestedSessions: 0,
+      rescheduledSessions: 1,
       inProgressSessions: 0,
       unresolvedPastSessions: 1,
       otherSessions: 0,
@@ -125,6 +140,7 @@ describe('parent dashboard data contract — Brick P1', () => {
     expect(normalizeClassSessionStatus('completed')).toBe('completed');
     expect(normalizeClassSessionStatus('canceled')).toBe('cancelled');
     expect(normalizeClassSessionStatus('inprogress')).toBe('in_progress');
+    expect(normalizeClassSessionStatus('rescheduled')).toBe('rescheduled');
     expect(normalizeClassSessionStatus('unknown-status')).toBe('other');
   });
 
