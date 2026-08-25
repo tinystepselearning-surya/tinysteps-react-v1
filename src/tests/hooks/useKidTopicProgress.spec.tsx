@@ -81,4 +81,42 @@ describe('useKidTopicProgress', () => {
     await waitFor(() => expect(getDocsMock).toHaveBeenCalledTimes(1));
     expect(whereMock).toHaveBeenCalledWith('courseId', '==', 'early-phonics');
   });
+
+  it('preserves broad reads only for legacy callers that omit the course argument', async () => {
+    renderHook(() => useKidTopicProgress('kid-legacy'));
+
+    await waitFor(() => expect(getDocsMock).toHaveBeenCalledTimes(1));
+    expect(queryMock).not.toHaveBeenCalled();
+    expect(getDocsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'collection' }),
+    );
+  });
+
+  it('ignores a slower response from the previously selected course', async () => {
+    let resolveFirst: ((value: unknown) => void) | undefined;
+    let resolveSecond: ((value: unknown) => void) | undefined;
+    getDocsMock
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveFirst = resolve; }))
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveSecond = resolve; }));
+
+    const { result, rerender } = renderHook(
+      ({ courseId }) => useKidTopicProgress('kid-1', courseId),
+      { initialProps: { courseId: 'phonics-foundations' } },
+    );
+    rerender({ courseId: 'early-phonics' });
+
+    await act(async () => {
+      resolveSecond?.({
+        docs: [{ id: 'new-course-topic', data: () => ({ courseId: 'early-phonics' }) }],
+      });
+    });
+    await waitFor(() => expect(result.current.topics[0]?.id).toBe('new-course-topic'));
+
+    await act(async () => {
+      resolveFirst?.({
+        docs: [{ id: 'stale-course-topic', data: () => ({ courseId: 'phonics-foundations' }) }],
+      });
+    });
+    expect(result.current.topics[0]?.id).toBe('new-course-topic');
+  });
 });
