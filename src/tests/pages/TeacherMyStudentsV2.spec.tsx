@@ -22,25 +22,18 @@ const {
 }));
 
 vi.mock('firebase/firestore', () => ({
-  Timestamp: {
-    fromMillis: mockTimestampFromMillis,
-  },
+  Timestamp: { fromMillis: mockTimestampFromMillis },
   collection: mockCollection,
   getDocs: mockGetDocs,
   query: mockQuery,
   where: mockWhere,
 }));
 
-vi.mock('../../lib/firebaseConfig', () => ({
-  db: {},
-}));
+vi.mock('../../lib/firebaseConfig', () => ({ db: {} }));
 
 vi.mock('../../store/useAuthStore', () => ({
   useAuthStore: () => ({
-    user: {
-      uid: 'teacher-1',
-      role: 'teacher',
-    },
+    user: { uid: 'teacher-1', role: 'teacher' },
   }),
 }));
 
@@ -74,9 +67,8 @@ const getCollectionName = (queryRef: { args: Array<{ kind?: string; name?: strin
   return base?.name || '';
 };
 
-const getTeacherAliasField = (queryRef: { args: Array<{ kind?: string; args?: unknown[] }> }) => {
-  const whereClauses = extractWhereClauses(queryRef);
-  const teacherClause = whereClauses.find((clause) =>
+const getTeacherField = (queryRef: { args: Array<{ kind?: string; args?: unknown[] }> }) => {
+  const teacherClause = extractWhereClauses(queryRef).find((clause) =>
     ['teacherId', 'teacherIds', 'assignedTeacherId', 'primaryTeacherId', 'teacherUid', 'teacher_id'].includes(
       String(clause[0] || ''),
     ),
@@ -86,11 +78,7 @@ const getTeacherAliasField = (queryRef: { args: Array<{ kind?: string; args?: un
 
 function renderComponent() {
   const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-      },
-    },
+    defaultOptions: { queries: { retry: false } },
   });
 
   render(
@@ -102,7 +90,32 @@ function renderComponent() {
   );
 }
 
-describe('TeacherMyStudentsV2', () => {
+const canonicalEnrollment = (id: string, overrides: Record<string, unknown> = {}) =>
+  makeDoc(id, {
+    teacherId: 'teacher-1',
+    kidId: 'kid-1',
+    studentName: 'Asha',
+    courseName: 'Phonics',
+    courseId: 'phonics',
+    parentName: 'Maya',
+    status: 'active',
+    ...overrides,
+  });
+
+const canonicalSession = (id: string, overrides: Record<string, unknown> = {}) =>
+  makeDoc(id, {
+    teacherId: 'teacher-1',
+    enrollmentId: 'enr-1',
+    kidId: 'kid-1',
+    studentName: 'Asha',
+    courseName: 'Phonics',
+    courseId: 'phonics',
+    status: 'scheduled',
+    startAt: { toMillis: () => Date.now() + 2 * 24 * 60 * 60 * 1000 },
+    ...overrides,
+  });
+
+describe('TeacherMyStudentsV2 B4 canonical read cutover', () => {
   beforeEach(() => {
     mockCollection.mockClear();
     mockGetDocs.mockReset();
@@ -111,232 +124,114 @@ describe('TeacherMyStudentsV2', () => {
     mockWhere.mockClear();
   });
 
-  it('renders active assigned enrollments from snapshot data, dedupes alias results, and avoids kids/students reads', async () => {
+  it('renders active canonical enrollments and session summaries using only teacherId queries', async () => {
     mockGetDocs.mockImplementation(async (queryRef: unknown) => {
       const collectionName = getCollectionName(queryRef as any);
-      const aliasField = getTeacherAliasField(queryRef as any);
-
       if (collectionName === 'enrollments') {
-        const docsByAlias: Record<string, ReturnType<typeof makeDoc>[]> = {
-          teacherId: [
-            makeDoc('enr-direct', {
-              teacherId: 'teacher-1',
-              kidId: 'kid-1',
-              studentName: 'Asha',
-              courseName: 'Phonics',
-              courseId: 'phonics',
-              parentName: 'Maya',
-              status: 'active',
-            }),
-          ],
-          teacherIds: [
-            makeDoc('enr-direct', {
-              teacherIds: ['teacher-1'],
-              kidId: 'kid-1',
-              studentName: 'Asha',
-              courseName: 'Phonics',
-              courseId: 'phonics',
-              parentName: 'Maya',
-              status: 'active',
-            }),
-          ],
-        };
-        return { docs: docsByAlias[aliasField] || [] };
+        return { docs: [canonicalEnrollment('enr-1')] };
       }
-
       if (collectionName === 'classSessions') {
-        const docsByAlias: Record<string, ReturnType<typeof makeDoc>[]> = {
-          teacherId: [
-            makeDoc('session-past', {
-              teacherId: 'teacher-1',
-              enrollmentId: 'enr-direct',
-              kidId: 'kid-1',
-              studentName: 'Asha',
-              courseName: 'Phonics',
-              courseId: 'phonics',
+        return {
+          docs: [
+            canonicalSession('session-past', {
               status: 'completed',
               startAt: { toMillis: () => Date.now() - 2 * 24 * 60 * 60 * 1000 },
             }),
-            makeDoc('session-next', {
-              teacherId: 'teacher-1',
-              enrollmentId: 'enr-direct',
-              kidId: 'kid-1',
-              studentName: 'Asha',
-              courseName: 'Phonics',
-              courseId: 'phonics',
-              status: 'scheduled',
-              startAt: { toMillis: () => Date.now() + 2 * 24 * 60 * 60 * 1000 },
-            }),
+            canonicalSession('session-next'),
           ],
         };
-        return { docs: docsByAlias[aliasField] || [] };
       }
-
       return { docs: [] };
     });
 
     renderComponent();
 
     await waitFor(() => expect(screen.getByText('Asha')).toBeTruthy());
-
     expect(screen.getByText('Parent: Maya')).toBeTruthy();
     expect(screen.getByText('Phonics')).toBeTruthy();
+    expect(screen.getByText('Active 1')).toBeTruthy();
     expect(
       screen.getAllByText((_, node) => node?.textContent?.includes('2 total') ?? false).length,
     ).toBeGreaterThan(0);
-    expect(screen.getByText('Active 1')).toBeTruthy();
-    expect(screen.queryByText('No active students.')).toBeNull();
+
+    const teacherFields = mockGetDocs.mock.calls
+      .map(([queryRef]) => getTeacherField(queryRef as any))
+      .filter(Boolean);
+    expect(teacherFields).toEqual(['teacherId', 'teacherId']);
 
     const collectionNames = mockCollection.mock.calls.map(([, name]) => name);
     expect(collectionNames).not.toContain('kids');
     expect(collectionNames).not.toContain('students');
-    const enrollmentTeacherIdsQueries = mockQuery.mock.calls.filter((call) => {
-      const queryRef = call[0] as any;
-      return queryRef?.kind === 'collection' && queryRef?.name === 'enrollments';
-    });
-    expect(
-      enrollmentTeacherIdsQueries.some((call) =>
-        call.some((entry: any) => entry?.kind === 'where' && entry?.args?.[0] === 'teacherIds'),
-      ),
-    ).toBe(false);
   });
 
-  it('supports reassigned teacher alias fields for active enrollments', async () => {
+  it('treats legacy aliases as passive metadata when canonical teacherId is present', async () => {
     mockGetDocs.mockImplementation(async (queryRef: unknown) => {
       const collectionName = getCollectionName(queryRef as any);
-      const aliasField = getTeacherAliasField(queryRef as any);
-
       if (collectionName === 'enrollments') {
-        const docsByAlias: Record<string, ReturnType<typeof makeDoc>[]> = {
-          assignedTeacherId: [
-            makeDoc('enr-assigned', {
-              assignedTeacherId: 'teacher-1',
-              childId: 'child-1',
-              childName: 'Reassigned Student',
-              courseName: 'Reading',
-              courseId: 'reading',
-              status: 'active',
-            }),
-          ],
-          primaryTeacherId: [
-            makeDoc('enr-primary', {
-              primaryTeacherId: 'teacher-1',
-              childId: 'child-2',
-              childName: 'Primary Student',
-              courseName: 'Writing',
-              courseId: 'writing',
-              status: 'active',
-            }),
-          ],
+        return {
+          docs: [canonicalEnrollment('enr-stale', {
+            teacherIds: ['teacher-old'],
+            assignedTeacherId: 'teacher-old',
+            kidId: 'kid-7',
+            kidName: 'Current Student',
+            studentName: 'Current Student',
+            courseName: 'Conversation',
+            courseId: 'conversation',
+          })],
         };
-        return { docs: docsByAlias[aliasField] || [] };
       }
-
       if (collectionName === 'classSessions') {
-        const docsByAlias: Record<string, ReturnType<typeof makeDoc>[]> = {
-          assignedTeacherId: [
-            makeDoc('session-assigned', {
-              assignedTeacherId: 'teacher-1',
-              enrollmentId: 'enr-assigned',
-              childId: 'child-1',
-              childName: 'Reassigned Student',
-              courseName: 'Reading',
-              courseId: 'reading',
-              status: 'scheduled',
-              startAt: { toMillis: () => Date.now() + 24 * 60 * 60 * 1000 },
-            }),
-          ],
-          primaryTeacherId: [
-            makeDoc('session-primary', {
-              primaryTeacherId: 'teacher-1',
-              enrollmentId: 'enr-primary',
-              childId: 'child-2',
-              childName: 'Primary Student',
-              courseName: 'Writing',
-              courseId: 'writing',
-              status: 'scheduled',
-              startAt: { toMillis: () => Date.now() + 2 * 24 * 60 * 60 * 1000 },
-            }),
-          ],
+        return {
+          docs: [canonicalSession('session-stale', {
+            enrollmentId: 'enr-stale',
+            teacherIds: ['teacher-old'],
+            assignedTeacherId: 'teacher-old',
+            kidId: 'kid-7',
+            kidName: 'Current Student',
+            studentName: 'Current Student',
+            courseName: 'Conversation',
+            courseId: 'conversation',
+          })],
         };
-        return { docs: docsByAlias[aliasField] || [] };
       }
-
       return { docs: [] };
     });
 
     renderComponent();
 
-    await waitFor(() => expect(screen.getByText('Reassigned Student')).toBeTruthy());
-
-    expect(screen.getByText('Primary Student')).toBeTruthy();
-    expect(screen.getByText('Active 2')).toBeTruthy();
-  });
-
-  it('keeps teacherIds as passive metadata on already-authorized enrollment docs', async () => {
-    mockGetDocs.mockImplementation(async (queryRef: unknown) => {
-      const collectionName = getCollectionName(queryRef as any);
-      const aliasField = getTeacherAliasField(queryRef as any);
-
-      if (collectionName === 'enrollments') {
-        if (aliasField === 'teacherId') {
-          return {
-            docs: [
-              makeDoc('enr-array', {
-                teacherId: 'teacher-1',
-                teacherIds: ['teacher-1'],
-                kidIds: ['kid-7'],
-                kidName: 'Array Assigned Student',
-                courseName: 'Conversation',
-                courseId: 'conversation',
-                status: 'active',
-              }),
-            ],
-          };
-        }
-        return { docs: [] };
-      }
-
-      if (collectionName === 'classSessions') {
-        if (aliasField === 'teacherId') {
-          return {
-            docs: [
-              makeDoc('session-array', {
-                teacherId: 'teacher-1',
-                teacherIds: ['teacher-1'],
-                enrollmentId: 'enr-array',
-                kidIds: ['kid-7'],
-                kidName: 'Array Assigned Student',
-                courseName: 'Conversation',
-                courseId: 'conversation',
-                status: 'scheduled',
-                startAt: { toMillis: () => Date.now() + 24 * 60 * 60 * 1000 },
-              }),
-            ],
-          };
-        }
-        return { docs: [] };
-      }
-
-      return { docs: [] };
-    });
-
-    renderComponent();
-
-    await waitFor(() => expect(screen.getByText('Array Assigned Student')).toBeTruthy());
-
+    await waitFor(() => expect(screen.getByText('Current Student')).toBeTruthy());
     expect(screen.getByText('Conversation')).toBeTruthy();
     expect(screen.getByText('Active 1')).toBeTruthy();
+  });
+
+  it('does not render a row whose canonical teacherId belongs to another teacher even if stale aliases match', async () => {
+    mockGetDocs.mockImplementation(async (queryRef: unknown) => {
+      const collectionName = getCollectionName(queryRef as any);
+      if (collectionName === 'enrollments') {
+        return {
+          docs: [canonicalEnrollment('enr-wrong', {
+            teacherId: 'teacher-2',
+            teacherIds: ['teacher-1'],
+            assignedTeacherId: 'teacher-1',
+            studentName: 'Should Not Appear',
+          })],
+        };
+      }
+      return { docs: [] };
+    });
+
+    renderComponent();
+
+    await waitFor(() => expect(screen.getByText('No active students.')).toBeTruthy());
+    expect(screen.queryByText('Should Not Appear')).toBeNull();
   });
 
   it('shows a permission-specific error state instead of an empty state', async () => {
     mockGetDocs.mockImplementation(async (queryRef: unknown) => {
       const collectionName = getCollectionName(queryRef as any);
-
       if (collectionName === 'enrollments' || collectionName === 'classSessions') {
         throw permissionDeniedError();
       }
-
       return { docs: [] };
     });
 
@@ -345,33 +240,24 @@ describe('TeacherMyStudentsV2', () => {
     await waitFor(() =>
       expect(screen.getByText('Unable to load students due to permissions')).toBeTruthy(),
     );
-
     expect(screen.queryByText('No active students.')).toBeNull();
   });
 
   it('falls back to Student name pending when authorized snapshots do not include a name', async () => {
     mockGetDocs.mockImplementation(async (queryRef: unknown) => {
       const collectionName = getCollectionName(queryRef as any);
-      const aliasField = getTeacherAliasField(queryRef as any);
-
-      if (collectionName === 'enrollments' && aliasField === 'teacherId') {
+      if (collectionName === 'enrollments') {
         return {
-          docs: [
-            makeDoc('enr-missing-name', {
-              teacherId: 'teacher-1',
-              kidId: 'kid-12',
-              courseName: 'Math',
-              courseId: 'math',
-              status: 'active',
-            }),
-          ],
+          docs: [canonicalEnrollment('enr-missing-name', {
+            kidId: 'kid-12',
+            studentName: undefined,
+            childName: undefined,
+            kidName: undefined,
+            courseName: 'Math',
+            courseId: 'math',
+          })],
         };
       }
-
-      if (collectionName === 'classSessions') {
-        return { docs: [] };
-      }
-
       return { docs: [] };
     });
 
@@ -381,84 +267,21 @@ describe('TeacherMyStudentsV2', () => {
     expect(screen.queryByText('Unnamed student')).toBeNull();
   });
 
-  it('keeps successful results visible when one alias query is permission-denied', async () => {
-    mockGetDocs.mockImplementation(async (queryRef: unknown) => {
-      const collectionName = getCollectionName(queryRef as any);
-      const aliasField = getTeacherAliasField(queryRef as any);
-
-      if (aliasField === 'assignedTeacherId') {
-        throw permissionDeniedError();
-      }
-
-      if (collectionName === 'enrollments' && aliasField === 'teacherId') {
-        return {
-          docs: [
-            makeDoc('enr-visible', {
-              teacherId: 'teacher-1',
-              kidId: 'kid-15',
-              studentName: 'Visible Student',
-              courseName: 'Grammar',
-              courseId: 'grammar',
-              status: 'active',
-            }),
-          ],
-        };
-      }
-
-      if (collectionName === 'classSessions' && aliasField === 'teacherId') {
-        return {
-          docs: [
-            makeDoc('session-visible', {
-              teacherId: 'teacher-1',
-              enrollmentId: 'enr-visible',
-              kidId: 'kid-15',
-              studentName: 'Visible Student',
-              courseName: 'Grammar',
-              courseId: 'grammar',
-              status: 'scheduled',
-              startAt: { toMillis: () => Date.now() + 24 * 60 * 60 * 1000 },
-            }),
-          ],
-        };
-      }
-
-      return { docs: [] };
-    });
-
-    renderComponent();
-
-    await waitFor(() => expect(screen.getByText('Visible Student')).toBeTruthy());
-
-    expect(screen.getByText('Active 1')).toBeTruthy();
-    expect(screen.queryByText('Unable to load students due to permissions')).toBeNull();
-  });
-
   it('keeps archived and inactive enrollments out of Active and shows them under Past', async () => {
     mockGetDocs.mockImplementation(async (queryRef: unknown) => {
       const collectionName = getCollectionName(queryRef as any);
-      const aliasField = getTeacherAliasField(queryRef as any);
-
-      if (collectionName === 'enrollments' && aliasField === 'teacherId') {
+      if (collectionName === 'enrollments') {
         return {
           docs: [
-            makeDoc('enr-active', {
-              teacherId: 'teacher-1',
-              kidId: 'kid-20',
-              studentName: 'Current Student',
-              courseName: 'Phonics',
-              courseId: 'phonics',
-              status: 'active',
-            }),
-            makeDoc('enr-archived', {
-              teacherId: 'teacher-1',
+            canonicalEnrollment('enr-active', { kidId: 'kid-20', studentName: 'Current Student' }),
+            canonicalEnrollment('enr-archived', {
               kidId: 'kid-21',
               studentName: 'Archived Student',
               courseName: 'Writing',
               courseId: 'writing',
               status: 'archived',
             }),
-            makeDoc('enr-inactive', {
-              teacherId: 'teacher-1',
+            canonicalEnrollment('enr-inactive', {
               kidId: 'kid-22',
               studentName: 'Inactive Student',
               courseName: 'Math',
@@ -468,18 +291,12 @@ describe('TeacherMyStudentsV2', () => {
           ],
         };
       }
-
-      if (collectionName === 'classSessions') {
-        return { docs: [] };
-      }
-
       return { docs: [] };
     });
 
     renderComponent();
 
     await waitFor(() => expect(screen.getByText('Current Student')).toBeTruthy());
-
     expect(screen.queryByText('Archived Student')).toBeNull();
     expect(screen.queryByText('Inactive Student')).toBeNull();
     expect(screen.getByText('Active 1')).toBeTruthy();
@@ -492,13 +309,12 @@ describe('TeacherMyStudentsV2', () => {
     expect(screen.getByText('Past 2')).toBeTruthy();
   });
 
-  it('shows no active students only when enrollment queries succeed with zero rows', async () => {
+  it('shows no active students only when canonical queries succeed with zero rows', async () => {
     mockGetDocs.mockResolvedValue({ docs: [] });
 
     renderComponent();
 
     await waitFor(() => expect(screen.getByText('No active students.')).toBeTruthy());
-
     expect(screen.queryByText('Unable to load students due to permissions')).toBeNull();
   });
 });
