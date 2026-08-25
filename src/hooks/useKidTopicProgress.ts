@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebaseConfig';
 import {
   deriveLegacyProgressFromRatings,
@@ -38,6 +38,7 @@ interface UseKidTopicProgressResult {
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
+  upsertLocalTopic: (topic: KidTopicProgress) => void;
 }
 
 const MASTERY_LEVELS: { key: string; pct: number }[] = [
@@ -87,9 +88,7 @@ function normalizeMastery(value: any): { masteryKey: string; masteryPct: number 
   return { masteryKey: best.key, masteryPct: best.pct };
 }
 
-function mapProgressDoc(d: any): KidTopicProgress {
-  const data = d.data() as any;
-
+function normalizeProgressRecord(id: string, data: any): KidTopicProgress {
   const progressSkillsMeta = normalizeProgressSkillsMeta(data.progressRatingsMeta);
 
   const resolvedArea =
@@ -127,8 +126,8 @@ function mapProgressDoc(d: any): KidTopicProgress {
 
   return {
     ...data,
-    id: d.id,
-    topicName: data.topicName ?? data.name ?? d.id,
+    id,
+    topicName: data.topicName ?? data.name ?? id,
     area: data.area,
     subskill: data.subskill,
     progressRatings,
@@ -145,15 +144,22 @@ function mapProgressDoc(d: any): KidTopicProgress {
   };
 }
 
+function mapProgressDoc(d: any): KidTopicProgress {
+  return normalizeProgressRecord(d.id, d.data() as any);
+}
+
 export function useKidTopicProgress(
   kidId: string | null | undefined,
+  courseId?: string | null,
+  enabled = true,
 ): UseKidTopicProgressResult {
   const [topics, setTopics] = useState<KidTopicProgress[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadProgress = useCallback(async () => {
-    if (!kidId) {
+    const normalizedCourseId = String(courseId || '').trim();
+    if (!kidId || !normalizedCourseId || !enabled) {
       setTopics([]);
       setLoading(false);
       setError(null);
@@ -165,7 +171,8 @@ export function useKidTopicProgress(
 
     try {
       const progressCol = collection(db, 'students', kidId, 'progress');
-      const snap = await getDocs(progressCol);
+      const scopedQuery = query(progressCol, where('courseId', '==', normalizedCourseId));
+      const snap = await getDocs(scopedQuery);
 
       const arr: KidTopicProgress[] = snap.docs.map(mapProgressDoc);
       setTopics(arr);
@@ -177,16 +184,25 @@ export function useKidTopicProgress(
     } finally {
       setLoading(false);
     }
-  }, [kidId]);
+  }, [courseId, enabled, kidId]);
 
   useEffect(() => {
     void loadProgress();
   }, [loadProgress]);
+
+  const upsertLocalTopic = useCallback((topic: KidTopicProgress) => {
+    setTopics((current) => {
+      const next = current.filter((entry) => entry.id !== topic.id);
+      next.push(normalizeProgressRecord(topic.id, topic));
+      return next;
+    });
+  }, []);
 
   return {
     topics,
     loading,
     error,
     refresh: loadProgress,
+    upsertLocalTopic,
   };
 }
