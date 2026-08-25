@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 
-describe('B6 Brick 6B1 analytics rollup preparation source guards', () => {
+describe('B6 Brick 6B1/6B2 analytics rollup preparation source guards', () => {
   it('keeps preparation explicit, bounded, and away from teacherEarnings writes', () => {
     const source = fs.readFileSync(
       path.resolve(process.cwd(), 'functions/src/prepareTeacherFinanceAnalyticsRollups.ts'),
@@ -15,6 +15,7 @@ describe('B6 Brick 6B1 analytics rollup preparation source guards', () => {
     expect(source).toContain('evaluateTeacherFinanceRollupParity');
     expect(source).toContain(".collection('teachers')");
     expect(source).toContain(".doc('teacherFinanceAnalyticsProjection')");
+    expect(source).toContain('monthKey,');
     expect(source).toContain('analyticsProjectionVersion: ANALYTICS_PROJECTION_VERSION');
     expect(source).toContain('analyticsProjectionPreparedSessionEarnings');
 
@@ -46,7 +47,7 @@ describe('B6 Brick 6B1 analytics rollup preparation source guards', () => {
     );
   });
 
-  it('invalidates prepared analytics only for unsafe earning event images', () => {
+  it('invalidates unsafe earning images and refreshes only already-certified safe months', () => {
     const source = fs.readFileSync(
       path.resolve(process.cwd(), 'functions/src/teacherEarningsRollupTrigger.ts'),
       'utf8',
@@ -57,5 +58,10 @@ describe('B6 Brick 6B1 analytics rollup preparation source guards', () => {
     expect(source).toContain('analyticsProjectionVersion: 0');
     expect(source).toContain("ready: false");
     expect(source).toContain('await invalidateUnsafeAnalyticsProjection');
+    expect(source).toContain('async function refreshCertifiedAnalyticsRollups');
+    expect(source).toContain('data.ready === true');
+    expect(source).toContain("analyticsProjectionSource: 'b6_teacher_earnings_live_refresh_v1'");
+    expect(source).toContain('await authoritativeTeacherEarningsRollupWrite.run(event)');
+    expect(source).toContain('await refreshCertifiedAnalyticsRollups(images)');
   });
 });
