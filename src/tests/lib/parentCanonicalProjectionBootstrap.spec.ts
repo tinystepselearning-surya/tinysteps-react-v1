@@ -8,11 +8,11 @@ import {
 } from '../../lib/parentCanonicalProjectionBootstrap';
 
 describe('parent canonical projection bootstrap client contract', () => {
-  it('canonicalizes legacy course aliases before building the deterministic request id', () => {
+  it('canonicalizes legacy course aliases before building the saved-lesson repair request id', () => {
     expect(normalizeBootstrapCourseId('EARLY-PHONICS')).toBe('early-phonics');
     expect(normalizeBootstrapCourseId('phonics-early')).toBe('early-phonics');
     expect(normalizeBootstrapCourseId('foundation')).toBe('phonics-foundations');
-    expect(courseBootstrapRequestId('phonics-early')).toBe('v1-course-early-phonics');
+    expect(courseBootstrapRequestId('phonics-early')).toBe('v2-course-early-phonics');
   });
 
   it('rejects unsafe course ids instead of creating arbitrary document paths', () => {
