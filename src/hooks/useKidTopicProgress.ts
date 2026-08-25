@@ -19,7 +19,7 @@ export interface KidTopicProgress {
   topicName?: string;
   area?: string;
   subskill?: string;
-  mastery?: number | null;
+  mastery?: number | string | null;
   masteryKey?: string | null;
   masteryPct?: number | null;
   progressRatings?: ProgressRatings;
