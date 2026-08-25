@@ -84,7 +84,19 @@ Brick 3 changes the Month preset itself:
 - no finance documents are rewritten or migrated by this UI read cutover.
 
 ## Brick 4 — month-bound `voidTeacherOrphanEarnings`
-Scope the orphan-earning correction callable to the requested teacher-month at the Firestore query itself while preserving all existing paid/void/session-billability protections.
+The admin orphan-earning correction historically accepted `monthKey` but queried every `teacherEarnings` document for the teacher before validating linked sessions.
+
+Brick 4 replaces the deployed export with a dedicated month-scoped module:
+
+- the callable name and request/response shape remain `voidTeacherOrphanEarnings`;
+- the Firestore query is now `teacherId + monthKey`, so only the requested teacher-month is loaded;
+- the existing composite index already supports the query;
+- completed/present sessions remain billable and are never voided;
+- paid, partially paid, or settled orphan earnings remain protected from voiding;
+- already-void rows and non-session-linked rows remain untouched;
+- the current any-present attendance-map semantics are preserved exactly;
+- the previous broad implementation in `revenue.ts` is no longer exported from `functions/src/index.ts`;
+- no historical earnings are migrated or mass-rewritten by this read-scope change.
 
 ## Brick 5 — reduce the broad daily reconciliation session scan
 Bound the daily reconciliation `classSessions` read to the intended reconciliation month before downloading rows, without weakening the reconciliation checks themselves.
