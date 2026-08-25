@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, CalendarClock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import {
   currentIndiaMonthKey,
   requestClassAttendanceBootstrap,
 } from "../../../lib/parentCanonicalProjectionBootstrap";
+import { queryClient } from "../../../lib/queryClient";
 import {
   formatIndiaTimeRange,
   formatSessionDate,
@@ -47,8 +47,6 @@ export default function ParentAttendanceSummary({
   onJoinSession,
   canJoinFromOverview,
 }: ParentAttendanceSummaryProps) {
-  const queryClient = useQueryClient();
-
   useEffect(() => {
     if (classesState !== "unavailable" || typeof window === "undefined") return;
     const kidId = String(new URLSearchParams(window.location.search).get("kidId") || "").trim();
@@ -68,7 +66,7 @@ export default function ParentAttendanceSummary({
         });
       })
       .catch(() => undefined);
-  }, [classesState, queryClient]);
+  }, [classesState]);
 
   const summaryValue = (value: number | undefined) =>
     classesState === "available" && typeof value === "number" ? String(value) : "—";
