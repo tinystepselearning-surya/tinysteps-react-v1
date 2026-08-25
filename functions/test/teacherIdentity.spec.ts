@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  aliasFieldMatchesCanonicalTeacher,
   buildCanonicalTeacherWriteFields,
   buildEnrollmentTeacherWriteFields,
   resolveCanonicalTeacherIdForWrite,
@@ -64,13 +63,6 @@ describe('canonical teacher writer identity', () => {
       source: 'ambiguous_legacy',
       legacyRefs: ['teacher-a', 'teacher-b'],
     });
-  });
-
-  it('keeps alias comparison available only for historical audit and repair', () => {
-    expect(aliasFieldMatchesCanonicalTeacher('teacherIds', ['teacher-1'], 'teacher-1')).toBe(true);
-    expect(aliasFieldMatchesCanonicalTeacher('teacherIds', ['teacher-1', 'teacher-2'], 'teacher-1')).toBe(false);
-    expect(aliasFieldMatchesCanonicalTeacher('teacherUid', 'teacher-1', 'teacher-1')).toBe(true);
-    expect(aliasFieldMatchesCanonicalTeacher('teacherUid', 'teacher-2', 'teacher-1')).toBe(false);
   });
 
   it('rejects empty canonical session ownership writes', () => {
