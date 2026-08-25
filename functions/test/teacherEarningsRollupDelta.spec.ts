@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  canSkipTeacherEarningsRollupRecompute,
   planTeacherEarningsRollupChange,
   teacherEarningContributionFor,
 } from '../src/helpers/teacherEarningsRollupDelta';
@@ -282,5 +283,112 @@ describe('teacher earnings rollup delta planner', () => {
       mode: 'noop',
       targets: [{ teacherId: 'teacher-1', monthKey: '2026-08' }],
     });
+  });
+});
+
+describe('teacher earnings rollup noop gate', () => {
+  const canonicalBase = {
+    teacherId: 'teacher-1',
+    monthKey: '2026-08',
+    amount: 100,
+    status: 'unpaid',
+    source: 'demo_completed',
+  };
+
+  it('skips only metadata-only updates on the same explicit canonical teacher-month', () => {
+    expect(
+      canSkipTeacherEarningsRollupRecompute({
+        earningId: 'demo-demo-1',
+        before: { ...canonicalBase, note: 'old' },
+        after: { ...canonicalBase, note: 'new' },
+      }),
+    ).toBe(true);
+  });
+
+  it('does not skip payout-state mutations even when total earnings are unchanged', () => {
+    expect(
+      canSkipTeacherEarningsRollupRecompute({
+        earningId: 'demo-demo-1',
+        before: { ...canonicalBase },
+        after: {
+          ...canonicalBase,
+          status: 'partial',
+          paidAmount: 25,
+          payoutIds: ['payout-1'],
+        },
+      }),
+    ).toBe(false);
+  });
+
+  it('does not skip teacher or month moves', () => {
+    expect(
+      canSkipTeacherEarningsRollupRecompute({
+        earningId: 'demo-demo-1',
+        before: canonicalBase,
+        after: { ...canonicalBase, teacherId: 'teacher-2' },
+      }),
+    ).toBe(false);
+
+    expect(
+      canSkipTeacherEarningsRollupRecompute({
+        earningId: 'demo-demo-1',
+        before: canonicalBase,
+        after: { ...canonicalBase, monthKey: '2026-09' },
+      }),
+    ).toBe(false);
+  });
+
+  it('does not skip creates or deletes', () => {
+    expect(
+      canSkipTeacherEarningsRollupRecompute({
+        earningId: 'demo-demo-1',
+        before: null,
+        after: canonicalBase,
+      }),
+    ).toBe(false);
+
+    expect(
+      canSkipTeacherEarningsRollupRecompute({
+        earningId: 'demo-demo-1',
+        before: canonicalBase,
+        after: null,
+      }),
+    ).toBe(false);
+  });
+
+  it('does not skip legacy rows whose month is only derivable from timestamps', () => {
+    const legacy = {
+      teacherId: 'teacher-1',
+      amount: 100,
+      status: 'unpaid',
+      source: 'demo_completed',
+      earnedAt: '2026-08-12T10:00:00+05:30',
+    };
+
+    expect(
+      canSkipTeacherEarningsRollupRecompute({
+        earningId: 'demo-demo-1',
+        before: { ...legacy, note: 'old' },
+        after: { ...legacy, note: 'new' },
+      }),
+    ).toBe(false);
+  });
+
+  it('does not skip non-canonical legacy session rows', () => {
+    const legacySession = {
+      teacherId: 'teacher-1',
+      monthKey: '2026-08',
+      amount: 175,
+      status: 'unpaid',
+      sessionId: 'session-1',
+    };
+
+    expect(
+      canSkipTeacherEarningsRollupRecompute({
+        earningId: 'legacy-earning-1',
+        before: { ...legacySession, note: 'old' },
+        after: { ...legacySession, note: 'new' },
+      }),
+    ).toBe(false);
   });
 });
