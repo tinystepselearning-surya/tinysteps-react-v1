@@ -3,6 +3,7 @@ import * as admin from 'firebase-admin';
 import { canSkipTeacherEarningsRollupRecompute } from './helpers/teacherEarningsRollupDelta';
 import { checkTeacherFinanceAnalyticsReadinessRow } from './helpers/teacherFinanceAnalyticsReadiness';
 import { recomputeTeacherEarningsEventCoordinated } from './helpers/teacherEarningsCoordinatedRecompute';
+import { tryApplyTeacherEarningsIncrementalEvent } from './helpers/teacherEarningsIncrementalExecutor';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -129,16 +130,17 @@ async function refreshCertifiedAnalyticsRollups(input: EarningImages): Promise<v
 }
 
 /**
- * Read-optimized and transaction-coordinated entry point for the teacherEarnings monthly rollup.
+ * Brick 7C2 teacherEarnings monthly-rollup entry point.
  *
- * Brick 1 still suppresses only proven metadata-only updates. Brick 7B2 replaces the legacy
- * uncoordinated full-recompute runtime path with claim -> ledger scan -> finalize sequencing.
- * A later finance event can supersede an older scan, and only the latest claim epoch may publish
- * authoritative totals. Incremental money deltas remain disabled until Brick 7C.
+ * The order is intentionally conservative:
+ * 1) Brick 1 skips only proven finance-neutral metadata updates.
+ * 2) Brick 7C2 attempts a transactional exact delta only for planner-approved events whose rollup
+ *    is authoritative, transaction-fenced, idle, and newer than its last full-scan watermark.
+ * 3) Every other event falls back to the Brick 7C1 atomic full-ledger recompute transaction.
  *
- * Brick 6B1/6B2 invalidates certified analytics when an earning becomes unsafe. During every real
- * recompute the coordinated claim also marks that rollup projection unready, so Finance falls back
- * to raw monthly earnings until the latest authoritative scan finalizes and certification refreshes.
+ * Session creates/deletes, payout-state changes, teacher/month moves, archive toggles, legacy or
+ * ambiguous session rows, missing/equal watermarks, invalid totals, and marker conflicts therefore
+ * retain authoritative full-recompute semantics.
  */
 export const onTeacherEarningsRollupWrite = onDocumentWritten(
   {
@@ -174,8 +176,41 @@ export const onTeacherEarningsRollupWrite = onDocumentWritten(
       return;
     }
 
+    const db = admin.firestore();
+    const eventUpdateTime = change.after.exists ? change.after.updateTime : null;
+    const incremental = await tryApplyTeacherEarningsIncrementalEvent({
+      db,
+      eventId: event.id,
+      earningId,
+      eventUpdateTime,
+      before: beforeData,
+      after: afterData,
+    });
+
+    if (incremental.mode === 'applied') return;
+
+    if (incremental.mode === 'covered') {
+      await refreshCertifiedAnalyticsRollups(images);
+      return;
+    }
+
+    if (incremental.mode === 'replay') {
+      if (incremental.previousOutcome === 'covered') {
+        await refreshCertifiedAnalyticsRollups(images);
+      }
+      return;
+    }
+
+    if (incremental.mode === 'conflict') {
+      console.error('teacher earnings incremental marker conflict; forcing authoritative recompute', {
+        earningId,
+        eventId: event.id,
+        reason: incremental.reason,
+      });
+    }
+
     const recompute = await recomputeTeacherEarningsEventCoordinated({
-      db: admin.firestore(),
+      db,
       eventId: event.id,
       before: beforeData,
       after: afterData,
