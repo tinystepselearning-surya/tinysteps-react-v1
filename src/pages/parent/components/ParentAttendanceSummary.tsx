@@ -3,10 +3,12 @@ import { ArrowRight, CalendarClock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { auth } from "../../../lib/firebaseConfig";
 import {
   currentIndiaMonthKey,
   requestClassAttendanceBootstrap,
 } from "../../../lib/parentCanonicalProjectionBootstrap";
+import { queryClient } from "../../../lib/queryClient";
 import {
   formatIndiaTimeRange,
   formatSessionDate,
@@ -50,9 +52,20 @@ export default function ParentAttendanceSummary({
     const kidId = String(new URLSearchParams(window.location.search).get("kidId") || "").trim();
     if (!kidId) return;
 
-    // Existing class sessions can predate the P4 projection writer. The request document
-    // is deterministic per child/current month, so repeated renders cannot trigger scans.
-    void requestClassAttendanceBootstrap(kidId, currentIndiaMonthKey()).catch(() => undefined);
+    const monthKey = currentIndiaMonthKey();
+    // Existing class sessions can predate P4's canonical date/identity fields. The repair
+    // callable is server-idempotent for this repair version, so remounts cannot create
+    // repeated historical scans. Invalidate the active month query after it completes so
+    // the repaired selected-child row appears without a manual browser refresh.
+    void requestClassAttendanceBootstrap(kidId, monthKey)
+      .then(async () => {
+        const parentId = String(auth.currentUser?.uid || "").trim();
+        if (!parentId) return;
+        await queryClient.invalidateQueries({
+          queryKey: ["parentMonthlyBillingReadModel", parentId, monthKey],
+        });
+      })
+      .catch(() => undefined);
   }, [classesState]);
 
   const summaryValue = (value: number | undefined) =>
