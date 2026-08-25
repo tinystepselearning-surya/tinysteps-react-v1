@@ -24,6 +24,7 @@ const coordinatedRollup = {
   rollupVersion: 1,
   incrementalProtocolVersion: TEACHER_EARNINGS_INCREMENTAL_PROTOCOL_VERSION,
   incrementalTransactionFence: TEACHER_EARNINGS_TRANSACTION_FENCE,
+  incrementalRecomputeState: 'idle',
   incrementalRevision: 12,
 };
 
