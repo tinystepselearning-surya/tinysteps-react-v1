@@ -137,8 +137,8 @@ export const buildDashboardHeroMessage = (params: {
   phonicsLoading: boolean;
   completion: number | null;
   dueNow: number;
-  rescheduled: number;
-  upcoming: number;
+  rescheduled: number | null;
+  upcoming: number | null;
 }): string => {
   const { childName, phonicsLoading, completion, dueNow, rescheduled, upcoming } = params;
   if (phonicsLoading) {
@@ -150,11 +150,14 @@ export const buildDashboardHeroMessage = (params: {
   if (typeof completion === "number" && completion >= 40) {
     return `${childName} is moving forward. Focus on regular practice this week to keep momentum strong.`;
   }
-  if (rescheduled > 0) {
-    return `${childName} is in an early phase. A rescheduled class is pending, so please check the schedule and rejoin flow.`;
+  if (typeof rescheduled === "number" && rescheduled > 0) {
+    return `${childName} has a class update that needs attention. Please check the class schedule for the latest status.`;
   }
-  if (upcoming > 0) {
+  if (typeof upcoming === "number" && upcoming > 0) {
     return `${childName} is building consistency. Upcoming classes this week will help unlock the next progress milestone.`;
+  }
+  if (rescheduled === null || upcoming === null) {
+    return `${childName}'s learning overview is ready. Class totals will appear once the selected-child monthly projection is available.`;
   }
   return `${childName}'s dashboard is ready with clear next steps for learning, class rhythm, and payment visibility.`;
 };
