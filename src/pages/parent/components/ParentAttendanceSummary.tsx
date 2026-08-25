@@ -1,7 +1,12 @@
+import { useEffect } from "react";
 import { ArrowRight, CalendarClock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  currentIndiaMonthKey,
+  requestClassAttendanceBootstrap,
+} from "../../../lib/parentCanonicalProjectionBootstrap";
 import {
   formatIndiaTimeRange,
   formatSessionDate,
@@ -40,6 +45,16 @@ export default function ParentAttendanceSummary({
   onJoinSession,
   canJoinFromOverview,
 }: ParentAttendanceSummaryProps) {
+  useEffect(() => {
+    if (classesState !== "unavailable" || typeof window === "undefined") return;
+    const kidId = String(new URLSearchParams(window.location.search).get("kidId") || "").trim();
+    if (!kidId) return;
+
+    // Existing class sessions can predate the P4 projection writer. The request document
+    // is deterministic per child/current month, so repeated renders cannot trigger scans.
+    void requestClassAttendanceBootstrap(kidId, currentIndiaMonthKey()).catch(() => undefined);
+  }, [classesState]);
+
   const summaryValue = (value: number | undefined) =>
     classesState === "available" && typeof value === "number" ? String(value) : "—";
 
