@@ -1,0 +1,89 @@
+name: B6 invoke session-create v2 certification callable
+
+on:
+  push:
+    branches:
+      - audit/b6-production-session-create-v2-evidence
+    paths:
+      - functions/scripts/b6InvokeSessionCreateCertificationCallableV2.js
+      - .github/workflows/b6-invoke-session-create-certification-v2.yml
+
+permissions:
+  contents: read
+
+env:
+  FIREBASE_PROJECT_ID: tinysteps-react-v1
+  CERTIFICATION_MONTH_KEY: 2026-08
+  DEPLOYED_MAIN_SHA: 4381b2593e1fc46817ed8e9f1ec4e283b7a51cd7
+
+jobs:
+  invoke-certification-callable:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout exact operations commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Refuse unexpected branch project or base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF}" = "refs/heads/audit/b6-production-session-create-v2-evidence"
+          test "${FIREBASE_PROJECT_ID}" = "tinysteps-react-v1"
+          git merge-base --is-ancestor "${DEPLOYED_MAIN_SHA}" HEAD
+          echo "Operations branch: ${GITHUB_REF_NAME}"
+          echo "Operations SHA: ${GITHUB_SHA}"
+          echo "Deployed main base: ${DEPLOYED_MAIN_SHA}"
+          echo "Production project: ${FIREBASE_PROJECT_ID}"
+          echo "Certification month: ${CERTIFICATION_MONTH_KEY}"
+
+      - name: Verify runner has no direct Firestore mutation API
+        shell: bash
+        run: |
+          set -euo pipefail
+          runner="functions/scripts/b6InvokeSessionCreateCertificationCallableV2.js"
+          ! grep -E "\.set\(|\.update\(|\.delete\(|\.create\(|\.add\(|batch\.commit\(|runTransaction\(" "$runner"
+          grep -F "createCustomToken" "$runner"
+          grep -F "signInWithCustomToken" "$runner"
+          grep -F "certifyTeacherEarningsSessionCreateFastPath" "$runner"
+          grep -F "apply: true" "$runner"
+          grep -F "const snap = await certificationRef.get();" "$runner"
+          echo "Callable-only mutation path guard passed."
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install Functions dependencies
+        run: npm ci --prefix functions --include=dev --ignore-scripts
+
+      - name: Authenticate to Google Cloud
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
+          create_credentials_file: true
+
+      - name: Invoke deployed certification callable and verify persisted state
+        run: >-
+          node functions/scripts/b6InvokeSessionCreateCertificationCallableV2.js
+          --project=${{ env.FIREBASE_PROJECT_ID }}
+          --month=${{ env.CERTIFICATION_MONTH_KEY }}
+          --output=artifacts/b6-session-create-certification-callable-v2.json
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+
+      - name: Upload certification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: b6-session-create-certification-callable-v2-${{ github.sha }}
+          path: artifacts/b6-session-create-certification-callable-v2.json
+          if-no-files-found: error
+          retention-days: 7
