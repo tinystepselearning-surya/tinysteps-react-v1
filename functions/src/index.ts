@@ -58,10 +58,8 @@ export {
   adminSyncCanonicalPhonicsCurriculum,
   onCurriculumTopicsCanonicalize,
 } from "./phonicsCurriculumEnforcer";
-export {
-  onParentUserReadModelWrite,
-  onStudentProgressReadModelWrite,
-} from "./parentMonthlyReadModels";
+export { onParentUserReadModelWrite } from "./parentMonthlyReadModels";
+export { onStudentProgressReadModelWrite } from "./childCourseProgressProjection";
 export {
   onBillingChargeReadModelWrite,
   onPaymentReadModelWrite,

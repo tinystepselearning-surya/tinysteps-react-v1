@@ -17,6 +17,7 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
   const returnTo = searchParams.get('returnTo');
   const fromStudents = searchParams.get('from') === 'students';
   const enrollmentId = searchParams.get('enrollmentId');
+  const courseId = searchParams.get('courseId');
 
   const handleBack = () => {
     if (returnTo) {
@@ -78,7 +79,7 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
       setLoadingName(false);
     };
 
-    loadName();
+    void loadName();
 
     return () => {
       active = false;
@@ -142,6 +143,7 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
         kidId={kidId}
         kidName={kidName ?? undefined}
         enrollmentId={enrollmentId ?? undefined}
+        courseId={courseId ?? undefined}
         onSaveAndBack={handleBack}
       />
     </div>

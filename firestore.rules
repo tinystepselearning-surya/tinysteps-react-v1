@@ -669,6 +669,14 @@ function teacherOwnsDocCanonicalFirst(data) {
         || (isTeacher() && isTeacherOfKid(kidId));
     }
 
+    match /students/{kidId}/courseProgress/{courseId} {
+      allow read: if isAdmin()
+        || (isTeacher() && isTeacherOfKid(kidId))
+        || isParentOfKid(kidId);
+
+      allow create, update, delete: if false;
+    }
+
     match /students/{kidId}/curriculum/{topicId} {
       allow read: if isAdmin()
         || (isTeacher() && isTeacherOfKid(kidId))

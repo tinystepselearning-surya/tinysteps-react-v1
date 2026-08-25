@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebaseConfig';
 import {
   deriveLegacyProgressFromRatings,
@@ -19,7 +19,7 @@ export interface KidTopicProgress {
   topicName?: string;
   area?: string;
   subskill?: string;
-  mastery?: number | null;
+  mastery?: number | string | null;
   masteryKey?: string | null;
   masteryPct?: number | null;
   progressRatings?: ProgressRatings;
@@ -38,6 +38,7 @@ interface UseKidTopicProgressResult {
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
+  upsertLocalTopic: (topic: KidTopicProgress) => void;
 }
 
 const MASTERY_LEVELS: { key: string; pct: number }[] = [
@@ -87,9 +88,7 @@ function normalizeMastery(value: any): { masteryKey: string; masteryPct: number 
   return { masteryKey: best.key, masteryPct: best.pct };
 }
 
-function mapProgressDoc(d: any): KidTopicProgress {
-  const data = d.data() as any;
-
+function normalizeProgressRecord(id: string, data: any): KidTopicProgress {
   const progressSkillsMeta = normalizeProgressSkillsMeta(data.progressRatingsMeta);
 
   const resolvedArea =
@@ -127,8 +126,8 @@ function mapProgressDoc(d: any): KidTopicProgress {
 
   return {
     ...data,
-    id: d.id,
-    topicName: data.topicName ?? data.name ?? d.id,
+    id,
+    topicName: data.topicName ?? data.name ?? id,
     area: data.area,
     subskill: data.subskill,
     progressRatings,
@@ -145,15 +144,26 @@ function mapProgressDoc(d: any): KidTopicProgress {
   };
 }
 
+function mapProgressDoc(d: any): KidTopicProgress {
+  return normalizeProgressRecord(d.id, d.data() as any);
+}
+
 export function useKidTopicProgress(
   kidId: string | null | undefined,
+  courseId?: string | null,
+  enabled = true,
 ): UseKidTopicProgressResult {
   const [topics, setTopics] = useState<KidTopicProgress[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const requestVersionRef = useRef(0);
 
   const loadProgress = useCallback(async () => {
-    if (!kidId) {
+    const requestVersion = requestVersionRef.current + 1;
+    requestVersionRef.current = requestVersion;
+    const normalizedCourseId = String(courseId || '').trim();
+    const requiresCourseScope = courseId !== undefined;
+    if (!kidId || !enabled || (requiresCourseScope && !normalizedCourseId)) {
       setTopics([]);
       setLoading(false);
       setError(null);
@@ -165,28 +175,45 @@ export function useKidTopicProgress(
 
     try {
       const progressCol = collection(db, 'students', kidId, 'progress');
-      const snap = await getDocs(progressCol);
+      const progressQuery = normalizedCourseId
+        ? query(progressCol, where('courseId', '==', normalizedCourseId))
+        : progressCol;
+      const snap = await getDocs(progressQuery);
 
       const arr: KidTopicProgress[] = snap.docs.map(mapProgressDoc);
+      if (requestVersion !== requestVersionRef.current) return;
       setTopics(arr);
       setError(null);
     } catch (err: any) {
+      if (requestVersion !== requestVersionRef.current) return;
       console.error('[useKidTopicProgress] Firestore error', err);
       setTopics([]);
       setError(err?.message ?? String(err));
     } finally {
-      setLoading(false);
+      if (requestVersion === requestVersionRef.current) setLoading(false);
     }
-  }, [kidId]);
+  }, [courseId, enabled, kidId]);
 
   useEffect(() => {
     void loadProgress();
+    return () => {
+      requestVersionRef.current += 1;
+    };
   }, [loadProgress]);
+
+  const upsertLocalTopic = useCallback((topic: KidTopicProgress) => {
+    setTopics((current) => {
+      const next = current.filter((entry) => entry.id !== topic.id);
+      next.push(normalizeProgressRecord(topic.id, topic));
+      return next;
+    });
+  }, []);
 
   return {
     topics,
     loading,
     error,
     refresh: loadProgress,
+    upsertLocalTopic,
   };
 }

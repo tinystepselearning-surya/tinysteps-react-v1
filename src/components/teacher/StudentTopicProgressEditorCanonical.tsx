@@ -3,6 +3,7 @@ import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebaseConfig';
 import ChildSkillRatingCard from '../progress/ChildSkillRatingCard';
 import { useKidTopicProgress } from '../../hooks/useKidTopicProgress';
+import { useAuthStore } from '../../store/useAuthStore';
 import {
   deriveLegacyProgressFromRatings,
   normalizeProgressRatings,
@@ -21,6 +22,7 @@ interface StudentTopicProgressEditorProps {
   kidId: string;
   kidName?: string;
   enrollmentId?: string;
+  courseId?: string;
   onSaveAndBack?: () => void;
 }
 
@@ -168,20 +170,16 @@ export default function StudentTopicProgressEditorCanonical({
   kidId,
   kidName,
   enrollmentId,
+  courseId,
   onSaveAndBack,
 }: StudentTopicProgressEditorProps) {
-  const {
-    topics: existingTopics,
-    loading: existingLoading,
-    error: existingError,
-    refresh,
-  } = useKidTopicProgress(kidId);
-
+  const { user } = useAuthStore();
+  const routeCourseId = normalizeCourseId(courseId);
   const [configuredTopics, setConfiguredTopics] = useState<TeacherTopic[]>([]);
   const [configLoading, setConfigLoading] = useState(true);
   const [configError, setConfigError] = useState<string | null>(null);
   const [lockedCourseId, setLockedCourseId] = useState<CourseId | ''>('');
-  const [selectedCourseId, setSelectedCourseId] = useState<CourseId | ''>('');
+  const [selectedCourseId, setSelectedCourseId] = useState<CourseId | ''>(routeCourseId);
   const [selectedTopicId, setSelectedTopicId] = useState('');
   const [ratings, setRatings] = useState<ProgressRatings>({});
   const [strengths, setStrengths] = useState<string[]>([]);
@@ -191,6 +189,19 @@ export default function StudentTopicProgressEditorCanonical({
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+
+  const {
+    topics: existingTopics,
+    loading: existingLoading,
+    error: existingError,
+    upsertLocalTopic,
+  } = useKidTopicProgress(kidId, selectedCourseId || null, Boolean(selectedCourseId));
+
+  useEffect(() => {
+    if (routeCourseId && !lockedCourseId) {
+      setSelectedCourseId(routeCourseId);
+    }
+  }, [lockedCourseId, routeCourseId]);
 
   useEffect(() => {
     let active = true;
@@ -249,15 +260,6 @@ export default function StudentTopicProgressEditorCanonical({
       active = false;
     };
   }, [enrollmentId]);
-
-  useEffect(() => {
-    if (selectedCourseId || lockedCourseId || existingTopics.length === 0) return;
-    const latest = [...existingTopics]
-      .sort((a, b) => timestampMs(b.updatedAt) - timestampMs(a.updatedAt))
-      .map((topic) => normalizeCourseId((topic as any).courseId ?? (topic as any).courseLabel))
-      .find(Boolean);
-    if (latest) setSelectedCourseId(latest);
-  }, [existingTopics, lockedCourseId, selectedCourseId]);
 
   const courseTopics = useMemo<TeacherTopic[]>(() => {
     if (!selectedCourseId) return [];
@@ -364,40 +366,56 @@ export default function StudentTopicProgressEditorCanonical({
     try {
       const legacy = deriveLegacyProgressFromRatings(ratings, progressSkills);
       const combinedSubskills = Array.from(new Set([...strengths, ...needsPractice]));
+      const savedAt = new Date();
+      const progressData = {
+        topicId: selectedTopic.id,
+        topicName: selectedTopic.displayTitle,
+        area: selectedTopic.area,
+        courseId: selectedTopic.courseId,
+        courseLabel: COURSE_LABELS[selectedTopic.courseId],
+        courseTotalTopics: courseTopics.length,
+        lesson: selectedTopic.lesson,
+        lessonNumber: selectedTopic.order,
+        stageLabel: selectedTopic.stageLabel ?? null,
+        stageOrder: selectedTopic.stageOrder ?? null,
+        rubricType: selectedTopic.rubricType ?? null,
+        curriculumRevision: isPhonicsCourseId(selectedTopic.courseId)
+          ? PHONICS_CURRICULUM_REVISION
+          : null,
+        progressRatings: ratings,
+        progressRatingsMeta: progressSkills.map((skill) => ({
+          key: skill.key,
+          label: skill.label,
+          area: skill.area,
+        })),
+        mastery: legacy.mastery,
+        checks: legacy.checks,
+        strengthSubskills: [...strengths].sort(),
+        needsPracticeSubskills: [...needsPractice].sort(),
+        selectedSubskills: [...combinedSubskills].sort(),
+        teacherRemark: teacherRemark || null,
+        enrollmentId: enrollmentId || null,
+        updatedBy: user?.uid || null,
+        updatedByRole: String((user as any)?.role || 'teacher').trim().toLowerCase(),
+        source: 'teacher_topic_progress',
+      };
+
       await setDoc(
         doc(db, 'students', kidId, 'progress', selectedTopic.id),
         {
-          topicName: selectedTopic.displayTitle,
-          area: selectedTopic.area,
-          courseId: selectedTopic.courseId,
-          courseLabel: COURSE_LABELS[selectedTopic.courseId],
-          lesson: selectedTopic.lesson,
-          lessonNumber: selectedTopic.order,
-          stageLabel: selectedTopic.stageLabel ?? null,
-          stageOrder: selectedTopic.stageOrder ?? null,
-          rubricType: selectedTopic.rubricType ?? null,
-          curriculumRevision: isPhonicsCourseId(selectedTopic.courseId)
-            ? PHONICS_CURRICULUM_REVISION
-            : null,
-          progressRatings: ratings,
-          progressRatingsMeta: progressSkills.map((skill) => ({
-            key: skill.key,
-            label: skill.label,
-            area: skill.area,
-          })),
-          mastery: legacy.mastery,
-          checks: legacy.checks,
-          strengthSubskills: [...strengths].sort(),
-          needsPracticeSubskills: [...needsPractice].sort(),
-          selectedSubskills: [...combinedSubskills].sort(),
-          teacherRemark: teacherRemark || null,
+          ...progressData,
           updatedAt: serverTimestamp(),
         },
         { merge: true },
       );
-      await refresh();
+
+      upsertLocalTopic({
+        id: selectedTopic.id,
+        ...progressData,
+        updatedAt: savedAt,
+      });
       setBaseline(currentSnapshot);
-      setLastSavedAt(Date.now());
+      setLastSavedAt(savedAt.getTime());
       setSaveMessage('Progress saved.');
       return true;
     } catch (error: any) {
