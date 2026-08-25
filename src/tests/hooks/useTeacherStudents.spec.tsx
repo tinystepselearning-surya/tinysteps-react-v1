@@ -100,7 +100,7 @@ describe('useTeacherFilteredStudents', () => {
     mockWhere.mockClear();
   });
 
-  it('reads teacher-owned enrollment snapshots only and never queries kids or students', async () => {
+  it('reads canonical teacher-owned enrollment snapshots only and never queries legacy aliases, kids, or students', async () => {
     mockGetDocs.mockImplementation(async (queryRef: unknown) => {
       const collectionName = getCollectionName(queryRef as any);
       const aliasField = getTeacherAliasField(queryRef as any);
@@ -120,30 +120,20 @@ describe('useTeacherFilteredStudents', () => {
         };
       }
 
-      if (aliasField === 'teacherIds') {
-        return {
-          docs: [
-            makeDoc('enr-array', {
-              teacherIds: ['teacher-1'],
-              childId: 'child-2',
-              childSnapshot: { name: 'Student Two' },
-              status: 'active',
-            }),
-          ],
-        };
-      }
-
       return { docs: [] };
     });
 
     renderHookComponent();
 
-    await waitFor(() => expect(screen.getByText('count:2')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('count:1')).toBeTruthy());
 
     expect(screen.getAllByTestId('student').map((node) => node.textContent)).toEqual([
       'kid-1:Shreenika',
-      'child-2:Student Two',
     ]);
+
+    expect(mockWhere).toHaveBeenCalledTimes(1);
+    expect(mockWhere).toHaveBeenCalledWith('teacherId', '==', 'teacher-1');
+    expect(mockWhere).not.toHaveBeenCalledWith('teacherIds', 'array-contains', 'teacher-1');
 
     const collectionNames = mockCollection.mock.calls.map(([, name]) => name);
     expect(collectionNames).toContain('enrollments');
