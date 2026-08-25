@@ -66,6 +66,20 @@ export function selectCanonicalParentInsightsProgress(
     : [];
   if (rawStages.length === 0 && totalLessons > 0) return null;
 
+  const invalidStage = rawStages.some((stage) => {
+    const totalCount = count(stage.totalTopics);
+    const completedCount = count(stage.completedTopics);
+    const inProgressCount = count(stage.inProgressTopics);
+    const notStartedCount = count(stage.notStartedTopics);
+    const progressPct = pct(stage.completionPct);
+    return (
+      inProgressCount !== 0 ||
+      completedCount + notStartedCount !== totalCount ||
+      progressPct !== (totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0)
+    );
+  });
+  if (invalidStage) return null;
+
   const presentationByOrder = new Map<number, ParentInsightStageDisplay>();
   presentationStages.forEach((stage) => {
     const order = count(stage.order);
@@ -79,14 +93,8 @@ export function selectCanonicalParentInsightsProgress(
     const order = count(stage.order);
     const totalCount = count(stage.totalTopics);
     const completedCount = count(stage.completedTopics);
-    const inProgressCount = count(stage.inProgressTopics);
     const notStartedCount = count(stage.notStartedTopics);
     const progressPct = pct(stage.completionPct);
-    if (inProgressCount !== 0) throw new Error('canonical_insights_in_progress_not_zero');
-    if (completedCount + notStartedCount !== totalCount) throw new Error('canonical_insights_stage_counts_invalid');
-    if (progressPct !== (totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0)) {
-      throw new Error('canonical_insights_stage_pct_invalid');
-    }
 
     stageTotal += totalCount;
     stageCompleted += completedCount;
