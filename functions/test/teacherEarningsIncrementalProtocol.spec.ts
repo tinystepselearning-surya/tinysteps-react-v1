@@ -228,7 +228,7 @@ describe('B6 Brick 7A teacher earnings incremental transaction protocol', () => 
     ).toEqual({ mode: 'fallback', reason: 'missing_event_identity' });
   });
 
-  it('does not wire Brick 7A into the live trigger before the recompute fence exists', () => {
+  it('keeps Brick 7A incremental execution disabled after the 7B2 recompute cutover', () => {
     const liveTriggerSource = fs.readFileSync(
       path.resolve(process.cwd(), 'functions/src/teacherEarningsRollupTrigger.ts'),
       'utf8',
@@ -236,6 +236,7 @@ describe('B6 Brick 7A teacher earnings incremental transaction protocol', () => 
 
     expect(liveTriggerSource).not.toContain('teacherEarningsIncrementalProtocol');
     expect(liveTriggerSource).not.toContain('planTeacherEarningsIncrementalTransaction');
-    expect(liveTriggerSource).toContain('authoritativeTeacherEarningsRollupWrite.run(event)');
+    expect(liveTriggerSource).toContain('recomputeTeacherEarningsEventCoordinated');
+    expect(liveTriggerSource).not.toContain('authoritativeTeacherEarningsRollupWrite.run(event)');
   });
 });
