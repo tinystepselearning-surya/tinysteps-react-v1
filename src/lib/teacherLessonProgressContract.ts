@@ -25,6 +25,20 @@ export interface TeacherLessonStatusPlan {
   clearCompletedMetadata: boolean;
 }
 
+export interface TeacherLegacyCompletionBaselineTopic {
+  topicId: string;
+  lessonNumber: number;
+  existing?: TeacherLessonProgressLike | null;
+}
+
+export interface TeacherLegacyCompletionBaselinePlan {
+  cutoffLessonNumber: number;
+  candidateTopicIds: string[];
+  alreadyCompletedTopicIds: string[];
+  conflictTopicIds: string[];
+  canApply: boolean;
+}
+
 /**
  * The teacher editor is only used after a lesson has been taught or reviewed.
  * A brand-new lesson therefore defaults to `in_progress` once the teacher
@@ -71,6 +85,70 @@ export function planTeacherLessonStatusWrite(
     statusChanged,
     setCompletedMetadata: transition === 'completed',
     clearCompletedMetadata: transition === 'reopened',
+  };
+}
+
+/**
+ * Plans a one-time teacher-confirmed historical completion baseline for students
+ * whose progress predates explicit `lessonStatus` writes.
+ *
+ * This deliberately does NOT inspect mastery, ratings, attendance, or class count.
+ * A teacher must explicitly choose the last fully completed lesson. Rows that
+ * already carry any explicit non-completed status are treated as conflicts so a
+ * migration can never overwrite newer P2 teacher intent.
+ */
+export function planTeacherLegacyCompletionBaseline(
+  topics: readonly TeacherLegacyCompletionBaselineTopic[],
+  cutoffLessonNumber: number,
+): TeacherLegacyCompletionBaselinePlan {
+  const cutoff = Math.trunc(Number(cutoffLessonNumber));
+  if (!Number.isFinite(cutoff) || cutoff <= 0) {
+    throw new Error('Historical completion cutoff must be a positive lesson number.');
+  }
+
+  const candidateTopicIds: string[] = [];
+  const alreadyCompletedTopicIds: string[] = [];
+  const conflictTopicIds: string[] = [];
+
+  [...topics]
+    .filter((topic) => Number.isFinite(topic.lessonNumber) && topic.lessonNumber > 0 && topic.lessonNumber <= cutoff)
+    .sort((a, b) => a.lessonNumber - b.lessonNumber || a.topicId.localeCompare(b.topicId))
+    .forEach((topic) => {
+      const explicit = normalizeLessonStatus(topic.existing?.lessonStatus);
+      if (explicit === 'completed') {
+        alreadyCompletedTopicIds.push(topic.topicId);
+        return;
+      }
+      if (explicit) {
+        conflictTopicIds.push(topic.topicId);
+        return;
+      }
+      candidateTopicIds.push(topic.topicId);
+    });
+
+  return {
+    cutoffLessonNumber: cutoff,
+    candidateTopicIds,
+    alreadyCompletedTopicIds,
+    conflictTopicIds,
+    canApply: conflictTopicIds.length === 0 && candidateTopicIds.length > 0,
+  };
+}
+
+/**
+ * Scalar status fields for an explicit teacher-confirmed historical baseline.
+ * Timestamp sentinels are added by the Firestore writer.
+ */
+export function buildTeacherLegacyCompletionBaselineScalars(
+  actorUid: string | null | undefined,
+): Record<string, string | number | null | boolean> {
+  const uid = String(actorUid ?? '').trim() || null;
+  return {
+    learningContractVersion: TEACHER_LEARNING_CONTRACT_VERSION,
+    lessonStatus: 'completed',
+    lessonStatusSource: 'teacher_legacy_baseline',
+    lessonStatusUpdatedBy: uid,
+    legacyCompletionBaseline: true,
   };
 }
 
