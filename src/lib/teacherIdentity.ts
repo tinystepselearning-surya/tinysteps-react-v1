@@ -23,16 +23,10 @@ export type OperationalTeacherIdentityAudit = {
 
 export type CanonicalOperationalTeacherWriteFields = {
   teacherId: string;
-  teacherIds: string[];
-  assignedTeacherId: string;
-  primaryTeacherId: string;
-  teacherUid: string;
-  teacher_id: string;
 };
 
 export type CanonicalEnrollmentTeacherWriteFields = {
   teacherId: string;
-  teacherIds: string[];
 };
 
 export const normalizeTeacherIdentityValue = (value: unknown): string => {
@@ -52,6 +46,7 @@ const normalizeTeacherIdentityList = (value: unknown): string[] => {
   );
 };
 
+// Historical/direct-document compatibility only. Active collection readers are canonical-only.
 export const collectLegacyTeacherIdentityRefs = (
   record: Record<string, unknown> | undefined,
 ): string[] => {
@@ -67,6 +62,8 @@ export const collectLegacyTeacherIdentityRefs = (
   );
 };
 
+// Canonical-first so stale aliases can never override an operational owner.
+// The fallback is retained only for legacy direct-document/history compatibility.
 export const resolveOperationalTeacherId = (
   record: Record<string, unknown> | undefined,
 ): string => {
@@ -98,22 +95,17 @@ export const operationalTeacherRecordBelongsTo = (
   return collectLegacyTeacherIdentityRefs(record).includes(expectedTeacherId);
 };
 
+// B5 write contract: new/updated operational ownership is written only to teacherId.
+// Existing alias fields are intentionally not deleted here; physical cleanup is a separate reviewed migration.
 export const buildCanonicalOperationalTeacherWriteFields = (
   teacherId: unknown,
 ): CanonicalOperationalTeacherWriteFields => {
   const canonicalTeacherId = normalizeTeacherIdentityValue(teacherId);
   if (!canonicalTeacherId) {
-    throw new Error('Canonical teacherId is required before writing teacher ownership aliases');
+    throw new Error('Canonical teacherId is required before writing teacher ownership');
   }
 
-  return {
-    teacherId: canonicalTeacherId,
-    teacherIds: [canonicalTeacherId],
-    assignedTeacherId: canonicalTeacherId,
-    primaryTeacherId: canonicalTeacherId,
-    teacherUid: canonicalTeacherId,
-    teacher_id: canonicalTeacherId,
-  };
+  return { teacherId: canonicalTeacherId };
 };
 
 export const buildCanonicalEnrollmentTeacherWriteFields = (
@@ -123,10 +115,7 @@ export const buildCanonicalEnrollmentTeacherWriteFields = (
   if (!canonicalTeacherId) {
     throw new Error('Canonical teacherId is required before writing enrollment ownership');
   }
-  return {
-    teacherId: canonicalTeacherId,
-    teacherIds: [canonicalTeacherId],
-  };
+  return { teacherId: canonicalTeacherId };
 };
 
 export const auditOperationalTeacherIdentity = (
