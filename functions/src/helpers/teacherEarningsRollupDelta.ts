@@ -64,6 +64,60 @@ const isDemoCompletion = (data: Record<string, unknown>): boolean =>
 const isDemoEnrollmentBonus = (data: Record<string, unknown>): boolean =>
   normalizeStatus(data.source) === 'demo_enrolled_bonus';
 
+const normalizedStringList = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => normalizeText(entry))
+    .filter(Boolean)
+    .sort();
+};
+
+const timestampToken = (value: unknown): string => {
+  if (!value) return '';
+  if (value instanceof Date) return Number.isFinite(value.getTime()) ? String(value.getTime()) : '';
+  if (typeof value === 'object') {
+    const row = value as {
+      toMillis?: () => number;
+      seconds?: number;
+      nanoseconds?: number;
+      _seconds?: number;
+      _nanoseconds?: number;
+    };
+    if (typeof row.toMillis === 'function') {
+      const millis = row.toMillis();
+      return Number.isFinite(millis) ? String(millis) : '';
+    }
+    const seconds = Number(row.seconds ?? row._seconds);
+    const nanoseconds = Number(row.nanoseconds ?? row._nanoseconds ?? 0);
+    if (Number.isFinite(seconds)) return `${seconds}:${Number.isFinite(nanoseconds) ? nanoseconds : 0}`;
+  }
+  return normalizeText(value);
+};
+
+const paidLikeStatusToken = (value: unknown): string => {
+  const status = normalizeStatus(value);
+  return status === 'paid' || status === 'partial' || status === 'settled' || status === 'processed'
+    ? status
+    : '';
+};
+
+const payoutStateSignature = (data: Record<string, unknown> | null): string => {
+  if (!data) return 'absent';
+  return JSON.stringify({
+    paidAmount: nonNegativeNumber(data.paidAmount),
+    paidAt: timestampToken(data.paidAt),
+    payoutIds: normalizedStringList(data.payoutIds),
+    reversedPaidAmount: nonNegativeNumber(data.reversedPaidAmount),
+    reversedPayoutIds: normalizedStringList(data.reversedPayoutIds),
+    paidLikeStatus: paidLikeStatusToken(data.status),
+  });
+};
+
+const payoutStateChanged = (
+  before: Record<string, unknown> | null,
+  after: Record<string, unknown> | null,
+): boolean => payoutStateSignature(before) !== payoutStateSignature(after);
+
 export const teacherMonthRollupTargetFor = (
   data: Record<string, unknown> | null | undefined,
 ): TeacherMonthRollupTarget | null => {
@@ -152,6 +206,8 @@ const isCanonicalSessionRecord = (
  * Conservative by design:
  * - standalone demo/adjustment rows can be created, updated, or deleted incrementally;
  * - an existing canonical session earning can be updated incrementally;
+ * - payout-state changes always require recompute because the monthly read model also
+ *   contains the top-five teacherPayouts payment history;
  * - session earning creates/deletes and non-canonical duplicate rows require recompute,
  *   because a legacy row for the same session may become selected by dedupe rules;
  * - teacher/month moves require both affected months to recompute.
@@ -172,6 +228,10 @@ export const planTeacherEarningsRollupChange = (input: {
 
   if (beforeTarget && afterTarget && !sameTarget(beforeTarget, afterTarget)) {
     return { mode: 'recompute', targets, reason: 'teacher_or_month_changed' };
+  }
+
+  if (payoutStateChanged(input.before, input.after)) {
+    return { mode: 'recompute', targets, reason: 'payout_state_changed' };
   }
 
   if (!beforeTarget || !afterTarget) {
