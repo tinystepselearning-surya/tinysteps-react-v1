@@ -24,7 +24,7 @@ jobs:
           node-version: 22.x
 
       - name: Apply P5 canonical Overview wiring
-        run: node scripts/p5-wire-parent-overview.mjs
+        run: node scripts/p5-wire-parent-overview-v2.mjs
 
       - name: Commit integration when changed
         shell: bash
