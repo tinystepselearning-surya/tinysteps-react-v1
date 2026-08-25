@@ -14,6 +14,10 @@ export type ParentClassSessionDateBounds = {
   endKey: string;
 };
 
+const PARENT_LEGACY_SESSION_PROBE_VERSION = "v2";
+const PARENT_LEGACY_SESSION_PROBE_PREFIX =
+  `ts-parent-class-legacy-probe:${PARENT_LEGACY_SESSION_PROBE_VERSION}:`;
+
 const pad2 = (value: number): string => String(value).padStart(2, "0");
 
 const toYmd = (date: Date): string =>
@@ -23,6 +27,25 @@ const isHistoryView = (classesView: string): boolean =>
   classesView === "completed"
   || classesView === "past_pending"
   || classesView === "rescheduled";
+
+const claimParentLegacySessionProbe = (): boolean => {
+  if (typeof window === "undefined") return false;
+
+  const kidId = new URLSearchParams(window.location.search).get("kidId")?.trim() || "";
+  if (!kidId) return false;
+
+  try {
+    const storageKey = `${PARENT_LEGACY_SESSION_PROBE_PREFIX}${kidId}`;
+    if (window.sessionStorage.getItem(storageKey) === "1") return false;
+    window.sessionStorage.setItem(storageKey, "1");
+    return true;
+  } catch {
+    // Storage can be blocked in hardened/private browser modes. In that case we
+    // keep the canonical bounded read and avoid accidentally turning every load
+    // into an unbounded compatibility scan.
+    return false;
+  }
+};
 
 export const resolveParentClassSessionReadMode = ({
   activeTab,
@@ -63,5 +86,14 @@ export const resolveParentClassSessionDateBounds = ({
   };
 };
 
-export const shouldRunParentLegacySessionFallback = (canonicalResultCount: number): boolean =>
-  !Number.isFinite(canonicalResultCount) || canonicalResultCount <= 0;
+export const shouldRunParentLegacySessionFallback = (canonicalResultCount: number): boolean => {
+  if (!Number.isFinite(canonicalResultCount) || canonicalResultCount <= 0) return true;
+
+  // Existing parents can have a mixed month: canonical dated completed sessions
+  // plus older/future sessions that only carry startAt/legacy ownership. A
+  // non-empty bounded result therefore does not prove migration completeness.
+  // Probe the legacy ownership path once per selected child per browser session.
+  // The ParentDashboard query still filters the compatibility result back to the
+  // current operational bounds, and subsequent loads stay on the bounded path.
+  return claimParentLegacySessionProbe();
+};

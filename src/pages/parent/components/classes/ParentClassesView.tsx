@@ -101,7 +101,7 @@ type JoinButtonProps = {
 
 function JoinButton({ row, joining, onJoin, compact = false }: JoinButtonProps) {
   const reasonId = `class-join-reason-${row.id}`;
-  const showAction = shouldShowClassJoinAction(row.status);
+  const showAction = shouldShowClassJoinAction(row.status) && (row.isToday || row.isFuture);
   if (!showAction) return null;
 
   return (
