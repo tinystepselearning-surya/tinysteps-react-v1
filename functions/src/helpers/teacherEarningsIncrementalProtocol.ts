@@ -171,12 +171,12 @@ const addDelta = (
 };
 
 /**
- * Pure Brick 7A gate for a future incremental transaction.
+ * Pure Brick 7A/7B gate for a future incremental transaction.
  *
- * This does NOT enable incremental writes. It intentionally requires the rollup to carry a
- * transaction-coordination fence that no current production rollup has yet. Brick 7B must first
- * move the authoritative full-recompute writer onto the same transaction protocol and stamp that
- * fence. Until then this function always returns `fallback` for live rollups.
+ * This does NOT enable incremental writes. It requires both the transaction-coordination fence
+ * and an idle authoritative recompute state. Brick 7B must first move the full-recompute writer
+ * onto the same claim/finalize protocol. Until that cutover is complete, live rollups continue to
+ * fall back to the authoritative full scan.
  */
 export const planTeacherEarningsIncrementalTransaction = (input: {
   eventId: unknown;
@@ -207,6 +207,7 @@ export const planTeacherEarningsIncrementalTransaction = (input: {
   const rollupVersion = finiteNumber(rollup.rollupVersion);
   const protocolVersion = finiteNumber(rollup.incrementalProtocolVersion);
   const transactionFence = normalizeText(rollup.incrementalTransactionFence);
+  const recomputeState = normalizeText(rollup.incrementalRecomputeState);
   const revisionBefore = nonNegativeInteger(rollup.incrementalRevision);
 
   if (source !== 'teacherEarnings_events_v1' || rollupVersion == null || rollupVersion < 1) {
@@ -222,6 +223,9 @@ export const planTeacherEarningsIncrementalTransaction = (input: {
     revisionBefore == null
   ) {
     return { mode: 'fallback', reason: 'recompute_not_transaction_coordinated' };
+  }
+  if (recomputeState !== 'idle') {
+    return { mode: 'fallback', reason: 'recompute_in_progress' };
   }
 
   const currentTotals = readRollupTotals(rollup);
