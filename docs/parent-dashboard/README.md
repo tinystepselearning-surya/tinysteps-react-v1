@@ -19,4 +19,7 @@ Parent-facing screens present facts owned by canonical operational systems. A me
 - **P9 — Payments / Wallet:** family and child billing scopes made explicit.
 - **P10 — Legacy Retirement:** remove obsolete calculations/fallbacks only after the new path is proven.
 
-See `brick-p1-data-contract.md` for the first contract.
+## Current contract docs
+
+- `brick-p1-data-contract.md` — semantic foundation and invariants.
+- `brick-p2-teacher-learning-contract.md` — teacher-owned lesson completion and learning evidence writes.
