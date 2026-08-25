@@ -1,14 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BookOpenCheck,
   CheckCircle2,
   ChevronDown,
   Circle,
   GraduationCap,
+  Info,
 } from "lucide-react";
 
 import { cn } from "@/components/lib/utils";
+import { useLatestActiveChildCourseProgressProjection } from "../../../../hooks/useChildCourseProgressProjection";
 import {
+  buildCanonicalParentInsightStages,
   getParentInsightStageStateLabel,
   type ParentInsightCourseOption,
   type ParentInsightProgressState,
@@ -40,6 +43,27 @@ type ParentInsightsViewProps = {
   onViewTeacherRatings: () => void;
   onSelectionFeedback?: () => void;
 };
+
+function normalizeCourseId(value: unknown): string {
+  const raw = String(value ?? '').trim().toLowerCase();
+  if (!raw) return '';
+  const aliases: Record<string, string> = {
+    'phonics-foundation': 'phonics-foundations',
+    foundational: 'phonics-foundations',
+    foundation: 'phonics-foundations',
+    'phonics-early': 'early-phonics',
+    early: 'early-phonics',
+    'phonics-advanced': 'advanced-phonics',
+    advanced: 'advanced-phonics',
+    'grammar-essentials': 'basic-grammar',
+    'grammar-mastery': 'advanced-grammar',
+    'intermediate-grammar': 'basic-grammar',
+    'public-speaking-foundations': 'basic-public-speaking',
+    'public-speaking-excellence': 'advanced-public-speaking',
+    'intermediate-public-speaking': 'basic-public-speaking',
+  };
+  return aliases[raw] || raw;
+}
 
 function ParentInsightsSkeleton() {
   return (
@@ -107,6 +131,7 @@ function CourseProgressSummary({
   completedStages,
   lastUpdatedLabel,
   usesLatestLessonFallback,
+  hasLearningActivityAwaitingCompletion,
 }: Pick<
   ParentInsightsViewProps,
   | "completedLessons"
@@ -115,7 +140,7 @@ function CourseProgressSummary({
   | "completedStages"
   | "lastUpdatedLabel"
   | "usesLatestLessonFallback"
->) {
+> & { hasLearningActivityAwaitingCompletion: boolean }) {
   const progressAvailable = typeof completionPct === "number";
   const progressWidth = progressAvailable
     ? Math.max(0, Math.min(100, completionPct))
@@ -157,6 +182,20 @@ function CourseProgressSummary({
           <span className="sr-only">Current-course progress is unavailable.</span>
         </div>
       )}
+
+      {hasLearningActivityAwaitingCompletion ? (
+        <div
+          role="note"
+          data-testid="parent-progress-unconfirmed-activity"
+          className="mt-3 flex gap-2 rounded-xl bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200"
+        >
+          <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <p>
+            Some lessons have teacher learning activity recorded but are not explicitly marked completed yet. Completion percentage stays based only on teacher lesson status.
+          </p>
+        </div>
+      ) : null}
+
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-slate-200 pt-3 text-xs text-slate-500 dark:border-slate-700">
         {completedStages !== null ? <span>{completedStages} completed stages</span> : null}
         {lastUpdatedLabel ? <span>Updated {lastUpdatedLabel}</span> : null}
@@ -186,12 +225,12 @@ function CurrentStageCard({ stage }: { stage: ParentInsightStageDisplay }) {
       {stage.progressPct !== null ? (
         <div className="mt-4">
           <div className="flex justify-between gap-3 text-xs text-slate-500">
-            <span>Stage progress</span>
+            <span>Lesson completion</span>
             <span className="font-semibold text-slate-700 dark:text-slate-200">{stage.progressPct}%</span>
           </div>
           <div
             role="progressbar"
-            aria-label={`${stage.label} stage progress`}
+            aria-label={`${stage.label} lesson completion`}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={stage.progressPct}
@@ -205,11 +244,10 @@ function CurrentStageCard({ stage }: { stage: ParentInsightStageDisplay }) {
         {stage.completedCount !== null && stage.totalCount !== null ? (
           <span>{stage.completedCount}/{stage.totalCount} lessons completed</span>
         ) : null}
-        {stage.masteryLabel ? <span>Mastery: {stage.masteryLabel}</span> : null}
       </div>
       {stage.focusItems.length > 0 ? (
         <div className="mt-4">
-          <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Current focus</p>
+          <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">Teacher learning focus</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {stage.focusItems.slice(0, 2).map((item) => (
               <span key={item} className="rounded-full bg-violet-100/80 px-2.5 py-1 text-xs text-violet-900 dark:bg-violet-950/60 dark:text-violet-200">
@@ -282,7 +320,7 @@ function StageJourney({
                   <span className="block text-xs text-slate-500">Stage {stage.order} · {stateLabel}</span>
                   <span className="mt-0.5 block break-words text-sm font-semibold text-slate-900 dark:text-slate-100">{stage.label}</span>
                   <span className="mt-0.5 block text-xs text-slate-500">
-                    {stage.progressPct !== null ? `${stage.progressPct}%` : "Progress unavailable"}
+                    {stage.progressPct !== null ? `${stage.progressPct}% lesson completion` : "Progress unavailable"}
                     {stage.completedCount !== null && stage.totalCount !== null
                       ? ` · ${stage.completedCount}/${stage.totalCount} lessons`
                       : ""}
@@ -302,11 +340,10 @@ function StageJourney({
                 ) : null}
                 {stage.focusItems.length > 0 ? (
                   <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
-                    <span className="font-semibold text-slate-700 dark:text-slate-200">Focus:</span>{" "}
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">Teacher learning focus:</span>{" "}
                     {stage.focusItems.join(" · ")}
                   </p>
                 ) : null}
-                {stage.masteryLabel ? <p className="mt-3 text-xs text-slate-500">Mastery: {stage.masteryLabel}</p> : null}
               </div>
             </li>
           );
@@ -390,6 +427,46 @@ export default function ParentInsightsView(props: ParentInsightsViewProps) {
     onSelectionFeedback,
   } = props;
 
+  const activeProjection = useLatestActiveChildCourseProgressProjection(childSelected);
+  const canonicalProjectionMatchesCourse = Boolean(
+    activeProjection.data
+    && normalizeCourseId(activeProjection.courseId || activeProjection.data.courseId) === normalizeCourseId(selectedCourseId),
+  );
+  const canonicalStageResult = useMemo(
+    () => canonicalProjectionMatchesCourse
+      ? buildCanonicalParentInsightStages({
+          projection: activeProjection.data,
+          expectedCourseId: selectedCourseId,
+          presentationStages: stages,
+        })
+      : null,
+    [activeProjection.data, canonicalProjectionMatchesCourse, selectedCourseId, stages],
+  );
+
+  const canonicalProjection = canonicalProjectionMatchesCourse ? activeProjection.data : null;
+  const effectiveStages = canonicalStageResult?.stages ?? stages;
+  const effectiveActiveStage = canonicalStageResult?.activeStage ?? activeStage;
+  const effectiveNextStage = canonicalStageResult?.nextStage ?? nextStage;
+  const effectiveCompletedLessons = canonicalProjection
+    ? Number(canonicalProjection.completedTopics ?? 0)
+    : completedLessons;
+  const effectiveTotalLessons = canonicalProjection
+    ? Number(canonicalProjection.totalTopics ?? 0)
+    : totalLessons;
+  const effectiveCompletionPct = canonicalProjection
+    ? Number(canonicalProjection.overallPct ?? 0)
+    : completionPct;
+  const effectiveCompletedStages = canonicalProjection
+    ? Number(canonicalProjection.completedStages ?? 0)
+    : completedStages;
+  const effectiveProgressState: ParentInsightProgressState = canonicalStageResult
+    ? 'available'
+    : progressState;
+  const hasLearningActivityAwaitingCompletion = Boolean(
+    canonicalProjection
+    && Number(canonicalProjection.inProgressTopics ?? 0) > 0,
+  );
+
   return (
     <div className="min-w-0 space-y-4 overflow-x-hidden pb-2" data-testid="parent-insights-view">
       <header className={isNativeIOSApp ? "sr-only" : ""}>
@@ -397,7 +474,7 @@ export default function ParentInsightsView(props: ParentInsightsViewProps) {
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">A concise view of the current learning journey.</p>
       </header>
 
-      {progressState === "loading" ? (
+      {effectiveProgressState === "loading" ? (
         <ParentInsightsSkeleton />
       ) : errorMessage ? (
         <div role="alert" className="rounded-[20px] border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
@@ -422,22 +499,23 @@ export default function ParentInsightsView(props: ParentInsightsViewProps) {
             />
           </section>
 
-          {progressState === "unavailable" ? (
+          {effectiveProgressState === "unavailable" ? (
             <div role="status" className="rounded-[20px] border border-slate-200 bg-white p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
               This course is assigned, but its curriculum breakdown is not available yet.
             </div>
           ) : (
             <>
               <CourseProgressSummary
-                completedLessons={completedLessons}
-                totalLessons={totalLessons}
-                completionPct={completionPct}
-                completedStages={completedStages}
+                completedLessons={effectiveCompletedLessons}
+                totalLessons={effectiveTotalLessons}
+                completionPct={effectiveCompletionPct}
+                completedStages={effectiveCompletedStages}
                 lastUpdatedLabel={lastUpdatedLabel}
-                usesLatestLessonFallback={usesLatestLessonFallback}
+                usesLatestLessonFallback={canonicalProjection ? false : usesLatestLessonFallback}
+                hasLearningActivityAwaitingCompletion={hasLearningActivityAwaitingCompletion}
               />
-              {activeStage ? (
-                <CurrentStageCard stage={activeStage} />
+              {effectiveActiveStage ? (
+                <CurrentStageCard stage={effectiveActiveStage} />
               ) : (
                 <div role="status" className="rounded-[20px] border border-slate-200 bg-white p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
                   A stage breakdown is not available for this course yet.
@@ -452,7 +530,7 @@ export default function ParentInsightsView(props: ParentInsightsViewProps) {
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Learning now</p>
                       <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-                        {activeStage?.focusItems.length ? activeStage.focusItems.join(" · ") : activeStage?.label || "Current focus will appear here."}
+                        {effectiveActiveStage?.focusItems.length ? effectiveActiveStage.focusItems.join(" · ") : effectiveActiveStage?.label || "Current focus will appear here."}
                       </p>
                     </div>
                   </div>
@@ -461,7 +539,7 @@ export default function ParentInsightsView(props: ParentInsightsViewProps) {
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Coming next</p>
                       <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-                        {nextStage ? `Stage ${nextStage.order} — ${nextStage.label}` : "No next stage is available in this course."}
+                        {effectiveNextStage ? `Stage ${effectiveNextStage.order} — ${effectiveNextStage.label}` : "No next stage is available in this course."}
                       </p>
                     </div>
                   </div>
@@ -474,11 +552,11 @@ export default function ParentInsightsView(props: ParentInsightsViewProps) {
                 onViewTeacherRatings={onViewTeacherRatings}
               />
 
-              {stages.length > 0 ? (
+              {effectiveStages.length > 0 ? (
                 <StageJourney
-                  stages={stages}
-                  activeStage={activeStage}
-                  contextKey={contextKey}
+                  stages={effectiveStages}
+                  activeStage={effectiveActiveStage}
+                  contextKey={`${contextKey}::${canonicalProjection ? 'p3' : 'legacy'}`}
                   onSelectionFeedback={onSelectionFeedback}
                 />
               ) : null}
