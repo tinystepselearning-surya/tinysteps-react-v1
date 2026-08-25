@@ -55,13 +55,12 @@ jobs:
             exit 1
           fi
 
-      - name: Apply exact B3 alias repair
+      - name: Verify exact B3 targets remain after denied transaction
         run: >-
           node scripts/repair-teacher-identity-aliases.mjs
           --project tinysteps-react-v1
           --limit 250
           --expected-enrollments 6
           --expected-sessions 3
-          --apply
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
