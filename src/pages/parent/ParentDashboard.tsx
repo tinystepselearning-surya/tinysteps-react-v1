@@ -1416,6 +1416,8 @@ export default function ParentDashboard() {
 
   const kids = useMemo(() => kidsQuery.data ?? [], [kidsQuery.data]);
   const [selectedKidId, setSelectedKidId] = useState<string>("");
+  const [curriculumTopicModalOpen, setCurriculumTopicModalOpen] = useState(false);
+  const [selectedCurriculumTopic, setSelectedCurriculumTopic] = useState<any>(null);
   const [insightsCourseId, setInsightsCourseId] = useState<string>("");
   const [skillsCourseId, setSkillsCourseId] = useState<string>("");
   const [profileOpen, setProfileOpen] = useState(false);
