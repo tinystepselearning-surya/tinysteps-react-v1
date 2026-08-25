@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { summarizeTeacherFinanceRollups } from '../../pages/admin/teacherFinanceRollupMetrics';
 
-describe('B6 Brick 6A teacher finance rollup projection', () => {
+describe('B6 Brick 6A/6B2 teacher finance rollup projection', () => {
   it('reproduces the Finance summary from analytics-ready monthly rollups', () => {
     const summary = summarizeTeacherFinanceRollups(
       [
@@ -14,7 +14,7 @@ describe('B6 Brick 6A teacher finance rollup projection', () => {
           demoEarnings: 200,
           demoCompletedCount: 1,
           demoEnrollmentBonusCount: 1,
-          sessionEarnings: 1000,
+          analyticsProjectionPreparedSessionEarnings: 1000,
           unclassifiedEarnings: 0,
           analyticsProjectionVersion: 1,
         },
@@ -27,7 +27,7 @@ describe('B6 Brick 6A teacher finance rollup projection', () => {
           demoEarnings: 100,
           demoCompletedCount: 1,
           demoEnrollmentBonusCount: 0,
-          sessionEarnings: 550,
+          analyticsProjectionPreparedSessionEarnings: 550,
           unclassifiedEarnings: 0,
           analyticsProjectionVersion: 1,
         },
@@ -46,6 +46,31 @@ describe('B6 Brick 6A teacher finance rollup projection', () => {
       unsafeRollupCount: 0,
       safeForFinanceSummary: true,
     });
+  });
+
+  it('derives live session earnings from authoritative total minus demo instead of stale prepared metadata', () => {
+    const summary = summarizeTeacherFinanceRollups(
+      [
+        {
+          monthKey: '2026-08',
+          totalEarnings: 1400,
+          pendingEarnings: 700,
+          totalSessions: 7,
+          demoEarnings: 200,
+          demoCompletedCount: 1,
+          demoEnrollmentBonusCount: 1,
+          analyticsProjectionPreparedSessionEarnings: 999,
+          unclassifiedEarnings: 0,
+          analyticsProjectionVersion: 1,
+        },
+      ],
+      '2026-08',
+    );
+
+    expect(summary.safeForFinanceSummary).toBe(true);
+    expect(summary.totalCombinedEarned).toBe(1400);
+    expect(summary.totalSessionEarned).toBe(1200);
+    expect(summary.totalDemoEarned).toBe(200);
   });
 
   it('does not silently use legacy v1 rollups that lack the analytics projection', () => {
@@ -77,7 +102,7 @@ describe('B6 Brick 6A teacher finance rollup projection', () => {
       [
         {
           monthKey: '2026-08',
-          sessionEarnings: 1000,
+          totalEarnings: 1200,
           demoEarnings: 200,
           unclassifiedEarnings: 50,
           analyticsProjectionVersion: 1,
@@ -96,7 +121,7 @@ describe('B6 Brick 6A teacher finance rollup projection', () => {
         {
           id: '2026-07',
           monthKey: '2026-07',
-          sessionEarnings: 1000,
+          totalEarnings: 1200,
           demoEarnings: 200,
           unclassifiedEarnings: 0,
           analyticsProjectionVersion: 1,
