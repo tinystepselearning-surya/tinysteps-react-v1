@@ -1,4 +1,4 @@
-import { BookOpen, CalendarDays, CreditCard, Target } from "lucide-react";
+import { BookOpen, CalendarDays, CreditCard } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 
@@ -9,8 +9,10 @@ type ParentDashboardKpisProps = {
   progressState: ProgressDisplayState;
   completionPct?: number;
   lessonsSummaryText: string;
-  confidenceLabel: string;
-  confidenceMetaText: string;
+  // Kept temporarily for ParentDashboard call-site compatibility until P10 removes
+  // the retired confidence wiring. P5 intentionally does not display guessed confidence.
+  confidenceLabel?: string;
+  confidenceMetaText?: string;
   confidenceLoading?: boolean;
   attendanceState: AttendanceDisplayState;
   attendanceLabel: string;
@@ -26,9 +28,6 @@ export default function ParentDashboardKpis({
   progressState,
   completionPct,
   lessonsSummaryText,
-  confidenceLabel,
-  confidenceMetaText,
-  confidenceLoading = false,
   attendanceState,
   attendanceLabel,
   attendanceMetaText,
@@ -43,12 +42,12 @@ export default function ParentDashboardKpis({
   return (
     <section
       aria-label="Parent dashboard snapshot"
-      className="grid grid-cols-2 gap-3 xl:grid-cols-4"
+      className="grid gap-3 sm:grid-cols-3"
       data-layout="fixed-grid"
     >
       <Card className={`${cardClass} border-indigo-100 bg-gradient-to-br from-white to-indigo-50/65 dark:border-indigo-900/60 dark:from-slate-900 dark:to-slate-900`}>
         <div className="flex items-start justify-between gap-2">
-          <p className="text-xs font-medium leading-4 text-slate-600">Current course progress</p>
+          <p className="text-xs font-medium leading-4 text-slate-600">Course progress</p>
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"><BookOpen className="h-4 w-4" aria-hidden="true" /></span>
         </div>
         {progressState === "loading" ? valueSkeleton : (
@@ -73,22 +72,13 @@ export default function ParentDashboardKpis({
         )}
       </Card>
 
-      <Card className={`${cardClass} border-emerald-100 bg-gradient-to-br from-white to-emerald-50/60 dark:border-emerald-900/60 dark:from-slate-900 dark:to-slate-900`}>
-        <div className="flex items-start justify-between gap-2">
-          <p className="text-xs font-medium leading-4 text-slate-600">Confidence snapshot</p>
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"><Target className="h-4 w-4" aria-hidden="true" /></span>
-        </div>
-        {confidenceLoading ? valueSkeleton : <p className="mt-2 break-words text-xl font-semibold text-slate-950 dark:text-slate-100">{confidenceLabel}</p>}
-        <p className="mt-1 min-h-8 text-xs leading-4 text-slate-500">{confidenceMetaText}</p>
-      </Card>
-
       <Card className={`${cardClass} border-amber-100 bg-gradient-to-br from-white to-amber-50/65 dark:border-amber-900/60 dark:from-slate-900 dark:to-slate-900`}>
         <div className="flex items-start justify-between gap-2">
-          <p className="text-xs font-medium leading-4 text-slate-600">Classes in selected month</p>
+          <p className="text-xs font-medium leading-4 text-slate-600">Classes this month</p>
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"><CalendarDays className="h-4 w-4" aria-hidden="true" /></span>
         </div>
         {attendanceState === "loading" ? valueSkeleton : (
-          <p className="mt-2 text-xl font-semibold text-slate-950 dark:text-slate-100">
+          <p className="mt-2 break-words text-xl font-semibold text-slate-950 dark:text-slate-100">
             {attendanceState === "available" ? attendanceLabel : "Not available"}
           </p>
         )}
@@ -97,7 +87,7 @@ export default function ParentDashboardKpis({
 
       <Card className={`${cardClass} border-teal-100 bg-gradient-to-br from-white to-teal-50/65 dark:border-teal-900/60 dark:from-slate-900 dark:to-slate-900`}>
         <div className="flex items-start justify-between gap-2">
-          <p className="text-xs font-medium leading-4 text-slate-600">Wallet balance</p>
+          <p className="text-xs font-medium leading-4 text-slate-600">Wallet</p>
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300"><CreditCard className="h-4 w-4" aria-hidden="true" /></span>
         </div>
         {billingLoading ? valueSkeleton : <p className="mt-2 break-words text-xl font-semibold text-slate-950 dark:text-slate-100">{billingLabel}</p>}
