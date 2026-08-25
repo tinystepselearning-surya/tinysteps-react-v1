@@ -9,18 +9,23 @@ import {
 if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
+const ANALYTICS_PROJECTION_VERSION = 1;
 
-async function invalidateUnsafeAnalyticsProjection(input: {
+type EarningImages = {
   earningId: string;
   before: Record<string, unknown> | null;
   after: Record<string, unknown> | null;
-}): Promise<void> {
-  const checks = [
-    checkTeacherFinanceAnalyticsReadinessRow(input.earningId, input.before),
-    checkTeacherFinanceAnalyticsReadinessRow(input.earningId, input.after),
-  ].filter((check) => check.relevant && !check.safe);
+};
 
-  if (checks.length === 0) return;
+const readinessChecksFor = (input: EarningImages) => [
+  checkTeacherFinanceAnalyticsReadinessRow(input.earningId, input.before),
+  checkTeacherFinanceAnalyticsReadinessRow(input.earningId, input.after),
+];
+
+async function invalidateUnsafeAnalyticsProjection(input: EarningImages): Promise<boolean> {
+  const checks = readinessChecksFor(input).filter((check) => check.relevant && !check.safe);
+
+  if (checks.length === 0) return false;
 
   const db = admin.firestore();
   const batch = db.batch();
@@ -56,7 +61,7 @@ async function invalidateUnsafeAnalyticsProjection(input: {
         {
           monthKey: check.monthKey,
           ready: false,
-          analyticsProjectionVersion: 1,
+          analyticsProjectionVersion: ANALYTICS_PROJECTION_VERSION,
           invalidReason: invalidReasons.join(','),
           invalidatedAt: admin.firestore.FieldValue.serverTimestamp(),
           source: 'b6_teacher_earnings_readiness_guard',
@@ -67,6 +72,62 @@ async function invalidateUnsafeAnalyticsProjection(input: {
   }
 
   await batch.commit();
+  return true;
+}
+
+async function refreshCertifiedAnalyticsRollups(input: EarningImages): Promise<void> {
+  const checks = readinessChecksFor(input);
+  if (checks.some((check) => check.relevant && !check.safe)) return;
+
+  const targets = new Map<string, { teacherId: string; monthKey: string }>();
+  for (const check of checks) {
+    if (!check.relevant || !check.safe || !check.teacherId || !check.monthKey) continue;
+    targets.set(`${check.teacherId}__${check.monthKey}`, {
+      teacherId: check.teacherId,
+      monthKey: check.monthKey,
+    });
+  }
+  if (targets.size === 0) return;
+
+  const db = admin.firestore();
+  const monthKeys = Array.from(new Set(Array.from(targets.values()).map((target) => target.monthKey)));
+  const readinessRefs = monthKeys.map((monthKey) =>
+    db
+      .collection('adminStats')
+      .doc('teacherFinanceAnalyticsProjection')
+      .collection('months')
+      .doc(monthKey),
+  );
+  const readinessSnaps = readinessRefs.length > 0 ? await db.getAll(...readinessRefs) : [];
+  const readyMonths = new Set<string>();
+  readinessSnaps.forEach((snap, index) => {
+    const data = snap.exists ? (snap.data() || {}) : {};
+    const version = Number(data.analyticsProjectionVersion);
+    if (data.ready === true && Number.isFinite(version) && version >= ANALYTICS_PROJECTION_VERSION) {
+      readyMonths.add(monthKeys[index]);
+    }
+  });
+  if (readyMonths.size === 0) return;
+
+  const batch = db.batch();
+  let writeCount = 0;
+  for (const target of targets.values()) {
+    if (!readyMonths.has(target.monthKey)) continue;
+    batch.set(
+      db.collection('teachers').doc(target.teacherId).collection('earnings').doc(target.monthKey),
+      {
+        monthKey: target.monthKey,
+        analyticsProjectionVersion: ANALYTICS_PROJECTION_VERSION,
+        unclassifiedEarnings: 0,
+        analyticsProjectionSource: 'b6_teacher_earnings_live_refresh_v1',
+        analyticsProjectionRefreshedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+    writeCount += 1;
+  }
+
+  if (writeCount > 0) await batch.commit();
 }
 
 /**
@@ -76,9 +137,10 @@ async function invalidateUnsafeAnalyticsProjection(input: {
  * payout-related, legacy, moved, or ambiguous event delegates to the existing authoritative
  * revenue handler unchanged.
  *
- * B6 Brick 6B1 additionally invalidates a previously prepared Analytics projection only when an
- * active earning is noncanonical, unclassified, or otherwise unsafe. Canonical session/demo
- * events add no extra Firestore write here; the authoritative rollup continues to refresh totals.
+ * B6 Brick 6B1/6B2 invalidates certified analytics when an earning becomes unsafe. After a real
+ * authoritative recompute, canonical session/demo events refresh certification metadata only for
+ * months that an admin has already certified. This costs at most one readiness-document read per
+ * affected month and never auto-certifies an unprepared month.
  */
 export const onTeacherEarningsRollupWrite = onDocumentWritten(
   {
@@ -87,32 +149,34 @@ export const onTeacherEarningsRollupWrite = onDocumentWritten(
   },
   async (event) => {
     const change = event.data;
-    if (change) {
-      const beforeData = change.before.exists
-        ? ((change.before.data() || {}) as Record<string, unknown>)
-        : null;
-      const afterData = change.after.exists
-        ? ((change.after.data() || {}) as Record<string, unknown>)
-        : null;
-      const earningId = String(event.params.earningId || '');
+    if (!change) return authoritativeTeacherEarningsRollupWrite.run(event);
 
-      await invalidateUnsafeAnalyticsProjection({
+    const beforeData = change.before.exists
+      ? ((change.before.data() || {}) as Record<string, unknown>)
+      : null;
+    const afterData = change.after.exists
+      ? ((change.after.data() || {}) as Record<string, unknown>)
+      : null;
+    const earningId = String(event.params.earningId || '');
+    const images: EarningImages = {
+      earningId,
+      before: beforeData,
+      after: afterData,
+    };
+
+    await invalidateUnsafeAnalyticsProjection(images);
+
+    if (
+      canSkipTeacherEarningsRollupRecompute({
         earningId,
         before: beforeData,
         after: afterData,
-      });
-
-      if (
-        canSkipTeacherEarningsRollupRecompute({
-          earningId,
-          before: beforeData,
-          after: afterData,
-        })
-      ) {
-        return;
-      }
+      })
+    ) {
+      return;
     }
 
-    return authoritativeTeacherEarningsRollupWrite.run(event);
+    await authoritativeTeacherEarningsRollupWrite.run(event);
+    await refreshCertifiedAnalyticsRollups(images);
   },
 );
