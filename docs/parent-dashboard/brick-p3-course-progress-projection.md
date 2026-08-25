@@ -139,3 +139,5 @@ P3 does **not**:
 - delete all legacy parent calculations yet (P10).
 
 Because the rebuild is stacked, consumer cutover can happen in later bricks without exposing a partially migrated parent experience on `main`.
+
+Final review requires full repository CI to pass on the exact P3 head commit before the PR is considered build-complete.
