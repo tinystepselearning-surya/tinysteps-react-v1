@@ -5,9 +5,10 @@ import {
   type TeacherPayoutLedgerRow,
 } from './teacherEarningsAuthoritativeRollup';
 import {
-  planTeacherEarningsRecomputeClaim,
-  planTeacherEarningsRecomputeFinalize,
-} from './teacherEarningsRecomputeCoordination';
+  TEACHER_EARNINGS_INCREMENTAL_PROTOCOL_VERSION,
+  TEACHER_EARNINGS_TRANSACTION_FENCE,
+} from './teacherEarningsIncrementalProtocol';
+import { TEACHER_EARNINGS_RECOMPUTE_STATE_IDLE } from './teacherEarningsRecomputeCoordination';
 
 const IST_OFFSET_MINUTES = 330;
 
@@ -25,6 +26,11 @@ export type TeacherEarningsCoordinatedRecomputeResult = {
 
 const normalizeText = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : value == null ? '' : String(value).trim();
+
+const nonNegativeInteger = (value: unknown, fallback = 0): number => {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 && Number.isInteger(parsed) ? parsed : fallback;
+};
 
 const toDate = (value: unknown): Date | null => {
   if (!value) return null;
@@ -90,111 +96,97 @@ const teacherRollupRef = (
   target: TeacherEarningsRecomputeTarget,
 ) => db.collection('teachers').doc(target.teacherId).collection('earnings').doc(target.monthKey);
 
-const claimIdFor = (eventId: string, target: TeacherEarningsRecomputeTarget): string =>
-  `${eventId}__${target.teacherId}__${target.monthKey}`;
-
-const scanTargetLedger = async (
+const earningsQueryFor = (
   db: admin.firestore.Firestore,
   target: TeacherEarningsRecomputeTarget,
-) => {
-  const [earningsSnap, payoutsSnap] = await Promise.all([
-    db
-      .collection('teacherEarnings')
-      .where('teacherId', '==', target.teacherId)
-      .where('monthKey', '==', target.monthKey)
-      .get(),
-    db
-      .collection('teacherPayouts')
-      .where('teacherId', '==', target.teacherId)
-      .where('monthKey', '==', target.monthKey)
-      .get(),
-  ]);
+) =>
+  db
+    .collection('teacherEarnings')
+    .where('teacherId', '==', target.teacherId)
+    .where('monthKey', '==', target.monthKey);
 
-  const earnings: TeacherEarningsLedgerRow[] = earningsSnap.docs.map((docSnap) => ({
-    id: docSnap.id,
-    data: (docSnap.data() || {}) as Record<string, unknown>,
-  }));
-  const payouts: TeacherPayoutLedgerRow[] = payoutsSnap.docs.map((docSnap) => ({
-    id: docSnap.id,
-    data: (docSnap.data() || {}) as Record<string, unknown>,
-  }));
+const payoutsQueryFor = (
+  db: admin.firestore.Firestore,
+  target: TeacherEarningsRecomputeTarget,
+) =>
+  db
+    .collection('teacherPayouts')
+    .where('teacherId', '==', target.teacherId)
+    .where('monthKey', '==', target.monthKey);
 
-  return computeTeacherMonthlyRollupPayload({ monthKey: target.monthKey, earnings, payouts });
-};
-
-async function recomputeOneTarget(input: {
+async function recomputeOneTargetAtomic(input: {
   db: admin.firestore.Firestore;
   eventId: string;
   target: TeacherEarningsRecomputeTarget;
-}): Promise<'finalized' | 'superseded'> {
+}): Promise<void> {
   const { db, eventId, target } = input;
   const rollupRef = teacherRollupRef(db, target);
-  const claimId = claimIdFor(eventId, target);
+  const earningsQuery = earningsQueryFor(db, target);
+  const payoutsQuery = payoutsQueryFor(db, target);
 
-  const claim = await db.runTransaction(async (tx) => {
+  await db.runTransaction(async (tx) => {
+    // Firestore server transactions are serializable by commit time. Keep every authoritative
+    // source read in this transaction so the published rollup corresponds to one atomic ledger
+    // snapshot. Reads intentionally happen before the rollup write.
     const rollupSnap = await tx.get(rollupRef);
-    const decision = planTeacherEarningsRecomputeClaim({
-      claimId,
-      rollup: rollupSnap.exists
-        ? ((rollupSnap.data() || {}) as Record<string, unknown>)
-        : null,
-    });
-    if (decision.mode !== 'claim') {
-      throw new Error(`teacher earnings recompute claim rejected: ${decision.reason}`);
-    }
+    const earningsSnap = await tx.get(earningsQuery);
+    const payoutsSnap = await tx.get(payoutsQuery);
 
-    tx.set(
-      rollupRef,
-      {
-        ...decision.patch,
-        monthKey: target.monthKey,
-        analyticsProjectionVersion: 0,
-        analyticsProjectionInvalidReason: 'authoritative_recompute_in_progress',
-        incrementalRecomputeClaimedAt: admin.firestore.FieldValue.serverTimestamp(),
-      },
-      { merge: true },
-    );
-    return decision;
-  });
-
-  const payload = await scanTargetLedger(db, target);
-
-  return db.runTransaction(async (tx) => {
-    const rollupSnap = await tx.get(rollupRef);
-    const decision = planTeacherEarningsRecomputeFinalize({
-      claimId,
-      claimEpoch: claim.claimEpoch,
-      rollup: rollupSnap.exists
-        ? ((rollupSnap.data() || {}) as Record<string, unknown>)
-        : null,
+    const earnings: TeacherEarningsLedgerRow[] = earningsSnap.docs.map((docSnap) => ({
+      id: docSnap.id,
+      data: (docSnap.data() || {}) as Record<string, unknown>,
+    }));
+    const payouts: TeacherPayoutLedgerRow[] = payoutsSnap.docs.map((docSnap) => ({
+      id: docSnap.id,
+      data: (docSnap.data() || {}) as Record<string, unknown>,
+    }));
+    const payload = computeTeacherMonthlyRollupPayload({
+      monthKey: target.monthKey,
+      earnings,
+      payouts,
     });
 
-    if (decision.mode === 'superseded') return 'superseded';
-    if (decision.mode !== 'finalize') {
-      throw new Error(`teacher earnings recompute finalize rejected: ${decision.reason}`);
-    }
+    const currentRollup = rollupSnap.exists
+      ? ((rollupSnap.data() || {}) as Record<string, unknown>)
+      : {};
+    const currentEpoch = nonNegativeInteger(currentRollup.incrementalRecomputeEpoch, 0);
+    const currentRevision = nonNegativeInteger(currentRollup.incrementalRevision, 0);
 
     tx.set(
       rollupRef,
       {
         ...payload,
-        ...decision.patch,
+        monthKey: target.monthKey,
+        incrementalProtocolVersion: TEACHER_EARNINGS_INCREMENTAL_PROTOCOL_VERSION,
+        incrementalTransactionFence: TEACHER_EARNINGS_TRANSACTION_FENCE,
+        incrementalRecomputeState: TEACHER_EARNINGS_RECOMPUTE_STATE_IDLE,
+        incrementalRecomputeClaimId: null,
+        incrementalRecomputeEpoch: currentEpoch + 1,
+        incrementalRevision: currentRevision + 1,
+        incrementalLastAuthoritativeEventId: eventId,
+        // Resolved by Firestore to the transaction commit time. Future incremental events compare
+        // their source document updateTime against this watermark to prove inclusion/non-inclusion.
+        incrementalAuthoritativeCommittedAt: admin.firestore.FieldValue.serverTimestamp(),
         incrementalRecomputeCompletedAt: admin.firestore.FieldValue.serverTimestamp(),
+        analyticsProjectionVersion: 0,
+        analyticsProjectionInvalidReason: 'authoritative_recompute_transaction',
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
       { merge: true },
     );
-    return 'finalized';
   });
 }
 
 /**
- * Brick 7B2 coordinated replacement for the legacy teacherEarnings full-recompute handler.
+ * Brick 7C1 atomic authoritative replacement for the Brick 7B2 claim/scan/finalize runner.
  *
- * The expensive ledger scan still happens and retains the same authoritative arithmetic. The
- * safety change is sequencing: each target is claimed transactionally before scanning, and only
- * the latest claim epoch may finalize. A newer earning event therefore supersedes any stale scan
- * instead of allowing it to overwrite newer finance state.
+ * The expensive month-bounded ledger scan is intentionally retained. The safety improvement is
+ * that the rollup read, teacherEarnings query, teacherPayouts query, and authoritative rollup write
+ * now share one Firestore transaction. This gives the rollup a precise commit-time baseline that a
+ * future Brick 7C incremental transaction can compare against without guessing whether a delayed
+ * CloudEvent was already included by a full recompute.
+ *
+ * Incremental money deltas are still disabled at this checkpoint.
  */
 export const recomputeTeacherEarningsEventCoordinated = async (input: {
   db: admin.firestore.Firestore;
@@ -206,19 +198,14 @@ export const recomputeTeacherEarningsEventCoordinated = async (input: {
   if (!eventId) throw new Error('teacher earnings recompute requires CloudEvent identity');
 
   const targets = resolveTeacherEarningsRecomputeTargets({ before: input.before, after: input.after });
-  let finalizedCount = 0;
-  let supersededCount = 0;
-
   for (const target of targets) {
-    const outcome = await recomputeOneTarget({ db: input.db, eventId, target });
-    if (outcome === 'finalized') finalizedCount += 1;
-    else supersededCount += 1;
+    await recomputeOneTargetAtomic({ db: input.db, eventId, target });
   }
 
   return {
     targetCount: targets.length,
-    finalizedCount,
-    supersededCount,
-    allFinalized: targets.length === finalizedCount,
+    finalizedCount: targets.length,
+    supersededCount: 0,
+    allFinalized: true,
   };
 };
