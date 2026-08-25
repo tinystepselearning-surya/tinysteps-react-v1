@@ -3,6 +3,7 @@ import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { ensureAdmin } from './helpers/adminGuard';
 import { normalizeEnrollmentStatus } from './helpers/status';
+import { buildCanonicalTeacherWriteFields } from './helpers/teacherIdentity';
 import {
   isHistoricalTerminalEnrollmentStatus,
   isTeacherValidForHistoricalSession,
@@ -284,12 +285,7 @@ export const createAdminHistoricalAttendanceSession = onCall({ region: REGION },
       kidName: text(enrollment.kidName) || studentName,
       parentId,
       parentIds,
-      teacherId: teacherIdentity.teacherId,
-      teacherIds: teacherIdentity.identityIds,
-      assignedTeacherId: teacherIdentity.teacherId,
-      primaryTeacherId: teacherIdentity.teacherId,
-      teacherUid: teacherIdentity.teacherId,
-      teacher_id: teacherIdentity.teacherId,
+      ...buildCanonicalTeacherWriteFields(teacherIdentity.teacherId),
       teacherName: teacherIdentity.name,
       teacherEmail: teacherIdentity.email,
       courseId,

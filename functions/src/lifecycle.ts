@@ -9,6 +9,11 @@ import {
   normalizeManualSessionState,
 } from './helpers/status';
 import { repairEnrollmentFutureSessionsFromScheduleInternal } from './createSessionsFromSchedule';
+import {
+  buildCanonicalTeacherWriteFields,
+  buildEnrollmentTeacherWriteFields,
+  resolveCanonicalTeacherIdForWrite,
+} from './helpers/teacherIdentity';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -314,8 +319,7 @@ async function createEnrollmentInternal(
       parentIds,
       courseId: canonicalCourseId,
       courseName,
-      teacherId,
-      teacherIds: teacherId ? [teacherId] : [],
+      ...buildEnrollmentTeacherWriteFields(teacherId),
       lpId: assignedLpId,
       status: 'active',
       ratePerSession,
@@ -1077,15 +1081,10 @@ export function buildSessionRepairPatch(args: {
   );
 
   return removeUndefinedDeep({
-    teacherId: teacher.teacherId,
-    teacherIds: teacher.teacherIds,
+    ...buildCanonicalTeacherWriteFields(teacher.teacherId),
     teacherName: teacher.teacherName,
     teacherDisplayName: teacher.teacherDisplayName,
     teacherEmail: teacher.teacherEmail,
-    assignedTeacherId: teacher.teacherId,
-    primaryTeacherId: teacher.teacherId,
-    teacherUid: teacher.teacherId,
-    teacher_id: teacher.teacherId,
     ...(includeEnrollmentId ? { enrollmentId: enrollment.enrollmentId } : {}),
     ...(student.kidId && !toOptionalId((existing as any).kidId) ? { kidId: student.kidId } : {}),
     ...(student.studentId && !toOptionalId((existing as any).studentId) ? { studentId: student.studentId } : {}),
@@ -1368,8 +1367,14 @@ export const createAdminManualSession = onCall({ region: REGION }, async (reques
   }
   const kidId = resolveKidIdFromEnrollment(enrollment);
   const courseId = toOptionalId(enrollment.courseId);
-  const teacherIds = toStringList(enrollment.teacherIds);
-  const teacherId = toOptionalId(enrollment.teacherId) || teacherIds[0] || null;
+  const teacherResolution = resolveCanonicalTeacherIdForWrite(enrollment);
+  if (teacherResolution.source === 'ambiguous_legacy') {
+    throw new HttpsError(
+      'failed-precondition',
+      'Enrollment has conflicting legacy teacher identities. Repair canonical teacherId before creating a manual session.',
+    );
+  }
+  const teacherId = teacherResolution.teacherId;
   if (!kidId || !courseId || !teacherId) {
     throw new HttpsError('failed-precondition', 'Enrollment is missing canonical child, course, or teacher identity');
   }
@@ -1391,7 +1396,6 @@ export const createAdminManualSession = onCall({ region: REGION }, async (reques
       throw new HttpsError('already-exists', 'A different session already exists for this enrollment, date, and time');
     }
     const kidIds = Array.from(new Set([kidId, ...toStringList(enrollment.kidIds)]));
-    const canonicalTeacherIds = Array.from(new Set([teacherId, ...teacherIds]));
     const parentIds = toStringList(enrollment.parentIds);
     const parentId = toOptionalId(enrollment.parentId) || parentIds[0] || null;
     const sessionPayload = removeUndefinedDeep({
@@ -1403,12 +1407,7 @@ export const createAdminManualSession = onCall({ region: REGION }, async (reques
       kidName: toOptionalId(enrollment.kidName) || toOptionalId(enrollment.studentName),
       parentId,
       parentIds,
-      teacherId,
-      teacherIds: canonicalTeacherIds,
-      assignedTeacherId: teacherId,
-      primaryTeacherId: teacherId,
-      teacherUid: teacherId,
-      teacher_id: teacherId,
+      ...buildCanonicalTeacherWriteFields(teacherId),
       teacherName: toOptionalId(enrollment.teacherName),
       courseId,
       courseName: toOptionalId(enrollment.courseName) || toOptionalId(enrollment.courseLabel),
@@ -2057,8 +2056,6 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
   if (previousTeacherId && previousTeacherId === newTeacherId) {
     throw new HttpsError('failed-precondition', 'Selected teacher is already assigned to this enrollment.');
   }
-  const teacherIds = [newTeacherId];
-
   const teacherSnap = await db.collection('users').doc(newTeacherId).get();
   if (!teacherSnap.exists) {
     throw new HttpsError('failed-precondition', 'Selected teacher profile does not exist.');
@@ -2117,15 +2114,10 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
   const enrollmentIdentity = buildEnrollmentIdentity({ enrollmentId, enrollment });
 
   const enrollmentPatch: Record<string, unknown> = {
-    teacherId: newTeacherId,
-    teacherIds,
+    ...buildCanonicalTeacherWriteFields(newTeacherId),
     teacherName: newTeacherName,
     teacherEmail: newTeacherEmail || null,
     teacherDisplayName: newTeacherDisplayName || newTeacherName,
-    assignedTeacherId: newTeacherId,
-    primaryTeacherId: newTeacherId,
-    teacherUid: newTeacherId,
-    teacher_id: newTeacherId,
     ...(studentIdentity.kidId ? { kidId: studentIdentity.kidId } : {}),
     ...(studentIdentity.studentId ? { studentId: studentIdentity.studentId } : {}),
     ...(studentIdentity.kidIds.length > 0 ? { kidIds: studentIdentity.kidIds } : {}),

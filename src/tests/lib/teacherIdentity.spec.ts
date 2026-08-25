@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   auditOperationalTeacherIdentity,
+  buildCanonicalEnrollmentTeacherWriteFields,
+  buildCanonicalOperationalTeacherWriteFields,
   collectLegacyTeacherIdentityRefs,
   resolveOperationalTeacherId,
 } from '../../lib/teacherIdentity';
@@ -76,5 +78,28 @@ describe('teacher identity normalization contract', () => {
       mismatchedAliasFields: [],
       hasLegacyAliases: true,
     });
+  });
+
+  it('derives every temporary session alias from one canonical teacherId', () => {
+    expect(buildCanonicalOperationalTeacherWriteFields(' teacher-a ')).toEqual({
+      teacherId: 'teacher-a',
+      teacherIds: ['teacher-a'],
+      assignedTeacherId: 'teacher-a',
+      primaryTeacherId: 'teacher-a',
+      teacherUid: 'teacher-a',
+      teacher_id: 'teacher-a',
+    });
+  });
+
+  it('keeps enrollment ownership minimal and canonical', () => {
+    expect(buildCanonicalEnrollmentTeacherWriteFields(' teacher-a ')).toEqual({
+      teacherId: 'teacher-a',
+      teacherIds: ['teacher-a'],
+    });
+  });
+
+  it('rejects an empty teacherId before client-side ownership writes', () => {
+    expect(() => buildCanonicalOperationalTeacherWriteFields('')).toThrow(/Canonical teacherId is required/);
+    expect(() => buildCanonicalEnrollmentTeacherWriteFields('')).toThrow(/Canonical teacherId is required/);
   });
 });

@@ -2,6 +2,7 @@ import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { ensureAdmin } from './helpers/adminGuard';
+import { buildCanonicalTeacherWriteFields } from './helpers/teacherIdentity';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -265,12 +266,7 @@ export const repairTransferredTeacherSessionSnapshots = onCall({ region: REGION 
       null;
 
     const patch = {
-      teacherId: toTeacherUid,
-      teacherIds: [toTeacherUid],
-      assignedTeacherId: toTeacherUid,
-      primaryTeacherId: toTeacherUid,
-      teacherUid: toTeacherUid,
-      teacher_id: toTeacherUid,
+      ...buildCanonicalTeacherWriteFields(toTeacherUid),
       teacherName:
         toCleanText(teacherData.displayName) ||
         toCleanText(teacherData.name) ||

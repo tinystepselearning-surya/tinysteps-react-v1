@@ -18,6 +18,7 @@ import {
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../../lib/firebaseConfig';
 import { doesSessionMatchEnrollmentSchedule } from '../../../lib/sessionScheduleIntegrity';
+import { buildCanonicalOperationalTeacherWriteFields } from '../../../lib/teacherIdentity';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
@@ -2977,14 +2978,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         ...(studentName ? { studentName, kidName: studentName, childName: studentName } : {}),
         parentId,
         parentIds,
-        teacherId: req.teacherId,
-        ...(req.teacherId ? {
-          teacherIds: [req.teacherId],
-          assignedTeacherId: req.teacherId,
-          primaryTeacherId: req.teacherId,
-          teacherUid: req.teacherId,
-          teacher_id: req.teacherId,
-        } : {}),
+        ...buildCanonicalOperationalTeacherWriteFields(req.teacherId),
         ...(teacherName ? { teacherName } : {}),
         ...(teacherEmail ? { teacherEmail } : {}),
         courseId,

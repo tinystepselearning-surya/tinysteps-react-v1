@@ -4,6 +4,7 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {ensureAdmin} from "./helpers/adminGuard";
+import {buildCanonicalTeacherWriteFields, resolveCanonicalTeacherIdForWrite} from "./helpers/teacherIdentity";
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -257,33 +258,16 @@ function toOptionalText(value: unknown): string | null {
   return null;
 }
 
-function toStringList(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return Array.from(
-    new Set(
-      value
-        .map((entry) => toOptionalText(entry))
-        .filter((entry): entry is string => Boolean(entry)),
-    ),
-  );
-}
-
 function resolveEnrollmentTeacherIdentity(enrollment: EnrollmentDoc): { teacherId: string | null; teacherIds: string[] } {
-  const teacherIds = toStringList(enrollment.teacherIds);
-  const teacherId =
-    toOptionalText(enrollment.teacherId) ||
-    toOptionalText((enrollment as Record<string, unknown>).assignedTeacherId) ||
-    toOptionalText((enrollment as Record<string, unknown>).primaryTeacherId) ||
-    toOptionalText((enrollment as Record<string, unknown>).teacherUid) ||
-    toOptionalText((enrollment as Record<string, unknown>).teacher_id) ||
-    teacherIds[0] ||
-    null;
-
-  if (teacherId && !teacherIds.includes(teacherId)) {
-    teacherIds.unshift(teacherId);
+  const resolution = resolveCanonicalTeacherIdForWrite(enrollment as Record<string, unknown>);
+  if (resolution.source === "ambiguous_legacy") {
+    throw new HttpsError(
+      "failed-precondition",
+      "Enrollment has conflicting legacy teacher identities. Repair canonical teacherId before generating sessions.",
+    );
   }
-
-  return { teacherId, teacherIds };
+  const teacherId = resolution.teacherId;
+  return { teacherId, teacherIds: teacherId ? [teacherId] : [] };
 }
 
 function removeUndefinedDeep(value: unknown): unknown {
@@ -955,7 +939,7 @@ async function generateSessionsFromScheduleInternal(
   const childId = enrollment.childId || kidId || null;
   const parentId = enrollment.parentId || (enrollment.parentIds && enrollment.parentIds[0]) || null;
   const parentIds = enrollment.parentIds || (parentId ? [parentId] : []);
-  const {teacherId, teacherIds} = resolveEnrollmentTeacherIdentity(enrollment);
+  const {teacherId} = resolveEnrollmentTeacherIdentity(enrollment);
   const courseId = enrollment.courseId || null;
   const feeAmount = Number(enrollment.feePerClass || 0);
   const currency = enrollment.currency || "INR";
@@ -1349,10 +1333,9 @@ async function generateSessionsFromScheduleInternal(
       parentId,
       parentIds,
       teacherId,
-      ...(teacherIds.length > 0 ? {teacherIds} : {}),
+      ...(teacherId ? buildCanonicalTeacherWriteFields(teacherId) : {}),
       ...(teacherName ? {teacherName} : {}),
       ...(teacherEmail ? {teacherEmail} : {}),
-      ...(teacherId ? {assignedTeacherId: teacherId, primaryTeacherId: teacherId, teacherUid: teacherId, teacher_id: teacherId} : {}),
       courseId,
       ...(courseName ? {courseName} : {}),
       ...(courseName ? {courseTitle: courseName, courseLabel: courseName} : {}),
@@ -1610,13 +1593,7 @@ function buildCanonicalSessionFields(args: {
     parentId: context.parentId,
     parentIds: context.parentIds,
     teacherId: context.teacherId,
-    ...(context.teacherIds.length > 0 ? { teacherIds: context.teacherIds } : {}),
-    ...(context.teacherId ? {
-      assignedTeacherId: context.teacherId,
-      primaryTeacherId: context.teacherId,
-      teacherUid: context.teacherId,
-      teacher_id: context.teacherId,
-    } : {}),
+    ...(context.teacherId ? buildCanonicalTeacherWriteFields(context.teacherId) : {}),
     ...(context.teacherName ? { teacherName: context.teacherName, teacherNameSnapshot: context.teacherName } : {}),
     ...(context.teacherEmail ? { teacherEmail: context.teacherEmail } : {}),
     courseId: context.courseId,
