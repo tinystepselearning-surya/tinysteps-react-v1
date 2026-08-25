@@ -28,6 +28,10 @@ import {
   type AnalyticsDataset,
   type AnalyticsView,
 } from './analyticsReadPlan';
+import {
+  loadTeacherFinanceSummary,
+  type TeacherFinanceSummaryDataset,
+} from './teacherFinanceSummaryLoader';
 
 const ANALYTICS_VIEWS: Array<{ id: AnalyticsView; label: string }> = [
   { id: 'overview', label: 'Overview' },
@@ -181,6 +185,8 @@ const loadAnalyticsDataset = async (dataset: AnalyticsDataset, monthKey: string)
         .map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() as any) }))
         .filter((charge) => charge.archived !== true);
     }
+    case 'teacherFinanceSummary':
+      return loadTeacherFinanceSummary(monthKey);
     case 'teacherEarnings': {
       const snap = await getDocsLogged(
         'AnalyticsDashboardV3:month-teacher-earnings',
@@ -347,6 +353,7 @@ export default function AnalyticsDashboardV3(): JSX.Element {
 
   const financeTotals = normalizeCanonicalMonthFinanceTotals((activeData.financeTotals || {}) as Record<string, unknown>);
   const charges = (activeData.charges as any[] | undefined) || emptyRows;
+  const teacherFinanceSummaryData = activeData.teacherFinanceSummary as TeacherFinanceSummaryDataset | undefined;
   const teacherEarningsEntries = (activeData.teacherEarnings as any[] | undefined) || emptyRows;
   const classSessions = (activeData.classSessions as any[] | undefined) || emptyRows;
   const users = (activeData.users as any[] | undefined) || emptyRows;
@@ -355,7 +362,10 @@ export default function AnalyticsDashboardV3(): JSX.Element {
 
   const sessionChargeTotals = useMemo(() => summarizeSessionCharges(charges), [charges]);
   const teacherRowsRaw = useMemo(() => aggregateTeacherEarnings(teacherEarningsEntries), [teacherEarningsEntries]);
-  const teacherSummary = useMemo(() => summarizeTeacherEarnings(teacherRowsRaw), [teacherRowsRaw]);
+  const rawTeacherSummary = useMemo(() => summarizeTeacherEarnings(teacherRowsRaw), [teacherRowsRaw]);
+  const teacherSummary = activeView === 'finance' && teacherFinanceSummaryData?.summary
+    ? teacherFinanceSummaryData.summary
+    : rawTeacherSummary;
 
   const plannedProjection = useMemo(() => {
     let plannedSessions = 0;
@@ -614,7 +624,7 @@ export default function AnalyticsDashboardV3(): JSX.Element {
 
       {activeView === 'finance' ? (
         <section className="space-y-5">
-          <SectionHeading title="Finance & Collections" description="Raw finance, earning, session, enrollment, and course detail loads only in this specialist view." />
+          <SectionHeading title="Finance & Collections" description="Teacher payout summaries use certified monthly rollups when available, with an automatic month-bounded ledger fallback if certification is absent or invalidated." />
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <MetricCard label="Billed Revenue (Month)" value={loading ? '…' : formatMoney(expectedRevenue)} />
             <MetricCard label="Settled Revenue (Month)" value={loading ? '…' : formatMoney(earnedRevenue)} />
@@ -641,7 +651,13 @@ export default function AnalyticsDashboardV3(): JSX.Element {
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <MetricCard label="Session Net Revenue" value={formatMoney(sessionNetRevenue)} />
                 <MetricCard label="Demo Earnings" value={formatMoney(teacherSummary.totalDemoEarned)} sub={`${teacherSummary.totalDemoCount} demo earning entries`} />
-                <MetricCard label="Total Teacher Payout" value={formatMoney(teacherSummary.totalCombinedEarned)} />
+                <MetricCard
+                  label="Total Teacher Payout"
+                  value={formatMoney(teacherSummary.totalCombinedEarned)}
+                  sub={teacherFinanceSummaryData?.source === 'rollup'
+                    ? `${teacherFinanceSummaryData.rollupCount} certified teacher-month rollups`
+                    : 'Month-bounded teacher earnings ledger fallback'}
+                />
               </div>
             </>
           ) : null}
@@ -683,7 +699,7 @@ export default function AnalyticsDashboardV3(): JSX.Element {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h3 className="text-base font-semibold text-slate-950">Teacher earnings · selected month</h3>
-                <p className="mt-1 text-xs text-muted-foreground">The table reuses the same cached month earnings if Finance was opened first.</p>
+                <p className="mt-1 text-xs text-muted-foreground">Raw teacher earnings load only for this detailed Teachers view.</p>
               </div>
               <span className="text-xs text-muted-foreground">{filteredTeacherRows.length} teachers</span>
             </div>
