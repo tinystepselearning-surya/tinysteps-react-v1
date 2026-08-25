@@ -150,8 +150,13 @@ export function selectCanonicalParentOverviewCourse(
     }
   }
 
+  // Teacher learning evidence can legitimately exist in several stages for migrated
+  // students because ratings/mastery were recorded before explicit lessonStatus writes.
+  // That evidence must never count as completion, but the furthest evidenced stage is the
+  // best canonical learning position. Choosing the first evidenced stage incorrectly sends
+  // established students back to Stage 1 even when teachers are working in later stages.
   const activeStage =
-    stageSummaries.find((stage) => stage.inProgressTopics > 0) ||
+    [...stageSummaries].reverse().find((stage) => stage.inProgressTopics > 0) ||
     stageSummaries.find((stage) => stage.completedTopics < stage.totalTopics) ||
     stageSummaries[stageSummaries.length - 1] ||
     null;
