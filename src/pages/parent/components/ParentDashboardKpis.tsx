@@ -3,6 +3,7 @@ import { BookOpen, CalendarDays, CreditCard, Target } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 export type ProgressDisplayState = "loading" | "available" | "unavailable";
+export type AttendanceDisplayState = "loading" | "available" | "unavailable";
 
 type ParentDashboardKpisProps = {
   progressState: ProgressDisplayState;
@@ -11,9 +12,9 @@ type ParentDashboardKpisProps = {
   confidenceLabel: string;
   confidenceMetaText: string;
   confidenceLoading?: boolean;
+  attendanceState: AttendanceDisplayState;
   attendanceLabel: string;
   attendanceMetaText: string;
-  attendanceLoading?: boolean;
   billingLabel: string;
   billingMetaText: string;
   billingLoading?: boolean;
@@ -28,9 +29,9 @@ export default function ParentDashboardKpis({
   confidenceLabel,
   confidenceMetaText,
   confidenceLoading = false,
+  attendanceState,
   attendanceLabel,
   attendanceMetaText,
-  attendanceLoading = false,
   billingLabel,
   billingMetaText,
   billingLoading = false,
@@ -86,7 +87,11 @@ export default function ParentDashboardKpis({
           <p className="text-xs font-medium leading-4 text-slate-600">Classes in selected month</p>
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"><CalendarDays className="h-4 w-4" aria-hidden="true" /></span>
         </div>
-        {attendanceLoading ? valueSkeleton : <p className="mt-2 text-xl font-semibold text-slate-950 dark:text-slate-100">{attendanceLabel}</p>}
+        {attendanceState === "loading" ? valueSkeleton : (
+          <p className="mt-2 text-xl font-semibold text-slate-950 dark:text-slate-100">
+            {attendanceState === "available" ? attendanceLabel : "Not available"}
+          </p>
+        )}
         <p className="mt-1 min-h-8 text-xs leading-4 text-slate-500">{attendanceMetaText}</p>
       </Card>
 
