@@ -43,6 +43,8 @@ export type ChildCourseProgressProjection = {
 
 type ProjectionState = {
   key: string;
+  kidId?: string;
+  courseId?: string;
   data: ChildCourseProgressProjection | null;
   loading: boolean;
   error: string | null;
@@ -54,6 +56,49 @@ const EMPTY_STATE: ProjectionState = {
   loading: false,
   error: null,
 };
+
+// Brick P5 compatibility bridge: ParentDashboard already owns the single live P3 listener.
+// Overview child components can subscribe to this in-memory snapshot without opening a
+// second Firestore listener. P10 can remove this bridge once the container itself is fully
+// cut over to the canonical overview view model.
+const latestProjectionByKid = new Map<string, ProjectionState>();
+const latestProjectionSubscribers = new Set<() => void>();
+
+function publishLatestProjection(kidId: string, state: ProjectionState) {
+  if (!kidId) return;
+  latestProjectionByKid.set(kidId, state);
+  latestProjectionSubscribers.forEach((listener) => listener());
+}
+
+export function useLatestChildCourseProgressProjection(
+  kidId: string | null | undefined,
+  enabled = true,
+) {
+  const normalizedKidId = String(kidId || '').trim();
+  const [, setVersion] = useState(0);
+
+  useEffect(() => {
+    if (!enabled || !normalizedKidId) return undefined;
+    const listener = () => setVersion((value) => value + 1);
+    latestProjectionSubscribers.add(listener);
+    return () => latestProjectionSubscribers.delete(listener);
+  }, [enabled, normalizedKidId]);
+
+  if (!enabled || !normalizedKidId) {
+    return { data: null, loading: false, error: null, courseId: null as string | null };
+  }
+
+  const state = latestProjectionByKid.get(normalizedKidId);
+  if (!state) {
+    return { data: null, loading: true, error: null, courseId: null as string | null };
+  }
+  return {
+    data: state.data,
+    loading: state.loading,
+    error: state.error,
+    courseId: state.courseId || state.data?.courseId || null,
+  };
+}
 
 export function useChildCourseProgressProjection(
   kidId: string | null | undefined,
@@ -73,26 +118,48 @@ export function useChildCourseProgressProjection(
       return;
     }
 
-    setState({ key: projectionKey, data: null, loading: true, error: null });
+    const loadingState: ProjectionState = {
+      key: projectionKey,
+      kidId: normalizedKidId,
+      courseId: normalizedCourseId,
+      data: null,
+      loading: true,
+      error: null,
+    };
+    setState(loadingState);
+    publishLatestProjection(normalizedKidId, loadingState);
+
     return onSnapshot(
       doc(db, 'students', normalizedKidId, 'courseProgress', normalizedCourseId),
       (snapshot) => {
-        setState({
+        const raw = snapshot.exists()
+          ? (snapshot.data() as ChildCourseProgressProjection)
+          : null;
+        const data = raw
+          ? { ...raw, courseId: raw.courseId || normalizedCourseId }
+          : null;
+        const nextState: ProjectionState = {
           key: projectionKey,
-          data: snapshot.exists()
-            ? (snapshot.data() as ChildCourseProgressProjection)
-            : null,
+          kidId: normalizedKidId,
+          courseId: normalizedCourseId,
+          data,
           loading: false,
           error: null,
-        });
+        };
+        setState(nextState);
+        publishLatestProjection(normalizedKidId, nextState);
       },
       (error) => {
-        setState({
+        const nextState: ProjectionState = {
           key: projectionKey,
+          kidId: normalizedKidId,
+          courseId: normalizedCourseId,
           data: null,
           loading: false,
           error: error?.message || 'Unable to load course progress.',
-        });
+        };
+        setState(nextState);
+        publishLatestProjection(normalizedKidId, nextState);
       },
     );
   }, [normalizedCourseId, normalizedKidId, projectionKey]);
