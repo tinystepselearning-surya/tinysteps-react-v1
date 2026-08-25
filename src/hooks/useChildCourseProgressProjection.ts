@@ -62,16 +62,29 @@ const EMPTY_STATE: ProjectionState = {
 };
 
 // Brick P5 compatibility bridge: ParentDashboard already owns the single live P3 listener.
-// Overview child components can subscribe to this in-memory snapshot without opening a
-// second Firestore listener. P10 can remove this bridge once the container itself is fully
-// cut over to the canonical overview view model.
+// Overview/P6 child components can subscribe to this in-memory snapshot without opening a
+// second Firestore listener. P10 can remove this bridge once the container is fully cut over.
 const latestProjectionByKid = new Map<string, ProjectionState>();
 const latestProjectionSubscribers = new Set<() => void>();
+let latestActiveProjection: ProjectionState | null = null;
 
 function publishLatestProjection(kidId: string, state: ProjectionState) {
   if (!kidId) return;
   latestProjectionByKid.set(kidId, state);
+  latestActiveProjection = state;
   latestProjectionSubscribers.forEach((listener) => listener());
+}
+
+function useProjectionBridgeSubscription(enabled: boolean) {
+  const [, setVersion] = useState(0);
+  useEffect(() => {
+    if (!enabled) return undefined;
+    const listener = () => setVersion((value) => value + 1);
+    latestProjectionSubscribers.add(listener);
+    return () => {
+      latestProjectionSubscribers.delete(listener);
+    };
+  }, [enabled]);
 }
 
 export function useLatestChildCourseProgressProjection(
@@ -79,16 +92,7 @@ export function useLatestChildCourseProgressProjection(
   enabled = true,
 ) {
   const normalizedKidId = String(kidId || '').trim();
-  const [, setVersion] = useState(0);
-
-  useEffect(() => {
-    if (!enabled || !normalizedKidId) return undefined;
-    const listener = () => setVersion((value) => value + 1);
-    latestProjectionSubscribers.add(listener);
-    return () => {
-      latestProjectionSubscribers.delete(listener);
-    };
-  }, [enabled, normalizedKidId]);
+  useProjectionBridgeSubscription(enabled && Boolean(normalizedKidId));
 
   if (!enabled || !normalizedKidId) {
     return {
@@ -118,6 +122,51 @@ export function useLatestChildCourseProgressProjection(
     error: state.error,
     isLoading: state.loading,
     isError: Boolean(state.error),
+    courseId: state.courseId || state.data?.courseId || null,
+  };
+}
+
+/**
+ * P6 bridge for the currently active ParentDashboard course projection.
+ * ParentDashboard owns exactly one live P3 listener for the selected child/course, so
+ * P6 can reuse it without knowing whether a migrated child is addressed by kidId or a
+ * legacy student alias and without opening another Firestore listener.
+ */
+export function useLatestActiveChildCourseProgressProjection(enabled = true) {
+  useProjectionBridgeSubscription(enabled);
+
+  if (!enabled) {
+    return {
+      data: null,
+      loading: false,
+      error: null,
+      isLoading: false,
+      isError: false,
+      kidId: null as string | null,
+      courseId: null as string | null,
+    };
+  }
+
+  const state = latestActiveProjection;
+  if (!state) {
+    return {
+      data: null,
+      loading: true,
+      error: null,
+      isLoading: true,
+      isError: false,
+      kidId: null as string | null,
+      courseId: null as string | null,
+    };
+  }
+
+  return {
+    data: state.data,
+    loading: state.loading,
+    error: state.error,
+    isLoading: state.loading,
+    isError: Boolean(state.error),
+    kidId: state.kidId || null,
     courseId: state.courseId || state.data?.courseId || null,
   };
 }
