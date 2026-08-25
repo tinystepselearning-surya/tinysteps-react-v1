@@ -22,6 +22,7 @@ import {
   getSessionStartDate,
 } from '../../../../lib/sessionTime';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
+import { shouldUseMonthBoundTeacherEarningsRead } from './teacherEarningsReadPlan';
 
 type FilterPreset = 'week' | 'month' | 'custom';
 
@@ -573,6 +574,12 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
   const [studentNameLookup, setStudentNameLookup] = useState<Map<string, string>>(new Map());
   const [enrollmentsById, setEnrollmentsById] = useState<Map<string, EnrollmentRateDoc>>(new Map());
   const [monthSessions, setMonthSessions] = useState<TeacherMonthSessionRow[]>([]);
+  const ledgerReadMonthKey = shouldUseMonthBoundTeacherEarningsRead({
+    filterPreset,
+    selectedMonth,
+  })
+    ? selectedMonth
+    : null;
 
   const baseStudentNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -880,10 +887,16 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
       setIsLoading(true);
       setErrorMessage(null);
       try {
-        const earningsQuery = query(
-          collection(db, 'teacherEarnings'),
-          where('teacherId', '==', resolvedTeacherId),
-        );
+        const earningsQuery = ledgerReadMonthKey
+          ? query(
+              collection(db, 'teacherEarnings'),
+              where('teacherId', '==', resolvedTeacherId),
+              where('monthKey', '==', ledgerReadMonthKey),
+            )
+          : query(
+              collection(db, 'teacherEarnings'),
+              where('teacherId', '==', resolvedTeacherId),
+            );
 
         const snap = await getDocs(earningsQuery);
         const rows: TeacherEarningLedgerRow[] = snap.docs.map((docSnap) => {
@@ -933,7 +946,7 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
     return () => {
       cancelled = true;
     };
-  }, [resolvedTeacherId]);
+  }, [ledgerReadMonthKey, resolvedTeacherId]);
 
   const range = useMemo(() => {
     const today = new Date();
