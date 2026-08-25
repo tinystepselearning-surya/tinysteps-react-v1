@@ -10,6 +10,7 @@ export const TEACHER_LEARNING_CONTRACT_VERSION = 2 as const;
 export type TeacherEditableLessonStatus = Exclude<LessonStatus, 'not_started'>;
 export type TeacherLessonStatusTransition =
   | 'unchanged'
+  | 'adopted'
   | 'started'
   | 'completed'
   | 'reopened';
@@ -18,6 +19,7 @@ export interface TeacherLessonStatusPlan {
   previousStatus: LessonStatus;
   nextStatus: TeacherEditableLessonStatus;
   transition: TeacherLessonStatusTransition;
+  hadExplicitStatus: boolean;
   statusChanged: boolean;
   setCompletedMetadata: boolean;
   clearCompletedMetadata: boolean;
@@ -40,12 +42,14 @@ export function planTeacherLessonStatusWrite(
   existing: TeacherLessonProgressLike | null | undefined,
   nextStatus: TeacherEditableLessonStatus,
 ): TeacherLessonStatusPlan {
+  const explicitStatus = normalizeLessonStatus(existing?.lessonStatus);
   const previousStatus = canonicalLessonStatus(existing);
   const normalizedNext = normalizeLessonStatus(nextStatus);
   if (normalizedNext !== 'in_progress' && normalizedNext !== 'completed') {
     throw new Error('Teacher lesson status must be in_progress or completed.');
   }
 
+  const hadExplicitStatus = explicitStatus !== null;
   let transition: TeacherLessonStatusTransition = 'unchanged';
   if (previousStatus === 'not_started' && normalizedNext === 'in_progress') {
     transition = 'started';
@@ -53,13 +57,18 @@ export function planTeacherLessonStatusWrite(
     transition = 'completed';
   } else if (previousStatus === 'completed' && normalizedNext === 'in_progress') {
     transition = 'reopened';
+  } else if (!hadExplicitStatus && normalizedNext === previousStatus) {
+    transition = 'adopted';
   }
+
+  const statusChanged = !hadExplicitStatus || previousStatus !== normalizedNext;
 
   return {
     previousStatus,
     nextStatus: normalizedNext,
     transition,
-    statusChanged: previousStatus !== normalizedNext,
+    hadExplicitStatus,
+    statusChanged,
     setCompletedMetadata: transition === 'completed',
     clearCompletedMetadata: transition === 'reopened',
   };
