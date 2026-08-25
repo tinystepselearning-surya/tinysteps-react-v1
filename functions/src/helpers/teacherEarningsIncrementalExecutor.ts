@@ -6,7 +6,12 @@ import {
   TEACHER_EARNINGS_INCREMENTAL_PROTOCOL_VERSION,
   teacherEarningsIncrementalChangeSignature,
   teacherEarningsIncrementalMarkerId,
+  type TeacherEarningsPreplannedIncrementalDelta,
 } from './teacherEarningsIncrementalProtocol';
+import {
+  evaluateTeacherEarningsSessionCreateCertification,
+  planTeacherEarningsSessionCreateCandidate,
+} from './teacherEarningsSessionCreateFastPath';
 
 export type TeacherEarningsIncrementalExecutionResult =
   | {
@@ -43,12 +48,13 @@ const normalizeMarkerOutcome = (value: unknown): 'applied' | 'covered' | 'unknow
 };
 
 /**
- * Brick 7C2 transactional fast path for already-proven exact teacherEarnings deltas.
+ * Brick 7C2/7D2B transactional fast path for proven teacherEarnings deltas.
  *
- * This helper never reads teacherEarnings or teacherPayouts. Eligibility is decided by the pure
- * delta planner first. Only an eligible teacher-month then enters a Firestore transaction that
- * reads the derived rollup and one event-idempotency marker. The exact rollup totals/revision and
- * marker are committed atomically.
+ * This helper never reads teacherEarnings or teacherPayouts. Existing 7C deltas retain the exact
+ * two-read transaction (rollup + event marker). A strict canonical session create may enter the
+ * same protocol only after reading and validating its month-specific v2 production certification
+ * inside that same transaction. Missing/stale/invalidated certification fails closed to the
+ * authoritative full recompute.
  *
  * The authoritative full-recompute commit watermark is intentionally NOT advanced by a delta.
  * Only a transaction that scans the complete teacher-month ledgers may advance that watermark.
@@ -70,7 +76,26 @@ export const tryApplyTeacherEarningsIncrementalEvent = async (input: {
     before: input.before,
     after: input.after,
   });
-  if (initialPlan.mode !== 'delta') {
+  const sessionCreateCandidate = planTeacherEarningsSessionCreateCandidate({
+    earningId,
+    before: input.before,
+    after: input.after,
+  });
+
+  let target: { teacherId: string; monthKey: string };
+  let preplannedDelta: TeacherEarningsPreplannedIncrementalDelta | null = null;
+  let requiresSessionCreateCertification = false;
+
+  if (initialPlan.mode === 'delta') {
+    target = initialPlan.target;
+  } else if (sessionCreateCandidate.eligible) {
+    target = sessionCreateCandidate.target;
+    preplannedDelta = {
+      target: sessionCreateCandidate.target,
+      delta: sessionCreateCandidate.delta,
+    };
+    requiresSessionCreateCertification = true;
+  } else {
     return {
       mode: 'fallback',
       reason: initialPlan.mode === 'recompute' ? `planner_${initialPlan.reason}` : 'planner_noop',
@@ -89,17 +114,24 @@ export const tryApplyTeacherEarningsIncrementalEvent = async (input: {
     return { mode: 'fallback', reason: 'missing_event_identity' };
   }
 
-  const target = initialPlan.target;
   const rollupRef = input.db
     .collection('teachers')
     .doc(target.teacherId)
     .collection('earnings')
     .doc(target.monthKey);
   const markerRef = rollupRef.collection('incrementalEvents').doc(markerId);
+  const certificationRef = requiresSessionCreateCertification
+    ? input.db
+        .collection('adminStats')
+        .doc('teacherEarningsSessionCreateFastPath')
+        .collection('months')
+        .doc(target.monthKey)
+    : null;
 
   return input.db.runTransaction(async (tx) => {
     const rollupSnap = await tx.get(rollupRef);
     const markerSnap = await tx.get(markerRef);
+    const certificationSnap = certificationRef ? await tx.get(certificationRef) : null;
     const existingMarker = markerSnap.exists
       ? ((markerSnap.data() || {}) as Record<string, unknown>)
       : null;
@@ -122,6 +154,19 @@ export const tryApplyTeacherEarningsIncrementalEvent = async (input: {
       return { mode: 'conflict' as const, reason: replayDecision.reason };
     }
 
+    if (requiresSessionCreateCertification) {
+      const certification = certificationSnap?.exists
+        ? ((certificationSnap.data() || {}) as Record<string, unknown>)
+        : null;
+      const certificationDecision = evaluateTeacherEarningsSessionCreateCertification({
+        certification,
+        target,
+      });
+      if (!certificationDecision.ready) {
+        return { mode: 'fallback' as const, reason: certificationDecision.reason };
+      }
+    }
+
     const rollup = rollupSnap.exists
       ? ((rollupSnap.data() || {}) as Record<string, unknown>)
       : null;
@@ -132,14 +177,11 @@ export const tryApplyTeacherEarningsIncrementalEvent = async (input: {
       before: input.before,
       after: input.after,
       rollup,
+      preplannedDelta,
     });
 
-    if (decision.mode === 'fallback') {
-      return { mode: 'fallback' as const, reason: decision.reason };
-    }
-    if (decision.mode === 'conflict') {
-      return { mode: 'conflict' as const, reason: decision.reason };
-    }
+    if (decision.mode === 'fallback') return { mode: 'fallback' as const, reason: decision.reason };
+    if (decision.mode === 'conflict') return { mode: 'conflict' as const, reason: decision.reason };
     if (decision.mode === 'replay') {
       return {
         mode: 'replay' as const,
@@ -150,60 +192,34 @@ export const tryApplyTeacherEarningsIncrementalEvent = async (input: {
       };
     }
 
+    const fastPathKind = requiresSessionCreateCertification ? 'session_create_v2' : 'delta_v1';
+
     if (decision.mode === 'covered') {
-      tx.set(
-        markerRef,
-        {
-          eventId,
-          earningId,
-          teacherId: target.teacherId,
-          monthKey: target.monthKey,
-          changeSignature,
-          protocolVersion: TEACHER_EARNINGS_INCREMENTAL_PROTOCOL_VERSION,
-          outcome: 'covered',
-          eventUpdateTime: input.eventUpdateTime,
-          recordedAt: admin.firestore.FieldValue.serverTimestamp(),
-        },
-        { merge: false },
-      );
-      return {
-        mode: 'covered' as const,
-        teacherId: target.teacherId,
-        monthKey: target.monthKey,
-        markerId,
-      };
+      tx.set(markerRef, {
+        eventId, earningId, teacherId: target.teacherId, monthKey: target.monthKey,
+        changeSignature, protocolVersion: TEACHER_EARNINGS_INCREMENTAL_PROTOCOL_VERSION,
+        fastPathKind, outcome: 'covered', eventUpdateTime: input.eventUpdateTime,
+        recordedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: false });
+      return { mode: 'covered' as const, teacherId: target.teacherId, monthKey: target.monthKey, markerId };
     }
 
-    tx.set(
-      rollupRef,
-      {
-        ...decision.nextTotals,
-        incrementalProtocolVersion: decision.protocolVersion,
-        incrementalRevision: decision.revisionAfter,
-        incrementalLastEventId: eventId,
-        incrementalLastEventUpdateTime: input.eventUpdateTime,
-        incrementalLastAppliedAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      },
-      { merge: true },
-    );
-    tx.set(
-      markerRef,
-      {
-        eventId,
-        earningId,
-        teacherId: target.teacherId,
-        monthKey: target.monthKey,
-        changeSignature,
-        protocolVersion: decision.protocolVersion,
-        outcome: 'applied',
-        eventUpdateTime: input.eventUpdateTime,
-        revisionBefore: decision.revisionBefore,
-        revisionAfter: decision.revisionAfter,
-        recordedAt: admin.firestore.FieldValue.serverTimestamp(),
-      },
-      { merge: false },
-    );
+    tx.set(rollupRef, {
+      ...decision.nextTotals,
+      incrementalProtocolVersion: decision.protocolVersion,
+      incrementalRevision: decision.revisionAfter,
+      incrementalLastEventId: eventId,
+      incrementalLastEventUpdateTime: input.eventUpdateTime,
+      incrementalLastAppliedAt: admin.firestore.FieldValue.serverTimestamp(),
+      incrementalLastFastPathKind: fastPathKind,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    tx.set(markerRef, {
+      eventId, earningId, teacherId: target.teacherId, monthKey: target.monthKey,
+      changeSignature, protocolVersion: decision.protocolVersion, fastPathKind, outcome: 'applied',
+      eventUpdateTime: input.eventUpdateTime, revisionBefore: decision.revisionBefore,
+      revisionAfter: decision.revisionAfter, recordedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: false });
 
     return {
       mode: 'applied' as const,
