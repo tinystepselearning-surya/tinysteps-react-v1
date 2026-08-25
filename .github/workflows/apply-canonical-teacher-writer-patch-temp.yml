@@ -1,0 +1,70 @@
+name: Temporary apply canonical teacher writer patch
+
+on:
+  push:
+    branches:
+      - refactor/canonical-teacher-writers
+    paths:
+      - scripts/apply-canonical-teacher-writer-patch.mjs
+      - .github/workflows/apply-canonical-teacher-writer-patch-temp.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply-patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout branch head
+        uses: actions/checkout@v4
+        with:
+          ref: refactor/canonical-teacher-writers
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Apply guarded patch
+        run: node scripts/apply-canonical-teacher-writer-patch.mjs
+
+      - name: Verify intended files changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git status --short
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' \
+            functions/src/createAdminHistoricalAttendanceSession.ts \
+            functions/src/createMakeupSessionFromCredit.ts \
+            functions/src/createSessionsFromSchedule.ts \
+            functions/src/lifecycle.ts \
+            functions/src/repairTransferredTeacherSessionSnapshots.ts \
+            src/pages/admin/EnrollmentManagement/EnrollmentDetailView.tsx \
+            src/pages/admin/StudentManagement/StudentList.tsx | sort)"
+          if [[ "${changed}" != "${expected}" ]]; then
+            echo "::error::Unexpected changed-file set."
+            echo "Expected:"; echo "${expected}"
+            echo "Actual:"; echo "${changed}"
+            exit 1
+          fi
+
+      - name: Commit patched writers
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            functions/src/createAdminHistoricalAttendanceSession.ts \
+            functions/src/createMakeupSessionFromCredit.ts \
+            functions/src/createSessionsFromSchedule.ts \
+            functions/src/lifecycle.ts \
+            functions/src/repairTransferredTeacherSessionSnapshots.ts \
+            src/pages/admin/EnrollmentManagement/EnrollmentDetailView.tsx \
+            src/pages/admin/StudentManagement/StudentList.tsx
+          git commit -m "refactor(teacher): canonicalize operational writer aliases"
+          git push origin HEAD:refactor/canonical-teacher-writers
