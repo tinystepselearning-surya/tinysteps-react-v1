@@ -37,7 +37,7 @@ describe('B6 Brick 5A finance reconciliation completed-session scope', () => {
     const source = fs.readFileSync(
       path.resolve(
         process.cwd(),
-        'src/helpers/financeReconciliationCompletedSessions.ts',
+        'functions/src/helpers/financeReconciliationCompletedSessions.ts',
       ),
       'utf8',
     );
