@@ -18,22 +18,17 @@ const {
   mockQuery: vi.fn((...args: unknown[]) => ({ kind: 'query', args })),
   mockWhere: vi.fn((...args: unknown[]) => ({ kind: 'where', args })),
   mockOrderBy: vi.fn((...args: unknown[]) => ({ kind: 'orderBy', args })),
-
-  // Important: keep this mock typed with a session argument.
-  // Otherwise TypeScript infers it as () => boolean and rejects
-  // mockImplementation((sessionLike) => ...).
   mockIsSessionCanonicalForEnrollment: vi.fn(
-    (_sessionLike?: Record<string, unknown>) => true,
+    (_sessionLike?: Record<string, unknown>, _enrollmentLike?: Record<string, unknown>) => true,
   ),
-
   mockIsScheduleExceptionSession: vi.fn(
     (_sessionLike?: Record<string, unknown>) => false,
   ),
-
   mockShouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment: vi.fn(
-    (_sessionLike?: Record<string, unknown>) => false,
+    (_sessionLike?: Record<string, unknown>, _teacherId?: string) => false,
   ),
 }));
+
 vi.mock('firebase/firestore', () => ({
   collection: vi.fn((_db: unknown, name: string) => ({ kind: 'collection', name })),
   documentId: vi.fn(() => '__name__'),
@@ -44,9 +39,7 @@ vi.mock('firebase/firestore', () => ({
   where: mockWhere,
 }));
 
-vi.mock('../../lib/firebaseConfig', () => ({
-  db: {},
-}));
+vi.mock('../../lib/firebaseConfig', () => ({ db: {} }));
 
 vi.mock('../../lib/sessionScheduleIntegrity', () => ({
   isScheduleExceptionSession: mockIsScheduleExceptionSession,
@@ -88,10 +81,11 @@ const getCollectionName = (queryRef: { args: Array<{ kind?: string; name?: strin
   return base?.name || '';
 };
 
-const getTeacherAliasField = (queryRef: { args: Array<{ kind?: string; args?: unknown[] }> }) => {
-  const whereClauses = extractWhereClauses(queryRef);
-  const teacherClause = whereClauses.find((args) =>
-    ['teacherId', 'teacherIds', 'assignedTeacherId', 'primaryTeacherId', 'teacherUid', 'teacher_id'].includes(String(args[0] || '')),
+const getTeacherField = (queryRef: { args: Array<{ kind?: string; args?: unknown[] }> }) => {
+  const teacherClause = extractWhereClauses(queryRef).find((args) =>
+    ['teacherId', 'teacherIds', 'assignedTeacherId', 'primaryTeacherId', 'teacherUid', 'teacher_id'].includes(
+      String(args[0] || ''),
+    ),
   );
   return String(teacherClause?.[0] || '');
 };
@@ -99,315 +93,161 @@ const getTeacherAliasField = (queryRef: { args: Array<{ kind?: string; args?: un
 const tomorrowDate = () => format(addDays(new Date(), 1), 'yyyy-MM-dd');
 const specificDate = () => format(addDays(new Date(), 4), 'yyyy-MM-dd');
 
-describe('useUpcomingSessions', () => {
+const canonicalSession = (
+  id: string,
+  date: string,
+  overrides: Record<string, unknown> = {},
+) => makeDoc(id, {
+  teacherId: 'teacher-1',
+  enrollmentId: 'enr-1',
+  date,
+  startTime: '18:00',
+  kidId: 'kid-1',
+  status: 'scheduled',
+  ...overrides,
+});
+
+describe('useUpcomingSessions B4 canonical read cutover', () => {
   beforeEach(() => {
     mockGetDocs.mockReset();
     mockOnSnapshot.mockReset();
     mockQuery.mockClear();
     mockWhere.mockClear();
     mockOrderBy.mockClear();
+
     mockIsSessionCanonicalForEnrollment.mockReset();
     mockIsSessionCanonicalForEnrollment.mockImplementation(
-      (_sessionLike?: Record<string, unknown>) => true,
+      (_sessionLike?: Record<string, unknown>, _enrollmentLike?: Record<string, unknown>) => true,
     );
     mockIsScheduleExceptionSession.mockReset();
-    mockIsScheduleExceptionSession.mockImplementation(
-      (_sessionLike?: Record<string, unknown>) => false,
-    );
+    mockIsScheduleExceptionSession.mockImplementation(() => false);
     mockShouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment.mockReset();
-    mockShouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment.mockImplementation(
-      (_sessionLike?: Record<string, unknown>) => false,
-    );
+    mockShouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment.mockImplementation(() => false);
 
     mockGetDocs.mockImplementation(async (queryRef: unknown) => {
       const collectionName = getCollectionName(queryRef as any);
-      const aliasField = getTeacherAliasField(queryRef as any);
-      const whereClauses = extractWhereClauses(queryRef as any);
-      const selectedDate = String(whereClauses.find((args) => args[0] === 'date')?.[2] || '');
-
       if (collectionName === 'enrollments') {
         return {
-          docs: [
-            makeDoc('enr-direct', { teacherId: 'teacher-1', kidId: 'kid-1', courseId: 'course-1' }),
-            makeDoc('enr-array', { teacherIds: ['teacher-1'], kidId: 'kid-2', courseId: 'course-1' }),
-            makeDoc('enr-assigned', { assignedTeacherId: 'teacher-1', kidId: 'kid-3', courseId: 'course-1' }),
-            makeDoc('enr-primary', { primaryTeacherId: 'teacher-1', kidId: 'kid-4', courseId: 'course-1' }),
-            makeDoc('enr-uid', { teacherUid: 'teacher-1', kidId: 'kid-5', courseId: 'course-1' }),
-            makeDoc('enr-legacy', { teacher_id: 'teacher-1', kidId: 'kid-6', courseId: 'course-1' }),
-          ],
+          docs: [makeDoc('enr-1', {
+            teacherId: 'teacher-1',
+            kidId: 'kid-1',
+            courseId: 'course-1',
+            status: 'active',
+          })],
         };
       }
-
-      if (collectionName === 'classSessions') {
-        const docsByDate: Record<string, Record<string, ReturnType<typeof makeDoc>[]>> = {
-          [tomorrowDate()]: {
-            teacherIds: [makeDoc('session-array', { teacherIds: ['teacher-1'], enrollmentId: 'enr-array', date: tomorrowDate(), startTime: '19:45', kidId: 'kid-2', status: 'scheduled' })],
-            assignedTeacherId: [makeDoc('session-assigned', { assignedTeacherId: 'teacher-1', enrollmentId: 'enr-assigned', date: tomorrowDate(), startTime: '20:00', kidId: 'kid-3', status: 'scheduled' })],
-            primaryTeacherId: [makeDoc('session-primary', { primaryTeacherId: 'teacher-1', enrollmentId: 'enr-primary', date: tomorrowDate(), startTime: '20:15', kidId: 'kid-4', status: 'scheduled' })],
-            teacherUid: [makeDoc('session-uid', { teacherUid: 'teacher-1', enrollmentId: 'enr-uid', date: tomorrowDate(), startTime: '20:30', kidId: 'kid-5', status: 'scheduled' })],
-            teacher_id: [makeDoc('session-legacy', { teacher_id: 'teacher-1', enrollmentId: 'enr-legacy', date: tomorrowDate(), startTime: '20:45', kidId: 'kid-6', status: 'scheduled' })],
-          },
-          [specificDate()]: {
-            teacherIds: [makeDoc('session-specific-array', { teacherIds: ['teacher-1'], enrollmentId: 'enr-array', date: specificDate(), startTime: '18:15', kidId: 'kid-2', status: 'scheduled' })],
-            assignedTeacherId: [makeDoc('session-other-day-assigned', { assignedTeacherId: 'teacher-1', enrollmentId: 'enr-assigned', date: specificDate(), startTime: '21:00', kidId: 'kid-3', status: 'scheduled' })],
-          },
-        };
-        return { docs: docsByDate[selectedDate]?.[aliasField] || [] };
-      }
-
       return { docs: [] };
     });
 
     mockOnSnapshot.mockImplementation((queryRef, onNext) => {
-      const aliasField = getTeacherAliasField(queryRef as any);
       const whereClauses = extractWhereClauses(queryRef as any);
       const selectedDate = String(whereClauses.find((args) => args[0] === 'date')?.[2] || '');
-      const docsByDate: Record<string, Record<string, ReturnType<typeof makeDoc>[]>> = {
-        [tomorrowDate()]: {
-          teacherId: [makeDoc('session-direct', { teacherId: 'teacher-1', enrollmentId: 'enr-direct', date: tomorrowDate(), startTime: '19:30', kidId: 'kid-1', status: 'scheduled' })],
-        },
-        [specificDate()]: {
-          teacherId: [makeDoc('session-specific', { teacherId: 'teacher-1', enrollmentId: 'enr-direct', date: specificDate(), startTime: '18:00', kidId: 'kid-1', status: 'scheduled' })],
-        },
-      };
-      onNext({ docs: docsByDate[selectedDate]?.[aliasField] || [] });
+      onNext({ docs: [canonicalSession(`session-${selectedDate}`, selectedDate)] });
       return vi.fn();
     });
   });
 
-  it('defaults upcoming to tomorrow only and does not run a next-7-days query', async () => {
+  it('defaults to tomorrow and uses one canonical teacherId listener with no classSessions getDocs fallbacks', async () => {
     render(<TestComponent teacherId="teacher-1" />);
 
-    await waitFor(() => expect(screen.getByText('count:6')).toBeTruthy());
-    expect(screen.getByText(`session-direct:${tomorrowDate()}:teacher-1`)).toBeTruthy();
-    expect(screen.queryByText(new RegExp(`session-specific:${specificDate()}:teacher-1`))).toBeNull();
+    await waitFor(() => expect(screen.getByText('count:1')).toBeTruthy());
+    expect(screen.getByText(`session-${tomorrowDate()}:${tomorrowDate()}:teacher-1`)).toBeTruthy();
     expect(getDefaultUpcomingSelectedDate()).toBe(tomorrowDate());
 
-    const classSessionCalls = [
-      ...mockOnSnapshot.mock.calls.map(([queryRef]) => queryRef),
-      ...mockGetDocs.mock.calls
-        .filter(([queryRef]) => getCollectionName(queryRef as any) === 'classSessions')
-        .map(([queryRef]) => queryRef),
-    ];
-    classSessionCalls.forEach((queryRef) => {
-      const whereClauses = extractWhereClauses(queryRef as any);
-      expect(whereClauses).toEqual(
-        expect.arrayContaining([
-          expect.arrayContaining(['date', '==', tomorrowDate()]),
-        ]),
-      );
-      expect(whereClauses.some((args) => args[0] === 'date' && args[1] === 'in')).toBe(false);
-    });
-  });
-
-  it('loads only the selected date when a specific date is requested', async () => {
-    render(<TestComponent teacherId="teacher-1" selectedDate={specificDate()} />);
-
-    await waitFor(() => expect(screen.getByText('count:3')).toBeTruthy());
-    expect(screen.getByText(`session-specific:${specificDate()}:teacher-1`)).toBeTruthy();
-    expect(screen.queryByText(new RegExp(`:${tomorrowDate()}:teacher-1`))).toBeNull();
-  });
-
-  it('keeps legacy alias fallback bounded to the selected date only', async () => {
-    render(<TestComponent teacherId="teacher-1" selectedDate={specificDate()} />);
-
-    await waitFor(() => expect(screen.getByText('count:3')).toBeTruthy());
+    expect(mockOnSnapshot).toHaveBeenCalledTimes(1);
+    const [listenerQuery] = mockOnSnapshot.mock.calls[0];
+    expect(getTeacherField(listenerQuery as any)).toBe('teacherId');
+    expect(extractWhereClauses(listenerQuery as any)).toEqual(
+      expect.arrayContaining([
+        expect.arrayContaining(['teacherId', '==', 'teacher-1']),
+        expect.arrayContaining(['date', '==', tomorrowDate()]),
+      ]),
+    );
 
     const classSessionGetDocsCalls = mockGetDocs.mock.calls.filter(
       ([queryRef]) => getCollectionName(queryRef as any) === 'classSessions',
     );
-    expect(classSessionGetDocsCalls).toHaveLength(5);
-    classSessionGetDocsCalls.forEach(([queryRef]) => {
-      expect(extractWhereClauses(queryRef as any)).toEqual(
-        expect.arrayContaining([
-          expect.arrayContaining(['date', '==', specificDate()]),
-        ]),
-      );
-    });
+    expect(classSessionGetDocsCalls).toHaveLength(0);
   });
 
-  it('keeps transferred future sessions visible for the new teacher on the selected date', async () => {
+  it('loads only the explicitly selected date', async () => {
+    render(<TestComponent teacherId="teacher-1" selectedDate={specificDate()} />);
+
+    await waitFor(() => expect(screen.getByText('count:1')).toBeTruthy());
+    expect(screen.getByText(`session-${specificDate()}:${specificDate()}:teacher-1`)).toBeTruthy();
+
+    const [listenerQuery] = mockOnSnapshot.mock.calls[0];
+    expect(extractWhereClauses(listenerQuery as any)).toEqual(
+      expect.arrayContaining([expect.arrayContaining(['date', '==', specificDate()])]),
+    );
+  });
+
+  it('keeps a transferred session visible for the new canonical teacher even when legacy aliases are stale', async () => {
     mockGetDocs.mockImplementation(async (queryRef: unknown) => {
-      const collectionName = getCollectionName(queryRef as any);
-      const aliasField = getTeacherAliasField(queryRef as any);
-      const whereClauses = extractWhereClauses(queryRef as any);
-      const selectedDate = String(whereClauses.find((args) => args[0] === 'date')?.[2] || '');
-
-      if (collectionName === 'enrollments') {
+      if (getCollectionName(queryRef as any) === 'enrollments') {
         return {
-          docs: [
-            makeDoc('enr-direct', { teacherId: 'teacher-1', kidId: 'kid-1', courseId: 'course-1' }),
-            makeDoc('enr-array', { teacherIds: ['teacher-1'], kidId: 'kid-2', courseId: 'course-1' }),
-          ],
+          docs: [makeDoc('enr-transfer', {
+            teacherId: 'teacher-1',
+            teacherIds: ['teacher-old'],
+            assignedTeacherId: 'teacher-old',
+            kidId: 'kid-2',
+            courseId: 'course-1',
+            status: 'active',
+          })],
         };
       }
-
-      if (collectionName === 'classSessions' && aliasField === 'teacherIds' && selectedDate === specificDate()) {
-        return {
-          docs: [
-            makeDoc('session-transferred', {
-              teacherIds: ['teacher-1', 'teacher-old'],
-              assignedTeacherId: 'teacher-1',
-              enrollmentId: 'enr-array',
-              date: specificDate(),
-              startTime: '18:30',
-              kidId: 'kid-2',
-              status: 'scheduled',
-            }),
-          ],
-        };
-      }
-
       return { docs: [] };
     });
-    mockOnSnapshot.mockReset();
-    mockOnSnapshot.mockImplementation((queryRef, onNext) => {
-      const aliasField = getTeacherAliasField(queryRef as any);
-      if (aliasField === 'teacherId') {
-        onNext({
-          docs: [
-            makeDoc('session-specific', {
-              teacherId: 'teacher-1',
-              enrollmentId: 'enr-direct',
-              date: specificDate(),
-              startTime: '18:00',
-              kidId: 'kid-1',
-              status: 'scheduled',
-            }),
-          ],
-        });
-        return vi.fn();
-      }
-      onNext({ docs: [] });
+    mockOnSnapshot.mockImplementation((_queryRef, onNext) => {
+      onNext({
+        docs: [canonicalSession('session-transferred', specificDate(), {
+          teacherId: 'teacher-1',
+          teacherIds: ['teacher-old'],
+          assignedTeacherId: 'teacher-old',
+          enrollmentId: 'enr-transfer',
+          kidId: 'kid-2',
+          startTime: '18:30',
+        })],
+      });
       return vi.fn();
     });
 
     render(<TestComponent teacherId="teacher-1" selectedDate={specificDate()} />);
 
-    await waitFor(() => expect(screen.getByText('count:2')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('count:1')).toBeTruthy());
     expect(screen.getByText(`session-transferred:${specificDate()}:teacher-1`)).toBeTruthy();
   });
 
-  it('does not show moved future sessions to the previous teacher on the selected date', async () => {
-    mockIsSessionCanonicalForEnrollment.mockImplementation(function () {
-      const sessionLike = arguments[0] as Record<string, unknown> | undefined;
-      return String(sessionLike?.id || '') !== 'session-moved-away';
-    });
-    mockGetDocs.mockImplementation(async (queryRef: unknown) => {
-      const collectionName = getCollectionName(queryRef as any);
-      const aliasField = getTeacherAliasField(queryRef as any);
-      const whereClauses = extractWhereClauses(queryRef as any);
-      const selectedDate = String(whereClauses.find((args) => args[0] === 'date')?.[2] || '');
-
-      if (collectionName === 'enrollments') {
-        return {
-          docs: [
-            makeDoc('enr-direct', { teacherId: 'teacher-1', kidId: 'kid-1', courseId: 'course-1' }),
-            makeDoc('enr-array', { teacherIds: ['teacher-1'], kidId: 'kid-2', courseId: 'course-1' }),
-          ],
-        };
-      }
-
-      if (collectionName === 'classSessions' && aliasField === 'teacherIds' && selectedDate === specificDate()) {
-        return {
-          docs: [
-            makeDoc('session-moved-away', {
-              teacherIds: ['teacher-1', 'teacher-2'],
-              assignedTeacherId: 'teacher-2',
-              enrollmentId: 'enr-array',
-              date: specificDate(),
-              startTime: '18:45',
-              kidId: 'kid-2',
-              status: 'scheduled',
-            }),
-          ],
-        };
-      }
-
-      return { docs: [] };
-    });
-    mockOnSnapshot.mockReset();
-    mockOnSnapshot.mockImplementation((queryRef, onNext) => {
-      const aliasField = getTeacherAliasField(queryRef as any);
-      if (aliasField === 'teacherId') {
-        onNext({
-          docs: [
-            makeDoc('session-specific', {
-              teacherId: 'teacher-1',
-              enrollmentId: 'enr-direct',
-              date: specificDate(),
-              startTime: '18:00',
-              kidId: 'kid-1',
-              status: 'scheduled',
-            }),
-          ],
-        });
-        return vi.fn();
-      }
-      onNext({ docs: [] });
-      return vi.fn();
-    });
-
-    render(<TestComponent teacherId="teacher-1" selectedDate={specificDate()} />);
-
-    await waitFor(() => expect(screen.getByText('count:1')).toBeTruthy());
-    expect(screen.queryByText(`session-moved-away:${specificDate()}:teacher-1`)).toBeNull();
-  });
-
-  it('dedupes duplicate alias matches for the same selected date', async () => {
-    mockGetDocs.mockImplementation(async (queryRef: unknown) => {
-      const collectionName = getCollectionName(queryRef as any);
-      const aliasField = getTeacherAliasField(queryRef as any);
-      if (collectionName === 'enrollments') {
-        return { docs: [makeDoc('enr-shared', { teacherId: 'teacher-1', kidId: 'kid-1', courseId: 'course-1' })] };
-      }
-      if (collectionName === 'classSessions' && ['assignedTeacherId', 'teacherUid'].includes(aliasField)) {
-        return {
-          docs: [
-            makeDoc('session-shared', {
-              assignedTeacherId: 'teacher-1',
-              teacherUid: 'teacher-1',
-              enrollmentId: 'enr-shared',
-              date: specificDate(),
-              startTime: '19:00',
-              kidId: 'kid-1',
-              status: 'scheduled',
-            }),
-          ],
-        };
-      }
-      return { docs: [] };
-    });
-
-    mockOnSnapshot.mockReset();
+  it('rejects a stale-alias session if a backend unexpectedly returns a different canonical teacher', async () => {
     mockOnSnapshot.mockImplementation((_queryRef, onNext) => {
-      onNext({ docs: [] });
+      onNext({
+        docs: [canonicalSession('session-old-alias', specificDate(), {
+          teacherId: 'teacher-2',
+          teacherIds: ['teacher-1'],
+          assignedTeacherId: 'teacher-1',
+        })],
+      });
       return vi.fn();
     });
 
     render(<TestComponent teacherId="teacher-1" selectedDate={specificDate()} />);
 
-    await waitFor(() => expect(screen.getByText('count:1')).toBeTruthy());
-    expect(screen.getAllByTestId('session')).toHaveLength(1);
+    await waitFor(() => expect(screen.getByText('count:0')).toBeTruthy());
+    expect(screen.queryByText(/session-old-alias/)).toBeNull();
   });
 
   it('fails closed for recurring sessions when enrollment hydration fails', async () => {
     mockGetDocs.mockImplementation(async (queryRef: unknown) => {
-      const collectionName = getCollectionName(queryRef as any);
-      if (collectionName === 'enrollments') throw new Error('enrollment lookup failed');
+      if (getCollectionName(queryRef as any) === 'enrollments') {
+        throw new Error('enrollment lookup failed');
+      }
       return { docs: [] };
     });
-    mockOnSnapshot.mockReset();
     mockOnSnapshot.mockImplementation((_queryRef, onNext) => {
       onNext({
-        docs: [makeDoc('session-unverified', {
-          teacherId: 'teacher-1',
+        docs: [canonicalSession('session-unverified', specificDate(), {
           enrollmentId: 'enr-missing',
           courseId: 'phonics',
-          kidId: 'kid-1',
-          date: specificDate(),
-          startTime: '19:00',
-          status: 'scheduled',
           source: 'enrollmentSchedule',
         })],
       });

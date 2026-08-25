@@ -4,6 +4,7 @@ import {
   buildCanonicalEnrollmentTeacherWriteFields,
   buildCanonicalOperationalTeacherWriteFields,
   collectLegacyTeacherIdentityRefs,
+  operationalTeacherRecordBelongsTo,
   resolveOperationalTeacherId,
 } from '../../lib/teacherIdentity';
 
@@ -14,6 +15,23 @@ describe('teacher identity normalization contract', () => {
       assignedTeacherId: 'legacy-teacher',
       teacherIds: ['legacy-teacher'],
     })).toBe('canonical-teacher');
+  });
+
+  it('uses canonical teacherId as the only owner when stale aliases disagree', () => {
+    const record = {
+      teacherId: 'teacher-b',
+      assignedTeacherId: 'teacher-a',
+      teacherIds: ['teacher-a'],
+    };
+
+    expect(operationalTeacherRecordBelongsTo(record, 'teacher-b')).toBe(true);
+    expect(operationalTeacherRecordBelongsTo(record, 'teacher-a')).toBe(false);
+  });
+
+  it('retains direct legacy ownership compatibility only when canonical teacherId is absent', () => {
+    const record = { assignedTeacherId: 'legacy-teacher' };
+    expect(operationalTeacherRecordBelongsTo(record, 'legacy-teacher')).toBe(true);
+    expect(operationalTeacherRecordBelongsTo(record, 'other-teacher')).toBe(false);
   });
 
   it('preserves legacy resolution for records that do not yet have teacherId', () => {

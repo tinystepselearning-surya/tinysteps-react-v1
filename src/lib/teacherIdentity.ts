@@ -85,6 +85,19 @@ export const resolveOperationalTeacherId = (
   );
 };
 
+export const operationalTeacherRecordBelongsTo = (
+  record: Record<string, unknown> | undefined,
+  teacherId: unknown,
+): boolean => {
+  const expectedTeacherId = normalizeTeacherIdentityValue(teacherId);
+  if (!record || !expectedTeacherId) return false;
+
+  const canonicalTeacherId = normalizeTeacherIdentityValue(record.teacherId);
+  if (canonicalTeacherId) return canonicalTeacherId === expectedTeacherId;
+
+  return collectLegacyTeacherIdentityRefs(record).includes(expectedTeacherId);
+};
+
 export const buildCanonicalOperationalTeacherWriteFields = (
   teacherId: unknown,
 ): CanonicalOperationalTeacherWriteFields => {
