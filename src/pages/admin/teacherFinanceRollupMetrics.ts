@@ -12,7 +12,7 @@ export type TeacherFinanceMonthlyRollup = {
   rollupSource?: unknown;
   rollupVersion?: unknown;
   analyticsProjectionVersion?: unknown;
-  sessionEarnings?: unknown;
+  analyticsProjectionPreparedSessionEarnings?: unknown;
   unclassifiedEarnings?: unknown;
 };
 
@@ -50,12 +50,12 @@ const rollupMonthKey = (row: TeacherFinanceMonthlyRollup): string => {
 };
 
 /**
- * B6 Brick 6A projection contract.
+ * B6 Brick 6A/6B2 projection contract.
  *
- * The Finance view may use teacher-month rollups only when the rollup explicitly carries the
- * analytics projection fields produced by the B6 migration/canonical writer. Older v1 rollups
- * remain visible to the caller, but are marked unsafe so the UI can retain the raw-ledger
- * fallback rather than silently change financial totals.
+ * The authoritative rollup already owns totalEarnings and demoEarnings. Once Brick 6B1 proves
+ * that the month contains only canonical session/demo earnings, session earnings are safely the
+ * remainder: totalEarnings - demoEarnings. This avoids maintaining a second live money total that
+ * could drift after later canonical earning/payout events.
  */
 export function summarizeTeacherFinanceRollups(
   rows: TeacherFinanceMonthlyRollup[],
@@ -79,13 +79,17 @@ export function summarizeTeacherFinanceRollups(
     rollupCount += 1;
 
     const projectionVersion = Number(row.analyticsProjectionVersion);
+    const totalEarningsRaw = Number(row.totalEarnings);
+    const demoEarningsRaw = Number(row.demoEarnings);
     const unclassifiedEarnings = toMoney(row.unclassifiedEarnings);
-    const sessionEarningsRaw = Number(row.sessionEarnings);
     const projectionSafe =
       Number.isFinite(projectionVersion) &&
       projectionVersion >= 1 &&
-      Number.isFinite(sessionEarningsRaw) &&
-      sessionEarningsRaw >= 0 &&
+      Number.isFinite(totalEarningsRaw) &&
+      totalEarningsRaw >= 0 &&
+      Number.isFinite(demoEarningsRaw) &&
+      demoEarningsRaw >= 0 &&
+      demoEarningsRaw <= totalEarningsRaw + 0.01 &&
       unclassifiedEarnings <= 0.001;
 
     if (!projectionSafe) {
@@ -93,11 +97,12 @@ export function summarizeTeacherFinanceRollups(
       continue;
     }
 
-    const sessionEarnings = Math.max(sessionEarningsRaw, 0);
-    const demoEarnings = toMoney(row.demoEarnings);
+    const totalEarnings = Math.max(totalEarningsRaw, 0);
+    const demoEarnings = Math.max(demoEarningsRaw, 0);
+    const sessionEarnings = Math.max(totalEarnings - demoEarnings, 0);
     totalSessionEarned += sessionEarnings;
     totalDemoEarned += demoEarnings;
-    totalCombinedEarned += sessionEarnings + demoEarnings;
+    totalCombinedEarned += totalEarnings;
     totalPending += toMoney(row.pendingEarnings);
     totalSessionCount += toCount(row.totalSessions ?? row.sessionsCompleted);
     totalDemoCount +=
