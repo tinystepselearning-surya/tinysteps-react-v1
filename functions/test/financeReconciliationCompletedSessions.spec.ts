@@ -5,7 +5,7 @@ import {
   buildFinanceReconciliationMonthBounds,
 } from '../src/helpers/financeReconciliationCompletedSessions';
 
-describe('B6 Brick 5A finance reconciliation completed-session scope', () => {
+describe('B6 Brick 5 finance reconciliation completed-session scope', () => {
   it('builds exact IST boundaries for August 2026', () => {
     const bounds = buildFinanceReconciliationMonthBounds('2026-08');
 
@@ -49,5 +49,21 @@ describe('B6 Brick 5A finance reconciliation completed-session scope', () => {
     expect(source).toContain("where('monthKey', '==', monthKey)");
     expect(source).toContain("where('status', '==', 'completed')");
     expect(source).toContain("mode: 'month_bounded_canonical_union'");
+  });
+
+  it('wires the bounded fetcher into the reconciliation report and retires the broad completed-session scan', () => {
+    const source = fs.readFileSync(
+      path.resolve(process.cwd(), 'functions/src/financeReconciliationReport.ts'),
+      'utf8',
+    );
+
+    expect(source).toContain(
+      "import { fetchCompletedSessionsForFinanceReconciliation } from './helpers/financeReconciliationCompletedSessions';",
+    );
+    expect(source).toContain('fetchCompletedSessionsForFinanceReconciliation({');
+    expect(source).toContain('maxDocs: maxDocsPerCollection');
+    expect(source).not.toContain(
+      "fetchLimitedDocs(db.collection('classSessions').where('status', '==', 'completed'), maxDocsPerCollection)",
+    );
   });
 });
