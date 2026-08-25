@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
+import type { ChildCourseProgressProjection } from '../../hooks/useChildCourseProgressProjection';
+import type { ParentClassAttendanceReadModel } from '../../lib/parentClassAttendanceProjection';
 import {
   buildCanonicalParentOverview,
   selectCanonicalParentOverviewCourse,
 } from '../../pages/parent/parentOverviewProjection';
 
-const canonicalCourse = {
+const canonicalCourse: ChildCourseProgressProjection = {
   schemaVersion: 2,
   modelType: 'child_course_progress_v2',
   completionAuthority: 'teacher_lesson_status',
@@ -42,9 +44,9 @@ const canonicalCourse = {
     },
   ],
   lastUpdatedAtMs: 1234,
-} as const;
+};
 
-const classModel = {
+const classModel: ParentClassAttendanceReadModel = {
   schemaVersion: 3,
   modelType: 'class_attendance_v3',
   childRowsAuthoritative: true,
@@ -77,7 +79,7 @@ const classModel = {
     totalSessions: 99,
     completedSessions: 80,
   },
-} as const;
+};
 
 describe('Brick P5 parent overview projection', () => {
   it('accepts only the canonical P3 V2 teacher-status completion model', () => {
@@ -118,13 +120,14 @@ describe('Brick P5 parent overview projection', () => {
       ),
     ).toBeNull();
 
+    const stageSummaries = [...(canonicalCourse.stageSummaries ?? [])];
     expect(
       selectCanonicalParentOverviewCourse(
         {
           ...canonicalCourse,
           stageSummaries: [
-            ...canonicalCourse.stageSummaries.slice(0, 1),
-            { ...canonicalCourse.stageSummaries[1], totalTopics: 3, notStartedTopics: 3 },
+            stageSummaries[0],
+            { ...stageSummaries[1], totalTopics: 3, notStartedTopics: 3 },
           ],
         },
         'phonics-foundations',
