@@ -160,6 +160,7 @@ export default function ParentProgressOverview({
                 className="h-10 w-full justify-between px-1 text-sm font-semibold"
                 aria-expanded={detailsOpen}
                 aria-controls="parent-course-progress-details"
+                aria-label={detailsOpen ? "Hide course details" : "View course details"}
                 onClick={() => setDetailsOpen((open) => !open)}
               >
                 {detailsOpen ? "Hide course details" : "View course details"}

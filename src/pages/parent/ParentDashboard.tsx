@@ -81,6 +81,7 @@ import MobileTabBar from "../../components/common/MobileTabBar";
 import HolidayCalendar2026 from "../../components/common/HolidayCalendar2026";
 import MessagesPanel from "../messages/MessagesPanel";
 import useMessageThreads from "../../hooks/useMessageThreads";
+import { useChildCourseProgressProjection } from "../../hooks/useChildCourseProgressProjection";
  
 import { masteryKeyFromValue, masteryLabel, masteryPctFromKey, type MasteryKey } from "../../lib/mastery";
 import {
@@ -2768,6 +2769,12 @@ export default function ParentDashboard() {
     return null;
   }, [enrolledCourseIds, mostRecentSessionCourseId]);
 
+  const childCourseProgressProjection = useChildCourseProgressProjection(
+    studentIdForProgress,
+    displayCourseId,
+    shouldLoadCurriculumData,
+  );
+
   const phonicsProgressByCourse = useMemo(() => {
     const curriculumEnrollmentCourseIds = insightsCourseOptions
       .map((option) => normalizeCurriculumCourseId(option.courseId))
@@ -3909,6 +3916,26 @@ export default function ParentDashboard() {
       return null;
     }
 
+    const currentCourseProjection = childCourseProgressProjection.data;
+    if (currentCourseProjection) {
+      const totalTopics = Number(currentCourseProjection.totalTopics ?? 0);
+      const completedTopics = Number(currentCourseProjection.completedTopics ?? 0);
+      const inProgressTopics = Number(currentCourseProjection.inProgressTopics ?? 0);
+      const overallPct = Number(
+        currentCourseProjection.overallPct ??
+          (totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0),
+      );
+      return {
+        source: 'course_projection' as const,
+        totalTopics: Number.isFinite(totalTopics) ? totalTopics : 0,
+        completedTopics: Number.isFinite(completedTopics) ? completedTopics : 0,
+        inProgressTopics: Number.isFinite(inProgressTopics) ? inProgressTopics : 0,
+        overallPct: Number.isFinite(overallPct) ? overallPct : 0,
+        refreshedAt: currentCourseProjection.updatedAt || null,
+        lastUpdatedAtMs: Number(currentCourseProjection.lastUpdatedAtMs ?? 0) || null,
+      };
+    }
+
     const progressProjection = parentMonthlyBillingReadModelQuery.data?.progress;
     const projectionKid = progressProjection?.byKid?.[kidId];
     const projectionCourse = projectionKid?.byCourse?.[courseId];
@@ -3946,7 +3973,13 @@ export default function ParentDashboard() {
       refreshedAt: null,
       lastUpdatedAtMs: Number(fallbackCourse.lastUpdatedAtMs ?? 0) || null,
     };
-  }, [displayCourseId, parentMonthlyBillingReadModelQuery.data, phonicsProgressByCourse, selectedKidId]);
+  }, [
+    childCourseProgressProjection.data,
+    displayCourseId,
+    parentMonthlyBillingReadModelQuery.data,
+    phonicsProgressByCourse,
+    selectedKidId,
+  ]);
 
   const profileEnrollments = useMemo(() => {
     const enrollments = (enrollmentsQuery.data ?? []) as Enrollment[];

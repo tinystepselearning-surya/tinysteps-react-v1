@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
   applyIncrementalSummary,
+  buildSummaryFromDocs,
+  courseTopicIds,
+  docsForCourse,
   normalizeCourseId,
   progressState,
 } from '../../../functions/src/childCourseProgressProjection';
@@ -100,5 +103,41 @@ describe('child course progress projection', () => {
     expect(summary.latestTopicId).toBe('lesson-8');
     expect(summary.strengthHighlights.length).toBeLessThanOrEqual(4);
     expect(summary.practiceHighlights.length).toBeLessThanOrEqual(4);
+  });
+
+  it('bootstraps legacy documents through canonical aliases and curriculum topic mapping', () => {
+    const topicIds = courseTopicIds({
+      topics: [
+        { id: 'legacy-missing-course', courseId: 'phonics-foundation' },
+        { id: 'other-course-topic', courseId: 'early-phonics' },
+      ],
+    }, 'phonics-foundations');
+    const fakeDocs = [
+      {
+        id: 'legacy-alias',
+        data: () => ({ courseId: 'phonics-foundation', mastery: 'mastered' }),
+      },
+      {
+        id: 'legacy-missing-course',
+        data: () => ({ mastery: 'developing' }),
+      },
+      {
+        id: 'other-course-topic',
+        data: () => ({ courseId: 'early-phonics', mastery: 'mastered' }),
+      },
+    ] as any;
+
+    const relevantDocs = docsForCourse(fakeDocs, 'phonics-foundations', topicIds);
+    const summary = buildSummaryFromDocs(
+      'kid-legacy',
+      'phonics-foundations',
+      relevantDocs,
+      topicIds.size,
+    );
+
+    expect(relevantDocs).toHaveLength(2);
+    expect(summary.totalTopics).toBe(2);
+    expect(summary.completedTopics).toBe(1);
+    expect(summary.inProgressTopics).toBe(1);
   });
 });

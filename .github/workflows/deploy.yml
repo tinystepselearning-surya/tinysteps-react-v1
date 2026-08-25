@@ -54,7 +54,7 @@ jobs:
           npx firebase-tools@latest emulators:exec
           --project ${{ env.FIREBASE_PROJECT_ID }}
           --only firestore
-          "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run src/tests/firestore/publicLeads.rules.spec.ts src/tests/firestore/schoolDomain.rules.spec.ts src/tests/firestore/schoolProgramme.rules.spec.ts src/tests/firestore/teacherIdentity.rules.spec.ts"
+          "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run src/tests/firestore/publicLeads.rules.spec.ts src/tests/firestore/schoolDomain.rules.spec.ts src/tests/firestore/schoolProgramme.rules.spec.ts src/tests/firestore/teacherIdentity.rules.spec.ts src/tests/firestore/childCourseProgress.rules.spec.ts"
 
       - name: Run website lead deduplication transaction tests
         run: >-

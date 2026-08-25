@@ -155,9 +155,8 @@ function updateFromProgress(topicId: string, data: ProgressData): RecentProgress
 
 function clampCounts(totalTopics: number, completedTopics: number, inProgressTopics: number) {
   const safeTotal = Math.max(0, Math.round(totalTopics));
-  const safeCompleted = Math.min(Math.max(0, Math.round(completedTopics)), safeTotal || Number.MAX_SAFE_INTEGER);
-  const remaining = safeTotal > 0 ? Math.max(0, safeTotal - safeCompleted) : Number.MAX_SAFE_INTEGER;
-  const safeInProgress = Math.min(Math.max(0, Math.round(inProgressTopics)), remaining);
+  const safeCompleted = Math.max(0, Math.round(completedTopics));
+  const safeInProgress = Math.max(0, Math.round(inProgressTopics));
   return {
     totalTopics: Math.max(safeTotal, safeCompleted + safeInProgress),
     completedTopics: safeCompleted,
@@ -237,10 +236,11 @@ export function applyIncrementalSummary(args: {
   };
 }
 
-function buildSummaryFromDocs(
+export function buildSummaryFromDocs(
   kidId: string,
   courseId: string,
   docs: admin.firestore.QueryDocumentSnapshot[],
+  totalTopicsHint = 0,
 ): CourseProgressSummary {
   let summary: CourseProgressSummary = {
     schemaVersion: 1,
@@ -279,26 +279,69 @@ function buildSummaryFromDocs(
     (max, docSnap) => Math.max(max, numeric(docSnap.data()?.courseTotalTopics) ?? 0),
     0,
   );
-  if (maxHint > summary.totalTopics) {
-    summary.totalTopics = maxHint;
-    summary.overallPct = maxHint > 0 ? Math.round((summary.completedTopics / maxHint) * 100) : 0;
+  const resolvedTotalHint = Math.max(maxHint, totalTopicsHint);
+  if (resolvedTotalHint > summary.totalTopics) {
+    summary.totalTopics = resolvedTotalHint;
+    summary.overallPct = resolvedTotalHint > 0
+      ? Math.round((summary.completedTopics / resolvedTotalHint) * 100)
+      : 0;
   }
   summary.updatedAt = FieldValue.serverTimestamp();
   return summary;
 }
 
+export function courseTopicIds(
+  curriculumData: Record<string, unknown> | undefined,
+  courseId: string,
+): Set<string> {
+  const topics = Array.isArray(curriculumData?.topics) ? curriculumData.topics : [];
+  return new Set(
+    topics
+      .filter((topic) => {
+        if (!topic || typeof topic !== 'object') return false;
+        const data = topic as Record<string, unknown>;
+        return normalizeCourseId(data.courseId ?? data.course) === courseId;
+      })
+      .map((topic) => {
+        const data = topic as Record<string, unknown>;
+        return text(data.id ?? data.topicId);
+      })
+      .filter(Boolean),
+  );
+}
+
+export function docsForCourse(
+  docs: admin.firestore.QueryDocumentSnapshot[],
+  courseId: string,
+  topicIds: Set<string>,
+): admin.firestore.QueryDocumentSnapshot[] {
+  return docs.filter((docSnap) => {
+    const data = (docSnap.data() || {}) as Record<string, unknown>;
+    const documentCourseId = normalizeCourseId(data.courseId ?? data.course);
+    if (documentCourseId) return documentCourseId === courseId;
+    return topicIds.has(text(data.topicId) || docSnap.id);
+  });
+}
+
 async function updateCourseSummary(args: {
   db: admin.firestore.Firestore;
+  eventId: string;
   kidId: string;
   courseId: string;
   topicId: string;
   beforeData: ProgressData;
   afterData: ProgressData;
-}): Promise<{ sourceDocumentsRead: number; mode: 'incremental' | 'bootstrap' }> {
-  const { db, kidId, courseId, topicId, beforeData, afterData } = args;
+}): Promise<{ sourceDocumentsRead: number; mode: 'incremental' | 'bootstrap' | 'duplicate' }> {
+  const { db, eventId, kidId, courseId, topicId, beforeData, afterData } = args;
   const summaryRef = db.collection('students').doc(kidId).collection('courseProgress').doc(courseId);
+  const eventRef = db.collection('students').doc(kidId).collection('progressEvents').doc(eventId);
 
   return db.runTransaction(async (transaction) => {
+    const eventSnap = await transaction.get(eventRef);
+    if (eventSnap.exists) {
+      return { sourceDocumentsRead: 1, mode: 'duplicate' as const };
+    }
+
     const currentSnap = await transaction.get(summaryRef);
     if (currentSnap.exists) {
       const next = applyIncrementalSummary({
@@ -310,19 +353,35 @@ async function updateCourseSummary(args: {
         afterData,
       });
       transaction.set(summaryRef, next, { merge: false });
-      return { sourceDocumentsRead: 1, mode: 'incremental' as const };
+      transaction.set(eventRef, {
+        schemaVersion: 1,
+        projectionAppliedAt: FieldValue.serverTimestamp(),
+      });
+      return { sourceDocumentsRead: 2, mode: 'incremental' as const };
     }
 
-    const courseQuery = db
+    const progressQuery = db
       .collection('students')
       .doc(kidId)
-      .collection('progress')
-      .where('courseId', '==', courseId);
-    const progressSnap = await transaction.get(courseQuery);
-    const bootstrap = buildSummaryFromDocs(kidId, courseId, progressSnap.docs);
+      .collection('progress');
+    const curriculumRef = db.collection('config').doc('curriculumTopics');
+    const progressSnap = await transaction.get(progressQuery);
+    const curriculumSnap = await transaction.get(curriculumRef);
+    const topicIds = courseTopicIds(curriculumSnap.data(), courseId);
+    const relevantDocs = docsForCourse(progressSnap.docs, courseId, topicIds);
+    const bootstrap = buildSummaryFromDocs(
+      kidId,
+      courseId,
+      relevantDocs,
+      topicIds.size,
+    );
     transaction.set(summaryRef, bootstrap, { merge: false });
+    transaction.set(eventRef, {
+      schemaVersion: 1,
+      projectionAppliedAt: FieldValue.serverTimestamp(),
+    });
     return {
-      sourceDocumentsRead: 1 + progressSnap.size,
+      sourceDocumentsRead: 3 + progressSnap.size,
       mode: 'bootstrap' as const,
     };
   });
@@ -334,19 +393,22 @@ async function rebuildCourseAfterRemoval(args: {
   courseId: string;
 }): Promise<number> {
   const { db, kidId, courseId } = args;
-  const progressSnap = await db
-    .collection('students')
-    .doc(kidId)
-    .collection('progress')
-    .where('courseId', '==', courseId)
-    .get();
+  const [progressSnap, curriculumSnap] = await Promise.all([
+    db.collection('students').doc(kidId).collection('progress').get(),
+    db.collection('config').doc('curriculumTopics').get(),
+  ]);
+  const topicIds = courseTopicIds(curriculumSnap.data(), courseId);
+  const relevantDocs = docsForCourse(progressSnap.docs, courseId, topicIds);
   const summaryRef = db.collection('students').doc(kidId).collection('courseProgress').doc(courseId);
-  if (progressSnap.empty) {
+  if (relevantDocs.length === 0) {
     await summaryRef.delete().catch(() => undefined);
-    return progressSnap.size;
+    return progressSnap.size + 1;
   }
-  await summaryRef.set(buildSummaryFromDocs(kidId, courseId, progressSnap.docs), { merge: false });
-  return progressSnap.size;
+  await summaryRef.set(
+    buildSummaryFromDocs(kidId, courseId, relevantDocs, topicIds.size),
+    { merge: false },
+  );
+  return progressSnap.size + 1;
 }
 
 async function writeProgressEvent(args: {
@@ -413,6 +475,7 @@ export const onStudentProgressReadModelWrite = onDocumentWritten(
     if (beforeCourseId && afterCourseId && beforeCourseId === afterCourseId) {
       const result = await updateCourseSummary({
         db,
+        eventId: event.id,
         kidId,
         courseId: afterCourseId,
         topicId,
@@ -429,6 +492,7 @@ export const onStudentProgressReadModelWrite = onDocumentWritten(
       if (afterCourseId) {
         const result = await updateCourseSummary({
           db,
+          eventId: event.id,
           kidId,
           courseId: afterCourseId,
           topicId,
