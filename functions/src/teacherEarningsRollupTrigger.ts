@@ -9,6 +9,7 @@ if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
 const ANALYTICS_PROJECTION_VERSION = 1;
+const SESSION_CREATE_CERTIFICATION_VERSION = 1;
 
 type EarningImages = {
   earningId: string;
@@ -64,6 +65,26 @@ async function invalidateUnsafeAnalyticsProjection(input: EarningImages): Promis
           invalidReason: invalidReasons.join(','),
           invalidatedAt: admin.firestore.FieldValue.serverTimestamp(),
           source: 'b6_teacher_earnings_readiness_guard',
+        },
+        { merge: true },
+      );
+
+      // Brick 7D2A certification must fail closed after deployment. If any later earning image is
+      // unsafe for the canonical finance model, disable the month-level session-create evidence too.
+      // The future 7D2B fast path will require this document to be explicitly ready=true.
+      batch.set(
+        db
+          .collection('adminStats')
+          .doc('teacherEarningsSessionCreateFastPath')
+          .collection('months')
+          .doc(check.monthKey),
+        {
+          monthKey: check.monthKey,
+          ready: false,
+          certificationVersion: SESSION_CREATE_CERTIFICATION_VERSION,
+          invalidReason: `unsafe_teacher_earning_event:${invalidReasons.join(',')}`,
+          invalidatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          source: 'b6_brick_7d2a_runtime_invalidation_guard',
         },
         { merge: true },
       );
