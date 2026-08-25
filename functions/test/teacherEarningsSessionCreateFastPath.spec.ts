@@ -5,7 +5,13 @@ import {
   analyzeTeacherEarningsCanonicalCoverage,
   analyzeTeacherEarningsLegacyMonthCoverage,
 } from '../src/helpers/teacherEarningsCanonicalAudit';
-import { evaluateTeacherEarningsSessionCreateFastPathReadiness } from '../src/helpers/teacherEarningsSessionCreateFastPath';
+import {
+  evaluateTeacherEarningsSessionCreateCertification,
+  evaluateTeacherEarningsSessionCreateFastPathReadiness,
+  planTeacherEarningsSessionCreateCandidate,
+  TEACHER_EARNINGS_SESSION_CREATE_CERTIFICATION_VERSION,
+  TEACHER_EARNINGS_SESSION_CREATE_SOURCE_CODE_CONTRACT,
+} from '../src/helpers/teacherEarningsSessionCreateFastPath';
 import { planTeacherEarningsRollupChange } from '../src/helpers/teacherEarningsRollupDelta';
 
 const cleanRows = [
@@ -28,8 +34,30 @@ const cleanRows = [
   },
 ];
 
-describe('B6 Brick 7D1 session-create fast-path evidence gate', () => {
-  it('reports ready only for complete, clean full-ledger evidence', () => {
+const cleanCertification = {
+  monthKey: '2026-08',
+  ready: true,
+  certificationVersion: TEACHER_EARNINGS_SESSION_CREATE_CERTIFICATION_VERSION,
+  fullLedgerEvidenceComplete: true,
+  sessionLinkedRows: 576,
+  canonicalSessionRows: 576,
+  duplicateSessionIdGroups: 0,
+  nonCanonicalSessionRows: 0,
+  sessionSourceMissingSessionIdRows: 0,
+  missingTeacherIdRows: 0,
+  legacyMonthCoverageClean: true,
+  sessionEvidence: {
+    requestedSessionCount: 2682,
+    foundSessionCount: 2682,
+    missingSessionCount: 0,
+    unresolvedServiceMonthCount: 0,
+  },
+  blockers: [],
+  sourceCodeContract: TEACHER_EARNINGS_SESSION_CREATE_SOURCE_CODE_CONTRACT,
+};
+
+describe('B6 Brick 7D session-create fast-path gates', () => {
+  it('reports evidence ready only for complete, clean full-ledger evidence', () => {
     const coverage = analyzeTeacherEarningsCanonicalCoverage(cleanRows);
     const legacyMonthCoverage = analyzeTeacherEarningsLegacyMonthCoverage(cleanRows, '2026-08');
 
@@ -57,7 +85,7 @@ describe('B6 Brick 7D1 session-create fast-path evidence gate', () => {
     });
   });
 
-  it('blocks duplicate or non-canonical session earnings', () => {
+  it('blocks duplicate or non-canonical historical session earnings', () => {
     const rows = [
       ...cleanRows,
       {
@@ -84,39 +112,6 @@ describe('B6 Brick 7D1 session-create fast-path evidence gate', () => {
     expect(result.blockers).toContain('session_linked_rows_not_fully_canonical');
   });
 
-  it('blocks missing session/teacher identity and dirty legacy month coverage', () => {
-    const rows = [
-      {
-        id: 'broken-session',
-        teacherId: '',
-        monthKey: '2026-08',
-        source: 'session_present_completed',
-        status: 'unpaid',
-        earnedAt: '2026-08-12T10:00:00+05:30',
-      },
-      {
-        id: 'legacy-month-row',
-        teacherId: 'teacher-1',
-        sessionId: 'legacy-month-row',
-        source: 'session_present_completed',
-        status: 'unpaid',
-        earnedAt: '2026-08-13T10:00:00+05:30',
-      },
-    ];
-    const coverage = analyzeTeacherEarningsCanonicalCoverage(rows);
-    const legacyMonthCoverage = analyzeTeacherEarningsLegacyMonthCoverage(rows, '2026-08');
-    const result = evaluateTeacherEarningsSessionCreateFastPathReadiness({
-      fullLedgerEvidenceComplete: true,
-      coverage,
-      legacyMonthCoverage,
-    });
-
-    expect(result.ready).toBe(false);
-    expect(result.blockers).toContain('legacy_month_coverage_not_clean');
-    expect(result.blockers).toContain('session_source_missing_session_id');
-    expect(result.blockers).toContain('missing_teacher_id_rows');
-  });
-
   it('proves the active session accrual writer uses teacherEarnings/{sessionId}', () => {
     const source = fs.readFileSync(
       path.resolve(process.cwd(), 'functions/src/revenue.ts'),
@@ -124,33 +119,128 @@ describe('B6 Brick 7D1 session-create fast-path evidence gate', () => {
     );
 
     expect(source).toContain("const earningRef = db.collection('teacherEarnings').doc(sessionId)");
-    expect(source).toContain("source: 'session_present_completed'");
+    expect(source).toContain("!earningSnap.exists ? 'unpaid' : earningStatus");
     expect(source).toContain('const earningPayload: Record<string, any> = {\n          sessionId,');
     expect(source).not.toContain("collection('teacherEarnings').add(");
   });
 
-  it('keeps session creation on authoritative recompute until a separate 7D2 cutover', () => {
+  it('keeps the general planner conservative while the dedicated canonical-create gate can qualify the writer shape', () => {
+    const after = {
+      teacherId: 'teacher-1',
+      monthKey: '2026-08',
+      sessionId: 'session-2',
+      amount: 175,
+      status: 'unpaid',
+    };
+
     expect(
       planTeacherEarningsRollupChange({
         earningId: 'session-2',
         before: null,
-        after: {
-          teacherId: 'teacher-1',
-          monthKey: '2026-08',
-          sessionId: 'session-2',
-          source: 'session_present_completed',
-          amount: 175,
-          status: 'unpaid',
-        },
+        after,
       }),
     ).toEqual({
       mode: 'recompute',
       targets: [{ teacherId: 'teacher-1', monthKey: '2026-08' }],
       reason: 'session_create_or_delete',
     });
+
+    expect(
+      planTeacherEarningsSessionCreateCandidate({
+        earningId: 'session-2',
+        before: null,
+        after,
+      }),
+    ).toEqual({
+      eligible: true,
+      target: { teacherId: 'teacher-1', monthKey: '2026-08' },
+      delta: {
+        totalEarnings: 175,
+        pendingEarnings: 175,
+        totalSessions: 1,
+        sessionsCompleted: 1,
+        demoEarnings: 0,
+        demoCompletedCount: 0,
+        demoEnrollmentBonusCount: 0,
+      },
+    });
   });
 
-  it('exposes the production evidence result from the existing read-only audit without writes', () => {
+  it('rejects noncanonical create ids, payout state, nonnumeric amounts, and deletes', () => {
+    const base = {
+      teacherId: 'teacher-1',
+      monthKey: '2026-08',
+      sessionId: 'session-3',
+      amount: 175,
+      status: 'unpaid',
+    };
+
+    expect(
+      planTeacherEarningsSessionCreateCandidate({
+        earningId: 'legacy-id',
+        before: null,
+        after: base,
+      }),
+    ).toMatchObject({ eligible: false, reason: 'session_create_not_canonical_id' });
+    expect(
+      planTeacherEarningsSessionCreateCandidate({
+        earningId: 'session-3',
+        before: null,
+        after: { ...base, paidAmount: 10 },
+      }),
+    ).toMatchObject({ eligible: false, reason: 'session_create_has_payout_state' });
+    expect(
+      planTeacherEarningsSessionCreateCandidate({
+        earningId: 'session-3',
+        before: null,
+        after: { ...base, amount: '175' },
+      }),
+    ).toMatchObject({ eligible: false, reason: 'session_create_amount_not_canonical_number' });
+    expect(
+      planTeacherEarningsSessionCreateCandidate({
+        earningId: 'session-3',
+        before: base,
+        after: null,
+      }),
+    ).toMatchObject({ eligible: false, reason: 'not_session_create' });
+  });
+
+  it('accepts only the exact v2 persisted certification contract', () => {
+    const target = { teacherId: 'teacher-1', monthKey: '2026-08' };
+    expect(
+      evaluateTeacherEarningsSessionCreateCertification({ certification: cleanCertification, target }),
+    ).toEqual({ ready: true });
+
+    expect(
+      evaluateTeacherEarningsSessionCreateCertification({
+        certification: { ...cleanCertification, certificationVersion: 1 },
+        target,
+      }),
+    ).toMatchObject({ ready: false, reason: 'session_create_certification_version_mismatch' });
+    expect(
+      evaluateTeacherEarningsSessionCreateCertification({
+        certification: { ...cleanCertification, ready: false },
+        target,
+      }),
+    ).toMatchObject({ ready: false, reason: 'session_create_certification_not_ready' });
+    expect(
+      evaluateTeacherEarningsSessionCreateCertification({
+        certification: { ...cleanCertification, blockers: ['unsafe'] },
+        target,
+      }),
+    ).toMatchObject({ ready: false, reason: 'session_create_certification_has_blockers' });
+    expect(
+      evaluateTeacherEarningsSessionCreateCertification({
+        certification: {
+          ...cleanCertification,
+          sessionEvidence: { ...cleanCertification.sessionEvidence, missingSessionCount: 1 },
+        },
+        target,
+      }),
+    ).toMatchObject({ ready: false, reason: 'session_create_certification_session_evidence_dirty' });
+  });
+
+  it('exposes production evidence from the existing read-only audit without writes', () => {
     const auditSource = fs.readFileSync(
       path.resolve(process.cwd(), 'functions/src/auditTeacherEarningsCanonicalCoverage.ts'),
       'utf8',
