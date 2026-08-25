@@ -217,6 +217,7 @@ export {
   adminUpdateLeadWorkflowRecord,
   adminDeleteLeadWorkflowRecord,
 } from './adminLeadWorkflow';
+export { adminCorrectDemoCompletion } from './adminCorrectDemoCompletion';
 
 // AI: Ask TinySteps chatbot and knowledge base
 export { askTinySteps } from "./ai/askTinySteps";
