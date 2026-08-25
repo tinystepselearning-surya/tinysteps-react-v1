@@ -71,37 +71,36 @@ The callable returns explicit evidence gates including `fullLedgerEvidenceComple
 
 This audit is on-demand rather than scheduled, so it creates no recurring read load when unused.
 
-## Brick 3 — teacher Earnings monthly read cutover
-The teacher Earnings screen historically queried every `teacherEarnings` document for the teacher and then filtered the selected month in the browser.
+## Brick 3 — month-bound Teacher Earnings UI
+The Teacher Earnings screen historically queried every `teacherEarnings` document for the teacher and then filtered the selected month in the browser.
 
-Brick 3 introduces a guarded Firestore read plan:
+Brick 3 changes the Month preset itself:
 
-- September 2026 and future **Month** views query `teacherId + monthKey` directly;
-- August 2026 and older months retain the previous teacher-history query so pre-B6/legacy rows remain visible;
-- Week and Custom views retain their existing history query and client-side date filtering;
-- switching between bounded and compatibility modes automatically reloads the appropriate ledger scope;
+- every valid **Month** view queries `teacherId + selected monthKey` directly in Firestore;
+- changing the selected month reloads only that teacher-month ledger slice;
+- Week and Custom retain the existing teacher-history query because those ranges can span month boundaries and are separate optimization work;
 - the existing `teacherEarnings(monthKey, teacherId)` composite index already supports the bounded query;
-- earnings calculations, payment status handling, session detail logic, demos, and UI rendering are unchanged.
+- earnings calculations, paid/pending logic, session detail logic, demo earnings, and UI rendering remain unchanged;
+- no finance documents are rewritten or migrated by this UI read cutover.
 
-The September boundary is deliberate. The production full-ledger Brick 2 audit has not yet been run, so August and older history are not cut over merely on assumption. Once production legacy-month evidence is clean, the historical boundary can be reconsidered separately.
+## Brick 4 — month-bound `voidTeacherOrphanEarnings`
+Scope the orphan-earning correction callable to the requested teacher-month at the Firestore query itself while preserving all existing paid/void/session-billability protections.
 
-## Delta execution remains gated
+## Brick 5 — reduce the broad daily reconciliation session scan
+Bound the daily reconciliation `classSessions` read to the intended reconciliation month before downloading rows, without weakening the reconciliation checks themselves.
+
+## Brick 6 — move appropriate admin analytics totals to monthly rollups
+Use existing monthly derived rollups for summary-only admin totals where raw earning rows are not required. Detail views and reconciliation remain on source-of-truth ledgers when necessary.
+
+## Later — idempotent/concurrency-safe incremental earnings rollup
 The planner's `delta` result is **not** currently executed as `FieldValue.increment` in production.
 
 A naive increment path is unsafe because Firestore/Eventarc delivery may retry an event, and an incremental write may race with a concurrent authoritative full recomputation. Either condition could double-count or lose a finance delta without additional sequencing/idempotency controls.
 
-Before enabling delta writes, B6 still requires:
+Before enabling incremental earnings rollups, B6 still requires:
 
-1. Deploy and run the Brick 2 full-ledger canonical/legacy-month audit and review its evidence.
+1. Deploy and run the Brick 2 full-ledger canonical/legacy-month audit and review its production evidence.
 2. Add parity coverage for representative unpaid, partial, paid, void, demo, correction, and legacy-dedup transitions.
 3. Add a retry/concurrency protocol for incremental events, such as stable event receipts plus recompute/delta sequencing or another transactionally equivalent design.
 4. Keep authoritative full recompute as the fallback for every event that cannot be proven incremental-safe.
 5. Compare Query Insights after deployment before expanding the fast path.
-
-## Remaining read-optimization bricks
-These are independent read opportunities and should remain brick-sized:
-
-- month-bound `voidTeacherOrphanEarnings` at the Firestore query itself, with legacy safety preserved;
-- replace raw teacher-earnings analytics totals with monthly rollups where detail rows are not required;
-- month-bound the daily reconciliation `classSessions(status == completed)` scan before downloading records;
-- defer finer Teacher Payments detail-loading optimization until the higher-volume readers above are complete.
