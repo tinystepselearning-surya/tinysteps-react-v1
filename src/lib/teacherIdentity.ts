@@ -30,6 +30,11 @@ export type CanonicalOperationalTeacherWriteFields = {
   teacher_id: string;
 };
 
+export type CanonicalEnrollmentTeacherWriteFields = {
+  teacherId: string;
+  teacherIds: string[];
+};
+
 export const normalizeTeacherIdentityValue = (value: unknown): string => {
   if (typeof value === 'string') return value.trim();
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
@@ -95,6 +100,19 @@ export const buildCanonicalOperationalTeacherWriteFields = (
     primaryTeacherId: canonicalTeacherId,
     teacherUid: canonicalTeacherId,
     teacher_id: canonicalTeacherId,
+  };
+};
+
+export const buildCanonicalEnrollmentTeacherWriteFields = (
+  teacherId: unknown,
+): CanonicalEnrollmentTeacherWriteFields => {
+  const canonicalTeacherId = normalizeTeacherIdentityValue(teacherId);
+  if (!canonicalTeacherId) {
+    throw new Error('Canonical teacherId is required before writing enrollment ownership');
+  }
+  return {
+    teacherId: canonicalTeacherId,
+    teacherIds: [canonicalTeacherId],
   };
 };
 
