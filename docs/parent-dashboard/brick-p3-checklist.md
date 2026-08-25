@@ -1,0 +1,22 @@
+# Brick P3 — Course Progress Projection Checklist
+
+- [x] Stack branch directly on the exact P2 head.
+- [x] Preserve the deployed `onStudentProgressReadModelWrite` function export name.
+- [x] Replace mastery/status-derived completion with explicit `lessonStatus` completion.
+- [x] Treat legacy learning evidence without `lessonStatus` as `in_progress`.
+- [x] Build `totalTopics` from the canonical curriculum definition.
+- [x] Reject stray progress rows from course completion counts when curriculum topics are configured.
+- [x] Add `notStartedTopics` so all lesson states reconcile to total.
+- [x] Add canonical `stageSummaries` from the same course lesson states.
+- [x] Derive course counts from stage counts to make reconciliation structural.
+- [x] Keep recent teacher evidence bounded and independent from completion counts.
+- [x] Force one-time bootstrap when a V1/stale projection is encountered.
+- [x] Avoid mass backfill of untouched students.
+- [x] Mark missing curriculum definitions instead of inventing percentages.
+- [x] Keep the React hook backward-compatible while exposing V2 metadata/stages.
+- [x] Add tests proving Mastered/Proficient cannot complete a lesson.
+- [x] Add tests proving stage counts sum exactly to course counts.
+- [x] Add tests proving stray rows cannot inflate canonical totals.
+- [ ] Full repository CI green on the exact P3 head.
+- [ ] Final P3-only diff reviewed against the P2 branch.
+- [ ] Keep PR draft; do not merge without explicit approval.
