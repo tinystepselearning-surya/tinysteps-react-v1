@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/components/lib/utils";
+import { useCurrentParentCourseProgressProjection } from "../../../../hooks/useChildCourseProgressProjection";
 import {
   getParentInsightStageStateLabel,
   type ParentInsightCourseOption,
@@ -15,6 +16,7 @@ import {
   type ParentInsightStageDisplay,
   type ParentInsightTeacherDisplay,
 } from "./parentInsightsPresentation";
+import { selectCanonicalParentInsightsProgress } from "./parentInsightsCanonicalProgress";
 
 type ParentInsightsViewProps = {
   isNativeIOSApp: boolean;
@@ -371,16 +373,7 @@ export default function ParentInsightsView(props: ParentInsightsViewProps) {
     courseOptions,
     selectedCourseId,
     selectedCourseLabel,
-    progressState,
-    completedLessons,
-    totalLessons,
-    completionPct,
-    completedStages,
-    lastUpdatedLabel,
-    usesLatestLessonFallback,
-    stages,
-    activeStage,
-    nextStage,
+    stages: presentationStages,
     teacherInsight,
     teacherInsightLoading,
     errorMessage,
@@ -389,6 +382,34 @@ export default function ParentInsightsView(props: ParentInsightsViewProps) {
     onViewTeacherRatings,
     onSelectionFeedback,
   } = props;
+
+  const canonicalProjection = useCurrentParentCourseProgressProjection(
+    selectedCourseId,
+    childSelected && courseOptions.length > 0 && Boolean(selectedCourseId),
+  );
+  const canonicalProgress = canonicalProjection.loading
+    ? null
+    : selectCanonicalParentInsightsProgress(
+        canonicalProjection.data,
+        selectedCourseId,
+        presentationStages,
+      );
+  const progressState: ParentInsightProgressState = canonicalProjection.loading
+    ? "loading"
+    : canonicalProgress
+      ? "available"
+      : "unavailable";
+  const effectiveErrorMessage = errorMessage || canonicalProjection.error;
+  const completedLessons = canonicalProgress?.completedLessons ?? null;
+  const totalLessons = canonicalProgress?.totalLessons ?? null;
+  const completionPct = canonicalProgress?.completionPct ?? null;
+  const completedStages = canonicalProgress?.completedStages ?? null;
+  const lastUpdatedLabel = canonicalProgress?.lastUpdatedAtMs
+    ? new Date(canonicalProgress.lastUpdatedAtMs).toLocaleString()
+    : "";
+  const stages = canonicalProgress?.stages ?? [];
+  const activeStage = canonicalProgress?.activeStage ?? null;
+  const nextStage = canonicalProgress?.nextStage ?? null;
 
   return (
     <div className="min-w-0 space-y-4 overflow-x-hidden pb-2" data-testid="parent-insights-view">
@@ -399,9 +420,9 @@ export default function ParentInsightsView(props: ParentInsightsViewProps) {
 
       {progressState === "loading" ? (
         <ParentInsightsSkeleton />
-      ) : errorMessage ? (
+      ) : effectiveErrorMessage ? (
         <div role="alert" className="rounded-[20px] border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
-          {errorMessage}
+          {effectiveErrorMessage}
         </div>
       ) : !childSelected ? (
         <div role="status" className="rounded-[20px] border border-slate-200 bg-white p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
@@ -424,7 +445,7 @@ export default function ParentInsightsView(props: ParentInsightsViewProps) {
 
           {progressState === "unavailable" ? (
             <div role="status" className="rounded-[20px] border border-slate-200 bg-white p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-              This course is assigned, but its curriculum breakdown is not available yet.
+              This course is assigned, but its saved-lesson curriculum progress is not available yet.
             </div>
           ) : (
             <>
@@ -434,7 +455,7 @@ export default function ParentInsightsView(props: ParentInsightsViewProps) {
                 completionPct={completionPct}
                 completedStages={completedStages}
                 lastUpdatedLabel={lastUpdatedLabel}
-                usesLatestLessonFallback={usesLatestLessonFallback}
+                usesLatestLessonFallback={false}
               />
               {activeStage ? (
                 <CurrentStageCard stage={activeStage} />
@@ -478,7 +499,7 @@ export default function ParentInsightsView(props: ParentInsightsViewProps) {
                 <StageJourney
                   stages={stages}
                   activeStage={activeStage}
-                  contextKey={contextKey}
+                  contextKey={`${contextKey}::saved-lessons-v3`}
                   onSelectionFeedback={onSelectionFeedback}
                 />
               ) : null}

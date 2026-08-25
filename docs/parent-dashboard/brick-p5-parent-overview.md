@@ -10,18 +10,20 @@ P5 is a consumer brick. It does not redefine lesson completion, class lifecycle,
 
 ### Course progress
 
-Overview accepts only the Brick P3 child/course projection when all of the following are true:
+Overview accepts only the current Brick P3 child/course projection when all of the following are true:
 
-- `schemaVersion === 2`
-- `modelType === child_course_progress_v2`
-- `completionAuthority === teacher_lesson_status`
+- `schemaVersion === 3`
+- `modelType === child_course_progress_v3`
+- `completionAuthority === teacher_progress_save`
 - `definitionStatus === configured`
 - the projection course matches the selected course
 - course counts reconcile
 - every stage reconciles
 - summed stage counts reconcile back to the course counts
 
-If those conditions are not met, course progress is **unavailable**. P5 does not substitute mastery, a monthly progress rollup, or a client-side curriculum calculation.
+P3 defines one completed curriculum lesson as one canonical lesson progress document successfully saved by the teacher. Re-saving the same lesson updates that document and does not add another completion.
+
+If those conditions are not met, course progress is **unavailable** while the bounded P3 repair runs. P5 does not substitute mastery, a monthly progress rollup, class counts, or a client-side curriculum calculation.
 
 ### Classes and attendance
 
@@ -41,7 +43,7 @@ P5 may show actual teacher-provided evidence already captured by the teacher lea
 - explicit strengths
 - explicit needs-practice items
 
-P5 must not turn mastery or game signals into a synthetic confidence score.
+P5 must not turn mastery or game signals into a synthetic confidence score, and skill ratings do not create extra curriculum completions.
 
 ### Wallet
 
@@ -66,25 +68,26 @@ P5 distinguishes a genuine zero from unavailable data.
 
 Examples:
 
-- canonical `0 / 12` completed lessons → show `0%`
+- canonical `0 / 12` saved lessons → show `0%`
 - canonical selected-child `0` sessions → show zero class activity
-- missing/rejected P3 projection → `Not available`
+- missing/rejected/stale P3 projection → `Not available` until repaired
 - missing P4 child row even when family totals exist → `Not available`
 
 ## Implementation boundary
 
 `parentOverviewProjection.ts` is the P5 selection boundary. It validates P3 course data, selects P4 child/month data, and exposes the view-ready canonical summary.
 
-The large `ParentDashboard.tsx` still contains legacy calculations used by tabs scheduled for P6–P10. P5 does not delete those calculations; it ensures the **Overview no longer consumes them as fallbacks**.
+The large `ParentDashboard.tsx` still contains legacy calculations used by tabs scheduled for later retirement. P5 ensures the **Overview no longer consumes them as fallbacks**.
 
 ## Acceptance invariants
 
-1. Mastery cannot make Parent Overview course completion increase.
-2. A P3 V1 or wrong-authority projection is rejected.
-3. Stage totals and course totals must reconcile before P5 renders course progress.
-4. A missing P4 selected-child row never falls back to family totals.
-5. Zero and unavailable are visually distinct.
-6. P5 does not render guessed confidence or recommendations.
-7. P5 does not render detailed lesson rows.
-8. Existing wallet behavior is unchanged pending P9.
-9. No tracing-game, billing-authority, attendance-authority, or teacher-pay semantics are modified by this brick.
+1. One teacher-saved canonical lesson contributes exactly one curriculum completion.
+2. Re-saving stars/status/feedback on the same lesson does not increment completion again.
+3. Mastery cannot create an additional Parent Overview course completion.
+4. A P3 V1/V2 or wrong-authority projection is rejected.
+5. Stage totals and course totals must reconcile before P5 renders course progress.
+6. A missing P4 selected-child row never falls back to family totals.
+7. Zero and unavailable are visually distinct.
+8. P5 does not render guessed confidence or recommendations.
+9. P5 does not render detailed lesson rows.
+10. Existing wallet behavior is unchanged pending P9.

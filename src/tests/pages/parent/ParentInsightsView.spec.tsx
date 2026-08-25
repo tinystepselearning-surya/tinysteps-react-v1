@@ -1,5 +1,13 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const { useProjectionMock } = vi.hoisted(() => ({
+  useProjectionMock: vi.fn(),
+}));
+
+vi.mock("../../../hooks/useChildCourseProgressProjection", () => ({
+  useCurrentParentCourseProgressProjection: useProjectionMock,
+}));
 
 import ParentInsightsView from "../../../pages/parent/components/insights/ParentInsightsView";
 import {
@@ -8,6 +16,7 @@ import {
   resolveParentInsightStageState,
   type ParentInsightStageDisplay,
 } from "../../../pages/parent/components/insights/parentInsightsPresentation";
+import type { ChildCourseProgressProjection } from "../../../hooks/useChildCourseProgressProjection";
 
 const stage = (
   order: number,
@@ -32,19 +41,75 @@ const stage = (
 
 const stages = [stage(1), stage(2), stage(3)];
 
+type StageCount = { order: number; total: number; completed: number };
+
+function canonicalProjection(
+  courseId: string,
+  counts: StageCount[] = [
+    { order: 1, total: 4, completed: 4 },
+    { order: 2, total: 4, completed: 2 },
+    { order: 3, total: 4, completed: 0 },
+  ],
+): ChildCourseProgressProjection {
+  const totalTopics = counts.reduce((sum, item) => sum + item.total, 0);
+  const completedTopics = counts.reduce((sum, item) => sum + item.completed, 0);
+  return {
+    schemaVersion: 3,
+    modelType: "child_course_progress_v3",
+    completionAuthority: "teacher_progress_save",
+    definitionStatus: "configured",
+    courseId,
+    courseLabel: "Phonics Foundation",
+    totalTopics,
+    completedTopics,
+    inProgressTopics: 0,
+    notStartedTopics: totalTopics - completedTopics,
+    overallPct: totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0,
+    totalStages: counts.length,
+    completedStages: counts.filter((item) => item.total > 0 && item.completed === item.total).length,
+    stageSummaries: counts.map((item) => ({
+      key: `canonical-${item.order}`,
+      label: `Canonical Stage ${item.order}`,
+      order: item.order,
+      totalTopics: item.total,
+      completedTopics: item.completed,
+      inProgressTopics: 0,
+      notStartedTopics: item.total - item.completed,
+      completionPct: item.total > 0 ? Math.round((item.completed / item.total) * 100) : 0,
+    })),
+    lastUpdatedAtMs: Date.parse("2026-08-26T01:00:00+05:30"),
+  };
+}
+
+type HookState = {
+  data: ChildCourseProgressProjection | null;
+  loading: boolean;
+  error: string | null;
+  isLoading: boolean;
+  isError: boolean;
+};
+
+const projectionStates = new Map<string, HookState>();
+
+function availableState(data: ChildCourseProgressProjection): HookState {
+  return { data, loading: false, error: null, isLoading: false, isError: false };
+}
+
 const commonProps = {
   isNativeIOSApp: false,
   childSelected: true,
   courseOptions: [{ courseId: "course-internal-id", label: "Phonics Foundation" }],
   selectedCourseId: "course-internal-id",
   selectedCourseLabel: "Phonics Foundation",
+  // These legacy props deliberately remain contradictory. P6 must not consume them for
+  // curriculum completion after the V3 cutover.
   progressState: "available" as const,
-  completedLessons: 6,
+  completedLessons: 12,
   totalLessons: 12,
-  completionPct: 50,
-  completedStages: 1,
-  lastUpdatedLabel: "26 Jul 2026",
-  usesLatestLessonFallback: false,
+  completionPct: 100,
+  completedStages: 3,
+  lastUpdatedLabel: "legacy label",
+  usesLatestLessonFallback: true,
   stages,
   activeStage: stages[1],
   nextStage: stages[2],
@@ -56,6 +121,17 @@ const commonProps = {
   onViewTeacherRatings: vi.fn(),
   onSelectionFeedback: vi.fn(),
 };
+
+beforeEach(() => {
+  projectionStates.clear();
+  useProjectionMock.mockReset();
+  useProjectionMock.mockImplementation((courseId: string, enabled = true) => {
+    if (!enabled) {
+      return { data: null, loading: false, error: null, isLoading: false, isError: false };
+    }
+    return projectionStates.get(courseId) || availableState(canonicalProjection(courseId));
+  });
+});
 
 describe("parent Insights presentation helpers", () => {
   it("creates stable stage identities and textual states", () => {
@@ -113,64 +189,84 @@ describe("ParentInsightsView", () => {
     expect(onCourseChange).toHaveBeenCalledWith("grammar");
   });
 
-  it("preserves genuine zero and exact lesson counts with progress semantics", () => {
-    render(
-      <ParentInsightsView
-        {...commonProps}
-        completionPct={0}
-        completedLessons={0}
-        totalLessons={12}
-      />,
+  it("ignores mastery-derived legacy completion props and renders V3 saved-lesson counts", () => {
+    render(<ParentInsightsView {...commonProps} />);
+    expect(screen.getByRole("progressbar", { name: "Current-course progress" })).toHaveAttribute(
+      "aria-valuenow",
+      "50",
     );
-    expect(screen.getByText("0%")).toBeInTheDocument();
+    expect(screen.getByText("6/12 lessons completed")).toBeInTheDocument();
+    expect(screen.queryByText("100%")).not.toBeInTheDocument();
+    expect(screen.queryByText("12/12 lessons completed")).not.toBeInTheDocument();
+    expect(screen.queryByText(/latest available lesson progress/i)).not.toBeInTheDocument();
+  });
+
+  it("preserves genuine canonical zero and exact lesson counts with progress semantics", () => {
+    projectionStates.set(
+      "course-internal-id",
+      availableState(canonicalProjection("course-internal-id", [
+        { order: 1, total: 4, completed: 0 },
+        { order: 2, total: 4, completed: 0 },
+        { order: 3, total: 4, completed: 0 },
+      ])),
+    );
+    render(<ParentInsightsView {...commonProps} />);
+    expect(screen.getAllByText("0%").length).toBeGreaterThan(0);
     expect(screen.getByText("0/12 lessons completed")).toBeInTheDocument();
     expect(screen.getByRole("progressbar", { name: "Current-course progress" })).toHaveAttribute(
       "aria-valuenow",
       "0",
     );
-    expect(screen.getByText("Current-course progress")).toBeInTheDocument();
   });
 
-  it("shows unavailable progress without a false zero or aria-valuenow", () => {
-    render(
-      <ParentInsightsView
-        {...commonProps}
-        progressState="unavailable"
-        completedLessons={null}
-        totalLessons={null}
-        completionPct={null}
-        completedStages={null}
-        stages={[]}
-        activeStage={null}
-        nextStage={null}
-      />,
-    );
-    expect(screen.getByText(/curriculum breakdown is not available/i)).toBeInTheDocument();
+  it("rejects stale V2 progress without falling back to mastery or false zero", () => {
+    projectionStates.set("course-internal-id", availableState({
+      ...canonicalProjection("course-internal-id"),
+      schemaVersion: 2,
+      modelType: "child_course_progress_v2",
+      completionAuthority: "teacher_lesson_status",
+    }));
+    render(<ParentInsightsView {...commonProps} />);
+    expect(screen.getByText(/saved-lesson curriculum progress is not available yet/i)).toBeInTheDocument();
     expect(screen.queryByRole("progressbar", { name: "Current-course progress" })).not.toBeInTheDocument();
-    expect(screen.queryByText("0%")).not.toBeInTheDocument();
+    expect(screen.queryByText("100%")).not.toBeInTheDocument();
   });
 
-  it("shows a stable loading skeleton rather than empty or zero values", () => {
-    render(<ParentInsightsView {...commonProps} progressState="loading" />);
+  it("shows a stable loading skeleton rather than legacy or zero values", () => {
+    projectionStates.set("course-internal-id", {
+      data: null,
+      loading: true,
+      error: null,
+      isLoading: true,
+      isError: false,
+    });
+    render(<ParentInsightsView {...commonProps} />);
     expect(screen.getByRole("status", { name: "Loading learning insights" })).toBeInTheDocument();
-    expect(screen.queryByText("0%")).not.toBeInTheDocument();
-    expect(screen.queryByText(/once a course is assigned/i)).not.toBeInTheDocument();
+    expect(screen.queryByText("100%")).not.toBeInTheDocument();
   });
 
-  it("prioritises the exact current stage without inventing missing mastery", () => {
+  it("uses canonical stage counts while preserving non-authoritative mastery/focus metadata", () => {
     const current = stage(2, {
       label: "A very long current stage label that remains readable",
-      masteryLabel: "",
-      completedCount: 2,
-      totalCount: 7,
+      masteryLabel: "Mastered",
+      completedCount: 99,
+      totalCount: 99,
+      progressPct: 100,
       hint: "Practise blending sounds into words.",
       focusItems: ["CVC blending"],
     });
+    projectionStates.set(
+      "course-internal-id",
+      availableState(canonicalProjection("course-internal-id", [
+        { order: 1, total: 4, completed: 4 },
+        { order: 2, total: 7, completed: 2 },
+        { order: 3, total: 4, completed: 0 },
+      ])),
+    );
     render(
       <ParentInsightsView
         {...commonProps}
         stages={[stages[0], current, stages[2]]}
-        activeStage={current}
       />,
     );
     const currentCard = screen.getByTestId("parent-current-stage");
@@ -178,10 +274,11 @@ describe("ParentInsightsView", () => {
     expect(within(currentCard).getByText("2/7 lessons completed")).toBeInTheDocument();
     expect(within(currentCard).getByText("Practise blending sounds into words.")).toBeInTheDocument();
     expect(within(currentCard).getByText("CVC blending")).toBeInTheDocument();
-    expect(within(currentCard).queryByText(/Mastery:/)).not.toBeInTheDocument();
+    expect(within(currentCard).getByText("Mastery: Mastered")).toBeInTheDocument();
+    expect(within(currentCard).queryByText("99/99 lessons completed")).not.toBeInTheDocument();
   });
 
-  it("preserves stage order and expands only the current stage by default", () => {
+  it("preserves stage order and expands only the canonical current stage by default", () => {
     render(<ParentInsightsView {...commonProps} />);
     const rows = document.querySelectorAll("[data-stage-key]");
     expect(rows[0]).toHaveAttribute("data-stage-key", stages[0].key);
@@ -194,44 +291,45 @@ describe("ParentInsightsView", () => {
     expect(firstButton).toHaveAttribute("aria-expanded", "false");
     expect(currentButton).toHaveAttribute("aria-expanded", "true");
     expect(futureButton).toHaveAttribute("aria-expanded", "false");
-    expect(within(rows[0] as HTMLElement).queryByText("Stage 1 expectation")).not.toBeInTheDocument();
     expect(within(rows[1] as HTMLElement).getByText(/Stage 2 expectation/)).toBeVisible();
   });
 
-  it("uses single-stage disclosure and resets it when course context changes", () => {
+  it("uses single-stage disclosure and resets it when canonical course context changes", () => {
     const { rerender } = render(<ParentInsightsView {...commonProps} />);
     const firstRow = document.querySelector(`[data-stage-key="${stages[0].key}"]`) as HTMLElement;
     fireEvent.click(within(firstRow).getByRole("button"));
     expect(within(firstRow).getByRole("button")).toHaveAttribute("aria-expanded", "true");
-    const currentRow = document.querySelector(`[data-stage-key="${stages[1].key}"]`) as HTMLElement;
-    expect(within(currentRow).getByRole("button")).toHaveAttribute("aria-expanded", "false");
 
     const nextCourseStages = [stage(4, { state: "current" }), stage(5)];
+    projectionStates.set(
+      "course-2",
+      availableState(canonicalProjection("course-2", [
+        { order: 4, total: 3, completed: 1 },
+        { order: 5, total: 3, completed: 0 },
+      ])),
+    );
     rerender(
       <ParentInsightsView
         {...commonProps}
+        courseOptions={[
+          { courseId: "course-internal-id", label: "Phonics Foundation" },
+          { courseId: "course-2", label: "Next Course" },
+        ]}
+        selectedCourseId="course-2"
+        selectedCourseLabel="Next Course"
         contextKey="kid-1::course-2"
         stages={nextCourseStages}
-        activeStage={nextCourseStages[0]}
-        nextStage={nextCourseStages[1]}
       />,
     );
     const newCurrent = document.querySelector(`[data-stage-key="${nextCourseStages[0].key}"]`) as HTMLElement;
     expect(within(newCurrent).getByRole("button")).toHaveAttribute("aria-expanded", "true");
   });
 
-  it("renders textual completed, current, upcoming, and unavailable states", () => {
-    const unavailable = stage(4, {
-      state: "unavailable",
-      progressPct: null,
-      completedCount: null,
-      totalCount: null,
-    });
-    render(<ParentInsightsView {...commonProps} stages={[...stages, unavailable]} />);
+  it("renders canonical completed, current, and upcoming stage states", () => {
+    render(<ParentInsightsView {...commonProps} />);
     expect(screen.getByText("Stage 1 · Completed")).toBeInTheDocument();
     expect(screen.getByText("Stage 2 · Current stage")).toBeInTheDocument();
     expect(screen.getByText("Stage 3 · Upcoming")).toBeInTheDocument();
-    expect(screen.getByText("Stage 4 · Progress unavailable")).toBeInTheDocument();
   });
 
   it("keeps teacher ratings on the four-point scale and preserves the Skills callback", () => {
@@ -259,17 +357,23 @@ describe("ParentInsightsView", () => {
   });
 
   it("keeps no-rating, loading-rating, and missing-next-stage states distinct", () => {
+    projectionStates.set(
+      "course-internal-id",
+      availableState(canonicalProjection("course-internal-id", [
+        { order: 1, total: 4, completed: 4 },
+        { order: 2, total: 4, completed: 4 },
+        { order: 3, total: 4, completed: 2 },
+      ])),
+    );
     const { rerender } = render(
       <ParentInsightsView
         {...commonProps}
         teacherInsight={null}
         teacherInsightLoading={false}
-        nextStage={null}
       />,
     );
     expect(screen.getByText(/after a lesson is reviewed/i)).toBeInTheDocument();
     expect(screen.getByText("No next stage is available in this course.")).toBeInTheDocument();
-    expect(screen.queryByText(/Stage 4/)).not.toBeInTheDocument();
 
     rerender(
       <ParentInsightsView

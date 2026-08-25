@@ -83,27 +83,63 @@ function normalizeStage(stage: ChildCourseProgressStageProjection): ParentOvervi
 
 function stageIsValid(stage: ParentOverviewCourseStage): boolean {
   return (
-    stage.completedTopics + stage.inProgressTopics + stage.notStartedTopics === stage.totalTopics &&
+    stage.inProgressTopics === 0 &&
+    stage.completedTopics + stage.notStartedTopics === stage.totalTopics &&
     stage.completionPct ===
       (stage.totalTopics > 0 ? Math.round((stage.completedTopics / stage.totalTopics) * 100) : 0)
   );
 }
 
+function selectSavedLessonStageJourney(stageSummaries: ParentOverviewCourseStage[]): {
+  activeStage: ParentOverviewCourseStage | null;
+  nextStage: ParentOverviewCourseStage | null;
+} {
+  if (stageSummaries.length === 0) return { activeStage: null, nextStage: null };
+
+  const partialStages = stageSummaries.filter(
+    (stage) => stage.completedTopics > 0 && stage.completedTopics < stage.totalTopics,
+  );
+  let activeStage = partialStages[partialStages.length - 1] || null;
+
+  if (!activeStage) {
+    const furthestCompletedIndex = stageSummaries.reduce(
+      (latest, stage, index) =>
+        stage.totalTopics > 0 && stage.completedTopics === stage.totalTopics ? index : latest,
+      -1,
+    );
+    activeStage =
+      stageSummaries[furthestCompletedIndex + 1] ||
+      stageSummaries[stageSummaries.length - 1] ||
+      null;
+  }
+
+  const activeIndex = activeStage
+    ? stageSummaries.findIndex((stage) => stage.key === activeStage.key && stage.order === activeStage.order)
+    : -1;
+  const nextStage =
+    activeIndex >= 0
+      ? stageSummaries.slice(activeIndex + 1).find((stage) => stage.completedTopics < stage.totalTopics) || null
+      : null;
+
+  return { activeStage, nextStage };
+}
+
 /**
- * Brick P5 course selector.
+ * Canonical parent course selector.
  *
- * Parent Overview accepts only the P3 V2 projection whose completion owner is explicit
- * teacher lesson status. Legacy progress_v1, mastery-derived rows, and locally recomputed
- * curriculum summaries are intentionally not accepted as fallbacks.
+ * A curriculum lesson is completed when the teacher successfully saves that lesson's
+ * canonical progress document. Re-saving the same lesson only updates the existing document,
+ * so completion stays one-per-lesson. Mastery, skill stars, attendance, and class completion
+ * are not alternate curriculum counters.
  */
 export function selectCanonicalParentOverviewCourse(
   projection: ChildCourseProgressProjection | null | undefined,
   expectedCourseId: string | null | undefined,
 ): ParentOverviewCourseSummary | null {
   if (!projection) return null;
-  if (projection.schemaVersion !== 2) return null;
-  if (projection.modelType !== 'child_course_progress_v2') return null;
-  if (projection.completionAuthority !== 'teacher_lesson_status') return null;
+  if (projection.schemaVersion !== 3) return null;
+  if (projection.modelType !== 'child_course_progress_v3') return null;
+  if (projection.completionAuthority !== 'teacher_progress_save') return null;
   if (projection.definitionStatus !== 'configured') return null;
 
   const expected = String(expectedCourseId || '').trim();
@@ -117,7 +153,8 @@ export function selectCanonicalParentOverviewCourse(
   const notStartedTopics = count(projection.notStartedTopics);
   const overallPct = pct(projection.overallPct);
 
-  if (completedTopics + inProgressTopics + notStartedTopics !== totalTopics) return null;
+  if (inProgressTopics !== 0) return null;
+  if (completedTopics + notStartedTopics !== totalTopics) return null;
   if (
     overallPct !==
     (totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0)
@@ -150,19 +187,7 @@ export function selectCanonicalParentOverviewCourse(
     }
   }
 
-  const activeStage =
-    stageSummaries.find((stage) => stage.inProgressTopics > 0) ||
-    stageSummaries.find((stage) => stage.completedTopics < stage.totalTopics) ||
-    stageSummaries[stageSummaries.length - 1] ||
-    null;
-  const activeIndex = activeStage
-    ? stageSummaries.findIndex((stage) => stage.key === activeStage.key && stage.order === activeStage.order)
-    : -1;
-  const nextStage =
-    activeIndex >= 0
-      ? stageSummaries.slice(activeIndex + 1).find((stage) => stage.completedTopics < stage.totalTopics) || null
-      : null;
-
+  const { activeStage, nextStage } = selectSavedLessonStageJourney(stageSummaries);
   const derivedCompletedStages = stageSummaries.filter(
     (stage) => stage.totalTopics > 0 && stage.completedTopics === stage.totalTopics,
   ).length;

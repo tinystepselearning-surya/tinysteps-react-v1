@@ -64,6 +64,19 @@ export function normalizeBootstrapKind(value: unknown): ParentProjectionBootstra
   return null;
 }
 
+/**
+ * Keep v1 valid for clients already loaded before this repair deploy, while v2 is the
+ * deterministic saved-lesson repair id used to bypass an older completed v1 request.
+ */
+export function isSupportedCourseBootstrapRequestId(requestId: string, courseId: string): boolean {
+  const normalizedCourseId = normalizeCourseId(courseId);
+  if (!normalizedCourseId) return false;
+  return (
+    requestId === `v1-course-${normalizedCourseId}` ||
+    requestId === `v2-course-${normalizedCourseId}`
+  );
+}
+
 export function currentIndiaMonthKey(nowMs = Date.now()): string {
   const ist = new Date(nowMs + IST_OFFSET_MINUTES * 60 * 1000);
   const year = ist.getUTCFullYear();
@@ -367,7 +380,7 @@ export const onParentProjectionBootstrapRequest = onDocumentCreated(
       let result: Record<string, unknown>;
       if (kind === 'course_progress') {
         const courseId = normalizeCourseId(data.courseId);
-        if (!courseId || requestId !== `v1-course-${courseId}`) {
+        if (!courseId || !isSupportedCourseBootstrapRequestId(requestId, courseId)) {
           await fail('invalid_course_request');
           return;
         }
