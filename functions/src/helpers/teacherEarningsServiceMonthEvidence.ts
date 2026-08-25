@@ -54,6 +54,27 @@ export function applyCanonicalSessionMonthEvidence(
   });
 }
 
+export function finalizeCanonicalServiceMonthCoverage(
+  coverage: TeacherEarningsLegacyMonthCoverage,
+  evidence: TeacherEarningsSessionServiceMonthEvidence,
+): TeacherEarningsCanonicalServiceMonthCoverage {
+  const sessionEvidence = {
+    requestedSessionCount: evidence.requestedSessionCount,
+    foundSessionCount: evidence.foundSessionCount,
+    missingSessionCount: evidence.missingSessionCount,
+    unresolvedServiceMonthCount: evidence.unresolvedServiceMonthCount,
+  };
+
+  return {
+    ...coverage,
+    legacyMonthCoverageClean:
+      coverage.legacyMonthCoverageClean &&
+      sessionEvidence.missingSessionCount === 0 &&
+      sessionEvidence.unresolvedServiceMonthCount === 0,
+    sessionEvidence,
+  };
+}
+
 /**
  * Read-only evidence loader for session-linked teacher earnings.
  *
@@ -126,19 +147,5 @@ export async function analyzeTeacherEarningsCanonicalServiceMonthCoverage(
     sampleLimit,
   );
 
-  const sessionEvidence = {
-    requestedSessionCount: evidence.requestedSessionCount,
-    foundSessionCount: evidence.foundSessionCount,
-    missingSessionCount: evidence.missingSessionCount,
-    unresolvedServiceMonthCount: evidence.unresolvedServiceMonthCount,
-  };
-
-  return {
-    ...coverage,
-    legacyMonthCoverageClean:
-      coverage.legacyMonthCoverageClean &&
-      sessionEvidence.missingSessionCount === 0 &&
-      sessionEvidence.unresolvedServiceMonthCount === 0,
-    sessionEvidence,
-  };
+  return finalizeCanonicalServiceMonthCoverage(coverage, evidence);
 }
