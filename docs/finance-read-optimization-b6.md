@@ -49,19 +49,41 @@ Every other event delegates to the original `revenue.ts` rollup handler unchange
 
 This first live optimization is intentionally idempotent: skipped events perform no derived write and therefore cannot double-apply on Cloud Functions event retry.
 
-## Brick 2 — read-only current-month canonical coverage audit
-`auditTeacherEarningsCanonicalCoverage` is an admin-only callable used to gather production evidence before any incremental finance writes are enabled.
+## Brick 2 — read-only canonical and legacy-month coverage audit
+`auditTeacherEarningsCanonicalCoverage` is an admin-only callable used to gather production evidence before broader read cutovers or incremental finance writes are enabled.
 
-The callable:
+Default mode:
 
 - defaults to the current IST month, or accepts an explicit `YYYY-MM` month;
 - queries only `teacherEarnings` rows with that explicit `monthKey`;
-- is bounded (`maxDocs`, default 5,000, hard maximum 10,000) and uses one extra document only to report truncation;
+- is bounded (`maxDocs`, default 5,000, hard maximum 10,000);
 - performs no Firestore writes or repairs;
-- reports session-linked row count, canonical `earningId === sessionId` coverage, non-canonical session rows, missing session IDs, missing canonical `teacherId`, duplicate `sessionId` groups, archived/void rows, and small ID-only samples;
-- returns `coverageCleanForFurtherDeltaDesign` as evidence only. That flag does not enable incremental finance writes by itself.
+- reports canonical `earningId === sessionId` coverage, non-canonical session rows, missing session IDs, missing canonical `teacherId`, duplicate `sessionId` groups, archived/void rows, and small ID-only samples.
+
+Optional `includeLegacyMonthCoverage=true` mode performs one bounded full-ledger scan so the audit can also detect:
+
+- active rows whose target month exists only in timestamps because `monthKey` is missing;
+- rows whose stored `monthKey` conflicts with timestamp-derived month;
+- undated rows that cannot be assigned safely to a month;
+- whether the bounded full-ledger evidence is complete or truncated.
+
+The callable returns explicit evidence gates including `fullLedgerEvidenceComplete`, `readyForMonthBoundReads`, and `readyForFurtherDeltaDesign`. A truncated scan always means the evidence is incomplete even if the partial rows look clean.
 
 This audit is on-demand rather than scheduled, so it creates no recurring read load when unused.
+
+## Brick 3 — teacher Earnings monthly read cutover
+The teacher Earnings screen historically queried every `teacherEarnings` document for the teacher and then filtered the selected month in the browser.
+
+Brick 3 introduces a guarded Firestore read plan:
+
+- September 2026 and future **Month** views query `teacherId + monthKey` directly;
+- August 2026 and older months retain the previous teacher-history query so pre-B6/legacy rows remain visible;
+- Week and Custom views retain their existing history query and client-side date filtering;
+- switching between bounded and compatibility modes automatically reloads the appropriate ledger scope;
+- the existing `teacherEarnings(monthKey, teacherId)` composite index already supports the bounded query;
+- earnings calculations, payment status handling, session detail logic, demos, and UI rendering are unchanged.
+
+The September boundary is deliberate. The production full-ledger Brick 2 audit has not yet been run, so August and older history are not cut over merely on assumption. Once production legacy-month evidence is clean, the historical boundary can be reconsidered separately.
 
 ## Delta execution remains gated
 The planner's `delta` result is **not** currently executed as `FieldValue.increment` in production.
@@ -70,17 +92,16 @@ A naive increment path is unsafe because Firestore/Eventarc delivery may retry a
 
 Before enabling delta writes, B6 still requires:
 
-1. Deploy and run the Brick 2 current-month canonical coverage audit and review its evidence.
+1. Deploy and run the Brick 2 full-ledger canonical/legacy-month audit and review its evidence.
 2. Add parity coverage for representative unpaid, partial, paid, void, demo, correction, and legacy-dedup transitions.
 3. Add a retry/concurrency protocol for incremental events, such as stable event receipts plus recompute/delta sequencing or another transactionally equivalent design.
 4. Keep authoritative full recompute as the fallback for every event that cannot be proven incremental-safe.
 5. Compare Query Insights after deployment before expanding the fast path.
 
-## Separate later read-optimization bricks
+## Remaining read-optimization bricks
 These are independent read opportunities and should remain brick-sized:
 
-- month-bound the teacher Earnings screen for its default monthly view instead of loading the teacher's entire earning history;
-- month-bound `voidTeacherOrphanEarnings` at the Firestore query itself;
+- month-bound `voidTeacherOrphanEarnings` at the Firestore query itself, with legacy safety preserved;
 - replace raw teacher-earnings analytics totals with monthly rollups where detail rows are not required;
 - month-bound the daily reconciliation `classSessions(status == completed)` scan before downloading records;
 - defer finer Teacher Payments detail-loading optimization until the higher-volume readers above are complete.
