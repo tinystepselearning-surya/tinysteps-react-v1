@@ -66,6 +66,55 @@ describe("Parent Home components", () => {
     expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Blending");
   });
 
+  it("expands course details without triggering a progress refetch loop", () => {
+    const onRefresh = vi.fn();
+    render(
+      <ParentProgressOverview
+        childName="Aarav"
+        isRefetching={false}
+        onRefresh={onRefresh}
+        showsFallbackBanner={false}
+        phonicsLoading={false}
+        phonicsError={false}
+        phonicsErrorMessage=""
+        completionPct={50}
+        curriculumData={{
+          summaryCompletedCount: 2,
+          summaryTotalTopics: 4,
+          activeStage: { order: 1, label: "Stage 1 Sounds", progressPct: 50 },
+          nextStage: { order: 2, label: "Stage 2 Blending", progressPct: 0 },
+          stageSummaries: [
+            { order: 1, label: "Stage 1 Sounds", progressPct: 50 },
+            { order: 2, label: "Stage 2 Blending", progressPct: 0 },
+          ],
+          groupedLessons: [
+            {
+              key: "1__Stage 1 Sounds",
+              label: "Stage 1 Sounds",
+              order: 1,
+              summary: { progressPct: 50 },
+              rows: [
+                { id: "lesson-1", label: "Lesson 1 — S", status: "completed" },
+                { id: "lesson-2", label: "Lesson 2 — A", status: "in_progress" },
+              ],
+            },
+          ],
+        }}
+        stripStagePrefix={(label) => label.replace(/^Stage \d+ /, "")}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "View course details" }));
+    expect(screen.getByText("Lesson 1 — S")).toBeInTheDocument();
+    expect(screen.getByText("Lesson 2 — A")).toBeInTheDocument();
+    expect(document.querySelector('[data-fetch-behavior="render-only"]')).toBeInTheDocument();
+    expect(onRefresh).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Hide course details" }));
+    expect(screen.queryByText("Lesson 1 — S")).not.toBeInTheDocument();
+    expect(onRefresh).not.toHaveBeenCalled();
+  });
+
   it("prioritises the next class and sends the correct session to Join", () => {
     const onJoinSession = vi.fn();
     const nextSession = {
