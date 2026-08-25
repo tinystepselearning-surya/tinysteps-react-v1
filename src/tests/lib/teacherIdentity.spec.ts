@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   auditOperationalTeacherIdentity,
+  buildCanonicalEnrollmentTeacherWriteFields,
   buildCanonicalOperationalTeacherWriteFields,
   collectLegacyTeacherIdentityRefs,
   resolveOperationalTeacherId,
@@ -90,7 +91,15 @@ describe('teacher identity normalization contract', () => {
     });
   });
 
-  it('rejects an empty teacherId before client-side session ownership writes', () => {
+  it('keeps enrollment ownership minimal and canonical', () => {
+    expect(buildCanonicalEnrollmentTeacherWriteFields(' teacher-a ')).toEqual({
+      teacherId: 'teacher-a',
+      teacherIds: ['teacher-a'],
+    });
+  });
+
+  it('rejects an empty teacherId before client-side ownership writes', () => {
     expect(() => buildCanonicalOperationalTeacherWriteFields('')).toThrow(/Canonical teacherId is required/);
+    expect(() => buildCanonicalEnrollmentTeacherWriteFields('')).toThrow(/Canonical teacherId is required/);
   });
 });
