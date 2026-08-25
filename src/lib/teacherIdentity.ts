@@ -21,6 +21,15 @@ export type OperationalTeacherIdentityAudit = {
   hasLegacyAliases: boolean;
 };
 
+export type CanonicalOperationalTeacherWriteFields = {
+  teacherId: string;
+  teacherIds: string[];
+  assignedTeacherId: string;
+  primaryTeacherId: string;
+  teacherUid: string;
+  teacher_id: string;
+};
+
 export const normalizeTeacherIdentityValue = (value: unknown): string => {
   if (typeof value === 'string') return value.trim();
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
@@ -69,6 +78,24 @@ export const resolveOperationalTeacherId = (
     || normalizeTeacherIdentityList(record.teacherIds)[0]
     || ''
   );
+};
+
+export const buildCanonicalOperationalTeacherWriteFields = (
+  teacherId: unknown,
+): CanonicalOperationalTeacherWriteFields => {
+  const canonicalTeacherId = normalizeTeacherIdentityValue(teacherId);
+  if (!canonicalTeacherId) {
+    throw new Error('Canonical teacherId is required before writing teacher ownership aliases');
+  }
+
+  return {
+    teacherId: canonicalTeacherId,
+    teacherIds: [canonicalTeacherId],
+    assignedTeacherId: canonicalTeacherId,
+    primaryTeacherId: canonicalTeacherId,
+    teacherUid: canonicalTeacherId,
+    teacher_id: canonicalTeacherId,
+  };
 };
 
 export const auditOperationalTeacherIdentity = (
