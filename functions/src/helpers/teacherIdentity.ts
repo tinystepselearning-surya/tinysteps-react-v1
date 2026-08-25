@@ -16,11 +16,6 @@ export type CanonicalTeacherIdentityResolution = {
 
 export type CanonicalTeacherWriteFields = {
   teacherId: string;
-  teacherIds: string[];
-  assignedTeacherId: string;
-  primaryTeacherId: string;
-  teacherUid: string;
-  teacher_id: string;
 };
 
 export function normalizeTeacherIdentityValue(value: unknown): string {
@@ -36,6 +31,7 @@ function normalizeTeacherIdentityList(value: unknown): string[] {
   );
 }
 
+// Retained for historical/backfill resolution only. Active B5 writes are canonical-only.
 export function collectLegacyTeacherIdentityRefs(
   record: Record<string, unknown> | undefined,
 ): string[] {
@@ -70,33 +66,25 @@ export function resolveCanonicalTeacherIdForWrite(
   return {teacherId: null, source: 'missing', legacyRefs};
 }
 
+// B5 write contract: operational session ownership is persisted only in teacherId.
+// Existing alias fields are not deleted here; physical cleanup remains a separately reviewed migration.
 export function buildCanonicalTeacherWriteFields(teacherId: unknown): CanonicalTeacherWriteFields {
   const canonicalTeacherId = normalizeTeacherIdentityValue(teacherId);
   if (!canonicalTeacherId) {
-    throw new Error('Canonical teacherId is required before writing teacher ownership aliases');
+    throw new Error('Canonical teacherId is required before writing teacher ownership');
   }
 
-  return {
-    teacherId: canonicalTeacherId,
-    teacherIds: [canonicalTeacherId],
-    assignedTeacherId: canonicalTeacherId,
-    primaryTeacherId: canonicalTeacherId,
-    teacherUid: canonicalTeacherId,
-    teacher_id: canonicalTeacherId,
-  };
+  return {teacherId: canonicalTeacherId};
 }
 
 export function buildEnrollmentTeacherWriteFields(teacherId: unknown): {
   teacherId: string | null;
-  teacherIds: string[];
 } {
   const canonicalTeacherId = normalizeTeacherIdentityValue(teacherId);
-  return {
-    teacherId: canonicalTeacherId || null,
-    teacherIds: canonicalTeacherId ? [canonicalTeacherId] : [],
-  };
+  return {teacherId: canonicalTeacherId || null};
 }
 
+// Historical audit/repair helper. New operational writes no longer emit these aliases.
 export function aliasFieldMatchesCanonicalTeacher(
   field: LegacyTeacherIdAliasField,
   value: unknown,
