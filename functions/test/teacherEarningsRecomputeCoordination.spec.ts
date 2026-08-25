@@ -147,13 +147,14 @@ describe('B6 Brick 7B1 authoritative recompute coordination', () => {
     expect(decision).toEqual({ mode: 'fallback', reason: 'recompute_in_progress' });
   });
 
-  it('does not wire the 7B coordinator into the live trigger before the 7B1 checkpoint is green', () => {
+  it('wires the 7B coordinator into the live trigger while keeping the old handler out of runtime', () => {
     const liveTriggerSource = fs.readFileSync(
       path.resolve(process.cwd(), 'functions/src/teacherEarningsRollupTrigger.ts'),
       'utf8',
     );
 
-    expect(liveTriggerSource).not.toContain('teacherEarningsRecomputeCoordination');
-    expect(liveTriggerSource).toContain('authoritativeTeacherEarningsRollupWrite.run(event)');
+    expect(liveTriggerSource).toContain('recomputeTeacherEarningsEventCoordinated');
+    expect(liveTriggerSource).toContain('eventId: event.id');
+    expect(liveTriggerSource).not.toContain('authoritativeTeacherEarningsRollupWrite.run(event)');
   });
 });
