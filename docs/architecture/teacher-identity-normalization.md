@@ -40,12 +40,29 @@ After the B1 audit is reviewed:
 - Cover enrollment creation, scheduled session generation, makeup sessions, historical admin sessions, and teacher transfers.
 - Reject ambiguous writes rather than persisting conflicting teacher ownership.
 
-## Phase B3 — backfill
+## Phase B3 — bounded backfill decision
 
 - Run a dry-run report first.
-- Backfill only documents that are missing `teacherId` or whose canonical teacher can be determined safely.
+- Backfill only documents that are missing `teacherId` and whose canonical teacher can be determined safely.
+- Never infer teacher ownership only from current child ownership when historical/reassignment context is unavailable.
 - Do not rewrite historical teacher ownership merely because a child's current teacher changed.
 - Preserve reassignment history as the source of truth for historical transitions.
+- A record with no canonical teacher and no legacy teacher references is **not** an automatic backfill candidate.
+
+### Production dry-run result — 2026-08-25
+
+The bounded production audit scanned 107 operational enrollments and 142 current/future class sessions.
+
+- 106/107 operational enrollments already contained canonical `teacherId`.
+- One active enrollment had no canonical teacher and no legacy teacher references.
+- That enrollment also had no schedule configuration and no open future sessions in the bounded operational session set, so there was no trustworthy teacher identity to infer.
+- 142/142 current/future class sessions contained canonical `teacherId`.
+- There were zero legacy-only enrollment or class-session records in the operational sample.
+- Six enrollments and three scheduled sessions had legacy alias fields that disagreed with an already-present canonical `teacherId`.
+
+**B3 decision: zero production backfill writes.** The single missing enrollment is left untouched rather than guessing an assignment. Records that already contain canonical `teacherId` are not rewritten merely to cosmetically align aliases; B2 prevents new mismatches, B4 moves normal readers to the canonical field, and B5 retires the redundant aliases after fallback usage reaches zero.
+
+This is intentionally safer than forcing every active enrollment to have a teacher: enrollment creation can legitimately exist before a teacher has been assigned.
 
 ## Phase B4 — read cutover
 
@@ -89,6 +106,7 @@ Optional arguments:
 ```bash
 --limit 250
 --start-date YYYY-MM-DD
+--summary-only
 ```
 
-The script is intentionally bounded to at most 500 documents per collection and performs no writes. It reports missing canonical IDs and aliases that disagree with `teacherId`.
+The script is intentionally bounded to at most 500 documents per collection and performs no writes. It reports missing canonical IDs, aliases that disagree with `teacherId`, status-level coverage, and summary-only evidence for whether a missing enrollment has an operational future-session teacher signal.
