@@ -28,15 +28,15 @@ export type ChildCourseProgressProjection = {
   overallPct?: number;
   totalStages?: number;
   completedStages?: number;
-  stageSummaries?: ChildCourseProgressStageProjection[];
+  stageSummaries?: readonly ChildCourseProgressStageProjection[];
   latestTopicId?: string | null;
   latestTopicName?: string | null;
   latestLessonNumber?: number | null;
   latestMastery?: string | number | null;
-  strengthHighlights?: string[];
-  practiceHighlights?: string[];
+  strengthHighlights?: readonly string[];
+  practiceHighlights?: readonly string[];
   latestTeacherRemark?: string | null;
-  recentUpdates?: Array<Record<string, unknown>>;
+  recentUpdates?: readonly Record<string, unknown>[];
   lastUpdatedAtMs?: number | null;
   updatedAt?: unknown;
 };
@@ -81,21 +81,39 @@ export function useLatestChildCourseProgressProjection(
     if (!enabled || !normalizedKidId) return undefined;
     const listener = () => setVersion((value) => value + 1);
     latestProjectionSubscribers.add(listener);
-    return () => latestProjectionSubscribers.delete(listener);
+    return () => {
+      latestProjectionSubscribers.delete(listener);
+    };
   }, [enabled, normalizedKidId]);
 
   if (!enabled || !normalizedKidId) {
-    return { data: null, loading: false, error: null, courseId: null as string | null };
+    return {
+      data: null,
+      loading: false,
+      error: null,
+      isLoading: false,
+      isError: false,
+      courseId: null as string | null,
+    };
   }
 
   const state = latestProjectionByKid.get(normalizedKidId);
   if (!state) {
-    return { data: null, loading: true, error: null, courseId: null as string | null };
+    return {
+      data: null,
+      loading: true,
+      error: null,
+      isLoading: true,
+      isError: false,
+      courseId: null as string | null,
+    };
   }
   return {
     data: state.data,
     loading: state.loading,
     error: state.error,
+    isLoading: state.loading,
+    isError: Boolean(state.error),
     courseId: state.courseId || state.data?.courseId || null,
   };
 }
@@ -166,8 +184,21 @@ export function useChildCourseProgressProjection(
 
   return useMemo(() => {
     if (!projectionKey || state.key !== projectionKey) {
-      return { data: null, loading: Boolean(projectionKey), error: null };
+      const loading = Boolean(projectionKey);
+      return {
+        data: null,
+        loading,
+        error: null,
+        isLoading: loading,
+        isError: false,
+      };
     }
-    return { data: state.data, loading: state.loading, error: state.error };
+    return {
+      data: state.data,
+      loading: state.loading,
+      error: state.error,
+      isLoading: state.loading,
+      isError: Boolean(state.error),
+    };
   }, [projectionKey, state]);
 }
