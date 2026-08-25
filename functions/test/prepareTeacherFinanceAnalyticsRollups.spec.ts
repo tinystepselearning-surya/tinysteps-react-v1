@@ -61,7 +61,9 @@ describe('B6 Brick 6B1/6B2 analytics rollup preparation source guards', () => {
     expect(source).toContain('async function refreshCertifiedAnalyticsRollups');
     expect(source).toContain('data.ready === true');
     expect(source).toContain("analyticsProjectionSource: 'b6_teacher_earnings_live_refresh_v1'");
-    expect(source).toContain('await authoritativeTeacherEarningsRollupWrite.run(event)');
+    expect(source).toContain('await recomputeTeacherEarningsEventCoordinated');
+    expect(source).toContain('if (recompute.allFinalized)');
     expect(source).toContain('await refreshCertifiedAnalyticsRollups(images)');
+    expect(source).not.toContain('authoritativeTeacherEarningsRollupWrite.run(event)');
   });
 });
