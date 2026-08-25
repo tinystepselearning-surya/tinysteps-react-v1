@@ -3,9 +3,9 @@ import * as admin from 'firebase-admin';
 import { ensureAdmin } from './helpers/adminGuard';
 import {
   analyzeTeacherEarningsCanonicalCoverage,
-  analyzeTeacherEarningsLegacyMonthCoverage,
   type TeacherEarningAuditRow,
 } from './helpers/teacherEarningsCanonicalAudit';
+import { analyzeTeacherEarningsCanonicalServiceMonthCoverage } from './helpers/teacherEarningsServiceMonthEvidence';
 import {
   buildTeacherFinanceAnalyticsProjection,
   evaluateTeacherFinanceRollupParity,
@@ -90,6 +90,8 @@ async function setMonthReadiness(
  * Admin-only, on-demand preparation of existing teacher monthly rollups for the Analytics read
  * cutover. This callable never writes teacherEarnings. It performs a bounded full-ledger evidence
  * scan so target-month rows hidden by missing/conflicting monthKey values cannot be missed.
+ * Session-linked month ownership is validated from canonical class service dates rather than
+ * ledger processing timestamps.
  *
  * Dry-run is the default. `apply: true` is required to write analytics metadata to the derived
  * teacher-month rollups. Authoritative financial totals remain untouched.
@@ -116,7 +118,12 @@ export const prepareTeacherFinanceAnalyticsRollups = onCall(
     const targetMonthRows = allRows.filter((row) => String(row.monthKey || '').trim() === monthKey);
 
     const canonicalCoverage = analyzeTeacherEarningsCanonicalCoverage(targetMonthRows, sampleLimit);
-    const legacyMonthCoverage = analyzeTeacherEarningsLegacyMonthCoverage(allRows, monthKey, sampleLimit);
+    const legacyMonthCoverage = await analyzeTeacherEarningsCanonicalServiceMonthCoverage(
+      db,
+      allRows,
+      monthKey,
+      sampleLimit,
+    );
     const byTeacher = groupTargetMonthRowsByTeacher(allRows, monthKey);
     const teacherIds = Array.from(byTeacher.keys()).sort();
 
