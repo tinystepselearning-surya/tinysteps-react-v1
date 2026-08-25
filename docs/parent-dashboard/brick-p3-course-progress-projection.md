@@ -1,10 +1,10 @@
 # Parent Dashboard Rebuild — Brick P3 Course Progress Projection
 
-Status: **stacked implementation** on P2. Do not merge independently ahead of P1/P2 review.
+Status: **canonical projection in production; saved-lesson completion repair in review**.
 
 ## Goal
 
-Create one canonical child + course read model for curriculum completion so the parent experience can no longer derive course completion from mastery, attendance, class counts, or independent screen-level calculations.
+Create one canonical child + course read model for curriculum completion so the parent experience cannot derive course completion from mastery, attendance, class counts, or independent screen-level calculations.
 
 Canonical read model:
 
@@ -12,40 +12,49 @@ Canonical read model:
 students/{kidId}/courseProgress/{courseId}
 ```
 
-Schema:
+Current schema:
 
 ```text
-schemaVersion = 2
-modelType = child_course_progress_v2
-completionAuthority = teacher_lesson_status
+schemaVersion = 3
+modelType = child_course_progress_v3
+completionAuthority = teacher_progress_save
 ```
 
 ## Completion authority
 
-A curriculum lesson is completed only when the teacher progress record contains:
+A curriculum lesson is completed when the teacher successfully saves that canonical lesson in the Teacher Topic Progress editor.
+
+The teacher editor writes one durable document per canonical lesson:
 
 ```text
-lessonStatus = completed
+students/{kidId}/progress/{topicId}
 ```
 
-The following never complete a lesson by themselves:
+Therefore:
 
-- `mastery = mastered`
-- `mastery = proficient`
-- numeric mastery percentages
-- skill ratings
-- strengths / practice areas
-- legacy `status = completed`
-- attendance or class-session status
+- first successful **Save / Save & Back / Save & Next** for a canonical lesson = one completed curriculum lesson;
+- re-saving the same lesson after changing stars, strengths, practice areas, notes, or learning status updates the same document and does **not** add another completion;
+- a saved lesson may still have learning status **Still learning**; that means the child needs more teaching/practice, not that the lesson should disappear from curriculum completion;
+- deleting the canonical saved progress document removes that lesson from completion.
 
-Legacy teacher progress with genuine learning evidence but no explicit `lessonStatus` is conservatively projected as `in_progress`.
+The following never create an additional curriculum completion by themselves:
+
+- `lessonStatus` / learning-status choice;
+- `mastery = mastered` or `proficient`;
+- numeric mastery percentages;
+- skill ratings / stars;
+- strengths / practice areas;
+- attendance or class-session completion.
+
+This distinction is deliberate: **lesson progress is the teacher's saved curriculum record; mastery is the child's proficiency evidence.**
 
 ## Canonical course invariant
 
 For every configured course:
 
 ```text
-completedTopics + inProgressTopics + notStartedTopics = totalTopics
+completedTopics + notStartedTopics = totalTopics
+inProgressTopics = 0
 ```
 
 and:
@@ -54,11 +63,11 @@ and:
 overallPct = completedTopics / totalTopics
 ```
 
-`totalTopics` comes from the canonical curriculum definition. Progress documents that do not belong to a canonical curriculum topic cannot inflate the denominator or completed count.
+`totalTopics` comes from the canonical curriculum definition. Saved progress documents that do not belong to a canonical curriculum topic cannot inflate the denominator or completed count.
 
 ## Canonical stage invariant
 
-The V2 read model includes `stageSummaries[]` built from the same curriculum topics and the same lesson states as the course summary.
+The V3 read model includes `stageSummaries[]` built from the same canonical curriculum topics and saved lesson records as the course summary.
 
 Each stage contains:
 
@@ -68,21 +77,12 @@ label
 order
 totalTopics
 completedTopics
-inProgressTopics
+inProgressTopics = 0
 notStartedTopics
 completionPct
 ```
 
-The course counts are derived from the stage counts, so the stage totals and course totals reconcile by construction.
-
-This removes the architecture that could produce contradictions such as:
-
-```text
-Course: 15 / 40 completed
-Stage 1: 0 / 12
-Stage 2: 0 / 8
-...
-```
+The course counts are derived from the stage counts, so stage totals and course totals reconcile by construction.
 
 ## Incremental write strategy
 
@@ -92,17 +92,41 @@ The projection remains event-driven from:
 students/{kidId}/progress/{topicId}
 ```
 
-For an already-valid V2 projection, one teacher progress write updates only the affected course/stage delta plus a bounded recent-evidence window.
+For an already-valid V3 projection:
 
-The trigger reads the canonical curriculum definition before applying the delta so stage ownership and course totals remain curriculum-owned rather than progress-document-owned.
+- a first save changes the lesson from `not_started` to `completed`;
+- a re-save changes `completed` to `completed`, so the count remains unchanged;
+- a removed saved lesson changes `completed` back to `not_started`.
 
-## Controlled bootstrap
+The deployed Cloud Function export remains:
 
-A V1 projection or a V2 projection whose stored curriculum shape no longer matches the canonical definition is not incrementally trusted.
+```text
+onStudentProgressReadModelWrite
+```
 
-On the next relevant teacher progress write, the function performs a one-time course bootstrap from that child's progress documents + the canonical curriculum definition, then resumes incremental V2 updates.
+so deployment replaces the prior writer rather than installing a competing writer.
 
-There is deliberately **no mass backfill in P3**. Existing untouched students are not rewritten merely because this brick exists.
+## Existing-parent repair
+
+Parents may already have a V2 projection created under the superseded `teacher_lesson_status` rule. Those rows can show `0/40` even while the teacher Skills view clearly contains many previously saved lesson records.
+
+The parent projection hook treats any non-V3 row as stale and creates one deterministic bounded repair request:
+
+```text
+v2-course-{courseId}
+```
+
+The backend:
+
+1. verifies the authenticated parent owns the selected child;
+2. reads the canonical curriculum definition;
+3. scans at most 250 existing child progress documents;
+4. keeps only canonical topics for the selected course;
+5. rebuilds V3 by counting each saved canonical lesson once.
+
+The old `v1-course-*` request id remains accepted temporarily for rollout compatibility, while the new `v2-course-*` id bypasses already-completed requests created under the old contract.
+
+There is deliberately **no global mass backfill**. Existing students repair lazily when their parent view requests that child/course, while all future teacher saves update V3 automatically.
 
 ## Missing curriculum definition
 
@@ -112,32 +136,26 @@ When a course has no canonical curriculum definition, the projection records:
 definitionStatus = missing
 ```
 
-and does not invent course totals from progress rows. Later parent UI bricks must present this as unavailable rather than fabricating a percentage.
+and does not invent course totals from progress rows. Parent UI must present this as unavailable rather than fabricate a percentage.
 
-## Compatibility
+## Consumer contract
 
-The deployed Cloud Function export name remains:
+P5 Overview and P6 Insights accept only:
 
 ```text
-onStudentProgressReadModelWrite
+schemaVersion = 3
+modelType = child_course_progress_v3
+completionAuthority = teacher_progress_save
 ```
 
-The old module path is retained as a compatibility barrel, but it now exports the V2 implementation. This ensures deployment replaces the old writer instead of deploying two competing writers to the same read model.
+This prevents stale V2 or mastery-derived data from being shown as canonical course progress.
 
-The React hook keeps all existing V1 fields while exposing V2 fields (`notStartedTopics`, stage summaries, schema/authority metadata) for later parent UI bricks.
+## Explicit separation from other bricks
 
-## Explicitly deferred
+P3 does not make these facts interchangeable:
 
-P3 does **not**:
+- P4/P8 class sessions and attendance;
+- P7 skill mastery / teacher ratings;
+- P9 wallet and billing.
 
-- redesign the Parent Overview UI (P5);
-- rebuild the detailed lesson tracker (P6);
-- change skill/mastery presentation (P7);
-- change class or attendance semantics (P4/P8);
-- change billing or wallet semantics (P9);
-- mass-migrate old progress rows;
-- delete all legacy parent calculations yet (P10).
-
-Because the rebuild is stacked, consumer cutover can happen in later bricks without exposing a partially migrated parent experience on `main`.
-
-Final review requires full repository CI to pass on the exact P3 head commit before the PR is considered build-complete.
+A child may therefore have many completed classes, a different number of saved curriculum lessons, and skill ratings that continue to change after a lesson was saved. Those are separate facts by design.
