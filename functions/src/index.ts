@@ -21,9 +21,9 @@ export {
   previewFinanceCutoverArchive,
   archiveFinanceRecordsThroughMonth,
   reconcileSessionRevenueMonthKeys,
-  voidTeacherOrphanEarnings,
   adminVoidSessionCharge,
 } from "./revenue";
+export { voidTeacherOrphanEarnings } from "./voidTeacherOrphanEarnings";
 export { onTeacherEarningsRollupWrite } from "./teacherEarningsRollupTrigger";
 export {
   getWalletAutomationConfig,
