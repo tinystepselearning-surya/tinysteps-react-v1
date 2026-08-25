@@ -27,6 +27,7 @@ export type ClassSessionStatus =
   | 'cancelled'
   | 'no_show'
   | 'reschedule_requested'
+  | 'rescheduled'
   | 'other';
 
 export interface TeacherLessonProgressLike {
@@ -63,6 +64,7 @@ export interface ParentClassMonthSummary {
   cancelledSessions: number;
   noShowSessions: number;
   rescheduleRequestedSessions: number;
+  rescheduledSessions: number;
   inProgressSessions: number;
   unresolvedPastSessions: number;
   otherSessions: number;
@@ -112,14 +114,15 @@ export function normalizeClassSessionStatus(value: unknown): ClassSessionStatus 
   if (!raw) return 'scheduled';
   if (raw === 'inprogress') return 'in_progress';
   if (raw === 'canceled') return 'cancelled';
-  if (raw === 'rescheduled' || raw === 'reschedule-requested') return 'reschedule_requested';
+  if (raw === 'reschedule-requested') return 'reschedule_requested';
   if (
     raw === 'scheduled' ||
     raw === 'in_progress' ||
     raw === 'completed' ||
     raw === 'cancelled' ||
     raw === 'no_show' ||
-    raw === 'reschedule_requested'
+    raw === 'reschedule_requested' ||
+    raw === 'rescheduled'
   ) {
     return raw;
   }
@@ -132,7 +135,8 @@ function hasNonEmptyArray(value: unknown): boolean {
 
 function hasRatedSkill(value: TeacherLessonProgressLike['progressRatings']): boolean {
   if (!value || typeof value !== 'object') return false;
-  return Object.values(value).some((rating) => {
+  return Object.keys(value).some((key) => {
+    const rating = value[key];
     if (typeof rating === 'number') return Number.isFinite(rating) && rating > 0;
     const numeric = Number(rating);
     return Number.isFinite(numeric) && numeric > 0;
@@ -184,6 +188,11 @@ export function isLessonCompleted(
  * Builds one curriculum-completion summary from explicit lesson status only.
  * Duplicate lesson/topic ids are de-duplicated so one lesson cannot inflate the
  * course total twice.
+ *
+ * `totalLessons` remains the canonical curriculum total. If progress contains
+ * more distinct active/completed lessons than the curriculum total, this helper
+ * intentionally leaves the contradiction visible so invariant validation can
+ * block it instead of silently changing the curriculum size.
  */
 export function summarizeCurriculumCompletion(
   totalLessons: number,
@@ -208,14 +217,13 @@ export function summarizeCurriculumCompletion(
   }
 
   const counted = completedLessons + inProgressLessons;
-  const effectiveTotal = Math.max(total, counted);
-  const notStartedLessons = Math.max(0, effectiveTotal - counted);
-  const completionPct = effectiveTotal > 0
-    ? Math.round((completedLessons / effectiveTotal) * 100)
+  const notStartedLessons = Math.max(0, total - counted);
+  const completionPct = total > 0
+    ? Math.round((completedLessons / total) * 100)
     : 0;
 
   return {
-    totalLessons: effectiveTotal,
+    totalLessons: total,
     completedLessons,
     inProgressLessons,
     notStartedLessons,
@@ -243,6 +251,9 @@ export function curriculumSummaryInvariantErrors(
   if (completionPct !== expectedPct) {
     errors.push('completionPct must be derived only from completedLessons / totalLessons');
   }
+  if (completionPct < 0 || completionPct > 100) {
+    errors.push('completionPct must remain between 0 and 100');
+  }
   return errors;
 }
 
@@ -257,6 +268,7 @@ export function summarizeParentClassMonth(
     cancelledSessions: 0,
     noShowSessions: 0,
     rescheduleRequestedSessions: 0,
+    rescheduledSessions: 0,
     inProgressSessions: 0,
     unresolvedPastSessions: 0,
     otherSessions: 0,
@@ -273,6 +285,7 @@ export function summarizeParentClassMonth(
     else if (status === 'cancelled') summary.cancelledSessions += 1;
     else if (status === 'no_show') summary.noShowSessions += 1;
     else if (status === 'reschedule_requested') summary.rescheduleRequestedSessions += 1;
+    else if (status === 'rescheduled') summary.rescheduledSessions += 1;
     else if (status === 'in_progress') summary.inProgressSessions += 1;
     else if (status === 'other') summary.otherSessions += 1;
 
