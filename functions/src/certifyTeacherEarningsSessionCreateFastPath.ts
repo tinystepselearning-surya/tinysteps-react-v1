@@ -3,9 +3,9 @@ import * as admin from 'firebase-admin';
 import { ensureAdmin } from './helpers/adminGuard';
 import {
   analyzeTeacherEarningsCanonicalCoverage,
-  analyzeTeacherEarningsLegacyMonthCoverage,
   type TeacherEarningAuditRow,
 } from './helpers/teacherEarningsCanonicalAudit';
+import { analyzeTeacherEarningsCanonicalServiceMonthCoverage } from './helpers/teacherEarningsServiceMonthEvidence';
 import { evaluateTeacherEarningsSessionCreateFastPathReadiness } from './helpers/teacherEarningsSessionCreateFastPath';
 
 if (!admin.apps.length) admin.initializeApp();
@@ -15,7 +15,7 @@ const IST_OFFSET_MINUTES = 330;
 const DEFAULT_MAX_DOCS = 5000;
 const MAX_ALLOWED_DOCS = 10000;
 const DEFAULT_SAMPLE_LIMIT = 20;
-export const TEACHER_EARNINGS_SESSION_CREATE_CERTIFICATION_VERSION = 1;
+export const TEACHER_EARNINGS_SESSION_CREATE_CERTIFICATION_VERSION = 2;
 
 function currentMonthKeyIST(): string {
   const now = new Date(Date.now() + IST_OFFSET_MINUTES * 60 * 1000);
@@ -48,6 +48,8 @@ function toAuditRows(
  *
  * Dry-run is the default. apply=true writes only one derived adminStats certification document.
  * The source teacherEarnings ledger is never repaired, rewritten, archived, or otherwise mutated.
+ * Session-linked month ownership is validated against linked classSessions canonical service dates;
+ * ledger processing timestamps are never treated as service dates.
  * A blocked/incomplete apply explicitly stores ready=false so an older certification cannot linger.
  */
 export const certifyTeacherEarningsSessionCreateFastPath = onCall(
@@ -74,7 +76,8 @@ export const certifyTeacherEarningsSessionCreateFastPath = onCall(
     );
 
     const coverage = analyzeTeacherEarningsCanonicalCoverage(targetMonthRows, sampleLimit);
-    const legacyMonthCoverage = analyzeTeacherEarningsLegacyMonthCoverage(
+    const legacyMonthCoverage = await analyzeTeacherEarningsCanonicalServiceMonthCoverage(
+      db,
       scannedRows,
       monthKey,
       sampleLimit,
@@ -100,8 +103,9 @@ export const certifyTeacherEarningsSessionCreateFastPath = onCall(
       sessionSourceMissingSessionIdRows: coverage.sessionSourceMissingSessionIdRows,
       missingTeacherIdRows: coverage.missingTeacherIdRows,
       legacyMonthCoverageClean: legacyMonthCoverage.legacyMonthCoverageClean,
+      sessionEvidence: legacyMonthCoverage.sessionEvidence,
       blockers: readiness.blockers,
-      sourceCodeContract: 'canonical_session_earning_id_equals_session_id_v1',
+      sourceCodeContract: 'canonical_session_earning_id_and_service_month_v2',
       source: 'b6_brick_7d2a_full_ledger_certification',
       evaluatedAt: admin.firestore.FieldValue.serverTimestamp(),
       ...(readiness.ready
@@ -134,7 +138,7 @@ export const certifyTeacherEarningsSessionCreateFastPath = onCall(
       blockers: readiness.blockers,
       certificationVersion: TEACHER_EARNINGS_SESSION_CREATE_CERTIFICATION_VERSION,
       note: !apply
-        ? 'Dry-run only. Re-run with apply=true only after reviewing the complete evidence.'
+        ? 'Dry-run only. Re-run with apply=true only after reviewing the complete canonical service-month evidence.'
         : readiness.ready
           ? 'Certification stored for this month. Session-create deltas are still not enabled until Brick 7D2B.'
           : 'Certification stored as disabled because the evidence was incomplete or unsafe.',
