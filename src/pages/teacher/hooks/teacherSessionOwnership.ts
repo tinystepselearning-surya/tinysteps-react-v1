@@ -1,34 +1,9 @@
 import { type Query } from 'firebase/firestore';
-import { getDocsLogged } from '../../../lib/firestoreReadLogging';
-import {
-  CANONICAL_TEACHER_ID_FIELD,
-  LEGACY_TEACHER_ID_ALIAS_FIELDS,
-  type LegacyTeacherIdAliasField,
-  type OperationalTeacherIdentityField,
-} from '../../../lib/teacherIdentity';
-
-export type TeacherSessionAliasField = OperationalTeacherIdentityField;
-export type TeacherSessionFallbackAliasField = LegacyTeacherIdAliasField;
-
-type TeacherSessionAliasConfig = {
-  field: TeacherSessionFallbackAliasField;
-  operator: '==' | 'array-contains';
-};
-
-export const TEACHER_SESSION_FALLBACK_ALIASES: TeacherSessionAliasConfig[] =
-  LEGACY_TEACHER_ID_ALIAS_FIELDS.map((field) => ({
-    field,
-    operator: field === 'teacherIds' ? 'array-contains' : '==',
-  }));
+import { CANONICAL_TEACHER_ID_FIELD } from '../../../lib/teacherIdentity';
 
 export const buildCanonicalTeacherSessionQuery = (
   buildScopedQuery: (field: 'teacherId', operator: '==') => Query,
 ): Query => buildScopedQuery(CANONICAL_TEACHER_ID_FIELD, '==');
-
-export const makeTeacherFallbackCacheKey = (
-  teacherId: string,
-  scopeKey: string,
-): string => `${teacherId}::${scopeKey}`;
 
 export const mergeAndDedupeSessionDocs = <T extends { id: string }>(
   ...rowGroups: Array<Iterable<T>>
@@ -40,102 +15,4 @@ export const mergeAndDedupeSessionDocs = <T extends { id: string }>(
     }
   });
   return merged;
-};
-
-const isPermissionDeniedError = (error: unknown): boolean => {
-  const code = typeof (error as { code?: unknown } | undefined)?.code === 'string'
-    ? String((error as { code?: string }).code).toLowerCase()
-    : '';
-  const message = error instanceof Error ? error.message.toLowerCase() : String(error || '').toLowerCase();
-  return code.includes('permission-denied') || message.includes('missing or insufficient permissions');
-};
-
-export interface TeacherSessionFallbackResult<T extends { id: string }> {
-  rows: T[];
-  deniedAliases: TeacherSessionFallbackAliasField[];
-  succeededAliases: TeacherSessionFallbackAliasField[];
-  firstError: unknown;
-}
-
-export const fetchTeacherSessionAliasFallbacks = async <T extends { id: string }>(params: {
-  buildScopedQuery: (
-    field: TeacherSessionFallbackAliasField,
-    operator: '==' | 'array-contains',
-  ) => Query;
-  includeAliases?: TeacherSessionFallbackAliasField[];
-  mapDoc: (doc: { id: string; data: () => Record<string, unknown> }) => T;
-  rowMatchesTeacher?: (row: T) => boolean;
-  onQuery?: (details: { field: TeacherSessionFallbackAliasField; operator: '==' | 'array-contains' }) => void;
-  onQueryError?: (details: {
-    field: TeacherSessionFallbackAliasField;
-    operator: '==' | 'array-contains';
-    error: unknown;
-  }) => void;
-  source?: string;
-  labelPrefix?: string;
-}): Promise<TeacherSessionFallbackResult<T>> => {
-  const {
-    buildScopedQuery,
-    includeAliases,
-    mapDoc,
-    rowMatchesTeacher,
-    onQuery,
-    onQueryError,
-    source = 'teacherSessionOwnership',
-    labelPrefix = 'teacher-session-fallback',
-  } = params;
-
-  const allowedAliases = includeAliases ? new Set(includeAliases) : null;
-  const aliases = TEACHER_SESSION_FALLBACK_ALIASES.filter(
-    ({ field }) => !allowedAliases || allowedAliases.has(field),
-  );
-
-  const settled = await Promise.allSettled(
-    aliases.map(async ({ field, operator }) => {
-      onQuery?.({ field, operator });
-      const scopedQuery = buildScopedQuery(field, operator);
-      const snap = await getDocsLogged(
-        `${labelPrefix}:${field}`,
-        scopedQuery,
-        { source },
-      );
-      return { field, snap };
-    }),
-  );
-
-  const merged = new Map<string, T>();
-  const deniedAliases: TeacherSessionFallbackAliasField[] = [];
-  const succeededAliases: TeacherSessionFallbackAliasField[] = [];
-  let firstError: unknown = null;
-
-  settled.forEach((result, index) => {
-    const alias = aliases[index];
-
-    if (result.status === 'fulfilled') {
-      succeededAliases.push(alias.field);
-      result.value.snap.docs.forEach((docSnap) => {
-        const row = mapDoc(docSnap as { id: string; data: () => Record<string, unknown> });
-        if (rowMatchesTeacher && !rowMatchesTeacher(row)) return;
-        merged.set(row.id, row);
-      });
-      return;
-    }
-
-    firstError ??= result.reason;
-    if (isPermissionDeniedError(result.reason)) {
-      deniedAliases.push(alias.field);
-    }
-    onQueryError?.({
-      field: alias.field,
-      operator: alias.operator,
-      error: result.reason,
-    });
-  });
-
-  return {
-    rows: Array.from(merged.values()),
-    deniedAliases,
-    succeededAliases,
-    firstError,
-  };
 };
