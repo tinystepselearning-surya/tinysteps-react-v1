@@ -1,0 +1,74 @@
+name: Temporary fix B2 compile remnants
+
+on:
+  push:
+    branches:
+      - refactor/canonical-teacher-writers
+    paths:
+      - .github/workflows/fix-b2-unused-temp.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout B2 branch
+        uses: actions/checkout@v4
+        with:
+          ref: refactor/canonical-teacher-writers
+          fetch-depth: 0
+
+      - name: Remove dead mixed-identity remnants
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected 1 match, found {count}")
+              p.write_text(text.replace(old, new, 1))
+
+          replace_once(
+              'functions/src/createSessionsFromSchedule.ts',
+              '''function toStringList(value: unknown): string[] {\n  if (!Array.isArray(value)) return [];\n  return Array.from(\n    new Set(\n      value\n        .map((entry) => toOptionalText(entry))\n        .filter((entry): entry is string => Boolean(entry)),\n    ),\n  );\n}\n\n''',
+              '',
+          )
+          replace_once(
+              'functions/src/createSessionsFromSchedule.ts',
+              '  const {teacherId, teacherIds} = resolveEnrollmentTeacherIdentity(enrollment);\n',
+              '  const {teacherId} = resolveEnrollmentTeacherIdentity(enrollment);\n',
+          )
+          replace_once(
+              'functions/src/lifecycle.ts',
+              '  const teacherIds = [newTeacherId];\n\n',
+              '',
+          )
+
+      - name: Verify exact files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' functions/src/createSessionsFromSchedule.ts functions/src/lifecycle.ts | sort)"
+          if [[ "${changed}" != "${expected}" ]]; then
+            echo "::error::Unexpected changed files"
+            echo "${changed}"
+            exit 1
+          fi
+
+      - name: Commit compile cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add functions/src/createSessionsFromSchedule.ts functions/src/lifecycle.ts
+          git commit -m "fix(teacher): remove obsolete mixed-identity variables"
+          git push origin HEAD:refactor/canonical-teacher-writers
