@@ -112,6 +112,11 @@ const getTeacherAliasField = (queryRef: { args: Array<{ kind?: string; args?: un
   return String(teacherClause?.[0] || '');
 };
 
+const getClassSessionGetDocsCalls = () =>
+  mockGetDocs.mock.calls.filter(
+    ([queryRef]) => getCollectionName(queryRef as any) === 'classSessions',
+  );
+
 describe('useTeacherSessions', () => {
   beforeEach(() => {
     mockGetDocs.mockReset();
@@ -167,34 +172,25 @@ describe('useTeacherSessions', () => {
     });
   });
 
-  it('keeps one live teacherId listener and merges bounded alias fallback rows for today', async () => {
+  it('keeps one live canonical teacherId listener and performs no legacy classSessions reads', async () => {
     render(<TestComponent teacherId="teacher-1" startDate="2026-06-08" endDate="2026-06-08" />);
 
-    await waitFor(() => expect(screen.getByText('count:6')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('count:1')).toBeTruthy());
 
     expect(screen.getAllByTestId('session').map((node) => node.textContent)).toEqual([
       'session-direct:2026-06-08:teacher-1',
-      'session-array:2026-06-08:teacher-1',
-      'session-assigned:2026-06-08:teacher-1',
-      'session-primary:2026-06-08:teacher-1',
-      'session-uid:2026-06-08:teacher-1',
-      'session-legacy:2026-06-08:teacher-1',
     ]);
 
     expect(mockOnSnapshot).toHaveBeenCalledTimes(1);
-
-    const classSessionGetDocsCalls = mockGetDocs.mock.calls.filter(
-      ([queryRef]) => getCollectionName(queryRef as any) === 'classSessions',
+    const primaryQueryRef = mockOnSnapshot.mock.calls[0]?.[0];
+    expect(extractWhereClauses(primaryQueryRef as any)).toEqual(
+      expect.arrayContaining([
+        expect.arrayContaining(['teacherId', '==', 'teacher-1']),
+        expect.arrayContaining(['date', '>=', '2026-06-08']),
+        expect.arrayContaining(['date', '<=', '2026-06-08']),
+      ]),
     );
-    expect(classSessionGetDocsCalls).toHaveLength(5);
-    classSessionGetDocsCalls.forEach(([queryRef]) => {
-      expect(extractWhereClauses(queryRef as any)).toEqual(
-        expect.arrayContaining([
-          expect.arrayContaining(['date', '>=', '2026-06-08']),
-          expect.arrayContaining(['date', '<=', '2026-06-08']),
-        ]),
-      );
-    });
+    expect(getClassSessionGetDocsCalls()).toHaveLength(0);
   });
 
   it('surfaces classSessions permission errors instead of running broader fallback reads', async () => {
@@ -214,13 +210,10 @@ describe('useTeacherSessions', () => {
       ).toBeTruthy(),
     );
 
-    const classSessionGetDocsCalls = mockGetDocs.mock.calls.filter(
-      ([queryRef]) => getCollectionName(queryRef as any) === 'classSessions',
-    );
-    expect(classSessionGetDocsCalls).toHaveLength(0);
+    expect(getClassSessionGetDocsCalls()).toHaveLength(0);
   });
 
-  it('does not rerun alias fallback getDocs after the first canonical snapshot for the same range', async () => {
+  it('updates from the canonical listener without launching alias fallback getDocs', async () => {
     let nextSnapshot: ((snapshot: { docs: ReturnType<typeof makeDoc>[] }) => void) | null = null;
     mockOnSnapshot.mockReset();
     mockOnSnapshot.mockImplementation((_queryRef, onNext) => {
@@ -242,16 +235,13 @@ describe('useTeacherSessions', () => {
 
     render(<TestComponent teacherId="teacher-1" startDate="2026-06-08" endDate="2026-06-08" />);
 
-    await waitFor(() => expect(screen.getByText('count:6')).toBeTruthy());
-    const firstPassCalls = mockGetDocs.mock.calls.filter(
-      ([queryRef]) => getCollectionName(queryRef as any) === 'classSessions',
-    );
-    expect(firstPassCalls).toHaveLength(5);
+    await waitFor(() => expect(screen.getByText('session-direct:2026-06-08:teacher-1')).toBeTruthy());
+    expect(getClassSessionGetDocsCalls()).toHaveLength(0);
 
     await act(async () => {
       nextSnapshot?.({
         docs: [
-          makeDoc('session-direct', {
+          makeDoc('session-updated', {
             teacherId: 'teacher-1',
             enrollmentId: 'enr-direct',
             date: '2026-06-08',
@@ -263,28 +253,42 @@ describe('useTeacherSessions', () => {
       });
     });
 
-    const secondPassCalls = mockGetDocs.mock.calls.filter(
-      ([queryRef]) => getCollectionName(queryRef as any) === 'classSessions',
-    );
-    expect(secondPassCalls).toHaveLength(5);
+    await waitFor(() => expect(screen.getByText('session-updated:2026-06-08:teacher-1')).toBeTruthy());
+    expect(mockOnSnapshot).toHaveBeenCalledTimes(1);
+    expect(getClassSessionGetDocsCalls()).toHaveLength(0);
   });
 
-  it('shows assignedTeacherId-only transferred sessions through fallback and keeps enrollment snapshots', async () => {
+  it('enriches canonical transferred sessions from enrollment snapshots without alias reads', async () => {
     mockOnSnapshot.mockReset();
     mockOnSnapshot.mockImplementation((_queryRef, onNext) => {
-      onNext({ docs: [] });
+      onNext({
+        docs: [
+          makeDoc('session-transferred', {
+            teacherId: 'teacher-1',
+            assignedTeacherId: 'teacher-stale',
+            teacherIds: ['teacher-stale'],
+            enrollmentId: 'enr-assigned',
+            date: '2026-06-08',
+            startTime: '20:30',
+            kidId: 'kid-3',
+            childName: '1 assigned',
+            courseName: 'advanced-phonics',
+            courseId: 'advanced-phonics',
+            status: 'scheduled',
+          }),
+        ],
+      });
       return vi.fn();
     });
 
     mockGetDocs.mockImplementation(async (queryRef: unknown) => {
       const collectionName = getCollectionName(queryRef as any);
-      const aliasField = getTeacherAliasField(queryRef as any);
-
       if (collectionName === 'enrollments') {
         return {
           docs: [
             makeDoc('enr-assigned', {
-              assignedTeacherId: 'teacher-1',
+              teacherId: 'teacher-1',
+              teacherIds: ['teacher-stale'],
               kidId: 'kid-3',
               childName: 'Student Three',
               courseName: 'Foundation Phonics',
@@ -292,26 +296,6 @@ describe('useTeacherSessions', () => {
           ],
         };
       }
-
-      if (collectionName === 'classSessions' && aliasField === 'assignedTeacherId') {
-        return {
-          docs: [
-            makeDoc('session-transferred', {
-              assignedTeacherId: 'teacher-1',
-              teacherIds: ['teacher-1'],
-              enrollmentId: 'enr-assigned',
-              date: '2026-06-08',
-              startTime: '20:30',
-              kidId: 'kid-3',
-              childName: '1 assigned',
-              courseName: 'advanced-phonics',
-              courseId: 'advanced-phonics',
-              status: 'scheduled',
-            }),
-          ],
-        };
-      }
-
       return { docs: [] };
     });
 
@@ -320,49 +304,36 @@ describe('useTeacherSessions', () => {
     await waitFor(() =>
       expect(screen.getByText('session-transferred:Student Three:Foundation Phonics')).toBeTruthy(),
     );
+    expect(getClassSessionGetDocsCalls()).toHaveLength(0);
   });
 
-  it('dedupes sessions that match multiple alias fields into one row', async () => {
+  it('prefers canonical teacherId when stale alias fields disagree', async () => {
     mockOnSnapshot.mockReset();
     mockOnSnapshot.mockImplementation((_queryRef, onNext) => {
-      onNext({ docs: [] });
+      onNext({
+        docs: [
+          makeDoc('session-canonical', {
+            teacherId: 'teacher-1',
+            teacherIds: ['teacher-stale'],
+            assignedTeacherId: 'teacher-stale',
+            primaryTeacherId: 'teacher-stale',
+            teacherUid: 'teacher-stale',
+            teacher_id: 'teacher-stale',
+            enrollmentId: 'enr-direct',
+            date: '2026-06-08',
+            startTime: '20:00',
+            kidId: 'kid-1',
+            status: 'scheduled',
+          }),
+        ],
+      });
       return vi.fn();
-    });
-
-    mockGetDocs.mockImplementation(async (queryRef: unknown) => {
-      const collectionName = getCollectionName(queryRef as any);
-      const aliasField = getTeacherAliasField(queryRef as any);
-
-      if (collectionName === 'enrollments') {
-        return {
-          docs: [
-            makeDoc('enr-shared', { teacherId: 'teacher-1', kidId: 'kid-1', childName: 'Student One', courseName: 'Foundation Phonics' }),
-          ],
-        };
-      }
-
-      if (collectionName === 'classSessions' && ['teacherIds', 'assignedTeacherId'].includes(aliasField)) {
-        return {
-          docs: [
-            makeDoc('session-shared', {
-              teacherIds: ['teacher-1'],
-              assignedTeacherId: 'teacher-1',
-              enrollmentId: 'enr-shared',
-              date: '2026-06-08',
-              startTime: '20:00',
-              kidId: 'kid-1',
-              status: 'scheduled',
-            }),
-          ],
-        };
-      }
-
-      return { docs: [] };
     });
 
     render(<TestComponent teacherId="teacher-1" startDate="2026-06-08" endDate="2026-06-08" />);
 
     await waitFor(() => expect(screen.getByText('count:1')).toBeTruthy());
-    expect(screen.getAllByTestId('session')).toHaveLength(1);
+    expect(screen.getByText('session-canonical:2026-06-08:teacher-1')).toBeTruthy();
+    expect(getClassSessionGetDocsCalls()).toHaveLength(0);
   });
 });
