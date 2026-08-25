@@ -41,6 +41,7 @@ export { auditParentPaymentBackfillDryRun } from "./parentPaymentBackfillDryRun"
 export { applyParentPaymentBackfillForSafeParents } from "./parentPaymentBackfillWriteMode";
 export { runFinanceReconciliationAudit, runFinanceReconciliationAuditDaily } from "./financeReconciliationReport";
 export { auditTeacherEarningsCanonicalCoverage } from "./auditTeacherEarningsCanonicalCoverage";
+export { prepareTeacherFinanceAnalyticsRollups } from "./prepareTeacherFinanceAnalyticsRollups";
 export { reconcileParentPaymentsMonthReadModels } from "./reconcileParentPaymentsMonthReadModels";
 export { recordLegacyFallbackUsage } from "./legacyFallbackMetrics";
 
