@@ -16,7 +16,9 @@ if (!admin.apps.length) admin.initializeApp();
 const REGION = 'asia-south1';
 const IST_OFFSET_MINUTES = 330;
 const MONTH_RE = /^\d{4}-\d{2}$/;
-const ATTENDANCE_REPAIR_VERSION = 2;
+export const ATTENDANCE_REPAIR_VERSION = 2;
+export const ATTENDANCE_REPAIR_RETRY_COOLDOWN_MS = 10 * 60 * 1000;
+const ATTENDANCE_REPAIR_PROCESSING_TTL_MS = 5 * 60 * 1000;
 
 type RecordLike = Record<string, unknown>;
 
@@ -25,17 +27,25 @@ type ParentKidContext = {
   aliases: Set<string>;
 };
 
+type AttendanceQueryMode =
+  | 'parentId_date_month_bounded'
+  | 'parentId_capped_compatibility_zero_bounded'
+  | 'parentId_capped_compatibility_missing_index'
+  | 'parentId_capped_compatibility_missing_child';
+
 type AttendanceSource = {
   sessions: RecordLike[];
   sourceDocumentsRead: number;
-  queryMode:
-    | 'parentId_date_month_bounded'
-    | 'parentId_capped_compatibility_zero_bounded'
-    | 'parentId_capped_compatibility_missing_index';
+  queryMode: AttendanceQueryMode;
 };
 
 function text(value: unknown): string {
   return String(value ?? '').trim();
+}
+
+function numberOrZero(value: unknown): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 function strings(value: unknown): string[] {
@@ -180,11 +190,59 @@ export function normalizeAttendanceBootstrapSessionKidIdentity(
   };
 }
 
+export function shouldUseAttendanceCompatibilityRepair(args: {
+  boundedSessionCount: number;
+  missingIndex?: boolean;
+  requestedChildRowPresent?: boolean;
+}): boolean {
+  return Boolean(
+    args.missingIndex ||
+      args.boundedSessionCount === 0 ||
+      args.requestedChildRowPresent === false,
+  );
+}
+
+/**
+ * Successful repair versions are terminal. Processing locks expire after five minutes and
+ * failed attempts may retry after a ten-minute cooldown, preventing both permanent failure
+ * and repeated dashboard-triggered scans.
+ */
+export function shouldClaimAttendanceRepairLock(
+  data: RecordLike,
+  nowMs: number,
+): boolean {
+  const version = numberOrZero(data.repairVersion);
+  if (version < ATTENDANCE_REPAIR_VERSION) return true;
+
+  const status = text(data.status).toLowerCase();
+  if (status === 'completed') return false;
+
+  const startedAtMs = numberOrZero(data.startedAtMs);
+  if (
+    status === 'processing' &&
+    startedAtMs > 0 &&
+    nowMs - startedAtMs < ATTENDANCE_REPAIR_PROCESSING_TTL_MS
+  ) {
+    return false;
+  }
+
+  const lastAttemptAtMs = numberOrZero(data.lastAttemptAtMs) || startedAtMs;
+  if (
+    status === 'failed' &&
+    lastAttemptAtMs > 0 &&
+    nowMs - lastAttemptAtMs < ATTENDANCE_REPAIR_RETRY_COOLDOWN_MS
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
 async function compatibilitySource(
   db: admin.firestore.Firestore,
   parentId: string,
   monthKey: string,
-  queryMode: AttendanceSource['queryMode'],
+  queryMode: AttendanceQueryMode,
 ): Promise<AttendanceSource> {
   const compatibilitySnap = await db
     .collection('classSessions')
@@ -237,7 +295,7 @@ async function loadParentMonthSessionsForRepair(
       throw new Error(`attendance_bootstrap_cap_exceeded:${boundedSnap.size}`);
     }
 
-    if (boundedSnap.size > 0) {
+    if (!shouldUseAttendanceCompatibilityRepair({ boundedSessionCount: boundedSnap.size })) {
       return {
         sessions: boundedSnap.docs.map((docSnap) => (docSnap.data() || {}) as RecordLike),
         sourceDocumentsRead: boundedSnap.size,
@@ -290,6 +348,33 @@ async function currentKidRowExists(
   return hasAuthoritativeKidRow(snap.data()?.attendance as RecordLike | undefined, kidId);
 }
 
+function normalizeSessionsForKid(
+  sessions: RecordLike[],
+  kidId: string,
+  aliases: Set<string>,
+): { sessions: RecordLike[]; migratedIdentityRecords: number } {
+  let migratedIdentityRecords = 0;
+  const normalizedSessions = sessions.map((session) => {
+    const normalized = normalizeAttendanceBootstrapSessionKidIdentity(session, kidId, aliases);
+    if (normalized.migrated) migratedIdentityRecords += 1;
+    return normalized.session;
+  });
+  return { sessions: normalizedSessions, migratedIdentityRecords };
+}
+
+function buildValidatedProjection(
+  sessions: RecordLike[],
+  monthKey: string,
+  generatedAtMs: number,
+) {
+  const projection = buildParentMonthClassAttendanceProjection(sessions, monthKey, generatedAtMs);
+  const invariantErrors = classAttendanceProjectionInvariantErrors(projection);
+  if (invariantErrors.length > 0) {
+    throw new Error(`attendance_projection_invariant_failure:${invariantErrors.join('|')}`);
+  }
+  return projection;
+}
+
 async function repairParentClassAttendance(args: {
   db: admin.firestore.Firestore;
   parentId: string;
@@ -308,23 +393,29 @@ async function repairParentClassAttendance(args: {
     };
   }
 
-  const source = await loadParentMonthSessionsForRepair(db, parentId, monthKey);
-  let migratedIdentityRecords = 0;
-  const normalizedSessions = source.sessions.map((session) => {
-    const normalized = normalizeAttendanceBootstrapSessionKidIdentity(session, kidId, aliases);
-    if (normalized.migrated) migratedIdentityRecords += 1;
-    return normalized.session;
-  });
-
+  let source = await loadParentMonthSessionsForRepair(db, parentId, monthKey);
+  let normalized = normalizeSessionsForKid(source.sessions, kidId, aliases);
   const generatedAtMs = Date.now();
-  const projection = buildParentMonthClassAttendanceProjection(
-    normalizedSessions,
-    monthKey,
-    generatedAtMs,
-  );
-  const invariantErrors = classAttendanceProjectionInvariantErrors(projection);
-  if (invariantErrors.length > 0) {
-    throw new Error(`attendance_projection_invariant_failure:${invariantErrors.join('|')}`);
+  let projection = buildValidatedProjection(normalized.sessions, monthKey, generatedAtMs);
+
+  // A parent may have modern dated sessions for one child while the requested child's older
+  // sessions lack `date`. If the bounded parent/month result therefore has no requested child
+  // row, retry once through the capped parent history compatibility path.
+  if (
+    source.queryMode === 'parentId_date_month_bounded' &&
+    shouldUseAttendanceCompatibilityRepair({
+      boundedSessionCount: source.sessions.length,
+      requestedChildRowPresent: Boolean(projection.byKid[kidId]),
+    })
+  ) {
+    source = await compatibilitySource(
+      db,
+      parentId,
+      monthKey,
+      'parentId_capped_compatibility_missing_child',
+    );
+    normalized = normalizeSessionsForKid(source.sessions, kidId, aliases);
+    projection = buildValidatedProjection(normalized.sessions, monthKey, generatedAtMs);
   }
 
   const readModelRef = db
@@ -347,12 +438,12 @@ async function repairParentClassAttendance(args: {
         timeClassificationAsOfMs: generatedAtMs,
         timeBucketsRecomputableFromPendingStarts: true,
         queryMode: source.queryMode,
-        sourceSessionCount: normalizedSessions.length,
+        sourceSessionCount: normalized.sessions.length,
         sourceDocumentsRead: source.sourceDocumentsRead,
         maxSourceSessionCount: MAX_PARENT_MONTH_ATTENDANCE_SESSIONS,
         unassignedSessionRecords: projection.unassignedSessionRecords,
         legacyKidAliasOnlySessionRecords: projection.legacyKidAliasOnlySessionRecords,
-        migratedIdentityRecords,
+        migratedIdentityRecords: normalized.migratedIdentityRecords,
         repairVersion: ATTENDANCE_REPAIR_VERSION,
         refreshedAt: admin.firestore.FieldValue.serverTimestamp(),
         generatedAtMs,
@@ -368,9 +459,9 @@ async function repairParentClassAttendance(args: {
     repairVersion: ATTENDANCE_REPAIR_VERSION,
     queryMode: source.queryMode,
     sourceDocumentsRead: 1 + source.sourceDocumentsRead,
-    sourceSessionCount: normalizedSessions.length,
+    sourceSessionCount: normalized.sessions.length,
     childRowPresent: Boolean(projection.byKid[kidId]),
-    migratedIdentityRecords,
+    migratedIdentityRecords: normalized.migratedIdentityRecords,
     legacyKidAliasOnlySessionRecords: projection.legacyKidAliasOnlySessionRecords,
     unassignedSessionRecords: projection.unassignedSessionRecords,
   };
@@ -390,10 +481,11 @@ async function claimRepairVersion(
     .collection('attendance')
     .doc(monthKey);
 
+  const nowMs = Date.now();
   const claimed = await db.runTransaction(async (transaction) => {
     const snapshot = await transaction.get(lockRef);
     const data = (snapshot.data() || {}) as RecordLike;
-    if (Number(data.repairVersion ?? 0) >= ATTENDANCE_REPAIR_VERSION) return false;
+    if (!shouldClaimAttendanceRepairLock(data, nowMs)) return false;
 
     transaction.set(lockRef, {
       parentId,
@@ -401,7 +493,9 @@ async function claimRepairVersion(
       monthKey,
       repairVersion: ATTENDANCE_REPAIR_VERSION,
       status: 'processing',
+      startedAtMs: nowMs,
       startedAt: admin.firestore.FieldValue.serverTimestamp(),
+      attemptCount: numberOrZero(data.attemptCount) + 1,
     });
     return true;
   });
@@ -466,6 +560,7 @@ export const bootstrapParentClassAttendance = onCall({ region: REGION }, async (
       {
         status: 'completed',
         result,
+        lastAttemptAtMs: Date.now(),
         completedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
       { merge: true },
@@ -477,6 +572,7 @@ export const bootstrapParentClassAttendance = onCall({ region: REGION }, async (
       {
         status: 'failed',
         failureCode: message.slice(0, 180),
+        lastAttemptAtMs: Date.now(),
         completedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
       { merge: true },
