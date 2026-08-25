@@ -16,7 +16,6 @@ export { onSessionComplete } from "./onSessionComplete";
 // Revenue rollups (expected + earned)
 export {
   onSessionRevenueWrite,
-  onTeacherEarningsRollupWrite,
   recordPayment,
   recordTeacherPayout,
   previewFinanceCutoverArchive,
@@ -25,6 +24,7 @@ export {
   voidTeacherOrphanEarnings,
   adminVoidSessionCharge,
 } from "./revenue";
+export { onTeacherEarningsRollupWrite } from "./teacherEarningsRollupTrigger";
 export {
   getWalletAutomationConfig,
   setWalletAutomationConfig,
