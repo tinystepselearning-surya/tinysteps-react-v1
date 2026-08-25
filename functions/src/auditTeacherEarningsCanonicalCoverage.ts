@@ -3,6 +3,7 @@ import * as admin from 'firebase-admin';
 import { ensureAdmin } from './helpers/adminGuard';
 import {
   analyzeTeacherEarningsCanonicalCoverage,
+  analyzeTeacherEarningsLegacyMonthCoverage,
   type TeacherEarningAuditRow,
 } from './helpers/teacherEarningsCanonicalAudit';
 
@@ -36,11 +37,22 @@ function clampInt(value: unknown, fallback: number, min: number, max: number): n
   return Math.max(min, Math.min(max, Math.floor(parsed)));
 }
 
+function toAuditRows(
+  docs: FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData>[],
+): TeacherEarningAuditRow[] {
+  return docs.map((docSnap) => ({
+    id: docSnap.id,
+    ...(docSnap.data() || {}),
+  }));
+}
+
 /**
  * Admin-only, read-only B6 integrity audit.
  *
- * It intentionally queries one explicit teacherEarnings month only and performs no writes.
- * The extra +1 document is used solely to report truncation without running a second query.
+ * Default mode performs one bounded query for the explicit target month.
+ * Optional includeLegacyMonthCoverage mode performs one bounded full-ledger scan instead so it
+ * can detect active rows whose target month exists only in timestamps or conflicts with monthKey.
+ * Neither mode performs Firestore writes or repairs.
  */
 export const auditTeacherEarningsCanonicalCoverage = onCall(
   {
@@ -54,33 +66,55 @@ export const auditTeacherEarningsCanonicalCoverage = onCall(
     const monthKey = normalizeMonthKey(request.data?.monthKey);
     const maxDocs = clampInt(request.data?.maxDocs, DEFAULT_MAX_DOCS, 1, MAX_ALLOWED_DOCS);
     const sampleLimit = clampInt(request.data?.sampleLimit, DEFAULT_SAMPLE_LIMIT, 0, 100);
+    const includeLegacyMonthCoverage = request.data?.includeLegacyMonthCoverage === true;
 
-    const snapshot = await admin
-      .firestore()
-      .collection('teacherEarnings')
-      .where('monthKey', '==', monthKey)
-      .limit(maxDocs + 1)
-      .get();
+    const collectionRef = admin.firestore().collection('teacherEarnings');
+    const baseQuery = includeLegacyMonthCoverage
+      ? collectionRef.limit(maxDocs + 1)
+      : collectionRef.where('monthKey', '==', monthKey).limit(maxDocs + 1);
 
+    const snapshot = await baseQuery.get();
     const truncated = snapshot.docs.length > maxDocs;
     const docs = truncated ? snapshot.docs.slice(0, maxDocs) : snapshot.docs;
-    const rows: TeacherEarningAuditRow[] = docs.map((docSnap) => ({
-      id: docSnap.id,
-      ...(docSnap.data() || {}),
-    }));
+    const scannedRows = toAuditRows(docs);
 
-    const coverage = analyzeTeacherEarningsCanonicalCoverage(rows, sampleLimit);
+    const targetMonthRows = includeLegacyMonthCoverage
+      ? scannedRows.filter((row) => String(row.monthKey || '').trim() === monthKey)
+      : scannedRows;
+
+    const coverage = analyzeTeacherEarningsCanonicalCoverage(targetMonthRows, sampleLimit);
+    const legacyMonthCoverage = includeLegacyMonthCoverage
+      ? analyzeTeacherEarningsLegacyMonthCoverage(scannedRows, monthKey, sampleLimit)
+      : null;
+
+    const fullLedgerEvidenceComplete = includeLegacyMonthCoverage && !truncated;
+    const readyForMonthBoundReads = Boolean(
+      fullLedgerEvidenceComplete &&
+        coverage.coverageCleanForFurtherDeltaDesign &&
+        legacyMonthCoverage?.legacyMonthCoverageClean,
+    );
+    const readyForFurtherDeltaDesign = readyForMonthBoundReads;
 
     return {
       ok: true,
       readOnly: true,
       monthKey,
       maxDocs,
+      queryScope: includeLegacyMonthCoverage ? 'bounded_full_ledger' : 'explicit_month_only',
+      includeLegacyMonthCoverage,
       truncated,
-      scannedRows: rows.length,
+      scannedRows: scannedRows.length,
+      analyzedTargetMonthRows: targetMonthRows.length,
+      fullLedgerEvidenceComplete,
       coverage,
-      note:
-        'coverageCleanForFurtherDeltaDesign is evidence only. It does not enable incremental finance writes by itself.',
+      legacyMonthCoverage,
+      readyForMonthBoundReads,
+      readyForFurtherDeltaDesign,
+      note: truncated
+        ? 'Audit evidence is incomplete because the bounded scan truncated. Do not use clean-looking partial results to enable read cutovers or incremental finance writes.'
+        : includeLegacyMonthCoverage
+          ? 'Read-only evidence only. A clean result supports the next design review but does not itself enable incremental finance writes.'
+          : 'Explicit-month coverage only. Run again with includeLegacyMonthCoverage=true before month-bounding reads or expanding incremental finance behavior.',
     };
   },
 );
