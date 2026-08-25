@@ -60,9 +60,43 @@ The bounded production audit scanned 107 operational enrollments and 142 current
 - There were zero legacy-only enrollment or class-session records in the operational sample.
 - Six enrollments and three scheduled sessions had legacy alias fields that disagreed with an already-present canonical `teacherId`.
 
-**B3 decision: zero production backfill writes.** The single missing enrollment is left untouched rather than guessing an assignment. Records that already contain canonical `teacherId` are not rewritten merely to cosmetically align aliases; B2 prevents new mismatches, B4 moves normal readers to the canonical field, and B5 retires the redundant aliases after fallback usage reaches zero.
+**B3 decision: zero production backfill writes.** The single missing enrollment is left untouched rather than guessing an assignment. The nine records that already contain canonical `teacherId` are not physically rewritten in B3; B2 prevents new mismatches and B5 will retire or clean the redundant aliases through a separately controlled migration.
 
 This is intentionally safer than forcing every active enrollment to have a teacher: enrollment creation can legitimately exist before a teacher has been assigned.
+
+### B3 production execution outcome
+
+Two guarded physical-repair approaches were evaluated and stopped without changing production data:
+
+- An atomic Admin SDK transaction was denied because the CI service account intentionally has no Firestore document-write IAM.
+- A Firebase Security Rules-authenticated transaction could not create its temporary custom token because that service account intentionally lacks `iam.serviceAccounts.signBlob`.
+
+No broad IAM role was granted and neither failure produced a partial write. A fresh bounded read-only audit on 2026-08-25 again found exactly 107 operational enrollments, 142 current/future sessions, six enrollment alias mismatches, and three scheduled-session alias mismatches. It also verified that the nine canonical user records exist and have teacher role, and found no mismatched non-scheduled session target.
+
+No existing privileged callable is narrow enough for this repair. The teacher reassignment and transferred-session repair callables update broader identity, scheduling, join-link, child ownership, or audit state by design, so reusing them for alias-only cleanup would violate the B3 scope.
+
+### B3 authorization hardening
+
+Firestore teacher authorization for `enrollments` and `classSessions` is canonical-first:
+
+- when the document contains `teacherId`, only that canonical UID can authorize teacher access;
+- legacy aliases cannot expand access when `teacherId` exists, even if an alias is stale;
+- direct legacy document reads retain an alias fallback only when the `teacherId` field is absent;
+- teacher collection queries are canonical-only because an alias-constrained Firestore query cannot prove that every matching document lacks `teacherId`;
+- admin and parent authorization paths are unchanged.
+
+This neutralizes the authorization risk from the nine stale records while deferring their physical cleanup to B5. Operational teacher readers already query canonical `teacherId` first; optional alias queries fail closed without discarding successful canonical results. Focused emulator tests cover canonical teacher document and query access, stale-alias document and query denial, unrelated teacher denial, legacy-by-ID fallback, admin and parent access, and post-reassignment denial for the old alias teacher.
+
+### Trigger safety review
+
+Current production code has one enrollment trigger and three class-session triggers in scope:
+
+- enrollment message-thread sync compares child, parent, teacher, LP, and status identity fields; an alias-only enrollment rewrite could sync a thread because `teacherIds` participates in that fingerprint, but it cannot regenerate sessions or touch finance;
+- session revenue processing exits immediately for scheduled-to-scheduled writes before any accrual or reversal;
+- the active parent attendance projection fingerprint excludes teacher aliases, so alias-only session writes exit before projection reads;
+- no class-session trigger schedules reminders, regenerates sessions, recalculates attendance, changes join links, or enters lead/demo workflows.
+
+Because B3 performs no production writes, none of these triggers is invoked by the closeout.
 
 ## Phase B4 — read cutover
 
@@ -84,7 +118,7 @@ Only after fallback usage is effectively zero:
 
 Normalization must not change:
 
-- which teacher can see a class;
+- canonical teacher access to a class;
 - teacher transfers or transfer history;
 - completed or historical attendance ownership;
 - teacher earnings attribution;
