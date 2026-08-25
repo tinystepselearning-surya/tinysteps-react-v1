@@ -1,6 +1,10 @@
 import type { Firestore } from 'firebase-admin/firestore';
 import { resolveCanonicalServiceDate } from './serviceDate';
-import type { TeacherEarningAuditRow } from './teacherEarningsCanonicalAudit';
+import {
+  analyzeTeacherEarningsLegacyMonthCoverage,
+  type TeacherEarningAuditRow,
+  type TeacherEarningsLegacyMonthCoverage,
+} from './teacherEarningsCanonicalAudit';
 
 const GET_ALL_BATCH_SIZE = 250;
 
@@ -19,6 +23,36 @@ export type TeacherEarningsSessionServiceMonthEvidence = {
   missingSessionCount: number;
   unresolvedServiceMonthCount: number;
 };
+
+export type TeacherEarningsCanonicalServiceMonthCoverage = TeacherEarningsLegacyMonthCoverage & {
+  sessionEvidence: Omit<TeacherEarningsSessionServiceMonthEvidence, 'sessionServiceMonthById'>;
+};
+
+/**
+ * Replace only session-linked service-date evidence before running the existing target-month
+ * coverage analysis. Standalone earnings preserve their historical fallback behavior.
+ *
+ * For session-linked earnings, ledger processing timestamps are explicitly cleared so
+ * earnedAt/createdAt/updatedAt can never masquerade as the class service date.
+ */
+export function applyCanonicalSessionMonthEvidence(
+  rows: TeacherEarningAuditRow[],
+  sessionServiceMonthById: ReadonlyMap<string, string | null>,
+): TeacherEarningAuditRow[] {
+  return rows.map((row) => {
+    if (row.archived === true || !isSessionLinked(row)) return row;
+
+    const sessionId = normalizeText(row.sessionId);
+    const serviceMonthKey = sessionId ? sessionServiceMonthById.get(sessionId) || '' : '';
+    return {
+      ...row,
+      date: serviceMonthKey ? `${serviceMonthKey}-01` : '',
+      earnedAt: null,
+      createdAt: null,
+      updatedAt: null,
+    };
+  });
+}
 
 /**
  * Read-only evidence loader for session-linked teacher earnings.
@@ -71,5 +105,40 @@ export async function loadTeacherEarningsSessionServiceMonthEvidence(
     foundSessionCount,
     missingSessionCount,
     unresolvedServiceMonthCount,
+  };
+}
+
+/**
+ * Shared read-only target-month evidence used by the audit, analytics preparation and 7D
+ * certification gates. Missing linked sessions or unresolved canonical service dates fail closed.
+ */
+export async function analyzeTeacherEarningsCanonicalServiceMonthCoverage(
+  db: Firestore,
+  rows: TeacherEarningAuditRow[],
+  targetMonthKey: string,
+  sampleLimit = 20,
+): Promise<TeacherEarningsCanonicalServiceMonthCoverage> {
+  const evidence = await loadTeacherEarningsSessionServiceMonthEvidence(db, rows);
+  const evidenceRows = applyCanonicalSessionMonthEvidence(rows, evidence.sessionServiceMonthById);
+  const coverage = analyzeTeacherEarningsLegacyMonthCoverage(
+    evidenceRows,
+    targetMonthKey,
+    sampleLimit,
+  );
+
+  const sessionEvidence = {
+    requestedSessionCount: evidence.requestedSessionCount,
+    foundSessionCount: evidence.foundSessionCount,
+    missingSessionCount: evidence.missingSessionCount,
+    unresolvedServiceMonthCount: evidence.unresolvedServiceMonthCount,
+  };
+
+  return {
+    ...coverage,
+    legacyMonthCoverageClean:
+      coverage.legacyMonthCoverageClean &&
+      sessionEvidence.missingSessionCount === 0 &&
+      sessionEvidence.unresolvedServiceMonthCount === 0,
+    sessionEvidence,
   };
 }
