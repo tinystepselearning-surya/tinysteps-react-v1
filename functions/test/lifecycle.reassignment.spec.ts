@@ -153,7 +153,7 @@ describe('teacher reassignment join-link handling', () => {
     });
   });
 
-  it('rewrites future session snapshots to remove stale meeting links during reassignment', () => {
+  it('rewrites future session snapshots with canonical teacher ownership and removes stale meeting links', () => {
     const patch = buildSessionRepairPatch({
       existing: {
         enrollmentId: 'enr_123',
@@ -199,12 +199,14 @@ describe('teacher reassignment join-link handling', () => {
 
     expect(patch).toMatchObject({
       teacherId: 'teacher_new',
-      teacherIds: ['teacher_new'],
-      assignedTeacherId: 'teacher_new',
-      primaryTeacherId: 'teacher_new',
       joinUrl: null,
       meetingLink: null,
       classLink: null,
     });
+    expect(patch).not.toHaveProperty('teacherIds');
+    expect(patch).not.toHaveProperty('assignedTeacherId');
+    expect(patch).not.toHaveProperty('primaryTeacherId');
+    expect(patch).not.toHaveProperty('teacherUid');
+    expect(patch).not.toHaveProperty('teacher_id');
   });
 });

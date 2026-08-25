@@ -20,8 +20,8 @@ const SCALAR_LEGACY_ALIAS_QUERY_PATTERNS = [
   /where\(\s*['\"]teacher_id['\"]/, 
 ] as const;
 
-describe('B4 canonical teacher collection reads', () => {
-  it.each(ALL_ACTIVE_TEACHER_READERS)('%s does not call the legacy alias collection fallback helper', (path) => {
+describe('B4/B5 canonical teacher collection reads', () => {
+  it.each(ALL_ACTIVE_TEACHER_READERS)('%s does not call the retired legacy alias collection fallback helper', (path) => {
     const source = fs.readFileSync(path, 'utf8');
     expect(source).not.toContain('fetchTeacherSessionAliasFallbacks');
   });
@@ -30,6 +30,16 @@ describe('B4 canonical teacher collection reads', () => {
     const source = fs.readFileSync(path, 'utf8');
     expect(source).not.toMatch(/where\(\s*['\"]teacherIds['\"]/);
     SCALAR_LEGACY_ALIAS_QUERY_PATTERNS.forEach((pattern) => expect(source).not.toMatch(pattern));
+  });
+
+  it('physically retires the dead alias-query helper while keeping the canonical query builder', () => {
+    const source = fs.readFileSync('src/pages/teacher/hooks/teacherSessionOwnership.ts', 'utf8');
+
+    expect(source).toContain('buildCanonicalTeacherSessionQuery');
+    expect(source).not.toContain('TEACHER_SESSION_FALLBACK_ALIASES');
+    expect(source).not.toContain('fetchTeacherSessionAliasFallbacks');
+    expect(source).not.toContain('makeTeacherFallbackCacheKey');
+    expect(source).not.toContain('getDocsLogged');
   });
 
   it('keeps enrollment reads canonical in useTeacherStudents while preserving kids.teacherIds', () => {

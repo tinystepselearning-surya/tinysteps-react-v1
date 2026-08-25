@@ -6,8 +6,6 @@ export const LEGACY_TEACHER_ID_ALIAS_FIELDS = [
   'teacher_id',
 ] as const;
 
-type LegacyTeacherIdAliasField = typeof LEGACY_TEACHER_ID_ALIAS_FIELDS[number];
-
 export type CanonicalTeacherIdentityResolution = {
   teacherId: string | null;
   source: 'canonical' | 'legacy' | 'missing' | 'ambiguous_legacy';
@@ -16,11 +14,6 @@ export type CanonicalTeacherIdentityResolution = {
 
 export type CanonicalTeacherWriteFields = {
   teacherId: string;
-  teacherIds: string[];
-  assignedTeacherId: string;
-  primaryTeacherId: string;
-  teacherUid: string;
-  teacher_id: string;
 };
 
 export function normalizeTeacherIdentityValue(value: unknown): string {
@@ -36,6 +29,7 @@ function normalizeTeacherIdentityList(value: unknown): string[] {
   );
 }
 
+// Retained for historical/backfill resolution only. Active B5 writes are canonical-only.
 export function collectLegacyTeacherIdentityRefs(
   record: Record<string, unknown> | undefined,
 ): string[] {
@@ -70,42 +64,20 @@ export function resolveCanonicalTeacherIdForWrite(
   return {teacherId: null, source: 'missing', legacyRefs};
 }
 
+// B5 write contract: operational session ownership is persisted only in teacherId.
+// Existing alias fields are not deleted here; physical cleanup remains a separately reviewed migration.
 export function buildCanonicalTeacherWriteFields(teacherId: unknown): CanonicalTeacherWriteFields {
   const canonicalTeacherId = normalizeTeacherIdentityValue(teacherId);
   if (!canonicalTeacherId) {
-    throw new Error('Canonical teacherId is required before writing teacher ownership aliases');
+    throw new Error('Canonical teacherId is required before writing teacher ownership');
   }
 
-  return {
-    teacherId: canonicalTeacherId,
-    teacherIds: [canonicalTeacherId],
-    assignedTeacherId: canonicalTeacherId,
-    primaryTeacherId: canonicalTeacherId,
-    teacherUid: canonicalTeacherId,
-    teacher_id: canonicalTeacherId,
-  };
+  return {teacherId: canonicalTeacherId};
 }
 
 export function buildEnrollmentTeacherWriteFields(teacherId: unknown): {
   teacherId: string | null;
-  teacherIds: string[];
 } {
   const canonicalTeacherId = normalizeTeacherIdentityValue(teacherId);
-  return {
-    teacherId: canonicalTeacherId || null,
-    teacherIds: canonicalTeacherId ? [canonicalTeacherId] : [],
-  };
-}
-
-export function aliasFieldMatchesCanonicalTeacher(
-  field: LegacyTeacherIdAliasField,
-  value: unknown,
-  teacherId: string,
-): boolean {
-  if (field === 'teacherIds') {
-    const ids = normalizeTeacherIdentityList(value);
-    return ids.length === 1 && ids[0] === teacherId;
-  }
-  const normalized = normalizeTeacherIdentityValue(value);
-  return !normalized || normalized === teacherId;
+  return {teacherId: canonicalTeacherId || null};
 }
