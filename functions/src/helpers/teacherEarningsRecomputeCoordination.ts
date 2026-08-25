@@ -85,7 +85,7 @@ export const planTeacherEarningsRecomputeFinalize = (input: {
 }): TeacherEarningsRecomputeFinalizeDecision => {
   const claimId = normalizeText(input.claimId);
   const claimEpoch = nonNegativeInteger(input.claimEpoch, -1);
-  if (!claimId || claimEpoch < 0) {
+  if (!claimId || claimEpoch < 1) {
     return { mode: 'reject', reason: 'invalid_recompute_claim' };
   }
   if (!input.rollup) return { mode: 'superseded', reason: 'rollup_missing' };
