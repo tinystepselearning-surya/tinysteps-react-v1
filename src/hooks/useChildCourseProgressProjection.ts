@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 
 import { db } from '../lib/firebaseConfig';
-import { requestCourseProgressBootstrap } from '../lib/parentCanonicalProjectionBootstrap';
+import {
+  normalizeBootstrapCourseId,
+  requestCourseProgressBootstrap,
+} from '../lib/parentCanonicalProjectionBootstrap';
 
 export type ChildCourseProgressStageProjection = {
   key: string;
@@ -125,7 +128,7 @@ export function useChildCourseProgressProjection(
   enabled = true,
 ) {
   const normalizedKidId = String(kidId || '').trim();
-  const normalizedCourseId = String(courseId || '').trim();
+  const normalizedCourseId = normalizeBootstrapCourseId(String(courseId || '')) || '';
   const projectionKey = enabled && normalizedKidId && normalizedCourseId
     ? `${normalizedKidId}::${normalizedCourseId}`
     : '';
