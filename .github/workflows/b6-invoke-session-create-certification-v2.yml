@@ -47,12 +47,15 @@ jobs:
           set -euo pipefail
           runner="functions/scripts/b6InvokeSessionCreateCertificationCallableV2.js"
           ! grep -E "\.set\(|\.update\(|\.delete\(|\.create\(|\.add\(|batch\.commit\(|runTransaction\(" "$runner"
+          grep -F "FIREBASE_SERVICE_ACCOUNT_JSON" "$runner"
+          grep -F "admin.credential.cert(serviceAccount)" "$runner"
           grep -F "createCustomToken" "$runner"
           grep -F "signInWithCustomToken" "$runner"
           grep -F "certifyTeacherEarningsSessionCreateFastPath" "$runner"
           grep -F "apply: true" "$runner"
           grep -F "const snap = await certificationRef.get();" "$runner"
-          echo "Callable-only mutation path guard passed."
+          ! grep -E "console\.(log|info|warn|error).*serviceAccount" "$runner"
+          echo "Callable-only mutation path and secret-handling guard passed."
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -64,13 +67,6 @@ jobs:
       - name: Install Functions dependencies
         run: npm ci --prefix functions --include=dev --ignore-scripts
 
-      - name: Authenticate to Google Cloud
-        id: gcp-auth
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
-          create_credentials_file: true
-
       - name: Invoke deployed certification callable and verify persisted state
         run: >-
           node functions/scripts/b6InvokeSessionCreateCertificationCallableV2.js
@@ -78,7 +74,7 @@ jobs:
           --month=${{ env.CERTIFICATION_MONTH_KEY }}
           --output=artifacts/b6-session-create-certification-callable-v2.json
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
 
       - name: Upload certification evidence
         uses: actions/upload-artifact@v4
