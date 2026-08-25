@@ -14,6 +14,28 @@ const IST_OFFSET_MINUTES = 330;
 const COURSE_ID_RE = /^[A-Za-z0-9_-]{1,100}$/;
 const MONTH_RE = /^\d{4}-\d{2}$/;
 
+const COURSE_ID_ALIASES: Record<string, string> = {
+  'phonics-foundation': 'phonics-foundations',
+  foundational: 'phonics-foundations',
+  foundation: 'phonics-foundations',
+  'phonics-early': 'early-phonics',
+  early: 'early-phonics',
+  'phonics-advanced': 'advanced-phonics',
+  advanced: 'advanced-phonics',
+  'grammar-essentials': 'basic-grammar',
+  'grammar-mastery': 'advanced-grammar',
+  'intermediate-grammar': 'basic-grammar',
+  'public-speaking-foundations': 'basic-public-speaking',
+  'public-speaking-excellence': 'advanced-public-speaking',
+  'intermediate-public-speaking': 'basic-public-speaking',
+};
+
+export function normalizeBootstrapCourseId(courseId: string): string | null {
+  const raw = String(courseId || '').trim().toLowerCase();
+  if (!COURSE_ID_RE.test(raw)) return null;
+  return COURSE_ID_ALIASES[raw] || raw;
+}
+
 export function currentIndiaMonthKey(nowMs = Date.now()): string {
   const ist = new Date(nowMs + IST_OFFSET_MINUTES * 60 * 1000);
   const year = ist.getUTCFullYear();
@@ -22,8 +44,8 @@ export function currentIndiaMonthKey(nowMs = Date.now()): string {
 }
 
 export function courseBootstrapRequestId(courseId: string): string | null {
-  const normalized = String(courseId || '').trim().toLowerCase();
-  return COURSE_ID_RE.test(normalized) ? `v1-course-${normalized}` : null;
+  const normalized = normalizeBootstrapCourseId(courseId);
+  return normalized ? `v1-course-${normalized}` : null;
 }
 
 export function attendanceBootstrapRequestId(monthKey: string): string | null {
@@ -42,10 +64,13 @@ async function createRequest(args: {
   if (!parentId) return 'no_authenticated_parent';
   if (!kidId || kidId.length > 200) return 'invalid_input';
 
+  const normalizedCourseId = args.kind === 'course_progress'
+    ? normalizeBootstrapCourseId(String(args.courseId || ''))
+    : null;
   const requestId = args.kind === 'course_progress'
     ? courseBootstrapRequestId(String(args.courseId || ''))
     : attendanceBootstrapRequestId(String(args.monthKey || ''));
-  if (!requestId) return 'invalid_input';
+  if (!requestId || (args.kind === 'course_progress' && !normalizedCourseId)) return 'invalid_input';
 
   const requestKey = `${parentId}:${kidId}:${requestId}`;
   if (inFlightRequests.has(requestKey)) return 'already_requested';
@@ -75,7 +100,7 @@ async function createRequest(args: {
     if (args.kind === 'course_progress') {
       await setDoc(requestRef, {
         ...base,
-        courseId: String(args.courseId || '').trim().toLowerCase(),
+        courseId: normalizedCourseId,
       });
     } else {
       await setDoc(requestRef, {
