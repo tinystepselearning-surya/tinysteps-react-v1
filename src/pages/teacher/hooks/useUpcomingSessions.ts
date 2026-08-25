@@ -24,10 +24,12 @@ import {
 } from '../utils/resolveTeacherSessionStudentName';
 import {
   buildCanonicalTeacherSessionQuery,
-  fetchTeacherSessionAliasFallbacks,
-  makeTeacherFallbackCacheKey,
   mergeAndDedupeSessionDocs,
 } from './teacherSessionOwnership';
+import {
+  operationalTeacherRecordBelongsTo,
+  resolveOperationalTeacherId,
+} from '../../../lib/teacherIdentity';
 
 interface UseUpcomingSessionsResult {
   sessions: TeacherSession[];
@@ -64,26 +66,15 @@ const normalizeKidIds = (doc: any): string[] => {
 };
 
 const normalizeTeacherIds = (doc: any): string[] => {
-  const raw = Array.isArray(doc.teacherIds) ? doc.teacherIds : [];
-  const singles = [doc.teacherId, doc.assignedTeacherId, doc.primaryTeacherId, doc.teacherUid, doc.teacher_id];
-
-  return Array.from(
-    new Set(
-      [...raw, ...singles]
-        .map((id: unknown) => (typeof id === 'string' ? id.trim() : ''))
-        .filter(Boolean),
-    ),
-  );
+  const resolvedTeacherId = resolveOperationalTeacherId(doc as Record<string, unknown>);
+  return resolvedTeacherId ? [resolvedTeacherId] : [];
 };
 
-const resolveTeacherId = (doc: any): string => {
-  return normalizeTeacherIds(doc)[0] || '';
-};
+const resolveTeacherId = (doc: any): string =>
+  resolveOperationalTeacherId(doc as Record<string, unknown>);
 
-const sessionBelongsToTeacher = (doc: any, teacherId: string): boolean => {
-  if (!teacherId) return false;
-  return normalizeTeacherIds(doc).includes(teacherId);
-};
+const sessionBelongsToTeacher = (doc: any, teacherId: string): boolean =>
+  operationalTeacherRecordBelongsTo(doc as Record<string, unknown>, teacherId);
 
 const chunkIds = (ids: string[], size = 10): string[][] => {
   const chunks: string[][] = [];
@@ -378,9 +369,6 @@ export const useUpcomingSessions = (
     const sourceStates = new Map<string, { status: 'pending' | 'ready' | 'error'; error: Error | null }>([
       ['primary', { status: 'pending', error: null }],
     ]);
-    const fallbackCache = new Map<string, TeacherSession[]>();
-    const fallbackCacheKey = makeTeacherFallbackCacheKey(teacherId, targetDate);
-    let fallbackPromise: Promise<void> | null = null;
 
     const setSettledState = () => {
       if (cancelled) return;
@@ -403,7 +391,6 @@ export const useUpcomingSessions = (
     const publishMerged = async () => {
       const merged = mergeAndDedupeSessionDocs(
         ...Array.from(liveDocsBySource.values()).map((rows) => rows.values()),
-        (fallbackCache.get(fallbackCacheKey) || []).values(),
       );
 
       const next = Array.from(merged.values()).filter((session) =>
@@ -522,74 +509,6 @@ export const useUpcomingSessions = (
     };
 
     const listeners: Array<() => void> = [];
-    const ensureFallbackRows = () => {
-      if (fallbackCache.has(fallbackCacheKey) || fallbackPromise) return;
-
-      fallbackPromise = fetchTeacherSessionAliasFallbacks({
-        buildScopedQuery: (field, operator) => buildScopedTeacherQuery(field, operator),
-        includeAliases: ['teacherIds', 'assignedTeacherId', 'primaryTeacherId', 'teacherUid', 'teacher_id'],
-        mapDoc: (docSnap) => toTeacherSession({
-          id: docSnap.id,
-          ...(docSnap.data() as Record<string, unknown>),
-        }),
-        rowMatchesTeacher: (row) => sessionBelongsToTeacher(row as any, teacherId),
-        onQuery: ({ field, operator }) => {
-          devLogTeacherQuery('useUpcomingSessions', 'listen', {
-            queryName: `fallback-${field}`,
-            collection: 'classSessions',
-            aliasField: field,
-            op: operator,
-            dateRange: { type: 'single', date: targetDate },
-            authUid: teacherId,
-            mode: 'getDocs-fallback',
-          });
-        },
-        onQueryError: ({ field, operator, error }) => {
-          devLogTeacherQuery('useUpcomingSessions', 'error', {
-            queryName: `fallback-${field}`,
-            collection: 'classSessions',
-            aliasField: field,
-            op: operator,
-            dateRange: { type: 'single', date: targetDate },
-            authUid: teacherId,
-            error: error instanceof Error ? error.message : String(error),
-            code: (error as any)?.code || null,
-          });
-        },
-        source: 'src/pages/teacher/hooks/useUpcomingSessions.ts',
-        labelPrefix: 'useUpcomingSessions:fallback',
-      })
-        .then((result) => {
-          if (cancelled) return;
-          fallbackCache.set(fallbackCacheKey, result.rows);
-          if (import.meta.env.DEV) {
-            console.info('[useUpcomingSessions] fallback-used', {
-              authUid: teacherId,
-              dateRange: { type: 'single', date: targetDate },
-              cacheKey: fallbackCacheKey,
-              aliases: result.succeededAliases,
-              deniedAliases: result.deniedAliases,
-              rows: result.rows.length,
-            });
-          }
-          void publishMerged();
-        })
-        .catch((err) => {
-          if (cancelled) return;
-          devLogTeacherQuery('useUpcomingSessions', 'error', {
-            queryName: 'fallback',
-            collection: 'classSessions',
-            aliasField: 'fallback',
-            dateRange: { type: 'single', date: targetDate },
-            authUid: teacherId,
-            error: err instanceof Error ? err.message : String(err),
-            code: (err as any)?.code || null,
-          });
-        })
-        .finally(() => {
-          fallbackPromise = null;
-        });
-    };
 
     const attachListener = (
       sourceKey: string,
@@ -651,9 +570,6 @@ export const useUpcomingSessions = (
             ));
             setIsLoading(false);
           });
-          if (sourceKey === 'primary') {
-            ensureFallbackRows();
-          }
         },
         (err) => {
           const errMessage = err instanceof Error ? err.message : String(err);

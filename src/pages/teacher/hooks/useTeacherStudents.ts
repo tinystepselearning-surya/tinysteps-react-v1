@@ -2,21 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { collection, doc, query, where } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
 import { getDocLogged, getDocsLogged } from '../../../lib/firestoreReadLogging';
-import { fetchTeacherSessionAliasFallbacks } from './teacherSessionOwnership';
+import { operationalTeacherRecordBelongsTo } from '../../../lib/teacherIdentity';
 import { TeacherStudent } from '../../../types/Teacher';
-
-const normalizeTeacherIds = (row: Record<string, unknown> | undefined): string[] => {
-  if (!row) return [];
-  const teacherIds = Array.isArray(row.teacherIds) ? row.teacherIds : [];
-  const singles = [row.teacherId, row.assignedTeacherId, row.primaryTeacherId, row.teacherUid, row.teacher_id];
-  return Array.from(
-    new Set(
-      [...teacherIds, ...singles]
-        .map((value) => (typeof value === 'string' ? value.trim() : ''))
-        .filter(Boolean),
-    ),
-  );
-};
 
 const fetchTeacherStudents = async (teacherId: string): Promise<TeacherStudent[]> => {
   const kidsByTeacherIdSnap = await getDocsLogged(
@@ -55,19 +42,6 @@ const fetchTeacherStudents = async (teacherId: string): Promise<TeacherStudent[]
     enrollmentDocsById.set(docSnap.id, { id: docSnap.id, ...(docSnap.data() as any) });
   });
 
-  if (enrollmentDocsById.size === 0) {
-    const fallback = await fetchTeacherSessionAliasFallbacks<Record<string, any> & { id: string }>({
-      buildScopedQuery: (field, operator) => query(enrollmentsBase, where(field, operator, teacherId)),
-      includeAliases: ['teacherIds', 'assignedTeacherId', 'primaryTeacherId', 'teacherUid', 'teacher_id'],
-      mapDoc: (docSnap) => ({ id: docSnap.id, ...(docSnap.data() as Record<string, unknown>) }),
-      rowMatchesTeacher: (row) => normalizeTeacherIds(row).includes(teacherId),
-      source: 'src/pages/teacher/hooks/useTeacherStudents.ts',
-      labelPrefix: 'useTeacherStudents:fallback',
-    });
-    fallback.rows.forEach((row) => {
-      enrollmentDocsById.set(row.id, row);
-    });
-  }
 
   enrollmentDocsById.forEach((enrollment) => {
     const ids = new Set<string>();
@@ -141,7 +115,7 @@ const fetchTeacherStudents = async (teacherId: string): Promise<TeacherStudent[]
 
   return kidDocs.flatMap(({ id, data }) => {
     const enrollments = (enrollmentsByKidId.get(id) || []).filter((enrollment) =>
-      normalizeTeacherIds(enrollment as Record<string, unknown>).includes(teacherId),
+      operationalTeacherRecordBelongsTo(enrollment as Record<string, unknown>, teacherId),
     );
     const parentId =
       data.primaryParentId ||

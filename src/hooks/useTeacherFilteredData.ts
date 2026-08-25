@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { collection, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebaseConfig';
 import { getDocsLogged } from '../lib/firestoreReadLogging';
-import { fetchTeacherSessionAliasFallbacks } from '../pages/teacher/hooks/teacherSessionOwnership';
+import { operationalTeacherRecordBelongsTo } from '../lib/teacherIdentity';
 import { useAuthStore } from '../store/useAuthStore';
 
 interface FilteredStudent {
@@ -25,19 +25,6 @@ type QueryError = Error & { code?: string | null };
 const ACTIVE_PROGRESS_STATUS = 'on_track';
 
 const readName = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
-
-const normalizeTeacherIds = (row: Record<string, unknown> | undefined): string[] => {
-  if (!row) return [];
-  const teacherIds = Array.isArray(row.teacherIds) ? row.teacherIds : [];
-  const singles = [row.teacherId, row.assignedTeacherId, row.primaryTeacherId, row.teacherUid, row.teacher_id];
-  return Array.from(
-    new Set(
-      [...teacherIds, ...singles]
-        .map((value) => (typeof value === 'string' ? value.trim() : ''))
-        .filter(Boolean),
-    ),
-  );
-};
 
 const extractEntityIds = (row: Record<string, unknown> | undefined): string[] => {
   if (!row) return [];
@@ -91,11 +78,9 @@ const resolveSnapshotName = (row: EnrollmentRow): string => {
 async function fetchTeacherFilteredStudents(teacherId: string): Promise<FilteredStudent[]> {
   const base = collection(db, 'enrollments');
   const merged = new Map<string, FilteredStudent>();
-  const deniedAliases: string[] = [];
-
   const mergeRows = (rows: EnrollmentRow[]) => {
     rows.forEach((row) => {
-      if (!normalizeTeacherIds(row).includes(teacherId)) return;
+      if (!operationalTeacherRecordBelongsTo(row, teacherId)) return;
 
       const uid = extractEntityIds(row)[0];
       if (!uid) return;
@@ -146,51 +131,11 @@ async function fetchTeacherFilteredStudents(teacherId: string): Promise<Filtered
     }) as EnrollmentRow),
   );
 
-  const teacherIdsFallback = await fetchTeacherSessionAliasFallbacks<EnrollmentRow>({
-    buildScopedQuery: (field, operator) => query(base, where(field, operator, teacherId)),
-    includeAliases: ['teacherIds'],
-    mapDoc: (docSnap) => ({ id: docSnap.id, ...(docSnap.data() as Record<string, unknown>) }),
-    rowMatchesTeacher: (row) => normalizeTeacherIds(row).includes(teacherId),
-    onQueryError: ({ field, error }) => {
-      if (isPermissionDeniedError(error)) deniedAliases.push(field);
-      devLogStudentQuery('info', {
-        phase: 'alias-query-skipped',
-        alias: field,
-        code: (error as QueryError | undefined)?.code || null,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    },
-    source: 'src/hooks/useTeacherFilteredData.ts',
-    labelPrefix: 'useTeacherFilteredStudents:fallback',
-  });
-  mergeRows(teacherIdsFallback.rows);
-
-  if (merged.size === 0) {
-    const fallback = await fetchTeacherSessionAliasFallbacks<EnrollmentRow>({
-      buildScopedQuery: (field, operator) => query(base, where(field, operator, teacherId)),
-      includeAliases: ['assignedTeacherId', 'primaryTeacherId', 'teacherUid', 'teacher_id'],
-      mapDoc: (docSnap) => ({ id: docSnap.id, ...(docSnap.data() as Record<string, unknown>) }),
-      rowMatchesTeacher: (row) => normalizeTeacherIds(row).includes(teacherId),
-      onQueryError: ({ field, error }) => {
-        if (isPermissionDeniedError(error)) deniedAliases.push(field);
-        devLogStudentQuery('info', {
-          phase: 'alias-query-skipped',
-          alias: field,
-          code: (error as QueryError | undefined)?.code || null,
-          error: error instanceof Error ? error.message : String(error),
-        });
-      },
-      source: 'src/hooks/useTeacherFilteredData.ts',
-      labelPrefix: 'useTeacherFilteredStudents:fallback',
-    });
-    mergeRows(fallback.rows);
-  }
 
   devLogStudentQuery('debug', {
     phase: 'loaded',
     teacherId,
     rows: merged.size,
-    deniedAliases,
   });
 
   return Array.from(merged.values()).sort((a, b) => a.fullName.localeCompare(b.fullName));

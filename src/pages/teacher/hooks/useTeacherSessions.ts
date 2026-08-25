@@ -15,10 +15,12 @@ import {
 } from '../utils/resolveTeacherSessionStudentName';
 import {
   buildCanonicalTeacherSessionQuery,
-  fetchTeacherSessionAliasFallbacks,
-  makeTeacherFallbackCacheKey,
   mergeAndDedupeSessionDocs,
 } from './teacherSessionOwnership';
+import {
+  operationalTeacherRecordBelongsTo,
+  resolveOperationalTeacherId,
+} from '../../../lib/teacherIdentity';
 
 interface UseTeacherSessionsResult {
   sessions: TeacherSession[];
@@ -184,26 +186,11 @@ const normalizeKidIds = (doc: any): string[] => {
     .filter((id: string) => id.length > 0);
 };
 
-const normalizeTeacherIds = (doc: any): string[] => {
-  const raw = Array.isArray(doc.teacherIds) ? doc.teacherIds : [];
-  const singles = [doc.teacherId, doc.assignedTeacherId, doc.primaryTeacherId, doc.teacherUid, doc.teacher_id];
-  return Array.from(
-    new Set(
-      [...raw, ...singles]
-        .map((id: unknown) => toCleanText(id))
-        .filter((id: string) => id.length > 0),
-    ),
-  );
-};
+const sessionBelongsToTeacher = (doc: any, teacherId: string): boolean =>
+  operationalTeacherRecordBelongsTo(doc as Record<string, unknown>, teacherId);
 
-const sessionBelongsToTeacher = (doc: any, teacherId: string): boolean => {
-  if (!teacherId) return false;
-  return normalizeTeacherIds(doc).includes(teacherId);
-};
-
-const resolveTeacherId = (doc: any): string => {
-  return normalizeTeacherIds(doc)[0] || '';
-};
+const resolveTeacherId = (doc: any): string =>
+  resolveOperationalTeacherId(doc as Record<string, unknown>);
 
 const toTeacherSession = (doc: any): TeacherSession => {
   const startAtDate = toDateMaybe(doc.startAt);
@@ -526,9 +513,6 @@ export const useTeacherSessions = (
     const sourceStates = new Map<string, { status: 'pending' | 'ready' | 'error'; error: Error | null }>([
       ['primary', { status: 'pending', error: null }],
     ]);
-    const fallbackCache = new Map<string, TeacherSession[]>();
-    const fallbackCacheKey = makeTeacherFallbackCacheKey(teacherKey, `${start}::${end}`);
-    let fallbackPromise: Promise<void> | null = null;
 
     const setSettledState = () => {
       if (cancelled) return;
@@ -620,7 +604,6 @@ export const useTeacherSessions = (
     const publishMergedRows = () => {
       const merged = mergeAndDedupeSessionDocs(
         ...Array.from(liveDocsBySource.values()).map((sourceRows) => sourceRows.values()),
-        (fallbackCache.get(fallbackCacheKey) || []).values(),
       );
       const bounded = Array.from(merged.values()).filter((session) => {
         const date = toCleanText(session.date);
@@ -644,75 +627,6 @@ export const useTeacherSessions = (
         ));
         setIsLoading(false);
       });
-    };
-
-    const ensureFallbackRows = () => {
-      if (includeAllTeachers || !teacherKey) return;
-      if (fallbackCache.has(fallbackCacheKey) || fallbackPromise) return;
-
-      fallbackPromise = fetchTeacherSessionAliasFallbacks({
-        buildScopedQuery: (field, operator) => buildScopedTeacherQuery(field, operator),
-        mapDoc: (docSnap) => toTeacherSession({ id: docSnap.id, ...(docSnap.data() as Record<string, unknown>) }),
-        rowMatchesTeacher: (row) => sessionBelongsToTeacher(row as any, teacherKey),
-        onQuery: ({ field, operator }) => {
-          devLogTeacherQuery('useTeacherSessions', 'listen', {
-            queryName: `fallback-${field}`,
-            collection: 'classSessions',
-            aliasField: field,
-            operator,
-            teacherUid: teacherKey || null,
-            todayDate,
-            dateRange: { start, end },
-            mode: 'getDocs-fallback',
-          });
-        },
-        onQueryError: ({ field, operator, error }) => {
-          devLogTeacherQuery('useTeacherSessions', 'error', {
-            queryName: `fallback-${field}`,
-            collection: 'classSessions',
-            aliasField: field,
-            operator,
-            teacherUid: teacherKey || null,
-            todayDate,
-            dateRange: { start, end },
-            error: error instanceof Error ? error.message : String(error),
-            code: (error as any)?.code || null,
-          });
-        },
-        source: 'src/pages/teacher/hooks/useTeacherSessions.ts',
-        labelPrefix: 'useTeacherSessions:fallback',
-      })
-        .then((result) => {
-          if (cancelled) return;
-          fallbackCache.set(fallbackCacheKey, result.rows);
-          if (import.meta.env.DEV) {
-            console.info('[useTeacherSessions] fallback-used', {
-              teacherUid: teacherKey || null,
-              dateRange: { start, end },
-              cacheKey: fallbackCacheKey,
-              aliases: result.succeededAliases,
-              deniedAliases: result.deniedAliases,
-              rows: result.rows.length,
-            });
-          }
-          publishMergedRows();
-        })
-        .catch((err) => {
-          if (cancelled) return;
-          devLogTeacherQuery('useTeacherSessions', 'error', {
-            queryName: 'fallback',
-            collection: 'classSessions',
-            aliasField: 'fallback',
-            teacherUid: teacherKey || null,
-            todayDate,
-            dateRange: { start, end },
-            error: err instanceof Error ? err.message : String(err),
-            code: (err as any)?.code || null,
-          });
-        })
-        .finally(() => {
-          fallbackPromise = null;
-        });
     };
 
     devLogTeacherQuery('useTeacherSessions', 'listen', {
@@ -748,7 +662,6 @@ export const useTeacherSessions = (
           ),
         );
         publishMergedRows();
-        ensureFallbackRows();
       },
       (err) => {
         devLogTeacherQuery('useTeacherSessions', 'error', {
