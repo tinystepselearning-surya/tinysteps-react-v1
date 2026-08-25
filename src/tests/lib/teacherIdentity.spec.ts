@@ -34,7 +34,7 @@ describe('teacher identity normalization contract', () => {
     expect(operationalTeacherRecordBelongsTo(record, 'other-teacher')).toBe(false);
   });
 
-  it('preserves legacy resolution for records that do not yet have teacherId', () => {
+  it('preserves legacy resolution for historical records that do not yet have teacherId', () => {
     expect(resolveOperationalTeacherId({
       assignedTeacherId: 'assigned-teacher',
       teacherIds: ['array-teacher'],
@@ -80,7 +80,7 @@ describe('teacher identity normalization contract', () => {
     });
   });
 
-  it('accepts fully aligned compatibility aliases during the migration phase', () => {
+  it('still audits fully aligned historical aliases without requiring them on new writes', () => {
     expect(auditOperationalTeacherIdentity({
       teacherId: 'teacher-a',
       teacherIds: ['teacher-a'],
@@ -98,21 +98,15 @@ describe('teacher identity normalization contract', () => {
     });
   });
 
-  it('derives every temporary session alias from one canonical teacherId', () => {
+  it('writes only canonical teacherId for operational ownership after B5', () => {
     expect(buildCanonicalOperationalTeacherWriteFields(' teacher-a ')).toEqual({
       teacherId: 'teacher-a',
-      teacherIds: ['teacher-a'],
-      assignedTeacherId: 'teacher-a',
-      primaryTeacherId: 'teacher-a',
-      teacherUid: 'teacher-a',
-      teacher_id: 'teacher-a',
     });
   });
 
-  it('keeps enrollment ownership minimal and canonical', () => {
+  it('writes only canonical teacherId for enrollment ownership after B5', () => {
     expect(buildCanonicalEnrollmentTeacherWriteFields(' teacher-a ')).toEqual({
       teacherId: 'teacher-a',
-      teacherIds: ['teacher-a'],
     });
   });
 
