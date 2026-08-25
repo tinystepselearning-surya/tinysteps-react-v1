@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { analyzeTeacherEarningsCanonicalCoverage } from '../src/helpers/teacherEarningsCanonicalAudit';
+import {
+  analyzeTeacherEarningsCanonicalCoverage,
+  analyzeTeacherEarningsLegacyMonthCoverage,
+} from '../src/helpers/teacherEarningsCanonicalAudit';
 
 describe('teacher earnings canonical coverage audit', () => {
   it('reports clean canonical current-month session coverage', () => {
@@ -155,5 +158,146 @@ describe('teacher earnings canonical coverage audit', () => {
     expect(result.missingTeacherIdRows).toBe(0);
     expect(result.samples.nonCanonicalSessionRows).toHaveLength(1);
     expect(result.samples.nonCanonicalSessionRows[0]?.id).toBe('legacy-2');
+  });
+});
+
+describe('teacher earnings legacy month coverage audit', () => {
+  it('reports clean coverage when active rows have explicit consistent month keys', () => {
+    const result = analyzeTeacherEarningsLegacyMonthCoverage(
+      [
+        {
+          id: 'session-1',
+          teacherId: 'teacher-1',
+          monthKey: '2026-08',
+          earnedAt: '2026-08-10T10:00:00+05:30',
+        },
+        {
+          id: 'session-2',
+          teacherId: 'teacher-1',
+          monthKey: '2026-07',
+          earnedAt: '2026-07-31T10:00:00+05:30',
+        },
+      ],
+      '2026-08',
+    );
+
+    expect(result).toMatchObject({
+      targetMonthKey: '2026-08',
+      totalRows: 2,
+      activeRows: 2,
+      archivedRows: 0,
+      explicitTargetMonthRows: 1,
+      activeRowsMissingOrInvalidMonthKey: 0,
+      derivedTargetRowsMissingOrInvalidMonthKey: 0,
+      derivedTargetRowsStoredInDifferentMonth: 0,
+      storedTargetRowsDerivedIntoDifferentMonth: 0,
+      undatedRowsMissingOrInvalidMonthKey: 0,
+      legacyMonthCoverageClean: true,
+    });
+  });
+
+  it('detects a target-month earning whose month exists only in timestamps', () => {
+    const result = analyzeTeacherEarningsLegacyMonthCoverage(
+      [
+        {
+          id: 'legacy-current',
+          teacherId: 'teacher-1',
+          earnedAt: '2026-08-12T12:00:00+05:30',
+        },
+      ],
+      '2026-08',
+    );
+
+    expect(result).toMatchObject({
+      activeRowsMissingOrInvalidMonthKey: 1,
+      derivedTargetRowsMissingOrInvalidMonthKey: 1,
+      legacyMonthCoverageClean: false,
+    });
+    expect(result.samples.derivedTargetRowsMissingOrInvalidMonthKey[0]).toMatchObject({
+      id: 'legacy-current',
+      teacherId: 'teacher-1',
+      derivedMonthKey: '2026-08',
+    });
+  });
+
+  it('detects stored/derived month conflicts in both directions', () => {
+    const result = analyzeTeacherEarningsLegacyMonthCoverage(
+      [
+        {
+          id: 'wrong-stored-month',
+          teacherId: 'teacher-1',
+          monthKey: '2026-07',
+          earnedAt: '2026-08-02T10:00:00+05:30',
+        },
+        {
+          id: 'wrong-target-month',
+          teacherId: 'teacher-2',
+          monthKey: '2026-08',
+          earnedAt: '2026-07-31T10:00:00+05:30',
+        },
+      ],
+      '2026-08',
+    );
+
+    expect(result).toMatchObject({
+      derivedTargetRowsStoredInDifferentMonth: 1,
+      storedTargetRowsDerivedIntoDifferentMonth: 1,
+      legacyMonthCoverageClean: false,
+    });
+    expect(result.samples.derivedTargetRowsStoredInDifferentMonth[0]?.id).toBe('wrong-stored-month');
+    expect(result.samples.storedTargetRowsDerivedIntoDifferentMonth[0]?.id).toBe('wrong-target-month');
+  });
+
+  it('detects undated rows with no usable month key', () => {
+    const result = analyzeTeacherEarningsLegacyMonthCoverage(
+      [{ id: 'undated', teacherId: 'teacher-1', monthKey: 'legacy' }],
+      '2026-08',
+    );
+
+    expect(result).toMatchObject({
+      activeRowsMissingOrInvalidMonthKey: 1,
+      undatedRowsMissingOrInvalidMonthKey: 1,
+      legacyMonthCoverageClean: false,
+    });
+    expect(result.samples.undatedRowsMissingOrInvalidMonthKey[0]?.id).toBe('undated');
+  });
+
+  it('ignores archived legacy rows as blockers', () => {
+    const result = analyzeTeacherEarningsLegacyMonthCoverage(
+      [
+        {
+          id: 'archived-current',
+          teacherId: 'teacher-1',
+          earnedAt: '2026-08-12T12:00:00+05:30',
+          archived: true,
+        },
+      ],
+      '2026-08',
+    );
+
+    expect(result).toMatchObject({
+      totalRows: 1,
+      activeRows: 0,
+      archivedRows: 1,
+      activeRowsMissingOrInvalidMonthKey: 0,
+      derivedTargetRowsMissingOrInvalidMonthKey: 0,
+      legacyMonthCoverageClean: true,
+    });
+  });
+
+  it('derives IST month from Firestore timestamp-like values', () => {
+    const result = analyzeTeacherEarningsLegacyMonthCoverage(
+      [
+        {
+          id: 'timestamp-row',
+          teacherId: 'teacher-1',
+          earnedAt: { seconds: 1787598000, nanoseconds: 0 },
+        },
+      ],
+      '2026-08',
+    );
+
+    expect(result.derivedTargetRowsMissingOrInvalidMonthKey).toBe(1);
+    expect(result.legacyMonthCoverageClean).toBe(false);
   });
 });
