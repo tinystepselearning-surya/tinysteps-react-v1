@@ -594,6 +594,7 @@ export const onSessionRevenueWrite = onDocumentWritten(
           amount: teacherEarningAmount,
           currency,
           status: nextEarningStatus || 'unpaid',
+          source: 'session_present_completed',
           earnedAt: FieldValue.serverTimestamp(),
           monthKey: earningMonthKey,
           updatedAt: FieldValue.serverTimestamp(),

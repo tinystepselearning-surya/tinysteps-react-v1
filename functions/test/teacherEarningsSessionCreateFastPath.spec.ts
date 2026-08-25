@@ -6,7 +6,10 @@ import {
   analyzeTeacherEarningsLegacyMonthCoverage,
 } from '../src/helpers/teacherEarningsCanonicalAudit';
 import { evaluateTeacherEarningsSessionCreateFastPathReadiness } from '../src/helpers/teacherEarningsSessionCreateFastPath';
-import { planTeacherEarningsRollupChange } from '../src/helpers/teacherEarningsRollupDelta';
+import {
+  isCanonicalSessionCreateFastPathCandidate,
+  planTeacherEarningsRollupChange,
+} from '../src/helpers/teacherEarningsRollupDelta';
 
 const cleanRows = [
   {
@@ -124,9 +127,37 @@ describe('B6 Brick 7D1 session-create fast-path evidence gate', () => {
     );
 
     expect(source).toContain("const earningRef = db.collection('teacherEarnings').doc(sessionId)");
-    expect(source).toContain("source: 'session_present_completed'");
-    expect(source).toContain('const earningPayload: Record<string, any> = {\n          sessionId,');
+    const earningPayloadStart = source.indexOf(
+      'const earningPayload: Record<string, any> = {\n          sessionId,',
+    );
+    expect(earningPayloadStart).toBeGreaterThan(-1);
+    const earningPayloadEnd = source.indexOf('\n        };', earningPayloadStart);
+    expect(earningPayloadEnd).toBeGreaterThan(earningPayloadStart);
+    const earningPayloadSource = source.slice(earningPayloadStart, earningPayloadEnd);
+    expect(earningPayloadSource).toContain("source: 'session_present_completed'");
     expect(source).not.toContain("collection('teacherEarnings').add(");
+  });
+
+  it('accepts the canonical revenue-writer shape as a certified session-create candidate', () => {
+    expect(
+      isCanonicalSessionCreateFastPathCandidate({
+        earningId: 'session-writer-shape',
+        before: null,
+        after: {
+          sessionId: 'session-writer-shape',
+          enrollmentId: 'enrollment-1',
+          kidId: 'kid-1',
+          teacherId: 'teacher-1',
+          parentId: 'parent-1',
+          courseId: 'course-1',
+          amount: 175,
+          currency: 'INR',
+          status: 'unpaid',
+          source: 'session_present_completed',
+          monthKey: '2026-08',
+        },
+      }),
+    ).toBe(true);
   });
 
   it('keeps session creation on authoritative recompute until a separate 7D2 cutover', () => {
