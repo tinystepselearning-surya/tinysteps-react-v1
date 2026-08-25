@@ -14,11 +14,22 @@ const ACTIVE_ENROLLMENT_STATUSES = [
   'pending_payment',
 ];
 
+const CLOSED_SESSION_STATUSES = new Set([
+  'cancelled',
+  'canceled',
+  'completed',
+  'present',
+  'attendance_marked',
+  'billable_completed',
+]);
+
 const normalize = (value) => {
   if (typeof value === 'string') return value.trim();
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
   return '';
 };
+
+const normalizeStatus = (value) => normalize(value).toLowerCase() || 'unknown';
 
 const normalizeList = (value) => {
   if (!Array.isArray(value)) return [];
@@ -43,6 +54,13 @@ const resolveTeacherId = (row) => (
   || ''
 );
 
+const hasScheduleConfig = (row) => (
+  Boolean(row?.schedule) &&
+  typeof row.schedule === 'object' &&
+  !Array.isArray(row.schedule) &&
+  Object.keys(row.schedule).length > 0
+);
+
 const auditRow = (id, row) => {
   const canonical = normalize(row.teacherId);
   const aliases = legacyRefs(row);
@@ -61,10 +79,14 @@ const auditRow = (id, row) => {
 
   return {
     id,
+    enrollmentId: normalize(row.enrollmentId) || null,
+    status: normalizeStatus(row.status),
+    hasScheduleConfig: hasScheduleConfig(row),
     canonicalTeacherId: canonical || null,
     resolvedTeacherId: resolveTeacherId(row) || null,
     legacyRefs: aliases,
     missingCanonicalTeacherId: !canonical,
+    missingCanonicalWithoutLegacyRefs: !canonical && aliases.length === 0,
     legacyOnly: !canonical && aliases.length > 0,
     mismatchedFields,
   };
@@ -88,15 +110,72 @@ const parseArgs = (args) => {
   return { project, limit, startDate, summaryOnly };
 };
 
-const summarize = (rows) => ({
-  scanned: rows.length,
-  missingCanonicalTeacherId: rows.filter((row) => row.missingCanonicalTeacherId).length,
-  legacyOnly: rows.filter((row) => row.legacyOnly).length,
-  mismatchedAliases: rows.filter((row) => row.mismatchedFields.length > 0).length,
-  cleanCanonical: rows.filter((row) => (
-    !row.missingCanonicalTeacherId && row.mismatchedFields.length === 0
-  )).length,
-});
+const countByStatus = (rows) => rows.reduce((acc, row) => {
+  acc[row.status] = (acc[row.status] || 0) + 1;
+  return acc;
+}, {});
+
+const summarize = (rows) => {
+  const missingCanonicalRows = rows.filter((row) => row.missingCanonicalTeacherId);
+  const missingWithoutLegacyRows = rows.filter((row) => row.missingCanonicalWithoutLegacyRefs);
+  const legacyOnlyRows = rows.filter((row) => row.legacyOnly);
+  const mismatchedRows = rows.filter((row) => row.mismatchedFields.length > 0);
+  return {
+    scanned: rows.length,
+    missingCanonicalTeacherId: missingCanonicalRows.length,
+    missingCanonicalWithoutLegacyRefs: missingWithoutLegacyRows.length,
+    legacyOnly: legacyOnlyRows.length,
+    mismatchedAliases: mismatchedRows.length,
+    cleanCanonical: rows.filter((row) => (
+      !row.missingCanonicalTeacherId && row.mismatchedFields.length === 0
+    )).length,
+    statusCounts: countByStatus(rows),
+    missingCanonicalByStatus: countByStatus(missingCanonicalRows),
+    missingWithoutLegacyRefsByStatus: countByStatus(missingWithoutLegacyRows),
+    legacyOnlyByStatus: countByStatus(legacyOnlyRows),
+    mismatchedAliasesByStatus: countByStatus(mismatchedRows),
+  };
+};
+
+const summarizeMissingEnrollmentEvidence = (enrollments, classSessions) => {
+  const missing = enrollments.filter((row) => row.missingCanonicalTeacherId);
+  let withScheduleConfig = 0;
+  let withOpenFutureSessions = 0;
+  let withSingleCanonicalFutureTeacher = 0;
+  let withMultipleCanonicalFutureTeachers = 0;
+  let withNoCanonicalFutureTeacher = 0;
+  let withoutOpenFutureSessions = 0;
+
+  missing.forEach((enrollment) => {
+    if (enrollment.hasScheduleConfig) withScheduleConfig += 1;
+    const openFutureSessions = classSessions.filter((session) => (
+      session.enrollmentId === enrollment.id &&
+      !CLOSED_SESSION_STATUSES.has(session.status)
+    ));
+    if (openFutureSessions.length === 0) {
+      withoutOpenFutureSessions += 1;
+      return;
+    }
+
+    withOpenFutureSessions += 1;
+    const futureTeacherIds = Array.from(new Set(
+      openFutureSessions.map((session) => session.canonicalTeacherId).filter(Boolean),
+    ));
+    if (futureTeacherIds.length === 1) withSingleCanonicalFutureTeacher += 1;
+    else if (futureTeacherIds.length > 1) withMultipleCanonicalFutureTeachers += 1;
+    else withNoCanonicalFutureTeacher += 1;
+  });
+
+  return {
+    missingCanonicalEnrollments: missing.length,
+    withScheduleConfig,
+    withOpenFutureSessions,
+    withSingleCanonicalFutureTeacher,
+    withMultipleCanonicalFutureTeachers,
+    withNoCanonicalFutureTeacher,
+    withoutOpenFutureSessions,
+  };
+};
 
 const main = async () => {
   const { project, limit, startDate, summaryOnly } = parseArgs(process.argv.slice(2));
@@ -143,6 +222,7 @@ const main = async () => {
 
   const enrollmentSummary = summarize(enrollments);
   const sessionSummary = summarize(classSessions);
+  const missingEnrollmentEvidence = summarizeMissingEnrollmentEvidence(enrollments, classSessions);
   const result = {
     mode: 'READ_ONLY',
     project,
@@ -151,6 +231,7 @@ const main = async () => {
     collections: {
       enrollments: {
         summary: enrollmentSummary,
+        missingCanonicalEvidence: missingEnrollmentEvidence,
         ...(!summaryOnly ? {
           problems: enrollments.filter((row) => row.missingCanonicalTeacherId || row.mismatchedFields.length > 0),
         } : {}),

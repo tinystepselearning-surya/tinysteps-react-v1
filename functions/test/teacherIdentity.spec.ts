@@ -52,6 +52,16 @@ describe('canonical teacher writer identity', () => {
     });
   });
 
+  it('does not invent a teacher when both canonical and legacy identities are absent', () => {
+    expect(resolveCanonicalTeacherIdForWrite({
+      status: 'active',
+    })).toEqual({
+      teacherId: null,
+      source: 'missing',
+      legacyRefs: [],
+    });
+  });
+
   it('refuses to choose between conflicting legacy identities', () => {
     expect(resolveCanonicalTeacherIdForWrite({
       assignedTeacherId: 'teacher-a',

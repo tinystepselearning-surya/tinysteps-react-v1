@@ -401,11 +401,18 @@ function isTeacherOfKid(kidId) {
     );
 }
 
-function teacherOwnsDocViaAliases(data) {
-  return isSignedIn()
+function teacherOwnsCanonicalDoc(data) {
+  return isTeacher()
+    && ('teacherId' in data)
+    && (data.teacherId is string)
+    && data.teacherId == request.auth.uid;
+}
+
+function teacherOwnsLegacyDocWithoutCanonical(data) {
+  return isTeacher()
+    && !('teacherId' in data)
     && (
-      (('teacherId' in data) && data.teacherId == request.auth.uid)
-      || (
+      (
         ('teacherIds' in data)
         && (data.teacherIds is list)
         && (request.auth.uid in data.teacherIds)
@@ -415,6 +422,11 @@ function teacherOwnsDocViaAliases(data) {
       || (('teacherUid' in data) && data.teacherUid == request.auth.uid)
       || (('teacher_id' in data) && data.teacher_id == request.auth.uid)
     );
+}
+
+function teacherOwnsDocCanonicalFirst(data) {
+  return teacherOwnsCanonicalDoc(data)
+    || teacherOwnsLegacyDocWithoutCanonical(data);
 }
 
     // Class session schema guardrail (canonical collection)
@@ -796,9 +808,14 @@ function teacherOwnsDocViaAliases(data) {
     // ----------------------------
     match /enrollments/{enrollmentId} {
       allow read, write: if isAdmin();
-      allow read: if isParent() && resource.data.parentId == request.auth.uid;
-      allow read: if isTeacher() && teacherOwnsDocViaAliases(resource.data);
-      allow read: if isLP() && resource.data.lpId == request.auth.uid;
+      allow get: if isParent() && resource.data.parentId == request.auth.uid;
+      allow list: if isParent() && resource.data.parentId == request.auth.uid;
+      allow get: if teacherOwnsDocCanonicalFirst(resource.data);
+      // Alias-constrained collection queries cannot prove teacherId is absent and can
+      // otherwise expose canonical documents with stale aliases. Lists are canonical-only.
+      allow list: if teacherOwnsCanonicalDoc(resource.data);
+      allow get: if isLP() && resource.data.lpId == request.auth.uid;
+      allow list: if isLP() && resource.data.lpId == request.auth.uid;
     }
 
     // ----------------------------
@@ -813,12 +830,12 @@ function teacherOwnsDocViaAliases(data) {
     // ----------------------------
     match /classSessions/{sessionId} {
       allow get: if isAdmin()
-        || teacherOwnsDocViaAliases(resource.data)
+        || teacherOwnsDocCanonicalFirst(resource.data)
         || (isParent() && resource.data.parentId == request.auth.uid)
         || (isKid() && ('kidIds' in resource.data) && (request.auth.uid in resource.data.kidIds));
 
       allow list: if isAdmin()
-        || teacherOwnsDocViaAliases(resource.data)
+        || teacherOwnsCanonicalDoc(resource.data)
         || (isParentToken() && resource.data.parentId == request.auth.uid)
         || (isKidToken() && ('kidIds' in resource.data) && (request.auth.uid in resource.data.kidIds));
 
