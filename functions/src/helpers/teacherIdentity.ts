@@ -6,8 +6,6 @@ export const LEGACY_TEACHER_ID_ALIAS_FIELDS = [
   'teacher_id',
 ] as const;
 
-type LegacyTeacherIdAliasField = typeof LEGACY_TEACHER_ID_ALIAS_FIELDS[number];
-
 export type CanonicalTeacherIdentityResolution = {
   teacherId: string | null;
   source: 'canonical' | 'legacy' | 'missing' | 'ambiguous_legacy';
@@ -82,18 +80,4 @@ export function buildEnrollmentTeacherWriteFields(teacherId: unknown): {
 } {
   const canonicalTeacherId = normalizeTeacherIdentityValue(teacherId);
   return {teacherId: canonicalTeacherId || null};
-}
-
-// Historical audit/repair helper. New operational writes no longer emit these aliases.
-export function aliasFieldMatchesCanonicalTeacher(
-  field: LegacyTeacherIdAliasField,
-  value: unknown,
-  teacherId: string,
-): boolean {
-  if (field === 'teacherIds') {
-    const ids = normalizeTeacherIdentityList(value);
-    return ids.length === 1 && ids[0] === teacherId;
-  }
-  const normalized = normalizeTeacherIdentityValue(value);
-  return !normalized || normalized === teacherId;
 }
