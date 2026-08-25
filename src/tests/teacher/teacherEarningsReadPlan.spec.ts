@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   TEACHER_EARNINGS_MONTH_BOUND_CUTOVER_MONTH,
   shouldUseMonthBoundTeacherEarningsRead,
-} from '@/pages/teacher/components/earnings/teacherEarningsReadPlan';
+} from '../../pages/teacher/components/earnings/teacherEarningsReadPlan';
 
 describe('B6 teacher earnings read plan', () => {
   it('month-bounds September 2026 and future months', () => {
