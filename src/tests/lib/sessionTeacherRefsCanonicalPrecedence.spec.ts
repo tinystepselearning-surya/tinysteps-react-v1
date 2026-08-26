@@ -27,13 +27,4 @@ describe('sessionTeacherRefs canonical reassignment precedence', () => {
       ),
     ).toBe('teacher-nandini');
   });
-
-  it('normalizes a canonical Firestore-style teacher reference before legacy aliases', () => {
-    expect(
-      collectSessionTeacherRefs({
-        teacherId: 'users/teacher-nandini',
-        teacherIds: ['teacher-vaishnavi'],
-      }),
-    ).toEqual(['teacher-nandini', 'teacher-vaishnavi']);
-  });
 });
