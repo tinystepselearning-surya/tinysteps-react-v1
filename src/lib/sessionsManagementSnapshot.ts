@@ -48,6 +48,12 @@ let refreshPromise: Promise<SessionsManagementSnapshotPayload> | null = null;
 const canUseSessionStorage = (): boolean =>
   typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined';
 
+const rejectUninjectedTestNetwork = (): void => {
+  if (import.meta.env.MODE === 'test') {
+    throw new Error('Sessions Management snapshot network disabled in unit tests; inject a snapshot loader.');
+  }
+};
+
 const normalizeRows = (value: unknown): SessionsManagementSnapshotRow[] =>
   Array.isArray(value)
     ? value
@@ -141,7 +147,6 @@ const persistCache = (cache: BrowserSnapshotCache): void => {
   try {
     window.sessionStorage.setItem(CACHE_KEY, JSON.stringify(cache));
   } catch (error) {
-    // Snapshot caching is an optimization. Never break Sessions Management if browser quota is constrained.
     console.warn('[SessionsManagementSnapshot] session cache write failed; using memory cache only', error);
   }
 };
@@ -168,6 +173,7 @@ export const getCachedSessionsManagementSnapshot = (): SessionsManagementSnapsho
 
 export async function loadSessionsManagementSnapshot(): Promise<SessionsManagementSnapshotPayload> {
   if (loadPromise) return loadPromise;
+  rejectUninjectedTestNetwork();
 
   loadPromise = (async () => {
     const cached = readStoredCache();
@@ -182,7 +188,6 @@ export async function loadSessionsManagementSnapshot(): Promise<SessionsManageme
     const snapshot = normalizeSnapshot(result?.snapshot);
     if (snapshot) return replaceSnapshotCache(snapshot);
 
-    // A stale/corrupt browser cache should never leave the screen unusable. Retry once without a known id.
     const retry = await callable({ knownSnapshotId: '' });
     const retryResult = retry.data as Record<string, unknown>;
     const retrySnapshot = normalizeSnapshot(retryResult?.snapshot);
@@ -197,6 +202,7 @@ export async function loadSessionsManagementSnapshot(): Promise<SessionsManageme
 
 export async function refreshSessionsManagementSnapshot(): Promise<SessionsManagementSnapshotPayload> {
   if (refreshPromise) return refreshPromise;
+  rejectUninjectedTestNetwork();
 
   refreshPromise = (async () => {
     const callable = httpsCallable(functions, 'adminRefreshSessionsManagementSnapshot');
@@ -215,6 +221,7 @@ export async function refreshSessionsManagementSnapshot(): Promise<SessionsManag
 export async function loadSessionsManagementDateSnapshot(
   dateKey: string,
 ): Promise<SessionsManagementDatePayload> {
+  rejectUninjectedTestNetwork();
   const snapshot = await loadSessionsManagementSnapshot();
   const cached = readStoredCache();
 
