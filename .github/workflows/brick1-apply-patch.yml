@@ -2,16 +2,13 @@ name: Apply Brick 1 authorization patch
 
 on:
   push:
-    branches:
-      - 'fix/teacher-phonics-progress-p0-auth'
-    paths:
-      - '.github/workflows/brick1-apply-patch.yml'
 
 permissions:
   contents: write
 
 jobs:
   apply:
+    if: github.ref == 'refs/heads/fix/teacher-phonics-progress-p0-auth'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Brick 1 branch
