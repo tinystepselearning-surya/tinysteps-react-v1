@@ -45,6 +45,24 @@ const RUBRIC_PROGRESS_SKILLS: Record<string, string[]> = {
   revision: ['Independent use', 'Speed + accuracy', 'Confidence', 'Apply in reading', 'Apply in spelling'],
 };
 
+const PHONICS_LESSON_PROGRESS_SKILLS: Record<string, string[]> = {
+  'phonics-foundations__lesson-02': ['Letter recognition', 'Short vowel pronunciation', 'Vowel sound spotting', 'Letter formation'],
+  'phonics-foundations__lesson-04': ['Letter recognition', 'Short vowel pronunciation', 'Vowel sound spotting', 'Letter formation'],
+  'phonics-foundations__lesson-09': ['Letter recognition', 'Short vowel pronunciation', 'Vowel sound spotting', 'Letter formation'],
+  'phonics-foundations__lesson-15': ['Letter recognition', 'Short vowel pronunciation', 'Vowel sound spotting', 'Letter formation'],
+  'phonics-foundations__lesson-16': ['Letter recognition', 'Short vowel pronunciation', 'Vowel sound spotting', 'Letter formation'],
+  'early-phonics__lesson-15': ['TH recognition', 'TH sound pronunciation', 'KN silent-letter pattern', 'Word reading', 'Pattern spelling'],
+  'early-phonics__lesson-40': ['Hear the schwa sound', 'Spot unstressed syllables', 'Word reading', 'Schwa spelling choice', 'Read sentence'],
+  'advanced-phonics__lesson-01': ['A–Z sound recall', 'Sound pronunciation', 'Blend and segment', 'Word reading', 'Simple spelling'],
+  'advanced-phonics__lesson-24': ['Long A family recognition', 'Compare long A spellings', 'Read long-A words', 'Spell long-A words', 'Read sentence'],
+  'advanced-phonics__lesson-25': ['Long E family recognition', 'Compare long E spellings', 'Read long-E words', 'Spell long-E words', 'Read sentence'],
+  'advanced-phonics__lesson-26': ['Long I family recognition', 'Compare long I spellings', 'Read long-I words', 'Spell long-I words', 'Read sentence'],
+  'advanced-phonics__lesson-27': ['Long O family recognition', 'Compare long O spellings', 'Read long-O words', 'Spell long-O words', 'Read sentence'],
+  'advanced-phonics__lesson-28': ['Long U family recognition', 'Compare long U spellings', 'Read long-U words', 'Spell long-U words', 'Read sentence'],
+  'advanced-phonics__lesson-29': ['Spot missing/sleepy sounds', 'Pronounce reduced sounds', 'Word reading', 'Spelling pattern', 'Read sentence'],
+  'advanced-phonics__lesson-30': ['Hear the schwa sound', 'Spot unstressed syllables', 'Word reading', 'Schwa spelling choice', 'Read sentence'],
+};
+
 const AREA_FALLBACK_SKILLS: Record<ProgressSkillArea, string[]> = {
   phonics: ['Sound recall', 'Blending', 'Read words', 'Spell words', 'Apply rule'],
   grammar: ['Identify concept', 'Apply in sentence', 'Choose correct form', 'Write own example', 'Fix mistakes'],
@@ -143,10 +161,25 @@ export function progressSkillsFromRatingKeys(
     }));
 }
 
+function canonicalPhonicsLessonKey(context: ProgressSkillContext, courseId: string): string {
+  const topicId = String(context.topicId || '').trim().toLowerCase();
+  if (topicId) return topicId;
+
+  const lessonMatch = String(context.lessonId || '').match(/lesson[-_\s]?(\d+)/i);
+  if (!lessonMatch) return '';
+  return `${courseId}__lesson-${String(Number(lessonMatch[1])).padStart(2, '0')}`;
+}
+
 function canonicalPhonicsRubricLabels(context: ProgressSkillContext): string[] | null {
   const courseId = String(context.courseId || '').trim().toLowerCase();
+  if (!CANONICAL_PHONICS_COURSE_IDS.has(courseId)) return null;
+
+  const lessonKey = canonicalPhonicsLessonKey(context, courseId);
+  const lessonSpecific = PHONICS_LESSON_PROGRESS_SKILLS[lessonKey];
+  if (lessonSpecific) return lessonSpecific;
+
   const rubricType = String(context.rubricType || '').trim().toLowerCase();
-  if (!CANONICAL_PHONICS_COURSE_IDS.has(courseId) || !rubricType) return null;
+  if (!rubricType) return null;
   return RUBRIC_PROGRESS_SKILLS[rubricType] ?? null;
 }
 
