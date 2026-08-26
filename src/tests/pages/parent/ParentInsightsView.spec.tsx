@@ -27,7 +27,7 @@ const stage = (
     key: getParentInsightStageKey(order, label),
     order,
     label,
-    state: order === 2 ? "current" : order < 2 ? "completed" : "upcoming",
+    state: order === 2 ? "current" : order < 2 ? "completed" : "not_started",
     progressPct: order === 1 ? 100 : order === 2 ? 40 : 0,
     completedCount: order === 1 ? 4 : order === 2 ? 2 : 0,
     totalCount: 4,
@@ -138,6 +138,8 @@ describe("parent Insights presentation helpers", () => {
     expect(getParentInsightStageKey(2, "Blending")).toBe("2__Blending");
     expect(getParentInsightStageStateLabel("completed")).toBe("Completed");
     expect(getParentInsightStageStateLabel("current")).toBe("Current stage");
+    expect(getParentInsightStageStateLabel("in_progress")).toBe("In progress");
+    expect(getParentInsightStageStateLabel("not_started")).toBe("Not started");
     expect(getParentInsightStageStateLabel("upcoming")).toBe("Upcoming");
     expect(getParentInsightStageStateLabel("unavailable")).toBe("Progress unavailable");
   });
@@ -156,7 +158,14 @@ describe("parent Insights presentation helpers", () => {
       progressPct: 0,
       activeStageKey: "2__Now",
       activeStageOrder: 2,
-    })).toBe("upcoming");
+    })).toBe("not_started");
+    expect(resolveParentInsightStageState({
+      key: "1__Earlier",
+      order: 1,
+      progressPct: 40,
+      activeStageKey: "2__Now",
+      activeStageOrder: 2,
+    })).toBe("in_progress");
   });
 });
 
@@ -325,11 +334,12 @@ describe("ParentInsightsView", () => {
     expect(within(newCurrent).getByRole("button")).toHaveAttribute("aria-expanded", "true");
   });
 
-  it("renders canonical completed, current, and upcoming stage states", () => {
+  it("renders canonical completed, current, and not-started stage states", () => {
     render(<ParentInsightsView {...commonProps} />);
     expect(screen.getByText("Stage 1 · Completed")).toBeInTheDocument();
     expect(screen.getByText("Stage 2 · Current stage")).toBeInTheDocument();
-    expect(screen.getByText("Stage 3 · Upcoming")).toBeInTheDocument();
+    expect(screen.getByText("Stage 3 · Not started")).toBeInTheDocument();
+    expect(screen.queryByText("Stage 3 · Upcoming")).not.toBeInTheDocument();
   });
 
   it("keeps teacher ratings on the four-point scale and preserves the Skills callback", () => {

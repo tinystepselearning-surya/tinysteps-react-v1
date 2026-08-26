@@ -35,7 +35,7 @@ const presentationStages: ParentInsightStageDisplay[] = [
     key: 'presentation-stage-3',
     order: 3,
     label: 'Magic E',
-    state: 'upcoming',
+    state: 'not_started',
     progressPct: 100,
     completedCount: 99,
     totalCount: 99,
@@ -76,7 +76,7 @@ const canonical: ChildCourseProgressProjection = {
   lastUpdatedAtMs: 123456,
 };
 
-describe('P6 canonical Insights saved-lesson progress', () => {
+describe('P6/P7 canonical Insights saved-lesson progress', () => {
   it('uses V3 saved-lesson counts even when presentation/mastery rows claim 100%', () => {
     const result = selectCanonicalParentInsightsProgress(
       canonical,
@@ -159,7 +159,91 @@ describe('P6 canonical Insights saved-lesson progress', () => {
     expect(result).toBeNull();
   });
 
-  it('selects the furthest partial stage as current and the following incomplete stage as next', () => {
+  it('marks earlier partial stages in progress, the furthest partial current, and untouched stages not started', () => {
+    const result = selectCanonicalParentInsightsProgress(
+      {
+        ...canonical,
+        totalTopics: 40,
+        completedTopics: 22,
+        notStartedTopics: 18,
+        overallPct: 55,
+        totalStages: 6,
+        completedStages: 0,
+        stageSummaries: [
+          { key: 's1', label: 'Stage 1', order: 1, totalTopics: 12, completedTopics: 10, inProgressTopics: 0, notStartedTopics: 2, completionPct: 83 },
+          { key: 's2', label: 'Stage 2', order: 2, totalTopics: 8, completedTopics: 1, inProgressTopics: 0, notStartedTopics: 7, completionPct: 13 },
+          { key: 's3', label: 'Stage 3', order: 3, totalTopics: 9, completedTopics: 8, inProgressTopics: 0, notStartedTopics: 1, completionPct: 89 },
+          { key: 's4', label: 'Stage 4', order: 4, totalTopics: 4, completedTopics: 2, inProgressTopics: 0, notStartedTopics: 2, completionPct: 50 },
+          { key: 's5', label: 'Stage 5', order: 5, totalTopics: 4, completedTopics: 1, inProgressTopics: 0, notStartedTopics: 3, completionPct: 25 },
+          { key: 's6', label: 'Stage 6', order: 6, totalTopics: 3, completedTopics: 0, inProgressTopics: 0, notStartedTopics: 3, completionPct: 0 },
+        ],
+      },
+      'early-phonics',
+      [],
+    );
+
+    expect(result?.activeStage?.order).toBe(5);
+    expect(result?.nextStage?.order).toBe(6);
+    expect(result?.stages.map((stage) => stage.state)).toEqual([
+      'in_progress',
+      'in_progress',
+      'in_progress',
+      'in_progress',
+      'current',
+      'not_started',
+    ]);
+  });
+
+  it('does not copy the stale Magic-E stage description onto canonical Diphthongs', () => {
+    const presentation: ParentInsightStageDisplay[] = [
+      {
+        key: 'legacy-stage-5',
+        order: 5,
+        label: 'Magic E',
+        state: 'current',
+        progressPct: 25,
+        completedCount: 1,
+        totalCount: 4,
+        masteryLabel: 'Developing',
+        hint: 'Master Magic E long vowels.',
+        focusItems: ['Teacher feedback chip'],
+        expectations: ['Spell with Magic E'],
+      },
+    ];
+    const projection: ChildCourseProgressProjection = {
+      schemaVersion: 3,
+      modelType: 'child_course_progress_v3',
+      completionAuthority: 'teacher_progress_save',
+      definitionStatus: 'configured',
+      courseId: 'early-phonics',
+      totalTopics: 40,
+      completedTopics: 1,
+      inProgressTopics: 0,
+      notStartedTopics: 39,
+      overallPct: 3,
+      totalStages: 6,
+      completedStages: 0,
+      stageSummaries: [
+        { key: 's1', label: 'Stage 1', order: 1, totalTopics: 12, completedTopics: 0, inProgressTopics: 0, notStartedTopics: 12, completionPct: 0 },
+        { key: 's2', label: 'Stage 2', order: 2, totalTopics: 8, completedTopics: 0, inProgressTopics: 0, notStartedTopics: 8, completionPct: 0 },
+        { key: 's3', label: 'Stage 3', order: 3, totalTopics: 9, completedTopics: 0, inProgressTopics: 0, notStartedTopics: 9, completionPct: 0 },
+        { key: 's4', label: 'Stage 4', order: 4, totalTopics: 4, completedTopics: 0, inProgressTopics: 0, notStartedTopics: 4, completionPct: 0 },
+        { key: 's5', label: 'Stage 5', order: 5, totalTopics: 4, completedTopics: 1, inProgressTopics: 0, notStartedTopics: 3, completionPct: 25 },
+        { key: 's6', label: 'Stage 6', order: 6, totalTopics: 3, completedTopics: 0, inProgressTopics: 0, notStartedTopics: 3, completionPct: 0 },
+      ],
+    };
+
+    const result = selectCanonicalParentInsightsProgress(projection, 'early-phonics', presentation);
+    const stage5 = result?.stages.find((stage) => stage.order === 5);
+
+    expect(stage5?.label).toContain('Diphthongs');
+    expect(stage5?.hint).toMatch(/diphthongs/i);
+    expect(stage5?.hint).not.toMatch(/Magic E/i);
+    expect(stage5?.expectations.join(' ')).toMatch(/lessons 34–37/i);
+    expect(stage5?.focusItems).toEqual(['Teacher feedback chip']);
+  });
+
+  it('selects the furthest partial stage as current and keeps earlier partial stages in progress', () => {
     const result = selectCanonicalParentInsightsProgress(
       {
         ...canonical,
@@ -188,6 +272,6 @@ describe('P6 canonical Insights saved-lesson progress', () => {
 
     expect(result?.activeStage?.order).toBe(3);
     expect(result?.nextStage).toBeNull();
-    expect(result?.stages.map((stage) => stage.state)).toEqual(['upcoming', 'upcoming', 'current']);
+    expect(result?.stages.map((stage) => stage.state)).toEqual(['not_started', 'in_progress', 'current']);
   });
 });

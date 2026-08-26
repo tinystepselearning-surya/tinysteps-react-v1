@@ -12,7 +12,7 @@ const lesson = (overrides: Partial<ParentSkillsLesson> = {}): ParentSkillsLesson
   label: "Blend CVC words",
   courseId: "early-phonics",
   courseLabel: "Early Phonics",
-  stageLabel: "Stage 2 · Blending",
+  stageLabel: "Stage 2 — Digraphs + vowel teams",
   updatedAtMs: new Date("2026-07-20T00:00:00Z").getTime(),
   ratedSkillCount: 1,
   totalSkillCount: 2,
@@ -33,13 +33,13 @@ const lesson = (overrides: Partial<ParentSkillsLesson> = {}): ParentSkillsLesson
 
 const stages: ParentSkillsStage[] = [
   {
-    id: "2__Stage 2 · Blending",
-    label: "Stage 2 · Blending",
+    id: "2__Stage 2 — Digraphs + vowel teams",
+    label: "Stage 2 — Digraphs + vowel teams",
     order: 2,
-    displayLabel: "Blending",
+    displayLabel: "Digraphs + vowel teams",
     skills: [
-      { tag: "blending", label: "Blending", count: 2 },
-      { tag: "segmenting", label: "Segmenting", count: 1 },
+      { tag: "digraph_recognition", label: "Digraph Recognition", count: 2 },
+      { tag: "sound_pronunciation", label: "Sound Pronunciation", count: 1 },
     ],
   },
 ];
@@ -62,7 +62,12 @@ const baseProps = {
   practiceAreas: ["Writing"],
   stages,
   recentUpdates: [
-    { id: "blending__Stage 2__2__123", label: "Blending", stageLabel: "Blending", updatedAtMs: 123 },
+    {
+      id: "digraph__stage-2__123",
+      label: "Digraph Recognition",
+      stageLabel: "Digraphs + vowel teams",
+      updatedAtMs: 123,
+    },
   ],
   onCourseChange: vi.fn(),
   onOpenLesson: vi.fn(),
@@ -82,7 +87,7 @@ describe("ParentSkillsView", () => {
   });
 
   it("keeps lesson grids collapsed, expands one lesson at a time, and exposes four decorative stars per skill", () => {
-    const { container } = render(<ParentSkillsView {...baseProps} />);
+    render(<ParentSkillsView {...baseProps} />);
     const firstDisclosure = screen.getByRole("button", { name: "Show rating details for Blend CVC words" });
     const secondDisclosure = screen.getByRole("button", { name: "Show rating details for Segment sounds" });
 
@@ -121,16 +126,18 @@ describe("ParentSkillsView", () => {
     expect(onOpenLesson).toHaveBeenCalledWith(expect.objectContaining({ id: "lesson-1" }));
   });
 
-  it("uses accessible stage disclosure without unsupported progress claims", () => {
+  it("uses accessible canonical stage disclosure without unsupported progress claims", () => {
     render(<ParentSkillsView {...baseProps} />);
-    const stageDisclosure = screen.getByRole("button", { name: "Show skills for Stage 2: Blending" });
+    const stageDisclosure = screen.getByRole("button", {
+      name: "Show skills for Stage 2: Digraphs + vowel teams",
+    });
     const detailsId = stageDisclosure.getAttribute("aria-controls");
 
     expect(stageDisclosure).toHaveAttribute("aria-expanded", "false");
     expect(document.getElementById(detailsId!)).not.toBeInTheDocument();
     fireEvent.click(stageDisclosure);
     expect(stageDisclosure).toHaveAttribute("aria-expanded", "true");
-    expect(document.getElementById(detailsId!)).toHaveTextContent("Segmenting");
+    expect(document.getElementById(detailsId!)).toHaveTextContent("Sound Pronunciation");
     expect(screen.queryByText(/current|completed|%/i)).not.toBeInTheDocument();
   });
 
@@ -170,5 +177,60 @@ describe("ParentSkillsView", () => {
       expect.stringContaining("First skill"),
       expect.stringContaining("Second skill"),
     ]);
+  });
+
+  it("consolidates duplicate recent updates in the rendered summary", () => {
+    render(
+      <ParentSkillsView
+        {...baseProps}
+        recentUpdates={[
+          {
+            id: "old",
+            label: "Digraph Recognition",
+            stageLabel: "Digraphs + vowel teams",
+            updatedAtMs: 1,
+          },
+          {
+            id: "new",
+            label: "Digraph Recognition",
+            stageLabel: "Digraphs + vowel teams",
+            updatedAtMs: 2,
+          },
+        ]}
+      />,
+    );
+
+    const updates = screen.getByRole("heading", { name: "Recent skill updates" }).parentElement?.parentElement;
+    expect(updates).not.toBeNull();
+    expect(within(updates!).getAllByRole("listitem")).toHaveLength(1);
+  });
+
+  it("filters a stale Magic-E skill from the canonical Diphthongs stage summary", () => {
+    render(
+      <ParentSkillsView
+        {...baseProps}
+        stages={[
+          {
+            id: "legacy-stage-5",
+            label: "Stage 5 — Diphthongs",
+            order: 5,
+            displayLabel: "Diphthongs",
+            skills: [
+              { tag: "magic_e_rule", label: "Magic E Rule", count: 1 },
+              { tag: "diphthong_recognition", label: "Diphthong Recognition", count: 1 },
+            ],
+          },
+        ]}
+        recentUpdates={[]}
+      />,
+    );
+
+    const stageDisclosure = screen.getByRole("button", { name: "Show skills for Stage 5: Diphthongs" });
+    const detailsId = stageDisclosure.getAttribute("aria-controls");
+    fireEvent.click(stageDisclosure);
+    const details = document.getElementById(detailsId!);
+    expect(details).not.toBeNull();
+    expect(within(details!).getByText("Diphthong Recognition")).toBeInTheDocument();
+    expect(within(details!).queryByText("Magic E Rule")).not.toBeInTheDocument();
   });
 });

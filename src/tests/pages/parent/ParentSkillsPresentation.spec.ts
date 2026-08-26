@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildParentSkillRatingDisplay,
+  canonicalizeParentSkillsSummary,
+  consolidateParentSkillUpdates,
   dedupeParentSkillLabels,
   formatParentSkillTag,
   parentSkillUpdateId,
@@ -111,5 +113,114 @@ describe("parent Skills rating presentation", () => {
         updatedAtMs: 123,
       }),
     ).toBe("blending__Stage 2__2__123");
+  });
+
+  it("consolidates the same skill within a stage and keeps the newest update", () => {
+    const result = consolidateParentSkillUpdates([
+      { id: "old", label: "Vowel Team Recognition", stageLabel: "Magic E + word rules", updatedAtMs: 100 },
+      { id: "new", label: "Vowel Team Recognition", stageLabel: "Magic E + word rules", updatedAtMs: 300 },
+      { id: "middle", label: "Sound Pronunciation", stageLabel: "Magic E + word rules", updatedAtMs: 200 },
+    ]);
+
+    expect(result).toEqual([
+      expect.objectContaining({ id: "new", label: "Vowel Team Recognition", updatedAtMs: 300 }),
+      expect.objectContaining({ id: "middle", label: "Sound Pronunciation", updatedAtMs: 200 }),
+    ]);
+  });
+
+  it("keeps the same skill separate when it belongs to different stages", () => {
+    const result = consolidateParentSkillUpdates([
+      { id: "stage-2", label: "Word Reading", stageLabel: "Digraphs + vowel teams", updatedAtMs: 100 },
+      { id: "stage-3", label: "Word Reading", stageLabel: "Magic E + word rules", updatedAtMs: 200 },
+    ]);
+
+    expect(result).toHaveLength(2);
+    expect(result.map((item) => item.id)).toEqual(["stage-3", "stage-2"]);
+  });
+
+  it("normalizes harmless casing/spacing differences when consolidating updates", () => {
+    const result = consolidateParentSkillUpdates([
+      { id: "a", label: "  Blending ", stageLabel: "Stage 1", updatedAtMs: 100 },
+      { id: "b", label: "blending", stageLabel: " stage 1 ", updatedAtMs: 200 },
+    ]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("b");
+  });
+
+  it("filters stale cross-stage phonics skills and canonicalizes the stage identity", () => {
+    const result = canonicalizeParentSkillsSummary({
+      courseId: "early-phonics",
+      stages: [
+        {
+          id: "legacy-stage-4",
+          label: "Stage 4 — Controlling R + secret vowel",
+          order: 4,
+          displayLabel: "Controlling R + secret vowel",
+          skills: [
+            { tag: "magic_e_rule", label: "Magic E Rule", count: 1 },
+            { tag: "bossy_r_recognition", label: "Bossy R Recognition", count: 2 },
+          ],
+        },
+      ],
+      recentUpdates: [
+        { id: "bad", label: "Magic E Rule", stageLabel: "Controlling R + secret vowel", updatedAtMs: 300 },
+        { id: "good", label: "Bossy R Recognition", stageLabel: "Controlling R + secret vowel", updatedAtMs: 200 },
+      ],
+    });
+
+    expect(result.stages).toHaveLength(1);
+    expect(result.stages[0]).toMatchObject({
+      order: 4,
+      displayLabel: "Controlling R + secret vowel",
+    });
+    expect(result.stages[0].skills.map((skill) => skill.label)).toEqual(["Bossy R Recognition"]);
+    expect(result.recentUpdates.map((update) => update.id)).toEqual(["good"]);
+  });
+
+  it("keeps valid Diphthong skills while excluding Magic-E leakage from stage 5", () => {
+    const result = canonicalizeParentSkillsSummary({
+      courseId: "early-phonics",
+      stages: [
+        {
+          id: "legacy-stage-5",
+          label: "Stage 5 — Diphthongs",
+          order: 5,
+          displayLabel: "Diphthongs",
+          skills: [
+            { tag: "magic_e_rule", label: "Magic E Rule", count: 1 },
+            { tag: "diphthong_recognition", label: "Diphthong Recognition", count: 1 },
+            { tag: "word_reading", label: "Word Reading", count: 1 },
+          ],
+        },
+      ],
+      recentUpdates: [],
+    });
+
+    expect(result.stages[0].skills.map((skill) => skill.label)).toEqual([
+      "Diphthong Recognition",
+      "Word Reading",
+    ]);
+  });
+
+  it("does not apply phonics filtering to non-phonics courses", () => {
+    const result = canonicalizeParentSkillsSummary({
+      courseId: "basic-grammar",
+      stages: [
+        {
+          id: "grammar-stage",
+          label: "Nouns",
+          order: 1,
+          displayLabel: "Nouns",
+          skills: [{ tag: "identify_nouns", label: "Identify Nouns", count: 1 }],
+        },
+      ],
+      recentUpdates: [
+        { id: "grammar-update", label: "Identify Nouns", stageLabel: "Nouns", updatedAtMs: 1 },
+      ],
+    });
+
+    expect(result.stages).toHaveLength(1);
+    expect(result.recentUpdates).toHaveLength(1);
   });
 });

@@ -52,6 +52,12 @@ const AREA_FALLBACK_SKILLS: Record<ProgressSkillArea, string[]> = {
   general: ['Understanding', 'Application', 'Accuracy', 'Independence'],
 };
 
+const CANONICAL_PHONICS_COURSE_IDS = new Set([
+  'phonics-foundations',
+  'early-phonics',
+  'advanced-phonics',
+]);
+
 export const LEGACY_PROGRESS_SKILLS: ProgressSkillDefinition[] = [
   { key: 'recogniseSounds', label: 'Recognise Sounds', area: 'phonics' },
   { key: 'saySoundsClearly', label: 'Say Sounds Clearly', area: 'phonics' },
@@ -137,10 +143,25 @@ export function progressSkillsFromRatingKeys(
     }));
 }
 
+function canonicalPhonicsRubricLabels(context: ProgressSkillContext): string[] | null {
+  const courseId = String(context.courseId || '').trim().toLowerCase();
+  const rubricType = String(context.rubricType || '').trim().toLowerCase();
+  if (!CANONICAL_PHONICS_COURSE_IDS.has(courseId) || !rubricType) return null;
+  return RUBRIC_PROGRESS_SKILLS[rubricType] ?? null;
+}
+
 export function getProgressSkillsForLesson(context: ProgressSkillContext): ProgressSkillDefinition[] {
-  const explicitMeta = normalizeProgressSkillDefinitions(
-    Array.isArray(context.progressSkillsMeta) ? context.progressSkillsMeta : [],
-  );
+  // Phonics lesson identity/rubric comes from the canonical 31/40/30 lesson curriculum. Historical
+  // progress rows may carry progressRatingsMeta or subskillChips produced by an older stage/rubric
+  // map. When a canonical phonics rubric is available, never let that stale stored presentation
+  // metadata override the current lesson's rubric (for example Diphthong OO showing Magic-E skills).
+  const canonicalPhonicsLabels = canonicalPhonicsRubricLabels(context);
+
+  const explicitMeta = canonicalPhonicsLabels
+    ? []
+    : normalizeProgressSkillDefinitions(
+        Array.isArray(context.progressSkillsMeta) ? context.progressSkillsMeta : [],
+      );
   if (explicitMeta.length > 0) return explicitMeta;
 
   const area: ProgressSkillArea =
@@ -148,10 +169,11 @@ export function getProgressSkillsForLesson(context: ProgressSkillContext): Progr
       ? context.area
       : 'general';
 
-  const labels = Array.isArray(context.subskillChips) && context.subskillChips.length > 0
-    ? context.subskillChips
-    : RUBRIC_PROGRESS_SKILLS[String(context.rubricType || '').trim().toLowerCase()]
-      ?? AREA_FALLBACK_SKILLS[area];
+  const labels = canonicalPhonicsLabels
+    ?? (Array.isArray(context.subskillChips) && context.subskillChips.length > 0
+      ? context.subskillChips
+      : RUBRIC_PROGRESS_SKILLS[String(context.rubricType || '').trim().toLowerCase()]
+        ?? AREA_FALLBACK_SKILLS[area]);
 
   const results: ProgressSkillDefinition[] = [];
   const seen = new Set<string>();

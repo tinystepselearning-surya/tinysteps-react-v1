@@ -108,7 +108,37 @@ describe("Parent Home components", () => {
     expect(screen.getByText("3/12 lessons")).toBeInTheDocument();
     expect(screen.getByText("25%")).toBeInTheDocument();
     expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Blending");
-    expect(screen.getByText(/teacher lesson status/i)).toBeInTheDocument();
+    expect(screen.getByText(/lessons saved by your child's teacher/i)).toBeInTheDocument();
+    expect(screen.queryByText(/teacher lesson status/i)).not.toBeInTheDocument();
+  });
+
+  it("marks partial, current, and untouched stage rows without calling partial progress upcoming", () => {
+    const partialCourse: ParentOverviewCourseSummary = {
+      ...canonicalCourse,
+      stageSummaries: [
+        { ...canonicalCourse.stageSummaries[0], completedTopics: 2, notStartedTopics: 1, completionPct: 67 },
+        { ...canonicalCourse.stageSummaries[1], completedTopics: 1, inProgressTopics: 0, notStartedTopics: 2, completionPct: 33 },
+        canonicalCourse.stageSummaries[2],
+      ],
+      activeStage: null,
+      nextStage: null,
+    };
+    partialCourse.activeStage = partialCourse.stageSummaries[1];
+    partialCourse.nextStage = partialCourse.stageSummaries[2];
+
+    render(
+      <ParentProgressOverview
+        childName="Aarav"
+        loading={false}
+        course={partialCourse}
+        stripStagePrefix={(label) => label.replace(/^Stage \d+ /, "")}
+      />,
+    );
+
+    const rows = screen.getAllByRole("listitem");
+    expect(rows[0]).toHaveAttribute("data-stage-state", "in_progress");
+    expect(rows[1]).toHaveAttribute("data-stage-state", "current");
+    expect(rows[2]).toHaveAttribute("data-stage-state", "not_started");
   });
 
   it("does not expose detailed lesson rows in P5 progress overview", () => {
@@ -200,7 +230,8 @@ describe("Parent Home components", () => {
           updatedAtMs: 100,
         }}
         selectedCourseLabel="Phonics"
-        formatTimestamp={() => "26 Jul"}
+        formatTimestamp={() => "26 Jul"
+        }
         dashboardStrengthChips={["Sound recognition"]}
         dashboardPracticeChips={["Short vowels"]}
         onOpenAllRatings={vi.fn()}

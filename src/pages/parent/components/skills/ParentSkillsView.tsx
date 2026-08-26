@@ -14,11 +14,12 @@ import {
   SKILL_RATING_MAX,
   skillRatingLegendLabel,
 } from "../../../../lib/skillRatings";
-import type {
-  ParentSkillRatingDisplay,
-  ParentSkillsLesson,
-  ParentSkillsStage,
-  ParentSkillUpdate,
+import {
+  canonicalizeParentSkillsSummary,
+  type ParentSkillRatingDisplay,
+  type ParentSkillsLesson,
+  type ParentSkillsStage,
+  type ParentSkillUpdate,
 } from "./parentSkillsPresentation";
 
 type ParentSkillsViewProps = {
@@ -197,6 +198,13 @@ export default function ParentSkillsView({
 
   const selectedCourse = courses.find((course) => course.id === selectedCourseId) ?? courses[0] ?? null;
   const latestLesson = lessons[0] ?? null;
+  const canonicalSummary = canonicalizeParentSkillsSummary({
+    courseId: selectedCourseId,
+    stages,
+    recentUpdates,
+  });
+  const displayStages = canonicalSummary.stages;
+  const consolidatedRecentUpdates = canonicalSummary.recentUpdates;
 
   return (
     <div className="min-w-0 space-y-4 overflow-x-hidden pb-2" data-testid="parent-skills-view">
@@ -398,9 +406,9 @@ export default function ParentSkillsView({
           </div>
           <Sparkles className="h-5 w-5 text-slate-400" aria-hidden="true" />
         </div>
-        {stages.length > 0 ? (
+        {displayStages.length > 0 ? (
           <div className="mt-3 divide-y divide-slate-200 dark:divide-slate-800">
-            {stages.map((stage) => {
+            {displayStages.map((stage) => {
               const expanded = expandedStageId === stage.id;
               const detailsId = `parent-skill-stage-${stage.id}`;
               return (
@@ -459,9 +467,9 @@ export default function ParentSkillsView({
           <MessageSquareText className="h-4 w-4 text-slate-400" aria-hidden="true" />
           <h2 id="recent-skill-updates-title" className="text-base font-semibold text-slate-950 dark:text-slate-100">Recent skill updates</h2>
         </div>
-        {recentUpdates.length > 0 ? (
+        {consolidatedRecentUpdates.length > 0 ? (
           <ul className="mt-3 divide-y divide-slate-200 dark:divide-slate-800">
-            {recentUpdates.map((update) => (
+            {consolidatedRecentUpdates.map((update) => (
               <li key={update.id} data-update-id={update.id} className="flex min-w-0 items-start justify-between gap-3 py-3">
                 <span className="min-w-0">
                   <span className="block break-words text-sm font-medium text-slate-900 dark:text-slate-100">{update.label}</span>
