@@ -1,0 +1,82 @@
+name: Ensure teacher earnings session Firestore index
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/ensure-teacher-earnings-session-index.mjs"
+      - "scripts/ensure-teacher-earnings-session-index.test.mjs"
+      - ".github/workflows/ensure-teacher-earnings-session-index.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Control-plane verification only: creates the exact composite index required by
+# Teacher Earnings lazy session details and waits until Firestore reports READY.
+
+jobs:
+  ensure-index:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    concurrency:
+      group: firebase-deployment-tinysteps-react-v1
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Test index ensure logic
+        run: node --test scripts/ensure-teacher-earnings-session-index.test.mjs
+
+      - name: Authenticate to Google Cloud
+        id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
+          create_credentials_file: true
+
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Verify authenticated service account
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_account="github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com"
+          authenticated_account="$(gcloud auth list --filter=status:ACTIVE --format='value(account)')"
+          if [[ "${authenticated_account}" != "${expected_account}" ]]; then
+            echo "::error::Expected Google Cloud account ${expected_account}, got ${authenticated_account:-<none>}."
+            exit 1
+          fi
+          echo "Authenticated as ${authenticated_account}."
+
+      - name: Refuse stale main verification
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          current_main_sha="$(git rev-parse origin/main)"
+          echo "Workflow SHA: ${GITHUB_SHA}"
+          echo "Current main SHA: ${current_main_sha}"
+          if [[ "${GITHUB_SHA}" != "${current_main_sha}" ]]; then
+            echo "::error::Refusing stale Firestore index verification for ${GITHUB_SHA}. Current main is ${current_main_sha}."
+            exit 1
+          fi
+
+      - name: Ensure teacher earnings session index is READY
+        run: >-
+          node scripts/ensure-teacher-earnings-session-index.mjs
+          --project tinysteps-react-v1
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.gcp-auth.outputs.credentials_file_path }}
