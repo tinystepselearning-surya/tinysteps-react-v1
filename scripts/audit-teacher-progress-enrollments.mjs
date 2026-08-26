@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { applicationDefault, getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getFirestore } from 'firebase-admin/firestore';
 import {
   buildProgressEnrollmentAudit,
 } from './lib/teacher-progress-enrollment-audit.mjs';
@@ -113,11 +113,10 @@ async function applyUniqueBackfill(db, audit, progressRows) {
         return;
       }
 
-      // Intentionally do not touch updatedAt/mastery/status. This is authorization metadata only.
+      // Intentionally update only authorization identity. Do not touch updatedAt,
+      // mastery, lesson status, completion metadata, or parent-facing projection fields.
       tx.update(source.ref, {
         enrollmentId: candidate.targetEnrollmentId,
-        authorizationEnrollmentBackfilledAt: FieldValue.serverTimestamp(),
-        authorizationEnrollmentBackfillSource: 'brick1_teacher_progress_authorization',
       });
       updated += 1;
     });
