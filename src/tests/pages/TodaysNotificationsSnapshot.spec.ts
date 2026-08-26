@@ -3,6 +3,7 @@ import {
   loadManualReminderDayBuckets,
   loadManualReminderSelectedDate,
 } from '../../pages/admin/todaysNotificationsManualData';
+import type { ManualReminderSessionDoc } from '../../pages/admin/todaysNotificationsManualData';
 import type {
   SessionsManagementDatePayload,
   SessionsManagementSnapshotPayload,
@@ -62,10 +63,12 @@ const makeSnapshot = (
 });
 
 const makeDeps = () => ({
-  fetchEnrollmentsByIds: vi.fn(async () => ({})),
-  fetchSessionsForDate: vi.fn(async () => []),
-  readCache: vi.fn(() => null),
-  writeCache: vi.fn(),
+  fetchEnrollmentsByIds: vi.fn(async (_ids: string[]) => ({})),
+  fetchSessionsForDate: vi.fn(
+    async (_dateKey: string): Promise<ManualReminderSessionDoc[]> => [],
+  ),
+  readCache: vi.fn((_dateKey: string) => null),
+  writeCache: vi.fn((_dateKey: string, _payload: unknown) => undefined),
 });
 
 describe('Sessions Management authoritative snapshot loading', () => {
