@@ -181,6 +181,38 @@ suite('teacher progress authorization follows canonical enrollment ownership', (
     await assertSucceeds(updateDoc(ref, { mastery: 'proficient' }));
   });
 
+  it('uses enrollment kidId canonically and never broadens through contradictory legacy child aliases', async () => {
+    await seedBase();
+    const contradictoryEnrollment = 'enroll-contradictory-child';
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'enrollments', contradictoryEnrollment), {
+        teacherId: teacherA,
+        kidId: childA,
+        studentId: childB,
+        childId: childB,
+        kidIds: [childB],
+        courseId: phonicsCourse,
+        parentId: parentA,
+        status: 'active',
+      });
+      await setDoc(
+        progressRef(context.firestore(), childB, 'contradictory-existing'),
+        canonicalProgress(contradictoryEnrollment, phonicsCourse),
+      );
+    });
+
+    const db = teacherDb(teacherA);
+    await assertFails(getDoc(progressRef(db, childB, 'contradictory-existing')));
+    await assertFails(setDoc(
+      progressRef(db, childB, 'contradictory-create'),
+      canonicalProgress(contradictoryEnrollment, phonicsCourse),
+    ));
+    await assertFails(updateDoc(
+      progressRef(db, childB, 'contradictory-existing'),
+      { mastery: 'mastered' },
+    ));
+  });
+
   it('denies a different teacher READ/CREATE/UPDATE', async () => {
     await seedBase();
     const db = teacherDb(teacherOther);
