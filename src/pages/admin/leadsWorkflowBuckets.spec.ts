@@ -20,6 +20,13 @@ describe('four-stage leads workflow buckets', () => {
     expect(resolveSimpleStatusLabel({ demoStatus: 'open', hasDemo: true })).toBe('Ready to assign');
   });
 
+  it('allows an unassigned Open demo to close directly as no response', () => {
+    const input = { demoStatus: 'open', conversionStatus: 'no_response', hasDemo: true };
+    expect(resolveSimpleLeadBucket(input)).toBe('closed');
+    expect(resolveSimpleLeadAction(input)).toBe('view_outcome');
+    expect(resolveSimpleStatusLabel(input)).toBe('No response');
+  });
+
   it('does not let stale pre-demo follow-up data override a newly linked open demo', () => {
     expect(resolveSimpleLeadBucket({ demoStatus: 'open', hasDemo: true, hasFollowUp: true })).toBe('open');
     expect(resolveSimpleLeadAction({ demoStatus: 'open', hasDemo: true, hasFollowUp: true })).toBe('assign_teacher');
