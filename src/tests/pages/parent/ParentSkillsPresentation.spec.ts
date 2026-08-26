@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildParentSkillRatingDisplay,
+  consolidateParentSkillUpdates,
   dedupeParentSkillLabels,
   formatParentSkillTag,
   parentSkillUpdateId,
@@ -111,5 +112,38 @@ describe("parent Skills rating presentation", () => {
         updatedAtMs: 123,
       }),
     ).toBe("blending__Stage 2__2__123");
+  });
+
+  it("consolidates the same skill within a stage and keeps the newest update", () => {
+    const result = consolidateParentSkillUpdates([
+      { id: "old", label: "Vowel Team Recognition", stageLabel: "Magic E + word rules", updatedAtMs: 100 },
+      { id: "new", label: "Vowel Team Recognition", stageLabel: "Magic E + word rules", updatedAtMs: 300 },
+      { id: "middle", label: "Sound Pronunciation", stageLabel: "Magic E + word rules", updatedAtMs: 200 },
+    ]);
+
+    expect(result).toEqual([
+      expect.objectContaining({ id: "new", label: "Vowel Team Recognition", updatedAtMs: 300 }),
+      expect.objectContaining({ id: "middle", label: "Sound Pronunciation", updatedAtMs: 200 }),
+    ]);
+  });
+
+  it("keeps the same skill separate when it belongs to different stages", () => {
+    const result = consolidateParentSkillUpdates([
+      { id: "stage-2", label: "Word Reading", stageLabel: "Digraphs + vowel teams", updatedAtMs: 100 },
+      { id: "stage-3", label: "Word Reading", stageLabel: "Magic E + word rules", updatedAtMs: 200 },
+    ]);
+
+    expect(result).toHaveLength(2);
+    expect(result.map((item) => item.id)).toEqual(["stage-3", "stage-2"]);
+  });
+
+  it("normalizes harmless casing/spacing differences when consolidating updates", () => {
+    const result = consolidateParentSkillUpdates([
+      { id: "a", label: "  Blending ", stageLabel: "Stage 1", updatedAtMs: 100 },
+      { id: "b", label: "blending", stageLabel: " stage 1 ", updatedAtMs: 200 },
+    ]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("b");
   });
 });
