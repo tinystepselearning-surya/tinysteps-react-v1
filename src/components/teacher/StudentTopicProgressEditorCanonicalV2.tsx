@@ -213,6 +213,7 @@ export default function StudentTopicProgressEditorCanonicalV2({
     selectedCourseId || null,
     Boolean(selectedCourseId && enrollmentId),
     enrollmentId ?? null,
+    selectedTopicId || null,
   );
 
   useEffect(() => {
