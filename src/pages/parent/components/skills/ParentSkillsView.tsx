@@ -15,7 +15,7 @@ import {
   skillRatingLegendLabel,
 } from "../../../../lib/skillRatings";
 import {
-  consolidateParentSkillUpdates,
+  canonicalizeParentSkillsSummary,
   type ParentSkillRatingDisplay,
   type ParentSkillsLesson,
   type ParentSkillsStage,
@@ -198,7 +198,13 @@ export default function ParentSkillsView({
 
   const selectedCourse = courses.find((course) => course.id === selectedCourseId) ?? courses[0] ?? null;
   const latestLesson = lessons[0] ?? null;
-  const consolidatedRecentUpdates = consolidateParentSkillUpdates(recentUpdates);
+  const canonicalSummary = canonicalizeParentSkillsSummary({
+    courseId: selectedCourseId,
+    stages,
+    recentUpdates,
+  });
+  const displayStages = canonicalSummary.stages;
+  const consolidatedRecentUpdates = canonicalSummary.recentUpdates;
 
   return (
     <div className="min-w-0 space-y-4 overflow-x-hidden pb-2" data-testid="parent-skills-view">
@@ -400,9 +406,9 @@ export default function ParentSkillsView({
           </div>
           <Sparkles className="h-5 w-5 text-slate-400" aria-hidden="true" />
         </div>
-        {stages.length > 0 ? (
+        {displayStages.length > 0 ? (
           <div className="mt-3 divide-y divide-slate-200 dark:divide-slate-800">
-            {stages.map((stage) => {
+            {displayStages.map((stage) => {
               const expanded = expandedStageId === stage.id;
               const detailsId = `parent-skill-stage-${stage.id}`;
               return (
