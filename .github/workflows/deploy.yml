@@ -43,6 +43,9 @@ jobs:
       - name: Run Cloud Functions unit tests
         run: npm --prefix functions test
 
+      - name: Run teacher progress enrollment audit classifier tests
+        run: npx vitest run scripts/test/teacher-progress-enrollment-audit.spec.mjs
+
       - name: Setup Java for Firestore emulator
         uses: actions/setup-java@v4
         with:
@@ -54,7 +57,7 @@ jobs:
           npx firebase-tools@latest emulators:exec
           --project ${{ env.FIREBASE_PROJECT_ID }}
           --only firestore
-          "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run src/tests/firestore/publicLeads.rules.spec.ts src/tests/firestore/schoolDomain.rules.spec.ts src/tests/firestore/schoolProgramme.rules.spec.ts src/tests/firestore/teacherIdentity.rules.spec.ts src/tests/firestore/childCourseProgress.rules.spec.ts"
+          "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run src/tests/firestore/publicLeads.rules.spec.ts src/tests/firestore/schoolDomain.rules.spec.ts src/tests/firestore/schoolProgramme.rules.spec.ts src/tests/firestore/teacherIdentity.rules.spec.ts src/tests/firestore/teacherProgressAuthorization.rules.spec.ts src/tests/firestore/childCourseProgress.rules.spec.ts"
 
       - name: Run website lead deduplication transaction tests
         run: >-
@@ -256,7 +259,7 @@ jobs:
           set -euo pipefail
           service_resource="$(gcloud functions describe enrichPublicLeadAttribution \
             --gen2 \
-            --project="${{ env.FIREBASE_PROJECT_ID }}" \
+            --project="${FIREBASE_PROJECT_ID}" \
             --region=asia-south1 \
             --format='value(serviceConfig.service)')"
           expected_prefix="projects/${{ env.FIREBASE_PROJECT_ID }}/locations/asia-south1/services/"
@@ -270,7 +273,7 @@ jobs:
             exit 1
           fi
           gcloud run services add-iam-policy-binding "${service_name}" \
-            --project="${{ env.FIREBASE_PROJECT_ID }}" \
+            --project="${FIREBASE_PROJECT_ID}" \
             --region=asia-south1 \
             --member=allUsers \
             --role=roles/run.invoker \
