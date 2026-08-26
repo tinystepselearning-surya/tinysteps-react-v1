@@ -259,7 +259,7 @@ jobs:
           set -euo pipefail
           service_resource="$(gcloud functions describe enrichPublicLeadAttribution \
             --gen2 \
-            --project="${FIREBASE_PROJECT_ID}" \
+            --project="${{ env.FIREBASE_PROJECT_ID }}" \
             --region=asia-south1 \
             --format='value(serviceConfig.service)')"
           expected_prefix="projects/${{ env.FIREBASE_PROJECT_ID }}/locations/asia-south1/services/"
@@ -273,7 +273,7 @@ jobs:
             exit 1
           fi
           gcloud run services add-iam-policy-binding "${service_name}" \
-            --project="${FIREBASE_PROJECT_ID}" \
+            --project="${{ env.FIREBASE_PROJECT_ID }}" \
             --region=asia-south1 \
             --member=allUsers \
             --role=roles/run.invoker \
