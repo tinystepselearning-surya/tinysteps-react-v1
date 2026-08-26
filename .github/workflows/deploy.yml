@@ -2,7 +2,7 @@ name: CI/CD Deploy to Firebase
 
 on:
   push:
-    branches: [main]
+    branches: [main, fix/teacher-phonics-progress-p0-auth]
   pull_request:
     branches: [main]
   workflow_dispatch:
