@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const firestoreMocks = vi.hoisted(() => ({
@@ -85,6 +85,9 @@ const getDataQueryArgs = (callIndex: number) => {
   return queryObject?.args || [];
 };
 
+const hasConstraintKind = (items: unknown[], kind: string): boolean =>
+  items.some((item) => Boolean(item && typeof item === 'object' && (item as { kind?: unknown }).kind === kind));
+
 beforeEach(() => {
   subscriptions.length = 0;
   Object.values(firestoreMocks).forEach((mock) => mock.mockReset());
@@ -132,7 +135,7 @@ describe('usePagedLeads bounded Firestore reads', () => {
 
     const dataArgs = getDataQueryArgs(0);
     expect(dataArgs).toContainEqual({ kind: 'orderBy', args: ['createdAt', 'desc'] });
-    expect(dataArgs.some((item: any) => item?.kind === 'where')).toBe(false);
+    expect(hasConstraintKind(dataArgs, 'where')).toBe(false);
   });
 
   it('scans another small bounded batch when non-Open rows are interleaved', async () => {
@@ -197,7 +200,7 @@ describe('usePagedLeads bounded Firestore reads', () => {
       kind: 'where',
       args: ['status', 'in', [...LEAD_STATUSES_BY_BUCKET.open]],
     });
-    expect(dataArgs.some((item: any) => item?.kind === 'orderBy')).toBe(false);
+    expect(hasConstraintKind(dataArgs, 'orderBy')).toBe(false);
   });
 
   it('uses the exact small status queue for With Teacher instead of scanning Open leads', async () => {
@@ -218,7 +221,7 @@ describe('usePagedLeads bounded Firestore reads', () => {
       kind: 'where',
       args: ['status', 'in', [...LEAD_STATUSES_BY_BUCKET.in_progress]],
     });
-    expect(dataArgs.some((item: any) => item?.kind === 'orderBy')).toBe(false);
+    expect(hasConstraintKind(dataArgs, 'orderBy')).toBe(false);
   });
 
   it('keeps only a five-document realtime watch for new website lead notifications', () => {
