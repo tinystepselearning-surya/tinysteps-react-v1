@@ -37,6 +37,11 @@ type ParentAttendanceSummaryProps = {
   canJoinFromOverview: (row: UpcomingRow) => boolean;
 };
 
+const isUpcomingPreviewStatus = (status: string): boolean => {
+  const token = String(status || "").trim().toLowerCase().replace(/[-\s]+/g, "_");
+  return token === "scheduled" || token === "in_progress";
+};
+
 export default function ParentAttendanceSummary({
   classesState,
   classesCounts,
@@ -71,6 +76,13 @@ export default function ParentAttendanceSummary({
   const summaryValue = (value: number | undefined) =>
     classesState === "available" && typeof value === "number" ? String(value) : "—";
 
+  // P8 production hardening: the parent container may include a same-day row that changed
+  // status after its session query was cached. The Overview card is a future-action surface,
+  // so completed/cancelled/no-show/reschedule rows must never be presented as "Next Class".
+  const visibleUpcomingPreviewRows = upcomingPreviewRows.filter((row) =>
+    isUpcomingPreviewStatus(row.status),
+  );
+
   return (
     <Card className="overflow-hidden rounded-[20px] border-indigo-100 border-t-2 border-t-indigo-500 bg-white p-4 shadow-sm sm:p-5 dark:border-indigo-900/60 dark:border-t-indigo-400 dark:bg-slate-900">
       <div className="flex items-start justify-between gap-3">
@@ -84,12 +96,12 @@ export default function ParentAttendanceSummary({
       </div>
 
       <div className="mt-4 space-y-2" data-testid="upcoming-class-list">
-        {upcomingPreviewRows.length === 0 ? (
+        {visibleUpcomingPreviewRows.length === 0 ? (
           <div className="rounded-2xl bg-slate-50 px-4 py-4 text-sm text-slate-600 dark:bg-slate-800/60 dark:text-slate-300">
             No today or upcoming classes are scheduled yet.
           </div>
         ) : (
-          upcomingPreviewRows.map((row, index) => {
+          visibleUpcomingPreviewRows.map((row, index) => {
             const session = row.session;
             const canJoin = canJoinFromOverview(row);
             return (
