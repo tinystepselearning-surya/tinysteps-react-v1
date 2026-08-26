@@ -1,3 +1,7 @@
+import {
+  PHONICS_STAGE_DEFINITIONS,
+  isPhonicsCourseId,
+} from '../../../../content/phonicsCurriculum';
 import type { ChildCourseProgressProjection } from '../../../../hooks/useChildCourseProgressProjection';
 import type { ParentInsightStageDisplay } from './parentInsightsPresentation';
 
@@ -10,6 +14,12 @@ export type CanonicalParentInsightsProgress = {
   stages: ParentInsightStageDisplay[];
   activeStage: ParentInsightStageDisplay | null;
   nextStage: ParentInsightStageDisplay | null;
+};
+
+type CanonicalStageCopy = {
+  label: string;
+  hint: string;
+  expectations: string[];
 };
 
 function count(value: unknown): number {
@@ -27,12 +37,45 @@ function normalized(value: unknown): string {
   return String(value ?? '').trim();
 }
 
+function stripStagePrefix(label: string): string {
+  return normalized(label).replace(/^Stage\s+\d+\s*[—–-]\s*/i, '').trim();
+}
+
 /**
- * P6 completion boundary.
+ * P7 presentation copy for canonical phonics stages.
  *
- * Course/stage completion comes only from the P3 V3 saved-lesson projection. The presentation
- * rows supplied by ParentDashboard remain useful for mastery labels, focus chips, hints and
- * expectations, but their mastery-derived percentages/counts are deliberately ignored here.
+ * The previous ParentDashboard presentation rows still contain an older six-stage phonics map.
+ * Never copy those stale hint/expectation strings onto a canonical P3 phonics stage. Instead,
+ * resolve the stage by canonical course id + stage order and derive conservative copy from that
+ * exact stage definition. This prevents cross-stage leakage such as Diphthongs displaying a
+ * Magic-E description while keeping P3 completion maths completely independent of feedback.
+ */
+function canonicalStageCopy(courseId: string, order: number): CanonicalStageCopy | null {
+  if (!isPhonicsCourseId(courseId)) return null;
+  const definition = PHONICS_STAGE_DEFINITIONS[courseId].find(
+    (candidate) => candidate.stageOrder === order,
+  );
+  if (!definition) return null;
+
+  const focus = stripStagePrefix(definition.label) || `Stage ${order}`;
+  const focusInSentence = focus.charAt(0).toLowerCase() + focus.slice(1);
+  return {
+    label: definition.label,
+    hint: `Build confidence with ${focusInSentence}.`,
+    expectations: [
+      `Practise ${focusInSentence} across lessons ${definition.start}–${definition.end}.`,
+    ],
+  };
+}
+
+/**
+ * P6/P7 completion boundary.
+ *
+ * Course/stage completion comes only from the P3 V3 saved-lesson projection. Presentation rows
+ * supplied by ParentDashboard remain useful only for teacher-feedback metadata such as mastery
+ * labels and focus chips. Their mastery-derived percentages/counts are deliberately ignored.
+ * Canonical phonics stage labels/copy are resolved from the current curriculum definition rather
+ * than the legacy presentation map.
  */
 export function selectCanonicalParentInsightsProgress(
   projection: ChildCourseProgressProjection | null | undefined,
@@ -99,19 +142,23 @@ export function selectCanonicalParentInsightsProgress(
     stageTotal += totalCount;
     stageCompleted += completedCount;
     stageNotStarted += notStartedCount;
+
     const presentation = presentationByOrder.get(order);
+    const stageCopy = canonicalStageCopy(courseId, order);
+    const canonicalLabel = stageCopy?.label || normalized(stage.label) || presentation?.label || `Stage ${order}`;
+
     return {
-      key: presentation?.key || normalized(stage.key) || `${order}__${normalized(stage.label) || 'Stage'}`,
+      key: normalized(stage.key) || presentation?.key || `${order}__${canonicalLabel}`,
       order,
-      label: presentation?.label || normalized(stage.label) || `Stage ${order}`,
-      state: 'upcoming' as const,
+      label: canonicalLabel,
+      state: 'not_started' as const,
       progressPct,
       completedCount,
       totalCount,
       masteryLabel: presentation?.masteryLabel || '',
-      hint: presentation?.hint || '',
+      hint: stageCopy?.hint || presentation?.hint || '',
       focusItems: presentation?.focusItems ? [...presentation.focusItems] : [],
-      expectations: presentation?.expectations ? [...presentation.expectations] : [],
+      expectations: stageCopy?.expectations || (presentation?.expectations ? [...presentation.expectations] : []),
     } satisfies ParentInsightStageDisplay;
   });
 
@@ -120,7 +167,10 @@ export function selectCanonicalParentInsightsProgress(
   }
 
   const partialStages = materialized.filter(
-    (stage) => (stage.completedCount ?? 0) > 0 && (stage.completedCount ?? 0) < (stage.totalCount ?? 0),
+    (stage) =>
+      (stage.totalCount ?? 0) > 0 &&
+      (stage.completedCount ?? 0) > 0 &&
+      (stage.completedCount ?? 0) < (stage.totalCount ?? 0),
   );
   let activeStage: ParentInsightStageDisplay | null = partialStages[partialStages.length - 1] || null;
   if (!activeStage) {
@@ -139,8 +189,11 @@ export function selectCanonicalParentInsightsProgress(
         ? 'completed'
         : activeStage && stage.key === activeStage.key
           ? 'current'
-          : 'upcoming',
+          : (stage.completedCount ?? 0) > 0
+            ? 'in_progress'
+            : 'not_started',
   })) as ParentInsightStageDisplay[];
+
   activeStage = activeStage ? stages.find((stage) => stage.key === activeStage?.key) || null : null;
   const activeIndex = activeStage ? stages.findIndex((stage) => stage.key === activeStage?.key) : -1;
   const nextStage = activeIndex >= 0
