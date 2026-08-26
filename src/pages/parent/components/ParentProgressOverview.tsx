@@ -30,7 +30,7 @@ export default function ParentProgressOverview({
       <div className="min-w-0">
         <h3 className="text-base font-semibold text-slate-950 dark:text-slate-100">Progress Overview</h3>
         <p className="mt-1 text-sm leading-5 text-slate-600 dark:text-slate-300">
-          Canonical course progress for {childName}, based on teacher lesson status.
+          Course progress for {childName}, based on lessons saved by your child&apos;s teacher.
         </p>
       </div>
 
@@ -99,12 +99,20 @@ export default function ParentProgressOverview({
                 const stageKey = `${stage.order}-${stage.key}`;
                 const isActive = stageKey === activeStageKey;
                 const isComplete = stage.totalTopics > 0 && stage.completedTopics === stage.totalTopics;
+                const hasProgress = stage.completedTopics > 0;
+                const stageState = isActive
+                  ? "current"
+                  : isComplete
+                    ? "completed"
+                    : hasProgress
+                      ? "in_progress"
+                      : "not_started";
                 return (
                   <li
                     key={stageKey}
                     className="flex min-w-0 items-center gap-3 py-3"
                     aria-current={isActive ? "step" : undefined}
-                    data-stage-state={isActive ? "active" : isComplete ? "complete" : "upcoming"}
+                    data-stage-state={stageState}
                   >
                     {isComplete ? (
                       <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" aria-hidden="true" />
