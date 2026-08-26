@@ -1,6 +1,12 @@
 name: Ensure teacher earnings session Firestore index
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/ensure-teacher-earnings-session-index.mjs"
+      - "scripts/ensure-teacher-earnings-session-index.test.mjs"
+      - ".github/workflows/ensure-teacher-earnings-session-index.yml"
   push:
     branches: [main]
     paths:
@@ -12,11 +18,28 @@ on:
 permissions:
   contents: read
 
-# Control-plane verification only: creates the exact composite index required by
-# Teacher Earnings lazy session details and waits until Firestore reports READY.
+# Pull requests only test the control-plane logic. Pushes to main (or a manual
+# dispatch) authenticate to Google Cloud, create the exact composite index if
+# absent, and wait until Firestore reports it READY. No Firestore documents are read.
 
 jobs:
+  test-index-ensure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Test index ensure logic
+        run: node --test scripts/ensure-teacher-earnings-session-index.test.mjs
+
   ensure-index:
+    if: github.event_name != 'pull_request'
+    needs: test-index-ensure
     runs-on: ubuntu-latest
     timeout-minutes: 40
     concurrency:
@@ -34,9 +57,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.x
-
-      - name: Test index ensure logic
-        run: node --test scripts/ensure-teacher-earnings-session-index.test.mjs
 
       - name: Authenticate to Google Cloud
         id: gcp-auth
