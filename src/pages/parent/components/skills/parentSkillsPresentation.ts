@@ -178,3 +178,48 @@ export const parentSkillUpdateId = (params: {
     String(params.stageOrder || 0),
     String(params.updatedAtMs || 0),
   ].join("__");
+
+function normalizedUpdateIdentity(value: string): string {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+/**
+ * Parent-facing "Recent skill updates" is a summary, not the historical ledger.
+ * Within the already-selected course, collapse the same normalized skill in the same stage and
+ * retain the newest observation. Lesson rating history remains untouched and continues to expose
+ * each lesson-level record.
+ */
+export function consolidateParentSkillUpdates(
+  updates: readonly ParentSkillUpdate[],
+): ParentSkillUpdate[] {
+  const latestByIdentity = new Map<string, ParentSkillUpdate>();
+
+  updates.forEach((update) => {
+    const label = normalizedUpdateIdentity(update.label);
+    const stage = normalizedUpdateIdentity(update.stageLabel);
+    if (!label) return;
+    const identity = `${stage}__${label}`;
+    const existing = latestByIdentity.get(identity);
+    const nextMs = typeof update.updatedAtMs === "number" && Number.isFinite(update.updatedAtMs)
+      ? update.updatedAtMs
+      : 0;
+    const existingMs = typeof existing?.updatedAtMs === "number" && Number.isFinite(existing.updatedAtMs)
+      ? existing.updatedAtMs
+      : 0;
+
+    if (!existing || nextMs > existingMs) {
+      latestByIdentity.set(identity, update);
+    }
+  });
+
+  return Array.from(latestByIdentity.values()).sort((a, b) => {
+    const aMs = typeof a.updatedAtMs === "number" && Number.isFinite(a.updatedAtMs) ? a.updatedAtMs : 0;
+    const bMs = typeof b.updatedAtMs === "number" && Number.isFinite(b.updatedAtMs) ? b.updatedAtMs : 0;
+    if (aMs !== bMs) return bMs - aMs;
+    const stageCompare = a.stageLabel.localeCompare(b.stageLabel);
+    return stageCompare !== 0 ? stageCompare : a.label.localeCompare(b.label);
+  });
+}
