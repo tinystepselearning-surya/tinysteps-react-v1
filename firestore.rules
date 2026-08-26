@@ -429,6 +429,64 @@ function teacherOwnsDocCanonicalFirst(data) {
     || teacherOwnsLegacyDocWithoutCanonical(data);
 }
 
+function enrollmentDocPath(enrollmentId) {
+  return /databases/$(database)/documents/enrollments/$(enrollmentId);
+}
+
+function enrollmentExists(enrollmentId) {
+  return enrollmentId is string
+    && enrollmentId.size() > 0
+    && exists(enrollmentDocPath(enrollmentId));
+}
+
+function enrollmentDoc(enrollmentId) {
+  return get(enrollmentDocPath(enrollmentId)).data;
+}
+
+function enrollmentBelongsToKidCanonicalFirst(data, kidId) {
+  return (
+    ('kidId' in data)
+    && (data.kidId is string)
+    && data.kidId == kidId
+  ) || (
+    !('kidId' in data)
+    && (
+      (('studentId' in data) && (data.studentId is string) && data.studentId == kidId)
+      || (('childId' in data) && (data.childId is string) && data.childId == kidId)
+      || (
+        ('kidIds' in data)
+        && (data.kidIds is list)
+        && (kidId in data.kidIds)
+      )
+    )
+  );
+}
+
+function teacherCanAccessProgressData(kidId, data) {
+  return isTeacher()
+    && ('enrollmentId' in data)
+    && (data.enrollmentId is string)
+    && data.enrollmentId.size() > 0
+    && ('courseId' in data)
+    && (data.courseId is string)
+    && data.courseId.size() > 0
+    && enrollmentExists(data.enrollmentId)
+    && teacherOwnsCanonicalDoc(enrollmentDoc(data.enrollmentId))
+    && enrollmentBelongsToKidCanonicalFirst(enrollmentDoc(data.enrollmentId), kidId)
+    && ('courseId' in enrollmentDoc(data.enrollmentId))
+    && (enrollmentDoc(data.enrollmentId).courseId is string)
+    && enrollmentDoc(data.enrollmentId).courseId == data.courseId;
+}
+
+function teacherProgressIdentityUnchanged() {
+  return ('enrollmentId' in resource.data)
+    && ('courseId' in resource.data)
+    && ('enrollmentId' in request.resource.data)
+    && ('courseId' in request.resource.data)
+    && request.resource.data.enrollmentId == resource.data.enrollmentId
+    && request.resource.data.courseId == resource.data.courseId;
+}
+
     // Class session schema guardrail (canonical collection)
     function isValidClassSession(data) {
       return data.keys().hasAll([
@@ -662,11 +720,23 @@ function teacherOwnsDocCanonicalFirst(data) {
     // ----------------------------
     match /students/{kidId}/progress/{topicId} {
       allow read: if isAdmin()
-        || (isTeacher() && isTeacherOfKid(kidId))
+        || teacherCanAccessProgressData(kidId, resource.data)
         || isParentOfKid(kidId);
 
-      allow create, update, delete: if isAdmin()
-        || (isTeacher() && isTeacherOfKid(kidId));
+      allow create: if isAdmin()
+        || teacherCanAccessProgressData(kidId, request.resource.data);
+
+      allow update: if isAdmin()
+        || (
+          teacherCanAccessProgressData(kidId, resource.data)
+          && teacherProgressIdentityUnchanged()
+          && teacherCanAccessProgressData(kidId, request.resource.data)
+        );
+
+      // Preserve the pre-Brick-1 teacher delete capability, but scope it to the
+      // canonical enrollment instead of child-level teacher aliases.
+      allow delete: if isAdmin()
+        || teacherCanAccessProgressData(kidId, resource.data);
     }
 
     match /students/{kidId}/courseProgress/{courseId} {
