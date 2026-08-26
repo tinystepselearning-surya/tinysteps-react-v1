@@ -43,7 +43,12 @@ import {
   adminDeleteLeadWorkflowRecord,
   adminUpdateLeadWorkflowRecord,
 } from '../../services/leadsAdminService';
-import { buildNewWebsiteLeadToastDescription, useRealtimeLeads } from './leadsRealtime';
+import { buildNewWebsiteLeadToastDescription } from './leadsRealtime';
+import {
+  LEAD_PAGE_SIZE_OPTIONS,
+  usePagedLeads,
+  type LeadPageSize,
+} from './leadsPaged';
 import LegacyLeadsInquiriesWorkspace from './LeadsInquiriesWorkspaceLegacy';
 import LeadAdminToolsMenu from './LeadAdminToolsMenu';
 import {
@@ -279,7 +284,7 @@ const bucketMeta: Record<SimpleLeadBucket, { title: string; subtitle: string; ic
 };
 
 const bucketGuidance: Record<SimpleLeadBucket, string> = {
-  open: 'Open contains unassigned demo requests.',
+  open: 'Open contains unassigned demo requests. Newest enquiries are shown first.',
   in_progress: 'Teacher owns this bucket until the demo is completed.',
   admin_review: 'Teacher work is finished. Admin should review, follow up or close the lead.',
   closed: 'Final decision is saved. Admin tools remain available from the row menu.',
@@ -295,6 +300,7 @@ const rowTeacherWasAssigned = (row: SimpleRow): boolean => Boolean(row.demo?.ass
 export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange }: LeadsInquiriesWorkspaceProps) {
   const { toast } = useToast();
   const [bucket, setBucket] = useState<SimpleLeadBucket>('open');
+  const [pageSize, setPageSize] = useState<LeadPageSize>(10);
   const [search, setSearch] = useState('');
   const [monthFilter, setMonthFilter] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
@@ -319,13 +325,19 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   const {
     leads,
     isLoading: leadsLoading,
-    closedCount,
-    closedHistoryHasMore,
-    isLoadingMoreClosed,
-    loadMoreClosed,
-    refreshClosedCount,
-  } = useRealtimeLeads<LeadRecord>({
-    includeClosed: bucket === 'closed',
+    bucketCounts,
+    countsLoading,
+    pageNumber,
+    totalPages,
+    hasPrevious,
+    hasNext,
+    previousPage,
+    nextPage,
+    reloadPage,
+    refreshCounts,
+  } = usePagedLeads<LeadRecord>({
+    bucket,
+    pageSize,
     onNewWebsiteLeads: (newLeads) => {
       toast({
         title: newLeads.length === 1 ? 'New demo enquiry received' : `${newLeads.length} new demo enquiries received`,
@@ -375,6 +387,13 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
       (error) => console.error('[LeadsInquiriesWorkspaceV2] compatibility demo phone load failed', error),
     );
   }, [privatePhoneDemoIdsKey]);
+
+  const refreshWorkflowSoon = useCallback(() => {
+    window.setTimeout(() => {
+      void refreshCounts();
+      reloadPage();
+    }, 800);
+  }, [refreshCounts, reloadPage]);
 
   const loadTeachersIfNeeded = useCallback(async () => {
     if (teachersLoaded || teachersLoading) return;
@@ -497,11 +516,6 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   }, [dateFrom, dateTo, monthFilter, rows, search]);
 
   const filtersActive = Boolean(search.trim() || monthFilter !== 'all' || dateFrom || dateTo);
-  const counts = useMemo(() => {
-    const next = filteredRows.reduce((acc, row) => ({ ...acc, [row.bucket]: acc[row.bucket] + 1 }), { open: 0, in_progress: 0, admin_review: 0, closed: 0 });
-    if (!filtersActive) next.closed = Math.max(next.closed, closedCount);
-    return next;
-  }, [closedCount, filteredRows, filtersActive]);
 
   const actionForRow = (row: SimpleRow): SimpleLeadAction => resolveSimpleLeadAction({
     leadStatus: row.lead?.status,
@@ -515,11 +529,12 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     const list = filteredRows.filter((row) => row.bucket === bucket);
     const rank: Record<SimpleLeadAction, number> = { review_outcome: 0, follow_up_lead: 1, assign_teacher: 1, awaiting_demo: 2, wait_teacher: 3, view_outcome: 4 };
     return list.sort((a, b) => {
+      if (bucket === 'open') return b.createdAtMs - a.createdAtMs;
       if (bucket === 'closed') return b.updatedAtMs - a.updatedAtMs;
       const actionDiff = rank[actionForRow(a)] - rank[actionForRow(b)];
       if (actionDiff !== 0) return actionDiff;
       if (a.followUpAtMs && b.followUpAtMs) return a.followUpAtMs - b.followUpAtMs;
-      return a.updatedAtMs - b.updatedAtMs;
+      return b.updatedAtMs - a.updatedAtMs;
     });
   }, [bucket, filteredRows]);
 
@@ -542,6 +557,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
       await reassignDemoSession({ demoId: assignRow.demo.id, assignedTeacherId: teacher.id, assignedTeacherName: teacher.name });
       const wasAssigned = rowTeacherWasAssigned(assignRow);
       setAssignRow(null);
+      refreshWorkflowSoon();
       toast({ title: wasAssigned ? 'Teacher reassigned' : 'Teacher assigned', description: 'The demo ownership state updates automatically.' });
     } catch (error: any) {
       toast({ title: 'Could not assign teacher', description: error?.message || 'Please try again.', variant: 'destructive' });
@@ -580,8 +596,8 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
         admissionNotConfirmedReason: outcomeForm.reason.trim() || null,
       });
       const closesLead = ['enrolled', 'not_interested', 'wrong_fit', 'no_response'].includes(conversionStatus);
-      if (closesLead) void refreshClosedCount();
       setOutcomeRow(null);
+      refreshWorkflowSoon();
       toast({ title: closesLead ? 'Lead closed' : 'Admin follow-up saved', description: closesLead ? 'The final decision moves this lead to Closed automatically.' : 'This lead remains in Admin Review until a final decision is saved.' });
     } catch (error: any) {
       toast({ title: 'Could not save decision', description: error?.message || 'Please try again.', variant: 'destructive' });
@@ -624,6 +640,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
         preferredTimingText: editForm.preferredTimingText.trim() || null, timezone: editForm.timezone.trim() || null, notes: editForm.notes.trim() || null,
       });
       setEditRow(null);
+      reloadPage();
       toast({ title: 'Lead updated', description: 'The lead and linked demo details are now in sync.' });
     } catch (error: any) {
       toast({ title: 'Could not update lead', description: error?.message || 'Please try again.', variant: 'destructive' });
@@ -636,7 +653,8 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     setDeletingRowId(row.id);
     try {
       await adminDeleteLeadWorkflowRecord({ leadId: row.lead?.id || null, demoId: row.demo?.id || null });
-      if (row.bucket === 'closed') void refreshClosedCount();
+      void refreshCounts();
+      reloadPage();
       toast({ title: 'Lead deleted', description: 'The record was removed from the active leads workflow.' });
     } catch (error: any) {
       toast({ title: 'Could not delete lead', description: error?.message || 'Please try again.', variant: 'destructive' });
@@ -664,7 +682,14 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   }
 
   const loading = leadsLoading || !demosLoaded;
-  const showLoadMoreClosed = bucket === 'closed' && closedHistoryHasMore;
+  const currentTotal = bucketCounts[bucket];
+  const listSummary = loading
+    ? 'Checking workflow…'
+    : filtersActive
+      ? `${visibleRows.length} matching on page ${pageNumber} · ${currentTotal} total`
+      : pageSize === 'all'
+        ? `${visibleRows.length} of ${currentTotal} leads loaded`
+        : `Showing ${visibleRows.length} of ${currentTotal} · Page ${pageNumber} of ${totalPages}`;
 
   return <div className="space-y-4">
     <Card className="p-5">
@@ -676,7 +701,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
         {(['open', 'in_progress', 'admin_review', 'closed'] as SimpleLeadBucket[]).map((item) => {
           const meta = bucketMeta[item]; const Icon = meta.icon;
           return <button key={item} type="button" onClick={() => setBucket(item)} className={`rounded-xl border p-4 text-left transition ${meta.accent} ${bucket === item ? 'ring-2 ring-slate-900/10 shadow-sm' : 'hover:shadow-sm'}`}>
-            <div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2 font-semibold"><Icon className="h-5 w-5" />{meta.title}</div><span className="text-2xl font-bold">{loading ? '—' : counts[item]}</span></div>
+            <div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2 font-semibold"><Icon className="h-5 w-5" />{meta.title}</div><span className="text-2xl font-bold">{countsLoading ? '—' : bucketCounts[item]}</span></div>
             <p className="mt-2 text-sm opacity-75">{meta.subtitle}</p>
           </button>;
         })}
@@ -689,15 +714,15 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
       <div><Label htmlFor="lead-date-from" className="mb-1 block text-xs text-slate-500">From date</Label><Input id="lead-date-from" type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} /></div>
       <div><Label htmlFor="lead-date-to" className="mb-1 block text-xs text-slate-500">To date</Label><Input id="lead-date-to" type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} /></div>
       <Button type="button" variant="outline" onClick={clearFilters} disabled={!filtersActive}>Clear</Button>
-    </div></Card>
+    </div>{pageSize !== 'all' && <p className="mt-3 text-xs text-slate-500">Search, month and date filters apply only to the currently loaded page. Choose <span className="font-medium text-slate-700">All</span> when you intentionally need to search the full {bucketMeta[bucket].title.toLowerCase()} list.</p>}</Card>
 
     <Card className="overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
-        <div><h2 className="font-semibold text-slate-950">{bucketMeta[bucket].title}</h2><p className="text-sm text-slate-500">{loading ? 'Checking workflow…' : bucket === 'closed' && !filtersActive && closedCount > visibleRows.length ? `${visibleRows.length} of ${closedCount} closed leads loaded` : `${visibleRows.length} lead${visibleRows.length === 1 ? '' : 's'} in this list`}</p></div>
+        <div><h2 className="font-semibold text-slate-950">{bucketMeta[bucket].title}</h2><p className="text-sm text-slate-500">{listSummary}</p></div>
         {!loading && <p className="text-xs font-medium text-slate-500">{bucketGuidance[bucket]}</p>}
       </div>
-      {loading ? <div className="p-8 text-center text-sm text-slate-500">Loading leads and demo ownership…</div> : visibleRows.length === 0 ? <div className="p-8 text-center"><CheckCircle2 className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-2 font-medium text-slate-700">Nothing here right now.</p>{showLoadMoreClosed && <div className="mt-4"><Button type="button" variant="outline" onClick={() => void loadMoreClosed()} disabled={isLoadingMoreClosed}>{isLoadingMoreClosed ? 'Loading older leads…' : 'Check older closed leads'}</Button></div>}</div> : <div>
-        <div className="divide-y">{visibleRows.map((row) => <div key={row.id} className="grid gap-3 px-4 py-4 lg:grid-cols-[1.35fr_1fr_1fr_1fr_auto] lg:items-center">
+      {loading ? <div className="p-8 text-center text-sm text-slate-500">Loading this page and demo ownership…</div> : <>
+        {visibleRows.length === 0 ? <div className="p-8 text-center"><CheckCircle2 className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-2 font-medium text-slate-700">Nothing here right now.</p>{filtersActive && <p className="mt-1 text-xs text-slate-500">Try clearing the page filters or move to another page.</p>}</div> : <div className="divide-y">{visibleRows.map((row) => <div key={row.id} className="grid gap-3 px-4 py-4 lg:grid-cols-[1.35fr_1fr_1fr_1fr_auto] lg:items-center">
           <div><div className="font-semibold text-slate-950">{row.parentName}</div><div className="text-sm text-slate-600">{row.childName} · {row.parentPhone}</div></div>
           <div><div className="text-sm font-medium text-slate-800">{row.course}</div><div className="text-xs text-slate-500">{row.source}</div></div>
           <div><div className="text-sm font-medium text-slate-800">{row.teacherName}</div><div className="text-xs text-slate-500">Teacher</div></div>
@@ -705,11 +730,14 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
           <div className="flex flex-wrap items-center gap-2 lg:justify-end">
             {row.parentPhone !== '—' && <Button size="sm" variant="ghost" className="gap-1" onClick={() => window.open(buildWhatsAppUrl(row.parentPhone), '_blank', 'noopener,noreferrer')}><MessageCircle className="h-4 w-4" /> WhatsApp</Button>}
             {renderAction(row)}
-            <LeadAdminToolsMenu row={row as any} deleting={deletingRowId === row.id} onEdit={() => openEdit(row)} onDelete={() => void deleteRow(row)} onReassign={() => openAssign(row)} onOutcome={() => openOutcome(row)} onWorkflowChanged={() => { if (row.bucket === 'closed') void refreshClosedCount(); }} />
+            <LeadAdminToolsMenu row={row as any} deleting={deletingRowId === row.id} onEdit={() => openEdit(row)} onDelete={() => void deleteRow(row)} onReassign={() => openAssign(row)} onOutcome={() => openOutcome(row)} onWorkflowChanged={refreshWorkflowSoon} />
           </div>
-        </div>)}</div>
-        {showLoadMoreClosed && <div className="border-t px-4 py-4 text-center"><Button type="button" variant="outline" onClick={() => void loadMoreClosed()} disabled={isLoadingMoreClosed}>{isLoadingMoreClosed ? 'Loading older leads…' : 'Load older closed leads'}</Button><p className="mt-2 text-xs text-slate-500">Older closed history loads only when requested.</p></div>}
-      </div>}
+        </div>)}</div>}
+        {currentTotal > 0 && <div className="flex flex-wrap items-center justify-between gap-3 border-t bg-slate-50/60 px-4 py-3">
+          <div className="flex items-center gap-2"><Label className="text-xs text-slate-500">Rows per page</Label><Select value={String(pageSize)} onValueChange={(value) => setPageSize(value === 'all' ? 'all' : Number(value) as LeadPageSize)}><SelectTrigger className="h-9 w-[130px] bg-white" aria-label="Rows per page"><SelectValue /></SelectTrigger><SelectContent>{LEAD_PAGE_SIZE_OPTIONS.map((size) => <SelectItem key={size} value={String(size)}>{size}</SelectItem>)}<SelectItem value="all">All ({currentTotal})</SelectItem></SelectContent></Select></div>
+          <div className="flex items-center gap-2"><Button type="button" size="sm" variant="outline" onClick={previousPage} disabled={!hasPrevious || leadsLoading}>Previous</Button><span className="min-w-[92px] text-center text-xs font-medium text-slate-600">Page {pageNumber} of {totalPages}</span><Button type="button" size="sm" variant="outline" onClick={nextPage} disabled={!hasNext || leadsLoading}>Next</Button></div>
+        </div>}
+      </>}
     </Card>
 
     <Dialog open={Boolean(assignRow)} onOpenChange={(open) => !open && setAssignRow(null)}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>{assignRow && rowTeacherWasAssigned(assignRow) ? 'Reassign teacher' : 'Assign teacher'}</DialogTitle><DialogDescription>Teacher options load only when this dialog is opened; there is no background teacher listener.</DialogDescription></DialogHeader><form onSubmit={submitAssign} className="space-y-4"><div className="rounded-lg bg-slate-50 p-3 text-sm"><span className="font-semibold">{assignRow?.childName}</span> · {assignRow?.course}</div><div><Label>Teacher *</Label><Select value={assignTeacherId} onValueChange={setAssignTeacherId}><SelectTrigger className="mt-1"><SelectValue placeholder={teachersLoading ? 'Loading teachers…' : teachersLoaded ? 'Select active teacher' : 'Teacher list not loaded'} /></SelectTrigger><SelectContent>{teachers.map((teacher) => <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>)}</SelectContent></Select></div><div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setAssignRow(null)}>Cancel</Button><Button type="submit" disabled={teachersLoading || !teachersLoaded || !assignTeacherId || assignSaving}>{assignSaving ? 'Saving…' : assignRow && rowTeacherWasAssigned(assignRow) ? 'Reassign teacher' : 'Assign teacher'}</Button></div></form></DialogContent></Dialog>
