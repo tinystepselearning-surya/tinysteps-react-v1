@@ -11,6 +11,9 @@ const defaultSummary: TeacherEarningsSummary = {
   ratePerSession: 0,
   totalEarnings: 0,
   pendingEarnings: 0,
+  demoEarnings: 0,
+  demoCompletedCount: 0,
+  demoEnrollmentBonusCount: 0,
   breakdownByCourse: [],
   payments: [],
 };
@@ -18,32 +21,32 @@ const defaultSummary: TeacherEarningsSummary = {
 const toNumber = (value: unknown, fallback = 0) =>
   typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 
-const getMonthId = (date: Date, useUtc = false) => {
-  const year = useUtc ? date.getUTCFullYear() : date.getFullYear();
-  const month = String((useUtc ? date.getUTCMonth() : date.getMonth()) + 1).padStart(2, '0');
+const getMonthId = (date: Date) => {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+  }).formatToParts(date);
+  const year = parts.find((part) => part.type === 'year')?.value || String(date.getFullYear());
+  const month = parts.find((part) => part.type === 'month')?.value || String(date.getMonth() + 1).padStart(2, '0');
   return `${year}-${month}`;
 };
 
 const normalizeEarnings = (data: any, monthId: string): TeacherEarningsSummary => {
   const sessionsCompleted = toNumber(data.sessionsCompleted, toNumber(data.totalSessions, 0));
-  const totalSessions = toNumber(data.totalSessions, sessionsCompleted || toNumber(data.creditsEarned, 0));
-  const sessionsPending = toNumber(data.sessionsPending, 0);
-  const ratePerSession = toNumber(data.ratePerSession, toNumber(data.ratePerCredit, 0));
-  const creditsEarned = toNumber(data.creditsEarned, 0);
-  const totalEarnings = toNumber(
-    data.totalEarnings,
-    ratePerSession > 0 ? ratePerSession * creditsEarned : 0
-  );
-  const pendingEarnings = toNumber(data.pendingEarnings, 0);
+  const totalSessions = toNumber(data.totalSessions, sessionsCompleted);
 
   return {
     month: data.month ?? monthId,
     totalSessions,
     sessionsCompleted,
-    sessionsPending,
-    ratePerSession,
-    totalEarnings,
-    pendingEarnings,
+    sessionsPending: toNumber(data.sessionsPending, 0),
+    ratePerSession: toNumber(data.ratePerSession, 0),
+    totalEarnings: toNumber(data.totalEarnings, 0),
+    pendingEarnings: toNumber(data.pendingEarnings, 0),
+    demoEarnings: toNumber(data.demoEarnings, 0),
+    demoCompletedCount: toNumber(data.demoCompletedCount, 0),
+    demoEnrollmentBonusCount: toNumber(data.demoEnrollmentBonusCount, 0),
     breakdownByCourse: Array.isArray(data.breakdownByCourse) ? data.breakdownByCourse : [],
     payments: Array.isArray(data.payments) ? data.payments : [],
   };
@@ -51,39 +54,26 @@ const normalizeEarnings = (data: any, monthId: string): TeacherEarningsSummary =
 
 const fetchEarnings = async (
   teacherId: string,
-  monthId?: string
+  monthId: string,
 ): Promise<TeacherEarningsSummary> => {
-  const now = new Date();
-  const monthLocal = monthId || getMonthId(now);
-  const monthUtc = getMonthId(now, true);
+  const monthlyRef = doc(db, 'teachers', teacherId, 'earnings', monthId);
+  const snapshot = await getDoc(monthlyRef);
 
-  const primaryRef = doc(db, 'teachers', teacherId, 'earnings', monthLocal);
-  let snapshot = await getDoc(primaryRef);
-
-  if (!snapshot.exists() && !monthId && monthUtc !== monthLocal) {
-    const utcRef = doc(db, 'teachers', teacherId, 'earnings', monthUtc);
-    snapshot = await getDoc(utcRef);
+  if (!snapshot.exists()) {
+    return { ...defaultSummary, month: monthId };
   }
 
-  if (snapshot.exists()) {
-    return normalizeEarnings(snapshot.data(), snapshot.id);
-  }
-
-  // Backward-compat fallback
-  const legacyRef = doc(db, 'teacherEarnings', teacherId);
-  const legacySnap = await getDoc(legacyRef);
-  if (!legacySnap.exists()) {
-    return { ...defaultSummary, month: monthLocal };
-  }
-  return normalizeEarnings(legacySnap.data(), monthLocal);
+  return normalizeEarnings(snapshot.data(), snapshot.id);
 };
 
 export const useEarnings = (teacherId?: string, monthId?: string) => {
   const resolvedMonth = monthId || getMonthId(new Date());
   return useQuery<TeacherEarningsSummary>({
-    queryKey: ['teacherEarnings', teacherId, resolvedMonth],
+    queryKey: ['teacherEarningsRollup', teacherId, resolvedMonth],
     queryFn: () =>
-      teacherId ? fetchEarnings(teacherId, resolvedMonth) : Promise.resolve(defaultSummary),
+      teacherId
+        ? fetchEarnings(teacherId, resolvedMonth)
+        : Promise.resolve({ ...defaultSummary, month: resolvedMonth }),
     enabled: Boolean(teacherId),
     staleTime: 1000 * 60 * 10,
   });
