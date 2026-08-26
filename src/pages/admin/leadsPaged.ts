@@ -8,8 +8,10 @@ import {
   orderBy,
   query,
   startAfter,
+  Timestamp,
   where,
   type DocumentData,
+  type QueryConstraint,
   type QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { db } from '../../lib/firebaseConfig';
@@ -45,6 +47,8 @@ export interface PagedLeadRecord {
 export interface UsePagedLeadsOptions<T extends PagedLeadRecord> {
   bucket: SimpleLeadBucket;
   pageSize: LeadPageSize;
+  dateFromMs?: number;
+  dateToMs?: number;
   onError: (error: Error) => void;
   onNewWebsiteLeads: (leads: T[]) => void;
 }
@@ -99,6 +103,33 @@ const getBucketCount = async (bucket: SimpleLeadBucket): Promise<number> => {
   return Number(snapshot.data().count || 0);
 };
 
+const isWithinDateRange = (
+  docSnapshot: QueryDocumentSnapshot<DocumentData>,
+  dateFromMs: number,
+  dateToMs: number,
+): boolean => {
+  const createdAtMs = timestampToMillis(docSnapshot.data().createdAt);
+  if (!createdAtMs) return false;
+  if (dateFromMs && createdAtMs < dateFromMs) return false;
+  if (dateToMs && createdAtMs > dateToMs) return false;
+  return true;
+};
+
+const buildCreatedAtConstraints = (
+  dateFromMs: number,
+  dateToMs: number,
+  cursor: QueryDocumentSnapshot<DocumentData> | null,
+  batchSize?: number,
+): QueryConstraint[] => {
+  const constraints: QueryConstraint[] = [];
+  if (dateFromMs) constraints.push(where('createdAt', '>=', Timestamp.fromMillis(dateFromMs)));
+  if (dateToMs) constraints.push(where('createdAt', '<=', Timestamp.fromMillis(dateToMs)));
+  constraints.push(orderBy('createdAt', 'desc'));
+  if (cursor) constraints.push(startAfter(cursor));
+  if (batchSize) constraints.push(limit(batchSize));
+  return constraints;
+};
+
 interface PageState {
   key: string;
   index: number;
@@ -107,16 +138,22 @@ interface PageState {
 export function usePagedLeads<T extends PagedLeadRecord>({
   bucket,
   pageSize,
+  dateFromMs = 0,
+  dateToMs = 0,
   onError,
   onNewWebsiteLeads,
 }: UsePagedLeadsOptions<T>) {
-  const optionKey = `${bucket}:${pageSize}`;
+  const hasDateFilter = Boolean(dateFromMs || dateToMs);
+  const invalidDateRange = Boolean(dateFromMs && dateToMs && dateFromMs > dateToMs);
+  const optionKey = `${bucket}:${pageSize}:${dateFromMs || 0}:${dateToMs || 0}`;
   const [pageState, setPageState] = useState<PageState>({ key: optionKey, index: 0 });
   const effectivePageIndex = pageState.key === optionKey ? pageState.index : 0;
   const [leads, setLeads] = useState<T[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [bucketCounts, setBucketCounts] = useState<LeadBucketCounts>(EMPTY_COUNTS);
   const [countsLoading, setCountsLoading] = useState(true);
+  const [filteredTotal, setFilteredTotal] = useState<number | null>(null);
+  const [filteredHasNext, setFilteredHasNext] = useState(false);
   const [reloadVersion, setReloadVersion] = useState(0);
   const onErrorRef = useRef(onError);
   const onNewWebsiteLeadsRef = useRef(onNewWebsiteLeads);
@@ -152,6 +189,8 @@ export function usePagedLeads<T extends PagedLeadRecord>({
   useEffect(() => {
     if (pageState.key === optionKey) return;
     pageStartCursorsRef.current = [null];
+    setFilteredTotal(null);
+    setFilteredHasNext(false);
     setPageState({ key: optionKey, index: 0 });
   }, [optionKey, pageState.key]);
 
@@ -169,26 +208,49 @@ export function usePagedLeads<T extends PagedLeadRecord>({
     const fail = (error: unknown) => {
       if (cancelled || requestId !== requestIdRef.current) return;
       setLeads([]);
+      setFilteredHasNext(false);
       setIsLoading(false);
       onErrorRef.current(error as Error);
     };
 
     const load = async () => {
       setIsLoading(true);
+      setFilteredHasNext(false);
+      if (invalidDateRange) {
+        setFilteredTotal(0);
+        publish([]);
+        return;
+      }
+
       try {
         const statuses = [...LEAD_STATUSES_BY_BUCKET[bucket]];
 
         if (pageSize === 'all') {
-          const snapshot = await getDocs(
-            query(collection(db, LEADS_COLLECTION), where('status', 'in', statuses)),
-          );
-          publish([...snapshot.docs].sort(sortLeadDocsByCreatedAtDesc));
+          if (hasDateFilter) {
+            const snapshot = await getDocs(
+              query(
+                collection(db, LEADS_COLLECTION),
+                ...buildCreatedAtConstraints(dateFromMs, dateToMs, null),
+              ),
+            );
+            const matching = snapshot.docs.filter((docSnapshot) =>
+              leadStatusBelongsToBucket(docSnapshot.data().status, bucket));
+            setFilteredTotal(matching.length);
+            publish(matching);
+          } else {
+            const snapshot = await getDocs(
+              query(collection(db, LEADS_COLLECTION), where('status', 'in', statuses)),
+            );
+            setFilteredTotal(null);
+            publish([...snapshot.docs].sort(sortLeadDocsByCreatedAtDesc));
+          }
           return;
         }
 
         // With Teacher / Admin Review / Closed are normally small operational queues.
         // For <=100 rows, fetch the exact status-filtered queue once and paginate the
-        // cached result locally. This avoids scanning the much larger Open population.
+        // cached result locally. Date filtering then happens inside that small cache, so
+        // no composite status + createdAt Firestore index is required.
         if (bucket !== 'open') {
           let cached = smallBucketCacheRef.current.get(bucket);
           if (!cached) {
@@ -202,37 +264,36 @@ export function usePagedLeads<T extends PagedLeadRecord>({
             }
           }
           if (cached) {
+            const matching = hasDateFilter
+              ? cached.filter((docSnapshot) => isWithinDateRange(docSnapshot, dateFromMs, dateToMs))
+              : cached;
             const start = effectivePageIndex * pageSize;
-            publish(cached.slice(start, start + pageSize));
+            setFilteredTotal(hasDateFilter ? matching.length : null);
+            setFilteredHasNext(start + pageSize < matching.length);
+            publish(matching.slice(start, start + pageSize));
             return;
           }
         }
 
-        // Open can be large. Do not download every Open lead and slice in React.
-        // Instead walk the built-in createdAt index from newest to oldest, keeping only
-        // this bucket's canonical lead statuses until the requested page is full.
+        // Open can be large. Walk the built-in createdAt index from newest to oldest,
+        // applying the requested month/custom-date bounds at the query itself. We do not
+        // add a status predicate here because status + createdAt would require a new
+        // composite index; bucket membership is checked only for the small bounded scan.
         let cursor = pageStartCursorsRef.current[effectivePageIndex] || null;
-        const pageDocs: QueryDocumentSnapshot<DocumentData>[] = [];
+        const matchingDocs: QueryDocumentSnapshot<DocumentData>[] = [];
         let reachedEnd = false;
+        let pageBoundaryCursor: QueryDocumentSnapshot<DocumentData> | null = null;
+        const targetMatches = pageSize + (hasDateFilter ? 1 : 0);
 
-        while (pageDocs.length < pageSize && !reachedEnd) {
-          const remaining = pageSize - pageDocs.length;
-          // A tiny amount of over-fetch keeps latency reasonable when a non-Open record is
-          // interleaved with Open records, while remaining tightly bounded.
+        while (matchingDocs.length < targetMatches && !reachedEnd) {
+          const remaining = targetMatches - matchingDocs.length;
           const batchSize = Math.min(100, Math.max(remaining, Math.min(5, pageSize)));
-          const pageQuery = cursor
-            ? query(
-                collection(db, LEADS_COLLECTION),
-                orderBy('createdAt', 'desc'),
-                startAfter(cursor),
-                limit(batchSize),
-              )
-            : query(
-                collection(db, LEADS_COLLECTION),
-                orderBy('createdAt', 'desc'),
-                limit(batchSize),
-              );
-          const snapshot = await getDocs(pageQuery);
+          const snapshot = await getDocs(
+            query(
+              collection(db, LEADS_COLLECTION),
+              ...buildCreatedAtConstraints(dateFromMs, dateToMs, cursor, batchSize),
+            ),
+          );
           if (snapshot.empty) {
             reachedEnd = true;
             break;
@@ -240,19 +301,35 @@ export function usePagedLeads<T extends PagedLeadRecord>({
 
           for (const docSnapshot of snapshot.docs) {
             cursor = docSnapshot;
-            if (leadStatusBelongsToBucket(docSnapshot.data().status, bucket)) {
-              pageDocs.push(docSnapshot);
-              if (pageDocs.length === pageSize) break;
-            }
+            if (!leadStatusBelongsToBucket(docSnapshot.data().status, bucket)) continue;
+            matchingDocs.push(docSnapshot);
+            if (matchingDocs.length === pageSize) pageBoundaryCursor = docSnapshot;
+            if (matchingDocs.length === targetMatches) break;
           }
 
           if (snapshot.docs.length < batchSize) reachedEnd = true;
         }
 
-        if (pageDocs.length === pageSize && cursor) {
-          pageStartCursorsRef.current[effectivePageIndex + 1] = cursor;
+        const pageDocs = matchingDocs.slice(0, pageSize);
+        const hasFilteredNextPage = hasDateFilter
+          ? matchingDocs.length > pageSize
+          : false;
+        setFilteredHasNext(hasFilteredNextPage);
+
+        if (pageDocs.length === pageSize && pageBoundaryCursor) {
+          pageStartCursorsRef.current[effectivePageIndex + 1] = pageBoundaryCursor;
         } else {
           pageStartCursorsRef.current.splice(effectivePageIndex + 1);
+        }
+
+        if (hasDateFilter) {
+          if (!hasFilteredNextPage && reachedEnd) {
+            setFilteredTotal(effectivePageIndex * pageSize + pageDocs.length);
+          } else {
+            setFilteredTotal(null);
+          }
+        } else {
+          setFilteredTotal(null);
         }
         publish(pageDocs);
       } catch (error) {
@@ -264,7 +341,18 @@ export function usePagedLeads<T extends PagedLeadRecord>({
     return () => {
       cancelled = true;
     };
-  }, [bucket, effectivePageIndex, optionKey, pageSize, pageState.key, reloadVersion]);
+  }, [
+    bucket,
+    dateFromMs,
+    dateToMs,
+    effectivePageIndex,
+    hasDateFilter,
+    invalidDateRange,
+    optionKey,
+    pageSize,
+    pageState.key,
+    reloadVersion,
+  ]);
 
   // Preserve new website-enquiry alerts without reopening the former unbounded active
   // leads listener. Only the five newest lead documents stay live.
@@ -298,14 +386,16 @@ export function usePagedLeads<T extends PagedLeadRecord>({
         onNewWebsiteLeadsRef.current(newWebsiteLeads);
         smallBucketCacheRef.current.clear();
         void refreshCounts();
-        if (bucket === 'open' && effectivePageIndex === 0) {
+        const rangeIncludesNow =
+          (!dateFromMs || now >= dateFromMs) && (!dateToMs || now <= dateToMs);
+        if (bucket === 'open' && effectivePageIndex === 0 && rangeIncludesNow) {
           pageStartCursorsRef.current = [null];
           setReloadVersion((current) => current + 1);
         }
       },
       (error) => onErrorRef.current(error as Error),
     );
-  }, [bucket, effectivePageIndex, refreshCounts]);
+  }, [bucket, dateFromMs, dateToMs, effectivePageIndex, refreshCounts]);
 
   const reloadPage = useCallback((resetToFirst = false) => {
     smallBucketCacheRef.current.delete(bucket);
@@ -323,9 +413,17 @@ export function usePagedLeads<T extends PagedLeadRecord>({
   const pageNumber = effectivePageIndex + 1;
   const totalPages = pageSize === 'all'
     ? 1
-    : Math.max(1, Math.ceil(currentTotal / pageSize));
+    : hasDateFilter
+      ? filteredTotal === null
+        ? null
+        : Math.max(1, Math.ceil(filteredTotal / pageSize))
+      : Math.max(1, Math.ceil(currentTotal / pageSize));
   const hasPrevious = pageSize !== 'all' && effectivePageIndex > 0;
-  const hasNext = pageSize !== 'all' && leads.length > 0 && pageNumber < totalPages;
+  const hasNext = pageSize !== 'all' && leads.length > 0 && (
+    hasDateFilter
+      ? filteredHasNext
+      : pageNumber < (totalPages || 1)
+  );
 
   const previousPage = useCallback(() => {
     if (pageSize === 'all') return;
@@ -348,6 +446,8 @@ export function usePagedLeads<T extends PagedLeadRecord>({
     isLoading,
     bucketCounts,
     countsLoading,
+    filteredTotal,
+    dateFilterActive: hasDateFilter,
     pageNumber,
     totalPages,
     hasPrevious,
@@ -359,6 +459,8 @@ export function usePagedLeads<T extends PagedLeadRecord>({
   }), [
     bucketCounts,
     countsLoading,
+    filteredTotal,
+    hasDateFilter,
     hasNext,
     hasPrevious,
     isLoading,

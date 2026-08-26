@@ -255,6 +255,29 @@ const formatMonthKey = (value: string): string => {
   }).format(new Date(year, month - 1, 15, 12, 0, 0, 0));
 };
 
+const monthDateRangeMs = (value: string): { fromMs: number; toMs: number } => {
+  if (!/^\d{4}-\d{2}$/.test(value)) return { fromMs: 0, toMs: 0 };
+  const [year, month] = value.split('-').map(Number);
+  if (!year || !month || month < 1 || month > 12) return { fromMs: 0, toMs: 0 };
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const monthText = String(month).padStart(2, '0');
+  return {
+    fromMs: dateBoundaryMs(`${year}-${monthText}-01`),
+    toMs: dateBoundaryMs(`${year}-${monthText}-${String(lastDay).padStart(2, '0')}`, true),
+  };
+};
+
+const buildRecentMonthOptions = (count = 36): Array<{ value: string; label: string }> => {
+  const currentMonthKey = monthKeyFromMs(Date.now());
+  const [currentYear, currentMonth] = currentMonthKey.split('-').map(Number);
+  if (!currentYear || !currentMonth) return [];
+  return Array.from({ length: count }, (_, index) => {
+    const date = new Date(Date.UTC(currentYear, currentMonth - 1 - index, 15, 12, 0, 0));
+    const value = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+    return { value, label: formatMonthKey(value) };
+  });
+};
+
 const formatTrack = (value: unknown): string =>
   normalizeText(value)
     .split('_')
@@ -322,11 +345,21 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   const [editSaving, setEditSaving] = useState(false);
   const [deletingRowId, setDeletingRowId] = useState<string | null>(null);
 
+  const serverDateRange = useMemo(() => {
+    if (monthFilter !== 'all') return monthDateRangeMs(monthFilter);
+    return {
+      fromMs: dateBoundaryMs(dateFrom),
+      toMs: dateBoundaryMs(dateTo, true),
+    };
+  }, [dateFrom, dateTo, monthFilter]);
+
   const {
     leads,
     isLoading: leadsLoading,
     bucketCounts,
     countsLoading,
+    filteredTotal,
+    dateFilterActive,
     pageNumber,
     totalPages,
     hasPrevious,
@@ -338,6 +371,8 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   } = usePagedLeads<LeadRecord>({
     bucket,
     pageSize,
+    dateFromMs: serverDateRange.fromMs,
+    dateToMs: serverDateRange.toMs,
     onNewWebsiteLeads: (newLeads) => {
       toast({
         title: newLeads.length === 1 ? 'New demo enquiry received' : `${newLeads.length} new demo enquiries received`,
@@ -500,22 +535,21 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     return next;
   }, [demoPhones, demos, leads]);
 
-  const monthOptions = useMemo(() => Array.from(new Set(rows.map((row) => monthKeyFromMs(row.createdAtMs)).filter(Boolean))).sort((a, b) => b.localeCompare(a)).map((value) => ({ value, label: formatMonthKey(value) })), [rows]);
+  const monthOptions = useMemo(() => buildRecentMonthOptions(), []);
 
   const filteredRows = useMemo(() => {
     const needle = search.trim().toLowerCase();
-    const fromMs = dateBoundaryMs(dateFrom);
-    const toMsInclusive = dateBoundaryMs(dateTo, true);
-    return rows.filter((row) => {
-      if (monthFilter !== 'all' && monthKeyFromMs(row.createdAtMs) !== monthFilter) return false;
-      if (fromMs && row.createdAtMs < fromMs) return false;
-      if (toMsInclusive && row.createdAtMs > toMsInclusive) return false;
-      if (!needle) return true;
-      return [row.parentName, row.childName, row.parentPhone, row.course, row.source, row.teacherName, row.statusLabel].join(' ').toLowerCase().includes(needle);
-    });
-  }, [dateFrom, dateTo, monthFilter, rows, search]);
+    if (!needle) return rows;
+    return rows.filter((row) =>
+      [row.parentName, row.childName, row.parentPhone, row.course, row.source, row.teacherName, row.statusLabel]
+        .join(' ')
+        .toLowerCase()
+        .includes(needle));
+  }, [rows, search]);
 
-  const filtersActive = Boolean(search.trim() || monthFilter !== 'all' || dateFrom || dateTo);
+  const dateFiltersActive = Boolean(monthFilter !== 'all' || dateFrom || dateTo);
+  const textSearchActive = Boolean(search.trim());
+  const filtersActive = Boolean(textSearchActive || dateFiltersActive);
 
   const actionForRow = (row: SimpleRow): SimpleLeadAction => resolveSimpleLeadAction({
     leadStatus: row.lead?.status,
@@ -539,6 +573,24 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   }, [bucket, filteredRows]);
 
   const clearFilters = () => { setSearch(''); setMonthFilter('all'); setDateFrom(''); setDateTo(''); };
+
+  const selectMonth = (value: string) => {
+    setMonthFilter(value);
+    if (value !== 'all') {
+      setDateFrom('');
+      setDateTo('');
+    }
+  };
+
+  const updateDateFrom = (value: string) => {
+    setMonthFilter('all');
+    setDateFrom(value);
+  };
+
+  const updateDateTo = (value: string) => {
+    setMonthFilter('all');
+    setDateTo(value);
+  };
 
   const openAssign = (row: SimpleRow) => {
     if (!row.demo) return;
@@ -683,13 +735,18 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
 
   const loading = leadsLoading || !demosLoaded;
   const currentTotal = bucketCounts[bucket];
+  const pageLabel = totalPages ? `Page ${pageNumber} of ${totalPages}` : `Page ${pageNumber}`;
   const listSummary = loading
     ? 'Checking workflow…'
-    : filtersActive
-      ? `${visibleRows.length} matching on page ${pageNumber} · ${currentTotal} total`
-      : pageSize === 'all'
-        ? `${visibleRows.length} of ${currentTotal} leads loaded`
-        : `Showing ${visibleRows.length} of ${currentTotal} · Page ${pageNumber} of ${totalPages}`;
+    : textSearchActive
+      ? `${visibleRows.length} text match${visibleRows.length === 1 ? '' : 'es'} on ${pageLabel}${dateFilterActive && filteredTotal !== null ? ` · ${filteredTotal} in selected date range` : ''}`
+      : dateFilterActive
+        ? filteredTotal !== null
+          ? `Showing ${visibleRows.length} of ${filteredTotal} in selected date range · ${pageLabel}`
+          : `Showing ${visibleRows.length} in selected date range · ${pageLabel}`
+        : pageSize === 'all'
+          ? `${visibleRows.length} of ${currentTotal} leads loaded`
+          : `Showing ${visibleRows.length} of ${currentTotal} · ${pageLabel}`;
 
   return <div className="space-y-4">
     <Card className="p-5">
@@ -710,11 +767,11 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
 
     <Card className="p-4"><div className="grid gap-3 lg:grid-cols-[minmax(260px,1fr)_180px_160px_160px_auto] lg:items-end">
       <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search parent, child, phone, course or teacher" className="pl-9" /></div>
-      <div><Label className="mb-1 block text-xs text-slate-500">Enquiry month</Label><Select value={monthFilter} onValueChange={setMonthFilter}><SelectTrigger aria-label="Filter by enquiry month"><SelectValue placeholder="All months" /></SelectTrigger><SelectContent><SelectItem value="all">All months</SelectItem>{monthOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></div>
-      <div><Label htmlFor="lead-date-from" className="mb-1 block text-xs text-slate-500">From date</Label><Input id="lead-date-from" type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} /></div>
-      <div><Label htmlFor="lead-date-to" className="mb-1 block text-xs text-slate-500">To date</Label><Input id="lead-date-to" type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} /></div>
+      <div><Label className="mb-1 block text-xs text-slate-500">Enquiry month</Label><Select value={monthFilter} onValueChange={selectMonth}><SelectTrigger aria-label="Filter by enquiry month"><SelectValue placeholder="All months" /></SelectTrigger><SelectContent><SelectItem value="all">All months</SelectItem>{monthOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></div>
+      <div><Label htmlFor="lead-date-from" className="mb-1 block text-xs text-slate-500">From date</Label><Input id="lead-date-from" type="date" value={dateFrom} onChange={(event) => updateDateFrom(event.target.value)} /></div>
+      <div><Label htmlFor="lead-date-to" className="mb-1 block text-xs text-slate-500">To date</Label><Input id="lead-date-to" type="date" value={dateTo} onChange={(event) => updateDateTo(event.target.value)} /></div>
       <Button type="button" variant="outline" onClick={clearFilters} disabled={!filtersActive}>Clear</Button>
-    </div>{pageSize !== 'all' && <p className="mt-3 text-xs text-slate-500">Search, month and date filters apply only to the currently loaded page. Choose <span className="font-medium text-slate-700">All</span> when you intentionally need to search the full {bucketMeta[bucket].title.toLowerCase()} list.</p>}</Card>
+    </div><p className="mt-3 text-xs text-slate-500">Month and custom-date filters query the full <span className="font-medium text-slate-700">{bucketMeta[bucket].title}</span> list on Firestore without loading every lead. Text search applies to the loaded page; choose <span className="font-medium text-slate-700">All</span> only when you intentionally need full-list text search.</p></Card>
 
     <Card className="overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
@@ -722,7 +779,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
         {!loading && <p className="text-xs font-medium text-slate-500">{bucketGuidance[bucket]}</p>}
       </div>
       {loading ? <div className="p-8 text-center text-sm text-slate-500">Loading this page and demo ownership…</div> : <>
-        {visibleRows.length === 0 ? <div className="p-8 text-center"><CheckCircle2 className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-2 font-medium text-slate-700">Nothing here right now.</p>{filtersActive && <p className="mt-1 text-xs text-slate-500">Try clearing the page filters or move to another page.</p>}</div> : <div className="divide-y">{visibleRows.map((row) => <div key={row.id} className="grid gap-3 px-4 py-4 lg:grid-cols-[1.35fr_1fr_1fr_1fr_auto] lg:items-center">
+        {visibleRows.length === 0 ? <div className="p-8 text-center"><CheckCircle2 className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-2 font-medium text-slate-700">Nothing here right now.</p>{dateFiltersActive ? <p className="mt-1 text-xs text-slate-500">No leads were found in the selected month or date range.</p> : textSearchActive ? <p className="mt-1 text-xs text-slate-500">Try clearing the text search or move to another page.</p> : null}</div> : <div className="divide-y">{visibleRows.map((row) => <div key={row.id} className="grid gap-3 px-4 py-4 lg:grid-cols-[1.35fr_1fr_1fr_1fr_auto] lg:items-center">
           <div><div className="font-semibold text-slate-950">{row.parentName}</div><div className="text-sm text-slate-600">{row.childName} · {row.parentPhone}</div></div>
           <div><div className="text-sm font-medium text-slate-800">{row.course}</div><div className="text-xs text-slate-500">{row.source}</div></div>
           <div><div className="text-sm font-medium text-slate-800">{row.teacherName}</div><div className="text-xs text-slate-500">Teacher</div></div>
@@ -734,8 +791,8 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
           </div>
         </div>)}</div>}
         {currentTotal > 0 && <div className="flex flex-wrap items-center justify-between gap-3 border-t bg-slate-50/60 px-4 py-3">
-          <div className="flex items-center gap-2"><Label className="text-xs text-slate-500">Rows per page</Label><Select value={String(pageSize)} onValueChange={(value) => setPageSize(value === 'all' ? 'all' : Number(value) as LeadPageSize)}><SelectTrigger className="h-9 w-[130px] bg-white" aria-label="Rows per page"><SelectValue /></SelectTrigger><SelectContent>{LEAD_PAGE_SIZE_OPTIONS.map((size) => <SelectItem key={size} value={String(size)}>{size}</SelectItem>)}<SelectItem value="all">All ({currentTotal})</SelectItem></SelectContent></Select></div>
-          <div className="flex items-center gap-2"><Button type="button" size="sm" variant="outline" onClick={previousPage} disabled={!hasPrevious || leadsLoading}>Previous</Button><span className="min-w-[92px] text-center text-xs font-medium text-slate-600">Page {pageNumber} of {totalPages}</span><Button type="button" size="sm" variant="outline" onClick={nextPage} disabled={!hasNext || leadsLoading}>Next</Button></div>
+          <div className="flex items-center gap-2"><Label className="text-xs text-slate-500">Rows per page</Label><Select value={String(pageSize)} onValueChange={(value) => setPageSize(value === 'all' ? 'all' : Number(value) as LeadPageSize)}><SelectTrigger className="h-9 w-[130px] bg-white" aria-label="Rows per page"><SelectValue /></SelectTrigger><SelectContent>{LEAD_PAGE_SIZE_OPTIONS.map((size) => <SelectItem key={size} value={String(size)}>{size}</SelectItem>)}<SelectItem value="all">{dateFilterActive ? 'All matching' : `All (${currentTotal})`}</SelectItem></SelectContent></Select></div>
+          <div className="flex items-center gap-2"><Button type="button" size="sm" variant="outline" onClick={previousPage} disabled={!hasPrevious || leadsLoading}>Previous</Button><span className="min-w-[92px] text-center text-xs font-medium text-slate-600">{pageLabel}</span><Button type="button" size="sm" variant="outline" onClick={nextPage} disabled={!hasNext || leadsLoading}>Next</Button></div>
         </div>}
       </>}
     </Card>

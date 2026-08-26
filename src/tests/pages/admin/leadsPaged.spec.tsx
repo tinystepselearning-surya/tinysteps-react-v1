@@ -11,11 +11,21 @@ const firestoreMocks = vi.hoisted(() => ({
   orderBy: vi.fn((...args: unknown[]) => ({ kind: 'orderBy', args })),
   query: vi.fn((...args: unknown[]) => ({ kind: 'query', args })),
   startAfter: vi.fn((...args: unknown[]) => ({ kind: 'startAfter', args })),
+  timestampFromMillis: vi.fn((value: number) => ({ kind: 'timestamp', value })),
   where: vi.fn((...args: unknown[]) => ({ kind: 'where', args })),
 }));
 
 vi.mock('firebase/firestore', () => ({
-  ...firestoreMocks,
+  collection: firestoreMocks.collection,
+  getCountFromServer: firestoreMocks.getCountFromServer,
+  getDocs: firestoreMocks.getDocs,
+  limit: firestoreMocks.limit,
+  onSnapshot: firestoreMocks.onSnapshot,
+  orderBy: firestoreMocks.orderBy,
+  query: firestoreMocks.query,
+  startAfter: firestoreMocks.startAfter,
+  Timestamp: { fromMillis: firestoreMocks.timestampFromMillis },
+  where: firestoreMocks.where,
 }));
 
 vi.mock('../../../lib/firebaseConfig', () => ({ db: {} }));
@@ -62,10 +72,22 @@ function makeSnapshot(docs: TestDoc[], fromCache = false) {
   };
 }
 
-function Harness({ bucket = 'open', pageSize = 10 }: { bucket?: SimpleLeadBucket; pageSize?: LeadPageSize }) {
+function Harness({
+  bucket = 'open',
+  pageSize = 10,
+  dateFromMs = 0,
+  dateToMs = 0,
+}: {
+  bucket?: SimpleLeadBucket;
+  pageSize?: LeadPageSize;
+  dateFromMs?: number;
+  dateToMs?: number;
+}) {
   const result = usePagedLeads<TestLead>({
     bucket,
     pageSize,
+    dateFromMs,
+    dateToMs,
     onError: vi.fn(),
     onNewWebsiteLeads: vi.fn(),
   });
@@ -74,6 +96,8 @@ function Harness({ bucket = 'open', pageSize = 10 }: { bucket?: SimpleLeadBucket
       <span data-testid="loading">{String(result.isLoading)}</span>
       <span data-testid="ids">{result.leads.map((lead) => lead.id).join(',')}</span>
       <span data-testid="page">{result.pageNumber}</span>
+      <span data-testid="total-pages">{String(result.totalPages)}</span>
+      <span data-testid="filtered-total">{String(result.filteredTotal)}</span>
       <span data-testid="has-next">{String(result.hasNext)}</span>
       <button type="button" onClick={result.nextPage}>Next</button>
     </div>
@@ -96,6 +120,7 @@ beforeEach(() => {
   firestoreMocks.orderBy.mockImplementation((...args: unknown[]) => ({ kind: 'orderBy', args }));
   firestoreMocks.query.mockImplementation((...args: unknown[]) => ({ kind: 'query', args }));
   firestoreMocks.startAfter.mockImplementation((...args: unknown[]) => ({ kind: 'startAfter', args }));
+  firestoreMocks.timestampFromMillis.mockImplementation((value: number) => ({ kind: 'timestamp', value }));
   firestoreMocks.where.mockImplementation((...args: unknown[]) => ({ kind: 'where', args }));
   firestoreMocks.getCountFromServer.mockResolvedValue({ data: () => ({ count: 180 }) });
   firestoreMocks.onSnapshot.mockImplementation(
@@ -184,6 +209,51 @@ describe('usePagedLeads bounded Firestore reads', () => {
 
     expect(firestoreMocks.startAfter).toHaveBeenCalledWith(firstPage[9]);
     expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(2);
+  });
+
+  it('applies custom date bounds at Firestore instead of filtering only the loaded page', async () => {
+    const docs = Array.from({ length: 4 }, (_, index) =>
+      makeDoc(`july-${index}`, 'demo_pending_schedule', 4_000 - index));
+    firestoreMocks.getDocs.mockResolvedValue(makeSnapshot(docs));
+
+    render(<Harness dateFromMs={1_000} dateToMs={5_000} />);
+
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
+    expect(firestoreMocks.timestampFromMillis).toHaveBeenCalledWith(1_000);
+    expect(firestoreMocks.timestampFromMillis).toHaveBeenCalledWith(5_000);
+    expect(firestoreMocks.where).toHaveBeenCalledWith(
+      'createdAt',
+      '>=',
+      { kind: 'timestamp', value: 1_000 },
+    );
+    expect(firestoreMocks.where).toHaveBeenCalledWith(
+      'createdAt',
+      '<=',
+      { kind: 'timestamp', value: 5_000 },
+    );
+    expect(screen.getByTestId('filtered-total')).toHaveTextContent('4');
+    expect(screen.getByTestId('total-pages')).toHaveTextContent('1');
+  });
+
+  it('does not combine Open status and createdAt filters, avoiding a new composite index', async () => {
+    firestoreMocks.getDocs.mockResolvedValue(makeSnapshot([]));
+
+    render(<Harness dateFromMs={1_000} dateToMs={5_000} />);
+
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
+    const dataArgs = getDataQueryArgs(0);
+    expect(dataArgs).toContainEqual({
+      kind: 'where',
+      args: ['createdAt', '>=', { kind: 'timestamp', value: 1_000 }],
+    });
+    expect(dataArgs).toContainEqual({
+      kind: 'where',
+      args: ['createdAt', '<=', { kind: 'timestamp', value: 5_000 }],
+    });
+    expect(dataArgs).not.toContainEqual({
+      kind: 'where',
+      args: ['status', 'in', [...LEAD_STATUSES_BY_BUCKET.open]],
+    });
   });
 
   it('loads the entire bucket only when All is explicitly selected', async () => {
