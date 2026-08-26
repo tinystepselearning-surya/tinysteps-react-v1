@@ -84,6 +84,14 @@ export { adminGenerateResetLink } from "./adminGenerateResetLink";
 export { adminResetPassword } from "./adminResetPassword";
 export { resolveLoginIdentifier } from "./resolveLoginIdentifier";
 
+// Admin Sessions Management snapshot: one authoritative rebuild at 04:00 IST plus explicit admin refresh.
+export {
+  getSessionsManagementSnapshot,
+  adminRefreshSessionsManagementSnapshot,
+  getSessionsManagementDateSnapshot,
+  refreshSessionsManagementSnapshot4am,
+} from './sessionsManagementSnapshot';
+
 // Admin / school management
 export {
   adminCreateSchool,
