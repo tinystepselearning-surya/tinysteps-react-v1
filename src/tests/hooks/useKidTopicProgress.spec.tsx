@@ -174,4 +174,32 @@ describe('useKidTopicProgress', () => {
     });
     expect(result.current.topics[0]?.id).toBe('new-course-topic');
   });
+
+  it('holds enrollment-scoped teacher editors closed after a failed progress read', async () => {
+    getDocsMock.mockRejectedValueOnce(new Error('Missing or insufficient permissions.'));
+
+    const { result } = renderHook(() => useKidTopicProgress(
+      'kid-1',
+      'phonics-foundations',
+      true,
+      'enrollment-1',
+    ));
+
+    await waitFor(() => expect(result.current.error).toBe('Missing or insufficient permissions.'));
+    expect(result.current.topics).toEqual([]);
+    expect(result.current.loading).toBe(true);
+  });
+
+  it('does not change legacy loading semantics when a non-enrollment-scoped read fails', async () => {
+    getDocsMock.mockRejectedValueOnce(new Error('legacy read failed'));
+
+    const { result } = renderHook(() => useKidTopicProgress(
+      'kid-1',
+      'phonics-foundations',
+    ));
+
+    await waitFor(() => expect(result.current.error).toBe('legacy read failed'));
+    expect(result.current.topics).toEqual([]);
+    expect(result.current.loading).toBe(false);
+  });
 });
