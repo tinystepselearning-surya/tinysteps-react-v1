@@ -119,6 +119,8 @@ const earningDoc = makeDoc('session-1', {
   source: 'session_present_completed',
   status: 'pending',
   amount: 175,
+  // A processing timestamp in September must never drive August service-date inclusion.
+  earnedAt: new Date('2026-09-02T00:00:00Z'),
 });
 
 const demoDoc = makeDoc('demo-earning-1', {
@@ -136,11 +138,7 @@ describe('Teacher Earnings read-contract cutover', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useAuthStoreMock.mockReturnValue({ user: { uid: 'teacher-1' } });
-    useEarningsMock.mockReturnValue({
-      data: monthlySummary,
-      isLoading: false,
-      isError: false,
-    });
+    useEarningsMock.mockReturnValue({ data: monthlySummary, isLoading: false, isError: false });
     getDocsMock.mockImplementation(async (input: any) => {
       if (collectionName(input) === 'classSessions') return { docs: [sessionDoc] };
       if (collectionName(input) === 'teacherEarnings') return { docs: [earningDoc, demoDoc] };
@@ -148,7 +146,7 @@ describe('Teacher Earnings read-contract cutover', () => {
     });
   });
 
-  it('mounts from the monthly rollup without querying detail collections', () => {
+  it('mounts from the monthly rollup without querying any detail collection', () => {
     render(<EarningsSummary teacherId="teacher-1" />);
 
     expect(screen.getByText('Earnings Overview')).toBeTruthy();
@@ -158,32 +156,42 @@ describe('Teacher Earnings read-contract cutover', () => {
     expect(collectionMock).not.toHaveBeenCalled();
   });
 
-  it('loads only month-bounded sessions and ledger after View details, then reuses them for student expansion', async () => {
+  it('uses only bounded canonical service-date session queries after View details and reuses data for student expansion', async () => {
     render(<EarningsSummary teacherId="teacher-1" />);
 
     fireEvent.click(screen.getAllByRole('button', { name: 'View details' })[0]);
 
-    await waitFor(() => expect(getDocsMock).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(getDocsMock).toHaveBeenCalledTimes(3));
 
     const queries = getDocsMock.mock.calls.map((call) => call[0]);
-    const sessionQuery = queries.find((input) => collectionName(input) === 'classSessions');
+    const sessionQueries = queries.filter((input) => collectionName(input) === 'classSessions');
     const ledgerQuery = queries.find((input) => collectionName(input) === 'teacherEarnings');
 
-    expect(sessionQuery).toBeTruthy();
-    expect(hasWhere(sessionQuery, 'teacherId', '==', 'teacher-1')).toBe(true);
-    expect(hasWhere(sessionQuery, 'date', '>=', '2026-08-01')).toBe(true);
-    expect(hasWhere(sessionQuery, 'date', '<=', '2026-08-31')).toBe(true);
+    expect(sessionQueries).toHaveLength(2);
+    const dateQuery = sessionQueries.find((input) => hasWhere(input, 'date', '>='));
+    const startAtQuery = sessionQueries.find((input) => hasWhere(input, 'startAt', '>='));
+
+    expect(dateQuery).toBeTruthy();
+    expect(hasWhere(dateQuery, 'teacherId', '==', 'teacher-1')).toBe(true);
+    expect(hasWhere(dateQuery, 'date', '>=', '2026-08-01')).toBe(true);
+    expect(hasWhere(dateQuery, 'date', '<=', '2026-08-31')).toBe(true);
+
+    expect(startAtQuery).toBeTruthy();
+    expect(hasWhere(startAtQuery, 'teacherId', '==', 'teacher-1')).toBe(true);
+    expect(hasWhere(startAtQuery, 'startAt', '>=')).toBe(true);
+    expect(hasWhere(startAtQuery, 'startAt', '<')).toBe(true);
 
     expect(ledgerQuery).toBeTruthy();
     expect(hasWhere(ledgerQuery, 'teacherId', '==', 'teacher-1')).toBe(true);
     expect(hasWhere(ledgerQuery, 'monthKey', '==', '2026-08')).toBe(true);
+    expect(queries.some((input) => hasWhere(input, 'earnedAt'))).toBe(false);
 
     const studentRow = screen.getByText('Asha').closest('tr');
     expect(studentRow).toBeTruthy();
     fireEvent.click(within(studentRow as HTMLElement).getByRole('button', { name: 'View details' }));
 
     expect(screen.getByText('Date-wise details: Asha')).toBeTruthy();
-    expect(getDocsMock).toHaveBeenCalledTimes(2);
+    expect(getDocsMock).toHaveBeenCalledTimes(3);
   });
 
   it('loads demo ledger only on demand and reuses the same month cache', async () => {
@@ -203,7 +211,7 @@ describe('Teacher Earnings read-contract cutover', () => {
     expect(getDocsMock).toHaveBeenCalledTimes(1);
   });
 
-  it('fails closed when the bounded session query fails and never falls back to teacher-wide history', async () => {
+  it('fails closed when bounded session queries fail and never executes a teacher-wide history fallback', async () => {
     getDocsMock.mockImplementation(async (input: any) => {
       if (collectionName(input) === 'classSessions') throw new Error('missing index');
       if (collectionName(input) === 'teacherEarnings') return { docs: [] };
@@ -218,19 +226,21 @@ describe('Teacher Earnings read-contract cutover', () => {
     const sessionQueries = getDocsMock.mock.calls
       .map((call) => call[0])
       .filter((input) => collectionName(input) === 'classSessions');
-    expect(sessionQueries).toHaveLength(1);
-    expect(hasWhere(sessionQueries[0], 'date', '>=', '2026-08-01')).toBe(true);
-    expect(hasWhere(sessionQueries[0], 'date', '<=', '2026-08-31')).toBe(true);
+    expect(sessionQueries).toHaveLength(2);
 
-    const unboundedTeacherHistoryQuery = getDocsMock.mock.calls
-      .map((call) => call[0])
-      .some(
-        (input) =>
-          collectionName(input) === 'classSessions' &&
-          hasWhere(input, 'teacherId', '==', 'teacher-1') &&
-          !hasWhere(input, 'date', '>=') &&
-          !hasWhere(input, 'date', '<='),
-      );
+    sessionQueries.forEach((input) => {
+      expect(hasWhere(input, 'teacherId', '==', 'teacher-1')).toBe(true);
+      const boundedByDate = hasWhere(input, 'date', '>=') && hasWhere(input, 'date', '<=');
+      const boundedByStartAt = hasWhere(input, 'startAt', '>=') && hasWhere(input, 'startAt', '<');
+      expect(boundedByDate || boundedByStartAt).toBe(true);
+    });
+
+    const unboundedTeacherHistoryQuery = sessionQueries.some(
+      (input) =>
+        hasWhere(input, 'teacherId', '==', 'teacher-1') &&
+        !hasWhere(input, 'date', '>=') &&
+        !hasWhere(input, 'startAt', '>='),
+    );
     expect(unboundedTeacherHistoryQuery).toBe(false);
   });
 });
