@@ -3,6 +3,27 @@ export type CanonicalPhonicsCourseId =
   | 'early-phonics'
   | 'advanced-phonics';
 
+export type CanonicalPhonicsRubricType =
+  | 'single_sound'
+  | 'short_vowels'
+  | 'sound_set'
+  | 'digraph'
+  | 'vowel_team'
+  | 'magic_e'
+  | 'diphthong'
+  | 'r_controlled'
+  | 'alternate_vowel'
+  | 'suffix_ending'
+  | 'rule'
+  | 'revision';
+
+export type CanonicalPhonicsStage = {
+  stageOrder: number;
+  label: string;
+  start: number;
+  end: number;
+};
+
 export type CanonicalPhonicsTopic = {
   id: string;
   courseId: CanonicalPhonicsCourseId;
@@ -15,9 +36,17 @@ export type CanonicalPhonicsTopic = {
   order: number;
   stageLabel: string;
   stageOrder: number;
-  rubricType: string;
+  rubricType: CanonicalPhonicsRubricType;
 };
 
+/**
+ * Server-safe shared source of truth for the Tiny Steps phonics curriculum.
+ *
+ * Keep this module free of Firebase/Node/browser-only imports. The Functions
+ * enforcer and the web client both consume these exact runtime definitions so
+ * lesson identity, ordering, stages and rubric metadata cannot drift between
+ * client and server.
+ */
 export const PHONICS_CURRICULUM_REVISION = '2026-08-10';
 
 const FOUNDATION_LESSONS = [
@@ -105,9 +134,10 @@ const ADVANCED_LESSONS = [
   'The Lazy Vowel Mystery',
 ] as const;
 
-type Stage = { stageOrder: number; label: string; start: number; end: number };
-
-const STAGES: Record<CanonicalPhonicsCourseId, Stage[]> = {
+export const CANONICAL_PHONICS_STAGE_DEFINITIONS: Record<
+  CanonicalPhonicsCourseId,
+  CanonicalPhonicsStage[]
+> = {
   'phonics-foundations': [
     { stageOrder: 1, label: 'Stage 1 — Letters S, A, T, I, P, N', start: 1, end: 6 },
     { stageOrder: 2, label: 'Stage 2 — Letters C, K, E, H, R, M', start: 7, end: 12 },
@@ -134,14 +164,17 @@ const STAGES: Record<CanonicalPhonicsCourseId, Stage[]> = {
   ],
 };
 
-const COURSE_LABELS: Record<CanonicalPhonicsCourseId, string> = {
+export const CANONICAL_PHONICS_COURSE_LABELS: Record<CanonicalPhonicsCourseId, string> = {
   'phonics-foundations': 'Foundation Phonics',
   'early-phonics': 'Early Phonics',
   'advanced-phonics': 'Advanced Phonics',
 };
 
-const stageForLesson = (courseId: CanonicalPhonicsCourseId, lessonNumber: number): Stage => {
-  const stage = STAGES[courseId].find(
+const stageForLesson = (
+  courseId: CanonicalPhonicsCourseId,
+  lessonNumber: number,
+): CanonicalPhonicsStage => {
+  const stage = CANONICAL_PHONICS_STAGE_DEFINITIONS[courseId].find(
     (candidate) => lessonNumber >= candidate.start && lessonNumber <= candidate.end,
   );
   if (!stage) throw new Error(`Missing phonics stage for ${courseId} lesson ${lessonNumber}`);
@@ -152,7 +185,7 @@ const inferRubricType = (
   courseId: CanonicalPhonicsCourseId,
   lessonNumber: number,
   label: string,
-): string => {
+): CanonicalPhonicsRubricType => {
   const lower = label.toLowerCase();
   if (courseId === 'phonics-foundations') {
     if (lessonNumber <= 26) return 'single_sound';
@@ -191,7 +224,7 @@ const buildTopics = (
   return {
     id: `${courseId}__lesson-${String(lessonNumber).padStart(2, '0')}`,
     courseId,
-    courseLabel: COURSE_LABELS[courseId],
+    courseLabel: CANONICAL_PHONICS_COURSE_LABELS[courseId],
     area: 'phonics',
     lesson: `Lesson-${lessonNumber}`,
     lessonNumber,
