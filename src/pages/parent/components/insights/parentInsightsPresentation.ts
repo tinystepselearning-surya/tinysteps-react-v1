@@ -9,6 +9,7 @@ export type ParentInsightStageState =
   | "completed"
   | "current"
   | "in_progress"
+  | "not_started"
   | "upcoming"
   | "unavailable";
 
@@ -49,7 +50,9 @@ export const getParentInsightStageStateLabel = (
     case "current":
       return "Current stage";
     case "in_progress":
-      return "Progress recorded";
+      return "In progress";
+    case "not_started":
+      return "Not started";
     case "upcoming":
       return "Upcoming";
     default:
@@ -71,9 +74,9 @@ export const resolveParentInsightStageState = ({
   activeStageOrder: number | null;
 }): ParentInsightStageState => {
   if (progressPct === null) return "unavailable";
-  if (progressPct >= 100) return "completed";
   if (key === activeStageKey) return "current";
+  if (progressPct >= 100) return "completed";
   if (progressPct > 0) return "in_progress";
-  if (activeStageOrder === null || order > activeStageOrder) return "upcoming";
-  return "unavailable";
+  if (activeStageOrder !== null && order > activeStageOrder) return "not_started";
+  return "not_started";
 };
