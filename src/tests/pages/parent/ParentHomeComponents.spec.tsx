@@ -202,6 +202,48 @@ describe("Parent Home components", () => {
     expect(onJoinSession).toHaveBeenCalledWith(nextSession);
   });
 
+  it("excludes an already-completed same-day row from the Next Class preview", () => {
+    const completedSession = {
+      id: "session-completed",
+      date: "2026-08-26",
+      startTime: "12:30",
+      endTime: "13:05",
+      courseName: "Completed Phonics",
+      teacherName: "Ms Anu",
+    };
+    const nextSession = {
+      id: "session-next",
+      date: "2026-08-27",
+      startTime: "12:30",
+      endTime: "13:05",
+      courseName: "Next Phonics",
+      teacherName: "Ms Anu",
+    };
+
+    render(
+      <ParentAttendanceSummary
+        classesState="available"
+        classesCounts={{ total: 22, completed: 16, reschedule_requested: 0 }}
+        scopeLabel="Class activity · August 2026"
+        upcomingPreviewRows={[
+          { session: completedSession, status: "completed", start: new Date("2026-08-26T12:30:00") },
+          { session: nextSession, status: "scheduled", start: new Date("2026-08-27T12:30:00") },
+        ]}
+        joiningSessionId={null}
+        onOpenClasses={vi.fn()}
+        onJoinSession={vi.fn()}
+        canJoinFromOverview={() => true}
+      />,
+    );
+
+    expect(screen.queryByText("Completed Phonics · Ms Anu")).not.toBeInTheDocument();
+    expect(screen.getByText("Next Phonics · Ms Anu").closest("[data-class-priority]")).toHaveAttribute(
+      "data-class-priority",
+      "next",
+    );
+    expect(screen.getAllByRole("button", { name: "Join Class" })).toHaveLength(1);
+  });
+
   it("does not substitute family totals when selected-child class totals are unavailable", () => {
     render(
       <ParentAttendanceSummary
