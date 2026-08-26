@@ -78,6 +78,7 @@ describe('useKidTopicProgress', () => {
     ));
 
     await waitFor(() => expect(getDocsMock).toHaveBeenCalledTimes(1));
+    expect(queryMock).toHaveBeenCalledTimes(1);
     expect(whereMock).toHaveBeenCalledWith('courseId', '==', 'phonics-foundations');
     expect(whereMock).toHaveBeenCalledWith('enrollmentId', '==', 'enrollment-1');
     expect(queryMock).toHaveBeenCalledWith(
