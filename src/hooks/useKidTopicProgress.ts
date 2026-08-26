@@ -223,9 +223,13 @@ export function useKidTopicProgress(
     });
   }, []);
 
+  // Enrollment-scoped teacher editors must never become editable after a failed read.
+  // Keep the existing error visible while holding their editability gate closed.
+  const failClosed = enrollmentId !== undefined && Boolean(error);
+
   return {
     topics,
-    loading,
+    loading: loading || failClosed,
     error,
     refresh: loadProgress,
     upsertLocalTopic,
