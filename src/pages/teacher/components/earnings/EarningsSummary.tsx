@@ -1,9 +1,8 @@
 import type { FC } from 'react';
-import { useEffect, useMemo, useState } from 'react';
-import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { useMemo, useRef, useState } from 'react';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
-import { Input } from '@components/ui/input';
 import {
   Select,
   SelectContent,
@@ -21,37 +20,43 @@ import {
   getSessionEndDate,
   getSessionStartDate,
 } from '../../../../lib/sessionTime';
-import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
-import { shouldUseMonthBoundTeacherEarningsRead } from './teacherEarningsReadPlan';
-
-type FilterPreset = 'week' | 'month' | 'custom';
+import { useEarnings } from '../../hooks/useEarnings';
+import type { TeacherEarningsSummary } from '../../../../types/Teacher';
 
 interface EarningsSummaryProps {
   teacherId?: string;
 }
 
-interface TeacherEarningLedgerRow {
+type LoadStatus = 'idle' | 'loading' | 'loaded' | 'error';
+
+type MonthOption = {
+  value: string;
+  label: string;
+};
+
+type MonthRange = {
+  startDate: string;
+  endDate: string;
+  startAt: Date;
+  nextMonthStartAt: Date;
+};
+
+type DetailLedgerRow = {
   id: string;
   amount: number;
+  paidAmount: number;
   status: string;
   source: string;
   demoId: string;
   sessionId: string;
   kidId: string;
-  courseId: string;
-  paidAmount: number;
-  perClassRate: number | null;
-  monthKey: string;
-  earnedAt: Date | null;
-  enrollmentId: string;
   studentName: string;
   childName: string;
   kidName: string;
-}
+};
 
-interface TeacherMonthSessionRow {
+type MonthSessionRow = {
   id: string;
-  teacherId: string;
   date: string;
   startTime: string;
   endTime: string;
@@ -59,63 +64,21 @@ interface TeacherMonthSessionRow {
   endAt: Date | null;
   studentId: string;
   studentName: string;
-  studentAltName: string;
-  childName: string;
-  courseId: string;
   courseName: string;
-  courseTitle: string;
-  courseRaw: string;
-  enrollmentId: string;
-  makeupForSessionId: string;
   sessionTypeRaw: string;
+  makeupForSessionId: string;
   classStatus: string;
-}
-
-type EnrollmentRateDoc = {
-  id: string;
-  teacherId: string;
-  courseId: string;
-  courseName: string;
-  kidId: string;
-  studentId: string;
-  childId: string;
-  teacherRate: number | null;
-  studentName: string;
-  childName: string;
-  kidName: string;
-  updatedAtMs: number;
 };
 
-type ResolvedEarningRow = TeacherEarningLedgerRow & {
-  effectiveAmount: number;
-  effectiveRate: number | null;
-  studentDisplayName: string;
-  studentGroupKey: string;
-};
-
-interface MonthOption {
-  value: string;
-  label: string;
-}
-
-interface SessionDetailRow {
-  id: string;
+type SessionDetailRow = MonthSessionRow & {
   studentKey: string;
-  studentName: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  startAt: Date | null;
-  endAt: Date | null;
-  courseName: string;
   sessionTypeLabel: string;
   classStatusLabel: string;
-  classStatus: string;
   earningStatusLabel: string;
   amount: number;
-}
+};
 
-interface StudentSessionSummaryRow {
+type StudentSessionSummaryRow = {
   studentKey: string;
   studentName: string;
   totalClasses: number;
@@ -123,69 +86,32 @@ interface StudentSessionSummaryRow {
   nonPayableClasses: number;
   totalEarning: number;
   rows: SessionDetailRow[];
-}
+};
+
+const EMPTY_SUMMARY: TeacherEarningsSummary = {
+  month: '',
+  totalSessions: 0,
+  sessionsCompleted: 0,
+  sessionsPending: 0,
+  ratePerSession: 0,
+  totalEarnings: 0,
+  pendingEarnings: 0,
+  demoEarnings: 0,
+  demoCompletedCount: 0,
+  demoEnrollmentBonusCount: 0,
+  breakdownByCourse: [],
+  payments: [],
+};
 
 const toNumber = (value: unknown, fallback = 0): number => {
-  const parsed =
-    typeof value === 'number'
-      ? value
-      : typeof value === 'string'
-      ? Number(value)
-      : Number.NaN;
+  const parsed = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : Number.NaN;
   return Number.isFinite(parsed) ? parsed : fallback;
 };
-
-const toDate = (value: unknown): Date | null => {
-  if (!value) return null;
-  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
-  if (typeof value === 'object' && value !== null && typeof (value as any).toDate === 'function') {
-    const date = (value as any).toDate();
-    return date instanceof Date && !Number.isNaN(date.getTime()) ? date : null;
-  }
-  if (typeof value === 'number') {
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? null : date;
-  }
-  if (typeof value === 'string') {
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? null : date;
-  }
-  return null;
-};
-
-const pad2 = (value: number): string => String(value).padStart(2, '0');
-
-const monthKeyFromDate = (date: Date): string => `${date.getFullYear()}-${pad2(date.getMonth() + 1)}`;
-
-const normalizeMonthKey = (value: unknown): string => {
-  const raw = String(value || '').trim();
-  return /^\d{4}-\d{2}$/.test(raw) ? raw : '';
-};
-
-const formatCurrency = (value: number): string => `₹${Math.round(value).toLocaleString('en-IN')}`;
-
-const toTitleCase = (value: string): string =>
-  value
-    .split(' ')
-    .filter(Boolean)
-    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
-    .join(' ');
 
 const toCleanString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : typeof value === 'number' ? String(value) : '';
 
-const getObjectName = (value: unknown): string => {
-  if (!value || typeof value !== 'object') return '';
-  const row = value as Record<string, unknown>;
-  return toCleanString(row.name) ||
-    toCleanString(row.fullName) ||
-    toCleanString(row.displayName) ||
-    toCleanString(row.studentName) ||
-    toCleanString(row.kidName) ||
-    toCleanString(row.childName);
-};
-
-const toIdFromValue = (value: unknown): string => {
+const toId = (value: unknown): string => {
   if (typeof value === 'string') return value.trim();
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
   if (value && typeof value === 'object') {
@@ -195,334 +121,60 @@ const toIdFromValue = (value: unknown): string => {
   return '';
 };
 
-const normalizeStatusToken = (value: unknown): string => {
-  const raw = String(value || '').trim().toLowerCase();
-  if (!raw) return '';
-  return raw.replace(/\s+/g, '_').replace(/-/g, '_');
-};
-
-const normalizeClassStatus = (value: unknown): string => {
-  const normalized = normalizeStatusToken(value);
-  if (normalized === 'canceled') return 'cancelled';
-  if (normalized === 'noshow') return 'no_show';
-  if (normalized === 'no_show') return 'no_show';
-  if (normalized === 'no_showed') return 'no_show';
-  if (normalized === 'reschedule_request') return 'reschedule_requested';
-  if (normalized === 'rescheduled_requested') return 'reschedule_requested';
-  return normalized;
-};
-
-const normalizeSessionTypeToken = (value: unknown): string =>
-  String(value || '').trim().toLowerCase().replace(/\s+/g, '_').replace(/-/g, '_');
-
-const getSessionTypeLabel = (
-  rawType: unknown,
-  classStatus: string,
-  makeupForSessionId: string,
-): string => {
-  if (makeupForSessionId) return 'Makeup';
-
-  const normalized = normalizeSessionTypeToken(rawType);
-  if (!normalized) {
-    if (classStatus === 'rescheduled' || classStatus === 'reschedule_requested') return 'Rescheduled';
-    return 'Regular';
-  }
-  if (normalized === 'regular') return 'Regular';
-  if (normalized === 'rescheduled' || normalized === 'reschedule_requested') return 'Rescheduled';
-  if (normalized === 'makeup' || normalized === 'make_up') return 'Makeup';
-  if (normalized === 'one_off' || normalized === 'oneoff') return 'One-off';
-  if (normalized === 'enrollmentschedulereplace') {
-    return classStatus === 'rescheduled' || classStatus === 'reschedule_requested' ? 'Rescheduled' : 'Regular';
-  }
-
-  return toTitleCase(normalized.replace(/_/g, ' '));
-};
-
-const getClassStatusLabel = (value: string): string => {
-  switch (normalizeClassStatus(value)) {
-    case 'present':
-      return 'Present';
-    case 'absent':
-      return 'Absent';
-    case 'cancelled':
-      return 'Cancelled';
-    case 'rescheduled':
-      return 'Rescheduled';
-    case 'no_show':
-      return 'No-show';
-    case 'reschedule_requested':
-      return 'Reschedule requested';
-    case 'late':
-      return 'Late';
-    case 'not_marked':
-      return 'Not marked';
-    default:
-      return 'Not marked';
-  }
-};
-
-const normalizeStartTime = (rawValue: unknown): string | null => {
-  if (typeof rawValue !== 'string') return null;
-  const value = rawValue.trim();
-  const match = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(value);
-  if (!match) return null;
-  const hours = Number(match[1]);
-  const minutes = Number(match[2]);
-  const seconds = match[3] ? Number(match[3]) : 0;
-  if (
-    !Number.isFinite(hours) ||
-    !Number.isFinite(minutes) ||
-    !Number.isFinite(seconds) ||
-    hours < 0 ||
-    hours > 23 ||
-    minutes < 0 ||
-    minutes > 59 ||
-    seconds < 0 ||
-    seconds > 59
-  ) {
-    return null;
-  }
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-};
-
-const getMonthDateRange = (monthKey: string): { startDate: string; endDate: string } | null => {
-  const parsed = parseMonthKey(monthKey);
-  if (!parsed) return null;
-  const monthStart = new Date(parsed.year, parsed.monthIndex, 1);
-  const monthEnd = new Date(parsed.year, parsed.monthIndex + 1, 0);
-  const startDate = `${monthStart.getFullYear()}-${pad2(monthStart.getMonth() + 1)}-${pad2(monthStart.getDate())}`;
-  const endDate = `${monthEnd.getFullYear()}-${pad2(monthEnd.getMonth() + 1)}-${pad2(monthEnd.getDate())}`;
-  return { startDate, endDate };
+const getObjectName = (value: unknown): string => {
+  if (!value || typeof value !== 'object') return '';
+  const row = value as Record<string, unknown>;
+  return (
+    toCleanString(row.name) ||
+    toCleanString(row.fullName) ||
+    toCleanString(row.displayName) ||
+    toCleanString(row.studentName) ||
+    toCleanString(row.kidName) ||
+    toCleanString(row.childName)
+  );
 };
 
 const isReadableName = (value: unknown): boolean => {
-  if (typeof value !== 'string') return false;
-  const trimmed = value.trim();
-  if (!trimmed) return false;
-  const lower = trimmed.toLowerCase();
-  if (
-    lower === 'unknown' ||
-    lower === 'name not found' ||
-    lower === 'n/a' ||
-    lower === 'na' ||
-    lower === 'null' ||
-    lower === 'undefined'
-  ) {
-    return false;
-  }
-  const hasWhitespace = /\s/.test(trimmed);
-  const looksLikeLongId =
-    !hasWhitespace &&
-    ((/^[a-f0-9]{16,}$/i.test(trimmed)) || (/^[A-Za-z0-9_-]{20,}$/.test(trimmed)));
+  const raw = toCleanString(value);
+  if (!raw) return false;
+  const lower = raw.toLowerCase();
+  if (['unknown', 'name not found', 'n/a', 'na', 'null', 'undefined'].includes(lower)) return false;
+  const looksLikeLongId = !/\s/.test(raw) && (/^[a-f0-9]{16,}$/i.test(raw) || /^[A-Za-z0-9_-]{20,}$/.test(raw));
   return !looksLikeLongId;
 };
 
 const pickReadableName = (...values: unknown[]): string | null => {
   for (const value of values) {
-    if (isReadableName(value)) return String(value).trim();
+    if (isReadableName(value)) return toCleanString(value);
   }
   return null;
 };
 
-const formatYmdInIndia = (date: Date): string => {
-  const parts = new Intl.DateTimeFormat('en-GB', {
-    timeZone: INDIA_TIME_ZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(date);
+const normalizeToken = (value: unknown): string =>
+  toCleanString(value).toLowerCase().replace(/\s+/g, '_').replace(/-/g, '_');
 
-  const year = parts.find((part) => part.type === 'year')?.value || '';
-  const month = parts.find((part) => part.type === 'month')?.value || '';
-  const day = parts.find((part) => part.type === 'day')?.value || '';
-
-  return year && month && day ? `${year}-${month}-${day}` : '';
-};
-
-const formatTimeInIndia = (date: Date): string => {
-  return new Intl.DateTimeFormat('en-GB', {
-    timeZone: INDIA_TIME_ZONE,
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-  }).format(date);
-};
-
-const pickPerClassRate = (data: Record<string, unknown>): number | null => {
-  const candidates = [
-    data.perSessionRate,
-    data.ratePerClass,
-    data.teacherRate,
-    data.payoutRate,
-    data.rate,
-  ];
-  for (const candidate of candidates) {
-    const value = toNumber(candidate, Number.NaN);
-    if (Number.isFinite(value) && value > 0) return value;
-  }
-  return null;
-};
-
-const pickEnrollmentTeacherRate = (data: Record<string, unknown>): number | null => {
-  const candidates = [
-    data.teacherPayPerSession,
-    data.teacherRatePerSession,
-    data.teacherFee,
-    data.teacherPayoutRate,
-    data.rateTeacher,
-    data.teacherRate,
-    data.teacherPay,
-    data.payoutRate,
-    data.ratePerClass,
-    data.ratePerSession,
-  ];
-  for (const candidate of candidates) {
-    const value = toNumber(candidate, Number.NaN);
-    if (Number.isFinite(value) && value > 0) return value;
-  }
-  return null;
-};
-
-const isPaidLikeStatus = (status: string): boolean => {
-  const normalized = String(status || '').trim().toLowerCase();
-  return normalized === 'paid' || normalized === 'settled' || normalized === 'processed';
-};
-
-const parseMonthKey = (value: string): { year: number; monthIndex: number } | null => {
-  const match = /^(\d{4})-(\d{2})$/.exec(value.trim());
-  if (!match) return null;
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) return null;
-  return { year, monthIndex: month - 1 };
-};
-
-const buildMonthOptions = (monthsBack = 12): MonthOption[] => {
-  const options: MonthOption[] = [];
-  const now = new Date();
-
-  for (let i = 0; i < monthsBack; i += 1) {
-    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const value = monthKeyFromDate(date);
-    const label = date.toLocaleString('en-US', { month: 'long', year: 'numeric' });
-    options.push({ value, label });
-  }
-
-  return options;
-};
-
-const todayDateInput = (): string => {
-  const now = new Date();
-  return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
-};
-
-const monthStartDateInput = (): string => {
-  const now = new Date();
-  return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-01`;
-};
-
-const parseDateInput = (value: string): Date | null => {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
-  if (!match) return null;
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const date = new Date(year, month - 1, day);
-  if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day
-  ) {
-    return null;
-  }
-  return date;
-};
-
-const startOfDay = (date: Date): Date => {
-  const out = new Date(date);
-  out.setHours(0, 0, 0, 0);
-  return out;
-};
-
-const endOfDay = (date: Date): Date => {
-  const out = new Date(date);
-  out.setHours(23, 59, 59, 999);
-  return out;
-};
-
-const isSessionLinkedRow = (row: TeacherEarningLedgerRow): boolean => {
-  const source = String(row.source || '').trim().toLowerCase();
-  if (source === 'demo_completed' || source === 'demo_enrolled_bonus') return false;
-  return String(row.sessionId || '').trim().length > 0;
-};
-
-const pickPreferredSessionRow = (
-  current: TeacherEarningLedgerRow,
-  incoming: TeacherEarningLedgerRow
-): TeacherEarningLedgerRow => {
-  const currentSessionId = String(current.sessionId || '').trim();
-  const incomingSessionId = String(incoming.sessionId || '').trim();
-  const currentCanonical = current.id === currentSessionId;
-  const incomingCanonical = incoming.id === incomingSessionId;
-  if (currentCanonical !== incomingCanonical) {
-    return incomingCanonical ? incoming : current;
-  }
-
-  if ((current.status === 'void') !== (incoming.status === 'void')) {
-    return incoming.status === 'void' ? current : incoming;
-  }
-
-  const currentMs = current.earnedAt?.getTime() || 0;
-  const incomingMs = incoming.earnedAt?.getTime() || 0;
-  return incomingMs > currentMs ? incoming : current;
-};
-
-const dedupeSessionLedgerRows = (
-  rows: TeacherEarningLedgerRow[]
-): TeacherEarningLedgerRow[] => {
-  const sessionRowsBySessionId = new Map<string, TeacherEarningLedgerRow>();
-  const nonSessionRows: TeacherEarningLedgerRow[] = [];
-
-  rows.forEach((row) => {
-    if (!isSessionLinkedRow(row)) {
-      nonSessionRows.push(row);
-      return;
-    }
-
-    const sessionId = String(row.sessionId || '').trim();
-    if (!sessionId) {
-      nonSessionRows.push(row);
-      return;
-    }
-
-    const existing = sessionRowsBySessionId.get(sessionId);
-    if (!existing) {
-      sessionRowsBySessionId.set(sessionId, row);
-      return;
-    }
-
-    sessionRowsBySessionId.set(sessionId, pickPreferredSessionRow(existing, row));
-  });
-
-  return [...nonSessionRows, ...Array.from(sessionRowsBySessionId.values())];
+const normalizeClassStatus = (value: unknown): string => {
+  const token = normalizeToken(value);
+  if (token === 'canceled') return 'cancelled';
+  if (token === 'noshow' || token === 'no_showed') return 'no_show';
+  if (token === 'reschedule_request' || token === 'rescheduled_requested') return 'reschedule_requested';
+  return token;
 };
 
 const resolveSessionClassStatus = (session: Record<string, unknown>): string => {
-  const statusCandidates = [
+  for (const candidate of [
     session.attendanceStatus,
     session.attendance_state,
     session.classStatus,
     session.class_status,
     session.sessionAttendanceStatus,
-  ];
-  for (const candidate of statusCandidates) {
-    const normalized = normalizeClassStatus(candidate);
-    if (normalized) return normalized;
+  ]) {
+    const status = normalizeClassStatus(candidate);
+    if (status) return status;
   }
 
-  const attendance = session.attendance;
-  if (attendance && typeof attendance === 'object') {
-    const statuses = Object.values(attendance as Record<string, unknown>)
+  if (session.attendance && typeof session.attendance === 'object') {
+    const statuses = Object.values(session.attendance as Record<string, unknown>)
       .map((value) => {
         if (typeof value === 'string') return normalizeClassStatus(value);
         if (value && typeof value === 'object' && 'status' in (value as Record<string, unknown>)) {
@@ -531,718 +183,491 @@ const resolveSessionClassStatus = (session: Record<string, unknown>): string => 
         return '';
       })
       .filter(Boolean);
-
     if (statuses.includes('present')) return 'present';
     if (statuses.includes('late')) return 'late';
     if (statuses.length > 0) return statuses[0];
   }
 
-  const fallbackStatus = normalizeClassStatus(session.status);
-  if (
-    fallbackStatus === 'absent' ||
-    fallbackStatus === 'cancelled' ||
-    fallbackStatus === 'rescheduled' ||
-    fallbackStatus === 'no_show' ||
-    fallbackStatus === 'reschedule_requested' ||
-    fallbackStatus === 'late' ||
-    fallbackStatus === 'not_marked' ||
-    fallbackStatus === 'present'
-  ) {
-    return fallbackStatus;
-  }
+  return normalizeClassStatus(session.status) || 'not_marked';
+};
 
-  return 'not_marked';
+const getClassStatusLabel = (value: string): string => {
+  switch (normalizeClassStatus(value)) {
+    case 'present': return 'Present';
+    case 'late': return 'Late';
+    case 'absent': return 'Absent';
+    case 'cancelled': return 'Cancelled';
+    case 'rescheduled': return 'Rescheduled';
+    case 'reschedule_requested': return 'Reschedule requested';
+    case 'no_show': return 'No-show';
+    case 'scheduled': return 'Scheduled';
+    default: return 'Not marked';
+  }
+};
+
+const toTitleCase = (value: string): string =>
+  value
+    .split(' ')
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(' ');
+
+const getSessionTypeLabel = (rawType: string, classStatus: string, makeupForSessionId: string): string => {
+  if (makeupForSessionId) return 'Makeup';
+  const token = normalizeToken(rawType);
+  if (!token) return classStatus.startsWith('reschedul') ? 'Rescheduled' : 'Regular';
+  if (token === 'regular') return 'Regular';
+  if (token === 'makeup' || token === 'make_up') return 'Makeup';
+  if (token === 'rescheduled' || token === 'reschedule_requested') return 'Rescheduled';
+  if (token === 'one_off' || token === 'oneoff') return 'One-off';
+  if (token === 'enrollmentschedulereplace') return classStatus.startsWith('reschedul') ? 'Rescheduled' : 'Regular';
+  return toTitleCase(token.replace(/_/g, ' '));
+};
+
+const formatCurrency = (value: number): string => `₹${Math.round(value).toLocaleString('en-IN')}`;
+
+const getCurrentMonthKeyInIndia = (): string => {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: INDIA_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+  }).formatToParts(new Date());
+  const year = parts.find((part) => part.type === 'year')?.value || '';
+  const month = parts.find((part) => part.type === 'month')?.value || '';
+  return year && month ? `${year}-${month}` : '';
+};
+
+const parseMonthKey = (value: string): { year: number; month: number } | null => {
+  const match = /^(\d{4})-(\d{2})$/.exec(value.trim());
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  return Number.isInteger(year) && Number.isInteger(month) && month >= 1 && month <= 12 ? { year, month } : null;
+};
+
+const buildMonthOptions = (monthsBack = 18): MonthOption[] => {
+  const current = parseMonthKey(getCurrentMonthKeyInIndia());
+  const base = current ? new Date(Date.UTC(current.year, current.month - 1, 1)) : new Date();
+  return Array.from({ length: monthsBack }, (_, index) => {
+    const date = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() - index, 1));
+    return {
+      value: `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`,
+      label: date.toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }),
+    };
+  });
+};
+
+const getMonthRange = (monthKey: string): MonthRange | null => {
+  const parsed = parseMonthKey(monthKey);
+  if (!parsed) return null;
+  const lastDay = new Date(Date.UTC(parsed.year, parsed.month, 0)).getUTCDate();
+  const nextMonth = parsed.month === 12
+    ? { year: parsed.year + 1, month: 1 }
+    : { year: parsed.year, month: parsed.month + 1 };
+  const startDate = `${parsed.year}-${String(parsed.month).padStart(2, '0')}-01`;
+  const endDate = `${parsed.year}-${String(parsed.month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  const nextStartDate = `${nextMonth.year}-${String(nextMonth.month).padStart(2, '0')}-01`;
+  return {
+    startDate,
+    endDate,
+    startAt: new Date(`${startDate}T00:00:00+05:30`),
+    nextMonthStartAt: new Date(`${nextStartDate}T00:00:00+05:30`),
+  };
+};
+
+const normalizeStartTime = (rawValue: unknown): string => {
+  const raw = toCleanString(rawValue);
+  const match = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(raw);
+  if (!match) return '';
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return '';
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+};
+
+const formatTimeInIndia = (date: Date): string =>
+  new Intl.DateTimeFormat('en-GB', {
+    timeZone: INDIA_TIME_ZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).format(date);
+
+const formatYmdInIndia = (date: Date): string => {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: INDIA_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const year = parts.find((part) => part.type === 'year')?.value || '';
+  const month = parts.find((part) => part.type === 'month')?.value || '';
+  const day = parts.find((part) => part.type === 'day')?.value || '';
+  return year && month && day ? `${year}-${month}-${day}` : '';
+};
+
+const isPaidLike = (status: string, paidAmount: number): boolean =>
+  paidAmount > 0 || ['paid', 'settled', 'processed'].includes(normalizeToken(status));
+
+const mapLedgerDocs = (docs: Array<{ id: string; data: () => Record<string, unknown> }>): DetailLedgerRow[] =>
+  docs.map((docSnap) => {
+    const data = docSnap.data();
+    return {
+      id: docSnap.id,
+      amount: Math.max(toNumber(data.amount, 0), 0),
+      paidAmount: Math.max(toNumber(data.paidAmount, 0), 0),
+      status: normalizeToken(data.status),
+      source: normalizeToken(data.source),
+      demoId: toCleanString(data.demoId),
+      sessionId: toCleanString(data.sessionId),
+      kidId: toCleanString(data.kidId || data.studentId || data.childId),
+      studentName: toCleanString(data.studentName),
+      childName: toCleanString(data.childName),
+      kidName: toCleanString(data.kidName),
+    };
+  });
+
+const mapSessionDoc = (docSnap: { id: string; data: () => Record<string, unknown> }): MonthSessionRow | null => {
+  const data = docSnap.data();
+  const startAt = getSessionStartDate(data);
+  const endAt = getSessionEndDate(data);
+  const rawDate = toCleanString(data.date);
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : startAt ? formatYmdInIndia(startAt) : '';
+  if (!date) return null;
+
+  const studentId =
+    toId(data.kidId) ||
+    toId(data.studentId) ||
+    toId(data.childId) ||
+    toId(data.student) ||
+    toId(data.kid) ||
+    toId(data.child) ||
+    (Array.isArray(data.kidIds) ? toId(data.kidIds[0]) : '') ||
+    (Array.isArray(data.studentIds) ? toId(data.studentIds[0]) : '') ||
+    (Array.isArray(data.childIds) ? toId(data.childIds[0]) : '');
+
+  return {
+    id: docSnap.id,
+    date,
+    startTime: normalizeStartTime(data.startTime) || (startAt ? formatTimeInIndia(startAt) : ''),
+    endTime: normalizeStartTime(data.endTime) || (endAt ? formatTimeInIndia(endAt) : ''),
+    startAt,
+    endAt,
+    studentId,
+    studentName:
+      pickReadableName(
+        data.studentName,
+        data.kidName,
+        data.childName,
+        getObjectName(data.student),
+        getObjectName(data.kid),
+        getObjectName(data.child),
+        Array.isArray(data.studentNames) ? data.studentNames[0] : null,
+        Array.isArray(data.kidNames) ? data.kidNames[0] : null,
+        Array.isArray(data.childNames) ? data.childNames[0] : null,
+      ) || 'Student',
+    courseName:
+      pickReadableName(data.courseName, data.courseTitle, data.courseLabel, data.subject, getObjectName(data.course)) || 'Course',
+    sessionTypeRaw:
+      toCleanString(data.sessionType) ||
+      toCleanString(data.type) ||
+      toCleanString(data.source) ||
+      toCleanString(data.sessionKind) ||
+      'regular',
+    makeupForSessionId: toId(data.makeupForSessionId),
+    classStatus: resolveSessionClassStatus(data),
+  };
 };
 
 export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
   const { user } = useAuthStore();
-  const { students } = useTeacherFilteredStudents();
   const resolvedTeacherId = teacherId || user?.uid;
-
   const monthOptions = useMemo(() => buildMonthOptions(18), []);
-  const [filterPreset, setFilterPreset] = useState<FilterPreset>('month');
-  const [selectedMonth, setSelectedMonth] = useState<string>(() => monthKeyFromDate(new Date()));
-  const [customStartDate, setCustomStartDate] = useState<string>(monthStartDateInput);
-  const [customEndDate, setCustomEndDate] = useState<string>(todayDateInput);
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => getCurrentMonthKeyInIndia());
+  const selectedMonthRef = useRef(selectedMonth);
 
-  const [ledgerRows, setLedgerRows] = useState<TeacherEarningLedgerRow[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const earningsQuery = useEarnings(resolvedTeacherId, selectedMonth);
+  const earnings = earningsQuery.data || { ...EMPTY_SUMMARY, month: selectedMonth };
+
   const [showSessionDetails, setShowSessionDetails] = useState(false);
-  const [selectedSessionStudentKey, setSelectedSessionStudentKey] = useState<string | null>(null);
   const [showDemoDetails, setShowDemoDetails] = useState(false);
-  const [studentNameLookup, setStudentNameLookup] = useState<Map<string, string>>(new Map());
-  const [enrollmentsById, setEnrollmentsById] = useState<Map<string, EnrollmentRateDoc>>(new Map());
-  const [monthSessions, setMonthSessions] = useState<TeacherMonthSessionRow[]>([]);
-  const ledgerReadMonthKey = shouldUseMonthBoundTeacherEarningsRead({
-    filterPreset,
-    selectedMonth,
-  })
-    ? selectedMonth
-    : null;
+  const [selectedSessionStudentKey, setSelectedSessionStudentKey] = useState<string | null>(null);
 
-  const baseStudentNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    students.forEach((student: any) => {
-      const name = pickReadableName(
-        student.fullName,
-        student.studentName,
-        student.displayName,
-        student.name
-      );
-      if (!name) return;
-      if (student.uid) map.set(String(student.uid), name);
-      if (student.id) map.set(String(student.id), name);
-      if (student.userId) map.set(String(student.userId), name);
-    });
-    return map;
-  }, [students]);
+  const [ledgerStatus, setLedgerStatus] = useState<LoadStatus>('idle');
+  const [ledgerRows, setLedgerRows] = useState<DetailLedgerRow[]>([]);
+  const [ledgerError, setLedgerError] = useState<string | null>(null);
+  const ledgerCacheRef = useRef(new Map<string, DetailLedgerRow[]>());
+  const ledgerPromiseRef = useRef(new Map<string, Promise<DetailLedgerRow[]>>());
 
-  const studentNameById = useMemo(() => {
-    const map = new Map<string, string>(baseStudentNameById);
-    studentNameLookup.forEach((name, id) => {
-      if (!map.has(id)) map.set(id, name);
-    });
-    return map;
-  }, [baseStudentNameById, studentNameLookup]);
+  const [sessionStatus, setSessionStatus] = useState<LoadStatus>('idle');
+  const [monthSessions, setMonthSessions] = useState<MonthSessionRow[]>([]);
+  const [sessionError, setSessionError] = useState<string | null>(null);
+  const sessionCacheRef = useRef(new Map<string, MonthSessionRow[]>());
+  const sessionPromiseRef = useRef(new Map<string, Promise<MonthSessionRow[]>>());
 
-  useEffect(() => {
-    let cancelled = false;
+  const handleMonthChange = (monthKey: string) => {
+    if (monthKey === selectedMonth) return;
+    selectedMonthRef.current = monthKey;
+    setSelectedMonth(monthKey);
+    setShowSessionDetails(false);
+    setShowDemoDetails(false);
+    setSelectedSessionStudentKey(null);
+    setLedgerError(null);
+    setSessionError(null);
 
-    const loadTeacherEnrollments = async () => {
-      if (!resolvedTeacherId) {
-        setEnrollmentsById(new Map());
-        return;
+    const cachedLedger = ledgerCacheRef.current.get(monthKey);
+    setLedgerRows(cachedLedger || []);
+    setLedgerStatus(cachedLedger ? 'loaded' : 'idle');
+
+    const cachedSessions = sessionCacheRef.current.get(monthKey);
+    setMonthSessions(cachedSessions || []);
+    setSessionStatus(cachedSessions ? 'loaded' : 'idle');
+  };
+
+  const ensureLedgerLoaded = async (monthKey = selectedMonth): Promise<DetailLedgerRow[]> => {
+    if (!resolvedTeacherId) return [];
+    const cached = ledgerCacheRef.current.get(monthKey);
+    if (cached) {
+      if (selectedMonthRef.current === monthKey) {
+        setLedgerRows(cached);
+        setLedgerStatus('loaded');
       }
+      return cached;
+    }
+
+    const existingPromise = ledgerPromiseRef.current.get(monthKey);
+    if (existingPromise) return existingPromise;
+
+    if (selectedMonthRef.current === monthKey) {
+      setLedgerStatus('loading');
+      setLedgerError(null);
+    }
+
+    const promise = (async () => {
       try {
-        const enrollmentsQuery = query(
-          collection(db, 'enrollments'),
-          where('teacherId', '==', resolvedTeacherId)
+        const ledgerQuery = query(
+          collection(db, 'teacherEarnings'),
+          where('teacherId', '==', resolvedTeacherId),
+          where('monthKey', '==', monthKey),
         );
-        const snap = await getDocs(enrollmentsQuery);
-        if (cancelled) return;
-        const map = new Map<string, EnrollmentRateDoc>();
-        snap.docs.forEach((docSnap) => {
-          const data = docSnap.data() as Record<string, unknown>;
-          map.set(docSnap.id, {
-            id: docSnap.id,
-            teacherId: String(data.teacherId || '').trim(),
-            courseId: String(data.courseId || '').trim(),
-            courseName:
-              toCleanString(data.courseName) ||
-              toCleanString(data.courseTitle) ||
-              toCleanString(data.courseLabel) ||
-              toCleanString(data.programName) ||
-              toCleanString(data.subject),
-            kidId: String(data.kidId || '').trim(),
-            studentId: String(data.studentId || '').trim(),
-            childId: String(data.childId || '').trim(),
-            teacherRate: pickEnrollmentTeacherRate(data),
-            studentName: String(data.studentName || ''),
-            childName: String(data.childName || ''),
-            kidName: String(data.kidName || ''),
-            updatedAtMs:
-              toDate(data.updatedAt)?.getTime() ||
-              toDate(data.createdAt)?.getTime() ||
-              0,
-          });
-        });
-        setEnrollmentsById(map);
+        const snap = await getDocs(ledgerQuery);
+        const rows = mapLedgerDocs(snap.docs as Array<{ id: string; data: () => Record<string, unknown> }>);
+        ledgerCacheRef.current.set(monthKey, rows);
+        if (selectedMonthRef.current === monthKey) {
+          setLedgerRows(rows);
+          setLedgerStatus('loaded');
+        }
+        return rows;
       } catch (error) {
-        if (!cancelled) setEnrollmentsById(new Map());
+        console.error('Failed to load bounded teacher earnings details', error);
+        if (selectedMonthRef.current === monthKey) {
+          setLedgerRows([]);
+          setLedgerStatus('error');
+          setLedgerError('Unable to load earnings details.');
+        }
+        throw error;
+      } finally {
+        ledgerPromiseRef.current.delete(monthKey);
       }
-    };
+    })();
 
-    void loadTeacherEnrollments();
+    ledgerPromiseRef.current.set(monthKey, promise);
+    return promise;
+  };
 
-    return () => {
-      cancelled = true;
-    };
-  }, [resolvedTeacherId]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadMonthSessions = async () => {
-      if (!resolvedTeacherId) {
-        setMonthSessions([]);
-        return;
+  const ensureSessionDetailsLoaded = async (monthKey = selectedMonth): Promise<MonthSessionRow[]> => {
+    if (!resolvedTeacherId) return [];
+    const cached = sessionCacheRef.current.get(monthKey);
+    if (cached) {
+      if (selectedMonthRef.current === monthKey) {
+        setMonthSessions(cached);
+        setSessionStatus('loaded');
       }
+      return cached;
+    }
 
-      const monthRange = getMonthDateRange(selectedMonth);
-      if (!monthRange) {
-        setMonthSessions([]);
-        return;
-      }
+    const existingPromise = sessionPromiseRef.current.get(monthKey);
+    if (existingPromise) return existingPromise;
 
-      const mapDocs = (docs: Array<{ id: string; data: Record<string, unknown> }>): TeacherMonthSessionRow[] => {
-        const sessionMap = new Map<string, TeacherMonthSessionRow>();
-        docs.forEach((docRow) => {
-          const session = docRow.data;
-          const teacherId = String(session.teacherId || '').trim();
-          if (teacherId !== resolvedTeacherId) return;
-          const fallbackDate = String(session.date || '').trim();
-          const startAt = getSessionStartDate(session);
-          const endAt = getSessionEndDate(session);
-          const startTime = normalizeStartTime(session.startTime) || (startAt ? formatTimeInIndia(startAt) : '');
-          const endTime = normalizeStartTime(session.endTime) || (endAt ? formatTimeInIndia(endAt) : '');
-          const studentId =
-            toIdFromValue(session.kidId) ||
-            toIdFromValue(session.studentId) ||
-            toIdFromValue(session.childId) ||
-            toIdFromValue(session.student) ||
-            toIdFromValue(session.kid) ||
-            toIdFromValue(session.child) ||
-            (Array.isArray(session.kidIds) ? toIdFromValue(session.kidIds[0]) : '') ||
-            (Array.isArray(session.studentIds) ? toIdFromValue(session.studentIds[0]) : '') ||
-            (Array.isArray(session.childIds) ? toIdFromValue(session.childIds[0]) : '');
-          const studentName =
-            pickReadableName(
-              session.studentName,
-              session.kidName,
-              session.childName,
-              getObjectName(session.student),
-              getObjectName(session.kid),
-              Array.isArray(session.studentNames) ? session.studentNames[0] : null,
-              Array.isArray(session.kidNames) ? session.kidNames[0] : null,
-              Array.isArray(session.childNames) ? session.childNames[0] : null,
-            ) ||
-            '';
+    const monthRange = getMonthRange(monthKey);
+    if (!monthRange) {
+      setSessionStatus('error');
+      setSessionError('Unable to load session details.');
+      return [];
+    }
 
-          const studentAltName =
-            pickReadableName(
-              session.kidName,
-              session.childName,
-              getObjectName(session.kid),
-              getObjectName(session.child),
-            ) || '';
+    if (selectedMonthRef.current === monthKey) {
+      setSessionStatus('loading');
+      setSessionError(null);
+    }
 
-          const sessionTypeRaw =
-            String(session.sessionType || '').trim() ||
-            String(session.type || '').trim() ||
-            String(session.source || '').trim() ||
-            String(session.sessionKind || '').trim() ||
-            'regular';
-
-          const classStatus = resolveSessionClassStatus(session);
-          const date =
-            /^\d{4}-\d{2}-\d{2}$/.test(fallbackDate)
-              ? fallbackDate
-              : startAt
-              ? formatYmdInIndia(startAt)
-              : '';
-
-          if (!date) return;
-          if (date < monthRange.startDate || date > monthRange.endDate) return;
-
-          sessionMap.set(docRow.id, {
-            id: docRow.id,
-            teacherId,
-            date,
-            startTime,
-            endTime,
-            startAt,
-            endAt,
-            studentId,
-            studentName,
-            studentAltName,
-            childName: toCleanString(session.childName),
-            courseId: toIdFromValue(session.courseId),
-            courseName:
-              toCleanString(session.courseName) ||
-              toCleanString(session.courseLabel) ||
-              toCleanString(session.subject),
-            courseTitle:
-              toCleanString(session.courseTitle) ||
-              getObjectName(session.course),
-            courseRaw: toCleanString(session.course),
-            enrollmentId: toIdFromValue(session.enrollmentId),
-            makeupForSessionId: toIdFromValue(session.makeupForSessionId),
-            sessionTypeRaw,
-            classStatus,
-          });
-        });
-
-        return Array.from(sessionMap.values()).sort((a, b) => {
-          const aMs = getSessionStartDate(a)?.getTime() ?? 0;
-          const bMs = getSessionStartDate(b)?.getTime() ?? 0;
-          return bMs - aMs;
-        });
-      };
-
+    const promise = (async () => {
       try {
-        const primaryQuery = query(
+        // Canonical service-date contract: session.date first, session.startAt in IST second.
+        // Both queries remain month-bounded; there is deliberately no teacher-history fallback.
+        const byDateQuery = query(
           collection(db, 'classSessions'),
           where('teacherId', '==', resolvedTeacherId),
           where('date', '>=', monthRange.startDate),
           where('date', '<=', monthRange.endDate),
         );
-        const snap = await getDocs(primaryQuery);
-        if (!cancelled) {
-          setMonthSessions(
-            mapDocs(snap.docs.map((docSnap) => ({ id: docSnap.id, data: docSnap.data() as Record<string, unknown> }))),
-          );
-        }
-      } catch (error) {
-        const fallbackSnap = await getDocs(
-          query(collection(db, 'classSessions'), where('teacherId', '==', resolvedTeacherId)),
+        const byStartAtQuery = query(
+          collection(db, 'classSessions'),
+          where('teacherId', '==', resolvedTeacherId),
+          where('startAt', '>=', monthRange.startAt),
+          where('startAt', '<', monthRange.nextMonthStartAt),
         );
-        if (!cancelled) {
-          setMonthSessions(
-            mapDocs(
-              fallbackSnap.docs.map((docSnap) => ({ id: docSnap.id, data: docSnap.data() as Record<string, unknown> })),
-            ),
-          );
+
+        const [byDateSnap, byStartAtSnap] = await Promise.all([
+          getDocs(byDateQuery),
+          getDocs(byStartAtQuery),
+        ]);
+
+        const deduped = new Map<string, MonthSessionRow>();
+        for (const docSnap of [...byDateSnap.docs, ...byStartAtSnap.docs]) {
+          const row = mapSessionDoc(docSnap as { id: string; data: () => Record<string, unknown> });
+          if (!row) continue;
+          if (row.date < monthRange.startDate || row.date > monthRange.endDate) continue;
+          deduped.set(row.id, row);
         }
-      }
-    };
 
-    void loadMonthSessions();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [resolvedTeacherId, selectedMonth]);
-
-  useEffect(() => {
-    if (!showSessionDetails) {
-      setSelectedSessionStudentKey(null);
-    }
-  }, [showSessionDetails]);
-
-  useEffect(() => {
-    setSelectedSessionStudentKey(null);
-  }, [selectedMonth]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadStudentNamesFromDocs = async () => {
-      const candidateIds = new Set<string>();
-      ledgerRows.forEach((row) => {
-        const kidId = String(row.kidId || '').trim();
-        if (kidId) candidateIds.add(kidId);
-      });
-      enrollmentsById.forEach((enrollment) => {
-        [enrollment.kidId, enrollment.studentId, enrollment.childId]
-          .map((id) => String(id || '').trim())
-          .filter(Boolean)
-          .forEach((id) => candidateIds.add(id));
-      });
-      monthSessions.forEach((session) => {
-        const studentId = String(session.studentId || '').trim();
-        if (studentId) candidateIds.add(studentId);
-      });
-
-      const ids = Array.from(candidateIds);
-      if (ids.length === 0) {
-        setStudentNameLookup(new Map());
-        return;
-      }
-
-      const map = new Map<string, string>();
-      for (const id of ids) {
-        if (baseStudentNameById.has(id)) continue;
-        const collectionsToTry = ['kids', 'students', 'children'];
-        for (const collectionName of collectionsToTry) {
-          const snap = await getDoc(doc(db, collectionName, id));
-          if (!snap.exists()) continue;
-          const data = snap.data() as Record<string, unknown>;
-          const name = pickReadableName(
-            data.studentName,
-            data.childName,
-            data.kidName,
-            data.fullName,
-            data.displayName,
-            data.name
-          );
-          if (name) {
-            map.set(id, name);
-            break;
-          }
+        const rows = Array.from(deduped.values()).sort(
+          (a, b) => (getSessionStartDate(b)?.getTime() || 0) - (getSessionStartDate(a)?.getTime() || 0),
+        );
+        sessionCacheRef.current.set(monthKey, rows);
+        if (selectedMonthRef.current === monthKey) {
+          setMonthSessions(rows);
+          setSessionStatus('loaded');
         }
-      }
-
-      if (!cancelled) {
-        setStudentNameLookup(map);
-      }
-    };
-
-    void loadStudentNamesFromDocs();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [baseStudentNameById, enrollmentsById, ledgerRows, monthSessions]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadLedger = async () => {
-      if (!resolvedTeacherId) {
-        setLedgerRows([]);
-        return;
-      }
-
-      setIsLoading(true);
-      setErrorMessage(null);
-      try {
-        const earningsQuery = ledgerReadMonthKey
-          ? query(
-              collection(db, 'teacherEarnings'),
-              where('teacherId', '==', resolvedTeacherId),
-              where('monthKey', '==', ledgerReadMonthKey),
-            )
-          : query(
-              collection(db, 'teacherEarnings'),
-              where('teacherId', '==', resolvedTeacherId),
-            );
-
-        const snap = await getDocs(earningsQuery);
-        const rows: TeacherEarningLedgerRow[] = snap.docs.map((docSnap) => {
-          const data = docSnap.data() as Record<string, unknown>;
-          const earnedAt =
-            toDate(data.earnedAt) || toDate(data.createdAt) || toDate(data.updatedAt) || null;
-          const monthKey = normalizeMonthKey(data.monthKey) || (earnedAt ? monthKeyFromDate(earnedAt) : '');
-
-          return {
-            id: docSnap.id,
-            amount: toNumber(data.amount, 0),
-            status: String(data.status || '').toLowerCase(),
-            source: String(data.source || '').toLowerCase(),
-            demoId: String(data.demoId || ''),
-            sessionId: String(data.sessionId || ''),
-            kidId: String(data.kidId || data.studentId || data.childId || ''),
-            courseId: String(data.courseId || ''),
-            paidAmount: toNumber(data.paidAmount, 0),
-            perClassRate: pickPerClassRate(data),
-            monthKey,
-            earnedAt,
-            enrollmentId: String(data.enrollmentId || ''),
-            studentName: String(data.studentName || ''),
-            childName: String(data.childName || ''),
-            kidName: String(data.kidName || ''),
-          };
-        });
-
-        if (!cancelled) {
-          setLedgerRows(rows);
-        }
+        return rows;
       } catch (error) {
-        console.error('Failed to load teacher earnings ledger', error);
-        if (!cancelled) {
-          setErrorMessage('Unable to load earnings details right now.');
-          setLedgerRows([]);
+        console.error('Failed to load bounded teacher session details', error);
+        if (selectedMonthRef.current === monthKey) {
+          setMonthSessions([]);
+          setSessionStatus('error');
+          setSessionError('Unable to load session details.');
         }
+        throw error;
       } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
+        sessionPromiseRef.current.delete(monthKey);
       }
-    };
+    })();
 
-    void loadLedger();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [ledgerReadMonthKey, resolvedTeacherId]);
-
-  const range = useMemo(() => {
-    const today = new Date();
-
-    if (filterPreset === 'week') {
-      const end = endOfDay(today);
-      const startBase = new Date(today);
-      startBase.setDate(startBase.getDate() - 6);
-      const start = startOfDay(startBase);
-      return { start, end, label: 'Last 7 days' };
-    }
-
-    if (filterPreset === 'month') {
-      const parsed = parseMonthKey(selectedMonth);
-      if (!parsed) {
-        const start = startOfDay(today);
-        const end = endOfDay(today);
-        return { start, end, label: selectedMonth };
-      }
-
-      const start = new Date(parsed.year, parsed.monthIndex, 1, 0, 0, 0, 0);
-      const end = new Date(parsed.year, parsed.monthIndex + 1, 0, 23, 59, 59, 999);
-      const label = start.toLocaleString('en-US', { month: 'long', year: 'numeric' });
-      return { start, end, label };
-    }
-
-    const parsedStart = parseDateInput(customStartDate) || new Date();
-    const parsedEnd = parseDateInput(customEndDate) || parsedStart;
-
-    const start = startOfDay(parsedStart);
-    const end = endOfDay(parsedEnd < parsedStart ? parsedStart : parsedEnd);
-    return { start, end, label: `${customStartDate} to ${customEndDate}` };
-  }, [customEndDate, customStartDate, filterPreset, selectedMonth]);
-
-  const filteredRows = useMemo(
-    () =>
-      ledgerRows.filter((row) => {
-        if (filterPreset === 'month') {
-          if (row.monthKey) return row.monthKey === selectedMonth;
-          if (!row.earnedAt) return false;
-          return row.earnedAt >= range.start && row.earnedAt <= range.end;
-        }
-        if (!row.earnedAt) return false;
-        return row.earnedAt >= range.start && row.earnedAt <= range.end;
-      }),
-    [filterPreset, ledgerRows, range.end, range.start, selectedMonth],
-  );
-
-  const resolveEnrollmentForRow = (row: TeacherEarningLedgerRow): EnrollmentRateDoc | null => {
-    const directEnrollmentId = String(row.enrollmentId || '').trim();
-    if (directEnrollmentId && enrollmentsById.has(directEnrollmentId)) {
-      return enrollmentsById.get(directEnrollmentId) || null;
-    }
-
-    const rowKidId = String(row.kidId || '').trim();
-    const rowCourseId = String(row.courseId || '').trim();
-    let bestMatch: EnrollmentRateDoc | null = null;
-    for (const enrollment of enrollmentsById.values()) {
-      const enrollmentKidIds = [enrollment.kidId, enrollment.studentId, enrollment.childId]
-        .map((value) => String(value || '').trim())
-        .filter(Boolean);
-      const kidMatch = rowKidId ? enrollmentKidIds.includes(rowKidId) : false;
-      const courseMatch = rowCourseId ? String(enrollment.courseId || '').trim() === rowCourseId : true;
-      if (!kidMatch || !courseMatch) continue;
-      if (!bestMatch || enrollment.updatedAtMs > bestMatch.updatedAtMs) {
-        bestMatch = enrollment;
-      }
-    }
-    return bestMatch;
+    sessionPromiseRef.current.set(monthKey, promise);
+    return promise;
   };
 
-  const resolvedRows = useMemo<ResolvedEarningRow[]>(() => {
-    return dedupeSessionLedgerRows(filteredRows)
-      .filter((row) => row.status !== 'void')
-      .map((row) => {
-        const enrollment = resolveEnrollmentForRow(row);
-        const kidId = String(row.kidId || '').trim();
-        const enrollmentKidId = String(
-          enrollment?.kidId || enrollment?.studentId || enrollment?.childId || ''
-        ).trim();
-        const canonicalKidId = kidId || enrollmentKidId;
-        const studentDisplayName =
-          pickReadableName(
-            row.studentName,
-            row.childName,
-            row.kidName,
-            enrollment?.studentName,
-            enrollment?.childName,
-            enrollment?.kidName,
-            canonicalKidId ? studentNameById.get(canonicalKidId) : null
-          ) || 'Name not found';
+  const toggleSessionDetails = () => {
+    if (showSessionDetails) {
+      setShowSessionDetails(false);
+      setSelectedSessionStudentKey(null);
+      return;
+    }
+    setShowSessionDetails(true);
+    if (sessionStatus === 'idle' || sessionStatus === 'error' || ledgerStatus === 'idle' || ledgerStatus === 'error') {
+      const monthKey = selectedMonth;
+      void Promise.all([ensureSessionDetailsLoaded(monthKey), ensureLedgerLoaded(monthKey)]).catch(() => undefined);
+    }
+  };
 
-        const enrollmentRate = enrollment?.teacherRate ?? null;
-        const useEnrollmentRate =
-          isSessionLinkedRow(row) && !isPaidLikeStatus(row.status) && Number.isFinite(enrollmentRate) && (enrollmentRate || 0) > 0;
-        const effectiveRate = useEnrollmentRate ? (enrollmentRate as number) : row.perClassRate;
-        const effectiveAmount = useEnrollmentRate ? (enrollmentRate as number) : toNumber(row.amount, 0);
-        const studentGroupKey =
-          canonicalKidId ||
-          String(row.enrollmentId || '').trim() ||
-          String(row.sessionId || '').trim() ||
-          row.id;
+  const toggleDemoDetails = () => {
+    if (showDemoDetails) {
+      setShowDemoDetails(false);
+      return;
+    }
+    setShowDemoDetails(true);
+    if (ledgerStatus === 'idle' || ledgerStatus === 'error') {
+      void ensureLedgerLoaded(selectedMonth).catch(() => undefined);
+    }
+  };
 
-        return {
-          ...row,
-          effectiveAmount,
-          effectiveRate: Number.isFinite(effectiveRate) && (effectiveRate || 0) > 0 ? (effectiveRate as number) : null,
-          studentDisplayName,
-          studentGroupKey,
-        };
-      });
-  }, [enrollmentsById, filteredRows, studentNameById]);
+  const demoEventCount = earnings.demoCompletedCount + earnings.demoEnrollmentBonusCount;
 
-  const categorizedRows = useMemo(() => {
-    const demoCompletedRows = resolvedRows.filter((row) => row.source === 'demo_completed');
-    const demoConvertedRows = resolvedRows.filter((row) => row.source === 'demo_enrolled_bonus');
-    const sessionRows = resolvedRows.filter((row) => {
-      const hasDemoMarker = row.demoId.length > 0;
-      const isDemoSource = row.source === 'demo_completed' || row.source === 'demo_enrolled_bonus';
-      return !hasDemoMarker && !isDemoSource;
+  const ledgerBySessionId = useMemo(() => {
+    const map = new Map<string, DetailLedgerRow>();
+    ledgerRows.forEach((row) => {
+      if (!row.sessionId) return;
+      const current = map.get(row.sessionId);
+      if (!current || (current.status === 'void' && row.status !== 'void')) map.set(row.sessionId, row);
     });
-    return { demoCompletedRows, demoConvertedRows, sessionRows };
-  }, [resolvedRows]);
-
-  const metrics = useMemo(() => {
-    const { demoCompletedRows, demoConvertedRows, sessionRows } = categorizedRows;
-
-    const demoCompletedIds = new Set(
-      demoCompletedRows.map((row) => row.demoId).filter((value) => value.length > 0),
-    );
-    const demoConvertedIds = new Set(
-      demoConvertedRows.map((row) => row.demoId).filter((value) => value.length > 0),
-    );
-
-    const sumAmount = (rows: ResolvedEarningRow[]) =>
-      rows.reduce((acc, row) => acc + toNumber(row.effectiveAmount, 0), 0);
-
-    const totalEarnings = sumAmount(resolvedRows);
-    const sessionEarnings = sumAmount(sessionRows);
-    const demoCompletedEarnings = sumAmount(demoCompletedRows);
-    const demoConvertedEarnings = sumAmount(demoConvertedRows);
-
-    const paymentsReceived = resolvedRows.reduce((acc, row) => {
-      const paidAmount = toNumber(row.paidAmount, 0);
-      if (paidAmount > 0) return acc + paidAmount;
-      if (row.status === 'paid') return acc + toNumber(row.effectiveAmount, 0);
-      return acc;
-    }, 0);
-
-    const pendingEarnings = Math.max(totalEarnings - paymentsReceived, 0);
-
-    return {
-      sessionCount: sessionRows.length,
-      demoConductedCount: demoCompletedIds.size,
-      demoConvertedCount: demoConvertedIds.size,
-      totalEarnings,
-      sessionEarnings,
-      demoCompletedEarnings,
-      demoConvertedEarnings,
-      paymentsReceived,
-      pendingEarnings,
-    };
-  }, [categorizedRows, resolvedRows]);
-
-  const demoDetails = useMemo(() => {
-    const bucket = new Map<string, { name: string; count: number; amount: number }>();
-    categorizedRows.demoCompletedRows.forEach((row) => {
-      const studentName = row.studentDisplayName || 'Name not found';
-      const key = row.studentGroupKey || `${row.demoId || 'demo'}_${row.id}`;
-      const existing = bucket.get(key) || { name: studentName, count: 0, amount: 0 };
-      existing.count += 1;
-      existing.amount += toNumber(row.effectiveAmount, 0);
-      bucket.set(key, existing);
-    });
-    return Array.from(bucket.values()).sort((a, b) => b.count - a.count || b.amount - a.amount);
-  }, [categorizedRows.demoCompletedRows]);
-
-  const earningsBySessionId = useMemo(() => {
-    const map = new Map<string, TeacherEarningLedgerRow>();
-    dedupeSessionLedgerRows(ledgerRows)
-      .filter((row) => isSessionLinkedRow(row))
-      .forEach((row) => {
-        const sessionId = String(row.sessionId || '').trim();
-        if (!sessionId) return;
-        map.set(sessionId, row);
-      });
     return map;
   }, [ledgerRows]);
 
-  const sessionDateWiseDetails = useMemo<SessionDetailRow[]>(() => {
-    return monthSessions.map((session) => {
-      const earning = earningsBySessionId.get(session.id);
-      const classStatus = normalizeClassStatus(session.classStatus) || 'not_marked';
-      const earningStatusRaw = String(earning?.status || '').trim().toLowerCase();
-      const isVoid = earningStatusRaw === 'void';
-      const isPaid = Boolean(earning && (isPaidLikeStatus(earningStatusRaw) || toNumber(earning.paidAmount, 0) > 0));
-      const isPresent = classStatus === 'present';
+  const studentSessionSummary = useMemo<StudentSessionSummaryRow[]>(() => {
+    if (sessionStatus !== 'loaded' || ledgerStatus !== 'loaded') return [];
+    const bucket = new Map<string, StudentSessionSummaryRow>();
 
-      let earningStatusLabel = 'Not payable';
-      if (isVoid) {
-        earningStatusLabel = 'Voided';
-      } else if (isPresent) {
-        earningStatusLabel = isPaid ? 'Paid' : 'Payable';
-      }
-
-      const amount = !isVoid && isPresent && earning ? Math.max(toNumber(earning.amount, 0), 0) : 0;
-      let enrollment = session.enrollmentId ? enrollmentsById.get(session.enrollmentId) || null : null;
-      if (!enrollment) {
-        for (const candidate of enrollmentsById.values()) {
-          const candidateIds = [candidate.kidId, candidate.studentId, candidate.childId]
-            .map((value) => String(value || '').trim())
-            .filter(Boolean);
-          const idMatch = session.studentId ? candidateIds.includes(session.studentId) : false;
-          const courseMatch = session.courseId ? candidate.courseId === session.courseId : true;
-          if (idMatch && courseMatch) {
-            enrollment = candidate;
-            break;
-          }
-        }
-      }
+    monthSessions.forEach((session) => {
+      const earning = ledgerBySessionId.get(session.id);
+      const isVoid = earning?.status === 'void';
+      const isPresent = session.classStatus === 'present';
+      const amount = isPresent && earning && !isVoid ? earning.amount : 0;
+      const earningStatusLabel = isVoid
+        ? 'Voided'
+        : isPresent
+        ? earning
+          ? isPaidLike(earning.status, earning.paidAmount)
+            ? 'Paid'
+            : 'Payable'
+          : 'Not found'
+        : 'Not payable';
       const studentName =
-        pickReadableName(
-          session.studentName,
-          session.studentAltName,
-          session.childName,
-          enrollment?.studentName,
-          enrollment?.kidName,
-          enrollment?.childName,
-          session.studentId ? studentNameById.get(session.studentId) : null,
-        ) || 'Student';
-
-      const studentKey = session.studentId || studentName.toLowerCase();
-      const courseName =
-        pickReadableName(
-          session.courseName,
-          session.courseTitle,
-          session.courseRaw,
-          enrollment?.courseName,
-        ) || 'Course';
-
-      return {
-        id: session.id,
+        pickReadableName(session.studentName, earning?.studentName, earning?.kidName, earning?.childName) || 'Student';
+      const studentKey = session.studentId || earning?.kidId || studentName.toLowerCase();
+      const detailRow: SessionDetailRow = {
+        ...session,
         studentKey,
         studentName,
-        date: session.date,
-        startTime: session.startTime,
-        endTime: session.endTime,
-        startAt: session.startAt,
-        endAt: session.endAt,
-        courseName,
-        sessionTypeLabel: getSessionTypeLabel(session.sessionTypeRaw, classStatus, session.makeupForSessionId),
-        classStatusLabel: getClassStatusLabel(classStatus),
-        classStatus,
+        sessionTypeLabel: getSessionTypeLabel(session.sessionTypeRaw, session.classStatus, session.makeupForSessionId),
+        classStatusLabel: getClassStatusLabel(session.classStatus),
         earningStatusLabel,
         amount,
       };
-    });
-  }, [earningsBySessionId, enrollmentsById, monthSessions, studentNameById]);
 
-  const studentSessionSummary = useMemo<StudentSessionSummaryRow[]>(() => {
-    const bucket = new Map<string, StudentSessionSummaryRow>();
-
-    sessionDateWiseDetails.forEach((row) => {
-      const isPayable = row.classStatus === 'present';
-      const existing = bucket.get(row.studentKey) || {
-        studentKey: row.studentKey,
-        studentName: row.studentName,
+      const existing = bucket.get(studentKey) || {
+        studentKey,
+        studentName,
         totalClasses: 0,
         payableClasses: 0,
         nonPayableClasses: 0,
         totalEarning: 0,
         rows: [],
       };
-
       existing.totalClasses += 1;
-      if (isPayable) {
-        existing.payableClasses += 1;
-      } else {
-        existing.nonPayableClasses += 1;
-      }
-      existing.totalEarning += toNumber(row.amount, 0);
-      existing.rows.push(row);
-      bucket.set(row.studentKey, existing);
+      if (isPresent) existing.payableClasses += 1;
+      else existing.nonPayableClasses += 1;
+      existing.totalEarning += amount;
+      existing.rows.push(detailRow);
+      bucket.set(studentKey, existing);
     });
 
     return Array.from(bucket.values())
       .map((row) => ({
         ...row,
-        rows: [...row.rows].sort((a, b) => {
-          const aMs = getSessionStartDate(a)?.getTime() ?? 0;
-          const bMs = getSessionStartDate(b)?.getTime() ?? 0;
-          return bMs - aMs;
-        }),
+        rows: [...row.rows].sort(
+          (a, b) => (getSessionStartDate(b)?.getTime() || 0) - (getSessionStartDate(a)?.getTime() || 0),
+        ),
       }))
       .sort((a, b) => b.totalEarning - a.totalEarning || a.studentName.localeCompare(b.studentName));
-  }, [sessionDateWiseDetails]);
+  }, [ledgerBySessionId, ledgerStatus, monthSessions, sessionStatus]);
+
+  const loadedSessionEarnings = useMemo(
+    () => studentSessionSummary.reduce((sum, row) => sum + row.totalEarning, 0),
+    [studentSessionSummary],
+  );
+
+  const demoDetails = useMemo(() => {
+    if (ledgerStatus !== 'loaded') return [];
+    return ledgerRows
+      .filter((row) => row.status !== 'void' && (row.source === 'demo_completed' || row.source === 'demo_enrolled_bonus'))
+      .map((row) => ({
+        id: row.id,
+        name: pickReadableName(row.studentName, row.kidName, row.childName) || 'Student',
+        label: row.source === 'demo_completed' ? 'Demo conducted' : 'Enrollment bonus',
+        amount: row.amount,
+      }))
+      .sort((a, b) => b.amount - a.amount || a.name.localeCompare(b.name));
+  }, [ledgerRows, ledgerStatus]);
 
   if (!resolvedTeacherId) {
     return (
@@ -1258,105 +683,56 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-lg font-semibold">Earnings Overview</h3>
-            <p className="text-sm text-muted-foreground">Range: {range.label}</p>
+            <p className="text-sm text-muted-foreground">Monthly earnings summary</p>
           </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant={filterPreset === 'week' ? 'default' : 'outline'}
-              onClick={() => setFilterPreset('week')}
-            >
-              Week
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant={filterPreset === 'month' ? 'default' : 'outline'}
-              onClick={() => setFilterPreset('month')}
-            >
-              Month
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant={filterPreset === 'custom' ? 'default' : 'outline'}
-              onClick={() => setFilterPreset('custom')}
-            >
-              Custom
-            </Button>
-          </div>
-        </div>
-
-        {filterPreset === 'month' && (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
             <label className="text-sm font-medium">Month</label>
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <Select value={selectedMonth} onValueChange={handleMonthChange}>
               <SelectTrigger className="w-[220px]">
                 <SelectValue placeholder="Select month" />
               </SelectTrigger>
               <SelectContent>
                 {monthOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-        )}
+        </div>
 
-        {filterPreset === 'custom' && (
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="space-y-1">
-              <label htmlFor="earnings-custom-start" className="text-sm font-medium">Start Date</label>
-              <Input
-                id="earnings-custom-start"
-                type="date"
-                value={customStartDate}
-                max={customEndDate || undefined}
-                onChange={(event) => setCustomStartDate(event.target.value)}
-              />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="earnings-custom-end" className="text-sm font-medium">End Date</label>
-              <Input
-                id="earnings-custom-end"
-                type="date"
-                value={customEndDate}
-                min={customStartDate || undefined}
-                onChange={(event) => setCustomEndDate(event.target.value)}
-              />
-            </div>
-          </div>
-        )}
-
-        {isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading earnings...</p>
-        ) : errorMessage ? (
-          <p className="text-sm text-destructive">{errorMessage}</p>
+        {earningsQuery.isLoading ? (
+          <p className="text-sm text-muted-foreground">Loading monthly earnings…</p>
+        ) : earningsQuery.isError ? (
+          <p className="text-sm text-destructive">Unable to load monthly earnings.</p>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <Card className="p-3">
               <div className="text-xs uppercase tracking-wide text-muted-foreground">Sessions Conducted</div>
-              <div className="mt-1 text-2xl font-semibold">{metrics.sessionCount}</div>
-              <div className="text-sm text-muted-foreground">{formatCurrency(metrics.sessionEarnings)}</div>
-            </Card>
-            <Card className="p-3">
-              <div className="text-xs uppercase tracking-wide text-muted-foreground">Demos Conducted</div>
-              <div className="mt-1 text-2xl font-semibold">{metrics.demoConductedCount}</div>
-              <div className="text-sm text-muted-foreground">{formatCurrency(metrics.demoCompletedEarnings)}</div>
-            </Card>
-            <Card className="p-3">
-              <div className="text-xs uppercase tracking-wide text-muted-foreground">Demo Enrollments</div>
-              <div className="mt-1 text-2xl font-semibold">{metrics.demoConvertedCount}</div>
-              <div className="text-sm text-muted-foreground">{formatCurrency(metrics.demoConvertedEarnings)}</div>
+              <div className="mt-1 text-2xl font-semibold">{earnings.sessionsCompleted}</div>
+              <div className="text-sm text-muted-foreground">Saved monthly count</div>
             </Card>
             <Card className="p-3">
               <div className="text-xs uppercase tracking-wide text-muted-foreground">Total Earnings</div>
-              <div className="mt-1 text-2xl font-semibold">{formatCurrency(metrics.totalEarnings)}</div>
-              <div className="text-sm text-muted-foreground">Pending: {formatCurrency(metrics.pendingEarnings)}</div>
+              <div className="mt-1 text-2xl font-semibold">{formatCurrency(earnings.totalEarnings)}</div>
+              <div className="text-sm text-muted-foreground">Pending: {formatCurrency(earnings.pendingEarnings)}</div>
+            </Card>
+            <Card className="p-3">
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Demo Earnings</div>
+              <div className="mt-1 text-2xl font-semibold">{formatCurrency(earnings.demoEarnings)}</div>
+              <div className="text-sm text-muted-foreground">{demoEventCount} saved demo earning events</div>
+            </Card>
+            <Card className="p-3">
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Demos Conducted</div>
+              <div className="mt-1 text-2xl font-semibold">{earnings.demoCompletedCount}</div>
+            </Card>
+            <Card className="p-3">
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Demo Enrollments</div>
+              <div className="mt-1 text-2xl font-semibold">{earnings.demoEnrollmentBonusCount}</div>
+            </Card>
+            <Card className="p-3">
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Recent Payments</div>
+              <div className="mt-1 text-2xl font-semibold">{earnings.payments?.length || 0}</div>
+              <div className="text-sm text-muted-foreground">Saved in monthly rollup</div>
             </Card>
           </div>
         )}
@@ -1376,45 +752,43 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
           <TableBody>
             <TableRow>
               <TableCell>Sessions Conducted</TableCell>
-              <TableCell>{metrics.sessionCount}</TableCell>
-              <TableCell className="text-right">{formatCurrency(metrics.sessionEarnings)}</TableCell>
+              <TableCell>{earnings.sessionsCompleted}</TableCell>
               <TableCell className="text-right">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setShowSessionDetails((prev) => !prev)}
-                >
+                {sessionStatus === 'loaded' && ledgerStatus === 'loaded' ? formatCurrency(loadedSessionEarnings) : 'Load details'}
+              </TableCell>
+              <TableCell className="text-right">
+                <Button size="sm" variant="outline" onClick={toggleSessionDetails}>
                   {showSessionDetails ? 'Hide' : 'View details'}
                 </Button>
               </TableCell>
             </TableRow>
             <TableRow>
               <TableCell>Demos Conducted</TableCell>
-              <TableCell>{metrics.demoConductedCount}</TableCell>
-              <TableCell className="text-right">{formatCurrency(metrics.demoCompletedEarnings)}</TableCell>
+              <TableCell>{earnings.demoCompletedCount}</TableCell>
+              <TableCell className="text-right">—</TableCell>
               <TableCell className="text-right">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setShowDemoDetails((prev) => !prev)}
-                >
+                <Button size="sm" variant="outline" onClick={toggleDemoDetails}>
                   {showDemoDetails ? 'Hide' : 'View details'}
                 </Button>
               </TableCell>
             </TableRow>
             <TableRow>
-              <TableCell>Demos Converted to Enrollment</TableCell>
-              <TableCell>{metrics.demoConvertedCount}</TableCell>
-              <TableCell className="text-right">{formatCurrency(metrics.demoConvertedEarnings)}</TableCell>
+              <TableCell>Demo Enrollment Bonuses</TableCell>
+              <TableCell>{earnings.demoEnrollmentBonusCount}</TableCell>
+              <TableCell className="text-right">—</TableCell>
+              <TableCell className="text-right">Included in demo details</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Demo Earnings</TableCell>
+              <TableCell>{demoEventCount}</TableCell>
+              <TableCell className="text-right">{formatCurrency(earnings.demoEarnings)}</TableCell>
               <TableCell className="text-right">—</TableCell>
             </TableRow>
             <TableRow>
-              <TableCell className="font-medium">Total</TableCell>
-              <TableCell className="font-medium">
-                {metrics.sessionCount + metrics.demoConductedCount + metrics.demoConvertedCount}
-              </TableCell>
-              <TableCell className="text-right font-medium">{formatCurrency(metrics.totalEarnings)}</TableCell>
-              <TableCell className="text-right">—</TableCell>
+              <TableCell className="font-medium">Total Earnings</TableCell>
+              <TableCell className="font-medium">—</TableCell>
+              <TableCell className="text-right font-medium">{formatCurrency(earnings.totalEarnings)}</TableCell>
+              <TableCell className="text-right">Monthly rollup</TableCell>
             </TableRow>
           </TableBody>
         </Table>
@@ -1422,9 +796,13 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
         {showSessionDetails && (
           <div className="mt-4 rounded-md border p-3">
             <h4 className="text-sm font-semibold mb-2">Sessions Conducted: Student-wise</h4>
-            {studentSessionSummary.length === 0 ? (
+            {sessionStatus === 'loading' || ledgerStatus === 'loading' ? (
+              <p className="text-xs text-muted-foreground">Loading session details…</p>
+            ) : sessionStatus === 'error' || ledgerStatus === 'error' ? (
+              <p className="text-xs text-destructive">{sessionError || ledgerError || 'Unable to load session details.'}</p>
+            ) : sessionStatus === 'loaded' && ledgerStatus === 'loaded' && studentSessionSummary.length === 0 ? (
               <p className="text-xs text-muted-foreground">No sessions found for this month.</p>
-            ) : (
+            ) : sessionStatus === 'loaded' && ledgerStatus === 'loaded' ? (
               <div className="overflow-x-auto space-y-4">
                 <Table>
                   <TableHeader>
@@ -1440,30 +818,26 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
                   <TableBody>
                     {studentSessionSummary.map((row) => {
                       const isSelected = selectedSessionStudentKey === row.studentKey;
-                      const colSpan = 6;
-
                       return [
                         <TableRow key={row.studentKey}>
-                            <TableCell>{row.studentName}</TableCell>
-                            <TableCell>{row.totalClasses}</TableCell>
-                            <TableCell>{row.payableClasses}</TableCell>
-                            <TableCell>{row.nonPayableClasses}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(row.totalEarning)}</TableCell>
-                            <TableCell className="text-right">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setSelectedSessionStudentKey((prev) => (prev === row.studentKey ? null : row.studentKey));
-                                }}
-                              >
-                                {isSelected ? 'Hide details' : 'View details'}
-                              </Button>
-                            </TableCell>
+                          <TableCell>{row.studentName}</TableCell>
+                          <TableCell>{row.totalClasses}</TableCell>
+                          <TableCell>{row.payableClasses}</TableCell>
+                          <TableCell>{row.nonPayableClasses}</TableCell>
+                          <TableCell className="text-right">{formatCurrency(row.totalEarning)}</TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setSelectedSessionStudentKey((current) => current === row.studentKey ? null : row.studentKey)}
+                            >
+                              {isSelected ? 'Hide details' : 'View details'}
+                            </Button>
+                          </TableCell>
                         </TableRow>,
                         isSelected ? (
                           <TableRow key={`${row.studentKey}-details`}>
-                            <TableCell colSpan={colSpan} className="p-0">
+                            <TableCell colSpan={6} className="p-0">
                               <div className="border-t bg-slate-50/40 p-3">
                                 <h5 className="text-sm font-semibold mb-2">Date-wise details: {row.studentName}</h5>
                                 <Table>
@@ -1481,23 +855,20 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
                                   </TableHeader>
                                   <TableBody>
                                     {row.rows.map((detailRow) => {
-                                      const dateLabel =
-                                        formatSessionDate(detailRow, {
-                                          timeZone: INDIA_TIME_ZONE,
-                                          dateOptions: { day: '2-digit', month: 'short', year: 'numeric' },
-                                          fallbackText: detailRow.date || '—',
-                                        }) || '—';
-                                      const dayLabel =
-                                        formatSessionDate(detailRow, {
-                                          timeZone: INDIA_TIME_ZONE,
-                                          dateOptions: { weekday: 'short' },
-                                          fallbackText: '—',
-                                        }) || '—';
+                                      const dateLabel = formatSessionDate(detailRow, {
+                                        timeZone: INDIA_TIME_ZONE,
+                                        dateOptions: { day: '2-digit', month: 'short', year: 'numeric' },
+                                        fallbackText: detailRow.date || '—',
+                                      });
+                                      const dayLabel = formatSessionDate(detailRow, {
+                                        timeZone: INDIA_TIME_ZONE,
+                                        dateOptions: { weekday: 'short' },
+                                        fallbackText: '—',
+                                      });
                                       const timeLabel = formatSessionTimeRange(detailRow, {
                                         timeZone: INDIA_TIME_ZONE,
                                         fallbackText: '—',
                                       });
-
                                       return (
                                         <TableRow key={`${detailRow.id}-${detailRow.date}-${detailRow.startTime}`}>
                                           <TableCell>{dateLabel}</TableCell>
@@ -1522,30 +893,59 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
                   </TableBody>
                 </Table>
               </div>
-            )}
+            ) : null}
           </div>
         )}
 
         {showDemoDetails && (
           <div className="mt-4 rounded-md border p-3">
-            <h4 className="text-sm font-semibold mb-2">Demos Conducted: Student-wise</h4>
-            {demoDetails.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No demo details in this range.</p>
-            ) : (
-              <div className="space-y-1">
-                {demoDetails.map((row, index) => (
-                  <div key={`demo-detail-${row.name}-${index}`} className="flex items-center justify-between text-sm">
-                    <span>{row.name}</span>
-                    <span className="text-muted-foreground">
-                      {row.count} demos · {formatCurrency(row.amount)}
-                    </span>
+            <h4 className="text-sm font-semibold mb-2">Demo details</h4>
+            {ledgerStatus === 'loading' ? (
+              <p className="text-xs text-muted-foreground">Loading demo details…</p>
+            ) : ledgerStatus === 'error' ? (
+              <p className="text-xs text-destructive">{ledgerError || 'Unable to load demo details.'}</p>
+            ) : ledgerStatus === 'loaded' && demoDetails.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No demo details for this month.</p>
+            ) : ledgerStatus === 'loaded' ? (
+              <div className="space-y-2">
+                {demoDetails.map((row) => (
+                  <div key={row.id} className="flex items-center justify-between gap-3 text-sm">
+                    <div>
+                      <div>{row.name}</div>
+                      <div className="text-xs text-muted-foreground">{row.label}</div>
+                    </div>
+                    <span className="font-medium">{formatCurrency(row.amount)}</span>
                   </div>
                 ))}
               </div>
-            )}
+            ) : null}
           </div>
         )}
       </Card>
+
+      {(earnings.payments?.length || 0) > 0 && (
+        <Card className="p-4 md:p-6">
+          <h3 className="text-lg font-semibold mb-3">Recent Payments</h3>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {(earnings.payments || []).map((payment) => (
+                <TableRow key={payment.id}>
+                  <TableCell>{payment.date}</TableCell>
+                  <TableCell>{toTitleCase(normalizeToken(payment.status).replace(/_/g, ' ')) || 'Completed'}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(payment.amount)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
     </div>
   );
 };
