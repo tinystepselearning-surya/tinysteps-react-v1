@@ -93,12 +93,35 @@ const sortLeadDocsByCreatedAtDesc = (
   return right.id.localeCompare(left.id);
 };
 
-const getBucketCount = async (bucket: SimpleLeadBucket): Promise<number> => {
+const buildCreatedAtConstraints = (
+  dateFromMs: number,
+  dateToMs: number,
+  cursor: QueryDocumentSnapshot<DocumentData> | null,
+  batchSize?: number,
+): QueryConstraint[] => {
+  const constraints: QueryConstraint[] = [];
+  if (dateFromMs) constraints.push(where('createdAt', '>=', Timestamp.fromMillis(dateFromMs)));
+  if (dateToMs) constraints.push(where('createdAt', '<=', Timestamp.fromMillis(dateToMs)));
+  constraints.push(orderBy('createdAt', 'desc'));
+  if (cursor) constraints.push(startAfter(cursor));
+  if (batchSize) constraints.push(limit(batchSize));
+  return constraints;
+};
+
+const getBucketCount = async (
+  bucket: SimpleLeadBucket,
+  dateFromMs = 0,
+  dateToMs = 0,
+): Promise<number> => {
+  const constraints: QueryConstraint[] = [
+    where('status', 'in', [...LEAD_STATUSES_BY_BUCKET[bucket]]),
+  ];
+  if (dateFromMs) constraints.push(where('createdAt', '>=', Timestamp.fromMillis(dateFromMs)));
+  if (dateToMs) constraints.push(where('createdAt', '<=', Timestamp.fromMillis(dateToMs)));
+  if (dateFromMs || dateToMs) constraints.push(orderBy('createdAt', 'desc'));
+
   const snapshot = await getCountFromServer(
-    query(
-      collection(db, LEADS_COLLECTION),
-      where('status', 'in', [...LEAD_STATUSES_BY_BUCKET[bucket]]),
-    ),
+    query(collection(db, LEADS_COLLECTION), ...constraints),
   );
   return Number(snapshot.data().count || 0);
 };
@@ -115,19 +138,32 @@ const isWithinDateRange = (
   return true;
 };
 
-const buildCreatedAtConstraints = (
+const isMissingCompositeIndexError = (error: unknown): boolean => {
+  const candidate = error as { code?: unknown; message?: unknown } | null;
+  const code = String(candidate?.code || '').toLowerCase();
+  const message = String(candidate?.message || error || '');
+  return code.includes('failed-precondition') || /requires an index|index.*required|create it here/i.test(message);
+};
+
+const getDateRangeBucketCountsFallback = async (
   dateFromMs: number,
   dateToMs: number,
-  cursor: QueryDocumentSnapshot<DocumentData> | null,
-  batchSize?: number,
-): QueryConstraint[] => {
-  const constraints: QueryConstraint[] = [];
-  if (dateFromMs) constraints.push(where('createdAt', '>=', Timestamp.fromMillis(dateFromMs)));
-  if (dateToMs) constraints.push(where('createdAt', '<=', Timestamp.fromMillis(dateToMs)));
-  constraints.push(orderBy('createdAt', 'desc'));
-  if (cursor) constraints.push(startAfter(cursor));
-  if (batchSize) constraints.push(limit(batchSize));
-  return constraints;
+): Promise<LeadBucketCounts> => {
+  const snapshot = await getDocs(
+    query(
+      collection(db, LEADS_COLLECTION),
+      ...buildCreatedAtConstraints(dateFromMs, dateToMs, null),
+    ),
+  );
+  const counts: LeadBucketCounts = { ...EMPTY_COUNTS };
+  for (const docSnapshot of snapshot.docs) {
+    const status = docSnapshot.data().status;
+    if (leadStatusBelongsToBucket(status, 'open')) counts.open += 1;
+    else if (leadStatusBelongsToBucket(status, 'in_progress')) counts.in_progress += 1;
+    else if (leadStatusBelongsToBucket(status, 'admin_review')) counts.admin_review += 1;
+    else if (leadStatusBelongsToBucket(status, 'closed')) counts.closed += 1;
+  }
+  return counts;
 };
 
 interface PageState {
@@ -167,6 +203,30 @@ export function usePagedLeads<T extends PagedLeadRecord>({
   const refreshCounts = useCallback(async () => {
     setCountsLoading(true);
     try {
+      if (invalidDateRange) {
+        setBucketCounts({ ...EMPTY_COUNTS });
+        return;
+      }
+
+      if (hasDateFilter) {
+        try {
+          const [open, inProgress, adminReview, closed] = await Promise.all([
+            getBucketCount('open', dateFromMs, dateToMs),
+            getBucketCount('in_progress', dateFromMs, dateToMs),
+            getBucketCount('admin_review', dateFromMs, dateToMs),
+            getBucketCount('closed', dateFromMs, dateToMs),
+          ]);
+          setBucketCounts({ open, in_progress: inProgress, admin_review: adminReview, closed });
+        } catch (error) {
+          if (!isMissingCompositeIndexError(error)) throw error;
+          console.warn(
+            '[usePagedLeads] Leads status/date index is not READY yet; using one bounded date-range scan for card counts.',
+          );
+          setBucketCounts(await getDateRangeBucketCountsFallback(dateFromMs, dateToMs));
+        }
+        return;
+      }
+
       const [open, inProgress, adminReview, closed] = await Promise.all([
         getBucketCount('open'),
         getBucketCount('in_progress'),
@@ -180,7 +240,7 @@ export function usePagedLeads<T extends PagedLeadRecord>({
     } finally {
       setCountsLoading(false);
     }
-  }, []);
+  }, [dateFromMs, dateToMs, hasDateFilter, invalidDateRange]);
 
   useEffect(() => {
     void refreshCounts();
@@ -250,7 +310,7 @@ export function usePagedLeads<T extends PagedLeadRecord>({
         // With Teacher / Admin Review / Closed are normally small operational queues.
         // For <=100 rows, fetch the exact status-filtered queue once and paginate the
         // cached result locally. Date filtering then happens inside that small cache, so
-        // no composite status + createdAt Firestore index is required.
+        // the row list itself does not depend on a composite status + createdAt index.
         if (bucket !== 'open') {
           let cached = smallBucketCacheRef.current.get(bucket);
           if (!cached) {
@@ -277,8 +337,8 @@ export function usePagedLeads<T extends PagedLeadRecord>({
 
         // Open can be large. Walk the built-in createdAt index from newest to oldest,
         // applying the requested month/custom-date bounds at the query itself. We do not
-        // add a status predicate here because status + createdAt would require a new
-        // composite index; bucket membership is checked only for the small bounded scan.
+        // add a status predicate here, keeping the page read path index-safe even while
+        // the dedicated status/date count index is being provisioned.
         let cursor = pageStartCursorsRef.current[effectivePageIndex] || null;
         const matchingDocs: QueryDocumentSnapshot<DocumentData>[] = [];
         let reachedEnd = false;
@@ -410,18 +470,23 @@ export function usePagedLeads<T extends PagedLeadRecord>({
   }, [bucket, effectivePageIndex, optionKey]);
 
   const currentTotal = bucketCounts[bucket];
+  const exactFilteredTotal = hasDateFilter && !countsLoading
+    ? currentTotal
+    : filteredTotal;
   const pageNumber = effectivePageIndex + 1;
   const totalPages = pageSize === 'all'
     ? 1
     : hasDateFilter
-      ? filteredTotal === null
+      ? exactFilteredTotal === null
         ? null
-        : Math.max(1, Math.ceil(filteredTotal / pageSize))
+        : Math.max(1, Math.ceil(exactFilteredTotal / pageSize))
       : Math.max(1, Math.ceil(currentTotal / pageSize));
   const hasPrevious = pageSize !== 'all' && effectivePageIndex > 0;
   const hasNext = pageSize !== 'all' && leads.length > 0 && (
     hasDateFilter
-      ? filteredHasNext
+      ? exactFilteredTotal !== null
+        ? pageNumber < (totalPages || 1)
+        : filteredHasNext
       : pageNumber < (totalPages || 1)
   );
 
@@ -446,7 +511,7 @@ export function usePagedLeads<T extends PagedLeadRecord>({
     isLoading,
     bucketCounts,
     countsLoading,
-    filteredTotal,
+    filteredTotal: exactFilteredTotal,
     dateFilterActive: hasDateFilter,
     pageNumber,
     totalPages,
@@ -459,7 +524,7 @@ export function usePagedLeads<T extends PagedLeadRecord>({
   }), [
     bucketCounts,
     countsLoading,
-    filteredTotal,
+    exactFilteredTotal,
     hasDateFilter,
     hasNext,
     hasPrevious,
