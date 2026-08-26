@@ -7,9 +7,15 @@ import {
   type DocumentSnapshot,
   type FirestoreError,
   type Query,
+  type QueryDocumentSnapshot,
   type QuerySnapshot,
   type Unsubscribe,
 } from 'firebase/firestore';
+import {
+  getCachedSessionsManagementRowsForReadLabel,
+  loadSessionsManagementSnapshot,
+  type SessionsManagementSnapshotRow,
+} from './sessionsManagementSnapshot';
 
 type ReadTarget = Query<DocumentData> | DocumentReference<DocumentData>;
 
@@ -85,6 +91,50 @@ const logRead = (
   logger('[firestore-read]', payload);
 };
 
+const isSessionsManagementSnapshotLabel = (label: string): boolean =>
+  label === 'TodaysNotifications:overall-admissions' ||
+  label === 'TodaysNotifications:users-by-doc-id' ||
+  label === 'TodaysNotifications:users-by-uid' ||
+  label.startsWith('TodaysNotifications:fetchDocsByIds:');
+
+const makeCachedQuerySnapshot = <T extends DocumentData>(
+  rows: SessionsManagementSnapshotRow[],
+): QuerySnapshot<T> => {
+  const docs = rows.map((row) => ({
+    id: row.id,
+    exists: () => true,
+    data: () => row.data as T,
+  })) as unknown as QueryDocumentSnapshot<T>[];
+
+  return {
+    docs,
+    size: docs.length,
+    empty: docs.length === 0,
+    forEach: (callback: (result: QueryDocumentSnapshot<T>) => void) => docs.forEach(callback),
+  } as unknown as QuerySnapshot<T>;
+};
+
+const tryGetSessionsManagementCachedRows = async (
+  label: string,
+): Promise<SessionsManagementSnapshotRow[] | null> => {
+  if (!isSessionsManagementSnapshotLabel(label)) return null;
+
+  let rows = getCachedSessionsManagementRowsForReadLabel(label);
+  if (rows !== null) return rows;
+
+  try {
+    await loadSessionsManagementSnapshot();
+    rows = getCachedSessionsManagementRowsForReadLabel(label);
+    return rows;
+  } catch (error) {
+    console.warn('[firestore-read] Sessions Management snapshot unavailable; using Firestore fallback', {
+      label,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
+};
+
 export async function getDocsLogged<T extends DocumentData>(
   label: string,
   target: Query<T>,
@@ -92,6 +142,17 @@ export async function getDocsLogged<T extends DocumentData>(
 ): Promise<QuerySnapshot<T>> {
   const startedAt = Date.now();
   try {
+    const cachedRows = await tryGetSessionsManagementCachedRows(label);
+    if (cachedRows !== null) {
+      const snapshot = makeCachedQuerySnapshot<T>(cachedRows);
+      logRead('result', label, target as unknown as ReadTarget, meta, {
+        mode: 'sessions-management-snapshot-cache',
+        durationMs: Date.now() - startedAt,
+        resultSize: snapshot.size,
+      });
+      return snapshot;
+    }
+
     const snapshot = await getDocs(target);
     logRead('result', label, target as unknown as ReadTarget, meta, {
       mode: 'getDocs',

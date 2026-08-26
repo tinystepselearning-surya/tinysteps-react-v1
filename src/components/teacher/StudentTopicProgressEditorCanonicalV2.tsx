@@ -188,7 +188,7 @@ export default function StudentTopicProgressEditorCanonicalV2({
   const { user } = useAuthStore();
   const routeCourseId = normalizeCourseId(courseId);
   const [configuredTopics, setConfiguredTopics] = useState<TeacherTopic[]>([]);
-  const [configLoading, setConfigLoading] = useState(false);
+  const [configLoading, setConfigLoading] = useState(true);
   const [configError, setConfigError] = useState<string | null>(null);
   const [lockedCourseId, setLockedCourseId] = useState<CourseId | ''>('');
   const [selectedCourseId, setSelectedCourseId] = useState<CourseId | ''>(routeCourseId);
@@ -221,12 +221,6 @@ export default function StudentTopicProgressEditorCanonicalV2({
   }, [lockedCourseId, routeCourseId]);
 
   useEffect(() => {
-    if (!selectedCourseId || isPhonicsCourseId(selectedCourseId)) {
-      setConfigLoading(false);
-      setConfigError(null);
-      return;
-    }
-
     let active = true;
     const loadConfig = async () => {
       setConfigLoading(true);
@@ -254,7 +248,7 @@ export default function StudentTopicProgressEditorCanonicalV2({
     return () => {
       active = false;
     };
-  }, [selectedCourseId]);
+  }, []);
 
   useEffect(() => {
     if (!enrollmentId) {

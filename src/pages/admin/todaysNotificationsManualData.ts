@@ -4,6 +4,14 @@ import {
   isSessionStatusOperationallyVisible,
 } from '../../lib/sessionScheduleIntegrity';
 import {
+  loadSessionsManagementDateSnapshot,
+  loadSessionsManagementSnapshot,
+  refreshSessionsManagementSnapshot,
+  type SessionsManagementDatePayload,
+  type SessionsManagementSnapshotPayload,
+  type SessionsManagementSnapshotRow,
+} from '../../lib/sessionsManagementSnapshot';
+import {
   type ManualReminderCache,
   readManualReminderCache,
   writeManualReminderCache,
@@ -58,12 +66,15 @@ interface ReminderLoadDeps {
   fetchSessionsForDate: (dateKey: string) => Promise<ManualReminderSessionDoc[]>;
   readCache: (dateKey: string) => ManualReminderCache | null;
   writeCache: (dateKey: string, payload: ManualReminderCache) => boolean | void;
+  loadSnapshot?: () => Promise<SessionsManagementSnapshotPayload>;
+  refreshSnapshot?: () => Promise<SessionsManagementSnapshotPayload>;
+  loadDateSnapshot?: (dateKey: string) => Promise<SessionsManagementDatePayload>;
 }
 
 interface ReminderLoadMeta {
   elapsedMs: number;
   enrollmentFallbackReads: number;
-  source: 'firestore';
+  source: 'snapshot' | 'firestore';
   enrollmentMap: Record<string, Record<string, unknown>>;
 }
 
@@ -89,6 +100,25 @@ const normalizeLookupId = (value: unknown): string => {
 
 const uniqueIds = (values: unknown[]): string[] =>
   Array.from(new Set(values.map((value) => normalizeLookupId(value)).filter(Boolean)));
+
+const rowsToMap = (
+  rows: SessionsManagementSnapshotRow[],
+): Record<string, Record<string, unknown>> => {
+  const output: Record<string, Record<string, unknown>> = {};
+  rows.forEach((row) => {
+    if (!row.id) return;
+    output[row.id] = { id: row.id, ...(row.data || {}) };
+  });
+  return output;
+};
+
+const rowsToSessions = (rows: SessionsManagementSnapshotRow[]): ManualReminderSessionDoc[] =>
+  rows.map((row) => ({ id: row.id, ...(row.data || {}) } as ManualReminderSessionDoc));
+
+const generatedAtMillis = (generatedAt: string): number => {
+  const millis = Date.parse(String(generatedAt || ''));
+  return Number.isFinite(millis) ? millis : Date.now();
+};
 
 export const sessionHasRequiredReminderDisplayData = (
   session: ManualReminderSessionDoc,
@@ -212,6 +242,17 @@ const hydrateSessionsWithEnrollments = async (
   };
 };
 
+const hydrateSnapshotSessions = (
+  sessions: ManualReminderSessionDoc[],
+  enrollmentMap: Record<string, Record<string, unknown>>,
+): ManualReminderSessionDoc[] =>
+  sessions.map((session) =>
+    mergeSessionWithEnrollmentFallback(
+      session,
+      enrollmentMap[normalizeLookupId(session.enrollmentId)],
+    ),
+  );
+
 const operationalIdentity = (session: ManualReminderSessionDoc): string => {
   const exceptionIdentity = isScheduleExceptionSession(session as unknown as Record<string, unknown>)
     ? [
@@ -292,28 +333,25 @@ export const createCompactManualReminderCache = (
   return cache;
 };
 
-export const loadManualReminderDayBuckets = async ({
-  deps,
-  forceRefresh = false,
-  todayDateKey,
-  tomorrowDateKey,
-}: {
-  deps: ReminderLoadDeps;
-  forceRefresh?: boolean;
-  todayDateKey: string;
-  tomorrowDateKey: string;
-}): Promise<ManualReminderDayBucketsResult> => {
-  const startedAt = Date.now();
-  // Cache is only a short-lived initial-view hint. It is never authoritative:
-  // every load and date change completes a fresh Firestore validation pass.
-  if (!forceRefresh) {
-    try {
-      deps.readCache(todayDateKey);
-    } catch (cacheError) {
-      console.warn('[TodaysNotifications] reminder cache read failed; continuing', cacheError);
-    }
+const writeReminderNotificationCache = (
+  deps: ReminderLoadDeps,
+  dateKey: string,
+  sessions: ManualReminderSessionDoc[],
+  fetchedAt: number,
+): void => {
+  try {
+    deps.writeCache(dateKey, createCompactManualReminderCache(sessions, fetchedAt));
+  } catch (cacheError) {
+    console.warn('[TodaysNotifications] reminder cache write failed; continuing', cacheError);
   }
+};
 
+const loadDayBucketsFromFirestore = async (
+  deps: ReminderLoadDeps,
+  todayDateKey: string,
+  tomorrowDateKey: string,
+  startedAt: number,
+): Promise<ManualReminderDayBucketsResult> => {
   const [todaySessions, tomorrowSessions] = await Promise.all([
     deps.fetchSessionsForDate(todayDateKey),
     deps.fetchSessionsForDate(tomorrowDateKey),
@@ -326,15 +364,12 @@ export const loadManualReminderDayBuckets = async ({
   const fetchedAt = Date.now();
   const hydratedTodaySessions = todaySessions.map((session) => byId.get(session.id) || session);
   const hydratedTomorrowSessions = tomorrowSessions.map((session) => byId.get(session.id) || session);
-  try {
-    deps.writeCache(
-      todayDateKey,
-      createCompactManualReminderCache([...hydratedTodaySessions, ...hydratedTomorrowSessions], fetchedAt),
-    );
-  } catch (cacheError) {
-    // Injected/test cache implementations are also non-fatal to the Firestore result.
-    console.warn('[TodaysNotifications] reminder cache write failed; continuing', cacheError);
-  }
+  writeReminderNotificationCache(
+    deps,
+    todayDateKey,
+    [...hydratedTodaySessions, ...hydratedTomorrowSessions],
+    fetchedAt,
+  );
 
   return {
     fetchedAt,
@@ -348,6 +383,64 @@ export const loadManualReminderDayBuckets = async ({
   };
 };
 
+export const loadManualReminderDayBuckets = async ({
+  deps,
+  forceRefresh = false,
+  todayDateKey,
+  tomorrowDateKey,
+}: {
+  deps: ReminderLoadDeps;
+  forceRefresh?: boolean;
+  todayDateKey: string;
+  tomorrowDateKey: string;
+}): Promise<ManualReminderDayBucketsResult> => {
+  const startedAt = Date.now();
+  if (!forceRefresh) {
+    try {
+      deps.readCache(todayDateKey);
+    } catch (cacheError) {
+      console.warn('[TodaysNotifications] reminder cache read failed; continuing', cacheError);
+    }
+  }
+
+  try {
+    const snapshot = forceRefresh
+      ? await (deps.refreshSnapshot || refreshSessionsManagementSnapshot)()
+      : await (deps.loadSnapshot || loadSessionsManagementSnapshot)();
+    const enrollmentMap = rowsToMap(snapshot.enrollments);
+    const allSessions = rowsToSessions(snapshot.sessions);
+    const todaySessions = hydrateSnapshotSessions(
+      allSessions.filter((session) => String(session.date || '').trim() === todayDateKey),
+      enrollmentMap,
+    );
+    const tomorrowSessions = hydrateSnapshotSessions(
+      allSessions.filter((session) => String(session.date || '').trim() === tomorrowDateKey),
+      enrollmentMap,
+    );
+    const fetchedAt = generatedAtMillis(snapshot.generatedAt);
+    writeReminderNotificationCache(
+      deps,
+      todayDateKey,
+      [...todaySessions, ...tomorrowSessions],
+      fetchedAt,
+    );
+
+    return {
+      fetchedAt,
+      fetchedForDate: todayDateKey,
+      todaySessions,
+      tomorrowSessions,
+      elapsedMs: Date.now() - startedAt,
+      enrollmentFallbackReads: 0,
+      enrollmentMap,
+      source: 'snapshot',
+    };
+  } catch (snapshotError) {
+    console.warn('[TodaysNotifications] snapshot load failed; falling back to bounded Firestore reads', snapshotError);
+    return loadDayBucketsFromFirestore(deps, todayDateKey, tomorrowDateKey, startedAt);
+  }
+};
+
 export const loadManualReminderSelectedDate = async ({
   dateKey,
   deps,
@@ -356,14 +449,29 @@ export const loadManualReminderSelectedDate = async ({
   deps: Omit<ReminderLoadDeps, 'readCache' | 'writeCache'>;
 }): Promise<ManualReminderSelectedDateResult> => {
   const startedAt = Date.now();
-  const sessions = await deps.fetchSessionsForDate(dateKey);
-  const enriched = await hydrateSessionsWithEnrollments(sessions, deps.fetchEnrollmentsByIds);
-  return {
-    dateKey,
-    elapsedMs: Date.now() - startedAt,
-    enrollmentFallbackReads: enriched.enrollmentFallbackReads,
-    enrollmentMap: enriched.enrollmentMap,
-    sessions: enriched.sessions,
-    source: 'firestore',
-  };
+  try {
+    const payload = await (deps.loadDateSnapshot || loadSessionsManagementDateSnapshot)(dateKey);
+    const enrollmentMap = rowsToMap(payload.enrollments);
+    const sessions = hydrateSnapshotSessions(rowsToSessions(payload.sessions), enrollmentMap);
+    return {
+      dateKey,
+      elapsedMs: Date.now() - startedAt,
+      enrollmentFallbackReads: 0,
+      enrollmentMap,
+      sessions,
+      source: 'snapshot',
+    };
+  } catch (snapshotError) {
+    console.warn('[TodaysNotifications] selected-date snapshot load failed; using bounded Firestore fallback', snapshotError);
+    const sessions = await deps.fetchSessionsForDate(dateKey);
+    const enriched = await hydrateSessionsWithEnrollments(sessions, deps.fetchEnrollmentsByIds);
+    return {
+      dateKey,
+      elapsedMs: Date.now() - startedAt,
+      enrollmentFallbackReads: enriched.enrollmentFallbackReads,
+      enrollmentMap: enriched.enrollmentMap,
+      sessions: enriched.sessions,
+      source: 'firestore',
+    };
+  }
 };
