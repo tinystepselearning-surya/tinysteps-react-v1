@@ -145,10 +145,13 @@ export function selectCanonicalParentInsightsProgress(
 
     const presentation = presentationByOrder.get(order);
     const stageCopy = canonicalStageCopy(courseId, order);
-    const canonicalLabel = stageCopy?.label || normalized(stage.label) || presentation?.label || `Stage ${order}`;
+    const canonicalLabel = stageCopy?.label || presentation?.label || normalized(stage.label) || `Stage ${order}`;
+    const stageKey = stageCopy
+      ? normalized(stage.key) || `${order}__${canonicalLabel}`
+      : presentation?.key || normalized(stage.key) || `${order}__${canonicalLabel}`;
 
     return {
-      key: normalized(stage.key) || presentation?.key || `${order}__${canonicalLabel}`,
+      key: stageKey,
       order,
       label: canonicalLabel,
       state: 'not_started' as const,
