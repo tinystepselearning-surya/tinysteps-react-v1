@@ -12,6 +12,11 @@ import {
 } from '../../lib/skillRatings';
 import { getProgressSkillsForLesson } from '../../lib/progressSkills';
 import {
+  deriveProgressSubskillSuggestions,
+  resolveProgressSubskillSelection,
+  type SubskillSelectionSource,
+} from '../../lib/progressSubskillSuggestions';
+import {
   buildTeacherLessonStatusScalars,
   planTeacherLessonStatusWrite,
   resolveTeacherEditableLessonStatus,
@@ -188,7 +193,7 @@ export default function StudentTopicProgressEditorCanonicalV2({
   const { user } = useAuthStore();
   const routeCourseId = normalizeCourseId(courseId);
   const [configuredTopics, setConfiguredTopics] = useState<TeacherTopic[]>([]);
-  const [configLoading, setConfigLoading] = useState(true);
+  const [configLoading, setConfigLoading] = useState(false);
   const [configError, setConfigError] = useState<string | null>(null);
   const [lockedCourseId, setLockedCourseId] = useState<CourseId | ''>('');
   const [selectedCourseId, setSelectedCourseId] = useState<CourseId | ''>(routeCourseId);
@@ -197,6 +202,7 @@ export default function StudentTopicProgressEditorCanonicalV2({
   const [ratings, setRatings] = useState<ProgressRatings>({});
   const [strengths, setStrengths] = useState<string[]>([]);
   const [needsPractice, setNeedsPractice] = useState<string[]>([]);
+  const [subskillSelectionSource, setSubskillSelectionSource] = useState<SubskillSelectionSource>('stars');
   const [teacherRemark, setTeacherRemark] = useState('');
   const [baseline, setBaseline] = useState('');
   const [saving, setSaving] = useState(false);
@@ -221,6 +227,12 @@ export default function StudentTopicProgressEditorCanonicalV2({
   }, [lockedCourseId, routeCourseId]);
 
   useEffect(() => {
+    if (!selectedCourseId || isPhonicsCourseId(selectedCourseId)) {
+      setConfigLoading(false);
+      setConfigError(null);
+      return;
+    }
+
     let active = true;
     const loadConfig = async () => {
       setConfigLoading(true);
@@ -248,7 +260,7 @@ export default function StudentTopicProgressEditorCanonicalV2({
     return () => {
       active = false;
     };
-  }, []);
+  }, [selectedCourseId]);
 
   useEffect(() => {
     if (!enrollmentId) {
@@ -325,9 +337,9 @@ export default function StudentTopicProgressEditorCanonicalV2({
     });
   }, [existing?.progressSkillsMeta, selectedTopic]);
 
-  const allowedLabels = useMemo(
-    () => new Set(progressSkills.map((skill) => skill.label)),
-    [progressSkills],
+  const starSuggestions = useMemo(
+    () => deriveProgressSubskillSuggestions(ratings, progressSkills),
+    [progressSkills, ratings],
   );
 
   useEffect(() => {
@@ -336,6 +348,7 @@ export default function StudentTopicProgressEditorCanonicalV2({
       setRatings({});
       setStrengths([]);
       setNeedsPractice([]);
+      setSubskillSelectionSource('stars');
       setTeacherRemark('');
       setBaseline('');
       return;
@@ -348,39 +361,51 @@ export default function StudentTopicProgressEditorCanonicalV2({
       mastery: existing?.masteryKey ?? existing?.mastery,
       checks: (existing as any)?.checks,
     });
-    const nextStrengths = Array.isArray((existing as any)?.strengthSubskills)
-      ? (existing as any).strengthSubskills
-          .filter((item: unknown) => typeof item === 'string' && allowedLabels.has(item as string))
-          .slice(0, 3)
-      : [];
-    const nextPractice = Array.isArray((existing as any)?.needsPracticeSubskills)
-      ? (existing as any).needsPracticeSubskills
-          .filter((item: unknown) => typeof item === 'string' && allowedLabels.has(item as string))
-          .slice(0, 3)
-      : [];
+    const nextSelection = resolveProgressSubskillSelection({
+      progressRatings: nextRatings,
+      progressSkills,
+      savedSource: (existing as any)?.subskillSelectionSource,
+      savedStrengths: (existing as any)?.strengthSubskills,
+      savedNeedsPractice: (existing as any)?.needsPracticeSubskills,
+    });
     const nextRemark = existing?.teacherRemark ?? '';
 
     setLessonStatus(nextLessonStatus);
     setRatings(nextRatings);
-    setStrengths(nextStrengths);
-    setNeedsPractice(nextPractice);
+    setStrengths(nextSelection.strengths);
+    setNeedsPractice(nextSelection.needsPractice);
+    setSubskillSelectionSource(nextSelection.source);
     setTeacherRemark(nextRemark);
     setLastSavedAt(timestampMs(existing?.updatedAt) || null);
     setSaveMessage(null);
     setBaseline(JSON.stringify({
       lessonStatus: baselineLessonStatus,
       ratings: nextRatings,
-      strengths: [...nextStrengths].sort(),
-      needsPractice: [...nextPractice].sort(),
+      strengths: [...nextSelection.strengths].sort(),
+      needsPractice: [...nextSelection.needsPractice].sort(),
+      subskillSelectionSource: nextSelection.source,
       teacherRemark: nextRemark,
     }));
-  }, [allowedLabels, existing, progressSkills, selectedTopic]);
+  }, [existing, progressSkills, selectedTopic]);
+
+  useEffect(() => {
+    if (subskillSelectionSource !== 'stars') return;
+    const savedSource = (existing as any)?.subskillSelectionSource;
+    const hasLegacySavedSelection = Boolean(existing) && (
+      Array.isArray((existing as any)?.strengthSubskills)
+      || Array.isArray((existing as any)?.needsPracticeSubskills)
+    );
+    if (savedSource === 'teacher' || (!savedSource && hasLegacySavedSelection)) return;
+    setStrengths(starSuggestions.strengths);
+    setNeedsPractice(starSuggestions.needsPractice);
+  }, [existing, starSuggestions, subskillSelectionSource]);
 
   const currentSnapshot = JSON.stringify({
     lessonStatus,
     ratings,
     strengths: [...strengths].sort(),
     needsPractice: [...needsPractice].sort(),
+    subskillSelectionSource,
     teacherRemark,
   });
   const isDirty = Boolean(baseline) && currentSnapshot !== baseline;
@@ -454,6 +479,7 @@ export default function StudentTopicProgressEditorCanonicalV2({
         strengthSubskills: [...strengths].sort(),
         needsPracticeSubskills: [...needsPractice].sort(),
         selectedSubskills: [...combinedSubskills].sort(),
+        subskillSelectionSource,
         teacherRemark: teacherRemark || null,
         enrollmentId: enrollmentId || null,
         updatedBy: actorUid,
@@ -631,6 +657,28 @@ export default function StudentTopicProgressEditorCanonicalV2({
         compact
       />
 
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-600">
+        <span>
+          {subskillSelectionSource === 'stars'
+            ? 'Strengths and practice are suggested from the skill stars.'
+            : 'Strengths and practice were adjusted by the teacher.'}
+        </span>
+        {subskillSelectionSource === 'teacher' ? (
+          <button
+            type="button"
+            disabled={disabled}
+            className="rounded-md border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-700 disabled:opacity-50"
+            onClick={() => {
+              setSubskillSelectionSource('stars');
+              setStrengths(starSuggestions.strengths);
+              setNeedsPractice(starSuggestions.needsPractice);
+            }}
+          >
+            Use star suggestions
+          </button>
+        ) : null}
+      </div>
+
       <div className="grid gap-3 lg:grid-cols-2">
         <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3">
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-emerald-800">Strengths</div>
@@ -643,6 +691,7 @@ export default function StudentTopicProgressEditorCanonicalV2({
                   key={`strength-${label}`}
                   disabled={disabled}
                   onClick={() => {
+                    setSubskillSelectionSource('teacher');
                     setStrengths((current) => toggleLimited(label, current));
                     setNeedsPractice((current) => current.filter((item) => item !== label));
                   }}
@@ -670,6 +719,7 @@ export default function StudentTopicProgressEditorCanonicalV2({
                   key={`practice-${label}`}
                   disabled={disabled}
                   onClick={() => {
+                    setSubskillSelectionSource('teacher');
                     setNeedsPractice((current) => toggleLimited(label, current));
                     setStrengths((current) => current.filter((item) => item !== label));
                   }}
