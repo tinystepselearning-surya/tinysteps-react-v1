@@ -105,6 +105,9 @@ export interface TeacherEarningsSummary {
   ratePerSession: number;
   totalEarnings: number;
   pendingEarnings: number;
+  demoEarnings: number;
+  demoCompletedCount: number;
+  demoEnrollmentBonusCount: number;
   breakdownByCourse: Array<{
     courseName: string;
     sessions: number;
@@ -114,7 +117,7 @@ export interface TeacherEarningsSummary {
     id: string;
     date: string;
     amount: number;
-    status: 'pending' | 'paid';
+    status: string;
   }>;
 }
 
