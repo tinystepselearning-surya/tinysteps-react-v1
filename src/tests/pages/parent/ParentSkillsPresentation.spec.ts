@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildParentSkillRatingDisplay,
+  canonicalizeParentSkillsSummary,
   consolidateParentSkillUpdates,
   dedupeParentSkillLabels,
   formatParentSkillTag,
@@ -145,5 +146,81 @@ describe("parent Skills rating presentation", () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe("b");
+  });
+
+  it("filters stale cross-stage phonics skills and canonicalizes the stage identity", () => {
+    const result = canonicalizeParentSkillsSummary({
+      courseId: "early-phonics",
+      stages: [
+        {
+          id: "legacy-stage-4",
+          label: "Stage 4 — Controlling R + secret vowel",
+          order: 4,
+          displayLabel: "Controlling R + secret vowel",
+          skills: [
+            { tag: "magic_e_rule", label: "Magic E Rule", count: 1 },
+            { tag: "bossy_r_recognition", label: "Bossy R Recognition", count: 2 },
+          ],
+        },
+      ],
+      recentUpdates: [
+        { id: "bad", label: "Magic E Rule", stageLabel: "Controlling R + secret vowel", updatedAtMs: 300 },
+        { id: "good", label: "Bossy R Recognition", stageLabel: "Controlling R + secret vowel", updatedAtMs: 200 },
+      ],
+    });
+
+    expect(result.stages).toHaveLength(1);
+    expect(result.stages[0]).toMatchObject({
+      order: 4,
+      displayLabel: "Controlling R + secret vowel",
+    });
+    expect(result.stages[0].skills.map((skill) => skill.label)).toEqual(["Bossy R Recognition"]);
+    expect(result.recentUpdates.map((update) => update.id)).toEqual(["good"]);
+  });
+
+  it("keeps valid Diphthong skills while excluding Magic-E leakage from stage 5", () => {
+    const result = canonicalizeParentSkillsSummary({
+      courseId: "early-phonics",
+      stages: [
+        {
+          id: "legacy-stage-5",
+          label: "Stage 5 — Diphthongs",
+          order: 5,
+          displayLabel: "Diphthongs",
+          skills: [
+            { tag: "magic_e_rule", label: "Magic E Rule", count: 1 },
+            { tag: "diphthong_recognition", label: "Diphthong Recognition", count: 1 },
+            { tag: "word_reading", label: "Word Reading", count: 1 },
+          ],
+        },
+      ],
+      recentUpdates: [],
+    });
+
+    expect(result.stages[0].skills.map((skill) => skill.label)).toEqual([
+      "Diphthong Recognition",
+      "Word Reading",
+    ]);
+  });
+
+  it("does not apply phonics filtering to non-phonics courses", () => {
+    const result = canonicalizeParentSkillsSummary({
+      courseId: "basic-grammar",
+      stages: [
+        {
+          id: "grammar-stage",
+          label: "Nouns",
+          order: 1,
+          displayLabel: "Nouns",
+          skills: [{ tag: "identify_nouns", label: "Identify Nouns", count: 1 }],
+        },
+      ],
+      recentUpdates: [
+        { id: "grammar-update", label: "Identify Nouns", stageLabel: "Nouns", updatedAtMs: 1 },
+      ],
+    });
+
+    expect(result.stages).toHaveLength(1);
+    expect(result.recentUpdates).toHaveLength(1);
   });
 });
