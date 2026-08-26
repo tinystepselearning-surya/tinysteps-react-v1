@@ -34,6 +34,13 @@ type MonthOption = {
   label: string;
 };
 
+type MonthRange = {
+  startDate: string;
+  endDate: string;
+  startAt: Date;
+  nextMonthStartAt: Date;
+};
+
 type DetailLedgerRow = {
   id: string;
   amount: number;
@@ -63,18 +70,9 @@ type MonthSessionRow = {
   classStatus: string;
 };
 
-type SessionDetailRow = {
-  id: string;
+type SessionDetailRow = MonthSessionRow & {
   studentKey: string;
-  studentName: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  startAt: Date | null;
-  endAt: Date | null;
-  courseName: string;
   sessionTypeLabel: string;
-  classStatus: string;
   classStatusLabel: string;
   earningStatusLabel: string;
   amount: number;
@@ -106,27 +104,8 @@ const EMPTY_SUMMARY: TeacherEarningsSummary = {
 };
 
 const toNumber = (value: unknown, fallback = 0): number => {
-  const parsed =
-    typeof value === 'number'
-      ? value
-      : typeof value === 'string'
-      ? Number(value)
-      : Number.NaN;
+  const parsed = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : Number.NaN;
   return Number.isFinite(parsed) ? parsed : fallback;
-};
-
-const toDate = (value: unknown): Date | null => {
-  if (!value) return null;
-  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
-  if (typeof value === 'object' && value !== null && typeof (value as any).toDate === 'function') {
-    const date = (value as any).toDate();
-    return date instanceof Date && !Number.isNaN(date.getTime()) ? date : null;
-  }
-  if (typeof value === 'number' || typeof value === 'string') {
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? null : date;
-  }
-  return null;
 };
 
 const toCleanString = (value: unknown): string =>
@@ -183,15 +162,13 @@ const normalizeClassStatus = (value: unknown): string => {
 };
 
 const resolveSessionClassStatus = (session: Record<string, unknown>): string => {
-  const directCandidates = [
+  for (const candidate of [
     session.attendanceStatus,
     session.attendance_state,
     session.classStatus,
     session.class_status,
     session.sessionAttendanceStatus,
-  ];
-
-  for (const candidate of directCandidates) {
+  ]) {
     const status = normalizeClassStatus(candidate);
     if (status) return status;
   }
@@ -206,36 +183,25 @@ const resolveSessionClassStatus = (session: Record<string, unknown>): string => 
         return '';
       })
       .filter(Boolean);
-
     if (statuses.includes('present')) return 'present';
     if (statuses.includes('late')) return 'late';
     if (statuses.length > 0) return statuses[0];
   }
 
-  const fallback = normalizeClassStatus(session.status);
-  return fallback || 'not_marked';
+  return normalizeClassStatus(session.status) || 'not_marked';
 };
 
 const getClassStatusLabel = (value: string): string => {
   switch (normalizeClassStatus(value)) {
-    case 'present':
-      return 'Present';
-    case 'late':
-      return 'Late';
-    case 'absent':
-      return 'Absent';
-    case 'cancelled':
-      return 'Cancelled';
-    case 'rescheduled':
-      return 'Rescheduled';
-    case 'reschedule_requested':
-      return 'Reschedule requested';
-    case 'no_show':
-      return 'No-show';
-    case 'scheduled':
-      return 'Scheduled';
-    default:
-      return 'Not marked';
+    case 'present': return 'Present';
+    case 'late': return 'Late';
+    case 'absent': return 'Absent';
+    case 'cancelled': return 'Cancelled';
+    case 'rescheduled': return 'Rescheduled';
+    case 'reschedule_requested': return 'Reschedule requested';
+    case 'no_show': return 'No-show';
+    case 'scheduled': return 'Scheduled';
+    default: return 'Not marked';
   }
 };
 
@@ -249,16 +215,12 @@ const toTitleCase = (value: string): string =>
 const getSessionTypeLabel = (rawType: string, classStatus: string, makeupForSessionId: string): string => {
   if (makeupForSessionId) return 'Makeup';
   const token = normalizeToken(rawType);
-  if (!token) {
-    return classStatus === 'rescheduled' || classStatus === 'reschedule_requested' ? 'Rescheduled' : 'Regular';
-  }
+  if (!token) return classStatus.startsWith('reschedul') ? 'Rescheduled' : 'Regular';
   if (token === 'regular') return 'Regular';
   if (token === 'makeup' || token === 'make_up') return 'Makeup';
   if (token === 'rescheduled' || token === 'reschedule_requested') return 'Rescheduled';
   if (token === 'one_off' || token === 'oneoff') return 'One-off';
-  if (token === 'enrollmentschedulereplace') {
-    return classStatus === 'rescheduled' || classStatus === 'reschedule_requested' ? 'Rescheduled' : 'Regular';
-  }
+  if (token === 'enrollmentschedulereplace') return classStatus.startsWith('reschedul') ? 'Rescheduled' : 'Regular';
   return toTitleCase(token.replace(/_/g, ' '));
 };
 
@@ -280,8 +242,7 @@ const parseMonthKey = (value: string): { year: number; month: number } | null =>
   if (!match) return null;
   const year = Number(match[1]);
   const month = Number(match[2]);
-  if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) return null;
-  return { year, month };
+  return Number.isInteger(year) && Number.isInteger(month) && month >= 1 && month <= 12 ? { year, month } : null;
 };
 
 const buildMonthOptions = (monthsBack = 18): MonthOption[] => {
@@ -289,21 +250,28 @@ const buildMonthOptions = (monthsBack = 18): MonthOption[] => {
   const base = current ? new Date(Date.UTC(current.year, current.month - 1, 1)) : new Date();
   return Array.from({ length: monthsBack }, (_, index) => {
     const date = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth() - index, 1));
-    const value = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
     return {
-      value,
+      value: `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`,
       label: date.toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }),
     };
   });
 };
 
-const getMonthDateRange = (monthKey: string): { startDate: string; endDate: string } | null => {
+const getMonthRange = (monthKey: string): MonthRange | null => {
   const parsed = parseMonthKey(monthKey);
   if (!parsed) return null;
   const lastDay = new Date(Date.UTC(parsed.year, parsed.month, 0)).getUTCDate();
+  const nextMonth = parsed.month === 12
+    ? { year: parsed.year + 1, month: 1 }
+    : { year: parsed.year, month: parsed.month + 1 };
+  const startDate = `${parsed.year}-${String(parsed.month).padStart(2, '0')}-01`;
+  const endDate = `${parsed.year}-${String(parsed.month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  const nextStartDate = `${nextMonth.year}-${String(nextMonth.month).padStart(2, '0')}-01`;
   return {
-    startDate: `${parsed.year}-${String(parsed.month).padStart(2, '0')}-01`,
-    endDate: `${parsed.year}-${String(parsed.month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`,
+    startDate,
+    endDate,
+    startAt: new Date(`${startDate}T00:00:00+05:30`),
+    nextMonthStartAt: new Date(`${nextStartDate}T00:00:00+05:30`),
   };
 };
 
@@ -359,11 +327,64 @@ const mapLedgerDocs = (docs: Array<{ id: string; data: () => Record<string, unkn
     };
   });
 
+const mapSessionDoc = (docSnap: { id: string; data: () => Record<string, unknown> }): MonthSessionRow | null => {
+  const data = docSnap.data();
+  const startAt = getSessionStartDate(data);
+  const endAt = getSessionEndDate(data);
+  const rawDate = toCleanString(data.date);
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : startAt ? formatYmdInIndia(startAt) : '';
+  if (!date) return null;
+
+  const studentId =
+    toId(data.kidId) ||
+    toId(data.studentId) ||
+    toId(data.childId) ||
+    toId(data.student) ||
+    toId(data.kid) ||
+    toId(data.child) ||
+    (Array.isArray(data.kidIds) ? toId(data.kidIds[0]) : '') ||
+    (Array.isArray(data.studentIds) ? toId(data.studentIds[0]) : '') ||
+    (Array.isArray(data.childIds) ? toId(data.childIds[0]) : '');
+
+  return {
+    id: docSnap.id,
+    date,
+    startTime: normalizeStartTime(data.startTime) || (startAt ? formatTimeInIndia(startAt) : ''),
+    endTime: normalizeStartTime(data.endTime) || (endAt ? formatTimeInIndia(endAt) : ''),
+    startAt,
+    endAt,
+    studentId,
+    studentName:
+      pickReadableName(
+        data.studentName,
+        data.kidName,
+        data.childName,
+        getObjectName(data.student),
+        getObjectName(data.kid),
+        getObjectName(data.child),
+        Array.isArray(data.studentNames) ? data.studentNames[0] : null,
+        Array.isArray(data.kidNames) ? data.kidNames[0] : null,
+        Array.isArray(data.childNames) ? data.childNames[0] : null,
+      ) || 'Student',
+    courseName:
+      pickReadableName(data.courseName, data.courseTitle, data.courseLabel, data.subject, getObjectName(data.course)) || 'Course',
+    sessionTypeRaw:
+      toCleanString(data.sessionType) ||
+      toCleanString(data.type) ||
+      toCleanString(data.source) ||
+      toCleanString(data.sessionKind) ||
+      'regular',
+    makeupForSessionId: toId(data.makeupForSessionId),
+    classStatus: resolveSessionClassStatus(data),
+  };
+};
+
 export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
   const { user } = useAuthStore();
   const resolvedTeacherId = teacherId || user?.uid;
   const monthOptions = useMemo(() => buildMonthOptions(18), []);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => getCurrentMonthKeyInIndia());
+  const selectedMonthRef = useRef(selectedMonth);
 
   const earningsQuery = useEarnings(resolvedTeacherId, selectedMonth);
   const earnings = earningsQuery.data || { ...EMPTY_SUMMARY, month: selectedMonth };
@@ -375,157 +396,165 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
   const [ledgerStatus, setLedgerStatus] = useState<LoadStatus>('idle');
   const [ledgerRows, setLedgerRows] = useState<DetailLedgerRow[]>([]);
   const [ledgerError, setLedgerError] = useState<string | null>(null);
-  const ledgerPromiseRef = useRef<Promise<DetailLedgerRow[]> | null>(null);
+  const ledgerCacheRef = useRef(new Map<string, DetailLedgerRow[]>());
+  const ledgerPromiseRef = useRef(new Map<string, Promise<DetailLedgerRow[]>>());
 
   const [sessionStatus, setSessionStatus] = useState<LoadStatus>('idle');
   const [monthSessions, setMonthSessions] = useState<MonthSessionRow[]>([]);
   const [sessionError, setSessionError] = useState<string | null>(null);
-
-  const resetDetailState = () => {
-    setShowSessionDetails(false);
-    setShowDemoDetails(false);
-    setSelectedSessionStudentKey(null);
-    setLedgerStatus('idle');
-    setLedgerRows([]);
-    setLedgerError(null);
-    ledgerPromiseRef.current = null;
-    setSessionStatus('idle');
-    setMonthSessions([]);
-    setSessionError(null);
-  };
+  const sessionCacheRef = useRef(new Map<string, MonthSessionRow[]>());
+  const sessionPromiseRef = useRef(new Map<string, Promise<MonthSessionRow[]>>());
 
   const handleMonthChange = (monthKey: string) => {
     if (monthKey === selectedMonth) return;
-    resetDetailState();
+    selectedMonthRef.current = monthKey;
     setSelectedMonth(monthKey);
+    setShowSessionDetails(false);
+    setShowDemoDetails(false);
+    setSelectedSessionStudentKey(null);
+    setLedgerError(null);
+    setSessionError(null);
+
+    const cachedLedger = ledgerCacheRef.current.get(monthKey);
+    setLedgerRows(cachedLedger || []);
+    setLedgerStatus(cachedLedger ? 'loaded' : 'idle');
+
+    const cachedSessions = sessionCacheRef.current.get(monthKey);
+    setMonthSessions(cachedSessions || []);
+    setSessionStatus(cachedSessions ? 'loaded' : 'idle');
   };
 
-  const ensureLedgerLoaded = async (): Promise<DetailLedgerRow[]> => {
+  const ensureLedgerLoaded = async (monthKey = selectedMonth): Promise<DetailLedgerRow[]> => {
     if (!resolvedTeacherId) return [];
-    if (ledgerStatus === 'loaded') return ledgerRows;
-    if (ledgerPromiseRef.current) return ledgerPromiseRef.current;
+    const cached = ledgerCacheRef.current.get(monthKey);
+    if (cached) {
+      if (selectedMonthRef.current === monthKey) {
+        setLedgerRows(cached);
+        setLedgerStatus('loaded');
+      }
+      return cached;
+    }
 
-    setLedgerStatus('loading');
-    setLedgerError(null);
+    const existingPromise = ledgerPromiseRef.current.get(monthKey);
+    if (existingPromise) return existingPromise;
+
+    if (selectedMonthRef.current === monthKey) {
+      setLedgerStatus('loading');
+      setLedgerError(null);
+    }
 
     const promise = (async () => {
       try {
         const ledgerQuery = query(
           collection(db, 'teacherEarnings'),
           where('teacherId', '==', resolvedTeacherId),
-          where('monthKey', '==', selectedMonth),
+          where('monthKey', '==', monthKey),
         );
         const snap = await getDocs(ledgerQuery);
         const rows = mapLedgerDocs(snap.docs as Array<{ id: string; data: () => Record<string, unknown> }>);
-        setLedgerRows(rows);
-        setLedgerStatus('loaded');
+        ledgerCacheRef.current.set(monthKey, rows);
+        if (selectedMonthRef.current === monthKey) {
+          setLedgerRows(rows);
+          setLedgerStatus('loaded');
+        }
         return rows;
       } catch (error) {
         console.error('Failed to load bounded teacher earnings details', error);
-        setLedgerRows([]);
-        setLedgerStatus('error');
-        setLedgerError('Unable to load earnings details.');
+        if (selectedMonthRef.current === monthKey) {
+          setLedgerRows([]);
+          setLedgerStatus('error');
+          setLedgerError('Unable to load earnings details.');
+        }
         throw error;
       } finally {
-        ledgerPromiseRef.current = null;
+        ledgerPromiseRef.current.delete(monthKey);
       }
     })();
 
-    ledgerPromiseRef.current = promise;
+    ledgerPromiseRef.current.set(monthKey, promise);
     return promise;
   };
 
-  const loadSessionDetails = async () => {
-    if (!resolvedTeacherId || sessionStatus === 'loaded' || sessionStatus === 'loading') return;
-    const monthRange = getMonthDateRange(selectedMonth);
+  const ensureSessionDetailsLoaded = async (monthKey = selectedMonth): Promise<MonthSessionRow[]> => {
+    if (!resolvedTeacherId) return [];
+    const cached = sessionCacheRef.current.get(monthKey);
+    if (cached) {
+      if (selectedMonthRef.current === monthKey) {
+        setMonthSessions(cached);
+        setSessionStatus('loaded');
+      }
+      return cached;
+    }
+
+    const existingPromise = sessionPromiseRef.current.get(monthKey);
+    if (existingPromise) return existingPromise;
+
+    const monthRange = getMonthRange(monthKey);
     if (!monthRange) {
       setSessionStatus('error');
       setSessionError('Unable to load session details.');
-      return;
+      return [];
     }
 
-    setSessionStatus('loading');
-    setSessionError(null);
-
-    try {
-      const sessionsQuery = query(
-        collection(db, 'classSessions'),
-        where('teacherId', '==', resolvedTeacherId),
-        where('date', '>=', monthRange.startDate),
-        where('date', '<=', monthRange.endDate),
-      );
-
-      const [sessionSnap] = await Promise.all([getDocs(sessionsQuery), ensureLedgerLoaded()]);
-      const rows: MonthSessionRow[] = sessionSnap.docs
-        .map((docSnap) => {
-          const data = docSnap.data() as Record<string, unknown>;
-          const startAt = getSessionStartDate(data);
-          const endAt = getSessionEndDate(data);
-          const rawDate = toCleanString(data.date);
-          const date = /^\d{4}-\d{2}-\d{2}$/.test(rawDate)
-            ? rawDate
-            : startAt
-            ? formatYmdInIndia(startAt)
-            : '';
-          const studentId =
-            toId(data.kidId) ||
-            toId(data.studentId) ||
-            toId(data.childId) ||
-            toId(data.student) ||
-            toId(data.kid) ||
-            toId(data.child) ||
-            (Array.isArray(data.kidIds) ? toId(data.kidIds[0]) : '') ||
-            (Array.isArray(data.studentIds) ? toId(data.studentIds[0]) : '') ||
-            (Array.isArray(data.childIds) ? toId(data.childIds[0]) : '');
-          const studentName =
-            pickReadableName(
-              data.studentName,
-              data.kidName,
-              data.childName,
-              getObjectName(data.student),
-              getObjectName(data.kid),
-              getObjectName(data.child),
-              Array.isArray(data.studentNames) ? data.studentNames[0] : null,
-              Array.isArray(data.kidNames) ? data.kidNames[0] : null,
-              Array.isArray(data.childNames) ? data.childNames[0] : null,
-            ) || 'Student';
-          const classStatus = resolveSessionClassStatus(data);
-          const courseName =
-            pickReadableName(data.courseName, data.courseTitle, data.courseLabel, data.subject, getObjectName(data.course)) ||
-            'Course';
-          const sessionTypeRaw =
-            toCleanString(data.sessionType) ||
-            toCleanString(data.type) ||
-            toCleanString(data.source) ||
-            toCleanString(data.sessionKind) ||
-            'regular';
-
-          return {
-            id: docSnap.id,
-            date,
-            startTime: normalizeStartTime(data.startTime) || (startAt ? formatTimeInIndia(startAt) : ''),
-            endTime: normalizeStartTime(data.endTime) || (endAt ? formatTimeInIndia(endAt) : ''),
-            startAt,
-            endAt,
-            studentId,
-            studentName,
-            courseName,
-            sessionTypeRaw,
-            makeupForSessionId: toId(data.makeupForSessionId),
-            classStatus,
-          };
-        })
-        .filter((row) => row.date >= monthRange.startDate && row.date <= monthRange.endDate)
-        .sort((a, b) => (getSessionStartDate(b)?.getTime() || 0) - (getSessionStartDate(a)?.getTime() || 0));
-
-      setMonthSessions(rows);
-      setSessionStatus('loaded');
-    } catch (error) {
-      console.error('Failed to load bounded teacher session details', error);
-      setMonthSessions([]);
-      setSessionStatus('error');
-      setSessionError('Unable to load session details.');
+    if (selectedMonthRef.current === monthKey) {
+      setSessionStatus('loading');
+      setSessionError(null);
     }
+
+    const promise = (async () => {
+      try {
+        // Canonical service-date contract: session.date first, session.startAt in IST second.
+        // Both queries remain month-bounded; there is deliberately no teacher-history fallback.
+        const byDateQuery = query(
+          collection(db, 'classSessions'),
+          where('teacherId', '==', resolvedTeacherId),
+          where('date', '>=', monthRange.startDate),
+          where('date', '<=', monthRange.endDate),
+        );
+        const byStartAtQuery = query(
+          collection(db, 'classSessions'),
+          where('teacherId', '==', resolvedTeacherId),
+          where('startAt', '>=', monthRange.startAt),
+          where('startAt', '<', monthRange.nextMonthStartAt),
+        );
+
+        const [byDateSnap, byStartAtSnap] = await Promise.all([
+          getDocs(byDateQuery),
+          getDocs(byStartAtQuery),
+        ]);
+
+        const deduped = new Map<string, MonthSessionRow>();
+        for (const docSnap of [...byDateSnap.docs, ...byStartAtSnap.docs]) {
+          const row = mapSessionDoc(docSnap as { id: string; data: () => Record<string, unknown> });
+          if (!row) continue;
+          if (row.date < monthRange.startDate || row.date > monthRange.endDate) continue;
+          deduped.set(row.id, row);
+        }
+
+        const rows = Array.from(deduped.values()).sort(
+          (a, b) => (getSessionStartDate(b)?.getTime() || 0) - (getSessionStartDate(a)?.getTime() || 0),
+        );
+        sessionCacheRef.current.set(monthKey, rows);
+        if (selectedMonthRef.current === monthKey) {
+          setMonthSessions(rows);
+          setSessionStatus('loaded');
+        }
+        return rows;
+      } catch (error) {
+        console.error('Failed to load bounded teacher session details', error);
+        if (selectedMonthRef.current === monthKey) {
+          setMonthSessions([]);
+          setSessionStatus('error');
+          setSessionError('Unable to load session details.');
+        }
+        throw error;
+      } finally {
+        sessionPromiseRef.current.delete(monthKey);
+      }
+    })();
+
+    sessionPromiseRef.current.set(monthKey, promise);
+    return promise;
   };
 
   const toggleSessionDetails = () => {
@@ -535,8 +564,9 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
       return;
     }
     setShowSessionDetails(true);
-    if (sessionStatus === 'idle' || sessionStatus === 'error') {
-      void loadSessionDetails();
+    if (sessionStatus === 'idle' || sessionStatus === 'error' || ledgerStatus === 'idle' || ledgerStatus === 'error') {
+      const monthKey = selectedMonth;
+      void Promise.all([ensureSessionDetailsLoaded(monthKey), ensureLedgerLoaded(monthKey)]).catch(() => undefined);
     }
   };
 
@@ -547,11 +577,10 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
     }
     setShowDemoDetails(true);
     if (ledgerStatus === 'idle' || ledgerStatus === 'error') {
-      void ensureLedgerLoaded().catch(() => undefined);
+      void ensureLedgerLoaded(selectedMonth).catch(() => undefined);
     }
   };
 
-  const sessionEarnings = Math.max(earnings.totalEarnings - earnings.demoEarnings, 0);
   const demoEventCount = earnings.demoCompletedCount + earnings.demoEnrollmentBonusCount;
 
   const ledgerBySessionId = useMemo(() => {
@@ -566,7 +595,6 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
 
   const studentSessionSummary = useMemo<StudentSessionSummaryRow[]>(() => {
     if (sessionStatus !== 'loaded' || ledgerStatus !== 'loaded') return [];
-
     const bucket = new Map<string, StudentSessionSummaryRow>();
 
     monthSessions.forEach((session) => {
@@ -584,25 +612,13 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
           : 'Not found'
         : 'Not payable';
       const studentName =
-        pickReadableName(
-          session.studentName,
-          earning?.studentName,
-          earning?.kidName,
-          earning?.childName,
-        ) || 'Student';
+        pickReadableName(session.studentName, earning?.studentName, earning?.kidName, earning?.childName) || 'Student';
       const studentKey = session.studentId || earning?.kidId || studentName.toLowerCase();
       const detailRow: SessionDetailRow = {
-        id: session.id,
+        ...session,
         studentKey,
         studentName,
-        date: session.date,
-        startTime: session.startTime,
-        endTime: session.endTime,
-        startAt: session.startAt,
-        endAt: session.endAt,
-        courseName: session.courseName,
         sessionTypeLabel: getSessionTypeLabel(session.sessionTypeRaw, session.classStatus, session.makeupForSessionId),
-        classStatus: session.classStatus,
         classStatusLabel: getClassStatusLabel(session.classStatus),
         earningStatusLabel,
         amount,
@@ -634,6 +650,11 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
       }))
       .sort((a, b) => b.totalEarning - a.totalEarning || a.studentName.localeCompare(b.studentName));
   }, [ledgerBySessionId, ledgerStatus, monthSessions, sessionStatus]);
+
+  const loadedSessionEarnings = useMemo(
+    () => studentSessionSummary.reduce((sum, row) => sum + row.totalEarning, 0),
+    [studentSessionSummary],
+  );
 
   const demoDetails = useMemo(() => {
     if (ledgerStatus !== 'loaded') return [];
@@ -672,9 +693,7 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
               </SelectTrigger>
               <SelectContent>
                 {monthOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -690,7 +709,7 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
             <Card className="p-3">
               <div className="text-xs uppercase tracking-wide text-muted-foreground">Sessions Conducted</div>
               <div className="mt-1 text-2xl font-semibold">{earnings.sessionsCompleted}</div>
-              <div className="text-sm text-muted-foreground">{formatCurrency(sessionEarnings)}</div>
+              <div className="text-sm text-muted-foreground">Saved monthly count</div>
             </Card>
             <Card className="p-3">
               <div className="text-xs uppercase tracking-wide text-muted-foreground">Total Earnings</div>
@@ -700,7 +719,7 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
             <Card className="p-3">
               <div className="text-xs uppercase tracking-wide text-muted-foreground">Demo Earnings</div>
               <div className="mt-1 text-2xl font-semibold">{formatCurrency(earnings.demoEarnings)}</div>
-              <div className="text-sm text-muted-foreground">{demoEventCount} demo earning events</div>
+              <div className="text-sm text-muted-foreground">{demoEventCount} saved demo earning events</div>
             </Card>
             <Card className="p-3">
               <div className="text-xs uppercase tracking-wide text-muted-foreground">Demos Conducted</div>
@@ -734,7 +753,9 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
             <TableRow>
               <TableCell>Sessions Conducted</TableCell>
               <TableCell>{earnings.sessionsCompleted}</TableCell>
-              <TableCell className="text-right">{formatCurrency(sessionEarnings)}</TableCell>
+              <TableCell className="text-right">
+                {sessionStatus === 'loaded' && ledgerStatus === 'loaded' ? formatCurrency(loadedSessionEarnings) : 'Load details'}
+              </TableCell>
               <TableCell className="text-right">
                 <Button size="sm" variant="outline" onClick={toggleSessionDetails}>
                   {showSessionDetails ? 'Hide' : 'View details'}
@@ -765,9 +786,9 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
             </TableRow>
             <TableRow>
               <TableCell className="font-medium">Total Earnings</TableCell>
-              <TableCell className="font-medium">{earnings.sessionsCompleted + demoEventCount}</TableCell>
+              <TableCell className="font-medium">—</TableCell>
               <TableCell className="text-right font-medium">{formatCurrency(earnings.totalEarnings)}</TableCell>
-              <TableCell className="text-right">—</TableCell>
+              <TableCell className="text-right">Monthly rollup</TableCell>
             </TableRow>
           </TableBody>
         </Table>
@@ -779,9 +800,9 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
               <p className="text-xs text-muted-foreground">Loading session details…</p>
             ) : sessionStatus === 'error' || ledgerStatus === 'error' ? (
               <p className="text-xs text-destructive">{sessionError || ledgerError || 'Unable to load session details.'}</p>
-            ) : sessionStatus === 'loaded' && studentSessionSummary.length === 0 ? (
+            ) : sessionStatus === 'loaded' && ledgerStatus === 'loaded' && studentSessionSummary.length === 0 ? (
               <p className="text-xs text-muted-foreground">No sessions found for this month.</p>
-            ) : sessionStatus === 'loaded' ? (
+            ) : sessionStatus === 'loaded' && ledgerStatus === 'loaded' ? (
               <div className="overflow-x-auto space-y-4">
                 <Table>
                   <TableHeader>
@@ -808,11 +829,7 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() =>
-                                setSelectedSessionStudentKey((current) =>
-                                  current === row.studentKey ? null : row.studentKey,
-                                )
-                              }
+                              onClick={() => setSelectedSessionStudentKey((current) => current === row.studentKey ? null : row.studentKey)}
                             >
                               {isSelected ? 'Hide details' : 'View details'}
                             </Button>
