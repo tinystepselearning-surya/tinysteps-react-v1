@@ -175,22 +175,8 @@ const COUNTRY_OPTIONS = [
   { id: 'NO', code: '+47', label: 'Norway (+47)' },
 ] as const;
 const CUSTOM_COUNTRY_ID = 'CUSTOM';
-const DEFAULT_PARENT_TEMPLATE = `Hello!
-
-Quick reminder: [Child Name] has Tiny Steps class today at [Time].
-
-Please join on time for a fun and focused session.
-
-Kindly inform us in advance for any changes/cancellations. Repeated no-shows may be penalised.
-
-- Tiny Steps`;
-const DEFAULT_TEACHER_TEMPLATE = `Hello [Teacher Name],
-
-Reminder: [Child Name] has Tiny Steps class today at [Time].
-
-Please join on time.
-
-Tiny Steps`;
+const DEFAULT_PARENT_TEMPLATE = `Hello!\n\nQuick reminder: [Child Name] has Tiny Steps class today at [Time].\n\nPlease join on time for a fun and focused session.\n\nKindly inform us in advance for any changes/cancellations. Repeated no-shows may be penalised.\n\n- Tiny Steps`;
+const DEFAULT_TEACHER_TEMPLATE = `Hello [Teacher Name],\n\nReminder: [Child Name] has Tiny Steps class today at [Time].\n\nPlease join on time.\n\nTiny Steps`;
 const ALL_TEACHERS_FILTER = 'ALL_TEACHERS';
 const ALL_STATUSES_FILTER = 'ALL_STATUSES';
 const IST_OFFSET_MINUTES = 5.5 * 60;
@@ -440,7 +426,8 @@ const getEnrollmentTeacherRefs = (enrollmentLike: Record<string, any> | undefine
   const fromSingles = [enrollmentLike.teacherId];
   return Array.from(
     new Set(
-      [...fromIds, ...fromSingles]
+      // Canonical enrollment ownership must win over stale legacy aliases after reassignment.
+      [...fromSingles, ...fromIds]
         .map((id) => normalizeLookupId(id))
         .filter(Boolean),
     ),
@@ -1192,7 +1179,6 @@ export default function TodaysNotifications() {
         const nextSessions = selectOperationalReminderSessions(fetchedSessions, result.enrollmentMap);
 
         if (!active) return;
-        // Session data is usable as soon as the core Firestore request succeeds.
         setSessions(nextSessions);
         setEnrollmentMap(result.enrollmentMap);
 
@@ -1365,7 +1351,7 @@ export default function TodaysNotifications() {
         const resolvedParentName =
           String(session.parentName || '').trim() || getDisplayName(parentUser, '') || 'Parent';
         const resolvedTeacherName =
-          String(session.teacherName || '').trim() || getDisplayName(teacherUser, '') || 'Teacher';
+          getDisplayName(teacherUser, '') || String(session.teacherName || '').trim() || 'Teacher';
         const parentTimeZone = resolveParentTimeZone(parentUser);
         const sessionTimeBounds = resolveSessionTimeBounds(session);
         const hasValidDate = isYmdDateKey(sessionDateKey);

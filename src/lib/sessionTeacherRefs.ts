@@ -5,8 +5,9 @@ export const collectSessionTeacherRefs = (sessionLike: Record<string, unknown> |
   return Array.from(
     new Set(
       [
-        ...(Array.isArray(sessionLike.teacherIds) ? sessionLike.teacherIds : []),
+        // Canonical ownership must win over stale legacy aliases after reassignment.
         sessionLike.teacherId,
+        ...(Array.isArray(sessionLike.teacherIds) ? sessionLike.teacherIds : []),
         sessionLike.assignedTeacherId,
         sessionLike.primaryTeacherId,
         sessionLike.teacherUid,
