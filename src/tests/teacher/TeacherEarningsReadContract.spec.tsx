@@ -161,7 +161,8 @@ describe('Teacher Earnings read-contract cutover', () => {
 
     fireEvent.click(screen.getAllByRole('button', { name: 'View details' })[0]);
 
-    await waitFor(() => expect(getDocsMock).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(screen.getByText('Asha')).toBeTruthy());
+    expect(getDocsMock).toHaveBeenCalledTimes(3);
 
     const queries = getDocsMock.mock.calls.map((call) => call[0]);
     const sessionQueries = queries.filter((input) => collectionName(input) === 'classSessions');
@@ -199,12 +200,12 @@ describe('Teacher Earnings read-contract cutover', () => {
 
     fireEvent.click(screen.getAllByRole('button', { name: 'View details' })[1]);
 
-    await waitFor(() => expect(getDocsMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByText('Mira')).toBeTruthy());
+    expect(getDocsMock).toHaveBeenCalledTimes(1);
     const ledgerQuery = getDocsMock.mock.calls[0][0];
     expect(collectionName(ledgerQuery)).toBe('teacherEarnings');
     expect(hasWhere(ledgerQuery, 'teacherId', '==', 'teacher-1')).toBe(true);
     expect(hasWhere(ledgerQuery, 'monthKey', '==', '2026-08')).toBe(true);
-    expect(screen.getByText('Mira')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Hide' }));
     fireEvent.click(screen.getAllByRole('button', { name: 'View details' })[1]);
