@@ -208,7 +208,12 @@ export default function StudentTopicProgressEditorCanonicalV2({
     loading: existingLoading,
     error: existingError,
     upsertLocalTopic,
-  } = useKidTopicProgress(kidId, selectedCourseId || null, Boolean(selectedCourseId));
+  } = useKidTopicProgress(
+    kidId,
+    selectedCourseId || null,
+    Boolean(selectedCourseId && enrollmentId),
+    enrollmentId ?? null,
+  );
 
   useEffect(() => {
     if (routeCourseId && !lockedCourseId) setSelectedCourseId(routeCourseId);

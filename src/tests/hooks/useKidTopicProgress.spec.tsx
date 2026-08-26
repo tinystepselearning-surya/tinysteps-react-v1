@@ -30,6 +30,7 @@ describe('useKidTopicProgress', () => {
           id: 'lesson-1',
           data: () => ({
             courseId: 'phonics-foundations',
+            enrollmentId: 'enrollment-1',
             topicName: 'Lesson 1 — S',
             mastery: 'developing',
           }),
@@ -66,6 +67,60 @@ describe('useKidTopicProgress', () => {
       await result.current.refresh();
     });
     expect(getDocsMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('scopes explicit teacher reads by both courseId and enrollmentId', async () => {
+    renderHook(() => useKidTopicProgress(
+      'kid-1',
+      'phonics-foundations',
+      true,
+      'enrollment-1',
+    ));
+
+    await waitFor(() => expect(getDocsMock).toHaveBeenCalledTimes(1));
+    expect(queryMock).toHaveBeenCalledTimes(1);
+    expect(whereMock).toHaveBeenCalledWith('courseId', '==', 'phonics-foundations');
+    expect(whereMock).toHaveBeenCalledWith('enrollmentId', '==', 'enrollment-1');
+    expect(queryMock).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'collection' }),
+      expect.objectContaining({ kind: 'where', parts: ['courseId', '==', 'phonics-foundations'] }),
+      expect.objectContaining({ kind: 'where', parts: ['enrollmentId', '==', 'enrollment-1'] }),
+    );
+  });
+
+  it('does not fetch canonical teacher progress until the explicit enrollment is present', async () => {
+    const { rerender } = renderHook(
+      ({ enrollmentId }) => useKidTopicProgress(
+        'kid-1',
+        'phonics-foundations',
+        true,
+        enrollmentId,
+      ),
+      { initialProps: { enrollmentId: '' } },
+    );
+
+    await act(async () => Promise.resolve());
+    expect(getDocsMock).not.toHaveBeenCalled();
+
+    rerender({ enrollmentId: 'enrollment-1' });
+    await waitFor(() => expect(getDocsMock).toHaveBeenCalledTimes(1));
+    expect(whereMock).toHaveBeenCalledWith('enrollmentId', '==', 'enrollment-1');
+  });
+
+  it('keeps the canonical query bound to one enrollment when the same child and course have another enrollment', async () => {
+    renderHook(() => useKidTopicProgress(
+      'kid-1',
+      'phonics-foundations',
+      true,
+      'enrollment-1',
+    ));
+
+    await waitFor(() => expect(getDocsMock).toHaveBeenCalledTimes(1));
+    const enrollmentWhereCalls = whereMock.mock.calls.filter(
+      (call) => call[0] === 'enrollmentId',
+    );
+    expect(enrollmentWhereCalls).toEqual([['enrollmentId', '==', 'enrollment-1']]);
+    expect(enrollmentWhereCalls).not.toContainEqual(['enrollmentId', '==', 'enrollment-2']);
   });
 
   it('does not fetch until a course is selected', async () => {

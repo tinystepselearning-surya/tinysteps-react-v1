@@ -152,6 +152,7 @@ export function useKidTopicProgress(
   kidId: string | null | undefined,
   courseId?: string | null,
   enabled = true,
+  enrollmentId?: string | null,
 ): UseKidTopicProgressResult {
   const [topics, setTopics] = useState<KidTopicProgress[]>([]);
   const [loading, setLoading] = useState(false);
@@ -162,8 +163,15 @@ export function useKidTopicProgress(
     const requestVersion = requestVersionRef.current + 1;
     requestVersionRef.current = requestVersion;
     const normalizedCourseId = String(courseId || '').trim();
+    const normalizedEnrollmentId = String(enrollmentId || '').trim();
     const requiresCourseScope = courseId !== undefined;
-    if (!kidId || !enabled || (requiresCourseScope && !normalizedCourseId)) {
+    const requiresEnrollmentScope = enrollmentId !== undefined;
+    if (
+      !kidId
+      || !enabled
+      || (requiresCourseScope && !normalizedCourseId)
+      || (requiresEnrollmentScope && !normalizedEnrollmentId)
+    ) {
       setTopics([]);
       setLoading(false);
       setError(null);
@@ -176,7 +184,13 @@ export function useKidTopicProgress(
     try {
       const progressCol = collection(db, 'students', kidId, 'progress');
       const progressQuery = normalizedCourseId
-        ? query(progressCol, where('courseId', '==', normalizedCourseId))
+        ? normalizedEnrollmentId
+          ? query(
+              progressCol,
+              where('courseId', '==', normalizedCourseId),
+              where('enrollmentId', '==', normalizedEnrollmentId),
+            )
+          : query(progressCol, where('courseId', '==', normalizedCourseId))
         : progressCol;
       const snap = await getDocs(progressQuery);
 
@@ -192,7 +206,7 @@ export function useKidTopicProgress(
     } finally {
       if (requestVersion === requestVersionRef.current) setLoading(false);
     }
-  }, [courseId, enabled, kidId]);
+  }, [courseId, enabled, enrollmentId, kidId]);
 
   useEffect(() => {
     void loadProgress();
