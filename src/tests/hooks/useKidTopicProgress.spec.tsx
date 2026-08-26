@@ -1,15 +1,17 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { getDocsMock, collectionMock, whereMock, queryMock } = vi.hoisted(() => ({
+const { getDocsMock, collectionMock, documentIdMock, whereMock, queryMock } = vi.hoisted(() => ({
   getDocsMock: vi.fn(),
   collectionMock: vi.fn((...parts: unknown[]) => ({ kind: 'collection', parts })),
+  documentIdMock: vi.fn(() => ({ kind: 'documentId' })),
   whereMock: vi.fn((...parts: unknown[]) => ({ kind: 'where', parts })),
   queryMock: vi.fn((...parts: unknown[]) => ({ kind: 'query', parts })),
 }));
 
 vi.mock('firebase/firestore', () => ({
   collection: collectionMock,
+  documentId: documentIdMock,
   getDocs: getDocsMock,
   query: queryMock,
   where: whereMock,
@@ -201,5 +203,109 @@ describe('useKidTopicProgress', () => {
     await waitFor(() => expect(result.current.error).toBe('legacy read failed'));
     expect(result.current.topics).toEqual([]);
     expect(result.current.loading).toBe(false);
+  });
+
+  it('waits for the selected lesson before an enrollment-scoped teacher read', async () => {
+    const { rerender } = renderHook(
+      ({ topicId }) => useKidTopicProgress(
+        'kid-1',
+        'phonics-foundations',
+        true,
+        'enrollment-1',
+        topicId,
+      ),
+      { initialProps: { topicId: '' } },
+    );
+
+    await act(async () => Promise.resolve());
+    expect(getDocsMock).not.toHaveBeenCalled();
+
+    rerender({ topicId: 'phonics-foundations__lesson-01' });
+    await waitFor(() => expect(getDocsMock).toHaveBeenCalledTimes(1));
+    expect(documentIdMock).toHaveBeenCalledTimes(1);
+    expect(whereMock).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'documentId' }),
+      '==',
+      'phonics-foundations__lesson-01',
+    );
+  });
+
+  it('loads only the selected lesson and serves revisits from the in-session cache', async () => {
+    const lessonOneId = 'phonics-foundations__lesson-01';
+    const lessonTwoId = 'phonics-foundations__lesson-02';
+    getDocsMock
+      .mockResolvedValueOnce({
+        docs: [{
+          id: lessonOneId,
+          data: () => ({
+            courseId: 'phonics-foundations',
+            enrollmentId: 'enrollment-1',
+            topicName: 'Lesson 1 — Letter S',
+            mastery: 'developing',
+          }),
+        }],
+      })
+      .mockResolvedValueOnce({
+        docs: [{
+          id: lessonTwoId,
+          data: () => ({
+            courseId: 'phonics-foundations',
+            enrollmentId: 'enrollment-1',
+            topicName: 'Lesson 2 — Letter A',
+            mastery: 'proficient',
+          }),
+        }],
+      });
+
+    const { result, rerender } = renderHook(
+      ({ topicId }) => useKidTopicProgress(
+        'kid-1',
+        'phonics-foundations',
+        true,
+        'enrollment-1',
+        topicId,
+      ),
+      { initialProps: { topicId: lessonOneId } },
+    );
+
+    await waitFor(() => expect(result.current.topics[0]?.id).toBe(lessonOneId));
+    expect(getDocsMock).toHaveBeenCalledTimes(1);
+
+    rerender({ topicId: lessonTwoId });
+    await waitFor(() => expect(result.current.topics[0]?.id).toBe(lessonTwoId));
+    expect(getDocsMock).toHaveBeenCalledTimes(2);
+
+    rerender({ topicId: lessonOneId });
+    await waitFor(() => expect(result.current.topics[0]?.id).toBe(lessonOneId));
+    expect(getDocsMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('bypasses the selected-lesson cache on an explicit refresh', async () => {
+    const topicId = 'phonics-foundations__lesson-01';
+    getDocsMock.mockResolvedValue({
+      docs: [{
+        id: topicId,
+        data: () => ({
+          courseId: 'phonics-foundations',
+          enrollmentId: 'enrollment-1',
+          topicName: 'Lesson 1 — Letter S',
+          mastery: 'developing',
+        }),
+      }],
+    });
+
+    const { result } = renderHook(() => useKidTopicProgress(
+      'kid-1',
+      'phonics-foundations',
+      true,
+      'enrollment-1',
+      topicId,
+    ));
+
+    await waitFor(() => expect(getDocsMock).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      await result.current.refresh();
+    });
+    expect(getDocsMock).toHaveBeenCalledTimes(2);
   });
 });
