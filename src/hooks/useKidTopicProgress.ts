@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, documentId, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebaseConfig';
 import {
   deriveLegacyProgressFromRatings,
@@ -148,29 +148,43 @@ function mapProgressDoc(d: any): KidTopicProgress {
   return normalizeProgressRecord(d.id, d.data() as any);
 }
 
+function teacherTopicCacheKey(
+  kidId: string,
+  courseId: string,
+  enrollmentId: string,
+  topicId: string,
+): string {
+  return [kidId, courseId, enrollmentId, topicId].join('::');
+}
+
 export function useKidTopicProgress(
   kidId: string | null | undefined,
   courseId?: string | null,
   enabled = true,
   enrollmentId?: string | null,
+  topicId?: string | null,
 ): UseKidTopicProgressResult {
   const [topics, setTopics] = useState<KidTopicProgress[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestVersionRef = useRef(0);
+  const teacherTopicCacheRef = useRef<Map<string, KidTopicProgress | null>>(new Map());
 
-  const loadProgress = useCallback(async () => {
+  const loadProgress = useCallback(async (bypassCache = false) => {
     const requestVersion = requestVersionRef.current + 1;
     requestVersionRef.current = requestVersion;
     const normalizedCourseId = String(courseId || '').trim();
     const normalizedEnrollmentId = String(enrollmentId || '').trim();
+    const normalizedTopicId = String(topicId || '').trim();
     const requiresCourseScope = courseId !== undefined;
     const requiresEnrollmentScope = enrollmentId !== undefined;
+    const requiresTopicScope = topicId !== undefined;
     if (
       !kidId
       || !enabled
       || (requiresCourseScope && !normalizedCourseId)
       || (requiresEnrollmentScope && !normalizedEnrollmentId)
+      || (requiresTopicScope && !normalizedTopicId)
     ) {
       setTopics([]);
       setLoading(false);
@@ -178,25 +192,58 @@ export function useKidTopicProgress(
       return;
     }
 
+    const isTeacherTopicScoped = Boolean(
+      normalizedCourseId && normalizedEnrollmentId && normalizedTopicId,
+    );
+    const cacheKey = isTeacherTopicScoped
+      ? teacherTopicCacheKey(
+          kidId,
+          normalizedCourseId,
+          normalizedEnrollmentId,
+          normalizedTopicId,
+        )
+      : null;
+
+    if (!bypassCache && cacheKey && teacherTopicCacheRef.current.has(cacheKey)) {
+      const cached = teacherTopicCacheRef.current.get(cacheKey) ?? null;
+      if (requestVersion !== requestVersionRef.current) return;
+      setTopics(cached ? [cached] : []);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     setLoading(true);
     setError(null);
+    if (isTeacherTopicScoped) setTopics([]);
 
     try {
       const progressCol = collection(db, 'students', kidId, 'progress');
       const progressQuery = normalizedCourseId
         ? normalizedEnrollmentId
-          ? query(
-              progressCol,
-              where('courseId', '==', normalizedCourseId),
-              where('enrollmentId', '==', normalizedEnrollmentId),
-            )
+          ? normalizedTopicId
+            ? query(
+                progressCol,
+                where('courseId', '==', normalizedCourseId),
+                where('enrollmentId', '==', normalizedEnrollmentId),
+                where(documentId(), '==', normalizedTopicId),
+              )
+            : query(
+                progressCol,
+                where('courseId', '==', normalizedCourseId),
+                where('enrollmentId', '==', normalizedEnrollmentId),
+              )
           : query(progressCol, where('courseId', '==', normalizedCourseId))
         : progressCol;
       const snap = await getDocs(progressQuery);
 
       const arr: KidTopicProgress[] = snap.docs.map(mapProgressDoc);
+      if (cacheKey) {
+        const selected = arr.find((entry) => entry.id === normalizedTopicId) ?? null;
+        teacherTopicCacheRef.current.set(cacheKey, selected);
+      }
       if (requestVersion !== requestVersionRef.current) return;
-      setTopics(arr);
+      setTopics(cacheKey ? arr.filter((entry) => entry.id === normalizedTopicId) : arr);
       setError(null);
     } catch (err: any) {
       if (requestVersion !== requestVersionRef.current) return;
@@ -206,7 +253,7 @@ export function useKidTopicProgress(
     } finally {
       if (requestVersion === requestVersionRef.current) setLoading(false);
     }
-  }, [courseId, enabled, enrollmentId, kidId]);
+  }, [courseId, enabled, enrollmentId, kidId, topicId]);
 
   useEffect(() => {
     void loadProgress();
@@ -216,12 +263,24 @@ export function useKidTopicProgress(
   }, [loadProgress]);
 
   const upsertLocalTopic = useCallback((topic: KidTopicProgress) => {
+    const normalized = normalizeProgressRecord(topic.id, topic);
+    const normalizedCourseId = String(courseId || '').trim();
+    const normalizedEnrollmentId = String(enrollmentId || '').trim();
+    if (kidId && normalizedCourseId && normalizedEnrollmentId && topic.id) {
+      const cacheKey = teacherTopicCacheKey(
+        kidId,
+        normalizedCourseId,
+        normalizedEnrollmentId,
+        topic.id,
+      );
+      teacherTopicCacheRef.current.set(cacheKey, normalized);
+    }
     setTopics((current) => {
       const next = current.filter((entry) => entry.id !== topic.id);
-      next.push(normalizeProgressRecord(topic.id, topic));
+      next.push(normalized);
       return next;
     });
-  }, []);
+  }, [courseId, enrollmentId, kidId]);
 
   // Enrollment-scoped teacher editors must never become editable after a failed read.
   // Keep the existing error visible while holding their editability gate closed.
@@ -231,7 +290,7 @@ export function useKidTopicProgress(
     topics,
     loading: loading || failClosed,
     error,
-    refresh: loadProgress,
+    refresh: () => loadProgress(true),
     upsertLocalTopic,
   };
 }
