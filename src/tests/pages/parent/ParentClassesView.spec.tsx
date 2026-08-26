@@ -2,13 +2,21 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import ParentClassesView from "../../../pages/parent/components/classes/ParentClassesView";
+import ParentClassesView, {
+  ParentClassMonthSummaryPanel,
+} from "../../../pages/parent/components/classes/ParentClassesView";
 import {
+  buildParentClassMonthSummaryDisplay,
+  formatParentClassMonthCompletion,
+  getParentClassDisplayStatus,
   getParentClassStatusLabel,
   selectNextParentClass,
+  shouldShowClassJoinAction,
   type ParentClassesFilterId,
   type ParentClassSessionDisplay,
 } from "../../../pages/parent/components/classes/parentClassPresentation";
+import { resolveParentClassKidId } from "../../../pages/parent/components/classes/useParentCanonicalClassMonth";
+import type { MaterializedParentChildMonthClassAttendance } from "../../../lib/parentClassAttendanceProjection";
 
 const row = (
   id: string,
@@ -32,6 +40,30 @@ const row = (
   joinDisabledReason: "",
   ...overrides,
 });
+
+const canonicalMonthRow: MaterializedParentChildMonthClassAttendance = {
+  kidId: "kid-1",
+  monthKey: "2026-08",
+  totalSessions: 18,
+  completedSessions: 15,
+  scheduledSessions: 1,
+  inProgressSessions: 0,
+  cancelledSessions: 1,
+  noShowSessions: 0,
+  rescheduleRequestedSessions: 1,
+  rescheduledSessions: 0,
+  otherSessions: 0,
+  upcomingSessions: 1,
+  unresolvedPastSessions: 0,
+  pendingTimeUnknownSessions: 0,
+  presentSessions: 12,
+  lateSessions: 1,
+  absentSessions: 1,
+  attendanceMarkedSessions: 14,
+  attendanceUnmarkedCompletedSessions: 1,
+  attendancePct: 93,
+  pendingSessionStartAtMs: [2_000_000_000_000],
+};
 
 const filters = [
   {
@@ -92,14 +124,49 @@ const commonProps = {
   onJoinSession: vi.fn(),
 };
 
+describe("parent class identity selection", () => {
+  const kids = [{ id: "kid-a" }, { id: "kid-b" }];
+
+  it("uses a valid requested child", () => {
+    expect(resolveParentClassKidId("kid-b", kids)).toBe("kid-b");
+  });
+
+  it("uses the dashboard default first child when the URL has no kidId", () => {
+    expect(resolveParentClassKidId("", kids)).toBe("kid-a");
+  });
+
+  it("rejects a stale URL kidId and uses the dashboard default child", () => {
+    expect(resolveParentClassKidId("kid-stale", kids)).toBe("kid-a");
+  });
+});
+
 describe("parent class presentation", () => {
-  it("uses parent-facing status labels", () => {
+  it("uses distinct parent-facing reschedule labels", () => {
     expect(getParentClassStatusLabel("scheduled")).toBe("Scheduled");
     expect(getParentClassStatusLabel("in_progress")).toBe("In progress");
     expect(getParentClassStatusLabel("completed")).toBe("Completed");
     expect(getParentClassStatusLabel("cancelled")).toBe("Cancelled");
     expect(getParentClassStatusLabel("no_show")).toBe("No show");
-    expect(getParentClassStatusLabel("reschedule_requested")).toBe("Rescheduled");
+    expect(getParentClassStatusLabel("reschedule_requested")).toBe("Reschedule requested");
+    expect(getParentClassStatusLabel("rescheduled")).toBe("Rescheduled");
+  });
+
+  it("recovers raw rescheduled status from a compatibility-normalized detail row", () => {
+    const legacyNormalized = row("rescheduled", {
+      status: "reschedule_requested",
+      source: { id: "rescheduled", status: "rescheduled" },
+    });
+    expect(getParentClassDisplayStatus(legacyNormalized)).toBe("rescheduled");
+  });
+
+  it("never exposes join actions for historical or reschedule lifecycle states", () => {
+    expect(shouldShowClassJoinAction("scheduled")).toBe(true);
+    expect(shouldShowClassJoinAction("in_progress")).toBe(true);
+    expect(shouldShowClassJoinAction("completed")).toBe(false);
+    expect(shouldShowClassJoinAction("cancelled")).toBe(false);
+    expect(shouldShowClassJoinAction("no_show")).toBe(false);
+    expect(shouldShowClassJoinAction("reschedule_requested")).toBe(false);
+    expect(shouldShowClassJoinAction("rescheduled")).toBe(false);
   });
 
   it("selects a today joinable class before future classes", () => {
@@ -115,10 +182,68 @@ describe("parent class presentation", () => {
     expect(selectNextParentClass([completed, cancelled, next])?.id).toBe("next");
     expect(selectNextParentClass([completed, cancelled])).toBeNull();
   });
+
+  it("derives the P8 monthly summary only from the canonical P4 child row", () => {
+    const summary = buildParentClassMonthSummaryDisplay(canonicalMonthRow);
+    expect(summary).toMatchObject({
+      totalSessions: 18,
+      completedSessions: 15,
+      upcomingSessions: 1,
+      cancelledSessions: 1,
+      rescheduleRequestedSessions: 1,
+      presentSessions: 12,
+      lateSessions: 1,
+      absentSessions: 1,
+      attendanceMarkedSessions: 14,
+      attendanceUnmarkedCompletedSessions: 1,
+      attendancePct: 93,
+    });
+    expect(formatParentClassMonthCompletion(summary, "August 2026")).toBe(
+      "15 completed of 18 August sessions",
+    );
+  });
+});
+
+describe("ParentClassMonthSummaryPanel", () => {
+  it("shows explicit monthly class lifecycle and completed-class attendance", () => {
+    render(
+      <ParentClassMonthSummaryPanel
+        state="available"
+        monthLabel="August 2026"
+        row={canonicalMonthRow}
+      />,
+    );
+
+    expect(screen.getByText("15 completed of 18 August sessions")).toBeInTheDocument();
+    expect(screen.getByText("Class lifecycle and attendance are kept separate from lesson progress.")).toBeInTheDocument();
+    expect(screen.getByText("93%")).toBeInTheDocument();
+    expect(screen.getByText("Upcoming")).toBeInTheDocument();
+    expect(screen.getByText("Cancelled")).toBeInTheDocument();
+    expect(screen.getByText("No show")).toBeInTheDocument();
+    expect(screen.getByText("Reschedule requests")).toBeInTheDocument();
+    expect(screen.getByText("Rescheduled")).toBeInTheDocument();
+    expect(screen.getByText("Needs review")).toBeInTheDocument();
+    expect(screen.getByText("14 marked · 1 awaiting attendance")).toBeInTheDocument();
+    expect(screen.getByText("Present")).toBeInTheDocument();
+    expect(screen.getByText("Late")).toBeInTheDocument();
+    expect(screen.getByText("Absent")).toBeInTheDocument();
+  });
+
+  it("shows unavailable rather than substituting parent/family totals", () => {
+    render(
+      <ParentClassMonthSummaryPanel
+        state="unavailable"
+        monthLabel="August 2026"
+        row={null}
+      />,
+    );
+    expect(screen.getByText("Class and attendance summary unavailable")).toBeInTheDocument();
+    expect(screen.getByText(/Family totals are not substituted/i)).toBeInTheDocument();
+  });
 });
 
 describe("ParentClassesView", () => {
-  it("shows supplied counts and scope wording without changing row order", () => {
+  it("shows supplied detail counts and scope wording without changing row order", () => {
     const rows = [
       row("first", { dateLabel: "First date", timeLabel: "9:00 AM" }),
       row("second", { dateLabel: "Second date", timeLabel: "10:00 AM" }),
@@ -133,13 +258,19 @@ describe("ParentClassesView", () => {
     expect(sessionRows[1]).toHaveAttribute("data-session-id", "second");
   });
 
+  it("presents the mixed compatibility history bucket as Reschedules", () => {
+    render(<ParentClassesView {...commonProps} activeView="rescheduled" activeRows={[]} />);
+    expect(screen.getByRole("tab", { name: "Reschedules, 5" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByText("Reschedule requests and rescheduled classes in the available history.")).toBeInTheDocument();
+  });
+
   it("contains the horizontal filter row inside a clipped visual frame", () => {
     render(<ParentClassesView {...commonProps} activeView="today" activeRows={[]} />);
     expect(screen.getByTestId("parent-class-filter-frame")).toHaveClass("overflow-hidden");
     expect(screen.getByTestId("parent-class-filter-scroll")).toHaveClass("overflow-x-auto");
   });
 
-  it("does not present loading counts as zero or show a no-class empty state", () => {
+  it("does not present loading detail counts as zero or show a no-class empty state", () => {
     render(
       <ParentClassesView
         {...commonProps}
@@ -154,11 +285,20 @@ describe("ParentClassesView", () => {
     expect(screen.getByRole("status", { name: "Loading classes" })).toBeInTheDocument();
   });
 
-  it("keeps historical and attention statuses non-joinable", () => {
+  it("keeps historical and attention statuses non-joinable and restores raw rescheduled display", () => {
     const historicalRows = [
       row("completed", { status: "completed", canJoin: false }),
       row("cancelled", { status: "cancelled", canJoin: false }),
-      row("rescheduled", { status: "reschedule_requested", canJoin: false }),
+      row("reschedule-requested", {
+        status: "reschedule_requested",
+        source: { id: "reschedule-requested", status: "reschedule_requested" },
+        canJoin: false,
+      }),
+      row("rescheduled", {
+        status: "reschedule_requested",
+        source: { id: "rescheduled", status: "rescheduled" },
+        canJoin: false,
+      }),
     ];
     render(
       <ParentClassesView
@@ -170,6 +310,7 @@ describe("ParentClassesView", () => {
     expect(screen.queryByRole("button", { name: /Join .* class/ })).not.toBeInTheDocument();
     expect(within(document.querySelector('[data-session-id="completed"]') as HTMLElement).getByText("Completed")).toBeInTheDocument();
     expect(within(document.querySelector('[data-session-id="cancelled"]') as HTMLElement).getByText("Cancelled")).toBeInTheDocument();
+    expect(within(document.querySelector('[data-session-id="reschedule-requested"]') as HTMLElement).getByText("Reschedule requested")).toBeInTheDocument();
     expect(within(document.querySelector('[data-session-id="rescheduled"]') as HTMLElement).getByText("Rescheduled")).toBeInTheDocument();
   });
 
