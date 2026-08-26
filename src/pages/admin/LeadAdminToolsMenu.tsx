@@ -157,6 +157,7 @@ export default function LeadAdminToolsMenu({
   const hasPhone = row.parentPhone !== '—' && phoneDigits(row.parentPhone).length >= 7;
   const normalizedDemoStatus = String(row.demo?.status || '').trim().toLowerCase();
   const canOpenOutcome = Boolean(row.demo) && (
+    normalizedDemoStatus === 'open' ||
     normalizedDemoStatus === 'completed' ||
     normalizedDemoStatus === 'cancelled' ||
     Boolean(row.demo?.conversionStatus)
@@ -350,7 +351,8 @@ export default function LeadAdminToolsMenu({
           </DropdownMenuItem>
           {canOpenOutcome && (
             <DropdownMenuItem onClick={onOutcome}>
-              <RotateCcw className="mr-2 h-4 w-4" /> Follow-up / conversion
+              <RotateCcw className="mr-2 h-4 w-4" />
+              {normalizedDemoStatus === 'open' ? 'Close / no response' : 'Follow-up / conversion'}
             </DropdownMenuItem>
           )}
 
