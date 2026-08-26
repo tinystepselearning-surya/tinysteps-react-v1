@@ -10,7 +10,11 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/components/lib/utils";
+import type { MaterializedParentChildMonthClassAttendance } from "../../../../lib/parentClassAttendanceProjection";
 import {
+  buildParentClassMonthSummaryDisplay,
+  formatParentClassMonthCompletion,
+  getParentClassDisplayStatus,
   getParentClassStatusLabel,
   getParentClassStatusTone,
   shouldShowClassJoinAction,
@@ -19,6 +23,10 @@ import {
   type ParentClassesViewId,
   type ParentClassSessionDisplay,
 } from "./parentClassPresentation";
+import {
+  useParentCanonicalClassMonth,
+  type ParentCanonicalClassMonthState,
+} from "./useParentCanonicalClassMonth";
 
 type FilterDefinition = {
   id: ParentClassesFilterId;
@@ -92,6 +100,135 @@ function ParentClassesSkeleton() {
   );
 }
 
+type ParentClassMonthSummaryPanelProps = {
+  state: ParentCanonicalClassMonthState;
+  monthLabel: string;
+  row: MaterializedParentChildMonthClassAttendance | null;
+};
+
+export function ParentClassMonthSummaryPanel({
+  state,
+  monthLabel,
+  row,
+}: ParentClassMonthSummaryPanelProps) {
+  if (state === "idle") return null;
+
+  if (state === "loading") {
+    return (
+      <section
+        aria-label="Loading selected-child class summary"
+        className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+        data-testid="parent-class-month-summary-loading"
+      >
+        <div className="h-3 w-36 rounded bg-slate-200" />
+        <div className="mt-3 h-6 w-64 max-w-full rounded bg-slate-200" />
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+          {Array.from({ length: 6 }, (_, index) => (
+            <div key={index} className="h-16 rounded-xl bg-slate-100" />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (state === "error" || state === "unavailable" || !row) {
+    return (
+      <section
+        aria-labelledby="parent-class-month-summary-title"
+        className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+        data-testid="parent-class-month-summary-unavailable"
+      >
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Selected child · {monthLabel}
+        </p>
+        <h2 id="parent-class-month-summary-title" className="mt-1 text-base font-semibold text-slate-950">
+          Class and attendance summary unavailable
+        </h2>
+        <p className="mt-2 text-sm leading-5 text-slate-600">
+          We can’t show verified class totals for this child and month yet. Family totals are not substituted.
+        </p>
+      </section>
+    );
+  }
+
+  const summary = buildParentClassMonthSummaryDisplay(row);
+  const attendanceAvailable = summary.attendanceMarkedSessions > 0;
+  const lifecycleItems = [
+    { label: "Upcoming", value: summary.upcomingSessions },
+    { label: "Cancelled", value: summary.cancelledSessions },
+    { label: "No show", value: summary.noShowSessions },
+    { label: "Reschedule requests", value: summary.rescheduleRequestedSessions },
+    { label: "Rescheduled", value: summary.rescheduledSessions },
+    { label: "Needs review", value: summary.needsReviewSessions },
+  ];
+
+  return (
+    <section
+      aria-labelledby="parent-class-month-summary-title"
+      className="rounded-2xl border border-indigo-100 bg-white p-4 shadow-sm sm:p-5 dark:border-indigo-900/60 dark:bg-slate-900"
+      data-testid="parent-class-month-summary"
+    >
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">
+            Selected child · {monthLabel}
+          </p>
+          <h2 id="parent-class-month-summary-title" className="mt-1 text-lg font-semibold text-slate-950 dark:text-slate-100">
+            {formatParentClassMonthCompletion(summary, monthLabel)}
+          </h2>
+          <p className="mt-1 text-sm leading-5 text-slate-600 dark:text-slate-300">
+            Class lifecycle and attendance are kept separate from lesson progress.
+          </p>
+        </div>
+        <div className="shrink-0 rounded-xl bg-slate-50 px-3 py-2 text-left sm:text-right dark:bg-slate-800/70">
+          <p className="text-xs font-medium text-slate-500">Attendance rate</p>
+          <p className="mt-0.5 text-lg font-semibold text-slate-950 dark:text-slate-100">
+            {attendanceAvailable ? `${summary.attendancePct}%` : "—"}
+          </p>
+          <p className="text-[11px] text-slate-500">Marked completed classes</p>
+        </div>
+      </div>
+
+      <dl className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+        {lifecycleItems.map((item) => (
+          <div key={item.label} className="rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800/60">
+            <dt className="text-xs text-slate-500">{item.label}</dt>
+            <dd className="mt-0.5 text-lg font-semibold text-slate-950 dark:text-slate-100">{item.value}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="mt-4 border-t border-slate-200 pt-3 dark:border-slate-700">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Attendance on completed classes</p>
+          <p className="text-xs text-slate-500">
+            {summary.attendanceMarkedSessions} marked · {summary.attendanceUnmarkedCompletedSessions} awaiting attendance
+          </p>
+        </div>
+        <dl className="mt-2 grid grid-cols-3 divide-x divide-slate-200 dark:divide-slate-700">
+          <div className="pr-3">
+            <dt className="text-xs text-slate-500">Present</dt>
+            <dd className="mt-0.5 text-base font-semibold text-slate-950 dark:text-slate-100">{summary.presentSessions}</dd>
+          </div>
+          <div className="px-3">
+            <dt className="text-xs text-slate-500">Late</dt>
+            <dd className="mt-0.5 text-base font-semibold text-slate-950 dark:text-slate-100">{summary.lateSessions}</dd>
+          </div>
+          <div className="pl-3">
+            <dt className="text-xs text-slate-500">Absent</dt>
+            <dd className="mt-0.5 text-base font-semibold text-slate-950 dark:text-slate-100">{summary.absentSessions}</dd>
+          </div>
+        </dl>
+        {summary.needsReviewSessions > 0 ? (
+          <p className="mt-3 text-xs leading-4 text-slate-500">
+            “Needs review” means a past, time-unknown, or non-standard class record still needs an operational status update. No parent action is required.
+          </p>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 type JoinButtonProps = {
   row: ParentClassSessionDisplay;
   joining: boolean;
@@ -101,7 +238,8 @@ type JoinButtonProps = {
 
 function JoinButton({ row, joining, onJoin, compact = false }: JoinButtonProps) {
   const reasonId = `class-join-reason-${row.id}`;
-  const showAction = shouldShowClassJoinAction(row.status);
+  const displayStatus = getParentClassDisplayStatus(row);
+  const showAction = shouldShowClassJoinAction(displayStatus);
   if (!showAction) return null;
 
   return (
@@ -176,10 +314,10 @@ function ParentNextClassCard({
               <span
                 className={cn(
                   "inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold",
-                  getParentClassStatusTone(row.status),
+                  getParentClassStatusTone(getParentClassDisplayStatus(row)),
                 )}
               >
-                {getParentClassStatusLabel(row.status)}
+                {getParentClassStatusLabel(getParentClassDisplayStatus(row))}
               </span>
               {row.childName ? <span className="text-xs text-slate-500">{row.childName}</span> : null}
             </div>
@@ -207,8 +345,13 @@ type ParentSessionRowProps = {
 };
 
 function ParentSessionRow({ row, joining, onJoin }: ParentSessionRowProps) {
+  const displayStatus = getParentClassDisplayStatus(row);
   const isHistorical =
-    row.status === "completed" || row.status === "cancelled" || row.status === "no_show";
+    displayStatus === "completed"
+    || displayStatus === "cancelled"
+    || displayStatus === "no_show"
+    || displayStatus === "reschedule_requested"
+    || displayStatus === "rescheduled";
 
   return (
     <article
@@ -219,7 +362,7 @@ function ParentSessionRow({ row, joining, onJoin }: ParentSessionRowProps) {
           : "bg-white dark:bg-slate-900",
       )}
       data-session-id={row.id}
-      aria-label={`${row.dateLabel}, ${row.timeLabel}, ${row.courseName}, ${getParentClassStatusLabel(row.status)}`}
+      aria-label={`${row.dateLabel}, ${row.timeLabel}, ${row.courseName}, ${getParentClassStatusLabel(displayStatus)}`}
     >
       <div className="min-w-0">
         <time className="text-sm font-semibold text-slate-950 dark:text-slate-100" dateTime={row.dateTime}>
@@ -239,10 +382,10 @@ function ParentSessionRow({ row, joining, onJoin }: ParentSessionRowProps) {
         <span
           className={cn(
             "mt-2 inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold",
-            getParentClassStatusTone(row.status),
+            getParentClassStatusTone(displayStatus),
           )}
         >
-          {getParentClassStatusLabel(row.status)}
+          {getParentClassStatusLabel(displayStatus)}
         </span>
       </div>
       <JoinButton
@@ -362,6 +505,16 @@ function ParentClassResources({
   );
 }
 
+const presentFilter = (filter: FilterDefinition): FilterDefinition =>
+  filter.id === "rescheduled"
+    ? {
+        ...filter,
+        label: "Reschedules",
+        scopeText: "Reschedule requests and rescheduled classes in the available history.",
+        emptyText: "No reschedule activity is available.",
+      }
+    : filter;
+
 export default function ParentClassesView({
   activeView,
   filters,
@@ -376,8 +529,10 @@ export default function ParentClassesView({
   onJoinSession,
   resourceContent,
 }: ParentClassesViewProps) {
-  const activeFilter = filters.find((filter) => filter.id === activeView) || null;
+  const activeFilterRaw = filters.find((filter) => filter.id === activeView) || null;
+  const activeFilter = activeFilterRaw ? presentFilter(activeFilterRaw) : null;
   const isResourceView = activeView === "calendar";
+  const canonicalClassMonth = useParentCanonicalClassMonth();
 
   return (
     <div className="min-w-0 space-y-4 overflow-x-hidden" data-testid="parent-classes-view">
@@ -391,6 +546,12 @@ export default function ParentClassesView({
         />
       )}
 
+      <ParentClassMonthSummaryPanel
+        state={canonicalClassMonth.state}
+        monthLabel={canonicalClassMonth.monthLabel}
+        row={canonicalClassMonth.row}
+      />
+
       <nav aria-label="Class session filters">
         <div className="relative max-w-full overflow-hidden after:pointer-events-none after:absolute after:inset-y-0 after:right-0 after:w-8 after:bg-gradient-to-l after:from-[var(--ts-parent-bg,#f5f7fb)] after:to-transparent" data-testid="parent-class-filter-frame">
           <div
@@ -398,34 +559,35 @@ export default function ParentClassesView({
             className="scrollbar-hide flex max-w-full snap-x snap-mandatory gap-2 overflow-x-auto pb-1 pr-10 [-webkit-overflow-scrolling:touch]"
             data-testid="parent-class-filter-scroll"
           >
-          {filters.map((filter) => {
-            const Icon = FILTER_ICONS[filter.id];
-            const selected = activeView === filter.id;
-            const countLabel = filter.count === null ? "loading" : String(filter.count);
-            return (
-              <button
-                key={filter.id}
-                type="button"
-                role="tab"
-                aria-selected={selected}
-                aria-controls="parent-classes-active-content"
-                aria-label={`${filter.label}, ${countLabel}`}
-                onClick={() => onSelectFilter(filter.id)}
-                className={cn(
-                  "inline-flex min-h-11 shrink-0 snap-start items-center gap-1.5 rounded-full border px-3 text-sm font-semibold outline-none transition active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-slate-600",
-                  selected
-                    ? "border-indigo-200 bg-indigo-50 text-indigo-950 dark:border-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-100"
-                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300",
-                )}
-              >
-                <Icon className="h-4 w-4" aria-hidden="true" />
-                {filter.label}
-                <span aria-hidden="true" className="text-xs">
-                  {filter.count === null ? "…" : filter.count}
-                </span>
-              </button>
-            );
-          })}
+            {filters.map((rawFilter) => {
+              const filter = presentFilter(rawFilter);
+              const Icon = FILTER_ICONS[filter.id];
+              const selected = activeView === filter.id;
+              const countLabel = filter.count === null ? "loading" : String(filter.count);
+              return (
+                <button
+                  key={filter.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  aria-controls="parent-classes-active-content"
+                  aria-label={`${filter.label}, ${countLabel}`}
+                  onClick={() => onSelectFilter(filter.id)}
+                  className={cn(
+                    "inline-flex min-h-11 shrink-0 snap-start items-center gap-1.5 rounded-full border px-3 text-sm font-semibold outline-none transition active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-slate-600",
+                    selected
+                      ? "border-indigo-200 bg-indigo-50 text-indigo-950 dark:border-indigo-800 dark:bg-indigo-950/50 dark:text-indigo-100"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300",
+                  )}
+                >
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                  {filter.label}
+                  <span aria-hidden="true" className="text-xs">
+                    {filter.count === null ? "…" : filter.count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       </nav>
