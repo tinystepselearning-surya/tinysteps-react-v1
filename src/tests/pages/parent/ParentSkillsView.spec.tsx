@@ -226,8 +226,11 @@ describe("ParentSkillsView", () => {
     );
 
     const stageDisclosure = screen.getByRole("button", { name: "Show skills for Stage 5: Diphthongs" });
+    const detailsId = stageDisclosure.getAttribute("aria-controls");
     fireEvent.click(stageDisclosure);
-    expect(screen.getByText("Diphthong Recognition")).toBeInTheDocument();
-    expect(screen.queryByText("Magic E Rule")).not.toBeInTheDocument();
+    const details = document.getElementById(detailsId!);
+    expect(details).not.toBeNull();
+    expect(within(details!).getByText("Diphthong Recognition")).toBeInTheDocument();
+    expect(within(details!).queryByText("Magic E Rule")).not.toBeInTheDocument();
   });
 });
