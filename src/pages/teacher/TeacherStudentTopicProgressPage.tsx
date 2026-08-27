@@ -6,11 +6,21 @@ import StudentTopicProgressEditor from '../../components/teacher/StudentTopicPro
 import { db } from '../../lib/firebaseConfig';
 import TinyStepsBrand from '../../components/common/TinyStepsBrand';
 
+type TopicProgressLocationState = {
+  studentName?: unknown;
+};
+
+const normalizeDisplayName = (value: unknown): string =>
+  typeof value === 'string' ? value.trim() : '';
+
 const TeacherStudentTopicProgressPage: React.FC = () => {
   const { kidId } = useParams<{ kidId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
-  const [kidName, setKidName] = useState<string | null>(null);
+  const routedStudentName = normalizeDisplayName(
+    (location.state as TopicProgressLocationState | null)?.studentName,
+  );
+  const [kidName, setKidName] = useState<string | null>(() => routedStudentName || null);
   const [loadingName, setLoadingName] = useState(false);
 
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
@@ -34,6 +44,15 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
   useEffect(() => {
     if (!kidId) return;
 
+    // My Students already has the child's display name in memory. Reuse that
+    // navigation state so normal in-app navigation performs zero extra reads
+    // solely for the name. Direct URL loads still use the safe fallbacks below.
+    if (routedStudentName) {
+      setKidName(routedStudentName);
+      setLoadingName(false);
+      return;
+    }
+
     let active = true;
     const getNameFromDoc = (data: any) =>
       data?.fullName ??
@@ -46,37 +65,49 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
         ? `${data?.firstName ?? ''} ${data?.lastName ?? ''}`.trim()
         : null);
 
+    const readName = async (collectionName: 'enrollments' | 'students' | 'kids', id: string) => {
+      try {
+        const snap = await getDoc(doc(db, collectionName, id));
+        if (!active || !snap.exists()) return null;
+        return getNameFromDoc(snap.data());
+      } catch {
+        // Name resolution is presentation-only. A denied legacy lookup must not
+        // interrupt the teacher's already-authorized progress workflow.
+        return null;
+      }
+    };
+
+    setKidName(null);
     setLoadingName(true);
 
     const loadName = async () => {
-      const kidSnap = await getDoc(doc(db, 'kids', kidId));
-      if (!active) return;
-      if (kidSnap.exists()) {
-        setKidName(getNameFromDoc(kidSnap.data()));
-        setLoadingName(false);
-        return;
-      }
+      try {
+        // The route already carries the canonical enrollment used to authorize
+        // progress. Prefer that single, teacher-readable document for the name.
+        if (enrollmentId) {
+          const enrollmentName = await readName('enrollments', enrollmentId);
+          if (!active) return;
+          if (enrollmentName) {
+            setKidName(enrollmentName);
+            return;
+          }
+        }
 
-      const studentSnap = await getDoc(doc(db, 'students', kidId));
-      if (!active) return;
-      if (studentSnap.exists()) {
-        setKidName(getNameFromDoc(studentSnap.data()));
-        setLoadingName(false);
-        return;
-      }
-
-      if (enrollmentId) {
-        const enrollmentSnap = await getDoc(doc(db, 'enrollments', enrollmentId));
+        // Historical enrollments may not contain a display name. Fall back to
+        // child documents, but treat permission-denied as a recoverable miss.
+        const studentName = await readName('students', kidId);
         if (!active) return;
-        if (enrollmentSnap.exists()) {
-          setKidName(getNameFromDoc(enrollmentSnap.data()));
-          setLoadingName(false);
+        if (studentName) {
+          setKidName(studentName);
           return;
         }
-      }
 
-      setKidName(null);
-      setLoadingName(false);
+        const kidNameFallback = await readName('kids', kidId);
+        if (!active) return;
+        setKidName(kidNameFallback);
+      } finally {
+        if (active) setLoadingName(false);
+      }
     };
 
     void loadName();
@@ -84,7 +115,7 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [kidId, enrollmentId]);
+  }, [kidId, enrollmentId, routedStudentName]);
 
   if (!kidId) {
     return (
