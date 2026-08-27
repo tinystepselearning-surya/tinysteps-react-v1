@@ -12,6 +12,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  documentId,
   getDoc,
   getDocs,
   query,
@@ -45,6 +46,13 @@ const unusableCanonicalKidIds: Array<[string, unknown]> = [
   ['blank', ''],
   ['null', null],
 ];
+
+const productionShapedEmptyLessonQueries = [
+  ['phonics-foundations', 'prod-enrollment-foundations', 'prod-child-foundations'],
+  ['early-phonics', 'prod-enrollment-early', 'prod-child-early'],
+  ['advanced-phonics', 'prod-enrollment-advanced', 'prod-child-advanced'],
+  ['basic-grammar', 'prod-enrollment-grammar', 'prod-child-grammar'],
+] as const;
 
 beforeAll(async () => {
   if (!emulatorHost) return;
@@ -164,6 +172,63 @@ async function assertTeacherCrudSucceeds(uid: string, kidId: string, enrollmentI
 }
 
 suite('teacher progress authorization follows canonical enrollment ownership', () => {
+  it.each(productionShapedEmptyLessonQueries)(
+    'allows an assigned teacher to query a not-yet-created %s lesson by exact document ID',
+    async (courseId, enrollmentId, kidId) => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), 'enrollments', enrollmentId), {
+          enrollmentId,
+          teacherId: teacherA,
+          kidId,
+          studentId: kidId,
+          kidIds: [kidId],
+          courseId,
+          parentId: parentA,
+          status: 'active',
+        });
+      });
+
+      const lessonId = `${courseId}__lesson-01`;
+      const productionTeacherDb = testEnv.authenticatedContext(teacherA, {
+        role: 'teacher',
+        email: 'teacher@example.test',
+      }).firestore();
+      // A direct get cannot authorize a missing resource because resource.data is
+      // null; the constrained range query remains a list operation and can prove
+      // enrollment and course identity from its filters.
+      await assertFails(getDoc(progressRef(productionTeacherDb, kidId, lessonId)));
+      await assertSucceeds(getDocs(query(
+        collection(productionTeacherDb, 'students', kidId, 'progress'),
+        where('courseId', '==', courseId),
+        where('enrollmentId', '==', enrollmentId),
+        where(documentId(), '>=', lessonId),
+        where(documentId(), '<=', lessonId),
+      )));
+
+      await assertFails(getDocs(query(
+        collection(teacherDb(teacherOther), 'students', kidId, 'progress'),
+        where('courseId', '==', courseId),
+        where('enrollmentId', '==', enrollmentId),
+        where(documentId(), '>=', lessonId),
+        where(documentId(), '<=', lessonId),
+      )));
+      await assertFails(getDocs(query(
+        collection(productionTeacherDb, 'students', kidId, 'progress'),
+        where('courseId', '==', `${courseId}-forged`),
+        where('enrollmentId', '==', enrollmentId),
+        where(documentId(), '>=', lessonId),
+        where(documentId(), '<=', lessonId),
+      )));
+      await assertFails(getDocs(query(
+        collection(productionTeacherDb, 'students', `${kidId}-wrong`, 'progress'),
+        where('courseId', '==', courseId),
+        where('enrollmentId', '==', enrollmentId),
+        where(documentId(), '>=', lessonId),
+        where(documentId(), '<=', lessonId),
+      )));
+    },
+  );
+
   it('allows canonical enrollment teacher READ/CREATE/UPDATE despite stale kid teacher aliases', async () => {
     await seedBase();
     await assertTeacherCrudSucceeds(teacherA, childA, phonicsEnrollment, phonicsCourse);

@@ -226,7 +226,11 @@ export function useKidTopicProgress(
                 progressCol,
                 where('courseId', '==', normalizedCourseId),
                 where('enrollmentId', '==', normalizedEnrollmentId),
-                where(documentId(), '==', normalizedTopicId),
+                // Keep this as a list query even when the lesson document does not
+                // exist yet. An equality on documentId() is optimized as a single
+                // document lookup, leaving resource.data null for rules evaluation.
+                where(documentId(), '>=', normalizedTopicId),
+                where(documentId(), '<=', normalizedTopicId),
               )
             : query(
                 progressCol,
@@ -247,7 +251,18 @@ export function useKidTopicProgress(
       setError(null);
     } catch (err: any) {
       if (requestVersion !== requestVersionRef.current) return;
-      console.error('[useKidTopicProgress] Firestore error', err);
+      if (import.meta.env.DEV) {
+        console.error('[useKidTopicProgress] Firestore error', {
+          kidId,
+          courseId: normalizedCourseId || null,
+          enrollmentId: normalizedEnrollmentId || null,
+          topicId: normalizedTopicId || null,
+          queryMode: isTeacherTopicScoped ? 'selected-lesson-range' : 'collection',
+          error: err,
+        });
+      } else {
+        console.error('[useKidTopicProgress] Firestore error', err);
+      }
       setTopics([]);
       setError(err?.message ?? String(err));
     } finally {

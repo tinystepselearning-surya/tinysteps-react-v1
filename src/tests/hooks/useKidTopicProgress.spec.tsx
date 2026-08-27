@@ -222,10 +222,15 @@ describe('useKidTopicProgress', () => {
 
     rerender({ topicId: 'phonics-foundations__lesson-01' });
     await waitFor(() => expect(getDocsMock).toHaveBeenCalledTimes(1));
-    expect(documentIdMock).toHaveBeenCalledTimes(1);
+    expect(documentIdMock).toHaveBeenCalledTimes(2);
     expect(whereMock).toHaveBeenCalledWith(
       expect.objectContaining({ kind: 'documentId' }),
-      '==',
+      '>=',
+      'phonics-foundations__lesson-01',
+    );
+    expect(whereMock).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'documentId' }),
+      '<=',
       'phonics-foundations__lesson-01',
     );
   });
