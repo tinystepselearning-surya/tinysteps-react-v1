@@ -624,7 +624,7 @@ export const getSessionsManagementSnapshot = onCall(
     await ensureAdmin(request.auth);
     const knownSnapshotId = String((request.data as { knownSnapshotId?: unknown } | undefined)?.knownSnapshotId || '').trim();
 
-    let meta = await readCurrentMeta();
+    const meta = await readCurrentMeta();
     if (!meta) {
       const rebuilt = await rebuildSnapshot('bootstrap', request.auth?.uid || null);
       return { unchanged: false, snapshot: rebuilt };
