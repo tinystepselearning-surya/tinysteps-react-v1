@@ -6,11 +6,21 @@ import StudentTopicProgressEditor from '../../components/teacher/StudentTopicPro
 import { db } from '../../lib/firebaseConfig';
 import TinyStepsBrand from '../../components/common/TinyStepsBrand';
 
+type TopicProgressLocationState = {
+  studentName?: unknown;
+};
+
+const normalizeDisplayName = (value: unknown): string =>
+  typeof value === 'string' ? value.trim() : '';
+
 const TeacherStudentTopicProgressPage: React.FC = () => {
   const { kidId } = useParams<{ kidId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
-  const [kidName, setKidName] = useState<string | null>(null);
+  const routedStudentName = normalizeDisplayName(
+    (location.state as TopicProgressLocationState | null)?.studentName,
+  );
+  const [kidName, setKidName] = useState<string | null>(() => routedStudentName || null);
   const [loadingName, setLoadingName] = useState(false);
 
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
@@ -33,6 +43,15 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
 
   useEffect(() => {
     if (!kidId) return;
+
+    // My Students already has the child's display name in memory. Reuse that
+    // navigation state so normal in-app navigation performs zero extra reads
+    // solely for the name. Direct URL loads still use the safe fallbacks below.
+    if (routedStudentName) {
+      setKidName(routedStudentName);
+      setLoadingName(false);
+      return;
+    }
 
     let active = true;
     const getNameFromDoc = (data: any) =>
@@ -58,6 +77,7 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
       }
     };
 
+    setKidName(null);
     setLoadingName(true);
 
     const loadName = async () => {
@@ -95,7 +115,7 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [kidId, enrollmentId]);
+  }, [kidId, enrollmentId, routedStudentName]);
 
   if (!kidId) {
     return (
