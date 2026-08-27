@@ -1,3 +1,11 @@
+export type BlogAudience = 'Parent' | 'Schools & Research';
+export type BlogDiscoveryCategory =
+  | 'Phonics'
+  | 'Grammar'
+  | 'Speaking & Communication'
+  | 'Parent Guides'
+  | 'Schools & Research';
+
 export type BlogPost = {
   slug: string;
   title: string;
@@ -8,6 +16,8 @@ export type BlogPost = {
   hero?: string; // image url
   metaDescription?: string;
   excerpt: string;
+  audience?: BlogAudience;
+  discoveryCategory?: BlogDiscoveryCategory;
   body: {
     type: 'h2' | 'h3' | 'p' | 'li';
     content: string;
