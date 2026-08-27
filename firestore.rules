@@ -443,13 +443,18 @@ function enrollmentDoc(enrollmentId) {
   return get(enrollmentDocPath(enrollmentId)).data;
 }
 
+function enrollmentHasCanonicalKidId(data) {
+  return ('kidId' in data)
+    && (data.kidId is string)
+    && data.kidId.size() > 0;
+}
+
 function enrollmentBelongsToKidCanonicalFirst(data, kidId) {
   return (
-    ('kidId' in data)
-    && (data.kidId is string)
+    enrollmentHasCanonicalKidId(data)
     && data.kidId == kidId
   ) || (
-    !('kidId' in data)
+    !enrollmentHasCanonicalKidId(data)
     && (
       (('studentId' in data) && (data.studentId is string) && data.studentId == kidId)
       || (('childId' in data) && (data.childId is string) && data.childId == kidId)
