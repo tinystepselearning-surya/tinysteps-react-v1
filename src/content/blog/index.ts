@@ -1,5 +1,6 @@
 import type { BlogPost, PhonicsSeoPost } from './types';
 import { BLOG_PUBLICATION_DATES, BLOG_CATEGORY_OVERRIDES, DEFAULT_HERO_BY_CATEGORY } from './shared/defaults';
+import { getBlogAudience, getBlogDiscoveryCategory } from './shared/audience';
 import { makePhonicsPost } from './shared/phonicsShared';
 import { enrichWeekPost } from './shared/weeklyShared';
 
@@ -39,11 +40,18 @@ for (const [path, module] of Object.entries(postModules).sort(([a], [b]) => a.lo
 
 const normalizedBlogPosts: BlogPost[] = Array.from(postsBySlug.values()).map((post) => {
   const enriched = enrichWeekPost(post);
-  return {
+  const category = BLOG_CATEGORY_OVERRIDES[enriched.slug] ?? enriched.category;
+  const normalized = {
     ...enriched,
-    category: BLOG_CATEGORY_OVERRIDES[enriched.slug] ?? enriched.category,
+    category,
     date: BLOG_PUBLICATION_DATES[enriched.slug] ?? enriched.date,
-    hero: enriched.hero ?? DEFAULT_HERO_BY_CATEGORY[BLOG_CATEGORY_OVERRIDES[enriched.slug] ?? enriched.category],
+    hero: enriched.hero ?? DEFAULT_HERO_BY_CATEGORY[category],
+  } as BlogPost;
+
+  return {
+    ...normalized,
+    audience: getBlogAudience(normalized),
+    discoveryCategory: getBlogDiscoveryCategory(normalized),
   };
 });
 
