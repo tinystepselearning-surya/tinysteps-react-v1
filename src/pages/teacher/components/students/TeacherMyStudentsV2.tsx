@@ -636,7 +636,13 @@ export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
                             navigate(
                               `/teacher/students/${enrollment.resolvedEntityId}/topic-progress?from=students&tab=topic${
                                 enrollment.courseId ? `&courseId=${encodeURIComponent(enrollment.courseId)}` : ''
-                              }&enrollmentId=${encodeURIComponent(enrollment.id)}`
+                              }&enrollmentId=${encodeURIComponent(enrollment.id)}`,
+                              {
+                                state:
+                                  name && name !== 'Student name pending'
+                                    ? { studentName: name }
+                                    : undefined,
+                              },
                             )
                           }
                           disabled={!enrollment.resolvedEntityId}
