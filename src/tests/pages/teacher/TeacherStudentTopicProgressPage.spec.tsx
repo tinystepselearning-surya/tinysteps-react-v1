@@ -28,11 +28,15 @@ const snap = (data?: Record<string, unknown>) => ({
   data: () => data,
 });
 
-const renderPage = () =>
+const renderPage = (studentName?: string) =>
   render(
     <MemoryRouter
       initialEntries={[
-        '/teacher/students/kid-1/topic-progress?from=students&courseId=early-phonics&enrollmentId=enroll-1',
+        {
+          pathname: '/teacher/students/kid-1/topic-progress',
+          search: '?from=students&courseId=early-phonics&enrollmentId=enroll-1',
+          state: studentName ? { studentName } : undefined,
+        },
       ]}
     >
       <Routes>
@@ -48,6 +52,16 @@ describe('TeacherStudentTopicProgressPage student-name resolution', () => {
   beforeEach(() => {
     getDocMock.mockReset();
     docMock.mockClear();
+  });
+
+  it('uses My Students navigation state with zero Firestore reads for the name', async () => {
+    renderPage('Aanya');
+
+    expect(await screen.findByText('Student: Aanya')).toBeInTheDocument();
+    expect(screen.queryByText('Loading student name…')).not.toBeInTheDocument();
+    expect(screen.getByTestId('topic-progress-editor')).toBeInTheDocument();
+    expect(getDocMock).not.toHaveBeenCalled();
+    expect(docMock).not.toHaveBeenCalled();
   });
 
   it('uses the route enrollment first and stops after one read when it contains the name', async () => {
