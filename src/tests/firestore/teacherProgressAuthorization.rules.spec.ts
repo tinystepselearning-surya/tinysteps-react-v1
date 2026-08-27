@@ -41,6 +41,10 @@ const phonicsEnrollment = 'enroll-phonics-a';
 const grammarEnrollment = 'enroll-grammar-b';
 const childBEnrollment = 'enroll-child-b-a';
 const reassignedEnrollment = 'enroll-reassigned';
+const unusableCanonicalKidIds: Array<[string, unknown]> = [
+  ['blank', ''],
+  ['null', null],
+];
 
 beforeAll(async () => {
   if (!emulatorHost) return;
@@ -180,6 +184,45 @@ suite('teacher progress authorization follows canonical enrollment ownership', (
     await assertSucceeds(getDoc(ref));
     await assertSucceeds(updateDoc(ref, { mastery: 'proficient' }));
   });
+
+  it.each(unusableCanonicalKidIds)(
+    'falls back to legacy child identity when enrollment kidId is %s without broadening teacher access',
+    async (label, unusableKidId) => {
+      await seedBase();
+      const enrollmentId = `enroll-legacy-kid-${label}`;
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), 'enrollments', enrollmentId), {
+          enrollmentId,
+          teacherId: teacherA,
+          kidId: unusableKidId,
+          studentId: childB,
+          kidIds: [childB],
+          courseId: phonicsCourse,
+          parentId: parentB,
+          status: 'active',
+        });
+      });
+
+      const db = teacherDb(teacherA);
+      const ref = progressRef(db, childB, `legacy-kid-${label}`);
+      await assertSucceeds(setDoc(ref, canonicalProgress(enrollmentId, phonicsCourse)));
+      await assertSucceeds(getDoc(ref));
+      await assertSucceeds(updateDoc(ref, { mastery: 'proficient' }));
+      await assertSucceeds(getDocs(query(
+        collection(db, 'students', childB, 'progress'),
+        where('courseId', '==', phonicsCourse),
+        where('enrollmentId', '==', enrollmentId),
+      )));
+
+      const otherDb = teacherDb(teacherOther);
+      await assertFails(getDoc(progressRef(otherDb, childB, `legacy-kid-${label}`)));
+      await assertFails(getDocs(query(
+        collection(otherDb, 'students', childB, 'progress'),
+        where('courseId', '==', phonicsCourse),
+        where('enrollmentId', '==', enrollmentId),
+      )));
+    },
+  );
 
   it('uses enrollment kidId canonically and never broadens through contradictory legacy child aliases', async () => {
     await seedBase();
