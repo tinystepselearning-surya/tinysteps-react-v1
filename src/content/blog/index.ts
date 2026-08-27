@@ -1,5 +1,6 @@
 import type { BlogPost, PhonicsSeoPost } from './types';
 import { BLOG_PUBLICATION_DATES, BLOG_CATEGORY_OVERRIDES, DEFAULT_HERO_BY_CATEGORY } from './shared/defaults';
+import { applyBlogEditorialCleanup } from './shared/editorialCleanup';
 import { makePhonicsPost } from './shared/phonicsShared';
 import { enrichWeekPost } from './shared/weeklyShared';
 
@@ -38,7 +39,7 @@ for (const [path, module] of Object.entries(postModules).sort(([a], [b]) => a.lo
 }
 
 const normalizedBlogPosts: BlogPost[] = Array.from(postsBySlug.values()).map((post) => {
-  const enriched = enrichWeekPost(post);
+  const enriched = applyBlogEditorialCleanup(enrichWeekPost(post));
   return {
     ...enriched,
     category: BLOG_CATEGORY_OVERRIDES[enriched.slug] ?? enriched.category,
