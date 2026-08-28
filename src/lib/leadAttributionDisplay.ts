@@ -1,3 +1,4 @@
+import { acquisitionChannelLabel } from './leadAcquisition';
 import { parseBlogLeadSourceDetail } from './blogLeadAttribution';
 
 export type LeadAttributionLike = {
@@ -24,19 +25,19 @@ export type LeadAttributionDisplay = {
   ctaPosition: string | null;
 };
 
-const ACQUISITION_LABELS: Record<string, string> = {
-  google_organic: 'Google Organic',
-  google_ads: 'Google Ads',
-  bing_organic: 'Bing Organic',
-  microsoft_ads: 'Microsoft Ads',
-  instagram: 'Instagram',
-  facebook: 'Facebook',
-  linkedin: 'LinkedIn',
-  youtube: 'YouTube',
-  referral: 'Referral',
-  direct: 'Direct',
-  other: 'Other',
-};
+const KNOWN_ACQUISITION_CHANNELS = new Set([
+  'google_organic',
+  'google_ads',
+  'bing_organic',
+  'microsoft_ads',
+  'instagram',
+  'facebook',
+  'linkedin',
+  'youtube',
+  'referral',
+  'direct',
+  'other',
+]);
 
 const normalizeText = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
@@ -57,7 +58,7 @@ const humanizeToken = (value: string): string =>
 
 function resolveAcquisitionLabel(lead: LeadAttributionLike): string {
   const channel = normalizeText(lead.acquisitionChannel).toLowerCase();
-  if (channel && ACQUISITION_LABELS[channel]) return ACQUISITION_LABELS[channel];
+  if (KNOWN_ACQUISITION_CHANNELS.has(channel)) return acquisitionChannelLabel(channel);
 
   const utmSource = normalizeText(lead.attribution?.utm_source);
   if (utmSource) return humanizeToken(utmSource);
