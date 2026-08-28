@@ -2,11 +2,14 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
 import { ORGANIZATION_ID, PUBLIC_FACTS, SITE_ORIGIN } from '../../lib/schemas';
+import AboutAuthor from '../../components/AboutAuthor';
+import { ACADEMIC_TEAM_BLOG_AUTHOR } from '../../content/blog/shared/editorialTrust';
 
 const ARTICLE_SLUG = 'what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading';
 const ARTICLE_PATH = `/blog/${ARTICLE_SLUG}`;
 const BLOG_URL = `${SITE_ORIGIN}/blog`;
 const ARTICLE_URL = `${SITE_ORIGIN}${ARTICLE_PATH}`;
+const TEAM_URL = `${SITE_ORIGIN}/team`;
 
 const faqItems = [
   {
@@ -55,6 +58,7 @@ export default function WhatIsJollyPhonicsBestWayPage() {
             '@type': 'Organization',
             '@id': ORGANIZATION_ID,
             name: PUBLIC_FACTS.brandName,
+            url: TEAM_URL,
           },
           publisher: {
             '@id': ORGANIZATION_ID,
@@ -64,7 +68,6 @@ export default function WhatIsJollyPhonicsBestWayPage() {
             '@id': ARTICLE_URL,
           },
           datePublished: '2026-04-05',
-          dateModified: '2026-04-05',
         },
         {
           '@context': 'https://schema.org',
@@ -80,6 +83,9 @@ export default function WhatIsJollyPhonicsBestWayPage() {
         },
       ],
     });
+
+    const metaAuthor = document.head.querySelector('meta[name="author"]');
+    if (metaAuthor) metaAuthor.setAttribute('content', PUBLIC_FACTS.brandName);
   }, []);
 
   return (
@@ -92,6 +98,12 @@ export default function WhatIsJollyPhonicsBestWayPage() {
         <p className="mt-4 text-base text-slate-700">
           If you are comparing reading methods, this guide explains what Jolly Phonics is, what synthetic phonics means, and what actually helps children read confidently.
         </p>
+        <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+          <Link to="/team" className="font-semibold text-slate-900 underline underline-offset-4 hover:text-primary-700">
+            {PUBLIC_FACTS.brandName} · Academic Team
+          </Link>
+          <span>Published 5 April 2026</span>
+        </div>
       </header>
 
       <section className="mb-8 rounded-2xl border border-sky-100 bg-sky-50 p-6">
@@ -107,11 +119,34 @@ export default function WhatIsJollyPhonicsBestWayPage() {
       <section className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold text-slate-900">Is it the best way to teach reading?</h2>
         <p className="mt-3 text-slate-700">
-          For early reading, a structured synthetic phonics approach is one of the strongest and most practical foundations. Jolly Phonics is one well-known method in this category, but the core principle is the same across high-quality programs: teach sounds clearly, blend consistently, and progress step by step.
+          Systematic phonics has strong evidence as an early word-reading approach. Jolly Phonics is one well-known synthetic phonics programme, but it is not the only programme that can teach the underlying alphabetic code clearly and cumulatively.
         </p>
         <p className="mt-3 text-slate-700">
-          The “best” method is the one that fits your child’s level, is taught consistently, and gives parents clear progress visibility.
+          A useful parent question is therefore not whether one branded method is universally “best”, but whether the teaching is systematic, explicit, well matched to the child’s stage, and connected to real decoding and reading practice.
         </p>
+        <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700">
+          <p className="font-semibold text-slate-900">Evidence used for this section</p>
+          <p className="mt-2">
+            See the{' '}
+            <a
+              href="https://educationendowmentfoundation.org.uk/education-evidence/teaching-learning-toolkit/phonics"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-4"
+            >
+              Education Endowment Foundation phonics summary
+            </a>{' '}
+            and the{' '}
+            <a
+              href="https://www.nichd.nih.gov/publications/pubs/nrp/findings"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-4"
+            >
+              National Reading Panel findings
+            </a>.
+          </p>
+        </div>
       </section>
 
       <section className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -135,7 +170,13 @@ export default function WhatIsJollyPhonicsBestWayPage() {
         </div>
       </section>
 
-      <section className="rounded-2xl bg-slate-900 p-7 text-white">
+      <AboutAuthor
+        author={ACADEMIC_TEAM_BLOG_AUTHOR}
+        evidenceLabel="2 external evidence sources are linked in this article"
+        reviewLabel="Published date only; no separate update date is claimed"
+      />
+
+      <section className="mt-10 rounded-2xl bg-slate-900 p-7 text-white">
         <h2 className="text-2xl font-bold">Want the right starting point for your child?</h2>
         <p className="mt-3 text-slate-200">
           Book one free 35-minute 1:1 online demo assessment class and we will recommend the right phonics stage based on your child’s current reading level.
