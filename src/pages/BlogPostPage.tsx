@@ -12,6 +12,15 @@ import {
   resolveBlogAuthor,
 } from '../content/blog/shared/editorialTrust';
 import { resolveBlogHero } from '../content/blog/shared/heroFamilies';
+import {
+  BLOG_ID,
+  buildBlogAboutSchema,
+  buildBlogKeywords,
+  extractExternalCitationUrls,
+  getBlogArticleId,
+  getBlogTechnicalAuthority,
+  getBlogWebPageId,
+} from '../content/blog/shared/technicalAuthority';
 import { ORGANIZATION_ID, PUBLIC_FACTS, SITE_ORIGIN } from '../lib/schemas';
 import AboutAuthor from '../components/AboutAuthor';
 import ParentsAlsoAsk from '../components/ParentsAlsoAsk';
@@ -565,25 +574,45 @@ function buildMetaDescription(src: any) {
 
   const articleSchema = useMemo(() => {
     if (!post && !metaSource) return null;
+    const articleSlug = metaSource.slug || slug || '';
+    const authorityPost = {
+      slug: articleSlug,
+      category: metaSource.category || 'Parent Tips',
+      audience: metaSource.audience,
+      discoveryCategory: metaSource.discoveryCategory,
+    };
+    const authority = getBlogTechnicalAuthority(authorityPost);
+    const resolvedImageUrl = resolvedHero
+      ? (resolvedHero.startsWith('http') ? resolvedHero : `${SITE_ORIGIN}${resolvedHero}`)
+      : `${SITE_ORIGIN}/og-default.jpg`;
+    const externalCitations = post ? extractExternalCitationUrls(post) : [];
     const obj: any = {
       '@context': 'https://schema.org',
       '@type': 'BlogPosting',
+      '@id': getBlogArticleId(articleSlug),
       headline: metaSource.title,
       author: buildBlogAuthorSchema(articleAuthor),
       url: canonicalArticleUrl,
       // Add dates only when present in metadata (do not invent dates)
-      image: resolvedHero
-        ? (resolvedHero.startsWith('http') ? resolvedHero : `${SITE_ORIGIN}${resolvedHero}`)
-        : `${SITE_ORIGIN}/og-default.jpg`,
+      image: resolvedImageUrl,
+      thumbnailUrl: resolvedImageUrl,
       description: buildMetaDescription(metaSource) || undefined,
-      articleSection: metaSource.category || undefined,
-      mainEntityOfPage: {
-        '@type': 'WebPage',
-        '@id': canonicalArticleUrl,
+      articleSection: authority.discoveryCategory,
+      about: buildBlogAboutSchema(authorityPost),
+      keywords: buildBlogKeywords(authorityPost),
+      audience: {
+        '@type': 'Audience',
+        audienceType: authority.audienceType,
       },
+      isPartOf: { '@id': BLOG_ID },
+      mainEntityOfPage: { '@id': getBlogWebPageId(articleSlug) },
       inLanguage: 'en-IN',
-      wordCount: post && Array.isArray(post.body) ? post.body.map((b) => (b.content || '')).join('\n').split(/\s+/).length : 2500,
-      articleBody: post ? post.body.map((b) => b.content).join('\n') : '',
+      isAccessibleForFree: true,
+      citation: externalCitations.length ? externalCitations : undefined,
+      wordCount: post && Array.isArray(post.body)
+        ? post.body.map((b) => (b.content || '')).join('\n').split(/\s+/).filter(Boolean).length
+        : undefined,
+      articleBody: post ? post.body.map((b) => b.content).join('\n') : undefined,
     };
 
     if (metaSource.date) {
@@ -609,7 +638,7 @@ function buildMetaDescription(src: any) {
     }
 
     return obj;
-  }, [articleAuthor, canonicalArticleUrl, metaSource, post, resolvedHero]);
+  }, [articleAuthor, canonicalArticleUrl, metaSource, post, resolvedHero, slug]);
 
   const faqSchema = useMemo(() => {
     if (!post?.faq?.length) return null;
@@ -889,7 +918,7 @@ function buildMetaDescription(src: any) {
               <h2 className="ts-blog-hero-title mt-3 text-2xl font-black tracking-tight text-slate-950 sm:text-4xl">
                 {metaSource.title}
               </h2>
-              <p className="mt-4 max-w-4xl text-lg leading-8 text-slate-700">
+              <p className="ts-blog-quick-answer mt-4 max-w-4xl text-lg leading-8 text-slate-700">
                 {heroDescription}
               </p>
             </section>
