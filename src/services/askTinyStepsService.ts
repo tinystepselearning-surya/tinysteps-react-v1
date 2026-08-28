@@ -5,17 +5,20 @@ import {
   type AskTinyStepsKnowledgeSource,
 } from '../config/askTinyStepsKnowledgeSources';
 import {
-  ASK_TINY_STEPS_MODEL_CASCADE,
+  ASK_TINY_STEPS_APPLICATION_DEADLINE_MS,
   getAskTinyStepsGenerativeModel,
+  getAskTinyStepsModelCascade,
+  type AskTinyStepsModelMode,
 } from '../lib/askTinyStepsFirebaseAI';
 import { ASK_TINY_STEPS_MAX_URL_CONTEXT_SOURCES } from './askTinyStepsSourceSelector';
 
 export const ASK_TINY_STEPS_MAX_PROMPT_LENGTH = 2_000;
-export const ASK_TINY_STEPS_MAX_HISTORY_MESSAGES = 8;
+export const ASK_TINY_STEPS_MAX_HISTORY_MESSAGES = 3;
 export const ASK_TINY_STEPS_SAFE_ERROR =
   'TinySteps AI is temporarily unavailable. Please try again in a moment.';
 export const ASK_TINY_STEPS_UNAPPROVED_URL_REPLY =
   "I can’t open or summarize links supplied by visitors. I can help with Tiny Steps and children’s English learning using approved Tiny Steps sources.";
+export const ASK_TINY_STEPS_CLIENT_DEADLINE_ERROR = 'ask-tiny-steps-client-deadline';
 
 const EXTERNAL_URL_PLACEHOLDER = '[external URL omitted]';
 const VISITOR_URL_PATTERN = /(?:https?:\/\/|www\.)[^\s<>()]+/i;
@@ -24,14 +27,9 @@ type AskMessage = { role: 'user' | 'assistant'; content: string };
 
 export type AskTinyStepsCallOptions = {
   sourceIds?: readonly string[];
+  mode?: AskTinyStepsModelMode;
 };
 
-/**
- * URL Context must never receive arbitrary visitor-controlled URLs. All links in
- * conversation history are removed before the message reaches Gemini. The only
- * complete URLs left in the current turn are canonical URLs resolved from the
- * source-controlled Tiny Steps registry below.
- */
 function removeConversationUrls(text: string): string {
   return text
     .replace(/(?:https?:\/\/|www\.)[^\s<>()]+/gi, EXTERNAL_URL_PLACEHOLDER)
@@ -80,9 +78,13 @@ function resolveApprovedSources(sourceIds: readonly string[]): AskTinyStepsKnowl
   });
 }
 
-function buildCurrentPrompt(question: string, sources: AskTinyStepsKnowledgeSource[]): string {
-  if (sources.length === 0) {
-    return `NO APPROVED TINY STEPS SOURCE URL WAS SELECTED FOR THIS TURN.\nDo not introduce new Tiny Steps-specific factual claims. You may provide brief general English-learning guidance if relevant, or redirect an unrelated question back to Tiny Steps / children's English learning.\n\nVISITOR QUESTION:\n${question}`;
+function buildCurrentPrompt(
+  question: string,
+  sources: AskTinyStepsKnowledgeSource[],
+  mode: AskTinyStepsModelMode,
+): string {
+  if (mode === 'general_guidance') {
+    return `GENERAL CHILDREN'S ENGLISH-LEARNING GUIDANCE\nNo Tiny Steps-specific factual claim is required for this turn. Give a brief, practical, age-appropriate response. Do not imply that you searched the web or retrieved Tiny Steps pages.\n\nVISITOR QUESTION:\n${question}`;
   }
 
   const sourceList = sources
@@ -158,22 +160,21 @@ function providerErrorText(error: unknown): string {
 
   if (typeof error === 'object' && error !== null) {
     const record = error as Record<string, unknown>;
-    const pieces = [record.message, record.code, record.status]
+    return [record.message, record.code, record.status]
       .filter((value) => value !== undefined && value !== null)
-      .map(String);
-    return pieces.join(' ');
+      .map(String)
+      .join(' ');
   }
 
   return String(error ?? '');
 }
 
-/**
- * Advance only for failures that are safely attributable to transient provider/model
- * availability. App Check, invalid requests, policy errors and URL grounding failures
- * deliberately remain fail-closed and must never be hidden by a stronger cascade.
- */
 export function isAskTinyStepsModelFallbackEligible(error: unknown): boolean {
   const text = providerErrorText(error).toLowerCase();
+
+  // A local user-facing deadline must not launch another model while the first
+  // provider request may still be consuming resources in the background.
+  if (text.includes(ASK_TINY_STEPS_CLIENT_DEADLINE_ERROR)) return false;
 
   const quotaOrCapacity =
     /(^|\D)429(\D|$)/.test(text) ||
@@ -204,13 +205,25 @@ export function isAskTinyStepsModelFallbackEligible(error: unknown): boolean {
     /(?:^|\s)internal(?:\s|$|:)/.test(text);
   if (providerInternal) return true;
 
-  const modelUnavailable =
+  return (
     /model(?:\s+[\w.-]+)?[^.\n]*(?:not found|not available|unavailable|retired|shutdown|shut down)/.test(
       text,
     ) ||
-    /(?:not found|unavailable|retired|shutdown|shut down)[^.\n]*model/.test(text);
+    /(?:not found|unavailable|retired|shutdown|shut down)[^.\n]*model/.test(text)
+  );
+}
 
-  return modelUnavailable;
+async function withApplicationDeadline<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(ASK_TINY_STEPS_CLIENT_DEADLINE_ERROR)), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
 }
 
 export async function callAskTinySteps(
@@ -228,8 +241,6 @@ export async function callAskTinySteps(
     throw new Error(ASK_TINY_STEPS_SAFE_ERROR);
   }
 
-  // Visitor-provided links are never browsing inputs. Block the current turn
-  // before history cleaning, Firebase AI initialization, token use, or URL Context.
   if (VISITOR_URL_PATTERN.test(submitted.content)) {
     return ASK_TINY_STEPS_UNAPPROVED_URL_REPLY;
   }
@@ -240,50 +251,54 @@ export async function callAskTinySteps(
     throw new Error(ASK_TINY_STEPS_SAFE_ERROR);
   }
 
-  const approvedSources = resolveApprovedSources(options.sourceIds ?? []);
-  const history = toGeminiHistory(clean.slice(0, -1));
-  const currentPrompt = buildCurrentPrompt(lastMessage.content, approvedSources);
+  const mode = options.mode ?? 'first_party_grounded';
+  const approvedSources = mode === 'first_party_grounded'
+    ? resolveApprovedSources(options.sourceIds ?? [])
+    : [];
 
-  for (let index = 0; index < ASK_TINY_STEPS_MODEL_CASCADE.length; index += 1) {
-    const modelName = ASK_TINY_STEPS_MODEL_CASCADE[index];
+  // Grounded mode is never allowed to silently become an ungrounded Tiny Steps
+  // factual call. The execution router must select at least one approved source.
+  if (mode === 'first_party_grounded' && approvedSources.length === 0) {
+    throw new Error(ASK_TINY_STEPS_SAFE_ERROR);
+  }
+
+  const history = toGeminiHistory(clean.slice(0, -1));
+  const currentPrompt = buildCurrentPrompt(lastMessage.content, approvedSources, mode);
+  const cascade = getAskTinyStepsModelCascade(mode);
+
+  for (let index = 0; index < cascade.length; index += 1) {
+    const modelName = cascade[index];
 
     try {
-      const model = getAskTinyStepsGenerativeModel(modelName);
+      const model = getAskTinyStepsGenerativeModel(modelName, mode);
       const chat = model.startChat({ history });
-      const result = await chat.sendMessage(currentPrompt);
+      const result = await withApplicationDeadline(
+        chat.sendMessage(currentPrompt),
+        ASK_TINY_STEPS_APPLICATION_DEADLINE_MS[mode],
+      );
       const rawReply = result.response.text().trim();
-      if (!rawReply) {
-        throw new Error('empty-response');
-      }
+      if (!rawReply) throw new Error('empty-response');
       if (responseHitOutputLimit(result.response)) {
-        // A partial sentence is worse than a deterministic verified fallback. Do
-        // not spend another model call on an application-level output-limit failure.
         throw new Error('incomplete-response-max-tokens');
       }
 
-      if (approvedSources.length === 0) {
+      if (mode === 'general_guidance') {
         return finalizeGroundedReply(rawReply, []);
       }
 
       const retrievedUrls = successfulRetrievedUrls(result.response, approvedSources);
       const primaryUrl = comparableUrl(approvedSources[0].canonicalUrl);
       const primaryRetrieved = retrievedUrls.some((url) => comparableUrl(url) === primaryUrl);
-
-      // Tiny Steps factual answers fail closed if Gemini could not retrieve the
-      // primary approved page. Model switching must never bypass this grounding gate.
       if (!primaryRetrieved) {
         throw new Error('primary-url-context-retrieval-failed');
       }
 
       return finalizeGroundedReply(rawReply, retrievedUrls);
     } catch (error) {
-      const hasNextModel = index < ASK_TINY_STEPS_MODEL_CASCADE.length - 1;
+      const hasNextModel = index < cascade.length - 1;
       if (hasNextModel && isAskTinyStepsModelFallbackEligible(error)) {
         continue;
       }
-
-      // Never expose provider details, URL retrieval diagnostics, model routing,
-      // or conversation history in the visitor UI/logs.
       throw new Error(ASK_TINY_STEPS_SAFE_ERROR);
     }
   }
