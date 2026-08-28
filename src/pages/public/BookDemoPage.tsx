@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
 import { createFAQPageSchema } from '../../lib/schemas';
+import { resolveBlogLeadSourceDetail } from '../../lib/blogLeadAttribution';
 import PublicAssessmentForm from '../../components/forms/PublicAssessmentForm';
 import {
   FREE_DEMO_CTA_LABEL,
@@ -39,6 +40,12 @@ const assessmentFaqItems = [
 ];
 
 export default function BookDemoPage() {
+  const location = useLocation();
+  const assessmentSource = useMemo(
+    () => resolveBlogLeadSourceDetail(location.search) || 'book_demo_page',
+    [location.search],
+  );
+
   useEffect(() => {
     applySeo({
       title: 'Book a Free 35-Minute Demo Assessment Class | Tiny Steps Learning',
@@ -112,7 +119,7 @@ export default function BookDemoPage() {
         </div>
 
         <div id="assessment-form" className="mx-auto mt-12 max-w-2xl">
-          <PublicAssessmentForm source="book_demo_page" autoFocusFirstField />
+          <PublicAssessmentForm source={assessmentSource} autoFocusFirstField />
         </div>
       </section>
 
