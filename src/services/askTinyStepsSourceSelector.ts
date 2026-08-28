@@ -348,9 +348,6 @@ export function selectAskTinyStepsSources(
     : undefined;
   const lastUserMessage = recentUserMessages.at(-1) ?? '';
 
-  // Explicit parent wording wins even on a school page. Otherwise, a clearly
-  // institutional question or an institutional current page establishes school
-  // context. History is used only for genuinely vague follow-ups.
   const audience: AskTinyStepsSelectionAudience = hasParentContext(currentQuestion)
     ? 'parents'
     : hasSchoolContext(currentQuestion)
@@ -377,7 +374,9 @@ export function selectAskTinyStepsSources(
 
   directSourceIds(intent, audience, contextText, currentQuestion).forEach((id) => add(sourceById(id)));
 
-  if (currentPageSource && (isFollowUp || selected.length === 0)) {
+  // Current-page context is useful for a vague "tell me more" continuation, but
+  // must not make an unrelated standalone question consume URL Context tokens.
+  if (currentPageSource && isFollowUp) {
     add(currentPageSource);
   }
 
