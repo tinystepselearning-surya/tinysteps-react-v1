@@ -27,7 +27,7 @@ describe('useAskTinyStepsChat submission guards', () => {
     expect(result.current.error).toContain('under 2000 characters');
   });
 
-  it('passes registry-selected source ids to Firebase AI Logic', async () => {
+  it('passes only the canonical pricing source to Firebase AI Logic', async () => {
     serviceMocks.call.mockResolvedValue('Our current pricing is on the pricing page.');
     const { result } = renderHook(() => useAskTinyStepsChat());
 
@@ -35,9 +35,19 @@ describe('useAskTinyStepsChat submission guards', () => {
 
     expect(serviceMocks.call).toHaveBeenCalledTimes(1);
     expect(serviceMocks.call.mock.calls[0][1]).toEqual({
-      sourceIds: expect.arrayContaining(['pricing', 'book-demo']),
+      sourceIds: ['pricing'],
     });
     expect(result.current.messages[result.current.messages.length - 1]?.content).toContain('pricing');
+  });
+
+  it('routes one-to-one questions to the canonical pricing source', async () => {
+    serviceMocks.call.mockResolvedValue('Yes. Tiny Steps offers live 1:1 classes.');
+    const { result } = renderHook(() => useAskTinyStepsChat());
+
+    await act(async () => result.current.sendMessage('Do you provide one-to-one classes?'));
+
+    expect(serviceMocks.call).toHaveBeenCalledTimes(1);
+    expect(serviceMocks.call.mock.calls[0][1]).toEqual({ sourceIds: ['pricing'] });
   });
 
   it('prevents duplicate submissions even before React rerenders loading state', async () => {
