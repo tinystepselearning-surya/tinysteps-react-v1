@@ -32,6 +32,7 @@ const post: BlogPost = {
     { type: 'h2', content: 'Five quick checks to find the actual bottleneck' },
     { type: 'h3', content: '1. Sound recall check' },
     { type: 'p', content: 'Show a small set of already-taught letters in mixed order. Can the child give the sounds without reciting the alphabet sequence? If recall is slow or inconsistent, strengthen sound-symbol mapping before expecting fluent blending.' },
+    { type: 'p', content: 'If this sound-recall check is the weak point, use [Tiny Steps Phonics Balloon Pop](/free-balloon-pop-phonics-game-for-kids) as a short sound-to-print warm-up: the child hears one target sound, finds the matching printed letter, and pops the balloon. If sound recall is already quick and accurate, do not stay on letter-sound practice; move on to oral and printed blending.' },
     { type: 'h3', content: '2. Oral blending check' },
     { type: 'p', content: 'Without showing print, say a simple sequence such as /m/ /a/ /p/. Can the child combine the sounds and say map? If oral blending is difficult, the child may need more phonemic-awareness practice before print is added.' },
     { type: 'h3', content: '3. Printed blending check' },
@@ -83,7 +84,7 @@ const post: BlogPost = {
     { type: 'p', content: '[Reading Rockets on phonics and decoding](https://www.readingrockets.org/reading-101/reading-and-writing-basics/phonics-and-decoding) likewise describes effective phonics as systematic and explicit, with frequent opportunities to apply letter-sound knowledge in words, sentences and stories. These sources support the sequence used in this guide; they do not imply that every child progresses at the same rate.' },
 
     { type: 'h2', content: 'Tiny Steps next-step pathway' },
-    { type: 'p', content: 'Tiny Steps uses an assessment-first approach: identify whether the bottleneck is sound knowledge, blending, decoding, fluency, comprehension or confidence, then choose the relevant learning path. Explore [structured phonics support](/phonics) for decoding foundations, [reading classes for kids](/reading-classes-for-kids) for broader reading needs, or [book a free 35-minute 1:1 demo assessment class](/book-demo) when you want help identifying the starting point.' },
+    { type: 'p', content: 'Tiny Steps uses an assessment-first approach: identify whether the bottleneck is sound knowledge, blending, decoding, fluency, comprehension or confidence, then choose the relevant learning path. If sound recall itself needs strengthening, use [Tiny Steps Phonics Balloon Pop](/free-balloon-pop-phonics-game-for-kids) for a short listen-and-match practice step. Explore [structured phonics support](/phonics) for decoding foundations, [reading classes for kids](/reading-classes-for-kids) for broader reading needs, or [book a free 35-minute 1:1 demo assessment class](/book-demo) when you want help identifying the starting point.' },
   ],
   faq: [
     { question: 'Why can my child say every letter sound but still not read cat?', answer: 'The child may know the individual sounds but still need to learn how to hold them in order and blend them into one spoken word. Test oral blending and printed blending separately.' },
