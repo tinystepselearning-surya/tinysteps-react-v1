@@ -46,6 +46,25 @@ describe('Ask Tiny Steps smart source selector', () => {
     expect(selection.sources.every((source) => source.audience !== 'parents')).toBe(true);
   });
 
+  it('does not mistake a parent mentioning school for an institutional user', () => {
+    const selection = selectAskTinyStepsSources(
+      'My child is struggling to read words at school. Which course can help?',
+    );
+
+    expect(selection.audience).toBe('parents');
+    expect(selection.sourceIds).not.toContain('for-schools');
+  });
+
+  it('uses the For Schools page as institutional context for an ambiguous pricing question', () => {
+    const selection = selectAskTinyStepsSources('What are your prices?', {
+      currentPath: '/for-schools',
+    });
+
+    expect(selection.audience).toBe('schools');
+    expect(selection.sourceIds[0]).toBe('for-schools');
+    expect(selection.sourceIds).not.toContain('pricing');
+  });
+
   it('uses archived Summer Camp content only for an explicit historical Summer Camp question', () => {
     const explicit = selectAskTinyStepsSources('What happened in Summer Camp 2026?');
     const normal = selectAskTinyStepsSources('Which course is suitable for my child?');
