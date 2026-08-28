@@ -15,6 +15,7 @@ const post: PhonicsSeoPost = {
     'At-home diagnostic checklist, step 7: Does your child forget sounds while reading and restart often?',
     'Common reasons this happens: children may memorize alphabet names but still have weak letter-sound mapping, weak blending, weak phonemic awareness, too much guessing, or not enough structured practice.',
     'What parents can do at home: use short sound games, oral blending before print, simple CVC blending, and one calm routine. Avoid pressure and avoid random word lists without sequence.',
+    'For the broader framework around phonics, decoding, multilingual homes and programme quality, use the [complete Phonics for Parents guide](/blog/phonics-for-parents-guide).',
     'If your child already recalls letter sounds accurately but still cannot join them into words, move to the separate [letter-sounds-but-cannot-read diagnostic guide](/blog/why-child-knows-letter-sounds-but-cannot-read-words) rather than repeating alphabet work.',
     'If stage-matched practice is not producing greater independence, ask the child’s teacher or a qualified reading professional to review the pattern instead of simply increasing worksheet volume.'
   ],
