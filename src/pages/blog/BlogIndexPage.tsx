@@ -195,7 +195,7 @@ const ArticleImage: FC<{ post: BlogIndexItem; eager?: boolean }> = ({ post, eage
     <div className="aspect-[16/9] overflow-hidden bg-slate-100">
       <img
         src={hero}
-        alt=""
+        alt={post.title}
         width={720}
         height={405}
         loading={eager ? 'eager' : 'lazy'}
@@ -286,21 +286,24 @@ const BlogIndexPage: FC = () => {
       description:
         'Parent-friendly blog for phonics, grammar, speaking, English communication, home routines, and education research.',
       publisher: { '@id': ORGANIZATION_ID },
-      blogPost: sortedPublishedPosts.map((post) => ({
-        '@type': 'BlogPosting',
-        headline: post.title,
-        datePublished: isoDateFromYMD(post.date),
-        ...(post.modifiedDate ? { dateModified: isoDateFromYMD(post.modifiedDate) } : {}),
-        articleSection: post.discoveryCategory || post.category,
-        image: post.hero
-          ? String(post.hero).startsWith('http')
-            ? post.hero
-            : `${SITE_ORIGIN}${post.hero}`
-          : `${SITE_ORIGIN}/logo-square.webp`,
-        author: buildBlogAuthorSchema(resolveBlogAuthor(post.author, post.category)),
-        publisher: { '@id': ORGANIZATION_ID },
-        url: `${SITE_ORIGIN}/blog/${post.slug}`,
-      })),
+      blogPost: sortedPublishedPosts.map((post) => {
+        const hero = resolveBlogHero(post);
+        return {
+          '@type': 'BlogPosting',
+          headline: post.title,
+          datePublished: isoDateFromYMD(post.date),
+          ...(post.modifiedDate ? { dateModified: isoDateFromYMD(post.modifiedDate) } : {}),
+          articleSection: post.discoveryCategory || post.category,
+          image: hero
+            ? String(hero).startsWith('http')
+              ? hero
+              : `${SITE_ORIGIN}${hero}`
+            : `${SITE_ORIGIN}/logo-square.webp`,
+          author: buildBlogAuthorSchema(resolveBlogAuthor(post.author, post.category)),
+          publisher: { '@id': ORGANIZATION_ID },
+          url: `${SITE_ORIGIN}/blog/${post.slug}`,
+        };
+      }),
     }),
     [sortedPublishedPosts],
   );
