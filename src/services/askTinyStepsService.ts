@@ -168,9 +168,9 @@ function providerErrorText(error: unknown): string {
 }
 
 /**
- * Advance to the next Gemini model only for narrow provider availability failures.
- * Security/config/request/grounding failures deliberately return false so a stronger
- * model cascade cannot hide App Check, prompt, or application defects.
+ * Advance only for failures that are safely attributable to transient provider/model
+ * availability. App Check, invalid requests, policy errors and URL grounding failures
+ * deliberately remain fail-closed and must never be hidden by a stronger cascade.
  */
 export function isAskTinyStepsModelFallbackEligible(error: unknown): boolean {
   const text = providerErrorText(error).toLowerCase();
@@ -188,6 +188,21 @@ export function isAskTinyStepsModelFallbackEligible(error: unknown): boolean {
       text,
     );
   if (serviceUnavailable) return true;
+
+  const providerTimeout =
+    /(^|\D)(408|504)(\D|$)/.test(text) ||
+    /deadline[-_\s]?exceeded|request (?:timed out|timeout)|timed out|network timeout|fetch timeout|gateway timeout/.test(
+      text,
+    );
+  if (providerTimeout) return true;
+
+  const providerInternal =
+    /(^|\D)(500|502)(\D|$)/.test(text) ||
+    /\b(internal server error|internal_error|internal-error|backend internal error|upstream error)\b/.test(
+      text,
+    ) ||
+    /(?:^|\s)internal(?:\s|$|:)/.test(text);
+  if (providerInternal) return true;
 
   const modelUnavailable =
     /model(?:\s+[\w.-]+)?[^.\n]*(?:not found|not available|unavailable|retired|shutdown|shut down)/.test(
@@ -242,7 +257,7 @@ export async function callAskTinySteps(
       }
       if (responseHitOutputLimit(result.response)) {
         // A partial sentence is worse than a deterministic verified fallback. Do
-        // not switch models for this application-level integrity failure.
+        // not spend another model call on an application-level output-limit failure.
         throw new Error('incomplete-response-max-tokens');
       }
 
