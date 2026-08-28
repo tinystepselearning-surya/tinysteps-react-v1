@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const firebaseMocks = vi.hoisted(() => ({
   getApps: vi.fn(),
-  getApp: vi.fn(),
   initializeApp: vi.fn(),
   initializeAppCheck: vi.fn(),
   provider: vi.fn(),
@@ -13,7 +12,6 @@ const firebaseMocks = vi.hoisted(() => ({
 
 vi.mock('firebase/app', () => ({
   getApps: firebaseMocks.getApps,
-  getApp: firebaseMocks.getApp,
   initializeApp: firebaseMocks.initializeApp,
 }));
 
@@ -29,7 +27,9 @@ vi.mock('firebase/ai', () => ({
 }));
 
 import {
+  ASK_TINY_STEPS_APPLICATION_DEADLINE_MS,
   ASK_TINY_STEPS_APP_NAME,
+  ASK_TINY_STEPS_GUIDANCE_MODEL_CASCADE,
   ASK_TINY_STEPS_MAX_OUTPUT_TOKENS,
   ASK_TINY_STEPS_MODEL,
   ASK_TINY_STEPS_MODEL_CASCADE,
@@ -38,6 +38,7 @@ import {
   ASK_TINY_STEPS_THINKING_BUDGET,
   getAskTinyStepsApp,
   getAskTinyStepsGenerativeModel,
+  getAskTinyStepsModelCascade,
   initializeAskTinyStepsAppCheck,
 } from '../../lib/askTinyStepsFirebaseAI';
 
@@ -73,43 +74,61 @@ describe('Ask Tiny Steps secondary Firebase AI client', () => {
     expect(firebaseMocks.initializeApp).not.toHaveBeenCalledWith(expect.anything());
   });
 
-  it('prefers 3.7 Flash, then 3.5 Flash, then 3.5 Flash-Lite', () => {
+  it('uses stable 3.5 Flash then Flash-Lite for grounded production traffic', () => {
     expect(ASK_TINY_STEPS_MODEL_CASCADE).toEqual([
-      'gemini-3.7-flash',
       'gemini-3.5-flash',
       'gemini-3.5-flash-lite',
     ]);
-    expect(ASK_TINY_STEPS_MODEL).toBe('gemini-3.7-flash');
+    expect(ASK_TINY_STEPS_MODEL).toBe('gemini-3.5-flash');
+    expect(getAskTinyStepsModelCascade('first_party_grounded')).toEqual(
+      ASK_TINY_STEPS_MODEL_CASCADE,
+    );
   });
 
-  it('uses a 12s/10s/8s per-model timeout budget instead of a 60s stall', () => {
+  it('uses Flash-Lite only for tool-free general guidance', () => {
+    expect(ASK_TINY_STEPS_GUIDANCE_MODEL_CASCADE).toEqual(['gemini-3.5-flash-lite']);
+    expect(getAskTinyStepsModelCascade('general_guidance')).toEqual([
+      'gemini-3.5-flash-lite',
+    ]);
+  });
+
+  it('uses bounded 12s/8s SDK timeouts plus application deadlines', () => {
     expect(ASK_TINY_STEPS_MODEL_TIMEOUT_MS).toEqual({
-      'gemini-3.7-flash': 12_000,
-      'gemini-3.5-flash': 10_000,
+      'gemini-3.5-flash': 12_000,
       'gemini-3.5-flash-lite': 8_000,
     });
     expect(ASK_TINY_STEPS_REQUEST_TIMEOUT_MS).toBe(12_000);
+    expect(ASK_TINY_STEPS_APPLICATION_DEADLINE_MS).toEqual({
+      first_party_grounded: 12_000,
+      general_guidance: 8_000,
+    });
   });
 
-  it('uses Gemini Developer API and URL Context with the requested model timeout', () => {
+  it('enables URL Context only for first-party grounded mode', () => {
     firebaseMocks.getApps.mockReturnValue([askApp]);
-    getAskTinyStepsGenerativeModel('gemini-3.5-flash');
+    getAskTinyStepsGenerativeModel('gemini-3.5-flash', 'first_party_grounded');
 
-    expect(firebaseMocks.backend).toHaveBeenCalledOnce();
-    expect(firebaseMocks.getAI).toHaveBeenCalledWith(askApp, {
-      backend: expect.anything(),
-    });
     expect(firebaseMocks.getGenerativeModel).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
         model: 'gemini-3.5-flash',
         tools: [{ urlContext: {} }],
       }),
-      { timeout: 10_000 },
+      { timeout: 12_000 },
     );
   });
 
-  it('uses the SDK-compatible near-minimal thinking budget with answer headroom', () => {
+  it('does not expose URL Context to general-guidance requests', () => {
+    firebaseMocks.getApps.mockReturnValue([askApp]);
+    getAskTinyStepsGenerativeModel('gemini-3.5-flash-lite', 'general_guidance');
+
+    const modelConfig = firebaseMocks.getGenerativeModel.mock.calls[0][1];
+    expect(modelConfig.model).toBe('gemini-3.5-flash-lite');
+    expect(modelConfig).not.toHaveProperty('tools');
+    expect(firebaseMocks.getGenerativeModel.mock.calls[0][2]).toEqual({ timeout: 8_000 });
+  });
+
+  it('uses the SDK-compatible minimum thinking budget with answer headroom', () => {
     firebaseMocks.getApps.mockReturnValue([askApp]);
     getAskTinyStepsGenerativeModel();
 
@@ -121,23 +140,18 @@ describe('Ask Tiny Steps secondary Firebase AI client', () => {
       thinkingConfig: { thinkingBudget: ASK_TINY_STEPS_THINKING_BUDGET },
     });
     expect(modelConfig.generationConfig).not.toHaveProperty('temperature');
-    expect(modelConfig.generationConfig.thinkingConfig).not.toHaveProperty('thinkingLevel');
   });
 
-  it('applies the shortest timeout to the final Flash-Lite fallback', () => {
-    firebaseMocks.getApps.mockReturnValue([askApp]);
-    getAskTinyStepsGenerativeModel('gemini-3.5-flash-lite');
-
-    expect(firebaseMocks.getGenerativeModel.mock.calls[0][2]).toEqual({ timeout: 8_000 });
-  });
-
-  it('defaults direct model creation to the 3.7 Flash primary', () => {
+  it('defaults direct model creation to stable 3.5 Flash grounded mode', () => {
     firebaseMocks.getApps.mockReturnValue([askApp]);
     getAskTinyStepsGenerativeModel();
 
     expect(firebaseMocks.getGenerativeModel).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ model: 'gemini-3.7-flash' }),
+      expect.objectContaining({
+        model: 'gemini-3.5-flash',
+        tools: [{ urlContext: {} }],
+      }),
       expect.anything(),
     );
   });
@@ -155,9 +169,9 @@ describe('Ask Tiny Steps secondary Firebase AI client', () => {
   });
 
   it('refuses to initialize Ask Tiny Steps App Check on the default app', () => {
-    expect(() =>
-      initializeAskTinyStepsAppCheck({ name: '[DEFAULT]' } as never),
-    ).toThrow('Refusing to initialize');
+    expect(() => initializeAskTinyStepsAppCheck({ name: '[DEFAULT]' } as never)).toThrow(
+      'Refusing to initialize',
+    );
     expect(firebaseMocks.initializeAppCheck).not.toHaveBeenCalled();
   });
 
