@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+// @ts-expect-error Build/SEO tooling is intentionally authored as executable ESM JavaScript.
 import { RETIRED_BLOG_PATH_REDIRECTS } from '../../../scripts/blog-consolidation-map.mjs';
 
 const ROOT = process.cwd();
