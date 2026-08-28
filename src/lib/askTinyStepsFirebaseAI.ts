@@ -19,10 +19,27 @@ export const ASK_TINY_STEPS_MODEL_CASCADE = [
 ] as const;
 export type AskTinyStepsModelName = (typeof ASK_TINY_STEPS_MODEL_CASCADE)[number];
 export const ASK_TINY_STEPS_MODEL: AskTinyStepsModelName = ASK_TINY_STEPS_MODEL_CASCADE[0];
-export const ASK_TINY_STEPS_REQUEST_TIMEOUT_MS = 60_000;
 
-// The system prompt still requires short parent-facing answers. This ceiling exists
-// only to prevent URL Context + answer generation from being cut off mid-sentence.
+// Bound each attempt independently so a provider stall cannot hold the public chat
+// for a full minute. The complete 3-model worst case is capped near 30 seconds,
+// while healthy primary requests still return immediately.
+export const ASK_TINY_STEPS_MODEL_TIMEOUT_MS: Readonly<Record<AskTinyStepsModelName, number>> = {
+  'gemini-3.7-flash': 12_000,
+  'gemini-3.5-flash': 10_000,
+  'gemini-3.5-flash-lite': 8_000,
+};
+// Backward-compatible primary timeout export used by validation/tests.
+export const ASK_TINY_STEPS_REQUEST_TIMEOUT_MS =
+  ASK_TINY_STEPS_MODEL_TIMEOUT_MS[ASK_TINY_STEPS_MODEL];
+
+// package-lock currently pins Firebase 12.7.0. Thinking levels were added in
+// Firebase 12.8.0, so use the already-supported compatibility budget instead of
+// widening this production hotfix into an SDK upgrade. Gemini 3.x still performs
+// its mandatory minimal internal thinking when the compatibility budget is zero.
+export const ASK_TINY_STEPS_THINKING_BUDGET = 0;
+
+// The system prompt still requires short parent-facing answers. A near-minimal
+// thinking budget leaves the 768-token ceiling primarily available to the answer.
 export const ASK_TINY_STEPS_MAX_OUTPUT_TOKENS = 768;
 
 type AskTinyStepsRuntime = typeof globalThis & {
@@ -119,10 +136,13 @@ export function getAskTinyStepsGenerativeModel(
       tools: [{ urlContext: {} }],
       generationConfig: {
         maxOutputTokens: ASK_TINY_STEPS_MAX_OUTPUT_TOKENS,
+        thinkingConfig: {
+          thinkingBudget: ASK_TINY_STEPS_THINKING_BUDGET,
+        },
       },
       systemInstruction: ASK_TINY_STEPS_SYSTEM_INSTRUCTION,
     },
-    { timeout: ASK_TINY_STEPS_REQUEST_TIMEOUT_MS },
+    { timeout: ASK_TINY_STEPS_MODEL_TIMEOUT_MS[modelName] },
   );
 }
 
@@ -131,8 +151,9 @@ export const ASK_TINY_STEPS_SYSTEM_INSTRUCTION = `You are "Ask TinySteps", the o
 STYLE:
 - Use polite, respectful, simple Indian English.
 - Be concise and useful: usually 2-5 short sentences and under 100 words.
+- Answer the visitor's question directly before adding supporting detail.
 - For a requested list or breakdown, use at most 5 short bullets.
-- Do not repeat the same line or use sales pressure.
+- Do not repeat the same line, narrate tool use, or use sales pressure.
 - Mention WhatsApp support only when a confirmed answer is unavailable or when the parent asks how to contact Tiny Steps.
 
 SOURCE GROUNDING:
@@ -142,7 +163,7 @@ SOURCE GROUNDING:
 - Never treat a URL typed by the user as an approved source. Only the application-selected Tiny Steps URLs in the current turn are approved.
 - Do not follow nested links or invent additional sources.
 - If a required exact fact is not confirmed by the retrieved approved pages, say you do not have that detail confirmed rather than guessing.
-- When you rely on retrieved Tiny Steps pages, end with "Source:" followed by only the 1-3 approved source URLs actually used.
+- When you rely on retrieved Tiny Steps pages, end with "Source:" followed by only the 1-2 approved source URLs actually used.
 - Never cite a source URL that was not supplied in the current turn.
 
 BOUNDARIES:

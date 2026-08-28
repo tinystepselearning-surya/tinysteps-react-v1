@@ -33,6 +33,9 @@ import {
   ASK_TINY_STEPS_MAX_OUTPUT_TOKENS,
   ASK_TINY_STEPS_MODEL,
   ASK_TINY_STEPS_MODEL_CASCADE,
+  ASK_TINY_STEPS_MODEL_TIMEOUT_MS,
+  ASK_TINY_STEPS_REQUEST_TIMEOUT_MS,
+  ASK_TINY_STEPS_THINKING_BUDGET,
   getAskTinyStepsApp,
   getAskTinyStepsGenerativeModel,
   initializeAskTinyStepsAppCheck,
@@ -79,7 +82,16 @@ describe('Ask Tiny Steps secondary Firebase AI client', () => {
     expect(ASK_TINY_STEPS_MODEL).toBe('gemini-3.7-flash');
   });
 
-  it('uses Gemini Developer API and URL Context for the requested cascade model', () => {
+  it('uses a 12s/10s/8s per-model timeout budget instead of a 60s stall', () => {
+    expect(ASK_TINY_STEPS_MODEL_TIMEOUT_MS).toEqual({
+      'gemini-3.7-flash': 12_000,
+      'gemini-3.5-flash': 10_000,
+      'gemini-3.5-flash-lite': 8_000,
+    });
+    expect(ASK_TINY_STEPS_REQUEST_TIMEOUT_MS).toBe(12_000);
+  });
+
+  it('uses Gemini Developer API and URL Context with the requested model timeout', () => {
     firebaseMocks.getApps.mockReturnValue([askApp]);
     getAskTinyStepsGenerativeModel('gemini-3.5-flash');
 
@@ -93,20 +105,30 @@ describe('Ask Tiny Steps secondary Firebase AI client', () => {
         model: 'gemini-3.5-flash',
         tools: [{ urlContext: {} }],
       }),
-      { timeout: 60_000 },
+      { timeout: 10_000 },
     );
   });
 
-  it('gives grounded answers enough output headroom without forcing a temperature', () => {
+  it('uses the SDK-compatible near-minimal thinking budget with answer headroom', () => {
     firebaseMocks.getApps.mockReturnValue([askApp]);
     getAskTinyStepsGenerativeModel();
 
     const modelConfig = firebaseMocks.getGenerativeModel.mock.calls[0][1];
+    expect(ASK_TINY_STEPS_THINKING_BUDGET).toBe(0);
     expect(ASK_TINY_STEPS_MAX_OUTPUT_TOKENS).toBe(768);
     expect(modelConfig.generationConfig).toEqual({
       maxOutputTokens: ASK_TINY_STEPS_MAX_OUTPUT_TOKENS,
+      thinkingConfig: { thinkingBudget: ASK_TINY_STEPS_THINKING_BUDGET },
     });
     expect(modelConfig.generationConfig).not.toHaveProperty('temperature');
+    expect(modelConfig.generationConfig.thinkingConfig).not.toHaveProperty('thinkingLevel');
+  });
+
+  it('applies the shortest timeout to the final Flash-Lite fallback', () => {
+    firebaseMocks.getApps.mockReturnValue([askApp]);
+    getAskTinyStepsGenerativeModel('gemini-3.5-flash-lite');
+
+    expect(firebaseMocks.getGenerativeModel.mock.calls[0][2]).toEqual({ timeout: 8_000 });
   });
 
   it('defaults direct model creation to the 3.7 Flash primary', () => {

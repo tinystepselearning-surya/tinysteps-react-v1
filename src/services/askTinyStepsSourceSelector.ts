@@ -4,12 +4,15 @@ import {
   type AskTinyStepsKnowledgeSource,
 } from '../config/askTinyStepsKnowledgeSources';
 
-export const ASK_TINY_STEPS_MAX_URL_CONTEXT_SOURCES = 3;
+// Keep URL Context intentionally small. Most public questions have one canonical
+// Tiny Steps page; diagnostic/school research questions may need a second page.
+export const ASK_TINY_STEPS_MAX_URL_CONTEXT_SOURCES = 2;
 
 export type AskTinyStepsSelectionAudience = Extract<AskTinyStepsAudience, 'parents' | 'schools'>;
 export type AskTinyStepsSelectionIntent =
   | 'assessment'
   | 'pricing'
+  | 'class_mode'
   | 'timings'
   | 'courses'
   | 'phonics'
@@ -70,6 +73,10 @@ const INTENT_RULES: readonly IntentRule[] = [
   {
     intent: 'timings',
     pattern: /\b(minute|minutes|duration|class length|time per class|how long(?: is| are)? (?:a |the )?class|how long is it)\b/i,
+  },
+  {
+    intent: 'class_mode',
+    pattern: /\b(1:1|one-to-one|one to one|one-on-one|individual classes?|private classes?)\b/i,
   },
   {
     intent: 'class_samples',
@@ -217,36 +224,37 @@ function directSourceIds(
 
   switch (intent) {
     case 'assessment':
-      return ['book-demo', 'faq'];
+      return ['book-demo'];
     case 'pricing':
-      return ['pricing', 'book-demo'];
+    case 'class_mode':
+      return ['pricing'];
     case 'timings':
-      return ['book-demo', 'faq'];
+      return ['book-demo'];
     case 'courses':
-      return ['courses', 'curriculum'];
+      return ['courses'];
     case 'phonics':
       if (/\b(letter sounds?|knows? sounds?|cannot read|can t read|cant read|blending)\b/i.test(contextText)) {
-        return ['sounds-cannot-read', 'phonics', 'letter-sounds-not-enough'];
+        return ['sounds-cannot-read', 'letter-sounds-not-enough'];
       }
-      return ['phonics', 'courses'];
+      return ['phonics'];
     case 'grammar':
-      return ['grammar', 'courses'];
+      return ['grammar'];
     case 'speaking':
-      return ['speaking', 'courses'];
+      return ['speaking'];
     case 'reading':
       if (/\b(fluency|slow reading|reads? slowly)\b/i.test(contextText)) {
-        return ['reading-fluency-guide', 'reading-classes', 'phonics'];
+        return ['reading-fluency-guide', 'reading-classes'];
       }
       if (/\b(cannot read|can t read|cant read|reading difficulty|not reading)\b/i.test(contextText)) {
-        return ['child-not-reading', 'reading-classes', 'phonics'];
+        return ['child-not-reading', 'reading-classes'];
       }
-      return ['reading-classes', 'phonics'];
+      return ['reading-classes'];
     case 'curriculum':
-      return ['curriculum', 'courses'];
+      return ['curriculum'];
     case 'methodology':
-      return ['why-tiny-steps', 'class-samples'];
+      return ['why-tiny-steps'];
     case 'class_samples':
-      return ['class-samples', 'why-tiny-steps'];
+      return ['class-samples'];
     case 'testimonials':
       return ['testimonials'];
     case 'contact':
@@ -254,7 +262,7 @@ function directSourceIds(
     case 'summer_camp':
       return ['summer-camps-2026'];
     case 'brand':
-      return ['home', 'why-tiny-steps', 'courses'];
+      return ['home'];
     default:
       return [];
   }
@@ -372,15 +380,18 @@ export function selectAskTinyStepsSources(
     selected.push(source);
   };
 
-  directSourceIds(intent, audience, contextText, currentQuestion).forEach((id) => add(sourceById(id)));
+  const directIds = directSourceIds(intent, audience, contextText, currentQuestion);
+  directIds.forEach((id) => add(sourceById(id)));
 
-  // Current-page context is useful for a vague "tell me more" continuation, but
-  // must not make an unrelated standalone question consume URL Context tokens.
+  // Add page context only for a genuine continuation. A standalone question never
+  // pays for a page merely because the user happens to be browsing it.
   if (currentPageSource && isFollowUp) {
     add(currentPageSource);
   }
 
-  if (selected.length < maxSources && intent !== 'general') {
+  // Direct mappings are authoritative and intentionally minimal. Semantic scoring
+  // is only a fallback for intents without a canonical route.
+  if (selected.length === 0 && intent !== 'general') {
     ASK_TINY_STEPS_KNOWLEDGE_SOURCES
       .filter((source) => isEligible(source, audience, intent))
       .map((source) => ({ source, score: scoreSource(source, contextText) }))
