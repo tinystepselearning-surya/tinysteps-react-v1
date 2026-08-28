@@ -27,6 +27,7 @@ const CAREERS_PATH = '/careers';
 const CAREERS_URL = 'https://tinystepslearning.com/careers';
 const ROLE_TITLE = 'Online English Teacher - Phonics, Grammar & Public Speaking';
 const WHATSAPP_NUMBER = '919618398383';
+const JOB_VALID_THROUGH = '2026-12-31T23:59:59+05:30';
 const CAREERS_TITLE = 'Online English Teacher Jobs in India | Tiny Steps Learning';
 const CAREERS_DESCRIPTION =
   'Apply for remote online English teacher jobs in India with Tiny Steps Learning. Teach phonics, grammar, spoken English and public speaking to children in live 1:1 classes.';
@@ -52,6 +53,7 @@ const AT_A_GLANCE = [
   ['Role', 'Online English Teacher'],
   ['Work mode', 'Fully remote / work from home'],
   ['Applications', 'Teachers based in India'],
+  ['Applications close', '31 December 2026'],
   ['Learners', 'Children aged 3–12'],
   ['Subjects', 'Phonics, Grammar, Speaking'],
   ['Class format', 'Live 1:1 online classes'],
@@ -457,11 +459,11 @@ export default function CareersPage() {
       'Teachers may be assigned Phonics, Grammar, Public Speaking or Spoken English lessons using structured Tiny Steps curriculum and teaching materials.',
       `Responsibilities include ${RESPONSIBILITIES.join(' ')}`,
       `Qualifications and requirements include ${REQUIREMENTS.join(' ')}`,
-      'Applications are currently open to teachers based in India. Candidates should provide their city or state and available teaching window in Indian Standard Time (IST).',
+      'Applications are currently open to teachers based in India through 31 December 2026. Candidates should provide their city or state and available teaching window in Indian Standard Time (IST).',
       'Consistent availability of around 3–4 teaching hours per day is preferred.',
       'Regular classes scheduled from 9:00 AM to 9:00 PM IST are paid at ₹175 per completed 35-minute class. Classes scheduled before 9:00 AM IST or after 9:00 PM IST are paid at ₹200 per completed 35-minute class. Assigned demo classes are paid separately, and successful demo conversions may qualify for additional incentives. Selected teachers receive structured training, demo preparation and active scheduling support, with confirmed teaching slots typically built within 1–2 weeks of onboarding.',
       'An illustrative four-week schedule of six completed regular classes per day across six teaching days can exceed ₹25,000 per month in regular-class earnings before paid demos, conversion incentives or extended-hours classes.',
-    ].join(' ');
+    ].join('\n');
 
     const jobPostingSchema = {
       '@context': 'https://schema.org',
@@ -475,6 +477,7 @@ export default function CareersPage() {
       title: ROLE_TITLE,
       description: jobDescription,
       datePosted: '2026-08-20',
+      validThrough: JOB_VALID_THROUGH,
       employmentType: 'PART_TIME',
       directApply: true,
       industry: 'Online Education',
@@ -483,6 +486,7 @@ export default function CareersPage() {
         name: 'Tiny Steps Learning',
         sameAs: 'https://tinystepslearning.com',
         url: 'https://tinystepslearning.com',
+        logo: 'https://tinystepslearning.com/android-chrome-512x512.png',
       },
       jobLocationType: 'TELECOMMUTE',
       applicantLocationRequirements: {
