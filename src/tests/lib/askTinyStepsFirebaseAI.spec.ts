@@ -25,12 +25,6 @@ vi.mock('firebase/app-check', () => ({
 vi.mock('firebase/ai', () => ({
   getAI: firebaseMocks.getAI,
   GoogleAIBackend: firebaseMocks.backend,
-  ThinkingLevel: {
-    MINIMAL: 'MINIMAL',
-    LOW: 'LOW',
-    MEDIUM: 'MEDIUM',
-    HIGH: 'HIGH',
-  },
   getGenerativeModel: firebaseMocks.getGenerativeModel,
 }));
 
@@ -41,6 +35,7 @@ import {
   ASK_TINY_STEPS_MODEL_CASCADE,
   ASK_TINY_STEPS_MODEL_TIMEOUT_MS,
   ASK_TINY_STEPS_REQUEST_TIMEOUT_MS,
+  ASK_TINY_STEPS_THINKING_BUDGET,
   getAskTinyStepsApp,
   getAskTinyStepsGenerativeModel,
   initializeAskTinyStepsAppCheck,
@@ -114,27 +109,25 @@ describe('Ask Tiny Steps secondary Firebase AI client', () => {
     );
   });
 
-  it('uses low thinking for 3.7/3.5 to reduce latency while preserving output headroom', () => {
+  it('uses the SDK-compatible near-minimal thinking budget with answer headroom', () => {
     firebaseMocks.getApps.mockReturnValue([askApp]);
     getAskTinyStepsGenerativeModel();
 
     const modelConfig = firebaseMocks.getGenerativeModel.mock.calls[0][1];
+    expect(ASK_TINY_STEPS_THINKING_BUDGET).toBe(0);
     expect(ASK_TINY_STEPS_MAX_OUTPUT_TOKENS).toBe(768);
     expect(modelConfig.generationConfig).toEqual({
       maxOutputTokens: ASK_TINY_STEPS_MAX_OUTPUT_TOKENS,
-      thinkingConfig: { thinkingLevel: 'LOW' },
+      thinkingConfig: { thinkingBudget: ASK_TINY_STEPS_THINKING_BUDGET },
     });
     expect(modelConfig.generationConfig).not.toHaveProperty('temperature');
+    expect(modelConfig.generationConfig.thinkingConfig).not.toHaveProperty('thinkingLevel');
   });
 
-  it('keeps Flash-Lite at minimal thinking for the cheapest final fallback', () => {
+  it('applies the shortest timeout to the final Flash-Lite fallback', () => {
     firebaseMocks.getApps.mockReturnValue([askApp]);
     getAskTinyStepsGenerativeModel('gemini-3.5-flash-lite');
 
-    const modelConfig = firebaseMocks.getGenerativeModel.mock.calls[0][1];
-    expect(modelConfig.generationConfig.thinkingConfig).toEqual({
-      thinkingLevel: 'MINIMAL',
-    });
     expect(firebaseMocks.getGenerativeModel.mock.calls[0][2]).toEqual({ timeout: 8_000 });
   });
 
