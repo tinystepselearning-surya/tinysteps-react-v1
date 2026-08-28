@@ -109,36 +109,38 @@ const post: BlogPost = {
     },
     {
       type: 'h2',
-      content: '5. Tiny Steps Method for Grammar and Sentence Formation',
-    },
-    {
-      type: 'li',
-      content: 'Vocabulary building for useful everyday sentence words.',
-    },
-    {
-      type: 'li',
-      content: 'Subject-verb-object practice for clear sentence patterns.',
-    },
-    {
-      type: 'li',
-      content: 'Grammar correction with child-friendly feedback.',
-    },
-    {
-      type: 'li',
-      content: 'Sentence expansion from simple to detailed expression.',
-    },
-    {
-      type: 'li',
-      content: 'Speaking practice with full-sentence responses.',
-    },
-    {
-      type: 'li',
-      content: 'Writing practice that transfers spoken sentences to correct written form.',
+      content: '5. How Tiny Steps checks sentence formation before adding more grammar',
     },
     {
       type: 'p',
       content:
-        'Explore grammar support: /grammar. Build communication confidence: /speaking. Compare learning routes: /courses. Read connected-skill guide: /blog/how-phonics-grammar-and-communication-work-together. Try home routine ideas: /blog/how-to-engage-kids-in-english-learning-at-home.',
+        'Tiny Steps separates sentence formation into observable steps instead of treating every weak sentence as the same grammar problem. We first check whether the child can say a complete simple sentence, then whether the same idea can be built from a clear subject-and-action pattern, expanded with one useful detail, and transferred into writing without losing the structure.',
+    },
+    {
+      type: 'li',
+      content: 'Oral sentence check: can the child describe a familiar picture or idea in one complete sentence without an adult finishing it?',
+    },
+    {
+      type: 'li',
+      content: 'Core structure check: can the child keep who + action + key detail in a sensible order?',
+    },
+    {
+      type: 'li',
+      content: 'Expansion check: can the child add where, when, how, or why without breaking the original sentence?',
+    },
+    {
+      type: 'li',
+      content: 'Writing transfer check: can the child write the same idea with the sentence structure still intact?',
+    },
+    {
+      type: 'p',
+      content:
+        'The first step that consistently breaks is the better practice target. If the oral sentence is incomplete, stay with guided speaking before adding writing. If speaking is clear but writing loses words or order, focus on oral-to-written transfer. If the simple sentence is secure but expansion causes errors, add only one detail at a time instead of introducing several new grammar rules together.',
+    },
+    {
+      type: 'p',
+      content:
+        'This matches the wider Tiny Steps curriculum approach of building grammar control through sentence formation and then carrying that control into clearer speaking and writing. Explore grammar support: /grammar. Build communication confidence: /speaking. Compare learning routes: /courses. Read connected-skill guide: /blog/how-phonics-grammar-and-communication-work-together. Try home routine ideas: /blog/how-to-engage-kids-in-english-learning-at-home.',
     },
     {
       type: 'h3',
@@ -191,7 +193,7 @@ const post: BlogPost = {
     {
       question: 'How long does sentence improvement usually take?',
       answer:
-        'It depends on starting level and practice consistency. Most children show visible progress when sentence routines are guided and repeated regularly.',
+        'It depends on starting level and practice consistency. Track whether complete sentences become more independent, details can be added without losing structure, and the same sentence control transfers from speaking into writing.',
     },
   ],
 };
