@@ -1,7 +1,14 @@
-import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useRef } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
 import { createFAQPageSchema } from '../../lib/schemas';
+import {
+  getBlogConversionAttribution,
+  parseBlogLeadSourceDetail,
+  resolveBlogLeadSourceDetail,
+} from '../../lib/blogLeadAttribution';
+import { trackBlogDemoStart, trackBlogDemoSubmit } from '../../lib/blogConversionTracking';
+import type { BlogConversionFamily } from '../../content/blog/shared/conversionFamilies';
 import PublicAssessmentForm from '../../components/forms/PublicAssessmentForm';
 import {
   FREE_DEMO_CTA_LABEL,
@@ -38,7 +45,36 @@ const assessmentFaqItems = [
   },
 ];
 
+function programForBlogFamily(family: BlogConversionFamily) {
+  if (family === 'phonics-diagnostic' || family === 'phonics-practice' || family === 'reading-fluency') {
+    return 'phonics' as const;
+  }
+  if (family === 'grammar-diagnostic' || family === 'sentence-building') return 'grammar' as const;
+  if (family === 'speaking-confidence') return 'speaking' as const;
+  return 'general' as const;
+}
+
 export default function BookDemoPage() {
+  const location = useLocation();
+  const demoStartTrackedRef = useRef(false);
+  const assessmentSource = useMemo(
+    () => resolveBlogLeadSourceDetail(location.search) || 'book_demo_page',
+    [location.search],
+  );
+  const blogDemoContext = useMemo(() => {
+    const parsed = parseBlogLeadSourceDetail(assessmentSource);
+    if (!parsed) return null;
+    const stored = getBlogConversionAttribution();
+    return {
+      article_slug: parsed.articleSlug,
+      conversion_family: parsed.family,
+      intent_cluster: stored.lastIntentCluster || parsed.family,
+      program: programForBlogFamily(parsed.family),
+      cta_position: parsed.ctaPosition,
+      destination_path: '/book-demo',
+    };
+  }, [assessmentSource]);
+
   useEffect(() => {
     applySeo({
       title: 'Book a Free 35-Minute Demo Assessment Class | Tiny Steps Learning',
@@ -68,6 +104,21 @@ export default function BookDemoPage() {
       ],
     });
   }, []);
+
+  useEffect(() => {
+    if (!blogDemoContext) return;
+    const assessmentForm = document.getElementById('assessment-form');
+    if (!assessmentForm) return;
+
+    const handleStart = () => {
+      if (demoStartTrackedRef.current) return;
+      demoStartTrackedRef.current = true;
+      trackBlogDemoStart(blogDemoContext);
+    };
+
+    assessmentForm.addEventListener('focusin', handleStart);
+    return () => assessmentForm.removeEventListener('focusin', handleStart);
+  }, [blogDemoContext]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -112,7 +163,11 @@ export default function BookDemoPage() {
         </div>
 
         <div id="assessment-form" className="mx-auto mt-12 max-w-2xl">
-          <PublicAssessmentForm source="book_demo_page" autoFocusFirstField />
+          <PublicAssessmentForm
+            source={assessmentSource}
+            autoFocusFirstField
+            onSuccess={blogDemoContext ? () => trackBlogDemoSubmit(blogDemoContext) : undefined}
+          />
         </div>
       </section>
 

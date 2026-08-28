@@ -21,9 +21,13 @@ import {
   getBlogTechnicalAuthority,
   getBlogWebPageId,
 } from '../content/blog/shared/technicalAuthority';
+import { getBlogConversionConfig } from '../content/blog/shared/conversionFamilies';
 import { ORGANIZATION_ID, PUBLIC_FACTS, SITE_ORIGIN } from '../lib/schemas';
+import { buildBlogDemoPath, captureBlogArticleContext, captureBlogCtaContext } from '../lib/blogLeadAttribution';
+import { trackBlogArticleView, trackBlogCtaClick, trackBlogProgramClick } from '../lib/blogConversionTracking';
 import AboutAuthor from '../components/AboutAuthor';
 import ParentsAlsoAsk from '../components/ParentsAlsoAsk';
+import BlogConversionCard from '../components/blog/BlogConversionCard';
 import ResearchArticleHero from '../components/blog/ResearchArticleHero';
 // Meta removed — use applySeo as single source of truth
 
@@ -238,6 +242,41 @@ const CATEGORY_ARTICLE_CONFIG = {
   },
 };
 
+const SCHOOL_RESEARCH_SEARCH_PAIN_POINTS = [
+  'How can our school implement phonics consistently across classrooms?',
+  'How should teachers assess decoding rather than memorisation?',
+  'What support helps teachers apply a structured literacy progression?',
+  'How can we turn research guidance into a practical school routine?',
+];
+
+const SCHOOL_RESEARCH_HERO_POINTS = [
+  {
+    label: 'Best for',
+    value: 'School literacy implementation',
+    detail: 'For school leaders and teachers planning structured phonics, decoding assessment, and classroom progression.',
+  },
+  {
+    label: 'Use this when',
+    value: 'Consistency matters across classrooms',
+    detail: 'Useful when a school needs a shared instructional route rather than isolated activities or one-off training.',
+  },
+  {
+    label: 'Next best route',
+    value: 'Tiny Steps for Schools',
+    detail: 'Continue to the school partnership route for implementation support, teacher development, and program planning.',
+  },
+];
+
+const SCHOOL_RESEARCH_SIDEBAR = {
+  sidebarTitle: 'Planning a school implementation?',
+  sidebarDescription:
+    'Explore school partnership support, teacher implementation, and a direct contact route for your leadership team.',
+  sidebarLinks: [
+    { label: 'Explore Tiny Steps for Schools', to: '/for-schools' },
+    { label: 'Contact Tiny Steps about your school', to: '/contact' },
+  ],
+};
+
 const POST_CTA_OVERRIDES: Record<string, {
   primaryAction?: {
     label: string;
@@ -414,53 +453,6 @@ function renderInlineContent(text: string) {
   return nodes.length ? nodes : text;
 }
 
-const PHONICS_ROUTE = {
-  label: 'Online Phonics Classes',
-  to: '/phonics',
-};
-
-const GRAMMAR_ROUTE = {
-  label: 'Grammar & Sentence Formation',
-  to: '/grammar',
-};
-
-const SPEAKING_ROUTE = {
-  label: 'Communication & Public Speaking',
-  to: '/speaking',
-};
-
-const GENERIC_ROUTE = {
-  label: 'Find the Right Course',
-  to: '/courses',
-};
-
-const PHONICS_KEYWORDS = ['phonics', 'reading', 'blend', 'cvc', 'vowel', 'digraph', 'spelling', 'sight words'];
-const GRAMMAR_KEYWORDS = ['grammar', 'sentence', 'writing', 'noun', 'verb', 'tense', 'punctuation', 'paragraph'];
-const SPEAKING_KEYWORDS = ['speaking', 'communication', 'confidence', 'public speaking', 'shy', 'one-word', 'answers'];
-
-function hasAnyKeyword(text: string, keywords: string[]) {
-  return keywords.some((keyword) => text.includes(keyword));
-}
-
-function resolveNextStepRoute(params: { category?: unknown; slug?: unknown; title?: unknown }) {
-  const category = String(params.category || '').toLowerCase();
-  if (category.includes('phonics')) return PHONICS_ROUTE;
-  if (category.includes('grammar')) return GRAMMAR_ROUTE;
-  if (
-    category.includes('public speaking')
-    || category.includes('speaking')
-    || category.includes('communication')
-  ) {
-    return SPEAKING_ROUTE;
-  }
-
-  const classifierText = `${String(params.slug || '')} ${String(params.title || '')}`.toLowerCase();
-  if (hasAnyKeyword(classifierText, PHONICS_KEYWORDS)) return PHONICS_ROUTE;
-  if (hasAnyKeyword(classifierText, GRAMMAR_KEYWORDS)) return GRAMMAR_ROUTE;
-  if (hasAnyKeyword(classifierText, SPEAKING_KEYWORDS)) return SPEAKING_ROUTE;
-  return GENERIC_ROUTE;
-}
-
 function buildHeadingMeta(blocks: Array<{ type: string; content: string }> = []) {
   const counts = new Map<string, number>();
 
@@ -532,6 +524,10 @@ const BlogPostPage: FC = () => {
   );
   const evidenceSummary = useMemo(
     () => (post ? getBlogEvidenceSummary(post) : null),
+    [post],
+  );
+  const blogConversionConfig = useMemo(
+    () => (post ? getBlogConversionConfig(post) : null),
     [post],
   );
 
@@ -697,10 +693,27 @@ function buildMetaDescription(src: any) {
     if (metaAuthor) metaAuthor.setAttribute('content', articleAuthor.name);
   }, [articleAuthor, slug, metaSource, jsonLd, breadcrumbSchema, post]);
 
+  useEffect(() => {
+    if (!post || !slug || !blogConversionConfig) return;
+    captureBlogArticleContext({
+      slug,
+      family: blogConversionConfig.family,
+      intentCluster: blogConversionConfig.intentCluster,
+      path: `/blog/${slug}`,
+    });
+    trackBlogArticleView({
+      article_slug: slug,
+      conversion_family: blogConversionConfig.family,
+      intent_cluster: blogConversionConfig.intentCluster,
+      authority_cluster: blogConversionConfig.authorityCluster,
+      program: blogConversionConfig.program,
+    });
+  }, [blogConversionConfig, post, slug]);
+
   const categoryConfig = CATEGORY_ARTICLE_CONFIG[metaSource.category] || CATEGORY_ARTICLE_CONFIG['Parent Tips'];
   const postCtaOverride = slug ? POST_CTA_OVERRIDES[slug] : undefined;
   const primaryAction = postCtaOverride?.primaryAction || categoryConfig.primaryAction;
-  const learningPathIntro = postCtaOverride?.learningPathIntro || categoryConfig.learningPathIntro;
+  const isSchoolConversion = blogConversionConfig?.family === 'schools-partnership';
   const weekMatch = String(metaSource.title || '').match(/^Week\s+(\d+)/i);
   const eyebrowPrimary = weekMatch ? `Week ${weekMatch[1]} Roadmap` : metaSource.category || 'Parent Guide';
   const rawEyebrowSecondary = deriveEyebrowSecondaryLabel(
@@ -715,7 +728,9 @@ function buildMetaDescription(src: any) {
   const heroSearchPainPoints =
     Array.isArray(post?.faq) && post.faq.length > 0
       ? post.faq.slice(0, 4).map((item) => item.question)
-      : categoryConfig.searchPainPoints;
+      : isSchoolConversion
+        ? SCHOOL_RESEARCH_SEARCH_PAIN_POINTS
+        : categoryConfig.searchPainPoints;
   const articleAuthorLabel = articleAuthor.name;
   const learningPathLinks = Array.isArray(postCtaOverride?.learningPathLinks)
     ? postCtaOverride.learningPathLinks
@@ -725,10 +740,59 @@ function buildMetaDescription(src: any) {
   const suppressCoursesFallback = Boolean(postCtaOverride?.suppressCoursesFallback);
   const hasCoursesLink = learningPathLinks.some((link) => link?.to === '/courses');
   const heroDescription = metaSource.metaDescription || metaSource.excerpt || buildMetaDescription(metaSource);
-  const nextStepPrimaryRoute = useMemo(
-    () => resolveNextStepRoute({ category: metaSource.category, slug, title: metaSource.title }),
-    [metaSource.category, metaSource.title, slug],
-  );
+  const sidebarConfig = isSchoolConversion ? SCHOOL_RESEARCH_SIDEBAR : categoryConfig;
+  const recommendedPrimaryAction = isSchoolConversion
+    ? blogConversionConfig?.primaryAction
+    : blogConversionConfig?.secondaryAction || primaryAction;
+
+  const buildTrackedHeroAction = (action: any, variant?: 'primary' | 'secondary') => {
+    if (!action || !slug || !blogConversionConfig) return null;
+    const destinationPath = action.kind === 'demo'
+      ? buildBlogDemoPath({ slug, family: blogConversionConfig.family, ctaPosition: 'hero' })
+      : action.to;
+    return {
+      label: action.label,
+      to: destinationPath,
+      variant,
+      onClick: () => {
+        captureBlogCtaContext({
+          slug,
+          family: blogConversionConfig.family,
+          intentCluster: blogConversionConfig.intentCluster,
+          ctaLabel: action.label,
+          ctaPosition: 'hero',
+          destinationPath,
+        });
+        const event = {
+          article_slug: slug,
+          conversion_family: blogConversionConfig.family,
+          intent_cluster: blogConversionConfig.intentCluster,
+          authority_cluster: blogConversionConfig.authorityCluster,
+          program: blogConversionConfig.program,
+          cta_position: 'hero',
+          cta_label: action.label,
+          destination_path: destinationPath,
+        };
+        trackBlogCtaClick(event);
+        if (action.kind === 'program' || action.kind === 'schools') trackBlogProgramClick(event);
+      },
+    };
+  };
+
+  const heroActions = blogConversionConfig
+    ? (isSchoolConversion
+      ? [
+          buildTrackedHeroAction(blogConversionConfig.primaryAction),
+          buildTrackedHeroAction(blogConversionConfig.secondaryAction, 'secondary'),
+        ]
+      : [
+          buildTrackedHeroAction(blogConversionConfig.secondaryAction || blogConversionConfig.primaryAction),
+          blogConversionConfig.secondaryAction
+            ? buildTrackedHeroAction(blogConversionConfig.primaryAction, 'secondary')
+            : null,
+        ]).filter(Boolean)
+    : [primaryAction, categoryConfig.secondaryAction];
+
   const headingItems = useMemo(() => buildHeadingMeta(post?.body || []), [post]);
   const articleNodes = useMemo(() => {
     if (!post) return MdxComp ? <MdxComp /> : null;
@@ -884,9 +948,10 @@ function buildMetaDescription(src: any) {
         authorTo={articleAuthor.profilePath}
         dateLabel={formatBlogDate(metaSource.date)}
         readTimeLabel={metaSource.readTime || '5 min read'}
-        actions={[primaryAction, categoryConfig.secondaryAction]}
+        actions={heroActions}
         searchPainPoints={heroSearchPainPoints}
-        heroPoints={categoryConfig.heroPoints}
+        searchLabel={isSchoolConversion ? 'Schools often ask' : 'Parents often search'}
+        heroPoints={isSchoolConversion ? SCHOOL_RESEARCH_HERO_POINTS : categoryConfig.heroPoints}
       />
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
@@ -931,33 +996,6 @@ function buildMetaDescription(src: any) {
 
             {post?.faq?.length ? <ParentsAlsoAsk items={post.faq} /> : null}
 
-            <section className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#101828,#1b2a46)] px-6 py-8 text-white shadow-[0_28px_80px_rgba(15,23,42,0.18)] sm:px-8">
-              <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-center">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">Continue with Tiny Steps learning paths</p>
-                  <h2 className="mt-3 text-3xl font-black tracking-tight">Turn this article into a clearer next step</h2>
-                  <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-200">
-                    {learningPathIntro || 'Choose a program aligned to your child&apos;s current stage and next learning goal.'}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-3 lg:justify-end">
-                  {learningPathLinks.map((link, index) => (
-                    <Link
-                      key={link.to}
-                      to={link.to}
-                      className={
-                        index === 0
-                          ? 'inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100'
-                          : 'inline-flex items-center rounded-full border border-white/18 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15'
-                      }
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </section>
-
             <AboutAuthor
               author={articleAuthor}
               variant={metaSource.category === 'Research' ? 'research' : 'standard'}
@@ -965,52 +1003,45 @@ function buildMetaDescription(src: any) {
               reviewLabel={reviewLabel}
             />
 
-            <section className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#eef8f2_100%)] p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Parent Guidance</p>
-              <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Next Step for Parents</h2>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-                If your child is facing this challenge, start with the right learning path instead of trying random worksheets. Tiny Steps can help identify whether your child needs support with phonics, grammar, reading, sentence formation, or speaking confidence.
-              </p>
-              <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold">
-                <Link to={nextStepPrimaryRoute.to} className="inline-flex items-center rounded-full bg-slate-950 px-5 py-3 text-white transition hover:bg-slate-800">
-                  {nextStepPrimaryRoute.label}
-                </Link>
-                <Link to="/courses" className="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-3 text-slate-900 shadow-sm transition hover:bg-slate-50">
-                  Explore Courses
-                </Link>
-                <Link to="/book-demo" className="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-3 text-slate-900 shadow-sm transition hover:bg-slate-50">
-                  Book Free 35-Minute Demo
-                </Link>
-              </div>
-            </section>
+            {blogConversionConfig && slug ? (
+              <BlogConversionCard slug={slug} config={blogConversionConfig} />
+            ) : null}
 
             <section className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#fff8ef_0%,#f6faff_100%)] p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Recommended Next for Parents</p>
-              <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Looking for more structured support?</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">
+                {isSchoolConversion ? 'Recommended Next for Schools' : 'Recommended Next for Parents'}
+              </p>
+              <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">
+                {isSchoolConversion ? 'Continue with school implementation resources' : 'Looking for more structured support?'}
+              </h2>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-                Explore our main programs, related guides, or compare courses directly.
+                {isSchoolConversion
+                  ? 'Explore the school partnership route and related implementation guidance.'
+                  : 'Explore the most relevant program, related guides, or compare courses directly.'}
               </p>
               <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold">
-                {primaryAction && (
-                  <Link to={primaryAction.to} className="inline-flex items-center rounded-full bg-slate-950 px-5 py-3 text-white transition hover:bg-slate-800">
-                    {primaryAction.label}
+                {recommendedPrimaryAction && (
+                  <Link to={recommendedPrimaryAction.to} className="inline-flex items-center rounded-full bg-slate-950 px-5 py-3 text-white transition hover:bg-slate-800">
+                    {recommendedPrimaryAction.label}
                   </Link>
                 )}
                 {blogPosts
-                  .filter(
-                    p =>
-                      p.category === metaSource.category
+                  .filter((p) => {
+                    const sameAudience = isSchoolConversion
+                      ? getBlogTechnicalAuthority(p).audience === 'Schools & Research'
+                      : p.category === metaSource.category;
+                    return sameAudience
                       && p.slug !== slug
                       && !p.hideFromList
-                      && !shouldNoindexBlogSlug(p.slug),
-                  )
+                      && !shouldNoindexBlogSlug(p.slug);
+                  })
                   .slice(0, 3)
                   .map(related => (
                     <Link key={related.slug} to={`/blog/${related.slug}`} className="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-3 text-slate-900 shadow-sm transition hover:bg-slate-50">
                       {related.title}
                     </Link>
                   ))}
-                {!hasCoursesLink && !suppressCoursesFallback ? (
+                {!isSchoolConversion && !hasCoursesLink && !suppressCoursesFallback ? (
                   <Link to="/courses" className="inline-flex items-center rounded-full border border-slate-200 bg-[#f4f8fc] px-5 py-3 text-slate-900 transition hover:bg-[#e8f1f8]">Explore all courses</Link>
                 ) : null}
               </div>
@@ -1034,7 +1065,7 @@ function buildMetaDescription(src: any) {
                 </div>
                 <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Best next move</p>
-                  <p className="mt-2 text-sm leading-7 text-slate-600">{categoryConfig.sidebarDescription}</p>
+                  <p className="mt-2 text-sm leading-7 text-slate-600">{sidebarConfig.sidebarDescription}</p>
                 </div>
                 <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Content ownership</p>
@@ -1070,10 +1101,10 @@ function buildMetaDescription(src: any) {
             ) : null}
 
             <div className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#fff5e7,#eef6ff)] p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">{categoryConfig.sidebarTitle}</p>
-              <p className="mt-3 text-sm leading-7 text-slate-600">{categoryConfig.sidebarDescription}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">{sidebarConfig.sidebarTitle}</p>
+              <p className="mt-3 text-sm leading-7 text-slate-600">{sidebarConfig.sidebarDescription}</p>
               <div className="mt-5 space-y-3">
-                {categoryConfig.sidebarLinks.map((link) => (
+                {sidebarConfig.sidebarLinks.map((link) => (
                   <Link
                     key={link.label}
                     to={link.to}

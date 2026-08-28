@@ -11,6 +11,7 @@ type HeroAction = {
   label: string;
   to: string;
   variant?: 'primary' | 'secondary';
+  onClick?: () => void;
 };
 
 type ResearchArticleHeroProps = {
@@ -25,6 +26,7 @@ type ResearchArticleHeroProps = {
   readTimeLabel: string;
   actions: HeroAction[];
   searchPainPoints: string[];
+  searchLabel?: string;
   heroPoints: HeroPoint[];
 };
 
@@ -40,6 +42,7 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
   readTimeLabel,
   actions,
   searchPainPoints,
+  searchLabel = 'Parents often search',
   heroPoints,
 }) => {
   return (
@@ -85,6 +88,7 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
                 <Link
                   key={action.label}
                   to={action.to}
+                  onClick={action.onClick}
                   className={
                     action.variant === 'secondary'
                       ? 'inline-flex max-w-full items-center justify-center rounded-full border border-white/20 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/10'
@@ -98,7 +102,7 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
           </div>
 
           <div className="rounded-[32px] border border-white/12 bg-white/8 p-5 sm:p-6 backdrop-blur">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-300">Parents often search</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-300">{searchLabel}</p>
             <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-100">
               {searchPainPoints.map((item) => (
                 <li key={item} className="border-b border-white/10 pb-3 last:border-b-0 last:pb-0">
