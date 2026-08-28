@@ -142,7 +142,7 @@ describe('B7 blog editorial trust and authorship', () => {
     expect(authorPanel).toContain("{ label: 'Report a correction', to: '/contact'");
     expect(authorPanel).toContain("profilePath: '/team'");
 
-    expect(jolly).toContain(`${PUBLIC_FACTS.brandName} · Academic Team`);
+    expect(jolly).toContain('{PUBLIC_FACTS.brandName} · Academic Team');
     expect(jolly).toContain('url: TEAM_URL');
     expect(jolly).toContain('Education Endowment Foundation phonics summary');
     expect(jolly).toContain('National Reading Panel findings');
