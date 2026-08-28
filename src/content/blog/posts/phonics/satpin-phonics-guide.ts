@@ -40,6 +40,12 @@ const post: PhonicsSeoPost = {
     answer: 'A strong sign is reduced guessing: your child starts sounding out and blending new SATPIN words independently.'
   }],
   relatedReads: [{
+    label: 'Read the complete phonics guide for parents',
+    to: '/blog/phonics-for-parents-guide'
+  }, {
+    label: 'Read why letter sounds may not yet become words',
+    to: '/blog/why-child-knows-letter-sounds-but-cannot-read-words'
+  }, {
     label: 'CVC words explained for parents',
     to: '/blog/cvc-words-explained-for-parents'
   }, {
