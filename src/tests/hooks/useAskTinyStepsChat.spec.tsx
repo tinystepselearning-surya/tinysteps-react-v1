@@ -27,6 +27,19 @@ describe('useAskTinyStepsChat submission guards', () => {
     expect(result.current.error).toContain('under 2000 characters');
   });
 
+  it('passes registry-selected source ids to Firebase AI Logic', async () => {
+    serviceMocks.call.mockResolvedValue('Our current pricing is on the pricing page.');
+    const { result } = renderHook(() => useAskTinyStepsChat());
+
+    await act(async () => result.current.sendMessage('What are your fees and packages?'));
+
+    expect(serviceMocks.call).toHaveBeenCalledTimes(1);
+    expect(serviceMocks.call.mock.calls[0][1]).toEqual({
+      sourceIds: expect.arrayContaining(['pricing', 'book-demo']),
+    });
+    expect(result.current.messages[result.current.messages.length - 1]?.content).toContain('pricing');
+  });
+
   it('prevents duplicate submissions even before React rerenders loading state', async () => {
     let resolveRequest!: (value: string) => void;
     serviceMocks.call.mockReturnValue(
