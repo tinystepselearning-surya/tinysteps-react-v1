@@ -1,12 +1,4 @@
-import type { BlogPost } from '../types';
-
-export type BlogAudience = 'Parent' | 'Schools & Research';
-export type BlogDiscoveryCategory =
-  | 'Phonics'
-  | 'Grammar'
-  | 'Speaking & Communication'
-  | 'Parent Guides'
-  | 'Schools & Research';
+import type { BlogAudience, BlogDiscoveryCategory, BlogPost } from '../types';
 
 /**
  * Explicit audience ownership for institutional/research content.
