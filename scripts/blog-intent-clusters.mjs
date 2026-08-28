@@ -5,13 +5,21 @@ export const BLOG_INTENT_CLUSTERS = Object.freeze([
     queryIntent: 'Child knows letters or letter sounds but cannot read words',
     risk: 'high',
     action: 'merge-review',
-    provisionalCanonical: 'why-child-knows-letter-sounds-but-cannot-read-words',
+    provisionalCanonical: null,
     requiresPerformanceValidation: true,
     slugs: [
       'why-child-knows-letter-sounds-but-cannot-read-words',
       'child-knows-abc-but-cannot-read',
     ],
-    notes: 'Two current parent-facing URLs still answer substantially the same diagnosis query. Do not merge until GSC page/query evidence selects the stronger owner.',
+    evidence: {
+      source: 'user-shared-gsc-2026-08-28',
+      observedInGsc: true,
+      metricsCaptured: false,
+      finding:
+        'The user-shared Search Console evidence showed competing cannot-read URLs with real visibility. Exact page/query metrics are not preserved in the project text, so B2 must not name a winner from wording alone.',
+    },
+    notes:
+      'Two current parent-facing URLs answer substantially the same diagnosis query. Keep both reversible until page-level GSC clicks, impressions, query overlap and position select an owner.',
   },
   {
     id: 'school-letter-sounds-not-enough',
@@ -25,6 +33,78 @@ export const BLOG_INTENT_CLUSTERS = Object.freeze([
     notes: 'Institutional implementation intent is distinct from the parent diagnosis cluster.',
   },
   {
+    id: 'school-cbse-ncf-foundational-literacy',
+    audience: 'Schools & Research',
+    queryIntent: 'Whether CBSE/NCF includes phonics and what foundational literacy guidance requires',
+    risk: 'low',
+    action: 'protect-gsc-visible-owner',
+    provisionalCanonical: 'does-cbse-include-phonics-ncf-foundational-literacy',
+    requiresPerformanceValidation: false,
+    slugs: ['does-cbse-include-phonics-ncf-foundational-literacy'],
+    evidence: {
+      source: 'user-shared-gsc-2026-08-28',
+      observedInGsc: true,
+      metricsCaptured: false,
+      finding:
+        'The user-shared Search Console screenshots showed impressions/clicks for this institutional topic. Preserve the current URL and its school/research intent.',
+    },
+    notes: 'Do not fold this compliance/framework question into parent phonics-help content.',
+  },
+  {
+    id: 'school-phonics-scope-sequence',
+    audience: 'Schools & Research',
+    queryIntent: 'Phonics scope and sequence for CBSE schools',
+    risk: 'low',
+    action: 'protect-gsc-visible-owner',
+    provisionalCanonical: 'phonics-scope-and-sequence-for-cbse-schools',
+    requiresPerformanceValidation: false,
+    slugs: ['phonics-scope-and-sequence-for-cbse-schools'],
+    evidence: {
+      source: 'user-shared-gsc-2026-08-28',
+      observedInGsc: true,
+      metricsCaptured: false,
+      finding:
+        'The user-shared Search Console screenshots showed real visibility for the school scope-and-sequence page. Treat it as a protected owner, not a consolidation candidate.',
+    },
+    notes: 'Owns implementation-sequence intent for schools.',
+  },
+  {
+    id: 'school-international-phonics-benchmarks',
+    audience: 'Schools & Research',
+    queryIntent: 'International phonics benchmarks for Indian schools',
+    risk: 'low',
+    action: 'protect-gsc-visible-owner',
+    provisionalCanonical: 'international-phonics-benchmarks-for-indian-schools',
+    requiresPerformanceValidation: false,
+    slugs: ['international-phonics-benchmarks-for-indian-schools'],
+    evidence: {
+      source: 'user-shared-gsc-2026-08-28',
+      observedInGsc: true,
+      metricsCaptured: false,
+      finding:
+        'The user-shared Search Console screenshots showed real visibility for the international-benchmarks page. Preserve its institutional comparison/research intent.',
+    },
+    notes: 'Do not merge into general parent phonics evidence pages merely because terminology overlaps.',
+  },
+  {
+    id: 'school-phonics-teacher-training',
+    audience: 'Schools & Research',
+    queryIntent: 'Phonics teacher training and implementation support for schools',
+    risk: 'low',
+    action: 'protect-gsc-visible-owner',
+    provisionalCanonical: 'phonics-teacher-training-for-schools-implementation',
+    requiresPerformanceValidation: false,
+    slugs: ['phonics-teacher-training-for-schools-implementation'],
+    evidence: {
+      source: 'user-shared-gsc-2026-08-28',
+      observedInGsc: true,
+      metricsCaptured: false,
+      finding:
+        'The user-shared Search Console screenshots showed real visibility for teacher-training content. Preserve this school implementation owner.',
+    },
+    notes: 'Owns school teacher-training/implementation intent and should remain separate from parent-facing class-selection content.',
+  },
+  {
     id: 'phonics-start-age',
     audience: 'Parent',
     queryIntent: 'Right/best age to start phonics',
@@ -33,7 +113,15 @@ export const BLOG_INTENT_CLUSTERS = Object.freeze([
     provisionalCanonical: 'what-age-to-start-phonics',
     requiresPerformanceValidation: false,
     slugs: ['what-age-to-start-phonics'],
-    notes: 'Legacy best-age URL is already retired to this owner by the existing consolidation map.',
+    retiredSlugs: ['best-age-to-start-phonics-classes-for-kids'],
+    evidence: {
+      source: 'user-shared-gsc-2026-08-28',
+      observedInGsc: true,
+      metricsCaptured: false,
+      finding:
+        'The Search Console review surfaced age-to-start visibility including legacy URL history. The repository already redirects the retired best-age slug to the current owner; B2 protects that consolidation rather than reversing it from incomplete metrics.',
+    },
+    notes: 'Existing redirect lineage is explicit and must remain one-way unless later evidence proves a migration error.',
   },
   {
     id: 'phonics-blending',
@@ -52,10 +140,10 @@ export const BLOG_INTENT_CLUSTERS = Object.freeze([
     queryIntent: 'How phonics improves reading confidence / how Tiny Steps builds reading confidence',
     risk: 'high',
     action: 'merge-review',
-    provisionalCanonical: 'how-phonics-builds-reading-confidence',
+    provisionalCanonical: null,
     requiresPerformanceValidation: true,
     slugs: ['how-phonics-builds-reading-confidence', 'how-tiny-steps-builds-reading-confidence'],
-    notes: 'The generic parent query should own the informational intent. Brand-method detail can be merged as an experience section if performance supports consolidation.',
+    notes: 'Potential overlap is real, but B2 has no retained URL/query metrics proving a winner. Do not bias B3 by naming one provisionally.',
   },
   {
     id: 'phonics-class-selection',
@@ -121,7 +209,15 @@ export const BLOG_INTENT_CLUSTERS = Object.freeze([
     provisionalCanonical: 'child-gives-one-word-answers',
     requiresPerformanceValidation: false,
     slugs: ['child-gives-one-word-answers'],
-    notes: 'Legacy why-child-answers-only-in-one-word URL is already retired to this owner.',
+    retiredSlugs: ['why-child-answers-only-in-one-word'],
+    evidence: {
+      source: 'user-shared-gsc-2026-08-28',
+      observedInGsc: true,
+      metricsCaptured: false,
+      finding:
+        'The Search Console review surfaced one-word-answer URL history. The repository already redirects the legacy why-child-answers slug to the current owner, so B2 protects the existing consolidation and prevents accidental duplicate resurrection.',
+    },
+    notes: 'Legacy source and current owner are both recorded so the redirect lineage is auditable.',
   },
   {
     id: 'english-speaking-hesitation',
@@ -129,10 +225,10 @@ export const BLOG_INTENT_CLUSTERS = Object.freeze([
     queryIntent: 'Child understands English but hesitates or refuses to speak',
     risk: 'high',
     action: 'merge-review',
-    provisionalCanonical: 'child-understands-english-but-does-not-speak',
+    provisionalCanonical: null,
     requiresPerformanceValidation: true,
     slugs: ['child-understands-english-but-does-not-speak', 'spoken-english-classes-for-kids-confidence'],
-    notes: 'The second page is already sitemap-excluded but remains page-level indexable. B3 must resolve this policy mismatch after performance review.',
+    notes: 'The second page is sitemap-excluded but remains page-level indexable. B3 must resolve this policy mismatch only after URL/query performance evidence is captured.',
   },
   {
     id: 'grammar-application-gap',
@@ -149,4 +245,8 @@ export const BLOG_INTENT_CLUSTERS = Object.freeze([
 
 export const HIGH_RISK_BLOG_INTENTS = Object.freeze(
   BLOG_INTENT_CLUSTERS.filter((cluster) => cluster.risk === 'high'),
+);
+
+export const GSC_VISIBLE_BLOG_INTENTS = Object.freeze(
+  BLOG_INTENT_CLUSTERS.filter((cluster) => cluster.evidence?.observedInGsc),
 );
