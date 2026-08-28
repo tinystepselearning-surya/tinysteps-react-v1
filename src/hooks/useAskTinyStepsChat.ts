@@ -199,7 +199,7 @@ function detectIntent(q: string): Intent {
   }
 
   if (
-    /(single\s*class|one\s*class|paid\s*class|paid\s*trial|trial\s*price|trial\s*fee)/.test(
+    /\b(single\s*class|one\s*class|paid\s*class|paid\s*trial|trial\s*price|trial\s*fee)\b/.test(
       s
     )
   ) {
