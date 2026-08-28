@@ -10,6 +10,8 @@ const post: PhonicsSeoPost = {
     'Use the parent checklist: does the game teach sounds correctly, support blending, match age level, include reading transfer, reduce guessing, and give meaningful feedback?',
     'Keep short sessions and follow each game with print or oral transfer to check real reading progress.',
     'For children who know letters but cannot read, prioritize sound-to-blending games over random rewards.',
+    'For letter-sound recognition, try Tiny Steps Phonics Balloon Pop: children hear one target sound, find the matching printed letter, and pop the correct balloon.',
+    'Play Free: /free-balloon-pop-phonics-game-for-kids',
     'For slow readers, use fluency-friendly tasks only after decoding basics are stable.',
     'If no measurable reading improvement appears in 4-6 weeks, move to structured teacher-led support.'
   ],
@@ -37,6 +39,9 @@ const post: PhonicsSeoPost = {
     answer: 'Tiny Steps checks sound clarity, blending readiness, decoding behavior, reading pace signals, and confidence, then recommends the right next pathway.'
   }],
   relatedReads: [{
+    label: 'Play Tiny Steps Phonics Balloon Pop',
+    to: '/free-balloon-pop-phonics-game-for-kids'
+  }, {
     label: 'Daily routine for letter-sound practice',
     to: '/blog/phonics-games-for-letter-sounds'
   }, {
