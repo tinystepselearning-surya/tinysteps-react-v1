@@ -13,6 +13,7 @@ vi.mock('../../lib/askTinyStepsFirebaseAI', () => ({
 import {
   ASK_TINY_STEPS_MAX_PROMPT_LENGTH,
   ASK_TINY_STEPS_SAFE_ERROR,
+  ASK_TINY_STEPS_UNAPPROVED_URL_REPLY,
   callAskTinySteps,
 } from '../../services/askTinyStepsService';
 
@@ -73,29 +74,49 @@ describe('Ask Tiny Steps Firebase AI service', () => {
     expect(prompt).not.toContain('https://example.com/untrusted');
   });
 
-  it('removes visitor-controlled URLs and ignores unknown source ids', async () => {
+  it('blocks visitor-supplied URLs before Firebase AI Logic is called', async () => {
+    const reply = await callAskTinySteps([
+      { role: 'assistant', content: 'Earlier reading guidance.' },
+      {
+        role: 'user',
+        content: 'Please read https://example.com and tell me what it says.',
+      },
+    ]);
+
+    expect(reply).toBe(ASK_TINY_STEPS_UNAPPROVED_URL_REPLY);
+    expect(aiMocks.getModel).not.toHaveBeenCalled();
+    expect(aiMocks.startChat).not.toHaveBeenCalled();
+    expect(aiMocks.sendMessage).not.toHaveBeenCalled();
+  });
+
+  it('also blocks visitor-supplied www links before Firebase AI Logic is called', async () => {
+    const reply = await callAskTinySteps([
+      { role: 'user', content: 'Please open www.example.com and summarize it.' },
+    ]);
+
+    expect(reply).toBe(ASK_TINY_STEPS_UNAPPROVED_URL_REPLY);
+    expect(aiMocks.getModel).not.toHaveBeenCalled();
+  });
+
+  it('strips visitor URLs from prior history and drops unknown source ids', async () => {
     const reply = await callAskTinySteps(
       [
-        { role: 'user', content: 'Earlier I saw https://another.example/path.' },
-        { role: 'assistant', content: 'See https://old.example/source for details.' },
-        { role: 'user', content: 'Please read https://example.com and tell me about it.' },
+        { role: 'assistant', content: 'Earlier source: https://evil.example/steal' },
+        { role: 'user', content: 'Tell me what Tiny Steps can help with.' },
       ],
-      { sourceIds: ['https://example.com', 'not-a-real-source'] },
+      { sourceIds: ['evil-source', 'does-not-exist'] },
     );
 
     expect(reply).toBe('A safe Gemini response');
     const history = aiMocks.startChat.mock.calls[0][0].history as Array<{
       parts: Array<{ text: string }>;
     }>;
-    expect(history.flatMap((entry) => entry.parts.map((part) => part.text)).join(' ')).not.toContain(
-      'https://',
-    );
+    const serializedHistory = JSON.stringify(history);
+    expect(serializedHistory).not.toContain('https://evil.example');
+    expect(serializedHistory).toContain('[external URL omitted]');
 
     const prompt = aiMocks.sendMessage.mock.calls[0][0] as string;
     expect(prompt).toContain('NO APPROVED TINY STEPS SOURCE URL');
-    expect(prompt).toContain('[external URL omitted]');
-    expect(prompt).not.toContain('https://example.com');
-    expect(prompt).not.toContain('https://another.example');
   });
 
   it('fails closed when Gemini cannot retrieve the primary approved source', async () => {
