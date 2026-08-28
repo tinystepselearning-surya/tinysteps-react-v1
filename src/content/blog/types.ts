@@ -8,6 +8,7 @@ export type BlogPost = {
   hero?: string; // image url
   metaDescription?: string;
   excerpt: string;
+  seriesLabel?: string;
   body: {
     type: 'h2' | 'h3' | 'p' | 'li';
     content: string;
