@@ -172,14 +172,16 @@ export function isAskTinyStepsModelFallbackEligible(error: unknown): boolean {
 
   const quotaOrCapacity =
     /(^|\D)429(\D|$)/.test(text) ||
-    /resource exhausted|quota(?:[-\s]?exceeded)?|rate[-\s]?limit|too many requests|capacity (?:is )?(?:exhausted|unavailable)|overloaded by requests/.test(
+    /resource[-_\s]?exhausted|quota(?:[-_\s]?exceeded)?|rate[-_\s]?limit|too many requests|capacity (?:is )?(?:exhausted|unavailable)|overloaded by requests/.test(
       text,
     );
   if (quotaOrCapacity) return true;
 
   const serviceUnavailable =
     /(^|\D)503(\D|$)/.test(text) ||
-    /service unavailable|temporarily overloaded|backend unavailable|model overloaded/.test(text);
+    /service unavailable|temporarily overloaded|backend unavailable|model (?:is )?overloaded/.test(
+      text,
+    );
   if (serviceUnavailable) return true;
 
   const modelUnavailable =
