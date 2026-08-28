@@ -12,7 +12,13 @@ import {
 
 export const ASK_TINY_STEPS_APP_NAME = 'ask-tiny-steps';
 export const ASK_TINY_STEPS_PROJECT_ID = 'tiny-steps-ask-ai';
-export const ASK_TINY_STEPS_MODEL = 'gemini-3.5-flash-lite';
+export const ASK_TINY_STEPS_MODEL_CASCADE = [
+  'gemini-3.7-flash',
+  'gemini-3.5-flash',
+  'gemini-3.5-flash-lite',
+] as const;
+export type AskTinyStepsModelName = (typeof ASK_TINY_STEPS_MODEL_CASCADE)[number];
+export const ASK_TINY_STEPS_MODEL: AskTinyStepsModelName = ASK_TINY_STEPS_MODEL_CASCADE[0];
 export const ASK_TINY_STEPS_REQUEST_TIMEOUT_MS = 60_000;
 
 type AskTinyStepsRuntime = typeof globalThis & {
@@ -96,14 +102,16 @@ export function initializeAskTinyStepsAppCheck(
   initializedApps.add(app.name);
 }
 
-export function getAskTinyStepsGenerativeModel(): GenerativeModel {
+export function getAskTinyStepsGenerativeModel(
+  modelName: AskTinyStepsModelName = ASK_TINY_STEPS_MODEL,
+): GenerativeModel {
   const app = getAskTinyStepsApp();
   initializeAskTinyStepsAppCheck(app);
   const ai = getAI(app, { backend: new GoogleAIBackend() });
   return getGenerativeModel(
     ai,
     {
-      model: ASK_TINY_STEPS_MODEL,
+      model: modelName,
       tools: [{ urlContext: {} }],
       generationConfig: {
         temperature: 0.2,
