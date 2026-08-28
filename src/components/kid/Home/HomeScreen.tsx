@@ -32,8 +32,8 @@ const HomeScreen = () => {
 
   const handleJoinSession = () => {
     setSessionStatus('inProgress');
-    // Open Zoom link
-    window.open('https://zoom.us/j/example', '_blank');
+    // Open live class link
+    window.open('https://teams.microsoft.com/', '_blank');
   };
 
   return (

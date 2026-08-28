@@ -140,7 +140,7 @@ const UpcomingSessionsView: React.FC = () => {
                     <div className="flex items-center space-x-2">
                       {group === 'Today' && session.joinUrl && (
                         <Button variant="default" size="sm">
-                          Join Zoom
+                          Join Class
                         </Button>
                       )}
                       <Button variant="outline" size="sm">
