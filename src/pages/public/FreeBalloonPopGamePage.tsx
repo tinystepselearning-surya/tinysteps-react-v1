@@ -403,8 +403,8 @@ export default function FreeBalloonPopGamePage() {
 
         <section className="mt-5 rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_18px_44px_rgba(15,23,42,0.05)]">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Continue the Tiny Steps phonics journey</p>
-          <h2 className="mt-2 text-2xl font-bold text-slate-900">Move from seeing letters to hearing, matching, and blending sounds</h2>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <h2 className="mt-2 text-2xl font-bold text-slate-900">Move from seeing letters to hearing, matching, listening, and blending sounds</h2>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {[
               {
                 title: '1. Trace letters',
@@ -412,19 +412,29 @@ export default function FreeBalloonPopGamePage() {
                 to: '/free-letter-tracing-game-for-kids',
               },
               {
-                title: '2. Trace with sounds',
+                title: '2. Trace + sound',
                 body: 'Connect the letter shape with its sound.',
                 to: '/letter-tracing-with-sounds-game',
               },
               {
-                title: '3. Balloon Pop',
+                title: '3. Letter sounds',
+                body: 'Practise direct letter-to-sound matching and recall.',
+                to: '/free-letter-sounds-game-for-kids',
+              },
+              {
+                title: '4. Balloon Pop',
                 body: 'Hear a sound and find its matching letter quickly.',
                 to: PAGE_PATH,
               },
               {
-                title: '4. Sound listening',
-                body: 'Strengthen listening before deeper blending practice.',
+                title: '5. Sound listening',
+                body: 'Strengthen listening and sound discrimination.',
                 to: '/free-sound-listening-game-for-kids',
+              },
+              {
+                title: '6. Blend words',
+                body: 'Join known sounds into simple words and begin decoding.',
+                to: '/free-word-building-game-for-kids',
               },
             ].map((item) => (
               <Link
