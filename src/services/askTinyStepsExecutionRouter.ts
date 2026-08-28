@@ -70,6 +70,8 @@ const SLOT_OR_SCHEDULE_PATTERN =
   /\b(slot|slots|schedule|scheduling|weekend|weekday|monday|tuesday|wednesday|thursday|friday|saturday|sunday|time zone|timezone|available time|available timings?|teacher availability)\b/i;
 const DURATION_PATTERN =
   /\b(duration|how long|minutes?|class length|time per class|session length)\b/i;
+const PRICING_PATTERN =
+  /\b(price|prices|pricing|fee|fees|cost|package|packages|plan|plans|how much)\b/i;
 
 function sourceById(id: string): AskTinyStepsKnowledgeSource | undefined {
   return ASK_TINY_STEPS_KNOWLEDGE_SOURCES.find((source) => source.id === id);
@@ -201,10 +203,12 @@ function explicitDeterministicAnswer(
     return outOfScopeAnswer();
   }
 
+  // Current-turn pricing language wins inside established school context. This
+  // prevents the previous word "schools" from masking a genuine pricing follow-up.
+  if (audience === 'schools' && PRICING_PATTERN.test(question)) return schoolPricingAnswer();
+
   if (intent === 'assessment') return assessmentAnswer();
-  if (intent === 'pricing') {
-    return audience === 'schools' ? schoolPricingAnswer() : parentPricingAnswer();
-  }
+  if (intent === 'pricing') return parentPricingAnswer();
   if (intent === 'class_mode') return classModeAnswer();
   if (intent === 'timings' && DURATION_PATTERN.test(question) && !SLOT_OR_SCHEDULE_PATTERN.test(question)) {
     return durationAnswer(question);
