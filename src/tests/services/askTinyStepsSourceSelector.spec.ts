@@ -5,24 +5,39 @@ import {
 } from '../../services/askTinyStepsSourceSelector';
 
 describe('Ask Tiny Steps smart source selector', () => {
-  it('selects pricing and assessment as the canonical parent pricing sources', () => {
+  it('uses only the canonical pricing page for parent pricing', () => {
     const selection = selectAskTinyStepsSources('What are your fees and packages?');
 
     expect(selection.audience).toBe('parents');
     expect(selection.intent).toBe('pricing');
-    expect(selection.sourceIds.slice(0, 2)).toEqual(['pricing', 'book-demo']);
+    expect(selection.sourceIds).toEqual(['pricing']);
     expect(selection.sources.every((source) => source.audience !== 'schools')).toBe(true);
   });
 
-  it('grounds class-duration questions on current assessment and FAQ pages', () => {
+  it('routes one-to-one class-mode questions to an approved source instead of general mode', () => {
+    const selection = selectAskTinyStepsSources('Do you provide one-to-one classes?');
+
+    expect(selection.audience).toBe('parents');
+    expect(selection.intent).toBe('class_mode');
+    expect(selection.sourceIds).toEqual(['pricing']);
+  });
+
+  it('keeps 1:1 pricing questions in pricing intent', () => {
+    const selection = selectAskTinyStepsSources('What are your fees for 1:1 classes?');
+
+    expect(selection.intent).toBe('pricing');
+    expect(selection.sourceIds).toEqual(['pricing']);
+  });
+
+  it('grounds class-duration questions on one canonical assessment page', () => {
     const selection = selectAskTinyStepsSources('What is the duration of each class?');
 
     expect(selection.audience).toBe('parents');
     expect(selection.intent).toBe('timings');
-    expect(selection.sourceIds.slice(0, 2)).toEqual(['book-demo', 'faq']);
+    expect(selection.sourceIds).toEqual(['book-demo']);
   });
 
-  it('routes a blending problem to the specific support article before broad phonics pages', () => {
+  it('routes a blending problem to two specific diagnostic sources without broad-page padding', () => {
     const selection = selectAskTinyStepsSources(
       'My child knows letter sounds but cannot read words. How can I help with blending?',
     );
@@ -30,9 +45,16 @@ describe('Ask Tiny Steps smart source selector', () => {
     expect(selection.intent).toBe('phonics');
     expect(selection.sourceIds).toEqual([
       'sounds-cannot-read',
-      'phonics',
       'letter-sounds-not-enough',
     ]);
+    expect(selection.sourceIds).not.toContain('phonics');
+  });
+
+  it('uses only the canonical phonics page for a generic phonics question', () => {
+    const selection = selectAskTinyStepsSources('Tell me about your phonics classes.');
+
+    expect(selection.intent).toBe('phonics');
+    expect(selection.sourceIds).toEqual(['phonics']);
   });
 
   it('keeps school queries inside school/both sources and prefers the specific CBSE source', () => {
@@ -42,7 +64,7 @@ describe('Ask Tiny Steps smart source selector', () => {
 
     expect(selection.audience).toBe('schools');
     expect(selection.intent).toBe('school_research');
-    expect(selection.sourceIds.slice(0, 2)).toEqual(['cbse-phonics-ncf', 'for-schools']);
+    expect(selection.sourceIds).toEqual(['cbse-phonics-ncf', 'for-schools']);
     expect(selection.sources.every((source) => source.audience !== 'parents')).toBe(true);
   });
 
@@ -61,7 +83,7 @@ describe('Ask Tiny Steps smart source selector', () => {
     });
 
     expect(selection.audience).toBe('schools');
-    expect(selection.sourceIds[0]).toBe('for-schools');
+    expect(selection.sourceIds).toEqual(['for-schools']);
     expect(selection.sourceIds).not.toContain('pricing');
   });
 
@@ -91,7 +113,7 @@ describe('Ask Tiny Steps smart source selector', () => {
 
     expect(selection.audience).toBe('parents');
     expect(selection.intent).toBe('pricing');
-    expect(selection.sourceIds[0]).toBe('pricing');
+    expect(selection.sourceIds).toEqual(['pricing']);
   });
 
   it('can use the approved current page for a contextual follow-up', () => {
@@ -112,14 +134,13 @@ describe('Ask Tiny Steps smart source selector', () => {
     expect(selection.sourceIds).toEqual([]);
   });
 
-  it('never exceeds the bounded URL Context source count', () => {
+  it('caps URL Context at two approved sources', () => {
     const selection = selectAskTinyStepsSources(
       'Tell me about phonics, blending, reading, curriculum and your courses.',
       { maxSources: 20 },
     );
 
-    expect(selection.sourceIds.length).toBeLessThanOrEqual(
-      ASK_TINY_STEPS_MAX_URL_CONTEXT_SOURCES,
-    );
+    expect(ASK_TINY_STEPS_MAX_URL_CONTEXT_SOURCES).toBe(2);
+    expect(selection.sourceIds.length).toBeLessThanOrEqual(2);
   });
 });

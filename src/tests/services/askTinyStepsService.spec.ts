@@ -98,6 +98,38 @@ describe('Ask Tiny Steps Firebase AI service', () => {
     ]);
   });
 
+  it('moves to the next model when an attempt hits its bounded request timeout', async () => {
+    aiMocks.sendMessage
+      .mockRejectedValueOnce(new Error('Request timed out after 12000 ms'))
+      .mockResolvedValueOnce(successfulResponse([], 'Answered after timeout'));
+
+    const reply = await callAskTinySteps([
+      { role: 'user', content: 'What courses do you offer?' },
+    ]);
+
+    expect(reply).toBe('Answered after timeout');
+    expect(aiMocks.getModel.mock.calls.map((call) => call[0])).toEqual([
+      'gemini-3.7-flash',
+      'gemini-3.5-flash',
+    ]);
+  });
+
+  it('moves past a transient provider INTERNAL failure', async () => {
+    aiMocks.sendMessage
+      .mockRejectedValueOnce(Object.assign(new Error('Provider request failed'), { status: 'INTERNAL' }))
+      .mockResolvedValueOnce(successfulResponse([], 'Answered after internal failure'));
+
+    const reply = await callAskTinySteps([
+      { role: 'user', content: 'What courses do you offer?' },
+    ]);
+
+    expect(reply).toBe('Answered after internal failure');
+    expect(aiMocks.getModel.mock.calls.map((call) => call[0])).toEqual([
+      'gemini-3.7-flash',
+      'gemini-3.5-flash',
+    ]);
+  });
+
   it('falls through 3.7 and 3.5 to Flash-Lite when both stronger models are unavailable', async () => {
     aiMocks.sendMessage
       .mockRejectedValueOnce(new Error('429 quota exceeded'))
@@ -137,7 +169,7 @@ describe('Ask Tiny Steps Firebase AI service', () => {
     aiMocks.sendMessage
       .mockRejectedValueOnce(new Error('429 quota exceeded'))
       .mockRejectedValueOnce(new Error('503 service unavailable'))
-      .mockRejectedValueOnce(new Error('429 resource exhausted'));
+      .mockRejectedValueOnce(new Error('504 gateway timeout'));
 
     await expect(
       callAskTinySteps([{ role: 'user', content: 'What courses do you offer?' }]),
@@ -163,7 +195,7 @@ describe('Ask Tiny Steps Firebase AI service', () => {
     expect(aiMocks.getModel).toHaveBeenCalledWith('gemini-3.7-flash');
   });
 
-  it('does not switch models for invalid requests or generic provider defects', async () => {
+  it('does not switch models for invalid requests or generic application defects', async () => {
     aiMocks.sendMessage.mockRejectedValue(new Error('400 INVALID_ARGUMENT: bad request'));
 
     await expect(
@@ -262,7 +294,7 @@ describe('Ask Tiny Steps Firebase AI service', () => {
     expect(aiMocks.getModel).toHaveBeenCalledTimes(1);
   });
 
-  it('fails closed instead of publishing a MAX_TOKENS partial sentence', async () => {
+  it('fails closed instead of publishing or retrying a MAX_TOKENS partial sentence', async () => {
     aiMocks.sendMessage.mockResolvedValue({
       response: {
         text: () => 'If your child knows letter',
@@ -291,9 +323,14 @@ describe('Ask Tiny Steps Firebase AI service', () => {
     expect(aiMocks.getModel).toHaveBeenCalledTimes(1);
   });
 
-  it('classifies only narrow availability errors as model-fallback eligible', () => {
+  it('classifies only narrow transient provider/model errors as fallback eligible', () => {
     expect(isAskTinyStepsModelFallbackEligible(new Error('429 resource exhausted'))).toBe(true);
     expect(isAskTinyStepsModelFallbackEligible(new Error('503 service unavailable'))).toBe(true);
+    expect(isAskTinyStepsModelFallbackEligible(new Error('504 gateway timeout'))).toBe(true);
+    expect(isAskTinyStepsModelFallbackEligible(new Error('Request timed out'))).toBe(true);
+    expect(
+      isAskTinyStepsModelFallbackEligible(Object.assign(new Error('request failed'), { status: 'INTERNAL' })),
+    ).toBe(true);
     expect(
       isAskTinyStepsModelFallbackEligible(new Error('model gemini-3.7-flash retired')),
     ).toBe(true);
@@ -304,6 +341,7 @@ describe('Ask Tiny Steps Firebase AI service', () => {
       ),
     ).toBe(false);
     expect(isAskTinyStepsModelFallbackEligible(new Error('400 invalid argument'))).toBe(false);
+    expect(isAskTinyStepsModelFallbackEligible(new Error('incomplete-response-max-tokens'))).toBe(false);
     expect(isAskTinyStepsModelFallbackEligible(new Error('primary-url-context-retrieval-failed'))).toBe(
       false,
     );
