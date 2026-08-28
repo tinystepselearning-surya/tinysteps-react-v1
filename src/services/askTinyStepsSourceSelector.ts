@@ -10,6 +10,7 @@ export type AskTinyStepsSelectionAudience = Extract<AskTinyStepsAudience, 'paren
 export type AskTinyStepsSelectionIntent =
   | 'assessment'
   | 'pricing'
+  | 'timings'
   | 'courses'
   | 'phonics'
   | 'grammar'
@@ -62,6 +63,10 @@ const INTENT_RULES: readonly IntentRule[] = [
   {
     intent: 'pricing',
     pattern: /\b(price|prices|pricing|fee|fees|cost|package|packages|plan|plans|how much)\b/i,
+  },
+  {
+    intent: 'timings',
+    pattern: /\b(minute|minutes|duration|class length|time per class|how long(?: is| are)? (?:a |the )?class|how long is it)\b/i,
   },
   {
     intent: 'class_samples',
@@ -165,8 +170,8 @@ function meaningfulTokens(text: string): string[] {
     .filter((token) => token.length > 1 && !STOP_WORDS.has(token));
 }
 
-function detectAudience(text: string): AskTinyStepsSelectionAudience {
-  return SCHOOL_CONTEXT_PATTERN.test(text) ? 'schools' : 'parents';
+function hasSchoolContext(text: string): boolean {
+  return SCHOOL_CONTEXT_PATTERN.test(text);
 }
 
 function detectIntent(text: string, audience: AskTinyStepsSelectionAudience): AskTinyStepsSelectionIntent {
@@ -185,16 +190,21 @@ function detectIntent(text: string, audience: AskTinyStepsSelectionAudience): As
 function directSourceIds(
   intent: AskTinyStepsSelectionIntent,
   audience: AskTinyStepsSelectionAudience,
-  text: string,
+  contextText: string,
+  currentQuestion: string,
 ): string[] {
   if (audience === 'schools') {
-    if (/\b(scope and sequence)\b/i.test(text)) return ['school-scope-sequence', 'for-schools'];
-    if (/\b(teacher training|teachers training)\b/i.test(text)) return ['teacher-training', 'for-schools'];
-    if (/\b(benchmark|international)\b/i.test(text)) return ['international-benchmarks', 'for-schools'];
-    if (/\b(memorisation|memorization|assess decoding|assessment)\b/i.test(text)) return ['assess-decoding', 'for-schools'];
-    if (/\b(systematic|cumulative)\b/i.test(text)) return ['systematic-cumulative', 'for-schools'];
-    if (/\b(cbse|ncf|foundational literacy|fln)\b/i.test(text)) return ['cbse-phonics-ncf', 'for-schools'];
-    if (/\b(price|pricing|fee|fees|cost|package|packages|plan|plans|how much)\b/i.test(text)) return ['for-schools'];
+    // A current pricing question should resolve to the school programme page even
+    // when prior conversation mentions teacher training or CBSE research.
+    if (/\b(price|pricing|fee|fees|cost|package|packages|plan|plans|how much)\b/i.test(currentQuestion)) {
+      return ['for-schools'];
+    }
+    if (/\b(scope and sequence)\b/i.test(contextText)) return ['school-scope-sequence', 'for-schools'];
+    if (/\b(teacher training|teachers training)\b/i.test(contextText)) return ['teacher-training', 'for-schools'];
+    if (/\b(benchmark|international)\b/i.test(contextText)) return ['international-benchmarks', 'for-schools'];
+    if (/\b(memorisation|memorization|assess decoding|assessment)\b/i.test(contextText)) return ['assess-decoding', 'for-schools'];
+    if (/\b(systematic|cumulative)\b/i.test(contextText)) return ['systematic-cumulative', 'for-schools'];
+    if (/\b(cbse|ncf|foundational literacy|fln)\b/i.test(contextText)) return ['cbse-phonics-ncf', 'for-schools'];
     return ['for-schools'];
   }
 
@@ -203,10 +213,12 @@ function directSourceIds(
       return ['book-demo', 'faq'];
     case 'pricing':
       return ['pricing', 'book-demo'];
+    case 'timings':
+      return ['book-demo', 'faq'];
     case 'courses':
       return ['courses', 'curriculum'];
     case 'phonics':
-      if (/\b(letter sounds?|knows? sounds?|cannot read|can t read|cant read|blending)\b/i.test(text)) {
+      if (/\b(letter sounds?|knows? sounds?|cannot read|can t read|cant read|blending)\b/i.test(contextText)) {
         return ['sounds-cannot-read', 'phonics', 'letter-sounds-not-enough'];
       }
       return ['phonics', 'courses'];
@@ -215,10 +227,10 @@ function directSourceIds(
     case 'speaking':
       return ['speaking', 'courses'];
     case 'reading':
-      if (/\b(fluency|slow reading|reads? slowly)\b/i.test(text)) {
+      if (/\b(fluency|slow reading|reads? slowly)\b/i.test(contextText)) {
         return ['reading-fluency-guide', 'reading-classes', 'phonics'];
       }
-      if (/\b(cannot read|can t read|cant read|reading difficulty|not reading)\b/i.test(text)) {
+      if (/\b(cannot read|can t read|cant read|reading difficulty|not reading)\b/i.test(contextText)) {
         return ['child-not-reading', 'reading-classes', 'phonics'];
       }
       return ['reading-classes', 'phonics'];
@@ -321,8 +333,15 @@ export function selectAskTinyStepsSources(
     ? [...recentUserMessages, currentQuestion].join(' ')
     : currentQuestion;
 
-  const audienceText = [recentUserMessages.at(-1), currentQuestion].filter(Boolean).join(' ');
-  const audience = detectAudience(audienceText);
+  // Conversation history may preserve school context only for a genuinely vague
+  // follow-up. A clear new parent question must not inherit stale school routing.
+  const lastUserMessage = recentUserMessages.at(-1) ?? '';
+  const audience: AskTinyStepsSelectionAudience = hasSchoolContext(currentQuestion)
+    ? 'schools'
+    : isFollowUp && hasSchoolContext(lastUserMessage)
+      ? 'schools'
+      : 'parents';
+
   const intent = detectIntent(contextText, audience);
   const maxSources = Math.min(
     ASK_TINY_STEPS_MAX_URL_CONTEXT_SOURCES,
@@ -337,7 +356,7 @@ export function selectAskTinyStepsSources(
     selected.push(source);
   };
 
-  directSourceIds(intent, audience, contextText).forEach((id) => add(sourceById(id)));
+  directSourceIds(intent, audience, contextText, currentQuestion).forEach((id) => add(sourceById(id)));
 
   const currentPath = normalizePath(options.currentPath);
   if (isFollowUp && currentPath) {
