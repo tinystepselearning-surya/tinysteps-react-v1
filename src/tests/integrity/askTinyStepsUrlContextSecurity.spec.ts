@@ -22,7 +22,7 @@ describe('Ask Tiny Steps URL Context security boundary', () => {
     );
 
     expect(aiClient).toContain('tools: [{ urlContext: {} }]');
-    expect(selector).toContain('ASK_TINY_STEPS_MAX_URL_CONTEXT_SOURCES = 3');
+    expect(selector).toContain('ASK_TINY_STEPS_MAX_URL_CONTEXT_SOURCES = 2');
     expect(service).toContain('removeConversationUrls');
     expect(service).toContain('ASK_TINY_STEPS_KNOWLEDGE_SOURCES.find');
     expect(service).toContain("urlRetrievalStatus === 'URL_RETRIEVAL_STATUS_SUCCESS'");
