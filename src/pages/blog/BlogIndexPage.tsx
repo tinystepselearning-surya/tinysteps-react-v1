@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { blogPosts } from '../../content/blog';
 import { getBlogAudience, getBlogDiscoveryCategory } from '../../content/blog/shared/audience';
 import { buildBlogAuthorSchema, resolveBlogAuthor } from '../../content/blog/shared/editorialTrust';
+import { resolveBlogHero } from '../../content/blog/shared/heroFamilies';
 import type { BlogDiscoveryCategory, BlogPost } from '../../content/blog/types';
 import { fetchMdxPosts, type MdxMeta } from '../../content/blogMdx';
 import Meta from '../../components/common/Meta';
@@ -17,6 +18,7 @@ import {
   getAuthorityPosts,
   getBlogCardLabel,
   getBlogDiscoveryTopic,
+  getLibraryCountLabel,
   getBlogTopicCounts,
   getPublishedCountLabel,
   isParentFacingBlogPost,
@@ -163,8 +165,11 @@ function getSchoolVisualLabel(title: string): string {
 const ArticleImage: FC<{ post: BlogIndexItem; eager?: boolean }> = ({ post, eager = false }) => {
   const topic = getBlogDiscoveryTopic(post);
   const style = DISCOVERY_STYLES[topic];
-  const useSchoolResearchTile = topic === 'Schools & Research' && post.hero === '/blog/hero-research.jpg';
-  const hero = post.category === 'Research' && topic === 'Phonics' ? '/blog/hero-phonics.jpg' : post.hero;
+  const resolvedHero = resolveBlogHero(post);
+  const useSchoolResearchTile = topic === 'Schools & Research' && resolvedHero === '/blog/hero-research.jpg';
+  const hero = post.category === 'Research' && topic === 'Phonics' && resolvedHero === post.hero
+    ? '/blog/hero-phonics.jpg'
+    : resolvedHero;
 
   if (useSchoolResearchTile) {
     return (
@@ -270,6 +275,7 @@ const BlogIndexPage: FC = () => {
   );
   const visiblePosts = libraryPosts.slice(0, visibleCount);
   const canLoadMore = visiblePosts.length < libraryPosts.length;
+  const libraryCountLabel = getLibraryCountLabel(libraryPosts.length, defaultParentView);
   const schoolsCount = topicCounts.get('Schools & Research') ?? 0;
 
   const blogSchema = useMemo(
@@ -473,7 +479,7 @@ const BlogIndexPage: FC = () => {
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary-700">Featured guides</p>
               <h2 id="featured-heading" className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">
-                Popular guides parents start with
+                Featured guides to start with
               </h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
                 Clear starting points for common questions about phonics, reading, and communication, with practical next steps for families.
@@ -575,9 +581,11 @@ const BlogIndexPage: FC = () => {
               </h2>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <p aria-live="polite" className="text-sm text-slate-500">
-                {libraryPosts.length} article{libraryPosts.length === 1 ? '' : 's'}
-              </p>
+              {libraryCountLabel ? (
+                <p aria-live="polite" className="text-sm text-slate-500">
+                  {libraryCountLabel}
+                </p>
+              ) : null}
               {topic === 'Parent' && schoolsCount > 0 ? (
                 <button
                   type="button"
