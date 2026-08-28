@@ -73,16 +73,29 @@ describe('Ask Tiny Steps Firebase AI service', () => {
     expect(prompt).not.toContain('https://example.com/untrusted');
   });
 
-  it('ignores unknown source ids so user-controlled URLs cannot enter URL Context', async () => {
+  it('removes visitor-controlled URLs and ignores unknown source ids', async () => {
     const reply = await callAskTinySteps(
-      [{ role: 'user', content: 'Please read https://example.com and tell me about it.' }],
+      [
+        { role: 'user', content: 'Earlier I saw https://another.example/path.' },
+        { role: 'assistant', content: 'See https://old.example/source for details.' },
+        { role: 'user', content: 'Please read https://example.com and tell me about it.' },
+      ],
       { sourceIds: ['https://example.com', 'not-a-real-source'] },
     );
 
     expect(reply).toBe('A safe Gemini response');
+    const history = aiMocks.startChat.mock.calls[0][0].history as Array<{
+      parts: Array<{ text: string }>;
+    }>;
+    expect(history.flatMap((entry) => entry.parts.map((part) => part.text)).join(' ')).not.toContain(
+      'https://',
+    );
+
     const prompt = aiMocks.sendMessage.mock.calls[0][0] as string;
     expect(prompt).toContain('NO APPROVED TINY STEPS SOURCE URL');
-    expect(prompt).not.toContain('URL: https://example.com');
+    expect(prompt).toContain('[external URL omitted]');
+    expect(prompt).not.toContain('https://example.com');
+    expect(prompt).not.toContain('https://another.example');
   });
 
   it('fails closed when Gemini cannot retrieve the primary approved source', async () => {
