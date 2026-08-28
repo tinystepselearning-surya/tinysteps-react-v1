@@ -52,8 +52,8 @@ describe('B6 parent authority pillars', () => {
     expect(getParentAuthorityPillar('satpin-phonics-guide')?.changePolicy).toBe('protect');
 
     const text = bodyText('satpin-phonics-guide');
-    expect(text).toContain('/blog/phonics-for-parents-guide');
-    expect(text).toContain('/blog/why-child-knows-letter-sounds-but-cannot-read-words');
+    expect(text).toContain('[Phonics for Parents guide](/blog/phonics-for-parents-guide)');
+    expect(text).toContain('[letter-sounds-but-cannot-read diagnostic guide](/blog/why-child-knows-letter-sounds-but-cannot-read-words)');
   });
 
   it('keeps the phonics parent guide on its dedicated research route and preserves a substantial evidence page', () => {
@@ -81,8 +81,9 @@ describe('B6 parent authority pillars', () => {
     expect(getParentAuthorityPillar(abc!.slug)?.role).toBe('distinct-diagnostic');
     expect(getParentAuthorityPillar(sounds!.slug)?.role).toBe('diagnostic-owner');
 
-    expect(bodyText(abc!.slug)).toContain('/blog/why-child-knows-letter-sounds-but-cannot-read-words');
-    expect(bodyText(sounds!.slug)).toContain('/blog/child-knows-abc-but-cannot-read');
+    expect(bodyText(abc!.slug)).toContain('[letter-sounds-but-cannot-read diagnostic guide](/blog/why-child-knows-letter-sounds-but-cannot-read-words)');
+    expect(bodyText(abc!.slug)).toContain('[complete Phonics for Parents guide](/blog/phonics-for-parents-guide)');
+    expect(bodyText(sounds!.slug)).toContain('[Child Knows ABC but Cannot Read](/blog/child-knows-abc-but-cannot-read)');
   });
 
   it('keeps blending explanation and blending activities as separate complementary intents', () => {
@@ -94,10 +95,10 @@ describe('B6 parent authority pillars', () => {
     expect(explainer?.title).toContain('Stage-by-Stage');
     expect(activities?.title).toContain('Activities');
 
-    expect(bodyText(explainer!.slug)).toContain('/blog/phonics-blending-activities');
-    expect(bodyText(activities!.slug)).toContain('/blog/how-kids-learn-blending');
-    expect(bodyText(explainer!.slug)).toContain('/blog/phonics-for-parents-guide');
-    expect(bodyText(activities!.slug)).toContain('/blog/phonics-for-parents-guide');
+    expect(bodyText(explainer!.slug)).toContain('[phonics blending activities guide](/blog/phonics-blending-activities)');
+    expect(bodyText(activities!.slug)).toContain('[how kids learn blending](/blog/how-kids-learn-blending)');
+    expect(bodyText(explainer!.slug)).toContain('[complete phonics guide for parents](/blog/phonics-for-parents-guide)');
+    expect(bodyText(activities!.slug)).toContain('[complete phonics guide for parents](/blog/phonics-for-parents-guide)');
   });
 
   it('evidence-hardens the letter-sounds diagnosis with direct reading sources and next-step links', () => {
@@ -106,9 +107,9 @@ describe('B6 parent authority pillars', () => {
     expect(text).toContain('educationendowmentfoundation.org.uk');
     expect(text).toContain('ies.ed.gov/ncee/wwc/PracticeGuide/21');
     expect(text).toContain('readingrockets.org/reading-101/reading-and-writing-basics/phonics-and-decoding');
-    expect(text).toContain('/blog/how-to-improve-reading-fluency-in-children');
-    expect(text).toContain('/blog/phonics-for-parents-guide');
-    expect(text).toContain('/reading-classes-for-kids');
+    expect(text).toContain('[How to Improve Reading Fluency in Children](/blog/how-to-improve-reading-fluency-in-children)');
+    expect(text).toContain('[Phonics for Parents guide](/blog/phonics-for-parents-guide)');
+    expect(text).toContain('[reading classes for kids](/reading-classes-for-kids)');
   });
 
   it('makes the fluency pillar accuracy- and meaning-first and removes unsupported fixed thresholds', () => {
@@ -120,8 +121,8 @@ describe('B6 parent authority pillars', () => {
     expect(text).toContain('ies.ed.gov/ncee/wwc/PracticeGuide/21');
     expect(text).toContain('Reading Rockets');
     expect(text).toContain('not a race against a timer');
-    expect(text).toContain('/blog/why-child-knows-letter-sounds-but-cannot-read-words');
-    expect(text).toContain('/blog/phonics-for-parents-guide');
+    expect(text).toContain('[letter-sounds-but-cannot-read diagnostic guide](/blog/why-child-knows-letter-sounds-but-cannot-read-words)');
+    expect(text).toContain('[complete phonics guide for parents](/blog/phonics-for-parents-guide)');
 
     expect(text).not.toContain('80-150 word');
     expect(text).not.toContain('12-15 minute routine done consistently is more effective');
