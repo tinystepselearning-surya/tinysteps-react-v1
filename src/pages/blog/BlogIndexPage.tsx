@@ -153,12 +153,7 @@ const ArticleImage: FC<{ post: BlogIndexItem; eager?: boolean }> = ({ post, eage
   const style = CATEGORY_STYLES[post.category];
 
   if (!post.hero) {
-    return (
-      <div
-        aria-hidden="true"
-        className={`aspect-[16/9] w-full bg-gradient-to-br ${style.wash}`}
-      />
-    );
+    return <div aria-hidden="true" className={`aspect-[16/9] w-full bg-gradient-to-br ${style.wash}`} />;
   }
 
   return (
@@ -189,11 +184,9 @@ const BlogIndexPage: FC = () => {
   }, []);
 
   useEffect(() => {
-    const externalQuery = searchParams.get('search') ?? '';
-    const externalTopic = readTopicParam(searchParams.get('topic'));
-    if (externalQuery !== query) setQuery(externalQuery);
-    if (externalTopic !== topic) setTopic(externalTopic);
-  }, [query, searchParams, topic]);
+    setQuery(searchParams.get('search') ?? '');
+    setTopic(readTopicParam(searchParams.get('topic')));
+  }, [searchParams]);
 
   useEffect(() => {
     const nextParams = new URLSearchParams(searchParams);
