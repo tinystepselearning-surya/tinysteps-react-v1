@@ -12,11 +12,26 @@ export const ASK_TINY_STEPS_MAX_HISTORY_MESSAGES = 8;
 export const ASK_TINY_STEPS_SAFE_ERROR =
   'TinySteps AI is temporarily unavailable. Please try again in a moment.';
 
+const EXTERNAL_URL_PLACEHOLDER = '[external URL omitted]';
+
 type AskMessage = { role: 'user' | 'assistant'; content: string };
 
 export type AskTinyStepsCallOptions = {
   sourceIds?: readonly string[];
 };
+
+/**
+ * URL Context must never receive arbitrary visitor-controlled URLs. All links in
+ * conversation history are removed before the message reaches Gemini. The only
+ * complete URLs left in the current turn are canonical URLs resolved from the
+ * source-controlled Tiny Steps registry below.
+ */
+function removeConversationUrls(text: string): string {
+  return text
+    .replace(/(?:https?:\/\/|www\.)[^\s<>()]+/gi, EXTERNAL_URL_PLACEHOLDER)
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 function cleanMessages(messages: AskMessage[]): AskMessage[] {
   return messages
@@ -29,7 +44,9 @@ function cleanMessages(messages: AskMessage[]): AskMessage[] {
     )
     .map((message) => ({
       role: message.role,
-      content: message.content.trim().slice(0, ASK_TINY_STEPS_MAX_PROMPT_LENGTH),
+      content: removeConversationUrls(
+        message.content.trim().slice(0, ASK_TINY_STEPS_MAX_PROMPT_LENGTH),
+      ),
     }))
     .slice(-ASK_TINY_STEPS_MAX_HISTORY_MESSAGES);
 }
@@ -47,7 +64,10 @@ function resolveApprovedSources(sourceIds: readonly string[]): AskTinyStepsKnowl
   return uniqueIds.flatMap((id) => {
     const source = ASK_TINY_STEPS_KNOWLEDGE_SOURCES.find((candidate) => candidate.id === id);
     if (!source || !source.enabledForAI || source.retrievalPolicy === 'disabled') return [];
-    if (!source.canonicalUrl.startsWith(`${ASK_TINY_STEPS_SITE_ORIGIN}/`) && source.canonicalUrl !== `${ASK_TINY_STEPS_SITE_ORIGIN}/`) {
+    if (
+      !source.canonicalUrl.startsWith(`${ASK_TINY_STEPS_SITE_ORIGIN}/`) &&
+      source.canonicalUrl !== `${ASK_TINY_STEPS_SITE_ORIGIN}/`
+    ) {
       return [];
     }
     return [source];
@@ -105,10 +125,7 @@ function stripModelSourceLines(reply: string): string {
     .trim();
 }
 
-function finalizeGroundedReply(
-  reply: string,
-  retrievedUrls: string[],
-): string {
+function finalizeGroundedReply(reply: string, retrievedUrls: string[]): string {
   const cleanReply = stripModelSourceLines(reply);
   if (retrievedUrls.length === 0) return cleanReply;
   return `${cleanReply}\n\nSource: ${retrievedUrls.join(', ')}`;
@@ -131,7 +148,7 @@ export async function callAskTinySteps(
 
   const clean = cleanMessages(messages);
   const lastMessage = clean[clean.length - 1];
-  if (!lastMessage || lastMessage.role !== 'user') {
+  if (!lastMessage || lastMessage.role !== 'user' || !lastMessage.content) {
     throw new Error(ASK_TINY_STEPS_SAFE_ERROR);
   }
 
