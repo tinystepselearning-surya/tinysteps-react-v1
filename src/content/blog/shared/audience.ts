@@ -1,11 +1,10 @@
 import type { BlogAudience, BlogDiscoveryCategory, BlogPost } from '../types';
 
 /**
- * Explicit audience ownership for institutional/research content.
- *
- * Keep this list explicit rather than inferring from category alone: the Research
- * category also contains parent-facing authority pieces such as the phonics parent
- * guide and science-of-phonics explainer.
+ * Research is the one source category that serves two materially different
+ * audiences. Keep both sides explicit so adding a new Research article requires
+ * an intentional audience review instead of silently defaulting into the parent
+ * discovery experience.
  */
 export const SCHOOL_RESEARCH_SLUGS = new Set<string>([
   'cbse-phonics-curriculum-vs-systematic-phonics-programme',
@@ -17,6 +16,16 @@ export const SCHOOL_RESEARCH_SLUGS = new Set<string>([
   'systematic-cumulative-phonics-explained-for-schools',
   'why-letter-sounds-are-not-enough-to-read',
 ]);
+
+export const PARENT_RESEARCH_SLUGS = new Set<string>([
+  'phonics-for-parents-guide',
+  'science-of-phonics-learning',
+]);
+
+export function hasReviewedResearchAudience(post: Pick<BlogPost, 'slug' | 'category'>): boolean {
+  if (post.category !== 'Research') return true;
+  return SCHOOL_RESEARCH_SLUGS.has(post.slug) || PARENT_RESEARCH_SLUGS.has(post.slug);
+}
 
 export function getBlogAudience(post: Pick<BlogPost, 'slug' | 'category'>): BlogAudience {
   return SCHOOL_RESEARCH_SLUGS.has(post.slug) ? 'Schools & Research' : 'Parent';
@@ -36,8 +45,7 @@ export function getBlogDiscoveryCategory(
     case 'Parent Tips':
       return 'Parent Guides';
     case 'Research':
-      // Parent-facing Research content is discovered by the problem it solves,
-      // not through an institution-oriented Research shelf.
+      // The reviewed parent-facing Research pieces are phonics authority guides.
       return 'Phonics';
     case 'Phonics':
     default:
