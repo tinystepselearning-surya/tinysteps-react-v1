@@ -30,6 +30,7 @@ vi.mock('firebase/ai', () => ({
 
 import {
   ASK_TINY_STEPS_APP_NAME,
+  ASK_TINY_STEPS_MAX_OUTPUT_TOKENS,
   ASK_TINY_STEPS_MODEL,
   ASK_TINY_STEPS_MODEL_CASCADE,
   getAskTinyStepsApp,
@@ -94,6 +95,18 @@ describe('Ask Tiny Steps secondary Firebase AI client', () => {
       }),
       { timeout: 60_000 },
     );
+  });
+
+  it('gives grounded answers enough output headroom without forcing a temperature', () => {
+    firebaseMocks.getApps.mockReturnValue([askApp]);
+    getAskTinyStepsGenerativeModel();
+
+    const modelConfig = firebaseMocks.getGenerativeModel.mock.calls[0][1];
+    expect(ASK_TINY_STEPS_MAX_OUTPUT_TOKENS).toBe(768);
+    expect(modelConfig.generationConfig).toEqual({
+      maxOutputTokens: ASK_TINY_STEPS_MAX_OUTPUT_TOKENS,
+    });
+    expect(modelConfig.generationConfig).not.toHaveProperty('temperature');
   });
 
   it('defaults direct model creation to the 3.7 Flash primary', () => {

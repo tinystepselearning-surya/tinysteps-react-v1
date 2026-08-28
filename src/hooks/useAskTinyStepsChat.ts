@@ -12,11 +12,9 @@ import {
   FREE_DEMO_OFFER_NAME,
   FREE_DEMO_PRICE,
   FREE_DEMO_SESSION_COUNT,
-  STANDARD_PRICING_SUMMARY,
 } from "../config/publicOffer";
 import {
   ASK_TINY_STEPS_MAX_PROMPT_LENGTH,
-  ASK_TINY_STEPS_SAFE_ERROR,
   callAskTinySteps,
 } from "../services/askTinyStepsService";
 import { selectAskTinyStepsSources } from "../services/askTinyStepsSourceSelector";
@@ -48,7 +46,9 @@ export const ASK_TINYSTEPS_KB: { id: string; title: string; text: string; url: s
     title: "Pricing & Packages",
     url: "https://tinystepslearning.com/pricing",
     text:
-      `${STANDARD_PRICING_SUMMARY}. Standard 1:1 monthly plans: Starter ${formatINR(CANONICAL_PRICING_PACKAGES[0].price)} for ${CANONICAL_PRICING_PACKAGES[0].classes} classes, Growth ${formatINR(CANONICAL_PRICING_PACKAGES[1].price)} for ${CANONICAL_PRICING_PACKAGES[1].classes} classes, Intensive ${formatINR(CANONICAL_PRICING_PACKAGES[2].price)} for ${CANONICAL_PRICING_PACKAGES[2].classes} classes. Ultra Premium Program (classes with native English-speaking teachers): 1:1 ${formatINR(ULTRA_PREMIUM_PRICING[0].perClass)} per class or ${formatINR(ULTRA_PREMIUM_PRICING[0].package12)} for 12 classes; 1:2 ${formatINR(ULTRA_PREMIUM_PRICING[1].package12)} for 12 classes per child; 1:3 ${formatINR(ULTRA_PREMIUM_PRICING[2].package12)}; 1:4 ${formatINR(ULTRA_PREMIUM_PRICING[3].package12)}; 1:5 ${formatINR(ULTRA_PREMIUM_PRICING[4].package12)}; 1:6 ${formatINR(ULTRA_PREMIUM_PRICING[5].package12)}.`,
+      `Standard 1:1 classes are ₹${PER_CLASS_PRICE} per class. Standard monthly plans are ${CANONICAL_PRICING_PACKAGES.map(
+        (pkg) => `${formatINR(pkg.price)} for ${pkg.classes} classes`,
+      ).join(", ")}.`,
   },
   {
     id: "timings",
@@ -171,6 +171,7 @@ type Intent =
   | "assessment"
   | "pricing"
   | "single_class"
+  | "class_mode"
   | "timings"
   | "courses"
   | "summer_camp"
@@ -198,11 +199,15 @@ function detectIntent(q: string): Intent {
   }
 
   if (
-    /(single\s*class|one\s*class|paid\s*class|paid\s*trial|trial\s*price|trial\s*fee)/.test(
+    /\b(single\s*class|one\s*class|paid\s*class|paid\s*trial|trial\s*price|trial\s*fee)\b/.test(
       s
     )
   ) {
     return "single_class";
+  }
+
+  if (/\b(1:1|one-to-one|one to one|individual class|private class)\b/.test(s)) {
+    return "class_mode";
   }
 
   if (/(summer\s*camp|summer\s*camps|fast\s*track|vacation\s*course|holiday\s*course)/.test(s))
@@ -219,50 +224,40 @@ function detectIntent(q: string): Intent {
 }
 
 function formatFactsForIntent(intent: Intent): { text: string; sourcesUsed: string[] } {
-  const wa = `${ASK_TINYSTEPS_FACTS.whatsappCtaText}: ${ASK_TINYSTEPS_FACTS.whatsappLink}`;
-
   if (intent === "assessment") {
     return {
       text:
         `✅ ${FREE_DEMO_OFFER_NAME}: FREE (₹${FREE_DEMO_PRICE}).\n` +
         `${FREE_DEMO_FULL_DESCRIPTION}\n` +
-        `No credit card or enrolment commitment is required.\n\n` +
-        `${wa}`,
+        `No credit card or enrolment commitment is required.`,
       sourcesUsed: ["assessment"],
     };
   }
 
   if (intent === "pricing") {
-    const lines = ASK_TINYSTEPS_FACTS.pricingPackages.map(
-      (p) => `• Standard: ${p.classes} classes — ${formatINR(p.price)} (₹${p.perClass}/class)`
-    );
-
-    lines.unshift(
-      `✅ ${STANDARD_PRICING_SUMMARY}`,
-      `✅ ${FREE_DEMO_OFFER_NAME}: FREE (₹${FREE_DEMO_PRICE})`
-    );
-    lines.push("• Ultra Premium (native English-speaking teachers):");
-    ASK_TINYSTEPS_FACTS.ultraPremiumPricing.forEach((row) => {
-      lines.push(
-        `  - ${row.format} — ${formatINR(row.perClass)} ${row.unitLabel} | ${formatINR(row.package12)} ${row.packageLabel}`
-      );
-    });
-    lines.push(
-      `• Standard single paid class: ₹${ASK_TINYSTEPS_FACTS.paidSingleClassPrice}`
-    );
-    lines.push(`\n${wa}`);
-
-    return { text: lines.join("\n"), sourcesUsed: ["pricing", "assessment"] };
+    const starter = ASK_TINYSTEPS_FACTS.pricingPackages[0];
+    return {
+      text:
+        `Standard 1:1 classes are ₹${ASK_TINYSTEPS_FACTS.paidSingleClassPrice} per class. ` +
+        `The ${starter.classes}-class plan is ${formatINR(starter.price)}. ` +
+        `${FREE_DEMO_OFFER_NAME} is free and lasts ${ASK_TINYSTEPS_FACTS.freeDemoDurationMins} minutes.`,
+      sourcesUsed: ["pricing", "assessment"],
+    };
   }
 
   if (intent === "single_class") {
     return {
       text:
-        `Standard single paid class (35 minutes, 1:1): ₹${ASK_TINYSTEPS_FACTS.paidSingleClassPrice}.\n` +
-        `Ultra Premium 1:1 class (native English-speaking teacher): ₹${ASK_TINYSTEPS_FACTS.ultraPremiumPricing[0].perClass}.\n` +
-        `✅ ${FREE_DEMO_OFFER_NAME} is FREE (₹${FREE_DEMO_PRICE}) and is recommended before purchasing paid classes.\n\n` +
-        `${wa}`,
+        `Standard single paid class (${ASK_TINYSTEPS_FACTS.classDurationMins} minutes, 1:1): ₹${ASK_TINYSTEPS_FACTS.paidSingleClassPrice}. ` +
+        `${FREE_DEMO_OFFER_NAME} is FREE (₹${FREE_DEMO_PRICE}) and is recommended before purchasing paid classes.`,
       sourcesUsed: ["pricing", "assessment"],
+    };
+  }
+
+  if (intent === "class_mode") {
+    return {
+      text: `Yes. Tiny Steps standard classes are live 1:1 sessions, ${ASK_TINYSTEPS_FACTS.classDurationMins} minutes each.`,
+      sourcesUsed: ["timings", "courses"],
     };
   }
 
@@ -270,7 +265,7 @@ function formatFactsForIntent(intent: Intent): { text: string; sourcesUsed: stri
     return {
       text:
         `Each class is ${ASK_TINYSTEPS_FACTS.classDurationMins} minutes ` +
-        `(${ASK_TINYSTEPS_FACTS.classModes.join(", ")}).\n\n${wa}`,
+        `(${ASK_TINYSTEPS_FACTS.classModes.join(", ")}).`,
       sourcesUsed: ["timings"],
     };
   }
@@ -280,7 +275,7 @@ function formatFactsForIntent(intent: Intent): { text: string; sourcesUsed: stri
       .map((t) => `• ${t.name} (${t.ageRange})`)
       .join("\n");
     return {
-      text: `We offer:\n${trackLines}\n\nOverall age range: ${ASK_TINYSTEPS_FACTS.ageRangeOverall}.\n\n${wa}`,
+      text: `We offer:\n${trackLines}\n\nOverall age range: ${ASK_TINYSTEPS_FACTS.ageRangeOverall}.`,
       sourcesUsed: ["courses"],
     };
   }
@@ -289,16 +284,28 @@ function formatFactsForIntent(intent: Intent): { text: string; sourcesUsed: stri
     return {
       text:
         "Summer Camp 2026 ended on 13 June 2026. Enrolment is closed.\n" +
-        "Each child joined one four-week small-group batch with 24 live classes from Monday to Saturday.\n" +
-        "Historical tracks were Phonics Fast Track, Grammar Fast Track, and Speaking Fast Track.\n" +
-        "Historical list fee: ₹5,000 per child. Historical effective fee: ₹2,400 per child.\n" +
-        "Details: https://tinystepslearning.com/summer-camps\n\n" +
-        `${wa}`,
+        "Historical details: https://tinystepslearning.com/summer-camps",
       sourcesUsed: ["summer_camps"],
     };
   }
 
   return { text: "", sourcesUsed: [] };
+}
+
+function schoolFallback(question: string): string {
+  if (/(price|prices|pricing|fee|fees|cost|package|packages|plan|plans|how much)/i.test(question)) {
+    return (
+      "School partnership pricing is separate from parent 1:1 pricing. " +
+      "Please see the current For Schools page for the applicable school plan: " +
+      "https://tinystepslearning.com/for-schools"
+    );
+  }
+
+  return (
+    "Yes. Tiny Steps has a dedicated For Schools programme. " +
+    "You can view the current school partnership details here: " +
+    "https://tinystepslearning.com/for-schools"
+  );
 }
 
 function greetingReply(): { text: string; sourcesUsed: string[] } {
@@ -309,13 +316,21 @@ function greetingReply(): { text: string; sourcesUsed: string[] } {
       "• One Free 35-Minute Demo Assessment Class\n" +
       "• Pricing / packages\n" +
       "• Class duration\n" +
-      "• Courses (Phonics / Grammar / Public Speaking)\n\n" +
-      "Tell me your child’s age and what you’re looking for.",
+      "• Courses (Phonics / Grammar / Public Speaking)\n" +
+      "• Programmes for schools\n\n" +
+      "Tell me what you’re looking for.",
     sourcesUsed: [],
   };
 }
 
-function historyForAI(messages: AskChatMessage[], maxMessages = 10): AskChatMessage[] {
+const CONTEXTUAL_FOLLOW_UP_PATTERN =
+  /^(?:what|how) about\b|^and\b|\b(?:this|that|it|those|same one|same thing)\b|\bhow much is it\b|\bhow much does (?:it|this|that) cost\b|\bhow long is it\b|\btell me more\b/i;
+
+function isContextualFollowUp(question: string): boolean {
+  return CONTEXTUAL_FOLLOW_UP_PATTERN.test(question.trim());
+}
+
+function historyForAI(messages: AskChatMessage[], maxMessages = 3): AskChatMessage[] {
   return messages.slice(-maxMessages).map((m) => ({
     role: m.role,
     content: String(m.content || "").slice(0, 2000),
@@ -354,21 +369,35 @@ export function useAskTinyStepsChat() {
 
       const intent = detectIntent(trimmed);
       let assistantText = "";
+      let sourceSelection: ReturnType<typeof selectAskTinyStepsSources> | null = null;
 
       if (intent === "greeting") {
         const res = greetingReply();
         assistantText = res.text;
       } else {
+        const recentUserMessages = messages
+          .filter((message) => message.role === "user")
+          .map((message) => message.content)
+          .slice(-2);
+        const contextualFollowUp = isContextualFollowUp(trimmed);
+        const selectionQuestion =
+          contextualFollowUp && recentUserMessages.length > 0
+            ? `${recentUserMessages[recentUserMessages.length - 1]} ${trimmed}`
+            : trimmed;
+
+        sourceSelection = selectAskTinyStepsSources(selectionQuestion, {
+          recentUserMessages,
+          currentPath: typeof window !== "undefined" ? window.location.pathname : undefined,
+        });
+
+        // A clear standalone question gets a fresh Gemini chat so old parent/school
+        // answers cannot contaminate the new audience. A genuine follow-up receives
+        // only the immediately preceding user/assistant turn.
+        const conversation = contextualFollowUp
+          ? historyForAI([...messages.slice(-2), userMsg], 3)
+          : [userMsg];
+
         try {
-          const conversation = historyForAI([...messages, userMsg], 10);
-          const recentUserMessages = messages
-            .filter((message) => message.role === "user")
-            .map((message) => message.content)
-            .slice(-2);
-          const sourceSelection = selectAskTinyStepsSources(trimmed, {
-            recentUserMessages,
-            currentPath: typeof window !== "undefined" ? window.location.pathname : undefined,
-          });
           const aiReply = await callAskTinySteps(conversation, {
             sourceIds: sourceSelection.sourceIds,
           });
@@ -377,16 +406,20 @@ export function useAskTinyStepsChat() {
           }
         } catch {
           console.warn("AskTinySteps AI unavailable; using the approved local fallback.");
-          setError(ASK_TINY_STEPS_SAFE_ERROR);
         }
       }
 
       // Fail-closed deterministic fallback. These local facts are not sent to Gemini.
+      // A successful verified fallback is a valid answer, so it must not display a
+      // contradictory red provider-outage banner to the visitor.
       if (!assistantText) {
-        if (
+        if (sourceSelection?.audience === "schools") {
+          assistantText = schoolFallback(trimmed);
+        } else if (
           intent === "assessment" ||
           intent === "pricing" ||
           intent === "single_class" ||
+          intent === "class_mode" ||
           intent === "timings" ||
           intent === "courses" ||
           intent === "summer_camp"
@@ -399,7 +432,6 @@ export function useAskTinyStepsChat() {
             assistantText = results
               .map((r) => `• ${r.title}: ${r.text}`)
               .join("\n\n");
-            assistantText += `\n\n${ASK_TINYSTEPS_FACTS.whatsappCtaText}: ${ASK_TINYSTEPS_FACTS.whatsappLink}`;
           } else {
             assistantText =
               `I don’t have that confirmed in my notes yet.\n\n` +
