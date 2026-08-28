@@ -14,6 +14,14 @@ describe('Ask Tiny Steps smart source selector', () => {
     expect(selection.sources.every((source) => source.audience !== 'schools')).toBe(true);
   });
 
+  it('grounds class-duration questions on current assessment and FAQ pages', () => {
+    const selection = selectAskTinyStepsSources('What is the duration of each class?');
+
+    expect(selection.audience).toBe('parents');
+    expect(selection.intent).toBe('timings');
+    expect(selection.sourceIds.slice(0, 2)).toEqual(['book-demo', 'faq']);
+  });
+
   it('routes a blending problem to the specific support article before broad phonics pages', () => {
     const selection = selectAskTinyStepsSources(
       'My child knows letter sounds but cannot read words. How can I help with blending?',
@@ -47,7 +55,7 @@ describe('Ask Tiny Steps smart source selector', () => {
     expect(normal.sourceIds).not.toContain('summer-camps-2026');
   });
 
-  it('uses recent conversation context for a vague follow-up without broadening to arbitrary sources', () => {
+  it('uses recent school context for a vague pricing follow-up without switching to parent pricing', () => {
     const selection = selectAskTinyStepsSources('How much is it?', {
       recentUserMessages: ['We are a CBSE school looking for teacher training.'],
     });
@@ -55,6 +63,16 @@ describe('Ask Tiny Steps smart source selector', () => {
     expect(selection.audience).toBe('schools');
     expect(selection.sourceIds[0]).toBe('for-schools');
     expect(selection.sourceIds).not.toContain('pricing');
+  });
+
+  it('does not let stale school history contaminate a clear new parent question', () => {
+    const selection = selectAskTinyStepsSources('What are your regular class fees for my child?', {
+      recentUserMessages: ['We are a CBSE school looking for teacher training.'],
+    });
+
+    expect(selection.audience).toBe('parents');
+    expect(selection.intent).toBe('pricing');
+    expect(selection.sourceIds[0]).toBe('pricing');
   });
 
   it('can use the approved current page for a contextual follow-up', () => {
