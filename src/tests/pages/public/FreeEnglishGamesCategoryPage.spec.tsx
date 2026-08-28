@@ -74,6 +74,18 @@ describe("FreeEnglishGamesCategoryPage", () => {
     },
   );
 
+  it("features Tiny Steps Phonics Balloon Pop on the letter-sound authority category", () => {
+    renderRoute("/free-letter-sound-games-for-kids");
+
+    expect(screen.getByRole("heading", { level: 2, name: /tiny steps phonics balloon pop/i })).toBeInTheDocument();
+    expect(screen.getByText(/hear one target letter sound, find the matching printed letter/i)).toBeInTheDocument();
+    expect(screen.getByText(/satpin/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /play balloon pop free/i })).toHaveAttribute(
+      "href",
+      "/free-balloon-pop-phonics-game-for-kids",
+    );
+  });
+
   it("covers every configured public category route", () => {
     const configuredRoutes = new Set(PUBLIC_ENGLISH_GAMES_CATEGORY_CONFIGS.map((config) => config.route));
 
