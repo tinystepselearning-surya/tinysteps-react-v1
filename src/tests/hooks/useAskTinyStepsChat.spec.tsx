@@ -10,6 +10,9 @@ vi.mock('../../services/askTinyStepsService', () => ({
 
 import { useAskTinyStepsChat } from '../../hooks/useAskTinyStepsChat';
 
+const lastMessageContent = (messages: Array<{ content: string }>): string =>
+  messages[messages.length - 1]?.content ?? '';
+
 describe('useAskTinyStepsChat execution policy', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -32,7 +35,7 @@ describe('useAskTinyStepsChat execution policy', () => {
     await act(async () => result.current.sendMessage('What are your fees and packages?'));
 
     expect(serviceMocks.call).not.toHaveBeenCalled();
-    const answer = result.current.messages.at(-1)?.content ?? '';
+    const answer = lastMessageContent(result.current.messages);
     expect(answer).toContain('₹400');
     expect(answer).toContain('₹4,800');
     expect(answer).toContain('/pricing');
@@ -45,7 +48,7 @@ describe('useAskTinyStepsChat execution policy', () => {
     await act(async () => result.current.sendMessage('How long is each class?'));
 
     expect(serviceMocks.call).not.toHaveBeenCalled();
-    const answer = result.current.messages.at(-1)?.content ?? '';
+    const answer = lastMessageContent(result.current.messages);
     expect(answer).toContain('1:1 classes are 35 minutes');
     expect(answer).toContain('40–60 minutes');
   });
@@ -56,7 +59,7 @@ describe('useAskTinyStepsChat execution policy', () => {
     await act(async () => result.current.sendMessage("Can you tell me my child's attendance and progress?"));
 
     expect(serviceMocks.call).not.toHaveBeenCalled();
-    expect(result.current.messages.at(-1)?.content).toContain('secure Parent Dashboard');
+    expect(lastMessageContent(result.current.messages)).toContain('secure Parent Dashboard');
   });
 
   it('blocks visitor URLs with zero Gemini calls', async () => {
@@ -67,7 +70,7 @@ describe('useAskTinyStepsChat execution policy', () => {
     );
 
     expect(serviceMocks.call).not.toHaveBeenCalled();
-    expect(result.current.messages.at(-1)?.content).toContain('links supplied by visitors');
+    expect(lastMessageContent(result.current.messages)).toContain('links supplied by visitors');
   });
 
   it('uses first-party grounded mode only when synthesis from approved pages is needed', async () => {
@@ -149,7 +152,7 @@ describe('useAskTinyStepsChat execution policy', () => {
     await act(async () => result.current.sendMessage('How much does it cost?'));
 
     expect(serviceMocks.call).not.toHaveBeenCalled();
-    const answer = result.current.messages.at(-1)?.content ?? '';
+    const answer = lastMessageContent(result.current.messages);
     expect(answer).toContain('₹59,000');
     expect(answer).toContain('₹1,49,000');
     expect(answer).not.toContain('₹400');
@@ -163,7 +166,7 @@ describe('useAskTinyStepsChat execution policy', () => {
       result.current.sendMessage('My child knows letter sounds but cannot blend words. What should I do?'),
     );
 
-    const answer = result.current.messages.at(-1)?.content ?? '';
+    const answer = lastMessageContent(result.current.messages);
     expect(result.current.error).toBeNull();
     expect(answer).toContain('2–3 sounds');
     expect(answer).not.toContain('Summer Camp');
@@ -179,7 +182,7 @@ describe('useAskTinyStepsChat execution policy', () => {
       ),
     );
 
-    const answer = result.current.messages.at(-1)?.content ?? '';
+    const answer = lastMessageContent(result.current.messages);
     expect(answer).toContain('repeated reading');
     expect(answer).toContain('accuracy');
     expect(answer).not.toContain('Summer Camp');
