@@ -186,3 +186,9 @@ export function getAuthorityPosts(posts: readonly BlogIndexItem[], limit = 4): B
 export function getPublishedCountLabel(count: number): string {
   return `${count} published article${count === 1 ? '' : 's'}`;
 }
+
+export function getLibraryCountLabel(count: number, featuredPostsExcluded: boolean): string | null {
+  if (count === 0) return null;
+  const suffix = `article${count === 1 ? '' : 's'}`;
+  return featuredPostsExcluded ? `${count} more ${suffix}` : `${count} ${suffix}`;
+}

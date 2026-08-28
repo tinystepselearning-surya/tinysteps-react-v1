@@ -11,6 +11,7 @@ import {
   getBlogCardLabel,
   getBlogDiscoveryTopic,
   getDefaultParentLibraryPosts,
+  getLibraryCountLabel,
   getPublishedCountLabel,
   isParentFacingBlogPost,
   sortBlogIndexPostsNewest,
@@ -80,6 +81,17 @@ describe('B5 blog index UX model with post-B7 polish', () => {
     expect(library.every((post) => !authoritySlugs.has(post.slug))).toBe(true);
   });
 
+  it('labels the default parent feed as the dynamic remainder after featured guides', () => {
+    const authoritySlugs = new Set(getAuthorityPosts(blogPosts).map((post) => post.slug));
+    const library = getDefaultParentLibraryPosts(blogPosts, authoritySlugs);
+
+    expect(getLibraryCountLabel(library.length, true)).toBe(`${library.length} more articles`);
+    expect(getLibraryCountLabel(1, true)).toBe('1 more article');
+    expect(getLibraryCountLabel(0, true)).toBeNull();
+    expect(getLibraryCountLabel(12, false)).toBe('12 articles');
+    expect(getLibraryCountLabel(1, false)).toBe('1 article');
+  });
+
   it('uses deterministic newest-first ordering instead of unsupported popularity claims', () => {
     const sorted = sortBlogIndexPostsNewest(blogPosts);
     for (let index = 1; index < sorted.length; index += 1) {
@@ -99,7 +111,8 @@ describe('B5 blog index UX model with post-B7 polish', () => {
     expect(source).not.toContain('earning strong search visibility');
     expect(source).not.toContain('authority routes');
     expect(source).not.toContain('without another long feed');
-    expect(source).toContain('Popular guides parents start with');
+    expect(source).not.toContain('Popular guides parents start with');
+    expect(source).toContain('Featured guides to start with');
     expect(source).toContain('Get practical English-learning ideas in your inbox');
   });
 
