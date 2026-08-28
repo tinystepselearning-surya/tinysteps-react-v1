@@ -12,6 +12,10 @@ describe('Ask Tiny Steps URL Context security boundary', () => {
       join(process.cwd(), 'src/services/askTinyStepsSourceSelector.ts'),
       'utf8',
     );
+    const router = readFileSync(
+      join(process.cwd(), 'src/services/askTinyStepsExecutionRouter.ts'),
+      'utf8',
+    );
     const aiClient = readFileSync(
       join(process.cwd(), 'src/lib/askTinyStepsFirebaseAI.ts'),
       'utf8',
@@ -21,18 +25,28 @@ describe('Ask Tiny Steps URL Context security boundary', () => {
       'utf8',
     );
 
+    expect(aiClient).toContain("mode === 'first_party_grounded'");
     expect(aiClient).toContain('tools: [{ urlContext: {} }]');
     expect(selector).toContain('ASK_TINY_STEPS_MAX_URL_CONTEXT_SOURCES = 2');
     expect(service).toContain('removeConversationUrls');
     expect(service).toContain('ASK_TINY_STEPS_KNOWLEDGE_SOURCES.find');
     expect(service).toContain("urlRetrievalStatus === 'URL_RETRIEVAL_STATUS_SUCCESS'");
     expect(service).toContain('primary-url-context-retrieval-failed');
-    expect(hook).toContain('selectAskTinyStepsSources');
-    expect(hook).toContain('sourceIds: sourceSelection.sourceIds');
+    expect(router).toContain('planAskTinyStepsExecution');
+    expect(router).toContain('selectAskTinyStepsSources');
+    expect(router).toContain('VISITOR_URL_PATTERN');
+    expect(hook).toContain('planAskTinyStepsExecution');
+    expect(hook).toContain('sourceIds: plan.sourceIds');
 
-    // The Groq-era copied-snippet request contract is retired from the AI path.
+    // General guidance must not inherit the URL Context tool.
+    expect(aiClient).toContain("mode: AskTinyStepsModelMode = 'first_party_grounded'");
+    expect(router).toContain("mode: 'general_guidance'");
+
+    // The Groq-era copied-snippet / generic KB request contracts are retired.
     expect(service).not.toContain('approvedSnippets');
     expect(hook).not.toContain('approvedSnippets');
     expect(service).not.toContain('APPROVED TINY STEPS SNIPPETS');
+    expect(hook).not.toContain('scoreKB');
+    expect(hook).not.toContain('retrieve(trimmed');
   });
 });

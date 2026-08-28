@@ -5,19 +5,18 @@ const serviceMocks = vi.hoisted(() => ({ call: vi.fn() }));
 
 vi.mock('../../services/askTinyStepsService', () => ({
   ASK_TINY_STEPS_MAX_PROMPT_LENGTH: 2_000,
-  ASK_TINY_STEPS_SAFE_ERROR: 'TinySteps AI is temporarily unavailable. Please try again in a moment.',
   callAskTinySteps: serviceMocks.call,
 }));
 
 import { useAskTinyStepsChat } from '../../hooks/useAskTinyStepsChat';
 
-describe('useAskTinyStepsChat submission guards', () => {
+describe('useAskTinyStepsChat execution policy', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
   });
 
-  it('rejects empty and oversized prompts', async () => {
+  it('rejects empty and oversized prompts before any model call', async () => {
     const { result } = renderHook(() => useAskTinyStepsChat());
     await act(async () => result.current.sendMessage('   '));
     await act(async () => result.current.sendMessage('x'.repeat(2_001)));
@@ -27,27 +26,80 @@ describe('useAskTinyStepsChat submission guards', () => {
     expect(result.current.error).toContain('under 2000 characters');
   });
 
-  it('passes only the canonical pricing source to Firebase AI Logic', async () => {
-    serviceMocks.call.mockResolvedValue('Our current pricing is on the pricing page.');
+  it('answers parent pricing with zero Gemini calls', async () => {
     const { result } = renderHook(() => useAskTinyStepsChat());
 
     await act(async () => result.current.sendMessage('What are your fees and packages?'));
 
-    expect(serviceMocks.call).toHaveBeenCalledTimes(1);
-    expect(serviceMocks.call.mock.calls[0][1]).toEqual({
-      sourceIds: ['pricing'],
-    });
-    expect(result.current.messages[result.current.messages.length - 1]?.content).toContain('pricing');
+    expect(serviceMocks.call).not.toHaveBeenCalled();
+    const answer = result.current.messages.at(-1)?.content ?? '';
+    expect(answer).toContain('₹400');
+    expect(answer).toContain('₹4,800');
+    expect(answer).toContain('/pricing');
   });
 
-  it('routes one-to-one questions to the canonical pricing source', async () => {
-    serviceMocks.call.mockResolvedValue('Yes. Tiny Steps offers live 1:1 classes.');
+  it('answers one-to-one class mode and duration with zero Gemini calls', async () => {
     const { result } = renderHook(() => useAskTinyStepsChat());
 
     await act(async () => result.current.sendMessage('Do you provide one-to-one classes?'));
+    await act(async () => result.current.sendMessage('How long is each class?'));
+
+    expect(serviceMocks.call).not.toHaveBeenCalled();
+    const answer = result.current.messages.at(-1)?.content ?? '';
+    expect(answer).toContain('1:1 classes are 35 minutes');
+    expect(answer).toContain('40–60 minutes');
+  });
+
+  it('answers private child-record questions with zero Gemini calls', async () => {
+    const { result } = renderHook(() => useAskTinyStepsChat());
+
+    await act(async () => result.current.sendMessage("Can you tell me my child's attendance and progress?"));
+
+    expect(serviceMocks.call).not.toHaveBeenCalled();
+    expect(result.current.messages.at(-1)?.content).toContain('secure Parent Dashboard');
+  });
+
+  it('blocks visitor URLs with zero Gemini calls', async () => {
+    const { result } = renderHook(() => useAskTinyStepsChat());
+
+    await act(async () =>
+      result.current.sendMessage('Please read https://example.com and tell me what it says.'),
+    );
+
+    expect(serviceMocks.call).not.toHaveBeenCalled();
+    expect(result.current.messages.at(-1)?.content).toContain('links supplied by visitors');
+  });
+
+  it('uses first-party grounded mode only when synthesis from approved pages is needed', async () => {
+    serviceMocks.call.mockResolvedValue('Grounded phonics guidance');
+    const { result } = renderHook(() => useAskTinyStepsChat());
+
+    await act(async () =>
+      result.current.sendMessage(
+        'My 6-year-old knows letter sounds but cannot blend words. What should I do?',
+      ),
+    );
 
     expect(serviceMocks.call).toHaveBeenCalledTimes(1);
-    expect(serviceMocks.call.mock.calls[0][1]).toEqual({ sourceIds: ['pricing'] });
+    expect(serviceMocks.call.mock.calls[0][1]).toEqual({
+      sourceIds: ['sounds-cannot-read', 'letter-sounds-not-enough'],
+      mode: 'first_party_grounded',
+    });
+  });
+
+  it('uses tool-free general guidance mode for English-learning questions without a first-party route', async () => {
+    serviceMocks.call.mockResolvedValue('Use short themed word groups and review them in sentences.');
+    const { result } = renderHook(() => useAskTinyStepsChat());
+
+    await act(async () =>
+      result.current.sendMessage('What is a simple way to build my child’s English vocabulary at home?'),
+    );
+
+    expect(serviceMocks.call).toHaveBeenCalledTimes(1);
+    expect(serviceMocks.call.mock.calls[0][1]).toEqual({
+      sourceIds: [],
+      mode: 'general_guidance',
+    });
   });
 
   it('prevents duplicate submissions even before React rerenders loading state', async () => {
@@ -73,76 +125,63 @@ describe('useAskTinyStepsChat submission guards', () => {
     expect(result.current.messages).toHaveLength(2);
   });
 
-  it('keeps a clear new school question out of stale parent pricing history', async () => {
-    serviceMocks.call
-      .mockResolvedValueOnce('Parent pricing answer')
-      .mockResolvedValueOnce('School programme answer');
+  it('keeps a clear new parent synthesis question out of stale school history', async () => {
+    serviceMocks.call.mockResolvedValue('Grounded phonics programme answer');
     const { result } = renderHook(() => useAskTinyStepsChat());
 
-    await act(async () => result.current.sendMessage('How much do phonics classes cost?'));
     await act(async () => result.current.sendMessage('Do you have programs for schools?'));
+    await act(async () => result.current.sendMessage('Tell me about your phonics classes.'));
 
-    expect(serviceMocks.call).toHaveBeenCalledTimes(2);
-    expect(serviceMocks.call.mock.calls[1][0]).toEqual([
-      { role: 'user', content: 'Do you have programs for schools?' },
+    expect(serviceMocks.call).toHaveBeenCalledTimes(1);
+    expect(serviceMocks.call.mock.calls[0][0]).toEqual([
+      { role: 'user', content: 'Tell me about your phonics classes.' },
     ]);
-    expect(serviceMocks.call.mock.calls[1][1].sourceIds).toContain('for-schools');
-    expect(serviceMocks.call.mock.calls[1][1].sourceIds).not.toContain('pricing');
+    expect(serviceMocks.call.mock.calls[0][1]).toEqual({
+      sourceIds: ['phonics'],
+      mode: 'first_party_grounded',
+    });
   });
 
-  it('preserves only the immediately relevant school turn for a pricing follow-up', async () => {
-    serviceMocks.call
-      .mockResolvedValueOnce('Yes. Tiny Steps has school programmes.')
-      .mockResolvedValueOnce('Current school pricing is on the For Schools page.');
+  it('answers a school pricing follow-up deterministically without parent-price leakage', async () => {
     const { result } = renderHook(() => useAskTinyStepsChat());
 
     await act(async () => result.current.sendMessage('Do you have programs for schools?'));
     await act(async () => result.current.sendMessage('How much does it cost?'));
 
-    expect(serviceMocks.call).toHaveBeenCalledTimes(2);
-    expect(serviceMocks.call.mock.calls[1][0]).toEqual([
-      { role: 'user', content: 'Do you have programs for schools?' },
-      { role: 'assistant', content: 'Yes. Tiny Steps has school programmes.' },
-      { role: 'user', content: 'How much does it cost?' },
-    ]);
-    expect(serviceMocks.call.mock.calls[1][1].sourceIds).toContain('for-schools');
-    expect(serviceMocks.call.mock.calls[1][1].sourceIds).not.toContain('pricing');
-  });
-
-  it('uses a concise verified fallback without showing a contradictory outage error', async () => {
-    serviceMocks.call.mockRejectedValue(new Error('provider unavailable'));
-    const { result } = renderHook(() => useAskTinyStepsChat());
-
-    await act(async () => result.current.sendMessage('How much do phonics classes cost?'));
-
-    const answer = result.current.messages[result.current.messages.length - 1]?.content ?? '';
-    expect(result.current.error).toBeNull();
-    expect(answer).toContain('₹400 per class');
-    expect(answer).toContain('₹4,800');
-    expect(answer).not.toContain('Ultra Premium');
-  });
-
-  it('never falls back from a school question to parent 1:1 pricing', async () => {
-    serviceMocks.call.mockRejectedValue(new Error('provider unavailable'));
-    const { result } = renderHook(() => useAskTinyStepsChat());
-
-    await act(async () => result.current.sendMessage('Do you have programs for schools?'));
-
-    const answer = result.current.messages[result.current.messages.length - 1]?.content ?? '';
-    expect(result.current.error).toBeNull();
-    expect(answer).toContain('For Schools');
+    expect(serviceMocks.call).not.toHaveBeenCalled();
+    const answer = result.current.messages.at(-1)?.content ?? '';
+    expect(answer).toContain('₹59,000');
+    expect(answer).toContain('₹1,49,000');
     expect(answer).not.toContain('₹400');
   });
 
-  it('answers one-to-one mode correctly from the verified fallback', async () => {
+  it('falls back to focused blending guidance without archived-source leakage', async () => {
     serviceMocks.call.mockRejectedValue(new Error('provider unavailable'));
     const { result } = renderHook(() => useAskTinyStepsChat());
 
-    await act(async () => result.current.sendMessage('Do you provide one-to-one classes?'));
+    await act(async () =>
+      result.current.sendMessage('My child knows letter sounds but cannot blend words. What should I do?'),
+    );
 
-    const answer = result.current.messages[result.current.messages.length - 1]?.content ?? '';
-    expect(answer).toContain('live 1:1 sessions');
-    expect(answer).toContain('35 minutes');
+    const answer = result.current.messages.at(-1)?.content ?? '';
     expect(result.current.error).toBeNull();
+    expect(answer).toContain('2–3 sounds');
+    expect(answer).not.toContain('Summer Camp');
+  });
+
+  it('falls back to focused fluency guidance and never retrieves Summer Camp', async () => {
+    serviceMocks.call.mockRejectedValue(new Error('provider unavailable'));
+    const { result } = renderHook(() => useAskTinyStepsChat());
+
+    await act(async () =>
+      result.current.sendMessage(
+        'My child can read simple words but reads very slowly. What should I work on?',
+      ),
+    );
+
+    const answer = result.current.messages.at(-1)?.content ?? '';
+    expect(answer).toContain('repeated reading');
+    expect(answer).toContain('accuracy');
+    expect(answer).not.toContain('Summer Camp');
   });
 });
