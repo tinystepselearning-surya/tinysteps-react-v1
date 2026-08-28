@@ -1,120 +1,141 @@
-# Blog SEO Program — B2 Cannibalization & Intent Ownership
+# Blog SEO Program — B2 Final Cannibalization & Intent Ownership
 
-**Brick:** B2 — Cannibalization + canonical winners  
+**Brick:** B2 — Cannibalization + canonical ownership  
 **Frozen baseline:** `main@6ba6b988c0203e0641eb149bc18b9e6962f79cd7`  
 **Branch:** `seo/blog-b02-cannibalization-winners`  
-**Redirects performed by B2:** None
+**B2 destructive changes:** None — ownership is finalized here; the one new content merge/301 belongs to B3.
 
-## What B2 changes
+## Final result
 
-B2 creates an explicit search-intent ownership registry. It distinguishes these states:
+After the repository audit, live-page review, user-shared 3-month Search Console evidence and content-by-content intent analysis, **B2 has zero unresolved ownership decisions**.
 
-- `merge-review` — likely competing pages; URL/query performance evidence is required before any destructive action;
-- `differentiate` — similar topic, but search intent should remain distinct;
-- `protect-indexable-owner` — an evergreen page owns search while a weekly page remains noindex;
-- `protect-existing-consolidation` — a duplicate was already retired in the current repository and the redirect lineage is now recorded explicitly;
-- `protect-distinct-audience` — a related school/research article must not be folded into parent-help content;
-- `protect-gsc-visible-owner` — a URL with real user-shared Search Console visibility is explicitly protected from accidental consolidation.
+The important correction from the first B2 pass is that “ABC/letter names known but cannot read” and “letter sounds known but cannot blend/read” are **not the same search intent**. They are now separate owners. Conversely, the two reading-confidence articles are sufficiently duplicative that one owner is now selected for a B3 merge.
 
-## Search Console evidence used in the second-pass review
+## Final ownership matrix
 
-The user shared real three-month Google Search Console screenshots during the B0–B2 review. Those screenshots showed visibility across phonics, reading, English, grammar, speaking/communication and institutional research content. They specifically surfaced:
+| Cluster | Final owner / relationship | Final action |
+|---|---|---|
+| Child knows ABC/letter names but cannot read | `child-knows-abc-but-cannot-read` | **Keep separately indexable** — earlier diagnostic stage |
+| Child already knows letter sounds but cannot blend/read | `why-child-knows-letter-sounds-but-cannot-read-words` | **Protect owner**; legacy `child-knows-letter-sounds-but-cannot-read` remains retired → owner |
+| School: why sounds are not enough | `why-letter-sounds-are-not-enough-to-read` | Protect distinct school/research audience |
+| CBSE/NCF foundational literacy | `does-cbse-include-phonics-ncf-foundational-literacy` | Protect GSC-visible institutional owner |
+| CBSE school scope & sequence | `phonics-scope-and-sequence-for-cbse-schools` | Protect GSC-visible institutional owner |
+| International phonics benchmarks | `international-phonics-benchmarks-for-indian-schools` | Protect GSC-visible institutional owner |
+| School phonics teacher training | `phonics-teacher-training-for-schools-implementation` | Protect GSC-visible institutional owner |
+| Age to start phonics | `what-age-to-start-phonics` | Protect existing retirement of `best-age-to-start-phonics-classes-for-kids` |
+| Blending | explainer + activities + weekly routine | Differentiate; do not blanket-merge |
+| Reading confidence | `how-phonics-builds-reading-confidence` | **B3 merge planned:** merge unique branded material, then retire `how-tiny-steps-builds-reading-confidence` |
+| Phonics class selection | checklist + online/school comparison + online benefits | Differentiate; preserve existing “best classes” retired URLs → checklist owner |
+| Apps/games | decision page + activity pages | Differentiate |
+| Phonics vs sight words / traditional reading / evidence | three distinct questions | Differentiate |
+| Long vowels | `long-vowel-sounds-for-kids` | Evergreen owner + Week 4 public supporting noindex page |
+| R-controlled vowels | `r-controlled-vowels-explained` | Evergreen owner + Week 5 public supporting noindex page |
+| One-word answers | `child-gives-one-word-answers` | Protect existing retirement of `why-child-answers-only-in-one-word` |
+| English-speaking hesitation | `child-understands-english-but-does-not-speak` | Protect existing Firebase Hosting 301 from `spoken-english-classes-for-kids-confidence` |
+| Grammar rule knowledge vs sentence formation | two distinct parent problems | Differentiate |
 
-- competing parent “cannot read” URLs;
-- age-to-start phonics URL history;
-- one-word-answer URL history;
-- institutional URLs covering CBSE/NCF, school phonics scope-and-sequence, international benchmarks and teacher training.
+## Search Console evidence captured
 
-The screenshots demonstrated real impressions/clicks, but the exact numeric page/query breakdown is not preserved in the project text available to this branch. B2 therefore uses that evidence only as a **protection signal**. It does **not** invent metrics and does **not** select a new redirect winner from incomplete retained data.
+The user supplied a Google Search Console **3-month Pages** view on 2026-08-28. B2 now records the visible page metrics directly rather than only keeping a qualitative note.
 
-## URL-by-URL ownership decisions after GSC review
+| URL | Clicks | Impressions | Interpretation |
+|---|---:|---:|---|
+| `child-knows-abc-but-cannot-read` | 3 | 134 | Real independent visibility for the ABC/letter-name diagnosis |
+| `why-child-knows-letter-sounds-but-cannot-read-words` | 8 | 460 | Stronger current owner for the letter-sounds/blending diagnosis |
+| retired `child-knows-letter-sounds-but-cannot-read` | 8 | 615 | Historical duplicate equity must be preserved through redirect |
+| `does-cbse-include-phonics-ncf-foundational-literacy` | 2 | 55 | Protect institutional owner |
+| `phonics-scope-and-sequence-for-cbse-schools` | 1 | 24 | Protect institutional owner |
+| `international-phonics-benchmarks-for-indian-schools` | 1 | 20 | Protect institutional owner |
+| `phonics-teacher-training-for-schools-implementation` | 1 | 19 | Protect institutional owner |
+| `what-age-to-start-phonics` | 0 | 112 | Current evergreen owner |
+| retired `best-age-to-start-phonics-classes-for-kids` | 0 | 1403 | High historical impressions but zero clicks; preserve signals, do not reverse redirect from impressions alone |
+| `how-kids-learn-blending` | 3 | 239 | Explainer has real visibility |
+| `phonics-blending-activities` | 0 | 154 | Activity intent remains separately useful |
+| `week-2-phonics-blending-club` | 1 | 25 | Supporting weekly intent |
+| `how-phonics-builds-reading-confidence` | 0 | 7 | Generic informational owner selected on content/search-intent quality; branded duplicate will merge into it |
+| `how-to-choose-phonics-classes` | 0 | 30 | Selection owner |
+| `online-phonics-classes-vs-school` | 0 | 20 | Modality comparison |
+| `why-parents-choose-online-phonics` | 0 | 35 | Online-benefit intent |
+| retired `best-online-phonics-classes-for-kids` | 2 | 563 | Preserve historical equity through existing redirect to selection owner |
+| `long-vowel-sounds-for-kids` | 0 | 15 | Evergreen concept owner |
+| `week-4-phonics-long-vowels` | 0 | 10 | Supporting weekly routine |
+| `r-controlled-vowels-explained` | 0 | 50 | Evergreen concept owner |
+| `week-5-phonics-r-controlled` | 5 | 552 | Meaningful historical weekly visibility: **do not delete/redirect**; preserve as public support page and monitor noindex transition |
+| `child-gives-one-word-answers` | 2 | 128 | Current comprehensive owner |
+| retired `why-child-answers-only-in-one-word` | 5 | 500 | Preserve historical equity through existing redirect |
+| `child-understands-english-but-does-not-speak` | 0 | 34 | Current diagnosis owner |
+| redirected `spoken-english-classes-for-kids-confidence` | 0 | 3 | Existing Hosting 301 is appropriate |
 
-| Intent | Current/retired URL ownership | GSC evidence status | B2 decision |
-|---|---|---|---|
-| Parent cannot read despite letters/sounds | `why-child-knows-letter-sounds-but-cannot-read-words` + `child-knows-abc-but-cannot-read` | Real competing visibility observed; exact page/query metrics not retained | **Merge-review only. No provisional winner.** |
-| School letter-sounds transfer | `why-letter-sounds-are-not-enough-to-read` | Different school/research audience | Protect distinct audience |
-| CBSE/NCF phonics | `does-cbse-include-phonics-ncf-foundational-literacy` | Real GSC visibility observed | Protect current institutional owner |
-| School scope and sequence | `phonics-scope-and-sequence-for-cbse-schools` | Real GSC visibility observed | Protect current institutional owner |
-| International school benchmarks | `international-phonics-benchmarks-for-indian-schools` | Real GSC visibility observed | Protect current institutional owner |
-| School teacher training | `phonics-teacher-training-for-schools-implementation` | Real GSC visibility observed | Protect current institutional owner |
-| Age to start phonics | owner `what-age-to-start-phonics`; retired `best-age-to-start-phonics-classes-for-kids` | GSC surfaced age-to-start URL history | Protect existing redirect lineage |
-| Reading confidence | `how-phonics-builds-reading-confidence` + `how-tiny-steps-builds-reading-confidence` | No retained URL/query metrics sufficient to select winner | **Merge-review only. No provisional winner.** |
-| One-word answers | owner `child-gives-one-word-answers`; retired `why-child-answers-only-in-one-word` | GSC surfaced legacy/current URL history | Protect existing redirect lineage |
-| English-speaking hesitation | `child-understands-english-but-does-not-speak` + `spoken-english-classes-for-kids-confidence` | No retained URL/query metrics sufficient to select winner | **Merge-review only. No provisional winner.** |
+These metrics are historical page-performance evidence from the shared 3-month screenshot. A redirected/noindexed URL may still appear because the reporting window includes its earlier state; the numbers are **not** treated as proof that Google currently indexes that URL.
 
-## High-risk unresolved clusters
+## Why the two “cannot read” pages both survive
 
-### 1. Parent: letters/sounds known but cannot read
+### `child-knows-abc-but-cannot-read`
 
-Current URLs:
+This page starts before functional phonics is established: can the child recite ABC but still fail to identify sounds, hear phonemes, blend or decode? It owns the **alphabet/letter-name → sound/decoding** diagnostic.
 
-- `why-child-knows-letter-sounds-but-cannot-read-words`
-- `child-knows-abc-but-cannot-read`
+### `why-child-knows-letter-sounds-but-cannot-read-words`
 
-The first-pass B2 registry named `why-child-knows-letter-sounds-but-cannot-read-words` as a provisional owner. The second-pass review removes that bias. Real GSC evidence confirms the cluster matters, but the retained evidence does not contain enough page/query metrics to justify a winner. Both URLs therefore remain reversible until B3 has the required evidence.
+This page starts later: the child already knows individual sounds but cannot combine them into functional reading. It owns **sound knowledge → blending/sequencing/transfer**.
 
-The school/research article `why-letter-sounds-are-not-enough-to-read` remains explicitly protected as a different audience and intent.
+The true duplicate is the retired `child-knows-letter-sounds-but-cannot-read`, which already maps to the second owner.
 
-### 2. Reading confidence
+## Reading-confidence merge finalized for B3
 
-Current URLs:
+Owner:
 
-- `how-phonics-builds-reading-confidence`
-- `how-tiny-steps-builds-reading-confidence`
+`how-phonics-builds-reading-confidence`
 
-The first-pass semantic preference for the generic phonics URL is no longer treated as a canonical recommendation. B2 now records the overlap but names **no winner** until performance evidence exists.
+Merge source:
 
-### 3. English-speaking hesitation
+`how-tiny-steps-builds-reading-confidence`
 
-Current URLs:
+The branded article contains useful Tiny Steps-specific details — stage matching, warm correction loops, parent-visible progress and consistent correction language — but substantially repeats the generic article’s confidence/decoding/retry/home-routine framework.
 
-- `child-understands-english-but-does-not-speak`
-- `spoken-english-classes-for-kids-confidence`
+**B3 implementation order must be:**
 
-B2 names **no winner**. The second URL is explicitly excluded from the blog sitemap but is not caught by the weekly-page noindex policy. That policy mismatch remains a deliberate B3 decision gate, not something B2 guesses around.
+1. extract any genuinely unique branded material;
+2. add it to the generic owner as a clearly branded practice/method section;
+3. update internal links;
+4. add a permanent 301 from the branded URL to the owner;
+5. remove the retired source from sitemap/RSS/feed/discovery outputs;
+6. preserve the redirect permanently.
 
-## Institutional URLs protected by GSC evidence
+B2 does not execute those destructive steps itself.
 
-The following current URLs are now explicit `protect-gsc-visible-owner` entries:
+## English-speaking hesitation is already consolidated
 
-- `does-cbse-include-phonics-ncf-foundational-literacy`
-- `phonics-scope-and-sequence-for-cbse-schools`
-- `international-phonics-benchmarks-for-indian-schools`
-- `phonics-teacher-training-for-schools-implementation`
+Firebase Hosting already has:
 
-This prevents a later cannibalization cleanup from collapsing real school/research visibility into parent-facing phonics pages merely because terms such as “phonics,” “reading,” or “training” overlap.
+`/blog/spoken-english-classes-for-kids-confidence`
+→ **301** →
+`/blog/child-understands-english-but-does-not-speak`
 
-## Distinct clusters to protect from over-consolidation
+B2 now validates that exact Hosting rule instead of incorrectly treating the pair as unresolved.
 
-The following related pages remain intentionally **not** automatic merge candidates:
+Commercial query intent such as “spoken English classes for kids” should remain on the dedicated program/landing-page layer, not create another duplicate parent-diagnosis article.
 
-- blending explainer vs blending activities;
-- class-selection checklist vs online/school comparison vs online-class benefits;
-- “are apps enough?” decision page vs games/activity pages;
-- synthetic-vs-traditional comparison vs sight-words sequencing vs science/evidence explainer;
-- grammar-knowledge application gap vs sentence-formation intervention.
+## Age-to-start and one-word-answer redirects
 
-B2 prevents a cleanup pass from damaging useful long-tail intent coverage by merging merely because titles share keywords.
+Existing repository lineages remain final:
 
-## Weekly evergreen ownership
+- `best-age-to-start-phonics-classes-for-kids` → `what-age-to-start-phonics`
+- `why-child-answers-only-in-one-word` → `child-gives-one-word-answers`
 
-The evergreen pages remain the indexable owners for:
+The legacy URLs had substantial historical impressions/clicks in GSC. That is a reason to preserve their permanent redirects and remove conflicting discovery signals — **not** a reason to recreate duplicate content.
 
-- long vowels;
-- R-controlled vowels.
+## Weekly long-vowel / R-controlled rule
 
-Their Week-series counterparts are already noindex and should function as supporting content, not competing search URLs.
+Final architecture:
 
-## Existing redirect consolidations now audited as lineages
+- evergreen concept guide = search owner;
+- Week-series page = public practice/implementation companion;
+- supporting weekly page = noindex under current repository policy;
+- no deletion and no redirect.
 
-B2 no longer records only the destination. It also records the retired source slug and validates the live repository map:
+Special caution: `week-5-phonics-r-controlled` showed **5 clicks / 552 impressions** in the shared three-month GSC view versus **0 / 50** for the evergreen guide. Because that is meaningful historical performance, B10 must explicitly monitor the noindex transition and evergreen-owner visibility rather than assuming the transfer has worked. The weekly page must remain available and internally useful.
 
-- `best-age-to-start-phonics-classes-for-kids` → `what-age-to-start-phonics`;
-- `why-child-answers-only-in-one-word` → `child-gives-one-word-answers`.
-
-The audit fails if a recorded retired source is missing from `scripts/blog-consolidation-map.mjs` or points to a different owner.
-
-## Validation
+## Final executable guard
 
 Run:
 
@@ -122,42 +143,36 @@ Run:
 node scripts/audit-blog-intent-ownership.mjs
 ```
 
-The audit now fails if:
+The audit fails if any of the following regressions occurs:
 
-- a current cluster references a slug missing from the real blog registry;
-- a provisional owner is outside its current cluster;
-- an unresolved `merge-review` names a provisional canonical before evidence selects a winner;
-- a `merge-review` bypasses performance validation;
-- a protected consolidation omits its retired source URL;
-- a retired source does not map to the recorded owner;
-- a GSC-visible institutional URL is missing, assigned to the wrong audience, or not protected;
-- GSC evidence is claimed without an explicit source/finding/metric-retention state;
-- one current or retired slug is accidentally assigned to multiple reviewed lineages.
+- an unresolved `merge-review` or performance-validation gate returns;
+- a canonical/current owner is missing from the real blog registry;
+- a retired source disappears from the consolidation map or points to the wrong owner;
+- a planned B3 merge source is already redirected before its unique content is merged;
+- the Firebase Hosting English-speaking redirect disappears, changes destination or stops being a 301;
+- a weekly supporting page stops matching the current noindex policy;
+- an evergreen owner becomes noindex;
+- a GSC-protected school URL is moved out of `Schools & Research`;
+- captured GSC clicks/impressions become invalid or lose their 3-month/2026-08-28 provenance;
+- one current, retired or planned-merge URL is assigned conflicting ownership.
 
-The same audit is also executed by `src/tests/seo/blogIntentOwnership.spec.ts`, so the normal unit-test CI gate covers B2 rather than relying on a manual script only.
+The audit is executed by `src/tests/seo/blogIntentOwnership.spec.ts`, so normal CI tests the final B2 specification.
 
 ## B2 completion gate
 
-- [x] High-risk remaining cannibalization is explicitly registered.
-- [x] Parent and school intent are not conflated.
-- [x] Similar-but-distinct intents are protected from over-merging.
-- [x] Existing redirect consolidation is recognised with source → owner lineage.
-- [x] User-shared GSC-visible institutional URLs are protected.
-- [x] First-pass semantic winner guesses were removed from unresolved high-risk clusters.
-- [x] Numeric GSC metrics are not invented when they are not retained.
-- [x] Destructive merge decisions requiring performance data remain blocked from B2.
-- [x] The B2 audit is wired into the normal unit-test suite.
-- [x] No redirects, deletions, canonical migrations, sitemap changes or article rewrites are performed in this brick.
+- [x] 18 reviewed intent clusters have final ownership rules.
+- [x] **0 unresolved ownership decisions remain.**
+- [x] ABC/letter-name and letter-sound/blending parent intents are explicitly separated.
+- [x] True letter-sound duplicate redirect lineage is protected.
+- [x] Reading-confidence winner and B3 merge source are finalized.
+- [x] English-speaking existing Hosting 301 is validated.
+- [x] Four GSC-visible school/research owners are protected.
+- [x] Age-to-start and one-word-answer legacy redirect equity is protected.
+- [x] Long-vowel and R-controlled evergreen/support relationships are validated.
+- [x] User-shared GSC metrics are captured with provenance.
+- [x] The final ownership audit runs inside the unit-test suite.
+- [x] B2 itself introduces no redirect, deletion, canonical migration, sitemap change or article rewrite.
 
-## Required evidence before B3 destructive actions
+## Handoff to B3
 
-For each `merge-review` cluster, capture the best available:
-
-1. GSC clicks/impressions by URL;
-2. top query overlap and query-to-URL ownership;
-3. average position;
-4. backlinks or meaningful external references;
-5. GA4 engagement;
-6. demo/inquiry/enrollment contribution.
-
-If evidence is unavailable, B3 must prefer a reversible non-destructive action (differentiate/noindex decision) over guessing a redirect winner.
+B3 no longer needs to decide **which URLs should own these intents**. It should implement only the final consolidation mechanics that are still missing — principally the reading-confidence content merge/301 and cleanup of any stale retired-source discovery artifacts — while preserving all ownership rules locked by B2.
