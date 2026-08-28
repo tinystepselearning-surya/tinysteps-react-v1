@@ -294,7 +294,7 @@ function scoreSource(source: AskTinyStepsKnowledgeSource, queryText: string): nu
     if (queryTokens.has(token)) relevance += 2;
   }
 
-  for (const token of meaningfulTokens(source.path.replaceAll('/', ' '))) {
+  for (const token of meaningfulTokens(source.path.replace(/\//g, ' '))) {
     if (queryTokens.has(token)) relevance += 2;
   }
 
@@ -346,7 +346,7 @@ export function selectAskTinyStepsSources(
         (source) => normalizePath(source.path) === currentPath,
       )
     : undefined;
-  const lastUserMessage = recentUserMessages.at(-1) ?? '';
+  const lastUserMessage = recentUserMessages[recentUserMessages.length - 1] ?? '';
 
   const audience: AskTinyStepsSelectionAudience = hasParentContext(currentQuestion)
     ? 'parents'
