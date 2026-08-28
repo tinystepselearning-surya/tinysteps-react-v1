@@ -1,0 +1,470 @@
+export const ASK_TINY_STEPS_SITE_ORIGIN = 'https://tinystepslearning.com';
+
+export type AskTinyStepsAudience = 'parents' | 'schools' | 'both';
+export type AskTinyStepsLifecycle = 'evergreen' | 'seasonal' | 'archived';
+export type AskTinyStepsRetrievalPolicy = 'always' | 'intent_only' | 'disabled';
+export type AskTinyStepsSourceCategory =
+  | 'brand'
+  | 'assessment'
+  | 'pricing'
+  | 'program'
+  | 'curriculum'
+  | 'decision'
+  | 'support'
+  | 'proof'
+  | 'institutional'
+  | 'research'
+  | 'seasonal';
+
+export type AskTinyStepsKnowledgeSource = {
+  id: string;
+  path: string;
+  canonicalUrl: string;
+  title: string;
+  audience: AskTinyStepsAudience;
+  category: AskTinyStepsSourceCategory;
+  lifecycle: AskTinyStepsLifecycle;
+  retrievalPolicy: AskTinyStepsRetrievalPolicy;
+  priority: 1 | 2 | 3 | 4 | 5;
+  enabledForAI: boolean;
+  legacyKbAvailable: boolean;
+  canonicalFor?: readonly string[];
+  tags: readonly string[];
+  note?: string;
+};
+
+const source = (
+  value: Omit<AskTinyStepsKnowledgeSource, 'canonicalUrl'>,
+): AskTinyStepsKnowledgeSource => ({
+  ...value,
+  canonicalUrl: `${ASK_TINY_STEPS_SITE_ORIGIN}${value.path}`,
+});
+
+/**
+ * AI-2B authoritative source registry.
+ *
+ * This registry does not change the production Gemini retrieval path yet.
+ * AI-2C will consume it for source selection / URL Context. Until then the
+ * existing deterministic Ask Tiny Steps KB remains the production fallback.
+ */
+export const ASK_TINY_STEPS_KNOWLEDGE_SOURCES: readonly AskTinyStepsKnowledgeSource[] = [
+  source({
+    id: 'home',
+    path: '/',
+    title: 'Tiny Steps Learning',
+    audience: 'both',
+    category: 'brand',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'always',
+    priority: 2,
+    enabledForAI: true,
+    legacyKbAvailable: true,
+    canonicalFor: ['brand', 'general'],
+    tags: ['tiny steps', 'online english', 'children'],
+  }),
+  source({
+    id: 'book-demo',
+    path: '/book-demo',
+    title: 'One Free 35-Minute Demo Assessment Class',
+    audience: 'parents',
+    category: 'assessment',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'always',
+    priority: 1,
+    enabledForAI: true,
+    legacyKbAvailable: true,
+    canonicalFor: ['demo', 'assessment', 'trial', 'placement'],
+    tags: ['free assessment', 'demo', 'placement'],
+  }),
+  source({
+    id: 'pricing',
+    path: '/pricing',
+    title: 'Pricing & Packages',
+    audience: 'parents',
+    category: 'pricing',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'always',
+    priority: 1,
+    enabledForAI: true,
+    legacyKbAvailable: true,
+    canonicalFor: ['pricing', 'fees', 'packages'],
+    tags: ['pricing', 'fees', 'packages', '1:1', 'small group'],
+  }),
+  source({
+    id: 'courses',
+    path: '/courses',
+    title: 'Courses and Tracks',
+    audience: 'parents',
+    category: 'program',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'always',
+    priority: 1,
+    enabledForAI: true,
+    legacyKbAvailable: true,
+    canonicalFor: ['courses', 'recommendation'],
+    tags: ['phonics', 'grammar', 'public speaking', 'courses'],
+  }),
+  source({
+    id: 'phonics',
+    path: '/phonics',
+    title: 'Online Phonics Classes for Kids',
+    audience: 'parents',
+    category: 'program',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'always',
+    priority: 1,
+    enabledForAI: true,
+    legacyKbAvailable: false,
+    canonicalFor: ['phonics', 'decoding', 'blending'],
+    tags: ['phonics', 'blending', 'decoding', 'reading'],
+  }),
+  source({
+    id: 'grammar',
+    path: '/grammar',
+    title: 'Grammar Classes for Kids',
+    audience: 'parents',
+    category: 'program',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'always',
+    priority: 1,
+    enabledForAI: true,
+    legacyKbAvailable: false,
+    canonicalFor: ['grammar', 'writing', 'sentence formation'],
+    tags: ['grammar', 'writing', 'sentences', 'punctuation'],
+  }),
+  source({
+    id: 'speaking',
+    path: '/speaking',
+    title: 'Public Speaking Classes for Kids',
+    audience: 'parents',
+    category: 'program',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'always',
+    priority: 1,
+    enabledForAI: true,
+    legacyKbAvailable: false,
+    canonicalFor: ['public speaking', 'speaking confidence', 'communication'],
+    tags: ['public speaking', 'communication', 'confidence', 'pronunciation'],
+  }),
+  source({
+    id: 'reading-classes',
+    path: '/reading-classes-for-kids',
+    title: 'Reading Classes for Kids',
+    audience: 'parents',
+    category: 'program',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'always',
+    priority: 2,
+    enabledForAI: true,
+    legacyKbAvailable: false,
+    canonicalFor: ['reading', 'fluency'],
+    tags: ['reading', 'fluency', 'comprehension', 'decoding'],
+  }),
+  source({
+    id: 'curriculum',
+    path: '/curriculum',
+    title: 'Curriculum Overview',
+    audience: 'both',
+    category: 'curriculum',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'always',
+    priority: 2,
+    enabledForAI: true,
+    legacyKbAvailable: true,
+    canonicalFor: ['curriculum', 'learning path', 'progression'],
+    tags: ['curriculum', 'progression', 'phonics', 'grammar', 'speaking'],
+  }),
+  source({
+    id: 'why-tiny-steps',
+    path: '/why-tiny-steps',
+    title: 'Why Tiny Steps',
+    audience: 'parents',
+    category: 'decision',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'always',
+    priority: 2,
+    enabledForAI: true,
+    legacyKbAvailable: true,
+    canonicalFor: ['why tiny steps', 'methodology'],
+    tags: ['methodology', '1:1', 'progress', 'personalized'],
+  }),
+  source({
+    id: 'faq',
+    path: '/faq',
+    title: 'Frequently Asked Questions',
+    audience: 'parents',
+    category: 'decision',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'always',
+    priority: 2,
+    enabledForAI: true,
+    legacyKbAvailable: true,
+    canonicalFor: ['faq', 'general parent questions'],
+    tags: ['faq', 'classes', 'demo', 'fees'],
+  }),
+  source({
+    id: 'parents-hub',
+    path: '/parents',
+    title: 'Parents Hub',
+    audience: 'parents',
+    category: 'decision',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'always',
+    priority: 2,
+    enabledForAI: true,
+    legacyKbAvailable: false,
+    tags: ['parents', 'learning concerns', 'course choice'],
+  }),
+  source({
+    id: 'class-samples',
+    path: '/class-samples',
+    title: 'Class Samples',
+    audience: 'parents',
+    category: 'proof',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'intent_only',
+    priority: 3,
+    enabledForAI: true,
+    legacyKbAvailable: false,
+    tags: ['class samples', 'teaching examples'],
+  }),
+  source({
+    id: 'testimonials',
+    path: '/testimonials',
+    title: 'Parent Testimonials',
+    audience: 'parents',
+    category: 'proof',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'intent_only',
+    priority: 3,
+    enabledForAI: true,
+    legacyKbAvailable: false,
+    tags: ['testimonials', 'parent feedback'],
+    note: 'Use only for approved, attributable proof. Do not generate aggregate ratings.',
+  }),
+  source({
+    id: 'contact',
+    path: '/contact',
+    title: 'Contact Tiny Steps',
+    audience: 'both',
+    category: 'decision',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'intent_only',
+    priority: 3,
+    enabledForAI: true,
+    legacyKbAvailable: false,
+    tags: ['contact', 'whatsapp', 'support'],
+  }),
+  source({
+    id: 'for-schools',
+    path: '/for-schools',
+    title: 'Systematic Phonics Program for CBSE & Schools in India',
+    audience: 'schools',
+    category: 'institutional',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'intent_only',
+    priority: 1,
+    enabledForAI: true,
+    legacyKbAvailable: true,
+    canonicalFor: ['schools', 'school partnership', 'institutional pricing'],
+    tags: ['schools', 'cbse', 'phonics program', 'teacher training'],
+  }),
+  source({
+    id: 'cbse-phonics-ncf',
+    path: '/blog/does-cbse-include-phonics-ncf-foundational-literacy',
+    title: 'Does CBSE Include Phonics? What NCF Actually Says',
+    audience: 'schools',
+    category: 'research',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'intent_only',
+    priority: 2,
+    enabledForAI: true,
+    legacyKbAvailable: true,
+    canonicalFor: ['cbse phonics', 'ncf phonics'],
+    tags: ['cbse', 'ncf', 'phonics', 'foundational literacy'],
+  }),
+  source({
+    id: 'cbse-vs-systematic',
+    path: '/blog/cbse-phonics-curriculum-vs-systematic-phonics-programme',
+    title: 'CBSE Phonics Curriculum vs a Systematic Phonics Programme',
+    audience: 'schools',
+    category: 'research',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'intent_only',
+    priority: 3,
+    enabledForAI: true,
+    legacyKbAvailable: true,
+    tags: ['cbse', 'systematic phonics', 'implementation'],
+  }),
+  source({
+    id: 'school-scope-sequence',
+    path: '/blog/phonics-scope-and-sequence-for-cbse-schools',
+    title: 'Phonics Scope and Sequence for CBSE Schools',
+    audience: 'schools',
+    category: 'research',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'intent_only',
+    priority: 3,
+    enabledForAI: true,
+    legacyKbAvailable: true,
+    tags: ['scope and sequence', 'cbse', 'schools'],
+  }),
+  source({
+    id: 'international-benchmarks',
+    path: '/blog/international-phonics-benchmarks-for-indian-schools',
+    title: 'International Phonics Benchmarks for Indian Schools',
+    audience: 'schools',
+    category: 'research',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'intent_only',
+    priority: 4,
+    enabledForAI: true,
+    legacyKbAvailable: true,
+    tags: ['phonics benchmarks', 'schools', 'systematic phonics'],
+  }),
+  source({
+    id: 'letter-sounds-not-enough',
+    path: '/blog/why-letter-sounds-are-not-enough-to-read',
+    title: 'Why Knowing Letter Sounds Is Not Enough to Learn to Read',
+    audience: 'both',
+    category: 'research',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'intent_only',
+    priority: 2,
+    enabledForAI: true,
+    legacyKbAvailable: true,
+    tags: ['letter sounds', 'blending', 'decoding', 'reading'],
+  }),
+  source({
+    id: 'assess-decoding',
+    path: '/blog/how-schools-can-assess-decoding-not-memorisation',
+    title: 'How Schools Can Assess Decoding Instead of Word Memorisation',
+    audience: 'schools',
+    category: 'research',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'intent_only',
+    priority: 3,
+    enabledForAI: true,
+    legacyKbAvailable: true,
+    tags: ['assessment', 'decoding', 'memorisation'],
+  }),
+  source({
+    id: 'systematic-cumulative',
+    path: '/blog/systematic-cumulative-phonics-explained-for-schools',
+    title: 'What Is Systematic and Cumulative Phonics?',
+    audience: 'schools',
+    category: 'research',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'intent_only',
+    priority: 3,
+    enabledForAI: true,
+    legacyKbAvailable: true,
+    tags: ['systematic phonics', 'cumulative phonics'],
+  }),
+  source({
+    id: 'teacher-training',
+    path: '/blog/phonics-teacher-training-for-schools-implementation',
+    title: 'Phonics Teacher Training for Schools',
+    audience: 'schools',
+    category: 'research',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'intent_only',
+    priority: 3,
+    enabledForAI: true,
+    legacyKbAvailable: true,
+    tags: ['teacher training', 'schools', 'implementation'],
+  }),
+  source({
+    id: 'child-not-reading',
+    path: '/child-not-reading-properly',
+    title: 'Child Not Reading Properly - Help',
+    audience: 'parents',
+    category: 'support',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'intent_only',
+    priority: 2,
+    enabledForAI: true,
+    legacyKbAvailable: false,
+    tags: ['reading difficulty', 'parent help', 'decoding'],
+  }),
+  source({
+    id: 'reading-fluency-guide',
+    path: '/blog/how-to-improve-reading-fluency-in-children',
+    title: 'How to Improve Reading Fluency in Children',
+    audience: 'parents',
+    category: 'support',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'intent_only',
+    priority: 3,
+    enabledForAI: true,
+    legacyKbAvailable: false,
+    tags: ['reading fluency', 'parents', 'reading support'],
+  }),
+  source({
+    id: 'sounds-cannot-read',
+    path: '/blog/why-child-knows-letter-sounds-but-cannot-read-words',
+    title: 'Why Letter Sounds Are Not Enough to Read Words',
+    audience: 'parents',
+    category: 'support',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'intent_only',
+    priority: 2,
+    enabledForAI: true,
+    legacyKbAvailable: false,
+    tags: ['letter sounds', 'blending', 'cannot read words'],
+  }),
+  source({
+    id: 'choose-phonics',
+    path: '/blog/how-to-choose-phonics-classes',
+    title: 'How to Choose Phonics Classes for Kids',
+    audience: 'parents',
+    category: 'support',
+    lifecycle: 'evergreen',
+    retrievalPolicy: 'intent_only',
+    priority: 3,
+    enabledForAI: true,
+    legacyKbAvailable: false,
+    canonicalFor: ['choose phonics classes'],
+    tags: ['choose phonics', 'parents', 'comparison'],
+  }),
+  source({
+    id: 'summer-camps-2026',
+    path: '/summer-camps',
+    title: 'Summer Camp 2026 Archive',
+    audience: 'parents',
+    category: 'seasonal',
+    lifecycle: 'archived',
+    retrievalPolicy: 'intent_only',
+    priority: 5,
+    enabledForAI: true,
+    legacyKbAvailable: true,
+    canonicalFor: ['summer camp 2026'],
+    tags: ['summer camp', 'archive', '2026'],
+    note: 'Historical only. Never surface as a current offer or default recommendation.',
+  }),
+] as const;
+
+export function getAskTinyStepsKnowledgeSources(
+  predicate?: (source: AskTinyStepsKnowledgeSource) => boolean,
+): AskTinyStepsKnowledgeSource[] {
+  const sources = [...ASK_TINY_STEPS_KNOWLEDGE_SOURCES];
+  return predicate ? sources.filter(predicate) : sources;
+}
+
+export function getLegacyKbRefreshPaths(): string[] {
+  return ASK_TINY_STEPS_KNOWLEDGE_SOURCES.filter(
+    (entry) => entry.legacyKbAvailable && entry.enabledForAI && entry.retrievalPolicy !== 'disabled',
+  ).map((entry) => entry.path);
+}
+
+export function getAskTinyStepsKnowledgeSourceStats() {
+  const sources = ASK_TINY_STEPS_KNOWLEDGE_SOURCES;
+  return {
+    total: sources.length,
+    enabled: sources.filter((entry) => entry.enabledForAI).length,
+    parent: sources.filter((entry) => entry.audience === 'parents' || entry.audience === 'both').length,
+    schools: sources.filter((entry) => entry.audience === 'schools' || entry.audience === 'both').length,
+    legacyKbAvailable: sources.filter((entry) => entry.legacyKbAvailable).length,
+    archived: sources.filter((entry) => entry.lifecycle === 'archived').length,
+  };
+}
