@@ -228,6 +228,39 @@ const post: BlogPost = {
       content: 'See full learning roadmap: /curriculum',
     },
     {
+      type: 'h3',
+      content: 'Choose the support page that matches the transfer failure',
+    },
+    {
+      type: 'p',
+      content:
+        'Do not restart every grammar topic when one pattern is unstable. Use the broad roadmap to see the full sequence, then practise the smallest layer that is actually breaking in fresh work.',
+    },
+    {
+      type: 'li',
+      content: '[See the broad grammar roadmap from nouns to paragraphs](/blog/week-7-grammar-nouns-to-paragraphs).',
+    },
+    {
+      type: 'li',
+      content: '[Use tense practice when time words and verb forms break during fresh sentences](/blog/week-8-grammar-tenses).',
+    },
+    {
+      type: 'li',
+      content: '[Use subject-verb agreement practice when singular and plural subjects trigger repeated verb errors](/blog/week-10-grammar-subject-verb).',
+    },
+    {
+      type: 'li',
+      content: '[Use the grammar assessment guide when you need to identify one or two weak layers before choosing practice](/blog/week-17-grammar-assessment).',
+    },
+    {
+      type: 'li',
+      content: '[Use the editing guide when the child can produce ideas but needs a repeatable self-correction routine](/blog/week-20-grammar-editing-camp).',
+    },
+    {
+      type: 'li',
+      content: '[Use the sentence-formation guide instead when the main problem is building the sentence itself rather than applying a known rule](/blog/how-to-improve-sentence-formation-in-kids).',
+    },
+    {
       type: 'h2',
       content: '11. FAQ section with 5 parent questions',
     },
