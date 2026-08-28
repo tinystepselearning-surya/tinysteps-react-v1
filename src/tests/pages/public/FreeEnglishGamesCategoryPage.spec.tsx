@@ -79,7 +79,7 @@ describe("FreeEnglishGamesCategoryPage", () => {
 
     expect(screen.getByRole("heading", { level: 2, name: /tiny steps phonics balloon pop/i })).toBeInTheDocument();
     expect(screen.getByText(/hear one target letter sound, find the matching printed letter/i)).toBeInTheDocument();
-    expect(screen.getByText(/satpin/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/satpin/i).length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: /play balloon pop free/i })).toHaveAttribute(
       "href",
       "/free-balloon-pop-phonics-game-for-kids",
