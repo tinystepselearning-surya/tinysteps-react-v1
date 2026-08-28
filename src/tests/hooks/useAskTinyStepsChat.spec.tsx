@@ -62,4 +62,77 @@ describe('useAskTinyStepsChat submission guards', () => {
     });
     expect(result.current.messages).toHaveLength(2);
   });
+
+  it('keeps a clear new school question out of stale parent pricing history', async () => {
+    serviceMocks.call
+      .mockResolvedValueOnce('Parent pricing answer')
+      .mockResolvedValueOnce('School programme answer');
+    const { result } = renderHook(() => useAskTinyStepsChat());
+
+    await act(async () => result.current.sendMessage('How much do phonics classes cost?'));
+    await act(async () => result.current.sendMessage('Do you have programs for schools?'));
+
+    expect(serviceMocks.call).toHaveBeenCalledTimes(2);
+    expect(serviceMocks.call.mock.calls[1][0]).toEqual([
+      { role: 'user', content: 'Do you have programs for schools?' },
+    ]);
+    expect(serviceMocks.call.mock.calls[1][1].sourceIds).toContain('for-schools');
+    expect(serviceMocks.call.mock.calls[1][1].sourceIds).not.toContain('pricing');
+  });
+
+  it('preserves only the immediately relevant school turn for a pricing follow-up', async () => {
+    serviceMocks.call
+      .mockResolvedValueOnce('Yes. Tiny Steps has school programmes.')
+      .mockResolvedValueOnce('Current school pricing is on the For Schools page.');
+    const { result } = renderHook(() => useAskTinyStepsChat());
+
+    await act(async () => result.current.sendMessage('Do you have programs for schools?'));
+    await act(async () => result.current.sendMessage('How much does it cost?'));
+
+    expect(serviceMocks.call).toHaveBeenCalledTimes(2);
+    expect(serviceMocks.call.mock.calls[1][0]).toEqual([
+      { role: 'user', content: 'Do you have programs for schools?' },
+      { role: 'assistant', content: 'Yes. Tiny Steps has school programmes.' },
+      { role: 'user', content: 'How much does it cost?' },
+    ]);
+    expect(serviceMocks.call.mock.calls[1][1].sourceIds).toContain('for-schools');
+    expect(serviceMocks.call.mock.calls[1][1].sourceIds).not.toContain('pricing');
+  });
+
+  it('uses a concise verified fallback without showing a contradictory outage error', async () => {
+    serviceMocks.call.mockRejectedValue(new Error('provider unavailable'));
+    const { result } = renderHook(() => useAskTinyStepsChat());
+
+    await act(async () => result.current.sendMessage('How much do phonics classes cost?'));
+
+    const answer = result.current.messages[result.current.messages.length - 1]?.content ?? '';
+    expect(result.current.error).toBeNull();
+    expect(answer).toContain('₹400 per class');
+    expect(answer).toContain('₹4,800');
+    expect(answer).not.toContain('Ultra Premium');
+  });
+
+  it('never falls back from a school question to parent 1:1 pricing', async () => {
+    serviceMocks.call.mockRejectedValue(new Error('provider unavailable'));
+    const { result } = renderHook(() => useAskTinyStepsChat());
+
+    await act(async () => result.current.sendMessage('Do you have programs for schools?'));
+
+    const answer = result.current.messages[result.current.messages.length - 1]?.content ?? '';
+    expect(result.current.error).toBeNull();
+    expect(answer).toContain('For Schools');
+    expect(answer).not.toContain('₹400');
+  });
+
+  it('answers one-to-one mode correctly from the verified fallback', async () => {
+    serviceMocks.call.mockRejectedValue(new Error('provider unavailable'));
+    const { result } = renderHook(() => useAskTinyStepsChat());
+
+    await act(async () => result.current.sendMessage('Do you provide one-to-one classes?'));
+
+    const answer = result.current.messages[result.current.messages.length - 1]?.content ?? '';
+    expect(answer).toContain('live 1:1 sessions');
+    expect(answer).toContain('35 minutes');
+    expect(result.current.error).toBeNull();
+  });
 });

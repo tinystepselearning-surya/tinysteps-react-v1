@@ -12,9 +12,9 @@ type AskTinyStepsModalProps = {
 const QUICK_QUESTIONS = [
   "Is the demo / assessment free?",
   "What are your fees / packages?",
-  "Tell me about Summer Camp",
   "What is the class duration?",
   "What courses do you offer?",
+  "Do you have programs for schools?",
 ] as const;
 
 const URL_REGEX = /(https?:\/\/[^\s]+)/g;
@@ -165,7 +165,7 @@ export const AskTinyStepsModal: React.FC<AskTinyStepsModalProps> = ({
                   </div>
                   <h2 className="text-xl font-semibold leading-tight">Ask TinySteps</h2>
                   <p className="mt-1 text-xs text-slate-200">
-                    Premium AI support for classes, pricing, curriculum and summer camp.
+                    AI support for classes, pricing, curriculum, learning and school programmes.
                   </p>
                 </div>
 
@@ -303,7 +303,7 @@ export const AskTinyStepsModal: React.FC<AskTinyStepsModalProps> = ({
 
               <div className="mt-2 flex items-center justify-between gap-3">
                 <div className="text-[11px] text-slate-500">
-                  Chats may be stored to improve responses.
+                  Tiny Steps does not save this chat history.
                 </div>
 
                 <button

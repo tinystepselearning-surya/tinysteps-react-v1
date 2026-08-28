@@ -21,6 +21,10 @@ export type AskTinyStepsModelName = (typeof ASK_TINY_STEPS_MODEL_CASCADE)[number
 export const ASK_TINY_STEPS_MODEL: AskTinyStepsModelName = ASK_TINY_STEPS_MODEL_CASCADE[0];
 export const ASK_TINY_STEPS_REQUEST_TIMEOUT_MS = 60_000;
 
+// The system prompt still requires short parent-facing answers. This ceiling exists
+// only to prevent URL Context + answer generation from being cut off mid-sentence.
+export const ASK_TINY_STEPS_MAX_OUTPUT_TOKENS = 768;
+
 type AskTinyStepsRuntime = typeof globalThis & {
   FIREBASE_APPCHECK_DEBUG_TOKEN?: boolean | string;
   __askTinyStepsAppCheckApps?: Set<string>;
@@ -114,8 +118,7 @@ export function getAskTinyStepsGenerativeModel(
       model: modelName,
       tools: [{ urlContext: {} }],
       generationConfig: {
-        temperature: 0.2,
-        maxOutputTokens: 240,
+        maxOutputTokens: ASK_TINY_STEPS_MAX_OUTPUT_TOKENS,
       },
       systemInstruction: ASK_TINY_STEPS_SYSTEM_INSTRUCTION,
     },
