@@ -1,28 +1,31 @@
 import { startTransition, useDeferredValue, useEffect, useMemo, useState, type FC } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { blogPosts } from '../../content/blog';
-import type { BlogPost } from '../../content/blog/types';
+import { getBlogAudience, getBlogDiscoveryCategory } from '../../content/blog/shared/audience';
+import { buildBlogAuthorSchema, resolveBlogAuthor } from '../../content/blog/shared/editorialTrust';
+import type { BlogDiscoveryCategory, BlogPost } from '../../content/blog/types';
 import { fetchMdxPosts, type MdxMeta } from '../../content/blogMdx';
-import AboutAuthor from '../../components/AboutAuthor';
 import Meta from '../../components/common/Meta';
 import NewsletterForm from '../../components/common/NewsletterForm';
 import { formatBlogDate, isoDateFromYMD } from '../../lib/date';
 import { applySeo } from '../../lib/seo';
-import { FOUNDER_ID, ORGANIZATION_ID, PUBLIC_FACTS, SITE_ORIGIN } from '../../lib/schemas';
+import { ORGANIZATION_ID, PUBLIC_FACTS, SITE_ORIGIN } from '../../lib/schemas';
 import {
   BLOG_TOPIC_OPTIONS,
   PARENT_GOAL_ROUTES,
   filterBlogIndexPosts,
   getAuthorityPosts,
+  getBlogCardLabel,
+  getBlogDiscoveryTopic,
   getBlogTopicCounts,
   getPublishedCountLabel,
+  isParentFacingBlogPost,
   isPublishedBlogPost,
   sortBlogIndexPostsNewest,
   type BlogIndexItem,
   type BlogTopic,
 } from './blogIndexUx';
 
-const FOUNDER_AUTHOR_NAME = 'Priya';
 const TEAM_AUTHOR_LABEL = 'Tiny Steps Academic Team';
 const INITIAL_LIBRARY_COUNT = 9;
 
@@ -46,7 +49,7 @@ const BLOG_FAQS = [
   {
     question: 'Does the blog cover grammar and speaking as well as phonics?',
     answer:
-      'Yes. Use the topic filters to move between phonics, grammar, speaking, English communication, parent guidance, and research articles.',
+      'Yes. The Parent library includes phonics, grammar, speaking, English communication, and practical parent guidance. School leaders can switch to the Schools & Research filter.',
   },
   {
     question: 'Are these guides only for parents in India?',
@@ -56,116 +59,143 @@ const BLOG_FAQS = [
   {
     question: 'How do I find a specific answer without scrolling through the whole archive?',
     answer:
-      'Use the search box with the words you would naturally use as a parent, choose a topic filter, and load more articles only when you need a deeper archive.',
+      'Use the search box with the words you would naturally use as a parent, choose the most relevant topic, and load more articles only when you want to go deeper.',
   },
 ];
 
-const CATEGORY_STYLES: Record<BlogPost['category'], { chip: string; wash: string }> = {
+const SOURCE_CATEGORIES: BlogPost['category'][] = [
+  'Phonics',
+  'Grammar',
+  'Public Speaking',
+  'English Communication',
+  'Parent Tips',
+  'Research',
+];
+
+const DISCOVERY_STYLES: Record<BlogDiscoveryCategory, { chip: string; wash: string }> = {
   Phonics: {
     chip: 'bg-sky-100 text-sky-800',
-    wash: 'from-sky-50 to-blue-50',
+    wash: 'from-sky-50 to-blue-100',
   },
   Grammar: {
     chip: 'bg-emerald-100 text-emerald-800',
-    wash: 'from-emerald-50 to-teal-50',
+    wash: 'from-emerald-50 to-teal-100',
   },
-  'Public Speaking': {
+  'Speaking & Communication': {
     chip: 'bg-amber-100 text-amber-800',
-    wash: 'from-amber-50 to-orange-50',
+    wash: 'from-amber-50 to-orange-100',
   },
-  'English Communication': {
-    chip: 'bg-indigo-100 text-indigo-800',
-    wash: 'from-indigo-50 to-sky-50',
-  },
-  'Parent Tips': {
+  'Parent Guides': {
     chip: 'bg-rose-100 text-rose-800',
-    wash: 'from-rose-50 to-orange-50',
+    wash: 'from-rose-50 to-orange-100',
   },
-  Research: {
+  'Schools & Research': {
     chip: 'bg-violet-100 text-violet-800',
-    wash: 'from-violet-50 to-indigo-50',
+    wash: 'from-violet-50 to-indigo-100',
   },
 };
 
-const CATEGORY_LABELS: Record<BlogTopic, string> = {
-  All: 'All topics',
+const TOPIC_LABELS: Record<BlogTopic, string> = {
+  Parent: 'Parent library',
   Phonics: 'Phonics',
   Grammar: 'Grammar',
-  'Public Speaking': 'Speaking',
-  'English Communication': 'Communication',
-  'Parent Tips': 'Parent guides',
-  Research: 'Research',
+  'Speaking & Communication': 'Speaking',
+  'Parent Guides': 'Parent guides',
+  'Schools & Research': 'Schools & research',
+  All: 'All articles',
 };
-
-const BLOG_CATEGORIES = BLOG_TOPIC_OPTIONS.filter((topic): topic is BlogPost['category'] => topic !== 'All');
 
 function normalizeCategory(value: unknown): BlogPost['category'] {
   const candidate = String(value ?? '').trim() as BlogPost['category'];
-  return BLOG_CATEGORIES.includes(candidate) ? candidate : 'Parent Tips';
+  return SOURCE_CATEGORIES.includes(candidate) ? candidate : 'Parent Tips';
 }
 
 function toIndexItem(meta: MdxMeta): BlogIndexItem {
+  const category = normalizeCategory(meta.category);
+  const identity = { slug: meta.slug, category };
+
   return {
     slug: meta.slug,
     title: meta.title || meta.slug,
-    category: normalizeCategory(meta.category),
+    category,
     author: meta.author || TEAM_AUTHOR_LABEL,
     date: meta.date || new Date().toISOString().slice(0, 10),
     readTime: meta.readTime || '5 min read',
     hero: meta.hero,
     excerpt: meta.excerpt || '',
+    audience: getBlogAudience(identity),
+    discoveryCategory: getBlogDiscoveryCategory(identity),
   };
 }
 
-function toDisplayAuthor(author: unknown): string {
-  return String(author ?? '').trim().toLowerCase() === FOUNDER_AUTHOR_NAME.toLowerCase()
-    ? FOUNDER_AUTHOR_NAME
-    : TEAM_AUTHOR_LABEL;
-}
-
-function toArticleAuthorSchema(author: unknown) {
-  if (String(author ?? '').trim().toLowerCase() === FOUNDER_AUTHOR_NAME.toLowerCase()) {
-    return {
-      '@type': 'Person',
-      '@id': FOUNDER_ID,
-      name: PUBLIC_FACTS.founder.fullName,
-      givenName: PUBLIC_FACTS.founder.givenName,
-      familyName: PUBLIC_FACTS.founder.familyName,
-      alternateName: [...PUBLIC_FACTS.founder.alternateNames],
-      jobTitle: 'Founder',
-      worksFor: { '@id': ORGANIZATION_ID },
-    };
-  }
-
-  return {
-    '@type': 'Organization',
-    '@id': ORGANIZATION_ID,
-    name: PUBLIC_FACTS.brandName,
-  };
+function toDisplayAuthor(post: BlogIndexItem): string {
+  const author = resolveBlogAuthor(post.author, post.category);
+  if (author.key === 'founder') return author.name;
+  return `${PUBLIC_FACTS.brandName} ${author.role}`;
 }
 
 function readTopicParam(value: string | null): BlogTopic {
-  if (!value) return 'All';
-  return BLOG_TOPIC_OPTIONS.includes(value as BlogTopic) ? (value as BlogTopic) : 'All';
+  if (!value) return 'Parent';
+  return BLOG_TOPIC_OPTIONS.includes(value as BlogTopic) ? (value as BlogTopic) : 'Parent';
+}
+
+function slugHash(slug: string): number {
+  return [...slug].reduce((total, character) => total + character.charCodeAt(0), 0);
+}
+
+function getImagePosition(slug: string): string {
+  const positions = ['object-center', 'object-[44%_center]', 'object-[56%_center]'] as const;
+  return positions[slugHash(slug) % positions.length];
+}
+
+function getSchoolVisualLabel(title: string): string {
+  const normalized = title.toLowerCase();
+  if (normalized.includes('teacher training')) return 'Teacher training';
+  if (normalized.includes('assess') || normalized.includes('assessment')) return 'Assessment';
+  if (normalized.includes('benchmark')) return 'Benchmarks';
+  if (normalized.includes('scope') || normalized.includes('sequence')) return 'Scope & sequence';
+  if (normalized.includes('cbse') || normalized.includes('ncf')) return 'Curriculum';
+  if (normalized.includes('systematic') || normalized.includes('cumulative')) return 'Systematic phonics';
+  if (normalized.includes('letter sounds') || normalized.includes('decoding')) return 'Decoding';
+  return 'Research brief';
 }
 
 const ArticleImage: FC<{ post: BlogIndexItem; eager?: boolean }> = ({ post, eager = false }) => {
-  const style = CATEGORY_STYLES[post.category];
+  const topic = getBlogDiscoveryTopic(post);
+  const style = DISCOVERY_STYLES[topic];
+  const useSchoolResearchTile = topic === 'Schools & Research' && post.hero === '/blog/hero-research.jpg';
+  const hero = post.category === 'Research' && topic === 'Phonics' ? '/blog/hero-phonics.jpg' : post.hero;
 
-  if (!post.hero) {
+  if (useSchoolResearchTile) {
+    return (
+      <div aria-hidden="true" className={`aspect-[16/9] bg-gradient-to-br ${style.wash} p-5 sm:p-6`}>
+        <div className="flex h-full flex-col justify-between rounded-[1.2rem] border border-white/80 bg-white/55 p-4 backdrop-blur-sm">
+          <span className="w-fit rounded-full border border-violet-200 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-700">
+            Schools & Research
+          </span>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Tiny Steps brief</p>
+            <p className="mt-2 text-xl font-black tracking-tight text-slate-900">{getSchoolVisualLabel(post.title)}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hero) {
     return <div aria-hidden="true" className={`aspect-[16/9] w-full bg-gradient-to-br ${style.wash}`} />;
   }
 
   return (
     <div className="aspect-[16/9] overflow-hidden bg-slate-100">
       <img
-        src={post.hero}
+        src={hero}
         alt=""
         width={720}
         height={405}
         loading={eager ? 'eager' : 'lazy'}
         decoding="async"
-        className="h-full w-full object-cover object-center transition duration-300 group-hover:scale-[1.02] motion-reduce:transform-none"
+        className={`h-full w-full object-cover ${getImagePosition(post.slug)} transition duration-300 group-hover:scale-[1.02] motion-reduce:transform-none`}
       />
     </div>
   );
@@ -195,7 +225,7 @@ const BlogIndexPage: FC = () => {
     if (cleanQuery) nextParams.set('search', cleanQuery);
     else nextParams.delete('search');
 
-    if (topic !== 'All') nextParams.set('topic', topic);
+    if (topic !== 'Parent') nextParams.set('topic', topic);
     else nextParams.delete('topic');
 
     if (nextParams.toString() !== searchParams.toString()) {
@@ -222,20 +252,25 @@ const BlogIndexPage: FC = () => {
     [allPosts, todayIso],
   );
   const sortedPublishedPosts = useMemo(() => sortBlogIndexPostsNewest(publishedPosts), [publishedPosts]);
+  const parentCount = useMemo(
+    () => sortedPublishedPosts.filter((post) => isParentFacingBlogPost(post)).length,
+    [sortedPublishedPosts],
+  );
   const topicCounts = useMemo(() => getBlogTopicCounts(sortedPublishedPosts), [sortedPublishedPosts]);
   const filteredPosts = useMemo(
     () => sortBlogIndexPostsNewest(filterBlogIndexPosts(sortedPublishedPosts, topic, deferredQuery)),
     [deferredQuery, sortedPublishedPosts, topic],
   );
   const authorityPosts = useMemo(() => getAuthorityPosts(sortedPublishedPosts), [sortedPublishedPosts]);
-  const activeFilters = Boolean(deferredQuery || topic !== 'All');
+  const defaultParentView = !deferredQuery && topic === 'Parent';
   const authoritySlugs = useMemo(() => new Set(authorityPosts.map((post) => post.slug)), [authorityPosts]);
   const libraryPosts = useMemo(
-    () => (activeFilters ? filteredPosts : filteredPosts.filter((post) => !authoritySlugs.has(post.slug))),
-    [activeFilters, authoritySlugs, filteredPosts],
+    () => (defaultParentView ? filteredPosts.filter((post) => !authoritySlugs.has(post.slug)) : filteredPosts),
+    [authoritySlugs, defaultParentView, filteredPosts],
   );
   const visiblePosts = libraryPosts.slice(0, visibleCount);
   const canLoadMore = visiblePosts.length < libraryPosts.length;
+  const schoolsCount = topicCounts.get('Schools & Research') ?? 0;
 
   const blogSchema = useMemo(
     () => ({
@@ -249,14 +284,14 @@ const BlogIndexPage: FC = () => {
         '@type': 'BlogPosting',
         headline: post.title,
         datePublished: isoDateFromYMD(post.date),
-        dateModified: isoDateFromYMD(post.date),
-        articleSection: post.category,
+        ...(post.modifiedDate ? { dateModified: isoDateFromYMD(post.modifiedDate) } : {}),
+        articleSection: post.discoveryCategory || post.category,
         image: post.hero
           ? String(post.hero).startsWith('http')
             ? post.hero
             : `${SITE_ORIGIN}${post.hero}`
           : `${SITE_ORIGIN}/logo-square.webp`,
-        author: toArticleAuthorSchema(post.author),
+        author: buildBlogAuthorSchema(resolveBlogAuthor(post.author, post.category)),
         publisher: { '@id': ORGANIZATION_ID },
         url: `${SITE_ORIGIN}/blog/${post.slug}`,
       })),
@@ -333,12 +368,22 @@ const BlogIndexPage: FC = () => {
   const clearFilters = () => {
     startTransition(() => {
       setQuery('');
-      setTopic('All');
+      setTopic('Parent');
     });
   };
 
+  const libraryHeading = deferredQuery
+    ? 'Your matching articles'
+    : topic === 'Parent'
+      ? 'Browse the parent library'
+      : topic === 'Schools & Research'
+        ? 'Schools & research'
+        : topic === 'All'
+          ? 'Browse all articles'
+          : `Browse ${TOPIC_LABELS[topic].toLowerCase()}`;
+
   return (
-    <div className="min-h-screen bg-[#fbfaf7] text-slate-950">
+    <div className="min-h-screen bg-[#fbfaf7] pb-20 text-slate-950 sm:pb-24 lg:pb-8">
       <Meta
         title={metaTitle}
         description={metaDescription}
@@ -399,8 +444,11 @@ const BlogIndexPage: FC = () => {
                 What are you trying to solve today?
               </h2>
             </div>
-            <Link to="/for-schools" className="text-sm font-semibold text-primary-700 hover:text-primary-800">
-              School leader? Explore schools & research →
+            <Link
+              to="/blog?topic=Schools%20%26%20Research"
+              className="text-sm font-semibold text-primary-700 hover:text-primary-800"
+            >
+              School leader? Browse schools & research →
             </Link>
           </div>
 
@@ -420,21 +468,21 @@ const BlogIndexPage: FC = () => {
           </div>
         </section>
 
-        {!activeFilters && authorityPosts.length > 0 ? (
+        {defaultParentView && authorityPosts.length > 0 ? (
           <section aria-labelledby="featured-heading" className="mt-10">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary-700">Featured guides</p>
               <h2 id="featured-heading" className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">
-                Start with the guides already earning strong search visibility
+                Popular guides parents start with
               </h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                These are intentionally surfaced as authority routes instead of letting the newest article automatically dominate the page.
+                Clear starting points for common questions about phonics, reading, and communication, with practical next steps for families.
               </p>
             </div>
 
             <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {authorityPosts.map((post, index) => {
-                const style = CATEGORY_STYLES[post.category];
+                const style = DISCOVERY_STYLES[getBlogDiscoveryTopic(post)];
                 return (
                   <Link
                     key={post.slug}
@@ -444,7 +492,7 @@ const BlogIndexPage: FC = () => {
                     <ArticleImage post={post} eager={index === 0} />
                     <div className="p-4">
                       <div className="flex items-center justify-between gap-3">
-                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${style.chip}`}>{post.category}</span>
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${style.chip}`}>{getBlogCardLabel(post)}</span>
                         <span className="text-xs text-slate-500">{post.readTime}</span>
                       </div>
                       <h3 className="mt-3 text-lg font-bold leading-7 text-slate-950">{post.title}</h3>
@@ -459,8 +507,8 @@ const BlogIndexPage: FC = () => {
 
         <section aria-labelledby="library-heading" className="mt-10">
           <div className="rounded-[1.6rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5 lg:sticky lg:top-20 lg:z-20">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-              <div className="min-w-0 flex-1">
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] xl:items-end">
+              <div className="min-w-0">
                 <label htmlFor="blog-search" className="text-sm font-semibold text-slate-900">
                   Search the blog
                 </label>
@@ -488,25 +536,29 @@ const BlogIndexPage: FC = () => {
                 </div>
               </div>
 
-              <div className="xl:max-w-[620px]">
+              <div className="min-w-0">
                 <p className="text-sm font-semibold text-slate-900">Filter by topic</p>
-                <div className="-mx-1 mt-2 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
+                <div className="mt-2 flex flex-wrap gap-2">
                   {BLOG_TOPIC_OPTIONS.map((option) => {
                     const active = topic === option;
-                    const count = option === 'All' ? sortedPublishedPosts.length : topicCounts.get(option) ?? 0;
+                    const count = option === 'Parent'
+                      ? parentCount
+                      : option === 'All'
+                        ? sortedPublishedPosts.length
+                        : topicCounts.get(option) ?? 0;
                     return (
                       <button
                         key={option}
                         type="button"
                         aria-pressed={active}
                         onClick={() => startTransition(() => setTopic(option))}
-                        className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 ${
+                        className={`rounded-full px-3.5 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 ${
                           active
                             ? 'bg-slate-950 text-white'
                             : 'border border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-slate-100'
                         }`}
                       >
-                        {CATEGORY_LABELS[option]} <span className={active ? 'text-slate-300' : 'text-slate-400'}>{count}</span>
+                        {TOPIC_LABELS[option]} <span className={active ? 'text-slate-300' : 'text-slate-400'}>{count}</span>
                       </button>
                     );
                   })}
@@ -515,39 +567,48 @@ const BlogIndexPage: FC = () => {
             </div>
           </div>
 
-          <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary-700">Library</p>
               <h2 id="library-heading" className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">
-                {activeFilters ? 'Your matching articles' : 'Browse the rest of the library'}
+                {libraryHeading}
               </h2>
             </div>
-            <p aria-live="polite" className="text-sm text-slate-500">
-              {activeFilters
-                ? `${filteredPosts.length} result${filteredPosts.length === 1 ? '' : 's'}`
-                : `${libraryPosts.length} additional article${libraryPosts.length === 1 ? '' : 's'}`}
-            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <p aria-live="polite" className="text-sm text-slate-500">
+                {libraryPosts.length} article{libraryPosts.length === 1 ? '' : 's'}
+              </p>
+              {topic === 'Parent' && schoolsCount > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => startTransition(() => setTopic('Schools & Research'))}
+                  className="text-sm font-semibold text-primary-700 hover:text-primary-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                >
+                  School resources ({schoolsCount}) →
+                </button>
+              ) : null}
+            </div>
           </div>
 
           {libraryPosts.length === 0 ? (
             <div className="mt-5 rounded-[1.6rem] border border-slate-200 bg-white p-8 text-center shadow-sm">
               <h3 className="text-xl font-bold">No articles match that combination</h3>
               <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">
-                Try fewer search words, choose another topic, or reset the filters to return to the full library.
+                Try fewer search words, choose another topic, or reset the filters to return to the parent library.
               </p>
               <button
                 type="button"
                 onClick={clearFilters}
                 className="mt-5 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
               >
-                Reset search and topic
+                Reset to parent library
               </button>
             </div>
           ) : (
             <>
               <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {visiblePosts.map((post) => {
-                  const style = CATEGORY_STYLES[post.category];
+                  const style = DISCOVERY_STYLES[getBlogDiscoveryTopic(post)];
                   return (
                     <article key={post.slug} className="group overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
                       <Link
@@ -557,14 +618,14 @@ const BlogIndexPage: FC = () => {
                         <ArticleImage post={post} />
                         <div className="p-4">
                           <div className="flex items-center justify-between gap-3">
-                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${style.chip}`}>{post.category}</span>
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${style.chip}`}>{getBlogCardLabel(post)}</span>
                             <span className="text-xs text-slate-500">{post.readTime}</span>
                           </div>
                           <h3 className="mt-3 text-lg font-bold leading-7 text-slate-950">{post.title}</h3>
                           <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{post.metaDescription || post.excerpt}</p>
                           <div className="mt-4 flex items-center justify-between gap-3 text-xs text-slate-500">
                             <span>{formatBlogDate(post.date)}</span>
-                            <span>By {toDisplayAuthor(post.author)}</span>
+                            <span>By {toDisplayAuthor(post)}</span>
                           </div>
                         </div>
                       </Link>
@@ -604,7 +665,7 @@ const BlogIndexPage: FC = () => {
 
           <aside className="rounded-[1.75rem] border border-slate-200 bg-gradient-to-br from-amber-50 to-sky-50 p-5 sm:p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Useful next routes</p>
-            <h2 className="mt-2 text-xl font-black tracking-tight">Go beyond the archive</h2>
+            <h2 className="mt-2 text-xl font-black tracking-tight">Go beyond the library</h2>
             <div className="mt-5 grid gap-2">
               <Link to="/parents" className="rounded-xl border border-white bg-white/90 px-4 py-3 text-sm font-semibold text-slate-900 hover:border-slate-300">
                 Parents Help Hub →
@@ -619,26 +680,58 @@ const BlogIndexPage: FC = () => {
           </aside>
         </section>
 
-        <AboutAuthor
-          className="mt-12"
-          title="About Tiny Steps Blog & Founder"
-          intro="The Tiny Steps blog helps parents move from a search question to a practical next step in reading, grammar, writing, speaking, and home learning."
-          note="Guides are organized around real learning blockers rather than an endless chronological feed."
-          badges={['Tiny Steps Blog', 'Parent-first guidance', 'Practical next steps']}
-          highlights={[
-            { label: 'Primary purpose', value: 'Help families identify the right next move faster' },
-            { label: 'Library', value: getPublishedCountLabel(sortedPublishedPosts.length) },
-            { label: 'Topics', value: 'Phonics, grammar, speaking, communication, parent guidance, and research' },
-          ]}
-        />
+        <section
+          className="mt-10 rounded-[1.75rem] border border-slate-200 bg-[linear-gradient(135deg,#fff8ef_0%,#f8fbff_62%,#ffffff_100%)] p-5 shadow-sm sm:p-6"
+          aria-label="About Tiny Steps Blog and founder"
+        >
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.75fr)] lg:items-center">
+            <div>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                <img
+                  src="/priya-founder-tiny-steps-learning.webp"
+                  alt="Priya, Founder of Tiny Steps Learning"
+                  width={128}
+                  height={128}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-16 w-16 rounded-2xl border border-slate-200 object-cover shadow-md"
+                />
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary-700">Founder, Tiny Steps Learning</p>
+                  <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950">
+                    <Link to="/team" className="underline decoration-slate-300 underline-offset-4 hover:text-primary-700">Priya</Link>
+                  </h2>
+                </div>
+              </div>
+              <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600">
+                Priya leads Tiny Steps academic direction across curriculum, lesson design, teacher guidance, teaching quality, and parent communication.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link to="/team" className="rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-50">
+                  Meet the Tiny Steps team
+                </Link>
+                <Link to="/contact" className="rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-slate-50">
+                  Report a correction
+                </Link>
+              </div>
+            </div>
 
-        <section className="mt-12 overflow-hidden rounded-[1.8rem] bg-slate-950 p-6 text-white shadow-lg sm:p-8">
+            <div className="rounded-[1.4rem] border border-slate-200 bg-white/85 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Editorial responsibility</p>
+              <p className="mt-2 text-sm leading-6 text-slate-700">
+                Tiny Steps organizes guides around common learning blockers and practical next steps. Published and updated dates change only when the underlying editorial record changes.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-10 overflow-hidden rounded-[1.8rem] bg-slate-950 p-6 text-white shadow-lg sm:p-8">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-200">Inbox guidance</p>
-              <h2 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Get practical English-learning ideas without another long feed</h2>
+              <h2 className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">Get practical English-learning ideas in your inbox</h2>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
-                Parent-friendly notes on phonics, grammar, speaking, home routines, and new Tiny Steps guidance.
+                Parent-friendly notes on phonics, reading, grammar, speaking, home routines, and new Tiny Steps guidance.
               </p>
             </div>
             <div className="rounded-[1.25rem] border border-white/10 bg-white/10 p-4">

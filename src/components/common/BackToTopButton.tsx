@@ -6,7 +6,7 @@ const BackToTopButton = () => {
 
   useEffect(() => {
     const onScroll = () => {
-      const nextVisible = window.scrollY > 400;
+      const nextVisible = window.scrollY > 650;
       setVisible((current) => (current === nextVisible ? current : nextVisible));
     };
 
@@ -20,11 +20,12 @@ const BackToTopButton = () => {
   return (
     <button
       type="button"
-      className="fixed bottom-6 left-4 z-40 flex items-center gap-2 rounded-full bg-gradient-to-r from-[#59c3ff] via-[#ffb347] to-[#ff8f5c] px-4 py-2 text-sm font-semibold text-white shadow-[0_15px_35px_rgba(15,23,42,0.3)] transition-transform duration-150 hover:scale-105 active:scale-95"
+      className="fixed bottom-4 left-3 z-40 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-[#59c3ff] via-[#ffb347] to-[#ff8f5c] text-sm font-semibold text-white shadow-[0_15px_35px_rgba(15,23,42,0.3)] transition-transform duration-150 hover:scale-105 active:scale-95 sm:bottom-6 sm:left-4 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2"
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
       aria-label="Back to top"
     >
-      ↑ Back to top
+      <span aria-hidden="true">↑</span>
+      <span className="sr-only sm:not-sr-only">Back to top</span>
     </button>
   );
 };

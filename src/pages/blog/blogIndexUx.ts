@@ -1,20 +1,30 @@
-import type { BlogPost } from '../../content/blog/types';
+import type { BlogDiscoveryCategory, BlogPost } from '../../content/blog/types';
 
 export const BLOG_TOPIC_OPTIONS = [
-  'All',
+  'Parent',
   'Phonics',
   'Grammar',
-  'Public Speaking',
-  'English Communication',
-  'Parent Tips',
-  'Research',
+  'Speaking & Communication',
+  'Parent Guides',
+  'Schools & Research',
+  'All',
 ] as const;
 
 export type BlogTopic = (typeof BLOG_TOPIC_OPTIONS)[number];
 
 export type BlogIndexItem = Pick<
   BlogPost,
-  'slug' | 'title' | 'category' | 'author' | 'date' | 'readTime' | 'hero' | 'excerpt'
+  | 'slug'
+  | 'title'
+  | 'category'
+  | 'author'
+  | 'date'
+  | 'modifiedDate'
+  | 'readTime'
+  | 'hero'
+  | 'excerpt'
+  | 'audience'
+  | 'discoveryCategory'
 > &
   Partial<Pick<BlogPost, 'metaDescription' | 'body' | 'faq'>>;
 
@@ -65,6 +75,43 @@ export const PARENT_GOAL_ROUTES = Object.freeze([
 
 const normalize = (value: unknown): string => String(value ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
 
+export function getBlogDiscoveryTopic(post: BlogIndexItem): BlogDiscoveryCategory {
+  if (post.discoveryCategory) return post.discoveryCategory;
+  if (post.audience === 'Schools & Research') return 'Schools & Research';
+
+  switch (post.category) {
+    case 'Grammar':
+      return 'Grammar';
+    case 'Public Speaking':
+    case 'English Communication':
+      return 'Speaking & Communication';
+    case 'Parent Tips':
+      return 'Parent Guides';
+    case 'Research':
+      return 'Phonics';
+    case 'Phonics':
+    default:
+      return 'Phonics';
+  }
+}
+
+export function getBlogCardLabel(post: BlogIndexItem): string {
+  switch (getBlogDiscoveryTopic(post)) {
+    case 'Speaking & Communication':
+      return 'Speaking';
+    case 'Parent Guides':
+      return 'Parent Guide';
+    case 'Schools & Research':
+      return 'Schools & Research';
+    default:
+      return getBlogDiscoveryTopic(post);
+  }
+}
+
+export function isParentFacingBlogPost(post: BlogIndexItem): boolean {
+  return post.audience !== 'Schools & Research' && getBlogDiscoveryTopic(post) !== 'Schools & Research';
+}
+
 export function buildBlogSearchText(post: BlogIndexItem): string {
   const body = Array.isArray(post.body) ? post.body.map((block) => block.content).join(' ') : '';
   const faq = Array.isArray(post.faq)
@@ -72,7 +119,7 @@ export function buildBlogSearchText(post: BlogIndexItem): string {
     : '';
 
   return normalize(
-    `${post.title} ${post.excerpt} ${post.category} ${post.author} ${post.metaDescription ?? ''} ${body} ${faq}`,
+    `${post.title} ${post.excerpt} ${post.category} ${getBlogDiscoveryTopic(post)} ${post.author} ${post.metaDescription ?? ''} ${body} ${faq}`,
   );
 }
 
@@ -89,7 +136,8 @@ export function filterBlogIndexPosts(
   const normalizedQuery = normalize(query);
 
   return posts.filter((post) => {
-    if (topic !== 'All' && post.category !== topic) return false;
+    if (topic === 'Parent' && !isParentFacingBlogPost(post)) return false;
+    if (topic !== 'Parent' && topic !== 'All' && getBlogDiscoveryTopic(post) !== topic) return false;
     if (!normalizedQuery) return true;
     return buildBlogSearchText(post).includes(normalizedQuery);
   });
@@ -106,9 +154,19 @@ export function sortBlogIndexPostsNewest(posts: readonly BlogIndexItem[]): BlogI
 export function getBlogTopicCounts(posts: readonly BlogIndexItem[]): Map<string, number> {
   const counts = new Map<string, number>();
   for (const post of posts) {
-    counts.set(post.category, (counts.get(post.category) ?? 0) + 1);
+    const topic = getBlogDiscoveryTopic(post);
+    counts.set(topic, (counts.get(topic) ?? 0) + 1);
   }
   return counts;
+}
+
+export function getDefaultParentLibraryPosts(
+  posts: readonly BlogIndexItem[],
+  excludedSlugs: ReadonlySet<string> = new Set<string>(),
+): BlogIndexItem[] {
+  return sortBlogIndexPostsNewest(
+    posts.filter((post) => isParentFacingBlogPost(post) && !excludedSlugs.has(post.slug)),
+  );
 }
 
 export function getAuthorityPosts(posts: readonly BlogIndexItem[], limit = 4): BlogIndexItem[] {
@@ -120,7 +178,8 @@ export function getAuthorityPosts(posts: readonly BlogIndexItem[], limit = 4): B
   if (curated.length >= limit) return curated.slice(0, limit);
 
   const used = new Set(curated.map((post) => post.slug));
-  const fallback = sortBlogIndexPostsNewest(posts).filter((post) => !used.has(post.slug));
+  const fallback = sortBlogIndexPostsNewest(posts)
+    .filter((post) => isParentFacingBlogPost(post) && !used.has(post.slug));
   return [...curated, ...fallback].slice(0, limit);
 }
 
