@@ -11,6 +11,7 @@ type HeroAction = {
   label: string;
   to: string;
   variant?: 'primary' | 'secondary';
+  onClick?: () => void;
 };
 
 type ResearchArticleHeroProps = {
@@ -85,6 +86,7 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
                 <Link
                   key={action.label}
                   to={action.to}
+                  onClick={action.onClick}
                   className={
                     action.variant === 'secondary'
                       ? 'inline-flex max-w-full items-center justify-center rounded-full border border-white/20 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/10'
