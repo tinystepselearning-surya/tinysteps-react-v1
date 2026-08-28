@@ -43,7 +43,8 @@ describe('FreeBalloonPopGamePage', () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/tiny steps phonics · free listening practice/i)).toBeInTheDocument();
     expect(screen.getByText(/the tiny steps learning loop/i)).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 2, name: /tiny steps phonics sound groups/i })).toBeInTheDocument();
+    expect(screen.getByText(/tiny steps phonics sound groups/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: /start with a small sound set, then expand gradually/i })).toBeInTheDocument();
     expect(screen.getByText(/satpin listening and sound recall/i)).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: /parent guidance: keep the game purposeful/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: /for teachers and homeschool practice/i })).toBeInTheDocument();
