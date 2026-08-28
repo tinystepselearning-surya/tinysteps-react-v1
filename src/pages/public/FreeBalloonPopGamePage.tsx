@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import Meta from '../../components/common/Meta';
 import { trackEvent } from '../../lib/analytics';
 import { trackFreeResourceStart, trackFreeResourceToTrialClick } from '../../lib/conversionTracking';
@@ -9,6 +9,10 @@ import KidsBalloonPop from '../KidsBalloonPop';
 
 const PAGE_PATH = '/free-balloon-pop-phonics-game-for-kids';
 const PAGE_URL = `https://tinystepslearning.com${PAGE_PATH}`;
+const PUBLIC_PROGRESS_KEY = 'ts_balloonpop_progress_guest';
+const SEO_TITLE = 'Free Balloon Pop Phonics Game for Kids | Tiny Steps';
+const SEO_DESCRIPTION =
+  'Play a free balloon pop phonics game for kids. Children listen to letter sounds, choose the correct balloon, and build early phonics recognition through play.';
 
 const faqItems = [
   {
@@ -86,12 +90,32 @@ const appSchema = {
   },
 };
 
+function readPublicCompletionCounts(): Record<string, number> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = window.localStorage.getItem(PUBLIC_PROGRESS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as {
+      completed?: Record<string, { completedSessions?: number }>;
+    };
+    return Object.fromEntries(
+      Object.entries(parsed.completed || {}).map(([level, value]) => [level, Number(value?.completedSessions || 0)]),
+    );
+  } catch {
+    return {};
+  }
+}
+
 export default function FreeBalloonPopGamePage() {
+  const [searchParams] = useSearchParams();
+  const selectedLevel = searchParams.get('level');
+  const lastTrackedLevelRef = useRef<string | null>(null);
+  const completionCountsRef = useRef<Record<string, number>>({});
+
   useEffect(() => {
     applySeo({
-      title: 'Free Phonics Balloon Pop Game for Kids | Letter Sound Listening',
-      description:
-        'Play Tiny Steps Phonics Balloon Pop free online. Children hear a letter sound, find the matching letter, and pop the correct balloon for fun phonics listening practice.',
+      title: SEO_TITLE,
+      description: SEO_DESCRIPTION,
       canonicalPath: PAGE_PATH,
       ogType: 'website',
       jsonLd: [
@@ -108,12 +132,56 @@ export default function FreeBalloonPopGamePage() {
     });
   }, []);
 
+  useEffect(() => {
+    if (!selectedLevel || selectedLevel === lastTrackedLevelRef.current) return;
+    lastTrackedLevelRef.current = selectedLevel;
+    trackEvent('balloon_pop_level_select', {
+      page_path: PAGE_PATH,
+      game_id: 'balloon-pop',
+      level: Number(selectedLevel),
+      sound_group: `sound_group_${selectedLevel}`,
+      source_context: 'public_free_game',
+    });
+  }, [selectedLevel]);
+
+  useEffect(() => {
+    completionCountsRef.current = readPublicCompletionCounts();
+    const timer = window.setInterval(() => {
+      const nextCounts = readPublicCompletionCounts();
+      Object.entries(nextCounts).forEach(([level, completedSessions]) => {
+        const previous = completionCountsRef.current[level] || 0;
+        if (completedSessions > previous) {
+          trackEvent('balloon_pop_level_complete', {
+            page_path: PAGE_PATH,
+            game_id: 'balloon-pop',
+            level: Number(level),
+            sound_group: `sound_group_${level}`,
+            completed_sessions: completedSessions,
+            public_mode: true,
+          });
+        }
+      });
+      completionCountsRef.current = nextCounts;
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
   const handleGameStart = (sourceContext: string) => {
     trackFreeResourceStart('free_balloon_pop_phonics_game', PAGE_PATH);
     trackEvent('balloon_pop_game_start', {
       page_path: PAGE_PATH,
       game_id: 'balloon-pop',
       source_context: sourceContext,
+    });
+  };
+
+  const handleNextGameClick = (destinationPath: string, label: string) => {
+    trackEvent('balloon_pop_next_game_click', {
+      page_path: PAGE_PATH,
+      game_id: 'balloon-pop',
+      destination_path: destinationPath,
+      destination_label: label,
     });
   };
 
@@ -135,11 +203,7 @@ export default function FreeBalloonPopGamePage() {
 
   return (
     <div className="overflow-x-clip bg-[linear-gradient(180deg,#f8f5ff_0%,#f5fbff_34%,#ffffff_100%)]">
-      <Meta
-        title="Free Phonics Balloon Pop Game for Kids | Letter Sound Listening"
-        description="Play Tiny Steps Phonics Balloon Pop free online. Children hear a letter sound, find the matching letter, and pop the correct balloon for fun phonics listening practice."
-        canonical={PAGE_URL}
-      />
+      <Meta title={SEO_TITLE} description={SEO_DESCRIPTION} canonical={PAGE_URL} />
 
       <div className="mx-auto w-full max-w-7xl px-4 pb-14 pt-4 sm:px-6 lg:px-8">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
@@ -363,7 +427,12 @@ export default function FreeBalloonPopGamePage() {
                 to: '/free-sound-listening-game-for-kids',
               },
             ].map((item) => (
-              <Link key={item.title} to={item.to} className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 hover:border-violet-300">
+              <Link
+                key={item.title}
+                to={item.to}
+                onClick={() => handleNextGameClick(item.to, item.title)}
+                className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 hover:border-violet-300"
+              >
                 <div className="text-sm font-bold text-slate-900">{item.title}</div>
                 <div className="mt-2 text-sm leading-6 text-slate-600">{item.body}</div>
               </Link>
