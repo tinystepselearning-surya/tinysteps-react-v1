@@ -12,6 +12,7 @@ export type BlogPost = {
   category: 'Phonics' | 'Grammar' | 'Public Speaking' | 'English Communication' | 'Parent Tips' | 'Research';
   author: string;
   date: string; // ISO date
+  modifiedDate?: string; // ISO date; set only after a meaningful editorial revision
   readTime: string;
   hero?: string; // image url
   metaDescription?: string;
