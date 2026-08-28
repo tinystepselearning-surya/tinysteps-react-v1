@@ -18,6 +18,7 @@ import {
 } from "../../lib/publicEnglishGames";
 
 const SITE_ORIGIN = "https://tinystepslearning.com";
+const BALLOON_POP_PATH = "/free-balloon-pop-phonics-game-for-kids";
 
 export default function FreeEnglishGamesCategoryPage() {
   const location = useLocation();
@@ -91,6 +92,7 @@ export default function FreeEnglishGamesCategoryPage() {
     route: getPublicTileRoute(tile.gameId)?.route,
     title: tile.gameTitle,
   })).filter((item): item is { route: string; title: string } => Boolean(item.route));
+  const isLetterSoundCategory = config.route === "/free-letter-sound-games-for-kids";
 
   const faqItems = [
     { question: config.categoryQuestion, answer: config.categoryAnswer },
@@ -166,6 +168,26 @@ export default function FreeEnglishGamesCategoryPage() {
               </Link>
             </nav>
           </header>
+
+          {isLetterSoundCategory ? (
+            <section className="mt-3 rounded-lg border border-fuchsia-300/25 bg-[linear-gradient(135deg,rgba(88,28,135,0.42),rgba(14,116,144,0.28))] p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-fuchsia-200">Featured Tiny Steps Phonics practice</p>
+                  <h2 className="mt-1 text-lg font-black text-white">Tiny Steps Phonics Balloon Pop</h2>
+                  <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-200">
+                    Hear one target letter sound, find the matching printed letter, and pop the balloon. Start with SATPIN or choose another Tiny Steps Phonics sound group for quick sound-to-letter recall practice.
+                  </p>
+                </div>
+                <Link
+                  to={BALLOON_POP_PATH}
+                  className="shrink-0 rounded-lg bg-cyan-300 px-4 py-2.5 text-sm font-black text-slate-950 hover:bg-cyan-200"
+                >
+                  Play Balloon Pop Free
+                </Link>
+              </div>
+            </section>
+          ) : null}
 
           <div className="mt-3 grid grid-cols-2 gap-2 lg:grid-cols-4">
             <div className="public-category-kpi">

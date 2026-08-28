@@ -46,7 +46,7 @@ const MY_FIRST_WORDS_ASSETS = {
  *
  * Games (catalog ensures core metadata + ids; UI may be separate):
  * - letter-sound-match (7 levels) - Actual game has 7 levels
- * - balloon-pop (7 levels) - Legacy game
+ * - balloon-pop (7 sound groups) - Tiny Steps Phonics Balloon Pop
  * - sound-detective (5 levels)
  * - letter-tracing (5 levels)
  * - rhyme-time (5 levels)
@@ -66,7 +66,7 @@ const MY_FIRST_WORDS_ASSETS = {
  *
  * Optional fields (only set if missing):
  * - games[...].active (default true if undefined)
- * - games[...].title (preserve existing)
+ * - games[...].title (preserve existing, except Balloon Pop canonical identity)
  * - games[...].order (preserve existing)
  * - categories["letter_sounds"].label (only if missing)
  * - categories["letter_sounds"].order (only if missing)
@@ -169,8 +169,8 @@ export async function ensureGamesCatalogPatched(
       patchedPaths.push("games.balloon-pop.active");
       needsPatch = true;
     }
-    if (!balloonPopGame.title) {
-      balloonPopPatch.title = "Balloon Pop (Jolly Levels)";
+    if (balloonPopGame.title !== "Tiny Steps Phonics Balloon Pop") {
+      balloonPopPatch.title = "Tiny Steps Phonics Balloon Pop";
       patchedPaths.push("games.balloon-pop.title");
       needsPatch = true;
     }

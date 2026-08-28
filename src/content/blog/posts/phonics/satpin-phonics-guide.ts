@@ -15,6 +15,9 @@ const post: PhonicsSeoPost = {
     'Move to broader CVC sets only when SATPIN blending is accurate with low prompting across several sessions.',
     'For the complete framework around phonics, home practice and programme quality, read the [Phonics for Parents guide](/blog/phonics-for-parents-guide).',
     'If your child can say the SATPIN sounds but cannot join them into words, use the [letter-sounds-but-cannot-read diagnostic guide](/blog/why-child-knows-letter-sounds-but-cannot-read-words).',
+    'Try Tiny Steps Phonics Balloon Pop with SATPIN',
+    'Let your child hear s, a, t, i, p, and n, then find and pop the matching letter balloon. Use it as a short sound-recall warm-up before blending words.',
+    'Play Free: /free-balloon-pop-phonics-game-for-kids?level=1',
     'Try Letter Tracing with Sounds',
     'Help your child connect letter shapes with letter sounds through simple tracing practice.',
     'Play Free: /letter-tracing-with-sounds-game'
@@ -43,6 +46,9 @@ const post: PhonicsSeoPost = {
     answer: 'A strong sign is reduced guessing: your child starts sounding out and blending new SATPIN words independently.'
   }],
   relatedReads: [{
+    label: 'Play Tiny Steps Phonics Balloon Pop with SATPIN',
+    to: '/free-balloon-pop-phonics-game-for-kids?level=1'
+  }, {
     label: 'Read the complete phonics guide for parents',
     to: '/blog/phonics-for-parents-guide'
   }, {

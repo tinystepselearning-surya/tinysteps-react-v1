@@ -27,8 +27,8 @@ const PHONICS_GAMES = [
   },
   {
     id: 'phonics_balloon_pop',
-    title: 'Balloon Pop (Jolly Levels)',
-    description: 'Age 3–8 — Pop the correct letter sound',
+    title: 'Tiny Steps Phonics Balloon Pop',
+    description: 'Age 3–8 — Hear a sound and pop the matching letter',
     route: '/kids/games/phonics/balloon-pop',
     color: 'text-yellow-300',
     stageId: 'sound_foundations',

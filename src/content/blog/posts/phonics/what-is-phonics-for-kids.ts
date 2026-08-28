@@ -12,6 +12,9 @@ const post: PhonicsSeoPost = {
     'Run a 10-minute start routine: 3 minutes sound review, 4 minutes blending, 2 minutes decodable reading, 1 minute recap.',
     'Add one short spelling transfer task: say a word, child taps sounds, writes, then reads back.',
     'After one week, check if your child is relying less on guessing and more on sound-by-sound decoding.',
+    'Try Tiny Steps Phonics Balloon Pop',
+    'Use the listen-match-pop activity for a short sound-to-letter warm-up before blending practice.',
+    'Play Free: /free-balloon-pop-phonics-game-for-kids',
     'Try the Free Letter Tracing Game',
     'Help your child practise letter formation on screen with a simple tracing activity.',
     'Play Free: /free-letter-tracing-game-for-kids',
@@ -43,6 +46,9 @@ const post: PhonicsSeoPost = {
     answer: 'A strong early sign is reduced guessing: your child starts attempting words sound by sound, including unfamiliar ones.'
   }],
   relatedReads: [{
+    label: 'Play Tiny Steps Phonics Balloon Pop',
+    to: '/free-balloon-pop-phonics-game-for-kids'
+  }, {
     label: 'Explore structured phonics support',
     to: '/phonics'
   }, {
