@@ -18,6 +18,7 @@ const CANONICAL_BLOG_REDIRECTS: Record<string, string> = {
   "/blog/phonics-grammar-speaking-connected-english-communication": "/blog/how-phonics-grammar-and-communication-work-together",
   "/blog/engage-children-phonics-grammar-speaking-at-home": "/blog/how-to-engage-kids-in-english-learning-at-home",
   "/blog/best-age-to-start-phonics-classes-for-kids": "/blog/what-age-to-start-phonics",
+  "/blog/how-tiny-steps-builds-reading-confidence": "/blog/how-phonics-builds-reading-confidence",
 };
 
 function escapeHtml(value: string) {
