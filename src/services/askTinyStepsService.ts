@@ -123,6 +123,11 @@ function successfulRetrievedUrls(
     .filter((url) => successful.has(comparableUrl(url)));
 }
 
+function responseHitOutputLimit(response: GenerateContentResponse): boolean {
+  const finishReason = response.candidates?.[0]?.finishReason;
+  return String(finishReason ?? '').toUpperCase() === 'MAX_TOKENS';
+}
+
 function stripModelSourceLines(reply: string): string {
   return reply
     .split('\n')
@@ -234,6 +239,11 @@ export async function callAskTinySteps(
       const rawReply = result.response.text().trim();
       if (!rawReply) {
         throw new Error('empty-response');
+      }
+      if (responseHitOutputLimit(result.response)) {
+        // A partial sentence is worse than a deterministic verified fallback. Do
+        // not switch models for this application-level integrity failure.
+        throw new Error('incomplete-response-max-tokens');
       }
 
       if (approvedSources.length === 0) {
