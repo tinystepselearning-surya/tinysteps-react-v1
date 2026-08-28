@@ -46,7 +46,10 @@ type IntentRule = {
 };
 
 const SCHOOL_CONTEXT_PATTERN =
-  /\b(school|schools|cbse|ncf|principal|academic coordinator|school owner|campus|institution|institutional|teacher training|teachers training|scope and sequence|foundational literacy|fln|curriculum head|school partnership)\b/i;
+  /\b(cbse|ncf|principal|academic coordinator|academic dean|school owner|curriculum head|campus|institution|institutional|teacher training|teachers training|train our teachers|train teachers|teacher workshop|scope and sequence|foundational literacy|fln|school partnership|school programme|school program|school implementation|school proposal|school pilot|preschool|pre-school|kindergarten|schools)\b|\b(?:our|my|a|the) school\b|\bwe are (?:a |an )?(?:cbse )?(?:school|preschool|pre-school|kindergarten)\b/i;
+
+const PARENT_CONTEXT_PATTERN =
+  /\b(my child|for my child|my son|my daughter|our child|our son|our daughter|my kid|our kid|as a parent|at home)\b/i;
 
 const FOLLOW_UP_PATTERN =
   /^(what|how) about\b|^and\b|\b(this|that|it|those|same one|same thing)\b|\bhow much is it\b|\bhow long is it\b|\btell me more\b/i;
@@ -174,12 +177,16 @@ function hasSchoolContext(text: string): boolean {
   return SCHOOL_CONTEXT_PATTERN.test(text);
 }
 
+function hasParentContext(text: string): boolean {
+  return PARENT_CONTEXT_PATTERN.test(text);
+}
+
 function detectIntent(text: string, audience: AskTinyStepsSelectionAudience): AskTinyStepsSelectionIntent {
   if (audience === 'schools') {
-    if (/\b(cbse|ncf|foundational literacy|fln|scope and sequence|benchmark|research|systematic|cumulative|decoding|memorisation|teacher training)\b/i.test(text)) {
+    if (/\b(cbse|ncf|foundational literacy|fln|scope and sequence|benchmark|research|systematic|cumulative|decoding|memorisation|teacher training|teacher workshop)\b/i.test(text)) {
       return 'school_research';
     }
-    if (/\b(school|schools|campus|institution|partnership|principal|school owner|curriculum head)\b/i.test(text)) {
+    if (/\b(school|schools|preschool|pre-school|kindergarten|campus|institution|partnership|principal|school owner|curriculum head)\b/i.test(text)) {
       return 'school_program';
     }
   }
@@ -194,13 +201,13 @@ function directSourceIds(
   currentQuestion: string,
 ): string[] {
   if (audience === 'schools') {
-    // A current pricing question should resolve to the school programme page even
-    // when prior conversation mentions teacher training or CBSE research.
     if (/\b(price|pricing|fee|fees|cost|package|packages|plan|plans|how much)\b/i.test(currentQuestion)) {
       return ['for-schools'];
     }
     if (/\b(scope and sequence)\b/i.test(contextText)) return ['school-scope-sequence', 'for-schools'];
-    if (/\b(teacher training|teachers training)\b/i.test(contextText)) return ['teacher-training', 'for-schools'];
+    if (/\b(teacher training|teachers training|train our teachers|train teachers|teacher workshop)\b/i.test(contextText)) {
+      return ['teacher-training', 'for-schools'];
+    }
     if (/\b(benchmark|international)\b/i.test(contextText)) return ['international-benchmarks', 'for-schools'];
     if (/\b(memorisation|memorization|assess decoding|assessment)\b/i.test(contextText)) return ['assess-decoding', 'for-schools'];
     if (/\b(systematic|cumulative)\b/i.test(contextText)) return ['systematic-cumulative', 'for-schools'];
@@ -333,14 +340,26 @@ export function selectAskTinyStepsSources(
     ? [...recentUserMessages, currentQuestion].join(' ')
     : currentQuestion;
 
-  // Conversation history may preserve school context only for a genuinely vague
-  // follow-up. A clear new parent question must not inherit stale school routing.
+  const currentPath = normalizePath(options.currentPath);
+  const currentPageSource = currentPath
+    ? ASK_TINY_STEPS_KNOWLEDGE_SOURCES.find(
+        (source) => normalizePath(source.path) === currentPath,
+      )
+    : undefined;
   const lastUserMessage = recentUserMessages.at(-1) ?? '';
-  const audience: AskTinyStepsSelectionAudience = hasSchoolContext(currentQuestion)
-    ? 'schools'
-    : isFollowUp && hasSchoolContext(lastUserMessage)
+
+  // Explicit parent wording wins even on a school page. Otherwise, a clearly
+  // institutional question or an institutional current page establishes school
+  // context. History is used only for genuinely vague follow-ups.
+  const audience: AskTinyStepsSelectionAudience = hasParentContext(currentQuestion)
+    ? 'parents'
+    : hasSchoolContext(currentQuestion)
       ? 'schools'
-      : 'parents';
+      : currentPageSource?.audience === 'schools'
+        ? 'schools'
+        : isFollowUp && hasSchoolContext(lastUserMessage)
+          ? 'schools'
+          : 'parents';
 
   const intent = detectIntent(contextText, audience);
   const maxSources = Math.min(
@@ -358,12 +377,8 @@ export function selectAskTinyStepsSources(
 
   directSourceIds(intent, audience, contextText, currentQuestion).forEach((id) => add(sourceById(id)));
 
-  const currentPath = normalizePath(options.currentPath);
-  if (isFollowUp && currentPath) {
-    const pageSource = ASK_TINY_STEPS_KNOWLEDGE_SOURCES.find(
-      (source) => normalizePath(source.path) === currentPath,
-    );
-    add(pageSource);
+  if (currentPageSource && (isFollowUp || selected.length === 0)) {
+    add(currentPageSource);
   }
 
   if (selected.length < maxSources && intent !== 'general') {
@@ -379,8 +394,6 @@ export function selectAskTinyStepsSources(
       .forEach(({ source }) => add(source));
   }
 
-  // A deliberately unrelated/general question should not trigger arbitrary page retrieval.
-  // This keeps URL Context focused, cheap, and resistant to user-supplied URL injection.
   return {
     audience,
     intent,
