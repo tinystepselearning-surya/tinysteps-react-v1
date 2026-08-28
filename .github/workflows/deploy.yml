@@ -240,6 +240,7 @@ jobs:
           set -euo pipefail
 
           retired_functions=(
+            askTinySteps
             sendClassReminders15Min
             sendWhatsAppTemplateMessage
             whatsAppWebhook
