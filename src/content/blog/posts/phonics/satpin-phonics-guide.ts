@@ -12,6 +12,8 @@ const post: PhonicsSeoPost = {
     'Use multisensory cues (actions, sound cards, finger taps) to stabilize sound production and recall.',
     'Check weekly whether your child can decode unfamiliar SATPIN combinations, not just memorized words.',
     'Move to broader CVC sets only when SATPIN blending is accurate with low prompting across several sessions.',
+    'For the complete framework around phonics, home practice and programme quality, read the [Phonics for Parents guide](/blog/phonics-for-parents-guide).',
+    'If your child can say the SATPIN sounds but cannot join them into words, use the [letter-sounds-but-cannot-read diagnostic guide](/blog/why-child-knows-letter-sounds-but-cannot-read-words).',
     'Try Letter Tracing with Sounds',
     'Help your child connect letter shapes with letter sounds through simple tracing practice.',
     'Play Free: /letter-tracing-with-sounds-game'
