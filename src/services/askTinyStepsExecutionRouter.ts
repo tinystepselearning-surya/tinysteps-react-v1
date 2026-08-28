@@ -18,6 +18,8 @@ import {
 } from '../config/pricing';
 import { PUBLIC_SITE_FACTS } from '../config/publicFacts';
 import {
+  isAskTinyStepsContextualFollowUp,
+  isAskTinyStepsDurationQuestion,
   selectAskTinyStepsSources,
   type AskTinyStepsSelectionAudience,
   type AskTinyStepsSelectionIntent,
@@ -54,8 +56,6 @@ export type AskTinyStepsExecutionOptions = {
 };
 
 const VISITOR_URL_PATTERN = /(?:https?:\/\/|www\.)[^\s<>()]+/i;
-const FOLLOW_UP_PATTERN =
-  /^(what|how) about\b|^and\b|\b(this|that|it|those|same one|same thing)\b|\bhow much is it\b|\bhow much does (?:it|this|that) cost\b|\bhow long is it\b|\btell me more\b/i;
 const GREETING_PATTERN =
   /^(hi|hello|hey|hii+|heyy+|hola|namaste|good morning|good afternoon|good evening)[!.\s]*$/i;
 const PRIVATE_ACCOUNT_PATTERN =
@@ -68,8 +68,6 @@ const OBVIOUS_OUT_OF_SCOPE_PATTERN =
   /\b(weather|temperature|forecast|cricket|football|stock market|share price|recipe|bitcoin|cryptocurrency|election|politics|horoscope|movie review|flight status)\b/i;
 const SLOT_OR_SCHEDULE_PATTERN =
   /\b(slot|slots|schedule|scheduling|weekend|weekday|monday|tuesday|wednesday|thursday|friday|saturday|sunday|time zone|timezone|available time|available timings?|teacher availability)\b/i;
-const DURATION_PATTERN =
-  /\b(duration|how long|minutes?|class length|time per class|session length)\b/i;
 const PRICING_PATTERN =
   /\b(price|prices|pricing|fee|fees|cost|package|packages|plan|plans|how much)\b/i;
 
@@ -210,7 +208,11 @@ function explicitDeterministicAnswer(
   if (intent === 'assessment') return assessmentAnswer();
   if (intent === 'pricing') return parentPricingAnswer();
   if (intent === 'class_mode') return classModeAnswer();
-  if (intent === 'timings' && DURATION_PATTERN.test(question) && !SLOT_OR_SCHEDULE_PATTERN.test(question)) {
+  if (
+    intent === 'timings' &&
+    isAskTinyStepsDurationQuestion(question) &&
+    !SLOT_OR_SCHEDULE_PATTERN.test(question)
+  ) {
     return durationAnswer(question);
   }
   if (intent === 'school_program' && audience === 'schools') return schoolProgrammeAnswer();
@@ -228,7 +230,8 @@ export function planAskTinyStepsExecution(
     .map((message) => message.trim())
     .filter(Boolean)
     .slice(-1);
-  const isFollowUp = recentUserMessages.length > 0 && FOLLOW_UP_PATTERN.test(currentQuestion);
+  const isFollowUp =
+    recentUserMessages.length > 0 && isAskTinyStepsContextualFollowUp(currentQuestion);
 
   if (VISITOR_URL_PATTERN.test(currentQuestion)) {
     return {

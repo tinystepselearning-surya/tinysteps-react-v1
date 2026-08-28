@@ -158,6 +158,56 @@ describe('useAskTinyStepsChat execution policy', () => {
     expect(answer).not.toContain('₹400');
   });
 
+  it('answers an elliptical school pricing follow-up from deterministic conversation state', async () => {
+    const { result } = renderHook(() => useAskTinyStepsChat());
+
+    await act(async () => result.current.sendMessage('Do you have programmes for schools?'));
+    await act(async () => result.current.sendMessage('Tell me the fees.'));
+
+    expect(serviceMocks.call).not.toHaveBeenCalled();
+    const answer = lastMessageContent(result.current.messages);
+    expect(answer).toContain('₹59,000');
+    expect(answer).toContain('/for-schools');
+    expect(answer).not.toContain('₹400');
+  });
+
+  it('lets explicit parent pricing override the previous deterministic school turn', async () => {
+    const { result } = renderHook(() => useAskTinyStepsChat());
+
+    await act(async () => result.current.sendMessage('Do you have programmes for schools?'));
+    await act(async () =>
+      result.current.sendMessage('How much are phonics classes for my child?'),
+    );
+
+    expect(serviceMocks.call).not.toHaveBeenCalled();
+    const answer = lastMessageContent(result.current.messages);
+    expect(answer).toContain('₹400');
+    expect(answer).toContain('/pricing');
+    expect(answer).not.toContain('₹59,000');
+  });
+
+  it('sends only the immediately preceding turn for an AI contextual follow-up', async () => {
+    serviceMocks.call
+      .mockResolvedValueOnce('Grounded phonics class answer')
+      .mockResolvedValueOnce('Grounded phonics follow-up answer');
+    const { result } = renderHook(() => useAskTinyStepsChat());
+
+    await act(async () => result.current.sendMessage('Hello'));
+    await act(async () => result.current.sendMessage('Tell me about your phonics classes.'));
+    await act(async () => result.current.sendMessage('How does it work?'));
+
+    expect(serviceMocks.call).toHaveBeenCalledTimes(2);
+    expect(serviceMocks.call.mock.calls[1][0]).toEqual([
+      { role: 'user', content: 'Tell me about your phonics classes.' },
+      { role: 'assistant', content: 'Grounded phonics class answer' },
+      { role: 'user', content: 'How does it work?' },
+    ]);
+    expect(serviceMocks.call.mock.calls[1][1]).toEqual({
+      sourceIds: ['phonics'],
+      mode: 'first_party_grounded',
+    });
+  });
+
   it('falls back to focused blending guidance without archived-source leakage', async () => {
     serviceMocks.call.mockRejectedValue(new Error('provider unavailable'));
     const { result } = renderHook(() => useAskTinyStepsChat());

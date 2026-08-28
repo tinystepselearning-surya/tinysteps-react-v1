@@ -34,6 +34,17 @@ describe('Ask Tiny Steps smart source selector', () => {
     expect(demo.sourceIds).toEqual(['book-demo']);
   });
 
+  it.each([
+    'How long is each class?',
+    'How long are your classes?',
+    'How long does a class last?',
+  ])('recognizes natural regular-class duration wording: %s', (question) => {
+    const selection = selectAskTinyStepsSources(question);
+
+    expect(selection.intent).toBe('timings');
+    expect(selection.sourceIds).toEqual(['pricing']);
+  });
+
   it('uses FAQ for schedule and slot questions instead of pricing', () => {
     const selection = selectAskTinyStepsSources('Do you have weekend slots?');
     expect(selection.intent).toBe('timings');
@@ -106,6 +117,18 @@ describe('Ask Tiny Steps smart source selector', () => {
     expect(selection.sourceIds).not.toContain('pricing');
   });
 
+  it.each(['What is the price?', 'Tell me the fees.', 'How much?'])(
+    'uses recent school context for the elliptical pricing follow-up %s',
+    (question) => {
+      const selection = selectAskTinyStepsSources(question, {
+        recentUserMessages: ['Do you have programmes for schools?'],
+      });
+
+      expect(selection.audience).toBe('schools');
+      expect(selection.sourceIds).toEqual(['for-schools']);
+    },
+  );
+
   it('does not invent follow-up context when there is no previous user turn', () => {
     const selection = selectAskTinyStepsSources('How much does it cost?', {
       currentPath: '/',
@@ -124,6 +147,18 @@ describe('Ask Tiny Steps smart source selector', () => {
     expect(selection.audience).toBe('parents');
     expect(selection.intent).toBe('pricing');
     expect(selection.sourceIds).toEqual(['pricing']);
+  });
+
+  it.each([
+    'How can my child improve reading fluency?',
+    'Tell me about phonics classes.',
+    'Do you have programmes for schools?',
+    'What are your class fees?',
+  ])('isolates archived Summer Camp from unrelated routing: %s', (question) => {
+    const selection = selectAskTinyStepsSources(question);
+
+    expect(selection.sourceIds).not.toContain('summer-camps-2026');
+    expect(selection.sources.every((source) => source.lifecycle !== 'archived')).toBe(true);
   });
 
   it('can use the approved current page for a genuine contextual follow-up', () => {

@@ -11,19 +11,31 @@ describe('Ask Tiny Steps execution router', () => {
 
     expect(plan.mode).toBe('deterministic');
     expect(plan.intent).toBe('pricing');
+    expect(plan.sourceIds).toEqual(['pricing']);
     expect(plan.deterministicAnswer).toContain('₹400');
     expect(plan.deterministicAnswer).toContain('₹4,800');
     expect(plan.deterministicAnswer).toContain('/pricing');
   });
 
-  it('answers regular and demo duration from canonical configuration without Gemini', () => {
-    const regular = planAskTinyStepsExecution('How long is each class?');
-    const demo = planAskTinyStepsExecution('How long is the demo assessment?');
+  it.each([
+    'How long is each class?',
+    'How long are your classes?',
+    'How long does a class last?',
+  ])('answers regular duration from canonical configuration for %s', (question) => {
+    const regular = planAskTinyStepsExecution(question);
 
     expect(regular.mode).toBe('deterministic');
+    expect(regular.intent).toBe('timings');
+    expect(regular.sourceIds).toEqual(['pricing']);
     expect(regular.deterministicAnswer).toContain('1:1 classes are 35 minutes');
     expect(regular.deterministicAnswer).toContain('40–60 minutes');
+  });
+
+  it('answers demo duration from canonical configuration without Gemini', () => {
+    const demo = planAskTinyStepsExecution('How long is the demo assessment?');
+
     expect(demo.mode).toBe('deterministic');
+    expect(demo.sourceIds).toEqual(['book-demo']);
     expect(demo.deterministicAnswer).toContain('35 minutes');
   });
 
@@ -57,9 +69,38 @@ describe('Ask Tiny Steps execution router', () => {
     expect(plan.isFollowUp).toBe(true);
     expect(plan.audience).toBe('schools');
     expect(plan.mode).toBe('deterministic');
+    expect(plan.sourceIds).toEqual(['for-schools']);
     expect(plan.deterministicAnswer).toContain('₹59,000');
     expect(plan.deterministicAnswer).toContain('₹1,49,000');
     expect(plan.deterministicAnswer).toContain('/for-schools');
+  });
+
+  it.each(['What is the price?', 'Tell me the fees.', 'How much?'])(
+    'preserves school context for the elliptical pricing follow-up %s',
+    (question) => {
+      const plan = planAskTinyStepsExecution(question, {
+        recentUserMessages: ['Do you have programmes for schools?'],
+      });
+
+      expect(plan.isFollowUp).toBe(true);
+      expect(plan.audience).toBe('schools');
+      expect(plan.mode).toBe('deterministic');
+      expect(plan.sourceIds).toEqual(['for-schools']);
+      expect(plan.deterministicAnswer).toContain('₹59,000');
+      expect(plan.deterministicAnswer).not.toContain('₹400');
+    },
+  );
+
+  it('lets an explicit parent pricing intent override stale school context', () => {
+    const plan = planAskTinyStepsExecution('How much are phonics classes for my child?', {
+      recentUserMessages: ['Do you have programmes for schools?'],
+    });
+
+    expect(plan.audience).toBe('parents');
+    expect(plan.intent).toBe('pricing');
+    expect(plan.sourceIds).toEqual(['pricing']);
+    expect(plan.deterministicAnswer).toContain('₹400');
+    expect(plan.deterministicAnswer).not.toContain('₹59,000');
   });
 
   it('does not invent follow-up state in a fresh chat', () => {
@@ -98,6 +139,23 @@ describe('Ask Tiny Steps execution router', () => {
 
     expect(plan.mode).toBe('general_guidance');
     expect(plan.sourceIds).toEqual([]);
+  });
+
+  it.each([
+    {
+      question: 'How can I practise blending at home?',
+      sourceIds: ['sounds-cannot-read', 'letter-sounds-not-enough'],
+    },
+    {
+      question: 'Why does my child read slowly?',
+      sourceIds: ['reading-fluency-guide', 'reading-classes'],
+    },
+  ])('keeps specific learning questions on their first-party route: $question', ({ question, sourceIds }) => {
+    const plan = planAskTinyStepsExecution(question);
+
+    expect(plan.mode).toBe('first_party_grounded');
+    expect(plan.sourceIds).toEqual(sourceIds);
+    expect(plan.sourceIds).not.toContain('summer-camps-2026');
   });
 
   it('keeps live external research capability explicitly disabled', () => {

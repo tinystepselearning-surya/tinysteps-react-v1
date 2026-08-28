@@ -56,6 +56,23 @@ const PARENT_CONTEXT_PATTERN =
 
 const FOLLOW_UP_PATTERN =
   /^(what|how) about\b|^and\b|\b(this|that|it|those|same one|same thing)\b|\bhow much is it\b|\bhow much does (?:it|this|that) cost\b|\bhow long is it\b|\btell me more\b/i;
+const ELLIPTICAL_PRICE_FOLLOW_UP_PATTERN =
+  /^(?:(?:what(?:'s| is| are) (?:the |its )?|tell me (?:the |its )?)(?:price|cost|fees?)|how much)[?.!]*$/i;
+
+const DURATION_PATTERN =
+  /\b(?:minutes?|duration|class length|time per class|session length|how long(?: is| are)? (?:(?:a|an|the|each|your|our) )?class(?:es)?|how long (?:does|do) (?:(?:a|an|the|each|your|our) )?class(?:es)? last|how long is (?:it|this|that))\b/i;
+
+export function isAskTinyStepsContextualFollowUp(question: string): boolean {
+  const normalizedQuestion = question.trim();
+  return (
+    FOLLOW_UP_PATTERN.test(normalizedQuestion) ||
+    ELLIPTICAL_PRICE_FOLLOW_UP_PATTERN.test(normalizedQuestion)
+  );
+}
+
+export function isAskTinyStepsDurationQuestion(question: string): boolean {
+  return DURATION_PATTERN.test(question);
+}
 
 const INTENT_RULES: readonly IntentRule[] = [
   {
@@ -72,7 +89,10 @@ const INTENT_RULES: readonly IntentRule[] = [
   },
   {
     intent: 'timings',
-    pattern: /\b(minute|minutes|duration|class length|time per class|how long(?: is| are)? (?:a |the )?class|how long is it|slot|slots|schedule|weekend|weekday|timezone|time zone)\b/i,
+    pattern: new RegExp(
+      `${DURATION_PATTERN.source}|\\b(slot|slots|schedule|weekend|weekday|timezone|time zone)\\b`,
+      'i',
+    ),
   },
   {
     intent: 'class_mode',
@@ -194,7 +214,7 @@ function directSourceIds(
     case 'class_mode':
       return ['pricing'];
     case 'timings':
-      return /\b(duration|how long|minutes?|class length|time per class|session length)\b/i.test(currentQuestion)
+      return isAskTinyStepsDurationQuestion(currentQuestion)
         ? ['pricing']
         : ['faq'];
     case 'courses':
@@ -310,7 +330,8 @@ export function selectAskTinyStepsSources(
     .map((message) => message.trim())
     .filter(Boolean)
     .slice(-2);
-  const isFollowUp = recentUserMessages.length > 0 && FOLLOW_UP_PATTERN.test(currentQuestion);
+  const isFollowUp =
+    recentUserMessages.length > 0 && isAskTinyStepsContextualFollowUp(currentQuestion);
   const contextText = isFollowUp
     ? [...recentUserMessages, currentQuestion].join(' ')
     : currentQuestion;
@@ -350,9 +371,10 @@ export function selectAskTinyStepsSources(
   const directIds = directSourceIds(intent, audience, contextText, currentQuestion);
   directIds.forEach((id) => add(sourceById(id)));
 
-  // Add page context only for a genuine continuation. A standalone question never
-  // pays for a page merely because the user happens to be browsing it.
-  if (currentPageSource && isFollowUp) {
+  // Use page context only as a genuine-continuation fallback. A standalone
+  // question, or one with an explicit canonical route, never pays for an extra
+  // page merely because the user happens to be browsing it.
+  if (currentPageSource && isFollowUp && selected.length === 0) {
     add(currentPageSource);
   }
 
