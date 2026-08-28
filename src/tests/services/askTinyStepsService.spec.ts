@@ -262,6 +262,35 @@ describe('Ask Tiny Steps Firebase AI service', () => {
     expect(aiMocks.getModel).toHaveBeenCalledTimes(1);
   });
 
+  it('fails closed instead of publishing a MAX_TOKENS partial sentence', async () => {
+    aiMocks.sendMessage.mockResolvedValue({
+      response: {
+        text: () => 'If your child knows letter',
+        candidates: [
+          {
+            finishReason: 'MAX_TOKENS',
+            urlContextMetadata: {
+              urlMetadata: [
+                {
+                  retrievedUrl: 'https://tinystepslearning.com/phonics',
+                  urlRetrievalStatus: 'URL_RETRIEVAL_STATUS_SUCCESS',
+                },
+              ],
+            },
+          },
+        ],
+      },
+    });
+
+    await expect(
+      callAskTinySteps([{ role: 'user', content: 'My child cannot blend words.' }], {
+        sourceIds: ['phonics'],
+      }),
+    ).rejects.toThrow(ASK_TINY_STEPS_SAFE_ERROR);
+
+    expect(aiMocks.getModel).toHaveBeenCalledTimes(1);
+  });
+
   it('classifies only narrow availability errors as model-fallback eligible', () => {
     expect(isAskTinyStepsModelFallbackEligible(new Error('429 resource exhausted'))).toBe(true);
     expect(isAskTinyStepsModelFallbackEligible(new Error('503 service unavailable'))).toBe(true);
