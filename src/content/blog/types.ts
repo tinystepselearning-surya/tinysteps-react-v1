@@ -1,13 +1,25 @@
+export type BlogAudience = 'Parent' | 'Schools & Research';
+export type BlogDiscoveryCategory =
+  | 'Phonics'
+  | 'Grammar'
+  | 'Speaking & Communication'
+  | 'Parent Guides'
+  | 'Schools & Research';
+
 export type BlogPost = {
   slug: string;
   title: string;
   category: 'Phonics' | 'Grammar' | 'Public Speaking' | 'English Communication' | 'Parent Tips' | 'Research';
   author: string;
   date: string; // ISO date
+  modifiedDate?: string; // ISO date; set only after a meaningful editorial revision
   readTime: string;
   hero?: string; // image url
   metaDescription?: string;
   excerpt: string;
+  audience?: BlogAudience;
+  discoveryCategory?: BlogDiscoveryCategory;
+  seriesLabel?: string;
   body: {
     type: 'h2' | 'h3' | 'p' | 'li';
     content: string;

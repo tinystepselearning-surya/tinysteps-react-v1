@@ -10,6 +10,7 @@ export const RETIRED_BLOG_PATH_REDIRECTS = Object.freeze({
   '/blog/phonics-grammar-speaking-connected-english-communication': '/blog/how-phonics-grammar-and-communication-work-together',
   '/blog/engage-children-phonics-grammar-speaking-at-home': '/blog/how-to-engage-kids-in-english-learning-at-home',
   '/blog/best-age-to-start-phonics-classes-for-kids': '/blog/what-age-to-start-phonics',
+  '/blog/how-tiny-steps-builds-reading-confidence': '/blog/how-phonics-builds-reading-confidence',
 });
 
 export const RETIRED_BLOG_SLUG_REDIRECTS = Object.freeze(

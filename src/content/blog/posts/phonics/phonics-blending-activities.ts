@@ -3,59 +3,62 @@ import type { PhonicsSeoPost } from '../../types';
 const post: PhonicsSeoPost = {
   slug: 'phonics-blending-activities',
   title: 'Phonics Blending Activities That Help Children Read Words Confidently',
-  focus: 'phonics blending practice for reading confidence',
-  quickAnswer: 'Blending is the bridge between knowing sounds and reading words. If your child can say sounds but cannot join them into words, use a staged blending routine: oral blending first, then CVC words, then sentence-level transfer and fluency practice.',
+  focus: 'phonics blending activities for children who need practice',
+  quickAnswer: 'Blending activities should practise one missing step at a time. Start with oral sound merging if the child cannot combine sounds without print, move to short decodable words when oral merging is stable, then use short sentences so the same decoding process transfers into connected reading.',
   homePlan: [
-    'What blending means in phonics: children join separate sounds in sequence to read a word, for example /c/ /a/ /t/ -> cat.',
-    'Why children may know sounds but still fail to blend: weak sound memory, skipping middle sounds, guessing from pictures, and limited guided sound-joining practice.',
-    'Signs of a blending gap: child says sounds separately but cannot join them, guesses words from pictures, forgets the first sound by the end, reads very slowly, and avoids new words.',
-    'Activity progression step 1: oral blending before print (listen and join sounds with no letters first).',
-    'Activity progression step 2: two-sound blending (at, am, in) to build merge confidence.',
-    'Activity progression step 3: CVC blending (cat, pin, sun) with slow-to-smooth decoding.',
-    'Activity progression step 4: word-family blending (-at, -in, -op) for pattern stability.',
-    'Activity progression step 5: sentence-level reading using short decodable lines without picture guessing.',
-    'Activity progression step 6: fluency practice with accurate rereads before speed.',
-    '10-minute home routine: 2 minutes oral blending, 2 minutes two-sound blends, 3 minutes CVC/word-family blends, 2 minutes sentence reading, 1 minute praise and recap.',
-    'Mistakes to avoid: rushing into long words, giving too many words at once, correcting harshly, skipping oral blending, and using worksheets without sound practice.'
+    'Before choosing an activity, identify the bottleneck. If you need the developmental sequence first, read [how kids learn blending](/blog/how-kids-learn-blending).',
+    'Activity 1 - oral blending before print: say two or three sounds slowly and ask the child to join them into one spoken word.',
+    'Activity 2 - two-sound blending: use combinations such as at, am and in when three-sound words are still too demanding.',
+    'Activity 3 - CVC blending: use a small set such as cat, pin and sun and guide the child from slow sound-by-sound reading to one connected blend.',
+    'Activity 4 - contrast practice: mix words that differ by one sound so the child has to attend to the full sequence rather than guess from the first letter.',
+    'Activity 5 - word-family practice: use a small family such as -at or -in only after the child can still decode a mixed word set; the goal is transferable decoding, not memorising a visual pattern.',
+    'Activity 6 - sentence transfer: use one or two short decodable lines built mainly from patterns the child already knows.',
+    'Activity 7 - reread for smoothness only after the words are accurate; do not turn blending work into a speed race.',
+    'Keep the session small enough that the child gets repeated successful attempts. More words are not automatically better practice.',
+    'If the child can already say individual sounds but still cannot join them into words, use the [letter-sounds-but-cannot-read diagnostic guide](/blog/why-child-knows-letter-sounds-but-cannot-read-words) to check oral blending, printed blending and transfer separately.',
+    'For the bigger reading framework, use the [complete phonics guide for parents](/blog/phonics-for-parents-guide).'
   ],
-  classChecklistFocus: 'Parent decision checklist - Does my child need extra blending support? Check whether your child can hold sounds in sequence, blend new words without guessing, and transfer blending into sentence reading with growing confidence.',
-  avoidFocus: 'When blending difficulties need structured support: if your child keeps failing basic blends despite consistent home practice, avoids reading more over time, or cannot transfer blending to connected text, use guided phonics support.',
-  progress: 'How Tiny Steps supports blending: assessment, phonics gap check, guided blending practice, reading fluency pathway, and confidence-building through stage-matched correction.',
-  support: 'For children with persistent blending gaps, start with the right structured path: phonics for decoding and blending foundations, then reading fluency support when pace and flow remain weak after decoding improves.',
+  classChecklistFocus: 'A useful blending lesson identifies whether the gap is oral merging, printed blending or sentence transfer; models the exact step; gives multiple child retries; and uses new decodable examples to check whether the strategy transfers.',
+  avoidFocus: 'Avoid long random word lists, picture guessing, rushing into complex words, harsh correction, or adding new phonics patterns while the child is still struggling to blend the current set.',
+  progress: 'Useful progress means the child keeps sounds in order, needs less prompting, blends unfamiliar decodable words with fewer guesses, and begins to carry the same process into short connected text. Smoothness comes after accuracy becomes more secure.',
+  support: 'Ask for structured support when blending remains persistently difficult despite consistent, stage-matched practice, when guessing replaces decoding, or when broader speech, language, hearing, memory, or learning concerns may be involved.',
   faq: [{
     question: 'What is blending in phonics?',
-    answer: 'Blending is joining individual sounds in order to read a word. It is the key step that connects sound knowledge to actual word reading.'
+    answer: 'Blending is joining individual sounds in order to read a word. It is the step that connects sound knowledge to actual word reading.'
   }, {
     question: 'Why can my child say sounds but not read words?',
-    answer: 'Many children know sounds but struggle to hold and merge them smoothly. They need guided blending practice, not just more sound memorization.'
+    answer: 'Sound recall and blending are different skills. Check whether your child can merge sounds orally, then whether the same skill works with print, before teaching more sound patterns.'
   }, {
     question: 'What blending activities should I try at home?',
-    answer: 'Start with oral blending, then move to two-sound and CVC words, followed by simple sentence reading. Keep sessions short and focused on accuracy before speed.'
+    answer: 'Start with oral blending, then move to short decodable words and simple sentence transfer. Keep the word set small enough for accurate repeated attempts.'
   }, {
     question: 'Should I start with two-sound or three-sound words?',
-    answer: 'Start with two-sound combinations if your child is hesitant, then move to three-sound CVC words once merging feels stable and less effortful.'
+    answer: 'Use two-sound combinations when three-sound blending is still too difficult, then move to CVC words once the child can hold and merge the shorter sequence.'
+  }, {
+    question: 'Should I time blending practice?',
+    answer: 'Accuracy and transfer matter more than racing. Once blending is reliable, rereading can help smoothness, but speed should not be the first target.'
   }, {
     question: 'When does a blending problem need extra support?',
-    answer: 'If your child still cannot blend basic words after consistent guided practice, keeps guessing, or avoids reading, structured support is usually needed.'
-  }, {
-    question: 'What happens in a Tiny Steps phonics assessment?',
-    answer: 'Tiny Steps checks sound clarity, blending readiness, decoding behavior, reading pace signals, and confidence, then recommends the right next pathway.'
+    answer: 'Ask for a closer review when a child remains persistently unable to blend stage-appropriate words despite consistent, explicit practice or when broader language or learning concerns are also present.'
   }],
   relatedReads: [{
+    label: 'Read how kids learn blending stage by stage',
+    to: '/blog/how-kids-learn-blending'
+  }, {
+    label: 'Read the complete phonics guide for parents',
+    to: '/blog/phonics-for-parents-guide'
+  }, {
+    label: 'Read why letter sounds may not yet become words',
+    to: '/blog/why-child-knows-letter-sounds-but-cannot-read-words'
+  }, {
     label: 'Explore Tiny Steps phonics program',
     to: '/phonics'
   }, {
     label: 'Parent support: child not reading properly',
     to: '/child-not-reading-properly'
   }, {
-    label: 'Reading classes for kids',
+    label: 'Explore reading classes for kids',
     to: '/reading-classes-for-kids'
-  }, {
-    label: 'Slow reader child help guide',
-    to: '/slow-reader-child-help'
-  }, {
-    label: 'Reading fluency program for kids',
-    to: '/reading-fluency-program'
   }, {
     label: 'Book Free 35-Minute Demo',
     to: '/book-demo'

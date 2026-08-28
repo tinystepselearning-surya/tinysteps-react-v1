@@ -19,6 +19,8 @@ type ResearchArticleHeroProps = {
   title: string;
   description: string;
   authorLabel?: string;
+  authorRole?: string;
+  authorTo?: string;
   dateLabel: string;
   readTimeLabel: string;
   actions: HeroAction[];
@@ -31,7 +33,9 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
   eyebrowSecondary,
   title,
   description,
-  authorLabel = 'Tiny Steps Research Desk',
+  authorLabel = 'Tiny Steps Learning',
+  authorRole = 'Research Desk',
+  authorTo = '/team',
   dateLabel,
   readTimeLabel,
   actions,
@@ -64,7 +68,14 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
             <p className="mt-6 max-w-3xl text-base leading-7 text-slate-200 sm:text-lg sm:leading-8">{description}</p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3 text-sm text-slate-200">
-              <span className="rounded-full border border-white/15 bg-white/8 px-4 py-2">{authorLabel}</span>
+              <Link
+                to={authorTo}
+                className="rounded-full border border-white/15 bg-white/8 px-4 py-2 transition hover:bg-white/12 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                aria-label={`About ${authorLabel}`}
+              >
+                <span className="font-semibold text-white">{authorLabel}</span>
+                {authorRole ? <span className="text-slate-300"> · {authorRole}</span> : null}
+              </Link>
               <span className="rounded-full border border-white/15 bg-white/8 px-4 py-2">{dateLabel}</span>
               <span className="rounded-full border border-white/15 bg-white/8 px-4 py-2">{readTimeLabel}</span>
             </div>
