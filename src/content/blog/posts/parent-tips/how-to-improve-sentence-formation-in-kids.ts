@@ -144,6 +144,31 @@ const post: BlogPost = {
     },
     {
       type: 'h3',
+      content: 'Use the wider grammar path without confusing the diagnosis',
+    },
+    {
+      type: 'p',
+      content:
+        'Sentence formation is one part of the wider grammar pathway. If the child needs a broader sequence from naming words through paragraphs, start with the grammar roadmap. If sentence structure is already secure, move only to the support page that matches the next observable gap.',
+    },
+    {
+      type: 'li',
+      content: '[See the broad grammar roadmap from nouns to paragraphs](/blog/week-7-grammar-nouns-to-paragraphs).',
+    },
+    {
+      type: 'li',
+      content: '[Practise conjunctions when the child can build short sentences but struggles to join ideas](/blog/week-9-grammar-conjunctions).',
+    },
+    {
+      type: 'li',
+      content: '[Use the oral-to-written bridge when the child can say the idea but loses sentence structure while writing](/blog/week-23-grammar-speaking-bridge).',
+    },
+    {
+      type: 'li',
+      content: '[Use the grammar-transfer guide instead when rules are already known but mistakes return in fresh speaking or writing](/blog/child-knows-grammar-but-makes-mistakes).',
+    },
+    {
+      type: 'h3',
       content: 'Try Word Meaning Flashcards',
     },
     {

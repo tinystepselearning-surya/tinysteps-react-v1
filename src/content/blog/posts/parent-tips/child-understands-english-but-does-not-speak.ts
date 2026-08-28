@@ -230,6 +230,27 @@ const post: BlogPost = {
       content: 'See full learning roadmap: /curriculum',
     },
     {
+      type: 'h3',
+      content: 'Use the wider speaking path without turning every hesitation into the same problem',
+    },
+    {
+      type: 'p',
+      content:
+        'This page owns the understanding-versus-speaking diagnosis. If the child already answers independently but the replies stay very short, use the response-expansion guide instead. If the child is ready for broader confidence practice, move to the speaking roadmap and then to organised short talks.',
+    },
+    {
+      type: 'li',
+      content: '[See the broad speaking-confidence roadmap](/blog/week-12-speaking-confidence-seeds).',
+    },
+    {
+      type: 'li',
+      content: '[Use the one-word-answer guide when the child responds but needs help expanding the answer](/blog/child-gives-one-word-answers).',
+    },
+    {
+      type: 'li',
+      content: '[Use Hook–Body–Close when the child can answer but needs help organising a longer short talk](/blog/week-13-speaking-structure).',
+    },
+    {
       type: 'h2',
       content: '11. FAQ section with 5 parent questions',
     },

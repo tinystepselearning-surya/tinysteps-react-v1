@@ -70,6 +70,12 @@ const post: BlogPost = {
     { type: 'li', content: '3 minutes: picture talk, short retell or “first/then” story.' },
     { type: 'li', content: '2 minutes: repeat one strong answer naturally and end without drilling every error.' },
 
+    { type: 'h2', content: 'Use the wider speaking path without changing this article’s job' },
+    { type: 'p', content: 'This guide owns response expansion: the child already answers, but the answer is too brief. If the child often understands the question yet cannot start an independent response at all, use the understanding-versus-speaking diagnosis instead. If fuller answers are becoming easier, move toward broader confidence and organised speaking practice.' },
+    { type: 'li', content: '[See the broad speaking-confidence roadmap](/blog/week-12-speaking-confidence-seeds).' },
+    { type: 'li', content: '[Use the understanding-versus-speaking guide when the child follows English but still cannot start or sustain an independent response](/blog/child-understands-english-but-does-not-speak).' },
+    { type: 'li', content: '[Use Hook–Body–Close when complete answers are secure and the child is ready to organise a longer short talk](/blog/week-13-speaking-structure).' },
+
     { type: 'h2', content: 'How grammar supports fuller answers' },
     { type: 'p', content: 'Children need enough sentence control to organise who did what, when, where and why. Grammar practice is most useful when it feeds real expression: expand a noun phrase, choose a tense, connect two ideas, or revise a sentence the child actually wants to say.' },
 
