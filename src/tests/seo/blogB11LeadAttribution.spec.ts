@@ -93,7 +93,8 @@ describe('B11 blog lead conversion and attribution guardrails', () => {
     expect(blogAttribution).toContain('firstArticleSlug');
     expect(blogAttribution).toContain('lastArticleSlug');
     expect(genericAttribution).toContain('ts_lead_attribution_v1');
-    expect(genericAttribution).toContain('firstTouch');
+    expect(genericAttribution).toContain('existing?.landingPage || patch.landingPage');
+    expect(genericAttribution).toContain('existing?.firstSeenAt || patch.firstSeenAt');
   });
 
   it('writes blog context through the existing public lead sourceDetail field and measures the real form funnel', () => {
