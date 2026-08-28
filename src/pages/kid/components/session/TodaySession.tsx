@@ -27,7 +27,7 @@ export const TodaySession: FC<TodaySessionProps> = ({ kidId }) => {
     teacherName: 'Ms. Sarah',
     time: '10:00 AM',
     duration: 35,
-    joinUrl: 'https://zoom.us/j/123456789',
+    joinUrl: 'https://teams.microsoft.com/',
     isGroup: false,
     status: 'upcoming',
   };

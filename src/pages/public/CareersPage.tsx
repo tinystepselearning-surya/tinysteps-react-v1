@@ -158,7 +158,7 @@ const REQUIREMENTS = [
   'Graduation is preferred; relevant structured teaching experience is valued.',
   'Experience teaching children, English, phonics, grammar, communication or public speaking is an advantage.',
   'A laptop or desktop with camera and microphone, reliable broadband and a quiet teaching space.',
-  'Comfort using Zoom / Teams-style online classrooms, screen sharing and digital lesson materials.',
+  'Comfort using Microsoft Teams, screen sharing and digital lesson materials.',
   'Consistent availability; around 3–4 teaching hours per day is especially useful for scheduling.',
   'Professional reliability, punctuality and willingness to follow Tiny Steps teaching and child-safety standards.',
 ];

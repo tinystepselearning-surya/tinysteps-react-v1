@@ -22,10 +22,10 @@ const post: BlogPost = {
     content: 'Keep the format tiny and joyous: 2 minutes per child, warm applause after each performance, and no corrections from the audience. Praise effort and one specific detail (voice, smile, idea). The rule is: celebrate, not critique.'
   }, {
     type: 'h2',
-    content: 'How to host at home or on Zoom (grandparents included)'
+    content: 'How to host at home or on a video call (grandparents included)'
   }, {
     type: 'p',
-    content: 'Choose a comfortable space, set a clear start time, and send a simple invite for Zoom if you include distant family. Ask remote guests to mute except for applause or a short encouraging line. Use a laptop on a stable surface for video and a low table as a stage.'
+    content: 'Choose a comfortable space, set a clear start time, and send a simple video-call invite if you include distant family. Ask remote guests to mute except for applause or a short encouraging line. Use a laptop on a stable surface for video and a low table as a stage.'
   }, {
     type: 'h2',
     content: 'Week 24 plan (7 days) — prep small each day, then host'

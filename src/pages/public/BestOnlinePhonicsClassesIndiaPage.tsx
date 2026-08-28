@@ -75,7 +75,7 @@ const parentQuestionRows = [
   },
   {
     question: 'What platform is used?',
-    answer: 'Classes run live on Zoom, so families in India and abroad can join from home with a simple browser link.',
+    answer: 'Classes are conducted live through Microsoft Teams, so families in India and abroad can join from home with the class link shared before the session.',
   },
   {
     question: 'Do parents get support?',
@@ -155,7 +155,7 @@ const whyTinyStepsPoints = [
   'Live 1:1 correction instead of only videos or worksheets',
   'Structured synthetic phonics progression',
   'Founder-led curriculum direction',
-  'Zoom-based live classes for India and global families',
+  'Live online classes for India and global families',
   'Progress updates and next-step guidance for parents',
   'One free 35-minute 1:1 demo assessment class before package selection',
 ];
@@ -297,7 +297,7 @@ const faqItems = [
   {
     question: 'Is this suitable for Indian kids living abroad?',
     answer:
-      'Yes. Classes are online, so Indian families abroad can join based on available schedule slots and Zoom access.',
+      'Yes. Classes are live online, so Indian families abroad can join based on available schedule slots and the class link shared before the session.',
   },
   {
     question: 'How much do online phonics classes cost?',
@@ -311,7 +311,7 @@ const faqItems = [
   },
   {
     question: 'What platform do you use for online classes?',
-    answer: 'Tiny Steps uses Zoom for live sessions so families can join from India or abroad with a simple browser link.',
+    answer: 'Tiny Steps conducts live online classes through Microsoft Teams. Families receive a class link before the scheduled session and can join from India or abroad.',
   },
 ];
 

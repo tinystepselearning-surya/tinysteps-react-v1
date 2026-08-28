@@ -16,7 +16,7 @@ const HowToStartSection: React.FC = () => {
             <li>Create a personalized plan only for YOUR child</li>
           </ul>
           <p>You’ll receive a detailed report after the class. Transparent. No commitment.</p>
-          <p className="text-sm text-gray-600">Duration: 20–25 minutes • Time: 5 AM to 10 PM IST • Platform: Zoom</p>
+          <p className="text-sm text-gray-600">Duration: 20–25 minutes • Time: 5 AM to 10 PM IST • Format: Live online class</p>
           <div className="mt-6 flex justify-center">
             <Button size="lg">BOOK YOUR FREE CLASS</Button>
           </div>
