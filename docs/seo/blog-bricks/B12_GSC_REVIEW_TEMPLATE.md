@@ -134,6 +134,12 @@ If these fields are weak, do not create the URL.
 
 Use B11 analytics and lead attribution only after enough traffic exists for a meaningful interpretation.
 
+Use the stable event funnel rather than substituting visually similar metrics:
+
+`blog_article_view → blog_cta_impression → blog_cta_click → blog_demo_start → blog_demo_submit`
+
+`blog_program_click` is an exploration event and must not be counted as a submitted lead.
+
 | Article / family | Article views | CTA impressions | CTA clicks | Demo starts | Demo submits | Observed leak |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | | | | | | | |
