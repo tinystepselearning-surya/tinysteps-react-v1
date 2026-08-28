@@ -8,11 +8,15 @@ import {
   buildBlogSearchText,
   filterBlogIndexPosts,
   getAuthorityPosts,
+  getBlogCardLabel,
+  getBlogDiscoveryTopic,
+  getDefaultParentLibraryPosts,
   getPublishedCountLabel,
+  isParentFacingBlogPost,
   sortBlogIndexPostsNewest,
 } from '../../pages/blog/blogIndexUx';
 
-describe('B5 blog index UX model', () => {
+describe('B5 blog index UX model with post-B7 polish', () => {
   it('uses the real normalized registry instead of a stale hard-coded article count', () => {
     expect(blogPosts.length).toBe(76);
     expect(getPublishedCountLabel(blogPosts.length)).toBe('76 published articles');
@@ -48,14 +52,32 @@ describe('B5 blog index UX model', () => {
     expect(matches.some((candidate) => candidate.slug === post!.slug)).toBe(true);
   });
 
-  it('combines topic filtering with parent-style search', () => {
+  it('uses audience discovery categories for public filters instead of source-folder labels', () => {
+    const parentPhonicsGuide = blogPosts.find((post) => post.slug === 'phonics-for-parents-guide');
+    expect(parentPhonicsGuide).toBeTruthy();
+    expect(parentPhonicsGuide!.category).toBe('Research');
+    expect(getBlogDiscoveryTopic(parentPhonicsGuide!)).toBe('Phonics');
+    expect(getBlogCardLabel(parentPhonicsGuide!)).toBe('Phonics');
+
     const phonics = filterBlogIndexPosts(blogPosts, 'Phonics', 'reading');
     expect(phonics.length).toBeGreaterThan(0);
-    expect(phonics.every((post) => post.category === 'Phonics')).toBe(true);
+    expect(phonics.every((post) => getBlogDiscoveryTopic(post) === 'Phonics')).toBe(true);
 
-    const grammar = filterBlogIndexPosts(blogPosts, 'Grammar', 'sentence');
-    expect(grammar.length).toBeGreaterThan(0);
-    expect(grammar.every((post) => post.category === 'Grammar')).toBe(true);
+    const schools = filterBlogIndexPosts(blogPosts, 'Schools & Research', '');
+    expect(schools.length).toBeGreaterThan(0);
+    expect(schools.every((post) => post.audience === 'Schools & Research')).toBe(true);
+  });
+
+  it('keeps the default Parent library free of school-research cards', () => {
+    const parentPosts = filterBlogIndexPosts(blogPosts, 'Parent', '');
+    expect(parentPosts.length).toBeGreaterThan(0);
+    expect(parentPosts.every((post) => isParentFacingBlogPost(post))).toBe(true);
+    expect(parentPosts.every((post) => post.audience !== 'Schools & Research')).toBe(true);
+
+    const authoritySlugs = new Set(getAuthorityPosts(blogPosts).map((post) => post.slug));
+    const library = getDefaultParentLibraryPosts(blogPosts, authoritySlugs);
+    expect(library.every((post) => isParentFacingBlogPost(post))).toBe(true);
+    expect(library.every((post) => !authoritySlugs.has(post.slug))).toBe(true);
   });
 
   it('uses deterministic newest-first ordering instead of unsupported popularity claims', () => {
@@ -72,7 +94,25 @@ describe('B5 blog index UX model', () => {
     expect(source).not.toContain('Why this page is easier to use');
   });
 
-  it('keeps the public BlogPage route module stable while delegating to the new typed index', () => {
+  it('keeps internal SEO strategy language out of public-facing blog copy', () => {
+    const source = fs.readFileSync(path.join(process.cwd(), 'src/pages/blog/BlogIndexPage.tsx'), 'utf8');
+    expect(source).not.toContain('earning strong search visibility');
+    expect(source).not.toContain('authority routes');
+    expect(source).not.toContain('without another long feed');
+    expect(source).toContain('Popular guides parents start with');
+    expect(source).toContain('Get practical English-learning ideas in your inbox');
+  });
+
+  it('wraps discovery filters and preserves explicit B7 modified-date semantics', () => {
+    const source = fs.readFileSync(path.join(process.cwd(), 'src/pages/blog/BlogIndexPage.tsx'), 'utf8');
+    expect(source).toContain('mt-2 flex flex-wrap gap-2');
+    expect(source).not.toContain('overflow-x-auto');
+    expect(source).not.toContain('dateModified: isoDateFromYMD(post.date)');
+    expect(source).toContain('post.modifiedDate ? { dateModified: isoDateFromYMD(post.modifiedDate) } : {}');
+    expect(source).toContain('buildBlogAuthorSchema(resolveBlogAuthor(post.author, post.category))');
+  });
+
+  it('keeps the public BlogPage route module stable while delegating to the typed index', () => {
     const routeModule = fs.readFileSync(path.join(process.cwd(), 'src/pages/BlogPage.tsx'), 'utf8');
     expect(routeModule.trim()).toBe("export { default } from './blog/BlogIndexPage';");
   });
