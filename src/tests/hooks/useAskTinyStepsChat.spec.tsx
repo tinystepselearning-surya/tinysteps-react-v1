@@ -8,14 +8,6 @@ vi.mock('../../services/askTinyStepsService', () => ({
   ASK_TINY_STEPS_SAFE_ERROR: 'TinySteps AI is temporarily unavailable. Please try again in a moment.',
   callAskTinySteps: serviceMocks.call,
 }));
-vi.mock('../../lib/firebaseConfig', () => ({ db: {} }));
-vi.mock('firebase/firestore', () => ({
-  addDoc: vi.fn().mockResolvedValue(undefined),
-  collection: vi.fn(() => ({})),
-  doc: vi.fn(() => ({})),
-  serverTimestamp: vi.fn(() => 'timestamp'),
-  setDoc: vi.fn().mockResolvedValue(undefined),
-}));
 
 import { useAskTinyStepsChat } from '../../hooks/useAskTinyStepsChat';
 

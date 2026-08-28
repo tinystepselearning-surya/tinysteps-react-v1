@@ -1,13 +1,5 @@
 // src/hooks/useAskTinyStepsChat.ts
 import { useCallback, useRef, useState } from "react";
-import { db } from "../lib/firebaseConfig";
-import {
-  addDoc,
-  collection,
-  doc,
-  serverTimestamp,
-  setDoc,
-} from "firebase/firestore";
 import {
   formatINR,
   ONE_TO_ONE_MONTHLY_PACKAGES,
@@ -338,67 +330,11 @@ function greetingReply(): { text: string; sourcesUsed: string[] } {
   };
 }
 
-// --------------------
-// Firestore logging helpers
-// --------------------
-function getPagePathSafe(): string {
-  try {
-    return typeof window !== "undefined" ? window.location.pathname : "";
-  } catch {
-    return "";
-  }
-}
-
-function readSessionId(): string | null {
-  try {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("ts_ask_session_v1");
-  } catch {
-    return null;
-  }
-}
-
-function writeSessionId(id: string) {
-  try {
-    if (typeof window === "undefined") return;
-    localStorage.setItem("ts_ask_session_v1", id);
-  } catch {
-    // ignore
-  }
-}
-
-function clearSessionId() {
-  try {
-    if (typeof window === "undefined") return;
-    localStorage.removeItem("ts_ask_session_v1");
-  } catch {
-    // ignore
-  }
-}
-
-function newSessionId(): string {
-  const sid = `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-  writeSessionId(sid);
-  return sid;
-}
-
-function getOrCreateSessionId(): string {
-  const existing = readSessionId();
-  if (existing) return existing;
-  return newSessionId();
-}
-
 function historyForAI(messages: AskChatMessage[], maxMessages = 10): AskChatMessage[] {
   return messages.slice(-maxMessages).map((m) => ({
     role: m.role,
     content: String(m.content || "").slice(0, 2000),
   }));
-}
-
-function extractSourcesFromReply(text: string): string[] {
-  const urls = String(text || "").match(/https?:\/\/[^\s,)]+/g) || [];
-  const uniq = Array.from(new Set(urls.map((u) => u.trim())));
-  return uniq.slice(0, 3);
 }
 
 // --------------------
@@ -411,16 +347,10 @@ export function useAskTinyStepsChat() {
   const [error, setError] = useState<string | null>(null);
   const requestInFlightRef = useRef(false);
 
-  // ✅ IMPORTANT FIX:
-  // sessionId is STATE (not useMemo) so resetChat can truly start a fresh session.
-  const [sessionId, setSessionId] = useState<string>(() => getOrCreateSessionId());
-
   const resetChat = useCallback(() => {
     setMessages([]);
     setError(null);
     setInput("");
-    clearSessionId();
-    setSessionId(newSessionId());
   }, []);
 
   // ✅ Allow optionally sending an explicit text (useful for quick-reply chips)
@@ -444,14 +374,11 @@ export function useAskTinyStepsChat() {
       const intent = detectIntent(trimmed);
 
       let assistantText = "";
-      let sourcesUsed: string[] = [];
-      let answeredBy = "local";
 
       // ✅ Greeting first (no model call needed)
       if (intent === "greeting") {
         const res = greetingReply();
         assistantText = res.text;
-        sourcesUsed = res.sourcesUsed;
       } else {
         // Try Firebase AI Logic first for richer, approved-context responses.
         try {
@@ -466,8 +393,6 @@ export function useAskTinyStepsChat() {
           });
           if (aiReply?.trim()) {
             assistantText = aiReply.trim();
-            sourcesUsed = extractSourcesFromReply(assistantText);
-            answeredBy = "firebase-ai-logic";
           }
         } catch {
           console.warn("AskTinySteps AI unavailable; using the approved local fallback.");
@@ -487,20 +412,17 @@ export function useAskTinyStepsChat() {
         ) {
           const res = formatFactsForIntent(intent);
           assistantText = res.text;
-          sourcesUsed = res.sourcesUsed;
         } else {
-          const { results, sourcesUsed: s } = retrieve(trimmed, 2);
+          const { results } = retrieve(trimmed, 2);
           if (results.length > 0) {
             assistantText = results
               .map((r) => `• ${r.title}: ${r.text}`)
               .join("\n\n");
             assistantText += `\n\n${ASK_TINYSTEPS_FACTS.whatsappCtaText}: ${ASK_TINYSTEPS_FACTS.whatsappLink}`;
-            sourcesUsed = s;
           } else {
             assistantText =
               `I don’t have that confirmed in my notes yet.\n\n` +
               `${ASK_TINYSTEPS_FACTS.whatsappCtaText}: ${ASK_TINYSTEPS_FACTS.whatsappLink}`;
-            sourcesUsed = [];
           }
         }
       }
@@ -508,53 +430,10 @@ export function useAskTinyStepsChat() {
       const assistantMsg: AskChatMessage = { role: "assistant", content: assistantText };
       setMessages((prev) => [...prev, assistantMsg]);
 
-      // Firestore logging (best effort)
-      try {
-        const pagePath = getPagePathSafe();
-        const sessionRef = doc(db, "askTinysteps_sessions", sessionId);
-
-        await setDoc(
-          sessionRef,
-          {
-            sessionId,
-            lastSeenAt: serverTimestamp(),
-            pagePath,
-          },
-          { merge: true }
-        );
-
-        const msgsCol = collection(sessionRef, "messages");
-
-        await addDoc(msgsCol, {
-          role: "user",
-          text: trimmed,
-          createdAt: serverTimestamp(),
-          pagePath,
-          sourcesUsed: [],
-          intent,
-        });
-
-        await addDoc(msgsCol, {
-          role: "assistant",
-          text: assistantText,
-          createdAt: serverTimestamp(),
-          pagePath,
-          sourcesUsed,
-          intent,
-          answeredBy,
-        });
-      } catch (e) {
-        // Do not break chat UX if logging fails
-         
-        console.error("AskTinySteps logging error:", e);
-        // Optional lightweight UI hint:
-        // setError("Chat saved locally, but logging failed.");
-      } finally {
-        requestInFlightRef.current = false;
-        setLoading(false);
-      }
+      requestInFlightRef.current = false;
+      setLoading(false);
     },
-    [input, loading, sessionId, messages]
+    [input, loading, messages]
   );
 
   return { messages, input, setInput, loading, error, sendMessage, resetChat };
