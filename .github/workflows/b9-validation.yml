@@ -63,5 +63,11 @@ jobs:
       - name: Rendered HTML check
         run: npm run seo:rendered-check
 
+      - name: Route integrity
+        run: npm run seo:route-integrity
+
+      - name: Indexability report
+        run: npm run seo:indexability-report
+
       - name: Indexation guard
         run: npm run seo:indexation-check
