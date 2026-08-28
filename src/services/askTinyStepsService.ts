@@ -11,8 +11,11 @@ export const ASK_TINY_STEPS_MAX_PROMPT_LENGTH = 2_000;
 export const ASK_TINY_STEPS_MAX_HISTORY_MESSAGES = 8;
 export const ASK_TINY_STEPS_SAFE_ERROR =
   'TinySteps AI is temporarily unavailable. Please try again in a moment.';
+export const ASK_TINY_STEPS_UNAPPROVED_URL_REPLY =
+  "I can’t open or summarize links supplied by visitors. I can help with Tiny Steps and children’s English learning using approved Tiny Steps sources.";
 
 const EXTERNAL_URL_PLACEHOLDER = '[external URL omitted]';
+const VISITOR_URL_PATTERN = /(?:https?:\/\/|www\.)[^\s<>()]+/i;
 
 type AskMessage = { role: 'user' | 'assistant'; content: string };
 
@@ -144,6 +147,12 @@ export async function callAskTinySteps(
     submitted.content.trim().length > ASK_TINY_STEPS_MAX_PROMPT_LENGTH
   ) {
     throw new Error(ASK_TINY_STEPS_SAFE_ERROR);
+  }
+
+  // Visitor-provided links are never browsing inputs. Block the current turn
+  // before history cleaning, Firebase AI initialization, token use, or URL Context.
+  if (VISITOR_URL_PATTERN.test(submitted.content)) {
+    return ASK_TINY_STEPS_UNAPPROVED_URL_REPLY;
   }
 
   const clean = cleanMessages(messages);
