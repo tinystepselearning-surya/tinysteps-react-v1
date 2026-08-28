@@ -53,7 +53,7 @@ describe('FreeBalloonPopGamePage', () => {
     expect(screen.getByTestId('balloon-pop-game')).toBeInTheDocument();
   });
 
-  it('provides direct sound-group, related-game, and assessment pathways', () => {
+  it('provides direct sound-group, six-step learning, and assessment pathways', () => {
     renderPage();
 
     expect(screen.getByRole('link', { name: /start with satpin/i })).toHaveAttribute(
@@ -67,6 +67,18 @@ describe('FreeBalloonPopGamePage', () => {
     expect(screen.getByRole('link', { name: /satpin phonics guide for parents/i })).toHaveAttribute(
       'href',
       '/blog/satpin-phonics-guide',
+    );
+    expect(screen.getByRole('link', { name: /3\. letter sounds/i })).toHaveAttribute(
+      'href',
+      '/free-letter-sounds-game-for-kids',
+    );
+    expect(screen.getByRole('link', { name: /4\. balloon pop/i })).toHaveAttribute(
+      'href',
+      '/free-balloon-pop-phonics-game-for-kids',
+    );
+    expect(screen.getByRole('link', { name: /6\. blend words/i })).toHaveAttribute(
+      'href',
+      '/free-word-building-game-for-kids',
     );
     expect(screen.getByRole('link', { name: /book free phonics assessment/i })).toHaveAttribute('href', '/book-demo');
     expect(screen.getByRole('link', { name: /explore tiny steps phonics/i })).toHaveAttribute('href', '/phonics');
