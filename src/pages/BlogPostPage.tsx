@@ -6,22 +6,16 @@ import { formatBlogDate, isoDateFromYMD } from '../lib/date';
 import type { FC } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { blogPosts } from '../content/blog';
+import {
+  buildBlogAuthorSchema,
+  getBlogEvidenceSummary,
+  resolveBlogAuthor,
+} from '../content/blog/shared/editorialTrust';
 import { ORGANIZATION_ID, PUBLIC_FACTS, SITE_ORIGIN } from '../lib/schemas';
 import AboutAuthor from '../components/AboutAuthor';
 import ParentsAlsoAsk from '../components/ParentsAlsoAsk';
 import ResearchArticleHero from '../components/blog/ResearchArticleHero';
 // Meta removed — use applySeo as single source of truth
-
-const FOUNDER_AUTHOR_NAME = 'Priya';
-const TEAM_AUTHOR_LABEL = 'Tiny Steps Academic Team';
-
-const isFounderAuthor = (author: unknown): boolean =>
-  String(author || '').trim().toLowerCase() === FOUNDER_AUTHOR_NAME.toLowerCase();
-
-const getArticleAuthorLabel = (author: unknown): string =>
-  isFounderAuthor(author)
-    ? `${FOUNDER_AUTHOR_NAME} • Founder, ${PUBLIC_FACTS.brandName}`
-    : TEAM_AUTHOR_LABEL;
 
 const CATEGORY_ARTICLE_CONFIG = {
   Phonics: {
@@ -518,6 +512,14 @@ const BlogPostPage: FC = () => {
 
   // hooks must run before any early returns
   const metaSource = useMemo(() => post || mdxMeta || {}, [post, mdxMeta]);
+  const articleAuthor = useMemo(
+    () => resolveBlogAuthor(metaSource.author, metaSource.category),
+    [metaSource.author, metaSource.category],
+  );
+  const evidenceSummary = useMemo(
+    () => (post ? getBlogEvidenceSummary(post) : null),
+    [post],
+  );
 
 function buildMetaDescription(src: any) {
   if (!src) return '';
@@ -562,10 +564,7 @@ function buildMetaDescription(src: any) {
       '@context': 'https://schema.org',
       '@type': 'BlogPosting',
       headline: metaSource.title,
-      author: {
-        '@type': 'Organization',
-        name: PUBLIC_FACTS.brandName,
-      },
+      author: buildBlogAuthorSchema(articleAuthor),
       url: canonicalArticleUrl,
       // Add dates only when present in metadata (do not invent dates)
       image: metaSource.hero
@@ -585,9 +584,7 @@ function buildMetaDescription(src: any) {
     if (metaSource.date) {
       try {
         obj.datePublished = isoDateFromYMD(metaSource.date);
-        // dateModified: prefer explicit modified date, else reuse published if available
         if (metaSource.modifiedDate) obj.dateModified = isoDateFromYMD(metaSource.modifiedDate);
-        else obj.dateModified = isoDateFromYMD(metaSource.date);
       } catch (e) {
         // if conversion fails, omit dates rather than inventing
       }
@@ -607,7 +604,7 @@ function buildMetaDescription(src: any) {
     }
 
     return obj;
-  }, [canonicalArticleUrl, metaSource, post]);
+  }, [articleAuthor, canonicalArticleUrl, metaSource, post]);
 
   const faqSchema = useMemo(() => {
     if (!post?.faq?.length) return null;
@@ -638,8 +635,6 @@ function buildMetaDescription(src: any) {
     const canonical = `/blog/${slug}`;
     const source = metaSource || {};
     const isArticle = Boolean(source.title || post);
-    const todayIso = new Date().toISOString().slice(0, 10);
-    const isFutureDated = Boolean(source.date && String(source.date) > todayIso);
 
     if (!isArticle) {
       applySeo({
@@ -663,7 +658,10 @@ function buildMetaDescription(src: any) {
       ogType: 'article',
       jsonLd,
     });
-  }, [slug, metaSource, jsonLd, breadcrumbSchema, post]);
+
+    const metaAuthor = document.head.querySelector('meta[name="author"]');
+    if (metaAuthor) metaAuthor.setAttribute('content', articleAuthor.name);
+  }, [articleAuthor, slug, metaSource, jsonLd, breadcrumbSchema, post]);
 
   const categoryConfig = CATEGORY_ARTICLE_CONFIG[metaSource.category] || CATEGORY_ARTICLE_CONFIG['Parent Tips'];
   const postCtaOverride = slug ? POST_CTA_OVERRIDES[slug] : undefined;
@@ -684,7 +682,7 @@ function buildMetaDescription(src: any) {
     Array.isArray(post?.faq) && post.faq.length > 0
       ? post.faq.slice(0, 4).map((item) => item.question)
       : categoryConfig.searchPainPoints;
-  const articleAuthorLabel = getArticleAuthorLabel(metaSource.author);
+  const articleAuthorLabel = articleAuthor.name;
   const learningPathLinks = Array.isArray(postCtaOverride?.learningPathLinks)
     ? postCtaOverride.learningPathLinks
     : Array.isArray(categoryConfig.learningPathLinks)
@@ -836,6 +834,10 @@ function buildMetaDescription(src: any) {
     );
   }
 
+  const reviewLabel = metaSource.modifiedDate
+    ? `Meaningfully updated ${formatBlogDate(metaSource.modifiedDate)}`
+    : 'Published date only; no separate update date is claimed';
+
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f6eee3_0%,#fbfaf7_22%,#ffffff_48%,#f4f8fc_100%)] text-slate-900">
       <ResearchArticleHero
@@ -844,6 +846,8 @@ function buildMetaDescription(src: any) {
         title={metaSource.title}
         description={heroDescription}
         authorLabel={articleAuthorLabel}
+        authorRole={articleAuthor.role}
+        authorTo={articleAuthor.profilePath}
         dateLabel={formatBlogDate(metaSource.date)}
         readTimeLabel={metaSource.readTime || '5 min read'}
         actions={[primaryAction, categoryConfig.secondaryAction]}
@@ -920,7 +924,12 @@ function buildMetaDescription(src: any) {
               </div>
             </section>
 
-            <AboutAuthor variant={metaSource.category === 'Research' ? 'research' : 'standard'} />
+            <AboutAuthor
+              author={articleAuthor}
+              variant={metaSource.category === 'Research' ? 'research' : 'standard'}
+              evidenceLabel={evidenceSummary?.label}
+              reviewLabel={reviewLabel}
+            />
 
             <section className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#f8fbff_0%,#eef8f2_100%)] p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Parent Guidance</p>
@@ -996,8 +1005,11 @@ function buildMetaDescription(src: any) {
                 <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Content ownership</p>
                   <p className="mt-2 text-sm leading-7 text-slate-600">
-                    Published by {PUBLIC_FACTS.brandName}. This article is prepared by the Tiny Steps academic team to help parents make practical English-learning decisions.
+                    Responsible author: {articleAuthor.name}{articleAuthor.role ? ` · ${articleAuthor.role}` : ''}. {evidenceSummary?.label || 'No external source claim is made on this page.'}
                   </p>
+                  <Link to={articleAuthor.profilePath} className="mt-3 inline-flex text-sm font-semibold text-primary-700 underline underline-offset-4">
+                    About the responsible author or team
+                  </Link>
                 </div>
               </div>
             </div>
