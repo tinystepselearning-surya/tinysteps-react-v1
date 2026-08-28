@@ -185,7 +185,9 @@ export function isAskTinyStepsModelFallbackEligible(error: unknown): boolean {
   if (serviceUnavailable) return true;
 
   const modelUnavailable =
-    /model[^.\n]*(?:not found|not available|unavailable|retired|shutdown|shut down)/.test(text) ||
+    /model(?:\s+[\w.-]+)?[^.\n]*(?:not found|not available|unavailable|retired|shutdown|shut down)/.test(
+      text,
+    ) ||
     /(?:not found|unavailable|retired|shutdown|shut down)[^.\n]*model/.test(text);
 
   return modelUnavailable;
