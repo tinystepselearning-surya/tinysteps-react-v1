@@ -18,6 +18,7 @@ export type BlogPost = {
   excerpt: string;
   audience?: BlogAudience;
   discoveryCategory?: BlogDiscoveryCategory;
+  seriesLabel?: string;
   body: {
     type: 'h2' | 'h3' | 'p' | 'li';
     content: string;
