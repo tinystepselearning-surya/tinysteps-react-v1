@@ -68,7 +68,7 @@ describe('Ask Tiny Steps secondary Firebase AI client', () => {
     expect(firebaseMocks.initializeApp).not.toHaveBeenCalledWith(expect.anything());
   });
 
-  it('uses Gemini Developer API and the approved Gemini model', () => {
+  it('uses Gemini Developer API, the approved model, and URL Context only', () => {
     firebaseMocks.getApps.mockReturnValue([askApp]);
     getAskTinyStepsGenerativeModel();
 
@@ -78,7 +78,10 @@ describe('Ask Tiny Steps secondary Firebase AI client', () => {
     });
     expect(firebaseMocks.getGenerativeModel).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ model: ASK_TINY_STEPS_MODEL }),
+      expect.objectContaining({
+        model: ASK_TINY_STEPS_MODEL,
+        tools: [{ urlContext: {} }],
+      }),
       { timeout: 60_000 },
     );
     expect(ASK_TINY_STEPS_MODEL).toBe('gemini-3.5-flash-lite');
