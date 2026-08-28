@@ -8,13 +8,18 @@ const post: BlogPost = {
   date: '2026-05-15',
   readTime: '12 min read',
   metaDescription:
-    'Child knows letter sounds but cannot read words? Learn how blending, phonemic awareness, sound sequencing, decoding and transfer checks reveal the real reading gap.',
+    'Child knows letter sounds but cannot read words? Check oral blending, printed blending, sound sequencing and transfer to find the real decoding bottleneck and choose the right next step.',
   excerpt:
     'Knowing individual letter sounds is only one part of learning to read. This parent guide explains the missing bridge from sound recall to blending, decoding and independent word reading.',
   body: [
     { type: 'h2', content: 'Quick answer: knowing sounds is not the same as decoding' },
     { type: 'p', content: 'A child can correctly say the sounds for s, a and t and still be unable to read sat. That usually means the child has learned individual sound-symbol links but has not yet made those sounds work together as a word. The missing step is often blending, sound sequencing, or enough practice transferring the same decoding process to unfamiliar words.' },
     { type: 'p', content: 'The useful question is not “Does my child know the alphabet?” but “Can my child look at an unfamiliar, appropriately simple word, say or hold the sounds in order, blend them, and arrive at the word without guessing?” That transfer check separates sound knowledge from functional reading.' },
+
+    { type: 'h2', content: 'First decide which reading problem you actually have' },
+    { type: 'p', content: 'Tiny Steps keeps the parent reading cluster deliberately separated by bottleneck so one article does not try to rank for every reading problem. If your child mainly knows alphabet names but letter sounds are not secure, start with [Child Knows ABC but Cannot Read](/blog/child-knows-abc-but-cannot-read).' },
+    { type: 'p', content: 'If letter sounds are already secure but joining them into words is the problem, stay on this diagnostic page. If you need the developmental sequence behind blending, use [How Kids Learn Blending](/blog/how-kids-learn-blending); if you already know the stage and need practice ideas, use [Phonics Blending Activities](/blog/phonics-blending-activities).' },
+    { type: 'p', content: 'If word decoding is reasonably accurate but connected reading remains slow, effortful or expressionless, move to [How to Improve Reading Fluency in Children](/blog/how-to-improve-reading-fluency-in-children). For the complete framework across phonics, home practice and programme quality, use the [Phonics for Parents guide](/blog/phonics-for-parents-guide).' },
 
     { type: 'h2', content: 'The reading chain: what has to happen between a letter and a word' },
     { type: 'li', content: 'Hear and notice the sounds inside spoken words.' },
@@ -28,7 +33,7 @@ const post: BlogPost = {
     { type: 'h3', content: '1. Sound recall check' },
     { type: 'p', content: 'Show a small set of already-taught letters in mixed order. Can the child give the sounds without reciting the alphabet sequence? If recall is slow or inconsistent, strengthen sound-symbol mapping before expecting fluent blending.' },
     { type: 'h3', content: '2. Oral blending check' },
-    { type: 'p', content: 'Without showing print, say a simple sequence such as /m/ /a/ /p/. Can the child combine the sounds and say map? If oral blending is difficult, the child may need phonemic-awareness practice before print makes the task easier.' },
+    { type: 'p', content: 'Without showing print, say a simple sequence such as /m/ /a/ /p/. Can the child combine the sounds and say map? If oral blending is difficult, the child may need more phonemic-awareness practice before print is added.' },
     { type: 'h3', content: '3. Printed blending check' },
     { type: 'p', content: 'Show a simple decodable word built only from known sound patterns. Ask the child to move left to right and blend. Watch whether the child stretches the sounds together or says isolated sounds with long gaps and then guesses.' },
     { type: 'h3', content: '4. Unfamiliar-word check' },
@@ -37,18 +42,18 @@ const post: BlogPost = {
     { type: 'p', content: 'Once single words are stable, place similar words in a short decodable sentence. Some children can decode one word in isolation but lose the process when attention is also needed for spacing, meaning and sentence flow.' },
 
     { type: 'h2', content: 'Why separated sounds can fail to become a word' },
-    { type: 'p', content: 'A common pattern is /c/ ... /a/ ... /t/ followed by a pause. By the time the child reaches the final sound, the first sound may no longer be active enough to combine. Continuous blending reduces that memory load: hold blendable sounds where appropriate, move through the word, and make the final blend one connected action rather than three unrelated answers.' },
+    { type: 'p', content: 'A common pattern is /c/ ... /a/ ... /t/ followed by a pause. By the time the child reaches the final sound, the first sound may no longer be active enough to combine. Continuous blending can reduce that load: hold blendable sounds where appropriate, move through the word, and make the final blend one connected action rather than three unrelated answers.' },
     { type: 'p', content: 'Another issue is adding an extra “uh” after consonants. If /m/ becomes “muh” and /t/ becomes “tuh,” the child is trying to blend sounds that are not actually in the word. Clear sound production makes blending easier.' },
 
     { type: 'h2', content: 'Alphabet names, letter sounds and phonics are different achievements' },
     { type: 'p', content: 'Singing ABC, naming letters, and recognising their shapes are useful early-literacy skills. They do not prove that a child can decode. Phonics connects print with speech sounds and then uses those connections to read and spell. A child who knows ABC but cannot read may therefore need sound-symbol mapping; a child who knows the sounds but cannot read may need blending and transfer. Those are related but different starting points.' },
 
-    { type: 'h2', content: 'A practical 10-minute home routine' },
-    { type: 'li', content: '2 minutes: rapid review of a small set of already-taught sounds in mixed order.' },
-    { type: 'li', content: '2 minutes: oral blending with two or three simple sound sequences and no print.' },
-    { type: 'li', content: '3 minutes: read a small set of decodable words that use only known patterns.' },
-    { type: 'li', content: '2 minutes: read one or two short decodable sentences using similar patterns.' },
-    { type: 'li', content: '1 minute: spell or build one word from the same sound pattern to connect decoding with encoding.' },
+    { type: 'h2', content: 'A practical short home routine' },
+    { type: 'li', content: 'Start with a rapid review of a small set of already-taught sounds in mixed order.' },
+    { type: 'li', content: 'Do two or three oral blends with no print so you can see whether sound merging itself is stable.' },
+    { type: 'li', content: 'Read a small set of decodable words that use only known patterns.' },
+    { type: 'li', content: 'Read one or two short decodable sentences using similar patterns.' },
+    { type: 'li', content: 'Spell or build one word from the same pattern to connect decoding with encoding.' },
     { type: 'p', content: 'Keep the material easy enough for the child to practise the process. If every word contains untaught patterns, the session becomes a vocabulary or guessing test instead of a decoding lesson.' },
 
     { type: 'h2', content: 'What parents should avoid' },
@@ -72,8 +77,13 @@ const post: BlogPost = {
     { type: 'h2', content: 'When the issue may be broader than phonics' },
     { type: 'p', content: 'If a child has persistent difficulty hearing or manipulating speech sounds, understanding spoken language, remembering very short sound sequences, or making expected progress despite well-matched explicit instruction, discuss the pattern with the child’s teacher and an appropriate qualified professional. The aim is not to label the child from one reading difficulty; it is to avoid assuming that more worksheets will solve every problem.' },
 
+    { type: 'h2', content: 'What the reading evidence supports' },
+    { type: 'p', content: 'The [Education Endowment Foundation phonics evidence review](https://educationendowmentfoundation.org.uk/education-evidence/teaching-learning-toolkit/phonics) supports explicit, systematic phonics and notes that instruction should be matched to a child’s current phonemic awareness and letter-sound knowledge. It also cautions that phonics improves reading accuracy but does not replace vocabulary and comprehension teaching.' },
+    { type: 'p', content: 'The [IES foundational reading practice guide](https://ies.ed.gov/ncee/wwc/PracticeGuide/21) gives strong-evidence recommendations for linking speech sounds to letters and teaching decoding, word analysis and word recognition, followed by connected-text reading to support accuracy, fluency and comprehension.' },
+    { type: 'p', content: '[Reading Rockets on phonics and decoding](https://www.readingrockets.org/reading-101/reading-and-writing-basics/phonics-and-decoding) likewise describes effective phonics as systematic and explicit, with frequent opportunities to apply letter-sound knowledge in words, sentences and stories. These sources support the sequence used in this guide; they do not imply that every child progresses at the same rate.' },
+
     { type: 'h2', content: 'Tiny Steps next-step pathway' },
-    { type: 'p', content: 'Tiny Steps uses an assessment-first approach: identify whether the bottleneck is sound knowledge, blending, decoding, fluency, comprehension or confidence, then choose the relevant learning path. Explore /phonics for structured phonics support, /reading-classes-for-kids for broader reading needs, or /book-demo for the regular free 35-minute 1:1 demo assessment class.' },
+    { type: 'p', content: 'Tiny Steps uses an assessment-first approach: identify whether the bottleneck is sound knowledge, blending, decoding, fluency, comprehension or confidence, then choose the relevant learning path. Explore [structured phonics support](/phonics) for decoding foundations, [reading classes for kids](/reading-classes-for-kids) for broader reading needs, or [book a free 35-minute 1:1 demo assessment class](/book-demo) when you want help identifying the starting point.' },
   ],
   faq: [
     { question: 'Why can my child say every letter sound but still not read cat?', answer: 'The child may know the individual sounds but still need to learn how to hold them in order and blend them into one spoken word. Test oral blending and printed blending separately.' },
