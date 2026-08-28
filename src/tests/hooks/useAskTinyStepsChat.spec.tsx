@@ -37,7 +37,7 @@ describe('useAskTinyStepsChat submission guards', () => {
     expect(serviceMocks.call.mock.calls[0][1]).toEqual({
       sourceIds: expect.arrayContaining(['pricing', 'book-demo']),
     });
-    expect(result.current.messages.at(-1)?.content).toContain('pricing');
+    expect(result.current.messages[result.current.messages.length - 1]?.content).toContain('pricing');
   });
 
   it('prevents duplicate submissions even before React rerenders loading state', async () => {
