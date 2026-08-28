@@ -55,7 +55,7 @@ const PARENT_CONTEXT_PATTERN =
   /\b(my child|for my child|my son|my daughter|our child|our son|our daughter|my kid|our kid|as a parent|at home)\b/i;
 
 const FOLLOW_UP_PATTERN =
-  /^(what|how) about\b|^and\b|\b(this|that|it|those|same one|same thing)\b|\bhow much is it\b|\bhow long is it\b|\btell me more\b/i;
+  /^(what|how) about\b|^and\b|\b(this|that|it|those|same one|same thing)\b|\bhow much is it\b|\bhow much does (?:it|this|that) cost\b|\bhow long is it\b|\btell me more\b/i;
 
 const INTENT_RULES: readonly IntentRule[] = [
   {
@@ -72,7 +72,7 @@ const INTENT_RULES: readonly IntentRule[] = [
   },
   {
     intent: 'timings',
-    pattern: /\b(minute|minutes|duration|class length|time per class|how long(?: is| are)? (?:a |the )?class|how long is it)\b/i,
+    pattern: /\b(minute|minutes|duration|class length|time per class|how long(?: is| are)? (?:a |the )?class|how long is it|slot|slots|schedule|weekend|weekday|timezone|time zone)\b/i,
   },
   {
     intent: 'class_mode',
@@ -112,7 +112,7 @@ const INTENT_RULES: readonly IntentRule[] = [
   },
   {
     intent: 'reading',
-    pattern: /\b(reading|read words|fluency|comprehension)\b/i,
+    pattern: /\b(reading|reads?|read words|fluency|comprehension)\b/i,
   },
   {
     intent: 'courses',
@@ -125,45 +125,10 @@ const INTENT_RULES: readonly IntentRule[] = [
 ] as const;
 
 const STOP_WORDS = new Set([
-  'a',
-  'about',
-  'am',
-  'an',
-  'and',
-  'are',
-  'as',
-  'at',
-  'be',
-  'can',
-  'child',
-  'do',
-  'does',
-  'for',
-  'from',
-  'how',
-  'i',
-  'in',
-  'is',
-  'it',
-  'me',
-  'my',
-  'of',
-  'on',
-  'or',
-  'our',
-  'please',
-  'tell',
-  'that',
-  'the',
-  'their',
-  'this',
-  'to',
-  'we',
-  'what',
-  'which',
-  'with',
-  'you',
-  'your',
+  'a', 'about', 'am', 'an', 'and', 'are', 'as', 'at', 'be', 'can', 'child', 'do', 'does',
+  'for', 'from', 'how', 'i', 'in', 'is', 'it', 'me', 'my', 'of', 'on', 'or', 'our',
+  'please', 'tell', 'that', 'the', 'their', 'this', 'to', 'we', 'what', 'which', 'with',
+  'you', 'your',
 ]);
 
 function normalize(text: string): string {
@@ -229,7 +194,9 @@ function directSourceIds(
     case 'class_mode':
       return ['pricing'];
     case 'timings':
-      return ['book-demo'];
+      return /\b(duration|how long|minutes?|class length|time per class|session length)\b/i.test(currentQuestion)
+        ? ['pricing']
+        : ['faq'];
     case 'courses':
       return ['courses'];
     case 'phonics':
@@ -242,7 +209,7 @@ function directSourceIds(
     case 'speaking':
       return ['speaking'];
     case 'reading':
-      if (/\b(fluency|slow reading|reads? slowly)\b/i.test(contextText)) {
+      if (/\b(fluency|slow reading|reading slowly|reads?(?:\s+\w+){0,2}\s+slowly)\b/i.test(contextText)) {
         return ['reading-fluency-guide', 'reading-classes'];
       }
       if (/\b(cannot read|can t read|cant read|reading difficulty|not reading)\b/i.test(contextText)) {
@@ -343,7 +310,7 @@ export function selectAskTinyStepsSources(
     .map((message) => message.trim())
     .filter(Boolean)
     .slice(-2);
-  const isFollowUp = FOLLOW_UP_PATTERN.test(currentQuestion);
+  const isFollowUp = recentUserMessages.length > 0 && FOLLOW_UP_PATTERN.test(currentQuestion);
   const contextText = isFollowUp
     ? [...recentUserMessages, currentQuestion].join(' ')
     : currentQuestion;
