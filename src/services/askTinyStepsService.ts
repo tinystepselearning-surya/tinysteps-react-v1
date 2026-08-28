@@ -4,7 +4,10 @@ import {
   ASK_TINY_STEPS_SITE_ORIGIN,
   type AskTinyStepsKnowledgeSource,
 } from '../config/askTinyStepsKnowledgeSources';
-import { getAskTinyStepsGenerativeModel } from '../lib/askTinyStepsFirebaseAI';
+import {
+  ASK_TINY_STEPS_MODEL_CASCADE,
+  getAskTinyStepsGenerativeModel,
+} from '../lib/askTinyStepsFirebaseAI';
 import { ASK_TINY_STEPS_MAX_URL_CONTEXT_SOURCES } from './askTinyStepsSourceSelector';
 
 export const ASK_TINY_STEPS_MAX_PROMPT_LENGTH = 2_000;
@@ -134,6 +137,62 @@ function finalizeGroundedReply(reply: string, retrievedUrls: string[]): string {
   return `${cleanReply}\n\nSource: ${retrievedUrls.join(', ')}`;
 }
 
+function providerErrorText(error: unknown): string {
+  if (error instanceof Error) {
+    const withCode = error as Error & { code?: unknown; status?: unknown; customData?: unknown };
+    const pieces = [error.message, withCode.code, withCode.status]
+      .filter((value) => value !== undefined && value !== null)
+      .map(String);
+    try {
+      if (withCode.customData) pieces.push(JSON.stringify(withCode.customData));
+    } catch {
+      // Ignore unserializable provider metadata. We never expose it to the visitor.
+    }
+    return pieces.join(' ');
+  }
+
+  if (typeof error === 'object' && error !== null) {
+    const record = error as Record<string, unknown>;
+    const pieces = [record.message, record.code, record.status]
+      .filter((value) => value !== undefined && value !== null)
+      .map(String);
+    return pieces.join(' ');
+  }
+
+  return String(error ?? '');
+}
+
+/**
+ * Advance to the next Gemini model only for narrow provider availability failures.
+ * Security/config/request/grounding failures deliberately return false so a stronger
+ * model cascade cannot hide App Check, prompt, or application defects.
+ */
+export function isAskTinyStepsModelFallbackEligible(error: unknown): boolean {
+  const text = providerErrorText(error).toLowerCase();
+
+  const quotaOrCapacity =
+    /(^|\D)429(\D|$)/.test(text) ||
+    /resource[-_\s]?exhausted|quota(?:[-_\s]?exceeded)?|rate[-_\s]?limit|too many requests|capacity (?:is )?(?:exhausted|unavailable)|overloaded by requests/.test(
+      text,
+    );
+  if (quotaOrCapacity) return true;
+
+  const serviceUnavailable =
+    /(^|\D)503(\D|$)/.test(text) ||
+    /service unavailable|temporarily overloaded|backend unavailable|model (?:is )?overloaded/.test(
+      text,
+    );
+  if (serviceUnavailable) return true;
+
+  const modelUnavailable =
+    /model(?:\s+[\w.-]+)?[^.\n]*(?:not found|not available|unavailable|retired|shutdown|shut down)/.test(
+      text,
+    ) ||
+    /(?:not found|unavailable|retired|shutdown|shut down)[^.\n]*model/.test(text);
+
+  return modelUnavailable;
+}
+
 export async function callAskTinySteps(
   messages: AskMessage[],
   options: AskTinyStepsCallOptions = {},
@@ -162,35 +221,47 @@ export async function callAskTinySteps(
   }
 
   const approvedSources = resolveApprovedSources(options.sourceIds ?? []);
+  const history = toGeminiHistory(clean.slice(0, -1));
+  const currentPrompt = buildCurrentPrompt(lastMessage.content, approvedSources);
 
-  try {
-    const model = getAskTinyStepsGenerativeModel();
-    const chat = model.startChat({
-      history: toGeminiHistory(clean.slice(0, -1)),
-    });
-    const result = await chat.sendMessage(buildCurrentPrompt(lastMessage.content, approvedSources));
-    const rawReply = result.response.text().trim();
-    if (!rawReply) {
-      throw new Error('empty-response');
+  for (let index = 0; index < ASK_TINY_STEPS_MODEL_CASCADE.length; index += 1) {
+    const modelName = ASK_TINY_STEPS_MODEL_CASCADE[index];
+
+    try {
+      const model = getAskTinyStepsGenerativeModel(modelName);
+      const chat = model.startChat({ history });
+      const result = await chat.sendMessage(currentPrompt);
+      const rawReply = result.response.text().trim();
+      if (!rawReply) {
+        throw new Error('empty-response');
+      }
+
+      if (approvedSources.length === 0) {
+        return finalizeGroundedReply(rawReply, []);
+      }
+
+      const retrievedUrls = successfulRetrievedUrls(result.response, approvedSources);
+      const primaryUrl = comparableUrl(approvedSources[0].canonicalUrl);
+      const primaryRetrieved = retrievedUrls.some((url) => comparableUrl(url) === primaryUrl);
+
+      // Tiny Steps factual answers fail closed if Gemini could not retrieve the
+      // primary approved page. Model switching must never bypass this grounding gate.
+      if (!primaryRetrieved) {
+        throw new Error('primary-url-context-retrieval-failed');
+      }
+
+      return finalizeGroundedReply(rawReply, retrievedUrls);
+    } catch (error) {
+      const hasNextModel = index < ASK_TINY_STEPS_MODEL_CASCADE.length - 1;
+      if (hasNextModel && isAskTinyStepsModelFallbackEligible(error)) {
+        continue;
+      }
+
+      // Never expose provider details, URL retrieval diagnostics, model routing,
+      // or conversation history in the visitor UI/logs.
+      throw new Error(ASK_TINY_STEPS_SAFE_ERROR);
     }
-
-    if (approvedSources.length === 0) {
-      return finalizeGroundedReply(rawReply, []);
-    }
-
-    const retrievedUrls = successfulRetrievedUrls(result.response, approvedSources);
-    const primaryUrl = comparableUrl(approvedSources[0].canonicalUrl);
-    const primaryRetrieved = retrievedUrls.some((url) => comparableUrl(url) === primaryUrl);
-
-    // Tiny Steps factual answers fail closed if Gemini could not retrieve the
-    // primary approved page. The hook will use the deterministic local fallback.
-    if (!primaryRetrieved) {
-      throw new Error('primary-url-context-retrieval-failed');
-    }
-
-    return finalizeGroundedReply(rawReply, retrievedUrls);
-  } catch {
-    // Never expose provider details, URL retrieval diagnostics, or conversation history in UI/logs.
-    throw new Error(ASK_TINY_STEPS_SAFE_ERROR);
   }
+
+  throw new Error(ASK_TINY_STEPS_SAFE_ERROR);
 }
