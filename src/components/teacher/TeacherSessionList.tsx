@@ -34,7 +34,7 @@ export default function TeacherSessionList() {
               target="_blank"
               rel="noreferrer"
             >
-              Join Zoom
+              Join Class
             </a>
           </div>
         </div>
