@@ -35,7 +35,7 @@ describe("KidsBalloonPop pedagogy UX", () => {
     localStorage.clear();
   });
   afterEach(() => {
-    delete (document.documentElement as HTMLElement & { requestFullscreen?: () => Promise<void> }).requestFullscreen;
+    delete (document.documentElement as any).requestFullscreen;
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
