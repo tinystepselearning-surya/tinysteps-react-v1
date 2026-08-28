@@ -181,16 +181,37 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'Many families see better progress when speaking and grammar are practised together through staged tasks similar to English communication classes for children and public speaking for kids programs.',
+        'Speaking and grammar can be practised together when sentence planning is the bottleneck, but confidence practice should not replace checking whether the child understands the question and can build the response with support.',
     },
     {
       type: 'h2',
-      content: '10. Tiny Steps View',
+      content: '10. How Tiny Steps separates understanding from independent speaking',
     },
     {
       type: 'p',
       content:
-        'At Tiny Steps, we approach this as a confidence-plus-structure issue. We help children move from understanding to expression with guided sentence frames, gentle feedback, and progressive speaking practice.',
+        'Tiny Steps does not treat a quiet response as proof that the child does not understand English. We separate comprehension from response independence by checking the same idea at four levels: understanding without speaking, repeating a model, adapting a prompt, and answering a similar question independently.',
+    },
+    {
+      type: 'li',
+      content: 'Comprehension check: can the child follow the instruction, choose the correct option, point, or otherwise show that the question was understood?',
+    },
+    {
+      type: 'li',
+      content: 'Modelled response: after hearing one useful sentence, can the child repeat it accurately enough to show the language pattern is available?',
+    },
+    {
+      type: 'li',
+      content: 'Prompted response: can the child fill or adapt a short sentence frame for a new but similar answer?',
+    },
+    {
+      type: 'li',
+      content: 'Independent response: can the child answer a similar question without the sentence frame or an adult finishing the idea?',
+    },
+    {
+      type: 'p',
+      content:
+        'If comprehension itself breaks, speaking-confidence drills are not the first target. If modelled and prompted answers work but independent answers do not, reduce prompts gradually and practise planning a response. If independent speaking is comfortable at home but not in class, treat the setting and confidence demand separately from the child’s sentence knowledge.',
     },
     {
       type: 'li',

@@ -8,6 +8,7 @@ const post: PhonicsSeoPost = {
   homePlan: [
     'Introduce SATPIN in small batches (1-2 sounds), then review before adding new sounds.',
     'Use a fixed routine: pure sound recall, oral blending, printed word blending, and one short transfer line.',
+    'Tiny Steps uses readiness rather than calendar time as the useful checkpoint: first check whether the child can recall the taught sounds, then blend fresh SATPIN words with low prompting, then carry the same process into a short line before increasing the pattern load.',
     'Practise high-utility SATPIN words (sat, pin, tap, sit, tin) with minimal picture cues.',
     'Use multisensory cues (actions, sound cards, finger taps) to stabilize sound production and recall.',
     'Check weekly whether your child can decode unfamiliar SATPIN combinations, not just memorized words.',
@@ -23,8 +24,8 @@ const post: PhonicsSeoPost = {
   ],
   classChecklistFocus: 'Good SATPIN teaching includes pure sound modeling, immediate blending application, cumulative review, and clear evidence that children can decode new SATPIN words independently.',
   avoidFocus: 'Avoid teaching all six sounds in one sitting, mixing letter names into blending drills, or staying too long on isolated sound drills without word application.',
-  progress: 'Typical early gains are clearer sound recall in 1 week and first SATPIN word blending in 1-2 weeks. With steady practice, sentence-level transfer often begins in 3-5 weeks.',
-  support: 'If SATPIN sounds remain unstable after 4-6 weeks, reduce new input, increase oral-only review, and check for articulation or sound-discrimination gaps before progressing.',
+  progress: 'Track observable readiness rather than a fixed number of days or weeks. Useful progress is steadier sound recall, less prompting during blending, successful decoding of fresh SATPIN words, and transfer of the same process into short sentences. The pace varies by child and starting point.',
+  support: 'If SATPIN sounds remain unstable despite consistent, stage-matched practice, reduce new input, increase oral-only review, and check whether the current bottleneck is sound recall, oral blending, printed blending, or transfer before progressing.',
   faq: [{
     question: 'Why is SATPIN taught before full alphabet order?',
     answer: 'Because these sounds combine quickly into many useful early words, giving children faster decoding success and motivation.'

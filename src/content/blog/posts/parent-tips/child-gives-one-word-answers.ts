@@ -46,6 +46,13 @@ const post: BlogPost = {
     { type: 'h2', content: 'The “one more detail” technique' },
     { type: 'p', content: 'If the child says “football,” first model a complete sentence: “I played football.” Then ask for one extra detail: where, with whom, when, why, or what happened next. This keeps the task manageable while teaching that a strong answer contains connected information.' },
 
+    { type: 'h2', content: 'A Tiny Steps checkpoint: how far can the answer expand before the prompt takes over?' },
+    { type: 'p', content: 'Tiny Steps treats answer length and answer independence as separate observations. We build one response in small steps—complete sentence, one useful detail, then one reason, example or sequence—and reduce the adult prompt as soon as the child can carry the structure.' },
+    { type: 'li', content: 'Step 1 — complete sentence: move from a label such as “football” to a self-contained answer such as “I played football.”' },
+    { type: 'li', content: 'Step 2 — one useful detail: add where, when, with whom, what happened, or another concrete detail.' },
+    { type: 'li', content: 'Step 3 — connected thinking: add a reason, example, feeling or simple sequence when the topic allows it.' },
+    { type: 'p', content: 'If the child can expand only by copying the adult’s exact sentence, that is a supported response rather than independent transfer. A stronger checkpoint is whether the child can use the same response structure on a fresh topic with a smaller prompt or no prompt. If the structure collapses as soon as the prompt is removed, keep the next practice target small instead of demanding a longer answer.' },
+
     { type: 'h2', content: 'Because-answer practice' },
     { type: 'p', content: 'Questions that naturally invite a reason are useful: “Which game would you choose and why?” A simple because-frame helps the child move from naming a preference to explaining a thought. Do not insist on “because” in every conversation; the point is learning expansion patterns, not making speech mechanical.' },
 

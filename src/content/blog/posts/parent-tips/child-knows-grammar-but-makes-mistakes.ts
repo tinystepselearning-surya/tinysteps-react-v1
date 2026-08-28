@@ -183,16 +183,37 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'In many cases, consistent stage-wise support improves both accuracy and confidence without overwhelming the child.',
+        'Structured support is most useful when it isolates the first transfer step that breaks and gives practice there, rather than simply adding another rule list.',
     },
     {
       type: 'h2',
-      content: '10. Tiny Steps View',
+      content: '10. How Tiny Steps checks whether a grammar rule has transferred',
     },
     {
       type: 'p',
       content:
-        'At Tiny Steps, grammar is taught as a use skill, not only a rule list. We combine guided speaking, sentence building, and writing practice so children apply grammar naturally and build communication confidence over time.',
+        'Tiny Steps treats rule recall and real use as separate checkpoints. For one target pattern, we look at whether the child can recognise the rule, use it with a cue, use it while speaking about a fresh topic, and carry it into new writing. A correct worksheet answer is therefore useful evidence, but it is not the final transfer check.',
+    },
+    {
+      type: 'li',
+      content: 'Rule recall: can the child identify or correct the target when the rule is explicitly named?',
+    },
+    {
+      type: 'li',
+      content: 'Controlled use: can the child complete or build one sentence when the target pattern is cued?',
+    },
+    {
+      type: 'li',
+      content: 'Spontaneous speaking: can the child use the same pattern while answering a new question without being reminded of the rule?',
+    },
+    {
+      type: 'li',
+      content: 'Written transfer: can the child use the target in a fresh sentence or short paragraph without copying a model?',
+    },
+    {
+      type: 'p',
+      content:
+        'If rule recall is secure but controlled use breaks, practise a small number of guided examples. If speaking is accurate but writing breaks, move the same sentence into editing and writing tasks. If the pattern works immediately after revision but disappears later, revisit it cumulatively instead of treating the next new rule as the priority.',
     },
     {
       type: 'li',
