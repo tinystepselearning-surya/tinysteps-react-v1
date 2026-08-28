@@ -1,13 +1,5 @@
 // src/hooks/useAskTinyStepsChat.ts
-import { useCallback, useState } from "react";
-import { db } from "../lib/firebaseConfig";
-import {
-  addDoc,
-  collection,
-  doc,
-  serverTimestamp,
-  setDoc,
-} from "firebase/firestore";
+import { useCallback, useRef, useState } from "react";
 import {
   formatINR,
   ONE_TO_ONE_MONTHLY_PACKAGES,
@@ -22,7 +14,11 @@ import {
   FREE_DEMO_SESSION_COUNT,
   STANDARD_PRICING_SUMMARY,
 } from "../config/publicOffer";
-import { callAskTinySteps } from "../services/askTinyStepsService";
+import {
+  ASK_TINY_STEPS_MAX_PROMPT_LENGTH,
+  ASK_TINY_STEPS_SAFE_ERROR,
+  callAskTinySteps,
+} from "../services/askTinyStepsService";
 
 type ChatRole = "user" | "assistant";
 export type AskChatMessage = { role: ChatRole; content: string };
@@ -37,42 +33,83 @@ const CANONICAL_PRICING_PACKAGES = ONE_TO_ONE_MONTHLY_PACKAGES.map((pkg) => ({
   perClass: PER_CLASS_PRICE,
 }));
 
-export const ASK_TINYSTEPS_KB: { id: string; title: string; text: string }[] = [
+export const ASK_TINYSTEPS_KB: { id: string; title: string; text: string; url: string }[] = [
   {
     id: "assessment",
     title: FREE_DEMO_OFFER_NAME,
+    url: "https://tinystepslearning.com/book-demo",
     text:
       `${FREE_DEMO_FULL_DESCRIPTION} It is FREE (₹${FREE_DEMO_PRICE}), requires no credit card, and there is no obligation to enrol.`,
   },
   {
     id: "pricing",
     title: "Pricing & Packages",
+    url: "https://tinystepslearning.com/pricing",
     text:
       `${STANDARD_PRICING_SUMMARY}. Standard 1:1 monthly plans: Starter ${formatINR(CANONICAL_PRICING_PACKAGES[0].price)} for ${CANONICAL_PRICING_PACKAGES[0].classes} classes, Growth ${formatINR(CANONICAL_PRICING_PACKAGES[1].price)} for ${CANONICAL_PRICING_PACKAGES[1].classes} classes, Intensive ${formatINR(CANONICAL_PRICING_PACKAGES[2].price)} for ${CANONICAL_PRICING_PACKAGES[2].classes} classes. Ultra Premium Program (classes with native English-speaking teachers): 1:1 ${formatINR(ULTRA_PREMIUM_PRICING[0].perClass)} per class or ${formatINR(ULTRA_PREMIUM_PRICING[0].package12)} for 12 classes; 1:2 ${formatINR(ULTRA_PREMIUM_PRICING[1].package12)} for 12 classes per child; 1:3 ${formatINR(ULTRA_PREMIUM_PRICING[2].package12)}; 1:4 ${formatINR(ULTRA_PREMIUM_PRICING[3].package12)}; 1:5 ${formatINR(ULTRA_PREMIUM_PRICING[4].package12)}; 1:6 ${formatINR(ULTRA_PREMIUM_PRICING[5].package12)}.`,
   },
   {
     id: "timings",
     title: "Class Timings",
+    url: "https://tinystepslearning.com/book-demo",
     text:
       "Each class is 35 minutes. Live 1:1 sessions. Timings depend on slots; WhatsApp Advisor helps you pick a suitable slot.",
   },
   {
     id: "courses",
     title: "Courses",
+    url: "https://tinystepslearning.com/courses",
     text:
       "Tracks: Phonics (3–10), Grammar (5–10), Public Speaking (5–12). Personalized 1:1 learning with activities and worksheets.",
   },
   {
     id: "how_it_works",
     title: "How it works",
+    url: "https://tinystepslearning.com/why-tiny-steps",
     text:
       `${FREE_DEMO_FULL_DESCRIPTION} We then confirm slots and start classes with stage-based progress updates.`,
   },
   {
     id: "summer_camps",
     title: "Summer Camp 2026 — Enrolment Closed",
+    url: "https://tinystepslearning.com/summer-camps",
     text:
       "Tiny Steps Summer Camp 2026 ended on 13 June 2026. Each child joined one four-week small-group batch with 24 live classes from Monday to Saturday. The historical list fee was ₹5,000 per child and the effective fee was ₹2,400 per child. Enrolment is closed. Current families can book one free 35-minute demo assessment class for the regular Tiny Steps programmes.",
+  },
+  {
+    id: "curriculum",
+    title: "Connected, stage-based curriculum",
+    url: "https://tinystepslearning.com/curriculum",
+    text:
+      "The Tiny Steps curriculum is a structured English pathway for ages 3–12, with placement based on current skill rather than age alone. It connects phonics decoding, grammar and sentence control, reading, communication, and public speaking through stage-based progression.",
+  },
+  {
+    id: "methodology",
+    title: "Tiny Steps teaching methodology",
+    url: "https://tinystepslearning.com/why-tiny-steps",
+    text:
+      "Tiny Steps uses personalized live teaching, active child participation, explicit instruction, immediate correction, level-appropriate practice, and progress evidence from fresh examples. The free assessment helps identify the strongest current learning gap before a course is chosen.",
+  },
+  {
+    id: "phonics_learning",
+    title: "Phonics and reading pathway",
+    url: "https://tinystepslearning.com/phonics",
+    text:
+      "The structured phonics path moves from sound-letter links and phonemic awareness to oral blending, printed-word blending, CVC words, digraphs, vowel patterns, decoding, spelling, fluency, and sentence reading. Older children can also benefit when a decoding gap remains.",
+  },
+  {
+    id: "learning_guidance",
+    title: "English-learning guidance",
+    url: "https://tinystepslearning.com/faq",
+    text:
+      "Weak unfamiliar-word decoding points toward phonics; accurate but effortful reading may need fluency or comprehension; repeated sentence errors may need grammar and writing; short hesitant answers may need sentence formation and speaking confidence. Progress should be checked on fresh tasks with increasing independence.",
+  },
+  {
+    id: "resources",
+    title: "Tiny Steps parent resources",
+    url: "https://tinystepslearning.com/blog",
+    text:
+      "Tiny Steps publishes public parent resources about phonics, blending, decoding, reading fluency, grammar, sentence formation, speaking confidence, home practice, and choosing suitable English-learning support.",
   },
 ];
 
@@ -128,7 +165,7 @@ function retrieve(query: string, topN = 2) {
   const scored = scoreKB(query).filter((e) => e.score > 0);
   const results = scored
     .slice(0, topN)
-    .map((e) => ({ id: e.id, title: e.title, text: e.text }));
+    .map((e) => ({ id: e.id, title: e.title, text: e.text, url: e.url }));
   return { results, sourcesUsed: results.map((r) => r.id) };
 }
 
@@ -293,67 +330,11 @@ function greetingReply(): { text: string; sourcesUsed: string[] } {
   };
 }
 
-// --------------------
-// Firestore logging helpers
-// --------------------
-function getPagePathSafe(): string {
-  try {
-    return typeof window !== "undefined" ? window.location.pathname : "";
-  } catch {
-    return "";
-  }
-}
-
-function readSessionId(): string | null {
-  try {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("ts_ask_session_v1");
-  } catch {
-    return null;
-  }
-}
-
-function writeSessionId(id: string) {
-  try {
-    if (typeof window === "undefined") return;
-    localStorage.setItem("ts_ask_session_v1", id);
-  } catch {
-    // ignore
-  }
-}
-
-function clearSessionId() {
-  try {
-    if (typeof window === "undefined") return;
-    localStorage.removeItem("ts_ask_session_v1");
-  } catch {
-    // ignore
-  }
-}
-
-function newSessionId(): string {
-  const sid = `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-  writeSessionId(sid);
-  return sid;
-}
-
-function getOrCreateSessionId(): string {
-  const existing = readSessionId();
-  if (existing) return existing;
-  return newSessionId();
-}
-
-function historyForCloud(messages: AskChatMessage[], maxMessages = 10): AskChatMessage[] {
+function historyForAI(messages: AskChatMessage[], maxMessages = 10): AskChatMessage[] {
   return messages.slice(-maxMessages).map((m) => ({
     role: m.role,
     content: String(m.content || "").slice(0, 2000),
   }));
-}
-
-function extractSourcesFromReply(text: string): string[] {
-  const urls = String(text || "").match(/https?:\/\/[^\s,)]+/g) || [];
-  const uniq = Array.from(new Set(urls.map((u) => u.trim())));
-  return uniq.slice(0, 3);
 }
 
 // --------------------
@@ -364,24 +345,25 @@ export function useAskTinyStepsChat() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // ✅ IMPORTANT FIX:
-  // sessionId is STATE (not useMemo) so resetChat can truly start a fresh session.
-  const [sessionId, setSessionId] = useState<string>(() => getOrCreateSessionId());
+  const requestInFlightRef = useRef(false);
 
   const resetChat = useCallback(() => {
     setMessages([]);
     setError(null);
     setInput("");
-    clearSessionId();
-    setSessionId(newSessionId());
   }, []);
 
   // ✅ Allow optionally sending an explicit text (useful for quick-reply chips)
   const sendMessage = useCallback(
     async (textOverride?: string) => {
       const trimmed = (textOverride ?? input).trim();
-      if (!trimmed || loading) return;
+      if (!trimmed || loading || requestInFlightRef.current) return;
+      if (trimmed.length > ASK_TINY_STEPS_MAX_PROMPT_LENGTH) {
+        setError(`Please keep your question under ${ASK_TINY_STEPS_MAX_PROMPT_LENGTH} characters.`);
+        return;
+      }
+
+      requestInFlightRef.current = true;
 
       const userMsg: AskChatMessage = { role: "user", content: trimmed };
       setMessages((prev) => [...prev, userMsg]);
@@ -392,28 +374,29 @@ export function useAskTinyStepsChat() {
       const intent = detectIntent(trimmed);
 
       let assistantText = "";
-      let sourcesUsed: string[] = [];
-      let answeredBy = "local";
 
       // ✅ Greeting first (no model call needed)
       if (intent === "greeting") {
         const res = greetingReply();
         assistantText = res.text;
-        sourcesUsed = res.sourcesUsed;
       } else {
-        // Try cloud function first for richer page-grounded responses.
+        // Try Firebase AI Logic first for richer, approved-context responses.
         try {
-          const conversation = historyForCloud([...messages, userMsg], 10);
-          const cloudReply = await callAskTinySteps(conversation, {
-            useRetrieval: true,
+          const conversation = historyForAI([...messages, userMsg], 10);
+          const approvedSnippets = retrieve(trimmed, 2).results.map(({ title, text, url }) => ({
+            title,
+            text,
+            url,
+          }));
+          const aiReply = await callAskTinySteps(conversation, {
+            approvedSnippets,
           });
-          if (cloudReply?.trim()) {
-            assistantText = cloudReply.trim();
-            sourcesUsed = extractSourcesFromReply(assistantText);
-            answeredBy = "cloud";
+          if (aiReply?.trim()) {
+            assistantText = aiReply.trim();
           }
-        } catch (cloudErr) {
-          console.warn("AskTinySteps cloud fallback to local:", cloudErr);
+        } catch {
+          console.warn("AskTinySteps AI unavailable; using the approved local fallback.");
+          setError(ASK_TINY_STEPS_SAFE_ERROR);
         }
       }
 
@@ -429,20 +412,17 @@ export function useAskTinyStepsChat() {
         ) {
           const res = formatFactsForIntent(intent);
           assistantText = res.text;
-          sourcesUsed = res.sourcesUsed;
         } else {
-          const { results, sourcesUsed: s } = retrieve(trimmed, 2);
+          const { results } = retrieve(trimmed, 2);
           if (results.length > 0) {
             assistantText = results
               .map((r) => `• ${r.title}: ${r.text}`)
               .join("\n\n");
             assistantText += `\n\n${ASK_TINYSTEPS_FACTS.whatsappCtaText}: ${ASK_TINYSTEPS_FACTS.whatsappLink}`;
-            sourcesUsed = s;
           } else {
             assistantText =
               `I don’t have that confirmed in my notes yet.\n\n` +
               `${ASK_TINYSTEPS_FACTS.whatsappCtaText}: ${ASK_TINYSTEPS_FACTS.whatsappLink}`;
-            sourcesUsed = [];
           }
         }
       }
@@ -450,52 +430,10 @@ export function useAskTinyStepsChat() {
       const assistantMsg: AskChatMessage = { role: "assistant", content: assistantText };
       setMessages((prev) => [...prev, assistantMsg]);
 
-      // Firestore logging (best effort)
-      try {
-        const pagePath = getPagePathSafe();
-        const sessionRef = doc(db, "askTinysteps_sessions", sessionId);
-
-        await setDoc(
-          sessionRef,
-          {
-            sessionId,
-            lastSeenAt: serverTimestamp(),
-            pagePath,
-          },
-          { merge: true }
-        );
-
-        const msgsCol = collection(sessionRef, "messages");
-
-        await addDoc(msgsCol, {
-          role: "user",
-          text: trimmed,
-          createdAt: serverTimestamp(),
-          pagePath,
-          sourcesUsed: [],
-          intent,
-        });
-
-        await addDoc(msgsCol, {
-          role: "assistant",
-          text: assistantText,
-          createdAt: serverTimestamp(),
-          pagePath,
-          sourcesUsed,
-          intent,
-          answeredBy,
-        });
-      } catch (e) {
-        // Do not break chat UX if logging fails
-         
-        console.error("AskTinySteps logging error:", e);
-        // Optional lightweight UI hint:
-        // setError("Chat saved locally, but logging failed.");
-      } finally {
-        setLoading(false);
-      }
+      requestInFlightRef.current = false;
+      setLoading(false);
     },
-    [input, loading, sessionId, messages]
+    [input, loading, messages]
   );
 
   return { messages, input, setInput, loading, error, sendMessage, resetChat };

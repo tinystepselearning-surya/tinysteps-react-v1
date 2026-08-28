@@ -8,7 +8,6 @@
   },
   "scripts": {
     "backfill:parent-payment-sort": "node scripts/backfillParentPaymentSortFields.js",
-    "set-groq-secret": "node scripts/setGroqSecret.js",
     "lint": "eslint \"src/**/*.{ts,js}\" \"scripts/**/*.{ts,js}\"",
     "build": "tsc",
     "build:watch": "tsc --watch",
@@ -27,7 +26,6 @@
     "cors": "^2.8.5",
     "firebase-admin": "^13.7.0",
     "firebase-functions": "^7.2.2",
-    "groq-sdk": "^0.36.0",
     "nice-color-palettes": "^4.0.0",
     "papaparse": "^5.5.0",
     "three-bmfont-text": "^3.0.1"

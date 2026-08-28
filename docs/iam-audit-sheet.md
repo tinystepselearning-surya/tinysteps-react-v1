@@ -23,7 +23,7 @@ Target principal audited:
 | principal | role | scope | reason | keep/remove/narrow | tested after change |
 |---|---|---|---|---|---|
 | github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/iam.serviceAccountUser` | `tinysteps-react-v1@appspot.gserviceaccount.com` (service-account scope) | required to act as runtime service account | narrowed (from project-level) | yes (policy update verified) |
-| github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/secretmanager.secretAccessor` | secret `groq-api-key` | runtime secret resolution for Groq function | keep (secret-level) | yes (policy update verified) |
+| github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/secretmanager.secretAccessor` | secret `groq-api-key` | retired Ask Tiny Steps provider | remove after Firebase AI Logic production validation | pending |
 | github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/secretmanager.viewer` | secret `groq-api-key` | not required for runtime secret access | removed | yes (policy update verified) |
 | github-action-1086722180@tinysteps-react-v1.iam.gserviceaccount.com | `roles/secretmanager.secretAccessor` + `roles/secretmanager.viewer` | secret `GROQ_API_KEY` | duplicate legacy secret; not used by code | removed | yes (policy update verified) |
 

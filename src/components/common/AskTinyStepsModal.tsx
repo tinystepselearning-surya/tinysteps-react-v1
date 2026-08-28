@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAskTinyStepsChat } from "../../hooks/useAskTinyStepsChat";
+import { ASK_TINY_STEPS_MAX_PROMPT_LENGTH } from "../../services/askTinyStepsService";
 
 type AskTinyStepsModalProps = {
   open: boolean;
@@ -283,6 +284,7 @@ export const AskTinyStepsModal: React.FC<AskTinyStepsModalProps> = ({
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyPress}
                     placeholder="Type your question..."
+                    maxLength={ASK_TINY_STEPS_MAX_PROMPT_LENGTH}
                     className="h-11 flex-1 rounded-xl border-0 px-3 text-sm text-slate-800 outline-none ring-0 placeholder:text-slate-400"
                     disabled={loading}
                   />

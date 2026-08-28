@@ -233,8 +233,7 @@ export {
 } from './adminLeadWorkflow';
 export { adminCorrectDemoCompletion } from './adminCorrectDemoCompletion';
 
-// AI: Ask TinySteps chatbot and knowledge base
-export { askTinySteps } from "./ai/askTinySteps";
+// Public website knowledge-base refresh tooling
 export { refreshPublicKb } from "./ai/refreshPublicKb";
 
 // Meta WhatsApp Cloud API integration intentionally retired until explicitly reintroduced.

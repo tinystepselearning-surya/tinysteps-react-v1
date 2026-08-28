@@ -4,7 +4,7 @@ import { getRegionalFunctions } from './firebaseConfig';
 // Map known callable functions to the regions where they are actually deployed.
 // This avoids relying on env misconfigurations and ensures game functions hit us-central1.
 const FUNCTION_REGION_OVERRIDES: Record<string, string> = {
-  // Game / Groq-backed functions (us-central1)
+  // Game functions (us-central1)
   // (game-related functions removed)
 
   // Admin / payments / LP functions (asia-south1)
