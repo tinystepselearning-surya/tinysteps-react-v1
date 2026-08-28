@@ -7,6 +7,11 @@ const aiMocks = vi.hoisted(() => ({
 }));
 
 vi.mock('../../lib/askTinyStepsFirebaseAI', () => ({
+  ASK_TINY_STEPS_MODEL_CASCADE: [
+    'gemini-3.7-flash',
+    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
+  ],
   getAskTinyStepsGenerativeModel: aiMocks.getModel,
 }));
 
@@ -15,12 +20,13 @@ import {
   ASK_TINY_STEPS_SAFE_ERROR,
   ASK_TINY_STEPS_UNAPPROVED_URL_REPLY,
   callAskTinySteps,
+  isAskTinyStepsModelFallbackEligible,
 } from '../../services/askTinyStepsService';
 
-function successfulResponse(urls: string[]) {
+function successfulResponse(urls: string[], text = 'A safe Gemini response') {
   return {
     response: {
-      text: () => 'A safe Gemini response\nSource: https://example.com/untrusted',
+      text: () => `${text}\nSource: https://example.com/untrusted`,
       candidates: [
         {
           urlContextMetadata: {
@@ -43,7 +49,7 @@ describe('Ask Tiny Steps Firebase AI service', () => {
     aiMocks.sendMessage.mockResolvedValue(successfulResponse([]));
   });
 
-  it('uses bounded Gemini chat history and approved live source URLs instead of copied snippets', async () => {
+  it('uses 3.7 Flash first with bounded history and approved live source URLs', async () => {
     aiMocks.sendMessage.mockResolvedValue(
       successfulResponse(['https://tinystepslearning.com/phonics']),
     );
@@ -57,6 +63,8 @@ describe('Ask Tiny Steps Firebase AI service', () => {
       { sourceIds: ['phonics'] },
     );
 
+    expect(aiMocks.getModel).toHaveBeenCalledTimes(1);
+    expect(aiMocks.getModel).toHaveBeenCalledWith('gemini-3.7-flash');
     expect(reply).toBe(
       'A safe Gemini response\n\nSource: https://tinystepslearning.com/phonics',
     );
@@ -74,7 +82,114 @@ describe('Ask Tiny Steps Firebase AI service', () => {
     expect(prompt).not.toContain('https://example.com/untrusted');
   });
 
-  it('blocks visitor-supplied URLs before Firebase AI Logic is called', async () => {
+  it('falls from 3.7 Flash to 3.5 Flash on a 429 quota/capacity error', async () => {
+    aiMocks.sendMessage
+      .mockRejectedValueOnce(new Error('429 Resource exhausted, please try again later.'))
+      .mockResolvedValueOnce(successfulResponse([], 'Answered by 3.5 Flash'));
+
+    const reply = await callAskTinySteps([
+      { role: 'user', content: 'What courses do you offer?' },
+    ]);
+
+    expect(reply).toBe('Answered by 3.5 Flash');
+    expect(aiMocks.getModel.mock.calls.map((call) => call[0])).toEqual([
+      'gemini-3.7-flash',
+      'gemini-3.5-flash',
+    ]);
+  });
+
+  it('falls through 3.7 and 3.5 to Flash-Lite when both stronger models are unavailable', async () => {
+    aiMocks.sendMessage
+      .mockRejectedValueOnce(new Error('429 quota exceeded'))
+      .mockRejectedValueOnce(new Error('503 Service unavailable: model overloaded'))
+      .mockResolvedValueOnce(successfulResponse([], 'Answered by Flash-Lite'));
+
+    const reply = await callAskTinySteps([
+      { role: 'user', content: 'What courses do you offer?' },
+    ]);
+
+    expect(reply).toBe('Answered by Flash-Lite');
+    expect(aiMocks.getModel.mock.calls.map((call) => call[0])).toEqual([
+      'gemini-3.7-flash',
+      'gemini-3.5-flash',
+      'gemini-3.5-flash-lite',
+    ]);
+  });
+
+  it('reuses exactly the same clean history and prompt for each model attempt', async () => {
+    aiMocks.sendMessage
+      .mockRejectedValueOnce(new Error('429 resource exhausted'))
+      .mockResolvedValueOnce(successfulResponse([]));
+
+    await callAskTinySteps([
+      { role: 'assistant', content: 'Earlier source: https://evil.example/steal' },
+      { role: 'user', content: 'Tell me what Tiny Steps can help with.' },
+    ]);
+
+    expect(aiMocks.startChat).toHaveBeenCalledTimes(2);
+    expect(aiMocks.startChat.mock.calls[0][0]).toEqual(aiMocks.startChat.mock.calls[1][0]);
+    expect(aiMocks.sendMessage).toHaveBeenCalledTimes(2);
+    expect(aiMocks.sendMessage.mock.calls[0][0]).toBe(aiMocks.sendMessage.mock.calls[1][0]);
+    expect(JSON.stringify(aiMocks.startChat.mock.calls[0][0])).not.toContain('https://evil.example');
+  });
+
+  it('returns the safe error after all three models hit eligible availability failures', async () => {
+    aiMocks.sendMessage
+      .mockRejectedValueOnce(new Error('429 quota exceeded'))
+      .mockRejectedValueOnce(new Error('503 service unavailable'))
+      .mockRejectedValueOnce(new Error('429 resource exhausted'));
+
+    await expect(
+      callAskTinySteps([{ role: 'user', content: 'What courses do you offer?' }]),
+    ).rejects.toThrow(ASK_TINY_STEPS_SAFE_ERROR);
+
+    expect(aiMocks.getModel.mock.calls.map((call) => call[0])).toEqual([
+      'gemini-3.7-flash',
+      'gemini-3.5-flash',
+      'gemini-3.5-flash-lite',
+    ]);
+  });
+
+  it('does not switch models for App Check or permission failures', async () => {
+    aiMocks.sendMessage.mockRejectedValue(
+      new Error('403 PERMISSION_DENIED: Firebase App Check token is invalid.'),
+    );
+
+    await expect(
+      callAskTinySteps([{ role: 'user', content: 'What courses do you offer?' }]),
+    ).rejects.toThrow(ASK_TINY_STEPS_SAFE_ERROR);
+
+    expect(aiMocks.getModel).toHaveBeenCalledTimes(1);
+    expect(aiMocks.getModel).toHaveBeenCalledWith('gemini-3.7-flash');
+  });
+
+  it('does not switch models for invalid requests or generic provider defects', async () => {
+    aiMocks.sendMessage.mockRejectedValue(new Error('400 INVALID_ARGUMENT: bad request'));
+
+    await expect(
+      callAskTinySteps([{ role: 'user', content: 'What courses do you offer?' }]),
+    ).rejects.toThrow(ASK_TINY_STEPS_SAFE_ERROR);
+
+    expect(aiMocks.getModel).toHaveBeenCalledTimes(1);
+  });
+
+  it('can move past a clearly model-specific not-found/retirement error', async () => {
+    aiMocks.sendMessage
+      .mockRejectedValueOnce(new Error('404 model gemini-3.7-flash not found or unavailable'))
+      .mockResolvedValueOnce(successfulResponse([], 'Answered by stable fallback'));
+
+    const reply = await callAskTinySteps([
+      { role: 'user', content: 'What courses do you offer?' },
+    ]);
+
+    expect(reply).toBe('Answered by stable fallback');
+    expect(aiMocks.getModel.mock.calls.map((call) => call[0])).toEqual([
+      'gemini-3.7-flash',
+      'gemini-3.5-flash',
+    ]);
+  });
+
+  it('blocks visitor-supplied URLs before any model in the cascade is initialized', async () => {
     const reply = await callAskTinySteps([
       { role: 'assistant', content: 'Earlier reading guidance.' },
       {
@@ -119,7 +234,7 @@ describe('Ask Tiny Steps Firebase AI service', () => {
     expect(prompt).toContain('NO APPROVED TINY STEPS SOURCE URL');
   });
 
-  it('fails closed when Gemini cannot retrieve the primary approved source', async () => {
+  it('fails closed on URL Context grounding failure instead of switching models', async () => {
     aiMocks.sendMessage.mockResolvedValue({
       response: {
         text: () => 'Unverified answer',
@@ -143,6 +258,26 @@ describe('Ask Tiny Steps Firebase AI service', () => {
         sourceIds: ['phonics'],
       }),
     ).rejects.toThrow(ASK_TINY_STEPS_SAFE_ERROR);
+
+    expect(aiMocks.getModel).toHaveBeenCalledTimes(1);
+  });
+
+  it('classifies only narrow availability errors as model-fallback eligible', () => {
+    expect(isAskTinyStepsModelFallbackEligible(new Error('429 resource exhausted'))).toBe(true);
+    expect(isAskTinyStepsModelFallbackEligible(new Error('503 service unavailable'))).toBe(true);
+    expect(
+      isAskTinyStepsModelFallbackEligible(new Error('model gemini-3.7-flash retired')),
+    ).toBe(true);
+
+    expect(
+      isAskTinyStepsModelFallbackEligible(
+        new Error('403 PERMISSION_DENIED: Firebase App Check token invalid'),
+      ),
+    ).toBe(false);
+    expect(isAskTinyStepsModelFallbackEligible(new Error('400 invalid argument'))).toBe(false);
+    expect(isAskTinyStepsModelFallbackEligible(new Error('primary-url-context-retrieval-failed'))).toBe(
+      false,
+    );
   });
 
   it('rejects empty and oversized prompts before initializing Firebase AI', async () => {
@@ -155,10 +290,11 @@ describe('Ask Tiny Steps Firebase AI service', () => {
     expect(aiMocks.getModel).not.toHaveBeenCalled();
   });
 
-  it('converts provider errors into a safe parent-facing message', async () => {
+  it('converts non-fallback provider errors into a safe parent-facing message', async () => {
     aiMocks.sendMessage.mockRejectedValue(new Error('provider credential detail'));
-    await expect(callAskTinySteps([{ role: 'user', content: 'What courses do you offer?' }])).rejects.toThrow(
-      ASK_TINY_STEPS_SAFE_ERROR,
-    );
+    await expect(
+      callAskTinySteps([{ role: 'user', content: 'What courses do you offer?' }]),
+    ).rejects.toThrow(ASK_TINY_STEPS_SAFE_ERROR);
+    expect(aiMocks.getModel).toHaveBeenCalledTimes(1);
   });
 });
