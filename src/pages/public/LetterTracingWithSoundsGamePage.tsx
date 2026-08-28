@@ -142,10 +142,13 @@ export default function LetterTracingWithSoundsGamePage() {
           </Link>
         </article>
         <article className="rounded-2xl border border-sky-200 bg-sky-50/50 p-5">
-          <h2 className="text-xl font-bold text-slate-900">Link to other free learning games</h2>
+          <h2 className="text-xl font-bold text-slate-900">Continue with free Tiny Steps phonics games</h2>
           <div className="mt-2 flex flex-col gap-2 text-sm">
             <Link to="/free-letter-tracing-game-for-kids" className="font-semibold text-sky-900 underline underline-offset-4">
               Free ABC Tracing Game for Kids
+            </Link>
+            <Link to="/free-balloon-pop-phonics-game-for-kids" className="font-semibold text-sky-900 underline underline-offset-4">
+              Tiny Steps Phonics Balloon Pop — hear a sound and pop the matching letter
             </Link>
             <Link to="/phonics-learning-games" className="font-semibold text-sky-900 underline underline-offset-4">
               More Tiny Steps learning games

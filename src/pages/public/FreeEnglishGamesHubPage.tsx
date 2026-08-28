@@ -196,6 +196,44 @@ export default function FreeEnglishGamesHubPage() {
 
       <div className="mx-auto w-full max-w-7xl space-y-4 px-3 pb-10 sm:px-5">
         <section
+          aria-labelledby="featured-balloon-pop"
+          className="overflow-hidden rounded-xl border border-fuchsia-300/25 bg-[linear-gradient(135deg,rgba(88,28,135,0.42),rgba(14,116,144,0.28))] p-5 shadow-[0_18px_60px_rgba(76,29,149,0.2)] sm:p-6"
+        >
+          <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-fuchsia-200">Featured Tiny Steps Phonics game</p>
+              <h2 id="featured-balloon-pop" className="mt-2 text-2xl font-black text-white sm:text-3xl">
+                Hear the sound → find the letter → pop the balloon 🎈
+              </h2>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-200 sm:text-base">
+                Tiny Steps Phonics Balloon Pop turns letter-sound practice into a quick listening challenge. Children hear one target sound, scan the moving balloons, and pop the matching letter. Start with SATPIN or choose another sound group.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-slate-100">
+                {['Free', 'No login', 'Letter-sound listening', 'SATPIN included', 'Preschool & kindergarten'].map((item) => (
+                  <span key={item} className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5">
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3 lg:max-w-[260px] lg:justify-end">
+              <Link
+                to="/free-balloon-pop-phonics-game-for-kids"
+                className="inline-flex rounded-lg border border-cyan-200/40 bg-cyan-300 px-4 py-3 text-sm font-black text-slate-950 hover:bg-cyan-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-200"
+              >
+                Play Tiny Steps Phonics Balloon Pop
+              </Link>
+              <Link
+                to="/blog/satpin-phonics-guide"
+                className="inline-flex rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-sm font-extrabold text-white hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+              >
+                Read the SATPIN Parent Guide
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section
           aria-labelledby="browse-games-by-skill"
           className="rounded-lg border border-violet-300/20 bg-slate-950/60 p-4 backdrop-blur-md"
         >

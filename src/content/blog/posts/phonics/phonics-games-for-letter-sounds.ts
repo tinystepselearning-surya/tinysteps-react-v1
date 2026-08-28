@@ -15,6 +15,9 @@ const post: PhonicsSeoPost = {
     '10-minute daily routine, step 5 (quick blending readiness check, 1 minute): test 2-3 oral blends such as /s/ /a/ /t/ and /m/ /a/ /p/.',
     '10-minute daily routine, step 6 (praise and stop before fatigue, 1 minute): end with one success sentence and avoid over-practice when focus drops.',
     'Game ideas by skill: sound recognition (sound flashcards), first-sound identification (sound detective), sound discrimination (same or different), blending readiness (oral sound join), listening confidence (repeat-and-point games).',
+    'Try Tiny Steps Phonics Balloon Pop',
+    'Your child hears one letter sound, finds the matching printed letter, and pops the correct balloon. This is useful for fast sound-to-print recognition and playful listening practice.',
+    'Play Free: /free-balloon-pop-phonics-game-for-kids',
     'Try the Free Letter Tracing Game',
     'Help your child practise letter formation on screen with a simple tracing activity.',
     'Play Free: /free-letter-tracing-game-for-kids',
@@ -46,6 +49,9 @@ const post: PhonicsSeoPost = {
     answer: 'Tiny Steps checks sound recall, blending readiness, decoding habits, and confidence, then recommends the right starting level and next learning path.'
   }],
   relatedReads: [{
+    label: 'Play Tiny Steps Phonics Balloon Pop',
+    to: '/free-balloon-pop-phonics-game-for-kids'
+  }, {
     label: 'Broader guide: online phonics games',
     to: '/blog/online-phonics-games'
   }, {

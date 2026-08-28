@@ -39,15 +39,15 @@ const EEM_MISSION_ID = "english-excellence-mission-v2";
 const pendingMissionDoneKey = (kidId: string) =>
   `ts_eem_done_pending_${EEM_MISSION_ID}_${kidId || "guest"}`;
 
-// Reduce early load slightly (you can tune)
-const JOLLY_LEVELS: LevelConfig[] = [
-  { id: 1, title: "Level 1", letters: ["s", "a", "t", "i", "p", "n"], balloonCount: 5, speedMin: 7, speedMax: 12 },
-  { id: 2, title: "Level 2", letters: ["c", "k", "e", "h", "r", "m"], balloonCount: 5, speedMin: 7, speedMax: 13 },
-  { id: 3, title: "Level 3", letters: ["d", "g", "o", "u", "l", "f"], balloonCount: 6, speedMin: 8, speedMax: 14 },
-  { id: 4, title: "Level 4", letters: ["b", "j"], balloonCount: 6, speedMin: 9, speedMax: 15 },
-  { id: 5, title: "Level 5", letters: ["v", "w"], balloonCount: 6, speedMin: 10, speedMax: 16 },
-  { id: 6, title: "Level 6", letters: ["x", "y"], balloonCount: 6, speedMin: 10, speedMax: 17 },
-  { id: 7, title: "Level 7", letters: ["q", "z"], balloonCount: 6, speedMin: 11, speedMax: 18 },
+// Tiny Steps Phonics sound groups. Keep numeric ids stable for URLs, progress and analytics.
+const TINY_STEPS_PHONICS_LEVELS: LevelConfig[] = [
+  { id: 1, title: "Sound Group 1", letters: ["s", "a", "t", "i", "p", "n"], balloonCount: 5, speedMin: 7, speedMax: 12 },
+  { id: 2, title: "Sound Group 2", letters: ["c", "k", "e", "h", "r", "m"], balloonCount: 5, speedMin: 7, speedMax: 13 },
+  { id: 3, title: "Sound Group 3", letters: ["d", "g", "o", "u", "l", "f"], balloonCount: 6, speedMin: 8, speedMax: 14 },
+  { id: 4, title: "Sound Group 4", letters: ["b", "j"], balloonCount: 6, speedMin: 9, speedMax: 15 },
+  { id: 5, title: "Sound Group 5", letters: ["v", "w"], balloonCount: 6, speedMin: 10, speedMax: 16 },
+  { id: 6, title: "Sound Group 6", letters: ["x", "y"], balloonCount: 6, speedMin: 10, speedMax: 17 },
+  { id: 7, title: "Sound Group 7", letters: ["q", "z"], balloonCount: 6, speedMin: 11, speedMax: 18 },
 ];
 
 type Progress = {
@@ -323,7 +323,7 @@ const KidsBalloonPop: React.FC<KidsBalloonPopProps> = ({
 
   const levelParam = searchParams.get("level");
   const currentLevelId = levelParam ? parseInt(levelParam, 10) : null;
-  const currentLevel = currentLevelId ? JOLLY_LEVELS.find((l) => l.id === currentLevelId) : null;
+  const currentLevel = currentLevelId ? TINY_STEPS_PHONICS_LEVELS.find((l) => l.id === currentLevelId) : null;
 
   const navigateWithKid = useCallback(
     (path: string) => {
@@ -473,7 +473,7 @@ const KidsBalloonPop: React.FC<KidsBalloonPopProps> = ({
       navigate(`${baseRoute}?${params.toString()}`, { replace: true });
 
       // Init balloons
-      const level = JOLLY_LEVELS.find((l) => l.id === levelId);
+      const level = TINY_STEPS_PHONICS_LEVELS.find((l) => l.id === levelId);
       if (!level) return;
 
       const initial: Balloon[] = [];
@@ -1047,8 +1047,9 @@ const KidsBalloonPop: React.FC<KidsBalloonPopProps> = ({
         )}
 
         <div className="w-full max-w-6xl mx-auto text-center mb-8">
-          <h2 className="text-5xl font-bold text-white">Choose Level</h2>
-          <p className="text-white/70 mt-2">Pick a Jolly Phonics level to play Balloon Pop</p>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-white/80">Tiny Steps Phonics</p>
+          <h2 className="mt-2 text-5xl font-bold text-white">Choose a Sound Group</h2>
+          <p className="text-white/70 mt-2">Choose a Tiny Steps Phonics sound group to play Balloon Pop</p>
 
           {!kidId && !hideNoKidNotice && (
             <div className="mt-6 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-lg max-w-md mx-auto">
@@ -1067,7 +1068,7 @@ const KidsBalloonPop: React.FC<KidsBalloonPopProps> = ({
         </div>
 
         <div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
-          {JOLLY_LEVELS.map((level) => {
+          {TINY_STEPS_PHONICS_LEVELS.map((level) => {
             const locked = !unlockAllLevels && level.id > progress.unlocked;
             const completed = progress.completed[level.id];
             const stars = completed ? "⭐".repeat(completed.stars) : "";
@@ -1075,7 +1076,7 @@ const KidsBalloonPop: React.FC<KidsBalloonPopProps> = ({
               <button
                 key={level.id}
                 type="button"
-                aria-label={`Level ${level.id} ${level.title}`}
+                aria-label={`${level.title}: ${level.letters.join(" ")}`}
                 onClick={() => {
                   if (!locked) void playLevel(level.id);
                 }}
@@ -1091,7 +1092,7 @@ const KidsBalloonPop: React.FC<KidsBalloonPopProps> = ({
                       <div className="text-sm text-white/80 mt-2">{level.letters.join(" ")}</div>
                       {completed && (
                         <div className="text-xs text-green-300 mt-1 font-semibold">
-                          {completed.mastered ? "Mastered ✅" : "Completed • Practice to unlock"} • Best: {completed.bestScore}
+                          {completed.mastered ? "Mastered ✅" : "Completed • Practice to unlock next group"} • Best: {completed.bestScore}
                         </div>
                       )}
                     </div>
@@ -1170,7 +1171,7 @@ const KidsBalloonPop: React.FC<KidsBalloonPopProps> = ({
 
       {/* HUD */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 flex gap-4 items-center bg-white/90 backdrop-blur-md px-5 py-2.5 rounded-full shadow-xl border border-white/50">
-        <div className="text-sm font-semibold text-gray-800">{currentLevel?.title || "Level"}</div>
+        <div className="text-sm font-semibold text-gray-800">{currentLevel?.title || "Sound Group"}</div>
         <div className="text-sm font-semibold text-gray-800">
           Score: <span className="font-bold text-green-600">{score}</span>
         </div>
@@ -1388,7 +1389,7 @@ const KidsBalloonPop: React.FC<KidsBalloonPopProps> = ({
         })}
       </div>
 
-      {/* Bottom cue (keep as your “POP: letter” because this is a letter-ID game) */}
+      {/* Bottom cue: this is a letter-sound identification game */}
       {hasStarted && !levelComplete && (
         <button
           onClick={handleHearAgain}
@@ -1460,8 +1461,8 @@ const KidsBalloonPop: React.FC<KidsBalloonPopProps> = ({
             </p>
             <p className="text-xl text-white/95 mb-2 max-w-xl font-semibold">
               {sessionMastered
-                ? "You finished and mastered this level. Next level is unlocked."
-                : "You finished this level. Replay once more to unlock the next level."}
+                ? "You finished and mastered this sound group. The next sound group is unlocked."
+                : "You finished this sound group. Replay once more to unlock the next sound group."}
             </p>
             {!sessionMastered && (
               <p className="text-sm text-white/80 mb-6 max-w-xl">
@@ -1495,7 +1496,7 @@ const KidsBalloonPop: React.FC<KidsBalloonPopProps> = ({
                   className="px-8 py-4 bg-green-600 hover:bg-green-700 rounded-2xl text-2xl font-bold text-white shadow-2xl transform hover:scale-105 transition-all"
                   style={{ touchAction: "manipulation" }}
                 >
-                  ➡️ Next Level
+                  ➡️ Next Sound Group
                 </button>
               )}
               <button
@@ -1510,7 +1511,7 @@ const KidsBalloonPop: React.FC<KidsBalloonPopProps> = ({
                 className="px-8 py-4 bg-gray-700 hover:bg-gray-800 rounded-2xl text-2xl font-bold text-white shadow-2xl transform hover:scale-105 transition-all"
                 style={{ touchAction: "manipulation" }}
               >
-                ⬅️ Back to Levels
+                ⬅️ Back to Sound Groups
               </button>
             </div>
           </div>
