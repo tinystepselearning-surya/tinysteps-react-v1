@@ -374,6 +374,7 @@ const KidsBalloonPop: React.FC<KidsBalloonPopProps> = ({
   const [balloons, setBalloons] = useState<Balloon[]>([]);
   const [hasStarted, setHasStarted] = useState(false);
   const [fullscreenMode, setFullscreenMode] = useState(false);
+  const [nativeFullscreenActive, setNativeFullscreenActive] = useState(false);
   const [fsBlocked, setFsBlocked] = useState(false);
 
   const [target, setTarget] = useState<string>("");
@@ -466,6 +467,29 @@ const KidsBalloonPop: React.FC<KidsBalloonPopProps> = ({
   }, []);
 
   // --- Fullscreen helpers ---
+  const requestNativeFullscreen = useCallback(async () => {
+    if (disableFullscreen) return false;
+
+    try {
+      const elem = document.documentElement;
+      if (elem.requestFullscreen) await elem.requestFullscreen();
+      else if ((elem as any).webkitRequestFullscreen) await (elem as any).webkitRequestFullscreen();
+      else return false;
+
+      setNativeFullscreenActive(true);
+      setFsBlocked(false);
+      return true;
+    } catch {
+      setNativeFullscreenActive(false);
+      setFsBlocked(true);
+      if (fsNoticeTimeoutRef.current) {
+        window.clearTimeout(fsNoticeTimeoutRef.current);
+      }
+      fsNoticeTimeoutRef.current = window.setTimeout(() => setFsBlocked(false), 2200);
+      return false;
+    }
+  }, [disableFullscreen]);
+
   const playLevel = useCallback(
     async (levelId: number, mode: GameMode = "focus") => {
       if (!unlockAllLevels && levelId > progress.unlocked) return;
@@ -477,20 +501,8 @@ const KidsBalloonPop: React.FC<KidsBalloonPopProps> = ({
       setReviewLetters([]);
       setFsBlocked(false);
 
-      // Fullscreen is best-effort; gameplay should still work when blocked.
-      if (!disableFullscreen) {
-        try {
-          const elem = document.documentElement;
-          if (elem.requestFullscreen) await elem.requestFullscreen();
-          else if ((elem as any).webkitRequestFullscreen) await (elem as any).webkitRequestFullscreen();
-        } catch {
-          setFsBlocked(true);
-          if (fsNoticeTimeoutRef.current) {
-            window.clearTimeout(fsNoticeTimeoutRef.current);
-          }
-          fsNoticeTimeoutRef.current = window.setTimeout(() => setFsBlocked(false), 2200);
-        }
-      }
+      // Native fullscreen is best-effort. The fixed viewport presentation remains as a fallback.
+      await requestNativeFullscreen();
 
       // Update URL
       const params = new URLSearchParams();
@@ -538,11 +550,12 @@ const KidsBalloonPop: React.FC<KidsBalloonPopProps> = ({
       setLevelComplete(false);
       lastCorrectPopRef.current = Date.now();
     },
-    [baseRoute, disableFullscreen, kidId, navigate, progress.unlocked, publicMode, searchParams, unlockAllLevels]
+    [baseRoute, kidId, navigate, progress.unlocked, publicMode, requestNativeFullscreen, searchParams, unlockAllLevels]
   );
 
   const exitFullscreen = useCallback(() => {
     setFullscreenMode(false);
+    setNativeFullscreenActive(false);
     setHasStarted(false);
     if (nextTargetCueTimeoutRef.current) {
       window.clearTimeout(nextTargetCueTimeoutRef.current);
@@ -569,6 +582,7 @@ const KidsBalloonPop: React.FC<KidsBalloonPopProps> = ({
     if (disableFullscreen) return;
     const handleFSChange = () => {
       const isFull = !!(document.fullscreenElement || (document as any).webkitFullscreenElement);
+      setNativeFullscreenActive(isFull);
       if (isFull) {
         setFsBlocked(false);
         return;
@@ -1230,8 +1244,18 @@ const KidsBalloonPop: React.FC<KidsBalloonPopProps> = ({
         }
       `}</style>
 
-      {/* Exit */}
+      {/* Immersive controls */}
+      {!disableFullscreen && !nativeFullscreenActive && (
+        <button
+          type="button"
+          onClick={() => void requestNativeFullscreen()}
+          className="absolute top-4 right-28 z-50 px-4 py-2 bg-slate-900/80 hover:bg-slate-900 text-white text-sm font-semibold rounded-full shadow-lg backdrop-blur-sm"
+        >
+          ⛶ Full screen
+        </button>
+      )}
       <button
+        type="button"
         onClick={exitFullscreen}
         className="absolute top-4 right-4 z-50 px-4 py-2 bg-red-500/90 hover:bg-red-600 text-white font-semibold rounded-full shadow-lg backdrop-blur-sm"
       >
@@ -1258,7 +1282,7 @@ const KidsBalloonPop: React.FC<KidsBalloonPopProps> = ({
       {/* Fullscreen blocked toast */}
       {fsBlocked && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-lg z-50">
-          Fullscreen unavailable. You can keep playing.
+          Fullscreen unavailable. Immersive game view is still active.
         </div>
       )}
 
