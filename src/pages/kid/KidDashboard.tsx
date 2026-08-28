@@ -363,7 +363,7 @@ const KidDashboard: React.FC = () => {
                 <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
                   Sound Detective 🔍
                   <span className="text-[11px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
-                    Beta · Groq AI
+                    Beta · Adaptive AI
                   </span>
                 </h2>
                 <p className="text-sm text-slate-600">

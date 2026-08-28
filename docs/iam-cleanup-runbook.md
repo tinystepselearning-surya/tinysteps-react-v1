@@ -25,7 +25,7 @@ This runbook is rollback-safe and designed for one change at a time.
 3. Verify callable function still works.
 4. Verify HTTP function still works.
 5. Verify Firestore trigger remains active.
-6. Verify Groq-backed function can resolve `groq-api-key`.
+6. Verify Ask Tiny Steps succeeds through the separate Firebase AI Logic project.
 
 ## Rollback
 
