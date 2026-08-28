@@ -103,8 +103,10 @@ describe('Ask Tiny Steps smart source selector', () => {
     expect(selection.sourceIds).toContain('phonics');
   });
 
-  it('does not spend URL Context tokens on unrelated general-purpose questions', () => {
-    const selection = selectAskTinyStepsSources('Who won the cricket match yesterday?');
+  it('does not spend URL Context tokens on unrelated general-purpose questions even on the homepage', () => {
+    const selection = selectAskTinyStepsSources('Who won the cricket match yesterday?', {
+      currentPath: '/',
+    });
 
     expect(selection.intent).toBe('general');
     expect(selection.sourceIds).toEqual([]);
