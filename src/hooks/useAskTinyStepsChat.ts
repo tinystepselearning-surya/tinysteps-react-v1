@@ -19,13 +19,15 @@ import {
   ASK_TINY_STEPS_SAFE_ERROR,
   callAskTinySteps,
 } from "../services/askTinyStepsService";
+import { selectAskTinyStepsSources } from "../services/askTinyStepsSourceSelector";
 
 type ChatRole = "user" | "assistant";
 export type AskChatMessage = { role: ChatRole; content: string };
 
 /**
- * ✅ Curated, deterministic KB (no model calls).
- * Keep this aligned with website copy.
+ * Curated deterministic fallback KB.
+ * AI-2C no longer sends these snippets to Gemini. They remain only as the
+ * fail-closed local fallback if Firebase AI Logic or URL Context is unavailable.
  */
 const CANONICAL_PRICING_PACKAGES = ONE_TO_ONE_MONTHLY_PACKAGES.map((pkg) => ({
   classes: pkg.classes,
@@ -118,34 +120,26 @@ export const ASK_TINYSTEPS_FACTS = {
   classModes: ["1:1"] as const,
   freeDemoSessionCount: FREE_DEMO_SESSION_COUNT,
   freeDemoDurationMins: FREE_DEMO_DURATION_MINUTES,
-
-  // ✅ Important: keep these consistent with website CTA.
   freeAssessmentPrice: FREE_DEMO_PRICE,
-
-  // Optional paid single class (not the demo)
   paidSingleClassPrice: PER_CLASS_PRICE,
-
   pricingPackages: CANONICAL_PRICING_PACKAGES,
   ultraPremiumPricing: ULTRA_PREMIUM_PRICING,
-
   ageRangeOverall: "3–12",
   tracks: [
     { name: "Phonics", ageRange: "3–10" },
     { name: "Grammar", ageRange: "5–10" },
     { name: "Public Speaking", ageRange: "5–12" },
   ] as const,
-
   whatsappCtaText: "Chat with our WhatsApp Advisor",
   whatsappLink: "https://wa.me/919618398383",
 } as const;
 
 // --------------------
-// Helpers: tokenize + retrieve
+// Legacy fallback retrieval only
 // --------------------
 function tokenize(text: string): string[] {
   return text
     .toLowerCase()
-    // ✅ keep this regex on ONE line (no line breaks)
     .replace(/[^\w\s]/g, " ")
     .split(/\s+/)
     .filter(Boolean);
@@ -170,13 +164,13 @@ function retrieve(query: string, topN = 2) {
 }
 
 // --------------------
-// Intent detection + strict facts formatting
+// Legacy fallback intent detection + strict facts formatting
 // --------------------
 type Intent =
   | "greeting"
-  | "assessment" // free demo/free assessment
+  | "assessment"
   | "pricing"
-  | "single_class" // paid one class
+  | "single_class"
   | "timings"
   | "courses"
   | "summer_camp"
@@ -186,7 +180,6 @@ function detectIntent(q: string): Intent {
   const s = q.toLowerCase();
   const trimmed = s.trim();
 
-  // ✅ Greeting intent (short hi/hello type messages)
   if (
     /^(hi|hello|hey|hii+|heyy+|hola|namaste|good morning|good afternoon|good evening)\b/.test(
       trimmed
@@ -196,11 +189,6 @@ function detectIntent(q: string): Intent {
     return "greeting";
   }
 
-  /**
-   * ✅ Very important ordering:
-   * “demo / free assessment / free trial” must be answered as FREE (₹0)
-   * and must NOT fall through to pricing or paid class.
-   */
   if (
     /(free\s*assessment|assessment\s*class|demo\s*class|demo|free\s*demo|free\s*trial)/.test(
       s
@@ -209,7 +197,6 @@ function detectIntent(q: string): Intent {
     return "assessment";
   }
 
-  // Paid single class (only when explicitly asked)
   if (
     /(single\s*class|one\s*class|paid\s*class|paid\s*trial|trial\s*price|trial\s*fee)/.test(
       s
@@ -218,11 +205,9 @@ function detectIntent(q: string): Intent {
     return "single_class";
   }
 
-  // Summer camp related (keep above generic pricing/courses so "summer camp fees" maps correctly)
   if (/(summer\s*camp|summer\s*camps|fast\s*track|vacation\s*course|holiday\s*course)/.test(s))
     return "summer_camp";
 
-  // Packages / pricing
   if (/(price|prices|cost|fee|fees|pricing|package|packages|plan|plans)/.test(s))
     return "pricing";
   if (/(minute|minutes|min|duration|how long|time per class)/.test(s))
@@ -337,9 +322,6 @@ function historyForAI(messages: AskChatMessage[], maxMessages = 10): AskChatMess
   }));
 }
 
-// --------------------
-// Hook
-// --------------------
 export function useAskTinyStepsChat() {
   const [messages, setMessages] = useState<AskChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -353,7 +335,6 @@ export function useAskTinyStepsChat() {
     setInput("");
   }, []);
 
-  // ✅ Allow optionally sending an explicit text (useful for quick-reply chips)
   const sendMessage = useCallback(
     async (textOverride?: string) => {
       const trimmed = (textOverride ?? input).trim();
@@ -372,24 +353,24 @@ export function useAskTinyStepsChat() {
       setError(null);
 
       const intent = detectIntent(trimmed);
-
       let assistantText = "";
 
-      // ✅ Greeting first (no model call needed)
       if (intent === "greeting") {
         const res = greetingReply();
         assistantText = res.text;
       } else {
-        // Try Firebase AI Logic first for richer, approved-context responses.
         try {
           const conversation = historyForAI([...messages, userMsg], 10);
-          const approvedSnippets = retrieve(trimmed, 2).results.map(({ title, text, url }) => ({
-            title,
-            text,
-            url,
-          }));
+          const recentUserMessages = messages
+            .filter((message) => message.role === "user")
+            .map((message) => message.content)
+            .slice(-2);
+          const sourceSelection = selectAskTinyStepsSources(trimmed, {
+            recentUserMessages,
+            currentPath: typeof window !== "undefined" ? window.location.pathname : undefined,
+          });
           const aiReply = await callAskTinySteps(conversation, {
-            approvedSnippets,
+            sourceIds: sourceSelection.sourceIds,
           });
           if (aiReply?.trim()) {
             assistantText = aiReply.trim();
@@ -400,7 +381,7 @@ export function useAskTinyStepsChat() {
         }
       }
 
-      // Local deterministic fallback when cloud is unavailable.
+      // Fail-closed deterministic fallback. These local facts are not sent to Gemini.
       if (!assistantText) {
         if (
           intent === "assessment" ||
