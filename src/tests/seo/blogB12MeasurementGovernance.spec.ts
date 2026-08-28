@@ -83,7 +83,7 @@ describe('B12 measurement and publishing governance', () => {
     expect(governance).toContain('New blog URLs in B12: **0**');
     expect(governance).toContain('NEW PAGE GATE');
     expect(governance).toContain('No change is a valid SEO decision');
-    expect(governance).toContain('A third-party crawler error');
+    expect(governance).toContain('third-party crawler error');
     expect(template).toContain('Location-page gate');
     expect(template).toContain('Do not publish a city/country page by swapping place names');
     expect(template).toContain('blog_demo_submit');
