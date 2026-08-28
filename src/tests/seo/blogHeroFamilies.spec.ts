@@ -15,7 +15,7 @@ const EXPECTED_FAMILY_COUNTS: Record<BlogHeroFamily, number> = {
   'satpin-letter-sounds': 2,
   'blending-early-reading': 6,
   'reading-fluency': 1,
-  'parent-home-practice': 9,
+  'parent-home-practice': 8,
   'grammar-sentence-building': 9,
   'speaking-communication': 10,
   'school-readiness-routines': 3,
@@ -26,12 +26,13 @@ const EXPECTED_FAMILY_COUNTS: Record<BlogHeroFamily, number> = {
 
 const INTENTIONAL_EXISTING_HERO_SLUGS = [
   'are-phonics-apps-enough-for-kids',
+  'can-child-improve-english-in-10-days',
   'how-phonics-grammar-and-communication-work-together',
   'how-to-choose-phonics-classes',
   'online-english-classes-for-kids-india',
   'online-phonics-classes-vs-school',
+  'week-11-grammar-creative-writing',
   'week-22-phonics-diagnostics',
-  'week-23-grammar-speaking-bridge',
   'week-6-phonics-comprehension',
   'why-child-reads-words-but-does-not-understand-story',
   'why-parents-choose-online-phonics',
@@ -61,6 +62,9 @@ describe('blog hero image family architecture', () => {
     expect(BLOG_HERO_FAMILY_BY_SLUG['how-kids-learn-blending']).toBe('blending-early-reading');
     expect(BLOG_HERO_FAMILY_BY_SLUG['how-to-improve-reading-fluency-in-children']).toBe(
       'reading-fluency',
+    );
+    expect(BLOG_HERO_FAMILY_BY_SLUG['week-23-grammar-speaking-bridge']).toBe(
+      'grammar-sentence-building',
     );
     expect(BLOG_HERO_FAMILY_BY_SLUG['phonics-teacher-training-for-schools-implementation']).toBe(
       'teacher-classroom-support',

@@ -31,7 +31,6 @@ export const BLOG_HERO_FAMILY_BY_SLUG: Readonly<Record<string, BlogHeroFamily>> 
   'how-to-improve-reading-fluency-in-children': 'reading-fluency',
 
   // Parent-led practice and home routines
-  'can-child-improve-english-in-10-days': 'parent-home-practice',
   'child-reads-in-class-but-forgets-at-home': 'parent-home-practice',
   'how-to-engage-kids-in-english-learning-at-home': 'parent-home-practice',
   'phonics-activities-for-kids-at-home': 'parent-home-practice',
@@ -48,9 +47,9 @@ export const BLOG_HERO_FAMILY_BY_SLUG: Readonly<Record<string, BlogHeroFamily>> 
   'week-8-grammar-tenses': 'grammar-sentence-building',
   'week-9-grammar-conjunctions': 'grammar-sentence-building',
   'week-10-grammar-subject-verb': 'grammar-sentence-building',
-  'week-11-grammar-creative-writing': 'grammar-sentence-building',
   'week-17-grammar-assessment': 'grammar-sentence-building',
   'week-20-grammar-editing-camp': 'grammar-sentence-building',
+  'week-23-grammar-speaking-bridge': 'grammar-sentence-building',
 
   // Speaking, listening, presentations, and communication confidence
   'child-understands-english-but-does-not-speak': 'speaking-communication',
