@@ -150,6 +150,24 @@ const post: BlogPost = {
     content: 'If spelling is messy, focus on ideas and use a word bank for correct spellings nearby. If the child refuses, switch to drawing or oral storytelling and try writing later.'
   }, {
     type: 'h2',
+    content: 'Choose the right next grammar guide for the exact gap'
+  }, {
+    type: 'p',
+    content: 'This page is the broad grammar roadmap. Use the next guide according to where the child gets stuck rather than repeating the whole sequence. Sentence building and grammar-rule transfer are related, but they are not the same problem.'
+  }, {
+    type: 'li',
+    content: '[How sentence formation develops](/blog/how-to-improve-sentence-formation-in-kids) — use this when the child has ideas or vocabulary but cannot reliably build, expand, or write a complete sentence.'
+  }, {
+    type: 'li',
+    content: '[Why a child can know grammar rules but still make mistakes](/blog/child-knows-grammar-but-makes-mistakes) — use this when the rule is known in exercises but disappears during fresh speaking or writing.'
+  }, {
+    type: 'li',
+    content: '[Practise conjunctions to join ideas](/blog/week-9-grammar-conjunctions) — a supporting practice guide for children who can make short sentences but need to connect reasons, contrasts, or results.'
+  }, {
+    type: 'li',
+    content: '[Bridge spoken ideas into writing](/blog/week-23-grammar-speaking-bridge) — a supporting practice guide when the child can say the idea but loses structure while writing it.'
+  }, {
+    type: 'h2',
     content: 'Done checklist + Week 8 tenses teaser'
   }, {
     type: 'li',
