@@ -218,8 +218,6 @@ function inferFamily(post: BlogConversionInput): BlogConversionFamily {
       return 'sentence-building';
     case 'Speaking & Communication':
       return 'speaking-confidence';
-    case 'Schools & Research':
-      return 'schools-partnership';
     default:
       return 'general-english';
   }
