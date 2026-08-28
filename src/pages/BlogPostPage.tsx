@@ -11,6 +11,7 @@ import {
   getBlogEvidenceSummary,
   resolveBlogAuthor,
 } from '../content/blog/shared/editorialTrust';
+import { resolveBlogHero } from '../content/blog/shared/heroFamilies';
 import { ORGANIZATION_ID, PUBLIC_FACTS, SITE_ORIGIN } from '../lib/schemas';
 import AboutAuthor from '../components/AboutAuthor';
 import ParentsAlsoAsk from '../components/ParentsAlsoAsk';
@@ -512,6 +513,10 @@ const BlogPostPage: FC = () => {
 
   // hooks must run before any early returns
   const metaSource = useMemo(() => post || mdxMeta || {}, [post, mdxMeta]);
+  const resolvedHero = useMemo(
+    () => (post ? resolveBlogHero(post) : metaSource.hero),
+    [metaSource.hero, post],
+  );
   const articleAuthor = useMemo(
     () => resolveBlogAuthor(metaSource.author, metaSource.category),
     [metaSource.author, metaSource.category],
@@ -567,8 +572,8 @@ function buildMetaDescription(src: any) {
       author: buildBlogAuthorSchema(articleAuthor),
       url: canonicalArticleUrl,
       // Add dates only when present in metadata (do not invent dates)
-      image: metaSource.hero
-        ? (metaSource.hero.startsWith('http') ? metaSource.hero : `${SITE_ORIGIN}${metaSource.hero}`)
+      image: resolvedHero
+        ? (resolvedHero.startsWith('http') ? resolvedHero : `${SITE_ORIGIN}${resolvedHero}`)
         : `${SITE_ORIGIN}/og-default.jpg`,
       description: buildMetaDescription(metaSource) || undefined,
       articleSection: metaSource.category || undefined,
@@ -604,7 +609,7 @@ function buildMetaDescription(src: any) {
     }
 
     return obj;
-  }, [articleAuthor, canonicalArticleUrl, metaSource, post]);
+  }, [articleAuthor, canonicalArticleUrl, metaSource, post, resolvedHero]);
 
   const faqSchema = useMemo(() => {
     if (!post?.faq?.length) return null;
@@ -862,11 +867,11 @@ function buildMetaDescription(src: any) {
               <Link to="/blog" className="inline-flex items-center text-sm font-semibold text-primary-700">← Back to Blogs</Link>
             </div>
 
-            {metaSource.hero ? (
+            {resolvedHero ? (
               <div className="self-start overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
                 <div className={`aspect-[1.68/1] w-full ${isStoryUnderstandingPillar ? 'xl:aspect-[2.25/1]' : 'xl:aspect-[2.05/1]'}`}>
                   <img
-                    src={metaSource.hero}
+                    src={resolvedHero}
                     alt={metaSource.title}
                     className="h-full w-full bg-slate-100 object-cover object-center"
                     width={1600}

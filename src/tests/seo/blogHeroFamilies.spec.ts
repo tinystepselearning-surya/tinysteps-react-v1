@@ -1,3 +1,5 @@
+import { existsSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { blogPosts } from '../../content/blog';
 import {
@@ -6,42 +8,96 @@ import {
   getBlogHeroFamily,
   getBlogHeroFamilyAssetPath,
   resolveBlogHero,
+  type BlogHeroFamily,
 } from '../../content/blog/shared/heroFamilies';
 
-const EXPECTED_FAMILIES = {
-  'satpin-phonics-guide': 'satpin-letter-sounds',
-  'phonics-for-parents-guide': 'general-phonics',
-  'why-child-knows-letter-sounds-but-cannot-read-words': 'blending-early-reading',
-  'child-knows-abc-but-cannot-read': 'blending-early-reading',
-  'how-kids-learn-blending': 'blending-early-reading',
-  'phonics-blending-activities': 'blending-early-reading',
-  'how-to-improve-reading-fluency-in-children': 'reading-fluency',
-  'how-to-improve-sentence-formation-in-kids': 'grammar-sentence-building',
-  'child-understands-english-but-does-not-speak': 'speaking-communication',
-} as const;
+const EXPECTED_FAMILY_COUNTS: Record<BlogHeroFamily, number> = {
+  'satpin-letter-sounds': 2,
+  'blending-early-reading': 6,
+  'reading-fluency': 1,
+  'parent-home-practice': 9,
+  'grammar-sentence-building': 9,
+  'speaking-communication': 10,
+  'school-readiness-routines': 3,
+  'schools-research': 6,
+  'teacher-classroom-support': 2,
+  'general-phonics': 18,
+};
+
+const INTENTIONAL_EXISTING_HERO_SLUGS = [
+  'are-phonics-apps-enough-for-kids',
+  'how-phonics-grammar-and-communication-work-together',
+  'how-to-choose-phonics-classes',
+  'online-english-classes-for-kids-india',
+  'online-phonics-classes-vs-school',
+  'week-22-phonics-diagnostics',
+  'week-23-grammar-speaking-bridge',
+  'week-6-phonics-comprehension',
+  'why-child-reads-words-but-does-not-understand-story',
+  'why-parents-choose-online-phonics',
+] as const;
 
 describe('blog hero image family architecture', () => {
-  it('maps the initial high-value pages to stable visual families', () => {
-    const bySlug = new Map(blogPosts.map((post) => [post.slug, post]));
+  it('maps every reviewed article to its approved family or an intentional existing-hero fallback', () => {
+    const actualCounts = Object.fromEntries(
+      [...AVAILABLE_BLOG_HERO_FAMILY_ASSETS].map((family) => [family, 0]),
+    ) as Record<BlogHeroFamily, number>;
 
-    for (const [slug, family] of Object.entries(EXPECTED_FAMILIES)) {
-      expect(bySlug.has(slug), `${slug} must remain an existing blog URL`).toBe(true);
-      expect(BLOG_HERO_FAMILY_BY_SLUG[slug]).toBe(family);
-      expect(getBlogHeroFamily(bySlug.get(slug)!)).toBe(family);
+    for (const post of blogPosts) {
+      const family = getBlogHeroFamily(post);
+      if (family) actualCounts[family] += 1;
+    }
+
+    expect(actualCounts).toEqual(EXPECTED_FAMILY_COUNTS);
+    expect(
+      blogPosts.filter((post) => !getBlogHeroFamily(post)).map((post) => post.slug).sort(),
+    ).toEqual([...INTENTIONAL_EXISTING_HERO_SLUGS].sort());
+  });
+
+  it('keeps required semantic assignments explicit and stable', () => {
+    expect(BLOG_HERO_FAMILY_BY_SLUG['satpin-phonics-guide']).toBe('satpin-letter-sounds');
+    expect(BLOG_HERO_FAMILY_BY_SLUG['week-1-phonics-satpin-launch']).toBe('satpin-letter-sounds');
+    expect(BLOG_HERO_FAMILY_BY_SLUG['phonics-blending-activities']).toBe('blending-early-reading');
+    expect(BLOG_HERO_FAMILY_BY_SLUG['how-kids-learn-blending']).toBe('blending-early-reading');
+    expect(BLOG_HERO_FAMILY_BY_SLUG['how-to-improve-reading-fluency-in-children']).toBe(
+      'reading-fluency',
+    );
+    expect(BLOG_HERO_FAMILY_BY_SLUG['phonics-teacher-training-for-schools-implementation']).toBe(
+      'teacher-classroom-support',
+    );
+  });
+
+  it('routes reviewed school evidence to research unless a teacher-support mapping is stronger', () => {
+    const researchPost = blogPosts.find(
+      (post) => post.slug === 'cbse-phonics-curriculum-vs-systematic-phonics-programme',
+    )!;
+    const teacherPost = blogPosts.find(
+      (post) => post.slug === 'phonics-teacher-training-for-schools-implementation',
+    )!;
+
+    expect(getBlogHeroFamily(researchPost)).toBe('schools-research');
+    expect(getBlogHeroFamily(teacherPost)).toBe('teacher-classroom-support');
+  });
+
+  it('activates only assets that exist and resolve to non-empty public WebP files', () => {
+    expect(AVAILABLE_BLOG_HERO_FAMILY_ASSETS.size).toBe(10);
+
+    for (const family of AVAILABLE_BLOG_HERO_FAMILY_ASSETS) {
+      const publicPath = getBlogHeroFamilyAssetPath(family);
+      const filePath = join(process.cwd(), 'public', publicPath.replace(/^\//, ''));
+      expect(existsSync(filePath), `${family} asset must exist`).toBe(true);
+      expect(statSync(filePath).size, `${family} asset must not be empty`).toBeGreaterThan(0);
     }
   });
 
-  it('uses existing audience metadata for school research content', () => {
-    const schoolPosts = blogPosts.filter((post) => post.audience === 'Schools & Research');
-    expect(schoolPosts.length).toBeGreaterThan(0);
-    expect(schoolPosts.every((post) => getBlogHeroFamily(post) === 'schools-research')).toBe(true);
-  });
-
-  it('keeps current heroes and never requests planned assets before they exist', () => {
-    expect(AVAILABLE_BLOG_HERO_FAMILY_ASSETS.size).toBe(0);
-
+  it('uses the family image for mapped posts and preserves article-specific fallbacks', () => {
     const mappedPost = blogPosts.find((post) => post.slug === 'satpin-phonics-guide')!;
-    expect(resolveBlogHero(mappedPost)).toBe(mappedPost.hero);
+    const fallbackPost = blogPosts.find(
+      (post) => post.slug === 'why-child-reads-words-but-does-not-understand-story',
+    )!;
+
+    expect(resolveBlogHero(mappedPost)).toBe('/blog/hero-families/satpin-letter-sounds.webp');
+    expect(resolveBlogHero(fallbackPost)).toBe(fallbackPost.hero);
     expect(resolveBlogHero({
       slug: 'unmapped-test-post',
       hero: '/blog/existing-hero.webp',
@@ -53,11 +109,5 @@ describe('blog hero image family architecture', () => {
       audience: 'Parent',
       discoveryCategory: 'Parent Guides',
     })).toBeUndefined();
-  });
-
-  it('exposes the predictable future WebP path contract', () => {
-    expect(getBlogHeroFamilyAssetPath('blending-early-reading')).toBe(
-      '/blog/hero-families/blending-early-reading.webp',
-    );
   });
 });

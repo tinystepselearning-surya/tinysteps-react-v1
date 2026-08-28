@@ -1,6 +1,6 @@
 # Blog hero image system
 
-The blog hero-family registry gives selected posts a stable visual intent without replacing their current `hero`. A family asset becomes eligible only after its finished WebP is added to `public/blog/hero-families/` and the family is added to `AVAILABLE_BLOG_HERO_FAMILY_ASSETS`. Until then, `resolveBlogHero` returns the post's existing hero, so planned assets never create broken requests.
+The blog hero-family registry gives selected posts a stable visual intent without replacing their stored `hero`. A family asset becomes eligible only after its finished WebP is added to `public/blog/hero-families/` and the family is added to `AVAILABLE_BLOG_HERO_FAMILY_ASSETS`. If an article has no reviewed family, `resolveBlogHero` returns the post's existing hero, so uncertain matches keep their established imagery and planned assets never create broken requests.
 
 ## Production contract
 
@@ -34,10 +34,10 @@ The blog hero-family registry gives selected posts a stable visual intent withou
 
 Assets follow `public/blog/hero-families/<family>.webp`, producing public URLs such as `/blog/hero-families/reading-fluency.webp`.
 
-To publish a family image:
+All ten approved family WebPs are now active. To publish a future family image:
 
 1. Add the reviewed WebP at the contracted path.
 2. Add that family to `AVAILABLE_BLOG_HERO_FAMILY_ASSETS`.
 3. Run the hero-family tests, blog SEO tests, production build, and SEO smoke checks.
 
-Slug mappings remain explicit in `src/content/blog/shared/heroFamilies.ts`. School research posts use their existing `audience` or `discoveryCategory` metadata rather than title matching. Do not assign a family unless the editorial intent is clear.
+Slug mappings remain explicit in `src/content/blog/shared/heroFamilies.ts`. School research posts use their existing `audience` or `discoveryCategory` metadata rather than title matching, with explicit teacher-support mappings taking precedence. The resolver is shared by blog cards, article heroes, and their structured-data image fields. Rendered image alt text remains the article title; family identifiers are never exposed as alt text. Do not assign a family unless the editorial intent is clear.
