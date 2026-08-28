@@ -168,10 +168,11 @@ export const BLOG_INTENT_CLUSTERS = Object.freeze([
     audience: 'Parent',
     queryIntent: 'How phonics improves reading confidence',
     risk: 'resolved',
-    action: 'merge-planned',
+    action: 'protect-existing-consolidation',
     canonicalOwner: 'how-phonics-builds-reading-confidence',
-    slugs: ['how-phonics-builds-reading-confidence', 'how-tiny-steps-builds-reading-confidence'],
-    mergeSourceSlugs: ['how-tiny-steps-builds-reading-confidence'],
+    slugs: ['how-phonics-builds-reading-confidence'],
+    retiredSlugs: ['how-tiny-steps-builds-reading-confidence'],
+    retiredRedirectOwner: 'how-phonics-builds-reading-confidence',
     evidence: gsc(
       {
         'how-phonics-builds-reading-confidence': { clicks: 0, impressions: 7 },
@@ -179,7 +180,7 @@ export const BLOG_INTENT_CLUSTERS = Object.freeze([
       'The generic article is the better informational owner. The branded article substantially repeats the same confidence, correction, retry, home-routine and progress framework and should contribute its Tiny Steps-specific material to the generic owner before retirement.',
     ),
     notes:
-      'B2 finalizes ownership only. B3 must first merge any unique branded method material into the owner, then implement a permanent redirect and remove the retired URL from discovery outputs.',
+      'B3 merged the unique branded method material into this owner, permanently redirected the retired URL and removed it from discovery outputs.',
   },
   {
     id: 'phonics-class-selection',

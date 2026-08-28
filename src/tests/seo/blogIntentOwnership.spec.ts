@@ -10,7 +10,8 @@ describe('blog intent ownership', () => {
 
     expect(output).toContain('[blog-b2] 18 final intent clusters');
     expect(output).toContain('[blog-b2] 0 unresolved ownership decisions');
-    expect(output).toContain('[blog-b2] 1 planned merge(s) for B3 implementation');
+    expect(output).toContain('[blog-b2] 0 planned merge(s) for B3 implementation');
+    expect(output).toContain('[blog-b2] 5 existing consolidation lineage(s) protected');
     expect(output).toContain('[blog-b2] 2 evergreen + supporting-noindex relationship(s) validated');
     expect(output).toContain(
       '[blog-b2] PASS: final intent ownership, redirect lineage, GSC evidence and support-page policy are internally consistent.',

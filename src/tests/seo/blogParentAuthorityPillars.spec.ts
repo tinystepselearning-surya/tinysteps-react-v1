@@ -30,7 +30,7 @@ function bodyText(slug: string) {
 
 describe('B6 parent authority pillars', () => {
   it('keeps the isolated blog registry stable and defines exactly the seven GSC-prioritised authority URLs', () => {
-    expect(blogPosts).toHaveLength(77);
+    expect(blogPosts).toHaveLength(76);
     expect(PARENT_AUTHORITY_PILLARS).toHaveLength(7);
     expect(new Set(PARENT_AUTHORITY_SLUGS).size).toBe(7);
     expect(getParentAuthorityPosts(blogPosts)).toHaveLength(7);

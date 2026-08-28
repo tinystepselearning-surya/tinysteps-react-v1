@@ -18,19 +18,19 @@ function runAudit(args: string[] = []) {
 }
 
 describe('B0 blog baseline audit', () => {
-  it('executes successfully in normal mode and reports the frozen inventory', () => {
+  it('executes successfully in normal mode and reports the integrated post-B3 inventory', () => {
     const output = runAudit();
 
     expect(output).toContain('[blog-b0] baseline inventory');
-    expect(output).toContain('"sourcePostFiles": 77');
-    expect(output).toContain('"routedPostSlugs": 77');
+    expect(output).toContain('"sourcePostFiles": 76');
+    expect(output).toContain('"routedPostSlugs": 76');
     expect(output).toContain('"duplicateSlugs": 0');
-    expect(output).toContain('"publishedPosts": 77');
+    expect(output).toContain('"publishedPosts": 76');
     expect(output).toContain('"weeklyPosts": 27');
     expect(output).toContain('"pageNoindexPosts": 24');
-    expect(output).toContain('"indexableByPageRobots": 53');
-    expect(output).toContain('"expectedGeneratedSitemapPosts": 52');
-    expect(output).toContain('"retiredRedirectSources": 11');
+    expect(output).toContain('"indexableByPageRobots": 52');
+    expect(output).toContain('"expectedGeneratedSitemapPosts": 51');
+    expect(output).toContain('"retiredRedirectSources": 12');
     expect(output).toContain('[blog-b0] PASS: registry structure is internally consistent.');
   });
 
