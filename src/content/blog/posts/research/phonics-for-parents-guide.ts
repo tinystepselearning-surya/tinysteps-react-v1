@@ -19,6 +19,18 @@ const post: BlogPost = {
   }, {
     type: 'p',
     content: 'It also includes multilingual-home guidance, a 10-minute daily routine, myth-busting, a class-quality checklist, parent FAQ, and a citation appendix.'
+  }, {
+    type: 'h2',
+    content: 'How Tiny Steps separates the reading problem before choosing practice'
+  }, {
+    type: 'p',
+    content: 'Tiny Steps uses an assessment-first pathway rather than assuming every reading difficulty is a phonics-rule problem. A useful sequence is: can the child hear and notice sounds, recall the taught letter sounds, merge sounds orally, blend the same sounds in print, decode a fresh word, and then carry that process into connected text? The first step that consistently breaks is the better place to practise than simply adding more worksheets or new rules.'
+  }, {
+    type: 'h3',
+    content: 'A parent observation checkpoint'
+  }, {
+    type: 'p',
+    content: 'Use one easy example at a time and watch the process, not just the final answer. If the child knows the sounds but cannot merge them without print, practise oral blending. If oral blending works but printed words trigger guessing, practise left-to-right printed blending. If single words are accurate but sentences remain effortful, the next need may be connected-reading fluency rather than more isolated sound cards.'
   }],
   faq: [{
     question: 'Can I teach phonics at home?',
