@@ -38,9 +38,12 @@ export function cleanBlogBlock(block: BlogBlock): BlogBlock {
 }
 
 export function applyBlogEditorialCleanup(post: BlogPost): BlogPost {
+  const seriesLabel = post.seriesLabel || getWeekSeriesLabel(post.slug) || undefined;
+
   return {
     ...post,
     title: cleanBlogTitle(post.title),
+    seriesLabel,
     body: post.body.map(cleanBlogBlock),
   };
 }
