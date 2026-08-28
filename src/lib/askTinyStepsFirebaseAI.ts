@@ -7,7 +7,6 @@ import {
   getAI,
   getGenerativeModel,
   GoogleAIBackend,
-  ThinkingLevel,
   type GenerativeModel,
 } from 'firebase/ai';
 
@@ -33,8 +32,14 @@ export const ASK_TINY_STEPS_MODEL_TIMEOUT_MS: Readonly<Record<AskTinyStepsModelN
 export const ASK_TINY_STEPS_REQUEST_TIMEOUT_MS =
   ASK_TINY_STEPS_MODEL_TIMEOUT_MS[ASK_TINY_STEPS_MODEL];
 
-// The system prompt still requires short parent-facing answers. With low thinking,
-// 768 tokens leaves ample room for URL Context plus a complete concise response.
+// package-lock currently pins Firebase 12.7.0. Thinking levels were added in
+// Firebase 12.8.0, so use the already-supported compatibility budget instead of
+// widening this production hotfix into an SDK upgrade. Gemini 3.x still performs
+// its mandatory minimal internal thinking when the compatibility budget is zero.
+export const ASK_TINY_STEPS_THINKING_BUDGET = 0;
+
+// The system prompt still requires short parent-facing answers. A near-minimal
+// thinking budget leaves the 768-token ceiling primarily available to the answer.
 export const ASK_TINY_STEPS_MAX_OUTPUT_TOKENS = 768;
 
 type AskTinyStepsRuntime = typeof globalThis & {
@@ -118,12 +123,6 @@ export function initializeAskTinyStepsAppCheck(
   initializedApps.add(app.name);
 }
 
-function thinkingLevelForModel(modelName: AskTinyStepsModelName) {
-  return modelName === 'gemini-3.5-flash-lite'
-    ? ThinkingLevel.MINIMAL
-    : ThinkingLevel.LOW;
-}
-
 export function getAskTinyStepsGenerativeModel(
   modelName: AskTinyStepsModelName = ASK_TINY_STEPS_MODEL,
 ): GenerativeModel {
@@ -138,7 +137,7 @@ export function getAskTinyStepsGenerativeModel(
       generationConfig: {
         maxOutputTokens: ASK_TINY_STEPS_MAX_OUTPUT_TOKENS,
         thinkingConfig: {
-          thinkingLevel: thinkingLevelForModel(modelName),
+          thinkingBudget: ASK_TINY_STEPS_THINKING_BUDGET,
         },
       },
       systemInstruction: ASK_TINY_STEPS_SYSTEM_INSTRUCTION,
