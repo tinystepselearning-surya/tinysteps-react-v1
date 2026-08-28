@@ -66,6 +66,15 @@ const post: BlogPost = {
     { type: 'li', content: 'Speaking: longer independent responses, clearer organisation and better recovery after mistakes.' },
     { type: 'li', content: 'Transfer: vocabulary and structures appear across reading, writing and speaking contexts.' },
 
+    { type: 'h2', content: 'Move from the cross-skill picture to the right specialist guide' },
+    { type: 'p', content: 'This article explains how the systems connect; it is not the diagnostic owner for every grammar or speaking problem. Once the bottleneck is clear, use the specialist authority page so practice stays focused.' },
+    { type: 'li', content: '[Start with the broad grammar roadmap when sentence and writing structure are the main concern](/blog/week-7-grammar-nouns-to-paragraphs).' },
+    { type: 'li', content: '[Use the sentence-formation guide when the child knows words or ideas but cannot build and expand clear sentences](/blog/how-to-improve-sentence-formation-in-kids).' },
+    { type: 'li', content: '[Use the grammar-transfer guide when rules are known but errors return in fresh speaking or writing](/blog/child-knows-grammar-but-makes-mistakes).' },
+    { type: 'li', content: '[Start with the broad speaking-confidence roadmap for a staged path from complete answers to organised speaking](/blog/week-12-speaking-confidence-seeds).' },
+    { type: 'li', content: '[Use the understanding-versus-speaking diagnosis when comprehension is stronger than independent response](/blog/child-understands-english-but-does-not-speak).' },
+    { type: 'li', content: '[Use the one-word-answer guide when the child responds but needs help adding a sentence, detail, reason, or sequence](/blog/child-gives-one-word-answers).' },
+
     { type: 'h2', content: 'How to choose the right Tiny Steps starting path' },
     { type: 'p', content: 'Use the strongest bottleneck to choose the first route: /phonics for decoding, /reading-classes-for-kids for fluency/comprehension, /grammar for sentence and writing control, and /speaking for communication. /courses and /curriculum show how the pathways relate, while /book-demo is the regular free 35-minute 1:1 assessment route.' },
   ],

@@ -18,6 +18,14 @@ function renderGame() {
   );
 }
 
+function renderFullscreenGame() {
+  return render(
+    <MemoryRouter initialEntries={["/kids/games/phonics/balloon-pop?kidId=test-kid"]}>
+      <Routes><Route path="/kids/games/phonics/balloon-pop" element={<KidsBalloonPop unlockAllLevels />} /></Routes>
+    </MemoryRouter>,
+  );
+}
+
 describe("KidsBalloonPop pedagogy UX", () => {
   beforeEach(() => {
     vi.stubGlobal("Audio", FakeAudio as unknown as typeof Audio);
@@ -26,7 +34,30 @@ describe("KidsBalloonPop pedagogy UX", () => {
     vi.spyOn(Math, "random").mockReturnValue(0.01);
     localStorage.clear();
   });
-  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+  afterEach(() => {
+    delete (document.documentElement as any).requestFullscreen;
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it("enters immersive fullscreen and offers recovery after native fullscreen closes", async () => {
+    const requestFullscreen = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(document.documentElement, "requestFullscreen", {
+      configurable: true,
+      value: requestFullscreen,
+    });
+
+    renderFullscreenGame();
+    fireEvent.click(screen.getByRole("button", { name: /Sound Group 1: s a t i p n/i }));
+    await waitFor(() => expect(requestFullscreen).toHaveBeenCalledTimes(1));
+
+    document.dispatchEvent(new Event("fullscreenchange"));
+    const restoreButton = await screen.findByRole("button", { name: /Full screen/i });
+    fireEvent.click(restoreButton);
+    await waitFor(() => expect(requestFullscreen).toHaveBeenCalledTimes(2));
+
+    expect(screen.getByRole("button", { name: /Exit/i })).toBeInTheDocument();
+  });
 
   it("uses one correct balloon by default and an auditory-only cue", async () => {
     renderGame();

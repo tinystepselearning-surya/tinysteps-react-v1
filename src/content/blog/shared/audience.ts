@@ -22,6 +22,21 @@ export const PARENT_RESEARCH_SLUGS = new Set<string>([
   'science-of-phonics-learning',
 ]);
 
+/**
+ * These posts intentionally keep the Parent Tips source category while joining
+ * the topical discovery lane that best matches the parent's problem. This is a
+ * read-model decision only: no URL, canonical or source-category rewrite.
+ */
+export const GRAMMAR_PARENT_DIAGNOSTIC_SLUGS = new Set<string>([
+  'how-to-improve-sentence-formation-in-kids',
+  'child-knows-grammar-but-makes-mistakes',
+]);
+
+export const SPEAKING_PARENT_DIAGNOSTIC_SLUGS = new Set<string>([
+  'child-understands-english-but-does-not-speak',
+  'child-gives-one-word-answers',
+]);
+
 export function hasReviewedResearchAudience(post: Pick<BlogPost, 'slug' | 'category'>): boolean {
   if (post.category !== 'Research') return true;
   return SCHOOL_RESEARCH_SLUGS.has(post.slug) || PARENT_RESEARCH_SLUGS.has(post.slug);
@@ -35,6 +50,8 @@ export function getBlogDiscoveryCategory(
   post: Pick<BlogPost, 'slug' | 'category'>,
 ): BlogDiscoveryCategory {
   if (getBlogAudience(post) === 'Schools & Research') return 'Schools & Research';
+  if (GRAMMAR_PARENT_DIAGNOSTIC_SLUGS.has(post.slug)) return 'Grammar';
+  if (SPEAKING_PARENT_DIAGNOSTIC_SLUGS.has(post.slug)) return 'Speaking & Communication';
 
   switch (post.category) {
     case 'Grammar':

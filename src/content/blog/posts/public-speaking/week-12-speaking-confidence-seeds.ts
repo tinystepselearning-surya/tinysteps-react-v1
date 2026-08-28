@@ -199,6 +199,35 @@ const post: BlogPost = {
     },
     {
       type: 'h2',
+      content: 'Choose the right next speaking guide for the exact gap',
+    },
+    {
+      type: 'p',
+      content:
+        'This page is the broad speaking-confidence roadmap. The best next guide depends on whether the main difficulty is starting an independent response, expanding a short answer, organising a longer talk, or using feedback without increasing pressure.',
+    },
+    {
+      type: 'li',
+      content:
+        '[When a child understands English but does not speak](/blog/child-understands-english-but-does-not-speak) — use this when comprehension appears stronger than independent classroom or conversational speaking.',
+    },
+    {
+      type: 'li',
+      content:
+        '[How to expand one-word answers into fuller responses](/blog/child-gives-one-word-answers) — use this when the child answers, but the reply stays brief and needs a sentence, detail, reason, or sequence.',
+    },
+    {
+      type: 'li',
+      content:
+        '[How children can organise a short talk](/blog/week-13-speaking-structure) — a supporting practice guide for moving from conversational answers into a clear Hook–Body–Close structure.',
+    },
+    {
+      type: 'li',
+      content:
+        '[Use video for one-target speaking feedback](/blog/week-18-speaking-video-feedback) — a supporting practice guide when the child is ready to notice one speaking habit at a time without turning feedback into criticism.',
+    },
+    {
+      type: 'h2',
       content: 'Troubleshooting common speaking situations',
     },
     {

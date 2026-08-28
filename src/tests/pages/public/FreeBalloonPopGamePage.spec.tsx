@@ -21,7 +21,14 @@ vi.mock('../../../lib/conversionTracking', () => ({
 }));
 
 vi.mock('../../../pages/KidsBalloonPop', () => ({
-  default: () => <div data-testid="balloon-pop-game">Balloon Pop Game</div>,
+  default: (props: { disableFullscreen?: boolean }) => (
+    <div
+      data-testid="balloon-pop-game"
+      data-disable-fullscreen={String(Boolean(props.disableFullscreen))}
+    >
+      Balloon Pop Game
+    </div>
+  ),
 }));
 
 function renderPage(initialEntry = '/free-balloon-pop-phonics-game-for-kids') {
@@ -51,6 +58,7 @@ describe('FreeBalloonPopGamePage', () => {
     expect(screen.getByRole('heading', { level: 2, name: /frequently asked questions/i })).toBeInTheDocument();
     expect(screen.getByText(/does the game include satpin practice\?/i)).toBeInTheDocument();
     expect(screen.getByTestId('balloon-pop-game')).toBeInTheDocument();
+    expect(screen.getByTestId('balloon-pop-game')).toHaveAttribute('data-disable-fullscreen', 'false');
   });
 
   it('provides direct sound-group, six-step learning, and assessment pathways', () => {

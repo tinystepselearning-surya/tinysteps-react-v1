@@ -295,7 +295,6 @@ export default function FreeBalloonPopGamePage() {
             publicMode
             unlockAllLevels
             showTopBackButton={false}
-            disableFullscreen
           />
         </section>
 

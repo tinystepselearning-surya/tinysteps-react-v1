@@ -4,13 +4,24 @@ import { blogPosts } from '../../content/blog';
 import { getBlogAudience, getBlogDiscoveryCategory } from '../../content/blog/shared/audience';
 import { buildBlogAuthorSchema, resolveBlogAuthor } from '../../content/blog/shared/editorialTrust';
 import { resolveBlogHero } from '../../content/blog/shared/heroFamilies';
+import {
+  BLOG_COLLECTION_ID,
+  BLOG_FAQ_ID,
+  BLOG_ID,
+  buildBlogAboutSchema,
+  buildBlogKeywords,
+  getBlogArticleId,
+  getBlogTechnicalAuthority,
+  getBlogWebPageId,
+} from '../../content/blog/shared/technicalAuthority';
 import type { BlogDiscoveryCategory, BlogPost } from '../../content/blog/types';
 import { fetchMdxPosts, type MdxMeta } from '../../content/blogMdx';
 import Meta from '../../components/common/Meta';
 import NewsletterForm from '../../components/common/NewsletterForm';
 import { formatBlogDate, isoDateFromYMD } from '../../lib/date';
 import { applySeo } from '../../lib/seo';
-import { ORGANIZATION_ID, PUBLIC_FACTS, SITE_ORIGIN } from '../../lib/schemas';
+import { shouldNoindexBlogSlug } from '../../lib/blogIndexingPolicy.js';
+import { ORGANIZATION_ID, PUBLIC_FACTS, SITE_ORIGIN, WEBSITE_ID } from '../../lib/schemas';
 import {
   BLOG_TOPIC_OPTIONS,
   PARENT_GOAL_ROUTES,
@@ -257,6 +268,10 @@ const BlogIndexPage: FC = () => {
     [allPosts, todayIso],
   );
   const sortedPublishedPosts = useMemo(() => sortBlogIndexPostsNewest(publishedPosts), [publishedPosts]);
+  const indexablePublishedPosts = useMemo(
+    () => sortedPublishedPosts.filter((post) => !shouldNoindexBlogSlug(post.slug)),
+    [sortedPublishedPosts],
+  );
   const parentCount = useMemo(
     () => sortedPublishedPosts.filter((post) => isParentFacingBlogPost(post)).length,
     [sortedPublishedPosts],
@@ -282,18 +297,34 @@ const BlogIndexPage: FC = () => {
     () => ({
       '@context': 'https://schema.org',
       '@type': 'Blog',
+      '@id': BLOG_ID,
       name: 'Tiny Steps Parent Desk',
       description:
         'Parent-friendly blog for phonics, grammar, speaking, English communication, home routines, and education research.',
+      url: `${SITE_ORIGIN}/blog`,
+      inLanguage: 'en-IN',
+      isPartOf: { '@id': WEBSITE_ID },
       publisher: { '@id': ORGANIZATION_ID },
-      blogPost: sortedPublishedPosts.map((post) => {
+      about: [
+        { '@type': 'Thing', name: 'phonics and reading' },
+        { '@type': 'Thing', name: 'grammar and sentence formation' },
+        { '@type': 'Thing', name: 'speaking and communication' },
+        { '@type': 'Thing', name: 'parent English learning support' },
+        { '@type': 'Thing', name: 'school phonics implementation' },
+      ],
+      blogPost: indexablePublishedPosts.map((post) => {
         const hero = resolveBlogHero(post);
+        const authority = getBlogTechnicalAuthority(post);
         return {
           '@type': 'BlogPosting',
+          '@id': getBlogArticleId(post.slug),
           headline: post.title,
           datePublished: isoDateFromYMD(post.date),
           ...(post.modifiedDate ? { dateModified: isoDateFromYMD(post.modifiedDate) } : {}),
-          articleSection: post.discoveryCategory || post.category,
+          articleSection: authority.discoveryCategory,
+          about: buildBlogAboutSchema(post),
+          keywords: buildBlogKeywords(post),
+          audience: { '@type': 'Audience', audienceType: authority.audienceType },
           image: hero
             ? String(hero).startsWith('http')
               ? hero
@@ -301,43 +332,52 @@ const BlogIndexPage: FC = () => {
             : `${SITE_ORIGIN}/logo-square.webp`,
           author: buildBlogAuthorSchema(resolveBlogAuthor(post.author, post.category)),
           publisher: { '@id': ORGANIZATION_ID },
+          isPartOf: { '@id': BLOG_ID },
+          mainEntityOfPage: { '@id': getBlogWebPageId(post.slug) },
+          isAccessibleForFree: true,
           url: `${SITE_ORIGIN}/blog/${post.slug}`,
         };
       }),
     }),
-    [sortedPublishedPosts],
+    [indexablePublishedPosts],
   );
 
   const collectionSchema = useMemo(
     () => ({
       '@context': 'https://schema.org',
       '@type': 'CollectionPage',
+      '@id': BLOG_COLLECTION_ID,
       name: 'Tiny Steps Blog',
       description:
         'Search and browse phonics, grammar, speaking, communication, parent guidance, and research articles.',
       url: `${SITE_ORIGIN}/blog`,
+      isPartOf: { '@id': WEBSITE_ID },
+      hasPart: { '@id': BLOG_ID },
       audience: {
         '@type': 'Audience',
         audienceType: 'Parents, caregivers, educators, and school leaders',
       },
       mainEntity: {
         '@type': 'ItemList',
-        itemListElement: sortedPublishedPosts.slice(0, 24).map((post, index) => ({
+        '@id': `${SITE_ORIGIN}/blog#indexable-articles`,
+        numberOfItems: indexablePublishedPosts.length,
+        itemListElement: indexablePublishedPosts.slice(0, 24).map((post, index) => ({
           '@type': 'ListItem',
           position: index + 1,
           url: `${SITE_ORIGIN}/blog/${post.slug}`,
           name: post.title,
+          item: { '@id': getBlogArticleId(post.slug) },
         })),
       },
     }),
-    [sortedPublishedPosts],
+    [indexablePublishedPosts],
   );
 
   const faqSchema = useMemo(
     () => ({
       '@context': 'https://schema.org',
       '@type': 'FAQPage',
-      '@id': `${SITE_ORIGIN}/blog#faqpage`,
+      '@id': BLOG_FAQ_ID,
       mainEntity: BLOG_FAQS.map((faq) => ({
         '@type': 'Question',
         name: faq.question,
@@ -351,6 +391,7 @@ const BlogIndexPage: FC = () => {
     () => ({
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
+      '@id': `${SITE_ORIGIN}/blog#breadcrumb`,
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
         { '@type': 'ListItem', position: 2, name: 'Blog', item: `${SITE_ORIGIN}/blog` },
