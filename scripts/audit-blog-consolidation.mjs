@@ -14,6 +14,8 @@ const RSS_FILES = [
   path.join(ROOT, 'public/blog/feed.xml'),
 ];
 const NOT_FOUND = path.join(ROOT, 'functions/src/notFoundRoute.ts');
+const FIREBASE_CONFIG = path.join(ROOT, 'firebase.json');
+const INDEXING_POLICY = path.join(ROOT, 'src/lib/blogIndexingPolicy.js');
 const VITE_CONFIG = ['vite.config.js', 'vite.config.ts', 'vite.config.jsx', 'vite.config.tsx']
   .map((name) => path.join(ROOT, name))
   .find((candidate) => fs.existsSync(candidate));
@@ -32,6 +34,21 @@ const AUTHORITY_CANONICAL_SLUGS = [
   'what-age-to-start-phonics',
 ];
 const MIN_AUTHORITY_BODY_BLOCKS = 18;
+
+const READING_CONFIDENCE_OWNER = 'how-phonics-builds-reading-confidence';
+const READING_CONFIDENCE_RETIRED = 'how-tiny-steps-builds-reading-confidence';
+const READING_CONFIDENCE_REQUIRED_SIGNALS = [
+  'mirror the teacher’s correction language at home',
+  'weekly teacher or parent progress notes',
+  'explicit stage placement',
+  'parent-visible method Tiny Steps aims to use',
+  'temporary level adjustment and focused revision cycle',
+];
+
+const SPOKEN_ENGLISH_REDIRECT = {
+  source: '/blog/spoken-english-classes-for-kids-confidence',
+  destination: '/blog/child-understands-english-but-does-not-speak',
+};
 
 function walk(dir, predicate = () => true) {
   if (!fs.existsSync(dir)) return [];
@@ -60,6 +77,9 @@ function hasSlug(slug) {
 
 const redirectText = fs.existsSync(NOT_FOUND) ? fs.readFileSync(NOT_FOUND, 'utf8') : '';
 const viteText = VITE_CONFIG ? fs.readFileSync(VITE_CONFIG, 'utf8') : '';
+const indexingPolicyText = fs.existsSync(INDEXING_POLICY) ? fs.readFileSync(INDEXING_POLICY, 'utf8') : '';
+const firebase = fs.existsSync(FIREBASE_CONFIG) ? JSON.parse(fs.readFileSync(FIREBASE_CONFIG, 'utf8')) : null;
+
 if (!viteText.includes('canonicalInternalBlogLinks')) {
   failures.push('canonical Vite config is missing the internal-blog-link rewrite plugin');
 }
@@ -93,10 +113,52 @@ for (const [sourcePath, destinationPath] of Object.entries(RETIRED_BLOG_PATH_RED
   }
 }
 
-// Protect the new editorial standard: these canonical intent owners must remain
-// full authority BlogPost articles rather than falling back to the old compact
-// PhonicsSeoPost template. This prevents a later "SEO refresh" from shrinking
-// the strongest consolidated pages back into repetitive shells.
+// The reading-confidence redirect is safe only after the branded article's
+// genuinely useful practice details have been preserved in the canonical guide.
+const readingConfidenceOwner = findPostBySlug(READING_CONFIDENCE_OWNER);
+if (!readingConfidenceOwner) {
+  failures.push(`reading-confidence canonical owner missing: ${READING_CONFIDENCE_OWNER}`);
+} else {
+  for (const signal of READING_CONFIDENCE_REQUIRED_SIGNALS) {
+    if (!readingConfidenceOwner.text.includes(signal)) {
+      failures.push(`reading-confidence merge lost required source material: ${signal}`);
+    }
+  }
+}
+if (hasSlug(READING_CONFIDENCE_RETIRED)) {
+  failures.push(`reading-confidence duplicate still exists: ${READING_CONFIDENCE_RETIRED}`);
+}
+if (
+  RETIRED_BLOG_PATH_REDIRECTS[`/blog/${READING_CONFIDENCE_RETIRED}`]
+  !== `/blog/${READING_CONFIDENCE_OWNER}`
+) {
+  failures.push('reading-confidence retired URL is not mapped to the canonical owner');
+}
+
+// The speaking-confidence duplicate is already a real Firebase Hosting 301.
+// It must not be modelled as a second noindex mechanism in blog page policy.
+const spokenRedirect = (firebase?.hosting?.redirects ?? []).find(
+  (redirect) => redirect.source === SPOKEN_ENGLISH_REDIRECT.source,
+);
+if (!spokenRedirect) {
+  failures.push(`Firebase Hosting 301 missing: ${SPOKEN_ENGLISH_REDIRECT.source}`);
+} else {
+  if (spokenRedirect.destination !== SPOKEN_ENGLISH_REDIRECT.destination) {
+    failures.push(
+      `Firebase speaking redirect points to ${spokenRedirect.destination}, expected ${SPOKEN_ENGLISH_REDIRECT.destination}`,
+    );
+  }
+  if (spokenRedirect.type !== 301) {
+    failures.push(`Firebase speaking redirect must be 301, found ${spokenRedirect.type}`);
+  }
+}
+if (indexingPolicyText.includes('spoken-english-classes-for-kids-confidence')) {
+  failures.push('speaking redirect source leaked into page-level noindex policy; use the permanent Hosting redirect only');
+}
+
+// Protect the existing editorial standard: these canonical intent owners must
+// remain full authority BlogPost articles rather than falling back to the old
+// compact PhonicsSeoPost template.
 for (const slug of AUTHORITY_CANONICAL_SLUGS) {
   const found = findPostBySlug(slug);
   if (!found) {
@@ -139,5 +201,5 @@ if (failures.length) {
 }
 
 console.log(
-  `PASS: blog consolidation (${Object.keys(RETIRED_BLOG_PATH_REDIRECTS).length} retired intents, ${AUTHORITY_CANONICAL_SLUGS.length} protected authority articles, canonical sitemap/RSS ownership${CHECK_DIST ? ', rendered output clean' : ''})`,
+  `PASS: blog consolidation (${Object.keys(RETIRED_BLOG_PATH_REDIRECTS).length} retired intents, ${AUTHORITY_CANONICAL_SLUGS.length} protected authority articles, reading-confidence source merged, speaking Hosting 301 protected, canonical sitemap/RSS ownership${CHECK_DIST ? ', rendered output clean' : ''})`,
 );
