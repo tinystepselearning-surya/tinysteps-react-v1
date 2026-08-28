@@ -31,6 +31,7 @@ vi.mock('firebase/ai', () => ({
 import {
   ASK_TINY_STEPS_APP_NAME,
   ASK_TINY_STEPS_MODEL,
+  ASK_TINY_STEPS_MODEL_CASCADE,
   getAskTinyStepsApp,
   getAskTinyStepsGenerativeModel,
   initializeAskTinyStepsAppCheck,
@@ -68,9 +69,18 @@ describe('Ask Tiny Steps secondary Firebase AI client', () => {
     expect(firebaseMocks.initializeApp).not.toHaveBeenCalledWith(expect.anything());
   });
 
-  it('uses Gemini Developer API and the approved Gemini model', () => {
+  it('prefers 3.7 Flash, then 3.5 Flash, then 3.5 Flash-Lite', () => {
+    expect(ASK_TINY_STEPS_MODEL_CASCADE).toEqual([
+      'gemini-3.7-flash',
+      'gemini-3.5-flash',
+      'gemini-3.5-flash-lite',
+    ]);
+    expect(ASK_TINY_STEPS_MODEL).toBe('gemini-3.7-flash');
+  });
+
+  it('uses Gemini Developer API and URL Context for the requested cascade model', () => {
     firebaseMocks.getApps.mockReturnValue([askApp]);
-    getAskTinyStepsGenerativeModel();
+    getAskTinyStepsGenerativeModel('gemini-3.5-flash');
 
     expect(firebaseMocks.backend).toHaveBeenCalledOnce();
     expect(firebaseMocks.getAI).toHaveBeenCalledWith(askApp, {
@@ -78,10 +88,23 @@ describe('Ask Tiny Steps secondary Firebase AI client', () => {
     });
     expect(firebaseMocks.getGenerativeModel).toHaveBeenCalledWith(
       expect.anything(),
-      expect.objectContaining({ model: ASK_TINY_STEPS_MODEL }),
+      expect.objectContaining({
+        model: 'gemini-3.5-flash',
+        tools: [{ urlContext: {} }],
+      }),
       { timeout: 60_000 },
     );
-    expect(ASK_TINY_STEPS_MODEL).toBe('gemini-3.5-flash-lite');
+  });
+
+  it('defaults direct model creation to the 3.7 Flash primary', () => {
+    firebaseMocks.getApps.mockReturnValue([askApp]);
+    getAskTinyStepsGenerativeModel();
+
+    expect(firebaseMocks.getGenerativeModel).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ model: 'gemini-3.7-flash' }),
+      expect.anything(),
+    );
   });
 
   it('uses reCAPTCHA Enterprise in production without enabling a debug token', () => {
