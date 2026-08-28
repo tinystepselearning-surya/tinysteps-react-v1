@@ -13,6 +13,11 @@ import {
 } from "../../config/askTinyStepsKnowledgeSources";
 
 type AudienceFilter = "all" | AskTinyStepsAudience;
+type RegistryValidation = {
+  checkedAt: string;
+  missingFromKb: string[];
+  unregisteredKbPaths: string[];
+};
 
 function statusLabel(source: AskTinyStepsKnowledgeSource) {
   if (!source.enabledForAI || source.retrievalPolicy === "disabled") return "Disabled";
@@ -30,13 +35,18 @@ const RefreshPublicKbTool: React.FC = () => {
   const [selectedLegacyPaths, setSelectedLegacyPaths] = useState<string[]>(() =>
     getLegacyKbRefreshPaths()
   );
+  const [validatingRegistry, setValidatingRegistry] = useState(false);
+  const [registryValidation, setRegistryValidation] = useState<RegistryValidation | null>(null);
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<any>(null);
 
   const visibleSources = useMemo(() => {
     const q = query.trim().toLowerCase();
     return ASK_TINY_STEPS_KNOWLEDGE_SOURCES.filter((source) => {
-      const audienceMatches = audienceFilter === "all" || source.audience === audienceFilter;
+      const audienceMatches =
+        audienceFilter === "all" ||
+        source.audience === audienceFilter ||
+        (source.audience === "both" && audienceFilter !== "both");
       const queryMatches =
         !q ||
         source.title.toLowerCase().includes(q) ||
@@ -50,6 +60,50 @@ const RefreshPublicKbTool: React.FC = () => {
     setSelectedLegacyPaths((current) =>
       current.includes(path) ? current.filter((item) => item !== path) : [...current, path]
     );
+  };
+
+  const handleValidateRegistry = async () => {
+    setValidatingRegistry(true);
+    try {
+      const response = await fetch("/kb.json", { cache: "no-store" });
+      if (!response.ok) throw new Error(`kb.json returned ${response.status}`);
+      const payload = await response.json();
+      if (!Array.isArray(payload)) throw new Error("kb.json is not an array");
+
+      const kbPaths = new Set(
+        payload
+          .map((entry: any) => String(entry?.path || "").trim())
+          .filter(Boolean)
+      );
+      const expectedLegacyPaths = getLegacyKbRefreshPaths();
+      const registryPaths = new Set(ASK_TINY_STEPS_KNOWLEDGE_SOURCES.map((source) => source.path));
+
+      const validation: RegistryValidation = {
+        checkedAt: new Date().toISOString(),
+        missingFromKb: expectedLegacyPaths.filter((path) => !kbPaths.has(path)),
+        unregisteredKbPaths: [...kbPaths].filter((path) => !registryPaths.has(path)).sort(),
+      };
+      setRegistryValidation(validation);
+
+      const aligned =
+        validation.missingFromKb.length === 0 && validation.unregisteredKbPaths.length === 0;
+      toast({
+        title: aligned ? "Knowledge registry aligned" : "Knowledge registry needs review",
+        description: aligned
+          ? `All ${expectedLegacyPaths.length} legacy kb.json sources match the registry.`
+          : `${validation.missingFromKb.length} missing and ${validation.unregisteredKbPaths.length} unregistered kb.json paths found.`,
+        variant: aligned ? "default" : "destructive",
+      });
+    } catch (error: any) {
+      console.error("[RefreshPublicKbTool] registry validation failed", error);
+      toast({
+        title: "Registry validation failed",
+        description: error?.message || "Could not compare the registry with public/kb.json.",
+        variant: "destructive",
+      });
+    } finally {
+      setValidatingRegistry(false);
+    }
   };
 
   const handleRun = async () => {
@@ -105,22 +159,35 @@ const RefreshPublicKbTool: React.FC = () => {
     }
   };
 
+  const registryAligned =
+    registryValidation &&
+    registryValidation.missingFromKb.length === 0 &&
+    registryValidation.unregisteredKbPaths.length === 0;
+
   return (
     <div className="space-y-4">
       <Card className="p-4">
         <div className="space-y-4">
-          <div>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h3 className="text-lg font-semibold">Ask Tiny Steps Knowledge Sources</h3>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                  AI-2B registry of approved public sources. This is the control layer for the next
-                  Gemini retrieval upgrade; it does not switch production retrieval by itself.
-                </p>
-              </div>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold">Ask Tiny Steps Knowledge Sources</h3>
+              <p className="mt-1 max-w-3xl text-sm text-gray-600 dark:text-gray-400">
+                AI-2B registry of approved public sources. This is the control layer for the next
+                Gemini retrieval upgrade; it does not switch production retrieval by itself.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
                 {stats.enabled} AI-enabled sources
               </span>
+              <Button
+                onClick={handleValidateRegistry}
+                variant="outline"
+                size="sm"
+                disabled={validatingRegistry}
+              >
+                {validatingRegistry ? "Validating…" : "Validate registry"}
+              </Button>
             </div>
           </div>
 
@@ -139,6 +206,37 @@ const RefreshPublicKbTool: React.FC = () => {
             ))}
           </div>
 
+          {registryValidation && (
+            <div
+              className={`rounded-lg border p-3 text-sm ${
+                registryAligned
+                  ? "border-emerald-200 bg-emerald-50/70 dark:border-emerald-900 dark:bg-emerald-950/20"
+                  : "border-amber-200 bg-amber-50/70 dark:border-amber-900 dark:bg-amber-950/20"
+              }`}
+            >
+              <div className="font-semibold">
+                Registry ↔ kb.json: {registryAligned ? "Aligned" : "Needs review"}
+              </div>
+              <div className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                Checked {new Date(registryValidation.checkedAt).toLocaleString()}.
+              </div>
+              {!registryAligned && (
+                <div className="mt-2 space-y-1 text-xs">
+                  {registryValidation.missingFromKb.length > 0 && (
+                    <div>
+                      Missing from kb.json: {registryValidation.missingFromKb.join(", ")}
+                    </div>
+                  )}
+                  {registryValidation.unregisteredKbPaths.length > 0 && (
+                    <div>
+                      In kb.json but not registry: {registryValidation.unregisteredKbPaths.join(", ")}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex flex-col gap-2 md:flex-row">
             <input
               value={query}
@@ -154,7 +252,7 @@ const RefreshPublicKbTool: React.FC = () => {
               <option value="all">All audiences</option>
               <option value="parents">Parents</option>
               <option value="schools">Schools</option>
-              <option value="both">Both</option>
+              <option value="both">Both only</option>
             </select>
           </div>
 
