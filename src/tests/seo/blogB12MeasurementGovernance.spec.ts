@@ -42,7 +42,7 @@ describe('B12 measurement and publishing governance', () => {
       conversionPage: '/book-demo',
     });
 
-    expect(display.acquisitionLabel).toBe('Direct');
+    expect(display.acquisitionLabel).toBe('Direct / unknown');
     expect(display.contentInfluenceLabel).toBe('First touch blog · Satpin Phonics Guide');
     expect(display.blogArticleSlug).toBe('satpin-phonics-guide');
   });
