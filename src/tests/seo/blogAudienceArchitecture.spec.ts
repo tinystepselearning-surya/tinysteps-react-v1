@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { blogPosts } from '../../content/blog';
 import {
   getBlogAudience,
   getBlogDiscoveryCategory,
+  hasReviewedResearchAudience,
+  PARENT_RESEARCH_SLUGS,
   SCHOOL_RESEARCH_SLUGS,
 } from '../../content/blog/shared/audience';
 
@@ -30,9 +33,47 @@ describe('blog audience architecture', () => {
     ).toBe('Speaking & Communication');
   });
 
-  it('uses an explicit reviewed institutional set', () => {
+  it('requires every normalized Research article to have explicit reviewed audience ownership', () => {
+    const researchPosts = blogPosts.filter((post) => post.category === 'Research');
+    const unreviewed = researchPosts.filter((post) => !hasReviewedResearchAudience(post));
+
+    expect(unreviewed.map((post) => post.slug)).toEqual([]);
+    expect(new Set(researchPosts.map((post) => post.slug))).toEqual(
+      new Set([...SCHOOL_RESEARCH_SLUGS, ...PARENT_RESEARCH_SLUGS]),
+    );
+  });
+
+  it('keeps every reviewed institutional slug attached to a real registry article', () => {
+    const registrySlugs = new Set(blogPosts.map((post) => post.slug));
+    const missing = [...SCHOOL_RESEARCH_SLUGS].filter((slug) => !registrySlugs.has(slug));
+
+    expect(missing).toEqual([]);
     expect(SCHOOL_RESEARCH_SLUGS.size).toBe(8);
-    expect(SCHOOL_RESEARCH_SLUGS.has('phonics-for-parents-guide')).toBe(false);
-    expect(SCHOOL_RESEARCH_SLUGS.has('science-of-phonics-learning')).toBe(false);
+    expect(PARENT_RESEARCH_SLUGS.size).toBe(2);
+  });
+
+  it('enriches every normalized article with the expected audience and discovery category', () => {
+    for (const post of blogPosts) {
+      expect(post.audience, post.slug).toBe(getBlogAudience(post));
+      expect(post.discoveryCategory, post.slug).toBe(getBlogDiscoveryCategory(post));
+    }
+  });
+
+  it('keeps the current discovery lanes internally coherent', () => {
+    const schoolPosts = blogPosts.filter((post) => post.audience === 'Schools & Research');
+    const parentPosts = blogPosts.filter((post) => post.audience === 'Parent');
+    const discoveryCategories = new Set(blogPosts.map((post) => post.discoveryCategory));
+
+    expect(schoolPosts).toHaveLength(SCHOOL_RESEARCH_SLUGS.size);
+    expect(parentPosts.length + schoolPosts.length).toBe(blogPosts.length);
+    expect(discoveryCategories).toEqual(
+      new Set([
+        'Phonics',
+        'Grammar',
+        'Speaking & Communication',
+        'Parent Guides',
+        'Schools & Research',
+      ]),
+    );
   });
 });
