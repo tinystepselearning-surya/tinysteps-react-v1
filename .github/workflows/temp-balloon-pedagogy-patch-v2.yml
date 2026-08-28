@@ -1,0 +1,462 @@
+name: Temporary Balloon Pop Pedagogy Patch V2
+
+on:
+  push:
+    branches:
+      - feat/balloon-pop-pedagogy-ux
+    paths:
+      - .github/workflows/temp-balloon-pedagogy-patch-v2.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/balloon-pop-pedagogy-ux
+          fetch-depth: 0
+
+      - name: Apply pedagogy and UX patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('src/pages/KidsBalloonPop.tsx')
+          text = path.read_text()
+
+          def sub(pattern, replacement, label, flags=0, expected=1):
+              global text
+              text, count = re.subn(pattern, replacement, text, count=expected, flags=flags)
+              if count != expected:
+                  raise SystemExit(f'{label}: expected {expected} replacement(s), got {count}')
+
+          sub(
+              r'(type LevelConfig = \{\n(?:.*\n)*?\};\n)',
+              r'\1\ntype GameMode = "focus" | "speed";\n',
+              'game mode type',
+          )
+
+          sub(
+              r'// Ensure there are >= desiredCount visible target balloons.*?\nconst BALLOON_COLORS = \[',
+              '''// Keep the default listening task unambiguous: one correct balloon.
+          // Speed Challenge deliberately uses two matching balloons as a separate fluency mode.
+          const ensureExactTargetCount = (
+            balloons: Balloon[],
+            target: string,
+            desiredCount: number,
+            levelLetters: string[]
+          ): Balloon[] => {
+            if (!target || desiredCount <= 0) return balloons;
+
+            const activeTargets = balloons.filter((b) => b.letter === target && !b.isPopping);
+            let next = balloons;
+
+            if (activeTargets.length > desiredCount) {
+              const excessIds = new Set(activeTargets.slice(desiredCount).map((b) => b.id));
+              const distractors = levelLetters.filter((letter) => letter !== target);
+              next = next.map((b) =>
+                excessIds.has(b.id) && distractors.length > 0
+                  ? { ...b, letter: choice(distractors), disabledUntil: undefined }
+                  : b
+              );
+            }
+
+            const currentCount = next.filter((b) => b.letter === target && !b.isPopping).length;
+            if (currentCount >= desiredCount) return next;
+
+            const needed = desiredCount - currentCount;
+            const candidates = next.filter((b) => b.letter !== target && !b.isPopping);
+            const visibleCandidates = candidates.filter((b) => b.y >= -10 && b.y <= 95);
+            const toConvert =
+              visibleCandidates.length >= needed
+                ? visibleCandidates.slice(0, needed)
+                : [...visibleCandidates, ...candidates.slice(0, needed - visibleCandidates.length)];
+
+            const convertIds = new Set(toConvert.map((b) => b.id));
+            return next.map((b) => (convertIds.has(b.id) ? { ...b, letter: target, disabledUntil: undefined } : b));
+          };
+
+          const desiredTargetCountForMode = (mode: GameMode, level: LevelConfig) =>
+            mode === "speed" ? Math.min(2, ACTIVE_BALLOON_COUNT, level.letters.length) : 1;
+
+          const BALLOON_COLORS = [''',
+              'exact target helper',
+              flags=re.S,
+          )
+
+          sub(
+              r'(  const currentLevel = currentLevelId \? TINY_STEPS_PHONICS_LEVELS\.find\(\(l\) => l\.id === currentLevelId\) : null;\n)',
+              r'\1  const gameMode: GameMode = searchParams.get("mode") === "speed" ? "speed" : "focus";\n  const [practiceMode, setPracticeMode] = useState<GameMode>("focus");\n',
+              'mode state',
+          )
+
+          sub(
+              r'  const wrongStreakRef = useRef\(0\);',
+              '  const wrongStreakRef = useRef(0);\n  const speedTargetsRemainingRef = useRef(1);',
+              'speed remaining ref',
+          )
+
+          sub(
+              r'async \(levelId: number\) => \{',
+              'async (levelId: number, mode: GameMode = "focus") => {',
+              'playLevel mode signature',
+          )
+
+          sub(
+              r'      params\.set\("level", String\(levelId\)\);',
+              '      params.set("level", String(levelId));\n      if (mode === "speed") params.set("mode", "speed");',
+              'mode query parameter',
+          )
+
+          sub(
+              r'      const t = choice\(level\.letters\);\n      const desiredTargetCount = Math\.min\(2, ACTIVE_BALLOON_COUNT, level\.letters\.length\);\n\n      setBalloons\(ensureTargetCount\(initial, t, desiredTargetCount\)\);\n      setTarget\(t\);',
+              '''      const t = choice(level.letters);
+              const desiredTargetCount = desiredTargetCountForMode(mode, level);
+              speedTargetsRemainingRef.current = desiredTargetCount;
+
+              setBalloons(ensureExactTargetCount(initial, t, desiredTargetCount, level.letters));
+              setTarget(t);''',
+              'initial target count',
+          )
+
+          # Change all engine target-count calculations from fixed two to mode-aware.
+          text = text.replace(
+              'const desiredTargetCount = Math.min(2, ACTIVE_BALLOON_COUNT, currentLevel.letters.length);',
+              'const desiredTargetCount = gameMode === "speed"\n          ? Math.max(1, speedTargetsRemainingRef.current)\n          : 1;'
+          )
+          text = text.replace('ensureTargetCount(updated, t, desiredTargetCount)', 'ensureExactTargetCount(updated, t, desiredTargetCount, currentLevel.letters)')
+          text = text.replace('ensureTargetCount(prevB, next, desiredTargetCount)', 'ensureExactTargetCount(prevB, next, desiredTargetCount, currentLevel.letters)')
+          text = text.replace('ensureTargetCount(moved, target, desiredTargetCount)', 'ensureExactTargetCount(moved, target, desiredTargetCount, currentLevel.letters)')
+
+          sub(
+              r'(  const respawn = useCallback\(.*?\n  \);\n)\n  const pickNewTarget',
+              r'''\1
+            const respawnAsDistractor = useCallback(
+              (id: number, currentTarget: string) => {
+                if (!currentLevel) return;
+                const distractors = currentLevel.letters.filter((letter) => letter !== currentTarget);
+                setBalloons((prev) => {
+                  const others = prev.filter((b) => b.id !== id);
+                  const next = makeBalloonNoOverlap(
+                    id,
+                    distractors.length > 0 ? distractors : currentLevel.letters,
+                    currentLevel.speedMin,
+                    currentLevel.speedMax,
+                    others
+                  );
+                  return prev.map((b) => (b.id === id ? next : b));
+                });
+              },
+              [currentLevel]
+            );
+
+            const pickNewTarget''',
+              'distractor respawn helper',
+              flags=re.S,
+          )
+
+          # React hook dependencies for callbacks that now read gameMode.
+          sub(
+              r'(  const respawn = useCallback\(.*?\n    \},\n)    \[currentLevel, target\](\n  \);)',
+              r'\1    [currentLevel, gameMode, target]\2',
+              'respawn deps',
+              flags=re.S,
+          )
+          sub(
+              r'(  const pickNewTarget = useCallback\(.*?\n    \},\n)    \[currentLevel\](\n  \);)',
+              r'\1    [currentLevel, gameMode]\2',
+              'pick target deps',
+              flags=re.S,
+          )
+
+          sub(
+              r'              `level:\$\{currentLevel\.id\}`,\n',
+              '              `level:${currentLevel.id}`,\n              `mode:${gameMode}`,\n',
+              'mode result tag',
+          )
+          sub(
+              r'\}, \[correctCount, currentLevel, eemTile, kidId, mistakes, progress, publicMode, sfx, setMissionDonePending\]\);',
+              '}, [correctCount, currentLevel, eemTile, gameMode, kidId, mistakes, progress, publicMode, sfx, setMissionDonePending]);',
+              'complete deps',
+          )
+
+          sub(
+              r'    playLevel\(nextLevelId\);\n  \}, \[currentLevel, progress\.unlocked, playLevel, unlockAllLevels\]\);',
+              '    playLevel(nextLevelId, gameMode);\n  }, [currentLevel, gameMode, progress.unlocked, playLevel, unlockAllLevels]);',
+              'next level preserves mode',
+          )
+          sub(
+              r'    playLevel\(currentLevel\.id\);\n  \}, \[currentLevel, playLevel\]\);',
+              '    playLevel(currentLevel.id, gameMode);\n  }, [currentLevel, gameMode, playLevel]);',
+              'replay preserves mode',
+          )
+
+          sub(
+              r'        const cueLetter = target\.toUpperCase\(\);\n\n        setMistakes\(\(m\) => m \+ 1\);.*?        if \(nextStreak === 2\) \{.*?        \} else if \(nextStreak >= 3\) \{',
+              '''        setMistakes((m) => m + 1);
+                if (nextStreak <= 1) {
+                  // First miss: auditory support only. Do not reveal or highlight the answer.
+                  setFeedback("Listen again 👂");
+                  setHintUntil(0);
+                } else if (nextStreak === 2) {
+                  // Second miss: add the first visual scaffold.
+                  setFeedback("Look carefully — the matching balloon will glow ✨");
+                  supportStatsRef.current.hintPulseCount += 1;
+                  setHintUntil(now + 1200);
+                } else {
+                  // Third miss: reduce visual competition without printing the target letter.
+                  setFeedback("Try the glowing balloon. You can do it! 🎈");
+                }
+                window.setTimeout(() => setFeedback(null), 1200);
+
+                if (nextStreak >= 3) {''',
+              'progressive hint ladder',
+              flags=re.S,
+          )
+
+          sub(
+              r'      // CORRECT: pop \+ respawn \+ new target\n.*?      window\.setTimeout\(\(\) => \{\n        respawn\(id, nextTarget\);\n      \}, 240\);',
+              '''      // CORRECT: pop + positive micro-feedback.
+              wrongStreakRef.current = 0;
+              setHintUntil(0);
+
+              suppressAutoCueFor(TARGET_AUTO_CUE_SFX_GAP_MS);
+              await ensureAudioPrimed();
+              sfx.playSfx("pop", 0.85);
+              sfx.playSfx("correct", 0.9);
+              bumpLetterStat(target, "correct");
+
+              const remainingSpeedTargets = gameMode === "speed"
+                ? balloons.filter((x) => x.id !== id && x.letter === target && !x.isPopping).length
+                : 0;
+
+              setBalloons((prev) => prev.map((x) => (x.id === id ? { ...x, isPopping: true, popAt: now } : x)));
+
+              setScore((s) => s + 1);
+              setCorrectCount((c) => {
+                const nc = c + 1;
+                if (nc >= TARGET_CORRECT) window.setTimeout(() => completeLevel(nc), 350);
+                return nc;
+              });
+
+              if (gameMode === "speed" && remainingSpeedTargets > 0) {
+                speedTargetsRemainingRef.current = remainingSpeedTargets;
+                setFeedback("Great listening! 🎈 Find the other match.");
+                window.setTimeout(() => setFeedback(null), 800);
+                window.setTimeout(() => respawnAsDistractor(id, target), 240);
+                window.setTimeout(() => {
+                  lastTargetCueAtRef.current = Date.now();
+                  void sfx.playLetter(target, 0.95);
+                }, 360);
+                return;
+              }
+
+              setFeedback("Great listening! 🎈");
+              window.setTimeout(() => setFeedback(null), 700);
+              speedTargetsRemainingRef.current = gameMode === "speed" && currentLevel
+                ? desiredTargetCountForMode("speed", currentLevel)
+                : 1;
+
+              const nextTarget = pickNewTarget(target);
+              setTarget(nextTarget);
+              if (nextTargetCueTimeoutRef.current) window.clearTimeout(nextTargetCueTimeoutRef.current);
+              nextTargetCueTimeoutRef.current = window.setTimeout(() => {
+                lastTargetCueAtRef.current = Date.now();
+                void sfx.playLetter(nextTarget, 0.95);
+              }, 460);
+              window.setTimeout(() => respawn(id, nextTarget), 240);''',
+              'correct feedback and speed batch',
+              flags=re.S,
+          )
+
+          sub(
+              r'\[hasStarted, levelComplete, balloons, target, ensureAudioPrimed, sfx, pickNewTarget, respawn, completeLevel, bumpLetterStat, bumpConfusionStat, playTargetCue, suppressAutoCueFor\]',
+              '[hasStarted, levelComplete, balloons, target, ensureAudioPrimed, sfx, gameMode, currentLevel, pickNewTarget, respawn, respawnAsDistractor, completeLevel, bumpLetterStat, bumpConfusionStat, playTargetCue, suppressAutoCueFor]',
+              'pop deps',
+          )
+
+          # Do not visually reveal the answer because the child simply waited.
+          text = re.sub(
+              r'\n\s*// periodic hint if no correct for a while\n\s*if \(now - lastCorrectPopRef\.current > 4500\) \{\n\s*setHintUntil\(now \+ 900\);\n\s*lastCorrectPopRef\.current = now;\n\s*\}',
+              '\n        // Recurring audio cues handle idle time; visual hints require an actual mistake.',
+              text,
+          )
+          text = re.sub(
+              r'\n\s*if \(now - lastCorrectPopRef\.current > 4500\) \{\n\s*setHintUntil\(now \+ 900\);\n\s*lastCorrectPopRef\.current = now;\n\s*\}',
+              '\n      // Recurring audio cues handle idle time; visual hints require an actual mistake.',
+              text,
+          )
+          text = text.replace(
+              '}, [hasStarted, fullscreenMode, currentLevel, levelComplete, target]);',
+              '}, [hasStarted, fullscreenMode, currentLevel, gameMode, levelComplete, target]);'
+          )
+
+          sub(
+              r'        <div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">',
+              '''        <div className="w-full max-w-3xl mx-auto mb-6 rounded-2xl border border-white/15 bg-white/10 p-2 grid grid-cols-1 sm:grid-cols-2 gap-2" aria-label="Balloon Pop practice mode">
+                  <button type="button" aria-pressed={practiceMode === "focus"} onClick={() => setPracticeMode("focus")} className={`rounded-xl px-4 py-3 text-left transition ${practiceMode === "focus" ? "bg-white text-indigo-800 shadow-lg" : "bg-white/5 text-white hover:bg-white/10"}`}>
+                    <span className="block text-sm font-black">👂 Listening Focus</span>
+                    <span className={`mt-1 block text-xs ${practiceMode === "focus" ? "text-indigo-700" : "text-white/70"}`}>One correct balloon · best for sound-to-letter learning</span>
+                  </button>
+                  <button type="button" aria-pressed={practiceMode === "speed"} onClick={() => setPracticeMode("speed")} className={`rounded-xl px-4 py-3 text-left transition ${practiceMode === "speed" ? "bg-amber-300 text-slate-900 shadow-lg" : "bg-white/5 text-white hover:bg-white/10"}`}>
+                    <span className="block text-sm font-black">⚡ Speed Challenge</span>
+                    <span className={`mt-1 block text-xs ${practiceMode === "speed" ? "text-slate-700" : "text-white/70"}`}>Pop all matching balloons · fluency practice</span>
+                  </button>
+                </div>
+
+                <div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">''',
+              'mode selector',
+          )
+          sub(
+              r'if \(!locked\) void playLevel\(level\.id\);',
+              'if (!locked) void playLevel(level.id, practiceMode);',
+              'selected mode launch',
+          )
+
+          sub(
+              r'(<div className="text-sm font-semibold text-gray-800">\{currentLevel\?\.title \|\| "Sound Group"\}</div>)',
+              r'''\1
+                <div className="text-xs font-black uppercase tracking-wide text-violet-700">{gameMode === "speed" ? "⚡ Speed" : "👂 Listen"}</div>''',
+              'mode HUD',
+          )
+
+          sub(
+              r'\{\/\* Secondary helper copy \(dominant cue is the bottom sound/letter button\) \*\/\}\n      <div className="absolute top-20 left-6 z-30 text-white/75 text-sm font-medium backdrop-blur-sm bg-black/10 px-3 py-1\.5 rounded-lg">\n        Listen, then pop the matching balloon\.\n      </div>',
+              '''{/* Secondary helper copy. The answer stays auditory until support is needed. */}
+              <div className="absolute top-20 left-6 z-30 text-white/80 text-sm font-medium backdrop-blur-sm bg-black/10 px-3 py-1.5 rounded-lg">
+                {gameMode === "speed" ? "Listen, then pop every matching balloon." : "Listen, then pop the matching balloon."}
+              </div>''',
+              'helper copy',
+          )
+
+          sub(r'🎈 Tap to Start! 🎈', '🎈 Start Listening! 🎈', 'start label')
+
+          sub(
+              r'      \{\/\* Bottom cue: this is a letter-sound identification game \*\/\}.*?      \)\}',
+              '''      {/* Auditory cue: never print the target letter in the listening task. */}
+              {hasStarted && !levelComplete && (
+                <button
+                  onClick={handleHearAgain}
+                  aria-label="Hear target sound again"
+                  data-testid="balloon-pop-sound-cue"
+                  className="absolute left-1/2 px-8 py-4 bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-400 rounded-full font-black text-white focus:outline-none focus:ring-4 focus:ring-yellow-500 shadow-xl"
+                  style={{ bottom: 72, transform: "translateX(-50%)", zIndex: 30, border: "4px solid rgba(255,255,255,0.9)", touchAction: "manipulation", userSelect: "none", WebkitUserSelect: "none" }}
+                >
+                  <div className="flex flex-col items-center leading-none">
+                    <span className="text-3xl mb-1" aria-hidden="true">🔊</span>
+                    <span className="text-base font-black">{gameMode === "speed" ? "Listen — pop all matches" : "Listen carefully"}</span>
+                    <span className="text-xs opacity-90 mt-2">Tap to hear again</span>
+                  </div>
+                </button>
+              )}''',
+              'auditory-only cue',
+              flags=re.S,
+          )
+
+          sub(
+              r'      \{feedback && \(\n        <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-yellow-400 text-black px-6 py-3 rounded-full text-lg font-bold shadow-lg z-50">\n          \{feedback\}\n        </div>\n      \)\}',
+              '''      {feedback && (
+                <div role="status" aria-live="polite" className={`absolute top-20 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full text-lg font-black shadow-xl z-50 ${feedback.startsWith("Great") ? "bg-emerald-500 text-white" : "bg-yellow-300 text-slate-900"}`}>
+                  {feedback}
+                </div>
+              )}''',
+              'feedback UI',
+          )
+
+          if 'ensureTargetCount(' in text:
+              raise SystemExit('legacy ensureTargetCount call remains')
+          if 'Tap to Start!' in text:
+              raise SystemExit('legacy start label remains')
+          if '>{target}</span>' in text:
+              raise SystemExit('target letter still printed in game cue')
+
+          path.write_text(text)
+
+          Path('src/tests/pages/KidsBalloonPopPedagogy.spec.tsx').write_text(r'''import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+          import { MemoryRouter, Route, Routes } from "react-router-dom";
+          import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+          import KidsBalloonPop from "../../pages/KidsBalloonPop";
+
+          class FakeAudio {
+            preload = ""; volume = 1; muted = false; currentTime = 0;
+            constructor(public src: string) {}
+            pause() {}
+            play() { return Promise.resolve(); }
+          }
+
+          function renderGame() {
+            return render(
+              <MemoryRouter initialEntries={["/kids/games/phonics/balloon-pop?kidId=test-kid"]}>
+                <Routes><Route path="/kids/games/phonics/balloon-pop" element={<KidsBalloonPop disableFullscreen unlockAllLevels />} /></Routes>
+              </MemoryRouter>,
+            );
+          }
+
+          describe("KidsBalloonPop pedagogy UX", () => {
+            beforeEach(() => {
+              vi.stubGlobal("Audio", FakeAudio as unknown as typeof Audio);
+              vi.stubGlobal("requestAnimationFrame", vi.fn(() => 1));
+              vi.stubGlobal("cancelAnimationFrame", vi.fn());
+              vi.spyOn(Math, "random").mockReturnValue(0.01);
+              localStorage.clear();
+            });
+            afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+
+            it("uses one correct balloon by default and an auditory-only cue", async () => {
+              renderGame();
+              expect(screen.getByRole("button", { name: /Listening Focus/i })).toHaveAttribute("aria-pressed", "true");
+              fireEvent.click(screen.getByRole("button", { name: /Sound Group 1: s a t i p n/i }));
+              const start = await screen.findByRole("button", { name: /Start Listening/i });
+              expect(screen.getAllByRole("button", { name: "Balloon s" })).toHaveLength(1);
+              fireEvent.click(start);
+              const cue = await screen.findByTestId("balloon-pop-sound-cue");
+              expect(cue).toHaveTextContent("Listen carefully");
+              expect(cue).toHaveTextContent("Tap to hear again");
+            });
+
+            it("adds visual guidance only after the second mistake", async () => {
+              renderGame();
+              fireEvent.click(screen.getByRole("button", { name: /Sound Group 1: s a t i p n/i }));
+              fireEvent.click(await screen.findByRole("button", { name: /Start Listening/i }));
+              const distractor = screen.getAllByRole("button", { name: "Balloon a" })[0];
+              fireEvent.click(distractor);
+              expect(await screen.findByText(/Listen again/i)).toBeInTheDocument();
+              expect((screen.getByRole("button", { name: "Balloon s" }).getAttribute("style") || "")).not.toContain("hintPulse");
+              fireEvent.click(distractor);
+              expect(await screen.findByText(/matching balloon will glow/i)).toBeInTheDocument();
+              await waitFor(() => expect(screen.getByRole("button", { name: "Balloon s" }).getAttribute("style") || "").toContain("hintPulse"));
+            });
+
+            it("offers a separate speed challenge with two matches", async () => {
+              renderGame();
+              fireEvent.click(screen.getByRole("button", { name: /Speed Challenge/i }));
+              fireEvent.click(screen.getByRole("button", { name: /Sound Group 1: s a t i p n/i }));
+              const start = await screen.findByRole("button", { name: /Start Listening/i });
+              expect(screen.getAllByRole("button", { name: "Balloon s" })).toHaveLength(2);
+              fireEvent.click(start);
+              expect(await screen.findByText(/Listen — pop all matches/i)).toBeInTheDocument();
+            });
+
+            it("shows positive micro-feedback for a correct pop", async () => {
+              renderGame();
+              fireEvent.click(screen.getByRole("button", { name: /Sound Group 1: s a t i p n/i }));
+              fireEvent.click(await screen.findByRole("button", { name: /Start Listening/i }));
+              fireEvent.click(screen.getByRole("button", { name: "Balloon s" }));
+              expect(await screen.findByRole("status")).toHaveTextContent(/Great listening/i);
+            });
+          });
+          ''')
+          PY
+
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/pages/KidsBalloonPop.tsx src/tests/pages/KidsBalloonPopPedagogy.spec.tsx
+          git commit -m "feat: strengthen Balloon Pop pedagogy and game UX"
+          git push origin HEAD:feat/balloon-pop-pedagogy-ux
