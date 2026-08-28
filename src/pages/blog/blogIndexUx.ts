@@ -1,12 +1,13 @@
 import type { BlogDiscoveryCategory, BlogPost } from '../../content/blog/types';
 
 export const BLOG_TOPIC_OPTIONS = [
-  'All',
+  'Parent',
   'Phonics',
   'Grammar',
   'Speaking & Communication',
   'Parent Guides',
   'Schools & Research',
+  'All',
 ] as const;
 
 export type BlogTopic = (typeof BLOG_TOPIC_OPTIONS)[number];
@@ -135,7 +136,8 @@ export function filterBlogIndexPosts(
   const normalizedQuery = normalize(query);
 
   return posts.filter((post) => {
-    if (topic !== 'All' && getBlogDiscoveryTopic(post) !== topic) return false;
+    if (topic === 'Parent' && !isParentFacingBlogPost(post)) return false;
+    if (topic !== 'Parent' && topic !== 'All' && getBlogDiscoveryTopic(post) !== topic) return false;
     if (!normalizedQuery) return true;
     return buildBlogSearchText(post).includes(normalizedQuery);
   });
