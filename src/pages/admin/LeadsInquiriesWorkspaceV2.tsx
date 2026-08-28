@@ -31,6 +31,7 @@ import {
 import { Textarea } from '@components/ui/textarea';
 import { useToast } from '@components/hooks/use-toast';
 import { db } from '../../lib/firebaseConfig';
+import { buildLeadAttributionDisplay } from '../../lib/leadAttributionDisplay';
 import { normalizeDemoStatus } from '../../lib/statuses';
 import type { DemoConversionStatus, DemoSession } from '../../types/models';
 import {
@@ -92,6 +93,17 @@ interface LeadRecord {
   interestTrack?: string | null;
   programInterest?: string | null;
   source?: string | null;
+  sourceDetail?: string | null;
+  acquisitionChannel?: string | null;
+  acquisitionSource?: string | null;
+  landingPage?: string | null;
+  conversionPage?: string | null;
+  attribution?: {
+    utm_source?: string | null;
+    utm_medium?: string | null;
+    utm_campaign?: string | null;
+    referrerDomain?: string | null;
+  } | null;
   preferredTimingText?: string | null;
   timezone?: string | null;
   notes?: string | null;
@@ -118,6 +130,9 @@ interface SimpleRow {
   parentPhone: string;
   course: string;
   source: string;
+  acquisitionLabel: string;
+  contentInfluenceLabel: string | null;
+  attributionDetail: string | null;
   teacherName: string;
   createdAtMs: number;
   updatedAtMs: number;
@@ -502,6 +517,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
       const followUpAtMs = (demo ? parseDateInputMs(demo.followUpDate) : 0) || toMs(lead?.nextFollowUpAt);
       const createdAtMs = toMs(lead?.createdAt) || toMs(demo?.createdAt) || toMs(lead?.updatedAt) || toMs(demo?.lastUpdatedAt);
       const workflow = { leadStatus: lead?.status, demoStatus, conversionStatus: demo?.conversionStatus, hasDemo: Boolean(demo), hasFollowUp: followUpAtMs > 0 };
+      const attributionDisplay = buildLeadAttributionDisplay(lead || { source: demo?.source });
       return {
         id, lead, demo,
         bucket: resolveSimpleLeadBucket(workflow),
@@ -510,6 +526,9 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
         parentPhone: normalizeText(lead?.primaryPhone || lead?.whatsappNumber || lead?.phoneNormalized || (demo ? demoPhones[demo.id] : '')) || '—',
         course: normalizeText(demo?.courseInterested || lead?.programInterest) || formatTrack(lead?.interestTrack) || '—',
         source: normalizeText(demo?.source || lead?.source) || '—',
+        acquisitionLabel: attributionDisplay.acquisitionLabel,
+        contentInfluenceLabel: attributionDisplay.contentInfluenceLabel,
+        attributionDetail: attributionDisplay.detailLabel,
         teacherName: normalizeText(demo?.assignedTeacherName) || (demo?.assignedTeacherId ? 'Assigned teacher' : '—'),
         createdAtMs,
         updatedAtMs: Math.max(toMs(lead?.updatedAt || lead?.createdAt), toMs(demo?.lastUpdatedAt || demo?.createdAt)),
@@ -541,7 +560,18 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     const needle = search.trim().toLowerCase();
     if (!needle) return rows;
     return rows.filter((row) =>
-      [row.parentName, row.childName, row.parentPhone, row.course, row.source, row.teacherName, row.statusLabel]
+      [
+        row.parentName,
+        row.childName,
+        row.parentPhone,
+        row.course,
+        row.source,
+        row.acquisitionLabel,
+        row.contentInfluenceLabel,
+        row.attributionDetail,
+        row.teacherName,
+        row.statusLabel,
+      ]
         .join(' ')
         .toLowerCase()
         .includes(needle));
@@ -766,7 +796,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     </Card>
 
     <Card className="p-4"><div className="grid gap-3 lg:grid-cols-[minmax(260px,1fr)_180px_160px_160px_auto] lg:items-end">
-      <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search parent, child, phone, course or teacher" className="pl-9" /></div>
+      <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search parent, child, phone, course, teacher or attribution" className="pl-9" /></div>
       <div><Label className="mb-1 block text-xs text-slate-500">Enquiry month</Label><Select value={monthFilter} onValueChange={selectMonth}><SelectTrigger aria-label="Filter by enquiry month"><SelectValue placeholder="All months" /></SelectTrigger><SelectContent><SelectItem value="all">All months</SelectItem>{monthOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select></div>
       <div><Label htmlFor="lead-date-from" className="mb-1 block text-xs text-slate-500">From date</Label><Input id="lead-date-from" type="date" value={dateFrom} onChange={(event) => updateDateFrom(event.target.value)} /></div>
       <div><Label htmlFor="lead-date-to" className="mb-1 block text-xs text-slate-500">To date</Label><Input id="lead-date-to" type="date" value={dateTo} onChange={(event) => updateDateTo(event.target.value)} /></div>
@@ -781,7 +811,19 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
       {loading ? <div className="p-8 text-center text-sm text-slate-500">Loading this page and demo ownership…</div> : <>
         {visibleRows.length === 0 ? <div className="p-8 text-center"><CheckCircle2 className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-2 font-medium text-slate-700">Nothing here right now.</p>{dateFiltersActive ? <p className="mt-1 text-xs text-slate-500">No leads were found in the selected month or date range.</p> : textSearchActive ? <p className="mt-1 text-xs text-slate-500">Try clearing the text search or move to another page.</p> : null}</div> : <div className="divide-y">{visibleRows.map((row) => <div key={row.id} className="grid gap-3 px-4 py-4 lg:grid-cols-[1.35fr_1fr_1fr_1fr_auto] lg:items-center">
           <div><div className="font-semibold text-slate-950">{row.parentName}</div><div className="text-sm text-slate-600">{row.childName} · {row.parentPhone}</div></div>
-          <div><div className="text-sm font-medium text-slate-800">{row.course}</div><div className="text-xs text-slate-500">{row.source}</div></div>
+          <div>
+            <div className="text-sm font-medium text-slate-800">{row.course}</div>
+            <div className="text-xs text-slate-500">{row.source}</div>
+            <div className="mt-1 text-xs font-semibold text-slate-700">{row.acquisitionLabel}</div>
+            {row.contentInfluenceLabel && (
+              <div
+                className="mt-0.5 max-w-[260px] truncate text-xs text-slate-500"
+                title={row.attributionDetail || row.contentInfluenceLabel}
+              >
+                {row.contentInfluenceLabel}
+              </div>
+            )}
+          </div>
           <div><div className="text-sm font-medium text-slate-800">{row.teacherName}</div><div className="text-xs text-slate-500">Teacher</div></div>
           <div><Badge variant="outline">{row.statusLabel}</Badge><div className="mt-1 text-xs text-slate-500">{row.followUpAtMs ? `Follow-up ${formatFollowUp(row.followUpAtMs)}` : `Updated ${formatUpdated(row.updatedAtMs)}`}</div></div>
           <div className="flex flex-wrap items-center gap-2 lg:justify-end">
