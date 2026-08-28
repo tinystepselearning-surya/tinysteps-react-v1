@@ -2,7 +2,7 @@ import type { BlogBlock, BlogPost } from '../types';
 
 const WEEK_TITLE_PREFIX = /^\s*Week\s+\d+\s*(?::|[-–—])\s*/i;
 const FAQ_TEMPLATE_HEADING = /^\s*(?:\d+\.\s*)?FAQ section with \d+ parent questions\.?\s*$/i;
-const RAW_ACTION_ROUTE = /\b(Explore|Read|Visit|Build|Compare|Try|Play|Book|Start|See|View|Open)\s+([^.:!?]{1,120}?):\s*(\/[a-z0-9][a-z0-9\-_/?.=&%#]*)/gi;
+const RAW_ACTION_ROUTE = /\b(Explore|Read|Visit|Build|Compare|Try|Play|Book|Start|See|View|Open)\s+([^.:!?]{1,120}?):\s*(\/[a-z0-9](?:[a-z0-9\-_/?.=&%#]*[a-z0-9\-_/#=&%])?)/gi;
 const BOOK_QUERY_ONLY = /^\s*\/?\?book=1\s*$/i;
 
 export function cleanBlogTitle(title: string): string {
