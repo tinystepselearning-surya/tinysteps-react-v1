@@ -2,13 +2,23 @@ import { memo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../../constants/publicContact';
+import {
+  OFFICIAL_PUBLIC_PROFILES,
+  type OfficialProfilePlatform,
+} from '../../lib/officialProfiles';
 
-const socialLinks = [
-  { label: 'Facebook', href: 'https://www.facebook.com/tinystepslearning', icon: '📘' },
-  { label: 'Instagram', href: 'https://www.instagram.com/tiny_steps_oel/', icon: '📸' },
-  { label: 'YouTube', href: 'https://www.youtube.com/@TinyStepsLearning-1157', icon: '▶️' },
-  { label: 'LinkedIn', href: 'https://www.linkedin.com/company/tiny-steps-learning/', icon: '💼' },
-];
+const SOCIAL_ICONS: Record<OfficialProfilePlatform, string> = {
+  Facebook: '📘',
+  Instagram: '📸',
+  YouTube: '▶️',
+  LinkedIn: '💼',
+};
+
+const socialLinks = OFFICIAL_PUBLIC_PROFILES.map((profile) => ({
+  label: profile.platform,
+  href: profile.url,
+  icon: SOCIAL_ICONS[profile.platform],
+}));
 
 const courseLinks = [
   { label: 'Courses overview', href: '/courses' },

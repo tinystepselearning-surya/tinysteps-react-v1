@@ -13,8 +13,16 @@ import {
 const repoRoot = process.cwd();
 const read = (relativePath: string) => fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
 
+const EXPECTED_OFFICIAL_PROFILE_URLS = [
+  'https://www.facebook.com/profile.php?id=61593673422886',
+  'https://www.instagram.com/tiny_steps_oel/',
+  'https://www.youtube.com/@TinyStepsLearning-1157',
+  'https://www.linkedin.com/company/tiny-steps-learning/',
+];
+
 describe('B15 off-site entity corroboration guardrails', () => {
   it('derives visible official profiles from organization sameAs without duplicating URLs', () => {
+    expect(organizationSchema.sameAs).toEqual(EXPECTED_OFFICIAL_PROFILE_URLS);
     expect(organizationSchema.sameAs).toEqual(OFFICIAL_PUBLIC_PROFILE_URLS);
     expect(new Set(OFFICIAL_PUBLIC_PROFILE_URLS).size).toBe(OFFICIAL_PUBLIC_PROFILE_URLS.length);
 
@@ -27,6 +35,20 @@ describe('B15 off-site entity corroboration guardrails', () => {
       expect(profile.url).not.toMatch(/[?&](?:utm_|fbclid|gclid)/i);
       expect(profile.platform).toMatch(/^(?:Facebook|Instagram|YouTube|LinkedIn)$/);
     }
+  });
+
+  it('uses public organization identities rather than admin or account-management URLs', () => {
+    const sameAs = organizationSchema.sameAs.join('\n');
+    expect(sameAs).not.toContain('facebook.com/tinystepslearning');
+    expect(sameAs).not.toContain('61585755667285');
+    expect(sameAs).not.toContain('/admin/');
+    expect(sameAs).not.toContain('viewAsMember=true');
+  });
+
+  it('keeps the footer on the same canonical profile contract', () => {
+    const footer = read('src/components/common/Footer.tsx');
+    expect(footer).toContain('OFFICIAL_PUBLIC_PROFILES');
+    expect(footer).not.toMatch(/href:\s*['"]https:\/\/(?:www\.)?(?:facebook|instagram|youtube|linkedin)\.com/i);
   });
 
   it('keeps the off-site fact pack aligned with canonical site facts', () => {
