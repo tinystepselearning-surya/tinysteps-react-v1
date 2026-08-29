@@ -26,6 +26,7 @@ describe('blog indexing policy', () => {
     for (const [cleanSlug, legacySlug] of [
       ['prevent-summer-slide-reading', 'week-27-prevent-summer-slide-reading'],
       ['phonics-diagnostics', 'week-22-phonics-diagnostics'],
+      ['phonics-multisyllabic', 'week-19-phonics-multisyllabic'],
     ]) {
       expect(shouldNoindexBlogSlug(cleanSlug)).toBe(false);
       expect(shouldIncludeBlogSlugInSitemap(cleanSlug)).toBe(true);
