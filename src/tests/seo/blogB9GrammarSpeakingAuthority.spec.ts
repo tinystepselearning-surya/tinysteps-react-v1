@@ -18,26 +18,26 @@ const readRepoFile = (relativePath: string) =>
 const bySlug = new Map(blogPosts.map((post) => [post.slug, post]));
 const bodyText = (slug: string) => bySlug.get(slug)!.body.map((block) => block.content).join('\n');
 
-const GRAMMAR_OWNER = 'week-7-grammar-nouns-to-paragraphs';
-const SPEAKING_OWNER = 'week-12-speaking-confidence-seeds';
+const GRAMMAR_OWNER = 'grammar-nouns-to-paragraphs';
+const SPEAKING_OWNER = 'speaking-confidence-seeds';
 
 const GRAMMAR_SUPPORT_SLUGS = [
-  'week-8-grammar-tenses',
-  'week-9-grammar-conjunctions',
-  'week-10-grammar-subject-verb',
-  'week-11-grammar-creative-writing',
-  'week-17-grammar-assessment',
-  'week-20-grammar-editing-camp',
-  'week-23-grammar-speaking-bridge',
+  'grammar-tenses',
+  'grammar-conjunctions',
+  'grammar-subject-verb',
+  'grammar-creative-writing',
+  'grammar-assessment',
+  'grammar-editing-camp',
+  'grammar-speaking-bridge',
 ] as const;
 
 const SPEAKING_SUPPORT_SLUGS = [
-  'week-13-speaking-structure',
-  'week-14-speaking-visual-aids',
-  'week-15-speaking-debate-starters',
-  'week-18-speaking-video-feedback',
-  'week-21-speaking-competition-prep',
-  'week-24-speaking-family-showcase',
+  'speaking-structure',
+  'speaking-visual-aids',
+  'speaking-debate-starters',
+  'speaking-video-feedback',
+  'speaking-competition-prep',
+  'speaking-family-showcase',
 ] as const;
 
 describe('B9 grammar and speaking authority guardrails', () => {
@@ -74,7 +74,7 @@ describe('B9 grammar and speaking authority guardrails', () => {
     }
   });
 
-  it('keeps broad Week 7 and Week 12 owners indexable while support Week pages remain noindex', () => {
+  it('keeps the broad grammar and speaking owners indexable while supporting roadmap pages remain noindex', () => {
     expect(shouldNoindexBlogSlug(GRAMMAR_OWNER)).toBe(false);
     expect(shouldNoindexBlogSlug(SPEAKING_OWNER)).toBe(false);
 
@@ -111,8 +111,8 @@ describe('B9 grammar and speaking authority guardrails', () => {
     const grammarHub = bodyText(GRAMMAR_OWNER);
     expect(grammarHub).toContain('/blog/how-to-improve-sentence-formation-in-kids');
     expect(grammarHub).toContain('/blog/child-knows-grammar-but-makes-mistakes');
-    expect(grammarHub).toContain('/blog/week-9-grammar-conjunctions');
-    expect(grammarHub).toContain('/blog/week-23-grammar-speaking-bridge');
+    expect(grammarHub).toContain('/blog/grammar-conjunctions');
+    expect(grammarHub).toContain('/blog/grammar-speaking-bridge');
 
     expect(bodyText('how-to-improve-sentence-formation-in-kids')).toContain(`/blog/${GRAMMAR_OWNER}`);
     expect(bodyText('child-knows-grammar-but-makes-mistakes')).toContain(`/blog/${GRAMMAR_OWNER}`);
@@ -120,7 +120,7 @@ describe('B9 grammar and speaking authority guardrails', () => {
     const speakingHub = bodyText(SPEAKING_OWNER);
     expect(speakingHub).toContain('/blog/child-understands-english-but-does-not-speak');
     expect(speakingHub).toContain('/blog/child-gives-one-word-answers');
-    expect(speakingHub).toContain('/blog/week-13-speaking-structure');
+    expect(speakingHub).toContain('/blog/speaking-structure');
 
     expect(bodyText('child-understands-english-but-does-not-speak')).toContain(`/blog/${SPEAKING_OWNER}`);
     expect(bodyText('child-gives-one-word-answers')).toContain(`/blog/${SPEAKING_OWNER}`);
