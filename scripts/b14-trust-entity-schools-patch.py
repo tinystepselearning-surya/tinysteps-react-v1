@@ -109,3 +109,29 @@ replace_once(
     """                </a>\n              </div>\n              <p className=\"mt-4 max-w-2xl text-xs leading-5 text-slate-600\">\n                Tiny Steps Learning is an independent education provider. Referencing NCF, CBSE, or international\n                phonics criteria explains the evidence and implementation context; it does not imply endorsement,\n                approval, certification or affiliation.\n              </p>\n            </div>\n\n            <div className=\"grid gap-4\">\n""",
     'visible independent provider disclosure',
 )
+
+# 4) Remove unsupported enrolment/referral causality from the visible school-value section.
+replace_once(
+    'src/pages/ForSchoolsPage.tsx',
+    '<p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-700">The enrolment business case</p>',
+    '<p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-700">Implementation visibility</p>',
+    'school value eyebrow',
+)
+replace_once(
+    'src/pages/ForSchoolsPage.tsx',
+    '<h2 className="mt-3 text-3xl font-black leading-tight tracking-tight text-slate-950 md:text-4xl">\n                Visible reading progress strengthens parent confidence\n              </h2>',
+    '<h2 className="mt-3 text-3xl font-black leading-tight tracking-tight text-slate-950 md:text-4xl">\n                Make phonics progress easier for families and leaders to understand\n              </h2>',
+    'school value heading',
+)
+replace_once(
+    'src/pages/ForSchoolsPage.tsx',
+    """                <p>\n                  In the Early Years, Pre-Primary and Lower Primary stages, families often evaluate the quality of\n                  schooling through the progress they can observe in their child’s reading, blending, spelling, and\n                  writing. Report-card scores matter, but visible literacy development gives parents clearer evidence\n                  that classroom learning is becoming lasting capability.\n                </p>\n                <p>\n                  Demonstrable reading progress can strengthen parent trust, support continued enrolment, and\n                  encourage positive recommendations within the school community.\n                </p>\n""",
+    """                <p>\n                  In Early Years, Pre-Primary and Lower Primary, families often need clear language for understanding\n                  what children are practising in reading, blending, spelling, and writing. Skill-specific reporting can\n                  make classroom learning easier to discuss than a broad score alone.\n                </p>\n                <p>\n                  A shared implementation sequence, baseline checks, checkpoints, and consistent teacher language give\n                  schools a clearer way to explain what is secure, what needs reinforcement, and what comes next.\n                </p>\n""",
+    'school value body copy',
+)
+replace_once(
+    'src/pages/ForSchoolsPage.tsx',
+    """                Strong early literacy is not only an academic priority. It is part of the trust a school builds with\n                every family.\n""",
+    """                Strong early literacy is an academic priority. Clear evidence and communication help families and\n                school leaders understand the work being done.\n""",
+    'school value statement',
+)
