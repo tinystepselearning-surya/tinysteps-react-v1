@@ -17,9 +17,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/curriculum': {
-    title: 'IB-Aligned English Curriculum | Tiny Steps Learning',
+    title: 'English Curriculum for Kids Ages 3–12 | Tiny Steps Learning',
     description:
-      'See the full learning roadmap for children aged 3–12 across phonics, grammar, reading, sentence formation, communication, and public speaking.',
+      'See the complete Tiny Steps learning roadmap for ages 3–12: phonics and reading foundations, grammar and sentence building, then speaking and communication progression.',
     canonicalPath: '/curriculum',
     ogType: 'website',
   },

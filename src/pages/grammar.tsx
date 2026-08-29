@@ -96,7 +96,7 @@ export default function GrammarPage() {
       '@type': 'BreadcrumbList',
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
-        { '@type': 'ListItem', position: 2, name: 'Courses', item: 'https://tinystepslearning.com/courses' },
+        { '@type': 'ListItem', position: 2, name: 'Curriculum', item: 'https://tinystepslearning.com/curriculum' },
         { '@type': 'ListItem', position: 3, name: 'Grammar Classes for Kids', item: canonicalUrl },
       ],
     };
@@ -158,7 +158,7 @@ export default function GrammarPage() {
               </li>
               <li aria-hidden="true">&gt;</li>
               <li>
-                <Link to="/courses" className="hover:text-slate-900 hover:underline">Courses</Link>
+                <Link to="/curriculum" className="hover:text-slate-900 hover:underline">Curriculum</Link>
               </li>
               <li aria-hidden="true">&gt;</li>
               <li className="font-medium text-slate-900">Grammar Classes for Kids</li>
@@ -186,6 +186,12 @@ export default function GrammarPage() {
                   className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-slate-900 px-6 py-3.5 text-base font-bold text-white shadow-[0_10px_24px_rgba(15,23,42,0.2)] transition hover:bg-slate-800 sm:w-auto sm:min-w-[230px] md:px-8 md:py-4"
                 >
                   Book Free 35-Minute Demo
+                </Link>
+                <Link
+                  to="/curriculum?tab=grammar"
+                  className="ml-0 mt-3 inline-flex min-h-[44px] items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-50 sm:ml-3 sm:mt-0"
+                >
+                  View Full Curriculum Roadmap
                 </Link>
                 <p className="mt-3 text-sm text-slate-600 md:text-[15px]">Takes 20-30 seconds • No commitment</p>
               </div>

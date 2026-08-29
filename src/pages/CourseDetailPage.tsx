@@ -86,6 +86,8 @@ const CourseDetailPage: FC = () => {
     if (slug.includes('speaking') || slug.includes('communication')) return 'speaking';
     return 'phonics';
   }, [slug]);
+  const programPath = courseTrack === 'phonics' ? '/phonics' : courseTrack === 'grammar' ? '/grammar' : '/speaking';
+  const programLabel = courseTrack === 'phonics' ? 'Phonics' : courseTrack === 'grammar' ? 'Grammar' : 'Speaking & Communication';
   const courseTag = courseTrack;
   const course = useMemo(() => catalogs.find((c) => c.slug === slug), [slug]);
   const usedHrefs = useMemo(() => new Set<string>(), []);
@@ -157,10 +159,11 @@ const CourseDetailPage: FC = () => {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: `${PUBLIC_FACTS.primaryWebsite}/` },
-      { '@type': 'ListItem', position: 2, name: 'Courses', item: `${PUBLIC_FACTS.primaryWebsite}/courses` },
+      { '@type': 'ListItem', position: 2, name: 'Curriculum', item: `${PUBLIC_FACTS.primaryWebsite}/curriculum` },
+      { '@type': 'ListItem', position: 3, name: programLabel, item: `${PUBLIC_FACTS.primaryWebsite}${programPath}` },
       {
         '@type': 'ListItem',
-        position: 3,
+        position: 4,
         name: coursePageConfig?.breadcrumbName ?? course.name,
         item: canonicalUrl,
       },
@@ -236,7 +239,7 @@ const CourseDetailPage: FC = () => {
                     program: courseTrack,
                   }),
               },
-              { label: 'Compare All Courses', to: '/courses', variant: 'ghost' },
+              { label: 'View Full Curriculum Roadmap', to: '/curriculum', variant: 'ghost' },
             ]}
             renderLink={(item, className) =>
               item.to ? (
@@ -326,6 +329,12 @@ const CourseDetailPage: FC = () => {
             title="How the course unfolds lesson by lesson"
             description="Parents can see the learning path clearly before they commit."
           />
+          <p className="mt-3 text-sm leading-6 text-slate-700">
+            This page owns the detailed lesson sequence for this level. For the relationship between Phonics, Grammar, and Speaking, see the{' '}
+            <Link to="/curriculum" className="font-semibold text-slate-900 underline underline-offset-4">
+              complete Tiny Steps curriculum roadmap
+            </Link>.
+          </p>
           {weeksState && weeksState.length ? (
             <div className="mt-5">
               <WeekAccordion items={weeksState} />
@@ -371,12 +380,8 @@ const CourseDetailPage: FC = () => {
                       program: courseTrack,
                     }),
                 },
-                { label: 'All Courses', to: '/courses', variant: 'ghost' },
-                slug.includes('phonic')
-                  ? { label: 'View Phonics Track', to: '/phonics', variant: 'ghost' }
-                  : slug.includes('grammar')
-                    ? { label: 'View Grammar Track', to: '/grammar', variant: 'ghost' }
-                    : { label: 'View Speaking Track', to: '/speaking', variant: 'ghost' },
+                { label: 'View Full Curriculum Roadmap', to: '/curriculum', variant: 'ghost' },
+                { label: `View ${programLabel} Program`, to: programPath, variant: 'ghost' },
               ]}
               renderLink={(item, className) => (
                 <Link
