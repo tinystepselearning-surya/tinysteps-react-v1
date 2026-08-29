@@ -61,19 +61,10 @@ const SUPPORTING_LONG_TAIL = new Set([
   '/letter-tracing-with-sounds-game',
 ]);
 
+// Weekly-roadmap support pages are governed centrally by blogIndexingPolicy.
+// Keep only independent sitemap exclusions here.
 const EXCLUDED_BLOG_SLUGS = new Set([
   'spoken-english-classes-for-kids-confidence',
-  'week-26-screen-smart-summer-routine',
-  'week-22-phonics-diagnostics',
-  'week-16-phonics-summer-plan',
-  'week-3-phonics-tricky-words',
-  'week-19-phonics-multisyllabic',
-  'week-9-grammar-conjunctions',
-  'week-15-speaking-debate-starters',
-  'week-14-speaking-visual-aids',
-  'week-11-grammar-creative-writing',
-  'week-23-grammar-speaking-bridge',
-  'week-17-grammar-assessment',
 ]);
 
 (function main(){
