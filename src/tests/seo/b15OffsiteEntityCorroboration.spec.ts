@@ -14,9 +14,13 @@ const repoRoot = process.cwd();
 const read = (relativePath: string) => fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
 
 describe('B15 off-site entity corroboration guardrails', () => {
-  it('keeps declared official profiles identical to organization sameAs', () => {
+  it('derives visible official profiles from organization sameAs without duplicating URLs', () => {
     expect(organizationSchema.sameAs).toEqual(OFFICIAL_PUBLIC_PROFILE_URLS);
     expect(new Set(OFFICIAL_PUBLIC_PROFILE_URLS).size).toBe(OFFICIAL_PUBLIC_PROFILE_URLS.length);
+
+    const profileContract = read('src/lib/officialProfiles.ts');
+    expect(profileContract).toContain('organizationSchema.sameAs.map');
+    expect(profileContract).not.toMatch(/url:\s*['"]https:\/\//);
 
     for (const profile of OFFICIAL_PUBLIC_PROFILES) {
       expect(profile.url).toMatch(/^https:\/\//);
