@@ -2,7 +2,7 @@
 
 ## Sequence authority
 
-The programme numbering is now locked to the **authoritative 76-blog inventory supplied by the founder on 2026-08-30**:
+The programme numbering is locked to the **authoritative 76-blog inventory supplied by the founder on 2026-08-30**:
 
 - Blogs **1–34**: Phonics
 - Blogs **35–51**: Parent Tips / English Communication
@@ -10,9 +10,28 @@ The programme numbering is now locked to the **authoritative 76-blog inventory s
 - Blogs **61–68**: Grammar
 - Blogs **69–76**: Public Speaking
 
-This numbering overrides the earlier temporary refresh order. Previous quality work merged through PRs #158–#161 remains valid content work, but those PR numbers do **not** define Blog #1, #2, #3 or #4 in the authoritative 76-blog sequence.
+The complete fixed order lives in `docs/seo/blog-quality/AUTHORITATIVE_76_SEQUENCE.md`.
 
-The current programme must always move through the supplied inventory in numeric order unless the founder explicitly changes the sequence.
+This numbering overrides the earlier temporary refresh order. Previous quality work merged through PRs #158–#161 remains valid content work, but those PR numbers do **not** define Blog #1, #2, #3 or #4 in the authoritative sequence.
+
+## Delivery model — 10 blogs per merge batch
+
+The founder changed the delivery model on 2026-08-30:
+
+1. Build and lock Blogs **#1–#10 on the same branch/PR**.
+2. Do not merge individual blogs while the batch is incomplete.
+3. Keep focused regression coverage for each article as it is added.
+4. Re-run the full exact-head CI/SEO gate on the final Blog #10 head.
+5. Merge the complete Blogs #1–#10 batch to `main` only after the founder explicitly approves it.
+6. Then start the next batch (#11–#20) from the new `main`.
+
+Current batch branch:
+
+`seo/blog-quality-sequence-01-benefits-phonics`
+
+Current batch PR:
+
+`#163`
 
 ## North Star
 
@@ -40,19 +59,25 @@ Search visibility is a distribution goal, not the purpose of the content. Every 
 
 - Every retained article should reach **90+/100** after refresh.
 - A numeric score never overrides a factual, pedagogical, evidence, safety, trust or intent hard fail.
-- No individual article is merged until its exact-head CI/SEO gate is green and the founder explicitly approves the merge.
+- The full 10-blog batch must pass exact-head CI/SEO before merge.
+- Merge requires explicit founder approval after Blog #10 is locked.
 
-## Authoritative progress
+## Batch #1 progress — Blogs #1–#10
 
 | # | Article | Baseline | Status | Main action | Score after refresh |
 |---:|---|---:|---|---|---:|
-| 1 | Benefits of Phonics for Kids: What Parents Usually Notice First | 57/100 | **LOCKED — exact-head validation next** | Rebuilt from generic phonics template into the realistic parent benefits owner; removes fixed benefit timelines and unsupported direct-confidence claims; adds observable decoding/encoding/transfer signals, evidence boundaries, five FAQs and intent routing | **95/100** |
-| 2 | Child Knows ABC but Cannot Read: What Parents Should Check First | — | QUEUED | Start only after Blog #1 validation/merge decision | — |
+| 1 | Benefits of Phonics for Kids: What Parents Usually Notice First | 57/100 | **LOCKED IN BATCH** | Rebuilt from generic phonics template into the realistic parent benefits owner; removed fixed timelines and unsupported direct-confidence claims; added observable decoding/encoding/transfer signals, evidence boundaries and intent routing | **95/100** |
+| 2 | Child Knows ABC but Cannot Read: What Parents Should Check First | 65/100 | **LOCKED IN BATCH** | Rebuilt as the ABC-to-reading bottleneck owner; adds six-step check from recognition to connected-text transfer, removes generic template claims, separates Blog #2 from the letter-sounds-specific owner, adds evidence and diagnostic boundaries | **96/100** |
 | 3 | CVC Words Explained for Parents: The First Real Decoding Milestone | — | QUEUED | — | — |
 | 4 | Digraphs and Tricky Words: What to Decode and What to Remember | — | QUEUED | — | — |
 | 5 | How Kids Learn Blending: The Stage-by-Stage Path Parents Can Track | — | QUEUED | — | — |
+| 6 | How Long Does Phonics Take? A Realistic Parent Guide to Progress | — | QUEUED | — | — |
+| 7 | How Phonics Builds Reading Confidence: What Changes First at Home | — | QUEUED | — | — |
+| 8 | How Phonics Classes Help Kids Read: Decoding, Blending and Fluency Explained | — | QUEUED | — | — |
+| 9 | How Phonics Improves Spelling: A Parent Encoding Roadmap | — | QUEUED | — | — |
+| 10 | How to Choose a Phonics Class: The Complete Parent Comparison Framework | — | QUEUED | — | — |
 
-## Blog #1 — locked for exact-head validation
+## Blog #1 — locked in batch
 
 ### Canonical role
 
@@ -84,39 +109,86 @@ It is an outcomes/observation explainer, not a general definition page, not a bl
 - Added the Tiny Steps five-signal benefit check: **coverage, blending, independence, encoding and transfer**.
 - Added fresh-word checks so parents can distinguish transferable decoding from memorised word lists.
 - Added a clear boundary that phonics supports word reading but does not replace vocabulary, oral language, comprehension, reading experience or motivation.
-- Added first-party guidance for interpreting uneven progress without changing the whole method too early.
 - Added four external evidence sources: EEF, National Reading Panel/NICHD, IES/What Works Clearinghouse and the UK Department for Education Reading Framework.
-- Added five AEO/GEO FAQs.
-- Added contextual links to blending, spelling, confidence, fluency, assessment, phonics sequence and the main Phonics programme.
+- Added five AEO/GEO FAQs and contextual intent routing.
 - Added founder authorship, `modifiedDate: 2026-08-30`, a dedicated meta description and a 13-minute read estimate.
-
-### Evidence decision
-
-The article now makes only evidence-supported broad claims:
-
-- systematic phonics supports early word reading/decoding;
-- phonics can support spelling when sound-to-print encoding is taught;
-- explicit, systematic teaching should be matched to current knowledge;
-- connected-text practice matters for fluency;
-- phonics alone does not guarantee comprehension.
-
-The Tiny Steps five-signal check is explicitly labelled editorial guidance rather than a standardized research instrument.
 
 ### Final decision
 
-**95/100 — LOCKED pending exact-head CI/SEO validation.**
+**95/100 — LOCKED IN BLOGS #1–#10 BATCH.**
 
-## Per-blog final gate
+## Blog #2 — locked in batch
 
-Before each merge:
+### Canonical role
 
-- human-helpfulness/shareability review
+`/blog/child-knows-abc-but-cannot-read` owns the broad parent diagnostic question:
+
+> **My child knows or recites the alphabet but cannot read words. Which link between ABC knowledge and decoding should I check first?**
+
+This article starts before word reading and identifies the first breakdown across alphabet recognition, sound-letter recall, oral blending, printed blending, fresh-word transfer and short connected text.
+
+### Intent boundaries
+
+- `/blog/child-knows-abc-but-cannot-read` → ABC/alphabet familiarity to first real decoding bottleneck.
+- `/blog/why-child-knows-letter-sounds-but-cannot-read-words` → narrower owner after letter-sound recall is already secure but blending/word reading still fails.
+- `/blog/how-kids-learn-blending` → stage-by-stage blending instruction rather than broad diagnosis.
+- `/blog/cvc-words-explained-for-parents` → first simple CVC decoding milestone.
+- `/blog/phonics-diagnostics` → broader informal home phonics observation across taught skills.
+- `/blog/what-is-phonics-for-kids` → general definition/start-here owner.
+- `/phonics` → commercial structured programme owner.
+
+### Baseline problems fixed
+
+- Converted Blog #2 from the shared generic `PhonicsSeoPost` generator into a direct editorial `BlogPost`.
+- Removed generic template copy about class selection, a 10-minute daily routine, fixed judgement windows and shared escalation timelines.
+- Removed the oversimplified FAQ instruction to “prioritize letter sounds” and replaced it with the more accurate distinction that children benefit from both letter names and sound-letter knowledge, while decoding specifically requires usable sound correspondences.
+- Added the **Tiny Steps six-step ABC-to-reading check**:
+  1. printed-letter recognition;
+  2. taught sound recall;
+  3. oral blending without print;
+  4. simple printed blending;
+  5. fresh-word transfer;
+  6. short connected-text transfer.
+- Made every check conditional on **already-taught** sounds/patterns so parents do not test advanced or untaught spellings and misclassify the child.
+- Added an interpretation section that maps the first weak step to the next appropriate practice target.
+- Added a firm cannibalization boundary with Blog #50: once letter-sound recall is secure, the parent should move to the letter-sounds-but-cannot-read article instead of repeating alphabet work.
+- Added practical home responses for letter-sound recall, oral blending and printed decoding without imposing a research-invented daily dosage.
+- Added explicit warnings against picture guessing during a decoding check, long random word lists, premature speed pressure and fixed-week expectations.
+- Added a progress section based on observable independence and transfer rather than calendar promises.
+- Added a diagnostic boundary: this parent guide does not diagnose dyslexia, hearing, speech, language, attention or broader learning conditions.
+- Added four external evidence sources: IES/What Works Clearinghouse, National Reading Panel/NICHD, Education Endowment Foundation and the UK Department for Education Reading Framework.
+- Added five answer-engine-friendly FAQs and contextual links to blending, CVC, diagnostics and the main Phonics pathway.
+- Added founder authorship, `modifiedDate: 2026-08-30`, a dedicated meta description and a 14-minute read estimate.
+
+### Evidence decision
+
+The Tiny Steps six-step check is explicitly labelled **editorial guidance rather than a standardized research test**.
+
+The external evidence supports the underlying principles that:
+
+- phonemic awareness involves noticing and manipulating sounds in spoken words;
+- sound-letter correspondences must become usable in reading rather than remain isolated knowledge;
+- blending is required to decode unfamiliar words;
+- explicit, systematic phonics instruction should progress from simpler to more complex applications;
+- children need opportunities to apply decoding in connected text.
+
+The article makes no claim that knowing ABC, passing the six steps or failing one step constitutes a professional diagnosis.
+
+### Final decision
+
+**96/100 — LOCKED IN BLOGS #1–#10 BATCH.** No known factual, pedagogical, evidence, diagnosis-boundary, reader-helpfulness or cannibalization hard fail remains after review.
+
+## Batch merge gate
+
+Do not merge PR #163 until Blogs #1–#10 are all complete and the final batch head passes:
+
+- human-helpfulness/shareability review for all 10
 - no hard-fail issue
-- final score 90+
-- intent/cannibalization check
+- each final score 90+
+- intent/cannibalization checks
 - title/meta/FAQ/internal-link review
 - evidence claim verification
-- indexability decision
+- indexability decisions where relevant
 - focused regression tests
-- exact-head CI/SEO validation
-- explicit founder approval to merge
+- full exact-head CI/SEO validation after Blog #10
+- explicit founder approval to merge the complete batch
