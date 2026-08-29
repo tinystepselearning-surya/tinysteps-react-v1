@@ -53,7 +53,7 @@ Target: **90+/100** with no factual, pedagogical, evidence, diagnosis-boundary, 
 | 4 | Digraphs and Tricky Words: What to Decode and What to Remember | 64/100 | **LOCKED IN BATCH** | Distinguishes digraphs, blends, high-frequency and tricky words; four-question decode-or-remember rule; protects Blog #28 tricky-word routine intent | **96/100** |
 | 5 | How Kids Learn Blending: The Stage-by-Stage Path Parents Can Track | 66/100 | **LOCKED IN BATCH** | Five-stage oral→print→continuous→fresh-word→text blending pathway; stage-exit signals replace fixed days/weeks; error interpretation and evidence | **96/100** |
 | 6 | How Long Does Phonics Take? A Realistic Parent Guide to Progress | 74/100 | **LOCKED IN BATCH** | Separates current-target, full-progression and fluent-reading timelines; replaces calendar promises with progress-to-time signals, evidence and provider accountability | **96/100** |
-| 7 | How Phonics Builds Reading Confidence: What Changes First at Home | — | QUEUED | — | — |
+| 7 | How Phonics Builds Reading Confidence: What Changes First at Home | 68/100 | **LOCKED IN BATCH** | Separates decoding competence from confidence, removes unsupported success ratios/daily dosage, adds five observable confidence signals, home-response guidance, evidence and causal boundaries | **96/100** |
 | 8 | How Phonics Classes Help Kids Read: Decoding, Blending and Fluency Explained | — | QUEUED | — | — |
 | 9 | How Phonics Improves Spelling: A Parent Encoding Roadmap | — | QUEUED | — | — |
 | 10 | How to Choose a Phonics Class: The Complete Parent Comparison Framework | — | QUEUED | — | — |
@@ -62,15 +62,11 @@ Target: **90+/100** with no factual, pedagogical, evidence, diagnosis-boundary, 
 
 **Canonical role:** `/blog/benefits-of-phonics-for-kids` owns the question: *What benefits of phonics should parents realistically notice, and what tends to change first?*
 
-Intent boundaries: definition → `/blog/what-is-phonics-for-kids`; blending → Blog #5; spelling → Blog #9; confidence → Blog #7; timeline → Blog #6; fluency → `/blog/how-to-improve-reading-fluency-in-children`.
-
 **Final decision: 95/100 — LOCKED IN BATCH.**
 
 ## Blog #2 — locked
 
 **Canonical role:** `/blog/child-knows-abc-but-cannot-read` owns the broad alphabet-familiarity-to-first-decoding bottleneck.
-
-The article checks printed-letter recognition, taught sound recall, oral blending, printed blending, fresh-word transfer and connected-text transfer. Once sound recall is already secure, `/blog/why-child-knows-letter-sounds-but-cannot-read-words` becomes the narrower owner.
 
 **Final decision: 96/100 — LOCKED IN BATCH.**
 
@@ -78,17 +74,11 @@ The article checks printed-letter recognition, taught sound recall, oral blendin
 
 **Canonical role:** `/blog/cvc-words-explained-for-parents` owns the CVC definition and first simple printed-word decoding milestone.
 
-It defines CVC as a consonant-vowel-consonant spelling structure rather than any three-letter word, requires already-taught correspondences, checks fresh-word and encoding transfer, and does not prescribe universal word counts or fixed mastery timelines.
-
-**Indexability:** ordinary evergreen non-weekly slug; already indexable and sitemap eligible.
-
 **Final decision: 96/100 — LOCKED IN BATCH.**
 
 ## Blog #4 — locked
 
 **Canonical role:** `/blog/digraphs-and-tricky-words` owns the conceptual parent decision: *Which parts should my child decode and which parts genuinely need extra memory?*
-
-Key decisions: distinguishes digraphs from consonant blends; separates high-frequency from tricky/common-exception; explains temporarily tricky correspondences; adds the four-question decode-or-remember check; decodes regular parts rather than whole-word visual guessing; protects `/blog/phonics-tricky-words` as Blog #28’s detailed teaching-routine owner; adds evidence, transfer checks and five FAQs.
 
 **Final decision: 96/100 — LOCKED IN BATCH.**
 
@@ -96,54 +86,51 @@ Key decisions: distinguishes digraphs from consonant blends; separates high-freq
 
 **Canonical role:** `/blog/how-kids-learn-blending` owns the developmental and instructional progression from hearing separate phonemes to independently blending printed words and carrying that strategy into connected text.
 
-Key decisions: removes inherited fixed-calendar examples; establishes oral blending → print connection → continuous blending → fresh-word transfer → connected-text transfer; clarifies blending as a verb; adds clean-sound/schwa guidance; replaces calendar stage exits with accuracy, independence, transfer, retention and text use; adds evidence, error interpretation and five FAQs.
-
 **Final decision: 96/100 — LOCKED IN BATCH.**
 
 ## Blog #6 — locked
 
 **Canonical role:** `/blog/how-long-does-phonics-take` owns the parent question: *How should I think about phonics duration without relying on a universal deadline?*
 
-### Core quality decision — three separate clocks
+The article separates current-target time, full-progression time and fluent-reading time, then uses starting point, accuracy, independence, transfer and retention instead of fixed calendars.
 
-The article now separates:
+**Final decision: 96/100 — LOCKED IN BATCH.**
 
-1. **Current-target time** — how long it takes the child to secure the phonics target being taught now.
-2. **Full-progression time** — how long it takes to work through the programme’s wider cumulative phonics scope.
-3. **Fluent-reading time** — how long accurate decoding takes to become increasingly automatic in connected text alongside vocabulary, language comprehension and reading experience.
+## Blog #7 — locked
 
-These are related but are not one deadline.
+**Canonical role:** `/blog/how-phonics-builds-reading-confidence` owns the parent question: *How can improved decoding show up as reading-confidence behaviour at home, and what should I watch for without assuming confidence is guaranteed?*
 
 ### Intent boundaries
 
-- `/blog/how-long-does-phonics-take` → progress pace, duration interpretation and realistic timeline owner.
+- `/blog/how-phonics-builds-reading-confidence` → reading-confidence behaviour, error recovery, willingness to attempt and independence.
+- `/blog/benefits-of-phonics-for-kids` → wider observable phonics benefits.
 - `/blog/how-kids-learn-blending` → blending progression.
-- `/blog/cvc-words-explained-for-parents` → CVC milestone.
-- `/blog/how-to-improve-reading-fluency-in-children` → fluency after decoding is sufficiently accurate.
-- `/blog/how-to-choose-phonics-classes` → provider-selection framework.
-- `/blog/phonics-diagnostics` → broader parent observation/assessment.
+- `/blog/how-long-does-phonics-take` → progress pace and duration.
+- `/blog/how-phonics-classes-help-kids-read` → mechanism of structured classes from decoding toward fluency.
+- `/blog/how-to-improve-reading-fluency-in-children` → accurate but effortful connected reading.
+- `/blog/how-to-choose-phonics-classes` → provider comparison.
 - `/phonics` → commercial programme owner.
 
 ### Baseline problems fixed
 
-- The original article already rejected one universal completion deadline, but it did not clearly separate the different meanings of “How long does phonics take?”
-- Changed organisation-level authorship to founder authorship and added `modifiedDate: 2026-08-30`.
-- Added a dedicated hero, stronger excerpt and clearer parent-intent meta description.
-- Added the three-clock distinction so completion of one current target, completion of a phonics scope and fluent reading are not conflated.
-- Added the **Tiny Steps progress-to-time compass**: starting point, accuracy, independence, transfer and retention.
-- Explicitly labels the compass editorial guidance rather than a standardized timing formula.
-- Replaced calendar progression with observable stage evidence.
-- Added a parent dashboard: current target, fresh-word result, prompt level, text transfer, spelling transfer, retention and dominant error.
-- Added a clear safeguard that this article does not prescribe a research-defined weekly or monthly testing schedule.
-- Prevents “give it more time” from becoming an excuse for prolonged unchanged errors.
-- Added provider accountability questions without taking over Blog #10’s full class-comparison intent.
-- Added a non-diagnostic boundary: parent tracking cannot diagnose dyslexia or another condition.
-- Added four external evidence sources: EEF, IES/What Works Clearinghouse, DfE Reading Framework and DfE SSP validation guidance.
-- Added five AEO/GEO FAQs and contextual links to blending, CVC, digraphs, fluency, diagnostics, class choice, `/phonics` and `/curriculum`.
+- Converted the article from the shared generic `PhonicsSeoPost` generator into a direct editorial `BlogPost`.
+- Removed the unsupported prescribed **daily 10-minute confidence loop**.
+- Removed the unsupported **85–90% accuracy success-ratio rule**.
+- Removed the direct causal wording that confidence “rises” because of phonics.
+- Explicitly states that phonics teaches decoding; confidence is a separate behavioural/emotional outcome that may be supported by successful reading but is not guaranteed.
+- Added the **Tiny Steps five confidence signals**: starting, strategy use, retry, independence and transfer.
+- Labels the five-signal check editorial guidance rather than a standardized confidence scale or diagnostic test.
+- Separates true reading competence from confident-looking guessing, memorised-list speed and class participation.
+- Adds a calm five-step home response: level match, one decoding prompt, child retry, strategy-specific feedback and stopping before repeated failure loops.
+- Preserves rich adult read-alouds while keeping independent decoding text matched to taught phonics knowledge.
+- Adds interpretation for “knows sounds but cannot read”, class/home differences, reading-aloud refusal and accurate-but-slow reading.
+- Adds a non-diagnostic boundary for dyslexia, anxiety and other conditions.
+- Adds four external evidence sources: EEF phonics evidence review, DfE Reading Framework, IES reading-motivation guidance and Ofsted’s struggling-readers report.
+- Adds five AEO/GEO FAQs, founder authorship, updated metadata and focused regression coverage.
 
 ### Evidence decision
 
-The Tiny Steps progress-to-time compass is **editorial guidance, not a standardized timing instrument**. External evidence supports systematic teaching matched to current knowledge, decoding and spelling instruction, connected-text application, assessment of gaps and targeted response when pupils are not keeping up. No evidence source is used to claim a universal phonics-completion duration.
+The article does **not** claim that phonics directly causes confidence. External evidence supports phonics for decoding accuracy and supports the importance of successful, appropriately matched reading experiences for motivation/confidence. Tiny Steps’ five confidence signals are editorial parent-observation guidance, not a standardized psychological measure.
 
 ### Indexability decision
 
