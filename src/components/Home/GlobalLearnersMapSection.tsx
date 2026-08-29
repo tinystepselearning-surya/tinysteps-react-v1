@@ -1,53 +1,40 @@
 import React, { useEffect, useMemo, useState } from "react";
+import {
+  getCountryCoverageMetadata,
+  getCountryMapPoint,
+  type CountryMapPoint,
+} from "../../lib/countryCoverage";
 
 type RollupCountry = {
   countryCode: string;
   countryName: string;
-  activeStudents: number;
-  familyCount?: number;
+  familyCount: number;
+  activeStudents?: number;
 };
 
 type RollupPayload = {
-  totalActiveCountries: number;
-  totalActiveStudentsWithCountry: number;
+  totalCountriesServed: number;
+  totalFamiliesWithCountry: number;
   countries: RollupCountry[];
   updatedAt: string;
   source: string;
-};
-
-type CountryPoint = {
-  x: number;
-  y: number;
+  coverageDefinition?: string;
+  schedule?: string;
+  totalActiveCountries?: number;
+  totalActiveStudentsWithCountry?: number;
 };
 
 type LoadState = "loading" | "loaded" | "fallback";
 
+type PinnedCountry = {
+  country: RollupCountry;
+  point: CountryMapPoint;
+};
+
 const JSON_OBJECT_PATH = "public-stats/global-learners.json";
 const DEFAULT_STORAGE_BUCKET = "tinysteps-react-v1.firebasestorage.app";
-const COUNTRY_POINTS: Record<string, CountryPoint> = {
-  US: { x: 23.8, y: 47.0 },
-  GB: { x: 48.2, y: 39.5 },
-  IE: { x: 46.7, y: 40.0 },
-  HR: { x: 51.3, y: 44.7 },
-  AE: { x: 58.5, y: 54.5 },
-  OM: { x: 60.0, y: 57.0 },
-  PK: { x: 62.0, y: 53.8 },
-  IN: { x: 65.2, y: 58.4 },
-  SG: { x: 70.0, y: 65.8 },
-  AU: { x: 78.5, y: 76.5 },
-};
-const COUNTRY_NAME_FALLBACK: Record<string, string> = {
-  IN: "India",
-  AE: "UAE",
-  AU: "Australia",
-  US: "USA",
-  GB: "UK",
-  HR: "Croatia",
-  IE: "Ireland",
-  OM: "Oman",
-  PK: "Pakistan",
-  SG: "Singapore",
-};
+const ROLLUP_STALE_AFTER_MS = 48 * 60 * 60 * 1000;
+
 function normalizeBucket(value: unknown): string {
   if (typeof value !== "string") return "";
   return value.trim().replace(/^gs:\/\//, "").replace(/\/+$/, "");
@@ -64,15 +51,22 @@ function normalizeCountry(entry: unknown): RollupCountry | null {
   const raw = entry as Partial<RollupCountry>;
   const code = typeof raw.countryCode === "string" ? raw.countryCode.trim().toUpperCase() : "";
   if (!/^[A-Z]{2}$/.test(code)) return null;
+
+  const metadata = getCountryCoverageMetadata(code);
   const name = typeof raw.countryName === "string" ? raw.countryName.trim() : "";
-  const fallbackName = COUNTRY_NAME_FALLBACK[code] || code;
-  const numericCount = typeof raw.activeStudents === "number" && Number.isFinite(raw.activeStudents)
-    ? raw.activeStudents
-    : typeof raw.familyCount === "number" && Number.isFinite(raw.familyCount)
-      ? raw.familyCount
+  const numericCount = typeof raw.familyCount === "number" && Number.isFinite(raw.familyCount)
+    ? raw.familyCount
+    : typeof raw.activeStudents === "number" && Number.isFinite(raw.activeStudents)
+      ? raw.activeStudents
       : 0;
-  const activeStudents = Math.max(0, Math.floor(numericCount));
-  return { countryCode: code, countryName: name || fallbackName, activeStudents, familyCount: activeStudents };
+  const familyCount = Math.max(0, Math.floor(numericCount));
+
+  return {
+    countryCode: code,
+    countryName: name || metadata?.name || code,
+    familyCount,
+    activeStudents: familyCount,
+  };
 }
 
 function normalizePayload(raw: unknown): RollupPayload | null {
@@ -82,20 +76,38 @@ function normalizePayload(raw: unknown): RollupPayload | null {
     ? input.countries.map(normalizeCountry).filter((item): item is RollupCountry => Boolean(item))
     : [];
 
-  const totalActiveCountries = typeof input.totalActiveCountries === "number"
+  const legacyTotalCountries = typeof input.totalActiveCountries === "number"
     ? Math.max(0, Math.floor(input.totalActiveCountries))
-    : normalizedCountries.length;
-  const totalActiveStudentsWithCountry = typeof input.totalActiveStudentsWithCountry === "number"
+    : 0;
+  const totalCountriesServed = typeof input.totalCountriesServed === "number"
+    ? Math.max(0, Math.floor(input.totalCountriesServed))
+    : legacyTotalCountries || normalizedCountries.length;
+
+  const legacyFamilyTotal = typeof input.totalActiveStudentsWithCountry === "number"
     ? Math.max(0, Math.floor(input.totalActiveStudentsWithCountry))
-    : normalizedCountries.reduce((sum, row) => sum + row.activeStudents, 0);
+    : 0;
+  const totalFamiliesWithCountry = typeof input.totalFamiliesWithCountry === "number"
+    ? Math.max(0, Math.floor(input.totalFamiliesWithCountry))
+    : legacyFamilyTotal || normalizedCountries.reduce((sum, row) => sum + row.familyCount, 0);
 
   return {
-    totalActiveCountries,
-    totalActiveStudentsWithCountry,
+    totalCountriesServed,
+    totalFamiliesWithCountry,
     countries: normalizedCountries,
     updatedAt: typeof input.updatedAt === "string" ? input.updatedAt : "",
     source: typeof input.source === "string" ? input.source : "",
+    coverageDefinition: typeof input.coverageDefinition === "string" ? input.coverageDefinition : undefined,
+    schedule: typeof input.schedule === "string" ? input.schedule : undefined,
+    totalActiveCountries: legacyTotalCountries || totalCountriesServed,
+    totalActiveStudentsWithCountry: legacyFamilyTotal || totalFamiliesWithCountry,
   };
+}
+
+function getRollupFreshness(updatedAt: string): "fresh" | "stale" | "unknown" {
+  if (!updatedAt) return "unknown";
+  const timestamp = Date.parse(updatedAt);
+  if (!Number.isFinite(timestamp)) return "unknown";
+  return Date.now() - timestamp <= ROLLUP_STALE_AFTER_MS ? "fresh" : "stale";
 }
 
 export default function GlobalLearnersMapSection() {
@@ -136,29 +148,30 @@ export default function GlobalLearnersMapSection() {
         }
         const data = JSON.parse(rawText) as unknown;
         const normalized = normalizePayload(data);
-        if (!normalized) {
+        if (!normalized || normalized.countries.length === 0) {
           setPayload(null);
           setLoadState("fallback");
           return;
         }
-        const normalizedCountries = normalized.countries;
-        if (isDev) {
-          console.info("[GlobalLearnersMap] normalized countries", normalizedCountries);
-        }
-        if (normalizedCountries.length === 0) {
-          setPayload(null);
-          setLoadState("fallback");
-          return;
-        }
-        const safeTotalActiveCountries =
-          normalized.totalActiveCountries >= normalizedCountries.length && normalized.totalActiveCountries > 0
-            ? normalized.totalActiveCountries
-            : normalizedCountries.length;
-        setPayload({
+
+        const safeTotalCountries =
+          normalized.totalCountriesServed >= normalized.countries.length && normalized.totalCountriesServed > 0
+            ? normalized.totalCountriesServed
+            : normalized.countries.length;
+        const safePayload = {
           ...normalized,
-          totalActiveCountries: safeTotalActiveCountries,
-        });
+          totalCountriesServed: safeTotalCountries,
+        };
+        setPayload(safePayload);
         setLoadState("loaded");
+
+        if (isDev) {
+          console.info("[GlobalLearnersMap] normalized countries", safePayload.countries);
+          console.info("[GlobalLearnersMap] updatedAt", safePayload.updatedAt);
+          if (getRollupFreshness(safePayload.updatedAt) === "stale") {
+            console.warn("[GlobalLearnersMap] rollup is older than 48 hours", safePayload.updatedAt);
+          }
+        }
       } catch {
         setPayload(null);
         setLoadState("fallback");
@@ -171,37 +184,38 @@ export default function GlobalLearnersMapSection() {
 
   const countries = loadState === "loaded" && payload?.countries?.length ? payload.countries : [];
   const totalCountries = loadState === "loaded" && payload
-    ? (payload.totalActiveCountries > 0 ? payload.totalActiveCountries : payload.countries.length)
+    ? (payload.totalCountriesServed > 0 ? payload.totalCountriesServed : payload.countries.length)
     : 0;
   const countriesLabel = totalCountries === 1 ? "country" : "countries";
+  const freshness = payload ? getRollupFreshness(payload.updatedAt) : "unknown";
 
-  const pinnedCountries = countries.filter((country) =>
-    Boolean(COUNTRY_POINTS[country.countryCode]),
-  );
+  const pinnedCountries = useMemo<PinnedCountry[]>(() => {
+    return countries
+      .map((country) => {
+        const point = getCountryMapPoint(country.countryCode);
+        return point ? { country, point } : null;
+      })
+      .filter((item): item is PinnedCountry => Boolean(item));
+  }, [countries]);
+
   const sortedCountries = useMemo(() => {
-    const mapped: RollupCountry[] = [];
-    const unmapped: RollupCountry[] = [];
-
-    for (const country of countries) {
-      if (COUNTRY_POINTS[country.countryCode]) {
-        mapped.push(country);
-      } else {
-        unmapped.push(country);
-      }
-    }
-
-    mapped.sort((a, b) => {
-      const aX = COUNTRY_POINTS[a.countryCode].x;
-      const bX = COUNTRY_POINTS[b.countryCode].x;
-      if (aX !== bX) return aX - bX;
+    return [...countries].sort((a, b) => {
+      const aPoint = getCountryMapPoint(a.countryCode);
+      const bPoint = getCountryMapPoint(b.countryCode);
+      if (aPoint && bPoint && aPoint.x !== bPoint.x) return aPoint.x - bPoint.x;
+      if (aPoint && !bPoint) return -1;
+      if (!aPoint && bPoint) return 1;
       return a.countryName.localeCompare(b.countryName);
     });
-    unmapped.sort((a, b) => a.countryName.localeCompare(b.countryName));
-    return [...mapped, ...unmapped];
   }, [countries]);
 
   return (
-    <section className="px-4 py-6 sm:px-6 sm:py-8" data-map-state={loadState}>
+    <section
+      className="px-4 py-6 sm:px-6 sm:py-8"
+      data-map-state={loadState}
+      data-rollup-freshness={freshness}
+      data-rollup-updated-at={payload?.updatedAt || ""}
+    >
       <div className="mx-auto max-w-6xl">
         <div className="relative overflow-hidden rounded-[28px] border border-slate-200/80 bg-gradient-to-br from-[#fffaf4] via-white to-[#ecf7ff] p-4 shadow-[0_22px_56px_rgba(15,23,42,0.08)] sm:p-6">
           <div className="pointer-events-none absolute -left-16 -top-20 h-48 w-48 rounded-full bg-amber-200/35 blur-3xl" />
@@ -210,17 +224,17 @@ export default function GlobalLearnersMapSection() {
           <div className="relative">
             <h2 className="text-2xl font-semibold text-slate-900 sm:text-3xl">Tiny Steps Learners Around the World</h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-700 sm:text-base">
-              Children learn phonics, grammar, reading, sentence formation, and confident communication with Tiny Steps from wherever they are.
+              Children have learned phonics, grammar, reading, sentence formation, and confident communication with Tiny Steps from around the world.
             </p>
             <p className="mt-1.5 text-sm font-medium text-slate-600">
-              A growing online learning community for families across countries.
+              Our global learning community includes families learning with Tiny Steps today and families who have completed their courses.
             </p>
             <p className="mt-2 text-sm text-slate-600">
               {loadState === "loaded"
-                ? `Learning community across ${Math.max(totalCountries, 1)} ${countriesLabel}`
+                ? `Tiny Steps has served families across ${Math.max(totalCountries, 1)} ${countriesLabel}`
                 : loadState === "fallback"
-                  ? "Learning community growing across regions"
-                  : "Learning community across countries"}
+                  ? "Tiny Steps has served families across regions"
+                  : "Tiny Steps serves families across countries"}
             </p>
           </div>
 
@@ -245,22 +259,19 @@ export default function GlobalLearnersMapSection() {
                       />
 
                       <div className="pointer-events-none absolute inset-0 z-20">
-                        {pinnedCountries.map((country) => {
-                          const point = COUNTRY_POINTS[country.countryCode];
-
-                          return (
-                            <div
-                              key={country.countryCode}
-                              className="absolute z-30 -translate-x-1/2 -translate-y-full"
-                              style={{ left: `${point.x}%`, top: `${point.y}%` }}
-                            >
-                              <span className="relative block h-3.5 w-3.5 rounded-full bg-[#ff8f3f] shadow-[0_0_0_3px_rgba(255,143,63,0.24),0_2px_8px_rgba(15,23,42,0.28)] md:h-5 md:w-5">
-                                <span className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white md:h-2 md:w-2" />
-                                <span className="absolute inset-0 hidden rounded-full border border-orange-300/70 md:block md:motion-safe:animate-ping" />
-                              </span>
-                            </div>
-                          );
-                        })}
+                        {pinnedCountries.map(({ country, point }) => (
+                          <div
+                            key={country.countryCode}
+                            className="absolute z-30 -translate-x-1/2 -translate-y-full"
+                            style={{ left: `${point.x}%`, top: `${point.y}%` }}
+                            aria-label={country.countryName}
+                          >
+                            <span className="relative block h-3.5 w-3.5 rounded-full bg-[#ff8f3f] shadow-[0_0_0_3px_rgba(255,143,63,0.24),0_2px_8px_rgba(15,23,42,0.28)] md:h-5 md:w-5">
+                              <span className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white md:h-2 md:w-2" />
+                              <span className="absolute inset-0 hidden rounded-full border border-orange-300/70 md:block md:motion-safe:animate-ping" />
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -279,9 +290,13 @@ export default function GlobalLearnersMapSection() {
               ))}
             </div>
 
+            {loadState === "loaded" ? (
+              <p className="mt-3 text-xs text-slate-500">Country coverage is refreshed daily.</p>
+            ) : null}
+
             {loadState === "fallback" ? (
               <p className="mt-3 text-sm text-slate-500">
-                Tiny Steps is growing with families across regions.
+                Tiny Steps has served families across regions.
               </p>
             ) : null}
           </div>
