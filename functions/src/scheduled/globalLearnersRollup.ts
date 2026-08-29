@@ -2,6 +2,7 @@ import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import {
+  normalizeIsoCountryCode,
   resolveCountryFromParentDoc,
   resolveCountryName,
 } from '../helpers/parentCountryCoverage';
@@ -18,6 +19,7 @@ const PARENT_ROLE = 'parent';
 // Archived parents are intentionally included: this map represents countries
 // Tiny Steps has served historically, not only currently active families.
 const EXCLUDED_PARENT_STATUSES = new Set(['deleted', 'disabled']);
+const INFERRED_COUNTRY_SOURCE = 'phone-inferred';
 
 type CountryRow = {
   countryCode: string;
@@ -26,6 +28,11 @@ type CountryRow = {
   // Backward-compatible alias for the existing public payload. This value is a
   // family count, not a student count, and should not be used for new UI copy.
   activeStudents: number;
+};
+
+type CountryBackfill = {
+  ref: admin.firestore.DocumentReference;
+  countryCode: string;
 };
 
 function normalizeStatus(value: unknown): string {
@@ -48,6 +55,29 @@ function isExcludedParentRecord(data: Record<string, unknown>): boolean {
   return false;
 }
 
+async function persistCountryBackfills(
+  db: admin.firestore.Firestore,
+  backfills: CountryBackfill[],
+): Promise<number> {
+  if (!backfills.length) return 0;
+
+  let written = 0;
+  for (let start = 0; start < backfills.length; start += 400) {
+    const batch = db.batch();
+    const slice = backfills.slice(start, start + 400);
+    for (const item of slice) {
+      batch.set(item.ref, {
+        countryCode: item.countryCode,
+        countryCodeSource: INFERRED_COUNTRY_SOURCE,
+        countryCodeUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+    await batch.commit();
+    written += slice.length;
+  }
+  return written;
+}
+
 export const globalLearnersRollup = onSchedule(
   {
     schedule: '30 2 * * *', // Daily 02:30 IST
@@ -67,6 +97,7 @@ export const globalLearnersRollup = onSchedule(
         'role',
         'status',
         'countryCode',
+        'countryCodeSource',
         'phoneCountryCode',
         'phoneLocal',
         'phone',
@@ -82,6 +113,7 @@ export const globalLearnersRollup = onSchedule(
 
     const counts = new Map<string, number>();
     const unmappedPhoneCountryCodeCounts = new Map<string, number>();
+    const countryBackfills: CountryBackfill[] = [];
     let totalParentUsersScanned = 0;
     let totalEligibleFamiliesScanned = 0;
     let archivedFamiliesIncluded = 0;
@@ -102,7 +134,16 @@ export const globalLearnersRollup = onSchedule(
         archivedFamiliesIncluded += 1;
       }
 
-      const resolved = resolveCountryFromParentDoc(data);
+      // A manually/canonically supplied ISO code always wins. A code previously
+      // inferred from phone data is re-resolved so later phone corrections can
+      // repair the stored country without manual backfill work.
+      const existingCountryCode = normalizeIsoCountryCode(data.countryCode);
+      const isPhoneInferredCountry = data.countryCodeSource === INFERRED_COUNTRY_SOURCE;
+      const resolutionInput = isPhoneInferredCountry
+        ? { ...data, countryCode: undefined }
+        : data;
+      const resolved = resolveCountryFromParentDoc(resolutionInput);
+
       if (!resolved.countryCode) {
         skippedMissingCountryCode += 1;
         if (resolved.unmappedPhoneCountryCode) {
@@ -123,8 +164,17 @@ export const globalLearnersRollup = onSchedule(
         countedFromFullPhone += 1;
       }
 
+      if (
+        resolved.source !== 'iso' &&
+        (existingCountryCode !== resolved.countryCode || !isPhoneInferredCountry)
+      ) {
+        countryBackfills.push({ ref: docSnap.ref, countryCode: resolved.countryCode });
+      }
+
       counts.set(resolved.countryCode, (counts.get(resolved.countryCode) || 0) + 1);
     }
+
+    const persistedCountryBackfills = await persistCountryBackfills(db, countryBackfills);
 
     const countries: CountryRow[] = Array.from(counts.entries())
       .map(([countryCode, familyCount]) => ({
@@ -188,6 +238,7 @@ export const globalLearnersRollup = onSchedule(
       countedFromCanonicalCountryCode,
       countedFromPhoneCountryCode,
       countedFromFullPhone,
+      persistedCountryBackfills,
       skippedMissingCountryCode,
       skippedUnmappedPhoneCountryCode,
       unmappedPhoneCountryCodeSummary,
