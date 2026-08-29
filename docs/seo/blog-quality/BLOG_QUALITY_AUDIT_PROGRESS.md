@@ -31,8 +31,8 @@ Current sequence:
 - Blog #1: merged through PR #158.
 - Blog #2: merged through PR #159.
 - Blog #3: merged through PR #160.
-- Blog #4: `seo/blog-quality-04-multisyllabic-words` → PR #161, exact-head CI initiated.
-- Blog #5: `seo/blog-quality-05-summer-phonics-plan`, stacked from Blog #4's locked exact head for sequential programme continuity; exact-head PR/CI is the next validation gate.
+- Blog #4: merged through PR #161.
+- Blog #5: `seo/blog-quality-05-summer-phonics-plan` → PR #162, exact-head CI initiated.
 
 ## Standard 100-point quality rubric
 
@@ -82,8 +82,8 @@ A blog cannot be marked complete if it contains factual/pedagogical errors, unsu
 | 1 | SATPIN at Home: A Parent Launch Plan for Early Blending and Reading | 70/100 | **MERGED / PR #158** | Evergreen SATPIN home implementation owner; corrected sequence, readiness progression, evidence, self-routing, escalation and AEO structure | **95/100** |
 | 2 | How to Prevent the Summer Slide in Reading (10-Minute Daily Plan) | 64/100 | **MERGED / PR #159** | Evidence-aware summer reading continuity; stage-matched routines, book-fit guidance, Tiny Steps three-signal check, support boundary, FAQs, internal authority links and indexability promotion | **94/100** |
 | 3 | Phonics Assessment Checklist for Parents Before a New School Term | 61/100 | **MERGED / PR #160** | Informal parent phonics observation owner using taught scope, fresh-word decoding, blending/segmenting, encoding, connected-text transfer, evidence and a diagnostic boundary; quality-promoted to indexable | **95/100** |
-| 4 | How to Help Kids Read Multisyllabic Words: Simple Chunking Practice | 59/100 | **LOCKED / PR #161 — CI initiated** | Rebuilt as a phonics- and morphology-aware long-word decoding guide with readiness checks, a repeatable five-step routine, stage-matched practice, transfer signals, evidence, FAQs and support boundaries; quality-promoted to indexable | **95/100** |
-| 5 | Summer Phonics Practice for Kids: A 10-Minute Daily Routine | 54/100 | **LOCKED — ready for exact-head validation** | Rebuilt as the phonics-specific summer consolidation owner: taught-stage routing, recall → decode → spell → matched-text practice, Tiny Steps maintenance signals, evidence, FAQs, support boundaries and indexability promotion | **95/100** |
+| 4 | How to Help Kids Read Multisyllabic Words: Simple Chunking Practice | 59/100 | **MERGED / PR #161** | Rebuilt as a phonics- and morphology-aware long-word decoding guide with readiness checks, a repeatable five-step routine, stage-matched practice, transfer signals, evidence, FAQs and support boundaries; quality-promoted to indexable | **95/100** |
+| 5 | Summer Phonics Practice for Kids: A 10-Minute Daily Routine | 54/100 | **LOCKED / PR #162 — CI initiated** | Rebuilt as the phonics-specific summer consolidation owner: taught-stage routing, recall → decode → spell → matched-text practice, Tiny Steps maintenance signals, evidence, FAQs, support boundaries and indexability promotion | **95/100** |
 
 ## Blog #1 — locked and merged
 
@@ -161,7 +161,7 @@ The historical `/blog/week-22-phonics-diagnostics` URL remains a non-indexable p
 
 **95/100 — LOCKED and merged through PR #160.**
 
-## Blog #4 — locked for exact-head validation
+## Blog #4 — locked and merged
 
 ### Canonical role
 
@@ -199,13 +199,13 @@ The exact Tiny Steps five-step routine is presented as an editorial teaching rou
 
 ### Indexability decision
 
-Blog #4 now owns a distinct useful parent search intent and passes the human-first quality gate, so `/blog/phonics-multisyllabic` is **quality-promoted to indexable + sitemap eligible**.
+Blog #4 owns a distinct useful parent search intent and passes the human-first quality gate, so `/blog/phonics-multisyllabic` is **quality-promoted to indexable + sitemap eligible**.
 
 The historical `/blog/week-19-phonics-multisyllabic` URL remains a non-indexable permanent redirect alias.
 
 ### Final decision
 
-**95/100 — LOCKED pending exact-head CI/SEO validation in PR #161.** No known factual, pedagogical, evidence, diagnosis-boundary, reader-helpfulness or cannibalization hard fail remains after the final content review.
+**95/100 — LOCKED and merged through PR #161.**
 
 ## Blog #5 — locked for exact-head validation
 
@@ -252,7 +252,7 @@ The historical `/blog/week-16-phonics-summer-plan` URL remains a non-indexable p
 
 ### Final decision
 
-**95/100 — LOCKED pending exact-head CI/SEO validation.** No known factual, pedagogical, evidence, reader-helpfulness or cannibalization hard fail remains after the final content review.
+**95/100 — LOCKED pending exact-head CI/SEO validation in PR #162.** No known factual, pedagogical, evidence, reader-helpfulness or cannibalization hard fail remains after the final content review.
 
 ## Per-blog final gate
 
