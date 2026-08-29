@@ -66,7 +66,7 @@ export const BLOG_TECHNICAL_AUTHORITY = Object.freeze({
     role: 'pillar',
     topics: ['reading fluency', 'accurate reading', 'expressive reading', 'reading practice'],
   },
-  'week-7-grammar-nouns-to-paragraphs': {
+  'grammar-nouns-to-paragraphs': {
     cluster: 'Grammar',
     role: 'pillar',
     topics: ['grammar for children', 'sentence building', 'paragraph building', 'grammar progression'],
@@ -81,7 +81,7 @@ export const BLOG_TECHNICAL_AUTHORITY = Object.freeze({
     role: 'diagnostic-owner',
     topics: ['grammar rule transfer', 'grammar mistakes', 'spontaneous grammar use', 'self-correction'],
   },
-  'week-12-speaking-confidence-seeds': {
+  'speaking-confidence-seeds': {
     cluster: 'Speaking & Communication',
     role: 'pillar',
     topics: ['speaking confidence', 'oral communication', 'connected speaking', 'public speaking foundations'],

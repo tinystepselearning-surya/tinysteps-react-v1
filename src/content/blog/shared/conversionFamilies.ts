@@ -44,10 +44,10 @@ const EXPLICIT_FAMILY_BY_SLUG: Partial<Record<string, BlogConversionFamily>> = {
   'how-to-improve-reading-fluency-in-children': 'reading-fluency',
   'child-knows-grammar-but-makes-mistakes': 'grammar-diagnostic',
   'how-to-improve-sentence-formation-in-kids': 'sentence-building',
-  'week-7-grammar-nouns-to-paragraphs': 'sentence-building',
+  'grammar-nouns-to-paragraphs': 'sentence-building',
   'child-understands-english-but-does-not-speak': 'speaking-confidence',
   'child-gives-one-word-answers': 'speaking-confidence',
-  'week-12-speaking-confidence-seeds': 'speaking-confidence',
+  'speaking-confidence-seeds': 'speaking-confidence',
 };
 
 const FAMILY_COPY: Record<BlogConversionFamily, Omit<BlogConversionConfig, 'family' | 'authorityCluster' | 'intentCluster'>> = {

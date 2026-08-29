@@ -78,12 +78,12 @@ Use these as the preferred Tiny Steps editorial authorities for the named parent
 - [How to Improve Reading Fluency in Children](https://tinystepslearning.com/blog/how-to-improve-reading-fluency-in-children) — reading-fluency authority.
 
 ### Grammar Authorities
-- [Grammar: Nouns to Paragraphs](https://tinystepslearning.com/blog/week-7-grammar-nouns-to-paragraphs) — broad grammar progression from sentence foundations toward paragraph building.
+- [Grammar Basics Roadmap: Nouns to Paragraphs](https://tinystepslearning.com/blog/grammar-nouns-to-paragraphs) — broad grammar progression from sentence foundations toward paragraph building.
 - [How to Improve Sentence Formation in Kids](https://tinystepslearning.com/blog/how-to-improve-sentence-formation-in-kids) — building and expanding well-formed sentences, including oral-to-written transfer.
 - [Child Knows Grammar but Still Makes Mistakes](https://tinystepslearning.com/blog/child-knows-grammar-but-makes-mistakes) — rule knowledge that does not yet transfer reliably into spontaneous speaking or writing.
 
 ### Speaking & Communication Authorities
-- [Speaking Confidence Seeds](https://tinystepslearning.com/blog/week-12-speaking-confidence-seeds) — broad speaking-confidence and communication progression.
+- [Speaking Confidence Roadmap](https://tinystepslearning.com/blog/speaking-confidence-seeds) — broad speaking-confidence and communication progression.
 - [Child Understands English but Does Not Speak](https://tinystepslearning.com/blog/child-understands-english-but-does-not-speak) — comprehension is present but independent spoken response is hesitant or limited.
 - [Child Gives One-Word Answers](https://tinystepslearning.com/blog/child-gives-one-word-answers) — response-expansion problem: complete sentence, useful detail, then connected thinking.
 

@@ -11,6 +11,7 @@ import {
   shouldIncludeBlogSlugInSitemap,
   shouldNoindexBlogSlug,
 } from '../src/lib/blogIndexingPolicy.js';
+import { rewriteLegacyWeekBlogPaths } from '../src/lib/blogWeekRenames.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
@@ -18,6 +19,10 @@ const firebase = JSON.parse(fs.readFileSync(path.join(root, 'firebase.json'), 'u
 const hosting = firebase.hosting || {};
 const redirects = Array.isArray(hosting.redirects) ? hosting.redirects : [];
 const headers = Array.isArray(hosting.headers) ? hosting.headers : [];
+const notFoundRoutePath = path.join(root, 'functions', 'src', 'notFoundRoute.ts');
+const notFoundRouteText = fs.existsSync(notFoundRoutePath)
+  ? fs.readFileSync(notFoundRoutePath, 'utf8')
+  : '';
 
 const sitemapFiles = [
   'sitemap-static.xml',
@@ -46,6 +51,15 @@ function hasPermanentRedirect(source, destination) {
     rule?.destination === destination &&
     Number(rule?.type) === 301
   );
+}
+
+function hasFunctionPermanentRedirect(source, destination) {
+  return notFoundRouteText.includes(`\"${source}\": \"${destination}\"`)
+    && notFoundRouteText.includes('response.redirect(301');
+}
+
+function hasCanonicalPermanentRedirect(source, destination) {
+  return hasPermanentRedirect(source, destination) || hasFunctionPermanentRedirect(source, destination);
 }
 
 function hasNoindexHeader(source) {
@@ -103,20 +117,34 @@ for (const row of GSC_CRAWLED_NOT_INDEXED_URLS) {
       fail(row.path, 'noindex-archive is currently supported only for blog URLs');
       continue;
     }
-    const slug = row.path.slice('/blog/'.length);
-    if (!shouldNoindexBlogSlug(slug)) fail(row.path, 'blog indexing policy does not return noindex');
-    if (shouldIncludeBlogSlugInSitemap(slug)) fail(row.path, 'archived weekly post is still eligible for sitemap inclusion');
-    if (isInSitemap(row.path)) fail(row.path, 'archived weekly post appears in a canonical sitemap');
+    const canonicalPath = rewriteLegacyWeekBlogPaths(row.path);
+    const canonicalSlug = canonicalPath.slice('/blog/'.length);
+    if (canonicalPath !== row.path) {
+      if (!hasCanonicalPermanentRedirect(row.path, canonicalPath)) {
+        fail(row.path, `renamed archive is missing a 301 redirect to ${canonicalPath}`);
+      }
+      if (isInSitemap(row.path)) fail(row.path, 'renamed archive alias appears in a canonical sitemap');
+    }
+    if (!shouldNoindexBlogSlug(canonicalSlug)) fail(canonicalPath, 'blog indexing policy does not return noindex');
+    if (shouldIncludeBlogSlugInSitemap(canonicalSlug)) fail(canonicalPath, 'archived roadmap post is still eligible for sitemap inclusion');
+    if (isInSitemap(canonicalPath)) fail(canonicalPath, 'archived roadmap post appears in a canonical sitemap');
     continue;
   }
 
   if (row.action === 'index') {
-    if (!isInSitemap(row.path)) fail(row.path, 'index target is missing from canonical sitemaps');
-    if (hasNoindexHeader(row.path)) fail(row.path, 'index target is blocked by an exact X-Robots-Tag noindex header');
-    if (row.path.startsWith('/blog/')) {
-      const slug = row.path.slice('/blog/'.length);
-      if (shouldNoindexBlogSlug(slug)) fail(row.path, 'index target is blocked by blog noindex policy');
-      if (!shouldIncludeBlogSlugInSitemap(slug)) fail(row.path, 'index-target blog slug is excluded by blog sitemap policy');
+    const canonicalPath = rewriteLegacyWeekBlogPaths(row.path);
+    if (canonicalPath !== row.path) {
+      if (!hasCanonicalPermanentRedirect(row.path, canonicalPath)) {
+        fail(row.path, `renamed index target is missing a 301 redirect to ${canonicalPath}`);
+      }
+      if (isInSitemap(row.path)) fail(row.path, 'renamed index-target alias must not appear in canonical sitemaps');
+    }
+    if (!isInSitemap(canonicalPath)) fail(canonicalPath, 'index target is missing from canonical sitemaps');
+    if (hasNoindexHeader(canonicalPath)) fail(canonicalPath, 'index target is blocked by an exact X-Robots-Tag noindex header');
+    if (canonicalPath.startsWith('/blog/')) {
+      const slug = canonicalPath.slice('/blog/'.length);
+      if (shouldNoindexBlogSlug(slug)) fail(canonicalPath, 'index target is blocked by blog noindex policy');
+      if (!shouldIncludeBlogSlugInSitemap(slug)) fail(canonicalPath, 'index-target blog slug is excluded by blog sitemap policy');
     }
     continue;
   }
@@ -155,4 +183,4 @@ if (problems.length) {
   process.exit(1);
 }
 
-console.log('[gsc-crawled-audit] PASS: all 52 URLs match the intended index/redirect/archive/resource policy and only the 23 remediation targets remain eligible for submission from this GSC set.');
+console.log('[gsc-crawled-audit] PASS: all 52 historical GSC URLs resolve to the intended canonical index/redirect/archive/resource policy and only the 23 remediation targets remain eligible for submission.');

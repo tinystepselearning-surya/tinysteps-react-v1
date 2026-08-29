@@ -2,6 +2,7 @@ import type { BlogPost, PhonicsSeoPost } from './types';
 import { BLOG_PUBLICATION_DATES, BLOG_CATEGORY_OVERRIDES, DEFAULT_HERO_BY_CATEGORY } from './shared/defaults';
 import { getBlogAudience, getBlogDiscoveryCategory } from './shared/audience';
 import { applyBlogEditorialCleanup } from './shared/editorialCleanup';
+import { applyLegacyWeekBlogRename } from './shared/legacyWeekRenames';
 import { makePhonicsPost } from './shared/phonicsShared';
 import { enrichWeekPost } from './shared/weeklyShared';
 
@@ -40,6 +41,9 @@ for (const [path, module] of Object.entries(postModules).sort(([a], [b]) => a.lo
 }
 
 const normalizedBlogPosts: BlogPost[] = Array.from(postsBySlug.values()).map((post) => {
+  // Preserve the original source slug through publication/category normalization.
+  // The week-number cleanup is deliberately applied afterwards so historical
+  // date overrides and internal editorial lineage remain intact.
   const enriched = applyBlogEditorialCleanup(enrichWeekPost(post));
   const category = BLOG_CATEGORY_OVERRIDES[enriched.slug] ?? enriched.category;
   const normalized = {
@@ -48,11 +52,12 @@ const normalizedBlogPosts: BlogPost[] = Array.from(postsBySlug.values()).map((po
     date: BLOG_PUBLICATION_DATES[enriched.slug] ?? enriched.date,
     hero: enriched.hero ?? DEFAULT_HERO_BY_CATEGORY[category],
   } as BlogPost;
+  const publicPost = applyLegacyWeekBlogRename(normalized);
 
   return {
-    ...normalized,
-    audience: getBlogAudience(normalized),
-    discoveryCategory: getBlogDiscoveryCategory(normalized),
+    ...publicPost,
+    audience: getBlogAudience(publicPost),
+    discoveryCategory: getBlogDiscoveryCategory(publicPost),
   };
 });
 

@@ -31,9 +31,9 @@ const INTENTIONAL_EXISTING_HERO_SLUGS = [
   'how-to-choose-phonics-classes',
   'online-english-classes-for-kids-india',
   'online-phonics-classes-vs-school',
-  'week-11-grammar-creative-writing',
-  'week-22-phonics-diagnostics',
-  'week-6-phonics-comprehension',
+  'grammar-creative-writing',
+  'phonics-diagnostics',
+  'phonics-comprehension',
   'why-child-reads-words-but-does-not-understand-story',
   'why-parents-choose-online-phonics',
 ] as const;
@@ -69,6 +69,16 @@ describe('blog hero image family architecture', () => {
     expect(BLOG_HERO_FAMILY_BY_SLUG['phonics-teacher-training-for-schools-implementation']).toBe(
       'teacher-classroom-support',
     );
+  });
+
+  it('resolves cleaned weekly public slugs through their preserved semantic family', () => {
+    const cleanedGrammar = blogPosts.find((post) => post.slug === 'grammar-speaking-bridge')!;
+    const cleanedSpeaking = blogPosts.find((post) => post.slug === 'speaking-visual-aids')!;
+    const cleanedPhonics = blogPosts.find((post) => post.slug === 'phonics-satpin-launch')!;
+
+    expect(getBlogHeroFamily(cleanedGrammar)).toBe('grammar-sentence-building');
+    expect(getBlogHeroFamily(cleanedSpeaking)).toBe('speaking-communication');
+    expect(getBlogHeroFamily(cleanedPhonics)).toBe('satpin-letter-sounds');
   });
 
   it('routes reviewed school evidence to research unless a teacher-support mapping is stronger', () => {
