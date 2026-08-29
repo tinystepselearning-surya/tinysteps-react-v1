@@ -4,10 +4,11 @@ import {
   GSC_CRAWLED_NOT_INDEXED_URLS,
 } from './gsc-crawled-not-indexed-manifest.mjs';
 import { LEGACY_WEEK_BLOG_PATH_REDIRECTS } from '../src/lib/blogWeekRenames.js';
+import { shouldNoindexBlogSlug } from '../src/lib/blogIndexingPolicy.js';
 
 const root = process.cwd();
 const origin = 'https://tinystepslearning.com';
-const archives = GSC_CRAWLED_NOT_INDEXED_URLS.filter((row) => row.action === 'noindex-archive');
+const historicalArchives = GSC_CRAWLED_NOT_INDEXED_URLS.filter((row) => row.action === 'noindex-archive');
 const failures = [];
 const notFoundRoutePath = path.join(root, 'functions', 'src', 'notFoundRoute.ts');
 const notFoundRoute = fs.existsSync(notFoundRoutePath)
@@ -27,12 +28,22 @@ function canonicalArchivePath(pathname) {
   return LEGACY_WEEK_BLOG_PATH_REDIRECTS[pathname] || pathname;
 }
 
-for (const row of archives) {
+let activeNoindexCount = 0;
+let promotedCount = 0;
+
+for (const row of historicalArchives) {
   const canonicalPath = canonicalArchivePath(row.path);
+  const canonicalSlug = canonicalPath.startsWith('/blog/')
+    ? canonicalPath.slice('/blog/'.length)
+    : '';
+  const expectsNoindex = shouldNoindexBlogSlug(canonicalSlug);
+
+  if (expectsNoindex) activeNoindexCount += 1;
+  else promotedCount += 1;
 
   // The 2026-08-09 GSC manifest is historical evidence. After the week-label
-  // migration, the historical URL must remain only as a permanent alias while
-  // the cleaned public URL carries the accessible noindex archive page.
+  // migration, the historical URL remains a permanent alias. A later quality
+  // audit may promote the cleaned canonical from noindex archive to indexable.
   if (canonicalPath !== row.path) {
     if (!notFoundRoute.includes(`\"${row.path}\": \"${canonicalPath}\"`)) {
       failures.push(`${row.path}: missing permanent migration redirect to ${canonicalPath}`);
@@ -41,7 +52,7 @@ for (const row of archives) {
 
   const file = path.join(root, 'dist', canonicalPath.slice(1), 'index.html');
   if (!fs.existsSync(file)) {
-    failures.push(`${row.path}: cleaned archive ${canonicalPath} is missing prerendered HTML`);
+    failures.push(`${row.path}: cleaned canonical ${canonicalPath} is missing prerendered HTML`);
     continue;
   }
 
@@ -53,20 +64,27 @@ for (const row of archives) {
   const body = stripHtml(extract(html, /<body[^>]*>([\s\S]*?)<\/body>/i));
   const words = body.split(/\s+/).filter(Boolean).length;
 
-  if (!/(?:^|[,\s])noindex(?:[,\s]|$)/i.test(robots)) {
-    failures.push(`${canonicalPath}: rendered robots is not noindex (${robots || 'missing'})`);
+  if (expectsNoindex) {
+    if (!/(?:^|[,\s])noindex(?:[,\s]|$)/i.test(robots)) {
+      failures.push(`${canonicalPath}: rendered robots is not noindex (${robots || 'missing'})`);
+    }
+  } else if (/(?:^|[,\s])noindex(?:[,\s]|$)/i.test(robots)) {
+    failures.push(`${canonicalPath}: quality-promoted canonical still renders noindex (${robots})`);
   }
+
   if (canonical !== `${origin}${canonicalPath}`) {
     failures.push(`${canonicalPath}: canonical is ${canonical || 'missing'}`);
   }
   if (!title || !h1 || /(?:404|not found|not available)/i.test(`${title} ${h1}`)) {
-    failures.push(`${canonicalPath}: archive rendered as missing content (title=${title || 'missing'}, h1=${h1 || 'missing'})`);
+    failures.push(`${canonicalPath}: canonical rendered as missing content (title=${title || 'missing'}, h1=${h1 || 'missing'})`);
   }
-  if (words < 200) failures.push(`${canonicalPath}: archive prerender is too thin (${words} words)`);
+  if (words < 200) failures.push(`${canonicalPath}: prerender is too thin (${words} words)`);
 }
 
-console.log(`[gsc-archive-rendering] archives=${archives.length}`);
-if (archives.length !== 12) failures.push(`manifest: expected 12 noindex archives, found ${archives.length}`);
+console.log(`[gsc-archive-rendering] historicalArchives=${historicalArchives.length}`);
+console.log(`[gsc-archive-rendering] activeNoindex=${activeNoindexCount}`);
+console.log(`[gsc-archive-rendering] qualityPromoted=${promotedCount}`);
+if (historicalArchives.length !== 12) failures.push(`manifest: expected 12 historical noindex-archive rows, found ${historicalArchives.length}`);
 
 if (failures.length) {
   console.error('[gsc-archive-rendering] FAILED');
@@ -74,4 +92,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log('[gsc-archive-rendering] PASS: all 12 historical archive URLs resolve to cleaned, self-canonical, substantial prerendered noindex pages, with migration redirects preserved.');
+console.log('[gsc-archive-rendering] PASS: all historical archive URLs preserve migration redirects; cleaned canonicals render substantial content with robots matching their current quality-audit indexability policy.');
