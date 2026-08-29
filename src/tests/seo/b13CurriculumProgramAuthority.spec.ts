@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { PUBLIC_COURSE_PAGE_CONFIGS } from '../../lib/publicCoursePages.js';
 
 const repoRoot = process.cwd();
 const read = (relativePath: string) => fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
@@ -18,7 +17,9 @@ const canonicalCoursePaths = [
 
 describe('B13 curriculum, program and course authority guardrails', () => {
   it('keeps the existing canonical course URL set unchanged', () => {
-    expect(PUBLIC_COURSE_PAGE_CONFIGS.map((config) => config.routePath)).toEqual(canonicalCoursePaths);
+    const registry = read('src/lib/publicCoursePages.js');
+    const routePaths = [...registry.matchAll(/routePath:\s*'([^']+)'/g)].map((match) => match[1]);
+    expect(routePaths).toEqual(canonicalCoursePaths);
   });
 
   it('makes /curriculum the roadmap owner without duplicating lesson-by-lesson course content', () => {
