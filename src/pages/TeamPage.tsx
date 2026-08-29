@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { OfficialProfilesSection } from '../components/entity/OfficialProfilesSection';
 import { applySeo, getRouteConfig } from '../lib/seo';
 import {
   FOUNDER_ID,
@@ -86,6 +87,7 @@ export default function TeamPage() {
       <TeamHero />
       <TrustMetrics />
       <FounderSection />
+      <OfficialProfilesSection />
       <AcademicSystemSection />
       <ResearchToClassroomSection />
       <TeacherDevelopmentSection />
