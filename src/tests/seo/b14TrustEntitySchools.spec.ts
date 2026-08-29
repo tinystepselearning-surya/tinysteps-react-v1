@@ -65,6 +65,11 @@ describe('B14 trust, entity authority and schools guardrails', () => {
     expect(schools).not.toContain("title: 'Reputation and referrals'");
     expect(schools).not.toContain('enrollmentBusinessOutcomes');
     expect(schools).toContain("question: 'How can schools communicate reading progress clearly to families?'");
+    expect(schools).toContain('Implementation visibility');
+    expect(schools).toContain('Make phonics progress easier for families and leaders to understand');
+    expect(schools).not.toContain('The enrolment business case');
+    expect(schools).not.toContain('support continued enrolment');
+    expect(schools).not.toContain('positive recommendations within the school community');
   });
 
   it('preserves B13 canonical authority routes and creates no B14 public route', () => {
