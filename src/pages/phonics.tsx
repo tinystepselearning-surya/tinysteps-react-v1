@@ -475,7 +475,8 @@ export default function PhonicsPage({
         "@type": "BreadcrumbList",
         "itemListElement": [
           { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://tinystepslearning.com/" },
-          { "@type": "ListItem", "position": 2, "name": breadcrumbName, "item": canonicalUrl }
+          { "@type": "ListItem", "position": 2, "name": "Curriculum", "item": "https://tinystepslearning.com/curriculum" },
+          { "@type": "ListItem", "position": 3, "name": breadcrumbName, "item": canonicalUrl }
         ]
       },
       createFAQPageSchema(schemaFaqItems)
@@ -526,6 +527,12 @@ export default function PhonicsPage({
                 className="inline-flex items-center justify-center rounded-full border border-[#E9D7C0] bg-white/88 px-6 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-white"
               >
                 See Learning Path
+              </Link>
+              <Link
+                to="/curriculum?tab=phonics"
+                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white/75 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-white"
+              >
+                Full Curriculum Roadmap
               </Link>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-2">

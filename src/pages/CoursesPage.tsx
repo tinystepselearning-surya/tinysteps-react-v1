@@ -38,7 +38,7 @@ const phonicsCards = [
     age: 'Age: 3–5',
     tag: 'Best for beginners',
     focus: ['Recognize letter sounds through structured synthetic phonics', 'Start blending simple words', 'Build confidence in reading'],
-    outcome: 'Your child starts reading small words independently',
+    outcome: 'Learning focus: build early word-reading independence through guided phonics practice',
     href: '/courses/phonics-foundation',
   },
   {
@@ -46,7 +46,7 @@ const phonicsCards = [
     age: 'Age: 4–7',
     tag: 'Best for developing readers',
     focus: ['Blend 3–4 letter words', 'Learn digraphs like sh, ch, th', 'Improve decoding skills'],
-    outcome: 'Your child reads sentences with confidence',
+    outcome: 'Learning focus: build more accurate sentence reading through stronger decoding habits',
     href: '/courses/phonics-brush-up',
   },
   {
@@ -54,7 +54,7 @@ const phonicsCards = [
     age: 'Age: 6–12',
     tag: 'Best for fluent reading',
     focus: ['Long vowels and advanced patterns', 'R-controlled sounds', 'Reading fluency'],
-    outcome: 'Your child reads books independently',
+    outcome: 'Learning focus: strengthen advanced decoding and increasingly independent reading',
     href: '/courses/phonics-advanced',
   },
 ];
@@ -64,14 +64,14 @@ const grammarCards = [
     title: 'Beginner Grammar',
     age: 'Age: 5–10',
     focus: ['Nouns, verbs, adjectives', 'Sentence formation', 'Prepositions and articles'],
-    outcome: 'Your child forms correct everyday sentences',
+    outcome: 'Learning focus: build clearer, more accurate everyday sentence formation',
     href: '/courses/grammar',
   },
   {
     title: 'Advanced Grammar',
     age: 'Age: 8–12',
     focus: ['Tenses mastery', 'Complex sentences', 'Paragraph writing'],
-    outcome: 'Your child writes and speaks clearly',
+    outcome: 'Learning focus: strengthen grammar control in writing and spoken expression',
     href: '/courses/grammar-mastery',
   },
 ];
@@ -81,14 +81,14 @@ const speakingCards = [
     title: 'Basic Public Speaking',
     age: 'Age: 4–7',
     focus: ['Speak in simple sentences', 'Picture talk', 'Show and tell'],
-    outcome: 'Your child starts speaking confidently',
+    outcome: 'Learning focus: build complete responses and speaking comfort step by step',
     href: '/courses/public-speaking-foundations',
   },
   {
     title: 'Advanced Public Speaking',
     age: 'Age: 7–12',
     focus: ['Structured speaking', 'Storytelling', 'Presentations and debates'],
-    outcome: 'Your child speaks fluently and confidently',
+    outcome: 'Learning focus: strengthen structured speaking, expression, and presentation confidence',
     href: '/courses/public-speaking-excellence',
   },
 ];
@@ -162,13 +162,14 @@ function CoursesPage() {
       '@id': 'https://tinystepslearning.com/courses#main-paths',
       name: 'Tiny Steps core learning paths',
       itemListOrder: 'https://schema.org/ItemListOrderAscending',
-      numberOfItems: 5,
+      numberOfItems: 6,
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Phonics', url: 'https://tinystepslearning.com/phonics' },
-        { '@type': 'ListItem', position: 2, name: 'Grammar', url: 'https://tinystepslearning.com/grammar' },
-        { '@type': 'ListItem', position: 3, name: 'Reading Classes', url: 'https://tinystepslearning.com/reading-classes-for-kids' },
-        { '@type': 'ListItem', position: 4, name: 'Public Speaking', url: 'https://tinystepslearning.com/speaking' },
-        { '@type': 'ListItem', position: 5, name: 'Courses', url: 'https://tinystepslearning.com/courses' },
+        { '@type': 'ListItem', position: 1, name: 'Curriculum Roadmap', url: 'https://tinystepslearning.com/curriculum' },
+        { '@type': 'ListItem', position: 2, name: 'Phonics', url: 'https://tinystepslearning.com/phonics' },
+        { '@type': 'ListItem', position: 3, name: 'Grammar', url: 'https://tinystepslearning.com/grammar' },
+        { '@type': 'ListItem', position: 4, name: 'Reading Classes', url: 'https://tinystepslearning.com/reading-classes-for-kids' },
+        { '@type': 'ListItem', position: 5, name: 'Public Speaking', url: 'https://tinystepslearning.com/speaking' },
+        { '@type': 'ListItem', position: 6, name: 'Courses', url: 'https://tinystepslearning.com/courses' },
       ],
     };
 
@@ -210,6 +211,12 @@ function CoursesPage() {
                 className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
               >
                 View Pricing
+              </Link>
+              <Link
+                to="/curriculum"
+                className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
+              >
+                View Curriculum Roadmap
               </Link>
             </div>
 
