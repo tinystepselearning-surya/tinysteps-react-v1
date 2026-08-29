@@ -8,6 +8,7 @@ import ProgramFacts from '../components/programs/ProgramFacts';
 import ProgramProof from '../components/programs/ProgramProof';
 import NextStepsLinks from '../components/programs/NextStepsLinks';
 import TopicClusterLinks from '../components/programs/TopicClusterLinks';
+import ResponsiveTeachingSection from '../components/programs/ResponsiveTeachingSection';
 import ContentTrustNote from '../components/seo/ContentTrustNote';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
 import TestimonialSnippets from '../components/common/TestimonialSnippets';
@@ -1001,6 +1002,18 @@ export default function PhonicsPage({
       </SectionShell>
 
       <ContentTrustNote text="This page is created by the Tiny Steps academic team and reviewed by the founder to help parents understand structured phonics and reading development." />
+
+      <ResponsiveTeachingSection
+        id="teacher-delivery"
+        program="Phonics"
+        introduction="Teachers keep the phonics progression cumulative while responding to the child’s decoding behaviour. A lesson uses clear sound and word modelling, guided blending practice, immediate correction and retries before support is reduced."
+        steps={[
+          { title: 'Model and blend', detail: 'The teacher models the sound–spelling link and how to blend through the whole word without guessing.' },
+          { title: 'Observe and correct', detail: 'The child tries known and unfamiliar words while the teacher watches sound accuracy, blending and recurring confusion.' },
+          { title: 'Retry and release', detail: 'Prompts, examples, repetition and practice time are adjusted, then support is reduced as decoding becomes secure.' },
+        ]}
+        observation="sound–spelling accuracy, whether the child blends or guesses, which prerequisite pattern is insecure, and when independent reading is ready to increase."
+      />
 
       <SectionShell id="program">
         <div className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-sky-50/60 via-white to-orange-50/50 p-3 shadow-xl">

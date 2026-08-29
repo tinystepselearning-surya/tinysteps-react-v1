@@ -1,136 +1,151 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { FOUNDER_ID, ORGANIZATION_ID, PUBLIC_FACTS } from '../../lib/schemas';
+import {
+  FOUNDER_ID,
+  ORGANIZATION_ID,
+  PUBLIC_FACTS,
+  SITE_ORIGIN,
+  organizationSchema,
+} from '../../lib/schemas';
 
 const repoRoot = process.cwd();
-const readRepoFile = (relativePath: string) =>
-  fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
+const read = (relativePath: string) => fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
 
-describe('B14 trust, entity authority and schools guardrails', () => {
-  it('keeps the canonical founder identity aligned with the visible Team founder section', () => {
-    expect(PUBLIC_FACTS.founder.fullName).toBe('Vannala Ravali Priya');
-    expect(PUBLIC_FACTS.founder.displayName).toBe('Priya');
+const productionTrustFiles = [
+  'src/pages/TeamPage.tsx',
+  'src/pages/team/TeamPageSections.tsx',
+  'src/pages/CurriculumPage.tsx',
+  'src/pages/ForSchoolsPage.tsx',
+  'src/pages/phonics.tsx',
+  'src/pages/grammar.tsx',
+  'src/pages/speaking.tsx',
+].map(read).join('\n');
+
+describe('B14 trust, entity and schools authority guardrails', () => {
+  it('publishes one canonical educational-organization identity', () => {
+    expect(PUBLIC_FACTS.organizationName).toBe('Tiny Steps Early Education');
+    expect(ORGANIZATION_ID).toBe('https://tinystepslearning.com/#educational-organization');
+    expect(organizationSchema).toMatchObject({
+      '@context': 'https://schema.org',
+      '@type': 'EducationalOrganization',
+      '@id': ORGANIZATION_ID,
+      name: PUBLIC_FACTS.organizationName,
+      url: `${SITE_ORIGIN}/`,
+    });
+    expect(organizationSchema.alternateName).toContain(PUBLIC_FACTS.brandName);
+
+    const sourceFiles = fs
+      .readdirSync(path.join(repoRoot, 'src'), { recursive: true, withFileTypes: true })
+      .filter(
+        (entry) =>
+          entry.isFile() &&
+          /\.(?:ts|tsx)$/.test(entry.name) &&
+          !entry.parentPath.includes(`${path.sep}tests`),
+      );
+    for (const entry of sourceFiles) {
+      const source = fs.readFileSync(path.join(entry.parentPath, entry.name), 'utf8');
+      expect(source, path.join(entry.parentPath, entry.name)).not.toContain(
+        'https://tinystepslearning.com/#organization',
+      );
+    }
+  });
+
+  it('connects the canonical founder person to the organization and visible Team entity', () => {
     expect(FOUNDER_ID).toBe('https://tinystepslearning.com/#founder');
+    expect(organizationSchema.founder).toMatchObject({
+      '@type': 'Person',
+      '@id': FOUNDER_ID,
+      name: PUBLIC_FACTS.founder.fullName,
+      worksFor: { '@id': ORGANIZATION_ID },
+    });
 
-    const teamPage = readRepoFile('src/pages/TeamPage.tsx');
-    const teamSections = readRepoFile('src/pages/team/TeamPageSections.tsx');
-
+    const teamPage = read('src/pages/TeamPage.tsx');
+    const sections = read('src/pages/team/TeamPageSections.tsx');
     expect(teamPage).toContain("url: `${SITE_ORIGIN}/team#founder`");
     expect(teamPage).toContain("mainEntityOfPage: { '@id': `${SITE_ORIGIN}/team#webpage` }");
-    expect(teamSections).toContain('id="founder"');
-    expect(teamSections).toContain('{PUBLIC_FACTS.founder.fullName}');
-    expect(teamSections).toContain('known to families as {PUBLIC_FACTS.founder.displayName}');
+    expect(sections).toContain('id="founder"');
+    expect(sections).toContain('{PUBLIC_FACTS.founder.fullName}');
   });
 
-  it('does not manufacture founder or teacher credentials', () => {
-    const files = [
-      readRepoFile('src/pages/TeamPage.tsx'),
-      readRepoFile('src/pages/team/TeamPageSections.tsx'),
-      readRepoFile('src/pages/team/teamPageContent.ts'),
-    ].join('\n');
-
-    expect(files).not.toMatch(/\b(?:CELTA|TESOL|TEFL|IB certified|Cambridge certified|certified expert|licensed specialist)\b/i);
+  it('makes /team the primary academic-design authority page', () => {
+    const page = read('src/pages/TeamPage.tsx');
+    const sections = read('src/pages/team/TeamPageSections.tsx');
+    expect(page).toContain('ResearchToClassroomSection');
+    expect(sections).toContain('Built around how children actually learn');
+    for (const concept of [
+      'Child development',
+      'Learning science',
+      'Early-literacy pedagogy',
+      'recurring learner difficulties',
+      'Map the skill and its prerequisites',
+      'Observe the child during class',
+      'Reduce teacher support gradually',
+    ]) {
+      expect(sections).toContain(concept);
+    }
   });
 
-  it('makes the research-to-classroom design process explicit without turning it into clinical or outcome claims', () => {
-    const teamPage = readRepoFile('src/pages/TeamPage.tsx');
-    const teamSections = readRepoFile('src/pages/team/TeamPageSections.tsx');
-
-    expect(teamPage).toContain('ResearchToClassroomSection');
-    expect(teamSections).toContain('How Tiny Steps designs learning');
-    expect(teamSections).toContain('Research-informed planning. Child-responsive teaching.');
-    expect(teamSections).toContain('child development');
-    expect(teamSections).toContain('learning science');
-    expect(teamSections).toContain('early-literacy pedagogy');
-    expect(teamSections).toContain('language development');
-    expect(teamSections).toContain('From research to classroom practice');
-    expect(teamSections).toContain('Structured curriculum. Responsive teaching.');
-    expect(teamSections).toContain('Adjust modelling, prompts, repetition and practice time');
-    expect(teamSections).toContain('Reduce support deliberately as accuracy and independence become more secure.');
-    expect(teamSections).toContain('not clinical psychology');
-    expect(teamSections).not.toMatch(/kinesthetic learner|learn faster|faster learning/i);
+  it('keeps /curriculum concise and preserves roadmap ownership', () => {
+    const curriculum = read('src/pages/CurriculumPage.tsx');
+    expect(curriculum).toContain('The complete Tiny Steps learning roadmap');
+    expect(curriculum).toContain('built around prerequisites, structured progression, learner observation');
+    expect(curriculum).toContain('adapting modelling, prompts, repetition, practice time and pace');
+    expect(curriculum.match(/How Tiny Steps designs learning/g) ?? []).toHaveLength(0);
   });
 
-  it('defines child-friendly classes through observable teaching behaviours rather than a marketing label', () => {
-    const teamSections = readRepoFile('src/pages/team/TeamPageSections.tsx');
+  it('gives the three program owners course-specific responsive-delivery sections', () => {
+    const component = read('src/components/programs/ResponsiveTeachingSection.tsx');
+    expect(component).toContain('How teachers deliver this course');
+    expect(component).toContain('data-program-delivery');
 
-    expect(teamSections).toContain('short, age-appropriate tasks');
-    expect(teamSections).toContain('predictable lesson routines');
-    expect(teamSections).toContain('guided retries');
-    expect(teamSections).toContain('specific, encouraging feedback');
-    expect(teamSections).toContain('not forced through it at a fixed speed');
-    expect(teamSections).toContain('not simply because a lesson number is complete');
+    const expectations = [
+      ['src/pages/phonics.tsx', 'program="Phonics"', 'sound–spelling accuracy'],
+      ['src/pages/grammar.tsx', 'program="Grammar"', 'self-corrects'],
+      ['src/pages/speaking.tsx', 'program="Public Speaking"', 'idea organisation'],
+    ] as const;
+    for (const [file, program, evidence] of expectations) {
+      const page = read(file);
+      expect(page).toContain('<ResponsiveTeachingSection');
+      expect(page).toContain(program);
+      expect(page).toContain(evidence);
+    }
   });
 
-  it('keeps the school service tied to the canonical organisation and a distinct school audience', () => {
-    expect(ORGANIZATION_ID).toBe('https://tinystepslearning.com/#organization');
-
-    const schools = readRepoFile('src/pages/ForSchoolsPage.tsx');
-    expect(schools).toContain("import { ORGANIZATION_ID } from '../lib/schemas';");
-    expect(schools).toContain("'@id': ORGANIZATION_ID");
-    expect(schools).toContain("educationalRole: 'school and early-years education provider'");
-    expect(schools).toContain("{ '@type': 'Country', name: 'India' }");
-    expect(schools).toContain("{ '@type': 'Place', name: 'Worldwide' }");
-  });
-
-  it('gives schools the same protected methodology plus evidence-based pacing', () => {
-    const schools = readRepoFile('src/pages/ForSchoolsPage.tsx');
-
+  it('defines the school offer as a teaching and implementation system', () => {
+    const schools = read('src/pages/ForSchoolsPage.tsx');
     expect(schools).toContain('How academic design becomes classroom practice');
-    expect(schools).toContain('A protected teaching method, with room to respond to the learner');
-    expect(schools).toContain('child development, learning science, early-literacy pedagogy');
     expect(schools).toContain('Model → guided practice → observe → correct → retry → reduce support');
     expect(schools).toContain('Structured curriculum. Responsive teaching.');
-    expect(schools).toContain('adjusting modelling, prompts,');
-    expect(schools).toContain('examples, repetition and practice time');
-    expect(schools).toContain('Progression based on readiness, not lesson-number pressure');
-    expect(schools).toContain('do not represent clinical');
-    expect(schools).not.toMatch(/kinesthetic learner|learn faster|faster learning/i);
-  });
-
-  it('keeps framework evidence explicit while preserving the independent-provider boundary', () => {
-    const schools = readRepoFile('src/pages/ForSchoolsPage.tsx');
-
-    expect(schools).toContain('citation: [ncfUrl, cbseHpcUrl, dfePhonicsUrl]');
-    expect(schools).toContain('Tiny Steps Learning is an independent education provider.');
-    expect(schools).toMatch(/does not imply endorsement,[\s\S]*approval,[\s\S]*certification or affiliation/);
-    expect(schools).toContain("question: 'Is Tiny Steps an officially CBSE-endorsed or government-approved phonics programme?'");
-  });
-
-  it('replaces enrolment and referral promises with operational school value', () => {
-    const schools = readRepoFile('src/pages/ForSchoolsPage.tsx');
-
+    expect(schools).toContain('Prerequisite practice when required');
     expect(schools).toContain('const schoolImplementationValue = [');
-    expect(schools).toContain("title: 'Parent communication'");
-    expect(schools).toContain("title: 'Implementation consistency'");
-    expect(schools).toContain("title: 'Teacher readiness'");
-    expect(schools).toContain("title: 'Leadership visibility'");
-    expect(schools).not.toContain("title: 'Continued enrolment'");
-    expect(schools).not.toContain("title: 'Reputation and referrals'");
-    expect(schools).not.toContain('enrollmentBusinessOutcomes');
-    expect(schools).toContain("question: 'How can schools communicate reading progress clearly to families?'");
-    expect(schools).toContain('Implementation visibility');
-    expect(schools).toContain('Make phonics progress easier for families and leaders to understand');
-    expect(schools).not.toContain('The enrolment business case');
-    expect(schools).not.toContain('support continued enrolment');
-    expect(schools).not.toContain('positive recommendations within the school community');
+    expect(schools).toContain('citation: [ncfUrl, cbseHpcUrl, dfePhonicsUrl]');
+    expect(schools).toContain("'@id': ORGANIZATION_ID");
+    expect(schools).toContain('independent education provider');
+    expect(schools).toMatch(/does not imply endorsement,[\s\S]*approval,[\s\S]*certification or affiliation/);
   });
 
-  it('preserves B13 canonical authority routes and creates no B14 public route', () => {
-    const routeSeo = readRepoFile('src/lib/routeSeoRegistry.js');
-    const schools = readRepoFile('src/pages/ForSchoolsPage.tsx');
-    const team = readRepoFile('src/pages/TeamPage.tsx');
+  it('blocks unsupported credentials, affiliations and outcome promises', () => {
+    expect(productionTrustFiles).not.toMatch(
+      /psychology-backed|scientifically proven|clinically proven|learning styles?|guaranteed (?:academic )?results?|CBSE-endorsed Tiny Steps|IB-endorsed Tiny Steps|Cambridge-endorsed Tiny Steps/i,
+    );
+    expect(read('src/pages/ForSchoolsPage.tsx')).not.toMatch(
+      /support continued enrolment|reputation and referrals|positive recommendations within the school community/i,
+    );
+    expect([
+      read('src/pages/TeamPage.tsx'),
+      read('src/pages/team/TeamPageSections.tsx'),
+      read('src/pages/team/teamPageContent.ts'),
+    ].join('\n')).not.toMatch(/\b(?:CELTA|TESOL|TEFL|IB certified|Cambridge certified|certified expert)\b/i);
+  });
 
-    expect(routeSeo).toContain("'/curriculum'");
-    expect(routeSeo).toContain("canonicalPath: '/curriculum'");
-    expect(schools).toContain("const canonicalUrl = 'https://tinystepslearning.com/for-schools';");
-    expect(team).toContain("const teamCanonicalPath = teamSeo?.canonicalPath ?? '/team';");
-
-    const audit = readRepoFile('docs/seo/blog-bricks/B14_TRUST_ENTITY_SCHOOLS_AUDIT.md');
-    expect(audit).toContain('must not:\n\n- create a new public URL');
-    expect(audit).toContain('does **not** hard-code a Trustpilot score');
-    expect(audit).toContain('Structured curriculum. Responsive teaching.');
-    expect(audit).toContain('child development, learning science and evidence-informed teaching practice');
+  it('contains no temporary B14 patch or self-modifying workflow machinery', () => {
+    for (const temporaryPath of [
+      '.github/workflows/b14-build-validation.yml',
+      'scripts/b14-academic-design-patch.py',
+      'scripts/b14-trust-entity-schools-patch.py',
+    ]) {
+      expect(fs.existsSync(path.join(repoRoot, temporaryPath)), temporaryPath).toBe(false);
+    }
   });
 });

@@ -55,9 +55,9 @@ export default function WhatIsJollyPhonicsBestWayPage() {
             'A parent-friendly guide to Jolly Phonics, synthetic phonics, and how Tiny Steps uses a structured phonics approach for reading confidence.',
           articleSection: 'Phonics',
           author: {
-            '@type': 'Organization',
+            '@type': 'EducationalOrganization',
             '@id': ORGANIZATION_ID,
-            name: PUBLIC_FACTS.brandName,
+            name: PUBLIC_FACTS.organizationName,
             url: TEAM_URL,
           },
           publisher: {

@@ -3,7 +3,7 @@
 ## Public authority graph
 
 ```text
-Tiny Steps Learning
+Tiny Steps Early Education (public brand: Tiny Steps Learning)
   ├─ /team
   │   ├─ founder identity and academic responsibility
   │   ├─ how curriculum and lesson plans are designed
@@ -12,10 +12,12 @@ Tiny Steps Learning
   │   └─ quality and progress-review process
   │
   ├─ /curriculum
-  │   └─ complete learning-roadmap owner (protected by B13)
+  │   ├─ complete learning-roadmap owner (protected by B13)
+  │   └─ concise methodology trust reinforcement
   │
   ├─ /phonics /grammar /speaking
-  │   └─ programme owners (protected by B13)
+  │   ├─ programme owners (protected by B13)
+  │   └─ course-specific responsive teaching delivery
   │
   ├─ /courses/...
   │   └─ detailed course / lesson-sequence owners (protected by B13)
@@ -109,8 +111,9 @@ Consistency means common instructional principles and progression—not identica
 ## Entity relationships
 
 ```text
-https://tinystepslearning.com/#organization
-  Tiny Steps Learning
+https://tinystepslearning.com/#educational-organization
+  Tiny Steps Early Education
+  alternate names: Tiny Steps Learning, Tiny Steps
        │
        ├─ founder → https://tinystepslearning.com/#founder
        │              Vannala Ravali Priya
@@ -150,3 +153,20 @@ B14 must not claim:
 ## URL boundary
 
 B14 creates **zero new public URLs** and does not alter canonicals, redirects, sitemap, RSS or indexability. B13 curriculum/program/course ownership remains intact.
+
+## Implementation ownership summary
+
+```text
+/team
+    → founder + academic-design authority
+
+/curriculum
+    → curriculum-roadmap owner
+    → concise methodology trust reinforcement
+
+/for-schools
+    → school implementation + teacher-training authority
+
+/phonics /grammar /speaking
+    → programme-specific teacher delivery
+```

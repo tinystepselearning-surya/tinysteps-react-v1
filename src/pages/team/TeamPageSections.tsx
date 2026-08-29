@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { trackEvent } from '../../lib/analytics';
+import { PUBLIC_FACTS } from '../../lib/schemas';
 import {
   academicSystemCards,
   founderResponsibilities,
@@ -198,7 +199,7 @@ export function TrustMetrics() {
 
 export function FounderSection() {
   return (
-    <section className="bg-white px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+    <section id="founder" className="bg-white px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
       <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
         <div className="relative mx-auto w-full max-w-[520px]">
           <div className="absolute -bottom-5 -left-5 h-full w-full rounded-[30px] bg-orange-100" aria-hidden="true" />
@@ -216,13 +217,15 @@ export function FounderSection() {
         <div>
           <SectionHeading eyebrow="Founder & academic leadership" title="Built by an educator. Strengthened by a teaching system." />
           <div className="mt-8 border-l-2 border-orange-400 pl-5 sm:pl-7">
-            <h3 className="font-heading text-2xl font-bold text-slate-950">Priya</h3>
-            <p className="mt-1 font-semibold text-orange-700">Founder, Tiny Steps Learning</p>
+            <h3 className="font-heading text-2xl font-bold text-slate-950">{PUBLIC_FACTS.founder.fullName}</h3>
+            <p className="mt-1 font-semibold text-orange-700">
+              Founder, Tiny Steps Learning • known to families as {PUBLIC_FACTS.founder.displayName}
+            </p>
           </div>
           <div className="mt-7 max-w-3xl space-y-4 text-base leading-7 text-slate-700">
             <p>Priya founded Tiny Steps Learning to make high-quality English learning more structured, personal and measurable for children.</p>
             <p>She leads the academic direction of the organisation, working across curriculum development, lesson design, teacher guidance, teaching quality and parent communication for Phonics, Reading, Grammar, Writing and Public Speaking programmes.</p>
-            <p>The goal is not simply to help children complete lessons. It is to help them demonstrate visible progress in reading accuracy, language confidence, sentence formation and independent communication.</p>
+            <p>The goal is not simply to help children complete lessons. It is to keep learning progress observable through evidence such as reading accuracy, sentence formation, language use and increasingly independent communication.</p>
           </div>
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
             {founderResponsibilities.map((item) => {
@@ -269,6 +272,105 @@ export function AcademicSystemSection() {
               </article>
             );
           })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function ResearchToClassroomSection() {
+  const designInputs = [
+    {
+      title: 'Child development',
+      detail: 'Age, readiness, attention and language development shape how lesson demands, examples and pacing are planned.',
+    },
+    {
+      title: 'Learning science',
+      detail: 'Prerequisites, guided practice, retrieval, cumulative review and gradual reduction of support inform the progression.',
+    },
+    {
+      title: 'Subject pedagogy',
+      detail: 'Early-literacy pedagogy and language-development principles connect phonics, reading, grammar, writing and speaking.',
+    },
+    {
+      title: 'Learner observation',
+      detail: 'Recurring errors and observed learner difficulty help the academic team refine examples, practice and review points.',
+    },
+  ];
+
+  const designProcess = [
+    'Review child-development and subject-pedagogy evidence',
+    'Map the skill and its prerequisites',
+    'Build the curriculum progression',
+    'Design lesson objectives, modelling and practice',
+    'Prepare teachers around shared instructional principles',
+    'Observe the child during class',
+    'Adjust pace, prompting, examples and repetition',
+    'Review progress and select the next teaching focus',
+  ];
+
+  const responsiveBehaviours = [
+    'Use short, age-appropriate tasks and predictable lesson routines.',
+    'Model clearly, then provide guided practice and guided retries.',
+    'Give specific, encouraging feedback and revisit prerequisites when needed.',
+    'Adjust prompts, examples, repetition and practice time to the child’s response.',
+    'Reduce teacher support gradually as accuracy and independence become secure.',
+  ];
+
+  return (
+    <section className="bg-white px-4 py-20 sm:px-6 sm:py-24 lg:px-8" aria-labelledby="academic-design-heading">
+      <div className="mx-auto max-w-7xl">
+        <div className="max-w-4xl">
+          <Eyebrow>How Tiny Steps designs learning</Eyebrow>
+          <h2 id="academic-design-heading" className="mt-4 font-heading text-3xl font-bold leading-tight tracking-[-0.025em] text-slate-950 sm:text-4xl lg:text-[2.75rem]">
+            Built around how children actually learn
+          </h2>
+          <p className="mt-5 text-base leading-7 text-slate-600 sm:text-lg">
+            Tiny Steps curriculum development goes beyond choosing topics and worksheets. Research-informed planning draws on child development, learning science, early-literacy pedagogy, language development, classroom observation and recurring learner difficulties.
+          </p>
+        </div>
+
+        <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          {designInputs.map((item, index) => (
+            <article key={item.title} className="rounded-[24px] border border-slate-200 bg-[#fffaf3] p-6 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
+              <span className="text-xs font-black tracking-[0.16em] text-orange-600">0{index + 1}</span>
+              <h3 className="mt-4 font-heading text-xl font-bold text-slate-950">{item.title}</h3>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{item.detail}</p>
+            </article>
+          ))}
+        </div>
+
+        <div className="mt-10 grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
+          <div className="rounded-[28px] bg-[#10243e] p-6 text-white shadow-[0_22px_60px_rgba(15,23,42,0.16)] sm:p-8">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-300">From research to classroom practice</p>
+            <ol className="mt-6 grid gap-3 sm:grid-cols-2">
+              {designProcess.map((step, index) => (
+                <li key={step} className="flex gap-3 rounded-2xl border border-white/10 bg-white/[0.06] p-4">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-300 text-xs font-black text-slate-950">{index + 1}</span>
+                  <span className="text-sm font-semibold leading-6 text-white/85">{step}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          <div className="rounded-[28px] border border-emerald-200 bg-emerald-50/70 p-6 sm:p-8">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-800">Research-informed planning. Child-responsive teaching.</p>
+            <h3 className="mt-3 font-heading text-2xl font-bold leading-tight text-slate-950">The curriculum is structured, but the child is not forced through it at a fixed speed.</h3>
+            <p className="mt-4 text-sm leading-7 text-slate-700">
+              Teachers keep the shared lesson objective and instructional principles while adapting pace, modelling and support to the learner’s readiness and response during class.
+            </p>
+            <ul className="mt-6 space-y-3">
+              {responsiveBehaviours.map((item) => (
+                <li key={item} className="flex gap-3 text-sm leading-6 text-slate-700">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" aria-hidden="true" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-6 rounded-2xl border border-emerald-200 bg-white/80 p-4 text-xs leading-5 text-slate-600">
+              This describes evidence-informed teaching practice, not clinical psychology, learning-style classifications or a guarantee that every child progresses at the same rate.
+            </p>
+          </div>
         </div>
       </div>
     </section>

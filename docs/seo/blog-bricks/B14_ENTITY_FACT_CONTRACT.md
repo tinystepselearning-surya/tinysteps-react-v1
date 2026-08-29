@@ -10,6 +10,15 @@ The rule is:
 
 ## Tiny Steps Learning
 
+### Canonical structured-data identity
+
+- Organization type: **EducationalOrganization**
+- Canonical organization name: **Tiny Steps Early Education**
+- Public brand / alternate name: **Tiny Steps Learning**
+- Short alternate name: **Tiny Steps**
+- Canonical URL: **https://tinystepslearning.com/**
+- Canonical `@id`: **https://tinystepslearning.com/#educational-organization**
+
 Canonical entity:
 
 - Name: **Tiny Steps Learning**

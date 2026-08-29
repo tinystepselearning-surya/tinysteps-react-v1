@@ -131,10 +131,10 @@ export default function OnlinePhonicsReadingClassesPage() {
           description:
             'Live online phonics and early reading classes focused on structured synthetic phonics, blending, CVC decoding, and first-sentence reading confidence.',
           provider: {
-            '@type': 'Organization',
-            '@id': 'https://tinystepslearning.com/#organization',
-            name: 'Tiny Steps Learning',
-            url: 'https://tinystepslearning.com',
+            '@type': 'EducationalOrganization',
+            '@id': 'https://tinystepslearning.com/#educational-organization',
+            name: 'Tiny Steps Early Education',
+            url: 'https://tinystepslearning.com/',
           },
           url: canonicalUrl,
           hasCourseInstance: {

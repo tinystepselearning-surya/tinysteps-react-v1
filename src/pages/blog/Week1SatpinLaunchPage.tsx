@@ -361,9 +361,9 @@ export default function Week1SatpinLaunchPage() {
         keywords: ARTICLE_KEYWORDS,
         image: `${SITE_ORIGIN}${ARTICLE_HERO}`,
         author: {
-          '@type': 'Organization',
+          '@type': 'EducationalOrganization',
           '@id': ORGANIZATION_ID,
-          name: PUBLIC_FACTS.brandName,
+          name: PUBLIC_FACTS.organizationName,
         },
         publisher: {
           '@id': ORGANIZATION_ID,

@@ -4,6 +4,7 @@ import ClusterSeoNav from '../components/programs/ClusterSeoNav';
 import TestimonialSnippets from '../components/common/TestimonialSnippets';
 import { applySeo } from '../lib/seo';
 import { createCourseSchema, createFAQPageSchema, PUBLIC_FACTS } from '../lib/schemas';
+import ResponsiveTeachingSection from '../components/programs/ResponsiveTeachingSection';
 
 const faqItems = [
   {
@@ -300,6 +301,18 @@ export default function SpeakingPage() {
           </article>
         </div>
       </section>
+
+      <ResponsiveTeachingSection
+        id="teacher-delivery"
+        program="Public Speaking"
+        introduction="Teachers provide a predictable speaking routine: model a clear response, offer guided prompts, listen to the child’s attempt and help them retry. Prompts are reduced gradually so confidence grows alongside independent expression."
+        steps={[
+          { title: 'Model and organise', detail: 'The teacher shows how to form a complete answer, add relevant detail and organise ideas for the task.' },
+          { title: 'Prompt and retry', detail: 'The child speaks in short, age-appropriate turns with encouraging, specific feedback and guided retries.' },
+          { title: 'Reduce support', detail: 'Topics, examples, wait time and prompts adjust to readiness, then fade as the child speaks more independently.' },
+        ]}
+        observation="sentence completeness, idea organisation, clarity, response to feedback and how much prompting the child needs before speaking independently."
+      />
 
       <section className="px-4 pb-8 pt-8 sm:px-5 md:pb-12 md:pt-12 lg:px-6 lg:pb-14 lg:pt-14">
         <div className="mx-auto max-w-6xl">

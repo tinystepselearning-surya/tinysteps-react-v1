@@ -21,7 +21,7 @@ B13 established the commercial learning ownership model:
 - `/phonics`, `/grammar`, `/speaking` — programme owners
 - canonical `/courses/...` routes — detailed course owners
 
-B14 preserves that model and focuses on `/team`, `/for-schools`, and the canonical organisation/founder entities they already reference.
+B14 preserves that model. `/team` owns the substantial academic-design explanation, `/curriculum` receives only a concise methodology reinforcement, `/for-schools` owns school implementation, and `/phonics`, `/grammar`, and `/speaking` explain programme-specific teacher delivery.
 
 ## Audit: `/team`
 
@@ -31,7 +31,7 @@ The Team page already has substantially more trust infrastructure than a generic
 
 - canonical `/team` route;
 - `AboutPage` structured data;
-- the canonical Tiny Steps `Organization` entity;
+- the canonical Tiny Steps `EducationalOrganization` entity;
 - a founder `Person` entity using the shared founder ID;
 - visible founder photography;
 - founder responsibilities covering curriculum direction, teacher development and academic quality;
@@ -189,6 +189,17 @@ The related FAQ is reframed from enrolment/reputation to communicating reading p
 
 B14 deliberately does **not** hard-code a Trustpilot score, app-store rating, review count, or other volatile third-party metric into entity facts.
 
+## Canonical entity decision
+
+The canonical schema identity is **Tiny Steps Early Education** at
+`https://tinystepslearning.com/#educational-organization`, with **Tiny Steps Learning** and **Tiny Steps** retained as alternate public brand names. The website, founder, course, service, article and page relationships reuse that single `@id`. Legacy hard-coded `/#organization` references are removed from production source.
+
+The separately defined `LocalBusiness` helper is not emitted by the public SEO layer and therefore does not create a competing organisation node. The public metadata path emits the canonical `EducationalOrganization` unless a page already supplies an organisation entity.
+
+## Temporary machinery cleanup
+
+The final implementation is committed directly in production source. The self-modifying B14 workflow and both B14 Python patch helpers are removed; no validation job edits source or pushes a bot-authored implementation commit.
+
 Stable profile links can be evaluated in later distribution work, but changing external ratings are not suitable as permanent schema facts unless they are fetched and displayed through a properly maintained source-of-truth integration.
 
 ## Methodology decision carried forward from external audits
@@ -232,4 +243,4 @@ B14 must not:
 
 B14 is complete when the visible and machine-readable site tell the same trust story:
 
-**Tiny Steps Learning → Vannala Ravali Priya (Founder) → child-development and pedagogy-informed academic design → structured curriculum and lesson planning → prepared teachers → child-responsive live teaching → observable progress review → independent school implementation service → source-linked evidence → no invented credentials, affiliations or guaranteed outcomes.**
+**Tiny Steps Early Education (Tiny Steps Learning) → Vannala Ravali Priya (Founder) → child-development and pedagogy-informed academic design → structured curriculum and lesson planning → prepared teachers → child-responsive live teaching → observable progress review → independent school implementation service → source-linked evidence → no invented credentials, affiliations or guaranteed outcomes.**

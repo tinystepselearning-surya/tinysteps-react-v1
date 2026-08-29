@@ -83,7 +83,7 @@ export function buildBlogAuthorSchema(profile: BlogAuthorProfile) {
       name: profile.name,
       url: profile.profileUrl,
       jobTitle: 'Founder',
-      worksFor: { '@id': ORGANIZATION_ID, name: PUBLIC_FACTS.brandName },
+      worksFor: { '@id': ORGANIZATION_ID, name: PUBLIC_FACTS.organizationName },
     };
   }
 
