@@ -37,11 +37,11 @@ describe('B13 curriculum, program and course authority guardrails', () => {
     expect(page).not.toContain('How Tiny Steps aligns with IB English scopes');
 
     for (const coursePath of canonicalCoursePaths) {
-      expect(page, coursePath).toContain(`to="${coursePath}"`);
+      expect(page, coursePath).toContain(`path: '${coursePath}'`);
     }
 
     for (const programPath of ['/phonics', '/grammar', '/speaking']) {
-      expect(page, programPath).toContain(`to="${programPath}"`);
+      expect(page, programPath).toContain(`programPath: '${programPath}'`);
     }
   });
 
