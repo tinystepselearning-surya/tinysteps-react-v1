@@ -7,6 +7,7 @@ import {
   getPublicBlogTitle,
   rewriteLegacyWeekBlogPaths,
 } from '../src/lib/blogWeekRenames.js';
+import { getOptimizedBlogTitle } from '../src/lib/blogTitleOptimization.js';
 import { rewriteRetiredBlogPaths } from './blog-consolidation-map.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -96,7 +97,8 @@ function parseBlogItemsFromSource() {
     const sourceTitle = extractSingleQuotedField(content, 'title');
     if (!sourceSlug || !sourceTitle || EXCLUDED_BLOG_SLUGS.has(sourceSlug)) continue;
     const slug = getPublicBlogSlug(sourceSlug);
-    const title = getPublicBlogTitle(sourceSlug, sourceTitle);
+    const publicTitle = getPublicBlogTitle(sourceSlug, sourceTitle);
+    const title = getOptimizedBlogTitle(slug, publicTitle);
     const dateFromPost = extractSingleQuotedField(content, 'date');
     const date = dateFromPost || publicationDates.get(sourceSlug) || '';
     if (date && date > todayIso) continue;
