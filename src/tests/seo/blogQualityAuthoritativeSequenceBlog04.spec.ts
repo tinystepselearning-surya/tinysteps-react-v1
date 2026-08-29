@@ -38,7 +38,7 @@ describe('authoritative Blog #4 quality lock', () => {
     expect(body).not.toContain('Aim for 10 minutes a day, 5-6 days a week');
     expect(body).not.toContain('Checklist when choosing a phonics class');
     expect(body).not.toContain('Progress timeline parents can expect');
-    expect(body).not.toMatch(/memorise every common word as a visual shape/i);
+    expect(body).not.toContain('learn the whole word by its shape and picture');
   });
 
   it('adds evidence, scope boundaries and extractable digraph/tricky-word FAQs', () => {
