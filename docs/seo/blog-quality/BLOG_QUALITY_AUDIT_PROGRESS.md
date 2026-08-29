@@ -68,7 +68,7 @@ Search visibility is a distribution goal, not the purpose of the content. Every 
 |---:|---|---:|---|---|---:|
 | 1 | Benefits of Phonics for Kids: What Parents Usually Notice First | 57/100 | **LOCKED IN BATCH** | Rebuilt from generic phonics template into the realistic parent benefits owner; removed fixed timelines and unsupported direct-confidence claims; added observable decoding/encoding/transfer signals, evidence boundaries and intent routing | **95/100** |
 | 2 | Child Knows ABC but Cannot Read: What Parents Should Check First | 65/100 | **LOCKED IN BATCH** | Rebuilt as the ABC-to-reading bottleneck owner; adds six-step check from recognition to connected-text transfer, removes generic template claims, separates Blog #2 from the letter-sounds-specific owner, adds evidence and diagnostic boundaries | **96/100** |
-| 3 | CVC Words Explained for Parents: The First Real Decoding Milestone | — | QUEUED | — | — |
+| 3 | CVC Words Explained for Parents: The First Real Decoding Milestone | 65/100 | **LOCKED IN BATCH** | Rebuilt as the first simple printed-word decoding owner; defines CVC accurately, adds a six-step hear→map→blend→fresh-word→encode→text ladder, mixed-vowel/word-family guidance, transfer checks, evidence and non-diagnostic boundaries | **96/100** |
 | 4 | Digraphs and Tricky Words: What to Decode and What to Remember | — | QUEUED | — | — |
 | 5 | How Kids Learn Blending: The Stage-by-Stage Path Parents Can Track | — | QUEUED | — | — |
 | 6 | How Long Does Phonics Take? A Realistic Parent Guide to Progress | — | QUEUED | — | — |
@@ -98,21 +98,6 @@ It is an outcomes/observation explainer, not a general definition page, not a bl
 - `/blog/how-to-improve-reading-fluency-in-children` → fluency accuracy/phrasing/meaning owner.
 - `/phonics` → commercial programme owner.
 
-### Baseline problems fixed
-
-- Removed template-generated fixed claims such as `weeks 1–3`, `weeks 3–6`, `weeks 6–10` and `after 8–10 weeks`.
-- Removed the generic requirement to run a 10-minute routine for 2–3 weeks before judging progress.
-- Removed template FAQ language prescribing `10 minutes a day, 5–6 days a week` as though it were an evidence-defined dose.
-- Removed the claim that phonics directly supports speaking confidence.
-- Reframed confidence carefully as a possible behavioural consequence of successful reading, not a guaranteed phonics outcome.
-- Separated decoding, spelling, fluency and comprehension instead of treating them as one automatic chain.
-- Added the Tiny Steps five-signal benefit check: **coverage, blending, independence, encoding and transfer**.
-- Added fresh-word checks so parents can distinguish transferable decoding from memorised word lists.
-- Added a clear boundary that phonics supports word reading but does not replace vocabulary, oral language, comprehension, reading experience or motivation.
-- Added four external evidence sources: EEF, National Reading Panel/NICHD, IES/What Works Clearinghouse and the UK Department for Education Reading Framework.
-- Added five AEO/GEO FAQs and contextual intent routing.
-- Added founder authorship, `modifiedDate: 2026-08-30`, a dedicated meta description and a 13-minute read estimate.
-
 ### Final decision
 
 **95/100 — LOCKED IN BLOGS #1–#10 BATCH.**
@@ -137,46 +122,69 @@ This article starts before word reading and identifies the first breakdown acros
 - `/blog/what-is-phonics-for-kids` → general definition/start-here owner.
 - `/phonics` → commercial structured programme owner.
 
+### Final decision
+
+**96/100 — LOCKED IN BLOGS #1–#10 BATCH.** No known factual, pedagogical, evidence, diagnosis-boundary, reader-helpfulness or cannibalization hard fail remains after review.
+
+## Blog #3 — locked in batch
+
+### Canonical role
+
+`/blog/cvc-words-explained-for-parents` owns the parent question:
+
+> **What are CVC words, why are they an important first printed-word decoding milestone, and how can I tell whether my child is genuinely decoding them rather than memorising a list?**
+
+The article begins after a child has at least a small taught set of usable sound-letter correspondences and emerging oral blending. It focuses on applying those component skills to regular consonant-vowel-consonant printed words.
+
+### Intent boundaries
+
+- `/blog/cvc-words-explained-for-parents` → CVC definition, first simple printed-word decoding, fresh-word transfer and readiness to move beyond CVC.
+- `/blog/child-knows-abc-but-cannot-read` → broader alphabet-to-reading bottleneck before reliable word decoding.
+- `/blog/how-kids-learn-blending` → the blending process itself, including children who know sounds but cannot merge them.
+- `/blog/phonics-blending-activities` → practical blending exercises rather than the CVC milestone explanation.
+- `/blog/digraphs-and-tricky-words` → next-pattern distinction between decodable multi-letter graphemes and exception/high-frequency words.
+- `/blog/how-phonics-improves-spelling` → full encoding/spelling roadmap.
+- `/phonics` → commercial programme owner.
+
 ### Baseline problems fixed
 
-- Converted Blog #2 from the shared generic `PhonicsSeoPost` generator into a direct editorial `BlogPost`.
-- Removed generic template copy about class selection, a 10-minute daily routine, fixed judgement windows and shared escalation timelines.
-- Removed the oversimplified FAQ instruction to “prioritize letter sounds” and replaced it with the more accurate distinction that children benefit from both letter names and sound-letter knowledge, while decoding specifically requires usable sound correspondences.
-- Added the **Tiny Steps six-step ABC-to-reading check**:
-  1. printed-letter recognition;
-  2. taught sound recall;
-  3. oral blending without print;
-  4. simple printed blending;
-  5. fresh-word transfer;
-  6. short connected-text transfer.
-- Made every check conditional on **already-taught** sounds/patterns so parents do not test advanced or untaught spellings and misclassify the child.
-- Added an interpretation section that maps the first weak step to the next appropriate practice target.
-- Added a firm cannibalization boundary with Blog #50: once letter-sound recall is secure, the parent should move to the letter-sounds-but-cannot-read article instead of repeating alphabet work.
-- Added practical home responses for letter-sound recall, oral blending and printed decoding without imposing a research-invented daily dosage.
-- Added explicit warnings against picture guessing during a decoding check, long random word lists, premature speed pressure and fixed-week expectations.
-- Added a progress section based on observable independence and transfer rather than calendar promises.
-- Added a diagnostic boundary: this parent guide does not diagnose dyslexia, hearing, speech, language, attention or broader learning conditions.
-- Added four external evidence sources: IES/What Works Clearinghouse, National Reading Panel/NICHD, Education Endowment Foundation and the UK Department for Education Reading Framework.
-- Added five answer-engine-friendly FAQs and contextual links to blending, CVC, diagnostics and the main Phonics pathway.
+- Converted Blog #3 from the shared generic `PhonicsSeoPost` generator into a direct editorial `BlogPost`.
+- Removed generic template sections about choosing a phonics class, fixed practice duration, shared progress timelines and unrelated base FAQs.
+- Clarified that **CVC is a consonant-vowel-consonant spelling structure**, not a synonym for every three-letter word.
+- Made beginner CVC checks conditional on regular words using **already-taught** sound-letter correspondences.
+- Explicitly stated that Tiny Steps’ “first real decoding milestone” language is editorial framing, not a standardized research stage.
+- Added the **Tiny Steps six-step CVC decoding ladder**:
+  1. hear the sounds in order;
+  2. map each taught letter to its sound;
+  3. blend the printed word;
+  4. decode a fresh CVC word;
+  5. reverse the process through spelling/encoding;
+  6. transfer into short connected text.
+- Added continuous-blending guidance and a boundary for when the problem is blending rather than sound recall.
+- Added short-vowel example sets while making clear they are examples, not a required mastery list or order.
+- Added mixed-vowel contrast guidance only after the relevant vowels are taught.
+- Added a word-family boundary: families can scaffold early learning but can also hide memorisation unless order and examples are mixed.
+- Added interpretation for first-letter guessing, middle-vowel substitutions, blend failure, familiar-card dependence and reading-ahead-of-spelling.
+- Replaced universal word-count and fixed-week mastery rules with independence and transfer signals.
+- Added readiness guidance for moving from CVC words to the next systematic patterns without requiring perfect speed.
+- Added a clear non-diagnostic support boundary for persistent difficulties.
+- Added four external evidence sources: IES/What Works Clearinghouse, Education Endowment Foundation, UK Department for Education Reading Framework and Reading Rockets’ parent-facing CVC decoding guidance.
+- Added five answer-engine-friendly FAQs and contextual links to Blogs #2, #4, #5, blending activities, spelling and `/phonics`.
 - Added founder authorship, `modifiedDate: 2026-08-30`, a dedicated meta description and a 14-minute read estimate.
 
 ### Evidence decision
 
-The Tiny Steps six-step check is explicitly labelled **editorial guidance rather than a standardized research test**.
+The Tiny Steps six-step CVC decoding ladder is explicitly labelled **editorial teaching guidance rather than a standardized research protocol**.
 
-The external evidence supports the underlying principles that:
+The evidence layer supports the underlying principles that beginning readers need phonemic awareness, sound-letter mapping, blending, word decoding, spelling/encoding practice and opportunities to apply those skills in connected text. No source is used to claim a universal CVC word count, fixed mastery timeline or research-defined daily practice dose.
 
-- phonemic awareness involves noticing and manipulating sounds in spoken words;
-- sound-letter correspondences must become usable in reading rather than remain isolated knowledge;
-- blending is required to decode unfamiliar words;
-- explicit, systematic phonics instruction should progress from simpler to more complex applications;
-- children need opportunities to apply decoding in connected text.
+### Indexability decision
 
-The article makes no claim that knowing ABC, passing the six steps or failing one step constitutes a professional diagnosis.
+Blog #3 is an ordinary evergreen public phonics source rather than a historical week-* roadmap alias. Under the existing indexing policy, non-weekly slugs are already indexable and sitemap eligible, so **no indexability promotion or policy change is required**.
 
 ### Final decision
 
-**96/100 — LOCKED IN BLOGS #1–#10 BATCH.** No known factual, pedagogical, evidence, diagnosis-boundary, reader-helpfulness or cannibalization hard fail remains after review.
+**96/100 — LOCKED IN BLOGS #1–#10 BATCH.** No known factual, pedagogical, evidence, diagnosis-boundary, reader-helpfulness, SEO or cannibalization hard fail remains after review.
 
 ## Batch merge gate
 
