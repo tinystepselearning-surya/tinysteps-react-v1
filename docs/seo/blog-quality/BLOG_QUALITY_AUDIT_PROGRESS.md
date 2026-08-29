@@ -18,7 +18,7 @@ If the answer is no, the article is not finished.
 
 ## Delivery workflow
 
-The programme now ships **incrementally, one blog at a time**:
+The programme ships **incrementally, one blog at a time**:
 
 1. Audit and improve one blog on an isolated branch.
 2. Lock its quality, intent ownership, evidence and indexability decision.
@@ -28,8 +28,9 @@ The programme now ships **incrementally, one blog at a time**:
 
 Current sequence:
 
-- Blog #1 branch: `seo/blog-quality-audit-refresh` → PR #158, merge pending manual CI confirmation.
-- Blog #2 branch: `seo/blog-quality-02-summer-slide`, created from the locked Blog #1 head so Blog #1 remains unchanged while Blog #2 work proceeds.
+- Blog #1: merged through PR #158.
+- Blog #2: `seo/blog-quality-02-summer-slide` → PR #159, CI status to be supplied manually by the user.
+- Blog #3: `seo/blog-quality-03-phonics-assessment`, stacked from the locked Blog #2 head so Blog #2 remains frozen while Blog #3 work proceeds.
 
 ## Standard 100-point quality rubric
 
@@ -76,11 +77,12 @@ A blog cannot be marked complete if it contains factual/pedagogical errors, unsu
 
 | # | Public article | Baseline | Status | Main action | Score after refresh |
 |---:|---|---:|---|---|---:|
-| 1 | SATPIN at Home: A Parent Launch Plan for Early Blending and Reading | 70/100 | **LOCKED / PR #158** | Evergreen SATPIN home implementation owner; corrected sequence, readiness progression, evidence, self-routing, escalation and AEO structure | **95/100** |
-| 2 | How to Prevent the Summer Slide in Reading (10-Minute Daily Plan) | 64/100 | **LOCKED — ready for incremental validation** | Rebuilt around evidence-aware summer reading continuity; stage-matched 10-minute plans, book-fit guidance, Tiny Steps three-signal check, support boundary, FAQs, internal authority links and indexability promotion | **94/100** |
-| 3 | Phonics Assessment Checklist for Parents Before a New School Term | — | QUEUED | Audit after Blog #2 ships | — |
+| 1 | SATPIN at Home: A Parent Launch Plan for Early Blending and Reading | 70/100 | **MERGED / PR #158** | Evergreen SATPIN home implementation owner; corrected sequence, readiness progression, evidence, self-routing, escalation and AEO structure | **95/100** |
+| 2 | How to Prevent the Summer Slide in Reading (10-Minute Daily Plan) | 64/100 | **LOCKED / PR #159** | Evidence-aware summer reading continuity; stage-matched routines, book-fit guidance, Tiny Steps three-signal check, support boundary, FAQs, internal authority links and indexability promotion | **94/100** |
+| 3 | Phonics Assessment Checklist for Parents Before a New School Term | 61/100 | **LOCKED — ready for incremental validation after Blog #2** | Rebuilt as an informal parent phonics observation guide using taught scope, fresh-word decoding, blending/segmenting, encoding, connected-text transfer, evidence and a clear diagnostic boundary; quality-promoted to indexable | **95/100** |
+| 4 | How to Help Kids Read Multisyllabic Words: Simple Chunking Practice | — | QUEUED | Audit after Blog #3 ships | — |
 
-## Blog #1 — locked
+## Blog #1 — locked and merged
 
 ### Canonical role
 
@@ -88,7 +90,7 @@ Practical **SATPIN-at-home implementation** owner for parents, guardians and edu
 
 ### Final decision
 
-**95/100 — LOCKED.** Do not broadly rewrite unless a later concrete factual, technical or intent issue is discovered.
+**95/100 — LOCKED and merged through PR #158.**
 
 ## Blog #2 — locked
 
@@ -105,32 +107,56 @@ Intent boundaries:
 
 ### Final decision
 
-**94/100 — LOCKED.** Blog #2 passes the human-helpfulness/shareability review and has no known factual, pedagogical or intent hard fail after the final content review. The remaining gate is exact-head technical/SEO validation when the block is prepared for its incremental PR.
-
-### Baseline problems fixed
-
-- Removed the claim that summer reading loss is universally “preventable”.
-- Removed the unsupported claim that exactly 10 minutes is usually enough to maintain or improve reading.
-- Explained that measured summer learning patterns vary across children, assessments and student groups.
-- Replaced one identical ages-3–12 routine with three stage-matched versions: pre-reader/early phonics, developing decoder, increasingly fluent reader.
-- Stopped prescribing phonics drills to every older/fluent reader.
-- Added practical text-selection guidance so difficulty does not force guessing or destroy comprehension.
-- Added the Tiny Steps three-signal summer check: accuracy/independence, meaning, and fresh-text transfer.
-- Added a low-pressure weekly rhythm that keeps the holiday from becoming another school timetable.
-- Added specific resistance/motivation troubleshooting and behaviour-based praise examples.
-- Added a clear `When home practice is not enough` boundary and avoided online diagnosis language.
-- Added credible evidence from NWEA, the Kim & Quinn summer-reading intervention meta-analysis, and the National Reading Panel fluency findings.
-- Added five meaningful answer-engine FAQs.
-- Replaced raw sales URLs/CTA copy with contextual next-step links after the substantive help.
-- Added links to the reading-fluency owner, comprehension diagnostic, Parents Hub reading-at-home guide, Phonics programme and Summer Camp page.
-- Added `modifiedDate: 2026-08-30` and a concise meta description.
-- Added Blog #2 to the canonical LLM editorial authority map with explicit intent boundaries.
+**94/100 — LOCKED.** Blog #2 passes the human-helpfulness/shareability review and has no known factual, pedagogical or intent hard fail. PR #159 is the incremental technical/SEO validation gate.
 
 ### Indexability decision
 
-Blog #2 now owns a distinct, useful and evidence-backed search intent, so its cleaned public URL `/blog/prevent-summer-slide-reading` is **quality-promoted to indexable + sitemap eligible**.
+The cleaned public URL `/blog/prevent-summer-slide-reading` is quality-promoted to **indexable + sitemap eligible**. The historical `/blog/week-27-prevent-summer-slide-reading` remains a permanent redirect alias. Historical GSC snapshot rows remain historical evidence rather than being rewritten.
 
-The historical `/blog/week-27-prevent-summer-slide-reading` URL remains non-indexable and preserves its permanent redirect to the clean canonical. Historical GSC snapshot rows are not rewritten; audit infrastructure now supports later quality promotions while preserving historical evidence.
+## Blog #3 — locked after content review
+
+### Canonical role
+
+**Informal parent phonics assessment / observation** owner before a new school term or when a parent wants to identify the next practice priority.
+
+Intent boundaries:
+
+- `/blog/phonics-diagnostics` → parent/guardian home observation of already-taught phonics skills.
+- `/blog/how-schools-can-assess-decoding-not-memorisation` → school/institutional assessment design and transferable decoding evidence.
+- `/book-demo` → Tiny Steps commercial 35-minute 1:1 demo assessment pathway, not the editorial explanation owner.
+- `/blog/why-child-knows-letter-sounds-but-cannot-read-words` → diagnostic explanation for the specific sounds-to-blending gap, not a general assessment checklist.
+
+### Baseline problems fixed
+
+- Removed the old `Week 22` campaign framing and fixed seven-day remediation timetable.
+- Removed the one-size-fits-all list of sounds, blends, digraphs, tricky words and long vowels regardless of what the child had actually been taught.
+- Reframed the page as an **informal home observation**, not a standardized diagnostic or screening test.
+- Added a clear boundary that the checklist cannot diagnose dyslexia, hearing, speech, language, attention or developmental conditions.
+- Replaced generic Green/Amber/Red scoring with **Secure / Developing / Priority** plus an observed example rather than a percentage.
+- Added the Tiny Steps five-part phonics check: sound-letter recall, oral blending/segmenting, fresh-word decoding, encoding/spelling, and connected-text transfer.
+- Added fresh-word examples by teaching stage and made every example conditional on the pattern already being taught.
+- Added optional, carefully bounded pseudo-word guidance so parents understand why unfamiliar items can reveal transferable decoding without imitating a statutory screening test.
+- Added assessment-fairness guidance: avoid hints, do not teach during the item, do not let pictures replace decoding, accept self-correction as useful evidence, and stop if the child becomes distressed.
+- Added actionable interpretation of common error patterns so results lead to the correct next practice rather than more random worksheets.
+- Added teacher-ready language for sharing observations, such as describing a blending or transfer problem rather than saying a child is simply “weak in phonics”.
+- Added evidence from the UK Standards and Testing Agency/DfE phonics screening framework and US IES/What Works Clearinghouse foundational-reading and assessment guidance.
+- Added five answer-engine FAQs covering home assessment, scope, pseudo-words, sounds-without-reading, and dyslexia/diagnosis boundaries.
+- Added contextual links to the letter-sounds diagnostic, blending guide, CVC guide, ABC diagnostic, Phonics programme and Tiny Steps demo assessment.
+- Added `modifiedDate: 2026-08-30` and a concise search-result meta description.
+
+### Evidence decision
+
+The article uses formal assessment sources only to explain useful principles: assess the intended skill, use unfamiliar decodable items to check transfer, distinguish screening/diagnostic/progress-monitoring purposes, and use assessment evidence to target instruction. It does **not** claim that this home checklist is equivalent to the UK phonics screening check or a professional diagnostic assessment.
+
+### Indexability decision
+
+Blog #3 now owns a distinct useful parent search intent and passes the human-first quality gate, so `/blog/phonics-diagnostics` is **quality-promoted to indexable + sitemap eligible**.
+
+The historical `/blog/week-22-phonics-diagnostics` URL remains a non-indexable permanent redirect alias. The promotion-aware GSC/archive audit infrastructure created for Blog #2 already validates this pattern without rewriting historical Search Console evidence.
+
+### Final decision
+
+**95/100 — LOCKED.** No known factual, pedagogical, evidence, diagnostic-boundary or cannibalization hard fail remains after the final content review. Exact-head technical/SEO validation will be run only after Blog #2 is merged and Blog #3 is prepared as the next incremental PR.
 
 ## Per-blog final gate
 
