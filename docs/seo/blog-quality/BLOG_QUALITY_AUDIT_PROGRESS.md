@@ -120,18 +120,24 @@ A blog cannot be marked complete if it contains any of the following:
 
 ## Progress
 
-| # | Public article | Baseline | Status | Main action | Target after refresh |
+| # | Public article | Baseline | Status | Main action | Score after refresh |
 |---:|---|---:|---|---|---:|
-| 1 | SATPIN at Home: A Parent Launch Plan for Early Blending and Reading | 70/100 | **REFRESHED** | Rebuilt as evergreen SATPIN home implementation guide; corrected teaching sequence; removed seven-day pressure; added evidence, first-party readiness checks, FAQ, internal learning path and updated authorship | 92+/100 |
+| 1 | SATPIN at Home: A Parent Launch Plan for Early Blending and Reading | 70/100 | **LOCKED** | Rebuilt as evergreen SATPIN home implementation guide; corrected teaching sequence; removed calendar pressure; added reader self-routing, evidence, first-party readiness checks, FAQ, internal learning path, escalation boundary and updated authorship | **95/100** |
 | 2 | How to Prevent the Summer Slide in Reading (10-Minute Daily Plan) | — | QUEUED | Audit next | — |
 
-## Blog #1 — completed changes
+## Blog #1 — locked after final revisit
 
 ### Canonical role
 
-Practical **SATPIN-at-home implementation** owner for parents.
+Practical **SATPIN-at-home implementation** owner for parents, guardians and educators supporting an early reader.
 
 The separate `/blog/satpin-phonics-guide` remains the broader SATPIN explanation/progression owner.
+
+### Final quality decision
+
+**95/100 — LOCKED.**
+
+Blog #1 passes the human-helpfulness and shareability test and has no known hard-fail issue after the final revisit. It should not receive another broad rewrite during this programme unless later cross-blog reconciliation reveals a concrete duplication, factual, technical or intent problem.
 
 ### Fixed
 
@@ -140,16 +146,23 @@ The separate `/blog/satpin-phonics-guide` remains the broader SATPIN explanation
 - Corrected the sequence error where words containing untaught `t` and `p` appeared before those sounds had been introduced.
 - Removed non-SATPIN and unnatural practice examples such as `Tin can`, `Tan pan`, and `Nap in pan`.
 - Added a genuinely SATPIN-only cumulative word bank.
+- Added guidance for unfamiliar but decodable words so vocabulary support does not turn into guessing.
 - Added decoding + encoding transfer rather than isolated sound recall alone.
 - Replaced weak completion criteria with observable Tiny Steps readiness checkpoints.
 - Added an explicit distinction between this practical routine and the comprehensive SATPIN guide.
+- Added a `Who this SATPIN plan is for` section to help parents, guardians, tutors and teachers self-route quickly.
+- Added a clear boundary explaining that this is a phonics-practice guide, not a diagnostic test for hearing, speech or language difficulties.
 - Added parent-focused troubleshooting for the sound-knowledge → blending gap.
+- Added `When home practice is not enough`, including appropriate teacher support and qualified-professional boundaries when hearing/speech/language concerns exist.
 - Added evidence links from EEF, UK Department for Education, and NICHD National Reading Panel.
+- Verified that the EEF source explicitly describes SATPIN as a commonly used early grapheme sequence and that the evidence sources support systematic phonics, blending, segmenting and responsive teaching.
 - Replaced unsupported “research-backed” marketing language with evidence-informed, source-linked wording.
 - Changed authorship to `Priya`, which resolves to the founder author profile in the existing editorial-trust system.
 - Added `modifiedDate: 2026-08-30` for this meaningful revision.
-- Added FAQ content for answer-engine extraction.
+- Tightened the meta description to fit a cleaner search-result snippet.
+- Added FAQ content for answer-engine extraction and made the blending FAQ avoid oversimplifying all reading difficulty as a single cause.
 - Added links to the SATPIN authority guide, blending guide, CVC guide, Balloon Pop SATPIN level, Letter Tracing with Sounds, and the Phonics programme.
+- Kept the programme CTA after the substantive help, not before it.
 
 ## Final validation gate (after all 76)
 
