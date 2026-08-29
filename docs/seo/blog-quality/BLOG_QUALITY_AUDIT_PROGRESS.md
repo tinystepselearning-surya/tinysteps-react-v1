@@ -32,6 +32,7 @@ Current sequence:
 - Blog #2: merged through PR #159.
 - Blog #3: merged through PR #160.
 - Blog #4: `seo/blog-quality-04-multisyllabic-words` → PR #161, exact-head CI initiated.
+- Blog #5: `seo/blog-quality-05-summer-phonics-plan`, stacked from Blog #4's locked exact head for sequential programme continuity; exact-head PR/CI is the next validation gate.
 
 ## Standard 100-point quality rubric
 
@@ -82,6 +83,7 @@ A blog cannot be marked complete if it contains factual/pedagogical errors, unsu
 | 2 | How to Prevent the Summer Slide in Reading (10-Minute Daily Plan) | 64/100 | **MERGED / PR #159** | Evidence-aware summer reading continuity; stage-matched routines, book-fit guidance, Tiny Steps three-signal check, support boundary, FAQs, internal authority links and indexability promotion | **94/100** |
 | 3 | Phonics Assessment Checklist for Parents Before a New School Term | 61/100 | **MERGED / PR #160** | Informal parent phonics observation owner using taught scope, fresh-word decoding, blending/segmenting, encoding, connected-text transfer, evidence and a diagnostic boundary; quality-promoted to indexable | **95/100** |
 | 4 | How to Help Kids Read Multisyllabic Words: Simple Chunking Practice | 59/100 | **LOCKED / PR #161 — CI initiated** | Rebuilt as a phonics- and morphology-aware long-word decoding guide with readiness checks, a repeatable five-step routine, stage-matched practice, transfer signals, evidence, FAQs and support boundaries; quality-promoted to indexable | **95/100** |
+| 5 | Summer Phonics Practice for Kids: A 10-Minute Daily Routine | 54/100 | **LOCKED — ready for exact-head validation** | Rebuilt as the phonics-specific summer consolidation owner: taught-stage routing, recall → decode → spell → matched-text practice, Tiny Steps maintenance signals, evidence, FAQs, support boundaries and indexability promotion | **95/100** |
 
 ## Blog #1 — locked and merged
 
@@ -204,6 +206,53 @@ The historical `/blog/week-19-phonics-multisyllabic` URL remains a non-indexable
 ### Final decision
 
 **95/100 — LOCKED pending exact-head CI/SEO validation in PR #161.** No known factual, pedagogical, evidence, diagnosis-boundary, reader-helpfulness or cannibalization hard fail remains after the final content review.
+
+## Blog #5 — locked for exact-head validation
+
+### Canonical role
+
+**Phonics-specific summer consolidation and transfer** owner for parents supporting a child who is currently learning phonics and needs a light routine that maintains taught sound-letter knowledge through decoding, encoding and matched connected text.
+
+Intent boundaries:
+
+- `/blog/phonics-summer-plan` → phonics-specific summer consolidation: taught patterns, blending, fresh-word decoding, spelling and decodable-text transfer.
+- `/blog/prevent-summer-slide-reading` → broader summer reading continuity across phonics, fluency, comprehension, vocabulary and reading experience.
+- `/blog/phonics-activities-for-kids-at-home` → evergreen activity library, not a seasonal progression or maintenance routine.
+- `/blog/phonics-diagnostics` → informal home observation/assessment owner when the next practice priority is unclear.
+- `/blog/how-kids-learn-blending` → stage-by-stage blending explanation rather than a summer routine.
+- `/phonics` → Tiny Steps commercial structured programme owner, not the editorial summer-practice answer page.
+
+### Baseline problems fixed
+
+- Removed the old `Week 16` campaign framing, exact seven-day schedule and Week 17 teaser.
+- Removed the unsupported implication that 15 minutes a day is an evidence-defined optimum; the new 10-minute structure is explicitly labelled Tiny Steps practical guidance rather than a research-prescribed dose.
+- Removed the stage-agnostic sequence that introduced blends, a digraph and a long-vowel pattern on fixed days whether or not the child had learned them.
+- Removed `5-word sprint` and speed-first framing before decoding accuracy is secure.
+- Rebuilt selection around the child’s **current taught phonics stage rather than age**.
+- Added three practical versions: first sounds/early blending, CVC/digraph/vowel-pattern practice, and longer-word/increasingly fluent reading.
+- Added the Tiny Steps 10-minute routine: recall taught patterns, decode fresh words, encode/spell one or two words, then transfer into matched connected text.
+- Added a clear explanation that independent phonics text should be closely matched to developing code knowledge, while richer storybooks can still be read aloud for vocabulary and enjoyment.
+- Added a game-quality boundary so playful activities still practise the intended sound-letter or decoding skill rather than replacing phonics with generic entertainment.
+- Added the Tiny Steps three-signal phonics maintenance check: recall, application and transfer.
+- Added resistance guidance, a support boundary and parent-facing next-step routing.
+- Added evidence from EEF, the UK Department for Education Reading Framework, IES/What Works Clearinghouse and the UK National Curriculum.
+- Added five answer-engine FAQs covering practice length, new summer content, blending difficulty, spelling and the limits of a 10-minute routine.
+- Added contextual links to the broader summer reading guide, blending, CVC, long vowels, spelling, multisyllabic words, phonics diagnostics, Balloon Pop, Letter Tracing, free games and the Phonics programme.
+- Added `modifiedDate: 2026-08-30`, a 13-minute read estimate and concise search metadata.
+
+### Evidence decision
+
+The 10-minute routine and Tiny Steps three-signal check are presented as **Tiny Steps editorial teaching guidance**, not standardized research protocols and not a guaranteed prevention dose for summer learning loss. External sources support the underlying instructional choices: explicit/systematic phonics, matching teaching to current phonemic/grapheme knowledge, linking sounds to letters, decoding and spelling, and reading connected text aligned with the learner’s developing phonics knowledge.
+
+### Indexability decision
+
+Blog #5 now owns a distinct useful parent intent from the broader summer-reading article and passes the human-first quality gate, so `/blog/phonics-summer-plan` is **quality-promoted to indexable + sitemap eligible**.
+
+The historical `/blog/week-16-phonics-summer-plan` URL remains a non-indexable permanent redirect alias.
+
+### Final decision
+
+**95/100 — LOCKED pending exact-head CI/SEO validation.** No known factual, pedagogical, evidence, reader-helpfulness or cannibalization hard fail remains after the final content review.
 
 ## Per-blog final gate
 
