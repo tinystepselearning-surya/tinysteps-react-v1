@@ -28,10 +28,10 @@ const PROTECTED_FAMILIES = {
   'how-to-improve-reading-fluency-in-children': ['reading-fluency', '/phonics'],
   'child-knows-grammar-but-makes-mistakes': ['grammar-diagnostic', '/grammar'],
   'how-to-improve-sentence-formation-in-kids': ['sentence-building', '/grammar'],
-  'week-7-grammar-nouns-to-paragraphs': ['sentence-building', '/grammar'],
+  'grammar-nouns-to-paragraphs': ['sentence-building', '/grammar'],
   'child-understands-english-but-does-not-speak': ['speaking-confidence', '/speaking'],
   'child-gives-one-word-answers': ['speaking-confidence', '/speaking'],
-  'week-12-speaking-confidence-seeds': ['speaking-confidence', '/speaking'],
+  'speaking-confidence-seeds': ['speaking-confidence', '/speaking'],
 } as const;
 
 describe('B11 blog lead conversion and attribution guardrails', () => {
