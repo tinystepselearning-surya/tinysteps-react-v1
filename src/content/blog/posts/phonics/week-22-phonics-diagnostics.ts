@@ -238,7 +238,7 @@ const post: BlogPost = {
     content: 'If the concern goes beyond reading instruction — for example hearing, speech, language, vision or broader developmental concerns — seek advice from an appropriately qualified professional. This checklist cannot identify a medical, developmental or learning diagnosis.'
   }, {
     type: 'h2',
-    content: 'What formal assessment guidance tells us'
+    content: 'Evidence and formal assessment guidance'
   }, {
     type: 'p',
     content: 'Formal early-reading assessment reinforces two useful principles for parents: assess the skill you actually want to understand, and use the result to guide instruction. England’s phonics screening check is specifically designed to check phonic decoding and identify pupils who may need extra help. Its framework uses both real words and pseudo-words because unfamiliar items reduce the chance that visual memory alone explains success. US Institute of Education Sciences guidance likewise recommends using assessment data to identify specific word-reading needs and matching instruction to those needs.'
