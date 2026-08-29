@@ -1,0 +1,101 @@
+name: B13 Curriculum Program Authority Validation
+
+on:
+  push:
+    branches:
+      - 'seo/b13-curriculum-program-authority'
+
+permissions:
+  contents: write
+
+jobs:
+  validate-b13:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    env:
+      VITE_ASK_TINY_STEPS_FIREBASE_API_KEY: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_API_KEY }}
+      VITE_ASK_TINY_STEPS_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_AUTH_DOMAIN }}
+      VITE_ASK_TINY_STEPS_FIREBASE_PROJECT_ID: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_PROJECT_ID }}
+      VITE_ASK_TINY_STEPS_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_STORAGE_BUCKET }}
+      VITE_ASK_TINY_STEPS_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_MESSAGING_SENDER_ID }}
+      VITE_ASK_TINY_STEPS_FIREBASE_APP_ID: ${{ secrets.VITE_ASK_TINY_STEPS_FIREBASE_APP_ID }}
+      VITE_ASK_TINY_STEPS_RECAPTCHA_ENTERPRISE_SITE_KEY: ${{ secrets.VITE_ASK_TINY_STEPS_RECAPTCHA_ENTERPRISE_SITE_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+
+      - name: Apply B13 curriculum authority patch
+        run: python scripts/b13-curriculum-authority-patch.py
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run B13 and cross-brick guardrails
+        run: >-
+          npx vitest run
+          src/tests/seo/b13CurriculumProgramAuthority.spec.ts
+          src/tests/seo/blogB12MeasurementGovernance.spec.ts
+          src/tests/seo/blogB11LeadAttribution.spec.ts
+          src/tests/seo/blogB10TechnicalGeoAuthority.spec.ts
+          src/tests/seo/blogB9GrammarSpeakingAuthority.spec.ts
+          src/tests/seo/blogB8FirstPartyKnowledge.spec.ts
+          src/tests/seo/blogEditorialTrust.spec.ts
+          src/tests/seo/blogParentAuthorityPillars.spec.ts
+          src/tests/seo/blogIntentOwnership.spec.ts
+          src/tests/seo/blogHeroFamilies.spec.ts
+          src/tests/seo/blogIndexingPolicy.spec.ts
+          src/tests/seo/blogAudienceArchitecture.spec.ts
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Full root unit suite
+        run: npm run test:unit -- --run
+
+      - name: Production build
+        run: npm run build
+
+      - name: SEO smoke
+        run: npm run seo:smoke
+
+      - name: Rendered HTML check
+        run: npm run seo:rendered-check
+
+      - name: Route integrity
+        run: npm run seo:route-integrity
+
+      - name: Indexability report
+        run: npm run seo:indexability-report
+
+      - name: Indexation guard
+        run: npm run seo:indexation-check
+
+      - name: Commit validated B13 implementation
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            src/lib/routeSeoRegistry.js \
+            src/pages/CurriculumPage.tsx \
+            src/components/curriculum/IBAlignmentSection.tsx \
+            src/pages/CourseDetailPage.tsx \
+            src/pages/CoursesPage.tsx \
+            src/pages/phonics.tsx \
+            src/pages/grammar.tsx \
+            src/pages/speaking.tsx
+          git commit -m "feat: clarify curriculum program and course authority"
+          git push origin HEAD:seo/b13-curriculum-program-authority
