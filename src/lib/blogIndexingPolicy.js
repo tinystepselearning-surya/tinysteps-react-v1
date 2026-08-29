@@ -12,7 +12,7 @@ export const INDEXABLE_WEEKLY_BLOG_SLUGS = new Set([
 ]);
 
 /**
- * Clean public replacements for the same three approved authority articles.
+ * Clean public replacements for the same three historically approved authority articles.
  * These are intentionally separate from INDEXABLE_WEEKLY_BLOG_SLUGS so the
  * historical infrastructure contract stays stable during the URL migration.
  */
@@ -20,6 +20,15 @@ const INDEXABLE_RENAMED_WEEKLY_PUBLIC_SLUGS = new Set([
   'phonics-satpin-launch',
   'grammar-nouns-to-paragraphs',
   'speaking-confidence-seeds',
+]);
+
+/**
+ * Former roadmap/support articles that have completed the human-first quality
+ * audit and now own a distinct indexable search intent. Keep the historical
+ * week-* source URL as a redirect alias; only the cleaned public slug is promoted.
+ */
+const QUALITY_PROMOTED_PUBLIC_SLUGS = new Set([
+  'prevent-summer-slide-reading',
 ]);
 
 const RENAMED_WEEKLY_PUBLIC_SLUGS = new Set(LEGACY_WEEK_PUBLIC_SLUGS);
@@ -38,6 +47,7 @@ function isIndexableRoadmapAuthoritySlug(slug) {
   return (
     INDEXABLE_WEEKLY_BLOG_SLUGS.has(normalized)
     || INDEXABLE_RENAMED_WEEKLY_PUBLIC_SLUGS.has(normalized)
+    || QUALITY_PROMOTED_PUBLIC_SLUGS.has(normalized)
   );
 }
 
