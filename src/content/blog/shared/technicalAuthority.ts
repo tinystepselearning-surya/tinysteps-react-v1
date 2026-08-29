@@ -1,7 +1,6 @@
 import type { BlogDiscoveryCategory, BlogPost } from '../types';
 import { getBlogAudience, getBlogDiscoveryCategory } from './audience';
 import { SITE_ORIGIN } from '../../../lib/schemas';
-import { getLegacyWeekSourceSlug } from '../../../lib/blogWeekRenames.js';
 
 export const BLOG_ID = `${SITE_ORIGIN}/blog#blog`;
 export const BLOG_COLLECTION_ID = `${SITE_ORIGIN}/blog#collection`;
@@ -67,7 +66,7 @@ export const BLOG_TECHNICAL_AUTHORITY = Object.freeze({
     role: 'pillar',
     topics: ['reading fluency', 'accurate reading', 'expressive reading', 'reading practice'],
   },
-  'week-7-grammar-nouns-to-paragraphs': {
+  'grammar-nouns-to-paragraphs': {
     cluster: 'Grammar',
     role: 'pillar',
     topics: ['grammar for children', 'sentence building', 'paragraph building', 'grammar progression'],
@@ -82,7 +81,7 @@ export const BLOG_TECHNICAL_AUTHORITY = Object.freeze({
     role: 'diagnostic-owner',
     topics: ['grammar rule transfer', 'grammar mistakes', 'spontaneous grammar use', 'self-correction'],
   },
-  'week-12-speaking-confidence-seeds': {
+  'speaking-confidence-seeds': {
     cluster: 'Speaking & Communication',
     role: 'pillar',
     topics: ['speaking confidence', 'oral communication', 'connected speaking', 'public speaking foundations'],
@@ -138,10 +137,7 @@ export function getBlogWebPageId(slug: string): string {
 }
 
 export function getBlogTechnicalAuthority(post: BlogAuthorityInput) {
-  const sourceSlug = getLegacyWeekSourceSlug(post.slug);
-  const explicit = BLOG_TECHNICAL_AUTHORITY[
-    (post.slug in BLOG_TECHNICAL_AUTHORITY ? post.slug : sourceSlug || '') as keyof typeof BLOG_TECHNICAL_AUTHORITY
-  ];
+  const explicit = BLOG_TECHNICAL_AUTHORITY[post.slug as keyof typeof BLOG_TECHNICAL_AUTHORITY];
   const discoveryCategory = post.discoveryCategory || getBlogDiscoveryCategory(post);
   const audience = post.audience || getBlogAudience(post);
   const topics = unique([...(explicit?.topics || []), ...DEFAULT_TOPICS[discoveryCategory]]);
