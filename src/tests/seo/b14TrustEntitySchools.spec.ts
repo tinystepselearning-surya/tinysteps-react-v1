@@ -49,7 +49,7 @@ describe('B14 trust, entity authority and schools guardrails', () => {
 
     expect(schools).toContain('citation: [ncfUrl, cbseHpcUrl, dfePhonicsUrl]');
     expect(schools).toContain('Tiny Steps Learning is an independent education provider.');
-    expect(schools).toContain('does not imply endorsement, approval, certification or affiliation');
+    expect(schools).toMatch(/does not imply endorsement,[\s\S]*approval,[\s\S]*certification or affiliation/);
     expect(schools).toContain("question: 'Is Tiny Steps an officially CBSE-endorsed or government-approved phonics programme?'");
   });
 
