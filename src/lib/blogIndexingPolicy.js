@@ -1,11 +1,24 @@
 import { LEGACY_WEEK_PUBLIC_SLUGS } from './blogWeekRenames.js';
 
+/**
+ * Historical weekly source slugs that were explicitly approved as indexable.
+ * Keep this exported compatibility contract limited to the original week-* IDs;
+ * Node-based SEO infrastructure tests and older audit scripts depend on it.
+ */
 export const INDEXABLE_WEEKLY_BLOG_SLUGS = new Set([
   'week-1-phonics-satpin-launch',
-  'phonics-satpin-launch',
   'week-7-grammar-nouns-to-paragraphs',
-  'grammar-nouns-to-paragraphs',
   'week-12-speaking-confidence-seeds',
+]);
+
+/**
+ * Clean public replacements for the same three approved authority articles.
+ * These are intentionally separate from INDEXABLE_WEEKLY_BLOG_SLUGS so the
+ * historical infrastructure contract stays stable during the URL migration.
+ */
+const INDEXABLE_RENAMED_WEEKLY_PUBLIC_SLUGS = new Set([
+  'phonics-satpin-launch',
+  'grammar-nouns-to-paragraphs',
   'speaking-confidence-seeds',
 ]);
 
@@ -20,13 +33,21 @@ export function isWeeklyBlogSlug(slug) {
   return /^week-\d+/i.test(normalized) || RENAMED_WEEKLY_PUBLIC_SLUGS.has(normalized);
 }
 
+function isIndexableRoadmapAuthoritySlug(slug) {
+  const normalized = String(slug).trim();
+  return (
+    INDEXABLE_WEEKLY_BLOG_SLUGS.has(normalized)
+    || INDEXABLE_RENAMED_WEEKLY_PUBLIC_SLUGS.has(normalized)
+  );
+}
+
 export function shouldIncludeBlogSlugInSitemap(slug) {
   if (!slug) return false;
   if (!isWeeklyBlogSlug(slug)) return true;
-  return INDEXABLE_WEEKLY_BLOG_SLUGS.has(String(slug).trim());
+  return isIndexableRoadmapAuthoritySlug(slug);
 }
 
 export function shouldNoindexBlogSlug(slug) {
   if (!slug) return false;
-  return isWeeklyBlogSlug(slug) && !INDEXABLE_WEEKLY_BLOG_SLUGS.has(String(slug).trim());
+  return isWeeklyBlogSlug(slug) && !isIndexableRoadmapAuthoritySlug(slug);
 }
