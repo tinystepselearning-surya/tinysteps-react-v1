@@ -39,6 +39,60 @@ describe('Ask Tiny Steps execution router', () => {
     expect(demo.deterministicAnswer).toContain('35 minutes');
   });
 
+  it('answers the core course catalogue deterministically from canonical public facts', () => {
+    const plan = planAskTinyStepsExecution('What courses do you offer?');
+
+    expect(plan.mode).toBe('deterministic');
+    expect(plan.intent).toBe('courses');
+    expect(plan.sourceIds).toEqual(['courses']);
+    expect(plan.deterministicAnswer).toContain('Phonics');
+    expect(plan.deterministicAnswer).toContain('Grammar');
+    expect(plan.deterministicAnswer).toContain('Public Speaking');
+    expect(plan.deterministicAnswer).toContain('3–12');
+    expect(plan.deterministicAnswer).toContain('/courses');
+  });
+
+  it('answers the public learner age range deterministically', () => {
+    const plan = planAskTinyStepsExecution('What age groups do you teach?');
+
+    expect(plan.mode).toBe('deterministic');
+    expect(plan.intent).toBe('courses');
+    expect(plan.sourceIds).toEqual(['courses']);
+    expect(plan.deterministicAnswer).toContain('children aged 3–12');
+    expect(plan.deterministicAnswer).toContain('/courses');
+  });
+
+  it.each([
+    ['Do you offer grammar classes?', 'grammar', 'grammar', 'Grammar'],
+    ['Do you offer public speaking classes?', 'speaking', 'speaking', 'Public Speaking'],
+    ['Do you teach phonics?', 'phonics', 'phonics', 'Phonics'],
+  ] as const)(
+    'keeps programme availability in the zero-AI deterministic lane: %s',
+    (question, expectedIntent, expectedSource, expectedLabel) => {
+      const plan = planAskTinyStepsExecution(question);
+
+      expect(plan.mode).toBe('deterministic');
+      expect(plan.reason).toBe('verified_fact');
+      expect(plan.intent).toBe(expectedIntent);
+      expect(plan.sourceIds).toEqual([expectedSource]);
+      expect(plan.deterministicAnswer).toContain(expectedLabel);
+      expect(plan.deterministicAnswer).toContain(`/${expectedSource}`);
+    },
+  );
+
+  it('does not turn teaching-method or child-help questions into programme availability facts', () => {
+    const methodology = planAskTinyStepsExecution('How do you teach phonics?');
+    const guidance = planAskTinyStepsExecution('How can I improve my child’s grammar?');
+
+    expect(methodology.mode).toBe('first_party_grounded');
+    expect(methodology.intent).toBe('methodology');
+    expect(methodology.sourceIds).toEqual(['why-tiny-steps']);
+
+    expect(guidance.mode).toBe('first_party_grounded');
+    expect(guidance.intent).toBe('grammar');
+    expect(guidance.sourceIds).toEqual(['grammar']);
+  });
+
   it('routes a blending diagnosis to first-party URL Context instead of generic guidance', () => {
     const plan = planAskTinyStepsExecution(
       'My 6-year-old knows letter sounds but cannot blend words. What should I do?',
