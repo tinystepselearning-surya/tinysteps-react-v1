@@ -54,7 +54,7 @@ Target: **90+/100** with no factual, pedagogical, evidence, diagnosis-boundary, 
 | 5 | How Kids Learn Blending: The Stage-by-Stage Path Parents Can Track | 66/100 | **LOCKED IN BATCH** | Five-stage oral→print→continuous→fresh-word→text blending pathway; stage-exit signals replace fixed days/weeks; error interpretation and evidence | **96/100** |
 | 6 | How Long Does Phonics Take? A Realistic Parent Guide to Progress | 74/100 | **LOCKED IN BATCH** | Separates current-target, full-progression and fluent-reading timelines; replaces calendar promises with progress-to-time signals, evidence and provider accountability | **96/100** |
 | 7 | How Phonics Builds Reading Confidence: What Changes First at Home | 68/100 | **LOCKED IN BATCH** | Separates decoding competence from confidence, removes unsupported success ratios/daily dosage, adds five observable confidence signals, home-response guidance, evidence and causal boundaries | **96/100** |
-| 8 | How Phonics Classes Help Kids Read: Decoding, Blending and Fluency Explained | — | QUEUED | — | — |
+| 8 | How Phonics Classes Help Kids Read: Decoding, Blending and Fluency Explained | 67/100 | **LOCKED IN BATCH** | Rebuilt as the class-to-reading mechanism owner; six-part start→teach→blend/segment→fresh word→matched text→review chain; separates decoding, fluency and comprehension; adds transfer evidence and class-shopping boundary | **96/100** |
 | 9 | How Phonics Improves Spelling: A Parent Encoding Roadmap | — | QUEUED | — | — |
 | 10 | How to Choose a Phonics Class: The Complete Parent Comparison Framework | — | QUEUED | — | — |
 
@@ -100,37 +100,57 @@ The article separates current-target time, full-progression time and fluent-read
 
 **Canonical role:** `/blog/how-phonics-builds-reading-confidence` owns the parent question: *How can improved decoding show up as reading-confidence behaviour at home, and what should I watch for without assuming confidence is guaranteed?*
 
+Key decisions: separates decoding competence from confidence; removes unsupported daily dosage and accuracy thresholds; adds starting, strategy-use, retry, independence and transfer signals; distinguishes decoding difficulty from reading-aloud pressure; preserves rich adult read-alouds; adds evidence and non-diagnostic boundaries.
+
+**Final decision: 96/100 — LOCKED IN BATCH.**
+
+## Blog #8 — locked
+
+**Canonical role:** `/blog/how-phonics-classes-help-kids-read` owns the parent question: *What should actually happen inside a phonics class that helps a child become a more independent reader?*
+
 ### Intent boundaries
 
-- `/blog/how-phonics-builds-reading-confidence` → reading-confidence behaviour, error recovery, willingness to attempt and independence.
-- `/blog/benefits-of-phonics-for-kids` → wider observable phonics benefits.
-- `/blog/how-kids-learn-blending` → blending progression.
-- `/blog/how-long-does-phonics-take` → progress pace and duration.
-- `/blog/how-phonics-classes-help-kids-read` → mechanism of structured classes from decoding toward fluency.
-- `/blog/how-to-improve-reading-fluency-in-children` → accurate but effortful connected reading.
-- `/blog/how-to-choose-phonics-classes` → provider comparison.
+- `/blog/how-phonics-classes-help-kids-read` → instructional mechanism from taught correspondences to independent word reading and matched-text transfer.
+- `/blog/how-kids-learn-blending` → stage-by-stage blending development.
+- `/blog/how-long-does-phonics-take` → duration and progress interpretation.
+- `/blog/how-phonics-builds-reading-confidence` → reading-confidence behaviour.
+- `/blog/how-phonics-improves-spelling` → full encoding/spelling roadmap.
+- `/blog/how-to-improve-reading-fluency-in-children` → accurate-but-effortful connected reading.
+- `/blog/how-to-choose-phonics-classes` → provider/class comparison and purchase framework.
+- `/blog/online-phonics-classes-vs-school` → online-versus-school support comparison.
 - `/phonics` → commercial programme owner.
 
 ### Baseline problems fixed
 
+- Corrected the title from the temporary `A Parent Evidence Guide` wording to the authoritative title: **How Phonics Classes Help Kids Read: Decoding, Blending and Fluency Explained**.
 - Converted the article from the shared generic `PhonicsSeoPost` generator into a direct editorial `BlogPost`.
-- Removed the unsupported prescribed **daily 10-minute confidence loop**.
-- Removed the unsupported **85–90% accuracy success-ratio rule**.
-- Removed the direct causal wording that confidence “rises” because of phonics.
-- Explicitly states that phonics teaches decoding; confidence is a separate behavioural/emotional outcome that may be supported by successful reading but is not guaranteed.
-- Added the **Tiny Steps five confidence signals**: starting, strategy use, retry, independence and transfer.
-- Labels the five-signal check editorial guidance rather than a standardized confidence scale or diagnostic test.
-- Separates true reading competence from confident-looking guessing, memorised-list speed and class participation.
-- Adds a calm five-step home response: level match, one decoding prompt, child retry, strategy-specific feedback and stopping before repeated failure loops.
-- Preserves rich adult read-alouds while keeping independent decoding text matched to taught phonics knowledge.
-- Adds interpretation for “knows sounds but cannot read”, class/home differences, reading-aloud refusal and accurate-but-slow reading.
-- Adds a non-diagnostic boundary for dyslexia, anxiety and other conditions.
-- Adds four external evidence sources: EEF phonics evidence review, DfE Reading Framework, IES reading-motivation guidance and Ofsted’s struggling-readers report.
-- Adds five AEO/GEO FAQs, founder authorship, updated metadata and focused regression coverage.
+- Replaced generic class-selection/template material with a clear explanation of the instructional mechanism.
+- Added explicit distinctions between **blending**, **decoding** and **fluency** so they are not presented as interchangeable outcomes.
+- Added the **Tiny Steps six-part class-to-reading chain**:
+  1. establish current starting point;
+  2. teach the sound-spelling relationship explicitly;
+  3. blend for reading and segment for spelling;
+  4. check a fresh word;
+  5. transfer into matched connected text;
+  6. revisit cumulatively until prompting reduces and earlier learning remains available.
+- Labels that six-part chain editorial teaching guidance rather than a standardized research protocol.
+- Added a live-teaching-versus-worksheet explanation focused on responsive error observation and feedback rather than claiming worksheets are inherently ineffective.
+- Added a clear encoding boundary explaining why spelling belongs inside phonics instruction while protecting Blog #9 as the full spelling owner.
+- Added a fluency boundary: phonics contributes to accurate word reading and increasingly efficient recognition, but completing phonics is not identical to becoming a fluent reader.
+- Added a comprehension boundary: vocabulary, oral language, background knowledge and meaning-focused instruction remain necessary.
+- Added five parent-visible transfer signals: strategy use, fresh-word transfer, reduced prompting, spelling/word-building transfer and matched-text transfer.
+- Added guidance for the common class/home mismatch without treating untaught storybook words as a fair decoding test.
+- Added explicit plan-review triggers when memorised success, persistent errors, lost earlier patterns, mismatched text or unchanged prompting remain.
+- Protected Blog #10 as the provider-comparison owner and Blog #12 as the online-versus-school comparison owner.
+- Added Tiny Steps first-party teaching context without turning the article into a sales page.
+- Added four external evidence sources: EEF Phonics, IES/What Works Clearinghouse foundational reading guide, DfE Reading Framework and DfE SSP validation criteria.
+- Added five AEO/GEO FAQs, founder authorship, updated metadata and focused regression coverage.
 
 ### Evidence decision
 
-The article does **not** claim that phonics directly causes confidence. External evidence supports phonics for decoding accuracy and supports the importance of successful, appropriately matched reading experiences for motivation/confidence. Tiny Steps’ five confidence signals are editorial parent-observation guidance, not a standardized psychological measure.
+The article uses external evidence for the underlying instructional components: explicit/systematic sound-letter teaching, blending, decoding, segmenting for spelling, matched decodable text, connected-text practice, assessment and cumulative review. The **Tiny Steps six-part class-to-reading chain is an editorial synthesis**, not a validated research instrument.
+
+The article does not claim that phonics alone guarantees fluency or comprehension. EEF explicitly distinguishes phonics’ positive effect on reading accuracy from broader comprehension and vocabulary needs, while IES and DfE guidance connect foundational decoding with spelling and connected-text practice.
 
 ### Indexability decision
 
