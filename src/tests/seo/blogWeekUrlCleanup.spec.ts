@@ -22,6 +22,7 @@ const indexableRenamedSlugs = new Set([
   'phonics-satpin-launch',
   'grammar-nouns-to-paragraphs',
   'speaking-confidence-seeds',
+  'prevent-summer-slide-reading',
 ]);
 
 describe('weekly blog title and URL cleanup', () => {
@@ -48,7 +49,7 @@ describe('weekly blog title and URL cleanup', () => {
     }
   });
 
-  it('preserves the established indexability split after the slugs change', () => {
+  it('preserves historical authority pages and quality-promotes audited clean URLs', () => {
     for (const publicSlug of LEGACY_WEEK_PUBLIC_SLUGS) {
       const shouldBeIndexable = indexableRenamedSlugs.has(publicSlug);
       expect(shouldNoindexBlogSlug(publicSlug), publicSlug).toBe(!shouldBeIndexable);
