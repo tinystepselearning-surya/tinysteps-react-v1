@@ -21,24 +21,35 @@ B10 owns technical GEO/LLM discoverability. B14 owns trust, founder, academic-de
 
 B15 keeps these repository-controlled surfaces aligned:
 
-1. The `EducationalOrganization.sameAs` URLs already published by the production schema.
+1. The `EducationalOrganization.sameAs` URLs published by the production schema.
 2. A reusable `OFFICIAL_PUBLIC_PROFILES` contract for public profile labels and URLs.
 3. Crawlable, human-visible official-profile links on `/team`, the site's primary entity/leadership authority page.
-4. Tests that fail if the visible profile contract and organization schema drift apart.
-5. The existing `OFFSITE_CORROBORATION_PACK` for consistent company descriptions, founder bios, categories and safe review-request language.
+4. Footer social links derived from the same canonical profile contract instead of separately hard-coded URLs.
+5. Tests that fail if the visible profile contract, footer and organization schema drift apart.
+6. The existing `OFFSITE_CORROBORATION_PACK` for consistent company descriptions, founder bios, categories and safe review-request language.
 
 B15 adds no new external account merely for SEO and makes no unverified accreditation, review or directory claim.
 
 ## Declared official profiles
 
-The following URLs were already present in the production `EducationalOrganization.sameAs` contract before B15. B15 reuses them rather than inventing alternatives:
+The current public organization identities confirmed for Tiny Steps are:
 
-- Facebook — `https://www.facebook.com/tinystepslearning`
+- Facebook Page — `https://www.facebook.com/profile.php?id=61593673422886`
 - Instagram — `https://www.instagram.com/tiny_steps_oel/`
 - YouTube — `https://www.youtube.com/@TinyStepsLearning-1157`
-- LinkedIn — `https://www.linkedin.com/company/tiny-steps-learning/`
+- LinkedIn company page — `https://www.linkedin.com/company/tiny-steps-learning/`
 
-LinkedIn was also independently discoverable in web search during the B15 review as the active Tiny Steps Learning company presence. Facebook, Instagram and YouTube can restrict crawler access, so B15 does not treat search-engine fetchability as proof of ownership. Their inclusion is based on the pre-existing production schema contract and should be manually rechecked before changing any account handle.
+These four URLs are the canonical `EducationalOrganization.sameAs` set and therefore also drive the human-visible `/team` identity cards and footer social links.
+
+### Platform URL distinctions
+
+Tiny Steps also confirmed the Facebook profile/account URL `https://www.facebook.com/profile.php?id=61585755667285`. It is intentionally **not** used as the canonical organization `sameAs` identity because the separately confirmed Facebook **Page** is the stronger organization-level public entity surface.
+
+LinkedIn administration is accessed through `https://www.linkedin.com/company/110927266/admin/dashboard/`. That URL is intentionally **not** published because it is an administration surface, not a public organization identity.
+
+The member-facing LinkedIn URL may appear in the browser as `https://www.linkedin.com/company/tiny-steps-learning/?viewAsMember=true`. The canonical public URL stored in schema and website links deliberately removes the view-state query parameter and remains `https://www.linkedin.com/company/tiny-steps-learning/`.
+
+Facebook, Instagram, YouTube and LinkedIn can restrict crawler access, so crawler fetchability alone is not treated as proof of ownership. URLs should be changed only after Tiny Steps confirms the public identity surface directly.
 
 ## Manual external-profile work
 
@@ -72,6 +83,7 @@ B15 is considered implementation-complete when:
 
 - the official profile contract is reusable in production UI;
 - `/team` exposes the official profiles as ordinary crawlable links;
+- the footer consumes the same canonical profile contract;
 - the organization schema and visible profile contract are identical under automated tests;
 - no conflicting organization ID is introduced;
 - no new unsupported external identity is added;
