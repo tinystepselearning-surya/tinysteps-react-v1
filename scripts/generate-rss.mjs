@@ -2,6 +2,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ROUTE_SEO_REGISTRY } from '../src/lib/routeSeoRegistry.js';
+import {
+  getPublicBlogSlug,
+  getPublicBlogTitle,
+  rewriteLegacyWeekBlogPaths,
+} from '../src/lib/blogWeekRenames.js';
 import { rewriteRetiredBlogPaths } from './blog-consolidation-map.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -43,13 +48,13 @@ function escapeXml(value) {
   return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 }
 function normalizeText(value) {
-  return rewriteRetiredBlogPaths(String(value || '')).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').replace(/\s+/g, ' ').trim();
+  return rewriteLegacyWeekBlogPaths(rewriteRetiredBlogPaths(String(value || ''))).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').replace(/\s+/g, ' ').trim();
 }
 function fromSingleQuotedJs(value) {
   return value.replace(/\\\\/g, '\\').replace(/\\'/g, "'").replace(/\\n/g, ' ').replace(/\\r/g, ' ').replace(/\\t/g, ' ');
 }
 function toCanonicalAbsoluteUrl(inputPath) {
-  const rewritten = rewriteRetiredBlogPaths(inputPath);
+  const rewritten = rewriteLegacyWeekBlogPaths(rewriteRetiredBlogPaths(inputPath));
   const url = rewritten.startsWith('http://') || rewritten.startsWith('https://') ? new URL(rewritten) : new URL(rewritten === '/' ? '/' : rewritten.replace(/\/+$/, ''), SITE_URL);
   if (url.pathname !== '/' && url.pathname.endsWith('/')) url.pathname = url.pathname.slice(0, -1);
   return `${SITE_URL}${url.pathname === '/' ? '/' : url.pathname}`;
@@ -87,11 +92,13 @@ function parseBlogItemsFromSource() {
   const todayIso = new Date().toISOString().slice(0, 10);
   for (const postFile of walkFiles(BLOG_SLUG_PATH)) {
     const content = fs.readFileSync(postFile, 'utf8');
-    const slug = extractSingleQuotedField(content, 'slug');
-    const title = extractSingleQuotedField(content, 'title');
-    if (!slug || !title || EXCLUDED_BLOG_SLUGS.has(slug)) continue;
+    const sourceSlug = extractSingleQuotedField(content, 'slug');
+    const sourceTitle = extractSingleQuotedField(content, 'title');
+    if (!sourceSlug || !sourceTitle || EXCLUDED_BLOG_SLUGS.has(sourceSlug)) continue;
+    const slug = getPublicBlogSlug(sourceSlug);
+    const title = getPublicBlogTitle(sourceSlug, sourceTitle);
     const dateFromPost = extractSingleQuotedField(content, 'date');
-    const date = dateFromPost || publicationDates.get(slug) || '';
+    const date = dateFromPost || publicationDates.get(sourceSlug) || '';
     if (date && date > todayIso) continue;
     const excerpt = extractSingleQuotedField(content, 'excerpt');
     const metaDescription = extractSingleQuotedField(content, 'metaDescription');
