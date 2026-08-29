@@ -1,39 +1,39 @@
 export const LEGACY_WEEK_BLOG_RENAMES = Object.freeze({
   'week-1-phonics-satpin-launch': {
     slug: 'phonics-satpin-launch',
-    title: 'SATPIN for Parents: A Research-Backed Launch Plan for Confident Readers',
+    title: 'SATPIN at Home: A Parent Launch Plan for Early Blending and Reading',
   },
   'week-2-phonics-blending-club': {
     slug: 'phonics-blending-club',
-    title: 'Build a Blending Club at Home',
+    title: 'Blending Practice for Kids at Home: A Simple Daily Routine',
   },
   'week-3-phonics-tricky-words': {
     slug: 'phonics-tricky-words',
-    title: 'Introduce Tricky Words the Smart Way',
+    title: 'How to Teach Tricky Words to Kids Without Encouraging Guessing',
   },
   'week-4-phonics-long-vowels': {
     slug: 'phonics-long-vowels',
-    title: 'Long Vowel Patterns Without Tears',
+    title: 'Long Vowel Practice for Kids: Simple Activities for Common Patterns',
   },
   'week-5-phonics-r-controlled': {
     slug: 'phonics-r-controlled',
-    title: 'R-Controlled Vowels Made Simple',
+    title: 'R-Controlled Vowel Practice for Kids: ar, er, ir, or and ur',
   },
   'week-6-phonics-comprehension': {
     slug: 'phonics-comprehension',
-    title: 'From Sounding Out to Understanding',
+    title: 'From Decoding to Comprehension: How to Help Kids Understand What They Read',
   },
   'week-16-phonics-summer-plan': {
     slug: 'phonics-summer-plan',
-    title: 'Summer Phonics Booster Schedule',
+    title: 'Summer Phonics Practice for Kids: A 10-Minute Daily Routine',
   },
   'week-19-phonics-multisyllabic': {
     slug: 'phonics-multisyllabic',
-    title: 'Multisyllabic Word Play',
+    title: 'How to Help Kids Read Multisyllabic Words: Simple Chunking Practice',
   },
   'week-22-phonics-diagnostics': {
     slug: 'phonics-diagnostics',
-    title: 'Diagnostic Checklist Before a New Term',
+    title: 'Phonics Assessment Checklist for Parents Before a New School Term',
   },
   'week-27-prevent-summer-slide-reading': {
     slug: 'prevent-summer-slide-reading',
@@ -41,19 +41,19 @@ export const LEGACY_WEEK_BLOG_RENAMES = Object.freeze({
   },
   'week-7-grammar-nouns-to-paragraphs': {
     slug: 'grammar-nouns-to-paragraphs',
-    title: 'Grammar Basics Roadmap: Nouns to Paragraphs in 7 Days (Ages 3-10)',
+    title: 'Grammar Basics for Kids: From Nouns to Paragraphs — A Parent Roadmap',
   },
   'week-8-grammar-tenses': {
     slug: 'grammar-tenses',
-    title: 'Tenses Without Tears',
+    title: 'English Tenses for Kids: Simple Present, Past and Future Explained',
   },
   'week-9-grammar-conjunctions': {
     slug: 'grammar-conjunctions',
-    title: 'Conjunction Toolkits',
+    title: 'Conjunctions for Kids: How to Use and, but, because and so',
   },
   'week-10-grammar-subject-verb': {
     slug: 'grammar-subject-verb',
-    title: 'Subject-Verb Agreement Rescue Plan',
+    title: 'Subject-Verb Agreement for Kids: Common Mistakes and Easy Fixes',
   },
   'week-11-grammar-creative-writing': {
     slug: 'grammar-creative-writing',
@@ -61,51 +61,51 @@ export const LEGACY_WEEK_BLOG_RENAMES = Object.freeze({
   },
   'week-17-grammar-assessment': {
     slug: 'grammar-assessment',
-    title: 'DIY Grammar Assessment for Parents',
+    title: 'Grammar Assessment for Kids: A Simple Parent Checklist',
   },
   'week-20-grammar-editing-camp': {
     slug: 'grammar-editing-camp',
-    title: 'Editing Camp at Home',
+    title: 'Grammar Editing Practice for Kids: Find and Fix Common Mistakes',
   },
   'week-23-grammar-speaking-bridge': {
     slug: 'grammar-speaking-bridge',
-    title: 'Bridge Grammar & Speaking with Story Cards',
+    title: 'Story Cards for Kids: Build Grammar and Speaking Skills Together',
   },
   'week-12-speaking-confidence-seeds': {
     slug: 'speaking-confidence-seeds',
-    title: 'Speaking Confidence Roadmap: A 7-Day Calm Plan for Kids (Ages 3–10)',
+    title: 'How to Build Speaking Confidence in Kids: A 7-Day Calm Practice Plan',
   },
   'week-13-speaking-structure': {
     slug: 'speaking-structure',
-    title: 'Hook-Body-Close for Kids',
+    title: 'How to Structure a Speech for Kids: Hook, Body and Conclusion',
   },
   'week-14-speaking-visual-aids': {
     slug: 'speaking-visual-aids',
-    title: 'Visual Aids That Wow',
+    title: 'How Kids Can Use Visual Aids in Public Speaking',
   },
   'week-15-speaking-debate-starters': {
     slug: 'speaking-debate-starters',
-    title: 'Debate Starters for Tweens',
+    title: 'Debate Topics and Starters for Kids and Tweens to Build Speaking Confidence',
   },
   'week-18-speaking-video-feedback': {
     slug: 'speaking-video-feedback',
-    title: 'Use Video for Instant Speaking Feedback',
+    title: 'How Video Feedback Helps Kids Improve Public Speaking',
   },
   'week-21-speaking-competition-prep': {
     slug: 'speaking-competition-prep',
-    title: 'Competition Prep Checklist',
+    title: 'Public Speaking Competition Checklist for Kids: How to Prepare Step by Step',
   },
   'week-24-speaking-family-showcase': {
     slug: 'speaking-family-showcase',
-    title: 'Host a Family Showcase Night',
+    title: 'Public Speaking Activities for Kids at Home: Host a Family Showcase',
   },
   'week-25-back-to-school-plan': {
     slug: 'back-to-school-english-confidence-plan',
-    title: 'Back-to-School English Confidence Plan',
+    title: 'Back-to-School English Confidence Plan for Kids: Speaking, Participation and Classroom Routines',
   },
   'week-26-screen-smart-summer-routine': {
     slug: 'screen-smart-summer-routine-for-kids',
-    title: 'Screen-Smart Summer Routine for Kids (Ages 3-12)',
+    title: 'Screen-Smart Summer Learning Routine for Kids: Balance English Practice and Screen Time',
   },
 });
 
