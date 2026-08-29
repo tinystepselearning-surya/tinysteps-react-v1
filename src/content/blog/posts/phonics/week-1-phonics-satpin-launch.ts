@@ -2,209 +2,283 @@ import type { BlogPost } from '../../types';
 
 const post: BlogPost = {
   slug: 'week-1-phonics-satpin-launch',
-  title: 'SATPIN for Parents: A Research-Backed Week 1 Launch Plan for Confident Readers',
+  title: 'SATPIN at Home: A Parent Launch Plan for Early Blending and Reading',
   category: 'Phonics',
-  author: 'Tiny Steps Research Desk',
+  author: 'Priya',
   date: '2026-04-03',
-  readTime: '11 min read',
-  hero: '/blog/hero-research.jpg',
-  metaDescription: 'A research-backed SATPIN phonics guide for parents: what to teach first, how to model pure sounds, how to blend in week 1, and how multilingual homes can support early reading calmly.',
-  excerpt: 'A premium SATPIN week 1 roadmap for parents who want a calm, research-backed plan to teach s, a, t, p, i, and n at home.',
+  modifiedDate: '2026-08-30',
+  readTime: '12 min read',
+  hero: '/blog/hero-phonics.jpg',
+  metaDescription: 'A practical SATPIN-at-home plan for parents: teach s, a, t, p, i and n in small steps, start blending as soon as the child is ready, and use clear progress checks before moving on.',
+  excerpt: 'Use this flexible SATPIN home routine to build sound recall, early blending, simple word reading and spelling without turning a seven-session plan into a seven-day deadline.',
   body: [{
     type: 'h2',
-    content: 'What “SATPIN” means (and why it’s a smart first set)'
+    content: 'Quick answer: how should parents start SATPIN at home?'
   }, {
     type: 'p',
-    content: 'SATPIN is six simple sounds: s, a, t, p, i, n. These letters combine to make dozens of simple three-letter (CVC) words like sat, pin, tap, and tin.'
+    content: 'Start with a small number of sounds, practise them until recall is becoming secure, and begin blending as soon as the child knows enough sounds to build a simple word. SATPIN gives parents a practical early set — s, a, t, p, i and n — but the goal is not to finish six letters quickly. The goal is to help the child use those sound-letter links to read and spell new words with steadily less help.'
   }, {
     type: 'p',
-    content: 'We choose SATPIN first because the letters are distinct, their sounds are easy to say, and they form many early words. For busy parents and short attention spans, this set gives quick wins.'
+    content: 'This page is the practical home-routine companion to our [SATPIN Phonics Guide for Parents](/blog/satpin-phonics-guide). Use the main guide for the broader explanation of SATPIN and progression; use this page when you want to know exactly what to practise at home.'
   }, {
     type: 'h2',
-    content: 'Letter names vs letter sounds (the common confusion)'
+    content: 'Why SATPIN is a useful early sound set'
   }, {
     type: 'p',
-    content: 'Many children know the ABC song and can say “bee” or “see.” But reading needs the speech sounds those letters make: /b/ /s/ /t/ etc. Saying the letter name (“bee”) is not the same as saying the sound /b/ used in decoding.'
+    content: 'SATPIN is a commonly used early sequence because these grapheme-phoneme correspondences can be combined quickly into simple words such as sat, pat, tap, sit, pin and tin. That lets children move from isolated sound recall into real decoding early instead of waiting until they know the whole alphabet.'
   }, {
     type: 'p',
-    content: 'So the first job is to teach the sound, not the name. Use lowercase letters from storybooks — that’s what children see in real reading.'
+    content: 'SATPIN is one practical starting sequence, not a claim that every child or every phonics programme must begin in exactly the same order. The stronger principle is systematic teaching: introduce a manageable set, review cumulatively, blend with what has been taught, and check transfer before increasing the load.'
   }, {
     type: 'h2',
-    content: 'The Week 1 plan (7 days, 10 minutes/day)'
+    content: 'Letter names and letter sounds: keep the jobs separate'
   }, {
     type: 'p',
-    content: 'Each day: warm-up (1 min), teach/practice (6–7 min), celebrate & stop (1–2 min). Keep sessions playful and routine-based so your child knows what to expect.'
-  }, {
-    type: 'h3',
-    content: 'Day 1 — s, a'
+    content: 'Knowing the alphabet song or the letter name does not automatically mean a child can decode. During a reading activity, the useful response is the sound represented by the letter. For example, the child needs /s/ for s and /t/ for t when blending sat.'
   }, {
     type: 'p',
-    content: 'Introduce /s/ and /a/. Show the letters, say the sound, let your child repeat, then trace each letter once with a finger.'
-  }, {
-    type: 'p',
-    content: 'Example words to say: sat, pat. Success: child says /s/ and /a/ when you show the letters.'
-  }, {
-    type: 'h3',
-    content: 'Day 2 — t, p'
-  }, {
-    type: 'p',
-    content: 'Introduce /t/ and /p/. Play a quick I-Spy: “I spy something that starts with /t/.” Trace and tap as you say each sound.'
-  }, {
-    type: 'p',
-    content: 'Example words: tap, pat. Success: child identifies the initial sound in a spoken word.'
-  }, {
-    type: 'h3',
-    content: 'Day 3 — i, n'
-  }, {
-    type: 'p',
-    content: 'Introduce /i/ and /n/. Use a motion (e.g., point to tummy for /i/ like “it”) and a nose touch for /n/ so learning is multisensory.'
-  }, {
-    type: 'p',
-    content: 'Example words: pin, tin. Success: child repeats sounds and traces letters.'
-  }, {
-    type: 'h3',
-    content: 'Day 4 — Review + blend a few words'
-  }, {
-    type: 'p',
-    content: 'Quickly review all six sounds, then demonstrate blending for one word: /s/ /a/ /t/ → “sat.” Let your child try with support.'
-  }, {
-    type: 'p',
-    content: 'Example words: sat, pat. Success: child blends one word with prompting.'
-  }, {
-    type: 'h3',
-    content: 'Day 5 — More blending practice'
-  }, {
-    type: 'p',
-    content: 'Blend two or three CVC words together. Use letter cards or toys as markers for each sound.'
-  }, {
-    type: 'p',
-    content: 'Example words: sat, pat, pin. Success: child blends independently or with minimal help.'
-  }, {
-    type: 'h3',
-    content: 'Day 6 — Little reading practice'
-  }, {
-    type: 'p',
-    content: 'Read a very short decodable sentence using learned words: “Pat sat.” Point to each word and blend as you go.'
-  }, {
-    type: 'p',
-    content: 'Success: child recognizes at least one word when you point and sound it out.'
-  }, {
-    type: 'h3',
-    content: 'Day 7 — Game day + celebrate'
-  }, {
-    type: 'p',
-    content: 'Play quick sound games (see below), then review any words your child found tricky. Give a small reward — a sticker or a thumbs-up — and end on a positive note.'
+    content: 'Letter names can still be learned, but keep sound production clear during phonics practice. For short stop sounds such as /t/ and /p/, avoid adding an extra “uh” because /tuh-a-tuh/ makes blending harder than /t-a-p/. If you are unsure how a sound should be modelled, use a reliable phonics audio source rather than guessing.'
   }, {
     type: 'h2',
-    content: 'Games that work (no worksheets needed)'
+    content: 'Use seven flexible practice sessions — not a seven-day deadline'
   }, {
     type: 'p',
-    content: 'Short, playful games are best for LKG/UKG and early primary. Here are quick options you can use in 1–3 minutes each.'
-  }, {
-    type: 'li',
-    content: 'I Spy Sounds — spot initial sounds around the room.'
-  }, {
-    type: 'li',
-    content: 'Sound Clap — say a CVC word and clap for each sound.'
-  }, {
-    type: 'li',
-    content: 'Toy Match — place three toys and ask which one starts with /p/.'
-  }, {
-    type: 'li',
-    content: 'Letter Trace Race — trace a letter in the air with a finger, add silly sound effects.'
-  }, {
-    type: 'li',
-    content: 'Sound Hop — place cards on the floor and let your child hop to the card after you say a sound.'
-  }, {
-    type: 'li',
-    content: 'Blend Basket — put letter cards in a basket and pull three to blend aloud.'
-  }, {
-    type: 'h2',
-    content: 'SATPIN example bank (ready-to-use for busy parents)'
-  }, {
-    type: 'p',
-    content: 'Use these examples as-is so practice is quick and predictable. Do one mini set per day and repeat it twice.'
-  }, {
-    type: 'li',
-    content: 'Set A: sat, pat, tap. Sentence: "Pat sat." "Tap, tap."'
-  }, {
-    type: 'li',
-    content: 'Set B: pin, tin, nip. Sentence: "Pin it." "Tin can."'
-  }, {
-    type: 'li',
-    content: 'Set C: pan, tan, nap. Sentence: "Tan pan." "Nap in pan."'
-  }, {
-    type: 'li',
-    content: 'Mixed review: sat, pin, tap, tan, nip. Ask child to sort by middle vowel /a/ vs /i/.'
-  }, {
-    type: 'li',
-    content: 'Parent prompt: "Show me each sound first, then blend." If stuck, return to slow blend and retry once.'
-  }, {
-    type: 'p',
-    content: 'If your child reads one full sentence independently from these sets, count that as a strong daily win.'
-  }, {
-    type: 'h2',
-    content: 'Blending: when to start (and how to do it without pressure)'
-  }, {
-    type: 'p',
-    content: 'Start blending once your child can hear and say 4–6 sounds reliably. Blending should be short and supported: you say the sounds, then say them faster to make the word.'
-  }, {
-    type: 'p',
-    content: 'Use gestures: stretch sounds slowly (/s—a—t/) then snap to “sat.” Praise effort and try again another day if it’s not clicking.'
-  }, {
-    type: 'h2',
-    content: 'Mistakes to avoid (and what to do instead)'
-  }, {
-    type: 'p',
-    content: 'Avoid long worksheets, timed drills, or pushing too many letters at once. These create frustration and turn sessions into homework.'
-  }, {
-    type: 'p',
-    content: 'Do instead: short play-based practice, one new sound at a time, clear praise, and immediate positive feedback. If you notice confusion, slow down and revisit sounds with games.'
-  }, {
-    type: 'h2',
-    content: 'Troubleshooting'
+    content: 'The sequence below is written as seven sessions for convenience. A session can be repeated for two or three days if needed. Some children will move faster; others need more review. Tiny Steps uses readiness checkpoints rather than calendar pressure.'
   }, {
     type: 'h3',
-    content: 'If my child mixes sounds (b/d or p/q)'
+    content: 'Session 1 — s and a: build clean sound recall'
   }, {
     type: 'p',
-    content: 'Use multi-sensory cues — say the sound, trace, and add a small action. For b/d confusion, try a “bat” vs “dog” gesture so shapes and sounds link to movement.'
+    content: 'Show lowercase s and a one at a time. Say the sound, let your child repeat it, trace the letter once with a finger, then ask for the sound again after a short gap. At this stage, do not ask the child to read words containing letters that have not been taught yet.'
+  }, {
+    type: 'p',
+    content: 'Success check: your child can usually give /s/ and /a/ from the printed letters with little prompting.'
   }, {
     type: 'h3',
-    content: 'If my child can’t blend yet'
+    content: 'Session 2 — add t and blend the first word'
   }, {
     type: 'p',
-    content: 'Return to phonemic awareness games. Clap sounds, segment words, and slow the pace. Blending often follows with a little more practice.'
+    content: 'Review s and a, introduce t, then model /s/ /a/ /t/ → sat. Point from left to right as the sounds are blended. One successful blended word is enough for the first attempt.'
+  }, {
+    type: 'p',
+    content: 'Practice words: sat. Success check: your child follows the left-to-right sound sequence and can join the sounds with support.'
   }, {
     type: 'h3',
-    content: 'If my child gets bored'
+    content: 'Session 3 — add p and expand the word set'
   }, {
     type: 'p',
-    content: 'Switch to a 1‑minute game, sing the sounds, or try a toy-based activity. Always end on a win.'
+    content: 'Introduce p, then reuse all previously taught sounds. Blend only words that can be built from s, a, t and p.'
+  }, {
+    type: 'p',
+    content: 'Practice words: sat, pat, tap, sap. Success check: your child can blend at least two of these with less help than in the previous session.'
+  }, {
+    type: 'h3',
+    content: 'Session 4 — add i and compare the middle sound'
+  }, {
+    type: 'p',
+    content: 'Introduce i, then compare /a/ and /i/ in short words. This helps the child attend to every sound rather than guessing from the first letter.'
+  }, {
+    type: 'p',
+    content: 'Practice words: sit, pit, tip, sip, sat, pat. Ask: “What is the middle sound?” before blending one or two examples.'
+  }, {
+    type: 'h3',
+    content: 'Session 5 — add n and build a wider SATPIN bank'
+  }, {
+    type: 'p',
+    content: 'Introduce n, review all six sounds, then blend a small mixed set. Keep the list short enough that the child is still reading rather than memorising the order.'
+  }, {
+    type: 'p',
+    content: 'Practice words: pin, tin, nip, pan, nap, sit. Success check: your child can decode at least one word they have not just rehearsed.'
+  }, {
+    type: 'h3',
+    content: 'Session 6 — transfer into a very short line'
+  }, {
+    type: 'p',
+    content: 'Move from single words into a tiny line using only taught sound patterns. Examples: “Pat sat.” “Tap it.” “Pin it.” Point to each word and let the child blend rather than telling the word immediately.'
+  }, {
+    type: 'p',
+    content: 'If the capital P in Pat is new, simply explain that it is the same letter used at the beginning of a name. Keep the decoding demand focused on the sounds already taught.'
+  }, {
+    type: 'h3',
+    content: 'Session 7 — read, spell and review'
+  }, {
+    type: 'p',
+    content: 'Choose three or four mixed SATPIN words. Ask the child to read them, then say one word aloud and let the child tap or count the sounds before choosing letters to spell it. Reading and spelling together strengthen the same sound-to-print map from both directions.'
   }, {
     type: 'h2',
-    content: 'Signs Week 1 is “done” (simple checklist)'
+    content: 'A simple 10-minute SATPIN routine'
   }, {
     type: 'li',
-    content: 'Can say 4–6 SATPIN sounds when prompted.'
+    content: '2 minutes — review previously taught sounds in random order.'
   }, {
     type: 'li',
-    content: 'Can blend at least one CVC word with support.'
+    content: '2 minutes — introduce or revisit one sound that is still unstable.'
   }, {
     type: 'li',
-    content: 'Enjoys short, 5–10 minute sessions and asks to play again.'
+    content: '3 minutes — blend two to four words using only taught sounds.'
+  }, {
+    type: 'li',
+    content: '2 minutes — read a short line or spell one or two words if the child is ready.'
+  }, {
+    type: 'li',
+    content: '1 minute — finish with one easy success and stop before the child is exhausted.'
+  }, {
+    type: 'p',
+    content: 'If ten minutes is too long for your child, use five good minutes. Consistent, focused practice is more useful than stretching a session after attention has gone.'
   }, {
     type: 'h2',
-    content: 'What to do in Week 2 (teaser + next step)'
+    content: 'SATPIN word bank: keep every example decodable'
   }, {
     type: 'p',
-    content: 'Week 2 builds on blending: we add two more sounds, increase blending practice, and introduce short decodable books. The aim is fluent decoding of many CVC words by the end of the fortnight.'
+    content: 'A common home-practice mistake is accidentally adding words with untaught letters. Keep the first bank genuinely SATPIN-only so the child can solve the words from what they know.'
+  }, {
+    type: 'li',
+    content: 'With s, a, t: sat.'
+  }, {
+    type: 'li',
+    content: 'After p: pat, tap, sap.'
+  }, {
+    type: 'li',
+    content: 'After i: sit, pit, tip, sip.'
+  }, {
+    type: 'li',
+    content: 'After n: pin, tin, nip, pan, nap.'
+  }, {
+    type: 'li',
+    content: 'Short transfer lines: “Pat sat.” “Tap it.” “Pin it.”'
   }, {
     type: 'p',
-    content: 'If you want guided lessons and a clear progression, Tiny Steps has a structured Phonics program with lesson-by-lesson milestones.'
+    content: 'Do not judge progress by how many words the child remembers. Mix the order and occasionally use a fresh SATPIN combination. Successful decoding of an unfamiliar example is stronger evidence than reciting a memorised list.'
+  }, {
+    type: 'h2',
+    content: 'Three games that practise the skill without hiding it'
+  }, {
+    type: 'h3',
+    content: '1. Sound hunt'
   }, {
     type: 'p',
-    content: 'Try this next: pick 3 CVC words your child liked this week and practise blending them twice a day for three days.'
+    content: 'Place the taught letter cards around the room. Say a sound and ask the child to find the matching grapheme. Then reverse the task: show the card and ask for the sound.'
+  }, {
+    type: 'h3',
+    content: '2. Build and blend'
+  }, {
+    type: 'p',
+    content: 'Give the child three taught letter cards, arrange a decodable word, point through the sounds from left to right, and blend. Change just one letter to make the next word: sat → pat → pit → pin.'
+  }, {
+    type: 'h3',
+    content: '3. Read or spell?'
+  }, {
+    type: 'p',
+    content: 'Show a word for the child to read, then say a different word for the child to build. Alternating decoding and encoding makes the activity more diagnostic than simply matching pictures.'
+  }, {
+    type: 'h2',
+    content: 'Tiny Steps readiness checkpoints: when is the child ready to move beyond SATPIN?'
+  }, {
+    type: 'p',
+    content: 'At Tiny Steps, we do not treat a date on the calendar as the main progress marker. We look for observable transfer. A child is usually ready for a broader sound set when most of these behaviours are becoming stable across several sessions:'
+  }, {
+    type: 'li',
+    content: 'Recalls the taught SATPIN sounds accurately in mixed order.'
+  }, {
+    type: 'li',
+    content: 'Blends familiar and fresh SATPIN words with low prompting.'
+  }, {
+    type: 'li',
+    content: 'Tracks the sounds from left to right instead of guessing from pictures or the first letter.'
+  }, {
+    type: 'li',
+    content: 'Can segment and spell at least a few simple SATPIN words.'
+  }, {
+    type: 'li',
+    content: 'Can carry the same decoding process into a very short line.'
+  }, {
+    type: 'p',
+    content: 'A child does not need perfection on every word. The useful question is whether the process is becoming reliable enough that adding new sounds will not overload the foundation.'
+  }, {
+    type: 'h2',
+    content: 'If the child knows the sounds but cannot blend'
+  }, {
+    type: 'p',
+    content: 'Sound recall and blending are different skills. First model the whole process: point to s, a, t; say each sound cleanly; then repeat the sequence with smaller gaps until the word becomes sat. Let the child imitate the same movement across the letters.'
+  }, {
+    type: 'p',
+    content: 'If printed blending still stalls, add short oral blending such as “What word is /s/ /a/ /t/?” and then return to print. Do not add more graphemes simply because the child can name the existing letters. Our [letter-sounds-but-cannot-read guide](/blog/why-child-knows-letter-sounds-but-cannot-read-words) helps identify this exact bottleneck.'
+  }, {
+    type: 'h2',
+    content: 'Mistakes to avoid during SATPIN practice'
+  }, {
+    type: 'li',
+    content: 'Teaching all six sounds in one sitting just to finish the set.'
+  }, {
+    type: 'li',
+    content: 'Using untaught letters inside the “practice” word list.'
+  }, {
+    type: 'li',
+    content: 'Adding “uh” to short consonant sounds and making blending harder.'
+  }, {
+    type: 'li',
+    content: 'Letting pictures or memorised word order do the reading for the child.'
+  }, {
+    type: 'li',
+    content: 'Timing the child for speed before accurate decoding is stable.'
+  }, {
+    type: 'li',
+    content: 'Moving on because seven days have passed rather than because the child is ready.'
+  }, {
+    type: 'h2',
+    content: 'Evidence behind this approach'
+  }, {
+    type: 'p',
+    content: 'The evidence supports explicit, systematic phonics in which children learn sound-letter relationships and apply them through blending and segmenting. It does not show that every child must complete SATPIN in exactly seven days. The practical sequence on this page combines that evidence with Tiny Steps classroom and parent-support routines.'
+  }, {
+    type: 'li',
+    content: '[Education Endowment Foundation — Phonics](https://educationendowmentfoundation.org.uk/education-evidence/teaching-learning-toolkit/phonics): summarizes a large evidence base for explicit, systematic phonics and notes the importance of matching teaching to current phonemic awareness and letter-sound knowledge.'
+  }, {
+    type: 'li',
+    content: '[Education Endowment Foundation — Supporting children to decode](https://educationendowmentfoundation.org.uk/news/supporting-children-to-decode): explains synthetic phonics, blending and the common use of SATPIN as an early grapheme set.'
+  }, {
+    type: 'li',
+    content: '[Department for Education — The reading framework](https://www.gov.uk/government/publications/the-reading-framework-teaching-the-foundations-of-literacy): provides evidence-informed guidance on systematic synthetic phonics, decoding, practice and reading progression.'
+  }, {
+    type: 'li',
+    content: '[National Reading Panel — Findings](https://www.nichd.nih.gov/publications/pubs/nrp/findings): reports that systematic phonics and phonemic-awareness instruction improve important early reading outcomes and stresses applying letter-sound knowledge through blending and spelling.'
+  }, {
+    type: 'h2',
+    content: 'Useful next steps'
+  }, {
+    type: 'li',
+    content: '[Read the complete SATPIN Phonics Guide for Parents](/blog/satpin-phonics-guide) for the broader progression and readiness framework.'
+  }, {
+    type: 'li',
+    content: '[See how children learn blending step by step](/blog/how-kids-learn-blending) if joining sounds is the main difficulty.'
+  }, {
+    type: 'li',
+    content: '[Read the CVC words guide](/blog/cvc-words-explained-for-parents) when your child is beginning to decode short words.'
+  }, {
+    type: 'li',
+    content: '[Play Tiny Steps Phonics Balloon Pop with SATPIN](/free-balloon-pop-phonics-game-for-kids?level=1) for a short sound-recall warm-up.'
+  }, {
+    type: 'li',
+    content: '[Try Letter Tracing with Sounds](/letter-tracing-with-sounds-game) to connect letter shapes and sounds.'
+  }, {
+    type: 'li',
+    content: '[Explore the Tiny Steps Phonics programme](/phonics) if your child needs guided progression and feedback.'
+  }],
+  faq: [{
+    question: 'Should I teach all six SATPIN sounds at once?',
+    answer: 'Usually no. Introduce a small number, review them, and add more as recall becomes secure. The useful goal is not exposure to all six letters; it is being able to use the taught sounds in blending and spelling.'
+  }, {
+    question: 'When should a child start blending SATPIN words?',
+    answer: 'Start as soon as the child knows enough taught sounds to build a simple word. You do not need to wait until all six SATPIN sounds are mastered before modelling an easy blend such as sat.'
+  }, {
+    question: 'How long should SATPIN take?',
+    answer: 'There is no fixed seven-day rule. Move forward when sound recall, blending and short-word transfer are becoming stable across several sessions, with less prompting.'
+  }, {
+    question: 'Should parents teach letter names as well as sounds?',
+    answer: 'Children can learn both, but keep the sound response primary during decoding practice. Letter names and phoneme production serve different jobs.'
+  }, {
+    question: 'What if my child knows SATPIN sounds but still cannot read words?',
+    answer: 'That usually means the next skill to inspect is blending rather than adding more letters. Model oral and printed blending, reduce the word set, and check whether the child can join the sounds in order.'
   }]
 };
 
