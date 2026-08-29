@@ -1,6 +1,11 @@
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
+import {
+  normalizeIsoCountryCode,
+  resolveCountryFromParentDoc,
+  resolveCountryName,
+} from '../helpers/parentCountryCoverage';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -11,53 +16,23 @@ const OUTPUT_PATH = 'public-stats/global-learners.json';
 const CACHE_CONTROL = 'public, max-age=86400, s-maxage=86400';
 
 const PARENT_ROLE = 'parent';
-const EXCLUDED_PARENT_STATUSES = new Set(['archived', 'deleted', 'disabled']);
-const COUNTRY_CODE_REGEX = /^[A-Z]{2}$/;
-const DIGITS_ONLY_REGEX = /^\d+$/;
-
-const PHONE_COUNTRY_TO_ISO: Record<string, string> = {
-  '91': 'IN',
-  '971': 'AE',
-  '92': 'PK',
-  '385': 'HR',
-  '968': 'OM',
-  '353': 'IE',
-  '44': 'GB',
-  '1': 'US',
-  '65': 'SG',
-  '61': 'AU',
-};
-
-const COUNTRY_NAMES: Record<string, string> = {
-  IN: 'India',
-  AE: 'United Arab Emirates',
-  PK: 'Pakistan',
-  HR: 'Croatia',
-  OM: 'Oman',
-  IE: 'Ireland',
-  GB: 'United Kingdom',
-  US: 'United States',
-  SG: 'Singapore',
-  AU: 'Australia',
-};
+// Archived parents are intentionally included: this map represents countries
+// Tiny Steps has served historically, not only currently active families.
+const EXCLUDED_PARENT_STATUSES = new Set(['deleted', 'disabled']);
+const INFERRED_COUNTRY_SOURCE = 'phone-inferred';
 
 type CountryRow = {
   countryCode: string;
   countryName: string;
   familyCount: number;
-  activeStudents: number; // backward-compatible key for existing frontend payload shape
+  // Backward-compatible alias for the existing public payload. This value is a
+  // family count, not a student count, and should not be used for new UI copy.
+  activeStudents: number;
 };
 
-type ParentCountryNormalizationResult = {
-  countryCode: string | null;
-  hasValue: boolean;
-  unmappedPhoneCountryCode: string | null;
-};
-
-type ParentCountryResolutionResult = {
-  countryCode: string | null;
-  source: 'iso' | 'phone' | null;
-  unmappedPhoneCountryCode: string | null;
+type CountryBackfill = {
+  ref: admin.firestore.DocumentReference;
+  countryCode: string;
 };
 
 function normalizeStatus(value: unknown): string {
@@ -66,73 +41,6 @@ function normalizeStatus(value: unknown): string {
 
 function normalizeRole(value: unknown): string {
   return String(value || '').trim().toLowerCase();
-}
-
-function normalizeIsoCountryCode(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
-  const normalized = value.trim().toUpperCase();
-  if (!COUNTRY_CODE_REGEX.test(normalized)) return null;
-  return normalized;
-}
-
-function resolveCountryName(countryCode: string): string {
-  return COUNTRY_NAMES[countryCode] || countryCode;
-}
-
-function normalizePhoneCountryCode(value: unknown): ParentCountryNormalizationResult {
-  if (typeof value !== 'string') {
-    return { countryCode: null, hasValue: false, unmappedPhoneCountryCode: null };
-  }
-
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return { countryCode: null, hasValue: false, unmappedPhoneCountryCode: null };
-  }
-
-  const compact = trimmed.replace(/[\s\-()]/g, '');
-  if (!compact) {
-    return { countryCode: null, hasValue: false, unmappedPhoneCountryCode: null };
-  }
-
-  const isoCandidate = compact.toUpperCase();
-  if (COUNTRY_CODE_REGEX.test(isoCandidate)) {
-    return { countryCode: isoCandidate, hasValue: true, unmappedPhoneCountryCode: null };
-  }
-
-  let digitsCandidate = compact;
-  if (digitsCandidate.startsWith('+')) {
-    digitsCandidate = digitsCandidate.slice(1);
-  }
-  while (digitsCandidate.startsWith('00')) {
-    digitsCandidate = digitsCandidate.slice(2);
-  }
-
-  if (!digitsCandidate || !DIGITS_ONLY_REGEX.test(digitsCandidate)) {
-    return {
-      countryCode: null,
-      hasValue: true,
-      unmappedPhoneCountryCode: '__INVALID_FORMAT__',
-    };
-  }
-
-  const mapped = PHONE_COUNTRY_TO_ISO[digitsCandidate];
-  if (mapped) {
-    return { countryCode: mapped, hasValue: true, unmappedPhoneCountryCode: null };
-  }
-
-  if (digitsCandidate.length > 4) {
-    return {
-      countryCode: null,
-      hasValue: true,
-      unmappedPhoneCountryCode: '__NON_CODE_NUMERIC__',
-    };
-  }
-
-  return {
-    countryCode: null,
-    hasValue: true,
-    unmappedPhoneCountryCode: `+${digitsCandidate}`,
-  };
 }
 
 function isExcludedParentRecord(data: Record<string, unknown>): boolean {
@@ -147,22 +55,27 @@ function isExcludedParentRecord(data: Record<string, unknown>): boolean {
   return false;
 }
 
-function resolveCountryFromParentDoc(data: Record<string, unknown>): ParentCountryResolutionResult {
-  const isoCountryCode = normalizeIsoCountryCode(data.countryCode);
-  if (isoCountryCode) {
-    return { countryCode: isoCountryCode, source: 'iso', unmappedPhoneCountryCode: null };
-  }
+async function persistCountryBackfills(
+  db: admin.firestore.Firestore,
+  backfills: CountryBackfill[],
+): Promise<number> {
+  if (!backfills.length) return 0;
 
-  const phoneCountry = normalizePhoneCountryCode(data.phoneCountryCode);
-  if (phoneCountry.countryCode) {
-    return { countryCode: phoneCountry.countryCode, source: 'phone', unmappedPhoneCountryCode: null };
+  let written = 0;
+  for (let start = 0; start < backfills.length; start += 400) {
+    const batch = db.batch();
+    const slice = backfills.slice(start, start + 400);
+    for (const item of slice) {
+      batch.set(item.ref, {
+        countryCode: item.countryCode,
+        countryCodeSource: INFERRED_COUNTRY_SOURCE,
+        countryCodeUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+    await batch.commit();
+    written += slice.length;
   }
-
-  return {
-    countryCode: null,
-    source: null,
-    unmappedPhoneCountryCode: phoneCountry.unmappedPhoneCountryCode,
-  };
+  return written;
 }
 
 export const globalLearnersRollup = onSchedule(
@@ -184,7 +97,10 @@ export const globalLearnersRollup = onSchedule(
         'role',
         'status',
         'countryCode',
+        'countryCodeSource',
         'phoneCountryCode',
+        'phoneLocal',
+        'phone',
         'deleted',
         'isDeleted',
         'deletedAt',
@@ -197,9 +113,13 @@ export const globalLearnersRollup = onSchedule(
 
     const counts = new Map<string, number>();
     const unmappedPhoneCountryCodeCounts = new Map<string, number>();
+    const countryBackfills: CountryBackfill[] = [];
     let totalParentUsersScanned = 0;
-    let countedFromParentCountryCode = 0;
-    let countedFromParentIsoCountryCode = 0;
+    let totalEligibleFamiliesScanned = 0;
+    let archivedFamiliesIncluded = 0;
+    let countedFromCanonicalCountryCode = 0;
+    let countedFromPhoneCountryCode = 0;
+    let countedFromFullPhone = 0;
     let skippedMissingCountryCode = 0;
     let skippedUnmappedPhoneCountryCode = 0;
 
@@ -209,8 +129,21 @@ export const globalLearnersRollup = onSchedule(
       totalParentUsersScanned += 1;
 
       if (isExcludedParentRecord(data)) continue;
+      totalEligibleFamiliesScanned += 1;
+      if (normalizeStatus(data.status) === 'archived') {
+        archivedFamiliesIncluded += 1;
+      }
 
-      const resolved = resolveCountryFromParentDoc(data);
+      // A manually/canonically supplied ISO code always wins. A code previously
+      // inferred from phone data is re-resolved so later phone corrections can
+      // repair the stored country without manual backfill work.
+      const existingCountryCode = normalizeIsoCountryCode(data.countryCode);
+      const isPhoneInferredCountry = data.countryCodeSource === INFERRED_COUNTRY_SOURCE;
+      const resolutionInput = isPhoneInferredCountry
+        ? { ...data, countryCode: undefined }
+        : data;
+      const resolved = resolveCountryFromParentDoc(resolutionInput);
+
       if (!resolved.countryCode) {
         skippedMissingCountryCode += 1;
         if (resolved.unmappedPhoneCountryCode) {
@@ -224,13 +157,24 @@ export const globalLearnersRollup = onSchedule(
       }
 
       if (resolved.source === 'iso') {
-        countedFromParentIsoCountryCode += 1;
-      } else if (resolved.source === 'phone') {
-        countedFromParentCountryCode += 1;
+        countedFromCanonicalCountryCode += 1;
+      } else if (resolved.source === 'phone-country-code') {
+        countedFromPhoneCountryCode += 1;
+      } else if (resolved.source === 'full-phone') {
+        countedFromFullPhone += 1;
+      }
+
+      if (
+        resolved.source !== 'iso' &&
+        (existingCountryCode !== resolved.countryCode || !isPhoneInferredCountry)
+      ) {
+        countryBackfills.push({ ref: docSnap.ref, countryCode: resolved.countryCode });
       }
 
       counts.set(resolved.countryCode, (counts.get(resolved.countryCode) || 0) + 1);
     }
+
+    const persistedCountryBackfills = await persistCountryBackfills(db, countryBackfills);
 
     const countries: CountryRow[] = Array.from(counts.entries())
       .map(([countryCode, familyCount]) => ({
@@ -261,13 +205,20 @@ export const globalLearnersRollup = onSchedule(
       return acc;
     }, {});
 
+    const updatedAt = new Date().toISOString();
     const payload = {
-      totalActiveCountries: countries.length,
-      totalActiveStudentsWithCountry: totalFamiliesWithCountry,
+      // Canonical historical-coverage semantics.
+      totalCountriesServed: countries.length,
       totalFamiliesWithCountry,
       countries,
-      updatedAt: new Date().toISOString(),
-      source: 'daily_parent_country_rollup',
+      updatedAt,
+      source: 'daily_parent_country_coverage_rollup',
+      coverageDefinition: 'active_archived_and_completed_parent_families_excluding_deleted_test_and_system_records',
+      schedule: 'daily_02_30_Asia_Kolkata',
+
+      // Backward-compatible aliases consumed by older clients.
+      totalActiveCountries: countries.length,
+      totalActiveStudentsWithCountry: totalFamiliesWithCountry,
     };
 
     const file = bucket.file(OUTPUT_PATH);
@@ -280,16 +231,21 @@ export const globalLearnersRollup = onSchedule(
     });
 
     logger.info('globalLearnersRollup: completed', {
+      updatedAt,
       totalParentUsersScanned,
-      countedFromParentCountryCode,
-      countedFromParentIsoCountryCode,
+      totalEligibleFamiliesScanned,
+      archivedFamiliesIncluded,
+      countedFromCanonicalCountryCode,
+      countedFromPhoneCountryCode,
+      countedFromFullPhone,
+      persistedCountryBackfills,
       skippedMissingCountryCode,
       skippedUnmappedPhoneCountryCode,
       unmappedPhoneCountryCodeSummary,
       finalCountries: countries.map((row) => row.countryCode),
       familiesByCountryCode,
       totalFamiliesWithCountry,
-      totalActiveCountries: payload.totalActiveCountries,
+      totalCountriesServed: payload.totalCountriesServed,
     });
   },
 );

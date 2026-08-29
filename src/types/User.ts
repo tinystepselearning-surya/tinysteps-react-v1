@@ -8,12 +8,12 @@ export interface User {
   name: string; // Full name of the user
   email: string; // Firebase Auth email, unique
   phone?: string; // Optional phone number
-  phoneCountryCode?: string; // Optional phone country code (e.g. +91)
+  phoneCountryCode?: string; // Optional phone country calling code (e.g. +91)
   phoneLocal?: string; // Optional local phone number without country code
   phoneNumber?: string; // Legacy optional phone field
   mobile?: string; // Legacy optional mobile field
   contactNumber?: string; // Legacy optional contact number field
-  countryCode?: string; // Legacy optional country code field
+  countryCode?: string; // Canonical ISO 3166-1 alpha-2 country code (e.g. IN, CA, US)
   role: AuthRole; // User role
   status: 'active' | 'suspended' | 'archived'; // User status
   childIds?: string[]; // Array of kid IDs (for parents)
@@ -29,6 +29,7 @@ export interface CreateUserData {
   phone?: string;
   phoneCountryCode?: string;
   phoneLocal?: string;
+  countryCode?: string;
   role: User['role'];
   status: User['status'];
   // Role-specific fields
