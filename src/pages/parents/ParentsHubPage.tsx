@@ -238,7 +238,7 @@ const founderSchema = {
   jobTitle: 'Founder',
   image: 'https://tinystepslearning.com/priya-founder-tiny-steps-learning.webp',
   worksFor: {
-    '@id': 'https://tinystepslearning.com/#organization',
+    '@id': 'https://tinystepslearning.com/#educational-organization',
   },
 };
 const parentsSeo = getRouteConfig('/parents');

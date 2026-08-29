@@ -13,6 +13,7 @@ import {
   FinalAssessmentSection,
   FounderSection,
   QualitySystemSection,
+  ResearchToClassroomSection,
   SchoolPartnershipSection,
   TeacherDevelopmentSection,
   TeachingCommunitySection,
@@ -59,8 +60,10 @@ export default function TeamPage() {
           familyName: PUBLIC_FACTS.founder.familyName,
           alternateName: [...PUBLIC_FACTS.founder.alternateNames],
           jobTitle: 'Founder',
+          url: `${SITE_ORIGIN}/team#founder`,
+          mainEntityOfPage: { '@id': `${SITE_ORIGIN}/team#webpage` },
           image: `${SITE_ORIGIN}/priya-founder-tiny-steps-learning.webp`,
-          worksFor: { '@id': ORGANIZATION_ID, name: PUBLIC_FACTS.brandName },
+          worksFor: { '@id': ORGANIZATION_ID, name: PUBLIC_FACTS.organizationName },
           description:
             'Founder of Tiny Steps Learning, leading academic direction across curriculum, lesson design, teacher guidance, teaching quality and parent communication.',
           knowsAbout: ['Phonics', 'Reading', 'Grammar', 'Writing', 'Sentence Formation', 'Public Speaking'],
@@ -84,6 +87,7 @@ export default function TeamPage() {
       <TrustMetrics />
       <FounderSection />
       <AcademicSystemSection />
+      <ResearchToClassroomSection />
       <TeacherDevelopmentSection />
       <QualitySystemSection />
       <TeachingCommunitySection />

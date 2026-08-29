@@ -30,7 +30,8 @@ describe('TeamPage', () => {
     expect(screen.getByText('5,000+')).toBeInTheDocument();
     expect(screen.getByText('15+')).toBeInTheDocument();
     expect(screen.getByText(/Structured English programmes for children ages 3–12/)).toBeInTheDocument();
-    expect(screen.getAllByText('Founder, Tiny Steps Learning', { selector: 'p' })).toHaveLength(2);
+    expect(screen.getAllByText(/Founder, Tiny Steps Learning/, { selector: 'p' })).toHaveLength(2);
+    expect(screen.getByRole('heading', { name: 'Built around how children actually learn' })).toBeInTheDocument();
     expect(screen.getByAltText('Priya, Founder of Tiny Steps Learning')).toHaveAttribute(
       'src',
       '/priya-founder-tiny-steps-learning.webp',

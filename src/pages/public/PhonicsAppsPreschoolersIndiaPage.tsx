@@ -69,10 +69,10 @@ const webPageSchema = {
   description: 'A parent-friendly guide to choosing phonics apps for preschoolers in India. Learn what to look for, how to use apps at home, and common mistakes to avoid.',
   inLanguage: 'en-IN',
   publisher: {
-    '@id': 'https://tinystepslearning.com/#organization'
+    '@id': 'https://tinystepslearning.com/#educational-organization'
   },
   about: {
-    '@id': 'https://tinystepslearning.com/#organization'
+    '@id': 'https://tinystepslearning.com/#educational-organization'
   },
   breadcrumb: {
     '@id': 'https://tinystepslearning.com/phonics-apps-for-preschoolers-india#breadcrumb'

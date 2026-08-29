@@ -288,7 +288,7 @@ const CurriculumPage: FC = () => {
         </div>
       </section>
 
-      <ContentTrustNote text="This roadmap is maintained by the Tiny Steps academic team and reviewed by the founder to keep program boundaries, placement logic, and parent guidance consistent with the courses actually taught." />
+      <ContentTrustNote text="This roadmap is maintained by the Tiny Steps academic team and reviewed by the founder. It is built around prerequisites, structured progression, learner observation and evidence-informed educational principles. Teachers preserve the learning sequence while adapting modelling, prompts, repetition, practice time and pace to the child’s readiness." />
 
       <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6" aria-labelledby="programs-heading">
         <div className="text-center">

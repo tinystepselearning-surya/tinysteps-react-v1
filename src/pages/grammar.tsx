@@ -4,6 +4,7 @@ import ClusterSeoNav from '../components/programs/ClusterSeoNav';
 import TestimonialSnippets from '../components/common/TestimonialSnippets';
 import { applySeo } from '../lib/seo';
 import { createCourseSchema, createFAQPageSchema, PUBLIC_FACTS } from '../lib/schemas';
+import ResponsiveTeachingSection from '../components/programs/ResponsiveTeachingSection';
 
 const faqItems = [
   {
@@ -279,6 +280,18 @@ export default function GrammarPage() {
           </article>
         </div>
       </section>
+
+      <ResponsiveTeachingSection
+        id="teacher-delivery"
+        program="Grammar"
+        introduction="Teachers move from a clear sentence model to guided practice and independent use. Correction stays specific: the child sees the error, retries the sentence in context and receives only as much prompting as needed."
+        steps={[
+          { title: 'Model the pattern', detail: 'The teacher demonstrates the grammar feature inside a meaningful spoken or written sentence.' },
+          { title: 'Guide and correct', detail: 'The child builds and edits sentences while the teacher observes recurring errors and gives focused prompts.' },
+          { title: 'Apply independently', detail: 'Examples, repetition and practice time change with readiness, and support reduces as the child self-corrects.' },
+        ]}
+        observation="whether the child can use the pattern beyond a rule exercise, explain or correct an error, and build a complete sentence with less support."
+      />
 
       <section className="px-4 pb-8 pt-8 sm:px-5 md:pb-12 md:pt-12 lg:px-6 lg:pb-14 lg:pt-14">
         <div className="mx-auto max-w-6xl">

@@ -88,7 +88,7 @@ describe('ForSchoolsPage proposal CTAs', () => {
     }
   });
 
-  it('keeps the approved enrolment business case and FAQ structured data consistent', async () => {
+  it('keeps implementation value and family-communication FAQ structured data consistent', async () => {
     render(
       <MemoryRouter initialEntries={['/for-schools']}>
         <ForSchoolsPage />
@@ -96,19 +96,19 @@ describe('ForSchoolsPage proposal CTAs', () => {
     );
 
     expect(
-      screen.getByRole('heading', { name: 'Visible reading progress strengthens parent confidence' }),
+      screen.getByRole('heading', { name: 'Make phonics progress easier for families and leaders to understand' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('The enrolment business case')).toBeInTheDocument();
+    expect(screen.getByText('Implementation visibility')).toBeInTheDocument();
 
-    const outcomes = ['Parent confidence', 'Continued enrolment', 'Reputation and referrals', 'Leadership visibility'];
+    const outcomes = ['Parent communication', 'Implementation consistency', 'Teacher readiness', 'Leadership visibility'];
     for (const outcome of outcomes) {
       expect(screen.getByText(outcome)).toBeInTheDocument();
     }
 
-    expect(screen.getByText(/Strong early literacy is not only an academic priority/)).toBeInTheDocument();
+    expect(screen.getByText(/Strong early literacy is an academic priority/)).toBeInTheDocument();
     expect(document.body).not.toHaveTextContent('The majority of schools will lose admissions.');
 
-    const faqQuestion = 'How can visible reading progress support enrolment and reputation?';
+    const faqQuestion = 'How can schools communicate reading progress clearly to families?';
     expect(screen.getByText(faqQuestion)).toBeInTheDocument();
 
     await waitFor(() => {
@@ -121,7 +121,7 @@ describe('ForSchoolsPage proposal CTAs', () => {
       const faqSchema = schemas.find((schema) => schema['@type'] === 'FAQPage');
       const structuredQuestion = faqSchema?.mainEntity?.find((item) => item.name === faqQuestion);
       expect(structuredQuestion?.acceptedAnswer?.text).toContain(
-        'A structured phonics programme, supported by teacher training and regular academic review',
+        'Baseline checks, checkpoints, and consistent teacher language',
       );
     });
   });

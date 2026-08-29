@@ -12,6 +12,7 @@ import {
 } from '../components/marketing/LeadPageSections';
 import { buildPublicWhatsAppUrl, PUBLIC_CONTACT_EMAIL } from '../constants/publicContact';
 import { trackCoursePageCtaClick } from '../lib/conversionTracking';
+import { ORGANIZATION_ID, PUBLIC_FACTS } from '../lib/schemas';
 
 const canonicalUrl = 'https://tinystepslearning.com/for-schools';
 const ncfUrl = 'https://ncert.nic.in/pdf/NCF_for_Foundational_Stage_20_October_2022.pdf';
@@ -169,22 +170,22 @@ const internationalBenchmarks = [
   'High-quality training for the people delivering phonics',
 ];
 
-const enrollmentBusinessOutcomes = [
+const schoolImplementationValue = [
   {
-    title: 'Parent confidence',
-    detail: 'Clear, observable progress helps families understand the value being created in the classroom.',
+    title: 'Parent communication',
+    detail: 'Shared learning goals help schools explain what children are practising, what is secure, and what needs reinforcement.',
   },
   {
-    title: 'Continued enrolment',
-    detail: 'When parents can see their child becoming a more confident reader, they have stronger reasons to continue their relationship with the school.',
+    title: 'Implementation consistency',
+    detail: 'A common sequence, lesson resources, correction routines, and review points help classrooms use the same teaching model.',
   },
   {
-    title: 'Reputation and referrals',
-    detail: 'Consistent literacy development contributes to a stronger academic reputation and more credible parent-to-parent advocacy.',
+    title: 'Teacher readiness',
+    detail: 'Training, rehearsal, guidance, and follow-up support prepare teachers to apply the agreed routines and progression.',
   },
   {
     title: 'Leadership visibility',
-    detail: 'A structured review process gives school leaders clearer insight into programme delivery, teacher readiness, and learner progression.',
+    detail: 'Baseline checks, checkpoints, and implementation reviews show leaders what is being taught and where support is needed.',
   },
 ];
 
@@ -345,9 +346,9 @@ const faqItems = [
       'Schools receive baseline, checkpoint, and end-of-cycle assessment guidance across sound knowledge, blending, segmenting, decoding, spelling, and fluency. Leadership reviews focus on cohort patterns, transfer of learning, and practical next steps rather than marks alone.',
   },
   {
-    question: 'How can visible reading progress support enrolment and reputation?',
+    question: 'How can schools communicate reading progress clearly to families?',
     answer:
-      'Schools can strengthen parent confidence by making learner progress easier to understand. In Early Years, Pre-Primary and Lower Primary, observable development in reading, blending, spelling and writing gives families clearer evidence of classroom learning. A structured phonics programme, supported by teacher training and regular academic review, can support continued enrolment and contribute to a strong school reputation and credible parent recommendations.',
+      'Schools can make phonics progress easier for families to understand by reporting the skills being practised, what is becoming secure, what needs reinforcement, and the next teaching focus. Baseline checks, checkpoints, and consistent teacher language make those conversations concrete without promising enrolment or reputation outcomes.',
   },
   {
     question: 'How much does the school phonics partnership cost?',
@@ -383,7 +384,8 @@ const pageSchema = {
   description: pageDescription,
   url: canonicalUrl,
   inLanguage: 'en-IN',
-  dateModified: '2026-08-10',
+  dateModified: '2026-08-29',
+  citation: [ncfUrl, cbseHpcUrl, dfePhonicsUrl],
   speakable: {
     '@type': 'SpeakableSpecification',
     cssSelector: ['h1', '.school-answer', '#cbse-phonics-answer'],
@@ -410,8 +412,8 @@ const serviceSchema = {
   description: pageDescription,
   provider: {
     '@type': 'EducationalOrganization',
-    '@id': 'https://tinystepslearning.com/#organization',
-    name: 'Tiny Steps Learning',
+    '@id': ORGANIZATION_ID,
+    name: PUBLIC_FACTS.organizationName,
     url: 'https://tinystepslearning.com/',
   },
   areaServed: [{ '@type': 'Country', name: 'India' }, { '@type': 'Place', name: 'Worldwide' }],
@@ -645,6 +647,11 @@ const ForSchoolsPage: React.FC = () => {
                   CBSE Foundational Stage resources
                 </a>
               </div>
+              <p className="mt-4 max-w-2xl text-xs leading-5 text-slate-600">
+                Tiny Steps Learning is an independent education provider. Referencing NCF, CBSE, or international
+                phonics criteria explains the evidence and implementation context; it does not imply endorsement,
+                approval, certification or affiliation.
+              </p>
             </div>
 
             <div className="grid gap-4">
@@ -673,6 +680,64 @@ const ForSchoolsPage: React.FC = () => {
               </div>
             </div>
           </div>
+        </LeadCard>
+      </LeadSection>
+
+      <LeadSection id="academic-design">
+        <LeadCard className="overflow-hidden border-emerald-100 bg-gradient-to-br from-white via-emerald-50/45 to-sky-50/55">
+          <LeadSectionHeading
+            eyebrow="How academic design becomes classroom practice"
+            title="A protected teaching method, with room to respond to the learner"
+            description="The partnership is more than content or worksheets. Curriculum progression, lesson plans, teacher preparation, classroom observation and review work as one implementation system."
+          />
+
+          <div className="mt-8 grid gap-5 lg:grid-cols-[0.92fr_1.08fr]">
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-6">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-800">Academic design inputs</p>
+              <div className="mt-5 space-y-4 text-sm leading-7 text-slate-700">
+                <p>
+                  Tiny Steps planning draws on child development, learning science, early-literacy pedagogy, language
+                  development and recurring learner difficulties identified through teaching and assessment.
+                </p>
+                <p>
+                  Those inputs become prerequisite maps, a structured progression, lesson objectives, examples,
+                  modelling, guided practice, correction routines, cumulative review and checkpoints.
+                </p>
+              </div>
+              <div className="mt-6 rounded-2xl bg-slate-950 p-5 text-white">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-orange-300">Shared teaching principle</p>
+                <p className="mt-2 text-lg font-black">Model → guided practice → observe → correct → retry → reduce support</p>
+              </div>
+            </div>
+
+            <div className="rounded-[2rem] border border-emerald-200 bg-emerald-50/70 p-6">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-emerald-800">Structured curriculum. Responsive teaching.</p>
+              <h3 className="mt-3 text-2xl font-black tracking-tight text-slate-950">Consistency does not mean forcing every child through the same pace.</h3>
+              <p className="mt-4 text-sm leading-7 text-slate-700">
+                Teachers retain the agreed learning objective and progression while adjusting modelling, prompts,
+                examples, repetition and practice time in response to learner accuracy, independence and recurring errors.
+              </p>
+              <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+                {[
+                  'Short, age-appropriate tasks',
+                  'Predictable teaching routines',
+                  'Guided retries before moving on',
+                  'Specific, encouraging feedback',
+                  'Prerequisite practice when required',
+                  'Support reduced as independence grows',
+                ].map((item) => (
+                  <li key={item} className="rounded-2xl border border-emerald-200 bg-white/85 p-4 text-sm font-bold leading-6 text-slate-800">
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <p className="mt-6 text-xs leading-5 text-slate-600">
+            These are evidence-informed instructional and implementation principles. They are not clinical psychology,
+            learner-type labels, or a guarantee that children progress at a fixed or accelerated rate.
+          </p>
         </LeadCard>
       </LeadSection>
 
@@ -856,32 +921,31 @@ const ForSchoolsPage: React.FC = () => {
         <LeadCard className="relative overflow-hidden border-orange-200/80 bg-gradient-to-br from-white via-orange-50/70 to-violet-50/60 p-0">
           <div className="relative grid gap-8 p-6 md:p-8 lg:grid-cols-[0.92fr_1.08fr] lg:gap-10 lg:p-10">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-700">The enrolment business case</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-700">Implementation visibility</p>
               <h2 className="mt-3 text-3xl font-black leading-tight tracking-tight text-slate-950 md:text-4xl">
-                Visible reading progress strengthens parent confidence
+                Make phonics progress easier for families and leaders to understand
               </h2>
               <div className="school-answer mt-5 space-y-4 text-sm leading-7 text-slate-700 md:text-base">
                 <p>
-                  In the Early Years, Pre-Primary and Lower Primary stages, families often evaluate the quality of
-                  schooling through the progress they can observe in their child’s reading, blending, spelling, and
-                  writing. Report-card scores matter, but visible literacy development gives parents clearer evidence
-                  that classroom learning is becoming lasting capability.
+                  In Early Years, Pre-Primary and Lower Primary, families often need clear language for understanding
+                  what children are practising in reading, blending, spelling and writing. Skill-specific reporting can
+                  make classroom learning easier to discuss than a broad score alone.
                 </p>
                 <p>
-                  Demonstrable reading progress can strengthen parent trust, support continued enrolment, and
-                  encourage positive recommendations within the school community.
+                  A shared implementation sequence, baseline checks, checkpoints and consistent teacher language give
+                  schools a clearer way to explain what is secure, what needs reinforcement and what comes next.
                 </p>
               </div>
               <div className="mt-6 rounded-3xl border border-orange-200 bg-white/85 p-5 text-lg font-bold leading-8 text-slate-950 shadow-[0_16px_36px_rgba(249,115,22,0.12)]">
-                Strong early literacy is not only an academic priority. It is part of the trust a school builds with
-                every family.
+                Strong early literacy is an academic priority. Clear evidence and communication help families and
+                school leaders understand the work being done.
               </div>
             </div>
 
             <div className="rounded-[1.75rem] border border-white/90 bg-slate-950 p-5 text-white shadow-[0_24px_54px_rgba(15,23,42,0.2)] md:p-6">
-              <h3 className="text-xl font-black tracking-tight text-white">How visible progress supports school leadership</h3>
+              <h3 className="text-xl font-black tracking-tight text-white">How structured implementation supports school leadership</h3>
               <ul className="mt-5 space-y-3">
-                {enrollmentBusinessOutcomes.map((outcome, index) => (
+                {schoolImplementationValue.map((outcome, index) => (
                   <li
                     key={outcome.title}
                     className="flex gap-3 rounded-2xl border border-white/10 bg-white/5 p-3.5 text-sm leading-6 text-slate-100"

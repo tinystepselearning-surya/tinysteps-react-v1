@@ -9,6 +9,7 @@ export const SITE_ORIGIN = 'https://tinystepslearning.com';
 export const PUBLIC_FACTS = {
   brandName: 'Tiny Steps Learning',
   shortBrandName: 'Tiny Steps',
+  organizationName: 'Tiny Steps Early Education',
   founder: {
     displayName: 'Priya',
     fullName: 'Vannala Ravali Priya',
@@ -95,17 +96,17 @@ export const OFFSITE_CORROBORATION_PACK = {
     'Request honest reviews only, and never filter for positive sentiment or offer incentives.',
 } as const;
 
-export const ORGANIZATION_ID = `${SITE_ORIGIN}/#organization`;
+export const ORGANIZATION_ID = `${SITE_ORIGIN}/#educational-organization`;
 export const WEBSITE_ID = `${SITE_ORIGIN}/#website`;
 export const FOUNDER_ID = `${SITE_ORIGIN}/#founder`;
 
 export const organizationSchema = {
   '@context': 'https://schema.org',
-  '@type': ['EducationalOrganization', 'Organization'],
+  '@type': 'EducationalOrganization',
   '@id': ORGANIZATION_ID,
-  name: PUBLIC_FACTS.brandName,
-  alternateName: PUBLIC_FACTS.shortBrandName,
-  url: SITE_ORIGIN,
+  name: PUBLIC_FACTS.organizationName,
+  alternateName: [PUBLIC_FACTS.brandName, PUBLIC_FACTS.shortBrandName],
+  url: `${SITE_ORIGIN}/`,
   logo: {
     '@type': 'ImageObject',
     url: `${SITE_ORIGIN}/logo-square.webp`
@@ -184,6 +185,9 @@ export const localBusinessSchema = {
   telephone: '+91-9618398383',
   email: PUBLIC_CONTACT_EMAIL,
   url: SITE_ORIGIN,
+  parentOrganization: {
+    '@id': ORGANIZATION_ID,
+  },
   address: {
     '@type': 'PostalAddress',
     addressLocality: 'Hyderabad',
@@ -347,9 +351,9 @@ export function createBlogPostingSchema(params: {
     },
     // Publisher info
     publisher: {
-      '@type': 'Organization',
+      '@type': 'EducationalOrganization',
       '@id': ORGANIZATION_ID,
-      name: PUBLIC_FACTS.brandName,
+      name: PUBLIC_FACTS.organizationName,
       logo: {
         '@type': 'ImageObject',
         url: `${SITE_ORIGIN}/logo-square.webp`
@@ -411,8 +415,8 @@ export function createServiceSchema(params: {
     provider: {
       '@id': ORGANIZATION_ID,
       '@type': 'EducationalOrganization',
-      name: PUBLIC_FACTS.brandName,
-      url: SITE_ORIGIN,
+      name: PUBLIC_FACTS.organizationName,
+      url: `${SITE_ORIGIN}/`,
     },
     areaServed: params.areaServed,
     ...(params.audienceType
@@ -454,8 +458,8 @@ export function createCourseSchema(params: {
     provider: {
       '@id': ORGANIZATION_ID,
       '@type': 'EducationalOrganization',
-      name: params.provider || PUBLIC_FACTS.brandName,
-      url: SITE_ORIGIN
+      name: PUBLIC_FACTS.organizationName,
+      url: `${SITE_ORIGIN}/`
     },
     ...(params.educationalLevel && {
       educationalLevel: params.educationalLevel
@@ -513,10 +517,10 @@ export function createCourseListSchema(params: {
         name: course.name,
         description: course.description,
         provider: {
-          '@type': 'Organization',
+          '@type': 'EducationalOrganization',
           '@id': ORGANIZATION_ID,
-          name: course.provider || PUBLIC_FACTS.brandName,
-          url: SITE_ORIGIN,
+          name: PUBLIC_FACTS.organizationName,
+          url: `${SITE_ORIGIN}/`,
         },
         ...(course.educationalLevel ? { educationalLevel: course.educationalLevel } : {}),
         ...(course.audienceType
