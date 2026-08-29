@@ -67,6 +67,8 @@ jobs:
         run: npm run test:unit -- --run
 
       - name: Production build
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
         run: npm run build
 
       - name: SEO smoke
