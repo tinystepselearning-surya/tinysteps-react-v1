@@ -180,4 +180,52 @@ describe('progressive blog quality refresh', () => {
     expect(shouldNoindexBlogSlug('week-19-phonics-multisyllabic')).toBe(true);
     expect(shouldIncludeBlogSlugInSitemap('week-19-phonics-multisyllabic')).toBe(false);
   });
+
+  it('makes Blog #5 the phonics-specific summer maintenance and practice owner', () => {
+    const post = bySlug.get('phonics-summer-plan');
+    expect(post).toBeDefined();
+    expect(post?.title).toBe('Summer Phonics Practice for Kids: A 10-Minute Daily Routine');
+    expect(post?.author).toBe('Priya');
+    expect(post?.modifiedDate).toBe('2026-08-30');
+    expect(post?.metaDescription?.length).toBeLessThanOrEqual(160);
+
+    const body = post?.body.map((block) => block.content).join('\n') || '';
+    expect(body).toContain('This guide is the phonics-specific summer practice owner');
+    expect(body).toContain('First choose the child’s current phonics stage — not their age');
+    expect(body).toContain('Stage A — first sounds and early blending');
+    expect(body).toContain('Stage B — secure CVC words, digraphs and taught vowel patterns');
+    expect(body).toContain('Stage C — longer words and increasingly fluent reading');
+    expect(body).toContain('The Tiny Steps 10-minute summer phonics routine');
+    expect(body).toContain('The Tiny Steps three-signal phonics maintenance check');
+    expect(body).toContain('When home summer practice is not enough');
+    expect(body).toContain('/blog/prevent-summer-slide-reading');
+    expect(body).toContain('/blog/how-kids-learn-blending');
+    expect(body).toContain('/blog/phonics-diagnostics');
+    expect(body).toContain('/free-balloon-pop-phonics-game-for-kids');
+
+    expect(body).not.toMatch(/\bWeek\s+16\b/i);
+    expect(body).not.toContain('Day 3 — New digraph intro');
+    expect(body).not.toContain('Day 4 — New long vowel pattern');
+    expect(body).not.toContain('5-word sprint');
+    expect(body).not.toContain('Week 17 will offer');
+  });
+
+  it('gives Blog #5 genuine evidence, answer-engine FAQs and cleaned indexable authority status', () => {
+    const post = bySlug.get('phonics-summer-plan');
+    expect(post).toBeDefined();
+
+    const evidence = getBlogEvidenceSummary(post!);
+    expect(evidence.hasSourceSection).toBe(true);
+    expect(evidence.externalSourceCount).toBeGreaterThanOrEqual(4);
+    expect(post?.faq).toHaveLength(5);
+    expect(post?.faq?.some((item) => /How long should kids practise phonics/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /teach new phonics sounds/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /include spelling/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /prevent reading loss/i.test(item.question))).toBe(true);
+
+    expect(shouldNoindexBlogSlug('phonics-summer-plan')).toBe(false);
+    expect(shouldIncludeBlogSlugInSitemap('phonics-summer-plan')).toBe(true);
+    expect(shouldNoindexBlogSlug('week-16-phonics-summer-plan')).toBe(true);
+    expect(shouldIncludeBlogSlugInSitemap('week-16-phonics-summer-plan')).toBe(false);
+  });
 });
