@@ -6,14 +6,36 @@ import {
 } from '../../lib/blogIndexingPolicy.js';
 
 describe('blog indexing policy', () => {
-  it('keeps the three reviewed weekly authority pages indexable', () => {
+  it('keeps the three reviewed roadmap authority pages indexable under old and cleaned slugs', () => {
     for (const slug of INDEXABLE_WEEKLY_BLOG_SLUGS) {
+      expect(shouldNoindexBlogSlug(slug)).toBe(false);
+      expect(shouldIncludeBlogSlugInSitemap(slug)).toBe(true);
+    }
+
+    for (const slug of [
+      'phonics-satpin-launch',
+      'grammar-nouns-to-paragraphs',
+      'speaking-confidence-seeds',
+    ]) {
       expect(shouldNoindexBlogSlug(slug)).toBe(false);
       expect(shouldIncludeBlogSlugInSitemap(slug)).toBe(true);
     }
   });
 
-  it('noindexes other weekly-series support pages and keeps them out of the sitemap', () => {
+  it('keeps renamed roadmap support pages noindex and out of the sitemap', () => {
+    for (const slug of [
+      'phonics-long-vowels',
+      'phonics-r-controlled',
+      'grammar-tenses',
+      'speaking-visual-aids',
+      'screen-smart-summer-routine-for-kids',
+    ]) {
+      expect(shouldNoindexBlogSlug(slug)).toBe(true);
+      expect(shouldIncludeBlogSlugInSitemap(slug)).toBe(false);
+    }
+  });
+
+  it('continues to recognize old weekly source slugs during redirect migration', () => {
     for (const slug of ['week-4-phonics-long-vowels', 'week-5-phonics-r-controlled', 'week-8-grammar-tenses']) {
       expect(shouldNoindexBlogSlug(slug)).toBe(true);
       expect(shouldIncludeBlogSlugInSitemap(slug)).toBe(false);
