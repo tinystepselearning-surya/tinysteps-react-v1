@@ -196,7 +196,7 @@ const post: BlogPost = {
     content: 'Home practice should not be used to diagnose hearing, speech, language, attention or learning conditions. If you have a broader developmental concern, discuss it with an appropriate qualified professional rather than relying on an online checklist.'
   }, {
     type: 'h2',
-    content: 'What the research says about summer reading'
+    content: 'What the evidence says about summer reading'
   }, {
     type: 'p',
     content: 'Research supports taking summer learning seriously, but it also warns against simplistic claims. Recent NWEA summaries show that summer learning patterns are highly variable and that the size of measured summer declines depends partly on the assessment and student group. A meta-analysis of 41 classroom and home summer-reading interventions found positive effects on multiple reading outcomes, especially in studies involving research-based instruction and many low-income children. Neither finding proves that a universal 10-minute routine will prevent loss for every child.'
