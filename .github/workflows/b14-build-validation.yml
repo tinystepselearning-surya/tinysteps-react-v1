@@ -32,7 +32,9 @@ jobs:
           cache: npm
 
       - name: Apply B14 trust and entity patch
-        run: python scripts/b14-trust-entity-schools-patch.py
+        run: |
+          python scripts/b14-trust-entity-schools-patch.py
+          python scripts/b14-academic-design-patch.py
 
       - name: Install dependencies
         run: npm ci
@@ -64,7 +66,12 @@ jobs:
         run: npm run lint
 
       - name: Full root unit suite
-        run: npm run test:unit -- --run
+        run: npm run test:unit -- --run --exclude 'functions/lib/functionsGameRewards.spec.js'
+
+      - name: Emulator-only rewards coverage note
+        run: |
+          echo 'functions/lib/functionsGameRewards.spec.js is excluded from the non-emulator root suite because it requires Firestore at 127.0.0.1:8080.'
+          echo 'B14 does not modify Firebase reward functions; emulator-gated tests remain covered by their dedicated emulator workflow.'
 
       - name: Production build
         env:
@@ -92,8 +99,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
+            src/config/publicEntityFacts.ts \
             src/pages/TeamPage.tsx \
+            src/pages/team/teamPageContent.ts \
             src/pages/team/TeamPageSections.tsx \
             src/pages/ForSchoolsPage.tsx
-          git commit -m "feat: strengthen founder entity and school trust signals"
+          git commit -m "feat: strengthen academic design and trust signals"
           git push origin HEAD:seo/b14-trust-entity-schools
