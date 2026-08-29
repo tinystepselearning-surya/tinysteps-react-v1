@@ -29,8 +29,9 @@ The programme ships **incrementally, one blog at a time**:
 Current sequence:
 
 - Blog #1: merged through PR #158.
-- Blog #2: `seo/blog-quality-02-summer-slide` → PR #159, CI status to be supplied manually by the user.
-- Blog #3: `seo/blog-quality-03-phonics-assessment`, stacked from the locked Blog #2 head so Blog #2 remains frozen while Blog #3 work proceeds.
+- Blog #2: merged through PR #159.
+- Blog #3: merged through PR #160.
+- Blog #4: `seo/blog-quality-04-multisyllabic-words` → PR #161, exact-head CI initiated.
 
 ## Standard 100-point quality rubric
 
@@ -78,9 +79,9 @@ A blog cannot be marked complete if it contains factual/pedagogical errors, unsu
 | # | Public article | Baseline | Status | Main action | Score after refresh |
 |---:|---|---:|---|---|---:|
 | 1 | SATPIN at Home: A Parent Launch Plan for Early Blending and Reading | 70/100 | **MERGED / PR #158** | Evergreen SATPIN home implementation owner; corrected sequence, readiness progression, evidence, self-routing, escalation and AEO structure | **95/100** |
-| 2 | How to Prevent the Summer Slide in Reading (10-Minute Daily Plan) | 64/100 | **LOCKED / PR #159** | Evidence-aware summer reading continuity; stage-matched routines, book-fit guidance, Tiny Steps three-signal check, support boundary, FAQs, internal authority links and indexability promotion | **94/100** |
-| 3 | Phonics Assessment Checklist for Parents Before a New School Term | 61/100 | **LOCKED — ready for incremental validation after Blog #2** | Rebuilt as an informal parent phonics observation guide using taught scope, fresh-word decoding, blending/segmenting, encoding, connected-text transfer, evidence and a clear diagnostic boundary; quality-promoted to indexable | **95/100** |
-| 4 | How to Help Kids Read Multisyllabic Words: Simple Chunking Practice | — | QUEUED | Audit after Blog #3 ships | — |
+| 2 | How to Prevent the Summer Slide in Reading (10-Minute Daily Plan) | 64/100 | **MERGED / PR #159** | Evidence-aware summer reading continuity; stage-matched routines, book-fit guidance, Tiny Steps three-signal check, support boundary, FAQs, internal authority links and indexability promotion | **94/100** |
+| 3 | Phonics Assessment Checklist for Parents Before a New School Term | 61/100 | **MERGED / PR #160** | Informal parent phonics observation owner using taught scope, fresh-word decoding, blending/segmenting, encoding, connected-text transfer, evidence and a diagnostic boundary; quality-promoted to indexable | **95/100** |
+| 4 | How to Help Kids Read Multisyllabic Words: Simple Chunking Practice | 59/100 | **LOCKED / PR #161 — CI initiated** | Rebuilt as a phonics- and morphology-aware long-word decoding guide with readiness checks, a repeatable five-step routine, stage-matched practice, transfer signals, evidence, FAQs and support boundaries; quality-promoted to indexable | **95/100** |
 
 ## Blog #1 — locked and merged
 
@@ -92,7 +93,7 @@ Practical **SATPIN-at-home implementation** owner for parents, guardians and edu
 
 **95/100 — LOCKED and merged through PR #158.**
 
-## Blog #2 — locked
+## Blog #2 — locked and merged
 
 ### Canonical role
 
@@ -107,13 +108,13 @@ Intent boundaries:
 
 ### Final decision
 
-**94/100 — LOCKED.** Blog #2 passes the human-helpfulness/shareability review and has no known factual, pedagogical or intent hard fail. PR #159 is the incremental technical/SEO validation gate.
+**94/100 — LOCKED and merged through PR #159.**
 
 ### Indexability decision
 
 The cleaned public URL `/blog/prevent-summer-slide-reading` is quality-promoted to **indexable + sitemap eligible**. The historical `/blog/week-27-prevent-summer-slide-reading` remains a permanent redirect alias. Historical GSC snapshot rows remain historical evidence rather than being rewritten.
 
-## Blog #3 — locked after content review
+## Blog #3 — locked and merged
 
 ### Canonical role
 
@@ -150,13 +151,59 @@ The article uses formal assessment sources only to explain useful principles: as
 
 ### Indexability decision
 
-Blog #3 now owns a distinct useful parent search intent and passes the human-first quality gate, so `/blog/phonics-diagnostics` is **quality-promoted to indexable + sitemap eligible**.
+Blog #3 owns a distinct useful parent search intent and passes the human-first quality gate, so `/blog/phonics-diagnostics` is **quality-promoted to indexable + sitemap eligible**.
 
-The historical `/blog/week-22-phonics-diagnostics` URL remains a non-indexable permanent redirect alias. The promotion-aware GSC/archive audit infrastructure created for Blog #2 already validates this pattern without rewriting historical Search Console evidence.
+The historical `/blog/week-22-phonics-diagnostics` URL remains a non-indexable permanent redirect alias. Historical Search Console evidence is not rewritten.
 
 ### Final decision
 
-**95/100 — LOCKED.** No known factual, pedagogical, evidence, diagnostic-boundary or cannibalization hard fail remains after the final content review. Exact-head technical/SEO validation will be run only after Blog #2 is merged and Blog #3 is prepared as the next incremental PR.
+**95/100 — LOCKED and merged through PR #160.**
+
+## Blog #4 — locked for exact-head validation
+
+### Canonical role
+
+**Parent-facing multisyllabic decoding and chunking-practice** owner for children who can already decode many one-syllable patterns but need a repeatable way to tackle longer printed words.
+
+Intent boundaries:
+
+- `/blog/phonics-multisyllabic` → practical long-word decoding, syllable/morpheme chunking, transfer and home practice.
+- `/blog/how-kids-learn-blending` → the broader stage-by-stage blending progression, especially early one-syllable blending.
+- `/blog/cvc-words-explained-for-parents` → first simple word-decoding milestone.
+- `/blog/long-vowel-sounds-for-kids` → long-vowel pattern explanation and practice order.
+- `/blog/how-phonics-improves-spelling` → encoding/spelling owner.
+- `/phonics` → Tiny Steps commercial programme owner, not the editorial long-word answer page.
+
+### Baseline problems fixed
+
+- Removed `Week 19` framing and the rigid seven-day / 12-minute schedule.
+- Removed the misleading shortcut that underlining every written vowel reliably reveals where a word should split.
+- Removed speed/race framing before decoding accuracy is secure.
+- Added a readiness check so parents do not use long-word practice to mask unstable short-word decoding.
+- Distinguished **syllables** as spoken sound units from **morphemes** as meaningful word parts.
+- Added the Tiny Steps five-step long-word routine: spot familiar parts, mark useful chunks, decode each part, blend and adjust to natural pronunciation, then reread for meaning.
+- Added stage-matched practice from secure two-part words to affixes and more complex morphology.
+- Explained that clapping syllables can support oral phonological awareness but cannot replace print-to-sound decoding work.
+- Added common-error interpretation, including first-part guessing, over-splitting vowels, blending breakdown, stress/pronunciation adjustment, repeated pattern gaps and vocabulary-vs-decoding distinctions.
+- Added the Tiny Steps four-signal progress check: coverage, independence, transfer and context.
+- Added a support boundary that the article is practice guidance rather than a dyslexia or learning-condition assessment.
+- Added evidence from IES/What Works Clearinghouse, University of Florida Literacy Institute and Reading Rockets.
+- Added five answer-engine FAQs plus contextual links to blending, CVC, long-vowel, spelling and Phonics authority pages.
+- Added `modifiedDate: 2026-08-30`, a 14-minute read estimate and concise search metadata.
+
+### Evidence decision
+
+The exact Tiny Steps five-step routine is presented as an editorial teaching routine rather than a standardized research protocol. The evidence layer supports the underlying principles: explicit decoding, word-part analysis, systematic progression from simpler to more complex words, use of a consistent multisyllabic routine, and reconnection to connected text and meaning.
+
+### Indexability decision
+
+Blog #4 now owns a distinct useful parent search intent and passes the human-first quality gate, so `/blog/phonics-multisyllabic` is **quality-promoted to indexable + sitemap eligible**.
+
+The historical `/blog/week-19-phonics-multisyllabic` URL remains a non-indexable permanent redirect alias.
+
+### Final decision
+
+**95/100 — LOCKED pending exact-head CI/SEO validation in PR #161.** No known factual, pedagogical, evidence, diagnosis-boundary, reader-helpfulness or cannibalization hard fail remains after the final content review.
 
 ## Per-blog final gate
 
