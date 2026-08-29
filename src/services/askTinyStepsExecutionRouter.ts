@@ -18,8 +18,10 @@ import {
 } from '../config/pricing';
 import { PUBLIC_SITE_FACTS } from '../config/publicFacts';
 import {
+  isAskTinyStepsAgeRangeQuestion,
   isAskTinyStepsContextualFollowUp,
   isAskTinyStepsDurationQuestion,
+  isAskTinyStepsProgrammeFactQuestion,
   selectAskTinyStepsSources,
   type AskTinyStepsSelectionAudience,
   type AskTinyStepsSelectionIntent,
@@ -148,6 +150,52 @@ function durationAnswer(question: string): string {
   );
 }
 
+function coursesAnswer(): string {
+  const programs = PUBLIC_SITE_FACTS.corePrograms;
+  return withSource(
+    `Tiny Steps offers three core English-learning programmes: ${programs[0]}, ${programs[1]}, and ${programs[2]}. ` +
+      `They are delivered as live online classes for ${PUBLIC_SITE_FACTS.audience.label}.`,
+    'courses',
+  );
+}
+
+function ageRangeAnswer(): string {
+  return withSource(
+    `Tiny Steps teaches ${PUBLIC_SITE_FACTS.audience.label} through live online English programmes. ` +
+      'The right starting point depends on the child’s current level and learning need.',
+    'courses',
+  );
+}
+
+function programmeAvailabilityAnswer(intent: AskTinyStepsSelectionIntent): string | undefined {
+  switch (intent) {
+    case 'phonics':
+      return withSource(
+        `Yes. Tiny Steps offers live online Phonics classes for ${PUBLIC_SITE_FACTS.audience.label}.`,
+        'phonics',
+      );
+    case 'grammar':
+      return withSource(
+        `Yes. Tiny Steps offers live online Grammar classes for ${PUBLIC_SITE_FACTS.audience.label}.`,
+        'grammar',
+      );
+    case 'speaking':
+      return withSource(
+        `Yes. Tiny Steps offers live online Public Speaking classes for ${PUBLIC_SITE_FACTS.audience.label}.`,
+        'speaking',
+      );
+    case 'reading':
+      return withSource(
+        `Yes. Tiny Steps offers live online Reading classes for ${PUBLIC_SITE_FACTS.audience.label}.`,
+        'reading-classes',
+      );
+    case 'courses':
+      return coursesAnswer();
+    default:
+      return undefined;
+  }
+}
+
 function schoolProgrammeAnswer(): string {
   return withSource(
     'Yes. Tiny Steps has a dedicated For Schools programme with phonics implementation, teacher training, and school partnership options.',
@@ -214,6 +262,11 @@ function explicitDeterministicAnswer(
     !SLOT_OR_SCHEDULE_PATTERN.test(question)
   ) {
     return durationAnswer(question);
+  }
+  if (isAskTinyStepsAgeRangeQuestion(question) && audience === 'parents') return ageRangeAnswer();
+  if (isAskTinyStepsProgrammeFactQuestion(question) && audience === 'parents') {
+    const answer = programmeAvailabilityAnswer(intent);
+    if (answer) return answer;
   }
   if (intent === 'school_program' && audience === 'schools') return schoolProgrammeAnswer();
   if (intent === 'summer_camp') return summerCampArchiveAnswer();

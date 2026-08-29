@@ -62,6 +62,12 @@ const ELLIPTICAL_PRICE_FOLLOW_UP_PATTERN =
 const DURATION_PATTERN =
   /\b(?:minutes?|duration|class length|time per class|session length|how long(?: is| are)? (?:(?:a|an|the|each|your|our) )?class(?:es)?|how long (?:does|do) (?:(?:a|an|the|each|your|our) )?class(?:es)? last|how long is (?:it|this|that))\b/i;
 
+const PROGRAMME_FACT_PATTERN =
+  /^\s*(?:(?:do you|do tiny steps|does tiny steps|does tinysteps)\s+(?:offer|have|provide|teach|run)\b|what\s+do you teach\b|(?:what|which)\s+(?:courses?|programmes?|programs?|classes)\s+(?:(?:do you|does tiny steps|does tinysteps)\s+)?(?:offer|have|provide|teach|run)\b)/i;
+
+const AGE_RANGE_PATTERN =
+  /\b(?:what|which)\s+(?:age|ages|age groups?|age ranges?)\s+(?:do you|does tiny steps|does tinysteps)\s+(?:teach|accept|support)\b|\b(?:what|which)\s+ages?\s+are\s+(?:your\s+)?(?:classes|courses|programmes|programs)\s+for\b/i;
+
 export function isAskTinyStepsContextualFollowUp(question: string): boolean {
   const normalizedQuestion = question.trim();
   return (
@@ -72,6 +78,14 @@ export function isAskTinyStepsContextualFollowUp(question: string): boolean {
 
 export function isAskTinyStepsDurationQuestion(question: string): boolean {
   return DURATION_PATTERN.test(question);
+}
+
+export function isAskTinyStepsProgrammeFactQuestion(question: string): boolean {
+  return PROGRAMME_FACT_PATTERN.test(question.trim());
+}
+
+export function isAskTinyStepsAgeRangeQuestion(question: string): boolean {
+  return AGE_RANGE_PATTERN.test(question.trim());
 }
 
 const INTENT_RULES: readonly IntentRule[] = [
@@ -136,7 +150,7 @@ const INTENT_RULES: readonly IntentRule[] = [
   },
   {
     intent: 'courses',
-    pattern: /\b(course|courses|program|programs|programme|programmes|track|tracks|classes do you offer|what do you teach)\b/i,
+    pattern: /\b(course|courses|program|programs|programme|programmes|track|tracks|classes do you offer|what do you teach)\b|\b(?:what|which)\s+(?:age|ages|age groups?|age ranges?)\s+(?:do you|does tiny steps|does tinysteps)\s+(?:teach|accept|support)\b|\b(?:what|which)\s+ages?\s+are\s+(?:your\s+)?(?:classes|courses|programmes|programs)\s+for\b/i,
   },
   {
     intent: 'brand',

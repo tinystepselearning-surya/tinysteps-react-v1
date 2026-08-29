@@ -53,6 +53,25 @@ describe('useAskTinyStepsChat execution policy', () => {
     expect(answer).toContain('40–60 minutes');
   });
 
+  it.each([
+    ['What courses do you offer?', 'Phonics', '/courses'],
+    ['What age groups do you teach?', 'children aged 3–12', '/courses'],
+    ['Do you offer grammar classes?', 'Grammar', '/grammar'],
+    ['Do you offer public speaking classes?', 'Public Speaking', '/speaking'],
+  ] as const)(
+    'answers public programme fact with zero Gemini calls: %s',
+    async (question, expectedText, expectedSource) => {
+      const { result } = renderHook(() => useAskTinyStepsChat());
+
+      await act(async () => result.current.sendMessage(question));
+
+      expect(serviceMocks.call).not.toHaveBeenCalled();
+      const answer = lastMessageContent(result.current.messages);
+      expect(answer).toContain(expectedText);
+      expect(answer).toContain(expectedSource);
+    },
+  );
+
   it('answers private child-record questions with zero Gemini calls', async () => {
     const { result } = renderHook(() => useAskTinyStepsChat());
 
