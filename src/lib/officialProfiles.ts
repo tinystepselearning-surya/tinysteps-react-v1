@@ -1,3 +1,5 @@
+import { organizationSchema } from './schemas';
+
 export type OfficialProfilePlatform = 'Facebook' | 'Instagram' | 'YouTube' | 'LinkedIn';
 
 export type OfficialPublicProfile = {
@@ -6,33 +8,45 @@ export type OfficialPublicProfile = {
   purpose: string;
 };
 
-/**
- * Public Tiny Steps profiles already declared by the production organization schema.
- *
- * B15 makes this list reusable by visible site UI and keeps the schema contract
- * guarded by tests so profile URLs cannot silently drift across surfaces.
- */
-export const OFFICIAL_PUBLIC_PROFILES = [
-  {
+const PROFILE_METADATA_BY_HOST = {
+  'www.facebook.com': {
     platform: 'Facebook',
-    url: 'https://www.facebook.com/tinystepslearning',
     purpose: 'Tiny Steps Learning updates and parent-facing learning content',
   },
-  {
+  'www.instagram.com': {
     platform: 'Instagram',
-    url: 'https://www.instagram.com/tiny_steps_oel/',
     purpose: 'Tiny Steps Learning classroom and learning updates',
   },
-  {
+  'www.youtube.com': {
     platform: 'YouTube',
-    url: 'https://www.youtube.com/@TinyStepsLearning-1157',
     purpose: 'Tiny Steps Learning videos and learning guidance',
   },
-  {
+  'www.linkedin.com': {
     platform: 'LinkedIn',
-    url: 'https://www.linkedin.com/company/tiny-steps-learning/',
     purpose: 'Tiny Steps Learning company and educational updates',
   },
-] as const satisfies readonly OfficialPublicProfile[];
+} as const satisfies Record<
+  string,
+  { platform: OfficialProfilePlatform; purpose: string }
+>;
+
+/**
+ * Human-visible official profiles derived from the canonical Organization.sameAs
+ * contract. The URL is defined only once in schemas.ts; this module adds display
+ * metadata without creating a second source of truth.
+ */
+export const OFFICIAL_PUBLIC_PROFILES: readonly OfficialPublicProfile[] = organizationSchema.sameAs.map((url) => {
+  const hostname = new URL(url).hostname as keyof typeof PROFILE_METADATA_BY_HOST;
+  const metadata = PROFILE_METADATA_BY_HOST[hostname];
+
+  if (!metadata) {
+    throw new Error(`Missing display metadata for official Tiny Steps profile host: ${hostname}`);
+  }
+
+  return {
+    ...metadata,
+    url,
+  };
+});
 
 export const OFFICIAL_PUBLIC_PROFILE_URLS = OFFICIAL_PUBLIC_PROFILES.map((profile) => profile.url);
