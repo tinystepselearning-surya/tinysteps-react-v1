@@ -77,7 +77,7 @@ A blog cannot be marked complete if it contains factual/pedagogical errors, unsu
 | # | Public article | Baseline | Status | Main action | Score after refresh |
 |---:|---|---:|---|---|---:|
 | 1 | SATPIN at Home: A Parent Launch Plan for Early Blending and Reading | 70/100 | **LOCKED / PR #158** | Evergreen SATPIN home implementation owner; corrected sequence, readiness progression, evidence, self-routing, escalation and AEO structure | **95/100** |
-| 2 | How to Prevent the Summer Slide in Reading (10-Minute Daily Plan) | 64/100 | **REFRESHED — final lock review next** | Rebuilt around evidence-aware summer reading continuity; stage-matched 10-minute plans, book-fit guidance, Tiny Steps three-signal check, support boundary, FAQs, internal authority links and indexability promotion | **94/100 target** |
+| 2 | How to Prevent the Summer Slide in Reading (10-Minute Daily Plan) | 64/100 | **LOCKED — ready for incremental validation** | Rebuilt around evidence-aware summer reading continuity; stage-matched 10-minute plans, book-fit guidance, Tiny Steps three-signal check, support boundary, FAQs, internal authority links and indexability promotion | **94/100** |
 | 3 | Phonics Assessment Checklist for Parents Before a New School Term | — | QUEUED | Audit after Blog #2 ships | — |
 
 ## Blog #1 — locked
@@ -90,7 +90,7 @@ Practical **SATPIN-at-home implementation** owner for parents, guardians and edu
 
 **95/100 — LOCKED.** Do not broadly rewrite unless a later concrete factual, technical or intent issue is discovered.
 
-## Blog #2 — refreshed
+## Blog #2 — locked
 
 ### Canonical role
 
@@ -102,6 +102,10 @@ Intent boundaries:
 - `/blog/how-to-improve-reading-fluency-in-children` → persistent fluency/accuracy/phrasing remediation.
 - `/blog/phonics-summer-plan` → phonics-specific summer pattern practice.
 - `/summer-camps` → commercial structured live summer learning option, not the editorial answer owner.
+
+### Final decision
+
+**94/100 — LOCKED.** Blog #2 passes the human-helpfulness/shareability review and has no known factual, pedagogical or intent hard fail after the final content review. The remaining gate is exact-head technical/SEO validation when the block is prepared for its incremental PR.
 
 ### Baseline problems fixed
 
