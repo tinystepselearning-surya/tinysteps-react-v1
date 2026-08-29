@@ -52,7 +52,7 @@ Target: **90+/100** with no factual, pedagogical, evidence, diagnosis-boundary, 
 | 3 | CVC Words Explained for Parents: The First Real Decoding Milestone | 65/100 | **LOCKED IN BATCH** | Accurate CVC definition; six-step hear→map→blend→fresh word→encode→text ladder; word-family and transfer boundaries | **96/100** |
 | 4 | Digraphs and Tricky Words: What to Decode and What to Remember | 64/100 | **LOCKED IN BATCH** | Distinguishes digraphs, blends, high-frequency and tricky words; four-question decode-or-remember rule; protects Blog #28 tricky-word routine intent | **96/100** |
 | 5 | How Kids Learn Blending: The Stage-by-Stage Path Parents Can Track | 66/100 | **LOCKED IN BATCH** | Five-stage oral→print→continuous→fresh-word→text blending pathway; stage-exit signals replace fixed days/weeks; error interpretation and evidence | **96/100** |
-| 6 | How Long Does Phonics Take? A Realistic Parent Guide to Progress | — | QUEUED | — | — |
+| 6 | How Long Does Phonics Take? A Realistic Parent Guide to Progress | 74/100 | **LOCKED IN BATCH** | Separates current-target, full-progression and fluent-reading timelines; replaces calendar promises with progress-to-time signals, evidence and provider accountability | **96/100** |
 | 7 | How Phonics Builds Reading Confidence: What Changes First at Home | — | QUEUED | — | — |
 | 8 | How Phonics Classes Help Kids Read: Decoding, Blending and Fluency Explained | — | QUEUED | — | — |
 | 9 | How Phonics Improves Spelling: A Parent Encoding Roadmap | — | QUEUED | — | — |
@@ -88,18 +88,7 @@ It defines CVC as a consonant-vowel-consonant spelling structure rather than any
 
 **Canonical role:** `/blog/digraphs-and-tricky-words` owns the conceptual parent decision: *Which parts should my child decode and which parts genuinely need extra memory?*
 
-### Key quality decisions
-
-- Defines a digraph as two letters representing one phoneme and distinguishes it from adjacent consonant phonemes.
-- Separates **high-frequency** from **tricky/common-exception**; common does not automatically mean irregular.
-- Explains temporarily tricky words: a correspondence may be regular in English but not yet taught.
-- Adds the Tiny Steps four-question decode-or-remember check.
-- Teaches parents to decode regular/taught parts and mark only the genuinely unusual or not-yet-taught correspondence.
-- Adds reading + spelling + fresh-word transfer checks instead of whole-word visual memorisation.
-- Protects `/blog/phonics-tricky-words` (Blog #28) as the detailed tricky-word teaching-routine owner.
-- Adds evidence from DfE National Curriculum/SSP guidance, UFLI and Reading Rockets, plus five FAQs and a non-diagnostic boundary.
-
-**Indexability:** ordinary evergreen non-weekly slug; no policy change required.
+Key decisions: distinguishes digraphs from consonant blends; separates high-frequency from tricky/common-exception; explains temporarily tricky correspondences; adds the four-question decode-or-remember check; decodes regular parts rather than whole-word visual guessing; protects `/blog/phonics-tricky-words` as Blog #28’s detailed teaching-routine owner; adds evidence, transfer checks and five FAQs.
 
 **Final decision: 96/100 — LOCKED IN BATCH.**
 
@@ -107,44 +96,60 @@ It defines CVC as a consonant-vowel-consonant spelling structure rather than any
 
 **Canonical role:** `/blog/how-kids-learn-blending` owns the developmental and instructional progression from hearing separate phonemes to independently blending printed words and carrying that strategy into connected text.
 
+Key decisions: removes inherited fixed-calendar examples; establishes oral blending → print connection → continuous blending → fresh-word transfer → connected-text transfer; clarifies blending as a verb; adds clean-sound/schwa guidance; replaces calendar stage exits with accuracy, independence, transfer, retention and text use; adds evidence, error interpretation and five FAQs.
+
+**Final decision: 96/100 — LOCKED IN BATCH.**
+
+## Blog #6 — locked
+
+**Canonical role:** `/blog/how-long-does-phonics-take` owns the parent question: *How should I think about phonics duration without relying on a universal deadline?*
+
+### Core quality decision — three separate clocks
+
+The article now separates:
+
+1. **Current-target time** — how long it takes the child to secure the phonics target being taught now.
+2. **Full-progression time** — how long it takes to work through the programme’s wider cumulative phonics scope.
+3. **Fluent-reading time** — how long accurate decoding takes to become increasingly automatic in connected text alongside vocabulary, language comprehension and reading experience.
+
+These are related but are not one deadline.
+
 ### Intent boundaries
 
-- Blog #2 `/blog/child-knows-abc-but-cannot-read` → broader ABC-to-reading diagnostic before the exact blending stage is known.
-- Blog #3 `/blog/cvc-words-explained-for-parents` → first simple CVC printed-word milestone.
-- Blog #5 `/blog/how-kids-learn-blending` → stage-by-stage blending process and stage-exit decisions.
-- `/blog/phonics-blending-activities` and `/blog/phonics-blending-club` → activity/routine owners rather than developmental progression.
-- `/blog/why-child-knows-letter-sounds-but-cannot-read-words` → narrow diagnostic when sound recall is already secure but word reading still fails.
+- `/blog/how-long-does-phonics-take` → progress pace, duration interpretation and realistic timeline owner.
+- `/blog/how-kids-learn-blending` → blending progression.
+- `/blog/cvc-words-explained-for-parents` → CVC milestone.
+- `/blog/how-to-improve-reading-fluency-in-children` → fluency after decoding is sufficiently accurate.
+- `/blog/how-to-choose-phonics-classes` → provider-selection framework.
+- `/blog/phonics-diagnostics` → broader parent observation/assessment.
+- `/phonics` → commercial programme owner.
 
 ### Baseline problems fixed
 
-- Converted the article from the shared generic `PhonicsSeoPost` generator into a direct editorial `BlogPost`.
-- Removed inherited fixed-calendar examples such as “5 days oral + print CVC”, “next 5 days”, and “step back one stage for 2 days”.
-- Removed generic class-selection, universal 10-minute dose and fixed 2–3 week judgement copy.
-- Clarified **blending as a verb** and separated it from the noun phrase “consonant blend”; adjacent consonants such as `st` retain separate phonemes.
-- Added the **Tiny Steps five-stage blending path**:
-  1. oral phoneme blending without print;
-  2. printed blending using a small taught correspondence set;
-  3. continuous blending with clean, blendable phoneme pronunciation;
-  4. fresh-word transfer using already-taught patterns;
-  5. connected-text transfer.
-- Added explicit guidance to avoid schwa insertion such as “tuh” and “puh”.
-- Replaced calendar progression with five observation signals: **accuracy, independence, transfer, retention and text use**.
-- Added interpretation for sound-recall-without-merge, schwa insertion, first-letter guessing, familiar-list dependence and sentence-level breakdown.
-- Added a parent practice structure without claiming a research-defined daily dosage.
-- Added a non-diagnostic support boundary.
-- Added evidence from IES/What Works Clearinghouse, UFLI phonemic-awareness and phoneme-grapheme resources, and the DfE Reading Framework.
-- Added five AEO/GEO FAQs and contextual internal links.
-- Added founder authorship, `modifiedDate: 2026-08-30`, a dedicated meta description and 15-minute read estimate.
+- The original article already rejected one universal completion deadline, but it did not clearly separate the different meanings of “How long does phonics take?”
+- Changed organisation-level authorship to founder authorship and added `modifiedDate: 2026-08-30`.
+- Added a dedicated hero, stronger excerpt and clearer parent-intent meta description.
+- Added the three-clock distinction so completion of one current target, completion of a phonics scope and fluent reading are not conflated.
+- Added the **Tiny Steps progress-to-time compass**: starting point, accuracy, independence, transfer and retention.
+- Explicitly labels the compass editorial guidance rather than a standardized timing formula.
+- Replaced calendar progression with observable stage evidence.
+- Added a parent dashboard: current target, fresh-word result, prompt level, text transfer, spelling transfer, retention and dominant error.
+- Added a clear safeguard that this article does not prescribe a research-defined weekly or monthly testing schedule.
+- Prevents “give it more time” from becoming an excuse for prolonged unchanged errors.
+- Added provider accountability questions without taking over Blog #10’s full class-comparison intent.
+- Added a non-diagnostic boundary: parent tracking cannot diagnose dyslexia or another condition.
+- Added four external evidence sources: EEF, IES/What Works Clearinghouse, DfE Reading Framework and DfE SSP validation guidance.
+- Added five AEO/GEO FAQs and contextual links to blending, CVC, digraphs, fluency, diagnostics, class choice, `/phonics` and `/curriculum`.
 
 ### Evidence decision
 
-The Tiny Steps five-stage path and exit signals are explicitly labelled editorial teaching guidance, not a standardized developmental test. External sources support the underlying principles: phonemic blending, sound-letter mapping, left-to-right decoding, blendable pronunciation, systematic progression and connected-text transfer.
+The Tiny Steps progress-to-time compass is **editorial guidance, not a standardized timing instrument**. External evidence supports systematic teaching matched to current knowledge, decoding and spelling instruction, connected-text application, assessment of gaps and targeted response when pupils are not keeping up. No evidence source is used to claim a universal phonics-completion duration.
 
 ### Indexability decision
 
-Blog #5 is an ordinary evergreen non-weekly public slug, so it is already indexable and sitemap eligible under the existing policy.
+Ordinary evergreen non-weekly public slug; already indexable and sitemap eligible. No policy change required.
 
-**Final decision: 96/100 — LOCKED IN BLOGS #1–#10 BATCH.** No known factual, pedagogical, evidence, diagnosis-boundary, reader-helpfulness, SEO or cannibalization hard fail remains after review.
+**Final decision: 96/100 — LOCKED IN BLOGS #1–#10 BATCH.**
 
 ## Batch merge gate
 
