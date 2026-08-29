@@ -31,6 +31,7 @@ const QUALITY_PROMOTED_PUBLIC_SLUGS = new Set([
   'prevent-summer-slide-reading',
   'phonics-diagnostics',
   'phonics-multisyllabic',
+  'phonics-summer-plan',
 ]);
 
 const RENAMED_WEEKLY_PUBLIC_SLUGS = new Set(LEGACY_WEEK_PUBLIC_SLUGS);
