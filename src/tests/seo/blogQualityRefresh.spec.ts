@@ -134,4 +134,50 @@ describe('progressive blog quality refresh', () => {
     expect(shouldNoindexBlogSlug('week-22-phonics-diagnostics')).toBe(true);
     expect(shouldIncludeBlogSlugInSitemap('week-22-phonics-diagnostics')).toBe(false);
   });
+
+  it('makes Blog #4 the parent multisyllabic decoding and chunking-practice owner', () => {
+    const post = bySlug.get('phonics-multisyllabic');
+    expect(post).toBeDefined();
+    expect(post?.title).toBe('How to Help Kids Read Multisyllabic Words: Simple Chunking Practice');
+    expect(post?.author).toBe('Priya');
+    expect(post?.modifiedDate).toBe('2026-08-30');
+    expect(post?.metaDescription?.length).toBeLessThanOrEqual(160);
+
+    const body = post?.body.map((block) => block.content).join('\n') || '';
+    expect(body).toContain('First check: is the child ready for multisyllabic word practice?');
+    expect(body).toContain('Syllables and morphemes: two useful ways to see a big word');
+    expect(body).toContain('The Tiny Steps five-step long-word routine');
+    expect(body).toContain('Stage A — two-part words built mostly from secure patterns');
+    expect(body).toContain('Stage B — add familiar endings and meaningful word parts');
+    expect(body).toContain('Stage C — three or more syllables and more complex morphology');
+    expect(body).toContain('The Tiny Steps four-signal progress check');
+    expect(body).toContain('When to step back or ask for more support');
+    expect(body).toContain('/blog/how-kids-learn-blending');
+    expect(body).toContain('/blog/cvc-words-explained-for-parents');
+    expect(body).toContain('/blog/long-vowel-sounds-for-kids');
+    expect(body).toContain('/blog/how-phonics-improves-spelling');
+
+    expect(body).not.toMatch(/\bWeek\s+19\b/i);
+    expect(body).not.toContain('underline all vowels first');
+    expect(body).not.toContain('12 minutes/day');
+    expect(body).not.toContain('read race');
+  });
+
+  it('gives Blog #4 evidence, answer-engine FAQs and indexable authority status', () => {
+    const post = bySlug.get('phonics-multisyllabic');
+    expect(post).toBeDefined();
+
+    const evidence = getBlogEvidenceSummary(post!);
+    expect(evidence.hasSourceSection).toBe(true);
+    expect(evidence.externalSourceCount).toBeGreaterThanOrEqual(4);
+    expect(post?.faq).toHaveLength(5);
+    expect(post?.faq?.some((item) => /multisyllabic word/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /underline every vowel/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /clapping syllables/i.test(item.question))).toBe(true);
+
+    expect(shouldNoindexBlogSlug('phonics-multisyllabic')).toBe(false);
+    expect(shouldIncludeBlogSlugInSitemap('phonics-multisyllabic')).toBe(true);
+    expect(shouldNoindexBlogSlug('week-19-phonics-multisyllabic')).toBe(true);
+    expect(shouldIncludeBlogSlugInSitemap('week-19-phonics-multisyllabic')).toBe(false);
+  });
 });
