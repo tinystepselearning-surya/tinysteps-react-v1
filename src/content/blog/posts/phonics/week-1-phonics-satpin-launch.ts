@@ -9,7 +9,7 @@ const post: BlogPost = {
   modifiedDate: '2026-08-30',
   readTime: '12 min read',
   hero: '/blog/hero-phonics.jpg',
-  metaDescription: 'A practical SATPIN-at-home plan for parents: teach s, a, t, p, i and n in small steps, start blending as soon as the child is ready, and use clear progress checks before moving on.',
+  metaDescription: 'A practical SATPIN home plan for parents: teach s, a, t, p, i and n in small steps, begin blending early, and use readiness checks before moving on.',
   excerpt: 'Use this flexible SATPIN home routine to build sound recall, early blending, simple word reading and spelling without turning a seven-session plan into a seven-day deadline.',
   body: [{
     type: 'h2',
@@ -20,6 +20,15 @@ const post: BlogPost = {
   }, {
     type: 'p',
     content: 'This page is the practical home-routine companion to our [SATPIN Phonics Guide for Parents](/blog/satpin-phonics-guide). Use the main guide for the broader explanation of SATPIN and progression; use this page when you want to know exactly what to practise at home.'
+  }, {
+    type: 'h2',
+    content: 'Who this SATPIN plan is for'
+  }, {
+    type: 'p',
+    content: 'Use this plan when a child is at the beginning of letter-sound learning and needs a short, repeatable routine that turns new sounds into early reading. Parents, grandparents, guardians, tutors and teachers can use the same sequence with one child or adapt it for a small group.'
+  }, {
+    type: 'p',
+    content: 'If the child already recalls SATPIN sounds and blends these words easily, do not keep drilling the same set just because this article has seven sessions — move to the next appropriate phonics pattern. If sound recall is secure but the sounds still do not join into words, skip to the blending troubleshooting section below. This is a practice guide, not a diagnostic test for hearing, speech or language difficulties.'
   }, {
     type: 'h2',
     content: 'Why SATPIN is a useful early sound set'
@@ -148,6 +157,9 @@ const post: BlogPost = {
     content: 'Short transfer lines: “Pat sat.” “Tap it.” “Pin it.”'
   }, {
     type: 'p',
+    content: 'If a word such as sap or nip is unfamiliar, let the child decode it first and then explain the meaning. Vocabulary support should follow the decoding attempt rather than becoming a picture or context clue that lets the child guess the word.'
+  }, {
+    type: 'p',
     content: 'Do not judge progress by how many words the child remembers. Mix the order and occasionally use a fresh SATPIN combination. Successful decoding of an unfamiliar example is stronger evidence than reciting a memorised list.'
   }, {
     type: 'h2',
@@ -203,6 +215,15 @@ const post: BlogPost = {
   }, {
     type: 'p',
     content: 'If printed blending still stalls, add short oral blending such as “What word is /s/ /a/ /t/?” and then return to print. Do not add more graphemes simply because the child can name the existing letters. Our [letter-sounds-but-cannot-read guide](/blog/why-child-knows-letter-sounds-but-cannot-read-words) helps identify this exact bottleneck.'
+  }, {
+    type: 'h2',
+    content: 'When home practice is not enough'
+  }, {
+    type: 'p',
+    content: 'If repeated short sessions are not improving sound recall, oral blending or left-to-right printed blending, stop adding new letters and get another set of eyes on the problem. A trained teacher can observe whether the next teaching target is sound recall, phonemic awareness, blending, print tracking or something else in the reading process.'
+  }, {
+    type: 'p',
+    content: 'If you also have concerns about hearing, speech or language development, raise those concerns with an appropriately qualified health or speech-and-language professional. This article can guide phonics practice, but it cannot diagnose the reason a child is struggling.'
   }, {
     type: 'h2',
     content: 'Mistakes to avoid during SATPIN practice'
@@ -278,7 +299,7 @@ const post: BlogPost = {
     answer: 'Children can learn both, but keep the sound response primary during decoding practice. Letter names and phoneme production serve different jobs.'
   }, {
     question: 'What if my child knows SATPIN sounds but still cannot read words?',
-    answer: 'That usually means the next skill to inspect is blending rather than adding more letters. Model oral and printed blending, reduce the word set, and check whether the child can join the sounds in order.'
+    answer: 'Blending and left-to-right decoding are the first things to inspect, but sound recall, phonemic awareness or print tracking may also be the bottleneck. Reduce the word set, model oral and printed blending, and use the linked diagnostic guide before simply adding more letters.'
   }]
 };
 
