@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   ASK_TINY_STEPS_MAX_URL_CONTEXT_SOURCES,
+  isAskTinyStepsAgeRangeQuestion,
+  isAskTinyStepsProgrammeFactQuestion,
   selectAskTinyStepsSources,
 } from '../../services/askTinyStepsSourceSelector';
 
@@ -49,6 +51,40 @@ describe('Ask Tiny Steps smart source selector', () => {
     const selection = selectAskTinyStepsSources('Do you have weekend slots?');
     expect(selection.intent).toBe('timings');
     expect(selection.sourceIds).toEqual(['faq']);
+  });
+
+  it.each([
+    ['What courses do you offer?', 'courses', 'courses'],
+    ['Do you offer grammar classes?', 'grammar', 'grammar'],
+    ['Do you offer public speaking classes?', 'speaking', 'speaking'],
+    ['Do you teach phonics?', 'phonics', 'phonics'],
+  ] as const)(
+    'recognizes explicit Tiny Steps programme facts: %s',
+    (question, expectedIntent, expectedSource) => {
+      const selection = selectAskTinyStepsSources(question);
+
+      expect(isAskTinyStepsProgrammeFactQuestion(question)).toBe(true);
+      expect(selection.intent).toBe(expectedIntent);
+      expect(selection.sourceIds).toEqual([expectedSource]);
+    },
+  );
+
+  it('recognizes the public age-range question as a courses fact', () => {
+    const question = 'What age groups do you teach?';
+    const selection = selectAskTinyStepsSources(question);
+
+    expect(isAskTinyStepsAgeRangeQuestion(question)).toBe(true);
+    expect(selection.intent).toBe('courses');
+    expect(selection.sourceIds).toEqual(['courses']);
+  });
+
+  it('does not confuse teaching-method questions with programme availability', () => {
+    expect(isAskTinyStepsProgrammeFactQuestion('How do you teach phonics?')).toBe(false);
+    expect(isAskTinyStepsProgrammeFactQuestion('How can I improve my child’s grammar?')).toBe(false);
+
+    const methodology = selectAskTinyStepsSources('How do you teach phonics?');
+    expect(methodology.intent).toBe('methodology');
+    expect(methodology.sourceIds).toEqual(['why-tiny-steps']);
   });
 
   it('routes a blending problem to two specific diagnostic sources without broad-page padding', () => {
