@@ -64,7 +64,7 @@ describe('B10 technical SEO, GEO, and LLM authority guardrails', () => {
   });
 
   it('derives keywords and citations only from declared topics and visible external URLs', () => {
-    const grammar = bySlug.get('week-7-grammar-nouns-to-paragraphs')!;
+    const grammar = bySlug.get('grammar-nouns-to-paragraphs')!;
     expect(buildBlogKeywords(grammar)).toContain('grammar for children');
     expect(buildBlogKeywords(grammar)).toContain('Grammar');
 
@@ -101,10 +101,10 @@ describe('B10 technical SEO, GEO, and LLM authority guardrails', () => {
     const llms = readRepoFile('public/llms.txt');
     expect(llms).toContain('## Canonical Editorial Authority Map');
     for (const slug of [
-      'week-7-grammar-nouns-to-paragraphs',
+      'grammar-nouns-to-paragraphs',
       'how-to-improve-sentence-formation-in-kids',
       'child-knows-grammar-but-makes-mistakes',
-      'week-12-speaking-confidence-seeds',
+      'speaking-confidence-seeds',
       'child-understands-english-but-does-not-speak',
       'child-gives-one-word-answers',
     ]) expect(llms).toContain(`/blog/${slug}`);
