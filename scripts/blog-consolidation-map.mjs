@@ -1,5 +1,3 @@
-import { LEGACY_WEEK_BLOG_PATH_REDIRECTS } from '../src/lib/blogWeekRenames.js';
-
 export const RETIRED_BLOG_PATH_REDIRECTS = Object.freeze({
   '/blog/child-knows-letter-sounds-but-cannot-read': '/blog/why-child-knows-letter-sounds-but-cannot-read-words',
   '/blog/can-child-master-english-in-10-days': '/blog/can-child-improve-english-in-10-days',
@@ -13,7 +11,6 @@ export const RETIRED_BLOG_PATH_REDIRECTS = Object.freeze({
   '/blog/engage-children-phonics-grammar-speaking-at-home': '/blog/how-to-engage-kids-in-english-learning-at-home',
   '/blog/best-age-to-start-phonics-classes-for-kids': '/blog/what-age-to-start-phonics',
   '/blog/how-tiny-steps-builds-reading-confidence': '/blog/how-phonics-builds-reading-confidence',
-  ...LEGACY_WEEK_BLOG_PATH_REDIRECTS,
 });
 
 export const RETIRED_BLOG_SLUG_REDIRECTS = Object.freeze(
