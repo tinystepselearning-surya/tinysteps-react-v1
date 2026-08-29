@@ -89,4 +89,49 @@ describe('progressive blog quality refresh', () => {
     expect(shouldNoindexBlogSlug('week-27-prevent-summer-slide-reading')).toBe(true);
     expect(shouldIncludeBlogSlugInSitemap('week-27-prevent-summer-slide-reading')).toBe(false);
   });
+
+  it('makes Blog #3 an informal phonics assessment owner with a clear diagnostic boundary', () => {
+    const post = bySlug.get('phonics-diagnostics');
+    expect(post).toBeDefined();
+    expect(post?.title).toBe('Phonics Assessment Checklist for Parents Before a New School Term');
+    expect(post?.author).toBe('Priya');
+    expect(post?.modifiedDate).toBe('2026-08-30');
+    expect(post?.metaDescription?.length).toBeLessThanOrEqual(160);
+
+    const body = post?.body.map((block) => block.content).join('\n') || '';
+    expect(body).toContain('This is an informal home check — not a diagnostic test');
+    expect(body).toContain('The Tiny Steps five-part phonics check');
+    expect(body).toContain('Fresh-word decoding');
+    expect(body).toContain('Encoding: can the child hear the sounds and spell a simple word?');
+    expect(body).toContain('Connected-text transfer');
+    expect(body).toContain('Use teaching stage, not age, to choose what to check');
+    expect(body).toContain('Secure, Developing, Priority');
+    expect(body).toContain('When to ask for more support');
+    expect(body).toContain('/blog/why-child-knows-letter-sounds-but-cannot-read-words');
+    expect(body).toContain('/blog/how-kids-learn-blending');
+    expect(body).toContain('/blog/cvc-words-explained-for-parents');
+    expect(body).toContain('/book-demo');
+
+    expect(body).not.toMatch(/\bWeek\s+22\b/i);
+    expect(body).not.toContain('Green/Amber/Red');
+    expect(body).not.toContain('choose two priorities for the next four weeks');
+  });
+
+  it('gives Blog #3 evidence, answer-engine FAQs and indexable authority status', () => {
+    const post = bySlug.get('phonics-diagnostics');
+    expect(post).toBeDefined();
+
+    const evidence = getBlogEvidenceSummary(post!);
+    expect(evidence.hasSourceSection).toBe(true);
+    expect(evidence.externalSourceCount).toBeGreaterThanOrEqual(4);
+    expect(post?.faq).toHaveLength(5);
+    expect(post?.faq?.some((item) => /assess phonics at home/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /nonsense or pseudo-words/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /dyslexia/i.test(item.question))).toBe(true);
+
+    expect(shouldNoindexBlogSlug('phonics-diagnostics')).toBe(false);
+    expect(shouldIncludeBlogSlugInSitemap('phonics-diagnostics')).toBe(true);
+    expect(shouldNoindexBlogSlug('week-22-phonics-diagnostics')).toBe(true);
+    expect(shouldIncludeBlogSlugInSitemap('week-22-phonics-diagnostics')).toBe(false);
+  });
 });
