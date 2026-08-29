@@ -9,6 +9,7 @@
     "sourceMap": true,
     "strict": true,
     "target": "es2017",
+    "lib": ["ES2017", "ES2020.Intl"],
     "types": ["node"]
   },
   "compileOnSave": true,
