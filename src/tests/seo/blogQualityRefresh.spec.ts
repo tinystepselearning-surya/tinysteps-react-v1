@@ -11,6 +11,7 @@ describe('progressive blog quality refresh', () => {
     expect(post?.title).toBe('SATPIN at Home: A Parent Launch Plan for Early Blending and Reading');
     expect(post?.author).toBe('Priya');
     expect(post?.modifiedDate).toBe('2026-08-30');
+    expect(post?.metaDescription?.length).toBeLessThanOrEqual(160);
 
     const body = post?.body.map((block) => block.content).join('\n') || '';
     expect(body).toContain('/blog/satpin-phonics-guide');
@@ -20,6 +21,9 @@ describe('progressive blog quality refresh', () => {
     expect(body).toContain('/letter-tracing-with-sounds-game');
     expect(body).toContain('seven flexible practice sessions');
     expect(body).toContain('Tiny Steps readiness checkpoints');
+    expect(body).toContain('Who this SATPIN plan is for');
+    expect(body).toContain('not a diagnostic test');
+    expect(body).toContain('When home practice is not enough');
 
     expect(body).not.toMatch(/\bWeek\s+[12]\b/i);
     expect(body).not.toContain('Tin can');
