@@ -117,6 +117,7 @@ for (const row of GSC_CRAWLED_NOT_INDEXED_URLS) {
       fail(row.path, 'noindex-archive is currently supported only for blog URLs');
       continue;
     }
+
     const canonicalPath = rewriteLegacyWeekBlogPaths(row.path);
     const canonicalSlug = canonicalPath.slice('/blog/'.length);
     if (canonicalPath !== row.path) {
@@ -125,7 +126,23 @@ for (const row of GSC_CRAWLED_NOT_INDEXED_URLS) {
       }
       if (isInSitemap(row.path)) fail(row.path, 'renamed archive alias appears in a canonical sitemap');
     }
-    if (!shouldNoindexBlogSlug(canonicalSlug)) fail(canonicalPath, 'blog indexing policy does not return noindex');
+
+    // The manifest preserves the 2026-08-09 historical decision. A later
+    // human-first quality audit may promote the cleaned canonical URL while
+    // retaining the historical week-* URL as a redirect alias.
+    if (!shouldNoindexBlogSlug(canonicalSlug)) {
+      if (!shouldIncludeBlogSlugInSitemap(canonicalSlug)) {
+        fail(canonicalPath, 'quality-promoted blog is not sitemap eligible');
+      }
+      if (!isInSitemap(canonicalPath)) {
+        fail(canonicalPath, 'quality-promoted blog is missing from canonical sitemaps');
+      }
+      if (hasNoindexHeader(canonicalPath)) {
+        fail(canonicalPath, 'quality-promoted blog is blocked by an exact X-Robots-Tag noindex header');
+      }
+      continue;
+    }
+
     if (shouldIncludeBlogSlugInSitemap(canonicalSlug)) fail(canonicalPath, 'archived roadmap post is still eligible for sitemap inclusion');
     if (isInSitemap(canonicalPath)) fail(canonicalPath, 'archived roadmap post appears in a canonical sitemap');
     continue;
@@ -157,7 +174,7 @@ if (GSC_CRAWLED_NOT_INDEXED_URLS.length !== 52) {
 }
 
 if (GSC_INDEX_TARGETS.length !== 23) {
-  problems.push(`manifest: expected 23 index targets, found ${GSC_INDEX_TARGETS.length}`);
+  problems.push(`manifest: expected 23 historical remediation index targets, found ${GSC_INDEX_TARGETS.length}`);
 }
 
 for (const target of GSC_INDEX_TARGETS) {
@@ -169,7 +186,7 @@ for (const target of GSC_INDEX_TARGETS) {
 
 const nonIndexRows = GSC_CRAWLED_NOT_INDEXED_URLS.filter((row) => row.action !== 'index');
 for (const row of nonIndexRows) {
-  if (isInSitemap(row.path)) fail(row.path, 'non-index target leaked into canonical sitemap set');
+  if (isInSitemap(row.path)) fail(row.path, 'historical non-index URL leaked into canonical sitemap set');
 }
 
 console.log(`[gsc-crawled-audit] snapshot=${GSC_CRAWLED_NOT_INDEXED_AUDIT_DATE}`);
@@ -183,4 +200,4 @@ if (problems.length) {
   process.exit(1);
 }
 
-console.log('[gsc-crawled-audit] PASS: all 52 historical GSC URLs resolve to the intended canonical index/redirect/archive/resource policy and only the 23 remediation targets remain eligible for submission.');
+console.log('[gsc-crawled-audit] PASS: all 52 historical GSC URLs resolve to the intended redirect/archive/resource policy; later quality-promoted clean blog URLs may additionally be indexable without rewriting the historical snapshot.');
