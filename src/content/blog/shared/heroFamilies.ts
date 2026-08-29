@@ -1,4 +1,5 @@
 import type { BlogPost } from '../types';
+import { getLegacyWeekSourceSlug } from '../../../lib/blogWeekRenames.js';
 
 export type BlogHeroFamily =
   | 'satpin-letter-sounds'
@@ -111,7 +112,9 @@ export const AVAILABLE_BLOG_HERO_FAMILY_ASSETS: ReadonlySet<BlogHeroFamily> = ne
 ]);
 
 export function getBlogHeroFamily(post: HeroFamilyPost): BlogHeroFamily | undefined {
-  const explicitFamily = BLOG_HERO_FAMILY_BY_SLUG[post.slug];
+  const sourceSlug = getLegacyWeekSourceSlug(post.slug);
+  const explicitFamily = BLOG_HERO_FAMILY_BY_SLUG[post.slug]
+    ?? (sourceSlug ? BLOG_HERO_FAMILY_BY_SLUG[sourceSlug] : undefined);
   if (explicitFamily) return explicitFamily;
 
   if (post.audience === 'Schools & Research' || post.discoveryCategory === 'Schools & Research') {
