@@ -22,7 +22,16 @@ describe('blog indexing policy', () => {
     }
   });
 
-  it('keeps renamed roadmap support pages noindex and out of the sitemap', () => {
+  it('promotes quality-audited roadmap articles only on their cleaned public URLs', () => {
+    expect(shouldNoindexBlogSlug('prevent-summer-slide-reading')).toBe(false);
+    expect(shouldIncludeBlogSlugInSitemap('prevent-summer-slide-reading')).toBe(true);
+
+    // Historical source stays a redirect-era identifier rather than an indexable page.
+    expect(shouldNoindexBlogSlug('week-27-prevent-summer-slide-reading')).toBe(true);
+    expect(shouldIncludeBlogSlugInSitemap('week-27-prevent-summer-slide-reading')).toBe(false);
+  });
+
+  it('keeps remaining renamed roadmap support pages noindex and out of the sitemap', () => {
     for (const slug of [
       'phonics-long-vowels',
       'phonics-r-controlled',
