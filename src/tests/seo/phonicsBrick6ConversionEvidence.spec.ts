@@ -102,6 +102,11 @@ describe('Phonics Brick 6 conversion-evidence guardrails', () => {
     ]) {
       expect(bookDemo, token).toContain(token);
     }
+
+    // ISO-8601 duration must stay derived from the canonical public-offer constant.
+    // Do not reintroduce a second hard-coded 35-minute source of truth in the page.
+    expect(bookDemo).toContain('duration: `PT${FREE_DEMO_DURATION_MINUTES}M`');
+    expect(bookDemo).not.toContain("duration: 'PT35M'");
   });
 
   it('protects the four-part decision evidence path without adding a new route', () => {
