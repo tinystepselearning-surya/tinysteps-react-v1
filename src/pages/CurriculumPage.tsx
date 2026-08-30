@@ -27,6 +27,11 @@ type RoadmapProgram = {
   courses: RoadmapCourse[];
 };
 
+type TeachingMethodStep = {
+  title: string;
+  description: string;
+};
+
 const curriculumSeo = getRouteConfig('/curriculum');
 const curriculumSeoTitle = curriculumSeo?.title ?? 'English Curriculum for Kids Ages 3–12 | Tiny Steps Learning';
 const curriculumSeoDescription =
@@ -50,6 +55,16 @@ const curriculumFaqItems = [
     question: 'How are Phonics, Grammar, and Speaking connected?',
     answer:
       'Phonics supports accurate word reading, grammar helps children build and control sentences, and speaking practice helps them organise and express those ideas clearly. Children can enter at the pathway that matches their current need.',
+  },
+  {
+    question: 'What is the difference between curriculum and teaching methodology?',
+    answer:
+      'The curriculum explains what children learn, the prerequisites, and the order in which skills become more complex. Teaching methodology explains how teachers model the skill, guide practice, correct errors, adjust support, and help the child apply the skill more independently.',
+  },
+  {
+    question: 'How does Tiny Steps turn the curriculum into a live lesson?',
+    answer:
+      'Teachers begin from the child’s assessed starting point, secure prerequisites when needed, model the target skill, guide practice and retries, give specific correction, then reduce support as the child becomes more accurate and independent.',
   },
   {
     question: 'How long is each live class?',
@@ -80,9 +95,42 @@ const quickAnswers = [
       'No. A child who already reads may start with grammar, sentence formation, reading fluency, or speaking support. The assessment is used to identify the most useful entry point.',
   },
   {
+    question: 'How is the roadmap taught in a live class?',
+    answer:
+      'Teachers follow the shared learning objective and progression, then adapt modelling, prompts, examples, repetition, practice time, and pace to the child’s current response.',
+  },
+  {
     question: 'Where can I see the exact lesson sequence?',
     answer:
       'Use the detailed course pages for the exact lesson-by-lesson sequence. This curriculum page stays focused on the full roadmap, progression logic, and how the programs connect.',
+  },
+];
+
+const teachingMethodSteps: TeachingMethodStep[] = [
+  {
+    title: 'Assess the starting point',
+    description:
+      'Identify what the child can already do, where accuracy breaks down, and which prerequisite or pathway needs attention first.',
+  },
+  {
+    title: 'Secure prerequisites',
+    description:
+      'Revisit an earlier sound, pattern, sentence skill, or speaking behaviour when the next target depends on a foundation that is not yet secure.',
+  },
+  {
+    title: 'Model the target skill',
+    description:
+      'Make the thinking and response visible through clear examples before asking the child to complete the new skill independently.',
+  },
+  {
+    title: 'Practise, correct, and retry',
+    description:
+      'Use guided practice, specific feedback, and another attempt so errors become useful teaching information rather than something to skip past.',
+  },
+  {
+    title: 'Apply and reduce support',
+    description:
+      'Move the skill into reading, spelling, sentences, speaking, or connected tasks and gradually reduce prompts as accuracy and independence become more secure.',
   },
 ];
 
@@ -224,7 +272,7 @@ const CurriculumPage: FC = () => {
   const webpageSchema = createWebPageSchema({
     name: 'Tiny Steps English Curriculum and Learning Roadmap (Ages 3–12)',
     description:
-      'The complete Tiny Steps learning roadmap connecting phonics and reading foundations, grammar and sentence building, and speaking and communication through assessment-led progression.',
+      'The complete Tiny Steps learning roadmap connecting phonics and reading foundations, grammar and sentence building, and speaking and communication through assessment-led progression and child-responsive live teaching.',
     url: curriculumCanonicalUrl,
   });
 
@@ -242,6 +290,20 @@ const CurriculumPage: FC = () => {
     })),
   };
 
+  const teachingMethodSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    '@id': `${curriculumCanonicalUrl}#teaching-method`,
+    name: 'Tiny Steps curriculum-to-classroom teaching method',
+    itemListOrder: 'https://schema.org/ItemListOrderAscending',
+    itemListElement: teachingMethodSteps.map((step, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: step.title,
+      description: step.description,
+    })),
+  };
+
   const faqSchema = {
     ...createFAQPageSchema(curriculumFaqItems),
     '@id': `${curriculumCanonicalUrl}#faq`,
@@ -253,7 +315,7 @@ const CurriculumPage: FC = () => {
         title={curriculumSeoTitle}
         description={curriculumSeoDescription}
         canonical={curriculumCanonicalUrl}
-        jsonLd={[breadcrumbSchema, webpageSchema, roadmapSchema, faqSchema]}
+        jsonLd={[breadcrumbSchema, webpageSchema, roadmapSchema, teachingMethodSchema, faqSchema]}
       />
 
       <section className="mx-auto max-w-6xl px-4 pb-8 pt-8 sm:px-6">
@@ -261,7 +323,7 @@ const CurriculumPage: FC = () => {
           <div className="gradient-chip mx-auto mb-4 w-max">Ages 3–12 • Assessment-led placement</div>
           <h1 className="font-heading text-3xl md:text-5xl">The complete Tiny Steps learning roadmap</h1>
           <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-gray-700 md:text-lg">
-            See how Phonics & Reading, Grammar & Sentence Building, and Speaking & Communication connect—and which detailed course owns the next level of learning.
+            See how Phonics & Reading, Grammar & Sentence Building, and Speaking & Communication connect—and which detailed course shows the next level of learning.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link to="/book-demo" className="rounded-full bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm">
@@ -277,7 +339,7 @@ const CurriculumPage: FC = () => {
       <section className="mx-auto max-w-6xl px-4 pb-10 sm:px-6">
         <div className="glass-panel p-6 md:p-8">
           <h2 className="text-2xl font-semibold text-gray-900">Quick answers for parents</h2>
-          <div className="mt-5 grid gap-4 md:grid-cols-3">
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {quickAnswers.map((item) => (
               <article key={item.question} className="rounded-2xl border border-gray-200 bg-white/85 p-5 shadow-sm">
                 <h3 className="text-base font-semibold text-gray-900">{item.question}</h3>
@@ -289,6 +351,45 @@ const CurriculumPage: FC = () => {
       </section>
 
       <ContentTrustNote text="This roadmap is maintained by the Tiny Steps academic team and reviewed by the founder. It is built around prerequisites, structured progression, learner observation and evidence-informed educational principles. Teachers preserve the learning sequence while adapting modelling, prompts, repetition, practice time and pace to the child’s readiness." />
+
+      <section id="teaching-method" className="mx-auto max-w-6xl px-4 py-10 sm:px-6" aria-labelledby="teaching-method-heading">
+        <div className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-sm md:p-8">
+          <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Curriculum → classroom practice</p>
+              <h2 id="teaching-method-heading" className="mt-2 text-2xl font-semibold text-gray-900 sm:text-3xl">How the roadmap becomes classroom teaching</h2>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-gray-700 md:text-base">
+                Curriculum explains <strong>what</strong> children learn, which prerequisites come first, and how skills become more complex. Teaching methodology explains <strong>how</strong> a teacher models the skill, guides practice, corrects errors, adapts support, and helps the child apply it with increasing independence.
+              </p>
+            </div>
+            <p className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 text-sm leading-6 text-slate-700">
+              The sequence stays structured, but the pace is responsive. A child can spend longer on a prerequisite or move forward when the underlying skill is secure.
+            </p>
+          </div>
+
+          <ol className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            {teachingMethodSteps.map((step, index) => (
+              <li key={step.title} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">{index + 1}</span>
+                <h3 className="mt-4 text-base font-semibold text-slate-900">{step.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-700">{step.description}</p>
+              </li>
+            ))}
+          </ol>
+
+          <div className="mt-7 flex flex-wrap gap-3 border-t border-slate-200 pt-6 text-sm font-semibold">
+            <Link to="/team" className="text-primary-600 underline underline-offset-4">
+              See the academic design and teacher-support system
+            </Link>
+            <Link to="/class-samples" className="text-primary-600 underline underline-offset-4">
+              Watch real class samples
+            </Link>
+            <Link to="/phonics" className="text-primary-600 underline underline-offset-4">
+              Explore the Phonics & Reading program
+            </Link>
+          </div>
+        </div>
+      </section>
 
       <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6" aria-labelledby="programs-heading">
         <div className="text-center">
@@ -363,7 +464,7 @@ const CurriculumPage: FC = () => {
       <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6" aria-labelledby="levels-heading">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Detailed course owners</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">Detailed course levels</p>
             <h2 id="levels-heading" className="mt-2 text-2xl font-semibold text-gray-900 sm:text-3xl">{selectedProgram.label} levels</h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-700 md:text-base">
               This roadmap shows where each level fits. Open the detailed course page for the exact lesson sequence, activities, level-specific FAQs, and course outcomes.
