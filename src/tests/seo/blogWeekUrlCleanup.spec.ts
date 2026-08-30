@@ -27,7 +27,7 @@ const indexableRenamedSlugs = new Set([
   'phonics-multisyllabic',
   'phonics-blending-club',
   'phonics-summer-plan',
-  'tricky-words-phonics',
+  'phonics-tricky-words',
 ]);
 
 describe('weekly blog title and URL cleanup', () => {
