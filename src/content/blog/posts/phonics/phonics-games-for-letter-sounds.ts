@@ -9,7 +9,7 @@ const post: BlogPost = {
   modifiedDate: '2026-08-30',
   readTime: '16 min read',
   hero: '/blog/hero-phonics.jpg',
-  metaDescription: 'Use simple phonics games to strengthen letter-sound recall, sound-to-print mapping and early word transfer without fixed minutes, sound counts or mastery claims.',
+  metaDescription: 'Use phonics games to strengthen letter-sound recall, sound-to-print mapping and early word transfer without fixed minutes, sound counts or mastery claims.',
   excerpt: 'A practical parent guide to letter-sound games: practise both directions, use blendable pronunciations, connect a small taught set to words and track fresh transfer.',
   body: [
     { type: 'h2', content: 'Quick answer: letter-sound games should make the sound–print link easier to retrieve and use' },
