@@ -31,6 +31,7 @@ const QUALITY_PROMOTED_PUBLIC_SLUGS = new Set([
   'prevent-summer-slide-reading',
   'phonics-blending-club',
   'phonics-diagnostics',
+  'phonics-long-vowels',
   'phonics-multisyllabic',
   'phonics-summer-plan',
   'phonics-tricky-words',
