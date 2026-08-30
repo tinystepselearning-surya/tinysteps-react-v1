@@ -77,7 +77,7 @@ export default function ProgramFacts({
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Service Area</p>
                 <p className="mt-1 text-base font-semibold text-slate-900">{PUBLIC_FACTS.geography}</p>
                 <p className="mt-1 text-xs leading-relaxed text-slate-600">
-                  Live online delivery is not limited to one city; families can join from major Indian cities and from other countries where class timings are suitable.
+                  Live online delivery is not limited to one city. Families can join from across major Indian metros and cities, as well as from other countries where class timings are suitable.
                 </p>
               </div>
             </div>
