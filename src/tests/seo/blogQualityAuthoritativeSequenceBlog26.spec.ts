@@ -63,7 +63,7 @@ describe('authoritative Blog #26 quality lock', () => {
     expect(evidence.externalSourceCount).toBeGreaterThanOrEqual(4);
     expect(body).toContain('there is no required home-assessment duration');
     expect(body).toContain('pretend words');
-    expect(body).toContain('do not compare a home pseudo-word score with a school screening threshold');
+    expect(body).toMatch(/do not turn this into a statutory-style test or compare a home pseudo-word score with a school screening threshold/i);
     expect(body).toContain('treat that as a separate context check rather than proof of phonics mastery or a comprehension diagnosis');
     expect(body).toContain('If word reading is accurate but meaning repeatedly breaks down, phonics may no longer be the main bottleneck.');
     expect(body).toContain('This checklist cannot identify a medical, developmental or learning diagnosis.');
