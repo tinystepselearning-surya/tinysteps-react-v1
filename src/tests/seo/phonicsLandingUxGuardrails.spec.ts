@@ -16,6 +16,20 @@ describe('Phonics landing narrative and UX guardrails', () => {
     expect(page).not.toContain('ages 3–10');
   });
 
+  it('keeps India-wide reach while making global online availability visible', () => {
+    const page = read('src/pages/phonics.tsx');
+    const facts = read('src/components/programs/ProgramFacts.tsx');
+    const schemas = read('src/lib/schemas.ts');
+
+    expect(page).toContain('Online phonics classes for kids across India');
+    expect(page).toContain('Hyderabad, Bengaluru, Chennai, Mumbai, Delhi, Pune, Kolkata, and other locations');
+    expect(facts).toContain("{PUBLIC_FACTS.geography}");
+    expect(facts).toContain('Live online delivery is not limited to one city');
+    expect(facts).toContain('major Indian cities and from other countries');
+    expect(schemas).toContain("geography: 'learners in India and globally online'");
+    expect(schemas).toContain("areaServed: ['IN', 'Worldwide']");
+  });
+
   it('keeps Brick 1 authority content and ownership intact while UX work proceeds around it', () => {
     const page = read('src/pages/phonics.tsx');
     const brick1 = read('src/tests/seo/phonicsBrick1Authority.spec.ts');
