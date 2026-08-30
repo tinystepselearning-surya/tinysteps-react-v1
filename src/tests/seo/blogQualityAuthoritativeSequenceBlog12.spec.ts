@@ -57,6 +57,7 @@ describe('authoritative Blog #12 quality lock', () => {
     expect(body).toContain('Outside England, those documents are useful implementation references rather than rules');
     expect(body).toContain('not a diagnostic or standardized placement tool');
     expect(body).toContain('They do not establish that online phonics is universally superior to school teaching');
+    expect(body).toContain('Neither setting should keep adding beginner phonics indefinitely when decoding is already accurate');
     expect(body).toContain('Neither setting should keep adding beginner phonics indefinitely');
     expect(body).toContain('the solution is not simply “more phonics.”');
     expect(body).toContain('appropriate professional review');

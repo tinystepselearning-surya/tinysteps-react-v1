@@ -29,8 +29,14 @@ const INDEXABLE_RENAMED_WEEKLY_PUBLIC_SLUGS = new Set([
  */
 const QUALITY_PROMOTED_PUBLIC_SLUGS = new Set([
   'prevent-summer-slide-reading',
+  'phonics-blending-club',
+  'phonics-comprehension',
   'phonics-diagnostics',
+  'phonics-long-vowels',
   'phonics-multisyllabic',
+  'phonics-r-controlled',
+  'phonics-summer-plan',
+  'phonics-tricky-words',
 ]);
 
 const RENAMED_WEEKLY_PUBLIC_SLUGS = new Set(LEGACY_WEEK_PUBLIC_SLUGS);

@@ -14,6 +14,8 @@ type SeoConfig = {
   robots?: string; // optional explicit robots value (e.g. "noindex, nofollow")
   ogType?: "website" | "article";
   ogImage?: string; // absolute or "/..." path
+  articlePublishedTime?: string;
+  articleModifiedTime?: string;
   jsonLd?: object | object[];
 };
 
@@ -265,6 +267,14 @@ export function applySeo(cfg: SeoConfig) {
   upsertMeta('meta[property="og:type"]', { property: 'og:type', content: cfg.ogType ?? 'website' });
   upsertMeta('meta[property="og:site_name"]', { property: 'og:site_name', content: PUBLIC_FACTS.brandName });
   upsertMeta('meta[property="og:locale"]', { property: 'og:locale', content: 'en_IN' });
+  upsertMeta('meta[property="article:published_time"]', {
+    property: 'article:published_time',
+    content: cfg.ogType === 'article' ? cfg.articlePublishedTime : undefined,
+  });
+  upsertMeta('meta[property="article:modified_time"]', {
+    property: 'article:modified_time',
+    content: cfg.ogType === 'article' ? cfg.articleModifiedTime : undefined,
+  });
 
   // Twitter metadata: keep in sync with OG but allow pages to override via cfg
   upsertMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: cfg.title });

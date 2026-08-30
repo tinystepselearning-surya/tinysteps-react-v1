@@ -44,6 +44,7 @@ describe('authoritative Blog #13 quality lock', () => {
     expect(body).toContain('/blog/phonics-activities-for-kids-at-home');
 
     expect(body).not.toMatch(/4\s*[-–]\s*6 weeks/i);
+    expect(body).toContain('it does not justify claiming that any particular game format guarantees reading progress.');
     expect(hasUnsupportedReadingGuarantee(body)).toBe(false);
     expect(hasUnsupportedReadingGuarantee('This game guarantees reading progress.')).toBe(true);
     expect(hasUnsupportedReadingGuarantee('The programme guarantees fluency.')).toBe(true);

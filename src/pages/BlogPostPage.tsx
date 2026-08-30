@@ -686,6 +686,8 @@ function buildMetaDescription(src: any) {
       canonicalPath: canonical,
       robots: shouldNoindexBlogSlug(slug) ? 'noindex, follow' : undefined,
       ogType: 'article',
+      articlePublishedTime: source.date ? isoDateFromYMD(source.date) : undefined,
+      articleModifiedTime: source.modifiedDate ? isoDateFromYMD(source.modifiedDate) : undefined,
       jsonLd,
     });
 

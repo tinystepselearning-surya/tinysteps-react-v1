@@ -23,8 +23,14 @@ const indexableRenamedSlugs = new Set([
   'grammar-nouns-to-paragraphs',
   'speaking-confidence-seeds',
   'prevent-summer-slide-reading',
+  'phonics-comprehension',
   'phonics-diagnostics',
+  'phonics-long-vowels',
   'phonics-multisyllabic',
+  'phonics-blending-club',
+  'phonics-r-controlled',
+  'phonics-summer-plan',
+  'phonics-tricky-words',
 ]);
 
 describe('weekly blog title and URL cleanup', () => {

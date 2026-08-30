@@ -25,8 +25,14 @@ describe('blog indexing policy', () => {
   it('promotes quality-audited roadmap articles only on their cleaned public URLs', () => {
     for (const [cleanSlug, legacySlug] of [
       ['prevent-summer-slide-reading', 'week-27-prevent-summer-slide-reading'],
+      ['phonics-blending-club', 'week-2-phonics-blending-club'],
+      ['phonics-comprehension', 'week-6-phonics-comprehension'],
       ['phonics-diagnostics', 'week-22-phonics-diagnostics'],
+      ['phonics-long-vowels', 'week-4-phonics-long-vowels'],
       ['phonics-multisyllabic', 'week-19-phonics-multisyllabic'],
+      ['phonics-r-controlled', 'week-5-phonics-r-controlled'],
+      ['phonics-summer-plan', 'week-16-phonics-summer-plan'],
+      ['phonics-tricky-words', 'week-3-phonics-tricky-words'],
     ]) {
       expect(shouldNoindexBlogSlug(cleanSlug)).toBe(false);
       expect(shouldIncludeBlogSlugInSitemap(cleanSlug)).toBe(true);
@@ -39,8 +45,6 @@ describe('blog indexing policy', () => {
 
   it('keeps remaining renamed roadmap support pages noindex and out of the sitemap', () => {
     for (const slug of [
-      'phonics-long-vowels',
-      'phonics-r-controlled',
       'grammar-tenses',
       'speaking-visual-aids',
       'screen-smart-summer-routine-for-kids',
@@ -51,7 +55,7 @@ describe('blog indexing policy', () => {
   });
 
   it('continues to recognize old weekly source slugs during redirect migration', () => {
-    for (const slug of ['week-4-phonics-long-vowels', 'week-5-phonics-r-controlled', 'week-8-grammar-tenses']) {
+    for (const slug of ['week-4-phonics-long-vowels', 'week-5-phonics-r-controlled', 'week-6-phonics-comprehension', 'week-8-grammar-tenses']) {
       expect(shouldNoindexBlogSlug(slug)).toBe(true);
       expect(shouldIncludeBlogSlugInSitemap(slug)).toBe(false);
     }

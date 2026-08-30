@@ -100,6 +100,7 @@ function parseBlogItemsFromSource() {
     const publicTitle = getPublicBlogTitle(sourceSlug, sourceTitle);
     const title = getOptimizedBlogTitle(slug, publicTitle);
     const dateFromPost = extractSingleQuotedField(content, 'date');
+    const modifiedDate = extractSingleQuotedField(content, 'modifiedDate');
     const date = dateFromPost || publicationDates.get(sourceSlug) || '';
     if (date && date > todayIso) continue;
     const excerpt = extractSingleQuotedField(content, 'excerpt');
@@ -107,7 +108,14 @@ function parseBlogItemsFromSource() {
     const quickAnswer = extractSingleQuotedField(content, 'quickAnswer');
     const description = metaDescription || excerpt || quickAnswer || SITE_DESCRIPTION;
     const url = toCanonicalAbsoluteUrl(`/blog/${slug}`);
-    itemsByUrl.set(url, { title, description, link: url, pubDate: date ? new Date(`${date}T00:00:00Z`).toUTCString() : undefined, sortDate: date || '1970-01-01' });
+    itemsByUrl.set(url, {
+      title,
+      description,
+      link: url,
+      pubDate: date ? new Date(`${date}T00:00:00Z`).toUTCString() : undefined,
+      updatedDate: modifiedDate ? `${modifiedDate}T00:00:00Z` : undefined,
+      sortDate: modifiedDate || date || '1970-01-01',
+    });
   }
   return [...itemsByUrl.values()].sort((a, b) => b.sortDate.localeCompare(a.sortDate));
 }
@@ -130,7 +138,13 @@ function mergeUniqueItems(items) {
     if (!item?.link) continue;
     const link = toCanonicalAbsoluteUrl(item.link);
     if (map.has(link)) continue;
-    map.set(link, { title: normalizeText(item.title || SITE_TITLE), description: normalizeText(item.description || SITE_DESCRIPTION), link, pubDate: item.pubDate });
+    map.set(link, {
+      title: normalizeText(item.title || SITE_TITLE),
+      description: normalizeText(item.description || SITE_DESCRIPTION),
+      link,
+      pubDate: item.pubDate,
+      updatedDate: item.updatedDate,
+    });
   }
   return [...map.values()];
 }
@@ -140,6 +154,7 @@ function buildRssXml({ title, description, feedPath, items }) {
   const itemXml = items.map((item) => {
     const parts = ['    <item>', `      <title>${escapeXml(item.title)}</title>`, `      <link>${escapeXml(item.link)}</link>`, `      <guid isPermaLink="true">${escapeXml(item.link)}</guid>`, `      <description>${escapeXml(item.description)}</description>`];
     if (item.pubDate) parts.push(`      <pubDate>${escapeXml(item.pubDate)}</pubDate>`);
+    if (item.updatedDate) parts.push(`      <atom:updated>${escapeXml(item.updatedDate)}</atom:updated>`);
     parts.push('    </item>');
     return parts.join('\n');
   }).join('\n');
