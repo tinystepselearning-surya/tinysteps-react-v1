@@ -196,7 +196,7 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
       { label: 'Compare all phonics levels', to: '/phonics' },
       { label: 'View the full curriculum roadmap', to: '/curriculum' },
       { label: 'How kids learn blending', to: '/blog/how-kids-learn-blending' },
-      { label: 'Digraphs and tricky words for parents', to: '/blog/digraphs-and-tricky-words-what-to-decode-and-what-to-remember' },
+      { label: 'Digraphs and tricky words for parents', to: '/blog/digraphs-and-tricky-words' },
       { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
     ],
     faq: [
@@ -294,7 +294,7 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
       { label: 'See the complete Tiny Steps phonics program', to: '/phonics' },
       { label: 'View the full curriculum roadmap', to: '/curriculum' },
       { label: 'Reading fluency support', to: '/reading-fluency-program' },
-      { label: 'How to help kids read multisyllabic words', to: '/blog/how-to-help-kids-read-multisyllabic-words-simple-chunking-practice' },
+      { label: 'How to help kids read multisyllabic words', to: '/blog/week-19-phonics-multisyllabic' },
       { label: 'Long vowel sounds for kids', to: '/blog/long-vowel-sounds-for-kids' },
       { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
     ],
