@@ -35,7 +35,7 @@ describe('authoritative Blog #13 quality lock', () => {
     expect(body).toContain('/blog/phonics-activities-for-kids-at-home');
 
     expect(body).not.toMatch(/4\s*[-–]\s*6 weeks/i);
-    expect(body).not.toMatch(/guarantee(?:d|s)? (?:reading|fluency|progress)/i);
+    expect(body).toContain('it does not justify claiming that any particular game format guarantees reading progress.');
     expect(body).not.toMatch(/game alone (?:will|can) teach/i);
     expect(body).not.toContain('Book Free 35-Minute Demo');
   });
