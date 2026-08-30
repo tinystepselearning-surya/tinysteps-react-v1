@@ -12,15 +12,12 @@ The programme numbering is locked to the founder-supplied **authoritative 76-blo
 
 The full fixed order lives in `docs/seo/blog-quality/AUTHORITATIVE_76_SEQUENCE.md`.
 
-Previous refresh PRs #158–#161 remain valid content improvements, but they do not define the authoritative blog numbering.
-
 ## Delivery model — 10 blogs per merge batch
 
 Batch #1 uses one branch and one PR for Blogs #1–#10:
 
 - Branch: `seo/blog-quality-sequence-01-benefits-phonics`
 - PR: `#163`
-- No individual blog merge while the batch is incomplete.
 - Each blog receives focused regression coverage when locked.
 - The decisive full exact-head CI/SEO gate runs after Blog #10.
 - Merge to `main` requires explicit founder approval for the complete batch.
@@ -43,132 +40,108 @@ Batch #1 uses one branch and one PR for Blogs #1–#10:
 
 Target: **90+/100** with no factual, pedagogical, evidence, diagnosis-boundary, trust, cannibalization or misleading-timeline hard fail.
 
-## Batch #1 progress — Blogs #1–#10
+## Batch #1 final scorecard — Blogs #1–#10
 
-| # | Article | Baseline | Status | Main action | Score after refresh |
-|---:|---|---:|---|---|---:|
-| 1 | Benefits of Phonics for Kids: What Parents Usually Notice First | 57/100 | **LOCKED IN BATCH** | Realistic phonics-benefits owner; removes fixed outcome timelines, separates decoding/spelling/fluency/comprehension, adds transfer signals and evidence | **95/100** |
-| 2 | Child Knows ABC but Cannot Read: What Parents Should Check First | 65/100 | **LOCKED IN BATCH** | ABC-to-reading bottleneck owner; six-step recognition→sound→oral blend→print→fresh word→text check; clear boundary with Blog #50 | **96/100** |
-| 3 | CVC Words Explained for Parents: The First Real Decoding Milestone | 65/100 | **LOCKED IN BATCH** | Accurate CVC definition; six-step hear→map→blend→fresh word→encode→text ladder; word-family and transfer boundaries | **96/100** |
-| 4 | Digraphs and Tricky Words: What to Decode and What to Remember | 64/100 | **LOCKED IN BATCH** | Distinguishes digraphs, blends, high-frequency and tricky words; four-question decode-or-remember rule; protects Blog #28 tricky-word routine intent | **96/100** |
-| 5 | How Kids Learn Blending: The Stage-by-Stage Path Parents Can Track | 66/100 | **LOCKED IN BATCH** | Five-stage oral→print→continuous→fresh-word→text blending pathway; stage-exit signals replace fixed days/weeks; error interpretation and evidence | **96/100** |
-| 6 | How Long Does Phonics Take? A Realistic Parent Guide to Progress | 74/100 | **LOCKED IN BATCH** | Separates current-target, full-progression and fluent-reading timelines; replaces calendar promises with progress-to-time signals, evidence and provider accountability | **96/100** |
-| 7 | How Phonics Builds Reading Confidence: What Changes First at Home | 68/100 | **LOCKED IN BATCH** | Separates decoding competence from confidence, removes unsupported success ratios/daily dosage, adds five observable confidence signals, home-response guidance, evidence and causal boundaries | **96/100** |
-| 8 | How Phonics Classes Help Kids Read: Decoding, Blending and Fluency Explained | 67/100 | **LOCKED IN BATCH** | Rebuilt as the class-to-reading mechanism owner; six-part start→teach→blend/segment→fresh word→matched text→review chain; separates decoding, fluency and comprehension; adds transfer evidence and class-shopping boundary | **96/100** |
-| 9 | How Phonics Improves Spelling: A Parent Encoding Roadmap | — | QUEUED | — | — |
-| 10 | How to Choose a Phonics Class: The Complete Parent Comparison Framework | — | QUEUED | — | — |
+| # | Article | Baseline | Status | Score after refresh |
+|---:|---|---:|---|---:|
+| 1 | Benefits of Phonics for Kids: What Parents Usually Notice First | 57/100 | **LOCKED IN BATCH** | **95/100** |
+| 2 | Child Knows ABC but Cannot Read: What Parents Should Check First | 65/100 | **LOCKED IN BATCH** | **96/100** |
+| 3 | CVC Words Explained for Parents: The First Real Decoding Milestone | 65/100 | **LOCKED IN BATCH** | **96/100** |
+| 4 | Digraphs and Tricky Words: What to Decode and What to Remember | 64/100 | **LOCKED IN BATCH** | **96/100** |
+| 5 | How Kids Learn Blending: The Stage-by-Stage Path Parents Can Track | 66/100 | **LOCKED IN BATCH** | **96/100** |
+| 6 | How Long Does Phonics Take? A Realistic Parent Guide to Progress | 74/100 | **LOCKED IN BATCH** | **96/100** |
+| 7 | How Phonics Builds Reading Confidence: What Changes First at Home | 68/100 | **LOCKED IN BATCH** | **96/100** |
+| 8 | How Phonics Classes Help Kids Read: Decoding, Blending and Fluency Explained | 67/100 | **LOCKED IN BATCH** | **96/100** |
+| 9 | How Phonics Improves Spelling: A Parent Encoding Roadmap | 62/100 | **LOCKED IN BATCH** | **96/100** |
+| 10 | How to Choose a Phonics Class: The Complete Parent Comparison Framework | 79/100 | **LOCKED IN BATCH** | **97/100** |
 
-## Blog #1 — locked
+### Batch quality movement
 
-**Canonical role:** `/blog/benefits-of-phonics-for-kids` owns the question: *What benefits of phonics should parents realistically notice, and what tends to change first?*
+- Baseline total: **667/1000**
+- Final total: **960/1000**
+- Baseline average: **66.7/100**
+- Final average: **96.0/100**
+- Total quality gain: **+293 points**
+- All 10 retained articles: **95+/100**
 
-**Final decision: 95/100 — LOCKED IN BATCH.**
+## Canonical intent map — Blogs #1–#10
 
-## Blog #2 — locked
+1. `/blog/benefits-of-phonics-for-kids` → realistic observable phonics benefits.
+2. `/blog/child-knows-abc-but-cannot-read` → broad alphabet-familiarity-to-decoding bottleneck.
+3. `/blog/cvc-words-explained-for-parents` → CVC definition and first simple printed-word decoding milestone.
+4. `/blog/digraphs-and-tricky-words` → what remains decodable versus what needs extra attention/memory.
+5. `/blog/how-kids-learn-blending` → stage-by-stage blending development and stage-exit decisions.
+6. `/blog/how-long-does-phonics-take` → realistic interpretation of phonics duration and progress.
+7. `/blog/how-phonics-builds-reading-confidence` → reading-confidence behaviour without claiming confidence is guaranteed by phonics.
+8. `/blog/how-phonics-classes-help-kids-read` → instructional mechanism from taught correspondences to independent reading transfer.
+9. `/blog/how-phonics-improves-spelling` → encoding/spelling roadmap and error interpretation.
+10. `/blog/how-to-choose-phonics-classes` → complete parent provider/class comparison and purchase framework.
 
-**Canonical role:** `/blog/child-knows-abc-but-cannot-read` owns the broad alphabet-familiarity-to-first-decoding bottleneck.
+## Blog #9 — locked
 
-**Final decision: 96/100 — LOCKED IN BATCH.**
+**Canonical role:** `/blog/how-phonics-improves-spelling` owns the parent question: *How does phonics support spelling, what is encoding, and what do different spelling errors tell me about the next teaching step?*
 
-## Blog #3 — locked
+### Key quality decisions
 
-**Canonical role:** `/blog/cvc-words-explained-for-parents` owns the CVC definition and first simple printed-word decoding milestone.
-
-**Final decision: 96/100 — LOCKED IN BATCH.**
-
-## Blog #4 — locked
-
-**Canonical role:** `/blog/digraphs-and-tricky-words` owns the conceptual parent decision: *Which parts should my child decode and which parts genuinely need extra memory?*
-
-**Final decision: 96/100 — LOCKED IN BATCH.**
-
-## Blog #5 — locked
-
-**Canonical role:** `/blog/how-kids-learn-blending` owns the developmental and instructional progression from hearing separate phonemes to independently blending printed words and carrying that strategy into connected text.
-
-**Final decision: 96/100 — LOCKED IN BATCH.**
-
-## Blog #6 — locked
-
-**Canonical role:** `/blog/how-long-does-phonics-take` owns the parent question: *How should I think about phonics duration without relying on a universal deadline?*
-
-The article separates current-target time, full-progression time and fluent-reading time, then uses starting point, accuracy, independence, transfer and retention instead of fixed calendars.
-
-**Final decision: 96/100 — LOCKED IN BATCH.**
-
-## Blog #7 — locked
-
-**Canonical role:** `/blog/how-phonics-builds-reading-confidence` owns the parent question: *How can improved decoding show up as reading-confidence behaviour at home, and what should I watch for without assuming confidence is guaranteed?*
-
-Key decisions: separates decoding competence from confidence; removes unsupported daily dosage and accuracy thresholds; adds starting, strategy-use, retry, independence and transfer signals; distinguishes decoding difficulty from reading-aloud pressure; preserves rich adult read-alouds; adds evidence and non-diagnostic boundaries.
+- Converted the article from the generic `PhonicsSeoPost` generator into a direct editorial `BlogPost`.
+- Removed unsupported weeks 1–10 progress promises, the 6–8 week support trigger and fixed daily word-count advice.
+- Defines encoding as segmenting spoken words into phonemes and mapping them to graphemes in sequence.
+- Adds the Tiny Steps six-step encoding roadmap: whole word → segment phonemes → map taught graphemes → choose alternatives → write in order → verify and transfer.
+- Adds an error map distinguishing omitted phonemes, order errors, phonically plausible alternatives, taught-pattern confusion, exception-word errors and morphology errors.
+- Explains why reading can develop ahead of spelling and why English spelling eventually requires more than phonics alone.
+- Replaces the unsupported “dictation is better than copying” claim with a purpose-based distinction between independent retrieval and copying/handwriting practice.
+- Adds evidence from DfE Reading Framework, DfE National Curriculum, IES/WWC, UFLI and EEF.
+- Adds five answer-engine FAQs, founder authorship, updated metadata and focused regression coverage.
 
 **Final decision: 96/100 — LOCKED IN BATCH.**
 
-## Blog #8 — locked
+## Blog #10 — locked
 
-**Canonical role:** `/blog/how-phonics-classes-help-kids-read` owns the parent question: *What should actually happen inside a phonics class that helps a child become a more independent reader?*
+**Canonical role:** `/blog/how-to-choose-phonics-classes` owns the parent decision: *How should I compare phonics classes or providers fairly before enrolling my child?*
 
-### Intent boundaries
+### Four-gate decision framework
 
-- `/blog/how-phonics-classes-help-kids-read` → instructional mechanism from taught correspondences to independent word reading and matched-text transfer.
-- `/blog/how-kids-learn-blending` → stage-by-stage blending development.
-- `/blog/how-long-does-phonics-take` → duration and progress interpretation.
-- `/blog/how-phonics-builds-reading-confidence` → reading-confidence behaviour.
-- `/blog/how-phonics-improves-spelling` → full encoding/spelling roadmap.
-- `/blog/how-to-improve-reading-fluency-in-children` → accurate-but-effortful connected reading.
-- `/blog/how-to-choose-phonics-classes` → provider/class comparison and purchase framework.
-- `/blog/online-phonics-classes-vs-school` → online-versus-school support comparison.
-- `/phonics` → commercial programme owner.
+1. **Fit** — does placement start from the child’s actual reading and spelling behaviour?
+2. **Teaching quality** — is instruction explicit, systematic, cumulative, blending-led and connected to spelling and matched reading?
+3. **Proof of transfer** — can the provider show progress on fresh words, matched text, spelling, retention and reduced prompting rather than lesson completion alone?
+4. **Practical clarity** — are format, duration, frequency, teacher continuity, parent communication, materials, policies and total pricing clear before enrolment?
 
-### Baseline problems fixed
+The framework is explicitly labelled **Tiny Steps editorial decision guidance**, not a standardized provider rating or accreditation tool.
 
-- Corrected the title from the temporary `A Parent Evidence Guide` wording to the authoritative title: **How Phonics Classes Help Kids Read: Decoding, Blending and Fluency Explained**.
-- Converted the article from the shared generic `PhonicsSeoPost` generator into a direct editorial `BlogPost`.
-- Replaced generic class-selection/template material with a clear explanation of the instructional mechanism.
-- Added explicit distinctions between **blending**, **decoding** and **fluency** so they are not presented as interchangeable outcomes.
-- Added the **Tiny Steps six-part class-to-reading chain**:
-  1. establish current starting point;
-  2. teach the sound-spelling relationship explicitly;
-  3. blend for reading and segment for spelling;
-  4. check a fresh word;
-  5. transfer into matched connected text;
-  6. revisit cumulatively until prompting reduces and earlier learning remains available.
-- Labels that six-part chain editorial teaching guidance rather than a standardized research protocol.
-- Added a live-teaching-versus-worksheet explanation focused on responsive error observation and feedback rather than claiming worksheets are inherently ineffective.
-- Added a clear encoding boundary explaining why spelling belongs inside phonics instruction while protecting Blog #9 as the full spelling owner.
-- Added a fluency boundary: phonics contributes to accurate word reading and increasingly efficient recognition, but completing phonics is not identical to becoming a fluent reader.
-- Added a comprehension boundary: vocabulary, oral language, background knowledge and meaning-focused instruction remain necessary.
-- Added five parent-visible transfer signals: strategy use, fresh-word transfer, reduced prompting, spelling/word-building transfer and matched-text transfer.
-- Added guidance for the common class/home mismatch without treating untaught storybook words as a fair decoding test.
-- Added explicit plan-review triggers when memorised success, persistent errors, lost earlier patterns, mismatched text or unchanged prompting remain.
-- Protected Blog #10 as the provider-comparison owner and Blog #12 as the online-versus-school comparison owner.
-- Added Tiny Steps first-party teaching context without turning the article into a sales page.
-- Added four external evidence sources: EEF Phonics, IES/What Works Clearinghouse foundational reading guide, DfE Reading Framework and DfE SSP validation criteria.
-- Added five AEO/GEO FAQs, founder authorship, updated metadata and focused regression coverage.
+### Major improvements
+
+- Preserves the useful comparison intent while replacing loose provider-shopping copy with a structured four-gate framework.
+- Expands the parent scorecard from 12 to **16 evidence-oriented checks** covering placement, sequence, blending, segmenting, matched text, fresh transfer, correction, review, progress reporting, adaptation, teacher training, scope boundaries, policies and marketing claims.
+- Adds explicit teacher-training and implementation-quality checks.
+- Adds commercial clarity without equating higher price with higher teaching quality or lower price with better value.
+- Separates 1:1, group and whole-class format from the underlying quality decision; EEF evidence includes positive phonics effects across these contexts.
+- Routes the online-versus-in-person comparison to Blog #12 instead of allowing Blog #10 to cannibalize that intent.
+- Removes the named-programme FAQ and provider-format absolutism.
+- Makes Tiny Steps subject to the **same comparison framework** as any other provider rather than granting itself a different standard.
+- Adds evidence from the current EEF phonics evidence review, DfE Choosing a Phonics Teaching Programme guidance, DfE SSP validation criteria, DfE Reading Framework and IES/WWC foundational reading guidance.
+- Adds five focused AEO/GEO FAQs, founder authorship, updated metadata and a dedicated regression test.
 
 ### Evidence decision
 
-The article uses external evidence for the underlying instructional components: explicit/systematic sound-letter teaching, blending, decoding, segmenting for spelling, matched decodable text, connected-text practice, assessment and cumulative review. The **Tiny Steps six-part class-to-reading chain is an editorial synthesis**, not a validated research instrument.
-
-The article does not claim that phonics alone guarantees fluency or comprehension. EEF explicitly distinguishes phonics’ positive effect on reading accuracy from broader comprehension and vocabulary needs, while IES and DfE guidance connect foundational decoding with spelling and connected-text practice.
+External sources support the underlying programme-selection features: systematic progression, explicit blending and segmenting, matched decodable text, assessment, responsiveness, teacher training, connected-text application and the need to distinguish decoding from wider reading comprehension. The Tiny Steps four-gate framework and 16-point parent scorecard are editorial syntheses rather than validated research instruments.
 
 ### Indexability decision
 
-Ordinary evergreen non-weekly public slug; already indexable and sitemap eligible. No policy change required.
+Ordinary evergreen non-weekly public slug; already indexable and sitemap eligible. No indexing-policy change required.
 
-**Final decision: 96/100 — LOCKED IN BLOGS #1–#10 BATCH.**
+**Final decision: 97/100 — LOCKED IN BATCH.**
 
-## Batch merge gate
+## Batch #1 merge gate
 
-Do **not** merge PR #163 until Blogs #1–#10 are complete and the final batch head passes:
+Blogs #1–#10 are now content-complete. Before merge, the final exact-head gate must confirm:
 
-- human-helpfulness/shareability review for all 10
-- no hard-fail issue
-- each final score 90+
-- intent/cannibalization checks
-- title/meta/FAQ/internal-link review
-- evidence claim verification
-- indexability decisions where relevant
-- focused regression tests
-- full exact-head CI/SEO validation after Blog #10
-- explicit founder approval to merge the complete batch
+- all focused blog quality regression tests pass
+- full CI passes on the final exact head
+- title/meta/FAQ/internal-link checks remain green
+- evidence-source extraction remains green
+- no intent/cannibalization hard fail is introduced
+- no accidental files are present in the PR diff
+- PR remains mergeable
+- explicit founder approval is received
+
+**Do not merge PR #163 until the final exact-head gate is green and the founder explicitly approves the merge.**
