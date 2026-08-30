@@ -33,6 +33,7 @@ const QUALITY_PROMOTED_PUBLIC_SLUGS = new Set([
   'phonics-diagnostics',
   'phonics-multisyllabic',
   'phonics-summer-plan',
+  'phonics-tricky-words',
 ]);
 
 const RENAMED_WEEKLY_PUBLIC_SLUGS = new Set(LEGACY_WEEK_PUBLIC_SLUGS);
