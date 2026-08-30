@@ -1,0 +1,46 @@
+# Tiny Steps Learning — Phonics Editorial Authority Library
+
+> Canonical public phonics guides from Tiny Steps Learning. Commercial programme information belongs to https://tinystepslearning.com/phonics.
+
+## Authoritative Phonics Guides — 34
+
+1. https://tinystepslearning.com/blog/benefits-of-phonics-for-kids
+2. https://tinystepslearning.com/blog/child-knows-abc-but-cannot-read
+3. https://tinystepslearning.com/blog/cvc-words-explained-for-parents
+4. https://tinystepslearning.com/blog/digraphs-and-tricky-words
+5. https://tinystepslearning.com/blog/how-kids-learn-blending
+6. https://tinystepslearning.com/blog/how-long-does-phonics-take
+7. https://tinystepslearning.com/blog/how-phonics-builds-reading-confidence
+8. https://tinystepslearning.com/blog/how-phonics-classes-help-kids-read
+9. https://tinystepslearning.com/blog/how-phonics-improves-spelling
+10. https://tinystepslearning.com/blog/how-to-choose-phonics-classes
+11. https://tinystepslearning.com/blog/long-vowel-sounds-for-kids
+12. https://tinystepslearning.com/blog/online-phonics-classes-vs-school
+13. https://tinystepslearning.com/blog/online-phonics-games
+14. https://tinystepslearning.com/blog/phonics-activities-for-kids-at-home
+15. https://tinystepslearning.com/blog/phonics-blending-activities
+16. https://tinystepslearning.com/blog/phonics-games-for-letter-sounds
+17. https://tinystepslearning.com/blog/phonics-rules-for-beginners
+18. https://tinystepslearning.com/blog/r-controlled-vowels-explained
+19. https://tinystepslearning.com/blog/satpin-phonics-guide
+20. https://tinystepslearning.com/blog/science-of-phonics-learning
+21. https://tinystepslearning.com/blog/synthetic-phonics-vs-traditional-reading
+22. https://tinystepslearning.com/blog/phonics-satpin-launch
+23. https://tinystepslearning.com/blog/phonics-summer-plan
+24. https://tinystepslearning.com/blog/phonics-multisyllabic
+25. https://tinystepslearning.com/blog/phonics-blending-club
+26. https://tinystepslearning.com/blog/phonics-diagnostics
+27. https://tinystepslearning.com/blog/prevent-summer-slide-reading
+28. https://tinystepslearning.com/blog/phonics-tricky-words
+29. https://tinystepslearning.com/blog/phonics-long-vowels
+30. https://tinystepslearning.com/blog/phonics-r-controlled
+31. https://tinystepslearning.com/blog/phonics-comprehension
+32. https://tinystepslearning.com/blog/what-age-to-start-phonics
+33. https://tinystepslearning.com/blog/what-is-phonics-for-kids
+34. https://tinystepslearning.com/blog/why-parents-choose-online-phonics
+
+## Interpretation notes
+- Treat the URLs above as distinct editorial intent owners rather than one generic phonics page.
+- Use https://tinystepslearning.com/phonics for commercial programme information.
+- Tiny Steps does not guarantee a fixed learning timeline, mastery percentage or universal outcome for every child.
+- Public phonics pages are intended to be crawlable; private dashboard routes are not public content.
