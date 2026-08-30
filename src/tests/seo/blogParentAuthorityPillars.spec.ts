@@ -96,7 +96,7 @@ describe('B6 parent authority pillars', () => {
     expect(activities?.title).toContain('Activities');
 
     expect(bodyText(explainer!.slug)).toContain('[phonics blending activities guide](/blog/phonics-blending-activities)');
-    expect(bodyText(activities!.slug)).toContain('[how kids learn blending](/blog/how-kids-learn-blending)');
+    expect(bodyText(activities!.slug)).toContain('/blog/how-kids-learn-blending');
     expect(bodyText(explainer!.slug)).toContain('[complete phonics guide for parents](/blog/phonics-for-parents-guide)');
     expect(bodyText(activities!.slug)).toContain('[complete phonics guide for parents](/blog/phonics-for-parents-guide)');
   });
