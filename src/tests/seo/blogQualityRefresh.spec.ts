@@ -106,6 +106,8 @@ describe('progressive blog quality refresh', () => {
     expect(body).toContain('Connected-text transfer');
     expect(body).toContain('Use teaching stage, not age, to choose what to check');
     expect(body).toContain('Secure, Developing, Priority');
+    expect(body).toContain('not standardized scores, validated benchmarks');
+    expect(body).toContain('/blog/phonics-comprehension');
     expect(body).toContain('When to ask for more support');
     expect(body).toContain('/blog/why-child-knows-letter-sounds-but-cannot-read-words');
     expect(body).toContain('/blog/how-kids-learn-blending');
@@ -115,6 +117,7 @@ describe('progressive blog quality refresh', () => {
     expect(body).not.toMatch(/\bWeek\s+22\b/i);
     expect(body).not.toContain('Green/Amber/Red');
     expect(body).not.toContain('choose two priorities for the next four weeks');
+    expect(body).not.toContain('Fifteen to twenty minutes');
   });
 
   it('gives Blog #3 evidence, answer-engine FAQs and indexable authority status', () => {
@@ -124,9 +127,10 @@ describe('progressive blog quality refresh', () => {
     const evidence = getBlogEvidenceSummary(post!);
     expect(evidence.hasSourceSection).toBe(true);
     expect(evidence.externalSourceCount).toBeGreaterThanOrEqual(4);
-    expect(post?.faq).toHaveLength(5);
+    expect(post?.faq).toHaveLength(6);
     expect(post?.faq?.some((item) => /assess phonics at home/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /nonsense or pseudo-words/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /standardized phonics scores/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /dyslexia/i.test(item.question))).toBe(true);
 
     expect(shouldNoindexBlogSlug('phonics-diagnostics')).toBe(false);
