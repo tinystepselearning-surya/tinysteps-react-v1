@@ -29,6 +29,7 @@ describe('blog indexing policy', () => {
       ['phonics-diagnostics', 'week-22-phonics-diagnostics'],
       ['phonics-long-vowels', 'week-4-phonics-long-vowels'],
       ['phonics-multisyllabic', 'week-19-phonics-multisyllabic'],
+      ['phonics-r-controlled', 'week-5-phonics-r-controlled'],
       ['phonics-summer-plan', 'week-16-phonics-summer-plan'],
       ['phonics-tricky-words', 'week-3-phonics-tricky-words'],
     ]) {
@@ -43,7 +44,6 @@ describe('blog indexing policy', () => {
 
   it('keeps remaining renamed roadmap support pages noindex and out of the sitemap', () => {
     for (const slug of [
-      'phonics-r-controlled',
       'grammar-tenses',
       'speaking-visual-aids',
       'screen-smart-summer-routine-for-kids',
