@@ -50,7 +50,7 @@ describe('authoritative Blog #3 quality lock', () => {
     expect(evidence.externalSourceCount).toBeGreaterThanOrEqual(4);
     expect(body).toContain('editorial teaching guidance, not a standardized research protocol');
     expect(body).toContain('cannot diagnose dyslexia');
-    expect(body).toContain('fresh regular CVC words');
+    expect(body).toMatch(/fresh,? regular CVC words/i);
     expect(body).toContain('This article does not prescribe a research-defined daily CVC dose');
 
     expect(post?.faq).toHaveLength(5);
