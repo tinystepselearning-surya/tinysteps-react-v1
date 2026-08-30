@@ -24,11 +24,13 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/phonics': {
-    title: 'Online Phonics Classes for Kids in India | Tiny Steps',
+    title: 'Online Phonics Classes for Kids in India | Live 1:1 | Tiny Steps',
     description:
-      'Live 1:1 online phonics classes for kids in India. Build letter sounds, blending, CVC words, digraphs, reading fluency and spelling. Book one free 35-minute 1:1 demo assessment class.',
+      'Explore live 1:1 online phonics classes for kids in India and what to look for when comparing the best phonics classes. Structured blending, decoding, spelling and fluency with assessment-first placement.',
     canonicalPath: '/phonics',
     ogType: 'website',
+    keywords:
+      'online phonics classes,online phonics classes for kids,online phonics classes for kids in India,phonics classes for kids,phonics classes in India,best online phonics classes,best online phonics classes in India,best phonics classes for kids,best phonics classes in India,best phonics course for kids,best online phonics course for kids,best phonics program for kids,live 1:1 phonics classes,1 to 1 phonics classes online,personalised phonics classes for kids,structured phonics classes for kids,synthetic phonics classes,phonics classes for struggling readers,phonics tutor online for kids,online reading and phonics classes',
   },
   '/grammar': {
     title: 'Grammar Classes for Kids in India | Tiny Steps',

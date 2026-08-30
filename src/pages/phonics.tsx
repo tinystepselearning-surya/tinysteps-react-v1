@@ -71,6 +71,16 @@ const faqItems = [
       'Yes. Online phonics classes are useful when they teach sound-letter links, blending, decoding, and reading practice in a clear sequence with live correction.',
   },
   {
+    question: 'What should parents look for in the best online phonics classes?',
+    answer:
+      'Look for assessment-first placement, explicit sound teaching, systematic progression, blending and segmenting practice, live correction, decoding instead of guessing, reading and spelling transfer, and clear progress updates for parents. The strongest fit depends on the child’s current level rather than a marketing claim alone.',
+  },
+  {
+    question: 'Are 1:1 phonics classes better than group phonics classes?',
+    answer:
+      'Both formats can work. Live 1:1 phonics classes are especially useful when a child needs individual pacing, immediate correction, or support for a specific blending, decoding, spelling, or fluency gap. Group classes can suit children who are progressing comfortably at a shared pace.',
+  },
+  {
     question: 'At what age should a child start phonics?',
     answer:
       'Many children start around ages 3 to 5 with playful sound work. Older children also benefit when blending, reading fluency, or spelling patterns are weak. The right start depends on current reading readiness, not only age.',
@@ -119,10 +129,27 @@ const PHONICS_SEO_KEYWORDS = [
   'what is phonics',
   'why phonics is important',
   'how to teach phonics at home',
+  'online phonics classes',
   'online phonics classes for kids',
   'online phonics classes for kids in India',
   'phonics classes in India',
   'phonics classes for kids',
+  'best online phonics classes',
+  'best online phonics classes in India',
+  'best phonics classes for kids',
+  'best phonics classes in India',
+  'best phonics course for kids',
+  'best online phonics course for kids',
+  'best phonics program for kids',
+  'live 1:1 phonics classes',
+  '1 to 1 phonics classes online',
+  'personalised phonics classes for kids',
+  'live online phonics classes',
+  'structured phonics classes for kids',
+  'phonics classes for struggling readers',
+  'phonics tutor online for kids',
+  'online reading and phonics classes',
+  'synthetic phonics program for kids',
   'reading classes for kids',
   'live 1:1 online phonics classes',
   'free phonics assessment',
@@ -182,6 +209,40 @@ const differentiators = [
   {
     title: 'Practice support through free games',
     detail: 'Classroom learning is reinforced with simple at-home phonics practice games.',
+  },
+];
+const bestClassCriteria = [
+  {
+    title: 'Assessment-first placement',
+    detail: 'A strong phonics programme checks what the child can already hear, decode, blend, read, and spell before choosing the starting level.',
+  },
+  {
+    title: 'Explicit, systematic progression',
+    detail: 'Sound–spelling links should be taught in a planned sequence that builds from easier patterns to more complex decoding.',
+  },
+  {
+    title: 'Blending and segmenting',
+    detail: 'Children need repeated practice joining sounds to read words and separating sounds to support spelling.',
+  },
+  {
+    title: 'Decoding instead of guessing',
+    detail: 'Teaching should help children work through unfamiliar words from their sound patterns rather than depend on pictures or memory.',
+  },
+  {
+    title: 'Live observation and correction',
+    detail: 'A teacher should hear the child read, identify the exact error, model the correction, and give the child another attempt.',
+  },
+  {
+    title: 'Reading and spelling transfer',
+    detail: 'The programme should connect phonics patterns to word reading, sentence reading, and spelling instead of stopping at isolated sounds.',
+  },
+  {
+    title: 'Pacing matched to readiness',
+    detail: 'Children should move forward when the prerequisite skill is secure, with extra practice when a decoding pattern is still unstable.',
+  },
+  {
+    title: 'Parent-visible progress',
+    detail: 'Parents should know what has improved, what still needs work, and what the next learning goal is.',
   },
 ];
 const intentSupportChips = ['Letter sounds', 'Blending', 'CVC words', 'Reading fluency'];
@@ -467,10 +528,26 @@ export default function PhonicsPage({
         },
       })),
     };
+    const phonicsQualityCriteriaSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      '@id': `${canonicalUrl}#phonics-class-quality-criteria`,
+      name: 'What parents should look for in online phonics classes',
+      itemListElement: bestClassCriteria.map((criterion, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item: {
+          '@type': 'Thing',
+          name: criterion.title,
+          description: criterion.detail,
+        },
+      })),
+    };
 
     const baseJsonLd = [
       courseSchema,
       phonicsPathwaySchema,
+      phonicsQualityCriteriaSchema,
       {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
@@ -646,6 +723,7 @@ export default function PhonicsPage({
             {[
               ['Overview', '#overview'],
               ['Who It’s For', '#problems'],
+              ['How to Choose', '#best-phonics-classes'],
               ['Method', '#method'],
               ['Program', '#program'],
               ['FAQ', '#faq'],
@@ -841,6 +919,62 @@ export default function PhonicsPage({
                 <p className="mt-2 text-sm leading-relaxed text-slate-700">{item.answer}</p>
               </PremiumCard>
             ))}
+          </div>
+        </div>
+      </SectionShell>
+
+      <SectionShell id="best-phonics-classes">
+        <div className="rounded-[2rem] border border-orange-100 bg-gradient-to-br from-[#FFF9F1] via-white to-[#F2FAFF] p-6 shadow-xl sm:p-8">
+          <SectionHeader
+            eyebrow="Parent comparison framework"
+            title="What should parents look for in the best online phonics classes?"
+            subtitle="The strongest programme is not the one with the biggest claim. It is the one that can show how a child is placed, taught, corrected, progressed, and supported from sounds into real reading."
+          />
+          <p className="mt-4 max-w-5xl text-sm leading-7 text-slate-700 sm:text-base">
+            Parents searching for the best online phonics classes in India or the best phonics classes for kids should compare the teaching process rather than rely on rankings alone. These eight criteria help families evaluate whether a programme is structured enough to support decoding, spelling, and reading progress.
+          </p>
+          <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {bestClassCriteria.map((criterion, index) => (
+              <PremiumCard key={criterion.title} className="h-full p-5 transition hover:-translate-y-0.5 hover:shadow-lg">
+                <div className="flex items-center gap-3">
+                  <NumberBadge value={index + 1} />
+                  <h3 className="text-base font-semibold text-slate-900">{criterion.title}</h3>
+                </div>
+                <p className="mt-3 text-sm leading-relaxed text-slate-700">{criterion.detail}</p>
+              </PremiumCard>
+            ))}
+          </div>
+          <div className="mt-7 grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5">
+              <h3 className="text-lg font-semibold text-slate-900">How Tiny Steps maps to these criteria</h3>
+              <p className="mt-2 text-sm leading-7 text-slate-700">
+                Tiny Steps uses assessment-first placement, a structured synthetic phonics progression, live 1:1 correction, reading and spelling practice, readiness-based pacing, and parent progress updates. Parents can inspect the evidence before deciding rather than depending on a broad “best” claim.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link to="/curriculum?tab=phonics" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-50">
+                  Review phonics curriculum
+                </Link>
+                <Link to="/class-samples" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-50">
+                  Watch class samples
+                </Link>
+                <Link to="/testimonials" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-50">
+                  Read parent feedback
+                </Link>
+                <Link to="/pricing" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-50">
+                  Check pricing
+                </Link>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-sky-200 bg-sky-50/70 p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Need a deeper comparison?</p>
+              <h3 className="mt-2 text-lg font-semibold text-slate-900">Use the dedicated buyer guide</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-700">
+                Compare 1:1 vs group format, curriculum structure, teacher attention, pricing, placement, and parent support in one decision-focused page.
+              </p>
+              <Link to="/best-online-phonics-classes-for-kids-in-india" className="mt-4 inline-flex rounded-full bg-slate-950 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800">
+                Compare online phonics classes
+              </Link>
+            </div>
           </div>
         </div>
       </SectionShell>
