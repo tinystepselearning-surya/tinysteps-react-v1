@@ -467,7 +467,7 @@ export default function PhonicsPage({
       url: canonicalUrl,
       educationalLevel: 'Foundation to Advanced',
       teaches: ['letter sounds', 'blending', 'CVC words', 'digraphs', 'vowel teams', 'reading fluency', 'spelling'],
-      areaServed: 'India',
+      areaServed: ['India', 'Worldwide'],
     });
     const phonicsPathwaySchema = {
       '@context': 'https://schema.org',
@@ -869,7 +869,7 @@ export default function PhonicsPage({
             ageRange="Ages 3–12"
             format="Live 1:1 online guidance"
             duration="35–40 minutes, 2–3x per week"
-            structure="3 levels, 36+ lessons with stage-based progression"
+            structure="3 levels, 101 structured lessons with stage-based progression"
             outcomes={[
               'Build sound-letter recognition',
               'Blend sounds into first words',
