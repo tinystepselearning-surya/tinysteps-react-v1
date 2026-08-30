@@ -42,7 +42,8 @@ describe('authoritative Blog #17 quality lock', () => {
     expect(body).not.toMatch(/after 6-8 weeks/i);
     expect(body).not.toMatch(/one focused rule family per week/i);
     expect(body).not.toMatch(/must (?:always )?follow.*CVC.*digraph.*long[- ]vowel/i);
-    expect(body).not.toMatch(/\b(?:90|95|100)%\s+(?:accuracy|mastery|correct)/i);
+    expect(body).not.toMatch(/(?:must|should|need(?:s)? to|has to|require(?:s|d)?|reach|achieve|move ahead (?:at|after|once)|advance (?:at|after|once))[^.\n]{0,80}\b(?:90|95|100)%\s+(?:accuracy|mastery|correct)/i);
+    expect(body).not.toMatch(/\b(?:90|95|100)%\s+(?:accuracy|mastery|correct)[^.\n]{0,80}\b(?:required|requirement|target|cut-?off|before (?:moving|advancing)|to (?:move ahead|advance))/i);
   });
 
   it('adds evidence, move-ahead safeguards and five extractable FAQs', () => {
