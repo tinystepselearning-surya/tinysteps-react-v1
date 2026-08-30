@@ -30,21 +30,21 @@ import {
 
 const COURSE_SCHEMA_BY_SLUG: Record<string, { name: string; description: string; educationalLevel: string }> = {
   'phonics-foundation': {
-    name: 'Phonics Foundation Program',
+    name: 'Phonics Foundations Program',
     description:
-      'Beginner phonics program for children who are starting letter sounds, early blending, CVC words, and reading readiness.',
+      'Beginner phonics program for children building letter-sound knowledge, oral blending, CVC decoding, early spelling, and reading readiness.',
     educationalLevel: 'Foundation',
   },
   'phonics-brush-up': {
-    name: 'Phonics Brush-Up Program',
+    name: 'Early Phonics Program',
     description:
-      'Revision-focused phonics program for children who know some phonics but need stronger blending, decoding, fluency, and confidence.',
-    educationalLevel: 'Intermediate',
+      'Early phonics program for developing readers covering digraphs, long vowels, vowel teams, Magic E, core phonics rules, decoding, and spelling.',
+    educationalLevel: 'Early',
   },
   'phonics-advanced': {
     name: 'Advanced Phonics Program',
     description:
-      'Advanced phonics program covering digraphs, long vowels, vowel teams, tricky words, spelling patterns, reading fluency, and passage reading.',
+      'Advanced phonics program covering complex vowel patterns, advanced sound families, longer-word decoding, spelling patterns, and connected reading fluency.',
     educationalLevel: 'Advanced',
   },
   'basic-grammar': {
@@ -148,6 +148,7 @@ const CourseDetailPage: FC = () => {
   const whatsappHref = `${WHATSAPP_BASE}${encodeURIComponent(
     `Hi Tiny Steps! I want help choosing the right ${courseHeading} option for my child.`
   )}`;
+  const stageAuthority = coursePageConfig?.stageAuthority;
   const courseSchemaConfig = COURSE_SCHEMA_BY_SLUG[course.slug] || {
     name: course.name,
     description: `${course.name} — ${course.overview.join(', ')}`,
@@ -175,12 +176,28 @@ const CourseDetailPage: FC = () => {
     description: courseSchemaConfig.description,
     url: canonicalUrl,
     educationalLevel: courseSchemaConfig.educationalLevel,
+    teaches: Array.isArray(coursePageConfig?.teaches) ? coursePageConfig.teaches : undefined,
   })];
 
   if (Array.isArray(coursePageConfig?.faq) && coursePageConfig.faq.length > 0 && isCanonicalSlug) {
     jsonLd.push({
       ...createFAQPageSchema(coursePageConfig.faq),
       '@id': `${canonicalUrl}#faq`,
+    });
+  }
+
+  if (Array.isArray(stageAuthority?.sequence) && stageAuthority.sequence.length > 0 && isCanonicalSlug) {
+    jsonLd.push({
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      '@id': `${canonicalUrl}#phonics-program-stages`,
+      name: 'Tiny Steps phonics programme stages',
+      itemListElement: stageAuthority.sequence.map((stage, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: stage.name,
+        item: `${PUBLIC_FACTS.primaryWebsite}${stage.routePath}`,
+      })),
     });
   }
 
@@ -286,7 +303,7 @@ const CourseDetailPage: FC = () => {
           <LeadSectionHeading
             eyebrow="Course overview"
             title="What this course helps your child improve first"
-            description="The layout is premium, but the content stays course-specific so parents can still judge fit quickly."
+            description="Use the overview and outcomes to check whether this level matches the skills your child needs now."
           />
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <LeadCard className="border-slate-100 bg-white">
@@ -309,6 +326,82 @@ const CourseDetailPage: FC = () => {
         </LeadCard>
       </LeadSection>
 
+      {stageAuthority ? (
+        <LeadSection id="phonics-stage-fit">
+          <LeadCard className="bg-gradient-to-br from-white via-sky-50/35 to-orange-50/35">
+            <LeadSectionHeading
+              eyebrow="Phonics stage fit"
+              title={stageAuthority.title}
+              description={stageAuthority.directAnswer}
+            />
+
+            <div className="mt-6 grid gap-4 lg:grid-cols-3">
+              <LeadCard className="border-slate-100 bg-white">
+                <h3 className="text-lg font-semibold text-slate-900">Signs this may be the right starting stage</h3>
+                <ul className="mt-4 space-y-2 text-sm leading-7 text-slate-700">
+                  {stageAuthority.entrySignals.map((item) => (
+                    <li key={item}>• {item}</li>
+                  ))}
+                </ul>
+              </LeadCard>
+              <LeadCard className="border-slate-100 bg-white">
+                <h3 className="text-lg font-semibold text-slate-900">Skills this stage builds</h3>
+                <ul className="mt-4 space-y-2 text-sm leading-7 text-slate-700">
+                  {stageAuthority.skillsBuilt.map((item) => (
+                    <li key={item}>• {item}</li>
+                  ))}
+                </ul>
+              </LeadCard>
+              <LeadCard className="border-slate-100 bg-white">
+                <h3 className="text-lg font-semibold text-slate-900">Readiness to move forward</h3>
+                <ul className="mt-4 space-y-2 text-sm leading-7 text-slate-700">
+                  {stageAuthority.exitSignals.map((item) => (
+                    <li key={item}>• {item}</li>
+                  ))}
+                </ul>
+              </LeadCard>
+            </div>
+
+            {Array.isArray(stageAuthority.sequence) && stageAuthority.sequence.length > 0 ? (
+              <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-5 sm:p-6">
+                <h3 className="text-lg font-semibold text-slate-900">Tiny Steps phonics progression</h3>
+                <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-700">
+                  Foundation, Early, and Advanced are readiness-based stages. The assessment helps identify the most useful starting point, and children move forward when the underlying skills are secure rather than simply because of age.
+                </p>
+                <ol className="mt-5 grid gap-4 md:grid-cols-3">
+                  {stageAuthority.sequence.map((stage, index) => {
+                    const isCurrentStage = stage.routePath === canonicalPath;
+                    return (
+                      <li
+                        key={stage.routePath}
+                        className={`rounded-2xl border p-4 ${isCurrentStage ? 'border-slate-400 bg-slate-50' : 'border-slate-200 bg-white'}`}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                            Stage {index + 1} • {stage.level}
+                          </span>
+                          {isCurrentStage ? (
+                            <span className="rounded-full bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-white">Current stage</span>
+                          ) : null}
+                        </div>
+                        <Link
+                          to={stage.routePath}
+                          aria-current={isCurrentStage ? 'page' : undefined}
+                          className="mt-3 block text-base font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4"
+                        >
+                          {stage.name}
+                        </Link>
+                        <p className="mt-2 text-sm leading-6 text-slate-700">{stage.summary}</p>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
+            ) : null}
+          </LeadCard>
+        </LeadSection>
+      ) : null}
+
       <LeadSection className="pb-2">
         <TestimonialsSection
           title="Parent feedback for this learning track"
@@ -330,7 +423,7 @@ const CourseDetailPage: FC = () => {
             description="Parents can see the learning path clearly before they commit."
           />
           <p className="mt-3 text-sm leading-6 text-slate-700">
-            This page owns the detailed lesson sequence for this level. For the relationship between Phonics, Grammar, and Speaking, see the{' '}
+            See the detailed lesson sequence for this level below. For the relationship between Phonics, Grammar, and Speaking, see the{' '}
             <Link to="/curriculum" className="font-semibold text-slate-900 underline underline-offset-4">
               complete Tiny Steps curriculum roadmap
             </Link>.
@@ -351,7 +444,7 @@ const CourseDetailPage: FC = () => {
             <LeadSectionHeading
               eyebrow="FAQs"
               title="Questions parents usually ask before enrolling"
-              description="FAQ content stays course-specific and continues to support valid structured data."
+              description="These answers explain placement, progression, and what to expect before you choose a course."
             />
             <div className="mt-6">
               <FAQSection items={coursePageConfig.faq} />
