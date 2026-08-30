@@ -110,7 +110,12 @@ describe('Phonics Brick 3 reading classes authority guardrails', () => {
       '/blog/why-child-knows-letter-sounds-but-cannot-read-words',
       '/child-not-reading-properly',
     ]) {
-      expect(page).toContain(`'${href}'`);
+      const linkedRouteReferences = [`href: '${href}'`, `route: '${href}'`, `to="${href}"`];
+
+      expect(
+        linkedRouteReferences.some((reference) => page.includes(reference)),
+        `expected ${href} to remain connected from the reading page`,
+      ).toBe(true);
     }
   });
 
