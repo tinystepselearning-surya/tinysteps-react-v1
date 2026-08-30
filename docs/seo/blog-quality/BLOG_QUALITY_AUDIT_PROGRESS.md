@@ -133,7 +133,7 @@ Ordinary evergreen non-weekly public slug; already indexable and sitemap eligibl
 
 ## Batch #1 merge gate
 
-Blogs #1–#10 are now content-complete. Before merge, the final exact-head gate must confirm:
+Blogs #1–#10 are content-complete. Final state before merge must confirm:
 
 - all focused blog quality regression tests pass
 - full CI passes on the final exact head
@@ -143,5 +143,7 @@ Blogs #1–#10 are now content-complete. Before merge, the final exact-head gate
 - no accidental files are present in the PR diff
 - PR remains mergeable
 - explicit founder approval is received
+
+**Exact-head CI/SEO gate: PENDING on the final batch head.**
 
 **Do not merge PR #163 until the final exact-head gate is green and the founder explicitly approves the merge.**
