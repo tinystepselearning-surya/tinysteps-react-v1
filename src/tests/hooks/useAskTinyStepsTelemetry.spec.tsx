@@ -10,6 +10,14 @@ vi.mock('../../services/askTinyStepsService', () => ({
 }));
 
 vi.mock('../../lib/askTinyStepsTelemetry', () => ({
+  toAskTinyStepsRoutingMetadata: (plan: Record<string, unknown>) => ({
+    mode: plan.mode,
+    reason: plan.reason,
+    audience: plan.audience,
+    intent: plan.intent,
+    sourceIds: plan.sourceIds,
+    isFollowUp: plan.isFollowUp,
+  }),
   trackAskTinyStepsRouting: telemetryMocks.track,
 }));
 
@@ -20,7 +28,7 @@ describe('useAskTinyStepsChat PV-1D telemetry integration', () => {
     vi.clearAllMocks();
   });
 
-  it('emits one deterministic routing record with length only, never question text', async () => {
+  it('emits one deterministic routing record with length only, never question or answer text', async () => {
     const question = 'My child Anaya is six. What are your fees?';
     const { result } = renderHook(() => useAskTinyStepsChat());
 
@@ -33,9 +41,13 @@ describe('useAskTinyStepsChat PV-1D telemetry integration', () => {
     expect(telemetryInput.promptLength).toBe(question.length);
     expect(telemetryInput.aiAttempted).toBe(false);
     expect(telemetryInput.responsePath).toBe('deterministic');
-    expect(telemetryInput.plan.intent).toBe('pricing');
-    expect(JSON.stringify(telemetryInput)).not.toContain('Anaya');
-    expect(JSON.stringify(telemetryInput)).not.toContain(question);
+    expect(telemetryInput.route.intent).toBe('pricing');
+    expect(telemetryInput.route).not.toHaveProperty('deterministicAnswer');
+
+    const serialized = JSON.stringify(telemetryInput);
+    expect(serialized).not.toContain('Anaya');
+    expect(serialized).not.toContain(question);
+    expect(serialized).not.toContain('₹400');
   });
 
   it('records successful grounded AI routing once', async () => {
@@ -51,8 +63,8 @@ describe('useAskTinyStepsChat PV-1D telemetry integration', () => {
     const telemetryInput = telemetryMocks.track.mock.calls[0][0];
     expect(telemetryInput.aiAttempted).toBe(true);
     expect(telemetryInput.responsePath).toBe('ai');
-    expect(telemetryInput.plan.mode).toBe('first_party_grounded');
-    expect(telemetryInput.plan.sourceIds).toEqual([
+    expect(telemetryInput.route.mode).toBe('first_party_grounded');
+    expect(telemetryInput.route.sourceIds).toEqual([
       'sounds-cannot-read',
       'letter-sounds-not-enough',
     ]);
