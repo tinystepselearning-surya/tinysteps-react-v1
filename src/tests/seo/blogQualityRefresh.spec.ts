@@ -170,10 +170,11 @@ describe('progressive blog quality refresh', () => {
     const evidence = getBlogEvidenceSummary(post!);
     expect(evidence.hasSourceSection).toBe(true);
     expect(evidence.externalSourceCount).toBeGreaterThanOrEqual(4);
-    expect(post?.faq).toHaveLength(5);
+    expect(post?.faq).toHaveLength(6);
     expect(post?.faq?.some((item) => /multisyllabic word/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /underline every vowel/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /clapping syllables/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /one correct way to split/i.test(item.question))).toBe(true);
 
     expect(shouldNoindexBlogSlug('phonics-multisyllabic')).toBe(false);
     expect(shouldIncludeBlogSlugInSitemap('phonics-multisyllabic')).toBe(true);
