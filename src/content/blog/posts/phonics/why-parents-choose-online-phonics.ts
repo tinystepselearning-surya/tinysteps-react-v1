@@ -9,7 +9,7 @@ const post: BlogPost = {
   modifiedDate: '2026-08-30',
   readTime: '17 min read',
   hero: '/blog/hero-phonics.jpg',
-  metaDescription: 'Why do parents choose online phonics classes? Compare convenience, individual feedback, level matching, limitations and the signs that live online support fits your child.',
+  metaDescription: 'Why choose online phonics classes? Compare convenience, individual feedback, level matching, limitations and signs that live online support fits your child.',
   excerpt: 'Parents often consider online phonics for easier access and targeted support, but delivery format alone does not teach reading. Use child need, teaching quality and transfer to judge fit.',
   body: [
     { type: 'h2', content: 'Quick answer: parents choose online phonics for access and targeted support — not because online is automatically better' },

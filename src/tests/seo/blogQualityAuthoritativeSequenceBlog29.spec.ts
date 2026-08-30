@@ -21,7 +21,7 @@ describe('authoritative Blog #29 quality lock', () => {
 
     const body = post?.body.map((block) => block.content).join('\n') || '';
 
-    expect(body).toContain('Blog #11, [Long Vowel Sounds for Kids](/blog/long-vowel-sounds-for-kids)');
+    expect(body).toContain('[Long Vowel Sounds for Kids](/blog/long-vowel-sounds-for-kids), owns the broader explanation');
     expect(body).toContain('practical activities for practising a pattern the child has already been taught');
     expect(body).toContain('The Tiny Steps six-part long-vowel practice loop');
     expect(body).toContain('**Choose** —');

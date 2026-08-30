@@ -21,7 +21,7 @@ describe('authoritative Blog #30 quality lock', () => {
 
     const body = post?.body.map((block) => block.content).join('\n') || '';
 
-    expect(body).toContain('This article owns practice — Blog #18 owns the pattern explanation and sequence');
+    expect(body).toContain('This article owns practice — This guide covers the pattern explanation and sequence');
     expect(body).toContain('/blog/r-controlled-vowels-explained');
     expect(body).toContain('practical activities for practising r-controlled spellings that the child has already been taught');
     expect(body).toContain('The Tiny Steps six-part r-controlled practice loop');

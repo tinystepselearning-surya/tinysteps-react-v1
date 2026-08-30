@@ -9,7 +9,7 @@ const post: BlogPost = {
   modifiedDate: '2026-08-30',
   readTime: '17 min read',
   hero: '/blog/hero-phonics.jpg',
-  metaDescription: 'What is phonics for kids? Learn phonemes, graphemes, blending, decoding, spelling, decodable text and the parent signs that phonics is transferring into reading.',
+  metaDescription: 'What is phonics for kids? Learn phonemes, graphemes, blending, decoding, spelling, decodable text and signs that phonics is transferring into reading.',
   excerpt: 'A parent start-here guide to phonics: understand how children connect speech sounds with print, blend unfamiliar words, spell from sounds and transfer learning into real reading.',
   body: [
     { type: 'h2', content: 'Quick answer: phonics teaches children how print represents speech sounds' },
