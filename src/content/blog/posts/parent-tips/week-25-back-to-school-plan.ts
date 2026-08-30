@@ -2,179 +2,150 @@ import type { BlogPost } from '../../types';
 
 const post: BlogPost = {
   slug: 'week-25-back-to-school-plan',
-  title: 'Week 25: Back-to-School English Confidence Plan',
+  title: 'Back-to-School English Confidence Plan for Kids: Speaking, Participation and Classroom Routines',
   category: 'Parent Tips',
   author: 'Priya',
   date: '2026-03-16',
-  readTime: '11 min',
-  excerpt: "A research-informed back‑to‑school protocol for parents: baseline checks, a 7-day micro-plan, and measurable targets in phonics, grammar, reading, and speaking.",
-  body: [{
-    type: 'h2',
-    content: 'Research abstract: why confidence drops after holidays'
-  }, {
-    type: 'p',
-    content: 'Back-to-school confidence usually drops because routines break and retrieval opportunities reduce, not because children suddenly "lose ability." A short, structured restart improves performance faster than intensive cramming. This Week 25 article uses a research-informed protocol designed for real family schedules.'
-  }, {
-    type: 'h2',
-    content: 'Evidence base used in this plan (plain-language summary)'
-  }, {
-    type: 'li',
-    content: 'Systematic phonics improves early word reading and spelling accuracy when practice is explicit and cumulative (National Reading Panel; later reviews in reading science).'
-  }, {
-    type: 'li',
-    content: 'Guided repeated oral reading improves fluency and supports comprehension when texts are matched to level.'
-  }, {
-    type: 'li',
-    content: 'Retrieval + spacing improves retention better than one long session; short daily review is more durable than weekend-only practice.'
-  }, {
-    type: 'li',
-    content: 'Child motivation improves with mastery experiences: small wins first, then gradual challenge (self-efficacy research).'
-  }, {
-    type: 'h2',
-    content: 'Tiny Steps Back-to-School Diagnostic (Day 0, 15 minutes)'
-  }, {
-    type: 'p',
-    content: 'Run a brief baseline before planning. This prevents random practice and ensures parents target the right skill gap.'
-  }, {
-    type: 'li',
-    content: 'Phonics check (5 min): 10 sound cards + 5 blend words; note accuracy and hesitation.'
-  }, {
-    type: 'li',
-    content: 'Reading fluency check (5 min): one short decodable passage; note error count and smoothness.'
-  }, {
-    type: 'li',
-    content: 'Grammar/writing check (3 min): one sentence expansion task.'
-  }, {
-    type: 'li',
-    content: 'Speaking check (2 min): 30-second prompt with beginning-middle-end.'
-  }, {
-    type: 'h2',
-    content: 'Seven-day intervention protocol (20-30 minutes/day)'
-  }, {
-    type: 'h3',
-    content: 'Day-by-day implementation'
-  }, {
-    type: 'li',
-    content: 'Day 1 (Reset): 10 min phonics refresh + 10 min guided reading + 5 min spoken recap.'
-  }, {
-    type: 'li',
-    content: 'Day 2 (Accuracy): 12 min decoding ladder + 8 min sentence dictation + 5 min confidence close.'
-  }, {
-    type: 'li',
-    content: 'Day 3 (Fluency): 5 min word review + 10 min repeated reading + 5 min comprehension questions.'
-  }, {
-    type: 'li',
-    content: 'Day 4 (Grammar transfer): 10 min sentence building + 10 min edit-and-read + 5 min oral explanation.'
-  }, {
-    type: 'li',
-    content: 'Day 5 (Speaking structure): 10 min topic planning + 10 min 45-second talk rehearsal.'
-  }, {
-    type: 'li',
-    content: 'Day 6 (Mixed transfer): combine one phonics, one grammar, one speaking task in short rounds.'
-  }, {
-    type: 'li',
-    content: 'Day 7 (Review): rerun mini-diagnostic, compare with Day 0, and set next 2 weekly targets.'
-  }, {
-    type: 'h2',
-    content: 'Age-band goals with measurable outcomes'
-  }, {
-    type: 'li',
-    content: 'Ages 3-5: stronger sound recall and oral blending; target is faster response and clearer segmenting.'
-  }, {
-    type: 'li',
-    content: 'Ages 6-7: improved decoding + sentence control; target is fewer reading errors and cleaner punctuation.'
-  }, {
-    type: 'li',
-    content: 'Ages 8-10: improved fluency + structured speaking; target is smoother passage reading and coherent 45-second response.'
-  }, {
-    type: 'h2',
-    content: 'Implementation standards for parents (to keep quality high)'
-  }, {
-    type: 'li',
-    content: 'Keep one fixed daily slot to reduce negotiation and decision fatigue.'
-  }, {
-    type: 'li',
-    content: 'Use 80/20 difficulty: mostly successful tasks, small stretch at the end.'
-  }, {
-    type: 'li',
-    content: 'Correct quickly: model once, child retries once, then move forward.'
-  }, {
-    type: 'li',
-    content: 'End every session with one specific praise line tied to effort or strategy.'
-  }, {
-    type: 'h2',
-    content: 'Progress tracker template (Notes app or notebook)'
-  }, {
-    type: 'p',
-    content: 'Track daily with five fields: Date | Task | Accuracy | Confidence (1-5) | Next focus. This makes parent-teacher communication precise and useful.'
-  }, {
-    type: 'li',
-    content: 'Example entry: "Mar 17 | CVC blending + retell | 8/10 | 4/5 | Review short-i contrasts tomorrow."'
-  }, {
-    type: 'h2',
-    content: 'Decision rules: continue, adapt, or escalate'
-  }, {
-    type: 'li',
-    content: 'Continue current plan if accuracy and confidence rise for 3 consecutive sessions.'
-  }, {
-    type: 'li',
-    content: 'Adapt task level if child resists or accuracy drops below about 60 percent for 2 sessions.'
-  }, {
-    type: 'li',
-    content: 'Escalate for teacher support if no visible gain after 2 weeks of consistent practice.'
-  }, {
-    type: 'h2',
-    content: 'Common back-to-school failure points and fixes'
-  }, {
-    type: 'li',
-    content: 'Failure point: too many new tasks at once. Fix: reduce to one target skill per day.'
-  }, {
-    type: 'li',
-    content: 'Failure point: reading-only practice without comprehension. Fix: add two meaning questions daily.'
-  }, {
-    type: 'li',
-    content: 'Failure point: correction overload. Fix: prioritize one correction type each session.'
-  }, {
-    type: 'h2',
-    content: 'Professional conclusion: what Week 25 should accomplish'
-  }, {
-    type: 'p',
-    content: 'By the end of this protocol, parents should see measurable recovery in decoding confidence, cleaner sentence control, and more organized speaking responses. Tiny Steps recommends carrying the same measurement habit into the next four weeks to protect gains during the school transition.'
-  }, {
-    type: 'h3',
-    content: 'Parent scripts (high-impact, low-pressure)'
-  }, {
-    type: 'li',
-    content: '"We are doing a short 10-minute reset, not a test."'
-  }, {
-    type: 'li',
-    content: '"Try slowly first; speed can come later."'
-  }, {
-    type: 'li',
-    content: '"You improved from yesterday on this exact skill."'
-  }, {
-    type: 'h3',
-    content: 'End-of-week checklist for families'
-  }, {
-    type: 'li',
-    content: 'Baseline and Day-7 recheck completed.'
-  }, {
-    type: 'li',
-    content: 'At least one measurable gain recorded (accuracy, fluency, or confidence).'
-  }, {
-    type: 'li',
-    content: 'Next two weekly targets documented and shared with teacher.'
-  }],
-  faq: [{
-    question: 'How long should we run this back-to-school reset before changing strategy?',
-    answer: 'Run the protocol for 7 days, then review data. If there is no improvement after 2 consistent weeks, reduce difficulty and seek teacher guidance.'
-  }, {
-    question: 'Should we prioritize fluency or comprehension first?',
-    answer: 'Build both together. Keep decoding and fluency tasks short, then add two immediate comprehension checks so meaning is never delayed.'
-  }, {
-    question: 'What is the minimum routine for very busy weekdays?',
-    answer: 'Use a 10-minute minimum: 3 minutes phonics review, 4 minutes reading, 2 minutes comprehension, 1 minute praise and next-step note.'
-  }]
+  modifiedDate: '2026-08-30',
+  readTime: '18 min read',
+  metaDescription:
+    'Build back-to-school English confidence with speaking, participation and classroom routines that help kids answer, join in and ask for help independently.',
+  excerpt:
+    'Back-to-school English confidence is not about rehearsing one perfect speech. This parent guide helps children restart familiar classroom routines, answer more independently, participate in small steps and know what to say when they need help.',
+  audience: 'Parent',
+  discoveryCategory: 'Speaking & Communication',
+  body: [
+    { type: 'h2', content: 'Quick answer: rebuild classroom participation in small, predictable steps — not with one big confidence test' },
+    { type: 'p', content: 'A child can know English and still feel rusty when school routines restart. Answering a teacher, joining a group discussion, reading aloud, asking for clarification and speaking when classmates are listening all place more demand on language than a relaxed conversation at home.' },
+    { type: 'p', content: 'The useful goal is not to make the child “confident” in every situation before school begins. It is to make a few common classroom speaking moves familiar enough that the child can start, respond and recover with less adult support.' },
+    { type: 'p', content: 'Tiny Steps uses an editorial restart loop for this parent problem: **Routine → Rehearse → Respond → Participate → Reflect**. Practise one predictable classroom routine, rehearse the language needed for it, reduce prompts until the child can respond, transfer the response into a more school-like interaction, then reflect on the next small step. This is not a standardized confidence, anxiety or language assessment.' },
+
+    { type: 'h2', content: 'Blog 48 owns the back-to-school participation plan — not every speaking diagnosis' },
+    { type: 'p', content: 'This page is for a child who needs help **re-entering classroom speaking and participation routines** after a break or before a new term. It focuses on practical rehearsal and gradual independence.' },
+    { type: 'p', content: 'If the deeper question is whether the child understands English but consistently cannot speak independently in class, use [My Child Understands English but Does Not Speak in Class](/blog/child-understands-english-but-does-not-speak). That page owns the comprehension-versus-language-versus-setting diagnosis.' },
+    { type: 'p', content: 'If the child already answers but gives only one-word replies, use [My Child Gives Only One-Word Answers](/blog/child-gives-one-word-answers). If the child has ideas but cannot reliably build complete sentences even in a comfortable setting, use [How to Improve Sentence Formation in Kids](/blog/how-to-improve-sentence-formation-in-kids). For the wider speaking progression, use the [Speaking Confidence roadmap](/blog/speaking-confidence-seeds).' },
+
+    { type: 'h2', content: 'Why back-to-school speaking can feel harder even when the child has not “lost English”' },
+    { type: 'h3', content: '1. Classroom routines are less familiar after a break' },
+    { type: 'p', content: 'School participation often follows recurring patterns: listen to a question, wait for a turn, answer, explain, ask for help, respond to a peer, or read something aloud. When those routines have not been used recently, the child may need a little more planning time before the response feels automatic again.' },
+    { type: 'h3', content: '2. Classroom speaking combines language with audience and timing pressure' },
+    { type: 'p', content: 'A child may explain an idea comfortably to a parent but hesitate when a teacher expects an immediate answer while classmates are listening. That difference does not automatically prove a language disorder or a confidence problem. It tells you that the setting demand changed.' },
+    { type: 'h3', content: '3. The child may understand more than they can formulate quickly' },
+    { type: 'p', content: 'Understanding the question is only one part of a classroom response. The child must retrieve vocabulary, organise the idea, choose sentence structure and begin speaking before the turn passes.' },
+    { type: 'h3', content: '4. Too much adult prompting can hide dependence' },
+    { type: 'p', content: 'Sentence starters and models can help a child restart, but they should shrink over time. If an adult always supplies the first half of the answer, the child can appear successful without becoming more independent at initiating responses.' },
+    { type: 'h3', content: '5. A child may be worrying about being wrong rather than lacking the answer' },
+    { type: 'p', content: 'Some children speak less when they believe every answer must be perfect. A useful restart plan rewards relevant participation, self-correction and strategy use instead of demanding flawless grammar before the child contributes.' },
+
+    { type: 'h2', content: 'The Tiny Steps back-to-school loop: Routine → Rehearse → Respond → Participate → Reflect' },
+    { type: 'h3', content: 'Step 1 — Routine: choose one classroom speaking job' },
+    { type: 'p', content: 'Do not practise “speaking confidence” as one huge skill. Choose one routine the child is likely to meet: greeting the teacher, answering a familiar question, asking for clarification, explaining an answer, joining a pair discussion, reading one line aloud or telling the teacher that help is needed.' },
+    { type: 'h3', content: 'Step 2 — Rehearse: make the language available before adding pressure' },
+    { type: 'p', content: 'Practise the routine first in a comfortable setting. Model one useful response if needed, then let the child try. For example: “Could you please repeat the question?” or “I think the answer is ___ because ___.” The purpose is to make the language pattern familiar, not to memorise a performance.' },
+    { type: 'h3', content: 'Step 3 — Respond: fade the support until the child can start independently' },
+    { type: 'p', content: 'Change the prompt slightly and reduce the scaffold. Move from a full model to a sentence starter, then to a keyword cue, then to no cue where possible. The important progress signal is that the child begins and completes the response with less adult construction.' },
+    { type: 'h3', content: 'Step 4 — Participate: make the task more classroom-like' },
+    { type: 'p', content: 'Once the response works privately, add one realistic demand: another listener, a shorter planning pause, a follow-up question, a peer turn or a small-group role. Increase one demand at a time so you can see what actually changes performance.' },
+    { type: 'h3', content: 'Step 5 — Reflect: name the successful strategy and the next small step' },
+    { type: 'p', content: 'Use specific feedback such as “You started without my sentence starter” or “You asked for the question again instead of going silent.” Then choose the next step: add one detail, answer a less familiar question, speak to one more listener or use the same routine in class.' },
+
+    { type: 'h2', content: 'Seven classroom English routines worth rehearsing before school restarts' },
+    { type: 'h3', content: '1. Greeting and opening interaction' },
+    { type: 'p', content: 'Practise a natural greeting and one short follow-up rather than a memorised self-introduction speech. The goal is easy entry into interaction.' },
+    { type: 'h3', content: '2. Answering a direct question' },
+    { type: 'p', content: 'Start with familiar questions, then vary them. Natural conversation does not require a full sentence every time, but school answers often need enough language to show the child’s thinking.' },
+    { type: 'h3', content: '3. Adding a reason or useful detail' },
+    { type: 'p', content: 'Practise one expansion move: “I think ___ because ___,” “My answer is ___ because ___,” or “One example is ___.” Fade the frame once the child can organise the idea independently.' },
+    { type: 'h3', content: '4. Asking for clarification' },
+    { type: 'p', content: 'Children need language for not understanding: “Could you repeat that?”, “What does ___ mean?”, or “Can you show me the first step?” Knowing how to ask for clarification can prevent silence from becoming the only response to uncertainty.' },
+    { type: 'h3', content: '5. Joining pair or group talk' },
+    { type: 'p', content: 'Practise entering a discussion with a small contribution: “I agree because ___,” “I have a different idea,” or “Can I add something?” The child does not need a long speech; participation begins with a usable turn.' },
+    { type: 'h3', content: '6. Reading or presenting one short part aloud' },
+    { type: 'p', content: 'Use material the child can actually read or understand. Do not turn speaking-confidence practice into a hidden decoding test. If reading accuracy is unstable, address that separately through the [reading-fluency guide](/blog/how-to-improve-reading-fluency-in-children) or [phonics pathway](/phonics).' },
+    { type: 'h3', content: '7. Repairing a mistake and continuing' },
+    { type: 'p', content: 'Practise simple repair language: “Let me try again,” “I mean ___,” or “I want to change my answer.” Confidence grows when the child learns that a mistake does not end the speaking turn.' },
+
+    { type: 'h2', content: 'A calm back-to-school practice plan parents can adapt' },
+    { type: 'p', content: 'The plan does not require a fixed number of days or minutes. Use it as a sequence and repeat a stage until the child is more independent. A child who is already comfortable answering may move quickly to group participation; another may need several low-pressure rehearsals first.' },
+    { type: 'li', content: '**Start with one predictable routine:** choose the classroom speaking job most likely to cause hesitation.' },
+    { type: 'li', content: '**Rehearse privately:** model once if necessary and let the child retry.' },
+    { type: 'li', content: '**Fade one prompt:** reduce the sentence starter, keyword cue or adult reminder.' },
+    { type: 'li', content: '**Add one classroom demand:** another listener, follow-up question or turn-taking requirement.' },
+    { type: 'li', content: '**Reflect briefly:** name the strategy that worked and choose the next small participation step.' },
+    { type: 'p', content: 'This approach aligns with evidence on explicit modelling, guided practice, scaffolding and gradual independence. The routine should stay connected to real classroom communication rather than becoming a separate “confidence drill.”' },
+
+    { type: 'h2', content: 'What parents can say without increasing performance pressure' },
+    { type: 'li', content: '“You do not need a perfect answer. Start with what you know.”' },
+    { type: 'li', content: '“Take a moment to think, then give me your first idea.”' },
+    { type: 'li', content: '“If you do not understand the question, ask me to repeat it.”' },
+    { type: 'li', content: '“Try once without the sentence starter.”' },
+    { type: 'li', content: '“You corrected yourself and kept going — that is useful classroom speaking.”' },
+    { type: 'p', content: 'Specific feedback tied to the task is more useful than personality labels such as “You are shy” or “You are a confident speaker.” Describe the behaviour that improved and the next action the child can control.' },
+
+    { type: 'h2', content: 'How parents can track participation without turning home into school' },
+    { type: 'p', content: 'Use a small observation note rather than a scorecard with artificial confidence percentages. Track the amount of support needed and whether the skill transfers to a slightly different situation.' },
+    { type: 'li', content: '**Initiation:** Did the child begin the answer independently?' },
+    { type: 'li', content: '**Completeness:** Was there enough language to communicate the idea?' },
+    { type: 'li', content: '**Prompt level:** Full model, sentence starter, keyword cue or independent?' },
+    { type: 'li', content: '**Participation:** Could the child take a turn, ask for clarification or respond to another person?' },
+    { type: 'li', content: '**Repair:** Could the child correct or restart after a mistake?' },
+    { type: 'li', content: '**Transfer:** Did the same routine work with a fresh question, listener or topic?' },
+
+    { type: 'h2', content: 'Three different patterns parents should not collapse into “low confidence”' },
+    { type: 'h3', content: 'Pattern A — understands and speaks well at home, but participation drops sharply in class' },
+    { type: 'p', content: 'Use the setting comparison in [My Child Understands English but Does Not Speak in Class](/blog/child-understands-english-but-does-not-speak). The child may need graduated classroom participation support, but the cause should not be guessed from silence alone.' },
+    { type: 'h3', content: 'Pattern B — answers everywhere, but responses stay extremely short' },
+    { type: 'p', content: 'Use [My Child Gives Only One-Word Answers](/blog/child-gives-one-word-answers). That is a response-expansion problem rather than simply a back-to-school routine problem.' },
+    { type: 'h3', content: 'Pattern C — wants to answer but cannot construct a clear sentence even privately' },
+    { type: 'p', content: 'Use [How to Improve Sentence Formation in Kids](/blog/how-to-improve-sentence-formation-in-kids). Sentence construction may need direct teaching before participation practice becomes productive.' },
+
+    { type: 'h2', content: 'For multilingual children, separate English proficiency from willingness to participate' },
+    { type: 'p', content: 'A multilingual child may participate differently depending on the language, topic and setting. Compare what the child can do across the languages they use instead of treating quieter English participation as proof of a general communication weakness.' },
+    { type: 'p', content: 'Structured supports such as useful vocabulary, visuals, sentence starters and smaller-group talk can make participation more accessible while English is developing. These scaffolds should support communication and then reduce when the child can manage the task more independently.' },
+
+    { type: 'h2', content: 'How parents and teachers can coordinate the first weeks back' },
+    { type: 'p', content: 'The most useful parent–teacher message is specific. Instead of “My child has no confidence,” share the observed routine: “She answers independently at home but needs a sentence starter when another adult asks the same question,” or “He can explain the answer but does not yet ask for clarification when confused.”' },
+    { type: 'p', content: 'Ask the teacher which classroom participation routine would be most useful to rehearse at home. Alignment matters: home practice should reinforce a school routine, not create a second competing communication method.' },
+    { type: 'p', content: 'For a broader start-of-term check across reading, writing and speaking, use the [School Reopening English Readiness Checklist](/blog/june-school-reopening-english-readiness-plan).' },
+
+    { type: 'h2', content: 'What parents should avoid during a confidence restart' },
+    { type: 'li', content: 'Do not label the child “shy” as if that explains the cause.' },
+    { type: 'li', content: 'Do not demand long speeches when the immediate classroom need is simply answering or asking for help.' },
+    { type: 'li', content: 'Do not correct every grammar error while the child is trying to participate.' },
+    { type: 'li', content: 'Do not keep the sentence starter forever once the child can begin independently.' },
+    { type: 'li', content: 'Do not compare the child’s speaking volume or speed with siblings or classmates.' },
+    { type: 'li', content: 'Do not treat one successful rehearsed answer as proof that the skill transfers to class.' },
+    { type: 'li', content: 'Do not interpret multilingualism itself as a communication disorder.' },
+
+    { type: 'h2', content: 'When the problem needs closer review rather than more confidence practice' },
+    { type: 'p', content: 'Ask the teacher for a closer review when the child repeatedly cannot understand routine questions, cannot formulate age-appropriate responses even in comfortable settings, shows a large and persistent difference between speaking situations, or participation difficulty is interfering with learning despite supportive classroom opportunities.' },
+    { type: 'p', content: 'If the child speaks comfortably in some settings but consistently cannot speak in other settings where speech is expected, do not assume it is ordinary shyness. Discuss the pattern with the school and an appropriate qualified professional. Tiny Steps provides educational speaking and language support; it does not diagnose anxiety, selective mutism, speech-language disorders or developmental conditions.' },
+
+    { type: 'h2', content: 'How this back-to-school plan connects to the Tiny Steps pathways' },
+    { type: 'p', content: 'Use the [speaking pathway](/speaking) when independent responses, conversational structure and participation are the main goals. The [curriculum roadmap](/curriculum) shows how speaking connects with grammar, reading and wider English development.' },
+    { type: 'p', content: 'For a wider explanation of how phonics, grammar and communication interact, use [How Phonics, Grammar and Communication Work Together](/blog/how-phonics-grammar-and-communication-work-together). Families who are unsure whether the main issue is language structure, reading or participation can use the [free 1:1 demo assessment route](/book-demo) to discuss an appropriate starting point.' },
+
+    { type: 'h2', content: 'Evidence and references' },
+    { type: 'li', content: 'Education Endowment Foundation — Oral Language Interventions: current evidence on purposeful speaking and listening, verbal interaction, modelling, scaffolding and classroom oral language. https://educationendowmentfoundation.org.uk/education-evidence/teaching-learning-toolkit/oral-language-interventions' },
+    { type: 'li', content: 'Education Endowment Foundation — Metacognition and Self-Regulation: evidence on explicit strategy teaching, modelling, guided practice, planning, monitoring, reflection and gradual learner independence. https://educationendowmentfoundation.org.uk/education-evidence/teaching-learning-toolkit/metacognition-and-self-regulation' },
+    { type: 'li', content: 'Education Endowment Foundation — Metacognition and Self-Regulated Learning guidance, second edition (2025): practical guidance on modelling, scaffolding and moving toward independent strategy use. https://educationendowmentfoundation.org.uk/education-evidence/guidance-reports/metacognition%20' },
+    { type: 'li', content: 'Education Endowment Foundation — Feedback: current guidance that feedback should be specific, linked to the learning goal, highlight strengths and identify a next step rather than focus on personal characteristics. https://educationendowmentfoundation.org.uk/16-19/developing-independent-learners/feedback' },
+    { type: 'li', content: 'Education Endowment Foundation — Parental Engagement: evidence supporting practical learning-linked parent guidance, positive communication and two-way discussion of strengths and difficulties. https://educationendowmentfoundation.org.uk/education-evidence/teaching-learning-toolkit/parental-engagement' },
+    { type: 'li', content: 'Education Endowment Foundation — Communicate Effectively with Families: guidance on personalised, positive and learning-linked parent communication. https://educationendowmentfoundation.org.uk/education-evidence/leadership-and-planning/supporting-attendance/communicate-effectively-with-families' },
+    { type: 'li', content: 'Education Endowment Foundation — Weaving Social and Emotional Learning Habits into Whole-School Routines: implementation example explaining how everyday routines can reinforce social and emotional skills. https://educationendowmentfoundation.org.uk/news/weaving-social-and-emotional-learning-sel-habits-into-whole-school-routines' },
+    { type: 'li', content: 'Education Endowment Foundation — Talking the Talk: 2025 discussion of embedding purposeful oral-language opportunities across everyday curriculum teaching rather than relying on bolt-on speaking activities. https://educationendowmentfoundation.org.uk/news/talking-the-talk-teacher-and-leader-views-on-embedding-oral-language-across-the-curriculum' },
+    { type: 'li', content: 'Institute of Education Sciences / What Works Clearinghouse — Teaching Academic Content and Literacy to English Learners: evidence-based recommendations for oral and written English development in elementary and middle school. https://ies.ed.gov/ncee/wwc/practiceguide/19' },
+    { type: 'li', content: 'Institute of Education Sciences — Guidance for Navigating Remote Learning for English Learner Students: practical examples of multiple participation modes, sentence starters, key vocabulary, visuals and small-group oral-language practice. https://ies.ed.gov/learn/blog/guidance-navigating-remote-learning-english-learner-students' },
+    { type: 'li', content: 'Institute of Education Sciences — Helping Your English Learner Students Succeed: summary of evidence-based classroom support including oral/written English instruction and language-rich opportunities. https://ies.ed.gov/learn/blog/helping-your-english-learner-students-succeed-evidence-based-practices-educators' },
+  ],
+  faq: [
+    { question: 'How can I build my child’s English confidence before school starts?', answer: 'Practise one common classroom speaking routine at a time. Rehearse the language privately, fade prompts, add one school-like demand such as another listener or follow-up question, and track whether the child can participate with less support.' },
+    { question: 'What classroom English routines should kids practise before going back to school?', answer: 'Useful routines include answering a teacher, adding a reason, asking for clarification, joining pair or group talk, reading or presenting a short part aloud, and repairing a response after a mistake.' },
+    { question: 'Should my child memorise a self-introduction for back to school?', answer: 'A short self-introduction can be useful, but memorising one polished speech does not prove classroom confidence. Practise flexible question-and-answer routines, clarification and turn-taking as well.' },
+    { question: 'My child speaks at home but not in class. Is this just low confidence?', answer: 'Not necessarily. Compare comprehension, modelled responses, prompted responses and independent responses, then compare the same speaking job across settings. Persistent setting-specific silence deserves closer discussion with the school rather than a simple “shy” label.' },
+    { question: 'Should I correct my child’s grammar while practising classroom speaking?', answer: 'Correct selectively. Protect the meaning and participation first, then cue one target that matters to the current learning goal. Too many corrections can make the speaking task harder without showing whether the child can participate independently.' },
+    { question: 'How do I know back-to-school speaking practice is helping?', answer: 'Look for less prompting, easier initiation, clearer participation, more useful clarification questions, better repair after mistakes and transfer to a fresh question, listener or classroom-like situation.' },
+  ],
 };
 
 export default post;
