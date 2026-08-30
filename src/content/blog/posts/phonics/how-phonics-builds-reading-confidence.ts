@@ -182,7 +182,7 @@ const post: BlogPost = {
     },
     {
       type: 'p',
-      content: 'This often points to blending rather than confidence. Use Blog #5, [How Kids Learn Blending](/blog/how-kids-learn-blending), or the narrower diagnostic [Why Does My Child Know Letter Sounds But Cannot Read Words?](/blog/why-child-knows-letter-sounds-but-cannot-read-words).'
+      content: 'This often points to blending rather than confidence. Use [How Kids Learn Blending](/blog/how-kids-learn-blending) or the narrower diagnostic [Why Does My Child Know Letter Sounds But Cannot Read Words?](/blog/why-child-knows-letter-sounds-but-cannot-read-words).'
     },
     {
       type: 'h3',
@@ -222,31 +222,31 @@ const post: BlogPost = {
     },
     {
       type: 'h2',
-      content: 'How Blog #7 differs from the other Tiny Steps phonics guides'
+      content: 'How this guide differs from our other phonics guides'
     },
     {
       type: 'li',
-      content: '[Benefits of Phonics for Kids](/blog/benefits-of-phonics-for-kids) owns the wider question of observable phonics benefits.'
+      content: '[Benefits of Phonics for Kids](/blog/benefits-of-phonics-for-kids) covers the wider question of observable phonics benefits.'
     },
     {
       type: 'li',
-      content: '[How Kids Learn Blending](/blog/how-kids-learn-blending) owns the blending pathway itself.'
+      content: '[How Kids Learn Blending](/blog/how-kids-learn-blending) explains the blending pathway itself.'
     },
     {
       type: 'li',
-      content: '[How Long Does Phonics Take?](/blog/how-long-does-phonics-take) owns progress pace and duration.'
+      content: '[How Long Does Phonics Take?](/blog/how-long-does-phonics-take) explains progress pace and duration.'
     },
     {
       type: 'li',
-      content: '[How Phonics Classes Help Kids Read](/blog/how-phonics-classes-help-kids-read) owns the mechanism of structured phonics teaching from decoding toward fluency.'
+      content: '[How Phonics Classes Help Kids Read](/blog/how-phonics-classes-help-kids-read) explains the mechanism of structured phonics teaching from decoding toward fluency.'
     },
     {
       type: 'li',
-      content: '[How to Choose a Phonics Class](/blog/how-to-choose-phonics-classes) owns provider comparison and class-selection criteria.'
+      content: '[How to Choose a Phonics Class](/blog/how-to-choose-phonics-classes) covers provider comparison and class-selection criteria.'
     },
     {
       type: 'p',
-      content: 'Blog #7 owns a narrower question: how decoding success, error recovery and increasing independence may show up as reading-confidence behaviour at home—without treating confidence as a guaranteed phonics outcome.'
+      content: 'This guide focuses on a narrower question: how decoding success, error recovery and increasing independence may show up as reading-confidence behaviour at home—without treating confidence as a guaranteed phonics outcome.'
     },
     {
       type: 'h2',

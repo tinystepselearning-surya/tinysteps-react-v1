@@ -794,6 +794,10 @@ function buildMetaDescription(src: any) {
     : [primaryAction, categoryConfig.secondaryAction];
 
   const headingItems = useMemo(() => buildHeadingMeta(post?.body || []), [post]);
+  const tocItems = useMemo(
+    () => headingItems.filter((item) => item.level === 'h2').slice(0, 9),
+    [headingItems],
+  );
   const articleNodes = useMemo(() => {
     if (!post) return MdxComp ? <MdxComp /> : null;
 
@@ -933,8 +937,8 @@ function buildMetaDescription(src: any) {
   }
 
   const reviewLabel = metaSource.modifiedDate
-    ? `Meaningfully updated ${formatBlogDate(metaSource.modifiedDate)}`
-    : 'Published date only; no separate update date is claimed';
+    ? `Updated ${formatBlogDate(metaSource.modifiedDate)}`
+    : `Published ${formatBlogDate(metaSource.date)}`;
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f6eee3_0%,#fbfaf7_22%,#ffffff_48%,#f4f8fc_100%)] text-slate-900">
@@ -1067,31 +1071,18 @@ function buildMetaDescription(src: any) {
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Best next move</p>
                   <p className="mt-2 text-sm leading-7 text-slate-600">{sidebarConfig.sidebarDescription}</p>
                 </div>
-                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Content ownership</p>
-                  <p className="mt-2 text-sm leading-7 text-slate-600">
-                    Responsible author: {articleAuthor.name}{articleAuthor.role ? ` · ${articleAuthor.role}` : ''}. {evidenceSummary?.label || 'No external source claim is made on this page.'}
-                  </p>
-                  <Link to={articleAuthor.profilePath} className="mt-3 inline-flex text-sm font-semibold text-primary-700 underline underline-offset-4">
-                    About the responsible author or team
-                  </Link>
-                </div>
               </div>
             </div>
 
-            {headingItems.length ? (
+            {tocItems.length ? (
               <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)]">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">On this page</p>
                 <nav className="mt-5 space-y-2">
-                  {headingItems.map((item) => (
+                  {tocItems.map((item) => (
                     <a
                       key={item.id}
                       href={`#${item.id}`}
-                      className={`block transition hover:text-primary-700 ${
-                        item.level === 'h3'
-                          ? 'pl-4 text-xs leading-5 text-slate-500'
-                          : 'text-sm font-semibold leading-6 text-slate-900'
-                      }`}
+                      className="block text-sm font-semibold leading-6 text-slate-900 transition hover:text-primary-700"
                     >
                       {item.title}
                     </a>

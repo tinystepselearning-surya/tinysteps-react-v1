@@ -4,6 +4,15 @@ import { getBlogEvidenceSummary } from '../../content/blog/shared/editorialTrust
 
 const bySlug = new Map(blogPosts.map((post) => [post.slug, post]));
 
+const hasUnsupportedReadingGuarantee = (text: string) => {
+  const guaranteeClaim = /\bguarantee(?:d|s)?\b[^.!?\n]{0,40}\b(?:reading|fluency|progress)\b/i;
+  const explicitRejection = /(?:\bdoes not justify claiming\b|\b(?:does|do|can|will|should) not\b[^.!?\n]{0,120}\bguarantee|\bcannot\b[^.!?\n]{0,120}\bguarantee|\bno\b[^.!?\n]{0,120}\bguarantee|\bmarketing claims? that\b[^.!?\n]{0,120}\bguarantee)/i;
+
+  return text
+    .split('\n')
+    .some((statement) => guaranteeClaim.test(statement) && !explicitRejection.test(statement));
+};
+
 describe('authoritative Blog #13 quality lock', () => {
   it('owns online phonics-game quality and reading transfer without treating engagement or scores as reading progress', () => {
     const post = bySlug.get('online-phonics-games');
@@ -36,6 +45,10 @@ describe('authoritative Blog #13 quality lock', () => {
 
     expect(body).not.toMatch(/4\s*[-–]\s*6 weeks/i);
     expect(body).toContain('it does not justify claiming that any particular game format guarantees reading progress.');
+    expect(hasUnsupportedReadingGuarantee(body)).toBe(false);
+    expect(hasUnsupportedReadingGuarantee('This game guarantees reading progress.')).toBe(true);
+    expect(hasUnsupportedReadingGuarantee('The programme guarantees fluency.')).toBe(true);
+    expect(hasUnsupportedReadingGuarantee('Guaranteed reading progress for every child.')).toBe(true);
     expect(body).not.toMatch(/game alone (?:will|can) teach/i);
     expect(body).not.toContain('Book Free 35-Minute Demo');
   });

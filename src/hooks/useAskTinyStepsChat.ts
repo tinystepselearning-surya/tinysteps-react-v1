@@ -8,6 +8,11 @@ import {
   buildAskTinyStepsLocalFallback,
   planAskTinyStepsExecution,
 } from '../services/askTinyStepsExecutionRouter';
+import {
+  toAskTinyStepsRoutingMetadata,
+  trackAskTinyStepsRouting,
+  type AskTinyStepsResponsePath,
+} from '../lib/askTinyStepsTelemetry';
 
 type ChatRole = 'user' | 'assistant';
 export type AskChatMessage = { role: ChatRole; content: string };
@@ -41,6 +46,7 @@ export function useAskTinyStepsChat() {
         return;
       }
 
+      const requestStartedAt = Date.now();
       requestInFlightRef.current = true;
       const userMsg: AskChatMessage = { role: 'user', content: trimmed };
       setMessages((previous) => [...previous, userMsg]);
@@ -60,8 +66,14 @@ export function useAskTinyStepsChat() {
         });
 
         let assistantText = plan.deterministicAnswer?.trim() ?? '';
+        let aiAttempted = false;
+        let responsePath: AskTinyStepsResponsePath = assistantText
+          ? 'deterministic'
+          : 'local_fallback';
 
         if (!assistantText && (plan.mode === 'first_party_grounded' || plan.mode === 'general_guidance')) {
+          aiAttempted = true;
+
           // A standalone question gets no stale history. A genuine follow-up gets
           // only the immediately preceding user/assistant turn plus this message.
           const conversation = plan.isFollowUp
@@ -73,8 +85,12 @@ export function useAskTinyStepsChat() {
               sourceIds: plan.sourceIds,
               mode: plan.mode,
             });
-            if (aiReply?.trim()) assistantText = aiReply.trim();
+            if (aiReply?.trim()) {
+              assistantText = aiReply.trim();
+              responsePath = 'ai';
+            }
           } catch {
+            responsePath = 'local_fallback';
             // Do not expose provider/model diagnostics in the visitor UI.
             console.warn('AskTinySteps AI unavailable; using the verified local fallback.');
           }
@@ -82,10 +98,19 @@ export function useAskTinyStepsChat() {
 
         if (!assistantText) {
           assistantText = buildAskTinyStepsLocalFallback(plan);
+          responsePath = 'local_fallback';
         }
 
         const assistantMsg: AskChatMessage = { role: 'assistant', content: assistantText };
         setMessages((previous) => [...previous, assistantMsg]);
+
+        trackAskTinyStepsRouting({
+          route: toAskTinyStepsRoutingMetadata(plan),
+          promptLength: trimmed.length,
+          aiAttempted,
+          responsePath,
+          totalLatencyMs: Date.now() - requestStartedAt,
+        });
       } finally {
         requestInFlightRef.current = false;
         setLoading(false);
