@@ -21,6 +21,17 @@ function countMeta(html, name) {
   return (html.match(new RegExp(`<meta\\s+name=["']${name}["'][^>]*>`, 'gi')) || []).length;
 }
 
+function firebaseSourceMatchesRoute(source, route) {
+  const glob = String(source || '');
+  const escaped = glob
+    .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+    .replace(/\*\*/g, '\u0000')
+    .replace(/\*/g, '[^/]*')
+    .replace(/\u0000/g, '.*');
+
+  return new RegExp(`^${escaped}$`).test(route);
+}
+
 describe('Phonics 34 search and AI crawlability lock', () => {
   it('keeps exactly 34 authoritative public phonics routes registered and indexable', () => {
     expect(PHONICS_34_AUTHORITY_SLUGS).toHaveLength(34);
@@ -100,19 +111,35 @@ describe('Phonics 34 search and AI crawlability lock', () => {
     expect(robots).toContain('Sitemap: https://tinystepslearning.com/sitemap.xml');
   });
 
-  it('does not apply an X-Robots-Tag noindex hosting header to blog routes', () => {
+  it('does not apply an X-Robots-Tag noindex hosting header to any Phonics 34 article route', () => {
     const firebase = JSON.parse(fs.readFileSync(path.join(repoRoot, 'firebase.json'), 'utf8'));
     const headers = firebase?.hosting?.headers || [];
-    const blogNoindexHeaders = headers.filter((entry) => {
-      const source = String(entry?.source || '');
-      if (!source.includes('/blog')) return false;
-      return (entry?.headers || []).some((header) =>
+    const authorityNoindexHeaders = headers.filter((entry) => {
+      const hasNoindexHeader = (entry?.headers || []).some((header) =>
         String(header?.key || '').toLowerCase() === 'x-robots-tag'
         && /noindex/i.test(String(header?.value || '')),
       );
+      if (!hasNoindexHeader) return false;
+
+      return PHONICS_34_AUTHORITY_ROUTES.some((route) =>
+        firebaseSourceMatchesRoute(entry?.source, route),
+      );
     });
 
-    expect(blogNoindexHeaders).toEqual([]);
+    expect(authorityNoindexHeaders).toEqual([]);
+
+    // RSS/Atom feeds are non-HTML discovery resources and should remain noindex.
+    for (const feedSource of ['/blog/rss.xml', '/blog/feed.xml']) {
+      const feedHeader = headers.find((entry) => entry?.source === feedSource);
+      expect(feedHeader?.headers || []).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            key: 'X-Robots-Tag',
+            value: 'noindex',
+          }),
+        ]),
+      );
+    }
   });
 
   it('publishes every Phonics 34 authority URL in the LLM-facing full authority directory', () => {
