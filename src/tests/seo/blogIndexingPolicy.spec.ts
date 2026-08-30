@@ -25,8 +25,12 @@ describe('blog indexing policy', () => {
   it('promotes quality-audited roadmap articles only on their cleaned public URLs', () => {
     for (const [cleanSlug, legacySlug] of [
       ['prevent-summer-slide-reading', 'week-27-prevent-summer-slide-reading'],
+      ['phonics-blending-club', 'week-2-phonics-blending-club'],
       ['phonics-diagnostics', 'week-22-phonics-diagnostics'],
+      ['phonics-long-vowels', 'week-4-phonics-long-vowels'],
       ['phonics-multisyllabic', 'week-19-phonics-multisyllabic'],
+      ['phonics-summer-plan', 'week-16-phonics-summer-plan'],
+      ['phonics-tricky-words', 'week-3-phonics-tricky-words'],
     ]) {
       expect(shouldNoindexBlogSlug(cleanSlug)).toBe(false);
       expect(shouldIncludeBlogSlugInSitemap(cleanSlug)).toBe(true);
@@ -39,7 +43,6 @@ describe('blog indexing policy', () => {
 
   it('keeps remaining renamed roadmap support pages noindex and out of the sitemap', () => {
     for (const slug of [
-      'phonics-long-vowels',
       'phonics-r-controlled',
       'grammar-tenses',
       'speaking-visual-aids',
