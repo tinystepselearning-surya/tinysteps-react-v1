@@ -138,12 +138,18 @@ describe('Phonics Brick 3 reading classes authority guardrails', () => {
     expect(page).toContain("name: 'Reading comprehension'");
   });
 
-  it('strengthens the search snippet around live 1:1 reading support without stuffing best claims', () => {
+  it('keeps client metadata aligned with the build-time prerender registry', () => {
     const page = read(readingPagePath);
+    const registry = read('src/lib/routeSeoRegistry.js');
+    const title = 'Reading Classes for Kids in India | Tiny Steps';
+    const description =
+      'Live online reading classes for kids in India. Build word reading, reading fluency, story comprehension, vocabulary and reading aloud confidence. Book one free 35-minute 1:1 demo assessment class.';
 
-    expect(page).toContain("const seoTitle = 'Online Reading Classes for Kids in India | Tiny Steps'");
-    expect(page).toContain('Live 1:1 online reading classes for kids in India.');
-    expect(page).toContain('assessment-first placement for struggling readers');
+    expect(page).toContain(`const seoTitle = '${title}'`);
+    expect(page).toContain(description);
+    expect(registry).toContain("'/reading-classes-for-kids': {");
+    expect(registry).toContain(`title: '${title}'`);
+    expect(registry).toContain(description);
     expect(page).toContain('keywords: READING_SEO_KEYWORDS');
   });
 });
