@@ -11,6 +11,7 @@ vi.mock('../../lib/analytics', () => ({
 import {
   ASK_TINY_STEPS_ROUTING_EVENT,
   buildAskTinyStepsRoutingTelemetry,
+  toAskTinyStepsRoutingMetadata,
   trackAskTinyStepsRouting,
 } from '../../lib/askTinyStepsTelemetry';
 import { planAskTinyStepsExecution } from '../../services/askTinyStepsExecutionRouter';
@@ -20,17 +21,28 @@ describe('Ask Tiny Steps PV-1D routing telemetry', () => {
     vi.clearAllMocks();
   });
 
-  it('records deterministic routing metadata without conversation content', () => {
+  it('records deterministic routing metadata without conversation or answer content', () => {
     const privateQuestion = 'My child Anaya needs help. What are your fees?';
     const plan = planAskTinyStepsExecution(privateQuestion);
+    const route = toAskTinyStepsRoutingMetadata(plan);
 
     const payload = buildAskTinyStepsRoutingTelemetry({
-      plan,
+      route,
       promptLength: privateQuestion.length,
       aiAttempted: false,
       responsePath: 'deterministic',
       totalLatencyMs: 17,
     });
+
+    expect(route).toEqual({
+      mode: 'deterministic',
+      reason: 'verified_fact',
+      audience: 'parents',
+      intent: 'pricing',
+      sourceIds: ['pricing'],
+      isFollowUp: false,
+    });
+    expect(route).not.toHaveProperty('deterministicAnswer');
 
     expect(payload).toEqual({
       schema_version: 'pv1d_v1',
@@ -50,9 +62,10 @@ describe('Ask Tiny Steps PV-1D routing telemetry', () => {
       total_latency_ms: 17,
     });
 
-    const serialized = JSON.stringify(payload);
+    const serialized = JSON.stringify({ route, payload });
     expect(serialized).not.toContain('Anaya');
     expect(serialized).not.toContain('What are your fees');
+    expect(serialized).not.toContain('₹400');
     expect(serialized).not.toContain('question');
     expect(serialized).not.toContain('answer');
     expect(serialized).not.toContain('message');
@@ -63,7 +76,7 @@ describe('Ask Tiny Steps PV-1D routing telemetry', () => {
     const plan = planAskTinyStepsExecution(question);
 
     const payload = buildAskTinyStepsRoutingTelemetry({
-      plan,
+      route: toAskTinyStepsRoutingMetadata(plan),
       promptLength: question.length,
       aiAttempted: true,
       responsePath: 'ai',
@@ -85,7 +98,7 @@ describe('Ask Tiny Steps PV-1D routing telemetry', () => {
     const plan = planAskTinyStepsExecution(question);
 
     const payload = buildAskTinyStepsRoutingTelemetry({
-      plan,
+      route: toAskTinyStepsRoutingMetadata(plan),
       promptLength: question.length,
       aiAttempted: true,
       responsePath: 'local_fallback',
@@ -103,7 +116,7 @@ describe('Ask Tiny Steps PV-1D routing telemetry', () => {
     );
 
     trackAskTinyStepsRouting({
-      plan,
+      route: toAskTinyStepsRoutingMetadata(plan),
       promptLength: 2_001,
       aiAttempted: true,
       responsePath: 'ai',
