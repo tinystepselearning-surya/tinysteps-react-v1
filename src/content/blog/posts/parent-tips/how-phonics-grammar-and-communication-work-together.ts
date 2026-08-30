@@ -9,7 +9,7 @@ const post: BlogPost = {
   modifiedDate: '2026-08-30',
   readTime: '18 min read',
   metaDescription:
-    'See how phonics, grammar and communication work together, why children can be uneven across skills, and how parents can choose the right English learning priority.',
+    'See how phonics, grammar and communication work together, why skills develop unevenly, and how parents can choose the right English learning priority.',
   excerpt:
     'Phonics, grammar and communication support different parts of English learning. This guide shows how they connect, where the chain can break, and which skill parents should prioritise first.',
   audience: 'Parent',
