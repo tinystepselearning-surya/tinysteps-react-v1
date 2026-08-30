@@ -36,10 +36,12 @@ export function extractBlogEntriesFromPostFiles(postsDir) {
 
       const sourceSlug = slugMatch[1];
       const dateMatch = src.match(/date\s*:\s*['"`]([0-9]{4}-[0-9]{2}-[0-9]{2})['"`]/);
+      const modifiedDateMatch = src.match(/modifiedDate\s*:\s*['"`]([0-9]{4}-[0-9]{2}-[0-9]{2})['"`]/);
       entries.push({
         slug: getPublicBlogSlug(sourceSlug),
         sourceSlug,
         date: dateMatch ? dateMatch[1] : null,
+        modifiedDate: modifiedDateMatch ? modifiedDateMatch[1] : null,
         sourcePath: filePath,
       });
     } catch {

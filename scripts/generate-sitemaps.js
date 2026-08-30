@@ -79,6 +79,11 @@ const EXCLUDED_BLOG_SLUGS = new Set([
   const blogPostEntries = extractBlogEntriesFromPostFiles(blogPostsDir);
   const mdxEntries = listMdxEntries(mdxDir);
   const blogPostSlugDateMap = new Map(blogPostEntries.filter((entry) => entry.date).map((entry) => [entry.slug, entry.date]));
+  const blogPostSlugLastmodMap = new Map(
+    blogPostEntries
+      .filter((entry) => entry.modifiedDate || entry.date)
+      .map((entry) => [entry.slug, entry.modifiedDate || entry.date]),
+  );
   const blogPostSlugPathMap = new Map(blogPostEntries.map((entry) => [entry.slug, entry.sourcePath]));
   const mdxSlugPathMap = new Map(mdxEntries.map((entry) => [entry.slug, entry.sourcePath]));
   const staticRoutesForSitemap = uniqueRoutes(SITEMAP_STATIC_ROUTES)
@@ -132,11 +137,12 @@ const EXCLUDED_BLOG_SLUGS = new Set([
     console.warn('[sitemap] No blog slugs detected; wrote /blog fallback URL.');
   } else {
     for (const slug of blogRoutes) {
-      const mappedDate = blogPostSlugDateMap.get(slug);
-      if (mappedDate && mappedDate > today) continue;
+      const publicationDate = blogPostSlugDateMap.get(slug);
+      if (publicationDate && publicationDate > today) continue;
+      const mappedLastmod = blogPostSlugLastmodMap.get(slug);
       const mdxPath = mdxSlugPathMap.get(slug);
       const postTsPath = blogPostSlugPathMap.get(slug);
-      const last = mappedDate
+      const last = mappedLastmod
         || (mdxPath
           ? lastmodFrom(mdxPath)
           : postTsPath
