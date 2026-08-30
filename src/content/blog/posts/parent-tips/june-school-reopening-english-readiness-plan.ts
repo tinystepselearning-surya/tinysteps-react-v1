@@ -2,306 +2,137 @@ import type { BlogPost } from '../../types';
 
 const post: BlogPost = {
   slug: 'june-school-reopening-english-readiness-plan',
-  title: 'June School Reopening English Readiness Plan for Kids',
+  title: 'School Reopening English Readiness Checklist for Kids: Reading, Writing and Speaking',
   category: 'Parent Tips',
-  author: 'Tiny Steps Learning',
+  author: 'Priya',
   date: '2026-05-14',
-  readTime: '8 min read',
+  modifiedDate: '2026-08-30',
+  readTime: '18 min read',
   metaDescription:
-    'Prepare your child for June school reopening with a simple English revision plan covering phonics, grammar, reading, writing, and speaking confidence.',
+    'School reopening English readiness checklist for kids: check reading, writing and speaking, find the first weak skill, and plan focused practice.',
   excerpt:
-    'Before June school reopening, children benefit from short English refresh sessions that revise phonics, reading, grammar, writing, and speaking for a confident return to class.',
+    'School reopening readiness is not a pass-or-fail test. This parent checklist helps you compare reading, writing and speaking on fresh, age-appropriate tasks, find the first unstable skill and choose a focused warm-up before classes restart.',
+  audience: 'Parent',
+  discoveryCategory: 'Parent Guides',
   body: [
-    {
-      type: 'h2',
-      content: '1. Quick Answer for Parents',
-    },
-    {
-      type: 'p',
-      content:
-        'Before June school reopening, children benefit from short English refreshment sessions that revise phonics, reading, grammar, sentence formation, and speaking. A 10-14 day routine can help children return to school with better confidence, smoother reading, clearer sentences, and stronger classroom participation.',
-    },
-    {
-      type: 'h2',
-      content: '2. Why June Readiness Matters',
-    },
-    {
-      type: 'li',
-      content: 'Children often lose learning rhythm during long holidays.',
-    },
-    {
-      type: 'li',
-      content: 'Reading fluency may slow down without daily revision.',
-    },
-    {
-      type: 'li',
-      content: 'Grammar mistakes increase when writing restarts after a break.',
-    },
-    {
-      type: 'li',
-      content: 'Shy children may hesitate to speak after time away from classroom routines.',
-    },
-    {
-      type: 'li',
-      content: 'School reopening feels easier when revision starts gently before day one.',
-    },
-    {
-      type: 'h2',
-      content: '3. What Parents Should Revise Before School Reopens',
-    },
-    {
-      type: 'p',
-      content:
-        'Use this quick school reopening preparation for kids checklist before classes begin:',
-    },
-    {
-      type: 'li',
-      content: 'Area | What to Check',
-    },
-    {
-      type: 'li',
-      content: 'Phonics | Can the child blend simple words?',
-    },
-    {
-      type: 'li',
-      content: 'Reading | Can the child read short sentences?',
-    },
-    {
-      type: 'li',
-      content: 'Grammar | Can the child form correct sentences?',
-    },
-    {
-      type: 'li',
-      content: 'Writing | Can the child write simple sentences?',
-    },
-    {
-      type: 'li',
-      content: 'Speaking | Can the child answer in full sentences?',
-    },
-    {
-      type: 'h2',
-      content: '4. 14-Day English Refreshment Plan',
-    },
-    {
-      type: 'h3',
-      content: 'Days 1-3: Phonics Reset',
-    },
-    {
-      type: 'li',
-      content: 'Revise short vowel sounds.',
-    },
-    {
-      type: 'li',
-      content: 'Practise CVC words.',
-    },
-    {
-      type: 'li',
-      content: 'Read five simple words daily.',
-    },
-    {
-      type: 'li',
-      content: 'Blend with finger tracking.',
-    },
-    {
-      type: 'h3',
-      content: 'Days 4-6: Sentence Reading',
-    },
-    {
-      type: 'li',
-      content: 'Read short sentences aloud.',
-    },
-    {
-      type: 'li',
-      content: 'Circle capital letters and full stops.',
-    },
-    {
-      type: 'li',
-      content: 'Identify nouns and action words.',
-    },
-    {
-      type: 'li',
-      content: 'Read aloud with expression.',
-    },
-    {
-      type: 'h3',
-      content: 'Days 7-9: Grammar Refresh',
-    },
-    {
-      type: 'li',
-      content: 'Articles: a, an, the.',
-    },
-    {
-      type: 'li',
-      content: 'Prepositions: in, on, under, beside, between.',
-    },
-    {
-      type: 'li',
-      content: 'Verbs and simple tenses.',
-    },
-    {
-      type: 'li',
-      content: 'Sentence correction games.',
-    },
-    {
-      type: 'h3',
-      content: 'Days 10-12: Speaking Confidence',
-    },
-    {
-      type: 'li',
-      content: 'Self-introduction practice.',
-    },
-    {
-      type: 'li',
-      content: 'Picture description.',
-    },
-    {
-      type: 'li',
-      content: 'Show and tell.',
-    },
-    {
-      type: 'li',
-      content: 'Opinion sentences.',
-    },
-    {
-      type: 'h3',
-      content: 'Days 13-14: Mini School Simulation',
-    },
-    {
-      type: 'li',
-      content: 'Read one short passage.',
-    },
-    {
-      type: 'li',
-      content: 'Answer three questions.',
-    },
-    {
-      type: 'li',
-      content: 'Write three sentences.',
-    },
-    {
-      type: 'li',
-      content: 'Speak for one minute on: My new school year.',
-    },
-    {
-      type: 'h2',
-      content: '5. Signs Your Child Needs a Refreshment Session',
-    },
-    {
-      type: 'li',
-      content: 'Child avoids reading.',
-    },
-    {
-      type: 'li',
-      content: 'Child guesses words instead of blending.',
-    },
-    {
-      type: 'li',
-      content: 'Child writes incomplete sentences.',
-    },
-    {
-      type: 'li',
-      content: 'Child gives one-word answers.',
-    },
-    {
-      type: 'li',
-      content: 'Child knows rules but does not apply them.',
-    },
-    {
-      type: 'li',
-      content: 'Child feels nervous about school reopening.',
-    },
-    {
-      type: 'h2',
-      content: '6. Why Short Revision Works Better Than Heavy Practice',
-    },
-    {
-      type: 'p',
-      content:
-        'Children need rhythm, not pressure. Small daily practice builds continuity and confidence without creating resistance.',
-    },
-    {
-      type: 'p',
-      content:
-        'Short revision sessions before reopening reduce anxiety and help school routines feel familiar from the first week.',
-    },
-    {
-      type: 'p',
-      content:
-        'Parent support works best when it is simple, realistic, and repeatable for busy weekdays.',
-    },
-    {
-      type: 'h2',
-      content: '7. Tiny Steps June Readiness Support',
-    },
-    {
-      type: 'p',
-      content:
-        'Tiny Steps helps children revise phonics, grammar, reading, sentence formation, and communication before school reopening through short, structured, child-friendly sessions.',
-    },
-    {
-      type: 'p',
-      content:
-        'For parents looking for English revision for kids before school starts, grammar refreshment classes for kids, or summer revision classes for children, this short pre-reopening format keeps practice focused and manageable.',
-    },
-    {
-      type: 'li',
-      content: 'Book a June readiness assessment: /book-demo',
-    },
-    {
-      type: 'li',
-      content: 'Start a 2-week refreshment route: /courses',
-    },
-    {
-      type: 'li',
-      content: 'Check full learning roadmap: /curriculum',
-    },
-    {
-      type: 'li',
-      content: 'Explore phonics pathway: /phonics',
-    },
-    {
-      type: 'li',
-      content: 'Explore grammar pathway: /grammar',
-    },
-    {
-      type: 'li',
-      content: 'Explore speaking pathway: /speaking',
-    },
-    {
-      type: 'li',
-      content: 'Contact Tiny Steps team: /contact',
-    },
-    {
-      type: 'h2',
-      content: '8. FAQ section with 5 parent questions',
-    },
+    { type: 'h2', content: 'Quick answer: check current independence, not how much the child can revise before school starts' },
+    { type: 'p', content: 'A useful school-reopening English check asks what your child can do **now** on a few fresh, age-appropriate tasks in reading, writing and speaking. The goal is not to make every child complete the same holiday syllabus or to prove that they are “ready” by age. It is to locate the first skill that has become rusty, effortful or overly dependent on adult help.' },
+    { type: 'p', content: 'A child may return with strong reading but hesitant speaking, fluent conversation but weak sentence writing, or good decoding with poor comprehension. Those patterns need different warm-ups. More revision is not automatically better; **better-matched revision** is more useful.' },
+    { type: 'p', content: 'Tiny Steps uses an editorial reopening loop for parent observation: **Check → Compare → Warm up → Transfer → Prioritise**. Check a fresh task, compare the amount of help needed, warm up the weakest layer, test it again in a school-like task, then prioritise the next teaching step. This is not a standardized school-readiness assessment.' },
+
+    { type: 'h2', content: 'School reopening readiness is broader than remembering last term’s worksheets' },
+    { type: 'p', content: 'Reading, writing and speaking are related but different parts of literacy and language. EEF’s Key Stage 1 literacy guidance describes literacy as including word-level skills such as spelling and word reading, plus text-level skills such as reading comprehension and writing composition. The current oral-language evidence also treats speaking and listening as purposeful learning processes rather than optional extras.' },
+    { type: 'p', content: 'That means a child can remember familiar answers and still need support transferring those skills to a fresh school task. Use unfamiliar-but-comparable examples whenever possible so the checklist measures current use rather than memory for holiday practice.' },
+
+    { type: 'h2', content: 'The Tiny Steps school-reopening loop: Check → Compare → Warm up → Transfer → Prioritise' },
+    { type: 'h3', content: '1. Check — use one fresh task in each major area' },
+    { type: 'p', content: 'Use a short reading passage, one manageable writing prompt and one spoken question or retell. Keep the content familiar enough that you are checking English skill rather than difficult background knowledge.' },
+    { type: 'h3', content: '2. Compare — record how much support the child needs' },
+    { type: 'p', content: 'Did the child complete the task independently, after one familiar cue, after a model, or only after the adult supplied most of the answer? Independence tells you more than whether the final response looked correct.' },
+    { type: 'h3', content: '3. Warm up — practise the first unstable skill, not every topic' },
+    { type: 'p', content: 'If decoding is the first break point, work there. If the child reads accurately but cannot explain meaning, focus on comprehension. If the spoken idea is clear but writing loses sentence structure, practise oral-to-written transfer. Avoid turning the week before school into a complete grammar and phonics re-course.' },
+    { type: 'h3', content: '4. Transfer — repeat the skill on a new school-like example' },
+    { type: 'p', content: 'A warm-up is becoming useful when the child can apply the strategy to a fresh word, sentence, paragraph, writing prompt or speaking question with less help. Repeating the exact practice item can build familiarity but does not prove transfer.' },
+    { type: 'h3', content: '5. Prioritise — carry one or two clear observations into the new term' },
+    { type: 'p', content: 'You do not need a long deficit list. “Reads accurately but needs help retelling” or “Can say a sentence but loses words when writing it” gives a teacher a far clearer starting point than “English is weak.”' },
+
+    { type: 'h2', content: 'Reading readiness checklist: accuracy, flow and meaning' },
+    { type: 'h3', content: '1. Can the child decode unfamiliar words at the expected current level?' },
+    { type: 'p', content: 'Use words containing patterns the child has already been taught. If the child relies on guessing, first check sound recall and blending rather than pushing into longer passages. Use [Why Does My Child Know Letter Sounds But Cannot Read Words?](/blog/why-child-knows-letter-sounds-but-cannot-read-words) when this is the main bottleneck.' },
+    { type: 'h3', content: '2. Can the child read connected text without excessive effort?' },
+    { type: 'p', content: 'When word reading is reasonably accurate, listen for whether the child can move through a sentence or short passage with increasingly natural phrasing. Slow reading is not automatically a problem, but persistent word-by-word effort may need fluency support. Use [How to Improve Reading Fluency in Children](/blog/how-to-improve-reading-fluency-in-children).' },
+    { type: 'h3', content: '3. Can the child explain what was read?' },
+    { type: 'p', content: 'Ask for a short retell, main idea, sequence or simple inference. The IES foundational-reading guide deliberately combines word-reading foundations with academic language, vocabulary and meaning because reading for understanding depends on more than accurate pronunciation.' },
+    { type: 'p', content: 'If your child reads the words but cannot explain the story, use [Why Does My Child Read Words But Not Understand Stories?](/blog/why-child-reads-words-but-does-not-understand-story) rather than adding harder reading material.' },
+
+    { type: 'h2', content: 'Writing readiness checklist: idea, sentence, transcription and transfer' },
+    { type: 'h3', content: '1. Can the child say the idea before writing it?' },
+    { type: 'p', content: 'The 2025 DfE Writing Framework emphasizes spoken language and oral composition as important supports for writing. Ask the child to say one sentence about a familiar picture, event or topic before asking them to write it.' },
+    { type: 'h3', content: '2. Can the child build a complete, meaningful sentence?' },
+    { type: 'p', content: 'Check whether the sentence has a stable core idea and sensible word order. If the child has vocabulary but cannot reliably construct the sentence, use [How to Improve Sentence Formation in Kids](/blog/how-to-improve-sentence-formation-in-kids).' },
+    { type: 'h3', content: '3. Can the child get the sentence onto the page without losing the idea?' },
+    { type: 'p', content: 'Writing places demands on handwriting, spelling, sentence construction and composition at the same time. DfE’s Writing Framework stresses that transcription skills should become increasingly automatic so children can devote more attention to meaning. For a readiness check, notice whether handwriting or spelling load causes the sentence itself to collapse.' },
+    { type: 'h3', content: '4. Are grammar errors a sentence-building problem or a transfer problem?' },
+    { type: 'p', content: 'If the sentence cannot be built clearly in the first place, stay with sentence formation. If the child can explain a grammar rule and use it in a controlled exercise but the error returns in fresh speaking or writing, use [My Child Knows Grammar Rules but Still Makes Mistakes](/blog/child-knows-grammar-but-makes-mistakes).' },
+    { type: 'p', content: 'Do not demand long writing before the foundations are stable. The DfE Writing Framework explicitly prioritises quality and foundation skills over length when pupils are not yet ready for extended writing.' },
+
+    { type: 'h2', content: 'Speaking readiness checklist: understand, respond, expand and participate' },
+    { type: 'h3', content: '1. Does the child understand the question or instruction?' },
+    { type: 'p', content: 'Start with comprehension. A child who cannot show understanding of the question needs a different next step from a child who understands perfectly but hesitates to answer.' },
+    { type: 'h3', content: '2. Can the child begin an answer without an adult building it first?' },
+    { type: 'p', content: 'Use one familiar classroom-style question such as explaining an activity, retelling something that happened or giving a simple reason. If comprehension is secure but independent speaking breaks, use [My Child Understands English but Does Not Speak in Class](/blog/child-understands-english-but-does-not-speak).' },
+    { type: 'h3', content: '3. Can the child add one useful detail when the task requires it?' },
+    { type: 'p', content: 'Natural conversation includes short answers, so do not demand a formal sentence for every reply. But when school participation requires explanation, the child should gradually be able to move from a basic answer to one useful detail, reason, example or sequence. Use [My Child Gives Only One-Word Answers](/blog/child-gives-one-word-answers) when response expansion is the main issue.' },
+    { type: 'h3', content: '4. Can the child use the skill with a slightly less familiar listener or task?' },
+    { type: 'p', content: 'EEF’s current oral-language review highlights purposeful interaction, modelling, scaffolding, vocabulary and dialogue. A readiness warm-up should therefore include real answering and listening, not memorising a polished self-introduction alone.' },
+
+    { type: 'h2', content: 'Use three readiness labels instead of a pass/fail score' },
+    { type: 'li', content: '**Ready to use:** the child completes a fresh, age-appropriate task independently or with very light support.' },
+    { type: 'li', content: '**Needs a warm-up:** the skill returns after one familiar cue, model, reread or brief rehearsal.' },
+    { type: 'li', content: '**Needs closer review:** the child repeatedly cannot complete comparable tasks, relies on heavy prompting, or shows the same specific breakdown across attempts.' },
+    { type: 'p', content: 'These labels are Tiny Steps editorial observation categories, not standardized educational benchmarks. Their purpose is to choose a useful next step and communicate clearly with the teacher.' },
+
+    { type: 'h2', content: 'A practical school-reopening check you can do at home' },
+    { type: 'p', content: 'Use one short session or split the check across a few days. The exact duration is not the target. Stop before fatigue makes the result meaningless.' },
+    { type: 'li', content: '**Reading:** one short level-appropriate passage or sentence set; note decoding, phrasing and meaning.' },
+    { type: 'li', content: '**Writing:** one oral sentence followed by the same idea in writing; note structure, spelling/handwriting load and independence.' },
+    { type: 'li', content: '**Speaking:** one familiar question plus one follow-up; note understanding, initiation and whether relevant detail can be added.' },
+    { type: 'li', content: '**Transfer:** change one word, picture, question or writing prompt and see whether the strategy survives.' },
+    { type: 'li', content: '**Priority:** choose the first unstable skill for the next few practice sessions.' },
+
+    { type: 'h2', content: 'What a focused warm-up can look like before school restarts' },
+    { type: 'h3', content: 'If reading accuracy is rusty' },
+    { type: 'p', content: 'Review already-taught sound–spelling patterns, blend a few fresh words and read a matched sentence. Do not jump immediately into an unfamiliar chapter book.' },
+    { type: 'h3', content: 'If fluency is rusty' },
+    { type: 'p', content: 'Use a short, appropriately difficult passage. Model one line, let the child reread with a clear phrasing target, then ask one meaning question. Do not turn the session into a speed race.' },
+    { type: 'h3', content: 'If writing is rusty' },
+    { type: 'p', content: 'Compose one or two sentences orally, write them, then improve one feature such as sentence completeness, spelling of a current pattern or punctuation. Quality is more informative than forcing a page.' },
+    { type: 'h3', content: 'If speaking is rusty' },
+    { type: 'p', content: 'Use familiar topics and real interaction: explain, retell, compare, ask and answer. Give wait time, then use the smallest prompt that works and fade it.' },
+    { type: 'p', content: 'For a broader home-practice structure, use [How to Keep Kids Engaged in English Practice at Home](/blog/how-to-engage-kids-in-english-learning-at-home). For the wider relationship among phonics, grammar and communication, use [How Phonics, Grammar and Communication Work Together](/blog/how-phonics-grammar-and-communication-work-together).' },
+
+    { type: 'h2', content: 'Do not use the school reopening checklist as a holiday exam' },
+    { type: 'li', content: 'Do not compare your child with a sibling or classmate to decide whether they are “ready.”' },
+    { type: 'li', content: 'Do not make one tired attempt the basis for a major conclusion.' },
+    { type: 'li', content: 'Do not reteach an entire grammar syllabus because of one weak sentence.' },
+    { type: 'li', content: 'Do not push reading speed when word accuracy is unstable.' },
+    { type: 'li', content: 'Do not force long writing before sentence and transcription foundations are ready.' },
+    { type: 'li', content: 'Do not treat quiet classroom behaviour as proof that the child does not understand English.' },
+    { type: 'li', content: 'Do not create a second teaching method at home when the child is already following a structured school or class sequence.' },
+
+    { type: 'h2', content: 'For multilingual children, check the learning task without judging overall language ability from English alone' },
+    { type: 'p', content: 'A multilingual child may show richer vocabulary, longer explanations or easier storytelling in another language. English output should be interpreted in the context of exposure and current proficiency rather than treated as a measure of intelligence or overall communication ability.' },
+    { type: 'p', content: 'IES guidance for English learners recommends integrating oral and written English instruction and providing structured opportunities to develop written language. If a child is learning English, focus the reopening check on the school language tasks they currently need while continuing to value strong communication in the languages used at home.' },
+
+    { type: 'h2', content: 'When to take a specific concern back to the school or teacher' },
+    { type: 'p', content: 'EEF guidance repeatedly emphasises identifying the specific aspect of literacy that is limiting progress. Bring a short observation such as “fresh CVC words still need full adult blending,” “reading is accurate but retell is weak,” or “oral sentence is clear but writing loses word order.” That is more actionable than saying the child has forgotten English.' },
+    { type: 'p', content: 'EEF’s parental-engagement evidence also supports giving families practical, learning-linked strategies rather than generic help. If you are unsure how a task should be taught, ask the teacher for the exact prompt or level instead of introducing a competing method.' },
+
+    { type: 'h2', content: 'How Tiny Steps routes the next step after the readiness check' },
+    { type: 'p', content: 'This article owns the **reopening checklist**, not every underlying diagnosis. Use the [phonics pathway](/phonics) when decoding and spelling foundations are the priority, [reading classes for kids](/reading-classes-for-kids) when connected reading or comprehension needs broader support, the [grammar pathway](/grammar) for sentence and writing control, and the [speaking pathway](/speaking) for independent communication.' },
+    { type: 'p', content: 'The [curriculum roadmap](/curriculum) shows the wider progression. Families who are unsure where the first unstable skill sits can use the [free 1:1 demo assessment route](/book-demo) to discuss an appropriate starting point.' },
+
+    { type: 'h2', content: 'Evidence and references' },
+    { type: 'li', content: 'Education Endowment Foundation — Improving Literacy in Key Stage 1: evidence-informed guidance spanning language, word reading, comprehension and writing. https://educationendowmentfoundation.org.uk/education-evidence/guidance-reports/literacy-ks-1' },
+    { type: 'li', content: 'Education Endowment Foundation — Improving Literacy in Key Stage 2: practical recommendations for developing fluent reading and writing and diagnosing specific literacy needs. https://educationendowmentfoundation.org.uk/education-evidence/guidance-reports/literacy-ks2' },
+    { type: 'li', content: 'Education Endowment Foundation — Oral Language Interventions: current evidence on speaking, listening, purposeful interaction, modelling, scaffolding and integration with literacy. https://educationendowmentfoundation.org.uk/education-evidence/teaching-learning-toolkit/oral-language-interventions' },
+    { type: 'li', content: 'Education Endowment Foundation — Parental Engagement: current evidence on practical, learning-linked support for parents and the quality of home learning. https://educationendowmentfoundation.org.uk/education-evidence/teaching-learning-toolkit/parental-engagement' },
+    { type: 'li', content: 'Education Endowment Foundation — From Talk to Text: 2025 guidance on oral rehearsal, vocabulary, sentence structures and writing development. https://educationendowmentfoundation.org.uk/news/talk-to-text-integrating-oral-language' },
+    { type: 'li', content: 'UK Department for Education — The Reading Framework: evidence-informed guidance on talk, systematic synthetic phonics, fluency, comprehension and identifying weaknesses in reading provision. https://www.gov.uk/government/publications/the-reading-framework-teaching-the-foundations-of-literacy' },
+    { type: 'li', content: 'UK Department for Education — The Writing Framework: 2025 guidance on transcription, sentence instruction, spoken language, composition and support for pupils who need more practice. https://www.gov.uk/government/publications/the-writing-framework' },
+    { type: 'li', content: 'UK Department for Education — Writing Framework summary: writing is complex; sentence instruction, spelling, handwriting, spoken language and quality-before-length all matter. https://www.gov.uk/government/publications/the-writing-framework/writing-framework-summary' },
+    { type: 'li', content: 'Institute of Education Sciences / What Works Clearinghouse — Foundational Skills to Support Reading for Understanding in Kindergarten Through 3rd Grade. https://ies.ed.gov/ncee/wwc/PracticeGuide/21' },
+    { type: 'li', content: 'Institute of Education Sciences / What Works Clearinghouse — Teaching Elementary School Students to Be Effective Writers: writing process, sentence construction, spelling and writing fluency. https://ies.ed.gov/ncee/WWC/PracticeGuide/17/Published' },
+    { type: 'li', content: 'Institute of Education Sciences / What Works Clearinghouse — Teaching Academic Content and Literacy to English Learners: academic vocabulary plus integrated oral and written English instruction. https://ies.ed.gov/ncee/wwc/PracticeGuide/19' },
+    { type: 'li', content: 'Institute of Education Sciences / REL Southeast — Supporting Your Child’s Reading at Home: 2026 family resource covering language, sounds and letters, word reading and reading for understanding. https://ies.ed.gov/sites/default/files/rel-southeast/document/2026/05/6.2.4.28%20Supporting%20Your%20Child%27s%20Reading%20at%20Home.pdf' },
   ],
   faq: [
-    {
-      question: 'How can I prepare my child for school reopening in June?',
-      answer:
-        'Use a 10-14 day revision plan with short daily tasks covering phonics, reading, grammar, writing, and speaking confidence.',
-    },
-    {
-      question: 'What English topics should children revise before school starts?',
-      answer:
-        'Prioritize blending and decoding, sentence reading, grammar basics, simple writing, and full-sentence speaking responses.',
-    },
-    {
-      question: 'Are refreshment classes useful before school reopening?',
-      answer:
-        'Yes. Short structured refresh sessions help children regain rhythm, reduce reopening anxiety, and participate more confidently in class.',
-    },
-    {
-      question: 'How many days of revision are enough before school starts?',
-      answer:
-        'For most children, 10-14 days of focused revision is enough to reactivate key skills and improve readiness.',
-    },
-    {
-      question: 'What if my child has forgotten phonics or grammar during holidays?',
-      answer:
-        'Start with a light reset: revise core sounds, simple words, and sentence patterns first, then build gradually over two weeks.',
-    },
+    { question: 'What should I check for English readiness before school reopens?', answer: 'Check three main areas on fresh, age-appropriate tasks: reading accuracy and meaning, sentence writing, and independent speaking. Note how much help your child needs and prioritise the first unstable skill rather than revising everything.' },
+    { question: 'How many days should my child revise before school reopens?', answer: 'There is no evidence-based number of days that suits every child. Use the readiness check to identify what is rusty, then do short focused practice for that skill and recheck transfer before adding more.' },
+    { question: 'Should my child revise all phonics and grammar before school starts?', answer: 'Usually no. Review the specific phonics, reading or grammar skill that is currently unstable. Repeating an entire syllabus can waste time and may hide the actual bottleneck.' },
+    { question: 'How do I know if my child’s reading is ready for school?', answer: 'Use a short level-appropriate passage. Check whether the child can decode the words accurately enough, read connected text with manageable effort, and explain basic meaning. Different breakdowns need different next steps.' },
+    { question: 'What writing should a child practise before school reopening?', answer: 'Use a small, age-appropriate task: say one idea, build a complete sentence, write it, and check whether sentence structure survives spelling and handwriting demands. Do not force long writing before the foundations are stable.' },
+    { question: 'What if my child understands English but is quiet about returning to class?', answer: 'Separate understanding from speaking independence. If the child understands the question and can speak comfortably in some settings but hesitates in class-like situations, use low-pressure speaking practice and discuss the setting pattern with the teacher rather than assuming weak English.' },
   ],
 };
 
