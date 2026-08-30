@@ -1,63 +1,149 @@
-import type { PhonicsSeoPost } from '../../types';
+import type { BlogPost } from '../../types';
 
-const post: PhonicsSeoPost = {
+const post: BlogPost = {
   slug: 'what-is-phonics-for-kids',
   title: 'What Is Phonics for Kids? A Parent Start-Here Guide',
-  focus: 'what is phonics for kids',
-  quickAnswer: 'Parent question: "What exactly is phonics, and how does it help my child read?" Direct answer: phonics teaches children to connect sounds to letters, blend those sounds into words, and spell by hearing sound patterns. This usually means your child moves from guessing words to decoding unfamiliar words step by step.',
-  homePlan: [
-    'Start with the core sequence: hear sound, map to letter, blend sounds into a word, then read in a short sentence.',
-    'Teach only a small sound set at first and review daily before adding new patterns.',
-    'Use oral blending before print: say separated sounds and ask your child to merge them into a word.',
-    'Run a 10-minute start routine: 3 minutes sound review, 4 minutes blending, 2 minutes decodable reading, 1 minute recap.',
-    'Add one short spelling transfer task: say a word, child taps sounds, writes, then reads back.',
-    'After one week, check if your child is relying less on guessing and more on sound-by-sound decoding.',
-    'Try Tiny Steps Phonics Balloon Pop',
-    'Use the listen-match-pop activity for a short sound-to-letter warm-up before blending practice.',
-    'Play Free: /free-balloon-pop-phonics-game-for-kids',
-    'Try the Free Letter Tracing Game',
-    'Help your child practise letter formation on screen with a simple tracing activity.',
-    'Play Free: /free-letter-tracing-game-for-kids',
-    'Try Letter Tracing with Sounds',
-    'Help your child connect letter shapes with letter sounds through simple tracing practice.',
-    'Play Free: /letter-tracing-with-sounds-game'
+  category: 'Phonics',
+  author: 'Priya',
+  date: '2025-11-10',
+  modifiedDate: '2026-08-30',
+  readTime: '17 min read',
+  hero: '/blog/hero-phonics.jpg',
+  metaDescription: 'What is phonics for kids? Learn phonemes, graphemes, blending, decoding, spelling, decodable text and the parent signs that phonics is transferring into reading.',
+  excerpt: 'A parent start-here guide to phonics: understand how children connect speech sounds with print, blend unfamiliar words, spell from sounds and transfer learning into real reading.',
+  body: [
+    { type: 'h2', content: 'Quick answer: phonics teaches children how print represents speech sounds' },
+    { type: 'p', content: 'Phonics is a way of teaching reading and spelling by making the relationship between spoken sounds and written letters or letter groups explicit. Children learn that print is not a set of pictures to memorise: letters and graphemes represent sounds, those sounds can be blended to read words, and spoken words can be segmented into sounds for spelling.' },
+    { type: 'p', content: 'The goal is not for a child to recite hundreds of “phonics rules.” The goal is increasingly independent word reading and spelling: **see print → retrieve the taught sounds → blend through the word → recognise the word → use it in connected reading**.' },
+
+    { type: 'h2', content: 'This is the start-here phonics guide' },
+    { type: 'p', content: 'Blog #33 owns the parent question **“What is phonics, what does it teach, and what should I expect it to look like?”** For the right starting age and readiness question, use [What Is the Right Age to Start Phonics?](/blog/what-age-to-start-phonics). For the full beginner teaching sequence, use [Phonics Rules for Beginners](/blog/phonics-rules-for-beginners). For a deeper research-and-parent-support guide later in the Tiny Steps library, use [Phonics for Parents](/blog/phonics-for-parents-guide).' },
+
+    { type: 'h2', content: 'Six terms make phonics much easier to understand' },
+    { type: 'h3', content: '1. Phoneme — a speech sound' },
+    { type: 'p', content: 'A phoneme is a unit of sound in spoken language. The word **ship** can be analysed as /sh/ /i/ /p/: three phonemes.' },
+    { type: 'h3', content: '2. Grapheme — the letter or letters representing a sound' },
+    { type: 'p', content: 'A grapheme is a written representation of a phoneme. A grapheme can be one letter, such as **m**, or more than one letter, such as **sh**, **ai** or **igh**. English has multiple spellings for some sounds and some graphemes can represent more than one sound, which is why phonics needs a planned cumulative sequence rather than one slogan per vowel.' },
+    { type: 'h3', content: '3. Blending — combining sounds to read a word' },
+    { type: 'p', content: 'When a child sees **sat**, retrieves /s/ /a/ /t/ and combines the sequence into **sat**, that is blending for reading. The useful habit is left-to-right attention to the whole printed word rather than guessing from the first letter or a picture.' },
+    { type: 'h3', content: '4. Segmenting — breaking a spoken word into sounds for spelling' },
+    { type: 'p', content: 'For spelling **ship**, the child hears the word, identifies /sh/ /i/ /p/ and represents those phonemes with the graphemes **sh-i-p**. Blog #9, [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling), owns the full encoding roadmap.' },
+    { type: 'h3', content: '5. Decoding — using print knowledge to work out a word' },
+    { type: 'p', content: 'Decoding means using the information in the printed word to identify it. A child who decodes a fresh word such as **sit** from taught correspondences is showing something different from remembering that **sat** was on yesterday’s flashcard.' },
+    { type: 'h3', content: '6. Decodable text — reading material matched to taught code' },
+    { type: 'p', content: 'Early independent reading is easier to interpret when the text mainly uses sound–spelling relationships the child has already been taught, with carefully handled common words that contain untaught or unusual parts. “Decodable” is therefore relative to the child’s taught knowledge, not a permanent category of book.' },
+
+    { type: 'h2', content: 'The Tiny Steps phonics learning chain' },
+    { type: 'p', content: 'Tiny Steps uses a six-part parent-facing chain to explain what phonics learning should eventually connect. This is editorial teaching guidance, not a standardized research protocol.' },
+    { type: 'li', content: '**Hear** — notice and work with the speech sound.' },
+    { type: 'li', content: '**Map** — connect that sound with its taught grapheme.' },
+    { type: 'li', content: '**Blend** — combine the mapped sounds through a printed word.' },
+    { type: 'li', content: '**Read** — recognise the completed word and reread it naturally.' },
+    { type: 'li', content: '**Spell** — segment the spoken word and represent the taught sound sequence in writing.' },
+    { type: 'li', content: '**Transfer** — use the same knowledge in a fresh word and appropriately matched connected text.' },
+    { type: 'p', content: 'The strongest learning signal is not completion of one activity. **Rehearsed success is practice evidence; fresh-word and text use are stronger transfer evidence.**' },
+
+    { type: 'h2', content: 'A simple example: how phonics turns letters into reading' },
+    { type: 'p', content: 'Suppose a child has been explicitly taught the correspondences **s, a, t, i, p, n**.' },
+    { type: 'li', content: 'The child sees **sat**.' },
+    { type: 'li', content: 'They retrieve /s/ /a/ /t/ from the print.' },
+    { type: 'li', content: 'They blend the sounds through the word: **sat**.' },
+    { type: 'li', content: 'They then read a fresh word such as **sit** or **pin** using the same taught code.' },
+    { type: 'li', content: 'For spelling, an adult says **pin** and the child segments /p/ /i/ /n/ and writes the matching graphemes.' },
+    { type: 'li', content: 'The same words can then appear in a short matched sentence so decoding moves into connected reading.' },
+    { type: 'p', content: 'For the first simple printed-word milestone, use [CVC Words Explained for Parents](/blog/cvc-words-explained-for-parents). For a SATPIN-specific launch, use [SATPIN Phonics Guide for Parents](/blog/satpin-phonics-guide).' },
+
+    { type: 'h2', content: 'Phonics is not the same as learning the alphabet' },
+    { type: 'p', content: 'Alphabet knowledge is useful, but knowing letter names does not automatically teach a child how to read an unfamiliar word. A child can sing A–Z, point to **B**, call it “bee,” and still not know how **b** contributes /b/ when decoding **bat**.' },
+    { type: 'p', content: 'That gap is why “knows ABC” and “can decode” should be checked separately. See [Child Knows ABC but Cannot Read](/blog/child-knows-abc-but-cannot-read) for the full parent diagnostic boundary.' },
+
+    { type: 'h2', content: 'Phonics is not the same as memorising whole words' },
+    { type: 'p', content: 'Children do build a store of rapidly recognised words as reading develops, but that does not require teaching every common word as an unanalyzable visual shape. Many high-frequency words are fully or largely decodable once the relevant correspondences are known.' },
+    { type: 'p', content: 'Some common words contain a part that is not yet decodable from the child’s current code or is genuinely unusual. Useful teaching maps the regular sound–spelling parts and draws attention to the unexpected part rather than encouraging a picture-like memory strategy. See [Phonics vs Sight Words](/blog/science-of-phonics-learning) and [How to Teach Tricky Words](/blog/phonics-tricky-words).' },
+
+    { type: 'h2', content: 'Phonics is not picture guessing or context guessing' },
+    { type: 'p', content: 'Pictures and sentence meaning are valuable for comprehension and for confirming whether a decoded word makes sense. They should not replace attention to the letters when identifying an unfamiliar printed word. The safer sequence is **print first for word identity; context next for meaning and confirmation**.' },
+    { type: 'p', content: 'If a child repeatedly looks at the first letter, scans the picture and invents the rest of the word, more book exposure alone may not correct the decoding process. Bring attention back to the complete printed sequence.' },
+
+    { type: 'h2', content: 'What systematic and cumulative phonics means' },
+    { type: 'p', content: 'Systematic phonics follows a planned progression rather than introducing spellings randomly. Cumulative teaching keeps earlier correspondences active while new ones are added, so the child’s usable code grows without repeatedly losing the foundation.' },
+    { type: 'li', content: 'Teach a defined set of correspondences.' },
+    { type: 'li', content: 'Use those correspondences in blending and spelling.' },
+    { type: 'li', content: 'Review earlier knowledge while adding new graphemes.' },
+    { type: 'li', content: 'Use fresh words to check application rather than only rehearsed lists.' },
+    { type: 'li', content: 'Move into matched phrases, sentences and books.' },
+    { type: 'p', content: 'Different programmes can use different orders. The important parent question is whether the order is explicit, coherent and cumulative. Blog #17 owns the detailed sequence question.' },
+
+    { type: 'h2', content: 'Does phonics include spelling?' },
+    { type: 'p', content: 'Yes, a strong phonics programme connects reading and spelling. Reading asks the child to move from graphemes to sounds and words; spelling asks the child to move from a spoken word to phonemes and graphemes. The two directions reinforce the same sound–print system, even though conventional English spelling eventually includes morphology, word history and pattern knowledge beyond simple one-sound-one-letter mapping.' },
+
+    { type: 'h2', content: 'What phonics does not teach by itself' },
+    { type: 'p', content: 'Phonics is important for word reading, but it is not the whole of literacy.' },
+    { type: 'li', content: 'Vocabulary — knowing what words mean.' },
+    { type: 'li', content: 'Oral language — understanding and producing increasingly complex spoken language.' },
+    { type: 'li', content: 'Background knowledge — knowing enough about the world and topic to understand a text.' },
+    { type: 'li', content: 'Reading comprehension — building meaning across sentences and a whole text.' },
+    { type: 'li', content: 'Writing composition — generating, organising and communicating ideas.' },
+    { type: 'p', content: 'A child can therefore need phonics and rich story language at the same time. Read aloud material does not need to be limited to what the child can independently decode. Adults can read richer books while the child independently practises matched text.' },
+    { type: 'p', content: 'Once decoding is accurate but the child does not understand the passage, use [From Decoding to Comprehension](/blog/phonics-comprehension). Once decoding is accurate but reading remains slow or choppy, use [How to Improve Reading Fluency](/blog/how-to-improve-reading-fluency-in-children).' },
+
+    { type: 'h2', content: 'What should parents see in a good phonics lesson?' },
+    { type: 'li', content: 'An appropriate starting point based on current reading behaviour rather than age alone.' },
+    { type: 'li', content: 'Explicit modelling of sound–spelling relationships.' },
+    { type: 'li', content: 'Active child responses — saying sounds, blending, reading, segmenting and spelling rather than mainly watching.' },
+    { type: 'li', content: 'Feedback that points the child back to the relevant print and allows another attempt.' },
+    { type: 'li', content: 'Cumulative review of earlier knowledge.' },
+    { type: 'li', content: 'Fresh-word checks that reduce the chance of memorised-list success being mistaken for decoding.' },
+    { type: 'li', content: 'Connected reading matched closely enough to taught code for independent practice.' },
+    { type: 'p', content: 'Blog #8, [How Phonics Classes Help Kids Read](/blog/how-phonics-classes-help-kids-read), owns the full explanation of what effective phonics instruction does inside lessons.' },
+
+    { type: 'h2', content: 'A flexible home routine for a child who is already learning phonics' },
+    { type: 'p', content: 'Do not copy a fixed online “10-minute formula” if it does not match the child. Keep one clear target and use enough practice for accurate, attentive attempts.' },
+    { type: 'li', content: 'Retrieve — review a small amount of already-taught sound–spelling knowledge.' },
+    { type: 'li', content: 'Apply — blend or decode words containing that taught target.' },
+    { type: 'li', content: 'Encode — spell one or more appropriate words from sounds where useful.' },
+    { type: 'li', content: 'Transfer — try a fresh word or matched sentence.' },
+    { type: 'li', content: 'Observe — note the exact point where help was needed.' },
+    { type: 'p', content: 'For the broad repeatable home system, use [Phonics Activities at Home](/blog/phonics-activities-for-kids-at-home). For letter-sound games, use [Phonics Games for Letter Sounds](/blog/phonics-games-for-letter-sounds).' },
+
+    { type: 'h2', content: 'Where Tiny Steps free games fit — and where they do not' },
+    { type: 'p', content: '[Balloon Pop](/free-balloon-pop-phonics-game-for-kids) specifically practises **hear a target sound → identify the printed letter → choose the matching balloon**. It can reinforce a letter-sound link, but it does not by itself demonstrate blending, word decoding, spelling or fluent reading.' },
+    { type: 'p', content: 'The [Letter Tracing Game](/free-letter-tracing-game-for-kids) can support letter-shape familiarity and motor practice. Tracing success is not proof that the child can retrieve the sound or decode words. Use games as targeted practice, then check the relevant reading skill away from the game.' },
+
+    { type: 'h2', content: 'How to tell whether phonics is working' },
+    { type: 'p', content: 'Track change in what the child can do, not a universal number of weeks.' },
+    { type: 'li', content: 'Sound–print recall becomes more reliable on taught correspondences.' },
+    { type: 'li', content: 'Blending needs less adult modelling.' },
+    { type: 'li', content: 'Fresh words built from taught code can be decoded instead of guessed.' },
+    { type: 'li', content: 'The same patterns can be segmented and represented in spelling where appropriate.' },
+    { type: 'li', content: 'Previously taught knowledge remains available as new patterns are added.' },
+    { type: 'li', content: 'The child can use the knowledge in matched connected text.' },
+    { type: 'p', content: 'These are observational signals, not a standardized mastery score. For timelines and plateaus, use [How Long Does Phonics Take?](/blog/how-long-does-phonics-take).' },
+
+    { type: 'h2', content: 'Can phonics work in multilingual homes?' },
+    { type: 'p', content: 'Yes. English phonics teaches the relationship between English speech sounds and English print. Families do not need to reduce rich use of their home language in order to teach English decoding. Continue conversation, stories, vocabulary and knowledge-building in the languages your family uses, while keeping the English phonics model consistent during English reading instruction.' },
+
+    { type: 'h2', content: 'Evidence and source boundary' },
+    { type: 'p', content: 'The Tiny Steps six-part learning chain is an editorial explanation. The evidence below supports its underlying components: explicit and systematic phonics, links between speech sounds and letters, blending/decoding, spelling and connected-text reading. It does not establish one universal home routine, one fixed course duration or a guarantee that phonics alone produces comprehension.' },
+    { type: 'li', content: '[Education Endowment Foundation — Phonics](https://educationendowmentfoundation.org.uk/education-evidence/teaching-learning-toolkit/phonics): summarises evidence for explicit, systematic phonics and stresses matching instruction to current phonemic awareness and grapheme knowledge.' },
+    { type: 'li', content: '[IES / What Works Clearinghouse — Foundational Skills to Support Reading for Understanding](https://ies.ed.gov/ncee/wwc/PracticeGuide/21/Published): recommends developing awareness of speech sounds, linking sounds to letters, teaching decoding and word analysis, writing/recognising words and reading connected text.' },
+    { type: 'li', content: '[UK Department for Education — The Reading Framework](https://www.gov.uk/government/publications/the-reading-framework-teaching-the-foundations-of-literacy): provides implementation guidance on systematic synthetic phonics, blending, assessment, fluency and decodable reading.' },
+    { type: 'li', content: '[UK Department for Education — SSP validation guidance](https://www.gov.uk/government/publications/phonics-teaching-materials-core-criteria-and-self-assessment/submitting-phonics-programmes-for-validation-application-form-guidance): describes incremental programme progression, blending, segmenting, assessment, matched decodable material and teacher guidance.' },
+
+    { type: 'h2', content: 'When to ask for more help' },
+    { type: 'p', content: 'If the child receives consistent, explicit, appropriately matched instruction but the same decoding bottleneck remains persistent, review the starting level, teaching sequence, feedback and practice material rather than waiting for an arbitrary number of weeks. If broader speech, language, hearing, attention or learning concerns are present, involve the child’s school and an appropriately qualified professional.' },
+
+    { type: 'h2', content: 'Tiny Steps next step' },
+    { type: 'p', content: 'If you now understand what phonics is and want to see the learning pathway, explore [/phonics](/phonics) and [/curriculum](/curriculum). If you are deciding whether your child is ready to begin, use [What Is the Right Age to Start Phonics?](/blog/what-age-to-start-phonics). If you want an assessment-led starting point, use [/book-demo](/book-demo).' },
   ],
-  classChecklistFocus: 'Good phonics teaching is explicit and cumulative: pure sound modeling, guided blending, decodable text practice, and regular review of previously taught patterns.',
-  avoidFocus: 'Do not reduce phonics to alphabet naming, random worksheets, or picture-guessing strategies. Children need active sound manipulation and decoding routines.',
-  progress: 'Early signs usually appear in 2-4 weeks: better sound recall and fewer guessing attempts. More stable unfamiliar-word decoding and early spelling transfer often emerge by weeks 4-8 with consistent practice.',
-  support: 'If your child still cannot identify basic sounds or blend simple words after 6-8 weeks of steady, stage-matched practice, get a structured diagnostic review to reset starting level and teaching sequence.',
-  faq: [{
-    question: 'Is phonics the same as the alphabet?',
-    answer: 'No. Alphabet learning teaches letter names. Phonics teaches how letters and letter groups represent sounds when reading and spelling real words.'
-  }, {
-    question: 'Is phonics the same as sight-word memorization?',
-    answer: 'No. Phonics is primarily decoding by sound patterns. Sight words can be a small support, but they should not replace sound-based reading.'
-  }, {
-    question: 'What age do most children start phonics?',
-    answer: 'Many children start between ages 3.5 and 5 when sound awareness and short attention for structured practice are present. Readiness matters more than exact age.'
-  }, {
-    question: 'Does phonics reduce love for storybooks?',
-    answer: 'No, when balanced well. Phonics builds decoding skill; read-aloud storybooks build vocabulary, background knowledge, and reading enjoyment.'
-  }, {
-    question: 'Can phonics work in multilingual homes?',
-    answer: 'Yes. Keep the phonics routine short and consistent in English, while continuing home language use for conversation and comprehension growth.'
-  }, {
-    question: 'What is one sign phonics is working?',
-    answer: 'A strong early sign is reduced guessing: your child starts attempting words sound by sound, including unfamiliar ones.'
-  }],
-  relatedReads: [{
-    label: 'Play Tiny Steps Phonics Balloon Pop',
-    to: '/free-balloon-pop-phonics-game-for-kids'
-  }, {
-    label: 'Explore structured phonics support',
-    to: '/phonics'
-  }, {
-    label: 'My child knows ABC but cannot read',
-    to: '/blog/child-knows-abc-but-cannot-read'
-  }, {
-    label: 'Phonics for parents: full decision guide',
-    to: '/blog/phonics-for-parents-guide'
-  }]
+  faq: [
+    { question: 'What is phonics in simple words?', answer: 'Phonics teaches children how written letters and letter groups represent speech sounds, then how to use those relationships to read unfamiliar words and spell words from sounds.' },
+    { question: 'Is phonics the same as learning the alphabet?', answer: 'No. Alphabet knowledge includes letter names and order. Phonics teaches how printed graphemes represent sounds and how those sounds combine when reading words.' },
+    { question: 'Does phonics mean sounding out every word forever?', answer: 'No. Phonics gives children a reliable way to work out unfamiliar words. With accurate practice, many familiar words become rapidly recognised, so reading becomes less effortful while phonics remains available for new words.' },
+    { question: 'Are sight words separate from phonics?', answer: 'Not always. Many high-frequency words are fully or partly decodable from taught phonics. For words with an unusual or not-yet-taught part, map the regular parts and teach the unexpected part explicitly rather than treating the whole word as a picture.' },
+    { question: 'Does phonics teach comprehension?', answer: 'Phonics supports accurate word reading, which is necessary for independent reading, but comprehension also depends on oral language, vocabulary, knowledge and building meaning across text. Phonics is important, not the whole of literacy.' },
+    { question: 'How do I know phonics is working?', answer: 'Look for more reliable sound–print recall, less prompting during blending, decoding of fresh words made from taught code, spelling transfer where appropriate and successful use of the same knowledge in matched connected text.' },
+  ],
 };
 
 export default post;
