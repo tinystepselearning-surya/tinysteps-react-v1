@@ -59,7 +59,7 @@ describe('authoritative Blog #8 quality lock', () => {
     expect(body).toContain('The Tiny Steps six-part class-to-reading chain is our editorial synthesis');
     expect(body).toContain('Phonics is an important part of learning to read, but it is not the whole of reading');
     expect(body).toContain('Every cause of reading difficulty');
-    expect(body).toContain('Persistent difficulties may also need broader professional review');
+    expect(body).toContain('may require additional professional assessment or support');
 
     expect(post?.faq).toHaveLength(5);
     expect(post?.faq?.some((item) => /how do phonics classes actually help/i.test(item.question))).toBe(true);
