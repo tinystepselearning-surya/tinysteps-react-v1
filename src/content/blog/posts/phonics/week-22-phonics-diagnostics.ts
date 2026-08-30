@@ -43,7 +43,7 @@ const post: BlogPost = {
     content: 'Use a quiet time when the child is not tired, hungry or rushing to another activity.'
   }, {
     type: 'li',
-    content: 'Keep the check brief. Fifteen to twenty minutes is plenty for many children, and younger children may do better with two shorter sessions.'
+    content: 'Keep the check brief enough that attention and accuracy remain representative. Split it across shorter sessions if concentration drops; there is no required home-assessment duration.'
   }, {
     type: 'li',
     content: 'Explain the purpose neutrally: “I want to see which parts feel easy and which part we should practise next.”'
@@ -115,7 +115,10 @@ const post: BlogPost = {
     content: '5. Connected-text transfer: does the skill survive inside a sentence?'
   }, {
     type: 'p',
-    content: 'Finish with one short sentence or passage that mostly contains patterns the child knows. This checks whether the skill transfers beyond isolated cards. Watch whether the child keeps their place, decodes rather than guesses, rereads after an error and can tell you what the sentence means.'
+    content: 'Finish with one short sentence or passage that mostly contains patterns the child knows. This checks whether the phonics skill transfers beyond isolated cards. Watch whether the child keeps their place, decodes rather than guesses and rereads after an error. You can also ask what the sentence means, but treat that as a separate context check rather than proof of phonics mastery or a comprehension diagnosis.'
+  }, {
+    type: 'p',
+    content: 'If word reading is accurate but meaning repeatedly breaks down, phonics may no longer be the main bottleneck. Use the dedicated [decoding-to-comprehension guide](/blog/phonics-comprehension) rather than interpreting a meaning difficulty as a phonics failure.'
   }, {
     type: 'p',
     content: 'Do not use a difficult story to “challenge” the child during this check. If the text contains too many untaught patterns, the result tells you more about text mismatch than about the child’s current phonics knowledge.'
@@ -163,7 +166,10 @@ const post: BlogPost = {
     content: 'A simple recording system: Secure, Developing, Priority'
   }, {
     type: 'p',
-    content: 'Avoid turning a short home observation into a percentage score. Use three practical labels for each skill: Secure, Developing or Priority. Then record one concrete example. “Developing — blended stop after one prompt” is much more useful than “phonics 70%”.'
+    content: 'Secure, Developing and Priority are Tiny Steps editorial observation labels for organising notes. They are not standardized scores, validated benchmarks, grade expectations or diagnostic categories, and they should not be compared with a school assessment cut score.'
+  }, {
+    type: 'p',
+    content: 'Avoid turning a short home observation into a percentage score. Use the three labels for each skill, then record one concrete example. “Developing — blended stop after one prompt” is much more useful than “phonics 70%”.'
   }, {
     type: 'li',
     content: 'Secure — accurate on several taught or fresh examples with little or no prompting.'
@@ -288,6 +294,9 @@ const post: BlogPost = {
   }, {
     question: 'What if my child knows letter sounds but cannot read a fresh word?',
     answer: 'Check oral blending first. If the child knows the sounds but cannot combine them, blending practice is the priority. If oral blending is secure but printed-word reading is difficult, look more closely at grapheme recognition, tracking and left-to-right decoding.'
+  }, {
+    question: 'Are Secure, Developing and Priority standardized phonics scores?',
+    answer: 'No. They are simple Tiny Steps editorial labels for organising a parent’s observations. They are not validated benchmarks, grade expectations, diagnostic categories or substitutes for a school screening or professional assessment.'
   }, {
     question: 'Does a weak phonics checklist result mean my child has dyslexia?',
     answer: 'No. A short home phonics check cannot diagnose dyslexia or another learning condition. It can only show which observed reading skills were difficult on that occasion. Persistent concerns should be discussed with the child’s teacher and, where appropriate, a qualified professional.'
