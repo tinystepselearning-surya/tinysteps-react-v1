@@ -18,8 +18,15 @@ const canonicalCoursePaths = [
 describe('B13 curriculum, program and course authority guardrails', () => {
   it('keeps the existing canonical course URL set unchanged', () => {
     const registry = read('src/lib/publicCoursePages.js');
-    const routePaths = [...registry.matchAll(/routePath:\s*'([^']+)'/g)].map((match) => match[1]);
+    const routePaths = [...registry.matchAll(/publicSlug:\s*'[^']+',\s*\n\s*routePath:\s*'([^']+)'/g)].map(
+      (match) => match[1],
+    );
+
+    // Only the routePath paired with each exported public course config is canonical.
+    // Nested navigation helpers may also reference course URLs and must not be mistaken
+    // for additional canonical course owners.
     expect(routePaths).toEqual(canonicalCoursePaths);
+    expect(new Set(routePaths).size).toBe(canonicalCoursePaths.length);
   });
 
   it('makes /curriculum the roadmap owner without duplicating lesson-by-lesson course content', () => {
@@ -74,7 +81,9 @@ describe('B13 curriculum, program and course authority guardrails', () => {
     expect(courseDetail).toContain("name: 'Curriculum'");
     expect(courseDetail).toContain("item: `${PUBLIC_FACTS.primaryWebsite}/curriculum`");
     expect(courseDetail).toContain("label: 'View Full Curriculum Roadmap'");
-    expect(courseDetail).toContain('This page owns the detailed lesson sequence for this level.');
+    expect(courseDetail).toContain('See the detailed lesson sequence for this level below.');
+    expect(courseDetail).toContain('complete Tiny Steps curriculum roadmap');
+    expect(courseDetail).not.toContain('This page owns the detailed lesson sequence for this level.');
   });
 
   it('keeps /courses as the comparison hub while softening guaranteed-outcome wording', () => {
