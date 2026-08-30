@@ -25,7 +25,7 @@ describe('Phonics landing narrative and UX guardrails', () => {
     expect(page).toContain('Hyderabad, Bengaluru, Chennai, Mumbai, Delhi, Pune, Kolkata, and other locations');
     expect(facts).toContain("{PUBLIC_FACTS.geography}");
     expect(facts).toContain('Live online delivery is not limited to one city');
-    expect(facts).toContain('major Indian cities and from other countries');
+    expect(facts).toContain('across major Indian metros and cities, as well as from other countries');
     expect(schemas).toContain("geography: 'learners in India and globally online'");
     expect(schemas).toContain("areaServed: ['IN', 'Worldwide']");
   });
