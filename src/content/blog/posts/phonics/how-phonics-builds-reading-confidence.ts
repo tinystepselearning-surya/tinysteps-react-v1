@@ -9,7 +9,7 @@ const post: BlogPost = {
   modifiedDate: '2026-08-30',
   readTime: '15 min read',
   hero: '/blog/hero-phonics.jpg',
-  metaDescription: 'Can phonics build reading confidence? Learn what may change first at home, which behaviours matter, and how to support success without pressure or false promises.',
+  metaDescription: 'Can phonics build reading confidence? Learn what may change first at home, which behaviours matter, and how to support reading success without pressure.',
   excerpt: 'A parent guide to the link between decoding competence and reading confidence: what may change first, what not to over-interpret, and how to make home reading more successful without pressure.',
   body: [
     {
