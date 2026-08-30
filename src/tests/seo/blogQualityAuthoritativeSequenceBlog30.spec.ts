@@ -57,7 +57,7 @@ describe('authoritative Blog #30 quality lock', () => {
     const evidence = getBlogEvidenceSummary(post!);
 
     expect(body).toContain('use the pronunciation model from the child’s school or phonics programme and do not mark a normal accent difference as a reading error');
-    expect(body).toContain('do not tell the child they should always be able to decide er, ir or ur from the sound alone');
+    expect(body).toContain('Do not tell the child they should always be able to decide er, ir or ur from the sound alone');
     expect(body).toContain('words such as **word, work, world** should not be used as straightforward early examples of ordinary **or**');
     expect(body).toContain('There is no universal research-defined number of r-controlled words, minutes, days, review intervals or percentage score');
     expect(body).toContain('These are Tiny Steps observational signals, not standardized cut-offs or diagnostic criteria.');
