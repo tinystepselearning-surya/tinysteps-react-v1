@@ -1,8 +1,11 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { blogPosts } from '../../content/blog';
 import { getBlogEvidenceSummary } from '../../content/blog/shared/editorialTrust';
 
 const bySlug = new Map(blogPosts.map((post) => [post.slug, post]));
+const repoRoot = process.cwd();
 
 const AFFIRMATIVE_ONE_FAMILY_PER_WEEK_CLAIMS = [
   /\b(?:teach|practise|practice|study|cover|complete) one family per week\b/i,
@@ -104,7 +107,12 @@ describe('authoritative Blog #18 quality lock', () => {
     expect(body).toContain('Pronunciation differences caused by accent are not reading disorders');
     expect(body).toContain('is also not, by itself, evidence of dyslexia or another condition');
     expect(body).toContain('This article is educational guidance and cannot diagnose');
-    expect(body).toContain('Blog #30, [R-Controlled Vowel Practice for Kids](/blog/phonics-r-controlled), is the practical activity owner');
+    expect(body).toContain('[R-Controlled Vowel Practice for Kids](/blog/phonics-r-controlled), is the practical activity owner');
+    const source = fs.readFileSync(
+      path.join(repoRoot, 'src/content/blog/posts/phonics/r-controlled-vowels-explained.ts'),
+      'utf8',
+    );
+    expect(source).toContain('Blog #30, [R-Controlled Vowel Practice for Kids](/blog/phonics-r-controlled), is the practical activity owner');
     expect(body).toContain('The cited evidence supports explicit and systematic sound–spelling instruction');
     expect(body).toContain('does **not** establish one universal first r-controlled family');
 

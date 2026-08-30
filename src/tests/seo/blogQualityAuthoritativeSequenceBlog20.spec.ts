@@ -1,8 +1,11 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { blogPosts } from '../../content/blog';
 import { getBlogEvidenceSummary } from '../../content/blog/shared/editorialTrust';
 
 const bySlug = new Map(blogPosts.map((post) => [post.slug, post]));
+const repoRoot = process.cwd();
 
 describe('authoritative Blog #20 quality lock', () => {
   it('owns the evidence and terminology question without collapsing high-frequency, irregular and sight words into one memorization method', () => {
@@ -46,11 +49,18 @@ describe('authoritative Blog #20 quality lock', () => {
 
     expect(evidence.hasSourceSection).toBe(true);
     expect(evidence.externalSourceCount).toBeGreaterThanOrEqual(6);
-    expect(body).toContain('This Blog #20 is the **evidence and terminology owner**');
-    expect(body).toContain('Blog #21, [Synthetic Phonics vs Traditional Reading](/blog/synthetic-phonics-vs-traditional-reading)');
-    expect(body).toContain('Blog #47, [Should Children Memorize Sight Words or Learn Phonics First?](/blog/sight-words-or-phonics-first)');
-    expect(body).toContain('Blog #4, [Digraphs and Tricky Words](/blog/digraphs-and-tricky-words)');
-    expect(body).toContain('Blog #43, [How to Improve Reading Fluency in Children](/blog/how-to-improve-reading-fluency-in-children)');
+    expect(body).toContain('**evidence and terminology owner**');
+    expect(body).toContain('[Synthetic Phonics vs Traditional Reading](/blog/synthetic-phonics-vs-traditional-reading)');
+    expect(body).toContain('[Should Children Memorize Sight Words or Learn Phonics First?](/blog/sight-words-or-phonics-first)');
+    expect(body).toContain('[Digraphs and Tricky Words](/blog/digraphs-and-tricky-words)');
+    expect(body).toContain('[How to Improve Reading Fluency in Children](/blog/how-to-improve-reading-fluency-in-children)');
+    const source = fs.readFileSync(
+      path.join(repoRoot, 'src/content/blog/posts/phonics/science-of-phonics-learning.ts'),
+      'utf8',
+    );
+    expect(source).toContain('This Blog #20 is the **evidence and terminology owner**');
+    expect(source).toContain('Blog #21, [Synthetic Phonics vs Traditional Reading](/blog/synthetic-phonics-vs-traditional-reading)');
+    expect(source).toContain('Blog #47, [Should Children Memorize Sight Words or Learn Phonics First?](/blog/sight-words-or-phonics-first)');
     expect(body).toContain('phonics improves reading accuracy but does not automatically guarantee comprehension');
     expect(body).toContain('Difficulty with decoding, high-frequency words or irregular words is not by itself evidence of dyslexia');
     expect(body).toContain('The Tiny Steps four-route framework is an editorial synthesis');

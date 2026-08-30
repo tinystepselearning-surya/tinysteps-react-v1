@@ -106,7 +106,7 @@ describe('authoritative Blog #19 quality lock', () => {
     expect(evidence.hasSourceSection).toBe(true);
     expect(evidence.externalSourceCount).toBeGreaterThanOrEqual(6);
     expect(body).toContain('SATPIN at home: guide versus routine');
-    expect(body).toContain('Blog #22, [SATPIN at Home: A Parent Launch Plan for Early Blending and Reading](/blog/phonics-satpin-launch)');
+    expect(body).toContain('[SATPIN at Home: A Parent Launch Plan for Early Blending and Reading](/blog/phonics-satpin-launch)');
     const source = fs.readFileSync(
       path.join(repoRoot, 'src/content/blog/posts/phonics/satpin-phonics-guide.ts'),
       'utf8',
