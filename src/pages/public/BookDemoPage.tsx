@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { applySeo } from '../../lib/seo';
-import { createFAQPageSchema } from '../../lib/schemas';
+import { applySeo, getRouteConfig } from '../../lib/seo';
+import {
+  ORGANIZATION_ID,
+  PUBLIC_FACTS,
+  SITE_ORIGIN,
+  createFAQPageSchema,
+  createWebPageSchema,
+} from '../../lib/schemas';
 import {
   getBlogConversionAttribution,
   parseBlogLeadSourceDetail,
@@ -16,6 +22,34 @@ import {
   FREE_DEMO_FULL_DESCRIPTION,
   FREE_DEMO_OFFER_NAME,
 } from '../../config/publicOffer';
+
+const bookDemoSeo = getRouteConfig('/book-demo');
+const bookDemoTitle =
+  bookDemoSeo?.title ?? 'Book a Free 35-Minute Demo Assessment Class | Tiny Steps Learning';
+const bookDemoDescription =
+  bookDemoSeo?.description ??
+  'Book one free 35-minute 1:1 online demo assessment class for your child. Understand their level in phonics, reading, grammar, sentence formation, pronunciation, and speaking confidence.';
+const bookDemoCanonicalPath = bookDemoSeo?.canonicalPath ?? '/book-demo';
+const bookDemoCanonicalUrl = `${SITE_ORIGIN}${bookDemoCanonicalPath}`;
+
+const decisionChecks = [
+  {
+    title: 'Current skill gap',
+    description: 'Understand what is already secure and which reading, language or speaking skill needs support first.',
+  },
+  {
+    title: 'Teaching interaction fit',
+    description: 'Notice how your child responds to live prompts, modelling, correction and guided practice.',
+  },
+  {
+    title: 'Recommended learning path',
+    description: 'Ask which Tiny Steps pathway and starting level are being recommended, and why.',
+  },
+  {
+    title: 'Format and price clarity',
+    description: 'Review the recommended class format, expected frequency and current pricing before deciding to enrol.',
+  },
+];
 
 const assessmentFaqItems = [
   {
@@ -36,14 +70,80 @@ const assessmentFaqItems = [
   {
     question: 'Will parents get a course recommendation?',
     answer:
-      'Yes. Parents receive a clear recommendation on whether the child should start with phonics, grammar, reading, public speaking, or a combined learning path.',
+      'Yes. Parents receive a recommendation on whether the child should start with phonics, grammar, reading, public speaking, or a combined learning path, based on what is observed in the assessment.',
+  },
+  {
+    question: 'Can I check class samples, parent feedback and pricing before I decide?',
+    answer:
+      'Yes. You can review Tiny Steps class samples, curated first-party parent feedback, the curriculum roadmap and current pricing before or after the demo. The assessment is another decision signal, not a requirement to enrol.',
+  },
+  {
+    question: 'What should I ask after the demo assessment?',
+    answer:
+      'Ask what your child can do independently, which skill needs attention first, which program and starting level are recommended, what class format and frequency fit that need, and what the current fee will be.',
+  },
+  {
+    question: 'Does the demo guarantee progress or a particular result?',
+    answer:
+      'No. The demo provides a snapshot of the child’s current level and a recommended next step. Progress depends on the child’s starting point, attendance, practice, response to teaching and time; no specific result is guaranteed.',
   },
   {
     question: 'Is there pressure to enrol after the demo?',
     answer:
-      'No. The demo assessment is meant to give parents clarity. Families can decide after understanding the child’s needs and recommended learning path.',
+      'No. The demo assessment is meant to give parents clarity. Families can decide after understanding the child’s needs, recommended learning path, class format and current pricing.',
   },
 ];
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_ORIGIN}/` },
+    { '@type': 'ListItem', position: 2, name: 'Book Demo', item: bookDemoCanonicalUrl },
+  ],
+};
+
+const webpageSchema = createWebPageSchema({
+  name: FREE_DEMO_OFFER_NAME,
+  description: bookDemoDescription,
+  url: bookDemoCanonicalUrl,
+});
+
+const assessmentServiceSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Service',
+  '@id': `${bookDemoCanonicalUrl}#assessment-service`,
+  name: FREE_DEMO_OFFER_NAME,
+  description: FREE_DEMO_FULL_DESCRIPTION,
+  url: bookDemoCanonicalUrl,
+  provider: {
+    '@type': 'EducationalOrganization',
+    '@id': ORGANIZATION_ID,
+    name: PUBLIC_FACTS.organizationName,
+  },
+  serviceType: 'Online English demo assessment class for children',
+  duration: `PT${FREE_DEMO_DURATION_MINUTES}M`,
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'INR',
+    url: bookDemoCanonicalUrl,
+  },
+};
+
+const decisionChecklistSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  '@id': `${bookDemoCanonicalUrl}#decision-checklist`,
+  name: 'What parents should confirm before enrolling after a Tiny Steps demo',
+  itemListOrder: 'https://schema.org/ItemListOrderAscending',
+  itemListElement: decisionChecks.map((item, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: item.title,
+    description: item.description,
+  })),
+};
 
 function programForBlogFamily(family: BlogConversionFamily) {
   if (family === 'phonics-diagnostic' || family === 'phonics-practice' || family === 'reading-fluency') {
@@ -77,30 +177,16 @@ export default function BookDemoPage() {
 
   useEffect(() => {
     applySeo({
-      title: 'Book a Free 35-Minute Demo Assessment Class | Tiny Steps Learning',
-      description:
-        'Book one free 35-minute 1:1 online demo assessment class for your child. Understand their level in phonics, reading, grammar, sentence formation, pronunciation, and speaking confidence.',
-      canonicalPath: '/book-demo',
+      title: bookDemoTitle,
+      description: bookDemoDescription,
+      canonicalPath: bookDemoCanonicalPath,
       ogType: 'website',
       jsonLd: [
-        {
-          '@context': 'https://schema.org',
-          '@type': 'Service',
-          name: FREE_DEMO_OFFER_NAME,
-          description: FREE_DEMO_FULL_DESCRIPTION,
-          provider: {
-            '@type': 'EducationalOrganization',
-            name: 'Tiny Steps Learning',
-          },
-          serviceType: 'Online English demo assessment class for children',
-          duration: 'PT35M',
-          offers: {
-            '@type': 'Offer',
-            price: '0',
-            priceCurrency: 'INR',
-          },
-        },
-        createFAQPageSchema(assessmentFaqItems),
+        webpageSchema,
+        assessmentServiceSchema,
+        decisionChecklistSchema,
+        breadcrumbSchema,
+        { ...createFAQPageSchema(assessmentFaqItems), '@id': `${bookDemoCanonicalUrl}#faq` },
       ],
     });
   }, []);
@@ -155,12 +241,16 @@ export default function BookDemoPage() {
             {FREE_DEMO_CTA_LABEL}
           </a>
           <Link
-            to="/courses"
+            to="/class-samples"
             className="inline-flex items-center rounded-2xl border border-slate-300 bg-white px-6 py-3 text-base font-semibold text-slate-900 transition hover:bg-slate-50"
           >
-            Explore Courses
+            Watch Class Samples
           </Link>
         </div>
+
+        <p className="mx-auto mt-5 max-w-3xl text-sm leading-6 text-slate-600">
+          You do not need to decide during the demo. Use the session to understand your child&apos;s level, then compare the recommendation with the curriculum, class samples, parent feedback and current pricing.
+        </p>
 
         <div id="assessment-form" className="mx-auto mt-12 max-w-2xl">
           <PublicAssessmentForm
@@ -228,14 +318,42 @@ export default function BookDemoPage() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-5xl px-6 py-12" aria-labelledby="decision-heading">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Decision support</p>
+          <h2 id="decision-heading" className="mt-2 text-3xl font-bold text-slate-900">What to confirm before you enrol</h2>
+          <p className="mt-3 max-w-3xl leading-7 text-slate-700">
+            The demo is for clarity, not a rushed purchase. After the session, make sure you understand these four points before choosing a plan.
+          </p>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {decisionChecks.map((item, index) => (
+              <article key={item.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Check {index + 1}</p>
+                <h3 className="mt-2 text-lg font-semibold text-slate-900">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-700">{item.description}</p>
+              </article>
+            ))}
+          </div>
+          <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold">
+            <Link to="/class-samples" className="text-slate-700 underline underline-offset-4">Watch class samples</Link>
+            <Link to="/testimonials" className="text-slate-700 underline underline-offset-4">Read parent feedback</Link>
+            <Link to="/curriculum" className="text-slate-700 underline underline-offset-4">Review curriculum</Link>
+            <Link to="/pricing" className="text-slate-700 underline underline-offset-4">Check current pricing</Link>
+          </div>
+        </div>
+      </section>
+
       <section className="mx-auto max-w-4xl px-6 py-12">
         <h2 className="mb-8 text-center text-3xl font-bold">Assessment outcomes</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-2xl border border-slate-200 bg-white p-5 font-medium text-slate-800">Current level clarity</div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 font-medium text-slate-800">Right course recommendation</div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 font-medium text-slate-800">Suggested learning path</div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 font-medium text-slate-800">Recommended starting path</div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 font-medium text-slate-800">First skill to prioritise</div>
           <div className="rounded-2xl border border-slate-200 bg-white p-5 font-medium text-slate-800">Parent-friendly next steps</div>
         </div>
+        <p className="mt-5 text-center text-sm leading-6 text-slate-600">
+          These outcomes describe the purpose of the assessment. They do not guarantee a particular learning result or progression speed.
+        </p>
       </section>
 
       <section className="mx-auto max-w-4xl px-6 py-12" aria-labelledby="demo-faq-heading">
@@ -253,10 +371,9 @@ export default function BookDemoPage() {
       </section>
 
       <section className="mx-auto max-w-4xl px-6 py-16 text-center">
-        <h2 className="mb-4 text-3xl font-bold">Ready to Get Started?</h2>
+        <h2 className="mb-4 text-3xl font-bold">Ready to understand your child’s starting point?</h2>
         <p className="mx-auto mb-8 max-w-2xl text-gray-700">
-          Book one free 35-minute demo assessment class. No credit card or
-          enrolment commitment is required.
+          Book one free 35-minute demo assessment class. No credit card or enrolment commitment is required, and you can review the recommendation before deciding.
         </p>
         <a
           href="#assessment-form"

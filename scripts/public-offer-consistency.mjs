@@ -51,12 +51,16 @@ const REQUIRED_STRINGS = [
     value: 'STANDARD_PRICING_SUMMARY',
   },
   {
-    path: 'src/pages/public/BookDemoPage.tsx',
-    value: 'PT35M',
-  },
-  {
     path: 'public/kb.json',
     value: 'Summer Camp 2026 concluded on 13 June 2026',
+  },
+];
+
+const REQUIRED_PATTERNS = [
+  {
+    path: 'src/pages/public/BookDemoPage.tsx',
+    label: 'demo Service duration derived from FREE_DEMO_DURATION_MINUTES',
+    regex: /duration:\s*`PT\$\{FREE_DEMO_DURATION_MINUTES\}M`/,
   },
 ];
 
@@ -127,6 +131,19 @@ for (const required of REQUIRED_STRINGS) {
   const text = fs.readFileSync(filePath, 'utf8');
   if (!text.includes(required.value)) {
     failures.push(`${required.path}: missing required string ${JSON.stringify(required.value)}`);
+  }
+}
+
+for (const required of REQUIRED_PATTERNS) {
+  const filePath = path.join(ROOT, required.path);
+  if (!fs.existsSync(filePath)) {
+    failures.push(`${required.path}: required file is missing`);
+    continue;
+  }
+  const text = fs.readFileSync(filePath, 'utf8');
+  required.regex.lastIndex = 0;
+  if (!required.regex.test(text)) {
+    failures.push(`${required.path}: missing required pattern ${JSON.stringify(required.label)}`);
   }
 }
 
