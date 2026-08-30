@@ -65,7 +65,7 @@ Batch #1 quality movement: **667/1000 → 960/1000**, average **66.7 → 96.0**,
 |---:|---|---:|---|---:|
 | 11 | Long Vowel Sounds for Kids: Pattern Order, Practice, and Common Mix-Ups | 67/100 | **LOCKED IN BATCH** | **96/100** |
 | 12 | Online Phonics Classes vs School: What Works for Which Child | 68/100 | **LOCKED IN BATCH** | **97/100** |
-| 13 | Online Phonics Games for Kids: What Actually Builds Reading | — | QUEUED | — |
+| 13 | Online Phonics Games for Kids: What Actually Builds Reading | 64/100 | **LOCKED IN BATCH** | **97/100** |
 | 14 | Phonics Activities at Home: A Parent Routine That Actually Sticks | — | QUEUED | — |
 | 15 | Phonics Blending Activities That Help Children Read Words Confidently | — | QUEUED | — |
 | 16 | Phonics Games for Letter Sounds: Parent Routine for Daily Practice | — | QUEUED | — |
@@ -74,12 +74,13 @@ Batch #1 quality movement: **667/1000 → 960/1000**, average **66.7 → 96.0**,
 | 19 | SATPIN Phonics Guide for Parents: How to Start and What to Expect | — | QUEUED | — |
 | 20 | Phonics vs Sight Words: What Helps Children Read Better | — | QUEUED | — |
 
-Current completed quality movement: baseline **135/200 → 193/200**, average **67.5 → 96.5**, total gain **+58**.
+Current completed quality movement: baseline **199/300 → 290/300**, average **66.3 → 96.7**, total gain **+91**.
 
 ## Canonical intent map — Batch #2 completed articles
 
 11. `/blog/long-vowel-sounds-for-kids` → long-vowel pattern families, ordering decisions, reading/spelling transfer and common mix-up interpretation. Hands-on long-vowel activity intent remains with Blog #29 `/blog/phonics-long-vowels`.
 12. `/blog/online-phonics-classes-vs-school` → parent decision between school-only phonics, school plus targeted online support, or a different reading priority. Provider-shopping intent remains with Blog #10 `/blog/how-to-choose-phonics-classes`.
+13. `/blog/online-phonics-games` → evaluate whether online phonics games rehearse a real foundational-reading skill and whether that skill transfers beyond the game. Letter-sound game routines remain with Blog #16; broad home routines remain with Blog #14; the later apps-versus-teacher decision remains with Blog #35.
 
 ## Blog #11 — LOCKED
 
@@ -120,6 +121,30 @@ Current completed quality movement: baseline **135/200 → 193/200**, average **
 ### Evidence boundary
 
 Evidence supports systematic phonics across different instructional contexts, targeted supplemental instruction, alignment with normal teaching, direct interaction, assessment and transfer practice. It does **not** establish that online phonics is universally superior to school teaching or that every child making slower progress needs paid supplemental tuition.
+
+**Final decision: 97/100 — LOCKED IN BATCH.**
+
+## Blog #13 — LOCKED
+
+**Canonical role:** answer the parent question: *What makes an online phonics game useful reading practice, and how can I tell whether success transfers beyond the game?*
+
+### Major quality decisions
+
+- Converted the generic `PhonicsSeoPost` into a direct founder-authored `BlogPost`.
+- Replaces vague “fun but educational” criteria with the Tiny Steps six-check game-to-reading filter: exact skill → phonics accuracy → active retrieval/application → useful feedback → level match → transfer.
+- Separates letter-sound, phonemic-awareness, printed blending/decoding, spelling and connected-reading game roles instead of treating all phonics games as equivalent.
+- Adds a 60-second off-screen transfer check using fresh examples rather than replay scores.
+- Explicitly states that engagement, coins, stars, streaks and completed levels are not reading outcomes.
+- Uses the EEF GraphoGame Rime trial as a careful evidence boundary: a game may be engaging without showing additional reading gains over comparison support.
+- Removes the unsupported fixed 4–6 week improvement trigger and any universal game-time or mastery threshold.
+- Gives a transparent first-party account of Tiny Steps Balloon Pop as letter-sound listening/recognition practice, not a complete reading game.
+- Routes the practical letter-sound routine to Blog #16 and the broader home-practice routine to Blog #14, while preserving Blog #35 for the later app-versus-teacher decision.
+- Adds evidence from IES/WWC, IES family reading resources, DfE Reading Framework, EEF phonics, EEF feedback and EEF GraphoGame Rime.
+- Adds five focused FAQs and dedicated regression coverage.
+
+### Evidence boundary
+
+Evidence supports the foundational skills that well-designed games can rehearse and the usefulness of specific feedback and matched practice. It does **not** support a claim that digital-game format itself guarantees reading progress. The Tiny Steps filter and transfer check are editorial syntheses rather than validated assessment tools.
 
 **Final decision: 97/100 — LOCKED IN BATCH.**
 
