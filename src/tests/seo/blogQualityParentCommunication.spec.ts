@@ -107,4 +107,59 @@ describe('parent tips and English communication blog quality refresh', () => {
     expect(shouldNoindexBlogSlug('can-child-improve-english-in-10-days')).toBe(false);
     expect(shouldIncludeBlogSlugInSitemap('can-child-improve-english-in-10-days')).toBe(true);
   });
+
+  it('makes Blog #37 the protected response-expansion owner for children who answer too briefly', () => {
+    const post = bySlug.get('child-gives-one-word-answers');
+    expect(post).toBeDefined();
+    expect(post?.title).toBe('My Child Gives Only One-Word Answers — How Can I Help Them Speak in Full Sentences?');
+    expect(post?.author).toBe('Priya');
+    expect(post?.modifiedDate).toBe('2026-08-30');
+    expect(post?.metaDescription?.length).toBeLessThanOrEqual(160);
+    expect(post?.audience).toBe('Parent');
+    expect(post?.discoveryCategory).toBe('Speaking & Communication');
+
+    const body = post?.body.map((block) => block.content).join('\n') || '';
+    expect(body).toContain('complete sentence → useful detail → reason / example / sequence');
+    expect(body).toContain('The Tiny Steps six-question cause map for one-word answers');
+    expect(body).toContain('Step 1 — complete sentence');
+    expect(body).toContain('Step 2 — one useful detail');
+    expect(body).toContain('Step 3 — connected thinking');
+    expect(body).toContain('Use the smallest prompt that works — then fade it');
+    expect(body).toContain('For multilingual children: compare languages before drawing conclusions');
+    expect(body).toContain('How to measure progress without counting words alone');
+    expect(body).toContain('Natural conversation includes short answers');
+    expect(body).toContain('multilingualism is not a communication disorder');
+    expect(body).toContain('/blog/child-understands-english-but-does-not-speak');
+    expect(body).toContain('/blog/speaking-confidence-seeds');
+    expect(body).toContain('/blog/how-to-improve-sentence-formation-in-kids');
+    expect(body).toContain('/blog/child-knows-grammar-but-makes-mistakes');
+    expect(body).toContain('/blog/how-phonics-grammar-and-communication-work-together');
+    expect(body).toContain('/speaking');
+    expect(body).toContain('/grammar');
+    expect(body).toContain('/curriculum');
+    expect(body).toContain('/book-demo');
+
+    expect(body).not.toContain('/blog/week-12-speaking-confidence-seeds');
+    expect(body).not.toContain('/blog/week-13-speaking-structure');
+    expect(body).not.toContain('10-minute daily speaking routine');
+  });
+
+  it('gives Blog #37 evidence, multilingual safeguards, answer-engine FAQs and indexable authority status', () => {
+    const post = bySlug.get('child-gives-one-word-answers');
+    expect(post).toBeDefined();
+
+    const evidence = getBlogEvidenceSummary(post!);
+    expect(evidence.hasSourceSection).toBe(true);
+    expect(evidence.externalSourceCount).toBeGreaterThanOrEqual(8);
+    expect(post?.faq).toHaveLength(6);
+    expect(post?.faq?.some((item) => /answer every question with one word/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /full sentence every time/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /turn a one-word answer/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /sentence starters/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /home language/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /seek extra help/i.test(item.question))).toBe(true);
+
+    expect(shouldNoindexBlogSlug('child-gives-one-word-answers')).toBe(false);
+    expect(shouldIncludeBlogSlugInSitemap('child-gives-one-word-answers')).toBe(true);
+  });
 });
