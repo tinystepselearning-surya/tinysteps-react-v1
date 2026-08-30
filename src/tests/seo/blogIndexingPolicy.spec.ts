@@ -26,6 +26,7 @@ describe('blog indexing policy', () => {
     for (const [cleanSlug, legacySlug] of [
       ['prevent-summer-slide-reading', 'week-27-prevent-summer-slide-reading'],
       ['phonics-blending-club', 'week-2-phonics-blending-club'],
+      ['phonics-comprehension', 'week-6-phonics-comprehension'],
       ['phonics-diagnostics', 'week-22-phonics-diagnostics'],
       ['phonics-long-vowels', 'week-4-phonics-long-vowels'],
       ['phonics-multisyllabic', 'week-19-phonics-multisyllabic'],
@@ -54,7 +55,7 @@ describe('blog indexing policy', () => {
   });
 
   it('continues to recognize old weekly source slugs during redirect migration', () => {
-    for (const slug of ['week-4-phonics-long-vowels', 'week-5-phonics-r-controlled', 'week-8-grammar-tenses']) {
+    for (const slug of ['week-4-phonics-long-vowels', 'week-5-phonics-r-controlled', 'week-6-phonics-comprehension', 'week-8-grammar-tenses']) {
       expect(shouldNoindexBlogSlug(slug)).toBe(true);
       expect(shouldIncludeBlogSlugInSitemap(slug)).toBe(false);
     }
