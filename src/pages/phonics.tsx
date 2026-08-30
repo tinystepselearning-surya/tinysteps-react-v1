@@ -185,32 +185,6 @@ const pyramidLevels = [
   { step: '2', title: 'Blending', helper: 'Join sounds into words' },
   { step: '1', title: 'Letter sounds', helper: 'Build sound recognition' },
 ];
-const differentiators = [
-  {
-    title: 'Assessment-first placement',
-    detail: 'Each child starts with a free phonics assessment before we recommend a level and learning path.',
-  },
-  {
-    title: 'Live teacher correction',
-    detail: 'Teachers correct blending, decoding, and pronunciation in real time during every class.',
-  },
-  {
-    title: 'Structured synthetic phonics path',
-    detail: 'Learning follows a clear progression from sound-letter links to blending, decoding, and reading.',
-  },
-  {
-    title: 'Parent progress updates',
-    detail: 'Families receive practical updates on mastered skills and the next focus area.',
-  },
-  {
-    title: '1:1 attention in every session',
-    detail: 'The lesson pace adjusts to the child so weak spots can be addressed early and clearly.',
-  },
-  {
-    title: 'Practice support through free games',
-    detail: 'Classroom learning is reinforced with simple at-home phonics practice games.',
-  },
-];
 const bestClassCriteria = [
   {
     title: 'Assessment-first placement',
@@ -320,16 +294,6 @@ const comparisonItems = [
     footerText: 'children who need explicit, level-based reading support',
     checklist: ['structured sequence', 'live correction', 'blending practice', 'parent progress updates'],
   },
-];
-const methodSteps = [
-  { title: 'One free 35-minute 1:1 demo assessment', detail: 'We map current reading level and phonics gaps.' },
-  { title: 'Sound recognition', detail: 'Build accurate sound-letter links first.' },
-  { title: 'Blending routine', detail: 'Move from separate sounds to whole words.' },
-  { title: 'CVC word reading', detail: 'Read short-vowel words with confidence.' },
-  { title: 'Digraphs, magic-e, and vowel teams', detail: 'Decode common advanced patterns.' },
-  { title: 'Reading fluency', detail: 'Improve pace, smoothness, and accuracy.' },
-  { title: 'Parent progress updates', detail: 'Track milestones and next-step goals.' },
-  { title: 'Free practice support', detail: 'Reinforce class learning at home.' },
 ];
 const reassuranceSteps = [
   {
@@ -716,9 +680,9 @@ export default function PhonicsPage({
               ['Overview', '#overview'],
               ['Who It’s For', '#problems'],
               ['How to Choose', '#best-phonics-classes'],
-              ['Why Tiny Steps', '#why-tiny-steps'],
-              ['Method', '#method'],
+              ['Teaching', '#teacher-delivery'],
               ['Program', '#program'],
+              ['Progress', '#progress'],
               ['Resources', '#resources'],
               ['FAQ', '#faq'],
               ['Assessment', '#assessment'],
@@ -872,52 +836,10 @@ export default function PhonicsPage({
         </div>
       </SectionShell>
 
-      <SectionShell id="why-tiny-steps">
-        <div className="relative overflow-hidden rounded-[2rem] border border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-[#1c2f4d] p-6 text-white shadow-2xl sm:p-8">
-          <div className="pointer-events-none absolute -left-14 top-8 h-44 w-44 rounded-full bg-sky-400/15 blur-3xl" />
-          <div className="pointer-events-none absolute -right-12 bottom-6 h-44 w-44 rounded-full bg-orange-400/15 blur-3xl" />
-          <div className="relative">
-            <SectionHeader
-              eyebrow="Why parents choose Tiny Steps"
-              title="Why Tiny Steps phonics is different"
-              subtitle="Built for children who need a clear bridge from knowing letters to reading words."
-              tone="light"
-            />
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
-              {differentiators.map((item) => (
-                <PremiumCard key={item.title} className="border-white/15 bg-white p-5 text-slate-900">
-                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-sky-500 text-sm text-white">✓</div>
-                  <h3 className="mt-3 text-lg font-semibold text-slate-900">{item.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-700">{item.detail}</p>
-                </PremiumCard>
-              ))}
-            </div>
-            <div className="mt-6 rounded-[1.75rem] border border-white/15 bg-white p-5 text-slate-900 shadow-xl sm:p-6">
-              <TestimonialSnippets courseTag="phonics" title="What phonics parents noticed first" />
-            </div>
-          </div>
-        </div>
-      </SectionShell>
-
-      <SectionShell id="method">
-        <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.07)] sm:p-8">
-          <SectionHeader
-            eyebrow="From assessment to independent reading"
-            title="The Tiny Steps Phonics Method"
-            subtitle="A structured live pathway from first sounds to confident reading, with each step building on the previous one."
-          />
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {methodSteps.map((step, index) => (
-              <article key={step.title} className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
-                <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-sky-500 text-xs font-bold text-white shadow">
-                  {index + 1}
-                </div>
-                <p className="mt-3 text-sm font-semibold text-slate-900">{step.title}</p>
-                <p className="mt-1 text-xs leading-5 text-slate-600">{step.detail}</p>
-              </article>
-            ))}
-          </div>
-        </div>
+      <SectionShell className="py-7 sm:py-8">
+        <PremiumCard className="border-slate-200 bg-white p-5 sm:p-7">
+          <TestimonialSnippets courseTag="phonics" title="What phonics parents noticed first" />
+        </PremiumCard>
       </SectionShell>
 
       <ContentTrustNote text="This page is created by the Tiny Steps academic team and reviewed by the founder to help parents understand structured phonics and reading development." />
@@ -934,43 +856,13 @@ export default function PhonicsPage({
         observation="sound–spelling accuracy, whether the child blends or guesses, which prerequisite pattern is insecure, and when independent reading is ready to increase."
       />
 
-      <SectionShell>
-        <div className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-sky-50/45 via-white to-orange-50/35 p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)] sm:p-8">
-          <SectionHeader
-            eyebrow="Learning outcomes"
-            title="What your child learns"
-            subtitle="The skills become more complex as decoding becomes secure; children do not need to start at the same point."
-          />
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              ['🔠', 'Letter sounds', 'Build clear sound recognition.', 'Skill: Sound recognition'],
-              ['🧩', 'Blending', 'Join sounds into readable words.', 'Skill: Blending routine'],
-              ['📖', 'CVC words', 'Read short-vowel CVC patterns.', 'Skill: Early decoding'],
-              ['🔤', 'Digraphs & magic-e', 'Decode advanced letter patterns.', 'Skill: Pattern mastery'],
-              ['📈', 'Reading fluency', 'Read more smoothly and confidently.', 'Skill: Fluency pacing'],
-              ['📝', 'Sentence reading', 'Move toward understanding short text.', 'Skill: Early comprehension'],
-            ].map(([icon, titleText, line, tag]) => (
-              <article
-                key={titleText}
-                className="rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
-              >
-                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-lg">{icon}</div>
-                <h3 className="mt-3 text-base font-semibold text-slate-900">{titleText}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-slate-700">{line}</p>
-                <AccentBadge className="mt-3 border-sky-200 bg-sky-50">{tag}</AccentBadge>
-              </article>
-            ))}
-          </div>
-        </div>
-      </SectionShell>
-
       <SectionShell id="program">
         <div className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-sky-50/60 via-white to-orange-50/50 p-3 shadow-xl">
           <div className="px-4 pt-4 sm:px-5 sm:pt-5">
             <SectionHeader
               eyebrow="Choose the right starting level"
               title="Program structure and options"
-              subtitle="Everything parents need to evaluate curriculum structure, class format, and progression."
+              subtitle="Ages 3–12, live 1:1 guidance, stage-based progression, and three curriculum levels parents can inspect before deciding."
             />
           </div>
           <ProgramFacts
@@ -1145,17 +1037,10 @@ export default function PhonicsPage({
             <SectionHeader
               eyebrow="Research, practice and next steps"
               title="Phonics parent resource hub"
-              subtitle="Keep exploring without losing the main learning journey: compare programmes, understand phonics, practise at home, or open a specific parent guide."
+              subtitle="Keep exploring without losing the main learning journey: understand phonics, practise at home, open a specific parent guide, or explore related support."
               tone="light"
             />
-            <div className="mt-7 grid gap-4 md:grid-cols-3">
-              <PremiumCard className="border-white/20 bg-white p-5 text-slate-900 shadow-xl transition hover:-translate-y-0.5 hover:shadow-2xl">
-                <h3 className="text-base font-semibold text-slate-900">🔍 Choosing the best online phonics classes for kids in India</h3>
-                <p className="mt-2 text-sm text-slate-700">Compare quality, learning structure, teacher attention, and parent support before enrollment.</p>
-                <Link to="/best-online-phonics-classes-for-kids-in-india" className="mt-3 inline-flex rounded-full bg-slate-950 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800">
-                  Open buyer guide
-                </Link>
-              </PremiumCard>
+            <div className="mt-7 grid gap-4 md:grid-cols-2">
               <PremiumCard className="border-white/20 bg-white p-5 text-slate-900 shadow-xl transition hover:-translate-y-0.5 hover:shadow-2xl">
                 <h3 className="text-base font-semibold text-slate-900">📘 What phonics is and how to support it at home</h3>
                 <p className="mt-2 text-sm text-slate-700">Understand synthetic phonics, blending, and practical home routines.</p>
