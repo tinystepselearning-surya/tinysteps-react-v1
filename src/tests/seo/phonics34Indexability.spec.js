@@ -33,7 +33,7 @@ function firebaseSourceMatchesRoute(source, route) {
 }
 
 describe('Phonics 34 search and AI crawlability lock', () => {
-  it('keeps exactly 34 authoritative public phonics routes registered and indexable', () => {
+  it('keeps exactly 34 authoritative public phonics articles resolvable and indexable', () => {
     expect(PHONICS_34_AUTHORITY_SLUGS).toHaveLength(34);
     expect(new Set(PHONICS_34_AUTHORITY_SLUGS).size).toBe(34);
     expect(PHONICS_34_AUTHORITY_ROUTES).toHaveLength(34);
@@ -41,23 +41,16 @@ describe('Phonics 34 search and AI crawlability lock', () => {
     for (const slug of PHONICS_34_AUTHORITY_SLUGS) {
       const route = `/blog/${slug}`;
       const post = postsBySlug.get(slug);
-      const manifestEntry = PUBLIC_ROUTE_MANIFEST.find((entry) => entry.path === route);
 
       expect(post, `missing normalized BlogPost for ${slug}`).toBeDefined();
       expect(post?.metaDescription?.length, `meta description too long for ${slug}`).toBeLessThanOrEqual(160);
       expect(post?.faq?.length || 0, `missing extractable FAQs for ${slug}`).toBeGreaterThanOrEqual(5);
       expect(shouldNoindexBlogSlug(slug), `${slug} unexpectedly noindexed`).toBe(false);
       expect(shouldIncludeBlogSlugInSitemap(slug), `${slug} missing from sitemap policy`).toBe(true);
-      expect(manifestEntry, `${route} missing exact public manifest entry`).toMatchObject({
-        path: route,
-        group: 'blog-authority',
-        intent: 'index',
-        indexable: true,
-        prerender: true,
-        sitemap: true,
-        canonicalPath: route,
-        robots: expectedRobots,
-      });
+      expect(
+        PUBLIC_ROUTE_MANIFEST.some((entry) => entry.path === route),
+        `${route} must stay in the dynamic blog pipeline instead of the static route manifest`,
+      ).toBe(false);
     }
   });
 

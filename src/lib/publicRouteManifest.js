@@ -1,5 +1,3 @@
-import { PHONICS_34_AUTHORITY_ROUTES } from './phonicsAuthorityRoutes.js';
-
 const route = (path, group, {
   indexable = true,
   prerender = true,
@@ -22,7 +20,6 @@ const route = (path, group, {
 export const PUBLIC_ROUTE_MANIFEST = [
   route('/', 'static'),
   route('/blog', 'static'),
-  ...PHONICS_34_AUTHORITY_ROUTES.map((path) => route(path, 'blog-authority')),
   route('/pricing', 'static'),
   route('/sitemap', 'static', { indexable: false, sitemap: false }),
   route('/contact', 'static'),
