@@ -48,6 +48,9 @@ const post: BlogPost = {
     type: 'p',
     content: 'This matters because “find every written vowel and split there” is not a reliable rule. A vowel team can represent one vowel sound, final silent e usually does not create another syllable, and y can represent a vowel sound. The child should use taught spelling patterns and meaningful parts rather than treating every vowel letter as a separate beat.'
   }, {
+    type: 'p',
+    content: 'Chunking is a teaching support, not a claim that every word has one visually perfect split. A useful syllable division may help pronunciation while a morpheme boundary may better preserve meaning and spelling. The best analysis is the one that keeps taught patterns intact, accounts for the whole word and helps the child transfer the strategy to another word.'
+  }, {
     type: 'h2',
     content: 'The Tiny Steps five-step long-word routine'
   }, {
@@ -79,7 +82,7 @@ const post: BlogPost = {
     content: '5. Reread the sentence and check meaning'
   }, {
     type: 'p',
-    content: 'A decoded word is not finished until it works in the sentence. Ask the child to reread the whole sentence and, when useful, explain the word or one meaningful part. This reconnects word reading to comprehension instead of leaving the activity as an isolated pronunciation drill.'
+    content: 'A decoded word is not finished until it works in the sentence. Ask the child to reread the whole sentence and, when useful, explain the word or one meaningful part. This reconnects word reading to comprehension instead of leaving the activity as an isolated pronunciation drill. If word reading is accurate but meaning repeatedly falls away, [From Decoding to Comprehension](/blog/phonics-comprehension) owns that next-stage reading problem.'
   }, {
     type: 'h2',
     content: 'Choose long words by teaching stage, not by how impressive they look'
@@ -121,19 +124,19 @@ const post: BlogPost = {
     content: 'A short home practice routine that does not become a word race'
   }, {
     type: 'p',
-    content: 'Use this as an example structure, not a required daily dose. Five to ten focused minutes can be enough for a useful practice round when the words are well chosen.'
+    content: 'Use this as an example sequence, not a required daily dose. The useful stopping point is when the child has had a small amount of accurate practice and at least one chance to transfer the routine—not when a timer or word quota has been completed.'
   }, {
     type: 'li',
-    content: '1 minute — review one spelling pattern, prefix or suffix that will appear in today’s words.'
+    content: 'Briefly review one spelling pattern, prefix or suffix that will appear in the practice words.'
   }, {
     type: 'li',
-    content: '3–4 minutes — decode three to five fresh multisyllabic words with the five-step routine.'
+    content: 'Decode a small set of fresh multisyllabic words with the five-step routine.'
   }, {
     type: 'li',
-    content: '2 minutes — reread the same words in short phrases or sentences.'
+    content: 'Reread the same words in short phrases or sentences so the child reconnects word solving with fluent meaning.'
   }, {
     type: 'li',
-    content: '1 minute — choose one word and talk about its meaning or meaningful parts.'
+    content: 'Choose one word to discuss for meaning, base word or affix when that adds useful vocabulary or spelling knowledge.'
   }, {
     type: 'p',
     content: 'Stop while the child is still working accurately. More words are not automatically better. If accuracy collapses after the first few items, reduce the number or simplify the word set.'
@@ -202,7 +205,7 @@ const post: BlogPost = {
     content: 'Evidence behind this approach'
   }, {
     type: 'p',
-    content: 'The exact Tiny Steps five-step routine above is an editorial teaching routine, not a standardized research protocol. Its components follow established reading guidance: explicitly teach decoding, analyze word parts, build from simpler to more complex words, use a consistent multisyllabic routine, and reconnect accurate word reading to connected text and meaning.'
+    content: 'The exact Tiny Steps five-step routine above is an editorial teaching routine, not a standardized research protocol. Its components follow established reading guidance: explicitly teach decoding, analyze word parts, build from simpler to more complex words, use a consistent multisyllabic routine, and reconnect accurate word reading to connected text and meaning. The evidence does not establish one universal chunking algorithm, one visually correct split for every English word, or a fixed daily practice dose that guarantees mastery.'
   }, {
     type: 'li',
     content: '[IES / What Works Clearinghouse — Foundational Skills to Support Reading for Understanding in Kindergarten Through 3rd Grade](https://ies.ed.gov/ncee/wwc/PracticeGuide/21): recommends teaching students to decode words, analyze word parts, write and recognize words, and read connected text.'
@@ -240,6 +243,9 @@ const post: BlogPost = {
   }, {
     question: 'How should I teach my child to break a long word into parts?',
     answer: 'Start with patterns the child has already learned. Help them spot a familiar syllable or meaningful word part, read each chunk accurately, blend the chunks into the whole word, and then reread the sentence to check pronunciation and meaning. Avoid asking them to memorize many splitting rules at once.'
+  }, {
+    question: 'Is there one correct way to split every multisyllabic word?',
+    answer: 'No single visual split works as a universal rule for every English word. A syllable division can support pronunciation while a morpheme boundary can preserve meaning and spelling. The useful analysis is one that respects taught patterns, accounts for the whole word and helps the child read it accurately.'
   }, {
     question: 'Should children underline every vowel in a multisyllabic word?',
     answer: 'Not as a stand-alone rule. Written vowel letters do not map one-to-one with syllables: vowel teams can represent one sound, final silent e usually does not add another syllable, and y can represent a vowel sound. Use taught spelling patterns and meaningful chunks instead.'
