@@ -10,6 +10,7 @@ const CLUSTERS = {
       { label: 'How to Choose a Phonics Class', href: '/blog/how-to-choose-phonics-classes' },
       { label: 'Online Phonics Classes vs School', href: '/blog/online-phonics-classes-vs-school' },
       { label: 'Are Phonics Apps Enough?', href: '/blog/are-phonics-apps-enough-for-kids' },
+      { label: 'How Long Does Phonics Take?', href: '/blog/how-long-does-phonics-take' },
       { label: 'Phonics Assessment Checklist', href: '/blog/phonics-diagnostics' },
       { label: 'Why Parents Choose Online Phonics', href: '/blog/why-parents-choose-online-phonics' },
     ],
