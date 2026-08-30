@@ -8,12 +8,15 @@ const read = (relativePath: string) => fs.readFileSync(path.join(repoRoot, relat
 const readingPagePath = 'src/pages/public/ReadingClassesForKidsPage.tsx';
 
 describe('Phonics Brick 3 reading classes authority guardrails', () => {
-  it('keeps /reading-classes-for-kids as the broad reading-support owner', () => {
+  it('keeps /reading-classes-for-kids as the broad reading-support destination', () => {
     const page = read(readingPagePath);
     const routes = read('src/app/routes.tsx');
 
     expect(page).toContain("const canonicalPath = '/reading-classes-for-kids'");
-    expect(page).toContain('This is the broad reading owner page.');
+    expect(page).toContain('From decoding to comprehension and reading confidence');
+    expect(page).toContain('The right starting point depends on what the child can already do.');
+    expect(page).not.toContain('broad reading owner page');
+    expect(page).not.toContain('Specialist pages handle narrower problems');
     expect(routes).toContain("const ReadingClassesForKidsPage = lazy(() => import('../pages/public/ReadingClassesForKidsPage'))");
     expect(routes).toContain("path: 'reading-classes-for-kids'");
   });
@@ -54,6 +57,15 @@ describe('Phonics Brick 3 reading classes authority guardrails', () => {
     expect(page).toContain('Reads the words but cannot explain the story');
   });
 
+  it('avoids pointless self-links in reading stage and diagnostic cards', () => {
+    const page = read(readingPagePath);
+    const canonicalRouteOccurrences = page.match(/route: '\/reading-classes-for-kids'/g) ?? [];
+    const stageHrefOccurrences = page.match(/href: '\/reading-classes-for-kids'/g) ?? [];
+
+    expect(canonicalRouteOccurrences).toHaveLength(0);
+    expect(stageHrefOccurrences).toHaveLength(0);
+  });
+
   it('uses a defensible best-reading-class framework instead of an unsupported ranking claim', () => {
     const page = read(readingPagePath);
 
@@ -66,7 +78,7 @@ describe('Phonics Brick 3 reading classes authority guardrails', () => {
     expect(page).toContain('Fresh evidence of progress');
     expect(page).toContain('Realistic expectations');
     expect(page).toContain('Parent-visible next steps');
-    expect(page).toContain('does not claim to be an objectively ranked “#1” reading provider');
+    expect(page).toContain('No reading provider is the best fit for every child.');
     expect(page).not.toContain("Tiny Steps is India's #1 reading");
     expect(page).not.toContain('Tiny Steps is the best reading class');
   });
@@ -95,6 +107,8 @@ describe('Phonics Brick 3 reading classes authority guardrails', () => {
       '/book-demo',
       '/blog/how-to-improve-reading-fluency-in-children',
       '/blog/week-6-phonics-comprehension',
+      '/blog/why-child-knows-letter-sounds-but-cannot-read-words',
+      '/child-not-reading-properly',
     ]) {
       expect(page).toContain(`'${href}'`);
     }
@@ -110,7 +124,7 @@ describe('Phonics Brick 3 reading classes authority guardrails', () => {
     expect(page).toContain('formatPublicInr');
   });
 
-  it('adds aligned AEO/GEO structured data for the broad reading journey', () => {
+  it('adds aligned AEO/GEO structured data for the reading journey', () => {
     const page = read(readingPagePath);
 
     expect(page).toContain("'@id': `${canonicalUrl}#reading-pathway`");
