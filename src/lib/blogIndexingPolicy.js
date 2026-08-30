@@ -33,6 +33,7 @@ const QUALITY_PROMOTED_PUBLIC_SLUGS = new Set([
   'phonics-diagnostics',
   'phonics-long-vowels',
   'phonics-multisyllabic',
+  'phonics-r-controlled',
   'phonics-summer-plan',
   'phonics-tricky-words',
 ]);
