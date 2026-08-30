@@ -221,9 +221,10 @@ const proofLinks = [
 export default function ReadingClassesForKidsPage() {
   const canonicalPath = '/reading-classes-for-kids';
   const canonicalUrl = `${PUBLIC_FACTS.primaryWebsite}${canonicalPath}`;
-  const seoTitle = 'Online Reading Classes for Kids in India | Tiny Steps';
+  // Keep these values aligned with routeSeoRegistry.js because that registry supplies build-time prerender metadata.
+  const seoTitle = 'Reading Classes for Kids in India | Tiny Steps';
   const seoDescription =
-    'Live 1:1 online reading classes for kids in India. Support decoding, fluency, comprehension and reading confidence with assessment-first placement for struggling readers.';
+    'Live online reading classes for kids in India. Build word reading, reading fluency, story comprehension, vocabulary and reading aloud confidence. Book one free 35-minute 1:1 demo assessment class.';
 
   useEffect(() => {
     const breadcrumbSchema = {
