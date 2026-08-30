@@ -19,7 +19,7 @@ describe('PV-1D Ask Tiny Steps privacy telemetry guard', () => {
     expect(telemetry).not.toMatch(/firebase\/firestore|addDoc|setDoc|updateDoc|collection\(/);
   });
 
-  it('does not define conversation-content fields in the telemetry payload', () => {
+  it('does not define conversation-content fields in the telemetry payload or tracker input', () => {
     const telemetry = read(telemetryPath);
 
     const forbiddenPayloadKeys = [
@@ -42,17 +42,21 @@ describe('PV-1D Ask Tiny Steps privacy telemetry guard', () => {
       expect(telemetry).not.toContain(key);
     }
 
+    expect(telemetry).not.toContain('deterministicAnswer');
+    expect(telemetry).toContain('route: AskTinyStepsRoutingMetadata');
     expect(telemetry).toContain('promptLength: number');
     expect(telemetry).toContain('prompt_length_bucket');
   });
 
-  it('emits telemetry only after the execution plan has selected an answer path', () => {
+  it('strips the answer-bearing execution plan before the analytics tracker receives it', () => {
     const hook = read(hookPath);
     const planIndex = hook.indexOf('const plan = planAskTinyStepsExecution');
+    const metadataIndex = hook.indexOf('route: toAskTinyStepsRoutingMetadata(plan)');
     const trackIndex = hook.indexOf('trackAskTinyStepsRouting({');
 
     expect(planIndex).toBeGreaterThan(-1);
     expect(trackIndex).toBeGreaterThan(planIndex);
+    expect(metadataIndex).toBeGreaterThan(trackIndex);
     expect(hook).toContain('responsePath');
     expect(hook).toContain('aiAttempted');
   });
