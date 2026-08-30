@@ -1,44 +1,133 @@
+const PHONICS_STAGE_SEQUENCE = [
+  {
+    name: 'Phonics Foundations',
+    routePath: '/courses/phonics-foundation',
+    level: 'Foundation',
+    summary: 'Build letter-sound knowledge, oral blending, CVC decoding, early spelling, and reading readiness.',
+  },
+  {
+    name: 'Early Phonics',
+    routePath: '/courses/phonics-brush-up',
+    level: 'Early',
+    summary: 'Extend decoding through digraphs, long vowels, vowel teams, core phonics rules, and more systematic spelling.',
+  },
+  {
+    name: 'Advanced Phonics',
+    routePath: '/courses/phonics-advanced',
+    level: 'Advanced',
+    summary: 'Apply advanced sound patterns to longer words, spelling, connected reading, and smoother fluency.',
+  },
+];
+
 export const PUBLIC_COURSE_PAGE_CONFIGS = [
   {
     internalSlug: 'phonics-foundation',
     publicSlug: 'phonics-foundation',
     routePath: '/courses/phonics-foundation',
     name: 'Phonics Foundations',
-    h1: 'Phonics Foundation Classes for Kids',
-    title: 'Phonics Foundation Classes for Kids | Tiny Steps',
+    h1: 'Phonics Foundation Course for Kids | Beginner Phonics Classes',
+    title: 'Phonics Foundation Course for Kids | Beginner Phonics | Tiny Steps',
     description:
-      'Start phonics the right way with live 1:1 classes that build letter sounds, blending, CVC reading, and early reading confidence for ages 3-7.',
+      'Live 1:1 beginner phonics course for kids building letter sounds, oral blending, CVC decoding, early spelling, and reading readiness through 31 structured lessons.',
     educationalLevel: 'Foundation',
     track: 'phonics',
     breadcrumbName: 'Phonics Foundation',
+    teaches: [
+      'letter-sound correspondence',
+      'phonemic awareness',
+      'oral blending',
+      'CVC word decoding',
+      'segmenting for early spelling',
+      'early reading readiness',
+    ],
     keywords: [
+      'phonics foundation course',
       'phonics foundation classes',
-      'phonics classes for beginners',
-      'blending classes for kids',
+      'beginner phonics course',
+      'phonics course for beginners',
+      'beginner phonics classes for kids',
+      'online phonics course for beginners',
+      'synthetic phonics course for kids',
+      'letter sounds and blending course',
+      'CVC reading course for kids',
+      'phonics classes for ages 3 to 7',
       'online phonics classes for ages 3 to 7',
     ],
     legacySlugs: ['phonics-foundations'],
+    stageAuthority: {
+      title: 'Is Phonics Foundations the right starting stage for my child?',
+      directAnswer:
+        'Phonics Foundations is the beginner stage for children who still need secure letter-sound links, oral blending, CVC decoding, and early spelling. Placement is based on what the child can do during assessment, not age alone.',
+      entrySignals: [
+        'Knows some letter names but cannot reliably give the matching sounds.',
+        'Can say individual sounds but cannot yet blend them into a word.',
+        'Guesses short words from pictures or memory instead of decoding them.',
+        'Needs a structured first pathway into CVC reading and early spelling.',
+      ],
+      skillsBuilt: [
+        'Hear, identify, and recall core speech sounds.',
+        'Connect sounds to written letters and graphemes.',
+        'Blend sounds to read simple CVC words.',
+        'Segment short words to support early spelling.',
+        'Move from isolated sounds into short decodable reading practice.',
+      ],
+      exitSignals: [
+        'Recalls the core sounds taught with growing automaticity.',
+        'Blends and decodes simple CVC words with less prompting.',
+        'Segments familiar short words for spelling with improving accuracy.',
+        'Is ready to extend into digraphs, vowel patterns, and broader phonics rules.',
+      ],
+      sequence: PHONICS_STAGE_SEQUENCE,
+    },
     relatedLinks: [
-      { label: 'Read the parent phonics mission', to: '/parents/phonics-mission' },
-      { label: 'See all phonics pathways', to: '/phonics' },
+      { label: 'See the complete Tiny Steps phonics program', to: '/phonics' },
+      { label: 'Continue to Early Phonics', to: '/courses/phonics-brush-up' },
+      { label: 'View the full curriculum roadmap', to: '/curriculum' },
       { label: 'What is phonics for kids?', to: '/blog/what-is-phonics-for-kids' },
+      { label: 'Why letter sounds alone are not enough to read', to: '/blog/why-letter-sounds-are-not-enough-to-read' },
+      { label: 'How kids learn blending', to: '/blog/how-kids-learn-blending' },
       { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
     ],
     faq: [
       {
+        question: 'What is a phonics foundation course?',
+        answer:
+          'A phonics foundation course is the beginner stage of structured phonics instruction. It builds sound awareness, letter-sound correspondence, oral blending, CVC decoding, early segmenting for spelling, and the first habits needed for independent word reading.',
+      },
+      {
         question: 'Who is the phonics foundation course best for?',
         answer:
-          'It is best for children who are still building sound-letter links, early blending, and confidence with short decodable words.',
+          'It is best for children who are still building sound-letter links, early blending, CVC decoding, and confidence with short decodable words. A child may know ABC names and still need this stage if they cannot yet blend sounds to read.',
+      },
+      {
+        question: 'Does my child need Foundation Phonics if they already know the alphabet?',
+        answer:
+          'Possibly. Knowing alphabet names is different from using speech sounds to decode. If a child knows ABC but cannot blend sounds, read simple CVC words, or segment short words for spelling, Foundation Phonics may still be the appropriate starting stage.',
       },
       {
         question: 'What does a child learn first in phonics foundation?',
         answer:
-          'Children begin with letter sounds, short vowels, oral blending, and simple CVC words before moving into more fluent early reading.',
+          'Children begin by hearing and identifying sounds, connecting those sounds to letters, practising oral blending, and reading simple CVC words before moving into more independent decoding and early spelling.',
+      },
+      {
+        question: 'How long does the Tiny Steps Phonics Foundations course take?',
+        answer:
+          'The published Foundation curriculum contains 31 lessons, but completion time is not fixed. Tiny Steps uses assessment-led placement and a flexible pace, so revision or progression can be adjusted to the child’s readiness.',
+      },
+      {
+        question: 'What comes after the phonics foundation stage?',
+        answer:
+          'Children who can recall core sounds, blend and decode simple words, and segment short words more independently can move into Early Phonics, where they begin broader patterns such as digraphs, long vowels, vowel teams, and additional phonics rules.',
+      },
+      {
+        question: 'Is phonics placement based only on age?',
+        answer:
+          'No. The age range is a guide, but placement should follow demonstrated reading readiness. Tiny Steps uses the assessment to decide whether a child needs Foundation, Early, or Advanced Phonics rather than moving children forward only because of age.',
       },
       {
         question: 'How can parents support this course at home?',
         answer:
-          'Short daily review works best: 5 to 10 minutes of sound review, blending, and one short decodable line after class.',
+          'Short, low-pressure review is usually more useful than long drills. Parents can revisit the sounds and blending patterns already taught in class and use brief decodable reading practice without introducing harder patterns too early.',
       },
     ],
   },
@@ -47,33 +136,99 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     publicSlug: 'phonics-brush-up',
     routePath: '/courses/phonics-brush-up',
     name: 'Early Phonics',
-    h1: 'Early Phonics Classes for Developing Readers',
-    title: 'Early Phonics Classes for Developing Readers | Tiny Steps',
+    h1: 'Early Phonics Course for Kids | Digraphs, Long Vowels & Decoding',
+    title: 'Early Phonics Course for Kids | Digraphs & Long Vowels | Tiny Steps',
     description:
-      'Help children move beyond basic sound recall with structured practice in digraphs, vowel teams, long vowels, and stronger decoding habits.',
+      'Live 1:1 Early Phonics course for developing readers covering digraphs, long vowels, vowel teams, Magic E, core phonics rules, decoding, and spelling.',
     educationalLevel: 'Early',
     track: 'phonics',
     breadcrumbName: 'Early Phonics',
-    keywords: [
-      'early phonics classes',
-      'digraph classes for kids',
-      'long vowel phonics support',
+    teaches: [
+      'digraph decoding',
+      'long vowel patterns',
+      'vowel teams',
+      'Magic E',
+      'core phonics rules',
+      'pattern-based spelling',
+      'developing reading fluency',
     ],
+    keywords: [
+      'early phonics course',
+      'early phonics classes',
+      'phonics course for developing readers',
+      'intermediate phonics course for kids',
+      'digraph classes for kids',
+      'digraph phonics course',
+      'long vowel phonics course',
+      'vowel team phonics classes',
+      'Magic E phonics classes',
+      'phonics spelling course for kids',
+      'phonics decoding classes for kids',
+    ],
+    stageAuthority: {
+      title: 'When should a child move from Foundation to Early Phonics?',
+      directAnswer:
+        'Early Phonics is the next stage for children who can already handle basic sounds and simple word blending but are not yet secure with broader spelling patterns such as digraphs, long vowels, vowel teams, and other common phonics rules.',
+      entrySignals: [
+        'Recognises the core letter sounds with reasonable consistency.',
+        'Can blend and decode simple CVC words but struggles as patterns become more complex.',
+        'Needs explicit teaching for digraphs, long vowels, vowel teams, and rule-based spelling.',
+        'Reads simple words but still guesses unfamiliar patterned words.',
+      ],
+      skillsBuilt: [
+        'Decode common digraphs and broader grapheme patterns.',
+        'Read and spell long-vowel patterns and vowel teams.',
+        'Apply Magic E and other core phonics rules to unfamiliar words.',
+        'Use pattern knowledge for both reading and spelling rather than memorising word lists.',
+        'Build greater accuracy and confidence in phrases and connected reading.',
+      ],
+      exitSignals: [
+        'Applies the main Early Phonics patterns across unfamiliar words with less prompting.',
+        'Uses sound-pattern knowledge more consistently when spelling.',
+        'Reads patterned words and short connected text with improving automaticity.',
+        'Is ready for advanced sound families, longer words, and more demanding fluency work.',
+      ],
+      sequence: PHONICS_STAGE_SEQUENCE,
+    },
     relatedLinks: [
-      { label: 'Compare phonics levels', to: '/phonics' },
+      { label: 'Review Phonics Foundations', to: '/courses/phonics-foundation' },
+      { label: 'Continue to Advanced Phonics', to: '/courses/phonics-advanced' },
+      { label: 'Compare all phonics levels', to: '/phonics' },
+      { label: 'View the full curriculum roadmap', to: '/curriculum' },
       { label: 'How kids learn blending', to: '/blog/how-kids-learn-blending' },
+      { label: 'Digraphs and tricky words for parents', to: '/blog/digraphs-and-tricky-words' },
       { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
     ],
     faq: [
       {
-        question: 'When should a child move to early phonics?',
+        question: 'Who is the Early Phonics course for?',
         answer:
-          'This level fits children who know basic sounds but still need guided practice with digraphs, vowel teams, and reading longer patterned words.',
+          'Early Phonics fits children who know basic sounds and can blend simple words but still need explicit support with digraphs, long vowels, vowel teams, Magic E, broader phonics rules, and more consistent spelling.',
       },
       {
-        question: 'Will this level help with spelling too?',
+        question: 'How is Early Phonics different from Phonics Foundations?',
         answer:
-          'Yes. As children understand sound patterns more clearly, spelling becomes less guess-based and more systematic.',
+          'Phonics Foundations builds the first decoding system: sound awareness, letter-sound links, blending, CVC reading, and early spelling. Early Phonics assumes those basics are developing and extends them into more complex grapheme patterns and phonics rules.',
+      },
+      {
+        question: 'What does a child learn in Early Phonics?',
+        answer:
+          'The stage develops digraphs, long vowels, vowel teams, Magic E, additional phonics rules, stronger word decoding, spelling through sound patterns, and more confident connected reading.',
+      },
+      {
+        question: 'Will Early Phonics help with spelling as well as reading?',
+        answer:
+          'Yes. Children practise using the same sound-pattern knowledge in both directions: decoding graphemes while reading and segmenting sounds to choose plausible spellings when writing.',
+      },
+      {
+        question: 'Should my child start here just because they are older?',
+        answer:
+          'No. Age is only a guide. A child who is older but still cannot blend or decode simple CVC words may need Foundation work first, while a younger child with secure foundations may be ready for Early Phonics after assessment.',
+      },
+      {
+        question: 'What comes after Early Phonics?',
+        answer:
+          'Children who can apply the main early patterns with growing independence can move into Advanced Phonics for more complex sound families, longer patterned words, multisyllabic decoding, spelling, and smoother reading fluency.',
       },
     ],
   },
@@ -82,33 +237,102 @@ export const PUBLIC_COURSE_PAGE_CONFIGS = [
     publicSlug: 'phonics-advanced',
     routePath: '/courses/phonics-advanced',
     name: 'Advanced Phonics',
-    h1: 'Advanced Phonics Classes for Stronger Reading Fluency',
-    title: 'Advanced Phonics Classes for Reading Fluency | Tiny Steps',
+    h1: 'Advanced Phonics Course for Kids | Longer Words, Spelling & Fluency',
+    title: 'Advanced Phonics Course for Kids | Spelling & Fluency | Tiny Steps',
     description:
-      'Advanced phonics for ages 6-12 covering bossy R, alternate vowels, multisyllabic decoding, spelling patterns, and smoother reading fluency.',
+      'Live 1:1 advanced phonics course for kids covering complex vowel patterns, controlling R, longer-word decoding, spelling patterns, and smoother reading fluency.',
     educationalLevel: 'Advanced',
     track: 'phonics',
-    breadcrumbName: 'Phonics Advanced',
-    keywords: [
-      'advanced phonics classes',
-      'reading fluency phonics support',
-      'multisyllabic decoding classes',
+    breadcrumbName: 'Advanced Phonics',
+    teaches: [
+      'advanced vowel patterns',
+      'r-controlled vowel patterns',
+      'advanced sound families',
+      'multisyllabic decoding',
+      'pattern-based spelling',
+      'connected reading fluency',
     ],
+    keywords: [
+      'advanced phonics course',
+      'advanced phonics classes for kids',
+      'advanced phonics program for kids',
+      'multisyllabic decoding course',
+      'longer word reading classes',
+      'advanced spelling patterns for kids',
+      'reading fluency phonics support',
+      'advanced vowel pattern classes',
+      'r controlled vowel phonics classes',
+      'phonics fluency course for kids',
+    ],
+    stageAuthority: {
+      title: 'Who is ready for Advanced Phonics?',
+      directAnswer:
+        'Advanced Phonics is for children whose basic decoding system is already working but who still need explicit support with complex vowel patterns, advanced sound families, longer words, spelling conventions, and smoother connected reading.',
+      entrySignals: [
+        'Reads simple and many patterned words accurately but slows down on longer or less familiar words.',
+        'Understands common early phonics patterns but is inconsistent with advanced vowel or R-controlled patterns.',
+        'Needs a more systematic strategy for decoding multisyllabic words instead of guessing parts of them.',
+        'Can decode but still needs stronger spelling transfer and smoother connected reading.',
+      ],
+      skillsBuilt: [
+        'Apply advanced vowel patterns and sound families across unfamiliar words.',
+        'Use R-controlled and other advanced phonics patterns more accurately.',
+        'Break longer and multisyllabic words into manageable decoding units.',
+        'Transfer advanced phonics knowledge into spelling.',
+        'Read sentences and passages with greater accuracy, phrasing, and fluency.',
+      ],
+      exitSignals: [
+        'Approaches unfamiliar longer words with a decoding strategy rather than guessing.',
+        'Applies advanced spelling patterns with greater consistency.',
+        'Reads connected text more smoothly because word recognition requires less effort.',
+        'Is increasingly ready to focus beyond phonics on broader fluency and comprehension needs where appropriate.',
+      ],
+      sequence: PHONICS_STAGE_SEQUENCE,
+    },
     relatedLinks: [
+      { label: 'Review Early Phonics', to: '/courses/phonics-brush-up' },
+      { label: 'See the complete Tiny Steps phonics program', to: '/phonics' },
+      { label: 'View the full curriculum roadmap', to: '/curriculum' },
       { label: 'Reading fluency support', to: '/reading-fluency-program' },
+      { label: 'How to help kids read multisyllabic words', to: '/blog/week-19-phonics-multisyllabic' },
       { label: 'Long vowel sounds for kids', to: '/blog/long-vowel-sounds-for-kids' },
       { label: 'Book one free 35-minute 1:1 online demo assessment class', to: '/book-demo' },
     ],
     faq: [
       {
-        question: 'Who should join advanced phonics?',
+        question: 'Who should join Advanced Phonics?',
         answer:
-          'This level is for children who can already read simple words but still need help with complex vowel patterns, longer words, and smoother reading.',
+          'Advanced Phonics is for children who can already read simple and many patterned words but still need help with complex vowel patterns, advanced sound families, longer words, spelling conventions, and smoother connected reading.',
       },
       {
-        question: 'Does advanced phonics include comprehension support?',
+        question: 'How is Advanced Phonics different from Early Phonics?',
         answer:
-          'Yes. As decoding becomes easier, children also practise reading sentences and passages with better fluency and meaning-making.',
+          'Early Phonics establishes common digraphs, vowel patterns, Magic E, and core phonics rules. Advanced Phonics builds on that base with more complex sound families, longer-word and multisyllabic decoding, advanced spelling patterns, and fluency application.',
+      },
+      {
+        question: 'Does Advanced Phonics teach children how to read longer words?',
+        answer:
+          'Yes. Children learn to apply known sound patterns and break longer words into manageable parts so they can decode systematically rather than guessing the whole word from its first letters or context.',
+      },
+      {
+        question: 'Does Advanced Phonics include spelling support?',
+        answer:
+          'Yes. Advanced phonics connects reading and spelling so children practise hearing sound units, recognising likely patterns, and applying those patterns when spelling increasingly complex words.',
+      },
+      {
+        question: 'Does Advanced Phonics include reading fluency?',
+        answer:
+          'Yes. Children apply decoding skills in sentences and connected reading so word recognition can become more automatic. If decoding is already secure and fluency is the main remaining difficulty, the dedicated reading fluency pathway may be a better fit.',
+      },
+      {
+        question: 'What comes after Advanced Phonics?',
+        answer:
+          'There is no automatic next phonics level. Once advanced decoding and spelling patterns are secure, the next priority depends on the child: some need continued reading fluency work, while others are ready to focus more heavily on comprehension, vocabulary, or broader English skills.',
+      },
+      {
+        question: 'Is Advanced Phonics placement based only on age?',
+        answer:
+          'No. The published age range is a guide. Tiny Steps uses assessment-led placement because an older child may still need earlier decoding work, while another child may be ready for advanced patterns sooner.',
       },
     ],
   },
