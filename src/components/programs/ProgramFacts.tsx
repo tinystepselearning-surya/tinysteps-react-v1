@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { PUBLIC_FACTS } from '../../lib/schemas';
 
 type ProgramFactsProps = {
   ageRange: string;
@@ -65,6 +66,19 @@ export default function ProgramFacts({
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Structure</p>
                 <p className="mt-1 text-base font-semibold text-slate-900">{structure}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white px-6 py-4 sm:col-span-2">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-lg">🌍</div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Service Area</p>
+                <p className="mt-1 text-base font-semibold text-slate-900">{PUBLIC_FACTS.geography}</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                  Live online delivery is not limited to one city; families can join from major Indian cities and from other countries where class timings are suitable.
+                </p>
               </div>
             </div>
           </div>
