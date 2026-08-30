@@ -14,7 +14,19 @@ export type AskTinyStepsAiResult = 'not_attempted' | 'success' | 'fallback';
 export type AskTinyStepsRoutingMetadata = Pick<
   AskTinyStepsExecutionPlan,
   'mode' | 'reason' | 'audience' | 'intent' | 'sourceIds' | 'isFollowUp'
->;
+> & {
+  deterministicAnswer?: never;
+  question?: never;
+  prompt?: never;
+  answer?: never;
+  content?: never;
+  history?: never;
+  errorMessage?: never;
+  email?: never;
+  phone?: never;
+  userId?: never;
+  sessionId?: never;
+};
 
 export type AskTinyStepsRoutingTelemetryInput = {
   route: AskTinyStepsRoutingMetadata;
@@ -69,7 +81,7 @@ function safeLatencyMs(value: number): number {
 
 /**
  * Builds the complete PV-1D payload. The tracker input contains routing metadata,
- * prompt length and timing only; it never receives prompt/answer/error text.
+ * prompt length and timing only; conversation/error fields are typed as never.
  */
 export function buildAskTinyStepsRoutingTelemetry(
   input: AskTinyStepsRoutingTelemetryInput,
