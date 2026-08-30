@@ -59,12 +59,12 @@ Target: **90+/100** with no factual, pedagogical, evidence, diagnosis-boundary, 
 | 14 | Phonics Activities at Home: A Parent Routine That Actually Sticks | 63 | **LOCKED IN BATCH** | **97** |
 | 15 | Phonics Blending Activities That Help Children Read Words Confidently | 72 | **LOCKED IN BATCH** | **97** |
 | 16 | Phonics Games for Letter Sounds: Parent Routine for Daily Practice | 61 | **LOCKED IN BATCH** | **97** |
-| 17 | Phonics Rules for Beginners: The Right Sequence and When to Move Ahead | — | QUEUED | — |
+| 17 | Phonics Rules for Beginners: The Right Sequence and When to Move Ahead | 60 | **LOCKED IN BATCH** | **97** |
 | 18 | R-Controlled Vowels Explained: Pattern Groups, Confusions, and Practice Order | — | QUEUED | — |
 | 19 | SATPIN Phonics Guide for Parents: How to Start and What to Expect | — | QUEUED | — |
 | 20 | Phonics vs Sight Words: What Helps Children Read Better | — | QUEUED | — |
 
-Current completed movement: **395/600 → 581/600**, average **65.8 → 96.8**, total gain **+186**.
+Current completed movement: **455/700 → 678/700**, average **65.0 → 96.9**, total gain **+223**.
 
 ## Canonical intent map — completed Batch #2 articles
 
@@ -74,29 +74,31 @@ Current completed movement: **395/600 → 581/600**, average **65.8 → 96.8**, 
 14. `/blog/phonics-activities-for-kids-at-home` → broad home-practice system across sound recall, blending, decoding, spelling and text transfer. Detailed blending activities remain with Blog #15.
 15. `/blog/phonics-blending-activities` → practical blending activity selection by observed bottleneck. Developmental stages remain with Blog #5; simple daily blending routine remains with Blog #25.
 16. `/blog/phonics-games-for-letter-sounds` → practical letter-sound game routine: two-way phoneme–grapheme retrieval, blendable pronunciations, small taught-set review and early word transfer. Online-game evaluation remains with Blog #13; broad home routine with Blog #14; blending activities with Blog #15; SATPIN launch with Blog #19; broad sequence with Blog #17.
+17. `/blog/phonics-rules-for-beginners` → parent-facing principles for a systematic, incremental and cumulative beginner phonics sequence, including what broad knowledge comes next and how to decide whether to move ahead or review. SATPIN launch remains with Blog #19; CVC milestone with Blog #3; digraph/tricky distinction with Blog #4; long vowels with Blog #11; r-controlled vowels with Blog #18; school-wide scope and sequence with Blog #57.
 
-## Blog #16 — LOCKED
+## Blog #17 — LOCKED
 
-**Canonical role:** answer the parent question: *Which games help a child strengthen letter-sound knowledge, how should parents practise the sound–print relationship, and when should that knowledge start transferring into words?*
+**Canonical role:** answer the parent question: *What does a sensible beginner phonics sequence look like, what should come next, and how can I tell whether my child is ready to move ahead without relying on a fixed weekly timetable?*
 
 ### Major quality decisions
 
-- Converted the generic `PhonicsSeoPost` into a direct founder-authored `BlogPost` with the original publication date preserved as **2025-11-22**.
-- Replaced the rigid 10-minute/2-minute schedule with the Tiny Steps five-part loop: **see it → say it → hear it → find or write it → use it in a word**.
-- Corrects the false either/or between letter names and letter sounds: both are useful alphabet knowledge, while phonics specifically requires usable sound–spelling relationships.
-- Removes the implied rule that A–Z sound mastery must come before blending. Children can begin decoding and encoding once a small taught set can form words.
-- Removes the unsupported “3–5 target sounds works best” claim and states that no universal sound-count target applies to every child.
-- Adds six low-prep game types covering print-to-sound, sound-to-print, auditory discrimination, one-word blending and early spelling transfer.
-- Adds blendable-pronunciation guidance and explicitly avoids added schwa/“uh” sounds where they interfere with blending.
-- Defines progress through two-way retrieval, reduced prompting, fresh-item transfer and early word use—not speed, game score or a fixed mastery percentage.
-- Gives transparent first-party product boundaries: Balloon Pop is sound-to-letter recognition practice; Letter Tracing With Sounds combines formation and sound connection; neither alone proves independent word reading.
-- Keeps Blog #13 as digital-game quality owner, Blog #14 as broad home-routine owner, Blog #15 as blending-activity owner, Blog #19 as SATPIN launch owner and Blog #17 as broad sequence owner.
-- Adds evidence from IES/WWC, IES/REL family guidance, UFLI, EEF and DfE.
-- Adds five focused FAQs and a dedicated regression spec.
+- Converted the generic `PhonicsSeoPost` into a direct founder-authored `BlogPost` with the original publication date preserved as **2025-11-19**.
+- Reframes “phonics rules” as parent-friendly language for sound–spelling relationships, common patterns, positional conventions and exceptions rather than perfectly reliable formulas.
+- Replaces the rigid `CVC → digraphs/blends → long vowels` prescription with evidence-aligned principles: clearly defined, explicit, incremental, cumulative teaching from simpler to more complex knowledge.
+- Adds a six-part explanatory beginner progression: phonemic awareness + a useful starter set → immediate blending/segmenting → broader consonants and grapheme patterns → gradual common-exception words → long-vowel/other common patterns → matched sentences and text.
+- Clarifies that CVC words are an important early milestone but not a complete beginner curriculum, and that digraphs and adjacent consonants are not one interchangeable “blend” rule family.
+- Protects common-exception words from whole-shape memorisation and routes the broader phonics-versus-sight-words decision to Blog #20.
+- Adds the Tiny Steps five-question progression check: **retrieval → fresh-word decoding → encoding → independence → transfer/retention**.
+- Removes fixed 3–5 day rule blocks, 2–8 week progress claims, 6–8 week support triggers, “two perfect sessions” and “one rule family per week” as universal readiness rules.
+- Adds practical responses for short/long vowel mixing, digraph/blend confusion, slogan-without-transfer and loss of old knowledge when new patterns are introduced.
+- Advises parents to reinforce a coherent school/programme sequence rather than mix competing orders at home.
+- Adds a non-diagnostic closer-review boundary instead of treating sequencing difficulty as evidence of a condition.
+- Adds evidence from the current EEF phonics review, DfE SSP validation criteria, IES/WWC foundational-reading guidance and UFLI.
+- Adds five focused FAQs and dedicated regression coverage.
 
 ### Evidence boundary
 
-Evidence supports explicit phoneme–grapheme teaching, both letter-name and letter-sound knowledge, cumulative review, blendable pronunciation and application to decoding/encoding. It does **not** establish one universal 10-minute home routine, one fixed number of sounds to practise, or an A–Z-before-blending requirement. The Tiny Steps five-part loop and game rotation are editorial syntheses.
+Evidence supports systematic, explicit, incremental and cumulative phonics; an early useful correspondence set; blending and segmenting; common sound–spelling patterns; spelling; common-exception words; and matched connected-text practice. It does **not** establish one universal commercial programme order, one rule family per week, a fixed mastery percentage or a fixed number of review sessions. The Tiny Steps six-part explanatory map and five-question move-ahead check are editorial syntheses.
 
 **Final decision: 97/100 — LOCKED IN BATCH.**
 
