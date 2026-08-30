@@ -67,14 +67,14 @@ Batch #1 quality movement: **667/1000 → 960/1000**, average **66.7 → 96.0**,
 | 12 | Online Phonics Classes vs School: What Works for Which Child | 68/100 | **LOCKED IN BATCH** | **97/100** |
 | 13 | Online Phonics Games for Kids: What Actually Builds Reading | 64/100 | **LOCKED IN BATCH** | **97/100** |
 | 14 | Phonics Activities at Home: A Parent Routine That Actually Sticks | 63/100 | **LOCKED IN BATCH** | **97/100** |
-| 15 | Phonics Blending Activities That Help Children Read Words Confidently | — | QUEUED | — |
+| 15 | Phonics Blending Activities That Help Children Read Words Confidently | 72/100 | **LOCKED IN BATCH** | **97/100** |
 | 16 | Phonics Games for Letter Sounds: Parent Routine for Daily Practice | — | QUEUED | — |
 | 17 | Phonics Rules for Beginners: The Right Sequence and When to Move Ahead | — | QUEUED | — |
 | 18 | R-Controlled Vowels Explained: Pattern Groups, Confusions, and Practice Order | — | QUEUED | — |
 | 19 | SATPIN Phonics Guide for Parents: How to Start and What to Expect | — | QUEUED | — |
 | 20 | Phonics vs Sight Words: What Helps Children Read Better | — | QUEUED | — |
 
-Current completed quality movement: baseline **262/400 → 387/400**, average **65.5 → 96.8**, total gain **+125**.
+Current completed quality movement: baseline **334/500 → 484/500**, average **66.8 → 96.8**, total gain **+150**.
 
 ## Canonical intent map — Batch #2 completed articles
 
@@ -82,6 +82,7 @@ Current completed quality movement: baseline **262/400 → 387/400**, average **
 12. `/blog/online-phonics-classes-vs-school` → parent decision between school-only phonics, school plus targeted online support, or a different reading priority. Provider-shopping intent remains with Blog #10 `/blog/how-to-choose-phonics-classes`.
 13. `/blog/online-phonics-games` → evaluate whether online phonics games rehearse a real foundational-reading skill and whether that skill transfers beyond the game. Letter-sound game routines remain with Blog #16; broad home routines remain with Blog #14; apps-versus-teacher remains with Blog #35.
 14. `/blog/phonics-activities-for-kids-at-home` → broad parent system for repeatable, level-matched home phonics practice across sound recall, blending, decoding, spelling and connected-text transfer. Detailed blending activities remain with Blog #15; letter-sound games remain with Blog #16; online-game evaluation remains with Blog #13.
+15. `/blog/phonics-blending-activities` → practical blending activity selection by observed bottleneck, from oral merging through printed-word and connected-text transfer. Stage progression remains with Blog #5; broad home routine with Blog #14; simple daily blending routine with Blog #25.
 
 ## Blog #11 — LOCKED
 
@@ -155,6 +156,33 @@ Current completed quality movement: baseline **262/400 → 387/400**, average **
 ### Evidence boundary
 
 Evidence supports practical family guidance, level-matched foundational reading activities, ongoing parent support and a wider reading environment. It does **not** establish one mandatory home-practice duration, one fixed number of activities, or a universal progress timetable. The Tiny Steps six-part routine and one-card check are editorial syntheses.
+
+**Final decision: 97/100 — LOCKED IN BATCH.**
+
+## Blog #15 — LOCKED
+
+**Canonical role:** answer the parent question: *Which blending activity should I use for the specific place where my child’s blending breaks down, and how do I know the skill transfers beyond the practised word list?*
+
+### Major quality decisions
+
+- Converted the generic `PhonicsSeoPost` into a direct founder-authored `BlogPost` while retaining the useful activity-bank intent.
+- Adds the Tiny Steps six-part activity loop: **locate the blending break → choose the matching activity → model only what is needed → let the child retry → check a fresh word → transfer into matched text**.
+- Adds a pre-activity blending-break check covering oral merging, printed blending, long pauses/schwa, familiar-list dependence and sentence-level breakdown.
+- Builds seven activity families: oral sound merging, continuous sound slider, short decodable words with fresh transfer, one-sound-change chains, one-sound contrasts, taught digraph/adjacent-consonant practice and sentence transfer.
+- Clarifies that oral-only blending is a temporary scaffold rather than a universal stage that must be mastered for a fixed period before print.
+- Adds blendable-sound guidance and protects stop sounds from added schwa pronunciations.
+- Keeps CVC practice tied to taught correspondences and fresh decoding rather than a fixed word-count milestone.
+- Uses one-sound-change word chains to preserve attention to the full sequence and prevents word-family visual memorisation from being mistaken for decoding.
+- Adds a correction routine based on pointing back to the relevant sound, reducing prompts and allowing a retry.
+- Defines progress through accuracy, independence, fresh-word transfer, retention and connected-text transfer rather than speed, percentages or a fixed practice calendar.
+- Explains that “confidently” is practical willingness/independence language, not a guaranteed emotional outcome from phonics.
+- Keeps Blog #5 as the developmental blending-stage owner, Blog #14 as the broad home-routine owner and Blog #25 as the simple daily blending-routine owner.
+- Adds evidence from IES/WWC, UFLI phonemic-awareness/decoding resources, DfE Reading Framework and EEF phonics evidence.
+- Adds five focused FAQs and dedicated regression coverage.
+
+### Evidence boundary
+
+Evidence supports explicit left-to-right blending, phoneme blending, blendable sound pronunciation, systematic word work and connected-text practice. It does **not** establish a universal number of blending words, timed target, mastery percentage or practice duration. The Tiny Steps six-part loop and blending-break categories are editorial syntheses rather than diagnostic instruments.
 
 **Final decision: 97/100 — LOCKED IN BATCH.**
 
