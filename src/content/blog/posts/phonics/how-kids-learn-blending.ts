@@ -190,7 +190,7 @@ const post: BlogPost = {
     content: 'Connected text — finish with one short decodable line when the child is ready for sentence transfer.'
   }, {
     type: 'p',
-    content: 'If you want activity ideas rather than the developmental pathway, use [Phonics Blending Activities](/blog/phonics-blending-activities) or [Blending Practice for Kids at Home](/blog/phonics-blending-club). Those pages own practice formats; this page owns the progression and stage-exit decisions.'
+    content: 'If you want activity ideas rather than the developmental pathway, use the [phonics blending activities guide](/blog/phonics-blending-activities) or [Blending Practice for Kids at Home](/blog/phonics-blending-club). Those pages own practice formats; this page owns the progression and stage-exit decisions. For the wider reading framework around how phonics fits together, use the [complete phonics guide for parents](/blog/phonics-for-parents-guide).'
   }, {
     type: 'h2',
     content: 'What not to do while blending is developing'
