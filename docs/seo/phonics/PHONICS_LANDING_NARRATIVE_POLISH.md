@@ -26,6 +26,16 @@ The public Phonics age range is **ages 3–12**.
 
 The landing page must not show an `ages 3–10` primary-pathway statement. Hero, visible facts and course schema stay aligned to ages 3–12.
 
+## Geographic positioning
+
+Tiny Steps is an online programme, so geography must never imply that the service is limited to one city.
+
+- India remains the priority commercial-search market for `/phonics` and the existing India-focused buyer-guide ownership stays unchanged.
+- Visible programme facts should communicate **learners in India and globally online**, consistent with `PUBLIC_FACTS.geography` and the organisation schema.
+- If city names are used, they are non-exhaustive examples of reach across major Indian cities, not separate service territories and not a claim that only those cities are served.
+- Do not over-list cities merely for SEO. Use broad India-wide language first, with selected examples only when they improve clarity.
+- Global wording should describe online accessibility accurately without inventing country-specific enrolment claims that are not already supported by first-party evidence.
+
 ## Final scrolling psychology / parent narrative
 
 The page should read as one guided decision story:
@@ -39,7 +49,7 @@ The page should read as one guided decision story:
 7. **Show me the roadmap** — Foundation-to-advanced stage progression is owned by the learning-path section.
 8. **Show me how progress is seen** — Parent-visible checkpoints and realistic progress framing.
 9. **Help me compare alternatives** — Apps, school reading, home reading and live guided phonics are compared only after the programme is understood.
-10. **Confirm availability** — India-wide delivery appears later in the journey rather than interrupting early programme comprehension.
+10. **Confirm availability** — India-wide and global online availability appears later in the journey rather than interrupting early programme comprehension.
 11. **Let me explore without losing the story** — One consolidated resource hub for the research guide, free practice, topic guides and related support.
 12. **Answer remaining objections** — One canonical FAQ accordion, not a second repeated FAQ block.
 13. **Make the next step feel safe** — Assessment process, what parents receive and a no-pressure final CTA.
@@ -58,6 +68,7 @@ Each major idea gets one primary visible owner.
 | Stage roadmap | `#learning-path` | Keeps stage progression separate from programme facts |
 | Parent progress | `#progress` | Keeps progress framing in one location |
 | Alternative support comparison | apps/school/home/live comparison section | Appears once, after programme and progress |
+| Geography / service reach | programme facts + later availability section | India-wide first, global online reach visible; no single-city ownership |
 | FAQs | `#faq` | Removed the earlier duplicate four-question FAQ card grid |
 | Resources | `#resources` | Merged the former research/practice block and lower resource directories; buyer-guide CTA is not repeated again here because Brick 1 already owns that handoff |
 | Assessment journey | `What happens next?` + final `#assessment` CTA | CTA repetition is deliberate; explanatory content is not repeated elsewhere |
@@ -76,6 +87,7 @@ Each major idea gets one primary visible owner.
 
 - Brick 1 regression tests remain unchanged and green.
 - No `3–10` Phonics age claim remains on `/phonics`.
+- Visible programme facts communicate India-wide and global online reach without implying a single-city limitation.
 - No duplicate full `Who is this for` / `Who should join` information block.
 - No duplicate `Why Tiny Steps` feature grid repeating Brick 1 criteria.
 - No duplicate `Tiny Steps Phonics Method` sequence repeating the learning roadmap / teacher-delivery model.
