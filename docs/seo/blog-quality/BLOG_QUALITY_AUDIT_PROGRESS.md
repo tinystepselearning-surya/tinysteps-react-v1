@@ -12,16 +12,6 @@ The programme numbering is locked to the founder-supplied **authoritative 76-blo
 
 The full fixed order lives in `docs/seo/blog-quality/AUTHORITATIVE_76_SEQUENCE.md`.
 
-## Delivery model — 10 blogs per merge batch
-
-Batch #1 uses one branch and one PR for Blogs #1–#10:
-
-- Branch: `seo/blog-quality-sequence-01-benefits-phonics`
-- PR: `#163`
-- Each blog receives focused regression coverage when locked.
-- The decisive full exact-head CI/SEO gate runs after Blog #10.
-- Merge to `main` requires explicit founder approval for the complete batch.
-
 ## Standard 100-point quality rubric
 
 | Dimension | Points |
@@ -40,110 +30,99 @@ Batch #1 uses one branch and one PR for Blogs #1–#10:
 
 Target: **90+/100** with no factual, pedagogical, evidence, diagnosis-boundary, trust, cannibalization or misleading-timeline hard fail.
 
-## Batch #1 final scorecard — Blogs #1–#10
+# Batch #1 — Blogs #1–#10 — MERGED
+
+- Branch: `seo/blog-quality-sequence-01-benefits-phonics`
+- PR: `#163`
+- Merge commit: `fda9963872299679d22e4ad3dc880cd4f13b482b`
+- Final exact-head CI before merge: green
+
+| # | Article | Baseline | Final |
+|---:|---|---:|---:|
+| 1 | Benefits of Phonics for Kids: What Parents Usually Notice First | 57/100 | 95/100 |
+| 2 | Child Knows ABC but Cannot Read: What Parents Should Check First | 65/100 | 96/100 |
+| 3 | CVC Words Explained for Parents: The First Real Decoding Milestone | 65/100 | 96/100 |
+| 4 | Digraphs and Tricky Words: What to Decode and What to Remember | 64/100 | 96/100 |
+| 5 | How Kids Learn Blending: The Stage-by-Stage Path Parents Can Track | 66/100 | 96/100 |
+| 6 | How Long Does Phonics Take? A Realistic Parent Guide to Progress | 74/100 | 96/100 |
+| 7 | How Phonics Builds Reading Confidence: What Changes First at Home | 68/100 | 96/100 |
+| 8 | How Phonics Classes Help Kids Read: Decoding, Blending and Fluency Explained | 67/100 | 96/100 |
+| 9 | How Phonics Improves Spelling: A Parent Encoding Roadmap | 62/100 | 96/100 |
+| 10 | How to Choose a Phonics Class: The Complete Parent Comparison Framework | 79/100 | 97/100 |
+
+Batch #1 quality movement: **667/1000 → 960/1000**, average **66.7 → 96.0**, total gain **+293**.
+
+# Batch #2 — Blogs #11–#20 — IN PROGRESS
+
+- Branch: `seo/blog-quality-sequence-11-long-vowels`
+- PR: `#164`
+- Base: merged Batch #1 main commit `fda9963872299679d22e4ad3dc880cd4f13b482b`
+- Delivery rule: review and lock **one blog at a time**, keep all Blogs #11–#20 on this branch/PR, run the decisive full exact-head CI/SEO gate after Blog #20, and merge only with explicit founder approval.
+
+## Batch #2 scorecard
 
 | # | Article | Baseline | Status | Score after refresh |
 |---:|---|---:|---|---:|
-| 1 | Benefits of Phonics for Kids: What Parents Usually Notice First | 57/100 | **LOCKED IN BATCH** | **95/100** |
-| 2 | Child Knows ABC but Cannot Read: What Parents Should Check First | 65/100 | **LOCKED IN BATCH** | **96/100** |
-| 3 | CVC Words Explained for Parents: The First Real Decoding Milestone | 65/100 | **LOCKED IN BATCH** | **96/100** |
-| 4 | Digraphs and Tricky Words: What to Decode and What to Remember | 64/100 | **LOCKED IN BATCH** | **96/100** |
-| 5 | How Kids Learn Blending: The Stage-by-Stage Path Parents Can Track | 66/100 | **LOCKED IN BATCH** | **96/100** |
-| 6 | How Long Does Phonics Take? A Realistic Parent Guide to Progress | 74/100 | **LOCKED IN BATCH** | **96/100** |
-| 7 | How Phonics Builds Reading Confidence: What Changes First at Home | 68/100 | **LOCKED IN BATCH** | **96/100** |
-| 8 | How Phonics Classes Help Kids Read: Decoding, Blending and Fluency Explained | 67/100 | **LOCKED IN BATCH** | **96/100** |
-| 9 | How Phonics Improves Spelling: A Parent Encoding Roadmap | 62/100 | **LOCKED IN BATCH** | **96/100** |
-| 10 | How to Choose a Phonics Class: The Complete Parent Comparison Framework | 79/100 | **LOCKED IN BATCH** | **97/100** |
+| 11 | Long Vowel Sounds for Kids: Pattern Order, Practice, and Common Mix-Ups | 67/100 | **LOCKED IN BATCH** | **96/100** |
+| 12 | Online Phonics Classes vs School: What Works for Which Child | 68/100 | **LOCKED IN BATCH** | **97/100** |
+| 13 | Online Phonics Games for Kids: What Actually Builds Reading | — | QUEUED | — |
+| 14 | Phonics Activities at Home: A Parent Routine That Actually Sticks | — | QUEUED | — |
+| 15 | Phonics Blending Activities That Help Children Read Words Confidently | — | QUEUED | — |
+| 16 | Phonics Games for Letter Sounds: Parent Routine for Daily Practice | — | QUEUED | — |
+| 17 | Phonics Rules for Beginners: The Right Sequence and When to Move Ahead | — | QUEUED | — |
+| 18 | R-Controlled Vowels Explained: Pattern Groups, Confusions, and Practice Order | — | QUEUED | — |
+| 19 | SATPIN Phonics Guide for Parents: How to Start and What to Expect | — | QUEUED | — |
+| 20 | Phonics vs Sight Words: What Helps Children Read Better | — | QUEUED | — |
 
-### Batch quality movement
+Current completed quality movement: baseline **135/200 → 193/200**, average **67.5 → 96.5**, total gain **+58**.
 
-- Baseline total: **667/1000**
-- Final total: **960/1000**
-- Baseline average: **66.7/100**
-- Final average: **96.0/100**
-- Total quality gain: **+293 points**
-- All 10 retained articles: **95+/100**
+## Canonical intent map — Batch #2 completed articles
 
-## Canonical intent map — Blogs #1–#10
+11. `/blog/long-vowel-sounds-for-kids` → long-vowel pattern families, ordering decisions, reading/spelling transfer and common mix-up interpretation. Hands-on long-vowel activity intent remains with Blog #29 `/blog/phonics-long-vowels`.
+12. `/blog/online-phonics-classes-vs-school` → parent decision between school-only phonics, school plus targeted online support, or a different reading priority. Provider-shopping intent remains with Blog #10 `/blog/how-to-choose-phonics-classes`.
 
-1. `/blog/benefits-of-phonics-for-kids` → realistic observable phonics benefits.
-2. `/blog/child-knows-abc-but-cannot-read` → broad alphabet-familiarity-to-decoding bottleneck.
-3. `/blog/cvc-words-explained-for-parents` → CVC definition and first simple printed-word decoding milestone.
-4. `/blog/digraphs-and-tricky-words` → what remains decodable versus what needs extra attention/memory.
-5. `/blog/how-kids-learn-blending` → stage-by-stage blending development and stage-exit decisions.
-6. `/blog/how-long-does-phonics-take` → realistic interpretation of phonics duration and progress.
-7. `/blog/how-phonics-builds-reading-confidence` → reading-confidence behaviour without claiming confidence is guaranteed by phonics.
-8. `/blog/how-phonics-classes-help-kids-read` → instructional mechanism from taught correspondences to independent reading transfer.
-9. `/blog/how-phonics-improves-spelling` → encoding/spelling roadmap and error interpretation.
-10. `/blog/how-to-choose-phonics-classes` → complete parent provider/class comparison and purchase framework.
+## Blog #11 — LOCKED
 
-## Blog #9 — locked
+**Canonical role:** explain how parents should understand long-vowel pattern families, decide what to introduce or contrast next, and interpret common reading/spelling mix-ups without treating one sequence as a universal research-defined order.
 
-**Canonical role:** `/blog/how-phonics-improves-spelling` owns the parent question: *How does phonics support spelling, what is encoding, and what do different spelling errors tell me about the next teaching step?*
+### Major quality decisions
 
-### Key quality decisions
-
-- Converted the article from the generic `PhonicsSeoPost` generator into a direct editorial `BlogPost`.
-- Removed unsupported weeks 1–10 progress promises, the 6–8 week support trigger and fixed daily word-count advice.
-- Defines encoding as segmenting spoken words into phonemes and mapping them to graphemes in sequence.
-- Adds the Tiny Steps six-step encoding roadmap: whole word → segment phonemes → map taught graphemes → choose alternatives → write in order → verify and transfer.
-- Adds an error map distinguishing omitted phonemes, order errors, phonically plausible alternatives, taught-pattern confusion, exception-word errors and morphology errors.
-- Explains why reading can develop ahead of spelling and why English spelling eventually requires more than phonics alone.
-- Replaces the unsupported “dictation is better than copying” claim with a purpose-based distinction between independent retrieval and copying/handwriting practice.
-- Adds evidence from DfE Reading Framework, DfE National Curriculum, IES/WWC, UFLI and EEF.
-- Adds five answer-engine FAQs, founder authorship, updated metadata and focused regression coverage.
+- Converted the thin generic `PhonicsSeoPost` into a direct founder-authored `BlogPost`.
+- Distinguishes VCe/silent-e, vowel teams, open syllables and later alternative long-vowel spellings.
+- Adds the Tiny Steps six-part long-vowel learning chain: **hear → notice → contrast → decode → encode → transfer**.
+- Adds five common error patterns and teaching responses.
+- Checks reading and spelling together while preserving Blog #9 as the full encoding owner.
+- Routes practical activity-heavy intent to Blog #29 and broad phonics-sequence intent to Blog #17.
+- Removes arbitrary mastery percentages, fixed word-count targets and the claim that silent-e must universally come first.
+- Adds evidence from IES/WWC, DfE and EEF, five focused FAQs and dedicated regression coverage.
 
 **Final decision: 96/100 — LOCKED IN BATCH.**
 
-## Blog #10 — locked
+## Blog #12 — LOCKED
 
-**Canonical role:** `/blog/how-to-choose-phonics-classes` owns the parent decision: *How should I compare phonics classes or providers fairly before enrolling my child?*
+**Canonical role:** answer the parent question: *When is school phonics enough, when can supplemental online phonics add useful targeted support, and when has the child’s main need moved beyond beginner phonics?*
 
-### Four-gate decision framework
+### Major quality decisions
 
-1. **Fit** — does placement start from the child’s actual reading and spelling behaviour?
-2. **Teaching quality** — is instruction explicit, systematic, cumulative, blending-led and connected to spelling and matched reading?
-3. **Proof of transfer** — can the provider show progress on fresh words, matched text, spelling, retention and reduced prompting rather than lesson completion alone?
-4. **Practical clarity** — are format, duration, frequency, teacher continuity, parent communication, materials, policies and total pricing clear before enrolment?
+- Converted the generic `PhonicsSeoPost` into a direct founder-authored `BlogPost`.
+- Rejects a universal “online is better” or “school is better” framing.
+- Separates three decisions: whether the child needs more phonics, whether current teaching meets that need, and whether online delivery adds a specific missing ingredient.
+- Adds clear school-only, school + targeted online, and different-priority decision paths.
+- Explains that supplemental teaching should connect sensibly with existing learning rather than become a competing phonics system.
+- Defines what good online phonics must still preserve: assessment, systematic teaching, active child response, corrective feedback, fresh-word transfer, matched connected text and cumulative review.
+- Explicitly protects school’s wider literacy role and states that supplemental phonics is not a substitute for the complete school literacy experience.
+- Adds online-fit limitations without arbitrary age cutoffs.
+- Adds the Tiny Steps five-question school-versus-online check as editorial guidance, not a diagnostic tool.
+- Routes provider-shopping intent to Blog #10 and class-mechanism intent to Blog #8.
+- Adds evidence from the current EEF phonics review, EEF one-to-one tuition review, DfE Reading Framework, DfE SSP validation criteria and IES/WWC.
+- Adds five focused FAQs and dedicated regression coverage.
 
-The framework is explicitly labelled **Tiny Steps editorial decision guidance**, not a standardized provider rating or accreditation tool.
+### Evidence boundary
 
-### Major improvements
-
-- Preserves the useful comparison intent while replacing loose provider-shopping copy with a structured four-gate framework.
-- Expands the parent scorecard from 12 to **16 evidence-oriented checks** covering placement, sequence, blending, segmenting, matched text, fresh transfer, correction, review, progress reporting, adaptation, teacher training, scope boundaries, policies and marketing claims.
-- Adds explicit teacher-training and implementation-quality checks.
-- Adds commercial clarity without equating higher price with higher teaching quality or lower price with better value.
-- Separates 1:1, group and whole-class format from the underlying quality decision; EEF evidence includes positive phonics effects across these contexts.
-- Routes the online-versus-in-person comparison to Blog #12 instead of allowing Blog #10 to cannibalize that intent.
-- Removes the named-programme FAQ and provider-format absolutism.
-- Makes Tiny Steps subject to the **same comparison framework** as any other provider rather than granting itself a different standard.
-- Adds evidence from the current EEF phonics evidence review, DfE Choosing a Phonics Teaching Programme guidance, DfE SSP validation criteria, DfE Reading Framework and IES/WWC foundational reading guidance.
-- Adds five focused AEO/GEO FAQs, founder authorship, updated metadata and a dedicated regression test.
-
-### Evidence decision
-
-External sources support the underlying programme-selection features: systematic progression, explicit blending and segmenting, matched decodable text, assessment, responsiveness, teacher training, connected-text application and the need to distinguish decoding from wider reading comprehension. The Tiny Steps four-gate framework and 16-point parent scorecard are editorial syntheses rather than validated research instruments.
-
-### Indexability decision
-
-Ordinary evergreen non-weekly public slug; already indexable and sitemap eligible. No indexing-policy change required.
+Evidence supports systematic phonics across different instructional contexts, targeted supplemental instruction, alignment with normal teaching, direct interaction, assessment and transfer practice. It does **not** establish that online phonics is universally superior to school teaching or that every child making slower progress needs paid supplemental tuition.
 
 **Final decision: 97/100 — LOCKED IN BATCH.**
 
-## Batch #1 merge gate
+## Batch #2 merge gate
 
-Blogs #1–#10 are content-complete. Final state before merge must confirm:
-
-- all focused blog quality regression tests pass
-- full CI passes on the final exact head
-- title/meta/FAQ/internal-link checks remain green
-- evidence-source extraction remains green
-- no intent/cannibalization hard fail is introduced
-- no accidental files are present in the PR diff
-- PR remains mergeable
-- explicit founder approval is received
-
-**Exact-head CI/SEO gate: PENDING on the final batch head.**
-
-**Do not merge PR #163 until the final exact-head gate is green and the founder explicitly approves the merge.**
+Do not merge PR #164 until Blogs #11–#20 are all locked, the decisive exact-head CI/SEO gate is green, the final diff is clean, the PR is mergeable, and explicit founder approval is received.
