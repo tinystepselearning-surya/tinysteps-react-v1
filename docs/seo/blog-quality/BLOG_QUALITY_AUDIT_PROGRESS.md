@@ -1,44 +1,33 @@
 # Tiny Steps Blog Quality Audit & Refresh Programme
 
-## North Star
+## Sequence authority
 
-Tiny Steps blogs exist first to **help a real reader solve a real learning problem**.
+The programme numbering is locked to the founder-supplied **authoritative 76-blog inventory** dated 2026-08-30.
 
-The target reader may be a parent, guardian, teacher, school leader, or—where the article is designed for direct practice—a child working with adult guidance. A successful article should leave that reader feeling that they found something specific, trustworthy, practical, and worth returning to or sharing with another family or educator.
+- Blogs **1–34**: Phonics
+- Blogs **35–51**: Parent Tips / English Communication
+- Blogs **52–60**: Research / Schools
+- Blogs **61–68**: Grammar
+- Blogs **69–76**: Public Speaking
 
-Search visibility is a distribution goal, not the purpose of the content. We want each article to be strong enough that Google, ChatGPT, Gemini, Perplexity and other answer engines can confidently discover, understand, extract and cite it, but we will not add filler, keyword repetition or unsupported claims merely to chase rankings.
+The full fixed order lives in `docs/seo/blog-quality/AUTHORITATIVE_76_SEQUENCE.md`.
 
-### The shareability test
+## Delivery model — 10 blogs per merge batch
 
-Before a blog is marked complete, ask:
+Batch #1 uses one branch and one PR for Blogs #1–#10:
 
-> If a parent or teacher found this while struggling with the exact problem, would they save it, use at least one recommendation, and feel comfortable sending it to another parent, teacher or colleague?
-
-If the answer is no, the article is not finished.
-
-## Delivery workflow
-
-The programme ships **incrementally, one blog at a time**:
-
-1. Audit and improve one blog on an isolated branch.
-2. Lock its quality, intent ownership, evidence and indexability decision.
-3. Open a PR against the current `main` and run exact-head CI/SEO checks.
-4. Merge only when the user confirms the block is green and ready.
-5. Start the next blog from the preceding locked head/new `main` so work remains sequential.
-
-Current sequence:
-
-- Blog #1: merged through PR #158.
-- Blog #2: merged through PR #159.
-- Blog #3: merged through PR #160.
-- Blog #4: `seo/blog-quality-04-multisyllabic-words` → PR #161, exact-head CI initiated.
+- Branch: `seo/blog-quality-sequence-01-benefits-phonics`
+- PR: `#163`
+- Each blog receives focused regression coverage when locked.
+- The decisive full exact-head CI/SEO gate runs after Blog #10.
+- Merge to `main` requires explicit founder approval for the complete batch.
 
 ## Standard 100-point quality rubric
 
 | Dimension | Points |
 |---|---:|
 | Search-intent match | 15 |
-| Reader usefulness — parent / teacher / school leader | 15 |
+| Reader usefulness | 15 |
 | Content depth | 10 |
 | Tiny Steps first-party insight | 10 |
 | Accuracy & evidence | 10 |
@@ -49,172 +38,112 @@ Current sequence:
 | Next-step usefulness | 5 |
 | **Total** | **100** |
 
-### Completion target
+Target: **90+/100** with no factual, pedagogical, evidence, diagnosis-boundary, trust, cannibalization or misleading-timeline hard fail.
 
-- Target quality after refresh: **90+/100** for every article we retain as a meaningful public resource.
-- A numeric score never overrides a critical factual, pedagogical, trust, or intent problem.
-- A quality-audited former roadmap article may be promoted from noindex to indexable only when it owns a distinct useful search intent and no hard-fail/cannibalization issue remains.
+## Batch #1 final scorecard — Blogs #1–#10
 
-## Human-helpfulness acceptance test
+| # | Article | Baseline | Status | Score after refresh |
+|---:|---|---:|---|---:|
+| 1 | Benefits of Phonics for Kids: What Parents Usually Notice First | 57/100 | **LOCKED IN BATCH** | **95/100** |
+| 2 | Child Knows ABC but Cannot Read: What Parents Should Check First | 65/100 | **LOCKED IN BATCH** | **96/100** |
+| 3 | CVC Words Explained for Parents: The First Real Decoding Milestone | 65/100 | **LOCKED IN BATCH** | **96/100** |
+| 4 | Digraphs and Tricky Words: What to Decode and What to Remember | 64/100 | **LOCKED IN BATCH** | **96/100** |
+| 5 | How Kids Learn Blending: The Stage-by-Stage Path Parents Can Track | 66/100 | **LOCKED IN BATCH** | **96/100** |
+| 6 | How Long Does Phonics Take? A Realistic Parent Guide to Progress | 74/100 | **LOCKED IN BATCH** | **96/100** |
+| 7 | How Phonics Builds Reading Confidence: What Changes First at Home | 68/100 | **LOCKED IN BATCH** | **96/100** |
+| 8 | How Phonics Classes Help Kids Read: Decoding, Blending and Fluency Explained | 67/100 | **LOCKED IN BATCH** | **96/100** |
+| 9 | How Phonics Improves Spelling: A Parent Encoding Roadmap | 62/100 | **LOCKED IN BATCH** | **96/100** |
+| 10 | How to Choose a Phonics Class: The Complete Parent Comparison Framework | 79/100 | **LOCKED IN BATCH** | **97/100** |
 
-Every completed blog should, where relevant to its intent:
+### Batch quality movement
 
-1. Answer the real question early.
-2. Explain why the problem happens without oversimplifying.
-3. Give concrete actions, examples, routines, checklists or decision rules.
-4. Show observable progress rather than vague promises.
-5. Explain common mistakes and what not to do.
-6. Help the reader decide the next appropriate step.
-7. Use supportable Tiny Steps first-party knowledge where it adds value.
-8. Use credible evidence for meaningful research/policy/development claims.
-9. Be easy for search engines and LLMs to quote and extract accurately.
-10. Earn sharing through usefulness rather than artificial share prompts.
+- Baseline total: **667/1000**
+- Final total: **960/1000**
+- Baseline average: **66.7/100**
+- Final average: **96.0/100**
+- Total quality gain: **+293 points**
+- All 10 retained articles: **95+/100**
 
-## Hard-fail conditions
+## Canonical intent map — Blogs #1–#10
 
-A blog cannot be marked complete if it contains factual/pedagogical errors, unsupported research claims, guaranteed outcomes, unrealistic timelines, unresolved cannibalization, generic AI filler, keyword stuffing, outdated Tiny Steps facts, misleading diagnosis language, evidence that does not support the attached claim, or a sales CTA that interrupts the solution before useful help is provided.
+1. `/blog/benefits-of-phonics-for-kids` → realistic observable phonics benefits.
+2. `/blog/child-knows-abc-but-cannot-read` → broad alphabet-familiarity-to-decoding bottleneck.
+3. `/blog/cvc-words-explained-for-parents` → CVC definition and first simple printed-word decoding milestone.
+4. `/blog/digraphs-and-tricky-words` → what remains decodable versus what needs extra attention/memory.
+5. `/blog/how-kids-learn-blending` → stage-by-stage blending development and stage-exit decisions.
+6. `/blog/how-long-does-phonics-take` → realistic interpretation of phonics duration and progress.
+7. `/blog/how-phonics-builds-reading-confidence` → reading-confidence behaviour without claiming confidence is guaranteed by phonics.
+8. `/blog/how-phonics-classes-help-kids-read` → instructional mechanism from taught correspondences to independent reading transfer.
+9. `/blog/how-phonics-improves-spelling` → encoding/spelling roadmap and error interpretation.
+10. `/blog/how-to-choose-phonics-classes` → complete parent provider/class comparison and purchase framework.
 
-## Progress
+## Blog #9 — locked
 
-| # | Public article | Baseline | Status | Main action | Score after refresh |
-|---:|---|---:|---|---|---:|
-| 1 | SATPIN at Home: A Parent Launch Plan for Early Blending and Reading | 70/100 | **MERGED / PR #158** | Evergreen SATPIN home implementation owner; corrected sequence, readiness progression, evidence, self-routing, escalation and AEO structure | **95/100** |
-| 2 | How to Prevent the Summer Slide in Reading (10-Minute Daily Plan) | 64/100 | **MERGED / PR #159** | Evidence-aware summer reading continuity; stage-matched routines, book-fit guidance, Tiny Steps three-signal check, support boundary, FAQs, internal authority links and indexability promotion | **94/100** |
-| 3 | Phonics Assessment Checklist for Parents Before a New School Term | 61/100 | **MERGED / PR #160** | Informal parent phonics observation owner using taught scope, fresh-word decoding, blending/segmenting, encoding, connected-text transfer, evidence and a diagnostic boundary; quality-promoted to indexable | **95/100** |
-| 4 | How to Help Kids Read Multisyllabic Words: Simple Chunking Practice | 59/100 | **LOCKED / PR #161 — CI initiated** | Rebuilt as a phonics- and morphology-aware long-word decoding guide with readiness checks, a repeatable five-step routine, stage-matched practice, transfer signals, evidence, FAQs and support boundaries; quality-promoted to indexable | **95/100** |
+**Canonical role:** `/blog/how-phonics-improves-spelling` owns the parent question: *How does phonics support spelling, what is encoding, and what do different spelling errors tell me about the next teaching step?*
 
-## Blog #1 — locked and merged
+### Key quality decisions
 
-### Canonical role
+- Converted the article from the generic `PhonicsSeoPost` generator into a direct editorial `BlogPost`.
+- Removed unsupported weeks 1–10 progress promises, the 6–8 week support trigger and fixed daily word-count advice.
+- Defines encoding as segmenting spoken words into phonemes and mapping them to graphemes in sequence.
+- Adds the Tiny Steps six-step encoding roadmap: whole word → segment phonemes → map taught graphemes → choose alternatives → write in order → verify and transfer.
+- Adds an error map distinguishing omitted phonemes, order errors, phonically plausible alternatives, taught-pattern confusion, exception-word errors and morphology errors.
+- Explains why reading can develop ahead of spelling and why English spelling eventually requires more than phonics alone.
+- Replaces the unsupported “dictation is better than copying” claim with a purpose-based distinction between independent retrieval and copying/handwriting practice.
+- Adds evidence from DfE Reading Framework, DfE National Curriculum, IES/WWC, UFLI and EEF.
+- Adds five answer-engine FAQs, founder authorship, updated metadata and focused regression coverage.
 
-Practical **SATPIN-at-home implementation** owner for parents, guardians and educators supporting an early reader. `/blog/satpin-phonics-guide` remains the broader SATPIN explanation/progression owner.
+**Final decision: 96/100 — LOCKED IN BATCH.**
 
-### Final decision
+## Blog #10 — locked
 
-**95/100 — LOCKED and merged through PR #158.**
+**Canonical role:** `/blog/how-to-choose-phonics-classes` owns the parent decision: *How should I compare phonics classes or providers fairly before enrolling my child?*
 
-## Blog #2 — locked and merged
+### Four-gate decision framework
 
-### Canonical role
+1. **Fit** — does placement start from the child’s actual reading and spelling behaviour?
+2. **Teaching quality** — is instruction explicit, systematic, cumulative, blending-led and connected to spelling and matched reading?
+3. **Proof of transfer** — can the provider show progress on fresh words, matched text, spelling, retention and reduced prompting rather than lesson completion alone?
+4. **Practical clarity** — are format, duration, frequency, teacher continuity, parent communication, materials, policies and total pricing clear before enrolment?
 
-**Summer reading continuity and stage-matched home practice** owner.
+The framework is explicitly labelled **Tiny Steps editorial decision guidance**, not a standardized provider rating or accreditation tool.
 
-Intent boundaries:
+### Major improvements
 
-- `/blog/prevent-summer-slide-reading` → summer reading continuity/maintenance across reading stages.
-- `/blog/how-to-improve-reading-fluency-in-children` → persistent fluency/accuracy/phrasing remediation.
-- `/blog/phonics-summer-plan` → phonics-specific summer pattern practice.
-- `/summer-camps` → commercial structured live summer learning option, not the editorial answer owner.
-
-### Final decision
-
-**94/100 — LOCKED and merged through PR #159.**
-
-### Indexability decision
-
-The cleaned public URL `/blog/prevent-summer-slide-reading` is quality-promoted to **indexable + sitemap eligible**. The historical `/blog/week-27-prevent-summer-slide-reading` remains a permanent redirect alias. Historical GSC snapshot rows remain historical evidence rather than being rewritten.
-
-## Blog #3 — locked and merged
-
-### Canonical role
-
-**Informal parent phonics assessment / observation** owner before a new school term or when a parent wants to identify the next practice priority.
-
-Intent boundaries:
-
-- `/blog/phonics-diagnostics` → parent/guardian home observation of already-taught phonics skills.
-- `/blog/how-schools-can-assess-decoding-not-memorisation` → school/institutional assessment design and transferable decoding evidence.
-- `/book-demo` → Tiny Steps commercial 35-minute 1:1 demo assessment pathway, not the editorial explanation owner.
-- `/blog/why-child-knows-letter-sounds-but-cannot-read-words` → diagnostic explanation for the specific sounds-to-blending gap, not a general assessment checklist.
-
-### Baseline problems fixed
-
-- Removed the old `Week 22` campaign framing and fixed seven-day remediation timetable.
-- Removed the one-size-fits-all list of sounds, blends, digraphs, tricky words and long vowels regardless of what the child had actually been taught.
-- Reframed the page as an **informal home observation**, not a standardized diagnostic or screening test.
-- Added a clear boundary that the checklist cannot diagnose dyslexia, hearing, speech, language, attention or developmental conditions.
-- Replaced generic Green/Amber/Red scoring with **Secure / Developing / Priority** plus an observed example rather than a percentage.
-- Added the Tiny Steps five-part phonics check: sound-letter recall, oral blending/segmenting, fresh-word decoding, encoding/spelling, and connected-text transfer.
-- Added fresh-word examples by teaching stage and made every example conditional on the pattern already being taught.
-- Added optional, carefully bounded pseudo-word guidance so parents understand why unfamiliar items can reveal transferable decoding without imitating a statutory screening test.
-- Added assessment-fairness guidance: avoid hints, do not teach during the item, do not let pictures replace decoding, accept self-correction as useful evidence, and stop if the child becomes distressed.
-- Added actionable interpretation of common error patterns so results lead to the correct next practice rather than more random worksheets.
-- Added teacher-ready language for sharing observations, such as describing a blending or transfer problem rather than saying a child is simply “weak in phonics”.
-- Added evidence from the UK Standards and Testing Agency/DfE phonics screening framework and US IES/What Works Clearinghouse foundational-reading and assessment guidance.
-- Added five answer-engine FAQs covering home assessment, scope, pseudo-words, sounds-without-reading, and dyslexia/diagnosis boundaries.
-- Added contextual links to the letter-sounds diagnostic, blending guide, CVC guide, ABC diagnostic, Phonics programme and Tiny Steps demo assessment.
-- Added `modifiedDate: 2026-08-30` and a concise search-result meta description.
+- Preserves the useful comparison intent while replacing loose provider-shopping copy with a structured four-gate framework.
+- Expands the parent scorecard from 12 to **16 evidence-oriented checks** covering placement, sequence, blending, segmenting, matched text, fresh transfer, correction, review, progress reporting, adaptation, teacher training, scope boundaries, policies and marketing claims.
+- Adds explicit teacher-training and implementation-quality checks.
+- Adds commercial clarity without equating higher price with higher teaching quality or lower price with better value.
+- Separates 1:1, group and whole-class format from the underlying quality decision; EEF evidence includes positive phonics effects across these contexts.
+- Routes the online-versus-in-person comparison to Blog #12 instead of allowing Blog #10 to cannibalize that intent.
+- Removes the named-programme FAQ and provider-format absolutism.
+- Makes Tiny Steps subject to the **same comparison framework** as any other provider rather than granting itself a different standard.
+- Adds evidence from the current EEF phonics evidence review, DfE Choosing a Phonics Teaching Programme guidance, DfE SSP validation criteria, DfE Reading Framework and IES/WWC foundational reading guidance.
+- Adds five focused AEO/GEO FAQs, founder authorship, updated metadata and a dedicated regression test.
 
 ### Evidence decision
 
-The article uses formal assessment sources only to explain useful principles: assess the intended skill, use unfamiliar decodable items to check transfer, distinguish screening/diagnostic/progress-monitoring purposes, and use assessment evidence to target instruction. It does **not** claim that this home checklist is equivalent to the UK phonics screening check or a professional diagnostic assessment.
+External sources support the underlying programme-selection features: systematic progression, explicit blending and segmenting, matched decodable text, assessment, responsiveness, teacher training, connected-text application and the need to distinguish decoding from wider reading comprehension. The Tiny Steps four-gate framework and 16-point parent scorecard are editorial syntheses rather than validated research instruments.
 
 ### Indexability decision
 
-Blog #3 owns a distinct useful parent search intent and passes the human-first quality gate, so `/blog/phonics-diagnostics` is **quality-promoted to indexable + sitemap eligible**.
+Ordinary evergreen non-weekly public slug; already indexable and sitemap eligible. No indexing-policy change required.
 
-The historical `/blog/week-22-phonics-diagnostics` URL remains a non-indexable permanent redirect alias. Historical Search Console evidence is not rewritten.
+**Final decision: 97/100 — LOCKED IN BATCH.**
 
-### Final decision
+## Batch #1 merge gate
 
-**95/100 — LOCKED and merged through PR #160.**
+Blogs #1–#10 are content-complete. Final state before merge must confirm:
 
-## Blog #4 — locked for exact-head validation
+- all focused blog quality regression tests pass
+- full CI passes on the final exact head
+- title/meta/FAQ/internal-link checks remain green
+- evidence-source extraction remains green
+- no intent/cannibalization hard fail is introduced
+- no accidental files are present in the PR diff
+- PR remains mergeable
+- explicit founder approval is received
 
-### Canonical role
+**Exact-head CI/SEO gate: PENDING on the final batch head.**
 
-**Parent-facing multisyllabic decoding and chunking-practice** owner for children who can already decode many one-syllable patterns but need a repeatable way to tackle longer printed words.
-
-Intent boundaries:
-
-- `/blog/phonics-multisyllabic` → practical long-word decoding, syllable/morpheme chunking, transfer and home practice.
-- `/blog/how-kids-learn-blending` → the broader stage-by-stage blending progression, especially early one-syllable blending.
-- `/blog/cvc-words-explained-for-parents` → first simple word-decoding milestone.
-- `/blog/long-vowel-sounds-for-kids` → long-vowel pattern explanation and practice order.
-- `/blog/how-phonics-improves-spelling` → encoding/spelling owner.
-- `/phonics` → Tiny Steps commercial programme owner, not the editorial long-word answer page.
-
-### Baseline problems fixed
-
-- Removed `Week 19` framing and the rigid seven-day / 12-minute schedule.
-- Removed the misleading shortcut that underlining every written vowel reliably reveals where a word should split.
-- Removed speed/race framing before decoding accuracy is secure.
-- Added a readiness check so parents do not use long-word practice to mask unstable short-word decoding.
-- Distinguished **syllables** as spoken sound units from **morphemes** as meaningful word parts.
-- Added the Tiny Steps five-step long-word routine: spot familiar parts, mark useful chunks, decode each part, blend and adjust to natural pronunciation, then reread for meaning.
-- Added stage-matched practice from secure two-part words to affixes and more complex morphology.
-- Explained that clapping syllables can support oral phonological awareness but cannot replace print-to-sound decoding work.
-- Added common-error interpretation, including first-part guessing, over-splitting vowels, blending breakdown, stress/pronunciation adjustment, repeated pattern gaps and vocabulary-vs-decoding distinctions.
-- Added the Tiny Steps four-signal progress check: coverage, independence, transfer and context.
-- Added a support boundary that the article is practice guidance rather than a dyslexia or learning-condition assessment.
-- Added evidence from IES/What Works Clearinghouse, University of Florida Literacy Institute and Reading Rockets.
-- Added five answer-engine FAQs plus contextual links to blending, CVC, long-vowel, spelling and Phonics authority pages.
-- Added `modifiedDate: 2026-08-30`, a 14-minute read estimate and concise search metadata.
-
-### Evidence decision
-
-The exact Tiny Steps five-step routine is presented as an editorial teaching routine rather than a standardized research protocol. The evidence layer supports the underlying principles: explicit decoding, word-part analysis, systematic progression from simpler to more complex words, use of a consistent multisyllabic routine, and reconnection to connected text and meaning.
-
-### Indexability decision
-
-Blog #4 now owns a distinct useful parent search intent and passes the human-first quality gate, so `/blog/phonics-multisyllabic` is **quality-promoted to indexable + sitemap eligible**.
-
-The historical `/blog/week-19-phonics-multisyllabic` URL remains a non-indexable permanent redirect alias.
-
-### Final decision
-
-**95/100 — LOCKED pending exact-head CI/SEO validation in PR #161.** No known factual, pedagogical, evidence, diagnosis-boundary, reader-helpfulness or cannibalization hard fail remains after the final content review.
-
-## Per-blog final gate
-
-Before each incremental merge:
-
-- human-helpfulness/shareability review
-- no hard-fail issue
-- final score 90+
-- intent/cannibalization check
-- title/meta/FAQ/internal-link review
-- evidence claim verification
-- indexability decision
-- focused regression tests
-- exact-head CI/SEO validation
+**Do not merge PR #163 until the final exact-head gate is green and the founder explicitly approves the merge.**
