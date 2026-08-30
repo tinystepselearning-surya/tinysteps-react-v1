@@ -11,8 +11,13 @@ export type AskTinyStepsModelLane =
   | 'flash_lite_guidance';
 export type AskTinyStepsAiResult = 'not_attempted' | 'success' | 'fallback';
 
+export type AskTinyStepsRoutingMetadata = Pick<
+  AskTinyStepsExecutionPlan,
+  'mode' | 'reason' | 'audience' | 'intent' | 'sourceIds' | 'isFollowUp'
+>;
+
 export type AskTinyStepsRoutingTelemetryInput = {
-  plan: AskTinyStepsExecutionPlan;
+  route: AskTinyStepsRoutingMetadata;
   promptLength: number;
   aiAttempted: boolean;
   responsePath: AskTinyStepsResponsePath;
@@ -20,6 +25,19 @@ export type AskTinyStepsRoutingTelemetryInput = {
 };
 
 const SAFE_SOURCE_ID = /^[a-z0-9][a-z0-9_-]{0,63}$/;
+
+export function toAskTinyStepsRoutingMetadata(
+  plan: AskTinyStepsExecutionPlan,
+): AskTinyStepsRoutingMetadata {
+  return {
+    mode: plan.mode,
+    reason: plan.reason,
+    audience: plan.audience,
+    intent: plan.intent,
+    sourceIds: [...plan.sourceIds],
+    isFollowUp: plan.isFollowUp,
+  };
+}
 
 function promptLengthBucket(length: number): string {
   if (length <= 80) return '1_80';
@@ -29,9 +47,9 @@ function promptLengthBucket(length: number): string {
   return 'over_2000';
 }
 
-function modelLane(plan: AskTinyStepsExecutionPlan): AskTinyStepsModelLane {
-  if (plan.mode === 'first_party_grounded') return 'grounded_flash_cascade';
-  if (plan.mode === 'general_guidance') return 'flash_lite_guidance';
+function modelLane(route: AskTinyStepsRoutingMetadata): AskTinyStepsModelLane {
+  if (route.mode === 'first_party_grounded') return 'grounded_flash_cascade';
+  if (route.mode === 'general_guidance') return 'flash_lite_guidance';
   return 'none';
 }
 
@@ -50,29 +68,28 @@ function safeLatencyMs(value: number): number {
 }
 
 /**
- * Builds the complete PV-1D payload. Deliberately accepts prompt length only,
- * never prompt/answer/error text, so content cannot be added accidentally by a
- * caller without changing this typed contract.
+ * Builds the complete PV-1D payload. The tracker input contains routing metadata,
+ * prompt length and timing only; it never receives prompt/answer/error text.
  */
 export function buildAskTinyStepsRoutingTelemetry(
   input: AskTinyStepsRoutingTelemetryInput,
 ): Record<string, string | number> {
-  const sources = safeSourceIds(input.plan.sourceIds);
+  const sources = safeSourceIds(input.route.sourceIds);
 
   return {
     schema_version: ASK_TINY_STEPS_TELEMETRY_SCHEMA_VERSION,
-    route_mode: input.plan.mode,
-    route_reason: input.plan.reason,
-    audience: input.plan.audience,
-    intent: input.plan.intent,
-    is_follow_up: input.plan.isFollowUp ? 1 : 0,
+    route_mode: input.route.mode,
+    route_reason: input.route.reason,
+    audience: input.route.audience,
+    intent: input.route.intent,
+    is_follow_up: input.route.isFollowUp ? 1 : 0,
     source_count: sources.length,
     primary_source_id: sources[0] ?? 'none',
     source_ids: sources.length ? sources.join('|') : 'none',
     prompt_length_bucket: promptLengthBucket(input.promptLength),
     ai_attempted: input.aiAttempted ? 1 : 0,
     ai_result: aiResult(input),
-    model_lane: modelLane(input.plan),
+    model_lane: modelLane(input.route),
     response_path: input.responsePath,
     total_latency_ms: safeLatencyMs(input.totalLatencyMs),
   };
