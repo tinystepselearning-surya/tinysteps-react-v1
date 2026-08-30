@@ -44,6 +44,7 @@ describe('Blog #50 letter-sounds-to-decoding diagnostic quality refresh', () => 
     expect(body).toContain('Older child, same decoding bottleneck: do not assume phonics is only for beginners');
     expect(body).toContain('fresh decodable examples');
     expect(body).toContain('practice resource');
+    expect(body).toContain('Do not ask the child to guess the whole word from its picture, first letter or sentence context.');
 
     expect(body).toContain('/blog/child-knows-abc-but-cannot-read');
     expect(body).toContain('/blog/how-kids-learn-blending');
@@ -58,7 +59,6 @@ describe('Blog #50 letter-sounds-to-decoding diagnostic quality refresh', () => 
     expect(body).toContain('/curriculum');
     expect(body).toContain('/book-demo');
 
-    expect(body).not.toContain('guess the whole word from its picture');
     expect(body).not.toContain('every child must complete');
     expect(body).not.toMatch(/(?:must|should|needs? to|has to)\s+(?:read|blend)\s+\d+\s+words/i);
     expect(body).not.toMatch(/(?:90|95|100)%\s+(?:accuracy|mastery|correct)/i);
