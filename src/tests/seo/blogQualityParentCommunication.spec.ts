@@ -162,4 +162,65 @@ describe('parent tips and English communication blog quality refresh', () => {
     expect(shouldNoindexBlogSlug('child-gives-one-word-answers')).toBe(false);
     expect(shouldIncludeBlogSlugInSitemap('child-gives-one-word-answers')).toBe(true);
   });
+
+  it('makes Blog #38 the protected grammar-transfer owner for children who know rules but cannot yet use them reliably', () => {
+    const post = bySlug.get('child-knows-grammar-but-makes-mistakes');
+    expect(post).toBeDefined();
+    expect(post?.title).toBe('My Child Knows Grammar Rules but Still Makes Mistakes — Why?');
+    expect(post?.author).toBe('Priya');
+    expect(post?.modifiedDate).toBe('2026-08-30');
+    expect(post?.metaDescription?.length).toBeLessThanOrEqual(160);
+    expect(post?.audience).toBe('Parent');
+    expect(post?.discoveryCategory).toBe('Grammar');
+
+    const body = post?.body.map((block) => block.content).join('\n') || '';
+    expect(body).toContain('Rule recall → Controlled use → Spontaneous speaking → Written transfer');
+    expect(body).toContain('Stage 1 — Rule recall');
+    expect(body).toContain('Stage 2 — Controlled use');
+    expect(body).toContain('Stage 3 — Spontaneous speaking');
+    expect(body).toContain('Stage 4 — Written transfer');
+    expect(body).toContain('Why a worksheet can look perfect while real grammar is still unstable');
+    expect(body).toContain('Six reasons a known rule may disappear in real use');
+    expect(body).toContain('How to correct grammar without turning every conversation into a test');
+    expect(body).toContain('The one-rule, three-context routine for home practice');
+    expect(body).toContain('What progress looks like — do not judge only by worksheet percentage');
+    expect(body).toContain('/blog/grammar-nouns-to-paragraphs');
+    expect(body).toContain('/blog/grammar-tenses');
+    expect(body).toContain('/blog/grammar-subject-verb');
+    expect(body).toContain('/blog/grammar-assessment');
+    expect(body).toContain('/blog/grammar-editing-camp');
+    expect(body).toContain('/blog/grammar-speaking-bridge');
+    expect(body).toContain('/blog/how-to-improve-sentence-formation-in-kids');
+    expect(body).toContain('/blog/child-gives-one-word-answers');
+    expect(body).toContain('/blog/how-phonics-grammar-and-communication-work-together');
+    expect(body).toContain('/grammar');
+    expect(body).toContain('/curriculum');
+    expect(body).toContain('/book-demo');
+
+    expect(body).not.toContain('/blog/week-7-grammar-nouns-to-paragraphs');
+    expect(body).not.toContain('/blog/week-8-grammar-tenses');
+    expect(body).not.toContain('/blog/week-10-grammar-subject-verb');
+    expect(body).not.toContain('11. FAQ section with 5 parent questions');
+    expect(body).not.toContain('Explore grammar pathway: /grammar');
+    expect(body).not.toContain('Compare starting routes: /courses');
+  });
+
+  it('gives Blog #38 evidence, transfer FAQs and indexable authority status', () => {
+    const post = bySlug.get('child-knows-grammar-but-makes-mistakes');
+    expect(post).toBeDefined();
+
+    const evidence = getBlogEvidenceSummary(post!);
+    expect(evidence.hasSourceSection).toBe(true);
+    expect(evidence.externalSourceCount).toBeGreaterThanOrEqual(9);
+    expect(post?.faq).toHaveLength(6);
+    expect(post?.faq?.some((item) => /know grammar rules but still make mistakes/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /worksheets right but speak incorrectly/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /correct every grammar mistake/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /grammar transfer into speaking/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /grammar transfer into writing/i.test(item.question))).toBe(true);
+    expect(post?.faq?.some((item) => /extra help for repeated grammar mistakes/i.test(item.question))).toBe(true);
+
+    expect(shouldNoindexBlogSlug('child-knows-grammar-but-makes-mistakes')).toBe(false);
+    expect(shouldIncludeBlogSlugInSitemap('child-knows-grammar-but-makes-mistakes')).toBe(true);
+  });
 });
