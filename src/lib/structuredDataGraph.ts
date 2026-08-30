@@ -273,7 +273,7 @@ function ensureWebPage(
   });
 }
 
-function buildCanonicalCourseNode(course: any) {
+function buildCanonicalCourseNode(course: any): any {
   const url = absoluteUrl(course.routePath);
   return {
     '@type': 'Course',
