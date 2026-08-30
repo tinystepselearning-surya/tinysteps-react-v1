@@ -36,7 +36,10 @@ describe('authoritative Blog #3 quality lock', () => {
     expect(body).not.toContain('Aim for 10 minutes a day, 5-6 days a week');
     expect(body).not.toContain('Checklist when choosing a phonics class');
     expect(body).not.toContain('Progress timeline parents can expect');
-    expect(body).not.toMatch(/50 CVC words/i);
+    expect(body).toContain('Do not use a universal target such as “50 CVC words”');
+    expect(body).not.toMatch(
+      /(?:target(?:\s+of)?|goal(?:\s+of)?|aim(?:s)?\s+for|(?:must|should|needs?\s+to)\s+(?:learn|read|master|memorise|know))\s+“?50 CVC words/i,
+    );
   });
 
   it('adds evidence, transfer checks, boundaries and extractable CVC FAQs', () => {

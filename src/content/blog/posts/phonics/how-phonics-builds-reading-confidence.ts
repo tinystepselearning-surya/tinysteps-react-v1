@@ -114,7 +114,7 @@ const post: BlogPost = {
     },
     {
       type: 'p',
-      content: 'Use a short prompt that points back to the taught strategy—for example, “Look through the sounds and blend.” Avoid changing methods every time the child hesitates. If school or class uses a consistent correction prompt, mirroring that language at home can reduce unnecessary task-switching.'
+      content: 'Use a short prompt that points back to the taught strategy—for example, “Look through the sounds and blend.” Avoid changing methods every time the child hesitates. If school or class uses a consistent correction prompt, mirror the teacher’s correction language at home so the child can use one familiar strategy across settings.'
     },
     {
       type: 'h3',
@@ -139,6 +139,14 @@ const post: BlogPost = {
     {
       type: 'p',
       content: 'There is no universal research-defined home session length for every child. If accuracy deteriorates, guessing increases or distress escalates, reduce the task demand and review the match between the material and the child’s current stage rather than forcing completion for the sake of minutes.'
+    },
+    {
+      type: 'p',
+      content: 'When teaching is shared between class and home, use weekly teacher or parent progress notes as a light record rather than a score or countdown. Record the child’s explicit stage placement, the decoding evidence seen, the prompt that helped and the next teaching priority. This is the parent-visible method Tiny Steps aims to use: progress is connected to observable skill and transfer, not enthusiasm alone.'
+    },
+    {
+      type: 'p',
+      content: 'If guessing, shutdown or weak transfer persists, a temporary level adjustment and focused revision cycle may be more appropriate than adding harder patterns. Recheck text match and the first insecure skill, then increase demand only when the child can use the taught process with greater accuracy and independence.'
     },
     {
       type: 'h2',

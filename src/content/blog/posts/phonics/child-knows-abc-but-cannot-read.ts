@@ -10,7 +10,7 @@ const post: BlogPost = {
   readTime: '14 min read',
   hero: '/blog/hero-phonics.jpg',
   excerpt: 'A parent guide for children who know the alphabet but still cannot read: check usable letter sounds, oral blending, printed decoding and transfer before adding more ABC practice.',
-  metaDescription: 'Child knows ABC but cannot read? Check letter sounds, oral blending, CVC decoding and transfer, then practise the first weak step instead of more alphabet drills.',
+  metaDescription: 'Child knows ABC but cannot read? Check letter sounds, oral blending, CVC decoding and transfer, then practise the first weak step—not more alphabet drills.',
   body: [{
     type: 'h2',
     content: 'Quick answer: why can a child know ABC but still not read?'
