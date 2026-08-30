@@ -69,7 +69,7 @@ describe('Phonics Brick 6 conversion-evidence guardrails', () => {
       'Child participation, not passive watching',
       'Gentle correction and guided practice',
       'What a Tiny Steps class usually includes',
-      'every clip on this page is shared with parent consent',
+      'Every clip on this page is shared with parent consent',
       'VideoObject',
       'ItemList',
     ]) {
