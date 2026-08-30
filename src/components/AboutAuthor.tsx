@@ -141,9 +141,7 @@ export const AboutAuthor: React.FC<AboutAuthorProps> = ({
             {(reviewLabel || evidenceLabel) ? (
               <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
                 {reviewLabel ? (
-                  <p>
-                    <span className="font-semibold text-slate-900">Reviewed/updated:</span> {reviewLabel}
-                  </p>
+                  <p className="font-semibold text-slate-900">{reviewLabel}</p>
                 ) : null}
                 {evidenceLabel ? (
                   <p>
