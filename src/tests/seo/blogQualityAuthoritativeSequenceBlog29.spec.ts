@@ -24,12 +24,12 @@ describe('authoritative Blog #29 quality lock', () => {
     expect(body).toContain('Blog #11, [Long Vowel Sounds for Kids](/blog/long-vowel-sounds-for-kids)');
     expect(body).toContain('practical activities for practising a pattern the child has already been taught');
     expect(body).toContain('The Tiny Steps six-part long-vowel practice loop');
-    expect(body).toContain('Choose —');
-    expect(body).toContain('Notice —');
-    expect(body).toContain('Decode —');
-    expect(body).toContain('Contrast —');
-    expect(body).toContain('Encode —');
-    expect(body).toContain('Transfer —');
+    expect(body).toContain('**Choose** —');
+    expect(body).toContain('**Notice** —');
+    expect(body).toContain('**Decode** —');
+    expect(body).toContain('**Contrast** —');
+    expect(body).toContain('**Encode** —');
+    expect(body).toContain('**Transfer** —');
     expect(body).toContain('Activity 1 — Short-vowel vs VCe contrast pairs');
     expect(body).toContain('Activity 2 — Pattern sort with a real reading requirement');
     expect(body).toContain('Activity 4 — Read, cover, spell, check');
