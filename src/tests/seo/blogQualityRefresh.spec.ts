@@ -79,7 +79,7 @@ describe('progressive blog quality refresh', () => {
     const evidence = getBlogEvidenceSummary(post!);
     expect(evidence.hasSourceSection).toBe(true);
     expect(evidence.externalSourceCount).toBeGreaterThanOrEqual(3);
-    expect(post?.faq).toHaveLength(5);
+    expect(post?.faq).toHaveLength(6);
     expect(post?.faq?.some((item) => /guaranteed/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /10 minutes/i.test(item.question))).toBe(true);
     expect(post?.faq?.some((item) => /phonics practice/i.test(item.question))).toBe(true);
