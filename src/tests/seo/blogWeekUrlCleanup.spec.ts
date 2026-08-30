@@ -24,6 +24,7 @@ const indexableRenamedSlugs = new Set([
   'speaking-confidence-seeds',
   'prevent-summer-slide-reading',
   'phonics-diagnostics',
+  'phonics-long-vowels',
   'phonics-multisyllabic',
   'phonics-blending-club',
   'phonics-summer-plan',
