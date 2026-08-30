@@ -25,7 +25,7 @@ function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
 }
 
 function isNoindexRobots(robots) {
-  return typeof robots === 'string' && /(^|[,\s])noindex([,\s]|$)/i.test(robots);
+  return typeof robots === 'string' && /(^|[,\\s])noindex([,\\s]|$)/i.test(robots);
 }
 
 function isCanonicalSelfRoute(route) {
