@@ -27,11 +27,11 @@ export const FOUNDER_BLOG_AUTHOR: BlogAuthorProfile = {
   key: 'founder',
   schemaType: 'Person',
   name: PUBLIC_FACTS.founder.displayName,
-  role: `Founder, ${PUBLIC_FACTS.brandName}`,
+  role: `Founder & Academic Lead, ${PUBLIC_FACTS.brandName}`,
   profilePath: TEAM_PROFILE_PATH,
   profileUrl: TEAM_PROFILE_URL,
   imageUrl: '/priya-founder-tiny-steps-learning.webp',
-  bio: `Priya is the founder of ${PUBLIC_FACTS.brandName} and leads academic direction across curriculum, lesson design, teacher guidance, teaching quality, and parent communication.`,
+  bio: `Priya leads ${PUBLIC_FACTS.brandName}'s academic direction across phonics, reading, grammar, writing, and communication, including curriculum design, teacher guidance, and teaching quality.`,
 };
 
 export const ACADEMIC_TEAM_BLOG_AUTHOR: BlogAuthorProfile = {
