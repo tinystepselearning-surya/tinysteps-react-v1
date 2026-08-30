@@ -9,6 +9,7 @@ import {
   planAskTinyStepsExecution,
 } from '../services/askTinyStepsExecutionRouter';
 import {
+  toAskTinyStepsRoutingMetadata,
   trackAskTinyStepsRouting,
   type AskTinyStepsResponsePath,
 } from '../lib/askTinyStepsTelemetry';
@@ -104,7 +105,7 @@ export function useAskTinyStepsChat() {
         setMessages((previous) => [...previous, assistantMsg]);
 
         trackAskTinyStepsRouting({
-          plan,
+          route: toAskTinyStepsRoutingMetadata(plan),
           promptLength: trimmed.length,
           aiAttempted,
           responsePath,
