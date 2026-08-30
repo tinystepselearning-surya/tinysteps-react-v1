@@ -112,6 +112,7 @@ describe('B5 blog index UX model with post-B7 polish', () => {
     expect(source).not.toContain('authority routes');
     expect(source).not.toContain('without another long feed');
     expect(source).not.toContain('Popular guides parents start with');
+    expect(source).not.toContain('Editorial responsibility');
     expect(source).toContain('Featured guides to start with');
     expect(source).toContain('Get practical English-learning ideas in your inbox');
   });

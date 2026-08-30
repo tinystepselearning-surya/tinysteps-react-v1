@@ -26,7 +26,8 @@ describe('authoritative Blog #8 quality lock', () => {
     expect(body).toContain('How phonics teaching contributes to fluency without promising fluency by itself');
     expect(body).toContain('What phonics classes do not automatically fix');
     expect(body).toContain('Five parent-visible signs that class learning is transferring');
-    expect(body).toContain('Where Blog #8 stops: class mechanism is not the same as class shopping');
+    expect(body).toContain('Where this guide stops: class mechanism is not the same as class shopping');
+    expect(body).not.toMatch(/\bBlog\s+#\d+\b/i);
 
     expect(body).toContain('/blog/how-kids-learn-blending');
     expect(body).toContain('/blog/how-to-improve-reading-fluency-in-children');

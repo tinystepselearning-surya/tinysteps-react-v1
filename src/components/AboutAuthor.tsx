@@ -37,8 +37,8 @@ type AboutAuthorProps = {
 
 const DEFAULT_AUTHOR: AuthorProfile = {
   name: PUBLIC_FACTS.founder.displayName,
-  role: `Founder, ${PUBLIC_FACTS.brandName}`,
-  bio: `Priya is the founder of ${PUBLIC_FACTS.brandName} and leads academic direction across curriculum, lesson design, teacher guidance, teaching quality, and parent communication.`,
+  role: `Founder & Academic Lead, ${PUBLIC_FACTS.brandName}`,
+  bio: `Priya leads ${PUBLIC_FACTS.brandName}'s academic direction across phonics, reading, grammar, writing, and communication, including curriculum design, teacher guidance, and teaching quality.`,
   imageUrl: '/priya-founder-tiny-steps-learning.webp',
   profilePath: '/team',
 };
@@ -46,24 +46,9 @@ const DEFAULT_AUTHOR: AuthorProfile = {
 const RESEARCH_AUTHOR: AuthorProfile = {
   name: PUBLIC_FACTS.brandName,
   role: 'Research Desk',
-  bio: `${PUBLIC_FACTS.brandName} publishes research-labelled parent explainers under the school's academic editorial responsibility. External evidence is identified with source links where it is used.`,
+  bio: `${PUBLIC_FACTS.brandName} publishes evidence-led parent explainers and links external sources where claims rely on outside evidence.`,
   profilePath: '/team',
 };
-
-const STANDARD_HIGHLIGHTS: AuthorHighlight[] = [
-  { label: 'Editorial scope', value: 'Phonics, reading, grammar, writing, and speaking' },
-  { label: 'Publisher', value: PUBLIC_FACTS.brandName },
-  { label: 'Corrections', value: 'Contact Tiny Steps if you spot an error or outdated claim' },
-];
-
-const RESEARCH_HIGHLIGHTS: AuthorHighlight[] = [
-  { label: 'Evidence standard', value: 'External sources are linked where claims rely on outside evidence' },
-  { label: 'Editorial responsibility', value: PUBLIC_FACTS.brandName },
-  { label: 'Update standard', value: 'Dates change only when a meaningful editorial revision is recorded' },
-];
-
-const STANDARD_BADGES = ['Author identified', 'Editorial responsibility'];
-const RESEARCH_BADGES = ['Research Desk', 'Source transparency'];
 
 const STANDARD_CTAS: AuthorCta[] = [
   { label: 'Meet the Tiny Steps team', to: '/team', variant: 'secondary' },
@@ -87,7 +72,6 @@ export const AboutAuthor: React.FC<AboutAuthorProps> = ({
   title,
   intro,
   note,
-  badges,
   highlights,
   ctas,
   evidenceLabel,
@@ -96,17 +80,11 @@ export const AboutAuthor: React.FC<AboutAuthorProps> = ({
 }) => {
   const isResearch = variant === 'research';
   const resolvedAuthor = author || (isResearch ? RESEARCH_AUTHOR : DEFAULT_AUTHOR);
-  const sectionTitle = title || (isResearch ? 'Authorship and Editorial Responsibility' : 'About the Author');
-  const sectionIntro =
-    intro ||
-    (isResearch
-      ? 'This page identifies who is responsible for the article and distinguishes cited external evidence from Tiny Steps editorial guidance.'
-      : 'This page identifies the responsible author or editorial team so readers can see who stands behind the guidance.');
-  const sectionNote =
-    note ||
-    'Published dates are retained. An updated or reviewed date should appear only when a meaningful editorial revision is explicitly recorded.';
-  const sectionBadges = badges || (isResearch ? RESEARCH_BADGES : STANDARD_BADGES);
-  const sectionHighlights = highlights || (isResearch ? RESEARCH_HIGHLIGHTS : STANDARD_HIGHLIGHTS);
+  const sectionTitle = title || (isResearch ? 'About the Research Team' : 'About the Author');
+  const sectionIntro = intro || (isResearch
+    ? 'External evidence is linked where it is used, while Tiny Steps guidance is identified as editorial guidance.'
+    : '');
+  const sectionHighlights = highlights || [];
   const sectionCtas = ctas || (isResearch ? RESEARCH_CTAS : STANDARD_CTAS);
   const initials = getInitials(resolvedAuthor.name);
   const authorName = resolvedAuthor.profilePath ? (
@@ -119,66 +97,72 @@ export const AboutAuthor: React.FC<AboutAuthorProps> = ({
   ) : resolvedAuthor.name;
 
   return (
-    <section className={`mt-12 ${className}`.trim()} aria-label="Article authorship and editorial information">
-      <div className="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-[linear-gradient(135deg,#fff8ef_0%,#f8fbff_58%,#ffffff_100%)] shadow-[0_24px_60px_rgba(15,23,42,0.08)]">
-        <div className="border-b border-slate-200/80 px-6 py-4 sm:px-8">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full border border-primary-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-primary-700">
-              {sectionTitle}
-            </span>
-            {sectionBadges.map((badge) => (
-              <span
-                key={badge}
-                className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500"
-              >
-                {badge}
-              </span>
-            ))}
-          </div>
-        </div>
+    <section className={`mt-12 ${className}`.trim()} aria-label="Article author information">
+      <div className="rounded-[2rem] border border-slate-200/80 bg-[linear-gradient(135deg,#fffaf4_0%,#f8fbff_72%,#ffffff_100%)] p-6 shadow-[0_18px_46px_rgba(15,23,42,0.06)] sm:p-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">{sectionTitle}</p>
 
-        <div className="grid gap-6 px-6 py-6 sm:px-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)] lg:items-start">
-          <div>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-              {resolvedAuthor.imageUrl ? (
-                <figure className="m-0 h-20 w-20 shrink-0 overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white shadow-lg">
-                  <img
-                    src={resolvedAuthor.imageUrl}
-                    alt={
-                      resolvedAuthor.name === PUBLIC_FACTS.founder.displayName
-                        ? 'Priya, Founder of Tiny Steps Learning'
-                        : resolvedAuthor.name
-                    }
-                    width={160}
-                    height={160}
-                    loading="lazy"
-                    decoding="async"
-                    className="h-full w-full object-cover object-center"
-                  />
-                  <figcaption className="sr-only">
-                    {resolvedAuthor.name}
-                    {resolvedAuthor.role ? `, ${resolvedAuthor.role}` : ''}
-                  </figcaption>
-                </figure>
-              ) : (
-                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(135deg,#0f172a,#17315f)] text-xl font-black text-white shadow-lg">
-                  {initials}
-                </div>
-              )}
+        <div className="mt-5 flex flex-col gap-5 sm:flex-row sm:items-start">
+          {resolvedAuthor.imageUrl ? (
+            <figure className="m-0 h-20 w-20 shrink-0 overflow-hidden rounded-[1.4rem] border border-slate-200/80 bg-white shadow-md">
+              <img
+                src={resolvedAuthor.imageUrl}
+                alt={
+                  resolvedAuthor.name === PUBLIC_FACTS.founder.displayName
+                    ? 'Priya, Founder of Tiny Steps Learning'
+                    : resolvedAuthor.name
+                }
+                width={160}
+                height={160}
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover object-center"
+              />
+              <figcaption className="sr-only">
+                {resolvedAuthor.name}
+                {resolvedAuthor.role ? `, ${resolvedAuthor.role}` : ''}
+              </figcaption>
+            </figure>
+          ) : (
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.4rem] bg-[linear-gradient(135deg,#0f172a,#17315f)] text-xl font-black text-white shadow-md">
+              {initials}
+            </div>
+          )}
 
-              <div className="min-w-0">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary-700">
-                  {resolvedAuthor.role || 'Tiny Steps'}
-                </p>
-                <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-900">{authorName}</h3>
-                <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">{resolvedAuthor.bio}</p>
+          <div className="min-w-0 flex-1">
+            {resolvedAuthor.role ? (
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary-700">{resolvedAuthor.role}</p>
+            ) : null}
+            <h3 className="mt-1 text-2xl font-black tracking-tight text-slate-900">{authorName}</h3>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">{resolvedAuthor.bio}</p>
+            {sectionIntro ? (
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">{sectionIntro}</p>
+            ) : null}
+
+            {(reviewLabel || evidenceLabel) ? (
+              <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600">
+                {reviewLabel ? (
+                  <p className="font-semibold text-slate-900">{reviewLabel}</p>
+                ) : null}
+                {evidenceLabel ? (
+                  <p>
+                    <span className="font-semibold text-slate-900">Sources:</span> {evidenceLabel}
+                  </p>
+                ) : null}
               </div>
-            </div>
+            ) : null}
 
-            <div className="mt-6 rounded-[1.7rem] border border-slate-200 bg-white/85 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Editorial responsibility</p>
-              <p className="mt-3 text-sm leading-7 text-slate-700">{sectionIntro}</p>
-            </div>
+            {sectionHighlights.length ? (
+              <dl className="mt-5 grid gap-x-6 gap-y-3 border-t border-slate-200 pt-5 sm:grid-cols-2">
+                {sectionHighlights.map((item) => (
+                  <div key={item.label}>
+                    <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{item.label}</dt>
+                    <dd className="mt-1 text-sm leading-6 text-slate-700">{item.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : null}
+
+            {note ? <p className="mt-4 text-xs leading-6 text-slate-500">{note}</p> : null}
 
             <div className="mt-5 flex flex-wrap gap-3">
               {sectionCtas.map((cta) => (
@@ -194,37 +178,6 @@ export const AboutAuthor: React.FC<AboutAuthorProps> = ({
                   {cta.label}
                 </Link>
               ))}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            {evidenceLabel ? (
-              <div className="rounded-[1.6rem] border border-sky-100 bg-sky-50/80 p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-700">Evidence on this page</p>
-                <p className="mt-2 text-sm font-semibold leading-6 text-slate-900">{evidenceLabel}</p>
-              </div>
-            ) : null}
-
-            {reviewLabel ? (
-              <div className="rounded-[1.6rem] border border-emerald-100 bg-emerald-50/80 p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">Review status</p>
-                <p className="mt-2 text-sm font-semibold leading-6 text-slate-900">{reviewLabel}</p>
-              </div>
-            ) : null}
-
-            {sectionHighlights.map((item) => (
-              <div
-                key={item.label}
-                className="rounded-[1.6rem] border border-slate-200/90 bg-white/90 p-5"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">{item.label}</p>
-                <p className="mt-2 text-sm font-semibold leading-6 text-slate-900">{item.value}</p>
-              </div>
-            ))}
-
-            <div className="rounded-[1.6rem] border border-primary-100 bg-primary-50/70 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary-700">Update policy</p>
-              <p className="mt-2 text-sm leading-7 text-slate-700">{sectionNote}</p>
             </div>
           </div>
         </div>

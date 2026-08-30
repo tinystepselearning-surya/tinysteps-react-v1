@@ -53,8 +53,9 @@ describe('authoritative Blog #4 quality lock', () => {
     expect(body).toContain('editorial teaching guidance rather than a standardized research protocol');
     expect(body).toContain('it does not diagnose dyslexia');
     expect(body).toContain('High frequency does not make a regular word irregular');
-    expect(body).toContain('Blog #28');
+    expect(body).toContain('This guide explains the conceptual difference between digraph decoding and exception-word learning');
     expect(body).toContain('Pronunciation and what counts as unusual can vary slightly by accent');
+    expect(body).not.toMatch(/\bBlog\s+#\d+\b/i);
 
     expect(post?.faq).toHaveLength(5);
     expect(post?.faq?.some((item) => /what is a digraph/i.test(item.question))).toBe(true);

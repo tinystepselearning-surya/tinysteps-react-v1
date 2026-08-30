@@ -9,6 +9,7 @@ import {
 } from '../../content/blog/shared/editorialCleanup';
 
 const EXPOSED_ACTION_ROUTE = /\b(Explore|Read|Visit|Build|Compare|Try|Play|Book|Start|See|View|Open)\s+([^.:!?]{1,120}?):\s*(\/[a-z0-9][a-z0-9\-_/?.=&%#]*)/i;
+const INTERNAL_BLOG_NUMBER = /\bBlog\s+#\d+\b/i;
 
 describe('blog editorial cleanup', () => {
   it('removes Week N from the primary title while preserving useful topic wording', () => {
@@ -27,6 +28,21 @@ describe('blog editorial cleanup', () => {
       .toBe('Frequently Asked Questions');
     expect(cleanBlogBlock({ type: 'h2', content: '11. FAQ section with 5 parent questions' }).content)
       .toBe('Frequently Asked Questions');
+  });
+
+  it('removes internal Blog # numbering from public article copy', () => {
+    expect(cleanBlogText('Use Blog #5, [How Kids Learn Blending](/blog/how-kids-learn-blending).'))
+      .toBe('Use [How Kids Learn Blending](/blog/how-kids-learn-blending).');
+    expect(cleanBlogText('Blog #9, [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling), owns the encoding roadmap.'))
+      .toBe('[How Phonics Improves Spelling](/blog/how-phonics-improves-spelling), owns the encoding roadmap.');
+    expect(cleanBlogText('How Blog #7 differs from the other Tiny Steps phonics guides'))
+      .toBe('How this guide differs from the other Tiny Steps phonics guides');
+    expect(cleanBlogText('Blog #10 asks whether the provider can show transfer.'))
+      .toBe('This guide asks whether the provider can show transfer.');
+    expect(cleanBlogText('This Blog #2 owns the broader parent question.'))
+      .toBe('This guide covers the broader parent question.');
+    expect(cleanBlogText('This Blog #4 explains the conceptual difference.'))
+      .toBe('This guide explains the conceptual difference.');
   });
 
   it('turns multiple exposed internal routes into readable links instead of dropping destinations', () => {
@@ -78,6 +94,7 @@ describe('blog editorial cleanup', () => {
       for (const block of post.body) {
         expect(block.content, `${post.slug}: FAQ template heading leaked`).not.toMatch(/FAQ section with \d+ parent questions/i);
         expect(block.content, `${post.slug}: raw internal action route leaked`).not.toMatch(EXPOSED_ACTION_ROUTE);
+        expect(block.content, `${post.slug}: internal Blog # numbering leaked`).not.toMatch(INTERNAL_BLOG_NUMBER);
       }
     }
   });

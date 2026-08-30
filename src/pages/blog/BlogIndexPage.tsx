@@ -736,7 +736,7 @@ const BlogIndexPage: FC = () => {
           className="mt-10 rounded-[1.75rem] border border-slate-200 bg-[linear-gradient(135deg,#fff8ef_0%,#f8fbff_62%,#ffffff_100%)] p-5 shadow-sm sm:p-6"
           aria-label="About Tiny Steps Blog and founder"
         >
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.75fr)] lg:items-center">
+          <div>
             <div>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 <img
@@ -766,13 +766,6 @@ const BlogIndexPage: FC = () => {
                   Report a correction
                 </Link>
               </div>
-            </div>
-
-            <div className="rounded-[1.4rem] border border-slate-200 bg-white/85 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Editorial responsibility</p>
-              <p className="mt-2 text-sm leading-6 text-slate-700">
-                Tiny Steps organizes guides around common learning blockers and practical next steps. Published and updated dates change only when the underlying editorial record changes.
-              </p>
             </div>
           </div>
         </section>
