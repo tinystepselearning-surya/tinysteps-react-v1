@@ -2,25 +2,7 @@
 
 ## Sequence authority
 
-The programme numbering is locked to the founder-supplied **authoritative 76-blog inventory** dated 2026-08-30.
-
-- Blogs **1–34**: Phonics
-- Blogs **35–51**: Parent Tips / English Communication
-- Blogs **52–60**: Research / Schools
-- Blogs **61–68**: Grammar
-- Blogs **69–76**: Public Speaking
-
-The full fixed order lives in `docs/seo/blog-quality/AUTHORITATIVE_76_SEQUENCE.md`.
-
-## Delivery model — 10 blogs per merge batch
-
-Batch #1 uses one branch and one PR for Blogs #1–#10:
-
-- Branch: `seo/blog-quality-sequence-01-benefits-phonics`
-- PR: `#163`
-- Each blog receives focused regression coverage when locked.
-- The decisive full exact-head CI/SEO gate runs after Blog #10.
-- Merge to `main` requires explicit founder approval for the complete batch.
+Numbering is locked to the founder-supplied **authoritative 76-blog inventory** dated 2026-08-30. The fixed order lives in `docs/seo/blog-quality/AUTHORITATIVE_76_SEQUENCE.md`.
 
 ## Standard 100-point quality rubric
 
@@ -40,110 +22,175 @@ Batch #1 uses one branch and one PR for Blogs #1–#10:
 
 Target: **90+/100** with no factual, pedagogical, evidence, diagnosis-boundary, trust, cannibalization or misleading-timeline hard fail.
 
-## Batch #1 final scorecard — Blogs #1–#10
+# Batch #1 — Blogs #1–#10 — MERGED
 
-| # | Article | Baseline | Status | Score after refresh |
+- Branch: `seo/blog-quality-sequence-01-benefits-phonics`
+- PR: `#163`
+- Merge commit: `fda9963872299679d22e4ad3dc880cd4f13b482b`
+- Final quality movement: **667/1000 → 960/1000**, average **66.7 → 96.0**, gain **+293**.
+
+| # | Article | Baseline | Final |
+|---:|---|---:|---:|
+| 1 | Benefits of Phonics for Kids: What Parents Usually Notice First | 57 | 95 |
+| 2 | Child Knows ABC but Cannot Read: What Parents Should Check First | 65 | 96 |
+| 3 | CVC Words Explained for Parents: The First Real Decoding Milestone | 65 | 96 |
+| 4 | Digraphs and Tricky Words: What to Decode and What to Remember | 64 | 96 |
+| 5 | How Kids Learn Blending: The Stage-by-Stage Path Parents Can Track | 66 | 96 |
+| 6 | How Long Does Phonics Take? A Realistic Parent Guide to Progress | 74 | 96 |
+| 7 | How Phonics Builds Reading Confidence: What Changes First at Home | 68 | 96 |
+| 8 | How Phonics Classes Help Kids Read: Decoding, Blending and Fluency Explained | 67 | 96 |
+| 9 | How Phonics Improves Spelling: A Parent Encoding Roadmap | 62 | 96 |
+| 10 | How to Choose a Phonics Class: The Complete Parent Comparison Framework | 79 | 97 |
+
+# Batch #2 — Blogs #11–#20 — CONTENT LOCKED / FINAL CI GATE
+
+- Branch: `seo/blog-quality-sequence-11-long-vowels`
+- PR: `#164`
+- Base: merged Batch #1 main commit `fda9963872299679d22e4ad3dc880cd4f13b482b`
+- Delivery rule: Blogs #11–#20 are now content-locked on this branch/PR. Run the decisive full exact-head CI/SEO gate, verify the final diff and mergeability, and merge only with explicit founder approval.
+
+## Batch #2 scorecard
+
+| # | Article | Baseline | Status | Final |
 |---:|---|---:|---|---:|
-| 1 | Benefits of Phonics for Kids: What Parents Usually Notice First | 57/100 | **LOCKED IN BATCH** | **95/100** |
-| 2 | Child Knows ABC but Cannot Read: What Parents Should Check First | 65/100 | **LOCKED IN BATCH** | **96/100** |
-| 3 | CVC Words Explained for Parents: The First Real Decoding Milestone | 65/100 | **LOCKED IN BATCH** | **96/100** |
-| 4 | Digraphs and Tricky Words: What to Decode and What to Remember | 64/100 | **LOCKED IN BATCH** | **96/100** |
-| 5 | How Kids Learn Blending: The Stage-by-Stage Path Parents Can Track | 66/100 | **LOCKED IN BATCH** | **96/100** |
-| 6 | How Long Does Phonics Take? A Realistic Parent Guide to Progress | 74/100 | **LOCKED IN BATCH** | **96/100** |
-| 7 | How Phonics Builds Reading Confidence: What Changes First at Home | 68/100 | **LOCKED IN BATCH** | **96/100** |
-| 8 | How Phonics Classes Help Kids Read: Decoding, Blending and Fluency Explained | 67/100 | **LOCKED IN BATCH** | **96/100** |
-| 9 | How Phonics Improves Spelling: A Parent Encoding Roadmap | 62/100 | **LOCKED IN BATCH** | **96/100** |
-| 10 | How to Choose a Phonics Class: The Complete Parent Comparison Framework | 79/100 | **LOCKED IN BATCH** | **97/100** |
+| 11 | Long Vowel Sounds for Kids: Pattern Order, Practice, and Common Mix-Ups | 67 | **LOCKED IN BATCH** | **96** |
+| 12 | Online Phonics Classes vs School: What Works for Which Child | 68 | **LOCKED IN BATCH** | **97** |
+| 13 | Online Phonics Games for Kids: What Actually Builds Reading | 64 | **LOCKED IN BATCH** | **97** |
+| 14 | Phonics Activities at Home: A Parent Routine That Actually Sticks | 63 | **LOCKED IN BATCH** | **97** |
+| 15 | Phonics Blending Activities That Help Children Read Words Confidently | 72 | **LOCKED IN BATCH** | **97** |
+| 16 | Phonics Games for Letter Sounds: Parent Routine for Daily Practice | 61 | **LOCKED IN BATCH** | **97** |
+| 17 | Phonics Rules for Beginners: The Right Sequence and When to Move Ahead | 60 | **LOCKED IN BATCH** | **97** |
+| 18 | R-Controlled Vowels Explained: Pattern Groups, Confusions, and Practice Order | 62 | **LOCKED IN BATCH** | **97** |
+| 19 | SATPIN Phonics Guide for Parents: How to Start and What to Expect | 66 | **LOCKED IN BATCH** | **97** |
+| 20 | Phonics vs Sight Words: What Helps Children Read Better | 62 | **LOCKED IN BATCH** | **97** |
 
-### Batch quality movement
+Batch #2 quality movement: **645/1000 → 969/1000**, average **64.5 → 96.9**, total gain **+324**.
 
-- Baseline total: **667/1000**
-- Final total: **960/1000**
-- Baseline average: **66.7/100**
-- Final average: **96.0/100**
-- Total quality gain: **+293 points**
-- All 10 retained articles: **95+/100**
+## Canonical intent map — completed Batch #2 articles
 
-## Canonical intent map — Blogs #1–#10
+11. `/blog/long-vowel-sounds-for-kids` → long-vowel pattern families, ordering decisions, reading/spelling transfer and common mix-up interpretation. Hands-on long-vowel activities remain with Blog #29.
+12. `/blog/online-phonics-classes-vs-school` → school-only vs school + targeted online support vs a different reading priority. Provider selection remains with Blog #10.
+13. `/blog/online-phonics-games` → whether digital phonics games rehearse a real reading skill and transfer beyond the game. Letter-sound routines remain with Blog #16.
+14. `/blog/phonics-activities-for-kids-at-home` → broad home-practice system across sound recall, blending, decoding, spelling and text transfer. Detailed blending activities remain with Blog #15.
+15. `/blog/phonics-blending-activities` → practical blending activity selection by observed bottleneck. Developmental stages remain with Blog #5; simple daily blending routine remains with Blog #25.
+16. `/blog/phonics-games-for-letter-sounds` → practical letter-sound game routine: two-way phoneme–grapheme retrieval, blendable pronunciations, small taught-set review and early word transfer. Online-game evaluation remains with Blog #13; broad home routine with Blog #14; blending activities with Blog #15; SATPIN launch with Blog #19; broad sequence with Blog #17.
+17. `/blog/phonics-rules-for-beginners` → parent-facing principles for a systematic, incremental and cumulative beginner phonics sequence, including what broad knowledge comes next and how to decide whether to move ahead or review. SATPIN launch remains with Blog #19; CVC milestone with Blog #3; digraph/tricky distinction with Blog #4; long vowels with Blog #11; r-controlled vowels with Blog #18; school-wide scope and sequence with Blog #57.
+18. `/blog/r-controlled-vowels-explained` → parent explanation of vowel-r/r-controlled pattern groups, accent-sensitive pronunciation, reading-versus-spelling confusions and evidence-aligned practice order. Hands-on r-controlled games and practice remain with Blog #30 (`/blog/phonics-r-controlled`); broad sequence remains with Blog #17; long-vowel patterns with Blog #11; full encoding with Blog #9.
+19. `/blog/satpin-phonics-guide` → SATPIN starter-set explanation, why a useful defined early set helps, how early blending/encoding begins, what progress looks like and when to move beyond SATPIN. Session-by-session home practice remains with Blog #22; broad sequence remains with Blog #17; letter-sound games with Blog #16; full blending development with Blog #5.
+20. `/blog/science-of-phonics-learning` → evidence and terminology owner for phonics versus “sight words”: systematic decoding evidence, high-frequency versus irregular/common-exception words, automatic recognition and evidence-aligned treatment of unfamiliar words. Blog #21 owns synthetic-phonics-versus-traditional method comparison; Blog #47 owns the parent “what first?” sequencing decision.
 
-1. `/blog/benefits-of-phonics-for-kids` → realistic observable phonics benefits.
-2. `/blog/child-knows-abc-but-cannot-read` → broad alphabet-familiarity-to-decoding bottleneck.
-3. `/blog/cvc-words-explained-for-parents` → CVC definition and first simple printed-word decoding milestone.
-4. `/blog/digraphs-and-tricky-words` → what remains decodable versus what needs extra attention/memory.
-5. `/blog/how-kids-learn-blending` → stage-by-stage blending development and stage-exit decisions.
-6. `/blog/how-long-does-phonics-take` → realistic interpretation of phonics duration and progress.
-7. `/blog/how-phonics-builds-reading-confidence` → reading-confidence behaviour without claiming confidence is guaranteed by phonics.
-8. `/blog/how-phonics-classes-help-kids-read` → instructional mechanism from taught correspondences to independent reading transfer.
-9. `/blog/how-phonics-improves-spelling` → encoding/spelling roadmap and error interpretation.
-10. `/blog/how-to-choose-phonics-classes` → complete parent provider/class comparison and purchase framework.
+## Blog #17 — LOCKED
 
-## Blog #9 — locked
+**Canonical role:** answer the parent question: *What does a sensible beginner phonics sequence look like, what should come next, and how can I tell whether my child is ready to move ahead without relying on a fixed weekly timetable?*
 
-**Canonical role:** `/blog/how-phonics-improves-spelling` owns the parent question: *How does phonics support spelling, what is encoding, and what do different spelling errors tell me about the next teaching step?*
+### Major quality decisions
 
-### Key quality decisions
+- Converted the generic `PhonicsSeoPost` into a direct founder-authored `BlogPost` with the original publication date preserved as **2025-11-19**.
+- Reframes “phonics rules” as parent-friendly language for sound–spelling relationships, common patterns, positional conventions and exceptions rather than perfectly reliable formulas.
+- Replaces the rigid `CVC → digraphs/blends → long vowels` prescription with evidence-aligned principles: clearly defined, explicit, incremental, cumulative teaching from simpler to more complex knowledge.
+- Adds a six-part explanatory beginner progression: phonemic awareness + a useful starter set → immediate blending/segmenting → broader consonants and grapheme patterns → gradual common-exception words → long-vowel/other common patterns → matched sentences and text.
+- Clarifies that CVC words are an important early milestone but not a complete beginner curriculum, and that digraphs and adjacent consonants are not one interchangeable “blend” rule family.
+- Protects common-exception words from whole-shape memorisation and routes the broader phonics-versus-sight-words decision to Blog #20.
+- Adds the Tiny Steps five-question progression check: **retrieval → fresh-word decoding → encoding → independence → transfer/retention**.
+- Removes fixed 3–5 day rule blocks, 2–8 week progress claims, 6–8 week support triggers, “two perfect sessions” and “one rule family per week” as universal readiness rules.
+- Adds practical responses for short/long vowel mixing, digraph/blend confusion, slogan-without-transfer and loss of old knowledge when new patterns are introduced.
+- Advises parents to reinforce a coherent school/programme sequence rather than mix competing orders at home.
+- Adds a non-diagnostic closer-review boundary instead of treating sequencing difficulty as evidence of a condition.
+- Adds evidence from the current EEF phonics review, DfE SSP validation criteria, IES/WWC foundational-reading guidance and UFLI.
+- Adds five focused FAQs and dedicated regression coverage.
 
-- Converted the article from the generic `PhonicsSeoPost` generator into a direct editorial `BlogPost`.
-- Removed unsupported weeks 1–10 progress promises, the 6–8 week support trigger and fixed daily word-count advice.
-- Defines encoding as segmenting spoken words into phonemes and mapping them to graphemes in sequence.
-- Adds the Tiny Steps six-step encoding roadmap: whole word → segment phonemes → map taught graphemes → choose alternatives → write in order → verify and transfer.
-- Adds an error map distinguishing omitted phonemes, order errors, phonically plausible alternatives, taught-pattern confusion, exception-word errors and morphology errors.
-- Explains why reading can develop ahead of spelling and why English spelling eventually requires more than phonics alone.
-- Replaces the unsupported “dictation is better than copying” claim with a purpose-based distinction between independent retrieval and copying/handwriting practice.
-- Adds evidence from DfE Reading Framework, DfE National Curriculum, IES/WWC, UFLI and EEF.
-- Adds five answer-engine FAQs, founder authorship, updated metadata and focused regression coverage.
+### Evidence boundary
 
-**Final decision: 96/100 — LOCKED IN BATCH.**
-
-## Blog #10 — locked
-
-**Canonical role:** `/blog/how-to-choose-phonics-classes` owns the parent decision: *How should I compare phonics classes or providers fairly before enrolling my child?*
-
-### Four-gate decision framework
-
-1. **Fit** — does placement start from the child’s actual reading and spelling behaviour?
-2. **Teaching quality** — is instruction explicit, systematic, cumulative, blending-led and connected to spelling and matched reading?
-3. **Proof of transfer** — can the provider show progress on fresh words, matched text, spelling, retention and reduced prompting rather than lesson completion alone?
-4. **Practical clarity** — are format, duration, frequency, teacher continuity, parent communication, materials, policies and total pricing clear before enrolment?
-
-The framework is explicitly labelled **Tiny Steps editorial decision guidance**, not a standardized provider rating or accreditation tool.
-
-### Major improvements
-
-- Preserves the useful comparison intent while replacing loose provider-shopping copy with a structured four-gate framework.
-- Expands the parent scorecard from 12 to **16 evidence-oriented checks** covering placement, sequence, blending, segmenting, matched text, fresh transfer, correction, review, progress reporting, adaptation, teacher training, scope boundaries, policies and marketing claims.
-- Adds explicit teacher-training and implementation-quality checks.
-- Adds commercial clarity without equating higher price with higher teaching quality or lower price with better value.
-- Separates 1:1, group and whole-class format from the underlying quality decision; EEF evidence includes positive phonics effects across these contexts.
-- Routes the online-versus-in-person comparison to Blog #12 instead of allowing Blog #10 to cannibalize that intent.
-- Removes the named-programme FAQ and provider-format absolutism.
-- Makes Tiny Steps subject to the **same comparison framework** as any other provider rather than granting itself a different standard.
-- Adds evidence from the current EEF phonics evidence review, DfE Choosing a Phonics Teaching Programme guidance, DfE SSP validation criteria, DfE Reading Framework and IES/WWC foundational reading guidance.
-- Adds five focused AEO/GEO FAQs, founder authorship, updated metadata and a dedicated regression test.
-
-### Evidence decision
-
-External sources support the underlying programme-selection features: systematic progression, explicit blending and segmenting, matched decodable text, assessment, responsiveness, teacher training, connected-text application and the need to distinguish decoding from wider reading comprehension. The Tiny Steps four-gate framework and 16-point parent scorecard are editorial syntheses rather than validated research instruments.
-
-### Indexability decision
-
-Ordinary evergreen non-weekly public slug; already indexable and sitemap eligible. No indexing-policy change required.
+Evidence supports systematic, explicit, incremental and cumulative phonics; an early useful correspondence set; blending and segmenting; common sound–spelling patterns; spelling; common-exception words; and matched connected-text practice. It does **not** establish one universal commercial programme order, one rule family per week, a fixed mastery percentage or a fixed number of review sessions. The Tiny Steps six-part explanatory map and five-question move-ahead check are editorial syntheses.
 
 **Final decision: 97/100 — LOCKED IN BATCH.**
 
-## Batch #1 merge gate
+## Blog #18 — LOCKED
 
-Blogs #1–#10 are content-complete. Final state before merge must confirm:
+**Canonical role:** answer the parent question: *What are r-controlled/vowel-r patterns, why do ar/or/er/ir/ur create different reading and spelling confusions, how does accent affect them, and what is a sensible order for practising them without imposing one universal timetable?*
 
-- all focused blog quality regression tests pass
-- full CI passes on the final exact head
-- title/meta/FAQ/internal-link checks remain green
-- evidence-source extraction remains green
-- no intent/cannibalization hard fail is introduced
-- no accidental files are present in the PR diff
-- PR remains mergeable
-- explicit founder approval is received
+### Major quality decisions
 
-**Exact-head CI/SEO gate: PENDING on the final batch head.**
+- Converted the generic `PhonicsSeoPost` into a direct founder-authored `BlogPost`, preserving the canonical publication date **2026-01-05** and adding a meaningful **2026-08-30** modified date.
+- Defines r-controlled/vowel-r patterns accurately as a vowel followed directly by `r`, while treating “bossy R” as an optional mnemonic rather than a literal linguistic explanation.
+- Adds a major accent safeguard: rhotic and non-rhotic English varieties can realise vowel-r patterns differently, so one pronunciation model is not universal.
+- Uses UFLI’s standard and Australian resources as direct evidence that accent-sensitive adaptation is legitimate.
+- Separates the five core spellings into `ar`, `or`, and the `er/ir/ur` spelling-choice problem without claiming that `er/ir/ur` sound identical in every accent or every word.
+- Adds the Tiny Steps six-part learning chain: **hear → notice/map → read → spell → contrast → transfer**.
+- Replaces fixed pattern-family sessions and implicit `ar/or first` universalism with a programme-aligned practice sequence based on prior decoding knowledge.
+- Uses UFLI’s `ar → or → er/ir/ur` progression as one concrete programme example while explicitly stating that it is not a universal research law.
+- Removes arbitrary prerequisites such as `30–50 CVC words`, fixed practice days, fixed word counts and percentage mastery rules.
+- Explains why r-controlled reading can be stronger than spelling: print reveals the grapheme during reading, while encoding may require choosing among `er`, `ir`, `ur` and later alternatives.
+- Adds five concrete confusion types: ordinary-vowel substitution, `ar/or` mixing, `er/ir/ur` spelling interchange, `wor` overgeneralisation and isolated-word-to-text transfer failure.
+- Adds a Tiny Steps five-signal move-ahead check: **notice → decode → encode → contrast → transfer/retain**.
+- Protects Blog #30 as the hands-on r-controlled practice/activity owner, Blog #17 as the broad sequence owner, Blog #11 as long-vowel owner and Blog #9 as full encoding owner.
+- Adds a non-diagnostic safeguard: normal accent differences and `er/ir/ur` spelling confusion are not, by themselves, evidence of a reading disorder.
+- Adds seven external evidence references, five focused FAQs and dedicated Blog #18 regression coverage.
 
-**Do not merge PR #163 until the final exact-head gate is green and the founder explicitly approves the merge.**
+### Evidence boundary
+
+Evidence supports explicit/systematic sound–spelling instruction, vowel-r/r-controlled patterns, linked reading and spelling practice, cumulative progression and transfer into matched text. UFLI provides a defensible sequence example and accent-adapted materials. The evidence does **not** establish one universal first r-controlled family, one pronunciation for all English accents, a fixed word-count prerequisite, a fixed number of practice sessions or a universal mastery percentage. The Tiny Steps six-part learning chain and five-signal move-ahead check are editorial syntheses.
+
+**Final decision: 97/100 — LOCKED IN BATCH.**
+
+## Blog #19 — LOCKED
+
+**Canonical role:** answer the parent question: *What is SATPIN, why can it be a useful early sound–spelling set, how should blending and spelling begin from it, what should parents expect to see, and when is the child ready to move beyond the set?*
+
+### Major quality decisions
+
+- Converted the generic `PhonicsSeoPost` into a direct founder-authored `BlogPost`, preserving the canonical publication date **2025-11-06** and adding a meaningful **2026-08-30** modified date.
+- Defines SATPIN accurately as the six-letter starter set `s, a, t, p, i, n` while noting that programmes can order those correspondences differently within an early sequence.
+- Replaces “SATPIN is first because it is best” logic with the evidence-supported principle that an early programme should begin with a **defined useful set** that permits children to read and spell words early.
+- Explicitly states that evidence does not establish SATPIN as the single mandatory or scientifically superior first set.
+- Adds the Tiny Steps SATPIN launch chain: **hear sound → connect sound and print → retrieve → blend → segment/spell → transfer**.
+- Corrects the old “pure sound mastery first, then blending” sequence: blending can begin as soon as enough taught correspondences can form a word.
+- Clarifies letter-name versus letter-sound roles without falsely telling parents to avoid letter names.
+- Reframes “pure sounds” as **blendable pronunciations**, including schwa avoidance for stop consonants where it interferes with blending.
+- Removes universal `1–2 sounds per batch`, weekly testing, fixed-session mastery and percentage thresholds.
+- Adds a five-signal progress interpretation: **retrieve → blend → decode fresh → encode → transfer/retain**.
+- Adds five concrete SATPIN bottlenecks: sound retrieval, sound-known-but-no-blend, familiar-card memorisation, reading stronger than spelling, and new-learning loss of earlier correspondences.
+- Protects Blog #22 as the session-by-session SATPIN home routine owner, Blog #17 as broad sequence owner, Blog #16 as letter-sound game owner, Blog #5 as blending-development owner and Blog #3 as the CVC milestone owner.
+- Describes Balloon Pop and Letter Tracing transparently as sound/letter practice rather than proof of word reading.
+- Adds a non-diagnostic safeguard and closer-teaching-review boundary.
+- Adds six external evidence references, five focused FAQs and dedicated Blog #19 regression coverage.
+
+### Evidence boundary
+
+Evidence supports explicit/systematic phonics, beginning with a defined useful set of sound–spelling correspondences, early blending and segmenting, linked spelling practice, cumulative review and matched connected-text application. It does **not** establish SATPIN as the only valid starter set, a fixed number of SATPIN sounds per session, a fixed SATPIN duration, a weekly testing requirement or a universal mastery percentage. The Tiny Steps SATPIN launch chain and progress signals are editorial syntheses.
+
+**Final decision: 97/100 — LOCKED IN BATCH.**
+
+## Blog #20 — LOCKED
+
+**Canonical role:** answer the evidence question: *When parents compare phonics and “sight words”, what do these terms actually mean, what does research support for beginning readers, and how should regular, high-frequency and irregular words be taught so word recognition becomes automatic without replacing decoding?*
+
+### Major quality decisions
+
+- Converted the generic `PhonicsSeoPost` into a direct founder-authored `BlogPost`, preserving the canonical publication date **2025-12-22** and adding a meaningful **2026-08-30** modified date.
+- Replaces the old “most children need balance, not extremes” framing with a clearer evidence hierarchy: **systematic phonics is the transferable decoding foundation; efficient recognition of familiar words is an outcome that develops alongside it**.
+- Separates four frequently conflated terms: **phonics**, **high-frequency words**, **irregular/common-exception words**, and **sight words**.
+- Clarifies that high-frequency words can be regular or irregular; frequency does not define decodability.
+- Clarifies that some words are only **temporarily irregular** because the child has not yet learned a correspondence, while others contain genuinely unusual spellings.
+- Corrects the idea that “sight word” means a competing whole-word method: automatic recognition is the desired outcome, not evidence that words should be learned as visual shapes.
+- Uses current EEF evidence, DfE SSP criteria, IES/WWC guidance and UFLI to explain why systematic decoding should remain the route for unfamiliar words.
+- Adds the Tiny Steps four-route framework: **regular taught word → regular high-frequency word → partly irregular/common-exception word → word with an untaught pattern**.
+- Explains how regular parts of irregular words can still be mapped, with only the unusual portion receiving special attention.
+- Removes fixed word-count/week guidance, vague “balance” language and unsupported progression promises.
+- Adds an automatic-recognition pathway from deliberate sound–spelling attention → accurate decoding → repeated successful encounters → increasingly efficient recognition.
+- Adds a fresh-word transfer safeguard so memorized flashcard performance is not mistaken for general decoding skill.
+- Protects Blog #21 as the synthetic-phonics-versus-traditional method-comparison owner and Blog #47 as the parent “what should I teach first?” sequencing owner.
+- Protects Blog #4 as digraph/tricky-word terminology owner and Blog #28 as the hands-on tricky-word routine owner.
+- Adds wider-reading boundaries: phonics supports word-reading accuracy but does not automatically supply fluency, vocabulary or comprehension.
+- Adds a non-diagnostic safeguard and closer-review criteria.
+- Adds six external evidence references, five focused FAQs and dedicated Blog #20 regression coverage.
+
+### Evidence boundary
+
+Evidence supports explicit/systematic phonics, left-to-right decoding, spelling/encoding, efficient recognition of regular and irregular high-frequency words, gradual teaching of common-exception words and connected-text practice. DfE explicitly rejects whole-shape word-list learning as a replacement for phonics; UFLI distinguishes temporarily/permanently irregular words and recommends mapping regular plus irregular parts. The evidence does **not** establish a universal number of “sight words” per week, a fixed mastery percentage, or a false choice between decoding and eventual automatic recognition. The Tiny Steps four-route framework is an editorial synthesis.
+
+**Final decision: 97/100 — LOCKED IN BATCH.**
+
+## Batch #2 merge gate
+
+Do not merge PR #164 until the decisive exact-head CI/SEO gate is green, the final diff is clean, the PR is mergeable, and explicit founder approval is received.
