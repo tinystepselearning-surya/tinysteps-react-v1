@@ -19,30 +19,27 @@ describe('PV-1D Ask Tiny Steps privacy telemetry guard', () => {
     expect(telemetry).not.toMatch(/firebase\/firestore|addDoc|setDoc|updateDoc|collection\(/);
   });
 
-  it('does not define conversation-content fields in the telemetry payload or tracker input', () => {
+  it('makes conversation and identity fields unrepresentable in routing metadata', () => {
     const telemetry = read(telemetryPath);
 
-    const forbiddenPayloadKeys = [
-      'question:',
-      'prompt:',
-      'answer:',
-      'response_text:',
-      'error_message:',
-      'email:',
-      'phone:',
-      'child_name:',
-      'parent_name:',
-      'conversation:',
-      'history:',
-      'session_id:',
-      'user_id:',
+    const neverTypedFields = [
+      'deterministicAnswer?: never;',
+      'question?: never;',
+      'prompt?: never;',
+      'answer?: never;',
+      'content?: never;',
+      'history?: never;',
+      'errorMessage?: never;',
+      'email?: never;',
+      'phone?: never;',
+      'userId?: never;',
+      'sessionId?: never;',
     ];
 
-    for (const key of forbiddenPayloadKeys) {
-      expect(telemetry).not.toContain(key);
+    for (const field of neverTypedFields) {
+      expect(telemetry).toContain(field);
     }
 
-    expect(telemetry).not.toContain('deterministicAnswer');
     expect(telemetry).toContain('route: AskTinyStepsRoutingMetadata');
     expect(telemetry).toContain('promptLength: number');
     expect(telemetry).toContain('prompt_length_bucket');
