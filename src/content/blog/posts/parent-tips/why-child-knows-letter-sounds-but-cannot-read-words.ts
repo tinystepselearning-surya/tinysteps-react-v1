@@ -22,7 +22,7 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'Blog 50 is the diagnostic owner for “knows letter sounds but cannot read words”' },
     { type: 'p', content: 'This page is deliberately narrow. It is for a child who already knows many of the relevant **letter sounds** but cannot yet combine those sounds into unfamiliar written words independently.' },
-    { type: 'p', content: 'If the child mainly knows alphabet **names** but the sound-to-letter links themselves are weak, start with [Child Knows ABC but Cannot Read: What Parents Should Check First](/blog/child-knows-abc-but-cannot-read). If you want the developmental stages of blending, use [How Kids Learn Blending](/blog/how-kids-learn-blending). If you already know the blending stage and need activities, use [Phonics Blending Activities](/blog/phonics-blending-activities).' },
+    { type: 'p', content: 'If the child mainly knows alphabet **names** but the sound-to-letter links themselves are weak, start with [Child Knows ABC but Cannot Read](/blog/child-knows-abc-but-cannot-read). If you want the developmental stages of blending, use [How Kids Learn Blending](/blog/how-kids-learn-blending). If you already know the blending stage and need activities, use [Phonics Blending Activities](/blog/phonics-blending-activities).' },
     { type: 'p', content: 'If word reading is already reasonably accurate but connected reading is slow, effortful or poorly phrased, move to [How to Improve Reading Fluency in Children](/blog/how-to-improve-reading-fluency-in-children). If the child reads the words but does not understand the story, use [Why Does My Child Read Words But Not Understand Stories?](/blog/why-child-reads-words-but-does-not-understand-story).' },
 
     { type: 'h2', content: 'Why this gap happens: letter sounds are pieces, but reading requires a sequence' },
@@ -78,7 +78,7 @@ const post: BlogPost = {
     { type: 'li', content: '**Fresh word:** add one or two new matched words so you can see whether the strategy transfers.' },
     { type: 'li', content: '**Sentence:** read one short decodable sentence when single-word blending is stable enough.' },
     { type: 'li', content: '**Encoding:** build or spell one related word so the child also maps sounds back to print.' },
-    { type: 'p', content: 'This routine is intentionally flexible. There is no evidence-based universal number of minutes or words that every child must complete. Keep the difficulty matched to the current teaching goal and stop before tired guessing replaces useful practice.' },
+    { type: 'p', content: 'This routine is intentionally flexible. Evidence does not support one fixed requirement for practice minutes or word counts across all children. Keep the difficulty matched to the current teaching goal and stop before tired guessing replaces useful practice.' },
 
     { type: 'h2', content: 'What to say when your child gets stuck' },
     { type: 'p', content: 'Give the smallest cue that helps the child restart the decoding process rather than telling the whole word immediately.' },
@@ -138,7 +138,7 @@ const post: BlogPost = {
     { type: 'li', content: '[Reading Rockets — Phonics and Decoding](https://www.readingrockets.org/reading-101/reading-and-writing-basics/phonics-and-decoding)' },
 
     { type: 'h2', content: 'Tiny Steps next-step pathway' },
-    { type: 'p', content: 'For this problem, start with the smallest broken link rather than adding more material. If sound recall itself needs strengthening, use [Phonics Balloon Pop](/free-balloon-pop-phonics-game-for-kids) as a short practice resource. For structured decoding instruction, explore [Phonics](/phonics). For broader reading support after decoding begins to stabilise, use [Reading Classes for Kids](/reading-classes-for-kids). Review the [curriculum roadmap](/curriculum), or [book a free 35-minute 1:1 demo assessment class](/book-demo) when you want help identifying the starting point.' },
+    { type: 'p', content: 'For this problem, start with the smallest broken link rather than adding more material. If sound recall itself needs strengthening, use [Phonics Balloon Pop](/free-balloon-pop-phonics-game-for-kids) as a short practice resource. For the wider evidence-led sequence, read the [Phonics for Parents guide](/blog/phonics-for-parents-guide); for structured decoding instruction, explore [Phonics](/phonics). For broader support after decoding begins to stabilise, use [reading classes for kids](/reading-classes-for-kids). Review the [curriculum roadmap](/curriculum), or [book a free 35-minute 1:1 demo assessment class](/book-demo) when you want help identifying the starting point.' },
   ],
   faq: [
     {

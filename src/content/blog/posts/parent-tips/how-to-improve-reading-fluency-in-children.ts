@@ -21,7 +21,7 @@ const post: BlogPost = {
     { type: 'p', content: 'Tiny Steps uses an editorial fluency checkpoint for parent observation: **Accurate decoding → Easier word recognition → Meaningful phrasing → Comprehension → Fresh-text transfer**. It is not a standardized fluency assessment or a words-per-minute benchmark. It is a way to identify the first layer that still needs support.' },
 
     { type: 'h2', content: 'First separate Blog 43 from the nearby reading problems' },
-    { type: 'p', content: 'This page owns **connected-text fluency**: the child can read many of the words, but reading is still slow, effortful, choppy or poorly phrased. If letter sounds are known but the child cannot blend unfamiliar words, use [Why Does My Child Know Letter Sounds But Cannot Read Words?](/blog/why-child-knows-letter-sounds-but-cannot-read-words) and [How Kids Learn Blending](/blog/how-kids-learn-blending) before treating the problem as fluency.' },
+    { type: 'p', content: 'This page owns **connected-text fluency**: the child can read many of the words, but reading is still slow, effortful, choppy or poorly phrased. If letter sounds are known but the child cannot blend unfamiliar words, use the [letter-sounds-but-cannot-read diagnostic guide](/blog/why-child-knows-letter-sounds-but-cannot-read-words) and [How Kids Learn Blending](/blog/how-kids-learn-blending) before treating the problem as fluency.' },
     { type: 'p', content: 'If the child reads the words smoothly but cannot explain what the passage means, use [Why Does My Child Read Words But Not Understand Stories?](/blog/why-child-reads-words-but-does-not-understand-story). If reading looks strong in class but much weaker at home, use the [class-to-home reading transfer guide](/blog/child-reads-in-class-but-forgets-at-home). Blog 43 should not absorb those separate diagnoses.' },
 
     { type: 'h2', content: 'What reading fluency actually includes' },
@@ -92,7 +92,7 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'Should parents time reading?' },
     { type: 'p', content: 'Timing can be one assessment tool in some instructional settings, but it should not become the definition of fluency. The IES grades 4–9 practice guide specifically cautions that timed readings can be overused and can harm engagement and motivation when they are used mainly to increase speed.' },
-    { type: 'p', content: 'At home, track whether reading is **more accurate, less effortful, better phrased and better understood**. If a timer creates rushing, guessing or anxiety, remove it. If a teacher uses a timed measure as part of formal progress monitoring, interpret it alongside accuracy and comprehension rather than as a standalone “good reader” score.' },
+    { type: 'p', content: 'At home, track whether reading is **more accurate, less effortful, better phrased and better understood**. Reading practice is not a race against a timer. If a timer creates rushing, guessing or anxiety, remove it. If a teacher uses a timed measure as part of formal progress monitoring, interpret it alongside accuracy and comprehension rather than as a standalone “good reader” score.' },
 
     { type: 'h2', content: 'Six fluency profiles — and the next step for each' },
     { type: 'h3', content: 'Profile 1 — slow and inaccurate on many words' },
@@ -133,7 +133,7 @@ const post: BlogPost = {
     { type: 'p', content: 'If concerns extend beyond the reading task—for example, speech, language, hearing, vision or broader learning concerns—discuss the pattern with the child’s school and an appropriately qualified professional. Reading speed by itself cannot diagnose the cause.' },
 
     { type: 'h2', content: 'How Blog 43 connects to the Tiny Steps pathways' },
-    { type: 'p', content: 'Use [reading classes for kids](/reading-classes-for-kids) when slow or effortful connected reading, fluency or comprehension is the broader need. If decoding itself is still unstable, the [phonics pathway](/phonics) is the earlier route. The [curriculum roadmap](/curriculum) shows how decoding, reading, grammar and communication connect, while [How Phonics, Grammar and Communication Work Together](/blog/how-phonics-grammar-and-communication-work-together) explains the cross-skill picture.' },
+    { type: 'p', content: 'Use [reading classes for kids](/reading-classes-for-kids) when slow or effortful connected reading, fluency or comprehension is the broader need. If decoding itself is still unstable, the [phonics pathway](/phonics) is the earlier route; the [complete phonics guide for parents](/blog/phonics-for-parents-guide) explains the evidence-led sequence. The [curriculum roadmap](/curriculum) shows how decoding, reading, grammar and communication connect, while [How Phonics, Grammar and Communication Work Together](/blog/how-phonics-grammar-and-communication-work-together) explains the cross-skill picture.' },
     { type: 'p', content: 'Families unsure whether the main bottleneck is decoding, fluency or comprehension can use the [free 1:1 demo assessment route](/book-demo) to discuss an appropriate starting point instead of choosing from age or reading speed alone.' },
 
     { type: 'h2', content: 'Evidence and references' },
@@ -146,6 +146,7 @@ const post: BlogPost = {
     { type: 'li', content: 'Institute of Education Sciences / REL — PRISMS Fluency Building module: implementation guidance on purposeful repeated reading, prosody, varied reading formats and selecting texts that are challenging but not frustrating. https://ies.ed.gov/ncee/rel/reading-intervention-grades-6-8/pro-learning-module2' },
     { type: 'li', content: 'Institute of Education Sciences — Strategies to Improve Reading implementation materials: connected-text fluency routines and scaffolds toward independence. https://ies.ed.gov/learn/blog/strategies-improve-reading-stir-implementation-materials' },
     { type: 'li', content: 'NICHD — National Reading Panel findings on fluency: guided repeated oral reading with guidance and feedback showed positive effects on word recognition, fluency and comprehension. https://www.nichd.nih.gov/publications/pubs/nrp/findings' },
+    { type: 'li', content: 'Reading Rockets — Fluency: parent- and teacher-facing guidance on accuracy, automaticity, phrasing and comprehension. https://www.readingrockets.org/reading-101/reading-and-writing-basics/fluency' },
   ],
   faq: [
     {

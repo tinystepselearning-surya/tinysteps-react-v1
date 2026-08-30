@@ -131,7 +131,7 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'When to ask for a closer review' },
     { type: 'p', content: 'Discuss the pattern with the child’s teacher when comprehension remains persistently weak across appropriately matched texts, especially when the child also struggles to understand spoken stories or explanations, has substantial vocabulary or language difficulties, cannot maintain meaning across short passages, or is not improving with explicit teaching matched to the identified need.' },
-    { type: 'p', content: 'A qualified professional may be appropriate when broader speech, language, hearing, learning or developmental concerns are present. This article cannot diagnose a disorder, and there is no universal number of weeks after which every child should be referred.' },
+    { type: 'p', content: 'A qualified professional may be appropriate when broader speech, language, hearing, learning or developmental concerns are present. This article cannot diagnose a disorder. There is no single referral timeline that fits every child, and no universal number of weeks after which every child should be referred.' },
 
     { type: 'h2', content: 'What good reading support should do with this problem' },
     { type: 'li', content: 'Confirm that word-reading accuracy is adequate for the selected text.' },

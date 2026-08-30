@@ -135,7 +135,7 @@ const post: BlogPost = {
     { type: 'p', content: 'That does not automatically mean the child failed. The target may have been too broad, the starting point may have been misidentified, the material may have been too difficult, the child may need more explicit modelling, or the chosen skill may simply require a longer runway.' },
     { type: 'p', content: 'The useful next step is to examine the error pattern. If the same problem repeats, change the teaching response rather than merely adding more days of identical practice.' },
 
-    { type: 'h2', content: 'How Tiny Steps approaches short-term progress' },
+    { type: 'h2', content: 'How Tiny Steps checks short-term progress' },
     { type: 'p', content: 'Tiny Steps does not treat a short calendar window as proof of mastery. Our preferred sequence is to identify the current bottleneck, teach at that level, observe the child’s response, practise deliberately, and then check transfer before moving on. Parents can explore [phonics support](/phonics), [grammar classes](/grammar), [speaking and communication classes](/speaking), [reading classes for kids](/reading-classes-for-kids) and the full [curriculum roadmap](/curriculum).' },
     { type: 'p', content: 'If you are unsure which skill should come first, use the [free 35-minute 1:1 demo assessment class](/book-demo) as a starting-point conversation rather than asking a short course to solve every English need at once.' },
 

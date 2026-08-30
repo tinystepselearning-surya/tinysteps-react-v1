@@ -31,6 +31,8 @@ const indexableRenamedSlugs = new Set([
   'phonics-r-controlled',
   'phonics-summer-plan',
   'phonics-tricky-words',
+  'back-to-school-english-confidence-plan',
+  'screen-smart-summer-routine-for-kids',
 ]);
 
 describe('weekly blog title and URL cleanup', () => {
